@@ -18,7 +18,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection } from '../logic/emoji/collection.ts'
-import { DECK, deckActif, deckComplet, likesDuDeck, mainPrecedente, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
+import { DECK, deckActif, deckComplet, likesDeLaMain, likesDuDeck, mainPrecedente, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { Vignette } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -29,6 +29,14 @@ export interface MainTombee {
   /** Compte les mains de la session : change à chaque main, pour rejouer l'entrée. */
   readonly numero: number
 }
+
+/**
+ * LE TEMPO DE LA MAIN, en millisecondes : les cinq entrent (`entree`, le temps
+ * de l'animation CSS `main-entre` et de ses décalages), puis chacune se résout
+ * à son tour (`parCarte`), et le total s'envole (`envol` après la dernière).
+ * Chiffres de moi, à rejuger : la séquence dure ~4 s sur les 10 de la cadence.
+ */
+const TEMPO = { entree: 900, parCarte: 380 } as const
 
 export function PageJouer({
   catalogue,
@@ -95,11 +103,33 @@ export function PageJouer({
     return () => cancelAnimationFrame(image)
   }, [deck.partie])
 
+  // LA MAIN SE RÉSOUT CARTE PAR CARTE. Keko : « que le total de la main ne
+  // s'affiche pas dès le début mais que chaque carte produise son effet avec
+  // une petite animation shake/pump chacun son tour ». Les cinq entrent, puis
+  // chacune gonfle à son tour et pose son « +n », le total monte avec elles,
+  // et c'est lui qui s'envole à la fin. `resolues` compte les cartes passées
+  // pour la main `numero` (l'état porte le numéro : une main neuve repart de
+  // zéro dès son premier rendu, sans montrer un instant les badges de
+  // l'ancienne). Sans main tombée dans la session (on arrive en cours de
+  // route), tout est déjà posé, sans séquence.
+  const [avancee, setAvancee] = useState({ numero: 0, resolues: 0 })
+  useEffect(() => {
+    if (derniere === null) return
+    const minuteurs = derniere.main.map((_, i) =>
+      window.setTimeout(() => setAvancee({ numero: derniere.numero, resolues: i + 1 }), TEMPO.entree + i * TEMPO.parCarte),
+    )
+    return () => minuteurs.forEach(clearTimeout)
+  }, [derniere])
+  const resolues = derniere === null ? (main?.length ?? 0) : avancee.numero === numero ? avancee.resolues : 0
+  const fini = main !== null && resolues >= main.length
+  const total = main === null || valeur === null ? 0 : likesDeLaMain(main.slice(0, resolues), valeur)
+
   // LES LIKES QUI S'ENVOLENT vers le compteur, en haut à droite. *Hors du
   // défilé*, qui rognerait tout ce qui en sort : un portail sur le corps de la
   // page, en position fixe, posé au-dessus de la main ; la cible se mesure
   // avant la première image (`useLayoutEffect`), l'animation CSS fait le
-  // reste. Un élément neuf par main (`key`), donc elle rejoue à chaque fois.
+  // reste. Un élément neuf par main (`key`), monté quand la dernière carte
+  // s'est résolue (`fini`), donc elle rejoue à chaque fois.
   const zone = useRef<HTMLDivElement>(null)
   const vol = useRef<HTMLSpanElement>(null)
   useLayoutEffect(() => {
@@ -114,7 +144,7 @@ export function PageJouer({
     if (cible === undefined) return
     el.style.setProperty('--dx', `${(cible.left + cible.width / 2 - x0).toFixed(1)}px`)
     el.style.setProperty('--dy', `${(cible.top + cible.height / 2 - y0).toFixed(1)}px`)
-  }, [numero])
+  }, [numero, fini])
 
   return (
     <div className="collection">
@@ -200,18 +230,23 @@ export function PageJouer({
                   if (carte === undefined) return null
                   // L'EXEMPLAIRE DU DECK, tel quel — sans « ×2 » ni « Nouveau » : une
                   // carte jouée n'est pas une case de la collection (Keko).
+                  // La carte qui se résout gonfle (`jouer-carte-pump`) et pose son
+                  // « +n » ; les suivantes attendent leur tour, badge compris.
+                  const resolue = i < resolues
+                  const enCours = derniere !== null && i === resolues - 1
                   return (
-                    <span key={`${e.id}:${i}`} className="jouer-carte" style={{ '--i': i } as React.CSSProperties}>
+                    <span key={`${e.id}:${i}`} className={`jouer-carte${enCours ? ' jouer-carte-pump' : ''}`} style={{ '--i': i } as React.CSSProperties}>
                       <Vignette carte={carte} possession={p} variante={e.v} nue onOuvrir={() => {}} />
                       {/* CE QUE LA CARTE A RAPPORTÉ, sous elle : la main ne fait plus
                           cinq d'office, on dit d'où vient le compte. */}
-                      {valeur !== null && <span className="jouer-carte-likes">+{valeur(e)}</span>}
+                      <span className={`jouer-carte-likes${resolue ? ' jouer-carte-likes-posee' : ''}`}>{valeur !== null && resolue ? `+${valeur(e)}` : '\u00a0'}</span>
                     </span>
                   )
                 })
               )}
             </div>
             {derniere !== null &&
+              fini &&
               createPortal(
                 <span key={numero} ref={vol} className="jouer-vol" aria-hidden>
                   +{derniere.likes}
@@ -220,7 +255,8 @@ export function PageJouer({
               )}
             {main !== null && (
               <p className="jouer-texte collection-discret">
-                {derniere !== null ? `+${derniere.likes} Likes` : 'La dernière main jouée'}
+                {/* LE TOTAL MONTE AVEC LES CARTES : rien tant qu'aucune n'est passée. */}
+                {derniere === null ? 'La dernière main jouée' : resolues === 0 ? '\u00a0' : `+${total} Like${total > 1 ? 's' : ''}`}
               </p>
             )}
           </div>
