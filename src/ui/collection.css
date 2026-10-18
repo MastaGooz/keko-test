@@ -1126,14 +1126,16 @@
 }
 
 /* LE CONTOUR FANTÔME : le cerne du sticker, blanchi, posé là où il sera
-   collé ; il respire doucement pour se lire comme une prévisualisation. */
+   collé ; il respire doucement pour se lire comme une prévisualisation. UN
+   PEU PLUS GRAND QUE LE STICKER TENU (1,25 contre 1,08) : Keko, « pour qu'on
+   le voie même quand le sticker est pile au-dessus » — l'anneau dépasse. */
 .sticker-fantome {
   position: fixed;
   left: -100px;
   top: -100px;
   z-index: 29;
   height: auto;
-  transform: translate(-50%, -50%) rotate(var(--a, 0rad));
+  transform: translate(-50%, -50%) rotate(var(--a, 0rad)) scale(1.25);
   filter: grayscale(1) brightness(4) drop-shadow(0 0 0.12rem rgba(14, 6, 40, 0.9));
   pointer-events: none;
   animation: fantome-respire 1s ease-in-out infinite alternate;
