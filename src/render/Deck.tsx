@@ -18,7 +18,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection } from '../logic/emoji/collection.ts'
-import { DECK, deckActif, deckComplet, mainPrecedente, type Decks, type EntreeDeck } from '../logic/emoji/deck.ts'
+import { DECK, deckActif, deckComplet, likesDuDeck, mainPrecedente, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { Vignette } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -34,6 +34,7 @@ export function PageJouer({
   catalogue,
   collection,
   decks,
+  valeur,
   derniere,
   onChoisir,
   onComposer,
@@ -41,6 +42,8 @@ export function PageJouer({
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
   decks: Decks
+  /** Ce que vaut une carte jouée (un Like plus un par cran) ; `null` tant que le catalogue n'est pas là. */
+  valeur: ValeurDeCarte | null
   derniere: MainTombee | null
   /** Choisir le deck qui joue (Keko : « sélectionner celui avec lequel il veut jouer »). */
   onChoisir: (i: number) => void
@@ -144,8 +147,10 @@ export function PageJouer({
           <p className="collection-compte">
             {complet ? (
               <>
-                <b>{DECK.main * DECK.likesParCarte}</b> Likes toutes les {Math.round(DECK.cadence / 1000)} s · main{' '}
-                {jouees / DECK.main + 1} / {parCycle} · {DECK.taille - jouees} carte{DECK.taille - jouees > 1 ? 's' : ''} dans la pile
+                {/* CE QUE RAPPORTE UN TOUR DU DECK : la somme de ses trente cartes, un
+                    Like plus un par cran — c'est là qu'on voit qu'un deck de rares vaut plus. */}
+                <b>{valeur === null ? '…' : likesDuDeck(deck, valeur)}</b> Likes par tour · main {jouees / DECK.main + 1} / {parCycle} ·{' '}
+                {DECK.taille - jouees} carte{DECK.taille - jouees > 1 ? 's' : ''} dans la pile
               </>
             ) : (
               <>
@@ -160,7 +165,7 @@ export function PageJouer({
             <p>
               Il manque {manquent} carte{manquent > 1 ? 's' : ''} au deck.
             </p>
-            <p className="collection-discret">Trente cartes, et il joue tout seul : cinq cartes, cinq Likes, toutes les dix secondes.</p>
+            <p className="collection-discret">Trente cartes, et il joue tout seul : cinq cartes toutes les dix secondes, un Like par carte et un de plus par cran de rareté.</p>
             <button type="button" className="collection-bouton" onClick={onComposer}>
               Composer le deck
             </button>
@@ -198,6 +203,9 @@ export function PageJouer({
                   return (
                     <span key={`${e.id}:${i}`} className="jouer-carte" style={{ '--i': i } as React.CSSProperties}>
                       <Vignette carte={carte} possession={p} variante={e.v} nue onOuvrir={() => {}} />
+                      {/* CE QUE LA CARTE A RAPPORTÉ, sous elle : la main ne fait plus
+                          cinq d'office, on dit d'où vient le compte. */}
+                      {valeur !== null && <span className="jouer-carte-likes">+{valeur(e)}</span>}
                     </span>
                   )
                 })

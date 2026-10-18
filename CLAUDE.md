@@ -287,9 +287,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   une fois par deck, un exemplaire dans un seul deck** (`disponibles`, « pris
   par le Deck 2 » estompé) ; **plusieurs decks** (`Decks`, six au plus, un
   onglet chacun, Keko), **un seul joue : l'actif** (`choisirDeck`, qui arrête
-  l'autre) ; complet, il joue tout seul **une main de cinq
-  toutes les dix secondes, un Like par carte, ajouté aussitôt, sur toutes les
-  pages** ; vidé, il se remélange (`melange` seedé, la graine suit). *Le temps
+  l'autre) ; complet, il joue tout seul **une main de cinq toutes les dix
+  secondes, un Like par carte PLUS UN PAR CRAN (commune 1 … légendaire 5,
+  Keko ; `ValeurDeCarte` injectée depuis le catalogue), ajoutés aussitôt, sur
+  toutes les pages** ; vidé, il se remélange (`melange` seedé, la graine suit). *Le temps
   est injecté* comme pour la réserve : `deckAJour` rejoue l'écoulé à la
   lecture, huit heures au plus hors ligne. « Jouer » montre la pile, la
   dernière main, les Likes qui s'envolent. Changer le deck relance sa partie ;

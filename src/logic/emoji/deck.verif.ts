@@ -26,8 +26,11 @@ import {
   modifierDeck,
   prochaineMainDans,
   supprimerDeck,
+  valeurParRarete,
   type EntreeDeck,
+  type ValeurDeCarte,
 } from './deck.ts'
+import { RARETES_EMOJI } from './types.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -42,6 +45,8 @@ const H = (id: string): EntreeDeck => ({ id, v: 'holo' })
 const simples = ids.map(S)
 const T0 = 1_000_000
 const cle = (m: readonly EntreeDeck[]): string => m.map((e) => `${e.id}#${e.v}`).join()
+/** Un Like par carte, quel que soit le cran : la règle du départ, pour les comptes ronds. */
+const UN: ValeurDeCarte = () => 1
 
 // LA COMPOSITION
 let d = deckVide()
@@ -60,26 +65,34 @@ verifier('le mélange est seedé', cle(melange(simples, 42)) === cle(melange(sim
 verifier('le mélange garde toutes les cartes', [...melange(ids, 7)].sort().join() === [...ids].sort().join())
 
 // LE TEMPS QUI JOUE
-verifier('rien avant la cadence', deckAJour(d, T0 + DECK.cadence - 1).mains === 0)
-const une = deckAJour(d, T0 + DECK.cadence)
-verifier('une main à la cadence', une.mains === 1 && une.likes === DECK.main * DECK.likesParCarte && une.derniere?.length === DECK.main)
+verifier('rien avant la cadence', deckAJour(d, T0 + DECK.cadence - 1, UN).mains === 0)
+const une = deckAJour(d, T0 + DECK.cadence, UN)
+verifier('une main à la cadence', une.mains === 1 && une.likes === DECK.main && une.derniere?.length === DECK.main)
 verifier('la main jouée était la main courante', cle(une.derniere!) === cle(mainCourante(d)))
 verifier('la main précédente du deck à jour est celle-là', cle(mainPrecedente(une.deck)!) === cle(une.derniere!))
 verifier('cinq cartes jouées, la cadence repart de la main', une.deck.partie?.jouees === DECK.main && une.deck.partie?.depuis === T0 + DECK.cadence)
 verifier('la prochaine main est à une cadence de là', prochaineMainDans(une.deck, T0 + DECK.cadence + 3000) === DECK.cadence - 3000)
 const parCycle = DECK.taille / DECK.main
-const cycle = deckAJour(d, T0 + DECK.cadence * parCycle)
+const cycle = deckAJour(d, T0 + DECK.cadence * parCycle, UN)
 verifier('un cycle entier vide le deck et le remélange', cycle.mains === parCycle && cycle.deck.partie?.jouees === 0 && cycle.deck.partie?.graine !== d.partie?.graine)
-verifier('le cycle rapporte trente Likes', cycle.likes === DECK.taille * DECK.likesParCarte)
-const deuxEtDemi = deckAJour(d, T0 + DECK.cadence * (parCycle * 2 + 3) + 1234)
+verifier('le cycle rapporte trente Likes', cycle.likes === DECK.taille)
+const deuxEtDemi = deckAJour(d, T0 + DECK.cadence * (parCycle * 2 + 3) + 1234, UN)
 verifier('deux cycles et trois mains', deuxEtDemi.mains === parCycle * 2 + 3 && deuxEtDemi.deck.partie?.jouees === 3 * DECK.main)
 verifier('le reste de la cadence est gardé', deuxEtDemi.deck.partie?.depuis === T0 + DECK.cadence * (parCycle * 2 + 3))
-verifier('jouer en deux fois ou en une donne pareil', deckAJour(une.deck, T0 + DECK.cadence * parCycle).likes + une.likes === cycle.likes && deckAJour(une.deck, T0 + DECK.cadence * parCycle).deck.partie?.graine === cycle.deck.partie?.graine)
-const horsLigne = deckAJour(d, T0 + DECK.horsLigneMax * 3)
+verifier('jouer en deux fois ou en une donne pareil', deckAJour(une.deck, T0 + DECK.cadence * parCycle, UN).likes + une.likes === cycle.likes && deckAJour(une.deck, T0 + DECK.cadence * parCycle, UN).deck.partie?.graine === cycle.deck.partie?.graine)
+const horsLigne = deckAJour(d, T0 + DECK.horsLigneMax * 3, UN)
 verifier('hors ligne, au plus la limite', horsLigne.mains === DECK.horsLigneMax / DECK.cadence && horsLigne.deck.partie?.depuis === T0 + DECK.horsLigneMax * 3)
-const recule = deckAJour(d, T0 - 5000)
+const recule = deckAJour(d, T0 - 5000, UN)
 verifier('une horloge qui recule ne joue rien et repart', recule.mains === 0 && recule.deck.partie?.depuis === T0 - 5000)
-verifier('une main vaut un Like par carte', likesDeLaMain([S('a'), S('b'), H('c')]) === 3 * DECK.likesParCarte)
+verifier('à un Like par carte, une main de trois vaut trois', likesDeLaMain([S('a'), S('b'), H('c')], UN) === 3)
+
+// LA VALEUR PAR CRAN (Keko : « +1 like par niveau de rareté »)
+const parCran = valeurParRarete((id) => (id === 'c' ? 'commun' : id === 'l' ? 'legendaire' : id === 'r' ? 'rare' : undefined))
+verifier('une commune vaut un Like, une légendaire cinq', parCran(S('c')) === DECK.likesCommun && parCran(S('l')) === DECK.likesCommun + (RARETES_EMOJI.length - 1) * DECK.likesParCran)
+verifier('la version ne compte pas', parCran(H('r')) === parCran(S('r')) && parCran(S('r')) === DECK.likesCommun + 2 * DECK.likesParCran)
+verifier('un cran inconnu vaut une commune', parCran(S('?')) === DECK.likesCommun)
+verifier('la main somme ses cartes', likesDeLaMain([S('c'), S('r'), H('l')], parCran) === 1 + 3 + 5)
+verifier('le temps joue avec la valeur injectée', deckAJour(d, T0 + DECK.cadence, () => 4).likes === DECK.main * 4)
 
 // LA POSSESSION
 const sansDeux = garderPossedees(d, (e) => e.id !== ids[0] && e.id !== ids[1], T0)
@@ -109,7 +122,7 @@ ds = ajouterDeck(ds)
 verifier('un deck de plus, l’actif reste le premier', ds.liste.length === 2 && ds.actif === 0)
 for (const e of simples) ds = basculerDansDeck(ds, 1, e, compte, T0)
 verifier('le second est complet mais ne joue pas : il n’est pas l’actif', deckComplet(ds.liste[1]!) && ds.liste[1]!.partie === null)
-verifier('rien ne tombe tant que l’actif est vide', decksAJour(ds, T0 + DECK.cadence * 3).mains === 0)
+verifier('rien ne tombe tant que l’actif est vide', decksAJour(ds, T0 + DECK.cadence * 3, UN).mains === 0)
 verifier('un exemplaire pris par le deck 2 n’est plus disponible au deck 1', disponibles(ds, 0, ids[4]!, 'simple', compte) === 0 && deckQuiTient(ds, 0, ids[4]!, 'simple') === 1)
 verifier('mais il reste disponible au deck qui le tient', disponibles(ds, 1, ids[4]!, 'simple', compte) === 1)
 verifier('le holo du premier emoji, lui, est libre', disponibles(ds, 0, ids[0]!, 'holo', compte) === 1 && deckQuiTient(ds, 0, ids[0]!, 'holo') === null)
@@ -120,7 +133,7 @@ verifier('retirer est toujours possible', basculerDansDeck(avecHolo, 0, H(ids[0]
 ds = choisirDeck(ds, 1, T0 + 100)
 verifier('choisir le second le lance', ds.actif === 1 && ds.liste[1]!.partie?.depuis === T0 + 100)
 verifier('le choisir encore ne change rien', choisirDeck(ds, 1, T0 + 999) === ds)
-const tombe = decksAJour(ds, T0 + 100 + DECK.cadence)
+const tombe = decksAJour(ds, T0 + 100 + DECK.cadence, UN)
 verifier('l’actif joue', tombe.mains === 1 && tombe.likes === DECK.main && tombe.decks.liste[1]!.partie?.jouees === DECK.main && tombe.decks.liste[0] === ds.liste[0])
 /** Deux exemplaires normaux de chaque : les deux decks peuvent être pleins. */
 const deuxChacun = (id: string, v: string): number => (ids.includes(id) && v === 'simple' ? 2 : 0)

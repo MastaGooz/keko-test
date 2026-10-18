@@ -1938,6 +1938,17 @@ span.jouer-pile-dos {
   transform: none;
 }
 
+/* « +3 » sous chaque carte de la main : un Like, plus un par cran. */
+.jouer-carte-likes {
+  display: block;
+  margin-top: 0.2rem;
+  text-align: center;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #ff6fa5;
+}
+
 @keyframes main-entre {
   from {
     opacity: 0;

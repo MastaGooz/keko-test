@@ -57,6 +57,7 @@ import {
   disponibles,
   garderPossedeesPartout,
   likesDeLaMain,
+  valeurParRarete,
   supprimerDeck,
   type CompteDExemplaires,
   type Decks,
@@ -300,14 +301,24 @@ export function Jeu(): React.ReactElement {
       return n
     })
   }, [])
+  // CE QUE VAUT UNE CARTE JOUÉE : un Like, plus un par cran (Keko : « +1 like
+  // par niveau de rareté »). Le cran vient du catalogue, injecté au deck.
+  const valeur = useMemo(() => {
+    if (catalogue === null) return null
+    const crans = new Map(catalogue.map((c) => [c.id, c.rarete]))
+    return valeurParRarete((id) => crans.get(id))
+  }, [catalogue])
   useEffect(() => {
-    const r = decksAJour(decks, maintenant)
+    // Sans catalogue on ne sait pas ce que vaut une carte : le temps attend,
+    // rien n'est perdu, il se rejouera à la lecture suivante.
+    if (valeur === null) return
+    const r = decksAJour(decks, maintenant, valeur)
     if (r.decks !== decks) poserDecks(() => r.decks)
     if (r.mains === 0 || r.derniere === null) return
     const main = r.derniere
     changer((c) => ajouterLikes(c, r.likes))
-    setDerniereMain((m) => ({ main, likes: likesDeLaMain(main), numero: (m?.numero ?? 0) + 1 }))
-  }, [decks, maintenant, changer, poserDecks])
+    setDerniereMain((m) => ({ main, likes: likesDeLaMain(main, valeur), numero: (m?.numero ?? 0) + 1 }))
+  }, [decks, maintenant, valeur, changer, poserDecks])
   // CE QU'ON POSSÈDE, VERSION PAR VERSION : les decks ne prennent pas plus
   // d'exemplaires qu'il n'y en a (Keko : « une carte ne peut pas être dans
   // deux decks »), et une carte détruite les quitte.
@@ -515,6 +526,7 @@ export function Jeu(): React.ReactElement {
           catalogue={catalogue}
           collection={collection}
           decks={decks}
+          valeur={valeur}
           derniere={derniereMain}
           onChoisir={choisirLeDeck}
           onComposer={() => {

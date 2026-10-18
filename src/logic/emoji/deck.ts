@@ -24,10 +24,18 @@
  * : *un emoji au plus une fois par deck* (choisir une autre version de
  * l'emoji remplace la première), et *un exemplaire au plus une fois dans
  * l'ensemble des decks* — on ne met pas en jeu plus de holo qu'on n'en a
- * (`disponibles`). Un Like par carte, la version ne compte pas encore.
+ * (`disponibles`).
+ *
+ * **CE QUE RAPPORTE UNE CARTE DÉPEND DE SON CRAN** (Keko : « +1 like par
+ * niveau de rareté quand les cartes sont jouées ») : un Like pour une
+ * commune, un de plus par cran, cinq pour une légendaire. Le cran est dans le
+ * catalogue, que ce module ne lit pas : *la valeur d'une carte est injectée*
+ * (`ValeurDeCarte`, bâtie par `valeurParRarete`), comme le temps. La version
+ * (holo, animée) ne compte pas encore.
  */
 import { createRng } from '../rng.ts'
 import { VARIANTES, type Variante } from './collection.ts'
+import { RARETES_EMOJI, type RareteEmoji } from './types.ts'
 
 /** Les chiffres de Keko (30, 5, 1 Like), et les miens à rejuger (la cadence, la limite hors ligne). */
 export const DECK = {
@@ -37,8 +45,10 @@ export const DECK = {
   main: 5,
   /** Une main toutes les dix secondes — « toutes les X secondes », X de moi. */
   cadence: 10 * 1000,
-  /** « commençons par 1 like par carte ». */
-  likesParCarte: 1,
+  /** « commençons par 1 like par carte » : ce que rapporte une commune. */
+  likesCommun: 1,
+  /** « +1 like par niveau de rareté » : ce que chaque cran ajoute. */
+  likesParCran: 1,
   /**
    * CE QU'ON RATTRAPE AU PLUS en revenant : huit heures de mains. *Un idle qui
    * ne joue qu'à l'écran n'est pas un idle*, mais une semaine d'absence qui
@@ -107,9 +117,29 @@ export function mainPrecedente(d: Deck): readonly EntreeDeck[] | null {
   return melange(d.cartes, d.partie.graine).slice(d.partie.jouees - DECK.main, d.partie.jouees)
 }
 
-/** Ce que rapporte une main : un Like par carte, pour commencer. */
-export function likesDeLaMain(main: readonly EntreeDeck[]): number {
-  return main.length * DECK.likesParCarte
+/** Ce que rapporte un exemplaire joué — injecté, le deck ne connaît pas le catalogue. */
+export type ValeurDeCarte = (e: EntreeDeck) => number
+
+/**
+ * UN LIKE, PLUS UN PAR CRAN : commune 1, peu commune 2, rare 3, épique 4,
+ * légendaire 5. Une carte dont on ne retrouve pas le cran vaut une commune.
+ */
+export function valeurParRarete(rareteDe: (id: string) => RareteEmoji | undefined): ValeurDeCarte {
+  return (e) => {
+    const r = rareteDe(e.id)
+    const cran = r === undefined ? 0 : Math.max(0, RARETES_EMOJI.indexOf(r))
+    return DECK.likesCommun + cran * DECK.likesParCran
+  }
+}
+
+/** Ce que rapporte une main : la somme de ses cartes. */
+export function likesDeLaMain(main: readonly EntreeDeck[], valeur: ValeurDeCarte): number {
+  return main.reduce((t, e) => t + valeur(e), 0)
+}
+
+/** Ce que rapporte un tour complet du deck : toutes ses cartes jouées une fois. */
+export function likesDuDeck(d: Deck, valeur: ValeurDeCarte): number {
+  return likesDeLaMain(d.cartes, valeur)
 }
 
 /**
@@ -160,7 +190,7 @@ export interface MainsJouees {
  * suivant quand le deck est vide. Au plus `horsLigneMax` de mains ; au-delà,
  * le reste est perdu et la cadence repart de maintenant.
  */
-export function deckAJour(d: Deck, maintenant: number): MainsJouees {
+export function deckAJour(d: Deck, maintenant: number, valeur: ValeurDeCarte): MainsJouees {
   const rien = { deck: d, mains: 0, likes: 0, derniere: null }
   if (d.partie === null) return rien
   // UNE HORLOGE QUI RECULE ne joue rien et ne doit rien casser : on repart de maintenant.
@@ -175,7 +205,7 @@ export function deckAJour(d: Deck, maintenant: number): MainsJouees {
   let ordre = melange(d.cartes, graine)
   for (let i = 0; i < mains; i++) {
     const main = ordre.slice(jouees, jouees + DECK.main)
-    likes += likesDeLaMain(main)
+    likes += likesDeLaMain(main, valeur)
     derniere = main
     jouees += DECK.main
     if (jouees >= ordre.length) {
@@ -191,7 +221,7 @@ export function deckAJour(d: Deck, maintenant: number): MainsJouees {
 /** Dans combien de millisecondes tombe la prochaine main ; `null` si le deck ne joue pas. */
 export function prochaineMainDans(d: Deck, maintenant: number): number | null {
   if (d.partie === null) return null
-  const a = deckAJour(d, maintenant).deck
+  const a = deckAJour(d, maintenant, () => 0).deck
   return Math.max(0, a.partie!.depuis + DECK.cadence - maintenant)
 }
 
@@ -371,8 +401,8 @@ export interface MainsJoueesDesDecks extends Omit<MainsJouees, 'deck'> {
 }
 
 /** Ce que le temps a joué : le deck actif seul joue. */
-export function decksAJour(ds: Decks, maintenant: number): MainsJoueesDesDecks {
-  const r = deckAJour(deckActif(ds), maintenant)
+export function decksAJour(ds: Decks, maintenant: number, valeur: ValeurDeCarte): MainsJoueesDesDecks {
+  const r = deckAJour(deckActif(ds), maintenant, valeur)
   const decks = r.deck === deckActif(ds) ? ds : { liste: ds.liste.map((d, k) => (k === ds.actif ? r.deck : d)), actif: ds.actif }
   return { decks, mains: r.mains, likes: r.likes, derniere: r.derniere }
 }
