@@ -27,6 +27,27 @@ import { art, fondPropre, urlDuCout, urlDuDosDeCarte, urlDuFond, urlImageDeKeko 
 import { boiteDe, mesurerBoite } from './silhouette.ts'
 
 /** Ce qu'il faut savoir d'une carte pour la peindre. */
+/**
+ * UN STICKER COLLÉ, PRÊT À PEINDRE : son image (cerne crème, ou arc-en-ciel
+ * pour un holo — *le sticker garde son contour d'origine*, Keko), sa place sur
+ * la fenêtre d'art, et, s'il est animé, de quoi charger ses images : *il garde
+ * son animation aussi*. `charger` est fourni par `peinture-vignette.ts`, qui
+ * sait faire les images holo ; ce module ne connaît que des images.
+ */
+export interface StickerAPeindre {
+  readonly cle: string
+  readonly image: CanvasImageSource
+  readonly x?: number
+  readonly y?: number
+  readonly a?: number
+  readonly anime?: { readonly charger: (cote: number) => Promise<ImagesDAnimation | null> }
+}
+/** Des images qui se suivent, et la durée du tour : l'animation d'un emoji, ou d'un sticker. */
+export interface ImagesDAnimation {
+  readonly images: readonly CanvasImageSource[]
+  readonly duree: number
+}
+
 export type CarteAPeindre = {
   /**
    * L'identifiant de l'EXEMPLAIRE, et il n'est pas décoratif : c'est la clé
@@ -257,7 +278,7 @@ export type CarteAPeindre = {
    * voir `stickersColles` dans `peinture-vignette.ts`), posés sur la fenêtre
    * d'art après l'emoji, à des places fixes. `cle` les distingue au cache.
    */
-  colles?: readonly { readonly cle: string; readonly image: HTMLCanvasElement; readonly x?: number; readonly y?: number; readonly a?: number }[]
+  colles?: readonly StickerAPeindre[]
   /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
@@ -1849,32 +1870,25 @@ export const TAILLE_COLLE = 0.3
  * Un sticker sans place (collé avant qu'on puisse la choisir) prend une place
  * fixe (`PLACES_COLLES`), les coins puis les bords, un tour décalé au-delà.
  */
-function peindreColles(
-  ctx: CanvasRenderingContext2D,
-  colles: readonly { readonly image: HTMLCanvasElement; readonly x?: number; readonly y?: number; readonly a?: number }[],
-  marge: number,
-  fY: number,
-  fH: number,
-): void {
+/** La place d'un sticker collé, en parts de la fenêtre d'art : la sienne, ou la place fixe de son rang. Les vignettes animées la lisent aussi. */
+export function placeDuColle(c: { readonly x?: number; readonly y?: number; readonly a?: number }, i: number): { x: number; y: number; a: number } {
+  if (c.x !== undefined && c.y !== undefined) return { x: c.x, y: c.y, a: c.a ?? 0 }
+  const place = PLACES_COLLES[i % PLACES_COLLES.length]!
+  const tour = Math.floor(i / PLACES_COLLES.length)
+  return {
+    x: place.x + (tour === 0 ? 0 : (((tour * 37) % 11) - 5) * 0.012),
+    y: place.y + (tour === 0 ? 0 : (((tour * 53) % 7) - 3) * 0.012),
+    a: place.a + tour * 0.07,
+  }
+}
+
+function peindreColles(ctx: CanvasRenderingContext2D, colles: readonly StickerAPeindre[], marge: number, fY: number, fH: number): void {
   const lFenetre = LARGE - marge * 2
   const taille = lFenetre * TAILLE_COLLE
   ctx.save()
   ctx.imageSmoothingQuality = 'high'
   colles.forEach((c, i) => {
-    let x: number
-    let y: number
-    let a: number
-    if (c.x !== undefined && c.y !== undefined) {
-      x = c.x
-      y = c.y
-      a = c.a ?? 0
-    } else {
-      const place = PLACES_COLLES[i % PLACES_COLLES.length]!
-      const tour = Math.floor(i / PLACES_COLLES.length)
-      x = place.x + (tour === 0 ? 0 : (((tour * 37) % 11) - 5) * 0.012)
-      y = place.y + (tour === 0 ? 0 : (((tour * 53) % 7) - 3) * 0.012)
-      a = place.a + tour * 0.07
-    }
+    const { x, y, a } = placeDuColle(c, i)
     ctx.save()
     ctx.translate(marge + x * lFenetre, fY + y * fH)
     ctx.rotate(a)
@@ -4227,11 +4241,18 @@ export async function peindreCarte(
   // dédoublaient au regard. Le masque des rayons brillants les épargne aussi.
   if (bulle && carte.sansSujet !== true && carte.colles !== undefined && carte.colles.length > 0) {
     peindreColles(ctx, carte.colles, marge, fY, fH)
-    const surface = document.createElement('canvas')
-    surface.width = canvas.width
-    surface.height = canvas.height
+    // LA MÊME TOILE DE SURFACE D'UNE IMAGE À L'AUTRE : l'animé repeint la carte
+    // trente fois par seconde, et la texture du nuanceur regarde cette toile-là.
+    let surface = SURFACES.get(canvas)
+    if (surface === undefined || surface.width !== canvas.width || surface.height !== canvas.height) {
+      surface = document.createElement('canvas')
+      surface.width = canvas.width
+      surface.height = canvas.height
+    }
     const sctx = surface.getContext('2d')
     if (sctx !== null) {
+      sctx.setTransform(1, 0, 0, 1, 0, 0)
+      sctx.clearRect(0, 0, surface.width, surface.height)
       sctx.scale(largeur / LARGE, largeur / LARGE)
       peindreColles(sctx, carte.colles, marge, fY, fH)
       SURFACES.set(canvas, surface)
@@ -6889,6 +6910,9 @@ export function textureDeCarte(
       // LE MASQUE DU SUJET VOYAGE AVEC ELLE : voir `masqueDuSujet`.
       const masque = MASQUES_DU_SUJET.get(canvas)
       if (masque !== undefined) texture.userData.masqueSujet = new THREE.CanvasTexture(masque)
+      // ET LES STICKERS COLLÉS : le nuanceur de la holo les épargne de son cerne arc-en-ciel.
+      const surface = SURFACES.get(canvas)
+      if (surface !== undefined) texture.userData.colles = new THREE.CanvasTexture(surface)
       // La carte se regarde de près et en biais : sans filtrage anisotrope le
       // texte se brouille dès qu'elle s'incline.
       texture.anisotropy = 8

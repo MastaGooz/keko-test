@@ -8,7 +8,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, stickerDe, sujetDe, type SujetPeint } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, stickerDe, sujetDe, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -760,13 +760,8 @@ export function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasEl
  * sticker (holo pour une version holo). Un sticker dont l'emoji manque au
  * catalogue est passé. La clé distingue les peintures au cache des cartes.
  */
-export interface StickerPeint {
-  readonly cle: string
+export interface StickerPeint extends StickerAPeindre {
   readonly image: HTMLCanvasElement
-  /** Sa place sur la fenêtre d'art, si on l'a posée au doigt : voir `StickerColle`. */
-  readonly x?: number
-  readonly y?: number
-  readonly a?: number
 }
 let CATALOGUE_PAR_ID = new Map<string, CarteEmoji>()
 export function declarerLeCatalogue(catalogue: readonly CarteEmoji[]): void {
@@ -786,8 +781,16 @@ export async function stickersColles(colles: readonly StickerColle[] | undefined
     colles.map(async (c): Promise<StickerPeint | null> => {
       const carte = CATALOGUE_PAR_ID.get(c.id)
       if (carte === undefined) return null
-      const image = await stickerPeint(carte, exemplaireDe(c.v).holo)
-      return image === null ? null : { cle: cleDuColle(c), image, x: c.x, y: c.y, a: c.a }
+      const ex = exemplaireDe(c.v)
+      const image = await stickerPeint(carte, ex.holo)
+      if (image === null) return null
+      // UN STICKER ANIMÉ RESTE ANIMÉ sur la carte (Keko : « qu'il garde son
+      // animation s'il en a ») : ses images, au cerne arc-en-ciel s'il est holo.
+      const anime =
+        ex.anime && carte.animable
+          ? { charger: (cote: number) => (ex.holo ? animationHolo(c.id, cote, false) : animationDeLEmoji(urlAnimationEmoji(c.id), cote)) }
+          : undefined
+      return { cle: cleDuColle(c), image, x: c.x, y: c.y, a: c.a, ...(anime === undefined ? {} : { anime }) }
     }),
   )
   return peints.filter((x): x is StickerPeint => x !== null)

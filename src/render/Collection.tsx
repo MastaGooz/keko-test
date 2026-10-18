@@ -25,7 +25,7 @@ import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/type
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
-import { AMBIANCE, TAILLE_COLLE, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { AMBIANCE, TAILLE_COLLE, placeDuColle, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
@@ -398,6 +398,10 @@ export function Vignette({
   // repeint quand ils changent (la clé dit s'ils ont changé).
   const colles = possession?.colles?.[variante]
   const cleColles = cleDesColles(colles)
+  /** Les stickers collés peints, dont les animés que la vignette fait jouer sur une couche à part. */
+  const collesPeints = useRef<readonly StickerPeint[]>([])
+  const [collesAnimes, setCollesAnimes] = useState(false)
+  const coucheColles = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -410,7 +414,11 @@ export function Vignette({
         const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
         const largeur = tailleQuIlFaut(px)
         void stickersColles(colles)
-          .then((peints) => peinte(carte, largeur, holo, tourne, false, false, tourne, peints))
+          .then((peints) => {
+            collesPeints.current = peints
+            setCollesAnimes(peints.some((c) => c.anime !== undefined))
+            return peinte(carte, largeur, holo, tourne, false, false, tourne, peints)
+          })
           .then(async (source) => {
           const t = toile.current
           const ctx = t?.getContext('2d')
@@ -478,13 +486,57 @@ export function Vignette({
   // (l'observateur du dessus se coupe après la première peinture).
   useEffect(() => {
     const el = boite.current
-    if (!tourne || el === null) return
+    if ((!tourne && !collesAnimes) || el === null) return
     const obs = new IntersectionObserver((e) => setVisible(e.some((x) => x.isIntersecting)), {
       rootMargin: '200px 0px',
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [tourne])
+  }, [tourne, collesAnimes])
+  // LES STICKERS COLLÉS ANIMÉS JOUENT sur leur couche, à leur place (Keko :
+  // « qu'il garde son animation s'il en a ») : leurs images chargées par leur
+  // `charger`, à la finesse de l'album, posées comme `peindreColles` les pose.
+  useEffect(() => {
+    if (!collesAnimes || !visible || !prete) return
+    let vivant = true
+    let image = 0
+    const peints = collesPeints.current
+    void Promise.all(peints.map((c) => (c.anime === undefined ? Promise.resolve(null) : c.anime.charger(COTE_PETIT)))).then((anims) => {
+      if (!vivant || !anims.some((a) => a !== null)) return
+      const depart = performance.now()
+      const pas = (t: number): void => {
+        const c = coucheColles.current
+        const base = toile.current
+        const ctx = c?.getContext('2d')
+        if (c == null || ctx == null || base == null) return
+        if (c.width !== base.width || c.height !== base.height) {
+          c.width = base.width
+          c.height = base.height
+        }
+        const R = RAYONS_DANS_LA_CARTE
+        const taille = TAILLE_COLLE * R.l * c.width
+        ctx.clearRect(0, 0, c.width, c.height)
+        peints.forEach((col, k) => {
+          const a = anims[k]
+          if (a == null) return
+          const i = Math.min(a.images.length - 1, Math.floor(((Math.max(0, t - depart) % a.duree) / a.duree) * a.images.length))
+          const { x, y, a: angle } = placeDuColle(col, k)
+          ctx.save()
+          ctx.translate((R.x + x * R.l) * c.width, (R.y + y * R.h) * c.height)
+          ctx.rotate(angle)
+          ctx.drawImage(a.images[i]!, -taille / 2, -taille / 2, taille, taille)
+          ctx.restore()
+        })
+        image = requestAnimationFrame(pas)
+      }
+      image = requestAnimationFrame(pas)
+    })
+    return () => {
+      vivant = false
+      cancelAnimationFrame(image)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- les stickers sont lus par leur clé
+  }, [collesAnimes, visible, prete, cleColles])
   // L'EMOJI ANIMÉ JOUE SUR LA COUCHE DU STICKER, à la place du sticker fixe,
   // une fois la vignette peinte : ses images sont déjà des stickers, au cerne
   // arc-en-ciel pour une holo — comme dans l'album.
@@ -535,6 +587,7 @@ export function Vignette({
           <canvas ref={sticker} className="vignette-toile vignette-sticker" style={{ filter: `saturate(${1 + SATURATION_APLAT})` }} />
         </>
       )}
+      {collesAnimes && <canvas ref={coucheColles} className="vignette-toile vignette-sticker" style={{ filter: `saturate(${1 + SATURATION_APLAT})` }} />}
       {holo &&
         SCINTILLES.map((v) => (
           <canvas

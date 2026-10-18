@@ -270,7 +270,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   pas sur l'exemplaire — la collection ne les distingue pas), `coller` les prend
   à l'album, `detruire` les emporte avec la version ; **posés au doigt**, glissés
   du ruban sur la carte (`x`, `y`, `a` ; `stickersColles`), jamais coupés par la
-  bordure (`placeNonCoupee`, un contour fantôme montre où il ira) ; **un Like de plus
+  bordure (`placeNonCoupee`, un contour fantôme montre où il ira) ; **ils gardent
+  leur contour et leur animation** (`uColles` épargne le cerne arc-en-ciel de la
+  holo, `anime.charger` fait jouer l'animé en vignette et en 3D) ; **un Like de plus
   par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,

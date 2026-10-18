@@ -25,8 +25,8 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
 import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde.tsx'
-import type { CarteAPeindre } from './texture-carte.ts'
-import { animationDeLEmoji, urlAnimationEmoji, type Animation } from './emoji-anime.ts'
+import type { CarteAPeindre, ImagesDAnimation } from './texture-carte.ts'
+import { COTE_CARTE, animationDeLEmoji, urlAnimationEmoji, type Animation } from './emoji-anime.ts'
 import {
   DEBORD_AUREOLE,
   DEBORD_CONTOUR,
@@ -374,6 +374,12 @@ const MASQUE_VIDE = (() => {
   t.needsUpdate = true
   return t
 })()
+/** Un pixel transparent : la place des stickers collés tant qu'il n'y en a pas (leur alpha compte). */
+const COLLES_VIDE = (() => {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1)
+  t.needsUpdate = true
+  return t
+})()
 
 const AVEC_BRILLANT = new URLSearchParams(location.search).get('brillant') !== '0'
 /** L'épaisseur du cadre, en largeurs de carte : la bordure peinte de 2,7 U. */
@@ -641,6 +647,7 @@ const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
 function libererToile(t: THREE.Texture | null): void {
   const masque = t?.userData.masqueSujet as THREE.Texture | undefined
   masque?.dispose()
+  ;(t?.userData.colles as THREE.Texture | undefined)?.dispose()
   ;(t?.userData.silhouette as { t: THREE.Texture } | undefined)?.t.dispose()
   t?.dispose()
 }
@@ -1158,6 +1165,8 @@ export function Carte3D({
       nuanceur.uniforms.uCoeurPortee = { value: 1 }
       nuanceur.uniforms.uSilhouette = { value: MASQUE_VIDE }
       nuanceur.uniforms.uSilhouetteOk = { value: 0 }
+      // LES STICKERS COLLÉS (leur alpha) : le cerne arc-en-ciel de la holo les épargne.
+      nuanceur.uniforms.uColles = { value: COLLES_VIDE }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1620,7 +1629,10 @@ ${nuanceur.vertexShader}`.replace(
            // fait le tour de l'emoji, tourne avec l'angle du regard, et
            // s'allume quand on le penche vers la lampe.
            float surEmoji = smoothstep(0.05, 0.3, 1.0 - libreH);
-           float cerneE = surEmoji * blancTexture;
+           // PAS SUR LES STICKERS COLLÉS : un sticker garde le contour qu'il avait
+           // (Keko : « quand je colle un sticker normal sur une carte holo, il
+           // gagne un contour holo : on ne veut pas »). Leur alpha est dans uColles.
+           float cerneE = surEmoji * blancTexture * (1.0 - texture2D(uColles, vLustreUv).a);
            vec2 tpE = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
            vec2 crE = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l * 0.5).toFixed(4)}, ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h * 0.5).toFixed(4)});
            vec2 drE = vec2(tpE.x - crE.x, (tpE.y - crE.y) * 1.4);
@@ -1691,6 +1703,7 @@ vec3 versLineaire(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(
 vec3 versSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(max(c, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c)); }
 uniform sampler2D uSilhouette;
 uniform float uSilhouetteOk;
+uniform sampler2D uColles;
 // LA SILHOUETTE DU STICKER : l'alpha de l'image posée par la peinture ; à
 // défaut (l'animé), là où la carte entière diffère de la carte nue.
 float stickerEn(vec2 q) {
@@ -1994,7 +2007,7 @@ ${nuanceur.fragmentShader}`
   const texToiles = useRef<(THREE.CanvasTexture | null)[]>([null, null])
   /** Le tampon que la texture montre ; on peint dans l'autre. */
   const tampon = useRef(0)
-  const derniere = useRef(-1)
+  const derniere = useRef('')
   const peintureEnCours = useRef(false)
   /**
    * LE PALIER DE TOILE DE LA DERNIÈRE PEINTURE — **et il faut le suivre.**
@@ -2013,17 +2026,36 @@ ${nuanceur.fragmentShader}`
    */
   const palierToile = useRef(-1)
 
+  /**
+   * LES STICKERS COLLÉS ANIMÉS jouent aussi (Keko : « qu'il garde son animation
+   * s'il en a ») : leurs images, chargées par leur `charger`, à la même
+   * cadence de repeinte que l'emoji ; une carte fixe qui en porte un se
+   * repeint comme une carte animée.
+   */
+  const animsColles = useRef<(ImagesDAnimation | null)[]>([])
+  const cleColles = carte.colles?.map((c) => c.cle).join(',') ?? ''
+  const enJeu = (): boolean => anim.current !== null || animsColles.current.some((x) => x !== null)
   useEffect(() => {
     const id = carte.animation
-    if (id === undefined) return
+    const colles = carte.colles ?? []
+    if (id === undefined && !colles.some((c) => c.anime !== undefined)) return
     let vivant = true
-    void animationDeLEmoji(urlAnimationEmoji(id)).then((a) => {
-      if (vivant) anim.current = a
+    if (id !== undefined)
+      void animationDeLEmoji(urlAnimationEmoji(id)).then((a) => {
+        if (vivant) anim.current = a
+      })
+    animsColles.current = colles.map(() => null)
+    colles.forEach((c, k) => {
+      if (c.anime === undefined) return
+      void c.anime.charger(COTE_CARTE).then((a) => {
+        if (vivant && animsColles.current.length > k) animsColles.current[k] = a
+      })
     })
     return () => {
       vivant = false
       anim.current = null
-      derniere.current = -1
+      animsColles.current = []
+      derniere.current = ''
       palierToile.current = -1
       // *Ce qui est à nous se libère* — à la différence de la texture du cache
       // partagé, qui sert encore à d'autres cartes.
@@ -2031,17 +2063,22 @@ ${nuanceur.fragmentShader}`
       texToiles.current = [null, null]
       toiles.current = [null, null]
     }
-  }, [carte.animation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- les stickers sont lus par leur clé
+  }, [carte.animation, cleColles])
 
   useFrame((etat) => {
     const a = anim.current
+    const ac = animsColles.current
     // RIEN NE SE JOUE SUR UN DOS : *une carte retournée ne dit rien de ce
     // qu'elle est*, et repeindre sous le dos serait du travail pour personne.
-    if (a === null || dos || peintureEnCours.current) return
-    const i = Math.min(
-      a.images.length - 1,
-      Math.floor(((etat.clock.elapsedTime * 1000) % a.duree) / (a.duree / a.images.length)),
-    )
+    if (!enJeu() || dos || peintureEnCours.current) return
+    const t = etat.clock.elapsedTime * 1000
+    const imageDe = (x: ImagesDAnimation | null): number =>
+      x === null ? -1 : Math.min(x.images.length - 1, Math.floor((t % x.duree) / (x.duree / x.images.length)))
+    const i = imageDe(a)
+    const js = ac.map(imageDe)
+    // L'IMAGE DU MOMENT, pour l'emoji et pour chaque sticker : une seule clé.
+    const cleImage = `${i}|${js.join(',')}`
     // ON NE REPEINT QUE SI L'IMAGE A CHANGÉ : l'animation tourne à quinze
     // images par seconde, l'écran à soixante.
     // LE PALIER A CHANGÉ : on repart d'une toile neuve, et il faut repeindre
@@ -2054,16 +2091,21 @@ ${nuanceur.fragmentShader}`
       texToiles.current = [null, null]
       toiles.current = [null, null]
     }
-    if (i === derniere.current && !change) return
-    derniere.current = i
+    if (cleImage === derniere.current && !change) return
+    derniere.current = cleImage
     peintureEnCours.current = true
     // ON PEINT DANS L'AUTRE TAMPON : celui que la texture montre ne doit jamais
     // etre efface sous les yeux du joueur.
     const libre = 1 - tampon.current
-    void peindreCarte({ ...carte, image: a.images[i] }, palier, toiles.current[libre] ?? undefined)
+    const colles = carte.colles?.map((c, k) => {
+      const x = ac[k]
+      const j = js[k]
+      return x != null && j !== undefined && j >= 0 ? { ...c, image: x.images[j]! } : c
+    })
+    void peindreCarte({ ...carte, image: a === null ? carte.image : a.images[i], colles }, palier, toiles.current[libre] ?? undefined)
       .then((canvas) => {
         peintureEnCours.current = false
-        if (anim.current === null) return
+        if (!enJeu()) return
         // UNE TOILE NEUVE DEMANDE UNE TEXTURE NEUVE : *on ne change pas les
         // dimensions d'une texture déjà allouée*, on la jette.
         if (texToiles.current[libre] == null || toiles.current[libre] !== canvas) {
@@ -2075,6 +2117,8 @@ ${nuanceur.fragmentShader}`
           // cache : sans lui, les rayons clairs de l'animé ne brillaient pas.
           const masque = masqueDuSujetDe(canvas)
           if (masque !== undefined) t.userData.masqueSujet = new THREE.CanvasTexture(masque)
+          const surface = surfaceDe(canvas)
+          if (surface !== undefined) t.userData.colles = new THREE.CanvasTexture(surface)
           texToiles.current[libre] = t
         }
         toiles.current[libre] = canvas
@@ -2094,6 +2138,8 @@ ${nuanceur.fragmentShader}`
         // SON MASQUE A ÉTÉ REPEINT AVEC ELLE : voir `masqueDuSujet`.
         const masque = tex.userData.masqueSujet as THREE.Texture | undefined
         if (masque !== undefined) masque.needsUpdate = true
+        const colTex = tex.userData.colles as THREE.Texture | undefined
+        if (colTex !== undefined) colTex.needsUpdate = true
         // ET SA SILHOUETTE, pour poser l'emoji sur des rayons qui tournent :
         // l'image de l'animation à sa place (`sujetDe`), sur une toile à la
         // taille de la face — créée une fois par toile, repeinte à chaque image.
@@ -2584,6 +2630,7 @@ ${nuanceur.fragmentShader}`
       // RAYONS_BRILLANTS. Sans lui (animé, dos, autre mode), rien ne brille.
       const masque = (face.map?.userData.masqueSujet ?? null) as THREE.Texture | null
       nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
+      nuanceur.uniforms.uColles!.value = (face.map?.userData.colles as THREE.Texture | undefined) ?? COLLES_VIDE
       // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
       const nue = nuDeLaFace.current
       // LA COMPOSITION (fond + emoji par sa silhouette) JOUE POUR LE RELIEF D'UNE
