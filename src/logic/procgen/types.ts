@@ -13,11 +13,18 @@ export const BOITE = 128
 export const AXE = BOITE / 2
 
 /**
- * Les familles. `vaisseau` tire une classe (combat ou minage) depuis l'id ;
- * les autres sont celles qu'on montre et qu'on demande.
+ * Les familles : trois RÔLES de vaisseau, qui se croisent avec la race, et
+ * deux corps célestes qui n'en ont pas. `vaisseau` tire un rôle (combat ou
+ * minage) depuis l'id ; `alien` reste accepté pour le combat alien.
  */
-export type Famille = 'combat' | 'minage' | 'station' | 'alien' | 'planete' | 'asteroide' | 'vaisseau'
-export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'alien', 'planete', 'asteroide']
+export type Famille = 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'vaisseau' | 'alien'
+export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide']
+/** Les familles qui ont une race. */
+export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'minage', 'station']
+
+/** La race : la technologie qui dessine le vaisseau. Les planètes l'ignorent. */
+export type Race = 'humain' | 'alien'
+export const RACES: readonly Race[] = ['humain', 'alien']
 
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {
@@ -37,6 +44,7 @@ export type Clip = { id: string; chemins: string[] }
 
 export type Dessin = {
   famille: Famille
+  race?: Race
   id: string
   seed: number
   boite: number

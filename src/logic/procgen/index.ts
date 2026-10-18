@@ -6,7 +6,7 @@
  * (`seedDe`), donc *même id, même visuel, toujours*, sur n'importe quel
  * appareil. C'est `ui/procgen/svg.ts` qui rend le dessin.
  */
-import type { Dessin, Famille } from './types.ts'
+import type { Dessin, Famille, Race } from './types.ts'
 import { genererVaisseau } from './vaisseau.ts'
 import { genererPlanete } from './planete.ts'
 import { genererAsteroide } from './asteroide.ts'
@@ -14,19 +14,20 @@ import { genererStation } from './station.ts'
 import { genererAlien } from './alien.ts'
 import { createRng } from '../rng.ts'
 
-export { BOITE, FAMILLES, type Clip, type Dessin, type Famille, type Forme } from './types.ts'
+export { BOITE, FAMILLES, RACES, ROLES, type Clip, type Dessin, type Famille, type Forme, type Race } from './types.ts'
 import { seedDe } from './seed.ts'
 export { seedDe }
 
-export function genererDessin(famille: Famille, id: string): Dessin {
-  if (famille === 'combat' || famille === 'minage') return genererVaisseau(id, famille)
+export function genererDessin(famille: Famille, id: string, race: Race = 'humain'): Dessin {
+  if (famille === 'alien') return genererAlien(id, 'combat')
   if (famille === 'vaisseau') {
-    // Un vaisseau quelconque : la classe est tirée de l'id, hors de la suite
-    // du dessin (qui repart de la seed).
-    return genererVaisseau(id, createRng(seedDe(id) ^ 0x5bd1e995).next() < 0.6 ? 'combat' : 'minage')
+    // Un vaisseau quelconque : le rôle est tiré de l'id, hors de la suite du
+    // dessin (qui repart de la seed).
+    famille = createRng(seedDe(id) ^ 0x5bd1e995).next() < 0.6 ? 'combat' : 'minage'
   }
+  if (race === 'alien' && (famille === 'combat' || famille === 'minage' || famille === 'station')) return genererAlien(id, famille)
+  if (famille === 'combat' || famille === 'minage') return genererVaisseau(id, famille)
   if (famille === 'station') return genererStation(id)
-  if (famille === 'alien') return genererAlien(id)
   if (famille === 'planete') return genererPlanete(id)
   return genererAsteroide(id)
 }

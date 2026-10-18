@@ -8,17 +8,19 @@
  * chaque regénération. Un champ permet aussi de voir UN identifiant précis.
  */
 import './preview.css'
-import { FAMILLES, seedDe, type Famille } from '../../logic/procgen/index.ts'
+import { FAMILLES, RACES, ROLES, seedDe, type Famille, type Race } from '../../logic/procgen/index.ts'
 import { createRng } from '../../logic/rng.ts'
 import { renderIcon } from './svg.ts'
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', alien: 'x', planete: 'p', asteroide: 'a', vaisseau: 'v' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', alien: 'Vaisseaux aliens', planete: 'Planètes', asteroide: 'Astéroïdes', vaisseau: 'Vaisseaux' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', vaisseau: 'v', alien: 'x' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
+const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien' }
 
 const adresse = new URL(location.href)
 let serie = Number(adresse.searchParams.get('serie')) || 1
+let race: Race = adresse.searchParams.get('race') === 'alien' ? 'alien' : 'humain'
 
 /** Les identifiants d'une série : tirés d'un RNG seedé par son numéro. */
 function identifiants(famille: Famille, serie: number): string[] {
@@ -33,6 +35,7 @@ function identifiants(famille: Famille, serie: number): string[] {
 
 function ecrireSerie(): void {
   adresse.searchParams.set('serie', String(serie))
+  adresse.searchParams.set('race', race)
   history.replaceState(null, '', adresse)
 }
 
@@ -41,12 +44,15 @@ racine.innerHTML = `
   <header class="pv-tete">
     <h1>Procgen</h1>
     <div class="pv-outils">
+      <span class="pv-races" role="group" aria-label="Race">
+        ${RACES.map((r) => `<button type="button" data-race="${r}" class="${r === race ? 'actif' : ''}">${NOM_RACE[r]}</button>`).join('')}
+      </span>
       <span class="pv-tailles" role="group" aria-label="Taille">
         ${TAILLES.map((t) => `<button type="button" data-taille="${t}" class="${t === 64 ? 'actif' : ''}">${t} px</button>`).join('')}
       </span>
       <button type="button" id="pv-regenerer">Regénérer</button>
       <span class="pv-serie">série <b id="pv-numero">${serie}</b></span>
-      <label class="pv-cherche">id <input id="pv-id" type="text" placeholder="c-abc, m-…, s-…, x-…, p-…, a-…" spellcheck="false" /></label>
+      <label class="pv-cherche">id <input id="pv-id" type="text" placeholder="c-abc, m-…, s-…, p-…, a-…" spellcheck="false" /></label>
     </div>
   </header>
   <section class="pv-un" id="pv-un" hidden></section>
@@ -65,7 +71,7 @@ function cellule(famille: Famille, id: string, t: number): HTMLElement {
   const cell = document.createElement('figure')
   cell.className = 'pv-cell'
   cell.style.setProperty('--t', `${t}px`)
-  const icone = renderIcon(famille, id, t)
+  const icone = renderIcon(famille, id, t, race)
   cell.appendChild(icone)
   const legende = document.createElement('figcaption')
   legende.innerHTML = `<b>${id}</b><small>${icone.dataset.seed}</small>`
@@ -84,6 +90,8 @@ function peindre(): void {
   for (const section of racine.querySelectorAll<HTMLElement>('.pv-famille')) {
     const famille = section.dataset.famille as Famille
     const grille = section.querySelector('.pv-grille')!
+    const titre = section.querySelector('h2')!
+    titre.textContent = (ROLES as readonly string[]).includes(famille) ? `${TITRE[famille]} — ${NOM_RACE[race]}` : TITRE[famille]
     grille.replaceChildren(...identifiants(famille, serie).map((id) => cellule(famille, id, taille)))
   }
   document.getElementById('pv-numero')!.textContent = String(serie)
@@ -102,6 +110,16 @@ function montrerUn(id: string): void {
   bloc.hidden = false
   bloc.replaceChildren(...TAILLES.map((t) => cellule(famille, propre, t)))
 }
+
+racine.querySelector('.pv-races')!.addEventListener('click', (e) => {
+  const bouton = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-race]')
+  if (!bouton) return
+  race = bouton.dataset.race as Race
+  for (const b of racine.querySelectorAll('.pv-races button')) b.classList.toggle('actif', b === bouton)
+  ecrireSerie()
+  peindre()
+  montrerUn((document.getElementById('pv-id') as HTMLInputElement).value)
+})
 
 racine.querySelector('.pv-tailles')!.addEventListener('click', (e) => {
   const bouton = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-taille]')

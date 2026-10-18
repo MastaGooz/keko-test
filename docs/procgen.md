@@ -1,4 +1,4 @@
-# Le générateur d'icônes — vaisseaux (combat, minage, alien), stations, planètes, astéroïdes
+# Le générateur d'icônes — deux races × trois rôles, planètes, astéroïdes
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -12,6 +12,17 @@ existe à côté, et c'est Keko qui jugera s'il a sa place dans le jeu.
 | `src/logic/procgen/` | PUR : un identifiant entre, un `Dessin` sort (des chemins SVG, des couleurs, des découpes). Vérifié sous `node` par `procgen.verif.ts`, dans `npm run verif`. |
 | `src/ui/procgen/svg.ts` | `renderIcon(famille, id, taille)` → `<svg>` ; `svgTexte(dessin, taille)` → chaîne. |
 | `preview.html` + `src/ui/procgen/preview.ts` | la page de preview, seconde entrée Vite (`rollupOptions.input`), hors du jeu. |
+
+## Deux races, trois rôles
+
+Keko : « rajoute une option en haut pour la race, humain / alien, et génère
+aussi des stations et vaisseaux minage alien ». **La race est un paramètre**
+(`Race`, `genererDessin(famille, id, race)`, `renderIcon(famille, id,
+taille, race)`), croisé avec les trois RÔLES (`ROLES` : combat, minage,
+station) ; les planètes et les astéroïdes n'en ont pas. Humain : `vaisseau.ts`
+et `station.ts`. Alien : `alien.ts` pour les trois rôles. Le même identifiant
+donne un dessin par race, ce qui permet de les comparer côte à côte. La page
+de preview a le sélecteur en tête, écrit dans l'adresse (`&race=alien`).
 
 ## Les règles
 
@@ -106,6 +117,19 @@ cloche, pointu aux deux bouts). Quatre plans :
   de poussée à la queue, des veines de la pointe à la queue ;
 - **orbe** : une sphère, un halo en anneau (l'arrière derrière, l'avant
   par-dessus), deux bras en croissant qui l'encadrent, parfois une pointe.
+
+**Le minage alien** : des MANDIBULES (un corps rond, deux arcs qui montent
+et se referment devant, des cristaux portés sur les flancs), une COSSE (une
+feuille longue au ventre translucide, les cristaux dedans, deux collecteurs
+qui flottent, parfois un tentacule court), une MÉDUSE (un dôme, des
+tentacules qui cueillent, un cristal ou un orbe au bout). Le cristal est un
+losange accent avec son éclat (`cristal`).
+
+**La station alienne** : une FLEUR (un cœur, 4 à 7 pétales qui rayonnent —
+`petale`, une feuille couchée le long d'un angle —, un orbe à chaque pointe,
+parfois un anneau fin derrière), un ANNEAU BRISÉ (des segments d'arc épais,
+un orbe dans chaque brèche, un halo plat autour du cœur), des ORBITES (deux
+ou trois anneaux fins, des nacelles posées dessus, un gros cœur).
 
 L'ombre du côté gauche est plus douce (12 %) que sur les tôles. Le banc de
 variété compare désormais le dessin entier : les aliens n'ont que quelques

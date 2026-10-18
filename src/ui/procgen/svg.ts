@@ -7,7 +7,7 @@
  * rendu : trente icônes sur une page partagent le même document, et deux
  * `<clipPath id="disque">` s'écraseraient.
  */
-import { genererDessin, type Dessin, type Famille } from '../../logic/procgen/index.ts'
+import { genererDessin, type Dessin, type Famille, type Race } from '../../logic/procgen/index.ts'
 
 const NS = 'http://www.w3.org/2000/svg'
 let compteur = 0
@@ -16,8 +16,8 @@ function idDeClip(prefixe: string, clip: string): string {
   return `${prefixe}-${clip}`
 }
 
-export function renderIcon(famille: Famille, id: string, taille: number): SVGSVGElement {
-  const dessin = genererDessin(famille, id)
+export function renderIcon(famille: Famille, id: string, taille: number, race: Race = 'humain'): SVGSVGElement {
+  const dessin = genererDessin(famille, id, race)
   const prefixe = `pg${(compteur++).toString(36)}`
   const svg = document.createElementNS(NS, 'svg')
   svg.setAttribute('viewBox', `0 0 ${dessin.boite} ${dessin.boite}`)
@@ -26,6 +26,7 @@ export function renderIcon(famille: Famille, id: string, taille: number): SVGSVG
   svg.setAttribute('role', 'img')
   svg.setAttribute('aria-label', `${famille} ${id}`)
   svg.dataset.famille = famille
+  if (dessin.race) svg.dataset.race = dessin.race
   svg.dataset.id = id
   svg.dataset.seed = String(dessin.seed)
 

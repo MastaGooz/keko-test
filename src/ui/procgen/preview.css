@@ -78,9 +78,15 @@ button.actif {
   font-weight: 600;
 }
 
-.pv-tailles {
+.pv-tailles,
+.pv-races {
   display: inline-flex;
   gap: 4px;
+}
+
+.pv-races button.actif {
+  border-color: #ffb13b;
+  color: #ffb13b;
 }
 
 .pv-serie {
