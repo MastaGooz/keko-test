@@ -1928,6 +1928,34 @@ const SURFACES_HOLO = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
 export function surfaceDesHoloDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
   return SURFACES_HOLO.get(canvas)
 }
+/**
+ * DURCIR UN MASQUE DE STICKERS COLLÉS : le corps du sticker, pas son ombre.
+ * Keko : « un sticker emoji holo sur une carte normale va colorer l'outline
+ * blanc de l'emoji de la carte dans une zone autour du sticker holo ». *Le
+ * sticker peint porte son ombre portée*, douce, à un tiers d'alpha au plus
+ * (`collerSticker`) : lue telle quelle par le nuanceur, elle allumait le cerne
+ * arc-en-ciel tout autour. L'alpha passe à tout ou rien à mi-hauteur, dans la
+ * zone de chaque sticker seulement (`zoneDuColle`) — pas la toile entière,
+ * que l'animé refait quinze fois par seconde.
+ */
+function durcirLesColles(ctx: CanvasRenderingContext2D, toile: HTMLCanvasElement, colles: readonly StickerAPeindre[]): void {
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  colles.forEach((c, i) => {
+    const z = zoneDuColle(c, i)
+    const x0 = Math.floor(z.x * toile.width)
+    const y0 = Math.floor(z.y * toile.height)
+    const l = Math.ceil(z.l * toile.width)
+    const h = Math.ceil(z.h * toile.height)
+    if (l <= 0 || h <= 0) return
+    const image = ctx.getImageData(x0, y0, l, h)
+    const d = image.data
+    for (let k = 3; k < d.length; k += 4) d[k] = d[k]! > 128 ? 255 : 0
+    ctx.putImageData(image, x0, y0)
+  })
+  ctx.restore()
+}
+
 /** Une toile transparente d'un pixel : la place d'un sticker qu'on ne veut pas dans une toile de surface. */
 const TOILE_VIDE = (() => {
   const t = document.createElement('canvas')
@@ -4332,6 +4360,7 @@ export async function peindreCarte(
         nctx.scale(largeur / LARGE, largeur / LARGE)
         // Aux mêmes rangs : la place d'un sticker sans place dépend de son rang.
         peindreColles(nctx, carte.colles.map((c) => (c.holo ? { ...c, image: TOILE_VIDE } : c)), marge, fY, fH)
+        durcirLesColles(nctx, normaux, carte.colles)
         SURFACES_NORMAUX.set(canvas, normaux)
       }
       // ET LES HOLO SEULS : là où le nuanceur pose le cerne arc-en-ciel même sur
@@ -4348,6 +4377,7 @@ export async function peindreCarte(
         hctx.clearRect(0, 0, holos.width, holos.height)
         hctx.scale(largeur / LARGE, largeur / LARGE)
         peindreColles(hctx, carte.colles.map((c) => (c.holo ? c : { ...c, image: TOILE_VIDE })), marge, fY, fH)
+        durcirLesColles(hctx, holos, carte.colles)
         if (carte.colles.some((c) => c.holo)) SURFACES_HOLO.set(canvas, holos)
         else SURFACES_HOLO.delete(canvas)
       }
