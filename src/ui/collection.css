@@ -1143,6 +1143,11 @@
   animation: fantome-respire 1s ease-in-out infinite alternate;
 }
 
+/* En zone interdite, le contour rouge respire plus vite : un refus, pas une attente. */
+.sticker-fantome-rouge {
+  animation-duration: 0.45s;
+}
+
 @keyframes fantome-respire {
   from {
     opacity: 0.55;
@@ -2087,7 +2092,11 @@ span.jouer-pile-dos {
 
 .jouer-carte {
   display: block;
-  animation: main-entre 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  /* `backwards`, pas `both` : une animation qui reste appliquée garde l'élément
+     sur sa propre couche de composition, et Keko a vu une main restée peinte
+     après son départ du DOM, les suivantes en dessous (téléphone). Finie,
+     l'animation lâche la couche. */
+  animation: main-entre 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
   animation-delay: calc(var(--i) * 80ms);
 }
 

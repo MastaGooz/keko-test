@@ -714,37 +714,44 @@ function CarteOuverte({
    * penchant qu'il montrait ; lâché ailleurs, rien. Pendant ce temps la carte
    * ne penche pas (`refPlacement`), pour que l'endroit visé soit l'endroit posé.
    */
-  const [tenu, setTenu] = useState<{ sticker: StickerColle; image: HTMLCanvasElement; contour: HTMLCanvasElement; a: number } | null>(null)
+  const [tenu, setTenu] = useState<{ sticker: StickerColle; image: HTMLCanvasElement; contour: HTMLCanvasElement; contourRouge: HTMLCanvasElement; a: number } | null>(null)
   const refPlacement = useRef(false)
   refPlacement.current = tenu !== null
   const flottant = useRef<HTMLCanvasElement>(null)
-  /** LE CONTOUR FANTÔME : le cerne du sticker, en blanc, là où il sera collé — montré sur la carte seulement. */
+  /**
+   * LE CONTOUR FANTÔME SUIT LE DOIGT sur la carte, jaune là où le sticker peut
+   * se coller, ROUGE là où il serait coupé par la bordure (Keko : « au lieu de
+   * déplacer la prévisualisation, on passe les pointillés en rouge tant qu'on
+   * est sur une zone de la carte interdite »). Deux toiles, l'une ou l'autre.
+   */
   const fantome = useRef<HTMLCanvasElement>(null)
+  const fantomeRouge = useRef<HTMLCanvasElement>(null)
   const suivre = useCallback((x: number, y: number) => {
     const el = flottant.current
     if (el === null) return
     el.style.left = `${x.toFixed(1)}px`
     el.style.top = `${y.toFixed(1)}px`
   }, [])
-  const poserLeFantome = useCallback((place: { x: number; y: number } | null) => {
-    const el = fantome.current
-    if (el === null) return
-    if (place === null) {
-      el.style.visibility = 'hidden'
-      return
+  const poserLeFantome = useCallback((place: { x: number; y: number; interdit: boolean } | null) => {
+    for (const [el, montre] of [
+      [fantome.current, place !== null && !place.interdit],
+      [fantomeRouge.current, place !== null && place.interdit],
+    ] as const) {
+      if (el === null) continue
+      el.style.visibility = montre ? 'visible' : 'hidden'
+      if (montre && place !== null) {
+        el.style.left = `${place.x.toFixed(1)}px`
+        el.style.top = `${place.y.toFixed(1)}px`
+      }
     }
-    el.style.visibility = 'visible'
-    el.style.left = `${place.x.toFixed(1)}px`
-    el.style.top = `${place.y.toFixed(1)}px`
   }, [])
   /**
    * Où un point de l'écran tombe dans la fenêtre d'art, en parts (0 à 1) — ou
-   * `null` hors de la carte. **Jamais coupé par la bordure** (Keko) : la place
-   * rendue est la plus proche où le sticker, penché de `a`, tient entier
-   * (`placeNonCoupee`). Un peu de jeu au bord : lâché à moitié dehors, il se
-   * colle au bord.
+   * `null` hors de la carte (avec un peu de jeu au bord). **`interdit`** quand le
+   * sticker, penché de `a`, y serait coupé par la bordure (`placeNonCoupee` le
+   * déplacerait) : le contour passe au rouge, et le lâcher ne colle pas.
    */
-  const dansLaFenetre = useCallback((x: number, y: number, a: number): { x: number; y: number } | null => {
+  const dansLaFenetre = useCallback((x: number, y: number, a: number): { x: number; y: number; interdit: boolean } | null => {
     const b = refBoite.current
     const u = (x - (b.cx - b.l / 2)) / b.l
     const v = (y - (b.cy - b.h / 2)) / b.h
@@ -752,27 +759,21 @@ function CarteOuverte({
     const fx = (u - R.x) / R.l
     const fy = (v - R.y) / R.h
     if (fx < -0.15 || fx > 1.15 || fy < -0.15 || fy > 1.15) return null
-    return placeNonCoupee(fx, fy, a)
-  }, [])
-  /** L'inverse : une place de la fenêtre d'art, à l'écran — pour caler le sticker qui suit le doigt sur la place qu'il prendra. */
-  const versLEcran = useCallback((p: { x: number; y: number }): { x: number; y: number } => {
-    const b = refBoite.current
-    const R = RAYONS_DANS_LA_CARTE
-    return { x: b.cx - b.l / 2 + (R.x + p.x * R.l) * b.l, y: b.cy - b.h / 2 + (R.y + p.y * R.h) * b.h }
+    const ok = placeNonCoupee(fx, fy, a)
+    return { x: fx, y: fy, interdit: Math.abs(ok.x - fx) > 1e-6 || Math.abs(ok.y - fy) > 1e-6 }
   }, [])
   /**
-   * LE STICKER TENU SUIT LE DOIGT, toujours — et, sur la carte, SON CONTOUR se
-   * montre à la place qu'il prendra (Keko : « ne pas déplacer le sticker dans
-   * la zone automatiquement durant le drag, mais prévisualiser le contour du
-   * sticker là où il sera posé »). Hors de la carte, pas de contour.
+   * LE STICKER TENU SUIT LE DOIGT, toujours — et, sur la carte, SON CONTOUR le
+   * suit aussi, jaune ou rouge selon que la place est permise ou non. Hors de
+   * la carte, pas de contour.
    */
   const suivreLeDoigt = useCallback(
     (x: number, y: number, a: number) => {
       suivre(x, y)
       const place = dansLaFenetre(x, y, a)
-      poserLeFantome(place === null ? null : versLEcran(place))
+      poserLeFantome(place === null ? null : { x, y, interdit: place.interdit })
     },
-    [dansLaFenetre, versLEcran, suivre, poserLeFantome],
+    [dansLaFenetre, suivre, poserLeFantome],
   )
   /**
    * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
@@ -985,7 +986,7 @@ function CarteOuverte({
             curseur.current.dessus = false
             curseur.current.tenu = false
             const a = (Math.random() - 0.5) * 0.5
-            setTenu({ sticker: st, image, contour: contourPointille(image), a })
+            setTenu({ sticker: st, image, contour: contourPointille(image), contourRouge: contourPointille(image, ROUGE_FANTOME), a })
             suivreLeDoigt(e.clientX, e.clientY, a)
           }}
           onSuivre={(e) => {
@@ -996,28 +997,36 @@ function CarteOuverte({
             setTenu(null)
             if (t === null) return
             const place = dansLaFenetre(e.clientX, e.clientY, t.a)
-            if (place === null) return
+            // Lâché hors de la carte ou en zone interdite (contour rouge) : rien.
+            if (place === null || place.interdit) return
             onColler({ ...t.sticker, x: place.x, y: place.y, a: t.a })
             jouerSon(SON_POSER, 0.5)
           }}
           onFermer={() => setChoixOuvert(false)}
         />
       )}
-      {/* LE CONTOUR FANTÔME, là où le sticker sera collé ; posé par `poserLeFantome`. */}
-      {tenu !== null && (
-        <canvas
-          ref={(el) => {
-            fantome.current = el
-            if (el === null) return
-            el.width = tenu.contour.width
-            el.height = tenu.contour.height
-            el.getContext('2d')?.drawImage(tenu.contour, 0, 0)
-          }}
-          className="sticker-fantome"
-          style={{ width: `${(refBoite.current.l * RAYONS_DANS_LA_CARTE.l * TAILLE_COLLE).toFixed(1)}px`, '--a': `${tenu.a}rad`, visibility: 'hidden' } as React.CSSProperties}
-          aria-hidden
-        />
-      )}
+      {/* LES CONTOURS FANTÔMES, jaune (permis) et rouge (interdit), sous le doigt ; posés par `poserLeFantome`. */}
+      {tenu !== null &&
+        (
+          [
+            [fantome, tenu.contour, ''],
+            [fantomeRouge, tenu.contourRouge, ' sticker-fantome-rouge'],
+          ] as const
+        ).map(([ref, toileContour, classe]) => (
+          <canvas
+            key={classe}
+            ref={(el) => {
+              ref.current = el
+              if (el === null) return
+              el.width = toileContour.width
+              el.height = toileContour.height
+              el.getContext('2d')?.drawImage(toileContour, 0, 0)
+            }}
+            className={`sticker-fantome${classe}`}
+            style={{ width: `${(refBoite.current.l * RAYONS_DANS_LA_CARTE.l * TAILLE_COLLE).toFixed(1)}px`, '--a': `${tenu.a}rad`, visibility: 'hidden' } as React.CSSProperties}
+            aria-hidden
+          />
+        ))}
       {/* LE STICKER QUI SUIT LE DOIGT, à la taille qu'il aura sur la carte. */}
       {tenu !== null && (
         <canvas
@@ -1100,7 +1109,9 @@ function ChoixDuSticker({
  * tracé en tirets ronds, jaunes, avec `setLineDash`.
  */
 const JAUNE_FANTOME = '#ffd45e'
-function contourPointille(image: HTMLCanvasElement): HTMLCanvasElement {
+/** Le rouge du contour en zone interdite : celui des pastilles « Nouveau ». */
+const ROUGE_FANTOME = '#ff4d6d'
+function contourPointille(image: HTMLCanvasElement, couleur = JAUNE_FANTOME): HTMLCanvasElement {
   const n = 256
   const lu = document.createElement('canvas')
   lu.width = n
@@ -1175,7 +1186,7 @@ function contourPointille(image: HTMLCanvasElement): HTMLCanvasElement {
   }
   // LE TRAIT : tirets ronds, jaunes, un point sur trois pour un bord lisse.
   const epaisseur = n * 0.03
-  ctx.strokeStyle = JAUNE_FANTOME
+  ctx.strokeStyle = couleur
   ctx.lineWidth = epaisseur
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
