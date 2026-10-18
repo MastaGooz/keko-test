@@ -130,8 +130,6 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   **Ou EN FENÊTRE** (`{ fichier, fenetre: true }`, Keko : « que l'image aille
   jusqu'à la bordure ») : l'image COUVRE la fenêtre d'art, coupée à ses bords,
   cerne emporté par la coupe (`stickerEnFenetre`), 1024 × 888 conseillé.
-  **TEST EN COURS** : 👺 (`Goblin paper.png`, un sticker à marges) sort en première carte de chaque
-  paquet (`TEST_GOBELIN`, `Paquet3D.tsx`) — `null` quand Keko a jugé.
 - **La bordure brille comme le film du sachet** (`BRILLANT`), **et reste
   plate** (Keko a refusé le biseau) : la réflexion de la clé du sachet (haut
   droit) sur la face plate, multipliée, avec un éclair teinté et du Fresnel,

@@ -6894,3 +6894,7 @@ Au passage, Keko a supprimé `Gobelin.webp` du dossier : le fichier sort du dép
 ### « Goblin paper » redevient un sticker à marges (18/10/2026)
 
 Keko : « j'ai mis à jour goblin paper ». Le nouveau fichier est un 512 × 512 avec 8 % de marge de chaque côté, le personnage (cape, dague) ne touche aucun bord : c'est un sticker classique, pas une image de fenêtre. **👺 repasse en mode normal** (il rentre entier dans la fenêtre d'art) — en fenêtre, ses marges auraient laissé une bande vide autour. Lu comme un signal de l'image, pas décidé par Keko : à rejuger s'il voulait le voir en fenêtre. Le mode fenêtre reste dans la table (`fenetre: true`), sans emploi pour l'instant.
+
+### Fin du test du gobelin (18/10/2026)
+
+Keko : « tu peux supprimer le goblin paper des cartes ? j'ai fini le test, je ne veux plus cet emoji dans le jeu ». 👺 sort de `EMOJI_DE_KEKO` et reprend son glyphe Noto ; `TEST_GOBELIN` et son bloc dans `Paquet3D.tsx` sont retirés (pas mis à `null` : un test fini ne laisse pas de code mort, `git log` le garde) ; `Goblin paper.png` sort du dépôt. Les exemplaires de 👺 déjà dans la collection de Keko y restent, sous le glyphe Noto. Ce qui reste du test : le mode fenêtre (`fenetre: true`), le seuil d'encre du cerne, et la table des emoji dessinés qui accepte les deux modes.
