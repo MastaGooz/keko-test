@@ -26,10 +26,10 @@ const SORTES_3D: readonly { sorte: Sorte3D; titre: string; prefixe: string }[] =
 ]
 const est3D = (f: string): f is Sorte3D => SORTES_3D.some((s) => s.sorte === f)
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', heros: 'k', masque: 'q', creature: 'b', vaisseau: 'v', alien: 'x' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', heros: 'k', masque: 'q', creature: 'b', gobelin: 'u', vaisseau: 'v', alien: 'x' }
 /** Les familles d'un même groupe tirent les MÊMES identifiants : on compare le même personnage d'un style à l'autre. */
 const GROUPE: Partial<Record<Famille, string>> = { 'perso-papier': 'perso', 'perso-pixel': 'perso', 'perso-encre': 'perso' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', 'perso-papier': 'Personnages — papier découpé', 'perso-pixel': 'Personnages — pixel art', 'perso-encre': 'Personnages — encre', heros: 'Héros en buste', masque: 'Masques', creature: 'Créatures de type', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', 'perso-papier': 'Personnages — papier découpé', 'perso-pixel': 'Personnages — pixel art', 'perso-encre': 'Personnages — encre', heros: 'Héros en buste', masque: 'Masques', creature: 'Créatures de type', gobelin: 'Emoji gobelins (à la Noto)', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
 const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien', biologique: 'Biologique' }
 
 const adresse = new URL(location.href)
@@ -97,7 +97,7 @@ function cellule(famille: Famille, id: string, t: number): HTMLElement {
   const icone = renderIcon(famille, id, t, race)
   cell.appendChild(icone)
   const legende = document.createElement('figcaption')
-  legende.innerHTML = `<b>${id}</b><small>${icone.dataset.seed}</small>`
+  legende.innerHTML = `<b>${id}</b><small>${icone.dataset.nom ?? icone.dataset.seed}</small>`
   cell.appendChild(legende)
   cell.title = famille === 'origami' ? 'Toucher pour déplier' : 'Cliquer pour copier l’identifiant'
   cell.addEventListener('click', () => {

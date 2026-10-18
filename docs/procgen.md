@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines, vaisseaux, stations, planètes et astéroïdes 3D toon, la créature de Keko en 3D
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines, vaisseaux, stations, planètes et astéroïdes 3D toon, la créature de Keko en 3D, emoji gobelins
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -434,6 +434,34 @@ des oreilles, le nombre de feuilles de la queue (2–4) et du dos (0–3), le
 bourgeon (cône, bouton, aucun), les taches (2–6), les proportions, et quatre
 feuillages (printemps — la référence —, sous-bois, automne, givre). La
 référence s'affiche en première case de la section, pour comparer.
+
+## Les emoji gobelins, à la Noto (`gobelin.ts`)
+
+Keko : « et des emoji de la même qualité que Noto ? disons emoji gobelins
+par exemple ». C'est le cas le plus favorable au procédural : les smileys
+de Noto sont GÉOMÉTRIQUES, un disque à dégradé radial (clair en haut à
+gauche, sombre au bord), des yeux, une bouche, et c'est la finition qui
+fait la qualité. Le format des dessins a gagné le DÉGRADÉ (`Degrade`,
+radial ou linéaire, en coordonnées de la boîte ; `svg.ts` l'émet dans les
+`<defs>` avec un identifiant unique par rendu), et un `nom` optionnel.
+
+Une tête de gobelin : le disque à dégradé, un menton assombri et un reflet
+de front, de grandes oreilles pointues à dedans rosé (derrière la tête),
+un nez crochu à dégradé et narine, des verrues (hors du nez et de la
+bouche), parfois une boucle d'or. Et UNE EXPRESSION par emoji, tirée de
+`EXPRESSIONS` (vingt-deux, nommées comme un vrai jeu : sourire, rire,
+colère, rage, sournois, surpris, amoureux, ébloui, assommé, dodo, avide,
+pleure, clin, cool, inquiet, roi, pirate, gnome, soldat, gêné, ricane,
+timide), chacune combinant des YEUX (ronds, plissés, fâchés à sourcil
+rabattu, clin, mi-clos à paupière, grands, inquiets, cœurs, étoiles,
+croix, fermés, pièces d'or), une BOUCHE (sourire à crocs, rire à langue et
+dents, grimace, o, sournois, langue tirée, crocs, dents serrées, ronfle,
+ligne) et des ORNEMENTS (larmes, larmes de joie, goutte, veine de colère,
+zzz, blush, lunettes noires, couronne à joyaux, bandana à pois et nœud,
+cache-œil, chapeau pointu, casque à rivets, étincelles, fumée). Cinq peaux
+(vert, olive, sauge, hobgobelin, gris). Le nom de l'expression s'affiche
+sous la vignette à la place de la seed. Fond clair sur la page, comme un
+clavier.
 
 ## La planète (`planete.ts`)
 

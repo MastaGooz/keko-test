@@ -19,9 +19,9 @@ export const AXE = BOITE / 2
  */
 export type Famille =
   | 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'origami' | 'gribouillis'
-  | 'perso-papier' | 'perso-pixel' | 'perso-encre' | 'heros' | 'masque' | 'creature'
+  | 'perso-papier' | 'perso-pixel' | 'perso-encre' | 'heros' | 'masque' | 'creature' | 'gobelin'
   | 'vaisseau' | 'alien'
-export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide', 'origami', 'gribouillis', 'perso-papier', 'perso-pixel', 'perso-encre', 'heros', 'masque', 'creature']
+export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide', 'origami', 'gribouillis', 'perso-papier', 'perso-pixel', 'perso-encre', 'heros', 'masque', 'creature', 'gobelin']
 /** Les familles qui ont une race. */
 export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'minage', 'station']
 
@@ -29,11 +29,17 @@ export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'm
 export type Race = 'humain' | 'alien' | 'biologique'
 export const RACES: readonly Race[] = ['humain', 'alien', 'biologique']
 
+/** Un dégradé, en coordonnées de la boîte : radial (centre, rayon) ou linéaire (deux points). */
+export type Degrade =
+  | { type: 'radial'; cx: number; cy: number; r: number; arrets: readonly (readonly [number, string])[] }
+  | { type: 'lineaire'; x1: number; y1: number; x2: number; y2: number; arrets: readonly (readonly [number, string])[] }
+
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {
   d: string
-  /** Une couleur CSS, ou `none`. */
+  /** Une couleur CSS, ou `none` ; `degrade` la remplace s'il est donné (le fill reste le repli). */
   fill: string
+  degrade?: Degrade
   stroke?: string
   epaisseur?: number
   opacite?: number
@@ -53,4 +59,6 @@ export type Dessin = {
   boite: number
   clips: Clip[]
   formes: Forme[]
+  /** Un nom lisible, quand le dessin en a un (l'expression d'un emoji). */
+  nom?: string
 }

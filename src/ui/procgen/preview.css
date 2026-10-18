@@ -221,6 +221,11 @@ button.actif {
   outline: 2px solid var(--accent);
 }
 
+/* L'emoji se pose sur un fond clair, comme dans un clavier. */
+.pv-cell[data-famille='gobelin'] svg {
+  background: #f4f1ea;
+}
+
 /* Le pixel art reste net : pas de lissage à l'agrandissement. */
 .pv-cell[data-famille='perso-pixel'] svg {
   shape-rendering: crispEdges;

@@ -34,9 +34,34 @@ export function renderDessin(dessin: Dessin, taille: number): SVGSVGElement {
   if (dessin.race) svg.dataset.race = dessin.race
   svg.dataset.id = id
   svg.dataset.seed = String(dessin.seed)
+  if (dessin.nom) svg.dataset.nom = dessin.nom
 
-  if (dessin.clips.length) {
+  const degrades = dessin.formes.filter((f) => f.degrade)
+  if (dessin.clips.length || degrades.length) {
     const defs = document.createElementNS(NS, 'defs')
+    degrades.forEach((f, k) => {
+      const g = f.degrade!
+      const el = document.createElementNS(NS, g.type === 'radial' ? 'radialGradient' : 'linearGradient')
+      el.setAttribute('id', `${prefixe}-d${k}`)
+      el.setAttribute('gradientUnits', 'userSpaceOnUse')
+      if (g.type === 'radial') {
+        el.setAttribute('cx', String(g.cx))
+        el.setAttribute('cy', String(g.cy))
+        el.setAttribute('r', String(g.r))
+      } else {
+        el.setAttribute('x1', String(g.x1))
+        el.setAttribute('y1', String(g.y1))
+        el.setAttribute('x2', String(g.x2))
+        el.setAttribute('y2', String(g.y2))
+      }
+      for (const [o, c] of g.arrets) {
+        const stop = document.createElementNS(NS, 'stop')
+        stop.setAttribute('offset', String(o))
+        stop.setAttribute('stop-color', c)
+        el.appendChild(stop)
+      }
+      defs.appendChild(el)
+    })
     for (const clip of dessin.clips) {
       const cp = document.createElementNS(NS, 'clipPath')
       cp.setAttribute('id', idDeClip(prefixe, clip.id))
@@ -53,7 +78,7 @@ export function renderDessin(dessin: Dessin, taille: number): SVGSVGElement {
   for (const f of dessin.formes) {
     const p = document.createElementNS(NS, 'path')
     p.setAttribute('d', f.d)
-    p.setAttribute('fill', f.fill)
+    p.setAttribute('fill', f.degrade ? `url(#${prefixe}-d${degrades.indexOf(f)})` : f.fill)
     if (f.regle) p.setAttribute('fill-rule', f.regle)
     if (f.stroke) {
       p.setAttribute('stroke', f.stroke)
@@ -74,8 +99,15 @@ export function svgTexte(dessin: Dessin, taille: number, prefixe = 'pg'): string
   const out: string[] = [
     `<svg xmlns="${NS}" viewBox="0 0 ${dessin.boite} ${dessin.boite}" width="${taille}" height="${taille}">`,
   ]
-  if (dessin.clips.length) {
+  const degrades = dessin.formes.filter((f) => f.degrade)
+  if (dessin.clips.length || degrades.length) {
     out.push('<defs>')
+    degrades.forEach((f, k) => {
+      const g = f.degrade!
+      const arrets = g.arrets.map(([o, c]) => `<stop offset="${o}" stop-color="${a(c)}"/>`).join('')
+      if (g.type === 'radial') out.push(`<radialGradient id="${idDeClip(prefixe, 'd' + k)}" gradientUnits="userSpaceOnUse" cx="${g.cx}" cy="${g.cy}" r="${g.r}">${arrets}</radialGradient>`)
+      else out.push(`<linearGradient id="${idDeClip(prefixe, 'd' + k)}" gradientUnits="userSpaceOnUse" x1="${g.x1}" y1="${g.y1}" x2="${g.x2}" y2="${g.y2}">${arrets}</linearGradient>`)
+    })
     for (const clip of dessin.clips) {
       out.push(`<clipPath id="${idDeClip(prefixe, clip.id)}">`)
       for (const d of clip.chemins) out.push(`<path d="${a(d)}"/>`)
@@ -84,7 +116,7 @@ export function svgTexte(dessin: Dessin, taille: number, prefixe = 'pg'): string
     out.push('</defs>')
   }
   for (const f of dessin.formes) {
-    const attrs = [`d="${a(f.d)}"`, `fill="${a(f.fill)}"`]
+    const attrs = [`d="${a(f.d)}"`, `fill="${f.degrade ? `url(#${idDeClip(prefixe, 'd' + degrades.indexOf(f))})` : a(f.fill)}"`]
     if (f.regle) attrs.push(`fill-rule="${f.regle}"`)
     if (f.stroke) attrs.push(`stroke="${a(f.stroke)}"`, `stroke-width="${f.epaisseur ?? 2}"`, 'stroke-linejoin="round"', 'stroke-linecap="round"')
     if (f.opacite !== undefined) attrs.push(`opacity="${f.opacite}"`)
