@@ -176,7 +176,8 @@ button.actif {
 .pv-cell[data-famille='vaisseau3d'] img,
 .pv-cell[data-famille='station3d'] img,
 .pv-cell[data-famille='planete3d'] img,
-.pv-cell[data-famille='asteroide3d'] img {
+.pv-cell[data-famille='asteroide3d'] img,
+.pv-cell[data-famille='feuillu'] img {
   display: block;
   background: radial-gradient(circle at 50% 40%, #2a2f44, #1b1e2c 70%);
   border-radius: 6px;
@@ -208,6 +209,16 @@ button.actif {
   margin: 0;
   color: var(--sourd);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* La référence de Keko : l'image telle quelle, sur son fond crème. */
+.pv-reference img {
+  background: #faf6ec !important;
+  object-fit: contain;
+}
+
+.pv-reference {
+  outline: 2px solid var(--accent);
 }
 
 /* Le pixel art reste net : pas de lissage à l'agrandissement. */

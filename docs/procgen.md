@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines, vaisseaux, stations, planètes et astéroïdes 3D toon
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines, vaisseaux, stations, planètes et astéroïdes 3D toon, la créature de Keko en 3D
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -414,6 +414,26 @@ Le rendu (`sphereColoree`) n'évalue que ces fonctions sur les sommets d'une
 sphère de three, recalcule les normales, et pose le même toon et le même
 contour. Le banc vérifie le déterminisme, que les couleurs sont des hex et
 que le rayon déformé reste entre 0,2 et 1.
+
+## Le feuillu : la créature de Keko modélisée en 3D (`feuillu.ts`)
+
+Keko a déposé `public/Créature.png` (un quadrupède plante : oreilles en
+feuilles, bourgeon orange, queue en bouquet, ventre crème, taches en
+feuille, griffes crème, yeux ambre) : « tu penses pouvoir faire un truc 3D
+basé dessus ? ». **On ne reconstruit pas un volume depuis une image** : on
+lit la référence et on la modélise avec le vocabulaire des figurines (boules
+qui fusionnent pour le corps, le cou, la tête, le museau, les quatre pattes
+et la queue qui s'enroule ; ellipsoïdes aplatis pour les feuilles, avec la
+feuille claire du dedans ; un cône pour le bourgeon ; des sphères crème pour
+les griffes ; les yeux posés sur la sphère de la tête par leur direction),
+avec la palette lue sur l'image. La bête est construite le long de x, la
+tête à +x, vue de trois quarts.
+
+Puis l'id fait varier ce qui peut varier sans quitter l'espèce : la taille
+des oreilles, le nombre de feuilles de la queue (2–4) et du dos (0–3), le
+bourgeon (cône, bouton, aucun), les taches (2–6), les proportions, et quatre
+feuillages (printemps — la référence —, sous-bois, automne, givre). La
+référence s'affiche en première case de la section, pour comparer.
 
 ## La planète (`planete.ts`)
 

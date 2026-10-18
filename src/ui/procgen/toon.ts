@@ -17,9 +17,10 @@ import * as THREE from 'three'
 import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes.js'
 import { genererFigurine, type Figurine, type Solide } from '../../logic/procgen/figurine.ts'
 import { genererVaisseau3D } from '../../logic/procgen/vaisseau3d.ts'
+import { genererFeuillu } from '../../logic/procgen/feuillu.ts'
 import { couleurAsteroide, couleurPlanete, genererAsteroide3D, genererPlanete3D, genererStation3D, rayonAsteroide, bruit, type Asteroide3D, type Bruit } from '../../logic/procgen/corps3d.ts'
 
-export type Sorte3D = 'figurine' | 'vaisseau3d' | 'station3d' | 'planete3d' | 'asteroide3d'
+export type Sorte3D = 'figurine' | 'vaisseau3d' | 'station3d' | 'planete3d' | 'asteroide3d' | 'feuillu'
 
 const RESOLUTION = 56
 const ISOLATION = 80
@@ -255,6 +256,14 @@ function monterAsteroide(id: string): THREE.Group {
 
 /** L'objet 3D d'une sorte, monté et orienté pour la vue. */
 function monter(sorte: Sorte3D, id: string): THREE.Group {
+  if (sorte === 'feuillu') {
+    // La bête est construite le long de x, la tête à +x : de trois quarts, la tête vers nous.
+    const g = monterFigurine(genererFeuillu(id))
+    g.rotation.set(0.12, -0.8, 0)
+    g.position.y = 0.05
+    g.scale.setScalar(0.86)
+    return g
+  }
   if (sorte === 'planete3d') return monterPlanete(id)
   if (sorte === 'asteroide3d') return monterAsteroide(id)
   if (sorte === 'station3d') {

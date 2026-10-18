@@ -17,6 +17,7 @@ import { vignette3D, visionneuse, type Sorte3D } from './toon.ts'
 const PAR_FAMILLE = 30
 /** Les familles 3D : pas des dessins SVG, des objets rendus en toon par three.js. */
 const SORTES_3D: readonly { sorte: Sorte3D; titre: string; prefixe: string }[] = [
+  { sorte: 'feuillu', titre: 'La créature de Keko, modélisée en 3D, et ses variations', prefixe: 'e' },
   { sorte: 'vaisseau3d', titre: 'Vaisseaux 3D toon (toucher pour faire tourner)', prefixe: 'w' },
   { sorte: 'station3d', titre: 'Stations 3D toon (toucher pour faire tourner)', prefixe: 'y' },
   { sorte: 'planete3d', titre: 'Planètes 3D toon (toucher pour faire tourner)', prefixe: 'n' },
@@ -214,7 +215,24 @@ function peindre(): void {
   fileDeRendu = []
   for (const section of racine.querySelectorAll<HTMLElement>('.pv-3d')) {
     const sorte = section.dataset.famille as Sorte3D
-    section.querySelector('.pv-grille')!.replaceChildren(...identifiants(sorte, serie).map((id) => cellule3D(sorte, id, taille)))
+    const cellules = identifiants(sorte, serie).map((id) => cellule3D(sorte, id, taille))
+    // La référence de Keko en première case, pour comparer.
+    if (sorte === 'feuillu') {
+      const ref = document.createElement('figure')
+      ref.className = 'pv-cell pv-reference'
+      ref.style.setProperty('--t', `${taille}px`)
+      const img = document.createElement('img')
+      img.src = `${import.meta.env.BASE_URL}${encodeURIComponent('Créature.png')}`
+      img.width = taille
+      img.height = taille
+      img.alt = 'la référence'
+      ref.appendChild(img)
+      const legende = document.createElement('figcaption')
+      legende.innerHTML = '<b>référence</b><small>Créature.png</small>'
+      ref.appendChild(legende)
+      cellules.unshift(ref)
+    }
+    section.querySelector('.pv-grille')!.replaceChildren(...cellules)
   }
   for (const section of racine.querySelectorAll<HTMLElement>('.pv-famille:not(.pv-3d)')) {
     const famille = section.dataset.famille as Famille

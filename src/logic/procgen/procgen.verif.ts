@@ -4,6 +4,7 @@
  */
 import { BOITE, FAMILLES, RACES, ROLES, genererDessin, seedDe, type Famille, type Race } from './index.ts'
 import { figurineSaine, genererFigurine } from './figurine.ts'
+import { genererFeuillu } from './feuillu.ts'
 import { genererVaisseau3D } from './vaisseau3d.ts'
 import { couleurAsteroide, couleurPlanete, genererAsteroide3D, genererPlanete3D, genererStation3D, rayonAsteroide } from './corps3d.ts'
 
@@ -69,6 +70,10 @@ verifier('autre id = autre figurine', JSON.stringify(genererFigurine('f-2')) !==
 let saines = true
 for (let i = 0; i < 300; i++) if (!figurineSaine(genererFigurine(`figurine-${i}`))) saines = false
 verifier('300 figurines saines, dans le cube unité', saines)
+verifier('même id = même feuillu', JSON.stringify(genererFeuillu('e-1')) === JSON.stringify(genererFeuillu('e-1')))
+let feuillusSains = true
+for (let i = 0; i < 200; i++) if (!figurineSaine(genererFeuillu(`feuillu-${i}`))) feuillusSains = false
+verifier('200 feuillus sains, dans le cube unité', feuillusSains)
 console.log('vaisseau 3D')
 verifier('même id = même vaisseau', JSON.stringify(genererVaisseau3D('w-1')) === JSON.stringify(genererVaisseau3D('w-1')))
 let sains3d = true
