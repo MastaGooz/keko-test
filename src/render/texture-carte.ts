@@ -5441,6 +5441,22 @@ interface Cerne {
   echelle: number
 }
 const CERNES_EMOJI = new WeakMap<HTMLCanvasElement, Map<number, Cerne>>()
+/**
+ * LE DOS DU STICKER COUVRE TOUT CE QUI PORTE DE L'ENCRE, le translucide
+ * compris. Keko, sur 🫧 : « dans l'image de l'emoji bulle, la zone transparente
+ * à l'intérieur a un problème de pixels bizarres sur ses bords ». *L'intérieur
+ * des bulles est à moitié transparent*, et la silhouette se coupait à
+ * mi-alpha APRÈS le flou : dedans, l'alpha flottait autour du seuil, et la
+ * découpe zigzaguait entre les reflets opaques et le verre — le crème du
+ * cerne apparaissait par taches crénelées sous le cyan. **La silhouette se
+ * binarise AVANT le flou, à ce seuil** : un pixel qui a de l'encre, même
+ * pâle, est dans le sticker ; seul le transparent franc est découpé. Le
+ * contour extérieur ne bouge que d'une fraction de pixel (le pied de
+ * l'anticrénelage), les trous vrais — l'anneau, le donut, l'air entre le bras
+ * et le corps du gobelin — restent des trous. C'est la logique du sticker
+ * imprimé : le vinyle est blanc sous l'encre, découpé au contour.
+ */
+const SEUIL_ENCRE = 0.06
 
 /**
  * ET SA FINESSE SE CHOISIT. Keko, sur la face des cartes : « je trouve
@@ -5490,7 +5506,8 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE)
   // pas, ses accidents plus petits que le rayon s'y fondent.** Le rayon suit
   // la finesse, ni plus ni moins que ce qu'un oeil lit comme un relief.
   const masque = new Float32Array(n * n)
-  for (let i = 0; i < n * n; i++) masque[i] = alpha[i * 4 + 3]! / 255
+  // Binaire avant le flou : voir `SEUIL_ENCRE`.
+  for (let i = 0; i < n * n; i++) masque[i] = alpha[i * 4 + 3]! > SEUIL_ENCRE * 255 ? 1 : 0
   adoucirLeMasque(masque, n, Math.max(1, Math.round(finesse / 128)))
   adoucirLeMasque(masque, n, Math.max(1, Math.round(finesse / 128)))
 

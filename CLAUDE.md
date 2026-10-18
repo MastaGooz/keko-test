@@ -120,7 +120,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`illustrationEntiere`) et passe par `illustration()` comme une image. On
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
-  Baloo 2 aussi se demande explicitement.
+  Baloo 2 aussi se demande explicitement. **Le dos du sticker couvre tout ce
+  qui porte de l'encre, translucide compris** (`SEUIL_ENCRE`, binarisé AVANT
+  le flou de `cerneDe`) : seul le transparent franc est un trou — 🫧 crénelait.
 - **Les emoji dessinés par Keko** remplacent le glyphe Noto, un par un
   (`EMOJI_DE_KEKO` dans `ui/art.ts`, identifiant → fichier de `public/`) :
   PNG ou WebP 512 carré, fond transparent, ~5 % de marge, sans contour ni
