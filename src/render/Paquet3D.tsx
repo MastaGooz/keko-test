@@ -312,7 +312,7 @@ const BANC_BONUS = '1f942'
 const BANC_PERSO = '1fae0'
 /**
  * TEST EN COURS, À RETIRER QUAND KEKO A JUGÉ : 👺, redessiné en gobelin
- * (`Gobelin.webp`), sort en PREMIÈRE CARTE DE CHAQUE PAQUET, sans paramètre.
+ * (`Goblin paper.png`), sort en PREMIÈRE CARTE DE CHAQUE PAQUET, sans paramètre.
  * Keko : « j'ai ajouté Gobelin.webp, je voudrais que tu le fasses sortir
  * (common) dans chaque booster au début (le temps d'un test) ». Posé comme
  * le banc `&perso`, après le tirage : la suite du hasard ne bouge pas, la
