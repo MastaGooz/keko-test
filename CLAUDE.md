@@ -343,9 +343,9 @@ Des icônes tirées d'un identifiant (même id, même visuel), palettes fixes,
 symétrie, pièces ancrées : en SVG plat, trois races × trois rôles de
 vaisseaux, planètes, astéroïdes, origamis qui se déplient, gribouillis,
 personnages en trois styles, héros, masques, créatures de type ; en 3D toon
-(three.js), figurines, vaisseaux, stations, planètes, astéroïdes et la
+figurines, vaisseaux, stations, planètes, astéroïdes et la
 créature de Keko modélisée (`feuillu.ts`). `logic/procgen/` (pur, dans
-`npm run verif`), `ui/procgen/` (`renderIcon`, `toon.ts`), la page
+`npm run verif`), `ui/procgen/` (`renderIcon`), la page
 `preview.html?serie=N` hors du jeu. **Aucun emoji n'est remplacé.** Tout est
 dans `docs/procgen.md`.
 
