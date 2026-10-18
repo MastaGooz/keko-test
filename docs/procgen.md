@@ -1,4 +1,4 @@
-# Le générateur d'icônes — deux races × trois rôles, planètes, astéroïdes
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -13,14 +13,14 @@ existe à côté, et c'est Keko qui jugera s'il a sa place dans le jeu.
 | `src/ui/procgen/svg.ts` | `renderIcon(famille, id, taille)` → `<svg>` ; `svgTexte(dessin, taille)` → chaîne. |
 | `preview.html` + `src/ui/procgen/preview.ts` | la page de preview, seconde entrée Vite (`rollupOptions.input`), hors du jeu. |
 
-## Deux races, trois rôles
+## Trois races, trois rôles
 
 Keko : « rajoute une option en haut pour la race, humain / alien, et génère
 aussi des stations et vaisseaux minage alien ». **La race est un paramètre**
 (`Race`, `genererDessin(famille, id, race)`, `renderIcon(famille, id,
 taille, race)`), croisé avec les trois RÔLES (`ROLES` : combat, minage,
 station) ; les planètes et les astéroïdes n'en ont pas. Humain : `vaisseau.ts`
-et `station.ts`. Alien : `alien.ts` pour les trois rôles. Le même identifiant
+et `station.ts`. Alien : `alien.ts` pour les trois rôles. Biologique : `bio.ts`. Le même identifiant
 donne un dessin par race, ce qui permet de les comparer côte à côte. La page
 de preview a le sélecteur en tête, écrit dans l'adresse (`&race=alien`).
 
@@ -134,6 +134,31 @@ ou trois anneaux fins, des nacelles posées dessus, un gros cœur).
 L'ombre du côté gauche est plus douce (12 %) que sur les tôles. Le banc de
 variété compare désormais le dessin entier : les aliens n'ont que quelques
 choix discrets, leur variété est dans les courbes.
+
+## La race biologique (`bio.ts`)
+
+Keko : « une autre race biologique en mode zerg ». Des bêtes, pas des
+machines : des CARAPACES bosselées (`carapace`, un contour d'ellipse dont le
+rayon tremble, symétrique), des ÉPINES plantées sur le bord (`epine`,
+`epinesSur`), des YEUX à pupille fendue (`oeil`, `yeux`), des PUSTULES qui
+luisent, des MEMBRANES translucides veinées, des GUEULES à dents, des PATTES
+articulées (deux segments, le coude vers le haut), les tentacules de
+l'alien (exportés avec `sym`). Les corps sont des SEGMENTS empilés qui se
+recouvrent, striés de plaques (`plaques`). Huit palettes chair et carapace,
+l'accent est une lueur acide.
+
+- **combat** : l'INSECTE (tête, thorax, abdomen, pattes en crochet, épines,
+  crocs), la RAIE (deux grandes membranes veinées, épines au bord d'attaque,
+  une queue), le VER (des anneaux de plus en plus petits, la gueule en haut ;
+  rétréci d'un bloc s'il ne tient pas dans la boîte).
+- **minage** : la TIQUE (un énorme sac gonflé de poches qui luisent, une
+  petite tête à crocs, des pattes courtes), le CUEILLEUR (un corps plat, une
+  frange de tentacules à ventouses), la BOURSE (une poche translucide qui
+  montre la récolte, une carapace dorsale striée, des épines).
+- **station** : la RUCHE (une masse bosselée, des tendrils qui rampent tout
+  autour, des alvéoles, un œil au centre), le COCON (strié, des épines tout
+  autour, une fente qui luit et l'œil dedans), l'ÉTOILE de chair (un cœur, 4 à
+  8 bras en épine, des membranes entre).
 
 ## La planète (`planete.ts`)
 

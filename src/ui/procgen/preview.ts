@@ -16,11 +16,12 @@ const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
 const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', vaisseau: 'v', alien: 'x' }
 const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
-const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien' }
+const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien', biologique: 'Biologique' }
 
 const adresse = new URL(location.href)
 let serie = Number(adresse.searchParams.get('serie')) || 1
-let race: Race = adresse.searchParams.get('race') === 'alien' ? 'alien' : 'humain'
+const raceLue = adresse.searchParams.get('race')
+let race: Race = (RACES as readonly string[]).includes(raceLue ?? '') ? (raceLue as Race) : 'humain'
 
 /** Les identifiants d'une série : tirés d'un RNG seedé par son numéro. */
 function identifiants(famille: Famille, serie: number): string[] {

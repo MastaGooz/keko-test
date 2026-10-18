@@ -31,7 +31,7 @@ const RAD = Math.PI / 180
 const mx = ([x, y]: XY): XY => [BOITE - x, y]
 
 /** Un contour fermé depuis sa moitié droite (premier et dernier point sur l'axe). */
-function sym(moitie: readonly XY[]): XY[] {
+export function sym(moitie: readonly XY[]): XY[] {
   return [...moitie, ...moitie.slice(1, -1).map(mx).reverse()]
 }
 
@@ -98,7 +98,7 @@ function paire(points: readonly XY[], fill: string, pal: Palette, formes: Forme[
 }
 
 /** Un tentacule qui pend : une courbe qui ondule, épaisse en haut, pointue en bas. */
-function tentacule(rng: Rng, x0: number, y0: number, longueur: number, w0: number): XY[] {
+export function tentacule(rng: Rng, x0: number, y0: number, longueur: number, w0: number): XY[] {
   const pas = 8
   const balance = entre(rng, -10, 10)
   const ph = entre(rng, 0, Math.PI)

@@ -23,8 +23,8 @@ export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'pla
 export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'minage', 'station']
 
 /** La race : la technologie qui dessine le vaisseau. Les planètes l'ignorent. */
-export type Race = 'humain' | 'alien'
-export const RACES: readonly Race[] = ['humain', 'alien']
+export type Race = 'humain' | 'alien' | 'biologique'
+export const RACES: readonly Race[] = ['humain', 'alien', 'biologique']
 
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {

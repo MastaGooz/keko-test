@@ -54,6 +54,18 @@ export const PALETTES_ALIEN: readonly Palette[] = [
   { nom: 'bronze-bleu', principale: '#b57a3c', secondaire: '#7d4f22', accent: '#3a8dff', ombre: '#3d2410', clair: '#f0c58a' },
 ]
 
+/** La race biologique : de la chair et de la carapace, `accent` une lueur acide. */
+export const PALETTES_BIO: readonly Palette[] = [
+  { nom: 'chair-acide', principale: '#8a4f8f', secondaire: '#5c3160', accent: '#9dff3a', ombre: '#2d1430', clair: '#c98bd0' },
+  { nom: 'carapace-rouge', principale: '#4a3a3f', secondaire: '#2f2327', accent: '#ff4a3d', ombre: '#160f12', clair: '#8f7a82' },
+  { nom: 'brun-orange', principale: '#9a6a3f', secondaire: '#6b4426', accent: '#ffa62b', ombre: '#3a2211', clair: '#d6a97a' },
+  { nom: 'marais-rose', principale: '#5f7f4a', secondaire: '#3e5731', accent: '#ff7bc8', ombre: '#1f2e17', clair: '#a6c48f' },
+  { nom: 'sang-jaune', principale: '#a63a4a', secondaire: '#6f2231', accent: '#ffe24a', ombre: '#3a0f18', clair: '#e08a97' },
+  { nom: 'os-vert', principale: '#d8cdb3', secondaire: '#a69a7c', accent: '#5ee37a', ombre: '#4d4532', clair: '#fff6e0' },
+  { nom: 'abysse-jaune', principale: '#2f4a6e', secondaire: '#1d3049', accent: '#ffd23a', ombre: '#0d1624', clair: '#6f93bf' },
+  { nom: 'insecte-cyan', principale: '#6f7a3c', secondaire: '#4a5226', accent: '#4ff0ff', ombre: '#232912', clair: '#b2bd7a' },
+]
+
 export type TypePlanete = 'continents' | 'bandes' | 'crateres'
 
 /** Une palette de planète sait pour quels types de surface elle est faite. */
