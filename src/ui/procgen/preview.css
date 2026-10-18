@@ -171,6 +171,16 @@ button.actif {
   border-radius: 6px;
 }
 
+/* Le pixel art reste net : pas de lissage à l'agrandissement. */
+.pv-cell[data-famille='perso-pixel'] svg {
+  shape-rendering: crispEdges;
+}
+
+/* L'encre se lit sur du papier. */
+.pv-cell[data-famille='perso-encre'] svg {
+  background: #f6f0e2;
+}
+
 /* Le gribouillis se pose sur la page du cahier : papier à carreaux. */
 .pv-cell[data-famille='gribouillis'] svg {
   background:

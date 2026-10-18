@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -228,6 +228,37 @@ bonnet), piques ou touffe ; un accessoire (lunettes, nœud, cape, hélice) ;
 des joues roses. Le dessin est transparent : la page met le PAPIER À
 CARREAUX derrière (`.pv-cell[data-famille='gribouillis']`), comme un emoji se
 pose sur n'importe quel fond.
+
+## Les personnages et leurs trois styles (`personnage.ts`)
+
+Keko, après les gribouillis : « et dans un style non dessin d'enfant ? tu
+sais dessiner d'autres styles ? ». **L'anatomie est séparée du style** : un
+personnage est une liste de PIÈCES (une forme fermée, une ligne, un rond)
+avec un rôle (corps, tête, ventre, œil, pupille, bouche, bras, doigt, patte,
+pied, tentacule, queue, corne, antenne, chapeau, pique, touffe, lunettes,
+nœud, cape, hélice, joue), une teinte abstraite (principale, secondaire,
+accent, clair, sombre) et sa géométrie, dans l'ordre de profondeur. Trois
+STYLES l'interprètent, et **le même id donne le même personnage dans les
+trois** (les trois familles `perso-*` tirent les mêmes identifiants sur la
+page, `GROUPE`) :
+
+- **papier découpé** : chaque pièce est une forme pleine posée en couche
+  avec son ombre portée, les sommets dérangés d'un demi-point (les ciseaux),
+  les lignes deviennent des bandes de papier ; huit palettes de papiers
+  colorés ;
+- **pixel art** : tout est rastérisé sur une grille de 24 (centre de
+  cellule dans la forme, distance au segment pour les lignes), le bas des
+  formes ombré d'un ton (`assombrir`), un contour sombre d'une cellule autour
+  de tout, les cellules émises par plages horizontales ; huit palettes
+  saturées ; `shape-rendering: crispEdges` sur la page ;
+- **encre** : un trait propre, les formes remplies de papier crème, l'ombre
+  en HACHURES à 45 degrés (balayage de la boîte de la forme, bornées par un
+  seuil de lumière vers le haut droit, découpées par la forme) et
+  CONTRE-HACHURES au plus sombre, les lignes épaisses bordées d'encre, les
+  accents en pointillé ; quatre encres.
+
+Le gribouillis reste à part : c'est un quatrième style, mais il a été
+écrit avant la séparation et dessine directement.
 
 ## La planète (`planete.ts`)
 

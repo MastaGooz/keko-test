@@ -17,8 +17,11 @@ export const AXE = BOITE / 2
  * deux corps célestes qui n'en ont pas. `vaisseau` tire un rôle (combat ou
  * minage) depuis l'id ; `alien` reste accepté pour le combat alien.
  */
-export type Famille = 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'origami' | 'gribouillis' | 'vaisseau' | 'alien'
-export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide', 'origami', 'gribouillis']
+export type Famille =
+  | 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'origami' | 'gribouillis'
+  | 'perso-papier' | 'perso-pixel' | 'perso-encre'
+  | 'vaisseau' | 'alien'
+export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide', 'origami', 'gribouillis', 'perso-papier', 'perso-pixel', 'perso-encre']
 /** Les familles qui ont une race. */
 export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'minage', 'station']
 

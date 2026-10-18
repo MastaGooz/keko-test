@@ -15,8 +15,10 @@ import { dessinerOrigami, dureeTotale, genererOrigami } from '../../logic/procge
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', vaisseau: 'v', alien: 'x' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', vaisseau: 'v', alien: 'x' }
+/** Les familles d'un même groupe tirent les MÊMES identifiants : on compare le même personnage d'un style à l'autre. */
+const GROUPE: Partial<Record<Famille, string>> = { 'perso-papier': 'perso', 'perso-pixel': 'perso', 'perso-encre': 'perso' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', 'perso-papier': 'Personnages — papier découpé', 'perso-pixel': 'Personnages — pixel art', 'perso-encre': 'Personnages — encre', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
 const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien', biologique: 'Biologique' }
 
 const adresse = new URL(location.href)
@@ -26,7 +28,7 @@ let race: Race = (RACES as readonly string[]).includes(raceLue ?? '') ? (raceLue
 
 /** Les identifiants d'une série : tirés d'un RNG seedé par son numéro. */
 function identifiants(famille: Famille, serie: number): string[] {
-  const rng = createRng(seedDe(`${famille}/${serie}`))
+  const rng = createRng(seedDe(`${GROUPE[famille] ?? famille}/${serie}`))
   const ids: string[] = []
   while (ids.length < PAR_FAMILLE) {
     const id = `${PREFIXE[famille]}-${Math.floor(rng.next() * 46656).toString(36).padStart(3, '0')}`
@@ -150,7 +152,9 @@ function montrerUn(id: string): void {
   }
   const famille = [...FAMILLES, 'vaisseau' as const].find((f) => propre.startsWith(PREFIXE[f])) ?? 'vaisseau'
   bloc.hidden = false
-  bloc.replaceChildren(...TAILLES.map((t) => cellule(famille, propre, t)))
+  // Un personnage se montre dans ses trois styles, à la taille courante.
+  const familles = GROUPE[famille] ? FAMILLES.filter((f) => GROUPE[f] === GROUPE[famille]) : [famille]
+  bloc.replaceChildren(...(familles.length > 1 ? familles.map((f) => cellule(f, propre, taille)) : TAILLES.map((t) => cellule(famille, propre, t))))
 }
 
 racine.querySelector('.pv-races')!.addEventListener('click', (e) => {
