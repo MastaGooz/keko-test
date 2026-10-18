@@ -17,24 +17,17 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
-import { VARIANTES, compteDe, type Collection, type Variante } from '../logic/emoji/collection.ts'
-import { DECK, deckActif, deckComplet, mainPrecedente, type Decks } from '../logic/emoji/deck.ts'
+import type { Collection } from '../logic/emoji/collection.ts'
+import { DECK, deckActif, deckComplet, mainPrecedente, type Decks, type EntreeDeck } from '../logic/emoji/deck.ts'
 import { Vignette } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
 /** La dernière main tombée dans la session : ce qu'on montre, et ce qui s'envole. */
 export interface MainTombee {
-  readonly main: readonly string[]
+  readonly main: readonly EntreeDeck[]
   readonly likes: number
   /** Compte les mains de la session : change à chaque main, pour rejouer l'entrée. */
   readonly numero: number
-}
-
-/** La plus belle version possédée d'une carte : celle qu'on montre dans la main. */
-function meilleureVariante(col: Collection, id: string): Variante {
-  const p = col.cartes[id]
-  if (p === undefined) return 'simple'
-  return VARIANTES.filter((v) => compteDe(p, v) > 0).at(-1) ?? 'simple'
 }
 
 export function PageJouer({
@@ -196,13 +189,15 @@ export function PageJouer({
               {main === null ? (
                 <p className="jouer-texte collection-discret jouer-premiere">La première main arrive…</p>
               ) : (
-                main.map((id, i) => {
-                  const carte = parId.get(id)
-                  const p = collection.cartes[id] ?? null
+                main.map((e, i) => {
+                  const carte = parId.get(e.id)
+                  const p = collection.cartes[e.id] ?? null
                   if (carte === undefined) return null
+                  // L'EXEMPLAIRE DU DECK, tel quel — sans « ×2 » ni « Nouveau » : une
+                  // carte jouée n'est pas une case de la collection (Keko).
                   return (
-                    <span key={`${id}:${i}`} className="jouer-carte" style={{ '--i': i } as React.CSSProperties}>
-                      <Vignette carte={carte} possession={p} variante={meilleureVariante(collection, id)} onOuvrir={() => {}} />
+                    <span key={`${e.id}:${i}`} className="jouer-carte" style={{ '--i': i } as React.CSSProperties}>
+                      <Vignette carte={carte} possession={p} variante={e.v} nue onOuvrir={() => {}} />
                     </span>
                   )
                 })

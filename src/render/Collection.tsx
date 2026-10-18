@@ -362,6 +362,8 @@ export function Vignette({
   variante,
   onOuvrir,
   choix,
+  prisPar,
+  nue = false,
 }: {
   carte: CarteEmoji
   /** `null` : une carte du catalogue qu'on n'a pas encore — grisée. */
@@ -370,11 +372,15 @@ export function Vignette({
   variante: Variante
   onOuvrir: () => void
   /**
-   * LE MODE DECK (voir `ChoixDuDeck`) : dans le deck (cochée), dehors, ou
-   * dehors d'un deck plein (estompée). `undefined` hors du mode deck, où la
-   * vignette garde sa bulle « Nouveau ».
+   * LE MODE DECK (voir `ChoixDuDeck`) : dans le deck (cochée), dehors, dehors
+   * d'un deck plein (estompée), ou prise par un autre deck (estompée, avec le
+   * nom du deck, `prisPar`). `undefined` hors du mode deck, où la vignette
+   * garde sa bulle « Nouveau ».
    */
-  choix?: 'dedans' | 'dehors' | 'plein'
+  choix?: 'dedans' | 'dehors' | 'plein' | 'pris'
+  prisPar?: string
+  /** LA MAIN QUI JOUE : sans le compte d'exemplaires ni « Nouveau » (Keko). */
+  nue?: boolean
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
@@ -507,7 +513,7 @@ export function Vignette({
     <button
       ref={boite}
       type="button"
-      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' ? ' vignette-estompee' : ''}`}
+      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' || choix === 'pris' ? ' vignette-estompee' : ''}`}
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}${possession === null ? ', pas encore obtenue' : ''}`}
@@ -538,8 +544,9 @@ export function Vignette({
           ✓
         </span>
       )}
-      {choix === undefined && possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
-      {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
+      {choix === 'pris' && <span className="vignette-prise">{prisPar ?? 'Pris'}</span>}
+      {choix === undefined && !nue && possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
+      {compte > 1 && !nue && <span className="vignette-nombre">×{compte}</span>}
       {(holo || anime) && (
         <span className="vignette-bonus">
           {holo && <span className="pastille-holo">Holo</span>}
@@ -824,10 +831,18 @@ function CarteOuverte({
  * ou l'en retire, au lieu de l'ouvrir. Voir `logic/emoji/deck.ts`.
  */
 export interface ChoixDuDeck {
-  /** Les cartes du deck qu'on compose (`edite`). */
-  readonly ids: ReadonlySet<string>
+  /** Combien de cartes le deck qu'on compose (`edite`) tient. */
+  readonly nombre: number
+  /**
+   * CE QUE LA GRILLE DIT DE CHAQUE EXEMPLAIRE : dans le deck, libre, deck plein,
+   * ou pris par un autre deck (`prisPar` : « Deck 2 »). *Une place par version
+   * possédée*, comme la collection — Keko : « afficher des slots différents
+   * quand une carte est normale / holo / animée / animée holo afin que le
+   * joueur décide quel exemplaire il veut mettre dans le deck ».
+   */
+  readonly choix: (id: string, v: Variante) => { etat: 'dedans' | 'dehors' | 'plein' | 'pris'; prisPar?: string }
   readonly taille: number
-  readonly onBasculer: (id: string) => void
+  readonly onBasculer: (e: { id: string; v: Variante }) => void
   /** Voir jouer le deck actif. */
   readonly onJouer: () => void
   /**
@@ -913,14 +928,8 @@ export function PageCollection({
    * Elles se suivent, dans l'ordre normal, holo, animé, holo animé.
    */
   const places = useMemo((): { carte: CarteEmoji; p: Possession | null; v: Variante }[] => {
-    // LE MODE DECK : une place par emoji possédé, sa plus belle version — un
-    // deck compte des emoji, pas des versions.
-    if (modeDeck)
-      return possedees.map(({ carte, p }) => ({
-        carte,
-        p,
-        v: VARIANTES.filter((v) => compteDe(p, v) > 0).at(-1) ?? 'simple',
-      }))
+    // LE MODE DECK : les mêmes places que la collection, une par version
+    // possédée — c'est l'exemplaire qu'on met dans le deck (Keko).
     // LE CATALOGUE ENTIER : une place par emoji, la plus belle version qu'on a
     // (la dernière de `VARIANTES` possédée), ou la simple en grisé.
     if (toutes)
@@ -932,7 +941,7 @@ export function PageCollection({
     return possedees.flatMap(({ carte, p }) =>
       VARIANTES.filter((v) => compteDe(p, v) > 0).map((v) => ({ carte, p, v })),
     )
-  }, [toutes, modeDeck, catalogue, collection, possedees])
+  }, [toutes, catalogue, collection, possedees])
   const visibles = useMemo(() => {
     const q = plier(recherche.trim())
     const l = places.filter(
@@ -955,7 +964,7 @@ export function PageCollection({
   }, [places, recherche, tri, raretes, groupes, bonus, possession, nouvelles])
 
   const total = catalogue?.length ?? 0
-  const part = deck !== undefined ? deck.ids.size / deck.taille : total === 0 ? 0 : possedees.length / total
+  const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
   const exemplaires = nombreDExemplaires(collection)
   const laOuverte =
     ouverte === null
@@ -997,12 +1006,12 @@ export function PageCollection({
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
-                Deck {deck.edite + 1} · <b>{deck.ids.size}</b> / {deck.taille} cartes ·{' '}
-                {deck.ids.size >= deck.taille
+                Deck {deck.edite + 1} · <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
+                {deck.nombre >= deck.taille
                   ? deck.edite === deck.actif
                     ? 'complet, il joue'
                     : 'complet, prêt à jouer'
-                  : `encore ${deck.taille - deck.ids.size} à choisir, une tape met la carte dans le deck`}
+                  : `encore ${deck.taille - deck.nombre} à choisir, une tape met l'exemplaire dans le deck`}
               </>
             ) : toutes ? (
               <>
@@ -1024,7 +1033,7 @@ export function PageCollection({
           {deck !== undefined && (
             <div className="deck-actions">
               {deck.edite === deck.actif
-                ? deck.ids.size >= deck.taille && (
+                ? deck.nombre >= deck.taille && (
                     <button type="button" className="collection-bouton deck-jouer" onClick={deck.onJouer}>
                       Voir le deck jouer
                     </button>
@@ -1033,7 +1042,7 @@ export function PageCollection({
                     <button
                       type="button"
                       className="collection-bouton deck-jouer"
-                      disabled={deck.ids.size < deck.taille}
+                      disabled={deck.nombre < deck.taille}
                       onClick={deck.onJouerAvec}
                     >
                       Jouer avec ce deck
@@ -1185,10 +1194,9 @@ export function PageCollection({
                 carte={carte}
                 possession={p}
                 variante={v}
-                choix={
-                  deck === undefined ? undefined : deck.ids.has(carte.id) ? 'dedans' : deck.ids.size >= deck.taille ? 'plein' : 'dehors'
-                }
-                onOuvrir={() => (deck !== undefined ? deck.onBasculer(carte.id) : setOuverte({ id: carte.id, v }))}
+                choix={deck === undefined ? undefined : deck.choix(carte.id, v).etat}
+                prisPar={deck === undefined ? undefined : deck.choix(carte.id, v).prisPar}
+                onOuvrir={() => (deck !== undefined ? deck.onBasculer({ id: carte.id, v }) : setOuverte({ id: carte.id, v }))}
               />
             ))}
           </div>

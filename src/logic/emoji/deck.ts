@@ -16,10 +16,18 @@
  * mulberry32) : la même graine redonne le même ordre, donc la main en cours se
  * recalcule sans la stocker.
  *
- * *Un deck est une liste d'emoji possédés, un exemplaire chacun* : la version
- * (holo, animée) n'y compte pas encore, un Like par carte.
+ * **UNE CARTE DU DECK EST UN EXEMPLAIRE PRÉCIS** (`EntreeDeck` : l'emoji et sa
+ * version). Keko : « on doit afficher des slots différents quand une carte est
+ * normale / holo / animée / animée holo afin que le joueur décide quel
+ * exemplaire il veut mettre dans le deck » ; « empêcher les doubles (pas deux
+ * fois la même carte) » ; « une carte ne peut pas être dans deux decks ». Donc
+ * : *un emoji au plus une fois par deck* (choisir une autre version de
+ * l'emoji remplace la première), et *un exemplaire au plus une fois dans
+ * l'ensemble des decks* — on ne met pas en jeu plus de holo qu'on n'en a
+ * (`disponibles`). Un Like par carte, la version ne compte pas encore.
  */
 import { createRng } from '../rng.ts'
+import { VARIANTES, type Variante } from './collection.ts'
 
 /** Les chiffres de Keko (30, 5, 1 Like), et les miens à rejuger (la cadence, la limite hors ligne). */
 export const DECK = {
@@ -39,6 +47,12 @@ export const DECK = {
   horsLigneMax: 8 * 60 * 60 * 1000,
 } as const
 
+/** Une carte du deck : un emoji dans une version précise. */
+export interface EntreeDeck {
+  readonly id: string
+  readonly v: Variante
+}
+
 /** La partie en cours : le mélange, où on en est, quand la dernière main est tombée. */
 export interface Partie {
   readonly graine: number
@@ -49,8 +63,8 @@ export interface Partie {
 }
 
 export interface Deck {
-  /** Les emoji du deck, dans l'ordre où le joueur les a mis — un exemplaire chacun. */
-  readonly cartes: readonly string[]
+  /** Les cartes du deck, dans l'ordre où le joueur les a mises — un emoji au plus une fois. */
+  readonly cartes: readonly EntreeDeck[]
   /** `null` : le deck ne joue pas (incomplet). */
   readonly partie: Partie | null
 }
@@ -63,8 +77,10 @@ export function deckComplet(d: Deck): boolean {
   return d.cartes.length === DECK.taille
 }
 
+export const memeEntree = (a: EntreeDeck, b: EntreeDeck): boolean => a.id === b.id && a.v === b.v
+
 /** Fisher-Yates seedé : *même graine, même ordre* — le mélange ne se stocke pas. */
-export function melange(cartes: readonly string[], graine: number): string[] {
+export function melange<T>(cartes: readonly T[], graine: number): T[] {
   const l = [...cartes]
   const rng = createRng(graine)
   for (let i = l.length - 1; i > 0; i--) {
@@ -79,38 +95,48 @@ function graineSuivante(g: number): number {
   return (Math.imul(g, 1103515245) + 12345) >>> 0
 }
 
-/** La main qui va se jouer (ou qui vient de l'être, selon ce qu'on regarde) : les cinq cartes à `jouees`. */
-export function mainCourante(d: Deck): readonly string[] {
+/** La main qui va se jouer : les cinq cartes à `jouees`. */
+export function mainCourante(d: Deck): readonly EntreeDeck[] {
   if (d.partie === null) return []
   return melange(d.cartes, d.partie.graine).slice(d.partie.jouees, d.partie.jouees + DECK.main)
 }
 
 /** La dernière main jouée du mélange en cours ; `null` au début d'un mélange (l'ordre d'avant n'est plus là). */
-export function mainPrecedente(d: Deck): readonly string[] | null {
+export function mainPrecedente(d: Deck): readonly EntreeDeck[] | null {
   if (d.partie === null || d.partie.jouees === 0) return null
   return melange(d.cartes, d.partie.graine).slice(d.partie.jouees - DECK.main, d.partie.jouees)
 }
 
 /** Ce que rapporte une main : un Like par carte, pour commencer. */
-export function likesDeLaMain(main: readonly string[]): number {
+export function likesDeLaMain(main: readonly EntreeDeck[]): number {
   return main.length * DECK.likesParCarte
 }
 
 /**
- * MET OU RETIRE UNE CARTE. *Changer le deck relance sa partie* : le mélange en
- * cours ne vaut plus, et un deck qui n'a plus ses trente cartes s'arrête.
+ * MET OU RETIRE UN EXEMPLAIRE. Le même : retiré. Une autre version du même
+ * emoji déjà dans le deck : remplacée (*un emoji au plus une fois par deck*).
+ * *Changer le deck relance sa partie* : le mélange en cours ne vaut plus, et
+ * un deck qui n'a plus ses trente cartes s'arrête.
  */
-export function basculerCarte(d: Deck, id: string, maintenant: number): Deck {
-  const dedans = d.cartes.includes(id)
-  if (!dedans && d.cartes.length >= DECK.taille) return d
-  const cartes = dedans ? d.cartes.filter((x) => x !== id) : [...d.cartes, id]
+export function basculerCarte(d: Deck, e: EntreeDeck, maintenant: number): Deck {
+  const i = d.cartes.findIndex((x) => x.id === e.id)
+  let cartes: EntreeDeck[]
+  if (i >= 0) {
+    cartes = d.cartes[i]!.v === e.v ? d.cartes.filter((_, k) => k !== i) : d.cartes.map((x, k) => (k === i ? e : x))
+  } else {
+    if (d.cartes.length >= DECK.taille) return d
+    cartes = [...d.cartes, e]
+  }
   return demarrer({ cartes, partie: null }, maintenant)
 }
 
-/** Les cartes qu'on ne possède plus quittent le deck (détruites, retirées). */
-export function garderPossedees(d: Deck, possede: (id: string) => boolean, maintenant: number): Deck {
-  if (d.cartes.every(possede)) return d
-  return demarrer({ cartes: d.cartes.filter(possede), partie: null }, maintenant)
+/** Les exemplaires qu'on ne possède plus quittent le deck (détruits, retirés). */
+export function garderPossedees(d: Deck, possede: (e: EntreeDeck) => boolean, maintenant: number): Deck {
+  // UN SEUL PASSAGE : `possede` peut compter ce qu'il laisse passer (voir
+  // `garderPossedeesPartout`), il ne doit pas être appelé deux fois par carte.
+  const cartes = d.cartes.filter(possede)
+  if (cartes.length === d.cartes.length) return d
+  return demarrer({ cartes, partie: null }, maintenant)
 }
 
 /** Lance la partie si le deck est complet et ne joue pas encore ; sinon rend le deck tel quel. */
@@ -126,7 +152,7 @@ export interface MainsJouees {
   /** Les Likes qu'elles ont rapportés, à ajouter à la collection. */
   readonly likes: number
   /** La dernière main jouée, celle qu'on montre ; `null` si aucune. */
-  readonly derniere: readonly string[] | null
+  readonly derniere: readonly EntreeDeck[] | null
 }
 
 /**
@@ -145,7 +171,7 @@ export function deckAJour(d: Deck, maintenant: number): MainsJouees {
   if (mains === 0) return rien
   let { graine, jouees } = d.partie
   let likes = 0
-  let derniere: readonly string[] | null = null
+  let derniere: readonly EntreeDeck[] | null = null
   let ordre = melange(d.cartes, graine)
   for (let i = 0; i < mains; i++) {
     const main = ordre.slice(jouees, jouees + DECK.main)
@@ -169,20 +195,33 @@ export function prochaineMainDans(d: Deck, maintenant: number): number | null {
   return Math.max(0, a.partie!.depuis + DECK.cadence - maintenant)
 }
 
+const ID_VALIDE = /^[0-9a-f]+(-[0-9a-f]+)*$/
+
+/** Relit une entrée gardée : `{ id, v }`, ou l'identifiant seul d'avant (version normale). */
+function lireEntree(b: unknown): EntreeDeck | null {
+  if (typeof b === 'string') return ID_VALIDE.test(b) ? { id: b, v: 'simple' } : null
+  if (typeof b !== 'object' || b === null) return null
+  const o = b as Record<string, unknown>
+  if (typeof o.id !== 'string' || !ID_VALIDE.test(o.id)) return null
+  const v = (VARIANTES as readonly string[]).includes(o.v as string) ? (o.v as Variante) : null
+  return v === null ? null : { id: o.id, v }
+}
+
 /**
  * RELIT UN DECK GARDÉ, sans confiance : abîmé, il repart vide. `possede` dit
- * ce que la collection connaît encore ; une carte en double ou de trop est
- * écartée, et un deck incomplet ne joue pas.
+ * ce que la collection connaît encore ; un emoji en double ou une carte de trop
+ * est écartée, et un deck incomplet ne joue pas.
  */
-export function lireDeck(brut: unknown, possede: (id: string) => boolean, maintenant: number): Deck {
+export function lireDeck(brut: unknown, possede: (e: EntreeDeck) => boolean, maintenant: number): Deck {
   if (typeof brut !== 'object' || brut === null) return deckVide()
   const o = brut as Record<string, unknown>
   if (!Array.isArray(o.cartes)) return deckVide()
-  const cartes: string[] = []
-  for (const id of o.cartes as unknown[]) {
-    if (typeof id !== 'string' || !/^[0-9a-f]+(-[0-9a-f]+)*$/.test(id) || cartes.includes(id) || !possede(id)) continue
+  const cartes: EntreeDeck[] = []
+  for (const b of o.cartes as unknown[]) {
+    const e = lireEntree(b)
+    if (e === null || cartes.some((x) => x.id === e.id) || !possede(e)) continue
     if (cartes.length >= DECK.taille) break
-    cartes.push(id)
+    cartes.push(e)
   }
   const p = typeof o.partie === 'object' && o.partie !== null ? (o.partie as Record<string, unknown>) : null
   const entier = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null)
@@ -216,6 +255,9 @@ export interface Decks {
   /** L'index du deck qui joue (ou qui jouerait, s'il était complet). */
   readonly actif: number
 }
+
+/** Combien d'exemplaires d'une version on possède — injecté par la collection. */
+export type CompteDExemplaires = (id: string, v: Variante) => number
 
 export function decksVides(): Decks {
   return { liste: [deckVide()], actif: 0 }
@@ -261,10 +303,66 @@ export function modifierDeck(ds: Decks, i: number, f: (d: Deck) => Deck): Decks 
   return { liste: ds.liste.map((x, k) => (k === i ? n : x)), actif: ds.actif }
 }
 
-/** Les cartes qu'on ne possède plus quittent tous les decks. */
-export function garderPossedeesPartout(ds: Decks, possede: (id: string) => boolean, maintenant: number): Decks {
+/** Combien d'exemplaires de cette version les AUTRES decks que `i` ont déjà pris. */
+export function prisAilleurs(ds: Decks, i: number, id: string, v: Variante): number {
+  let n = 0
+  ds.liste.forEach((d, k) => {
+    if (k !== i && d.cartes.some((e) => e.id === id && e.v === v)) n += 1
+  })
+  return n
+}
+
+/** Le premier autre deck qui tient cet exemplaire, ou `null` : pour le dire au joueur (« Deck 2 »). */
+export function deckQuiTient(ds: Decks, i: number, id: string, v: Variante): number | null {
+  const k = ds.liste.findIndex((d, j) => j !== i && d.cartes.some((e) => e.id === id && e.v === v))
+  return k < 0 ? null : k
+}
+
+/**
+ * COMBIEN D'EXEMPLAIRES DE CETTE VERSION LE DECK `i` PEUT ENCORE PRENDRE : ce
+ * qu'on possède, moins ce que les autres decks tiennent déjà. *Un exemplaire
+ * n'est que dans un deck à la fois* (Keko) ; celui que le deck `i` tient déjà
+ * ne compte pas contre lui.
+ */
+export function disponibles(ds: Decks, i: number, id: string, v: Variante, compte: CompteDExemplaires): number {
+  return Math.max(0, compte(id, v) - prisAilleurs(ds, i, id, v))
+}
+
+/**
+ * MET OU RETIRE UN EXEMPLAIRE DANS LE DECK `i`, si les autres decks en laissent
+ * un : retirer est toujours possible, mettre exige un exemplaire disponible.
+ */
+export function basculerDansDeck(ds: Decks, i: number, e: EntreeDeck, compte: CompteDExemplaires, maintenant: number): Decks {
+  const d = ds.liste[i]
+  if (d === undefined) return ds
+  const deja = d.cartes.some((x) => memeEntree(x, e))
+  if (!deja && disponibles(ds, i, e.id, e.v, compte) <= 0) return ds
+  return modifierDeck(ds, i, (x) => basculerCarte(x, e, maintenant))
+}
+
+/**
+ * LES EXEMPLAIRES QU'ON N'A PLUS QUITTENT LES DECKS — et *jamais plus
+ * d'exemplaires en jeu qu'on n'en possède* : deck par deck, dans l'ordre, ce
+ * qui dépasse le compte sort du deck suivant.
+ */
+export function garderPossedeesPartout(ds: Decks, compte: CompteDExemplaires, maintenant: number): Decks {
+  const pris = new Map<string, number>()
   let r = ds
-  for (let i = 0; i < ds.liste.length; i++) r = modifierDeck(r, i, (d) => garderPossedees(d, possede, maintenant))
+  for (let i = 0; i < ds.liste.length; i++) {
+    r = modifierDeck(r, i, (d) =>
+      garderPossedees(
+        d,
+        (e) => {
+          const cle = `${e.id}#${e.v}`
+          const n = pris.get(cle) ?? 0
+          if (n >= compte(e.id, e.v)) return false
+          pris.set(cle, n + 1)
+          return true
+        },
+        maintenant,
+      ),
+    )
+  }
   return r
 }
 
@@ -282,22 +380,27 @@ export function decksAJour(ds: Decks, maintenant: number): MainsJoueesDesDecks {
 /**
  * RELIT LES DECKS GARDÉS, sans confiance — et relit aussi un deck seul d'avant
  * (`{ cartes, partie }`), qui devient le premier et l'actif. Abîmés, un deck
- * vide ; seul l'actif garde sa partie.
+ * vide ; seul l'actif garde sa partie ; jamais plus d'exemplaires en jeu que
+ * possédés (`garderPossedeesPartout`).
  */
-export function lireDecks(brut: unknown, possede: (id: string) => boolean, maintenant: number): Decks {
+export function lireDecks(brut: unknown, compte: CompteDExemplaires, maintenant: number): Decks {
+  const possede = (e: EntreeDeck): boolean => compte(e.id, e.v) > 0
   if (typeof brut !== 'object' || brut === null) return decksVides()
   const o = brut as Record<string, unknown>
+  let ds: Decks
   if (!Array.isArray(o.liste)) {
     // Le format d'avant : un seul deck.
     if (!Array.isArray(o.cartes)) return decksVides()
-    return { liste: [lireDeck(brut, possede, maintenant)], actif: 0 }
+    ds = { liste: [lireDeck(brut, possede, maintenant)], actif: 0 }
+  } else {
+    const brutes = (o.liste as unknown[]).slice(0, DECKS_MAX)
+    if (brutes.length === 0) return decksVides()
+    const actif = typeof o.actif === 'number' && Number.isInteger(o.actif) && o.actif >= 0 && o.actif < brutes.length ? o.actif : 0
+    const liste = brutes.map((b, k) => {
+      const d = lireDeck(b, possede, maintenant)
+      return k === actif ? d : d.partie === null ? d : { cartes: d.cartes, partie: null }
+    })
+    ds = { liste, actif }
   }
-  const brutes = (o.liste as unknown[]).slice(0, DECKS_MAX)
-  if (brutes.length === 0) return decksVides()
-  const actif = typeof o.actif === 'number' && Number.isInteger(o.actif) && o.actif >= 0 && o.actif < brutes.length ? o.actif : 0
-  const liste = brutes.map((b, k) => {
-    const d = lireDeck(b, possede, maintenant)
-    return k === actif ? d : d.partie === null ? d : { cartes: d.cartes, partie: null }
-  })
-  return { liste, actif }
+  return garderPossedeesPartout(ds, compte, maintenant)
 }

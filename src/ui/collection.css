@@ -1691,6 +1691,29 @@
   opacity: 0.4;
 }
 
+/* UN EXEMPLAIRE PRIS PAR UN AUTRE DECK : estompé, et la pastille dit lequel
+   (Keko : « elle doit apparaître mais indisponible »). */
+.vignette-prise {
+  position: absolute;
+  top: -0.4rem;
+  left: -0.3rem;
+  z-index: 1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #2a1b63;
+  font-weight: 800;
+  font-size: 0.7rem;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
+}
+
+.vignette-estompee .vignette-prise {
+  opacity: 1;
+}
+
 .vignette-coche {
   position: absolute;
   top: -0.4rem;

@@ -28,6 +28,7 @@ import {
   ajouterPaquet,
   avecAbonnes,
   avecLikes,
+  compteDe,
   debloquer,
   debloquerStickers,
   retirer,
@@ -38,6 +39,7 @@ import {
   toutVu,
   type Collection,
   type Exemplaire,
+  type Variante,
 } from '../logic/emoji/collection.ts'
 import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerDecks, chargerReserve, sauverCollection, sauverDecks, sauverReserve } from '../ui/collection.ts'
@@ -46,16 +48,19 @@ import {
   DECK,
   DECKS_MAX,
   ajouterDeck,
-  basculerCarte,
+  basculerDansDeck,
   choisirDeck,
   deckActif,
   deckComplet,
+  deckQuiTient,
   decksAJour,
+  disponibles,
   garderPossedeesPartout,
   likesDeLaMain,
-  modifierDeck,
   supprimerDeck,
+  type CompteDExemplaires,
   type Decks,
+  type EntreeDeck,
 } from '../logic/emoji/deck.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
@@ -186,6 +191,14 @@ function Accueil({ onJouer }: { onJouer: () => void }): React.ReactElement {
   )
 }
 
+/** Combien d'exemplaires d'une version la collection tient : ce que les decks peuvent prendre. */
+function compteDesExemplaires(c: Collection): CompteDExemplaires {
+  return (id, v) => {
+    const p = c.cartes[id]
+    return p === undefined ? 0 : compteDe(p, v)
+  }
+}
+
 export function Jeu(): React.ReactElement {
   // `&page=collection|catalogue|stickers` : OUVRIR UNE PAGE D'UN LIEN, sans
   // l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien.* Le son n'est
@@ -271,7 +284,7 @@ export function Jeu(): React.ReactElement {
    */
   const [decks, setDecks] = useState<Decks>(() => {
     const c = chargerCollection()
-    return chargerDecks((id) => c.cartes[id] !== undefined, Date.now())
+    return chargerDecks(compteDesExemplaires(c), Date.now())
   })
   /**
    * PLUSIEURS DECKS, UN SEUL QUI JOUE (Keko : « que le joueur puisse avoir
@@ -295,17 +308,34 @@ export function Jeu(): React.ReactElement {
     changer((c) => ajouterLikes(c, r.likes))
     setDerniereMain((m) => ({ main, likes: likesDeLaMain(main), numero: (m?.numero ?? 0) + 1 }))
   }, [decks, maintenant, changer, poserDecks])
+  // CE QU'ON POSSÈDE, VERSION PAR VERSION : les decks ne prennent pas plus
+  // d'exemplaires qu'il n'y en a (Keko : « une carte ne peut pas être dans
+  // deux decks »), et une carte détruite les quitte.
+  const compte = useMemo(() => compteDesExemplaires(collection), [collection])
   useEffect(() => {
-    poserDecks((ds) => garderPossedeesPartout(ds, (id) => collection.cartes[id] !== undefined, Date.now()))
-  }, [collection, poserDecks])
+    poserDecks((ds) => garderPossedeesPartout(ds, compte, Date.now()))
+  }, [compte, poserDecks])
   const deck = deckActif(decks)
   const edite = decks.liste[deckEdite] ?? deck
   const basculerDansLeDeck = useCallback(
-    (id: string) => poserDecks((ds) => modifierDeck(ds, deckEdite, (d) => basculerCarte(d, id, Date.now()))),
-    [poserDecks, deckEdite],
+    (e: EntreeDeck) => poserDecks((ds) => basculerDansDeck(ds, deckEdite, e, compte, Date.now())),
+    [poserDecks, deckEdite, compte],
   )
   const choisirLeDeck = useCallback((i: number) => poserDecks((ds) => choisirDeck(ds, i, Date.now())), [poserDecks])
-  const deckIds = useMemo(() => new Set(edite.cartes), [edite.cartes])
+  /** Ce que la grille doit dire de chaque exemplaire possédé, pour le deck qu'on compose. */
+  const choixDuDeck = useCallback(
+    (id: string, v: Variante): { etat: 'dedans' | 'dehors' | 'plein' | 'pris'; prisPar?: string } => {
+      if (edite.cartes.some((e) => e.id === id && e.v === v)) return { etat: 'dedans' }
+      if (disponibles(decks, deckEdite, id, v, compte) <= 0) {
+        const k = deckQuiTient(decks, deckEdite, id, v)
+        return { etat: 'pris', prisPar: k === null ? 'Pris' : `Deck ${k + 1}` }
+      }
+      // Le deck est plein — sauf pour une autre version d'un emoji qu'il tient : elle le remplacerait.
+      if (edite.cartes.length >= DECK.taille && !edite.cartes.some((e) => e.id === id)) return { etat: 'plein' }
+      return { etat: 'dehors' }
+    },
+    [edite, decks, deckEdite, compte],
+  )
   /**
    * `&debloquer` : LA MOITIÉ DU CATALOGUE, D'UN LIEN. Keko : « tu peux me
    * débloquer la moitié de la collection ? » *La collection vit sur l'appareil*,
@@ -503,7 +533,8 @@ export function Jeu(): React.ReactElement {
           deck={
             page === 'deck'
               ? {
-                  ids: deckIds,
+                  nombre: edite.cartes.length,
+                  choix: choixDuDeck,
                   taille: DECK.taille,
                   onBasculer: basculerDansLeDeck,
                   onJouer: () => aller('jouer'),

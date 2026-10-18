@@ -281,9 +281,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   Abonnés est à trancher. Une collection d'avant relit zéro. `&likes=N` et
   `&abonnes=N` posent les soldes de l'appareil.
 - **Le deck qui joue** (`logic/emoji/deck.ts`, `render/Deck.tsx` ; Keko : « un
-  système idle où tu construis un deck ») : trente emoji possédés, un
-  exemplaire chacun, choisis dans la grille en mode deck (menu « Cartes » →
-  « Deck », `ChoixDuDeck`) ; **plusieurs decks** (`Decks`, six au plus, un
+  système idle où tu construis un deck ») : trente EXEMPLAIRES possédés
+  (`EntreeDeck` : emoji + version, une place par version dans la grille en
+  mode deck, menu « Cartes » → « Deck », `ChoixDuDeck`), **un emoji au plus
+  une fois par deck, un exemplaire dans un seul deck** (`disponibles`, « pris
+  par le Deck 2 » estompé) ; **plusieurs decks** (`Decks`, six au plus, un
   onglet chacun, Keko), **un seul joue : l'actif** (`choisirDeck`, qui arrête
   l'autre) ; complet, il joue tout seul **une main de cinq
   toutes les dix secondes, un Like par carte, ajouté aussitôt, sur toutes les

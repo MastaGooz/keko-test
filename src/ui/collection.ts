@@ -10,7 +10,7 @@
 
 import { collectionVide, lireCollection, type Collection } from '../logic/emoji/collection.ts'
 import { lireReserve, reservePleine, type Reserve } from '../logic/emoji/reserve.ts'
-import { decksVides, lireDecks, type Decks } from '../logic/emoji/deck.ts'
+import { decksVides, lireDecks, type CompteDExemplaires, type Decks } from '../logic/emoji/deck.ts'
 
 const CLE = 'keko-emoji-collection'
 
@@ -60,10 +60,10 @@ export function sauverReserve(r: Reserve): void {
 // aussi le deck seul d'avant.
 const CLE_DECK = 'keko-emoji-deck'
 
-export function chargerDecks(possede: (id: string) => boolean, maintenant: number): Decks {
+export function chargerDecks(compte: CompteDExemplaires, maintenant: number): Decks {
   try {
     const brut = localStorage.getItem(CLE_DECK)
-    return brut === null ? decksVides() : lireDecks(JSON.parse(brut), possede, maintenant)
+    return brut === null ? decksVides() : lireDecks(JSON.parse(brut), compte, maintenant)
   } catch {
     return decksVides()
   }
