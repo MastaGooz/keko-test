@@ -15,10 +15,10 @@ import { dessinerOrigami, dureeTotale, genererOrigami } from '../../logic/procge
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', vaisseau: 'v', alien: 'x' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', heros: 'k', masque: 'q', vaisseau: 'v', alien: 'x' }
 /** Les familles d'un même groupe tirent les MÊMES identifiants : on compare le même personnage d'un style à l'autre. */
 const GROUPE: Partial<Record<Famille, string>> = { 'perso-papier': 'perso', 'perso-pixel': 'perso', 'perso-encre': 'perso' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', 'perso-papier': 'Personnages — papier découpé', 'perso-pixel': 'Personnages — pixel art', 'perso-encre': 'Personnages — encre', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', 'perso-papier': 'Personnages — papier découpé', 'perso-pixel': 'Personnages — pixel art', 'perso-encre': 'Personnages — encre', heros: 'Héros en buste', masque: 'Masques', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
 const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien', biologique: 'Biologique' }
 
 const adresse = new URL(location.href)

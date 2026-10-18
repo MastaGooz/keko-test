@@ -19,9 +19,9 @@ export const AXE = BOITE / 2
  */
 export type Famille =
   | 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'origami' | 'gribouillis'
-  | 'perso-papier' | 'perso-pixel' | 'perso-encre'
+  | 'perso-papier' | 'perso-pixel' | 'perso-encre' | 'heros' | 'masque'
   | 'vaisseau' | 'alien'
-export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide', 'origami', 'gribouillis', 'perso-papier', 'perso-pixel', 'perso-encre']
+export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide', 'origami', 'gribouillis', 'perso-papier', 'perso-pixel', 'perso-encre', 'heros', 'masque']
 /** Les familles qui ont une race. */
 export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'minage', 'station']
 

@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -259,6 +259,39 @@ page, `GROUPE`) :
 
 Le gribouillis reste à part : c'est un quatrième style, mais il a été
 écrit avant la séparation et dessine directement.
+
+## Deux autres concepts : les héros en buste et les masques
+
+Keko, après les trois styles : « tu as gardé le concept dessin d'enfant, je
+voulais essayer un autre concept, histoire de voir l'étendue ». Deux
+concepts qui n'ont rien de la patate à yeux :
+
+**Le héros en buste** (`heros.ts`), le portrait d'une carte de jeu de rôle :
+un visage ADULTE construit comme un portrait — une mâchoire (carrée, ovale,
+pointue), des yeux en amande avec iris, pupille et éclat, une paupière
+marquée, des sourcils dont l'angle fait l'expression, un nez en trait, une
+bouche, des oreilles, l'ombre du côté gauche et sous la mâchoire —, une
+coiffure devant (frange ou non) et derrière (longue, queue, crête, chauve),
+une barbe (pleine, bouc, moustache), puis la CLASSE qui habille : le
+guerrier (plastron à rivets, épaulières, casque ouvert à nasal ou heaume à
+fente et cimier), le mage (col haut, broche, chapeau pointu tordu, robe
+liserée), le voleur (col croisé, sangle, capuche qui met le haut du visage
+dans l'ombre, bandeau sur l'œil), l'archer (col lacé, carquois qui dépasse,
+bandana), le barbare (fourrure, casque à cornes, peintures de guerre). Huit
+peaux, neuf couleurs de cheveux, cinq d'iris, trois tenues par classe ;
+cicatrices, boucle d'oreille, couronne. Le buste est coupé par le bas de
+la boîte, comme un portrait.
+
+**Le masque** (`masque.ts`), un OBJET rituel, pas un visage : un contour
+symétrique (ovale, anguleux, oblong, en cœur, rond), une base, des MOTIFS
+découpés par le contour (bandes, chevrons, losanges, rayons autour des
+yeux, moitié d'une autre couleur, bande centrale), des ORBITES claires
+autour des trous sombres (amande, rond, fente, en colère), une arête de nez
+ou un bec, une bouche à dents, une grimace, fermée ou en o, des crocs, des
+marques de joues ; derrière, des plumes en éventail, des rayons de soleil,
+des cornes striées, une crête ; des disques aux tempes, des franges ou des
+perles sous le menton. Huit palettes franches, trait épais. Les plumes et
+les rayons sont bornés à la boîte par calcul.
 
 ## La planète (`planete.ts`)
 
