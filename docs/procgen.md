@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines et vaisseaux 3D toon
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines, vaisseaux, stations, planètes et astéroïdes 3D toon
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -386,6 +386,34 @@ anneaux) ou les pinces, les hachures et les feux de position.
 
 Le nez pointe vers −z ; la vignette le montre de trois quarts, d'au-dessus,
 le nez vers le bas gauche, et la visionneuse tourne autour de y.
+
+## Les stations, planètes et astéroïdes 3D (`corps3d.ts`)
+
+Keko : « tu peux faire aussi station, planète et astéroïdes en mode 3D ? ».
+Trois constructions, la logique toujours pure :
+
+- la STATION est un assemblage de solides durs comme le vaisseau, avec le
+  TORE en plus pour l'anneau ; moyeu (cylindres empilés, cœur accent,
+  parabole), rayons, hublots en pavés clairs tout autour de l'anneau,
+  panneaux solaires (boîte accent, barrettes sombres), modules (sphère ou
+  caisson) ; trois plans : anneau, bras, colonne ;
+- la PLANÈTE est une sphère dont chaque sommet est coloré par une FONCTION
+  PURE, `couleurPlanete(p, x, y, z)` : continents par un BRUIT 3D (une somme
+  de sinus à directions et phases tirées, `bruitDe`, pas de table), rivage
+  en teinte mêlée, calottes aux pôles, bandes ondulées par le bruit,
+  cratères en bol sombre à rebord clair ; un anneau plat incliné
+  (`RingGeometry`, double face) avec sa rainure ; la planète est plus
+  petite quand elle a un anneau ;
+- l'ASTÉROÏDE est une sphère DÉFORMÉE sommet par sommet, `rayonAsteroide` :
+  le bruit fait les bosses, les cratères sont des bols avec un bourrelet,
+  la couleur (`couleurAsteroide`) marque le fond des cratères, le minerai
+  en accent et un grain clair ; des débris, petites sphères déformées par
+  leur propre bruit.
+
+Le rendu (`sphereColoree`) n'évalue que ces fonctions sur les sommets d'une
+sphère de three, recalcule les normales, et pose le même toon et le même
+contour. Le banc vérifie le déterminisme, que les couleurs sont des hex et
+que le rayon déformé reste entre 0,2 et 1.
 
 ## La planète (`planete.ts`)
 

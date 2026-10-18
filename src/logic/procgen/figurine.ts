@@ -17,7 +17,7 @@ import type { XY } from './trace.ts'
 
 export type Boule = { x: number; y: number; z: number; r: number; couleur: string }
 export type Solide = {
-  forme: 'sphere' | 'cone' | 'ellipsoide' | 'octaedre' | 'boite' | 'cylindre' | 'prisme'
+  forme: 'sphere' | 'cone' | 'ellipsoide' | 'octaedre' | 'boite' | 'cylindre' | 'prisme' | 'tore'
   x: number
   y: number
   z: number
@@ -26,7 +26,7 @@ export type Solide = {
   axe?: 'x' | 'y'
   epaisseur?: number
   biseau?: number
-  /** Un cylindre : les rayons du haut et du bas, relatifs à l'échelle. */
+  /** Un cylindre : les rayons du haut et du bas, relatifs à l'échelle. Un tore : le grand rayon et celui du tube. */
   rayons?: readonly [number, number]
   /** L'échelle par axe (un cône : rayon, hauteur, rayon). */
   s: readonly [number, number, number]

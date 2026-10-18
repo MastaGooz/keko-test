@@ -5,6 +5,7 @@
 import { BOITE, FAMILLES, RACES, ROLES, genererDessin, seedDe, type Famille, type Race } from './index.ts'
 import { figurineSaine, genererFigurine } from './figurine.ts'
 import { genererVaisseau3D } from './vaisseau3d.ts'
+import { couleurAsteroide, couleurPlanete, genererAsteroide3D, genererPlanete3D, genererStation3D, rayonAsteroide } from './corps3d.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -80,6 +81,26 @@ for (let i = 0; i < 300; i++) {
   }
 }
 verifier('300 vaisseaux 3D sains, dans le cube', sains3d)
+console.log('corps 3D')
+verifier('même id = même station', JSON.stringify(genererStation3D('y-1')) === JSON.stringify(genererStation3D('y-1')))
+verifier('même id = même planète', JSON.stringify(genererPlanete3D('n-1')) === JSON.stringify(genererPlanete3D('n-1')))
+let corpsSains = true
+for (let i = 0; i < 200; i++) {
+  const p = genererPlanete3D(`n-${i}`)
+  const a = genererAsteroide3D(`r-${i}`)
+  for (let k = 0; k < 20; k++) {
+    const t = (k / 20) * Math.PI * 2
+    const x = Math.cos(t) * 0.8
+    const y = Math.sin(t * 1.7) * 0.6
+    const z = Math.sqrt(Math.max(0, 1 - x * x - y * y))
+    if (!/^#[0-9a-f]{6}$/i.test(couleurPlanete(p, x, y, z))) corpsSains = false
+    if (!/^#[0-9a-f]{6}$/i.test(couleurAsteroide(a, x, y, z))) corpsSains = false
+    const r = rayonAsteroide(a, x, y, z)
+    if (!(r > 0.2 && r < 1)) corpsSains = false
+  }
+  for (const s of genererStation3D(`y-${i}`).solides) if (![s.x, s.y, s.z].every((v) => Number.isFinite(v) && Math.abs(v) <= 1.2)) corpsSains = false
+}
+verifier('200 planètes, astéroïdes et stations sains', corpsSains)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

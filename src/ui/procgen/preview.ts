@@ -18,6 +18,9 @@ const PAR_FAMILLE = 30
 /** Les familles 3D : pas des dessins SVG, des objets rendus en toon par three.js. */
 const SORTES_3D: readonly { sorte: Sorte3D; titre: string; prefixe: string }[] = [
   { sorte: 'vaisseau3d', titre: 'Vaisseaux 3D toon (toucher pour faire tourner)', prefixe: 'w' },
+  { sorte: 'station3d', titre: 'Stations 3D toon (toucher pour faire tourner)', prefixe: 'y' },
+  { sorte: 'planete3d', titre: 'Planètes 3D toon (toucher pour faire tourner)', prefixe: 'n' },
+  { sorte: 'asteroide3d', titre: 'Astéroïdes 3D toon (toucher pour faire tourner)', prefixe: 'r' },
   { sorte: 'figurine', titre: 'Figurines 3D toon (toucher pour faire tourner)', prefixe: 'f' },
 ]
 const est3D = (f: string): f is Sorte3D => SORTES_3D.some((s) => s.sorte === f)

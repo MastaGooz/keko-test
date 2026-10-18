@@ -17,8 +17,9 @@ import * as THREE from 'three'
 import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes.js'
 import { genererFigurine, type Figurine, type Solide } from '../../logic/procgen/figurine.ts'
 import { genererVaisseau3D } from '../../logic/procgen/vaisseau3d.ts'
+import { couleurAsteroide, couleurPlanete, genererAsteroide3D, genererPlanete3D, genererStation3D, rayonAsteroide, bruit, type Asteroide3D, type Bruit } from '../../logic/procgen/corps3d.ts'
 
-export type Sorte3D = 'figurine' | 'vaisseau3d'
+export type Sorte3D = 'figurine' | 'vaisseau3d' | 'station3d' | 'planete3d' | 'asteroide3d'
 
 const RESOLUTION = 56
 const ISOLATION = 80
@@ -134,6 +135,10 @@ function geometrieDe(s: Solide): { geo: THREE.BufferGeometry; partagee: boolean 
     const [h, b] = s.rayons ?? [1, 1]
     return { geo: new THREE.CylinderGeometry(h, b, 1, 24), partagee: false }
   }
+  if (s.forme === 'tore') {
+    const [R, tube] = s.rayons ?? [0.5, 0.1]
+    return { geo: new THREE.TorusGeometry(R, tube, 14, 56), partagee: false }
+  }
   if (s.forme === 'prisme' && s.pts) {
     // Le polygone dans le plan de la Shape, extrudé le long de z, puis couché.
     const shape = new THREE.Shape(s.pts.map(([a, b]) => new THREE.Vector2(a, b)))
@@ -176,8 +181,91 @@ export function monterFigurine(f: Figurine): THREE.Group {
   return groupe
 }
 
+/** Une sphère colorée sommet par sommet, et déformée si `rayon` est donné. */
+function sphereColoree(
+  couleur: (x: number, y: number, z: number) => string,
+  rayon: (x: number, y: number, z: number) => number,
+  contour: string,
+  segments = 64,
+): THREE.Mesh {
+  const geo = new THREE.SphereGeometry(1, segments, Math.round(segments * 0.75))
+  const pos = geo.attributes.position
+  const couleurs = new Float32Array(pos.count * 3)
+  const c = new THREE.Color()
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i)
+    const y = pos.getY(i)
+    const z = pos.getZ(i)
+    const r = rayon(x, y, z)
+    pos.setXYZ(i, x * r, y * r, z * r)
+    c.set(couleur(x, y, z))
+    couleurs[i * 3] = c.r
+    couleurs[i * 3 + 1] = c.g
+    couleurs[i * 3 + 2] = c.b
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(couleurs, 3))
+  geo.computeVertexNormals()
+  const mesh = new THREE.Mesh(geo, materiauToon('#ffffff', 1, true))
+  mesh.add(new THREE.Mesh(geo, materiauContour(contour)))
+  return mesh
+}
+
+function monterPlanete(id: string): THREE.Group {
+  const p = genererPlanete3D(id)
+  const g = new THREE.Group()
+  g.add(sphereColoree((x, y, z) => couleurPlanete(p, x, y, z), () => p.rayon, p.palette.ombre))
+  if (p.anneau) {
+    const geo = new THREE.RingGeometry(p.anneau.interieur, p.anneau.exterieur, 72, 1)
+    const m = materiauToon(p.anneau.couleur, 0.92)
+    m.side = THREE.DoubleSide
+    const anneau = new THREE.Mesh(geo, m)
+    anneau.rotation.set(Math.PI / 2 + p.anneau.inclinaison[0], 0, p.anneau.inclinaison[1])
+    g.add(anneau)
+    // Une rainure sombre au milieu de l'anneau.
+    const rm = (p.anneau.interieur + p.anneau.exterieur) / 2
+    const rainure = new THREE.Mesh(new THREE.RingGeometry(rm - 0.012, rm + 0.012, 72, 1), materiauToon(p.palette.ombre, 0.5))
+    ;(rainure.material as THREE.Material).side = THREE.DoubleSide
+    rainure.rotation.copy(anneau.rotation)
+    rainure.position.y += 0.002
+    g.add(rainure)
+  }
+  g.rotation.set(0.25, -0.5, 0)
+  return g
+}
+
+function debris(a: Asteroide3D, d: { x: number; y: number; z: number; r: number; bruit: Bruit }): THREE.Mesh {
+  const m = sphereColoree(
+    (x, y, z) => (bruit(d.bruit, x * 2, y * 2, z * 2) > 0.3 ? a.palette.secondaire : a.palette.principale),
+    (x, y, z) => d.r * (1 + 0.25 * bruit(d.bruit, x, y, z)),
+    a.palette.ombre,
+    24,
+  )
+  m.position.set(d.x, d.y, d.z)
+  return m
+}
+
+function monterAsteroide(id: string): THREE.Group {
+  const a = genererAsteroide3D(id)
+  const g = new THREE.Group()
+  g.add(sphereColoree((x, y, z) => couleurAsteroide(a, x, y, z), (x, y, z) => rayonAsteroide(a, x, y, z), a.palette.ombre, 72))
+  for (const d of a.debris) g.add(debris(a, d))
+  g.rotation.set(0.3, -0.4, 0.1)
+  return g
+}
+
 /** L'objet 3D d'une sorte, monté et orienté pour la vue. */
 function monter(sorte: Sorte3D, id: string): THREE.Group {
+  if (sorte === 'planete3d') return monterPlanete(id)
+  if (sorte === 'asteroide3d') return monterAsteroide(id)
+  if (sorte === 'station3d') {
+    const st = genererStation3D(id)
+    const g = new THREE.Group()
+    monterSolides(st.solides, st.palette.ombre, g)
+    // Vue d'au-dessus, de trois quarts.
+    g.rotation.set(0.75, -0.4, 0)
+    g.scale.setScalar(1.05)
+    return g
+  }
   if (sorte === 'figurine') {
     const g = monterFigurine(genererFigurine(id))
     g.rotation.y = -0.35
