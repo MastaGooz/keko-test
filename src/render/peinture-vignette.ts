@@ -8,7 +8,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, stickerDe, sujetDe, surfaceDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, peindreCarte, placeDuColle, stickerDe, sujetDe, surfaceDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -170,6 +170,68 @@ function cerneArcEnCielDuSujet(toile: HTMLCanvasElement): void {
   }
   ctx.putImageData(carte, 0, 0)
   SUJETS_HOLO.set(toile, { ...s, image: colore })
+}
+
+/**
+ * LE CERNE ARC-EN-CIEL D'UN STICKER HOLO COLLÉ, SUR SES PIXELS SEULS. Keko :
+ * « la zone autour d'un sticker holo va colorer également l'outline de
+ * l'emoji de la carte dans sa zone (il colore aussi l'outline blanc des
+ * autres stickers). Sa zone est le rectangle qui le contient ». *C'était
+ * `cerneArcEnCiel` lâché sur le rectangle du sticker* : il colore tout le
+ * crème qu'il trouve, et l'emoji comme les voisins y passent. On fait donc
+ * comme pour l'emoji (`cerneArcEnCielDuSujet`) : le sticker seul, posé à sa
+ * place sur du transparent, avant et après son arc-en-ciel (le spectre
+ * tourne autour du sticker), et la carte reçoit la différence prémultipliée
+ * — rien d'autre que le sticker ne change.
+ */
+function arcEnCielDUnColle(toile: HTMLCanvasElement, col: StickerPeint, i: number): void {
+  const ctx = toile.getContext('2d', { willReadFrequently: true })
+  if (ctx === null) return
+  const l = toile.width
+  const h = toile.height
+  const R = RAYONS_DANS_LA_CARTE
+  const z = zoneDuColle(col, i)
+  const zx = Math.floor(z.x * l)
+  const zy = Math.floor(z.y * h)
+  const zl = Math.ceil(z.l * l)
+  const zh = Math.ceil(z.h * h)
+  if (zl <= 0 || zh <= 0) return
+  const { x, y, a } = placeDuColle(col, i)
+  const taille = TAILLE_COLLE * R.l * l
+  const poser = (image: CanvasImageSource): Uint8ClampedArray | null => {
+    const c = document.createElement('canvas')
+    c.width = zl
+    c.height = zh
+    const g = c.getContext('2d', { willReadFrequently: true })
+    if (g === null) return null
+    g.translate((R.x + x * R.l) * l - zx, (R.y + y * R.h) * h - zy)
+    g.rotate(a)
+    g.drawImage(image, -taille / 2, -taille / 2, taille, taille)
+    return g.getImageData(0, 0, zl, zh).data
+  }
+  // Le sticker coloré : sa copie, le spectre autour de son propre centre.
+  const colore = document.createElement('canvas')
+  colore.width = col.image.width
+  colore.height = col.image.height
+  const cc = colore.getContext('2d', { willReadFrequently: true })
+  if (cc === null) return
+  cc.drawImage(col.image, 0, 0)
+  cerneArcEnCiel(colore, { x: 0, y: 0, l: 1, h: 1 })
+  const avant = poser(col.image)
+  const apres = poser(colore)
+  if (avant === null || apres === null) return
+  const carte = ctx.getImageData(zx, zy, zl, zh)
+  const d = carte.data
+  for (let k = 0; k < d.length; k += 4) {
+    const a0 = avant[k + 3]!
+    const a1 = apres[k + 3]!
+    if (a0 === 0 && a1 === 0) continue
+    for (let n = 0; n < 3; n++) {
+      const delta = (apres[k + n]! * a1 - avant[k + n]! * a0) / 255
+      d[k + n] = Math.max(0, Math.min(255, Math.round(d[k + n]! + delta)))
+    }
+  }
+  ctx.putImageData(carte, zx, zy)
 }
 
 /**
@@ -718,10 +780,10 @@ export function peinte(
       if (!sansSujet) cerneArcEnCielDuSujet(toile)
       if (paillettes) paillettesHolo(toile, c.id)
     }
-    // LES STICKERS HOLO COLLÉS ont leur cerne arc-en-ciel figé, chacun dans sa
-    // zone, autour de son centre — après celui de l'emoji, qui les a épargnés.
+    // LES STICKERS HOLO COLLÉS ont leur cerne arc-en-ciel figé, SUR LEURS PIXELS
+    // SEULS — après celui de l'emoji, qui les a épargnés.
     colles.forEach((col, i) => {
-      if (col.holo) cerneArcEnCiel(toile, zoneDuColle(col, i))
+      if (col.holo) arcEnCielDUnColle(toile, col, i)
     })
     return toile
   })
