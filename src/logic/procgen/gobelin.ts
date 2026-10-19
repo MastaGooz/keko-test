@@ -14,20 +14,31 @@
  * l'expression, la peau, la taille des oreilles, les verrues, la boucle.
  *
  * Pas de contour noir : des dégradés et un liseré sombre fin, comme Noto.
+ *
+ * LA FINITION A ÉTÉ DESSINÉE DANS INKSCAPE, puis reportée ici (19 octobre
+ * 2026) : les oreilles et le nez sont des cubiques tracées à la main
+ * (`cubiques`), pas des polygones ; l'oreille a un dedans à son propre
+ * dégradé et un ourlet sombre ; la tête porte un voile de menton (dégradé
+ * à arrêt transparent), l'ombre floue des oreilles, le reflet flou du front
+ * et une arcade sourcilière ; l'œil a l'ombre de sa paupière, une sclère
+ * dégradée, un iris doré et deux reflets ; la bouche a sa lèvre éclairée.
+ * *On a dessiné une tête à la main en regardant le rendu, puis on a écrit
+ * les chiffres qu'on avait trouvés.*
  */
 import { createRng, type Rng } from '../rng.ts'
 import { AXE, BOITE, type Clip, type Degrade, type Dessin, type Forme } from './types.ts'
 import { seedDe } from './seed.ts'
 import { chance, choix, entre, pondere } from './hasard.ts'
-import { cercle, courbe, courbeOuverte, ellipse, polygone, rect, type Point } from './trace.ts'
+import { cercle, courbe, courbeOuverte, cubiques, ellipse, polygone, rect, type Point, type XY } from './trace.ts'
 
-type Peau = { nom: string; clair: string; moyen: string; sombre: string; trait: string; oreille: string }
+/** Une peau : quatre valeurs de la teinte, et le dedans de l'oreille en trois. */
+type Peau = { nom: string; clair: string; moyen: string; sombre: string; trait: string; oreille: readonly [string, string, string] }
 const PEAUX: readonly Peau[] = [
-  { nom: 'vert', clair: '#b5e06a', moyen: '#7fbe3f', sombre: '#4a8a24', trait: '#2e5a14', oreille: '#d98a7a' },
-  { nom: 'olive', clair: '#cfd66a', moyen: '#9aa83a', sombre: '#5f6a1e', trait: '#3a4210', oreille: '#d9a27a' },
-  { nom: 'sauge', clair: '#b8d29a', moyen: '#86aa6a', sombre: '#4f7a3e', trait: '#2f4a26', oreille: '#d8908a' },
-  { nom: 'hobgobelin', clair: '#f0b06a', moyen: '#d4833e', sombre: '#8f4e1e', trait: '#55300f', oreille: '#e8a090' },
-  { nom: 'gris', clair: '#c9d2c6', moyen: '#9aa89a', sombre: '#5c6b5c', trait: '#36423a', oreille: '#c9a0a0' },
+  { nom: 'vert', clair: '#c4ea78', moyen: '#8cc848', sombre: '#5a9a2c', trait: '#2e5a14', oreille: ['#f0a890', '#c8705e', '#7a3a2c'] },
+  { nom: 'olive', clair: '#d8de74', moyen: '#a4b23e', sombre: '#6a7622', trait: '#3a4210', oreille: ['#f0b890', '#c8865e', '#7a4a2c'] },
+  { nom: 'sauge', clair: '#c4dca4', moyen: '#90b472', sombre: '#56843e', trait: '#2f4a26', oreille: ['#f0a8a0', '#c8706a', '#7a3a36'] },
+  { nom: 'hobgobelin', clair: '#f6bc78', moyen: '#dc8c44', sombre: '#9a5622', trait: '#55300f', oreille: ['#f6b4a8', '#d07a6a', '#7a3a2c'] },
+  { nom: 'gris', clair: '#d2dace', moyen: '#a2b0a2', sombre: '#667566', trait: '#36423a', oreille: ['#dcb4b4', '#b07a7a', '#6a4040'] },
 ]
 
 type Yeux = 'ronds' | 'plisses' | 'faches' | 'clin' | 'miClos' | 'grands' | 'coeurs' | 'etoiles' | 'croix' | 'fermes' | 'pieces' | 'inquiets'
@@ -65,10 +76,40 @@ const CY = 68
 const R = 46
 const OR = { clair: '#ffe27a', moyen: '#f2b73a', sombre: '#b8741a' }
 const ROUGE = { clair: '#ff6b5a', moyen: '#d93a2a', sombre: '#8f1f14' }
+const BLANC = '#fffbea'
+/** L'iris doré, et l'iris rouge de la colère. */
+const IRIS = { dore: ['#d9b23a', '#8a6a14', '#3a2a06'], rouge: ['#e05a3a', '#8f1f14', '#3a0a06'] } as const
+/** Le dedans de la bouche : du trait de la peau en haut au rouge sombre en bas. */
+const BOUCHE_BAS = '#4a1a12'
+/** Les flous : l'ombre portée, et le flou fin d'un reflet ou d'une paupière. */
+const FLOU = 2.2
+const FLOU_FIN = 1
 
 /** Un dégradé radial « Noto » : clair en haut à gauche, sombre au bord. */
 function radial(cx: number, cy: number, r: number, clair: string, moyen: string, sombre: string, fx = -0.3, fy = -0.3): Degrade {
   return { type: 'radial', cx: cx + r * fx, cy: cy + r * fy, r: r * 1.35, arrets: [[0, clair], [0.55, moyen], [1, sombre]] }
+}
+/** Un dégradé radial à centre donné, en quatre arrêts (celui de la tête). */
+function radial4(cx: number, cy: number, r: number, arrets: readonly [string, string, string, string]): Degrade {
+  return { type: 'radial', cx, cy, r, arrets: [[0, arrets[0]], [0.45, arrets[1]], [0.85, arrets[2]], [1, arrets[3]]] }
+}
+/** Un triangle de croc, pointe en bas (`bas`) ou en haut, le trait fin de la peau. */
+function croc(formes: Forme[], trait: string, x: number, y: number, h: number, bas: boolean, l = 3): void {
+  formes.push({ d: polygone([[x - l, y, 0.5], [x + l, y, 0.5], [x, y + (bas ? h : -h), 1]]), fill: BLANC, stroke: trait, epaisseur: 0.6 })
+}
+/** Les tracés d'une oreille droite, dans le repère de la tête ; `t` étire la pointe. */
+function oreilleDroite(t: number): { dehors: string; dedans: string; ourlet: string } {
+  const P = (x: number, y: number): XY => [CX + x, CY + y]
+  // La pointe et ses contrôles s'éloignent de la base (32, −20) avec la taille ; à 1,3 la pointe reste dans la boîte.
+  const E = (x: number, y: number): XY => P(32 + (x - 32) * t, -20 + (y + 20) * t)
+  const dehors = cubiques(P(32, -20), [[E(38, -30), E(47, -42), E(56, -50)], [E(53, -34), P(52, -18), P(48, -4)], [P(44, 6), P(34, 8), P(30, 2)]])
+  const dedans = cubiques(P(33, -16), [[E(38, -24), E(46, -34), E(52, -42)], [E(49, -30), P(47, -18), P(44, -8)], [P(41, 0), P(34, 0), P(32, -4)]])
+  const ourlet = cubiques(P(33, -16), [[E(38, -24), E(46, -34), E(52, -42)], [E(47, -32), P(43, -22), P(38, -12)]], false)
+  return { dehors, dedans, ourlet }
+}
+/** Le même tracé, miroir sur l'axe de la tête (les tracés n'ont que des M, L, Q et C absolus). */
+function miroirX(d: string): string {
+  return d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => `${Math.round((2 * CX - Number(x)) * 10) / 10} ${y}`)
 }
 
 export function genererGobelin(id: string): Dessin {
@@ -79,43 +120,38 @@ export function genererGobelin(id: string): Dessin {
   const formes: Forme[] = []
   const clips: Clip[] = []
   const orn = new Set(expr.ornements ?? [])
-  const degTete = radial(CX, CY, R, peau.clair, peau.moyen, peau.sombre)
   const degPeau = (cx: number, cy: number, r: number) => radial(cx, cy, r, peau.clair, peau.moyen, peau.sombre)
+  const degTete = radial4(CX - 16, CY - 18, 64, [peau.clair, peau.moyen, peau.sombre, peau.trait])
 
   // --- les oreilles, derrière la tête ---------------------------------------------------------
   const tailleOreille = entre(rng, 0.9, 1.3)
-  const oreille = (s: number) => {
-    const bx = CX + s * R * 0.8
-    const pts: Point[] = [
-      [bx, CY - 14, 6],
-      [CX + s * (R * 0.8 + 14 * tailleOreille), CY - 22 - 16 * tailleOreille, 3],
-      [CX + s * (R * 0.9 + 10), CY + 2, 8],
-      [bx, CY + 12, 8],
-    ]
-    formes.push({ d: polygone(pts), fill: peau.moyen, degrade: degPeau(bx + s * 10, CY - 8, 26), stroke: peau.sombre, epaisseur: 1.2 })
-    const dedans: Point[] = [
-      [bx + s * 4, CY - 10, 4],
-      [CX + s * (R * 0.8 + 9 * tailleOreille), CY - 18 - 11 * tailleOreille, 2],
-      [CX + s * (R * 0.9 + 8), CY - 2, 5],
-      [bx + s * 4, CY + 6, 5],
-    ]
-    formes.push({ d: polygone(dedans), fill: peau.oreille, opacite: 0.75 })
+  const droite = oreilleDroite(tailleOreille)
+  for (const s of [-1, 1]) {
+    const m = (d: string) => (s < 0 ? miroirX(d) : d)
+    formes.push({ d: m(droite.dehors), fill: peau.moyen, degrade: { type: 'radial', cx: CX + s * 44, cy: CY - 28, r: 34, arrets: [[0, peau.clair], [0.6, peau.moyen], [1, peau.sombre]] } })
+    formes.push({ d: m(droite.dedans), fill: peau.oreille[1], degrade: { type: 'radial', cx: CX + s * 42, cy: CY - 10, r: 26, arrets: [[0, peau.oreille[0]], [0.7, peau.oreille[1]], [1, peau.oreille[2]]] } })
+    formes.push({ d: m(droite.ourlet), fill: 'none', stroke: peau.oreille[2], epaisseur: 1.2, opacite: 0.6 })
   }
-  oreille(-1)
-  oreille(1)
   // La boucle d'oreille, parfois.
   if (chance(rng, 0.25)) {
     const s = chance(rng, 0.5) ? 1 : -1
-    formes.push({ d: cercle(CX + s * (R * 0.9 + 6), CY + 12, 4), fill: 'none', stroke: OR.moyen, epaisseur: 2.2 })
+    formes.push({ d: cercle(CX + s * (R * 0.9 + 6), CY + 10, 4), fill: 'none', stroke: OR.moyen, epaisseur: 2.2 })
   }
 
   // --- la tête ---------------------------------------------------------------------------------
   const dTete = cercle(CX, CY, R)
   clips.push({ id: 'tete', chemins: [dTete] })
   formes.push({ d: dTete, fill: peau.moyen, degrade: degTete })
-  // Le menton plus sombre, et le reflet du front.
-  formes.push({ d: ellipse(CX, CY + R * 0.75, R * 0.8, R * 0.35), fill: peau.sombre, opacite: 0.25, clip: 'tete' })
-  formes.push({ d: ellipse(CX - R * 0.3, CY - R * 0.55, R * 0.35, R * 0.18), fill: '#ffffff', opacite: 0.22, clip: 'tete' })
+  // Le voile du menton : transparent au milieu, le trait en bas.
+  formes.push({ d: dTete, fill: peau.trait, degrade: { type: 'lineaire', x1: 0, y1: CY + 2, x2: 0, y2: CY + R, arrets: [[0, peau.trait, 0], [1, peau.trait, 0.45]] } })
+  // L'ombre floue des oreilles sur la tête, le reflet flou du front.
+  for (const s of [-1, 1]) formes.push({ d: ellipse(CX + s * 42, CY - 4, 6, 14), fill: peau.trait, opacite: 0.35, flou: FLOU, clip: 'tete' })
+  formes.push({ d: ellipse(CX - 18, CY - 28, 16, 8), fill: '#ffffff', opacite: 0.28, flou: FLOU, clip: 'tete' })
+  // L'arcade sourcilière : un creux sombre au-dessus de chaque œil.
+  for (const s of [-1, 1]) {
+    const P = (x: number, y: number): XY => [CX + s * x, CY + y]
+    formes.push({ d: cubiques(P(34, -16), [[P(24, -28), P(8, -26), P(2, -20)], [P(8, -22), P(20, -20), P(28, -12)]]), fill: peau.trait, opacite: 0.5, flou: FLOU, clip: 'tete' })
+  }
   // Les verrues.
   const nbVerrues = Math.floor(rng.next() * 4)
   for (let i = 0; i < nbVerrues; i++) {
@@ -125,67 +161,107 @@ export function genererGobelin(id: string): Dessin {
     const y = CY + Math.sin(a) * d
     if (y > CY - 6 && y < CY + 26 && Math.abs(x - CX) < 26) continue // pas sur le nez ni la bouche
     const r = entre(rng, 2.2, 3.4)
-    formes.push({ d: cercle(x, y, r), fill: peau.sombre, opacite: 0.9, clip: 'tete' })
+    formes.push({ d: cercle(x, y, r), fill: peau.sombre, degrade: radial(x, y, r, peau.moyen, peau.sombre, peau.trait), clip: 'tete' })
     formes.push({ d: cercle(x - r * 0.3, y - r * 0.3, r * 0.4), fill: peau.clair, opacite: 0.8, clip: 'tete' })
   }
 
   // --- la bouche ------------------------------------------------------------------------------
-  const yB = CY + R * 0.5
-  const lB = R * 0.55
-  const croc = (x: number, y: number, h: number, bas: boolean) =>
-    formes.push({ d: polygone([[x - 3, y, 0], [x + 3, y, 0], [x, y + (bas ? -h : h), 1]]), fill: '#fffbea', stroke: peau.sombre, epaisseur: 0.8 })
+  const yB = CY + 18
+  const lB = 27
+  const trait = peau.trait
+  const degBouche = (haut: number, bas: number): Degrade => ({ type: 'lineaire', x1: 0, y1: haut, x2: 0, y2: bas, arrets: [[0, trait], [1, BOUCHE_BAS]] })
+  const P = (x: number, y: number): XY => [CX + x, yB + y]
+  /** Le trait de la lèvre du haut, et la lumière sur la lèvre du bas. */
+  const levres = (haut: string, bas: string) => {
+    formes.push({ d: haut, fill: 'none', stroke: trait, epaisseur: 1.6, opacite: 0.8 })
+    formes.push({ d: bas, fill: 'none', stroke: peau.clair, epaisseur: 1.4, opacite: 0.45 })
+  }
   const b = expr.bouche
   if (b === 'sourire' || b === 'sournois') {
-    const s = b === 'sournois' ? 1 : 0
-    formes.push({ d: courbe([[CX - lB, yB - 2 + s * 6], [CX, yB + 8], [CX + lB, yB - 2 - s * 4], [CX, yB + 2]], 0.4), fill: peau.trait })
-    if (b === 'sourire') for (const dx of [-lB * 0.45, lB * 0.45]) croc(CX + dx, yB + 1, 5, true)
-    else croc(CX + lB * 0.5, yB - 1, 6, true)
+    // Le sourire ; sournois : un coin relevé, l'autre bas.
+    const g = b === 'sournois' ? 6 : 0
+    const dr = b === 'sournois' ? -6 : 0
+    const haut = cubiques(P(-lB, -4 + g), [[P(-lB * 0.6, 6 + g * 0.5), P(lB * 0.6, 6 + dr * 0.5), P(lB, -4 + dr)]], false)
+    formes.push({ d: cubiques(P(-lB, -4 + g), [[P(-lB * 0.6, 6 + g * 0.5), P(lB * 0.6, 6 + dr * 0.5), P(lB, -4 + dr)], [P(lB * 0.9, 16 + dr), P(-lB * 0.9, 16 + g), P(-lB, -4 + g)]]), fill: trait, degrade: degBouche(yB - 4, yB + 16) })
+    formes.push({ d: cubiques(P(-lB * 0.85, -1 + g * 0.8), [[P(-lB * 0.5, 4 + g * 0.4), P(lB * 0.5, 4 + dr * 0.4), P(lB * 0.85, -1 + dr * 0.8)], [P(lB * 0.8, 5 + dr * 0.8), P(-lB * 0.8, 5 + g * 0.8), P(-lB * 0.85, -1 + g * 0.8)]]), fill: BLANC })
+    if (b === 'sourire') for (const dx of [-lB * 0.6, lB * 0.6]) croc(formes, trait, CX + dx, yB + 2, 10, true)
+    else croc(formes, trait, CX + lB * 0.55, yB - 1, 10, true)
+    levres(haut, cubiques(P(-lB * 0.85, 12 + g), [[P(-lB * 0.5, 18 + g * 0.5), P(lB * 0.5, 18 + dr * 0.5), P(lB * 0.85, 12 + dr)]], false))
   } else if (b === 'rire') {
-    formes.push({ d: courbe([[CX - lB, yB - 6], [CX, yB - 2], [CX + lB, yB - 6], [CX + lB * 0.7, yB + 14], [CX, yB + 20], [CX - lB * 0.7, yB + 14]], 0.45), fill: ROUGE.sombre })
-    formes.push({ d: ellipse(CX, yB + 13, lB * 0.45, 7), fill: ROUGE.moyen, clip: 'tete' })
-    formes.push({ d: rect(CX - lB * 0.85, yB - 5, lB * 1.7, 5, 2), fill: '#fffbea' })
-    for (const dx of [-lB * 0.6, lB * 0.6]) croc(CX + dx, yB - 1, 7, false)
+    const haut = cubiques(P(-lB, -6), [[P(-lB * 0.5, -2), P(lB * 0.5, -2), P(lB, -6)]], false)
+    formes.push({ d: cubiques(P(-lB, -6), [[P(-lB * 0.5, -2), P(lB * 0.5, -2), P(lB, -6)], [P(lB * 0.9, 22), P(-lB * 0.9, 22), P(-lB, -6)]]), fill: trait, degrade: degBouche(yB - 6, yB + 22) })
+    formes.push({ d: ellipse(CX, yB + 15, lB * 0.45, 8), fill: ROUGE.moyen, degrade: radial(CX, yB + 15, 10, ROUGE.clair, ROUGE.moyen, ROUGE.sombre, -0.2, -0.5), clip: 'tete' })
+    formes.push({ d: cubiques(P(-lB * 0.9, -4), [[P(-lB * 0.5, 0), P(lB * 0.5, 0), P(lB * 0.9, -4)], [P(lB * 0.8, 3), P(-lB * 0.8, 3), P(-lB * 0.9, -4)]]), fill: BLANC })
+    for (const dx of [-lB * 0.62, lB * 0.62]) croc(formes, trait, CX + dx, yB + 16, 8, false)
+    levres(haut, cubiques(P(-lB * 0.8, 18), [[P(-lB * 0.4, 24), P(lB * 0.4, 24), P(lB * 0.8, 18)]], false))
   } else if (b === 'grimace') {
-    formes.push({ d: courbeOuverte([[CX - lB, yB + 8], [CX, yB - 2], [CX + lB, yB + 8]]), fill: 'none', stroke: peau.trait, epaisseur: 5 })
-    for (const dx of [-lB * 0.5, lB * 0.5]) croc(CX + dx, yB + 1 + Math.abs(dx) * 0.1, 6, false)
+    const haut = cubiques(P(-lB, 8), [[P(-lB * 0.5, -4), P(lB * 0.5, -4), P(lB, 8)]], false)
+    formes.push({ d: cubiques(P(-lB, 8), [[P(-lB * 0.5, -4), P(lB * 0.5, -4), P(lB, 8)], [P(lB * 0.6, 12), P(-lB * 0.6, 12), P(-lB, 8)]]), fill: trait, degrade: degBouche(yB - 4, yB + 12) })
+    formes.push({ d: cubiques(P(-lB * 0.8, 7), [[P(-lB * 0.5, -1), P(lB * 0.5, -1), P(lB * 0.8, 7)], [P(lB * 0.5, 8), P(-lB * 0.5, 8), P(-lB * 0.8, 7)]]), fill: BLANC })
+    for (let i = 1; i < 5; i++) formes.push({ d: rect(CX - lB * 0.8 + ((lB * 1.6) * i) / 5 - 0.5, yB - 2 + Math.abs(i - 2.5) * 1.2, 1, 7), fill: trait, opacite: 0.5 })
+    for (const dx of [-lB * 0.55, lB * 0.55]) croc(formes, trait, CX + dx, yB + 9, 8, false, 2.6)
+    levres(haut, cubiques(P(-lB * 0.85, 13), [[P(-lB * 0.4, 9), P(lB * 0.4, 9), P(lB * 0.85, 13)]], false))
   } else if (b === 'o') {
-    formes.push({ d: ellipse(CX, yB + 4, lB * 0.45, lB * 0.6), fill: ROUGE.sombre })
-    formes.push({ d: ellipse(CX, yB + 12, lB * 0.28, lB * 0.22), fill: ROUGE.moyen })
+    formes.push({ d: ellipse(CX, yB + 4, lB * 0.42, lB * 0.58), fill: trait, degrade: degBouche(yB - 10, yB + 18) })
+    formes.push({ d: ellipse(CX, yB + 13, lB * 0.26, lB * 0.2), fill: ROUGE.moyen, degrade: radial(CX, yB + 13, 6, ROUGE.clair, ROUGE.moyen, ROUGE.sombre, -0.2, -0.5) })
+    formes.push({ d: ellipse(CX, yB + 4, lB * 0.42, lB * 0.58), fill: 'none', stroke: trait, epaisseur: 1.4, opacite: 0.8 })
+    formes.push({ d: courbeOuverte([[CX - lB * 0.3, yB + 20], [CX, yB + 23], [CX + lB * 0.3, yB + 20]]), fill: 'none', stroke: peau.clair, epaisseur: 1.4, opacite: 0.45 })
   } else if (b === 'langue') {
-    formes.push({ d: courbe([[CX - lB, yB - 2], [CX, yB + 8], [CX + lB, yB - 2], [CX, yB + 2]], 0.4), fill: peau.trait })
-    formes.push({ d: courbe([[CX - 4, yB + 2], [CX + 10, yB + 2], [CX + 11, yB + 14], [CX + 2, yB + 17], [CX - 5, yB + 10]], 0.5), fill: ROUGE.moyen, stroke: ROUGE.sombre, epaisseur: 1 })
-    croc(CX - lB * 0.5, yB + 1, 5, true)
+    const haut = cubiques(P(-lB, -4), [[P(-lB * 0.6, 6), P(lB * 0.6, 6), P(lB, -4)]], false)
+    formes.push({ d: cubiques(P(-lB, -4), [[P(-lB * 0.6, 6), P(lB * 0.6, 6), P(lB, -4)], [P(lB * 0.9, 14), P(-lB * 0.9, 14), P(-lB, -4)]]), fill: trait, degrade: degBouche(yB - 4, yB + 14) })
+    formes.push({ d: courbe([[CX - 4, yB + 2], [CX + 11, yB + 1], [CX + 13, yB + 15], [CX + 3, yB + 19], [CX - 6, yB + 10]], 0.5), fill: ROUGE.moyen, degrade: radial(CX + 4, yB + 10, 12, ROUGE.clair, ROUGE.moyen, ROUGE.sombre, -0.3, -0.4), stroke: ROUGE.sombre, epaisseur: 0.8 })
+    formes.push({ d: courbeOuverte([[CX + 3, yB + 5], [CX + 5, yB + 11], [CX + 4, yB + 16]]), fill: 'none', stroke: ROUGE.sombre, epaisseur: 0.8, opacite: 0.6 })
+    croc(formes, trait, CX - lB * 0.55, yB + 1, 9, true)
+    levres(haut, cubiques(P(-lB * 0.85, 11), [[P(-lB * 0.5, 16), P(lB * 0.5, 16), P(lB * 0.85, 11)]], false))
   } else if (b === 'crocs') {
-    formes.push({ d: courbeOuverte([[CX - lB, yB], [CX, yB + 5], [CX + lB, yB]]), fill: 'none', stroke: peau.trait, epaisseur: 4 })
-    for (const dx of [-lB * 0.55, lB * 0.55]) croc(CX + dx, yB + 1 + Math.abs(dx) * 0.08, 9, false)
+    const haut = cubiques(P(-lB, 0), [[P(-lB * 0.5, 6), P(lB * 0.5, 6), P(lB, 0)]], false)
+    formes.push({ d: cubiques(P(-lB, 0), [[P(-lB * 0.5, 6), P(lB * 0.5, 6), P(lB, 0)], [P(lB * 0.6, 8), P(-lB * 0.6, 8), P(-lB, 0)]]), fill: trait })
+    for (const dx of [-lB * 0.55, lB * 0.55]) croc(formes, trait, CX + dx, yB + 5 + Math.abs(dx) * 0.04, 12, false, 3.4)
+    levres(haut, cubiques(P(-lB * 0.8, 8), [[P(-lB * 0.4, 12), P(lB * 0.4, 12), P(lB * 0.8, 8)]], false))
   } else if (b === 'serres') {
-    formes.push({ d: rect(CX - lB, yB - 3, 2 * lB, 11, 5), fill: peau.trait })
-    formes.push({ d: rect(CX - lB + 2, yB - 1, 2 * lB - 4, 7, 2), fill: '#fffbea' })
-    for (let i = 1; i < 5; i++) formes.push({ d: rect(CX - lB + 2 + ((2 * lB - 4) * i) / 5 - 0.6, yB - 1, 1.2, 7), fill: peau.trait, opacite: 0.7 })
-    formes.push({ d: rect(CX - lB + 2, yB + 2, 2 * lB - 4, 1.2), fill: peau.trait, opacite: 0.5 })
+    formes.push({ d: rect(CX - lB, yB - 4, 2 * lB, 13, 6), fill: trait, degrade: degBouche(yB - 4, yB + 9) })
+    formes.push({ d: rect(CX - lB + 2.5, yB - 1.5, 2 * lB - 5, 8, 2.5), fill: BLANC })
+    for (let i = 1; i < 6; i++) formes.push({ d: rect(CX - lB + 2.5 + ((2 * lB - 5) * i) / 6 - 0.5, yB - 1.5, 1, 8), fill: trait, opacite: 0.6 })
+    formes.push({ d: rect(CX - lB + 2.5, yB + 2, 2 * lB - 5, 1.2), fill: trait, opacite: 0.5 })
+    formes.push({ d: courbeOuverte([[CX - lB * 0.8, yB + 12], [CX, yB + 13], [CX + lB * 0.8, yB + 12]]), fill: 'none', stroke: peau.clair, epaisseur: 1.4, opacite: 0.45 })
   } else if (b === 'ronfle') {
-    formes.push({ d: ellipse(CX + 6, yB + 4, 6, 7), fill: ROUGE.sombre })
+    formes.push({ d: ellipse(CX + 6, yB + 4, 6, 7), fill: trait, degrade: degBouche(yB - 3, yB + 11) })
+    formes.push({ d: cercle(CX + 16, yB - 2, 3), fill: '#dff2ff', opacite: 0.7 })
+    formes.push({ d: cercle(CX + 16, yB - 2, 3), fill: 'none', stroke: '#8fc6f0', epaisseur: 0.8 })
   } else {
-    formes.push({ d: courbeOuverte([[CX - lB * 0.8, yB + 2], [CX, yB + 1], [CX + lB * 0.8, yB + 3]]), fill: 'none', stroke: peau.trait, epaisseur: 4 })
+    formes.push({ d: courbeOuverte([[CX - lB * 0.8, yB + 2], [CX, yB + 1], [CX + lB * 0.8, yB + 3]]), fill: 'none', stroke: trait, epaisseur: 3.6 })
+    formes.push({ d: courbeOuverte([[CX - lB * 0.7, yB + 6], [CX, yB + 5.5], [CX + lB * 0.7, yB + 7]]), fill: 'none', stroke: peau.clair, epaisseur: 1.2, opacite: 0.4 })
   }
 
   // --- le nez crochu, par-dessus la bouche --------------------------------------------------------
-  const nez: Point[] = [[CX - 5, CY - 6, 4], [CX + 13, CY + 14, 7], [CX + 2, CY + 20, 5], [CX - 7, CY + 10, 6]]
-  formes.push({ d: polygone(nez), fill: peau.moyen, degrade: degPeau(CX + 2, CY + 6, 18), stroke: peau.sombre, epaisseur: 1 })
-  formes.push({ d: ellipse(CX - 1, CY + 17, 3, 1.8), fill: peau.sombre, opacite: 0.8 })
+  const N = (x: number, y: number): XY => [CX + x, CY + y]
+  const dNez = cubiques(N(-4, -12), [[N(-6, -6), N(-8, 2), N(-4, 10)], [N(0, 18), N(12, 18), N(14, 10)], [N(16, 4), N(8, 0), N(4, -4)], [N(2, -8), N(0, -12), N(-4, -12)]])
+  formes.push({ d: dNez, fill: peau.moyen, degrade: { type: 'radial', cx: CX - 4, cy: CY - 2, r: 22, arrets: [[0, peau.clair], [0.55, peau.moyen], [1, peau.sombre]] } })
+  formes.push({ d: cubiques(N(-4, -12), [[N(-6, -6), N(-8, 2), N(-4, 10)], [N(0, 18), N(12, 18), N(14, 10)]], false), fill: 'none', stroke: peau.trait, epaisseur: 1, opacite: 0.6 })
+  formes.push({ d: ellipse(CX, CY + 11, 3, 1.6), fill: peau.trait, opacite: 0.7 })
+  formes.push({ d: ellipse(CX + 2, CY + 2, 3, 4), fill: '#ffffff', opacite: 0.25, flou: FLOU_FIN })
 
   // --- les yeux et les sourcils ----------------------------------------------------------------------
-  const yY = CY - 8
+  const yY = CY - 10
   const eY = 18
-  const rY = 9
+  const rY = 9.5
   const y = expr.yeux
-  const blanc = (x: number, k = 1) => formes.push({ d: ellipse(x, yY, rY * k, rY * 1.1 * k), fill: '#fffbea', stroke: peau.sombre, epaisseur: 1 })
-  const pupille = (x: number, k = 1, dx = 0) => {
-    formes.push({ d: cercle(x + dx, yY + 1, 4.6 * k), fill: peau.trait })
-    formes.push({ d: cercle(x + dx - 1.6 * k, yY - 0.6, 1.5 * k), fill: '#ffffff' })
+  const iris = y === 'faches' ? IRIS.rouge : IRIS.dore
+  /** Le blanc de l'œil : l'ombre de la paupière, puis la sclère ombrée en haut. */
+  const blanc = (x: number, k = 1) => {
+    formes.push({ d: ellipse(x, yY + 1, (rY + 0.5) * k, (rY * 1.1 + 0.5) * k), fill: peau.trait, opacite: 0.5, flou: FLOU_FIN })
+    formes.push({ d: ellipse(x, yY, rY * k, rY * 1.1 * k), fill: BLANC, degrade: { type: 'lineaire', x1: 0, y1: yY - rY * 1.1 * k, x2: 0, y2: yY + rY * 1.1 * k, arrets: [[0, '#cfd3c8'], [0.35, '#fffdf2']] } })
   }
-  const sourcil = (x: number, s: number, angle: number, epaisseur = 4) =>
-    formes.push({ d: courbeOuverte([[x - 10, yY - 15 - angle * s * -1], [x, yY - 18], [x + 10, yY - 15 + angle * s * -1]]), fill: 'none', stroke: peau.trait, epaisseur })
+  /** L'iris dégradé, la pupille, le grand reflet et le petit. */
+  const pupille = (x: number, k = 1, dx = 0) => {
+    const cx = x + dx
+    formes.push({ d: cercle(cx, yY + 1, 5.6 * k), fill: iris[1], degrade: { type: 'radial', cx, cy: yY + 1, r: 5.6 * k, arrets: [[0, iris[0]], [0.7, iris[1]], [1, iris[2]]] } })
+    formes.push({ d: cercle(cx, yY + 1, 2.8 * k), fill: '#1a1206' })
+    formes.push({ d: cercle(cx - 2 * k, yY - 1.5 * k, 1.7 * k), fill: '#ffffff' })
+    formes.push({ d: cercle(cx + 2 * k, yY + 3.5 * k, 0.8 * k), fill: '#ffffff', opacite: 0.7 })
+  }
+  const sourcil = (x: number, s: number, angle: number, epaisseur = 3.6) =>
+    formes.push({ d: courbeOuverte([[x - 11, yY - 13 - angle * s * -1], [x, yY - 17], [x + 11, yY - 13 + angle * s * -1]]), fill: 'none', stroke: peau.trait, epaisseur })
   const arc = (x: number, haut: boolean) =>
     formes.push({ d: courbeOuverte([[x - 8, yY + (haut ? 2 : -2)], [x, yY + (haut ? -5 : 4)], [x + 8, yY + (haut ? 2 : -2)]]), fill: 'none', stroke: peau.trait, epaisseur: 3.5 })
   for (const s of [-1, 1]) {
@@ -216,9 +292,10 @@ export function genererGobelin(id: string): Dessin {
     } else if (y === 'miClos') {
       blanc(x)
       pupille(x, 1, s * 2)
-      formes.push({ d: rect(x - rY - 1, yY - rY * 1.2, 2 * rY + 2, rY * 1.05, 2), fill: peau.moyen, degrade: degPeau(x, yY - 6, 12) })
-      formes.push({ d: courbeOuverte([[x - rY, yY - 1], [x + rY, yY - 2]]), fill: 'none', stroke: peau.trait, epaisseur: 2.5 })
-      sourcil(x, s, -3, 3.5)
+      // La paupière tombée, de la peau, avec son ourlet.
+      formes.push({ d: rect(x - rY - 1.5, yY - rY * 1.25, 2 * rY + 3, rY * 1.1, 3), fill: peau.moyen, degrade: degPeau(x, yY - 6, 12) })
+      formes.push({ d: courbeOuverte([[x - rY - 1, yY - 1.5], [x, yY - 0.5], [x + rY + 1, yY - 2]]), fill: 'none', stroke: peau.trait, epaisseur: 2.2 })
+      sourcil(x, s, -3, 3.2)
     } else if (y === 'grands') {
       blanc(x, 1.35)
       pupille(x, 0.8)
@@ -229,7 +306,7 @@ export function genererGobelin(id: string): Dessin {
       sourcil(x, s, 5)
     } else if (y === 'coeurs') {
       const h = 11
-      formes.push({ d: courbe([[x, yY + h * 0.8], [x - h, yY - h * 0.2], [x - h * 0.5, yY - h], [x, yY - h * 0.35], [x + h * 0.5, yY - h], [x + h, yY - h * 0.2]], 0.5), fill: ROUGE.moyen, stroke: ROUGE.sombre, epaisseur: 1 })
+      formes.push({ d: courbe([[x, yY + h * 0.8], [x - h, yY - h * 0.2], [x - h * 0.5, yY - h], [x, yY - h * 0.35], [x + h * 0.5, yY - h], [x + h, yY - h * 0.2]], 0.5), fill: ROUGE.moyen, degrade: radial(x, yY, h, ROUGE.clair, ROUGE.moyen, ROUGE.sombre), stroke: ROUGE.sombre, epaisseur: 1 })
       formes.push({ d: cercle(x - 4, yY - 5, 1.8), fill: '#ffffff', opacite: 0.8 })
     } else if (y === 'etoiles') {
       const pts: Point[] = []
@@ -238,7 +315,7 @@ export function genererGobelin(id: string): Dessin {
         const r = i % 2 === 0 ? 11 : 4.8
         pts.push([x + Math.cos(a) * r, yY + Math.sin(a) * r, 0.5])
       }
-      formes.push({ d: polygone(pts), fill: OR.moyen, stroke: OR.sombre, epaisseur: 1 })
+      formes.push({ d: polygone(pts), fill: OR.moyen, degrade: radial(x, yY, 11, OR.clair, OR.moyen, OR.sombre), stroke: OR.sombre, epaisseur: 1 })
     } else if (y === 'croix') {
       for (const k of [-1, 1]) formes.push({ d: courbeOuverte([[x - 7, yY - 7 * k], [x + 7, yY + 7 * k]]), fill: 'none', stroke: peau.trait, epaisseur: 4 })
     } else if (y === 'pieces') {
@@ -269,7 +346,7 @@ export function genererGobelin(id: string): Dessin {
     for (const [dx, dy] of [[-5, 0], [5, 0], [0, -5], [0, 5]]) formes.push({ d: courbeOuverte([[x + dx * 0.4, yv + dy * 0.4], [x + dx * 1.6, yv + dy * 1.6]]), fill: 'none', stroke: ROUGE.moyen, epaisseur: 2.5 })
   }
   if (orn.has('fumee')) for (const s of [-1, 1]) formes.push({ d: courbe([[CX + s * (R + 2), CY - 2], [CX + s * (R + 12), CY - 8], [CX + s * (R + 8), CY - 16], [CX + s * (R + 2), CY - 10]], 0.5), fill: '#e6e6e6', opacite: 0.9 })
-  if (orn.has('blush')) for (const s of [-1, 1]) formes.push({ d: ellipse(CX + s * R * 0.62, CY + 12, 8, 4.5), fill: '#ff8a8a', opacite: 0.55, clip: 'tete' })
+  if (orn.has('blush')) for (const s of [-1, 1]) formes.push({ d: ellipse(CX + s * R * 0.62, CY + 12, 9, 5), fill: '#ff8a8a', opacite: 0.6, flou: FLOU, clip: 'tete' })
   if (orn.has('zzz')) {
     for (const [k, [x, yz, t]] of [[0, [CX + R * 0.85, CY - R * 0.7, 7]], [1, [CX + R * 1.0, CY - R * 1.0, 9]], [2, [CX + R * 1.16, CY - R * 1.3, 11]]] as const) {
       formes.push({ d: courbeOuverte([[x - t * 0.5, yz - t * 0.5], [x + t * 0.5, yz - t * 0.5], [x - t * 0.5, yz + t * 0.5], [x + t * 0.5, yz + t * 0.5]]), fill: 'none', stroke: '#5f8fe0', epaisseur: 2 + k * 0.4, opacite: 0.9 })

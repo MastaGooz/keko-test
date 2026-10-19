@@ -463,6 +463,45 @@ cache-œil, chapeau pointu, casque à rivets, étincelles, fumée). Cinq peaux
 sous la vignette à la place de la seed. Fond clair sur la page, comme un
 clavier.
 
+### La finition dessinée dans Inkscape (19 octobre 2026)
+
+Keko : « je veux que tu utilises l'outil Inkscape pour voir si tu fais mieux
+que ce qu'on a actuellement ». **La méthode a changé, pas le format** : on a
+dessiné UNE tête à la main dans Inkscape, en regardant le rendu à chaque
+retouche (deux passes : la première avait des oreilles en ailes de papillon
+et une bouche timide), puis on a reporté les chiffres trouvés dans
+`gobelin.ts`. *Le générateur reste pur, le dessin à la main n'a servi qu'à
+trouver les courbes.* Ce que la main a apporté, et que les polygones
+n'avaient pas :
+
+- **des cubiques tracées** (`cubiques` dans `trace.ts`, le tracé qu'on fait
+  dans un éditeur : départ puis segments contrôle-contrôle-arrivée) pour les
+  oreilles et le nez, l'oreille droite écrite une fois et renvoyée en miroir
+  (`miroirX`), sa pointe étirée par la taille tirée (bornée dans la boîte à
+  1,3) ;
+- **l'oreille a un dedans** à son propre dégradé rosé (trois valeurs par
+  peau, `Peau.oreille`) et un ourlet sombre ;
+- **la tête est finie** : dégradé à quatre arrêts jusqu'au trait, un voile de
+  menton (dégradé linéaire à ARRÊT TRANSPARENT — `Arret` a gagné l'opacité),
+  l'ombre FLOUE des oreilles sur la joue, le reflet flou du front, une arcade
+  sourcilière floue ;
+- **l'œil** : l'ombre floue de la paupière, la sclère ombrée en haut, un iris
+  doré à dégradé (rouge pour la colère), la pupille, deux reflets ;
+- **la bouche** : un dégradé du trait au rouge sombre, la lèvre du haut
+  tracée, la lèvre du bas qui prend la lumière, des crocs plus longs ;
+- **le format a gagné le flou** (`Forme.flou`, un `feGaussianBlur` par
+  valeur, émis dans les `<defs>` par `svg.ts` comme les dégradés) — 2,2 pour
+  une ombre portée, 1 pour un reflet ; à 32 px ça fait un demi-pixel, c'est
+  ce qui adoucit sans baver.
+
+Les expressions, les peaux, les ornements et l'ordre des tirages n'ont pas
+bougé : **même id, même expression qu'hier**, seule la finition change. La
+planche avant / après est `docs/images/gobelins-inkscape.png`. Ce qu'Inkscape
+apporte vraiment ici, c'est la BOUCLE : `render_preview` montre le dessin
+tout de suite, là où la page de preview demandait un build et Chrome sans
+tête. Les opérations booléennes n'ont pas servi : tout se découpe déjà au
+`clip` de la tête.
+
 ## La planète (`planete.ts`)
 
 Un disque, une surface, un côté dans l'ombre, parfois un anneau.

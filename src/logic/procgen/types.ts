@@ -29,10 +29,12 @@ export const ROLES: readonly ('combat' | 'minage' | 'station')[] = ['combat', 'm
 export type Race = 'humain' | 'alien' | 'biologique'
 export const RACES: readonly Race[] = ['humain', 'alien', 'biologique']
 
+/** Un arrêt de dégradé : position, couleur, et l'opacité (1 si absente) — un voile qui se fond part d'un arrêt transparent. */
+export type Arret = readonly [number, string, number?]
 /** Un dégradé, en coordonnées de la boîte : radial (centre, rayon) ou linéaire (deux points). */
 export type Degrade =
-  | { type: 'radial'; cx: number; cy: number; r: number; arrets: readonly (readonly [number, string])[] }
-  | { type: 'lineaire'; x1: number; y1: number; x2: number; y2: number; arrets: readonly (readonly [number, string])[] }
+  | { type: 'radial'; cx: number; cy: number; r: number; arrets: readonly Arret[] }
+  | { type: 'lineaire'; x1: number; y1: number; x2: number; y2: number; arrets: readonly Arret[] }
 
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {
@@ -46,6 +48,8 @@ export type Forme = {
   /** L'identifiant d'une découpe du dessin (`Dessin.clips`). */
   clip?: string
   regle?: 'evenodd'
+  /** Un flou gaussien (écart-type en unités de la boîte) : une ombre douce, un reflet qui se fond. */
+  flou?: number
 }
 
 /** Une découpe : l'union de ses chemins. */

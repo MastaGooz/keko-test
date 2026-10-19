@@ -342,7 +342,7 @@ noms longs).
 Des icônes tirées d'un identifiant (même id, même visuel), palettes fixes,
 symétrie : en SVG plat, trois races × trois rôles de
 vaisseaux, planètes, astéroïdes, origamis qui se déplient, gribouillis,
-personnages en trois styles, héros, masques, créatures de type, emoji gobelins à la Noto ; en 3D toon
+personnages en trois styles, héros, masques, créatures de type, emoji gobelins à la Noto (finis dans Inkscape : `cubiques`, `Forme.flou`) ; en 3D toon
 figurines, vaisseaux, stations, planètes, astéroïdes et la
 créature de Keko modélisée (`feuillu.ts`). `logic/procgen/` (pur, dans
 `npm run verif`), `ui/procgen/` (`renderIcon`), la page

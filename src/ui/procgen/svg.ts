@@ -37,8 +37,18 @@ export function renderDessin(dessin: Dessin, taille: number): SVGSVGElement {
   if (dessin.nom) svg.dataset.nom = dessin.nom
 
   const degrades = dessin.formes.filter((f) => f.degrade)
-  if (dessin.clips.length || degrades.length) {
+  const flous = [...new Set(dessin.formes.map((f) => f.flou).filter((v): v is number => v !== undefined))]
+  if (dessin.clips.length || degrades.length || flous.length) {
     const defs = document.createElementNS(NS, 'defs')
+    flous.forEach((v, k) => {
+      const filtre = document.createElementNS(NS, 'filter')
+      filtre.setAttribute('id', `${prefixe}-f${k}`)
+      for (const [a, val] of [['x', '-50%'], ['y', '-50%'], ['width', '200%'], ['height', '200%']]) filtre.setAttribute(a, val)
+      const flou = document.createElementNS(NS, 'feGaussianBlur')
+      flou.setAttribute('stdDeviation', String(v))
+      filtre.appendChild(flou)
+      defs.appendChild(filtre)
+    })
     degrades.forEach((f, k) => {
       const g = f.degrade!
       const el = document.createElementNS(NS, g.type === 'radial' ? 'radialGradient' : 'linearGradient')
@@ -54,10 +64,11 @@ export function renderDessin(dessin: Dessin, taille: number): SVGSVGElement {
         el.setAttribute('x2', String(g.x2))
         el.setAttribute('y2', String(g.y2))
       }
-      for (const [o, c] of g.arrets) {
+      for (const [o, c, op] of g.arrets) {
         const stop = document.createElementNS(NS, 'stop')
         stop.setAttribute('offset', String(o))
         stop.setAttribute('stop-color', c)
+        if (op !== undefined) stop.setAttribute('stop-opacity', String(op))
         el.appendChild(stop)
       }
       defs.appendChild(el)
@@ -88,6 +99,7 @@ export function renderDessin(dessin: Dessin, taille: number): SVGSVGElement {
     }
     if (f.opacite !== undefined) p.setAttribute('opacity', String(f.opacite))
     if (f.clip) p.setAttribute('clip-path', `url(#${idDeClip(prefixe, f.clip)})`)
+    if (f.flou !== undefined) p.setAttribute('filter', `url(#${prefixe}-f${flous.indexOf(f.flou)})`)
     svg.appendChild(p)
   }
   return svg
@@ -100,11 +112,13 @@ export function svgTexte(dessin: Dessin, taille: number, prefixe = 'pg'): string
     `<svg xmlns="${NS}" viewBox="0 0 ${dessin.boite} ${dessin.boite}" width="${taille}" height="${taille}">`,
   ]
   const degrades = dessin.formes.filter((f) => f.degrade)
-  if (dessin.clips.length || degrades.length) {
+  const flous = [...new Set(dessin.formes.map((f) => f.flou).filter((v): v is number => v !== undefined))]
+  if (dessin.clips.length || degrades.length || flous.length) {
     out.push('<defs>')
+    flous.forEach((v, k) => out.push(`<filter id="${prefixe}-f${k}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${v}"/></filter>`))
     degrades.forEach((f, k) => {
       const g = f.degrade!
-      const arrets = g.arrets.map(([o, c]) => `<stop offset="${o}" stop-color="${a(c)}"/>`).join('')
+      const arrets = g.arrets.map(([o, c, op]) => `<stop offset="${o}" stop-color="${a(c)}"${op !== undefined ? ` stop-opacity="${op}"` : ''}/>`).join('')
       if (g.type === 'radial') out.push(`<radialGradient id="${idDeClip(prefixe, 'd' + k)}" gradientUnits="userSpaceOnUse" cx="${g.cx}" cy="${g.cy}" r="${g.r}">${arrets}</radialGradient>`)
       else out.push(`<linearGradient id="${idDeClip(prefixe, 'd' + k)}" gradientUnits="userSpaceOnUse" x1="${g.x1}" y1="${g.y1}" x2="${g.x2}" y2="${g.y2}">${arrets}</linearGradient>`)
     })
@@ -121,6 +135,7 @@ export function svgTexte(dessin: Dessin, taille: number, prefixe = 'pg'): string
     if (f.stroke) attrs.push(`stroke="${a(f.stroke)}"`, `stroke-width="${f.epaisseur ?? 2}"`, 'stroke-linejoin="round"', 'stroke-linecap="round"')
     if (f.opacite !== undefined) attrs.push(`opacity="${f.opacite}"`)
     if (f.clip) attrs.push(`clip-path="url(#${idDeClip(prefixe, f.clip)})"`)
+    if (f.flou !== undefined) attrs.push(`filter="url(#${prefixe}-f${flous.indexOf(f.flou)})"`)
     out.push(`<path ${attrs.join(' ')}/>`)
   }
   out.push('</svg>')

@@ -46,6 +46,18 @@ export function polygone(points: readonly Point[]): string {
   return parts.join('') + 'Z'
 }
 
+/**
+ * Un tracé en cubiques écrites à la main : le départ, puis des segments
+ * (contrôle 1, contrôle 2, arrivée). C'est le tracé qu'on dessine dans un
+ * éditeur vectoriel (une oreille, un nez) ; `courbe` lisse des points, ici
+ * les tangentes sont choisies.
+ */
+export function cubiques(depart: XY, segments: readonly (readonly [XY, XY, XY])[], ferme = true): string {
+  const parts = [`M${n(depart[0])} ${n(depart[1])}`]
+  for (const [c1, c2, p] of segments) parts.push(`C${n(c1[0])} ${n(c1[1])} ${n(c2[0])} ${n(c2[1])} ${n(p[0])} ${n(p[1])}`)
+  return parts.join('') + (ferme ? 'Z' : '')
+}
+
 /** Une courbe fermée lisse (Catmull-Rom → cubiques) passant par les points. */
 export function courbe(points: readonly XY[], tension = 0.5): string {
   const N = points.length
