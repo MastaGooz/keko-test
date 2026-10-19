@@ -387,6 +387,23 @@ anneaux) ou les pinces, les hachures et les feux de position.
 Le nez pointe vers −z ; la vignette le montre de trois quarts, d'au-dessus,
 le nez vers le bas gauche, et la visionneuse tourne autour de y.
 
+### Le contour en pointillés des ailes (19 octobre 2026)
+
+Keko : « ce qui choque le plus : le contour noir est bizarre par endroits
+(aileron, wings), comme s'il scintillait bizarrement au lieu d'être bien
+continu ». Vu en Chrome sans tête à 128 px : le contour des plaques minces
+était en TIRETS. **La coque inversée gonflait la géométrie du solide le long
+de SES normales, qui sont par face** sur une boîte et un prisme extrudé :
+chaque face partait de son côté, les coins s'ouvraient, et sur une aile
+(deux grandes faces, quatre flancs fins) il ne restait que des bouts de
+flancs. Une sphère ou un cylindre n'avaient rien : leurs normales sont déjà
+moyennées. **La coque a maintenant sa propre géométrie** (`coqueLisse`,
+`COQUES` pour les formes unités) : sommets fondus par position
+(`mergeVertices`, qui referme aussi les coutures d'uv du tore et du
+cylindre), normales recalculées donc moyennées aux arêtes ; le solide garde
+ses normales à plat pour l'éclairage. *Le contour et la surface ne veulent
+pas les mêmes normales.* La coque construite se libère avec le solide.
+
 ## Les stations, planètes et astéroïdes 3D (`corps3d.ts`)
 
 Keko : « tu peux faire aussi station, planète et astéroïdes en mode 3D ? ».

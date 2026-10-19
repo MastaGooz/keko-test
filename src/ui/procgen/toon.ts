@@ -8,13 +8,19 @@
  * ordinaires. Tout est rendu avec `MeshToonMaterial` et une rampe à trois
  * paliers, et chaque maillage porte son CONTOUR : la même géométrie,
  * gonflée le long des normales, faces arrière, couleur du contour (la
- * « coque inversée », le plus vieux truc du cel shading).
+ * « coque inversée », le plus vieux truc du cel shading). **La coque a ses
+ * propres normales, LISSÉES** (`coqueLisse`) : une boîte ou un prisme a des
+ * normales par face, et chaque face gonflait de son côté — les coins
+ * s'ouvraient, le contour des ailes était en pointillés (Keko : « comme s'il
+ * scintillait au lieu d'être bien continu »). Sommets fondus par position,
+ * normales moyennées : la coque est d'un seul tenant.
  *
  * Deux usages : une VIGNETTE (un rendu, une image), et la VISIONNEUSE (une
  * figurine qui tourne dans un canvas).
  */
 import * as THREE from 'three'
 import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes.js'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { genererFigurine, type Figurine, type Solide } from '../../logic/procgen/figurine.ts'
 import { genererVaisseau3D } from '../../logic/procgen/vaisseau3d.ts'
 import { genererFeuillu } from '../../logic/procgen/feuillu.ts'
@@ -130,15 +136,34 @@ const GEOS = {
   boite: new THREE.BoxGeometry(1, 1, 1),
 }
 
-/** La géométrie d'un solide : partagée pour les formes unités, construite pour le reste. */
-function geometrieDe(s: Solide): { geo: THREE.BufferGeometry; partagee: boolean } {
+/**
+ * La géométrie de la coque du contour : les mêmes sommets, fondus par
+ * position (plus de faces séparées, plus de couture d'uv), normales
+ * moyennées. Gonflée le long de ces normales, la coque reste fermée aux
+ * arêtes vives, là où la géométrie à normales par face s'ouvrait.
+ */
+function coqueLisse(geo: THREE.BufferGeometry): THREE.BufferGeometry {
+  const nue = geo.clone()
+  for (const a of ['normal', 'uv', 'color']) if (nue.hasAttribute(a)) nue.deleteAttribute(a)
+  const coque = mergeVertices(nue, 1e-4)
+  coque.computeVertexNormals()
+  nue.dispose()
+  return coque
+}
+/** Les coques des formes unités, partagées comme elles. */
+const COQUES = Object.fromEntries(Object.entries(GEOS).map(([k, g]) => [k, coqueLisse(g)])) as Record<keyof typeof GEOS, THREE.BufferGeometry>
+const PARTAGEES: readonly THREE.BufferGeometry[] = [...Object.values(GEOS), ...Object.values(COQUES)]
+
+/** La géométrie d'un solide et la coque de son contour : partagées pour les formes unités, construites pour le reste. */
+function geometrieDe(s: Solide): { geo: THREE.BufferGeometry; coque: THREE.BufferGeometry } {
+  const construite = (geo: THREE.BufferGeometry) => ({ geo, coque: coqueLisse(geo) })
   if (s.forme === 'cylindre') {
     const [h, b] = s.rayons ?? [1, 1]
-    return { geo: new THREE.CylinderGeometry(h, b, 1, 24), partagee: false }
+    return construite(new THREE.CylinderGeometry(h, b, 1, 24))
   }
   if (s.forme === 'tore') {
     const [R, tube] = s.rayons ?? [0.5, 0.1]
-    return { geo: new THREE.TorusGeometry(R, tube, 14, 56), partagee: false }
+    return construite(new THREE.TorusGeometry(R, tube, 14, 56))
   }
   if (s.forme === 'prisme' && s.pts) {
     // Le polygone dans le plan de la Shape, extrudé le long de z, puis couché.
@@ -150,25 +175,23 @@ function geometrieDe(s: Solide): { geo: THREE.BufferGeometry; partagee: boolean 
     if (s.axe === 'x') geo.rotateY(-Math.PI / 2) // (z, y) du vaisseau, épaisseur le long de x
     else geo.rotateX(Math.PI / 2) // (x, z) du vaisseau, épaisseur le long de y
     geo.computeVertexNormals()
-    return { geo, partagee: false }
+    return construite(geo)
   }
-  if (s.forme === 'boite') return { geo: GEOS.boite, partagee: true }
-  if (s.forme === 'cone') return { geo: GEOS.cone, partagee: true }
-  if (s.forme === 'octaedre') return { geo: GEOS.octaedre, partagee: true }
-  return { geo: GEOS.sphere, partagee: true }
+  const forme = s.forme === 'boite' || s.forme === 'cone' || s.forme === 'octaedre' ? s.forme : 'sphere'
+  return { geo: GEOS[forme], coque: COQUES[forme] }
 }
 
 /** Les solides durs, montés dans un groupe. */
 function monterSolides(solides: readonly Solide[], contour: string, groupe: THREE.Group): void {
   for (const s of solides) {
-    const { geo } = geometrieDe(s)
+    const { geo, coque } = geometrieDe(s)
     const mesh = new THREE.Mesh(geo, materiauToon(s.couleur, s.opacite ?? 1))
     mesh.position.set(s.x, s.y, s.z)
     mesh.scale.set(s.s[0], s.s[1], s.s[2])
     mesh.rotation.set(s.rot[0], s.rot[1], s.rot[2])
     // Un cône est posé par sa base, pas par son centre.
     if (s.forme === 'cone') mesh.translateY(s.s[1] / 2)
-    if (!s.sansContour) mesh.add(new THREE.Mesh(geo, materiauContour(contour)))
+    if (!s.sansContour) mesh.add(new THREE.Mesh(coque, materiauContour(contour)))
     groupe.add(mesh)
   }
 }
@@ -330,8 +353,8 @@ export function vignette3D(sorte: Sorte3D, id: string, taille: number): string {
 function liberer(groupe: THREE.Group): void {
   groupe.traverse((o) => {
     if (o instanceof THREE.Mesh) {
-      if (!(Object.values(GEOS) as THREE.BufferGeometry[]).includes(o.geometry)) o.geometry.dispose()
-      // Le contour partage la géométrie : il est libéré avec elle.
+      // Le contour d'un solide construit a sa propre coque : c'est un maillage comme un autre, libéré ici.
+      if (!PARTAGEES.includes(o.geometry)) o.geometry.dispose()
       const m = o.material as THREE.Material
       m.dispose()
     }
