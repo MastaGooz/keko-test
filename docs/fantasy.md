@@ -198,6 +198,11 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
   plus elle descend, plus on va vers le générique (Loup, Guerrier orc). Keko.
+- **Répartition du pool VALIDÉE** (Keko) : 40 / 25 / 18 / 11 / 6 %, soit
+  157 communes, 98 peu communes, 71 rares, 43 épiques, 24 légendaires —
+  entre Magic (39/31/23/8, pyramide) et Hearthstone (35/26/20/17, pool plat) :
+  une base générique large pour les decks de 30, une vitrine de ~3 héros
+  nommés par peuple.
 - **Rythme : 1 paquet par heure, 10 au plus en réserve** (24 par jour au
   maximum, 15–20 pour un joueur qui passe matin et soir) **+ une boutique de
   4 paquets renouvelée une fois par jour**, achetés avec les ressources. Le
