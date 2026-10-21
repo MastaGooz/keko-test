@@ -354,6 +354,30 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 24. **Chiffonnière** · ♀ · un crochet à chiffons dans la main droite. Hotte débordante de tissus et de rubans dans le dos, tenue faite de bouts cousus ensemble.
 25. **Champignonniste** · ♀ · un panier de champignons lumineux au bras gauche et un petit couteau dans la main droite. Chapeau en forme de champignon, tablier de mousse.
 
+- **Keko** (22/10) : l'Archer reste ambigu, « on peut laisser le truc
+  ambigu ». Les 25 illustrations découpées une par une sont dans
+  `public/generations/gobelin/communs/` (`01-garde.png` … `25-champignonniste.png`).
+
+**Peu communes gobelins : 8 hommes, 7 femmes (53/47)** — un cran au-dessus : plus
+d'équipement, un savoir-faire qui se voit, sans être encore des personnages.
+Mêlée 2 H / 1 F, distance 2 H / 2 F, magie 2 H / 3 F, soutien 2 H / 1 F.
+
+1. **Brute** · ♂ · un gourdin clouté tenu à deux mains. Le plus massif des gobelins, épaules énormes, tête petite, mâchoire en avant, chaîne cassée au poignet.
+2. **Coupe-jarret** · ♀ · deux dagues courbes, une dans chaque main, tenues lame vers le bas. Foulard noir sur le bas du visage, accroupie, sourire qu'on devine aux yeux.
+3. **Sapeur** · ♂ · une pelle dans la main droite et un tonnelet de poudre sous le bras gauche. Casque de cuir avec une lampe, visage noirci, mèche roulée en bandoulière.
+4. **Arbalétrière** · ♀ · une arbalète trop lourde épaulée à deux mains. Carreaux dans un étui à la cuisse, une loupe de visée bricolée, un œil fermé.
+5. **Tireur à la sarbacane** · ♂ · une longue sarbacane en bambou portée à la bouche, à deux mains. Joues gonflées, plumes dans les cheveux, petites fléchettes à la ceinture.
+6. **Lanceuse de bombes** · ♀ · une bombe ronde noire à mèche allumée dans la main droite, prête à lancer. Sacoche pleine de bombes, cheveux en pétard, rire de folle.
+7. **Poseur de pièges** · ♂ · un piège à mâchoires ouvert dans les deux mains. Bandoulière de collets et de clochettes, accroupi, la langue entre les dents.
+8. **Pyromancienne** · ♀ · une boule de feu dans la main droite levée. Robe aux bords roussis, cheveux qui fument, petites flammes au bout des doigts de la main gauche.
+9. **Sorcier** · ♂ · un bâton tordu surmonté d'un crâne de rat dans la main droite. Long manteau rapiécé à capuche, barbiche, lueur verte dans la main gauche.
+10. **Alchimiste** · ♀ · une fiole bouillonnante dans la main droite et une autre dans la gauche. Lunettes rondes, ceinture de flacons colorés, tablier taché de toutes les couleurs.
+11. **Mage de rouille** · ♂ · une clé géante rouillée tenue comme un sceptre dans la main droite. Armure de ferraille piquée de rouille, poussière orange qui tourbillonne autour de la main gauche.
+12. **Mangeuse de feu** · ♀ · une torche dans la main droite, crachant une gerbe de feu. Tenue de saltimbanque à losanges, bracelets, joues gonflées, une seconde torche à la ceinture.
+13. **Dompteur de bêtes** · ♂ · un fouet dans la main droite. Un petit loup hérissé en laisse dans la gauche, gilet de cuir couvert de griffures, chapeau à plume.
+14. **Prêteuse sur gages** · ♀ · un grand registre sous le bras gauche et une loupe dans la main droite. Lunettes sur le bout du nez, clés pendues à la ceinture, colliers et babioles mis en gage.
+15. **Taxidermiste** · ♂ · une grosse aiguille et du fil dans la main droite, un corbeau empaillé dans la gauche. Tablier de cuir, petits yeux de verre dans une boîte à la ceinture, air un peu inquiétant.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
