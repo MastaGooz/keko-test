@@ -215,6 +215,17 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   taux de l'emoji (Hearthstone), toutes les légendaires en 1,5–2,5 mois ; aux
   taux proposés (cartes 1–4 : 74/16/8/1,7/0,3 ; carte 5 : —/72/20/6,5/1,5 ;
   épique garantie au 10e paquet, légendaire au 60e), 2,5–4 mois.
+- **Les cibles de Keko pour 24 paquets par jour** : plusieurs rares, 1–2
+  épiques, une légendaire tous les 4–7 jours. **Taux réglés dessus** (4 000
+  jours simulés) : cartes 1–4 81 / 16 / 2,5 / 0,4 / 0,02 % ; carte 5
+  — / 82,15 / 15 / 2,5 / 0,35 % ; épique garantie au 24e paquet sans épique,
+  légendaire au 200e (~8 jours). Résultat : 6 rares par jour (3–9), 1,5
+  épique (0 : 7 % des jours, 1 : 55 %, 2 : 26 %, 3+ : 12 %), une légendaire
+  tous les 4,6 jours (8,3 au pire décile). Les chiffres du paragraphe
+  précédent sont remplacés par ceux-ci.
+- **Protection contre les doublons : LÉGENDAIRES UNIQUEMENT** (Keko) — une
+  légendaire tirée est toujours une qu'on n'a pas tant qu'il en manque. Les 24
+  en ~3–4 mois ; les 43 épiques, au hasard, en ~3 mois.
 - **Doublons** : à trancher (proposition : ils font monter la carte en niveau).
 
 ## Les illustrations — le banc de génération
