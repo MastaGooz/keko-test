@@ -60,28 +60,139 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   artisan, messager, mais aussi prêtre, barde).
 - **La classe n'est pas un tag** : c'est l'identité de la carte (nom + ce
   qu'elle tient à l'image). « Archère elfe » = classe + race. Aucune règle ne lit
-  la classe ; les synergies parlent de races et de rôles. La rareté est portée
-  par la classe.
-- **Taille du pool** : repères donnés — Hearthstone ~380 à la sortie, Magic
-  295, Marvel Snap ~200, Pokémon TCG Pocket ~290. Proposition : **384**, soit
-  64 par race (l'unité d'une extension : une race = 64 cartes). Keko trouve
-  240 trop peu ; il veut partir du nombre total.
-- **La répartition n'a pas à être symétrique** (Keko). Proposition de profils,
-  en cartes par case, 64 par race, colonnes proches :
+  la classe ; les synergies parlent de races et de rôles.
+- **Une carte par couple classe × race**, et **le sexe est tiré au hasard
+  pour chaque carte** (seedé) : pas de pyromancien gobelin homme ET femme
+  (Keko). Le nom s'accorde au sexe tiré (Roi / Reine, Archer / Archère).
+- **La rareté est propre à chaque carte**, indépendante de la race, du rôle et
+  de la classe (Keko). **500 cartes au plus.**
+- **La répartition n'a pas à être symétrique** (Keko) : chaque peuple a son
+  fort — orcs et nains la mêlée, elfes la distance, morts-vivants la magie,
+  gobelins le soutien, humains équilibrés.
+- **Une septième race, Bête** (Keko) : ses « classes » sont des espèces
+  (dragon, loup…), **jamais une race civilisée** — ni homme-lézard, ni
+  homme-oiseau, ni troll, ni ogre.
+- **LE POOL VALIDÉ (21/10/2026) : 393 cartes, 165 classes + 49 espèces** —
+  « très honnête en quantité pour un gacha collection idle » (Keko). Une
+  centaine de places restent sous les 500 pour ouvrir des classes à d'autres
+  races.
 
-  | | mêlée | distance | magie | soutien |
-  |---|---|---|---|---|
-  | Gobelin | 10 | 20 | 12 | 22 |
-  | Orc | 28 | 10 | 8 | 18 |
-  | Humain | 16 | 16 | 16 | 16 |
-  | Elfe | 10 | 24 | 20 | 10 |
-  | Nain | 24 | 10 | 8 | 22 |
-  | Mort-vivant | 16 | 8 | 28 | 12 |
+  | | mêlée | distance | magie | soutien | total |
+  |---|---|---|---|---|---|
+  | Gobelin | 10 | 18 | 13 | 20 | 61 |
+  | Orc | 21 | 10 | 10 | 14 | 55 |
+  | Humain | 14 | 13 | 16 | 18 | 61 |
+  | Elfe | 9 | 17 | 18 | 12 | 56 |
+  | Nain | 19 | 9 | 9 | 19 | 56 |
+  | Mort-vivant | 13 | 7 | 22 | 13 | 55 |
+  | Bête | 14 | 11 | 12 | 12 | 49 |
+  | **total** | 100 | 85 | 100 | 108 | **393** |
 
-  Les cases faibles (berserker elfe, archimage orc) sont rares par nature.
+### Les classes par race
+
+**Gobelin (61)**
+- Mêlée : Garde, Guerrier, Bagarreur, Chef de guerre, Brute, Coupe-jarret,
+  Sapeur, Escrimeur à l'ombrelle, Chevaucheur de rat, Péagier
+- Distance : Archer, Chasseur, Arbalétrier, Lanceur de couteaux, Éclaireur,
+  Canonnier, Tireur à la sarbacane, Fauconnier, Frondeur, Lanceur de bombes,
+  Pétardier, Poseur de pièges, Lanceur de ruches, Cerf-voliste, Aéronaute,
+  Lanceur de boomerang, Rétiaire, Artificier
+- Magie : Pyromancien, Apprenti, Illusionniste, Sorcier, Électromancien,
+  Chaman, Alchimiste, Ritualiste, Cartomancien, Mycomancien, Essaimancien,
+  Mage de rouille, Mangeur de feu
+- Soutien : Fermier, Cuisinier, Mineur, Bûcheron, Messager, Marchand,
+  Herboriste, Ferrailleur, Dompteur de bêtes, Porteur, Bricoleur, Ingénieur,
+  Contrebandier, Prêteur sur gages, Apiculteur, Taxidermiste, Ramoneur,
+  Chiffonnier, Champignonniste, Horloger
+
+**Orc (55)**
+- Mêlée : Garde, Guerrier, Lancier, Bagarreur, Chef de guerre, Maître
+  d'armes, Champion, Gladiateur, Brute, Berserker, Brise-bouclier, Marteleur,
+  Briseur de crânes, Écorcheur, Massacreur, Ravageur, Chevaucheur de loup,
+  Bourreau, Lutteur d'ours, Péagier, Fléautier
+- Distance : Archer, Chasseur, Lanceur de couteaux, Javelinier, Pisteur,
+  Lanceur de harpon, Lanceur de ruches, Catapultier, Lanceur de bolas,
+  Lanceur de boomerang
+- Magie : Pyromancien, Druide, Chaman, Géomancien, Sorcier du sang,
+  Haruspice, Chanteur de pierre, Tatoueur runique, Mangeur de feu, Mage de
+  cendre
+- Soutien : Roi, Fermier, Cuisinier, Mineur, Bûcheron, Forgeron, Guérisseur,
+  Ferrailleur, Dompteur de bêtes, Porteur, Porte-étendard, Tambour de guerre,
+  Conteur, Montreur d'ours
+
+**Humain (61)**
+- Mêlée : Garde, Guerrier, Lancier, Bagarreur, Maître d'armes, Duelliste,
+  Hallebardier, Gladiateur, Paladin, Chevalier, Faucheur, Bourreau, Moine
+  bâtonniste, Fléautier
+- Distance : Archer, Chasseur, Arbalétrier, Lanceur de couteaux, Éclaireur,
+  Tireur d'élite, Arquebusier, Rôdeur, Maître archer, Cerf-voliste,
+  Catapultier, Lanceur de bolas, Rétiaire
+- Magie : Pyromancien, Apprenti, Cryomancien, Invocateur, Archimage,
+  Illusionniste, Sorcier, Chronomancien, Astromancien, Nécromancien,
+  Cartomancien, Calligraphe, Mage des miroirs, Mangeur de feu, Mage des
+  marées, Mage du sel
+- Soutien : Roi, Fermier, Cuisinier, Bûcheron, Messager, Forgeron, Marchand,
+  Pêcheur, Barde, Prêtre, Cartographe, Apiculteur, Fromager, Conteur,
+  Souffleur de verre, Ramoneur, Gardien de phare, Montreur d'ours
+
+**Elfe (56)**
+- Mêlée : Garde, Guerrier, Lancier, Champion, Duelliste, Lame-dansante, Moine
+  bâtonniste, Escrimeur à l'ombrelle, Cavalier de cerf
+- Distance : Archer, Chasseur, Éclaireur, Tireur d'élite, Javelinier,
+  Pisteur, Rôdeur, Maître archer, Tireur à la sarbacane, Fauconnier, Archer
+  sylvestre, Archer lunaire, Sentinelle, Lanceur de glaives, Chasseur de
+  dragons, Semeur d'épines, Lanceur de lucioles
+- Magie : Pyromancien, Apprenti, Cryomancien, Invocateur, Archimage,
+  Illusionniste, Chronomancien, Électromancien, Druide, Astromancien,
+  Ombremancien, Enchanteur, Oracle, Calligraphe, Onironaute, Mage des
+  miroirs, Essaimancien, Mage des marées
+- Soutien : Roi, Messager, Pêcheur, Barde, Herboriste, Guérisseur,
+  Cartographe, Apiculteur, Conteur, Souffleur de verre, Tisseur de linceuls,
+  Archiviste
+
+**Nain (56)**
+- Mêlée : Garde, Guerrier, Lancier, Bagarreur, Chef de guerre, Maître
+  d'armes, Champion, Hallebardier, Berserker, Brise-bouclier, Marteleur,
+  Briseur de crânes, Paladin, Gardien du roc, Tueur de géants, Sapeur,
+  Porte-enclume, Lutteur d'ours, Fléautier
+- Distance : Chasseur, Arbalétrier, Tireur d'élite, Canonnier, Arquebusier,
+  Lanceur de haches, Aéronaute, Catapultier, Artificier
+- Magie : Pyromancien, Alchimiste, Géomancien, Maître des runes, Enchanteur
+  de runes, Mycomancien, Chanteur de pierre, Tatoueur runique, Mage du sel
+- Soutien : Roi, Fermier, Cuisinier, Mineur, Bûcheron, Forgeron, Marchand,
+  Prêtre, Bricoleur, Ingénieur, Porte-étendard, Brasseur, Tailleur de pierre,
+  Orfèvre, Cartographe, Fromager, Gardien de phare, Champignonniste, Horloger
+
+**Mort-vivant (55)**
+- Mêlée : Garde, Guerrier, Lancier, Duelliste, Hallebardier, Écorcheur,
+  Chevalier, Goule, Revenant, Momie, Faucheur, Bourreau, Sonneur de glas
+- Distance : Archer, Archer spectral, Lanceur d'os, Cracheur de peste,
+  Arbalétrier maudit, Rétiaire, Corbeautier
+- Magie : Pyromancien, Apprenti, Cryomancien, Invocateur, Archimage, Sorcier,
+  Chronomancien, Ombremancien, Nécromancien, Sorcier du sang, Ritualiste,
+  Liche, Banshee, Embaumeur, Maître des âmes, Mage de peste, Marionnettiste
+  d'os, Onironaute, Mycomancien, Haruspice, Mage de rouille, Mage de cendre
+- Soutien : Roi, Fermier, Cuisinier, Mineur, Messager, Fossoyeur,
+  Porte-lanterne, Passeur, Taxidermiste, Chiffonnier, Tisseur de linceuls,
+  Archiviste, Pleureur
+
+**Bête (49 espèces)**
+- Mêlée : Loup, Ours, Sanglier, Taureau, Tigre à dents de sabre, Mammouth,
+  Rhinocéros cuirassé, Crocodile, Araignée géante, Scorpion géant, Ver des
+  sables, Griffon, Mantichore, Hydre
+- Distance : Dragon, Wyverne, Roc, Chauve-souris géante, Frelon géant,
+  Porc-épic géant, Cobra cracheur, Crapaud cracheur, Scarabée bombardier,
+  Pieuvre géante, Anguille électrique
+- Magie : Phénix, Licorne, Basilic, Chimère, Salamandre, Renard à neuf
+  queues, Cerf blanc, Papillon de lune, Hibou des arcanes, Méduse céleste,
+  Serpent de mer, Chat noir
+- Soutien : Cheval, Pégase, Âne, Bœuf, Chèvre, Chien de berger, Cochon
+  truffier, Corbeau, Pigeon voyageur, Tortue géante, Reine des abeilles,
+  Escargot géant
+
 - **Contrainte venue du concept** : une carte n'est que dans un seul deck et un
   deck fait 30 cartes ; avec N lieux ouverts il faut 30 × N cartes distinctes.
-  384 cartes soutiennent une dizaine de lieux avec du choix.
+  393 cartes soutiennent une dizaine de lieux avec du choix.
 
 ## Les illustrations — le banc de génération
 
@@ -103,4 +214,4 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
 - **Chaleur** : le portable plafonne à 87–89 °C en charge continue et s'est figé
   une nuit (20/10, 6 h 06). Génération et entraînement de jour, sonde
   `nvidia-smi` toutes les 10 s, pas de nuit tant que le refroidissement n'est
-  pas réglé. Une carte = 4 graines × 23 s ≈ 1 min 30 ; 384 cartes ≈ 10 h.
+  pas réglé. Une carte = 4 graines × 23 s ≈ 1 min 30 ; 393 cartes ≈ 10 h.
