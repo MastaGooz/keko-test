@@ -190,6 +190,124 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   truffier, Corbeau, Pigeon voyageur, Tortue géante, Reine des abeilles,
   Escargot géant
 
+### Les raretés par race (proposition, 21/10/2026)
+
+Du générique (commune) au personnage unique et nommé (légendaire). Le sexe
+d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
+
+**Gobelin**
+- Légendaire (3) : Chef de guerre « Snik le Rusé », Chaman « Mère Gribouille
+  », Ingénieur « Zabbo Boulon-Fou »
+- Épique (7) : Chevaucheur de rat, Cerf-voliste, Aéronaute, Cartomancien,
+  Horloger, Artificier, Contrebandier
+- Rare (11) : Escrimeur à l'ombrelle, Péagier, Canonnier, Fauconnier, Lanceur
+  de ruches, Rétiaire, Illusionniste, Électromancien, Ritualiste, Mycomancien,
+  Essaimancien
+- Peu commune (15) : Brute, Coupe-jarret, Sapeur, Arbalétrier, Tireur à la
+  sarbacane, Lanceur de bombes, Poseur de pièges, Pyromancien, Sorcier,
+  Alchimiste, Mage de rouille, Mangeur de feu, Dompteur de bêtes, Prêteur sur
+  gages, Taxidermiste
+- Commune (25) : Garde, Guerrier, Bagarreur, Archer, Chasseur, Lanceur de
+  couteaux, Éclaireur, Frondeur, Pétardier, Lanceur de boomerang, Apprenti,
+  Fermier, Cuisinier, Mineur, Bûcheron, Messager, Marchand, Herboriste,
+  Ferrailleur, Porteur, Bricoleur, Apiculteur, Ramoneur, Chiffonnier,
+  Champignonniste
+
+**Orc**
+- Légendaire (3) : Roi « Grumbak le Borgne », Chevaucheur de loup « Ursha
+  Croc-Rouge », Chaman « Ghor l'Ancien »
+- Épique (6) : Chef de guerre, Champion, Berserker, Sorcier du sang, Tatoueur
+  runique, Tambour de guerre
+- Rare (10) : Gladiateur, Ravageur, Massacreur, Lutteur d'ours, Lanceur de
+  harpon, Catapultier, Haruspice, Chanteur de pierre, Mage de cendre, Montreur
+  d'ours
+- Peu commune (14) : Maître d'armes, Brise-bouclier, Marteleur, Briseur de
+  crânes, Écorcheur, Bourreau, Péagier, Javelinier, Pisteur, Lanceur de bolas,
+  Druide, Géomancien, Mangeur de feu, Porte-étendard
+- Commune (22) : Garde, Guerrier, Lancier, Bagarreur, Brute, Fléautier,
+  Archer, Chasseur, Lanceur de couteaux, Lanceur de ruches, Lanceur de
+  boomerang, Pyromancien, Fermier, Cuisinier, Mineur, Bûcheron, Forgeron,
+  Guérisseur, Ferrailleur, Dompteur de bêtes, Porteur, Conteur
+
+**Humain**
+- Légendaire (4) : Roi « Aldric le Juste », Archimage « Méliane l'Étoilée »,
+  Paladin « Sire Gaspard », Rôdeur « Corvin le Gris »
+- Épique (7) : Chevalier, Maître d'armes, Maître archer, Chronomancien,
+  Nécromancien, Invocateur, Prêtre
+- Rare (11) : Faucheur, Moine bâtonniste, Gladiateur, Tireur d'élite, Cerf-
+  voliste, Rétiaire, Astromancien, Calligraphe, Mage des miroirs, Mage des
+  marées, Cartographe
+- Peu commune (15) : Duelliste, Hallebardier, Bourreau, Fléautier,
+  Arbalétrier, Arquebusier, Catapultier, Lanceur de bolas, Cryomancien,
+  Illusionniste, Sorcier, Cartomancien, Mangeur de feu, Mage du sel, Barde
+- Commune (24) : Garde, Guerrier, Lancier, Bagarreur, Archer, Chasseur,
+  Lanceur de couteaux, Éclaireur, Pyromancien, Apprenti, Fermier, Cuisinier,
+  Bûcheron, Messager, Forgeron, Marchand, Pêcheur, Apiculteur, Fromager,
+  Conteur, Souffleur de verre, Ramoneur, Gardien de phare, Montreur d'ours
+
+**Elfe**
+- Légendaire (4) : Roi « la reine Ilyaëlle », Oracle « Ysmira », Lame-dansante
+  « Faelis », Archer lunaire « Nyriel »
+- Épique (6) : Champion, Maître archer, Chasseur de dragons, Archimage,
+  Enchanteur, Cavalier de cerf
+- Rare (10) : Escrimeur à l'ombrelle, Moine bâtonniste, Lanceur de glaives,
+  Lanceur de lucioles, Sentinelle, Chronomancien, Astromancien, Ombremancien,
+  Onironaute, Mage des miroirs
+- Peu commune (14) : Duelliste, Tireur d'élite, Rôdeur, Tireur à la sarbacane,
+  Fauconnier, Semeur d'épines, Archer sylvestre, Cryomancien, Invocateur,
+  Illusionniste, Électromancien, Druide, Calligraphe, Barde
+- Commune (22) : Garde, Guerrier, Lancier, Archer, Chasseur, Éclaireur,
+  Javelinier, Pisteur, Pyromancien, Apprenti, Essaimancien, Mage des marées,
+  Messager, Pêcheur, Herboriste, Guérisseur, Cartographe, Apiculteur, Conteur,
+  Souffleur de verre, Tisseur de linceuls, Archiviste
+
+**Nain**
+- Légendaire (4) : Roi « Durgan Barbe-d'Enclume », Maître des runes « Hilda
+  Chant-de-Rune », Tueur de géants « Gorrin Brise-Montagne », Forgeron « Ulfa
+  la Forgeronne »
+- Épique (6) : Chef de guerre, Champion, Gardien du roc, Paladin, Enchanteur
+  de runes, Porte-enclume
+- Rare (10) : Berserker, Lutteur d'ours, Canonnier, Aéronaute, Artificier,
+  Lanceur de haches, Chanteur de pierre, Tatoueur runique, Orfèvre, Gardien de
+  phare
+- Peu commune (14) : Maître d'armes, Hallebardier, Brise-bouclier, Marteleur,
+  Briseur de crânes, Sapeur, Arquebusier, Tireur d'élite, Catapultier,
+  Alchimiste, Géomancien, Mycomancien, Porte-étendard, Ingénieur
+- Commune (22) : Garde, Guerrier, Lancier, Bagarreur, Fléautier, Chasseur,
+  Arbalétrier, Pyromancien, Mage du sel, Fermier, Cuisinier, Mineur, Bûcheron,
+  Marchand, Prêtre, Bricoleur, Brasseur, Tailleur de pierre, Cartographe,
+  Fromager, Champignonniste, Horloger
+
+**Mort-vivant**
+- Légendaire (3) : Liche « Morvath », Roi « Ossiran, le Roi-Spectre », Banshee
+  « Ondine la Pleureuse »
+- Épique (6) : Chevalier, Revenant, Maître des âmes, Nécromancien, Archimage,
+  Sonneur de glas
+- Rare (10) : Faucheur, Momie, Archer spectral, Arbalétrier maudit,
+  Corbeautier, Chronomancien, Embaumeur, Marionnettiste d'os, Onironaute,
+  Passeur
+- Peu commune (14) : Duelliste, Hallebardier, Écorcheur, Bourreau, Goule,
+  Cracheur de peste, Rétiaire, Invocateur, Sorcier du sang, Ombremancien, Mage
+  de peste, Haruspice, Porte-lanterne, Pleureur
+- Commune (22) : Garde, Guerrier, Lancier, Archer, Lanceur d'os, Pyromancien,
+  Apprenti, Cryomancien, Sorcier, Ritualiste, Mycomancien, Mage de rouille,
+  Mage de cendre, Fermier, Cuisinier, Mineur, Messager, Fossoyeur,
+  Taxidermiste, Chiffonnier, Tisseur de linceuls, Archiviste
+
+**Bête**
+- Légendaire (3) : Dragon « Pyrargos », Phénix « Aurore », Hydre « l'Hydre de
+  Morne-Marais »
+- Épique (5) : Griffon, Mantichore, Licorne, Chimère, Roc
+- Rare (9) : Wyverne, Basilic, Ver des sables, Mammouth, Renard à neuf queues,
+  Serpent de mer, Méduse céleste, Pégase, Tigre à dents de sabre
+- Peu commune (12) : Ours, Rhinocéros cuirassé, Araignée géante, Scorpion
+  géant, Crocodile, Frelon géant, Pieuvre géante, Anguille électrique,
+  Salamandre, Cerf blanc, Papillon de lune, Hibou des arcanes
+- Commune (20) : Loup, Sanglier, Taureau, Chauve-souris géante, Porc-épic
+  géant, Cobra cracheur, Crapaud cracheur, Scarabée bombardier, Chat noir,
+  Cheval, Âne, Bœuf, Chèvre, Chien de berger, Cochon truffier, Corbeau, Pigeon
+  voyageur, Tortue géante, Reine des abeilles, Escargot géant
+
 - **Contrainte venue du concept** : une carte n'est que dans un seul deck et un
   deck fait 30 cartes ; avec N lieux ouverts il faut 30 × N cartes distinctes.
   393 cartes soutiennent une dizaine de lieux avec du choix.
