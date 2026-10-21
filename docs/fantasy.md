@@ -226,7 +226,13 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
 - **Protection contre les doublons : LÉGENDAIRES UNIQUEMENT** (Keko) — une
   légendaire tirée est toujours une qu'on n'a pas tant qu'il en manque. Les 24
   en ~3–4 mois ; les 43 épiques, au hasard, en ~3 mois.
-- **Doublons** : à trancher (proposition : ils font monter la carte en niveau).
+- **Les doublons deviennent des stickers, et les stickers remplissent un
+  ALBUM** (Keko) : une case par carte. **Des SÉRIES de cases débloquent des
+  passifs** (« 3 paladins = les paladins ont +1 »). **Un sticker posé sur un
+  sticker déjà dans l'album fait monter la carte d'un niveau**, au coût qui
+  double : 1 sticker pour le niveau 1, puis 2, puis 4… (2^n stickers en tout
+  pour le niveau n, case comprise). Le prix des paquets de la boutique : plus
+  tard.
 
 ## Les illustrations — le banc de génération
 
