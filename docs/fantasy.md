@@ -194,6 +194,24 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   deck fait 30 cartes ; avec N lieux ouverts il faut 30 × N cartes distinctes.
   393 cartes soutiennent une dizaine de lieux avec du choix.
 
+## Les paquets et la rareté (21/10/2026)
+
+- **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
+  plus elle descend, plus on va vers le générique (Loup, Guerrier orc). Keko.
+- **Rythme : 1 paquet par heure, 10 au plus en réserve** (24 par jour au
+  maximum, 15–20 pour un joueur qui passe matin et soir) **+ une boutique de
+  4 paquets renouvelée une fois par jour**, achetés avec les ressources. Le
+  prix en temps de production est une proposition, pas tranché.
+- **La dernière carte du paquet est au moins peu commune et porte la pitié**
+  (Keko). Chiffres de la pitié et des taux pas encore tranchés.
+- **Simulation** (393 cartes, 157/98/71/43/24 par cran, 5 cartes par paquet) :
+  avec 20 à 28 paquets par jour, la moitié de la collection vient en 2–3 jours
+  QUELS QUE SOIENT LES TAUX ; seuls l'épique et le légendaire font durer. Aux
+  taux de l'emoji (Hearthstone), toutes les légendaires en 1,5–2,5 mois ; aux
+  taux proposés (cartes 1–4 : 74/16/8/1,7/0,3 ; carte 5 : —/72/20/6,5/1,5 ;
+  épique garantie au 10e paquet, légendaire au 60e), 2,5–4 mois.
+- **Doublons** : à trancher (proposition : ils font monter la carte en niveau).
+
 ## Les illustrations — le banc de génération
 
 - Style retravaillé par Keko le 20/10/2026 : 53 planches 2 × 2 générées, 204
