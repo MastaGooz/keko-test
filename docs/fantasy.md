@@ -312,6 +312,48 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   deck fait 30 cartes ; avec N lieux ouverts il faut 30 × N cartes distinctes.
   393 cartes soutiennent une dizaine de lieux avec du choix.
 
+### Le sexe de chaque carte, et la fiche des communes gobelins (proposition, 21/10/2026)
+
+- **Keko** : « repartir un peu le sexe de manière plus cohérente qu'au hasard
+  en gardant un ratio à peu près équilibré (40/60 pas plus en déséquilibre) ».
+  Règle : **entre 40/60 et 60/40 par race et par cran**, chaque sexe choisi pour
+  l'image de la carte et le contraste avec ses voisines. Le nom sur la carte
+  s'accorde (Archère, Bagarreuse…).
+- **Communes gobelins : 13 hommes, 12 femmes (52/48).** Mêlée 2 H / 1 F,
+  distance 4 H / 3 F, magie 1 F, soutien 6 H / 8 F.
+- **La fiche** (nom · sexe · arme ou outil et la main qui le tient · description),
+  base des prompts de génération, traduite en anglais avec « kksty » au
+  lancement d'un lot. Tous dans le style du LoRA : trapus, adultes, aplats.
+  *À trancher : la fiche inverse l'Archer et la Chasseuse par rapport au
+  tableau de répartition (tableau : Archère ♀, Chasseur ♂ ; fiche : Archer ♂,
+  Chasseuse ♀). Le total reste 13/12 dans les deux cas.*
+
+1. **Garde** · ♂ · une lance courte dans la main droite et un bouclier rond en bois cabossé dans la gauche. Trapu, casque de fer trop grand qui lui tombe sur les yeux, air bougon.
+2. **Guerrier** · ♂ · une épée courte ébréchée dans la main droite. Armure de cuir rapiécée, épaulière en métal d'un seul côté, posture de combat.
+3. **Bagarreuse** · ♀ · les poings nus bandés de tissu. Petite et teigneuse, oreille entaillée, sourire de défi, cheveux attachés en houppe.
+4. **Archer** · ♂ · un arc court dans la main gauche, une flèche encochée. Carquois dans le dos, capuche verte, plissant un œil pour viser.
+5. **Chasseuse** · ♀ · une lance de chasse dans la main droite. Peau de loup sur les épaules, collier de dents, un lapin pendu à la ceinture.
+6. **Lanceuse de couteaux** · ♀ · trois couteaux en éventail dans la main droite. Bandeau sur le front, ceinture couverte de lames, regard sournois.
+7. **Éclaireuse** · ♀ · une longue-vue dans la main droite et une dague à la ceinture. Cape à capuche, pieds nus, accroupie en guet.
+8. **Frondeur** · ♂ · une fronde qui tourne au-dessus de la tête dans la main droite, une pierre dans la gauche. Gamin des rues maigre, tunique trouée, langue tirée.
+9. **Pétardier** · ♂ · un bâton de dynamite à mèche allumée dans la main droite. Sourcils roussis, lunettes de protection sur le front, cartouchière de pétards en travers du torse.
+10. **Lanceur de boomerang** · ♂ · un boomerang en bois peint dans la main droite. Gros sourire édenté, peintures tribales sur les bras, en plein élan.
+11. **Apprentie** · ♀ · un gros grimoire ouvert tenu à deux mains. Robe trop longue, chapeau pointu affaissé, petite étincelle magique au-dessus du livre.
+12. **Fermier** · ♂ · une fourche sur l'épaule droite. Chapeau de paille, salopette rapiécée, un brin de paille au coin de la bouche.
+13. **Cuisinière** · ♀ · une louche dans la main droite et une marmite fumante dans la gauche. Tablier taché, toque de travers, joues rondes.
+14. **Mineur** · ♂ · une pioche dans la main droite. Casque avec une bougie, visage couvert de poussière, une pépite dans la poche.
+15. **Bûcheron** · ♂ · une hache plus grande que lui, tenue à deux mains. Chemise à carreaux, bras noueux, copeaux de bois à ses pieds.
+16. **Messagère** · ♀ · une lettre cachetée dans la main droite. Sacoche pleine de rouleaux en bandoulière, bottes usées, toujours en train de courir.
+17. **Marchande** · ♀ · une bourse de pièces dans la main droite et une balance dans la gauche. Châle coloré, bagues à tous les doigts, sourire rusé.
+18. **Herboriste** · ♀ · un mortier et son pilon tenus à deux mains. Bouquets d'herbes séchées accrochés à la ceinture, presque sorcière, foulard sur la tête.
+19. **Ferrailleur** · ♂ · un marteau dans la main droite. Chariot de casseroles cabossées derrière lui, tablier de cuir, une dent en métal.
+20. **Porteur** · ♂ · une pile de sacs et de caisses sur le dos, tenue par des sangles. Très courbé, petites jambes arquées, sueur au front.
+21. **Bricoleur** · ♂ · une clé à molette dans la main droite. Lunettes-loupes sur les yeux, poches pleines d'outils, un petit engrenage derrière l'oreille.
+22. **Apicultrice** · ♀ · un enfumoir dans la main droite. Chapeau à voile, quelques abeilles autour d'elle, un pot de miel à la ceinture.
+23. **Ramoneur** · ♂ · une brosse hérisson sur long manche, sur l'épaule. Couvert de suie, haut-de-forme cabossé, grand sourire blanc.
+24. **Chiffonnière** · ♀ · un crochet à chiffons dans la main droite. Hotte débordante de tissus et de rubans dans le dos, tenue faite de bouts cousus ensemble.
+25. **Champignonniste** · ♀ · un panier de champignons lumineux au bras gauche et un petit couteau dans la main droite. Chapeau en forme de champignon, tablier de mousse.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
