@@ -449,6 +449,25 @@ Pyromancienne.
   reflets translucides de l'Illusionniste et tout l'essaim de
   l'Essaimancienne.
 
+**Épiques gobelins : 3 hommes, 4 femmes (43/57)** — presque des personnages :
+une monture, une machine ou un effet qui occupe l'image, une tenue plus
+soignée que le reste de la tribu. Mêlée 1 H, distance 1 H / 2 F, magie 1 F,
+soutien 1 H / 1 F. Avec les légendaires (Snik ♂, Mère Gribouille ♀, Zabbo ♂),
+le gobelin entier fait 30 hommes et 31 femmes. Distinguées de leurs voisines :
+le Cerf-voliste vole au vent, l'Aéronaute à la machine ; l'Artificière tire
+des fusées de couleur, pas les explosifs du Pétardier ni de la Lanceuse de
+bombes ; la Cartomancienne lit l'avenir dans des cartes qui flottent,
+l'Illusionniste en fait jaillir de sa manche ; l'Horloger est de la mécanique
+fine, pas le bric-à-brac du Bricoleur.
+
+1. **Chevaucheur de rat** · ♂ · une lance courte à fanion dans la main droite, les rênes dans la gauche, en selle sur un rat géant cabré aux dents jaunes. Casque à cornes de travers, selle rapiécée garnie de clochettes, queue du rat enroulée au premier plan.
+2. **Cerf-voliste** · ♂ · le fil d'un grand cerf-volant de toile rapiécée dans les deux mains, les pieds décollés du sol, tiré dans les airs. Écharpe qui claque au vent, lunettes de vol, sacoche de cailloux à lâcher sur l'ennemi.
+3. **Aéronaute** · ♀ · une longue-vue dans la main droite, la gauche agrippée aux cordages d'une petite nacelle sous un ballon de rustines. Casque de cuir à oreillettes, lunettes relevées, sacs de lest qui pendent autour de la nacelle.
+4. **Artificière** · ♀ · un tube lance-fusées sur l'épaule droite, une fusée allumée dans la main gauche. Gerbe d'étincelles colorées derrière elle, cheveux roussis, bandoulière de fusées peintes à rayures.
+5. **Cartomancienne** · ♀ · une carte retournée entre deux doigts de la main droite levée, un éventail de cartes lumineuses qui flottent en arc devant elle. Foulard noué sur la tête, grandes boucles d'oreilles, châle à franges, troisième œil peint sur le front.
+6. **Horloger** · ♂ · un tournevis minuscule dans la main droite, une montre ouverte aux rouages apparents dans la gauche. Loupe vissée sur l'œil, gilet garni de chaînes de montres, petit oiseau mécanique remonté sur l'épaule.
+7. **Contrebandière** · ♀ · un coutelas dans la main droite, la gauche qui ouvre un long manteau doublé de poches bourrées de fioles et de marchandises. Tricorne enfoncé, bandeau sur un œil, tonnelet en bandoulière, sourire en coin.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
