@@ -423,6 +423,26 @@ Mêlée 2 H / 1 F, distance 2 H / 2 F, magie 2 H / 3 F, soutien 2 H / 1 F.
   `public/generations/gobelin/peu-communes/` (`01-brute.png` …
   `15-taxidermiste.png`, numérotées comme cette fiche).
 
+**Rares gobelins : 5 hommes, 6 femmes (45/55)** — un objet signature et une
+silhouette qu'on reconnaît de loin, sans être encore des personnages nommés.
+Mêlée 1 H / 1 F, distance 2 H / 2 F, magie 2 H / 3 F. Distinguées de leurs
+voisines : le Mycomancien (magie des spores) n'est pas la Champignonniste
+(cueillette), la Ruche lancée n'est pas l'essaim dirigé de l'Essaimancienne
+(sauterelles et scarabées, pas d'abeilles), l'Électromancienne n'est pas la
+Pyromancienne.
+
+1. **Escrimeuse à l'ombrelle** · ♀ · une ombrelle en dentelle trouée à pointe d'acier, tenue comme une rapière dans la main droite. Main gauche dans le dos, robe de dame rapiécée, petit chapeau à voilette de travers, pose de duelliste précieuse.
+2. **Péagier** · ♂ · une barrière de bois rayée rouge et blanc tenue en travers à deux mains. Coffret à pièces cadenassé à la ceinture, clochette au cou, casquette de fonctionnaire trop grande, regard qui réclame.
+3. **Canonnier** · ♂ · un petit canon de bronze sur l'épaule droite, la mèche fumante dans la main gauche. Bonnet enfoncé, chiffons dans les oreilles, boulets dans une besace, visage noirci par la poudre.
+4. **Fauconnière** · ♀ · un vautour déplumé perché sur le gant de cuir de la main gauche. Leurre à plumes qui tournoie dans la main droite, capuchon de rapace à la ceinture, plumes dans les cheveux.
+5. **Lanceur de ruches** · ♂ · une ruche de paille bourdonnante levée dans la main droite, prête à être lancée. Abeilles furieuses qui s'en échappent, visage piqué et boursouflé, filet de protection déchiré sur la tête.
+6. **Rétiaire** · ♀ · un trident dans la main droite et un filet lesté qu'elle fait tournoyer dans la gauche. Épaulière unique en métal, bras bandés, jupe de cuir à lanières, pose de gladiatrice.
+7. **Illusionniste** · ♂ · un masque souriant tenu devant le visage dans la main gauche, cartes et foulards qui jaillissent de la manche droite. Cape violette étoilée, deux reflets translucides de lui-même de chaque côté.
+8. **Électromancienne** · ♀ · une bobine de cuivre crépitante dans la main droite levée, éclairs bleus entre ses doigts. Cheveux dressés par l'électricité, lunettes de soudeuse, batterie bricolée dans le dos reliée par des câbles.
+9. **Ritualiste** · ♀ · une dague rituelle dans la main droite et une bougie noire dans la gauche. Cercle de craie aux runes lumineuses sous ses pieds, robe à capuche brodée d'yeux, os pendus au cou.
+10. **Mycomancien** · ♂ · un bâton noueux couronné d'un champignon géant qui crache des spores dans la main droite. Peau tachée de moisissure, mycélium lumineux qui court sur ses bras, petits champignons qui poussent sur ses épaules.
+11. **Essaimancienne** · ♀ · rien dans les mains : les deux bras tendus dirigent un nuage de sauterelles et de scarabées qui tourbillonne autour d'elle. Châle de toile percée, yeux à facettes peints sur le front, antennes de criquet dans les cheveux.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
