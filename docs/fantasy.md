@@ -205,11 +205,11 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 - Épique (8) : Chevaucheur de rat, Cerf-voliste, Aéronaute, Artificier,
   Illusionniste, Électromancien, Essaimancien, Gardien des clés
 - Rare (11) : Escrimeur à l'ombrelle, Canonnier, Fauconnier, Lanceur de
-  ruches, Pyromancien, Mangeur de feu, Cartomancien, Ritualiste, Mycomancien,
+  ruches, Pyromancien, Mage de rouille, Cartomancien, Ritualiste, Mycomancien,
   Horloger, Contrebandier
 - Peu commune (15) : Brute, Coupe-jarret, Péagier, Arbalétrier, Lanceur de
-  bombes, Poseur de pièges, Rétiaire, Apprenti, Sorcier, Alchimiste, Mage de
-  rouille, Dompteur de bêtes, Prêteur sur gages, Taxidermiste, Ferrailleur
+  bombes, Poseur de pièges, Rétiaire, Apprenti, Sorcier, Alchimiste, Mangeur de
+  feu, Dompteur de bêtes, Prêteur sur gages, Taxidermiste, Ferrailleur
 - Commune (25) : Garde, Guerrier, Bagarreur, Sapeur, Archer, Chasseur,
   Lanceur de couteaux, Éclaireur, Frondeur, Pétardier, Lanceur de boomerang,
   Tireur à la sarbacane, Fermier, Cuisinier, Mineur, Bûcheron, Messager,
@@ -372,7 +372,9 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   passent à 8 avec l'extra :
   - commune → peu commune : Ferrailleuse, Apprentie ;
   - peu commune → commune : Tireur à la sarbacane, Sapeur (le jumeau du Mineur) ;
-  - peu commune → rare : Pyromancienne, Mangeuse de feu ;
+  - peu commune → rare : Pyromancienne, Mage de rouille (Keko, ensuite :
+    « pyromancienne et mangeuse de feu au même niveau c'est dommage » — la
+    Mangeuse de feu, montée d'abord, est restée peu commune) ;
   - rare → peu commune : Péagier, Rétiaire (trop sobres pour leur rang) ;
   - rare → épique : Illusionniste, Électromancienne, Essaimancienne ;
   - épique → rare : Cartomancienne, Horloger, Contrebandière ;
@@ -426,9 +428,9 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   devient la **Ferrailleuse** (« ferailleuse femme ok »), depuis montée en peu
   commune (`15-ferrailleuse.png`).
 
-**Peu communes gobelins : 7 hommes, 8 femmes (47/53)** — un cran au-dessus : plus
+**Peu communes gobelins : 6 hommes, 9 femmes (40/60)** — un cran au-dessus : plus
 d'équipement, un savoir-faire qui se voit, sans être encore des personnages.
-Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 2 H / 2 F, soutien 2 H / 2 F.
+Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 1 H / 3 F, soutien 2 H / 2 F.
 
 1. **Brute** · ♂ · un gourdin clouté tenu à deux mains. Le plus massif des gobelins, épaules énormes, tête petite, mâchoire en avant, chaîne cassée au poignet.
 2. **Coupe-jarret** · ♀ · deux dagues courbes, une dans chaque main, tenues lame vers le bas. Foulard noir sur le bas du visage, accroupie, sourire qu'on devine aux yeux.
@@ -440,7 +442,7 @@ Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 2 H / 2 F, soutien 2 H / 2 F.
 8. **Apprentie** · ♀ · un gros grimoire ouvert tenu à deux mains. Robe trop longue, chapeau pointu affaissé, petite étincelle magique au-dessus du livre.
 9. **Sorcier** · ♂ · un bâton tordu surmonté d'un crâne de rat dans la main droite. Long manteau rapiécé à capuche, barbiche, lueur verte dans la main gauche.
 10. **Alchimiste** · ♀ · une fiole bouillonnante dans la main droite et une autre dans la gauche. Lunettes rondes, ceinture de flacons colorés, tablier taché de toutes les couleurs.
-11. **Mage de rouille** · ♂ · une clé géante rouillée tenue comme un sceptre dans la main droite. Armure de ferraille piquée de rouille, poussière orange qui tourbillonne autour de la main gauche.
+11. **Mangeuse de feu** · ♀ · une torche dans la main droite, crachant une gerbe de feu. Tenue de saltimbanque à losanges, bracelets, joues gonflées, une seconde torche à la ceinture.
 12. **Dompteur de bêtes** · ♂ · un fouet dans la main droite. Un petit loup hérissé en laisse dans la gauche, gilet de cuir couvert de griffures, chapeau à plume.
 13. **Prêteuse sur gages** · ♀ · un grand registre sous le bras gauche et une loupe dans la main droite. Lunettes sur le bout du nez, clés pendues à la ceinture, colliers et babioles mis en gage.
 14. **Taxidermiste** · ♂ · une grosse aiguille et du fil dans la main droite, un corbeau empaillé dans la gauche. Tablier de cuir, petits yeux de verre dans une boîte à la ceinture, air un peu inquiétant.
@@ -451,9 +453,9 @@ Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 2 H / 2 F, soutien 2 H / 2 F.
   `public/generations/gobelin/peu-communes/` (`01-brute.png` …
   `15-ferrailleuse.png`, numérotées comme cette fiche).
 
-**Rares gobelins : 4 hommes, 7 femmes (36/64)** — un objet signature et une
+**Rares gobelins : 5 hommes, 6 femmes (45/55)** — un objet signature et une
 silhouette qu'on reconnaît de loin, sans être encore des personnages nommés.
-Mêlée 1 F, distance 2 H / 1 F, magie 1 H / 4 F, soutien 1 H / 1 F.
+Mêlée 1 F, distance 2 H / 1 F, magie 2 H / 3 F, soutien 1 H / 1 F.
 Distinguées de leurs voisines : le Mycomancien (magie des spores) n'est pas
 la Champignonniste (cueillette), la Ruche lancée n'est pas l'essaim dirigé de
 l'Essaimancienne (sauterelles et scarabées, pas d'abeilles).
@@ -463,7 +465,7 @@ l'Essaimancienne (sauterelles et scarabées, pas d'abeilles).
 3. **Fauconnière** · ♀ · un vautour déplumé perché sur le gant de cuir de la main gauche. Leurre à plumes qui tournoie dans la main droite, capuchon de rapace à la ceinture, plumes dans les cheveux.
 4. **Lanceur de ruches** · ♂ · une ruche de paille bourdonnante levée dans la main droite, prête à être lancée. Abeilles furieuses qui s'en échappent, visage piqué et boursouflé, filet de protection déchiré sur la tête.
 5. **Pyromancienne** · ♀ · une boule de feu dans la main droite levée. Robe aux bords roussis, cheveux qui fument, petites flammes au bout des doigts de la main gauche.
-6. **Mangeuse de feu** · ♀ · une torche dans la main droite, crachant une gerbe de feu. Tenue de saltimbanque à losanges, bracelets, joues gonflées, une seconde torche à la ceinture.
+6. **Mage de rouille** · ♂ · une clé géante rouillée tenue comme un sceptre dans la main droite. Armure de ferraille piquée de rouille, poussière orange qui tourbillonne autour de la main gauche.
 7. **Cartomancienne** · ♀ · une carte retournée entre deux doigts de la main droite levée, un éventail de cartes lumineuses qui flottent en arc devant elle. Foulard noué sur la tête, grandes boucles d'oreilles, châle à franges, troisième œil peint sur le front.
 8. **Ritualiste** · ♀ · une dague rituelle dans la main droite et une bougie noire dans la gauche. Cercle de craie aux runes lumineuses sous ses pieds, robe à capuche brodée d'yeux, os pendus au cou.
 9. **Mycomancien** · ♂ · un bâton noueux couronné d'un champignon géant qui crache des spores dans la main droite. Peau tachée de moisissure, mycélium lumineux qui court sur ses bras, petits champignons qui poussent sur ses épaules.
