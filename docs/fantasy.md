@@ -355,6 +355,11 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   Règle : **entre 40/60 et 60/40 par race et par cran**, chaque sexe choisi pour
   l'image de la carte et le contraste avec ses voisines. Le nom sur la carte
   s'accorde (Archère, Bagarreuse…).
+- **Assoupli par Keko (22/10)** : « ratio sexe = doit être mixte (à peu
+  près) en général (pas forcément à chaque rareté) ». La règle vaut **par
+  race, toutes raretés confondues** ; un cran peut pencher d'un côté. Et
+  « rareté = métier pas forcément » : **la rareté d'une carte peut se juger
+  à son image** (complexité, effet, charisme), pas seulement au métier.
 - **Communes gobelins : 12 hommes, 13 femmes (48/52).** Mêlée 2 H / 1 F,
   distance 4 H / 3 F, magie 1 F, soutien 5 H / 9 F.
 - **La fiche** (nom · sexe · arme ou outil et la main qui le tient · description),
