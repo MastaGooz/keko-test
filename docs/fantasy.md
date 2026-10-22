@@ -206,10 +206,10 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   Illusionniste, Électromancien, Essaimancien, Gardien des clés
 - Rare (11) : Escrimeur à l'ombrelle, Canonnier, Fauconnier, Lanceur de
   ruches, Pyromancien, Mage de rouille, Cartomancien, Ritualiste, Mycomancien,
-  Horloger, Contrebandier
+  Sorcier, Alchimiste
 - Peu commune (15) : Brute, Coupe-jarret, Péagier, Arbalétrier, Lanceur de
-  bombes, Poseur de pièges, Rétiaire, Apprenti, Sorcier, Alchimiste, Mangeur de
-  feu, Dompteur de bêtes, Prêteur sur gages, Taxidermiste, Ferrailleur
+  bombes, Poseur de pièges, Rétiaire, Apprenti, Mangeur de feu, Dompteur de
+  bêtes, Prêteur sur gages, Taxidermiste, Ferrailleur, Horloger, Contrebandier
 - Commune (25) : Garde, Guerrier, Bagarreur, Sapeur, Archer, Chasseur,
   Lanceur de couteaux, Éclaireur, Frondeur, Pétardier, Lanceur de boomerang,
   Tireur à la sarbacane, Fermier, Cuisinier, Mineur, Bûcheron, Messager,
@@ -377,7 +377,13 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
     Mangeuse de feu, montée d'abord, est restée peu commune) ;
   - rare → peu commune : Péagier, Rétiaire (trop sobres pour leur rang) ;
   - rare → épique : Illusionniste, Électromancienne, Essaimancienne ;
-  - épique → rare : Cartomancienne, Horloger, Contrebandière ;
+  - épique → rare : Cartomancienne ; Horloger et Contrebandière, passés
+    par rare, finissent en peu commune (Keko : « alchimiste / sorcier /
+    dompteur, ils ont l'air puissants pour des uncommon… alors que horloger,
+    cartomancienne, contrebandière font un peu faible ») ;
+  - peu commune → rare : Sorcier, Alchimiste (échangés contre eux) ; le
+    Dompteur reste peu commune, son loup en laisse est la première marche
+    de l'échelle des compagnons ;
   - l'extra entre en épique : la **Gardienne des clés** (« Porte-lanterne »
     et « Mage des feux follets » sont déjà pris chez les morts-vivants).
 
@@ -426,11 +432,11 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 - **Keko** (22/10) : **les 25 illustrations sont validées** telles quelles (seconde
   série, 05–08 restés de la première) ; le Ferrailleur, dessiné en femme,
   devient la **Ferrailleuse** (« ferailleuse femme ok »), depuis montée en peu
-  commune (`15-ferrailleuse.png`).
+  commune (`13-ferrailleuse.png`).
 
 **Peu communes gobelins : 6 hommes, 9 femmes (40/60)** — un cran au-dessus : plus
 d'équipement, un savoir-faire qui se voit, sans être encore des personnages.
-Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 1 H / 3 F, soutien 2 H / 2 F.
+Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 2 F, soutien 3 H / 3 F.
 
 1. **Brute** · ♂ · un gourdin clouté tenu à deux mains. Le plus massif des gobelins, épaules énormes, tête petite, mâchoire en avant, chaîne cassée au poignet.
 2. **Coupe-jarret** · ♀ · deux dagues courbes, une dans chaque main, tenues lame vers le bas. Foulard noir sur le bas du visage, accroupie, sourire qu'on devine aux yeux.
@@ -440,22 +446,22 @@ Mêlée 2 H / 1 F, distance 1 H / 3 F, magie 1 H / 3 F, soutien 2 H / 2 F.
 6. **Poseur de pièges** · ♂ · un piège à mâchoires ouvert dans les deux mains. Bandoulière de collets et de clochettes, accroupi, la langue entre les dents.
 7. **Rétiaire** · ♀ · un trident dans la main droite et un filet lesté qu'elle fait tournoyer dans la gauche. Épaulière unique en métal, bras bandés, jupe de cuir à lanières, pose de gladiatrice.
 8. **Apprentie** · ♀ · un gros grimoire ouvert tenu à deux mains. Robe trop longue, chapeau pointu affaissé, petite étincelle magique au-dessus du livre.
-9. **Sorcier** · ♂ · un bâton tordu surmonté d'un crâne de rat dans la main droite. Long manteau rapiécé à capuche, barbiche, lueur verte dans la main gauche.
-10. **Alchimiste** · ♀ · une fiole bouillonnante dans la main droite et une autre dans la gauche. Lunettes rondes, ceinture de flacons colorés, tablier taché de toutes les couleurs.
-11. **Mangeuse de feu** · ♀ · une torche dans la main droite, crachant une gerbe de feu. Tenue de saltimbanque à losanges, bracelets, joues gonflées, une seconde torche à la ceinture.
-12. **Dompteur de bêtes** · ♂ · un fouet dans la main droite. Un petit loup hérissé en laisse dans la gauche, gilet de cuir couvert de griffures, chapeau à plume.
-13. **Prêteuse sur gages** · ♀ · un grand registre sous le bras gauche et une loupe dans la main droite. Lunettes sur le bout du nez, clés pendues à la ceinture, colliers et babioles mis en gage.
-14. **Taxidermiste** · ♂ · une grosse aiguille et du fil dans la main droite, un corbeau empaillé dans la gauche. Tablier de cuir, petits yeux de verre dans une boîte à la ceinture, air un peu inquiétant.
-15. **Ferrailleuse** · ♀ · un marteau dans la main droite. Chariot de casseroles cabossées derrière elle, tablier de cuir, une dent en métal.
+9. **Mangeuse de feu** · ♀ · une torche dans la main droite, crachant une gerbe de feu. Tenue de saltimbanque à losanges, bracelets, joues gonflées, une seconde torche à la ceinture.
+10. **Dompteur de bêtes** · ♂ · un fouet dans la main droite. Un petit loup hérissé en laisse dans la gauche, gilet de cuir couvert de griffures, chapeau à plume.
+11. **Prêteuse sur gages** · ♀ · un grand registre sous le bras gauche et une loupe dans la main droite. Lunettes sur le bout du nez, clés pendues à la ceinture, colliers et babioles mis en gage.
+12. **Taxidermiste** · ♂ · une grosse aiguille et du fil dans la main droite, un corbeau empaillé dans la gauche. Tablier de cuir, petits yeux de verre dans une boîte à la ceinture, air un peu inquiétant.
+13. **Ferrailleuse** · ♀ · un marteau dans la main droite. Chariot de casseroles cabossées derrière elle, tablier de cuir, une dent en métal.
+14. **Horloger** · ♂ · un tournevis minuscule dans la main droite, une montre ouverte aux rouages apparents dans la gauche. Loupe vissée sur l'œil, gilet garni de chaînes de montres, petit oiseau mécanique remonté sur l'épaule.
+15. **Contrebandière** · ♀ · un coutelas dans la main droite, la gauche qui ouvre un long manteau doublé de poches bourrées de fioles et de marchandises. Tricorne enfoncé, bandeau sur un œil, tonnelet en bandoulière, sourire en coin.
 
 - **Keko** (22/10) a généré les 15 avec le **loup** du Dompteur (le rat géant
   proposé n'est pas retenu). Découpées une par une dans
   `public/generations/gobelin/peu-communes/` (`01-brute.png` …
-  `15-ferrailleuse.png`, numérotées comme cette fiche).
+  `15-contrebandiere.png`, numérotées comme cette fiche).
 
 **Rares gobelins : 5 hommes, 6 femmes (45/55)** — un objet signature et une
 silhouette qu'on reconnaît de loin, sans être encore des personnages nommés.
-Mêlée 1 F, distance 2 H / 1 F, magie 2 H / 3 F, soutien 1 H / 1 F.
+Mêlée 1 F, distance 2 H / 1 F, magie 3 H / 4 F.
 Distinguées de leurs voisines : le Mycomancien (magie des spores) n'est pas
 la Champignonniste (cueillette), la Ruche lancée n'est pas l'essaim dirigé de
 l'Essaimancienne (sauterelles et scarabées, pas d'abeilles).
@@ -469,12 +475,12 @@ l'Essaimancienne (sauterelles et scarabées, pas d'abeilles).
 7. **Cartomancienne** · ♀ · une carte retournée entre deux doigts de la main droite levée, un éventail de cartes lumineuses qui flottent en arc devant elle. Foulard noué sur la tête, grandes boucles d'oreilles, châle à franges, troisième œil peint sur le front.
 8. **Ritualiste** · ♀ · une dague rituelle dans la main droite et une bougie noire dans la gauche. Cercle de craie aux runes lumineuses sous ses pieds, robe à capuche brodée d'yeux, os pendus au cou.
 9. **Mycomancien** · ♂ · un bâton noueux couronné d'un champignon géant qui crache des spores dans la main droite. Peau tachée de moisissure, mycélium lumineux qui court sur ses bras, petits champignons qui poussent sur ses épaules.
-10. **Horloger** · ♂ · un tournevis minuscule dans la main droite, une montre ouverte aux rouages apparents dans la gauche. Loupe vissée sur l'œil, gilet garni de chaînes de montres, petit oiseau mécanique remonté sur l'épaule.
-11. **Contrebandière** · ♀ · un coutelas dans la main droite, la gauche qui ouvre un long manteau doublé de poches bourrées de fioles et de marchandises. Tricorne enfoncé, bandeau sur un œil, tonnelet en bandoulière, sourire en coin.
+10. **Sorcier** · ♂ · un bâton tordu surmonté d'un crâne de rat dans la main droite. Long manteau rapiécé à capuche, barbiche, lueur verte dans la main gauche.
+11. **Alchimiste** · ♀ · une fiole bouillonnante dans la main droite et une autre dans la gauche. Lunettes rondes, ceinture de flacons colorés, tablier taché de toutes les couleurs.
 
 - **Keko** (22/10) a généré les 11 en trois planches. Découpées une par une
   dans `public/generations/gobelin/rares/` (`01-escrimeuse-a-l-ombrelle.png`
-  … `11-contrebandiere.png` depuis le reclassement), le seuil d'alpha descendu à 16 pour garder les
+  … `11-alchimiste.png` depuis le reclassement), le seuil d'alpha descendu à 16 pour garder les
   reflets translucides de l'Illusionniste et tout l'essaim de
   l'Essaimancienne.
 
@@ -526,7 +532,9 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
   débordant d'or et de bijoux. **Keko** (« ok pour la 1 ») : elle devient la
   4ᵉ légendaire, **Grisette la Dorée**, reine des voleurs (classe de mêlée).
   Découpés dans `public/generations/gobelin/legendaires/`
-  (`01-snik-le-ruse.png` … `04-grisette-la-doree.png`).
+  (`01-snik-le-ruse.png` … `04-grisette-la-doree.png`). Keko a remplacé la
+  planche le même jour par une version redessinée plus finement (Grisette
+  tient trois clés nettes) ; les découpes sont refaites dessus.
 
 
 ## Les paquets et la rareté (21/10/2026)
