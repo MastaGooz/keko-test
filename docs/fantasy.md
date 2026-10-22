@@ -76,24 +76,27 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   « très honnête en quantité pour un gacha collection idle » (Keko). Une
   centaine de places restent sous les 500 pour ouvrir des classes à d'autres
   races. **394 depuis le 22/10** : la Gardienne des clés, un extra dessiné
-  par Keko, entre en épique gobeline (44 épiques au lieu de 43).
+  par Keko, entre en épique gobeline (44 épiques au lieu de 43). **395** :
+  Grisette la Dorée, un bonus dessiné par Keko, devient la 4ᵉ légendaire
+  gobeline (25 légendaires au lieu de 24).
 
   | | mêlée | distance | magie | soutien | total |
   |---|---|---|---|---|---|
-  | Gobelin | 10 | 18 | 14 | 20 | 62 |
+  | Gobelin | 11 | 18 | 14 | 20 | 63 |
   | Orc | 21 | 10 | 10 | 14 | 55 |
   | Humain | 14 | 13 | 16 | 18 | 61 |
   | Elfe | 9 | 17 | 18 | 12 | 56 |
   | Nain | 19 | 9 | 9 | 19 | 56 |
   | Mort-vivant | 13 | 7 | 22 | 13 | 55 |
   | Bête | 14 | 11 | 12 | 12 | 49 |
-  | **total** | 100 | 85 | 101 | 108 | **394** |
+  | **total** | 101 | 85 | 101 | 108 | **395** |
 
 ### Les classes par race
 
-**Gobelin (62)**
+**Gobelin (63)**
 - Mêlée : Garde, Guerrier, Bagarreur, Chef de guerre, Brute, Coupe-jarret,
-  Sapeur, Escrimeur à l'ombrelle, Chevaucheur de rat, Péagier
+  Sapeur, Escrimeur à l'ombrelle, Chevaucheur de rat, Péagier, Reine des
+  voleurs
 - Distance : Archer, Chasseur, Arbalétrier, Lanceur de couteaux, Éclaireur,
   Canonnier, Tireur à la sarbacane, Fauconnier, Frondeur, Lanceur de bombes,
   Pétardier, Poseur de pièges, Lanceur de ruches, Cerf-voliste, Aéronaute,
@@ -197,8 +200,8 @@ Du générique (commune) au personnage unique et nommé (légendaire). Le sexe
 d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 
 **Gobelin**
-- Légendaire (3) : Chef de guerre « Snik le Rusé », Chaman « Mère Gribouille
-  », Ingénieur « Zabbo Boulon-Fou »
+- Légendaire (4) : Chef de guerre « Snik le Rusé », Chaman « Mère Gribouille
+  », Ingénieur « Zabbo Boulon-Fou », Reine des voleurs « Grisette la Dorée »
 - Épique (8) : Chevaucheur de rat, Cerf-voliste, Aéronaute, Artificier,
   Illusionniste, Électromancien, Essaimancien, Gardien des clés
 - Rare (11) : Escrimeur à l'ombrelle, Canonnier, Fauconnier, Lanceur de
@@ -477,7 +480,7 @@ l'Essaimancienne (sauterelles et scarabées, pas d'abeilles).
 une monture, une machine ou un effet qui occupe l'image, une tenue plus
 soignée que le reste de la tribu. Mêlée 1 H, distance 1 H / 2 F, magie 1 H /
 3 F. Avec les légendaires (Snik ♂, Mère Gribouille ♀, Zabbo ♂), le gobelin
-entier fait 30 hommes et 32 femmes. Distinguées de leurs voisines :
+entier fait 30 hommes et 33 femmes (avec Grisette). Distinguées de leurs voisines :
 le Cerf-voliste vole au vent, l'Aéronaute à la machine ; l'Artificière tire
 des fusées de couleur, pas les explosifs du Pétardier ni de la Lanceuse de
 bombes ; la Cartomancienne lit l'avenir dans des cartes qui flottent,
@@ -501,24 +504,27 @@ fine, pas le bric-à-brac du Bricoleur.
   valider). Découpés dans `public/generations/gobelin/epiques/`
   (`01-chevaucheur-de-rat.png` … `08-gardienne-des-cles.png`).
 
-**Légendaires gobelins : 2 hommes, 1 femme** — des personnages uniques et
+**Légendaires gobelins : 2 hommes, 2 femmes** — des personnages uniques et
 nommés, le dernier cran de l'escalade : **une scène entière**, des dorures,
 une pose héroïque, un décor ou un élément qui déborde de la silhouette.
 Chacun reprend le vocabulaire de la tribu en plus grand, pour qu'on
 reconnaisse le chef de ce qu'on a déjà vu : Snik monte plus haut que le
 Chevaucheur de rat, Mère Gribouille règne sur ce que font le Sorcier, la
-Ritualiste et le Mycomancien, Zabbo construit ce que le Bricoleur rafistole.
+Ritualiste et le Mycomancien, Zabbo construit ce que le Bricoleur rafistole,
+Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 
 1. **Snik le Rusé** · ♂ · chef de guerre · un sabre courbe doré levé dans la main droite, une carte au trésor froissée dans la gauche. Debout sur un trône de caisses volées et de boucliers ennemis empilés, couronne de fer tordu trop grande, longue cape rouge bordée de fourrure, sourire de fourbe, un œil plissé ; des fanions de la tribu flottent derrière lui.
 2. **Mère Gribouille** · ♀ · chamane · un grand bâton couvert de grigris, de plumes et d'os dans la main droite, la gauche qui remue un chaudron bouillonnant d'où montent des esprits verts en spirale. Vieille, voûtée, nez immense, cheveux blancs en broussaille piqués de champignons, masque d'os sur le front, manteau de peaux cousues brodé de runes dorées ; un crapaud sur l'épaule.
 3. **Zabbo Boulon-Fou** · ♂ · ingénieur · aux commandes d'une machine de guerre bricolée à grandes pattes de métal, une clé géante brandie dans la main droite, la gauche sur un levier. Cheveux électrisés, lunettes de soudure, harnais bourré d'outils, boulons et rivets dorés partout, la machine qui crache vapeur et étincelles, une hélice qui tourne sur son dos.
+4. **Grisette la Dorée** · ♀ · reine des voleurs · une dague dorée dans la main droite, un trousseau de clés anciennes qui pend de la gauche. Assise jambes croisées sur un coffre ouvert débordant de pièces, de colliers et de coupes d'or, capuche violette à la doublure sombre, diadème d'or sur le front, sourire narquois.
 
 - **Keko** (22/10) a généré les 3 en une planche, plus **un bonus hors
   fiche** : une gobeline à capuche violette et diadème d'or, une dague dorée
   dans une main, un trousseau de clés dans l'autre, assise sur un coffre
-  débordant d'or et de bijoux. Sa place n'est pas tranchée. Découpés dans
-  `public/generations/gobelin/legendaires/` (`01-snik-le-ruse.png` …
-  `03-zabbo-boulon-fou.png`, et `bonus-reine-au-tresor.png`).
+  débordant d'or et de bijoux. **Keko** (« ok pour la 1 ») : elle devient la
+  4ᵉ légendaire, **Grisette la Dorée**, reine des voleurs (classe de mêlée).
+  Découpés dans `public/generations/gobelin/legendaires/`
+  (`01-snik-le-ruse.png` … `04-grisette-la-doree.png`).
 
 
 ## Les paquets et la rareté (21/10/2026)
