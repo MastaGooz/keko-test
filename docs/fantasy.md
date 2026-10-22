@@ -582,6 +582,10 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 - **Voisins à surveiller** : le Pilleur d'épaves frôle
   la Ferrailleuse, la Bête de somme le Porteur, l'Éleveuse de cochons le
   Fermier. *Noms et sexes à rejuger par Keko.*
+- **Keko** (23/10) a généré les 22 en six planches. Découpées une par une
+  dans `public/generations/orc/communs/` (`01-cogneur-de-porte.png` …
+  `22-hurleur-de-legendes.png`, numérotées comme cette fiche), et commitées.
+  La Dresseuse de wargs se lit plutôt en homme à l'image.
 
 
 ## Les paquets et la rareté (21/10/2026)
