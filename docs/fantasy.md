@@ -468,6 +468,14 @@ fine, pas le bric-à-brac du Bricoleur.
 6. **Horloger** · ♂ · un tournevis minuscule dans la main droite, une montre ouverte aux rouages apparents dans la gauche. Loupe vissée sur l'œil, gilet garni de chaînes de montres, petit oiseau mécanique remonté sur l'épaule.
 7. **Contrebandière** · ♀ · un coutelas dans la main droite, la gauche qui ouvre un long manteau doublé de poches bourrées de fioles et de marchandises. Tricorne enfoncé, bandeau sur un œil, tonnelet en bandoulière, sourire en coin.
 
+- **Keko** (22/10) a généré les 7, plus **un extra hors fiche** : une
+  gobeline encapuchonnée de vert, une lanterne aux flammes spectrales
+  pendue à un bâton crochu, une grosse clé dans l'autre main, des feux
+  follets autour d'elle. Sa place n'est pas tranchée. Le Cerf-voliste est
+  dessiné en planeur à ailes de toile, sans fil (à valider).
+  Découpés dans `public/generations/gobelin/epiques/` (`01-chevaucheur-de-rat.png`
+  … `07-contrebandiere.png`, et `extra-porte-lanterne.png`).
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
