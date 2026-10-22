@@ -312,6 +312,42 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   deck fait 30 cartes ; avec N lieux ouverts il faut 30 × N cartes distinctes.
   393 cartes soutiennent une dizaine de lieux avec du choix.
 
+### Un nom par carte : les classes partagées renommées (22/10/2026)
+
+- **Keko** : « on va se retrouver avec des noms de race dans quasi toutes les cartes… on peut pas renommer les classes qui sont en plusieurs exemplaires mais race différente en prenant des synonymes ». Et : « pas grave si ça s'accorde pas au féminin ».
+- **113 classes partagées, 292 des 344 cartes de peuples** : 174 renommées. Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2 sont les seuls doublons restants, tous légendaires).
+- Des noms **colorés par la race** plutôt que des synonymes purs, vérifiés par script : aucun ne revient deux fois, aucun ne reprend une classe existante. Proposition, à rejuger nom par nom.
+
+**Orc** (34)
+- Mêlée : Garde → Cogneur de porte, Guerrier → Fracasseur, Lancier → Embrocheur, Bagarreur → Cogne-poing, Chef de guerre → Seigneur de horde, Maître d'armes → Maître de la fosse, Gladiateur → Combattant de l'arène, Brute → Mastodonte, Marteleur → Masse-d'os, Bourreau → Coupeur de têtes, Péagier → Rançonneur, Fléautier → Batteur de chaîne
+- Distance : Archer → Archer de la horde, Chasseur → Traqueur, Lanceur de couteaux → Lanceur de hachettes, Lanceur de ruches → Jeteur de guêpiers, Catapultier → Lanceur de rochers, Lanceur de boomerang → Lance-mâchoire
+- Magie : Pyromancien → Cracheur de braise, Druide → Sage des ronces, Géomancien → Fendeur de terre, Chanteur de pierre → Chantre des roches, Mangeur de feu → Avaleur de braises
+- Soutien : Fermier → Éleveur de cochons, Cuisinier → Rôtisseur, Mineur → Creuse-roc, Bûcheron → Abatteur d'arbres, Forgeron → Batteur de fer, Guérisseur → Rebouteux, Ferrailleur → Pilleur d'épaves, Dompteur de bêtes → Dresseur de wargs, Porteur → Bête de somme, Conteur → Hurleur de légendes, Montreur d'ours → Meneur d'ours
+
+**Humain** (30)
+- Mêlée : Garde → Homme de guet, Guerrier → Homme d'armes, Bagarreur → Pugiliste, Faucheur → Moissonneur de guerre
+- Distance : Archer → Archer royal, Chasseur → Veneur, Arbalétrier → Balestrier, Lanceur de couteaux → Jongleur de lames, Éclaireur → Coureur des bois, Maître archer → Capitaine des archers, Cerf-voliste → Pilote de cerf-volant, Lanceur de bolas → Lanceur de filins, Rétiaire → Gladiateur au filet
+- Magie : Pyromancien → Mage du feu, Apprenti → Novice, Illusionniste → Prestidigitateur, Sorcier → Mage noir, Nécromancien → Profanateur de tombes, Cartomancien → Tireur de cartes, Mangeur de feu → Cracheur de feu, Mage du sel → Mage des salines
+- Soutien : Fermier → Laboureur, Cuisinier → Aubergiste, Bûcheron → Forestier, Messager → Héraut, Forgeron → Maréchal-ferrant, Marchand → Colporteur, Apiculteur → Ruchier, Fromager → Laitier, Ramoneur → Fumiste
+
+**Elfe** (39)
+- Mêlée : Garde → Veilleur des bois, Guerrier → Lame d'argent, Lancier → Porte-lance sylvain, Champion → Élu de la forêt, Duelliste → Escrimeur des feuilles, Moine bâtonniste → Danseur au bâton, Escrimeur à l'ombrelle → Escrimeur à l'éventail
+- Distance : Archer → Archer des cimes, Chasseur → Chasseur de l'aube, Éclaireur → Coureur des feuillages, Tireur d'élite → Œil-de-faucon, Javelinier → Lanceur de sagaies, Pisteur → Liseur de traces, Rôdeur → Errant des bois, Tireur à la sarbacane → Souffleur de dards, Fauconnier → Chanteur d'oiseaux
+- Magie : Pyromancien → Danseur de flammes, Apprenti → Élève des sages, Cryomancien → Mage du givre, Invocateur → Appeleur d'esprits, Archimage → Haut mage, Illusionniste → Tisseur de mirages, Chronomancien → Gardien des saisons, Électromancien → Mage de l'orage, Astromancien → Lecteur d'étoiles, Ombremancien → Mage du crépuscule, Calligraphe → Scribe des feuilles, Mage des miroirs → Mage des reflets, Essaimancien → Mage des papillons, Mage des marées → Mage des sources
+- Soutien : Messager → Coursier du vent, Pêcheur → Pêcheur des lacs, Barde → Ménestrel, Herboriste → Cueilleur de simples, Cartographe → Arpenteur, Apiculteur → Gardien des abeilles, Conteur → Chanteur de légendes, Souffleur de verre → Tailleur de cristal, Tisseur de linceuls → Tisserand de lune
+
+**Nain** (40)
+- Mêlée : Garde → Gardien de la porte, Guerrier → Fer-de-hache, Lancier → Pique-roc, Bagarreur → Cogneur de taverne, Chef de guerre → Thane, Maître d'armes → Maître d'acier, Champion → Héros du clan, Hallebardier → Piquier, Berserker → Enragé, Brise-bouclier → Fend-écu, Briseur de crânes → Casse-crâne, Paladin → Juré de l'enclume, Sapeur → Saboteur, Lutteur d'ours → Lutteur des montagnes, Fléautier → Fléau-de-fer
+- Distance : Chasseur → Trappeur, Arbalétrier → Carreau-de-fer, Tireur d'élite → Œil-de-fer, Canonnier → Bombardier, Arquebusier → Mousquetaire, Aéronaute → Pilote de dirigeable, Catapultier → Servant de baliste, Artificier → Maître des poudres
+- Magie : Pyromancien → Maître du brasier, Alchimiste → Distillateur, Mycomancien → Mage des cavernes, Tatoueur runique → Graveur de runes
+- Soutien : Fermier → Éleveur de chèvres, Cuisinier → Maître des fourneaux, Mineur → Piocheur, Bûcheron → Fendeur de bûches, Marchand → Négociant, Prêtre → Chantre de l'enclume, Bricoleur → Mécanicien, Ingénieur → Maître des engrenages, Porte-étendard → Porte-bannière, Cartographe → Arpenteur des galeries, Gardien de phare → Veilleur de feu, Champignonniste → Jardinier des grottes, Horloger → Rouagier
+
+**Mort-vivant** (31)
+- Mêlée : Garde → Gardien des cryptes, Guerrier → Soldat squelette, Lancier → Pique-os, Duelliste → Escrimeur fantôme, Hallebardier → Veilleur de la nécropole, Écorcheur → Dépeceur, Chevalier → Cavalier sans tête, Bourreau → Exécuteur damné
+- Distance : Archer → Tireur squelette, Rétiaire → Lanceur de chaînes
+- Magie : Pyromancien → Mage des feux follets, Apprenti → Disciple de la tombe, Cryomancien → Mage de la glace morte, Invocateur → Éveilleur de morts, Archimage → Mage déchu, Sorcier → Sorcier des tombes, Chronomancien → Voleur d'années, Sorcier du sang → Buveur de sang, Ritualiste → Officiant des ténèbres, Onironaute → Mangeur de rêves, Mycomancien → Mage de la pourriture, Haruspice → Liseur d'entrailles, Mage de rouille → Mage de la corrosion, Mage de cendre → Mage du bûcher
+- Soutien : Fermier → Jardinier des tombes, Cuisinier → Touilleur de chaudron, Mineur → Creuseur d'ossuaire, Messager → Messager d'outre-tombe, Taxidermiste → Empailleur, Chiffonnier → Ramasse-guenilles, Archiviste → Gardien des registres
+
 ### Le sexe de chaque carte, et la fiche des communes gobelins (proposition, 21/10/2026)
 
 - **Keko** : « repartir un peu le sexe de manière plus cohérente qu'au hasard
