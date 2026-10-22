@@ -355,8 +355,8 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   Règle : **entre 40/60 et 60/40 par race et par cran**, chaque sexe choisi pour
   l'image de la carte et le contraste avec ses voisines. Le nom sur la carte
   s'accorde (Archère, Bagarreuse…).
-- **Communes gobelins : 13 hommes, 12 femmes (52/48).** Mêlée 2 H / 1 F,
-  distance 4 H / 3 F, magie 1 F, soutien 6 H / 8 F.
+- **Communes gobelins : 12 hommes, 13 femmes (48/52).** Mêlée 2 H / 1 F,
+  distance 4 H / 3 F, magie 1 F, soutien 5 H / 9 F.
 - **La fiche** (nom · sexe · arme ou outil et la main qui le tient · description),
   base des prompts de génération, traduite en anglais avec « kksty » au
   lancement d'un lot. Tous dans le style du LoRA : trapus, adultes, aplats.
@@ -382,7 +382,7 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 16. **Messagère** · ♀ · une lettre cachetée dans la main droite. Sacoche pleine de rouleaux en bandoulière, bottes usées, toujours en train de courir.
 17. **Marchande** · ♀ · une bourse de pièces dans la main droite et une balance dans la gauche. Châle coloré, bagues à tous les doigts, sourire rusé.
 18. **Herboriste** · ♀ · un mortier et son pilon tenus à deux mains. Bouquets d'herbes séchées accrochés à la ceinture, presque sorcière, foulard sur la tête.
-19. **Ferrailleur** · ♂ · un marteau dans la main droite. Chariot de casseroles cabossées derrière lui, tablier de cuir, une dent en métal.
+19. **Ferrailleuse** · ♀ · un marteau dans la main droite. Chariot de casseroles cabossées derrière elle, tablier de cuir, une dent en métal.
 20. **Porteur** · ♂ · une pile de sacs et de caisses sur le dos, tenue par des sangles. Très courbé, petites jambes arquées, sueur au front.
 21. **Bricoleur** · ♂ · une clé à molette dans la main droite. Lunettes-loupes sur les yeux, poches pleines d'outils, un petit engrenage derrière l'oreille.
 22. **Apicultrice** · ♀ · un enfumoir dans la main droite. Chapeau à voile, quelques abeilles autour d'elle, un pot de miel à la ceinture.
@@ -393,6 +393,10 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 - **Keko** (22/10) : l'Archer reste ambigu, « on peut laisser le truc
   ambigu ». Les 25 illustrations découpées une par une sont dans
   `public/generations/gobelin/communs/` (`01-garde.png` … `25-champignonniste.png`).
+- **Keko** (22/10) : **les 25 illustrations sont validées** telles quelles (seconde
+  série, 05–08 restés de la première) ; le Ferrailleur, dessiné en femme,
+  devient la **Ferrailleuse** (« ferailleuse femme ok »), le fichier garde son
+  nom `19-ferrailleur.png`.
 
 **Peu communes gobelins : 8 hommes, 7 femmes (53/47)** — un cran au-dessus : plus
 d'équipement, un savoir-faire qui se voit, sans être encore des personnages.
