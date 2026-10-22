@@ -501,6 +501,19 @@ fine, pas le bric-à-brac du Bricoleur.
   valider). Découpés dans `public/generations/gobelin/epiques/`
   (`01-chevaucheur-de-rat.png` … `08-gardienne-des-cles.png`).
 
+**Légendaires gobelins : 2 hommes, 1 femme** — des personnages uniques et
+nommés, le dernier cran de l'escalade : **une scène entière**, des dorures,
+une pose héroïque, un décor ou un élément qui déborde de la silhouette.
+Chacun reprend le vocabulaire de la tribu en plus grand, pour qu'on
+reconnaisse le chef de ce qu'on a déjà vu : Snik monte plus haut que le
+Chevaucheur de rat, Mère Gribouille règne sur ce que font le Sorcier, la
+Ritualiste et le Mycomancien, Zabbo construit ce que le Bricoleur rafistole.
+
+1. **Snik le Rusé** · ♂ · chef de guerre · un sabre courbe doré levé dans la main droite, une carte au trésor froissée dans la gauche. Debout sur un trône de caisses volées et de boucliers ennemis empilés, couronne de fer tordu trop grande, longue cape rouge bordée de fourrure, sourire de fourbe, un œil plissé ; des fanions de la tribu flottent derrière lui.
+2. **Mère Gribouille** · ♀ · chamane · un grand bâton couvert de grigris, de plumes et d'os dans la main droite, la gauche qui remue un chaudron bouillonnant d'où montent des esprits verts en spirale. Vieille, voûtée, nez immense, cheveux blancs en broussaille piqués de champignons, masque d'os sur le front, manteau de peaux cousues brodé de runes dorées ; un crapaud sur l'épaule.
+3. **Zabbo Boulon-Fou** · ♂ · ingénieur · aux commandes d'une machine de guerre bricolée à grandes pattes de métal, une clé géante brandie dans la main droite, la gauche sur un levier. Cheveux électrisés, lunettes de soudure, harnais bourré d'outils, boulons et rivets dorés partout, la machine qui crache vapeur et étincelles, une hélice qui tourne sur son dos.
+
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
