@@ -513,6 +513,13 @@ Ritualiste et le Mycomancien, Zabbo construit ce que le Bricoleur rafistole.
 2. **Mère Gribouille** · ♀ · chamane · un grand bâton couvert de grigris, de plumes et d'os dans la main droite, la gauche qui remue un chaudron bouillonnant d'où montent des esprits verts en spirale. Vieille, voûtée, nez immense, cheveux blancs en broussaille piqués de champignons, masque d'os sur le front, manteau de peaux cousues brodé de runes dorées ; un crapaud sur l'épaule.
 3. **Zabbo Boulon-Fou** · ♂ · ingénieur · aux commandes d'une machine de guerre bricolée à grandes pattes de métal, une clé géante brandie dans la main droite, la gauche sur un levier. Cheveux électrisés, lunettes de soudure, harnais bourré d'outils, boulons et rivets dorés partout, la machine qui crache vapeur et étincelles, une hélice qui tourne sur son dos.
 
+- **Keko** (22/10) a généré les 3 en une planche, plus **un bonus hors
+  fiche** : une gobeline à capuche violette et diadème d'or, une dague dorée
+  dans une main, un trousseau de clés dans l'autre, assise sur un coffre
+  débordant d'or et de bijoux. Sa place n'est pas tranchée. Découpés dans
+  `public/generations/gobelin/legendaires/` (`01-snik-le-ruse.png` …
+  `03-zabbo-boulon-fou.png`, et `bonus-reine-au-tresor.png`).
+
 
 ## Les paquets et la rareté (21/10/2026)
 
