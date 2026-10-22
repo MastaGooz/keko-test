@@ -542,15 +542,15 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
   sexe de la carte (Fracasseuse, Archère de la horde…).
 - **L'échelle des gobelins s'applique dès la fiche** : une commune, c'est
   **un objet, pas d'effet, pas d'animal**. Le Cracheur de braise tient un
-  pot de braises plutôt qu'une boule de feu ; la Dresseuse de wargs n'a pas
+  pot de braises plutôt qu'une boule de feu ; le Dresseur de wargs n'a pas
   de warg à l'image, seulement le fouet, le sifflet et les morsures.
 - **L'orc se distingue du gobelin par la masse** : grand, trapu et musclé,
   défenses qui sortent de la mâchoire, cicatrices, os, fourrure et fer brut
   plutôt que chiffons rapiécés. Chaque sexe est choisi à l'opposé de la carte
   gobeline la plus proche quand il y en a une (Archer ♂ → Archère ♀,
   Cuisinière ♀ → Rôtisseur ♂…).
-- **Communes orcs : 11 hommes, 11 femmes (50/50).** Mêlée 3 H / 3 F,
-  distance 2 H / 3 F, magie 1 H, soutien 5 H / 5 F.
+- **Communes orcs : 12 hommes, 10 femmes (55/45).** Mêlée 3 H / 3 F,
+  distance 2 H / 3 F, magie 1 H, soutien 6 H / 4 F.
 
 1. **Cogneur de porte** · ♂ · une massue cloutée posée sur l'épaule droite. Planté jambes écartées comme un videur, bras croisés à moitié, gorgerin de cuir, une défense cassée, regard qui interdit le passage.
 2. **Fracasseuse** · ♀ · une grande hache à deux mains, à double tranchant ébréché. Tresses épaisses, épaulières en os, peinture de guerre rouge sur les yeux, en plein élan.
@@ -571,7 +571,7 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 17. **Batteur de fer** · ♂ · un lourd marteau de forge dans la main droite, une pince tenant un fer chauffé dans la gauche. Tablier de cuir brûlé, bras énormes, barbe courte roussie.
 18. **Rebouteuse** · ♀ · une attelle de bois et des bandes de tissu dans les mains, prête à remettre un os en place. Colliers d'os et de griffes, sacoche de remèdes, manches retroussées, regard sans pitié.
 19. **Pilleur d'épaves** · ♂ · un grappin au bout d'une corde enroulée sur l'épaule droite, un bouclier rouillé de récupération dans la gauche. Vêtements mouillés, algues dans le col, ceinture de trouvailles cabossées.
-20. **Dresseuse de wargs** · ♀ · un fouet roulé dans la main droite et un sifflet en os à la bouche. Bras couverts de traces de morsures, collier clouté de warg pendu à la ceinture, peau de warg sur le dos.
+20. **Dresseur de wargs** · ♂ · un fouet roulé dans la main droite et un sifflet en os à la bouche. Bras couverts de traces de morsures, collier clouté de warg pendu à la ceinture, peau de warg sur le dos.
 21. **Bête de somme** · ♂ · un énorme tonneau sur le dos, tenu par une sangle passée sur le front. Courbé mais pas épuisé, jambes comme des troncs, un second sac sous le bras.
 22. **Hurleur de légendes** · ♂ · un bâton surmonté d'un crâne gravé dans la main droite, la gauche tendue vers le ciel. Bouche grande ouverte en plein récit, cape de fourrure, tatouages qui racontent ses histoires sur les bras.
 
@@ -585,7 +585,38 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 - **Keko** (23/10) a généré les 22 en six planches. Découpées une par une
   dans `public/generations/orc/communs/` (`01-cogneur-de-porte.png` …
   `22-hurleur-de-legendes.png`, numérotées comme cette fiche), et commitées.
-  La Dresseuse de wargs se lit plutôt en homme à l'image.
+  La Dresseuse de wargs se lisait en homme : elle devient le **Dresseur**
+  (Keko, « on le passe en dresseur »), `20-dresseur-de-wargs.png`.
+
+**Peu communes orcs : 6 hommes, 8 femmes (43/57)** — un cran au-dessus des
+communes : plus d'équipement et de métier, **un effet léger ou un petit
+animal** au plus (les ronces de la Sage, la fissure du Fendeur, le marcassin
+du Pisteur). Mêlée 3 H / 4 F, distance 1 H / 2 F, magie 2 H / 1 F, soutien
+1 F. Avec les communes, l'orc est à 18 hommes, 18 femmes. Les sexes sont
+pris à l'opposé de la carte gobeline la plus proche (Péagier ♂ →
+Rançonneuse ♀, Mangeuse de feu ♀ → Avaleur de braises ♂).
+
+1. **Maître de la fosse** · ♂ · un fouet de dressage dans la main droite, un gourdin d'entraînement dans la gauche. Vieux combattant couturé de cicatrices, oreille arrachée, sable de l'arène sur les bottes, sifflet pendu au cou.
+2. **Brise-bouclier** · ♀ · un marteau de guerre à long manche tenu à deux mains. Éclats de boucliers ennemis cloués sur sa ceinture comme des trophées, épaulière en fer, tresse unique, regard fixe.
+3. **Masse-d'os** · ♂ · une massue faite d'un énorme fémur de bête cerclé de fer, dans la main droite. Collier de vertèbres, crâne de bête en épaulière, peinture blanche en forme d'os sur le torse.
+4. **Briseuse de crânes** · ♀ · une masse à tête de pierre grossièrement taillée tenue à deux mains au-dessus de la tête. Casque à cornes ébréchées, brassards cloutés, crocs découverts, pose d'abattage.
+5. **Écorcheuse** · ♀ · un couteau à dépecer courbe dans chaque main. Tablier de cuir taché, peaux tendues séchant sur un cadre dans son dos, gants retroussés, sourire froid.
+6. **Coupeur de têtes** · ♂ · une immense hache de bourreau posée sur l'épaule droite. Cagoule noire à trous pour les yeux, torse nu énorme, billot de bois sous le pied gauche.
+7. **Rançonneuse** · ♀ · une hache dans la main droite, la gauche tendue paume ouverte pour réclamer. Assise sur un tas de sacs et de coffres extorqués, bourses pendues partout à sa ceinture, petit sourire d'usurière.
+8. **Javelinière** · ♀ · un javelot levé dans la main droite, prête à lancer, un faisceau de javelots dans le dos. Jambières de fourrure, bras tatoués de traits, cheveux tressés serrés, en pleine course.
+9. **Pisteur** · ♂ · une lance courte dans la main droite, la gauche tenant la laisse d'un marcassin qui renifle le sol. Cape de feuillage, nez au vent, pieds nus, empreintes moulées en argile à la ceinture.
+10. **Lanceuse de bolas** · ♀ · des bolas de pierre qui tournoient au-dessus de sa tête dans la main droite. Une deuxième paire à la ceinture, foulard sur la bouche, jambes fléchies, regard qui vise.
+11. **Sage des ronces** · ♀ · un bâton noueux d'où poussent des ronces vertes qui s'enroulent sur son bras droit. Vieille, cheveux en broussaille piqués de baies, manteau de mousse, épines dans les cheveux.
+12. **Fendeur de terre** · ♂ · un grand pieu de pierre enfoncé dans le sol à deux mains, une petite fissure lumineuse qui court sous ses pieds. Peau couverte de poussière, runes de terre peintes sur les bras, cailloux qui tremblent autour.
+13. **Avaleur de braises** · ♂ · une longue épée rougie au feu qu'il fait descendre dans sa gorge, tenue de la main droite. Torse nu tatoué de flammes, ventre lumineux comme un four, braises qui tombent de sa bouche.
+14. **Porte-étendard** · ♀ · une grande bannière de guerre en peau tendue sur une perche, tenue à deux mains. Bannière peinte du crâne de la horde, cor de guerre à la ceinture, cape rouge, bouche ouverte sur un cri.
+
+- **À surveiller** : l'Avaleur de braises orc (peu commune) reste dans le
+  même terrain que la Mangeuse de feu gobeline (peu commune aussi) et le
+  Cracheur de braise orc (commun) : trois cartes de feu avalé. Son épée
+  rougie le distingue de la torche gobeline, mais une autre classe à la
+  place serait plus nette. La Rançonneuse partage l'idée du Péagier
+  gobelin (réclamer) sans sa barrière. *Noms et sexes à rejuger par Keko.*
 
 
 ## Les paquets et la rareté (21/10/2026)
