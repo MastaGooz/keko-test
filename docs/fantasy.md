@@ -115,7 +115,7 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   Briseur de crânes, Écorcheur, Massacreur, Ravageur, Chevaucheur de loup,
   Bourreau, Lutteur d'ours, Péagier, Fléautier
 - Distance : Archer, Chasseur, Lanceur de couteaux, Javelinier, Pisteur,
-  Lanceur de harpon, Lanceur de ruches, Catapultier, Lanceur de bolas,
+  Lanceur de harpon, Lanceur de pierres, Catapultier, Lanceur de bolas,
   Lanceur de boomerang
 - Magie : Pyromancien, Druide, Chaman, Géomancien, Sorcier du sang,
   Haruspice, Chanteur de pierre, Tatoueur runique, Mangeur de feu, Mage de
@@ -229,7 +229,7 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   crânes, Écorcheur, Bourreau, Péagier, Javelinier, Pisteur, Lanceur de bolas,
   Druide, Géomancien, Mangeur de feu, Porte-étendard
 - Commune (22) : Garde, Guerrier, Lancier, Bagarreur, Brute, Fléautier,
-  Archer, Chasseur, Lanceur de couteaux, Lanceur de ruches, Lanceur de
+  Archer, Chasseur, Lanceur de couteaux, Lanceur de pierres, Lanceur de
   boomerang, Pyromancien, Fermier, Cuisinier, Mineur, Bûcheron, Forgeron,
   Guérisseur, Ferrailleur, Dompteur de bêtes, Porteur, Conteur
 
@@ -319,12 +319,12 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 ### Un nom par carte : les classes partagées renommées (22/10/2026)
 
 - **Keko** : « on va se retrouver avec des noms de race dans quasi toutes les cartes… on peut pas renommer les classes qui sont en plusieurs exemplaires mais race différente en prenant des synonymes ». Et : « pas grave si ça s'accorde pas au féminin ».
-- **113 classes partagées, 292 des 344 cartes de peuples** : 174 renommées. Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2 sont les seuls doublons restants, tous légendaires).
+- **112 classes partagées, 290 des 344 cartes de peuples** : 173 renommées (le Lanceur de ruches orc, remplacé le 22/10 par le Lanceur de pierres, n'est plus partagé). Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2 sont les seuls doublons restants, tous légendaires).
 - Des noms **colorés par la race** plutôt que des synonymes purs, vérifiés par script : aucun ne revient deux fois, aucun ne reprend une classe existante. Proposition, à rejuger nom par nom.
 
-**Orc** (34)
+**Orc** (33)
 - Mêlée : Garde → Cogneur de porte, Guerrier → Fracasseur, Lancier → Embrocheur, Bagarreur → Cogne-poing, Chef de guerre → Seigneur de horde, Maître d'armes → Maître de la fosse, Gladiateur → Combattant de l'arène, Brute → Mastodonte, Marteleur → Masse-d'os, Bourreau → Coupeur de têtes, Péagier → Rançonneur, Fléautier → Batteur de chaîne
-- Distance : Archer → Archer de la horde, Chasseur → Traqueur, Lanceur de couteaux → Lanceur de hachettes, Lanceur de ruches → Jeteur de guêpiers, Catapultier → Lanceur de rochers, Lanceur de boomerang → Lance-mâchoire
+- Distance : Archer → Archer de la horde, Chasseur → Traqueur, Lanceur de couteaux → Lanceur de hachettes, Catapultier → Lanceur de rochers, Lanceur de boomerang → Lance-mâchoire
 - Magie : Pyromancien → Cracheur de braise, Druide → Sage des ronces, Géomancien → Fendeur de terre, Chanteur de pierre → Chantre des roches, Mangeur de feu → Avaleur de braises
 - Soutien : Fermier → Éleveur de cochons, Cuisinier → Rôtisseur, Mineur → Creuse-roc, Bûcheron → Abatteur d'arbres, Forgeron → Batteur de fer, Guérisseur → Rebouteux, Ferrailleur → Pilleur d'épaves, Dompteur de bêtes → Dresseur de wargs, Porteur → Bête de somme, Conteur → Hurleur de légendes, Montreur d'ours → Meneur d'ours
 
@@ -561,7 +561,7 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 7. **Archère de la horde** · ♀ · un grand arc en corne dans la main gauche, une flèche à plumes noires encochée. Carquois en peau dans le dos, bandeau de fourrure, défenses ornées d'anneaux.
 8. **Traqueur** · ♂ · une machette dans la main droite, la gauche qui écarte les herbes. Manteau de peaux de bêtes, crâne de loup en capuche, accroupi sur une piste, narines dilatées.
 9. **Lanceur de hachettes** · ♂ · une hachette dans chaque main, une troisième entre les dents. Ceinture couverte de hachettes, bras épais, rictus de défi.
-10. **Jeteuse de guêpiers** · ♀ · un nid de guêpes gris en papier mâché tenu à bout de bras dans la main droite, prête à lancer. Gants épais, visage protégé par un masque d'écorce, deux ou trois guêpes seulement autour d'elle.
+10. **Lanceuse de pierres** · ♀ · une pierre grosse comme une tête levée à deux mains au-dessus de la tête, prête à la jeter. Sac de cailloux en bandoulière, bras et épaules énormes, mâchoire serrée, pieds plantés dans la poussière.
 11. **Lance-mâchoire** · ♀ · une mâchoire de bête taillée en boomerang dans la main droite. Colliers de dents, peintures blanches sur les bras, cheveux en crête, en plein élan.
 12. **Cracheur de braise** · ♂ · un pot de terre rempli de braises rougeoyantes tenu dans la main gauche, la droite qui en porte une à la bouche. Joues gonflées, sourcils brûlés, pagne roussi, un filet de fumée seulement.
 13. **Éleveuse de cochons** · ♀ · un seau de pâtée dans la main droite et un bâton de berger dans la gauche. Tablier de cuir boueux, bottes crottées, joues rondes, air content d'elle.
@@ -575,9 +575,11 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 21. **Bête de somme** · ♂ · un énorme tonneau sur le dos, tenu par une sangle passée sur le front. Courbé mais pas épuisé, jambes comme des troncs, un second sac sous le bras.
 22. **Hurleur de légendes** · ♂ · un bâton surmonté d'un crâne gravé dans la main droite, la gauche tendue vers le ciel. Bouche grande ouverte en plein récit, cape de fourrure, tatouages qui racontent ses histoires sur les bras.
 
-- **Voisins à surveiller** : la Jeteuse de guêpiers (orc commune) frôle le
-  Lanceur de ruches (gobelin rare) — guêpier gris en papier contre ruche de
-  paille, deux guêpes contre un essaim furieux ; le Pilleur d'épaves frôle
+- **Keko** (22/10) : la Jeteuse de guêpiers était « trop proche du
+  gobelin » (le Lanceur de ruches) ; remplacée par la **Lanceuse de pierres**,
+  la première marche de l'orc qui jette des choses lourdes, avant le Lanceur
+  de rochers (rare, l'ancien Catapultier).
+- **Voisins à surveiller** : le Pilleur d'épaves frôle
   la Ferrailleuse, la Bête de somme le Porteur, l'Éleveuse de cochons le
   Fermier. *Noms et sexes à rejuger par Keko.*
 
