@@ -536,6 +536,51 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
   planche le même jour par une version redessinée plus finement (Grisette
   tient trois clés nettes) ; les découpes sont refaites dessus.
 
+### La fiche des communes orcs (proposition, 22/10/2026)
+
+- **Les noms sont ceux du renommage** (« Un nom par carte »), accordés au
+  sexe de la carte (Fracasseuse, Archère de la horde…).
+- **L'échelle des gobelins s'applique dès la fiche** : une commune, c'est
+  **un objet, pas d'effet, pas d'animal**. Le Cracheur de braise tient un
+  pot de braises plutôt qu'une boule de feu ; la Dresseuse de wargs n'a pas
+  de warg à l'image, seulement le fouet, le sifflet et les morsures.
+- **L'orc se distingue du gobelin par la masse** : grand, trapu et musclé,
+  défenses qui sortent de la mâchoire, cicatrices, os, fourrure et fer brut
+  plutôt que chiffons rapiécés. Chaque sexe est choisi à l'opposé de la carte
+  gobeline la plus proche quand il y en a une (Archer ♂ → Archère ♀,
+  Cuisinière ♀ → Rôtisseur ♂…).
+- **Communes orcs : 11 hommes, 11 femmes (50/50).** Mêlée 3 H / 3 F,
+  distance 2 H / 3 F, magie 1 H, soutien 5 H / 5 F.
+
+1. **Cogneur de porte** · ♂ · une massue cloutée posée sur l'épaule droite. Planté jambes écartées comme un videur, bras croisés à moitié, gorgerin de cuir, une défense cassée, regard qui interdit le passage.
+2. **Fracasseuse** · ♀ · une grande hache à deux mains, à double tranchant ébréché. Tresses épaisses, épaulières en os, peinture de guerre rouge sur les yeux, en plein élan.
+3. **Embrocheuse** · ♀ · une lance à pointe barbelée tenue à deux mains, pointe en avant. Plastron de cuir clouté, crâne rasé sur les côtés, crocs serrés, pose de charge.
+4. **Cogne-poing** · ♂ · les poings nus serrés dans des poings américains en fer. Torse nu couvert de cicatrices, oreilles en chou-fleur, nez cassé, garde de lutteur.
+5. **Mastodonte** · ♂ · rien d'autre que ses poings énormes et une chaîne rompue qui pend d'un bracelet de fer. Le plus massif des orcs, tête minuscule sur un corps immense, ventre en avant, regard bovin.
+6. **Batteuse de chaîne** · ♀ · un fléau à boule cloutée dans la main droite, la chaîne qui tournoie. Brassards de fer, cotte de mailles trouée, sourire carnassier.
+7. **Archère de la horde** · ♀ · un grand arc en corne dans la main gauche, une flèche à plumes noires encochée. Carquois en peau dans le dos, bandeau de fourrure, défenses ornées d'anneaux.
+8. **Traqueur** · ♂ · une machette dans la main droite, la gauche qui écarte les herbes. Manteau de peaux de bêtes, crâne de loup en capuche, accroupi sur une piste, narines dilatées.
+9. **Lanceur de hachettes** · ♂ · une hachette dans chaque main, une troisième entre les dents. Ceinture couverte de hachettes, bras épais, rictus de défi.
+10. **Jeteuse de guêpiers** · ♀ · un nid de guêpes gris en papier mâché tenu à bout de bras dans la main droite, prête à lancer. Gants épais, visage protégé par un masque d'écorce, deux ou trois guêpes seulement autour d'elle.
+11. **Lance-mâchoire** · ♀ · une mâchoire de bête taillée en boomerang dans la main droite. Colliers de dents, peintures blanches sur les bras, cheveux en crête, en plein élan.
+12. **Cracheur de braise** · ♂ · un pot de terre rempli de braises rougeoyantes tenu dans la main gauche, la droite qui en porte une à la bouche. Joues gonflées, sourcils brûlés, pagne roussi, un filet de fumée seulement.
+13. **Éleveuse de cochons** · ♀ · un seau de pâtée dans la main droite et un bâton de berger dans la gauche. Tablier de cuir boueux, bottes crottées, joues rondes, air content d'elle.
+14. **Rôtisseur** · ♂ · une broche avec un cuissot rôti sur l'épaule droite, un couperet dans la gauche. Tablier taché de graisse, ventre énorme, bras velus, sourire gourmand.
+15. **Creuse-roc** · ♀ · un pic de mineur à deux mains, levé haut. Casque de fer cabossé, poussière de pierre sur les épaules, gants de cuir troués, bras noueux.
+16. **Abatteuse d'arbres** · ♀ · une scie de long passée en travers des épaules, tenue à deux mains. Chemise de laine aux manches arrachées, copeaux dans les cheveux, bûche sous le pied.
+17. **Batteur de fer** · ♂ · un lourd marteau de forge dans la main droite, une pince tenant un fer chauffé dans la gauche. Tablier de cuir brûlé, bras énormes, barbe courte roussie.
+18. **Rebouteuse** · ♀ · une attelle de bois et des bandes de tissu dans les mains, prête à remettre un os en place. Colliers d'os et de griffes, sacoche de remèdes, manches retroussées, regard sans pitié.
+19. **Pilleur d'épaves** · ♂ · un grappin au bout d'une corde enroulée sur l'épaule droite, un bouclier rouillé de récupération dans la gauche. Vêtements mouillés, algues dans le col, ceinture de trouvailles cabossées.
+20. **Dresseuse de wargs** · ♀ · un fouet roulé dans la main droite et un sifflet en os à la bouche. Bras couverts de traces de morsures, collier clouté de warg pendu à la ceinture, peau de warg sur le dos.
+21. **Bête de somme** · ♂ · un énorme tonneau sur le dos, tenu par une sangle passée sur le front. Courbé mais pas épuisé, jambes comme des troncs, un second sac sous le bras.
+22. **Hurleur de légendes** · ♂ · un bâton surmonté d'un crâne gravé dans la main droite, la gauche tendue vers le ciel. Bouche grande ouverte en plein récit, cape de fourrure, tatouages qui racontent ses histoires sur les bras.
+
+- **Voisins à surveiller** : la Jeteuse de guêpiers (orc commune) frôle le
+  Lanceur de ruches (gobelin rare) — guêpier gris en papier contre ruche de
+  paille, deux guêpes contre un essaim furieux ; le Pilleur d'épaves frôle
+  la Ferrailleuse, la Bête de somme le Porteur, l'Éleveuse de cochons le
+  Fermier. *Noms et sexes à rejuger par Keko.*
+
 
 ## Les paquets et la rareté (21/10/2026)
 
