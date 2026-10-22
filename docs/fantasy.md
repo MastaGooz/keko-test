@@ -443,6 +443,12 @@ Pyromancienne.
 10. **Mycomancien** · ♂ · un bâton noueux couronné d'un champignon géant qui crache des spores dans la main droite. Peau tachée de moisissure, mycélium lumineux qui court sur ses bras, petits champignons qui poussent sur ses épaules.
 11. **Essaimancienne** · ♀ · rien dans les mains : les deux bras tendus dirigent un nuage de sauterelles et de scarabées qui tourbillonne autour d'elle. Châle de toile percée, yeux à facettes peints sur le front, antennes de criquet dans les cheveux.
 
+- **Keko** (22/10) a généré les 11 en trois planches. Découpées une par une
+  dans `public/generations/gobelin/rares/` (`01-escrimeuse-a-l-ombrelle.png`
+  … `11-essaimancienne.png`), le seuil d'alpha descendu à 16 pour garder les
+  reflets translucides de l'Illusionniste et tout l'essaim de
+  l'Essaimancienne.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
