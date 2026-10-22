@@ -418,6 +418,11 @@ Mêlée 2 H / 1 F, distance 2 H / 2 F, magie 2 H / 3 F, soutien 2 H / 1 F.
 14. **Prêteuse sur gages** · ♀ · un grand registre sous le bras gauche et une loupe dans la main droite. Lunettes sur le bout du nez, clés pendues à la ceinture, colliers et babioles mis en gage.
 15. **Taxidermiste** · ♂ · une grosse aiguille et du fil dans la main droite, un corbeau empaillé dans la gauche. Tablier de cuir, petits yeux de verre dans une boîte à la ceinture, air un peu inquiétant.
 
+- **Keko** (22/10) a généré les 15 avec le **loup** du Dompteur (le rat géant
+  proposé n'est pas retenu). Découpées une par une dans
+  `public/generations/gobelin/peu-communes/` (`01-brute.png` …
+  `15-taxidermiste.png`, numérotées comme cette fiche).
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
