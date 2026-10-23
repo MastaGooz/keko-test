@@ -5610,6 +5610,7 @@ function peindreCuir(
   masque = false,
   retrait = 5.5,
   rayon = 0,
+  couture = true,
 ): void {
   if (!masque) {
     let s = 0x5eed
@@ -5632,6 +5633,9 @@ function peindreCuir(
     ctx.restore()
   }
   // LA COUTURE : un sillon sombre, puis le fil crème en pointillés par-dessus.
+  // PAS SUR LE SACHET : Keko, « ça embrouille avec les pointillés de là où on
+  // ouvre le paquet » — un seul pointillé doit y dire où tirer.
+  if (!couture) return
   const m = retrait * u
   const chemin = (): void => {
     ctx.beginPath()
@@ -6840,7 +6844,7 @@ async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
   // les trois (voir BRILLANCE_SOUDURE et BRILLANCE_FILM).
   ctx.fillStyle = '#808080'
   ctx.fillRect(0, 0, l, h)
-  peindreCuir(ctx, l, h, US, true, 7)
+  peindreCuir(ctx, l, h, US, true, 7, 0, false)
   const cyT = h * 0.27
   const cyM = h * 0.56
   await peindreTitreDuSachet(ctx, l, cyT, true)
@@ -6878,7 +6882,7 @@ async function peindreLeSachet(): Promise<{
   // vignettage elliptique, dither. *Le sachet et ce qu'il contient sont du même
   // objet*, donc ils ne peuvent pas être faits de deux matières.
   peindreDecor(ctx, undefined, DOS_CUIR, { l, h })
-  peindreCuir(ctx, l, h, US, false, 7)
+  peindreCuir(ctx, l, h, US, false, 7, 0, false)
 
   const yL = h * LIGNE_DECHIRURE
 

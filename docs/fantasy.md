@@ -772,7 +772,8 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
     clous aux coins ;
   - le **sachet** : le même cuir et sa couture, le titre en or, le bouquet de
     personnages gardé (il dit ce qu'il y a dedans), « 5 CARTES » sur un ruban
-    de parchemin, les cinq gemmes serties d'or. *Sa forme reste celle d'un
+    de parchemin, les cinq gemmes serties d'or. **Sans couture** (Keko : « ça
+    embrouille avec les pointillés de là où on ouvre le paquet »). *Sa forme reste celle d'un
     sachet qui se déchire* : en faire une vraie bourse changerait le geste ;
   - les **faces** : plaque de parchemin, encre brune ; le décor derrière le
     personnage garde la nuit et les rayons de son cran ; le **blanc des
