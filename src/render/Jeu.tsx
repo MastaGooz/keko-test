@@ -802,9 +802,6 @@ function IconeStickers(): React.ReactElement {
     <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
       {/* LE STICKER, coin bas droit replié. */}
       <path d="M6 3.5h12a2.5 2.5 0 0 1 2.5 2.5v7.5l-7 7H6a2.5 2.5 0 0 1-2.5-2.5V6A2.5 2.5 0 0 1 6 3.5z" fill="#ffd23f" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="8.9" cy="9" r="1.15" fill="#5a3a00" />
-      <circle cx="14.1" cy="9" r="1.15" fill="#5a3a00" />
-      <path d="M7.8 12.2q3.3 3 6.6 0" fill="none" stroke="#5a3a00" strokeWidth="1.3" />
       {/* LE COIN QUI SE DÉCOLLE : son dos crème. */}
       <path d="M20.5 13.5l-7 7v-4.5a2.5 2.5 0 0 1 2.5-2.5z" fill="#fffaf0" stroke="currentColor" strokeWidth="1.4" />
     </svg>

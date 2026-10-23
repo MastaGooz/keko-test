@@ -235,7 +235,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   compte « réunis / 1 892 » est resté en tête de la collection). Les deux
   panneaux filtres ont une puce « Nouveau ». Icônes
   dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
-  des crans, sans étoile ; `IconeStickers` : un sticker souriant au coin décollé), trait en
+  des crans, sans étoile ; `IconeStickers` : un sticker jaune au coin décollé, sans smiley), trait en
   `currentColor`. **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
   bilan sans paquet à suivre) — jamais pendant la déchirure ni le défilé, **ni
