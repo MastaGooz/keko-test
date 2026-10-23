@@ -40,9 +40,10 @@ import { PERSONNAGES_VITRINE, imageDuPersonnage } from './texture-carte.ts'
 const COULEURS = ['#ffb347', '#ff8a2a', '#ffd27a', '#e8603c', '#ffcf8a']
 
 const NB_BOKEHS = 16
-// UN PERSONNAGE SE LIT PLUS GRAND QU'UN EMOJI : moins nombreux, quatre fois
-// plus gros, plus effacés — sinon ce sont des miettes.
-const NB_EMOJI = 8
+// PLUS DE PERSONNAGES QUI DÉRIVENT : Keko, « les images de cartes qui flottent
+// dans le background c'est pas beau, enlève les ». Il reste les lueurs de
+// bougie ; le code des fantômes reste pour le jour où une autre matière flotterait.
+const NB_EMOJI = 0
 /** La densité de pixels du fond, plafonnée : *rien n'y est net.* */
 const DPR_MAX = 1
 /** Trente images par seconde suffisent à un fond qui dérive. */
@@ -133,8 +134,8 @@ export function FondAnime(): React.ReactElement {
     mesurer()
     window.addEventListener('resize', mesurer)
 
-    // LES PERSONNAGES DU BOUQUET, une fois leurs images là.
-    void Promise.all(PERSONNAGES_VITRINE.map((e) => imageDuPersonnage(e))).then((toutes) => {
+    // LES PERSONNAGES DU BOUQUET, une fois leurs images là — s'il en flotte.
+    if (NB_EMOJI > 0) void Promise.all(PERSONNAGES_VITRINE.map((e) => imageDuPersonnage(e))).then((toutes) => {
       if (!vivant) return
       const images = toutes.filter((i): i is HTMLCanvasElement => i !== null)
       if (images.length === 0) return
