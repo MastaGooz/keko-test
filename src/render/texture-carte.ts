@@ -618,6 +618,15 @@ const PISTE_CONTOUR: PisteContour = (() => {
  */
 const HAUT_BULLE = 0.605
 const AIR_SUJET = 7
+/**
+ * LE SUJET AGRANDI DANS SA FENÊTRE, autour de son centre. Keko : « on peut
+ * zoomer un peu plus les illustrations des cartes ? l'écart au bord un peu
+ * gros ». *La toile du sticker porte 10 % de marge transparente par côté*
+ * (`MARGE_STICKER`), plus les 5 % de l'image : l'écart vu venait d'elles.
+ * L'agrandissement mange cette marge sans couper le cerne ; `?zoom=1` rend
+ * l'ancienne taille.
+ */
+const ZOOM_SUJET = Number(new URLSearchParams(location.search).get('zoom') ?? 1.12) || 1.12
 
 /**
  * `?texte=sombre` rend le dégradé noir du gabarit.
@@ -4367,8 +4376,9 @@ export async function peindreCarte(
   const enFenetre = image !== null && carte.persoEnFenetre === true && bulle
   const lFen = LARGE - marge * 2
   const sujet = enFenetre ? stickerEnFenetre(image!, Math.round(lFen * (largeur / LARGE)), Math.round(fH * (largeur / LARGE))) : image
-  const sY = enFenetre ? fY : aY
-  const sH = enFenetre ? fH : aH
+  const zoom = bulle ? ZOOM_SUJET : 1
+  const sY = enFenetre ? fY : aY - (aH * (zoom - 1)) / 2
+  const sH = enFenetre ? fH : aH * zoom
   const sRognage = enFenetre ? 0 : rognage
   if (sujet !== null) {
     ctx.imageSmoothingQuality = 'high'
