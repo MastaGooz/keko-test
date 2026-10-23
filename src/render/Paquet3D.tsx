@@ -562,6 +562,8 @@ type PropsPaquet = {
    * paquet », et c'est `Jeu` qui dit quand le prochain arrive. Voir `reserve.ts`.
    */
   peutContinuer?: boolean
+  /** « Terminé » sur le DERNIER paquet : aucun ne suit, la page passe à l'attente. */
+  onTermine?: () => void
   /** Le sachet est là et pas encore déchiré : c'est sous lui que `Jeu` dit combien il en reste. */
   onSachetEnAttente?: (attend: boolean) => void
   /**
@@ -584,6 +586,7 @@ export function Paquet3D({
   onCalme,
   sansPrise = false,
   peutContinuer = true,
+  onTermine,
   onSachetEnAttente,
   onDetruire,
   joueur,
@@ -1893,7 +1896,9 @@ export function Paquet3D({
   // Terminé avant de réafficher l'UI de la barre ? » *Le bilan n'est donc
   // plus calme* — sauf quand aucun paquet ne suit : sans bouton, c'est la
   // barre et « Prochain paquet dans … » qui permettent de repartir.
-  const calme = !brule || (fini && !peutContinuer)
+  // ET LE DERNIER PAQUET AUSSI (Keko : « remet le bouton terminé quand on
+  // ouvre le dernier paquet ») : son « Terminé » mène à l'attente.
+  const calme = !brule
   useEffect(() => onCalme?.(calme), [calme, onCalme])
   const sachetAttend = !brule && !ouvert && paquet.length > 0
   useEffect(() => onSachetEnAttente?.(sachetAttend), [sachetAttend, onSachetEnAttente])
@@ -2078,7 +2083,7 @@ export function Paquet3D({
           disputerait le geste à la carte. « Tout révéler » est parti avec :
           il répondait à cinq dos posés côte à côte, et il n'y en a plus.
         */}
-        {ouvert && fini && zoomee === null && paquet.length > 0 && peutContinuer && (
+        {ouvert && fini && zoomee === null && paquet.length > 0 && (
           <Bouton3D
             // « TERMINÉ » : Keko, « à la place de "ouvrir un autre paquet" sur le
             // bouton on peut dire "terminé" ». Le geste ne change pas : il passe
@@ -2088,7 +2093,7 @@ export function Paquet3D({
             ton="emoji"
             cran="ecran"
             position={[0, -hVisible * 0.38, Z_MAIN]}
-            onCliquer={partir}
+            onCliquer={peutContinuer || onTermine === undefined ? partir : onTermine}
           />
         )}
       </Canvas>
