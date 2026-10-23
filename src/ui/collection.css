@@ -2090,7 +2090,7 @@ span.jouer-pile-dos {
   width: 0;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #ff6fa5, #ffb3d1);
+  background: linear-gradient(90deg, #e0a020, #ffd75e); /* en or, plus en rose (Keko) */
 }
 
 .jouer-texte {
