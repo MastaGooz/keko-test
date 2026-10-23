@@ -1506,7 +1506,13 @@ export function PageCollection({
                   <span className="deck-onglet-compte">
                     {d.n}/{deck.taille}
                   </span>
-                  {i === deck.actif && <span className="deck-onglet-joue">joue</span>}
+                  {/* LE DECK ACTIF NE JOUE QUE COMPLET : sinon il le dit (Keko). */}
+                  {i === deck.actif &&
+                    (d.n < deck.taille ? (
+                      <span className="deck-onglet-joue deck-onglet-incomplet">incomplet</span>
+                    ) : (
+                      <span className="deck-onglet-joue">joue</span>
+                    ))}
                 </button>
               ))}
               {deck.peutAjouter && (

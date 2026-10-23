@@ -1971,6 +1971,12 @@
   font-size: 0.7rem;
 }
 
+/* Le deck actif incomplet : la même pastille, éteinte. */
+.deck-onglet-incomplet {
+  background: rgba(255, 250, 240, 0.2);
+  color: #fffaf0;
+}
+
 .deck-ajouter {
   min-width: 2.4rem;
   justify-content: center;
