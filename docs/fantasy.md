@@ -683,10 +683,12 @@ Ursha : aucune épique ne le monte.
   `public/generations/orc/epiques/` (`01-seigneur-de-horde.png` …
   `06-tambour-de-guerre.png`, numérotées comme cette fiche). La Tatoueuse
   n'a pas le crâne rasé et se lit moins nettement en femme.
-- **Deux bonus dessinés par Keko**, rangés à part dans
-  `public/generations/orc/bonus/`, place à trancher : un **pêcheur** (lance,
-  hotte, gros poisson ; Keko le voit commun) et un **porteur de clés**
-  (capuche, trousseau, coffret ; Keko le voit peu commun).
+- **Deux bonus dessinés par Keko** : un **pêcheur** (lance, hotte, gros
+  poisson ; Keko le voit commun), rangé à part dans
+  `public/generations/orc/bonus/`, place à trancher ; et un **porteur de
+  clés** (capuche, trousseau, coffret), **supprimé** — trop proche de la
+  Gardienne des clés, de la Contrebandière et de la Rançonneuse (Keko : « ça
+  nous fait cramer une classe pour rien »).
 
 
 ## Les paquets et la rareté (21/10/2026)
