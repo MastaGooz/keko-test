@@ -1401,8 +1401,11 @@
   font-size: 8rem;
 }
 
+/* LE NOM DU STICKER EN GRENZE, comme le nom des cartes (Keko : « la même
+   police que le titre des cartes »). */
 .sticker-nom {
   margin: 0 0 0.4rem;
+  font-family: 'Grenze', Georgia, serif;
   font-weight: 800;
   font-size: clamp(1.3rem, 3.4vh, 1.8rem);
   line-height: 1.1;
