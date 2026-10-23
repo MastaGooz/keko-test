@@ -677,7 +677,8 @@ export function Jeu(): React.ReactElement {
             <img src={`${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
           </span>
           {/* LE NOMBRE DE PAQUETS SUR LE BOOSTER, comme le « 10 » de lexicodex. */}
-          <span className={`nav-pastille nav-pastille-booster${dispo === 0 ? ' vide' : ''}`}>{dispo}</span>
+          {/* À ZÉRO, PAS DE PASTILLE (Keko) : elle ne se montre qu'à 1 et plus. */}
+          {dispo > 0 && <span className="nav-pastille nav-pastille-booster">{dispo}</span>}
         </button>
         {/* LE MENU DÉROULÉ SOUS LE BOUTON « CARTES » : deux entrées, la page
             courante cochée. `nav-cartes` : une tape dedans ne le referme pas
