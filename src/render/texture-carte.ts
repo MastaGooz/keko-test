@@ -7104,8 +7104,9 @@ async function peindreLeSachet(): Promise<{
     ctx.arc(cx, cy, rc, 0, Math.PI * 2)
     ctx.fillStyle = METAUX[cran]![2]!
     ctx.fill()
-    // UN SERTI D'OR : des gemmes enchâssées dans le cuir (la taverne).
-    ctx.strokeStyle = OR_MOYEN
+    // UN SERTI D'OR CLAIR : des gemmes enchâssées dans le cuir (la taverne) ;
+    // Keko le voulait blanc / jaune clair, l'or moyen se perdait sur le cuir.
+    ctx.strokeStyle = OR_CLAIR
     ctx.lineWidth = DOS_CERNE * US * 0.9
     ctx.stroke()
   }
