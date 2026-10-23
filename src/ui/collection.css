@@ -2120,11 +2120,20 @@ span.jouer-pile-dos {
    l'infini ». */
 .jouer-main {
   position: relative;
+  /* ET LA ZONE SE PEINT D'UN BLOC (Keko l'a revu le 23/10 : « deux lignes de
+     main, une qui ne disparaît pas ») : `contain: paint` et `isolation`
+     enferment les couches des cartes qui gonflent dans la boîte de la main,
+     repeinte entière quand elle change. */
+  contain: paint;
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.5rem;
   width: min(100%, 34rem);
-  margin-top: 0.6rem;
+  /* La place de la carte qui gonfle (×1,18) : la boîte coupe ce qui déborde. */
+  box-sizing: border-box;
+  padding: 0.9rem 0.7rem 0.3rem;
+  margin-top: -0.3rem;
 }
 
 .jouer-premiere {
