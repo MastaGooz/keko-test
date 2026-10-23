@@ -647,6 +647,11 @@ L'orc passe à 23 hommes, 23 femmes.
   ne se dessinent pas pareil.
 - **Deux ours au même cran** : le Lutteur se bat contre le sien, la Meneuse
   fait danser le sien. *Noms et sexes à rejuger par Keko.*
+- **Illustrées par Keko** (23/10) telles que la fiche. Découpées dans
+  `public/generations/orc/rares/` (`01-combattante-de-l-arene.png` …
+  `10-meneuse-d-ours.png`, numérotées comme cette fiche) ; une goutte de la
+  gerbe du harpon, tombée chez le Lanceur de rochers, a été retirée à la
+  main. Le Massacreur, tresses et visage fin, se lit plutôt en femme.
 
 
 ## Les paquets et la rareté (21/10/2026)
