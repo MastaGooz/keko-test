@@ -66,6 +66,18 @@ export function PageJouer({
   const parCycle = DECK.taille / DECK.main
   const manquent = DECK.taille - deck.cartes.length
 
+  // AU RETOUR SUR LA PAGE (onglet réduit puis rouvert), LA ZONE DE JEU SE
+  // RECONSTRUIT : les mains rattrapées pendant l'absence laissaient des couches
+  // peintes que le navigateur ne retirait plus.
+  const [retour, setRetour] = useState(0)
+  useEffect(() => {
+    const voir = (): void => {
+      if (document.visibilityState === 'visible') setRetour((r) => r + 1)
+    }
+    document.addEventListener('visibilitychange', voir)
+    return () => document.removeEventListener('visibilitychange', voir)
+  }, [])
+
   // LA PILE : le dos de carte de l'emoji, peint une fois.
   const pile = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
@@ -82,7 +94,7 @@ export function PageJouer({
     return () => {
       vivant = false
     }
-  }, [complet])
+  }, [complet, retour])
 
   // LA BARRE JUSQU'À LA PROCHAINE MAIN : la largeur à chaque image, sans
   // rendu React ; les secondes affichées, seulement quand elles changent.
@@ -179,7 +191,7 @@ export function PageJouer({
             </button>
           </div>
         ) : (
-          <div className="jouer">
+          <div className="jouer" key={retour}>
             {/* LA PILE : trois dos décalés, le compte de ce qui reste à jouer. */}
             <div className="jouer-pile" aria-label={`${DECK.taille - jouees} cartes dans la pile`}>
               <span className="jouer-pile-dos jouer-pile-dos-3" />

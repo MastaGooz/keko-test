@@ -2095,6 +2095,11 @@ span.jouer-pile-dos {
   color: #ffd45e;
 }
 
+/* PAS DE FANTÔME DE MAIN : toutes les animations de la main finissent en
+   `backwards` (une animation restée appliquée garde sa couche de composition),
+   et la zone est reconstruite au retour sur la page (`Deck.tsx`). Keko : « quand
+   je quitte la page (réduire), des lignes de cartes déjà jouées persistent à
+   l'infini ». */
 .jouer-main {
   position: relative;
   display: grid;
@@ -2143,7 +2148,7 @@ span.jouer-pile-dos {
 }
 
 .jouer-carte-likes-posee {
-  animation: likes-pose 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  animation: likes-pose 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
 }
 
 @keyframes likes-pose {
@@ -2157,7 +2162,7 @@ span.jouer-pile-dos {
    shake/pump chacun son tour »), sur la vignette : le conteneur garde son
    animation d'entrée. */
 .jouer-carte-pump .vignette {
-  animation: carte-pump 0.45s ease-out both;
+  animation: carte-pump 0.45s ease-out backwards;
   z-index: 1;
 }
 
@@ -2209,12 +2214,12 @@ span.jouer-pile-dos {
   overflow: visible;
   color: #fffaf0;
   filter: drop-shadow(0 0.08rem 0.25rem rgba(14, 6, 40, 0.7));
-  animation: total-saut 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  animation: total-saut 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
 }
 
 .jouer-total-saut {
   display: inline-block;
-  animation: total-saut 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  animation: total-saut 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
 }
 
 @keyframes total-saut {
