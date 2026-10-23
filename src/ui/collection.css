@@ -1971,10 +1971,11 @@
   font-size: 0.7rem;
 }
 
-/* Le deck actif incomplet : la même pastille, éteinte. */
+/* Le deck actif incomplet : la même pastille, en rouge — en blanc, elle
+   disparaissait sur l'onglet sélectionné (Keko). */
 .deck-onglet-incomplet {
-  background: rgba(255, 250, 240, 0.2);
-  color: #fffaf0;
+  background: #ff4d5e;
+  color: #fff;
 }
 
 .deck-ajouter {
