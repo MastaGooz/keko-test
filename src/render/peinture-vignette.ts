@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { RAYON_SIMPLE, ondeDesRayons } from './texture-carte.ts'
+import { RAYON_SIMPLE, largeurDesRayons, ondeDesRayons } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -322,7 +322,9 @@ export function brillantDuRepos(
         const a = Math.atan2(dy, dx) - R.depart - ondeDesRayons(Math.hypot(dx, dy))
         const fr = ((a / secteur) % 1 + 1) % 1
         // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES.
-        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * fondu(0, 0.025, fr) * (1 - fondu(0.475, 0.5, fr))
+        // LE CLAIR : autour de l'axe du secteur pair, à sa largeur (voir `largeurDesRayons`).
+        const w = largeurDesRayons(Math.hypot(dx, dy))
+        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * (w < 0.026 ? 0 : 1 - fondu(w - 0.025, w, Math.abs(fr - 0.25)))
         const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib

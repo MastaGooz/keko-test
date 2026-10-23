@@ -56,6 +56,7 @@ import {
   rayonsDuCran,
   ECLAIRE_SOMBRES,
   COIN_DE_LA_PLAQUE,
+  largeurDesRayonsGlsl,
 } from './texture-carte.ts'
 
 /**
@@ -1249,7 +1250,9 @@ ${nuanceur.vertexShader}`.replace(
              vec2 drT = vec2(tpT.x - crT.x, (tpT.y - crT.y) * 1.4);
              // LES FLAMMES : le bord tourne avec la distance, voir ondeDesRayons.
              float frT = fract((atan(drT.y, drT.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons - (${RAYONS_DANS_LA_CARTE.onde.amplitude.toFixed(4)} * min(1.0, length(drT) / ${RAYONS_DANS_LA_CARTE.onde.calme.toFixed(4)}) * sin(length(drT) * ${(RAYONS_DANS_LA_CARTE.onde.frequence * Math.PI * 2).toFixed(4)}))) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
-             float secteurT = smoothstep(0.0, 0.01, frT) * (1.0 - smoothstep(0.49, 0.5, frT));
+             // LE CLAIR : autour de l'axe du secteur pair, à sa largeur (voir largeurDesRayons).
+             float wT = ${largeurDesRayonsGlsl('length(drT)')};
+             float secteurT = step(0.011, wT) * (1.0 - smoothstep(max(wT - 0.01, 0.0), wT, abs(frT - 0.25)));
              float rT = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float lT = length(drT);
              float fonduT = 1.0 - clamp((lT - rT * 0.08) / (rT * 0.92), 0.0, 1.0);
@@ -1556,7 +1559,9 @@ ${nuanceur.vertexShader}`.replace(
              // LES SOMBRES BRILLENT À LEUR PART : sans elle, la lampe multipliait les
              // clairs jusqu'à six fois et l'éclaircissement des sombres ne se voyait
              // pas (« je vois pas trop de différence »). Voir ECLAIRE_SOMBRES.
-             float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr)));
+             // LE CLAIR : autour de l'axe du secteur pair, à sa largeur (voir largeurDesRayons).
+             float wR = ${largeurDesRayonsGlsl('length(dr)')};
+             float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, step(0.026, wR) * (1.0 - smoothstep(max(wR - 0.025, 0.0), wR, abs(fr - 0.25))));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
              float libre = texture2D(uMasqueSujet, vLustreUv).r;

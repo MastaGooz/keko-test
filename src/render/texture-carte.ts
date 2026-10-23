@@ -1718,17 +1718,45 @@ export const COIN_DE_LA_PLAQUE = { haut: HAUT_BULLE, r: (5 * U) / LARGE, aspect:
  * dépend de la distance au centre (`ondeDesRayons`). Calme au centre, elle
  * s'ouvre en s'éloignant : les secteurs deviennent des flammes qui se tordent.
  * Le peintre, le nuanceur (brillant, rayons tournants) et le brillant des
- * vignettes lisent la même onde. `?flammes=0` rend les rayons droits.
+ * vignettes lisent la même onde.
+ *
+ * **LES MOTIFS SE CHOISISSENT** (`MOTIF_DES_RAYONS`, `?motif=`) : Keko, « on
+ * garde ça + les rayons droits en archive, maintenant propose-moi un autre
+ * motif », puis la ROSACE. Un motif est une ONDE (le bord qui tourne) et une
+ * LARGEUR (la demi-largeur d'un clair, en part de la paire de secteurs : 0,25
+ * = les seize secteurs d'origine). `droits` : rien ne tourne ; `flammes` :
+ * l'onde ; `rosace` : huit PÉTALES, étroits au centre, larges au milieu,
+ * refermés en pointe avant le bord — la rose d'un vitrail. `?flammes=0` reste
+ * un nom des rayons droits.
  */
-const ONDE_FLAMMES = (() => {
-  const sans = typeof location !== 'undefined' && new URLSearchParams(location.search).get('flammes') === '0'
-  /** `amplitude` en radians, `frequence` en tours par largeur de carte, `calme` : la distance (en largeurs) où l'onde atteint son ampleur. */
-  return { amplitude: sans ? 0 : 0.34, frequence: 2.3, calme: 0.16 }
+export type MotifDesRayons = 'droits' | 'flammes' | 'rosace'
+export const MOTIF_DES_RAYONS: MotifDesRayons = (() => {
+  const p = typeof location === 'undefined' ? null : new URLSearchParams(location.search)
+  const m = p?.get('motif')
+  if (m === 'droits' || m === 'flammes' || m === 'rosace') return m
+  if (p?.get('flammes') === '0') return 'droits'
+  return 'rosace'
 })()
+const ONDE_FLAMMES = (() => {
+  /** `amplitude` en radians, `frequence` en tours par largeur de carte, `calme` : la distance (en largeurs) où l'onde atteint son ampleur. */
+  return { amplitude: MOTIF_DES_RAYONS === 'flammes' ? 0.34 : 0, frequence: 2.3, calme: 0.16 }
+})()
+/** LE PÉTALE DE LA ROSACE : sa demi-largeur au plus large (part de la paire), sa longueur (en largeurs de carte), sa rondeur (l'exposant du sinus). */
+const PETALE = MOTIF_DES_RAYONS === 'rosace' ? { large: 0.42, longueur: 0.5, courbe: 0.7 } : null
 /** De combien l'angle d'un bord de rayon tourne à la distance `r` du centre (en largeurs de carte). */
 export function ondeDesRayons(r: number): number {
   const o = ONDE_FLAMMES
   return o.amplitude * Math.min(1, r / o.calme) * Math.sin(r * o.frequence * Math.PI * 2)
+}
+/** La demi-largeur d'un clair à la distance `r` (en largeurs), en part de la paire de secteurs : 0,25 pour un rayon. */
+export function largeurDesRayons(r: number): number {
+  if (PETALE === null) return 0.25
+  return PETALE.large * Math.pow(Math.sin(Math.PI * Math.min(1, r / PETALE.longueur)), PETALE.courbe)
+}
+/** La même largeur, en GLSL, pour la distance `r` (une expression) : lue par le nuanceur. */
+export function largeurDesRayonsGlsl(r: string): string {
+  if (PETALE === null) return '0.25'
+  return `(${PETALE.large.toFixed(4)} * pow(max(sin(3.14159265 * min(1.0, ${r} / ${PETALE.longueur.toFixed(4)})), 0.0), ${PETALE.courbe.toFixed(4)}))`
 }
 
 export const RAYONS_DANS_LA_CARTE = (() => {
@@ -1781,34 +1809,42 @@ function peindreRayons(
   ctx.globalAlpha = force
   const depart = 0.21
   const pas = (Math.PI * 2) / NB_RAYONS
-  // LES CLAIRS (pairs) PLEINS, LES SOMBRES (impairs) à ECLAIRE_SOMBRES.
+  // LES SOMBRES À ECLAIRE_SOMBRES, PARTOUT ; LES CLAIRS reçoivent le reste par
+  // l'addition (`lighter`) — le nuanceur dit la même chose : mix(part, 1, clair).
+  // *Un motif où le clair n'est pas un secteur* (le pétale) n'a plus de sombre
+  // à dessiner : le sombre est ce qui reste.
   const secteurs = (): void => {
     const a = ctx.globalAlpha
-    for (const [debut, part] of [[0, 1], [1, ECLAIRE_SOMBRES]] as const) {
-      if (part <= 0) continue
-      ctx.globalAlpha = a * part
-      for (let i = debut; i < NB_RAYONS; i += 2) {
-        const a0 = depart + i * pas
-        // UNE FLAMME : un bord qui part du centre en ondulant, l'arc du
-        // dehors, l'autre bord qui revient — décalé d'un secteur, même onde.
-        const bout = rayon * 1.05
-        ctx.beginPath()
-        ctx.moveTo(cx, cy)
-        for (let s = 1; s <= PAS_FLAMME; s++) {
-          const r = (bout * s) / PAS_FLAMME
-          const a = a0 + ondeDesRayons(r / LARGE)
-          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
-        }
-        const dehors = ondeDesRayons(bout / LARGE)
-        ctx.arc(cx, cy, bout, a0 + dehors, a0 + pas + dehors)
-        for (let s = PAS_FLAMME; s >= 1; s--) {
-          const r = (bout * s) / PAS_FLAMME
-          const a = a0 + pas + ondeDesRayons(r / LARGE)
-          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
-        }
-        ctx.closePath()
-        ctx.fill()
+    const bout = rayon * 1.05
+    if (ECLAIRE_SOMBRES > 0) {
+      ctx.globalAlpha = a * ECLAIRE_SOMBRES
+      ctx.beginPath()
+      ctx.arc(cx, cy, bout, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.globalAlpha = a * (1 - ECLAIRE_SOMBRES)
+    for (let i = 0; i < NB_RAYONS; i += 2) {
+      // LE CLAIR : son axe au milieu du secteur pair, ses deux bords à
+      // ± sa largeur (`largeurDesRayons`), tournés de l'onde (`ondeDesRayons`)
+      // — un rayon, une flamme ou un pétale selon le motif.
+      const axe = depart + (i + 0.5) * pas
+      const bord = (r: number, cote: number): number =>
+        axe + ondeDesRayons(r / LARGE) + cote * largeurDesRayons(r / LARGE) * 2 * pas
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+      for (let s = 1; s <= PAS_FLAMME; s++) {
+        const r = (bout * s) / PAS_FLAMME
+        const b = bord(r, -1)
+        ctx.lineTo(cx + Math.cos(b) * r, cy + Math.sin(b) * r)
       }
+      if (largeurDesRayons(bout / LARGE) > 0) ctx.arc(cx, cy, bout, bord(bout, -1), bord(bout, 1))
+      for (let s = PAS_FLAMME; s >= 1; s--) {
+        const r = (bout * s) / PAS_FLAMME
+        const b = bord(r, 1)
+        ctx.lineTo(cx + Math.cos(b) * r, cy + Math.sin(b) * r)
+      }
+      ctx.closePath()
+      ctx.fill()
     }
     ctx.globalAlpha = a
   }
