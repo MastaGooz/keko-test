@@ -466,10 +466,35 @@ function StickerOuvert({
       },
       { signal },
     )
+    // À LA SOURIS, IL NE PENCHE QUE SURVOLÉ, comme la carte ouverte. Keko : « le
+    // basculement d'un sticker au hover souris ne devrait se produire que quand
+    // la souris est sur le sticker ». Hors de lui, il se redresse.
+    // SUR LE DESSIN, pas sur son carré : on lit l'alpha de la toile sous la souris.
+    const survole = (x: number, y: number): boolean => {
+      const b = zone.current?.getBoundingClientRect()
+      if (b === undefined || x < b.left || x > b.right || y < b.top || y > b.bottom) return false
+      const c = toile.current
+      const ctx = c?.getContext('2d', { willReadFrequently: true })
+      if (c == null || ctx == null || c.width === 0) return true
+      const px = Math.floor(((x - b.left) / b.width) * c.width)
+      const py = Math.floor(((y - b.top) / b.height) * c.height)
+      return (ctx.getImageData(px, py, 1, 1).data[3] ?? 0) > 16
+    }
     addEventListener(
       'pointermove',
       (e) => {
-        if (e.pointerType === 'mouse' || doigt !== null) viser(e.clientX, e.clientY)
+        if (e.pointerType === 'mouse') {
+          if (survole(e.clientX, e.clientY)) viser(e.clientX, e.clientY)
+          else redresser()
+        } else if (doigt !== null) viser(e.clientX, e.clientY)
+      },
+      { signal },
+    )
+    // LA SOURIS QUI QUITTE LA FENÊTRE le laisse droit.
+    addEventListener(
+      'mouseout',
+      (e) => {
+        if (e.relatedTarget === null) redresser()
       },
       { signal },
     )
