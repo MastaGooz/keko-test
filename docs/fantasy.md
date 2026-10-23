@@ -679,6 +679,14 @@ Ursha : aucune épique ne le monte.
   rhinocéros laineux) ; puis « un peu trop détaillé, le modèle perd le style
   minimaliste » : **une épique = une grande idée et deux ou trois détails**,
   pas plus.
+- **Illustrées par Keko** (23/10). Découpées dans
+  `public/generations/orc/epiques/` (`01-seigneur-de-horde.png` …
+  `06-tambour-de-guerre.png`, numérotées comme cette fiche). La Tatoueuse
+  n'a pas le crâne rasé et se lit moins nettement en femme.
+- **Deux bonus dessinés par Keko**, rangés à part dans
+  `public/generations/orc/bonus/`, place à trancher : un **pêcheur** (lance,
+  hotte, gros poisson ; Keko le voit commun) et un **porteur de clés**
+  (capuche, trousseau, coffret ; Keko le voit peu commun).
 
 
 ## Les paquets et la rareté (21/10/2026)
