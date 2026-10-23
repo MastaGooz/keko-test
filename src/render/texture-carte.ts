@@ -3326,6 +3326,9 @@ function replierNom(ctx: CanvasRenderingContext2D, nom: string, max: number): st
  * cartouche : *un canvas écrit tout droit et laisse déborder sans rien
  * signaler*, donc il faut un fond à l'échelle et pas seulement deux marches.
  */
+/** De combien le nom en Grenze monte au-dessus de la taille calculée (`corpsDuNom`) ; `?grandi=1.4` l'essaie. */
+const GRANDI_TITRE = Number(new URLSearchParams(location.search).get('grandi') ?? 1.3) || 1.3
+
 function corpsDuNom(
   ctx: CanvasRenderingContext2D,
   nom: string,
@@ -3347,7 +3350,12 @@ function corpsDuNom(
   // LA TAILLE FIXE NE S'ESSAIE PAS, ELLE EST DÉJÀ LA BONNE : elle a été
   // calculée pour que deux lignes tiennent. *Il ne reste que le cas où le nom
   // en demande trois*, et là c'est la taille qui cède, comme ailleurs.
-  const crans = fixe ? [cranDeLaPlaque(ctx, police, sous, hautBande) / U] : CRANS_NOM
+  // GRENZE A L'OEIL PLUS PETIT QUE BALOO : à la taille calculée sur ses
+  // extrêmes (accents, jambages), le nom paraissait un cran plus bas — Keko :
+  // « je trouve les titres des cartes trop petits depuis le changement de
+  // police ». La plaque a la place (le cartouche est vide) : on monte d'autant,
+  // et un nom qui ne tiendrait plus en deux lignes redescend par la boucle.
+  const crans = fixe ? [(cranDeLaPlaque(ctx, police, sous, hautBande) / U) * GRANDI_TITRE] : CRANS_NOM
   for (const cran of crans) {
     const r = essai(cran * U)
     if (r.lignes.length <= 2 && r.haut <= place) return { taille: cran * U, ...r }
