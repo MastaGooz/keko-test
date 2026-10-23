@@ -629,6 +629,56 @@ const AIR_SUJET = 7
 const ZOOM_SUJET = Number(new URLSearchParams(location.search).get('zoom') ?? 1.12) || 1.12
 
 /**
+ * LE STICKER CADRÉ SUR SON DESSIN, PAS SUR UN CARRÉ. Keko : « le pisteur est
+ * petit alors que l'horloger est beaucoup plus gros ». *La taille venait de la
+ * FORME* : chaque image est un carré autour de son dessin, posé dans une
+ * fenêtre plus large que haute — un carré y bute sur la hauteur, et un dessin
+ * allongé (une lance, un sanglier en laisse) n'en occupait qu'une bande. Rogné
+ * à son dessin, le sticker remplit la fenêtre par le côté qui bute vraiment :
+ * un dessin large prend toute la largeur, un dessin haut ne change presque
+ * pas. `ZOOM_SUJET` ne joue plus alors ; `?cadre=carre` rend l'ancien cadrage.
+ */
+const ROGNE_AU_DESSIN = new URLSearchParams(location.search).get('cadre') !== 'carre'
+/** L'air laissé autour du dessin dans la fenêtre, en unités de carte. */
+const AIR_DESSIN = { cote: 3, haut: 3, bas: 2 } as const
+const ROGNES = new WeakMap<HTMLImageElement | HTMLCanvasElement, HTMLCanvasElement>()
+/** La toile du sticker coupée au plus près de ce qui porte de l'alpha (cerne et ombre compris). */
+function rogneAuDessin(image: HTMLImageElement | HTMLCanvasElement): HTMLImageElement | HTMLCanvasElement {
+  const deja = ROGNES.get(image)
+  if (deja !== undefined) return deja
+  const w = image.width
+  const h = image.height
+  const t = document.createElement('canvas')
+  t.width = w
+  t.height = h
+  const c = t.getContext('2d', { willReadFrequently: true })
+  if (c === null || w === 0 || h === 0) return image
+  c.drawImage(image, 0, 0)
+  const a = c.getImageData(0, 0, w, h).data
+  let x0 = w
+  let y0 = h
+  let x1 = -1
+  let y1 = -1
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (a[(y * w + x) * 4 + 3]! > 8) {
+        if (x < x0) x0 = x
+        if (x > x1) x1 = x
+        if (y < y0) y0 = y
+        if (y > y1) y1 = y
+      }
+    }
+  }
+  if (x1 < 0) return image
+  const r = document.createElement('canvas')
+  r.width = x1 - x0 + 3
+  r.height = y1 - y0 + 3
+  r.getContext('2d')?.drawImage(t, x0 - 1, y0 - 1, r.width, r.height, 0, 0, r.width, r.height)
+  ROGNES.set(image, r)
+  return r
+}
+
+/**
  * `?texte=sombre` rend le dégradé noir du gabarit.
  *
  * *Ce qui a servi à choisir doit rester ouvrable, même une fois le choix fait* —
@@ -4375,16 +4425,40 @@ export async function peindreCarte(
   // exactement dans la fenêtre.
   const enFenetre = image !== null && carte.persoEnFenetre === true && bulle
   const lFen = LARGE - marge * 2
-  const sujet = enFenetre ? stickerEnFenetre(image!, Math.round(lFen * (largeur / LARGE)), Math.round(fH * (largeur / LARGE))) : image
+  // CADRÉ SUR SON DESSIN (`auDessin`), le sticker remplit la fenêtre par son
+  // côté qui bute : voir `ROGNE_AU_DESSIN`.
+  const auDessin = bulle && !enFenetre && image !== null && ROGNE_AU_DESSIN
+  const sujet = enFenetre
+    ? stickerEnFenetre(image!, Math.round(lFen * (largeur / LARGE)), Math.round(fH * (largeur / LARGE)))
+    : auDessin
+      ? rogneAuDessin(image!)
+      : image
   const zoom = bulle ? ZOOM_SUJET : 1
-  const sY = enFenetre ? fY : aY - (aH * (zoom - 1)) / 2
-  const sH = enFenetre ? fH : aH * zoom
-  const sRognage = enFenetre ? 0 : rognage
+  let sY = enFenetre ? fY : aY - (aH * (zoom - 1)) / 2
+  let sH = enFenetre ? fH : aH * zoom
+  let sRognage = enFenetre ? 0 : rognage
+  let sX = marge
+  let sL = lFen
+  if (auDessin && sujet !== null) {
+    // LA BOÎTE EST LA FENÊTRE, moins un filet d'air ; le dessin y rentre
+    // entier et s'y CENTRE. `couvrir` sans rognage cale en haut : la boîte
+    // passée est donc exactement la hauteur posée, centrée à la main.
+    const bx = marge + AIR_DESSIN.cote * U
+    const bl = lFen - AIR_DESSIN.cote * 2 * U
+    const by = fY + AIR_DESSIN.haut * U
+    const bh = fH - (AIR_DESSIN.haut + AIR_DESSIN.bas) * U
+    const s = Math.min(bl / sujet.width, bh / sujet.height)
+    sX = bx
+    sL = bl
+    sH = sujet.height * s
+    sY = by + (bh - sH) / 2
+    sRognage = 0
+  }
   if (sujet !== null) {
     ctx.imageSmoothingQuality = 'high'
-    couvrir(ctx, sujet, marge, sY, lFen, sH, sRognage)
+    couvrir(ctx, sujet, sX, sY, sL, sH, sRognage)
     // OÙ L'EMOJI EST POSÉ, en pixels de la toile : le décollage le reprend là.
-    const r = placeDansCouvrir(sujet, marge, sY, lFen, sH, sRognage)
+    const r = placeDansCouvrir(sujet, sX, sY, sL, sH, sRognage)
     const k = largeur / LARGE
     SUJETS.set(canvas, { image: sujet, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
   }
