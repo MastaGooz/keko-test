@@ -5761,6 +5761,45 @@ function peindreBlason(ctx: CanvasRenderingContext2D, cx: number, cy: number, w:
   ctx.restore()
 }
 
+/**
+ * LE SYMBOLE DU JEU : le poing d'or sur l'écu violet, dessiné par Keko
+ * (`public/Symbole.png`, détouré en `symbole.webp`). Il marque le dos et le
+ * sachet ; `?marque=ancienne` rend le blason peint et le bouquet de
+ * personnages. `w` est le côté du carré de l'image ; en masque (la brillance
+ * du sachet), sa silhouette en blanc.
+ */
+const MARQUE_ANCIENNE = new URLSearchParams(location.search).get('marque') === 'ancienne'
+async function peindreSymbole(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  w: number,
+  masque = false,
+): Promise<void> {
+  const image = await imageDuPersonnage('symbole.webp')
+  if (image === null) return
+  if (masque) {
+    const t = document.createElement('canvas')
+    t.width = image.width
+    t.height = image.height
+    const c = t.getContext('2d')
+    if (c === null) return
+    c.drawImage(image, 0, 0)
+    c.globalCompositeOperation = 'source-in'
+    c.fillStyle = '#ffffff'
+    c.fillRect(0, 0, t.width, t.height)
+    ctx.drawImage(t, cx - w / 2, cy - w / 2, w, w)
+    return
+  }
+  // L'OMBRE PORTÉE : le symbole est frappé en relief sur le cuir.
+  ctx.save()
+  ctx.shadowColor = '#00000080'
+  ctx.shadowBlur = w * 0.06
+  ctx.shadowOffsetY = w * 0.03
+  ctx.drawImage(image, cx - w / 2, cy - w / 2, w, w)
+  ctx.restore()
+}
+
 /** Le crème du liseré et du découpage — celui des textes du gabarit. */
 const DOS_CREME = '#fffaf0'
 
@@ -5871,7 +5910,8 @@ export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement>
   ctx.fillStyle = halo
   ctx.fillRect(0, 0, LARGE, HAUT)
 
-  peindreBlason(ctx, cx, cy, 44 * U)
+  if (MARQUE_ANCIENNE) peindreBlason(ctx, cx, cy, 44 * U)
+  else await peindreSymbole(ctx, cx, cy, 56 * U)
   // QUATRE CLOUS D'OR aux coins, dans la couture : le cuir est monté sur un
   // plat, comme une couverture de grimoire.
   const pc = marge + 10 * U
@@ -6896,7 +6936,8 @@ async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
   const cyT = h * 0.27
   const cyM = h * 0.56
   await peindreTitreDuSachet(ctx, l, cyT, true)
-  await peindreBouquet(ctx, l / 2, cyM, US * 0.75, true)
+  if (MARQUE_ANCIENNE) await peindreBouquet(ctx, l / 2, cyM, US * 0.75, true)
+  else await peindreSymbole(ctx, l / 2, cyM, US * 52, true)
   // LES SOUDURES, aux mêmes mesures que sur le film (voir peindreLeSachet).
   ctx.fillStyle = '#000000'
   ctx.fillRect(0, 0, l, h * 0.047)
@@ -6969,7 +7010,9 @@ async function peindreLeSachet(): Promise<{
   // LA MARQUE : LE BOUQUET DU DOS, en grand. *Le logo d'une collection se
   // compose de ce qu'elle contient* — et c'est déjà lui qui dit à quel jeu ces
   // cartes appartiennent, donc le sachet n'a pas de second signe à porter.
-  await peindreBouquet(ctx, l / 2, cyM, US * 0.75)
+  // Keko : le symbole du jeu remplace le bouquet (`?marque=ancienne` le rend).
+  if (MARQUE_ANCIENNE) await peindreBouquet(ctx, l / 2, cyM, US * 0.75)
+  else await peindreSymbole(ctx, l / 2, cyM, US * 52)
 
   peindrePastilleDuSachet(ctx, l / 2, h * 0.8, '5 CARTES', l * 0.052)
 

@@ -151,9 +151,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   réalloue pas une `CanvasTexture`), et l'animation redit `face.map` à chaque
   image pendant que le cache statique s'abstient.
 - **LA DA EST « TAVERNE & PARCHEMIN »** (Keko, 23/10) : le dos est un cuir
-  cousu (`DOS_CUIR`, `peindreCuir`) au liseré d'or, frappé d'un blason
-  (`peindreBlason` : hache et dague croisées) et de quatre clous ; le sachet
-  du même cuir garde le bouquet de personnages ; la plaque est un parchemin
+  cousu (`DOS_CUIR`, `peindreCuir`) au liseré d'or, frappé du SYMBOLE de
+  Keko (`symbole.webp`, le poing d'or sur l'écu violet, `peindreSymbole`) et
+  de quatre clous ; le sachet du même cuir porte le même symbole
+  (`?marque=ancienne` : le blason peint et le bouquet de personnages) ; la plaque est un parchemin
   (`PLAQUE_CLAIRE`), l'encre brune ; titre du sachet et noms en **Grenze 800**
   (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; le
   blanc des communes tire vers l'ivoire. Cache par rayon et par piste.
