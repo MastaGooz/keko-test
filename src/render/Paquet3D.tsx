@@ -13,7 +13,7 @@ import { NoToneMapping, type Group } from 'three'
  */
 import { cloneElement, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { Decollage, type BoiteALEcran } from './Decollage.tsx'
-import type { Exemplaire } from '../logic/emoji/collection.ts'
+import type { Collection, Exemplaire } from '../logic/emoji/collection.ts'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
@@ -40,11 +40,14 @@ import { chargerPeintures } from '../ui/peintures.ts'
 import { createRng } from '../logic/rng.ts'
 import {
   CARTES_PAR_PAQUET,
-  ECHELLE_CINQ,
+  ECHELLE_FANTASY,
   ECHELLE_QUATRE,
+  PITIE_EPIQUE,
+  PITIE_LEGENDAIRE,
   ouvrirPaquet,
   parCran,
   type Echelle,
+  type OptionsPaquet,
 } from '../logic/paquet.ts'
 import { tirerBonus, type Bonus } from '../logic/emoji/tirage.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
@@ -567,6 +570,13 @@ type PropsPaquet = {
    * son sticker ». *Sans elle, pas de bouton* : `&art` et `&peau` n'en ont pas.
    */
   onDetruire?: (id: string, ex: Exemplaire) => void
+  /**
+   * LA COLLECTION DU JOUEUR, PAR RÉFÉRENCE : le tirage y lit ses pitiés et les
+   * légendaires qu'il a déjà. *Une référence, pas une valeur* : le paquet se
+   * tire au changement de numéro, et une collection qui bouge pendant qu'on
+   * le regarde ne doit pas le retirer.
+   */
+  joueur?: { readonly current: Collection }
 }
 
 export function Paquet3D({
@@ -576,6 +586,7 @@ export function Paquet3D({
   peutContinuer = true,
   onSachetEnAttente,
   onDetruire,
+  joueur,
 }: PropsPaquet = {}): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
@@ -900,7 +911,7 @@ export function Paquet3D({
   useEffect(() => {
     let vivant = true
     const charger = emojis
-      ? chargerEmojis(peau ? 'emoji-peau' : 'emoji')
+      ? chargerEmojis()
       : chargerPeintures()
     void charger.then((cartes: CarteDuMode[]) => {
       if (!vivant) return
@@ -936,7 +947,7 @@ export function Paquet3D({
    * deux tables, elles, restent typees chacune sur ses propres crans* — c'est
    * la qu'une faute se verrait.
    */
-  const echelle: Echelle<string> = emojis ? ECHELLE_CINQ : ECHELLE_QUATRE
+  const echelle: Echelle<string> = emojis ? ECHELLE_FANTASY : ECHELLE_QUATRE
   /** Les teintes du cadre, dans l'ordre : c'est elle que le reveal remonte. */
   const teintes: readonly string[] = emojis ? ECHELLE_COULEUR : ECHELLE_METAL
 
@@ -954,7 +965,19 @@ export function Paquet3D({
   const tirage = useMemo((): { cartes: CarteDuMode[]; bonus: Readonly<Record<string, Bonus>> } => {
     if (tas === null) return { cartes: [], bonus: {} }
     const rng = createRng((GRAINE + numero * 7919) >>> 0)
-    const cartes = ouvrirPaquet(tas, rng, echelle)
+    // LES PITIÉS ET LES LÉGENDAIRES SANS DOUBLON du fantasy (`docs/fantasy.md`).
+    const col = joueur?.current
+    const options: OptionsPaquet<string> =
+      emojis && col !== undefined
+        ? {
+            pities: [
+              { cran: 'epique', apres: PITIE_EPIQUE, sans: col.sansEpique },
+              { cran: 'legendaire', apres: PITIE_LEGENDAIRE, sans: col.sansLegendaire },
+            ],
+            sansDoublon: { cran: 'legendaire', possede: (id) => col.cartes[id] !== undefined },
+          }
+        : {}
+    const cartes = ouvrirPaquet(tas, rng, echelle, options)
     /**
      * LES BONUS SE TIRENT ICI, APRES LES CARTES ET AVEC LE MEME RNG.
      *
@@ -1014,7 +1037,7 @@ export function Paquet3D({
       for (const c of cartes) bonus[c.id] = { holo: true, anime: bonus[c.id]?.anime ?? false }
     }
     return { cartes, bonus }
-  }, [tas, numero, echelle, emojis, bonusForce, holoForce, animeForce, persoForce])
+  }, [tas, numero, echelle, joueur, emojis, bonusForce, holoForce, animeForce, persoForce])
   const paquet = tirage.cartes
 
   /**

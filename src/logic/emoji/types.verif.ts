@@ -6,7 +6,7 @@
  * lecture du JSON rejette ce qui est mal formé, les rayons se découpent chacun
  * pour soi, et les ex aequo partagent leur cran.
  */
-import { parseEmoji, parseEmojis, GROUPES_EMOJI, RARETES_EMOJI, parGroupe, NOM_DU_GROUPE } from './types.ts'
+import { parseEmoji, parseEmojis, RARETES_EMOJI, RACES, ROLES, NOM_DE_LA_RACE, NOM_DU_ROLE } from './types.ts'
 import { cransParGroupe, PYRAMIDE_CINQ } from '../quantiles.ts'
 import { tirerBonus, CHANCES_BONUS } from './tirage.ts'
 import {
@@ -15,7 +15,10 @@ import {
   CHANCES_CINQ,
   CRANS_CINQ,
   ECHELLE_CINQ,
+  ECHELLE_FANTASY,
   ECHELLE_QUATRE,
+  PITIE_EPIQUE,
+  PITIE_LEGENDAIRE,
   ouvrirPaquet,
   parCran,
 } from '../paquet.ts'
@@ -37,64 +40,38 @@ console.log('LA LECTURE DU CATALOGUE')
 // LE GABARIT REPREND TOUT LE TYPE, champ neuf compris : *un fixture incomplet
 // teste une AUTRE chose que celle qu'on croit, et il passe.*
 const bonne = {
-  id: '1f600',
-  emoji: '😀',
-  nom: 'visage rieur',
-  groupe: 'visages',
-  mots: ['content', 'rire'],
-  version: '1.0',
-  annee: 2015,
-  animable: true,
-  frequence: 0,
-  rang: 1,
-  rarete: 'legendaire',
+  id: 'gobelin-rare-03',
+  nom: 'Fauconnière',
+  race: 'gobelin',
+  role: 'distance',
+  sexe: 'f',
+  image: 'cartes/gobelin/rares/03-fauconniere.webp',
+  rang: 20,
+  rarete: 'rare',
 }
 
 verifier('une carte complète se lit', parseEmoji(bonne) !== null)
-verifier('un groupe inconnu est rejeté', parseEmoji({ ...bonne, groupe: 'licornes' }) === null)
+verifier('une race inconnue est rejetée', parseEmoji({ ...bonne, race: 'licorne' }) === null)
+verifier('un rôle inconnu est rejeté', parseEmoji({ ...bonne, role: 'barde' }) === null)
+verifier('un sexe inconnu est rejeté', parseEmoji({ ...bonne, sexe: 'x' }) === null)
 verifier('une rareté inconnue est rejetée', parseEmoji({ ...bonne, rarete: 'mythique' }) === null)
-verifier('un emoji vide est rejeté', parseEmoji({ ...bonne, emoji: '' }) === null)
-verifier('une année non numérique est rejetée', parseEmoji({ ...bonne, annee: '2015' }) === null)
-verifier(
-  'un drapeau d’animabilité non booléen est rejeté',
-  parseEmoji({ ...bonne, animable: 'oui' }) === null,
-)
+verifier('une image absente est rejetée', parseEmoji({ ...bonne, image: '' }) === null)
+verifier('un identifiant à majuscules est rejeté', parseEmoji({ ...bonne, id: 'Gobelin-1' }) === null)
 verifier('un rang absent est rejeté', parseEmoji({ ...bonne, rang: undefined }) === null)
-// LA FREQUENCE EST FACULTATIVE : *24 % du catalogue n'est pas au classement
-// d'Unicode* -- ce sont les emoji posterieurs a la version 12.0 -- et ils
-// gardent leur carte. **Une absence de mesure n'est pas une carte en moins.**
-egal(parseEmoji({ ...bonne, frequence: undefined })?.frequence, null, 'une fréquence absente vaut null')
-egal(parseEmoji({ ...bonne, frequence: 7 })?.frequence, 7, 'une fréquence connue se lit')
-// LES MOTS-CLES SONT FACULTATIFS : *un emoji sans nom francais n'en a pas*, et
-// il garde quand meme sa carte avec son nom anglais.
-verifier('des mots-clés absents ne rejettent pas la carte', parseEmoji({ ...bonne, mots: undefined })?.mots.length === 0)
+verifier('aucune carte n’est animable', parseEmoji(bonne)?.animable === false)
+egal(parseEmoji(bonne)?.mots.join(' · '), 'Gobelin · Distance', 'la recherche lit la race et le rôle')
 
 verifier('un JSON cassé rend une liste vide', parseEmojis('{ pas du json').length === 0)
 verifier('un JSON sans cartes rend une liste vide', parseEmojis('{"genere":"x"}').length === 0)
 egal(
-  parseEmojis(JSON.stringify({ cartes: [bonne, { ...bonne, groupe: 'faux' }] })).length,
+  parseEmojis(JSON.stringify({ cartes: [bonne, { ...bonne, race: 'faux' }] })).length,
   1,
   'une carte cassée est écartée, pas fatale',
 )
 
-console.log('')
-console.log('LES RAYONS')
-
-{
-  const cartes = [
-    { ...bonne, id: 'a', groupe: 'visages' as const },
-    { ...bonne, id: 'b', groupe: 'drapeaux' as const },
-    { ...bonne, id: 'c', groupe: 'visages' as const },
-  ].map((c) => parseEmoji(c)!)
-  const m = parGroupe(cartes)
-  egal(m.get('visages')?.length, 2, 'deux visages dans leur rayon')
-  egal(m.get('drapeaux')?.length, 1, 'un drapeau dans le sien')
-  egal(m.get('animaux'), undefined, 'un rayon vide n’existe pas')
-}
-
-// LES NEUF GROUPES ONT UN NOM AFFICHABLE. *Une liste de cas est une liste qu'on
-// oublie de completer*, et celle-ci se lit au pied de chaque carte.
-for (const g of GROUPES_EMOJI) verifier(`« ${g} » a un nom affiché (${NOM_DU_GROUPE[g]})`, NOM_DU_GROUPE[g] !== undefined && NOM_DU_GROUPE[g] !== '')
+// LES TAGS ONT UN NOM AFFICHABLE : ils se lisent dans la pastille.
+for (const r of RACES) verifier(`« ${r} » a un nom affiché (${NOM_DE_LA_RACE[r]})`, NOM_DE_LA_RACE[r] !== '')
+for (const r of ROLES) verifier(`« ${r} » a un nom affiché (${NOM_DU_ROLE[r]})`, NOM_DU_ROLE[r] !== '')
 
 console.log('')
 console.log('LE DÉCOUPAGE PAR GROUPE')
@@ -219,6 +196,58 @@ verifier(
     `la vedette vaut « rare » ou mieux (${derniere.rarete})`,
     CRANS_CINQ.indexOf(derniere.rarete) >= CRANS_CINQ.indexOf('rare'),
   )
+}
+
+console.log('')
+console.log('LES TAUX DU FANTASY')
+
+{
+  const somme = (c: Readonly<Record<string, number>>) => Object.values(c).reduce((a, b) => a + b, 0)
+  verifier(`les cartes 1–4 somment à un, au reliquat près (${somme(ECHELLE_FANTASY.chances).toFixed(4)})`,
+    Math.abs(somme(ECHELLE_FANTASY.chances) - 1) < 0.001)
+  verifier(`la cinquième somme à un (${somme(ECHELLE_FANTASY.derniere!).toFixed(4)})`,
+    Math.abs(somme(ECHELLE_FANTASY.derniere!) - 1) < 1e-9)
+  const tas = parCran(
+    RARETES_EMOJI.flatMap((r) => Array.from({ length: 20 }, (_, i) => ({ id: `${r}-${i}`, rarete: r }))),
+    ECHELLE_FANTASY,
+  )
+  const rang = (r: string) => CRANS_CINQ.indexOf(r as never)
+  let communeAuBout = 0
+  for (let g = 0; g < 2000; g++) {
+    const p = ouvrirPaquet(tas, createRng(g), ECHELLE_FANTASY)
+    if (p[p.length - 1]!.rarete === 'commun') communeAuBout += 1
+  }
+  egal(communeAuBout, 0, 'la cinquième carte n’est jamais commune (2 000 paquets)')
+  // LA PITIÉ : le 24ᵉ paquet sans épique en finit sur une, le 23ᵉ non forcé.
+  let epiques = 0
+  for (let g = 0; g < 300; g++) {
+    const p = ouvrirPaquet(tas, createRng(g), ECHELLE_FANTASY, { pities: [{ cran: 'epique', apres: PITIE_EPIQUE, sans: PITIE_EPIQUE - 1 }] })
+    if (rang(p[p.length - 1]!.rarete) >= rang('epique')) epiques += 1
+  }
+  egal(epiques, 300, 'au 24ᵉ paquet sans épique, la dernière est épique ou mieux')
+  let legendaires = 0
+  for (let g = 0; g < 300; g++) {
+    const p = ouvrirPaquet(tas, createRng(g), ECHELLE_FANTASY, { pities: [{ cran: 'legendaire', apres: PITIE_LEGENDAIRE, sans: PITIE_LEGENDAIRE - 1 }] })
+    if (p[p.length - 1]!.rarete === 'legendaire') legendaires += 1
+  }
+  egal(legendaires, 300, 'au 200ᵉ paquet sans légendaire, la dernière est légendaire')
+  // SANS DOUBLON : 19 des 20 légendaires possédées, la pitié tire la 20ᵉ.
+  const possede = (id: string) => id !== 'legendaire-7'
+  let manquante = 0
+  for (let g = 0; g < 100; g++) {
+    const p = ouvrirPaquet(tas, createRng(g), ECHELLE_FANTASY, {
+      pities: [{ cran: 'legendaire', apres: PITIE_LEGENDAIRE, sans: PITIE_LEGENDAIRE }],
+      sansDoublon: { cran: 'legendaire', possede },
+    })
+    if (p[p.length - 1]!.id === 'legendaire-7') manquante += 1
+  }
+  egal(manquante, 100, 'une légendaire tirée est toujours celle qui manque')
+  // ET QUAND RIEN NE MANQUE, LE DOUBLON REVIENT plutôt qu'un trou.
+  const p = ouvrirPaquet(tas, createRng(5), ECHELLE_FANTASY, {
+    pities: [{ cran: 'legendaire', apres: PITIE_LEGENDAIRE, sans: PITIE_LEGENDAIRE }],
+    sansDoublon: { cran: 'legendaire', possede: () => true },
+  })
+  egal(p[p.length - 1]!.rarete, 'legendaire', 'toutes possédées, une légendaire sort quand même')
 }
 
 console.log('')

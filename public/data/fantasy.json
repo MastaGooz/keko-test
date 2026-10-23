@@ -1,0 +1,1194 @@
+{
+ "cartes": [
+  {
+   "id": "gobelin-legendaire-01",
+   "nom": "Snik le Rusé",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "legendaire",
+   "image": "cartes/gobelin/legendaires/01-snik-le-ruse.webp",
+   "rang": 1
+  },
+  {
+   "id": "gobelin-legendaire-02",
+   "nom": "Mère Gribouille",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "legendaire",
+   "image": "cartes/gobelin/legendaires/02-mere-gribouille.webp",
+   "rang": 2
+  },
+  {
+   "id": "gobelin-legendaire-03",
+   "nom": "Zabbo Boulon-Fou",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "legendaire",
+   "image": "cartes/gobelin/legendaires/03-zabbo-boulon-fou.webp",
+   "rang": 3
+  },
+  {
+   "id": "gobelin-legendaire-04",
+   "nom": "Grisette la Dorée",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "legendaire",
+   "image": "cartes/gobelin/legendaires/04-grisette-la-doree.webp",
+   "rang": 4
+  },
+  {
+   "id": "orc-legendaire-01",
+   "nom": "Grumbak le Borgne",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "legendaire",
+   "image": "cartes/orc/legendaires/01-grumbak-le-borgne.webp",
+   "rang": 5
+  },
+  {
+   "id": "orc-legendaire-02",
+   "nom": "Gorruk Défense-d'Or",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "legendaire",
+   "image": "cartes/orc/legendaires/02-gorruk-defense-d-or.webp",
+   "rang": 6
+  },
+  {
+   "id": "orc-legendaire-03",
+   "nom": "Ghor l'Ancien",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "legendaire",
+   "image": "cartes/orc/legendaires/03-ghor-l-ancien.webp",
+   "rang": 7
+  },
+  {
+   "id": "gobelin-epique-01",
+   "nom": "Chevaucheur de rat",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/01-chevaucheur-de-rat.webp",
+   "rang": 8
+  },
+  {
+   "id": "gobelin-epique-02",
+   "nom": "Cerf-voliste",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/02-cerf-voliste.webp",
+   "rang": 9
+  },
+  {
+   "id": "gobelin-epique-03",
+   "nom": "Aéronaute",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/03-aeronaute.webp",
+   "rang": 10
+  },
+  {
+   "id": "gobelin-epique-04",
+   "nom": "Artificière",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/04-artificiere.webp",
+   "rang": 11
+  },
+  {
+   "id": "gobelin-epique-05",
+   "nom": "Illusionniste",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/05-illusionniste.webp",
+   "rang": 12
+  },
+  {
+   "id": "gobelin-epique-06",
+   "nom": "Électromancienne",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/06-electromancienne.webp",
+   "rang": 13
+  },
+  {
+   "id": "gobelin-epique-07",
+   "nom": "Essaimancienne",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/07-essaimancienne.webp",
+   "rang": 14
+  },
+  {
+   "id": "gobelin-epique-08",
+   "nom": "Gardienne des clés",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/gobelin/epiques/08-gardienne-des-cles.webp",
+   "rang": 15
+  },
+  {
+   "id": "orc-epique-01",
+   "nom": "Chevaucheuse de loup",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/orc/epiques/01-chevaucheuse-de-loup.webp",
+   "rang": 16
+  },
+  {
+   "id": "orc-epique-02",
+   "nom": "Championne",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/orc/epiques/02-championne.webp",
+   "rang": 17
+  },
+  {
+   "id": "orc-epique-03",
+   "nom": "Berserker",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "epique",
+   "image": "cartes/orc/epiques/03-berserker.webp",
+   "rang": 18
+  },
+  {
+   "id": "orc-epique-04",
+   "nom": "Sorcière du sang",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/orc/epiques/04-sorciere-du-sang.webp",
+   "rang": 19
+  },
+  {
+   "id": "orc-epique-05",
+   "nom": "Tatoueuse runique",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "epique",
+   "image": "cartes/orc/epiques/05-tatoueuse-runique.webp",
+   "rang": 20
+  },
+  {
+   "id": "orc-epique-06",
+   "nom": "Tambour de guerre",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "epique",
+   "image": "cartes/orc/epiques/06-tambour-de-guerre.webp",
+   "rang": 21
+  },
+  {
+   "id": "gobelin-rare-01",
+   "nom": "Escrimeuse à l'ombrelle",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/01-escrimeuse-a-l-ombrelle.webp",
+   "rang": 22
+  },
+  {
+   "id": "gobelin-rare-02",
+   "nom": "Canonnier",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/02-canonnier.webp",
+   "rang": 23
+  },
+  {
+   "id": "gobelin-rare-03",
+   "nom": "Fauconnière",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/03-fauconniere.webp",
+   "rang": 24
+  },
+  {
+   "id": "gobelin-rare-04",
+   "nom": "Lanceur de ruches",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/04-lanceur-de-ruches.webp",
+   "rang": 25
+  },
+  {
+   "id": "gobelin-rare-05",
+   "nom": "Pyromancienne",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/05-pyromancienne.webp",
+   "rang": 26
+  },
+  {
+   "id": "gobelin-rare-06",
+   "nom": "Mage de rouille",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/06-mage-de-rouille.webp",
+   "rang": 27
+  },
+  {
+   "id": "gobelin-rare-07",
+   "nom": "Cartomancienne",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/07-cartomancienne.webp",
+   "rang": 28
+  },
+  {
+   "id": "gobelin-rare-08",
+   "nom": "Ritualiste",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/08-ritualiste.webp",
+   "rang": 29
+  },
+  {
+   "id": "gobelin-rare-09",
+   "nom": "Mycomancien",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/09-mycomancien.webp",
+   "rang": 30
+  },
+  {
+   "id": "gobelin-rare-10",
+   "nom": "Sorcier",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/10-sorcier.webp",
+   "rang": 31
+  },
+  {
+   "id": "gobelin-rare-11",
+   "nom": "Alchimiste",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/gobelin/rares/11-alchimiste.webp",
+   "rang": 32
+  },
+  {
+   "id": "orc-rare-01",
+   "nom": "Combattante de l'arène",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/01-combattante-de-l-arene.webp",
+   "rang": 33
+  },
+  {
+   "id": "orc-rare-02",
+   "nom": "Ravageur",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/02-ravageur.webp",
+   "rang": 34
+  },
+  {
+   "id": "orc-rare-03",
+   "nom": "Massacreur",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/03-massacreur.webp",
+   "rang": 35
+  },
+  {
+   "id": "orc-rare-04",
+   "nom": "Lutteur d'ours",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/04-lutteur-d-ours.webp",
+   "rang": 36
+  },
+  {
+   "id": "orc-rare-05",
+   "nom": "Lanceuse de harpon",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/05-lanceuse-de-harpon.webp",
+   "rang": 37
+  },
+  {
+   "id": "orc-rare-06",
+   "nom": "Lanceur de rochers",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/06-lanceur-de-rochers.webp",
+   "rang": 38
+  },
+  {
+   "id": "orc-rare-07",
+   "nom": "Haruspice",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/07-haruspice.webp",
+   "rang": 39
+  },
+  {
+   "id": "orc-rare-08",
+   "nom": "Chantre des roches",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/08-chantre-des-roches.webp",
+   "rang": 40
+  },
+  {
+   "id": "orc-rare-09",
+   "nom": "Mage de cendre",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/09-mage-de-cendre.webp",
+   "rang": 41
+  },
+  {
+   "id": "orc-rare-10",
+   "nom": "Meneuse d'ours",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "rare",
+   "image": "cartes/orc/rares/10-meneuse-d-ours.webp",
+   "rang": 42
+  },
+  {
+   "id": "gobelin-peu-commun-01",
+   "nom": "Brute",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/01-brute.webp",
+   "rang": 43
+  },
+  {
+   "id": "gobelin-peu-commun-02",
+   "nom": "Coupe-jarret",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/02-coupe-jarret.webp",
+   "rang": 44
+  },
+  {
+   "id": "gobelin-peu-commun-03",
+   "nom": "Péagier",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/03-peagier.webp",
+   "rang": 45
+  },
+  {
+   "id": "gobelin-peu-commun-04",
+   "nom": "Arbalétrière",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/04-arbaletriere.webp",
+   "rang": 46
+  },
+  {
+   "id": "gobelin-peu-commun-05",
+   "nom": "Lanceuse de bombes",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/05-lanceuse-de-bombes.webp",
+   "rang": 47
+  },
+  {
+   "id": "gobelin-peu-commun-06",
+   "nom": "Poseur de pièges",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/06-poseur-de-pieges.webp",
+   "rang": 48
+  },
+  {
+   "id": "gobelin-peu-commun-07",
+   "nom": "Rétiaire",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/07-retiaire.webp",
+   "rang": 49
+  },
+  {
+   "id": "gobelin-peu-commun-08",
+   "nom": "Apprentie",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/08-apprentie.webp",
+   "rang": 50
+  },
+  {
+   "id": "gobelin-peu-commun-09",
+   "nom": "Mangeuse de feu",
+   "race": "gobelin",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/09-mangeuse-de-feu.webp",
+   "rang": 51
+  },
+  {
+   "id": "gobelin-peu-commun-10",
+   "nom": "Dompteur de bêtes",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/10-dompteur-de-betes.webp",
+   "rang": 52
+  },
+  {
+   "id": "gobelin-peu-commun-11",
+   "nom": "Prêteuse sur gages",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/11-preteuse-sur-gages.webp",
+   "rang": 53
+  },
+  {
+   "id": "gobelin-peu-commun-12",
+   "nom": "Taxidermiste",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/12-taxidermiste.webp",
+   "rang": 54
+  },
+  {
+   "id": "gobelin-peu-commun-13",
+   "nom": "Ferrailleuse",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/13-ferrailleuse.webp",
+   "rang": 55
+  },
+  {
+   "id": "gobelin-peu-commun-14",
+   "nom": "Horloger",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/14-horloger.webp",
+   "rang": 56
+  },
+  {
+   "id": "gobelin-peu-commun-15",
+   "nom": "Contrebandière",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/gobelin/peu-communes/15-contrebandiere.webp",
+   "rang": 57
+  },
+  {
+   "id": "orc-peu-commun-01",
+   "nom": "Maître de la fosse",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/01-maitre-de-la-fosse.webp",
+   "rang": 58
+  },
+  {
+   "id": "orc-peu-commun-02",
+   "nom": "Brise-bouclier",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/02-brise-bouclier.webp",
+   "rang": 59
+  },
+  {
+   "id": "orc-peu-commun-03",
+   "nom": "Masse-d'os",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/03-masse-d-os.webp",
+   "rang": 60
+  },
+  {
+   "id": "orc-peu-commun-04",
+   "nom": "Briseuse de crânes",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/04-briseuse-de-cranes.webp",
+   "rang": 61
+  },
+  {
+   "id": "orc-peu-commun-05",
+   "nom": "Écorcheuse",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/05-ecorcheuse.webp",
+   "rang": 62
+  },
+  {
+   "id": "orc-peu-commun-06",
+   "nom": "Coupeur de têtes",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/06-coupeur-de-tetes.webp",
+   "rang": 63
+  },
+  {
+   "id": "orc-peu-commun-07",
+   "nom": "Rançonneuse",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/07-ranconneuse.webp",
+   "rang": 64
+  },
+  {
+   "id": "orc-peu-commun-08",
+   "nom": "Javelinière",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/08-javeliniere.webp",
+   "rang": 65
+  },
+  {
+   "id": "orc-peu-commun-09",
+   "nom": "Pisteur",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/09-pisteur.webp",
+   "rang": 66
+  },
+  {
+   "id": "orc-peu-commun-10",
+   "nom": "Lanceuse de bolas",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/10-lanceuse-de-bolas.webp",
+   "rang": 67
+  },
+  {
+   "id": "orc-peu-commun-11",
+   "nom": "Sage des ronces",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/11-sage-des-ronces.webp",
+   "rang": 68
+  },
+  {
+   "id": "orc-peu-commun-12",
+   "nom": "Fendeur de terre",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/12-fendeur-de-terre.webp",
+   "rang": 69
+  },
+  {
+   "id": "orc-peu-commun-13",
+   "nom": "Avaleur de braises",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/13-avaleur-de-braises.webp",
+   "rang": 70
+  },
+  {
+   "id": "orc-peu-commun-14",
+   "nom": "Porte-étendard",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "peu-commun",
+   "image": "cartes/orc/peu-communes/14-porte-etendard.webp",
+   "rang": 71
+  },
+  {
+   "id": "gobelin-commun-01",
+   "nom": "Garde",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/01-garde.webp",
+   "rang": 72
+  },
+  {
+   "id": "gobelin-commun-02",
+   "nom": "Guerrier",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/02-guerrier.webp",
+   "rang": 73
+  },
+  {
+   "id": "gobelin-commun-03",
+   "nom": "Bagarreuse",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/03-bagarreuse.webp",
+   "rang": 74
+  },
+  {
+   "id": "gobelin-commun-04",
+   "nom": "Sapeur",
+   "race": "gobelin",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/04-sapeur.webp",
+   "rang": 75
+  },
+  {
+   "id": "gobelin-commun-05",
+   "nom": "Archer",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/05-archer.webp",
+   "rang": 76
+  },
+  {
+   "id": "gobelin-commun-06",
+   "nom": "Chasseuse",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/06-chasseuse.webp",
+   "rang": 77
+  },
+  {
+   "id": "gobelin-commun-07",
+   "nom": "Lanceuse de couteaux",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/07-lanceuse-de-couteaux.webp",
+   "rang": 78
+  },
+  {
+   "id": "gobelin-commun-08",
+   "nom": "Éclaireuse",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/08-eclaireuse.webp",
+   "rang": 79
+  },
+  {
+   "id": "gobelin-commun-09",
+   "nom": "Frondeur",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/09-frondeur.webp",
+   "rang": 80
+  },
+  {
+   "id": "gobelin-commun-10",
+   "nom": "Pétardier",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/10-petardier.webp",
+   "rang": 81
+  },
+  {
+   "id": "gobelin-commun-11",
+   "nom": "Lanceur de boomerang",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/11-lanceur-de-boomerang.webp",
+   "rang": 82
+  },
+  {
+   "id": "gobelin-commun-12",
+   "nom": "Tireur à la sarbacane",
+   "race": "gobelin",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/12-tireur-a-la-sarbacane.webp",
+   "rang": 83
+  },
+  {
+   "id": "gobelin-commun-13",
+   "nom": "Fermier",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/13-fermier.webp",
+   "rang": 84
+  },
+  {
+   "id": "gobelin-commun-14",
+   "nom": "Cuisinière",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/14-cuisiniere.webp",
+   "rang": 85
+  },
+  {
+   "id": "gobelin-commun-15",
+   "nom": "Mineur",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/15-mineur.webp",
+   "rang": 86
+  },
+  {
+   "id": "gobelin-commun-16",
+   "nom": "Bûcheron",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/16-bucheron.webp",
+   "rang": 87
+  },
+  {
+   "id": "gobelin-commun-17",
+   "nom": "Messagère",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/17-messagere.webp",
+   "rang": 88
+  },
+  {
+   "id": "gobelin-commun-18",
+   "nom": "Marchande",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/18-marchande.webp",
+   "rang": 89
+  },
+  {
+   "id": "gobelin-commun-19",
+   "nom": "Herboriste",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/19-herboriste.webp",
+   "rang": 90
+  },
+  {
+   "id": "gobelin-commun-20",
+   "nom": "Porteur",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/20-porteur.webp",
+   "rang": 91
+  },
+  {
+   "id": "gobelin-commun-21",
+   "nom": "Bricoleur",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/21-bricoleur.webp",
+   "rang": 92
+  },
+  {
+   "id": "gobelin-commun-22",
+   "nom": "Apicultrice",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/22-apicultrice.webp",
+   "rang": 93
+  },
+  {
+   "id": "gobelin-commun-23",
+   "nom": "Ramoneur",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/23-ramoneur.webp",
+   "rang": 94
+  },
+  {
+   "id": "gobelin-commun-24",
+   "nom": "Chiffonnière",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/24-chiffonniere.webp",
+   "rang": 95
+  },
+  {
+   "id": "gobelin-commun-25",
+   "nom": "Champignonniste",
+   "race": "gobelin",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/gobelin/communs/25-champignonniste.webp",
+   "rang": 96
+  },
+  {
+   "id": "orc-commun-01",
+   "nom": "Cogneur de porte",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/01-cogneur-de-porte.webp",
+   "rang": 97
+  },
+  {
+   "id": "orc-commun-02",
+   "nom": "Fracasseuse",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/02-fracasseuse.webp",
+   "rang": 98
+  },
+  {
+   "id": "orc-commun-03",
+   "nom": "Embrocheuse",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/03-embrocheuse.webp",
+   "rang": 99
+  },
+  {
+   "id": "orc-commun-04",
+   "nom": "Cogne-poing",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/04-cogne-poing.webp",
+   "rang": 100
+  },
+  {
+   "id": "orc-commun-05",
+   "nom": "Mastodonte",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/05-mastodonte.webp",
+   "rang": 101
+  },
+  {
+   "id": "orc-commun-06",
+   "nom": "Batteuse de chaîne",
+   "race": "orc",
+   "role": "melee",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/06-batteuse-de-chaine.webp",
+   "rang": 102
+  },
+  {
+   "id": "orc-commun-07",
+   "nom": "Archère de la horde",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/07-archere-de-la-horde.webp",
+   "rang": 103
+  },
+  {
+   "id": "orc-commun-08",
+   "nom": "Traqueur",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/08-traqueur.webp",
+   "rang": 104
+  },
+  {
+   "id": "orc-commun-09",
+   "nom": "Lanceur de hachettes",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/09-lanceur-de-hachettes.webp",
+   "rang": 105
+  },
+  {
+   "id": "orc-commun-10",
+   "nom": "Lanceuse de pierres",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/10-lanceuse-de-pierres.webp",
+   "rang": 106
+  },
+  {
+   "id": "orc-commun-11",
+   "nom": "Lance-mâchoire",
+   "race": "orc",
+   "role": "distance",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/11-lance-machoire.webp",
+   "rang": 107
+  },
+  {
+   "id": "orc-commun-12",
+   "nom": "Cracheur de braise",
+   "race": "orc",
+   "role": "magie",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/12-cracheur-de-braise.webp",
+   "rang": 108
+  },
+  {
+   "id": "orc-commun-13",
+   "nom": "Éleveuse de cochons",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/13-eleveuse-de-cochons.webp",
+   "rang": 109
+  },
+  {
+   "id": "orc-commun-14",
+   "nom": "Rôtisseur",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/14-rotisseur.webp",
+   "rang": 110
+  },
+  {
+   "id": "orc-commun-15",
+   "nom": "Creuse-roc",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/15-creuse-roc.webp",
+   "rang": 111
+  },
+  {
+   "id": "orc-commun-16",
+   "nom": "Abatteuse d'arbres",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/16-abatteuse-d-arbres.webp",
+   "rang": 112
+  },
+  {
+   "id": "orc-commun-17",
+   "nom": "Batteur de fer",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/17-batteur-de-fer.webp",
+   "rang": 113
+  },
+  {
+   "id": "orc-commun-18",
+   "nom": "Rebouteuse",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "f",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/18-rebouteuse.webp",
+   "rang": 114
+  },
+  {
+   "id": "orc-commun-19",
+   "nom": "Pilleur d'épaves",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/19-pilleur-d-epaves.webp",
+   "rang": 115
+  },
+  {
+   "id": "orc-commun-20",
+   "nom": "Dresseur de wargs",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/20-dresseur-de-wargs.webp",
+   "rang": 116
+  },
+  {
+   "id": "orc-commun-21",
+   "nom": "Bête de somme",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/21-bete-de-somme.webp",
+   "rang": 117
+  },
+  {
+   "id": "orc-commun-22",
+   "nom": "Hurleur de légendes",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/22-hurleur-de-legendes.webp",
+   "rang": 118
+  },
+  {
+   "id": "orc-commun-23",
+   "nom": "Pêcheur de rivière",
+   "race": "orc",
+   "role": "soutien",
+   "sexe": "h",
+   "rarete": "commun",
+   "image": "cartes/orc/communs/23-pecheur-de-riviere.webp",
+   "rang": 119
+  }
+ ]
+}

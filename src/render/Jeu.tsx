@@ -94,7 +94,7 @@ const ILLIMITE = new URLSearchParams(location.search).has('illimite')
 /** `&page=` : la page ouverte d'emblée (voir `accueil`) ; autre chose, ignoré. */
 const PAGE_DEMANDEE = ((): Page | null => {
   const p = new URLSearchParams(location.search).get('page')
-  return p === 'collection' || p === 'catalogue' || p === 'stickers' || p === 'deck' || p === 'jouer' ? p : null
+  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'stickers' || p === 'deck' || p === 'jouer' ? p : null
 })()
 
 /** 9:58 — les minutes sans zéro devant, les secondes avec. */
@@ -461,9 +461,14 @@ export function Jeu(): React.ReactElement {
     if (!Number.isFinite(n)) return
     changer((c) => avecAbonnes(c, n))
   }, [changer])
+  // LE CRAN DE CHAQUE CARTE, pour les comptes de la pitié (`ajouterPaquet`).
+  const rareteDe = useMemo(() => {
+    const crans = new Map((catalogue ?? []).map((c) => [c.id, c.rarete]))
+    return (id: string) => crans.get(id)
+  }, [catalogue])
   const ajouter = useCallback(
     (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => {
-      changer((c) => ajouterPaquet(c, ids, bonus, Date.now()))
+      changer((c) => ajouterPaquet(c, ids, bonus, Date.now(), rareteDe))
       // LE PAQUET SE DÉCOMPTE QUAND IL EST OUVERT, comme il entre dans la collection.
       if (!ILLIMITE)
         setReserve((r) => {
@@ -472,7 +477,7 @@ export function Jeu(): React.ReactElement {
           return n
         })
     },
-    [changer],
+    [changer, rareteDe],
   )
 
   /** UNE CARTE DÉTRUITE POUR SON STICKER : voir `Decollage`. */
@@ -537,6 +542,7 @@ export function Jeu(): React.ReactElement {
         <>
           <Paquet3D
             onPaquetOuvert={ajouter}
+            joueur={refCollection}
             onCalme={setCalme}
             onSachetEnAttente={setSachetAttend}
             onDetruire={detruireCarte}
@@ -668,7 +674,7 @@ export function Jeu(): React.ReactElement {
           onClick={() => aller('booster')}
         >
           <span className="nav-sachet">
-            <span>😄</span>
+            <img src={`${import.meta.env.BASE_URL}cartes/gobelin/legendaires/01-snik-le-ruse.webp`} alt="" />
           </span>
           {/* LE NOMBRE DE PAQUETS SUR LE BOOSTER, comme le « 10 » de lexicodex. */}
           <span className={`nav-pastille nav-pastille-booster${dispo === 0 ? ' vide' : ''}`}>{dispo}</span>

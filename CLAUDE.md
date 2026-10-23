@@ -1,16 +1,17 @@
 # keko-test
 
-**LE PROJET PRINCIPAL EST LA COLLECTION D'EMOJI.** Tranché par Keko : « on
-laisse définitivement tomber les animaux et les personnages. On garde le projet
-emoji qui devient le principal. Le projet extraction on le garde en archive
-mais on ne travaille plus dessus. Focus sur le projet emoji. »
+**LE PROJET EST LE GACHA FANTASY, SUR LE MOTEUR DE LA COLLECTION D'EMOJI.**
+Keko (23/10/2026) : « le jeu n'est plus au sujet des emojis (on vire tout et
+on remplace par le pool orc/gobelin) ». Le sachet, le défilé, la collection,
+les stickers et le deck restent ; **le catalogue est celui de
+`docs/fantasy.md`** (le concept, le pool, les fiches, les taux).
 
 | | où | statut |
 |---|---|---|
-| **la collection d'EMOJI** | la racine, et `?paquet` | **le projet — tout le travail va là** |
+| **le GACHA FANTASY** | la racine, et `?paquet` | **le projet — tout le travail va là** |
 | les PEINTURES | `?paquet&art` | une seconde collection, gardée ouvrable |
 | le jeu d'EXTRACTION | `?extraction`, `?r3f`, `?jeu` | **archive** : il marche, on n'y touche plus |
-| les ANIMAUX, les PERSONNAGES, le PLATEAU | — | **supprimés** |
+| les EMOJI, les ANIMAUX, les PERSONNAGES, le PLATEAU | — | **retirés** (le pipeline emoji reste, inutilisé) |
 
 **LA PAGE PAR DÉFAUT APPARTIENT À CE SUR QUOI ON TRAVAILLE**, et c'est le
 mouvement qui avait déjà donné la racine au moteur 3D le jour où il a rattrapé
@@ -49,23 +50,23 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 
 ### Le catalogue
 
-- `npm run emoji` écrit `public/data/emoji.json` : **1 892 cartes** depuis
-  Unicode (`emoji-test.txt`) + les DEUX fichiers CLDR (`annotations` et
-  `annotationsDerived`, les drapeaux sont dans le second). `--peau` écrit
-  `emoji-peau.json` (3 963, avec les tons de peau), ouvert par `?paquet&emoji&peau`.
-- **La notoriété est la fréquence d'usage réelle**, lue dans la PAGE
-  `home.unicode.org/emoji/emoji-frequency/` (pas le `.txt`, qui rend 404). Le
-  classement est GLOBAL, pas par groupe ; les 24 % non classés (post-2016)
-  vont en bas, départagés par ancienneté. Les deux échelles ne se mélangent pas.
-- **Les drapeaux identiques au pixel près sont écartés** (`DOUBLONS`, huit
-  territoires qui portent le drapeau d'un pays) ; les presque-pareils restent.
-- Une variante de peau hérite du rang de sa base (`baseSansPeau`).
-- Le CDN des animés sépare les points de code par `_`, notre identifiant par `-`.
-  **614 animés** sur 1 892 ; le cache porte les URL, pas les identifiants.
-  **Les vingt-trois cadrans clones sont écartés** (`CLONES`, 🕓 seul reste,
-  nommé « Horloge ») APRÈS le découpage en crans : aucune rareté ne bouge.
-- *Une ressource absente à l'adresse où on l'attend n'est pas une ressource
-  absente.*
+- `scripts/generate-fantasy.py` (Python du banc SDXL, il a PIL) écrit
+  `public/data/fantasy.json` et `public/cartes/<race>/<cran>/NN-nom.webp`
+  (512 carré) : les noms et sexes depuis les fiches numérotées de
+  `docs/fantasy.md`, les images depuis les découpes PNG de
+  `public/generations/` (la source, gardée). **119 cartes** : gobelin 63, orc 56.
+- **Le type garde son nom d'emoji** (`CarteEmoji`, `logic/emoji/`) : race,
+  rôle (les deux tags, la pastille les affiche), sexe, image, cran FIXÉ par la
+  fiche, `rang` = l'ordre du catalogue. `emoji` est toujours `''` (le peintre
+  reconnaît une carte à sticker à sa présence), `animable` toujours faux.
+- **Taux du fantasy** (`ECHELLE_FANTASY`, `PITIE_*` dans `logic/paquet.ts`) :
+  cartes 1–4 81/16/2,5/0,4/0,02 %, la 5ᵉ au moins peu commune, épique
+  garantie au 24ᵉ paquet sans, légendaire au 200ᵉ (`sansEpique`,
+  `sansLegendaire` dans la collection), **légendaires sans doublon** tant
+  qu'il en manque. Stockage `keko-fantasy-*` : les collections emoji ne sont
+  plus lues.
+- L'histoire du catalogue d'emoji (notoriété, drapeaux, animés) est dans
+  `docs/emoji.md`.
 
 ### La carte
 

@@ -32,7 +32,7 @@ import { stickerHautDe } from './texture-carte.ts'
 import { COTE_STICKER, STICKER_DANS_LA_CARTE, type ImagesAnimees, animationHolo, cerneArcEnCiel, peindreEtoile, stickerPeint } from './peinture-vignette.ts'
 import { COTE_GRAND, COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
-import { urlEmojiDeKeko } from '../ui/art.ts'
+import { urlDeLIllustration } from '../ui/art.ts'
 import { BRILLANT, COSMOS, INCLINAISON_REFLET, SATURATION_APLAT } from './Carte3D.tsx'
 
 /** Une paillette du sticker holo en grand : sa place, sa taille, sa teinte, et l'orientation où elle renvoie la lampe. */
@@ -224,7 +224,7 @@ function StickerOuvert({
     const t0 = toile.current
     if (t0 == null) return
     const cote = Math.round(t0.clientWidth * Math.min(window.devicePixelRatio || 1, 3))
-    void stickerHautDe(carte.emoji, cote, urlEmojiDeKeko(carte.id) ?? undefined).then((image) => {
+    void stickerHautDe(carte.emoji, cote, urlDeLIllustration(carte.image)).then((image) => {
       const t = toile.current
       const ctx = t?.getContext('2d', { willReadFrequently: holo })
       if (!vivant || image === null || t == null || ctx == null) return
@@ -588,7 +588,7 @@ export function PageStickers({
         <header className="collection-tete">
           <h1 className="collection-titre">Mes stickers</h1>
           <p className="collection-compte">
-            <b>{total}</b> sticker{total > 1 ? 's' : ''} · {Object.keys(collection.stickers).length} emoji
+            <b>{total}</b> sticker{total > 1 ? 's' : ''} · {Object.keys(collection.stickers).length} personnage{Object.keys(collection.stickers).length > 1 ? 's' : ''}
           </p>
         </header>
         {catalogue === null ? null : total === 0 ? (

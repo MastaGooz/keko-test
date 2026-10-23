@@ -14,82 +14,24 @@
  */
 
 /**
- * Les neuf groupes Unicode, hors `Component` qui n'a pas de carte — plus
- * sept découpés par Keko : `coeurs` et `creatures` sortis des visages (le
- * sous-groupe `heart` ; `face-costume`, crâne, ogre, fantôme, alien, robot…,
- * puis les créatures fictives des gens et des animaux — d'abord « Monstre »,
- * renommé « Créature »),
- * `mains` et `corps` sortis des gens (les six sous-groupes `hand*` ;
- * `body-parts`), `nature` sortie des animaux (`plant-*`), `elements` et
- * `vehicules` sortis des lieux (`sky & weather` moins les parapluies et les
- * bonshommes de neige — d'abord nommé « Ciel », renommé « Éléments » par
- * Keko ; les trois `transport-*` moins ce qui n'est pas un véhicule) ; voir
- * `SOUS_GROUPE` et `PAR_ID` dans le pipeline. Un groupe « Temps » (le
- * sous-groupe `time` et les calendriers) a existé un jour, puis Keko l'a
- * fondu dans les objets : « on peut supprimer temps et tout passer dans objet ».
- */
-export type GroupeEmoji =
-  | 'visages'
-  | 'coeurs'
-  | 'creatures'
-  | 'gens'
-  | 'mains'
-  | 'corps'
-  | 'animaux'
-  | 'nature'
-  | 'nourriture'
-  | 'lieux'
-  | 'vehicules'
-  | 'elements'
-  | 'activites'
-  | 'objets'
-  | 'symboles'
-  | 'drapeaux'
-
-export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
-  'visages',
-  'coeurs',
-  'creatures',
-  'gens',
-  'mains',
-  'corps',
-  'animaux',
-  'nature',
-  'nourriture',
-  'lieux',
-  'vehicules',
-  'elements',
-  'activites',
-  'objets',
-  'symboles',
-  'drapeaux',
-]
-
-/**
- * LE GROUPE SE TRADUIT ICI, PAS DANS LE PIPELINE.
+ * LES DEUX TAGS D'UNE CARTE : SA RACE ET SON RÔLE.
  *
- * *Le catalogue garde un identifiant*, donc le jour où l'on change un mot il
- * n'y a pas deux mille cartes à réengendrer — la règle déjà tenue par la
- * majuscule des noms de personnages et par le domaine `business` affiché
- * « Affaires ».
+ * Le concept de Keko (`docs/fantasy.md`) : « le type central est la Créature :
+ * elle produit de la puissance et porte deux tags, une race et un rôle. Les
+ * tags sont le langage du jeu. » *La classe n'est pas un tag* : c'est le nom de
+ * la carte. Le gobelin et l'orc sont les deux premières races illustrées.
  */
-export const NOM_DU_GROUPE: Readonly<Record<GroupeEmoji, string>> = {
-  visages: 'Smiley', // Keko : « on va renommer visage smiley » — la clé reste, pas de migration
-  coeurs: 'Cœur',
-  creatures: 'Créature',
-  gens: 'Gens',
-  mains: 'Main',
-  corps: 'Corps',
-  animaux: 'Animal',
-  nature: 'Nature',
-  nourriture: 'Nourriture',
-  lieux: 'Lieu',
-  vehicules: 'Véhicule',
-  elements: 'Éléments',
-  activites: 'Activité',
-  objets: 'Objet',
-  symboles: 'Symbole',
-  drapeaux: 'Drapeau',
+export type RaceCarte = 'gobelin' | 'orc'
+export const RACES: readonly RaceCarte[] = ['gobelin', 'orc']
+export const NOM_DE_LA_RACE: Readonly<Record<RaceCarte, string>> = { gobelin: 'Gobelin', orc: 'Orc' }
+
+export type RoleCarte = 'melee' | 'distance' | 'magie' | 'soutien'
+export const ROLES: readonly RoleCarte[] = ['melee', 'distance', 'magie', 'soutien']
+export const NOM_DU_ROLE: Readonly<Record<RoleCarte, string>> = {
+  melee: 'Mêlée',
+  distance: 'Distance',
+  magie: 'Magie',
+  soutien: 'Soutien',
 }
 
 /**
@@ -119,59 +61,46 @@ export const RARETES_EMOJI: readonly RareteEmoji[] = [
   'legendaire',
 ]
 
-/** Une carte-emoji. Les deux derniers champs sont DÉRIVÉS. */
-export interface CarteEmoji {
-  /** Les points de code, en minuscules et séparés par des tirets : `1f600`. */
-  id: string
-  /** Le caractère lui-même, séquence complète comprise. */
-  emoji: string
-  /** Le nom français (CLDR `tts`), ou le nom anglais d'Unicode à défaut. */
-  nom: string
-  groupe: GroupeEmoji
-  /**
-   * LES MOTS-CLÉS FRANÇAIS de CLDR, et c'est eux qui font le cartouche.
-   *
-   * *C'est exactement ce qu'un cartouche doit dire d'un emoji* : « content ·
-   * dents · heureux · joyeux · rire » décrit un visage mieux qu'une phrase.
-   */
-  mots: string[]
-  /** La version Unicode d'introduction, sans le `E` : `0.6`, `15.1`. */
-  version: string
-  /** L'année de cette version — voir `ANNEE_DE_VERSION` dans le pipeline. */
-  annee: number
 /**
-   * GOOGLE EN PUBLIE UNE VERSION ANIMÉE — une POSSIBILITÉ, pas un état.
-   *
-   * ***Le champ s'appelait `anime`, et il devait changer de nom*** : depuis que
-   * les bonus se tirent à l'ouverture, « animé » dit qu'un EXEMPLAIRE l'est.
-   * *Deux choses qui portent le même mot finissent par se confondre* — celle-ci
-   * dit seulement qu'une animation existe, donc qu'un exemplaire PEUT en
-   * recevoir une.
+ * UNE CARTE : UN PERSONNAGE ILLUSTRÉ PAR KEKO.
+ *
+ * ***Le type garde son nom d'avant*** (`CarteEmoji`) : le moteur de la
+ * collection d'emoji (sachet, défilé, collection, stickers, deck) est repris
+ * tel quel, et c'est le catalogue qu'on a changé, pas l'architecture. Keko :
+ * « le jeu n'est plus au sujet des emojis (on vire tout et on remplace par le
+ * pool orc/gobelin) ».
+ */
+export interface CarteEmoji {
+  /** `<race>-<cran>-<numéro de la fiche>` : `gobelin-rare-03`. */
+  id: string
+  /**
+   * TOUJOURS VIDE : il n'y a plus de glyphe. *Le champ reste* parce que le
+   * peintre et `Carte3D` reconnaissent une carte à sticker à sa présence
+   * (`emoji !== undefined`), et qu'une chaîne vide n'y peint rien.
    */
+  emoji: string
+  /** Le nom de la carte, accordé au sexe : « Archère de la horde ». */
+  nom: string
+  race: RaceCarte
+  role: RoleCarte
+  sexe: 'h' | 'f'
+  /** L'illustration, relative à la racine du site : `cartes/orc/rares/03-massacreur.webp`. */
+  image: string
+  /** Ce que la recherche lit en plus du nom : la race et le rôle en clair. */
+  mots: string[]
+  /** Toujours faux : aucune illustration n'est animée. Voir `tirerBonus`. */
   animable: boolean
-  /**
-   * LE GROUPE DE FRÉQUENCE D'UNICODE — 0 pour les plus employés, `null` pour
-   * ceux qui ne sont pas au classement.
-   *
-   * **Chaque groupe vaut la MOITIÉ du précédent en fréquence d'usage** : le 0
-   * ne contient que deux emoji, le 11 et au-delà sont sous la médiane. *C'est
-   * donc une échelle logarithmique de popularité réelle*, et c'est elle qui
-   * porte la rareté — voir le pipeline.
-   */
-  frequence: number | null
-  /**
-   * LA PLACE AU CLASSEMENT DU CATALOGUE, 1 pour le plus employé.
-   *
-   * *Elle n'est pas le rang d'Unicode* : elle range les 1 923 cartes, classées
-   * ou non, dans l'ordre exact qui décide des crans. **C'est donc le seul
-   * chiffre dont la rareté dérive**, et c'est lui que la carte affiche.
-   */
+  /** La place dans le catalogue, 1 pour la première légendaire. */
   rang: number
   rarete: RareteEmoji
 }
 
-function estGroupe(v: unknown): v is GroupeEmoji {
-  return typeof v === 'string' && (GROUPES_EMOJI as readonly string[]).includes(v)
+function estRace(v: unknown): v is RaceCarte {
+  return typeof v === 'string' && (RACES as readonly string[]).includes(v)
+}
+
+function estRole(v: unknown): v is RoleCarte {
+  return typeof v === 'string' && (ROLES as readonly string[]).includes(v)
 }
 
 function estRarete(v: unknown): v is RareteEmoji {
@@ -188,27 +117,23 @@ function estRarete(v: unknown): v is RareteEmoji {
 export function parseEmoji(v: unknown): CarteEmoji | null {
   if (typeof v !== 'object' || v === null) return null
   const c = v as Record<string, unknown>
-  if (typeof c.id !== 'string' || c.id === '') return null
-  if (typeof c.emoji !== 'string' || c.emoji === '') return null
+  if (typeof c.id !== 'string' || !/^[0-9a-z]+(-[0-9a-z]+)*$/.test(c.id)) return null
   if (typeof c.nom !== 'string' || c.nom === '') return null
-  if (!estGroupe(c.groupe)) return null
+  if (typeof c.image !== 'string' || c.image === '') return null
+  if (!estRace(c.race) || !estRole(c.role)) return null
+  if (c.sexe !== 'h' && c.sexe !== 'f') return null
   if (!estRarete(c.rarete)) return null
-  if (typeof c.version !== 'string') return null
-  if (typeof c.annee !== 'number' || !Number.isFinite(c.annee)) return null
-  if (typeof c.animable !== 'boolean') return null
   if (typeof c.rang !== 'number' || !Number.isFinite(c.rang)) return null
-  const frequence = typeof c.frequence === 'number' && Number.isFinite(c.frequence) ? c.frequence : null
-  const mots = Array.isArray(c.mots) && c.mots.every((m) => typeof m === 'string') ? (c.mots as string[]) : []
   return {
     id: c.id,
-    emoji: c.emoji,
+    emoji: '',
     nom: c.nom,
-    groupe: c.groupe,
-    mots,
-    version: c.version,
-    annee: c.annee,
-    animable: c.animable,
-    frequence,
+    race: c.race,
+    role: c.role,
+    sexe: c.sexe,
+    image: c.image,
+    mots: [NOM_DE_LA_RACE[c.race], NOM_DU_ROLE[c.role]],
+    animable: false,
     rang: c.rang,
     rarete: c.rarete,
   }
@@ -225,15 +150,4 @@ export function parseEmojis(texte: string): CarteEmoji[] {
   const liste = (brut as { cartes?: unknown })?.cartes
   if (!Array.isArray(liste)) return []
   return liste.map(parseEmoji).filter((c): c is CarteEmoji => c !== null)
-}
-
-/** Les cartes d'un groupe — les rayons de la collection. */
-export function parGroupe(cartes: readonly CarteEmoji[]): Map<GroupeEmoji, CarteEmoji[]> {
-  const m = new Map<GroupeEmoji, CarteEmoji[]>()
-  for (const c of cartes) {
-    const l = m.get(c.groupe)
-    if (l === undefined) m.set(c.groupe, [c])
-    else l.push(c)
-  }
-  return m
 }

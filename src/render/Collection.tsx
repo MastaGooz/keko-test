@@ -20,8 +20,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { NoToneMapping } from 'three'
-import type { CarteEmoji, GroupeEmoji, RareteEmoji } from '../logic/emoji/types.ts'
-import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/types.ts'
+import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emoji/types.ts'
+import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
@@ -1402,9 +1402,10 @@ export function PageCollection({
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>(triParDefaut)
   const [raretes, setRaretes] = useState<ReadonlySet<RareteEmoji>>(new Set())
-  // PLUSIEURS TYPES À LA FOIS, comme les raretés. Keko : « ce serait bien de
-  // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
-  const [groupes, setGroupes] = useState<ReadonlySet<GroupeEmoji>>(new Set())
+  // PLUSIEURS RACES ET RÔLES À LA FOIS, comme les raretés. Keko : « ce serait
+  // bien de pouvoir sélectionner plusieurs catégories à la fois ».
+  const [races, setRaces] = useState<ReadonlySet<RaceCarte>>(new Set())
+  const [roles, setRoles] = useState<ReadonlySet<RoleCarte>>(new Set())
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
   /**
    * OBTENUES / MANQUANTES, dans « Toutes les cartes » seulement (Keko : « dans
@@ -1416,7 +1417,7 @@ export function PageCollection({
   // stickers ». Une seule puce : coché, rien que ce qu'on n'a pas encore vu.
   const [nouvelles, setNouvelles] = useState(false)
   const [panneau, setPanneau] = useState(false)
-  const actifs = raretes.size + groupes.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
+  const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
@@ -1459,7 +1460,8 @@ export function PageCollection({
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
         }) &&
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
-        (groupes.size === 0 || groupes.has(carte.groupe)) &&
+        (races.size === 0 || races.has(carte.race)) &&
+        (roles.size === 0 || roles.has(carte.role)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
     )
     const az = new Intl.Collator('fr')
@@ -1467,7 +1469,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [places, recherche, tri, raretes, groupes, bonus, possession, nouvelles])
+  }, [places, recherche, tri, raretes, races, roles, bonus, possession, nouvelles])
 
   const total = catalogue?.length ?? 0
   const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
@@ -1526,7 +1528,7 @@ export function PageCollection({
               </>
             ) : (
               <>
-                <b>{possedees.length}</b> / {total} emoji · {exemplaires} carte{exemplaires > 1 ? 's' : ''} ·{' '}
+                <b>{possedees.length}</b> / {total} personnages · {exemplaires} carte{exemplaires > 1 ? 's' : ''} ·{' '}
                 {collection.paquets} paquet{collection.paquets > 1 ? 's' : ''}
               </>
             )}
@@ -1579,7 +1581,7 @@ export function PageCollection({
               <input
                 className="collection-recherche"
                 type="search"
-                placeholder="Chercher un emoji"
+                placeholder="Chercher une carte"
                 value={recherche}
                 onChange={(e) => setRecherche(e.target.value)}
               />
@@ -1593,7 +1595,8 @@ export function PageCollection({
             voir={`Voir ${visibles.length} carte${visibles.length > 1 ? 's' : ''}`}
             onEffacer={() => {
               setRaretes(new Set())
-              setGroupes(new Set())
+              setRaces(new Set())
+              setRoles(new Set())
               setBonus(new Set())
               setPossession(new Set())
               setNouvelles(false)
@@ -1633,16 +1636,30 @@ export function PageCollection({
               ))}
             </div>
             </SectionFiltre>
-            <SectionFiltre titre="Type">
+            <SectionFiltre titre="Race">
             <div className="filtres-panneau-puces">
-              {GROUPES_EMOJI.map((g) => (
+              {RACES.map((g) => (
                 <button
                   key={g}
                   type="button"
-                  className={`puce${groupes.has(g) ? ' actif' : ''}`}
-                  onClick={() => setGroupes((s) => basculer(s, g))}
+                  className={`puce${races.has(g) ? ' actif' : ''}`}
+                  onClick={() => setRaces((s) => basculer(s, g))}
                 >
-                  {NOM_DU_GROUPE[g]}
+                  {NOM_DE_LA_RACE[g]}
+                </button>
+              ))}
+            </div>
+            </SectionFiltre>
+            <SectionFiltre titre="Rôle">
+            <div className="filtres-panneau-puces">
+              {ROLES.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  className={`puce${roles.has(g) ? ' actif' : ''}`}
+                  onClick={() => setRoles((s) => basculer(s, g))}
+                >
+                  {NOM_DU_ROLE[g]}
                 </button>
               ))}
             </div>

@@ -178,9 +178,12 @@
   border-top: 0.2rem dotted #c9b9f2;
   border-bottom: 0.2rem dotted #c9b9f2;
   transform: rotate(-8deg);
-  font-family: 'Noto Color Emoji', sans-serif;
-  font-size: 1.05rem;
-  line-height: 1;
+}
+/* SNIK SUR LE SACHET DU BOUTON, à la place du 😄 : le jeu a quitté les emoji. */
+.nav-sachet img {
+  width: 1.6rem;
+  height: 1.6rem;
+  object-fit: contain;
 }
 
 /* ---------------------------------------------------------------- la page */

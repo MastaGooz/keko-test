@@ -1,7 +1,7 @@
 {
   "name": "Keko test",
   "short_name": "Keko",
-  "description": "Une collection de cartes emoji",
+  "description": "Un gacha de cartes fantasy : gobelins et orcs",
   "start_url": ".",
   "scope": ".",
   "display": "fullscreen",

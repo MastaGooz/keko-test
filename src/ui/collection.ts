@@ -12,7 +12,7 @@ import { collectionVide, lireCollection, type Collection } from '../logic/emoji/
 import { lireReserve, reservePleine, type Reserve } from '../logic/emoji/reserve.ts'
 import { decksVides, lireDecks, type CompteDExemplaires, type Decks } from '../logic/emoji/deck.ts'
 
-const CLE = 'keko-emoji-collection'
+const CLE = 'keko-fantasy-collection'
 
 export function chargerCollection(): Collection {
   try {
@@ -34,7 +34,7 @@ export function sauverCollection(col: Collection): void {
 // LA RÉSERVE DE PAQUETS, à côté : voir `logic/emoji/reserve.ts`. *Elle se
 // garde à part* : une réserve abîmée repart pleine alors qu'une collection
 // abîmée perd des cartes — deux reprises différentes, deux clés.
-const CLE_RESERVE = 'keko-emoji-reserve'
+const CLE_RESERVE = 'keko-fantasy-reserve'
 
 export function chargerReserve(maintenant: number): Reserve {
   try {
@@ -58,7 +58,7 @@ export function sauverReserve(r: Reserve): void {
 // dit ce qu'on possède encore (`possede`) — une carte partie quitte le deck.
 // La clé n'a pas changé quand il y a eu plusieurs decks : `lireDecks` relit
 // aussi le deck seul d'avant.
-const CLE_DECK = 'keko-emoji-deck'
+const CLE_DECK = 'keko-fantasy-deck'
 
 export function chargerDecks(compte: CompteDExemplaires, maintenant: number): Decks {
   try {

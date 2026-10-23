@@ -232,7 +232,7 @@ export function prochaineMainDans(d: Deck, maintenant: number): number | null {
   return Math.max(0, a.partie!.depuis + DECK.cadence - maintenant)
 }
 
-const ID_VALIDE = /^[0-9a-f]+(-[0-9a-f]+)*$/
+const ID_VALIDE = /^[0-9a-z]+(-[0-9a-z]+)*$/
 
 /** Relit une entrée gardée : `{ id, v }`, ou l'identifiant seul d'avant (version normale). */
 function lireEntree(b: unknown): EntreeDeck | null {

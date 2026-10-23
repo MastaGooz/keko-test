@@ -6,7 +6,7 @@
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
-import { urlEmojiDeKeko } from '../ui/art.ts'
+import { urlDeLIllustration } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
 import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, peindreCarte, placeDuColle, stickerDe, sujetDe, surfaceDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
@@ -806,7 +806,7 @@ export function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasEl
   const cle = `${c.id}${holo ? '#holo' : ''}`
   const deja = STICKERS_PEINTS.get(cle)
   if (deja !== undefined) return deja
-  const p = stickerDe(c.emoji, urlEmojiDeKeko(c.id) ?? undefined).then((image) => {
+  const p = stickerDe(c.emoji, urlDeLIllustration(c.image)).then((image) => {
     if (image === null) return null
     const toile = document.createElement('canvas')
     toile.width = COTE_STICKER

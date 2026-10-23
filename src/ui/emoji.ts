@@ -33,7 +33,7 @@ const enCoursPar = new Map<string, Promise<CarteEmoji[]>>()
  * condamnerait les cartes jusqu'au rechargement, la lecon des textures de
  * cartes.
  */
-export function chargerEmojis(fichier = 'emoji'): Promise<CarteEmoji[]> {
+export function chargerEmojis(fichier = 'fantasy'): Promise<CarteEmoji[]> {
   const deja = enCoursPar.get(fichier)
   if (deja !== undefined) return deja
   const p = (async () => {

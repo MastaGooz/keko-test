@@ -1837,6 +1837,52 @@ export function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
 }
 
 /**
+ * UN PERSONNAGE DE KEKO SUR SA TOILE, comme un glyphe sur la sienne : le
+ * bouquet du sachet et du dos, et le fond qui dérive, en font des stickers.
+ * `image` est relative à la racine du site (`cartes/orc/…webp`). *Une image
+ * qui ne vient pas rend `null`* : le sticker se saute, il ne laisse pas de trou.
+ */
+const PERSONNAGES = new Map<string, Promise<HTMLCanvasElement | null>>()
+export function imageDuPersonnage(image: string): Promise<HTMLCanvasElement | null> {
+  const deja = PERSONNAGES.get(image)
+  if (deja !== undefined) return deja
+  const p = new Promise<HTMLCanvasElement | null>((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const toile = document.createElement('canvas')
+      toile.width = TOILE_EMOJI
+      toile.height = TOILE_EMOJI
+      const ctx = toile.getContext('2d')
+      if (ctx === null) return resolve(null)
+      ctx.drawImage(img, 0, 0, TOILE_EMOJI, TOILE_EMOJI)
+      resolve(toile)
+    }
+    img.onerror = () => resolve(null)
+    img.src = `${import.meta.env.BASE_URL}${image}?v=${encodeURIComponent(__BUILD_TIME__)}`
+  })
+  PERSONNAGES.set(image, p)
+  return p
+}
+
+/** Les héros du bouquet et du fond : les légendaires et quelques épiques. */
+export const PERSONNAGES_VITRINE = [
+  'cartes/gobelin/legendaires/01-snik-le-ruse.webp',
+  'cartes/orc/legendaires/01-grumbak-le-borgne.webp',
+  'cartes/gobelin/legendaires/04-grisette-la-doree.webp',
+  'cartes/orc/legendaires/03-ghor-l-ancien.webp',
+  'cartes/gobelin/legendaires/02-mere-gribouille.webp',
+  'cartes/orc/legendaires/02-gorruk-defense-d-or.webp',
+  'cartes/gobelin/legendaires/03-zabbo-boulon-fou.webp',
+  'cartes/orc/epiques/01-chevaucheuse-de-loup.webp',
+  'cartes/gobelin/epiques/01-chevaucheur-de-rat.webp',
+  'cartes/orc/epiques/06-tambour-de-guerre.webp',
+  'cartes/gobelin/epiques/05-illusionniste.webp',
+  'cartes/orc/epiques/04-sorciere-du-sang.webp',
+  'cartes/gobelin/rares/03-fauconniere.webp',
+  'cartes/orc/rares/04-lutteur-d-ours.webp',
+] as const
+
+/**
  * L'EMOJI EN STICKER : le glyphe cerné de crème, avec son ombre, sur sa toile.
  *
  * Keko : « quand l'emoji est foncé comme le "Plus" il ne se distingue pas
@@ -5730,25 +5776,25 @@ function peindreTouches(
  * passent devant leurs voisins. *Un tas dont tout le petit est dessous est un
  * tas rangé.*
  */
-const BOUQUET: readonly { emoji: string; x: number; y: number; t: number; a: number }[] = [
-  { emoji: '⭐', x: 2, y: -30, t: 16, a: 0.18 },
-  { emoji: '🐱', x: -30, y: -14, t: 17, a: -0.4 },
-  { emoji: '🍕', x: 30, y: -4, t: 17, a: 0.4 },
-  { emoji: '⚽', x: -16, y: 27, t: 15, a: 0.3 },
-  { emoji: '🚀', x: -6, y: 24, t: 18, a: -0.5 },
-  { emoji: '🔥', x: -17, y: -20, t: 21, a: -0.22 },
-  { emoji: '❤️', x: 16, y: -19, t: 22, a: 0.28 },
-  { emoji: '👍', x: -20, y: 5, t: 21, a: 0.3 },
-  { emoji: '🎉', x: 19, y: 10, t: 22, a: -0.33 },
+const BOUQUET: readonly { image: number; x: number; y: number; t: number; a: number }[] = [
+  { image: 7, x: 2, y: -30, t: 18, a: 0.18 },
+  { image: 8, x: -30, y: -14, t: 19, a: -0.4 },
+  { image: 9, x: 30, y: -4, t: 19, a: 0.4 },
+  { image: 10, x: -16, y: 27, t: 17, a: 0.3 },
+  { image: 11, x: -6, y: 24, t: 19, a: -0.5 },
+  { image: 2, x: -17, y: -20, t: 23, a: -0.22 },
+  { image: 3, x: 16, y: -19, t: 23, a: 0.28 },
+  { image: 4, x: -20, y: 5, t: 22, a: 0.3 },
+  { image: 5, x: 19, y: 10, t: 23, a: -0.33 },
   // LE GROS AU CENTRE, posé une fois ses voisins en place : *il est le sujet,
-  // il doit rester entier.*
-  { emoji: '😂', x: 0, y: -2, t: 29, a: -0.06 },
-  // ET QUATRE PAR-DESSUS, tous en périphérie : ils ne cachent rien du centre et
+  // il doit rester entier.* Les deux chefs, Snik devant Grumbak.
+  { image: 1, x: 0, y: -2, t: 31, a: -0.06 },
+  { image: 0, x: 3, y: 1, t: 29, a: 0.05 },
+  // ET TROIS PAR-DESSUS, tous en périphérie : ils ne cachent rien du centre et
   // ils cassent l'empilement régulier.
-  { emoji: '🌈', x: -31, y: 12, t: 15, a: -0.3 },
-  { emoji: '🏁', x: 30, y: -24, t: 15, a: 0.5 },
-  { emoji: '💎', x: 7, y: 23, t: 16, a: 0.25 },
-  { emoji: '🎁', x: 25, y: 24, t: 15, a: -0.25 },
+  { image: 12, x: -31, y: 12, t: 16, a: -0.3 },
+  { image: 13, x: 30, y: -24, t: 16, a: 0.5 },
+  { image: 6, x: 25, y: 24, t: 17, a: -0.25 },
 ]
 
 /**
@@ -5765,12 +5811,12 @@ async function peindreBouquet(
   u = U,
   masque = false,
 ): Promise<void> {
-  // ON ATTEND LA POLICE POUR CHAQUE CARACTÈRE, et les douze ENSEMBLE : *une
-  // toile peinte avant que le glyphe soit là part en cache telle quelle*, donc
-  // le défaut survivrait au chargement. La règle est déjà payée sur la face.
-  await Promise.all(BOUQUET.map((p) => policeDeLEmoji(p.emoji)))
+  // ON ATTEND TOUTES LES IMAGES ENSEMBLE : *une toile peinte avant que
+  // l'image soit là part en cache telle quelle*, donc le défaut survivrait au
+  // chargement. La règle est déjà payée sur la face.
+  const images = await Promise.all(PERSONNAGES_VITRINE.map((v) => imageDuPersonnage(v)))
   for (const p of BOUQUET) {
-    const image = imageDeLEmoji(p.emoji)
+    const image = images[p.image] ?? null
     // UN GLYPHE QUI MANQUE SE SAUTE, il ne laisse pas de trou carré : *le dos
     // doit sortir même si une police n'arrive pas.*
     if (image === null) continue
@@ -6222,9 +6268,12 @@ const US = SACHET_LARGE / 100
  * lien* : `?visage=🤩` pose n'importe quel emoji à la place du « o », et le
  * défaut est celui qu'il a retenu en dernier.
  */
-const VISAGE_DU_TITRE =
-  (typeof location !== 'undefined' && new URLSearchParams(location.search).get('visage')) || '😄'
-const TITRE_DU_SACHET = `Em${VISAGE_DU_TITRE}jis`
+/**
+ * « GOBELINS & ORCS », PROVISOIRE. Keko a choisi un titre d'attente quand le
+ * jeu a quitté les emoji (« un titre provisoire ») : le vrai nom viendra. *Une
+ * ligne par ligne du titre* (`\n`), chaque lettre posée comme avant.
+ */
+const TITRE_DU_SACHET = 'Gobelins\n& Orcs'
 
 /**
  * LE TITRE EST UNE RANGÉE DE STICKERS, PAS UN MOT. Keko : « je suis pas hyper
@@ -6278,17 +6327,36 @@ async function peindreTitreDuSachet(
   cy: number,
   masque: boolean,
 ): Promise<void> {
-  const glyphes = Array.from(TITRE_DU_SACHET)
+  const lignes = TITRE_DU_SACHET.split('\n')
   await policeRonde()
-  await Promise.all(glyphes.filter((g) => PICTO.test(g)).map((g) => policeDeLEmoji(g)))
-  const taille = l * 0.19
+  await Promise.all(Array.from(TITRE_DU_SACHET).filter((g) => PICTO.test(g)).map((g) => policeDeLEmoji(g)))
+  // DEUX LIGNES PRENNENT LA HAUTEUR D'UNE ET DEMIE : le corps baisse, et
+  // l'interligne serre les lettres sans qu'elles se touchent.
+  const taille = l * (lignes.length > 1 ? 0.15 : 0.19)
+  const interligne = taille * 0.92
+  let rang = 0
+  for (const [k, ligne] of lignes.entries()) {
+    rang = peindreLigneDuTitre(ctx, l, cy + (k - (lignes.length - 1) / 2) * interligne, masque, Array.from(ligne), taille, rang)
+  }
+}
+
+/** Une ligne du titre ; `depart` continue les tables d'une ligne à l'autre. Rend le rang suivant. */
+function peindreLigneDuTitre(
+  ctx: CanvasRenderingContext2D,
+  l: number,
+  cy: number,
+  masque: boolean,
+  glyphes: string[],
+  taille: number,
+  depart: number,
+): number {
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.font = `800 ${taille}px ${FAMILLE_RONDE}`
   ctx.lineJoin = 'round'
   const n = TITRE_HAUTEURS.length
-  const echelle = (i: number): number => TITRE_ECHELLES[i % n]!
+  const echelle = (i: number): number => TITRE_ECHELLES[(i + depart) % n]!
   // LA LARGEUR DE CHAQUE GLYPHE, à son échelle : un emoji vaut à peu près un
   // carré de la taille de police, moins ses marges.
   const largeurs = glyphes.map((g, i) =>
@@ -6299,10 +6367,10 @@ async function peindreTitreDuSachet(
   let x = l / 2 - total / 2
   for (const [i, g] of glyphes.entries()) {
     const cx = x + largeurs[i]! / 2
-    const y = cy + TITRE_HAUTEURS[i % n]! * taille
+    const y = cy + TITRE_HAUTEURS[(i + depart) % n]! * taille
     ctx.save()
     ctx.translate(cx, y)
-    ctx.rotate(TITRE_PENCHES[i % n]!)
+    ctx.rotate(TITRE_PENCHES[(i + depart) % n]!)
     ctx.scale(echelle(i), echelle(i))
     if (PICTO.test(g)) {
       // L'EMOJI PORTE LE CERNE DES LETTRES, pas celui des stickers. Keko : « il
@@ -6379,6 +6447,7 @@ async function peindreTitreDuSachet(
     x += largeurs[i]! + ecart
   }
   ctx.restore()
+  return depart + glyphes.length
 }
 
 /**

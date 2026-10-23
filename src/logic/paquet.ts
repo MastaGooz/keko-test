@@ -68,6 +68,33 @@ export interface Echelle<R extends string> {
   readonly crans: readonly R[]
   readonly chances: Readonly<Record<R, number>>
   readonly garanti: R
+  /**
+   * LES CHANCES DE LA DERNIÈRE CARTE, quand elle a sa propre table (le
+   * fantasy : « la dernière carte du paquet est au moins peu commune et porte
+   * la pitié », Keko). Absente : la dernière tire dans `chances`.
+   */
+  readonly derniere?: Readonly<Record<R, number>>
+}
+
+/**
+ * LA PITIÉ : après `apres − 1` paquets d'affilée sans ce cran (ou mieux), le
+ * suivant le garantit sur sa dernière carte. `sans` est le compte en cours,
+ * tenu par la collection (`sansEpique`, `sansLegendaire`).
+ */
+export interface Pitie<R extends string> {
+  readonly cran: R
+  readonly apres: number
+  readonly sans: number
+}
+
+/** Ce que le joueur apporte au tirage : ses pitiés, et ce qu'il a déjà. */
+export interface OptionsPaquet<R extends string> {
+  readonly pities?: readonly Pitie<R>[]
+  /**
+   * PAS DE DOUBLON DANS CE CRAN tant qu'il en manque : « une légendaire tirée
+   * est toujours une qu'on n'a pas tant qu'il en manque » (Keko).
+   */
+  readonly sansDoublon?: { readonly cran: R; readonly possede: (id: string) => boolean }
 }
 
 /**
@@ -136,6 +163,25 @@ export const ECHELLE_QUATRE: Echelle<Cran> = {
   garanti: CRAN_GARANTI,
 }
 
+/**
+ * LES TAUX DU FANTASY, réglés dans `docs/fantasy.md` sur les cibles de Keko
+ * (« plusieurs rares, 1–2 épiques par jour, une légendaire tous les 4–7
+ * jours » à 24 paquets par jour) : cartes 1–4 81 / 16 / 2,5 / 0,4 / 0,02 %,
+ * la cinquième au moins peu commune — 82,15 / 15 / 2,5 / 0,35 %. *Les quatre
+ * premières somment à 99,92 %* : le reliquat revient au commun, comme tout
+ * reliquat d'arrondi (`tirerCran`).
+ */
+export const ECHELLE_FANTASY: Echelle<CranCinq> = {
+  crans: CRANS_CINQ,
+  chances: { commun: 0.81, 'peu-commun': 0.16, rare: 0.025, epique: 0.004, legendaire: 0.0002 },
+  garanti: 'peu-commun',
+  derniere: { commun: 0, 'peu-commun': 0.8215, rare: 0.15, epique: 0.025, legendaire: 0.0035 },
+}
+
+/** Les pitiés du fantasy : une épique au 24ᵉ paquet sans épique, une légendaire au 200ᵉ. */
+export const PITIE_EPIQUE = 24
+export const PITIE_LEGENDAIRE = 200
+
 /** Les cinq couleurs : le mode emoji. */
 export const ECHELLE_CINQ: Echelle<CranCinq> = {
   crans: CRANS_CINQ,
@@ -152,10 +198,10 @@ export function rangDeRarete<R extends string>(r: R, echelle: Echelle<R>): numbe
 }
 
 /** Tire un cran selon les chances de l'échelle. */
-function tirerCran<R extends string>(rng: Rng, echelle: Echelle<R>): R {
+function tirerCran<R extends string>(rng: Rng, echelle: Echelle<R>, chances = echelle.chances): R {
   let reste = rng.next()
   for (const r of echelle.crans) {
-    reste -= echelle.chances[r]
+    reste -= chances[r]
     if (reste <= 0) return r
   }
   // Le reliquat d'arrondi revient au cran le plus commun : *un tirage ne doit
@@ -192,10 +238,17 @@ function tirerDansLeCran<R extends string, T extends Tirable<R>>(
   rng: Rng,
   deja: ReadonlySet<string>,
   echelle: Echelle<R>,
+  options: OptionsPaquet<R> = {},
 ): T | null {
   for (let i = rangDeRarete(cran, echelle); i >= 0; i--) {
-    const lot = (tas.get(echelle.crans[i]!) ?? []).filter((c) => !deja.has(c.id))
+    let lot = (tas.get(echelle.crans[i]!) ?? []).filter((c) => !deja.has(c.id))
     if (lot.length === 0) continue
+    // LE CRAN SANS DOUBLON ne tire que ce qui manque, tant qu'il en manque.
+    const sd = options.sansDoublon
+    if (sd !== undefined && sd.cran === echelle.crans[i]) {
+      const manquantes = lot.filter((c) => !sd.possede(c.id))
+      if (manquantes.length > 0) lot = manquantes
+    }
     return lot[Math.floor(rng.next() * lot.length)] ?? null
   }
   // Puis vers le haut, en dernier recours : mieux vaut une carte trop rare
@@ -225,12 +278,13 @@ export function ouvrirPaquet<R extends string, T extends Tirable<R>>(
   tas: Map<R, T[]>,
   rng: Rng,
   echelle: Echelle<R>,
+  options: OptionsPaquet<R> = {},
 ): T[] {
   const tirees: T[] = []
   const vues = new Set<string>()
 
   for (let i = 0; i < CARTES_PAR_PAQUET - 1; i++) {
-    const c = tirerDansLeCran(tas, tirerCran(rng, echelle), rng, vues, echelle)
+    const c = tirerDansLeCran(tas, tirerCran(rng, echelle), rng, vues, echelle, options)
     if (c === null) break
     tirees.push(c)
     vues.add(c.id)
@@ -239,10 +293,14 @@ export function ouvrirPaquet<R extends string, T extends Tirable<R>>(
   // LA GARANTIE : le cran tiré, ou le cran garanti si le tirage est tombé plus
   // bas. *Une garantie qui se contente du minimum enlèverait tout le haut de
   // la table* — un paquet peut parfaitement finir sur un légendaire.
-  const cran = tirerCran(rng, echelle)
-  const retenu =
+  const cran = tirerCran(rng, echelle, echelle.derniere)
+  let retenu =
     rangDeRarete(cran, echelle) >= rangDeRarete(echelle.garanti, echelle) ? cran : echelle.garanti
-  const vedette = tirerDansLeCran(tas, retenu, rng, vues, echelle)
+  // LA PITIÉ relève la dernière carte au cran promis, jamais ne la descend.
+  for (const p of options.pities ?? []) {
+    if (p.sans >= p.apres - 1 && rangDeRarete(p.cran, echelle) > rangDeRarete(retenu, echelle)) retenu = p.cran
+  }
+  const vedette = tirerDansLeCran(tas, retenu, rng, vues, echelle, options)
   if (vedette !== null) tirees.push(vedette)
 
   return tirees

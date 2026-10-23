@@ -34,18 +34,15 @@
  * peint avant que sa police soit là retombe sur la police système.
  */
 import { useEffect, useRef } from 'react'
-import { AMBIANCE, imageDeLEmoji, policeDeLEmoji } from './texture-carte.ts'
+import { AMBIANCE, PERSONNAGES_VITRINE, imageDuPersonnage } from './texture-carte.ts'
 
-/** Les emoji du fond : ceux du bouquet, et quelques-uns qui luisent bien. */
-const EMOJI_DU_FOND = [
-  '😂', '❤️', '🔥', '⭐', '🎉', '🍕', '🌈', '💎', '🎁', '⚽', '🚀', '😺', '👍', '🏁',
-  '✨', '🎈', '🍀', '🌟', '🎵', '💜',
-]
 /** Les couleurs des bokehs : les cinq crans, par leur lueur d'ambiance. */
 const COULEURS = ['blanc', 'vert', 'bleu', 'violet', 'orange'].map((c) => AMBIANCE[c]!)
 
 const NB_BOKEHS = 16
-const NB_EMOJI = 26
+// UN PERSONNAGE SE LIT PLUS GRAND QU'UN EMOJI : moins nombreux, quatre fois
+// plus gros, plus effacés — sinon ce sont des miettes.
+const NB_EMOJI = 12
 /** La densité de pixels du fond, plafonnée : *rien n'y est net.* */
 const DPR_MAX = 1
 /** Trente images par seconde suffisent à un fond qui dérive. */
@@ -136,24 +133,22 @@ export function FondAnime(): React.ReactElement {
     mesurer()
     window.addEventListener('resize', mesurer)
 
-    // LES EMOJI, une fois leurs polices là.
-    void Promise.all(EMOJI_DU_FOND.map((e) => policeDeLEmoji(e))).then(() => {
+    // LES PERSONNAGES DU BOUQUET, une fois leurs images là.
+    void Promise.all(PERSONNAGES_VITRINE.map((e) => imageDuPersonnage(e))).then((toutes) => {
       if (!vivant) return
-      const images = EMOJI_DU_FOND.map((e) => imageDeLEmoji(e)).filter(
-        (i): i is HTMLCanvasElement => i !== null,
-      )
+      const images = toutes.filter((i): i is HTMLCanvasElement => i !== null)
       if (images.length === 0) return
       fantomes = Array.from({ length: NB_EMOJI }, (_, i) => ({
         image: images[i % images.length]!,
         x: hasard(),
         y: hasard(),
-        t: 0.035 + hasard() * 0.05,
+        t: 0.16 + hasard() * 0.1,
         vy: 0.012 + hasard() * 0.02,
         balance: 0.004 + hasard() * 0.01,
         phase: hasard() * Math.PI * 2,
         rot: (hasard() - 0.5) * 0.6,
         vrot: (hasard() - 0.5) * 0.16,
-        alpha: 0.5 + hasard() * 0.35,
+        alpha: 0.35 + hasard() * 0.25,
       }))
       // FIGÉ, on repeint une fois les glyphes là : sinon le fond resterait sans eux.
       if (fige) peindre(0)
@@ -204,8 +199,8 @@ export function FondAnime(): React.ReactElement {
       for (const f of fantomes) {
         f.y -= f.vy * dt
         f.rot += f.vrot * dt
-        if (f.y < -0.1) {
-          f.y = 1.1
+        if (f.y < -0.2) {
+          f.y = 1.2
           f.x = hasard()
         }
       }

@@ -11,9 +11,9 @@
  * rendu, et `logic/` ne connaît pas le rendu.
  */
 import type { CarteAPeindre } from './texture-carte.ts'
-import { NOM_DU_GROUPE, type CarteEmoji, type RareteEmoji } from '../logic/emoji/types.ts'
+import { NOM_DE_LA_RACE, NOM_DU_ROLE, type CarteEmoji, type RareteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
-import { emojiDeKekoEnFenetre, urlEmojiDeKeko } from '../ui/art.ts'
+import { urlDeLIllustration } from '../ui/art.ts'
 
 /**
  * UN CRAN, UNE COULEUR — **et c'est la table que Keko a dictée.**
@@ -45,56 +45,15 @@ export function enTitre(texte: string): string {
 }
 
 /**
- * LE CARTOUCHE PORTE LES MOTS-CLÉS, puis l'année.
+ * LE CARTOUCHE NE DIT QUE LE BONUS, pour l'instant.
  *
- * **C'est exactement ce qu'un cartouche doit dire d'un emoji** : « content ·
- * dents · heureux · joyeux · rire » décrit un visage mieux qu'une phrase, et
- * ce sont les mots que CLDR documente — *donc ceux qu'un francophone emploie
- * vraiment pour le chercher.*
- *
- * **Les mots qui répètent le nom sont retirés**, et il le faut : CLDR met
- * presque toujours le nom dans ses propres mots-clés, donc sans ce filtre la
- * ligne commencerait par redire le titre de la carte. *Une carte qui se répète
- * perd une ligne de cartouche pour rien.*
- *
- * **Cinq au plus** : le cartouche a trois crans de taille et descend d'un cran
- * dès qu'il s'allonge — *une liste qui déborde ne se lit pas mieux parce
- * qu'elle est complète.*
+ * *L'holographique est un reflet, donc il dépend de l'angle* : sur un écran
+ * immobile, rien ne dit si c'est la carte qui irise ou la lumière qui passe.
+ * Le cartouche le nomme. **La puissance et les effets viendront ici** quand le
+ * jeu les aura (voir `docs/fantasy.md`).
  */
-function mots(c: CarteEmoji, bonus?: Bonus): string[] {
-  const nom = c.nom.toLowerCase()
-  const utiles = c.mots.filter((m) => m.toLowerCase() !== nom && !nom.includes(m.toLowerCase()))
-  const lignes: string[] = []
-  if (utiles.length > 0) lignes.push(utiles.slice(0, 5).join(' · '))
-  /**
-   * LA PLACE AU CLASSEMENT D'USAGE, parce que c'est elle qui porte la rareté.
-   *
-   * *Si un chiffre décide du métal, il doit se lire sur la carte* — sinon le
-   * joueur ne sait pas pourquoi celle-ci vaut plus que sa voisine. **Et c'est
-   * la popularité RÉELLE** depuis que le classement d'Unicode est branché :
-   * voir `notoriete` dans le pipeline.
-   *
-   * Les 24 % que le classement ignore disent leur année à la place : *ce sont
-   * les emoji postérieurs à Unicode 12.0*, et l'ancienneté est tout ce qu'on
-   * sait d'eux.
-   */
-  const place = c.frequence === null ? `Unicode ${c.annee}` : `${c.rang}ᵉ au classement d’usage`
-  /**
-   * LES BONUS SE DISENT, parce qu'ils ne se devinent pas tous.
-   *
-   * *L'animé se voit* — la carte bouge — **mais l'holographique est un reflet,
-   * donc il dépend de l'angle** : sur un écran immobile, rien ne dit si c'est
-   * la carte qui irise ou la lumière qui passe. Le cartouche le nomme.
-   *
-   * **Et il ne dit plus « animé » quand il l'est seulement en PUISSANCE.** La
-   * carte annonçait son `animable`, donc un tiers du catalogue promettait un
-   * mouvement que l'exemplaire n'avait pas : *une carte ne dit que ce qu'elle
-   * est, jamais ce qu'elle aurait pu être.*
-   */
-  const bonus_ = [bonus?.holo === true ? 'holographique' : null, bonus?.anime === true ? 'animé' : null]
-    .filter((m): m is string => m !== null)
-  lignes.push(bonus_.length === 0 ? place : `${place} · ${bonus_.join(' · ')}`)
-  return lignes
+function mots(bonus?: Bonus): string[] {
+  return bonus?.holo === true ? ['Holographique'] : []
 }
 
 /**
@@ -121,34 +80,22 @@ function mots(c: CarteEmoji, bonus?: Bonus): string[] {
 export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
   return {
     id: c.id,
-    nom: enTitre(c.nom),
+    nom: c.nom,
     cout: null,
-    effet: mots(c, bonus),
-    type: NOM_DU_GROUPE[c.groupe],
+    effet: mots(bonus),
+    // LA PASTILLE PORTE LES DEUX TAGS, race et rôle (Keko).
+    type: `${NOM_DE_LA_RACE[c.race]} · ${NOM_DU_ROLE[c.role]}`,
     rarete: COULEUR[c.rarete],
     holo: bonus?.holo,
     emoji: c.emoji,
-    // L'EMOJI DESSINÉ PAR KEKO passe devant le glyphe Noto : voir `urlEmojiDeKeko`.
-    emojiPerso: urlEmojiDeKeko(c.id) ?? undefined,
-    // ET EN FENÊTRE si la table le dit : l'image couvre la fenêtre d'art.
-    persoEnFenetre: emojiDeKekoEnFenetre(c.id) || undefined,
-    // L'ANIMATION EST DEMANDEE PAR LA CARTE, PAS PAR LE PEINTRE : voir
-    // `emoji-anime.ts`. *Un emoji sans version animee n'en demande aucune*, et
-    // la carte reste statique -- comme sur un navigateur sans `ImageDecoder`.
-    //
-    // **ET C'EST LE BONUS QUI DECIDE, plus le catalogue.** Le champ du
-    // catalogue ne dit que ce qui est POSSIBLE (`animable`) : *un emoji animable
-    // dont l'exemplaire n'a pas tire le bonus reste statique*, sinon le bonus
-    // n'en serait pas un -- un tiers du catalogue l'aurait eu d'office.
-    animation: bonus?.anime === true ? c.id : undefined,
+    // L'ILLUSTRATION DE KEKO, détourée : le peintre en fait le sticker.
+    emojiPerso: urlDeLIllustration(c.image),
     illustrationEntiere: true,
     // ET SON CONTOUR EST SIMPLE. Keko : « un contour plus simple, plus dans le
-    // ton des emojis ». *La coque déchirée du gabarit parle la ferronnerie*, et
-    // un emoji est un aplat net : voir `CarteAPeindre.contour`.
+    // ton des emojis ». *La coque déchirée du gabarit parle la ferronnerie* :
+    // voir `CarteAPeindre.contour`.
     contour: 'simple',
-    // ET SA ZONE DE TEXTE EST UNE BULLE. Keko : « la police et la zone de texte
-    // (dégradé noir) sont hors du thème ; on veut un style proche de l'univers
-    // smartphone / fun des emoji ». Voir `CarteAPeindre.texte`.
+    // ET SA ZONE DE TEXTE EST UNE BULLE : voir `CarteAPeindre.texte`.
     texte: 'bulle',
   }
 }

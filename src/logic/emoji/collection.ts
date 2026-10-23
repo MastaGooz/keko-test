@@ -185,10 +185,17 @@ export interface Collection {
    * encore, son usage est à trancher.
    */
   readonly abonnes: number
+  /**
+   * LES COMPTES DE LA PITIÉ : les paquets ouverts d'affilée sans épique (ou
+   * mieux), et sans légendaire. Remis à zéro par le paquet qui en apporte une ;
+   * c'est le tirage qui les lit (`Pitie` dans `logic/paquet.ts`).
+   */
+  readonly sansEpique: number
+  readonly sansLegendaire: number
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, abonnes: 0 }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, abonnes: 0, sansEpique: 0, sansLegendaire: 0 }
 }
 
 /** Pose le solde de Likes — borné à zéro, arrondi à l'entier. Rend la même collection si rien ne change. */
@@ -219,8 +226,12 @@ export function ajouterPaquet(
   ids: readonly string[],
   bonus: Readonly<Record<string, Bonus>>,
   quand: number,
+  rareteDe: (id: string) => string | undefined = () => undefined,
 ): Collection {
   const cartes: Record<string, Possession> = { ...col.cartes }
+  const crans = ids.map(rareteDe)
+  const legendaire = crans.includes('legendaire')
+  const epique = legendaire || crans.includes('epique')
   let arrivees = col.arrivees
   for (const id of ids) {
     const b = bonus[id]
@@ -250,7 +261,14 @@ export function ajouterPaquet(
       }
     }
   }
-  return { ...col, arrivees, paquets: col.paquets + 1, cartes }
+  return {
+    ...col,
+    arrivees,
+    paquets: col.paquets + 1,
+    cartes,
+    sansEpique: epique ? 0 : col.sansEpique + 1,
+    sansLegendaire: legendaire ? 0 : col.sansLegendaire + 1,
+  }
 }
 
 /**
@@ -427,7 +445,7 @@ export function lireCollection(brut: unknown): Collection {
   const cartes: Record<string, Possession> = {}
   let plusGrandOrdre = 0
   for (const [id, v] of Object.entries(o.cartes as Record<string, unknown>)) {
-    if (!/^[0-9a-f]+(-[0-9a-f]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
+    if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
     const p = v as Record<string, unknown>
     const n = entier(p.n, 1)
     const holo = entier(p.holo)
@@ -466,7 +484,7 @@ export function lireCollection(brut: unknown): Collection {
   const stickers: Record<string, Stickers> = {}
   const brutStickers = typeof o.stickers === 'object' && o.stickers !== null ? o.stickers : {}
   for (const [id, v] of Object.entries(brutStickers as Record<string, unknown>)) {
-    if (!/^[0-9a-f]+(-[0-9a-f]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
+    if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
     const s = v as Record<string, unknown>
     const n = entier(s.n, 1)
     const holo = entier(s.holo)
@@ -488,5 +506,7 @@ export function lireCollection(brut: unknown): Collection {
     stickers,
     likes: entier(o.likes) ?? 0,
     abonnes: entier(o.abonnes) ?? 0,
+    sansEpique: entier(o.sansEpique) ?? 0,
+    sansLegendaire: entier(o.sansLegendaire) ?? 0,
   }
 }

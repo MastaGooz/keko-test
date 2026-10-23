@@ -726,6 +726,32 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
   légendaire : « Seigneur de horde » sort de la liste des renommés.
 
 
+## Le jeu passe au fantasy (23/10/2026)
+
+- **Keko** : « je voudrais qu'on passe au switch des emojis avec mes
+  illustrations : le jeu n'est plus au sujet des emojis (on vire tout et on
+  remplace par le pool orc/gobelin) ». Les 119 cartes illustrées (gobelin 63,
+  orc 56) remplacent les 1 892 emoji ; **le moteur reste** (sachet, défilé,
+  collection, stickers, deck qui joue, Likes).
+- **Le catalogue** : `scripts/generate-fantasy.py` lit les fiches numérotées
+  de ce document (nom, sexe, dans l'ordre des images) et les découpes de
+  `public/generations/`, et écrit `public/data/fantasy.json` et les WebP 512
+  de `public/cartes/`. Le rôle de chaque carte est écrit dans le script, fiche
+  par fiche, et vérifié contre le tableau des classes (gobelin 11 / 18 / 14 /
+  20, orc 21 / 10 / 10 / 15).
+- **Tranché par Keko** : un titre provisoire, « Gobelins & Orcs » (sachet et
+  accueil) ; la pastille porte **race · rôle** ; **les taux de ce document**
+  (ci-dessous : cartes 1–4 81 / 16 / 2,5 / 0,4 / 0,02 %, la 5ᵉ au moins peu
+  commune, pitié épique au 24ᵉ paquet et légendaire au 200ᵉ, légendaires sans
+  doublon tant qu'il en manque).
+- **De moi, à rejuger** : le bouquet du sachet et du dos, et le fond qui
+  dérive, sont faits des légendaires et de quelques épiques ; Snik remplace
+  le 😄 du bouton booster ; le cartouche ne dit que « Holographique » (la
+  puissance et les effets viendront là) ; le bonus animé ne tombe plus (aucune
+  illustration n'est animée), l'holo reste à 10 %. Les collections emoji des
+  appareils ne sont plus lues (`keko-fantasy-*`) : tout le monde repart de
+  zéro.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
