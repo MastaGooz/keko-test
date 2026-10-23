@@ -5622,12 +5622,35 @@ function peindreCuir(
   retrait = 5.5,
   rayon = 0,
   couture = true,
+  capitonne = true,
 ): void {
-  // LE CAPITONNÉ : des losanges rembourrés, un clou d'or à chaque croisement.
+  // LA MARBRURE, sur le sachet seulement : Keko a préféré son cuir d'avant
+  // au capitonné (« c'était mieux avant »).
+  if (!masque && !capitonne) {
+    let s = 0x5eed
+    const hasard = (): number => {
+      s = (s * 1664525 + 1013904223) >>> 0
+      return s / 4294967296
+    }
+    ctx.save()
+    for (let i = 0; i < 70; i++) {
+      const x = hasard() * l
+      const y = hasard() * h
+      const r = (6 + hasard() * 16) * u
+      const clair = hasard() < 0.45
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+      g.addColorStop(0, clair ? '#f2d6ff1a' : '#10031a2c')
+      g.addColorStop(1, clair ? '#f2d6ff00' : '#10031a00')
+      ctx.fillStyle = g
+      ctx.fillRect(x - r, y - r, r * 2, r * 2)
+    }
+    ctx.restore()
+  }
+  // LE CAPITONNÉ DU DOS : des losanges rembourrés, piqués à chaque croisement.
   // Keko : « c'est la même texture que le background » — la marbrure en
   // taches rondes et floues se lisait comme les bokehs du fond. *Une texture
   // nette et géométrique ne se confond pas avec un décor flou.*
-  if (!masque) {
+  if (!masque && capitonne) {
     const pas = 12 * u
     const cx = l / 2
     const cy = h / 2
@@ -5672,19 +5695,22 @@ function peindreCuir(
     ctx.strokeStyle = '#e6c8ff24'
     ctx.lineWidth = 0.45 * u
     ctx.stroke()
-    // LES CLOUS D'OR aux croisements.
+    // LES PIQÛRES aux croisements : un creux du même cuir, une pointe de
+    // lumière dessous. Keko voulait plus discret que des clous d'or.
     for (let a = -n; a <= n; a++) {
       for (let b = -n; b <= n; b++) {
         const x = cx + ((a + b) * pas) / 2
         const y = cy + ((a - b) * pas) / 2
         if (x < 0 || x > l || y < 0 || y > h) continue
-        const g = ctx.createRadialGradient(x - 0.3 * u, y - 0.3 * u, 0, x, y, 0.9 * u)
-        g.addColorStop(0, OR_CLAIR)
-        g.addColorStop(0.6, OR_MOYEN)
-        g.addColorStop(1, OR_SOMBRE)
-        ctx.beginPath()
-        ctx.arc(x, y, 0.9 * u, 0, Math.PI * 2)
+        const g = ctx.createRadialGradient(x, y, 0, x, y, 1.3 * u)
+        g.addColorStop(0, '#10031acc')
+        g.addColorStop(0.45, '#10031a66')
+        g.addColorStop(1, '#10031a00')
         ctx.fillStyle = g
+        ctx.fillRect(x - 1.3 * u, y - 1.3 * u, 2.6 * u, 2.6 * u)
+        ctx.beginPath()
+        ctx.arc(x, y + 0.55 * u, 0.35 * u, 0, Math.PI * 2)
+        ctx.fillStyle = '#e6c8ff30'
         ctx.fill()
       }
     }
@@ -7021,7 +7047,7 @@ async function peindreLeSachet(): Promise<{
   // vignettage elliptique, dither. *Le sachet et ce qu'il contient sont du même
   // objet*, donc ils ne peuvent pas être faits de deux matières.
   peindreDecor(ctx, undefined, DOS_CUIR, { l, h })
-  peindreCuir(ctx, l, h, US, false, 7, 0, false)
+  peindreCuir(ctx, l, h, US, false, 7, 0, false, false)
 
   const yL = h * LIGNE_DECHIRURE
 

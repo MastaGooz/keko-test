@@ -150,7 +150,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   par effacer) ; la texture est privée, refaite à chaque palier (three ne
   réalloue pas une `CanvasTexture`), et l'animation redit `face.map` à chaque
   image pendant que le cache statique s'abstient.
-- **LA DA EST « TAVERNE & PARCHEMIN »** (Keko, 23/10) : le dos est un cuir violet aubergine capitonné (losanges, clous d.or aux croisements)
+- **LA DA EST « TAVERNE & PARCHEMIN »** (Keko, 23/10) : le dos est un cuir violet aubergine capitonné (losanges piqués ; le sachet garde la marbrure)
   cousu (`DOS_CUIR`, `peindreCuir`) au liseré d'or, frappé du SYMBOLE de
   Keko (`symbole.webp`, le poing d'or sur l'écu violet, `peindreSymbole`) et
   de quatre clous ; le sachet du même cuir porte le même symbole
