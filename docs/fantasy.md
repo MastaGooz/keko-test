@@ -708,6 +708,10 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
 - **Distingués de leurs voisins** : le trône-crâne de Grumbak n'est pas le
   trône de caisses de Snik ; l'orage de Ghor n'est pas le chaudron aux
   esprits de Mère Gribouille. *À rejuger par Keko.*
+- **Illustrés par Keko** (23/10). Découpés dans
+  `public/generations/orc/legendaires/` (`01-grumbak-le-borgne.png` …
+  `03-ghor-l-ancien.png`). **L'orc est entièrement illustré** : 56 cartes,
+  23 communes, 14 peu communes, 10 rares, 6 épiques, 3 légendaires.
 
 
 ## Les paquets et la rareté (21/10/2026)
