@@ -1725,24 +1725,24 @@ export const COIN_DE_LA_PLAQUE = { haut: HAUT_BULLE, r: (5 * U) / LARGE, aspect:
  * motif », puis la ROSACE. Un motif est une ONDE (le bord qui tourne) et une
  * LARGEUR (la demi-largeur d'un clair, en part de la paire de secteurs : 0,25
  * = les seize secteurs d'origine). `droits` : rien ne tourne ; `flammes` :
- * l'onde ; `rosace` : huit PÉTALES, étroits au centre, larges au milieu,
- * refermés en pointe avant le bord — la rose d'un vitrail. `?flammes=0` reste
- * un nom des rayons droits.
+ * l'onde. La ROSACE (huit pétales) a été essayée et retirée (Keko : « c'est pas
+ * bon, on vire ») ; `git log` la garde. `?flammes=0` reste un nom des rayons
+ * droits.
  */
-export type MotifDesRayons = 'droits' | 'flammes' | 'rosace'
+export type MotifDesRayons = 'droits' | 'flammes'
 export const MOTIF_DES_RAYONS: MotifDesRayons = (() => {
   const p = typeof location === 'undefined' ? null : new URLSearchParams(location.search)
   const m = p?.get('motif')
-  if (m === 'droits' || m === 'flammes' || m === 'rosace') return m
+  if (m === 'droits' || m === 'flammes') return m
   if (p?.get('flammes') === '0') return 'droits'
-  return 'rosace'
+  return 'flammes'
 })()
 const ONDE_FLAMMES = (() => {
   /** `amplitude` en radians, `frequence` en tours par largeur de carte, `calme` : la distance (en largeurs) où l'onde atteint son ampleur. */
   return { amplitude: MOTIF_DES_RAYONS === 'flammes' ? 0.34 : 0, frequence: 2.3, calme: 0.16 }
 })()
-/** LE PÉTALE DE LA ROSACE : sa demi-largeur au plus large (part de la paire), sa longueur (en largeurs de carte), sa rondeur (l'exposant du sinus). */
-const PETALE = MOTIF_DES_RAYONS === 'rosace' ? { large: 0.42, longueur: 0.5, courbe: 0.7 } : null
+/** UNE LARGEUR DE CLAIR QUI VARIE avec la distance : aucun motif gardé ne s'en sert (la rosace s'en servait). */
+const PETALE: { large: number; longueur: number; courbe: number } | null = null
 /** De combien l'angle d'un bord de rayon tourne à la distance `r` du centre (en largeurs de carte). */
 export function ondeDesRayons(r: number): number {
   const o = ONDE_FLAMMES
