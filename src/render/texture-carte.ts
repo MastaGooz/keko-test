@@ -6215,6 +6215,26 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE)
     px[i * 4 + 2] = creme[2]
     px[i * 4 + 3] = Math.round(a * 255)
   }
+  // ET LES POCHES QUE LE CERNE REFERME : un creux à l'ouverture étroite (entre
+  // un bras et le corps) touchait le dehors sur la silhouette nue, mais le cerne,
+  // en s'épaississant, en ferme l'entrée et laisse un vide au milieu du blanc.
+  // Même remplissage depuis le bord, cette fois sur le cerne lui-même.
+  {
+    const dehors = new Uint8Array(n * n)
+    const pile: number[] = []
+    for (let i = 0; i < n; i++) pile.push(i, (n - 1) * n + i, i * n, i * n + n - 1)
+    while (pile.length > 0) {
+      const p = pile.pop()!
+      if (dehors[p] === 1 || px[p * 4 + 3]! >= 128) continue
+      dehors[p] = 1
+      const x = p % n
+      if (x > 0) pile.push(p - 1)
+      if (x < n - 1) pile.push(p + 1)
+      if (p >= n) pile.push(p - n)
+      if (p < n * n - n) pile.push(p + n)
+    }
+    for (let i = 0; i < n * n; i++) if (dehors[i] === 0) px[i * 4 + 3] = 255
+  }
   ctx.putImageData(sortie, 0, 0)
   parRayon.set(cle, cerne)
   return cerne
