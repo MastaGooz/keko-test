@@ -674,7 +674,7 @@ export function Jeu(): React.ReactElement {
           onClick={() => aller('booster')}
         >
           <span className="nav-sachet">
-            <img src={`${import.meta.env.BASE_URL}cartes/gobelin/legendaires/01-snik-le-ruse.webp`} alt="" />
+            <img src={`${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
           </span>
           {/* LE NOMBRE DE PAQUETS SUR LE BOOSTER, comme le « 10 » de lexicodex. */}
           <span className={`nav-pastille nav-pastille-booster${dispo === 0 ? ' vide' : ''}`}>{dispo}</span>

@@ -179,7 +179,7 @@
   border-bottom: 0.2rem dotted #b8996a;
   transform: rotate(-8deg);
 }
-/* SNIK SUR LE SACHET DU BOUTON, à la place du 😄 : le jeu a quitté les emoji. */
+/* LE SYMBOLE DU JEU SUR LE SACHET DU BOUTON (Keko), comme sur le vrai sachet. */
 .nav-sachet img {
   width: 1.6rem;
   height: 1.6rem;
