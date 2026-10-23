@@ -653,6 +653,28 @@ L'orc passe à 23 hommes, 23 femmes.
   gerbe du harpon, tombée chez le Lanceur de rochers, a été retirée à la
   main. Le Massacreur, tresses et visage fin, se lit plutôt en femme.
 
+**Épiques orcs : 3 hommes, 3 femmes** (proposition, 23/10/2026) — **une
+monture, une machine ou une explosion** qui occupe l'image, une tenue plus
+soignée que la horde (métal travaillé, fourrures choisies, bijoux). Mêlée
+2 H / 1 F, magie 2 F, soutien 1 H. L'orc passe à 26 hommes, 26 femmes,
+avant ses légendaires (Grumbak ♂, Ursha ♀, Ghor ♂). Le loup est gardé pour
+Ursha : aucune épique ne le monte.
+
+1. **Seigneur de horde** · ♂ · une grande hache de guerre ornée levée dans la main droite, les rênes dans la gauche, en selle sur un énorme sanglier de guerre caparaçonné de fer. Défenses du sanglier cerclées d'or, cape de fourrure noire, casque à cornes, bannière de la horde plantée dans la selle.
+2. **Championne** · ♀ · une épée à deux mains plantée dans le sol, les deux mains sur le pommeau. Debout sur la tête d'un énorme serpent de roche abattu, onde de choc qui fend la pierre autour de la lame, armure de plaques dépareillées, trophées de dents en collier.
+3. **Berserker** · ♂ · une hache dans chaque main, bras écartés. Aura de rage rouge qui explose autour de lui, yeux blancs brillants, veines lumineuses sur les bras, sol qui éclate sous ses pieds, peintures de guerre rouges.
+4. **Sorcière du sang** · ♀ · une dague rituelle courbe dans la main droite, la gauche levée qui fait tourner des rubans rouges lumineux. Sphères pourpres qui flottent autour d'elle, lune rouge derrière, robe de cuir sombre, ongles noirs, sourire inquiétant.
+5. **Tatoueuse runique** · ♀ · une aiguille d'os à tatouer dans la main droite, un pot d'encre bleue dans la gauche. Les runes tatouées sur ses bras se détachent de la peau et éclatent en lumière bleue tout autour d'elle, crâne rasé couvert de runes, tablier de cuir.
+6. **Tambour de guerre** · ♂ · deux battes en fémur dans les mains, levées pour frapper. Un tambour géant en peau monté sur un chariot à grosses roues, anneaux d'onde sonore qui s'en échappent, cailloux qui sautent, torse nu, collier de dents.
+
+- **Distinguées de leurs voisines** : le Berserker explose de rage, le
+  Massacreur (rare) tourne ; la Championne a vaincu une bête, la Combattante
+  de l'arène (rare) gagne devant la foule ; la Sorcière du sang n'a rien des
+  os de l'Haruspice ; la Tatoueuse fait jaillir ses runes, le Fendeur de
+  terre (peu commune) les a peintes ; le Tambour est une machine, la
+  Porte-étendard (peu commune) n'a que son cri. *Noms et sexes à rejuger par
+  Keko.*
+
 
 ## Les paquets et la rareté (21/10/2026)
 
