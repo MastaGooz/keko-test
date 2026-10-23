@@ -45,15 +45,12 @@ export function enTitre(texte: string): string {
 }
 
 /**
- * LE CARTOUCHE NE DIT QUE LE BONUS, pour l'instant.
- *
- * *L'holographique est un reflet, donc il dépend de l'angle* : sur un écran
- * immobile, rien ne dit si c'est la carte qui irise ou la lumière qui passe.
- * Le cartouche le nomme. **La puissance et les effets viendront ici** quand le
- * jeu les aura (voir `docs/fantasy.md`).
+ * LE CARTOUCHE EST VIDE, pour l'instant : Keko, « inutile de marquer
+ * "holographique" dans la description de la carte » — le reflet se voit. **La
+ * puissance et les effets viendront ici** (voir `docs/fantasy.md`).
  */
-function mots(bonus?: Bonus): string[] {
-  return bonus?.holo === true ? ['Holographique'] : []
+function mots(_bonus?: Bonus): string[] {
+  return []
 }
 
 /**
