@@ -220,9 +220,9 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 - *Reclassé à l'image le 22/10 (Keko), voir la fiche des communes.*
 
 **Orc**
-- Légendaire (3) : Roi « Grumbak le Borgne », Chevaucheur de loup « Ursha
-  Croc-Rouge », Chaman « Ghor l'Ancien »
-- Épique (6) : Chef de guerre, Champion, Berserker, Sorcier du sang, Tatoueur
+- Légendaire (3) : Roi « Grumbak le Borgne », Chef de guerre « Gorruk
+  Défense-d'Or », Chaman « Ghor l'Ancien »
+- Épique (6) : Chevaucheur de loup, Champion, Berserker, Sorcier du sang, Tatoueur
   runique, Tambour de guerre
 - Rare (10) : Gladiateur, Ravageur, Massacreur, Lutteur d'ours, Lanceur de
   harpon, Catapultier, Haruspice, Chanteur de pierre, Mage de cendre, Montreur
@@ -321,11 +321,11 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 ### Un nom par carte : les classes partagées renommées (22/10/2026)
 
 - **Keko** : « on va se retrouver avec des noms de race dans quasi toutes les cartes… on peut pas renommer les classes qui sont en plusieurs exemplaires mais race différente en prenant des synonymes ». Et : « pas grave si ça s'accorde pas au féminin ».
-- **112 classes partagées, 291 des 345 cartes de peuples** : 174 renommées (le Pêcheur orc, ajouté le 23/10, devient Pêcheur de rivière ; le Lanceur de ruches orc, remplacé le 22/10 par le Lanceur de pierres, n'est plus partagé). Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2 sont les seuls doublons restants, tous légendaires).
+- **112 classes partagées, 291 des 345 cartes de peuples** : 173 renommées (le Chef de guerre orc, devenu légendaire le 23/10, garde sa classe ; le Pêcheur orc, ajouté le 23/10, devient Pêcheur de rivière ; le Lanceur de ruches orc, remplacé le 22/10 par le Lanceur de pierres, n'est plus partagé). Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2, Chef de guerre ×2 sont les seuls doublons restants, tous légendaires).
 - Des noms **colorés par la race** plutôt que des synonymes purs, vérifiés par script : aucun ne revient deux fois, aucun ne reprend une classe existante. Proposition, à rejuger nom par nom.
 
-**Orc** (34)
-- Mêlée : Garde → Cogneur de porte, Guerrier → Fracasseur, Lancier → Embrocheur, Bagarreur → Cogne-poing, Chef de guerre → Seigneur de horde, Maître d'armes → Maître de la fosse, Gladiateur → Combattant de l'arène, Brute → Mastodonte, Marteleur → Masse-d'os, Bourreau → Coupeur de têtes, Péagier → Rançonneur, Fléautier → Batteur de chaîne
+**Orc** (33)
+- Mêlée : Garde → Cogneur de porte, Guerrier → Fracasseur, Lancier → Embrocheur, Bagarreur → Cogne-poing, Maître d'armes → Maître de la fosse, Gladiateur → Combattant de l'arène, Brute → Mastodonte, Marteleur → Masse-d'os, Bourreau → Coupeur de têtes, Péagier → Rançonneur, Fléautier → Batteur de chaîne
 - Distance : Archer → Archer de la horde, Chasseur → Traqueur, Lanceur de couteaux → Lanceur de hachettes, Catapultier → Lanceur de rochers, Lanceur de boomerang → Lance-mâchoire
 - Magie : Pyromancien → Cracheur de braise, Druide → Sage des ronces, Géomancien → Fendeur de terre, Chanteur de pierre → Chantre des roches, Mangeur de feu → Avaleur de braises
 - Soutien : Fermier → Éleveur de cochons, Cuisinier → Rôtisseur, Mineur → Creuse-roc, Bûcheron → Abatteur d'arbres, Forgeron → Batteur de fer, Guérisseur → Rebouteux, Ferrailleur → Pilleur d'épaves, Dompteur de bêtes → Dresseur de wargs, Porteur → Bête de somme, Conteur → Hurleur de légendes, Montreur d'ours → Meneur d'ours, Pêcheur → Pêcheur de rivière
@@ -656,14 +656,15 @@ L'orc passe à 24 hommes, 23 femmes.
   gerbe du harpon, tombée chez le Lanceur de rochers, a été retirée à la
   main. Le Massacreur, tresses et visage fin, se lit plutôt en femme.
 
-**Épiques orcs : 3 hommes, 3 femmes** (proposition, 23/10/2026) — **une
+**Épiques orcs : 2 hommes, 4 femmes** (proposition, 23/10/2026 ; échange du 23/10 compris) — **une
 monture, une machine ou une explosion** qui occupe l'image, une tenue plus
 soignée que la horde (métal travaillé, fourrures choisies, bijoux). Mêlée
-2 H / 1 F, magie 2 F, soutien 1 H. L'orc passe à 27 hommes, 26 femmes,
-avant ses légendaires (Grumbak ♂, Ursha ♀, Ghor ♂). Le loup est gardé pour
-Ursha : aucune épique ne le monte.
+1 H / 2 F, magie 2 F, soutien 1 H. L'orc passe à 27 hommes, 26 femmes,
+avant ses légendaires (Grumbak, Gorruk, Ghor, trois hommes) ; après
+l'échange, les épiques font 2 hommes, 4 femmes et l'orc entier 29 hommes,
+27 femmes.
 
-1. **Seigneur de horde** · ♂ · une grande hache de guerre ornée levée dans la main droite, les rênes dans la gauche, en selle sur un énorme sanglier de guerre caparaçonné de fer. Défenses du sanglier cerclées d'or, cape de fourrure noire, casque à cornes, bannière de la horde plantée dans la selle.
+1. **Chevaucheuse de loup** · ♀ · une lance à pointe rouge levée dans la main droite, en plein bond sur un immense loup noir qui hurle. Peinture de guerre rouge, harnais du loup clouté d'or, cheveux rouges qui volent. *(Dessinée comme Ursha Croc-Rouge, descendue de légendaire le 23/10.)*
 2. **Championne** · ♀ · une épée à deux mains plantée dans le sol, les deux mains sur le pommeau. Debout sur la tête d'un énorme serpent de roche abattu, onde de choc qui fend la pierre autour de la lame, armure de plaques dépareillées, trophées de dents en collier.
 3. **Berserker** · ♂ · une hache dans chaque main, bras écartés. Aura de rage rouge qui explose autour de lui, yeux blancs brillants, veines lumineuses sur les bras, sol qui éclate sous ses pieds, peintures de guerre rouges.
 4. **Sorcière du sang** · ♀ · une dague rituelle courbe dans la main droite, la gauche levée qui fait tourner des rubans rouges lumineux. Sphères pourpres qui flottent autour d'elle, lune rouge derrière, robe de cuir sombre, ongles noirs, sourire inquiétant.
@@ -683,7 +684,7 @@ Ursha : aucune épique ne le monte.
   minimaliste » : **une épique = une grande idée et deux ou trois détails**,
   pas plus.
 - **Illustrées par Keko** (23/10). Découpées dans
-  `public/generations/orc/epiques/` (`01-seigneur-de-horde.png` …
+  `public/generations/orc/epiques/` (`01-chevaucheuse-de-loup.png` …
   `06-tambour-de-guerre.png`, numérotées comme cette fiche). La Tatoueuse
   n'a pas le crâne rasé et se lit moins nettement en femme.
 - **Deux bonus dessinés par Keko** : un **pêcheur** (lance, hotte, gros
@@ -694,15 +695,15 @@ Ursha : aucune épique ne le monte.
   Gardienne des clés, de la Contrebandière et de la Rançonneuse (Keko : « ça
   nous fait cramer une classe pour rien »).
 
-**Légendaires orcs : 2 hommes, 1 femme** (proposition, 23/10/2026) — **une
+**Légendaires orcs : 3 hommes** (proposition, 23/10/2026 ; échange du 23/10 compris) — **une
 scène entière, des dorures, une pose héroïque**, mais écrite court (la règle
 des épiques : une grande idée, peu de détails). Chacun est le chef de ce
-qu'on a déjà vu : Grumbak règne sur le Seigneur de horde et la Championne,
-Ursha monte le loup que le Dresseur de wargs ne fait que tenir, Ghor
+qu'on a déjà vu : Grumbak règne sur la Championne et le Berserker, Gorruk
+mène la horde que la Chevaucheuse de loup éclaire, Ghor
 commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
 
 1. **Grumbak le Borgne** · ♂ · roi · une énorme hache cerclée d'or posée en travers des genoux. Assis sur un trône taillé dans le crâne d'une bête géante, couronne de fer et d'or, cache-œil doré, bannières de la horde derrière lui.
-2. **Ursha Croc-Rouge** · ♀ · chevaucheuse de loup · une lance à pointe rouge levée dans la main droite, en plein bond sur un immense loup noir qui hurle. Peinture de guerre rouge, harnais du loup clouté d'or, cheveux rouges qui volent.
+2. **Gorruk Défense-d'Or** · ♂ · chef de guerre · une grande hache de guerre ornée levée dans la main droite, les rênes dans la gauche, en selle sur un énorme sanglier de guerre caparaçonné de fer. Défenses du sanglier cerclées d'or, cape de fourrure noire, casque à cornes, bannière de la horde plantée dans la selle. *(Dessiné comme Seigneur de horde, monté d'épique le 23/10.)*
 3. **Ghor l'Ancien** · ♂ · chaman · un bâton surmonté d'un crâne de mammouth dans la main droite, la gauche levée. Très vieux, il flotte au-dessus du sol, yeux blancs, longue barbe tressée d'anneaux d'or, un tourbillon d'orage et d'éclairs autour de lui.
 
 - **Distingués de leurs voisins** : le trône-crâne de Grumbak n'est pas le
@@ -712,6 +713,17 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
   `public/generations/orc/legendaires/` (`01-grumbak-le-borgne.png` …
   `03-ghor-l-ancien.png`). **L'orc est entièrement illustré** : 56 cartes,
   23 communes, 14 peu communes, 10 rares, 6 épiques, 3 légendaires.
+- **L'échange** (Keko, 23/10 : « passe le chevaucheur de sanglier en
+  légendaire et la chevaucheuse de loup en épique ») : Ursha n'était qu'une
+  monture sans décor, la formule des épiques, et le Seigneur de horde, plus
+  doré et plus armé, la dépassait. Le sanglier devient **Gorruk
+  Défense-d'Or**, chef de guerre légendaire (nom de moi, pour ses défenses
+  cerclées d'or), `legendaires/02-gorruk-defense-d-or.png` ; Ursha devient
+  la **Chevaucheuse de loup**, épique sans nom,
+  `epiques/01-chevaucheuse-de-loup.png`. Les légendaires orcs sont trois
+  hommes : le mélange se fait sur la race entière (Keko : « pas forcément à
+  chaque rareté »). Le Chef de guerre orc garde sa classe, comme tout
+  légendaire : « Seigneur de horde » sort de la liste des renommés.
 
 
 ## Les paquets et la rareté (21/10/2026)
