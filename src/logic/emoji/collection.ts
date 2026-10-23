@@ -178,13 +178,8 @@ export interface Collection {
    * réserve. Entier, jamais négatif ; absent d'une collection d'avant : zéro.
    */
   readonly likes: number
-  /**
-   * LES ABONNÉS : LA SECONDE MONNAIE. Keko : « je voudrais rajouter une autre
-   * monnaie : les abonnés ». Même règle que les Likes : un compteur, entier,
-   * jamais négatif, zéro pour une collection d'avant ; rien ne le fait monter
-   * encore, son usage est à trancher.
-   */
-  readonly abonnes: number
+  // LES ABONNÉS SONT PARTIS (Keko : « supprime la deuxième ressource, on garde
+  // juste la puissance ») ; un solde gardé par une collection d'avant s'ignore.
   /**
    * LES COMPTES DE LA PITIÉ : les paquets ouverts d'affilée sans épique (ou
    * mieux), et sans légendaire. Remis à zéro par le paquet qui en apporte une ;
@@ -195,7 +190,7 @@ export interface Collection {
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, abonnes: 0, sansEpique: 0, sansLegendaire: 0 }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, sansEpique: 0, sansLegendaire: 0 }
 }
 
 /** Pose le solde de Likes — borné à zéro, arrondi à l'entier. Rend la même collection si rien ne change. */
@@ -209,16 +204,6 @@ export function ajouterLikes(col: Collection, n: number): Collection {
   return avecLikes(col, col.likes + n)
 }
 
-/** Pose le solde d'abonnés — même règle que `avecLikes`. */
-export function avecAbonnes(col: Collection, abonnes: number): Collection {
-  const n = Number.isFinite(abonnes) ? Math.max(0, Math.floor(abonnes)) : 0
-  return n === col.abonnes ? col : { ...col, abonnes: n }
-}
-
-/** Ajoute (ou retire, `n` négatif) des abonnés ; jamais sous zéro. */
-export function ajouterAbonnes(col: Collection, n: number): Collection {
-  return avecAbonnes(col, col.abonnes + n)
-}
 
 /** Ajoute un paquet ouvert. Rend une collection NEUVE : l'ancienne ne bouge pas. */
 export function ajouterPaquet(
@@ -505,7 +490,6 @@ export function lireCollection(brut: unknown): Collection {
     cartes,
     stickers,
     likes: entier(o.likes) ?? 0,
-    abonnes: entier(o.abonnes) ?? 0,
     sansEpique: entier(o.sansEpique) ?? 0,
     sansLegendaire: entier(o.sansLegendaire) ?? 0,
   }

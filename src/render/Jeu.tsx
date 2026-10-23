@@ -26,7 +26,6 @@ import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
   ajouterLikes,
   ajouterPaquet,
-  avecAbonnes,
   avecLikes,
   compteDe,
   debloquer,
@@ -450,17 +449,6 @@ export function Jeu(): React.ReactElement {
     if (!Number.isFinite(n)) return
     changer((c) => avecLikes(c, n))
   }, [changer])
-  /** `&abonnes=N` : le même banc pour la seconde monnaie. */
-  useEffect(() => {
-    const p = new URLSearchParams(location.search)
-    const v = p.get('abonnes')
-    if (v === null) return
-    p.delete('abonnes')
-    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
-    const n = Number(v)
-    if (!Number.isFinite(n)) return
-    changer((c) => avecAbonnes(c, n))
-  }, [changer])
   // LE CRAN DE CHAQUE CARTE, pour les comptes de la pitié (`ajouterPaquet`).
   const rareteDe = useMemo(() => {
     const crans = new Map((catalogue ?? []).map((c) => [c.id, c.rarete]))
@@ -548,6 +536,10 @@ export function Jeu(): React.ReactElement {
             onDetruire={detruireCarte}
             sansPrise
             peutContinuer={dispo > 0}
+            onTermine={() => {
+              setAttente(true)
+              setCalme(true)
+            }}
           />
           {/* COMBIEN IL EN RESTE, SOUS LE SACHET. Keko : « on peut afficher "X
               disponibles" sous le paquet pour dire combien sont dispo à
@@ -626,13 +618,9 @@ export function Jeu(): React.ReactElement {
           abonnés ». Une pilule à part, en haut à droite, qui se cache avec la
           barre : pendant la déchirure et le défilé, rien ne dispute l'écran. */}
       <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
-        <span className="monnaie monnaie-like" aria-label={`${collection.likes} Like${collection.likes > 1 ? 's' : ''}`}>
+        <span className="monnaie monnaie-like" aria-label={`${collection.likes} de puissance`}>
           <IconeLike />
           <b>{collection.likes}</b>
-        </span>
-        <span className="monnaie" aria-label={`${collection.abonnes} abonné${collection.abonnes > 1 ? 's' : ''}`}>
-          <IconeAbonne />
-          <b>{collection.abonnes}</b>
         </span>
       </div>
       <nav className={`nav${visible ? '' : ' nav-cachee'}`} aria-label="Navigation">
@@ -768,25 +756,6 @@ function IconeCollection(): React.ReactElement {
 // affiche le logo du jeu »), et leur compte passe en or.
 export function IconeLike(): React.ReactElement {
   return <img className="icone-like" src={`${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
-}
-
-/**
- * LES ABONNÉS : DEUX SILHOUETTES BLEUES, l'une devant l'autre — un public, pas
- * une personne. Keko : « bleu pour les abonnés (et enlève le +, c'est pas très
- * beau, propose un autre concept basé sur la silhouette) ». Celle de derrière
- * en bleu clair, celle de devant en bleu franc, trait en `currentColor`.
- */
-function IconeAbonne(): React.ReactElement {
-  return (
-    <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
-      {/* DERRIÈRE, à droite, plus petite. */}
-      <circle cx="15.8" cy="7.4" r="3.1" fill="#8ec5ff" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M10.2 18.6a5.6 5.6 0 0 1 11.2 0z" fill="#8ec5ff" stroke="currentColor" strokeWidth="1.3" />
-      {/* DEVANT, à gauche. */}
-      <circle cx="9" cy="9" r="3.7" fill="#3b82f6" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M2 21.2a7 7 0 0 1 14 0z" fill="#3b82f6" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  )
 }
 
 function IconeStickers(): React.ReactElement {

@@ -169,7 +169,7 @@ export function PageJouer({
               <>
                 {/* CE QUE RAPPORTE UN TOUR DU DECK : la somme de ses trente cartes, un
                     Like plus un par cran — c'est là qu'on voit qu'un deck de rares vaut plus. */}
-                <b>{valeur === null ? '…' : likesDuDeck(deck, valeur)}</b> Likes par tour · main {jouees / DECK.main + 1} / {parCycle} ·{' '}
+                <b>{valeur === null ? '…' : likesDuDeck(deck, valeur)}</b> de puissance par tour · main {jouees / DECK.main + 1} / {parCycle} ·{' '}
                 {DECK.taille - jouees} carte{DECK.taille - jouees > 1 ? 's' : ''} dans la pile
               </>
             ) : (
@@ -185,7 +185,7 @@ export function PageJouer({
             <p>
               Il manque {manquent} carte{manquent > 1 ? 's' : ''} au deck.
             </p>
-            <p className="collection-discret">Trente cartes, et il joue tout seul : cinq cartes toutes les dix secondes, un Like par carte et un de plus par cran de rareté.</p>
+            <p className="collection-discret">Trente cartes, et il joue tout seul : cinq cartes toutes les dix secondes, un point de puissance par carte et un de plus par cran de rareté.</p>
             <button type="button" className="collection-bouton" onClick={onComposer}>
               Composer le deck
             </button>
