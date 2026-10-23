@@ -617,6 +617,10 @@ Rançonneuse ♀, Mangeuse de feu ♀ → Avaleur de braises ♂).
   rougie le distingue de la torche gobeline, mais une autre classe à la
   place serait plus nette. La Rançonneuse partage l'idée du Péagier
   gobelin (réclamer) sans sa barrière. *Noms et sexes à rejuger par Keko.*
+- **Illustrées par Keko** (23/10) telles que la fiche, Avaleur de braises
+  compris. Découpées dans `public/generations/orc/peu-communes/`
+  (`01-maitre-de-la-fosse.png` … `14-porte-etendard.png`, numérotées comme
+  cette fiche).
 
 
 ## Les paquets et la rareté (21/10/2026)
