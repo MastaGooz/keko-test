@@ -694,6 +694,21 @@ Ursha : aucune épique ne le monte.
   Gardienne des clés, de la Contrebandière et de la Rançonneuse (Keko : « ça
   nous fait cramer une classe pour rien »).
 
+**Légendaires orcs : 2 hommes, 1 femme** (proposition, 23/10/2026) — **une
+scène entière, des dorures, une pose héroïque**, mais écrite court (la règle
+des épiques : une grande idée, peu de détails). Chacun est le chef de ce
+qu'on a déjà vu : Grumbak règne sur le Seigneur de horde et la Championne,
+Ursha monte le loup que le Dresseur de wargs ne fait que tenir, Ghor
+commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
+
+1. **Grumbak le Borgne** · ♂ · roi · une énorme hache cerclée d'or posée en travers des genoux. Assis sur un trône taillé dans le crâne d'une bête géante, couronne de fer et d'or, cache-œil doré, bannières de la horde derrière lui.
+2. **Ursha Croc-Rouge** · ♀ · chevaucheuse de loup · une lance à pointe rouge levée dans la main droite, en plein bond sur un immense loup noir qui hurle. Peinture de guerre rouge, harnais du loup clouté d'or, cheveux rouges qui volent.
+3. **Ghor l'Ancien** · ♂ · chaman · un bâton surmonté d'un crâne de mammouth dans la main droite, la gauche levée. Très vieux, il flotte au-dessus du sol, yeux blancs, longue barbe tressée d'anneaux d'or, un tourbillon d'orage et d'éclairs autour de lui.
+
+- **Distingués de leurs voisins** : le trône-crâne de Grumbak n'est pas le
+  trône de caisses de Snik ; l'orage de Ghor n'est pas le chaudron aux
+  esprits de Mère Gribouille. *À rejuger par Keko.*
+
 
 ## Les paquets et la rareté (21/10/2026)
 
