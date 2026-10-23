@@ -626,7 +626,7 @@ export function Jeu(): React.ReactElement {
           abonnés ». Une pilule à part, en haut à droite, qui se cache avec la
           barre : pendant la déchirure et le défilé, rien ne dispute l'écran. */}
       <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
-        <span className="monnaie" aria-label={`${collection.likes} Like${collection.likes > 1 ? 's' : ''}`}>
+        <span className="monnaie monnaie-like" aria-label={`${collection.likes} Like${collection.likes > 1 ? 's' : ''}`}>
           <IconeLike />
           <b>{collection.likes}</b>
         </span>
@@ -764,19 +764,10 @@ function IconeCollection(): React.ReactElement {
  * mais dans un cœur c'est mieux à la place de la bulle) ». Le cœur rose, le
  * pouce crème, trait en `currentColor`.
  */
+// LES LIKES PORTENT LE SYMBOLE DU JEU (Keko : « plutôt que les likes en rose
+// affiche le logo du jeu »), et leur compte passe en or.
 export function IconeLike(): React.ReactElement {
-  return (
-    <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
-      {/* LE CŒUR. */}
-      <path d="M12 21.3S4.3 16.6 2.5 11.7C1.1 8.1 3.3 4.4 7.1 4.4c2 0 3.6 1.1 4.9 2.8 1.3-1.7 2.9-2.8 4.9-2.8 3.8 0 6 3.7 4.6 7.3-1.8 4.9-9.5 9.6-9.5 9.6z" fill="#ff6fa5" stroke="currentColor" strokeWidth="1.4" />
-      {/* LE POUCE, au centre du cœur (0,75 : Keko le trouvait « un peu petit »
-          à 0,6) : la manchette, puis la main. */}
-      <g transform="translate(12 11.4) scale(0.75) translate(-12.8 -10)" stroke="currentColor" strokeWidth="1.5">
-        <path d="M6.3 9.3h2.2v6.2H6.3z" fill="#fffaf0" />
-        <path d="M8.5 9.6l2.6-4.3a1.3 1.3 0 0 1 2.4.8l-.6 2.9h3.6a1.6 1.6 0 0 1 1.6 1.9l-.8 3.6a1.6 1.6 0 0 1-1.6 1.3H8.5z" fill="#fffaf0" />
-      </g>
-    </svg>
-  )
+  return <img className="icone-like" src={`${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
 }
 
 /**

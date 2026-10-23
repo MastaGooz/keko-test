@@ -293,7 +293,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   la place à « Prochain paquet dans … ». `&illimite` ne la vide jamais.
 - **Deux monnaies, les Likes et les Abonnés** (`Collection.likes` /
   `abonnes`, `avecLikes` / `avecAbonnes`, `ajouterLikes` / `ajouterAbonnes`,
-  icônes `IconeLike` pouce-dans-un-cœur rose et `IconeAbonne` deux silhouettes bleues, un
+  icônes `IconeLike` le symbole du jeu (compte en or) et `IconeAbonne` deux silhouettes bleues, un
   compteur discret en haut à droite SUR TOUS LES ÉCRANS — voile sombre, pas de
   pilule crème, « ça fait penser à un bouton » —, caché avec la barre ; au
   doigt, « X disponibles » et la tête de la collection passent dessous, le

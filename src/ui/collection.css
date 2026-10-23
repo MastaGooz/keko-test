@@ -842,11 +842,17 @@
   border-left: 1px solid rgba(255, 250, 240, 0.35);
 }
 
-.monnaie svg {
+.monnaie svg,
+.monnaie .icone-like {
   width: 1.3rem;
   height: 1.3rem;
   overflow: visible;
   filter: drop-shadow(0 0.08rem 0.25rem rgba(14, 6, 40, 0.7));
+}
+
+/* Le compte des Likes en or, comme le symbole qui les porte. */
+.monnaie-like b {
+  color: #ffc61f;
 }
 
 .monnaie b {
@@ -2156,7 +2162,7 @@ span.jouer-pile-dos {
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-weight: 800;
   font-size: 0.85rem;
-  color: #ff6fa5;
+  color: #ffc61f;
 }
 
 .jouer-carte-likes-posee {
@@ -2203,7 +2209,7 @@ span.jouer-pile-dos {
   }
 }
 
-/* LE TOTAL DE LA MAIN, sous elle : l'icône des Likes et le compte en rose, le
+/* LE TOTAL DE LA MAIN, sous elle : l'icône des Likes et le compte en or, le
    compte qui saute à chaque hausse (l'élément est remonté par la page). */
 .jouer-total {
   display: flex;
@@ -2216,11 +2222,12 @@ span.jouer-pile-dos {
   font-weight: 800;
   font-size: 1.25rem;
   line-height: 1;
-  color: #ff6fa5;
+  color: #ffc61f;
   text-shadow: 0 0.08rem 0.3rem rgba(14, 6, 40, 0.8);
 }
 
-.jouer-total svg {
+.jouer-total svg,
+.jouer-total .icone-like {
   width: 1.5rem;
   height: 1.5rem;
   overflow: visible;
