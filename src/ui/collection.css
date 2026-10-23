@@ -383,6 +383,18 @@
   transform: scale(0.95);
 }
 
+/* À LA SOURIS, LA CARTE SURVOLÉE GROSSIT UN PEU (Keko), passe devant ses
+   voisines ; pas au doigt, et pas dans la main qui joue. */
+@media (hover: hover) and (pointer: fine) {
+  .vignette:hover:not(:active) {
+    z-index: 2;
+    transform: scale(1.08);
+  }
+  .jouer-carte .vignette:hover:not(:active) {
+    transform: none;
+  }
+}
+
 .vignette-toile {
   position: absolute;
   inset: 0;
@@ -1330,6 +1342,17 @@
   position: absolute;
   inset: 0;
   display: block;
+  transition: transform 0.15s ease;
+}
+
+/* Le sticker survolé grossit pareil, sa case reste en place. */
+@media (hover: hover) and (pointer: fine) {
+  .album-case:hover {
+    z-index: 2;
+  }
+  .album-case:hover .album-sticker {
+    transform: scale(1.12);
+  }
 }
 
 .album-toile {
