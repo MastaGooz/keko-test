@@ -1017,14 +1017,15 @@
   margin-top: 0.8rem;
 }
 
+/* EN OR, PLUS EN ROSE (Keko : « met le en jaune plutôt, c'est plus dans le thème »). */
 .decoller-second {
-  background: #ff6fa5;
-  color: #fffaf0;
-  box-shadow: 0 0.3rem 0 #b3486f;
+  background: #ffc61f;
+  color: #3a2416;
+  box-shadow: 0 0.3rem 0 #b8820a;
 }
 
 .decoller-second:active {
-  box-shadow: 0 0.15rem 0 #b3486f;
+  box-shadow: 0 0.15rem 0 #b8820a;
 }
 
 /* Le nombre de stickers déjà collés, sur le bouton. */
@@ -1036,7 +1037,7 @@
   padding: 0 0.3rem;
   border-radius: 999px;
   background: #fffaf0;
-  color: #b3486f;
+  color: #8a5a1c;
   font-size: 0.8rem;
 }
 
@@ -1965,8 +1966,8 @@
 .deck-onglet-joue {
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  background: #ff6fa5;
-  color: #fffaf0;
+  background: #ffc61f;
+  color: #3a2416;
   font-size: 0.7rem;
 }
 
