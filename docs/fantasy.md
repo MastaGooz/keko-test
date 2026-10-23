@@ -207,7 +207,7 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
   », Ingénieur « Zabbo Boulon-Fou », Reine des voleurs « Grisette la Dorée »
 - Épique (8) : Chevaucheur de rat, Cerf-voliste, Aéronaute, Artificier,
   Illusionniste, Électromancien, Essaimancien, Gardien des clés
-- Rare (11) : Escrimeur à l'ombrelle, Canonnier, Fauconnier, Lanceur de
+- Rare (11) : Escrimeur à l'ombrelle, Canonnier, Vautourier, Lanceur de
   ruches, Pyromancien, Mage de rouille, Cartomancien, Ritualiste, Mycomancien,
   Sorcier, Alchimiste
 - Peu commune (15) : Brute, Coupe-jarret, Péagier, Arbalétrier, Lanceur de
@@ -471,7 +471,7 @@ l'Essaimancienne (sauterelles et scarabées, pas d'abeilles).
 
 1. **Escrimeuse à l'ombrelle** · ♀ · une ombrelle en dentelle trouée à pointe d'acier, tenue comme une rapière dans la main droite. Main gauche dans le dos, robe de dame rapiécée, petit chapeau à voilette de travers, pose de duelliste précieuse.
 2. **Canonnier** · ♂ · un petit canon de bronze sur l'épaule droite, la mèche fumante dans la main gauche. Bonnet enfoncé, chiffons dans les oreilles, boulets dans une besace, visage noirci par la poudre.
-3. **Fauconnière** · ♀ · un vautour déplumé perché sur le gant de cuir de la main gauche. Leurre à plumes qui tournoie dans la main droite, capuchon de rapace à la ceinture, plumes dans les cheveux.
+3. **Vautourière** · ♀ · un vautour déplumé perché sur le gant de cuir de la main gauche. Leurre à plumes qui tournoie dans la main droite, capuchon de rapace à la ceinture, plumes dans les cheveux.
 4. **Lanceur de ruches** · ♂ · une ruche de paille bourdonnante levée dans la main droite, prête à être lancée. Abeilles furieuses qui s'en échappent, visage piqué et boursouflé, filet de protection déchiré sur la tête.
 5. **Pyromancienne** · ♀ · une boule de feu dans la main droite levée. Robe aux bords roussis, cheveux qui fument, petites flammes au bout des doigts de la main gauche.
 6. **Mage de rouille** · ♂ · une clé géante rouillée tenue comme un sceptre dans la main droite. Armure de ferraille piquée de rouille, poussière orange qui tourbillonne autour de la main gauche.
