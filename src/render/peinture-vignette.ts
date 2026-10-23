@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { AVEC_RAYONS_CARTE, RAYON_SIMPLE } from './texture-carte.ts'
+import { RAYON_SIMPLE } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -775,8 +775,7 @@ export function peinte(
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
-    // Sans rayons peints (`AVEC_RAYONS_CARTE`), pas de brillant de rayons non plus.
-    brillantDuRepos(toile, SATURE_RAYONS[COULEUR[c.rarete]] ?? 1, sansRayons || !AVEC_RAYONS_CARTE)
+    brillantDuRepos(toile, SATURE_RAYONS[COULEUR[c.rarete]] ?? 1, sansRayons)
     if (holo) {
       if (!sansSujet) cerneArcEnCielDuSujet(toile)
       if (paillettes) paillettesHolo(toile, c.id)
