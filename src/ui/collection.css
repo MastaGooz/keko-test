@@ -2059,7 +2059,7 @@
 span.jouer-pile-dos {
   border: 0.19rem solid transparent;
   background:
-    radial-gradient(ellipse at 50% 40%, #8a4e2c, #5c2f19) padding-box,
+    radial-gradient(ellipse at 50% 40%, #62296f, #3b1544) padding-box,
     linear-gradient(135deg, #ffe9a8, #e0b048 50%, #8a5a1c) border-box;
   box-sizing: border-box;
 }

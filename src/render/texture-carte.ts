@@ -5596,7 +5596,10 @@ export function dosDe(carte: CarteAPeindre): 'emoji' | 'gabarit' {
  * sachet passent du bleu d'application à un cuir brun, cousu, frappé d'un
  * blason doré.
  */
-const DOS_CUIR: readonly [number, number, number] = [112, 62, 36]
+// VIOLET AUBERGINE, PAS BRUN : Keko, « je trouve le fond des dos de carte trop
+// proche du background du jeu » — le brun se fondait dans le bois. Il reprend
+// le violet de l'écu du symbole, et l'or du liseré et des clous ressort.
+const DOS_CUIR: readonly [number, number, number] = [80, 34, 92]
 /** Les trois ors du blason et du liseré, du reflet à l'ombre. */
 const OR_CLAIR = '#ffe9a8'
 const OR_MOYEN = '#e0b048'
@@ -5633,8 +5636,8 @@ function peindreCuir(
       const r = (6 + hasard() * 16) * u
       const clair = hasard() < 0.45
       const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-      g.addColorStop(0, clair ? '#ffdcae1c' : '#1a0a0226')
-      g.addColorStop(1, clair ? '#ffdcae00' : '#1a0a0200')
+      g.addColorStop(0, clair ? '#f2d6ff1a' : '#10031a2c')
+      g.addColorStop(1, clair ? '#f2d6ff00' : '#10031a00')
       ctx.fillStyle = g
       ctx.fillRect(x - r, y - r, r * 2, r * 2)
     }
@@ -5652,7 +5655,7 @@ function peindreCuir(
   ctx.save()
   if (!masque) {
     chemin()
-    ctx.strokeStyle = '#1a0a0255'
+    ctx.strokeStyle = '#10031a55'
     ctx.lineWidth = 1.6 * u
     ctx.stroke()
   }
