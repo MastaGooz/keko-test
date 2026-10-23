@@ -1247,7 +1247,8 @@ ${nuanceur.vertexShader}`.replace(
              vec2 tpT = vec2(bF.x, 1.0 - bF.y);
              vec2 crT = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l * 0.5).toFixed(4)}, ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h * 0.5).toFixed(4)});
              vec2 drT = vec2(tpT.x - crT.x, (tpT.y - crT.y) * 1.4);
-             float frT = fract((atan(drT.y, drT.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
+             // LES FLAMMES : le bord tourne avec la distance, voir ondeDesRayons.
+             float frT = fract((atan(drT.y, drT.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons - (${RAYONS_DANS_LA_CARTE.onde.amplitude.toFixed(4)} * min(1.0, length(drT) / ${RAYONS_DANS_LA_CARTE.onde.calme.toFixed(4)}) * sin(length(drT) * ${(RAYONS_DANS_LA_CARTE.onde.frequence * Math.PI * 2).toFixed(4)}))) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
              float secteurT = smoothstep(0.0, 0.01, frT) * (1.0 - smoothstep(0.49, 0.5, frT));
              float rT = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float lT = length(drT);
@@ -1550,7 +1551,8 @@ ${nuanceur.vertexShader}`.replace(
              float fenetre = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tp.x) * step(tp.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
                * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tp.y) * step(tp.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
              // LE BRILLANT TOURNE AVEC LES RAYONS (uAngleRayons, 0 hors légendaires).
-             float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
+             // LES FLAMMES : le bord tourne avec la distance, voir ondeDesRayons.
+             float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons - (${RAYONS_DANS_LA_CARTE.onde.amplitude.toFixed(4)} * min(1.0, length(dr) / ${RAYONS_DANS_LA_CARTE.onde.calme.toFixed(4)}) * sin(length(dr) * ${(RAYONS_DANS_LA_CARTE.onde.frequence * Math.PI * 2).toFixed(4)}))) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
              // LES SOMBRES BRILLENT À LEUR PART : sans elle, la lampe multipliait les
              // clairs jusqu'à six fois et l'éclaircissement des sombres ne se voyait
              // pas (« je vois pas trop de différence »). Voir ECLAIRE_SOMBRES.

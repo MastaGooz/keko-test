@@ -1709,6 +1709,28 @@ export const ECLAIRE_SOMBRES = (() => {
  */
 export const COIN_DE_LA_PLAQUE = { haut: HAUT_BULLE, r: (5 * U) / LARGE, aspect: HAUT / LARGE } as const
 
+/**
+ * LES RAYONS ONDULENT EN FLAMMES. Keko : « changer les rayons pour d'autres
+ * formes (même couleur, même fonctionnement) », puis « essaie 1 » — des langues
+ * de feu, la taverne et ses bougies. *Le système ne bouge pas* : seize secteurs
+ * alternés, clairs et sombres, le même fondu, le même cœur, le même brillant ;
+ * seul le BORD de chaque secteur se courbe — son angle se décale d'une onde qui
+ * dépend de la distance au centre (`ondeDesRayons`). Calme au centre, elle
+ * s'ouvre en s'éloignant : les secteurs deviennent des flammes qui se tordent.
+ * Le peintre, le nuanceur (brillant, rayons tournants) et le brillant des
+ * vignettes lisent la même onde. `?flammes=0` rend les rayons droits.
+ */
+const ONDE_FLAMMES = (() => {
+  const sans = typeof location !== 'undefined' && new URLSearchParams(location.search).get('flammes') === '0'
+  /** `amplitude` en radians, `frequence` en tours par largeur de carte, `calme` : la distance (en largeurs) où l'onde atteint son ampleur. */
+  return { amplitude: sans ? 0 : 0.34, frequence: 2.3, calme: 0.16 }
+})()
+/** De combien l'angle d'un bord de rayon tourne à la distance `r` du centre (en largeurs de carte). */
+export function ondeDesRayons(r: number): number {
+  const o = ONDE_FLAMMES
+  return o.amplitude * Math.min(1, r / o.calme) * Math.sin(r * o.frequence * Math.PI * 2)
+}
+
 export const RAYONS_DANS_LA_CARTE = (() => {
   const marge = CONTOURS[PISTE_CONTOUR] * U
   const x = marge / LARGE
@@ -1722,10 +1744,15 @@ export const RAYONS_DANS_LA_CARTE = (() => {
     h,
     nombre: NB_RAYONS,
     depart: 0.21,
+    /** L'ONDE DES FLAMMES : voir `ondeDesRayons`. */
+    onde: ONDE_FLAMMES,
     /** Le rayon du fondu, en largeurs : la demi-diagonale de la fenêtre. */
     rayon: Math.hypot(l, h * 1.4) / 2,
   }
 })()
+
+/** Les points par bord de flamme : assez pour une courbe lisse à la taille d'une carte zoomée. */
+const PAS_FLAMME = 64
 
 function peindreRayons(
   ctx: CanvasRenderingContext2D,
@@ -1762,10 +1789,23 @@ function peindreRayons(
       ctx.globalAlpha = a * part
       for (let i = debut; i < NB_RAYONS; i += 2) {
         const a0 = depart + i * pas
-        const a1 = a0 + pas
+        // UNE FLAMME : un bord qui part du centre en ondulant, l'arc du
+        // dehors, l'autre bord qui revient — décalé d'un secteur, même onde.
+        const bout = rayon * 1.05
         ctx.beginPath()
         ctx.moveTo(cx, cy)
-        ctx.arc(cx, cy, rayon * 1.05, a0, a1)
+        for (let s = 1; s <= PAS_FLAMME; s++) {
+          const r = (bout * s) / PAS_FLAMME
+          const a = a0 + ondeDesRayons(r / LARGE)
+          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
+        }
+        const dehors = ondeDesRayons(bout / LARGE)
+        ctx.arc(cx, cy, bout, a0 + dehors, a0 + pas + dehors)
+        for (let s = PAS_FLAMME; s >= 1; s--) {
+          const r = (bout * s) / PAS_FLAMME
+          const a = a0 + pas + ondeDesRayons(r / LARGE)
+          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
+        }
         ctx.closePath()
         ctx.fill()
       }

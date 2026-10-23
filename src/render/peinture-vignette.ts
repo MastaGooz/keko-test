@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { RAYON_SIMPLE } from './texture-carte.ts'
+import { RAYON_SIMPLE, ondeDesRayons } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -318,7 +318,8 @@ export function brillantDuRepos(
       if (!sansRayons && u >= R.x && u <= R.x + R.l && v >= R.y && v <= R.y + R.h) {
         const dx = u - cx
         const dy = (v - cy) * 1.4
-        const a = Math.atan2(dy, dx) - R.depart
+        // LES FLAMMES : le bord tourne avec la distance, voir `ondeDesRayons`.
+        const a = Math.atan2(dy, dx) - R.depart - ondeDesRayons(Math.hypot(dx, dy))
         const fr = ((a / secteur) % 1 + 1) % 1
         // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES.
         const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * fondu(0, 0.025, fr) * (1 - fondu(0.475, 0.5, fr))
