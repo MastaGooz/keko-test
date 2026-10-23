@@ -5623,23 +5623,70 @@ function peindreCuir(
   rayon = 0,
   couture = true,
 ): void {
+  // LE CAPITONNÉ : des losanges rembourrés, un clou d'or à chaque croisement.
+  // Keko : « c'est la même texture que le background » — la marbrure en
+  // taches rondes et floues se lisait comme les bokehs du fond. *Une texture
+  // nette et géométrique ne se confond pas avec un décor flou.*
   if (!masque) {
-    let s = 0x5eed
-    const hasard = (): number => {
-      s = (s * 1664525 + 1013904223) >>> 0
-      return s / 4294967296
-    }
+    const pas = 12 * u
+    const cx = l / 2
+    const cy = h / 2
+    const n = Math.ceil((l + h) / pas) + 2
     ctx.save()
-    for (let i = 0; i < 70; i++) {
-      const x = hasard() * l
-      const y = hasard() * h
-      const r = (6 + hasard() * 16) * u
-      const clair = hasard() < 0.45
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-      g.addColorStop(0, clair ? '#f2d6ff1a' : '#10031a2c')
-      g.addColorStop(1, clair ? '#f2d6ff00' : '#10031a00')
-      ctx.fillStyle = g
-      ctx.fillRect(x - r, y - r, r * 2, r * 2)
+    // Chaque losange se bombe : clair en haut, sombre en bas.
+    for (let a = -n; a <= n; a++) {
+      for (let b = -n; b <= n; b++) {
+        const x = cx + ((a + b + 1) * pas) / 2
+        const y = cy + ((a - b) * pas) / 2
+        if (x < -pas || x > l + pas || y < -pas || y > h + pas) continue
+        const g = ctx.createLinearGradient(x, y - pas / 2, x, y + pas / 2)
+        g.addColorStop(0, '#f2d6ff1c')
+        g.addColorStop(0.45, '#f2d6ff00')
+        g.addColorStop(1, '#10031a3a')
+        ctx.beginPath()
+        ctx.moveTo(x, y - pas / 2)
+        ctx.lineTo(x + pas / 2, y)
+        ctx.lineTo(x, y + pas / 2)
+        ctx.lineTo(x - pas / 2, y)
+        ctx.closePath()
+        ctx.fillStyle = g
+        ctx.fill()
+      }
+    }
+    // LES SILLONS : un creux sombre, et la lèvre éclairée juste dessous.
+    const sillons = (dy: number): void => {
+      ctx.beginPath()
+      for (let k = -n; k <= n; k++) {
+        const o = k * pas
+        ctx.moveTo(cx + o - h, cy + dy - h)
+        ctx.lineTo(cx + o + h, cy + dy + h)
+        ctx.moveTo(cx + o + h, cy + dy - h)
+        ctx.lineTo(cx + o - h, cy + dy + h)
+      }
+    }
+    sillons(0)
+    ctx.strokeStyle = '#10031a99'
+    ctx.lineWidth = 0.9 * u
+    ctx.stroke()
+    sillons(0.6 * u)
+    ctx.strokeStyle = '#e6c8ff24'
+    ctx.lineWidth = 0.45 * u
+    ctx.stroke()
+    // LES CLOUS D'OR aux croisements.
+    for (let a = -n; a <= n; a++) {
+      for (let b = -n; b <= n; b++) {
+        const x = cx + ((a + b) * pas) / 2
+        const y = cy + ((a - b) * pas) / 2
+        if (x < 0 || x > l || y < 0 || y > h) continue
+        const g = ctx.createRadialGradient(x - 0.3 * u, y - 0.3 * u, 0, x, y, 0.9 * u)
+        g.addColorStop(0, OR_CLAIR)
+        g.addColorStop(0.6, OR_MOYEN)
+        g.addColorStop(1, OR_SOMBRE)
+        ctx.beginPath()
+        ctx.arc(x, y, 0.9 * u, 0, Math.PI * 2)
+        ctx.fillStyle = g
+        ctx.fill()
+      }
     }
     ctx.restore()
   }
