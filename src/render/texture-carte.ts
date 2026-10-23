@@ -1891,7 +1891,7 @@ export const PERSONNAGES_VITRINE = [
   'cartes/orc/epiques/06-tambour-de-guerre.webp',
   'cartes/gobelin/epiques/05-illusionniste.webp',
   'cartes/orc/epiques/04-sorciere-du-sang.webp',
-  'cartes/gobelin/rares/03-fauconniere.webp',
+  'cartes/gobelin/rares/03-vautouriere.webp',
   'cartes/orc/rares/04-lutteur-d-ours.webp',
 ] as const
 
