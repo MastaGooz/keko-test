@@ -1729,35 +1729,112 @@ export const COIN_DE_LA_PLAQUE = { haut: HAUT_BULLE, r: (5 * U) / LARGE, aspect:
  * bon, on vire ») ; `git log` la garde. `?flammes=0` reste un nom des rayons
  * droits.
  */
-export type MotifDesRayons = 'droits' | 'flammes'
+export type MotifDesRayons = 'droits' | 'flammes' | 'eclat'
 export const MOTIF_DES_RAYONS: MotifDesRayons = (() => {
   const p = typeof location === 'undefined' ? null : new URLSearchParams(location.search)
   const m = p?.get('motif')
-  if (m === 'droits' || m === 'flammes') return m
+  if (m === 'droits' || m === 'flammes' || m === 'eclat') return m
   if (p?.get('flammes') === '0') return 'droits'
-  return 'flammes'
+  return 'eclat'
 })()
 const ONDE_FLAMMES = (() => {
   /** `amplitude` en radians, `frequence` en tours par largeur de carte, `calme` : la distance (en largeurs) où l'onde atteint son ampleur. */
   return { amplitude: MOTIF_DES_RAYONS === 'flammes' ? 0.34 : 0, frequence: 2.3, calme: 0.16 }
 })()
-/** UNE LARGEUR DE CLAIR QUI VARIE avec la distance : aucun motif gardé ne s'en sert (la rosace s'en servait). */
-const PETALE: { large: number; longueur: number; courbe: number } | null = null
 /** De combien l'angle d'un bord de rayon tourne à la distance `r` du centre (en largeurs de carte). */
 export function ondeDesRayons(r: number): number {
   const o = ONDE_FLAMMES
   return o.amplitude * Math.min(1, r / o.calme) * Math.sin(r * o.frequence * Math.PI * 2)
 }
-/** La demi-largeur d'un clair à la distance `r` (en largeurs), en part de la paire de secteurs : 0,25 pour un rayon. */
-export function largeurDesRayons(r: number): number {
-  if (PETALE === null) return 0.25
-  return PETALE.large * Math.pow(Math.sin(Math.PI * Math.min(1, r / PETALE.longueur)), PETALE.courbe)
+
+/**
+ * LES CLAIRS D'UN MOTIF : `nombre` formes réparties sur le tour, chacune dans
+ * sa CASE (un tour / `nombre`). `centre` : où tombe l'axe dans la case (en part
+ * de case) ; par forme, `decale` le déplace, `large` est sa demi-largeur (en
+ * part de case, au centre de la carte) et `longueur` la distance où elle se
+ * referme en pointe (en largeurs ; `null` : elle ne se referme pas). *Une forme
+ * reste dans sa case* (`large + |decale| ≤ 0,5`) : le nuanceur ne lit que la
+ * sienne.
+ *
+ * - les RAYONS (droits, flammes) : huit clairs d'un secteur sur deux, demi-case ;
+ * - L'ÉCLAT (Keko : « la 1 ») : seize pointes de largeurs, de longueurs et de
+ *   places inégales, comme un sort qui éclate ou un coffre qui s'ouvre. Le
+ *   tirage est écrit ici, le même pour toutes les cartes.
+ */
+const FORMES_DES_CLAIRS: {
+  nombre: number
+  centre: number
+  formes: readonly { decale: number; large: number; longueur: number | null }[]
+} =
+  MOTIF_DES_RAYONS === 'eclat'
+    ? {
+        nombre: 16,
+        centre: 0.5,
+        formes: [
+          [0, 0.3, 0.74], [0.15, 0.12, 0.46], [-0.1, 0.22, 0.6], [0.2, 0.08, 0.38],
+          [0, 0.34, 0.8], [-0.15, 0.14, 0.5], [0.1, 0.18, 0.56], [-0.2, 0.1, 0.4],
+          [0.05, 0.28, 0.72], [0.18, 0.09, 0.36], [-0.12, 0.24, 0.62], [0.1, 0.13, 0.48],
+          [0, 0.32, 0.77], [-0.18, 0.11, 0.42], [0.12, 0.2, 0.58], [-0.1, 0.15, 0.5],
+        ].map(([decale, large, longueur]) => ({ decale: decale!, large: large!, longueur: longueur! })),
+      }
+    : { nombre: NB_RAYONS / 2, centre: 0.25, formes: Array.from({ length: NB_RAYONS / 2 }, () => ({ decale: 0, large: 0.25, longueur: null })) }
+/** L'exposant de l'affinement d'une pointe : sous 1, elle reste large longtemps et se referme vite. */
+const POINTE = 0.7
+/** La taille d'une case, en radians. */
+const CASE_DES_CLAIRS = (Math.PI * 2) / FORMES_DES_CLAIRS.nombre
+
+/** La demi-largeur de la forme `k` à la distance `r` (en largeurs), en part de case. */
+function largeurDeLaForme(k: number, r: number): number {
+  const f = FORMES_DES_CLAIRS.formes[k]!
+  return f.longueur === null ? f.large : f.large * Math.pow(Math.max(0, 1 - r / f.longueur), POINTE)
 }
-/** La même largeur, en GLSL, pour la distance `r` (une expression) : lue par le nuanceur. */
-export function largeurDesRayonsGlsl(r: string): string {
-  if (PETALE === null) return '0.25'
-  return `(${PETALE.large.toFixed(4)} * pow(max(sin(3.14159265 * min(1.0, ${r} / ${PETALE.longueur.toFixed(4)})), 0.0), ${PETALE.courbe.toFixed(4)}))`
+/** L'axe de la forme `k`, en radians depuis le départ des rayons (sans l'onde). */
+function axeDeLaForme(k: number): number {
+  return (k + FORMES_DES_CLAIRS.centre + FORMES_DES_CLAIRS.formes[k]!.decale) * CASE_DES_CLAIRS
 }
+
+/**
+ * EST-CE CLAIR ICI ? `a` : l'angle depuis le départ des rayons (rotation
+ * comprise), `r` : la distance au centre en largeurs, `flou` : la largeur du
+ * bord en part de case. De 0 (sombre) à 1 (clair). Le peintre trace les mêmes
+ * formes ; le nuanceur en a la copie (`CLAIR_DU_MOTIF_GLSL`).
+ */
+export function clairDuMotif(a: number, r: number, flou: number): number {
+  const n = FORMES_DES_CLAIRS.nombre
+  const q = (a - ondeDesRayons(r)) / CASE_DES_CLAIRS
+  const k = ((Math.floor(q) % n) + n) % n
+  const fr = q - Math.floor(q)
+  const f = FORMES_DES_CLAIRS.formes[k]!
+  const w = largeurDeLaForme(k, r)
+  if (w <= flou) return 0
+  const d = Math.abs(fr - (FORMES_DES_CLAIRS.centre + f.decale))
+  const x = Math.min(1, Math.max(0, (d - (w - flou)) / flou))
+  return 1 - x * x * (3 - 2 * x)
+}
+
+/** `clairDuMotif` en GLSL : une fonction à poser une fois dans le nuanceur. */
+export const CLAIR_DU_MOTIF_GLSL = (() => {
+  const F = FORMES_DES_CLAIRS
+  const n = F.nombre
+  const liste = (v: (f: (typeof F.formes)[number]) => number): string =>
+    `float[${n}](${F.formes.map((f) => v(f).toFixed(4)).join(', ')})`
+  const o = ONDE_FLAMMES
+  return `const float DECALES_CLAIRS[${n}] = ${liste((f) => f.decale)};
+const float LARGES_CLAIRS[${n}] = ${liste((f) => f.large)};
+const float LONGUEURS_CLAIRS[${n}] = ${liste((f) => f.longueur ?? -1)};
+float clairDuMotif(float a, float r, float flou) {
+  float onde = ${o.amplitude.toFixed(4)} * min(1.0, r / ${o.calme.toFixed(4)}) * sin(r * ${(o.frequence * Math.PI * 2).toFixed(4)});
+  float q = (a - onde) / ${CASE_DES_CLAIRS.toFixed(6)};
+  int k = int(mod(floor(q), ${n.toFixed(1)}));
+  float fr = q - floor(q);
+  float L = LONGUEURS_CLAIRS[k];
+  float w = L < 0.0 ? LARGES_CLAIRS[k] : LARGES_CLAIRS[k] * pow(max(0.0, 1.0 - r / L), ${POINTE.toFixed(2)});
+  if (w <= flou) return 0.0;
+  float d = abs(fr - (${F.centre.toFixed(4)} + DECALES_CLAIRS[k]));
+  return 1.0 - smoothstep(w - flou, w, d);
+}
+`
+})()
 
 export const RAYONS_DANS_LA_CARTE = (() => {
   const marge = CONTOURS[PISTE_CONTOUR] * U
@@ -1808,7 +1885,6 @@ function peindreRayons(
   ctx.fillStyle = fondu
   ctx.globalAlpha = force
   const depart = 0.21
-  const pas = (Math.PI * 2) / NB_RAYONS
   // LES SOMBRES À ECLAIRE_SOMBRES, PARTOUT ; LES CLAIRS reçoivent le reste par
   // l'addition (`lighter`) — le nuanceur dit la même chose : mix(part, 1, clair).
   // *Un motif où le clair n'est pas un secteur* (le pétale) n'a plus de sombre
@@ -1823,13 +1899,13 @@ function peindreRayons(
       ctx.fill()
     }
     ctx.globalAlpha = a * (1 - ECLAIRE_SOMBRES)
-    for (let i = 0; i < NB_RAYONS; i += 2) {
-      // LE CLAIR : son axe au milieu du secteur pair, ses deux bords à
-      // ± sa largeur (`largeurDesRayons`), tournés de l'onde (`ondeDesRayons`)
-      // — un rayon, une flamme ou un pétale selon le motif.
-      const axe = depart + (i + 0.5) * pas
+    for (let k = 0; k < FORMES_DES_CLAIRS.nombre; k++) {
+      // LE CLAIR : son axe dans sa case, ses deux bords à ± sa largeur
+      // (`largeurDeLaForme`), tournés de l'onde (`ondeDesRayons`) — un rayon,
+      // une flamme ou une pointe selon le motif.
+      const axe = depart + axeDeLaForme(k)
       const bord = (r: number, cote: number): number =>
-        axe + ondeDesRayons(r / LARGE) + cote * largeurDesRayons(r / LARGE) * 2 * pas
+        axe + ondeDesRayons(r / LARGE) + cote * largeurDeLaForme(k, r / LARGE) * CASE_DES_CLAIRS
       ctx.beginPath()
       ctx.moveTo(cx, cy)
       for (let s = 1; s <= PAS_FLAMME; s++) {
@@ -1837,7 +1913,7 @@ function peindreRayons(
         const b = bord(r, -1)
         ctx.lineTo(cx + Math.cos(b) * r, cy + Math.sin(b) * r)
       }
-      if (largeurDesRayons(bout / LARGE) > 0) ctx.arc(cx, cy, bout, bord(bout, -1), bord(bout, 1))
+      if (largeurDeLaForme(k, bout / LARGE) > 0) ctx.arc(cx, cy, bout, bord(bout, -1), bord(bout, 1))
       for (let s = PAS_FLAMME; s >= 1; s--) {
         const r = (bout * s) / PAS_FLAMME
         const b = bord(r, 1)

@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { RAYON_SIMPLE, largeurDesRayons, ondeDesRayons } from './texture-carte.ts'
+import { RAYON_SIMPLE, clairDuMotif } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -298,7 +298,6 @@ export function brillantDuRepos(
   const R = RAYONS_DANS_LA_CARTE
   const cx = R.x + R.l / 2
   const cy = R.y + R.h / 2
-  const secteur = (Math.PI * 4) / R.nombre
   const rr = R.rayon
   for (let j = 0; j < h; j++) {
     const v = (j + 0.5) / h
@@ -318,13 +317,9 @@ export function brillantDuRepos(
       if (!sansRayons && u >= R.x && u <= R.x + R.l && v >= R.y && v <= R.y + R.h) {
         const dx = u - cx
         const dy = (v - cy) * 1.4
-        // LES FLAMMES : le bord tourne avec la distance, voir `ondeDesRayons`.
-        const a = Math.atan2(dy, dx) - R.depart - ondeDesRayons(Math.hypot(dx, dy))
-        const fr = ((a / secteur) % 1 + 1) % 1
-        // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES.
-        // LE CLAIR : autour de l'axe du secteur pair, à sa largeur (voir `largeurDesRayons`).
-        const w = largeurDesRayons(Math.hypot(dx, dy))
-        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * (w < 0.026 ? 0 : 1 - fondu(w - 0.025, w, Math.abs(fr - 0.25)))
+        // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES ;
+        // le clair est celui du motif (`clairDuMotif`).
+        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * clairDuMotif(Math.atan2(dy, dx) - R.depart, Math.hypot(dx, dy), 0.025)
         const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib

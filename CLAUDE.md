@@ -156,7 +156,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   de quatre clous ; le sachet du même cuir porte le même symbole
   (`?marque=ancienne` : le blason peint et le bouquet de personnages) ; la plaque est un parchemin
   (`PLAQUE_CLAIRE`), l'encre brune ; titre du sachet et noms en **Grenze 800**
-  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; les rayons ont un MOTIF (`MOTIF_DES_RAYONS`, `?motif=flammes|droits`, flammes par défaut, rosace essayée et retirée : `ondeDesRayons` + `largeurDesRayons`, lues par le peintre, le nuanceur et le brillant des vignettes) — *le masque du sujet, le cerne holo et le relief en dépendent : on change la forme, pas le système* ; le
+  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; les rayons ont un MOTIF (`MOTIF_DES_RAYONS`, `?motif=eclat|flammes|droits`, l'éclat par défaut — seize pointes inégales —, rosace essayée et retirée : `FORMES_DES_CLAIRS` + `ondeDesRayons`, une seule fonction `clairDuMotif` lue par le brillant des vignettes et, en GLSL (`CLAIR_DU_MOTIF_GLSL`), par le nuanceur ; le peintre trace les mêmes formes) — *le masque du sujet, le cerne holo et le relief en dépendent : on change la forme, pas le système* ; le
   blanc des communes tire vers l'ivoire. Cache par rayon et par piste.
 
 ### L'ouverture — portrait, une carte à la fois

@@ -56,7 +56,7 @@ import {
   rayonsDuCran,
   ECLAIRE_SOMBRES,
   COIN_DE_LA_PLAQUE,
-  largeurDesRayonsGlsl,
+  CLAIR_DU_MOTIF_GLSL,
 } from './texture-carte.ts'
 
 /**
@@ -1248,11 +1248,8 @@ ${nuanceur.vertexShader}`.replace(
              vec2 tpT = vec2(bF.x, 1.0 - bF.y);
              vec2 crT = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l * 0.5).toFixed(4)}, ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h * 0.5).toFixed(4)});
              vec2 drT = vec2(tpT.x - crT.x, (tpT.y - crT.y) * 1.4);
-             // LES FLAMMES : le bord tourne avec la distance, voir ondeDesRayons.
-             float frT = fract((atan(drT.y, drT.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons - (${RAYONS_DANS_LA_CARTE.onde.amplitude.toFixed(4)} * min(1.0, length(drT) / ${RAYONS_DANS_LA_CARTE.onde.calme.toFixed(4)}) * sin(length(drT) * ${(RAYONS_DANS_LA_CARTE.onde.frequence * Math.PI * 2).toFixed(4)}))) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
-             // LE CLAIR : autour de l'axe du secteur pair, à sa largeur (voir largeurDesRayons).
-             float wT = ${largeurDesRayonsGlsl('length(drT)')};
-             float secteurT = step(0.011, wT) * (1.0 - smoothstep(max(wT - 0.01, 0.0), wT, abs(frT - 0.25)));
+             // LE CLAIR DU MOTIF (rayon, flamme, pointe) : voir clairDuMotif.
+             float secteurT = clairDuMotif(atan(drT.y, drT.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons, length(drT), 0.01);
              float rT = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float lT = length(drT);
              float fonduT = 1.0 - clamp((lT - rT * 0.08) / (rT * 0.92), 0.0, 1.0);
@@ -1554,14 +1551,11 @@ ${nuanceur.vertexShader}`.replace(
              float fenetre = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tp.x) * step(tp.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
                * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tp.y) * step(tp.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
              // LE BRILLANT TOURNE AVEC LES RAYONS (uAngleRayons, 0 hors légendaires).
-             // LES FLAMMES : le bord tourne avec la distance, voir ondeDesRayons.
-             float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons - (${RAYONS_DANS_LA_CARTE.onde.amplitude.toFixed(4)} * min(1.0, length(dr) / ${RAYONS_DANS_LA_CARTE.onde.calme.toFixed(4)}) * sin(length(dr) * ${(RAYONS_DANS_LA_CARTE.onde.frequence * Math.PI * 2).toFixed(4)}))) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
              // LES SOMBRES BRILLENT À LEUR PART : sans elle, la lampe multipliait les
              // clairs jusqu'à six fois et l'éclaircissement des sombres ne se voyait
              // pas (« je vois pas trop de différence »). Voir ECLAIRE_SOMBRES.
-             // LE CLAIR : autour de l'axe du secteur pair, à sa largeur (voir largeurDesRayons).
-             float wR = ${largeurDesRayonsGlsl('length(dr)')};
-             float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, step(0.026, wR) * (1.0 - smoothstep(max(wR - 0.025, 0.0), wR, abs(fr - 0.25))));
+             // LE CLAIR DU MOTIF (rayon, flamme, pointe) : voir clairDuMotif.
+             float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, clairDuMotif(atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons, length(dr), 0.025));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
              float libre = texture2D(uMasqueSujet, vLustreUv).r;
@@ -1722,6 +1716,8 @@ uniform float uSilhouetteOk;
 uniform sampler2D uColles;
 uniform sampler2D uCollesHolo;
 uniform float uCollesHoloOk;
+// LE MOTIF DES RAYONS : voir clairDuMotif dans texture-carte.
+${CLAIR_DU_MOTIF_GLSL}
 // LA SILHOUETTE DU STICKER : l'alpha de l'image posée par la peinture ; à
 // défaut (l'animé), là où la carte entière diffère de la carte nue.
 float stickerEn(vec2 q) {
