@@ -142,10 +142,10 @@
   },
   {
    "id": "gobelin-epique-08",
-   "nom": "Gardienne des clés",
+   "nom": "Gardien des clés",
    "race": "gobelin",
    "role": "magie",
-   "sexe": "f",
+   "sexe": "h",
    "rarete": "epique",
    "image": "cartes/gobelin/epiques/08-gardienne-des-cles.webp",
    "rang": 15
@@ -342,10 +342,10 @@
   },
   {
    "id": "orc-rare-03",
-   "nom": "Massacreur",
+   "nom": "Massacreuse",
    "race": "orc",
    "role": "melee",
-   "sexe": "h",
+   "sexe": "f",
    "rarete": "rare",
    "image": "cartes/orc/rares/03-massacreur.webp",
    "rang": 35

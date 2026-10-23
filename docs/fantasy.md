@@ -505,7 +505,7 @@ fine, pas le bric-à-brac du Bricoleur.
 5. **Illusionniste** · ♂ · un masque souriant tenu devant le visage dans la main gauche, cartes et foulards qui jaillissent de la manche droite. Cape violette étoilée, deux reflets translucides de lui-même de chaque côté.
 6. **Électromancienne** · ♀ · une bobine de cuivre crépitante dans la main droite levée, éclairs bleus entre ses doigts. Cheveux dressés par l'électricité, lunettes de soudeuse, batterie bricolée dans le dos reliée par des câbles.
 7. **Essaimancienne** · ♀ · rien dans les mains : les deux bras tendus dirigent un nuage de sauterelles et de scarabées qui tourbillonne autour d'elle. Châle de toile percée, yeux à facettes peints sur le front, antennes de criquet dans les cheveux.
-8. **Gardienne des clés** · ♀ · un bâton crochu dans la main droite où pend une lanterne aux flammes spectrales vertes, une grosse clé ancienne dans la gauche. Grande capuche verte en lambeaux, sourire en coin, feux follets qui flottent autour d'elle.
+8. **Gardien des clés** · ♂ · un bâton crochu dans la main droite où pend une lanterne aux flammes spectrales vertes, une grosse clé ancienne dans la gauche. Grande capuche verte en lambeaux, sourire en coin, feux follets qui flottent autour de lui.
 
 - **Keko** (22/10) a généré les 7, plus **un extra hors fiche** : une
   gobeline encapuchonnée de vert, une lanterne aux flammes spectrales
@@ -637,7 +637,7 @@ L'orc passe à 24 hommes, 22 femmes.
 
 1. **Combattante de l'arène** · ♀ · un couperet court dans la main droite, un bouclier rond hérissé de pointes au bras gauche. Chaînes brisées aux poignets, sable de l'arène qui vole sous ses pieds, pièces et fleurs jetées par la foule autour d'elle, poing levé de victoire.
 2. **Ravageur** · ♂ · une chaîne énorme dans la main droite, qui traîne derrière lui une porte de palissade arrachée. Hache passée dans la ceinture, éclats de bois qui volent, piquets brisés à ses pieds, cri de charge.
-3. **Massacreur** · ♂ · une grande hache à double lame tenue à deux mains, lancée dans un tourbillon. Traînées de mouvement en cercle autour de lui, poussière soulevée, tresses qui fouettent l'air, crocs serrés.
+3. **Massacreuse** · ♀ · une grande hache à double lame tenue à deux mains, lancée dans un tourbillon. Traînées de mouvement en cercle autour d'elle, poussière soulevée, tresses qui fouettent l'air, crocs serrés.
 4. **Lutteur d'ours** · ♂ · aucune arme : les deux bras serrés autour du cou d'un ours brun dressé contre lui. Torse nu couvert de griffures, ceinture de champion en fer, pieds arc-boutés dans la terre, sourire de défi.
 5. **Lanceuse de harpon** · ♀ · un harpon barbelé levé dans la main droite, la corde enroulée sur l'avant-bras gauche. Debout à la proue d'un radeau de rondins, gerbe d'eau, une grande anguille de mer qui jaillit des vagues devant elle.
 6. **Lanceur de rochers** · ♂ · la main droite qui abat le levier d'une petite catapulte de bois à bras, un rocher qui part du godet. Tas de rochers à côté, cordes et roues grossières, éclats de pierre en l'air, bouche ouverte de plaisir.
@@ -659,7 +659,10 @@ L'orc passe à 24 hommes, 22 femmes.
   `public/generations/orc/rares/` (`01-combattante-de-l-arene.png` …
   `10-meneuse-d-ours.png`, numérotées comme cette fiche) ; une goutte de la
   gerbe du harpon, tombée chez le Lanceur de rochers, a été retirée à la
-  main. Le Massacreur, tresses et visage fin, se lit plutôt en femme.
+  main. Le Massacreur, tresses et visage fin, se lisait plutôt en femme :
+  **renommé Massacreuse** (Keko, 23/10), avec le Gardien des clés passé au
+  masculin chez les épiques gobelins. Rares orcs : 4 hommes, 6 femmes ;
+  épiques gobelins : 4 hommes, 4 femmes.
 
 **Épiques orcs : 2 hommes, 4 femmes** (proposition, 23/10/2026 ; échange du 23/10 compris) — **une
 monture, une machine ou une explosion** qui occupe l'image, une tenue plus
