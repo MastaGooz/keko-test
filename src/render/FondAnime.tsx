@@ -34,15 +34,15 @@
  * peint avant que sa police soit là retombe sur la police système.
  */
 import { useEffect, useRef } from 'react'
-import { AMBIANCE, PERSONNAGES_VITRINE, imageDuPersonnage } from './texture-carte.ts'
+import { PERSONNAGES_VITRINE, imageDuPersonnage } from './texture-carte.ts'
 
-/** Les couleurs des bokehs : les cinq crans, par leur lueur d'ambiance. */
-const COULEURS = ['blanc', 'vert', 'bleu', 'violet', 'orange'].map((c) => AMBIANCE[c]!)
+/** Les couleurs des bokehs : des flammes de bougie, la taverne (Keko : « taverne & parchemin »). */
+const COULEURS = ['#ffb347', '#ff8a2a', '#ffd27a', '#e8603c', '#ffcf8a']
 
 const NB_BOKEHS = 16
 // UN PERSONNAGE SE LIT PLUS GRAND QU'UN EMOJI : moins nombreux, quatre fois
 // plus gros, plus effacés — sinon ce sont des miettes.
-const NB_EMOJI = 12
+const NB_EMOJI = 8
 /** La densité de pixels du fond, plafonnée : *rien n'y est net.* */
 const DPR_MAX = 1
 /** Trente images par seconde suffisent à un fond qui dérive. */
@@ -148,7 +148,7 @@ export function FondAnime(): React.ReactElement {
         phase: hasard() * Math.PI * 2,
         rot: (hasard() - 0.5) * 0.6,
         vrot: (hasard() - 0.5) * 0.16,
-        alpha: 0.35 + hasard() * 0.25,
+        alpha: 0.18 + hasard() * 0.14,
       }))
       // FIGÉ, on repeint une fois les glyphes là : sinon le fond resterait sans eux.
       if (fige) peindre(0)

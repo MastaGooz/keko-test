@@ -849,7 +849,8 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
    * d'une échelle ne doit pas se lire comme un métal précieux*, et le blanc
    * pur est déjà pris par le diamant de l'autre échelle.
    */
-  blanc: ['#f2f4f6', '#878d94', '#c8ced4', '#42464b', '#e2e6ea'],
+  // LE BLANC TIRE VERS L'IVOIRE (la taverne) : un gris-bleu détonnait sur le bois.
+  blanc: ['#f6f1e6', '#8f877a', '#d2c9b8', '#48423a', '#e8e1d2'],
   vert: ['#c9f0cf', '#2f7a42', '#68c182', '#11341c', '#a4e2b1'],
   bleu: ['#c6e2ff', '#205b9e', '#5a9ede', '#0d2742', '#9fcdfa'],
   violet: ['#e0ccff', '#5c2f9e', '#9a6ddb', '#2a1346', '#c7a7f5'],
@@ -1012,9 +1013,11 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
  * Mesuré sur le pire cran (le bleu, qui descend le plus) : **nom 5,6,
  * cartouche 5,2, type 5,1.**
  */
-const NOM_BULLE = '#111920'
-const CARTOUCHE_BULLE = '#16202a'
-const TYPE_BULLE = '#0d141b'
+// L'ENCRE BRUNE DU PARCHEMIN (la taverne, 23/10/2026) : le noir-bleu d'avant
+// parlait le téléphone.
+const NOM_BULLE = '#2a170b'
+const CARTOUCHE_BULLE = '#3a2416'
+const TYPE_BULLE = '#24140a'
 
 // LA PLAQUE REDEVIENT UN BLANC LÉGÈREMENT TEINTÉ. Keko, une fois le décor
 // passé à la nuit du cran : « on peut éclaircir les encadrés là où il y a le
@@ -1026,7 +1029,8 @@ const TYPE_BULLE = '#0d141b'
 // dans git log, avec leurs mesures.
 const PIGMENT_PLAQUE = [0.45, 0.55, 0.6] as const
 const LUM_PLAQUE = [0.94, 0.88, 0.85] as const
-const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
+// LA PLAQUE EST UN PARCHEMIN (la taverne) : crème chaud en haut, ocre clair en bas.
+const PLAQUE_CLAIRE = ['#fbf3dd', '#f1e3c0', '#e6d2a8'] as const
 /**
  * La part de couleur du cran dans la pastille du type, le reste est blanc.
  * **Le blanc prend son ton moyen entier** : à 0,42 il sortait à `#e8ebed` sur
@@ -1388,7 +1392,7 @@ export const AMBIANCE: Record<string, string> = {
 
   // LES CINQ COULEURS, saturées d'un cran : *un pigment ne survit pas à la
   // diffusion*, donc un halo doit crier un peu plus que le cadre qu'il annonce.
-  blanc: '#dfe6ee',
+  blanc: '#efe6d6',
   vert: '#4fd97a',
   bleu: '#4fa3ff',
   violet: '#b36bff',
@@ -1406,7 +1410,7 @@ export const METAL_3D: Record<string, string> = {
 
   // LA TRANCHE SUIT LE CADRE ici aussi : un cheveu plus sombre que le plateau,
   // puisqu'elle est vue de côté.
-  blanc: '#cfd5db',
+  blanc: '#d9cfbf',
   vert: '#4f9e63',
   bleu: '#3f7fbf',
   violet: '#7d4fb8',
@@ -3887,6 +3891,14 @@ function enMots(entree: string): Mot[] {
 const SERIF_EFFET = '"Crimson Pro", Georgia, serif'
 const RONDE = 'Baloo 2'
 export const FAMILLE_RONDE = `"${RONDE}", "Trebuchet MS", sans-serif`
+/**
+ * LA TITRAILLE FANTASY : Grenze 800, épaisse et lisible, dans l'esprit des
+ * jeux de cartes fantasy cartoon. Keko : « une titraille fantasy, Baloo pour
+ * le reste » — le titre du sachet et les noms des cartes ; Baloo garde le
+ * texte courant. Elle se demande avec la ronde (`policeRonde`).
+ */
+const TITRE = 'Grenze'
+export const FAMILLE_TITRE = `"${TITRE}", Georgia, serif`
 
 let RONDE_PRETE: Promise<unknown> | null = null
 export function policeRonde(): Promise<unknown> {
@@ -3894,6 +3906,7 @@ export function policeRonde(): Promise<unknown> {
     document.fonts.load(`400 64px "${RONDE}"`),
     document.fonts.load(`700 64px "${RONDE}"`),
     document.fonts.load(`800 64px "${RONDE}"`),
+    document.fonts.load(`800 64px "${TITRE}"`),
   ]).catch(() => null)
   return RONDE_PRETE
 }
@@ -5190,7 +5203,7 @@ function peindreTextes(
    */
   const tientDans = LARGE * (bulle ? 0.88 : 0.78)
   const policeNom = (t: number): string =>
-    bulle ? `800 ${t}px ${FAMILLE_RONDE}` : `700 ${t}px "Grenze Gotisch", Georgia, serif`
+    bulle ? `800 ${t}px ${FAMILLE_TITRE}` : `700 ${t}px "Grenze Gotisch", Georgia, serif`
   /**
    * LE TRAIT NE COMPTE QU'EN GABARIT, et c'est lui qui décide du cran.
    *
@@ -5567,7 +5580,174 @@ export function dosDe(carte: CarteAPeindre): 'emoji' | 'gabarit' {
  * et du dither de la face** : *le dos est la même carte vue de l'autre côté, il
  * n'a pas à être fait d'une autre matière.*
  */
-const DOS_BLEU: readonly [number, number, number] = [44, 96, 214]
+// (Le bleu d'avant valait [44, 96, 214] : voir `DOS_CUIR`.)
+
+/**
+ * LE CUIR DE LA TAVERNE (23/10/2026). Keko : « reskin / repenser la DA pour
+ * matcher le nouveau thème », direction « taverne & parchemin » : le dos et le
+ * sachet passent du bleu d'application à un cuir brun, cousu, frappé d'un
+ * blason doré.
+ */
+const DOS_CUIR: readonly [number, number, number] = [112, 62, 36]
+/** Les trois ors du blason et du liseré, du reflet à l'ombre. */
+const OR_CLAIR = '#ffe9a8'
+const OR_MOYEN = '#e0b048'
+const OR_SOMBRE = '#8a5a1c'
+/** L'encre brune des traits : le cerne du blason, les armes, les titres. */
+const BRUN_ENCRE = '#2a160a'
+
+/**
+ * LA MATIÈRE DU CUIR : des marbrures douces, plus sombres et plus claires,
+ * puis une couture crème le long du bord. *Une matière n'est pas un tirage de
+ * partie* : les marbrures viennent d'un hasard à graine fixe, le même à chaque
+ * peinture. En masque (la brillance du sachet), seule la couture brille.
+ */
+function peindreCuir(
+  ctx: CanvasRenderingContext2D,
+  l = LARGE,
+  h = HAUT,
+  u = U,
+  masque = false,
+  retrait = 5.5,
+  rayon = 0,
+): void {
+  if (!masque) {
+    let s = 0x5eed
+    const hasard = (): number => {
+      s = (s * 1664525 + 1013904223) >>> 0
+      return s / 4294967296
+    }
+    ctx.save()
+    for (let i = 0; i < 70; i++) {
+      const x = hasard() * l
+      const y = hasard() * h
+      const r = (6 + hasard() * 16) * u
+      const clair = hasard() < 0.45
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+      g.addColorStop(0, clair ? '#ffdcae1c' : '#1a0a0226')
+      g.addColorStop(1, clair ? '#ffdcae00' : '#1a0a0200')
+      ctx.fillStyle = g
+      ctx.fillRect(x - r, y - r, r * 2, r * 2)
+    }
+    ctx.restore()
+  }
+  // LA COUTURE : un sillon sombre, puis le fil crème en pointillés par-dessus.
+  const m = retrait * u
+  const chemin = (): void => {
+    ctx.beginPath()
+    ctx.roundRect(m, m, l - m * 2, h - m * 2, Math.max(0, rayon - m))
+  }
+  ctx.save()
+  if (!masque) {
+    chemin()
+    ctx.strokeStyle = '#1a0a0255'
+    ctx.lineWidth = 1.6 * u
+    ctx.stroke()
+  }
+  chemin()
+  ctx.setLineDash([2.6 * u, 1.9 * u])
+  ctx.lineCap = 'round'
+  ctx.strokeStyle = masque ? '#ffffff' : '#f0dcae'
+  ctx.lineWidth = 0.85 * u
+  ctx.stroke()
+  ctx.restore()
+}
+
+/**
+ * LE BLASON : un écu d'or cerné de brun, un champ de cuir rouge, et deux armes
+ * croisées — la hache de l'orc, la dague du gobelin. *Le signe de la
+ * collection dit ce qu'elle contient*, comme le bouquet avant lui. `w` est sa
+ * largeur ; il fait 1,2 fois plus haut.
+ */
+function peindreBlason(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, masque = false): void {
+  const h = w * 1.2
+  const ecu = (k: number): void => {
+    const lw = w * k
+    const lh = h * k
+    const x0 = cx - lw / 2
+    const y0 = cy - lh / 2
+    ctx.beginPath()
+    ctx.moveTo(x0, y0 + lh * 0.06)
+    ctx.quadraticCurveTo(cx, y0 - lh * 0.04, x0 + lw, y0 + lh * 0.06)
+    ctx.lineTo(x0 + lw, y0 + lh * 0.5)
+    ctx.quadraticCurveTo(x0 + lw, y0 + lh * 0.82, cx, y0 + lh)
+    ctx.quadraticCurveTo(x0, y0 + lh * 0.82, x0, y0 + lh * 0.5)
+    ctx.closePath()
+  }
+  ctx.save()
+  if (masque) {
+    ecu(1.06)
+    ctx.fillStyle = '#ffffff'
+    ctx.fill()
+    ctx.restore()
+    return
+  }
+  // L'OMBRE PORTÉE : le blason est frappé en relief sur le cuir.
+  ctx.shadowColor = '#00000070'
+  ctx.shadowBlur = w * 0.08
+  ctx.shadowOffsetY = w * 0.04
+  ecu(1.06)
+  ctx.fillStyle = BRUN_ENCRE
+  ctx.fill()
+  ctx.shadowColor = 'transparent'
+  ecu(1)
+  const or = ctx.createLinearGradient(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
+  or.addColorStop(0, OR_CLAIR)
+  or.addColorStop(0.45, OR_MOYEN)
+  or.addColorStop(1, OR_SOMBRE)
+  ctx.fillStyle = or
+  ctx.fill()
+  ecu(0.8)
+  const champ = ctx.createLinearGradient(0, cy - h * 0.4, 0, cy + h * 0.4)
+  champ.addColorStop(0, '#a8321f')
+  champ.addColorStop(1, '#5e170c')
+  ctx.fillStyle = champ
+  ctx.fill()
+  ctx.lineWidth = w * 0.025
+  ctx.strokeStyle = BRUN_ENCRE
+  ctx.stroke()
+  // LES DEUX ARMES CROISÉES, en or cerné de brun.
+  const arme = (angle: number, dessin: () => void): void => {
+    ctx.save()
+    ctx.translate(cx, cy + h * 0.02)
+    ctx.rotate(angle)
+    dessin()
+    ctx.fillStyle = or
+    ctx.fill()
+    ctx.lineWidth = w * 0.034
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = BRUN_ENCRE
+    ctx.stroke()
+    ctx.restore()
+  }
+  const L2 = h * 0.38
+  // LA HACHE DE GUERRE : un manche, et deux lames en croissant, de part et
+  // d'autre — la silhouette d'une hache se lit même toute petite.
+  arme(-0.62, () => {
+    ctx.beginPath()
+    ctx.rect(-w * 0.035, -L2 * 0.95, w * 0.07, L2 * 1.95)
+    for (const s of [1, -1]) {
+      ctx.moveTo(s * w * 0.03, -L2 * 0.9)
+      ctx.quadraticCurveTo(s * w * 0.14, -L2 * 0.86, s * w * 0.24, -L2 * 1.06)
+      ctx.quadraticCurveTo(s * w * 0.34, -L2 * 0.7, s * w * 0.24, -L2 * 0.34)
+      ctx.quadraticCurveTo(s * w * 0.14, -L2 * 0.54, s * w * 0.03, -L2 * 0.5)
+      ctx.closePath()
+    }
+  })
+  // LA DAGUE : une lame effilée, une garde, une poignée, un pommeau.
+  arme(0.62, () => {
+    ctx.beginPath()
+    ctx.moveTo(0, -L2 * 1.02)
+    ctx.lineTo(w * 0.06, -L2 * 0.2)
+    ctx.lineTo(-w * 0.06, -L2 * 0.2)
+    ctx.closePath()
+    ctx.rect(-w * 0.15, -L2 * 0.2, w * 0.3, w * 0.06)
+    ctx.rect(-w * 0.035, -L2 * 0.2 + w * 0.06, w * 0.07, L2 * 0.62)
+    ctx.moveTo(w * 0.07, L2 * 0.62)
+    ctx.arc(0, L2 * 0.62, w * 0.07, 0, Math.PI * 2)
+  })
+  ctx.restore()
+}
 
 /** Le crème du liseré et du découpage — celui des textes du gabarit. */
 const DOS_CREME = '#fffaf0'
@@ -5645,10 +5825,11 @@ export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement>
   ctx.beginPath()
   ctx.roundRect(0, 0, LARGE, HAUT, LARGE * rayon)
   ctx.clip()
+  // LE LISERÉ EST UN FILET D'OR (la taverne) : il borde le cuir.
   const bord = ctx.createLinearGradient(0, 0, LARGE * 0.5, HAUT)
-  bord.addColorStop(0, DOS_CREME)
-  bord.addColorStop(0.55, '#f0dfc0')
-  bord.addColorStop(1, '#dcc8a6')
+  bord.addColorStop(0, OR_CLAIR)
+  bord.addColorStop(0.5, OR_MOYEN)
+  bord.addColorStop(1, OR_SOMBRE)
   ctx.fillStyle = bord
   ctx.fillRect(0, 0, LARGE, HAUT)
 
@@ -5663,8 +5844,8 @@ export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement>
     Math.max(0, LARGE * rayon - marge),
   )
   ctx.clip()
-  peindreDecor(ctx, undefined, DOS_BLEU)
-  peindreTouches(ctx)
+  peindreDecor(ctx, undefined, DOS_CUIR)
+  peindreCuir(ctx, LARGE, HAUT, U, false, marge / U + 3.5, LARGE * rayon)
 
   // LE HALO DU STICKER : de la lumière tombée sur le fond, qui le détache du
   // motif sans lui donner de bord. *Le flou est dans la matière*, la règle du
@@ -5678,7 +5859,23 @@ export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement>
   ctx.fillStyle = halo
   ctx.fillRect(0, 0, LARGE, HAUT)
 
-  await peindreBouquet(ctx, cx, cy)
+  peindreBlason(ctx, cx, cy, 44 * U)
+  // QUATRE CLOUS D'OR aux coins, dans la couture : le cuir est monté sur un
+  // plat, comme une couverture de grimoire.
+  const pc = marge + 10 * U
+  for (const [x, y] of [[pc, pc], [LARGE - pc, pc], [pc, HAUT - pc], [LARGE - pc, HAUT - pc]] as const) {
+    const g = ctx.createRadialGradient(x - U, y - U, 0, x, y, 2.6 * U)
+    g.addColorStop(0, OR_CLAIR)
+    g.addColorStop(0.6, OR_MOYEN)
+    g.addColorStop(1, OR_SOMBRE)
+    ctx.beginPath()
+    ctx.arc(x, y, 2.6 * U, 0, Math.PI * 2)
+    ctx.fillStyle = g
+    ctx.fill()
+    ctx.lineWidth = 0.6 * U
+    ctx.strokeStyle = BRUN_ENCRE
+    ctx.stroke()
+  }
   ctx.restore()
   return canvas
 }
@@ -6353,7 +6550,7 @@ function peindreLigneDuTitre(
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `800 ${taille}px ${FAMILLE_RONDE}`
+  ctx.font = `800 ${taille}px ${FAMILLE_TITRE}`
   ctx.lineJoin = 'round'
   const n = TITRE_HAUTEURS.length
   const echelle = (i: number): number => TITRE_ECHELLES[(i + depart) % n]!
@@ -6403,7 +6600,7 @@ function peindreLigneDuTitre(
           ctx.shadowBlur = l * 0.02
           ctx.shadowOffsetX = l * 0.01
           ctx.shadowOffsetY = l * 0.016
-          ctx.drawImage(teinter(sombre.toile, '#16202a'), -ds / 2, -ds / 2, ds, ds)
+          ctx.drawImage(teinter(sombre.toile, BRUN_ENCRE), -ds / 2, -ds / 2, ds, ds)
           ctx.restore()
           ctx.drawImage(clair.toile, -dc / 2, -dc / 2, dc, dc)
           ctx.drawImage(image, -d / 2, -d / 2, d, d)
@@ -6424,7 +6621,7 @@ function peindreLigneDuTitre(
       ctx.shadowBlur = l * 0.02
       ctx.shadowOffsetX = l * 0.01
       ctx.shadowOffsetY = l * 0.016
-      ctx.strokeStyle = '#16202a'
+      ctx.strokeStyle = BRUN_ENCRE
       ctx.lineWidth = l * 0.03
       ctx.strokeText(g, 0, 0)
       ctx.shadowColor = 'transparent'
@@ -6436,10 +6633,11 @@ function peindreLigneDuTitre(
       // *Un crème sur du bleu est un aplat* ; le jaune-orange est la couleur du
       // visage qui rit au centre du bouquet, donc le titre et la marque parlent
       // la même langue. Le haut est presque blanc : la lumière vient du haut.
+      // L'OR DE LA TAVERNE : du blond pâle au vieil or, de haut en bas.
       const encre = ctx.createLinearGradient(0, -taille * 0.47, 0, taille * 0.47)
-      encre.addColorStop(0, '#fff6b0')
-      encre.addColorStop(0.45, '#ffcf2a')
-      encre.addColorStop(1, '#ff7a1a')
+      encre.addColorStop(0, '#fff3c4')
+      encre.addColorStop(0.45, '#f2c24a')
+      encre.addColorStop(1, '#b8742a')
       ctx.fillStyle = encre
       ctx.fillText(g, 0, 0)
     }
@@ -6598,11 +6796,12 @@ function peindrePastilleDuSachet(
   ctx.beginPath()
   ctx.roundRect(cx - w / 2, cy - h / 2, w, h, h / 2)
   const plaque = ctx.createLinearGradient(0, cy - h / 2, 0, cy + h / 2)
-  plaque.addColorStop(0, DOS_CREME)
-  plaque.addColorStop(1, '#e4d6bd')
+  // UN RUBAN DE PARCHEMIN (la taverne).
+  plaque.addColorStop(0, '#f8ebcb')
+  plaque.addColorStop(1, '#dcc292')
   ctx.fillStyle = plaque
   ctx.fill()
-  ctx.fillStyle = '#16202a'
+  ctx.fillStyle = BRUN_ENCRE
   ctx.fillText(mot, cx, cy + corps * 0.04)
   ctx.letterSpacing = '0px'
   ctx.textBaseline = 'alphabetic'
@@ -6641,7 +6840,7 @@ async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
   // les trois (voir BRILLANCE_SOUDURE et BRILLANCE_FILM).
   ctx.fillStyle = '#808080'
   ctx.fillRect(0, 0, l, h)
-  peindreTouches(ctx, l, h, US, true)
+  peindreCuir(ctx, l, h, US, true, 7)
   const cyT = h * 0.27
   const cyM = h * 0.56
   await peindreTitreDuSachet(ctx, l, cyT, true)
@@ -6678,8 +6877,8 @@ async function peindreLeSachet(): Promise<{
   // LA MATIÈRE EST CELLE DU DOS, par le même peintre : dégradé vertical,
   // vignettage elliptique, dither. *Le sachet et ce qu'il contient sont du même
   // objet*, donc ils ne peuvent pas être faits de deux matières.
-  peindreDecor(ctx, undefined, DOS_BLEU, { l, h })
-  peindreTouches(ctx, l, h, US)
+  peindreDecor(ctx, undefined, DOS_CUIR, { l, h })
+  peindreCuir(ctx, l, h, US, false, 7)
 
   const yL = h * LIGNE_DECHIRURE
 
@@ -6734,9 +6933,8 @@ async function peindreLeSachet(): Promise<{
     ctx.arc(cx, cy, rc, 0, Math.PI * 2)
     ctx.fillStyle = METAUX[cran]![2]!
     ctx.fill()
-    // LE MÊME CERNE CRÈME QUE LES STICKERS : *c'est une planche d'autocollants,
-    // et une découpeuse ne change pas de réglage entre deux pièces.*
-    ctx.strokeStyle = DOS_CREME
+    // UN SERTI D'OR : des gemmes enchâssées dans le cuir (la taverne).
+    ctx.strokeStyle = OR_MOYEN
     ctx.lineWidth = DOS_CERNE * US * 0.9
     ctx.stroke()
   }

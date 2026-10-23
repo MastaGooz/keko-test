@@ -44,7 +44,7 @@
   border-radius: 999px;
   background: #fffaf0;
   box-shadow:
-    0 0.3rem 0 #c9b9f2,
+    0 0.3rem 0 #b8996a,
     0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
 }
 
@@ -58,7 +58,7 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #2a1b63;
+  color: #3a2416;
   font: inherit;
   font-weight: 800;
   font-size: 0.95rem;
@@ -83,7 +83,7 @@
 }
 
 .nav-moitie.nav-active {
-  background: #2a1b63;
+  background: #3a2416;
   color: #fffaf0;
 }
 
@@ -144,7 +144,7 @@
   transform: translate(-50%, -46%);
   border: 0.22rem solid #ffc61f;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #9b74ff, #5a36c9 60%, #3a2190);
+  background: radial-gradient(circle at 35% 30%, #a8643a, #6e3a1e 60%, #40200f);
   box-shadow:
     0 0.25rem 0 #b8820a,
     0 0.5rem 1.2rem rgba(20, 8, 60, 0.5);
@@ -174,9 +174,9 @@
   margin: auto;
   box-sizing: border-box;
   border-radius: 0.25rem;
-  background: linear-gradient(160deg, #fffaf0, #e9defc);
-  border-top: 0.2rem dotted #c9b9f2;
-  border-bottom: 0.2rem dotted #c9b9f2;
+  background: linear-gradient(160deg, #fffaf0, #efe0bd);
+  border-top: 0.2rem dotted #b8996a;
+  border-bottom: 0.2rem dotted #b8996a;
   transform: rotate(-8deg);
 }
 /* SNIK SUR LE SACHET DU BOUTON, à la place du 😄 : le jeu a quitté les emoji. */
@@ -191,10 +191,10 @@
 .collection {
   position: fixed;
   inset: 0;
-  background-color: #241654;
+  background-color: #2b1a12;
   background-image:
-    radial-gradient(ellipse 90% 40% at 50% 0%, #5a3cb8 0%, transparent 70%),
-    linear-gradient(#2a1b63, #170c3a);
+    radial-gradient(ellipse 90% 40% at 50% 0%, #7a4520 0%, transparent 70%),
+    linear-gradient(#3a2416, #170d07);
   color: #fffaf0;
   font-family: 'Baloo 2', system-ui, sans-serif;
 }
@@ -227,7 +227,7 @@
   line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  text-shadow: 0 0.15rem 0 #170c3a;
+  text-shadow: 0 0.15rem 0 #170d07;
 }
 
 .collection-compte {
@@ -271,7 +271,7 @@
   padding: 0 1.1rem;
   border: 0.15rem solid rgba(255, 250, 240, 0.18);
   border-radius: 999px;
-  background: rgba(10, 4, 30, 0.35);
+  background: rgba(20, 10, 4, 0.35);
   color: #fffaf0;
   font: inherit;
   font-size: 1rem;
@@ -290,7 +290,7 @@
   display: flex;
   padding: 0.2rem;
   border-radius: 999px;
-  background: rgba(10, 4, 30, 0.35);
+  background: rgba(20, 10, 4, 0.35);
 }
 
 .collection-segments button {
@@ -310,7 +310,7 @@
 
 .collection-segments button.actif {
   background: #fffaf0;
-  color: #2a1b63;
+  color: #3a2416;
 }
 
 /* LES PUCES DÉFILENT DE CÔTÉ, la page jamais. */
@@ -336,7 +336,7 @@
   padding: 0 0.9rem;
   border: 0.15rem solid rgba(255, 250, 240, 0.2);
   border-radius: 999px;
-  background: rgba(10, 4, 30, 0.3);
+  background: rgba(20, 10, 4, 0.3);
   color: #fffaf0;
   font: inherit;
   font-weight: 700;
@@ -495,7 +495,7 @@
   background: #ff4d5e;
   color: #fff;
   text-transform: uppercase;
-  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
+  box-shadow: 0 0.15rem 0.3rem rgba(20, 10, 4, 0.5);
 }
 
 .vignette-nombre {
@@ -503,7 +503,7 @@
   right: -0.25rem;
   bottom: -0.3rem;
   z-index: 1;
-  background: #2a1b63;
+  background: #3a2416;
   color: #fffaf0;
   box-shadow: 0 0 0 0.12rem #fffaf0;
   font-size: 0.8rem;
@@ -520,12 +520,12 @@
 
 .pastille-holo {
   background: linear-gradient(90deg, #ff7ac8, #7ad8ff, #ffe27a);
-  color: #2a1b63;
+  color: #3a2416;
 }
 
 .pastille-anime {
   background: #ffc61f;
-  color: #2a1b63;
+  color: #3a2416;
 }
 
 .collection-vide {
@@ -552,12 +552,12 @@
   border: 0;
   border-radius: 999px;
   background: #fffaf0;
-  color: #2a1b63;
+  color: #3a2416;
   font: inherit;
   font-weight: 800;
   font-size: 1.05rem;
   text-transform: uppercase;
-  box-shadow: 0 0.3rem 0 #c9b9f2;
+  box-shadow: 0 0.3rem 0 #b8996a;
   cursor: pointer;
 }
 
@@ -622,12 +622,12 @@
   border: 0;
   border-radius: 50%;
   background: #fffaf0;
-  color: #2a1b63;
+  color: #3a2416;
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 1.8rem;
   font-weight: 800;
   line-height: 1;
-  box-shadow: 0 0.25rem 0 #c9b9f2;
+  box-shadow: 0 0.25rem 0 #b8996a;
   cursor: pointer;
 }
 
@@ -862,8 +862,8 @@
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-weight: 800;
   background: #ffc61f;
-  color: #2a1b63;
-  box-shadow: 0 0 0 0.15rem #2a1b63;
+  color: #3a2416;
+  box-shadow: 0 0 0 0.15rem #3a2416;
 }
 
 .nav-pastille-booster.vide {
@@ -982,13 +982,13 @@
   border: 0;
   border-radius: 999px;
   background: #fffaf0;
-  color: #2a1b63;
+  color: #3a2416;
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-weight: 800;
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  box-shadow: 0 0.3rem 0 #c9b9f2;
+  box-shadow: 0 0.3rem 0 #b8996a;
   cursor: pointer;
   pointer-events: auto;
   /* SUR UNE LIGNE. Keko : « via le booster il est écrit sur deux lignes ».
@@ -1002,7 +1002,7 @@
 
 .decoller:active {
   transform: translateY(0.15rem);
-  box-shadow: 0 0.15rem 0 #c9b9f2;
+  box-shadow: 0 0.15rem 0 #b8996a;
 }
 
 /* LES DEUX BOUTONS SOUS LA CARTE OUVERTE : décoller, coller. */
@@ -1169,7 +1169,7 @@
   z-index: 30;
   height: auto;
   transform: translate(-50%, -50%) rotate(var(--a, 0rad)) scale(1.08);
-  filter: drop-shadow(0 0.5rem 0.6rem rgba(10, 4, 30, 0.6));
+  filter: drop-shadow(0 0.5rem 0.6rem rgba(20, 10, 4, 0.6));
   pointer-events: none;
 }
 
@@ -1495,7 +1495,7 @@
   padding: 0;
   border: 0.15rem solid rgba(255, 250, 240, 0.18);
   border-radius: 999px;
-  background: rgba(10, 4, 30, 0.35);
+  background: rgba(20, 10, 4, 0.35);
   color: #fffaf0;
   font: inherit;
   font-weight: 800;
@@ -1527,7 +1527,7 @@
   box-sizing: border-box;
   border-radius: 999px;
   background: #ffc61f;
-  color: #2a1b63;
+  color: #3a2416;
   font-size: 0.8rem;
   line-height: 1.35rem;
   text-align: center;
@@ -1542,7 +1542,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(10, 4, 30, 0.55);
+  background: rgba(20, 10, 4, 0.55);
   animation: carte-ouverte-entre 0.2s ease-out;
 }
 
@@ -1555,10 +1555,10 @@
   flex-direction: column;
   padding: 0.6rem 16px calc(1rem + env(safe-area-inset-bottom));
   border-radius: 1.4rem 1.4rem 0 0;
-  background: #2a1b63;
+  background: #3a2416;
   color: #fffaf0;
   font-family: 'Baloo 2', system-ui, sans-serif;
-  box-shadow: 0 -0.5rem 2rem rgba(10, 4, 30, 0.5);
+  box-shadow: 0 -0.5rem 2rem rgba(20, 10, 4, 0.5);
   animation: panneau-monte 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
@@ -1680,7 +1680,7 @@
   border-radius: 1.1rem;
   background: #fffaf0;
   box-shadow:
-    0 0.3rem 0 #c9b9f2,
+    0 0.3rem 0 #b8996a,
     0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
   animation: nav-menu-tombe 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
   transform-origin: top left;
@@ -1711,7 +1711,7 @@
   border: 0;
   border-radius: 0.8rem;
   background: transparent;
-  color: #2a1b63;
+  color: #3a2416;
   font: inherit;
   font-weight: 800;
   font-size: 0.95rem;
@@ -1726,7 +1726,7 @@
 }
 
 .nav-menu-active {
-  background: #2a1b63;
+  background: #3a2416;
   color: #fffaf0;
 }
 
@@ -1872,13 +1872,13 @@
   padding: 0.25rem 0.5rem;
   border-radius: 999px;
   background: #fffaf0;
-  color: #2a1b63;
+  color: #3a2416;
   font-weight: 800;
   font-size: 0.7rem;
   line-height: 1;
   white-space: nowrap;
   text-transform: uppercase;
-  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
+  box-shadow: 0 0.15rem 0.3rem rgba(20, 10, 4, 0.5);
 }
 
 .vignette-estompee .vignette-prise {
@@ -1894,12 +1894,12 @@
   height: 1.5rem;
   border-radius: 50%;
   background: #ffd45e;
-  color: #2a1b63;
+  color: #3a2416;
   font-weight: 800;
   font-size: 0.95rem;
   line-height: 1.5rem;
   text-align: center;
-  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
+  box-shadow: 0 0.15rem 0.3rem rgba(20, 10, 4, 0.5);
 }
 
 /* LES ONGLETS DES DECKS (Keko : « plusieurs decks, et sélectionner celui avec
@@ -1933,8 +1933,8 @@
 
 .deck-onglet-edite {
   background: #fffaf0;
-  color: #2a1b63;
-  box-shadow: 0 0.2rem 0 #c9b9f2;
+  color: #3a2416;
+  box-shadow: 0 0.2rem 0 #b8996a;
 }
 
 .deck-onglet:disabled {
@@ -2029,12 +2029,12 @@
   width: 100%;
   height: 100%;
   border-radius: 6% / 4.3%;
-  box-shadow: 0 0.3rem 0.8rem rgba(10, 4, 30, 0.5);
+  box-shadow: 0 0.3rem 0.8rem rgba(20, 10, 4, 0.5);
 }
 
 /* Les dos de dessous : la couleur du dos, sans le peindre trois fois. */
 span.jouer-pile-dos {
-  background: #2c60d6;
+  background: #6b3a22;
   border: 0.15rem solid #fffaf0;
   box-sizing: border-box;
 }

@@ -5549,12 +5549,15 @@ body {
      Une base VIOLETTE SATUREE, pas un gris teinte : c'est le seul endroit libre
      de l'ecran (les cinq crans et le bleu du dos sont pris), et c'est la
      couleur d'une fete. */
-  background-color: #2a1b63;
+  /* LA TAVERNE (23/10/2026) : le violet de fête est devenu un bois chaud, une
+     lueur de bougie au centre. Keko : « reskin / repenser la DA pour matcher le
+     nouveau thème » — direction « taverne & parchemin ». */
+  background-color: #2b1a12;
   background-image: radial-gradient(
     ellipse 70% 55% at 50% 46%,
-    #7a52d6 0%,
-    #4a2fa8 50%,
-    #2a1b63 100%
+    #8a5228 0%,
+    #4a2c1a 50%,
+    #2b1a12 100%
   );
 }
 

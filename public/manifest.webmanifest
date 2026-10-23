@@ -10,8 +10,8 @@
     "standalone"
   ],
   "orientation": "portrait",
-  "background_color": "#170c3a",
-  "theme_color": "#2a1b63",
+  "background_color": "#170d07",
+  "theme_color": "#2b1a12",
   "icons": [
     { "src": "icone-emoji.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "icone-emoji-pleine.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" },

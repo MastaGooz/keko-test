@@ -150,9 +150,13 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   par effacer) ; la texture est privée, refaite à chaque palier (three ne
   réalloue pas une `CanvasTexture`), et l'animation redit `face.map` à chaque
   image pendant que le cache statique s'abstient.
-- **Le dos** : bouquet de quatorze emoji du catalogue découpés en stickers
-  (`source-in` × 16 pour le cerne), motif de touches de clavier, cinq confettis
-  des `METAUX` en `lighter`, bleu `DOS_BLEU`. Cache par rayon et par piste.
+- **LA DA EST « TAVERNE & PARCHEMIN »** (Keko, 23/10) : le dos est un cuir
+  cousu (`DOS_CUIR`, `peindreCuir`) au liseré d'or, frappé d'un blason
+  (`peindreBlason` : hache et dague croisées) et de quatre clous ; le sachet
+  du même cuir garde le bouquet de personnages ; la plaque est un parchemin
+  (`PLAQUE_CLAIRE`), l'encre brune ; titre du sachet et noms en **Grenze 800**
+  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; le
+  blanc des communes tire vers l'ivoire. Cache par rayon et par piste.
 
 ### L'ouverture — portrait, une carte à la fois
 

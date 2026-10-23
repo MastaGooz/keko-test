@@ -757,6 +757,29 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
   appareils ne sont plus lues (`keko-fantasy-*`) : tout le monde repart de
   zéro.
 
+## La DA : taverne & parchemin (23/10/2026)
+
+- **Keko** : « tu pourrais reskin / repenser un peu la DA de l'app pour
+  matcher le nouveau thème ? dos de carte, paquet, fond des cartes,
+  background, couleurs... » Trois ambiances proposées (taverne & parchemin,
+  forêt sauvage de nuit, fer & braises) : **taverne & parchemin** retenue, et
+  **une titraille fantasy pour les titres, Baloo pour le reste**.
+- **De moi, à rejuger** :
+  - la titraille est **Grenze 800** (comparée à quinze autres : la plus
+    proche de la Belwe des jeux de cartes fantasy, et lisible petite) ;
+  - le **dos** : cuir brun cousu, liseré d'or, blason d'or à champ rouge avec
+    une hache de guerre (l'orc) et une dague (le gobelin) croisées, quatre
+    clous aux coins ;
+  - le **sachet** : le même cuir et sa couture, le titre en or, le bouquet de
+    personnages gardé (il dit ce qu'il y a dedans), « 5 CARTES » sur un ruban
+    de parchemin, les cinq gemmes serties d'or. *Sa forme reste celle d'un
+    sachet qui se déchire* : en faire une vraie bourse changerait le geste ;
+  - les **faces** : plaque de parchemin, encre brune ; le décor derrière le
+    personnage garde la nuit et les rayons de son cran ; le **blanc des
+    communes tire vers l'ivoire**, son gris-bleu détonnait sur le bois ;
+  - le **fond** : bois chaud, bokehs de bougie, personnages qui dérivent plus
+    rares et plus effacés ; toute l'interface passe du violet au brun.
+
 ## Les paquets et la rareté (21/10/2026)
 
 - **Plus la rareté monte, plus on va vers le personnage unique et nommé** ;
