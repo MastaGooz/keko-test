@@ -174,7 +174,10 @@
   margin: auto;
   box-sizing: border-box;
   border-radius: 0.25rem;
-  background: linear-gradient(160deg, #fffaf0, #efe0bd);
+  /* La poche en violet, le cuir du dos (Keko) ; les soudures restent crème. */
+  background:
+    linear-gradient(160deg, #6a2c7a, #3b1544) padding-box,
+    linear-gradient(160deg, #fffaf0, #efe0bd) border-box;
   border-top: 0.2rem dotted #b8996a;
   border-bottom: 0.2rem dotted #b8996a;
   transform: rotate(-8deg);
