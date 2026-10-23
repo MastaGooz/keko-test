@@ -80,18 +80,19 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   Grisette la Dorée, un bonus dessiné par Keko, devient la 4ᵉ légendaire
   gobeline (25 légendaires au lieu de 24). **396** : le Pêcheur de rivière,
   un bonus dessiné par Keko, devient la 23ᵉ commune orc (158 communes au
-  lieu de 157).
+  lieu de 157). **395 depuis** : la Creuse-roc orc est retirée (Keko :
+  « j'aime pas le concept »), 157 communes.
 
   | | mêlée | distance | magie | soutien | total |
   |---|---|---|---|---|---|
   | Gobelin | 11 | 18 | 14 | 20 | 63 |
-  | Orc | 21 | 10 | 10 | 15 | 56 |
+  | Orc | 21 | 10 | 10 | 14 | 55 |
   | Humain | 14 | 13 | 16 | 18 | 61 |
   | Elfe | 9 | 17 | 18 | 12 | 56 |
   | Nain | 19 | 9 | 9 | 19 | 56 |
   | Mort-vivant | 13 | 7 | 22 | 13 | 55 |
   | Bête | 14 | 11 | 12 | 12 | 49 |
-  | **total** | 101 | 85 | 101 | 109 | **396** |
+  | **total** | 101 | 85 | 101 | 108 | **395** |
 
 ### Les classes par race
 
@@ -111,7 +112,7 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
   Contrebandier, Prêteur sur gages, Apiculteur, Taxidermiste, Ramoneur,
   Chiffonnier, Champignonniste, Horloger
 
-**Orc (56)**
+**Orc (55)**
 - Mêlée : Garde, Guerrier, Lancier, Bagarreur, Chef de guerre, Maître
   d'armes, Champion, Gladiateur, Brute, Berserker, Brise-bouclier, Marteleur,
   Briseur de crânes, Écorcheur, Massacreur, Ravageur, Chevaucheur de loup,
@@ -122,7 +123,7 @@ Prévu mais pas encore travaillé : fusion, combat, prestige.
 - Magie : Pyromancien, Druide, Chaman, Géomancien, Sorcier du sang,
   Haruspice, Chanteur de pierre, Tatoueur runique, Mangeur de feu, Mage de
   cendre
-- Soutien : Roi, Fermier, Cuisinier, Mineur, Bûcheron, Forgeron, Guérisseur,
+- Soutien : Roi, Fermier, Cuisinier, Bûcheron, Forgeron, Guérisseur,
   Ferrailleur, Dompteur de bêtes, Porteur, Porte-étendard, Tambour de guerre,
   Conteur, Montreur d'ours, Pêcheur
 
@@ -230,9 +231,9 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 - Peu commune (14) : Maître d'armes, Brise-bouclier, Marteleur, Briseur de
   crânes, Écorcheur, Bourreau, Péagier, Javelinier, Pisteur, Lanceur de bolas,
   Druide, Géomancien, Mangeur de feu, Porte-étendard
-- Commune (23) : Garde, Guerrier, Lancier, Bagarreur, Brute, Fléautier,
+- Commune (22) : Garde, Guerrier, Lancier, Bagarreur, Brute, Fléautier,
   Archer, Chasseur, Lanceur de couteaux, Lanceur de pierres, Lanceur de
-  boomerang, Pyromancien, Fermier, Cuisinier, Mineur, Bûcheron, Forgeron,
+  boomerang, Pyromancien, Fermier, Cuisinier, Bûcheron, Forgeron,
   Guérisseur, Ferrailleur, Dompteur de bêtes, Porteur, Conteur, Pêcheur
 
 **Humain**
@@ -321,14 +322,14 @@ d'un légendaire est fixé par son nom ; les autres le tirent au hasard.
 ### Un nom par carte : les classes partagées renommées (22/10/2026)
 
 - **Keko** : « on va se retrouver avec des noms de race dans quasi toutes les cartes… on peut pas renommer les classes qui sont en plusieurs exemplaires mais race différente en prenant des synonymes ». Et : « pas grave si ça s'accorde pas au féminin ».
-- **112 classes partagées, 291 des 345 cartes de peuples** : 173 renommées (le Chef de guerre orc, devenu légendaire le 23/10, garde sa classe ; le Pêcheur orc, ajouté le 23/10, devient Pêcheur de rivière ; le Lanceur de ruches orc, remplacé le 22/10 par le Lanceur de pierres, n'est plus partagé). Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2, Chef de guerre ×2 sont les seuls doublons restants, tous légendaires).
+- **112 classes partagées, 290 des 344 cartes de peuples** : 172 renommées (la Creuse-roc orc, le Mineur, retirée le 23/10 ; le Chef de guerre orc, devenu légendaire le 23/10, garde sa classe ; le Pêcheur orc, ajouté le 23/10, devient Pêcheur de rivière ; le Lanceur de ruches orc, remplacé le 22/10 par le Lanceur de pierres, n'est plus partagé). Le **gobelin garde le nom simple** partout où il a la classe (ses communes sont déjà dessinées) ; sinon, la race où le métier sonne le plus juste. **Les légendaires gardent leur classe** : leur nom propre les distingue (Roi ×5, Chaman ×2, Chef de guerre ×2 sont les seuls doublons restants, tous légendaires).
 - Des noms **colorés par la race** plutôt que des synonymes purs, vérifiés par script : aucun ne revient deux fois, aucun ne reprend une classe existante. Proposition, à rejuger nom par nom.
 
-**Orc** (33)
+**Orc** (32)
 - Mêlée : Garde → Cogneur de porte, Guerrier → Fracasseur, Lancier → Embrocheur, Bagarreur → Cogne-poing, Maître d'armes → Maître de la fosse, Gladiateur → Combattant de l'arène, Brute → Mastodonte, Marteleur → Masse-d'os, Bourreau → Coupeur de têtes, Péagier → Rançonneur, Fléautier → Batteur de chaîne
 - Distance : Archer → Archer de la horde, Chasseur → Traqueur, Lanceur de couteaux → Lanceur de hachettes, Catapultier → Lanceur de rochers, Lanceur de boomerang → Lance-mâchoire
 - Magie : Pyromancien → Cracheur de braise, Druide → Sage des ronces, Géomancien → Fendeur de terre, Chanteur de pierre → Chantre des roches, Mangeur de feu → Avaleur de braises
-- Soutien : Fermier → Éleveur de cochons, Cuisinier → Rôtisseur, Mineur → Creuse-roc, Bûcheron → Abatteur d'arbres, Forgeron → Batteur de fer, Guérisseur → Rebouteux, Ferrailleur → Pilleur d'épaves, Dompteur de bêtes → Dresseur de wargs, Porteur → Bête de somme, Conteur → Hurleur de légendes, Montreur d'ours → Meneur d'ours, Pêcheur → Pêcheur de rivière
+- Soutien : Fermier → Éleveur de cochons, Cuisinier → Rôtisseur, Bûcheron → Abatteur d'arbres, Forgeron → Batteur de fer, Guérisseur → Rebouteux, Ferrailleur → Pilleur d'épaves, Dompteur de bêtes → Dresseur de wargs, Porteur → Bête de somme, Conteur → Hurleur de légendes, Montreur d'ours → Meneur d'ours, Pêcheur → Pêcheur de rivière
 
 **Humain** (30)
 - Mêlée : Garde → Homme de guet, Guerrier → Homme d'armes, Bagarreur → Pugiliste, Faucheur → Moissonneur de guerre
@@ -551,8 +552,9 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
   plutôt que chiffons rapiécés. Chaque sexe est choisi à l'opposé de la carte
   gobeline la plus proche quand il y en a une (Archer ♂ → Archère ♀,
   Cuisinière ♀ → Rôtisseur ♂…).
-- **Communes orcs : 13 hommes, 10 femmes (57/43)** avec le Pêcheur. Mêlée
-  3 H / 3 F, distance 2 H / 3 F, magie 1 H, soutien 7 H / 4 F.
+- **Communes orcs : 13 hommes, 9 femmes (59/41)** avec le Pêcheur et sans la
+  Creuse-roc. Mêlée 3 H / 3 F, distance 2 H / 3 F, magie 1 H, soutien
+  7 H / 3 F.
 
 1. **Cogneur de porte** · ♂ · une massue cloutée posée sur l'épaule droite. Planté jambes écartées comme un videur, bras croisés à moitié, gorgerin de cuir, une défense cassée, regard qui interdit le passage.
 2. **Fracasseuse** · ♀ · une grande hache à deux mains, à double tranchant ébréché. Tresses épaisses, épaulières en os, peinture de guerre rouge sur les yeux, en plein élan.
@@ -568,7 +570,6 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
 12. **Cracheur de braise** · ♂ · un pot de terre rempli de braises rougeoyantes tenu dans la main gauche, la droite qui en porte une à la bouche. Joues gonflées, sourcils brûlés, pagne roussi, un filet de fumée seulement.
 13. **Éleveuse de cochons** · ♀ · un seau de pâtée dans la main droite et un bâton de berger dans la gauche. Tablier de cuir boueux, bottes crottées, joues rondes, air content d'elle.
 14. **Rôtisseur** · ♂ · une broche avec un cuissot rôti sur l'épaule droite, un couperet dans la gauche. Tablier taché de graisse, ventre énorme, bras velus, sourire gourmand.
-15. **Creuse-roc** · ♀ · un pic de mineur à deux mains, levé haut. Casque de fer cabossé, poussière de pierre sur les épaules, gants de cuir troués, bras noueux.
 16. **Abatteuse d'arbres** · ♀ · une scie de long passée en travers des épaules, tenue à deux mains. Chemise de laine aux manches arrachées, copeaux dans les cheveux, bûche sous le pied.
 17. **Batteur de fer** · ♂ · un lourd marteau de forge dans la main droite, une pince tenant un fer chauffé dans la gauche. Tablier de cuir brûlé, bras énormes, barbe courte roussie.
 18. **Rebouteuse** · ♀ · une attelle de bois et des bandes de tissu dans les mains, prête à remettre un os en place. Colliers d'os et de griffes, sacoche de remèdes, manches retroussées, regard sans pitié.
@@ -590,12 +591,16 @@ Grisette possède ce que la Contrebandière et la Coupe-jarret volent.
   `22-hurleur-de-legendes.png`, numérotées comme cette fiche), et commitées.
   La Dresseuse de wargs se lisait en homme : elle devient le **Dresseur**
   (Keko, « on le passe en dresseur »), `20-dresseur-de-wargs.png`.
+- **La Creuse-roc est retirée** (Keko, 23/10 : « on peut supprimer l'image
+  creuse-roc stp ? j'aime pas le concept ») : image et carte supprimées, le
+  Mineur sort de l'orc. Les autres gardent leur numéro de fichier (le 15
+  manque), donc leur identifiant `orc-commun-NN`.
 
 **Peu communes orcs : 6 hommes, 8 femmes (43/57)** — un cran au-dessus des
 communes : plus d'équipement et de métier, **un effet léger ou un petit
 animal** au plus (les ronces de la Sage, la fissure du Fendeur, le marcassin
 du Pisteur). Mêlée 3 H / 4 F, distance 1 H / 2 F, magie 2 H / 1 F, soutien
-1 F. Avec les communes, l'orc est à 19 hommes, 18 femmes (Pêcheur compris). Les sexes sont
+1 F. Avec les communes, l'orc est à 19 hommes, 17 femmes (Pêcheur compris, Creuse-roc retirée). Les sexes sont
 pris à l'opposé de la carte gobeline la plus proche (Péagier ♂ →
 Rançonneuse ♀, Mangeuse de feu ♀ → Avaleur de braises ♂).
 
@@ -628,7 +633,7 @@ Rançonneuse ♀, Mangeuse de feu ♀ → Avaleur de braises ♂).
 **Rares orcs : 5 hommes, 5 femmes** (proposition, 23/10/2026) — **un effet
 fort ou une mise en scène** : un décor, une bête de taille, une machine à
 bras. Mêlée 3 H / 1 F, distance 1 H / 1 F, magie 1 H / 2 F, soutien 1 F.
-L'orc passe à 24 hommes, 23 femmes.
+L'orc passe à 24 hommes, 22 femmes.
 
 1. **Combattante de l'arène** · ♀ · un couperet court dans la main droite, un bouclier rond hérissé de pointes au bras gauche. Chaînes brisées aux poignets, sable de l'arène qui vole sous ses pieds, pièces et fleurs jetées par la foule autour d'elle, poing levé de victoire.
 2. **Ravageur** · ♂ · une chaîne énorme dans la main droite, qui traîne derrière lui une porte de palissade arrachée. Hache passée dans la ceinture, éclats de bois qui volent, piquets brisés à ses pieds, cri de charge.
@@ -659,10 +664,10 @@ L'orc passe à 24 hommes, 23 femmes.
 **Épiques orcs : 2 hommes, 4 femmes** (proposition, 23/10/2026 ; échange du 23/10 compris) — **une
 monture, une machine ou une explosion** qui occupe l'image, une tenue plus
 soignée que la horde (métal travaillé, fourrures choisies, bijoux). Mêlée
-1 H / 2 F, magie 2 F, soutien 1 H. L'orc passe à 27 hommes, 26 femmes,
+1 H / 2 F, magie 2 F, soutien 1 H. L'orc passe à 27 hommes, 25 femmes,
 avant ses légendaires (Grumbak, Gorruk, Ghor, trois hommes) ; après
 l'échange, les épiques font 2 hommes, 4 femmes et l'orc entier 29 hommes,
-27 femmes.
+26 femmes.
 
 1. **Chevaucheuse de loup** · ♀ · une lance à pointe rouge levée dans la main droite, en plein bond sur un immense loup noir qui hurle. Peinture de guerre rouge, harnais du loup clouté d'or, cheveux rouges qui volent. *(Dessinée comme Ursha Croc-Rouge, descendue de légendaire le 23/10.)*
 2. **Championne** · ♀ · une épée à deux mains plantée dans le sol, les deux mains sur le pommeau. Debout sur la tête d'un énorme serpent de roche abattu, onde de choc qui fend la pierre autour de la lame, armure de plaques dépareillées, trophées de dents en collier.
@@ -711,8 +716,8 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
   esprits de Mère Gribouille. *À rejuger par Keko.*
 - **Illustrés par Keko** (23/10). Découpés dans
   `public/generations/orc/legendaires/` (`01-grumbak-le-borgne.png` …
-  `03-ghor-l-ancien.png`). **L'orc est entièrement illustré** : 56 cartes,
-  23 communes, 14 peu communes, 10 rares, 6 épiques, 3 légendaires.
+  `03-ghor-l-ancien.png`). **L'orc est entièrement illustré** : 55 cartes,
+  22 communes, 14 peu communes, 10 rares, 6 épiques, 3 légendaires.
 - **L'échange** (Keko, 23/10 : « passe le chevaucheur de sanglier en
   légendaire et la chevaucheuse de loup en épique ») : Ursha n'était qu'une
   monture sans décor, la formule des épiques, et le Seigneur de horde, plus

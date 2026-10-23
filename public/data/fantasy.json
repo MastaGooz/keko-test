@@ -1101,16 +1101,6 @@
    "rang": 110
   },
   {
-   "id": "orc-commun-15",
-   "nom": "Creuse-roc",
-   "race": "orc",
-   "role": "soutien",
-   "sexe": "f",
-   "rarete": "commun",
-   "image": "cartes/orc/communs/15-creuse-roc.webp",
-   "rang": 111
-  },
-  {
    "id": "orc-commun-16",
    "nom": "Abatteuse d'arbres",
    "race": "orc",
@@ -1118,7 +1108,7 @@
    "sexe": "f",
    "rarete": "commun",
    "image": "cartes/orc/communs/16-abatteuse-d-arbres.webp",
-   "rang": 112
+   "rang": 111
   },
   {
    "id": "orc-commun-17",
@@ -1128,7 +1118,7 @@
    "sexe": "h",
    "rarete": "commun",
    "image": "cartes/orc/communs/17-batteur-de-fer.webp",
-   "rang": 113
+   "rang": 112
   },
   {
    "id": "orc-commun-18",
@@ -1138,7 +1128,7 @@
    "sexe": "f",
    "rarete": "commun",
    "image": "cartes/orc/communs/18-rebouteuse.webp",
-   "rang": 114
+   "rang": 113
   },
   {
    "id": "orc-commun-19",
@@ -1148,7 +1138,7 @@
    "sexe": "h",
    "rarete": "commun",
    "image": "cartes/orc/communs/19-pilleur-d-epaves.webp",
-   "rang": 115
+   "rang": 114
   },
   {
    "id": "orc-commun-20",
@@ -1158,7 +1148,7 @@
    "sexe": "h",
    "rarete": "commun",
    "image": "cartes/orc/communs/20-dresseur-de-wargs.webp",
-   "rang": 116
+   "rang": 115
   },
   {
    "id": "orc-commun-21",
@@ -1168,7 +1158,7 @@
    "sexe": "h",
    "rarete": "commun",
    "image": "cartes/orc/communs/21-bete-de-somme.webp",
-   "rang": 117
+   "rang": 116
   },
   {
    "id": "orc-commun-22",
@@ -1178,7 +1168,7 @@
    "sexe": "h",
    "rarete": "commun",
    "image": "cartes/orc/communs/22-hurleur-de-legendes.webp",
-   "rang": 118
+   "rang": 117
   },
   {
    "id": "orc-commun-23",
@@ -1188,7 +1178,7 @@
    "sexe": "h",
    "rarete": "commun",
    "image": "cartes/orc/communs/23-pecheur-de-riviere.webp",
-   "rang": 119
+   "rang": 118
   }
  ]
 }

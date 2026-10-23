@@ -25,7 +25,7 @@ FICHES = [
   ('gobelin', 'rare', 'rares', 'm1 d3 g7'),
   ('gobelin', 'epique', 'epiques', 'm1 d3 g4'),
   ('gobelin', 'legendaire', 'legendaires', 'm1 g1 s1 m1'),
-  ('orc', 'commun', 'communs', 'm6 d5 g1 s11'),
+  ('orc', 'commun', 'communs', 'm6 d5 g1 s10'),
   ('orc', 'peu-commun', 'peu-communes', 'm7 d3 g3 s1'),
   ('orc', 'rare', 'rares', 'm4 d2 g3 s1'),
   ('orc', 'epique', 'epiques', 'm3 g2 s1'),

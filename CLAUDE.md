@@ -54,7 +54,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   `public/data/fantasy.json` et `public/cartes/<race>/<cran>/NN-nom.webp`
   (512 carré) : les noms et sexes depuis les fiches numérotées de
   `docs/fantasy.md`, les images depuis les découpes PNG de
-  `public/generations/` (la source, gardée). **119 cartes** : gobelin 63, orc 56.
+  `public/generations/` (la source, gardée). **118 cartes** : gobelin 63, orc 55.
 - **Le type garde son nom d'emoji** (`CarteEmoji`, `logic/emoji/`) : race,
   rôle (les deux tags, la pastille les affiche), sexe, image, cran FIXÉ par la
   fiche, `rang` = l'ordre du catalogue. `emoji` est toujours `''` (le peintre
