@@ -6134,6 +6134,26 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE)
   const masque = new Float32Array(n * n)
   // Binaire avant le flou : voir `SEUIL_ENCRE`.
   for (let i = 0; i < n * n; i++) masque[i] = alpha[i * 4 + 3]! > SEUIL_ENCRE * 255 ? 1 : 0
+  // LES TROUS SE COMBLENT : un vide qu'on ne rejoint pas depuis le bord (entre
+  // un bras et le corps, dans une anse) fait partie du sticker, et le dos crème
+  // le couvre. Keko : « quand un sticker a un trou transparent, on le comble en
+  // blanc ». Un remplissage depuis le bord : ce qu'il n'atteint pas est un trou.
+  {
+    const dehors = new Uint8Array(n * n)
+    const pile: number[] = []
+    for (let i = 0; i < n; i++) pile.push(i, (n - 1) * n + i, i * n, i * n + n - 1)
+    while (pile.length > 0) {
+      const p = pile.pop()!
+      if (dehors[p] === 1 || masque[p] === 1) continue
+      dehors[p] = 1
+      const x = p % n
+      if (x > 0) pile.push(p - 1)
+      if (x < n - 1) pile.push(p + 1)
+      if (p >= n) pile.push(p - n)
+      if (p < n * n - n) pile.push(p + n)
+    }
+    for (let i = 0; i < n * n; i++) if (dehors[i] === 0) masque[i] = 1
+  }
   adoucirLeMasque(masque, n, Math.max(1, Math.round(finesse / 128)))
   adoucirLeMasque(masque, n, Math.max(1, Math.round(finesse / 128)))
 

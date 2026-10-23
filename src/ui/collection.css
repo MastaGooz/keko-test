@@ -1352,11 +1352,16 @@
 
 /* ------------------------------------------------------- le sticker ouvert */
 
+/* LE STICKER OUVERT, PLUS PETIT (Keko : « le zoom des stickers un peu trop
+   gros ») ; son nom se pose juste dessous, plus haut et plus grand. */
+.sticker-ouvert {
+  --cote-sticker: min(72vw, 40vh, 24rem);
+}
 .sticker-grand {
   position: fixed;
   left: 50%;
-  top: 44%;
-  width: min(88vw, 52vh, 30rem);
+  top: 40%;
+  width: var(--cote-sticker);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   perspective: 50rem;
@@ -1407,12 +1412,16 @@
   margin: 0 0 0.4rem;
   font-family: 'Grenze', Georgia, serif;
   font-weight: 800;
-  font-size: clamp(1.3rem, 3.4vh, 1.8rem);
+  font-size: clamp(1.8rem, 4.6vh, 2.6rem);
   line-height: 1.1;
 }
 
 .sticker-ouvert {
   touch-action: none;
+}
+.sticker-ouvert .carte-ouverte-infos {
+  bottom: auto;
+  top: calc(40% + var(--cote-sticker) / 2 + 1rem);
 }
 
 /* LES PAILLETTES DU STICKER HOLO, ajoutées à la lumière (voir `COSMOS`). */
