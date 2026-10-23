@@ -1351,6 +1351,9 @@ export interface ChoixDuDeck {
   readonly onJouerAvec: () => void
 }
 
+/** Au doigt ou à la souris : la consigne dit « touchez » ou « cliquez » (Keko). */
+const AU_DOIGT = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
+
 export function PageCollection({
   catalogue,
   collection,
@@ -1521,7 +1524,7 @@ export function PageCollection({
                   ? deck.edite === deck.actif
                     ? 'complet, il joue'
                     : 'complet, prêt à jouer'
-                  : `encore ${deck.taille - deck.nombre} à choisir, une tape met l'exemplaire dans le deck`}
+                  : `encore ${deck.taille - deck.nombre} à choisir, ${AU_DOIGT ? 'touchez' : 'cliquez sur'} une carte pour l'ajouter au deck`}
               </>
             ) : toutes ? (
               <>
