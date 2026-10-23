@@ -622,6 +622,32 @@ Rançonneuse ♀, Mangeuse de feu ♀ → Avaleur de braises ♂).
   (`01-maitre-de-la-fosse.png` … `14-porte-etendard.png`, numérotées comme
   cette fiche).
 
+**Rares orcs : 5 hommes, 5 femmes** (proposition, 23/10/2026) — **un effet
+fort ou une mise en scène** : un décor, une bête de taille, une machine à
+bras. Mêlée 3 H / 1 F, distance 1 H / 1 F, magie 1 H / 2 F, soutien 1 F.
+L'orc passe à 23 hommes, 23 femmes.
+
+1. **Combattante de l'arène** · ♀ · un couperet court dans la main droite, un bouclier rond hérissé de pointes au bras gauche. Chaînes brisées aux poignets, sable de l'arène qui vole sous ses pieds, pièces et fleurs jetées par la foule autour d'elle, poing levé de victoire.
+2. **Ravageur** · ♂ · une chaîne énorme dans la main droite, qui traîne derrière lui une porte de palissade arrachée. Hache passée dans la ceinture, éclats de bois qui volent, piquets brisés à ses pieds, cri de charge.
+3. **Massacreur** · ♂ · une grande hache à double lame tenue à deux mains, lancée dans un tourbillon. Traînées de mouvement en cercle autour de lui, poussière soulevée, tresses qui fouettent l'air, crocs serrés.
+4. **Lutteur d'ours** · ♂ · aucune arme : les deux bras serrés autour du cou d'un ours brun dressé contre lui. Torse nu couvert de griffures, ceinture de champion en fer, pieds arc-boutés dans la terre, sourire de défi.
+5. **Lanceuse de harpon** · ♀ · un harpon barbelé levé dans la main droite, la corde enroulée sur l'avant-bras gauche. Debout à la proue d'un radeau de rondins, gerbe d'eau, une grande anguille de mer qui jaillit des vagues devant elle.
+6. **Lanceur de rochers** · ♂ · la main droite qui abat le levier d'une petite catapulte de bois à bras, un rocher qui part du godet. Tas de rochers à côté, cordes et roues grossières, éclats de pierre en l'air, bouche ouverte de plaisir.
+7. **Haruspice** · ♂ · un couteau d'os dans la main droite, la gauche ouverte au-dessus d'un plat de pierre où des os luisent. Fumée verte qui monte en signes, crânes de bêtes et bougies autour, yeux révulsés, manteau de peaux.
+8. **Chantre des roches** · ♀ · aucune arme : les deux mains levées, bouche ouverte sur un chant. Derrière elle un menhir gravé qui vibre, des pierres qui flottent en cercle autour d'elle, ondes visibles dans l'air, collier de cailloux polis.
+9. **Mage de cendre** · ♀ · un bâton de bois calciné dans la main droite, fumant au bout. Nuage de cendre grise qui tourbillonne autour d'elle, braises orange dedans, visage et bras peints de suie, cheveux gris de cendre.
+10. **Meneuse d'ours** · ♀ · un tambourin dans la main droite, la chaîne d'un ours muselé dans la gauche. L'ours dressé sur ses pattes arrière danse à côté d'elle, coiffé d'un petit chapeau, grelots à ses chevilles à elle, sourire de foire.
+
+- **Sexes** : l'opposé de la carte la plus proche quand il y en a une
+  (Maître de la fosse ♂ → Combattante ♀, Lanceuse de pierres ♀ → Lanceur de
+  rochers ♂, Dresseur de wargs ♂ → Meneuse ♀, Ritualiste ♀ → Haruspice ♂,
+  Fendeur de terre ♂ → Chantre ♀). La Mage de cendre est une femme parce que
+  tout le feu orc était masculin (Cracheur de braise, Avaleur de braises),
+  bien que la Pyromancienne gobeline rare soit une femme : cendre et flammes
+  ne se dessinent pas pareil.
+- **Deux ours au même cran** : le Lutteur se bat contre le sien, la Meneuse
+  fait danser le sien. *Noms et sexes à rejuger par Keko.*
+
 
 ## Les paquets et la rareté (21/10/2026)
 
