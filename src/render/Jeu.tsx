@@ -76,6 +76,7 @@ import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from
 import { FondAnime } from './FondAnime.tsx'
 import { demanderLInclinaison } from './inclinaison.ts'
 import { toileDuTitre } from './texture-carte.ts'
+import { penchantAuSurvol } from './survol.ts'
 
 /**
  * LES PAGES. `collection` et `catalogue` sont les deux entrées du menu
@@ -205,6 +206,7 @@ function compteDesExemplaires(c: Collection): CompteDExemplaires {
 }
 
 export function Jeu(): React.ReactElement {
+  useEffect(penchantAuSurvol, [])
   // `&page=collection|catalogue|stickers` : OUVRIR UNE PAGE D'UN LIEN, sans
   // l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien.* Le son n'est
   // pas amorcé : ces pages n'en ont pas besoin pour se juger.

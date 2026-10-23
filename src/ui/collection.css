@@ -386,9 +386,10 @@
 /* À LA SOURIS, LA CARTE SURVOLÉE GROSSIT UN PEU (Keko), passe devant ses
    voisines ; pas au doigt, et pas dans la main qui joue. */
 @media (hover: hover) and (pointer: fine) {
+  /* …et penche vers la souris (`render/survol.ts` pose --rx / --ry). */
   .vignette:hover:not(:active) {
     z-index: 2;
-    transform: scale(1.08);
+    transform: perspective(40rem) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.2);
   }
   .jouer-carte .vignette:hover:not(:active) {
     transform: none;
@@ -1351,7 +1352,7 @@
     z-index: 2;
   }
   .album-case:hover .album-sticker {
-    transform: scale(1.12);
+    transform: perspective(40rem) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.25);
   }
 }
 
