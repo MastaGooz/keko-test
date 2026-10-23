@@ -18,7 +18,8 @@ function lacher(): void {
   if (courante === null) return
   courante.style.removeProperty('--rx')
   courante.style.removeProperty('--ry')
-  courante.style.removeProperty('--b')
+  courante.style.removeProperty('--mx')
+  courante.style.removeProperty('--my')
   courante = null
 }
 
@@ -39,9 +40,9 @@ export function penchantAuSurvol(): void {
       const y = ((e.clientY - b.top) / b.height) * 2 - 1
       el.style.setProperty('--rx', `${(-y * PENCHE).toFixed(2)}deg`)
       el.style.setProperty('--ry', `${(x * PENCHE).toFixed(2)}deg`)
-      // LA BANDE DE LUMIÈRE PASSE SOUS LA SOURIS : sa ligne (u + v) / 2, u de
-      // gauche à droite, v de bas en haut — comme `sousLeDoigt` dans Carte3D.
-      el.style.setProperty('--b', `${(((x - y + 2) / 4) * 100).toFixed(1)}%`)
+      // OÙ EST LA SOURIS, en pour cent de la carte : la lumière et la holo s'y posent.
+      el.style.setProperty('--mx', `${((x + 1) * 50).toFixed(1)}%`)
+      el.style.setProperty('--my', `${((y + 1) * 50).toFixed(1)}%`)
     },
     { passive: true },
   )
