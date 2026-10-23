@@ -1625,8 +1625,15 @@ const SANS_TOUCHES =
 /** `?decor=bleu` : le bleu nuit commun derrière l'emoji, au lieu de la nuit du cran. */
 const DECOR_BLEU =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('decor') === 'bleu'
-const SANS_RAYONS =
-  typeof location !== 'undefined' && new URLSearchParams(location.search).get('rayons') === '0'
+/**
+ * PLUS DE RAYONS DERRIÈRE LES PERSONNAGES (Keko, 23/10 : « les rayons c'était
+ * bien pour les emojis, mais là je trouve ça pas très adapté ») : une AURÉOLE
+ * de la couleur du cran et une OMBRE AU SOL les remplacent (`peindreAureole`,
+ * `peindreOmbreAuSol`). `?rayons=1` rend les rayons.
+ */
+export const AVEC_RAYONS_CARTE =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('rayons') === '1'
+const SANS_RAYONS = !AVEC_RAYONS_CARTE
 /**
  * LA LUEUR DU SUJET NE SE PEINT PLUS EN MODE EMOJI. Keko : « j'ai l'impression
  * qu'il y a un halo lumineux autour des emojis non ? on peut essayer sans ? »
@@ -4321,6 +4328,7 @@ export async function peindreCarte(
     }
   }
   if (bulle && !SANS_RAYONS && carte.sansRayons !== true) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
+  if (bulle && SANS_RAYONS) peindreAureole(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
 
   /**
    * FOND, PUIS LUMIÈRE, PUIS SUJET — et c'est Keko qui a trouvé l'ordre : « on
@@ -4456,6 +4464,11 @@ export async function peindreCarte(
   }
   if (sujet !== null) {
     ctx.imageSmoothingQuality = 'high'
+    // L'OMBRE AU SOL, sous les pieds, juste avant le personnage.
+    if (bulle && SANS_RAYONS && !enFenetre) {
+      const p = placeDansCouvrir(sujet, sX, sY, sL, sH, sRognage)
+      peindreOmbreAuSol(ctx, p.x + p.l / 2, p.y + p.h, p.l)
+    }
     couvrir(ctx, sujet, sX, sY, sL, sH, sRognage)
     // OÙ L'EMOJI EST POSÉ, en pixels de la toile : le décollage le reprend là.
     const r = placeDansCouvrir(sujet, sX, sY, sL, sH, sRognage)
@@ -5957,6 +5970,62 @@ async function peindreSymbole(
   ctx.shadowBlur = w * 0.06
   ctx.shadowOffsetY = w * 0.03
   ctx.drawImage(image, cx - w / 2, cy - w / 2, w, w)
+  ctx.restore()
+}
+
+/**
+ * L'AURÉOLE : une lueur de bougie derrière le personnage, de la couleur claire
+ * du cran, qui s'éteint vers les bords de la fenêtre. *Elle met en valeur
+ * sans rien raconter* — le dessin reste seul à parler.
+ */
+function peindreAureole(
+  ctx: CanvasRenderingContext2D,
+  rarete: string | undefined,
+  x: number,
+  y: number,
+  l: number,
+  h: number,
+): void {
+  const metal = rarete === undefined ? undefined : METAUX[rarete]
+  const clair = metal?.[0] ?? '#fff3d1'
+  const cx = x + l / 2
+  const cy = y + h * 0.46
+  const r = Math.hypot(l, h) * 0.5
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r)
+  const [cr, cg, cb] = couleurDe(clair)
+  g.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, 0.7)`)
+  g.addColorStop(0.35, `rgba(${cr}, ${cg}, ${cb}, 0.32)`)
+  g.addColorStop(0.75, `rgba(${cr}, ${cg}, ${cb}, 0.07)`)
+  g.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`)
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x, y, l, h)
+  ctx.clip()
+  ctx.fillStyle = g
+  ctx.fillRect(x, y, l, h)
+  ctx.restore()
+}
+
+/**
+ * L'OMBRE AU SOL : une ellipse sombre et floue sous les pieds — le personnage
+ * est posé, comme une figurine sur la table. `cx`, `bas` : le milieu du bas du
+ * dessin ; `large` : sa largeur posée.
+ */
+function peindreOmbreAuSol(ctx: CanvasRenderingContext2D, cx: number, bas: number, large: number): void {
+  const rx = large * 0.42
+  const ry = rx * 0.2
+  const cy = bas - ry * 1.1
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.scale(1, ry / rx)
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
+  g.addColorStop(0, 'rgba(10, 4, 2, 0.6)')
+  g.addColorStop(0.6, 'rgba(10, 4, 2, 0.3)')
+  g.addColorStop(1, 'rgba(10, 4, 2, 0)')
+  ctx.fillStyle = g
+  ctx.beginPath()
+  ctx.arc(0, 0, rx, 0, Math.PI * 2)
+  ctx.fill()
   ctx.restore()
 }
 

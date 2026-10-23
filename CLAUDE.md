@@ -156,7 +156,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   de quatre clous ; le sachet du même cuir porte le même symbole
   (`?marque=ancienne` : le blason peint et le bouquet de personnages) ; la plaque est un parchemin
   (`PLAQUE_CLAIRE`), l'encre brune ; titre du sachet et noms en **Grenze 800**
-  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; le
+  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; derrière les personnages, plus de rayons (`?rayons=1`) mais une auréole du cran et une ombre au sol (`peindreAureole`, `peindreOmbreAuSol`), le dessin cadré à sa forme (`rogneAuDessin`, `?cadre=carre`) ; le
   blanc des communes tire vers l'ivoire. Cache par rayon et par piste.
 
 ### L'ouverture — portrait, une carte à la fois
