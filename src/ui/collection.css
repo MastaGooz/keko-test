@@ -395,9 +395,14 @@
     transform: none;
   }
 
-  /* LA LUMIÈRE QUI SUIT LA SOURIS (Keko : « l'effet de lumière au mouvement
-     de la carte ») : une tache claire là où pointe la souris (--mx / --my,
-     posés par `render/survol.ts`), aux coins de la carte (5,5 % de large). */
+  /* LE TRAIT DE LUMIÈRE DU ZOOM, À LA SOURIS. Keko : « c'est pas le même trait
+     de lumière (forme et fonctionnement) qu'en zoom ». C'est donc le lustre de
+     la carte 3D (`uLustre` dans Carte3D) : une BANDE en diagonale, sur la ligne
+     (u + v) / 2 — « to top right » fait passer ses lignes par les coins haut
+     gauche et bas droit, quel que soit le rapport —, posée SOUS LA SOURIS
+     (--b, `render/survol.ts`), au profil du nuanceur exp(−95 e²) + ½ exp(−480 e²),
+     teintée de la couleur du cran (--lustre, `tonDuLustre`) et AJOUTÉE à la
+     carte. */
   .vignette::before {
     content: '';
     position: absolute;
@@ -405,54 +410,52 @@
     z-index: 3;
     border-radius: 5.5% / 3.93%;
     pointer-events: none;
-    background: radial-gradient(
-      circle at var(--mx, 50%) var(--my, 50%),
-      rgba(255, 250, 235, 0.42),
-      rgba(255, 250, 235, 0.12) 30%,
-      rgba(255, 250, 235, 0) 60%
+    background: linear-gradient(
+      to top right,
+      transparent calc(var(--b, 50%) - 20%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 2%, transparent) calc(var(--b, 50%) - 15%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 8%, transparent) calc(var(--b, 50%) - 10%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 14%, transparent) calc(var(--b, 50%) - 7%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 22%, transparent) calc(var(--b, 50%) - 4%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 27%, transparent) calc(var(--b, 50%) - 2%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 30%, transparent) var(--b, 50%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 27%, transparent) calc(var(--b, 50%) + 2%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 22%, transparent) calc(var(--b, 50%) + 4%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 14%, transparent) calc(var(--b, 50%) + 7%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 8%, transparent) calc(var(--b, 50%) + 10%),
+      color-mix(in srgb, var(--lustre, #fff3d1) 2%, transparent) calc(var(--b, 50%) + 15%),
+      transparent calc(var(--b, 50%) + 20%)
     );
-    mix-blend-mode: soft-light;
+    mix-blend-mode: plus-lighter;
     opacity: 0;
     transition: opacity 0.2s ease;
   }
   .vignette:hover::before {
     opacity: 1;
   }
-  .jouer-carte .vignette::before {
+  .jouer-carte .vignette::before,
+  .vignette-holo::before {
     display: none;
   }
 
-  /* ET LA HOLO SUIT LA SOURIS : la bande arc-en-ciel ne court plus toute
-     seule, elle passe là où on penche, et un voile d'arc-en-ciel glisse sur
-     toute la carte — le cerne arc-en-ciel du sticker change de couleur avec. */
+  /* SUR UNE HOLO, LE TRAIT SE DÉCOMPOSE (« un foil n'a pas un reflet blanc ») :
+     c'est la bande arc-en-ciel de la feuille qui quitte sa course et se pose
+     sous la souris, comme au zoom quand on tient la carte. Mêmes couleurs et
+     même largeur (±0,105) que la bande qui court toute seule. */
   .vignette-holo:hover::after {
     z-index: 3;
     animation: none;
-    background:
-      linear-gradient(
-        to top right,
-        transparent 46%,
-        rgba(255, 120, 200, 0.5) 47.6%,
-        rgba(255, 240, 120, 0.55) 49.2%,
-        rgba(120, 255, 170, 0.55) 50.4%,
-        rgba(120, 200, 255, 0.55) 51.8%,
-        rgba(190, 130, 255, 0.5) 53%,
-        transparent 54%
-      ),
-      linear-gradient(
-        115deg,
-        rgba(255, 60, 160, 0.2),
-        rgba(255, 210, 60, 0.2),
-        rgba(60, 255, 160, 0.2),
-        rgba(60, 170, 255, 0.2),
-        rgba(180, 80, 255, 0.2),
-        rgba(255, 60, 160, 0.2)
-      );
-    background-size: 260% 260%, 300% 300%;
-    background-position:
-      calc(100% - var(--mx, 50%)) var(--my, 50%),
-      var(--mx, 50%) var(--my, 50%);
-    mix-blend-mode: color-dodge;
+    background: linear-gradient(
+      to top right,
+      transparent calc(var(--b, 50%) - 10.4%),
+      rgba(255, 120, 200, 0.5) calc(var(--b, 50%) - 6.2%),
+      rgba(255, 240, 120, 0.55) calc(var(--b, 50%) - 2%),
+      rgba(120, 255, 170, 0.55) calc(var(--b, 50%) + 1.1%),
+      rgba(120, 200, 255, 0.55) calc(var(--b, 50%) + 4.7%),
+      rgba(190, 130, 255, 0.5) calc(var(--b, 50%) + 7.8%),
+      transparent calc(var(--b, 50%) + 10.4%)
+    );
+    background-size: 100% 100%;
   }
 }
 

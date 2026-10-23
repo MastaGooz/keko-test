@@ -29,7 +29,7 @@ import { AMBIANCE, TAILLE_COLLE, collesSeChevauchent, placeDuColle, placeNonCoup
 import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
-import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
+import { RAYONS_DANS_LA_CARTE, tonDuLustre } from './texture-carte.ts'
 
 /**
  * LES RAYONS DES CARTES ANIMÉES TOURNENT AUSSI DANS LA GRILLE. Keko : « l'effet
@@ -90,6 +90,13 @@ const NOM_DE_LA_RARETE: Readonly<Record<RareteEmoji, string>> = {
 /** La couleur d'un cran, celle de son halo : *un pigment ne survit pas à la diffusion.* */
 export function teinteDuCran(r: RareteEmoji): string {
   return AMBIANCE[COULEUR[r]] ?? '#ffffff'
+}
+
+/** La couleur du trait de lumière d'un cran (`tonDuLustre`, ramené sous 1) : celle du survol. */
+function couleurDuLustre(r: RareteEmoji): string {
+  const ton = tonDuLustre(COULEUR[r])
+  const max = Math.max(1, ...ton)
+  return `rgb(${ton.map((c) => Math.round((c / max) * 255)).join(' ')})`
 }
 
 type Tri = 'recentes' | 'az' | 'rares'
@@ -575,7 +582,7 @@ export function Vignette({
       ref={boite}
       type="button"
       className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' || choix === 'pris' ? ' vignette-estompee' : ''}`}
-      style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
+      style={{ '--cran': teinteDuCran(carte.rarete), '--lustre': couleurDuLustre(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}${possession === null ? ', pas encore obtenue' : ''}`}
     >
