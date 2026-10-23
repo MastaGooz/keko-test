@@ -664,8 +664,8 @@ Ursha : aucune épique ne le monte.
 2. **Championne** · ♀ · une épée à deux mains plantée dans le sol, les deux mains sur le pommeau. Debout sur la tête d'un énorme serpent de roche abattu, onde de choc qui fend la pierre autour de la lame, armure de plaques dépareillées, trophées de dents en collier.
 3. **Berserker** · ♂ · une hache dans chaque main, bras écartés. Aura de rage rouge qui explose autour de lui, yeux blancs brillants, veines lumineuses sur les bras, sol qui éclate sous ses pieds, peintures de guerre rouges.
 4. **Sorcière du sang** · ♀ · une dague rituelle courbe dans la main droite, la gauche levée qui fait tourner des rubans rouges lumineux. Sphères pourpres qui flottent autour d'elle, lune rouge derrière, robe de cuir sombre, ongles noirs, sourire inquiétant.
-5. **Tatoueuse runique** · ♀ · une aiguille d'os à tatouer dans la main droite, un pot d'encre bleue dans la gauche. Les runes tatouées sur ses bras se détachent de la peau et éclatent en lumière bleue tout autour d'elle, crâne rasé couvert de runes, tablier de cuir.
-6. **Tambour de guerre** · ♂ · deux battes en fémur dans les mains, levées pour frapper. Un tambour géant en peau monté sur un chariot à grosses roues, anneaux d'onde sonore qui s'en échappent, cailloux qui sautent, torse nu, collier de dents.
+5. **Tatoueuse runique** · ♀ · une aiguille d'os dans la main droite, la gauche levée. Les runes de ses bras s'envolent et forment derrière elle un grand esprit de bélier en lumière bleue. Crâne rasé couvert de runes.
+6. **Tambour de guerre** · ♂ · deux battes en os levées pour frapper. Debout sur le dos d'un rhinocéros laineux qui porte un tambour géant, anneaux d'onde sonore qui s'en échappent.
 
 - **Distinguées de leurs voisines** : le Berserker explose de rage, le
   Massacreur (rare) tourne ; la Championne a vaincu une bête, la Combattante
@@ -674,6 +674,11 @@ Ursha : aucune épique ne le monte.
   terre (peu commune) les a peintes ; le Tambour est une machine, la
   Porte-étendard (peu commune) n'a que son cri. *Noms et sexes à rejuger par
   Keko.*
+- **Keko** (23/10) : la Tatoueuse et le Tambour « manquent un peu de côté
+  légendaire » — chacun reçoit une grande créature (l'esprit de bélier, le
+  rhinocéros laineux) ; puis « un peu trop détaillé, le modèle perd le style
+  minimaliste » : **une épique = une grande idée et deux ou trois détails**,
+  pas plus.
 
 
 ## Les paquets et la rareté (21/10/2026)
