@@ -2672,12 +2672,15 @@ ${nuanceur.fragmentShader}`
       const collesHolo = face.map?.userData.collesHolo as THREE.Texture | undefined
       nuanceur.uniforms.uCollesHolo!.value = collesHolo ?? COLLES_VIDE
       nuanceur.uniforms.uCollesHoloOk!.value = collesHolo !== undefined && dos !== true ? 1 : 0
-      // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
-      const nue = nuDeLaFace.current
       // LA COMPOSITION (fond + emoji par sa silhouette) JOUE POUR LE RELIEF D'UNE
       // HOLO ET POUR LES RAYONS QUI TOURNENT D'UNE CARTE ANIMÉE.
       const tourne = tourneLaCarte(carte) && carte.sansSujet !== true
       const holoRelief = AVEC_RELIEF && carte.holo === true
+      // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
+      // UNE HOLO SANS SON STICKER (le décollage) EST SA PROPRE CARTE NUE : sans
+      // relief, son fond retombait à sa taille d'origine — Keko : « quand je
+      // clique sur Décoller sur une carte holo, le fond dézoome ».
+      const nue = nuDeLaFace.current ?? (holoRelief && carte.sansSujet === true ? face.map : null)
       const relief = nue !== null && face.map !== null && dos !== true && (holoRelief || tourne)
       nuanceur.uniforms.uProfondeur!.value = holoRelief ? RELIEF.profondeur : 0
       nuanceur.uniforms.uAgrandi!.value = holoRelief ? RELIEF.agrandi : 1
