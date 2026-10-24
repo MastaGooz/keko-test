@@ -128,7 +128,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`illustrationEntiere`) et passe par `illustration()` comme une image. On
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
-  Baloo 2 aussi se demande explicitement. **Sur la carte, le cerne prend la couleur du cadre** (`CERNE_DE_CARTE`, `varianteDuSticker` ; `?cerne=nu` sans cerne, `?cerne=blanc` le crème ; la holo garde le crème, il fait l'arc-en-ciel) : au décollage, le cerne crème du sticker naît en gonflant (`DECOLLAGE.cerne`). **Le dos du sticker couvre tout ce
+  Baloo 2 aussi se demande explicitement. **Sur la carte, le dessin est posé SANS son cerne** (`CERNE_DE_CARTE`, `varianteDuSticker` ; `?cerne=cran` le cerne au ton moyen du cadre, essayé et écarté, `?cerne=blanc` le crème ; la holo garde le crème, il fait l'arc-en-ciel) : au décollage, le cerne crème du sticker naît en gonflant (`DECOLLAGE.cerne`). **Le dos du sticker couvre tout ce
   qui porte de l'encre, translucide compris** (`SEUIL_ENCRE`, binarisé AVANT
   le flou de `cerneDe`) : seul le transparent franc est un trou — 🫧 crénelait.
 - **Les emoji dessinés par Keko** remplacent le glyphe Noto, un par un

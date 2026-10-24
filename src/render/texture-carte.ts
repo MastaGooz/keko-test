@@ -2416,8 +2416,9 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
 /**
  * LE CERNE QUE LA CARTE MONTRE. D'abord Keko : « on enlève l'outline blanc et
  * on ne le fait apparaître avec une petite animation que quand le joueur clique
- * sur décoller le sticker » (`?cerne=nu`) ; puis : « on remet l'outline, mais
- * de la couleur du cadre de la carte (lié à la rareté) » — **par défaut**. Le
+ * sur décoller le sticker » — **par défaut** ; puis « on remet l'outline, mais
+ * de la couleur du cadre de la carte » (`?cerne=cran`, ton moyen ; le bas et le
+ * haut du cadre essayés aussi), et Keko : « pas terrible, on enlève ». Le
  * sticker gagné, lui, reste crème : au décollage, le cerne de la carte passe
  * au crème (`DECOLLAGE.cerne`). *Le sticker reste le même* — sa toile, sa
  * place, son cadrage (`rogneAuDessin` coupe toutes les variantes au même
@@ -2427,7 +2428,7 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
 type CerneDeCarte = 'cran' | 'nu' | 'blanc'
 const CERNE_DE_CARTE: CerneDeCarte = (() => {
   const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('cerne')
-  return v === 'nu' || v === 'blanc' ? v : v === '1' ? 'blanc' : 'cran'
+  return v === 'cran' || v === 'blanc' ? v : v === '1' ? 'blanc' : 'nu'
 })()
 const RECETTES = new WeakMap<HTMLImageElement | HTMLCanvasElement, { glyphe: HTMLCanvasElement; n: number; cote: number; u: number }>()
 const VARIANTES = new WeakMap<HTMLImageElement | HTMLCanvasElement, Map<string, HTMLCanvasElement | null>>()
