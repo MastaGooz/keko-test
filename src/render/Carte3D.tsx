@@ -105,7 +105,10 @@ function silhouetteDe(toile: HTMLCanvasElement): THREE.CanvasTexture | null {
     c.width = toile.width
     c.height = toile.height
     const cctx = c.getContext('2d')
-    cctx?.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+    // CE QUE LA CARTE MONTRE (le trait fin, sans comblement), pas le sticker
+    // plein : sinon une bande de fond non enfoncé tremblait autour du trait
+    // (Keko : « une déformation autour de l'outline holo »).
+    cctx?.drawImage(sujet.montre ?? sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
     // ET LES STICKERS COLLÉS, en surface eux aussi : voir `surfaceDe`.
     const surface = surfaceDe(toile)
     if (surface !== undefined) cctx?.drawImage(surface, 0, 0, c.width, c.height)
