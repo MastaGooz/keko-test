@@ -59,6 +59,7 @@ import {
   CLAIR_DU_MOTIF_GLSL,
   motifDeLaToile,
   satureDeLaToile,
+  lueurDeLaToile,
 } from './texture-carte.ts'
 
 /**
@@ -1157,6 +1158,7 @@ export function Carte3D({
       nuanceur.uniforms.uSatureRayons = { value: 1 }
       nuanceur.uniforms.uMotif = { value: 1 }
       nuanceur.uniforms.uSatureFond = { value: 1 }
+      nuanceur.uniforms.uLueurFond = { value: 1 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
       // LE RELIEF : la carte entière, la même sans emoji, et s'il joue (voir RELIEF).
       nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
@@ -1573,7 +1575,8 @@ ${nuanceur.vertexShader}`.replace(
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
              float libre = texture2D(uMasqueSujet, vLustreUv).r;
-             float kr = clair * fonduR * libre * fenetre;
+             // UN DÉCOR PEINT BRUT (uLueurFond nul) ne reçoit rien : voir lueurDeLaToile.
+             float kr = clair * fonduR * libre * fenetre * uLueurFond;
              float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
              cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
              float lumR = dot(cc, vec3(0.2126, 0.7152, 0.0722));
@@ -1712,6 +1715,7 @@ uniform float uRayons;
 uniform float uSatureRayons;
 uniform float uMotif;
 uniform float uSatureFond;
+uniform float uLueurFond;
 uniform sampler2D uMasqueSujet;
 uniform sampler2D uPeinture;
 uniform sampler2D uNu;
@@ -2705,6 +2709,7 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uSatureRayons!.value = SATURE_RAYONS[carte.rarete ?? ''] ?? 1
       nuanceur.uniforms.uMotif!.value = motifDeLaToile(face.map?.image)
       nuanceur.uniforms.uSatureFond!.value = satureDeLaToile(face.map?.image)
+      nuanceur.uniforms.uLueurFond!.value = lueurDeLaToile(face.map?.image)
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.

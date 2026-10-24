@@ -1679,10 +1679,24 @@ export function masqueDuSujetDe(canvas: HTMLCanvasElement): HTMLCanvasElement | 
  * seule par défaut**, sans pointes ; `?brillantfond=eclat` rend les pointes.
  */
 const FONDS_EN_IMAGE = new WeakSet<HTMLCanvasElement>()
-const BRILLANT_DU_FOND_DOUX =
-  typeof location === 'undefined' || new URLSearchParams(location.search).get('brillantfond') !== 'eclat'
+/**
+ * ET PUIS RIEN DU TOUT, par défaut : Keko, « on va rollback à l'essentiel :
+ * n'applique aucun traitement sur les backgrounds des cartes pour voir ce que
+ * ça donne en brut ». Ni lueur ni pointes sur le décor, en vignette comme en
+ * 3D (`lueurDeLaToile`) ; `?brillantfond=doux` rend la lueur (à moitié en
+ * vignette), `?brillantfond=eclat` les pointes.
+ */
+const BRILLANT_DU_FOND: 'aucun' | 'doux' | 'eclat' = (() => {
+  const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('brillantfond')
+  return v === 'doux' || v === 'eclat' ? v : 'aucun'
+})()
+const DECOR_PEINT = (canvas: unknown): boolean => canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas)
 export function motifDeLaToile(canvas: unknown): number {
-  return BRILLANT_DU_FOND_DOUX && canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas) ? 0 : 1
+  return BRILLANT_DU_FOND !== 'eclat' && DECOR_PEINT(canvas) ? 0 : 1
+}
+/** La part de la lueur de la lampe que reçoit la fenêtre d'art : nulle sur un décor peint, sauf demandée. */
+export function lueurDeLaToile(canvas: unknown): number {
+  return BRILLANT_DU_FOND === 'aucun' && DECOR_PEINT(canvas) ? 0 : 1
 }
 export function satureDeLaToile(canvas: unknown): number {
   return canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas) ? 0 : 1

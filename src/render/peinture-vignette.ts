@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { RAYON_SIMPLE, clairDuMotif, motifDeLaToile, satureDeLaToile } from './texture-carte.ts'
+import { RAYON_SIMPLE, clairDuMotif, lueurDeLaToile, motifDeLaToile, satureDeLaToile } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -302,6 +302,8 @@ export function brillantDuRepos(
   // UN DÉCOR PEINT ne sature pas ; sans pointes sauf `?brillantfond=eclat` : voir `motifDeLaToile`.
   const motif = motifDeLaToile(toile)
   const satureFond = satureDeLaToile(toile)
+  // Brut par défaut : voir `lueurDeLaToile`.
+  const lueurFond = lueurDeLaToile(toile)
   for (let j = 0; j < h; j++) {
     const v = (j + 0.5) / h
     for (let i = 0; i < l; i++) {
@@ -329,7 +331,7 @@ export function brillantDuRepos(
         // UN DÉCOR PEINT, À MOITIÉ : la vignette ne bouge pas, et la lueur de
         // face avivait le sol du camp orc (Keko : « dans la petite version, le
         // sol est un peu trop flashy ; c'est bien en zoom »).
-        if (satureFond === 0) kr *= 0.5
+        if (satureFond === 0) kr *= 0.5 * lueurFond
       }
       if (bande <= 0 && kr <= 0) continue
       let r = lineaire(d[k]! / 255)
