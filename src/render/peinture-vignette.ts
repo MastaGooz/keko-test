@@ -326,6 +326,10 @@ export function brillantDuRepos(
         const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib
+        // UN DÉCOR PEINT, À MOITIÉ : la vignette ne bouge pas, et la lueur de
+        // face avivait le sol du camp orc (Keko : « dans la petite version, le
+        // sol est un peu trop flashy ; c'est bien en zoom »).
+        if (satureFond === 0) kr *= 0.5
       }
       if (bande <= 0 && kr <= 0) continue
       let r = lineaire(d[k]! / 255)
