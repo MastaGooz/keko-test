@@ -679,6 +679,14 @@ function rogneAuDessin(image: HTMLImageElement | HTMLCanvasElement): HTMLImageEl
   r.width = x1 - x0 + 3
   r.height = y1 - y0 + 3
   r.getContext('2d')?.drawImage(t, x0 - 1, y0 - 1, r.width, r.height, 0, 0, r.width, r.height)
+  const nu = NUS.get(image)
+  if (nu !== undefined) {
+    const rn = document.createElement('canvas')
+    rn.width = r.width
+    rn.height = r.height
+    rn.getContext('2d')?.drawImage(nu, x0 - 1, y0 - 1, r.width, r.height, 0, 0, r.width, r.height)
+    NUS.set(r, rn)
+  }
   ROGNES.set(image, r)
   return r
 }
@@ -1713,6 +1721,14 @@ function masqueDuSujet(
     c.scale(m.width / LARGE, m.width / LARGE)
     c.globalCompositeOperation = 'destination-out'
     couvrir(c, image, marge, aY, LARGE - marge * 2, aH, rognage)
+    // ET LE TROU SE BOUCHE DE NOIR : le nuanceur et la vignette lisent le
+    // ROUGE, et un dessin presque opaque (alpha 253, les images de Keko sans
+    // leur cerne) laissait un blanc presque transparent — lu « libre », le
+    // brillant passait sur le personnage.
+    c.setTransform(1, 0, 0, 1, 0, 0)
+    c.globalCompositeOperation = 'destination-over'
+    c.fillStyle = '#000000'
+    c.fillRect(0, 0, m.width, m.height)
   }
   return m
 }
@@ -2370,8 +2386,27 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
   const u = (CERNE_CARTE * cote) / DOS_CERNE
   // À LA FINESSE DU GLYPHE : voir `cerneDe`.
   collerSticker(ctx, glyphe, n / 2, n / 2, cote, 0, u, false, cote)
+  // LE MÊME DESSIN SANS CERNE, à la même place dans une toile de même taille :
+  // voir `SANS_CERNE`.
+  const nu = document.createElement('canvas')
+  nu.width = n
+  nu.height = n
+  nu.getContext('2d')?.drawImage(glyphe, (n - cote) / 2, (n - cote) / 2, cote, cote)
+  NUS.set(toile, nu)
   return toile
 }
+
+/**
+ * LE STICKER POSÉ SANS SON CERNE SUR LA CARTE. Keko : « on enlève l'outline
+ * blanc et on ne le fait apparaître avec une petite animation que quand le
+ * joueur clique sur décoller le sticker ». *Le sticker reste le même* — sa
+ * toile, sa place, son cadrage (`rogneAuDessin` coupe les deux au même
+ * rectangle) — la carte peint seulement le dessin nu à sa place ; le décollage
+ * reprend le sticker entier (`sujetDe`) et fait naître son cerne. La holo
+ * garde le sien : c'est lui qui devient arc-en-ciel. `?cerne=1` rend l'ancien.
+ */
+const SANS_CERNE = typeof location === 'undefined' || new URLSearchParams(location.search).get('cerne') !== '1'
+const NUS = new WeakMap<HTMLImageElement | HTMLCanvasElement, HTMLCanvasElement>()
 
 /**
  * Une image de l'emoji animé, en sticker — `null` sous `?sticker=0`, où
@@ -3252,6 +3287,8 @@ function placeDansCouvrir(
  */
 export interface SujetPeint {
   image: HTMLImageElement | HTMLCanvasElement
+  /** Le dessin nu que la carte montre, quand le cerne n'y est pas peint (`SANS_CERNE`). */
+  nu?: HTMLCanvasElement
   x: number
   y: number
   l: number
@@ -4656,13 +4693,16 @@ export async function peindreCarte(
     sY = by + (bh - sH) / 2
     sRognage = 0
   }
+  // SANS SON CERNE sur la carte, sauf la holo : voir `SANS_CERNE`.
+  const nu = bulle && SANS_CERNE && carte.holo !== true && sujet !== null ? NUS.get(sujet) : undefined
+  const pose = nu ?? sujet
   if (sujet !== null) {
     ctx.imageSmoothingQuality = 'high'
-    couvrir(ctx, sujet, sX, sY, sL, sH, sRognage)
+    couvrir(ctx, pose!, sX, sY, sL, sH, sRognage)
     // OÙ L'EMOJI EST POSÉ, en pixels de la toile : le décollage le reprend là.
     const r = placeDansCouvrir(sujet, sX, sY, sL, sH, sRognage)
     const k = largeur / LARGE
-    SUJETS.set(canvas, { image: sujet, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
+    SUJETS.set(canvas, { image: sujet, nu, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
   }
   // LE MASQUE DU SUJET, pour que les rayons clairs brillent SANS l'emoji
   // posé dessus — voir `masqueDuSujet`. L'ANIMÉ (`toile`) le prend aussi, et
@@ -4671,7 +4711,7 @@ export async function peindreCarte(
   if (bulle && !SANS_RAYONS && (FORCE_RAYONS[carte.rarete ?? ''] ?? 0) > 0) {
     MASQUES_DU_SUJET.set(
       canvas,
-      masqueDuSujet(sujet as HTMLCanvasElement | null, marge, sY, sH, sRognage, MASQUES_DU_SUJET.get(canvas)),
+      masqueDuSujet(pose as HTMLCanvasElement | null, marge, sY, sH, sRognage, MASQUES_DU_SUJET.get(canvas)),
     )
   }
 
@@ -4741,6 +4781,10 @@ export async function peindreCarte(
         mctx.setTransform(1, 0, 0, 1, 0, 0)
         mctx.globalCompositeOperation = 'destination-out'
         mctx.drawImage(surface, 0, 0, m.width, m.height)
+        // Le trou bouché de noir, comme celui du sujet : voir `masqueDuSujet`.
+        mctx.globalCompositeOperation = 'destination-over'
+        mctx.fillStyle = '#000000'
+        mctx.fillRect(0, 0, m.width, m.height)
         mctx.restore()
       }
     }

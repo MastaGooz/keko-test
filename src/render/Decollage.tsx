@@ -70,15 +70,20 @@ export const DECOLLAGE = {
   grossi: 1.3,
   /** Le coin qui se soulève tout seul pour dire où tirer, en part du sticker. */
   invite: 0.16,
+  /** Le cerne qui naît autour du dessin nu (secondes), et le petit gonflement qui l'accompagne. */
+  cerne: 0.45,
+  gonfle: 0.08,
 } as const
 
 type P = { x: number; y: number }
-type Phase = 'prepa' | 'tirer' | 'recolle' | 'arrache' | 'retourne' | 'tient' | 'envol' | 'fin'
+type Phase = 'prepa' | 'cerne' | 'tirer' | 'recolle' | 'arrache' | 'retourne' | 'tient' | 'envol' | 'fin'
 
 interface Pret {
   /** La carte sans son sticker. */
   base: HTMLCanvasElement
   face: HTMLCanvasElement
+  /** Le dessin nu que la carte montrait, si son cerne n'y était pas peint : le cerne naît d'abord. */
+  nu: HTMLCanvasElement | null
   dos: HTMLCanvasElement
   /** La place du sticker à l'écran (sa toile entière, marge comprise). */
   s: { x: number; y: number; l: number; h: number }
@@ -156,7 +161,7 @@ async function preparer(carte: CarteEmoji, ex: Exemplaire, boite: BoiteALEcran, 
     }
   }
   if (pts.length === 0) return null
-  return { base, face, dos, s, points: new Float32Array(pts) }
+  return { base, face, nu: sujet.nu ?? null, dos, s, points: new Float32Array(pts) }
 }
 
 /** Les bornes du sticker le long de `u`, et la part levée quand la ligne est à `m`. */
@@ -525,7 +530,7 @@ export function Decollage({
           return
         }
         setPret(p)
-        passer('tirer')
+        passer(p.nu !== null ? 'cerne' : 'tirer')
         appels.current.onPret()
       },
       () => vivant && appels.current.onAnnuler(),
@@ -596,7 +601,22 @@ export function Decollage({
         dessinerMiettes(ctx, pret.base, miettes, tc, ton)
         dessinerEtincelles(ctx, etincelles, tc, ton)
       }
-      if (ph === 'tirer' || ph === 'recolle' || ph === 'arrache') {
+      if (ph === 'cerne' && pret.nu !== null) {
+        // LE CERNE NAÎT : le dessin nu de la carte, puis le sticker entier qui
+        // apparaît par-dessus en gonflant un peu — *il devient un sticker*.
+        const k = Math.min(1, dt / DECOLLAGE.cerne)
+        const g = 1 + DECOLLAGE.gonfle * Math.sin(Math.PI * k)
+        const l = pret.s.l * g
+        const h = pret.s.h * g
+        const x = pret.s.x - (l - pret.s.l) / 2
+        const y = pret.s.y - (h - pret.s.h) / 2
+        ctx.drawImage(pret.nu, x, y, l, h)
+        ctx.save()
+        ctx.globalAlpha = sortie(k)
+        ctx.drawImage(pret.face, x, y, l, h)
+        ctx.restore()
+        if (dt >= DECOLLAGE.cerne) passer('tirer')
+      } else if (ph === 'tirer' || ph === 'recolle' || ph === 'arrache') {
         let len: number
         if (ph === 'tirer') {
           if (e.depart !== null && e.doigt !== null) {
