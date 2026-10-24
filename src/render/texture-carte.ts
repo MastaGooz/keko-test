@@ -4753,8 +4753,9 @@ export async function peindreCarte(
     sRognage = 0
   }
   // LE CERNE DU CRAN (ou nu) sur la carte, sauf la holo : voir `CERNE_DE_CARTE`.
-  // LE BAS DU CADRE, son ton sombre (Keko : « basé sur le bas du cadre, plus foncé »).
-  const tonCerne = METAUX[carte.rarete ?? 'commune']?.[1]
+  // LE HAUT DU CADRE, son ton clair (Keko, après le bas : « c'est moche enfait,
+  // on peut essayer avec la couleur du haut du cadre, plus claire ? »).
+  const tonCerne = METAUX[carte.rarete ?? 'commune']?.[4]
   const cleCerne = CERNE_DE_CARTE === 'nu' ? 'nu' : CERNE_DE_CARTE === 'cran' ? tonCerne : undefined
   const montre =
     bulle && cleCerne !== undefined && carte.holo !== true && sujet !== null
