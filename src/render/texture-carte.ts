@@ -2444,6 +2444,9 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
  * (`'encre'`) : le brun de la plaque (`BRUN_ENCRE`), à `EPAISSEUR_ENCRE` du
  * cerne crème — le trait d'une illustration, pas la découpe d'un sticker, et
  * pas une couleur de plus sur le camp. `?cerne=nu` rend la carte d'avant.
+ * **Il ne comble pas les trous** (Keko : « on peut enlever le remplissage des
+ * trous pour le contour noir ? ») : l'air entre un bras et le corps reste
+ * l'air du camp, bordé du même trait.
  */
 type CerneDeCarte = 'cran' | 'nu' | 'blanc' | 'encre'
 const CERNE_DE_CARTE: CerneDeCarte = (() => {
@@ -2484,7 +2487,7 @@ function varianteDuSticker(sticker: HTMLImageElement | HTMLCanvasElement, cle: s
       if (c !== null) {
         if (cle === 'nu') c.drawImage(r.glyphe, (r.n - r.cote) / 2, (r.n - r.cote) / 2, r.cote, r.cote)
         else if (cle === 'encre')
-          collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u * EPAISSEUR_ENCRE, false, r.cote, BRUN_ENCRE)
+          collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u * EPAISSEUR_ENCRE, false, r.cote, BRUN_ENCRE, false)
         else collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u, false, r.cote, cle)
       }
     }
@@ -6635,14 +6638,14 @@ const SEUIL_ENCRE = 0.06
  * ses crans. La face le calcule à la taille du glyphe (`finesse` = 512), le
  * dos et le sachet gardent leurs 256. Mémorisé par rayon ET par finesse.
  */
-function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE): Cerne {
+function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE, combler = true): Cerne {
   const r = Math.max(1, Math.round(rayon * 2) / 2)
   let parRayon = CERNES_EMOJI.get(image)
   if (parRayon === undefined) {
     parRayon = new Map()
     CERNES_EMOJI.set(image, parRayon)
   }
-  const cle = r + finesse * 1000
+  const cle = (r + finesse * 1000) * (combler ? 1 : -1)
   const garde = parRayon.get(cle)
   if (garde !== undefined) return garde
 
@@ -6679,7 +6682,9 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE)
   // un bras et le corps, dans une anse) fait partie du sticker, et le dos crème
   // le couvre. Keko : « quand un sticker a un trou transparent, on le comble en
   // blanc ». Un remplissage depuis le bord : ce qu'il n'atteint pas est un trou.
-  {
+  // LE TRAIT D'ENCRE, LUI, NE COMBLE RIEN (`combler` faux, Keko 24/10) : c'est
+  // le trait d'une illustration, il cerne aussi le bord des trous.
+  if (combler) {
     const dehors = new Uint8Array(n * n)
     const pile: number[] = []
     for (let i = 0; i < n; i++) pile.push(i, (n - 1) * n + i, i * n, i * n + n - 1)
@@ -6760,7 +6765,7 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE)
   // un bras et le corps) touchait le dehors sur la silhouette nue, mais le cerne,
   // en s'épaississant, en ferme l'entrée et laisse un vide au milieu du blanc.
   // Même remplissage depuis le bord, cette fois sur le cerne lui-même.
-  {
+  if (combler) {
     const dehors = new Uint8Array(n * n)
     const pile: number[] = []
     for (let i = 0; i < n; i++) pile.push(i, (n - 1) * n + i, i * n, i * n + n - 1)
@@ -6841,11 +6846,13 @@ function collerSticker(
   finesse = TOILE_CERNE,
   /** Un cerne d'une autre couleur que le crème (le cran, sur la carte). */
   ton?: string,
+  /** Faux : les trous du dessin restent des trous, le cerne en suit le bord (le trait d'encre). */
+  combler = true,
 ): void {
   const d = taille
   // LE RAYON DU CERNE EN PIXELS DE SA TOILE : l'épaisseur voulue à l'écran,
   // ramenée à l'échelle à laquelle le sticker sera collé.
-  const cerne = cerneDe(image, (DOS_CERNE * u * finesse) / d, finesse)
+  const cerne = cerneDe(image, (DOS_CERNE * u * finesse) / d, finesse, combler)
   // La toile du cerne déborde le glyphe : elle se colle plus grande d'autant.
   const dc = d * cerne.echelle
   // TEINTÉ SUR UNE COPIE : la toile du cerne peut servir à d'autres.
