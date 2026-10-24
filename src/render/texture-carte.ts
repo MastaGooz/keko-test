@@ -2463,6 +2463,16 @@ const CERNE_DE_CARTE: CerneDeCarte = (() => {
  * comblement, dans le crème du sticker. `?trait=brun` rend l'encre brune.
  */
 const TRAIT_BRUN = typeof location !== 'undefined' && new URLSearchParams(location.search).get('trait') === 'brun'
+/**
+ * LA HOLO GARDE-T-ELLE LE CERNE ÉPAIS DU STICKER ? Plus avec le trait crème :
+ * Keko (24/10) : « réduire l'outline des illustrations holo pour qu'il ait la
+ * même épaisseur que les cartes normales, et on enlève le comblage des trous
+ * (sauf sticker) ». Le trait est crème, donc le nuanceur l'irise pareil. Le
+ * brun (`?trait=brun`), le cran ou le nu laissent la holo au cerne crème.
+ */
+function holoAuCerneCreme(carte: { holo?: boolean }): boolean {
+  return carte.holo === true && (CERNE_DE_CARTE !== 'encre' || TRAIT_BRUN)
+}
 /** L'épaisseur du trait d'encre, en part du cerne crème du sticker (`?encre=0.6` essaie). */
 const EPAISSEUR_ENCRE = (() => {
   const v = typeof location === 'undefined' ? NaN : Number(new URLSearchParams(location.search).get('encre'))
@@ -4800,7 +4810,7 @@ export async function peindreCarte(
   const cleCerne =
     CERNE_DE_CARTE === 'nu' || CERNE_DE_CARTE === 'encre' ? CERNE_DE_CARTE : CERNE_DE_CARTE === 'cran' ? tonCerne : undefined
   const montre =
-    bulle && cleCerne !== undefined && carte.holo !== true && sujet !== null
+    bulle && cleCerne !== undefined && !holoAuCerneCreme(carte) && sujet !== null
       ? (varianteDuSticker(sujet, cleCerne) ?? undefined)
       : undefined
   const pose = montre ?? sujet
@@ -7878,7 +7888,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${carte.holo === true && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${holoAuCerneCreme(carte) && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
 }
 
 /**

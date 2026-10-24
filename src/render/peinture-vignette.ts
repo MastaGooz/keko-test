@@ -125,16 +125,25 @@ function cerneArcEnCielDuSujet(toile: HTMLCanvasElement): void {
     cerneArcEnCiel(toile)
     return
   }
-  const li = 'naturalWidth' in s.image ? s.image.naturalWidth : s.image.width
-  const hi = 'naturalWidth' in s.image ? s.image.naturalHeight : s.image.height
-  if (li === 0 || hi === 0) return
-  const colore = document.createElement('canvas')
-  colore.width = li
-  colore.height = hi
-  const cc = colore.getContext('2d', { willReadFrequently: true })
-  if (cc === null) return
-  cc.drawImage(s.image, 0, 0)
-  cerneArcEnCiel(colore, { x: 0, y: 0, l: 1, h: 1 })
+  // L'ARC-EN-CIEL SE POSE SUR CE QUE LA CARTE MONTRE (le trait fin, sans
+  // comblement), et le sticker entier, qu'on décolle, le reçoit aussi.
+  const iriser = (image: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement | null => {
+    const li = 'naturalWidth' in image ? image.naturalWidth : image.width
+    const hi = 'naturalWidth' in image ? image.naturalHeight : image.height
+    if (li === 0 || hi === 0) return null
+    const c = document.createElement('canvas')
+    c.width = li
+    c.height = hi
+    const cc = c.getContext('2d', { willReadFrequently: true })
+    if (cc === null) return null
+    cc.drawImage(image, 0, 0)
+    cerneArcEnCiel(c, { x: 0, y: 0, l: 1, h: 1 })
+    return c
+  }
+  const pose = s.montre ?? s.image
+  const colore = iriser(pose)
+  const sticker = s.montre === undefined ? colore : iriser(s.image)
+  if (colore === null || sticker === null) return
   const { width: l, height: h } = toile
   const poser = (image: CanvasImageSource): Uint8ClampedArray | null => {
     const c = document.createElement('canvas')
@@ -145,7 +154,7 @@ function cerneArcEnCielDuSujet(toile: HTMLCanvasElement): void {
     x.drawImage(image, s.x, s.y, s.l, s.h)
     return x.getImageData(0, 0, l, h).data
   }
-  const avant = poser(s.image)
+  const avant = poser(pose)
   const apres = poser(colore)
   if (avant === null || apres === null) return
   // LES STICKERS COLLÉS PAR-DESSUS L'EMOJI ne reçoivent pas la différence : la
@@ -169,7 +178,7 @@ function cerneArcEnCielDuSujet(toile: HTMLCanvasElement): void {
     }
   }
   ctx.putImageData(carte, 0, 0)
-  SUJETS_HOLO.set(toile, { ...s, image: colore })
+  SUJETS_HOLO.set(toile, { ...s, image: sticker, montre: s.montre === undefined ? undefined : colore })
 }
 
 /**
