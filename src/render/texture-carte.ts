@@ -2519,7 +2519,10 @@ async function illustration(
     const image = await charger(perso)
     if (image !== null) {
       if (!sticker) return image
-      const toile = fenetre ? stickerPleinCadre(image) : stickerDUneImage(image, TOILE_EMOJI)
+      // À LA TAILLE DU FICHIER quand il dépasse 512 : une illustration servie
+      // plus grande (agrandie par IA, essai de Keko sur le Lutteur d'ours)
+      // garde sa finesse au zoom.
+      const toile = fenetre ? stickerPleinCadre(image) : stickerDUneImage(image, Math.max(TOILE_EMOJI, image.naturalWidth))
       if (toile !== null) {
         STICKERS.set(perso, toile)
         return toile
