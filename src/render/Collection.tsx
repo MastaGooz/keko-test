@@ -351,6 +351,8 @@ export function plier(texte: string): string {
  * (`SATURATION_APLAT`, +40 %), la vignette montrait la peinture telle quelle.
  * **Le chiffre est lu, pas recopié** : un seul endroit dit combien.
  */
+/** La part des paillettes de la carte 3D que garde une vignette holo (Keko : « trop de paillettes »). Chiffre de moi. */
+const DENSITE_PAILLETTES = 0.4
 /** La période d'une couche de paillettes vives, en secondes (voir `.vignette-scintille`). */
 const DUREE_SCINTILLE = 2.4
 
@@ -463,13 +465,13 @@ export function Vignette({
           // trois couches, un tirage chacune — *les places restent, l'éclat
           // change*, comme quand la carte 3D bouge.
           if (holo) {
-            paillettesHolo(source, carte.id, { cible: t, seules: 'pales' })
+            paillettesHolo(source, carte.id, { cible: t, seules: 'pales', densite: DENSITE_PAILLETTES })
             for (const v of SCINTILLES) {
               const c = scintilles.current[v]
               if (c == null) continue
               c.width = source.width
               c.height = source.height
-              paillettesHolo(source, carte.id, { cible: c, seules: 'vives', variante: v + 1 })
+              paillettesHolo(source, carte.id, { cible: c, seules: 'vives', variante: v + 1, densite: DENSITE_PAILLETTES })
             }
           }
           setPrete(true)

@@ -662,7 +662,7 @@ export function paillettesHolo(
    * renvoient la lampe — *les places restent, l'éclat change*, comme en 3D
    * quand la carte bouge.
    */
-  options: { cible?: HTMLCanvasElement; seules?: 'pales' | 'vives'; variante?: number } = {},
+  options: { cible?: HTMLCanvasElement; seules?: 'pales' | 'vives'; variante?: number; densite?: number } = {},
 ): void {
   const source = toile.getContext('2d', { willReadFrequently: true })
   const ctx = (options.cible ?? toile).getContext('2d')
@@ -707,6 +707,11 @@ export function paillettesHolo(
         const allume = rng.next()
         const teinte = rng.next() * 360
         if (!occupee) continue
+        // UNE PART SEULEMENT, SUR LA VIGNETTE (`densite`) : la grille de la carte
+        // 3D, sur cent pixels, posait une paillette tous les trois (Keko : « trop
+        // de paillettes, la densité semble énorme »). Tirée de la teinte, pour ne
+        // pas déranger le tirage des autres.
+        if (options.densite !== undefined && ((teinte * 0.0371) % 1) >= options.densite) continue
         const x = (i + 0.5 + ox) * cote
         const y = (j + 0.5 + oy) * cote
         const px = Math.round(x)
