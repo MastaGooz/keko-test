@@ -777,8 +777,10 @@ export function peinte(
     const toile = await peindreCarte(
       // LE DÉCOLLAGE NOMME SES BONUS AU CARTOUCHE, comme la carte 3D qu'il
       // remplace ; la vignette, non (elle a ses pastilles). Pas d'animation :
-      // une vignette est une image fixe.
-      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), animation: undefined, sansSujet, sansRayons, colles },
+      // une vignette est une image fixe. MAIS LA HOLO SE DIT TOUJOURS : elle
+      // garde le cerne crème que `cerneArcEnCielDuSujet` irise, là où la
+      // normale porte le trait d'encre (`CERNE_DE_CARTE`).
+      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), holo, animation: undefined, sansSujet, sansRayons, colles },
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.

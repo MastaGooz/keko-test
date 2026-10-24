@@ -212,7 +212,11 @@ export type CarteAPeindre = {
    * tirent À L'OUVERTURE d'un paquet. *Deux exemplaires du même emoji peuvent
    * donc différer*, ce qui est tout l'intérêt d'en ouvrir un de plus.
    *
-   * **IL N'ENTRE PAS DANS LA PEINTURE, DONC PAS DANS `signature()`.** Le foil
+   * **IL N'ENTRAIT PAS DANS LA PEINTURE, DONC PAS DANS `signature()`** — jusqu'au
+   * trait d'encre (24/10) : la normale cerne son dessin de brun, la holo le
+   * garde crème pour l'iriser. *Le cerne du dessin entre donc dans la clé*
+   * (`|holo`), sinon la première peinte prête son cerne à l'autre (Keko : « le
+   * pêcheur de rivière holo n'a pas l'outline arc-en-ciel »). Le foil
    * vit dans le NUANCEUR — c'est ce qui le rend indépendant de la teinte du
    * cadre : *une couleur qui dépend de l'angle sous lequel on regarde ne peut
    * pas être une image peinte*, et c'est la définition même d'un hologramme.
@@ -7868,7 +7872,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${carte.holo === true && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
 }
 
 /**
