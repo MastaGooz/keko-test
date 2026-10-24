@@ -302,6 +302,11 @@ export type CarteAPeindre = {
    */
   sansRayons?: boolean
   /**
+   * UN DÉCOR PEINT PAR KEKO dans la fenêtre d'art, à la place des touches et
+   * des rayons (chemin sous `public/`) : voir `FONDS_EN_IMAGE`.
+   */
+  fondImage?: string
+  /**
    * L'IDENTIFIANT DE L'EMOJI ANIME, s'il en a un -- les points de code separes
    * par des tirets.
    *
@@ -1655,6 +1660,28 @@ const AVEC_LUEUR_EMOJI =
 const MASQUES_DU_SUJET = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
 export function masqueDuSujetDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
   return MASQUES_DU_SUJET.get(canvas)
+}
+/**
+ * LES TOILES DONT LA FENÊTRE EST UN DÉCOR PEINT (`fondImage`). Keko : « j'ai
+ * créé un background moi-même (spécial orc), on peut le tester ? ». *Le
+ * système reste* : le masque du sujet est posé comme avec les rayons (le cerne
+ * holo, le relief et le brillant en dépendent, voir `MASQUES_DU_SUJET`) ; seul
+ * le motif s'efface du brillant — le décor brille à la part des sombres, sans
+ * pointes dessinées par-dessus ni saturation. `motifDeLaToile` le dit au nuanceur et à la
+ * vignette.
+ */
+const FONDS_EN_IMAGE = new WeakSet<HTMLCanvasElement>()
+export function motifDeLaToile(canvas: unknown): number {
+  return canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas) ? 0 : 1
+}
+const FONDS_CHARGES = new Map<string, Promise<HTMLImageElement | null>>()
+function fondPeint(chemin: string): Promise<HTMLImageElement | null> {
+  let p = FONDS_CHARGES.get(chemin)
+  if (p === undefined) {
+    p = charger(`${import.meta.env.BASE_URL}${chemin}?v=${encodeURIComponent(__BUILD_TIME__)}`)
+    FONDS_CHARGES.set(chemin, p)
+  }
+  return p
 }
 function masqueDuSujet(
   image: HTMLImageElement | HTMLCanvasElement | null,
@@ -4251,7 +4278,7 @@ export async function peindreCarte(
    */
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
-  const [image, decor, symbole] = await Promise.all([
+  const [image, decor, symbole, fondImage] = await Promise.all([
     carte.sansSujet === true ? Promise.resolve(null) : illustration(
       carte.nom,
       carte.rarete,
@@ -4268,6 +4295,7 @@ export async function peindreCarte(
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.
     FOND_PEINT ? null : carte.ciel === undefined ? fond() : fondTeinte(carte.ciel),
     coutPeint(),
+    carte.fondImage === undefined ? Promise.resolve(null) : fondPeint(carte.fondImage),
     document.fonts.ready,
     // ET LA RONDE SE DEMANDE EXPLICITEMENT : voir `policeRonde`. *Une police
     // que seul le canvas emploie n'est jamais téléchargée*, donc
@@ -4461,7 +4489,20 @@ export async function peindreCarte(
   // la fenêtre d'art seule la couleur du cran a le droit de parler. *Ils sont
   // du décor, pas de la lumière du sujet* : ils viennent avant le bloom, qui
   // les éclaire comme il éclaire le reste. `?touches=0` et `?rayons=0`.
-  if (bulle && !SANS_TOUCHES) {
+  const avecFondPeint = bulle && fondImage !== null
+  if (avecFondPeint) FONDS_EN_IMAGE.add(canvas)
+  else FONDS_EN_IMAGE.delete(canvas)
+  if (avecFondPeint) {
+    // LE DÉCOR DE KEKO couvre la fenêtre d'art, de la bordure à la plaque.
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(marge, fY, LARGE - marge * 2, fH)
+    ctx.clip()
+    ctx.imageSmoothingQuality = 'high'
+    couvrir(ctx, fondImage!, marge, fY, LARGE - marge * 2, fH)
+    ctx.restore()
+  }
+  if (bulle && !SANS_TOUCHES && !avecFondPeint) {
     const ton = carte.rarete === undefined ? undefined : METAUX[carte.rarete]?.[2]
     if (ton !== undefined) {
       ctx.save()
@@ -4472,7 +4513,7 @@ export async function peindreCarte(
       ctx.restore()
     }
   }
-  if (bulle && !SANS_RAYONS && carte.sansRayons !== true) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
+  if (bulle && !SANS_RAYONS && carte.sansRayons !== true && !avecFondPeint) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
 
   /**
    * FOND, PUIS LUMIÈRE, PUIS SUJET — et c'est Keko qui a trouvé l'ordre : « on

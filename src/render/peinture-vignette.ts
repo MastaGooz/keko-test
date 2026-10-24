@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { RAYON_SIMPLE, clairDuMotif } from './texture-carte.ts'
+import { RAYON_SIMPLE, clairDuMotif, motifDeLaToile } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -299,6 +299,8 @@ export function brillantDuRepos(
   const cx = R.x + R.l / 2
   const cy = R.y + R.h / 2
   const rr = R.rayon
+  // UN DÉCOR PEINT brille à la part des sombres, sans motif : voir `motifDeLaToile`.
+  const motif = motifDeLaToile(toile)
   for (let j = 0; j < h; j++) {
     const v = (j + 0.5) / h
     for (let i = 0; i < l; i++) {
@@ -319,7 +321,7 @@ export function brillantDuRepos(
         const dy = (v - cy) * 1.4
         // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES ;
         // le clair est celui du motif (`clairDuMotif`).
-        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * clairDuMotif(Math.atan2(dy, dx) - R.depart, Math.hypot(dx, dy), 0.025)
+        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * motif * clairDuMotif(Math.atan2(dy, dx) - R.depart, Math.hypot(dx, dy), 0.025)
         const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib
@@ -345,7 +347,7 @@ export function brillantDuRepos(
       g *= frr
       b *= frr
       lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-      const sr = 1 + RAYONS_BRILLANTS.sature * satureCran * nappeR * kr
+      const sr = 1 + RAYONS_BRILLANTS.sature * satureCran * motif * nappeR * kr
       r = Math.max(0, lum + (r - lum) * sr)
       g = Math.max(0, lum + (g - lum) * sr)
       b = Math.max(0, lum + (b - lum) * sr)
