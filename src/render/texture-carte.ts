@@ -1711,8 +1711,12 @@ function masqueDuSujet(
 ): HTMLCanvasElement {
   const m = dans ?? document.createElement('canvas')
   // Redonner sa largeur remet aussi le contexte à zéro (échelle, fusion).
-  m.width = 96
-  m.height = Math.round(96 * 1.4)
+  // PLUS FIN, ET ÉLARGI D'UN POIL : sans cerne, le bord flou d'un masque de 96
+  // tombait sur le bord du DESSIN, que le brillant brûlait en liseré saturé
+  // (Keko : « de gros artefacts sur les bordures des images »). Le cerne,
+  // lui, absorbait ce flou.
+  m.width = 288
+  m.height = Math.round(288 * 1.4)
   const c = m.getContext('2d')
   if (c === null) return m
   c.fillStyle = '#ffffff'
@@ -1721,6 +1725,11 @@ function masqueDuSujet(
     c.scale(m.width / LARGE, m.width / LARGE)
     c.globalCompositeOperation = 'destination-out'
     couvrir(c, image, marge, aY, LARGE - marge * 2, aH, rognage)
+    // L'élargissement : le même dessin, décalé tout autour de 1,2 U.
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4
+      couvrir(c, image, marge + Math.cos(a) * 1.2 * U, aY + Math.sin(a) * 1.2 * U, LARGE - marge * 2, aH, rognage)
+    }
     // ET LE TROU SE BOUCHE DE NOIR : le nuanceur et la vignette lisent le
     // ROUGE, et un dessin presque opaque (alpha 253, les images de Keko sans
     // leur cerne) laissait un blanc presque transparent — lu « libre », le

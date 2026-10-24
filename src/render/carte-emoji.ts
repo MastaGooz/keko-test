@@ -94,9 +94,10 @@ export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
     contour: 'simple',
     // ET SA ZONE DE TEXTE EST UNE BULLE : voir `CarteAPeindre.texte`.
     texte: 'bulle',
-    // LE CAMP DES ORCS, peint par Keko, derrière les orcs : sa variation sans
-    // rochers devant ; `?camp=ancien` : le premier, `?camp=0` : l'éclat.
-    fondImage: c.race === 'orc' && CAMP !== '0' ? (CAMP === 'ancien' ? 'fonds/camp-orc.webp' : 'fonds/orc.webp') : undefined,
+    // LE CAMP DE SA RACE, peint par Keko : les tentes à cornes des orcs, le
+    // campement des bois des gobelins ; `?camp=ancien` : le premier camp orc
+    // (rochers devant), `?camp=0` : l'éclat.
+    fondImage: CAMP === '0' ? undefined : c.race === 'orc' ? (CAMP === 'ancien' ? 'fonds/camp-orc.webp' : 'fonds/orc.webp') : 'fonds/gobelin.webp',
   }
 }
 
