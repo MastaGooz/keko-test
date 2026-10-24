@@ -156,7 +156,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   de quatre clous ; le sachet du même cuir porte le même symbole
   (`?marque=ancienne` : le blason peint et le bouquet de personnages) ; la plaque est un parchemin
   (`PLAQUE_CLAIRE`), l'encre brune ; titre du sachet et noms en **Grenze 800**
-  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; les rayons ont un MOTIF (`MOTIF_DES_RAYONS`, `?motif=eclat|flammes|droits`, l'éclat par défaut — seize pointes inégales —, rosace essayée et retirée : `FORMES_DES_CLAIRS` + `ondeDesRayons`, une seule fonction `clairDuMotif` lue par le brillant des vignettes et, en GLSL (`CLAIR_DU_MOTIF_GLSL`), par le nuanceur ; le peintre trace les mêmes formes) — *le masque du sujet, le cerne holo et le relief en dépendent : on change la forme, pas le système* ; **les ORCS ont le camp peint par Keko** (`fondImage` → `public/fonds/camp-orc.webp`, à la place des touches et des rayons ; le masque reste posé, le brillant y joue à la part des sombres sans motif ni saturation, `motifDeLaToile` ; `?camp=0` rend l'éclat) ; le
+  (`FAMILLE_TITRE`), Baloo pour le reste ; fond de bois et bokehs de bougie ; les rayons ont un MOTIF (`MOTIF_DES_RAYONS`, `?motif=eclat|flammes|droits`, l'éclat par défaut — seize pointes inégales —, rosace essayée et retirée : `FORMES_DES_CLAIRS` + `ondeDesRayons`, une seule fonction `clairDuMotif` lue par le brillant des vignettes et, en GLSL (`CLAIR_DU_MOTIF_GLSL`), par le nuanceur ; le peintre trace les mêmes formes) — *le masque du sujet, le cerne holo et le relief en dépendent : on change la forme, pas le système* ; **les ORCS ont le camp peint par Keko** (`fondImage` → `public/fonds/orc.webp`, la variation sans rochers, à la place des touches et des rayons ; le masque reste posé, le brillant de l'éclat y joue sans saturer, `motifDeLaToile`/`satureDeLaToile` ; `?brillantfond=doux` la lueur seule, `?camp=ancien` le premier camp, `?camp=0` l'éclat) ; le
   blanc des communes tire vers l'ivoire. Cache par rayon et par piste.
 
 ### L'ouverture — portrait, une carte à la fois
@@ -520,7 +520,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?brillant=0`, `?rayonsbrillants=0`, `?lin=0.09` | la bordure, les rayons clairs sans leur brillant ; le lin tressé essayé puis retiré |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
 | `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
-| `?camp=0` | les orcs sans le camp peint, sur l'éclat comme les gobelins |
+| `?camp=0`, `?camp=ancien`, `?brillantfond=doux` | les orcs sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur seule, sans les pointes brillantes |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

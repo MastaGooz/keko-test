@@ -1666,12 +1666,21 @@ export function masqueDuSujetDe(canvas: HTMLCanvasElement): HTMLCanvasElement | 
  * créé un background moi-même (spécial orc), on peut le tester ? ». *Le
  * système reste* : le masque du sujet est posé comme avec les rayons (le cerne
  * holo, le relief et le brillant en dépendent, voir `MASQUES_DU_SUJET`) ; seul
- * le motif s'efface du brillant — le décor brille à la part des sombres, sans
- * pointes dessinées par-dessus ni saturation. `motifDeLaToile` le dit au nuanceur et à la
- * vignette.
+ * la saturation du brillant s'efface (`satureDeLaToile`) : les couleurs sont
+ * celles de Keko, pas celles du cran.
+ *
+ * **ET LE BRILLANT DE L'ÉCLAT JOUE DESSUS** (Keko : « tu peux l'utiliser avec
+ * le brillant pour voir ? ») : les pointes ne sont plus peintes, mais la lampe
+ * les retrouve sur le décor (`motifDeLaToile`). `?brillantfond=doux` : la
+ * lueur seule, sans pointes (le premier essai).
  */
 const FONDS_EN_IMAGE = new WeakSet<HTMLCanvasElement>()
+const BRILLANT_DU_FOND_DOUX =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('brillantfond') === 'doux'
 export function motifDeLaToile(canvas: unknown): number {
+  return BRILLANT_DU_FOND_DOUX && canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas) ? 0 : 1
+}
+export function satureDeLaToile(canvas: unknown): number {
   return canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas) ? 0 : 1
 }
 const FONDS_CHARGES = new Map<string, Promise<HTMLImageElement | null>>()

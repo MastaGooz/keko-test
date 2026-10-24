@@ -58,6 +58,7 @@ import {
   COIN_DE_LA_PLAQUE,
   CLAIR_DU_MOTIF_GLSL,
   motifDeLaToile,
+  satureDeLaToile,
 } from './texture-carte.ts'
 
 /**
@@ -1155,6 +1156,7 @@ export function Carte3D({
       nuanceur.uniforms.uRayons = { value: 0 }
       nuanceur.uniforms.uSatureRayons = { value: 1 }
       nuanceur.uniforms.uMotif = { value: 1 }
+      nuanceur.uniforms.uSatureFond = { value: 1 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
       // LE RELIEF : la carte entière, la même sans emoji, et s'il joue (voir RELIEF).
       nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
@@ -1557,8 +1559,8 @@ ${nuanceur.vertexShader}`.replace(
              // clairs jusqu'à six fois et l'éclaircissement des sombres ne se voyait
              // pas (« je vois pas trop de différence »). Voir ECLAIRE_SOMBRES.
              // LE CLAIR DU MOTIF (rayon, flamme, pointe) : voir clairDuMotif.
-             // UN DÉCOR PEINT (uMotif nul) brille à la part des sombres, sans motif
-             // et sans saturer : ses couleurs sont celles de Keko, pas celles du cran.
+             // UN DÉCOR PEINT ne sature pas (uSatureFond) : ses couleurs sont celles de
+             // Keko ; uMotif nul (brillantfond=doux) : la lueur seule, sans pointes.
              float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, uMotif * clairDuMotif(atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons, length(dr), 0.025));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
@@ -1567,7 +1569,7 @@ ${nuanceur.vertexShader}`.replace(
              float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
              cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
              float lumR = dot(cc, vec3(0.2126, 0.7152, 0.0722));
-             cc = max(mix(vec3(lumR), cc, 1.0 + ${RAYONS_BRILLANTS.sature.toFixed(2)} * uSatureRayons * uMotif * nappeR * kr * feuc), 0.0);
+             cc = max(mix(vec3(lumR), cc, 1.0 + ${RAYONS_BRILLANTS.sature.toFixed(2)} * uSatureRayons * uSatureFond * nappeR * kr * feuc), 0.0);
              // À CLARTÉ CONSTANTE. Keko : « les fonds vert et bleu sont plus clairs
              // au centre, tandis que les violets et orange tirent plus foncé au
              // centre ». *La saturation se fait en lumière linéaire* : le vert d'un
@@ -1701,6 +1703,7 @@ uniform float uBrillant;
 uniform float uRayons;
 uniform float uSatureRayons;
 uniform float uMotif;
+uniform float uSatureFond;
 uniform sampler2D uMasqueSujet;
 uniform sampler2D uPeinture;
 uniform sampler2D uNu;
@@ -2693,6 +2696,7 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
       nuanceur.uniforms.uSatureRayons!.value = SATURE_RAYONS[carte.rarete ?? ''] ?? 1
       nuanceur.uniforms.uMotif!.value = motifDeLaToile(face.map?.image)
+      nuanceur.uniforms.uSatureFond!.value = satureDeLaToile(face.map?.image)
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
