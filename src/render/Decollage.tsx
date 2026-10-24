@@ -82,7 +82,7 @@ interface Pret {
   /** La carte sans son sticker. */
   base: HTMLCanvasElement
   face: HTMLCanvasElement
-  /** Le dessin nu que la carte montrait, si son cerne n'y était pas peint : le cerne naît d'abord. */
+  /** Ce que la carte montrait (nu, ou au cerne du cran) : le cerne crème naît d'abord. */
   nu: HTMLCanvasElement | null
   dos: HTMLCanvasElement
   /** La place du sticker à l'écran (sa toile entière, marge comprise). */
@@ -161,7 +161,7 @@ async function preparer(carte: CarteEmoji, ex: Exemplaire, boite: BoiteALEcran, 
     }
   }
   if (pts.length === 0) return null
-  return { base, face, nu: sujet.nu ?? null, dos, s, points: new Float32Array(pts) }
+  return { base, face, nu: sujet.montre ?? null, dos, s, points: new Float32Array(pts) }
 }
 
 /** Les bornes du sticker le long de `u`, et la part levée quand la ligne est à `m`. */
@@ -602,8 +602,9 @@ export function Decollage({
         dessinerEtincelles(ctx, etincelles, tc, ton)
       }
       if (ph === 'cerne' && pret.nu !== null) {
-        // LE CERNE NAÎT : le dessin nu de la carte, puis le sticker entier qui
-        // apparaît par-dessus en gonflant un peu — *il devient un sticker*.
+        // LE CERNE CRÈME NAÎT : ce que la carte montrait (nu ou au cerne du
+        // cran), puis le sticker entier qui apparaît par-dessus en gonflant un
+        // peu — *il devient un sticker*.
         const k = Math.min(1, dt / DECOLLAGE.cerne)
         const g = 1 + DECOLLAGE.gonfle * Math.sin(Math.PI * k)
         const l = pret.s.l * g

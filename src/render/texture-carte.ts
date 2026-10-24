@@ -647,6 +647,8 @@ const ROGNE_AU_DESSIN = new URLSearchParams(location.search).get('cadre') !== 'c
 /** L'air laissé autour du dessin dans la fenêtre, en unités de carte. */
 const AIR_DESSIN = { cote: 3, haut: 3, bas: 2 } as const
 const ROGNES = new WeakMap<HTMLImageElement | HTMLCanvasElement, HTMLCanvasElement>()
+/** D'où vient un sticker coupé, et où : ses variantes se coupent au même rectangle. */
+const COUPES = new WeakMap<HTMLImageElement | HTMLCanvasElement, { source: HTMLImageElement | HTMLCanvasElement; x: number; y: number }>()
 /** La toile du sticker coupée au plus près de ce qui porte de l'alpha (cerne et ombre compris). */
 function rogneAuDessin(image: HTMLImageElement | HTMLCanvasElement): HTMLImageElement | HTMLCanvasElement {
   const deja = ROGNES.get(image)
@@ -679,14 +681,7 @@ function rogneAuDessin(image: HTMLImageElement | HTMLCanvasElement): HTMLImageEl
   r.width = x1 - x0 + 3
   r.height = y1 - y0 + 3
   r.getContext('2d')?.drawImage(t, x0 - 1, y0 - 1, r.width, r.height, 0, 0, r.width, r.height)
-  const nu = NUS.get(image)
-  if (nu !== undefined) {
-    const rn = document.createElement('canvas')
-    rn.width = r.width
-    rn.height = r.height
-    rn.getContext('2d')?.drawImage(nu, x0 - 1, y0 - 1, r.width, r.height, 0, 0, r.width, r.height)
-    NUS.set(r, rn)
-  }
+  COUPES.set(r, { source: image, x: x0 - 1, y: y0 - 1 })
   ROGNES.set(image, r)
   return r
 }
@@ -2066,6 +2061,27 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
  * -- `couvrir` le pose comme il poserait une photo.
  */
 const TOILE_EMOJI = 512
+/**
+ * LE GRAND FICHIER POUR CE QUI SE PEINT EN GRAND. Keko : « on garde le petit
+ * format pour la collection et on utilise le grand pour les zooms ». Une
+ * illustration de `cartes/` (512) a sa jumelle dans `cartes-hd/` (1024,
+ * agrandie par IA, `scripts/agrandir-fantasy.py`) : *c'est la taille de la
+ * peinture qui choisit* — au-dessus de 512 (la carte ouverte, l'ouverture,
+ * le décollage, le sticker en grand), le grand ; la grille garde le petit et
+ * se charge aussi vite qu'avant. Une jumelle absente rend la place au petit
+ * (`chargerOuPetit`). `?hd=0` : le petit partout.
+ */
+const SEUIL_GRAND = 512
+const SANS_HD = typeof location !== 'undefined' && new URLSearchParams(location.search).get('hd') === '0'
+function enGrand(url: string | undefined, largeur: number): string | undefined {
+  if (url === undefined || SANS_HD || largeur <= SEUIL_GRAND) return url
+  return url.replace('/cartes/', '/cartes-hd/')
+}
+async function chargerOuPetit(url: string): Promise<HTMLImageElement | null> {
+  const image = await charger(url)
+  if (image !== null || !url.includes('/cartes-hd/')) return image
+  return charger(url.replace('/cartes-hd/', '/cartes/'))
+}
 const EMOJIS = new Map<string, HTMLCanvasElement>()
 const POLICES_EMOJI = new Map<string, Promise<unknown>>()
 
@@ -2392,27 +2408,62 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
   const u = (CERNE_CARTE * cote) / DOS_CERNE
   // À LA FINESSE DU GLYPHE : voir `cerneDe`.
   collerSticker(ctx, glyphe, n / 2, n / 2, cote, 0, u, false, cote)
-  // LE MÊME DESSIN SANS CERNE, à la même place dans une toile de même taille :
-  // voir `SANS_CERNE`.
-  const nu = document.createElement('canvas')
-  nu.width = n
-  nu.height = n
-  nu.getContext('2d')?.drawImage(glyphe, (n - cote) / 2, (n - cote) / 2, cote, cote)
-  NUS.set(toile, nu)
+  // LA RECETTE GARDÉE : la carte en tire ses variantes (voir `varianteDuSticker`).
+  RECETTES.set(toile, { glyphe, n, cote, u })
   return toile
 }
 
 /**
- * LE STICKER POSÉ SANS SON CERNE SUR LA CARTE. Keko : « on enlève l'outline
- * blanc et on ne le fait apparaître avec une petite animation que quand le
- * joueur clique sur décoller le sticker ». *Le sticker reste le même* — sa
- * toile, sa place, son cadrage (`rogneAuDessin` coupe les deux au même
- * rectangle) — la carte peint seulement le dessin nu à sa place ; le décollage
- * reprend le sticker entier (`sujetDe`) et fait naître son cerne. La holo
- * garde le sien : c'est lui qui devient arc-en-ciel. `?cerne=1` rend l'ancien.
+ * LE CERNE QUE LA CARTE MONTRE. D'abord Keko : « on enlève l'outline blanc et
+ * on ne le fait apparaître avec une petite animation que quand le joueur clique
+ * sur décoller le sticker » (`?cerne=nu`) ; puis : « on remet l'outline, mais
+ * de la couleur du cadre de la carte (lié à la rareté) » — **par défaut**. Le
+ * sticker gagné, lui, reste crème : au décollage, le cerne de la carte passe
+ * au crème (`DECOLLAGE.cerne`). *Le sticker reste le même* — sa toile, sa
+ * place, son cadrage (`rogneAuDessin` coupe toutes les variantes au même
+ * rectangle) — seule sa variante change. La holo garde le crème : c'est lui
+ * qui devient arc-en-ciel. `?cerne=blanc` : le crème partout.
  */
-const SANS_CERNE = typeof location === 'undefined' || new URLSearchParams(location.search).get('cerne') !== '1'
-const NUS = new WeakMap<HTMLImageElement | HTMLCanvasElement, HTMLCanvasElement>()
+type CerneDeCarte = 'cran' | 'nu' | 'blanc'
+const CERNE_DE_CARTE: CerneDeCarte = (() => {
+  const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('cerne')
+  return v === 'nu' || v === 'blanc' ? v : v === '1' ? 'blanc' : 'cran'
+})()
+const RECETTES = new WeakMap<HTMLImageElement | HTMLCanvasElement, { glyphe: HTMLCanvasElement; n: number; cote: number; u: number }>()
+const VARIANTES = new WeakMap<HTMLImageElement | HTMLCanvasElement, Map<string, HTMLCanvasElement | null>>()
+/** Le sticker sans cerne (`'nu'`) ou au cerne d'une autre couleur (un ton CSS), à la même place. */
+function varianteDuSticker(sticker: HTMLImageElement | HTMLCanvasElement, cle: string): HTMLCanvasElement | null {
+  let parCle = VARIANTES.get(sticker)
+  if (parCle === undefined) VARIANTES.set(sticker, (parCle = new Map()))
+  const deja = parCle.get(cle)
+  if (deja !== undefined) return deja
+  let v: HTMLCanvasElement | null = null
+  const coupe = COUPES.get(sticker)
+  if (coupe !== undefined) {
+    // LE STICKER CADRÉ SUR SON DESSIN : la variante entière, coupée pareil.
+    const entiere = varianteDuSticker(coupe.source, cle)
+    if (entiere !== null) {
+      v = document.createElement('canvas')
+      v.width = sticker.width
+      v.height = sticker.height
+      v.getContext('2d')?.drawImage(entiere, coupe.x, coupe.y, v.width, v.height, 0, 0, v.width, v.height)
+    }
+  } else {
+    const r = RECETTES.get(sticker)
+    if (r !== undefined) {
+      v = document.createElement('canvas')
+      v.width = r.n
+      v.height = r.n
+      const c = v.getContext('2d')
+      if (c !== null) {
+        if (cle === 'nu') c.drawImage(r.glyphe, (r.n - r.cote) / 2, (r.n - r.cote) / 2, r.cote, r.cote)
+        else collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u, false, r.cote, cle)
+      }
+    }
+  }
+  parCle.set(cle, v)
+  return v
+}
 
 /**
  * Une image de l'emoji animé, en sticker — `null` sous `?sticker=0`, où
@@ -2516,12 +2567,11 @@ async function illustration(
   if (perso !== undefined) {
     const deja = STICKERS.get(perso)
     if (deja !== undefined) return deja
-    const image = await charger(perso)
+    const image = await chargerOuPetit(perso)
     if (image !== null) {
       if (!sticker) return image
-      // À LA TAILLE DU FICHIER quand il dépasse 512 : une illustration servie
-      // plus grande (agrandie par IA, essai de Keko sur le Lutteur d'ours)
-      // garde sa finesse au zoom.
+      // À LA TAILLE DU FICHIER quand il dépasse 512 : le grand (voir
+      // `SEUIL_GRAND`) garde sa finesse au zoom.
       const toile = fenetre ? stickerPleinCadre(image) : stickerDUneImage(image, Math.max(TOILE_EMOJI, image.naturalWidth))
       if (toile !== null) {
         STICKERS.set(perso, toile)
@@ -3296,8 +3346,8 @@ function placeDansCouvrir(
  */
 export interface SujetPeint {
   image: HTMLImageElement | HTMLCanvasElement
-  /** Le dessin nu que la carte montre, quand le cerne n'y est pas peint (`SANS_CERNE`). */
-  nu?: HTMLCanvasElement
+  /** Ce que la carte montre à sa place quand ce n'est pas le sticker crème (`CERNE_DE_CARTE`). */
+  montre?: HTMLCanvasElement
   x: number
   y: number
   l: number
@@ -3333,7 +3383,7 @@ export function stickerHautDe(emoji: string, toile: number, perso?: string): Pro
   if (deja !== undefined) return deja
   const p = (async (): Promise<HTMLCanvasElement | null> => {
     let source: CanvasImageSource | null = null
-    if (perso !== undefined) source = await charger(perso)
+    if (perso !== undefined) source = await chargerOuPetit(enGrand(perso, toile)!)
     if (source === null) {
       await policeDeLEmoji(emoji)
       const glyphe = document.createElement('canvas')
@@ -4342,7 +4392,7 @@ export async function peindreCarte(
       carte.emoji,
       carte.image,
       enBulle(carte) && !SANS_STICKER,
-      carte.emojiPerso,
+      enGrand(carte.emojiPerso, largeur),
       carte.persoEnFenetre === true,
     ),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
@@ -4702,16 +4752,21 @@ export async function peindreCarte(
     sY = by + (bh - sH) / 2
     sRognage = 0
   }
-  // SANS SON CERNE sur la carte, sauf la holo : voir `SANS_CERNE`.
-  const nu = bulle && SANS_CERNE && carte.holo !== true && sujet !== null ? NUS.get(sujet) : undefined
-  const pose = nu ?? sujet
+  // LE CERNE DU CRAN (ou nu) sur la carte, sauf la holo : voir `CERNE_DE_CARTE`.
+  const tonCerne = METAUX[carte.rarete ?? 'commune']?.[2]
+  const cleCerne = CERNE_DE_CARTE === 'nu' ? 'nu' : CERNE_DE_CARTE === 'cran' ? tonCerne : undefined
+  const montre =
+    bulle && cleCerne !== undefined && carte.holo !== true && sujet !== null
+      ? (varianteDuSticker(sujet, cleCerne) ?? undefined)
+      : undefined
+  const pose = montre ?? sujet
   if (sujet !== null) {
     ctx.imageSmoothingQuality = 'high'
     couvrir(ctx, pose!, sX, sY, sL, sH, sRognage)
     // OÙ L'EMOJI EST POSÉ, en pixels de la toile : le décollage le reprend là.
     const r = placeDansCouvrir(sujet, sX, sY, sL, sH, sRognage)
     const k = largeur / LARGE
-    SUJETS.set(canvas, { image: sujet, nu, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
+    SUJETS.set(canvas, { image: sujet, montre, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
   }
   // LE MASQUE DU SUJET, pour que les rayons clairs brillent SANS l'emoji
   // posé dessus — voir `masqueDuSujet`. L'ANIMÉ (`toile`) le prend aussi, et
@@ -6753,6 +6808,8 @@ function collerSticker(
   u = U,
   masque = false,
   finesse = TOILE_CERNE,
+  /** Un cerne d'une autre couleur que le crème (le cran, sur la carte). */
+  ton?: string,
 ): void {
   const d = taille
   // LE RAYON DU CERNE EN PIXELS DE SA TOILE : l'épaisseur voulue à l'écran,
@@ -6760,6 +6817,20 @@ function collerSticker(
   const cerne = cerneDe(image, (DOS_CERNE * u * finesse) / d, finesse)
   // La toile du cerne déborde le glyphe : elle se colle plus grande d'autant.
   const dc = d * cerne.echelle
+  // TEINTÉ SUR UNE COPIE : la toile du cerne peut servir à d'autres.
+  let toileCerne: HTMLCanvasElement = cerne.toile
+  if (ton !== undefined) {
+    toileCerne = document.createElement('canvas')
+    toileCerne.width = cerne.toile.width
+    toileCerne.height = cerne.toile.height
+    const tc = toileCerne.getContext('2d')
+    if (tc !== null) {
+      tc.drawImage(cerne.toile, 0, 0)
+      tc.globalCompositeOperation = 'source-in'
+      tc.fillStyle = ton
+      tc.fillRect(0, 0, toileCerne.width, toileCerne.height)
+    }
+  }
   ctx.save()
   ctx.translate(x, y)
   ctx.rotate(angle)
@@ -6774,9 +6845,9 @@ function collerSticker(
   ctx.shadowColor = '#00000055'
   ctx.shadowOffsetY = 1.1 * u
   ctx.shadowBlur = 2.6 * u
-  ctx.drawImage(cerne.toile, -dc / 2, -dc / 2, dc, dc)
+  ctx.drawImage(toileCerne, -dc / 2, -dc / 2, dc, dc)
   ctx.restore()
-  ctx.drawImage(cerne.toile, -dc / 2, -dc / 2, dc, dc)
+  ctx.drawImage(toileCerne, -dc / 2, -dc / 2, dc, dc)
   ctx.drawImage(image, -d / 2, -d / 2, d, d)
   ctx.restore()
 }

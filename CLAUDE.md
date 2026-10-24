@@ -55,6 +55,13 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (512 carré) : les noms et sexes depuis les fiches numérotées de
   `docs/fantasy.md`, les images depuis les découpes PNG de
   `public/generations/` (la source, gardée). **118 cartes** : gobelin 63, orc 55.
+- **Deux tailles par illustration** : `cartes/` en 512 pour la grille, et
+  `cartes-hd/` en 1024, agrandie par IA (`scripts/agrandir-fantasy.py`,
+  Real-ESRGAN anime 6B dans le venv du banc, `--seul=nom`) — Keko : « le
+  petit format pour la collection, le grand pour les zooms ». *C'est la
+  taille de la peinture qui choisit* (`enGrand`, au-dessus de 512) ; une
+  jumelle absente rend le petit (`chargerOuPetit`) ; `?hd=0` le petit partout.
+  Une découpe nouvelle se relance dans les DEUX scripts.
 - **Le type garde son nom d'emoji** (`CarteEmoji`, `logic/emoji/`) : race,
   rôle (les deux tags, la pastille les affiche), sexe, image, cran FIXÉ par la
   fiche, `rang` = l'ordre du catalogue. `emoji` est toujours `''` (le peintre
@@ -121,7 +128,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`illustrationEntiere`) et passe par `illustration()` comme une image. On
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
-  Baloo 2 aussi se demande explicitement. **Sur la carte, le dessin est posé SANS son cerne** (`SANS_CERNE`, test de Keko, `?cerne=1` le rend ; la holo le garde, il fait l'arc-en-ciel) : le cerne naît en gonflant quand on décolle (`DECOLLAGE.cerne`). **Le dos du sticker couvre tout ce
+  Baloo 2 aussi se demande explicitement. **Sur la carte, le cerne prend la couleur du cadre** (`CERNE_DE_CARTE`, `varianteDuSticker` ; `?cerne=nu` sans cerne, `?cerne=blanc` le crème ; la holo garde le crème, il fait l'arc-en-ciel) : au décollage, le cerne crème du sticker naît en gonflant (`DECOLLAGE.cerne`). **Le dos du sticker couvre tout ce
   qui porte de l'encre, translucide compris** (`SEUIL_ENCRE`, binarisé AVANT
   le flou de `cerneDe`) : seul le transparent franc est un trou — 🫧 crénelait.
 - **Les emoji dessinés par Keko** remplacent le glyphe Noto, un par un
