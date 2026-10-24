@@ -2457,6 +2457,12 @@ const CERNE_DE_CARTE: CerneDeCarte = (() => {
   const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('cerne')
   return v === 'cran' || v === 'blanc' || v === 'nu' ? v : v === '1' ? 'blanc' : 'encre'
 })()
+/**
+ * LE TRAIT EST CRÈME, PLUS BRUN (Keko, 24/10 : « on peut passer l'outline
+ * normal en blanc au lieu de celui foncé ? ») : le même trait fin, sans
+ * comblement, dans le crème du sticker. `?trait=brun` rend l'encre brune.
+ */
+const TRAIT_BRUN = typeof location !== 'undefined' && new URLSearchParams(location.search).get('trait') === 'brun'
 /** L'épaisseur du trait d'encre, en part du cerne crème du sticker (`?encre=0.6` essaie). */
 const EPAISSEUR_ENCRE = (() => {
   const v = typeof location === 'undefined' ? NaN : Number(new URLSearchParams(location.search).get('encre'))
@@ -2491,7 +2497,7 @@ function varianteDuSticker(sticker: HTMLImageElement | HTMLCanvasElement, cle: s
       if (c !== null) {
         if (cle === 'nu') c.drawImage(r.glyphe, (r.n - r.cote) / 2, (r.n - r.cote) / 2, r.cote, r.cote)
         else if (cle === 'encre')
-          collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u * EPAISSEUR_ENCRE, false, r.cote, BRUN_ENCRE, false)
+          collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u * EPAISSEUR_ENCRE, false, r.cote, TRAIT_BRUN ? BRUN_ENCRE : DOS_CREME, false)
         else collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u, false, r.cote, cle)
       }
     }
