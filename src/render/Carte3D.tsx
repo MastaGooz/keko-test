@@ -1472,7 +1472,15 @@ ${nuanceur.vertexShader}`.replace(
         '#include <dithering_fragment>',
         `#include <dithering_fragment>
          float lumSortie = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature);
+         // SAUF DANS LA FENÊTRE D'ART D'UN DÉCOR PEINT : Keko, « pourquoi le sol
+         // orc semble plus jaune et vif quand on zoome alors que le sol gobelin
+         // ne change pas ? » — le gain saturait l'orange clair du camp orc et
+         // laissait le brun sombre du camp gobelin. Le décor et le personnage y
+         // gardent les couleurs de la vignette, le cadre garde son gain.
+         vec2 tpS = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
+         float fenetreS = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tpS.x) * step(tpS.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
+           * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tpS.y) * step(tpS.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
+         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature * (1.0 - fenetreS * (1.0 - uSatureFond)));
 
          // LA BORDURE BRILLANTE, en sortie : voir BRILLANT.
          // ***LES DÉRIVÉES D'ÉCRAN SE CALCULENT HORS DE TOUT if*** : dans une
