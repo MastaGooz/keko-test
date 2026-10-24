@@ -845,3 +845,7 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
   une nuit (20/10, 6 h 06). Génération et entraînement de jour, sonde
   `nvidia-smi` toutes les 10 s, pas de nuit tant que le refroidissement n'est
   pas réglé. Une carte = 4 graines × 23 s ≈ 1 min 30 ; 393 cartes ≈ 10 h.
+
+### Le trait d'encre autour des personnages (24/10/2026)
+
+Keko : « les persos non holos ne sont pas assez détachés du background, car ils n'ont pas d'outline ». Le cerne au ton du cadre avait été essayé puis retiré le matin même (« pas terrible »). Cette fois, c'est **un trait fin à l'encre brune de la plaque** (`BRUN_ENCRE`) : la même dilatation que le cerne crème du sticker (`collerSticker`, avec l'ombre), à 0,4 de son épaisseur (`EPAISSEUR_ENCRE`). C'est le trait d'une illustration, pas la découpe d'un sticker. La holo garde son cerne crème arc-en-ciel. Pour comparer : `?cerne=nu` (la carte d'avant), `?cerne=blanc`, `?encre=0.6` (plus épais).

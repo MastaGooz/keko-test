@@ -2438,15 +2438,26 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
  * place, son cadrage (`rogneAuDessin` coupe toutes les variantes au même
  * rectangle) — seule sa variante change. La holo garde le crème : c'est lui
  * qui devient arc-en-ciel. `?cerne=blanc` : le crème partout.
+ *
+ * Puis Keko (24/10) : « les persos non holos ne sont pas assez détachés du
+ * background, car ils n'ont pas d'outline ». **Par défaut, un trait d'ENCRE**
+ * (`'encre'`) : le brun de la plaque (`BRUN_ENCRE`), à `EPAISSEUR_ENCRE` du
+ * cerne crème — le trait d'une illustration, pas la découpe d'un sticker, et
+ * pas une couleur de plus sur le camp. `?cerne=nu` rend la carte d'avant.
  */
-type CerneDeCarte = 'cran' | 'nu' | 'blanc'
+type CerneDeCarte = 'cran' | 'nu' | 'blanc' | 'encre'
 const CERNE_DE_CARTE: CerneDeCarte = (() => {
   const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('cerne')
-  return v === 'cran' || v === 'blanc' ? v : v === '1' ? 'blanc' : 'nu'
+  return v === 'cran' || v === 'blanc' || v === 'nu' ? v : v === '1' ? 'blanc' : 'encre'
+})()
+/** L'épaisseur du trait d'encre, en part du cerne crème du sticker (`?encre=0.6` essaie). */
+const EPAISSEUR_ENCRE = (() => {
+  const v = typeof location === 'undefined' ? NaN : Number(new URLSearchParams(location.search).get('encre'))
+  return Number.isFinite(v) && v > 0 ? Math.min(1, v) : 0.4
 })()
 const RECETTES = new WeakMap<HTMLImageElement | HTMLCanvasElement, { glyphe: HTMLCanvasElement; n: number; cote: number; u: number }>()
 const VARIANTES = new WeakMap<HTMLImageElement | HTMLCanvasElement, Map<string, HTMLCanvasElement | null>>()
-/** Le sticker sans cerne (`'nu'`) ou au cerne d'une autre couleur (un ton CSS), à la même place. */
+/** Le sticker sans cerne (`'nu'`), au trait d'encre (`'encre'`) ou au cerne d'une autre couleur (un ton CSS), à la même place. */
 function varianteDuSticker(sticker: HTMLImageElement | HTMLCanvasElement, cle: string): HTMLCanvasElement | null {
   let parCle = VARIANTES.get(sticker)
   if (parCle === undefined) VARIANTES.set(sticker, (parCle = new Map()))
@@ -2472,6 +2483,8 @@ function varianteDuSticker(sticker: HTMLImageElement | HTMLCanvasElement, cle: s
       const c = v.getContext('2d')
       if (c !== null) {
         if (cle === 'nu') c.drawImage(r.glyphe, (r.n - r.cote) / 2, (r.n - r.cote) / 2, r.cote, r.cote)
+        else if (cle === 'encre')
+          collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u * EPAISSEUR_ENCRE, false, r.cote, BRUN_ENCRE)
         else collerSticker(c, r.glyphe, r.n / 2, r.n / 2, r.cote, 0, r.u, false, r.cote, cle)
       }
     }
@@ -4771,7 +4784,8 @@ export async function peindreCarte(
   // LE TON MOYEN DU CADRE : essayés aussi le bas (sombre) et le haut (clair),
   // Keko : « remets la teinte moyenne, c'était mieux que le foncé et le clair ».
   const tonCerne = METAUX[carte.rarete ?? 'commune']?.[2]
-  const cleCerne = CERNE_DE_CARTE === 'nu' ? 'nu' : CERNE_DE_CARTE === 'cran' ? tonCerne : undefined
+  const cleCerne =
+    CERNE_DE_CARTE === 'nu' || CERNE_DE_CARTE === 'encre' ? CERNE_DE_CARTE : CERNE_DE_CARTE === 'cran' ? tonCerne : undefined
   const montre =
     bulle && cleCerne !== undefined && carte.holo !== true && sujet !== null
       ? (varianteDuSticker(sujet, cleCerne) ?? undefined)
