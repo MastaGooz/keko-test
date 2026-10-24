@@ -4649,13 +4649,17 @@ export async function peindreCarte(
   if (avecFondPeint) FONDS_EN_IMAGE.add(canvas)
   else FONDS_EN_IMAGE.delete(canvas)
   if (avecFondPeint) {
-    // LE DÉCOR DE KEKO couvre la fenêtre d'art, de la bordure à la plaque.
+    // LE DÉCOR DE KEKO couvre la fenêtre d'art, de la bordure à la plaque —
+    // ET SOUS LES COINS ARRONDIS DU HAUT DE LA PLAQUE : arrêté à son bord, il
+    // laissait voir la nuit du cran dans l'arrondi (Keko : « les coins sont
+    // comblés avec la couleur de rareté très foncée, c'est moche »).
+    const fHCoins = fH + COIN_DE_LA_PLAQUE.r * LARGE
     ctx.save()
     ctx.beginPath()
-    ctx.rect(marge, fY, LARGE - marge * 2, fH)
+    ctx.rect(marge, fY, LARGE - marge * 2, fHCoins)
     ctx.clip()
     ctx.imageSmoothingQuality = 'high'
-    couvrir(ctx, fondImage!, marge, fY, LARGE - marge * 2, fH)
+    couvrir(ctx, fondImage!, marge, fY, LARGE - marge * 2, fHCoins)
     ctx.restore()
   }
   if (bulle && !SANS_TOUCHES && !avecFondPeint) {
