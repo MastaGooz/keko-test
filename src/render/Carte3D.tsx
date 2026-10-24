@@ -1485,6 +1485,21 @@ ${nuanceur.vertexShader}`.replace(
          vec2 tpS = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
          float fenetreS = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tpS.x) * step(tpS.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
            * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tpS.y) * step(tpS.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
+         // ET LES COINS ARRONDIS DU HAUT DE LA PLAQUE, où le décor descend : sans
+         // eux, ils prenaient le gain que le décor voisin n'a pas (Keko : « un
+         // filtre de l'image ne s'applique pas aux coins »). Même découpe que le relief.
+         {
+           float rC = ${COIN_DE_LA_PLAQUE.r.toFixed(5)};
+           float asp = ${COIN_DE_LA_PLAQUE.aspect.toFixed(4)};
+           float yH = ${COIN_DE_LA_PLAQUE.haut.toFixed(4)};
+           float x0 = ${RAYONS_DANS_LA_CARTE.x.toFixed(4)};
+           float x1 = ${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l).toFixed(4)};
+           float bandeC = step(yH, tpS.y) * step(tpS.y, yH + rC / asp);
+           float dxC = max(max(x0 + rC - tpS.x, tpS.x - (x1 - rC)), 0.0);
+           float horsArrondi = step(rC, length(vec2(dxC, (yH + rC / asp - tpS.y) * asp)));
+           float dansX = step(x0, tpS.x) * step(tpS.x, x1);
+           fenetreS = max(fenetreS, bandeC * dansX * step(0.000001, dxC) * horsArrondi);
+         }
          // MAIS LE PERSONNAGE GARDE SON GAIN (son masque, uMasqueSujet) : Keko,
          // « quand je clique sur Décoller, le personnage devient plus vif, j'aimerais
          // que ce soit comme ça en dehors » — le décollage le montre saturé.
