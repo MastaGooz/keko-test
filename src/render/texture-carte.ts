@@ -2412,7 +2412,12 @@ function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasEle
     glyphe = document.createElement('canvas')
     glyphe.width = cote
     glyphe.height = cote
-    glyphe.getContext('2d')?.drawImage(image, 0, 0, cote, cote)
+    const gctx = glyphe.getContext('2d')
+    if (gctx !== null) {
+      // UNE RÉDUCTION EN QUALITÉ HAUTE : la HD (1024) ramenée à la toile crénelait.
+      gctx.imageSmoothingQuality = 'high'
+      gctx.drawImage(image, 0, 0, cote, cote)
+    }
   }
   const n = Math.round(cote * (1 + MARGE_STICKER * 2))
   const toile = document.createElement('canvas')

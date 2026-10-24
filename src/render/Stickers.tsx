@@ -223,7 +223,11 @@ function StickerOuvert({
     // 3 : peint à sa taille réelle (`stickerHautDe`), il ne crénelle plus.
     const t0 = toile.current
     if (t0 == null) return
-    const cote = Math.round(t0.clientWidth * Math.min(window.devicePixelRatio || 1, 3))
+    // ET AU MOINS AU DOUBLE, comme la carte zoomée : sur un PC (densité 1), peint
+    // pile à sa taille, il prenait la petite illustration et se floutait au
+    // moindre agrandissement (Keko : « pas la même résolution que les cartes
+    // zoomées »). Plus grand, il prend la HD et le navigateur le réduit.
+    const cote = Math.round(t0.clientWidth * Math.max(2, Math.min(window.devicePixelRatio || 1, 3)))
     void stickerHautDe(carte.emoji, cote, urlDeLIllustration(carte.image)).then((image) => {
       const t = toile.current
       const ctx = t?.getContext('2d', { willReadFrequently: holo })
