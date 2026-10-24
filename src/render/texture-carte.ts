@@ -1679,12 +1679,13 @@ export function masqueDuSujetDe(canvas: HTMLCanvasElement): HTMLCanvasElement | 
  *
  * **ET LE BRILLANT DE L'ÉCLAT JOUE DESSUS** (Keko : « tu peux l'utiliser avec
  * le brillant pour voir ? ») : les pointes ne sont plus peintes, mais la lampe
- * les retrouve sur le décor (`motifDeLaToile`). `?brillantfond=doux` : la
- * lueur seule, sans pointes (le premier essai).
+ * les retrouve sur le décor (`motifDeLaToile`) — puis Keko : « on peut
+ * essayer sans les rayons, juste background brillant + perso ? » : **la lueur
+ * seule par défaut**, sans pointes ; `?brillantfond=eclat` rend les pointes.
  */
 const FONDS_EN_IMAGE = new WeakSet<HTMLCanvasElement>()
 const BRILLANT_DU_FOND_DOUX =
-  typeof location !== 'undefined' && new URLSearchParams(location.search).get('brillantfond') === 'doux'
+  typeof location === 'undefined' || new URLSearchParams(location.search).get('brillantfond') !== 'eclat'
 export function motifDeLaToile(canvas: unknown): number {
   return BRILLANT_DU_FOND_DOUX && canvas instanceof HTMLCanvasElement && FONDS_EN_IMAGE.has(canvas) ? 0 : 1
 }

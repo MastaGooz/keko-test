@@ -1560,7 +1560,7 @@ ${nuanceur.vertexShader}`.replace(
              // pas (« je vois pas trop de différence »). Voir ECLAIRE_SOMBRES.
              // LE CLAIR DU MOTIF (rayon, flamme, pointe) : voir clairDuMotif.
              // UN DÉCOR PEINT ne sature pas (uSatureFond) : ses couleurs sont celles de
-             // Keko ; uMotif nul (brillantfond=doux) : la lueur seule, sans pointes.
+             // Keko ; uMotif nul (par défaut) : la lueur seule, sans pointes.
              float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, uMotif * clairDuMotif(atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons, length(dr), 0.025));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);

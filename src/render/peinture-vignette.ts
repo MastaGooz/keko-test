@@ -299,7 +299,7 @@ export function brillantDuRepos(
   const cx = R.x + R.l / 2
   const cy = R.y + R.h / 2
   const rr = R.rayon
-  // UN DÉCOR PEINT ne sature pas ; `?brillantfond=doux`, sans pointes : voir `motifDeLaToile`.
+  // UN DÉCOR PEINT ne sature pas ; sans pointes sauf `?brillantfond=eclat` : voir `motifDeLaToile`.
   const motif = motifDeLaToile(toile)
   const satureFond = satureDeLaToile(toile)
   for (let j = 0; j < h; j++) {
