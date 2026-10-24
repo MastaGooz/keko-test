@@ -1485,7 +1485,11 @@ ${nuanceur.vertexShader}`.replace(
          vec2 tpS = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
          float fenetreS = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tpS.x) * step(tpS.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
            * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tpS.y) * step(tpS.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
-         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature * (1.0 - fenetreS * (1.0 - uSatureFond)));
+         // MAIS LE PERSONNAGE GARDE SON GAIN (son masque, uMasqueSujet) : Keko,
+         // « quand je clique sur Décoller, le personnage devient plus vif, j'aimerais
+         // que ce soit comme ça en dehors » — le décollage le montre saturé.
+         float sujetS = 1.0 - texture2D(uMasqueSujet, vLustreUv).r;
+         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature * (1.0 - fenetreS * (1.0 - uSatureFond) * (1.0 - sujetS)));
 
          // LA BORDURE BRILLANTE, en sortie : voir BRILLANT.
          // ***LES DÉRIVÉES D'ÉCRAN SE CALCULENT HORS DE TOUT if*** : dans une
