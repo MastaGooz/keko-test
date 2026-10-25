@@ -1607,7 +1607,7 @@ export function PageCollection({
                     (d.n < deck.taille ? (
                       <span className="deck-onglet-joue deck-onglet-incomplet">incomplet</span>
                     ) : (
-                      <span className="deck-onglet-joue">joue</span>
+                      <span className="deck-onglet-joue">complet</span>
                     ))}
                 </button>
               ))}
@@ -1624,7 +1624,7 @@ export function PageCollection({
                 Deck {deck.edite + 1} · <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
                 {deck.nombre >= deck.taille
                   ? deck.edite === deck.actif
-                    ? 'complet, il joue'
+                    ? 'complet'
                     : 'complet, prêt à jouer'
                   : `encore ${deck.taille - deck.nombre} à choisir`}
               </>
