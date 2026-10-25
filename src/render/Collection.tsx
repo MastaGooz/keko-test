@@ -1428,8 +1428,6 @@ export function PageCollection({
   const [panneau, setPanneau] = useState(false)
   const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
-  /** Le mode deck : le deck lui-même, ou la collection pour l'ajouter. */
-  const [vueDeck, setVueDeck] = useState<'deck' | 'ajouter'>('deck')
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   /** Ce qu'on possède ET que le catalogue connaît encore (un doublon retiré sort d'ici). */
@@ -1506,7 +1504,7 @@ export function PageCollection({
       : places.find((x) => x.carte.id === ouverte.id && x.v === ouverte.v)
 
   return (
-    <div className="collection">
+    <div className={`collection${modeDeck ? ' collection-avec-deck' : ''}`}>
       <div className="collection-defile">
         <header className="collection-tete">
           <h1 className="collection-titre">{modeDeck ? 'Mes decks' : toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
@@ -1607,48 +1605,7 @@ export function PageCollection({
           )}
         </header>
 
-        {/* DEUX VUES DU DECK (Keko : « on ne peut pas visualiser son deck d'un
-            coup d'oeil ») : « Mon deck », ses trente places sur un écran, une
-            tape retire la carte ; « Ajouter », la collection pour le remplir. */}
-        {deck !== undefined && catalogue !== null && (
-          <div className="collection-segments deck-vues" role="tablist" aria-label="Vue du deck">
-            <button type="button" role="tab" aria-selected={vueDeck === 'deck'} className={vueDeck === 'deck' ? 'actif' : ''} onClick={() => setVueDeck('deck')}>
-              Mon deck · {deck.nombre}/{deck.taille}
-            </button>
-            <button type="button" role="tab" aria-selected={vueDeck === 'ajouter'} className={vueDeck === 'ajouter' ? 'actif' : ''} onClick={() => setVueDeck('ajouter')}>
-              Ajouter
-            </button>
-          </div>
-        )}
-        {deck !== undefined && catalogue !== null && vueDeck === 'deck' && (
-          <>
-            <p className="deck-consigne">
-              {duDeck.length === 0
-                ? 'Le deck est vide : ajoute des cartes depuis « Ajouter ».'
-                : `${AU_DOIGT ? 'Touche' : 'Clique sur'} une carte pour la retirer du deck.`}
-            </p>
-            <div className="deck-grille">
-              {duDeck.map(({ carte, p, v }) => (
-                <div key={`${carte.id}:${v}`} className="deck-place" title={`Retirer ${carte.nom} du deck`}>
-                  <Vignette carte={carte} possession={p} variante={v} nue onOuvrir={() => deck.onBasculer({ id: carte.id, v })} />
-                </div>
-              ))}
-              {Array.from({ length: Math.max(0, deck.taille - duDeck.length) }, (_, i) => (
-                <button
-                  key={`vide-${i}`}
-                  type="button"
-                  className="deck-place deck-place-vide"
-                  aria-label="Ajouter une carte"
-                  onClick={() => setVueDeck('ajouter')}
-                >
-                  +
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {(toutes || possedees.length > 0) && !(modeDeck && vueDeck === 'deck') && (
+        {(toutes || possedees.length > 0) && (
           <div className="collection-outils">
             <div className="collection-ligne">
               <input
@@ -1770,7 +1727,7 @@ export function PageCollection({
           </PanneauFiltres>
         )}
 
-        {catalogue === null || (modeDeck && vueDeck === 'deck') ? null : !toutes && possedees.length === 0 ? (
+        {catalogue === null ? null : !toutes && possedees.length === 0 ? (
           <div className="collection-vide">
             <p>Ta collection est vide.</p>
             <p className="collection-discret">Chaque paquet ouvert y range ses cinq cartes.</p>
@@ -1798,6 +1755,43 @@ export function PageCollection({
           </div>
         )}
       </div>
+      {/* LA COLONNE DU DECK, à droite de la collection (Keko : « la collection
+          et sur la droite une colonne de deck, une ligne par carte, avec une
+          mini de l'illustration, le nom, une indication de rareté ») : elle
+          défile seule ; une tape sur une ligne retire la carte. */}
+      {deck !== undefined && catalogue !== null && (
+        <aside className="deck-colonne" aria-label={`Deck ${deck.edite + 1}`}>
+          <div className="deck-colonne-tete">
+            Deck {deck.edite + 1} <b>{deck.nombre}/{deck.taille}</b>
+          </div>
+          <div className="deck-colonne-liste">
+            {duDeck.length === 0 && <p className="deck-colonne-vide">{AU_DOIGT ? 'Touche' : 'Clique sur'} une carte pour l'ajouter.</p>}
+            {duDeck.map(({ carte, v }) => {
+              const { holo, anime } = exemplaireDe(v)
+              return (
+                <button
+                  key={`${carte.id}:${v}`}
+                  type="button"
+                  className="deck-ligne"
+                  style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
+                  title={`Retirer ${enTitre(carte.nom)} du deck`}
+                  onClick={() => deck.onBasculer({ id: carte.id, v })}
+                >
+                  <img className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
+                  <span className="deck-ligne-texte">
+                    <span className="deck-ligne-nom">{enTitre(carte.nom)}</span>
+                    <span className="deck-ligne-rarete">
+                      {NOM_DE_LA_RARETE[carte.rarete]}
+                      {holo ? ' · holo' : ''}
+                      {anime ? ' · animée' : ''}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+      )}
       {/* PAR-DESSUS LA BARRE : la page est fixe, donc elle fait son propre
           empilement, et la carte ouverte doit en sortir pour couvrir la
           navigation. *Une carte qu'on regarde n'a rien à côté d'elle.* */}

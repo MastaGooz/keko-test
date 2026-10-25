@@ -2018,50 +2018,127 @@
   font-size: 1.3rem;
 }
 
-/* LES DEUX VUES DU DECK (Keko : « visualiser son deck d'un coup d'oeil ») :
-   « Mon deck », ses trente places en six colonnes, tout sur un écran ;
-   « Ajouter », la collection. */
-.deck-vues {
-  max-width: 60rem;
-  margin: 1rem auto 0;
+/* LA COLONNE DU DECK (Keko : « la collection et sur la droite une colonne
+   de deck ») : la grille se range à sa gauche, la colonne défile seule, une
+   ligne par carte — la mini du personnage sur la couleur du cran, le nom, la
+   rareté. */
+.collection-avec-deck {
+  --colonne-deck: clamp(9.5rem, 28vw, 17rem);
 }
 
-.deck-consigne {
-  max-width: 36rem;
-  margin: 0.7rem auto 0.6rem;
-  font-size: 0.85rem;
-  opacity: 0.75;
+.collection-avec-deck .collection-defile {
+  right: var(--colonne-deck);
+  padding-right: 0.6rem;
 }
 
-.deck-grille {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.4rem;
-  max-width: 36rem;
-  margin: 0 auto;
+.collection-avec-deck .collection-grille {
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
 }
 
-.deck-place {
-  aspect-ratio: 1 / 1.4;
-  min-width: 0;
-}
-
-.deck-place .vignette {
-  display: block;
-  width: 100%;
-}
-
-.deck-place-vide {
+.deck-colonne {
+  position: absolute;
+  top: calc(max(0.6rem, env(safe-area-inset-top)) + 4.6rem);
+  right: 0;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  width: var(--colonne-deck);
   box-sizing: border-box;
-  padding: 0;
-  border: 0.12rem dashed rgba(255, 250, 240, 0.25);
-  border-radius: 0.3rem;
-  background: transparent;
-  color: rgba(255, 250, 240, 0.35);
-  font: inherit;
-  font-size: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.8rem 0 0 0.8rem;
+  background: rgba(23, 13, 7, 0.7);
+  box-shadow: inset 0.1rem 0 0 rgba(255, 250, 240, 0.08);
+}
+
+/* Au doigt : sous le compteur des monnaies, au-dessus de la barre. */
+@media (pointer: coarse) {
+  .deck-colonne {
+    top: calc(max(0.6rem, env(safe-area-inset-top)) + 3rem);
+    bottom: calc(var(--barre-bas) + 1rem);
+  }
+}
+
+.deck-colonne-tete {
+  padding: 0.6rem 0.7rem 0.4rem;
   font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.deck-colonne-tete b {
+  float: right;
+  color: #ffd27a;
+}
+
+.deck-colonne-liste {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 0.4rem 0.6rem;
+}
+
+.deck-colonne-vide {
+  margin: 0.4rem 0.3rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.deck-ligne {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.6rem;
+  margin: 0 0 0.25rem;
+  padding: 0.15rem 0.4rem 0.15rem 0.15rem;
+  border: 0;
+  border-left: 0.25rem solid var(--cran);
+  border-radius: 0.4rem;
+  background: rgba(255, 250, 240, 0.08);
+  color: #fffaf0;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.deck-ligne:active {
+  background: rgba(255, 77, 94, 0.3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-ligne:hover {
+    background: rgba(255, 77, 94, 0.2);
+  }
+}
+
+.deck-ligne-image {
+  flex: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.3rem;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--cran) 35%, #2b1a12);
+}
+
+.deck-ligne-texte {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.deck-ligne-nom {
+  overflow: hidden;
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.deck-ligne-rarete {
+  font-size: 0.68rem;
+  color: var(--cran);
 }
 
 .deck-actions {
