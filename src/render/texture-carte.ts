@@ -4995,7 +4995,8 @@ export async function peindreCarte(
 }
 
 /** LE MÉDAILLON DE PUISSANCE : sa place et sa taille (la hauteur du bouclier), en unités de la carte. */
-const MEDAILLON = { l: 0.17 * LARGE, cx: 0.105 * LARGE, cy: 0.105 * LARGE }
+// LES ÉPAULES DU BOUCLIER POSÉES SUR LA BORDURE : plus bas, un filet d'illustration passait entre eux (Keko).
+const MEDAILLON = { l: 0.17 * LARGE, cx: 0.1 * LARGE, cy: 0.096 * LARGE }
 
 /** Le bouclier de Keko, chargé une fois. */
 let bouclierCharge: Promise<HTMLImageElement | null> | null = null
