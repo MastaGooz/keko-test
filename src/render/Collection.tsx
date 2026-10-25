@@ -1647,22 +1647,18 @@ export function PageCollection({
               jouer sinon (complet), et le supprimer (deux tapes) s'il n'est pas seul. */}
           {deck !== undefined && (
             <div className="deck-actions">
-              {deck.edite === deck.actif
-                ? deck.nombre >= deck.taille && (
-                    <button type="button" className="collection-bouton deck-jouer" onClick={deck.onJouer}>
-                      Voir le deck jouer
-                    </button>
-                  )
-                : (
-                    <button
-                      type="button"
-                      className="collection-bouton deck-jouer"
-                      disabled={deck.nombre < deck.taille}
-                      onClick={deck.onJouerAvec}
-                    >
-                      Jouer avec ce deck
-                    </button>
-                  )}
+              {/* PLUS DE « VOIR LE DECK JOUER » (Keko : « enlève le bouton ») :
+                  la page « Jouer » reste dans le menu. */}
+              {deck.edite !== deck.actif && (
+                <button
+                  type="button"
+                  className="collection-bouton deck-jouer"
+                  disabled={deck.nombre < deck.taille}
+                  onClick={deck.onJouerAvec}
+                >
+                  Jouer avec ce deck
+                </button>
+              )}
               {deck.decks.length > 1 && (
                 <button
                   type="button"
