@@ -1940,6 +1940,11 @@
   white-space: nowrap;
   text-transform: uppercase;
   box-shadow: 0 0.15rem 0.3rem rgba(20, 10, 4, 0.5);
+  /* Un nom de deck long ne dépasse pas le bord droit de la carte : il se coupe. */
+  box-sizing: border-box;
+  max-width: calc(100% + 0.3rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vignette-estompee .vignette-prise {
