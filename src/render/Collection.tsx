@@ -588,7 +588,7 @@ export function Vignette({
     <button
       ref={boite}
       type="button"
-      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' || choix === 'pris' ? ' vignette-estompee' : ''}`}
+      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' ? ' vignette-estompee' : ''}`}
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
       onPointerDown={onSaisir}
@@ -621,7 +621,7 @@ export function Vignette({
           ✓
         </span>
       )}
-      {choix === 'pris' && (
+      {prisPar !== undefined && (
         <span className="vignette-prise" title={prisPar ?? 'Pris'} aria-label={`Dans ${prisPar ?? 'un autre deck'}`}>
           ✓
         </span>

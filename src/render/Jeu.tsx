@@ -357,12 +357,15 @@ export function Jeu(): React.ReactElement {
   const choixDuDeck = useCallback(
     (id: string, v: Variante): { etat: 'dedans' | 'dehors' | 'plein' | 'pris'; prisPar?: string } => {
       if (edite.cartes.some((e) => e.id === id && e.v === v)) return { etat: 'dedans' }
-      if (disponibles(decks, deckEdite, id, v, compte) <= 0) {
-        const k = deckQuiTient(decks, deckEdite, id, v)
-        return { etat: 'pris', prisPar: k === null ? 'Pris' : nomDuDeck(decks.liste[k], k) }
-      }
       // Le deck est plein — sauf pour une autre version d'un emoji qu'il tient : elle le remplacerait.
-      if (edite.cartes.length >= DECK.taille && !edite.cartes.some((e) => e.id === id)) return { etat: 'plein' }
+      const plein = edite.cartes.length >= DECK.taille && !edite.cartes.some((e) => e.id === id)
+      if (disponibles(decks, deckEdite, id, v, compte) <= 0) {
+        // PRIS PAR UN AUTRE DECK : il se prend tant qu'il y a de la place ici,
+        // et ne s'estompe que si le deck est plein (Keko) ; le symbole reste.
+        const k = deckQuiTient(decks, deckEdite, id, v)
+        return { etat: plein ? 'plein' : 'pris', prisPar: k === null ? 'Pris' : nomDuDeck(decks.liste[k], k) }
+      }
+      if (plein) return { etat: 'plein' }
       return { etat: 'dehors' }
     },
     [edite, decks, deckEdite, compte],

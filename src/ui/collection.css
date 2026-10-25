@@ -1923,7 +1923,7 @@
   opacity: 0.4;
 }
 
-/* UN EXEMPLAIRE PRIS PAR UN AUTRE DECK : estompé, et marqué d'un symbole, la
+/* UN EXEMPLAIRE PRIS PAR UN AUTRE DECK : marqué d'un symbole (estompé si le deck est plein), la
    coche du deck qu'on compose en négatif (Keko : « un symbole plutôt que le
    nom ») ; le nom du deck reste dans l'infobulle. */
 .vignette-prise {
