@@ -24,6 +24,7 @@ import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emo
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import { NOM_DECK_MAX } from '../logic/emoji/deck.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, TAILLE_COLLE, collesSeChevauchent, placeDuColle, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
@@ -1356,7 +1357,9 @@ export interface ChoixDuDeck {
    * sélectionner celui avec lequel il veut jouer ») : un onglet chacun, celui
    * qu'on compose (`edite`) et celui qui joue (`actif`).
    */
-  readonly decks: readonly { n: number; complet: boolean }[]
+  readonly decks: readonly { n: number; complet: boolean; nom: string; nomDonne: string }[]
+  /** Nommer le deck qu'on compose (Keko : « pouvoir nommer les decks ») ; vide : « Deck N ». */
+  readonly onRenommer: (nom: string) => void
   readonly edite: number
   readonly actif: number
   readonly peutAjouter: boolean
@@ -1598,7 +1601,7 @@ export function PageCollection({
                   className={`deck-onglet${i === deck.edite ? ' deck-onglet-edite' : ''}`}
                   onClick={() => deck.onEditer(i)}
                 >
-                  Deck {i + 1}
+                  <span className="deck-onglet-nom">{d.nom}</span>
                   <span className="deck-onglet-compte">
                     {d.n}/{deck.taille}
                   </span>
@@ -1618,10 +1621,32 @@ export function PageCollection({
               )}
             </div>
           )}
+          {/* LE NOM DU DECK QU'ON COMPOSE, qu'on tape à même la page ; vide, il
+              redevient « Deck N ». La clé suit le deck : changer d'onglet relit son nom. */}
+          {deck !== undefined && (
+            <label className="deck-nom">
+              <span className="deck-nom-crayon" aria-hidden>
+                ✎
+              </span>
+              <input
+                key={deck.edite}
+                type="text"
+                defaultValue={deck.decks[deck.edite]?.nomDonne ?? ''}
+                placeholder={`Deck ${deck.edite + 1}`}
+                maxLength={NOM_DECK_MAX}
+                aria-label="Nom du deck"
+                enterKeyHint="done"
+                onBlur={(e) => deck.onRenommer(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur()
+                }}
+              />
+            </label>
+          )}
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
-                Deck {deck.edite + 1} · <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
+                <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
                 {deck.nombre >= deck.taille
                   ? deck.edite === deck.actif
                     ? 'complet'
@@ -1643,39 +1668,8 @@ export function PageCollection({
           <div className="collection-barre" aria-hidden>
             <span style={{ width: `${(part * 100).toFixed(2)}%` }} />
           </div>
-          {/* LES ACTIONS DU DECK QU'ON COMPOSE : le voir jouer s'il joue, le faire
-              jouer sinon (complet), et le supprimer (deux tapes) s'il n'est pas seul. */}
-          {deck !== undefined && (
-            <div className="deck-actions">
-              {/* PLUS DE « VOIR LE DECK JOUER » (Keko : « enlève le bouton ») :
-                  la page « Jouer » reste dans le menu. */}
-              {deck.edite !== deck.actif && (
-                <button
-                  type="button"
-                  className="collection-bouton deck-jouer"
-                  disabled={deck.nombre < deck.taille}
-                  onClick={deck.onJouerAvec}
-                >
-                  Jouer avec ce deck
-                </button>
-              )}
-              {deck.decks.length > 1 && (
-                <button
-                  type="button"
-                  className={`deck-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
-                  onClick={() => {
-                    if (!sur) setSur(true)
-                    else {
-                      setSur(false)
-                      deck.onSupprimer()
-                    }
-                  }}
-                >
-                  {sur ? 'Sûr ? Supprimer' : 'Supprimer ce deck'}
-                </button>
-              )}
-            </div>
-          )}
+          {/* PLUS D'ACTIONS ICI (Keko) : « Jouer avec ce deck » vit dans la page
+              « Jouer », « Supprimer » en tête de la colonne du deck. */}
         </header>
 
         {(toutes || possedees.length > 0) && (
@@ -1837,11 +1831,28 @@ export function PageCollection({
         <aside
           ref={colonne}
           className={`deck-colonne${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
-          aria-label={`Deck ${deck.edite + 1}`}
+          aria-label={deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}
         >
           <div className="deck-colonne-tete">
-            Deck {deck.edite + 1} <b>{deck.nombre}/{deck.taille}</b>
+            <span className="deck-colonne-nom">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</span>
+            <b>{deck.nombre}/{deck.taille}</b>
           </div>
+          {/* SUPPRIMER LE DECK, en tête de sa colonne (Keko), d'une seconde tape ; jamais le dernier. */}
+          {deck.decks.length > 1 && (
+            <button
+              type="button"
+              className={`deck-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
+              onClick={() => {
+                if (!sur) setSur(true)
+                else {
+                  setSur(false)
+                  deck.onSupprimer()
+                }
+              }}
+            >
+              {sur ? 'Sûr ? Supprimer' : 'Supprimer ce deck'}
+            </button>
+          )}
           <div className="deck-colonne-liste">
             {duDeck.length === 0 && <p className="deck-colonne-vide">Glisse une carte ici pour l'ajouter au deck.</p>}
             {duDeck.map(({ carte, v }) => {

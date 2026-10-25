@@ -63,6 +63,8 @@ import {
   likesDeLaMain,
   valeurParRarete,
   supprimerDeck,
+  renommerDeck,
+  nomDuDeck,
   type CompteDExemplaires,
   type Decks,
   type EntreeDeck,
@@ -357,7 +359,7 @@ export function Jeu(): React.ReactElement {
       if (edite.cartes.some((e) => e.id === id && e.v === v)) return { etat: 'dedans' }
       if (disponibles(decks, deckEdite, id, v, compte) <= 0) {
         const k = deckQuiTient(decks, deckEdite, id, v)
-        return { etat: 'pris', prisPar: k === null ? 'Pris' : `Deck ${k + 1}` }
+        return { etat: 'pris', prisPar: k === null ? 'Pris' : nomDuDeck(decks.liste[k], k) }
       }
       // Le deck est plein — sauf pour une autre version d'un emoji qu'il tient : elle le remplacerait.
       if (edite.cartes.length >= DECK.taille && !edite.cartes.some((e) => e.id === id)) return { etat: 'plein' }
@@ -591,7 +593,8 @@ export function Jeu(): React.ReactElement {
                   taille: DECK.taille,
                   onBasculer: basculerDansLeDeck,
                   onJouer: () => aller('jouer'),
-                  decks: decks.liste.map((d) => ({ n: d.cartes.length, complet: deckComplet(d) })),
+                  decks: decks.liste.map((d, i) => ({ n: d.cartes.length, complet: deckComplet(d), nom: nomDuDeck(d, i), nomDonne: d.nom ?? '' })),
+                  onRenommer: (nom: string) => poserDecks((ds) => renommerDeck(ds, deckEdite, nom)),
                   edite: deckEdite,
                   actif: decks.actif,
                   peutAjouter: decks.liste.length < DECKS_MAX,

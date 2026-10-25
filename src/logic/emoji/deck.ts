@@ -79,6 +79,32 @@ export interface Deck {
   readonly cartes: readonly EntreeDeck[]
   /** `null` : le deck ne joue pas (incomplet). */
   readonly partie: Partie | null
+  /** LE NOM DONNÉ PAR LE JOUEUR (Keko : « pouvoir nommer les decks ») ; absent : « Deck N ». */
+  readonly nom?: string
+}
+
+/** Au plus tant de caractères dans un nom de deck. */
+export const NOM_DECK_MAX = 24
+
+/** Le nom à montrer : celui du joueur, sinon « Deck N » (N compté depuis 1). */
+export function nomDuDeck(d: Deck | undefined, i: number): string {
+  return d?.nom ?? `Deck ${i + 1}`
+}
+
+/** Un nom propre : sans blancs autour, borné ; vide, plus de nom. */
+function nomPropre(brut: unknown): string | undefined {
+  if (typeof brut !== 'string') return undefined
+  const n = brut.trim().replace(/\s+/g, ' ').slice(0, NOM_DECK_MAX)
+  return n === '' ? undefined : n
+}
+
+/** Garde ou retire le nom d'un deck — le reste ne bouge pas. */
+function avecNom(d: Deck, nom: string | undefined): Deck {
+  if (nom === undefined) {
+    const { nom: _, ...sans } = d
+    return sans
+  }
+  return { ...d, nom }
 }
 
 export function deckVide(): Deck {
@@ -164,7 +190,7 @@ export function basculerCarte(d: Deck, e: EntreeDeck, maintenant: number): Deck 
     if (d.cartes.length >= DECK.taille) return d
     cartes = [...d.cartes, e]
   }
-  return demarrer({ cartes, partie: null }, maintenant)
+  return demarrer({ ...d, cartes, partie: null }, maintenant)
 }
 
 /** Les exemplaires qu'on ne possède plus quittent le deck (détruits, retirés). */
@@ -173,13 +199,13 @@ export function garderPossedees(d: Deck, possede: (e: EntreeDeck) => boolean, ma
   // `garderPossedeesPartout`), il ne doit pas être appelé deux fois par carte.
   const cartes = d.cartes.filter(possede)
   if (cartes.length === d.cartes.length) return d
-  return demarrer({ cartes, partie: null }, maintenant)
+  return demarrer({ ...d, cartes, partie: null }, maintenant)
 }
 
 /** Lance la partie si le deck est complet et ne joue pas encore ; sinon rend le deck tel quel. */
 export function demarrer(d: Deck, maintenant: number): Deck {
   if (d.partie !== null || !deckComplet(d)) return d
-  return { cartes: d.cartes, partie: { graine: maintenant >>> 0, jouees: 0, depuis: maintenant } }
+  return { ...d, partie: { graine: maintenant >>> 0, jouees: 0, depuis: maintenant } }
 }
 
 export interface MainsJouees {
@@ -222,7 +248,7 @@ export function deckAJour(d: Deck, maintenant: number, valeur: ValeurDeCarte): M
     }
   }
   const depuis = borne ? maintenant : d.partie.depuis + mains * DECK.cadence
-  return { deck: { cartes: d.cartes, partie: { graine, jouees, depuis } }, mains, likes, derniere }
+  return { deck: { ...d, partie: { graine, jouees, depuis } }, mains, likes, derniere }
 }
 
 /** Dans combien de millisecondes tombe la prochaine main ; `null` si le deck ne joue pas. */
@@ -267,11 +293,11 @@ export function lireDeck(brut: unknown, possede: (e: EntreeDeck) => boolean, mai
     const jouees = entier(p.jouees)
     const depuis = typeof p.depuis === 'number' && Number.isFinite(p.depuis) ? p.depuis : null
     if (graine !== null && jouees !== null && jouees % DECK.main === 0 && jouees < DECK.taille && depuis !== null) {
-      return { cartes, partie: { graine, jouees, depuis } }
+      return avecNom({ cartes, partie: { graine, jouees, depuis } }, nomPropre(o.nom))
     }
   }
   // Un deck complet dont la partie est abîmée (ou absente) repart d'une partie neuve.
-  return demarrer({ cartes, partie: null }, maintenant)
+  return demarrer(avecNom({ cartes, partie: null }, nomPropre(o.nom)), maintenant)
 }
 
 /* ------------------------------------------------------------------------ */
@@ -325,7 +351,7 @@ export function supprimerDeck(ds: Decks, i: number, maintenant: number): Decks {
 export function choisirDeck(ds: Decks, i: number, maintenant: number, force = false): Decks {
   if (i < 0 || i >= ds.liste.length || (i === ds.actif && !force)) return ds
   const liste = ds.liste.map((d, k) =>
-    k === i ? demarrer({ cartes: d.cartes, partie: null }, maintenant) : d.partie === null ? d : { cartes: d.cartes, partie: null },
+    k === i ? demarrer({ ...d, partie: null }, maintenant) : d.partie === null ? d : { ...d, partie: null },
   )
   return { liste, actif: i }
 }
@@ -336,8 +362,16 @@ export function modifierDeck(ds: Decks, i: number, f: (d: Deck) => Deck): Decks 
   if (d === undefined) return ds
   const n0 = f(d)
   if (n0 === d) return ds
-  const n = i === ds.actif || n0.partie === null ? n0 : { cartes: n0.cartes, partie: null }
+  const n = i === ds.actif || n0.partie === null ? n0 : { ...n0, partie: null }
   return { liste: ds.liste.map((x, k) => (k === i ? n : x)), actif: ds.actif }
+}
+
+/** Renomme le deck `i` ; un nom vide rend « Deck N ». La partie continue. */
+export function renommerDeck(ds: Decks, i: number, nom: string): Decks {
+  return modifierDeck(ds, i, (d) => {
+    const n = nomPropre(nom)
+    return n === d.nom ? d : avecNom(d, n)
+  })
 }
 
 /** Combien d'exemplaires de cette version les AUTRES decks que `i` ont déjà pris. */
@@ -435,7 +469,7 @@ export function lireDecks(brut: unknown, compte: CompteDExemplaires, maintenant:
     const actif = typeof o.actif === 'number' && Number.isInteger(o.actif) && o.actif >= 0 && o.actif < brutes.length ? o.actif : 0
     const liste = brutes.map((b, k) => {
       const d = lireDeck(b, possede, maintenant)
-      return k === actif ? d : d.partie === null ? d : { cartes: d.cartes, partie: null }
+      return k === actif ? d : d.partie === null ? d : { ...d, partie: null }
     })
     ds = { liste, actif }
   }

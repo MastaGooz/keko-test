@@ -17,7 +17,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection } from '../logic/emoji/collection.ts'
-import { DECK, deckActif, deckComplet, likesDeLaMain, likesDuDeck, mainPrecedente, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
+import { DECK, deckActif, nomDuDeck, deckComplet, likesDeLaMain, likesDuDeck, mainPrecedente, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { Vignette } from './Collection.tsx'
 import { IconeLike } from './Jeu.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
@@ -141,7 +141,7 @@ export function PageJouer({
       <div className="collection-defile">
         <header className="collection-tete">
           <h1 className="collection-titre">
-            Le deck {decks.actif + 1} {complet ? 'joue' : 'attend'}
+            {nomDuDeck(deck, decks.actif)} {complet ? 'joue' : 'attend'}
           </h1>
           {/* QUEL DECK JOUE : un onglet par deck, les incomplets grisés. */}
           {decks.liste.length > 1 && (
@@ -156,7 +156,7 @@ export function PageJouer({
                   disabled={!deckComplet(d)}
                   onClick={() => onChoisir(i)}
                 >
-                  Deck {i + 1}
+                  <span className="deck-onglet-nom">{nomDuDeck(d, i)}</span>
                   <span className="deck-onglet-compte">
                     {d.cartes.length}/{DECK.taille}
                   </span>

@@ -2003,6 +2003,51 @@
   cursor: default;
 }
 
+/* Un nom long se coupe dans son onglet. */
+.deck-onglet-nom {
+  max-width: 9rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* LE NOM DU DECK, tapé à même la page : un champ discret, souligné. */
+.deck-nom {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 22rem;
+  margin: 0.2rem 0 0.1rem;
+  border-bottom: 0.12rem solid rgba(255, 250, 240, 0.25);
+}
+
+.deck-nom:focus-within {
+  border-bottom-color: #ffd27a;
+}
+
+.deck-nom-crayon {
+  color: #ffd27a;
+  font-size: 1.1rem;
+}
+
+.deck-nom input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.6rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fffaf0;
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.15rem;
+  outline: none;
+}
+
+.deck-nom input::placeholder {
+  color: rgba(255, 250, 240, 0.55);
+}
+
 .deck-onglet-compte {
   font-weight: 700;
   font-size: 0.8rem;
@@ -2080,9 +2125,30 @@
   text-transform: uppercase;
 }
 
+.deck-colonne-tete {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.deck-colonne-nom {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .deck-colonne-tete b {
-  float: right;
+  flex: none;
   color: #ffd27a;
+}
+
+/* Dans la colonne : sous son nom, à gauche, sans la marge du bas de page. */
+.deck-colonne .deck-supprimer {
+  align-self: flex-start;
+  margin: -0.2rem 0 0.3rem 0.3rem;
+  min-height: 2rem;
+  font-size: 0.75rem;
 }
 
 .deck-colonne-liste {
