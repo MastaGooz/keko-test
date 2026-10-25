@@ -4988,8 +4988,8 @@ export async function peindreCarte(
   peindreTextes(ctx, carte, symbole)
   if (carte.puissance !== undefined) {
     const bouclier = await bouclierPeint()
-    peindreMedaillon(ctx, carte.puissance, bouclier, carte.rarete)
-    medaillonEnSurface(canvas, largeur, carte.puissance, bouclier, carte.rarete)
+    peindreMedaillon(ctx, carte.puissance, bouclier)
+    medaillonEnSurface(canvas, largeur, carte.puissance, bouclier)
   }
   return canvas
 }
@@ -5010,14 +5010,16 @@ function bouclierPeint(): Promise<HTMLImageElement | null> {
  * arc-en-ciel d'une holo se reconnaît au crème (`COSMOS.cerne`). Sans
  * l'image, un disque de cuir serti d'or le remplace.
  */
-function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HTMLImageElement | null, rarete?: string): void {
+function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HTMLImageElement | null): void {
   const { cx, cy } = MEDAILLON
   const r = MEDAILLON.l / 2
   if (bouclier !== null) {
     const h = MEDAILLON.l * 1.08
     const l = (h * bouclier.width) / bouclier.height
-    contourDuBouclier(ctx, bouclier, cx - l / 2, cy - h / 2, l, h, rarete)
     ctx.save()
+    ctx.shadowColor = '#000000a0'
+    ctx.shadowBlur = 3 * U * ombreA(ctx)
+    ctx.shadowOffsetY = 1.2 * U * ombreA(ctx)
     ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(bouclier, cx - l / 2, cy - h / 2, l, h)
     ctx.restore()
@@ -5052,52 +5054,6 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
   chiffreDuMedaillon(ctx, n, cx, cy)
 }
 
-/** L'épaisseur du contour du bouclier, en unités de la carte. */
-const CONTOUR_BOUCLIER = 1.1 * U
-
-/**
- * LE CONTOUR DU BOUCLIER EST DU CADRE (Keko : « un léger outline autour du
- * symbole, fusionné avec le cadre de carte ») : sa silhouette dilatée, peinte
- * du même dégradé que le cadre (`aplat`), à la même échelle — le bouclier
- * mord déjà sur la bordure en haut et à gauche, donc le contour s'y fond et
- * le bouclier paraît serti dans le coin. L'ombre portée tombe sous le contour.
- */
-function contourDuBouclier(
-  ctx: CanvasRenderingContext2D,
-  bouclier: HTMLImageElement,
-  x: number,
-  y: number,
-  l: number,
-  h: number,
-  rarete?: string,
-): void {
-  const toile = document.createElement('canvas')
-  toile.width = ctx.canvas.width
-  toile.height = ctx.canvas.height
-  const t = toile.getContext('2d')
-  if (t === null) return
-  t.setTransform(ctx.getTransform())
-  // LA DILATATION : la silhouette répétée sur un cercle, et en son centre.
-  const pas = 24
-  for (let i = 0; i < pas; i += 1) {
-    const a = (i * Math.PI * 2) / pas
-    t.drawImage(bouclier, x + Math.cos(a) * CONTOUR_BOUCLIER, y + Math.sin(a) * CONTOUR_BOUCLIER, l, h)
-  }
-  t.drawImage(bouclier, x, y, l, h)
-  t.globalCompositeOperation = 'source-in'
-  t.fillStyle = aplat(t, rarete)
-  t.fillRect(0, 0, LARGE, HAUT)
-  // L'échelle lue AVANT de quitter la transformation : voir `ombreA`.
-  const k = ombreA(ctx)
-  ctx.save()
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.shadowColor = '#000000a0'
-  ctx.shadowBlur = 3 * U * k
-  ctx.shadowOffsetY = 1.2 * U * k
-  ctx.drawImage(toile, 0, 0)
-  ctx.restore()
-}
-
 /**
  * LES OMBRES D'UN CANVAS IGNORENT SA MISE À L'ÉCHELLE : leur flou et leur décalage
  * se comptent en pixels de la toile. Sans ce facteur, la vignette (peinte petite)
@@ -5125,7 +5081,7 @@ function chiffreDuMedaillon(ctx: CanvasRenderingContext2D, n: number, cx: number
  * relief et le cerne arc-en-ciel l'épargnent), et retiré du masque des rayons
  * brillants. Après les collés, qui posent ou effacent la surface de cette peinture.
  */
-function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number, bouclier: HTMLImageElement | null, rarete?: string): void {
+function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number, bouclier: HTMLImageElement | null): void {
   const poser = (toiles: WeakMap<HTMLCanvasElement, HTMLCanvasElement>): HTMLCanvasElement | null => {
     let t = toiles.get(canvas)
     if (t === undefined) {
@@ -5137,7 +5093,7 @@ function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: numbe
     if (c === null) return null
     c.save()
     c.setTransform(largeur / LARGE, 0, 0, largeur / LARGE, 0, 0)
-    peindreMedaillon(c, n, bouclier, rarete)
+    peindreMedaillon(c, n, bouclier)
     c.restore()
     toiles.set(canvas, t)
     return t
