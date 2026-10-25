@@ -1497,6 +1497,15 @@
 }
 
 /* LES PUCES DE BONUS : la pastille prend la couleur de sa vignette. */
+.puce-normal i {
+  background: #fffaf0;
+  box-shadow: 0 0 0.4rem rgba(255, 250, 240, 0.6);
+}
+
+.puce-normal.actif {
+  border-color: #fffaf0;
+}
+
 .puce-holo i {
   background: linear-gradient(90deg, #ff7ac8, #7ad8ff, #ffe27a);
   box-shadow: 0 0 0.4rem #7ad8ff;

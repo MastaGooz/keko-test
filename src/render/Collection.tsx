@@ -121,15 +121,23 @@ const POSSESSION_FILTRES: readonly { id: PossessionFiltre; nom: string }[] = [
   { id: 'manquantes', nom: 'Manquantes' },
 ]
 
-export type BonusFiltre = 'holo' | 'anime'
+export type BonusFiltre = 'normal' | 'holo' | 'anime'
 const BONUS_FILTRES: readonly { id: BonusFiltre; nom: string }[] = [
+  // « NORMAL » D'ABORD (Keko : « afin de pouvoir sélectionner uniquement les
+  // cartes non holos ») : la version sans aucun bonus.
+  { id: 'normal', nom: 'Normal' },
   { id: 'holo', nom: 'Holo' },
   // PLUS DE PUCE « ANIMÉ » : aucune illustration du fantasy n'est animée (Keko :
   // « enlève le filtre animé car y'a plus de cartes animées »). Le type la garde
   // pour le jour où il y en aurait.
 ]
 export function passeLeBonus(filtre: ReadonlySet<BonusFiltre>, x: { holo: number; anime: number }): boolean {
-  return filtre.size === 0 || (filtre.has('holo') && x.holo > 0) || (filtre.has('anime') && x.anime > 0)
+  return (
+    filtre.size === 0 ||
+    (filtre.has('normal') && x.holo === 0 && x.anime === 0) ||
+    (filtre.has('holo') && x.holo > 0) ||
+    (filtre.has('anime') && x.anime > 0)
+  )
 }
 export function PucesBonus({
   valeur,
