@@ -2118,12 +2118,13 @@
 }
 
 .deck-ligne:active {
-  background: rgba(255, 77, 94, 0.3);
+  background: rgba(255, 210, 122, 0.3);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .deck-ligne:hover {
-    background: rgba(255, 77, 94, 0.2);
+    /* En jaune, pas en rouge (Keko). */
+    background: rgba(255, 210, 122, 0.22);
   }
 }
 
