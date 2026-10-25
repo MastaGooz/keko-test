@@ -1608,13 +1608,8 @@ export function PageCollection({
                   <span className="deck-onglet-compte">
                     {d.n}/{deck.taille}
                   </span>
-                  {/* LE DECK ACTIF NE JOUE QUE COMPLET : sinon il le dit (Keko). */}
-                  {i === deck.actif &&
-                    (d.n < deck.taille ? (
-                      <span className="deck-onglet-joue deck-onglet-incomplet">incomplet</span>
-                    ) : (
-                      <span className="deck-onglet-joue">complet</span>
-                    ))}
+                  {/* « INCOMPLET » SUR CHAQUE DECK QUI L'EST, rien quand il est complet (Keko). */}
+                  {d.n < deck.taille && <span className="deck-onglet-joue deck-onglet-incomplet">incomplet</span>}
                 </button>
               ))}
               {deck.peutAjouter && (
