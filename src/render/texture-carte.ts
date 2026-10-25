@@ -23,7 +23,7 @@
  * carte 3D soit la MÊME carte, et pas une deuxième version qui dérivera.
  */
 import * as THREE from 'three'
-import { art, fondPropre, urlDuCout, urlDuDosDeCarte, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
+import { art, fondPropre, urlDuBouclier, urlDuCout, urlDuDosDeCarte, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
 import { boiteDe, mesurerBoite } from './silhouette.ts'
 
 /** Ce qu'il faut savoir d'une carte pour la peindre. */
@@ -4987,23 +4987,46 @@ export async function peindreCarte(
   if (carte.valeur !== undefined) peindreValeur(ctx, carte.valeur)
   peindreTextes(ctx, carte, symbole)
   if (carte.puissance !== undefined) {
-    peindreMedaillon(ctx, carte.puissance)
-    medaillonEnSurface(canvas, largeur, carte.puissance)
+    const bouclier = await bouclierPeint()
+    peindreMedaillon(ctx, carte.puissance, bouclier)
+    medaillonEnSurface(canvas, largeur, carte.puissance, bouclier)
   }
   return canvas
 }
 
-/** LE MÉDAILLON DE PUISSANCE : sa place et sa taille, en unités de la carte. */
+/** LE MÉDAILLON DE PUISSANCE : sa place et sa taille (la hauteur du bouclier), en unités de la carte. */
 const MEDAILLON = { l: 0.17 * LARGE, cx: 0.105 * LARGE, cy: 0.105 * LARGE }
 
+/** Le bouclier de Keko, chargé une fois. */
+let bouclierCharge: Promise<HTMLImageElement | null> | null = null
+function bouclierPeint(): Promise<HTMLImageElement | null> {
+  bouclierCharge ??= charger(urlDuBouclier())
+  return bouclierCharge
+}
+
 /**
- * LE MÉDAILLON : un disque de cuir aubergine serti d'or — la matière du dos et
- * du symbole de la puissance —, le chiffre en ivoire, en Grenze. Ni crème ni
- * blanc : le cerne arc-en-ciel d'une holo se reconnaît au crème (`COSMOS.cerne`).
+ * LE MÉDAILLON : LE BOUCLIER DE KEKO (« Bouclier violet et or facetté »), le
+ * chiffre en or clair dessus, en Grenze. Ni crème ni blanc : le cerne
+ * arc-en-ciel d'une holo se reconnaît au crème (`COSMOS.cerne`). Sans
+ * l'image, un disque de cuir serti d'or le remplace.
  */
-function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number): void {
+function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HTMLImageElement | null): void {
   const { cx, cy } = MEDAILLON
   const r = MEDAILLON.l / 2
+  if (bouclier !== null) {
+    const h = MEDAILLON.l * 1.08
+    const l = (h * bouclier.width) / bouclier.height
+    ctx.save()
+    ctx.shadowColor = '#000000a0'
+    ctx.shadowBlur = 3 * U
+    ctx.shadowOffsetY = 1.2 * U
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(bouclier, cx - l / 2, cy - h / 2, l, h)
+    ctx.restore()
+    // LE CHIFFRE UN PEU AU-DESSUS DU MILIEU : le bouclier s'effile vers sa pointe.
+    chiffreDuMedaillon(ctx, n, cx, cy - 0.04 * h)
+    return
+  }
   ctx.save()
   ctx.shadowColor = '#000000a0'
   ctx.shadowBlur = 3 * U
@@ -5028,6 +5051,10 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number): void {
   ctx.strokeStyle = OR_SOMBRE
   ctx.lineWidth = 1.2 * U
   ctx.stroke()
+  chiffreDuMedaillon(ctx, n, cx, cy)
+}
+
+function chiffreDuMedaillon(ctx: CanvasRenderingContext2D, n: number, cx: number, cy: number): void {
   const texte = String(n)
   ctx.font = `800 ${(texte.length > 1 ? 15 : 18) * U}px ${FAMILLE_TITRE}`
   ctx.textAlign = 'center'
@@ -5045,7 +5072,7 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number): void {
  * relief et le cerne arc-en-ciel l'épargnent), et retiré du masque des rayons
  * brillants. Après les collés, qui posent ou effacent la surface de cette peinture.
  */
-function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number): void {
+function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number, bouclier: HTMLImageElement | null): void {
   const poser = (toiles: WeakMap<HTMLCanvasElement, HTMLCanvasElement>): HTMLCanvasElement | null => {
     let t = toiles.get(canvas)
     if (t === undefined) {
@@ -5057,7 +5084,7 @@ function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: numbe
     if (c === null) return null
     c.save()
     c.setTransform(largeur / LARGE, 0, 0, largeur / LARGE, 0, 0)
-    peindreMedaillon(c, n)
+    peindreMedaillon(c, n, bouclier)
     c.restore()
     toiles.set(canvas, t)
     return t

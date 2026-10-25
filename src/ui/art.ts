@@ -294,6 +294,11 @@ export function urlDuSymbole(nom: string): string {
  * de cache que les autres fichiers de `public/` : l'URL porte la date du
  * build, sinon le remplacer ne changerait rien à l'écran.
  */
+/** LE BOUCLIER DE PUISSANCE de Keko (violet et or, facetté) : le médaillon des cartes. */
+export function urlDuBouclier(): string {
+  return `${import.meta.env.BASE_URL}bouclier-puissance.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
 export function urlDuCout(): string {
   return `${import.meta.env.BASE_URL}Cost.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
