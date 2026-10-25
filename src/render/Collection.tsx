@@ -1428,6 +1428,8 @@ export function PageCollection({
   const [panneau, setPanneau] = useState(false)
   const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
+  /** Le mode deck : le deck lui-même, ou la collection pour l'ajouter. */
+  const [vueDeck, setVueDeck] = useState<'deck' | 'ajouter'>('deck')
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   /** Ce qu'on possède ET que le catalogue connaît encore (un doublon retiré sort d'ici). */
@@ -1485,8 +1487,8 @@ export function PageCollection({
   const exemplaires = nombreDExemplaires(collection)
   /**
    * LE DECK D'UN COUP D'ŒIL (Keko : « on ne peut pas visualiser son deck d'un
-   * coup d'oeil ») : ses cartes en bandeau, du plus rare au plus commun, puis
-   * ses places vides jusqu'à trente.
+   * coup d'oeil ») : ses cartes du plus rare au plus commun, puis ses places
+   * vides jusqu'à trente.
    */
   const duDeck = useMemo(
     () =>
@@ -1549,7 +1551,7 @@ export function PageCollection({
                   ? deck.edite === deck.actif
                     ? 'complet, il joue'
                     : 'complet, prêt à jouer'
-                  : `encore ${deck.taille - deck.nombre} à choisir, ${AU_DOIGT ? 'touchez' : 'cliquez sur'} une carte pour l'ajouter au deck`}
+                  : `encore ${deck.taille - deck.nombre} à choisir`}
               </>
             ) : toutes ? (
               <>
@@ -1605,24 +1607,48 @@ export function PageCollection({
           )}
         </header>
 
-        {/* LE BANDEAU DU DECK, collé en haut quand la grille défile ; une tape
-            sur une de ses cartes la retire du deck. */}
+        {/* DEUX VUES DU DECK (Keko : « on ne peut pas visualiser son deck d'un
+            coup d'oeil ») : « Mon deck », ses trente places sur un écran, une
+            tape retire la carte ; « Ajouter », la collection pour le remplir. */}
         {deck !== undefined && catalogue !== null && (
-          <div className="deck-bandeau" aria-label={`Deck ${deck.edite + 1}`}>
-            <div className="deck-bandeau-rang">
+          <div className="collection-segments deck-vues" role="tablist" aria-label="Vue du deck">
+            <button type="button" role="tab" aria-selected={vueDeck === 'deck'} className={vueDeck === 'deck' ? 'actif' : ''} onClick={() => setVueDeck('deck')}>
+              Mon deck · {deck.nombre}/{deck.taille}
+            </button>
+            <button type="button" role="tab" aria-selected={vueDeck === 'ajouter'} className={vueDeck === 'ajouter' ? 'actif' : ''} onClick={() => setVueDeck('ajouter')}>
+              Ajouter
+            </button>
+          </div>
+        )}
+        {deck !== undefined && catalogue !== null && vueDeck === 'deck' && (
+          <>
+            <p className="deck-consigne">
+              {duDeck.length === 0
+                ? 'Le deck est vide : ajoute des cartes depuis « Ajouter ».'
+                : `${AU_DOIGT ? 'Touche' : 'Clique sur'} une carte pour la retirer du deck.`}
+            </p>
+            <div className="deck-grille">
               {duDeck.map(({ carte, p, v }) => (
-                <div key={`${carte.id}:${v}`} className="deck-bandeau-place" title={`Retirer ${carte.nom} du deck`}>
+                <div key={`${carte.id}:${v}`} className="deck-place" title={`Retirer ${carte.nom} du deck`}>
                   <Vignette carte={carte} possession={p} variante={v} nue onOuvrir={() => deck.onBasculer({ id: carte.id, v })} />
                 </div>
               ))}
               {Array.from({ length: Math.max(0, deck.taille - duDeck.length) }, (_, i) => (
-                <div key={`vide-${i}`} className="deck-bandeau-place deck-bandeau-vide" aria-hidden />
+                <button
+                  key={`vide-${i}`}
+                  type="button"
+                  className="deck-place deck-place-vide"
+                  aria-label="Ajouter une carte"
+                  onClick={() => setVueDeck('ajouter')}
+                >
+                  +
+                </button>
               ))}
             </div>
-          </div>
+          </>
         )}
 
-        {(toutes || possedees.length > 0) && (
+        {(toutes || possedees.length > 0) && !(modeDeck && vueDeck === 'deck') && (
           <div className="collection-outils">
             <div className="collection-ligne">
               <input
@@ -1744,7 +1770,7 @@ export function PageCollection({
           </PanneauFiltres>
         )}
 
-        {catalogue === null ? null : !toutes && possedees.length === 0 ? (
+        {catalogue === null || (modeDeck && vueDeck === 'deck') ? null : !toutes && possedees.length === 0 ? (
           <div className="collection-vide">
             <p>Ta collection est vide.</p>
             <p className="collection-discret">Chaque paquet ouvert y range ses cinq cartes.</p>
