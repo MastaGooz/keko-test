@@ -8,7 +8,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
 import { urlDeLIllustration } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, peindreCarte, placeDuColle, stickerDe, sujetDe, surfaceDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, peindreCarte, placeDuColle, stickerDe, sujetDe, surfaceDe, surfaceDesNormauxDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -287,6 +287,19 @@ export function brillantDuRepos(
   const { width: l, height: h } = toile
   const image = ctx.getImageData(0, 0, l, h)
   const d = image.data
+  // CE QUI EST POSÉ SUR LE CADRE (le bouclier de puissance) ne s'en allume pas, comme au nuanceur.
+  const pose = surfaceDesNormauxDe(toile)
+  let surface: Uint8ClampedArray | null = null
+  if (pose !== undefined) {
+    const s = document.createElement('canvas')
+    s.width = l
+    s.height = h
+    const sc = s.getContext('2d', { willReadFrequently: true })
+    if (sc !== null) {
+      sc.drawImage(pose, 0, 0, l, h)
+      surface = sc.getImageData(0, 0, l, h).data
+    }
+  }
   const masque = masqueDuSujetDe(toile)
   let libre: Uint8ClampedArray | null = null
   if (masque !== undefined) {
@@ -325,7 +338,7 @@ export function brillantDuRepos(
       const qx = Math.abs(px) - (0.5 - RAYON_SIMPLE)
       const qy = Math.abs(py) - (0.7 - RAYON_SIMPLE)
       const dc = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - RAYON_SIMPLE
-      const bande = fondu(-(CONTOUR_PLAQUE + 0.003), -(CONTOUR_PLAQUE - 0.002), dc)
+      const bande = fondu(-(CONTOUR_PLAQUE + 0.003), -(CONTOUR_PLAQUE - 0.002), dc) * (surface === null ? 1 : 1 - surface[k + 3]! / 255)
       // LES RAYONS CLAIRS, dans la fenêtre d'art, hors de l'emoji.
       let kr = 0
       if (!sansRayons && u >= R.x && u <= R.x + R.l && v >= R.y && v <= R.y + R.h) {

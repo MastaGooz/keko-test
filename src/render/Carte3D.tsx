@@ -1537,6 +1537,9 @@ ${nuanceur.vertexShader}`.replace(
            vec2 qc = abs(pc) - (vec2(0.5, 0.7) - ${RAYON_SIMPLE.toFixed(4)});
            float dc = length(max(qc, 0.0)) + min(max(qc.x, qc.y), 0.0) - ${RAYON_SIMPLE.toFixed(4)};
            float bande = smoothstep(-${(CONTOUR_PLAQUE + 0.003).toFixed(4)}, -${(CONTOUR_PLAQUE - 0.002).toFixed(4)}, dc);
+           // CE QUI EST POSÉ SUR LE CADRE NE S'EN ALLUME PAS : le bouclier de
+           // puissance mord sur la bordure, et son violet s'y éclaircissait (Keko).
+           bande *= 1.0 - texture2D(uColles, vLustreUv).a;
            // LE REFLET DE LA LAMPE CLÉ, comme sur le sachet — Keko : « la
            // lumière ne suit pas vraiment la source de lumière comme le
            // booster (haut droit) ». C'est maintenant une vraie RÉFLEXION :
