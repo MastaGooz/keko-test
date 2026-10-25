@@ -394,6 +394,12 @@
   .jouer-carte .vignette:hover:not(:active) {
     transform: none;
   }
+  /* Ni la carte indisponible du deck (deck plein, prise par un autre) : elle
+     ne se saisit pas, elle ne s'offre pas (Keko). */
+  .vignette-estompee:hover:not(:active) {
+    z-index: auto;
+    transform: none;
+  }
 }
 
 .vignette-toile {
