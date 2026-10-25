@@ -5024,7 +5024,7 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
     ctx.drawImage(bouclier, cx - l / 2, cy - h / 2, l, h)
     ctx.restore()
     // LE CHIFFRE UN PEU AU-DESSUS DU MILIEU : le bouclier s'effile vers sa pointe.
-    chiffreDuMedaillon(ctx, n, cx, cy - 0.04 * h)
+    chiffreDuMedaillon(ctx, n, cx, cy - 0.07 * h)
     return
   }
   ctx.save()
