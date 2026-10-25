@@ -586,6 +586,7 @@ export function Jeu(): React.ReactElement {
             page === 'deck'
               ? {
                   nombre: edite.cartes.length,
+                  cartes: edite.cartes,
                   choix: choixDuDeck,
                   taille: DECK.taille,
                   onBasculer: basculerDansLeDeck,

@@ -2018,6 +2018,48 @@
   font-size: 1.3rem;
 }
 
+/* LE BANDEAU DU DECK (Keko : « visualiser son deck d'un coup d'oeil ») : les
+   trente places en une rangée qu'on fait glisser, collée en haut de la page
+   quand la grille défile dessous. */
+.deck-bandeau {
+  position: sticky;
+  /* Sous la barre : le collant se compte depuis le padding de la page, qui la réserve déjà. */
+  top: 0;
+  z-index: 3;
+  max-width: 60rem;
+  margin: 0.9rem auto 0;
+  padding: 0.5rem 0;
+  border-radius: 0.8rem;
+  background: rgba(23, 13, 7, 0.95);
+  box-shadow: 0 0.4rem 1rem rgba(10, 4, 2, 0.5);
+}
+
+.deck-bandeau-rang {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.deck-bandeau-place {
+  flex: 0 0 auto;
+  width: 3.4rem;
+  aspect-ratio: 1 / 1.4;
+}
+
+.deck-bandeau-place .vignette {
+  display: block;
+  width: 100%;
+}
+
+.deck-bandeau-vide {
+  box-sizing: border-box;
+  border: 0.12rem dashed rgba(255, 250, 240, 0.25);
+  border-radius: 0.3rem;
+}
+
 .deck-actions {
   display: flex;
   flex-wrap: wrap;

@@ -1325,6 +1325,8 @@ function CaseDuSticker({
 export interface ChoixDuDeck {
   /** Combien de cartes le deck qu'on compose (`edite`) tient. */
   readonly nombre: number
+  /** LES EXEMPLAIRES DU DECK qu'on compose, pour le bandeau qui le montre entier. */
+  readonly cartes: readonly { id: string; v: Variante }[]
   /**
    * CE QUE LA GRILLE DIT DE CHAQUE EXEMPLAIRE : dans le deck, libre, deck plein,
    * ou pris par un autre deck (`prisPar` : « Deck 2 »). *Une place par version
@@ -1481,6 +1483,21 @@ export function PageCollection({
   const total = catalogue?.length ?? 0
   const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
   const exemplaires = nombreDExemplaires(collection)
+  /**
+   * LE DECK D'UN COUP D'ŒIL (Keko : « on ne peut pas visualiser son deck d'un
+   * coup d'oeil ») : ses cartes en bandeau, du plus rare au plus commun, puis
+   * ses places vides jusqu'à trente.
+   */
+  const duDeck = useMemo(
+    () =>
+      (deck?.cartes ?? [])
+        .flatMap((e): { carte: CarteEmoji; p: Possession | null; v: Variante }[] => {
+          const carte = parId.get(e.id)
+          return carte === undefined ? [] : [{ carte, p: collection.cartes[e.id] ?? null, v: e.v }]
+        })
+        .sort((a, b) => a.carte.rang - b.carte.rang),
+    [deck?.cartes, parId, collection.cartes],
+  )
   const laOuverte =
     ouverte === null
       ? undefined
@@ -1587,6 +1604,23 @@ export function PageCollection({
             </div>
           )}
         </header>
+
+        {/* LE BANDEAU DU DECK, collé en haut quand la grille défile ; une tape
+            sur une de ses cartes la retire du deck. */}
+        {deck !== undefined && catalogue !== null && (
+          <div className="deck-bandeau" aria-label={`Deck ${deck.edite + 1}`}>
+            <div className="deck-bandeau-rang">
+              {duDeck.map(({ carte, p, v }) => (
+                <div key={`${carte.id}:${v}`} className="deck-bandeau-place" title={`Retirer ${carte.nom} du deck`}>
+                  <Vignette carte={carte} possession={p} variante={v} nue onOuvrir={() => deck.onBasculer({ id: carte.id, v })} />
+                </div>
+              ))}
+              {Array.from({ length: Math.max(0, deck.taille - duDeck.length) }, (_, i) => (
+                <div key={`vide-${i}`} className="deck-bandeau-place deck-bandeau-vide" aria-hidden />
+              ))}
+            </div>
+          </div>
+        )}
 
         {(toutes || possedees.length > 0) && (
           <div className="collection-outils">
