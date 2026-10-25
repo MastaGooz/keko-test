@@ -2004,7 +2004,13 @@
 }
 
 /* Un nom long se coupe dans son onglet. */
+.collection-avec-deck .deck-onglet {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .deck-onglet-nom {
+  min-width: 0;
   max-width: 9rem;
   overflow: hidden;
   white-space: nowrap;
@@ -2097,9 +2103,9 @@
 /* LE CRAYON, à gauche du nom : une cible de doigt, sans fond. */
 .deck-colonne-crayon {
   flex: none;
-  width: 1.8rem;
+  width: 1.6rem;
   height: 1.8rem;
-  margin: -0.35rem 0 -0.35rem -0.35rem;
+  margin: -0.35rem -0.3rem -0.35rem -0.45rem;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -2131,8 +2137,11 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
 }
 
 .deck-colonne-tete b {
