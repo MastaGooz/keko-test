@@ -1414,6 +1414,9 @@ export function PageCollection({
   const triParDefaut: Tri = toutes || modeDeck ? 'rares' : 'recentes'
   // SUPPRIMER UN DECK SE CONFIRME D'UNE SECONDE TAPE, dans les trois secondes.
   const [sur, setSur] = useState(false)
+  /** LE NOM SE CHANGE AU CRAYON, en tête de la colonne (Keko) : le champ n'est là que pendant. */
+  const [renomme, setRenomme] = useState(false)
+  useEffect(() => setRenomme(false), [deck?.edite])
   useEffect(() => {
     if (!sur) return
     const t = window.setTimeout(() => setSur(false), 3000)
@@ -1621,28 +1624,6 @@ export function PageCollection({
               )}
             </div>
           )}
-          {/* LE NOM DU DECK QU'ON COMPOSE, qu'on tape à même la page ; vide, il
-              redevient « Deck N ». La clé suit le deck : changer d'onglet relit son nom. */}
-          {deck !== undefined && (
-            <label className="deck-nom">
-              <span className="deck-nom-crayon" aria-hidden>
-                ✎
-              </span>
-              <input
-                key={deck.edite}
-                type="text"
-                defaultValue={deck.decks[deck.edite]?.nomDonne ?? ''}
-                placeholder={`Deck ${deck.edite + 1}`}
-                maxLength={NOM_DECK_MAX}
-                aria-label="Nom du deck"
-                enterKeyHint="done"
-                onBlur={(e) => deck.onRenommer(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') e.currentTarget.blur()
-                }}
-              />
-            </label>
-          )}
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
@@ -1834,7 +1815,39 @@ export function PageCollection({
           aria-label={deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}
         >
           <div className="deck-colonne-tete">
-            <span className="deck-colonne-nom">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</span>
+            {/* LE CRAYON À GAUCHE DU NOM : le nom devient un champ ; Entrée ou une
+                tape ailleurs le garde, Échap l'abandonne, vide il redevient « Deck N ». */}
+            {renomme ? (
+              <input
+                className="deck-colonne-champ"
+                type="text"
+                autoFocus
+                defaultValue={deck.decks[deck.edite]?.nomDonne ?? ''}
+                placeholder={`Deck ${deck.edite + 1}`}
+                maxLength={NOM_DECK_MAX}
+                aria-label="Nom du deck"
+                enterKeyHint="done"
+                onFocus={(e) => e.currentTarget.select()}
+                onBlur={(e) => {
+                  if (renomme) deck.onRenommer(e.currentTarget.value)
+                  setRenomme(false)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur()
+                  if (e.key === 'Escape') {
+                    e.currentTarget.value = deck.decks[deck.edite]?.nomDonne ?? ''
+                    e.currentTarget.blur()
+                  }
+                }}
+              />
+            ) : (
+              <>
+                <button type="button" className="deck-colonne-crayon" aria-label="Renommer le deck" onClick={() => setRenomme(true)}>
+                  ✎
+                </button>
+                <span className="deck-colonne-nom">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</span>
+              </>
+            )}
             <b>{deck.nombre}/{deck.taille}</b>
           </div>
           {/* SUPPRIMER LE DECK, en tête de sa colonne (Keko), d'une seconde tape ; jamais le dernier. */}

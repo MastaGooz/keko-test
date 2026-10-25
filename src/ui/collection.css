@@ -2011,43 +2011,6 @@
   text-overflow: ellipsis;
 }
 
-/* LE NOM DU DECK, tapé à même la page : un champ discret, souligné. */
-.deck-nom {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  max-width: 22rem;
-  margin: 0.2rem 0 0.1rem;
-  border-bottom: 0.12rem solid rgba(255, 250, 240, 0.25);
-}
-
-.deck-nom:focus-within {
-  border-bottom-color: #ffd27a;
-}
-
-.deck-nom-crayon {
-  color: #ffd27a;
-  font-size: 1.1rem;
-}
-
-.deck-nom input {
-  flex: 1;
-  min-width: 0;
-  min-height: 2.6rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #fffaf0;
-  font: inherit;
-  font-weight: 800;
-  font-size: 1.15rem;
-  outline: none;
-}
-
-.deck-nom input::placeholder {
-  color: rgba(255, 250, 240, 0.55);
-}
-
 .deck-onglet-compte {
   font-weight: 700;
   font-size: 0.8rem;
@@ -2127,7 +2090,41 @@
 
 .deck-colonne-tete {
   display: flex;
+  align-items: center;
   gap: 0.4rem;
+}
+
+/* LE CRAYON, à gauche du nom : une cible de doigt, sans fond. */
+.deck-colonne-crayon {
+  flex: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: -0.35rem 0 -0.35rem -0.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #ffd27a;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.deck-colonne-crayon:hover {
+  background: rgba(255, 210, 122, 0.15);
+}
+
+.deck-colonne-champ {
+  flex: 1;
+  min-width: 0;
+  margin: -0.25rem 0;
+  padding: 0.15rem 0.3rem;
+  border: 0;
+  border-bottom: 0.12rem solid #ffd27a;
+  text-transform: none;
+  background: rgba(255, 250, 240, 0.08);
+  color: #fffaf0;
+  font: inherit;
+  outline: none;
 }
 
 .deck-colonne-nom {
