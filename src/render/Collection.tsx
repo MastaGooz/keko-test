@@ -621,7 +621,11 @@ export function Vignette({
           ✓
         </span>
       )}
-      {choix === 'pris' && <span className="vignette-prise">{prisPar ?? 'Pris'}</span>}
+      {choix === 'pris' && (
+        <span className="vignette-prise" title={prisPar ?? 'Pris'} aria-label={`Dans ${prisPar ?? 'un autre deck'}`}>
+          ✓
+        </span>
+      )}
       {choix === undefined && !nue && possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
       {compte > 1 && !nue && <span className="vignette-nombre">×{compte}</span>}
       {(holo || anime) && (
