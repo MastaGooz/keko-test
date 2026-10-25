@@ -715,7 +715,7 @@ function CarteOuverte({
   const aPeindre = useMemo(
     () => {
       const ex = exemplaireDe(variante)
-      return { ...carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }), colles: collesPeints }
+      return { ...carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, collesPeints.length), colles: collesPeints }
     },
     [carte, variante, collesPeints],
   )
@@ -803,7 +803,7 @@ function CarteOuverte({
    */
   const carteNue = useMemo(
     () =>
-      decolle === null ? aPeindre : { ...carteDeLEmoji(carte, decolle), sansSujet: true, animation: undefined, colles: collesPeints },
+      decolle === null ? aPeindre : { ...carteDeLEmoji(carte, decolle, collesPeints.length), sansSujet: true, animation: undefined, colles: collesPeints },
     [carte, decolle, aPeindre, collesPeints],
   )
   // LA CARTE TIENT DANS L'ÉCRAN, avec la place des lignes du dessous : la règle

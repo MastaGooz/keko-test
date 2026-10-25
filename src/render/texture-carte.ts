@@ -294,6 +294,13 @@ export type CarteAPeindre = {
    */
   colles?: readonly StickerAPeindre[]
   /**
+   * LA PUISSANCE DE L'EXEMPLAIRE, en médaillon dans le coin haut gauche (Keko :
+   * « une valeur de puissance sur chaque carte »). *Elle est EN SURFACE, comme
+   * les stickers collés* : la carte nue du relief ne la porte pas, la surface
+   * (`surfaceDe`) si — enfoncée avec le décor, elle glissait au regard.
+   */
+  puissance?: number
+  /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
    * *Elle entre dans la signature* : la carte 3D la prend pendant le geste, et
@@ -4979,7 +4986,96 @@ export async function peindreCarte(
   else if (carte.cout !== null) peindreCout(ctx, carte.cout, symbole)
   if (carte.valeur !== undefined) peindreValeur(ctx, carte.valeur)
   peindreTextes(ctx, carte, symbole)
+  if (carte.puissance !== undefined) {
+    peindreMedaillon(ctx, carte.puissance)
+    medaillonEnSurface(canvas, largeur, carte.puissance)
+  }
   return canvas
+}
+
+/** LE MÉDAILLON DE PUISSANCE : sa place et sa taille, en unités de la carte. */
+const MEDAILLON = { l: 0.17 * LARGE, cx: 0.105 * LARGE, cy: 0.105 * LARGE }
+
+/**
+ * LE MÉDAILLON : un disque de cuir aubergine serti d'or — la matière du dos et
+ * du symbole de la puissance —, le chiffre en ivoire, en Grenze. Ni crème ni
+ * blanc : le cerne arc-en-ciel d'une holo se reconnaît au crème (`COSMOS.cerne`).
+ */
+function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number): void {
+  const { cx, cy } = MEDAILLON
+  const r = MEDAILLON.l / 2
+  ctx.save()
+  ctx.shadowColor = '#000000a0'
+  ctx.shadowBlur = 3 * U
+  ctx.shadowOffsetY = 1.2 * U
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  const or = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
+  or.addColorStop(0, OR_CLAIR)
+  or.addColorStop(0.45, OR_MOYEN)
+  or.addColorStop(1, OR_SOMBRE)
+  ctx.fillStyle = or
+  ctx.fill()
+  ctx.restore()
+  ctx.beginPath()
+  ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2)
+  const cuir = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, 0, cx, cy, r * 0.8)
+  const [cr, cv, cb] = DOS_CUIR
+  cuir.addColorStop(0, `rgb(${cr + 40}, ${cv + 22}, ${cb + 40})`)
+  cuir.addColorStop(1, `rgb(${cr - 30}, ${cv - 16}, ${cb - 34})`)
+  ctx.fillStyle = cuir
+  ctx.fill()
+  ctx.strokeStyle = OR_SOMBRE
+  ctx.lineWidth = 1.2 * U
+  ctx.stroke()
+  const texte = String(n)
+  ctx.font = `800 ${(texte.length > 1 ? 15 : 18) * U}px ${FAMILLE_TITRE}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#ffe2a0'
+  ctx.shadowColor = BRUN_ENCRE
+  ctx.shadowOffsetY = 0.9 * U
+  ctx.fillText(texte, cx, cy + 0.6 * U)
+  ctx.shadowColor = 'transparent'
+  ctx.shadowOffsetY = 0
+}
+
+/**
+ * LE MÉDAILLON EST EN SURFACE : ajouté à la surface des stickers collés (le
+ * relief et le cerne arc-en-ciel l'épargnent), et retiré du masque des rayons
+ * brillants. Après les collés, qui posent ou effacent la surface de cette peinture.
+ */
+function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number): void {
+  const poser = (toiles: WeakMap<HTMLCanvasElement, HTMLCanvasElement>): HTMLCanvasElement | null => {
+    let t = toiles.get(canvas)
+    if (t === undefined) {
+      t = document.createElement('canvas')
+      t.width = canvas.width
+      t.height = canvas.height
+    }
+    const c = t.getContext('2d')
+    if (c === null) return null
+    c.save()
+    c.setTransform(largeur / LARGE, 0, 0, largeur / LARGE, 0, 0)
+    peindreMedaillon(c, n)
+    c.restore()
+    toiles.set(canvas, t)
+    return t
+  }
+  const surface = poser(SURFACES)
+  poser(SURFACES_NORMAUX)
+  const m = MASQUES_DU_SUJET.get(canvas)
+  const mctx = m?.getContext('2d')
+  if (surface !== null && m !== undefined && mctx != null) {
+    mctx.save()
+    mctx.setTransform(1, 0, 0, 1, 0, 0)
+    mctx.globalCompositeOperation = 'destination-out'
+    mctx.drawImage(surface, 0, 0, m.width, m.height)
+    mctx.globalCompositeOperation = 'destination-over'
+    mctx.fillStyle = '#000000'
+    mctx.fillRect(0, 0, m.width, m.height)
+    mctx.restore()
+  }
 }
 
 /**
@@ -7905,7 +8001,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${holoAuCerneCreme(carte) && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}|p${carte.puissance ?? ''}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${holoAuCerneCreme(carte) && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
 }
 
 /**

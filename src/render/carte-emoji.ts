@@ -14,6 +14,7 @@ import type { CarteAPeindre } from './texture-carte.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, type CarteEmoji, type RareteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import { urlDeLIllustration } from '../ui/art.ts'
+import { puissanceDe } from '../logic/emoji/deck.ts'
 
 /**
  * UN CRAN, UNE COULEUR — **et c'est la table que Keko a dictée.**
@@ -74,11 +75,14 @@ function mots(_bonus?: Bonus): string[] {
  * orbe de PA mentirait sur une carte qui ne se joue pas, et neuf ciels
  * disputeraient l'axe de la rareté.
  */
-export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
+export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus, stickers = 0): CarteAPeindre {
   return {
     id: c.id,
     nom: c.nom,
     cout: null,
+    // LA PUISSANCE EN MÉDAILLON, coin haut gauche (Keko) : ce que l'exemplaire
+    // rapporte au deck, stickers collés compris.
+    puissance: puissanceDe(c.rarete, stickers),
     effet: mots(bonus),
     // LA PASTILLE PORTE LES DEUX TAGS, race et rôle (Keko).
     type: `${NOM_DE_LA_RACE[c.race]} · ${NOM_DU_ROLE[c.role]}`,

@@ -794,7 +794,7 @@ export function peinte(
       // une vignette est une image fixe. MAIS LA HOLO SE DIT TOUJOURS : elle
       // garde le cerne crème que `cerneArcEnCielDuSujet` irise, là où la
       // normale porte le trait d'encre (`CERNE_DE_CARTE`).
-      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), holo, animation: undefined, sansSujet, sansRayons, colles },
+      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined, colles.length), holo, animation: undefined, sansSujet, sansRayons, colles },
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.

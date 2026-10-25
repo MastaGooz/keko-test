@@ -158,11 +158,17 @@ export function valeurParRarete(
   rareteDe: (id: string) => RareteEmoji | undefined,
   stickersDe: (e: EntreeDeck) => number = () => 0,
 ): ValeurDeCarte {
-  return (e) => {
-    const r = rareteDe(e.id)
-    const cran = r === undefined ? 0 : Math.max(0, RARETES_EMOJI.indexOf(r))
-    return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, stickersDe(e)) * DECK.likesParSticker
-  }
+  return (e) => puissanceDe(rareteDe(e.id), stickersDe(e))
+}
+
+/**
+ * LA PUISSANCE D'UN EXEMPLAIRE, celle que la carte porte en médaillon et celle
+ * que le deck encaisse — *une seule fonction, sinon le chiffre peint et le
+ * chiffre joué se désaccordent au premier réglage.*
+ */
+export function puissanceDe(r: RareteEmoji | undefined, stickers = 0): number {
+  const cran = r === undefined ? 0 : Math.max(0, RARETES_EMOJI.indexOf(r))
+  return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, stickers) * DECK.likesParSticker
 }
 
 /** Ce que rapporte une main : la somme de ses cartes. */

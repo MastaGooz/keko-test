@@ -1973,7 +1973,7 @@ ${nuanceur.fragmentShader}`
       carte.emoji !== undefined &&
       carte.sansSujet !== true
     ) {
-      void textureDeCarte({ ...carte, sansSujet: true, sansRayons: tourne, animation: undefined }, largeurPx)
+      void textureDeCarte({ ...carte, sansSujet: true, sansRayons: tourne, animation: undefined, puissance: undefined }, largeurPx)
         .then((t) => {
           if (vivant) nuDeLaFace.current = t
         })
