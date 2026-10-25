@@ -1466,8 +1466,10 @@ export function PageCollection({
   const vientDeGlisser = useRef(false)
   const saisir = (e: React.PointerEvent, carte: CarteEmoji, v: Variante, depuis: 'collection' | 'deck'): void => {
     if (deck === undefined || e.button !== 0) return
-    // Dans la collection, seule une carte qui peut entrer se saisit.
-    if (depuis === 'collection' && deck.choix(carte.id, v).etat !== 'dehors') return
+    // Dans la collection, seule une carte qui peut entrer se saisit — celle
+    // d'un autre deck aussi : posée ici, elle quitte l'autre (Keko).
+    const etat = deck.choix(carte.id, v).etat
+    if (depuis === 'collection' && etat !== 'dehors' && etat !== 'pris') return
     const x0 = e.clientX
     const y0 = e.clientY
     const id = e.pointerId

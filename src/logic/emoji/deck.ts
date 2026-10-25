@@ -406,15 +406,21 @@ export function disponibles(ds: Decks, i: number, id: string, v: Variante, compt
 }
 
 /**
- * MET OU RETIRE UN EXEMPLAIRE DANS LE DECK `i`, si les autres decks en laissent
- * un : retirer est toujours possible, mettre exige un exemplaire disponible.
+ * MET OU RETIRE UN EXEMPLAIRE DANS LE DECK `i` : retirer est toujours possible.
+ * **Un exemplaire qu'un autre deck tient se PREND à cet autre deck** (Keko :
+ * « permettre de prendre les cartes d'autres decks, quitte à les rendre
+ * incomplets ») : il le quitte, et ce deck-là s'arrête s'il jouait.
  */
 export function basculerDansDeck(ds: Decks, i: number, e: EntreeDeck, compte: CompteDExemplaires, maintenant: number): Decks {
   const d = ds.liste[i]
   if (d === undefined) return ds
   const deja = d.cartes.some((x) => memeEntree(x, e))
-  if (!deja && disponibles(ds, i, e.id, e.v, compte) <= 0) return ds
-  return modifierDeck(ds, i, (x) => basculerCarte(x, e, maintenant))
+  const k = !deja && disponibles(ds, i, e.id, e.v, compte) <= 0 ? deckQuiTient(ds, i, e.id, e.v) : null
+  if (!deja && compte(e.id, e.v) <= 0) return ds
+  const r = modifierDeck(ds, i, (x) => basculerCarte(x, e, maintenant))
+  // Le deck `i` n'a rien pris (plein) : l'autre garde son exemplaire.
+  if (r === ds || k === null) return r
+  return modifierDeck(r, k, (x) => basculerCarte(x, e, maintenant))
 }
 
 /**
