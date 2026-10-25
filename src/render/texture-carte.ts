@@ -5018,8 +5018,8 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
     const l = (h * bouclier.width) / bouclier.height
     ctx.save()
     ctx.shadowColor = '#000000a0'
-    ctx.shadowBlur = 3 * U
-    ctx.shadowOffsetY = 1.2 * U
+    ctx.shadowBlur = 3 * U * ombreA(ctx)
+    ctx.shadowOffsetY = 1.2 * U * ombreA(ctx)
     ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(bouclier, cx - l / 2, cy - h / 2, l, h)
     ctx.restore()
@@ -5029,8 +5029,8 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
   }
   ctx.save()
   ctx.shadowColor = '#000000a0'
-  ctx.shadowBlur = 3 * U
-  ctx.shadowOffsetY = 1.2 * U
+  ctx.shadowBlur = 3 * U * ombreA(ctx)
+  ctx.shadowOffsetY = 1.2 * U * ombreA(ctx)
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
   const or = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
@@ -5054,6 +5054,15 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
   chiffreDuMedaillon(ctx, n, cx, cy)
 }
 
+/**
+ * LES OMBRES D'UN CANVAS IGNORENT SA MISE À L'ÉCHELLE : leur flou et leur décalage
+ * se comptent en pixels de la toile. Sans ce facteur, la vignette (peinte petite)
+ * gardait l'ombre de la grande carte, et le chiffre se doublait d'un pâté brun.
+ */
+function ombreA(ctx: CanvasRenderingContext2D): number {
+  return Math.abs(ctx.getTransform().a)
+}
+
 function chiffreDuMedaillon(ctx: CanvasRenderingContext2D, n: number, cx: number, cy: number): void {
   const texte = String(n)
   ctx.font = `800 ${(texte.length > 1 ? 15 : 18) * U}px ${FAMILLE_TITRE}`
@@ -5061,7 +5070,7 @@ function chiffreDuMedaillon(ctx: CanvasRenderingContext2D, n: number, cx: number
   ctx.textBaseline = 'middle'
   ctx.fillStyle = '#ffe2a0'
   ctx.shadowColor = BRUN_ENCRE
-  ctx.shadowOffsetY = 0.9 * U
+  ctx.shadowOffsetY = 0.9 * U * ombreA(ctx)
   ctx.fillText(texte, cx, cy + 0.6 * U)
   ctx.shadowColor = 'transparent'
   ctx.shadowOffsetY = 0
