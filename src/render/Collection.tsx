@@ -368,6 +368,7 @@ export function Vignette({
   choix,
   prisPar,
   nue = false,
+  onSaisir,
 }: {
   carte: CarteEmoji
   /** `null` : une carte du catalogue qu'on n'a pas encore — grisée. */
@@ -385,6 +386,8 @@ export function Vignette({
   prisPar?: string
   /** LA MAIN QUI JOUE : sans le compte d'exemplaires ni « Nouveau » (Keko). */
   nue?: boolean
+  /** Le mode deck : le doigt posé peut saisir la carte pour la glisser (voir `saisir`). */
+  onSaisir?: (e: React.PointerEvent) => void
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
@@ -579,6 +582,7 @@ export function Vignette({
       className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' || choix === 'pris' ? ' vignette-estompee' : ''}`}
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
+      onPointerDown={onSaisir}
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}${possession === null ? ', pas encore obtenue' : ''}`}
     >
       {!prete && <span className="vignette-attente">{carte.emoji}</span>}
@@ -1355,9 +1359,6 @@ export interface ChoixDuDeck {
   readonly onJouerAvec: () => void
 }
 
-/** Au doigt ou à la souris : la consigne dit « touchez » ou « cliquez » (Keko). */
-const AU_DOIGT = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
-
 export function PageCollection({
   catalogue,
   collection,
@@ -1428,6 +1429,74 @@ export function PageCollection({
   const [panneau, setPanneau] = useState(false)
   const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
+  /**
+   * LE GLISSER-DÉPOSER DU DECK (Keko : « un drag and drop pour ajouter /
+   * retirer, on garde le clic pour zoomer ») : une carte de la collection
+   * lâchée sur la colonne entre au deck, une ligne de la colonne lâchée
+   * ailleurs en sort. *Au doigt, seul un geste de côté saisit* : le vertical
+   * fait défiler la grille ou la colonne (`touch-action: pan-y`).
+   */
+  const colonne = useRef<HTMLElement>(null)
+  const [glisse, setGlisse] = useState<{
+    carte: CarteEmoji
+    depuis: 'collection' | 'deck'
+    x: number
+    y: number
+    surColonne: boolean
+  } | null>(null)
+  /** Le clic qui suit un lâcher n'ouvre pas la carte. */
+  const vientDeGlisser = useRef(false)
+  const saisir = (e: React.PointerEvent, carte: CarteEmoji, v: Variante, depuis: 'collection' | 'deck'): void => {
+    if (deck === undefined || e.button !== 0) return
+    // Dans la collection, seule une carte qui peut entrer se saisit.
+    if (depuis === 'collection' && deck.choix(carte.id, v).etat !== 'dehors') return
+    const x0 = e.clientX
+    const y0 = e.clientY
+    const id = e.pointerId
+    let parti = false
+    const dans = (x: number, y: number): boolean => {
+      const r = colonne.current?.getBoundingClientRect()
+      return r !== undefined && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
+    }
+    const fin = (): void => {
+      window.removeEventListener('pointermove', bouge)
+      window.removeEventListener('pointerup', lache)
+      window.removeEventListener('pointercancel', annule)
+    }
+    const bouge = (m: PointerEvent): void => {
+      if (m.pointerId !== id) return
+      const dx = m.clientX - x0
+      const dy = m.clientY - y0
+      if (!parti) {
+        if (Math.hypot(dx, dy) < 8) return
+        if (m.pointerType !== 'mouse' && Math.abs(dx) < Math.abs(dy)) return fin()
+        parti = true
+      }
+      m.preventDefault()
+      setGlisse({ carte, depuis, x: m.clientX, y: m.clientY, surColonne: dans(m.clientX, m.clientY) })
+    }
+    const lache = (m: PointerEvent): void => {
+      if (m.pointerId !== id) return
+      fin()
+      if (!parti) return
+      vientDeGlisser.current = true
+      window.setTimeout(() => (vientDeGlisser.current = false), 0)
+      const sur = dans(m.clientX, m.clientY)
+      if (depuis === 'collection' ? sur : !sur) deck.onBasculer({ id: carte.id, v })
+      setGlisse(null)
+    }
+    const annule = (m: PointerEvent): void => {
+      if (m.pointerId !== id) return
+      fin()
+      setGlisse(null)
+    }
+    window.addEventListener('pointermove', bouge, { passive: false })
+    window.addEventListener('pointerup', lache)
+    window.addEventListener('pointercancel', annule)
+  }
+  const ouvrir = (e: { id: string; v: Variante }): void => {
+    if (!vientDeGlisser.current) setOuverte(e)
+  }
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   /** Ce qu'on possède ET que le catalogue connaît encore (un doublon retiré sort d'ici). */
@@ -1749,7 +1818,8 @@ export function PageCollection({
                 variante={v}
                 choix={deck === undefined ? undefined : deck.choix(carte.id, v).etat}
                 prisPar={deck === undefined ? undefined : deck.choix(carte.id, v).prisPar}
-                onOuvrir={() => (deck !== undefined ? deck.onBasculer({ id: carte.id, v }) : setOuverte({ id: carte.id, v }))}
+                onOuvrir={() => ouvrir({ id: carte.id, v })}
+                onSaisir={deck === undefined ? undefined : (e) => saisir(e, carte, v, 'collection')}
               />
             ))}
           </div>
@@ -1760,12 +1830,16 @@ export function PageCollection({
           mini de l'illustration, le nom, une indication de rareté ») : elle
           défile seule ; une tape sur une ligne retire la carte. */}
       {deck !== undefined && catalogue !== null && (
-        <aside className="deck-colonne" aria-label={`Deck ${deck.edite + 1}`}>
+        <aside
+          ref={colonne}
+          className={`deck-colonne${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
+          aria-label={`Deck ${deck.edite + 1}`}
+        >
           <div className="deck-colonne-tete">
             Deck {deck.edite + 1} <b>{deck.nombre}/{deck.taille}</b>
           </div>
           <div className="deck-colonne-liste">
-            {duDeck.length === 0 && <p className="deck-colonne-vide">{AU_DOIGT ? 'Touche' : 'Clique sur'} une carte pour l'ajouter.</p>}
+            {duDeck.length === 0 && <p className="deck-colonne-vide">Glisse une carte ici pour l'ajouter au deck.</p>}
             {duDeck.map(({ carte, v }) => {
               const { holo, anime } = exemplaireDe(v)
               return (
@@ -1774,10 +1848,11 @@ export function PageCollection({
                   type="button"
                   className="deck-ligne"
                   style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
-                  title={`Retirer ${enTitre(carte.nom)} du deck`}
-                  onClick={() => deck.onBasculer({ id: carte.id, v })}
+                  title={`${enTitre(carte.nom)} : glisse-la hors du deck pour la retirer`}
+                  onClick={() => ouvrir({ id: carte.id, v })}
+                  onPointerDown={(e) => saisir(e, carte, v, 'deck')}
                 >
-                  <img className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
+                  <img draggable={false} className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
                   <span className="deck-ligne-texte">
                     <span className="deck-ligne-nom">{enTitre(carte.nom)}</span>
                     <span className="deck-ligne-rarete">
@@ -1792,6 +1867,18 @@ export function PageCollection({
           </div>
         </aside>
       )}
+      {/* LA CARTE QU'ON GLISSE suit le doigt ; rouge quand la lâcher la retire. */}
+      {glisse !== null &&
+        createPortal(
+          <div
+            className={`deck-fantome${glisse.depuis === 'deck' && !glisse.surColonne ? ' deck-fantome-retire' : ''}`}
+            style={{ left: glisse.x, top: glisse.y, '--cran': teinteDuCran(glisse.carte.rarete) } as React.CSSProperties}
+            aria-hidden
+          >
+            <img draggable={false} src={`${import.meta.env.BASE_URL}${glisse.carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
+          </div>,
+          document.body,
+        )}
       {/* PAR-DESSUS LA BARRE : la page est fixe, donc elle fait son propre
           empilement, et la carte ouverte doit en sortir pour couvrir la
           navigation. *Une carte qu'on regarde n'a rien à côté d'elle.* */}
