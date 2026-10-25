@@ -5005,7 +5005,7 @@ function bouclierPeint(): Promise<HTMLImageElement | null> {
 }
 
 /**
- * LE MÉDAILLON : LE BOUCLIER DE KEKO (« Bouclier violet et or facetté »), le
+ * LE MÉDAILLON : LE BOUCLIER DE KEKO (« Bouclier violet à bordure dorée », la version simple), le
  * chiffre en or clair dessus, en Grenze. Ni crème ni blanc : le cerne
  * arc-en-ciel d'une holo se reconnaît au crème (`COSMOS.cerne`). Sans
  * l'image, un disque de cuir serti d'or le remplace.
