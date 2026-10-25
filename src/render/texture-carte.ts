@@ -7115,7 +7115,15 @@ const US = SACHET_LARGE / 100
  * jeu a quitté les emoji (« un titre provisoire ») : le vrai nom viendra. *Une
  * ligne par ligne du titre* (`\n`), chaque lettre posée comme avant.
  */
-const TITRE_DU_SACHET = 'Gobelins\n& Orcs'
+/**
+ * LE NOM DU JEU, sur le sachet et l'accueil. Keko (25/10) : « tu peux essayer
+ * "Papercraft" ? » — sur deux lignes, à la taille de l'ancien « Gobelins & Orcs ».
+ * `?nom=Gobelins|%26 Orcs` en essaie un autre (`|` pour aller à la ligne).
+ */
+const TITRE_DU_SACHET = (() => {
+  const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('nom')
+  return v !== null && v.trim() !== '' ? v.split('|').join('\n') : 'Paper\ncraft'
+})()
 
 /**
  * LE TITRE EST UNE RANGÉE DE STICKERS, PAS UN MOT. Keko : « je suis pas hyper
