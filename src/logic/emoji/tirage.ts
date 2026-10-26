@@ -37,7 +37,9 @@ export interface Bonus {
  * *Trois pour cent d'un tiers font un pour cent*, donc l'écart avec
  * l'holographique est de dix contre un et non de trois.
  */
-export const CHANCES_BONUS = { holo: 0.1, anime: 0.03 } as const
+// Keko (26/10) : la holo de 10 à 1 %. L'animé suit au dixième pour rester plus
+// rare (sa règle) ; le catalogue fantasy n'a rien d'animable, il ne sort pas.
+export const CHANCES_BONUS = { holo: 0.01, anime: 0.003 } as const
 
 /**
  * Tire les bonus d'un exemplaire.

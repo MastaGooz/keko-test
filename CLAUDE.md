@@ -81,8 +81,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   `METAUX` nommés par couleur), mode emoji seulement. Pyramide 50/25/15/7,5/2,5,
   chances du paquet 70/16/10/3,2/0,8, garantie « rare » — chiffres de moi, à
   rejuger par Keko. `logic/paquet.ts` est générique sur `Echelle<R>`.
-- **Deux bonus tirés à l'ouverture** (`logic/emoji/tirage.ts`) : holo 10 %,
-  animé 3 % (placeholders). L'animé exige `animable`. **La holo est
+- **Deux bonus tirés à l'ouverture** (`logic/emoji/tirage.ts`) : holo 1 % (Keko),
+  animé 0,3 %. L'animé exige `animable`. **La holo est
   une feuille de paillettes cosmos** (`COSMOS`) : de petits miroirs penchés au
   hasard qui renvoient la lampe clé, **sur l'emoji aussi** (`COSMOS.surEmoji`) — rien que des étoiles à quatre branches sur l'emoji, des points ronds sur le fond (`COSMOS.etoile`) —, plus la bande qui passe ;
   l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`) et
