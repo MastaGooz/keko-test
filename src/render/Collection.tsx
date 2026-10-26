@@ -1444,8 +1444,13 @@ export function PageCollection({
   // LES NOUVELLES SEULES. Keko : « un filtre nouveau dans la collection et les
   // stickers ». Une seule puce : coché, rien que ce qu'on n'a pas encore vu.
   const [nouvelles, setNouvelles] = useState(false)
+  // MASQUER LES CARTES ATTRIBUÉES, en mode deck (Keko) : un emoji que le deck
+  // qu'on compose tient s'efface, toutes versions ; une version qu'un autre
+  // deck a prise aussi.
+  const [sansAttribuees, setSansAttribuees] = useState(false)
   const [panneau, setPanneau] = useState(false)
-  const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
+  const actifs =
+    raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0) + (modeDeck && sansAttribuees ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
   /**
    * LE GLISSER-DÉPOSER DU DECK (Keko : « un drag and drop pour ajouter /
@@ -1553,6 +1558,9 @@ export function PageCollection({
       ({ carte, p, v }) =>
         (possession.size === 0 || possession.has(p === null ? 'manquantes' : 'obtenues')) &&
         (!nouvelles || (p !== null && p.nouvelles.includes(v))) &&
+        (deck === undefined ||
+          !sansAttribuees ||
+          (!deck.cartes.some((e) => e.id === carte.id) && deck.choix(carte.id, v).prisPar === undefined)) &&
         passeLeBonus(bonus, {
           holo: p !== null && exemplaireDe(v).holo ? 1 : 0,
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
@@ -1567,7 +1575,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [places, recherche, tri, raretes, races, roles, bonus, possession, nouvelles])
+  }, [places, recherche, tri, raretes, races, roles, bonus, possession, nouvelles, deck, sansAttribuees])
 
   const total = catalogue?.length ?? 0
   const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
@@ -1679,6 +1687,7 @@ export function PageCollection({
               setBonus(new Set())
               setPossession(new Set())
               setNouvelles(false)
+              setSansAttribuees(false)
               setTri(triParDefaut)
             }}
             onFermer={() => setPanneau(false)}
@@ -1771,6 +1780,16 @@ export function PageCollection({
                 >
                   Nouveau
                 </button>
+                {modeDeck && (
+                  <button
+                    type="button"
+                    className={`puce${sansAttribuees ? ' actif' : ''}`}
+                    aria-pressed={sansAttribuees}
+                    onClick={() => setSansAttribuees((n) => !n)}
+                  >
+                    Masquer les cartes attribuées
+                  </button>
+                )}
               </div>
             </SectionFiltre>
           </PanneauFiltres>
