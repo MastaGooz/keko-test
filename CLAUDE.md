@@ -526,6 +526,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
 | `?brillant=0`, `?rayonsbrillants=0`, `?lin=0.09` | la bordure, les rayons clairs sans leur brillant ; le lin tressé essayé puis retiré |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
+| `?niv=N` | N étoiles de niveau à droite de l'écu, sur toutes les cartes (forme choisie par Keko ; la règle du niveau n'existe pas encore) |
 | `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
 | `?camp=0`, `?camp=ancien`, `?brillantfond=doux\|eclat` | les cartes sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur, ou sous les pointes brillantes de l'éclat |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |

@@ -5098,127 +5098,44 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
 }
 
 /**
- * LE NIVEAU DE LA CARTE, EN ESSAI. Keko : « la carte doit avoir un niveau
- * (amélioré via l'album sticker), tu me conseilles de l'indiquer où ? » —
- * quatre formes autour de l'écu de puissance, puisque c'est elle que le niveau
- * fait monter : `?niveau=chevrons|etoiles|medaille|ruban`, et `&niv=N` le
- * niveau montré (3 par défaut). Sans `?niveau`, rien : la règle n'existe pas
- * encore, la collection ne connaît pas de niveau.
+ * LE NIVEAU DE LA CARTE : DES ÉTOILES D'OR À DROITE DE L'ÉCU, le long du haut
+ * de la fenêtre. Keko : « la carte doit avoir un niveau (amélioré via l'album
+ * sticker) » ; essayés à côté des chevrons, d'une médaille et d'un ruban, il
+ * a choisi les étoiles — près de la puissance, puisque c'est elle que le niveau
+ * fait monter, et elles se comptent sans se lire. *La règle n'existe pas
+ * encore* : la collection ne connaît pas de niveau, `?niv=N` le montre sur
+ * toutes les cartes.
  */
-const ESSAI_NIVEAU = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('niveau')
-const NIVEAU_D_ESSAI = Math.max(1, Math.min(9, Math.round(Number(typeof location === 'undefined' ? 3 : new URLSearchParams(location.search).get('niv') ?? 3) || 3)))
+const NIVEAU_D_ESSAI = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('niv')
 function peindreNiveau(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number, h: number): void {
-  const forme = ESSAI_NIVEAU
-  if (forme === null) return
-  const n = NIVEAU_D_ESSAI
-  const or = (x0: number, y0: number, x1: number, y1: number): CanvasGradient => {
-    const g = ctx.createLinearGradient(x0, y0, x1, y1)
-    g.addColorStop(0, OR_CLAIR)
-    g.addColorStop(0.5, OR_MOYEN)
-    g.addColorStop(1, OR_SOMBRE)
-    return g
-  }
+  if (NIVEAU_D_ESSAI === null) return
+  const n = Math.max(1, Math.min(9, Math.round(Number(NIVEAU_D_ESSAI)) || 3))
   ctx.save()
   ctx.lineJoin = 'round'
-  ctx.lineCap = 'round'
-  const ombre = (): void => {
+  const r = 3.1 * U
+  const y = cy - 0.18 * h
+  for (let i = 0; i < n; i++) {
+    const x = cx + l / 2 + 1.2 * U + r + i * r * 2.15
+    ctx.beginPath()
+    for (let k = 0; k < 10; k++) {
+      const a = -Math.PI / 2 + (k * Math.PI) / 5
+      const rr = k % 2 === 0 ? r : r * 0.45
+      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr)
+    }
+    ctx.closePath()
     ctx.shadowColor = '#000000a0'
     ctx.shadowBlur = 2 * U * ombreA(ctx)
     ctx.shadowOffsetY = 0.8 * U * ombreA(ctx)
-  }
-  if (forme === 'chevrons') {
-    // DES GALONS SOUS LA POINTE DE L'ÉCU, empilés vers le bas, pointe en haut.
-    const w = 0.5 * l
-    const monte = 0.32 * w
-    const pas = 3.3 * U
-    const y0 = cy + h / 2 + 0.6 * U
-    for (let i = 0; i < n; i++) {
-      const y = y0 + i * pas
-      ctx.beginPath()
-      ctx.moveTo(cx - w / 2, y + monte)
-      ctx.lineTo(cx, y)
-      ctx.lineTo(cx + w / 2, y + monte)
-      ombre()
-      ctx.strokeStyle = BRUN_ENCRE
-      ctx.lineWidth = 2.9 * U
-      ctx.stroke()
-      ctx.shadowColor = 'transparent'
-      ctx.strokeStyle = or(cx - w / 2, y, cx + w / 2, y + monte)
-      ctx.lineWidth = 1.7 * U
-      ctx.stroke()
-    }
-  } else if (forme === 'etoiles') {
-    // UNE RANGÉE D'ÉTOILES À DROITE DE L'ÉCU, le long du haut de la fenêtre.
-    const r = 3.1 * U
-    const y = cy - 0.18 * h
-    for (let i = 0; i < n; i++) {
-      const x = cx + l / 2 + 1.2 * U + r + i * r * 2.15
-      ctx.beginPath()
-      for (let k = 0; k < 10; k++) {
-        const a = -Math.PI / 2 + (k * Math.PI) / 5
-        const rr = k % 2 === 0 ? r : r * 0.45
-        ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr)
-      }
-      ctx.closePath()
-      ombre()
-      ctx.strokeStyle = BRUN_ENCRE
-      ctx.lineWidth = 1.1 * U
-      ctx.stroke()
-      ctx.shadowColor = 'transparent'
-      ctx.fillStyle = or(x - r, y - r, x + r, y + r)
-      ctx.fill()
-    }
-  } else if (forme === 'medaille') {
-    // UNE PIÈCE D'OR CONTRE LE BAS DE L'ÉCU, le chiffre à l'encre : autre forme,
-    // autres couleurs que l'écu, pour ne pas lire deux puissances.
-    const r = 0.32 * l
-    const x = cx + 0.4 * l
-    const y = cy + 0.36 * h
-    ctx.beginPath()
-    ctx.arc(x, y, r, 0, Math.PI * 2)
-    ombre()
-    ctx.fillStyle = or(x - r, y - r, x + r, y + r)
-    ctx.fill()
-    ctx.shadowColor = 'transparent'
     ctx.strokeStyle = BRUN_ENCRE
-    ctx.lineWidth = 0.9 * U
+    ctx.lineWidth = 1.1 * U
     ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(x, y, r * 0.78, 0, Math.PI * 2)
-    ctx.strokeStyle = OR_SOMBRE
-    ctx.lineWidth = 0.5 * U
-    ctx.stroke()
-    ctx.font = `800 ${r * 1.15}px ${FAMILLE_TITRE}`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = BRUN_ENCRE
-    ctx.fillText(String(n), x, y + 0.5 * U)
-  } else if (forme === 'ruban') {
-    // UN RUBAN SOUS L'ÉCU, « NIV 3 », aux bouts fendus.
-    const w = 1.05 * l
-    const hr = 5.4 * U
-    const y = cy + h / 2 + 0.4 * U
-    const fente = 1.4 * U
-    ctx.beginPath()
-    ctx.moveTo(cx - w / 2, y - hr / 2)
-    ctx.lineTo(cx + w / 2, y - hr / 2)
-    ctx.lineTo(cx + w / 2 - fente, y)
-    ctx.lineTo(cx + w / 2, y + hr / 2)
-    ctx.lineTo(cx - w / 2, y + hr / 2)
-    ctx.lineTo(cx - w / 2 + fente, y)
-    ctx.closePath()
-    ombre()
-    ctx.fillStyle = or(cx, y - hr / 2, cx, y + hr / 2)
-    ctx.fill()
     ctx.shadowColor = 'transparent'
-    ctx.strokeStyle = BRUN_ENCRE
-    ctx.lineWidth = 0.7 * U
-    ctx.stroke()
-    ctx.font = `800 ${3.9 * U}px ${FAMILLE_TITRE}`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = BRUN_ENCRE
-    ctx.fillText(`NIV ${n}`, cx, y + 0.3 * U)
+    const or = ctx.createLinearGradient(x - r, y - r, x + r, y + r)
+    or.addColorStop(0, OR_CLAIR)
+    or.addColorStop(0.5, OR_MOYEN)
+    or.addColorStop(1, OR_SOMBRE)
+    ctx.fillStyle = or
+    ctx.fill()
   }
   ctx.restore()
 }
