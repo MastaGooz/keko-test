@@ -5100,16 +5100,18 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
 /**
  * LE NIVEAU DE LA CARTE : DES ÉTOILES D'OR À DROITE DE L'ÉCU, le long du haut
  * de la fenêtre. Keko : « la carte doit avoir un niveau (amélioré via l'album
- * sticker) » ; essayés à côté des chevrons, d'une médaille et d'un ruban, il
- * a choisi les étoiles — près de la puissance, puisque c'est elle que le niveau
- * fait monter, et elles se comptent sans se lire. *La règle n'existe pas
- * encore* : la collection ne connaît pas de niveau, `?niv=N` le montre sur
- * toutes les cartes.
+ * sticker) » ; essayés à côté des chevrons, d'une médaille et d'un ruban, ce
+ * sont les étoiles que Keko a choisies — près de la puissance, puisque c'est
+ * elle que le niveau fait monter, et elles se comptent sans se lire. **Cinq
+ * niveaux, et aucune étoile au premier** (Keko) : une étoile par niveau gagné,
+ * quatre au plus. *La règle n'existe pas encore* : la collection ne connaît pas
+ * de niveau, `?niv=N` montre le niveau N sur toutes les cartes.
  */
+const NIVEAU_MAX = 5
 const NIVEAU_D_ESSAI = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('niv')
 function peindreNiveau(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number, h: number): void {
   if (NIVEAU_D_ESSAI === null) return
-  const n = Math.max(1, Math.min(9, Math.round(Number(NIVEAU_D_ESSAI)) || 3))
+  const n = Math.max(1, Math.min(NIVEAU_MAX, Math.round(Number(NIVEAU_D_ESSAI)) || 1)) - 1
   ctx.save()
   ctx.lineJoin = 'round'
   const r = 3.1 * U
