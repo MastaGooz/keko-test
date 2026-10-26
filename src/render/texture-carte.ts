@@ -5126,8 +5126,12 @@ function peindreNiveau(ctx: CanvasRenderingContext2D, cx: number, cy: number, l:
     ctx.shadowColor = '#000000a0'
     ctx.shadowBlur = 2 * U * ombreA(ctx)
     ctx.shadowOffsetY = 0.8 * U * ombreA(ctx)
-    // SANS CERNE BRUN (Keko : « enlève l'outline noir des étoiles pour voir ») :
-    // l'ombre portée reste, sur l'or.
+    // LE CERNE EST BLANC (Keko : « enlève l'outline noir », puis « remets
+    // l'outline mais en blanc »), sous l'ombre portée.
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 1.1 * U
+    ctx.stroke()
+    ctx.shadowColor = 'transparent'
     const or = ctx.createLinearGradient(x - r, y - r, x + r, y + r)
     or.addColorStop(0, OR_CLAIR)
     or.addColorStop(0.5, OR_MOYEN)
