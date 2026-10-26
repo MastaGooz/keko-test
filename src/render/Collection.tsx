@@ -18,8 +18,8 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Canvas } from '@react-three/fiber'
-import { NoToneMapping } from 'three'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { NoToneMapping, type Group } from 'three'
 import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emoji/types.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
@@ -650,6 +650,31 @@ const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', y
  * l'animation si on possède l'exemplaire qui les porte.** *On montre le plus
  * bel exemplaire qu'on a* : un holo et un animé valent mieux que la carte nue.
  */
+/**
+ * LE BUMP DE LA CARTE ZOOMÉE. Keko : « une petite anime bump à l'apparition
+ * d'une carte lors d'un zoom ». Dès qu'elle est peinte, la carte grandit de
+ * 85 % à sa taille en la dépassant un peu (un « retour arrière » amorti), en
+ * 0,35 s — autour de SON centre, pas de l'origine de la scène.
+ */
+const BUMP = { depart: 0.85, duree: 0.35, depasse: 2.6 }
+function Bump({ pret, centre, children }: { pret: boolean; centre: readonly [number, number, number]; children: React.ReactNode }): React.ReactElement {
+  const g = useRef<Group>(null)
+  const t = useRef(0)
+  useFrame((_, delta) => {
+    const el = g.current
+    if (el === null || !pret || t.current >= 1) return
+    t.current = Math.min(1, t.current + delta / BUMP.duree)
+    const u = t.current - 1
+    const sortie = 1 + (BUMP.depasse + 1) * u * u * u + BUMP.depasse * u * u
+    el.scale.setScalar(BUMP.depart + (1 - BUMP.depart) * sortie)
+  })
+  return (
+    <group ref={g} position={[...centre]} scale={BUMP.depart}>
+      <group position={[-centre[0], -centre[1], -centre[2]]}>{children}</group>
+    </group>
+  )
+}
+
 function CarteOuverte({
   carte,
   possession,
@@ -946,6 +971,7 @@ function CarteOuverte({
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
         {/* INVISIBLE, PAS DÉMONTÉE : annuler la rend telle qu'elle était. */}
         <group visible={!cassee && peinte}>
+        <Bump pret={peinte} centre={[0, hVisible * 0.06, Z_MAIN]}>
         <Carte3D
           onPeinte={() => setPeinte(true)}
           carte={cachee ? carteNue : aPeindre}
@@ -957,6 +983,7 @@ function CarteOuverte({
           curseurPartage={decolle === null ? curseur.current : undefined}
           ombre={false}
         />
+        </Bump>
         </group>
       </Canvas>
       {decolle !== null && (
