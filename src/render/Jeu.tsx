@@ -36,6 +36,7 @@ import {
   coller,
   ameliorer,
   niveauDe,
+  coutDuNiveau,
   nombreDeColles,
   nombreDeNouvelles,
   nombreDeStickersNouveaux,
@@ -75,6 +76,7 @@ import {
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
+import { PageAlbum } from './Album.tsx'
 import { PageStickers } from './Stickers.tsx'
 import { PageJouer, type MainTombee } from './Deck.tsx'
 import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
@@ -91,15 +93,18 @@ import { penchantAuSurvol } from './survol.ts'
  * catalogue est la même page que la collection, avec les cartes qu'on n'a pas
  * encore en grisé. `deck` (composer le deck, la même grille en mode deck) et
  * `jouer` (le regarder jouer) sont les deux entrées du deck qui joue (Keko).
+ *
+ * `stickers` et `album` sont les deux entrées du menu « Stickers » (Keko :
+ * « collection (ce qu'on a actuellement) et album (où on les colle) »).
  */
-type Page = 'booster' | 'collection' | 'catalogue' | 'stickers' | 'deck' | 'jouer'
+type Page = 'booster' | 'collection' | 'catalogue' | 'stickers' | 'album' | 'deck' | 'jouer'
 
 /** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
 const ILLIMITE = new URLSearchParams(location.search).has('illimite')
 /** `&page=` : la page ouverte d'emblée (voir `accueil`) ; autre chose, ignoré. */
 const PAGE_DEMANDEE = ((): Page | null => {
   const p = new URLSearchParams(location.search).get('page')
-  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'stickers' || p === 'deck' || p === 'jouer' ? p : null
+  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'stickers' || p === 'album' || p === 'deck' || p === 'jouer' ? p : null
 })()
 
 /** 9:58 — les minutes sans zéro devant, les secondes avec. */
@@ -510,9 +515,23 @@ export function Jeu(): React.ReactElement {
     document.addEventListener('pointerdown', fermer)
     return () => document.removeEventListener('pointerdown', fermer)
   }, [menuCartes])
+  // LE MENU « STICKERS », LE MÊME À DROITE : la collection des stickers et l'album.
+  const [menuStickers, setMenuStickers] = useState(false)
+  useEffect(() => {
+    if (!menuStickers) return
+    const fermer = (e: PointerEvent): void => {
+      if (e.target instanceof Element && e.target.closest('.nav-menu-stickers') !== null) return
+      setMenuStickers(false)
+    }
+    document.addEventListener('pointerdown', fermer)
+    return () => document.removeEventListener('pointerdown', fermer)
+  }, [menuStickers])
+  /** LE PERSONNAGE DONT L'ALBUM S'OUVRE À LA PAGE, venu d'un sticker ouvert. */
+  const [albumSur, setAlbumSur] = useState<string | null>(null)
 
   function aller(vers: Page): void {
     setMenuCartes(false)
+    setMenuStickers(false)
     if (vers === page) return
     // EN QUITTANT LES CARTES, TOUT A ÉTÉ VU : la pastille s'éteint, et les
     // « Nouveau » de la grille avec elle. *Pas en y entrant* : on doit pouvoir
@@ -529,6 +548,12 @@ export function Jeu(): React.ReactElement {
   const nouveauxStickers = nombreDeStickersNouveaux(collection)
   const visible = !accueil && (page !== 'booster' || calme)
   const surLesCartes = page === 'collection' || page === 'catalogue' || page === 'deck' || page === 'jouer'
+  const surLesStickers = page === 'stickers' || page === 'album'
+  // CE QUI SE COLLE ENCORE DANS L'ALBUM : les stickers des personnages qui ne sont pas au dernier niveau.
+  const aCollerDansLAlbum = Object.entries(collection.stickers).reduce(
+    (t, [id, s]) => t + (coutDuNiveau(niveauDe(collection, id).niveau) === null ? 0 : s.n),
+    0,
+  )
 
   return (
     <>
@@ -572,7 +597,23 @@ export function Jeu(): React.ReactElement {
           )}
         </>
       ) : page === 'stickers' ? (
-        <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} onAmeliorer={ameliorerPersonnage} />
+        <PageStickers
+          catalogue={catalogue}
+          collection={collection}
+          onCollection={() => aller('collection')}
+          onAlbum={(id) => {
+            setAlbumSur(id)
+            aller('album')
+          }}
+        />
+      ) : page === 'album' ? (
+        <PageAlbum
+          catalogue={catalogue}
+          collection={collection}
+          ouvrirSur={albumSur}
+          onAmeliorer={ameliorerPersonnage}
+          onStickers={() => aller('stickers')}
+        />
       ) : page === 'jouer' ? (
         <PageJouer
           catalogue={catalogue}
@@ -647,7 +688,10 @@ export function Jeu(): React.ReactElement {
             className={`nav-moitie nav-gauche nav-cartes${surLesCartes ? ' nav-active' : ''}`}
             aria-haspopup="menu"
             aria-expanded={menuCartes}
-            onClick={() => setMenuCartes((m) => !m)}
+            onClick={() => {
+              setMenuStickers(false)
+              setMenuCartes((m) => !m)
+            }}
           >
             <span className="nav-icone" aria-hidden>
               <IconeCollection />
@@ -662,9 +706,15 @@ export function Jeu(): React.ReactElement {
               s'envole vers ce bouton* (voir `Decollage`). */}
           <button
             type="button"
-            className={`nav-moitie nav-droite nav-stickers${page === 'stickers' ? ' nav-active' : ''}`}
-            onClick={() => aller('stickers')}
+            className={`nav-moitie nav-droite nav-stickers nav-menu-stickers${surLesStickers ? ' nav-active' : ''}`}
+            aria-haspopup="menu"
+            aria-expanded={menuStickers}
+            onClick={() => {
+              setMenuCartes(false)
+              setMenuStickers((m) => !m)
+            }}
           >
+            <span className={`nav-chevron${menuStickers ? ' nav-chevron-ouvert' : ''}`} aria-hidden />
             Stickers
             <span className="nav-icone" aria-hidden>
               <IconeStickers />
@@ -731,6 +781,34 @@ export function Jeu(): React.ReactElement {
             >
               Jouer
               {deck.partie !== null && <span className="nav-menu-compte">en cours</span>}
+            </button>
+          </div>
+        )}
+        {/* LE MENU DÉROULÉ SOUS LE BOUTON « STICKERS » : ce qu'on a, et l'album où on les colle. */}
+        {menuStickers && (
+          <div className="nav-menu nav-menu-droite nav-menu-stickers" role="menu" aria-label="Stickers">
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={page === 'stickers'}
+              className={`nav-menu-entree${page === 'stickers' ? ' nav-menu-active' : ''}`}
+              onClick={() => aller('stickers')}
+            >
+              Collection
+              {nouveauxStickers > 0 && <span className="nav-menu-pastille">{nouveauxStickers}</span>}
+            </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={page === 'album'}
+              className={`nav-menu-entree${page === 'album' ? ' nav-menu-active' : ''}`}
+              onClick={() => {
+                setAlbumSur(null)
+                aller('album')
+              }}
+            >
+              Album
+              {aCollerDansLAlbum > 0 && <span className="nav-menu-compte">{aCollerDansLAlbum} à coller</span>}
             </button>
           </div>
         )}

@@ -27,7 +27,7 @@ import {
 import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers, Variante } from '../logic/emoji/collection.ts'
-import { VARIANTES, compteDe, coutDuNiveau, exemplaireDe, niveauDe, nombreDeStickers, type Niveau } from '../logic/emoji/collection.ts'
+import { VARIANTES, compteDe, coutDuNiveau, exemplaireDe, niveauDe, nombreDeStickers, stickersPoses, type Niveau } from '../logic/emoji/collection.ts'
 import { stickerHautDe } from './texture-carte.ts'
 import { COTE_STICKER, STICKER_DANS_LA_CARTE, type ImagesAnimees, animationHolo, cerneArcEnCiel, peindreEtoile, stickerPeint } from './peinture-vignette.ts'
 import { COTE_GRAND, COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
@@ -189,7 +189,7 @@ function StickerOuvert({
   stickers,
   variante,
   niveau,
-  onAmeliorer,
+  onAlbum,
   onFermer,
 }: {
   carte: CarteEmoji
@@ -197,8 +197,8 @@ function StickerOuvert({
   variante: Variante
   /** Le niveau du personnage et sa jauge (voir `ameliorer`). */
   niveau: Niveau
-  /** Colle ce sticker dans l'album, vers le niveau suivant. */
-  onAmeliorer: () => void
+  /** Ouvre l'album à la page du personnage : c'est là qu'on colle. */
+  onAlbum: () => void
   onFermer: () => void
 }): React.ReactElement {
   const toile = useRef<HTMLCanvasElement>(null)
@@ -559,7 +559,7 @@ function StickerOuvert({
         </span>
         <p className="carte-ouverte-ligne">{lignes.join(' · ')}</p>
         <p className="carte-ouverte-ligne carte-ouverte-discret">Dernier gagné le {DATE.format(new Date(stickers.dernier))}</p>
-        <NiveauDuPersonnage niveau={niveau} onAmeliorer={onAmeliorer} />
+        <NiveauDuPersonnage niveau={niveau} onAlbum={onAlbum} />
       </div>
       <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
         ×
@@ -572,10 +572,10 @@ function StickerOuvert({
  * LE NIVEAU DU PERSONNAGE, SOUS SON STICKER. Keko : « on colle des stickers du
  * personnage dans l'album, chaque niveau demande un nombre de stickers plus
  * élevé ». Ses étoiles (celles de la carte, aucune au niveau 1), la jauge des
- * stickers déjà collés vers le niveau suivant, et le bouton qui en colle un :
- * CE sticker, la version ouverte.
+ * stickers déjà collés vers le niveau suivant, et le bouton qui ouvre l'album
+ * à sa page — *on colle dans l'album* (Keko : « album (où on les colle) »).
  */
-function NiveauDuPersonnage({ niveau, onAmeliorer }: { niveau: Niveau; onAmeliorer: () => void }): React.ReactElement {
+function NiveauDuPersonnage({ niveau, onAlbum }: { niveau: Niveau; onAlbum: () => void }): React.ReactElement {
   const cout = coutDuNiveau(niveau.niveau)
   return (
     <div className="niveau">
@@ -595,11 +595,11 @@ function NiveauDuPersonnage({ niveau, onAmeliorer }: { niveau: Niveau; onAmelior
           <p className="carte-ouverte-ligne carte-ouverte-discret">
             {niveau.poses} / {cout} vers le niveau {niveau.niveau + 1} · +1 de puissance
           </p>
-          <button type="button" className="decoller decoller-second" onClick={onAmeliorer}>
-            Coller dans l’album
-          </button>
         </>
       )}
+      <button type="button" className="decoller decoller-second" onClick={onAlbum}>
+        {cout === null || stickersPoses(niveau) > 0 ? 'Voir dans l’album' : 'Coller dans l’album'}
+      </button>
     </div>
   )
 }
@@ -608,13 +608,13 @@ export function PageStickers({
   catalogue,
   collection,
   onCollection,
-  onAmeliorer,
+  onAlbum,
 }: {
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
   onCollection: () => void
-  /** Colle un sticker dans l'album, vers le niveau suivant du personnage (voir `ameliorer`). */
-  onAmeliorer: (id: string, v: Variante) => void
+  /** Ouvre l'album à la page de ce personnage. */
+  onAlbum: (id: string) => void
 }): React.ReactElement {
   const [tri, setTri] = useState<Tri>('recents')
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
@@ -761,7 +761,7 @@ export function PageStickers({
             stickers={leOuvert.s}
             variante={leOuvert.v}
             niveau={niveauDe(collection, leOuvert.carte.id)}
-            onAmeliorer={() => onAmeliorer(leOuvert.carte.id, leOuvert.v)}
+            onAlbum={() => onAlbum(leOuvert.carte.id)}
             onFermer={() => setOuvert(null)}
           />,
           document.body,

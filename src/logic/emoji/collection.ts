@@ -224,6 +224,15 @@ export function coutDuNiveau(niveau: number): number | null {
 }
 
 /**
+ * LES STICKERS DÉJÀ COLLÉS DANS L'ALBUM pour ce personnage, tous niveaux
+ * confondus : ceux des niveaux gagnés plus la jauge. *C'est ce que la case de
+ * l'album montre* — un emplacement rempli par sticker posé.
+ */
+export function stickersPoses(n: Niveau): number {
+  return NIVEAUX.couts.slice(0, n.niveau - 1).reduce((t, c) => t + c, 0) + n.poses
+}
+
+/**
  * COLLE UN STICKER DU PERSONNAGE DANS L'ALBUM, vers son niveau suivant : il
  * quitte l'album (une version à la fois, comme `coller`), et quand assez sont
  * posés, le niveau monte et la jauge repart de zéro. Sans le sticker, ou au

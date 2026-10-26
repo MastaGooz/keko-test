@@ -291,12 +291,21 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
 - **Le NIVEAU d'un personnage** (`Collection.niveaux`, `ameliorer`, `NIVEAUX`) :
   au personnage, toutes versions ensemble, **cinq niveaux** (Keko) ; on le
-  monte dans l'album en y collant ses stickers (« Coller dans l'album », sous
-  le sticker ouvert), chaque niveau plus cher (2, 3, 4, 5 — de moi, à
+  monte dans l'ALBUM en y collant ses stickers, chaque niveau plus cher (2, 3, 4, 5 — de moi, à
   rejuger) ; **+1 de puissance par niveau**, et l'écu dit la puissance totale.
   Sur la carte : **une étoile d'or cernée de blanc par niveau gagné**, à droite
   de l'écu, aucune au premier (`peindreNiveau`). Les cartes lisent le niveau
   par `declarerLesNiveaux` (posé par `Jeu.tsx`).
+- **L'ALBUM** (`render/Album.tsx`, Keko : « collection (ce qu'on a) et album
+  (où on les colle) » — « Stickers » déroule un menu comme « Cartes ») : un
+  livre de parchemin qu'on feuillette d'un balayage, une suite de pages par
+  race et par cran, six personnages par page ; chaque case montre le
+  personnage (silhouette tant que rien n'est collé) et ses quatorze
+  emplacements en deux lignes (niveaux 2-3, puis 4-5), chaque palier fini par
+  son étoile ; **on glisse un sticker du ruban sur son personnage**
+  (`CaseDuSticker`, le geste des cartes) : il vole à son emplacement, s'y
+  plaque, et le passage de niveau fait jaillir une gerbe et « Niveau N ». Le
+  sticker ouvert dans la collection mène à sa page (« Voir dans l'album »).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,
   **un toutes les 10 minutes** (Keko), pleine au départ, décomptée à
@@ -516,7 +525,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; l'album ne bouge pas — le miroir de `&debloquer` |
 | `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET stickers (les decks suivent) — pour effacer ce qu'un test y a laissé |
-| `&page=collection`, `&page=catalogue`, `&page=stickers`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
+| `&page=collection`, `&page=catalogue`, `&page=stickers`, `&page=album`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&likes=N` | pose le solde de puissance DE CET APPAREIL (le compteur, sans générateur) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |

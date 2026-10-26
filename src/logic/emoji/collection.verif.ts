@@ -26,6 +26,7 @@ import {
   ameliorer,
   niveauDe,
   NIVEAUX,
+  stickersPoses,
   type Collection,
 } from './collection.ts'
 
@@ -184,5 +185,7 @@ verifier('cinq niveaux au plus, chaque niveau plus cher', niveauDe(auMax, 'a').n
 verifier('le niveau se relit', niveauDe(lireCollection(JSON.parse(JSON.stringify(unPose))), 'a').poses === 1 && niveauDe(lireCollection(JSON.parse(JSON.stringify(auMax))), 'a').niveau === NIVEAUX.max)
 verifier('un niveau abîmé est borné', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 99, poses: 7 } } }), 'a').niveau === NIVEAUX.max && niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 2, poses: 99 } } }), 'a').poses === NIVEAUX.couts[1]! - 1)
 verifier('une collection d’avant relit le niveau 1', niveauDe(lireCollection({ version: 1, cartes: {} }), 'a').niveau === 1)
+
+verifier('les stickers posés se comptent tous niveaux confondus', stickersPoses(niveauDe(albumNiv, 'a')) === 0 && stickersPoses(niveauDe(deuxPoses, 'a')) === 2 && stickersPoses(niveauDe(auMax, 'a')) === NIVEAUX.couts.reduce((t, c) => t + c, 0))
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

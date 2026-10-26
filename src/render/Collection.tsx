@@ -80,7 +80,7 @@ export const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
   holoAnime: 'holo animé',
 }
 
-const NOM_DE_LA_RARETE: Readonly<Record<RareteEmoji, string>> = {
+export const NOM_DE_LA_RARETE: Readonly<Record<RareteEmoji, string>> = {
   commun: 'Commune',
   'peu-commun': 'Peu commune',
   rare: 'Rare',
@@ -1275,7 +1275,7 @@ function contourPointille(image: HTMLCanvasElement, couleur = JAUNE_FANTOME): HT
  * le sticker le suit, et c'est le lâcher qui colle — sur la carte — ou
  * annule — ailleurs, y compris sur la case elle-même pour une simple tape.
  */
-function CaseDuSticker({
+export function CaseDuSticker({
   entree,
   onPrendre,
   onSuivre,
