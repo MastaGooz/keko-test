@@ -1446,11 +1446,10 @@ export function PageCollection({
   const [nouvelles, setNouvelles] = useState(false)
   // MASQUER LES CARTES ATTRIBUÉES, en mode deck (Keko) : un emoji que le deck
   // qu'on compose tient s'efface, toutes versions ; une version qu'un autre
-  // deck a prise aussi.
+  // deck a prise aussi. Un bouton à lui, hors du panneau des filtres (Keko).
   const [sansAttribuees, setSansAttribuees] = useState(false)
   const [panneau, setPanneau] = useState(false)
-  const actifs =
-    raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0) + (modeDeck && sansAttribuees ? 1 : 0)
+  const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
   /**
    * LE GLISSER-DÉPOSER DU DECK (Keko : « un drag and drop pour ajouter /
@@ -1672,6 +1671,23 @@ export function PageCollection({
                 value={recherche}
                 onChange={(e) => setRecherche(e.target.value)}
               />
+              {modeDeck && (
+                <button
+                  type="button"
+                  className={`bouton-filtres${sansAttribuees ? ' actif' : ''}`}
+                  aria-pressed={sansAttribuees}
+                  aria-label="Masquer les cartes attribuées"
+                  title="Masquer les cartes attribuées"
+                  onClick={() => setSansAttribuees((n) => !n)}
+                >
+                  {/* Un œil barré : ce qui est déjà dans un deck ne se montre plus. */}
+                  <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                    <path d="M4 20 20 4" />
+                  </svg>
+                </button>
+              )}
               <BoutonFiltres actifs={actifs} onOuvrir={() => setPanneau(true)} />
             </div>
           </div>
@@ -1687,7 +1703,6 @@ export function PageCollection({
               setBonus(new Set())
               setPossession(new Set())
               setNouvelles(false)
-              setSansAttribuees(false)
               setTri(triParDefaut)
             }}
             onFermer={() => setPanneau(false)}
@@ -1780,16 +1795,6 @@ export function PageCollection({
                 >
                   Nouveau
                 </button>
-                {modeDeck && (
-                  <button
-                    type="button"
-                    className={`puce${sansAttribuees ? ' actif' : ''}`}
-                    aria-pressed={sansAttribuees}
-                    onClick={() => setSansAttribuees((n) => !n)}
-                  >
-                    Masquer les cartes attribuées
-                  </button>
-                )}
               </div>
             </SectionFiltre>
           </PanneauFiltres>
