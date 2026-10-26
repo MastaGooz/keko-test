@@ -1675,12 +1675,13 @@ export function PageCollection({
                 <button
                   type="button"
                   className={`bouton-filtres bouton-attribuees${sansAttribuees ? ' actif' : ''}`}
-                  aria-pressed={sansAttribuees}
-                  aria-label="Masquer les cartes attribuées"
-                  data-bulle="Masquer les cartes attribuées"
+                  aria-pressed={!sansAttribuees}
+                  aria-label="Afficher les cartes attribuées"
+                  data-bulle="Afficher les cartes attribuées"
                   onClick={() => setSansAttribuees((n) => !n)}
                 >
-                  {/* LA COCHE DES CARTES DU DECK (Keko, plutôt qu'un œil) : ce qu'elle marque s'en va. */}
+                  {/* « AFFICHER LES CARTES ATTRIBUÉES », coché de base (Keko) : la coche
+                      jaune des cartes du deck ; décoché, celle des cartes d'un autre deck. */}
                   <span className="bouton-attribuees-coche" aria-hidden>
                     ✓
                   </span>

@@ -1577,24 +1577,27 @@
   height: 1.45rem;
 }
 
-/* MASQUER LES CARTES ATTRIBUÉES : la coche jaune des vignettes du deck, en
-   plus grand ; éteinte (estompée) tant que le bouton ne masque rien. */
+/* AFFICHER LES CARTES ATTRIBUÉES : coché, la coche jaune des vignettes du
+   deck ; décoché (elles sont masquées), la coche en négatif des cartes d'un
+   autre deck (`.vignette-prise`). */
 .bouton-attribuees-coche {
+  box-sizing: border-box;
   width: 1.6rem;
   height: 1.6rem;
+  border: 0.12rem solid #ffd45e;
   border-radius: 50%;
   background: #ffd45e;
   color: #3a2416;
   font-weight: 800;
   font-size: 1rem;
-  line-height: 1.6rem;
+  line-height: calc(1.6rem - 0.24rem);
   text-align: center;
   text-transform: none;
-  opacity: 0.55;
 }
 
 .bouton-attribuees.actif .bouton-attribuees-coche {
-  opacity: 1;
+  background: #3a2416;
+  color: #ffd45e;
 }
 
 /* L'INFOBULLE AUX COULEURS DU JEU (Keko) : la pilule crème à l'encre brune
