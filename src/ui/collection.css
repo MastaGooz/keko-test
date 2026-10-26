@@ -1459,6 +1459,49 @@
 .sticker-ouvert {
   touch-action: none;
 }
+
+/* LE NIVEAU DU PERSONNAGE, sous son sticker : ses étoiles, la jauge, le bouton. */
+.niveau {
+  margin-top: 0.7rem;
+  pointer-events: auto;
+}
+
+.niveau-titre {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.niveau-etoiles {
+  margin-left: 0.4rem;
+  color: #ffc61f;
+  -webkit-text-stroke: 0.06rem #fffaf0;
+  letter-spacing: 0.08em;
+}
+
+.niveau-jauge {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0.4rem auto 0;
+}
+
+.niveau-jauge span {
+  width: 1.4rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.18);
+}
+
+.niveau-jauge span.plein {
+  background: #ffc61f;
+}
+
+.niveau .decoller {
+  margin-top: 0.6rem;
+}
 .sticker-ouvert .carte-ouverte-infos {
   bottom: auto;
   top: calc(40% + var(--cote-sticker) / 2 + 1rem);

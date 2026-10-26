@@ -23,6 +23,10 @@ import {
   compteDe,
   avecLikes,
   ajouterLikes,
+  ameliorer,
+  niveauDe,
+  NIVEAUX,
+  type Collection,
 } from './collection.ts'
 
 let echecs = 0
@@ -165,5 +169,20 @@ verifier('détruire garde les Likes', detruire(ajouterPaquet(riche, ['1f600'], {
 verifier('une collection d’avant relit zéro Like', lireCollection({ version: 1, cartes: {} }).likes === 0)
 verifier('un solde gardé se relit', lireCollection({ version: 1, cartes: {}, likes: 40 }).likes === 40)
 verifier('un solde abîmé retombe à zéro', lireCollection({ version: 1, cartes: {}, likes: -5 }).likes === 0 && lireCollection({ version: 1, cartes: {}, likes: 'x' }).likes === 0)
+
+// LE NIVEAU (Keko : « amélioré via l'album sticker », cinq niveaux, chaque niveau plus cher)
+const albumNiv: Collection = { ...collectionVide(), stickers: { a: { n: 20, holo: 1, anime: 0, ha: 0, dernier: 0, nouveau: false } } }
+verifier('sans rien posé, niveau 1', niveauDe(albumNiv, 'a').niveau === 1 && niveauDe(albumNiv, 'a').poses === 0)
+const unPose = ameliorer(albumNiv, 'a', 'simple')
+verifier('un sticker posé quitte l’album et remplit la jauge', unPose.stickers.a?.n === 19 && niveauDe(unPose, 'a').niveau === 1 && niveauDe(unPose, 'a').poses === 1)
+const deuxPoses = ameliorer(unPose, 'a', 'holo')
+verifier('le coût atteint, le niveau monte et la jauge repart', niveauDe(deuxPoses, 'a').niveau === 2 && niveauDe(deuxPoses, 'a').poses === 0 && deuxPoses.stickers.a?.holo === 0)
+verifier('sans sticker de cette version, rien', ameliorer(deuxPoses, 'a', 'holo') === deuxPoses && ameliorer(albumNiv, 'b', 'simple') === albumNiv)
+let auMax: Collection = albumNiv
+for (let i = 0; i < 30; i++) auMax = ameliorer(auMax, 'a', 'simple')
+verifier('cinq niveaux au plus, chaque niveau plus cher', niveauDe(auMax, 'a').niveau === NIVEAUX.max && auMax.stickers.a?.n === 20 - NIVEAUX.couts.reduce((t, c) => t + c, 0) && NIVEAUX.couts.every((c, i) => i === 0 || c > NIVEAUX.couts[i - 1]!))
+verifier('le niveau se relit', niveauDe(lireCollection(JSON.parse(JSON.stringify(unPose))), 'a').poses === 1 && niveauDe(lireCollection(JSON.parse(JSON.stringify(auMax))), 'a').niveau === NIVEAUX.max)
+verifier('un niveau abîmé est borné', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 99, poses: 7 } } }), 'a').niveau === NIVEAUX.max && niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 2, poses: 99 } } }), 'a').poses === NIVEAUX.couts[1]! - 1)
+verifier('une collection d’avant relit le niveau 1', niveauDe(lireCollection({ version: 1, cartes: {} }), 'a').niveau === 1)
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

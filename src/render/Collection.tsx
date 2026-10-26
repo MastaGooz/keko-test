@@ -64,7 +64,7 @@ const STYLE_RAYONS: React.CSSProperties = {
 
 /** Trois tirages de paillettes vives, qui s'allument à tour de rôle (voir `.vignette-scintille`). */
 const SCINTILLES = [0, 1, 2] as const
-import { COULEUR, carteDeLEmoji, enTitre } from './carte-emoji.ts'
+import { COULEUR, carteDeLEmoji, enTitre, niveauDuPersonnageDe } from './carte-emoji.ts'
 import { Carte3D, HAUT, LARGE, SATURATION_APLAT, type CurseurDeCarte } from './Carte3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
@@ -408,6 +408,8 @@ export function Vignette({
   const [prete, setPrete] = useState(false)
   const [visible, setVisible] = useState(false)
   const { holo, anime } = exemplaireDe(variante)
+  // LE NIVEAU DU PERSONNAGE : la vignette se repeint quand il monte (ses étoiles, sa puissance).
+  const niveau = niveauDuPersonnageDe(carte.id)
   const compte = possession === null ? 0 : compteDe(possession, variante)
   const tourne = AVEC_TOURNE && anime && carte.animable
   // LES STICKERS COLLÉS sur cette version : la vignette les peint, et se
@@ -497,7 +499,7 @@ export function Vignette({
       obs.disconnect()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
-  }, [carte, holo, tourne, cleColles])
+  }, [carte, holo, tourne, cleColles, niveau])
   // LA VIGNETTE ANIMÉE SUIT SA VISIBILITÉ : l'animation ne joue qu'à l'écran
   // (l'observateur du dessus se coupe après la première peinture).
   useEffect(() => {
@@ -748,12 +750,13 @@ function CarteOuverte({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
   }, [cleColles])
+  const niveau = niveauDuPersonnageDe(carte.id)
   const aPeindre = useMemo(
     () => {
       const ex = exemplaireDe(variante)
-      return { ...carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, collesPeints.length), colles: collesPeints }
+      return { ...carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, collesPeints.length, niveau), colles: collesPeints }
     },
-    [carte, variante, collesPeints],
+    [carte, variante, collesPeints, niveau],
   )
   /** LE CHOIX DU STICKER À COLLER : ouvert par le bouton, fermé par la croix — et de lui-même quand l'album est vide (Keko). */
   const [choixOuvert, setChoixOuvert] = useState(false)

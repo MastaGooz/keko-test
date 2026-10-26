@@ -51,6 +51,8 @@ export const DECK = {
   likesParCran: 1,
   /** « +1 par sticker, sans limite par carte » : ce que chaque sticker collé ajoute. */
   likesParSticker: 1,
+  /** « +1 par niveau pour l'instant » : ce que chaque niveau au-delà du premier ajoute. */
+  likesParNiveau: 1,
   /**
    * CE QU'ON RATTRAPE AU PLUS en revenant : huit heures de mains. *Un idle qui
    * ne joue qu'à l'écran n'est pas un idle*, mais une semaine d'absence qui
@@ -157,8 +159,10 @@ export type ValeurDeCarte = (e: EntreeDeck) => number
 export function valeurParRarete(
   rareteDe: (id: string) => RareteEmoji | undefined,
   stickersDe: (e: EntreeDeck) => number = () => 0,
+  /** LE NIVEAU DU PERSONNAGE (Keko : « +1 par niveau »), injecté comme le reste. */
+  niveauDe: (id: string) => number = () => 1,
 ): ValeurDeCarte {
-  return (e) => puissanceDe(rareteDe(e.id), stickersDe(e))
+  return (e) => puissanceDe(rareteDe(e.id), stickersDe(e), niveauDe(e.id))
 }
 
 /**
@@ -166,9 +170,9 @@ export function valeurParRarete(
  * que le deck encaisse — *une seule fonction, sinon le chiffre peint et le
  * chiffre joué se désaccordent au premier réglage.*
  */
-export function puissanceDe(r: RareteEmoji | undefined, stickers = 0): number {
+export function puissanceDe(r: RareteEmoji | undefined, stickers = 0, niveau = 1): number {
   const cran = r === undefined ? 0 : Math.max(0, RARETES_EMOJI.indexOf(r))
-  return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, stickers) * DECK.likesParSticker
+  return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, stickers) * DECK.likesParSticker + Math.max(0, niveau - 1) * DECK.likesParNiveau
 }
 
 /** Ce que rapporte une main : la somme de ses cartes. */

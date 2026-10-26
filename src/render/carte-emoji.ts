@@ -75,14 +75,29 @@ function mots(_bonus?: Bonus): string[] {
  * orbe de PA mentirait sur une carte qui ne se joue pas, et neuf ciels
  * disputeraient l'axe de la rareté.
  */
-export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus, stickers = 0): CarteAPeindre {
+/**
+ * LE NIVEAU DE CHAQUE PERSONNAGE, déclaré par le jeu à chaque rendu (la
+ * collection vit dans `Jeu.tsx`) : toute carte peinte — vignette, zoom,
+ * défilé du paquet — porte le sien sans qu'on le passe de main en main.
+ */
+let niveauDuPersonnage: (id: string) => number = () => 1
+export function declarerLesNiveaux(f: (id: string) => number): void {
+  niveauDuPersonnage = f
+}
+export function niveauDuPersonnageDe(id: string): number {
+  return niveauDuPersonnage(id)
+}
+
+export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus, stickers = 0, niveau = niveauDuPersonnage(c.id)): CarteAPeindre {
   return {
     id: c.id,
     nom: c.nom,
     cout: null,
     // LA PUISSANCE EN MÉDAILLON, coin haut gauche (Keko) : ce que l'exemplaire
-    // rapporte au deck, stickers collés compris.
-    puissance: puissanceDe(c.rarete, stickers),
+    // rapporte au deck, stickers collés et niveau compris (Keko : « le blason
+    // indique la puissance totale, niveau compris »).
+    puissance: puissanceDe(c.rarete, stickers, niveau),
+    niveau,
     effet: mots(bonus),
     // LA PASTILLE PORTE LES DEUX TAGS, race et rôle (Keko).
     type: `${NOM_DE_LA_RACE[c.race]} · ${NOM_DU_ROLE[c.role]}`,

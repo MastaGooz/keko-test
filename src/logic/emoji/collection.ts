@@ -187,10 +187,72 @@ export interface Collection {
    */
   readonly sansEpique: number
   readonly sansLegendaire: number
+  /**
+   * LE NIVEAU DE CHAQUE PERSONNAGE, gagné dans l'album (voir `ameliorer`).
+   * Absent : niveau 1, rien de posé. Absent d'une collection d'avant : vide.
+   */
+  readonly niveaux: Readonly<Record<string, Niveau>>
+}
+
+/**
+ * LE NIVEAU D'UN PERSONNAGE. Keko : « la carte doit avoir un niveau (amélioré
+ * via l'album sticker) » — **au personnage, toutes ses versions ensemble**,
+ * **cinq niveaux**, et « on colle des stickers du personnage dans l'album,
+ * chaque niveau demande un nombre de stickers plus élevé ». *Il vit hors de la
+ * possession* : une carte détruite jusqu'à la dernière garde son niveau, que
+ * l'album a payé. `poses` : les stickers déjà collés vers le niveau suivant.
+ */
+export interface Niveau {
+  readonly niveau: number
+  readonly poses: number
+}
+
+/**
+ * Cinq niveaux (Keko) ; `couts[i]` : les stickers à coller pour passer du
+ * niveau i + 1 au niveau i + 2 — 2, 3, 4, 5, quatorze en tout. Ces chiffres
+ * sont de moi, à rejuger.
+ */
+export const NIVEAUX = { max: 5, couts: [2, 3, 4, 5] } as const
+
+export function niveauDe(col: Collection, id: string): Niveau {
+  return col.niveaux[id] ?? { niveau: 1, poses: 0 }
+}
+
+/** Les stickers qu'il faut pour quitter ce niveau ; `null` au dernier. */
+export function coutDuNiveau(niveau: number): number | null {
+  return NIVEAUX.couts[niveau - 1] ?? null
+}
+
+/**
+ * COLLE UN STICKER DU PERSONNAGE DANS L'ALBUM, vers son niveau suivant : il
+ * quitte l'album (une version à la fois, comme `coller`), et quand assez sont
+ * posés, le niveau monte et la jauge repart de zéro. Sans le sticker, ou au
+ * dernier niveau : la collection ne bouge pas.
+ */
+export function ameliorer(col: Collection, id: string, v: Variante): Collection {
+  const s = col.stickers[id]
+  const actuel = niveauDe(col, id)
+  const cout = coutDuNiveau(actuel.niveau)
+  if (s === undefined || compteDe(s, v) <= 0 || cout === null) return col
+  const ex = exemplaireDe(v)
+  const n = s.n - 1
+  const stickers: Record<string, Stickers> = { ...col.stickers }
+  if (n <= 0) delete stickers[id]
+  else
+    stickers[id] = {
+      ...s,
+      n,
+      holo: s.holo - (ex.holo ? 1 : 0),
+      anime: s.anime - (ex.anime ? 1 : 0),
+      ha: s.ha - (ex.holo && ex.anime ? 1 : 0),
+    }
+  const poses = actuel.poses + 1
+  const suivant = poses >= cout ? { niveau: actuel.niveau + 1, poses: 0 } : { niveau: actuel.niveau, poses }
+  return { ...col, stickers, niveaux: { ...col.niveaux, [id]: suivant } }
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, sansEpique: 0, sansLegendaire: 0 }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, sansEpique: 0, sansLegendaire: 0, niveaux: {} }
 }
 
 /** Pose le solde de Likes — borné à zéro, arrondi à l'entier. Rend la même collection si rien ne change. */
@@ -483,6 +545,18 @@ export function lireCollection(brut: unknown): Collection {
     const ha = Math.min(h, a, Math.max(entier(s.ha) ?? 0, h + a - n))
     stickers[id] = { n, holo: h, anime: a, ha, dernier, nouveau: s.nouveau === true }
   }
+  // LES NIVEAUX : entre 1 et le dernier, une jauge sous le coût du niveau ; le
+  // niveau 1 sans rien de posé ne s'écrit pas.
+  const niveaux: Record<string, Niveau> = {}
+  const brutNiveaux = typeof o.niveaux === 'object' && o.niveaux !== null ? o.niveaux : {}
+  for (const [id, v] of Object.entries(brutNiveaux as Record<string, unknown>)) {
+    if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
+    const x = v as Record<string, unknown>
+    const niveau = Math.min(NIVEAUX.max, entier(x.niveau, 1) ?? 1)
+    const cout = coutDuNiveau(niveau)
+    const poses = cout === null ? 0 : Math.min(cout - 1, entier(x.poses) ?? 0)
+    if (niveau > 1 || poses > 0) niveaux[id] = { niveau, poses }
+  }
   return {
     version: 1,
     arrivees: Math.max(entier(o.arrivees) ?? 0, plusGrandOrdre),
@@ -492,5 +566,6 @@ export function lireCollection(brut: unknown): Collection {
     likes: entier(o.likes) ?? 0,
     sansEpique: entier(o.sansEpique) ?? 0,
     sansLegendaire: entier(o.sansLegendaire) ?? 0,
+    niveaux,
   }
 }

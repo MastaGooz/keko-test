@@ -828,11 +828,11 @@ export function peinte(
    */
   garder = false,
 ): Promise<HTMLCanvasElement> {
-  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}${colles.length > 0 ? `#c:${colles.map((x) => x.cle).join(',')}` : ''}`
-  const deja = PEINTES.get(cle)
-  if (deja !== undefined) return deja
   // L'image se charge dès maintenant, pas à son tour dans la file.
   const aPeindre = { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined, colles.length), holo, animation: undefined, sansSujet, sansRayons, colles }
+  const cle = `${c.id}#${largeur}#n${aPeindre.niveau ?? 1}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}${colles.length > 0 ? `#c:${colles.map((x) => x.cle).join(',')}` : ''}`
+  const deja = PEINTES.get(cle)
+  if (deja !== undefined) return deja
   const enFile = (): Promise<HTMLCanvasElement> => {
     if (!sansSujet) prechargerIllustration(aPeindre.emojiPerso, largeur)
     const q = fileDePeinture.then(peindre)

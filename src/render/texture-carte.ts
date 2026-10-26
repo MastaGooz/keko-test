@@ -300,6 +300,8 @@ export type CarteAPeindre = {
    * (`surfaceDe`) si — enfoncée avec le décor, elle glissait au regard.
    */
   puissance?: number
+  /** LE NIVEAU DU PERSONNAGE, 1 à 5 : ses étoiles à droite du médaillon (voir `peindreNiveau`). */
+  niveau?: number
   /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
@@ -5028,8 +5030,8 @@ export async function peindreCarte(
   peindreTextes(ctx, carte, symbole)
   if (carte.puissance !== undefined) {
     const bouclier = await bouclierPeint()
-    peindreMedaillon(ctx, carte.puissance, bouclier)
-    medaillonEnSurface(canvas, largeur, carte.puissance, bouclier)
+    peindreMedaillon(ctx, carte.puissance, bouclier, carte.niveau ?? 1)
+    medaillonEnSurface(canvas, largeur, carte.puissance, bouclier, carte.niveau ?? 1)
   }
   return canvas
 }
@@ -5051,7 +5053,7 @@ function bouclierPeint(): Promise<HTMLImageElement | null> {
  * arc-en-ciel d'une holo se reconnaît au crème (`COSMOS.cerne`). Sans
  * l'image, un disque de cuir serti d'or le remplace.
  */
-function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HTMLImageElement | null): void {
+function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HTMLImageElement | null, niveau: number): void {
   const { cx, cy } = MEDAILLON
   const r = MEDAILLON.l / 2
   if (bouclier !== null) {
@@ -5066,7 +5068,7 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
     ctx.restore()
     // LE CHIFFRE UN PEU AU-DESSUS DU MILIEU : le bouclier s'effile vers sa pointe.
     chiffreDuMedaillon(ctx, n, cx, cy - 0.07 * h)
-    peindreNiveau(ctx, cx, cy, l, h)
+    peindreNiveau(ctx, cx, cy, l, h, niveau)
     return
   }
   ctx.save()
@@ -5094,7 +5096,7 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
   ctx.lineWidth = 1.2 * U
   ctx.stroke()
   chiffreDuMedaillon(ctx, n, cx, cy)
-  peindreNiveau(ctx, cx, cy, r * 2, r * 2)
+  peindreNiveau(ctx, cx, cy, r * 2, r * 2, niveau)
 }
 
 /**
@@ -5104,14 +5106,15 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
  * sont les étoiles que Keko a choisies — près de la puissance, puisque c'est
  * elle que le niveau fait monter, et elles se comptent sans se lire. **Cinq
  * niveaux, et aucune étoile au premier** (Keko) : une étoile par niveau gagné,
- * quatre au plus. *La règle n'existe pas encore* : la collection ne connaît pas
- * de niveau, `?niv=N` montre le niveau N sur toutes les cartes.
+ * quatre au plus. Le niveau vient de la collection (`Collection.niveaux`) ;
+ * `?niv=N` montre le niveau N sur toutes les cartes.
  */
 const NIVEAU_MAX = 5
 const NIVEAU_D_ESSAI = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('niv')
-function peindreNiveau(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number, h: number): void {
-  if (NIVEAU_D_ESSAI === null) return
-  const n = Math.max(1, Math.min(NIVEAU_MAX, Math.round(Number(NIVEAU_D_ESSAI)) || 1)) - 1
+function peindreNiveau(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number, h: number, niveau: number): void {
+  const voulu = NIVEAU_D_ESSAI === null ? niveau : Math.round(Number(NIVEAU_D_ESSAI)) || 1
+  const n = Math.max(1, Math.min(NIVEAU_MAX, voulu)) - 1
+  if (n === 0) return
   ctx.save()
   ctx.lineJoin = 'round'
   const r = 3.1 * U
@@ -5171,7 +5174,7 @@ function chiffreDuMedaillon(ctx: CanvasRenderingContext2D, n: number, cx: number
  * relief et le cerne arc-en-ciel l'épargnent), et retiré du masque des rayons
  * brillants. Après les collés, qui posent ou effacent la surface de cette peinture.
  */
-function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number, bouclier: HTMLImageElement | null): void {
+function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: number, bouclier: HTMLImageElement | null, niveau: number): void {
   const poser = (toiles: WeakMap<HTMLCanvasElement, HTMLCanvasElement>): HTMLCanvasElement | null => {
     let t = toiles.get(canvas)
     if (t === undefined) {
@@ -5183,7 +5186,7 @@ function medaillonEnSurface(canvas: HTMLCanvasElement, largeur: number, n: numbe
     if (c === null) return null
     c.save()
     c.setTransform(largeur / LARGE, 0, 0, largeur / LARGE, 0, 0)
-    peindreMedaillon(c, n, bouclier)
+    peindreMedaillon(c, n, bouclier, niveau)
     c.restore()
     toiles.set(canvas, t)
     return t
@@ -8127,7 +8130,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}|p${carte.puissance ?? ''}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${holoAuCerneCreme(carte) && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}|p${carte.puissance ?? ''}n${carte.niveau ?? ''}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}${holoAuCerneCreme(carte) && CERNE_DE_CARTE !== 'blanc' ? '|holo' : ''}`
 }
 
 /**

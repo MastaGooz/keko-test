@@ -289,6 +289,14 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   vivant du nuanceur, `uColles` n'épargne que les normaux, la vignette le fige par
   `zoneDuColle` ; `anime.charger(cote, arcEnCiel)`) ; **un Like de plus
   par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
+- **Le NIVEAU d'un personnage** (`Collection.niveaux`, `ameliorer`, `NIVEAUX`) :
+  au personnage, toutes versions ensemble, **cinq niveaux** (Keko) ; on le
+  monte dans l'album en y collant ses stickers (« Coller dans l'album », sous
+  le sticker ouvert), chaque niveau plus cher (2, 3, 4, 5 — de moi, à
+  rejuger) ; **+1 de puissance par niveau**, et l'écu dit la puissance totale.
+  Sur la carte : **une étoile d'or cernée de blanc par niveau gagné**, à droite
+  de l'écu, aucune au premier (`peindreNiveau`). Les cartes lisent le niveau
+  par `declarerLesNiveaux` (posé par `Jeu.tsx`).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,
   **un toutes les 10 minutes** (Keko), pleine au départ, décomptée à
@@ -526,7 +534,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
 | `?brillant=0`, `?rayonsbrillants=0`, `?lin=0.09` | la bordure, les rayons clairs sans leur brillant ; le lin tressé essayé puis retiré |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
-| `?niv=N` | le niveau N (1 à 5) sur toutes les cartes : N − 1 étoiles d'or cernées de blanc à droite de l'écu (Keko ; la règle du niveau n'existe pas encore) |
+| `?niv=N` | montre le niveau N (1 à 5) sur toutes les cartes, quel que soit leur vrai niveau |
 | `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
 | `?camp=0`, `?camp=ancien`, `?brillantfond=doux\|eclat` | les cartes sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur, ou sous les pointes brillantes de l'éclat |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |

@@ -34,6 +34,8 @@ import {
   oublier,
   detruire,
   coller,
+  ameliorer,
+  niveauDe,
   nombreDeColles,
   nombreDeNouvelles,
   nombreDeStickersNouveaux,
@@ -45,6 +47,7 @@ import {
   type Variante,
 } from '../logic/emoji/collection.ts'
 import { declarerLeCatalogue } from './peinture-vignette.ts'
+import { declarerLesNiveaux } from './carte-emoji.ts'
 import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerDecks, chargerReserve, sauverCollection, sauverDecks, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
@@ -316,12 +319,15 @@ export function Jeu(): React.ReactElement {
   // référence : la valeur n'a pas à se refaire à chaque Like qui tombe.
   const refCollection = useRef(collection)
   refCollection.current = collection
+  // LE NIVEAU DE CHAQUE PERSONNAGE, lu par toute carte qu'on peint (voir `declarerLesNiveaux`).
+  declarerLesNiveaux((id) => niveauDe(refCollection.current, id).niveau)
   const valeur = useMemo(() => {
     if (catalogue === null) return null
     const crans = new Map(catalogue.map((c) => [c.id, c.rarete]))
     return valeurParRarete(
       (id) => crans.get(id),
       (e) => nombreDeColles(refCollection.current.cartes[e.id], e.v),
+      (id) => niveauDe(refCollection.current, id).niveau,
     )
   }, [catalogue])
   // LE CATALOGUE EST DÉCLARÉ AUX PEINTRES : les stickers collés se retrouvent par lui.
@@ -485,6 +491,8 @@ export function Jeu(): React.ReactElement {
     (cible: { id: string; v: Variante }, sticker: StickerColle) => changer((c) => coller(c, cible, sticker)),
     [changer],
   )
+  // COLLER UN STICKER DANS L'ALBUM, vers le niveau suivant du personnage : voir `ameliorer`.
+  const ameliorerPersonnage = useCallback((id: string, v: Variante) => changer((c) => ameliorer(c, id, v)), [changer])
 
   /**
    * LE MENU « CARTES » : déroulé sous la pilule par une tape sur le bouton,
@@ -564,7 +572,7 @@ export function Jeu(): React.ReactElement {
           )}
         </>
       ) : page === 'stickers' ? (
-        <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} />
+        <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} onAmeliorer={ameliorerPersonnage} />
       ) : page === 'jouer' ? (
         <PageJouer
           catalogue={catalogue}
