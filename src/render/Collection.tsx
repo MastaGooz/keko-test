@@ -1674,18 +1674,16 @@ export function PageCollection({
               {modeDeck && (
                 <button
                   type="button"
-                  className={`bouton-filtres${sansAttribuees ? ' actif' : ''}`}
+                  className={`bouton-filtres bouton-attribuees${sansAttribuees ? ' actif' : ''}`}
                   aria-pressed={sansAttribuees}
                   aria-label="Masquer les cartes attribuées"
-                  title="Masquer les cartes attribuées"
+                  data-bulle="Masquer les cartes attribuées"
                   onClick={() => setSansAttribuees((n) => !n)}
                 >
-                  {/* Un œil barré : ce qui est déjà dans un deck ne se montre plus. */}
-                  <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
-                    <circle cx="12" cy="12" r="2.8" />
-                    <path d="M4 20 20 4" />
-                  </svg>
+                  {/* LA COCHE DES CARTES DU DECK (Keko, plutôt qu'un œil) : ce qu'elle marque s'en va. */}
+                  <span className="bouton-attribuees-coche" aria-hidden>
+                    ✓
+                  </span>
                 </button>
               )}
               <BoutonFiltres actifs={actifs} onOuvrir={() => setPanneau(true)} />

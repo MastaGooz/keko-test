@@ -1577,6 +1577,57 @@
   height: 1.45rem;
 }
 
+/* MASQUER LES CARTES ATTRIBUÉES : la coche jaune des vignettes du deck, en
+   plus grand ; éteinte (estompée) tant que le bouton ne masque rien. */
+.bouton-attribuees-coche {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #ffd45e;
+  color: #3a2416;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.6rem;
+  text-align: center;
+  text-transform: none;
+  opacity: 0.55;
+}
+
+.bouton-attribuees.actif .bouton-attribuees-coche {
+  opacity: 1;
+}
+
+/* L'INFOBULLE AUX COULEURS DU JEU (Keko) : la pilule crème à l'encre brune
+   de la barre, sous le bouton, au survol de la souris seulement — au doigt,
+   le survol reste collé après la tape. */
+[data-bulle] {
+  position: relative;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-bulle]:hover::after {
+    content: attr(data-bulle);
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    left: 50%;
+    z-index: 5;
+    transform: translateX(-50%);
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: #fffaf0;
+    color: #3a2416;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.75rem;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 0.15rem 0.4rem rgba(20, 10, 4, 0.55);
+    pointer-events: none;
+  }
+}
+
 /* LE COMPTE DES FILTRES ACTIFS, en pastille sur le coin du bouton. */
 .bouton-filtres-compte {
   position: absolute;
