@@ -14,6 +14,7 @@ import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } fro
 import { COULEUR } from './carte-emoji.ts'
 import { RAYON_SIMPLE, prechargerIllustration, clairDuMotif, lueurDeLaToile, motifDeLaToile, satureDeLaToile } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
+import { garderLaVignette, vignetteGardee } from '../ui/vignettes.ts'
 
 /**
  * LA FILE DES PEINTURES : une à la fois. *Cent vignettes qui entrent dans la
@@ -819,14 +820,26 @@ export function peinte(
   sansRayons = false,
   /** Les stickers collés sur la carte, déjà peints (`stickersColles`). */
   colles: readonly StickerPeint[] = [],
+  /**
+   * GARDÉE SUR L'APPAREIL (`ui/vignettes.ts`) : relue d'IndexedDB si un build
+   * identique l'a déjà peinte. Seulement pour une toile qu'on ne fait que
+   * montrer — l'image relue a perdu ce que la peinture accroche à sa toile
+   * (le sujet, son masque), que la holo et l'animée relisent.
+   */
+  garder = false,
 ): Promise<HTMLCanvasElement> {
   const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}${colles.length > 0 ? `#c:${colles.map((x) => x.cle).join(',')}` : ''}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
   // L'image se charge dès maintenant, pas à son tour dans la file.
   const aPeindre = { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined, colles.length), holo, animation: undefined, sansSujet, sansRayons, colles }
-  if (!sansSujet) prechargerIllustration(aPeindre.emojiPerso, largeur)
-  const p = fileDePeinture.then(async () => {
+  const enFile = (): Promise<HTMLCanvasElement> => {
+    if (!sansSujet) prechargerIllustration(aPeindre.emojiPerso, largeur)
+    const q = fileDePeinture.then(peindre)
+    fileDePeinture = q.catch(() => null)
+    return q
+  }
+  const peindre = async (): Promise<HTMLCanvasElement> => {
     const toile = await peindreCarte(
       // LE DÉCOLLAGE NOMME SES BONUS AU CARTOUCHE, comme la carte 3D qu'il
       // remplace ; la vignette, non (elle a ses pastilles). Pas d'animation :
@@ -848,8 +861,15 @@ export function peinte(
       if (col.holo) arcEnCielDUnColle(toile, col, i)
     })
     return toile
-  })
-  fileDePeinture = p.catch(() => null)
+  }
+  const p = garder
+    ? vignetteGardee(cle).then(async (gardee) => {
+        if (gardee !== null) return gardee
+        const toile = await enFile()
+        garderLaVignette(cle, toile)
+        return toile
+      })
+    : enFile()
   PEINTES.set(cle, p)
   // *Un cache retient les succès, pas les échecs.*
   p.catch(() => PEINTES.delete(cle))

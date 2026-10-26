@@ -433,7 +433,7 @@ export function Vignette({
           .then((peints) => {
             collesPeints.current = peints
             setCollesAnimes(peints.some((c) => c.anime !== undefined))
-            return peinte(carte, largeur, holo, tourne, false, false, tourne, peints)
+            return peinte(carte, largeur, holo, tourne, false, false, tourne, peints, !holo && !tourne)
           })
           .then(async (source) => {
           const t = toile.current
@@ -681,6 +681,13 @@ function CarteOuverte({
   const [decolle, setDecolle] = useState<Exemplaire | null>(null)
   const [cachee, setCachee] = useState(false)
   const [cassee, setCassee] = useState(false)
+  /**
+   * LA CARTE N'APPARAÎT QU'UNE FOIS PEINTE. Keko : « quand je zoome une carte,
+   * un carré gris apparaît avant la carte ». *Sans sa texture, la face n'a pas
+   * d'alpha pour couper ses coins* : c'était la dalle sombre et brillante,
+   * carrée, le temps que l'illustration en grand arrive.
+   */
+  const [peinte, setPeinte] = useState(false)
   const refDecolle = useRef(false)
   refDecolle.current = decolle !== null
   const [fenetre, setFenetre] = useState({ l: window.innerWidth, h: window.innerHeight })
@@ -938,8 +945,9 @@ function CarteOuverte({
         <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
         {/* INVISIBLE, PAS DÉMONTÉE : annuler la rend telle qu'elle était. */}
-        <group visible={!cassee}>
+        <group visible={!cassee && peinte}>
         <Carte3D
+          onPeinte={() => setPeinte(true)}
           carte={cachee ? carteNue : aPeindre}
           position={[0, hVisible * 0.06, Z_MAIN]}
           taille={taille}
