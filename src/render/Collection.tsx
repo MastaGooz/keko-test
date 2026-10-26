@@ -1674,17 +1674,18 @@ export function PageCollection({
               {modeDeck && (
                 <button
                   type="button"
-                  className={`bouton-filtres bouton-attribuees${sansAttribuees ? ' actif' : ''}`}
-                  aria-pressed={!sansAttribuees}
-                  aria-label="Afficher les cartes attribuées"
-                  data-bulle="Afficher les cartes attribuées"
+                  className={`bouton-filtres${sansAttribuees ? ' actif' : ''}`}
+                  aria-pressed={sansAttribuees}
+                  aria-label="Masquer les cartes attribuées"
+                  data-bulle="Masquer les cartes attribuées"
                   onClick={() => setSansAttribuees((n) => !n)}
                 >
-                  {/* « AFFICHER LES CARTES ATTRIBUÉES », coché de base (Keko) : la coche
-                      jaune des cartes du deck ; décoché, celle des cartes d'un autre deck. */}
-                  <span className="bouton-attribuees-coche" aria-hidden>
-                    ✓
-                  </span>
+                  {/* UN ŒIL, BARRÉ QUAND C'EST COCHÉ (Keko) : les cartes attribuées sont masquées. */}
+                  <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                    {sansAttribuees && <path d="M4 20 20 4" />}
+                  </svg>
                 </button>
               )}
               <BoutonFiltres actifs={actifs} onOuvrir={() => setPanneau(true)} />
