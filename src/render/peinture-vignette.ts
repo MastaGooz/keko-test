@@ -12,7 +12,7 @@ import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, p
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
-import { RAYON_SIMPLE, clairDuMotif, lueurDeLaToile, motifDeLaToile, satureDeLaToile } from './texture-carte.ts'
+import { RAYON_SIMPLE, prechargerIllustration, clairDuMotif, lueurDeLaToile, motifDeLaToile, satureDeLaToile } from './texture-carte.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
@@ -25,6 +25,26 @@ const PEINTES = new Map<string, Promise<HTMLCanvasElement>>()
 
 const lineaire = (v: number): number => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
 const srgb = (v: number): number => (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055)
+/**
+ * LES MÊMES CONVERSIONS, EN TABLES, pour la boucle du brillant (Keko : « les
+ * cartes mettent du temps à s'afficher ») : deux puissances par canal et par
+ * pixel en faisaient le gros du temps d'une vignette. Le résultat est le même
+ * octet : l'entrée n'a que 256 valeurs, et la sortie est l'arrondi de `srgb`,
+ * retrouvé en comptant les seuils linéaires qu'elle franchit.
+ */
+const LINEAIRE = Float64Array.from({ length: 256 }, (_, i) => lineaire(i / 255))
+const SEUILS_SRGB = Float64Array.from({ length: 255 }, (_, k) => lineaire((k + 0.5) / 255))
+/** `Math.round(srgb(min(1, x)) * 255)`, sans puissance. */
+function versOctet(x: number): number {
+  let bas = 0
+  let haut = 255
+  while (bas < haut) {
+    const m = (bas + haut) >> 1
+    if (SEUILS_SRGB[m]! <= x) bas = m + 1
+    else haut = m
+  }
+  return bas
+}
 const fondu = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
@@ -337,7 +357,9 @@ export function brillantDuRepos(
       const py = (v - 0.5) * 1.4
       const qx = Math.abs(px) - (0.5 - RAYON_SIMPLE)
       const qy = Math.abs(py) - (0.7 - RAYON_SIMPLE)
-      const dc = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - RAYON_SIMPLE
+      const ex = Math.max(qx, 0)
+      const ey = Math.max(qy, 0)
+      const dc = Math.sqrt(ex * ex + ey * ey) + Math.min(Math.max(qx, qy), 0) - RAYON_SIMPLE
       const bande = fondu(-(CONTOUR_PLAQUE + 0.003), -(CONTOUR_PLAQUE - 0.002), dc) * (surface === null ? 1 : 1 - surface[k + 3]! / 255)
       // LES RAYONS CLAIRS, dans la fenêtre d'art, hors de l'emoji.
       let kr = 0
@@ -346,8 +368,9 @@ export function brillantDuRepos(
         const dy = (v - cy) * 1.4
         // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES ;
         // le clair est celui du motif (`clairDuMotif`).
-        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * motif * clairDuMotif(Math.atan2(dy, dx) - R.depart, Math.hypot(dx, dy), 0.025)
-        const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
+        const dr = Math.sqrt(dx * dx + dy * dy)
+        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * motif * clairDuMotif(Math.atan2(dy, dx) - R.depart, dr, 0.025)
+        const fonduR = 1 - Math.min(1, Math.max(0, (dr - rr * 0.08) / (rr * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib
         // UN DÉCOR PEINT, À MOITIÉ : la vignette ne bouge pas, et la lueur de
@@ -356,9 +379,9 @@ export function brillantDuRepos(
         if (satureFond === 0) kr *= 0.5 * lueurFond
       }
       if (bande <= 0 && kr <= 0) continue
-      let r = lineaire(d[k]! / 255)
-      let g = lineaire(d[k + 1]! / 255)
-      let b = lineaire(d[k + 2]! / 255)
+      let r = LINEAIRE[d[k]!]!
+      let g = LINEAIRE[d[k + 1]!]!
+      let b = LINEAIRE[d[k + 2]!]!
       const lumAvant = 0.2126 * r + 0.7152 * g + 0.0722 * b
       // LA BORDURE : le grand reflet multiplié (l'éclair serré est nul de face).
       const fb = 1 + nappeB * BRILLANT.reflet * bande
@@ -391,9 +414,9 @@ export function brillantDuRepos(
       const lumApres = 0.2126 * r + 0.7152 * g + 0.0722 * b
       const plafond = Math.max(lumAvant, BRILLANT.plafond)
       const kp = Math.min(1, plafond / Math.max(lumApres, 0.0001))
-      d[k] = Math.round(srgb(Math.min(1, r * kp)) * 255)
-      d[k + 1] = Math.round(srgb(Math.min(1, g * kp)) * 255)
-      d[k + 2] = Math.round(srgb(Math.min(1, b * kp)) * 255)
+      d[k] = versOctet(r * kp)
+      d[k + 1] = versOctet(g * kp)
+      d[k + 2] = versOctet(b * kp)
     }
   }
   ctx.putImageData(image, 0, 0)
@@ -800,6 +823,9 @@ export function peinte(
   const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}${colles.length > 0 ? `#c:${colles.map((x) => x.cle).join(',')}` : ''}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
+  // L'image se charge dès maintenant, pas à son tour dans la file.
+  const aPeindre = { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined, colles.length), holo, animation: undefined, sansSujet, sansRayons, colles }
+  if (!sansSujet) prechargerIllustration(aPeindre.emojiPerso, largeur)
   const p = fileDePeinture.then(async () => {
     const toile = await peindreCarte(
       // LE DÉCOLLAGE NOMME SES BONUS AU CARTOUCHE, comme la carte 3D qu'il
@@ -807,7 +833,7 @@ export function peinte(
       // une vignette est une image fixe. MAIS LA HOLO SE DIT TOUJOURS : elle
       // garde le cerne crème que `cerneArcEnCielDuSujet` irise, là où la
       // normale porte le trait d'encre (`CERNE_DE_CARTE`).
-      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined, colles.length), holo, animation: undefined, sansSujet, sansRayons, colles },
+      aPeindre,
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.

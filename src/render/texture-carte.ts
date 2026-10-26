@@ -2098,6 +2098,19 @@ const TOILE_EMOJI = 512
  */
 const SEUIL_GRAND = 512
 const SANS_HD = typeof location !== 'undefined' && new URLSearchParams(location.search).get('hd') === '0'
+/**
+ * LE STICKER D'UNE PETITE CARTE SE PEINT À SA TAILLE (Keko : « les cartes
+ * mettent du temps à s'afficher » dans la grille). Son cerne est une distance
+ * calculée pixel par pixel, et il se calculait sur 512 pour une vignette qui
+ * en montre moins de 400 : le plus gros du temps d'une vignette en JavaScript.
+ * *Le sticker ne dépasse jamais la largeur de la carte*, donc à ce côté il
+ * reste au moins à un pixel par pixel affiché. Au-dessus, rien ne change.
+ */
+function coteDuStickerPour(largeur: number): number | undefined {
+  if (largeur >= TOILE_EMOJI) return undefined
+  return Math.max(256, Math.ceil(largeur / 64) * 64)
+}
+
 function enGrand(url: string | undefined, largeur: number): string | undefined {
   if (url === undefined || SANS_HD || largeur <= SEUIL_GRAND) return url
   return url.replace('/cartes/', '/cartes-hd/')
@@ -2621,6 +2634,8 @@ async function illustration(
   perso?: string,
   /** L'image de Keko en fenêtre : voir `stickerPleinCadre`. */
   fenetre = false,
+  /** Le côté du sticker quand la carte est petite : voir `coteDuStickerPour`. */
+  cote?: number,
 ): Promise<HTMLImageElement | HTMLCanvasElement | null> {
   // UNE IMAGE DEJA PRETE PASSE DEVANT TOUT : c'est le chemin de l'emoji anime,
   // et *elle n'a rien a charger*, donc rien a attendre.
@@ -2628,16 +2643,19 @@ async function illustration(
   // L'EMOJI DESSINÉ PAR KEKO, en sticker comme le glyphe. *S'il manque, le
   // glyphe Noto reprend* : une image absente ne doit pas vider une carte.
   if (perso !== undefined) {
-    const deja = STICKERS.get(perso)
+    const cleSticker = cote === undefined || fenetre ? perso : `${perso}#${cote}`
+    const deja = STICKERS.get(cleSticker)
     if (deja !== undefined) return deja
     const image = await chargerOuPetit(perso)
     if (image !== null) {
       if (!sticker) return image
       // À LA TAILLE DU FICHIER quand il dépasse 512 : le grand (voir
-      // `SEUIL_GRAND`) garde sa finesse au zoom.
-      const toile = fenetre ? stickerPleinCadre(image) : stickerDUneImage(image, Math.max(TOILE_EMOJI, image.naturalWidth))
+      // `SEUIL_GRAND`) garde sa finesse au zoom. Une petite carte, à la sienne.
+      const toile = fenetre
+        ? stickerPleinCadre(image)
+        : stickerDUneImage(image, cote ?? Math.max(TOILE_EMOJI, image.naturalWidth))
       if (toile !== null) {
-        STICKERS.set(perso, toile)
+        STICKERS.set(cleSticker, toile)
         return toile
       }
     }
@@ -3281,14 +3299,35 @@ function coutPeint(): Promise<HTMLImageElement | null> {
   return symboleCout
 }
 
+/** Les images en cours ou chargées, par adresse : un préchargement et la peinture se partagent la même. */
+const CHARGEES = new Map<string, Promise<HTMLImageElement | null>>()
 function charger(url: string): Promise<HTMLImageElement | null> {
-  return new Promise((resoudre) => {
+  const deja = CHARGEES.get(url)
+  if (deja !== undefined) return deja
+  const p = new Promise<HTMLImageElement | null>((resoudre) => {
     const image = new Image()
     image.crossOrigin = 'anonymous'
     image.onload = () => resoudre(image)
     image.onerror = () => resoudre(null)
     image.src = url
   })
+  CHARGEES.set(url, p)
+  // *Un cache retient les succès, pas les échecs.*
+  void p.then((i) => {
+    if (i === null) CHARGEES.delete(url)
+  })
+  return p
+}
+
+/**
+ * PRÉCHARGER L'ILLUSTRATION D'UNE CARTE, hors de la file des peintures (Keko :
+ * « les cartes mettent du temps à s'afficher ») : les vignettes se peignent une
+ * à une, et chacune attendait SON image au réseau à son tour. Lancées toutes
+ * dès qu'elles entrent dans la vue, elles arrivent ensemble.
+ */
+export function prechargerIllustration(url: string | undefined, largeur: number): void {
+  const u = enGrand(url, largeur)
+  if (u !== undefined) void chargerOuPetit(u)
 }
 
 /**
@@ -4457,6 +4496,7 @@ export async function peindreCarte(
       enBulle(carte) && !SANS_STICKER,
       enGrand(carte.emojiPerso, largeur),
       carte.persoEnFenetre === true,
+      coteDuStickerPour(largeur),
     ),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
