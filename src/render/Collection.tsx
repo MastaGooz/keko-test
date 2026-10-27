@@ -25,7 +25,7 @@ import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../log
 import type { Collection, Possession, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { NOM_DECK_MAX } from '../logic/emoji/deck.ts'
-import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { AMBIANCE, type SujetPeint, etoileDuNiveau, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
@@ -71,6 +71,7 @@ import { Bloom } from './Bloom.tsx'
 import { PencheAuGyro } from './Paquet3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { SON_EQUIPER, SON_POSER, jouerSon } from './sons.ts'
+import { FrappeDuNiveau, type Frappe } from './FrappeDuNiveau.tsx'
 
 export const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
   simple: 'normal',
@@ -687,19 +688,29 @@ function CarteOuverte({
   const refFermer = useRef(onFermer)
   refFermer.current = onFermer
   const niveau = niveauDuPersonnageDe(carte.id)
+  /**
+   * LA FUSION FRAPPE LA CARTE (Keko : « un effet beaucoup plus juicy ») : une
+   * étoile vole jusqu'à la place de la nouvelle (`FrappeDuNiveau`), et c'est
+   * À L'IMPACT que la carte rebondit (le `Bump` repart, sa clé est le compte
+   * des impacts), se repeint au niveau, que le titre éclate, que le son de
+   * l'équipement sonne et que le téléphone vibre. *La collection, elle, est
+   * fusionnée au clic* : seul ce qu'on MONTRE attend l'étoile (`niveauVu`).
+   */
+  const [impacts, setImpacts] = useState(0)
+  const [frappe, setFrappe] = useState<Frappe | null>(null)
+  const [enVol, setEnVol] = useState(false)
+  const [niveauVu, setNiveauVu] = useState(niveau)
+  const niveauApporte = useRef(niveau)
+  useEffect(() => {
+    if (!enVol) setNiveauVu(niveau)
+  }, [niveau, enVol])
   const aPeindre = useMemo(
     () => {
       const ex = exemplaireDe(variante)
-      return carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, niveau)
+      return carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, niveauVu)
     },
-    [carte, variante, niveau],
+    [carte, variante, niveauVu],
   )
-  /**
-   * LA FUSION SE VOIT : la carte rebondit encore (le `Bump` repart, sa clé est
-   * le compte des fusions), le titre du niveau éclate et le son de l'équipement
-   * sonne. Les étoiles arrivent d'elles-mêmes : la carte se repeint au niveau.
-   */
-  const [fusions, setFusions] = useState(0)
   // LA CARTE TIENT DANS L'ÉCRAN, avec la place des lignes du dessous : la règle
   // de la rangée du paquet, *la taille se calcule sur la place.*
   const hVisible = hauteurVisibleA(Z_MAIN, fenetre.h)
@@ -825,7 +836,7 @@ function CarteOuverte({
         <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
         <group visible={peinte}>
-        <Bump key={fusions} pret={peinte} centre={[xCarte, yCarte, Z_MAIN]}>
+        <Bump key={impacts} pret={peinte} centre={[xCarte, yCarte, Z_MAIN]}>
         <Carte3D
           onPeinte={() => setPeinte(true)}
           carte={aPeindre}
@@ -839,6 +850,16 @@ function CarteOuverte({
         />
         </Bump>
         </group>
+        <FrappeDuNiveau
+          frappe={frappe}
+          onImpact={() => {
+            setNiveauVu(niveauApporte.current)
+            setImpacts((n) => n + 1)
+            setEnVol(false)
+            jouerSon(SON_EQUIPER)
+            navigator.vibrate?.([25, 30, 60])
+          }}
+        />
       </Canvas>
       <div className="carte-ouverte-infos">
         <span className="carte-ouverte-cran" style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}>
@@ -848,14 +869,27 @@ function CarteOuverte({
             "X exemplaire normal" et la ligne de la date d'obtention »). */}
         {possession !== null && (
           <NiveauDeLaCarte
-            niveau={niveau}
+            niveau={niveauVu}
             exemplaires={possession.n}
-            fusions={fusions}
+            fusions={impacts}
+            occupe={enVol}
             onFusionner={() => {
+              // L'ÉTOILE PART : du haut droit, hors de l'écran, vers la place
+              // de l'étoile du niveau gagné (en fractions de la largeur de la
+              // carte depuis son coin haut gauche).
+              const vise = niveauVu + 1
+              const e = etoileDuNiveau(vise)
+              niveauApporte.current = vise
               onFusionner()
-              setFusions((f) => f + 1)
-              jouerSon(SON_EQUIPER)
-              navigator.vibrate?.(30)
+              setEnVol(true)
+              setFrappe({
+                id: impacts + 1 + Math.random(),
+                cible: [xCarte - taille / 2 + e.x * taille, yCarte + (taille * HAUT) / 2 - e.y * taille, Z_MAIN],
+                rayon: e.r * taille,
+                depart: [lVisible * 0.62, yCarte + taille * 0.2, Z_MAIN],
+                plafond: hVisible / 2,
+                taille,
+              })
             }}
           />
         )}
@@ -878,11 +912,14 @@ function NiveauDeLaCarte({
   niveau,
   exemplaires,
   fusions,
+  occupe,
   onFusionner,
 }: {
   niveau: number
   exemplaires: number
   fusions: number
+  /** L'étoile d'une fusion vole encore : pas de seconde fusion avant l'impact. */
+  occupe: boolean
   onFusionner: () => void
 }): React.ReactElement {
   const besoin = aFusionnerPour(niveau)
@@ -905,7 +942,7 @@ function NiveauDeLaCarte({
           <p className="carte-ouverte-ligne carte-ouverte-discret">
             {Math.min(exemplaires, besoin)} / {besoin} exemplaires pour le niveau {niveau + 1}
           </p>
-          <button type="button" className="decoller" disabled={exemplaires < besoin} onClick={onFusionner}>
+          <button type="button" className="decoller" disabled={exemplaires < besoin || occupe} onClick={onFusionner}>
             Fusionner {besoin} cartes
           </button>
         </>

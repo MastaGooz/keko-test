@@ -7067,3 +7067,13 @@ Keko : « on pourrait adapter l'app pour qu'elle soit utilisable en écran paysa
 **La carte ouverte allégée** (27/10, Keko : « dans le zoom d'une carte, enlève le "X exemplaire normal" et la ligne de la date d'obtention ; à côté du niveau, mets les étoiles en bas ; et enlève le montant de puissance gagné ») : sous la carte ne restent que la rareté, « Niveau N », ses étoiles SOUS le titre (`.niveau-etoiles` sur sa ligne), la jauge, « k / n exemplaires pour le niveau N+1 » (sans « · +1 de puissance ») et « Fusionner ». La ligne de la date emportait aussi « n° X sur 118 » ; « Pas encore obtenue » (le catalogue) part avec la ligne des exemplaires.
 
 **Les étoiles reviennent à droite de « Niveau N »** (27/10, Keko : « mets les étoiles à droite du texte niveau X, même ligne ») — « en bas » voulait dire en bas de la carte, sur la ligne du niveau.
+
+### La fusion frappe la carte (27/10/2026)
+
+Keko : « il faudrait un effet beaucoup plus juicy quand on level up une carte : bump, particules, étoile qui vient de l'extérieur frapper la carte à sa position en libérant des étincelles… un truc du genre ».
+
+- **`FrappeDuNiveau`** (`render/FrappeDuNiveau.tsx`), dans la scène de la carte ouverte. Une étoile d'or à cinq branches cernée de blanc, avec un halo, ENTRE PAR LE BORD DROIT (hors écran, à mi-hauteur de la carte), décrit un arc qui reste sous le haut de l'écran (`plafond`), tourne, sème une traînée d'étincelles, et PLONGE en accélérant (0,55 s). Grande tant qu'elle vole (0,16 de la carte), elle se resserre sur les derniers 40 % jusqu'à la taille de l'étoile peinte.
+- **Elle frappe la place exacte de l'étoile du nouveau niveau** : `etoileDuNiveau(n)` (texture-carte) rend la place que `peindreNiveau` lui donne, en fractions de la largeur de la carte — le même calcul (`placeDeLEtoile`), le rapport du bouclier retenu à la peinture.
+- **L'impact** : un éclair, une onde qui s'élargit, une gerbe de 90 étincelles qui retombent (or, or clair, crème, au-dessus de 1 pour le bloom, mélange additif), l'étoile volante qui s'efface sur l'étoile peinte. Et `onImpact` : la carte rebondit (`Bump` keyé par les impacts), se REPEINT au niveau (`niveauVu` attend l'impact ; la collection, elle, est fusionnée au clic), le titre du niveau éclate, `SON_EQUIPER`, vibration `[25, 30, 60]`. « Fusionner » est éteint tant que l'étoile vole.
+- Premier essai mesuré : départ en haut à droite et arc au-dessus — l'étoile passait presque tout son vol HORS DE L'ÉCRAN et n'apparaissait que petite, juste avant l'impact. D'où l'entrée par le bord et l'arc plafonné.
+- `&frappe=lent` : cinq fois plus lente, pour la regarder (le rendu sans tête ne la voit pas à vitesse réelle).

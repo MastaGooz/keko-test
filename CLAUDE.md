@@ -292,8 +292,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   5. **La plus belle reste** (Keko) : la fusion emporte le simple d'abord,
   le holo animé en dernier (`exemplaireAFusionner`). On fusionne depuis la
   CARTE OUVERTE de la collection (étoiles, jauge des exemplaires, « Fusionner
-  N cartes » éteint tant qu'il en manque ; la carte rebondit, le titre
-  éclate). **+1 de puissance par niveau**, l'écu dit la puissance totale ;
+  N cartes » éteint tant qu'il en manque). **La fusion FRAPPE la carte**
+  (`FrappeDuNiveau`, Keko : « un effet beaucoup plus juicy ») : une étoile
+  d'or entre par le bord, en arc, et frappe la place exacte de l'étoile du
+  nouveau niveau (`etoileDuNiveau`) — éclair, onde, gerbe d'étincelles ; À
+  L'IMPACT la carte rebondit et se repeint (`niveauVu`), le titre éclate, le
+  son et la vibration partent. La collection est fusionnée au clic. **+1 de puissance par niveau**, l'écu dit la puissance totale ;
   sur la carte, **une étoile d'or cernée de blanc par niveau gagné**, à
   droite de l'écu, aucune au premier (`peindreNiveau`). Les cartes lisent le
   niveau par `declarerLesNiveaux` (posé par `Jeu.tsx`). Une collection du
@@ -542,6 +546,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
 | `?brillant=0`, `?rayonsbrillants=0`, `?lin=0.09` | la bordure, les rayons clairs sans leur brillant ; le lin tressé essayé puis retiré |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
+| `&frappe=lent` | la frappe de la fusion cinq fois plus lente, pour la regarder |
 | `?niv=N` | montre le niveau N (1 à 5) sur toutes les cartes, quel que soit leur vrai niveau |
 | `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
 | `?camp=0`, `?camp=ancien`, `?brillantfond=doux\|eclat` | les cartes sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur, ou sous les pointes brillantes de l'éclat |

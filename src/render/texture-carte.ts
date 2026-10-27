@@ -5061,6 +5061,7 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
   if (bouclier !== null) {
     const h = MEDAILLON.l * 1.08
     const l = (h * bouclier.width) / bouclier.height
+    rapportDuBouclier = bouclier.width / bouclier.height
     ctx.save()
     ctx.shadowColor = '#000000a0'
     ctx.shadowBlur = 3 * U * ombreA(ctx)
@@ -5113,16 +5114,42 @@ function peindreMedaillon(ctx: CanvasRenderingContext2D, n: number, bouclier: HT
  */
 const NIVEAU_MAX = 5
 const NIVEAU_D_ESSAI = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('niv')
+/** Le rapport largeur / hauteur du bouclier peint, retenu pour `etoileDuNiveau`. */
+let rapportDuBouclier: number | null = null
+
+/** La place de la k-ième étoile (0 = la première) autour du médaillon de centre (cx, cy), de boîte l × h. */
+function placeDeLEtoile(cx: number, cy: number, l: number, h: number, k: number): { x: number; y: number; r: number } {
+  const r = 3.1 * U
+  return { x: cx + l / 2 + 1.2 * U + r + k * r * 2.15, y: cy - 0.18 * h, r }
+}
+
+/**
+ * OÙ SE PEINT L'ÉTOILE QU'APPORTE LE NIVEAU `niveau` (la dernière gagnée), en
+ * FRACTIONS DE LA LARGEUR de la carte depuis son coin haut gauche — pour que
+ * l'étoile qui vole à la fusion frappe la carte à sa place (`FrappeDuNiveau`).
+ * Le même calcul que `peindreNiveau`.
+ */
+export function etoileDuNiveau(niveau: number): { x: number; y: number; r: number } {
+  const k = Math.max(0, Math.min(NIVEAU_MAX, niveau) - 2)
+  const { cx, cy } = MEDAILLON
+  let l = MEDAILLON.l
+  let h = MEDAILLON.l
+  if (rapportDuBouclier !== null) {
+    h = MEDAILLON.l * 1.08
+    l = h * rapportDuBouclier
+  }
+  const p = placeDeLEtoile(cx, cy, l, h, k)
+  return { x: p.x / LARGE, y: p.y / LARGE, r: p.r / LARGE }
+}
+
 function peindreNiveau(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number, h: number, niveau: number): void {
   const voulu = NIVEAU_D_ESSAI === null ? niveau : Math.round(Number(NIVEAU_D_ESSAI)) || 1
   const n = Math.max(1, Math.min(NIVEAU_MAX, voulu)) - 1
   if (n === 0) return
   ctx.save()
   ctx.lineJoin = 'round'
-  const r = 3.1 * U
-  const y = cy - 0.18 * h
   for (let i = 0; i < n; i++) {
-    const x = cx + l / 2 + 1.2 * U + r + i * r * 2.15
+    const { x, y, r } = placeDeLEtoile(cx, cy, l, h, i)
     ctx.beginPath()
     for (let k = 0; k < 10; k++) {
       const a = -Math.PI / 2 + (k * Math.PI) / 5
