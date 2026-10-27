@@ -104,6 +104,19 @@ const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'niveau', nom: 'Niveau' },
 ]
 
+/** Vrai sur un écran au doigt (la même requête que la CSS du bandeau du deck). */
+function useAuDoigt(): boolean {
+  const requete = '(pointer: coarse)'
+  const [oui, setOui] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(requete).matches)
+  useEffect(() => {
+    const m = matchMedia(requete)
+    const suivre = (): void => setOui(m.matches)
+    m.addEventListener('change', suivre)
+    return () => m.removeEventListener('change', suivre)
+  }, [])
+  return oui
+}
+
 /** Au doigt, l'appui qui zoome une carte dans l'éditeur de deck. */
 const APPUI_LONG_MS = 450
 
@@ -1031,6 +1044,23 @@ export function PageCollection({
    * bandeau la retire ; le zoom passe à l'APPUI LONG. La souris garde le
    * glisser-déposer et le clic qui zoome.
    */
+  const enBandeau = useAuDoigt()
+  /** Le bandeau collé en haut du défilé (il descend avec la page jusque-là). */
+  const [collee, setCollee] = useState(false)
+  const defile = useRef<HTMLDivElement>(null)
+  const avecDeck = deck !== undefined
+  useEffect(() => {
+    const d = defile.current
+    if (!enBandeau || !avecDeck || d === null) return
+    const suivre = (): void => {
+      const c = colonne.current
+      if (c === null) return
+      setCollee(c.getBoundingClientRect().top - d.getBoundingClientRect().top <= parseFloat(getComputedStyle(d).paddingTop) + 0.5)
+    }
+    suivre()
+    d.addEventListener('scroll', suivre, { passive: true })
+    return () => d.removeEventListener('scroll', suivre)
+  }, [enBandeau, avecDeck])
   const auDoigt = useRef(false)
   const appuiLong = useRef<{ minuteur: number; x: number; y: number } | null>(null)
   const zoomeParAppui = useRef(false)
@@ -1200,9 +1230,68 @@ export function PageCollection({
       ? undefined
       : places.find((x) => x.carte.id === ouverte.id && x.v === ouverte.v)
 
+  /* LA COLONNE DU DECK, à droite de la collection (Keko : « la collection
+     et sur la droite une colonne de deck, une ligne par carte, avec une
+     mini de l'illustration, le nom, une indication de rareté ») : elle
+     défile seule ; une tape sur une ligne retire la carte. */
+  // AU DOIGT C'EST UN BANDEAU, rangé dans le défilé SOUS LA RECHERCHE ET LES
+  // FILTRES (Keko : « je voyais le bandeau du deck en dessous de la barre de
+  // recherche / filtre ») et collé en haut quand on descend ; à la souris, la
+  // colonne de droite.
+  const colonneDuDeck =
+    deck !== undefined && catalogue !== null ? (
+    <aside
+      ref={colonne}
+      className={`deck-colonne${collee ? ' deck-colonne-collee' : ''}${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
+      aria-label={deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}
+    >
+      {/* LA TÊTE DE LA COLONNE NE DIT QUE LE COMPTE : le nom, le crayon et
+          « Supprimer » sont montés au-dessus de la collection (Keko). */}
+      <div className="deck-colonne-tete">
+        <span className="deck-colonne-nom">Cartes</span>
+        <b>{deck.nombre}/{deck.taille}</b>
+      </div>
+      <div className="deck-colonne-liste">
+        {duDeck.length === 0 && <p className="deck-colonne-vide">{enBandeau ? "Touche une carte pour l'ajouter au deck." : "Glisse une carte ici pour l'ajouter au deck."}</p>}
+        {duDeck.map(({ carte, v }) => {
+          const { holo, anime } = exemplaireDe(v)
+          return (
+            <button
+              key={`${carte.id}:${v}`}
+              type="button"
+              className="deck-ligne"
+              style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
+              title={`${enTitre(carte.nom)} : glisse-la hors du deck pour la retirer`}
+              onClick={() => taper(carte, v)}
+              onPointerDown={(e) => toucher(e, carte, v, 'deck')}
+              onPointerMove={bougerAppui}
+              onPointerUp={lacherAppui}
+              onPointerCancel={lacherAppui}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <img draggable={false} className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
+              <span className="deck-ligne-texte">
+                <span className="deck-ligne-nom">{enTitre(carte.nom)}</span>
+                {/* LA RARETÉ NE S'ÉCRIT PAS (Keko) : la couleur du liseré la dit. Restent
+                    les bonus, en PASTILLES comme sur les vignettes (Keko : « holo dans
+                    le même style que la collection, pastille multicolore »). */}
+                {(holo || anime) && (
+                  <span className="deck-ligne-bonus">
+                    {holo && <span className="pastille-holo">Holo</span>}
+                    {anime && <span className="pastille-anime">Animé</span>}
+                  </span>
+                )}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </aside>
+    ) : null
+
   return (
     <div className={`collection${modeDeck ? ' collection-avec-deck' : ''}`}>
-      <div className="collection-defile">
+      <div ref={defile} className="collection-defile">
         <header className="collection-tete">
           {/* L'ÉDITEUR D'UN DECK, SANS ONGLETS (Keko : on y entre par son étui) :
               le retour aux étuis et, en face, le crayon puis la corbeille ; le
@@ -1342,6 +1431,7 @@ export function PageCollection({
             </div>
           </div>
         )}
+        {enBandeau && colonneDuDeck}
         {panneau && (
           <PanneauFiltres
             titre="Filtres"
@@ -1481,59 +1571,7 @@ export function PageCollection({
           </div>
         )}
       </div>
-      {/* LA COLONNE DU DECK, à droite de la collection (Keko : « la collection
-          et sur la droite une colonne de deck, une ligne par carte, avec une
-          mini de l'illustration, le nom, une indication de rareté ») : elle
-          défile seule ; une tape sur une ligne retire la carte. */}
-      {deck !== undefined && catalogue !== null && (
-        <aside
-          ref={colonne}
-          className={`deck-colonne${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
-          aria-label={deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}
-        >
-          {/* LA TÊTE DE LA COLONNE NE DIT QUE LE COMPTE : le nom, le crayon et
-              « Supprimer » sont montés au-dessus de la collection (Keko). */}
-          <div className="deck-colonne-tete">
-            <span className="deck-colonne-nom">Cartes</span>
-            <b>{deck.nombre}/{deck.taille}</b>
-          </div>
-          <div className="deck-colonne-liste">
-            {duDeck.length === 0 && <p className="deck-colonne-vide">Glisse une carte ici pour l'ajouter au deck.</p>}
-            {duDeck.map(({ carte, v }) => {
-              const { holo, anime } = exemplaireDe(v)
-              return (
-                <button
-                  key={`${carte.id}:${v}`}
-                  type="button"
-                  className="deck-ligne"
-                  style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
-                  title={`${enTitre(carte.nom)} : glisse-la hors du deck pour la retirer`}
-                  onClick={() => taper(carte, v)}
-                  onPointerDown={(e) => toucher(e, carte, v, 'deck')}
-                  onPointerMove={bougerAppui}
-                  onPointerUp={lacherAppui}
-                  onPointerCancel={lacherAppui}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  <img draggable={false} className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
-                  <span className="deck-ligne-texte">
-                    <span className="deck-ligne-nom">{enTitre(carte.nom)}</span>
-                    {/* LA RARETÉ NE S'ÉCRIT PAS (Keko) : la couleur du liseré la dit. Restent
-                        les bonus, en PASTILLES comme sur les vignettes (Keko : « holo dans
-                        le même style que la collection, pastille multicolore »). */}
-                    {(holo || anime) && (
-                      <span className="deck-ligne-bonus">
-                        {holo && <span className="pastille-holo">Holo</span>}
-                        {anime && <span className="pastille-anime">Animé</span>}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </aside>
-      )}
+      {!enBandeau && colonneDuDeck}
       {/* LA CARTE QU'ON GLISSE suit le doigt ; rouge quand la lâcher la retire. */}
       {glisse !== null &&
         createPortal(
