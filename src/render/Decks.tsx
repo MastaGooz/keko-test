@@ -11,7 +11,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { RARETES_EMOJI, type CarteEmoji } from '../logic/emoji/types.ts'
-import { DECK, nomDuDeck, deckComplet, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
+import { DECK, DECKS_MAX, nomDuDeck, deckComplet, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { teinteDuCran } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -90,7 +90,8 @@ export function PageDecks({
         <header className="collection-tete">
           <h1 className="collection-titre">Mes decks</h1>
           <p className="collection-compte">
-            <b>{decks.liste.length}</b> deck{decks.liste.length > 1 ? 's' : ''}
+            {/* LE PLAFOND SE LIT (Keko : « indiquer le nombre de decks max : X/max »). */}
+            <b>{decks.liste.length}</b> / {DECKS_MAX} decks
             {actif !== undefined && deckComplet(actif) && <> · {nomDuDeck(actif, decks.actif)} joue</>}
           </p>
         </header>
