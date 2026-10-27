@@ -23,7 +23,7 @@ import { NoToneMapping, type Group } from 'three'
 import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emoji/types.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
 import type { Collection, Possession, Variante } from '../logic/emoji/collection.ts'
-import { VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import { NIVEAUX, VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { NOM_DECK_MAX } from '../logic/emoji/deck.ts'
 import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
@@ -974,6 +974,9 @@ export function PageCollection({
   // bien de pouvoir sélectionner plusieurs catégories à la fois ».
   const [races, setRaces] = useState<ReadonlySet<RaceCarte>>(new Set())
   const [roles, setRoles] = useState<ReadonlySet<RoleCarte>>(new Set())
+  // LE NIVEAU DU PERSONNAGE (Keko : « ajouter le niveau dans les filtres ») :
+  // plusieurs à la fois, comme les raretés ; celui que la carte montre.
+  const [niveaux, setNiveaux] = useState<ReadonlySet<number>>(new Set())
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
   /**
    * OBTENUES / MANQUANTES, dans « Toutes les cartes » seulement (Keko : « dans
@@ -989,7 +992,7 @@ export function PageCollection({
   // deck a prise aussi. Un bouton à lui, hors du panneau des filtres (Keko).
   const [sansAttribuees, setSansAttribuees] = useState(false)
   const [panneau, setPanneau] = useState(false)
-  const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
+  const actifs = raretes.size + niveaux.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
   /**
    * LE GLISSER-DÉPOSER DU DECK (Keko : « un drag and drop pour ajouter /
@@ -1105,6 +1108,7 @@ export function PageCollection({
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
         }) &&
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
+        (niveaux.size === 0 || niveaux.has(niveauDuPersonnageDe(carte.id))) &&
         (races.size === 0 || races.has(carte.race)) &&
         (roles.size === 0 || roles.has(carte.role)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
@@ -1114,7 +1118,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [places, recherche, tri, raretes, races, roles, bonus, possession, nouvelles, deck, sansAttribuees])
+  }, [places, recherche, tri, raretes, niveaux, races, roles, bonus, possession, nouvelles, deck, sansAttribuees])
 
   const total = catalogue?.length ?? 0
   const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
@@ -1287,6 +1291,7 @@ export function PageCollection({
             voir={`Voir ${visibles.length} carte${visibles.length > 1 ? 's' : ''}`}
             onEffacer={() => {
               setRaretes(new Set())
+              setNiveaux(new Set())
               setRaces(new Set())
               setRoles(new Set())
               setBonus(new Set())
@@ -1324,6 +1329,20 @@ export function PageCollection({
                 >
                   <i />
                   {NOM_DE_LA_RARETE[r]}
+                </button>
+              ))}
+            </div>
+            </SectionFiltre>
+            <SectionFiltre titre="Niveau">
+            <div className="filtres-panneau-puces">
+              {Array.from({ length: NIVEAUX.max }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`puce${niveaux.has(n) ? ' actif' : ''}`}
+                  onClick={() => setNiveaux((s) => basculer(s, n))}
+                >
+                  {n}
                 </button>
               ))}
             </div>
