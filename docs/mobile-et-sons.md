@@ -14,7 +14,11 @@
   seule. *Son réglage est un rasoir et personne ne le rejoue* — une archive
   qu'on bascule sans la rejouer est une archive qu'on casse.
 - **Le manifeste dit `portrait`**, puisque l'application installée ouvre la
-  racine, c'est-à-dire la collection.
+  racine, c'est-à-dire la collection. ***Il dit `any` depuis le 27/10*** :
+  Keko, « adapter l'app pour qu'elle soit utilisable en écran paysage
+  également sur tel » — le paysage du téléphone a sa mise en page (le rail à
+  gauche, voir `docs/emoji.md`). Une app installée avant garde le portrait
+  jusqu'à sa réinstallation.
 
 ***UNE APP INSTALLÉE FIGE L'ORIENTATION DE SON MANIFESTE, ET AUCUN DÉPLOIEMENT
 NE LA CHANGE.*** Keko, après la bascule : « sur téléphone ça s'affiche toujours

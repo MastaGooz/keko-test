@@ -7037,3 +7037,14 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 **Prendre une carte à un autre deck se confirme** (27/10, Keko : « un petit message de confirmation pour demander si on est sûr de prendre une carte d'un autre deck ») : la tape (au doigt) ou le lâcher (à la souris) d'un exemplaire « pris » ouvre une boîte (`aPrendre`, `.prendre`) : la mini du personnage sur son cran, « Prendre **X** à **Deck 2** ? », « Elle quittera Deck 2. », Annuler / Prendre ; une tape sur le voile annule. Mesuré au toucher émulé : la tape ouvre la boîte sans rien changer (29), Annuler la ferme (29), Prendre fait l'échange (30, la marque « pris » disparaît).
 
 **Le bandeau ne suit plus l'écran** (27/10, Keko : « empêche le bandeau de suivre l'écran et laisse-le fixe ») : plus de `sticky` ni de `.deck-colonne-collee` ; il reste à sa place sous la recherche et part avec la page quand on descend (mesuré : 455 px au-dessus de l'écran après 700 px de défilement). Les pastilles des vignettes ne le croisent plus : il n'est plus jamais par-dessus la grille.
+
+### Le téléphone en paysage (27/10/2026)
+
+Keko : « on pourrait adapter l'app pour qu'elle soit utilisable en écran paysage également sur tel ? ». Mesuré d'abord en 844 × 390 au doigt : tout s'affichait, mais la barre du bas recouvrait le sachet et sa jauge, la grille n'avait qu'une rangée visible, et la carte ouverte posait ses lignes sur elle-même. Choisi par Keko : **la barre en RAIL VERTICAL À GAUCHE** (proposés : le rail, en haut comme sur PC, en bas plus compacte) et **l'éditeur de deck avec sa colonne à droite** comme sur PC (plutôt que le bandeau).
+
+- Requête : `(pointer: coarse) and (orientation: landscape) and (max-height: 32rem)` — le téléphone couché, pas la tablette. `--rail` est la largeur que le contenu laisse libre (`collection-defile`, la jauge centrée sur le reste, « X disponibles », « Prochain paquet dans … ») ; `--barre-bas` retombe au seul bord.
+- Le rail : la pilule en colonne (Cartes, la place du rond, Deck), l'icône sur le mot, le chevron qui pointe à droite ; les menus s'ouvrent À DROITE du rail, face à leur bouton (« Deck » par le bas).
+- L'éditeur de deck : le bandeau (`useAuDoigt`) ne vaut plus qu'en portrait ; en paysage la colonne de droite revient, sous le compteur. La tape et l'appui long restent (c'est le `pointerType` qui décide).
+- La carte ouverte : sous 520 px de haut et plus large que haute (`aCote`), la carte passe à gauche (centre à 30 % de la largeur, 86 % de la hauteur au plus), ses lignes et « Fusionner » dans la moitié droite ; la boîte qui reçoit le doigt suit (`boite.cx`).
+- Le paquet n'a rien de neuf : il avait déjà sa mise en page paysage (le PC, `reductionPaysage`, cinq colonnes au bilan).
+- Le manifeste passe de `portrait` à `any` ; une application installée avant garde le portrait jusqu'à sa réinstallation.

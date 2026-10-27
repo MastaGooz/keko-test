@@ -104,9 +104,12 @@ const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'niveau', nom: 'Niveau' },
 ]
 
-/** Vrai sur un écran au doigt (la même requête que la CSS du bandeau du deck). */
+/**
+ * Vrai quand le deck se montre en BANDEAU : au doigt, en portrait (la même
+ * requête que sa CSS) ; en paysage, il reprend la colonne de droite (Keko).
+ */
 function useAuDoigt(): boolean {
-  const requete = '(pointer: coarse)'
+  const requete = '(pointer: coarse) and (orientation: portrait)'
   const [oui, setOui] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(requete).matches)
   useEffect(() => {
     const m = matchMedia(requete)
@@ -705,7 +708,15 @@ function CarteOuverte({
   // de la rangée du paquet, *la taille se calcule sur la place.*
   const hVisible = hauteurVisibleA(Z_MAIN, fenetre.h)
   const lVisible = (hVisible * fenetre.l) / fenetre.h
-  const taille = Math.min((lVisible * 0.82) / LARGE, (hVisible * 0.54) / HAUT)
+  // LE TÉLÉPHONE EN PAYSAGE (Keko) : sous la carte, les lignes n'ont plus la
+  // place. La carte passe à gauche, sur presque toute la hauteur, ses lignes
+  // à droite (`carte-ouverte-a-cote`).
+  const aCote = fenetre.l > fenetre.h && fenetre.h < 520
+  const xCarte = aCote ? -lVisible * 0.2 : 0
+  const yCarte = aCote ? 0 : hVisible * 0.09
+  const taille = aCote
+    ? Math.min((lVisible * 0.42) / LARGE, (hVisible * 0.86) / HAUT)
+    : Math.min((lVisible * 0.82) / LARGE, (hVisible * 0.54) / HAUT)
   const px = (taille * LARGE * fenetre.l * Math.min(window.devicePixelRatio || 1, 2)) / lVisible
   /**
    * LE DOIGT PENCHE LA CARTE, COMME AU PAQUET. Keko : « il faut pouvoir bouger
@@ -715,8 +726,8 @@ function CarteOuverte({
    * **Une tape à côté la repose** — une tape, pas un glisser qui finit dehors.
    */
   const boite = {
-    cx: fenetre.l / 2,
-    cy: fenetre.h * (0.5 - 0.09),
+    cx: fenetre.l * (0.5 + xCarte / lVisible),
+    cy: fenetre.h * (0.5 - yCarte / hVisible),
     l: ((taille * LARGE) / lVisible) * fenetre.l,
     h: ((taille * HAUT) / hVisible) * fenetre.h,
   }
@@ -810,7 +821,7 @@ function CarteOuverte({
           possession.n > compteDe(possession, variante) ? `${possession.n} en tout` : null,
         ].filter((m): m is string => m !== null)
   return (
-    <div className="carte-ouverte">
+    <div className={`carte-ouverte${aCote ? ' carte-ouverte-a-cote' : ''}`}>
       <Canvas
         dpr={[1, 2]}
         camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
@@ -825,11 +836,11 @@ function CarteOuverte({
         <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
         <group visible={peinte}>
-        <Bump key={fusions} pret={peinte} centre={[0, hVisible * 0.09, Z_MAIN]}>
+        <Bump key={fusions} pret={peinte} centre={[xCarte, yCarte, Z_MAIN]}>
         <Carte3D
           onPeinte={() => setPeinte(true)}
           carte={aPeindre}
-          position={[0, hVisible * 0.09, Z_MAIN]}
+          position={[xCarte, yCarte, Z_MAIN]}
           taille={taille}
           tailleTexture={px}
           reflet
@@ -1249,7 +1260,7 @@ export function PageCollection({
         <b>{deck.nombre}/{deck.taille}</b>
       </div>
       <div className="deck-colonne-liste">
-        {duDeck.length === 0 && <p className="deck-colonne-vide">{enBandeau ? "Touche une carte pour l'ajouter au deck." : "Glisse une carte ici pour l'ajouter au deck."}</p>}
+        {duDeck.length === 0 && <p className="deck-colonne-vide">{matchMedia('(pointer: coarse)').matches ? "Touche une carte pour l'ajouter au deck." : "Glisse une carte ici pour l'ajouter au deck."}</p>}
         {duDeck.map(({ carte, v }) => {
           const { holo, anime } = exemplaireDe(v)
           return (

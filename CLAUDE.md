@@ -36,7 +36,7 @@ la raison de s'y tenir.***
 
 Les deux collections sont des jeux web (Vite + TypeScript, React + React Three
 Fiber pour le rendu des cartes), joués **au doigt sur téléphone**. ***LA
-COLLECTION EST EN PORTRAIT, L'ARCHIVE EN PAYSAGE*** — tranché par Keko en
+COLLECTION EST EN PORTRAIT (le paysage du téléphone tient aussi), L'ARCHIVE EN PAYSAGE*** — tranché par Keko en
 demandant l'ouverture de lexicodex : « le but est en partie de basculer le jeu
 en format vertical sur le téléphone (fini le mode paysage) ».
 
@@ -474,9 +474,14 @@ Le détail (variables CSS, pièges de `%` dans une variable, formats vérifiés,
 plein écran, sons synthétisés, arches) est dans `docs/mobile-et-sons.md`.
 
 - Cibles tactiles **≥ 48 px**. Tester au doigt.
-- **La collection est en portrait et n'exige rien** ; l'archive reste en
-  paysage avec son écran de rotation (`paysage-requis`). Le manifeste dit
-  `portrait` et **porte la date du build** (`manifesteVersionne`) ; une app
+- **La collection est en portrait et n'exige rien** ; **LE TÉLÉPHONE EN
+  PAYSAGE MARCHE AUSSI** (Keko, 27/10) : la barre devient un RAIL VERTICAL À
+  GAUCHE (`(pointer: coarse) and (orientation: landscape) and (max-height:
+  32rem)`, `--rail`), l'éditeur de deck reprend sa colonne de droite (le
+  bandeau est au portrait seul), la carte ouverte passe à gauche, ses lignes
+  à droite (`carte-ouverte-a-cote`) ; le paquet prend la mise en page paysage
+  du PC. L'archive reste en paysage avec son écran de rotation
+  (`paysage-requis`). Le manifeste dit `any` et **porte la date du build** (`manifesteVersionne`) ; une app
   installée fige l'orientation de son manifeste, il faut la réinstaller.
   **L'icône est le symbole de Keko** (le poing d'or sur l'écu, `icone-emoji*`,
   engendrées par `scripts/generate-icone.py` depuis `Symbole.png`).

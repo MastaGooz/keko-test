@@ -2879,7 +2879,7 @@ span.jouer-pile-dos {
    sous le compteur des monnaies, toute la largeur ; les cartes du deck en
    miniatures qui défilent de côté, le liseré du cran dessous, la grille en
    pleine largeur dessous. Au doigt, une tape ajoute ou retire, l'appui long zoome. */
-@media (pointer: coarse) {
+@media (pointer: coarse) and (orientation: portrait) {
   .collection-avec-deck {
     --bandeau-deck: 5.2rem;
   }
@@ -3047,5 +3047,151 @@ span.jouer-pile-dos {
 
 .prendre-boutons .prendre-annuler {
   margin-top: 1rem;
+}
+
+/* ====================================================================
+   LE TÉLÉPHONE EN PAYSAGE (Keko : « adapter l'app pour qu'elle soit
+   utilisable en écran paysage également sur tel ? » ; choisi : la barre en
+   RAIL VERTICAL À GAUCHE, l'éditeur de deck avec sa colonne à droite comme
+   sur PC). 390 px de haut : la barre du bas mangeait le sachet et la grille ;
+   collée au bord gauche, elle rend toute la hauteur au jeu. `--rail` : la
+   largeur qu'elle prend, que le contenu laisse libre.
+   ==================================================================== */
+@media (pointer: coarse) and (orientation: landscape) {
+  .collection-avec-deck .deck-colonne {
+    top: calc(max(0.6rem, env(safe-area-inset-top)) + 3rem);
+    bottom: calc(var(--barre-bas) + 1rem);
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 32rem) {
+  :root {
+    --rail: calc(max(0.6rem, env(safe-area-inset-left)) + 5.6rem);
+    --barre-bas: max(0.6rem, env(safe-area-inset-bottom));
+  }
+
+  .nav {
+    top: 50%;
+    bottom: auto;
+    left: max(0.6rem, env(safe-area-inset-left));
+    transform: translateY(-50%);
+  }
+
+  .nav-cachee {
+    transform: translate(-140%, -50%);
+  }
+
+  .nav-pilule {
+    flex-direction: column;
+    height: auto;
+    width: 4.8rem;
+    border-radius: 1.6rem;
+  }
+
+  /* Chaque moitié : l'icône sur le mot, le chevron qui pointe vers le menu, à droite. */
+  .nav-moitie {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
+    min-width: 0;
+    min-height: 4.2rem;
+    padding: 0.4rem 0.2rem;
+    border-radius: 1.3rem;
+    font-size: 0.72rem;
+  }
+
+  .nav-deck .nav-icone {
+    order: -1;
+  }
+
+  .nav-moitie .nav-chevron,
+  .nav-deck .nav-chevron {
+    position: absolute;
+    right: 0.3rem;
+    top: 50%;
+    margin: 0;
+    width: 0.35rem;
+    height: 0.35rem;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+
+  .nav-moitie .nav-chevron-ouvert,
+  .nav-deck .nav-chevron-ouvert {
+    transform: translateY(-50%) rotate(135deg);
+  }
+
+  .nav-pastille {
+    left: auto;
+    right: 0.6rem;
+    top: 0.1rem;
+  }
+
+  .nav-place {
+    width: auto;
+    height: 4.4rem;
+  }
+
+  .nav-booster {
+    transform: translate(-50%, -50%);
+  }
+
+  .nav-booster:active {
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+
+  /* Les menus s'ouvrent À DROITE DU RAIL, face à leur bouton. */
+  .nav-menu {
+    top: 0;
+    bottom: auto;
+    left: calc(100% + 0.55rem);
+    right: auto;
+    transform-origin: top left;
+    animation-name: nav-menu-tombe;
+  }
+
+  .nav-menu-droite {
+    top: auto;
+    bottom: 0;
+    transform-origin: bottom left;
+  }
+
+  /* Le contenu laisse la place du rail ; plus rien n'est en bas. */
+  .collection-defile {
+    padding-left: var(--rail);
+    padding-bottom: calc(1.6rem + env(safe-area-inset-bottom));
+  }
+
+  /* La jauge en haut, au milieu de ce qui reste ; « X disponibles » et
+     « Prochain paquet dans … » en bas, comme sur PC. */
+  .reserve-place {
+    top: max(0.6rem, env(safe-area-inset-top));
+    bottom: auto;
+    left: calc(50% + var(--rail) / 2);
+  }
+
+  .reserve-cachee {
+    transform: translate(-50%, -1rem);
+  }
+
+  .paquet-disponibles {
+    top: auto;
+    bottom: calc(5vh + env(safe-area-inset-bottom));
+    padding-left: var(--rail);
+  }
+
+  .reserve-bilan {
+    bottom: calc(9vh + env(safe-area-inset-bottom));
+    left: var(--rail);
+  }
+}
+
+/* LA CARTE OUVERTE, TÉLÉPHONE EN PAYSAGE : la carte à gauche (placée par
+   `CarteOuverte`), ses lignes et « Fusionner » dans la moitié droite. */
+.carte-ouverte-a-cote .carte-ouverte-infos {
+  left: 52%;
+  right: calc(16px + env(safe-area-inset-right));
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
 }
 
