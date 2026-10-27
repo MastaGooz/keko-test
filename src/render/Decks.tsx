@@ -9,10 +9,11 @@
  * *Rien ne se décide ici* : une tape ouvre l'éditeur (`PageCollection` en mode
  * deck), l'étui vide en crée un nouveau. Le deck qui joue porte « Joue ».
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RARETES_EMOJI, type CarteEmoji } from '../logic/emoji/types.ts'
 import { DECK, nomDuDeck, deckComplet, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { teinteDuCran } from './Collection.tsx'
+import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
 const VERSION = encodeURIComponent(__BUILD_TIME__)
 const url = (chemin: string): string => `${import.meta.env.BASE_URL}${chemin}?v=${VERSION}`
@@ -39,6 +40,21 @@ function vedetteDe(d: Deck, parId: ReadonlyMap<string, CarteEmoji>, valeur: Vale
   return meilleure?.carte ?? null
 }
 
+/**
+ * LE CUIR DE L'ÉTUI EST LE DOS DES CARTES, peint par le même peintre
+ * (`peindreDosEmoji` : le cuir capitonné, le liseré d'or, les clous) — Keko :
+ * « tu peux mettre vraiment la même texture et bordure de dos de carte sur
+ * les decks ? ». Peint une fois par session, servi en image de fond.
+ */
+let DOS: Promise<string | null> | null = null
+function imageDuDos(): Promise<string | null> {
+  DOS ??= peindreDosEmoji(RAYON_SIMPLE).then(
+    (toile) => new Promise<string | null>((resoudre) => toile.toBlob((b) => resoudre(b === null ? null : URL.createObjectURL(b)), 'image/webp', 0.9)),
+    () => null,
+  )
+  return DOS
+}
+
 export function PageDecks({
   catalogue,
   decks,
@@ -58,6 +74,16 @@ export function PageDecks({
 }): React.ReactElement {
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   const actif = decks.liste[decks.actif]
+  const [dos, setDos] = useState<string | null>(null)
+  useEffect(() => {
+    let vivant = true
+    void imageDuDos().then((u) => {
+      if (vivant) setDos(u)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [])
   return (
     <div className="collection">
       <div className="collection-defile">
@@ -77,6 +103,7 @@ export function PageDecks({
                 key={i}
                 type="button"
                 className={`etui${joue ? ' etui-joue' : ''}`}
+                style={dos === null ? undefined : { backgroundImage: `url(${dos})` }}
                 aria-label={`${nomDuDeck(d, i)}, ${d.cartes.length} cartes sur ${DECK.taille}${joue ? ', joue' : ''}`}
                 onClick={() => onOuvrir(i)}
               >

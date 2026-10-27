@@ -2691,32 +2691,22 @@ span.jouer-pile-dos {
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  aspect-ratio: 1 / 1.42;
-  padding: 0.75rem 0.7rem 0.6rem;
+  /* LA CARTE : son rapport, ses coins (`RAYON_SIMPLE`), et son dos en fond —
+     le cuir et le liseré d'or peints par `peindreDosEmoji` (voir `PageDecks`) ;
+     le contenu reste en dedans du liseré. */
+  aspect-ratio: 1 / 1.4;
+  padding: 11% 9% 8%;
   border: 0;
-  border-radius: 0.9rem;
-  background:
-    radial-gradient(120% 80% at 30% 15%, rgba(255, 255, 255, 0.12), transparent 60%),
-    linear-gradient(160deg, #6b3480, #4a1f5c 55%, #351340);
+  border-radius: 6% / 4.3%;
+  background: #3b1544 center / 100% 100% no-repeat;
   box-shadow:
     0 0.35rem 0 #241029,
-    0 0.6rem 1.2rem rgba(0, 0, 0, 0.45),
-    inset 0 0 0 0.12rem rgba(255, 198, 31, 0.55);
+    0 0.6rem 1.2rem rgba(0, 0, 0, 0.45);
   color: #fffaf0;
   font: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.12s ease;
-}
-
-/* LA COUTURE : un pointillé d'or juste en dedans du bord. */
-.etui::before {
-  content: '';
-  position: absolute;
-  inset: 0.35rem;
-  border: 0.1rem dashed rgba(255, 198, 31, 0.6);
-  border-radius: 0.6rem;
-  pointer-events: none;
 }
 
 .etui:active {
@@ -2795,20 +2785,16 @@ span.jouer-pile-dos {
 .etui-joue {
   box-shadow:
     0 0.35rem 0 #241029,
-    0 0 1.2rem rgba(255, 198, 31, 0.45),
-    inset 0 0 0 0.16rem #ffc61f;
+    0 0 1.4rem rgba(255, 198, 31, 0.55);
 }
 
 /* L'ÉTUI VIDE : un nouveau deck. */
 .etui-nouveau {
   justify-content: center;
+  padding: 0;
   background: rgba(255, 250, 240, 0.06);
   box-shadow: none;
   border: 0.15rem dashed rgba(255, 250, 240, 0.35);
-}
-
-.etui-nouveau::before {
-  display: none;
 }
 
 .etui-plus {
