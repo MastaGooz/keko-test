@@ -322,7 +322,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`EntreeDeck` : emoji + version, une place par version dans la grille en
   mode deck, menu « Cartes » → « Deck », `ChoixDuDeck`), **un emoji au plus
   une fois par deck, un exemplaire dans un seul deck** (`disponibles`, « pris
-  par le Deck 2 » estompé) — **le prendre à un autre deck se CONFIRME** (« Prendre X à Deck 2 ? », `aPrendre`) ; **plusieurs decks** (`Decks`, **trois au plus voulus, VINGT le temps des tests** — `DECKS_MAX`,
+  par le Deck 2 » estompé) — **le prendre à un autre deck se CONFIRME** (« Prendre X à Deck 2 ? », `aPrendre`) ; **plusieurs decks** (`Decks`, **TROIS au plus** — `DECKS_MAX`,
   Keko 27/10 ; une sauvegarde qui en a davantage les garde, `DECKS_LUS_MAX`) : **« Mes decks » les montre en ÉTUIS** (`render/Decks.tsx`, Keko :
   « matérialiser les decks par des paquets » ; le DOS des cartes en fond,
   `peindreDosEmoji` sans ses clous, nom frappé en or, la carte la plus forte en fenêtre sur son camp, ruban « Joue »), une

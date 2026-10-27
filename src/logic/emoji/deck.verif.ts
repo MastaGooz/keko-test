@@ -153,7 +153,7 @@ verifier('supprimer avant l’actif décale l’index', supprimerDeck(choisirDec
 let plein = decksVides()
 for (let i = 0; i < DECKS_MAX + 2; i++) plein = ajouterDeck(plein)
 verifier('au plus DECKS_MAX decks', plein.liste.length === DECKS_MAX)
-verifier('vingt decks au plus, le temps des tests (Keko)', DECKS_MAX === 20)
+verifier('trois decks au plus (Keko)', DECKS_MAX === 3)
 // UNE SAUVEGARDE QUI DÉPASSE LE PLAFOND (il a baissé) garde ses decks, sans pouvoir en ajouter.
 const nLus = Math.max(DECKS_MAX, DECKS_LUS_MAX)
 const auPlafond = lireDecks({ liste: Array.from({ length: nLus }, () => ({ cartes: [] })), actif: nLus - 1 }, deuxChacun, T0)
