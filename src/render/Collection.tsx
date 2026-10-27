@@ -615,8 +615,6 @@ export function Vignette({
 /* LA CARTE OUVERTE                                                         */
 /* ------------------------------------------------------------------------ */
 
-const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-
 /**
  * LA CARTE EN GRAND — la même `Carte3D` que le paquet, donc la même matière :
  * le reflet au doigt, le penchant au téléphone, **et la feuille holo ou
@@ -652,7 +650,6 @@ function CarteOuverte({
   carte,
   possession,
   variante,
-  total,
   onFermer,
   onFusionner,
 }: {
@@ -660,7 +657,6 @@ function CarteOuverte({
   /** `null` : ouverte depuis le catalogue sans la posséder — rien à fusionner. */
   possession: Possession | null
   variante: Variante
-  total: number
   onFermer: () => void
   /** Fusionne les exemplaires du personnage vers son niveau suivant : voir `fusionner`. */
   onFusionner: () => void
@@ -813,13 +809,6 @@ function CarteOuverte({
     )
     return () => arret.abort()
   }, [])
-  const exemplaires =
-    possession === null
-      ? ['Pas encore obtenue']
-      : [
-          `${compteDe(possession, variante)} exemplaire${compteDe(possession, variante) > 1 ? 's' : ''} ${NOM_DE_LA_VARIANTE[variante]}`,
-          possession.n > compteDe(possession, variante) ? `${possession.n} en tout` : null,
-        ].filter((m): m is string => m !== null)
   return (
     <div className={`carte-ouverte${aCote ? ' carte-ouverte-a-cote' : ''}`}>
       <Canvas
@@ -855,11 +844,8 @@ function CarteOuverte({
         <span className="carte-ouverte-cran" style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}>
           {NOM_DE_LA_RARETE[carte.rarete]}
         </span>
-        <p className="carte-ouverte-ligne">{exemplaires.join(' · ')}</p>
-        <p className="carte-ouverte-ligne carte-ouverte-discret">
-          {possession !== null && <>Obtenue le {DATE.format(new Date(possession.premiere))} · </>}
-          n° {carte.rang} sur {total}
-        </p>
+        {/* NI LE COMPTE D'EXEMPLAIRES NI LA LIGNE DE LA DATE (Keko : « enlève le
+            "X exemplaire normal" et la ligne de la date d'obtention »). */}
         {possession !== null && (
           <NiveauDeLaCarte
             niveau={niveau}
@@ -904,8 +890,9 @@ function NiveauDeLaCarte({
     <div className="niveau">
       <p key={fusions} className={`niveau-titre${fusions > 0 ? ' niveau-monte' : ''}`}>
         Niveau {niveau}
-        {niveau > 1 && <span className="niveau-etoiles" aria-hidden="true">{'★'.repeat(niveau - 1)}</span>}
       </p>
+      {/* LES ÉTOILES SOUS LE NIVEAU (Keko), plus à côté. */}
+      {niveau > 1 && <p className="niveau-etoiles" aria-hidden="true">{'★'.repeat(niveau - 1)}</p>}
       {besoin === null ? (
         <p className="carte-ouverte-ligne carte-ouverte-discret">Niveau maximum</p>
       ) : (
@@ -916,7 +903,7 @@ function NiveauDeLaCarte({
             ))}
           </div>
           <p className="carte-ouverte-ligne carte-ouverte-discret">
-            {Math.min(exemplaires, besoin)} / {besoin} exemplaires pour le niveau {niveau + 1} · +1 de puissance
+            {Math.min(exemplaires, besoin)} / {besoin} exemplaires pour le niveau {niveau + 1}
           </p>
           <button type="button" className="decoller" disabled={exemplaires < besoin} onClick={onFusionner}>
             Fusionner {besoin} cartes
@@ -1639,7 +1626,6 @@ export function PageCollection({
             carte={laOuverte.carte}
             possession={laOuverte.p}
             variante={laOuverte.v}
-            total={total}
             onFermer={() => setOuverte(null)}
             onFusionner={() => {
               const id = laOuverte.carte.id
