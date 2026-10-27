@@ -3070,8 +3070,12 @@ span.jouer-pile-dos {
     --barre-bas: max(0.6rem, env(safe-area-inset-bottom));
   }
 
+  /* CENTRÉ SUR LA PETITE HAUTEUR (`svh`), PAS SUR `50%` : en défilant, le
+     navigateur range sa barre d'adresse et la hauteur de la fenêtre change —
+     à `50%`, le rail suivait ce va-et-vient (Keko : « la barre latérale monte
+     bizarrement et redescend d'un coup »). `svh` ne bouge pas. */
   .nav {
-    top: 50%;
+    top: 50svh;
     bottom: auto;
     left: max(0.6rem, env(safe-area-inset-left));
     transform: translateY(-50%);
