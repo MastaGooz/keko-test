@@ -2878,7 +2878,7 @@ span.jouer-pile-dos {
    colonnes de cartes, pas ergonomique… et si on faisait le bandeau en haut ? ») :
    sous le compteur des monnaies, toute la largeur ; les cartes du deck en
    miniatures qui défilent de côté, le liseré du cran dessous, la grille en
-   pleine largeur dessous. Une miniature sort du deck par un geste VERTICAL. */
+   pleine largeur dessous. Au doigt, une tape ajoute ou retire, l'appui long zoome. */
 @media (pointer: coarse) {
   .collection-avec-deck {
     --bandeau-deck: 5.2rem;

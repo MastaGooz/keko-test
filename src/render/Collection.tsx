@@ -104,8 +104,8 @@ const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'niveau', nom: 'Niveau' },
 ]
 
-/** Au doigt, la colonne du deck est un bandeau en haut (la même requête que la CSS). */
-const enBandeau = (): boolean => typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
+/** Au doigt, l'appui qui zoome une carte dans l'éditeur de deck. */
+const APPUI_LONG_MS = 450
 
 /** Ajoute ou retire une valeur d'un filtre : rien de coché, tout passe. */
 function basculer<T>(s: ReadonlySet<T>, v: T): ReadonlySet<T> {
@@ -384,6 +384,8 @@ export function Vignette({
   prisPar,
   nue = false,
   onSaisir,
+  onBouger,
+  onLacher,
 }: {
   carte: CarteEmoji
   /** `null` : une carte du catalogue qu'on n'a pas encore — grisée. */
@@ -403,6 +405,9 @@ export function Vignette({
   nue?: boolean
   /** Le mode deck : le doigt posé peut saisir la carte pour la glisser (voir `saisir`). */
   onSaisir?: (e: React.PointerEvent) => void
+  /** L'appui long (zoom au doigt) s'annule si le doigt bouge ou se lève. */
+  onBouger?: (e: React.PointerEvent) => void
+  onLacher?: () => void
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
@@ -541,6 +546,10 @@ export function Vignette({
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
       onPointerDown={onSaisir}
+      onPointerMove={onBouger}
+      onPointerUp={onLacher}
+      onPointerCancel={onLacher}
+      onContextMenu={onSaisir === undefined ? undefined : (e) => e.preventDefault()}
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}${possession === null ? ', pas encore obtenue' : ''}`}
     >
       {!prete && <span className="vignette-attente">{carte.emoji}</span>}
@@ -1002,8 +1011,7 @@ export function PageCollection({
    * LE GLISSER-DÉPOSER DU DECK (Keko : « un drag and drop pour ajouter /
    * retirer, on garde le clic pour zoomer ») : une carte de la collection
    * lâchée sur la colonne entre au deck, une ligne de la colonne lâchée
-   * ailleurs en sort. *Au doigt, seul un geste de côté saisit* : le vertical
-   * fait défiler la grille ou la colonne (`touch-action: pan-y`).
+   * ailleurs en sort. *À la souris seulement* : au doigt, voir `toucher`.
    */
   const colonne = useRef<HTMLElement>(null)
   const [glisse, setGlisse] = useState<{
@@ -1015,6 +1023,51 @@ export function PageCollection({
   } | null>(null)
   /** Le clic qui suit un lâcher n'ouvre pas la carte. */
   const vientDeGlisser = useRef(false)
+  /**
+   * AU DOIGT, PAS DE GLISSER : UNE TAPE AJOUTE OU RETIRE (Keko : « le drag and
+   * drop entre en conflit avec le défilement vertical de la collection » ;
+   * choisi : « tape = ajouter / retirer »). Une tape sur une carte de la grille
+   * la met au deck (ou l'en sort si elle y est), une tape sur une miniature du
+   * bandeau la retire ; le zoom passe à l'APPUI LONG. La souris garde le
+   * glisser-déposer et le clic qui zoome.
+   */
+  const auDoigt = useRef(false)
+  const appuiLong = useRef<{ minuteur: number; x: number; y: number } | null>(null)
+  const zoomeParAppui = useRef(false)
+  const lacherAppui = (): void => {
+    if (appuiLong.current !== null) clearTimeout(appuiLong.current.minuteur)
+    appuiLong.current = null
+  }
+  const toucher = (e: React.PointerEvent, carte: CarteEmoji, v: Variante, depuis: 'collection' | 'deck'): void => {
+    auDoigt.current = e.pointerType !== 'mouse'
+    if (!auDoigt.current) return saisir(e, carte, v, depuis)
+    lacherAppui()
+    zoomeParAppui.current = false
+    appuiLong.current = {
+      x: e.clientX,
+      y: e.clientY,
+      minuteur: window.setTimeout(() => {
+        appuiLong.current = null
+        zoomeParAppui.current = true
+        navigator.vibrate?.(15)
+        setOuverte({ id: carte.id, v })
+      }, APPUI_LONG_MS),
+    }
+  }
+  const bougerAppui = (e: React.PointerEvent): void => {
+    const a = appuiLong.current
+    if (a !== null && Math.hypot(e.clientX - a.x, e.clientY - a.y) > 10) lacherAppui()
+  }
+  /** Une tape : au doigt, elle bascule l'exemplaire dans le deck ; à la souris, elle zoome. */
+  const taper = (carte: CarteEmoji, v: Variante): void => {
+    if (zoomeParAppui.current) {
+      zoomeParAppui.current = false
+      return
+    }
+    if (deck === undefined || !auDoigt.current) return ouvrir({ id: carte.id, v })
+    if (deck.choix(carte.id, v).etat === 'plein') return
+    deck.onBasculer({ id: carte.id, v })
+  }
   const saisir = (e: React.PointerEvent, carte: CarteEmoji, v: Variante, depuis: 'collection' | 'deck'): void => {
     if (deck === undefined || e.button !== 0) return
     // Dans la collection, seule une carte qui peut entrer se saisit — celle
@@ -1040,10 +1093,6 @@ export function PageCollection({
       const dy = m.clientY - y0
       if (!parti) {
         if (Math.hypot(dx, dy) < 8) return
-        // AU DOIGT, LE DECK EST UN BANDEAU HORIZONTAL (voir `.deck-colonne` au
-        // doigt) : il défile de côté, une carte en sort par un geste vertical.
-        const deCote = Math.abs(dx) >= Math.abs(dy)
-        if (m.pointerType !== 'mouse' && (depuis === 'deck' && enBandeau() ? deCote : !deCote)) return fin()
         parti = true
       }
       m.preventDefault()
@@ -1423,8 +1472,10 @@ export function PageCollection({
                 variante={v}
                 choix={deck === undefined ? undefined : deck.choix(carte.id, v).etat}
                 prisPar={deck === undefined ? undefined : deck.choix(carte.id, v).prisPar}
-                onOuvrir={() => ouvrir({ id: carte.id, v })}
-                onSaisir={deck === undefined ? undefined : (e) => saisir(e, carte, v, 'collection')}
+                onOuvrir={() => (deck === undefined ? ouvrir({ id: carte.id, v }) : taper(carte, v))}
+                onSaisir={deck === undefined ? undefined : (e) => toucher(e, carte, v, 'collection')}
+                onBouger={deck === undefined ? undefined : bougerAppui}
+                onLacher={deck === undefined ? undefined : lacherAppui}
               />
             ))}
           </div>
@@ -1457,8 +1508,12 @@ export function PageCollection({
                   className="deck-ligne"
                   style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
                   title={`${enTitre(carte.nom)} : glisse-la hors du deck pour la retirer`}
-                  onClick={() => ouvrir({ id: carte.id, v })}
-                  onPointerDown={(e) => saisir(e, carte, v, 'deck')}
+                  onClick={() => taper(carte, v)}
+                  onPointerDown={(e) => toucher(e, carte, v, 'deck')}
+                  onPointerMove={bougerAppui}
+                  onPointerUp={lacherAppui}
+                  onPointerCancel={lacherAppui}
+                  onContextMenu={(e) => e.preventDefault()}
                 >
                   <img draggable={false} className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
                   <span className="deck-ligne-texte">
