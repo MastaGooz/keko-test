@@ -1482,8 +1482,8 @@
 
 .niveau-etoiles {
   margin-left: 0.4rem;
+  /* SANS CERNE BLANC (Keko) : il est réservé aux étoiles peintes sur la carte. */
   color: #ffc61f;
-  -webkit-text-stroke: 0.06rem #fffaf0;
   letter-spacing: 0.08em;
 }
 

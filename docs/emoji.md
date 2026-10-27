@@ -7081,3 +7081,5 @@ Keko : « il faudrait un effet beaucoup plus juicy quand on level up une carte :
 **Deux reprises** (27/10, Keko : « il y a des restes de particules noires après l'animation, fixes à l'écran ; et attention : tu changes les valeurs et le compteur des exemplaires avant l'upgrade, au moment du clic ») :
 - une étincelle éteinte restait dessinée (noire) à sa dernière place, et le bloom en faisait un point noir fixe : morte, elle est rangée hors de la vue (`RANGEE`), et toutes y naissent ;
 - la jauge et « k / n exemplaires » lisaient la collection, fusionnée au clic : `exemplairesVus` attend l'impact, comme `niveauVu`. Mesuré au ralenti : pendant le vol, « Niveau 1 · 2 / 2 » ; après l'impact, « Niveau 2 ★ » et le compte suivant.
+
+**Les étoiles sous la carte sans cerne** (27/10, Keko : « ne mets pas d'outline blanc sur les étoiles sous la carte, uniquement celles dedans ») : `.niveau-etoiles` perd son `-webkit-text-stroke` ; seules les étoiles peintes (et celle qui vole à la fusion) gardent leur cerne blanc.
