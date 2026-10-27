@@ -219,7 +219,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   peinture pour l'émissif, puis `getUniforms`), et chaque pas de la chute est
   borné (`PAS_MAX`). **Le Canvas dit `shadows="percentage"`** : `shadows` seul
   demande le PCF doux, que three r186 remplace au premier rendu d'ombre —
-  et cette clé changée recompilait tout au début de la chute.
+  et cette clé changée recompilait tout au début de la chute. **Le cerne
+  des stickers se calcule dans un Worker** (`cerne-calcul.ts`, sans DOM ;
+  `cerne.worker.ts` ; `preparerLeCerne` range le résultat au cache où
+  `cerneDe` le trouve) : c'était le plus gros bloc du fil principal à
+  l'arrivée d'un paquet. Même calcul, au pixel près.
 - **Les cartes** attendent derrière le sachet dès le départ, reculées de `RECUL_DU_BAS` calculé, à la
   taille de la `POCHE` corrigée de la profondeur (`Z_DEDANS`), une seule
   toile (`tailleTexture`). Le film parti, la carte se rapproche

@@ -6997,3 +6997,9 @@ Ce qui a été trouvé, dans l'ordre : (1) en haut, hors du cadre, rien n'est de
 
 Résultat, même banc : la pire image de la chute passe de 500–1 000 ms à ~60 ms (le rendu logiciel du banc fait ~8 ms par image). Le sachet part un peu plus tard (il attend ses cartes) ; une image qui ne viendrait pas ne le garde pas plus de 1,5 s en l'air (`ATTENTE_MAX_ARRIVEE`).
 
+### Le cerne des stickers part dans un Worker (27/10/2026)
+
+Keko, après l'arrivée sans à-coup : « à chaque fois que le paquet apparaît, ça freeze avant toujours ». Le travail n'avait fait que changer de place : le sachet attendait ses cartes, et c'était l'attente qui gelait. **Mesuré** : le cerne des cinq stickers (crème et trait, à la finesse de l'illustration, 1024) prenait ~1,6 s de fil principal sur le banc, en blocs de 300 à 1 000 ms.
+
+Le calcul (`calculerCerne` : seuil d'encre, comblement, adoucissement, distance exacte, poches) est sorti dans `cerne-calcul.ts`, sans DOM, et tourne dans `cerne.worker.ts`. `illustration` prépare le glyphe et ses deux cernes dans le Worker (`glypheAuxCernesPrets`), les range au cache, et `stickerDUneImage` les y trouve ; sans Worker, `cerneDe` calcule comme avant. Après le clic, les longues tâches passent de 230 / 290 / 970 / 430 / 460 ms… à 229 / 263 / 169 / 81 / 72 ms (le montage de la scène et le contexte WebGL restent). **Rendu comparé au pixel** sur la grille et la carte zoomée : identique (seule la bande holo animée, saisie à un autre instant, diffère).
+

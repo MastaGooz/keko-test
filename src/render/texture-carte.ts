@@ -22,6 +22,7 @@
  * mesure en centièmes de largeur. On les garde à l'identique pour que la
  * carte 3D soit la MÊME carte, et pas une deuxième version qui dérivera.
  */
+import { calculerCerne } from './cerne-calcul.ts'
 import * as THREE from 'three'
 import { art, fondPropre, urlDuBouclier, urlDuCout, urlDuDosDeCarte, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
 import { boiteDe, mesurerBoite } from './silhouette.ts'
@@ -2653,9 +2654,10 @@ async function illustration(
       if (!sticker) return image
       // À LA TAILLE DU FICHIER quand il dépasse 512 : le grand (voir
       // `SEUIL_GRAND`) garde sa finesse au zoom. Une petite carte, à la sienne.
+      const coteDuSticker = cote ?? Math.max(TOILE_EMOJI, image.naturalWidth)
       const toile = fenetre
         ? stickerPleinCadre(image)
-        : stickerDUneImage(image, cote ?? Math.max(TOILE_EMOJI, image.naturalWidth))
+        : stickerDUneImage(await glypheAuxCernesPrets(image, coteDuSticker), coteDuSticker)
       if (toile !== null) {
         STICKERS.set(cleSticker, toile)
         return toile
@@ -6880,7 +6882,7 @@ const CERNES_EMOJI = new WeakMap<HTMLCanvasElement, Map<number, Cerne>>()
  * et le corps du gobelin — restent des trous. C'est la logique du sticker
  * imprimé : le vinyle est blanc sous l'encre, découpé au contour.
  */
-const SEUIL_ENCRE = 0.06
+// Le seuil vit avec le calcul : `SEUIL_ENCRE` dans `cerne-calcul.ts`.
 
 /**
  * ET SA FINESSE SE CHOISIT. Keko, sur la face des cartes : « je trouve
@@ -6892,17 +6894,23 @@ const SEUIL_ENCRE = 0.06
  * ses crans. La face le calcule à la taille du glyphe (`finesse` = 512), le
  * dos et le sachet gardent leurs 256. Mémorisé par rayon ET par finesse.
  */
-function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE, combler = true): Cerne {
+/** La clé d'un cerne dans le cache de son image : son rayon (au demi-pixel), sa finesse, et s'il comble. */
+function cleDuCerne(rayon: number, finesse: number, combler: boolean): { r: number; cle: number } {
   const r = Math.max(1, Math.round(rayon * 2) / 2)
+  return { r, cle: (r + finesse * 1000) * (combler ? 1 : -1) }
+}
+
+function cernesDe(image: HTMLCanvasElement): Map<number, Cerne> {
   let parRayon = CERNES_EMOJI.get(image)
   if (parRayon === undefined) {
     parRayon = new Map()
     CERNES_EMOJI.set(image, parRayon)
   }
-  const cle = (r + finesse * 1000) * (combler ? 1 : -1)
-  const garde = parRayon.get(cle)
-  if (garde !== undefined) return garde
+  return parRayon
+}
 
+/** La toile d'un cerne, le glyphe peint en retrait de sa marge, et son alpha. */
+function toileDuCerne(image: HTMLCanvasElement, r: number, finesse: number): { cerne: Cerne; ctx: CanvasRenderingContext2D | null; n: number; pixels: Uint8ClampedArray | null } {
   // LA TOILE DÉBORDE LE GLYPHE D'UNE MARGE AU MOINS ÉGALE AU RAYON. Keko, sur
   // la première version : « c'est pire, l'outline est coupé droit par
   // endroits ». *Un glyphe occupe 80 % de son carré*, et un cerne d'un
@@ -6914,13 +6922,28 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE,
   const toile = document.createElement('canvas')
   toile.width = n
   toile.height = n
-  const echelle = n / finesse
-  const cerne: Cerne = { toile, echelle }
+  const cerne: Cerne = { toile, echelle: n / finesse }
   const ctx = toile.getContext('2d', { willReadFrequently: true })
-  if (ctx === null) return cerne
+  if (ctx === null) return { cerne, ctx, n, pixels: null }
   ctx.drawImage(image, marge, marge, finesse, finesse)
-  const alpha = ctx.getImageData(0, 0, n, n).data
+  return { cerne, ctx, n, pixels: ctx.getImageData(0, 0, n, n).data }
+}
 
+function poserLeCerne(ctx: CanvasRenderingContext2D, n: number, pixels: Uint8ClampedArray): void {
+  const sortie = ctx.createImageData(n, n)
+  sortie.data.set(pixels)
+  ctx.putImageData(sortie, 0, 0)
+}
+
+function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE, combler = true): Cerne {
+  const { r, cle } = cleDuCerne(rayon, finesse, combler)
+  const parRayon = cernesDe(image)
+  const garde = parRayon.get(cle)
+  if (garde !== undefined) return garde
+  const { cerne, ctx, n, pixels } = toileDuCerne(image, r, finesse)
+  if (ctx === null || pixels === null) return cerne
+  // LE CALCUL, DANS `calculerCerne` (sans DOM, il peut partir dans un Worker :
+  // voir `preparerLeCerne`). Ses étapes :
   // LA SILHOUETTE EST ADOUCIE AVANT D'ÊTRE DILATÉE. Keko : « l'outline blanc
   // autour des emoji des cartes a toujours des reliefs bizarres et n'est pas
   // lisse ». *Une dilatation est exacte : elle reproduit chaque accident du
@@ -6929,143 +6952,94 @@ function cerneDe(image: HTMLCanvasElement, rayon: number, finesse = TOILE_CERNE,
   // gaussienne), puis se coupe à mi-hauteur : **le contour moyen ne bouge
   // pas, ses accidents plus petits que le rayon s'y fondent.** Le rayon suit
   // la finesse, ni plus ni moins que ce qu'un oeil lit comme un relief.
-  const masque = new Float32Array(n * n)
   // Binaire avant le flou : voir `SEUIL_ENCRE`.
-  for (let i = 0; i < n * n; i++) masque[i] = alpha[i * 4 + 3]! > SEUIL_ENCRE * 255 ? 1 : 0
   // LES TROUS SE COMBLENT : un vide qu'on ne rejoint pas depuis le bord (entre
   // un bras et le corps, dans une anse) fait partie du sticker, et le dos crème
   // le couvre. Keko : « quand un sticker a un trou transparent, on le comble en
   // blanc ». Un remplissage depuis le bord : ce qu'il n'atteint pas est un trou.
   // LE TRAIT D'ENCRE, LUI, NE COMBLE RIEN (`combler` faux, Keko 24/10) : c'est
   // le trait d'une illustration, il cerne aussi le bord des trous.
-  if (combler) {
-    const dehors = new Uint8Array(n * n)
-    const pile: number[] = []
-    for (let i = 0; i < n; i++) pile.push(i, (n - 1) * n + i, i * n, i * n + n - 1)
-    while (pile.length > 0) {
-      const p = pile.pop()!
-      if (dehors[p] === 1 || masque[p] === 1) continue
-      dehors[p] = 1
-      const x = p % n
-      if (x > 0) pile.push(p - 1)
-      if (x < n - 1) pile.push(p + 1)
-      if (p >= n) pile.push(p - n)
-      if (p < n * n - n) pile.push(p + n)
-    }
-    for (let i = 0; i < n * n; i++) if (dehors[i] === 0) masque[i] = 1
-  }
-  adoucirLeMasque(masque, n, Math.max(1, Math.round(finesse / 128)))
-  adoucirLeMasque(masque, n, Math.max(1, Math.round(finesse / 128)))
-
   // LA DISTANCE AU GLYPHE, au carré, par deux passes séparables.
-  const INF = 1e12
-  const f = new Float64Array(n * n)
-  for (let i = 0; i < n * n; i++) f[i] = masque[i]! > 0.5 ? 0 : INF
-  const d = new Float64Array(n)
-  const v = new Int32Array(n)
-  const z = new Float64Array(n + 1)
-  const ligne = new Float64Array(n)
-  const dt1 = (): void => {
-    let k = 0
-    v[0] = 0
-    z[0] = -INF
-    z[1] = INF
-    const croise = (q: number, p: number): number =>
-      (ligne[q]! + q * q - (ligne[p]! + p * p)) / (2 * q - 2 * p)
-    for (let q = 1; q < n; q++) {
-      let sx = croise(q, v[k]!)
-      while (sx <= z[k]!) {
-        k--
-        sx = croise(q, v[k]!)
-      }
-      k++
-      v[k] = q
-      z[k] = sx
-      z[k + 1] = INF
-    }
-    k = 0
-    for (let q = 0; q < n; q++) {
-      while (z[k + 1]! < q) k++
-      const vk = v[k]!
-      d[q] = (q - vk) * (q - vk) + ligne[vk]!
-    }
-  }
   // Colonnes, puis lignes.
-  for (let x = 0; x < n; x++) {
-    for (let y = 0; y < n; y++) ligne[y] = f[y * n + x]!
-    dt1()
-    for (let y = 0; y < n; y++) f[y * n + x] = d[y]!
-  }
-  for (let y = 0; y < n; y++) {
-    for (let x = 0; x < n; x++) ligne[x] = f[y * n + x]!
-    dt1()
-    for (let x = 0; x < n; x++) f[y * n + x] = d[x]!
-  }
-
   // LE CERNE : tout ce qui est à moins de `r` du glyphe, bord adouci sur un
   // pixel, en crème.
-  const sortie = ctx.createImageData(n, n)
-  const px = sortie.data
-  const creme = couleurDe(DOS_CREME)
-  for (let i = 0; i < n * n; i++) {
-    const dist = Math.sqrt(f[i]!)
-    const a = Math.max(0, Math.min(1, r + 0.5 - dist))
-    px[i * 4] = creme[0]
-    px[i * 4 + 1] = creme[1]
-    px[i * 4 + 2] = creme[2]
-    px[i * 4 + 3] = Math.round(a * 255)
-  }
   // ET LES POCHES QUE LE CERNE REFERME : un creux à l'ouverture étroite (entre
   // un bras et le corps) touchait le dehors sur la silhouette nue, mais le cerne,
   // en s'épaississant, en ferme l'entrée et laisse un vide au milieu du blanc.
   // Même remplissage depuis le bord, cette fois sur le cerne lui-même.
-  if (combler) {
-    const dehors = new Uint8Array(n * n)
-    const pile: number[] = []
-    for (let i = 0; i < n; i++) pile.push(i, (n - 1) * n + i, i * n, i * n + n - 1)
-    while (pile.length > 0) {
-      const p = pile.pop()!
-      if (dehors[p] === 1 || px[p * 4 + 3]! >= 128) continue
-      dehors[p] = 1
-      const x = p % n
-      if (x > 0) pile.push(p - 1)
-      if (x < n - 1) pile.push(p + 1)
-      if (p >= n) pile.push(p - n)
-      if (p < n * n - n) pile.push(p + n)
-    }
-    for (let i = 0; i < n * n; i++) if (dehors[i] === 0) px[i * 4 + 3] = 255
-  }
-  ctx.putImageData(sortie, 0, 0)
+  poserLeCerne(ctx, n, calculerCerne({ pixels, n, r, finesse, combler, creme: couleurDe(DOS_CREME) }))
   parRayon.set(cle, cerne)
   return cerne
 }
 
-/** Un flou en boîte, séparable, sur un masque carré de côté n — en place. */
-function adoucirLeMasque(m: Float32Array, n: number, r: number): void {
-  const tmp = new Float32Array(n * n)
-  const fenetre = r * 2 + 1
-  for (let y = 0; y < n; y++) {
-    let somme = 0
-    for (let k = -r; k <= r; k++) somme += k < 0 ? 0 : m[y * n + k]!
-    for (let x = 0; x < n; x++) {
-      tmp[y * n + x] = somme / fenetre
-      const sortant = x - r
-      const entrant = x + r + 1
-      if (sortant >= 0) somme -= m[y * n + sortant]!
-      if (entrant < n) somme += m[y * n + entrant]!
+/**
+ * LE MÊME CERNE, CALCULÉ HORS DU FIL PRINCIPAL et rangé au cache, où `cerneDe`
+ * le trouvera tout fait. Keko : « à chaque fois que le paquet apparaît, ça
+ * freeze avant toujours » — mesuré : le cerne des cartes du paquet, à la
+ * finesse de l'illustration, était le plus gros bloc avant la chute du
+ * sachet. *Le résultat est le même calcul, au pixel près* ; sans Worker (ou
+ * s'il échoue), rien n'est rangé et `cerneDe` le calcule comme avant.
+ */
+let travailleur: Worker | null | undefined
+const enAttente = new Map<number, (pixels: Uint8ClampedArray | null) => void>()
+let prochaineDemande = 0
+function travailleurDuCerne(): Worker | null {
+  if (travailleur !== undefined) return travailleur
+  try {
+    travailleur = new Worker(new URL('./cerne.worker.ts', import.meta.url), { type: 'module' })
+    travailleur.onmessage = (e: MessageEvent<{ id: number; pixels: Uint8ClampedArray }>) => {
+      enAttente.get(e.data.id)?.(e.data.pixels)
+      enAttente.delete(e.data.id)
     }
-  }
-  for (let x = 0; x < n; x++) {
-    let somme = 0
-    for (let k = -r; k <= r; k++) somme += k < 0 ? 0 : tmp[k * n + x]!
-    for (let y = 0; y < n; y++) {
-      m[y * n + x] = somme / fenetre
-      const sortant = y - r
-      const entrant = y + r + 1
-      if (sortant >= 0) somme -= tmp[sortant * n + x]!
-      if (entrant < n) somme += tmp[entrant * n + x]!
+    travailleur.onerror = () => {
+      travailleur = null
+      for (const f of enAttente.values()) f(null)
+      enAttente.clear()
     }
+  } catch {
+    travailleur = null
   }
+  return travailleur
+}
+async function preparerLeCerne(image: HTMLCanvasElement, rayon: number, finesse: number, combler: boolean): Promise<void> {
+  const { r, cle } = cleDuCerne(rayon, finesse, combler)
+  if (cernesDe(image).has(cle)) return
+  const w = travailleurDuCerne()
+  if (w === null) return
+  const { cerne, ctx, n, pixels } = toileDuCerne(image, r, finesse)
+  if (ctx === null || pixels === null) return
+  const id = (prochaineDemande += 1)
+  const rendu = await new Promise<Uint8ClampedArray | null>((resoudre) => {
+    enAttente.set(id, resoudre)
+    w.postMessage({ id, demande: { pixels, n, r, finesse, combler, creme: couleurDe(DOS_CREME) } }, [pixels.buffer])
+  })
+  if (rendu === null || cernesDe(image).has(cle)) return
+  poserLeCerne(ctx, n, rendu)
+  cernesDe(image).set(cle, cerne)
+}
+
+/**
+ * LE GLYPHE D'UN STICKER DE CARTE, SES DEUX CERNES PRÊTS : le crème du
+ * sticker et le trait que la carte montre (`varianteDuSticker`, `'encre'`),
+ * calculés dans le Worker. `stickerDUneImage` reprend ce glyphe tel quel (il
+ * est déjà à son côté) et trouve ses cernes au cache.
+ */
+async function glypheAuxCernesPrets(image: CanvasImageSource, cote: number): Promise<HTMLCanvasElement> {
+  const glyphe = document.createElement('canvas')
+  glyphe.width = cote
+  glyphe.height = cote
+  const gctx = glyphe.getContext('2d')
+  if (gctx === null) return glyphe
+  gctx.imageSmoothingQuality = 'high'
+  gctx.drawImage(image, 0, 0, cote, cote)
+  // LES RAYONS DE `collerSticker`, à la finesse du glyphe : DOS_CERNE unités
+  // de `u` (voir `stickerDUneImage`), et le trait en `EPAISSEUR_ENCRE`.
+  const rayon = CERNE_CARTE * cote
+  await Promise.all([
+    preparerLeCerne(glyphe, rayon, cote, true),
+    CERNE_DE_CARTE === 'encre' ? preparerLeCerne(glyphe, rayon * EPAISSEUR_ENCRE, cote, false) : Promise.resolve(),
+  ])
+  return glyphe
 }
 
 /** Les trois canaux d'une couleur CSS `#rrggbb`. */
