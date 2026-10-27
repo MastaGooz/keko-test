@@ -197,6 +197,13 @@
   background-image:
     radial-gradient(ellipse 90% 40% at 50% 0%, #7a4520 0%, transparent 70%),
     linear-gradient(#3a2416, #170d07);
+  /* LE BAS DE LA PAGE SE PROLONGE SOUS L'ÉCRAN (Keko : « une bande noire
+     apparaît brièvement en bas quand j'arrive en bas en scrollant ») : arrivé
+     au bout, le navigateur range ou ressort sa barre d'adresse, la fenêtre
+     grandit avant que la page fixe ne se recale, et le fond noir du `body`
+     (celui de l'archive) passait dessous. Une ombre pleine de la couleur du
+     bas, décalée sous l'écran, le couvre. */
+  box-shadow: 0 50vh 0 #170d07;
   color: #fffaf0;
   font-family: 'Baloo 2', system-ui, sans-serif;
 }
