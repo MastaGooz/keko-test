@@ -256,7 +256,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « réunis / 118 » est en tête de la collection). Le panneau filtres a une
   puce « Nouveau ». Icônes dessinées en SVG (`IconeCollection` : trois cartes
   en éventail aux couleurs des crans, sans étoile ; `IconeDeck` : trois cartes
-  de dos empilées), trait en `currentColor`. **Elle
+  de dos empilées, un seul trait autour de la pile), trait en `currentColor`. **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
   bilan sans paquet à suivre) — jamais pendant la déchirure ni le défilé, **ni
   au bilan avant « Terminé »** (Keko).

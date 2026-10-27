@@ -765,17 +765,27 @@ export function IconeLike(): React.ReactElement {
 
 /** LE DECK : trois cartes de dos empilées, le cuir violet du dos et son liseré d'or. */
 function IconeDeck(): React.ReactElement {
-  const carte = (dx: number, dy: number): React.ReactElement => (
-    <g transform={`translate(${dx} ${dy})`}>
-      <rect x="6" y="5" width="11" height="15" rx="1.8" fill="#5b2a6e" stroke="currentColor" strokeWidth="1.3" />
-      <rect x="8" y="7" width="7" height="11" rx="0.9" fill="none" stroke="#ffc61f" strokeWidth="1" />
-    </g>
+  const PILE = [
+    [2.4, -2.4],
+    [1.2, -1.2],
+    [0, 0],
+  ] as const
+  // UN SEUL TRAIT, AUTOUR DE LA PILE (Keko : « un seul outline autour de la
+  // pile plutôt qu'un outline sur chaque carte ») : les trois cartes tracées
+  // d'abord en trait épais, puis leurs fonds par-dessus — seul le bord
+  // extérieur du tas reste visible.
+  const forme = (dx: number, dy: number, props: React.SVGProps<SVGRectElement>): React.ReactElement => (
+    <rect key={`${dx},${dy}`} x={6 + dx} y={5 + dy} width="11" height="15" rx="1.8" {...props} />
   )
   return (
     <svg viewBox="0 0 24 24" strokeLinejoin="round">
-      {carte(2.4, -2.4)}
-      {carte(1.2, -1.2)}
-      {carte(0, 0)}
+      {PILE.map(([dx, dy]) => forme(dx, dy, { fill: 'currentColor', stroke: 'currentColor', strokeWidth: 2.6 }))}
+      {PILE.map(([dx, dy]) => (
+        <g key={`${dx},${dy}`} transform={`translate(${dx} ${dy})`}>
+          <rect x="6" y="5" width="11" height="15" rx="1.8" fill="#5b2a6e" />
+          <rect x="8" y="7" width="7" height="11" rx="0.9" fill="none" stroke="#ffc61f" strokeWidth="1" />
+        </g>
+      ))}
     </svg>
   )
 }
