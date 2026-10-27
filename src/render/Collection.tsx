@@ -1045,22 +1045,6 @@ export function PageCollection({
    * glisser-déposer et le clic qui zoome.
    */
   const enBandeau = useAuDoigt()
-  /** Le bandeau collé en haut du défilé (il descend avec la page jusque-là). */
-  const [collee, setCollee] = useState(false)
-  const defile = useRef<HTMLDivElement>(null)
-  const avecDeck = deck !== undefined
-  useEffect(() => {
-    const d = defile.current
-    if (!enBandeau || !avecDeck || d === null) return
-    const suivre = (): void => {
-      const c = colonne.current
-      if (c === null) return
-      setCollee(c.getBoundingClientRect().top - d.getBoundingClientRect().top <= parseFloat(getComputedStyle(d).paddingTop) + 0.5)
-    }
-    suivre()
-    d.addEventListener('scroll', suivre, { passive: true })
-    return () => d.removeEventListener('scroll', suivre)
-  }, [enBandeau, avecDeck])
   /**
    * PRENDRE UNE CARTE À UN AUTRE DECK SE CONFIRME (Keko : « un petit message
    * de confirmation pour demander si on est sûr de prendre une carte d'un
@@ -1249,13 +1233,13 @@ export function PageCollection({
      défile seule ; une tape sur une ligne retire la carte. */
   // AU DOIGT C'EST UN BANDEAU, rangé dans le défilé SOUS LA RECHERCHE ET LES
   // FILTRES (Keko : « je voyais le bandeau du deck en dessous de la barre de
-  // recherche / filtre ») et collé en haut quand on descend ; à la souris, la
-  // colonne de droite.
+  // recherche / filtre ») ; il défile avec la page ; à la souris, la colonne
+  // de droite.
   const colonneDuDeck =
     deck !== undefined && catalogue !== null ? (
     <aside
       ref={colonne}
-      className={`deck-colonne${collee ? ' deck-colonne-collee' : ''}${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
+      className={`deck-colonne${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
       aria-label={deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}
     >
       {/* LA TÊTE DE LA COLONNE NE DIT QUE LE COMPTE : le nom, le crayon et
@@ -1304,7 +1288,7 @@ export function PageCollection({
 
   return (
     <div className={`collection${modeDeck ? ' collection-avec-deck' : ''}`}>
-      <div ref={defile} className="collection-defile">
+      <div className="collection-defile">
         <header className="collection-tete">
           {/* L'ÉDITEUR D'UN DECK, SANS ONGLETS (Keko : on y entre par son étui) :
               le retour aux étuis et, en face, le crayon puis la corbeille ; le

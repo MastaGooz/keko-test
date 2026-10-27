@@ -2889,16 +2889,13 @@ span.jouer-pile-dos {
     padding-right: 16px;
   }
 
-  /* DANS LE DÉFILÉ, sous la recherche et les filtres (Keko), collé sous le
-     compteur quand on descend ; opaque et AU-DESSUS des vignettes : leurs
-     pastilles (✓, « pris », Holo) ne passent plus par-dessus. Collé, son
-     ombre vers le haut couvre l'interstice sous le compteur, où la grille
-     défilerait. */
+  /* DANS LE DÉFILÉ, sous la recherche et les filtres (Keko), et IL DÉFILE
+     AVEC LA PAGE (Keko : « empêche le bandeau de suivre l'écran et laisse-le
+     fixe » — il avait été collé en haut). */
   .deck-colonne {
-    position: sticky;
-    /* 0 : le collé se compte depuis le rembourrage du défilé, déjà sous le compteur. */
-    top: 0;
-    z-index: 3;
+    position: relative;
+    top: auto;
+    z-index: 1;
     width: auto;
     height: var(--bandeau-deck);
     margin: 0 -16px 0.8rem;
@@ -2906,12 +2903,6 @@ span.jouer-pile-dos {
     align-items: stretch;
     border-radius: 0;
     background: #24150d;
-  }
-
-  .deck-colonne-collee {
-    box-shadow:
-      0 calc(-1 * (max(0.6rem, env(safe-area-inset-top)) + 3rem)) 0 #2b1a12,
-      0 0.4rem 0.8rem rgba(10, 4, 2, 0.5);
   }
 
   .deck-colonne-tete {
