@@ -6989,3 +6989,11 @@ Le peintre sait encore poser un sticker collé (`colles`, `peindreColles`, les u
 
 Keko, après la fusion : « vire l'anti doublon des légendaires du coup ». Une légendaire tirée n'était jamais une qu'on avait tant qu'il en manquait une : avec la fusion, aucune ne pouvait monter avant d'avoir les sept. Le paquet ne passe plus `sansDoublon` ; l'option reste dans `logic/paquet.ts` (générique, vérifiée), inutilisée.
 
+### L'arrivée du sachet ne saute plus (27/10/2026)
+
+Keko : « quand je clique sur le bouton d'ouverture de booster j'ai un petit freeze/lag dans l'animation d'apparition du booster ». **Mesuré** au profileur (Chrome sans tête, CDP) : pendant les 0,6 s de la chute, trois blocs — la peinture des cinq cartes (le cerne de leur sticker, `cerneDe`, `adoucirLeMasque`), la compilation des nuanceurs (`onFirstUse`), et la chute réglée sur l'horloge sautait d'un coup après chacun.
+
+Ce qui a été trouvé, dans l'ordre : (1) en haut, hors du cadre, rien n'est dessiné, donc **rien ne se compile avant que la chute fasse entrer les objets** — d'où `compileAsync` ; (2) la clé d'un programme porte l'espace de couleur de la cible, et **la scène se dessine dans la cible du bloom** (linéaire) : compilés pour l'écran, le sachet et sa bande recompilaient ; (3) **`shadows` demande le PCF doux, que three r186 ne connaît plus** : au premier rendu d'ombre il le remplace par le PCF, et toutes les clés changent d'un coup — c'était le plus gros (le Canvas dit maintenant `shadows="percentage"`, le rendu est celui qu'on voyait) ; (4) l'émissif de la carte se pose à l'image qui suit sa peinture : la précompilation attend deux images.
+
+Résultat, même banc : la pire image de la chute passe de 500–1 000 ms à ~60 ms (le rendu logiciel du banc fait ~8 ms par image). Le sachet part un peu plus tard (il attend ses cartes) ; une image qui ne viendrait pas ne le garde pas plus de 1,5 s en l'air (`ATTENTE_MAX_ARRIVEE`).
+

@@ -1,4 +1,4 @@
-import { NoToneMapping, type Group } from 'three'
+import { NoToneMapping, WebGLRenderTarget, type Group } from 'three'
 /**
  * L'OUVERTURE D'UN PAQUET — le premier écran du troisième mode.
  *
@@ -13,7 +13,7 @@ import { NoToneMapping, type Group } from 'three'
  */
 import { cloneElement, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import type { Collection } from '../logic/emoji/collection.ts'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { Bouton3D } from './Bouton3D.tsx'
@@ -436,23 +436,98 @@ function Envol({
   return <group ref={g}>{children}</group>
 }
 
+/**
+ * LA CHUTE NE PART QUE QUAND LA SCÈNE EST PRÊTE, ET NE SAUTE JAMAIS. Keko :
+ * « quand je clique sur le bouton d'ouverture de booster j'ai un petit
+ * freeze/lag dans l'animation d'apparition ». *Mesuré* : les cinq cartes se
+ * peignent (le cerne de leur sticker) et les nuanceurs se compilent pendant
+ * les 0,6 s de la chute — et la chute, réglée sur l'horloge, sautait d'un coup
+ * après chaque bloc. Elle attend donc en haut que les cartes soient peintes
+ * (`pret`) et que leurs nuanceurs soient compilés (`Precompiler` : en haut,
+ * HORS DU CADRE, rien n'est dessiné, donc rien ne se compilait avant que la
+ * chute les fasse entrer), puis `IMAGES_DE_GRACE` images de plus, et chaque
+ * pas est borné (`PAS_MAX`) : *un retard reste un retard, il ne devient pas
+ * une téléportation.*
+ */
+const IMAGES_DE_GRACE = 2
+const PAS_MAX = 1 / 30
+/** Au pire, la chute part quand même : une image qui ne vient pas ne doit pas garder le sachet en l'air. */
+const ATTENTE_MAX_ARRIVEE = 1.5
+
+/**
+ * COMPILE LES NUANCEURS DE TOUTE LA SCÈNE, même hors du cadre (`compileAsync`,
+ * en parallèle quand le GPU le permet), quand `actif` passe à vrai — une fois.
+ */
+function Precompiler({ actif, onFait }: { actif: boolean; onFait: () => void }): null {
+  const { gl, scene, camera } = useThree()
+  const fait = useRef(onFait)
+  fait.current = onFait
+  useEffect(() => {
+    if (!actif) return
+    let vivant = true
+    let image = 0
+    const compiler = (): void => {
+      // DANS LA CIBLE DU BLOOM, ET À L'ÉCRAN : la clé d'un programme porte
+      // l'espace de couleur de ce qu'on dessine, et la scène se dessine dans la
+      // cible du bloom (linéaire). Compilés pour l'écran seul, le sachet et sa
+      // bande recompilaient au premier rendu de la chute — mesuré.
+      const cible = new WebGLRenderTarget(1, 1)
+      const avant = gl.getRenderTarget()
+      gl.setRenderTarget(cible)
+      const dansLaCible = gl.compileAsync(scene, camera)
+      gl.setRenderTarget(avant)
+      const aLEcran = gl.compileAsync(scene, camera)
+      Promise.all([dansLaCible, aLEcran])
+        .catch(() => undefined)
+        .then(() => {
+          cible.dispose()
+          if (!vivant) return
+          // ET LE PREMIER USAGE AUSSI : sans le parallèle du GPU, le lien du
+          // programme et la lecture de ses uniformes attendent le premier rendu
+          // (`getUniforms`).
+          for (const p of gl.info.programs ?? []) p.getUniforms()
+          fait.current()
+        })
+    }
+    // DEUX IMAGES D'ABORD : la carte peinte pose son émissif à l'image qui
+    // suit sa peinture (`face.emissiveMap`, voir `Carte3D`), et cette clé-là
+    // aussi change le programme.
+    image = requestAnimationFrame(() => {
+      image = requestAnimationFrame(compiler)
+    })
+    return () => {
+      vivant = false
+      cancelAnimationFrame(image)
+    }
+  }, [actif, gl, scene, camera])
+  return null
+}
+
 function Arrivee({
   distance,
   retard = 0,
+  pret = true,
   children,
 }: {
   readonly distance: number
   /** Combien il attend en haut avant de tomber, en secondes. */
   readonly retard?: number
+  /** Les cartes sont peintes : la chute peut partir (voir `IMAGES_DE_GRACE`). */
+  readonly pret?: boolean
   readonly children: ReactNode
 }): React.JSX.Element {
   const g = useRef<Group>(null)
-  const debut = useRef<number | null>(null)
-  useFrame(({ clock }) => {
+  const ecoule = useRef(0)
+  const attente = useRef(0)
+  const grace = useRef(0)
+  useFrame((_, delta) => {
     const o = g.current
     if (o === null) return
-    if (debut.current === null) debut.current = clock.elapsedTime
-    const u = Math.min(1, Math.max(0, clock.elapsedTime - debut.current - retard) / ARRIVEE.duree)
+    attente.current += delta
+    if (!pret && attente.current < ATTENTE_MAX_ARRIVEE) grace.current = 0
+    else if (grace.current < IMAGES_DE_GRACE) grace.current += 1
+    else ecoule.current += Math.min(delta, PAS_MAX)
+    const u = Math.min(1, Math.max(0, ecoule.current - retard) / ARRIVEE.duree)
     // IL SE POSE EN DÉPASSANT SA PLACE : un « back » à la sortie.
     const c = ARRIVEE.depassement
     const e = 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2
@@ -1022,6 +1097,20 @@ export function Paquet3D({
     () => paquet.map((c) => carteAPeindreDuMode(c, tirage.bonus[c.id])),
     [paquet, tirage],
   )
+  /**
+   * LES CARTES DU PAQUET SONT-ELLES PEINTES ? La chute du sachet les attend
+   * (voir `IMAGES_DE_GRACE`). Un ensemble d'index par numéro de paquet, dans
+   * une ref ; l'état ne bascule qu'une fois, quand la dernière arrive.
+   */
+  const peintes = useRef<{ numero: number; i: Set<number> }>({ numero, i: new Set() })
+  const [cartesPeintes, setCartesPeintes] = useState<number | null>(null)
+  const cartePeinte = (i: number): void => {
+    if (peintes.current.numero !== numero) peintes.current = { numero, i: new Set() }
+    peintes.current.i.add(i)
+    if (peintes.current.i.size >= aPeindre.length && cartesPeintes !== numero) setCartesPeintes(numero)
+  }
+  const [compile, setCompile] = useState<number | null>(null)
+  const arriveePrete = cartesPeintes === numero && compile === numero
   const indexZoome = zoomee === null ? -1 : aPeindre.findIndex((c) => c.id === zoomee)
   function rangDe(id: string): number {
     return rangDansLEchelle(aPeindre.find((c) => c.id === id)?.rarete, teintes)
@@ -1569,10 +1658,11 @@ export function Paquet3D({
           const vue = retourne
           return [
             <Envol key={`${numero}:${carte.id}`} sortie={false} rang={i} distance={hVisible * 1.25}>
-            <Arrivee distance={distanceArrivee} retard={retardArrivee}>
+            <Arrivee distance={distanceArrivee} retard={retardArrivee} pret={arriveePrete}>
             <Prise pris={pris} distance={distancePrise}>
             <group>
             <Carte3D
+              onPeinte={() => cartePeinte(i)}
               carte={carte}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
@@ -1825,7 +1915,14 @@ export function Paquet3D({
           />
         ))}
       <Canvas
-        shadows
+        // LES OMBRES EN PCF, DITES D'EMBLÉE. `shadows` seul demande le PCF doux,
+        // que three (r186) ne connaît plus : au PREMIER rendu d'ombre — quand
+        // le sachet entre dans le cadre, donc au début de sa chute — il le
+        // remplace par le PCF, et cette clé changée recompile TOUS les
+        // programmes d'un coup. Mesuré : c'était l'à-coup de l'arrivée (Keko :
+        // « un petit freeze/lag dans l'animation d'apparition du booster »).
+        // Le rendu ne change pas : c'est déjà le PCF qu'on voyait.
+        shadows="percentage"
         dpr={[1, 2]}
         camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
         gl={{ toneMapping: NoToneMapping }}
@@ -1833,6 +1930,8 @@ export function Paquet3D({
       >
         <Cadrage />
         <Horloge />
+        {/* LES NUANCEURS SE COMPILENT PENDANT QUE LE SACHET ATTEND EN HAUT : voir `Arrivee`. */}
+        <Precompiler key={numero} actif={cartesPeintes === numero} onFait={() => setCompile(numero)} />
         {/* AU BILAN, LE TÉLÉPHONE NE PENCHE QUE LA CARTE ZOOMÉE. Keko : « je
             voudrais que les mouvements de téléphone ne déplacent pas les
             cartes, sauf si je zoome une d'entre elles ». *Cinq cartes qui
@@ -1870,7 +1969,7 @@ export function Paquet3D({
         */}
         {/* LE PAQUET ARRIVE D'EN HAUT, ses cartes avec lui : voir `ARRIVEE`. */}
         {!parti && paquet.length > 0 && (
-          <Arrivee key={numero} distance={distanceArrivee} retard={retardArrivee}>
+          <Arrivee key={numero} distance={distanceArrivee} retard={retardArrivee} pret={arriveePrete}>
           <Prise pris={pris} distance={distancePrise}>
           <Sachet3D
             attend={!pris}

@@ -212,8 +212,15 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   dans le `pointerdown`** ; le contexte se reprend à chaque relâchement. Sur
   tactile le premier glisser d'une session reste muet, c'est le navigateur.
   Bancs : `?craque`, `?son`.
-- **Les cartes** attendent derrière le sachet dès le départ (nuanceurs
-  compilés pendant le balancement), reculées de `RECUL_DU_BAS` calculé, à la
+- **Le sachet attend en haut, hors du cadre, que la scène soit prête**
+  (`Arrivee`, Keko : « un petit freeze/lag dans l'animation d'apparition ») :
+  ses cinq cartes peintes, puis TOUS les nuanceurs compilés (`Precompiler` :
+  `compileAsync` dans la cible du bloom ET à l'écran, deux images après la
+  peinture pour l'émissif, puis `getUniforms`), et chaque pas de la chute est
+  borné (`PAS_MAX`). **Le Canvas dit `shadows="percentage"`** : `shadows` seul
+  demande le PCF doux, que three r186 remplace au premier rendu d'ombre —
+  et cette clé changée recompilait tout au début de la chute.
+- **Les cartes** attendent derrière le sachet dès le départ, reculées de `RECUL_DU_BAS` calculé, à la
   taille de la `POCHE` corrigée de la profondeur (`Z_DEDANS`), une seule
   toile (`tailleTexture`). Le film parti, la carte se rapproche
   (`tailleDuDefile`, 78 % de largeur / 58 % de hauteur, `Z_MAIN`).
