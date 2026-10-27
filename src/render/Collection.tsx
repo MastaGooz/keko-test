@@ -1061,6 +1061,19 @@ export function PageCollection({
     d.addEventListener('scroll', suivre, { passive: true })
     return () => d.removeEventListener('scroll', suivre)
   }, [enBandeau, avecDeck])
+  /**
+   * PRENDRE UNE CARTE À UN AUTRE DECK SE CONFIRME (Keko : « un petit message
+   * de confirmation pour demander si on est sûr de prendre une carte d'un
+   * autre deck ») : la tape ou le lâcher ouvrent la question, « Prendre » fait
+   * l'échange, « Annuler » ne touche à rien.
+   */
+  const [aPrendre, setAPrendre] = useState<{ carte: CarteEmoji; v: Variante; prisPar: string } | null>(null)
+  const entrer = (carte: CarteEmoji, v: Variante): void => {
+    if (deck === undefined) return
+    const { etat, prisPar } = deck.choix(carte.id, v)
+    if (etat === 'pris') setAPrendre({ carte, v, prisPar: prisPar ?? 'un autre deck' })
+    else deck.onBasculer({ id: carte.id, v })
+  }
   const auDoigt = useRef(false)
   const appuiLong = useRef<{ minuteur: number; x: number; y: number } | null>(null)
   const zoomeParAppui = useRef(false)
@@ -1096,7 +1109,7 @@ export function PageCollection({
     }
     if (deck === undefined || !auDoigt.current) return ouvrir({ id: carte.id, v })
     if (deck.choix(carte.id, v).etat === 'plein') return
-    deck.onBasculer({ id: carte.id, v })
+    entrer(carte, v)
   }
   const saisir = (e: React.PointerEvent, carte: CarteEmoji, v: Variante, depuis: 'collection' | 'deck'): void => {
     if (deck === undefined || e.button !== 0) return
@@ -1135,7 +1148,7 @@ export function PageCollection({
       vientDeGlisser.current = true
       window.setTimeout(() => (vientDeGlisser.current = false), 0)
       const sur = dans(m.clientX, m.clientY)
-      if (depuis === 'collection' ? sur : !sur) deck.onBasculer({ id: carte.id, v })
+      if (depuis === 'collection' ? sur : !sur) entrer(carte, v)
       setGlisse(null)
     }
     const annule = (m: PointerEvent): void => {
@@ -1572,6 +1585,42 @@ export function PageCollection({
         )}
       </div>
       {!enBandeau && colonneDuDeck}
+      {aPrendre !== null &&
+        deck !== undefined &&
+        createPortal(
+          <div className="prendre-voile" onClick={() => setAPrendre(null)}>
+            <div className="prendre" role="alertdialog" aria-modal="true" aria-labelledby="prendre-question" onClick={(e) => e.stopPropagation()}>
+              <img
+                draggable={false}
+                className="prendre-image"
+                style={{ '--cran': teinteDuCran(aPrendre.carte.rarete) } as React.CSSProperties}
+                src={`${import.meta.env.BASE_URL}${aPrendre.carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`}
+                alt=""
+              />
+              <p id="prendre-question" className="prendre-question">
+                Prendre <b>{enTitre(aPrendre.carte.nom)}</b> à <b>{aPrendre.prisPar}</b> ?
+              </p>
+              <p className="prendre-detail">Elle quittera {aPrendre.prisPar}.</p>
+              <div className="prendre-boutons">
+                <button type="button" className="prendre-annuler" onClick={() => setAPrendre(null)}>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className="collection-bouton prendre-oui"
+                  autoFocus
+                  onClick={() => {
+                    deck.onBasculer({ id: aPrendre.carte.id, v: aPrendre.v })
+                    setAPrendre(null)
+                  }}
+                >
+                  Prendre
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
       {/* LA CARTE QU'ON GLISSE suit le doigt ; rouge quand la lâcher la retire. */}
       {glisse !== null &&
         createPortal(
