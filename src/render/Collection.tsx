@@ -104,6 +104,9 @@ const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'niveau', nom: 'Niveau' },
 ]
 
+/** Au doigt, la colonne du deck est un bandeau en haut (la même requête que la CSS). */
+const enBandeau = (): boolean => typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
+
 /** Ajoute ou retire une valeur d'un filtre : rien de coché, tout passe. */
 function basculer<T>(s: ReadonlySet<T>, v: T): ReadonlySet<T> {
   const n = new Set(s)
@@ -1037,7 +1040,10 @@ export function PageCollection({
       const dy = m.clientY - y0
       if (!parti) {
         if (Math.hypot(dx, dy) < 8) return
-        if (m.pointerType !== 'mouse' && Math.abs(dx) < Math.abs(dy)) return fin()
+        // AU DOIGT, LE DECK EST UN BANDEAU HORIZONTAL (voir `.deck-colonne` au
+        // doigt) : il défile de côté, une carte en sort par un geste vertical.
+        const deCote = Math.abs(dx) >= Math.abs(dy)
+        if (m.pointerType !== 'mouse' && (depuis === 'deck' && enBandeau() ? deCote : !deCote)) return fin()
         parti = true
       }
       m.preventDefault()
