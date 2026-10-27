@@ -2306,9 +2306,14 @@
   text-overflow: ellipsis;
 }
 
-.deck-ligne-rarete {
-  font-size: 0.68rem;
-  color: var(--cran);
+.deck-ligne-bonus {
+  display: flex;
+  gap: 0.2rem;
+  margin-top: 0.15rem;
+}
+
+.deck-ligne-bonus > span {
+  font-size: 0.6rem;
 }
 
 .deck-actions {

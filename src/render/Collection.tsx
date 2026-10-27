@@ -1457,9 +1457,14 @@ export function PageCollection({
                   <img draggable={false} className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
                   <span className="deck-ligne-texte">
                     <span className="deck-ligne-nom">{enTitre(carte.nom)}</span>
-                    {/* LA RARETÉ NE S'ÉCRIT PAS (Keko) : la couleur du liseré la dit. Restent les bonus. */}
+                    {/* LA RARETÉ NE S'ÉCRIT PAS (Keko) : la couleur du liseré la dit. Restent
+                        les bonus, en PASTILLES comme sur les vignettes (Keko : « holo dans
+                        le même style que la collection, pastille multicolore »). */}
                     {(holo || anime) && (
-                      <span className="deck-ligne-rarete">{[holo && 'holo', anime && 'animée'].filter(Boolean).join(' · ')}</span>
+                      <span className="deck-ligne-bonus">
+                        {holo && <span className="pastille-holo">Holo</span>}
+                        {anime && <span className="pastille-anime">Animé</span>}
+                      </span>
                     )}
                   </span>
                 </button>

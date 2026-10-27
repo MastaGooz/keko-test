@@ -7025,3 +7025,5 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 **Les puces du niveau en étoiles** (27/10, Keko : « il faudrait l'afficher en étoiles je pense ») : comme sur la carte, une étoile d'or par niveau gagné (★ … ★★★★) ; le niveau 1, qui n'en porte aucune, en étoile creuse ☆. Les cinq tiennent sur une ligne à 390 px.
 
 **Le niveau devient un CLASSEMENT, plus un filtre** (27/10, Keko : « pourquoi on ne rajoute pas un type de classement niveau plutôt ? comme pour A→Z ») : la section « Niveau » et ses étoiles quittent le panneau ; « Trier » gagne « Niveau », le plus haut d'abord, à égalité l'ordre du catalogue. Mesuré : trois personnages posés aux niveaux 5, 3 et 3 sortent en tête, dans cet ordre. « Plus rares » devient « Rareté » : à quatre, il passait sur deux lignes à 390 px.
+
+**Les bonus de la colonne en pastilles** (27/10, Keko : « mets le terme holo dans la colonne deck dans le même style que la collection (pastille multicolore) ») : sous le nom, les mêmes `pastille-holo` (le dégradé rose, bleu, or) et `pastille-anime` que les vignettes, un cran plus petites.
