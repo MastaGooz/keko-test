@@ -933,7 +933,9 @@ export function Paquet3D({
   const tirage = useMemo((): { cartes: CarteDuMode[]; bonus: Readonly<Record<string, Bonus>> } => {
     if (tas === null) return { cartes: [], bonus: {} }
     const rng = createRng((GRAINE + numero * 7919) >>> 0)
-    // LES PITIÉS ET LES LÉGENDAIRES SANS DOUBLON du fantasy (`docs/fantasy.md`).
+    // LES PITIÉS du fantasy (`docs/fantasy.md`). *Plus de légendaire sans
+    // doublon* (Keko, 27/10 : « vire l'anti doublon des légendaires ») : le
+    // doublon fait monter le niveau par la fusion, une légendaire en a besoin.
     const col = joueur?.current
     const options: OptionsPaquet<string> =
       emojis && col !== undefined
@@ -942,7 +944,6 @@ export function Paquet3D({
               { cran: 'epique', apres: PITIE_EPIQUE, sans: col.sansEpique },
               { cran: 'legendaire', apres: PITIE_LEGENDAIRE, sans: col.sansLegendaire },
             ],
-            sansDoublon: { cran: 'legendaire', possede: (id) => col.cartes[id] !== undefined },
           }
         : {}
     const cartes = ouvrirPaquet(tas, rng, echelle, options)

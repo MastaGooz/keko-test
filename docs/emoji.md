@@ -6985,3 +6985,7 @@ Avec les taux d'alors (onze exemplaires d'un personnage pour son niveau 5), il f
 
 Le peintre sait encore poser un sticker collé (`colles`, `peindreColles`, les uniformes `uColles` du nuanceur) : rien ne le lui demande. L'album, le décollage et le ruban sont dans `git log` (c2bb2e5 et avant).
 
+### Les légendaires ont des doublons (27/10/2026)
+
+Keko, après la fusion : « vire l'anti doublon des légendaires du coup ». Une légendaire tirée n'était jamais une qu'on avait tant qu'il en manquait une : avec la fusion, aucune ne pouvait monter avant d'avoir les sept. Le paquet ne passe plus `sansDoublon` ; l'option reste dans `logic/paquet.ts` (générique, vérifiée), inutilisée.
+

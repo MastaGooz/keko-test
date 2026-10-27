@@ -814,7 +814,10 @@ commande ce que la Sage des ronces, l'Haruspice et la Tatoueuse effleurent.
   tous les 4,6 jours (8,3 au pire décile). Les chiffres du paragraphe
   précédent sont remplacés par ceux-ci.
 - **Protection contre les doublons : LÉGENDAIRES UNIQUEMENT** (Keko) — une
-  légendaire tirée est toujours une qu'on n'a pas tant qu'il en manque. Les 24
+  légendaire tirée est toujours une qu'on n'a pas tant qu'il en manque.
+  **RETIRÉE le 27/10** (Keko : « vire l'anti doublon des légendaires du
+  coup ») : le niveau se gagne en fusionnant des doublons, et une légendaire
+  restait au niveau 1 tant qu'il en manquait une. Les 24
   en ~3–4 mois ; les 43 épiques, au hasard, en ~3 mois.
 - **Les doublons deviennent des stickers, et les stickers remplissent un
   ALBUM** (Keko) : une case par carte. **Des SÉRIES de cases débloquent des

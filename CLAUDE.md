@@ -69,8 +69,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Taux du fantasy** (`ECHELLE_FANTASY`, `PITIE_*` dans `logic/paquet.ts`) :
   cartes 1–4 81/16/2,5/0,4/0,02 %, la 5ᵉ au moins peu commune, épique
   garantie au 24ᵉ paquet sans, légendaire au 200ᵉ (`sansEpique`,
-  `sansLegendaire` dans la collection), **légendaires sans doublon** tant
-  qu'il en manque. Stockage `keko-fantasy-*` : les collections emoji ne sont
+  `sansLegendaire` dans la collection). **Les légendaires ont des doublons**
+  comme les autres (Keko, 27/10 : la fusion en a besoin ; `sansDoublon` reste
+  dans `logic/paquet.ts`, inutilisé). Stockage `keko-fantasy-*` : les collections emoji ne sont
   plus lues.
 - L'histoire du catalogue d'emoji (notoriété, drapeaux, animés) est dans
   `docs/emoji.md`.
