@@ -3161,12 +3161,12 @@ span.jouer-pile-dos {
     padding-bottom: calc(1.6rem + env(safe-area-inset-bottom));
   }
 
-  /* La jauge en haut, au milieu de ce qui reste ; « X disponibles » et
-     « Prochain paquet dans … » en bas, comme sur PC. */
+  /* La jauge en haut ; « X disponibles » et « Prochain paquet dans … » en
+     bas, comme sur PC — CENTRÉS SUR L'ÉCRAN, comme le paquet (Keko : « le
+     paquet est centré mais le reste de l'UI est décalé sur la droite »). */
   .reserve-place {
     top: max(0.6rem, env(safe-area-inset-top));
     bottom: auto;
-    left: calc(50% + var(--rail) / 2);
   }
 
   .reserve-cachee {
@@ -3176,12 +3176,10 @@ span.jouer-pile-dos {
   .paquet-disponibles {
     top: auto;
     bottom: calc(5vh + env(safe-area-inset-bottom));
-    padding-left: var(--rail);
   }
 
   .reserve-bilan {
     bottom: calc(9vh + env(safe-area-inset-bottom));
-    left: var(--rail);
   }
 }
 
