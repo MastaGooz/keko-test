@@ -1339,10 +1339,13 @@ export function PageCollection({
                 <button
                   key={n}
                   type="button"
-                  className={`puce${niveaux.has(n) ? ' actif' : ''}`}
+                  className={`puce puce-etoiles${niveaux.has(n) ? ' actif' : ''}`}
+                  aria-label={`Niveau ${n}`}
                   onClick={() => setNiveaux((s) => basculer(s, n))}
                 >
-                  {n}
+                  {/* EN ÉTOILES (Keko), comme sur la carte : une par niveau gagné ;
+                      le niveau 1, qui n'en a aucune, en étoile creuse. */}
+                  <span aria-hidden>{n === 1 ? '☆' : '★'.repeat(n - 1)}</span>
                 </button>
               ))}
             </div>
