@@ -6215,6 +6215,18 @@ faisait déjà pour le sachet suivant*, qui arrivait pris.
   `&peau` n'ont pas d'accueil et gardent la prise**, sinon ils perdraient le son
   sur tactile.
 - La barre de navigation est cachée sur l'accueil.
+- **Le titre plus grand et qui FRAPPE** (27/10, Keko : « le titre trop petit à
+  l'écran de lancement, et pas assez juicy ») : la toile du titre était bien
+  plus large que le mot, il n'en occupait qu'un tiers. **Peint au double de sa
+  place puis rogné au dessin** (`cadreDuDessin`), il prend `min(88vw, 640px,
+  95vh)` — 365 px de large au lieu de ~140 sur un 390 × 844 (mesuré). **Son
+  arrivée** : il tombe de haut et de grand (× 1,9, penché), s'écrase à l'impact
+  (≈ 0,33 s) et rebondit deux fois ; **à l'impact** l'écran tremble
+  (`accueil-secousse`), un éclair d'or s'ouvre et vingt-six éclats à quatre
+  branches partent en gerbe et retombent (`ETINCELLES_ACCUEIL`, tirage fixe).
+  **Ensuite** il respire, une lueur de bougie bat derrière lui, et un reflet le
+  traverse toutes les 3,5 s, découpé au dessin (le titre rogné sert de
+  `mask-image`). Tout en CSS : rien ne retarde la tape qui rend le son.
 
 ### LA RÉSERVE DE PAQUETS : UN TOUTES LES DIX MINUTES (16/10/2026)
 

@@ -715,24 +715,53 @@
   user-select: none;
 }
 
-.accueil-titre {
+/* LE LOGO PREND LA LARGEUR (Keko : « trop petit ») ; en paysage, la hauteur le borne. */
+.accueil-logo {
   position: relative;
   z-index: 1;
-  width: min(86vw, 520px);
-  margin-bottom: 18vh;
+  width: min(88vw, 640px, 95vh);
+  margin-bottom: 14vh;
   opacity: 0;
-  transform: scale(0.6) rotate(-6deg);
 }
 
-/* LE TITRE ARRIVE EN REBONDISSANT, puis respire. */
+.accueil-titre {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* LA CHUTE : de haut et de grand, écrasé à l'impact (≈ 0,33 s), deux rebonds ; puis il respire. */
 .accueil-pret {
   animation:
-    accueil-arrive 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) forwards,
-    accueil-respire 3.2s ease-in-out 0.6s infinite;
+    accueil-chute 0.75s cubic-bezier(0.5, 0, 0.75, 0) both,
+    accueil-respire 3.2s ease-in-out 0.9s infinite;
 }
 
-@keyframes accueil-arrive {
-  to {
+@keyframes accueil-chute {
+  0% {
+    opacity: 0;
+    transform: translateY(-45vh) scale(1.9) rotate(-10deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  44% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    animation-timing-function: ease-out;
+  }
+  56% {
+    opacity: 1;
+    transform: translateY(2%) scale(1.22, 0.78);
+    animation-timing-function: ease-in-out;
+  }
+  72% {
+    transform: translateY(-4%) scale(0.92, 1.1) rotate(1.5deg);
+  }
+  86% {
+    transform: scale(1.04, 0.97);
+  }
+  100% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
   }
@@ -746,7 +775,137 @@
   }
   50% {
     opacity: 1;
-    transform: scale(1.04) rotate(-1.5deg);
+    transform: scale(1.05) rotate(-1.5deg);
+  }
+}
+
+/* L'ÉCRAN TREMBLE À L'IMPACT. */
+.accueil-secoue {
+  animation: accueil-secousse 0.4s linear 0.33s;
+}
+
+@keyframes accueil-secousse {
+  0%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: translate(-1.4vmin, 1vmin);
+  }
+  30% {
+    transform: translate(1.2vmin, -0.8vmin);
+  }
+  45% {
+    transform: translate(-0.8vmin, -0.6vmin);
+  }
+  60% {
+    transform: translate(0.6vmin, 0.5vmin);
+  }
+  80% {
+    transform: translate(-0.3vmin, 0.2vmin);
+  }
+}
+
+/* UNE LUEUR DE BOUGIE derrière le titre, qui bat doucement. */
+.accueil-halo {
+  position: absolute;
+  inset: -25% -10%;
+  background: radial-gradient(closest-side, #ffbe4a66, #ff8a1f22 55%, transparent);
+  animation: accueil-halo 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes accueil-halo {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+/* LE REFLET : une bande claire qui traverse les lettres toutes les 3,5 s. */
+.accueil-reflet {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  background: linear-gradient(105deg, transparent 38%, #fff8e0d9 47%, #fff 50%, #fff8e0d9 53%, transparent 62%) no-repeat;
+  background-size: 300% 100%;
+  background-position: 120% 0;
+  mix-blend-mode: soft-light;
+  animation: accueil-reflet 3.5s ease-in-out 0.8s infinite;
+  pointer-events: none;
+}
+
+@keyframes accueil-reflet {
+  0% {
+    background-position: 120% 0;
+  }
+  35%,
+  100% {
+    background-position: -20% 0;
+  }
+}
+
+/* L'ÉCLAIR DE L'IMPACT : un disque d'or blanc qui s'ouvre et s'éteint. */
+.accueil-eclair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fffbe8, #ffd36acc 30%, #ff9d2a55 60%, transparent);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: accueil-eclair 0.55s ease-out 0.33s both;
+  pointer-events: none;
+}
+
+@keyframes accueil-eclair {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+}
+
+/* LA GERBE : des éclats d'or à quatre branches, projetés puis retombés. */
+.accueil-etincelle {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: var(--t);
+  height: var(--t);
+  margin: calc(var(--t) / -2);
+  background: radial-gradient(closest-side, #fff, #fff2b0 30%, #ffc53a 75%, #ffc53a00);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  opacity: 0;
+  animation: accueil-etincelle var(--duree) cubic-bezier(0.15, 0.8, 0.4, 1) 0.33s both;
+  pointer-events: none;
+}
+
+@keyframes accueil-etincelle {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.4) rotate(0deg);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--dy) + 6vmin)) scale(0.3) rotate(180deg);
   }
 }
 

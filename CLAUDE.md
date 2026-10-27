@@ -182,7 +182,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   à contre-physique exprès** (le sachet s'allume en s'ouvrant) : ne pas le
   « corriger ». **Jamais de backtick dans un commentaire GLSL** (six fois).
 - **L'accueil « Touchez pour jouer »** (`Accueil` dans `Jeu.tsx`, le titre
-  du sachet par `toileDuTitre`) **a remplacé la prise** : c'est son
+  du sachet par `toileDuTitre`, rogné au dessin et grand ; il tombe, frappe —
+  secousse, éclair, gerbe — puis respire sous un reflet) **a remplacé la prise** : c'est son
   relâchement qui rend le son à la page sur tactile, une fois par session. Le
   paquet n'est monté qu'après, et chaque sachet arrive déjà pris
   (`sansPrise`). `Prise` et « Touchez le paquet » ne restent que pour `&art` et

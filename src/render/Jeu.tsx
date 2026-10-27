@@ -157,27 +157,31 @@ function Attente({ dans, onCollection }: { dans: number | null; onCollection: ()
  */
 function Accueil({ onJouer }: { onJouer: () => void }): React.ReactElement {
   const toile = useRef<HTMLCanvasElement>(null)
-  const [pret, setPret] = useState(false)
+  const [masque, setMasque] = useState<string | null>(null)
   useEffect(() => {
     let vivant = true
-    const l = Math.min(window.innerWidth * 0.86, 520) * Math.min(window.devicePixelRatio || 1, 2)
+    // PEINT AU DOUBLE DE SA PLACE, puis rogné au dessin : la toile du titre est
+    // bien plus large que le mot (Keko : « le titre trop petit »).
+    const l = Math.min(Math.min(window.innerWidth * 0.9, 640) * Math.min(window.devicePixelRatio || 1, 2) * 2, 2600)
     void toileDuTitre(l).then((source) => {
       const t = toile.current
       const ctx = t?.getContext('2d')
       if (!vivant || t == null || ctx == null) return
-      t.width = source.width
-      t.height = source.height
-      ctx.drawImage(source, 0, 0)
-      setPret(true)
+      const [x, y, w, h] = cadreDuDessin(source)
+      t.width = w
+      t.height = h
+      ctx.drawImage(source, x, y, w, h, 0, 0, w, h)
+      setMasque(t.toDataURL())
     })
     return () => {
       vivant = false
     }
   }, [])
+  const pret = masque !== null
   return (
     <button
       type="button"
-      className="accueil"
+      className={`accueil${pret ? ' accueil-secoue' : ''}`}
       onPointerUp={() => {
         amorcerLeSon()
         reveillerLeSon()
@@ -188,11 +192,65 @@ function Accueil({ onJouer }: { onJouer: () => void }): React.ReactElement {
     >
       <div className="paquet-fond" />
       <FondAnime />
-      <canvas ref={toile} className={`accueil-titre${pret ? ' accueil-pret' : ''}`} />
+      {/* LE TITRE TOMBE ET FRAPPE (Keko : « pas assez juicy ») : il chute de
+          haut, s'écrase, rebondit ; à l'impact l'écran tremble, un éclair et
+          une gerbe d'étincelles d'or partent ; puis il respire, et un reflet le
+          balaie, découpé au dessin (le titre lui sert de masque). */}
+      <div className={`accueil-logo${pret ? ' accueil-pret' : ''}`}>
+        <span className="accueil-halo" />
+        <canvas ref={toile} className="accueil-titre" />
+        {pret && (
+          <>
+            <span className="accueil-reflet" style={{ maskImage: `url(${masque})`, WebkitMaskImage: `url(${masque})` }} />
+            <span className="accueil-eclair" />
+            {ETINCELLES_ACCUEIL.map((e, i) => (
+              <span key={i} className="accueil-etincelle" style={e} />
+            ))}
+          </>
+        )}
+      </div>
       <span className="paquet-invite accueil-invite">Touchez pour jouer</span>
     </button>
   )
 }
+
+/** Le rectangle [x, y, l, h] de ce qui est peint (alpha visible), avec un peu d'air. */
+function cadreDuDessin(t: HTMLCanvasElement): [number, number, number, number] {
+  const ctx = t.getContext('2d')
+  if (ctx === null) return [0, 0, t.width, t.height]
+  const { data, width, height } = ctx.getImageData(0, 0, t.width, t.height)
+  let x0 = width
+  let y0 = height
+  let x1 = -1
+  let y1 = -1
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++)
+      if (data[(y * width + x) * 4 + 3]! > 8) {
+        if (x < x0) x0 = x
+        if (x > x1) x1 = x
+        if (y < y0) y0 = y
+        if (y > y1) y1 = y
+      }
+  if (x1 < 0) return [0, 0, t.width, t.height]
+  const air = Math.round((x1 - x0) * 0.03)
+  x0 = Math.max(0, x0 - air)
+  y0 = Math.max(0, y0 - air)
+  x1 = Math.min(width - 1, x1 + air)
+  y1 = Math.min(height - 1, y1 + air)
+  return [x0, y0, x1 - x0 + 1, y1 - y0 + 1]
+}
+
+/** La gerbe de l'impact : des directions régulières, des portées et des tailles qui varient. */
+const ETINCELLES_ACCUEIL: React.CSSProperties[] = Array.from({ length: 26 }, (_, i) => {
+  const a = (i / 26) * Math.PI * 2 + ((i * 7) % 5) * 0.09
+  const d = 0.55 + ((i * 11) % 7) / 10
+  return {
+    '--dx': `${(Math.cos(a) * d * 55).toFixed(1)}vmin`,
+    '--dy': `${(Math.sin(a) * d * 38).toFixed(1)}vmin`,
+    '--t': `${(1 + ((i * 5) % 6) * 0.18).toFixed(2)}rem`,
+    '--duree': `${(0.55 + ((i * 3) % 5) * 0.08).toFixed(2)}s`,
+  } as React.CSSProperties
+})
 
 /** Combien d'exemplaires d'une version la collection tient : ce que les decks peuvent prendre. */
 function compteDesExemplaires(c: Collection): CompteDExemplaires {
