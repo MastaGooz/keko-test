@@ -2106,7 +2106,7 @@ export function Paquet3D({
       </Canvas>
 
       {/* L'INVITE À PRENDRE LE SACHET : voir `Prise`. */}
-      {!pris && paquet.length > 0 && <p className="paquet-invite">Touche le paquet</p>}
+      {!pris && paquet.length > 0 && <p className="paquet-invite">Touchez le paquet</p>}
       {/* PLUS DE « DERNIÈRE CARTE » NI DE COMPTEUR EN HAUT. Keko : « enlève le
           commentaire en haut sur la rareté de la dernière carte ». La montée de
           l'écran vers la couleur du cran reste : voir `monterLeCompteur`, qui

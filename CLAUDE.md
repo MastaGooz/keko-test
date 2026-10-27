@@ -185,7 +185,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   du sachet par `toileDuTitre`) **a remplacé la prise** : c'est son
   relâchement qui rend le son à la page sur tactile, une fois par session. Le
   paquet n'est monté qu'après, et chaque sachet arrive déjà pris
-  (`sansPrise`). `Prise` et « Touche le paquet » ne restent que pour `&art` et
+  (`sansPrise`). `Prise` et « Touchez le paquet » ne restent que pour `&art` et
   `&peau`, qui n'ont pas d'accueil.
 - **Le geste** : le front suit le doigt (exposant 1), « Ouvrir ici » au départ
   du pointillé, **cliquet** (`p` ne recule jamais, pas de retour sous la
@@ -615,6 +615,11 @@ planche de prototype — est dans `docs/methode.md`.
 
 Keko écrit en français ; lui répondre en français. Commentaires de code et
 messages de commit en français également.
+
+**ON NE TUTOIE JAMAIS LE JOUEUR dans les textes du jeu** : « Touchez », « Votre
+collection » (Keko, déjà tranché pour l'archive — `docs/archive-extraction.md`
+— et redit le 27/10 : « ne tutoie jamais le joueur dans les textes, je l'avais
+déjà dit »). L'infinitif (« Ouvrir un paquet ») et l'énoncé restent bons.
 
 ## L'ARCHIVE : LE JEU D'EXTRACTION
 

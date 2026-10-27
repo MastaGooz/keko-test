@@ -1260,7 +1260,7 @@ export function PageCollection({
         <b>{deck.nombre}/{deck.taille}</b>
       </div>
       <div className="deck-colonne-liste">
-        {duDeck.length === 0 && <p className="deck-colonne-vide">{matchMedia('(pointer: coarse)').matches ? "Touche une carte pour l'ajouter au deck." : "Glisse une carte ici pour l'ajouter au deck."}</p>}
+        {duDeck.length === 0 && <p className="deck-colonne-vide">{matchMedia('(pointer: coarse)').matches ? "Touchez une carte pour l'ajouter au deck." : "Glissez une carte ici pour l'ajouter au deck."}</p>}
         {duDeck.map(({ carte, v }) => {
           const { holo, anime } = exemplaireDe(v)
           return (
@@ -1269,7 +1269,7 @@ export function PageCollection({
               type="button"
               className="deck-ligne"
               style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
-              title={`${enTitre(carte.nom)} : glisse-la hors du deck pour la retirer`}
+              title={`${enTitre(carte.nom)} : glissez-la hors du deck pour la retirer`}
               onClick={() => taper(carte, v)}
               onPointerDown={(e) => toucher(e, carte, v, 'deck')}
               onPointerMove={bougerAppui}
@@ -1550,7 +1550,7 @@ export function PageCollection({
 
         {catalogue === null ? null : !toutes && possedees.length === 0 ? (
           <div className="collection-vide">
-            <p>Ta collection est vide.</p>
+            <p>Votre collection est vide.</p>
             <p className="collection-discret">Chaque paquet ouvert y range ses cinq cartes.</p>
             <button type="button" className="collection-bouton" onClick={onOuvrirUnPaquet}>
               Ouvrir un paquet
