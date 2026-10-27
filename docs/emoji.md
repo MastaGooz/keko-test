@@ -7009,3 +7009,9 @@ Keko : « quand j'ouvre le paquet et que je clique sur terminer, l'animation de 
 
 **Mesuré** (Chrome sans tête, processeur ralenti cinq fois pour figurer un téléphone) : la version d'avant faisait neuf longues tâches pendant la sortie (100 à 300 ms) ; celle-ci aucune, ses images à 35–77 ms, un seul accroc de 222 ms une fois les cartes sorties du cadre.
 
+### « Mes decks » : un étui par deck (27/10/2026)
+
+Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks par des paquets, sans la collection ou la liste des decks, puis quand on clique sur un deck on ouvre un écran de création/modif du deck (ce qu'on a déjà) ». Tranché par lui : **l'étui de deck** (plutôt qu'une pile avec carte vedette ou une pile de dos), **l'éditeur sans onglets**, **une tape ouvre l'éditeur** (choisir le deck qui joue reste dans l'éditeur et dans « Jouer »).
+
+`PageDecks` (`render/Decks.tsx`, page `decks`, entrée « Mes decks » du menu) : un étui de cuir aubergine cousu d'or par deck, le nom en Grenze or, la carte qui rapporte le plus (`vedetteDe` : la valeur jouée, puis le cran, puis le rang) dans une fenêtre sertie de la couleur de son cran, sur le camp de sa race ; « Joue » en ruban sur l'actif complet, « 7/30 · incomplet » sinon ; un étui en pointillé pour un nouveau deck, ouvert aussitôt. L'éditeur (`PageCollection` en mode deck) perd ses onglets, gagne « ‹ Mes decks » et prend le nom du deck pour titre ; supprimer un deck ramène aux étuis.
+

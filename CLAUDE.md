@@ -322,8 +322,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`EntreeDeck` : emoji + version, une place par version dans la grille en
   mode deck, menu « Cartes » → « Deck », `ChoixDuDeck`), **un emoji au plus
   une fois par deck, un exemplaire dans un seul deck** (`disponibles`, « pris
-  par le Deck 2 » estompé) ; **plusieurs decks** (`Decks`, six au plus, un
-  onglet chacun, Keko), **un seul joue : l'actif** (`choisirDeck`, qui arrête
+  par le Deck 2 » estompé) ; **plusieurs decks** (`Decks`, six au plus,
+  Keko) : **« Mes decks » les montre en ÉTUIS** (`render/Decks.tsx`, Keko :
+  « matérialiser les decks par des paquets » ; boîte de cuir, nom frappé en
+  or, la carte la plus forte en fenêtre sur son camp, ruban « Joue »), une
+  tape ouvre l'éditeur — la grille en mode deck, SANS ONGLETS, « ‹ Mes
+  decks » pour revenir ; **un seul joue : l'actif** (`choisirDeck`, qui arrête
   l'autre) ; complet, il joue tout seul **une main de cinq toutes les dix
   secondes, un Like par carte PLUS UN PAR CRAN (commune 1 … légendaire 5,
   Keko ; `ValeurDeCarte` injectée depuis le catalogue), ajoutés aussitôt, sur
@@ -515,7 +519,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; les niveaux ne bougent pas — le miroir de `&debloquer` |
 | `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET niveau (les decks suivent) — pour effacer ce qu'un test y a laissé |
-| `&page=collection`, `&page=catalogue`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
+| `&page=collection`, `&page=catalogue`, `&page=decks`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&likes=N` | pose le solde de puissance DE CET APPAREIL (le compteur, sans générateur) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |

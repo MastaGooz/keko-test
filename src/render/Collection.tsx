@@ -924,9 +924,8 @@ export interface ChoixDuDeck {
   readonly onRenommer: (nom: string) => void
   readonly edite: number
   readonly actif: number
-  readonly peutAjouter: boolean
-  readonly onEditer: (i: number) => void
-  readonly onAjouter: () => void
+  /** Revenir à « Mes decks », les étuis (voir `PageDecks`). */
+  readonly onRetour: () => void
   readonly onSupprimer: () => void
   /** Faire jouer le deck qu'on compose. */
   readonly onJouerAvec: () => void
@@ -1144,35 +1143,16 @@ export function PageCollection({
     <div className={`collection${modeDeck ? ' collection-avec-deck' : ''}`}>
       <div className="collection-defile">
         <header className="collection-tete">
-          <h1 className="collection-titre">{modeDeck ? 'Mes decks' : toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
-          {/* UN ONGLET PAR DECK : celui qu'on compose en crème, celui qui joue
-              marqué « joue », et « + » pour en ouvrir un autre. */}
+          {/* L'ÉDITEUR D'UN DECK, SANS ONGLETS (Keko : on y entre par son étui) :
+              le retour aux étuis, et le nom du deck en titre. */}
           {deck !== undefined && (
-            <div className="decks-onglets" role="tablist" aria-label="Mes decks">
-              {deck.decks.map((d, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  role="tab"
-                  aria-selected={i === deck.edite}
-                  className={`deck-onglet${i === deck.edite ? ' deck-onglet-edite' : ''}`}
-                  onClick={() => deck.onEditer(i)}
-                >
-                  <span className="deck-onglet-nom">{d.nom}</span>
-                  <span className="deck-onglet-compte">
-                    {d.n}/{deck.taille}
-                  </span>
-                  {/* « INCOMPLET » SUR CHAQUE DECK QUI L'EST, rien quand il est complet (Keko). */}
-                  {d.n < deck.taille && <span className="deck-onglet-joue deck-onglet-incomplet">incomplet</span>}
-                </button>
-              ))}
-              {deck.peutAjouter && (
-                <button type="button" className="deck-onglet deck-ajouter" aria-label="Nouveau deck" onClick={deck.onAjouter}>
-                  +
-                </button>
-              )}
-            </div>
+            <button type="button" className="deck-retour" onClick={deck.onRetour}>
+              ‹ Mes decks
+            </button>
           )}
+          <h1 className="collection-titre">
+            {deck !== undefined ? (deck.decks[deck.edite]?.nom ?? 'Deck') : toutes ? 'Toutes les cartes' : 'Ma collection'}
+          </h1>
           <p className="collection-compte">
             {deck !== undefined ? (
               <>

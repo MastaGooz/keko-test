@@ -67,6 +67,7 @@ import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
 import { PageJouer, type MainTombee } from './Deck.tsx'
+import { PageDecks } from './Decks.tsx'
 import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
 import { FondAnime } from './FondAnime.tsx'
 import { demanderLInclinaison } from './inclinaison.ts'
@@ -83,14 +84,14 @@ import { penchantAuSurvol } from './survol.ts'
  * `jouer` (le regarder jouer) sont les deux entrées du menu « Deck », à droite
  * — la place des stickers, partis avec la fusion (Keko).
  */
-type Page = 'booster' | 'collection' | 'catalogue' | 'deck' | 'jouer'
+type Page = 'booster' | 'collection' | 'catalogue' | 'decks' | 'deck' | 'jouer'
 
 /** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
 const ILLIMITE = new URLSearchParams(location.search).has('illimite')
 /** `&page=` : la page ouverte d'emblée (voir `accueil`) ; autre chose, ignoré. */
 const PAGE_DEMANDEE = ((): Page | null => {
   const p = new URLSearchParams(location.search).get('page')
-  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'deck' || p === 'jouer' ? p : null
+  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'decks' || p === 'deck' || p === 'jouer' ? p : null
 })()
 
 /** 9:58 — les minutes sans zéro devant, les secondes avec. */
@@ -509,7 +510,7 @@ export function Jeu(): React.ReactElement {
   const nouvelles = nombreDeNouvelles(collection)
   const visible = !accueil && (page !== 'booster' || calme)
   const surLesCartes = page === 'collection' || page === 'catalogue'
-  const surLeDeck = page === 'deck' || page === 'jouer'
+  const surLeDeck = page === 'decks' || page === 'deck' || page === 'jouer'
 
   return (
     <>
@@ -551,6 +552,22 @@ export function Jeu(): React.ReactElement {
             <p className="reserve-bilan">Prochain paquet dans {dans === null ? '…' : minuteur(dans)}</p>
           )}
         </>
+      ) : page === 'decks' ? (
+        <PageDecks
+          catalogue={catalogue}
+          decks={decks}
+          valeur={valeur}
+          peutAjouter={decks.liste.length < DECKS_MAX}
+          onOuvrir={(i) => {
+            setDeckEdite(i)
+            aller('deck')
+          }}
+          onAjouter={() => {
+            poserDecks(ajouterDeck)
+            setDeckEdite(Math.min(decks.liste.length, DECKS_MAX - 1))
+            aller('deck')
+          }}
+        />
       ) : page === 'jouer' ? (
         <PageJouer
           catalogue={catalogue}
@@ -585,15 +602,12 @@ export function Jeu(): React.ReactElement {
                   onRenommer: (nom: string) => poserDecks((ds) => renommerDeck(ds, deckEdite, nom)),
                   edite: deckEdite,
                   actif: decks.actif,
-                  peutAjouter: decks.liste.length < DECKS_MAX,
-                  onEditer: setDeckEdite,
-                  onAjouter: () => {
-                    poserDecks(ajouterDeck)
-                    setDeckEdite(Math.min(decks.liste.length, DECKS_MAX - 1))
-                  },
+                  onRetour: () => aller('decks'),
+                  // SUPPRIMÉ, ON REVIENT AUX ÉTUIS : il n'y a plus rien à modifier ici.
                   onSupprimer: () => {
                     poserDecks((ds) => supprimerDeck(ds, deckEdite, Date.now()))
                     setDeckEdite((i) => Math.max(0, Math.min(i, decks.liste.length - 2)))
+                    aller('decks')
                   },
                   onJouerAvec: () => choisirLeDeck(deckEdite),
                 }
@@ -701,9 +715,9 @@ export function Jeu(): React.ReactElement {
             <button
               type="button"
               role="menuitemradio"
-              aria-checked={page === 'deck'}
-              className={`nav-menu-entree${page === 'deck' ? ' nav-menu-active' : ''}`}
-              onClick={() => aller('deck')}
+              aria-checked={page === 'decks' || page === 'deck'}
+              className={`nav-menu-entree${page === 'decks' || page === 'deck' ? ' nav-menu-active' : ''}`}
+              onClick={() => aller('decks')}
             >
               Mes decks
               <span className="nav-menu-compte">
