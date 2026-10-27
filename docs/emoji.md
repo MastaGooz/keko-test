@@ -7015,3 +7015,5 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 `PageDecks` (`render/Decks.tsx`, page `decks`, entrée « Mes decks » du menu) : un étui de cuir aubergine cousu d'or par deck, le nom en Grenze or, la carte qui rapporte le plus (`vedetteDe` : la valeur jouée, puis le cran, puis le rang) dans une fenêtre sertie de la couleur de son cran, sur le camp de sa race ; « Joue » en ruban sur l'actif complet, « 7/30 · incomplet » sinon ; un étui en pointillé pour un nouveau deck, ouvert aussitôt. L'éditeur (`PageCollection` en mode deck) perd ses onglets, gagne « ‹ Mes decks » et prend le nom du deck pour titre ; supprimer un deck ramène aux étuis.
 
+
+**Le nom et « Supprimer » montent au-dessus de la collection** (27/10, Keko : « plutôt que renommer le deck en haut de la colonne, autant le faire au-dessus de la collection (pareil pour supprimer) car on n'a plus les autres decks dans cet écran ») : le titre de l'éditeur est le nom du deck, le crayon à sa gauche le change en champ ; « ‹ Mes decks » à gauche et « Supprimer » (d'une seconde tape, « Sûr ? ») en face, sur la même ligne ; la tête de la colonne ne dit plus que « Cartes 30/30 ».

@@ -2175,39 +2175,6 @@
   gap: 0.4rem;
 }
 
-/* LE CRAYON, à gauche du nom : une cible de doigt, sans fond. */
-.deck-colonne-crayon {
-  flex: none;
-  width: 1.6rem;
-  height: 1.8rem;
-  margin: -0.35rem -0.3rem -0.35rem -0.45rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #ffd27a;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.deck-colonne-crayon:hover {
-  background: rgba(255, 210, 122, 0.15);
-}
-
-.deck-colonne-champ {
-  flex: 1;
-  min-width: 0;
-  margin: -0.25rem 0;
-  padding: 0.15rem 0.3rem;
-  border: 0;
-  border-bottom: 0.12rem solid #ffd27a;
-  text-transform: none;
-  background: rgba(255, 250, 240, 0.08);
-  color: #fffaf0;
-  font: inherit;
-  outline: none;
-}
-
 .deck-colonne-nom {
   flex: 1;
   min-width: 0;
@@ -2223,14 +2190,6 @@
 .deck-colonne-tete b {
   flex: none;
   color: #ffd27a;
-}
-
-/* Dans la colonne : sous son nom, à gauche, sans la marge du bas de page. */
-.deck-colonne .deck-supprimer {
-  align-self: flex-start;
-  margin: -0.2rem 0 0.3rem 0.3rem;
-  min-height: 2rem;
-  font-size: 0.75rem;
 }
 
 .deck-colonne-liste {
@@ -2837,4 +2796,68 @@ span.jouer-pile-dos {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
+}
+
+/* L'EN-TÊTE DE L'ÉDITEUR : « ‹ Mes decks » à gauche, « Supprimer » en face. */
+.deck-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.deck-entete .deck-retour {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.deck-entete .deck-supprimer {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+/* LE NOM DU DECK EN TITRE, le crayon à sa gauche : une cible de doigt, sans fond. */
+.deck-titre {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.deck-titre .collection-titre {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.deck-titre-crayon {
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin-left: -0.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #ffd27a;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.deck-titre-crayon:hover {
+  background: rgba(255, 210, 122, 0.15);
+}
+
+.deck-titre-champ {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 0 0.3rem;
+  border: 0;
+  border-bottom: 0.15rem solid #ffd27a;
+  background: rgba(255, 250, 240, 0.08);
+  color: #fffaf0;
+  font-family: inherit;
+  text-transform: none;
+  outline: none;
 }

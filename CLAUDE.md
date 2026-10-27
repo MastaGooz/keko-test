@@ -327,7 +327,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « matérialiser les decks par des paquets » ; le DOS des cartes en fond,
   `peindreDosEmoji` sans ses clous, nom frappé en or, la carte la plus forte en fenêtre sur son camp, ruban « Joue »), une
   tape ouvre l'éditeur — la grille en mode deck, SANS ONGLETS, « ‹ Mes
-  decks » pour revenir ; **un seul joue : l'actif** (`choisirDeck`, qui arrête
+  decks » pour revenir, « Supprimer » en face, le nom renommé au crayon en titre (la colonne ne dit plus que son compte) ; **un seul joue : l'actif** (`choisirDeck`, qui arrête
   l'autre) ; complet, il joue tout seul **une main de cinq toutes les dix
   secondes, un Like par carte PLUS UN PAR CRAN (commune 1 … légendaire 5,
   Keko ; `ValeurDeCarte` injectée depuis le catalogue), ajoutés aussitôt, sur

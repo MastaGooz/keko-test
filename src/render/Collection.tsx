@@ -1144,15 +1144,71 @@ export function PageCollection({
       <div className="collection-defile">
         <header className="collection-tete">
           {/* L'ÉDITEUR D'UN DECK, SANS ONGLETS (Keko : on y entre par son étui) :
-              le retour aux étuis, et le nom du deck en titre. */}
+              le retour aux étuis et, en face, « Supprimer » ; le nom du deck en
+              titre, qu'on renomme ici — Keko : « on n'a plus les autres decks
+              dans cet écran », la tête de la colonne n'a plus à le porter. */}
           {deck !== undefined && (
-            <button type="button" className="deck-retour" onClick={deck.onRetour}>
-              ‹ Mes decks
-            </button>
+            <div className="deck-entete">
+              <button type="button" className="deck-retour" onClick={deck.onRetour}>
+                ‹ Mes decks
+              </button>
+              {/* SUPPRIMER LE DECK d'une seconde tape ; jamais le dernier. */}
+              {deck.decks.length > 1 && (
+                <button
+                  type="button"
+                  className={`deck-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
+                  onClick={() => {
+                    if (!sur) setSur(true)
+                    else {
+                      setSur(false)
+                      deck.onSupprimer()
+                    }
+                  }}
+                >
+                  {sur ? 'Sûr ?' : 'Supprimer'}
+                </button>
+              )}
+            </div>
           )}
-          <h1 className="collection-titre">
-            {deck !== undefined ? (deck.decks[deck.edite]?.nom ?? 'Deck') : toutes ? 'Toutes les cartes' : 'Ma collection'}
-          </h1>
+          {deck === undefined ? (
+            <h1 className="collection-titre">{toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
+          ) : (
+            <div className="deck-titre">
+              {/* LE CRAYON À GAUCHE DU NOM : le nom devient un champ ; Entrée ou une
+                  tape ailleurs le garde, Échap l'abandonne, vide il redevient « Deck N ». */}
+              {renomme ? (
+                <input
+                  className="collection-titre deck-titre-champ"
+                  type="text"
+                  autoFocus
+                  defaultValue={deck.decks[deck.edite]?.nomDonne ?? ''}
+                  placeholder={`Deck ${deck.edite + 1}`}
+                  maxLength={NOM_DECK_MAX}
+                  aria-label="Nom du deck"
+                  enterKeyHint="done"
+                  onFocus={(e) => e.currentTarget.select()}
+                  onBlur={(e) => {
+                    if (renomme) deck.onRenommer(e.currentTarget.value)
+                    setRenomme(false)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.currentTarget.blur()
+                    if (e.key === 'Escape') {
+                      e.currentTarget.value = deck.decks[deck.edite]?.nomDonne ?? ''
+                      e.currentTarget.blur()
+                    }
+                  }}
+                />
+              ) : (
+                <>
+                  <button type="button" className="deck-titre-crayon" aria-label="Renommer le deck" onClick={() => setRenomme(true)}>
+                    ✎
+                  </button>
+                  <h1 className="collection-titre">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</h1>
+                </>
+              )}
+            </div>
+          )}
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
@@ -1360,58 +1416,12 @@ export function PageCollection({
           className={`deck-colonne${glisse?.depuis === 'collection' ? ' deck-colonne-attend' : ''}${glisse?.depuis === 'collection' && glisse.surColonne ? ' deck-colonne-cible' : ''}`}
           aria-label={deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}
         >
+          {/* LA TÊTE DE LA COLONNE NE DIT QUE LE COMPTE : le nom, le crayon et
+              « Supprimer » sont montés au-dessus de la collection (Keko). */}
           <div className="deck-colonne-tete">
-            {/* LE CRAYON À GAUCHE DU NOM : le nom devient un champ ; Entrée ou une
-                tape ailleurs le garde, Échap l'abandonne, vide il redevient « Deck N ». */}
-            {renomme ? (
-              <input
-                className="deck-colonne-champ"
-                type="text"
-                autoFocus
-                defaultValue={deck.decks[deck.edite]?.nomDonne ?? ''}
-                placeholder={`Deck ${deck.edite + 1}`}
-                maxLength={NOM_DECK_MAX}
-                aria-label="Nom du deck"
-                enterKeyHint="done"
-                onFocus={(e) => e.currentTarget.select()}
-                onBlur={(e) => {
-                  if (renomme) deck.onRenommer(e.currentTarget.value)
-                  setRenomme(false)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') e.currentTarget.blur()
-                  if (e.key === 'Escape') {
-                    e.currentTarget.value = deck.decks[deck.edite]?.nomDonne ?? ''
-                    e.currentTarget.blur()
-                  }
-                }}
-              />
-            ) : (
-              <>
-                <button type="button" className="deck-colonne-crayon" aria-label="Renommer le deck" onClick={() => setRenomme(true)}>
-                  ✎
-                </button>
-                <span className="deck-colonne-nom">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</span>
-              </>
-            )}
+            <span className="deck-colonne-nom">Cartes</span>
             <b>{deck.nombre}/{deck.taille}</b>
           </div>
-          {/* SUPPRIMER LE DECK, en tête de sa colonne (Keko), d'une seconde tape ; jamais le dernier. */}
-          {deck.decks.length > 1 && (
-            <button
-              type="button"
-              className={`deck-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
-              onClick={() => {
-                if (!sur) setSur(true)
-                else {
-                  setSur(false)
-                  deck.onSupprimer()
-                }
-              }}
-            >
-              {sur ? 'Sûr ? Supprimer' : 'Supprimer ce deck'}
-            </button>
-          )}
           <div className="deck-colonne-liste">
             {duDeck.length === 0 && <p className="deck-colonne-vide">Glisse une carte ici pour l'ajouter au deck.</p>}
             {duDeck.map(({ carte, v }) => {
