@@ -23,7 +23,7 @@ import { NoToneMapping, type Group } from 'three'
 import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emoji/types.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
 import type { Collection, Possession, Variante } from '../logic/emoji/collection.ts'
-import { NIVEAUX, VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import { VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { NOM_DECK_MAX } from '../logic/emoji/deck.ts'
 import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
@@ -92,12 +92,16 @@ export function teinteDuCran(r: RareteEmoji): string {
   return AMBIANCE[COULEUR[r]] ?? '#ffffff'
 }
 
-type Tri = 'recentes' | 'az' | 'rares'
+type Tri = 'recentes' | 'az' | 'rares' | 'niveau'
 
 const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'recentes', nom: 'Récentes' },
   { id: 'az', nom: 'A → Z' },
-  { id: 'rares', nom: 'Plus rares' },
+  { id: 'rares', nom: 'Rareté' },
+  // LE NIVEAU EST UN CLASSEMENT, PAS UN FILTRE (Keko : « pourquoi on ne rajoute
+  // pas un type de classement niveau plutôt ? comme pour A→Z ») : le plus haut
+  // d'abord, à égalité l'ordre du catalogue.
+  { id: 'niveau', nom: 'Niveau' },
 ]
 
 /** Ajoute ou retire une valeur d'un filtre : rien de coché, tout passe. */
@@ -974,9 +978,6 @@ export function PageCollection({
   // bien de pouvoir sélectionner plusieurs catégories à la fois ».
   const [races, setRaces] = useState<ReadonlySet<RaceCarte>>(new Set())
   const [roles, setRoles] = useState<ReadonlySet<RoleCarte>>(new Set())
-  // LE NIVEAU DU PERSONNAGE (Keko : « ajouter le niveau dans les filtres ») :
-  // plusieurs à la fois, comme les raretés ; celui que la carte montre.
-  const [niveaux, setNiveaux] = useState<ReadonlySet<number>>(new Set())
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
   /**
    * OBTENUES / MANQUANTES, dans « Toutes les cartes » seulement (Keko : « dans
@@ -992,7 +993,7 @@ export function PageCollection({
   // deck a prise aussi. Un bouton à lui, hors du panneau des filtres (Keko).
   const [sansAttribuees, setSansAttribuees] = useState(false)
   const [panneau, setPanneau] = useState(false)
-  const actifs = raretes.size + niveaux.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
+  const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
   /**
    * LE GLISSER-DÉPOSER DU DECK (Keko : « un drag and drop pour ajouter /
@@ -1108,7 +1109,6 @@ export function PageCollection({
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
         }) &&
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
-        (niveaux.size === 0 || niveaux.has(niveauDuPersonnageDe(carte.id))) &&
         (races.size === 0 || races.has(carte.race)) &&
         (roles.size === 0 || roles.has(carte.role)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
@@ -1116,9 +1116,11 @@ export function PageCollection({
     const az = new Intl.Collator('fr')
     if (tri === 'recentes') l.sort((a, b) => (b.p?.ordre ?? -1) - (a.p?.ordre ?? -1))
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
+    else if (tri === 'niveau')
+      l.sort((a, b) => niveauDuPersonnageDe(b.carte.id) - niveauDuPersonnageDe(a.carte.id) || a.carte.rang - b.carte.rang)
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [places, recherche, tri, raretes, niveaux, races, roles, bonus, possession, nouvelles, deck, sansAttribuees])
+  }, [places, recherche, tri, raretes, races, roles, bonus, possession, nouvelles, deck, sansAttribuees])
 
   const total = catalogue?.length ?? 0
   const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
@@ -1291,7 +1293,6 @@ export function PageCollection({
             voir={`Voir ${visibles.length} carte${visibles.length > 1 ? 's' : ''}`}
             onEffacer={() => {
               setRaretes(new Set())
-              setNiveaux(new Set())
               setRaces(new Set())
               setRoles(new Set())
               setBonus(new Set())
@@ -1329,23 +1330,6 @@ export function PageCollection({
                 >
                   <i />
                   {NOM_DE_LA_RARETE[r]}
-                </button>
-              ))}
-            </div>
-            </SectionFiltre>
-            <SectionFiltre titre="Niveau">
-            <div className="filtres-panneau-puces">
-              {Array.from({ length: NIVEAUX.max }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`puce puce-etoiles${niveaux.has(n) ? ' actif' : ''}`}
-                  aria-label={`Niveau ${n}`}
-                  onClick={() => setNiveaux((s) => basculer(s, n))}
-                >
-                  {/* EN ÉTOILES (Keko), comme sur la carte : une par niveau gagné ;
-                      le niveau 1, qui n'en a aucune, en étoile creuse. */}
-                  <span aria-hidden>{n === 1 ? '☆' : '★'.repeat(n - 1)}</span>
                 </button>
               ))}
             </div>

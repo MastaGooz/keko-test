@@ -2875,9 +2875,3 @@ span.jouer-pile-dos {
   text-transform: none;
   outline: none;
 }
-
-/* LES PUCES DU NIVEAU, en étoiles d'or comme sur la carte. */
-.puce-etoiles span {
-  color: #ffd27a;
-  letter-spacing: 0.05em;
-}
