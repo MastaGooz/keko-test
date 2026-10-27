@@ -1481,9 +1481,7 @@
 }
 
 .niveau-etoiles {
-  margin: 0.1rem 0 0;
-  font-size: 1.15rem;
-  line-height: 1;
+  margin-left: 0.4rem;
   color: #ffc61f;
   -webkit-text-stroke: 0.06rem #fffaf0;
   letter-spacing: 0.08em;

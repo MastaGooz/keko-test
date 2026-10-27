@@ -890,9 +890,9 @@ function NiveauDeLaCarte({
     <div className="niveau">
       <p key={fusions} className={`niveau-titre${fusions > 0 ? ' niveau-monte' : ''}`}>
         Niveau {niveau}
+        {/* LES ÉTOILES À DROITE DU NIVEAU, sur sa ligne (Keko). */}
+        {niveau > 1 && <span className="niveau-etoiles" aria-hidden="true">{'★'.repeat(niveau - 1)}</span>}
       </p>
-      {/* LES ÉTOILES SOUS LE NIVEAU (Keko), plus à côté. */}
-      {niveau > 1 && <p className="niveau-etoiles" aria-hidden="true">{'★'.repeat(niveau - 1)}</p>}
       {besoin === null ? (
         <p className="carte-ouverte-ligne carte-ouverte-discret">Niveau maximum</p>
       ) : (
