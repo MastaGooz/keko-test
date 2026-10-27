@@ -2901,11 +2901,14 @@ span.jouer-pile-dos {
      fixe » — il avait été collé en haut). */
   .deck-colonne {
     position: relative;
+    /* Ni `top` ni `bottom` hérités de la colonne : en relatif, ils DÉCALENT
+       (le `bottom` remontait le bandeau sur la jauge). */
     top: auto;
+    bottom: auto;
     z-index: 1;
     width: auto;
     height: var(--bandeau-deck);
-    margin: 0 -16px 0.8rem;
+    margin: 0.8rem -16px 0.8rem;
     flex-direction: row;
     align-items: stretch;
     border-radius: 0;

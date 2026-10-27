@@ -1242,10 +1242,10 @@ export function PageCollection({
      et sur la droite une colonne de deck, une ligne par carte, avec une
      mini de l'illustration, le nom, une indication de rareté ») : elle
      défile seule ; une tape sur une ligne retire la carte. */
-  // AU DOIGT C'EST UN BANDEAU, rangé dans le défilé SOUS LA RECHERCHE ET LES
-  // FILTRES (Keko : « je voyais le bandeau du deck en dessous de la barre de
-  // recherche / filtre ») ; il défile avec la page ; à la souris, la colonne
-  // de droite.
+  // AU DOIGT EN PORTRAIT C'EST UN BANDEAU, rangé dans le défilé SOUS LA JAUGE
+  // ET AU-DESSUS DE LA RECHERCHE (Keko : « mettre le bandeau deck au-dessus de
+  // la barre de recherche mais sous la jauge » ; il était d'abord dessous) ;
+  // il défile avec la page ; ailleurs, la colonne de droite.
   const colonneDuDeck =
     deck !== undefined && catalogue !== null ? (
     <aside
@@ -1408,6 +1408,9 @@ export function PageCollection({
               « Jouer », « Supprimer » en tête de la colonne du deck. */}
         </header>
 
+        {/* AU DOIGT EN PORTRAIT, LE BANDEAU DU DECK : sous la jauge, au-dessus de
+            la recherche (Keko). */}
+        {enBandeau && colonneDuDeck}
         {(toutes || possedees.length > 0) && (
           <div className="collection-outils">
             <div className="collection-ligne">
@@ -1439,7 +1442,6 @@ export function PageCollection({
             </div>
           </div>
         )}
-        {enBandeau && colonneDuDeck}
         {panneau && (
           <PanneauFiltres
             titre="Filtres"
