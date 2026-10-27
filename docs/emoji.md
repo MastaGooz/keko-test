@@ -7077,3 +7077,7 @@ Keko : « il faudrait un effet beaucoup plus juicy quand on level up une carte :
 - **L'impact** : un éclair, une onde qui s'élargit, une gerbe de 90 étincelles qui retombent (or, or clair, crème, au-dessus de 1 pour le bloom, mélange additif), l'étoile volante qui s'efface sur l'étoile peinte. Et `onImpact` : la carte rebondit (`Bump` keyé par les impacts), se REPEINT au niveau (`niveauVu` attend l'impact ; la collection, elle, est fusionnée au clic), le titre du niveau éclate, `SON_EQUIPER`, vibration `[25, 30, 60]`. « Fusionner » est éteint tant que l'étoile vole.
 - Premier essai mesuré : départ en haut à droite et arc au-dessus — l'étoile passait presque tout son vol HORS DE L'ÉCRAN et n'apparaissait que petite, juste avant l'impact. D'où l'entrée par le bord et l'arc plafonné.
 - `&frappe=lent` : cinq fois plus lente, pour la regarder (le rendu sans tête ne la voit pas à vitesse réelle).
+
+**Deux reprises** (27/10, Keko : « il y a des restes de particules noires après l'animation, fixes à l'écran ; et attention : tu changes les valeurs et le compteur des exemplaires avant l'upgrade, au moment du clic ») :
+- une étincelle éteinte restait dessinée (noire) à sa dernière place, et le bloom en faisait un point noir fixe : morte, elle est rangée hors de la vue (`RANGEE`), et toutes y naissent ;
+- la jauge et « k / n exemplaires » lisaient la collection, fusionnée au clic : `exemplairesVus` attend l'impact, comme `niveauVu`. Mesuré au ralenti : pendant le vol, « Niveau 1 · 2 / 2 » ; après l'impact, « Niveau 2 ★ » et le compte suivant.

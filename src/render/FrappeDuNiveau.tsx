@@ -29,6 +29,13 @@ const FRAPPE = {
 /** Combien d'étincelles au plus (la traînée et la gerbe se partagent l'anneau). */
 const ETINCELLES = 220
 const GERBE = 90
+/**
+ * OÙ VA UNE ÉTINCELLE ÉTEINTE : loin derrière la caméra. Éteinte (noire) à sa
+ * dernière place, elle restait dessinée — et le bloom en faisait un point
+ * NOIR fixe à l'écran (Keko : « des restes de particules noires après
+ * l'animation »). Une étincelle morte ne se dessine plus nulle part.
+ */
+const RANGEE = 1e6
 
 export interface Frappe {
   /** Un numéro par fusion : une frappe neuve à chaque changement. */
@@ -117,7 +124,8 @@ export function FrappeDuNiveau({ frappe, onImpact }: { frappe: Frappe | null; on
   const eclat = useMemo(texteDEclat, [])
   const nuee = useMemo(() => {
     const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ETINCELLES * 3), 3))
+    // Toutes rangées HORS DE LA VUE au départ (voir `RANGEE`).
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ETINCELLES * 3).fill(RANGEE), 3))
     g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(ETINCELLES * 3), 3))
     return {
       g,
@@ -177,6 +185,7 @@ export function FrappeDuNiveau({ frappe, onImpact }: { frappe: Frappe | null; on
     for (let i = 0; i < ETINCELLES; i++) {
       if (nuee.vie[i]! >= nuee.duree[i]!) {
         col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0
+        pos[i * 3] = pos[i * 3 + 1] = pos[i * 3 + 2] = RANGEE
         continue
       }
       nuee.vie[i]! += pas

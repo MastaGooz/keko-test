@@ -701,9 +701,15 @@ function CarteOuverte({
   const [enVol, setEnVol] = useState(false)
   const [niveauVu, setNiveauVu] = useState(niveau)
   const niveauApporte = useRef(niveau)
+  // LES EXEMPLAIRES MONTRÉS ATTENDENT AUSSI L'IMPACT (Keko : « tu changes les
+  // valeurs et le compteur des exemplaires avant l'upgrade, au moment du clic »).
+  const exemplairesReels = possession?.n ?? 0
+  const [exemplairesVus, setExemplairesVus] = useState(exemplairesReels)
   useEffect(() => {
-    if (!enVol) setNiveauVu(niveau)
-  }, [niveau, enVol])
+    if (enVol) return
+    setNiveauVu(niveau)
+    setExemplairesVus(exemplairesReels)
+  }, [niveau, exemplairesReels, enVol])
   const aPeindre = useMemo(
     () => {
       const ex = exemplaireDe(variante)
@@ -870,7 +876,7 @@ function CarteOuverte({
         {possession !== null && (
           <NiveauDeLaCarte
             niveau={niveauVu}
-            exemplaires={possession.n}
+            exemplaires={exemplairesVus}
             fusions={impacts}
             occupe={enVol}
             onFusionner={() => {
