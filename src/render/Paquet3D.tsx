@@ -11,7 +11,7 @@ import { NoToneMapping, WebGLRenderTarget, type Group } from 'three'
  * *C'est la règle du projet depuis le début* : un écran décide de ce que les
  * choses VEULENT DIRE, les objets savent comment elles se dessinent.
  */
-import { cloneElement, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
+import { cloneElement, useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import type { Collection } from '../logic/emoji/collection.ts'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
@@ -30,6 +30,7 @@ import {
   ECHELLE_METAL,
   POCHE,
   RAPPORT_SACHET,
+  textureDeCarte,
   type CarteAPeindre,
 } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
@@ -416,18 +417,22 @@ function Envol({
   readonly children: ReactNode
 }): React.JSX.Element {
   const g = useRef<Group>(null)
-  const debut = useRef<number | null>(null)
-  useFrame(({ clock }) => {
+  // LE TEMPS DE LA SORTIE AVANCE PAR PAS BORNÉS (`PAS_MAX`), comme la chute du
+  // sachet : Keko, « quand je clique sur terminer, l'animation de départ des
+  // cartes vers le bas n'est pas fluide ». Réglée sur l'horloge, elle sautait
+  // d'un coup après chaque image lourde.
+  const ecoule = useRef(0)
+  useFrame((_, delta) => {
     const o = g.current
     if (o === null) return
     if (!sortie) {
-      debut.current = null
+      ecoule.current = 0
       o.position.y = 0
       o.rotation.z = 0
       return
     }
-    if (debut.current === null) debut.current = clock.elapsedTime
-    const u = Math.min(1, Math.max(0, clock.elapsedTime - debut.current - rang * SORTIE.cascade) / SORTIE.duree)
+    ecoule.current += Math.min(delta, PAS_MAX)
+    const u = Math.min(1, Math.max(0, ecoule.current - rang * SORTIE.cascade) / SORTIE.duree)
     // ELLE SE RAMASSE PUIS PLONGE : un « back » à l'entrée.
     const e = (SORTIE.recul + 1) * u * u * u - SORTIE.recul * u * u
     o.position.y = -distance * e
@@ -1005,7 +1010,7 @@ export function Paquet3D({
    * LE PAQUET COURANT. Seedé sur son numéro, donc **rejouable** : Keko peut
    * signaler un tirage précis, exactement comme `?seed=42` rejoue une descente.
    */
-  const tirage = useMemo((): { cartes: CarteDuMode[]; bonus: Readonly<Record<string, Bonus>> } => {
+  const tirerLePaquet = useCallback((numero: number): { cartes: CarteDuMode[]; bonus: Readonly<Record<string, Bonus>> } => {
     if (tas === null) return { cartes: [], bonus: {} }
     const rng = createRng((GRAINE + numero * 7919) >>> 0)
     // LES PITIÉS du fantasy (`docs/fantasy.md`). *Plus de légendaire sans
@@ -1081,7 +1086,8 @@ export function Paquet3D({
       for (const c of cartes) bonus[c.id] = { holo: true, anime: bonus[c.id]?.anime ?? false }
     }
     return { cartes, bonus }
-  }, [tas, numero, echelle, joueur, emojis, bonusForce, holoForce, animeForce, persoForce])
+  }, [tas, echelle, joueur, emojis, bonusForce, holoForce, animeForce, persoForce])
+  const tirage = useMemo(() => tirerLePaquet(numero), [tirerLePaquet, numero])
   const paquet = tirage.cartes
 
   /**
@@ -1280,6 +1286,43 @@ export function Paquet3D({
       clearTimeout(pret)
     }
   }, [fini])
+
+  /**
+   * LE PAQUET SUIVANT SE PEINT PENDANT LE BILAN. Keko : « quand je clique sur
+   * terminer, l'animation de départ des cartes vers le bas n'est pas fluide ».
+   * *Mesuré sur l'arrivée* : peindre cinq cartes est le plus gros travail du
+   * fil principal, et « Terminé » le lançait pendant que les cartes tombaient.
+   * Le tirage est une fonction du numéro (`tirerLePaquet`), donc on connaît le
+   * suivant : ses faces passent au cache (`textureDeCarte`, aux deux
+   * profondeurs où la carte se peint, dans le sachet et en main), une carte
+   * à la fois, pendant qu'on regarde le bilan. Au clic, tout est prêt.
+   */
+  useEffect(() => {
+    if (!fini || !peutContinuer) return
+    const suivant = tirerLePaquet(numero + 1)
+    const tailleTex = Math.max(grande, tailleDuDefile, taille)
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const largeurs = [Z_DEDANS, Z_MAIN].map((z) => (tailleTex * (fenetre.h / hauteurVisibleA(z, fenetre.h))) * dpr)
+    const travail = suivant.cartes.flatMap((c) => largeurs.map((l) => () => textureDeCarte(carteAPeindreDuMode(c, suivant.bonus[c.id]), l)))
+    let vivant = true
+    let minute = 0
+    const suite = (): void => {
+      const t = travail.shift()
+      if (!vivant || t === undefined) return
+      void t()
+        .catch(() => undefined)
+        .then(() => {
+          if (vivant) minute = window.setTimeout(suite, 120)
+        })
+    }
+    // APRÈS LES ÉCLATS DU BILAN : ils ont le fil pour eux.
+    minute = window.setTimeout(suite, (DELAI_ECLATS_BILAN + 1) * 1000)
+    return () => {
+      vivant = false
+      clearTimeout(minute)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- les tailles sont lues au moment du bilan
+  }, [fini, peutContinuer, numero, tirerLePaquet])
 
   function ouvrirUnAutre(): void {
     cancelAnimationFrame(image.current)

@@ -7003,3 +7003,9 @@ Keko, après l'arrivée sans à-coup : « à chaque fois que le paquet apparaît
 
 Le calcul (`calculerCerne` : seuil d'encre, comblement, adoucissement, distance exacte, poches) est sorti dans `cerne-calcul.ts`, sans DOM, et tourne dans `cerne.worker.ts`. `illustration` prépare le glyphe et ses deux cernes dans le Worker (`glypheAuxCernesPrets`), les range au cache, et `stickerDUneImage` les y trouve ; sans Worker, `cerneDe` calcule comme avant. Après le clic, les longues tâches passent de 230 / 290 / 970 / 430 / 460 ms… à 229 / 263 / 169 / 81 / 72 ms (le montage de la scène et le contexte WebGL restent). **Rendu comparé au pixel** sur la grille et la carte zoomée : identique (seule la bande holo animée, saisie à un autre instant, diffère).
 
+### « Terminé » : le paquet suivant est déjà peint (27/10/2026)
+
+Keko : « quand j'ouvre le paquet et que je clique sur terminer, l'animation de départ des cartes vers le bas n'est pas fluide ». « Terminé » lance la sortie (`Envol`) ET le paquet suivant (`ouvrirUnAutre`), dont les cinq faces se peignaient pendant que les cartes tombaient ; la sortie, réglée sur l'horloge, sautait après chaque peinture. Le tirage devient une fonction du numéro (`tirerLePaquet`) : pendant le bilan, le suivant est tiré et ses faces passent au cache de `textureDeCarte`, une à une, aux deux profondeurs où une carte se peint (dans le sachet, en main). La sortie avance par pas bornés (`PAS_MAX`), comme la chute du sachet.
+
+**Mesuré** (Chrome sans tête, processeur ralenti cinq fois pour figurer un téléphone) : la version d'avant faisait neuf longues tâches pendant la sortie (100 à 300 ms) ; celle-ci aucune, ses images à 35–77 ms, un seul accroc de 222 ms une fois les cartes sorties du cadre.
+

@@ -223,7 +223,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   des stickers se calcule dans un Worker** (`cerne-calcul.ts`, sans DOM ;
   `cerne.worker.ts` ; `preparerLeCerne` range le résultat au cache où
   `cerneDe` le trouve) : c'était le plus gros bloc du fil principal à
-  l'arrivée d'un paquet. Même calcul, au pixel près.
+  l'arrivée d'un paquet. Même calcul, au pixel près. **Le paquet suivant se
+  peint pendant le bilan** (le tirage est une fonction du numéro,
+  `tirerLePaquet` ; ses faces passent au cache de `textureDeCarte`), et la
+  sortie des cartes avance par pas bornés : « Terminé » ne peint plus rien.
 - **Les cartes** attendent derrière le sachet dès le départ, reculées de `RECUL_DU_BAS` calculé, à la
   taille de la `POCHE` corrigée de la profondeur (`Z_DEDANS`), une seule
   toile (`tailleTexture`). Le film parti, la carte se rapproche
