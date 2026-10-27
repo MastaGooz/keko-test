@@ -6623,7 +6623,7 @@ const DOS_TOUCHE = 7.2
  * tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon
  * est sous la carte.
  */
-export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
+export async function peindreDosEmoji(rayon: number, clous = true): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
   canvas.height = HAUT
@@ -6674,8 +6674,10 @@ export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement>
   else await peindreSymbole(ctx, cx, cy, 56 * U)
   // QUATRE CLOUS D'OR aux coins, dans la couture : le cuir est monté sur un
   // plat, comme une couverture de grimoire.
+  // SANS EUX SUR LES ÉTUIS DE « MES DECKS » (Keko : « enlève les 4 ronds jaunes
+  // dans les coins, écran deck uniquement »).
   const pc = marge + 10 * U
-  for (const [x, y] of [[pc, pc], [LARGE - pc, pc], [pc, HAUT - pc], [LARGE - pc, HAUT - pc]] as const) {
+  for (const [x, y] of clous ? ([[pc, pc], [LARGE - pc, pc], [pc, HAUT - pc], [LARGE - pc, HAUT - pc]] as const) : []) {
     const g = ctx.createRadialGradient(x - U, y - U, 0, x, y, 2.6 * U)
     g.addColorStop(0, OR_CLAIR)
     g.addColorStop(0.6, OR_MOYEN)

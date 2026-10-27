@@ -48,7 +48,7 @@ function vedetteDe(d: Deck, parId: ReadonlyMap<string, CarteEmoji>, valeur: Vale
  */
 let DOS: Promise<string | null> | null = null
 function imageDuDos(): Promise<string | null> {
-  DOS ??= peindreDosEmoji(RAYON_SIMPLE).then(
+  DOS ??= peindreDosEmoji(RAYON_SIMPLE, false).then(
     (toile) => new Promise<string | null>((resoudre) => toile.toBlob((b) => resoudre(b === null ? null : URL.createObjectURL(b)), 'image/webp', 0.9)),
     () => null,
   )

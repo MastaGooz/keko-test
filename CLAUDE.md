@@ -325,7 +325,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   par le Deck 2 » estompé) ; **plusieurs decks** (`Decks`, six au plus,
   Keko) : **« Mes decks » les montre en ÉTUIS** (`render/Decks.tsx`, Keko :
   « matérialiser les decks par des paquets » ; le DOS des cartes en fond,
-  `peindreDosEmoji`, nom frappé en or, la carte la plus forte en fenêtre sur son camp, ruban « Joue »), une
+  `peindreDosEmoji` sans ses clous, nom frappé en or, la carte la plus forte en fenêtre sur son camp, ruban « Joue »), une
   tape ouvre l'éditeur — la grille en mode deck, SANS ONGLETS, « ‹ Mes
   decks » pour revenir ; **un seul joue : l'actif** (`choisirDeck`, qui arrête
   l'autre) ; complet, il joue tout seul **une main de cinq toutes les dix
