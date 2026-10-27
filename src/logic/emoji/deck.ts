@@ -316,7 +316,15 @@ export function lireDeck(brut: unknown, possede: (e: EntreeDeck) => boolean, mai
  * deck arrête le premier et lance le second (s'il est complet) — le mélange en
  * cours ne se garde pas, comme quand on change un deck.
  */
-export const DECKS_MAX = 6
+export const DECKS_MAX = 3
+/**
+ * CE QU'ON RELIT D'UNE SAUVEGARDE, PLUS LARGE QUE CE QU'ON CRÉE : le plafond
+ * est passé de six à TROIS (Keko, 27/10 : « on va établir un nombre de decks
+ * max, 3 pour l'instant »), et un joueur qui en avait composé davantage les
+ * garde — il ne peut plus en ajouter tant qu'il en a trois ou plus. *Baisser
+ * une limite ne détruit pas ce qu'elle permettait.*
+ */
+export const DECKS_LUS_MAX = 6
 
 export interface Decks {
   readonly liste: readonly Deck[]
@@ -475,7 +483,7 @@ export function lireDecks(brut: unknown, compte: CompteDExemplaires, maintenant:
     if (!Array.isArray(o.cartes)) return decksVides()
     ds = { liste: [lireDeck(brut, possede, maintenant)], actif: 0 }
   } else {
-    const brutes = (o.liste as unknown[]).slice(0, DECKS_MAX)
+    const brutes = (o.liste as unknown[]).slice(0, Math.max(DECKS_MAX, DECKS_LUS_MAX))
     if (brutes.length === 0) return decksVides()
     const actif = typeof o.actif === 'number' && Number.isInteger(o.actif) && o.actif >= 0 && o.actif < brutes.length ? o.actif : 0
     const liste = brutes.map((b, k) => {

@@ -152,6 +152,11 @@ verifier('supprimer avant l’actif décale l’index', supprimerDeck(choisirDec
 let plein = decksVides()
 for (let i = 0; i < DECKS_MAX + 2; i++) plein = ajouterDeck(plein)
 verifier('au plus DECKS_MAX decks', plein.liste.length === DECKS_MAX)
+verifier('trois decks au plus (Keko)', DECKS_MAX === 3)
+// UNE SAUVEGARDE D'AVANT LE PLAFOND À TROIS garde ses cinq decks, sans pouvoir en ajouter.
+const cinq = lireDecks({ liste: [{ cartes: [] }, { cartes: [] }, { cartes: [] }, { cartes: [] }, { cartes: [] }], actif: 4 }, deuxChacun, T0)
+verifier('cinq decks relus restent cinq', cinq.liste.length === 5 && cinq.actif === 4)
+verifier('au-delà du plafond, plus d’ajout', ajouterDeck(cinq) === cinq)
 const perdu = garderPossedeesPartout(bascule, (id, v) => (id === ids[2] ? 0 : deuxChacun(id, v)), T0)
 verifier('une carte perdue quitte tous les decks', perdu.liste.every((d) => d.cartes.length === DECK.taille - 1 && d.partie === null))
 const unSeul = garderPossedeesPartout(bascule, compte, T0)
