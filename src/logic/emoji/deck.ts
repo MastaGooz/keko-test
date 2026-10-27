@@ -316,7 +316,9 @@ export function lireDeck(brut: unknown, possede: (e: EntreeDeck) => boolean, mai
  * deck arrête le premier et lance le second (s'il est complet) — le mélange en
  * cours ne se garde pas, comme quand on change un deck.
  */
-export const DECKS_MAX = 3
+// VINGT POUR LES TESTS (Keko, 27/10 : « mets-moi 20 emplacements de deck pour
+// test ») ; le plafond voulu est 3.
+export const DECKS_MAX = 20
 /**
  * CE QU'ON RELIT D'UNE SAUVEGARDE, PLUS LARGE QUE CE QU'ON CRÉE : le plafond
  * est passé de six à TROIS (Keko, 27/10 : « on va établir un nombre de decks
@@ -324,7 +326,7 @@ export const DECKS_MAX = 3
  * garde — il ne peut plus en ajouter tant qu'il en a trois ou plus. *Baisser
  * une limite ne détruit pas ce qu'elle permettait.*
  */
-export const DECKS_LUS_MAX = 6
+export const DECKS_LUS_MAX = 20
 
 export interface Decks {
   readonly liste: readonly Deck[]

@@ -1,6 +1,7 @@
 // LA VÉRIF DU DECK QUI JOUE : `node src/logic/emoji/deck.verif.ts` — sans navigateur.
 import {
   DECK,
+  DECKS_LUS_MAX,
   DECKS_MAX,
   ajouterDeck,
   basculerCarte,
@@ -152,11 +153,12 @@ verifier('supprimer avant l’actif décale l’index', supprimerDeck(choisirDec
 let plein = decksVides()
 for (let i = 0; i < DECKS_MAX + 2; i++) plein = ajouterDeck(plein)
 verifier('au plus DECKS_MAX decks', plein.liste.length === DECKS_MAX)
-verifier('trois decks au plus (Keko)', DECKS_MAX === 3)
-// UNE SAUVEGARDE D'AVANT LE PLAFOND À TROIS garde ses cinq decks, sans pouvoir en ajouter.
-const cinq = lireDecks({ liste: [{ cartes: [] }, { cartes: [] }, { cartes: [] }, { cartes: [] }, { cartes: [] }], actif: 4 }, deuxChacun, T0)
-verifier('cinq decks relus restent cinq', cinq.liste.length === 5 && cinq.actif === 4)
-verifier('au-delà du plafond, plus d’ajout', ajouterDeck(cinq) === cinq)
+verifier('vingt decks au plus, le temps des tests (Keko)', DECKS_MAX === 20)
+// UNE SAUVEGARDE QUI DÉPASSE LE PLAFOND (il a baissé) garde ses decks, sans pouvoir en ajouter.
+const nLus = Math.max(DECKS_MAX, DECKS_LUS_MAX)
+const auPlafond = lireDecks({ liste: Array.from({ length: nLus }, () => ({ cartes: [] })), actif: nLus - 1 }, deuxChacun, T0)
+verifier('tous les decks relus restent', auPlafond.liste.length === nLus && auPlafond.actif === nLus - 1)
+verifier('au plafond, plus d’ajout', ajouterDeck(auPlafond) === auPlafond)
 const perdu = garderPossedeesPartout(bascule, (id, v) => (id === ids[2] ? 0 : deuxChacun(id, v)), T0)
 verifier('une carte perdue quitte tous les decks', perdu.liste.every((d) => d.cartes.length === DECK.taille - 1 && d.partie === null))
 const unSeul = garderPossedeesPartout(bascule, compte, T0)
