@@ -235,15 +235,13 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « Collection » (ce qu'on a, pastille rouge = VERSIONS nouvelles,
   `Possession.nouvelles`, la bulle sur la seule version qu'on n'avait pas) et
   « Toutes les cartes » (le catalogue entier, la même `PageCollection` avec `toutes`,
-  les manquantes en grisé, ouvrables en 3D sans « Décoller ») ; le booster
-  rond au centre, « Stickers » à droite (l'album, sa pastille rouge = stickers
-  nouveaux, `Stickers.nouveau` posé par `detruire`, effacé par `stickersVus` en
-  quittant l'album ; le
-  compte « réunis / 1 892 » est resté en tête de la collection). Les deux
-  panneaux filtres ont une puce « Nouveau ». Icônes
-  dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
-  des crans, sans étoile ; `IconeStickers` : un sticker jaune au coin décollé, sans smiley), trait en
-  `currentColor`. **Elle
+  les manquantes en grisé, ouvrables en 3D sans « Fusionner ») ; le booster
+  rond au centre, **« Deck » à droite**, qui déroule « Mes decks » et
+  « Jouer » (la place des stickers, partis avec la fusion ; le compte
+  « réunis / 118 » est en tête de la collection). Le panneau filtres a une
+  puce « Nouveau ». Icônes dessinées en SVG (`IconeCollection` : trois cartes
+  en éventail aux couleurs des crans, sans étoile ; `IconeDeck` : trois cartes
+  de dos empilées), trait en `currentColor`. **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
   bilan sans paquet à suivre) — jamais pendant la déchirure ni le défilé, **ni
   au bilan avant « Terminé »** (Keko).
@@ -253,9 +251,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   non déchiré reste le même — *on ne retire pas un paquet en changeant de page.*
 - **Une place par VERSION possédée** (`Variante` : normale, holo, animée, holo
   animée ; `compteDe`, la possession compte aussi `ha`, les holo animés) :
-  chaque version a sa vignette et son compte, et c'est elle qu'on ouvre et
-  qu'on décolle. **L'album pareil** (Keko) : une case par version de sticker,
-  `Stickers.ha`, le même `compteDe`.
+  chaque version a sa vignette et son compte, et c'est elle qu'on ouvre.
 - **La grille est peinte, pas rendue en 3D** : chaque vignette est
   `peindreCarte` à sa taille d'écran, quand elle entre dans la vue, une à la
   fois — **avec le brillant de la carte 3D au repos** (`brillantDuRepos` : les
@@ -264,48 +260,29 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   `Carte3D`, avec le holo ou l'animé si on possède l'exemplaire). Une ligne :
   la recherche et un bouton-icône (réglettes) qui ouvre un panneau (trier, rareté,
   type, bonus) — classes `filtres-panneau…`, *`.panneau` est pris par l'archive*.
-  L'album a la même ligne. Le panneau se ferme en tirant sa tête vers le bas
+  Le panneau se ferme en tirant sa tête vers le bas
   (`touch-action: none`, et `overscroll-behavior-y: none` sur `html` tant qu'il
   est ouvert : sinon le navigateur recharge la page).
-- **Détruire une carte pour son sticker** (`render/Decollage.tsx`) : un bouton
-  « Décoller le sticker » sous la carte du défilé, la carte zoomée au bilan, ou
-  la carte ouverte de la collection — **c'est le geste qui confirme** : on tire
-  le sticker, il se replie le long d'une ligne (son DOS crème reflété), puis la
-  carte vole en éclats en toile d'araignée autour du trou, et le sticker s'envole vers « Stickers ». Scène 2D posée sur la
-  carte 3D ; la carte RESTE EN 3D jusqu'à la casse, à plat et repeinte sans son emoji (`sansSujet`, dans la signature ; la 2D était terne),
-  `sujetDe` dit où il était). **Toutes se détruisent, même la dernière** ; le
-  sticker garde le bonus ; depuis la collection, le simple part d'abord
-  (`exemplaireADetruire`). Au défilé on passe à la suivante, le bilan se range
-  sur les restantes. L'album (`render/Stickers.tsx`) est `collection.stickers`.
-  Chiffres (`DECOLLAGE`) de moi, à rejuger.
-- **Les stickers se COLLENT sur les cartes** (Keko : « +1 par sticker, sans
-  limite par carte ») : sur la PLACE (emoji + version, `Possession.colles[v]`,
-  pas sur l'exemplaire — la collection ne les distingue pas), `coller` les prend
-  à l'album, `detruire` les emporte avec la version ; **posés au doigt**, glissés
-  du ruban sur la carte (`x`, `y`, `a` ; `stickersColles`), jamais coupés par la
-  bordure ni l'un sur l'autre (`placeNonCoupee`, `collesSeChevauchent` ; le contour
-  fantôme suit le doigt, rouge si interdit) ; **ils gardent
-  leur contour et leur animation** (peints crème ; un holo collé prend l'arc-en-ciel
-  vivant du nuanceur, `uColles` n'épargne que les normaux, la vignette le fige par
-  `zoneDuColle` ; `anime.charger(cote, arcEnCiel)`) ; **un Like de plus
-  par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
-- **Le NIVEAU d'un personnage** (`Collection.niveaux`, `ameliorer`, `NIVEAUX`) :
-  au personnage, toutes versions ensemble, **cinq niveaux** (Keko) ; on le
-  monte dans l'ALBUM en y collant ses stickers, chaque niveau plus cher (2, 3, 4, 5 — de moi, à
-  rejuger) ; **+1 de puissance par niveau**, et l'écu dit la puissance totale.
-  Sur la carte : **une étoile d'or cernée de blanc par niveau gagné**, à droite
-  de l'écu, aucune au premier (`peindreNiveau`). Les cartes lisent le niveau
-  par `declarerLesNiveaux` (posé par `Jeu.tsx`).
-- **L'ALBUM** (`render/Album.tsx`, Keko : « collection (ce qu'on a) et album
-  (où on les colle) » — « Stickers » déroule un menu comme « Cartes ») : un
-  livre de parchemin qu'on feuillette d'un balayage, une suite de pages par
-  race et par cran, six personnages par page ; chaque case montre le
-  personnage (silhouette tant que rien n'est collé) et ses quatorze
-  emplacements en deux lignes (niveaux 2-3, puis 4-5), chaque palier fini par
-  son étoile ; **on glisse un sticker du ruban sur son personnage**
-  (`CaseDuSticker`, le geste des cartes) : il vole à son emplacement, s'y
-  plaque, et le passage de niveau fait jaillir une gerbe et « Niveau N ». Le
-  sticker ouvert dans la collection mène à sa page (« Voir dans l'album »).
+- **LES STICKERS SONT PARTIS** (Keko, 27/10 : « pas convaincu de la
+  lisibilité et du réel intérêt de convertir une carte en sticker ») : le
+  décollage, l'album, les stickers collés sur les cartes et leur Like. *Le
+  doublon est la progression, sans geste à deviner.* Le peintre sait encore
+  poser un sticker collé (`colles`), rien ne le lui demande ; l'histoire est
+  dans `docs/emoji.md` et `git log`.
+- **Le NIVEAU d'un personnage se gagne en FUSIONNANT ses exemplaires**
+  (`Collection.niveaux`, `fusionner`, `aFusionnerPour`) : au personnage,
+  toutes versions ensemble, **cinq niveaux**, et *le niveau visé dit combien
+  de cartes fusionner, la gardée comprise* (Keko : « pour passer niveau 2 il
+  faut deux exemplaires, et niveau 5 il en faut 5 ») — dix doublons du 1 au
+  5. **La plus belle reste** (Keko) : la fusion emporte le simple d'abord,
+  le holo animé en dernier (`exemplaireAFusionner`). On fusionne depuis la
+  CARTE OUVERTE de la collection (étoiles, jauge des exemplaires, « Fusionner
+  N cartes » éteint tant qu'il en manque ; la carte rebondit, le titre
+  éclate). **+1 de puissance par niveau**, l'écu dit la puissance totale ;
+  sur la carte, **une étoile d'or cernée de blanc par niveau gagné**, à
+  droite de l'écu, aucune au premier (`peindreNiveau`). Les cartes lisent le
+  niveau par `declarerLesNiveaux` (posé par `Jeu.tsx`). Une collection du
+  temps de l'album relit son niveau (`{ niveau, poses }` → le niveau).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,
   **un toutes les 10 minutes** (Keko), pleine au départ, décomptée à
@@ -412,10 +389,8 @@ src/
     Jeu.tsx          # les deux pages (booster, collection) et la barre de navigation
     Paquet3D.tsx     # l'ouverture d'un paquet : l'emoji par défaut, `&art` les peintures
     Collection.tsx   # la grille des cartes obtenues, et la carte ouverte en 3D
-    Decollage.tsx    # détruire une carte : le sticker qu'on tire, la carte qui casse
-    Stickers.tsx     # l'album des stickers gagnés
     Deck.tsx         # la page « Jouer » : la pile, la dernière main et son total qui monte
-    peinture-vignette.ts # la carte peinte en petit (vignette, décollage), et sa holo
+    peinture-vignette.ts # la carte peinte en petit (vignette), et sa holo
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     carte-emoji.ts   # CarteEmoji -> CarteAPeindre
     carte-peinture.ts # CartePeinture -> CarteAPeindre
@@ -523,11 +498,11 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
-| `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; l'album ne bouge pas — le miroir de `&debloquer` |
-| `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET stickers (les decks suivent) — pour effacer ce qu'un test y a laissé |
-| `&page=collection`, `&page=catalogue`, `&page=stickers`, `&page=album`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
+| `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; les niveaux ne bougent pas — le miroir de `&debloquer` |
+| `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET niveau (les decks suivent) — pour effacer ce qu'un test y a laissé |
+| `&page=collection`, `&page=catalogue`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&likes=N` | pose le solde de puissance DE CET APPAREIL (le compteur, sans générateur) ; rouvrir ne double rien |
-| `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |
+| `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |
 | `&holo` | toutes les cartes du paquet sont holographiques (`?cosmos=0` : sans les paillettes) |

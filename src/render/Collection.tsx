@@ -16,18 +16,17 @@
  * **seulement quand elle entre dans la vue** et une à la fois. *La 3D est
  * gardée pour la carte qu'on ouvre* : là, le holo et l'animé ont de quoi jouer.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { NoToneMapping, type Group } from 'three'
 import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emoji/types.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
-import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
-import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import type { Collection, Possession, Variante } from '../logic/emoji/collection.ts'
+import { VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { NOM_DECK_MAX } from '../logic/emoji/deck.ts'
-import { Decollage } from './Decollage.tsx'
-import { AMBIANCE, TAILLE_COLLE, collesSeChevauchent, placeDuColle, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
-import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
+import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
 import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
@@ -71,7 +70,7 @@ import { Horloge } from './horloge.tsx'
 import { Bloom } from './Bloom.tsx'
 import { PencheAuGyro } from './Paquet3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
-import { SON_POSER, jouerSon } from './sons.ts'
+import { SON_EQUIPER, SON_POSER, jouerSon } from './sons.ts'
 
 export const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
   simple: 'normal',
@@ -412,14 +411,6 @@ export function Vignette({
   const niveau = niveauDuPersonnageDe(carte.id)
   const compte = possession === null ? 0 : compteDe(possession, variante)
   const tourne = AVEC_TOURNE && anime && carte.animable
-  // LES STICKERS COLLÉS sur cette version : la vignette les peint, et se
-  // repeint quand ils changent (la clé dit s'ils ont changé).
-  const colles = possession?.colles?.[variante]
-  const cleColles = cleDesColles(colles)
-  /** Les stickers collés peints, dont les animés que la vignette fait jouer sur une couche à part. */
-  const collesPeints = useRef<readonly StickerPeint[]>([])
-  const [collesAnimes, setCollesAnimes] = useState(false)
-  const coucheColles = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -431,13 +422,7 @@ export function Vignette({
         obs.disconnect()
         const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
         const largeur = tailleQuIlFaut(px)
-        void stickersColles(colles)
-          .then((peints) => {
-            collesPeints.current = peints
-            setCollesAnimes(peints.some((c) => c.anime !== undefined))
-            return peinte(carte, largeur, holo, tourne, false, false, tourne, peints, !holo && !tourne)
-          })
-          .then(async (source) => {
+        void peinte(carte, largeur, holo, tourne, false, false, tourne, [], !holo && !tourne).then(async (source) => {
           const t = toile.current
           const ctx = t?.getContext('2d')
           if (t == null || ctx == null) return
@@ -498,63 +483,18 @@ export function Vignette({
       fini = true
       obs.disconnect()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
-  }, [carte, holo, tourne, cleColles, niveau])
+  }, [carte, holo, tourne, niveau])
   // LA VIGNETTE ANIMÉE SUIT SA VISIBILITÉ : l'animation ne joue qu'à l'écran
   // (l'observateur du dessus se coupe après la première peinture).
   useEffect(() => {
     const el = boite.current
-    if ((!tourne && !collesAnimes) || el === null) return
+    if (!tourne || el === null) return
     const obs = new IntersectionObserver((e) => setVisible(e.some((x) => x.isIntersecting)), {
       rootMargin: '200px 0px',
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [tourne, collesAnimes])
-  // LES STICKERS COLLÉS ANIMÉS JOUENT sur leur couche, à leur place (Keko :
-  // « qu'il garde son animation s'il en a ») : leurs images chargées par leur
-  // `charger`, à la finesse de l'album, posées comme `peindreColles` les pose.
-  useEffect(() => {
-    if (!collesAnimes || !visible || !prete) return
-    let vivant = true
-    let image = 0
-    const peints = collesPeints.current
-    void Promise.all(peints.map((c) => (c.anime === undefined ? Promise.resolve(null) : c.anime.charger(COTE_PETIT, c.holo)))).then((anims) => {
-      if (!vivant || !anims.some((a) => a !== null)) return
-      const depart = performance.now()
-      const pas = (t: number): void => {
-        const c = coucheColles.current
-        const base = toile.current
-        const ctx = c?.getContext('2d')
-        if (c == null || ctx == null || base == null) return
-        if (c.width !== base.width || c.height !== base.height) {
-          c.width = base.width
-          c.height = base.height
-        }
-        const R = RAYONS_DANS_LA_CARTE
-        const taille = TAILLE_COLLE * R.l * c.width
-        ctx.clearRect(0, 0, c.width, c.height)
-        peints.forEach((col, k) => {
-          const a = anims[k]
-          if (a == null) return
-          const i = Math.min(a.images.length - 1, Math.floor(((Math.max(0, t - depart) % a.duree) / a.duree) * a.images.length))
-          const { x, y, a: angle } = placeDuColle(col, k)
-          ctx.save()
-          ctx.translate((R.x + x * R.l) * c.width, (R.y + y * R.h) * c.height)
-          ctx.rotate(angle)
-          ctx.drawImage(a.images[i]!, -taille / 2, -taille / 2, taille, taille)
-          ctx.restore()
-        })
-        image = requestAnimationFrame(pas)
-      }
-      image = requestAnimationFrame(pas)
-    })
-    return () => {
-      vivant = false
-      cancelAnimationFrame(image)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- les stickers sont lus par leur clé
-  }, [collesAnimes, visible, prete, cleColles])
+  }, [tourne])
   // L'EMOJI ANIMÉ JOUE SUR LA COUCHE DU STICKER, à la place du sticker fixe,
   // une fois la vignette peinte : ses images sont déjà des stickers, au cerne
   // arc-en-ciel pour une holo — comme dans l'album.
@@ -606,7 +546,6 @@ export function Vignette({
           <canvas ref={sticker} className="vignette-toile vignette-sticker" style={{ filter: `saturate(${1 + SATURATION_APLAT})` }} />
         </>
       )}
-      {collesAnimes && <canvas ref={coucheColles} className="vignette-toile vignette-sticker" style={{ filter: `saturate(${1 + SATURATION_APLAT})` }} />}
       {holo &&
         SCINTILLES.map((v) => (
           <canvas
@@ -682,32 +621,18 @@ function CarteOuverte({
   possession,
   variante,
   total,
-  album,
   onFermer,
-  onDetruire,
-  onColler,
+  onFusionner,
 }: {
   carte: CarteEmoji
-  /** `null` : ouverte depuis le catalogue sans la posséder — rien à décoller. */
+  /** `null` : ouverte depuis le catalogue sans la posséder — rien à fusionner. */
   possession: Possession | null
   variante: Variante
   total: number
-  /** L'ALBUM, ce qu'on peut coller : une entrée par version de sticker possédée, avec son compte. */
-  album: readonly { carte: CarteEmoji; v: Variante; n: number }[]
   onFermer: () => void
-  /** Le sticker est décollé : cet exemplaire est détruit. */
-  onDetruire: (ex: Exemplaire) => void
-  /** Un sticker de l'album se colle sur la version qu'on regarde (Keko : « coller des stickers sur les cartes »). */
-  onColler: (sticker: StickerColle) => void
+  /** Fusionne les exemplaires du personnage vers son niveau suivant : voir `fusionner`. */
+  onFusionner: () => void
 }): React.ReactElement {
-  /**
-   * LE DÉCOLLAGE EN COURS, et l'exemplaire qu'il détruit — **le simple
-   * d'abord** (voir `exemplaireADetruire`). `cachee` : la scène 2D couvre la
-   * carte, la 3D peut partir.
-   */
-  const [decolle, setDecolle] = useState<Exemplaire | null>(null)
-  const [cachee, setCachee] = useState(false)
-  const [cassee, setCassee] = useState(false)
   /**
    * LA CARTE N'APPARAÎT QU'UNE FOIS PEINTE. Keko : « quand je zoome une carte,
    * un carré gris apparaît avant la carte ». *Sans sa texture, la face n'a pas
@@ -715,8 +640,6 @@ function CarteOuverte({
    * carrée, le temps que l'illustration en grand arrive.
    */
   const [peinte, setPeinte] = useState(false)
-  const refDecolle = useRef(false)
-  refDecolle.current = decolle !== null
   const [fenetre, setFenetre] = useState({ l: window.innerWidth, h: window.innerHeight })
   useEffect(() => {
     const suivre = (): void => setFenetre({ l: window.innerWidth, h: window.innerHeight })
@@ -735,121 +658,25 @@ function CarteOuverte({
   const curseur = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0 })
   const refFermer = useRef(onFermer)
   refFermer.current = onFermer
-  // LES STICKERS COLLÉS SUR CETTE VERSION, peints avant d'entrer dans la carte :
-  // la 3D repeint sa face dès que la liste change (nouvelle carte à peindre).
-  const colles = possession?.colles?.[variante]
-  const cleColles = cleDesColles(colles)
-  const [collesPeints, setCollesPeints] = useState<readonly StickerPeint[]>([])
-  useEffect(() => {
-    let vivant = true
-    void stickersColles(colles).then((p) => {
-      if (vivant) setCollesPeints(p)
-    })
-    return () => {
-      vivant = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
-  }, [cleColles])
   const niveau = niveauDuPersonnageDe(carte.id)
   const aPeindre = useMemo(
     () => {
       const ex = exemplaireDe(variante)
-      return { ...carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, collesPeints.length, niveau), colles: collesPeints }
+      return carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }, niveau)
     },
-    [carte, variante, collesPeints, niveau],
-  )
-  /** LE CHOIX DU STICKER À COLLER : ouvert par le bouton, fermé par la croix — et de lui-même quand l'album est vide (Keko). */
-  const [choixOuvert, setChoixOuvert] = useState(false)
-  useEffect(() => {
-    if (album.length === 0) setChoixOuvert(false)
-  }, [album.length])
-  /**
-   * LE STICKER QU'ON TIENT, pendant qu'on le glisse du ruban vers la carte
-   * (Keko : « j'aurais bien aimé placer manuellement le sticker »). Il suit le
-   * doigt ; lâché sur la fenêtre d'art, il s'y colle à cet endroit, avec le
-   * penchant qu'il montrait ; lâché ailleurs, rien. Pendant ce temps la carte
-   * ne penche pas (`refPlacement`), pour que l'endroit visé soit l'endroit posé.
-   */
-  const [tenu, setTenu] = useState<{ sticker: StickerColle; image: HTMLCanvasElement; contour: HTMLCanvasElement; contourRouge: HTMLCanvasElement; a: number } | null>(null)
-  const refPlacement = useRef(false)
-  refPlacement.current = tenu !== null
-  const flottant = useRef<HTMLCanvasElement>(null)
-  /**
-   * LE CONTOUR FANTÔME SUIT LE DOIGT sur la carte, jaune là où le sticker peut
-   * se coller, ROUGE là où il serait coupé par la bordure (Keko : « au lieu de
-   * déplacer la prévisualisation, on passe les pointillés en rouge tant qu'on
-   * est sur une zone de la carte interdite »). Deux toiles, l'une ou l'autre.
-   */
-  const fantome = useRef<HTMLCanvasElement>(null)
-  const fantomeRouge = useRef<HTMLCanvasElement>(null)
-  const suivre = useCallback((x: number, y: number) => {
-    const el = flottant.current
-    if (el === null) return
-    el.style.left = `${x.toFixed(1)}px`
-    el.style.top = `${y.toFixed(1)}px`
-  }, [])
-  const poserLeFantome = useCallback((place: { x: number; y: number; interdit: boolean } | null) => {
-    for (const [el, montre] of [
-      [fantome.current, place !== null && !place.interdit],
-      [fantomeRouge.current, place !== null && place.interdit],
-    ] as const) {
-      if (el === null) continue
-      el.style.visibility = montre ? 'visible' : 'hidden'
-      if (montre && place !== null) {
-        el.style.left = `${place.x.toFixed(1)}px`
-        el.style.top = `${place.y.toFixed(1)}px`
-      }
-    }
-  }, [])
-  /**
-   * Où un point de l'écran tombe dans la fenêtre d'art, en parts (0 à 1) — ou
-   * `null` hors de la carte (avec un peu de jeu au bord). **`interdit`** quand le
-   * sticker, penché de `a`, y serait coupé par la bordure (`placeNonCoupee` le
-   * déplacerait) — ou recouvrirait un sticker déjà collé sur cette version
-   * (`collesSeChevauchent`, Keko : « les stickers peuvent se superposer, c'est
-   * moche ») : le contour passe au rouge, et le lâcher ne colle pas.
-   */
-  const dansLaFenetre = useCallback((x: number, y: number, a: number): { x: number; y: number; interdit: boolean } | null => {
-    const b = refBoite.current
-    const u = (x - (b.cx - b.l / 2)) / b.l
-    const v = (y - (b.cy - b.h / 2)) / b.h
-    const R = RAYONS_DANS_LA_CARTE
-    const fx = (u - R.x) / R.l
-    const fy = (v - R.y) / R.h
-    if (fx < -0.15 || fx > 1.15 || fy < -0.15 || fy > 1.15) return null
-    const ok = placeNonCoupee(fx, fy, a)
-    const coupe = Math.abs(ok.x - fx) > 1e-6 || Math.abs(ok.y - fy) > 1e-6
-    const recouvre = (colles ?? []).some((c, i) => collesSeChevauchent({ x: fx, y: fy }, placeDuColle(c, i)))
-    return { x: fx, y: fy, interdit: coupe || recouvre }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
-  }, [cleColles])
-  /**
-   * LE STICKER TENU SUIT LE DOIGT, toujours — et, sur la carte, SON CONTOUR le
-   * suit aussi, jaune ou rouge selon que la place est permise ou non. Hors de
-   * la carte, pas de contour.
-   */
-  const suivreLeDoigt = useCallback(
-    (x: number, y: number, a: number) => {
-      suivre(x, y)
-      const place = dansLaFenetre(x, y, a)
-      poserLeFantome(place === null ? null : { x, y, interdit: place.interdit })
-    },
-    [dansLaFenetre, suivre, poserLeFantome],
+    [carte, variante, niveau],
   )
   /**
-   * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
-   * d'abord, pas forcément le plus beau qu'on montrait), sans son emoji.
+   * LA FUSION SE VOIT : la carte rebondit encore (le `Bump` repart, sa clé est
+   * le compte des fusions), le titre du niveau éclate et le son de l'équipement
+   * sonne. Les étoiles arrivent d'elles-mêmes : la carte se repeint au niveau.
    */
-  const carteNue = useMemo(
-    () =>
-      decolle === null ? aPeindre : { ...carteDeLEmoji(carte, decolle, collesPeints.length), sansSujet: true, animation: undefined, colles: collesPeints },
-    [carte, decolle, aPeindre, collesPeints],
-  )
+  const [fusions, setFusions] = useState(0)
   // LA CARTE TIENT DANS L'ÉCRAN, avec la place des lignes du dessous : la règle
   // de la rangée du paquet, *la taille se calcule sur la place.*
   const hVisible = hauteurVisibleA(Z_MAIN, fenetre.h)
   const lVisible = (hVisible * fenetre.l) / fenetre.h
-  const taille = Math.min((lVisible * 0.82) / LARGE, (hVisible * 0.6) / HAUT)
+  const taille = Math.min((lVisible * 0.82) / LARGE, (hVisible * 0.54) / HAUT)
   const px = (taille * LARGE * fenetre.l * Math.min(window.devicePixelRatio || 1, 2)) / lVisible
   /**
    * LE DOIGT PENCHE LA CARTE, COMME AU PAQUET. Keko : « il faut pouvoir bouger
@@ -860,7 +687,7 @@ function CarteOuverte({
    */
   const boite = {
     cx: fenetre.l / 2,
-    cy: fenetre.h * (0.5 - 0.06),
+    cy: fenetre.h * (0.5 - 0.09),
     l: ((taille * LARGE) / lVisible) * fenetre.l,
     h: ((taille * HAUT) / hVisible) * fenetre.h,
   }
@@ -881,8 +708,6 @@ function CarteOuverte({
     addEventListener(
       'pointerdown',
       (e) => {
-        // PENDANT LE DÉCOLLAGE OU LE PLACEMENT D'UN STICKER, LE DOIGT EST À LUI.
-        if (refDecolle.current || refPlacement.current) return
         depart.x = e.clientX
         depart.y = e.clientY
         if (e.pointerType === 'mouse') return
@@ -897,7 +722,6 @@ function CarteOuverte({
     addEventListener(
       'pointermove',
       (e) => {
-        if (refPlacement.current) return
         if (e.pointerType === 'mouse') {
           c.dessus = viser(e)
           c.tenu = c.dessus
@@ -927,12 +751,11 @@ function CarteOuverte({
       'pointerup',
       (e) => {
         lacher(e)
-        if (refDecolle.current || refPlacement.current) return
         const tape = Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < 12
         const b = refBoite.current
         const dedans = Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
-        // La croix ferme d'elle-même : on ne repose pas deux fois.
-        const surUnBouton = e.target instanceof Element && e.target.closest('button, .coller-choix') !== null
+        // La croix et « Fusionner » font leur travail : on ne repose pas.
+        const surUnBouton = e.target instanceof Element && e.target.closest('button') !== null
         reposer = tape && !dedans && !surUnBouton
       },
       { signal },
@@ -967,47 +790,28 @@ function CarteOuverte({
       >
         <Cadrage />
         <Horloge />
-        <PencheAuGyro curseurs={decolle !== null ? [] : [curseur.current]} gyro={gyro} />
+        <PencheAuGyro curseurs={[curseur.current]} gyro={gyro} />
         <Bloom />
         <ambientLight intensity={0.55} />
         <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
-        {/* INVISIBLE, PAS DÉMONTÉE : annuler la rend telle qu'elle était. */}
-        <group visible={!cassee && peinte}>
-        <Bump pret={peinte} centre={[0, hVisible * 0.06, Z_MAIN]}>
+        <group visible={peinte}>
+        <Bump key={fusions} pret={peinte} centre={[0, hVisible * 0.09, Z_MAIN]}>
         <Carte3D
           onPeinte={() => setPeinte(true)}
-          carte={cachee ? carteNue : aPeindre}
-          position={[0, hVisible * 0.06, Z_MAIN]}
+          carte={aPeindre}
+          position={[0, hVisible * 0.09, Z_MAIN]}
           taille={taille}
           tailleTexture={px}
           reflet
-          refletAuDoigt={decolle === null}
-          curseurPartage={decolle === null ? curseur.current : undefined}
+          refletAuDoigt
+          curseurPartage={curseur.current}
           ombre={false}
         />
         </Bump>
         </group>
       </Canvas>
-      {decolle !== null && (
-        <Decollage
-          carte={carte}
-          exemplaire={decolle}
-          colles={collesPeints}
-          boite={refBoite.current}
-          onPret={() => setCachee(true)}
-          onCasse={() => setCassee(true)}
-          onAnnuler={() => {
-            setDecolle(null)
-            setCachee(false)
-          }}
-          onFini={() => {
-            onDetruire(decolle)
-            onFermer()
-          }}
-        />
-      )}
-      <div className={`carte-ouverte-infos${decolle !== null ? ' carte-ouverte-cachee' : ''}`}>
+      <div className="carte-ouverte-infos">
         <span className="carte-ouverte-cran" style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}>
           {NOM_DE_LA_RARETE[carte.rarete]}
         </span>
@@ -1016,354 +820,70 @@ function CarteOuverte({
           {possession !== null && <>Obtenue le {DATE.format(new Date(possession.premiere))} · </>}
           n° {carte.rang} sur {total}
         </p>
-        {/* DÉTRUIRE POUR LE STICKER : le bouton ouvre le geste, c'est le geste
-            qui décide. Keko : « l'option, quand on la zoome dans la collection,
-            de la détruire pour gagner son sticker ». Pas sur une carte qu'on
-            n'a pas. */}
         {possession !== null && (
-          <div className="carte-ouverte-boutons">
-            <button
-              type="button"
-              className="decoller"
-              // C'EST LA VERSION QU'ON REGARDE QUI PART : voir `Variante`.
-              onClick={() => setDecolle(exemplaireDe(variante))}
-            >
-              Décoller le sticker
-            </button>
-            {/* COLLER UN STICKER DE L'ALBUM SUR CETTE VERSION. Keko : « coller des
-                stickers sur les cartes… +1 par sticker, sans limite par carte ».
-                Le bouton n'est là que si l'album a de quoi coller. */}
-            {album.length > 0 && (
-              <button type="button" className="decoller decoller-second" onClick={() => setChoixOuvert((o) => !o)}>
-                Coller un sticker
-                {nombreDeColles(possession, variante) > 0 && <span className="coller-compte">{nombreDeColles(possession, variante)}</span>}
-              </button>
-            )}
-          </div>
+          <NiveauDeLaCarte
+            niveau={niveau}
+            exemplaires={possession.n}
+            fusions={fusions}
+            onFusionner={() => {
+              onFusionner()
+              setFusions((f) => f + 1)
+              jouerSon(SON_EQUIPER)
+              navigator.vibrate?.(30)
+            }}
+          />
         )}
       </div>
-      {choixOuvert && decolle === null && (
-        <ChoixDuSticker
-          album={album}
-          onPrendre={(st, image, e) => {
-            // La carte se remet à plat : le doigt est au sticker.
-            curseur.current.dessus = false
-            curseur.current.tenu = false
-            const a = (Math.random() - 0.5) * 0.5
-            setTenu({ sticker: st, image, contour: contourPointille(image), contourRouge: contourPointille(image, ROUGE_FANTOME), a })
-            suivreLeDoigt(e.clientX, e.clientY, a)
-          }}
-          onSuivre={(e) => {
-            if (tenu !== null) suivreLeDoigt(e.clientX, e.clientY, tenu.a)
-          }}
-          onLacher={(e) => {
-            const t = tenu
-            setTenu(null)
-            if (t === null) return
-            const place = dansLaFenetre(e.clientX, e.clientY, t.a)
-            // Lâché hors de la carte ou en zone interdite (contour rouge) : rien.
-            if (place === null || place.interdit) return
-            onColler({ ...t.sticker, x: place.x, y: place.y, a: t.a })
-            jouerSon(SON_POSER, 0.5)
-          }}
-          onFermer={() => setChoixOuvert(false)}
-        />
-      )}
-      {/* LES CONTOURS FANTÔMES, jaune (permis) et rouge (interdit), sous le doigt ; posés par `poserLeFantome`. */}
-      {tenu !== null &&
-        (
-          [
-            [fantome, tenu.contour, ''],
-            [fantomeRouge, tenu.contourRouge, ' sticker-fantome-rouge'],
-          ] as const
-        ).map(([ref, toileContour, classe]) => (
-          <canvas
-            key={classe}
-            ref={(el) => {
-              ref.current = el
-              if (el === null) return
-              el.width = toileContour.width
-              el.height = toileContour.height
-              el.getContext('2d')?.drawImage(toileContour, 0, 0)
-            }}
-            className={`sticker-fantome${classe}`}
-            style={{ width: `${(refBoite.current.l * RAYONS_DANS_LA_CARTE.l * TAILLE_COLLE).toFixed(1)}px`, '--a': `${tenu.a}rad`, visibility: 'hidden' } as React.CSSProperties}
-            aria-hidden
-          />
-        ))}
-      {/* LE STICKER QUI SUIT LE DOIGT, à la taille qu'il aura sur la carte. */}
-      {tenu !== null && (
-        <canvas
-          ref={(el) => {
-            flottant.current = el
-            if (el === null) return
-            el.width = tenu.image.width
-            el.height = tenu.image.height
-            el.getContext('2d')?.drawImage(tenu.image, 0, 0)
-          }}
-          className="sticker-flottant"
-          style={{ width: `${(refBoite.current.l * RAYONS_DANS_LA_CARTE.l * TAILLE_COLLE).toFixed(1)}px`, '--a': `${tenu.a}rad` } as React.CSSProperties}
-          aria-hidden
-        />
-      )}
-      {decolle === null && (
-        <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
-          ×
-        </button>
-      )}
+      <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
+        ×
+      </button>
     </div>
   )
 }
 
 /**
- * LE CHOIX DU STICKER À COLLER : l'album en ruban, une case par version de
- * sticker possédée avec son compte, peinte par le peintre de l'album
- * (`stickerPeint`). Une tape colle et laisse le ruban ouvert : on peut en
- * coller plusieurs d'affilée (sans limite, Keko). Une case qui se vide
- * disparaît avec le dernier sticker.
+ * LE NIVEAU DU PERSONNAGE, SOUS SA CARTE OUVERTE. Keko : « le niveau indique
+ * le nombre de cartes à fusionner : pour passer niveau 2 il faut deux
+ * exemplaires, et niveau 5 il en faut 5 ». Ses étoiles, la jauge de ses
+ * exemplaires — *toutes versions ensemble, la carte qu'on garde comprise* — et
+ * le bouton, éteint tant qu'il en manque. `fusions` rejoue l'éclat du titre.
  */
-function ChoixDuSticker({
-  album,
-  onPrendre,
-  onSuivre,
-  onLacher,
-  onFermer,
+function NiveauDeLaCarte({
+  niveau,
+  exemplaires,
+  fusions,
+  onFusionner,
 }: {
-  album: readonly { carte: CarteEmoji; v: Variante; n: number }[]
-  /** Le doigt se pose sur une case : on prend ce sticker (son image peinte), et on le suit jusqu'au lâcher. */
-  onPrendre: (s: StickerColle, image: HTMLCanvasElement, e: React.PointerEvent) => void
-  onSuivre: (e: React.PointerEvent) => void
-  onLacher: (e: React.PointerEvent) => void
-  onFermer: () => void
+  niveau: number
+  exemplaires: number
+  fusions: number
+  onFusionner: () => void
 }): React.ReactElement {
+  const besoin = aFusionnerPour(niveau)
   return (
-    <div className="coller-choix" role="dialog" aria-label="Coller un sticker">
-      <p className="coller-titre">
-        <span>
-          Coller un sticker <span className="coller-aide">· glisse-le sur la carte</span>
-        </span>
-        <button type="button" className="coller-fermer" aria-label="Fermer" onClick={onFermer}>
-          ×
-        </button>
+    <div className="niveau">
+      <p key={fusions} className={`niveau-titre${fusions > 0 ? ' niveau-monte' : ''}`}>
+        Niveau {niveau}
+        {niveau > 1 && <span className="niveau-etoiles" aria-hidden="true">{'★'.repeat(niveau - 1)}</span>}
       </p>
-      <div className="coller-ruban">
-        {album.map((e) => (
-          <CaseDuSticker
-            key={`${e.carte.id}#${e.v}`}
-            entree={e}
-            onPrendre={(image, ev) => onPrendre({ id: e.carte.id, v: e.v }, image, ev)}
-            onSuivre={onSuivre}
-            onLacher={onLacher}
-          />
-        ))}
-      </div>
+      {besoin === null ? (
+        <p className="carte-ouverte-ligne carte-ouverte-discret">Niveau maximum</p>
+      ) : (
+        <>
+          <div className="niveau-jauge" role="progressbar" aria-valuemin={0} aria-valuemax={besoin} aria-valuenow={Math.min(exemplaires, besoin)}>
+            {Array.from({ length: besoin }, (_, i) => (
+              <span key={i} className={i < exemplaires ? 'plein' : ''} />
+            ))}
+          </div>
+          <p className="carte-ouverte-ligne carte-ouverte-discret">
+            {Math.min(exemplaires, besoin)} / {besoin} exemplaires pour le niveau {niveau + 1} · +1 de puissance
+          </p>
+          <button type="button" className="decoller" disabled={exemplaires < besoin} onClick={onFusionner}>
+            Fusionner {besoin} cartes
+          </button>
+        </>
+      )}
     </div>
-  )
-}
-
-/**
- * LE CONTOUR FANTÔME D'UN STICKER : UN TRAIT POINTILLÉ JAUNE QUI SUIT SON BORD.
- * Keko : « la prévisualisation du sticker soit jaune en pointillé » — puis,
- * devant une trame de points posée sur le cerne, « les pointillés sont très
- * moches ». *Un pointillé est un trait qui suit un chemin*, pas une texture :
- * on retrouve donc le chemin. La silhouette du sticker (son alpha, cerne
- * compris) est suivie pixel à pixel le long de son bord (suivi de contour de
- * Moore, sur une grille de 256), composant par composant — les trous ne sont
- * pas suivis (le composant est rempli après son tour) —, puis le chemin est
- * tracé en tirets ronds, jaunes, avec `setLineDash`.
- */
-const JAUNE_FANTOME = '#ffd45e'
-/** Le rouge du contour en zone interdite : celui des pastilles « Nouveau ». */
-const ROUGE_FANTOME = '#ff4d6d'
-function contourPointille(image: HTMLCanvasElement, couleur = JAUNE_FANTOME): HTMLCanvasElement {
-  const n = 256
-  const lu = document.createElement('canvas')
-  lu.width = n
-  lu.height = n
-  const lctx = lu.getContext('2d', { willReadFrequently: true })
-  const contour = document.createElement('canvas')
-  contour.width = n
-  contour.height = n
-  const ctx = contour.getContext('2d')
-  if (lctx === null || ctx === null) return contour
-  lctx.drawImage(image, 0, 0, n, n)
-  const a = lctx.getImageData(0, 0, n, n).data
-  // LE MASQUE : dedans si l'alpha dépasse un quart, avec un bord vide tout autour.
-  const dedans = new Uint8Array(n * n)
-  for (let i = 0; i < n * n; i++) dedans[i] = a[i * 4 + 3]! > 64 ? 1 : 0
-  for (let i = 0; i < n; i++) dedans[i] = dedans[(n - 1) * n + i] = dedans[i * n] = dedans[i * n + n - 1] = 0
-  const vu = new Uint8Array(n * n)
-  const est = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < n && y < n && dedans[y * n + x] === 1
-  // Les huit voisins, dans l'ordre horaire, en partant de la gauche.
-  const DX = [-1, -1, 0, 1, 1, 1, 0, -1]
-  const DY = [0, -1, -1, -1, 0, 1, 1, 1]
-  const chemins: number[][] = []
-  for (let y0 = 1; y0 < n - 1; y0++) {
-    for (let x0 = 1; x0 < n - 1; x0++) {
-      // Un pixel dedans, dont le voisin de gauche est dehors, pas encore vu : un
-      // départ sur le bord extérieur d'un composant (on balaie de gauche à droite).
-      if (!est(x0, y0) || vu[y0 * n + x0] === 1 || est(x0 - 1, y0)) continue
-      // LE SUIVI DE MOORE : depuis le voisin par lequel on est arrivé, on tourne
-      // dans le sens horaire jusqu'au prochain pixel dedans.
-      const chemin: number[] = []
-      let x = x0
-      let y = y0
-      let depuis = 0
-      let tours = 0
-      do {
-        chemin.push(x, y)
-        let k = (depuis + 1) % 8
-        let trouve = false
-        for (let essai = 0; essai < 8; essai++) {
-          const nx = x + DX[k]!
-          const ny = y + DY[k]!
-          if (est(nx, ny)) {
-            // On repart en regardant d'où l'on vient : le voisin opposé, moins un cran.
-            depuis = (k + 6) % 8
-            x = nx
-            y = ny
-            trouve = true
-            break
-          }
-          k = (k + 1) % 8
-        }
-        if (!trouve) break
-        tours++
-      } while ((x !== x0 || y !== y0) && tours < n * n)
-      if (chemin.length >= 8) chemins.push(chemin)
-      // LE COMPOSANT EST REMPLI, pour ne pas repartir de ses trous ni de son bord.
-      const pile = [x0, y0]
-      vu[y0 * n + x0] = 1
-      while (pile.length > 0) {
-        const py = pile.pop()!
-        const px = pile.pop()!
-        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-          const qx = px + dx
-          const qy = py + dy
-          if (est(qx, qy) && vu[qy * n + qx] === 0) {
-            vu[qy * n + qx] = 1
-            pile.push(qx, qy)
-          }
-        }
-      }
-    }
-  }
-  // LE TRAIT : tirets ronds, jaunes, un point sur trois pour un bord lisse.
-  const epaisseur = n * 0.03
-  ctx.strokeStyle = couleur
-  ctx.lineWidth = epaisseur
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-  ctx.setLineDash([epaisseur * 1.4, epaisseur * 1.6])
-  for (const chemin of chemins) {
-    ctx.beginPath()
-    for (let i = 0; i < chemin.length; i += 6) {
-      const x = chemin[i]! + 0.5
-      const y = chemin[i + 1]! + 0.5
-      if (i === 0) ctx.moveTo(x, y)
-      else ctx.lineTo(x, y)
-    }
-    ctx.closePath()
-    ctx.stroke()
-  }
-  return contour
-}
-
-/**
- * UNE CASE DU RUBAN. *C'est un glisser, pas une tape* : le doigt se pose sur
- * la case (`setPointerCapture` : la case garde le doigt même sorti d'elle),
- * le sticker le suit, et c'est le lâcher qui colle — sur la carte — ou
- * annule — ailleurs, y compris sur la case elle-même pour une simple tape.
- */
-export function CaseDuSticker({
-  entree,
-  onPrendre,
-  onSuivre,
-  onLacher,
-}: {
-  entree: { carte: CarteEmoji; v: Variante; n: number }
-  onPrendre: (image: HTMLCanvasElement, e: React.PointerEvent) => void
-  onSuivre: (e: React.PointerEvent) => void
-  onLacher: (e: React.PointerEvent) => void
-}): React.ReactElement {
-  const toile = useRef<HTMLCanvasElement>(null)
-  const bouton = useRef<HTMLButtonElement>(null)
-  const image = useRef<HTMLCanvasElement | null>(null)
-  /** Le doigt est à nous, de la prise au lâcher — tenu ici plutôt que par `hasPointerCapture`, qu'un navigateur peut refuser. */
-  const pris = useRef(false)
-  const holo = exemplaireDe(entree.v).holo
-  // PEINTE QUAND ELLE APPROCHE DE L'ÉCRAN, comme une case de l'album : un
-  // ruban de deux mille stickers peints d'un coup figeait la page.
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = bouton.current
-    if (el === null) return
-    const obs = new IntersectionObserver(
-      (entrees) => {
-        if (entrees.some((e) => e.isIntersecting)) {
-          setVisible(true)
-          obs.disconnect()
-        }
-      },
-      { rootMargin: '0px 200px' },
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-  useEffect(() => {
-    if (!visible) return
-    let vivant = true
-    void stickerPeint(entree.carte, holo).then((source) => {
-      const t = toile.current
-      const ctx = t?.getContext('2d')
-      if (!vivant || source === null || t == null || ctx == null) return
-      image.current = source
-      t.width = source.width
-      t.height = source.height
-      ctx.drawImage(source, 0, 0)
-    })
-    return () => {
-      vivant = false
-    }
-  }, [entree.carte, holo, visible])
-  return (
-    <button
-      ref={bouton}
-      type="button"
-      className="coller-case"
-      aria-label={`${enTitre(entree.carte.nom)}, ${NOM_DE_LA_VARIANTE[entree.v]}, ${entree.n} — glisser sur la carte`}
-      onPointerDown={(e) => {
-        if (image.current === null) return
-        try {
-          e.currentTarget.setPointerCapture(e.pointerId)
-        } catch {
-          // Un pointeur que le navigateur ne veut pas capturer : on suit quand même.
-        }
-        pris.current = true
-        onPrendre(image.current, e)
-      }}
-      onPointerMove={(e) => {
-        if (pris.current) onSuivre(e)
-      }}
-      onPointerUp={(e) => {
-        if (!pris.current) return
-        pris.current = false
-        try {
-          e.currentTarget.releasePointerCapture(e.pointerId)
-        } catch {
-          // Rien à relâcher.
-        }
-        onLacher(e)
-      }}
-      onPointerCancel={(e) => {
-        if (!pris.current) return
-        pris.current = false
-        onLacher(e)
-      }}
-    >
-      <canvas ref={toile} />
-      {entree.n > 1 && <span className="vignette-nombre">×{entree.n}</span>}
-    </button>
   )
 }
 
@@ -1417,8 +937,7 @@ export function PageCollection({
   collection,
   toutes = false,
   onOuvrirUnPaquet,
-  onDetruire,
-  onColler,
+  onFusionner,
   deck,
 }: {
   catalogue: readonly CarteEmoji[] | null
@@ -1431,28 +950,12 @@ export function PageCollection({
    */
   toutes?: boolean
   onOuvrirUnPaquet: () => void
-  onDetruire: (id: string, ex: Exemplaire) => void
-  /** Coller un sticker de l'album sur une version d'une carte : voir `coller`. */
-  onColler: (cible: { id: string; v: Variante }, sticker: StickerColle) => void
+  /** Fusionne les exemplaires d'un personnage vers son niveau suivant : voir `fusionner`. */
+  onFusionner: (id: string) => void
   /** Le mode deck : voir `ChoixDuDeck`. */
   deck?: ChoixDuDeck
 }): React.ReactElement {
   const modeDeck = deck !== undefined
-  // L'ALBUM, CE QU'ON PEUT COLLER : une entrée par version de sticker possédée.
-  const album = useMemo(() => {
-    if (catalogue === null) return []
-    const parId = new Map(catalogue.map((c) => [c.id, c]))
-    const liste: { carte: CarteEmoji; v: Variante; n: number }[] = []
-    for (const [id, s] of Object.entries(collection.stickers)) {
-      const carte = parId.get(id)
-      if (carte === undefined) continue
-      for (const v of VARIANTES) {
-        const n = compteDe(s, v)
-        if (n > 0) liste.push({ carte, v, n })
-      }
-    }
-    return liste.sort((a, b) => b.n - a.n || a.carte.rang - b.carte.rang)
-  }, [catalogue, collection.stickers])
   const triParDefaut: Tri = toutes || modeDeck ? 'rares' : 'recentes'
   // SUPPRIMER UN DECK SE CONFIRME D'UNE SECONDE TAPE, dans les trois secondes.
   const [sur, setSur] = useState(false)
@@ -1980,10 +1483,18 @@ export function PageCollection({
             possession={laOuverte.p}
             variante={laOuverte.v}
             total={total}
-            album={album}
             onFermer={() => setOuverte(null)}
-            onDetruire={(ex) => onDetruire(laOuverte.carte.id, ex)}
-            onColler={(st) => onColler({ id: laOuverte.carte.id, v: laOuverte.v }, st)}
+            onFusionner={() => {
+              const id = laOuverte.carte.id
+              // LA VERSION QU'ON REGARDAIT A PU PARTIR À LA FUSION : on montre
+              // alors celle qui reste, la plus belle (voir `exemplaireAFusionner`).
+              const reste = fusionner(collection, id).cartes[id]
+              if (reste !== undefined && compteDe(reste, laOuverte.v) === 0) {
+                const v = [...VARIANTES].reverse().find((x) => compteDe(reste, x) > 0)
+                if (v !== undefined) setOuverte({ id, v })
+              }
+              onFusionner(id)
+            }}
           />,
           document.body,
         )}

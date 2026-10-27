@@ -29,25 +29,15 @@ import {
   avecLikes,
   compteDe,
   debloquer,
-  debloquerStickers,
   retirer,
   oublier,
-  detruire,
-  coller,
-  ameliorer,
+  fusionner,
   niveauDe,
-  coutDuNiveau,
-  nombreDeColles,
   nombreDeNouvelles,
-  nombreDeStickersNouveaux,
-  stickersVus,
   toutVu,
   type Collection,
-  type Exemplaire,
-  type StickerColle,
   type Variante,
 } from '../logic/emoji/collection.ts'
-import { declarerLeCatalogue } from './peinture-vignette.ts'
 import { declarerLesNiveaux } from './carte-emoji.ts'
 import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerDecks, chargerReserve, sauverCollection, sauverDecks, sauverReserve } from '../ui/collection.ts'
@@ -76,8 +66,6 @@ import {
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
-import { PageAlbum } from './Album.tsx'
-import { PageStickers } from './Stickers.tsx'
 import { PageJouer, type MainTombee } from './Deck.tsx'
 import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
 import { FondAnime } from './FondAnime.tsx'
@@ -92,19 +80,17 @@ import { penchantAuSurvol } from './survol.ts'
  * actuellement) / toutes les cartes (liste de toutes les cartes) »). Le
  * catalogue est la même page que la collection, avec les cartes qu'on n'a pas
  * encore en grisé. `deck` (composer le deck, la même grille en mode deck) et
- * `jouer` (le regarder jouer) sont les deux entrées du deck qui joue (Keko).
- *
- * `stickers` et `album` sont les deux entrées du menu « Stickers » (Keko :
- * « collection (ce qu'on a actuellement) et album (où on les colle) »).
+ * `jouer` (le regarder jouer) sont les deux entrées du menu « Deck », à droite
+ * — la place des stickers, partis avec la fusion (Keko).
  */
-type Page = 'booster' | 'collection' | 'catalogue' | 'stickers' | 'album' | 'deck' | 'jouer'
+type Page = 'booster' | 'collection' | 'catalogue' | 'deck' | 'jouer'
 
 /** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
 const ILLIMITE = new URLSearchParams(location.search).has('illimite')
 /** `&page=` : la page ouverte d'emblée (voir `accueil`) ; autre chose, ignoré. */
 const PAGE_DEMANDEE = ((): Page | null => {
   const p = new URLSearchParams(location.search).get('page')
-  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'stickers' || p === 'album' || p === 'deck' || p === 'jouer' ? p : null
+  return p === 'booster' || p === 'collection' || p === 'catalogue' || p === 'deck' || p === 'jouer' ? p : null
 })()
 
 /** 9:58 — les minutes sans zéro devant, les secondes avec. */
@@ -217,7 +203,7 @@ function compteDesExemplaires(c: Collection): CompteDExemplaires {
 
 export function Jeu(): React.ReactElement {
   useEffect(penchantAuSurvol, [])
-  // `&page=collection|catalogue|stickers` : OUVRIR UNE PAGE D'UN LIEN, sans
+  // `&page=collection|catalogue|deck|jouer` : OUVRIR UNE PAGE D'UN LIEN, sans
   // l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien.* Le son n'est
   // pas amorcé : ces pages n'en ont pas besoin pour se juger.
   const [accueil, setAccueil] = useState(PAGE_DEMANDEE === null)
@@ -261,10 +247,9 @@ export function Jeu(): React.ReactElement {
    * son qui attend le relâchement arrive après le geste. *Un seul écouteur pour
    * toute la page* plutôt qu'un par bouton — celui qu'on ajoutera demain
    * clique sans qu'on y pense. **Sauf les vignettes** : une carte n'est pas un
-   * bouton, et elle a déjà son son, la pose de carte en s'ouvrant. **Ni les
-   * stickers de l'album** (`album-case`), pour la même raison — Keko : « il y a
-   * le son de clic + le son de carte, il faudrait supprimer le son de clic ».
-   * **Ni les options du panneau filtres** (`filtres-panneau-corps` : tri,
+   * bouton, et elle a déjà son son, la pose de carte en s'ouvrant (Keko : « il
+   * y a le son de clic + le son de carte, il faudrait supprimer le son de
+   * clic »). **Ni les options du panneau filtres** (`filtres-panneau-corps` : tri,
    * rareté, type, bonus) — Keko : « tu peux enlever les sons de clic dans les
    * options du menu filtres » ; « Tout effacer » et le bouton qui ferme
    * gardent le leur.
@@ -275,7 +260,6 @@ export function Jeu(): React.ReactElement {
       if (
         bouton !== null &&
         !bouton.classList.contains('vignette') &&
-        !bouton.classList.contains('album-case') &&
         bouton.closest('.filtres-panneau-corps') === null
       )
         jouerSon(SON_CLIC_POP)
@@ -319,25 +303,19 @@ export function Jeu(): React.ReactElement {
   }, [])
   // CE QUE VAUT UNE CARTE JOUÉE : un Like, plus un par cran (Keko : « +1 like
   // par niveau de rareté »). Le cran vient du catalogue, injecté au deck.
-  // ET UN LIKE PAR STICKER COLLÉ sur l'exemplaire joué (Keko : « +1 par
-  // sticker, sans limite par carte »). La collection est lue par une
-  // référence : la valeur n'a pas à se refaire à chaque Like qui tombe.
+  // ET UN PAR NIVEAU DU PERSONNAGE. La collection est lue par une référence :
+  // la valeur n'a pas à se refaire à chaque Like qui tombe.
   const refCollection = useRef(collection)
   refCollection.current = collection
   // LE NIVEAU DE CHAQUE PERSONNAGE, lu par toute carte qu'on peint (voir `declarerLesNiveaux`).
-  declarerLesNiveaux((id) => niveauDe(refCollection.current, id).niveau)
+  declarerLesNiveaux((id) => niveauDe(refCollection.current, id))
   const valeur = useMemo(() => {
     if (catalogue === null) return null
     const crans = new Map(catalogue.map((c) => [c.id, c.rarete]))
     return valeurParRarete(
       (id) => crans.get(id),
-      (e) => nombreDeColles(refCollection.current.cartes[e.id], e.v),
-      (id) => niveauDe(refCollection.current, id).niveau,
+      (id) => niveauDe(refCollection.current, id),
     )
-  }, [catalogue])
-  // LE CATALOGUE EST DÉCLARÉ AUX PEINTRES : les stickers collés se retrouvent par lui.
-  useEffect(() => {
-    if (catalogue !== null) declarerLeCatalogue(catalogue)
   }, [catalogue])
   useEffect(() => {
     // Sans catalogue on ne sait pas ce que vaut une carte : le temps attend,
@@ -352,7 +330,7 @@ export function Jeu(): React.ReactElement {
   }, [decks, maintenant, valeur, changer, poserDecks])
   // CE QU'ON POSSÈDE, VERSION PAR VERSION : les decks ne prennent pas plus
   // d'exemplaires qu'il n'y en a (Keko : « une carte ne peut pas être dans
-  // deux decks »), et une carte détruite les quitte.
+  // deux decks »), et une carte fusionnée les quitte.
   const compte = useMemo(() => compteDesExemplaires(collection), [collection])
   useEffect(() => {
     poserDecks((ds) => garderPossedeesPartout(ds, compte, Date.now()))
@@ -397,9 +375,7 @@ export function Jeu(): React.ReactElement {
     const tout = p.get('debloquer') === 'tout'
     p.delete('debloquer')
     history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
-    changer((c0) => {
-      // `=tout` REMPLIT AUSSI L'ALBUM : un sticker de chaque emoji.
-      const c = tout ? debloquerStickers(c0, catalogue.map((x) => x.id), Date.now()) : c0
+    changer((c) => {
       const cible = tout ? catalogue.length : Math.ceil(catalogue.length / 2)
       const manquent = catalogue.filter((x) => c.cartes[x.id] === undefined).map((x) => x.id)
       const deja = catalogue.length - manquent.length
@@ -417,7 +393,7 @@ export function Jeu(): React.ReactElement {
    * `&debloquer`. Keko : « tu peux supprimer la moitié de ma collection ? »
    * *Sa collection vit sur son appareil* : on ne peut rien y faire d'ici, c'est
    * le lien qui le fait sur place. La moitié des emoji possédés, au hasard,
-   * avec tous leurs exemplaires ; l'album ne bouge pas. Le paramètre est
+   * avec tous leurs exemplaires ; les niveaux ne bougent pas. Le paramètre est
    * retiré de l'adresse ensuite : recharger ne retire pas encore la moitié.
    */
   useEffect(() => {
@@ -437,7 +413,7 @@ export function Jeu(): React.ReactElement {
   }, [changer])
   /**
    * `&oublier=<id>[,<id>]` : CES EMOJI QUITTENT LA COLLECTION DE CET APPAREIL,
-   * cartes et stickers, d'un lien. Keko, le test du gobelin fini : « tu peux
+   * cartes et niveau, d'un lien. Keko, le test du gobelin fini : « tu peux
    * supprimer le goblin également des collections cartes / stickers ? » *Sa
    * collection vit sur son appareil* : c'est le lien qui le fait sur place,
    * une fois par appareil. Les decks lâchent les exemplaires partis
@@ -486,18 +462,8 @@ export function Jeu(): React.ReactElement {
     [changer, rareteDe],
   )
 
-  /** UNE CARTE DÉTRUITE POUR SON STICKER : voir `Decollage`. */
-  const detruireCarte = useCallback(
-    (id: string, ex: Exemplaire) => changer((c) => detruire(c, id, ex, Date.now())),
-    [changer],
-  )
-  // COLLER UN STICKER DE L'ALBUM SUR UNE VERSION D'UNE CARTE : voir `coller`.
-  const collerSticker = useCallback(
-    (cible: { id: string; v: Variante }, sticker: StickerColle) => changer((c) => coller(c, cible, sticker)),
-    [changer],
-  )
-  // COLLER UN STICKER DANS L'ALBUM, vers le niveau suivant du personnage : voir `ameliorer`.
-  const ameliorerPersonnage = useCallback((id: string, v: Variante) => changer((c) => ameliorer(c, id, v)), [changer])
+  /** FUSIONNER LES EXEMPLAIRES D'UN PERSONNAGE vers son niveau suivant : voir `fusionner`. */
+  const fusionnerPersonnage = useCallback((id: string) => changer((c) => fusionner(c, id)), [changer])
 
   /**
    * LE MENU « CARTES » : déroulé sous la pilule par une tape sur le bouton,
@@ -515,45 +481,35 @@ export function Jeu(): React.ReactElement {
     document.addEventListener('pointerdown', fermer)
     return () => document.removeEventListener('pointerdown', fermer)
   }, [menuCartes])
-  // LE MENU « STICKERS », LE MÊME À DROITE : la collection des stickers et l'album.
-  const [menuStickers, setMenuStickers] = useState(false)
+  // LE MENU « DECK », LE MÊME À DROITE : composer ses decks, regarder jouer l'actif.
+  const [menuDeck, setMenuDeck] = useState(false)
   useEffect(() => {
-    if (!menuStickers) return
+    if (!menuDeck) return
     const fermer = (e: PointerEvent): void => {
-      if (e.target instanceof Element && e.target.closest('.nav-menu-stickers') !== null) return
-      setMenuStickers(false)
+      if (e.target instanceof Element && e.target.closest('.nav-menu-deck') !== null) return
+      setMenuDeck(false)
     }
     document.addEventListener('pointerdown', fermer)
     return () => document.removeEventListener('pointerdown', fermer)
-  }, [menuStickers])
-  /** LE PERSONNAGE DONT L'ALBUM S'OUVRE À LA PAGE, venu d'un sticker ouvert. */
-  const [albumSur, setAlbumSur] = useState<string | null>(null)
+  }, [menuDeck])
 
   function aller(vers: Page): void {
     setMenuCartes(false)
-    setMenuStickers(false)
+    setMenuDeck(false)
     if (vers === page) return
     // EN QUITTANT LES CARTES, TOUT A ÉTÉ VU : la pastille s'éteint, et les
     // « Nouveau » de la grille avec elle. *Pas en y entrant* : on doit pouvoir
     // les y voir. Le catalogue montre les mêmes vignettes, il compte pareil.
     if (page === 'collection' || page === 'catalogue') changer(toutVu)
-    // ET L'ALBUM PAREIL : les stickers sont vus en le quittant.
-    if (page === 'stickers') changer(stickersVus)
     if (vers === 'booster') setAttente(dispo === 0)
     setPage(vers)
     setCalme(true)
   }
 
   const nouvelles = nombreDeNouvelles(collection)
-  const nouveauxStickers = nombreDeStickersNouveaux(collection)
   const visible = !accueil && (page !== 'booster' || calme)
-  const surLesCartes = page === 'collection' || page === 'catalogue' || page === 'deck' || page === 'jouer'
-  const surLesStickers = page === 'stickers' || page === 'album'
-  // CE QUI SE COLLE ENCORE DANS L'ALBUM : les stickers des personnages qui ne sont pas au dernier niveau.
-  const aCollerDansLAlbum = Object.entries(collection.stickers).reduce(
-    (t, [id, s]) => t + (coutDuNiveau(niveauDe(collection, id).niveau) === null ? 0 : s.n),
-    0,
-  )
+  const surLesCartes = page === 'collection' || page === 'catalogue'
+  const surLeDeck = page === 'deck' || page === 'jouer'
 
   return (
     <>
@@ -573,7 +529,6 @@ export function Jeu(): React.ReactElement {
             joueur={refCollection}
             onCalme={setCalme}
             onSachetEnAttente={setSachetAttend}
-            onDetruire={detruireCarte}
             sansPrise
             peutContinuer={dispo > 0}
             onTermine={() => {
@@ -596,24 +551,6 @@ export function Jeu(): React.ReactElement {
             <p className="reserve-bilan">Prochain paquet dans {dans === null ? '…' : minuteur(dans)}</p>
           )}
         </>
-      ) : page === 'stickers' ? (
-        <PageStickers
-          catalogue={catalogue}
-          collection={collection}
-          onCollection={() => aller('collection')}
-          onAlbum={(id) => {
-            setAlbumSur(id)
-            aller('album')
-          }}
-        />
-      ) : page === 'album' ? (
-        <PageAlbum
-          catalogue={catalogue}
-          collection={collection}
-          ouvrirSur={albumSur}
-          onAmeliorer={ameliorerPersonnage}
-          onStickers={() => aller('stickers')}
-        />
       ) : page === 'jouer' ? (
         <PageJouer
           catalogue={catalogue}
@@ -634,8 +571,7 @@ export function Jeu(): React.ReactElement {
           collection={collection}
           toutes={page === 'catalogue'}
           onOuvrirUnPaquet={() => aller('booster')}
-          onDetruire={detruireCarte}
-          onColler={collerSticker}
+          onFusionner={fusionnerPersonnage}
           deck={
             page === 'deck'
               ? {
@@ -672,7 +608,7 @@ export function Jeu(): React.ReactElement {
       )}
       {/* LES MONNAIES, TOUJOURS LÀ. Keko : « j'aurais voulu que les likes soient
           toujours visibles quel que soit l'écran actif (booster, collection,
-          stickers) », puis « je voudrais rajouter une autre monnaie : les
+          stickers) » — les stickers sont partis depuis —, puis « je voudrais rajouter une autre monnaie : les
           abonnés ». Une pilule à part, en haut à droite, qui se cache avec la
           barre : pendant la déchirure et le défilé, rien ne dispute l'écran. */}
       <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
@@ -689,7 +625,7 @@ export function Jeu(): React.ReactElement {
             aria-haspopup="menu"
             aria-expanded={menuCartes}
             onClick={() => {
-              setMenuStickers(false)
+              setMenuDeck(false)
               setMenuCartes((m) => !m)
             }}
           >
@@ -701,25 +637,23 @@ export function Jeu(): React.ReactElement {
             {nouvelles > 0 && <span className="nav-pastille">{nouvelles}</span>}
           </button>
           <span className="nav-place" aria-hidden />
-          {/* LES STICKERS À DROITE, à la place du compte « réunis / 1 915 » —
-              qui reste en tête de la collection. *Le sticker qu'on décolle
-              s'envole vers ce bouton* (voir `Decollage`). */}
+          {/* LE DECK À DROITE, à la place des stickers (Keko : partis avec la
+              fusion, « Deck » y déroule ses deux entrées). */}
           <button
             type="button"
-            className={`nav-moitie nav-droite nav-stickers nav-menu-stickers${surLesStickers ? ' nav-active' : ''}`}
+            className={`nav-moitie nav-droite nav-deck nav-menu-deck${surLeDeck ? ' nav-active' : ''}`}
             aria-haspopup="menu"
-            aria-expanded={menuStickers}
+            aria-expanded={menuDeck}
             onClick={() => {
               setMenuCartes(false)
-              setMenuStickers((m) => !m)
+              setMenuDeck((m) => !m)
             }}
           >
-            <span className={`nav-chevron${menuStickers ? ' nav-chevron-ouvert' : ''}`} aria-hidden />
-            Stickers
+            <span className={`nav-chevron${menuDeck ? ' nav-chevron-ouvert' : ''}`} aria-hidden />
+            Deck
             <span className="nav-icone" aria-hidden>
-              <IconeStickers />
+              <IconeDeck />
             </span>
-            {nouveauxStickers > 0 && <span className="nav-pastille nav-pastille-stickers">{nouveauxStickers}</span>}
           </button>
         </div>
         <button
@@ -759,7 +693,11 @@ export function Jeu(): React.ReactElement {
             >
               Toutes les cartes
             </button>
-            {/* LE DECK QUI JOUE : le composer, le regarder jouer (Keko). */}
+          </div>
+        )}
+        {/* LE MENU DÉROULÉ SOUS LE BOUTON « DECK » : le composer, le regarder jouer (Keko). */}
+        {menuDeck && (
+          <div className="nav-menu nav-menu-droite nav-menu-deck" role="menu" aria-label="Deck">
             <button
               type="button"
               role="menuitemradio"
@@ -767,7 +705,7 @@ export function Jeu(): React.ReactElement {
               className={`nav-menu-entree${page === 'deck' ? ' nav-menu-active' : ''}`}
               onClick={() => aller('deck')}
             >
-              Deck
+              Mes decks
               <span className="nav-menu-compte">
                 {decks.liste.length} deck{decks.liste.length > 1 ? 's' : ''}
               </span>
@@ -784,34 +722,6 @@ export function Jeu(): React.ReactElement {
             </button>
           </div>
         )}
-        {/* LE MENU DÉROULÉ SOUS LE BOUTON « STICKERS » : ce qu'on a, et l'album où on les colle. */}
-        {menuStickers && (
-          <div className="nav-menu nav-menu-droite nav-menu-stickers" role="menu" aria-label="Stickers">
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={page === 'stickers'}
-              className={`nav-menu-entree${page === 'stickers' ? ' nav-menu-active' : ''}`}
-              onClick={() => aller('stickers')}
-            >
-              Collection
-              {nouveauxStickers > 0 && <span className="nav-menu-pastille">{nouveauxStickers}</span>}
-            </button>
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={page === 'album'}
-              className={`nav-menu-entree${page === 'album' ? ' nav-menu-active' : ''}`}
-              onClick={() => {
-                setAlbumSur(null)
-                aller('album')
-              }}
-            >
-              Album
-              {aCollerDansLAlbum > 0 && <span className="nav-menu-compte">{aCollerDansLAlbum} à coller</span>}
-            </button>
-          </div>
-        )}
       </nav>
     </>
   )
@@ -819,11 +729,11 @@ export function Jeu(): React.ReactElement {
 
 /**
  * LES ICÔNES DE LA BARRE, dessinées. Keko : « je trouve que ça matche pas :
- * pour collection je verrais bien 3 cartes en éventail, et pour stickers autre
- * chose qu'une étiquette ». *Les emoji 🗂️ et 🏷️ parlaient bureau* ; ici trois
- * cartes aux couleurs des crans (sans l'étoile de la première version, retirée par Keko), et un sticker souriant dont le coin se décolle
- * — le geste de l'album. Le trait est `currentColor` : sombre sur la
- * pilule crème, crème sur le bouton actif.
+ * pour collection je verrais bien 3 cartes en éventail ». *Les emoji 🗂️ et 🏷️
+ * parlaient bureau* ; ici trois cartes aux couleurs des crans (sans l'étoile de
+ * la première version, retirée par Keko), et pour le deck une pile de cartes
+ * de dos. Le trait est `currentColor` : sombre sur la pilule crème, crème sur
+ * le bouton actif.
  */
 function IconeCollection(): React.ReactElement {
   const carte = (angle: number, fond: string, fenetre: string): React.ReactElement => (
@@ -853,13 +763,19 @@ export function IconeLike(): React.ReactElement {
   return <img className="icone-like" src={`${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
 }
 
-function IconeStickers(): React.ReactElement {
+/** LE DECK : trois cartes de dos empilées, le cuir violet du dos et son liseré d'or. */
+function IconeDeck(): React.ReactElement {
+  const carte = (dx: number, dy: number): React.ReactElement => (
+    <g transform={`translate(${dx} ${dy})`}>
+      <rect x="6" y="5" width="11" height="15" rx="1.8" fill="#5b2a6e" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="8" y="7" width="7" height="11" rx="0.9" fill="none" stroke="#ffc61f" strokeWidth="1" />
+    </g>
+  )
   return (
-    <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
-      {/* LE STICKER, coin bas droit replié. */}
-      <path d="M6 3.5h12a2.5 2.5 0 0 1 2.5 2.5v7.5l-7 7H6a2.5 2.5 0 0 1-2.5-2.5V6A2.5 2.5 0 0 1 6 3.5z" fill="#ffd23f" stroke="currentColor" strokeWidth="1.4" />
-      {/* LE COIN QUI SE DÉCOLLE : son dos crème. */}
-      <path d="M20.5 13.5l-7 7v-4.5a2.5 2.5 0 0 1 2.5-2.5z" fill="#fffaf0" stroke="currentColor" strokeWidth="1.4" />
+    <svg viewBox="0 0 24 24" strokeLinejoin="round">
+      {carte(2.4, -2.4)}
+      {carte(1.2, -1.2)}
+      {carte(0, 0)}
     </svg>
   )
 }

@@ -88,15 +88,15 @@ export function niveauDuPersonnageDe(id: string): number {
   return niveauDuPersonnage(id)
 }
 
-export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus, stickers = 0, niveau = niveauDuPersonnage(c.id)): CarteAPeindre {
+export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus, niveau = niveauDuPersonnage(c.id)): CarteAPeindre {
   return {
     id: c.id,
     nom: c.nom,
     cout: null,
     // LA PUISSANCE EN MÉDAILLON, coin haut gauche (Keko) : ce que l'exemplaire
-    // rapporte au deck, stickers collés et niveau compris (Keko : « le blason
+    // rapporte au deck, niveau compris (Keko : « le blason
     // indique la puissance totale, niveau compris »).
-    puissance: puissanceDe(c.rarete, stickers, niveau),
+    puissance: puissanceDe(c.rarete, niveau),
     niveau,
     effet: mots(bonus),
     // LA PASTILLE PORTE LES DEUX TAGS, race et rôle (Keko).

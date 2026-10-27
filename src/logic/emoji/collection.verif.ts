@@ -10,23 +10,16 @@ import {
   nombreDExemplaires,
   toutVu,
   debloquer,
-  debloquerStickers,
   retirer,
   oublier,
-  detruire,
-  coller,
-  nombreDeColles,
-  exemplaireADetruire,
-  nombreDeStickers,
-  nombreDeStickersNouveaux,
-  stickersVus,
   compteDe,
   avecLikes,
   ajouterLikes,
-  ameliorer,
+  fusionner,
+  exemplaireAFusionner,
+  aFusionnerPour,
   niveauDe,
   NIVEAUX,
-  stickersPoses,
   type Collection,
 } from './collection.ts'
 
@@ -49,8 +42,6 @@ verifier('un paquet', un.paquets === 1)
 verifier("l'ordre d'arrivée", un.cartes['1f600']?.ordre === 1 && un.cartes['1f601']?.ordre === 2)
 verifier('deux nouvelles', nombreDeNouvelles(un) === 2)
 const debloquee = debloquer(un, ['1f600', '1f603', '1f604'], 5000)
-const albumPlein = debloquerStickers(debloquerStickers(un, ['1f600', '1f603'], 5000), ['1f600', '1f603'], 6000)
-verifier('les stickers débloqués ne doublent pas', nombreDeStickers(albumPlein) === nombreDeStickers(un) + 2 - (un.stickers['1f600'] ? 1 : 0) - (un.stickers['1f603'] ? 1 : 0))
 verifier('débloquer ajoute ce qui manque', Object.keys(debloquee.cartes).length === 4)
 verifier('débloquer ne touche pas ce qu’on a', debloquee.cartes['1f600']?.n === 2)
 verifier('débloquer ne fait pas de nouvelles', debloquee.cartes['1f603']?.nouvelles.length === 0)
@@ -58,27 +49,11 @@ verifier('débloquer ne compte pas de paquet', debloquee.paquets === un.paquets)
 const retiree = retirer(debloquee, ['1f603', '1f604', 'absent'])
 verifier('retirer enlève les emoji nommés, et ignore un absent', Object.keys(retiree.cartes).length === 2 && retiree.cartes['1f603'] === undefined)
 verifier('retirer ne touche pas le reste', retiree.cartes['1f600']?.n === 2 && retiree.paquets === debloquee.paquets && retiree.arrivees === debloquee.arrivees)
-verifier('retirer ne touche pas les stickers', Object.keys(retiree.stickers).length === Object.keys(debloquee.stickers).length)
 const oubliee = oublier(debloquee, '1f603')
-verifier('oublier enlève les cartes ET les stickers de l’emoji', oubliee.cartes['1f603'] === undefined && oubliee.stickers['1f603'] === undefined && Object.keys(oubliee.cartes).length === Object.keys(debloquee.cartes).length - 1)
+verifier('oublier enlève les cartes et le niveau de l’emoji', oubliee.cartes['1f603'] === undefined && oublier({ ...debloquee, niveaux: { '1f603': 3 } }, '1f603').niveaux['1f603'] === undefined && Object.keys(oubliee.cartes).length === Object.keys(debloquee.cartes).length - 1)
 verifier('oublier ne touche pas le reste', oubliee.cartes['1f600']?.n === 2 && oubliee.paquets === debloquee.paquets && oubliee.likes === debloquee.likes)
 verifier('oublier un absent ne change rien', oublier(debloquee, 'absent') === debloquee)
 
-// COLLER UN STICKER SUR UNE CARTE (Keko : « +1 par sticker, sans limite par carte »)
-const album = detruire(detruire(debloquee, '1f604', { holo: false, anime: false }, 7000), '1f603', { holo: false, anime: false }, 7001)
-const cible = { id: '1f600', v: 'simple' } as const
-const collee = coller(album, cible, { id: '1f604', v: 'simple' })
-verifier('coller pose le sticker sur la version et le retire de l’album', nombreDeColles(collee.cartes['1f600'], 'simple') === 1 && collee.cartes['1f600']?.colles?.simple?.[0]?.id === '1f604' && (collee.stickers['1f604']?.n ?? 0) === (album.stickers['1f604']?.n ?? 0) - 1)
-verifier('coller n’a pas de limite', nombreDeColles(coller(collee, cible, { id: '1f603', v: 'simple' }).cartes['1f600'], 'simple') === 2)
-verifier('sans sticker dans l’album, rien ne se colle', coller(collee, cible, { id: '1f604', v: 'simple' }) === collee)
-verifier('sans la version de la carte, rien ne se colle', coller(album, { id: '1f600', v: 'holoAnime' }, { id: '1f604', v: 'simple' }) === album)
-verifier('les stickers collés survivent à la relecture', nombreDeColles(lireCollection(JSON.parse(JSON.stringify(collee))).cartes['1f600'], 'simple') === 1)
-const placee = coller(album, cible, { id: '1f604', v: 'simple', x: 0.2, y: 1.7, a: 0.3 })
-const colleRelu = lireCollection(JSON.parse(JSON.stringify(placee))).cartes['1f600']?.colles?.simple?.[0]
-verifier('la place du sticker est gardée et bornée', colleRelu?.x === 0.2 && colleRelu?.y === 1 && colleRelu?.a === 0.3)
-verifier('un sticker sans place n’en invente pas', collee.cartes['1f600']?.colles?.simple?.[0]?.x === undefined)
-const sansSimple = detruire(detruire(collee, '1f600', { holo: false, anime: false }, 8000), '1f600', { holo: false, anime: false }, 8001)
-verifier('la version détruite emporte ses stickers collés', sansSimple.cartes['1f600'] === undefined || nombreDeColles(sansSimple.cartes['1f600'], 'simple') === 0)
 const vu = toutVu(un)
 verifier('tout vu', nombreDeNouvelles(vu) === 0)
 const deux = ajouterPaquet(vu, ['1f600'], { '1f600': sans }, 2000)
@@ -91,34 +66,6 @@ const secondHolo = ajouterPaquet(trois, ['1f600'], { '1f600': { holo: true, anim
 verifier("un second holo n'est pas une nouvelle", nombreDeNouvelles(secondHolo) === 1)
 verifier('une collection d’avant relit toutes ses versions nouvelles', nombreDeNouvelles(lireCollection({ version: 1, cartes: { '1f600': { n: 2, holo: 1, anime: 0, premiere: 1, ordre: 1, nouvelle: true } } })) === 2)
 verifier('une version nouvelle qu’on n’a pas est écartée à la relecture', lireCollection({ version: 1, cartes: { '1f600': { n: 1, holo: 0, anime: 0, premiere: 1, ordre: 1, nouvelles: ['holo', 'simple'] } } }).cartes['1f600']?.nouvelles.join() === 'simple')
-verifier('détruire la version nouvelle efface sa bulle', nombreDeNouvelles(detruire(trois, '1f600', { holo: true, anime: false }, 3600)) === 0)
-
-// LA DESTRUCTION : un exemplaire part, son sticker arrive.
-const simple = exemplaireADetruire(trois.cartes['1f600']!)
-verifier('on détruit le simple avant le holo', !simple.holo && !simple.anime)
-const d1 = detruire(trois, '1f600', simple, 4000)
-verifier('un exemplaire de moins', d1.cartes['1f600']?.n === trois.cartes['1f600']!.n - 1)
-verifier('le holo reste', d1.cartes['1f600']?.holo === 1)
-verifier('un sticker gagné', d1.stickers['1f600']?.n === 1 && d1.stickers['1f600']?.holo === 0)
-verifier('un sticker gagné est nouveau', d1.stickers['1f600']?.nouveau === true && nombreDeStickersNouveaux(d1) === 1)
-const albumVu = stickersVus(d1)
-verifier('l’album vu éteint la pastille', nombreDeStickersNouveaux(albumVu) === 0 && albumVu.stickers['1f600']?.n === 1)
-verifier('l’album déjà vu ne change pas', stickersVus(albumVu) === albumVu)
-verifier('un doublon de sticker redevient nouveau', detruire(albumVu, '1f600', simple, 4500).stickers['1f600']?.nouveau === true)
-verifier('un sticker débloqué n’est pas nouveau', debloquerStickers(albumVu, ['1f603'], 5000).stickers['1f603']?.nouveau === false)
-verifier('un album d’avant relit ses stickers sans nouveau', lireCollection({ version: 1, cartes: {}, stickers: { '1f600': { n: 1, holo: 0, anime: 0, dernier: 1 } } }).stickers['1f600']?.nouveau === false)
-const d2 = detruire(d1, '1f601', { holo: true, anime: false }, 5000)
-verifier('la dernière carte quitte la collection', d2.cartes['1f601'] === undefined)
-verifier('son sticker est holo', d2.stickers['1f601']?.holo === 1)
-verifier('deux stickers', nombreDeStickers(d2) === 2)
-verifier('détruire ce qu’on n’a pas ne change rien', detruire(d2, '1f601', simple, 6000) === d2)
-const d3 = detruire(d2, '1f600', { holo: false, anime: true }, 6000)
-verifier('un animé qu’on n’avait pas ne fait pas un sticker animé', d3.stickers['1f600']?.anime === 0)
-verifier('un paquet après garde l’album', ajouterPaquet(d3, ['1f601'], {}, 7000).stickers['1f601']?.n === 1)
-const relueAlbum = lireCollection(JSON.parse(JSON.stringify(d3)))
-verifier('l’album fait l’aller-retour JSON', JSON.stringify(relueAlbum) === JSON.stringify(d3))
-verifier('une collection d’avant l’album se relit', Object.keys(lireCollection({ version: 1, cartes: {} }).stickers).length === 0)
-
 // LES QUATRE VERSIONS : un holo animé se compte à part.
 const quatre = ajouterPaquet(collectionVide(), ['1f60a', '1f60a', '1f60a'], { '1f60a': { holo: true, anime: true } }, 1)
 const p4 = quatre.cartes['1f60a']!
@@ -126,14 +73,23 @@ verifier('trois holo animés', compteDe(p4, 'holoAnime') === 3 && compteDe(p4, '
 const melange = ajouterPaquet(ajouterPaquet(collectionVide(), ['1f60b'], { '1f60b': { holo: true, anime: false } }, 1), ['1f60b', '1f60b'], { '1f60b': sans }, 2)
 const pm = melange.cartes['1f60b']!
 verifier('un holo et deux simples', compteDe(pm, 'holo') === 1 && compteDe(pm, 'simple') === 2)
-const moinsHA = detruire(quatre, '1f60a', { holo: true, anime: true }, 3)
-verifier('détruire un holo animé', compteDe(moinsHA.cartes['1f60a']!, 'holoAnime') === 2)
-// L'ALBUM AUSSI A SES QUATRE VERSIONS.
-verifier('son sticker est holo animé', moinsHA.stickers['1f60a']?.ha === 1 && compteDe(moinsHA.stickers['1f60a']!, 'holoAnime') === 1 && compteDe(moinsHA.stickers['1f60a']!, 'holo') === 0)
-const moinsHolo = detruire(detruire(melange, '1f60b', { holo: true, anime: false }, 4), '1f60b', sans, 5)
-verifier('un sticker holo et un simple', compteDe(moinsHolo.stickers['1f60b']!, 'holo') === 1 && compteDe(moinsHolo.stickers['1f60b']!, 'simple') === 1 && moinsHolo.stickers['1f60b']?.ha === 0)
-verifier('un album d’avant déduit le holo animé imposé', lireCollection({ version: 1, cartes: {}, stickers: { '1f600': { n: 1, holo: 1, anime: 1, dernier: 1 } } }).stickers['1f600']?.ha === 1)
-verifier('un album d’avant sans contrainte lit zéro', lireCollection({ version: 1, cartes: {}, stickers: { '1f600': { n: 2, holo: 1, anime: 1, dernier: 1 } } }).stickers['1f600']?.ha === 0)
+// LA FUSION (Keko : « pour passer niveau 2 il faut deux exemplaires, et niveau 5 il en faut 5 »)
+verifier('il faut le niveau suivant en exemplaires, rien au dernier', aFusionnerPour(1) === 2 && aFusionnerPour(4) === 5 && aFusionnerPour(NIVEAUX.max) === null)
+verifier('sans rien fusionné, niveau 1', niveauDe(melange, '1f60b') === 1)
+verifier('le simple part avant le holo', !exemplaireAFusionner(pm).holo)
+const f2 = fusionner(melange, '1f60b')
+verifier('deux exemplaires fusionnent en un, au niveau 2', niveauDe(f2, '1f60b') === 2 && f2.cartes['1f60b']?.n === 2)
+verifier('pas assez d’exemplaires, rien ne bouge', fusionner(f2, '1f60b') === f2 && fusionner(melange, 'absent') === melange)
+const f3 = fusionner({ ...melange, niveaux: { '1f60b': 2 } }, '1f60b')
+verifier('trois pour le niveau 3, la meilleure reste', niveauDe(f3, '1f60b') === 3 && f3.cartes['1f60b']?.n === 1 && compteDe(f3.cartes['1f60b']!, 'holo') === 1)
+let auMax: Collection = { ...collectionVide(), cartes: { a: { n: 40, holo: 0, anime: 0, ha: 0, premiere: 0, ordre: 1, nouvelles: [] } } }
+for (let i = 0; i < 10; i++) auMax = fusionner(auMax, 'a')
+verifier('cinq niveaux au plus, dix doublons en tout', niveauDe(auMax, 'a') === NIVEAUX.max && auMax.cartes.a?.n === 40 - 10)
+verifier('le holo animé reste le dernier', compteDe(fusionner(quatre, '1f60a').cartes['1f60a']!, 'holoAnime') === 2)
+verifier('le niveau se relit', niveauDe(lireCollection(JSON.parse(JSON.stringify(auMax))), 'a') === NIVEAUX.max)
+verifier('un niveau abîmé est borné', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: 99 } }), 'a') === NIVEAUX.max)
+verifier('un niveau du temps de l’album se relit', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 3, poses: 2 } } }), 'a') === 3)
+verifier('une collection d’avant relit le niveau 1', niveauDe(lireCollection({ version: 1, cartes: {} }), 'a') === 1)
 const ancienne = lireCollection({ version: 1, cartes: { '1f600': { n: 2, holo: 2, anime: 1, premiere: 0, ordre: 1 } } })
 verifier('une collection d’avant déduit le holo animé imposé', ancienne.cartes['1f600']?.ha === 1)
 
@@ -166,26 +122,8 @@ verifier('ajouter zéro rend la même collection', ajouterLikes(riche, 0) === ri
 verifier('retirer ne descend pas sous zéro', ajouterLikes(riche, -20).likes === 0)
 verifier('poser un solde', avecLikes(riche, 3).likes === 3 && avecLikes(riche, -1).likes === 0 && avecLikes(riche, 2.7).likes === 2)
 verifier('un paquet garde les Likes', ajouterPaquet(riche, ['1f600'], {}, 9000).likes === 12)
-verifier('détruire garde les Likes', detruire(ajouterPaquet(riche, ['1f600'], {}, 9000), '1f600', exemplaireADetruire(ajouterPaquet(riche, ['1f600'], {}, 9000).cartes['1f600']!), 9100).likes === 12)
 verifier('une collection d’avant relit zéro Like', lireCollection({ version: 1, cartes: {} }).likes === 0)
 verifier('un solde gardé se relit', lireCollection({ version: 1, cartes: {}, likes: 40 }).likes === 40)
 verifier('un solde abîmé retombe à zéro', lireCollection({ version: 1, cartes: {}, likes: -5 }).likes === 0 && lireCollection({ version: 1, cartes: {}, likes: 'x' }).likes === 0)
-
-// LE NIVEAU (Keko : « amélioré via l'album sticker », cinq niveaux, chaque niveau plus cher)
-const albumNiv: Collection = { ...collectionVide(), stickers: { a: { n: 20, holo: 1, anime: 0, ha: 0, dernier: 0, nouveau: false } } }
-verifier('sans rien posé, niveau 1', niveauDe(albumNiv, 'a').niveau === 1 && niveauDe(albumNiv, 'a').poses === 0)
-const unPose = ameliorer(albumNiv, 'a', 'simple')
-verifier('un sticker posé quitte l’album et remplit la jauge', unPose.stickers.a?.n === 19 && niveauDe(unPose, 'a').niveau === 1 && niveauDe(unPose, 'a').poses === 1)
-const deuxPoses = ameliorer(unPose, 'a', 'holo')
-verifier('le coût atteint, le niveau monte et la jauge repart', niveauDe(deuxPoses, 'a').niveau === 2 && niveauDe(deuxPoses, 'a').poses === 0 && deuxPoses.stickers.a?.holo === 0)
-verifier('sans sticker de cette version, rien', ameliorer(deuxPoses, 'a', 'holo') === deuxPoses && ameliorer(albumNiv, 'b', 'simple') === albumNiv)
-let auMax: Collection = albumNiv
-for (let i = 0; i < 30; i++) auMax = ameliorer(auMax, 'a', 'simple')
-verifier('cinq niveaux au plus, chaque niveau plus cher', niveauDe(auMax, 'a').niveau === NIVEAUX.max && auMax.stickers.a?.n === 20 - NIVEAUX.couts.reduce((t, c) => t + c, 0) && NIVEAUX.couts.every((c, i) => i === 0 || c > NIVEAUX.couts[i - 1]!))
-verifier('le niveau se relit', niveauDe(lireCollection(JSON.parse(JSON.stringify(unPose))), 'a').poses === 1 && niveauDe(lireCollection(JSON.parse(JSON.stringify(auMax))), 'a').niveau === NIVEAUX.max)
-verifier('un niveau abîmé est borné', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 99, poses: 7 } } }), 'a').niveau === NIVEAUX.max && niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 2, poses: 99 } } }), 'a').poses === NIVEAUX.couts[1]! - 1)
-verifier('une collection d’avant relit le niveau 1', niveauDe(lireCollection({ version: 1, cartes: {} }), 'a').niveau === 1)
-
-verifier('les stickers posés se comptent tous niveaux confondus', stickersPoses(niveauDe(albumNiv, 'a')) === 0 && stickersPoses(niveauDe(deuxPoses, 'a')) === 2 && stickersPoses(niveauDe(auMax, 'a')) === NIVEAUX.couts.reduce((t, c) => t + c, 0))
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

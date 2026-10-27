@@ -49,8 +49,6 @@ export const DECK = {
   likesCommun: 1,
   /** « +1 like par niveau de rareté » : ce que chaque cran ajoute. */
   likesParCran: 1,
-  /** « +1 par sticker, sans limite par carte » : ce que chaque sticker collé ajoute. */
-  likesParSticker: 1,
   /** « +1 par niveau pour l'instant » : ce que chaque niveau au-delà du premier ajoute. */
   likesParNiveau: 1,
   /**
@@ -153,16 +151,13 @@ export type ValeurDeCarte = (e: EntreeDeck) => number
 /**
  * UN LIKE, PLUS UN PAR CRAN : commune 1, peu commune 2, rare 3, épique 4,
  * légendaire 5. Une carte dont on ne retrouve pas le cran vaut une commune.
- * PLUS UN PAR STICKER COLLÉ sur l'exemplaire (Keko : « +1 par sticker, sans
- * limite par carte ») — le compte est injecté, la collection n'est pas ici.
  */
 export function valeurParRarete(
   rareteDe: (id: string) => RareteEmoji | undefined,
-  stickersDe: (e: EntreeDeck) => number = () => 0,
-  /** LE NIVEAU DU PERSONNAGE (Keko : « +1 par niveau »), injecté comme le reste. */
+  /** LE NIVEAU DU PERSONNAGE (Keko : « +1 par niveau »), injecté : la collection n'est pas ici. */
   niveauDe: (id: string) => number = () => 1,
 ): ValeurDeCarte {
-  return (e) => puissanceDe(rareteDe(e.id), stickersDe(e), niveauDe(e.id))
+  return (e) => puissanceDe(rareteDe(e.id), niveauDe(e.id))
 }
 
 /**
@@ -170,9 +165,9 @@ export function valeurParRarete(
  * que le deck encaisse — *une seule fonction, sinon le chiffre peint et le
  * chiffre joué se désaccordent au premier réglage.*
  */
-export function puissanceDe(r: RareteEmoji | undefined, stickers = 0, niveau = 1): number {
+export function puissanceDe(r: RareteEmoji | undefined, niveau = 1): number {
   const cran = r === undefined ? 0 : Math.max(0, RARETES_EMOJI.indexOf(r))
-  return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, stickers) * DECK.likesParSticker + Math.max(0, niveau - 1) * DECK.likesParNiveau
+  return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, niveau - 1) * DECK.likesParNiveau
 }
 
 /** Ce que rapporte une main : la somme de ses cartes. */

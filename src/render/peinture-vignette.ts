@@ -5,7 +5,6 @@
  * peindre la même.
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
-import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
 import { urlDeLIllustration } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
 import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, TAILLE_COLLE, masqueDuSujetDe, peindreCarte, placeDuColle, stickerDe, sujetDe, surfaceDe, surfaceDesNormauxDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
@@ -829,7 +828,7 @@ export function peinte(
   garder = false,
 ): Promise<HTMLCanvasElement> {
   // L'image se charge dès maintenant, pas à son tour dans la file.
-  const aPeindre = { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined, colles.length), holo, animation: undefined, sansSujet, sansRayons, colles }
+  const aPeindre = { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), holo, animation: undefined, sansSujet, sansRayons, colles }
   const cle = `${c.id}#${largeur}#n${aPeindre.niveau ?? 1}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}${colles.length > 0 ? `#c:${colles.map((x) => x.cle).join(',')}` : ''}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
@@ -909,50 +908,12 @@ export function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasEl
 }
 
 /**
- * LES STICKERS COLLÉS SUR UNE CARTE, PRÊTS À PEINDRE. Keko : « coller des
- * stickers sur les cartes ». La collection ne garde que l'emoji et la version
- * de chaque sticker collé (`StickerColle`) ; ici on retrouve la carte au
- * catalogue (déclaré une fois par `declarerLeCatalogue`), et on peint le
- * sticker (holo pour une version holo). Un sticker dont l'emoji manque au
- * catalogue est passé. La clé distingue les peintures au cache des cartes.
+ * UN STICKER COLLÉ, PEINT : ce que le peintre sait encore poser sur une carte
+ * (`colles`). *Le jeu n'en colle plus* — les stickers sont partis avec la
+ * fusion (Keko) ; le peintre garde le geste, rien ne le lui demande.
  */
 export interface StickerPeint extends StickerAPeindre {
   readonly image: HTMLCanvasElement
-}
-let CATALOGUE_PAR_ID = new Map<string, CarteEmoji>()
-export function declarerLeCatalogue(catalogue: readonly CarteEmoji[]): void {
-  CATALOGUE_PAR_ID = new Map(catalogue.map((c) => [c.id, c]))
-}
-/** La clé d'une liste de stickers collés, pour savoir si une vignette doit se repeindre. */
-/** La clé d'un sticker collé : son emoji, sa version et sa place. */
-function cleDuColle(c: StickerColle): string {
-  return `${c.id}#${c.v}${c.x !== undefined && c.y !== undefined ? `@${c.x.toFixed(3)},${c.y.toFixed(3)},${(c.a ?? 0).toFixed(2)}` : ''}`
-}
-export function cleDesColles(colles: readonly StickerColle[] | undefined): string {
-  return (colles ?? []).map(cleDuColle).join(',')
-}
-export async function stickersColles(colles: readonly StickerColle[] | undefined): Promise<StickerPeint[]> {
-  if (colles === undefined || colles.length === 0) return []
-  const peints = await Promise.all(
-    colles.map(async (c): Promise<StickerPeint | null> => {
-      const carte = CATALOGUE_PAR_ID.get(c.id)
-      if (carte === undefined) return null
-      const ex = exemplaireDe(c.v)
-      // AU CERNE CRÈME, même holo : l'arc-en-ciel se pose après, vivant au
-      // nuanceur en 3D, figé par `cerneArcEnCiel` sur une vignette (`holo`).
-      const image = await stickerPeint(carte, false)
-      if (image === null) return null
-      // UN STICKER ANIMÉ RESTE ANIMÉ sur la carte (Keko : « qu'il garde son
-      // animation s'il en a ») : ses images, crème pour la 3D, arc-en-ciel
-      // figé pour une vignette s'il est holo.
-      const anime =
-        ex.anime && carte.animable
-          ? { charger: (cote: number, arcEnCiel: boolean) => (arcEnCiel && ex.holo ? animationHolo(c.id, cote, false) : animationDeLEmoji(urlAnimationEmoji(c.id), cote)) }
-          : undefined
-      return { cle: cleDuColle(c), image, holo: ex.holo, x: c.x, y: c.y, a: c.a, ...(anime === undefined ? {} : { anime }) }
-    }),
-  )
-  return peints.filter((x): x is StickerPeint => x !== null)
 }
 
 /**

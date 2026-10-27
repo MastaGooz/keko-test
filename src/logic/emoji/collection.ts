@@ -40,107 +40,17 @@ export interface Possession {
    * d'avant (`nouvelle: true`) relit toutes ses versions nouvelles.
    */
   nouvelles: readonly Variante[]
-  /**
-   * LES STICKERS COLLÉS SUR CETTE CARTE, par version. Keko : « on pourrait
-   * permettre de coller des stickers sur les cartes ? … +1 par sticker, sans
-   * limite par carte ». *Collés sur la PLACE, pas sur l'exemplaire* : la
-   * collection compte ses exemplaires, elle ne les distingue pas ; toutes les
-   * 🐉 holo portent les mêmes stickers. Une version qu'on perd perd ses
-   * stickers avec elle (`detruire`). Absent d'une collection d'avant : rien.
-   */
-  colles?: Readonly<Partial<Record<Variante, readonly StickerColle[]>>>
-}
-
-/**
- * Un sticker collé : l'emoji d'où il vient et sa version — c'est ce qui le
- * dessine — et SA PLACE, posée au doigt (Keko : « j'aurais bien aimé placer
- * manuellement le sticker ») : `x`, `y` en parts de la fenêtre d'art (0 à 1),
- * `a` son penchant en radians. Sans place (un sticker d'avant), le peintre
- * lui en donne une fixe.
- */
-export interface StickerColle {
-  readonly id: string
-  readonly v: Variante
-  readonly x?: number
-  readonly y?: number
-  readonly a?: number
-}
-
-/** La place d'un sticker, relue sans confiance : des nombres finis, bornés ; sinon rien. */
-function placeDuSticker(o: Record<string, unknown>): Pick<StickerColle, 'x' | 'y' | 'a'> {
-  const x = typeof o.x === 'number' && Number.isFinite(o.x) ? Math.min(1, Math.max(0, o.x)) : undefined
-  const y = typeof o.y === 'number' && Number.isFinite(o.y) ? Math.min(1, Math.max(0, o.y)) : undefined
-  const a = typeof o.a === 'number' && Number.isFinite(o.a) ? Math.min(Math.PI, Math.max(-Math.PI, o.a)) : 0
-  return x === undefined || y === undefined ? {} : { x, y, a }
-}
-
-/** Combien de stickers sont collés sur cette version de la carte. */
-export function nombreDeColles(p: Possession | null | undefined, v: Variante): number {
-  return p?.colles?.[v]?.length ?? 0
-}
-
-/**
- * COLLE UN STICKER DE L'ALBUM SUR UNE VERSION D'UNE CARTE. Il faut posséder
- * la version, et avoir le sticker : il quitte l'album (une version du sticker
- * à la fois, comme `detruire` l'y a mis). Sinon la collection ne bouge pas.
- * Sans limite par carte (Keko).
- */
-export function coller(col: Collection, cible: { id: string; v: Variante }, sticker: StickerColle): Collection {
-  const p = col.cartes[cible.id]
-  const s = col.stickers[sticker.id]
-  if (p === undefined || compteDe(p, cible.v) <= 0 || s === undefined || compteDe(s, sticker.v) <= 0) return col
-  const ex = exemplaireDe(sticker.v)
-  const n = s.n - 1
-  const stickers: Record<string, Stickers> = { ...col.stickers }
-  if (n <= 0) delete stickers[sticker.id]
-  else
-    stickers[sticker.id] = {
-      ...s,
-      n,
-      holo: s.holo - (ex.holo ? 1 : 0),
-      anime: s.anime - (ex.anime ? 1 : 0),
-      ha: s.ha - (ex.holo && ex.anime ? 1 : 0),
-    }
-  const colles = { ...p.colles, [cible.v]: [...(p.colles?.[cible.v] ?? []), { id: sticker.id, v: sticker.v, ...placeDuSticker(sticker as unknown as Record<string, unknown>) }] }
-  return { ...col, cartes: { ...col.cartes, [cible.id]: { ...p, colles } }, stickers }
-}
-
-/**
- * LES STICKERS D'UN EMOJI — ce qu'on a gagné en détruisant ses cartes. Keko :
- * « l'option de la détruire pour gagner son sticker ». *Un sticker garde le
- * bonus de la carte d'où il vient* : une holo donne un sticker holo, une animée
- * un sticker animé.
- */
-export interface Stickers {
-  n: number
-  holo: number
-  anime: number
-  /**
-   * HOLO ET ANIMÉS À LA FOIS — comme `Possession.ha`. Keko : « dans les
-   * stickers, faut faire des slots différents pour les versions normale /
-   * holo / animé / animé holo (comme pour les cartes) ». Absent d'un album
-   * d'avant : zéro, ou ce que les comptes imposent (voir `lireCollection`).
-   */
-  ha: number
-  /** Quand le dernier est arrivé : l'album se trie par là. */
-  dernier: number
-  /**
-   * Pas encore vu dans l'album — la bulle « Nouveau » et la pastille du bouton
-   * « Stickers », comme les cartes (Keko : « ajouter les bulles nouveau sur les
-   * stickers comme les cartes »). Absent d'un album d'avant : faux.
-   */
-  nouveau: boolean
 }
 
 /**
  * LES QUATRE VERSIONS D'UNE CARTE. Keko : « on fait des emplacements différents
  * dans la collection pour holo / normal / animé / holo animé ». *Chacune a sa
- * vignette, son compte, et c'est elle qu'on ouvre et qu'on décolle.*
+ * vignette, son compte, et c'est elle qu'on ouvre.*
  */
 export type Variante = 'simple' | 'holo' | 'anime' | 'holoAnime'
 export const VARIANTES: readonly Variante[] = ['simple', 'holo', 'anime', 'holoAnime']
 
-/** Combien d'exemplaires d'une version on possède — d'une carte (`Possession`) ou d'un sticker (`Stickers`). */
+/** Combien d'exemplaires d'une version on possède. */
 export function compteDe(p: { n: number; holo: number; anime: number; ha: number }, v: Variante): number {
   if (v === 'holoAnime') return p.ha
   if (v === 'holo') return p.holo - p.ha
@@ -156,7 +66,7 @@ export function exemplaireDe(v: Variante): Exemplaire {
   return { holo: v === 'holo' || v === 'holoAnime', anime: v === 'anime' || v === 'holoAnime' }
 }
 
-/** UN EXEMPLAIRE PRÉCIS : celui qu'on détruit porte ses bonus avec lui. */
+/** UN EXEMPLAIRE PRÉCIS : celui qui part à la fusion emporte ses bonus. */
 export interface Exemplaire {
   holo: boolean
   anime: boolean
@@ -168,8 +78,6 @@ export interface Collection {
   readonly arrivees: number
   readonly paquets: number
   readonly cartes: Readonly<Record<string, Possession>>
-  /** L'album : ajouté après coup, donc absent d'une collection d'avant (voir `lireCollection`). */
-  readonly stickers: Readonly<Record<string, Stickers>>
   /**
    * LES LIKES : LA MONNAIE DU JEU. Keko : « on peut ajouter une monnaie au
    * jeu ? Des Likes (symbole de like avec un pouce dans une bulle) ». *Pour
@@ -188,80 +96,74 @@ export interface Collection {
   readonly sansEpique: number
   readonly sansLegendaire: number
   /**
-   * LE NIVEAU DE CHAQUE PERSONNAGE, gagné dans l'album (voir `ameliorer`).
-   * Absent : niveau 1, rien de posé. Absent d'une collection d'avant : vide.
+   * LE NIVEAU DE CHAQUE PERSONNAGE, gagné en fusionnant ses exemplaires (voir
+   * `fusionner`). Absent : niveau 1. Absent d'une collection d'avant : vide.
    */
-  readonly niveaux: Readonly<Record<string, Niveau>>
+  readonly niveaux: Readonly<Record<string, number>>
 }
 
 /**
- * LE NIVEAU D'UN PERSONNAGE. Keko : « la carte doit avoir un niveau (amélioré
- * via l'album sticker) » — **au personnage, toutes ses versions ensemble**,
- * **cinq niveaux**, et « on colle des stickers du personnage dans l'album,
- * chaque niveau demande un nombre de stickers plus élevé ». *Il vit hors de la
- * possession* : une carte détruite jusqu'à la dernière garde son niveau, que
- * l'album a payé. `poses` : les stickers déjà collés vers le niveau suivant.
+ * LE NIVEAU D'UN PERSONNAGE. Keko : « 5 niveaux à coût progressif où le
+ * niveau indique le nombre de cartes à fusionner : pour passer niveau 2 il
+ * faut deux exemplaires, et niveau 5 il en faut 5 » — **au personnage, toutes
+ * ses versions ensemble**, et *la carte gardée compte* : on fusionne deux
+ * exemplaires, il en reste un, au niveau 2. Dix doublons du niveau 1 au 5.
+ * Il vit hors de la possession, comme ce qu'il a coûté.
  */
-export interface Niveau {
-  readonly niveau: number
-  readonly poses: number
+export const NIVEAUX = { max: 5 } as const
+
+export function niveauDe(col: Collection, id: string): number {
+  return col.niveaux[id] ?? 1
+}
+
+/** Les exemplaires à fusionner pour quitter ce niveau : le niveau suivant ; `null` au dernier. */
+export function aFusionnerPour(niveau: number): number | null {
+  return niveau < NIVEAUX.max ? niveau + 1 : null
 }
 
 /**
- * Cinq niveaux (Keko) ; `couts[i]` : les stickers à coller pour passer du
- * niveau i + 1 au niveau i + 2 — 2, 3, 4, 5, quatorze en tout. Ces chiffres
- * sont de moi, à rejuger.
+ * L'EXEMPLAIRE QUE LA FUSION EMPORTE : **le simple d'abord**, puis un holo,
+ * puis un animé, le holo animé en dernier — Keko : « un holo fusionné rend la
+ * carte holo ? », oui, *la meilleure reste* : on sacrifie toujours le moins
+ * beau, donc la carte gardée est la plus belle des fusionnées. Les comptes ne
+ * disent pas si un même exemplaire est holo ET animé ; on les suppose séparés,
+ * ce qui est le cas de presque tous.
  */
-export const NIVEAUX = { max: 5, couts: [2, 3, 4, 5] } as const
-
-export function niveauDe(col: Collection, id: string): Niveau {
-  return col.niveaux[id] ?? { niveau: 1, poses: 0 }
+export function exemplaireAFusionner(p: Possession): Exemplaire {
+  for (const v of VARIANTES) if (compteDe(p, v) > 0) return exemplaireDe(v)
+  return { holo: false, anime: false }
 }
 
-/** Les stickers qu'il faut pour quitter ce niveau ; `null` au dernier. */
-export function coutDuNiveau(niveau: number): number | null {
-  return NIVEAUX.couts[niveau - 1] ?? null
+/** La possession moins un exemplaire ; `null` quand c'était le dernier. */
+function sansUnExemplaire(p: Possession, ex: Exemplaire): Possession | null {
+  const n = p.n - 1
+  if (n <= 0) return null
+  const holo = Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0)))
+  const anime = Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0)))
+  const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
+  const reste = { n, holo, anime, ha }
+  // Une version partie n'est plus à voir.
+  return { ...p, ...reste, nouvelles: p.nouvelles.filter((v) => compteDe(reste, v) > 0) }
 }
 
 /**
- * LES STICKERS DÉJÀ COLLÉS DANS L'ALBUM pour ce personnage, tous niveaux
- * confondus : ceux des niveaux gagnés plus la jauge. *C'est ce que la case de
- * l'album montre* — un emplacement rempli par sticker posé.
+ * FUSIONNE LES EXEMPLAIRES D'UN PERSONNAGE vers son niveau suivant : il en
+ * faut autant que ce niveau, tous partent sauf un (`exemplaireAFusionner`
+ * choisit lesquels). Pas assez d'exemplaires, ou au dernier niveau : la
+ * collection ne bouge pas.
  */
-export function stickersPoses(n: Niveau): number {
-  return NIVEAUX.couts.slice(0, n.niveau - 1).reduce((t, c) => t + c, 0) + n.poses
-}
-
-/**
- * COLLE UN STICKER DU PERSONNAGE DANS L'ALBUM, vers son niveau suivant : il
- * quitte l'album (une version à la fois, comme `coller`), et quand assez sont
- * posés, le niveau monte et la jauge repart de zéro. Sans le sticker, ou au
- * dernier niveau : la collection ne bouge pas.
- */
-export function ameliorer(col: Collection, id: string, v: Variante): Collection {
-  const s = col.stickers[id]
+export function fusionner(col: Collection, id: string): Collection {
   const actuel = niveauDe(col, id)
-  const cout = coutDuNiveau(actuel.niveau)
-  if (s === undefined || compteDe(s, v) <= 0 || cout === null) return col
-  const ex = exemplaireDe(v)
-  const n = s.n - 1
-  const stickers: Record<string, Stickers> = { ...col.stickers }
-  if (n <= 0) delete stickers[id]
-  else
-    stickers[id] = {
-      ...s,
-      n,
-      holo: s.holo - (ex.holo ? 1 : 0),
-      anime: s.anime - (ex.anime ? 1 : 0),
-      ha: s.ha - (ex.holo && ex.anime ? 1 : 0),
-    }
-  const poses = actuel.poses + 1
-  const suivant = poses >= cout ? { niveau: actuel.niveau + 1, poses: 0 } : { niveau: actuel.niveau, poses }
-  return { ...col, stickers, niveaux: { ...col.niveaux, [id]: suivant } }
+  const besoin = aFusionnerPour(actuel)
+  let p: Possession | null = col.cartes[id] ?? null
+  if (p === null || besoin === null || p.n < besoin) return col
+  for (let i = 1; i < besoin && p !== null; i++) p = sansUnExemplaire(p, exemplaireAFusionner(p))
+  if (p === null) return col
+  return { ...col, cartes: { ...col.cartes, [id]: p }, niveaux: { ...col.niveaux, [id]: actuel + 1 } }
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, sansEpique: 0, sansLegendaire: 0, niveaux: {} }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, likes: 0, sansEpique: 0, sansLegendaire: 0, niveaux: {} }
 }
 
 /** Pose le solde de Likes — borné à zéro, arrondi à l'entier. Rend la même collection si rien ne change. */
@@ -328,65 +230,6 @@ export function ajouterPaquet(
 }
 
 /**
- * L'EXEMPLAIRE QU'ON DÉTRUIT DEPUIS LA COLLECTION : **le simple d'abord**, puis
- * un holo, puis un animé. *On ne brûle pas le plus beau quand un ordinaire
- * fait l'affaire.* Les comptes ne disent pas si un même exemplaire est holo ET
- * animé ; on les suppose séparés, ce qui est le cas de presque tous.
- */
-export function exemplaireADetruire(p: Possession): Exemplaire {
-  for (const v of VARIANTES) if (compteDe(p, v) > 0) return exemplaireDe(v)
-  return { holo: false, anime: false }
-}
-
-/**
- * DÉTRUIT UN EXEMPLAIRE ET GAGNE SON STICKER. *Même le dernier* (Keko : « toutes,
- * même la dernière ») : la carte quitte alors la collection, et le sticker,
- * lui, reste dans l'album.
- */
-export function detruire(col: Collection, id: string, ex: Exemplaire, quand: number): Collection {
-  const p = col.cartes[id]
-  if (p === undefined) return col
-  const cartes: Record<string, Possession> = { ...col.cartes }
-  const n = p.n - 1
-  if (n <= 0) delete cartes[id]
-  else {
-    const holo = Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0)))
-    const anime = Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0)))
-    const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
-    // Une version partie n'est plus à voir — et ses stickers collés partent avec elle.
-    const reste = { n, holo, anime, ha }
-    const colles = Object.fromEntries(Object.entries(p.colles ?? {}).filter(([v]) => compteDe(reste, v as Variante) > 0))
-    const { colles: _parties, ...sansColles } = p
-    cartes[id] = { ...sansColles, ...reste, nouvelles: p.nouvelles.filter((v) => compteDe(reste, v) > 0), ...(Object.keys(colles).length > 0 ? { colles } : {}) }
-  }
-  const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, ha: 0, dernier: quand, nouveau: false }
-  // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
-  // fabrique pas un holo.
-  const holo = ex.holo && p.holo > 0
-  const anime = ex.anime && p.anime > 0
-  // UN STICKER GAGNÉ EST NOUVEAU, même un doublon : c'est un exemplaire qu'on
-  // n'avait pas, comme le holo de plus d'une carte connue.
-  const stickers = {
-    ...col.stickers,
-    [id]: {
-      n: s.n + 1,
-      holo: s.holo + (holo ? 1 : 0),
-      anime: s.anime + (anime ? 1 : 0),
-      ha: s.ha + (holo && anime ? 1 : 0),
-      dernier: quand,
-      nouveau: true,
-    },
-  }
-  return { ...col, cartes, stickers }
-}
-
-export function nombreDeStickers(col: Collection): number {
-  let n = 0
-  for (const s of Object.values(col.stickers)) n += s.n
-  return n
-}
-
-/**
  * DÉBLOQUE DES CARTES SANS PAQUET — le banc `&debloquer`. Keko : « tu peux me
  * débloquer la moitié de la collection ? » Un exemplaire simple de chacune,
  * **sans « Nouveau »** (neuf cents pastilles ne diraient rien) et sans compter
@@ -404,27 +247,10 @@ export function debloquer(col: Collection, ids: readonly string[], quand: number
 }
 
 /**
- * ET LES STICKERS — `&debloquer=tout`. Keko : « tu peux me redonner la totalité
- * des cartes et des stickers ? (je suis sur PC, j'ai plus la collection) ». Un
- * sticker simple de chaque emoji qu'on n'a pas encore dans l'album ; ceux
- * qu'on a ne bougent pas.
- */
-export function debloquerStickers(col: Collection, ids: readonly string[], quand: number): Collection {
-  const stickers: Record<string, Stickers> = { ...col.stickers }
-  let i = 0
-  for (const id of ids) {
-    if (stickers[id] !== undefined) continue
-    i += 1
-    stickers[id] = { n: 1, holo: 0, anime: 0, ha: 0, dernier: quand - i, nouveau: false }
-  }
-  return { ...col, stickers }
-}
-
-/**
- * RETIRE DES CARTES SANS STICKER — le banc `&retirer`, le miroir de
+ * RETIRE DES CARTES — le banc `&retirer`, le miroir de
  * `debloquer`. Keko : « tu peux supprimer la moitié de ma collection ? » Les
- * emoji nommés quittent la collection avec tous leurs exemplaires ; l'album,
- * les paquets et le compte d'arrivées ne bougent pas.
+ * emoji nommés quittent la collection avec tous leurs exemplaires ; les
+ * niveaux, les paquets et le compte d'arrivées ne bougent pas.
  */
 export function retirer(col: Collection, ids: readonly string[]): Collection {
   const cartes: Record<string, Possession> = { ...col.cartes }
@@ -433,20 +259,18 @@ export function retirer(col: Collection, ids: readonly string[]): Collection {
 }
 
 /**
- * OUBLIE UN EMOJI : ses cartes ET ses stickers quittent la collection — le
- * banc `&oublier=<id>`, pour effacer d'un appareil ce qu'un test y a laissé.
- * Keko, après le gobelin : « tu peux supprimer le goblin également des
- * collections cartes / stickers ? ». Rien d'autre ne bouge ; un emoji absent
- * rend la collection telle quelle. Les decks suivent d'eux-mêmes : ils ne
- * gardent que les exemplaires possédés.
+ * OUBLIE UN EMOJI : ses cartes ET son niveau quittent la collection — le banc
+ * `&oublier=<id>`, pour effacer d'un appareil ce qu'un test y a laissé. Rien
+ * d'autre ne bouge ; un emoji absent rend la collection telle quelle. Les
+ * decks suivent d'eux-mêmes : ils ne gardent que les exemplaires possédés.
  */
 export function oublier(col: Collection, id: string): Collection {
-  if (col.cartes[id] === undefined && col.stickers[id] === undefined) return col
+  if (col.cartes[id] === undefined && col.niveaux[id] === undefined) return col
   const cartes: Record<string, Possession> = { ...col.cartes }
-  const stickers: Record<string, Stickers> = { ...col.stickers }
+  const niveaux: Record<string, number> = { ...col.niveaux }
   delete cartes[id]
-  delete stickers[id]
-  return { ...col, cartes, stickers }
+  delete niveaux[id]
+  return { ...col, cartes, niveaux }
 }
 
 /** Tout est vu : la pastille s'éteint. */
@@ -461,20 +285,6 @@ export function toutVu(col: Collection): Collection {
 export function nombreDeNouvelles(col: Collection): number {
   let n = 0
   for (const p of Object.values(col.cartes)) n += p.nouvelles.length
-  return n
-}
-
-/** L'album est vu : la pastille de « Stickers » s'éteint (le pendant de `toutVu`). */
-export function stickersVus(col: Collection): Collection {
-  if (!Object.values(col.stickers).some((s) => s.nouveau)) return col
-  const stickers: Record<string, Stickers> = {}
-  for (const [id, s] of Object.entries(col.stickers)) stickers[id] = s.nouveau ? { ...s, nouveau: false } : s
-  return { ...col, stickers }
-}
-
-export function nombreDeStickersNouveaux(col: Collection): number {
-  let n = 0
-  for (const s of Object.values(col.stickers)) if (s.nouveau) n += 1
   return n
 }
 
@@ -520,58 +330,25 @@ export function lireCollection(brut: unknown): Collection {
     // toutes nouvelles — c'est ce qu'elle montrait.
     const brutes: unknown[] = Array.isArray(p.nouvelles) ? p.nouvelles : p.nouvelle === true ? [...VARIANTES] : []
     const nouvelles = VARIANTES.filter((v) => brutes.includes(v) && compteDe(comptes, v) > 0)
-    // LES STICKERS COLLÉS, par version possédée seulement, chacun un emoji et une version valides.
-    const colles: Partial<Record<Variante, StickerColle[]>> = {}
-    const brutsColles = typeof p.colles === 'object' && p.colles !== null ? (p.colles as Record<string, unknown>) : {}
-    for (const v of VARIANTES) {
-      const liste = brutsColles[v]
-      if (!Array.isArray(liste) || compteDe(comptes, v) <= 0) continue
-      const propres = liste.flatMap((c: unknown): StickerColle[] => {
-        if (typeof c !== 'object' || c === null) return []
-        const o = c as Record<string, unknown>
-        return typeof o.id === 'string' && typeof o.v === 'string' && (VARIANTES as readonly string[]).includes(o.v) ? [{ id: o.id, v: o.v as Variante, ...placeDuSticker(o) }] : []
-      })
-      if (propres.length > 0) colles[v] = propres
-    }
-    cartes[id] = { ...comptes, premiere, ordre, nouvelles, ...(Object.keys(colles).length > 0 ? { colles } : {}) }
+    cartes[id] = { ...comptes, premiere, ordre, nouvelles }
     plusGrandOrdre = Math.max(plusGrandOrdre, ordre)
   }
-  // L'ALBUM, MÊME RÈGLE : un sticker mal formé est écarté, pas l'album.
-  const stickers: Record<string, Stickers> = {}
-  const brutStickers = typeof o.stickers === 'object' && o.stickers !== null ? o.stickers : {}
-  for (const [id, v] of Object.entries(brutStickers as Record<string, unknown>)) {
-    if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
-    const s = v as Record<string, unknown>
-    const n = entier(s.n, 1)
-    const holo = entier(s.holo)
-    const anime = entier(s.anime)
-    const dernier = entier(s.dernier)
-    if (n === null || holo === null || anime === null || dernier === null) continue
-    const h = Math.min(holo, n)
-    const a = Math.min(anime, n)
-    // LES DEUX À LA FOIS, comme pour les cartes : absent d'avant, jamais plus
-    // que l'un ou l'autre, au moins ce que les comptes imposent.
-    const ha = Math.min(h, a, Math.max(entier(s.ha) ?? 0, h + a - n))
-    stickers[id] = { n, holo: h, anime: a, ha, dernier, nouveau: s.nouveau === true }
-  }
-  // LES NIVEAUX : entre 1 et le dernier, une jauge sous le coût du niveau ; le
-  // niveau 1 sans rien de posé ne s'écrit pas.
-  const niveaux: Record<string, Niveau> = {}
+  // LES NIVEAUX : entre 2 et le dernier (le niveau 1 ne s'écrit pas). Une
+  // collection du temps de l'album les gardait en { niveau, poses } : on en
+  // relit le niveau, la jauge de stickers est partie avec eux.
+  const niveaux: Record<string, number> = {}
   const brutNiveaux = typeof o.niveaux === 'object' && o.niveaux !== null ? o.niveaux : {}
   for (const [id, v] of Object.entries(brutNiveaux as Record<string, unknown>)) {
-    if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
-    const x = v as Record<string, unknown>
-    const niveau = Math.min(NIVEAUX.max, entier(x.niveau, 1) ?? 1)
-    const cout = coutDuNiveau(niveau)
-    const poses = cout === null ? 0 : Math.min(cout - 1, entier(x.poses) ?? 0)
-    if (niveau > 1 || poses > 0) niveaux[id] = { niveau, poses }
+    if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(id)) continue
+    const brut = typeof v === 'object' && v !== null ? (v as Record<string, unknown>).niveau : v
+    const niveau = Math.min(NIVEAUX.max, entier(brut, 1) ?? 1)
+    if (niveau > 1) niveaux[id] = niveau
   }
   return {
     version: 1,
     arrivees: Math.max(entier(o.arrivees) ?? 0, plusGrandOrdre),
     paquets: entier(o.paquets) ?? 0,
     cartes,
-    stickers,
     likes: entier(o.likes) ?? 0,
     sansEpique: entier(o.sansEpique) ?? 0,
     sansLegendaire: entier(o.sansLegendaire) ?? 0,
