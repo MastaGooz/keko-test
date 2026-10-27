@@ -1997,13 +1997,15 @@
   opacity: 0.4;
 }
 
+/* LA COCHE ET LE SYMBOLE « PRIS » SONT EN HAUT À DROITE (Keko : « ils masquent
+   la puissance », l'écu du haut gauche). */
 /* UN EXEMPLAIRE PRIS PAR UN AUTRE DECK : marqué d'un symbole (estompé si le deck est plein), la
    coche du deck qu'on compose en négatif (Keko : « un symbole plutôt que le
    nom ») ; le nom du deck reste dans l'infobulle. */
 .vignette-prise {
   position: absolute;
   top: -0.4rem;
-  left: -0.3rem;
+  right: -0.3rem;
   z-index: 1;
   box-sizing: border-box;
   width: 1.5rem;
@@ -2026,7 +2028,7 @@
 .vignette-coche {
   position: absolute;
   top: -0.4rem;
-  left: -0.3rem;
+  right: -0.3rem;
   z-index: 1;
   width: 1.5rem;
   height: 1.5rem;

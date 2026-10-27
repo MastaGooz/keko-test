@@ -7083,3 +7083,5 @@ Keko : « il faudrait un effet beaucoup plus juicy quand on level up une carte :
 - la jauge et « k / n exemplaires » lisaient la collection, fusionnée au clic : `exemplairesVus` attend l'impact, comme `niveauVu`. Mesuré au ralenti : pendant le vol, « Niveau 1 · 2 / 2 » ; après l'impact, « Niveau 2 ★ » et le compte suivant.
 
 **Les étoiles sous la carte sans cerne** (27/10, Keko : « ne mets pas d'outline blanc sur les étoiles sous la carte, uniquement celles dedans ») : `.niveau-etoiles` perd son `-webkit-text-stroke` ; seules les étoiles peintes (et celle qui vole à la fusion) gardent leur cerne blanc.
+
+**La coche et « pris » en haut à droite** (27/10, Keko : « mettre la pastille d'attribution en haut à droite des cartes, car elle masque la puissance ») : `.vignette-coche` et `.vignette-prise` passent du coin haut gauche (l'écu de puissance) au coin haut droit. La pastille « Nouveau », qui y vit, ne se montre pas en mode deck : elles ne se croisent pas.
