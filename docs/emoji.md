@@ -7017,3 +7017,5 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 
 **Le nom et « Supprimer » montent au-dessus de la collection** (27/10, Keko : « plutôt que renommer le deck en haut de la colonne, autant le faire au-dessus de la collection (pareil pour supprimer) car on n'a plus les autres decks dans cet écran ») : le titre de l'éditeur est le nom du deck, le crayon à sa gauche le change en champ ; « ‹ Mes decks » à gauche et « Supprimer » (d'une seconde tape, « Sûr ? ») en face, sur la même ligne ; la tête de la colonne ne dit plus que « Cartes 30/30 ».
+
+**Le crayon et la corbeille** (27/10, Keko : « n'écris pas la rareté en texte dans la colonne du deck, la couleur le dit déjà ; ne mets pas le bouton edit à gauche du nom mais à gauche du bouton supprimer, puis remplace le bouton supprimer par un symbole ») : en face de « ‹ Mes decks », deux ronds d'or, le crayon puis la corbeille (armée, elle passe au rouge ; la seconde tape supprime) ; les lignes de la colonne ne disent plus que le nom, et « holo » / « animée » quand l'exemplaire l'est.

@@ -1144,38 +1144,55 @@ export function PageCollection({
       <div className="collection-defile">
         <header className="collection-tete">
           {/* L'ÉDITEUR D'UN DECK, SANS ONGLETS (Keko : on y entre par son étui) :
-              le retour aux étuis et, en face, « Supprimer » ; le nom du deck en
-              titre, qu'on renomme ici — Keko : « on n'a plus les autres decks
-              dans cet écran », la tête de la colonne n'a plus à le porter. */}
+              le retour aux étuis et, en face, le crayon puis la corbeille ; le
+              nom du deck en titre, qu'on renomme ici — Keko : « on n'a plus les
+              autres decks dans cet écran », la tête de la colonne n'a plus à le porter. */}
           {deck !== undefined && (
             <div className="deck-entete">
               <button type="button" className="deck-retour" onClick={deck.onRetour}>
                 ‹ Mes decks
               </button>
-              {/* SUPPRIMER LE DECK d'une seconde tape ; jamais le dernier. */}
-              {deck.decks.length > 1 && (
-                <button
-                  type="button"
-                  className={`deck-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
-                  onClick={() => {
-                    if (!sur) setSur(true)
-                    else {
-                      setSur(false)
-                      deck.onSupprimer()
-                    }
-                  }}
-                >
-                  {sur ? 'Sûr ?' : 'Supprimer'}
+              <div className="deck-entete-actions">
+                {/* LE CRAYON À GAUCHE DE LA CORBEILLE (Keko) : le titre devient un champ. */}
+                <button type="button" className="deck-icone" aria-label="Renommer le deck" data-bulle="Renommer" onClick={() => setRenomme(true)}>
+                  <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 20h4L19 9l-4-4L4 16v4z" />
+                    <path d="M13.5 6.5l4 4" />
+                  </svg>
                 </button>
-              )}
+                {/* SUPPRIMER LE DECK, UNE CORBEILLE (Keko), d'une seconde tape : la
+                    première la passe au rouge ; jamais le dernier. */}
+                {deck.decks.length > 1 && (
+                  <button
+                    type="button"
+                    className={`deck-icone deck-icone-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
+                    aria-label={sur ? 'Confirmer la suppression du deck' : 'Supprimer le deck'}
+                    data-bulle={sur ? 'Sûr ? Supprimer' : 'Supprimer'}
+                    onClick={() => {
+                      if (!sur) setSur(true)
+                      else {
+                        setSur(false)
+                        deck.onSupprimer()
+                      }
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 7h16" />
+                      <path d="M9 7V4.5h6V7" />
+                      <path d="M6 7l1 13h10l1-13" />
+                      <path d="M10 11v5.5M14 11v5.5" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           )}
           {deck === undefined ? (
             <h1 className="collection-titre">{toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
           ) : (
             <div className="deck-titre">
-              {/* LE CRAYON À GAUCHE DU NOM : le nom devient un champ ; Entrée ou une
-                  tape ailleurs le garde, Échap l'abandonne, vide il redevient « Deck N ». */}
+              {/* LE NOM DEVIENT UN CHAMP sous le crayon ; Entrée ou une tape
+                  ailleurs le garde, Échap l'abandonne, vide il redevient « Deck N ». */}
               {renomme ? (
                 <input
                   className="collection-titre deck-titre-champ"
@@ -1200,12 +1217,7 @@ export function PageCollection({
                   }}
                 />
               ) : (
-                <>
-                  <button type="button" className="deck-titre-crayon" aria-label="Renommer le deck" onClick={() => setRenomme(true)}>
-                    ✎
-                  </button>
-                  <h1 className="collection-titre">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</h1>
-                </>
+                <h1 className="collection-titre">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</h1>
               )}
             </div>
           )}
@@ -1439,11 +1451,10 @@ export function PageCollection({
                   <img draggable={false} className="deck-ligne-image" src={`${import.meta.env.BASE_URL}${carte.image}?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" loading="lazy" />
                   <span className="deck-ligne-texte">
                     <span className="deck-ligne-nom">{enTitre(carte.nom)}</span>
-                    <span className="deck-ligne-rarete">
-                      {NOM_DE_LA_RARETE[carte.rarete]}
-                      {holo ? ' · holo' : ''}
-                      {anime ? ' · animée' : ''}
-                    </span>
+                    {/* LA RARETÉ NE S'ÉCRIT PAS (Keko) : la couleur du liseré la dit. Restent les bonus. */}
+                    {(holo || anime) && (
+                      <span className="deck-ligne-rarete">{[holo && 'holo', anime && 'animée'].filter(Boolean).join(' · ')}</span>
+                    )}
                   </span>
                 </button>
               )

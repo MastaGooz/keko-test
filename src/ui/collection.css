@@ -2803,21 +2803,53 @@ span.jouer-pile-dos {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
+  gap: 0.3rem;
   margin-bottom: 0.2rem;
 }
 
 .deck-entete .deck-retour {
+  min-width: 0;
   margin-bottom: 0;
+  padding: 0 0.7rem 0 0.5rem;
   white-space: nowrap;
 }
 
-.deck-entete .deck-supprimer {
-  margin-top: 0;
-  white-space: nowrap;
+.deck-entete-actions {
+  display: flex;
+  flex: none;
+  gap: 0.2rem;
 }
 
-/* LE NOM DU DECK EN TITRE, le crayon à sa gauche : une cible de doigt, sans fond. */
+/* LE CRAYON ET LA CORBEILLE : deux ronds de doigt, l'or du jeu ; la
+   corbeille armée passe au rouge (`.deck-supprimer-sur`). */
+.deck-icone {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 250, 240, 0.1);
+  color: #ffd27a;
+  cursor: pointer;
+}
+
+.deck-icone svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.deck-icone:hover {
+  background: rgba(255, 210, 122, 0.18);
+}
+
+.deck-icone.deck-supprimer-sur {
+  background: #ff4d5e;
+  color: #fff;
+}
+
+/* LE NOM DU DECK EN TITRE ; le crayon (en face) le change en champ. */
 .deck-titre {
   display: flex;
   align-items: center;
@@ -2828,24 +2860,6 @@ span.jouer-pile-dos {
 .deck-titre .collection-titre {
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-.deck-titre-crayon {
-  flex: none;
-  width: 2.6rem;
-  height: 2.6rem;
-  margin-left: -0.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #ffd27a;
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-.deck-titre-crayon:hover {
-  background: rgba(255, 210, 122, 0.15);
 }
 
 .deck-titre-champ {
