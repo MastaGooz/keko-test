@@ -2699,9 +2699,22 @@ span.jouer-pile-dos {
   border: 0;
   border-radius: 6% / 4.3%;
   background: #3b1544 center / 100% 100% no-repeat;
+  /* L'ÉPAISSEUR DU DECK, des tranches de cartes : violet, un filet d'or,
+     violet… (Keko : « augmenter un peu l'épaisseur et la dessiner en traits
+     violet et doré pour marquer les tranches »). Chaque ombre est une carte
+     de plus dessous ; la première est dessus. */
+  --tranches:
+    0 0.13rem 0 #5b2a6e,
+    0 0.19rem 0 #e0b048,
+    0 0.32rem 0 #4f2260,
+    0 0.38rem 0 #c9962e,
+    0 0.51rem 0 #451c55,
+    0 0.57rem 0 #b8860b,
+    0 0.72rem 0 #241029;
   box-shadow:
-    0 0.35rem 0 #241029,
-    0 0.6rem 1.2rem rgba(0, 0, 0, 0.45);
+    var(--tranches),
+    0 0.9rem 1.2rem rgba(0, 0, 0, 0.45);
+  margin-bottom: 0.6rem;
   color: #fffaf0;
   font: inherit;
   cursor: pointer;
@@ -2784,7 +2797,7 @@ span.jouer-pile-dos {
 
 .etui-joue {
   box-shadow:
-    0 0.35rem 0 #241029,
+    var(--tranches),
     0 0 1.4rem rgba(255, 198, 31, 0.55);
 }
 
