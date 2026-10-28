@@ -6650,7 +6650,7 @@ const DOS_TOUCHE = 7.2
  * tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon
  * est sous la carte.
  */
-export async function peindreDosEmoji(rayon: number, clous = true): Promise<HTMLCanvasElement> {
+export async function peindreDosEmoji(rayon: number, clous = true, couture = true): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
   canvas.height = HAUT
@@ -6683,7 +6683,7 @@ export async function peindreDosEmoji(rayon: number, clous = true): Promise<HTML
   )
   ctx.clip()
   peindreDecor(ctx, undefined, DOS_CUIR)
-  peindreCuir(ctx, LARGE, HAUT, U, false, marge / U + 3.5, LARGE * rayon)
+  peindreCuir(ctx, LARGE, HAUT, U, false, marge / U + 3.5, LARGE * rayon, couture)
 
   // LE HALO DU STICKER : de la lumière tombée sur le fond, qui le détache du
   // motif sans lui donner de bord. *Le flou est dans la matière*, la règle du

@@ -7034,6 +7034,8 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 **La corbeille demande confirmation dans une fenêtre** (28/10, Keko : « quand je clique sur la poubelle il faudrait un message de confirmation ») : la seconde tape sur la corbeille rouge ne se voyait pas comme une question. La tape ouvre le dialogue de « Prendre » (`.prendre`) : « Supprimer Horde ? », « Ses cartes restent dans votre collection. », Annuler / Supprimer en rouge (`.supprimer-oui`) ; une tape hors de la fenêtre annule. Mesuré : Annuler ferme sans rien toucher, Supprimer revient aux étuis avec un deck de moins.
 
+**Les étuis sans couture** (28/10, Keko : « enlève le contour en pointillé sur les decks pour voir ») : `peindreDosEmoji` prend `couture` (vrai par défaut), l'étui le passe à faux ; le dos des cartes et le sachet gardent la leur. *À l'essai.*
+
 **Le niveau dans les filtres** (27/10, Keko : « ce serait bien d'ajouter le niveau dans les filtres ») : une section « Niveau » sous « Rareté », cinq puces 1 à 5, plusieurs à la fois comme les raretés ; c'est le niveau du personnage (`niveauDuPersonnageDe`), toutes versions ensemble. Mesuré : trois personnages posés aux niveaux 3, 3 et 5 sur 118 → 1 : 115, 3 : 2, 5 : 1, 2 : 0.
 
 **Les puces du niveau en étoiles** (27/10, Keko : « il faudrait l'afficher en étoiles je pense ») : comme sur la carte, une étoile d'or par niveau gagné (★ … ★★★★) ; le niveau 1, qui n'en porte aucune, en étoile creuse ☆. Les cinq tiennent sur une ligne à 390 px.

@@ -44,11 +44,13 @@ function vedetteDe(d: Deck, parId: ReadonlyMap<string, CarteEmoji>, valeur: Vale
  * LE CUIR DE L'ÉTUI EST LE DOS DES CARTES, peint par le même peintre
  * (`peindreDosEmoji` : le cuir capitonné, le liseré d'or, les clous) — Keko :
  * « tu peux mettre vraiment la même texture et bordure de dos de carte sur
- * les decks ? ». Peint une fois par session, servi en image de fond.
+ * les decks ? ». Peint une fois par session, servi en image de fond. **Sans
+ * la couture** (Keko, 28/10 : « enlève le contour en pointillé sur les decks
+ * pour voir ») : le dos des cartes la garde.
  */
 let DOS: Promise<string | null> | null = null
 function imageDuDos(): Promise<string | null> {
-  DOS ??= peindreDosEmoji(RAYON_SIMPLE, false).then(
+  DOS ??= peindreDosEmoji(RAYON_SIMPLE, false, false).then(
     (toile) => new Promise<string | null>((resoudre) => toile.toBlob((b) => resoudre(b === null ? null : URL.createObjectURL(b)), 'image/webp', 0.9)),
     () => null,
   )
