@@ -610,9 +610,25 @@ export function Vignette({
         <span className="vignette-bas-droite">
           {fusionnable && (
             <span className="vignette-fusion" title="Fusion possible" aria-label="Fusion possible">
-              <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 19V6" />
-                <path d="M6 11.5 12 5.5l6 6" />
+              {/* UNE FLÈCHE D'OR PLEINE, sans pastille (Keko : « pas dans un cercle :
+                  une flèche brillante qui pulse ») ; un reflet clair sur son flanc gauche. */}
+              <svg viewBox="0 0 24 26" aria-hidden>
+                <defs>
+                  <linearGradient id="fleche-or" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#fff6c8" />
+                    <stop offset="0.45" stopColor="#ffd23f" />
+                    <stop offset="1" stopColor="#e08a0c" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M12 1.8 22.5 12.6h-6.2v10.8H7.7V12.6H1.5z"
+                  fill="url(#fleche-or)"
+                  stroke="#3a2416"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                  paintOrder="stroke"
+                />
+                <path d="M12 4.6 5.6 11.2M9.6 14v7" stroke="#fffbe8" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" fill="none" />
               </svg>
             </span>
           )}
