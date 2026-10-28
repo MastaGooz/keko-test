@@ -930,14 +930,15 @@ function CarteOuverte({
                 Fusionner <b>{enTitre(carte.nom)}</b> ?
               </p>
               <p className="prendre-detail">
-                Des exemplaires fusionnés sont dans {aConfirmer.length > 1 ? 'les decks' : 'le deck'}{' '}
+                {/* UN EXEMPLAIRE PAR DECK au plus (Keko) : le pluriel suit le nombre de decks. */}
+                {aConfirmer.length > 1 ? 'Des exemplaires fusionnés sont dans les decks' : 'Un exemplaire fusionné est dans le deck'}{' '}
                 {aConfirmer.map((n, i) => (
                   <span key={i}>
                     {i > 0 && (i === aConfirmer.length - 1 ? ' et ' : ', ')}
                     <b>{n}</b>
                   </span>
                 ))}{' '}
-                : ils en sortiront.
+                : {aConfirmer.length > 1 ? 'ils en sortiront' : 'il en sortira'}.
               </p>
               <div className="prendre-boutons">
                 <button type="button" className="prendre-annuler" onClick={() => setAConfirmer(null)}>
