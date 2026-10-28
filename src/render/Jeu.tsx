@@ -522,17 +522,33 @@ export function Jeu(): React.ReactElement {
     [changer, rareteDe],
   )
 
+  /**
+   * LE DECK QUI GARDE SES EXEMPLAIRES À LA FUSION : celui qu'on édite (Keko :
+   * « supprimer l'exemplaire en priorité d'un autre deck quand la fusion est
+   * faite depuis l'écran d'édition d'un deck ») ; ailleurs, l'ordre des decks.
+   */
+  const gardeALaFusion = page === 'deck' ? deckEdite : undefined
   /** FUSIONNER LES EXEMPLAIRES D'UN PERSONNAGE vers son niveau suivant : voir `fusionner`. */
-  const fusionnerPersonnage = useCallback((id: string) => changer((c) => fusionner(c, id)), [changer])
+  const fusionnerPersonnage = useCallback(
+    (id: string) => {
+      const apres = fusionner(collection, id)
+      if (apres === collection) return
+      changer((c) => fusionner(c, id))
+      // Les decks d'abord, dans l'ordre voulu : quand l'effet sur `compte`
+      // passera, ils tiendront déjà dans les comptes et il ne touchera à rien.
+      poserDecks((ds) => garderPossedeesPartout(ds, compteDesExemplaires(apres), Date.now(), gardeALaFusion))
+    },
+    [changer, poserDecks, collection, gardeALaFusion],
+  )
   /** Les noms des decks auxquels cette fusion retirerait des exemplaires (voir `decksQuiPerdent`). */
   const pertesALaFusion = useCallback(
     (id: string): string[] => {
       const apres = fusionner(collection, id)
       if (apres === collection) return []
-      const ds = garderPossedeesPartout(decks, compteDesExemplaires(apres), Date.now())
+      const ds = garderPossedeesPartout(decks, compteDesExemplaires(apres), Date.now(), gardeALaFusion)
       return decksQuiPerdent(decks, ds).map((i) => nomDuDeck(decks.liste[i], i))
     },
-    [collection, decks],
+    [collection, decks, gardeALaFusion],
   )
 
   /**

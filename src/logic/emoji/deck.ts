@@ -434,12 +434,19 @@ export function basculerDansDeck(ds: Decks, i: number, e: EntreeDeck, compte: Co
 /**
  * LES EXEMPLAIRES QU'ON N'A PLUS QUITTENT LES DECKS — et *jamais plus
  * d'exemplaires en jeu qu'on n'en possède* : deck par deck, dans l'ordre, ce
- * qui dépasse le compte sort du deck suivant.
+ * qui dépasse le compte sort du deck suivant. `prioritaire` passe en premier
+ * et garde donc les siens (Keko : une fusion faite depuis l'éditeur d'un deck
+ * retire l'exemplaire aux AUTRES decks d'abord).
  */
-export function garderPossedeesPartout(ds: Decks, compte: CompteDExemplaires, maintenant: number): Decks {
+export function garderPossedeesPartout(ds: Decks, compte: CompteDExemplaires, maintenant: number, prioritaire?: number): Decks {
   const pris = new Map<string, number>()
   let r = ds
-  for (let i = 0; i < ds.liste.length; i++) {
+  const ordre = ds.liste.map((_, i) => i)
+  if (prioritaire !== undefined && prioritaire >= 0 && prioritaire < ordre.length) {
+    ordre.splice(prioritaire, 1)
+    ordre.unshift(prioritaire)
+  }
+  for (const i of ordre) {
     r = modifierDeck(r, i, (d) =>
       garderPossedees(
         d,
