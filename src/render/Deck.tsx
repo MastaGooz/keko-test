@@ -466,15 +466,14 @@ function ChoixDuDeck({
               >
                 <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
                 <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
-                <span className={`lieu-choix-detail${!complet ? ' lieu-choix-incomplet' : ''}`}>
-                  {i === ici
-                    ? 'ici'
-                    : !complet
-                      ? `${d.cartes.length}/${DECK.taille}`
-                      : ailleurs !== undefined
-                        ? ailleurs.nom
-                        : 'libre'}
-                </span>
+                {/* SON LIEU EN IMAGE (Keko : « plutôt que du texte ») ; sans lieu, libre ou à compléter. */}
+                {i === ici || ailleurs !== undefined ? (
+                  <img className="lieu-choix-lieu" src={imageDuLieu(ailleurs ?? lieu)} alt={(ailleurs ?? lieu).nom} draggable={false} />
+                ) : (
+                  <span className={`lieu-choix-detail${!complet ? ' lieu-choix-incomplet' : ''}`}>
+                    {!complet ? `${d.cartes.length}/${DECK.taille}` : 'libre'}
+                  </span>
+                )}
               </button>
             )
           })}
