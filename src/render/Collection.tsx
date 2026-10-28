@@ -653,6 +653,7 @@ function CarteOuverte({
   variante,
   onFermer,
   onFusionner,
+  pertes,
 }: {
   carte: CarteEmoji
   /** `null` : ouverte depuis le catalogue sans la posséder — rien à fusionner. */
@@ -661,7 +662,13 @@ function CarteOuverte({
   onFermer: () => void
   /** Fusionne les exemplaires du personnage vers son niveau suivant : voir `fusionner`. */
   onFusionner: () => void
+  /** Les decks auxquels la fusion retirerait des exemplaires : elle se confirme alors. */
+  pertes: () => readonly string[]
 }): React.ReactElement {
+  // LA FUSION QUI VIDE UN DECK SE CONFIRME (Keko : « il faut un message de
+  // confirmation si des exemplaires sont retirés à des decks ») : les noms des
+  // decks touchés, tant que la fenêtre est ouverte.
+  const [aConfirmer, setAConfirmer] = useState<readonly string[] | null>(null)
   /**
    * LA CARTE N'APPARAÎT QU'UNE FOIS PEINTE. Keko : « quand je zoome une carte,
    * un carré gris apparaît avant la carte ». *Sans sa texture, la face n'a pas
@@ -826,6 +833,25 @@ function CarteOuverte({
     )
     return () => arret.abort()
   }, [])
+  function lancerLaFusion(): void {
+    // L'ÉTOILE PART : du haut droit, hors de l'écran, vers la place
+    // de l'étoile du niveau gagné (en fractions de la largeur de la
+    // carte depuis son coin haut gauche).
+    const vise = niveauVu + 1
+    const e = etoileDuNiveau(vise)
+    niveauApporte.current = vise
+    onFusionner()
+    setEnVol(true)
+    setFrappe({
+      id: impacts + 1 + Math.random(),
+      cible: [xCarte - taille / 2 + e.x * taille, yCarte + (taille * HAUT) / 2 - e.y * taille, Z_MAIN],
+      rayon: e.r * taille,
+      depart: [lVisible * 0.62, yCarte + taille * 0.2, Z_MAIN],
+      plafond: hVisible / 2,
+      taille,
+    })
+  }
+
   return (
     <div className={`carte-ouverte${aCote ? ' carte-ouverte-a-cote' : ''}`}>
       <Canvas
@@ -880,26 +906,58 @@ function CarteOuverte({
             fusions={impacts}
             occupe={enVol}
             onFusionner={() => {
-              // L'ÉTOILE PART : du haut droit, hors de l'écran, vers la place
-              // de l'étoile du niveau gagné (en fractions de la largeur de la
-              // carte depuis son coin haut gauche).
-              const vise = niveauVu + 1
-              const e = etoileDuNiveau(vise)
-              niveauApporte.current = vise
-              onFusionner()
-              setEnVol(true)
-              setFrappe({
-                id: impacts + 1 + Math.random(),
-                cible: [xCarte - taille / 2 + e.x * taille, yCarte + (taille * HAUT) / 2 - e.y * taille, Z_MAIN],
-                rayon: e.r * taille,
-                depart: [lVisible * 0.62, yCarte + taille * 0.2, Z_MAIN],
-                plafond: hVisible / 2,
-                taille,
-              })
+              const touches = pertes()
+              if (touches.length > 0) setAConfirmer(touches)
+              else lancerLaFusion()
             }}
           />
         )}
       </div>
+      {aConfirmer !== null &&
+        createPortal(
+          // Le portail ne coupe pas la remontée des évènements React : la carte
+          // ouverte, dessous dans l'arbre, ne doit pas les recevoir.
+          <div
+            className="prendre-voile"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              setAConfirmer(null)
+            }}
+          >
+            <div className="prendre" role="alertdialog" aria-modal="true" aria-labelledby="fusion-question" onClick={(e) => e.stopPropagation()}>
+              <p id="fusion-question" className="prendre-question">
+                Fusionner <b>{enTitre(carte.nom)}</b> ?
+              </p>
+              <p className="prendre-detail">
+                Des exemplaires fusionnés sont dans {aConfirmer.length > 1 ? 'les decks' : 'le deck'}{' '}
+                {aConfirmer.map((n, i) => (
+                  <span key={i}>
+                    {i > 0 && (i === aConfirmer.length - 1 ? ' et ' : ', ')}
+                    <b>{n}</b>
+                  </span>
+                ))}{' '}
+                : ils en sortiront.
+              </p>
+              <div className="prendre-boutons">
+                <button type="button" className="prendre-annuler" onClick={() => setAConfirmer(null)}>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className="collection-bouton prendre-oui"
+                  onClick={() => {
+                    setAConfirmer(null)
+                    lancerLaFusion()
+                  }}
+                >
+                  Fusionner
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
       <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
         ×
       </button>
@@ -1007,6 +1065,7 @@ export function PageCollection({
   toutes = false,
   onOuvrirUnPaquet,
   onFusionner,
+  pertesALaFusion,
   deck,
 }: {
   catalogue: readonly CarteEmoji[] | null
@@ -1021,6 +1080,8 @@ export function PageCollection({
   onOuvrirUnPaquet: () => void
   /** Fusionne les exemplaires d'un personnage vers son niveau suivant : voir `fusionner`. */
   onFusionner: (id: string) => void
+  /** Les decks auxquels fusionner ce personnage retirerait des exemplaires (voir `decksQuiPerdent`). */
+  pertesALaFusion: (id: string) => readonly string[]
   /** Le mode deck : voir `ChoixDuDeck`. */
   deck?: ChoixDuDeck
 }): React.ReactElement {
@@ -1706,6 +1767,7 @@ export function PageCollection({
             possession={laOuverte.p}
             variante={laOuverte.v}
             onFermer={() => setOuverte(null)}
+            pertes={() => pertesALaFusion(laOuverte.carte.id)}
             onFusionner={() => {
               const id = laOuverte.carte.id
               // LA VERSION QU'ON REGARDAIT A PU PARTIR À LA FUSION : on montre

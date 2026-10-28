@@ -457,6 +457,15 @@ export function garderPossedeesPartout(ds: Decks, compte: CompteDExemplaires, ma
   return r
 }
 
+/**
+ * LES DECKS QUI ONT PERDU DES CARTES entre deux états (les index) : la fusion
+ * le demande avant d'emporter des exemplaires (Keko : « il faut un message de
+ * confirmation si des exemplaires sont retirés à des decks »).
+ */
+export function decksQuiPerdent(avant: Decks, apres: Decks): number[] {
+  return avant.liste.flatMap((d, i) => ((apres.liste[i]?.cartes.length ?? 0) < d.cartes.length ? [i] : []))
+}
+
 export interface MainsJoueesDesDecks extends Omit<MainsJouees, 'deck'> {
   readonly decks: Decks
 }

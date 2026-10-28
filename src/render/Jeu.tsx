@@ -59,6 +59,7 @@ import {
   supprimerDeck,
   renommerDeck,
   nomDuDeck,
+  decksQuiPerdent,
   type CompteDExemplaires,
   type Decks,
   type EntreeDeck,
@@ -523,6 +524,16 @@ export function Jeu(): React.ReactElement {
 
   /** FUSIONNER LES EXEMPLAIRES D'UN PERSONNAGE vers son niveau suivant : voir `fusionner`. */
   const fusionnerPersonnage = useCallback((id: string) => changer((c) => fusionner(c, id)), [changer])
+  /** Les noms des decks auxquels cette fusion retirerait des exemplaires (voir `decksQuiPerdent`). */
+  const pertesALaFusion = useCallback(
+    (id: string): string[] => {
+      const apres = fusionner(collection, id)
+      if (apres === collection) return []
+      const ds = garderPossedeesPartout(decks, compteDesExemplaires(apres), Date.now())
+      return decksQuiPerdent(decks, ds).map((i) => nomDuDeck(decks.liste[i], i))
+    },
+    [collection, decks],
+  )
 
   /**
    * LE MENU « CARTES » : déroulé sous la pilule par une tape sur le bouton,
@@ -647,6 +658,7 @@ export function Jeu(): React.ReactElement {
           toutes={page === 'catalogue'}
           onOuvrirUnPaquet={() => aller('booster')}
           onFusionner={fusionnerPersonnage}
+          pertesALaFusion={pertesALaFusion}
           deck={
             page === 'deck'
               ? {

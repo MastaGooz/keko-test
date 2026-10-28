@@ -298,7 +298,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   d'or entre par le bord, en arc, et frappe la place exacte de l'étoile du
   nouveau niveau (`etoileDuNiveau`) — éclair, onde, gerbe d'étincelles ; À
   L'IMPACT la carte rebondit et se repeint (`niveauVu`), le titre éclate, le
-  son et la vibration partent. La collection est fusionnée au clic. **+1 de puissance par niveau**, l'écu dit la puissance totale ;
+  son et la vibration partent. La collection est fusionnée au clic ; **si la fusion retire des exemplaires à des decks, elle se confirme d'abord** (`pertesALaFusion`, `decksQuiPerdent`). **+1 de puissance par niveau**, l'écu dit la puissance totale ;
   sur la carte, **une étoile d'or cernée de blanc par niveau gagné**, à
   droite de l'écu, aucune au premier (`peindreNiveau`). Les cartes lisent le
   niveau par `declarerLesNiveaux` (posé par `Jeu.tsx`). Une collection du

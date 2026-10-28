@@ -13,6 +13,7 @@ import {
   deckQuiTient,
   deckVide,
   decksAJour,
+  decksQuiPerdent,
   decksVides,
   demarrer,
   disponibles,
@@ -163,6 +164,7 @@ const perdu = garderPossedeesPartout(bascule, (id, v) => (id === ids[2] ? 0 : de
 verifier('une carte perdue quitte tous les decks', perdu.liste.every((d) => d.cartes.length === DECK.taille - 1 && d.partie === null))
 const unSeul = garderPossedeesPartout(bascule, compte, T0)
 verifier('un seul exemplaire possédé : le second deck le perd, le premier le garde', unSeul.liste[0]!.cartes.length === DECK.taille && unSeul.liste[1]!.cartes.length === 0)
+verifier('la perte se lit deck par deck', decksQuiPerdent(bascule, unSeul).join() === '1' && decksQuiPerdent(bascule, perdu).join() === '0,1' && decksQuiPerdent(bascule, bascule).length === 0)
 verifier('modifierDeck hors de l’actif ne laisse pas de partie', modifierDeck(bascule, 1, (d) => ({ ...d, partie: { graine: 1, jouees: 0, depuis: 0 } })).liste[1]!.partie === null)
 const relus = lireDecks(JSON.parse(JSON.stringify(bascule)), deuxChacun, T0)
 verifier('les decks gardés se relisent', relus.actif === 0 && relus.liste.length === 2 && relus.liste[0]!.partie?.depuis === T0 + 500 && relus.liste[1]!.partie === null && relus.liste[1]!.cartes.length === DECK.taille)
