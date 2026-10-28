@@ -199,10 +199,6 @@ export function PageJouer({
               const manque = l.prix - lieux.or
               return (
                 <div key={l.id} className="lieu lieu-ferme">
-                  <div className="lieu-tete">
-                    <h2 className="lieu-nom">{l.nom}</h2>
-                    <span className="lieu-bonus">{texteDuBonus(l)}</span>
-                  </div>
                   <div className="lieu-scene">
                     <div className="lieu-gauche">
                       <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
@@ -211,6 +207,7 @@ export function PageJouer({
                       {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
                     </div>
                     <div className="lieu-droite">
+                      <h2 className="lieu-nom">{l.nom}</h2>
                       <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
                     </div>
                   </div>
@@ -223,14 +220,12 @@ export function PageJouer({
               <div key={l.id} className="lieu">
                 {/* TOUT LE LIEU S'OUVRE D'UNE TAPE ; le bouton du deck a la sienne. */}
                 <button type="button" className="lieu-voir" aria-label={`Voir ${l.nom}`} onClick={() => setVu(l.id)} />
-                <div className="lieu-tete">
-                  <h2 className="lieu-nom">{l.nom}</h2>
-                  <span className="lieu-bonus">{texteDuBonus(l)}</span>
-                </div>
-                {/* LE DECK À GAUCHE, LE LIEU À DROITE, SA JAUGE SOUS SON IMAGE (Keko). */}
+                {/* LE DECK À GAUCHE ; À DROITE LE NOM, L'IMAGE, LA JAUGE (Keko). Le
+                    bonus et le reste sont dans l'écran du lieu. */}
                 <div className="lieu-scene">
                   <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} />
                   <div className="lieu-droite">
+                    <h2 className="lieu-nom">{l.nom}</h2>
                     <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
                     <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
                   </div>
@@ -280,9 +275,10 @@ function JaugeDuLieu({
 }
 
 /**
- * LA PLACE DU DECK, à gauche du lieu (Keko : « le deck à gauche, l'image du
- * lieu à droite ») : son étui, son nom, son état et le bouton pour le changer
- * — ou la place vide, et « Poser un deck ».
+ * LA PLACE DU DECK, à gauche du lieu : L'ÉTUI SEUL, et c'est lui qu'on touche
+ * pour changer de deck (Keko : « uniquement l'image du deck, cliquable, pas
+ * besoin de “joue” ou de bouton ») — ou la place vide en pointillé. Un deck
+ * posé qui a perdu une carte le dit d'une pastille rouge : il ne joue plus.
  */
 function PlaceDuDeck({
   deck,
@@ -297,25 +293,29 @@ function PlaceDuDeck({
   valeur: ValeurDeCarte | null
   onChoisir: () => void
 }): React.ReactElement {
+  const vide = deck === undefined || i === null
   return (
-    <div className="lieu-gauche lieu-deck">
-      {deck === undefined || i === null ? (
+    <button
+      type="button"
+      className="lieu-gauche lieu-deck"
+      aria-label={vide ? 'Poser un deck' : `${nomDuDeck(deck, i)} — changer de deck`}
+      onClick={onChoisir}
+    >
+      {vide ? (
         <span className="lieu-deck-place" aria-hidden>
           +
         </span>
       ) : (
         <>
           <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
-          <span className="lieu-deck-nom">{nomDuDeck(deck, i)}</span>
-          <span className={`lieu-deck-etat${deckComplet(deck) ? '' : ' lieu-deck-incomplet'}`}>
-            {deckComplet(deck) ? 'joue' : `${deck.cartes.length}/${DECK.taille} · incomplet`}
-          </span>
+          {!deckComplet(deck) && (
+            <span className="lieu-deck-incomplet">
+              {deck.cartes.length}/{DECK.taille}
+            </span>
+          )}
         </>
       )}
-      <button type="button" className="lieu-choisir" onClick={onChoisir}>
-        {deck === undefined ? 'Poser un deck' : 'Changer'}
-      </button>
-    </div>
+    </button>
   )
 }
 

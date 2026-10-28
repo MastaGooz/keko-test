@@ -3614,65 +3614,39 @@ span.jouer-pile-dos {
   }
 }
 
+/* L'ÉTUI EST LE BOUTON qui change de deck ; il passe au-dessus de `lieu-voir`. */
 .lieu-deck {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  margin-top: 0.7rem;
-  pointer-events: none;
+  justify-self: center;
+  padding: 0.3rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
 }
 
-.lieu-deck-nom {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-width: 0;
-  font-weight: 800;
+.lieu-deck:active {
+  transform: scale(0.95);
 }
 
-.lieu-deck-vide {
-  opacity: 0.7;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.lieu-deck-etat {
+/* Le deck posé qui a perdu une carte : il ne joue plus. */
+.lieu-deck-incomplet {
+  position: absolute;
+  left: 50%;
+  bottom: -0.2rem;
+  transform: translateX(-50%);
   padding: 0.05rem 0.5rem;
   border-radius: 999px;
-  background: #ffc61f;
-  color: #3a2416;
-  font-size: 0.72rem;
-  white-space: nowrap;
-}
-
-.lieu-deck-incomplet {
   background: #ff4d5e;
   color: #fff;
-}
-
-.lieu-choisir {
-  flex: none;
-  min-height: 3rem;
-  padding: 0 1rem;
-  border: 0;
-  border-radius: 999px;
-  background: #fffaf0;
-  color: #3a2416;
-  font: inherit;
+  font-size: 0.72rem;
   font-weight: 800;
-  font-size: 0.9rem;
-  box-shadow: 0 0.25rem 0 #b8996a;
-  cursor: pointer;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.lieu-choisir:active {
-  transform: translateY(0.15rem);
-  box-shadow: 0 0.1rem 0 #b8996a;
+  white-space: nowrap;
 }
 
 /* FERMÉ : éteint, son prix en bouton. */
@@ -3689,7 +3663,9 @@ span.jouer-pile-dos {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  margin-top: 0.8rem;
+  margin-top: 0;
+  padding: 0 1.1rem;
+  white-space: nowrap;
 }
 
 .lieu-manque {
@@ -3761,23 +3737,23 @@ span.jouer-pile-dos {
   vertical-align: -0.17em;
 }
 
-.lieu-choisir {
-  padding: 0 0.85rem;
-}
-
-/* LA SCÈNE DU LIEU : le deck à gauche, l'image du lieu à droite et sa jauge
-   dessous (Keko). */
+/* LA SCÈNE DU LIEU : l'étui du deck à gauche ; à droite le nom, l'image (en
+   petit) et la jauge dessous (Keko). */
 .lieu-scene {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
   align-items: center;
   gap: 0.8rem;
-  margin-top: 0.6rem;
 }
 
 .lieu-scene-vue {
   max-width: 30rem;
   margin-top: 0.9rem;
+}
+
+.lieu-droite .lieu-nom {
+  font-size: 1.25rem;
+  text-align: center;
 }
 
 .lieu-gauche {
@@ -3798,8 +3774,8 @@ span.jouer-pile-dos {
 }
 
 .lieu-droite .lieu-image {
-  width: min(100%, 9rem);
-  margin: 0 auto;
+  width: min(100%, 6rem);
+  margin: 0.2rem auto 0;
 }
 
 .lieu-scene .lieu-jauge-place {
@@ -3812,14 +3788,14 @@ span.jouer-pile-dos {
 
 /* L'étui du deck, plus grand ici que dans une ligne. */
 .lieu-gauche .etui-mini {
-  width: 4.4rem;
+  width: 5rem;
 }
 
 /* LA PLACE VIDE : la silhouette d'un étui, en pointillé. */
 .lieu-deck-place {
   display: grid;
   place-items: center;
-  width: 4.4rem;
+  width: 5rem;
   aspect-ratio: 1 / 1.4;
   box-sizing: border-box;
   border: 0.15rem dashed rgba(255, 250, 240, 0.35);
