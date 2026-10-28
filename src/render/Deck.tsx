@@ -253,7 +253,7 @@ export function PageJouer({
                     aria-label={`Ouvrir ${l.nom} pour ${l.prix} or`}
                     onClick={() => onOuvrirLieu(l.id)}
                   >
-                    Ouvrir · <IconeOr /> {l.prix}
+                    Ouvrir <IconeOr /> {l.prix}
                   </button>
                 </div>
               )
