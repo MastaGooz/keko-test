@@ -73,6 +73,14 @@ const PLACE_SUR_LA_CARTE: Readonly<Record<string, { x: number; y: number; deck: 
   mine: { x: 72, y: 49, deck: 'droite' },
   arene: { x: 28, y: 18, deck: 'gauche' },
 }
+/**
+ * OÙ COMMENCE LE DESSIN dans son image carrée, en part de sa hauteur (alpha
+ * > 40, mesuré sur `public/lieux/*.webp`) : tous touchent le bas, pas le haut.
+ * Le nom se pose sur le dessin, pas sur la case — sinon il flotte au-dessus
+ * d'un vide. À remesurer si une image change.
+ */
+const HAUT_DU_DESSIN: Readonly<Record<string, number>> = { taverne: 0.16, mine: 0.2, arene: 0.33 }
+
 /** Où le chemin quitte l'image, en % de la carte : un peu en deçà de son bord, caché derrière elle. */
 const BORD_DE_L_IMAGE = 9
 
@@ -232,7 +240,7 @@ export function PageJouer({
           </svg>
           {LIEUX.map((l) => {
             const place = PLACE_SUR_LA_CARTE[l.id]!
-            const style = { left: `${place.x}%`, top: `${place.y}%` }
+            const style = { left: `${place.x}%`, top: `${place.y}%`, '--haut-dessin': HAUT_DU_DESSIN[l.id] ?? 0 } as React.CSSProperties
             if (!estOuvert(lieux, l.id)) {
               return (
                 <div key={l.id} className="carte-lieu carte-lieu-ferme" style={style}>

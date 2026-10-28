@@ -3908,7 +3908,8 @@ span.jouer-pile-dos {
 }
 
 .carte-lieu-nom {
-  bottom: calc(var(--image-lieu) / 2 + 0.1rem);
+  /* Posé sur le haut du DESSIN, pas de sa case (`HAUT_DU_DESSIN`). */
+  bottom: calc(var(--image-lieu) / 2 - var(--image-lieu) * var(--haut-dessin, 0) + 0.15rem);
   margin: 0;
   font-family: 'Grenze', Georgia, serif;
   font-weight: 800;
@@ -3960,7 +3961,7 @@ span.jouer-pile-dos {
 }
 
 .carte-lieu-jauge {
-  top: calc(var(--image-lieu) / 2 + 0.05rem);
+  top: calc(var(--image-lieu) / 2 + 0.45rem);
   /* PAS PLUS LARGE QUE LE LIEU (Keko : qu'elle ne passe pas sous le deck). */
   width: calc(var(--image-lieu) - 0.6rem);
 }
@@ -3981,7 +3982,7 @@ span.jouer-pile-dos {
 }
 
 .carte-lieu-ouvrir {
-  top: calc(var(--image-lieu) / 2 + 0.1rem);
+  top: calc(var(--image-lieu) / 2 + 0.45rem);
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -4078,4 +4079,10 @@ span.jouer-pile-dos {
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1;
+}
+
+/* Le minuteur au coin EXTÉRIEUR de l'étui : côté lieu, il touchait le nom. */
+.carte-lieu-deck-gauche .minuteur-main {
+  right: auto;
+  left: -0.55rem;
 }
