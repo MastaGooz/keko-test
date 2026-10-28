@@ -1026,16 +1026,12 @@ export function PageCollection({
 }): React.ReactElement {
   const modeDeck = deck !== undefined
   const triParDefaut: Tri = toutes || modeDeck ? 'rares' : 'recentes'
-  // SUPPRIMER UN DECK SE CONFIRME D'UNE SECONDE TAPE, dans les trois secondes.
+  // SUPPRIMER UN DECK SE CONFIRME DANS UNE FENÊTRE (Keko : « il faudrait un
+  // message de confirmation ») : `sur` dit qu'elle est ouverte.
   const [sur, setSur] = useState(false)
   /** LE NOM SE CHANGE AU CRAYON, en tête de la colonne (Keko) : le champ n'est là que pendant. */
   const [renomme, setRenomme] = useState(false)
   useEffect(() => setRenomme(false), [deck?.edite])
-  useEffect(() => {
-    if (!sur) return
-    const t = window.setTimeout(() => setSur(false), 3000)
-    return () => clearTimeout(t)
-  }, [sur])
   const tris = toutes ? TRIS.filter((t) => t.id !== 'recentes') : TRIS
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>(triParDefaut)
@@ -1348,21 +1344,15 @@ export function PageCollection({
                     <path d="M13.5 6.5l4 4" />
                   </svg>
                 </button>
-                {/* SUPPRIMER LE DECK, UNE CORBEILLE (Keko), d'une seconde tape : la
-                    première la passe au rouge ; jamais le dernier. */}
+                {/* SUPPRIMER LE DECK, UNE CORBEILLE (Keko), qui demande confirmation ;
+                    jamais le dernier. */}
                 {deck.decks.length > 1 && (
                   <button
                     type="button"
                     className={`deck-icone deck-icone-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
-                    aria-label={sur ? 'Confirmer la suppression du deck' : 'Supprimer le deck'}
-                    data-bulle={sur ? 'Sûr ? Supprimer' : 'Supprimer'}
-                    onClick={() => {
-                      if (!sur) setSur(true)
-                      else {
-                        setSur(false)
-                        deck.onSupprimer()
-                      }
-                    }}
+                    aria-label="Supprimer le deck"
+                    data-bulle="Supprimer"
+                    onClick={() => setSur(true)}
                   >
                     <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 7h16" />
@@ -1642,6 +1632,34 @@ export function PageCollection({
                   }}
                 >
                   Prendre
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+      {sur &&
+        deck !== undefined &&
+        createPortal(
+          <div className="prendre-voile" onClick={() => setSur(false)}>
+            <div className="prendre" role="alertdialog" aria-modal="true" aria-labelledby="supprimer-question" onClick={(e) => e.stopPropagation()}>
+              <p id="supprimer-question" className="prendre-question">
+                Supprimer <b>{deck.decks[deck.edite]?.nom}</b> ?
+              </p>
+              <p className="prendre-detail">Ses cartes restent dans votre collection.</p>
+              <div className="prendre-boutons">
+                <button type="button" className="prendre-annuler" onClick={() => setSur(false)}>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className="collection-bouton prendre-oui supprimer-oui"
+                  onClick={() => {
+                    setSur(false)
+                    deck.onSupprimer()
+                  }}
+                >
+                  Supprimer
                 </button>
               </div>
             </div>

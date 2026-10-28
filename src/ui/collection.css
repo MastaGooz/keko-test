@@ -2996,7 +2996,7 @@ span.jouer-pile-dos {
 }
 
 /* LE CRAYON ET LA CORBEILLE : deux ronds de doigt, l'or du jeu ; la
-   corbeille armée passe au rouge (`.deck-supprimer-sur`). */
+   corbeille passe au rouge pendant que sa fenêtre de confirmation est ouverte (`.deck-supprimer-sur`). */
 .deck-icone {
   display: grid;
   place-items: center;
@@ -3227,6 +3227,12 @@ span.jouer-pile-dos {
 
 .prendre-boutons .prendre-annuler {
   margin-top: 1rem;
+}
+
+/* LA SUPPRESSION D'UN DECK : le même dialogue, le bouton en rouge. */
+.collection-bouton.supprimer-oui {
+  background: #ff4d5e;
+  color: #fff;
 }
 
 /* ====================================================================
