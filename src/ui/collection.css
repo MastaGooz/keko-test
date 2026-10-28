@@ -2849,7 +2849,9 @@ span.jouer-pile-dos {
    rangée souple, c'était la rangée entière, et la fenêtre tombait à 3 px. */
 .etuis {
   display: grid;
-  grid-template-columns: repeat(auto-fill, min(11rem, calc(50% - 0.5rem)));
+  /* PLUS PETITS (Keko, 28/10 : « un peu gros ») : trois de front sur un
+     téléphone — les trois decks du plafond tiennent sur une ligne. */
+  grid-template-columns: repeat(auto-fill, min(9rem, calc((100% - 2rem) / 3)));
   justify-content: start;
   gap: 1rem;
   max-width: 60rem;
@@ -2934,14 +2936,14 @@ span.jouer-pile-dos {
   white-space: nowrap;
   font-family: 'Grenze', Georgia, serif;
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1rem;
   line-height: 1.1;
   color: #ffc61f;
   text-shadow: 0 0.1rem 0 #241029;
 }
 
 .etui-compte {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 700;
   opacity: 0.85;
 }

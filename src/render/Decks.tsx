@@ -108,6 +108,8 @@ export function PageDecks({
                 aria-label={`${nomDuDeck(d, i)}, ${d.cartes.length} cartes sur ${DECK.taille}`}
                 onClick={() => onOuvrir(i)}
               >
+                {/* LE NOM EN HAUT, au-dessus de l'image (Keko, 28/10). */}
+                <span className="etui-nom">{nomDuDeck(d, i)}</span>
                 {/* LA FENÊTRE : la carte vedette sur son camp ; vide, le symbole du jeu. */}
                 <span
                   className="etui-fenetre"
@@ -123,7 +125,6 @@ export function PageDecks({
                     <img className="etui-vedette" src={url(vedette.image)} alt="" draggable={false} />
                   )}
                 </span>
-                <span className="etui-nom">{nomDuDeck(d, i)}</span>
                 <span className={`etui-compte${d.cartes.length < DECK.taille ? ' etui-incomplet' : ''}`}>
                   {d.cartes.length < DECK.taille ? `${d.cartes.length}/${DECK.taille} · incomplet` : 'Complet'}
                 </span>
