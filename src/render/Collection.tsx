@@ -631,7 +631,8 @@ export function Vignette({
           {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
         </span>
       )}
-      {(holo || anime) && (
+      {/* PAS DE PASTILLE SUR LA MAIN JOUÉE (Keko) : la carte jouée se lit à sa peinture. */}
+      {(holo || anime) && !nue && (
         <span className="vignette-bonus">
           {holo && <span className="pastille-holo">Holo</span>}
           {anime && <span className="pastille-anime">Animé</span>}
@@ -1104,6 +1105,7 @@ export function PageCollection({
   onOuvrirUnPaquet,
   onFusionner,
   pertesALaFusion,
+  toutFusionner,
   deck,
 }: {
   catalogue: readonly CarteEmoji[] | null
@@ -1120,6 +1122,11 @@ export function PageCollection({
   onFusionner: (id: string) => void
   /** Les decks auxquels fusionner ce personnage retirerait des exemplaires (voir `decksQuiPerdent`). */
   pertesALaFusion: (id: string) => readonly string[]
+  /**
+   * TOUT FUSIONNER, dans « Ma collection » (Keko) : combien de personnages
+   * peuvent monter, les decks qui y perdraient des cartes, et le geste.
+   */
+  toutFusionner?: { readonly n: number; readonly pertes: () => readonly string[]; readonly fusionner: () => void }
   /** Le mode deck : voir `ChoixDuDeck`. */
   deck?: ChoixDuDeck
 }): React.ReactElement {
@@ -1128,6 +1135,23 @@ export function PageCollection({
   // SUPPRIMER UN DECK SE CONFIRME DANS UNE FENÊTRE (Keko : « il faudrait un
   // message de confirmation ») : `sur` dit qu'elle est ouverte.
   const [sur, setSur] = useState(false)
+  // TOUT FUSIONNER : les decks touchés tant que la fenêtre est ouverte, et ce
+  // qui vient de monter (le message s'efface seul).
+  const [toutConfirmer, setToutConfirmer] = useState<readonly string[] | null>(null)
+  const [faites, setFaites] = useState<{ n: number; cle: number } | null>(null)
+  useEffect(() => {
+    if (faites === null) return
+    const t = window.setTimeout(() => setFaites(null), 2600)
+    return () => clearTimeout(t)
+  }, [faites])
+  const lancerTout = (): void => {
+    if (toutFusionner === undefined) return
+    const n = toutFusionner.n
+    toutFusionner.fusionner()
+    jouerSon(SON_EQUIPER)
+    navigator.vibrate?.([25, 30, 60])
+    setFaites((f) => ({ n, cle: (f?.cle ?? 0) + 1 }))
+  }
   /** LE NOM SE CHANGE AU CRAYON, en tête de la colonne (Keko) : le champ n'est là que pendant. */
   const [renomme, setRenomme] = useState(false)
   useEffect(() => setRenomme(false), [deck?.edite])
@@ -1531,6 +1555,31 @@ export function PageCollection({
           <div className="collection-barre" aria-hidden>
             <span style={{ width: `${(part * 100).toFixed(2)}%` }} />
           </div>
+          {/* TOUT FUSIONNER (Keko : « un bouton qui permette de fusionner toutes
+              les cartes dans l'onglet collection, avec un message de confirmation
+              général si au moins une d'entre elles casse un deck »). */}
+          {toutFusionner !== undefined && (toutFusionner.n > 0 || faites !== null) && (
+            <div className="fusion-tout">
+              {toutFusionner.n > 0 && (
+                <button
+                  type="button"
+                  className="collection-bouton fusion-tout-bouton"
+                  onClick={() => {
+                    const touches = toutFusionner.pertes()
+                    if (touches.length > 0) setToutConfirmer(touches)
+                    else lancerTout()
+                  }}
+                >
+                  Tout fusionner · {toutFusionner.n}
+                </button>
+              )}
+              {faites !== null && (
+                <span key={faites.cle} className="fusion-faite" role="status">
+                  {faites.n} carte{faites.n > 1 ? 's' : ''} {faites.n > 1 ? 'montent' : 'monte'} de niveau
+                </span>
+              )}
+            </div>
+          )}
           {/* PLUS D'ACTIONS ICI (Keko) : « Jouer avec ce deck » vit dans la page
               « Jouer », « Supprimer » en tête de la colonne du deck. */}
         </header>
@@ -1749,6 +1798,43 @@ export function PageCollection({
                   }}
                 >
                   Prendre
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+      {toutConfirmer !== null &&
+        toutFusionner !== undefined &&
+        createPortal(
+          <div className="prendre-voile" onClick={() => setToutConfirmer(null)}>
+            <div className="prendre" role="alertdialog" aria-modal="true" aria-labelledby="tout-question" onClick={(e) => e.stopPropagation()}>
+              <p id="tout-question" className="prendre-question">
+                Fusionner {toutFusionner.n} carte{toutFusionner.n > 1 ? 's' : ''} ?
+              </p>
+              <p className="prendre-detail">
+                {toutConfirmer.length > 1 ? 'Des exemplaires fusionnés sont dans les decks' : 'Des exemplaires fusionnés sont dans le deck'}{' '}
+                {toutConfirmer.map((n, i) => (
+                  <span key={i}>
+                    {i > 0 && (i === toutConfirmer.length - 1 ? ' et ' : ', ')}
+                    <b>{n}</b>
+                  </span>
+                ))}{' '}
+                : ils en sortiront.
+              </p>
+              <div className="prendre-boutons">
+                <button type="button" className="prendre-annuler" onClick={() => setToutConfirmer(null)}>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className="collection-bouton prendre-oui"
+                  onClick={() => {
+                    setToutConfirmer(null)
+                    lancerTout()
+                  }}
+                >
+                  Fusionner
                 </button>
               </div>
             </div>

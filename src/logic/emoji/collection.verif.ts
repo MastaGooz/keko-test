@@ -16,6 +16,8 @@ import {
   avecLikes,
   ajouterLikes,
   fusionner,
+  fusionnerTout,
+  fusionnables,
   exemplaireAFusionner,
   aFusionnerPour,
   niveauDe,
@@ -86,6 +88,9 @@ let auMax: Collection = { ...collectionVide(), cartes: { a: { n: 40, holo: 0, an
 for (let i = 0; i < 10; i++) auMax = fusionner(auMax, 'a')
 verifier('cinq niveaux au plus, dix doublons en tout', niveauDe(auMax, 'a') === NIVEAUX.max && auMax.cartes.a?.n === 40 - 10)
 verifier('le holo animé reste le dernier', compteDe(fusionner(quatre, '1f60a').cartes['1f60a']!, 'holoAnime') === 2)
+const tout = fusionnerTout({ ...collectionVide(), cartes: { a: { n: 6, holo: 0, anime: 0, ha: 0, premiere: 0, ordre: 1, nouvelles: [] }, b: { n: 1, holo: 0, anime: 0, ha: 0, premiere: 0, ordre: 2, nouvelles: [] } } })
+verifier('tout fusionner : six exemplaires montent au niveau 3, le seul ne bouge pas', niveauDe(tout, 'a') === 3 && tout.cartes.a?.n === 3 && niveauDe(tout, 'b') === 1 && tout.cartes.b?.n === 1)
+verifier('ce qui peut fusionner', fusionnables(melange).join() === '1f60b' && fusionnables(tout).length === 0 && fusionnerTout(tout) === tout)
 verifier('le niveau se relit', niveauDe(lireCollection(JSON.parse(JSON.stringify(auMax))), 'a') === NIVEAUX.max)
 verifier('un niveau abîmé est borné', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: 99 } }), 'a') === NIVEAUX.max)
 verifier('un niveau du temps de l’album se relit', niveauDe(lireCollection({ version: 1, cartes: {}, niveaux: { a: { niveau: 3, poses: 2 } } }), 'a') === 3)

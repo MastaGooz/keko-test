@@ -30,6 +30,8 @@ import {
   retirer,
   oublier,
   fusionner,
+  fusionnerTout,
+  fusionnables,
   niveauDe,
   nombreDeNouvelles,
   toutVu,
@@ -592,6 +594,18 @@ export function Jeu(): React.ReactElement {
     },
     [changer, poserDecks, collection, gardeALaFusion],
   )
+  /** TOUT FUSIONNER (Keko) : chaque personnage monte autant qu'il peut ; les decks suivent. */
+  const toutFusionner = useMemo(() => {
+    const n = fusionnables(collection).length
+    return {
+      n,
+      pertes: (): string[] => {
+        const ds = garderPossedeesPartout(decks, compteDesExemplaires(fusionnerTout(collection)), Date.now())
+        return decksQuiPerdent(decks, ds).map((i) => nomDuDeck(decks.liste[i], i))
+      },
+      fusionner: () => changer(fusionnerTout),
+    }
+  }, [collection, decks, changer])
   /** Les noms des decks auxquels cette fusion retirerait des exemplaires (voir `decksQuiPerdent`). */
   const pertesALaFusion = useCallback(
     (id: string): string[] => {
@@ -730,6 +744,7 @@ export function Jeu(): React.ReactElement {
           onOuvrirUnPaquet={() => aller('booster')}
           onFusionner={fusionnerPersonnage}
           pertesALaFusion={pertesALaFusion}
+          toutFusionner={page === 'collection' ? toutFusionner : undefined}
           deck={
             page === 'deck'
               ? {

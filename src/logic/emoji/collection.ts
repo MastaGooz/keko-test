@@ -162,6 +162,29 @@ export function fusionner(col: Collection, id: string): Collection {
   return { ...col, cartes: { ...col.cartes, [id]: p }, niveaux: { ...col.niveaux, [id]: actuel + 1 } }
 }
 
+/**
+ * FUSIONNE TOUT CE QUI PEUT L'ÊTRE (Keko : « un bouton qui permette de
+ * fusionner toutes les cartes ») : chaque personnage monte autant de niveaux
+ * que ses exemplaires le permettent, un niveau après l'autre — comme autant de
+ * tapes sur « Fusionner ».
+ */
+export function fusionnerTout(col: Collection): Collection {
+  let r = col
+  for (const id of Object.keys(col.cartes)) {
+    for (let k = 0; k < NIVEAUX.max; k++) {
+      const n = fusionner(r, id)
+      if (n === r) break
+      r = n
+    }
+  }
+  return r
+}
+
+/** Les personnages qui peuvent monter d'un niveau tout de suite. */
+export function fusionnables(col: Collection): string[] {
+  return Object.keys(col.cartes).filter((id) => fusionner(col, id) !== col)
+}
+
 export function collectionVide(): Collection {
   return { version: 1, arrivees: 0, paquets: 0, cartes: {}, likes: 0, sansEpique: 0, sansLegendaire: 0, niveaux: {} }
 }

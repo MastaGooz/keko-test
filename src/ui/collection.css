@@ -3789,3 +3789,41 @@ span.jouer-pile-dos {
   width: 7.5rem;
   flex: none;
 }
+
+/* TOUT FUSIONNER, sous la jauge de « Ma collection » ; ce qui vient de monter s'affiche à côté. */
+.fusion-tout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.fusion-tout-bouton {
+  margin: 0;
+}
+
+.fusion-faite {
+  color: #ffd45e;
+  font-weight: 800;
+  animation: fusion-faite 2.6s ease both;
+}
+
+@keyframes fusion-faite {
+  0% {
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  20%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
