@@ -4007,7 +4007,11 @@ span.jouer-pile-dos {
 
 /* L'étui à côté du lieu, vers le bord de la carte. */
 .carte-lieu-deck {
-  top: 0;
+  /* CENTRÉ SUR L'ENSEMBLE NOM, IMAGE, JAUGE (Keko), pas sur l'image : son
+     milieu descend de la moitié du vide en haut du dessin, plus la moitié de
+     ce que la jauge (1,8 rem) a de plus que le nom (1,2 rem) et leurs écarts —
+     0,9 rem, mesuré dans la page. */
+  top: calc((var(--image-lieu) * var(--haut-dessin, 0) + 0.9rem) / 2);
   transform: translateY(-50%);
 }
 
