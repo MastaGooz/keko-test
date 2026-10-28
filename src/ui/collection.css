@@ -3753,6 +3753,11 @@ span.jouer-pile-dos {
 }
 
 .lieu-choix-detail {
+  /* UNE HAUTEUR FIXE, texte ou image : toutes les cases ont la même. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.3rem;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3761,18 +3766,15 @@ span.jouer-pile-dos {
   opacity: 0.75;
 }
 
-.lieu-choix-etui {
-  position: relative;
+.lieu-choix-a-lieu {
+  opacity: 1;
 }
 
 .lieu-choix-lieu {
-  position: absolute;
-  top: -0.7rem;
-  right: -1rem;
-  width: 2.4rem;
-  height: 2.4rem;
+  display: block;
+  height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0.15rem 0.2rem rgba(10, 4, 2, 0.7));
+  filter: drop-shadow(0 0.1rem 0.15rem rgba(10, 4, 2, 0.6));
   pointer-events: none;
 }
 

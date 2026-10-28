@@ -464,21 +464,19 @@ function ChoixDuDeck({
                 className={`lieu-choix-deck${i === ici ? ' lieu-choix-ici' : ''}`}
                 onClick={() => (i === ici ? onFermer() : complet ? onPoser(i) : onComposer(i))}
               >
-                {/* SON LIEU EN IMAGE, au coin haut droit de l'étui (Keko : « plutôt que du
-                    texte », puis « en haut à droite, pour limiter » la hauteur). */}
-                <span className="lieu-choix-etui">
-                  <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
-                  {(i === ici || ailleurs !== undefined) && (
+                <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
+                <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
+                {/* SON LIEU EN IMAGE sous le nom, à la place de « libre », À LA HAUTEUR
+                    DU TEXTE : les cases ne grandissent pas (Keko). */}
+                <span className={`lieu-choix-detail${i === ici || ailleurs !== undefined ? ' lieu-choix-a-lieu' : !complet ? ' lieu-choix-incomplet' : ''}`}>
+                  {i === ici || ailleurs !== undefined ? (
                     <img className="lieu-choix-lieu" src={imageDuLieu(ailleurs ?? lieu)} alt={(ailleurs ?? lieu).nom} draggable={false} />
+                  ) : !complet ? (
+                    `${d.cartes.length}/${DECK.taille}`
+                  ) : (
+                    'libre'
                   )}
                 </span>
-                <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
-                {/* Sans lieu : libre, ou à compléter. */}
-                {i !== ici && ailleurs === undefined && (
-                  <span className={`lieu-choix-detail${!complet ? ' lieu-choix-incomplet' : ''}`}>
-                    {!complet ? `${d.cartes.length}/${DECK.taille}` : 'libre'}
-                  </span>
-                )}
               </button>
             )
           })}
