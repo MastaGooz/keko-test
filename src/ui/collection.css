@@ -3233,6 +3233,8 @@ span.jouer-pile-dos {
 .collection-bouton.supprimer-oui {
   background: #ff4d5e;
   color: #fff;
+  /* SON ÉPAISSEUR EST UN ROUGE PLUS FONCÉ, pas le brun des boutons crème (Keko). */
+  box-shadow: 0 0.3rem 0 #b3283a;
 }
 
 /* ====================================================================
