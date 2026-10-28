@@ -1534,7 +1534,7 @@ export function PageCollection({
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
-                {/* LA PUISSANCE, PUIS LE COMPTE (Keko, 28/10) : ni « complet », ni le lieu où il joue. */}
+                {/* LA PUISSANCE, PUIS LE COMPTE, PUIS LA BULLE (Keko, 28/10) ; pas le lieu où il joue. */}
                 {deck.puissance !== null && (
                   <>
                     <span className="deck-puissance">
@@ -1543,7 +1543,11 @@ export function PageCollection({
                     ·{' '}
                   </>
                 )}
-                <b>{deck.nombre}</b> / {deck.taille} cartes
+                <b>{deck.nombre}</b> / {deck.taille} cartes{' '}
+                {/* LA BULLE EN BOUT DE LIGNE (Keko). */}
+                <span className={`deck-etat${deck.nombre >= deck.taille ? '' : ' deck-etat-incomplet'}`}>
+                  {deck.nombre >= deck.taille ? 'complet' : 'incomplet'}
+                </span>
               </>
             ) : toutes ? (
               <>
