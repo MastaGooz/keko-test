@@ -322,22 +322,24 @@ export function FrappeDuNiveau({ frappe, onImpact }: { frappe: Frappe | null; on
  * où l'étoile se fixe, comme un effet de lumière qui flash la carte ») : une
  * dalle de lumière à la forme de la carte, aux bords flous — un peu plus
  * grande qu'elle, elle couvre la carte même penchée et déborde en halo —,
- * qui s'allume d'un coup et s'éteint en 0,5 s. Additive, au-dessus du bloom.
+ * additive, au-dessus du bloom. **DIFFUSE, PAS UN FLASH BREF** (Keko : « un
+ * effet plus diffus serait mieux ») : très floue, à mi-éclat, elle monte en
+ * 0,15 s et retombe doucement sur 1,3 s.
  * `declencheur` change à chaque impact (zéro : rien).
  */
-const FLASH = { duree: 0.5, deborde: 1.06, eclat: 1.6 }
+const FLASH = { duree: 1.3, monte: 0.12, deborde: 1.1, eclat: 0.75 }
 
 function texteDuFlash(): THREE.CanvasTexture {
   const l = 256
   const h = Math.round(l * 1.4)
   const c = document.createElement('canvas')
   // Le dessin au centre, la marge pour le flou du halo.
-  const marge = 0.08
+  const marge = 0.22
   c.width = Math.round(l * (1 + marge * 2))
   c.height = Math.round(h + l * marge * 2)
   const ctx = c.getContext('2d')
   if (ctx !== null) {
-    ctx.filter = `blur(${Math.round(l * 0.035)}px)`
+    ctx.filter = `blur(${Math.round(l * 0.1)}px)`
     ctx.fillStyle = '#fff'
     ctx.beginPath()
     ctx.roundRect(l * marge, l * marge, l, h, l * 0.055)
@@ -369,15 +371,15 @@ export function FlashDeLaCarte({
     const m = materiau.current
     if (m === null) return
     t.current = Math.min(1, t.current + delta / FLASH.duree)
-    // Allumé d'un coup, éteint en douceur.
-    const u = 1 - t.current
-    m.opacity = u * u
+    // Monte vite, retombe en douceur.
+    const v = t.current
+    m.opacity = v < FLASH.monte ? Math.sin(((v / FLASH.monte) * Math.PI) / 2) : Math.pow(1 - (v - FLASH.monte) / (1 - FLASH.monte), 1.6)
     m.visible = t.current < 1
   })
   const l = taille * FLASH.deborde
   return (
     <mesh position={[centre[0], centre[1], centre[2] + taille * 0.02]} renderOrder={5}>
-      <planeGeometry args={[l * 1.16, l * 1.4 + l * 0.16]} />
+      <planeGeometry args={[l * 1.44, l * 1.4 + l * 0.44]} />
       <meshBasicMaterial
         ref={materiau}
         map={texture}
