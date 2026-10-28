@@ -215,8 +215,14 @@ export function garderPossedees(d: Deck, possede: (e: EntreeDeck) => boolean, ma
   return demarrer({ ...d, cartes, partie: null }, maintenant)
 }
 
-/** Lance la partie si le deck est complet, posé sur un lieu, et ne joue pas encore ; sinon rend le deck tel quel. */
+/**
+ * Lance la partie si le deck est complet, posé sur un lieu, et ne joue pas
+ * encore ; sinon rend le deck tel quel. **UN DECK INCOMPLET QUITTE SON LIEU**
+ * (Keko, 28/10 : « quand un deck est incomplet, on le sort automatiquement
+ * d'un lieu ») : toute carte retirée, fusionnée ou perdue passe par ici.
+ */
 export function demarrer(d: Deck, maintenant: number): Deck {
+  if (!deckComplet(d) && d.lieu !== undefined) return sansLieu(d)
   if (d.partie !== null || !deckComplet(d) || d.lieu === undefined) return d
   return { ...d, partie: { graine: maintenant >>> 0, jouees: 0, depuis: maintenant } }
 }
