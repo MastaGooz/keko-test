@@ -142,15 +142,15 @@ export function PageJouer({
             <button type="button" className="deck-retour" onClick={() => setVu(null)}>
               ‹ Les lieux
             </button>
-            <div className="lieu-vue-tete">
-              <img className="lieu-image lieu-image-grande" src={imageDuLieu(lieuVu)} alt="" draggable={false} />
-              <div>
-                <h1 className="collection-titre">{lieuVu.nom}</h1>
-                <p className="collection-compte">{texteDuBonus(lieuVu)}</p>
+            <h1 className="collection-titre">{lieuVu.nom}</h1>
+            <p className="collection-compte">{texteDuBonus(lieuVu)}</p>
+            <div className="lieu-scene lieu-scene-vue">
+              <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(lieuVu.id)} />
+              <div className="lieu-droite">
+                <img className="lieu-image" src={imageDuLieu(lieuVu)} alt="" draggable={false} />
+                <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} gainAuDepart={orsAuDepart.current[lieuVu.id]} />
               </div>
             </div>
-            <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} gainAuDepart={orsAuDepart.current[lieuVu.id]} />
-            <LigneDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(lieuVu.id)} />
           </header>
           {deck === undefined || k === null ? (
             <div className="collection-vide">
@@ -199,16 +199,20 @@ export function PageJouer({
               const manque = l.prix - lieux.or
               return (
                 <div key={l.id} className="lieu lieu-ferme">
-                  <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
-                  <div className="lieu-corps">
-                    <div className="lieu-tete">
-                      <h2 className="lieu-nom">{l.nom}</h2>
-                      <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                  <div className="lieu-tete">
+                    <h2 className="lieu-nom">{l.nom}</h2>
+                    <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                  </div>
+                  <div className="lieu-scene">
+                    <div className="lieu-gauche">
+                      <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
+                        Ouvrir · <IconeOr /> {l.prix}
+                      </button>
+                      {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
                     </div>
-                    <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
-                      Ouvrir · <IconeOr /> {l.prix}
-                    </button>
-                    {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
+                    <div className="lieu-droite">
+                      <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
+                    </div>
                   </div>
                 </div>
               )
@@ -219,14 +223,17 @@ export function PageJouer({
               <div key={l.id} className="lieu">
                 {/* TOUT LE LIEU S'OUVRE D'UNE TAPE ; le bouton du deck a la sienne. */}
                 <button type="button" className="lieu-voir" aria-label={`Voir ${l.nom}`} onClick={() => setVu(l.id)} />
-                <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
-                <div className="lieu-corps">
-                  <div className="lieu-tete">
-                    <h2 className="lieu-nom">{l.nom}</h2>
-                    <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                <div className="lieu-tete">
+                  <h2 className="lieu-nom">{l.nom}</h2>
+                  <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                </div>
+                {/* LE DECK À GAUCHE, LE LIEU À DROITE, SA JAUGE SOUS SON IMAGE (Keko). */}
+                <div className="lieu-scene">
+                  <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} />
+                  <div className="lieu-droite">
+                    <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
+                    <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
                   </div>
-                  <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
-                  <LigneDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} />
                 </div>
               </div>
             )
@@ -272,8 +279,12 @@ function JaugeDuLieu({
   )
 }
 
-/** Le deck posé sur le lieu (ou aucun), et le bouton pour le choisir. */
-function LigneDuDeck({
+/**
+ * LA PLACE DU DECK, à gauche du lieu (Keko : « le deck à gauche, l'image du
+ * lieu à droite ») : son étui, son nom, son état et le bouton pour le changer
+ * — ou la place vide, et « Poser un deck ».
+ */
+function PlaceDuDeck({
   deck,
   i,
   parId,
@@ -287,20 +298,19 @@ function LigneDuDeck({
   onChoisir: () => void
 }): React.ReactElement {
   return (
-    <div className="lieu-deck">
+    <div className="lieu-gauche lieu-deck">
       {deck === undefined || i === null ? (
-        <span className="lieu-deck-vide">Aucun deck</span>
-      ) : (
-        <span className="lieu-deck-qui">
-          {/* L'ÉTUI DU DECK POSÉ, en petit (Keko). */}
-          <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
-          <span className="lieu-deck-nom">
-            {nomDuDeck(deck, i)}
-            <span className={`lieu-deck-etat${deckComplet(deck) ? '' : ' lieu-deck-incomplet'}`}>
-              {deckComplet(deck) ? 'joue' : `${deck.cartes.length}/${DECK.taille} · incomplet`}
-            </span>
-          </span>
+        <span className="lieu-deck-place" aria-hidden>
+          +
         </span>
+      ) : (
+        <>
+          <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
+          <span className="lieu-deck-nom">{nomDuDeck(deck, i)}</span>
+          <span className={`lieu-deck-etat${deckComplet(deck) ? '' : ' lieu-deck-incomplet'}`}>
+            {deckComplet(deck) ? 'joue' : `${deck.cartes.length}/${DECK.taille} · incomplet`}
+          </span>
+        </>
       )}
       <button type="button" className="lieu-choisir" onClick={onChoisir}>
         {deck === undefined ? 'Poser un deck' : 'Changer'}
