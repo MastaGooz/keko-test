@@ -3761,20 +3761,19 @@ span.jouer-pile-dos {
   opacity: 0.75;
 }
 
-.lieu-choix-lieu {
-  display: block;
-  width: 2.6rem;
-  height: 2.6rem;
-  object-fit: contain;
-  filter: drop-shadow(0 0.15rem 0.2rem rgba(10, 4, 2, 0.55));
-  pointer-events: none;
+.lieu-choix-etui {
+  position: relative;
 }
 
-/* Le texte occupe la hauteur de l'image : les noms restent alignés. */
-.lieu-choix-detail {
-  display: flex;
-  align-items: center;
-  min-height: 2.6rem;
+.lieu-choix-lieu {
+  position: absolute;
+  top: -0.7rem;
+  right: -1rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0.15rem 0.2rem rgba(10, 4, 2, 0.7));
+  pointer-events: none;
 }
 
 .lieu-choix-incomplet {

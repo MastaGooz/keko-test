@@ -464,12 +464,17 @@ function ChoixDuDeck({
                 className={`lieu-choix-deck${i === ici ? ' lieu-choix-ici' : ''}`}
                 onClick={() => (i === ici ? onFermer() : complet ? onPoser(i) : onComposer(i))}
               >
-                <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
+                {/* SON LIEU EN IMAGE, au coin haut droit de l'étui (Keko : « plutôt que du
+                    texte », puis « en haut à droite, pour limiter » la hauteur). */}
+                <span className="lieu-choix-etui">
+                  <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
+                  {(i === ici || ailleurs !== undefined) && (
+                    <img className="lieu-choix-lieu" src={imageDuLieu(ailleurs ?? lieu)} alt={(ailleurs ?? lieu).nom} draggable={false} />
+                  )}
+                </span>
                 <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
-                {/* SON LIEU EN IMAGE (Keko : « plutôt que du texte ») ; sans lieu, libre ou à compléter. */}
-                {i === ici || ailleurs !== undefined ? (
-                  <img className="lieu-choix-lieu" src={imageDuLieu(ailleurs ?? lieu)} alt={(ailleurs ?? lieu).nom} draggable={false} />
-                ) : (
+                {/* Sans lieu : libre, ou à compléter. */}
+                {i !== ici && ailleurs === undefined && (
                   <span className={`lieu-choix-detail${!complet ? ' lieu-choix-incomplet' : ''}`}>
                     {!complet ? `${d.cartes.length}/${DECK.taille}` : 'libre'}
                   </span>
