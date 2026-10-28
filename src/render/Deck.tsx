@@ -23,7 +23,6 @@ import {
   deckComplet,
   deckDuLieu,
   likesDeLaMain,
-  likesDuDeck,
   mainPrecedente,
   nomDuDeck,
   type Deck,
@@ -576,8 +575,8 @@ function DeckEnJeu({
   return (
     <div className="jouer" key={retour}>
       <p className="jouer-texte">
-        {/* CE QUE RAPPORTE UN TOUR DU DECK ICI : ses trente cartes, bonus du lieu compris. */}
-        <b>{valeur === null ? '…' : likesDuDeck(deck, valeur)}</b> de puissance par tour · main {jouees / DECK.main + 1} / {parCycle}
+        {/* LA PUISSANCE DU DECK RESTE SECRÈTE (Keko, 28/10) : seul le rang de la main se lit. */}
+        Main {jouees / DECK.main + 1} / {parCycle}
       </p>
       {/* LA PILE : trois dos décalés, le compte de ce qui reste à jouer. */}
       <div className="jouer-pile" aria-label={`${DECK.taille - jouees} cartes dans la pile`}>

@@ -2997,23 +2997,6 @@ span.jouer-pile-dos {
   text-shadow: 0 0.1rem 0 #241029;
 }
 
-/* LA PUISSANCE DU DECK, en or sous la fenêtre. */
-.etui-puissance {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-weight: 800;
-  font-size: 0.95rem;
-  line-height: 1;
-  color: #ffc61f;
-  text-shadow: 0 0.1rem 0 #241029;
-}
-
-.etui-puissance .icone-like {
-  width: 1em;
-  height: 1em;
-}
-
 /* COMPLET / INCOMPLET, en bulle au bout de la ligne de l'éditeur. */
 .deck-etat {
   display: inline-block;
