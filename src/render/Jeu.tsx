@@ -683,12 +683,17 @@ export function Jeu(): React.ReactElement {
           stickers) » — les stickers sont partis depuis —, puis « je voudrais rajouter une autre monnaie : les
           abonnés ». Une pilule à part, en haut à droite, qui se cache avec la
           barre : pendant la déchirure et le défilé, rien ne dispute l'écran. */}
-      <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
-        <span className="monnaie monnaie-like" aria-label={`${collection.likes} de puissance`}>
-          <IconeLike />
-          <b>{collection.likes}</b>
-        </span>
-      </div>
+      {/* SEULEMENT SUR LE BOOSTER ET « JOUER » (Keko, 28/10 : « il prend de la
+          place … on peut le supprimer et ne l'afficher que dans Jouer et dans
+          l'écran d'ouverture de boosters ») : ailleurs, la page monte d'autant. */}
+      {(page === 'booster' || page === 'jouer') && (
+        <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
+          <span className="monnaie monnaie-like" aria-label={`${collection.likes} de puissance`}>
+            <IconeLike />
+            <b>{collection.likes}</b>
+          </span>
+        </div>
+      )}
       <nav className={`nav${visible ? '' : ' nav-cachee'}`} aria-label="Navigation">
         <div className="nav-pilule">
           <button

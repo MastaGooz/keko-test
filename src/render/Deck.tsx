@@ -137,7 +137,7 @@ export function PageJouer({
 
 
   return (
-    <div className="collection">
+    <div className="collection collection-avec-likes">
       <div className="collection-defile">
         <header className="collection-tete">
           <h1 className="collection-titre">

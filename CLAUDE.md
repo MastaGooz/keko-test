@@ -315,10 +315,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Une seule ressource, la PUISSANCE** (le code dit encore « Likes » :
   `Collection.likes`, `avecLikes`, `ajouterLikes` ; Keko a retiré les Abonnés
   le 23/10), icône `IconeLike` = le symbole du jeu, compte en or, un
-  compteur discret en haut à droite SUR TOUS LES ÉCRANS — voile sombre, pas de
-  pilule crème, « ça fait penser à un bouton » —, caché avec la barre ; au
-  doigt, « X disponibles » et la tête de la collection passent dessous, le
-  titre garde sa taille et sa ligne) :
+  compteur discret en haut à droite **SUR LE BOOSTER ET « JOUER » SEULS** (Keko,
+  28/10 : il prenait la place de la colonne du deck et descendait les pages) —
+  voile sombre, pas de pilule crème, « ça fait penser à un bouton » —, caché
+  avec la barre ; au doigt, « X disponibles » et la tête de « Jouer »
+  (`collection-avec-likes`) passent dessous ; ailleurs la page monte) :
   **le deck qui joue la génère** (ci-dessous) ; elle achètera des paquets
   au-delà des dix de la réserve. Une collection d'avant relit zéro. `&likes=N`
   pose le solde de l'appareil.
