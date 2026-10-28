@@ -1092,8 +1092,6 @@ export interface ChoixDuDeck {
   /** Nommer le deck qu'on compose (Keko : « pouvoir nommer les decks ») ; vide : « Deck N ». */
   readonly onRenommer: (nom: string) => void
   readonly edite: number
-  /** LE LIEU OÙ JOUE LE DECK QU'ON COMPOSE (son nom), ou `null`. */
-  readonly lieu: string | null
   /** LA PUISSANCE DU DECK (Keko : « un score de puissance ») : ses cartes une fois chacune, sans le bonus du lieu ; `null` sans catalogue. */
   readonly puissance: number | null
   /** Revenir à « Mes decks », les étuis (voir `PageDecks`). */
@@ -1536,7 +1534,7 @@ export function PageCollection({
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
-                <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
+                {/* LA PUISSANCE, PUIS LE COMPTE (Keko, 28/10) : ni « complet », ni le lieu où il joue. */}
                 {deck.puissance !== null && (
                   <>
                     <span className="deck-puissance">
@@ -1545,11 +1543,7 @@ export function PageCollection({
                     ·{' '}
                   </>
                 )}
-                {deck.nombre >= deck.taille
-                  ? deck.lieu !== null
-                    ? `complet, joue à ${deck.lieu.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`
-                    : 'complet'
-                  : `encore ${deck.taille - deck.nombre} à choisir`}
+                <b>{deck.nombre}</b> / {deck.taille} cartes
               </>
             ) : toutes ? (
               <>

@@ -763,7 +763,6 @@ export function Jeu(): React.ReactElement {
                   decks: decks.liste.map((d, i) => ({ n: d.cartes.length, complet: deckComplet(d), nom: nomDuDeck(d, i), nomDonne: d.nom ?? '' })),
                   onRenommer: (nom: string) => poserDecks((ds) => renommerDeck(ds, deckEdite, nom)),
                   edite: deckEdite,
-                  lieu: lieuDe(edite.lieu)?.nom ?? null,
                   puissance: valeur === null ? null : likesDuDeck(edite, valeur),
                   onRetour: () => aller('decks'),
                   // SUPPRIMÉ, ON REVIENT AUX ÉTUIS : il n'y a plus rien à modifier ici.
