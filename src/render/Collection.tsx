@@ -72,6 +72,7 @@ import { PencheAuGyro } from './Paquet3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { SON_EQUIPER, SON_POSER, jouerSon } from './sons.ts'
 import { FlashDeLaCarte, FrappeDuNiveau, type Frappe } from './FrappeDuNiveau.tsx'
+import { IconeLike } from './Jeu.tsx'
 
 export const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
   simple: 'normal',
@@ -1093,6 +1094,8 @@ export interface ChoixDuDeck {
   readonly edite: number
   /** LE LIEU OÙ JOUE LE DECK QU'ON COMPOSE (son nom), ou `null`. */
   readonly lieu: string | null
+  /** LA PUISSANCE DU DECK (Keko : « un score de puissance ») : ses cartes une fois chacune, sans le bonus du lieu ; `null` sans catalogue. */
+  readonly puissance: number | null
   /** Revenir à « Mes decks », les étuis (voir `PageDecks`). */
   readonly onRetour: () => void
   readonly onSupprimer: () => void
@@ -1534,6 +1537,14 @@ export function PageCollection({
             {deck !== undefined ? (
               <>
                 <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
+                {deck.puissance !== null && (
+                  <>
+                    <span className="deck-puissance">
+                      <IconeLike /> <b>{deck.puissance}</b>
+                    </span>{' '}
+                    ·{' '}
+                  </>
+                )}
                 {deck.nombre >= deck.taille
                   ? deck.lieu !== null
                     ? `complet, joue à ${deck.lieu.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`

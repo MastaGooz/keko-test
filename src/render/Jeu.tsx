@@ -54,6 +54,7 @@ import {
   disponibles,
   garderPossedeesPartout,
   likesDeLaMain,
+  likesDuDeck,
   valeurParRarete,
   supprimerDeck,
   renommerDeck,
@@ -763,6 +764,7 @@ export function Jeu(): React.ReactElement {
                   onRenommer: (nom: string) => poserDecks((ds) => renommerDeck(ds, deckEdite, nom)),
                   edite: deckEdite,
                   lieu: lieuDe(edite.lieu)?.nom ?? null,
+                  puissance: valeur === null ? null : likesDuDeck(edite, valeur),
                   onRetour: () => aller('decks'),
                   // SUPPRIMÉ, ON REVIENT AUX ÉTUIS : il n'y a plus rien à modifier ici.
                   onSupprimer: () => {

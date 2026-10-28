@@ -12,9 +12,10 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { RARETES_EMOJI, type CarteEmoji } from '../logic/emoji/types.ts'
-import { DECK, DECKS_MAX, nomDuDeck, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
+import { DECK, DECKS_MAX, likesDuDeck, nomDuDeck, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { teinteDuCran } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
+import { IconeLike } from './Jeu.tsx'
 
 const VERSION = encodeURIComponent(__BUILD_TIME__)
 const url = (chemin: string): string => `${import.meta.env.BASE_URL}${chemin}?v=${VERSION}`
@@ -159,6 +160,12 @@ export function PageDecks({
                 <span className="etui-nom">{nomDuDeck(d, i)}</span>
                 {/* LA FENÊTRE : la carte vedette sur son camp ; vide, le symbole du jeu. */}
                 <FenetreDEtui vedette={vedette} />
+                {/* LA PUISSANCE DU DECK (Keko : « un score de puissance ») : sans le bonus du lieu. */}
+                {valeur !== null && d.cartes.length > 0 && (
+                  <span className="etui-puissance">
+                    <IconeLike /> {likesDuDeck(d, valeur)}
+                  </span>
+                )}
                 <span className={`etui-compte${d.cartes.length < DECK.taille ? ' etui-incomplet' : ''}`}>
                   {d.cartes.length < DECK.taille ? `${d.cartes.length}/${DECK.taille} · incomplet` : 'Complet'}
                 </span>
