@@ -271,6 +271,41 @@
   gap: 0.55rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
+  position: relative;
+}
+
+/* CE QUE L'ŒIL VIENT DE FAIRE, au doigt : une pastille sous la ligne, posée
+   par-dessus la grille (rien ne bouge), qui s'efface seule. */
+.oeil-message {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #3a2416;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: oeil-message 2s ease both;
+}
+
+@keyframes oeil-message {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .collection-recherche {

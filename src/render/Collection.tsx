@@ -1054,6 +1054,15 @@ export function PageCollection({
   // qu'on compose tient s'efface, toutes versions ; une version qu'un autre
   // deck a prise aussi. Un bouton à lui, hors du panneau des filtres (Keko).
   const [sansAttribuees, setSansAttribuees] = useState(false)
+  // AU DOIGT, PAS DE BULLE AU SURVOL (Keko : « sur tel on n'a pas l'info-bulle
+  // de ce que fait le bouton ») : chaque tape dit l'état pendant deux secondes.
+  // `n` relance l'apparition à chaque tape.
+  const [ditOeil, setDitOeil] = useState<{ n: number; texte: string } | null>(null)
+  useEffect(() => {
+    if (ditOeil === null) return
+    const t = window.setTimeout(() => setDitOeil(null), 2000)
+    return () => clearTimeout(t)
+  }, [ditOeil])
   const [panneau, setPanneau] = useState(false)
   const actifs = raretes.size + races.size + roles.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
@@ -1447,7 +1456,12 @@ export function PageCollection({
                   aria-pressed={sansAttribuees}
                   aria-label="Masquer les cartes attribuées"
                   data-bulle="Masquer les cartes attribuées"
-                  onClick={() => setSansAttribuees((n) => !n)}
+                  onClick={() => {
+                    const masque = !sansAttribuees
+                    setSansAttribuees(masque)
+                    if (window.matchMedia('(hover: none)').matches)
+                      setDitOeil((d) => ({ n: (d?.n ?? 0) + 1, texte: masque ? 'Cartes attribuées masquées' : 'Cartes attribuées affichées' }))
+                  }}
                 >
                   {/* UN ŒIL, BARRÉ QUAND C'EST COCHÉ (Keko) : les cartes attribuées sont masquées. */}
                   <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1459,6 +1473,11 @@ export function PageCollection({
               )}
               <BoutonFiltres actifs={actifs} onOuvrir={() => setPanneau(true)} />
             </div>
+            {ditOeil !== null && (
+              <p key={ditOeil.n} className="oeil-message" role="status">
+                {ditOeil.texte}
+              </p>
+            )}
           </div>
         )}
         {panneau && (

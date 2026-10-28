@@ -7042,6 +7042,8 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 **La tête de « Ma collection » ne dit que « 59 / 118 cartes »** (28/10, Keko : « enlève l'indication du nombre de paquets et de cartes total, et remplace personnages par cartes ») : partis, le nombre d'exemplaires et celui des paquets ouverts (`collection.paquets` reste compté).
 
+**L'œil se dit au doigt** (28/10, Keko : « sur tel on n'a pas l'info-bulle de ce que fait le bouton » ; choisi : un message bref à la tape) : sans survol (`(hover: none)`), chaque tape sur l'œil pose deux secondes, sous la ligne et par-dessus la grille, « Cartes attribuées masquées » ou « … affichées » (`ditOeil`, `.oeil-message`). La souris garde sa bulle. Mesuré au toucher émulé : le message paraît, puis part.
+
 **Le niveau dans les filtres** (27/10, Keko : « ce serait bien d'ajouter le niveau dans les filtres ») : une section « Niveau » sous « Rareté », cinq puces 1 à 5, plusieurs à la fois comme les raretés ; c'est le niveau du personnage (`niveauDuPersonnageDe`), toutes versions ensemble. Mesuré : trois personnages posés aux niveaux 3, 3 et 5 sur 118 → 1 : 115, 3 : 2, 5 : 1, 2 : 0.
 
 **Les puces du niveau en étoiles** (27/10, Keko : « il faudrait l'afficher en étoiles je pense ») : comme sur la carte, une étoile d'or par niveau gagné (★ … ★★★★) ; le niveau 1, qui n'en porte aucune, en étoile creuse ☆. Les cinq tiennent sur une ligne à 390 px.
