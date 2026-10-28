@@ -3479,8 +3479,9 @@ span.jouer-pile-dos {
   filter: drop-shadow(0 0.08rem 0.25rem rgba(14, 6, 40, 0.7));
 }
 
+/* Le solde d'or en BLANC (Keko) : la pièce dit déjà l'or. */
 .monnaie-or b {
-  color: #ffc61f;
+  color: #fffaf0;
 }
 
 .lieux {
