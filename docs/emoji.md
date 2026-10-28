@@ -7036,6 +7036,8 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 **Les étuis sans couture** (28/10, Keko : « enlève le contour en pointillé sur les decks pour voir ») : `peindreDosEmoji` prend `couture` (vrai par défaut), l'étui le passe à faux ; le dos des cartes et le sachet gardent la leur. *À l'essai.*
 
+**Un étui plein dit « Complet »** (28/10, Keko : « plutôt que mettre 30 cartes sur le deck, marque complet ») ; l'incomplet garde « 12/30 · incomplet ».
+
 **Le niveau dans les filtres** (27/10, Keko : « ce serait bien d'ajouter le niveau dans les filtres ») : une section « Niveau » sous « Rareté », cinq puces 1 à 5, plusieurs à la fois comme les raretés ; c'est le niveau du personnage (`niveauDuPersonnageDe`), toutes versions ensemble. Mesuré : trois personnages posés aux niveaux 3, 3 et 5 sur 118 → 1 : 115, 3 : 2, 5 : 1, 2 : 0.
 
 **Les puces du niveau en étoiles** (27/10, Keko : « il faudrait l'afficher en étoiles je pense ») : comme sur la carte, une étoile d'or par niveau gagné (★ … ★★★★) ; le niveau 1, qui n'en porte aucune, en étoile creuse ☆. Les cinq tiennent sur une ligne à 390 px.

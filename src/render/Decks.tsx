@@ -128,7 +128,7 @@ export function PageDecks({
                 </span>
                 <span className="etui-nom">{nomDuDeck(d, i)}</span>
                 <span className={`etui-compte${d.cartes.length < DECK.taille ? ' etui-incomplet' : ''}`}>
-                  {d.cartes.length < DECK.taille ? `${d.cartes.length}/${DECK.taille} · incomplet` : `${DECK.taille} cartes`}
+                  {d.cartes.length < DECK.taille ? `${d.cartes.length}/${DECK.taille} · incomplet` : 'Complet'}
                 </span>
               </button>
             )
