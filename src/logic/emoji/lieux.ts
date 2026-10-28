@@ -14,6 +14,15 @@
  * *Les chiffres sont de moi, à rejuger* (Keko : « oui, de toi ») : une jauge
  * de 100 rend 10 or, un lieu coûte 150 or.
  *
+ * **LES PALIERS DE L'HEURE** (Keko, 28/10) : chaque jauge remplie dans l'heure
+ * rend plus que la précédente (`hausse` par palier), et tout repart du premier
+ * palier à l'heure pleine (`FENETRE`, calée sur l'horloge). *La récompense
+ * dépend de la VITESSE du deck, pas du temps passé* : « certains loots ne
+ * devraient être accessibles qu'aux joueurs puissants ; avec le système
+ * actuel, n'importe quel joueur peut finir un lieu avec suffisamment de
+ * temps ». **Hors ligne, chaque heure compte entière** (Keko : « oui, on
+ * continue en l'absence du joueur ») : chaque main tombe dans SA fenêtre.
+ *
  * **Pur** : l'or, les lieux ouverts et les jauges sont un état qu'on lit sans
  * confiance (`lireLieux`) ; le temps ne passe pas ici, c'est le deck qui joue
  * (`decksAJour`) et sa puissance qui arrive (`remplirLaJauge`).
@@ -30,14 +39,19 @@ export interface Lieu {
   readonly prix: number
   /** La puissance qu'il faut pour remplir sa jauge… */
   readonly jauge: number
-  /** … et l'or qu'elle rend, pleine. */
+  /** … et l'or qu'elle rend, pleine, au premier palier de l'heure… */
   readonly or: number
+  /** … plus ceci par palier déjà franchi dans l'heure. */
+  readonly hausse: number
 }
 
+/** LA FENÊTRE DES PALIERS : une heure, calée sur l'horloge (14 h, 15 h…). */
+export const FENETRE = 60 * 60 * 1000
+
 export const LIEUX: readonly Lieu[] = [
-  { id: 'taverne', nom: 'La Taverne', bonus: null, prix: 0, jauge: 100, or: 10 },
-  { id: 'mine', nom: 'La Mine gobeline', bonus: { role: 'soutien', plus: 1 }, prix: 150, jauge: 100, or: 10 },
-  { id: 'arene', nom: "L'Arène", bonus: { role: 'melee', plus: 1 }, prix: 150, jauge: 100, or: 10 },
+  { id: 'taverne', nom: 'La Taverne', bonus: null, prix: 0, jauge: 100, or: 10, hausse: 1 },
+  { id: 'mine', nom: 'La Mine gobeline', bonus: { role: 'soutien', plus: 1 }, prix: 150, jauge: 100, or: 10, hausse: 1 },
+  { id: 'arene', nom: "L'Arène", bonus: { role: 'melee', plus: 1 }, prix: 150, jauge: 100, or: 10, hausse: 1 },
 ]
 
 export const IDS_LIEUX: readonly string[] = LIEUX.map((l) => l.id)
@@ -46,15 +60,40 @@ export function lieuDe(id: string | undefined): Lieu | undefined {
   return id === undefined ? undefined : LIEUX.find((l) => l.id === id)
 }
 
-/** Ce que le joueur a : son or, les lieux ouverts, la puissance déjà dans chaque jauge. */
+/** Combien de jauges un lieu a remplies dans quelle fenêtre (son numéro : `floor(t / FENETRE)`). */
+export interface Palier {
+  readonly fenetre: number
+  readonly n: number
+}
+
+/** Ce que le joueur a : son or, les lieux ouverts, la puissance déjà dans chaque jauge, les paliers de l'heure. */
 export interface EtatLieux {
   readonly or: number
   readonly ouverts: readonly string[]
   readonly jauges: Readonly<Record<string, number>>
+  readonly paliers: Readonly<Record<string, Palier>>
 }
 
 export function lieuxNeufs(): EtatLieux {
-  return { or: 0, ouverts: LIEUX.filter((l) => l.prix === 0).map((l) => l.id), jauges: {} }
+  return { or: 0, ouverts: LIEUX.filter((l) => l.prix === 0).map((l) => l.id), jauges: {}, paliers: {} }
+}
+
+export const fenetreDe = (t: number): number => Math.floor(t / FENETRE)
+
+/** Les jauges déjà remplies par ce lieu dans la fenêtre de `t` (zéro : une heure neuve). */
+export function palierDe(e: EtatLieux, id: string, t: number): number {
+  const p = e.paliers[id]
+  return p !== undefined && p.fenetre === fenetreDe(t) ? p.n : 0
+}
+
+/** L'or de la PROCHAINE jauge pleine, après `n` remplies dans l'heure. */
+export function orDuPalier(lieu: Lieu, n: number): number {
+  return lieu.or + lieu.hausse * n
+}
+
+/** Dans combien de millisecondes les paliers repartent du premier. */
+export function remiseDans(t: number): number {
+  return (fenetreDe(t) + 1) * FENETRE - t
 }
 
 export function estOuvert(e: EtatLieux, id: string): boolean {
@@ -62,19 +101,28 @@ export function estOuvert(e: EtatLieux, id: string): boolean {
 }
 
 /**
- * LA PUISSANCE JOUÉE DANS UN LIEU REMPLIT SA JAUGE ; chaque fois qu'elle est
- * pleine, elle rend son or et repart de ce qui dépasse. Rend l'état neuf,
- * l'or gagné et le nombre de jauges remplies. Un lieu fermé ou inconnu ne
- * prend rien.
+ * LA PUISSANCE JOUÉE DANS UN LIEU, À L'INSTANT `quand`, REMPLIT SA JAUGE ;
+ * chaque fois qu'elle est pleine, elle rend l'or de son palier dans l'heure
+ * de `quand` (`orDuPalier`), monte d'un palier, et repart de ce qui dépasse.
+ * Rend l'état neuf, l'or gagné et le nombre de jauges remplies. Un lieu fermé
+ * ou inconnu ne prend rien. *Les mains se versent dans l'ordre du temps.*
  */
-export function remplirLaJauge(e: EtatLieux, id: string, puissance: number): { etat: EtatLieux; or: number; pleines: number } {
+export function remplirLaJauge(e: EtatLieux, id: string, puissance: number, quand: number): { etat: EtatLieux; or: number; pleines: number } {
   const lieu = lieuDe(id)
   if (lieu === undefined || !estOuvert(e, id) || !(puissance > 0)) return { etat: e, or: 0, pleines: 0 }
   const total = (e.jauges[id] ?? 0) + Math.floor(puissance)
   const pleines = Math.floor(total / lieu.jauge)
-  const or = pleines * lieu.or
+  if (pleines === 0) return { etat: { ...e, jauges: { ...e.jauges, [id]: total } }, or: 0, pleines: 0 }
+  const avant = palierDe(e, id, quand)
+  // Les paliers avant…+pleines-1 : n·or + hausse·(avant + … + avant+pleines-1).
+  const or = pleines * lieu.or + lieu.hausse * (pleines * avant + (pleines * (pleines - 1)) / 2)
   return {
-    etat: { ...e, or: e.or + or, jauges: { ...e.jauges, [id]: total - pleines * lieu.jauge } },
+    etat: {
+      ...e,
+      or: e.or + or,
+      jauges: { ...e.jauges, [id]: total - pleines * lieu.jauge },
+      paliers: { ...e.paliers, [id]: { fenetre: fenetreDe(quand), n: avant + pleines } },
+    },
     or,
     pleines,
   }
@@ -117,5 +165,13 @@ export function lireLieux(brut: unknown): EtatLieux {
     const v = j[l.id]
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) jauges[l.id] = Math.min(Math.floor(v), l.jauge - 1)
   }
-  return { or, ouverts, jauges }
+  const paliers: Record<string, Palier> = {}
+  const p = typeof o.paliers === 'object' && o.paliers !== null ? (o.paliers as Record<string, unknown>) : {}
+  for (const l of LIEUX) {
+    const v = p[l.id] as Record<string, unknown> | null | undefined
+    if (typeof v !== 'object' || v === null) continue
+    const { fenetre, n } = v
+    if (Number.isInteger(fenetre) && Number.isInteger(n) && (n as number) > 0) paliers[l.id] = { fenetre: fenetre as number, n: n as number }
+  }
+  return { or, ouverts, jauges, paliers }
 }

@@ -1,5 +1,5 @@
 // LA VÉRIF DES LIEUX : `node src/logic/emoji/lieux.verif.ts` — sans navigateur.
-import { IDS_LIEUX, LIEUX, avecOr, estOuvert, lieuDe, lieuxNeufs, lireLieux, ouvrirLeLieu, remplirLaJauge, valeurDansLeLieu } from './lieux.ts'
+import { FENETRE, IDS_LIEUX, LIEUX, avecOr, estOuvert, lieuDe, lieuxNeufs, lireLieux, orDuPalier, ouvrirLeLieu, palierDe, remiseDans, remplirLaJauge, valeurDansLeLieu } from './lieux.ts'
 import { DECKS_MAX, type EntreeDeck } from './deck.ts'
 import type { RoleCarte } from './types.ts'
 
@@ -16,15 +16,27 @@ verifier('trois lieux, un par deck (Keko)', LIEUX.length === 3 && LIEUX.length =
 const neuf = lieuxNeufs()
 verifier('au départ : la Taverne seule ouverte, pas d’or', neuf.or === 0 && neuf.ouverts.join() === 'taverne' && estOuvert(neuf, 'taverne') && !estOuvert(neuf, 'mine'))
 
-// LA JAUGE
-const un = remplirLaJauge(neuf, 'taverne', 40)
+// LA JAUGE — à dix minutes d'une heure pleine.
+const T = 500_000 * FENETRE + 10 * 60 * 1000
+const un = remplirLaJauge(neuf, 'taverne', 40, T)
 verifier('de la puissance remplit la jauge, sans or tant qu’elle n’est pas pleine', un.etat.jauges.taverne === 40 && un.or === 0 && un.etat.or === 0)
-const plein = remplirLaJauge(un.etat, 'taverne', taverne.jauge - 40 + 7)
+const plein = remplirLaJauge(un.etat, 'taverne', taverne.jauge - 40 + 7, T)
 verifier('pleine, elle rend son or et garde ce qui dépasse', plein.or === taverne.or && plein.pleines === 1 && plein.etat.or === taverne.or && plein.etat.jauges.taverne === 7)
-const trois = remplirLaJauge(neuf, 'taverne', taverne.jauge * 3 + 1)
-verifier('plusieurs jauges d’un coup (le temps hors ligne)', trois.pleines === 3 && trois.etat.or === taverne.or * 3 && trois.etat.jauges.taverne === 1)
-verifier('un lieu fermé ne prend rien', remplirLaJauge(neuf, 'mine', 500).etat === neuf)
-verifier('un lieu inconnu, une puissance nulle : rien', remplirLaJauge(neuf, 'lune', 50).etat === neuf && remplirLaJauge(neuf, 'taverne', 0).etat === neuf)
+const trois = remplirLaJauge(neuf, 'taverne', taverne.jauge * 3 + 1, T)
+verifier('plusieurs jauges d’un coup : chacune à son palier', trois.pleines === 3 && trois.or === orDuPalier(taverne, 0) + orDuPalier(taverne, 1) + orDuPalier(taverne, 2) && trois.etat.jauges.taverne === 1)
+
+// LES PALIERS DE L'HEURE
+verifier('chaque palier rend plus que le précédent', orDuPalier(taverne, 1) > orDuPalier(taverne, 0) && orDuPalier(taverne, 0) === taverne.or)
+verifier('trois jauges : palier 3 dans l’heure', palierDe(trois.etat, 'taverne', T) === 3)
+const quatre = remplirLaJauge(trois.etat, 'taverne', taverne.jauge, T + 1000)
+verifier('la suivante dans la même heure rend le palier 4', quatre.or === orDuPalier(taverne, 3) && palierDe(quatre.etat, 'taverne', T) === 4)
+const apres = T + remiseDans(T)
+verifier('l’heure pleine remet les paliers à zéro', remiseDans(T) === FENETRE - 10 * 60 * 1000 && palierDe(quatre.etat, 'taverne', apres) === 0)
+const neuve = remplirLaJauge(quatre.etat, 'taverne', taverne.jauge, apres)
+verifier('dans l’heure neuve, on repart du premier palier', neuve.or === taverne.or && palierDe(neuve.etat, 'taverne', apres) === 1)
+verifier('un lieu à part a ses propres paliers', palierDe(quatre.etat, 'mine', T) === 0)
+verifier('un lieu fermé ne prend rien', remplirLaJauge(neuf, 'mine', 500, T).etat === neuf)
+verifier('un lieu inconnu, une puissance nulle : rien', remplirLaJauge(neuf, 'lune', 50, T).etat === neuf && remplirLaJauge(neuf, 'taverne', 0, T).etat === neuf)
 
 // L'ACHAT
 const pauvre = avecOr(neuf, mine.prix - 1)
@@ -49,6 +61,9 @@ const relu = lireLieux(JSON.parse(JSON.stringify(plein.etat)))
 verifier('l’état gardé se relit', relu.or === plein.etat.or && relu.ouverts.join() === 'taverne' && relu.jauges.taverne === 7)
 verifier('abîmé, il repart neuf', lireLieux('x').ouverts.join() === 'taverne' && lireLieux(null).or === 0)
 verifier('la Taverne est toujours ouverte, un lieu inconnu est écarté', lireLieux({ ouverts: ['arene', 'lune'] }).ouverts.join() === 'taverne,arene')
+const reluP = lireLieux(JSON.parse(JSON.stringify(quatre.etat)))
+verifier('les paliers se relisent', palierDe(reluP, 'taverne', T) === 4)
+verifier('un palier abîmé est écarté', Object.keys(lireLieux({ paliers: { taverne: { fenetre: 'x', n: 2 }, mine: { fenetre: 3, n: -1 } } }).paliers).length === 0)
 verifier('une jauge relue reste sous son plein', lireLieux({ jauges: { taverne: 9999 } }).jauges.taverne === taverne.jauge - 1)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)

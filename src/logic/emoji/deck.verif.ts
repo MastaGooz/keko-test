@@ -98,6 +98,7 @@ verifier('un cran inconnu vaut une commune', parCran(S('?')) === DECK.likesCommu
 const avecNiveau = valeurParRarete((id) => (id === 'r' ? 'rare' : undefined), (id) => (id === 'r' ? 4 : 1))
 verifier('chaque niveau au-delà du premier ajoute un Like', avecNiveau(S('r')) === parCran(S('r')) + 3 * DECK.likesParNiveau && avecNiveau(S('c')) === parCran(S('c')))
 verifier('la main somme ses cartes', likesDeLaMain([S('c'), S('r'), H('l')], parCran) === 1 + 3 + 5)
+verifier('chaque main dit sa puissance, la première à une cadence du départ', deuxEtDemi.parMain.length === deuxEtDemi.mains && deuxEtDemi.parMain.reduce((x, y) => x + y, 0) === deuxEtDemi.likes && deuxEtDemi.premiere === T0 + DECK.cadence)
 verifier('le temps joue avec la valeur injectée', deckAJour(d, T0 + DECK.cadence, () => 4).likes === DECK.main * 4)
 
 // LA POSSESSION

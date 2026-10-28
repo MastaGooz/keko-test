@@ -329,7 +329,13 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   les autres s'achètent en or** (`ouvrirLeLieu`) ; **chaque lieu favorise un
   rôle** (`valeurDansLeLieu` : la Mine +1 aux soutiens, l'Arène +1 à la
   mêlée). Trois lieux, un par deck. Jauge 100 → 10 or, lieu à 150 or : de
-  moi, à rejuger. **« Jouer » est une CARTE** (Keko : « sous la forme d'une map, avec des
+  moi, à rejuger. **LES PALIERS DE L'HEURE** (Keko : « certains loots ne
+  devraient être accessibles qu'aux joueurs puissants ») : chaque jauge
+  remplie dans l'heure rend `hausse` (1) or de plus que la précédente, tout
+  repart du palier 1 à l'heure pleine (`FENETRE`, `palierDe`, `orDuPalier`) —
+  *la récompense suit la VITESSE du deck* ; hors ligne, chaque main tombe dans
+  SA fenêtre (`parMain`, `premiere` de `deckAJour`). Prévue : l'ARMURE d'un
+  lieu (une main sous X ne remplit rien). **« Jouer » est une CARTE** (Keko : « sous la forme d'une map, avec des
   chemins ») : les lieux en petit (`public/lieux/`, tri de Keko), posés en
   zigzag (`PLACE_SUR_LA_CARTE`), reliés par un chemin pointillé qui monte de
   la Taverne ; le nom au-dessus, la jauge dessous, l'ÉTUI du deck à côté (une

@@ -32,7 +32,7 @@ import {
   type EntreeDeck,
   type ValeurDeCarte,
 } from '../logic/emoji/deck.ts'
-import { LIEUX, estOuvert, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
+import { LIEUX, estOuvert, orDuPalier, palierDe, remiseDans, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
 import { EtuiMiniature } from './Decks.tsx'
 import { IconeLike, IconeOr } from './Jeu.tsx'
@@ -166,6 +166,7 @@ export function PageJouer({
             </button>
             <h1 className="collection-titre">{lieuVu.nom}</h1>
             <p className="collection-compte">{texteDuBonus(lieuVu)}</p>
+            <PaliersDeLHeure lieu={lieuVu} lieux={lieux} />
             <div className="lieu-scene lieu-scene-vue">
               <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(lieuVu.id)} />
               <div className="lieu-droite">
@@ -298,6 +299,8 @@ function JaugeDuLieu({
   gainAuDepart: { numero: number; or: number } | undefined
 }): React.ReactElement {
   const dedans = lieux.jauges[lieu.id] ?? 0
+  // L'OR DE LA PROCHAINE JAUGE, à son palier de l'heure (affichage : l'horloge est lue ici).
+  const prochain = orDuPalier(lieu, palierDe(lieux, lieu.id, Date.now()))
   const neuf = gain !== undefined && gain.numero > (gainAuDepart?.numero ?? 0)
   return (
     <div className="lieu-jauge-place">
@@ -305,7 +308,7 @@ function JaugeDuLieu({
         <span style={{ width: `${((dedans / lieu.jauge) * 100).toFixed(1)}%` }} />
       </div>
       <p className="lieu-jauge-texte">
-        <IconeLike /> <b>{dedans}</b> / {lieu.jauge} → <IconeOr /> {lieu.or}
+        <IconeLike /> <b>{dedans}</b> / {lieu.jauge} → <IconeOr /> {prochain}
       </p>
       {neuf && (
         <span key={gain.numero} className="lieu-gain" aria-live="polite">
@@ -313,6 +316,26 @@ function JaugeDuLieu({
         </span>
       )}
     </div>
+  )
+}
+
+/**
+ * LES PALIERS DE L'HEURE (Keko, 28/10) : chaque jauge remplie dans l'heure rend
+ * plus que la précédente, et tout repart du premier palier à l'heure pleine.
+ * Le palier atteint, l'or de la prochaine jauge, et quand ça retombe.
+ */
+function PaliersDeLHeure({ lieu, lieux }: { lieu: Lieu; lieux: EtatLieux }): React.ReactElement {
+  const [maintenant, setMaintenant] = useState(() => Date.now())
+  useEffect(() => {
+    const t = window.setInterval(() => setMaintenant(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const n = palierDe(lieux, lieu.id, maintenant)
+  const minutes = Math.ceil(remiseDans(maintenant) / 60000)
+  return (
+    <p className="lieu-paliers">
+      Palier <b>{n + 1}</b> · prochaine jauge <IconeOr /> <b>{orDuPalier(lieu, n)}</b> · retour au palier 1 dans <b>{minutes} min</b>
+    </p>
   )
 }
 

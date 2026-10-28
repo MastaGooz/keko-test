@@ -4091,3 +4091,23 @@ span.jouer-pile-dos {
   right: auto;
   left: -0.55rem;
 }
+
+/* LES PALIERS DE L'HEURE, sous le bonus dans l'écran du lieu. */
+.lieu-paliers {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.lieu-paliers b {
+  color: #ffd45e;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lieu-paliers .icone-or {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+}

@@ -229,6 +229,13 @@ export interface MainsJouees {
   readonly likes: number
   /** La dernière main jouée, celle qu'on montre ; `null` si aucune. */
   readonly derniere: readonly EntreeDeck[] | null
+  /**
+   * LA PUISSANCE DE CHAQUE MAIN, dans l'ordre, et l'heure de la première (les
+   * suivantes à une `cadence` d'écart) : les lieux rangent chaque main dans
+   * SA fenêtre d'une heure, même rejouée hors ligne (`remplirLaJauge`).
+   */
+  readonly parMain: readonly number[]
+  readonly premiere: number
 }
 
 /**
@@ -237,7 +244,7 @@ export interface MainsJouees {
  * le reste est perdu et la cadence repart de maintenant.
  */
 export function deckAJour(d: Deck, maintenant: number, valeur: ValeurDeCarte): MainsJouees {
-  const rien = { deck: d, mains: 0, likes: 0, derniere: null }
+  const rien = { deck: d, mains: 0, likes: 0, derniere: null, parMain: [], premiere: maintenant }
   if (d.partie === null) return rien
   // UNE HORLOGE QUI RECULE ne joue rien et ne doit rien casser : on repart de maintenant.
   if (maintenant < d.partie.depuis) return { ...rien, deck: { ...d, partie: { ...d.partie, depuis: maintenant } } }
@@ -248,10 +255,13 @@ export function deckAJour(d: Deck, maintenant: number, valeur: ValeurDeCarte): M
   let { graine, jouees } = d.partie
   let likes = 0
   let derniere: readonly EntreeDeck[] | null = null
+  const parMain: number[] = []
   let ordre = melange(d.cartes, graine)
   for (let i = 0; i < mains; i++) {
     const main = ordre.slice(jouees, jouees + DECK.main)
-    likes += likesDeLaMain(main, valeur)
+    const l = likesDeLaMain(main, valeur)
+    likes += l
+    parMain.push(l)
     derniere = main
     jouees += DECK.main
     if (jouees >= ordre.length) {
@@ -261,7 +271,7 @@ export function deckAJour(d: Deck, maintenant: number, valeur: ValeurDeCarte): M
     }
   }
   const depuis = borne ? maintenant : d.partie.depuis + mains * DECK.cadence
-  return { deck: { ...d, partie: { graine, jouees, depuis } }, mains, likes, derniere }
+  return { deck: { ...d, partie: { graine, jouees, depuis } }, mains, likes, derniere, parMain, premiere: d.partie.depuis + DECK.cadence }
 }
 
 /** Dans combien de millisecondes tombe la prochaine main ; `null` si le deck ne joue pas. */
@@ -514,7 +524,7 @@ export function decksAJour(ds: Decks, maintenant: number, valeurDe: (d: Deck) =>
     if (d.partie === null || d.lieu === undefined) return d
     const r = deckAJour(d, maintenant, valeurDe(d))
     if (r.deck !== d) change = true
-    if (r.mains > 0) joues.push({ i, lieu: d.lieu, mains: r.mains, likes: r.likes, derniere: r.derniere })
+    if (r.mains > 0) joues.push({ i, lieu: d.lieu, mains: r.mains, likes: r.likes, derniere: r.derniere, parMain: r.parMain, premiere: r.premiere })
     return r.deck
   })
   return { decks: change ? { liste } : ds, joues }

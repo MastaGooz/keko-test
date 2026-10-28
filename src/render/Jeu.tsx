@@ -418,10 +418,15 @@ export function Jeu(): React.ReactElement {
     // LA PUISSANCE ENTRE DANS LA JAUGE DE SON LIEU ; une jauge pleine rend son or.
     let e = lieux
     const gagne: Record<string, number> = {}
-    for (const j of r.joues) {
-      const g = remplirLaJauge(e, j.lieu, j.likes)
+    // CHAQUE MAIN À SON HEURE : hors ligne, chaque heure a ses paliers. Les
+    // mains de tous les decks se versent dans l'ordre du temps.
+    const versements = r.joues
+      .flatMap((j) => j.parMain.map((likes, k) => ({ lieu: j.lieu, likes, quand: j.premiere + k * DECK.cadence })))
+      .sort((a, b) => a.quand - b.quand)
+    for (const v of versements) {
+      const g = remplirLaJauge(e, v.lieu, v.likes, v.quand)
       e = g.etat
-      if (g.or > 0) gagne[j.lieu] = (gagne[j.lieu] ?? 0) + g.or
+      if (g.or > 0) gagne[v.lieu] = (gagne[v.lieu] ?? 0) + g.or
     }
     poserLieux(() => e)
     if (Object.keys(gagne).length > 0)
