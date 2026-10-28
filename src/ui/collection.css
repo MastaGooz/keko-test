@@ -3702,6 +3702,8 @@ span.jouer-pile-dos {
   display: flex;
   flex-direction: column;
   max-height: calc(100dvh - 32px);
+  /* PLUS LARGE SUR PC (Keko) : autant de colonnes que la largeur en tient. */
+  width: min(40rem, 100%);
 }
 
 .lieu-choix-liste {
@@ -3709,7 +3711,7 @@ span.jouer-pile-dos {
   overflow-y: auto;
   overscroll-behavior: contain;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
   gap: 0.5rem;
   margin-top: 0.9rem;
 }
