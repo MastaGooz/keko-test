@@ -324,7 +324,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **LES LIEUX** (`logic/emoji/lieux.ts`, `render/Deck.tsx`, Keko 28/10 :
   « je voudrais attaquer les lieux ») : **chaque deck joue sur un lieu**
   (`Deck.lieu`, un deck par lieu, `poserSurLieu`), tous en même temps ; il ne
-  joue que complet ET posé. **Sa puissance remplit la jauge du lieu ; pleine,
+  joue que complet ET posé, et **un deck qui devient incomplet QUITTE son lieu** (Keko ; `demarrer`). **Sa puissance remplit la jauge du lieu ; pleine,
   elle rend de l'or** (`remplirLaJauge`). **La Taverne est ouverte au départ,
   les autres s'achètent en or** (`ouvrirLeLieu`) ; **chaque lieu favorise un
   rôle** (`valeurDansLeLieu` : la Mine +1 aux soutiens, l'Arène +1 à la
