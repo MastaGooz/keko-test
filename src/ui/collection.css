@@ -3493,7 +3493,12 @@ span.jouer-pile-dos {
 
 .lieu {
   position: relative;
-  padding: 1rem 1.1rem 0.9rem;
+  /* L'IMAGE À GAUCHE, le reste à droite (Keko : « trop textuel »). */
+  display: grid;
+  grid-template-columns: 6.2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem 0.9rem 0.8rem;
   border-radius: 1rem;
   background:
     radial-gradient(ellipse at 20% 0%, rgba(255, 198, 31, 0.12), transparent 60%),
@@ -3735,4 +3740,52 @@ span.jouer-pile-dos {
 .lieu-choix-detail {
   font-size: 0.8rem;
   opacity: 0.75;
+}
+
+/* L'IMAGE DU LIEU : le dessin trié par Keko, posé sur sa lueur. */
+.lieu-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 0.35rem 0.5rem rgba(10, 4, 2, 0.55));
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lieu-ferme .lieu-image {
+  filter: grayscale(0.85) brightness(0.55) drop-shadow(0 0.35rem 0.5rem rgba(10, 4, 2, 0.55));
+}
+
+.lieu-corps {
+  min-width: 0;
+}
+
+.lieu-tete {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.lieu-jauge-texte .icone-like {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.17em;
+}
+
+.lieu-choisir {
+  padding: 0 0.85rem;
+}
+
+/* LA VUE D'UN LIEU : sa grande image à côté de son nom. */
+.lieu-vue-tete {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.4rem;
+}
+
+.lieu-image-grande {
+  width: 7.5rem;
+  flex: none;
 }

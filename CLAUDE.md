@@ -329,7 +329,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   les autres s'achètent en or** (`ouvrirLeLieu`) ; **chaque lieu favorise un
   rôle** (`valeurDansLeLieu` : la Mine +1 aux soutiens, l'Arène +1 à la
   mêlée). Trois lieux, un par deck. Jauge 100 → 10 or, lieu à 150 or : de
-  moi, à rejuger. **« Jouer » est la carte des lieux** (leur jauge, le deck
+  moi, à rejuger. **« Jouer » est la carte des lieux** (leur image — `public/lieux/`, du tri de Keko —, leur jauge, le deck
   posé, « Changer » ; fermés, « Ouvrir · 150 ») ; une tape sur un lieu montre
   son deck qui joue. Une sauvegarde d'avant les lieux met le deck qui jouait
   à la Taverne (`lireDecks`). Stockage `keko-fantasy-lieux`.

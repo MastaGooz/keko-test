@@ -52,6 +52,15 @@ export interface MainTombee {
  */
 const TEMPO = { entree: 900, parCarte: 380 } as const
 
+const VERSION = encodeURIComponent(__BUILD_TIME__)
+/**
+ * L'IMAGE D'UN LIEU (Keko : « mettre des images pour les lieux, on avait trié
+ * une catégorie lieux ; là c'est trop textuel ») : les découpes du tri de
+ * Keko (`Desktop\Style\tri\lieux`), rognées au dessin, 512 carré, dans
+ * `public/lieux/<id>.webp`.
+ */
+const imageDuLieu = (l: Lieu): string => `${import.meta.env.BASE_URL}lieux/${l.id}.webp?v=${VERSION}`
+
 /** « à la Taverne », « à l'Arène », « à la Mine gobeline ». */
 export function aLieu(l: Lieu): string {
   return `à ${l.nom.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`
@@ -59,7 +68,7 @@ export function aLieu(l: Lieu): string {
 
 /** Ce que le lieu ajoute : « +1 par carte Soutien », ou rien. */
 function texteDuBonus(l: Lieu): string {
-  return l.bonus === null ? 'Aucun bonus' : `+${l.bonus.plus} par carte ${NOM_DU_ROLE[l.bonus.role]}`
+  return l.bonus === null ? 'Sans bonus' : `+${l.bonus.plus} aux cartes ${NOM_DU_ROLE[l.bonus.role]}`
 }
 
 export function PageJouer({
@@ -132,8 +141,13 @@ export function PageJouer({
             <button type="button" className="deck-retour" onClick={() => setVu(null)}>
               ‹ Les lieux
             </button>
-            <h1 className="collection-titre">{lieuVu.nom}</h1>
-            <p className="collection-compte">{texteDuBonus(lieuVu)}</p>
+            <div className="lieu-vue-tete">
+              <img className="lieu-image lieu-image-grande" src={imageDuLieu(lieuVu)} alt="" draggable={false} />
+              <div>
+                <h1 className="collection-titre">{lieuVu.nom}</h1>
+                <p className="collection-compte">{texteDuBonus(lieuVu)}</p>
+              </div>
+            </div>
             <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} gainAuDepart={orsAuDepart.current[lieuVu.id]} />
             <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(lieuVu.id)} />
           </header>
@@ -175,7 +189,7 @@ export function PageJouer({
         <header className="collection-tete">
           <h1 className="collection-titre">Les lieux</h1>
           <p className="collection-compte">
-            <b>{lieux.ouverts.length}</b> / {LIEUX.length} ouverts · chaque deck y joue, sa puissance remplit la jauge, la jauge rend de l'or
+            <b>{lieux.ouverts.length}</b> / {LIEUX.length} ouverts
           </p>
         </header>
         <div className="lieux">
@@ -184,14 +198,17 @@ export function PageJouer({
               const manque = l.prix - lieux.or
               return (
                 <div key={l.id} className="lieu lieu-ferme">
-                  <div className="lieu-tete">
-                    <h2 className="lieu-nom">{l.nom}</h2>
-                    <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                  <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
+                  <div className="lieu-corps">
+                    <div className="lieu-tete">
+                      <h2 className="lieu-nom">{l.nom}</h2>
+                      <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                    </div>
+                    <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
+                      Ouvrir · <IconeOr /> {l.prix}
+                    </button>
+                    {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
                   </div>
-                  <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
-                    Ouvrir · <IconeOr /> {l.prix}
-                  </button>
-                  {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
                 </div>
               )
             }
@@ -201,12 +218,15 @@ export function PageJouer({
               <div key={l.id} className="lieu">
                 {/* TOUT LE LIEU S'OUVRE D'UNE TAPE ; le bouton du deck a la sienne. */}
                 <button type="button" className="lieu-voir" aria-label={`Voir ${l.nom}`} onClick={() => setVu(l.id)} />
-                <div className="lieu-tete">
-                  <h2 className="lieu-nom">{l.nom}</h2>
-                  <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
+                <div className="lieu-corps">
+                  <div className="lieu-tete">
+                    <h2 className="lieu-nom">{l.nom}</h2>
+                    <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                  </div>
+                  <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
+                  <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(l.id)} />
                 </div>
-                <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
-                <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(l.id)} />
               </div>
             )
           })}
@@ -240,7 +260,7 @@ function JaugeDuLieu({
         <span style={{ width: `${((dedans / lieu.jauge) * 100).toFixed(1)}%` }} />
       </div>
       <p className="lieu-jauge-texte">
-        <b>{dedans}</b> / {lieu.jauge} de puissance → <IconeOr /> {lieu.or}
+        <IconeLike /> <b>{dedans}</b> / {lieu.jauge} → <IconeOr /> {lieu.or}
       </p>
       {neuf && (
         <span key={gain.numero} className="lieu-gain" aria-live="polite">
