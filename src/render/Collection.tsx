@@ -1529,20 +1529,19 @@ export function PageCollection({
               ) : (
                 <h1 className="collection-titre">{deck.decks[deck.edite]?.nom ?? `Deck ${deck.edite + 1}`}</h1>
               )}
+              {/* LA PUISSANCE DU DECK, EN GRAND au bout du titre (Keko : « plus visible »
+                  que sur la ligne du compte). */}
+              {deck.puissance !== null && (
+                <span className="deck-puissance" aria-label={`Puissance ${deck.puissance}`}>
+                  <IconeLike /> {deck.puissance}
+                </span>
+              )}
             </div>
           )}
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
-                {/* LA PUISSANCE, PUIS LE COMPTE, PUIS LA BULLE (Keko, 28/10) ; pas le lieu où il joue. */}
-                {deck.puissance !== null && (
-                  <>
-                    <span className="deck-puissance">
-                      <IconeLike /> <b>{deck.puissance}</b>
-                    </span>{' '}
-                    ·{' '}
-                  </>
-                )}
+                {/* LE COMPTE PUIS LA BULLE (Keko, 28/10) ; pas le lieu où il joue. */}
                 <b>{deck.nombre}</b> / {deck.taille} cartes{' '}
                 {/* LA BULLE EN BOUT DE LIGNE (Keko). */}
                 <span className={`deck-etat${deck.nombre >= deck.taille ? '' : ' deck-etat-incomplet'}`}>

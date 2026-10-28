@@ -3009,8 +3009,7 @@ span.jouer-pile-dos {
   text-shadow: 0 0.1rem 0 #241029;
 }
 
-.etui-puissance .icone-like,
-.deck-puissance .icone-like {
+.etui-puissance .icone-like {
   width: 1em;
   height: 1em;
 }
@@ -3035,11 +3034,27 @@ span.jouer-pile-dos {
   color: #fff;
 }
 
+/* LA PUISSANCE DU DECK au bout de son titre : une pastille d'or, en grand. */
 .deck-puissance {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  vertical-align: -0.12em;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.2rem 0.75rem 0.2rem 0.4rem;
+  border: 0.12rem solid #ffc61f;
+  border-radius: 999px;
+  background: rgba(36, 16, 41, 0.75);
+  color: #ffc61f;
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1;
+  text-shadow: 0 0.1rem 0 #241029;
+}
+
+.deck-puissance .icone-like {
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .etui-compte {
