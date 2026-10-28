@@ -439,6 +439,11 @@ export function Vignette({
   // LE NIVEAU DU PERSONNAGE : la vignette se repeint quand il monte (ses étoiles, sa puissance).
   const niveau = niveauDuPersonnageDe(carte.id)
   const compte = possession === null ? 0 : compteDe(possession, variante)
+  // ASSEZ D'EXEMPLAIRES POUR LE NIVEAU SUIVANT, toutes versions ensemble (Keko :
+  // « une indication sur les cartes qu'on peut fusionner » ; choisi : une
+  // flèche d'or qui pulse).
+  const besoin = aFusionnerPour(niveau)
+  const fusionnable = possession !== null && besoin !== null && possession.n >= besoin
   const tourne = AVEC_TOURNE && anime && carte.animable
   useEffect(() => {
     const el = boite.current
@@ -601,7 +606,19 @@ export function Vignette({
         </span>
       )}
       {choix === undefined && !nue && possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
-      {compte > 1 && !nue && <span className="vignette-nombre">×{compte}</span>}
+      {!nue && (fusionnable || compte > 1) && (
+        <span className="vignette-bas-droite">
+          {fusionnable && (
+            <span className="vignette-fusion" title="Fusion possible" aria-label="Fusion possible">
+              <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V6" />
+                <path d="M6 11.5 12 5.5l6 6" />
+              </svg>
+            </span>
+          )}
+          {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
+        </span>
+      )}
       {(holo || anime) && (
         <span className="vignette-bonus">
           {holo && <span className="pastille-holo">Holo</span>}

@@ -293,7 +293,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   5. **La plus belle reste** (Keko) : la fusion emporte le simple d'abord,
   le holo animé en dernier (`exemplaireAFusionner`). On fusionne depuis la
   CARTE OUVERTE de la collection (étoiles, jauge des exemplaires, « Fusionner
-  N cartes » éteint tant qu'il en manque). **La fusion FRAPPE la carte**
+  N cartes » éteint tant qu'il en manque). **Une flèche d'or qui pulse** marque, sur les vignettes, les cartes qu'on peut fusionner (`.vignette-fusion`). **La fusion FRAPPE la carte**
   (`FrappeDuNiveau`, Keko : « un effet beaucoup plus juicy ») : une étoile
   d'or entre par le bord, en arc, et frappe la place exacte de l'étoile du
   nouveau niveau (`etoileDuNiveau`) — éclair, onde, gerbe d'étincelles ; À

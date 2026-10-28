@@ -572,6 +572,59 @@
   font-size: 0.8rem;
 }
 
+/* LE COIN BAS DROIT : la flèche de fusion, puis le compte de la version. */
+.vignette-bas-droite {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.3rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.vignette-bas-droite .vignette-nombre {
+  position: static;
+}
+
+/* LA FUSION EST POSSIBLE : une pastille d'or, sa flèche, qui pulse (Keko). */
+.vignette-fusion {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff1b0, #ffc61f 55%, #d99a12);
+  color: #3a2416;
+  box-shadow:
+    0 0 0 0.12rem #3a2416,
+    0 0.15rem 0.3rem rgba(20, 10, 4, 0.5);
+  animation: vignette-fusion 1.6s ease-in-out infinite;
+}
+
+.vignette-fusion svg {
+  width: 70%;
+  height: 70%;
+}
+
+@keyframes vignette-fusion {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 0.12rem #3a2416,
+      0 0.15rem 0.3rem rgba(20, 10, 4, 0.5),
+      0 0 0 0 rgba(255, 198, 31, 0);
+  }
+  50% {
+    transform: scale(1.12) translateY(-0.08rem);
+    box-shadow:
+      0 0 0 0.12rem #3a2416,
+      0 0.15rem 0.3rem rgba(20, 10, 4, 0.5),
+      0 0 0.7rem 0.15rem rgba(255, 198, 31, 0.75);
+  }
+}
+
 .vignette-bonus {
   position: absolute;
   left: -0.25rem;
