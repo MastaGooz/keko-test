@@ -23,7 +23,7 @@ import { NoToneMapping, type Group } from 'three'
 import type { CarteEmoji, RaceCarte, RareteEmoji, RoleCarte } from '../logic/emoji/types.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, RACES, RARETES_EMOJI, ROLES } from '../logic/emoji/types.ts'
 import type { Collection, Possession, Variante } from '../logic/emoji/collection.ts'
-import { VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import { VARIANTES, aFusionnerPour, compteDe, exemplaireDe, fusionner } from '../logic/emoji/collection.ts'
 import { NOM_DECK_MAX } from '../logic/emoji/deck.ts'
 import { AMBIANCE, type SujetPeint, etoileDuNiveau, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
@@ -1243,7 +1243,6 @@ export function PageCollection({
 
   const total = catalogue?.length ?? 0
   const part = deck !== undefined ? deck.nombre / deck.taille : total === 0 ? 0 : possedees.length / total
-  const exemplaires = nombreDExemplaires(collection)
   /**
    * LE DECK D'UN COUP D'ŒIL (Keko : « on ne peut pas visualiser son deck d'un
    * coup d'oeil ») : ses cartes du plus rare au plus commun, puis ses places
@@ -1416,8 +1415,8 @@ export function PageCollection({
               </>
             ) : (
               <>
-                <b>{possedees.length}</b> / {total} personnages · {exemplaires} carte{exemplaires > 1 ? 's' : ''} ·{' '}
-                {collection.paquets} paquet{collection.paquets > 1 ? 's' : ''}
+                {/* LE COMPTE SEUL (Keko, 28/10 : ni le total des exemplaires, ni les paquets ouverts). */}
+                <b>{possedees.length}</b> / {total} cartes
               </>
             )}
           </p>

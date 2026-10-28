@@ -7040,6 +7040,8 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 **« Mes decks » ne dit plus lequel joue** (28/10, Keko : « enlève l'indication sur lequel deck joue », puis « les deux ») : ni le ruban « Joue », ni « · Horde joue » sous le compte, ni la lueur d'or de l'étui.
 
+**La tête de « Ma collection » ne dit que « 59 / 118 cartes »** (28/10, Keko : « enlève l'indication du nombre de paquets et de cartes total, et remplace personnages par cartes ») : partis, le nombre d'exemplaires et celui des paquets ouverts (`collection.paquets` reste compté).
+
 **Le niveau dans les filtres** (27/10, Keko : « ce serait bien d'ajouter le niveau dans les filtres ») : une section « Niveau » sous « Rareté », cinq puces 1 à 5, plusieurs à la fois comme les raretés ; c'est le niveau du personnage (`niveauDuPersonnageDe`), toutes versions ensemble. Mesuré : trois personnages posés aux niveaux 3, 3 et 5 sur 118 → 1 : 115, 3 : 2, 5 : 1, 2 : 0.
 
 **Les puces du niveau en étoiles** (27/10, Keko : « il faudrait l'afficher en étoiles je pense ») : comme sur la carte, une étoile d'or par niveau gagné (★ … ★★★★) ; le niveau 1, qui n'en porte aucune, en étoile creuse ☆. Les cinq tiennent sur une ligne à 390 px.
