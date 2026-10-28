@@ -1537,7 +1537,7 @@ export function PageCollection({
                 {deck.nombre >= deck.taille
                   ? deck.lieu !== null
                     ? `complet, joue à ${deck.lieu.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`
-                    : 'complet, à poser sur un lieu'
+                    : 'complet'
                   : `encore ${deck.taille - deck.nombre} à choisir`}
               </>
             ) : toutes ? (
