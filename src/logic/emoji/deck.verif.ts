@@ -4,6 +4,8 @@ import {
   DECKS_LUS_MAX,
   DECKS_MAX,
   ajouterDeck,
+  avecDecksDeTest,
+  exemplairesManquants,
   basculerCarte,
   basculerDansDeck,
   deckDuLieu,
@@ -194,6 +196,17 @@ verifier('un deck seul d’avant passe à la Taverne et continue sa partie', anc
 const avantLesLieux = lireDecks({ liste: [{ cartes: [] }, { cartes: ids, partie: { graine: 5, jouees: 0, depuis: T0 } }], actif: 1 }, deuxChacun, T0)
 verifier('avant les lieux, le deck actif passe à la Taverne, les autres attendent', avantLesLieux.liste[1]!.lieu === 'taverne' && avantLesLieux.liste[1]!.partie?.graine === 5 && avantLesLieux.liste[0]!.lieu === undefined)
 verifier('n’importe quoi : un deck vide', lireDecks(42, compte, T0).liste.length === 1)
+
+const test = avecDecksDeTest(decksVides(), 12, ids, compte)
+verifier('&decks=12 : douze decks', test.liste.length === 12)
+verifier('le deck déjà là reste, le premier ajouté prend les trente cartes, le holo libre va au suivant', test.liste[0]!.cartes.length === 0 && test.liste[1]!.cartes.length === DECK.taille && test.liste[2]!.cartes.length === 1 && test.liste[2]!.cartes[0]!.v === 'holo')
+verifier('plus rien à prendre : des decks vides', test.liste[3]!.cartes.length === 0 && test.liste.every((d) => d.partie === null && d.lieu === undefined))
+verifier('rouvrir le lien ne double rien', avecDecksDeTest(test, 12, ids, compte) === test)
+const manque = exemplairesManquants(decksVides(), 3, ids, compte)
+verifier('pour deux decks pleins de plus, il manque un exemplaire simple de chaque', Object.keys(manque).length === DECK.taille && Object.values(manque).every((k) => k === 1))
+const avecManque = (id: string, v: string): number => compte(id, v) + (v === 'simple' ? (manque[id] ?? 0) : 0)
+verifier('les exemplaires ajoutés, les decks sont pleins', avecDecksDeTest(decksVides(), 3, ids, avecManque).liste.slice(1).every((d) => d.cartes.length === DECK.taille))
+verifier('jamais au-delà de ce qu’une sauvegarde relit', avecDecksDeTest(decksVides(), 99, ids, compte).liste.length === DECKS_LUS_MAX)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

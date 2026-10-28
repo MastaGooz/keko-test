@@ -550,6 +550,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; les niveaux ne bougent pas — le miroir de `&debloquer` |
 | `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET niveau (les decks suivent) — pour effacer ce qu'un test y a laissé |
 | `&page=collection`, `&page=catalogue`, `&page=decks`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
+| `&decks=N` | des decks de test PLEINS jusqu'à N (20 au plus) ; la collection DE CET APPAREIL reçoit les exemplaires simples qui manquent ; avec `&debloquer`, après lui |
 | `&or=N` | pose l'or DE CET APPAREIL (pour ouvrir un lieu sans attendre) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |

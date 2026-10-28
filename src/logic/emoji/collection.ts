@@ -270,6 +270,27 @@ export function debloquer(col: Collection, ids: readonly string[], quand: number
 }
 
 /**
+ * AJOUTE DES EXEMPLAIRES SIMPLES — le banc `&decks=N`, qui en a besoin pour
+ * remplir ses decks (`exemplairesManquants`). Un emoji absent arrive comme
+ * avec `debloquer`, sans « Nouveau ».
+ */
+export function ajouterExemplaires(col: Collection, manque: Readonly<Record<string, number>>, quand: number): Collection {
+  const cartes: Record<string, Possession> = { ...col.cartes }
+  let arrivees = col.arrivees
+  for (const [id, k] of Object.entries(manque)) {
+    if (!(k > 0)) continue
+    const p = cartes[id]
+    if (p !== undefined) {
+      cartes[id] = { ...p, n: p.n + k }
+      continue
+    }
+    arrivees += 1
+    cartes[id] = { n: k, holo: 0, anime: 0, ha: 0, premiere: quand, ordre: arrivees, nouvelles: [] }
+  }
+  return { ...col, arrivees, cartes }
+}
+
+/**
  * RETIRE DES CARTES — le banc `&retirer`, le miroir de
  * `debloquer`. Keko : « tu peux supprimer la moitié de ma collection ? » Les
  * emoji nommés quittent la collection avec tous leurs exemplaires ; les

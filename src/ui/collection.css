@@ -3696,7 +3696,18 @@ span.jouer-pile-dos {
 }
 
 /* LE CHOIX DU DECK D'UN LIEU : la fenêtre de « Prendre », un deck par ligne. */
+/* BEAUCOUP DE DECKS : la fenêtre tient dans l'écran, la grille défile
+   entre la question et les boutons. */
+.lieu-choix {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+}
+
 .lieu-choix-liste {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;

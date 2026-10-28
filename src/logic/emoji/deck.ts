@@ -565,3 +565,51 @@ export function lireDecks(brut: unknown, compte: CompteDExemplaires, maintenant:
   })
   return garderPossedeesPartout({ liste }, compte, maintenant)
 }
+
+/**
+ * `&decks=N` : DES DECKS DE TEST JUSQU'À N (Keko : « donne-moi 12 decks pour
+ * test »), au-delà du plafond, dans la limite de ce qu'une sauvegarde relit
+ * (`DECKS_LUS_MAX`). Chacun prend, dans l'ordre de `ids`, les exemplaires
+ * qu'aucun autre deck ne tient encore, jusqu'à trente, chaque deck partant
+ * trente cartes plus loin que le précédent (les decks varient) : *une
+ * collection mince fait des decks incomplets, jamais des cartes en double* —
+ * le lien ajoute d'abord les exemplaires qui manquent (`exemplairesManquants`).
+ * Les decks déjà là restent ; rouvrir le lien ne double rien. Aucun n'est posé.
+ */
+export function avecDecksDeTest(ds: Decks, n: number, ids: readonly string[], compte: CompteDExemplaires): Decks {
+  const cible = Math.min(Math.floor(n), DECKS_LUS_MAX)
+  if (!(ds.liste.length < cible)) return ds
+  const tenus = new Map<string, number>()
+  const cle = (e: EntreeDeck): string => `${e.id}:${e.v}`
+  for (const d of ds.liste) for (const e of d.cartes) tenus.set(cle(e), (tenus.get(cle(e)) ?? 0) + 1)
+  const liste = [...ds.liste]
+  while (liste.length < cible) {
+    const cartes: EntreeDeck[] = []
+    const depart = ids.length === 0 ? 0 : ((liste.length - ds.liste.length) * DECK.taille) % ids.length
+    for (let k = 0; k < ids.length; k++) {
+      const id = ids[(depart + k) % ids.length]!
+      if (cartes.length >= DECK.taille) break
+      const v = VARIANTES.find((x) => compte(id, x) > (tenus.get(`${id}:${x}`) ?? 0))
+      if (v === undefined) continue
+      const e = { id, v }
+      tenus.set(cle(e), (tenus.get(cle(e)) ?? 0) + 1)
+      cartes.push(e)
+    }
+    liste.push({ cartes, partie: null })
+  }
+  return { liste }
+}
+
+/**
+ * CE QU'IL FAUT AJOUTER À LA COLLECTION pour que `avecDecksDeTest` fasse des
+ * decks PLEINS (Keko : ajouter les exemplaires) : les exemplaires simples que
+ * les decks tiendraient au-delà de ce qu'on possède, par emoji.
+ */
+export function exemplairesManquants(ds: Decks, n: number, ids: readonly string[], compte: CompteDExemplaires): Record<string, number> {
+  const pleins = avecDecksDeTest(ds, n, ids, () => Number.POSITIVE_INFINITY)
+  const tenus = new Map<string, number>()
+  for (const d of pleins.liste) for (const e of d.cartes) if (e.v === 'simple') tenus.set(e.id, (tenus.get(e.id) ?? 0) + 1)
+  const manque: Record<string, number> = {}
+  for (const [id, t] of tenus) if (t > compte(id, 'simple')) manque[id] = t - compte(id, 'simple')
+  return manque
+}

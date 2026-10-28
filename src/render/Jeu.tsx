@@ -26,6 +26,7 @@ import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
   ajouterPaquet,
   compteDe,
+  ajouterExemplaires,
   debloquer,
   retirer,
   oublier,
@@ -61,6 +62,8 @@ import {
   decksQuiPerdent,
   garderLesLieuxOuverts,
   poserSurLieu,
+  avecDecksDeTest,
+  exemplairesManquants,
   type Deck,
   type CompteDExemplaires,
   type Decks,
@@ -478,6 +481,27 @@ export function Jeu(): React.ReactElement {
     },
     [edite, decks, deckEdite, compte],
   )
+  /**
+   * `&decks=N` : DES DECKS DE TEST JUSQU'À N, d'un lien (`avecDecksDeTest`).
+   * *Déclaré AVANT `&debloquer`* : quand les deux sont dans l'adresse, il
+   * attend que le déblocage soit passé, puis remplit avec la collection neuve.
+   */
+  useEffect(() => {
+    if (catalogue === null || catalogue.length === 0) return
+    const p = new URLSearchParams(location.search)
+    const v = p.get('decks')
+    if (v === null || p.has('debloquer')) return
+    p.delete('decks')
+    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
+    const n = Number(v)
+    if (!Number.isFinite(n)) return
+    // DES DECKS PLEINS (Keko) : la collection reçoit d'abord les exemplaires qui manquent.
+    const ids = catalogue.map((c) => c.id)
+    const manque = exemplairesManquants(decks, n, ids, compte)
+    const plus = (id: string, x: Variante): number => compte(id, x) + (x === 'simple' ? (manque[id] ?? 0) : 0)
+    changer((c) => ajouterExemplaires(c, manque, Date.now()))
+    poserDecks((ds) => avecDecksDeTest(ds, n, ids, plus))
+  }, [catalogue, compte, decks, changer, poserDecks])
   /**
    * `&debloquer` : LA MOITIÉ DU CATALOGUE, D'UN LIEN. Keko : « tu peux me
    * débloquer la moitié de la collection ? » *La collection vit sur l'appareil*,
