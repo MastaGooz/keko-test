@@ -3862,3 +3862,171 @@ span.jouer-pile-dos {
   border-radius: 0.25rem;
   box-shadow: inset 0 0 0 0.08rem var(--cran, #ffc61f);
 }
+
+/* LA CARTE DES LIEUX : les lieux posés sur un chemin pointillé qui monte de la
+   Taverne ; chacun petit, son nom au-dessus, sa jauge dessous, l'étui de son
+   deck à côté (Keko). Chaque lieu est ancré au CENTRE DE SON IMAGE. */
+.carte-lieux {
+  --image-lieu: 5rem;
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+  height: 32rem;
+  margin: 0.4rem auto 1rem;
+}
+
+.carte-chemins {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.carte-chemin {
+  fill: none;
+  stroke: rgba(255, 212, 94, 0.7);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 11;
+}
+
+.carte-chemin-ferme {
+  stroke: rgba(255, 250, 240, 0.22);
+}
+
+.carte-lieu {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.carte-lieu > * {
+  position: absolute;
+  left: 0;
+  transform: translateX(-50%);
+}
+
+.carte-lieu-nom {
+  bottom: calc(var(--image-lieu) / 2 + 0.1rem);
+  margin: 0;
+  font-family: 'Grenze', Georgia, serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.1;
+  color: #ffc61f;
+  text-shadow: 0 0.1rem 0 #241029, 0 0 0.5rem rgba(10, 4, 2, 0.8);
+  white-space: nowrap;
+}
+
+.carte-lieu-voir,
+.carte-lieu > .carte-lieu-image {
+  top: calc(var(--image-lieu) / -2);
+  width: var(--image-lieu);
+  height: var(--image-lieu);
+}
+
+.carte-lieu-voir {
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.carte-lieu-voir:active {
+  transform: translateX(-50%) scale(0.94);
+}
+
+.carte-lieu-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.3rem 0.4rem rgba(10, 4, 2, 0.6));
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.carte-lieu-ferme .carte-lieu-image {
+  filter: grayscale(0.85) brightness(0.55) drop-shadow(0 0.3rem 0.4rem rgba(10, 4, 2, 0.6));
+}
+
+.carte-lieu-ferme .carte-lieu-nom {
+  color: rgba(255, 250, 240, 0.55);
+}
+
+.carte-lieu-jauge {
+  top: calc(var(--image-lieu) / 2 + 0.05rem);
+  width: 6.4rem;
+}
+
+.carte-lieu-jauge .lieu-jauge-place {
+  margin: 0;
+}
+
+.carte-lieu-jauge .lieu-jauge {
+  height: 0.5rem;
+}
+
+.carte-lieu-jauge .lieu-jauge-texte {
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.carte-lieu-ouvrir {
+  top: calc(var(--image-lieu) / 2 + 0.1rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.6rem;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #3a2416;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  box-shadow: 0 0.2rem 0 #b8996a;
+  cursor: pointer;
+}
+
+.carte-lieu-ouvrir:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* L'étui à côté du lieu, vers le bord de la carte. */
+.carte-lieu-deck {
+  top: 0;
+  transform: translateY(-50%);
+}
+
+.carte-lieu-deck-gauche {
+  left: auto;
+  right: calc(var(--image-lieu) / 2 + 0.3rem);
+}
+
+.carte-lieu-deck-droite {
+  left: calc(var(--image-lieu) / 2 + 0.3rem);
+}
+
+.carte-lieu-deck .lieu-deck {
+  padding: 0.2rem;
+}
+
+.carte-lieu-deck .etui-mini,
+.carte-lieu-deck .lieu-deck-place {
+  width: 3.1rem;
+}
+
+.carte-lieu-deck .lieu-deck-place {
+  font-size: 1.5rem;
+}

@@ -329,10 +329,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   les autres s'achètent en or** (`ouvrirLeLieu`) ; **chaque lieu favorise un
   rôle** (`valeurDansLeLieu` : la Mine +1 aux soutiens, l'Arène +1 à la
   mêlée). Trois lieux, un par deck. Jauge 100 → 10 or, lieu à 150 or : de
-  moi, à rejuger. **« Jouer » est la carte des lieux**, épurée (Keko : « trop chargé ») : à
-  gauche l'ÉTUI du deck seul, qu'on touche pour en changer ; à droite le nom,
-  l'image en petit (`public/lieux/`, tri de Keko) et la jauge ; fermés,
-  « Ouvrir · 150 ». Le bonus et le reste sont dans l'écran du lieu (une tape). Une sauvegarde d'avant les lieux met le deck qui jouait
+  moi, à rejuger. **« Jouer » est une CARTE** (Keko : « sous la forme d'une map, avec des
+  chemins ») : les lieux en petit (`public/lieux/`, tri de Keko), posés en
+  zigzag (`PLACE_SUR_LA_CARTE`), reliés par un chemin pointillé qui monte de
+  la Taverne ; le nom au-dessus, la jauge dessous, l'ÉTUI du deck à côté (une
+  tape le change) ; fermés, grisés, « Ouvrir · 150 ». Le bonus et le reste
+  sont dans l'écran du lieu (une tape sur l'image). Une sauvegarde d'avant les lieux met le deck qui jouait
   à la Taverne (`lireDecks`). Stockage `keko-fantasy-lieux`.
 - **Le deck qui joue** (`logic/emoji/deck.ts`, `render/Deck.tsx` ; Keko : « un
   système idle où tu construis un deck ») : trente EXEMPLAIRES possédés

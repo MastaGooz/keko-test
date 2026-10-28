@@ -62,6 +62,19 @@ const VERSION = encodeURIComponent(__BUILD_TIME__)
  */
 const imageDuLieu = (l: Lieu): string => `${import.meta.env.BASE_URL}lieux/${l.id}.webp?v=${VERSION}`
 
+/**
+ * OÙ CHAQUE LIEU EST POSÉ SUR LA CARTE, en % de la carte (le centre de son
+ * image), et de quel côté son deck se range — vers le bord, le chemin passe
+ * au milieu. De moi, à rejuger.
+ */
+const PLACE_SUR_LA_CARTE: Readonly<Record<string, { x: number; y: number; deck: 'gauche' | 'droite' }>> = {
+  taverne: { x: 28, y: 80, deck: 'gauche' },
+  mine: { x: 72, y: 49, deck: 'droite' },
+  arene: { x: 28, y: 18, deck: 'gauche' },
+}
+/** Où le chemin quitte l'image, en % de la carte : un peu en deçà de son bord, caché derrière elle. */
+const BORD_DE_L_IMAGE = 9
+
 /** « à la Taverne », « à l'Arène », « à la Mine gobeline ». */
 export function aLieu(l: Lieu): string {
   return `à ${l.nom.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`
@@ -193,42 +206,62 @@ export function PageJouer({
             <b>{lieux.ouverts.length}</b> / {LIEUX.length} ouverts
           </p>
         </header>
-        <div className="lieux">
-          {LIEUX.map((l) => {
-            if (!estOuvert(lieux, l.id)) {
-              const manque = l.prix - lieux.or
+        {/* LA CARTE DES LIEUX (Keko : « sous la forme d'une map, avec des chemins
+            qui relient les lieux ; des lieux et des jauges plus petits, le deck
+            mis à côté »). Le chemin part de la Taverne, en bas, et monte. */}
+        <div className="carte-lieux">
+          <svg className="carte-chemins" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+            {LIEUX.slice(1).map((l, n) => {
+              const a = PLACE_SUR_LA_CARTE[LIEUX[n]!.id]!
+              const b = PLACE_SUR_LA_CARTE[l.id]!
+              // DE CÔTÉ À CÔTÉ, à plat : le chemin sort de l'image (derrière elle) du
+              // côté opposé au deck, et ne coupe ni les noms ni les jauges.
+              const ax = a.deck === 'gauche' ? a.x + BORD_DE_L_IMAGE : a.x - BORD_DE_L_IMAGE
+              const bx = b.deck === 'gauche' ? b.x + BORD_DE_L_IMAGE : b.x - BORD_DE_L_IMAGE
+              const m = (ax + bx) / 2
               return (
-                <div key={l.id} className="lieu lieu-ferme">
-                  <div className="lieu-scene">
-                    <div className="lieu-gauche">
-                      <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
-                        Ouvrir · <IconeOr /> {l.prix}
-                      </button>
-                      {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
-                    </div>
-                    <div className="lieu-droite">
-                      <h2 className="lieu-nom">{l.nom}</h2>
-                      <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
-                    </div>
-                  </div>
+                <path
+                  key={l.id}
+                  className={estOuvert(lieux, l.id) ? 'carte-chemin' : 'carte-chemin carte-chemin-ferme'}
+                  d={`M ${ax} ${a.y} C ${m} ${a.y}, ${m} ${b.y}, ${bx} ${b.y}`}
+                  vectorEffect="non-scaling-stroke"
+                />
+              )
+            })}
+          </svg>
+          {LIEUX.map((l) => {
+            const place = PLACE_SUR_LA_CARTE[l.id]!
+            const style = { left: `${place.x}%`, top: `${place.y}%` }
+            if (!estOuvert(lieux, l.id)) {
+              return (
+                <div key={l.id} className="carte-lieu carte-lieu-ferme" style={style}>
+                  <h2 className="carte-lieu-nom">{l.nom}</h2>
+                  <img className="carte-lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
+                  <button
+                    type="button"
+                    className="carte-lieu-ouvrir"
+                    disabled={l.prix > lieux.or}
+                    aria-label={`Ouvrir ${l.nom} pour ${l.prix} or`}
+                    onClick={() => onOuvrirLieu(l.id)}
+                  >
+                    Ouvrir · <IconeOr /> {l.prix}
+                  </button>
                 </div>
               )
             }
             const k = deckDuLieu(decks, l.id)
             const deck = k === null ? undefined : decks.liste[k]
             return (
-              <div key={l.id} className="lieu">
-                {/* TOUT LE LIEU S'OUVRE D'UNE TAPE ; le bouton du deck a la sienne. */}
-                <button type="button" className="lieu-voir" aria-label={`Voir ${l.nom}`} onClick={() => setVu(l.id)} />
-                {/* LE DECK À GAUCHE ; À DROITE LE NOM, L'IMAGE, LA JAUGE (Keko). Le
-                    bonus et le reste sont dans l'écran du lieu. */}
-                <div className="lieu-scene">
+              <div key={l.id} className="carte-lieu" style={style}>
+                <h2 className="carte-lieu-nom">{l.nom}</h2>
+                <button type="button" className="carte-lieu-voir" aria-label={`Voir ${l.nom}`} onClick={() => setVu(l.id)}>
+                  <img className="carte-lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
+                </button>
+                <div className="carte-lieu-jauge">
+                  <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
+                </div>
+                <div className={`carte-lieu-deck carte-lieu-deck-${place.deck}`}>
                   <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} />
-                  <div className="lieu-droite">
-                    <h2 className="lieu-nom">{l.nom}</h2>
-                    <img className="lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
-                    <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
-                  </div>
                 </div>
               </div>
             )
