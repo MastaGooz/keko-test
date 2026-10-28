@@ -71,7 +71,7 @@ import { Bloom } from './Bloom.tsx'
 import { PencheAuGyro } from './Paquet3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { SON_EQUIPER, SON_POSER, jouerSon } from './sons.ts'
-import { FrappeDuNiveau, type Frappe } from './FrappeDuNiveau.tsx'
+import { FlashDeLaCarte, FrappeDuNiveau, type Frappe } from './FrappeDuNiveau.tsx'
 
 export const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
   simple: 'normal',
@@ -705,6 +705,14 @@ function CarteOuverte({
    * carrée, le temps que l'illustration en grand arrive.
    */
   const [peinte, setPeinte] = useState(false)
+  // LA FUSION ATTEND QUE LA CARTE SOIT LÀ (Keko : « attendre que la carte soit
+  // bien apparue en zoom pour permettre la fusion ») : peinte, puis son bump fini.
+  const [apparue, setApparue] = useState(false)
+  useEffect(() => {
+    if (!peinte) return
+    const t = window.setTimeout(() => setApparue(true), BUMP.duree * 1000 + 80)
+    return () => clearTimeout(t)
+  }, [peinte])
   const [fenetre, setFenetre] = useState({ l: window.innerWidth, h: window.innerHeight })
   useEffect(() => {
     const suivre = (): void => setFenetre({ l: window.innerWidth, h: window.innerHeight })
@@ -911,6 +919,7 @@ function CarteOuverte({
         />
         </Bump>
         </group>
+        <FlashDeLaCarte declencheur={impacts} centre={[xCarte, yCarte, Z_MAIN]} taille={taille} />
         <FrappeDuNiveau
           frappe={frappe}
           onImpact={() => {
@@ -933,7 +942,7 @@ function CarteOuverte({
             niveau={niveauVu}
             exemplaires={exemplairesVus}
             fusions={impacts}
-            occupe={enVol}
+            occupe={enVol || !apparue}
             onFusionner={() => {
               const touches = pertes()
               if (touches.length > 0) setAConfirmer(touches)

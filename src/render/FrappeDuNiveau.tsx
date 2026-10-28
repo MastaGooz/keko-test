@@ -316,3 +316,80 @@ export function FrappeDuNiveau({ frappe, onImpact }: { frappe: Frappe | null; on
     </>
   )
 }
+
+/**
+ * LE FLASH DE LA CARTE À L'IMPACT (Keko : « un effet sur la carte au moment
+ * où l'étoile se fixe, comme un effet de lumière qui flash la carte ») : une
+ * dalle de lumière à la forme de la carte, aux bords flous — un peu plus
+ * grande qu'elle, elle couvre la carte même penchée et déborde en halo —,
+ * qui s'allume d'un coup et s'éteint en 0,5 s. Additive, au-dessus du bloom.
+ * `declencheur` change à chaque impact (zéro : rien).
+ */
+const FLASH = { duree: 0.5, deborde: 1.06, eclat: 1.6 }
+
+function texteDuFlash(): THREE.CanvasTexture {
+  const l = 256
+  const h = Math.round(l * 1.4)
+  const c = document.createElement('canvas')
+  // Le dessin au centre, la marge pour le flou du halo.
+  const marge = 0.08
+  c.width = Math.round(l * (1 + marge * 2))
+  c.height = Math.round(h + l * marge * 2)
+  const ctx = c.getContext('2d')
+  if (ctx !== null) {
+    ctx.filter = `blur(${Math.round(l * 0.035)}px)`
+    ctx.fillStyle = '#fff'
+    ctx.beginPath()
+    ctx.roundRect(l * marge, l * marge, l, h, l * 0.055)
+    ctx.fill()
+  }
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+
+export function FlashDeLaCarte({
+  declencheur,
+  centre,
+  taille,
+}: {
+  declencheur: number
+  centre: readonly [number, number, number]
+  /** La largeur de la carte. */
+  taille: number
+}): React.ReactElement | null {
+  const texture = useMemo(texteDuFlash, [])
+  useEffect(() => () => texture.dispose(), [texture])
+  const materiau = useRef<THREE.MeshBasicMaterial>(null)
+  const t = useRef(1)
+  useEffect(() => {
+    if (declencheur > 0) t.current = 0
+  }, [declencheur])
+  useFrame((_, delta) => {
+    const m = materiau.current
+    if (m === null) return
+    t.current = Math.min(1, t.current + delta / FLASH.duree)
+    // Allumé d'un coup, éteint en douceur.
+    const u = 1 - t.current
+    m.opacity = u * u
+    m.visible = t.current < 1
+  })
+  const l = taille * FLASH.deborde
+  return (
+    <mesh position={[centre[0], centre[1], centre[2] + taille * 0.02]} renderOrder={5}>
+      <planeGeometry args={[l * 1.16, l * 1.4 + l * 0.16]} />
+      <meshBasicMaterial
+        ref={materiau}
+        map={texture}
+        color={[FLASH.eclat, FLASH.eclat * 0.95, FLASH.eclat * 0.8]}
+        transparent
+        opacity={0}
+        visible={false}
+        depthTest={false}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </mesh>
+  )
+}
