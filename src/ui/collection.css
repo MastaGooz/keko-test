@@ -3458,3 +3458,281 @@ span.jouer-pile-dos {
   transform: translateY(-50%);
 }
 
+
+/* ====================================================================
+   LES LIEUX (Keko, 28/10 : « Jouer devient la carte des lieux ») : chaque
+   lieu, son bonus, sa jauge de puissance qui rend de l'or, le deck posé
+   dessus ; fermé, son prix. Une tape sur le lieu montre son deck qui joue.
+   ==================================================================== */
+
+/* L'OR, au compteur et dans les textes. */
+.icone-or {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.17em;
+  flex: none;
+}
+
+.monnaie .icone-or {
+  width: 1.3rem;
+  height: 1.3rem;
+  filter: drop-shadow(0 0.08rem 0.25rem rgba(14, 6, 40, 0.7));
+}
+
+.monnaie-or b {
+  color: #ffc61f;
+}
+
+.lieux {
+  display: grid;
+  gap: 1rem;
+  max-width: 40rem;
+  margin: 0.6rem auto 0;
+  padding-bottom: 1rem;
+}
+
+.lieu {
+  position: relative;
+  padding: 1rem 1.1rem 0.9rem;
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255, 198, 31, 0.12), transparent 60%),
+    linear-gradient(160deg, #4a1d57, #2a1030);
+  box-shadow:
+    inset 0 0 0 0.14rem rgba(224, 176, 72, 0.55),
+    0 0.6rem 1.2rem rgba(10, 4, 2, 0.45);
+  color: #fffaf0;
+}
+
+/* TOUT LE LIEU EST LA TAPE QUI L'OUVRE ; ce qui a sa propre tape passe dessus. */
+.lieu-voir {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lieu-voir:active {
+  background: rgba(255, 250, 240, 0.05);
+}
+
+.lieu-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.2rem 0.8rem;
+}
+
+.lieu-nom {
+  margin: 0;
+  font-family: 'Grenze', Georgia, serif;
+  font-weight: 800;
+  font-size: 1.45rem;
+  line-height: 1.1;
+  color: #ffc61f;
+  text-shadow: 0 0.1rem 0 #241029;
+}
+
+.lieu-bonus {
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.lieu-jauge-place {
+  position: relative;
+  margin-top: 0.7rem;
+}
+
+.lieu-jauge {
+  height: 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.15);
+  overflow: hidden;
+}
+
+.lieu-jauge span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e0a020, #ffd75e);
+  box-shadow: 0 0 0.6rem rgba(255, 198, 31, 0.6);
+  transition: width 0.6s cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+
+.lieu-jauge-texte {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.lieu-jauge-texte b {
+  color: #ffd45e;
+  font-weight: 800;
+}
+
+/* LA JAUGE PLEINE REND SON OR : « +10 » et sa pièce s'envolent. */
+.lieu-gain {
+  position: absolute;
+  right: 0;
+  top: -0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #ffd45e;
+  font-weight: 800;
+  font-size: 1.3rem;
+  text-shadow: 0 0.1rem 0.4rem rgba(10, 4, 2, 0.8);
+  pointer-events: none;
+  animation: lieu-gain 1.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes lieu-gain {
+  0% {
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1.25);
+  }
+  30% {
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-1.6rem);
+  }
+}
+
+.lieu-deck {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+  pointer-events: none;
+}
+
+.lieu-deck-nom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-weight: 800;
+}
+
+.lieu-deck-vide {
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+.lieu-deck-etat {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: #ffc61f;
+  color: #3a2416;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.lieu-deck-incomplet {
+  background: #ff4d5e;
+  color: #fff;
+}
+
+.lieu-choisir {
+  flex: none;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #3a2416;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: 0 0.25rem 0 #b8996a;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lieu-choisir:active {
+  transform: translateY(0.15rem);
+  box-shadow: 0 0.1rem 0 #b8996a;
+}
+
+/* FERMÉ : éteint, son prix en bouton. */
+.lieu-ferme {
+  background: linear-gradient(160deg, #2c1a22, #1c1014);
+  box-shadow: inset 0 0 0 0.14rem rgba(255, 250, 240, 0.12);
+}
+
+.lieu-ferme .lieu-nom {
+  color: rgba(255, 250, 240, 0.6);
+}
+
+.lieu-ouvrir {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.8rem;
+}
+
+.lieu-manque {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* LE CHOIX DU DECK D'UN LIEU : la fenêtre de « Prendre », un deck par ligne. */
+.lieu-choix-liste {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.lieu-choix-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 3rem;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: rgba(255, 250, 240, 0.1);
+  color: #fffaf0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lieu-choix-deck:active {
+  background: rgba(255, 250, 240, 0.18);
+}
+
+.lieu-choix-ici {
+  box-shadow: inset 0 0 0 0.14rem #ffc61f;
+}
+
+.lieu-choix-nom {
+  font-weight: 800;
+}
+
+.lieu-choix-detail {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}

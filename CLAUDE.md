@@ -312,17 +312,27 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   sur le booster rond ; vide, l'écran d'attente montre le minuteur et le
   sachet descend tout seul à zéro ; au bilan, « Ouvrir un autre paquet » cède
   la place à « Prochain paquet dans … ». `&illimite` ne la vide jamais.
-- **Une seule ressource, la PUISSANCE** (le code dit encore « Likes » :
-  `Collection.likes`, `avecLikes`, `ajouterLikes` ; Keko a retiré les Abonnés
-  le 23/10), icône `IconeLike` = le symbole du jeu, compte en or, un
-  compteur discret en haut à droite **SUR LE BOOSTER ET « JOUER » SEULS** (Keko,
-  28/10 : il prenait la place de la colonne du deck et descendait les pages) —
-  voile sombre, pas de pilule crème, « ça fait penser à un bouton » —, caché
-  avec la barre ; au doigt, « X disponibles » et la tête de « Jouer »
-  (`collection-avec-likes`) passent dessous ; ailleurs la page monte) :
-  **le deck qui joue la génère** (ci-dessous) ; elle achètera des paquets
-  au-delà des dix de la réserve. Une collection d'avant relit zéro. `&likes=N`
-  pose le solde de l'appareil.
+- **LA PUISSANCE N'EST PLUS UNE MONNAIE, L'OR EN EST UNE** (Keko, 28/10) : la
+  puissance des cartes jouées (le code dit encore « Likes », `IconeLike` = le
+  symbole du jeu) ne fait que remplir la jauge des LIEUX (ci-dessous), qui
+  rendent de l'OR (`EtatLieux.or`, `IconeOr`). `Collection.likes` reste lu,
+  plus rien ne l'augmente. Le compteur (l'or) est en haut à droite **SUR LE
+  BOOSTER ET « JOUER » SEULS** (il prenait la place de la colonne du deck) —
+  voile sombre, pas de pilule crème —, caché avec la barre ; au doigt, « X
+  disponibles » et la tête de « Jouer » (`collection-avec-likes`) passent
+  dessous. `&or=N` pose l'or de l'appareil.
+- **LES LIEUX** (`logic/emoji/lieux.ts`, `render/Deck.tsx`, Keko 28/10 :
+  « je voudrais attaquer les lieux ») : **chaque deck joue sur un lieu**
+  (`Deck.lieu`, un deck par lieu, `poserSurLieu`), tous en même temps ; il ne
+  joue que complet ET posé. **Sa puissance remplit la jauge du lieu ; pleine,
+  elle rend de l'or** (`remplirLaJauge`). **La Taverne est ouverte au départ,
+  les autres s'achètent en or** (`ouvrirLeLieu`) ; **chaque lieu favorise un
+  rôle** (`valeurDansLeLieu` : la Mine +1 aux soutiens, l'Arène +1 à la
+  mêlée). Trois lieux, un par deck. Jauge 100 → 10 or, lieu à 150 or : de
+  moi, à rejuger. **« Jouer » est la carte des lieux** (leur jauge, le deck
+  posé, « Changer » ; fermés, « Ouvrir · 150 ») ; une tape sur un lieu montre
+  son deck qui joue. Une sauvegarde d'avant les lieux met le deck qui jouait
+  à la Taverne (`lireDecks`). Stockage `keko-fantasy-lieux`.
 - **Le deck qui joue** (`logic/emoji/deck.ts`, `render/Deck.tsx` ; Keko : « un
   système idle où tu construis un deck ») : trente EXEMPLAIRES possédés
   (`EntreeDeck` : emoji + version, une place par version dans la grille en
@@ -333,13 +343,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « matérialiser les decks par des paquets » ; le DOS des cartes en fond,
   `peindreDosEmoji` sans ses clous, nom frappé en or, la carte la plus forte en fenêtre sur son camp ; rien ne dit lequel joue), une
   tape ouvre l'éditeur — la grille en mode deck, SANS ONGLETS, « ‹ Mes
-  decks » pour revenir, en face le crayon (renommer le titre) puis la corbeille, qui confirme dans une fenêtre (la colonne ne dit plus que son compte, ses lignes taisent la rareté : la couleur la dit) ; **au doigt la colonne est un BANDEAU** rangé dans le défilé sous la jauge et au-dessus de la recherche, qui défile avec la page (Keko : pas collé en haut) (`useAuDoigt`, `colonneDuDeck` ; miniatures qui défilent de côté, la grille en trois colonnes) **et le glisser y est remplacé par la TAPE** : une tape ajoute ou retire, l'appui long zoome (`toucher`, `taper`, `APPUI_LONG_MS`) ; la souris garde le glisser-déposer ; **un seul joue : l'actif** (`choisirDeck`, qui arrête
-  l'autre) ; complet, il joue tout seul **une main de cinq toutes les dix
-  secondes, un Like par carte PLUS UN PAR CRAN (commune 1 … légendaire 5,
-  Keko ; `ValeurDeCarte` injectée depuis le catalogue), ajoutés aussitôt, sur
+  decks » pour revenir, en face le crayon (renommer le titre) puis la corbeille, qui confirme dans une fenêtre (la colonne ne dit plus que son compte, ses lignes taisent la rareté : la couleur la dit) ; **au doigt la colonne est un BANDEAU** rangé dans le défilé sous la jauge et au-dessus de la recherche, qui défile avec la page (Keko : pas collé en haut) (`useAuDoigt`, `colonneDuDeck` ; miniatures qui défilent de côté, la grille en trois colonnes) **et le glisser y est remplacé par la TAPE** : une tape ajoute ou retire, l'appui long zoome (`toucher`, `taper`, `APPUI_LONG_MS`) ; la souris garde le glisser-déposer ; complet et posé sur un lieu, il joue tout seul **une main de cinq toutes les dix
+  secondes, un de puissance par carte PLUS UN PAR CRAN (commune 1 … légendaire 5,
+  Keko ; `ValeurDeCarte` injectée depuis le catalogue), plus le bonus du lieu, sur
   toutes les pages** ; vidé, il se remélange (`melange` seedé, la graine suit). *Le temps
-  est injecté* comme pour la réserve : `deckAJour` rejoue l'écoulé à la
-  lecture, huit heures au plus hors ligne. « Jouer » montre la pile, la
+  est injecté* comme pour la réserve : `decksAJour` rejoue l'écoulé à la
+  lecture, deck par deck, huit heures au plus hors ligne. Le lieu montre la pile, la
   dernière main résolue carte par carte, son total qui monte. Changer le deck relance sa partie ;
   une carte détruite le quitte. Cadence et limite hors ligne de moi, à rejuger.
 
@@ -399,7 +408,8 @@ src/
       types.ts      # CarteEmoji, la validation, les seize groupes (neuf d'Unicode + cœurs, créatures, mains, corps, nature, éléments, véhicules), les cinq crans
       tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
       collection.ts # ce qu'on a obtenu : ajouter un paquet, relire le stockage
-      deck.ts       # le deck de trente qui joue tout seul : mains, cycles, Likes, temps injecté
+      deck.ts       # le deck de trente qui joue tout seul sur son lieu : mains, cycles, puissance, temps injecté
+      lieux.ts      # les lieux : jauges, or, achat, bonus de rôle
     procgen/     # LE TEST : humain, alien ou biologique × combat, minage, station ; une planète ou un astéroïde — dessinés depuis un id (chemins SVG, pas de DOM)
     paintings/   # la seconde collection : une carte = une PEINTURE
       types.ts      # CartePeinture, la validation, le siècle, les rayons
@@ -531,7 +541,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; les niveaux ne bougent pas — le miroir de `&debloquer` |
 | `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET niveau (les decks suivent) — pour effacer ce qu'un test y a laissé |
 | `&page=collection`, `&page=catalogue`, `&page=decks`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
-| `&likes=N` | pose le solde de puissance DE CET APPAREIL (le compteur, sans générateur) ; rouvrir ne double rien |
+| `&or=N` | pose l'or DE CET APPAREIL (pour ouvrir un lieu sans attendre) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |

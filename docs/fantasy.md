@@ -50,6 +50,11 @@ contenu, album conservé au prestige.
 
 Prévu mais pas encore travaillé : fusion, combat, prestige.
 
+**Les lieux, première version (28/10/2026, `docs/emoji.md` « Les lieux »)** :
+la puissance ne remplit que la jauge du lieu, qui rend de l'**or** ; la
+Taverne est ouverte, la Mine gobeline (+1 aux soutiens) et l'Arène (+1 à la
+mêlée) s'achètent en or ; un deck par lieu, tous jouent ensemble.
+
 ## Le pool de cartes — décisions et propositions (20–21/10/2026)
 
 - **Uniquement des personnages** (type « Créature » du concept), pas de cartes

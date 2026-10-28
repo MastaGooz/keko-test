@@ -21,12 +21,10 @@
  */
 import '../ui/collection.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CarteEmoji } from '../logic/emoji/types.ts'
+import type { CarteEmoji, RoleCarte } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
-  ajouterLikes,
   ajouterPaquet,
-  avecLikes,
   compteDe,
   debloquer,
   retirer,
@@ -40,15 +38,14 @@ import {
 } from '../logic/emoji/collection.ts'
 import { declarerLesNiveaux } from './carte-emoji.ts'
 import { createRng } from '../logic/rng.ts'
-import { chargerCollection, chargerDecks, chargerReserve, sauverCollection, sauverDecks, sauverReserve } from '../ui/collection.ts'
+import { chargerCollection, chargerDecks, chargerLieux, chargerReserve, sauverCollection, sauverDecks, sauverLieux, sauverReserve } from '../ui/collection.ts'
+import { avecOr, lieuDe, ouvrirLeLieu, remplirLaJauge, valeurDansLeLieu, type EtatLieux } from '../logic/emoji/lieux.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
 import {
   DECK,
   DECKS_MAX,
   ajouterDeck,
   basculerDansDeck,
-  choisirDeck,
-  deckActif,
   deckComplet,
   deckQuiTient,
   decksAJour,
@@ -60,6 +57,9 @@ import {
   renommerDeck,
   nomDuDeck,
   decksQuiPerdent,
+  garderLesLieuxOuverts,
+  poserSurLieu,
+  type Deck,
   type CompteDExemplaires,
   type Decks,
   type EntreeDeck,
@@ -336,24 +336,35 @@ export function Jeu(): React.ReactElement {
     })
   }, [])
   /**
-   * LE DECK QUI JOUE (`logic/emoji/deck.ts`). Keko : « un système idle où tu
-   * construis un deck… chaque main ajoute immédiatement ses likes ». *Il joue
-   * sur toutes les pages* : à chaque seconde, ce que le temps a joué tombe
-   * (`deckAJour`), les Likes entrent dans la collection, et la page « Jouer »
-   * montre la dernière main (`derniereMain`). Le deck ne garde que des cartes
-   * possédées : relu avec la collection, et une carte partie le quitte.
+   * LES LIEUX (`logic/emoji/lieux.ts`, Keko 28/10) : l'or, les lieux ouverts,
+   * leurs jauges. Chaque deck joue sur son lieu, et sa puissance remplit la
+   * jauge du lieu, qui rend de l'or — *la puissance n'est plus une monnaie.*
+   */
+  const [lieux, setLieux] = useState<EtatLieux>(chargerLieux)
+  const poserLieux = useCallback((f: (e: EtatLieux) => EtatLieux) => {
+    setLieux((e) => {
+      const n = f(e)
+      if (n !== e) sauverLieux(n)
+      return n
+    })
+  }, [])
+  /**
+   * LES DECKS QUI JOUENT (`logic/emoji/deck.ts`). Keko : « un système idle où
+   * tu construis un deck ». *Ils jouent sur toutes les pages* : à chaque
+   * seconde, ce que le temps a joué tombe (`decksAJour`), deck par deck, dans
+   * la jauge de son lieu ; la page « Jouer » montre la dernière main de chaque
+   * lieu. Un deck ne garde que des cartes possédées : relu avec la
+   * collection, et une carte partie le quitte.
    */
   const [decks, setDecks] = useState<Decks>(() => {
     const c = chargerCollection()
-    return chargerDecks(compteDesExemplaires(c), Date.now())
+    return garderLesLieuxOuverts(chargerDecks(compteDesExemplaires(c), Date.now()), chargerLieux().ouverts)
   })
-  /**
-   * PLUSIEURS DECKS, UN SEUL QUI JOUE (Keko : « que le joueur puisse avoir
-   * plusieurs decks, et sélectionner celui avec lequel il veut jouer »). On
-   * compose `deckEdite` dans « Deck » (l'actif au départ) ; l'actif joue.
-   */
-  const [deckEdite, setDeckEdite] = useState(decks.actif)
-  const [derniereMain, setDerniereMain] = useState<MainTombee | null>(null)
+  /** Le deck qu'on compose dans « Deck » (ouvert depuis son étui). */
+  const [deckEdite, setDeckEdite] = useState(0)
+  /** La dernière main tombée dans la session, LIEU PAR LIEU, et le dernier or gagné. */
+  const [mainsDesLieux, setMainsDesLieux] = useState<Readonly<Record<string, MainTombee>>>({})
+  const [orDesLieux, setOrDesLieux] = useState<Readonly<Record<string, { numero: number; or: number }>>>({})
   const poserDecks = useCallback((f: (ds: Decks) => Decks) => {
     setDecks((ds) => {
       const n = f(ds)
@@ -377,17 +388,56 @@ export function Jeu(): React.ReactElement {
       (id) => niveauDe(refCollection.current, id),
     )
   }, [catalogue])
+  // LE RÔLE DE CHAQUE CARTE : le bonus du lieu le lit (la Mine aime les soutiens).
+  const roleDe = useMemo(() => {
+    const roles = new Map<string, RoleCarte>((catalogue ?? []).map((c) => [c.id, c.role]))
+    return (id: string) => roles.get(id)
+  }, [catalogue])
+  /** Ce que vaut une carte jouée par CE deck : sa puissance, plus le bonus de son lieu. */
+  const valeurDe = useMemo(() => {
+    if (valeur === null) return null
+    const parLieu = new Map<string | undefined, ReturnType<typeof valeurDansLeLieu>>()
+    return (d: Deck) => {
+      let v = parLieu.get(d.lieu)
+      if (v === undefined) {
+        v = valeurDansLeLieu(valeur, roleDe, lieuDe(d.lieu))
+        parLieu.set(d.lieu, v)
+      }
+      return v
+    }
+  }, [valeur, roleDe])
   useEffect(() => {
     // Sans catalogue on ne sait pas ce que vaut une carte : le temps attend,
     // rien n'est perdu, il se rejouera à la lecture suivante.
-    if (valeur === null) return
-    const r = decksAJour(decks, maintenant, valeur)
+    if (valeurDe === null) return
+    const r = decksAJour(decks, maintenant, valeurDe)
     if (r.decks !== decks) poserDecks(() => r.decks)
-    if (r.mains === 0 || r.derniere === null) return
-    const main = r.derniere
-    changer((c) => ajouterLikes(c, r.likes))
-    setDerniereMain((m) => ({ main, likes: likesDeLaMain(main, valeur), numero: (m?.numero ?? 0) + 1 }))
-  }, [decks, maintenant, valeur, changer, poserDecks])
+    if (r.joues.length === 0) return
+    // LA PUISSANCE ENTRE DANS LA JAUGE DE SON LIEU ; une jauge pleine rend son or.
+    let e = lieux
+    const gagne: Record<string, number> = {}
+    for (const j of r.joues) {
+      const g = remplirLaJauge(e, j.lieu, j.likes)
+      e = g.etat
+      if (g.or > 0) gagne[j.lieu] = (gagne[j.lieu] ?? 0) + g.or
+    }
+    poserLieux(() => e)
+    if (Object.keys(gagne).length > 0)
+      setOrDesLieux((m) => {
+        const n = { ...m }
+        for (const [l, or] of Object.entries(gagne)) n[l] = { numero: (m[l]?.numero ?? 0) + 1, or }
+        return n
+      })
+    setMainsDesLieux((m) => {
+      const n = { ...m }
+      for (const j of r.joues) {
+        const d = r.decks.liste[j.i]
+        if (j.derniere === null || d === undefined) continue
+        n[j.lieu] = { main: j.derniere, likes: likesDeLaMain(j.derniere, valeurDe(d)), numero: (m[j.lieu]?.numero ?? 0) + 1 }
+      }
+      return n
+    })
+  }, [decks, lieux, maintenant, valeurDe, poserDecks, poserLieux])
   // CE QU'ON POSSÈDE, VERSION PAR VERSION : les decks ne prennent pas plus
   // d'exemplaires qu'il n'y en a (Keko : « une carte ne peut pas être dans
   // deux decks »), et une carte fusionnée les quitte.
@@ -395,13 +445,15 @@ export function Jeu(): React.ReactElement {
   useEffect(() => {
     poserDecks((ds) => garderPossedeesPartout(ds, compte, Date.now()))
   }, [compte, poserDecks])
-  const deck = deckActif(decks)
-  const edite = decks.liste[deckEdite] ?? deck
+  const edite = decks.liste[deckEdite] ?? decks.liste[0]!
   const basculerDansLeDeck = useCallback(
     (e: EntreeDeck) => poserDecks((ds) => basculerDansDeck(ds, deckEdite, e, compte, Date.now())),
     [poserDecks, deckEdite, compte],
   )
-  const choisirLeDeck = useCallback((i: number) => poserDecks((ds) => choisirDeck(ds, i, Date.now())), [poserDecks])
+  /** Pose un deck sur un lieu (`null` : l'en retire) ; le deck qui y était s'arrête. */
+  const poserLeDeck = useCallback((i: number, lieu: string | null) => poserDecks((ds) => poserSurLieu(ds, i, lieu, Date.now())), [poserDecks])
+  /** Ouvre un lieu contre son or. */
+  const ouvrirUnLieu = useCallback((id: string) => poserLieux((e) => ouvrirLeLieu(e, id)), [poserLieux])
   /** Ce que la grille doit dire de chaque exemplaire possédé, pour le deck qu'on compose. */
   const choixDuDeck = useCallback(
     (id: string, v: Variante): { etat: 'dedans' | 'dehors' | 'plein' | 'pris'; prisPar?: string } => {
@@ -489,20 +541,20 @@ export function Jeu(): React.ReactElement {
     changer((c) => ids.reduce((col, id) => oublier(col, id), c))
   }, [changer])
   /**
-   * `&likes=N` : POSE LE SOLDE DE LIKES DE CET APPAREIL, d'un lien — le banc
-   * du compteur tant qu'aucun geste n'en donne. *Il remplace, il n'ajoute
-   * pas* : rouvrir le lien ne double rien. Le paramètre est retiré ensuite.
+   * `&or=N` : POSE LE SOLDE D'OR DE CET APPAREIL, d'un lien — pour acheter un
+   * lieu sans attendre. *Il remplace, il n'ajoute pas* : rouvrir le lien ne
+   * double rien. Le paramètre est retiré ensuite.
    */
   useEffect(() => {
     const p = new URLSearchParams(location.search)
-    const v = p.get('likes')
+    const v = p.get('or')
     if (v === null) return
-    p.delete('likes')
+    p.delete('or')
     history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
     const n = Number(v)
     if (!Number.isFinite(n)) return
-    changer((c) => avecLikes(c, n))
-  }, [changer])
+    poserLieux((e) => avecOr(e, n))
+  }, [poserLieux])
   // LE CRAN DE CHAQUE CARTE, pour les comptes de la pitié (`ajouterPaquet`).
   const rareteDe = useMemo(() => {
     const crans = new Map((catalogue ?? []).map((c) => [c.id, c.rarete]))
@@ -658,11 +710,14 @@ export function Jeu(): React.ReactElement {
           catalogue={catalogue}
           collection={collection}
           decks={decks}
-          valeur={valeur}
-          derniere={derniereMain}
-          onChoisir={choisirLeDeck}
-          onComposer={() => {
-            setDeckEdite(decks.actif)
+          valeurDe={valeurDe}
+          lieux={lieux}
+          mains={mainsDesLieux}
+          ors={orDesLieux}
+          onPoser={poserLeDeck}
+          onOuvrirLieu={ouvrirUnLieu}
+          onComposer={(i) => {
+            setDeckEdite(i)
             aller('deck')
           }}
         />
@@ -687,15 +742,14 @@ export function Jeu(): React.ReactElement {
                   decks: decks.liste.map((d, i) => ({ n: d.cartes.length, complet: deckComplet(d), nom: nomDuDeck(d, i), nomDonne: d.nom ?? '' })),
                   onRenommer: (nom: string) => poserDecks((ds) => renommerDeck(ds, deckEdite, nom)),
                   edite: deckEdite,
-                  actif: decks.actif,
+                  lieu: lieuDe(edite.lieu)?.nom ?? null,
                   onRetour: () => aller('decks'),
                   // SUPPRIMÉ, ON REVIENT AUX ÉTUIS : il n'y a plus rien à modifier ici.
                   onSupprimer: () => {
-                    poserDecks((ds) => supprimerDeck(ds, deckEdite, Date.now()))
+                    poserDecks((ds) => supprimerDeck(ds, deckEdite))
                     setDeckEdite((i) => Math.max(0, Math.min(i, decks.liste.length - 2)))
                     aller('decks')
                   },
-                  onJouerAvec: () => choisirLeDeck(deckEdite),
                 }
               : undefined
           }
@@ -716,9 +770,10 @@ export function Jeu(): React.ReactElement {
           l'écran d'ouverture de boosters ») : ailleurs, la page monte d'autant. */}
       {(page === 'booster' || page === 'jouer') && (
         <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
-          <span className="monnaie monnaie-like" aria-label={`${collection.likes} de puissance`}>
-            <IconeLike />
-            <b>{collection.likes}</b>
+          {/* L'OR, la monnaie des lieux (Keko, 28/10) : la puissance n'en est plus une. */}
+          <span className="monnaie monnaie-or" aria-label={`${lieux.or} or`}>
+            <IconeOr />
+            <b>{lieux.or}</b>
           </span>
         </div>
       )}
@@ -823,7 +878,9 @@ export function Jeu(): React.ReactElement {
               onClick={() => aller('jouer')}
             >
               Jouer
-              {deck.partie !== null && <span className="nav-menu-compte">en cours</span>}
+              {decks.liste.some((d) => d.partie !== null) && (
+                <span className="nav-menu-compte">{decks.liste.filter((d) => d.partie !== null).length} en jeu</span>
+              )}
             </button>
           </div>
         )}
@@ -866,6 +923,18 @@ function IconeCollection(): React.ReactElement {
 // affiche le logo du jeu »), et leur compte passe en or.
 export function IconeLike(): React.ReactElement {
   return <img className="icone-like" src={`${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`} alt="" />
+}
+
+/** L'OR : une pièce frappée, bord sombre, reflet clair. */
+export function IconeOr(): React.ReactElement {
+  return (
+    <svg className="icone-or" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="10" fill="#b8860b" />
+      <circle cx="12" cy="11.2" r="9.2" fill="#ffc61f" />
+      <circle cx="12" cy="11.2" r="6.4" fill="none" stroke="#d99a12" strokeWidth="1.6" />
+      <path d="M8.2 6.6a6.6 6.6 0 0 1 5.4-1.4" fill="none" stroke="#fff6c8" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
 }
 
 /** LE DECK : trois cartes de dos empilées, le cuir violet du dos et son liseré d'or. */

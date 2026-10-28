@@ -11,6 +11,7 @@
 import { collectionVide, lireCollection, type Collection } from '../logic/emoji/collection.ts'
 import { lireReserve, reservePleine, type Reserve } from '../logic/emoji/reserve.ts'
 import { decksVides, lireDecks, type CompteDExemplaires, type Decks } from '../logic/emoji/deck.ts'
+import { lieuxNeufs, lireLieux, type EtatLieux } from '../logic/emoji/lieux.ts'
 
 const CLE = 'keko-fantasy-collection'
 
@@ -74,5 +75,27 @@ export function sauverDecks(ds: Decks): void {
     localStorage.setItem(CLE_DECK, JSON.stringify(ds))
   } catch {
     // Sans stockage, le deck vit le temps de la page.
+  }
+}
+
+// LES LIEUX, À PART : l'or, les lieux ouverts, leurs jauges (voir
+// `logic/emoji/lieux.ts`). *Un état abîmé repart neuf* : la Taverne ouverte,
+// sans or — les decks, eux, n'y perdent rien.
+const CLE_LIEUX = 'keko-fantasy-lieux'
+
+export function chargerLieux(): EtatLieux {
+  try {
+    const brut = localStorage.getItem(CLE_LIEUX)
+    return brut === null ? lieuxNeufs() : lireLieux(JSON.parse(brut))
+  } catch {
+    return lieuxNeufs()
+  }
+}
+
+export function sauverLieux(e: EtatLieux): void {
+  try {
+    localStorage.setItem(CLE_LIEUX, JSON.stringify(e))
+  } catch {
+    // Sans stockage, les lieux vivent le temps de la page.
   }
 }

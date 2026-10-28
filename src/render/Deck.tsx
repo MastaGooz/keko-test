@@ -1,25 +1,39 @@
 /**
- * LE DECK QUI JOUE — la page « Jouer » du menu « Cartes ».
+ * LA PAGE « JOUER » : LES LIEUX. Keko (28/10) : « « Jouer » devient la carte
+ * des lieux » — chaque lieu, sa jauge qui monte, l'or qu'elle rend, le deck
+ * posé dessus (une tape pour le choisir) ; les lieux fermés, leur prix. Une
+ * tape sur un lieu montre son deck qui joue : la pile, la dernière main
+ * tombée et son total qui monte carte après carte, la barre jusqu'à la main
+ * suivante.
  *
- * Keko : « un autre onglet dans le menu carte pour deck (crée le deck) et pour
- * jouer (animation du deck, des mains tirées, de la génération de like) ».
- * *Composer le deck, c'est la grille de la collection en mode deck*
- * (`PageCollection`, prop `deck`) ; ici, c'est le deck qu'on regarde jouer :
- * la pile (le dos de carte), la dernière main tombée et son total qui monte
- * carte après carte, et la barre jusqu'à la main suivante.
- *
- * **Rien ne se décide ici.** Les mains tombent dans `Jeu.tsx` (`deckAJour`, à
- * chaque seconde, sur toutes les pages — « chaque main ajoute immédiatement
- * ses likes ») ; cette page montre la dernière (`derniere`) et, faute d'en
- * avoir vu tomber une dans la session, celle que le mélange dit précédente.
- * La barre, elle, lit l'horloge à chaque image : c'est de l'affichage.
+ * **Rien ne se décide ici.** Les mains tombent dans `Jeu.tsx` (`decksAJour`,
+ * à chaque seconde, sur toutes les pages), leur puissance entre dans la jauge
+ * du lieu (`remplirLaJauge`) ; cette page montre la dernière main de chaque
+ * lieu (`mains`) et, faute d'en avoir vu tomber une dans la session, celle
+ * que le mélange dit précédente. La barre lit l'horloge à chaque image : c'est
+ * de l'affichage.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
+import { NOM_DU_ROLE } from '../logic/emoji/types.ts'
 import type { Collection } from '../logic/emoji/collection.ts'
-import { DECK, deckActif, nomDuDeck, deckComplet, likesDeLaMain, likesDuDeck, mainPrecedente, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
+import {
+  DECK,
+  deckComplet,
+  deckDuLieu,
+  likesDeLaMain,
+  likesDuDeck,
+  mainPrecedente,
+  nomDuDeck,
+  type Deck,
+  type Decks,
+  type EntreeDeck,
+  type ValeurDeCarte,
+} from '../logic/emoji/deck.ts'
+import { LIEUX, estOuvert, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
-import { IconeLike } from './Jeu.tsx'
+import { IconeLike, IconeOr } from './Jeu.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
 /** La dernière main tombée dans la session : ce qu'on montre, et ce qui s'envole. */
@@ -38,33 +52,310 @@ export interface MainTombee {
  */
 const TEMPO = { entree: 900, parCarte: 380 } as const
 
+/** « à la Taverne », « à l'Arène », « à la Mine gobeline ». */
+export function aLieu(l: Lieu): string {
+  return `à ${l.nom.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`
+}
+
+/** Ce que le lieu ajoute : « +1 par carte Soutien », ou rien. */
+function texteDuBonus(l: Lieu): string {
+  return l.bonus === null ? 'Aucun bonus' : `+${l.bonus.plus} par carte ${NOM_DU_ROLE[l.bonus.role]}`
+}
+
 export function PageJouer({
   catalogue,
   collection,
   decks,
-  valeur,
-  derniere,
-  onChoisir,
+  valeurDe,
+  lieux,
+  mains,
+  ors,
+  onPoser,
+  onOuvrirLieu,
   onComposer,
 }: {
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
   decks: Decks
-  /** Ce que vaut une carte jouée (un Like plus un par cran) ; `null` tant que le catalogue n'est pas là. */
+  /** Ce que vaut une carte jouée par ce deck, bonus de son lieu compris ; `null` tant que le catalogue n'est pas là. */
+  valeurDe: ((d: Deck) => ValeurDeCarte) | null
+  lieux: EtatLieux
+  /** La dernière main tombée dans la session, par lieu. */
+  mains: Readonly<Record<string, MainTombee>>
+  /** Le dernier or rendu par chaque lieu (`numero` change à chaque jauge pleine). */
+  ors: Readonly<Record<string, { numero: number; or: number }>>
+  /** Pose le deck `i` sur un lieu (`null` : l'en retire). */
+  onPoser: (i: number, lieu: string | null) => void
+  onOuvrirLieu: (id: string) => void
+  /** Ouvre l'éditeur du deck `i`. */
+  onComposer: (i: number) => void
+}): React.ReactElement {
+  const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
+  /** Le lieu qu'on regarde jouer ; `null` : la liste des lieux. */
+  const [vu, setVu] = useState<string | null>(null)
+  /** Le lieu dont on choisit le deck (la fenêtre est ouverte). */
+  const [aPoser, setAPoser] = useState<string | null>(null)
+  // LES GAINS DÉJÀ LÀ EN ARRIVANT NE SE REJOUENT PAS : seul l'or rendu sous nos yeux saute.
+  const orsAuDepart = useRef(ors)
+  const lieuVu = vu === null ? undefined : LIEUX.find((l) => l.id === vu && estOuvert(lieux, l.id))
+
+  const dialogue =
+    aPoser !== null &&
+    createPortal(
+      <ChoixDuDeck
+        lieu={LIEUX.find((l) => l.id === aPoser)!}
+        decks={decks}
+        onPoser={(i) => {
+          onPoser(i, aPoser)
+          setAPoser(null)
+        }}
+        onRetirer={(i) => {
+          onPoser(i, null)
+          setAPoser(null)
+        }}
+        onComposer={(i) => {
+          setAPoser(null)
+          onComposer(i)
+        }}
+        onFermer={() => setAPoser(null)}
+      />,
+      document.body,
+    )
+
+  if (lieuVu !== undefined) {
+    const k = deckDuLieu(decks, lieuVu.id)
+    const deck = k === null ? undefined : decks.liste[k]
+    return (
+      <div className="collection collection-avec-likes">
+        <div className="collection-defile">
+          <header className="collection-tete">
+            <button type="button" className="deck-retour" onClick={() => setVu(null)}>
+              ‹ Les lieux
+            </button>
+            <h1 className="collection-titre">{lieuVu.nom}</h1>
+            <p className="collection-compte">{texteDuBonus(lieuVu)}</p>
+            <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} gainAuDepart={orsAuDepart.current[lieuVu.id]} />
+            <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(lieuVu.id)} />
+          </header>
+          {deck === undefined || k === null ? (
+            <div className="collection-vide">
+              <p>Aucun deck ne joue ici.</p>
+              <button type="button" className="collection-bouton" onClick={() => setAPoser(lieuVu.id)}>
+                Poser un deck
+              </button>
+            </div>
+          ) : !deckComplet(deck) ? (
+            <div className="collection-vide">
+              <p>
+                Il manque {DECK.taille - deck.cartes.length} carte{DECK.taille - deck.cartes.length > 1 ? 's' : ''} à {nomDuDeck(deck, k)}.
+              </p>
+              <p className="collection-discret">Trente cartes, et il joue tout seul : cinq cartes toutes les dix secondes.</p>
+              <button type="button" className="collection-bouton" onClick={() => onComposer(k)}>
+                Composer le deck
+              </button>
+            </div>
+          ) : (
+            <DeckEnJeu
+              deck={deck}
+              collection={collection}
+              parId={parId}
+              valeur={valeurDe === null ? null : valeurDe(deck)}
+              derniere={mains[lieuVu.id] ?? null}
+            />
+          )}
+        </div>
+        {dialogue}
+      </div>
+    )
+  }
+
+  return (
+    <div className="collection collection-avec-likes">
+      <div className="collection-defile">
+        <header className="collection-tete">
+          <h1 className="collection-titre">Les lieux</h1>
+          <p className="collection-compte">
+            <b>{lieux.ouverts.length}</b> / {LIEUX.length} ouverts · chaque deck y joue, sa puissance remplit la jauge, la jauge rend de l'or
+          </p>
+        </header>
+        <div className="lieux">
+          {LIEUX.map((l) => {
+            if (!estOuvert(lieux, l.id)) {
+              const manque = l.prix - lieux.or
+              return (
+                <div key={l.id} className="lieu lieu-ferme">
+                  <div className="lieu-tete">
+                    <h2 className="lieu-nom">{l.nom}</h2>
+                    <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                  </div>
+                  <button type="button" className="collection-bouton lieu-ouvrir" disabled={manque > 0} onClick={() => onOuvrirLieu(l.id)}>
+                    Ouvrir · <IconeOr /> {l.prix}
+                  </button>
+                  {manque > 0 && <p className="lieu-manque">Il manque {manque} or</p>}
+                </div>
+              )
+            }
+            const k = deckDuLieu(decks, l.id)
+            const deck = k === null ? undefined : decks.liste[k]
+            return (
+              <div key={l.id} className="lieu">
+                {/* TOUT LE LIEU S'OUVRE D'UNE TAPE ; le bouton du deck a la sienne. */}
+                <button type="button" className="lieu-voir" aria-label={`Voir ${l.nom}`} onClick={() => setVu(l.id)} />
+                <div className="lieu-tete">
+                  <h2 className="lieu-nom">{l.nom}</h2>
+                  <span className="lieu-bonus">{texteDuBonus(l)}</span>
+                </div>
+                <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
+                <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(l.id)} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      {dialogue}
+    </div>
+  )
+}
+
+/**
+ * LA JAUGE D'UN LIEU : la puissance déjà là sur ce qu'il faut, et l'or qu'elle
+ * rendra. Quand elle se remplit sous nos yeux, « +10 » et sa pièce s'envolent.
+ */
+function JaugeDuLieu({
+  lieu,
+  lieux,
+  gain,
+  gainAuDepart,
+}: {
+  lieu: Lieu
+  lieux: EtatLieux
+  gain: { numero: number; or: number } | undefined
+  gainAuDepart: { numero: number; or: number } | undefined
+}): React.ReactElement {
+  const dedans = lieux.jauges[lieu.id] ?? 0
+  const neuf = gain !== undefined && gain.numero > (gainAuDepart?.numero ?? 0)
+  return (
+    <div className="lieu-jauge-place">
+      <div className="lieu-jauge" role="progressbar" aria-valuemin={0} aria-valuemax={lieu.jauge} aria-valuenow={dedans}>
+        <span style={{ width: `${((dedans / lieu.jauge) * 100).toFixed(1)}%` }} />
+      </div>
+      <p className="lieu-jauge-texte">
+        <b>{dedans}</b> / {lieu.jauge} de puissance → <IconeOr /> {lieu.or}
+      </p>
+      {neuf && (
+        <span key={gain.numero} className="lieu-gain" aria-live="polite">
+          +{gain.or} <IconeOr />
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** Le deck posé sur le lieu (ou aucun), et le bouton pour le choisir. */
+function LigneDuDeck({ deck, i, onChoisir }: { deck: Deck | undefined; i: number | null; onChoisir: () => void }): React.ReactElement {
+  return (
+    <div className="lieu-deck">
+      {deck === undefined || i === null ? (
+        <span className="lieu-deck-vide">Aucun deck</span>
+      ) : (
+        <span className="lieu-deck-nom">
+          {nomDuDeck(deck, i)}
+          <span className={`lieu-deck-etat${deckComplet(deck) ? '' : ' lieu-deck-incomplet'}`}>
+            {deckComplet(deck) ? 'joue' : `${deck.cartes.length}/${DECK.taille} · incomplet`}
+          </span>
+        </span>
+      )}
+      <button type="button" className="lieu-choisir" onClick={onChoisir}>
+        {deck === undefined ? 'Poser un deck' : 'Changer'}
+      </button>
+    </div>
+  )
+}
+
+/**
+ * QUEL DECK SUR CE LIEU : les decks complets se posent (celui qui joue
+ * ailleurs le quitte pour ici) ; un incomplet se compose d'abord.
+ */
+function ChoixDuDeck({
+  lieu,
+  decks,
+  onPoser,
+  onRetirer,
+  onComposer,
+  onFermer,
+}: {
+  lieu: Lieu
+  decks: Decks
+  onPoser: (i: number) => void
+  onRetirer: (i: number) => void
+  onComposer: (i: number) => void
+  onFermer: () => void
+}): React.ReactElement {
+  const ici = deckDuLieu(decks, lieu.id)
+  return (
+    <div className="prendre-voile" onClick={onFermer}>
+      <div className="prendre lieu-choix" role="dialog" aria-modal="true" aria-labelledby="lieu-choix-titre" onClick={(e) => e.stopPropagation()}>
+        <p id="lieu-choix-titre" className="prendre-question">
+          Quel deck {aLieu(lieu)} ?
+        </p>
+        <div className="lieu-choix-liste">
+          {decks.liste.map((d, i) => {
+            const complet = deckComplet(d)
+            const ailleurs = d.lieu !== undefined && d.lieu !== lieu.id ? LIEUX.find((l) => l.id === d.lieu) : undefined
+            return (
+              <button
+                key={i}
+                type="button"
+                className={`lieu-choix-deck${i === ici ? ' lieu-choix-ici' : ''}`}
+                onClick={() => (i === ici ? onFermer() : complet ? onPoser(i) : onComposer(i))}
+              >
+                <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
+                <span className="lieu-choix-detail">
+                  {i === ici
+                    ? 'joue ici'
+                    : !complet
+                      ? `${d.cartes.length}/${DECK.taille} · à compléter`
+                      : ailleurs !== undefined
+                        ? `joue ${aLieu(ailleurs)} · le déplacer`
+                        : 'prêt'}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="prendre-boutons">
+          <button type="button" className="prendre-annuler" onClick={onFermer}>
+            Annuler
+          </button>
+          {ici !== null && (
+            <button type="button" className="prendre-annuler" onClick={() => onRetirer(ici)}>
+              Retirer le deck
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** LE DECK QUI JOUE SUR UN LIEU : la pile, la barre jusqu'à la main suivante, la dernière main. */
+function DeckEnJeu({
+  deck,
+  collection,
+  parId,
+  valeur,
+  derniere,
+}: {
+  deck: Deck
+  collection: Collection
+  parId: ReadonlyMap<string, CarteEmoji>
   valeur: ValeurDeCarte | null
   derniere: MainTombee | null
-  /** Choisir le deck qui joue (Keko : « sélectionner celui avec lequel il veut jouer »). */
-  onChoisir: (i: number) => void
-  onComposer: () => void
 }): React.ReactElement {
-  const deck = deckActif(decks)
-  const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
-  const complet = deckComplet(deck)
   const main = derniere?.main ?? mainPrecedente(deck)
   const numero = derniere?.numero ?? 0
   const jouees = deck.partie?.jouees ?? 0
   const parCycle = DECK.taille / DECK.main
-  const manquent = DECK.taille - deck.cartes.length
 
   // AU RETOUR SUR LA PAGE (onglet réduit puis rouvert), LA ZONE DE JEU SE
   // RECONSTRUIT : les mains rattrapées pendant l'absence laissaient des couches
@@ -78,10 +369,9 @@ export function PageJouer({
     return () => document.removeEventListener('visibilitychange', voir)
   }, [])
 
-  // LA PILE : le dos de carte de l'emoji, peint une fois.
+  // LA PILE : le dos de carte, peint une fois.
   const pile = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
-    if (!complet) return
     let vivant = true
     void peindreDosEmoji(RAYON_SIMPLE).then((source) => {
       const c = pile.current
@@ -94,7 +384,7 @@ export function PageJouer({
     return () => {
       vivant = false
     }
-  }, [complet, retour])
+  }, [retour])
 
   // LA BARRE JUSQU'À LA PROCHAINE MAIN : la largeur à chaque image, sans
   // rendu React ; les secondes affichées, seulement quand elles changent.
@@ -119,11 +409,11 @@ export function PageJouer({
   // s'affiche pas dès le début mais que chaque carte produise son effet avec
   // une petite animation shake/pump chacun son tour ». Les cinq entrent, puis
   // chacune gonfle à son tour et pose son « +n », le total monte avec elles,
-  // sous elle. `resolues` compte les cartes passées
-  // pour la main `numero` (l'état porte le numéro : une main neuve repart de
-  // zéro dès son premier rendu, sans montrer un instant les badges de
-  // l'ancienne). Sans main tombée dans la session (on arrive en cours de
-  // route), tout est déjà posé, sans séquence.
+  // sous elle. `resolues` compte les cartes passées pour la main `numero`
+  // (l'état porte le numéro : une main neuve repart de zéro dès son premier
+  // rendu, sans montrer un instant les badges de l'ancienne). Sans main tombée
+  // dans la session (on arrive en cours de route), tout est déjà posé, sans
+  // séquence.
   const [avancee, setAvancee] = useState({ numero: 0, resolues: 0 })
   useEffect(() => {
     if (derniere === null) return
@@ -135,129 +425,72 @@ export function PageJouer({
   const resolues = derniere === null ? (main?.length ?? 0) : avancee.numero === numero ? avancee.resolues : 0
   const total = main === null || valeur === null ? 0 : likesDeLaMain(main.slice(0, resolues), valeur)
 
-
   return (
-    <div className="collection collection-avec-likes">
-      <div className="collection-defile">
-        <header className="collection-tete">
-          <h1 className="collection-titre">
-            {nomDuDeck(deck, decks.actif)} {complet ? 'joue' : 'attend'}
-          </h1>
-          {/* QUEL DECK JOUE : un onglet par deck, les incomplets grisés. */}
-          {decks.liste.length > 1 && (
-            <div className="decks-onglets" role="tablist" aria-label="Le deck qui joue">
-              {decks.liste.map((d, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  role="tab"
-                  aria-selected={i === decks.actif}
-                  className={`deck-onglet${i === decks.actif ? ' deck-onglet-edite' : ''}`}
-                  disabled={!deckComplet(d)}
-                  onClick={() => onChoisir(i)}
-                >
-                  <span className="deck-onglet-nom">{nomDuDeck(d, i)}</span>
-                  <span className="deck-onglet-compte">
-                    {d.cartes.length}/{DECK.taille}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-          <p className="collection-compte">
-            {complet ? (
-              <>
-                {/* CE QUE RAPPORTE UN TOUR DU DECK : la somme de ses trente cartes, un
-                    Like plus un par cran — c'est là qu'on voit qu'un deck de rares vaut plus. */}
-                <b>{valeur === null ? '…' : likesDuDeck(deck, valeur)}</b> de puissance par tour · main {jouees / DECK.main + 1} / {parCycle} ·{' '}
-                {DECK.taille - jouees} carte{DECK.taille - jouees > 1 ? 's' : ''} dans la pile
-              </>
+    <div className="jouer" key={retour}>
+      <p className="jouer-texte">
+        {/* CE QUE RAPPORTE UN TOUR DU DECK ICI : ses trente cartes, bonus du lieu compris. */}
+        <b>{valeur === null ? '…' : likesDuDeck(deck, valeur)}</b> de puissance par tour · main {jouees / DECK.main + 1} / {parCycle}
+      </p>
+      {/* LA PILE : trois dos décalés, le compte de ce qui reste à jouer. */}
+      <div className="jouer-pile" aria-label={`${DECK.taille - jouees} cartes dans la pile`}>
+        <span className="jouer-pile-dos jouer-pile-dos-3" />
+        <span className="jouer-pile-dos jouer-pile-dos-2" />
+        <canvas ref={pile} className="jouer-pile-dos" />
+        <span className="vignette-nombre jouer-pile-compte">{DECK.taille - jouees}</span>
+      </div>
+
+      {/* LA BARRE JUSQU'À LA MAIN SUIVANTE. */}
+      <div className="jouer-barre" aria-hidden>
+        <span ref={barre} />
+      </div>
+      <p className="jouer-texte">
+        Prochaine main dans <b>{secondes} s</b>
+      </p>
+
+      {/* LA DERNIÈRE MAIN TOMBÉE, cinq vignettes qui entrent l'une après
+          l'autre (`--i`), puis se résolvent une à une. */}
+      <div className="jouer-main" key={numero}>
+        {main === null ? (
+          <p className="jouer-texte collection-discret jouer-premiere">La première main arrive…</p>
+        ) : (
+          main.map((e, i) => {
+            const carte = parId.get(e.id)
+            const p = collection.cartes[e.id] ?? null
+            if (carte === undefined) return null
+            // L'EXEMPLAIRE DU DECK, tel quel — sans « ×2 » ni « Nouveau » : une
+            // carte jouée n'est pas une case de la collection (Keko).
+            // La carte qui se résout gonfle (`jouer-carte-pump`) et pose son
+            // « +n » ; les suivantes attendent leur tour, badge compris.
+            const resolue = i < resolues
+            const enCours = derniere !== null && i === resolues - 1
+            return (
+              <span key={`${e.id}:${i}`} className={`jouer-carte${enCours ? ' jouer-carte-pump' : ''}`} style={{ '--i': i } as React.CSSProperties}>
+                <Vignette carte={carte} possession={p} variante={e.v} nue onOuvrir={() => {}} />
+                {/* CE QUE LA CARTE A RAPPORTÉ, sous elle, bonus du lieu compris. */}
+                <span className={`jouer-carte-likes${resolue ? ' jouer-carte-likes-posee' : ''}`}>{valeur !== null && resolue ? `+${valeur(e)}` : ' '}</span>
+              </span>
+            )
+          })
+        )}
+      </div>
+      {/* LE TOTAL DE LA MAIN, UNE SEULE FOIS, SOUS ELLE (Keko) : rien tant
+          qu'aucune carte n'est passée, puis l'icône et le compte, remontés à
+          chaque hausse (`key`) pour rejouer le saut. Il entre dans la jauge. */}
+      {main !== null &&
+        (derniere === null ? (
+          <p className="jouer-texte collection-discret">La dernière main jouée</p>
+        ) : (
+          <p className="jouer-texte jouer-total" key={resolues} aria-live="polite">
+            {resolues === 0 ? (
+              ' '
             ) : (
               <>
-                <b>{deck.cartes.length}</b> / {DECK.taille} cartes · il joue dès qu'il est complet
+                <IconeLike />
+                <span className="jouer-total-saut">+{total}</span>
               </>
             )}
           </p>
-        </header>
-
-        {!complet ? (
-          <div className="collection-vide">
-            <p>
-              Il manque {manquent} carte{manquent > 1 ? 's' : ''} au deck.
-            </p>
-            <p className="collection-discret">Trente cartes, et il joue tout seul : cinq cartes toutes les dix secondes, un point de puissance par carte et un de plus par cran de rareté.</p>
-            <button type="button" className="collection-bouton" onClick={onComposer}>
-              Composer le deck
-            </button>
-          </div>
-        ) : (
-          <div className="jouer" key={retour}>
-            {/* LA PILE : trois dos décalés, le compte de ce qui reste à jouer. */}
-            <div className="jouer-pile" aria-label={`${DECK.taille - jouees} cartes dans la pile`}>
-              <span className="jouer-pile-dos jouer-pile-dos-3" />
-              <span className="jouer-pile-dos jouer-pile-dos-2" />
-              <canvas ref={pile} className="jouer-pile-dos" />
-              <span className="vignette-nombre jouer-pile-compte">{DECK.taille - jouees}</span>
-            </div>
-
-            {/* LA BARRE JUSQU'À LA MAIN SUIVANTE. */}
-            <div className="jouer-barre" aria-hidden>
-              <span ref={barre} />
-            </div>
-            <p className="jouer-texte">
-              Prochaine main dans <b>{secondes} s</b>
-            </p>
-
-            {/* LA DERNIÈRE MAIN TOMBÉE, cinq vignettes qui entrent l'une après
-                l'autre (`--i`), puis se résolvent une à une. */}
-            <div className="jouer-main" key={numero}>
-              {main === null ? (
-                <p className="jouer-texte collection-discret jouer-premiere">La première main arrive…</p>
-              ) : (
-                main.map((e, i) => {
-                  const carte = parId.get(e.id)
-                  const p = collection.cartes[e.id] ?? null
-                  if (carte === undefined) return null
-                  // L'EXEMPLAIRE DU DECK, tel quel — sans « ×2 » ni « Nouveau » : une
-                  // carte jouée n'est pas une case de la collection (Keko).
-                  // La carte qui se résout gonfle (`jouer-carte-pump`) et pose son
-                  // « +n » ; les suivantes attendent leur tour, badge compris.
-                  const resolue = i < resolues
-                  const enCours = derniere !== null && i === resolues - 1
-                  return (
-                    <span key={`${e.id}:${i}`} className={`jouer-carte${enCours ? ' jouer-carte-pump' : ''}`} style={{ '--i': i } as React.CSSProperties}>
-                      <Vignette carte={carte} possession={p} variante={e.v} nue onOuvrir={() => {}} />
-                      {/* CE QUE LA CARTE A RAPPORTÉ, sous elle : la main ne fait plus
-                          cinq d'office, on dit d'où vient le compte. */}
-                      <span className={`jouer-carte-likes${resolue ? ' jouer-carte-likes-posee' : ''}`}>{valeur !== null && resolue ? `+${valeur(e)}` : '\u00a0'}</span>
-                    </span>
-                  )
-                })
-              )}
-            </div>
-            {/* LE TOTAL DE LA MAIN, UNE SEULE FOIS, SOUS ELLE (Keko : « on marque deux
-                fois le total… on va garder le chiffre sous la main, le mettre en rose
-                aussi, lui mettre l'icône des Likes et l'animer à chaque fois qu'il
-                augmente ») : rien tant qu'aucune carte n'est passée, puis l'icône et
-                le compte, remontés à chaque hausse (`key`) pour rejouer le saut. */}
-            {main !== null &&
-              (derniere === null ? (
-                <p className="jouer-texte collection-discret">La dernière main jouée</p>
-              ) : (
-                <p className="jouer-texte jouer-total" key={resolues} aria-live="polite">
-                  {resolues === 0 ? (
-                    '\u00a0'
-                  ) : (
-                    <>
-                      <IconeLike />
-                      <span className="jouer-total-saut">+{total}</span>
-                    </>
-                  )}
-                </p>
-              ))}
-          </div>
-        )}
-      </div>
+        ))}
     </div>
   )
 }

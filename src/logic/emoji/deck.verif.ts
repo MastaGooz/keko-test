@@ -6,8 +6,9 @@ import {
   ajouterDeck,
   basculerCarte,
   basculerDansDeck,
-  choisirDeck,
-  deckActif,
+  deckDuLieu,
+  garderLesLieuxOuverts,
+  poserSurLieu,
   deckAJour,
   deckComplet,
   deckQuiTient,
@@ -25,10 +26,10 @@ import {
   mainCourante,
   mainPrecedente,
   melange,
-  modifierDeck,
   prochaineMainDans,
   supprimerDeck,
   valeurParRarete,
+  type Deck,
   type EntreeDeck,
   type ValeurDeCarte,
 } from './deck.ts'
@@ -50,13 +51,14 @@ const cle = (m: readonly EntreeDeck[]): string => m.map((e) => `${e.id}#${e.v}`)
 /** Un Like par carte, quel que soit le cran : la règle du départ, pour les comptes ronds. */
 const UN: ValeurDeCarte = () => 1
 
-// LA COMPOSITION
-let d = deckVide()
+// LA COMPOSITION — sur un lieu : un deck ne joue que posé (voir `lieux.ts`).
+let d: Deck = { ...deckVide(), lieu: 'taverne' }
 for (const e of simples.slice(0, DECK.taille - 1)) d = basculerCarte(d, e, T0)
 verifier('vingt-neuf cartes, le deck ne joue pas', d.cartes.length === DECK.taille - 1 && d.partie === null && !deckComplet(d))
 verifier('pas de main sans partie', mainCourante(d).length === 0 && prochaineMainDans(d, T0) === null && mainPrecedente(d) === null)
 d = basculerCarte(d, simples[DECK.taille - 1]!, T0)
 verifier('la trentième lance la partie', deckComplet(d) && d.partie !== null && d.partie.depuis === T0 && d.partie.jouees === 0)
+verifier('complet mais sur aucun lieu, il ne joue pas', demarrer({ ...d, partie: null, lieu: undefined }, T0).partie === null)
 verifier('une trente-et-unième est refusée', basculerCarte(d, S('abcd'), T0) === d)
 verifier('retirer une carte arrête la partie', basculerCarte(d, simples[3]!, T0 + 5).partie === null)
 const remplace = basculerCarte(d, H(ids[3]!), T0 + 6)
@@ -114,19 +116,21 @@ verifier('une carte qu’on ne possède plus est écartée, la partie tombe', sa
 verifier('un doublon d’emoji est écarté, même d’une autre version', lireDeck({ cartes: [...simples.slice(0, 29), H(ids[0]!)] }, tous, T0).cartes.length === 29)
 verifier('les identifiants seuls d’avant se relisent en version normale', lireDeck({ cartes: ids }, tous, T0 + 7).cartes.every((e) => e.v === 'simple'))
 verifier('une version inconnue est écartée', lireDeck({ cartes: [{ id: ids[0], v: 'doré' }] }, tous, T0).cartes.length === 0)
-verifier('un deck complet sans partie en reçoit une', lireDeck({ cartes: ids }, tous, T0 + 7).partie?.depuis === T0 + 7)
-verifier('une partie abîmée repart neuve', lireDeck({ cartes: ids, partie: { graine: 1, jouees: 7, depuis: T0 } }, tous, T0 + 9).partie?.depuis === T0 + 9)
+verifier('un deck complet sans partie en reçoit une', lireDeck({ cartes: ids, lieu: 'taverne' }, tous, T0 + 7).partie?.depuis === T0 + 7)
+verifier('un deck complet sans lieu reste sans partie', lireDeck({ cartes: ids, partie: { graine: 1, jouees: 0, depuis: T0 } }, tous, T0).partie === null)
+verifier('un lieu inconnu se relit sans lieu', lireDeck({ cartes: ids, lieu: 'lune' }, tous, T0).lieu === undefined)
+verifier('une partie abîmée repart neuve', lireDeck({ cartes: ids, lieu: 'taverne', partie: { graine: 1, jouees: 7, depuis: T0 } }, tous, T0 + 9).partie?.depuis === T0 + 9)
 
-// PLUSIEURS DECKS, UN SEUL QUI JOUE
+// PLUSIEURS DECKS, CHACUN SUR SON LIEU
 /** On possède un exemplaire normal de chaque emoji, et un holo du premier. */
 const compte = (id: string, v: string): number => (ids.includes(id) ? (v === 'simple' ? 1 : v === 'holo' && id === ids[0] ? 1 : 0) : 0)
 let ds = decksVides()
-verifier('un deck vide au départ, actif', ds.liste.length === 1 && ds.actif === 0 && deckActif(ds).cartes.length === 0)
+verifier('un deck vide au départ, sur aucun lieu', ds.liste.length === 1 && ds.liste[0]!.cartes.length === 0 && ds.liste[0]!.lieu === undefined)
 ds = ajouterDeck(ds)
-verifier('un deck de plus, l’actif reste le premier', ds.liste.length === 2 && ds.actif === 0)
+verifier('un deck de plus', ds.liste.length === 2)
 for (const e of simples) ds = basculerDansDeck(ds, 1, e, compte, T0)
-verifier('le second est complet mais ne joue pas : il n’est pas l’actif', deckComplet(ds.liste[1]!) && ds.liste[1]!.partie === null)
-verifier('rien ne tombe tant que l’actif est vide', decksAJour(ds, T0 + DECK.cadence * 3, UN).mains === 0)
+verifier('le second est complet mais ne joue pas : il n’est sur aucun lieu', deckComplet(ds.liste[1]!) && ds.liste[1]!.partie === null)
+verifier('rien ne tombe tant qu’aucun deck n’est posé', decksAJour(ds, T0 + DECK.cadence * 3, () => UN).joues.length === 0)
 verifier('un exemplaire pris par le deck 2 n’est plus disponible au deck 1', disponibles(ds, 0, ids[4]!, 'simple', compte) === 0 && deckQuiTient(ds, 0, ids[4]!, 'simple') === 1)
 verifier('mais il reste disponible au deck qui le tient', disponibles(ds, 1, ids[4]!, 'simple', compte) === 1)
 verifier('le holo du premier emoji, lui, est libre', disponibles(ds, 0, ids[0]!, 'holo', compte) === 1 && deckQuiTient(ds, 0, ids[0]!, 'holo') === null)
@@ -135,47 +139,60 @@ verifier('le deck 1 prend l’exemplaire au deck 2, qui devient incomplet', vole
 const avecHolo = basculerDansDeck(ds, 0, H(ids[0]!), compte, T0)
 verifier('il peut prendre le holo libre', avecHolo.liste[0]!.cartes.length === 1 && avecHolo.liste[0]!.cartes[0]!.v === 'holo')
 verifier('retirer est toujours possible', basculerDansDeck(avecHolo, 0, H(ids[0]!), compte, T0).liste[0]!.cartes.length === 0)
-ds = choisirDeck(ds, 1, T0 + 100)
-verifier('choisir le second le lance', ds.actif === 1 && ds.liste[1]!.partie?.depuis === T0 + 100)
-verifier('le choisir encore ne change rien', choisirDeck(ds, 1, T0 + 999) === ds)
-const tombe = decksAJour(ds, T0 + 100 + DECK.cadence, UN)
-verifier('l’actif joue', tombe.mains === 1 && tombe.likes === DECK.main && tombe.decks.liste[1]!.partie?.jouees === DECK.main && tombe.decks.liste[0] === ds.liste[0])
+ds = poserSurLieu(ds, 1, 'taverne', T0 + 100)
+verifier('le poser sur un lieu le lance', ds.liste[1]!.lieu === 'taverne' && ds.liste[1]!.partie?.depuis === T0 + 100 && deckDuLieu(ds, 'taverne') === 1)
+verifier('le reposer au même lieu ne change rien', poserSurLieu(ds, 1, 'taverne', T0 + 999) === ds)
+verifier('un lieu inconnu est refusé', poserSurLieu(ds, 1, 'lune', T0) === ds)
+const tombe = decksAJour(ds, T0 + 100 + DECK.cadence, () => UN)
+verifier('le deck posé joue', tombe.joues.length === 1 && tombe.joues[0]!.i === 1 && tombe.joues[0]!.lieu === 'taverne' && tombe.joues[0]!.likes === DECK.main && tombe.decks.liste[1]!.partie?.jouees === DECK.main && tombe.decks.liste[0] === ds.liste[0])
+verifier('à la valeur de son lieu', decksAJour(ds, T0 + 100 + DECK.cadence, (x) => (x.lieu === 'taverne' ? () => 3 : UN)).joues[0]!.likes === DECK.main * 3)
 /** Deux exemplaires normaux de chaque : les deux decks peuvent être pleins. */
 const deuxChacun = (id: string, v: string): number => (ids.includes(id) && v === 'simple' ? 2 : 0)
 for (const e of simples) ds = basculerDansDeck(ds, 0, e, deuxChacun, T0)
-verifier('compléter un deck non actif ne le lance pas', deckComplet(ds.liste[0]!) && ds.liste[0]!.partie === null)
-const bascule = choisirDeck(ds, 0, T0 + 500)
-verifier('changer de deck arrête l’ancien et lance le nouveau', bascule.actif === 0 && bascule.liste[0]!.partie?.depuis === T0 + 500 && bascule.liste[1]!.partie === null)
-const sansActif = supprimerDeck(bascule, 0, T0 + 600)
-verifier('supprimer l’actif : le premier restant prend sa place et joue', sansActif.liste.length === 1 && sansActif.actif === 0 && sansActif.liste[0]!.partie?.depuis === T0 + 600)
-verifier('on ne supprime pas le dernier deck', supprimerDeck(sansActif, 0, T0) === sansActif)
-const trois = ajouterDeck(ajouterDeck(bascule))
-verifier('supprimer avant l’actif décale l’index', supprimerDeck(choisirDeck(trois, 2, T0), 0, T0).actif === 1)
+verifier('compléter un deck sans lieu ne le lance pas', deckComplet(ds.liste[0]!) && ds.liste[0]!.partie === null)
+const deux = poserSurLieu(ds, 0, 'mine', T0 + 500)
+verifier('deux decks sur deux lieux jouent ensemble', deux.liste[0]!.partie?.depuis === T0 + 500 && deux.liste[1]!.partie?.depuis === T0 + 100)
+const ensemble = decksAJour(deux, T0 + 500 + DECK.cadence, () => UN)
+verifier('le temps les fait jouer tous les deux', ensemble.joues.length === 2 && ensemble.joues.map((j) => j.lieu).sort().join() === 'mine,taverne')
+const chasse = poserSurLieu(deux, 0, 'taverne', T0 + 700)
+verifier('poser sur un lieu occupé en chasse l’autre deck, qui s’arrête', chasse.liste[0]!.lieu === 'taverne' && chasse.liste[0]!.partie?.depuis === T0 + 700 && chasse.liste[1]!.lieu === undefined && chasse.liste[1]!.partie === null)
+const retire = poserSurLieu(deux, 0, null, T0)
+verifier('retiré de son lieu, il s’arrête', retire.liste[0]!.lieu === undefined && retire.liste[0]!.partie === null && retire.liste[1] === deux.liste[1])
+const ferme = garderLesLieuxOuverts(deux, ['taverne'])
+verifier('un lieu fermé fait descendre son deck', ferme.liste[0]!.lieu === undefined && ferme.liste[0]!.partie === null && ferme.liste[1]!.lieu === 'taverne')
+verifier('tous ouverts : rien ne bouge', garderLesLieuxOuverts(deux, ['taverne', 'mine']) === deux)
+const incomplet = basculerDansDeck(deux, 1, simples[0]!, deuxChacun, T0 + 800)
+verifier('un deck posé qui perd une carte s’arrête mais garde son lieu', incomplet.liste[1]!.partie === null && incomplet.liste[1]!.lieu === 'taverne')
+verifier('complété, il repart seul', basculerDansDeck(incomplet, 1, simples[0]!, deuxChacun, T0 + 900).liste[1]!.partie?.depuis === T0 + 900)
+const sansUn = supprimerDeck(deux, 0)
+verifier('supprimer un deck libère son lieu', sansUn.liste.length === 1 && deckDuLieu(sansUn, 'mine') === null && sansUn.liste[0]!.lieu === 'taverne')
+verifier('on ne supprime pas le dernier deck', supprimerDeck(sansUn, 0) === sansUn)
 let plein = decksVides()
 for (let i = 0; i < DECKS_MAX + 2; i++) plein = ajouterDeck(plein)
 verifier('au plus DECKS_MAX decks', plein.liste.length === DECKS_MAX)
 verifier('trois decks au plus (Keko)', DECKS_MAX === 3)
 // UNE SAUVEGARDE QUI DÉPASSE LE PLAFOND (il a baissé) garde ses decks, sans pouvoir en ajouter.
 const nLus = Math.max(DECKS_MAX, DECKS_LUS_MAX)
-const auPlafond = lireDecks({ liste: Array.from({ length: nLus }, () => ({ cartes: [] })), actif: nLus - 1 }, deuxChacun, T0)
-verifier('tous les decks relus restent', auPlafond.liste.length === nLus && auPlafond.actif === nLus - 1)
+const auPlafond = lireDecks({ liste: Array.from({ length: nLus }, () => ({ cartes: [], lieu: null })) }, deuxChacun, T0)
+verifier('tous les decks relus restent', auPlafond.liste.length === nLus)
 verifier('au plafond, plus d’ajout', ajouterDeck(auPlafond) === auPlafond)
-const perdu = garderPossedeesPartout(bascule, (id, v) => (id === ids[2] ? 0 : deuxChacun(id, v)), T0)
+const perdu = garderPossedeesPartout(deux, (id, v) => (id === ids[2] ? 0 : deuxChacun(id, v)), T0)
 verifier('une carte perdue quitte tous les decks', perdu.liste.every((d) => d.cartes.length === DECK.taille - 1 && d.partie === null))
-const unSeul = garderPossedeesPartout(bascule, compte, T0)
+const unSeul = garderPossedeesPartout(deux, compte, T0)
 verifier('un seul exemplaire possédé : le second deck le perd, le premier le garde', unSeul.liste[0]!.cartes.length === DECK.taille && unSeul.liste[1]!.cartes.length === 0)
-const garde = garderPossedeesPartout(bascule, compte, T0, 1)
+const garde = garderPossedeesPartout(deux, compte, T0, 1)
 verifier('le deck prioritaire garde son exemplaire, l’autre le perd', garde.liste[1]!.cartes.length === DECK.taille && garde.liste[0]!.cartes.length === 0)
-verifier('la perte se lit deck par deck', decksQuiPerdent(bascule, unSeul).join() === '1' && decksQuiPerdent(bascule, perdu).join() === '0,1' && decksQuiPerdent(bascule, bascule).length === 0)
-verifier('modifierDeck hors de l’actif ne laisse pas de partie', modifierDeck(bascule, 1, (d) => ({ ...d, partie: { graine: 1, jouees: 0, depuis: 0 } })).liste[1]!.partie === null)
-const relus = lireDecks(JSON.parse(JSON.stringify(bascule)), deuxChacun, T0)
-verifier('les decks gardés se relisent', relus.actif === 0 && relus.liste.length === 2 && relus.liste[0]!.partie?.depuis === T0 + 500 && relus.liste[1]!.partie === null && relus.liste[1]!.cartes.length === DECK.taille)
-verifier('à la relecture, jamais plus d’exemplaires en jeu que possédés', lireDecks(JSON.parse(JSON.stringify(bascule)), compte, T0).liste[1]!.cartes.length === 0)
+verifier('la perte se lit deck par deck', decksQuiPerdent(deux, unSeul).join() === '1' && decksQuiPerdent(deux, perdu).join() === '0,1' && decksQuiPerdent(deux, deux).length === 0)
+const relus = lireDecks(JSON.parse(JSON.stringify(deux)), deuxChacun, T0)
+verifier('les decks gardés se relisent, lieux et parties compris', relus.liste.length === 2 && relus.liste[0]!.lieu === 'mine' && relus.liste[0]!.partie?.depuis === T0 + 500 && relus.liste[1]!.lieu === 'taverne' && relus.liste[1]!.partie?.depuis === T0 + 100)
+verifier('à la relecture, jamais plus d’exemplaires en jeu que possédés', lireDecks(JSON.parse(JSON.stringify(deux)), compte, T0).liste[1]!.cartes.length === 0)
+const doublonDeLieu = lireDecks({ liste: [{ cartes: ids, lieu: 'mine' }, { cartes: [], lieu: 'mine' }] }, deuxChacun, T0)
+verifier('deux decks sur un même lieu : le premier le garde', doublonDeLieu.liste[0]!.lieu === 'mine' && doublonDeLieu.liste[1]!.lieu === undefined)
 const ancien = lireDecks({ cartes: ids, partie: { graine: 3, jouees: DECK.main, depuis: T0 } }, compte, T0)
-verifier('un deck seul d’avant devient le premier et l’actif, en versions normales', ancien.liste.length === 1 && ancien.actif === 0 && ancien.liste[0]!.partie?.graine === 3 && ancien.liste[0]!.cartes.every((e) => e.v === 'simple'))
+verifier('un deck seul d’avant passe à la Taverne et continue sa partie', ancien.liste.length === 1 && ancien.liste[0]!.lieu === 'taverne' && ancien.liste[0]!.partie?.graine === 3 && ancien.liste[0]!.cartes.every((e) => e.v === 'simple'))
+const avantLesLieux = lireDecks({ liste: [{ cartes: [] }, { cartes: ids, partie: { graine: 5, jouees: 0, depuis: T0 } }], actif: 1 }, deuxChacun, T0)
+verifier('avant les lieux, le deck actif passe à la Taverne, les autres attendent', avantLesLieux.liste[1]!.lieu === 'taverne' && avantLesLieux.liste[1]!.partie?.graine === 5 && avantLesLieux.liste[0]!.lieu === undefined)
 verifier('n’importe quoi : un deck vide', lireDecks(42, compte, T0).liste.length === 1)
-const relusActifFaux = lireDecks({ liste: [{ cartes: ids, partie: { graine: 1, jouees: 0, depuis: T0 } }, { cartes: [] }], actif: 7 }, compte, T0)
-verifier('un actif hors liste retombe sur le premier', relusActifFaux.actif === 0 && relusActifFaux.liste[0]!.partie !== null)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

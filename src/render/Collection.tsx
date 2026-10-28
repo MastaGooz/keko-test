@@ -1079,23 +1079,22 @@ export interface ChoixDuDeck {
   readonly choix: (id: string, v: Variante) => { etat: 'dedans' | 'dehors' | 'plein' | 'pris'; prisPar?: string }
   readonly taille: number
   readonly onBasculer: (e: { id: string; v: Variante }) => void
-  /** Voir jouer le deck actif. */
+  /** Voir jouer les decks (la page des lieux). */
   readonly onJouer: () => void
   /**
    * PLUSIEURS DECKS (Keko : « que le joueur puisse avoir plusieurs decks, et
-   * sélectionner celui avec lequel il veut jouer ») : un onglet chacun, celui
-   * qu'on compose (`edite`) et celui qui joue (`actif`).
+   * sélectionner celui avec lequel il veut jouer ») : celui qu'on compose
+   * (`edite`) ; chacun joue sur son lieu.
    */
   readonly decks: readonly { n: number; complet: boolean; nom: string; nomDonne: string }[]
   /** Nommer le deck qu'on compose (Keko : « pouvoir nommer les decks ») ; vide : « Deck N ». */
   readonly onRenommer: (nom: string) => void
   readonly edite: number
-  readonly actif: number
+  /** LE LIEU OÙ JOUE LE DECK QU'ON COMPOSE (son nom), ou `null`. */
+  readonly lieu: string | null
   /** Revenir à « Mes decks », les étuis (voir `PageDecks`). */
   readonly onRetour: () => void
   readonly onSupprimer: () => void
-  /** Faire jouer le deck qu'on compose. */
-  readonly onJouerAvec: () => void
 }
 
 export function PageCollection({
@@ -1512,9 +1511,9 @@ export function PageCollection({
               <>
                 <b>{deck.nombre}</b> / {deck.taille} cartes ·{' '}
                 {deck.nombre >= deck.taille
-                  ? deck.edite === deck.actif
-                    ? 'complet'
-                    : 'complet, prêt à jouer'
+                  ? deck.lieu !== null
+                    ? `complet, joue à ${deck.lieu.replace(/^(La |Le |L')/, (m) => m.toLowerCase())}`
+                    : 'complet, à poser sur un lieu'
                   : `encore ${deck.taille - deck.nombre} à choisir`}
               </>
             ) : toutes ? (

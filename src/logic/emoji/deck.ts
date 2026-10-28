@@ -32,8 +32,14 @@
  * catalogue, que ce module ne lit pas : *la valeur d'une carte est injectée*
  * (`ValeurDeCarte`, bâtie par `valeurParRarete`), comme le temps. La version
  * (holo, animée) ne compte pas encore.
+ *
+ * **UN DECK JOUE SUR UN LIEU** (`lieux.ts`, Keko 28/10) : il ne joue que
+ * complet ET posé sur un lieu (`Deck.lieu`), un deck par lieu ; tous les
+ * decks posés jouent en même temps, et leur puissance remplit la jauge de
+ * leur lieu.
  */
 import { createRng } from '../rng.ts'
+import { IDS_LIEUX } from './lieux.ts'
 import { VARIANTES, type Variante } from './collection.ts'
 import { RARETES_EMOJI, type RareteEmoji } from './types.ts'
 
@@ -77,8 +83,10 @@ export interface Partie {
 export interface Deck {
   /** Les cartes du deck, dans l'ordre où le joueur les a mises — un emoji au plus une fois. */
   readonly cartes: readonly EntreeDeck[]
-  /** `null` : le deck ne joue pas (incomplet). */
+  /** `null` : le deck ne joue pas (incomplet, ou posé sur aucun lieu). */
   readonly partie: Partie | null
+  /** LE LIEU OÙ IL JOUE (voir `lieux.ts`) ; absent : il attend. Un deck par lieu. */
+  readonly lieu?: string
   /** LE NOM DONNÉ PAR LE JOUEUR (Keko : « pouvoir nommer les decks ») ; absent : « Deck N ». */
   readonly nom?: string
 }
@@ -207,9 +215,9 @@ export function garderPossedees(d: Deck, possede: (e: EntreeDeck) => boolean, ma
   return demarrer({ ...d, cartes, partie: null }, maintenant)
 }
 
-/** Lance la partie si le deck est complet et ne joue pas encore ; sinon rend le deck tel quel. */
+/** Lance la partie si le deck est complet, posé sur un lieu, et ne joue pas encore ; sinon rend le deck tel quel. */
 export function demarrer(d: Deck, maintenant: number): Deck {
-  if (d.partie !== null || !deckComplet(d)) return d
+  if (d.partie !== null || !deckComplet(d) || d.lieu === undefined) return d
   return { ...d, partie: { graine: maintenant >>> 0, jouees: 0, depuis: maintenant } }
 }
 
@@ -291,30 +299,31 @@ export function lireDeck(brut: unknown, possede: (e: EntreeDeck) => boolean, mai
     if (cartes.length >= DECK.taille) break
     cartes.push(e)
   }
+  const lieu = typeof o.lieu === 'string' && IDS_LIEUX.includes(o.lieu) ? o.lieu : undefined
+  const base = (partie: Partie | null): Deck => avecNom(lieu === undefined ? { cartes, partie } : { cartes, partie, lieu }, nomPropre(o.nom))
   const p = typeof o.partie === 'object' && o.partie !== null ? (o.partie as Record<string, unknown>) : null
   const entier = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null)
-  if (p !== null && cartes.length === DECK.taille && cartes.length === (o.cartes as unknown[]).length) {
+  if (p !== null && lieu !== undefined && cartes.length === DECK.taille && cartes.length === (o.cartes as unknown[]).length) {
     const graine = entier(p.graine)
     const jouees = entier(p.jouees)
     const depuis = typeof p.depuis === 'number' && Number.isFinite(p.depuis) ? p.depuis : null
     if (graine !== null && jouees !== null && jouees % DECK.main === 0 && jouees < DECK.taille && depuis !== null) {
-      return avecNom({ cartes, partie: { graine, jouees, depuis } }, nomPropre(o.nom))
+      return base({ graine, jouees, depuis })
     }
   }
-  // Un deck complet dont la partie est abîmée (ou absente) repart d'une partie neuve.
-  return demarrer(avecNom({ cartes, partie: null }, nomPropre(o.nom)), maintenant)
+  // Un deck complet et posé dont la partie est abîmée (ou absente) repart d'une partie neuve.
+  return demarrer(base(null), maintenant)
 }
 
 /* ------------------------------------------------------------------------ */
-/* PLUSIEURS DECKS, UN SEUL QUI JOUE                                         */
+/* PLUSIEURS DECKS, CHACUN SUR SON LIEU                                      */
 /* ------------------------------------------------------------------------ */
 
 /**
- * Keko : « il faudrait que le joueur puisse avoir plusieurs decks, et
- * sélectionner celui avec lequel il veut jouer ». *Un seul joue à la fois* :
- * la partie est celle du deck actif, les autres n'en ont pas. Choisir un autre
- * deck arrête le premier et lance le second (s'il est complet) — le mélange en
- * cours ne se garde pas, comme quand on change un deck.
+ * Keko : « il faudrait que le joueur puisse avoir plusieurs decks ». *Ils
+ * jouent tous en même temps*, chacun sur son lieu (Keko, 28/10 : « 3 lieux,
+ * un par deck ») ; il n'y a plus de deck « actif ». Poser un deck sur un lieu
+ * le lance (s'il est complet) ; le deck qui y était s'arrête.
  */
 export const DECKS_MAX = 3
 /**
@@ -329,55 +338,70 @@ export const DECKS_LUS_MAX = 20
 
 export interface Decks {
   readonly liste: readonly Deck[]
-  /** L'index du deck qui joue (ou qui jouerait, s'il était complet). */
-  readonly actif: number
 }
 
 /** Combien d'exemplaires d'une version on possède — injecté par la collection. */
 export type CompteDExemplaires = (id: string, v: Variante) => number
 
 export function decksVides(): Decks {
-  return { liste: [deckVide()], actif: 0 }
+  return { liste: [deckVide()] }
 }
 
-export function deckActif(ds: Decks): Deck {
-  return ds.liste[ds.actif] ?? deckVide()
-}
-
-/** Un deck vide de plus, qu'on composera ; au plus `DECKS_MAX`. L'actif ne change pas. */
+/** Un deck vide de plus, qu'on composera ; au plus `DECKS_MAX`. */
 export function ajouterDeck(ds: Decks): Decks {
   if (ds.liste.length >= DECKS_MAX) return ds
-  return { liste: [...ds.liste, deckVide()], actif: ds.actif }
+  return { liste: [...ds.liste, deckVide()] }
 }
 
-/** Retire un deck — jamais le dernier. Si c'était l'actif, le premier prend sa place et démarre s'il peut. */
-export function supprimerDeck(ds: Decks, i: number, maintenant: number): Decks {
+/** Retire un deck — jamais le dernier. Son lieu se libère. */
+export function supprimerDeck(ds: Decks, i: number): Decks {
   if (ds.liste.length <= 1 || i < 0 || i >= ds.liste.length) return ds
-  const liste = ds.liste.filter((_, k) => k !== i)
-  if (i === ds.actif) return choisirDeck({ liste, actif: 0 }, 0, maintenant, true)
-  return { liste, actif: ds.actif < i ? ds.actif : ds.actif - 1 }
+  return { liste: ds.liste.filter((_, k) => k !== i) }
 }
 
-/**
- * CHOISIT LE DECK QUI JOUE : l'ancien s'arrête, le nouveau démarre s'il est
- * complet. Choisir celui qui joue déjà ne change rien.
- */
-export function choisirDeck(ds: Decks, i: number, maintenant: number, force = false): Decks {
-  if (i < 0 || i >= ds.liste.length || (i === ds.actif && !force)) return ds
-  const liste = ds.liste.map((d, k) =>
-    k === i ? demarrer({ ...d, partie: null }, maintenant) : d.partie === null ? d : { ...d, partie: null },
-  )
-  return { liste, actif: i }
-}
-
-/** Applique un changement à un deck ; seul l'actif garde (ou prend) une partie. */
+/** Applique un changement à un deck. */
 export function modifierDeck(ds: Decks, i: number, f: (d: Deck) => Deck): Decks {
   const d = ds.liste[i]
   if (d === undefined) return ds
-  const n0 = f(d)
-  if (n0 === d) return ds
-  const n = i === ds.actif || n0.partie === null ? n0 : { ...n0, partie: null }
-  return { liste: ds.liste.map((x, k) => (k === i ? n : x)), actif: ds.actif }
+  const n = f(d)
+  if (n === d) return ds
+  return { liste: ds.liste.map((x, k) => (k === i ? n : x)) }
+}
+
+/** Le deck sans lieu : il s'arrête. */
+function sansLieu(d: Deck): Deck {
+  if (d.lieu === undefined && d.partie === null) return d
+  const { lieu: _, ...reste } = d
+  return { ...reste, partie: null }
+}
+
+/** L'index du deck posé sur ce lieu, ou `null`. */
+export function deckDuLieu(ds: Decks, lieu: string): number | null {
+  const k = ds.liste.findIndex((d) => d.lieu === lieu)
+  return k < 0 ? null : k
+}
+
+/**
+ * POSE LE DECK `i` SUR UN LIEU (`null` : l'en retire). Le deck qui y était
+ * s'arrête ; celui-ci repart d'un mélange neuf, s'il est complet. Le poser
+ * là où il est déjà ne change rien.
+ */
+export function poserSurLieu(ds: Decks, i: number, lieu: string | null, maintenant: number): Decks {
+  const d = ds.liste[i]
+  if (d === undefined || (lieu !== null && !IDS_LIEUX.includes(lieu))) return ds
+  if ((d.lieu ?? null) === lieu) return ds
+  return {
+    liste: ds.liste.map((x, k) => {
+      if (k === i) return lieu === null ? sansLieu(x) : demarrer({ ...x, partie: null, lieu }, maintenant)
+      return lieu !== null && x.lieu === lieu ? sansLieu(x) : x
+    }),
+  }
+}
+
+/** Les decks posés sur un lieu qui n'est pas (plus) ouvert en descendent. */
+export function garderLesLieuxOuverts(ds: Decks, ouverts: readonly string[]): Decks {
+  if (ds.liste.every((d) => d.lieu === undefined || ouverts.includes(d.lieu))) return ds
+  return { liste: ds.liste.map((d) => (d.lieu === undefined || ouverts.includes(d.lieu) ? d : sansLieu(d))) }
 }
 
 /** Renomme le deck `i` ; un nom vide rend « Deck N ». La partie continue. */
@@ -473,41 +497,61 @@ export function decksQuiPerdent(avant: Decks, apres: Decks): number[] {
   return avant.liste.flatMap((d, i) => ((apres.liste[i]?.cartes.length ?? 0) < d.cartes.length ? [i] : []))
 }
 
-export interface MainsJoueesDesDecks extends Omit<MainsJouees, 'deck'> {
-  readonly decks: Decks
+/** Ce qu'un deck a joué : son index, son lieu, et ce que `deckAJour` en dit. */
+export interface JoueParUnDeck extends Omit<MainsJouees, 'deck'> {
+  readonly i: number
+  readonly lieu: string
 }
 
-/** Ce que le temps a joué : le deck actif seul joue. */
-export function decksAJour(ds: Decks, maintenant: number, valeur: ValeurDeCarte): MainsJoueesDesDecks {
-  const r = deckAJour(deckActif(ds), maintenant, valeur)
-  const decks = r.deck === deckActif(ds) ? ds : { liste: ds.liste.map((d, k) => (k === ds.actif ? r.deck : d)), actif: ds.actif }
-  return { decks, mains: r.mains, likes: r.likes, derniere: r.derniere }
+/**
+ * CE QUE LE TEMPS A JOUÉ, DECK PAR DECK : tous les decks posés jouent, chacun
+ * à la valeur de son lieu (`valeurDe`, qui ajoute le bonus du lieu).
+ */
+export function decksAJour(ds: Decks, maintenant: number, valeurDe: (d: Deck) => ValeurDeCarte): { decks: Decks; joues: JoueParUnDeck[] } {
+  const joues: JoueParUnDeck[] = []
+  let change = false
+  const liste = ds.liste.map((d, i) => {
+    if (d.partie === null || d.lieu === undefined) return d
+    const r = deckAJour(d, maintenant, valeurDe(d))
+    if (r.deck !== d) change = true
+    if (r.mains > 0) joues.push({ i, lieu: d.lieu, mains: r.mains, likes: r.likes, derniere: r.derniere })
+    return r.deck
+  })
+  return { decks: change ? { liste } : ds, joues }
 }
 
 /**
  * RELIT LES DECKS GARDÉS, sans confiance — et relit aussi un deck seul d'avant
- * (`{ cartes, partie }`), qui devient le premier et l'actif. Abîmés, un deck
- * vide ; seul l'actif garde sa partie ; jamais plus d'exemplaires en jeu que
- * possédés (`garderPossedeesPartout`).
+ * (`{ cartes, partie }`). Abîmés, un deck vide ; un lieu au plus un deck ;
+ * jamais plus d'exemplaires en jeu que possédés (`garderPossedeesPartout`).
+ * **UNE SAUVEGARDE D'AVANT LES LIEUX** (aucun deck n'en porte) : le deck qui
+ * jouait (`actif`) passe à la Taverne et continue sa partie — *le joueur ne
+ * retrouve pas son deck arrêté parce que le jeu a changé.*
  */
 export function lireDecks(brut: unknown, compte: CompteDExemplaires, maintenant: number): Decks {
   const possede = (e: EntreeDeck): boolean => compte(e.id, e.v) > 0
   if (typeof brut !== 'object' || brut === null) return decksVides()
   const o = brut as Record<string, unknown>
-  let ds: Decks
+  let brutes: unknown[]
+  let actif = 0
   if (!Array.isArray(o.liste)) {
     // Le format d'avant : un seul deck.
     if (!Array.isArray(o.cartes)) return decksVides()
-    ds = { liste: [lireDeck(brut, possede, maintenant)], actif: 0 }
+    brutes = [brut]
   } else {
-    const brutes = (o.liste as unknown[]).slice(0, Math.max(DECKS_MAX, DECKS_LUS_MAX))
+    brutes = (o.liste as unknown[]).slice(0, Math.max(DECKS_MAX, DECKS_LUS_MAX))
     if (brutes.length === 0) return decksVides()
-    const actif = typeof o.actif === 'number' && Number.isInteger(o.actif) && o.actif >= 0 && o.actif < brutes.length ? o.actif : 0
-    const liste = brutes.map((b, k) => {
-      const d = lireDeck(b, possede, maintenant)
-      return k === actif ? d : d.partie === null ? d : { ...d, partie: null }
-    })
-    ds = { liste, actif }
+    actif = typeof o.actif === 'number' && Number.isInteger(o.actif) && o.actif >= 0 && o.actif < brutes.length ? o.actif : 0
   }
-  return garderPossedeesPartout(ds, compte, maintenant)
+  const avantLesLieux = !brutes.some((b) => typeof b === 'object' && b !== null && 'lieu' in b)
+  if (avantLesLieux) brutes = brutes.map((b, k) => (k === actif && typeof b === 'object' && b !== null ? { ...b, lieu: IDS_LIEUX[0] } : b))
+  const pris = new Set<string>()
+  const liste = brutes.map((b) => {
+    const d = lireDeck(b, possede, maintenant)
+    if (d.lieu === undefined) return d
+    if (pris.has(d.lieu)) return sansLieu(d)
+    pris.add(d.lieu)
+    return d
+  })
+  return garderPossedeesPartout({ liste }, compte, maintenant)
 }

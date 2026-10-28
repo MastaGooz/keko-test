@@ -7056,6 +7056,30 @@ Keko : « quand on ouvre mes decks, ce serait bien de matérialiser les decks pa
 
 **La fusion attend la carte, et la carte flashe à l'impact** (28/10, Keko : « il faudrait attendre que la carte soit bien apparue en zoom pour permettre la fusion ; de plus un effet sur la carte serait sympa au moment où l'étoile se fixe, comme un effet de lumière qui flashe la carte ») : « Fusionner » reste éteint tant que la carte n'est pas peinte ET que son bump d'apparition n'est pas fini (`apparue`, `BUMP.duree` + 80 ms). À l'impact, `FlashDeLaCarte` (`FrappeDuNiveau.tsx`) : une dalle de lumière à la forme de la carte, bords flous, 6 % plus grande (elle couvre la carte même penchée), additive, allumée d'un coup puis éteinte en 0,5 s (opacité `(1 − t)²`). Mesuré (`&frappe=lent`) : le bouton éteint à l'ouverture, la carte blanche à l'impact, rendue en 0,35 s. **Puis diffus** (même jour, Keko : « un effet plus diffus serait mieux qu'un flash bref ») : flou triple (10 % de la largeur), dalle 10 % plus grande, mi-éclat (0,75) ; il monte en 0,15 s (quart de sinus) et retombe sur 1,15 s (`(1 − t)^1,6`) — la carte reste lisible dessous, nimbée.
 
+### LES LIEUX (28/10/2026)
+
+Keko, après le rappel du concept : **« je voudrais attaquer les lieux »**. Tranché par lui (questions posées) :
+
+| | |
+|---|---|
+| la puissance | **ne remplit QUE la jauge** — elle n'est plus une monnaie |
+| la récompense | **de l'OR** : « le lieu convertit la puissance en or » |
+| les lieux suivants | **un ouvert, les autres achetés** (en or) |
+| leurs règles | **un bonus de tag simple** : la Taverne neutre, la Mine +1 aux soutiens, l'Arène +1 à la mêlée |
+| combien | **trois, un par deck** |
+| l'écran | **« Jouer » devient la carte des lieux** |
+| les chiffres | **de moi, à rejuger** : jauge 100 → 10 or, lieu à 150 or |
+
+**La règle** (`logic/emoji/lieux.ts`, pur, `lieux.verif.ts`) : `LIEUX` (id, nom, bonus, prix, jauge, or) ; `EtatLieux` = l'or, les lieux ouverts, la puissance dans chaque jauge ; `remplirLaJauge` (plusieurs jauges d'un coup pour le temps hors ligne, le reste gardé), `ouvrirLeLieu`, `valeurDansLeLieu` (le rôle injecté), `lireLieux` (la Taverne toujours ouverte, une jauge relue reste sous son plein). Stockage à part : `keko-fantasy-lieux`.
+
+**Le deck** (`deck.ts`) : *il n'y a plus de deck « actif »* (`Decks.actif`, `choisirDeck`, `deckActif` retirés). `Deck.lieu` dit où il joue ; `demarrer` exige trente cartes ET un lieu ; `poserSurLieu` le pose (le deck qui y était s'arrête, celui-ci repart d'un mélange neuf) ou l'en retire ; `garderLesLieuxOuverts` fait descendre un deck d'un lieu fermé ; `decksAJour` fait jouer TOUS les decks posés, chacun à la valeur de son lieu, et rend ce que chacun a joué. **Une sauvegarde d'avant les lieux** : le deck qui jouait (`actif`) passe à la Taverne et garde sa partie — *le joueur ne retrouve pas son deck arrêté parce que le jeu a changé.* Deux decks relus sur un même lieu : le premier le garde.
+
+**L'écran** (`render/Deck.tsx`) : « Les lieux », une carte par lieu — nom en Grenze or, son bonus, la jauge (« 64 / 100 de puissance → 🪙 10 »), le deck posé (« joue », ou « 29/30 · incomplet » en rouge) et « Changer » / « Poser un deck » ; fermé : éteint, « Ouvrir · 🪙 150 », « Il manque N or ». Une tape sur le lieu ouvre sa vue : la jauge, le deck, puis la pile, la barre, la dernière main résolue carte par carte (les « +n » comptent le bonus du lieu). « Changer » ouvre la fenêtre de « Prendre » : un deck par ligne (« prêt », « joue à la Taverne · le déplacer », « 12/30 · à compléter » qui ouvre l'éditeur), « Retirer le deck ». Une jauge qui se remplit sous nos yeux fait sauter « +10 🪙 » (les gains d'avant l'arrivée sur la page ne se rejouent pas). Le compteur en haut à droite dit l'or (`IconeOr`, une pièce dessinée). L'éditeur dit « complet, joue à la Taverne » ou « complet, à poser sur un lieu » ; le menu « Jouer » dit « N en jeu ».
+
+**Mesuré** (Chrome sans tête) : une sauvegarde à l'ancienne (deux decks complets, l'actif second) — le second est à la Taverne et joue, la jauge à 14 après une main ; avec `&or=200`, la Mine s'ouvre (reste 50 or), la fenêtre propose « Deck 1 · prêt » et « Horde · joue à la Taverne · le déplacer » ; Deck 1 posé à la Mine, les deux jouent. Jauge à 98 : la main suivante la remplit, « +10 » saute, l'or passe de 37 à 47, la jauge repart à 10.
+
+*Ce qui reste à trancher* : les chiffres (jauge, or, prix, et des lieux « plus exigeants »), ce que l'or achètera après les lieux (la boutique de paquets du concept), si l'étui de « Mes decks » doit dire où joue son deck.
+
 **Le niveau dans les filtres** (27/10, Keko : « ce serait bien d'ajouter le niveau dans les filtres ») : une section « Niveau » sous « Rareté », cinq puces 1 à 5, plusieurs à la fois comme les raretés ; c'est le niveau du personnage (`niveauDuPersonnageDe`), toutes versions ensemble. Mesuré : trois personnages posés aux niveaux 3, 3 et 5 sur 118 → 1 : 115, 3 : 2, 5 : 1, 2 : 0.
 
 **Les puces du niveau en étoiles** (27/10, Keko : « il faudrait l'afficher en étoiles je pense ») : comme sur la carte, une étoile d'or par niveau gagné (★ … ★★★★) ; le niveau 1, qui n'en porte aucune, en étoile creuse ☆. Les cinq tiennent sur une ligne à 390 px.
