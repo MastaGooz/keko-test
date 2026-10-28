@@ -4030,3 +4030,51 @@ span.jouer-pile-dos {
 .carte-lieu-deck .lieu-deck-place {
   font-size: 1.5rem;
 }
+
+/* LE MINUTEUR DE LA MAIN, au coin de l'étui sur la carte : l'anneau d'or se
+   remplit jusqu'à la main suivante, les secondes au milieu. */
+.minuteur-main {
+  position: absolute;
+  top: -0.55rem;
+  right: -0.55rem;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: #2a1030;
+  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 2, 0.6);
+  pointer-events: none;
+}
+
+.minuteur-main svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.minuteur-main circle {
+  fill: none;
+  stroke-width: 3.6;
+}
+
+.minuteur-main-fond {
+  stroke: rgba(255, 250, 240, 0.18);
+}
+
+.minuteur-main-anneau {
+  stroke: #ffc61f;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+.minuteur-main b {
+  position: relative;
+  color: #fffaf0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}

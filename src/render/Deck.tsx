@@ -28,6 +28,7 @@ import {
   nomDuDeck,
   type Deck,
   type Decks,
+  type Partie,
   type EntreeDeck,
   type ValeurDeCarte,
 } from '../logic/emoji/deck.ts'
@@ -261,7 +262,7 @@ export function PageJouer({
                   <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
                 </div>
                 <div className={`carte-lieu-deck carte-lieu-deck-${place.deck}`}>
-                  <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} />
+                  <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} minuteur />
                 </div>
               </div>
             )
@@ -319,12 +320,15 @@ function PlaceDuDeck({
   parId,
   valeur,
   onChoisir,
+  minuteur = false,
 }: {
   deck: Deck | undefined
   i: number | null
   parId: ReadonlyMap<string, CarteEmoji>
   valeur: ValeurDeCarte | null
   onChoisir: () => void
+  /** Montre sur l'étui le temps jusqu'à la main suivante (la carte des lieux). */
+  minuteur?: boolean
 }): React.ReactElement {
   const vide = deck === undefined || i === null
   return (
@@ -341,6 +345,7 @@ function PlaceDuDeck({
       ) : (
         <>
           <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
+          {minuteur && deck.partie !== null && <MinuteurDeMain partie={deck.partie} />}
           {!deckComplet(deck) && (
             <span className="lieu-deck-incomplet">
               {deck.cartes.length}/{DECK.taille}
@@ -349,6 +354,38 @@ function PlaceDuDeck({
         </>
       )}
     </button>
+  )
+}
+
+/**
+ * LE MINUTEUR DE LA MAIN, sur l'étui de la carte des lieux (Keko : « une
+ * indication de timer sur les mains des decks ») : un anneau d'or qui se
+ * remplit jusqu'à la main suivante, les secondes au milieu. L'anneau suit
+ * l'horloge à chaque image sans rendu React ; les secondes, quand elles changent.
+ */
+function MinuteurDeMain({ partie }: { partie: Partie }): React.ReactElement {
+  const anneau = useRef<SVGCircleElement>(null)
+  const [secondes, setSecondes] = useState(() => Math.ceil(DECK.cadence / 1000))
+  useEffect(() => {
+    let image = 0
+    const pas = (): void => {
+      const ecoule = Math.max(0, Date.now() - partie.depuis)
+      const part = Math.min(1, ecoule / DECK.cadence)
+      if (anneau.current !== null) anneau.current.style.strokeDashoffset = `${(100 * (1 - part)).toFixed(2)}`
+      setSecondes(Math.max(0, Math.ceil((DECK.cadence - ecoule) / 1000)))
+      image = requestAnimationFrame(pas)
+    }
+    image = requestAnimationFrame(pas)
+    return () => cancelAnimationFrame(image)
+  }, [partie])
+  return (
+    <span className="minuteur-main" aria-label={`Prochaine main dans ${secondes} s`}>
+      <svg viewBox="0 0 36 36" aria-hidden>
+        <circle className="minuteur-main-fond" cx="18" cy="18" r="15.9155" />
+        <circle ref={anneau} className="minuteur-main-anneau" cx="18" cy="18" r="15.9155" pathLength={100} />
+      </svg>
+      <b>{secondes}</b>
+    </span>
   )
 }
 
