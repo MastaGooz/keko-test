@@ -2912,29 +2912,6 @@ span.jouer-pile-dos {
   color: #ffb3c0;
 }
 
-/* « JOUE » : un ruban d'or sur le deck actif. */
-.etui-ruban {
-  position: absolute;
-  top: -0.45rem;
-  right: -0.35rem;
-  z-index: 1;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background: #ffc61f;
-  color: #3a2416;
-  font-weight: 800;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  box-shadow: 0 0.2rem 0 #b8860b;
-}
-
-.etui-joue {
-  box-shadow:
-    var(--tranches),
-    0 0 1.4rem rgba(255, 198, 31, 0.55);
-}
-
 /* L'ÉTUI VIDE : un nouveau deck. */
 .etui-nouveau {
   justify-content: center;

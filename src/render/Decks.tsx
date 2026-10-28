@@ -7,11 +7,12 @@
  * en or, la carte la plus forte du deck dans une fenêtre sur son camp.
  *
  * *Rien ne se décide ici* : une tape ouvre l'éditeur (`PageCollection` en mode
- * deck), l'étui vide en crée un nouveau. Le deck qui joue porte « Joue ».
+ * deck), l'étui vide en crée un nouveau. Rien ne dit quel deck joue (Keko,
+ * 28/10 : ni ruban, ni lueur, ni « Horde joue » sous le titre).
  */
 import { useEffect, useMemo, useState } from 'react'
 import { RARETES_EMOJI, type CarteEmoji } from '../logic/emoji/types.ts'
-import { DECK, DECKS_MAX, nomDuDeck, deckComplet, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
+import { DECK, DECKS_MAX, nomDuDeck, type Deck, type Decks, type EntreeDeck, type ValeurDeCarte } from '../logic/emoji/deck.ts'
 import { teinteDuCran } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -75,7 +76,6 @@ export function PageDecks({
   onAjouter: () => void
 }): React.ReactElement {
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
-  const actif = decks.liste[decks.actif]
   const [dos, setDos] = useState<string | null>(null)
   useEffect(() => {
     let vivant = true
@@ -94,23 +94,20 @@ export function PageDecks({
           <p className="collection-compte">
             {/* LE PLAFOND SE LIT (Keko : « indiquer le nombre de decks max : X/max »). */}
             <b>{decks.liste.length}</b> / {DECKS_MAX} decks
-            {actif !== undefined && deckComplet(actif) && <> · {nomDuDeck(actif, decks.actif)} joue</>}
           </p>
         </header>
         <div className="etuis">
           {decks.liste.map((d, i) => {
             const vedette = vedetteDe(d, parId, valeur)
-            const joue = i === decks.actif && deckComplet(d)
             return (
               <button
                 key={i}
                 type="button"
-                className={`etui${joue ? ' etui-joue' : ''}`}
+                className="etui"
                 style={dos === null ? undefined : { backgroundImage: `url(${dos})` }}
-                aria-label={`${nomDuDeck(d, i)}, ${d.cartes.length} cartes sur ${DECK.taille}${joue ? ', joue' : ''}`}
+                aria-label={`${nomDuDeck(d, i)}, ${d.cartes.length} cartes sur ${DECK.taille}`}
                 onClick={() => onOuvrir(i)}
               >
-                {joue && <span className="etui-ruban">Joue</span>}
                 {/* LA FENÊTRE : la carte vedette sur son camp ; vide, le symbole du jeu. */}
                 <span
                   className="etui-fenetre"
