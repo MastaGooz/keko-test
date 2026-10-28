@@ -136,6 +136,8 @@ export function PageJouer({
       <ChoixDuDeck
         lieu={LIEUX.find((l) => l.id === aPoser)!}
         decks={decks}
+        parId={parId}
+        valeurDe={valeurDe}
         onPoser={(i) => {
           onPoser(i, aPoser)
           setAPoser(null)
@@ -421,11 +423,15 @@ function MinuteurDeMain({ partie }: { partie: Partie }): React.ReactElement {
 
 /**
  * QUEL DECK SUR CE LIEU : les decks complets se posent (celui qui joue
- * ailleurs le quitte pour ici) ; un incomplet se compose d'abord.
+ * ailleurs le quitte pour ici) ; un incomplet se compose d'abord. **UNE
+ * GRILLE D'ÉTUIS** (Keko : « plutôt qu'une liste, une grille avec les images
+ * des decks et leur attribution en dessous »).
  */
 function ChoixDuDeck({
   lieu,
   decks,
+  parId,
+  valeurDe,
   onPoser,
   onRetirer,
   onComposer,
@@ -433,6 +439,8 @@ function ChoixDuDeck({
 }: {
   lieu: Lieu
   decks: Decks
+  parId: ReadonlyMap<string, CarteEmoji>
+  valeurDe: ((d: Deck) => ValeurDeCarte) | null
   onPoser: (i: number) => void
   onRetirer: (i: number) => void
   onComposer: (i: number) => void
@@ -456,15 +464,16 @@ function ChoixDuDeck({
                 className={`lieu-choix-deck${i === ici ? ' lieu-choix-ici' : ''}`}
                 onClick={() => (i === ici ? onFermer() : complet ? onPoser(i) : onComposer(i))}
               >
+                <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
                 <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
-                <span className="lieu-choix-detail">
+                <span className={`lieu-choix-detail${!complet ? ' lieu-choix-incomplet' : ''}`}>
                   {i === ici
-                    ? 'joue ici'
+                    ? 'ici'
                     : !complet
-                      ? `${d.cartes.length}/${DECK.taille} · à compléter`
+                      ? `${d.cartes.length}/${DECK.taille}`
                       : ailleurs !== undefined
-                        ? `joue ${aLieu(ailleurs)} · le déplacer`
-                        : 'prêt'}
+                        ? ailleurs.nom
+                        : 'libre'}
                 </span>
               </button>
             )

@@ -3698,22 +3698,25 @@ span.jouer-pile-dos {
 /* LE CHOIX DU DECK D'UN LIEU : la fenêtre de « Prendre », un deck par ligne. */
 .lieu-choix-liste {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   margin-top: 0.9rem;
 }
 
+/* UN ÉTUI PAR CASE, son nom et son attribution dessous (Keko). */
 .lieu-choix-deck {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  min-height: 3rem;
-  padding: 0.55rem 0.9rem;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.6rem 0.3rem 0.5rem;
   border: 0;
   border-radius: 0.7rem;
   background: rgba(255, 250, 240, 0.1);
   color: #fffaf0;
   font: inherit;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -3726,13 +3729,30 @@ span.jouer-pile-dos {
   box-shadow: inset 0 0 0 0.14rem #ffc61f;
 }
 
+.lieu-choix-deck .etui-mini {
+  width: 4.2rem;
+}
+
 .lieu-choix-nom {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 800;
 }
 
 .lieu-choix-detail {
-  font-size: 0.8rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
   opacity: 0.75;
+}
+
+.lieu-choix-incomplet {
+  color: #ffb3c0;
+  opacity: 1;
 }
 
 /* L'IMAGE DU LIEU : le dessin trié par Keko, posé sur sa lueur. */
