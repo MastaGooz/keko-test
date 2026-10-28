@@ -33,6 +33,7 @@ import {
 } from '../logic/emoji/deck.ts'
 import { LIEUX, estOuvert, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
+import { EtuiMiniature } from './Decks.tsx'
 import { IconeLike, IconeOr } from './Jeu.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -149,7 +150,7 @@ export function PageJouer({
               </div>
             </div>
             <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} gainAuDepart={orsAuDepart.current[lieuVu.id]} />
-            <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(lieuVu.id)} />
+            <LigneDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(lieuVu.id)} />
           </header>
           {deck === undefined || k === null ? (
             <div className="collection-vide">
@@ -225,7 +226,7 @@ export function PageJouer({
                     <span className="lieu-bonus">{texteDuBonus(l)}</span>
                   </div>
                   <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
-                  <LigneDuDeck deck={deck} i={k} onChoisir={() => setAPoser(l.id)} />
+                  <LigneDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} />
                 </div>
               </div>
             )
@@ -272,16 +273,32 @@ function JaugeDuLieu({
 }
 
 /** Le deck posé sur le lieu (ou aucun), et le bouton pour le choisir. */
-function LigneDuDeck({ deck, i, onChoisir }: { deck: Deck | undefined; i: number | null; onChoisir: () => void }): React.ReactElement {
+function LigneDuDeck({
+  deck,
+  i,
+  parId,
+  valeur,
+  onChoisir,
+}: {
+  deck: Deck | undefined
+  i: number | null
+  parId: ReadonlyMap<string, CarteEmoji>
+  valeur: ValeurDeCarte | null
+  onChoisir: () => void
+}): React.ReactElement {
   return (
     <div className="lieu-deck">
       {deck === undefined || i === null ? (
         <span className="lieu-deck-vide">Aucun deck</span>
       ) : (
-        <span className="lieu-deck-nom">
-          {nomDuDeck(deck, i)}
-          <span className={`lieu-deck-etat${deckComplet(deck) ? '' : ' lieu-deck-incomplet'}`}>
-            {deckComplet(deck) ? 'joue' : `${deck.cartes.length}/${DECK.taille} · incomplet`}
+        <span className="lieu-deck-qui">
+          {/* L'ÉTUI DU DECK POSÉ, en petit (Keko). */}
+          <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
+          <span className="lieu-deck-nom">
+            {nomDuDeck(deck, i)}
+            <span className={`lieu-deck-etat${deckComplet(deck) ? '' : ' lieu-deck-incomplet'}`}>
+              {deckComplet(deck) ? 'joue' : `${deck.cartes.length}/${DECK.taille} · incomplet`}
+            </span>
           </span>
         </span>
       )}

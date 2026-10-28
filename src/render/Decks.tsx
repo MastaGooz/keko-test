@@ -58,6 +58,62 @@ function imageDuDos(): Promise<string | null> {
   return DOS
 }
 
+/** Le dos des étuis, une fois peint : `null` tant qu'il ne l'est pas. */
+function useDosDEtui(): string | null {
+  const [dos, setDos] = useState<string | null>(null)
+  useEffect(() => {
+    let vivant = true
+    void imageDuDos().then((u) => {
+      if (vivant) setDos(u)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [])
+  return dos
+}
+
+/** La fenêtre de l'étui : la carte vedette sur son camp ; vide, le symbole du jeu. */
+function FenetreDEtui({ vedette }: { vedette: CarteEmoji | null }): React.ReactElement {
+  return (
+    <span
+      className="etui-fenetre"
+      style={
+        vedette === null
+          ? undefined
+          : ({ backgroundImage: `url(${url(`fonds/${vedette.race}.webp`)})`, '--cran': teinteDuCran(vedette.rarete) } as React.CSSProperties)
+      }
+    >
+      {vedette === null ? (
+        <img className="etui-symbole" src={url('symbole.webp')} alt="" draggable={false} />
+      ) : (
+        <img className="etui-vedette" src={url(vedette.image)} alt="" draggable={false} />
+      )}
+    </span>
+  )
+}
+
+/**
+ * L'ÉTUI EN PETIT, sans nom ni compte : le deck posé sur un lieu (Keko : « on
+ * devrait ajouter l'image du deck attribué dans le lieu »).
+ */
+export function EtuiMiniature({
+  deck,
+  parId,
+  valeur,
+}: {
+  deck: Deck
+  parId: ReadonlyMap<string, CarteEmoji>
+  valeur: ValeurDeCarte | null
+}): React.ReactElement {
+  const dos = useDosDEtui()
+  return (
+    <span className="etui etui-mini" style={dos === null ? undefined : { backgroundImage: `url(${dos})` }} aria-hidden>
+      <FenetreDEtui vedette={vedetteDe(deck, parId, valeur)} />
+    </span>
+  )
+}
+
 export function PageDecks({
   catalogue,
   decks,
@@ -76,16 +132,7 @@ export function PageDecks({
   onAjouter: () => void
 }): React.ReactElement {
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
-  const [dos, setDos] = useState<string | null>(null)
-  useEffect(() => {
-    let vivant = true
-    void imageDuDos().then((u) => {
-      if (vivant) setDos(u)
-    })
-    return () => {
-      vivant = false
-    }
-  }, [])
+  const dos = useDosDEtui()
   return (
     <div className="collection">
       <div className="collection-defile">
@@ -111,20 +158,7 @@ export function PageDecks({
                 {/* LE NOM EN HAUT, au-dessus de l'image (Keko, 28/10). */}
                 <span className="etui-nom">{nomDuDeck(d, i)}</span>
                 {/* LA FENÊTRE : la carte vedette sur son camp ; vide, le symbole du jeu. */}
-                <span
-                  className="etui-fenetre"
-                  style={
-                    vedette === null
-                      ? undefined
-                      : ({ backgroundImage: `url(${url(`fonds/${vedette.race}.webp`)})`, '--cran': teinteDuCran(vedette.rarete) } as React.CSSProperties)
-                  }
-                >
-                  {vedette === null ? (
-                    <img className="etui-symbole" src={url('symbole.webp')} alt="" draggable={false} />
-                  ) : (
-                    <img className="etui-vedette" src={url(vedette.image)} alt="" draggable={false} />
-                  )}
-                </span>
+                <FenetreDEtui vedette={vedette} />
                 <span className={`etui-compte${d.cartes.length < DECK.taille ? ' etui-incomplet' : ''}`}>
                   {d.cartes.length < DECK.taille ? `${d.cartes.length}/${DECK.taille} · incomplet` : 'Complet'}
                 </span>
