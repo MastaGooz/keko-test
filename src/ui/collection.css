@@ -3961,7 +3961,8 @@ span.jouer-pile-dos {
 
 .carte-lieu-jauge {
   top: calc(var(--image-lieu) / 2 + 0.05rem);
-  width: 6.4rem;
+  /* PAS PLUS LARGE QUE LE LIEU (Keko : qu'elle ne passe pas sous le deck). */
+  width: calc(var(--image-lieu) - 0.6rem);
 }
 
 .carte-lieu-jauge .lieu-jauge-place {
