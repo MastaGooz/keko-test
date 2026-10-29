@@ -23,6 +23,12 @@
  * temps ». **Hors ligne, chaque heure compte entière** (Keko : « oui, on
  * continue en l'absence du joueur ») : chaque main tombe dans SA fenêtre.
  *
+ * **LE COFFRE DU LIEU** (Keko, 29/10 : « plutôt qu'un loot auto, … on
+ * accumule tout dedans et quand le joueur clique dessus … chaque type de loot
+ * est looté ») : une jauge pleine verse son or DANS LE COFFRE de son lieu
+ * (`Butin`), et c'est l'ouvrir qui le donne (`ouvrirLeCoffre`). Le butin n'a
+ * qu'un type pour l'instant, l'or.
+ *
  * **Pur** : l'or, les lieux ouverts et les jauges sont un état qu'on lit sans
  * confiance (`lireLieux`) ; le temps ne passe pas ici, c'est le deck qui joue
  * (`decksAJour`) et sa puissance qui arrive (`remplirLaJauge`).
@@ -66,16 +72,36 @@ export interface Palier {
   readonly n: number
 }
 
-/** Ce que le joueur a : son or, les lieux ouverts, la puissance déjà dans chaque jauge, les paliers de l'heure. */
+/** CE QU'UN COFFRE ACCUMULE, type par type (l'or seul pour l'instant). */
+export interface Butin {
+  readonly or: number
+}
+
+/** Ce que le joueur a : son or, les lieux ouverts, la puissance déjà dans chaque jauge, les paliers de l'heure, les coffres. */
 export interface EtatLieux {
   readonly or: number
   readonly ouverts: readonly string[]
   readonly jauges: Readonly<Record<string, number>>
   readonly paliers: Readonly<Record<string, Palier>>
+  readonly coffres: Readonly<Record<string, Butin>>
 }
 
 export function lieuxNeufs(): EtatLieux {
-  return { or: 0, ouverts: LIEUX.filter((l) => l.prix === 0).map((l) => l.id), jauges: {}, paliers: {} }
+  return { or: 0, ouverts: LIEUX.filter((l) => l.prix === 0).map((l) => l.id), jauges: {}, paliers: {}, coffres: {} }
+}
+
+/** Ce qui attend dans le coffre d'un lieu (vide : zéro partout). */
+export function coffreDe(e: EtatLieux, id: string): Butin {
+  return e.coffres[id] ?? { or: 0 }
+}
+
+/** OUVRIR LE COFFRE : son butin passe au joueur, le coffre est vidé. Vide ou inconnu : rien ne change. */
+export function ouvrirLeCoffre(e: EtatLieux, id: string): { etat: EtatLieux; butin: Butin } {
+  const butin = coffreDe(e, id)
+  if (butin.or <= 0) return { etat: e, butin: { or: 0 } }
+  const coffres = { ...e.coffres }
+  delete coffres[id]
+  return { etat: { ...e, or: e.or + butin.or, coffres }, butin }
 }
 
 export const fenetreDe = (t: number): number => Math.floor(t / FENETRE)
@@ -119,8 +145,8 @@ export function estOuvert(e: EtatLieux, id: string): boolean {
 /**
  * LA PUISSANCE JOUÉE DANS UN LIEU, À L'INSTANT `quand`, REMPLIT SA JAUGE ;
  * chaque fois qu'elle est pleine, elle rend l'or de son palier dans l'heure
- * de `quand` (`orDuPalier`), monte d'un palier, et repart de ce qui dépasse.
- * Rend l'état neuf, l'or gagné et le nombre de jauges remplies. Un lieu fermé
+ * de `quand` (`orDuPalier`) — DANS LE COFFRE du lieu —, monte d'un palier, et
+ * repart de ce qui dépasse. Rend l'état neuf, l'or gagné et le nombre de jauges remplies. Un lieu fermé
  * ou inconnu ne prend rien. *Les mains se versent dans l'ordre du temps.*
  */
 export function remplirLaJauge(e: EtatLieux, id: string, puissance: number, quand: number): { etat: EtatLieux; or: number; pleines: number } {
@@ -135,7 +161,7 @@ export function remplirLaJauge(e: EtatLieux, id: string, puissance: number, quan
   return {
     etat: {
       ...e,
-      or: e.or + or,
+      coffres: { ...e.coffres, [id]: { or: coffreDe(e, id).or + or } },
       jauges: { ...e.jauges, [id]: total - pleines * lieu.jauge },
       paliers: { ...e.paliers, [id]: { fenetre: fenetreDe(quand), n: avant + pleines } },
     },
@@ -189,5 +215,11 @@ export function lireLieux(brut: unknown): EtatLieux {
     const { fenetre, n } = v
     if (Number.isInteger(fenetre) && Number.isInteger(n) && (n as number) > 0) paliers[l.id] = { fenetre: fenetre as number, n: n as number }
   }
-  return { or, ouverts, jauges, paliers }
+  const coffres: Record<string, Butin> = {}
+  const c = typeof o.coffres === 'object' && o.coffres !== null ? (o.coffres as Record<string, unknown>) : {}
+  for (const l of LIEUX) {
+    const v = c[l.id] as Record<string, unknown> | null | undefined
+    if (typeof v === 'object' && v !== null && typeof v.or === 'number' && Number.isFinite(v.or) && v.or >= 1) coffres[l.id] = { or: Math.floor(v.or) }
+  }
+  return { or, ouverts, jauges, paliers, coffres }
 }

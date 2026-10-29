@@ -4057,6 +4057,196 @@ span.jouer-pile-dos {
   transform: translateX(-50%);
 }
 
+/* LE COFFRE DU LIEU, sous sa jauge : son butin dans une pastille ; vide, éteint. */
+.carte-lieu-coffre {
+  top: calc(var(--image-lieu) / 2 + 2.05rem);
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.carte-lieu-coffre img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.2rem 0.3rem rgba(10, 4, 2, 0.6));
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* PLEIN, IL RESPIRE : on voit qu'il attend qu'on l'ouvre. */
+.carte-lieu-coffre:not(.coffre-vide):not(.coffre-ouvert) img {
+  animation: coffre-attend 1.8s ease-in-out infinite;
+}
+
+.coffre-vide {
+  cursor: default;
+}
+
+.coffre-vide img {
+  filter: grayscale(0.8) brightness(0.5) drop-shadow(0 0.2rem 0.3rem rgba(10, 4, 2, 0.6));
+  opacity: 0.6;
+}
+
+.coffre-ouvert img {
+  animation: coffre-saute 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes coffre-attend {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06) translateY(-0.08rem);
+  }
+}
+
+@keyframes coffre-saute {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.25, 0.85);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Au coin BAS : en haut, elle mordait sur le texte de la jauge. */
+.coffre-butin {
+  position: absolute;
+  bottom: -0.1rem;
+  right: -1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.05rem 0.4rem 0.05rem 0.2rem;
+  border-radius: 999px;
+  background: #2a1030;
+  outline: 0.12rem solid #fff6e2;
+  color: #fffaf0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.coffre-butin .icone-or,
+.coffre-gain .icone-or {
+  width: 1em;
+  height: 1em;
+}
+
+.coffre-gain {
+  position: absolute;
+  left: 50%;
+  top: -0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #ffd45e;
+  font-weight: 800;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  text-shadow: 0 0.1rem 0.4rem rgba(10, 4, 2, 0.8);
+  pointer-events: none;
+  animation: coffre-gain 1.4s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes coffre-gain {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0.6rem) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.25);
+  }
+  30% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -1.6rem);
+  }
+}
+
+/* LES PIÈCES QUI VOLENT du coffre au compteur : elles jaillissent en
+   éventail, puis filent en se resserrant. Au-dessus de tout, barre comprise. */
+.pieces-volantes {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.piece-volante {
+  position: absolute;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: -0.65rem 0 0 -0.65rem;
+  opacity: 0;
+  filter: drop-shadow(0 0.1rem 0.2rem rgba(10, 4, 2, 0.6));
+  animation-name: piece-vole;
+  animation-fill-mode: both;
+  animation-timing-function: linear;
+}
+
+.piece-volante .icone-or {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes piece-vole {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3);
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.4, 1);
+  }
+  10% {
+    opacity: 1;
+  }
+  38% {
+    transform: translate(var(--ex), var(--ey)) scale(1.15);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.6);
+  }
+  96% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.7);
+  }
+}
+
+/* LE COMPTE D'OR SAUTE quand il change. */
+.monnaie-saute {
+  display: inline-block;
+  animation: monnaie-saute 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@keyframes monnaie-saute {
+  0% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .carte-lieu-ouvrir {
   top: calc(var(--image-lieu) / 2 + 0.45rem);
   display: inline-flex;

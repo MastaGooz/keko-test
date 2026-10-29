@@ -325,7 +325,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « je voudrais attaquer les lieux ») : **chaque deck joue sur un lieu**
   (`Deck.lieu`, un deck par lieu, `poserSurLieu`), tous en même temps ; il ne
   joue que complet ET posé, et **un deck qui devient incomplet QUITTE son lieu** (Keko ; `demarrer`). **Sa puissance remplit la jauge du lieu ; pleine,
-  elle rend de l'or** (`remplirLaJauge`). **La Taverne est ouverte au départ,
+  elle verse son or dans le COFFRE du lieu** (`remplirLaJauge`), sous sa jauge sur la carte ; une tape l'ouvre et les pièces volent au compteur, l'or versé à leur arrivée (Keko, 29/10 : « plutôt qu'un loot auto » ; `ouvrirLeCoffre`, `CoffreDuLieu`, `public/objets/coffre.webp`, n° 014 du tri). **La Taverne est ouverte au départ,
   les autres s'achètent en or** (`ouvrirLeLieu`) ; **chaque lieu favorise un
   rôle** (`valeurDansLeLieu` : la Mine +1 aux soutiens, l'Arène +1 à la
   mêlée). Trois lieux, un par deck. Jauge 100 → 10 or, lieu à 150 or : de

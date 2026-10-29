@@ -31,7 +31,7 @@ import {
   type EntreeDeck,
   type ValeurDeCarte,
 } from '../logic/emoji/deck.ts'
-import { LIEUX, estOuvert, nombreCourt, orDuPalier, palierDe, remiseDans, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
+import { LIEUX, coffreDe, estOuvert, nombreCourt, orDuPalier, palierDe, remiseDans, type Butin, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
 import { EtuiMiniature } from './Decks.tsx'
 import { IconeLike, IconeOr } from './Jeu.tsx'
@@ -103,6 +103,7 @@ export function PageJouer({
   ors,
   onPoser,
   onOuvrirLieu,
+  onOuvrirCoffre,
   onComposer,
 }: {
   catalogue: readonly CarteEmoji[] | null
@@ -118,6 +119,8 @@ export function PageJouer({
   /** Pose le deck `i` sur un lieu (`null` : l'en retire). */
   onPoser: (i: number, lieu: string | null) => void
   onOuvrirLieu: (id: string) => void
+  /** Vide le coffre d'un lieu dans l'or du joueur. */
+  onOuvrirCoffre: (id: string) => void
   /** Ouvre l'éditeur du deck `i`. */
   onComposer: (i: number) => void
 }): React.ReactElement {
@@ -271,6 +274,7 @@ export function PageJouer({
                 <div className="carte-lieu-jauge">
                   <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
                 </div>
+                <CoffreDuLieu lieu={l} butin={coffreDe(lieux, l.id)} onOuvrir={() => onOuvrirCoffre(l.id)} />
                 <div className={`carte-lieu-deck carte-lieu-deck-${place.deck}`}>
                   <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} minuteur />
                 </div>
@@ -396,6 +400,105 @@ function PlaceDuDeck({
       )}
     </button>
   )
+}
+
+/** Le coffre, détouré du tri de Keko (`Style/tri/objets`, n° 014). */
+const IMAGE_DU_COFFRE = `${import.meta.env.BASE_URL}objets/coffre.webp?v=${VERSION}`
+/** Le vol d'une pièce, du coffre au compteur. */
+const VOL_MS = 900
+const ECART_PIECES_MS = 55
+
+/**
+ * LE COFFRE DU LIEU, sous sa jauge (Keko : « on accumule tout dedans et quand
+ * le joueur clique dessus on lance une animation où chaque type de loot est
+ * looté ») : il montre ce qu'il garde ; une tape fait jaillir les pièces, qui
+ * volent jusqu'au compteur d'or, et l'or n'est versé qu'à leur arrivée. Quitter
+ * la page pendant le vol le verse aussitôt : rien ne se perd.
+ */
+function CoffreDuLieu({ lieu, butin, onOuvrir }: { lieu: Lieu; butin: Butin; onOuvrir: () => void }): React.ReactElement {
+  const bouton = useRef<HTMLButtonElement>(null)
+  const [vol, setVol] = useState<{ or: number; x: number; y: number; dx: number; dy: number } | null>(null)
+  const aVerser = useRef<(() => void) | null>(null)
+  useEffect(
+    () => () => {
+      aVerser.current?.()
+      aVerser.current = null
+    },
+    [],
+  )
+  const vide = butin.or <= 0
+  const ouvrir = (): void => {
+    if (vide || vol !== null || bouton.current === null) return
+    const a = bouton.current.getBoundingClientRect()
+    // VERS LE COMPTEUR D'OR, en haut à droite ; caché, vers le coin.
+    const c = document.querySelector('.monnaie-or svg')?.getBoundingClientRect()
+    const x = a.left + a.width / 2
+    const y = a.top + a.height * 0.4
+    const cx = c === undefined ? window.innerWidth - 40 : c.left + c.width / 2
+    const cy = c === undefined ? 30 : c.top + c.height / 2
+    setVol({ or: butin.or, x, y, dx: cx - x, dy: cy - y })
+    aVerser.current = onOuvrir
+    const fin = VOL_MS + (piecesPour(butin.or) - 1) * ECART_PIECES_MS
+    window.setTimeout(() => {
+      aVerser.current?.()
+      aVerser.current = null
+    }, fin)
+    window.setTimeout(() => setVol(null), fin + 700)
+  }
+  const n = vol === null ? 0 : piecesPour(vol.or)
+  return (
+    <button
+      ref={bouton}
+      type="button"
+      className={`carte-lieu-coffre${vide ? ' coffre-vide' : ''}${vol !== null ? ' coffre-ouvert' : ''}`}
+      aria-label={vide ? `Coffre de ${lieu.nom}, vide` : `Ouvrir le coffre de ${lieu.nom} : ${butin.or} or`}
+      disabled={vide && vol === null}
+      onClick={ouvrir}
+    >
+      <img src={IMAGE_DU_COFFRE} alt="" draggable={false} />
+      {!vide && vol === null && (
+        <span className="coffre-butin">
+          <IconeOr /> {nombreCourt(butin.or)}
+        </span>
+      )}
+      {vol !== null && (
+        <span className="coffre-gain" aria-live="polite">
+          +{nombreCourt(vol.or)} <IconeOr />
+        </span>
+      )}
+      {vol !== null &&
+        createPortal(
+          <div className="pieces-volantes" aria-hidden>
+            {Array.from({ length: n }, (_, i) => {
+              // LA GERBE : chaque pièce jaillit vers le haut, en éventail, puis file au compteur.
+              const angle = -Math.PI / 2 + (i / (n - 1) - 0.5) * 2.2
+              const portee = 34 + ((i * 37) % 23)
+              const style = {
+                left: `${vol.x}px`,
+                top: `${vol.y}px`,
+                '--ex': `${(Math.cos(angle) * portee).toFixed(1)}px`,
+                '--ey': `${(Math.sin(angle) * portee).toFixed(1)}px`,
+                '--dx': `${vol.dx.toFixed(1)}px`,
+                '--dy': `${vol.dy.toFixed(1)}px`,
+                animationDelay: `${i * ECART_PIECES_MS}ms`,
+                animationDuration: `${VOL_MS}ms`,
+              } as React.CSSProperties
+              return (
+                <span key={i} className="piece-volante" style={style}>
+                  <IconeOr />
+                </span>
+              )
+            })}
+          </div>,
+          document.body,
+        )}
+    </button>
+  )
+}
+
+/** Combien de pièces volent : une par tranche de cinq or, de quatre à douze. */
+function piecesPour(or: number): number {
+  return Math.max(4, Math.min(12, Math.ceil(or / 5)))
 }
 
 /**

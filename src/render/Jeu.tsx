@@ -42,7 +42,7 @@ import {
 import { declarerLesNiveaux } from './carte-emoji.ts'
 import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerDecks, chargerLieux, chargerReserve, sauverCollection, sauverDecks, sauverLieux, sauverReserve } from '../ui/collection.ts'
-import { avecOr, lieuDe, ouvrirLeLieu, remplirLaJauge, valeurDansLeLieu, type EtatLieux } from '../logic/emoji/lieux.ts'
+import { avecOr, lieuDe, ouvrirLeCoffre, ouvrirLeLieu, remplirLaJauge, valeurDansLeLieu, type EtatLieux } from '../logic/emoji/lieux.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
 import {
   DECK,
@@ -759,6 +759,7 @@ export function Jeu(): React.ReactElement {
           ors={orDesLieux}
           onPoser={poserLeDeck}
           onOuvrirLieu={ouvrirUnLieu}
+          onOuvrirCoffre={(id) => poserLieux((e) => ouvrirLeCoffre(e, id).etat)}
           onComposer={(i) => {
             setDeckEdite(i)
             aller('deck')
@@ -816,7 +817,10 @@ export function Jeu(): React.ReactElement {
           {/* L'OR, la monnaie des lieux (Keko, 28/10) : la puissance n'en est plus une. */}
           <span className="monnaie monnaie-or" aria-label={`${lieux.or} or`}>
             <IconeOr />
-            <b>{lieux.or}</b>
+            {/* LE COMPTE SAUTE QUAND IL CHANGE : l'or d'un coffre y arrive. */}
+            <b key={lieux.or} className="monnaie-saute">
+              {lieux.or}
+            </b>
           </span>
         </div>
       )}
