@@ -129,8 +129,6 @@ export function PageJouer({
   const [vu, setVu] = useState<string | null>(null)
   /** Le lieu dont on choisit le deck (la fenêtre est ouverte). */
   const [aPoser, setAPoser] = useState<string | null>(null)
-  // LES GAINS DÉJÀ LÀ EN ARRIVANT NE SE REJOUENT PAS : seul l'or rendu sous nos yeux saute.
-  const orsAuDepart = useRef(ors)
   const lieuVu = vu === null ? undefined : LIEUX.find((l) => l.id === vu && estOuvert(lieux, l.id))
 
   const dialogue =
@@ -175,7 +173,7 @@ export function PageJouer({
               <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(lieuVu.id)} />
               <div className="lieu-droite">
                 <img className="lieu-image" src={imageDuLieu(lieuVu)} alt="" draggable={false} />
-                <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} gainAuDepart={orsAuDepart.current[lieuVu.id]} />
+                <JaugeDuLieu lieu={lieuVu} lieux={lieux} gain={ors[lieuVu.id]} />
               </div>
             </div>
           </header>
@@ -272,7 +270,7 @@ export function PageJouer({
                   <img className="carte-lieu-image" src={imageDuLieu(l)} alt="" draggable={false} />
                 </button>
                 <div className="carte-lieu-jauge">
-                  <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} gainAuDepart={orsAuDepart.current[l.id]} />
+                  <JaugeDuLieu lieu={l} lieux={lieux} gain={ors[l.id]} />
                 </div>
                 <CoffreDuLieu lieu={l} butin={coffreDe(lieux, l.id)} onOuvrir={() => onOuvrirCoffre(l.id)} />
                 <div className={`carte-lieu-deck carte-lieu-deck-${place.deck}`}>
@@ -296,17 +294,19 @@ function JaugeDuLieu({
   lieu,
   lieux,
   gain,
-  gainAuDepart,
 }: {
   lieu: Lieu
   lieux: EtatLieux
   gain: { numero: number; or: number } | undefined
-  gainAuDepart: { numero: number; or: number } | undefined
 }): React.ReactElement {
   const dedans = lieux.jauges[lieu.id] ?? 0
   // L'OR DE LA PROCHAINE JAUGE, à son palier de l'heure (affichage : l'horloge est lue ici).
   const prochain = orDuPalier(lieu, palierDe(lieux, lieu.id, Date.now()))
-  const neuf = gain !== undefined && gain.numero > (gainAuDepart?.numero ?? 0)
+  // SEUL L'OR RENDU SOUS NOS YEUX SAUTE : ce qui était déjà là quand CETTE
+  // jauge s'est affichée ne se rejoue pas — ni en arrivant sur la page, ni en
+  // revenant d'un lieu (Keko : le pop rejouait sur les autres lieux).
+  const vuAuDepart = useRef(gain?.numero ?? 0)
+  const neuf = gain !== undefined && gain.numero > vuAuDepart.current
   return (
     <div className="lieu-jauge-place">
       <div className="lieu-jauge" role="progressbar" aria-valuemin={0} aria-valuemax={lieu.jauge} aria-valuenow={dedans}>
