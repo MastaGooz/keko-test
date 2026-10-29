@@ -274,7 +274,7 @@ export function PageJouer({
                 </div>
                 <CoffreDuLieu lieu={l} butin={coffreDe(lieux, l.id)} onOuvrir={() => onOuvrirCoffre(l.id)} />
                 <div className={`carte-lieu-deck carte-lieu-deck-${place.deck}`}>
-                  <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setAPoser(l.id)} minuteur />
+                  <PlaceDuDeck deck={deck} i={k} parId={parId} valeur={deck === undefined || valeurDe === null ? null : valeurDe(deck)} onChoisir={() => setVu(l.id)} label={`Voir ${l.nom}`} minuteur />
                 </div>
               </div>
             )
@@ -349,6 +349,9 @@ function PaliersDeLHeure({ lieu, lieux }: { lieu: Lieu; lieux: EtatLieux }): Rea
  * pour changer de deck (Keko : « uniquement l'image du deck, cliquable, pas
  * besoin de “joue” ou de bouton ») — ou la place vide en pointillé. Un deck
  * posé qui a perdu une carte le dit d'une pastille rouge : il ne joue plus.
+ * **SUR LA CARTE, LE DECK ET LE LIEU SONT UN SEUL BOUTON** (Keko : « un seul
+ * bouton deck + lieu qui envoie sur la page du lieu, on fera tout ici ») : il
+ * ouvre le lieu, et c'est là qu'on change de deck.
  */
 function PlaceDuDeck({
   deck,
@@ -356,6 +359,7 @@ function PlaceDuDeck({
   parId,
   valeur,
   onChoisir,
+  label,
   minuteur = false,
 }: {
   deck: Deck | undefined
@@ -363,6 +367,8 @@ function PlaceDuDeck({
   parId: ReadonlyMap<string, CarteEmoji>
   valeur: ValeurDeCarte | null
   onChoisir: () => void
+  /** Ce que dit le bouton, s'il ne choisit pas le deck (la carte : il ouvre le lieu). */
+  label?: string
   /**
    * LA CARTE DES LIEUX : un SYMBOLE de deck au lieu de l'étui (Keko : « juste
    * pour indiquer qu'il y a un deck »), et à son coin le temps jusqu'à la main suivante.
@@ -374,7 +380,7 @@ function PlaceDuDeck({
     <button
       type="button"
       className="lieu-gauche lieu-deck"
-      aria-label={vide ? 'Poser un deck' : `${nomDuDeck(deck, i)} — changer de deck`}
+      aria-label={label ?? (vide ? 'Poser un deck' : `${nomDuDeck(deck, i)} — changer de deck`)}
       onClick={onChoisir}
     >
       {vide && minuteur ? (
