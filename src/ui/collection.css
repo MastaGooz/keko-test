@@ -3608,8 +3608,10 @@ span.jouer-pile-dos {
   gap: 0.2rem;
   color: #ffd45e;
   font-weight: 800;
-  font-size: 1.3rem;
-  text-shadow: 0 0.1rem 0.4rem rgba(10, 4, 2, 0.8);
+  font-size: 1.25rem;
+  /* LE MÊME CERNE SOMBRE que le gain du coffre (Keko). */
+  text-shadow: 0 0.08rem 0 #241029, 0.08rem 0 0 #241029, -0.08rem 0 0 #241029, 0 -0.08rem 0 #241029, 0 0.15rem 0.4rem rgba(10, 4, 2, 0.8);
+  white-space: nowrap;
   pointer-events: none;
   animation: lieu-gain 1.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
@@ -4141,7 +4143,8 @@ span.jouer-pile-dos {
 }
 
 .coffre-butin .icone-or,
-.coffre-gain .icone-or {
+.coffre-gain .icone-or,
+.lieu-gain .icone-or {
   width: 1em;
   height: 1em;
 }
