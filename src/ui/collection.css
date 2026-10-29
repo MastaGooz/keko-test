@@ -4045,11 +4045,16 @@ span.jouer-pile-dos {
   height: 0.5rem;
 }
 
+/* PLUS LARGE QUE LA JAUGE, le texte déborde des deux côtés à parts égales :
+   `text-align` seul le laissait partir à droite. */
 .carte-lieu-jauge .lieu-jauge-texte {
+  position: relative;
+  left: 50%;
+  width: max-content;
   margin-top: 0.2rem;
   font-size: 0.7rem;
-  text-align: center;
   white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 .carte-lieu-ouvrir {

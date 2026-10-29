@@ -91,6 +91,22 @@ export function orDuPalier(lieu: Lieu, n: number): number {
   return lieu.or + lieu.hausse * n
 }
 
+/**
+ * UN NOMBRE EN COURT, pour le texte sous la jauge (Keko : « abréger les grands
+ * nombres ») : tel quel sous mille, puis en milliers (k) ou en millions (M),
+ * une décimale sous dix (« 1,2k »), aucune au-dessus (« 12k »). *Arrondi vers
+ * le bas* : une jauge presque pleine ne s'affiche jamais pleine.
+ */
+export function nombreCourt(n: number): string {
+  if (n < 1000) return String(Math.floor(n))
+  for (const [unite, lettre] of [[1e6, 'M'], [1e3, 'k']] as const) {
+    if (n < unite) continue
+    const v = n / unite
+    return v < 10 ? `${(Math.floor(v * 10) / 10).toString().replace('.', ',')}${lettre}` : `${Math.floor(v)}${lettre}`
+  }
+  return String(n)
+}
+
 /** Dans combien de millisecondes les paliers repartent du premier. */
 export function remiseDans(t: number): number {
   return (fenetreDe(t) + 1) * FENETRE - t

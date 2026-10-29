@@ -338,7 +338,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   lieu (une main sous X ne remplit rien). **« Jouer » est une CARTE** (Keko : « sous la forme d'une map, avec des
   chemins ») : les lieux en petit (`public/lieux/`, tri de Keko), posés en
   zigzag (`PLACE_SUR_LA_CARTE`), reliés par un chemin pointillé qui monte de
-  la Taverne ; le nom au-dessus, la jauge dessous, un DECK POSÉ en biais à côté (`DeckPose`, Keko : « juste pour indiquer qu'il y a un deck » ;
+  la Taverne ; le nom au-dessus, la jauge dessous (ses nombres abrégés, « 1,2k », `nombreCourt`), un DECK POSÉ en biais à côté (`DeckPose`, Keko : « juste pour indiquer qu'il y a un deck » ;
   une tape le change ; en pastille à son coin bas extérieur, le MINUTEUR de la main suivante, `MinuteurDeMain`) ; fermés, grisés, « Ouvrir 150 ». Le bonus et le reste
   sont dans l'écran du lieu (une tape sur l'image). Une sauvegarde d'avant les lieux met le deck qui jouait
   à la Taverne (`lireDecks`). Stockage `keko-fantasy-lieux`.

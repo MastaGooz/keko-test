@@ -1,5 +1,5 @@
 // LA VÉRIF DES LIEUX : `node src/logic/emoji/lieux.verif.ts` — sans navigateur.
-import { FENETRE, IDS_LIEUX, LIEUX, avecOr, estOuvert, lieuDe, lieuxNeufs, lireLieux, orDuPalier, ouvrirLeLieu, palierDe, remiseDans, remplirLaJauge, valeurDansLeLieu } from './lieux.ts'
+import { FENETRE, IDS_LIEUX, LIEUX, avecOr, estOuvert, lieuDe, lieuxNeufs, lireLieux, nombreCourt, orDuPalier, ouvrirLeLieu, palierDe, remiseDans, remplirLaJauge, valeurDansLeLieu } from './lieux.ts'
 import { DECKS_MAX, type EntreeDeck } from './deck.ts'
 import type { RoleCarte } from './types.ts'
 
@@ -12,6 +12,7 @@ function verifier(quoi: string, vrai: boolean): void {
 console.log('lieux')
 const taverne = lieuDe('taverne')!
 const mine = lieuDe('mine')!
+verifier('les nombres en court', [0, 999, 1000, 1250, 9999, 12345, 999999, 1000000, 2560000, 50000000].map(nombreCourt).join(' ') === '0 999 1k 1,2k 9,9k 12k 999k 1M 2,5M 50M')
 verifier('trois lieux, un par deck (Keko)', LIEUX.length === 3 && LIEUX.length === DECKS_MAX && new Set(IDS_LIEUX).size === 3)
 const neuf = lieuxNeufs()
 verifier('au départ : la Taverne seule ouverte, pas d’or', neuf.or === 0 && neuf.ouverts.join() === 'taverne' && estOuvert(neuf, 'taverne') && !estOuvert(neuf, 'mine'))

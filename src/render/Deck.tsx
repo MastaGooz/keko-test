@@ -31,7 +31,7 @@ import {
   type EntreeDeck,
   type ValeurDeCarte,
 } from '../logic/emoji/deck.ts'
-import { LIEUX, estOuvert, orDuPalier, palierDe, remiseDans, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
+import { LIEUX, estOuvert, nombreCourt, orDuPalier, palierDe, remiseDans, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
 import { EtuiMiniature } from './Decks.tsx'
 import { IconeLike, IconeOr } from './Jeu.tsx'
@@ -309,7 +309,7 @@ function JaugeDuLieu({
         <span style={{ width: `${((dedans / lieu.jauge) * 100).toFixed(1)}%` }} />
       </div>
       <p className="lieu-jauge-texte">
-        <IconeLike /> <b>{dedans}</b> / {lieu.jauge} → <IconeOr /> {prochain}
+        <IconeLike /> <b>{nombreCourt(dedans)}</b> / {nombreCourt(lieu.jauge)} → <IconeOr /> {nombreCourt(prochain)}
       </p>
       {neuf && (
         <span key={gain.numero} className="lieu-gain" aria-live="polite">
