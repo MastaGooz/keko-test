@@ -4059,7 +4059,7 @@ span.jouer-pile-dos {
 
 /* LE COFFRE DU LIEU, sous sa jauge : son butin dans une pastille ; vide, éteint. */
 .carte-lieu-coffre {
-  top: calc(var(--image-lieu) / 2 + 2.05rem);
+  top: calc(var(--image-lieu) / 2 + 2.5rem);
   width: 2.9rem;
   height: 2.9rem;
   padding: 0;
