@@ -3697,9 +3697,9 @@ span.jouer-pile-dos {
   opacity: 0.7;
 }
 
-/* LE CHOIX DU DECK D'UN LIEU : la fenêtre de « Prendre », un deck par ligne. */
-/* BEAUCOUP DE DECKS : la fenêtre tient dans l'écran, la grille défile
-   entre la question et les boutons. */
+/* LE CHOIX DU DECK D'UN LIEU : le lieu et sa place en tête, la grille des
+   étuis dessous. BEAUCOUP DE DECKS : la fenêtre tient dans l'écran, la grille
+   défile entre la tête et les boutons. */
 .lieu-choix {
   display: flex;
   flex-direction: column;
@@ -3708,44 +3708,136 @@ span.jouer-pile-dos {
   width: min(40rem, 100%);
 }
 
+/* LA TÊTE : le lieu à gauche, sa place à droite. */
+.lieu-choix-tete {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.4rem;
+}
+
+.lieu-choix-lieu-tete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lieu-choix-titre {
+  margin: 0 0 0.2rem;
+  font-family: 'Grenze', Georgia, serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  color: #ffc61f;
+  text-shadow: 0 0.1rem 0 #241029;
+  white-space: nowrap;
+}
+
+.lieu-choix-image {
+  display: block;
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0.3rem 0.4rem rgba(10, 4, 2, 0.6));
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* LA PLACE DU DECK : la taille d'un étui et de son nom ; visée, elle s'allume. */
+.lieu-choix-place {
+  display: grid;
+  place-items: center;
+  width: 5.6rem;
+  min-height: 7.6rem;
+  border-radius: 0.8rem;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lieu-choix-place-visee {
+  background: rgba(255, 198, 31, 0.14);
+  box-shadow: 0 0 0 0.15rem #ffc61f, 0 0 1rem rgba(255, 198, 31, 0.45);
+}
+
+.lieu-choix-vide {
+  display: block;
+  width: 4.6rem;
+  height: 4.6rem;
+}
+
+.lieu-choix-vide svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lieu-choix-aide {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
 .lieu-choix-liste {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
+  gap: 0.6rem 0.3rem;
+  margin-top: 0.7rem;
+  padding: 0.5rem 0.2rem;
+  border-radius: 0.8rem;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* UN ÉTUI PAR CASE, son nom et son attribution dessous (Keko). */
-.lieu-choix-deck {
+/* LE DECK POSÉ RAMENÉ VERS LA GRILLE : elle s'allume, il y retournera. */
+.lieu-choix-liste-visee {
+  background: rgba(255, 250, 240, 0.08);
+  box-shadow: inset 0 0 0 0.12rem rgba(255, 250, 240, 0.45);
+}
+
+/* UN ÉTUI PAR CASE, SANS CASE AUTOUR (Keko) : son nom et son attribution dessous. */
+.lieu-choix-deck,
+.lieu-choix-etui {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
   min-width: 0;
-  padding: 0.6rem 0.3rem 0.5rem;
+  padding: 0;
   border: 0;
-  border-radius: 0.7rem;
-  background: rgba(255, 250, 240, 0.1);
+  background: transparent;
   color: #fffaf0;
   font: inherit;
   text-align: center;
-  cursor: pointer;
+  cursor: grab;
+  /* LE GLISSER EST À NOUS : le navigateur ne fait pas défiler sous un étui. */
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
 }
 
-.lieu-choix-deck:active {
-  background: rgba(255, 250, 240, 0.18);
+.lieu-choix-deck:active .etui-mini,
+.lieu-choix-etui:active .etui-mini {
+  transform: scale(0.95);
 }
 
-.lieu-choix-ici {
-  box-shadow: inset 0 0 0 0.14rem #ffc61f;
-}
-
-.lieu-choix-deck .etui-mini {
+.lieu-choix-deck .etui-mini,
+.lieu-choix-etui .etui-mini {
   width: 4.2rem;
+}
+
+/* LE DECK DE CE LIEU, dans la grille : liseré d'or autour de l'étui. */
+.lieu-choix-ici .etui-mini {
+  outline: 0.14rem solid #ffc61f;
+  outline-offset: 0.15rem;
+}
+
+/* L'ÉTUI QU'ON TIENT laisse sa place en creux. */
+.lieu-choix-etui-parti {
+  opacity: 0.3;
 }
 
 .lieu-choix-nom {
@@ -3754,6 +3846,7 @@ span.jouer-pile-dos {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 800;
+  font-size: 0.85rem;
 }
 
 .lieu-choix-detail {
@@ -3785,6 +3878,24 @@ span.jouer-pile-dos {
 .lieu-choix-incomplet {
   color: #ffb3c0;
   opacity: 1;
+}
+
+/* LE FANTÔME : l'étui tenu suit le doigt, penché ; au-dessus de la place, il se redresse. */
+.lieu-choix-fantome {
+  position: fixed;
+  z-index: 1200;
+  pointer-events: none;
+  transform: translate(-50%, -60%) rotate(-6deg) scale(1.08);
+  filter: drop-shadow(0 0.8rem 1rem rgba(10, 4, 2, 0.6));
+  transition: transform 0.12s ease;
+}
+
+.lieu-choix-fantome-vise {
+  transform: translate(-50%, -60%) rotate(0deg) scale(1.15);
+}
+
+.lieu-choix-fantome .etui-mini {
+  width: 4.2rem;
 }
 
 /* L'IMAGE DU LIEU : le dessin trié par Keko, posé sur sa lueur. */

@@ -587,11 +587,18 @@ function MinuteurDeMain({ partie }: { partie: Partie }): React.ReactElement {
   )
 }
 
+/** Le doigt doit bouger d'autant (px) avant qu'un deck se mette à glisser : en deçà, c'est une tape. */
+const SEUIL_GLISSER = 6
+
 /**
- * QUEL DECK SUR CE LIEU : les decks complets se posent (celui qui joue
- * ailleurs le quitte pour ici) ; un incomplet se compose d'abord. **UNE
- * GRILLE D'ÉTUIS** (Keko : « plutôt qu'une liste, une grille avec les images
- * des decks et leur attribution en dessous »).
+ * QUEL DECK SUR CE LIEU (Keko : « le lieu en haut du panneau avec le deck
+ * associé, et en dessous le grid des decks … avec un système de drag and
+ * drop ») : en tête le lieu et sa PLACE, qui montre le deck posé ; dessous les
+ * étuis, à leur taille, sans case autour, leur nom et leur attribution dessous.
+ * **On glisse un étui sur la place pour le poser** (celui qui joue ailleurs le
+ * quitte pour ici), **on glisse le deck posé vers la grille pour le retirer.**
+ * La tape reste : un deck complet se pose, un incomplet s'ouvre pour être
+ * composé. Le glisser passe par les pointeurs : le doigt et la souris pareil.
  */
 function ChoixDuDeck({
   lieu,
@@ -613,13 +620,97 @@ function ChoixDuDeck({
   onFermer: () => void
 }): React.ReactElement {
   const ici = deckDuLieu(decks, lieu.id)
+  const place = useRef<HTMLDivElement>(null)
+  const grille = useRef<HTMLDivElement>(null)
+  /** Le geste en cours, avant même qu'il glisse. */
+  const geste = useRef<{ i: number; depuis: 'grille' | 'place'; x0: number; y0: number; glisse: boolean } | null>(null)
+  /** Un glisser vient de finir : la tape qui suit ne compte pas. */
+  const vientDeGlisser = useRef(false)
+  const [glisse, setGlisse] = useState<{ i: number; depuis: 'grille' | 'place'; x: number; y: number; cible: boolean } | null>(null)
+  const valeur = (d: Deck): ValeurDeCarte | null => (valeurDe === null ? null : valeurDe(d))
+
+  const dedans = (el: HTMLElement | null, x: number, y: number): boolean => {
+    if (el === null) return false
+    const r = el.getBoundingClientRect()
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
+  }
+  // OÙ LE DECK TOMBERAIT : de la grille, sur la place (s'il est complet) ; de la place, hors d'elle.
+  const surLaCible = (depuis: 'grille' | 'place', i: number, x: number, y: number): boolean =>
+    depuis === 'grille' ? deckComplet(decks.liste[i]!) && dedans(place.current, x, y) : !dedans(place.current, x, y)
+
+  const appui = (i: number, depuis: 'grille' | 'place') => (e: React.PointerEvent<HTMLElement>): void => {
+    if (e.button > 0) return
+    geste.current = { i, depuis, x0: e.clientX, y0: e.clientY, glisse: false }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const bouge = (e: React.PointerEvent<HTMLElement>): void => {
+    const g = geste.current
+    if (g === null) return
+    if (!g.glisse && Math.hypot(e.clientX - g.x0, e.clientY - g.y0) < SEUIL_GLISSER) return
+    g.glisse = true
+    setGlisse({ i: g.i, depuis: g.depuis, x: e.clientX, y: e.clientY, cible: surLaCible(g.depuis, g.i, e.clientX, e.clientY) })
+  }
+  const lache = (e: React.PointerEvent<HTMLElement>): void => {
+    const g = geste.current
+    geste.current = null
+    if (g === null || !g.glisse) return
+    vientDeGlisser.current = true
+    setGlisse(null)
+    if (!surLaCible(g.depuis, g.i, e.clientX, e.clientY)) return
+    if (g.depuis === 'grille') {
+      if (g.i !== ici) onPoser(g.i)
+    } else onRetirer(g.i)
+  }
+  const annule = (): void => {
+    geste.current = null
+    setGlisse(null)
+  }
+  const tape = (agir: () => void) => (): void => {
+    if (vientDeGlisser.current) {
+      vientDeGlisser.current = false
+      return
+    }
+    agir()
+  }
+  const glisseur = (i: number, depuis: 'grille' | 'place') => ({
+    onPointerDown: appui(i, depuis),
+    onPointerMove: bouge,
+    onPointerUp: lache,
+    onPointerCancel: annule,
+  })
+
+  const pose = ici === null ? undefined : decks.liste[ici]
   return (
     <div className="prendre-voile" onClick={onFermer}>
       <div className="prendre lieu-choix" role="dialog" aria-modal="true" aria-labelledby="lieu-choix-titre" onClick={(e) => e.stopPropagation()}>
-        <p id="lieu-choix-titre" className="prendre-question">
-          Quel deck {aLieu(lieu)} ?
-        </p>
-        <div className="lieu-choix-liste">
+        {/* EN TÊTE, LE LIEU ET SA PLACE : le deck qui y joue, ou la place vide où le déposer. */}
+        <div className="lieu-choix-tete">
+          <div className="lieu-choix-lieu-tete">
+            <h2 id="lieu-choix-titre" className="lieu-choix-titre">
+              {lieu.nom}
+            </h2>
+            <img className="lieu-choix-image" src={imageDuLieu(lieu)} alt="" draggable={false} />
+          </div>
+          <div ref={place} className={`lieu-choix-place${glisse !== null && glisse.depuis === 'grille' && glisse.cible ? ' lieu-choix-place-visee' : ''}`}>
+            {pose !== undefined && ici !== null ? (
+              <button
+                type="button"
+                className={`lieu-choix-etui${glisse?.depuis === 'place' ? ' lieu-choix-etui-parti' : ''}`}
+                aria-label={`${nomDuDeck(pose, ici)} — glisser vers la grille pour le retirer`}
+                {...glisseur(ici, 'place')}
+              >
+                <EtuiMiniature deck={pose} parId={parId} valeur={valeur(pose)} />
+                <span className="lieu-choix-nom">{nomDuDeck(pose, ici)}</span>
+              </button>
+            ) : (
+              <span className="lieu-choix-vide" aria-hidden>
+                <DeckPose vide />
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="lieu-choix-aide">{ici === null ? 'Glissez un deck sur la place' : 'Glissez un autre deck pour le remplacer'}</p>
+        <div ref={grille} className={`lieu-choix-liste${glisse !== null && glisse.depuis === 'place' && glisse.cible ? ' lieu-choix-liste-visee' : ''}`}>
           {decks.liste.map((d, i) => {
             const complet = deckComplet(d)
             const ailleurs = d.lieu !== undefined && d.lieu !== lieu.id ? LIEUX.find((l) => l.id === d.lieu) : undefined
@@ -627,10 +718,11 @@ function ChoixDuDeck({
               <button
                 key={i}
                 type="button"
-                className={`lieu-choix-deck${i === ici ? ' lieu-choix-ici' : ''}`}
-                onClick={() => (i === ici ? onFermer() : complet ? onPoser(i) : onComposer(i))}
+                className={`lieu-choix-deck${i === ici ? ' lieu-choix-ici' : ''}${glisse?.depuis === 'grille' && glisse.i === i ? ' lieu-choix-etui-parti' : ''}`}
+                onClick={tape(() => (i === ici ? onFermer() : complet ? onPoser(i) : onComposer(i)))}
+                {...glisseur(i, 'grille')}
               >
-                <EtuiMiniature deck={d} parId={parId} valeur={valeurDe === null ? null : valeurDe(d)} />
+                <EtuiMiniature deck={d} parId={parId} valeur={valeur(d)} />
                 <span className="lieu-choix-nom">{nomDuDeck(d, i)}</span>
                 {/* SON LIEU EN IMAGE sous le nom, à la place de « libre », À LA HAUTEUR
                     DU TEXTE : les cases ne grandissent pas (Keko). */}
@@ -649,7 +741,7 @@ function ChoixDuDeck({
         </div>
         <div className="prendre-boutons">
           <button type="button" className="prendre-annuler" onClick={onFermer}>
-            Annuler
+            Fermer
           </button>
           {ici !== null && (
             <button type="button" className="prendre-annuler" onClick={() => onRetirer(ici)}>
@@ -658,6 +750,14 @@ function ChoixDuDeck({
           )}
         </div>
       </div>
+      {/* L'ÉTUI QUI SUIT LE DOIGT, au-dessus de tout. */}
+      {glisse !== null &&
+        createPortal(
+          <div className={`lieu-choix-fantome${glisse.cible ? ' lieu-choix-fantome-vise' : ''}`} style={{ left: `${glisse.x}px`, top: `${glisse.y}px` }} aria-hidden>
+            <EtuiMiniature deck={decks.liste[glisse.i]!} parId={parId} valeur={valeur(decks.liste[glisse.i]!)} />
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
