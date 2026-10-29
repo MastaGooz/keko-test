@@ -465,11 +465,6 @@ function CoffreDuLieu({ lieu, butin, onOuvrir }: { lieu: Lieu; butin: Butin; onO
           <IconeOr /> {nombreCourt(butin.or)}
         </span>
       )}
-      {vol !== null && (
-        <span className="coffre-gain" aria-live="polite">
-          +{nombreCourt(vol.or)} <IconeOr />
-        </span>
-      )}
       {vol !== null &&
         createPortal(
           <div className="pieces-volantes" aria-hidden>
@@ -493,6 +488,10 @@ function CoffreDuLieu({ lieu, butin, onOuvrir }: { lieu: Lieu; butin: Butin; onO
                 </span>
               )
             })}
+            {/* LE GAIN DEVANT LES PIÈCES (Keko : « on le voit mal ») : après elles, dans la même couche. */}
+            <span className="coffre-gain" aria-live="polite" style={{ left: `${vol.x}px`, top: `${vol.y - 34}px` }}>
+              +{nombreCourt(vol.or)} <IconeOr />
+            </span>
           </div>,
           document.body,
         )}
@@ -535,7 +534,7 @@ function DeckPose({ vide = false }: { vide?: boolean }): React.ReactElement {
             {forme({ fill: '#2a1430' })}
           </g>
         ))}
-        <path d="M 21 19 V 31 M 15 25 H 27" stroke="rgba(255, 246, 226, 0.75)" strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M 24 18 V 30 M 18 24 H 30" stroke="rgba(255, 246, 226, 0.75)" strokeWidth="2.6" strokeLinecap="round" />
       </svg>
     )
   return (

@@ -4148,16 +4148,16 @@ span.jouer-pile-dos {
 
 .coffre-gain {
   position: absolute;
-  left: 50%;
-  top: -0.6rem;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
   color: #ffd45e;
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   white-space: nowrap;
-  text-shadow: 0 0.1rem 0.4rem rgba(10, 4, 2, 0.8);
+  /* UN CERNE SOMBRE : il se lit sur les pièces d'or comme sur le fond. */
+  text-shadow: 0 0.08rem 0 #241029, 0.08rem 0 0 #241029, -0.08rem 0 0 #241029, 0 -0.08rem 0 #241029, 0 0.15rem 0.4rem rgba(10, 4, 2, 0.8);
   pointer-events: none;
   animation: coffre-gain 1.4s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
