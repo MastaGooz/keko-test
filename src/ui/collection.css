@@ -4125,10 +4125,12 @@ span.jouer-pile-dos {
   right: -0.55rem;
   display: grid;
   place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 1.45rem;
+  height: 1.45rem;
   border-radius: 50%;
   background: #2a1030;
+  /* Le même trait crème que le deck posé : ils se lisent comme un seul objet. */
+  outline: 0.12rem solid #fff6e2;
   box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 2, 0.6);
   pointer-events: none;
 }
@@ -4160,18 +4162,22 @@ span.jouer-pile-dos {
 .minuteur-main b {
   position: relative;
   color: #fffaf0;
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   font-weight: 800;
   line-height: 1;
 }
 
-/* Le minuteur SOUS le symbole : posé sur son coin, il le couvrait presque
-   entier ; à côté, il sortait de l'écran ou touchait le nom du lieu. */
+/* LE MINUTEUR EN PASTILLE au coin bas EXTÉRIEUR du deck posé (Keko : « un
+   agencement plus esthétique ») : petit, il ne cache que le coin d'une carte. */
 .carte-lieu-deck .minuteur-main {
-  top: 100%;
+  top: auto;
+  bottom: -0.1rem;
+  right: -0.1rem;
+}
+
+.carte-lieu-deck-gauche .minuteur-main {
   right: auto;
-  left: 50%;
-  transform: translateX(-50%);
+  left: -0.1rem;
 }
 
 /* LES PALIERS DE L'HEURE, sous le bonus dans l'écran du lieu. */

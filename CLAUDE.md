@@ -339,7 +339,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   chemins ») : les lieux en petit (`public/lieux/`, tri de Keko), posés en
   zigzag (`PLACE_SUR_LA_CARTE`), reliés par un chemin pointillé qui monte de
   la Taverne ; le nom au-dessus, la jauge dessous, un DECK POSÉ en biais à côté (`DeckPose`, Keko : « juste pour indiquer qu'il y a un deck » ;
-  une tape le change ; dessous, le MINUTEUR de la main suivante, `MinuteurDeMain`) ; fermés, grisés, « Ouvrir 150 ». Le bonus et le reste
+  une tape le change ; en pastille à son coin bas extérieur, le MINUTEUR de la main suivante, `MinuteurDeMain`) ; fermés, grisés, « Ouvrir 150 ». Le bonus et le reste
   sont dans l'écran du lieu (une tape sur l'image). Une sauvegarde d'avant les lieux met le deck qui jouait
   à la Taverne (`lireDecks`). Stockage `keko-fantasy-lieux`.
 - **Le deck qui joue** (`logic/emoji/deck.ts`, `render/Deck.tsx` ; Keko : « un
