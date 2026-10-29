@@ -13,7 +13,7 @@
  * que le mélange dit précédente. La barre lit l'horloge à chaque image : c'est
  * de l'affichage.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { NOM_DU_ROLE } from '../logic/emoji/types.ts'
@@ -34,7 +34,6 @@ import {
 import { LIEUX, estOuvert, orDuPalier, palierDe, remiseDans, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
 import { EtuiMiniature } from './Decks.tsx'
-import { IconeDeck } from './Jeu.tsx'
 import { IconeLike, IconeOr } from './Jeu.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -382,7 +381,7 @@ function PlaceDuDeck({
         <>
           {minuteur ? (
             <span className="lieu-deck-symbole" aria-hidden>
-              <IconeDeck />
+              <DeckPose />
             </span>
           ) : (
             <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
@@ -396,6 +395,48 @@ function PlaceDuDeck({
         </>
       )}
     </button>
+  )
+}
+
+/**
+ * LE DECK POSÉ, sur la carte des lieux (Keko : « un deck posé, en biais, un
+ * truc plus quali ») : une pile couchée de biais, sa tranche crème visible,
+ * le dos du dessus en cuir violet au liseré d'or, frappé du symbole.
+ */
+function DeckPose(): React.ReactElement {
+  const id = useId()
+  const cuir = `${id}-cuir`
+  const tranche = `${id}-tranche`
+  const symbole = `${import.meta.env.BASE_URL}symbole.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
+  // LA PILE : cinq cartes, chacune décalée vers le bas à droite de la précédente.
+  const PILE = [4, 3, 2, 1]
+  const carte = { x: -11, y: -15, width: 22, height: 30, rx: 2.4 }
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden>
+      <defs>
+        <linearGradient id={cuir} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#8a4aa3" />
+          <stop offset="0.55" stopColor="#5b2a6e" />
+          <stop offset="1" stopColor="#3d1a4c" />
+        </linearGradient>
+        <linearGradient id={tranche} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff6e2" />
+          <stop offset="1" stopColor="#cdb48a" />
+        </linearGradient>
+      </defs>
+      <g transform="translate(23 22) rotate(-16)">
+        {/* L'ombre portée sur la carte, sous toute la pile. */}
+        <rect {...carte} x={carte.x + 2.6} y={carte.y + 4.2} fill="rgba(10, 4, 2, 0.45)" />
+        {PILE.map((k) => (
+          <rect key={k} {...carte} x={carte.x + k * 0.55} y={carte.y + k * 0.8} fill={`url(#${tranche})`} stroke="#3a1a40" strokeWidth="0.7" />
+        ))}
+        <rect {...carte} fill={`url(#${cuir})`} stroke="#2a1030" strokeWidth="1" />
+        <rect x={carte.x + 2.2} y={carte.y + 2.2} width={carte.width - 4.4} height={carte.height - 4.4} rx="1.2" fill="none" stroke="#ffc61f" strokeWidth="0.9" />
+        <image href={symbole} x="-7" y="-7.5" width="14" height="15" preserveAspectRatio="xMidYMid meet" />
+        {/* Le reflet sur le cuir, en haut à gauche. */}
+        <path d={`M ${carte.x + 1} ${carte.y + 6} Q ${carte.x + 1} ${carte.y + 1} ${carte.x + 6} ${carte.y + 1}`} fill="none" stroke="rgba(255, 250, 240, 0.45)" strokeWidth="1" strokeLinecap="round" />
+      </g>
+    </svg>
   )
 }
 

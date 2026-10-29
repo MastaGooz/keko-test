@@ -4102,10 +4102,8 @@ span.jouer-pile-dos {
 /* LE SYMBOLE DU DECK, sur la carte : il dit seulement qu'un deck y joue. */
 .lieu-deck-symbole {
   display: block;
-  width: 2.4rem;
-  height: 2.4rem;
-  color: #fffaf0;
-  filter: drop-shadow(0 0.12rem 0.2rem rgba(10, 4, 2, 0.6));
+  width: 3rem;
+  height: 3rem;
 }
 
 .lieu-deck-symbole svg {
