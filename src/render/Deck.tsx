@@ -377,7 +377,11 @@ function PlaceDuDeck({
       aria-label={vide ? 'Poser un deck' : `${nomDuDeck(deck, i)} — changer de deck`}
       onClick={onChoisir}
     >
-      {vide ? (
+      {vide && minuteur ? (
+        <span className="lieu-deck-symbole" aria-hidden>
+          <DeckPose vide />
+        </span>
+      ) : vide ? (
         <span className="lieu-deck-place" aria-hidden>
           +
         </span>
@@ -505,14 +509,27 @@ function piecesPour(or: number): number {
  * LE DECK POSÉ, sur la carte des lieux (Keko : « un deck posé, en biais », puis
  * « trop détaillé, ça manque de stylisé ») : DEUX DOS À PLAT, l'un couché sur
  * l'autre en biais, un seul gros trait crème autour (tracé d'abord, les fonds
- * par-dessus, comme `IconeDeck`), un losange d'or au milieu.
+ * par-dessus, comme `IconeDeck`), un losange d'or au milieu. **VIDE** (Keko :
+ * « qu'il matche l'icône du deck mais en mode vide ») : les mêmes deux cartes,
+ * en pointillé crème sans fond, un « + » au milieu.
  */
-function DeckPose(): React.ReactElement {
+function DeckPose({ vide = false }: { vide?: boolean }): React.ReactElement {
   const CARTES = [
     { a: 8, x: 27, y: 23 },
     { a: -14, x: 21, y: 25 },
   ] as const
   const forme = (props: React.SVGProps<SVGRectElement>): React.ReactElement => <rect x="-10" y="-14" width="20" height="28" rx="3" {...props} />
+  if (vide)
+    return (
+      <svg viewBox="0 0 48 48" aria-hidden strokeLinejoin="round">
+        {CARTES.map((c) => (
+          <g key={c.a} transform={`translate(${c.x} ${c.y}) rotate(${c.a})`}>
+            {forme({ fill: '#2a1430', stroke: 'rgba(255, 246, 226, 0.55)', strokeWidth: 1.6, strokeDasharray: '3 2.4' })}
+          </g>
+        ))}
+        <path d="M 21 19 V 31 M 15 25 H 27" stroke="rgba(255, 246, 226, 0.75)" strokeWidth="2.6" strokeLinecap="round" />
+      </svg>
+    )
   return (
     <svg viewBox="0 0 48 48" aria-hidden strokeLinejoin="round">
       {CARTES.map((c) => (
