@@ -511,7 +511,7 @@ function piecesPour(or: number): number {
  * l'autre en biais, un seul gros trait crème autour (tracé d'abord, les fonds
  * par-dessus, comme `IconeDeck`), un losange d'or au milieu. **VIDE** (Keko :
  * « qu'il matche l'icône du deck mais en mode vide ») : les mêmes deux cartes,
- * en pointillé crème sans fond, un « + » au milieu.
+ * un seul pointillé crème autour des deux, un « + » au milieu.
  */
 function DeckPose({ vide = false }: { vide?: boolean }): React.ReactElement {
   const CARTES = [
@@ -522,9 +522,17 @@ function DeckPose({ vide = false }: { vide?: boolean }): React.ReactElement {
   if (vide)
     return (
       <svg viewBox="0 0 48 48" aria-hidden strokeLinejoin="round">
+        {/* LE POINTILLÉ SUR LE CONTOUR DES DEUX (Keko) : les traits d'abord, en
+            double épaisseur, puis les deux fonds par-dessus — ils couvrent la
+            moitié intérieure et tout ce qui passe dans l'autre carte. */}
         {CARTES.map((c) => (
           <g key={c.a} transform={`translate(${c.x} ${c.y}) rotate(${c.a})`}>
-            {forme({ fill: '#2a1430', stroke: 'rgba(255, 246, 226, 0.55)', strokeWidth: 1.6, strokeDasharray: '3 2.4' })}
+            {forme({ fill: 'none', stroke: 'rgba(255, 246, 226, 0.6)', strokeWidth: 3.2, strokeDasharray: '3 2.4' })}
+          </g>
+        ))}
+        {CARTES.map((c) => (
+          <g key={c.a} transform={`translate(${c.x} ${c.y}) rotate(${c.a})`}>
+            {forme({ fill: '#2a1430' })}
           </g>
         ))}
         <path d="M 21 19 V 31 M 15 25 H 27" stroke="rgba(255, 246, 226, 0.75)" strokeWidth="2.6" strokeLinecap="round" />
