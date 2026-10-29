@@ -34,6 +34,7 @@ import {
 import { LIEUX, estOuvert, orDuPalier, palierDe, remiseDans, type EtatLieux, type Lieu } from '../logic/emoji/lieux.ts'
 import { Vignette } from './Collection.tsx'
 import { EtuiMiniature } from './Decks.tsx'
+import { IconeDeck } from './Jeu.tsx'
 import { IconeLike, IconeOr } from './Jeu.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -359,7 +360,10 @@ function PlaceDuDeck({
   parId: ReadonlyMap<string, CarteEmoji>
   valeur: ValeurDeCarte | null
   onChoisir: () => void
-  /** Montre sur l'étui le temps jusqu'à la main suivante (la carte des lieux). */
+  /**
+   * LA CARTE DES LIEUX : un SYMBOLE de deck au lieu de l'étui (Keko : « juste
+   * pour indiquer qu'il y a un deck »), et à son coin le temps jusqu'à la main suivante.
+   */
   minuteur?: boolean
 }): React.ReactElement {
   const vide = deck === undefined || i === null
@@ -376,7 +380,13 @@ function PlaceDuDeck({
         </span>
       ) : (
         <>
-          <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
+          {minuteur ? (
+            <span className="lieu-deck-symbole" aria-hidden>
+              <IconeDeck />
+            </span>
+          ) : (
+            <EtuiMiniature deck={deck} parId={parId} valeur={valeur} />
+          )}
           {minuteur && deck.partie !== null && <MinuteurDeMain partie={deck.partie} />}
           {!deckComplet(deck) && (
             <span className="lieu-deck-incomplet">

@@ -981,7 +981,7 @@ export function IconeOr(): React.ReactElement {
 }
 
 /** LE DECK : trois cartes de dos empilées, le cuir violet du dos et son liseré d'or. */
-function IconeDeck(): React.ReactElement {
+export function IconeDeck(): React.ReactElement {
   const PILE = [
     [2.4, -2.4],
     [1.2, -1.2],

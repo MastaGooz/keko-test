@@ -4099,12 +4099,23 @@ span.jouer-pile-dos {
   padding: 0.2rem;
 }
 
-.carte-lieu-deck .etui-mini,
-.carte-lieu-deck .lieu-deck-place {
-  width: 3.1rem;
+/* LE SYMBOLE DU DECK, sur la carte : il dit seulement qu'un deck y joue. */
+.lieu-deck-symbole {
+  display: block;
+  width: 2.4rem;
+  height: 2.4rem;
+  color: #fffaf0;
+  filter: drop-shadow(0 0.12rem 0.2rem rgba(10, 4, 2, 0.6));
+}
+
+.lieu-deck-symbole svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .carte-lieu-deck .lieu-deck-place {
+  width: 3.1rem;
   font-size: 1.5rem;
 }
 
@@ -4156,10 +4167,13 @@ span.jouer-pile-dos {
   line-height: 1;
 }
 
-/* Le minuteur au coin EXTÉRIEUR de l'étui : côté lieu, il touchait le nom. */
-.carte-lieu-deck-gauche .minuteur-main {
+/* Le minuteur SOUS le symbole : posé sur son coin, il le couvrait presque
+   entier ; à côté, il sortait de l'écran ou touchait le nom du lieu. */
+.carte-lieu-deck .minuteur-main {
+  top: 100%;
   right: auto;
-  left: -0.55rem;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* LES PALIERS DE L'HEURE, sous le bonus dans l'écran du lieu. */
