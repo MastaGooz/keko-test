@@ -4086,13 +4086,15 @@ span.jouer-pile-dos {
   transform: translateY(-50%);
 }
 
+/* L'écart au lieu : 0,4 rem EN DEÇÀ du bord de l'image, dont le dessin ne
+   touche pas les bords (Keko : « un peu loin du lieu »). */
 .carte-lieu-deck-gauche {
   left: auto;
-  right: calc(var(--image-lieu) / 2 + 0.3rem);
+  right: calc(var(--image-lieu) / 2 - 0.4rem);
 }
 
 .carte-lieu-deck-droite {
-  left: calc(var(--image-lieu) / 2 + 0.3rem);
+  left: calc(var(--image-lieu) / 2 - 0.4rem);
 }
 
 .carte-lieu-deck .lieu-deck {
