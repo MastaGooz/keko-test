@@ -43,11 +43,16 @@ export function nomDeLEnnemi(seed: number, etage: number): string {
   return `${nom}, ${choisir(rng, CREATURES)} ${choisir(rng, TITRES)}`
 }
 
+/** L'entier seedé dont l'écran fait le portrait de l'ennemi de cet étage. */
+export function portraitDeLEtage(seed: number, etage: number): number {
+  return graine(seed, etage)
+}
+
 export function pvDeLEtage(config: ConfigDonjon, etage: number): number {
   return Math.round(config.ennemi.pvBase * Math.pow(etage, config.ennemi.exposant))
 }
 
 export function ennemiDeLEtage(config: ConfigDonjon, seed: number, etage: number): Ennemi {
   const pv = pvDeLEtage(config, etage)
-  return { etage, nom: nomDeLEnnemi(seed, etage), pv, pvMax: pv, portrait: graine(seed, etage) }
+  return { etage, nom: nomDeLEnnemi(seed, etage), pv, pvMax: pv, portrait: portraitDeLEtage(seed, etage) }
 }

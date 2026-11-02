@@ -19,6 +19,7 @@ import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
 import { AMELIORATIONS, DONJON, JOUR, type CleAmelioration } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
+import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   chanceCritDe,
@@ -188,9 +189,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const scene = el('div', 'donjon-scene')
   scene.setAttribute('role', 'button')
   scene.setAttribute('aria-label', 'Frapper l\'ennemi')
-  const portrait = el('img', 'donjon-portrait')
-  portrait.alt = ''
-  portrait.draggable = false
+  const nouveauPortrait = () => {
+    const img = el('img', 'donjon-portrait')
+    img.alt = ''
+    img.draggable = false
+    return img
+  }
+  let portrait = nouveauPortrait()
   const pastilleEtage = el('div', 'donjon-pastille-etage')
   const etats = el('div', 'donjon-etats')
   const indice = el('div', 'donjon-indice', 'Touchez l\'ennemi pour frapper')
@@ -362,6 +367,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let etageVu = -1
   let niveauVu = -1
   let portraitVu = ''
+  let tirageDuPortrait = 0
   let filVu = ''
 
   function poserLePortrait(animer: boolean): void {
@@ -371,25 +377,49 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const image = carte === null ? '' : url(carte.image)
     if (image === portraitVu) return
     portraitVu = image
-    scene.style.backgroundImage = carte === null ? '' : `url(${url(`fonds/${carte.race}.webp`)})`
-    if (image === '') {
-      portrait.removeAttribute('src')
-      return
+    const ceTirage = ++tirageDuPortrait
+    if (carte === null) return
+    const fond = `url(${url(`fonds/${carte.race}.webp`)})`
+
+    // L'ANCIEN NE RESTE PAS À L'ÉCRAN EN ATTENDANT LE NOUVEAU (Keko : « le
+    // prochain conserve l'image de l'ennemi précédent brièvement ») : il
+    // disparaît à l'image même de sa mort — un fondu de sortie le montrait
+    // encore entier une ou deux images, sous le nom du suivant (mesuré) —,
+    // et le nouveau est décodé dans une image à part, puis posé d'un coup à
+    // sa place. Jamais un `src` changé sur l'image affichée : elle garde
+    // l'ancienne jusqu'au décodage.
+    if (animer) portrait.style.visibility = 'hidden'
+    const suivant = nouveauPortrait()
+    suivant.src = image
+    void suivant
+      .decode()
+      .catch(() => {})
+      .then(() => {
+        // Un ennemi plus récent est déjà passé (plusieurs étages par tic en ×1000).
+        if (ceTirage !== tirageDuPortrait) return
+        scene.style.backgroundImage = fond
+        portrait.replaceWith(suivant)
+        portrait = suivant
+        if (animer) {
+          portrait.animate(
+            [
+              { transform: 'translateY(18%) scale(0.7)', opacity: 0 },
+              { transform: 'translateY(-3%) scale(1.05)', opacity: 1, offset: 0.7 },
+              { transform: 'none', opacity: 1 },
+            ],
+            { duration: 420, easing: 'ease-out' },
+          )
+        }
+      })
+
+    // Le suivant se charge et se décode d'avance : c'est SON portrait tiré
+    // (le seedé de l'étage + 1), pas la carte de rang étage + 1.
+    const apres = carteDe(etat.ennemi.etage + 1, portraitDeLEtage(etat.saison.seed, etat.ennemi.etage + 1))
+    if (apres !== null) {
+      const avance = new Image()
+      avance.src = url(apres.image)
+      void avance.decode().catch(() => {})
     }
-    portrait.src = image
-    if (animer) {
-      portrait.animate(
-        [
-          { transform: 'translateY(18%) scale(0.7)', opacity: 0 },
-          { transform: 'translateY(-3%) scale(1.05)', opacity: 1, offset: 0.7 },
-          { transform: 'none', opacity: 1 },
-        ],
-        { duration: 420, easing: 'ease-out' },
-      )
-    }
-    // Le suivant se charge d'avance.
-    const suivant = carteDe(etat.ennemi.etage + 1, undefined)
-    if (suivant !== null) new Image().src = url(suivant.image)
   }
 
   function dessiner(): void {

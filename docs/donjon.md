@@ -86,6 +86,16 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   chiffre s'envole du doigt (doré et plus gros pour un critique), le suivant
   surgit à la mort pendant que la barre tremble, et la pastille du niveau
   enfle à chaque montée. Pas de son.
+- **Le portrait suivant ne passe jamais par l'ancien** (Keko, 03/11 : « le
+  prochain conserve l'image de l'ennemi précédent brièvement »). Il y avait
+  deux causes. Le `src` était changé sur l'image affichée, qui garde
+  l'ancienne jusqu'au décodage ; et le préchargement visait la carte de rang
+  `étage + 1` au lieu du portrait seedé de l'étage suivant
+  (`portraitDeLEtage`). Désormais l'ancien est caché à l'image même de sa
+  mort (un fondu de sortie le montrait encore une ou deux images, sous le nom
+  du suivant), et le nouveau est décodé à part puis posé d'un coup. Mesuré
+  par une sonde à chaque image : 0 image fautive sur 11 morts, le nouveau
+  posé en 0 à 28 ms.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
