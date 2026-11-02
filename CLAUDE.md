@@ -386,6 +386,15 @@ noms longs).
 - Un `git checkout` ne défait pas une sonde, il défait un fichier.
 - Ce qui se teste doit pouvoir s'ouvrir d'un lien.
 
+## UN MODE À PART : LE DONJON COOPÉRATIF — `?donjon`
+
+Un clicker coopératif à saisons (Keko, 02/11) : un ennemi commun, des étages,
+une semaine par saison, quatre bots et le joueur. **Tout l'équilibrage est
+dans `logic/donjon/config.ts`** ; un seul réducteur (`appliquer`) derrière
+l'interface `EtatPartage`, prête pour un backend ; l'auto-tap se résout par
+événements. `npm run donjon` simule une saison. `&neuf` repart de zéro. Tout
+est dans `docs/donjon.md`.
+
 ## UN TEST À PART : LE GÉNÉRATEUR D'ICÔNES — `preview.html`
 
 Des icônes tirées d'un identifiant (même id, même visuel), palettes fixes,
@@ -573,6 +582,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
 | `?camp=0`, `?camp=ancien`, `?brillantfond=doux\|eclat` | les cartes sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur, ou sous les pointes brillantes de l'éclat |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
+| `?donjon`, `&neuf` | le donjon coopératif ; `&neuf` oublie la saison de cet appareil |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
@@ -667,6 +677,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/mobile-et-sons.md` | les contraintes mobile en détail, les variables CSS, les sons |
 | `docs/methode.md` | la méthode, les images de Keko, l'anatomie et le vocabulaire de la carte |
 | `docs/archive-extraction.md` | le jeu d'extraction entier, du concept au moteur 3D |
+| `docs/donjon.md` | le donjon coopératif : ses fichiers, ses décisions, le premier rapport |
 | `docs/procgen.md` | le générateur d'icônes (toutes ses familles) et sa page de preview |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la

@@ -51,6 +51,13 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) monter3d(racine)
   })
+} else if (parametres.has('donjon')) {
+  // LE DONJON COOPÉRATIF, un mode à part : du HTML simple, sans React ni
+  // three — l'import dynamique ne charge que lui.
+  void import('./ui/donjon/page.ts').then(({ monterDonjon }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('ecusson')) {
   // La planche des symboles de coût : *ce qui a servi à choisir doit rester
   // ouvrable, même une fois le choix fait.*

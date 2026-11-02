@@ -1,0 +1,353 @@
+/* LE DONJON COOPÉRATIF — `?donjon`. Du HTML simple, lisible au téléphone.
+   La page tient dans l'écran ; seul le panneau du bas défile. */
+
+.donjon {
+  --donjon-fond: #1d1712;
+  --donjon-carte: #2b221a;
+  --donjon-trait: #4a3b2c;
+  --donjon-texte: #f1e6d2;
+  --donjon-doux: #b9a88f;
+  --donjon-or: #e6b44c;
+  --donjon-pv: #c8463a;
+  --donjon-xp: #5aa0d6;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(0.5rem, env(safe-area-inset-bottom));
+  max-width: 34rem;
+  margin: 0 auto;
+  background: var(--donjon-fond);
+  color: var(--donjon-texte);
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.donjon button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ------------------------------------------------ la tête */
+
+.donjon-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.donjon-saison {
+  font-weight: 700;
+}
+
+.donjon-reste {
+  font-size: 0.85rem;
+  color: var(--donjon-doux);
+  font-variant-numeric: tabular-nums;
+}
+
+.donjon-vitesses {
+  display: flex;
+  border: 1px solid var(--donjon-trait);
+  border-radius: 0.6rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.donjon-vitesse {
+  min-width: 3rem;
+  min-height: 3rem;
+  padding: 0 0.5rem;
+  background: none;
+  border: none;
+  font-weight: 700;
+}
+
+.donjon-vitesse + .donjon-vitesse {
+  border-left: 1px solid var(--donjon-trait);
+}
+
+.donjon-vitesse.actif {
+  background: var(--donjon-or);
+  color: var(--donjon-fond);
+}
+
+/* ------------------------------------------------ l'ennemi */
+
+.donjon-ennemi {
+  padding: 0.75rem;
+  background: var(--donjon-carte);
+  border: 1px solid var(--donjon-trait);
+  border-radius: 0.8rem;
+}
+
+.donjon-etage {
+  font-size: 0.85rem;
+  color: var(--donjon-or);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.donjon-nom {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+.donjon-barre {
+  position: relative;
+  height: 1.8rem;
+  background: #120e0b;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.donjon-barre-pv {
+  height: 100%;
+  background: var(--donjon-pv);
+  transition: width 0.15s linear;
+}
+
+.donjon-barre-texte {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------ l'attaque */
+
+.donjon-attaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  background: var(--donjon-or);
+  color: var(--donjon-fond) !important;
+  border: none;
+  border-radius: 1rem;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.donjon-attaque:active {
+  transform: scale(0.97);
+}
+
+.donjon-attaque.fatigue {
+  background: #b38a3e;
+}
+
+.donjon-attaque-titre {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.donjon-attaque-note {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------ le joueur */
+
+.donjon-moi-ligne {
+  font-weight: 700;
+}
+
+.donjon-xp {
+  height: 0.5rem;
+  margin: 0.3rem 0;
+  background: #120e0b;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.donjon-xp-plein {
+  height: 100%;
+  background: var(--donjon-xp);
+}
+
+.donjon-moi-note {
+  font-size: 0.85rem;
+  color: var(--donjon-doux);
+}
+
+/* ------------------------------------------------ les onglets */
+
+.donjon-onglets {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.donjon-onglet {
+  position: relative;
+  flex: 1;
+  min-height: 3rem;
+  background: var(--donjon-carte);
+  border: 1px solid var(--donjon-trait);
+  border-radius: 0.6rem;
+  font-weight: 700;
+}
+
+.donjon-onglet.actif {
+  border-color: var(--donjon-or);
+  color: var(--donjon-or);
+}
+
+.donjon-onglet.a-depenser::after {
+  content: '';
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--donjon-pv);
+}
+
+.donjon-corps {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ------------------------------------------------ les améliorations */
+
+.donjon-points {
+  margin-bottom: 0.5rem;
+  color: var(--donjon-doux);
+}
+
+.donjon-points.a-depenser {
+  color: var(--donjon-or);
+  font-weight: 700;
+}
+
+.donjon-amelioration {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--donjon-trait);
+}
+
+.donjon-amelioration-texte {
+  flex: 1;
+  min-width: 0;
+}
+
+.donjon-amelioration-nom {
+  font-weight: 700;
+}
+
+.donjon-amelioration-effet {
+  font-size: 0.85rem;
+  color: var(--donjon-doux);
+}
+
+.donjon-acheter {
+  min-height: 3rem;
+  padding: 0 0.8rem;
+  background: var(--donjon-carte);
+  border: 1px solid var(--donjon-or);
+  border-radius: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.donjon-acheter:disabled {
+  opacity: 0.4;
+  border-color: var(--donjon-trait);
+  cursor: default;
+}
+
+/* ------------------------------------------------ le journal */
+
+.donjon-journal {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.donjon-journal li {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--donjon-trait);
+}
+
+.donjon-journal li.donjon-c-moi {
+  color: var(--donjon-or);
+}
+
+.donjon-journal li.donjon-c-saison {
+  font-weight: 700;
+}
+
+.donjon-journal-heure {
+  flex-shrink: 0;
+  color: var(--donjon-doux);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------ le classement */
+
+.donjon-classement {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.donjon-classement th {
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--donjon-doux);
+  font-weight: 400;
+}
+
+.donjon-classement td,
+.donjon-classement th {
+  padding: 0.35rem 0.25rem;
+  border-bottom: 1px solid var(--donjon-trait);
+}
+
+.donjon-classement .donjon-c-nombre {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.donjon-classement .donjon-c-rang {
+  color: var(--donjon-doux);
+  width: 1.5rem;
+}
+
+.donjon-classement tr.donjon-c-moi {
+  color: var(--donjon-or);
+  font-weight: 700;
+}
+
+.donjon-archives {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--donjon-doux);
+}
+
+.donjon-pied {
+  font-size: 0.7rem;
+  color: var(--donjon-doux);
+  text-align: center;
+}
