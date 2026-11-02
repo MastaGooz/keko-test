@@ -61,6 +61,35 @@ cinquième joueur à côté des quatre bots.
   ×1000, et la rouvrir rattrape tout (bots compris, à l'heure de chacun de
   leurs passages).
 
+## L'écran
+
+**Première version (02/11)** : un gros bouton « Attaquer », trois onglets
+(améliorations, journal, classement), la vitesse en tête, le tout en
+listes. Keko : « je trouve l'ui surchargé et pas très beau ».
+
+**Seconde version (03/11)**, après deux choix de Keko : les portraits du pool
+orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
+
+- **L'ennemi EST le bouton.** C'est une carte du pool (`Ennemi.portrait`, un
+  entier seedé : `portrait % 118`) debout sur le camp peint de sa race
+  (`fonds/<race>.webp`). On le tape n'importe où dans la scène, qui prend
+  toute la place qui reste. Son nom est celui de la carte ; le nom engendré
+  reste le repli sans catalogue, et celui du rapport.
+- **Le reste est réduit à l'essentiel** : le nom et les PV, la dernière
+  nouvelle du journal (une tape ouvre le journal entier), le niveau et sa
+  jauge, les points, puis quatre tuiles de parchemin (Coup, Auto, Critique,
+  Force) qui s'allument quand on peut les payer. Le classement (trophée) et
+  les réglages (vitesse, « Recommencer ») s'ouvrent en feuille.
+- **Le repos et la fatigue** ne s'affichent qu'en pastilles sur la scène, et
+  seulement quand ils jouent.
+- **Le retour au doigt est léger** : l'ennemi s'écrase et s'éclaire, le
+  chiffre s'envole du doigt (doré et plus gros pour un critique), le suivant
+  surgit à la mort pendant que la barre tremble, et la pastille du niveau
+  enfle à chaque montée. Pas de son.
+- *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
+  `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
+  Tout est préfixé `donjon-`.
+
 ## Le premier rapport (graine 1, config initiale)
 
 ```

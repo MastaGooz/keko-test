@@ -4,6 +4,11 @@
  * *Même saison, même étage, même ennemi* : deux joueurs qui le voient (et
  * plus tard deux clients d'un backend) lisent le même nom sans le
  * transmettre.
+ *
+ * `portrait` est un entier tiré de la même graine : l'écran en fait une carte
+ * du pool orc/gobelin (`portrait % nombre de cartes`), dont il montre le nom.
+ * Le nom engendré reste celui du rapport, et le repli de l'écran sans
+ * catalogue.
  */
 import { createRng, type Rng } from '../rng.ts'
 import type { ConfigDonjon } from './config.ts'
@@ -44,5 +49,5 @@ export function pvDeLEtage(config: ConfigDonjon, etage: number): number {
 
 export function ennemiDeLEtage(config: ConfigDonjon, seed: number, etage: number): Ennemi {
   const pv = pvDeLEtage(config, etage)
-  return { etage, nom: nomDeLEnnemi(seed, etage), pv, pvMax: pv }
+  return { etage, nom: nomDeLEnnemi(seed, etage), pv, pvMax: pv, portrait: graine(seed, etage) }
 }

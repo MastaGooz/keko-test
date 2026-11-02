@@ -1,29 +1,37 @@
-/* LE DONJON COOPÉRATIF — `?donjon`. Du HTML simple, lisible au téléphone.
-   La page tient dans l'écran ; seul le panneau du bas défile. */
+/* LE DONJON COOPÉRATIF — `?donjon`. La DA du gacha, « taverne & parchemin » :
+   bois sombre, parchemin, encre brune, or ; Grenze pour les noms et les
+   chiffres, Baloo pour le reste. La page tient dans l'écran, rien ne défile
+   hors des feuilles. L'ennemi (la scène) prend toute la place qui reste. */
 
 .donjon {
-  --donjon-fond: #1d1712;
-  --donjon-carte: #2b221a;
-  --donjon-trait: #4a3b2c;
-  --donjon-texte: #f1e6d2;
-  --donjon-doux: #b9a88f;
-  --donjon-or: #e6b44c;
-  --donjon-pv: #c8463a;
-  --donjon-xp: #5aa0d6;
+  --d-fond: #1b130d;
+  --d-bois: #2a1d14;
+  --d-trait: #4b3624;
+  --d-texte: #f3e7cf;
+  --d-doux: #b8a183;
+  --d-or: #e8b54d;
+  --d-or-sombre: #8a6424;
+  --d-parchemin: #f2e3c2;
+  --d-encre: #3d2716;
+  --d-pv: #d4473a;
+  --d-xp: #6fb0e0;
+  --d-titre: 'Grenze', Georgia, serif;
 
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(0.5rem, env(safe-area-inset-bottom));
-  max-width: 34rem;
+  gap: 0.55rem;
+  padding: max(0.6rem, env(safe-area-inset-top)) 1rem max(0.8rem, env(safe-area-inset-bottom));
+  max-width: 32rem;
   margin: 0 auto;
-  background: var(--donjon-fond);
-  color: var(--donjon-texte);
+  background: radial-gradient(120% 80% at 50% 0%, #3a2819 0%, var(--d-fond) 60%);
+  color: var(--d-texte);
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 1rem;
-  line-height: 1.3;
+  line-height: 1.25;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .donjon button {
@@ -39,80 +47,217 @@
 .donjon-tete {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.25rem;
+}
+
+.donjon-tete-infos {
+  flex: 1;
+  min-width: 0;
 }
 
 .donjon-saison {
-  font-weight: 700;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
 }
 
 .donjon-reste {
   font-size: 0.85rem;
-  color: var(--donjon-doux);
+  color: var(--d-doux);
   font-variant-numeric: tabular-nums;
 }
 
-.donjon-vitesses {
-  display: flex;
-  border: 1px solid var(--donjon-trait);
-  border-radius: 0.6rem;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.donjon-vitesse {
-  min-width: 3rem;
-  min-height: 3rem;
-  padding: 0 0.5rem;
+.donjon-icone {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
   background: none;
   border: none;
+  border-radius: 50%;
+  color: var(--d-doux) !important;
+}
+
+.donjon-icone svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.donjon-icone:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ------------------------------------------------ la scène */
+
+.donjon-scene {
+  position: relative;
+  flex: 1;
+  min-height: 11rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 1.2rem;
+  border: 2px solid var(--d-trait);
+  background-color: #6a4a32;
+  background-size: cover;
+  background-position: center 65%;
+  box-shadow: inset 0 0 3rem rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* L'ombre sous ses pieds. */
+.donjon-scene::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  width: 55%;
+  height: 7%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.donjon-portrait {
+  position: relative;
+  width: min(80%, 22rem);
+  max-height: 90%;
+  margin-bottom: 4%;
+  object-fit: contain;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 0.3rem 0.4rem rgba(0, 0, 0, 0.35));
+}
+
+.donjon-pastille-etage {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: var(--d-parchemin);
+  color: var(--d-encre);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.35);
+}
+
+.donjon-etats {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.donjon-etat {
+  padding: 0.05rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
   font-weight: 700;
+  background: rgba(20, 12, 6, 0.75);
 }
 
-.donjon-vitesse + .donjon-vitesse {
-  border-left: 1px solid var(--donjon-trait);
+.donjon-etat.repos {
+  color: #9fdcff;
 }
 
-.donjon-vitesse.actif {
-  background: var(--donjon-or);
-  color: var(--donjon-fond);
+.donjon-etat.fatigue {
+  color: #ffb36b;
+}
+
+.donjon-indice {
+  position: absolute;
+  bottom: 0.7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.2rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(20, 12, 6, 0.75);
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: donjon-respire 1.6s ease-in-out infinite;
+}
+
+.donjon-indice[hidden] {
+  display: none;
+}
+
+@keyframes donjon-respire {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Le chiffre qui s'envole. */
+.donjon-degat {
+  position: absolute;
+  pointer-events: none;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.7rem;
+  color: #fff;
+  text-shadow:
+    0 0 2px var(--d-encre),
+    0 2px 0 var(--d-encre),
+    0 0 0.6rem rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.donjon-degat.critique {
+  font-size: 2.3rem;
+  color: var(--d-or);
 }
 
 /* ------------------------------------------------ l'ennemi */
 
-.donjon-ennemi {
-  padding: 0.75rem;
-  background: var(--donjon-carte);
-  border: 1px solid var(--donjon-trait);
-  border-radius: 0.8rem;
-}
-
-.donjon-etage {
-  font-size: 0.85rem;
-  color: var(--donjon-or);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+.donjon-fiche {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  row-gap: 0.3rem;
 }
 
 .donjon-nom {
-  font-size: 1.2rem;
+  font-family: var(--d-titre);
   font-weight: 800;
-  margin-bottom: 0.4rem;
+  font-size: 1.45rem;
+  line-height: 1.1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donjon-sous {
+  font-size: 0.85rem;
+  color: var(--d-doux);
+  padding-left: 0.5rem;
 }
 
 .donjon-barre {
+  grid-column: 1 / -1;
   position: relative;
-  height: 1.8rem;
-  background: #120e0b;
-  border-radius: 0.5rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #0f0a06;
+  border: 1px solid var(--d-trait);
   overflow: hidden;
 }
 
 .donjon-barre-pv {
   height: 100%;
-  background: var(--donjon-pv);
+  background: linear-gradient(#e2584a, #a92f25);
   transition: width 0.15s linear;
 }
 
@@ -123,160 +268,290 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ------------------------------------------------ l'attaque */
-
-.donjon-attaque {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 5.5rem;
-  background: var(--donjon-or);
-  color: var(--donjon-fond) !important;
-  border: none;
-  border-radius: 1rem;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.donjon-attaque:active {
-  transform: scale(0.97);
-}
-
-.donjon-attaque.fatigue {
-  background: #b38a3e;
-}
-
-.donjon-attaque-titre {
-  font-size: 1.6rem;
-  font-weight: 800;
-}
-
-.donjon-attaque-note {
   font-size: 0.85rem;
-  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ------------------------------------------------ la dernière nouvelle */
+
+.donjon-fil {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 0.2rem;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--d-trait);
+  border-bottom: 1px solid var(--d-trait);
+  color: var(--d-doux) !important;
+  font-size: 0.9rem;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.donjon-fil::after {
+  content: '›';
+  margin-left: auto;
+  padding-left: 0.4rem;
+  font-size: 1.3rem;
+}
+
+.donjon-fil.donjon-fil-moi {
+  color: var(--d-or) !important;
 }
 
 /* ------------------------------------------------ le joueur */
 
-.donjon-moi-ligne {
-  font-weight: 700;
+.donjon-bande {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.donjon-niveau {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f6d27c, var(--d-or) 55%, var(--d-or-sombre));
+  color: var(--d-encre);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.2rem;
+  box-shadow: 0 0 0 2px var(--d-fond), 0 0 0 3px var(--d-or-sombre);
 }
 
 .donjon-xp {
-  height: 0.5rem;
-  margin: 0.3rem 0;
-  background: #120e0b;
-  border-radius: 0.25rem;
+  flex: 1;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #0f0a06;
   overflow: hidden;
 }
 
 .donjon-xp-plein {
   height: 100%;
-  background: var(--donjon-xp);
+  background: var(--d-xp);
+  transition: width 0.2s linear;
 }
 
-.donjon-moi-note {
-  font-size: 0.85rem;
-  color: var(--donjon-doux);
+.donjon-points {
+  padding: 0.05rem 0.7rem;
+  border-radius: 999px;
+  background: var(--d-or);
+  color: var(--d-encre);
+  font-weight: 800;
+  font-size: 0.9rem;
+  animation: donjon-respire 1.4s ease-in-out infinite;
 }
 
-/* ------------------------------------------------ les onglets */
-
-.donjon-onglets {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.donjon-onglet {
-  position: relative;
-  flex: 1;
-  min-height: 3rem;
-  background: var(--donjon-carte);
-  border: 1px solid var(--donjon-trait);
-  border-radius: 0.6rem;
-  font-weight: 700;
-}
-
-.donjon-onglet.actif {
-  border-color: var(--donjon-or);
-  color: var(--donjon-or);
-}
-
-.donjon-onglet.a-depenser::after {
-  content: '';
-  position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-  background: var(--donjon-pv);
-}
-
-.donjon-corps {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+.donjon-points.vide {
+  visibility: hidden;
 }
 
 /* ------------------------------------------------ les améliorations */
 
-.donjon-points {
-  margin-bottom: 0.5rem;
-  color: var(--donjon-doux);
+.donjon-tuiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
 }
 
-.donjon-points.a-depenser {
-  color: var(--donjon-or);
-  font-weight: 700;
-}
-
-.donjon-amelioration {
+.donjon-tuile {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--donjon-trait);
+  gap: 0.1rem;
+  min-height: 4.8rem;
+  padding: 0.45rem 0.2rem 0.4rem;
+  border: none;
+  border-radius: 0.85rem;
+  background: var(--d-parchemin);
+  color: var(--d-encre) !important;
+  box-shadow:
+    inset 0 -3px 0 rgba(61, 39, 22, 0.25),
+    0 0 0 2px var(--d-or),
+    0 0 0.9rem rgba(232, 181, 77, 0.45);
 }
 
-.donjon-amelioration-texte {
-  flex: 1;
-  min-width: 0;
+.donjon-tuile:disabled {
+  cursor: default;
+  background: #4a3726;
+  color: var(--d-doux) !important;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
 }
 
-.donjon-amelioration-nom {
+.donjon-tuile:not(:disabled):active {
+  transform: translateY(2px);
+}
+
+.donjon-tuile-nom {
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
 }
 
-.donjon-amelioration-effet {
-  font-size: 0.85rem;
-  color: var(--donjon-doux);
-}
-
-.donjon-acheter {
-  min-height: 3rem;
-  padding: 0 0.8rem;
-  background: var(--donjon-carte);
-  border: 1px solid var(--donjon-or);
-  border-radius: 0.6rem;
-  font-weight: 700;
+.donjon-tuile-valeur {
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.donjon-acheter:disabled {
-  opacity: 0.4;
-  border-color: var(--donjon-trait);
-  cursor: default;
+.donjon-tuile-cout {
+  margin-top: auto;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--d-encre);
+  color: var(--d-or);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
-/* ------------------------------------------------ le journal */
+.donjon-tuile:disabled .donjon-tuile-cout {
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--d-doux);
+}
 
+/* ------------------------------------------------ la feuille */
+
+.donjon-voile {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.donjon-voile.ouvert {
+  display: flex;
+}
+
+.donjon-feuille {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 82%;
+  padding: 0.4rem 1rem max(1rem, env(safe-area-inset-bottom));
+  border-radius: 1.3rem 1.3rem 0 0;
+  background: var(--d-bois);
+  border-top: 2px solid var(--d-trait);
+  animation: donjon-monte 0.22s ease-out;
+}
+
+@keyframes donjon-monte {
+  from {
+    transform: translateY(30%);
+    opacity: 0;
+  }
+}
+
+.donjon-feuille-tete {
+  display: flex;
+  align-items: center;
+}
+
+.donjon-feuille-titre {
+  flex: 1;
+  margin: 0;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+
+.donjon-fermer {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.donjon-feuille-corps {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Le classement. */
+.donjon-classement {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.donjon-classement li {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--d-trait);
+}
+
+.donjon-classement-ligne {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.donjon-c-rang {
+  width: 1.2rem;
+  color: var(--d-doux);
+  font-family: var(--d-titre);
+  font-weight: 800;
+}
+
+.donjon-c-nom {
+  flex: 1;
+  font-weight: 700;
+}
+
+.donjon-c-nombre {
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.donjon-classement-part {
+  height: 0.3rem;
+  margin: 0.3rem 0 0.2rem 1.8rem;
+  border-radius: 999px;
+  background: #0f0a06;
+  overflow: hidden;
+}
+
+.donjon-classement-plein {
+  height: 100%;
+  background: var(--d-doux);
+}
+
+.donjon-classement-note {
+  margin-left: 1.8rem;
+  font-size: 0.8rem;
+  color: var(--d-doux);
+}
+
+.donjon-classement li.donjon-c-moi .donjon-c-nom,
+.donjon-classement li.donjon-c-moi .donjon-c-nombre {
+  color: var(--d-or);
+}
+
+.donjon-classement li.donjon-c-moi .donjon-classement-plein {
+  background: var(--d-or);
+}
+
+.donjon-archives {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--d-doux);
+}
+
+/* Le journal. */
 .donjon-journal {
   list-style: none;
   margin: 0;
@@ -287,12 +562,12 @@
 .donjon-journal li {
   display: flex;
   gap: 0.6rem;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid var(--donjon-trait);
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--d-trait);
 }
 
 .donjon-journal li.donjon-c-moi {
-  color: var(--donjon-or);
+  color: var(--d-or);
 }
 
 .donjon-journal li.donjon-c-saison {
@@ -301,71 +576,63 @@
 
 .donjon-journal-heure {
   flex-shrink: 0;
-  color: var(--donjon-doux);
+  color: var(--d-doux);
   font-variant-numeric: tabular-nums;
 }
 
-/* ------------------------------------------------ le classement */
-
-.donjon-classement {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.donjon-classement th {
-  text-align: left;
-  font-size: 0.8rem;
-  color: var(--donjon-doux);
-  font-weight: 400;
-}
-
-.donjon-classement td,
-.donjon-classement th {
-  padding: 0.35rem 0.25rem;
-  border-bottom: 1px solid var(--donjon-trait);
-}
-
-.donjon-classement .donjon-c-nombre {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.donjon-classement .donjon-c-rang {
-  color: var(--donjon-doux);
-  width: 1.5rem;
-}
-
-.donjon-classement tr.donjon-c-moi {
-  color: var(--donjon-or);
-  font-weight: 700;
-}
-
-.donjon-archives {
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-  color: var(--donjon-doux);
-}
-
-.donjon-pied {
+/* Les réglages. */
+.donjon-reglages {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.7rem;
-  color: var(--donjon-doux);
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-bottom: 0.5rem;
+}
+
+.donjon-reglage-titre {
+  color: var(--d-doux);
+  font-size: 0.9rem;
+}
+
+.donjon-vitesses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--d-trait);
+  border-radius: 0.8rem;
+  overflow: hidden;
+}
+
+.donjon-vitesse {
+  min-height: 3rem;
+  background: none;
+  border: none;
+  font-weight: 800;
+}
+
+.donjon-vitesse + .donjon-vitesse {
+  border-left: 1px solid var(--d-trait);
+}
+
+.donjon-vitesse.actif {
+  background: var(--d-or);
+  color: var(--d-encre) !important;
 }
 
 .donjon-recommencer {
   min-height: 3rem;
-  padding: 0 0.9rem;
+  margin-top: 0.4rem;
   background: none;
-  border: 1px solid var(--donjon-trait);
-  border-radius: 0.6rem;
-  font-size: 0.85rem;
+  border: 1px solid var(--d-trait);
+  border-radius: 0.8rem;
   font-weight: 700;
 }
 
 .donjon-recommencer.a-confirmer {
-  background: var(--donjon-pv);
-  border-color: var(--donjon-pv);
+  background: var(--d-pv);
+  border-color: var(--d-pv);
+}
+
+.donjon-build {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--d-doux);
 }

@@ -1,13 +1,19 @@
 /**
  * LE DONJON COOPÉRATIF À L'ÉCRAN — `?donjon`.
  *
- * Du HTML simple, sans React ni three : l'ennemi commun, le bouton d'attaque,
- * les améliorations, le journal, le classement, la vitesse du temps. *Toutes
- * les règles sont dans `logic/donjon/`* ; ici on lit l'horloge, on joue les
- * bots à leur heure et on dessine. Le joueur passe par `agir`, comme eux.
+ * Du DOM simple, sans React ni three. **L'ennemi EST le bouton** : une carte
+ * du pool orc/gobelin debout sur le camp de sa race, qu'on tape (Keko : « l'ui
+ * surchargé et pas très beau » — le gros bouton, les onglets et la vitesse
+ * sont partis). Sous lui, son nom et ses PV, la dernière nouvelle du journal,
+ * le niveau et les quatre améliorations. Le classement, le journal entier et
+ * les réglages (vitesse, recommencer) s'ouvrent en feuille.
  *
- * `&neuf` oublie la saison de cet appareil et en commence une ; le bouton
- * « Recommencer » du pied y mène.
+ * Retour au doigt LÉGER (choisi par Keko) : l'ennemi s'écrase, le chiffre
+ * s'envole (doré pour un critique), le suivant surgit à la mort. Pas de son.
+ *
+ * *Toutes les règles sont dans `logic/donjon/`* ; ici on lit l'horloge, on
+ * joue les bots à leur heure et on dessine. Le joueur passe par `agir`, comme
+ * eux. `&neuf` oublie la saison de cet appareil.
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
@@ -17,7 +23,6 @@ import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   chanceCritDe,
   coutDe,
-  degatsDeBaseDuTap,
   degatsDuTap,
   dpsEffectifDe,
   efficaciteDuTap,
@@ -26,15 +31,18 @@ import {
   jourDeLaSaison,
   multCritDe,
   reposA,
-  dpsDe,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
 import type { EtatDonjon, Evenement, Joueur } from '../../logic/donjon/types.ts'
+import { NOM_DE_LA_RACE, NOM_DU_ROLE, type CarteEmoji } from '../../logic/emoji/types.ts'
+import { chargerEmojis } from '../emoji.ts'
 import { ecrireLeDonjon, lireLeDonjon, oublierLeDonjon } from './stockage.ts'
 
 const C = DONJON
 const MOI = 'vous'
 const NOM_DU_JOUEUR = 'Vous'
+const VERSION = encodeURIComponent(__BUILD_TIME__)
+const url = (chemin: string) => `${import.meta.env.BASE_URL}${chemin}?v=${VERSION}`
 
 // ---------------------------------------------------------------- les mots
 
@@ -55,10 +63,9 @@ function duree(ms: number): string {
   const j = Math.floor(s / 86400)
   const h = Math.floor((s % 86400) / 3600)
   const m = Math.floor((s % 3600) / 60)
-  const sec = s % 60
-  if (j > 0) return `${j} j ${h} h ${String(m).padStart(2, '0')} min`
-  if (h > 0) return `${h} h ${String(m).padStart(2, '0')} min ${String(sec).padStart(2, '0')} s`
-  return `${m} min ${String(sec).padStart(2, '0')} s`
+  if (j > 0) return `${j} j ${h} h`
+  if (h > 0) return `${h} h ${String(m).padStart(2, '0')} min`
+  return `${m} min ${String(s % 60).padStart(2, '0')} s`
 }
 
 function heureDeJeu(etat: EtatDonjon, t: number): string {
@@ -85,18 +92,12 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
   }
 }
 
-const FICHES: Record<CleAmelioration, { nom: string; effet: (j: Joueur) => string }> = {
-  tap: {
-    nom: 'Coup',
-    effet: (j) => `${nombre(degatsDeBaseDuTap(C, j))} dégâts + ${C.tap.secondesDeDps} s d'auto-tap`,
-  },
-  auto: { nom: 'Auto-tap', effet: (j) => `${nombre(dpsDe(C, j))} dégâts / s` },
-  chanceCrit: { nom: 'Chance de critique', effet: (j) => pourcent(chanceCritDe(C, j)) },
-  multCrit: { nom: 'Force des critiques', effet: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
-}
-
-function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
-  return { ...j, ameliorations: { ...j.ameliorations, [quoi]: j.ameliorations[quoi] + 1 } }
+/** Les quatre tuiles : un mot, et la valeur qu'elle fait monter. */
+const TUILES: Record<CleAmelioration, { nom: string; valeur: (j: Joueur) => string }> = {
+  tap: { nom: 'Coup', valeur: (j) => nombre(degatsDuTap(C, j)) },
+  auto: { nom: 'Auto', valeur: (j) => `${nombre(dpsEffectifDe(C, j))}/s` },
+  chanceCrit: { nom: 'Critique', valeur: (j) => pourcent(chanceCritDe(C, j)) },
+  multCrit: { nom: 'Force', valeur: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
 }
 
 // ---------------------------------------------------------------- le DOM
@@ -108,7 +109,18 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe?: string, text
   return n
 }
 
-type Onglet = 'ameliorations' | 'journal' | 'classement'
+function bouton(classe: string, texte?: string): HTMLButtonElement {
+  const b = el('button', classe, texte)
+  b.type = 'button'
+  return b
+}
+
+const ICONE_TROPHEE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8 20h8M9.5 17h5"/></svg>'
+const ICONE_REGLAGES =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>'
+
+type Feuille = 'classement' | 'journal' | 'reglages'
 
 export async function monterDonjon(racine: HTMLElement, build: string): Promise<void> {
   const parametres = new URLSearchParams(location.search)
@@ -146,19 +158,128 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     await partage.agir({ joueur: MOI, t: debut, type: 'rejoindre', nom: NOM_DU_JOUEUR, bot: null })
   }
   const sauver = () => ecrireLeDonjon({ etat, horloge, bots })
+  const moi = (): Joueur => etat.joueurs.find((j) => j.id === MOI)!
+
+  // Le pool des portraits arrive après : d'ici là, le nom engendré.
+  let cartes: CarteEmoji[] | null = null
+  const carteDe = (etage: number, portrait: number | undefined): CarteEmoji | null =>
+    cartes === null ? null : cartes[(portrait ?? etage) % cartes.length]
 
   // ------------------------------------------------ la page
   racine.replaceChildren()
   const page = el('div', 'donjon')
   racine.append(page)
 
+  // La tête : la saison, le temps qui reste, deux icônes.
   const tete = el('header', 'donjon-tete')
   const saison = el('div', 'donjon-saison')
   const reste = el('div', 'donjon-reste')
+  const infos = el('div', 'donjon-tete-infos')
+  infos.append(saison, reste)
+  const boutonClassement = bouton('donjon-icone')
+  boutonClassement.innerHTML = ICONE_TROPHEE
+  boutonClassement.setAttribute('aria-label', 'Classement')
+  const boutonReglages = bouton('donjon-icone')
+  boutonReglages.innerHTML = ICONE_REGLAGES
+  boutonReglages.setAttribute('aria-label', 'Réglages')
+  tete.append(infos, boutonClassement, boutonReglages)
+
+  // La scène : le camp, l'ennemi debout dessus. C'est elle qu'on tape.
+  const scene = el('div', 'donjon-scene')
+  scene.setAttribute('role', 'button')
+  scene.setAttribute('aria-label', 'Frapper l\'ennemi')
+  const portrait = el('img', 'donjon-portrait')
+  portrait.alt = ''
+  portrait.draggable = false
+  const pastilleEtage = el('div', 'donjon-pastille-etage')
+  const etats = el('div', 'donjon-etats')
+  const indice = el('div', 'donjon-indice', 'Touchez l\'ennemi pour frapper')
+  scene.append(portrait, pastilleEtage, etats, indice)
+
+  // Sous la scène : le nom, ce qu'il est, ses PV.
+  const fiche = el('section', 'donjon-fiche')
+  const nom = el('div', 'donjon-nom')
+  const sous = el('div', 'donjon-sous')
+  const barre = el('div', 'donjon-barre')
+  const pv = el('div', 'donjon-barre-pv')
+  const pvTexte = el('span', 'donjon-barre-texte')
+  barre.append(pv, pvTexte)
+  fiche.append(nom, sous, barre)
+
+  // La dernière nouvelle : une tape ouvre le journal.
+  const fil = bouton('donjon-fil')
+
+  // Le joueur : son niveau, l'XP, ses points.
+  const bande = el('section', 'donjon-bande')
+  const niveau = el('div', 'donjon-niveau')
+  const xp = el('div', 'donjon-xp')
+  const xpPlein = el('div', 'donjon-xp-plein')
+  xp.append(xpPlein)
+  const points = el('div', 'donjon-points')
+  bande.append(niveau, xp, points)
+
+  // Les quatre améliorations, faites une fois (redessinées à chaque tic, les
+  // boutons perdraient le clic entre l'appui et le relâchement).
+  const tuiles = el('section', 'donjon-tuiles')
+  const lesTuiles = AMELIORATIONS.map((quoi) => {
+    const b = bouton('donjon-tuile')
+    const titre = el('span', 'donjon-tuile-nom', TUILES[quoi].nom)
+    const valeur = el('span', 'donjon-tuile-valeur')
+    const cout = el('span', 'donjon-tuile-cout')
+    b.append(titre, valeur, cout)
+    b.addEventListener('click', () => {
+      void partage.agir({ joueur: MOI, t: maintenant(), type: 'acheter', quoi }).then(() => {
+        b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
+        sauver()
+        dessiner()
+      })
+    })
+    tuiles.append(b)
+    return { quoi, b, valeur, cout }
+  })
+
+  page.append(tete, scene, fiche, fil, bande, tuiles)
+
+  // ------------------------------------------------ la feuille
+  const voile = el('div', 'donjon-voile')
+  const feuille = el('section', 'donjon-feuille')
+  const feuilleTete = el('div', 'donjon-feuille-tete')
+  const feuilleTitre = el('h2', 'donjon-feuille-titre')
+  const fermer = bouton('donjon-icone donjon-fermer', '×')
+  fermer.setAttribute('aria-label', 'Fermer')
+  feuilleTete.append(feuilleTitre, fermer)
+  const feuilleCorps = el('div', 'donjon-feuille-corps')
+  feuille.append(feuilleTete, feuilleCorps)
+  voile.append(feuille)
+  page.append(voile)
+  let ouverte: Feuille | null = null
+  let cleDeLaFeuille = ''
+
+  const TITRES: Record<Feuille, string> = { classement: 'Classement', journal: 'Journal', reglages: 'Réglages' }
+  function ouvrir(f: Feuille): void {
+    ouverte = f
+    cleDeLaFeuille = ''
+    feuilleTitre.textContent = TITRES[f]
+    voile.classList.add('ouvert')
+    dessiner()
+  }
+  function fermerLaFeuille(): void {
+    ouverte = null
+    voile.classList.remove('ouvert')
+  }
+  boutonClassement.addEventListener('click', () => ouvrir('classement'))
+  boutonReglages.addEventListener('click', () => ouvrir('reglages'))
+  fil.addEventListener('click', () => ouvrir('journal'))
+  fermer.addEventListener('click', fermerLaFeuille)
+  voile.addEventListener('click', (ev) => {
+    if (ev.target === voile) fermerLaFeuille()
+  })
+
+  // Les réglages, faits une fois : la vitesse du temps et « Recommencer ».
+  const reglages = el('div', 'donjon-reglages')
   const vitesses = el('div', 'donjon-vitesses')
   const boutonsVitesse = C.vitesses.map((v) => {
-    const b = el('button', 'donjon-vitesse', `×${v}`)
-    b.type = 'button'
+    const b = bouton('donjon-vitesse', `×${v}`)
     b.addEventListener('click', () => {
       horloge = changerDeVitesse(horloge, Date.now(), v)
       sauver()
@@ -167,69 +288,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     vitesses.append(b)
     return b
   })
-  const infos = el('div', 'donjon-tete-infos')
-  infos.append(saison, reste)
-  tete.append(infos, vitesses)
-
-  const ennemi = el('section', 'donjon-ennemi')
-  const etage = el('div', 'donjon-etage')
-  const nom = el('div', 'donjon-nom')
-  const barre = el('div', 'donjon-barre')
-  const pv = el('div', 'donjon-barre-pv')
-  const pvTexte = el('span', 'donjon-barre-texte')
-  barre.append(pv, pvTexte)
-  ennemi.append(etage, nom, barre)
-
-  const attaque = el('button', 'donjon-attaque')
-  attaque.type = 'button'
-  const attaqueTitre = el('span', 'donjon-attaque-titre', 'Attaquer')
-  const attaqueNote = el('span', 'donjon-attaque-note')
-  attaque.append(attaqueTitre, attaqueNote)
-  attaque.addEventListener('click', () => {
-    void partage.agir({ joueur: MOI, t: maintenant(), type: 'taper', n: 1 }).then(() => dessiner())
-  })
-
-  const moiBloc = el('section', 'donjon-moi')
-  const moiLigne = el('div', 'donjon-moi-ligne')
-  const xpBarre = el('div', 'donjon-xp')
-  const xpPlein = el('div', 'donjon-xp-plein')
-  xpBarre.append(xpPlein)
-  const moiNote = el('div', 'donjon-moi-note')
-  moiBloc.append(moiLigne, xpBarre, moiNote)
-
-  const onglets = el('nav', 'donjon-onglets')
-  let onglet: Onglet = 'ameliorations'
-  const panneaux: Record<Onglet, HTMLElement> = {
-    ameliorations: el('div', 'donjon-panneau'),
-    journal: el('div', 'donjon-panneau'),
-    classement: el('div', 'donjon-panneau'),
-  }
-  const titres: Record<Onglet, string> = { ameliorations: 'Améliorations', journal: 'Journal', classement: 'Classement' }
-  const boutonsOnglet = (Object.keys(panneaux) as Onglet[]).map((o) => {
-    const b = el('button', 'donjon-onglet', titres[o])
-    b.type = 'button'
-    b.addEventListener('click', () => {
-      onglet = o
-      dessiner()
-    })
-    onglets.append(b)
-    return [o, b] as const
-  })
-  const corps = el('div', 'donjon-corps')
-  corps.append(...Object.values(panneaux))
-
   // RECOMMENCER se confirme par une seconde tape (pas de fenêtre du
   // navigateur). On repart par `&neuf` plutôt qu'en vidant le stockage ici :
   // la sauvegarde de `pagehide` réécrirait l'ancienne saison en partant.
-  const pied = el('footer', 'donjon-pied')
-  const recommencer = el('button', 'donjon-recommencer', 'Recommencer')
-  recommencer.type = 'button'
+  const recommencer = bouton('donjon-recommencer', 'Recommencer la saison')
   let confirmation = 0
   recommencer.addEventListener('click', () => {
     if (recommencer.classList.contains('a-confirmer')) {
-      const url = new URL(location.href)
-      url.searchParams.set('neuf', '')
-      location.replace(url.toString())
+      const adresse = new URL(location.href)
+      adresse.searchParams.set('neuf', '')
+      location.replace(adresse.toString())
       return
     }
     recommencer.classList.add('a-confirmer')
@@ -237,125 +305,202 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     clearTimeout(confirmation)
     confirmation = window.setTimeout(() => {
       recommencer.classList.remove('a-confirmer')
-      recommencer.textContent = 'Recommencer'
+      recommencer.textContent = 'Recommencer la saison'
     }, 3000)
   })
-  pied.append(el('span', undefined, `build ${build}`), recommencer)
-  page.append(tete, ennemi, attaque, moiBloc, onglets, corps, pied)
+  reglages.append(
+    el('div', 'donjon-reglage-titre', 'Vitesse du temps'),
+    vitesses,
+    recommencer,
+    el('div', 'donjon-build', `build ${build}`),
+  )
 
-  // Les lignes d'amélioration sont faites une fois : redessinées à chaque
-  // tic, leurs boutons perdraient le clic entre l'appui et le relâchement.
-  const lignes = AMELIORATIONS.map((quoi) => {
-    const ligne = el('div', 'donjon-amelioration')
-    const texte = el('div', 'donjon-amelioration-texte')
-    const titre = el('div', 'donjon-amelioration-nom', FICHES[quoi].nom)
-    const effet = el('div', 'donjon-amelioration-effet')
-    texte.append(titre, effet)
-    const bouton = el('button', 'donjon-acheter')
-    bouton.type = 'button'
-    bouton.addEventListener('click', () => {
-      void partage.agir({ joueur: MOI, t: maintenant(), type: 'acheter', quoi }).then(() => {
-        sauver()
-        dessiner()
-      })
+  // ------------------------------------------------ le geste
+  /** Le chiffre qui s'envole du doigt. */
+  function envoler(x: number, y: number, texte: string, critique: boolean): void {
+    const n = el('div', critique ? 'donjon-degat critique' : 'donjon-degat', texte)
+    n.style.left = `${x}px`
+    n.style.top = `${y}px`
+    scene.append(n)
+    const derive = (Math.random() - 0.5) * 40
+    n.animate(
+      [
+        { transform: 'translate(-50%, -50%) scale(0.6)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${derive * 0.4}px), -120%) scale(${critique ? 1.35 : 1.1})`, opacity: 1, offset: 0.25 },
+        { transform: `translate(calc(-50% + ${derive}px), -260%) scale(1)`, opacity: 0 },
+      ],
+      { duration: critique ? 900 : 700, easing: 'ease-out' },
+    ).onfinish = () => n.remove()
+  }
+
+  scene.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== 0) return
+    const t = maintenant()
+    const avant = moi()
+    const attendu = degatsDuTap(C, avant) * efficaciteDuTap(C, fatigueA(C, avant, t)) * (reposA(C, avant, t) >= 1 ? C.repos.mult : 1)
+    const dejaInfliges = avant.degatsTap
+    const boite = scene.getBoundingClientRect()
+    const x = ev.clientX - boite.left
+    const y = ev.clientY - boite.top
+    portrait.animate(
+      [
+        { transform: 'scale(1)', filter: 'brightness(1)' },
+        { transform: 'scale(1.04, 0.92)', filter: 'brightness(1.5)', offset: 0.3 },
+        { transform: 'scale(1)', filter: 'brightness(1)' },
+      ],
+      { duration: 160, easing: 'ease-out' },
+    )
+    void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
+      const inflige = moi().degatsTap - dejaInfliges
+      const critique = inflige > attendu * 1.05
+      envoler(x, y, nombre(inflige), critique)
+      dessiner()
     })
-    ligne.append(texte, bouton)
-    panneaux.ameliorations.append(ligne)
-    return { quoi, titre, effet, bouton }
   })
-  const pointsLigne = el('div', 'donjon-points')
-  panneaux.ameliorations.prepend(pointsLigne)
-
-  let cleDuJournal = ''
 
   // ------------------------------------------------ le dessin
+  let etageVu = -1
+  let niveauVu = -1
+  let portraitVu = ''
+  let filVu = ''
+
+  function poserLePortrait(animer: boolean): void {
+    const carte = carteDe(etat.ennemi.etage, etat.ennemi.portrait)
+    nom.textContent = carte?.nom ?? etat.ennemi.nom
+    sous.textContent = carte === null ? '' : `${NOM_DE_LA_RACE[carte.race]} · ${NOM_DU_ROLE[carte.role]}`
+    const image = carte === null ? '' : url(carte.image)
+    if (image === portraitVu) return
+    portraitVu = image
+    scene.style.backgroundImage = carte === null ? '' : `url(${url(`fonds/${carte.race}.webp`)})`
+    if (image === '') {
+      portrait.removeAttribute('src')
+      return
+    }
+    portrait.src = image
+    if (animer) {
+      portrait.animate(
+        [
+          { transform: 'translateY(18%) scale(0.7)', opacity: 0 },
+          { transform: 'translateY(-3%) scale(1.05)', opacity: 1, offset: 0.7 },
+          { transform: 'none', opacity: 1 },
+        ],
+        { duration: 420, easing: 'ease-out' },
+      )
+    }
+    // Le suivant se charge d'avance.
+    const suivant = carteDe(etat.ennemi.etage + 1, undefined)
+    if (suivant !== null) new Image().src = url(suivant.image)
+  }
+
   function dessiner(): void {
     const t = Math.max(maintenant(), etat.t)
-    const moi = etat.joueurs.find((j) => j.id === MOI)
-    if (moi === undefined) return
+    const j = moi()
 
     saison.textContent = `Saison ${etat.saison.numero} · Jour ${jourDeLaSaison(etat, t)}`
-    reste.textContent = `Fin dans ${duree(etat.saison.fin - t)}`
-    boutonsVitesse.forEach((b, i) => b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse))
+    reste.textContent = `Fin dans ${duree(etat.saison.fin - t)}${horloge.vitesse === 1 ? '' : ` · ×${horloge.vitesse}`}`
 
-    etage.textContent = `Étage ${etat.ennemi.etage}`
-    nom.textContent = etat.ennemi.nom
-    pv.style.width = `${(100 * Math.max(0, etat.ennemi.pv)) / etat.ennemi.pvMax}%`
-    pvTexte.textContent = `${nombre(Math.max(0, etat.ennemi.pv))} / ${nombre(etat.ennemi.pvMax)} PV`
-
-    const efficacite = efficaciteDuTap(C, fatigueA(C, moi, t))
-    const repos = Math.floor(reposA(C, moi, t))
-    const prochain = degatsDuTap(C, moi) * efficacite * (repos >= 1 ? C.repos.mult : 1)
-    const etats = [`≈ ${nombre(prochain)} dégâts`]
-    if (repos >= 1) etats.push(`repos ×${C.repos.mult} : ${repos} coups`)
-    if (efficacite < 1) etats.push(`fatigue : frappe à ${pourcent(efficacite)}`)
-    attaqueNote.textContent = etats.join(' · ')
-    attaque.classList.toggle('fatigue', efficacite < 1)
-
-    const besoin = xpPourNiveau(C, moi.niveau)
-    moiLigne.textContent = `Niveau ${moi.niveau} · ${nombre(dpsEffectifDe(C, moi))} dégâts / s · ${moi.kills} achevé${moi.kills > 1 ? 's' : ''}`
-    xpPlein.style.width = `${(100 * moi.xp) / besoin}%`
-    moiNote.textContent = `XP ${nombre(moi.xp)} / ${nombre(besoin)} · ${nombre(moi.degatsTap + moi.degatsAuto)} dégâts cette saison`
-
-    for (const [o, b] of boutonsOnglet) {
-      b.classList.toggle('actif', o === onglet)
-      b.classList.toggle('a-depenser', o === 'ameliorations' && moi.points > 0)
-      panneaux[o].hidden = o !== onglet
+    // L'ennemi : un nouveau surgit, la barre tremble.
+    const nouveau = etat.ennemi.etage !== etageVu
+    poserLePortrait(nouveau && etageVu !== -1)
+    if (nouveau) {
+      if (etageVu !== -1) {
+        barre.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' }],
+          { duration: 300 },
+        )
+        pastilleEtage.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 400, easing: 'ease-out' })
+      }
+      etageVu = etat.ennemi.etage
+      pastilleEtage.textContent = `Étage ${etageVu}`
     }
-    if (onglet === 'ameliorations') dessinerLesAmeliorations(moi)
-    if (onglet === 'journal') dessinerLeJournal()
-    if (onglet === 'classement') dessinerLeClassement()
-  }
+    const part = Math.max(0, etat.ennemi.pv) / etat.ennemi.pvMax
+    pv.style.width = `${100 * part}%`
+    pvTexte.textContent = `${nombre(Math.max(0, etat.ennemi.pv))} / ${nombre(etat.ennemi.pvMax)}`
 
-  function dessinerLesAmeliorations(moi: Joueur): void {
-    pointsLigne.textContent =
-      moi.points === 0
-        ? 'Aucun point à dépenser : les niveaux et les coups fatals en rapportent.'
-        : `${moi.points} point${moi.points > 1 ? 's' : ''} à dépenser`
-    pointsLigne.classList.toggle('a-depenser', moi.points > 0)
-    for (const l of lignes) {
-      const fiche = FICHES[l.quoi]
-      const rang = moi.ameliorations[l.quoi]
-      const cout = coutDe(C, moi, l.quoi)
-      l.titre.textContent = `${fiche.nom} · rang ${rang}`
-      l.effet.textContent = `${fiche.effet(moi)} → ${fiche.effet(auRangSuivant(moi, l.quoi))}`
-      l.bouton.textContent = `Améliorer · ${cout} pt${cout > 1 ? 's' : ''}`
-      l.bouton.disabled = moi.points < cout
-    }
-  }
+    // Le repos et la fatigue ne se montrent que quand ils jouent.
+    const efficacite = efficaciteDuTap(C, fatigueA(C, j, t))
+    const repos = Math.floor(reposA(C, j, t))
+    const pastilles: string[] = []
+    if (repos >= 1) pastilles.push(`<span class="donjon-etat repos">Repos ×${C.repos.mult} · ${repos}</span>`)
+    if (efficacite < 1) pastilles.push(`<span class="donjon-etat fatigue">Fatigue · ${pourcent(efficacite)}</span>`)
+    const html = pastilles.join('')
+    if (etats.innerHTML !== html) etats.innerHTML = html
+    indice.hidden = j.degatsTap > 0
 
-  function dessinerLeJournal(): void {
+    // La dernière nouvelle.
     const dernier = etat.journal[etat.journal.length - 1]
-    const cle = `${etat.saison.numero}:${etat.journal.length}:${dernier?.t}:${dernier?.type}`
-    if (cle === cleDuJournal) return
-    cleDuJournal = cle
-    const liste = el('ol', 'donjon-journal')
-    for (const ev of [...etat.journal].reverse()) {
-      const li = el('li', ev.joueur === MOI ? 'donjon-c-moi' : ev.joueur === null ? 'donjon-c-saison' : undefined)
-      li.append(el('span', 'donjon-journal-heure', heureDeJeu(etat, ev.t)), el('span', undefined, phrase(etat, ev)))
-      liste.append(li)
+    const texteDuFil = dernier === undefined ? '' : phrase(etat, dernier)
+    if (texteDuFil !== filVu) {
+      filVu = texteDuFil
+      fil.textContent = texteDuFil
+      fil.classList.toggle('donjon-fil-moi', dernier?.joueur === MOI)
+      fil.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: 300 })
     }
-    panneaux.journal.replaceChildren(liste)
+
+    // Le joueur.
+    niveau.textContent = String(j.niveau)
+    if (j.niveau !== niveauVu) {
+      if (niveauVu !== -1) niveau.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.45)' }, { transform: 'scale(1)' }], { duration: 450, easing: 'ease-out' })
+      niveauVu = j.niveau
+    }
+    xpPlein.style.width = `${(100 * j.xp) / xpPourNiveau(C, j.niveau)}%`
+    points.textContent = j.points > 0 ? `${j.points} pt${j.points > 1 ? 's' : ''}` : ''
+    points.classList.toggle('vide', j.points === 0)
+
+    for (const tuile of lesTuiles) {
+      const cout = coutDe(C, j, tuile.quoi)
+      tuile.valeur.textContent = TUILES[tuile.quoi].valeur(j)
+      tuile.cout.textContent = `${cout} pt${cout > 1 ? 's' : ''}`
+      tuile.b.disabled = j.points < cout
+    }
+
+    for (const [i, b] of boutonsVitesse.entries()) b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse)
+    if (ouverte !== null) dessinerLaFeuille(ouverte)
   }
 
-  function dessinerLeClassement(): void {
-    const total = etat.joueurs.reduce((s, j) => s + j.degatsTap + j.degatsAuto, 0)
+  function dessinerLaFeuille(f: Feuille): void {
+    if (f === 'reglages') {
+      if (cleDeLaFeuille !== 'reglages') {
+        cleDeLaFeuille = 'reglages'
+        feuilleCorps.replaceChildren(reglages)
+      }
+      return
+    }
+    if (f === 'journal') {
+      const dernier = etat.journal[etat.journal.length - 1]
+      const cle = `journal:${etat.saison.numero}:${etat.journal.length}:${dernier?.t}:${dernier?.type}`
+      if (cle === cleDeLaFeuille) return
+      cleDeLaFeuille = cle
+      const liste = el('ol', 'donjon-journal')
+      for (const ev of [...etat.journal].reverse()) {
+        const li = el('li', ev.joueur === MOI ? 'donjon-c-moi' : ev.joueur === null ? 'donjon-c-saison' : undefined)
+        li.append(el('span', 'donjon-journal-heure', heureDeJeu(etat, ev.t)), el('span', undefined, phrase(etat, ev)))
+        liste.append(li)
+      }
+      feuilleCorps.replaceChildren(liste)
+      return
+    }
+    // Le classement change à chaque tic : on le refait, il n'a pas de bouton.
+    cleDeLaFeuille = 'classement'
+    const total = etat.joueurs.reduce((s, x) => s + x.degatsTap + x.degatsAuto, 0)
     const tries = [...etat.joueurs].sort((a, b) => b.degatsTap + b.degatsAuto - (a.degatsTap + a.degatsAuto))
-    const table = el('table', 'donjon-classement')
-    const entete = el('tr')
-    for (const h of ['', 'Joueur', 'Dégâts', 'Part', 'Niv.']) entete.append(el('th', undefined, h))
-    table.append(entete)
-    tries.forEach((j, i) => {
-      const degats = j.degatsTap + j.degatsAuto
-      const tr = el('tr', j.id === MOI ? 'donjon-c-moi' : undefined)
-      tr.append(
-        el('td', 'donjon-c-rang', String(i + 1)),
-        el('td', undefined, j.nom),
-        el('td', 'donjon-c-nombre', nombre(degats)),
-        el('td', 'donjon-c-nombre', total > 0 ? pourcent(degats / total) : '—'),
-        el('td', 'donjon-c-nombre', String(j.niveau)),
+    const liste = el('ol', 'donjon-classement')
+    tries.forEach((x, i) => {
+      const degats = x.degatsTap + x.degatsAuto
+      const li = el('li', x.id === MOI ? 'donjon-c-moi' : undefined)
+      const ligne = el('div', 'donjon-classement-ligne')
+      ligne.append(
+        el('span', 'donjon-c-rang', String(i + 1)),
+        el('span', 'donjon-c-nom', x.nom),
+        el('span', 'donjon-c-nombre', nombre(degats)),
       )
-      table.append(tr)
+      const part = el('div', 'donjon-classement-part')
+      const plein = el('div', 'donjon-classement-plein')
+      plein.style.width = `${total > 0 ? (100 * degats) / total : 0}%`
+      part.append(plein)
+      const note = el('div', 'donjon-classement-note', `Niveau ${x.niveau} · ${total > 0 ? pourcent(degats / total) : '0 %'} des dégâts · ${x.kills} achevé${x.kills > 1 ? 's' : ''}`)
+      li.append(ligne, part, note)
+      liste.append(li)
     })
     const passees = el('div', 'donjon-archives')
     if (etat.archives.length > 0) {
@@ -366,7 +511,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           .map((a) => `saison ${a.numero}, étage ${a.etage}`)
           .join(' · ')
     }
-    panneaux.classement.replaceChildren(table, passees)
+    feuilleCorps.replaceChildren(liste, passees)
   }
 
   // ------------------------------------------------ le temps
@@ -383,6 +528,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
   }
   await tic()
+  void chargerEmojis('fantasy')
+    .then((c) => {
+      cartes = c
+      portraitVu = '-'
+      poserLePortrait(true)
+    })
+    .catch(() => {
+      // Sans catalogue, l'ennemi garde son nom engendré.
+    })
   setInterval(() => void tic(), 200)
   setInterval(sauver, 2000)
   document.addEventListener('visibilitychange', () => {

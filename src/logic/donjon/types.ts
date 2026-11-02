@@ -41,6 +41,8 @@ export type Ennemi = {
   nom: string
   pv: number
   pvMax: number
+  /** Un entier seedé : l'écran le change en carte du pool. Absent des sauvegardes d'avant. */
+  portrait?: number
 }
 
 /**
