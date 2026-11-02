@@ -347,7 +347,25 @@
 }
 
 .donjon-pied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   font-size: 0.7rem;
   color: var(--donjon-doux);
-  text-align: center;
+}
+
+.donjon-recommencer {
+  min-height: 3rem;
+  padding: 0 0.9rem;
+  background: none;
+  border: 1px solid var(--donjon-trait);
+  border-radius: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.donjon-recommencer.a-confirmer {
+  background: var(--donjon-pv);
+  border-color: var(--donjon-pv);
 }

@@ -6,7 +6,8 @@
  * les règles sont dans `logic/donjon/`* ; ici on lit l'horloge, on joue les
  * bots à leur heure et on dessine. Le joueur passe par `agir`, comme eux.
  *
- * `&neuf` oublie la saison de cet appareil et en commence une.
+ * `&neuf` oublie la saison de cet appareil et en commence une ; le bouton
+ * « Recommencer » du pied y mène.
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
@@ -114,7 +115,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   if (parametres.has('neuf')) {
     oublierLeDonjon()
     parametres.delete('neuf')
-    history.replaceState(null, '', `${location.pathname}?${parametres.toString()}`)
+    history.replaceState(null, '', `${location.pathname}?${parametres.toString().replace(/=(&|$)/g, '$1')}`)
   }
 
   // ------------------------------------------------ l'état
@@ -217,7 +218,29 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const corps = el('div', 'donjon-corps')
   corps.append(...Object.values(panneaux))
 
-  const pied = el('footer', 'donjon-pied', `build ${build}`)
+  // RECOMMENCER se confirme par une seconde tape (pas de fenêtre du
+  // navigateur). On repart par `&neuf` plutôt qu'en vidant le stockage ici :
+  // la sauvegarde de `pagehide` réécrirait l'ancienne saison en partant.
+  const pied = el('footer', 'donjon-pied')
+  const recommencer = el('button', 'donjon-recommencer', 'Recommencer')
+  recommencer.type = 'button'
+  let confirmation = 0
+  recommencer.addEventListener('click', () => {
+    if (recommencer.classList.contains('a-confirmer')) {
+      const url = new URL(location.href)
+      url.searchParams.set('neuf', '')
+      location.replace(url.toString())
+      return
+    }
+    recommencer.classList.add('a-confirmer')
+    recommencer.textContent = 'Tout effacer ?'
+    clearTimeout(confirmation)
+    confirmation = window.setTimeout(() => {
+      recommencer.classList.remove('a-confirmer')
+      recommencer.textContent = 'Recommencer'
+    }, 3000)
+  })
+  pied.append(el('span', undefined, `build ${build}`), recommencer)
   page.append(tete, ennemi, attaque, moiBloc, onglets, corps, pied)
 
   // Les lignes d'amélioration sont faites une fois : redessinées à chaque
