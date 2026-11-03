@@ -43,15 +43,24 @@ export function degatsDeBaseDuTap(config: ConfigDonjon, j: Joueur): number {
 }
 
 /** La période de l'auto en recharges du tap : de `depart` vers 1, sans jamais l'atteindre. */
-export function periodeEnRecharges(config: ConfigDonjon, j: Joueur): number {
-  const a = config.auto
-  return 1 + (a.depart - 1) * Math.pow(a.garde, j.ameliorations.auto)
+export function periodeEnRecharges(config: ConfigDonjon, _j: Joueur): number {
+  return config.auto.depart
+}
+
+/** Le bonus de la Vitesse (+0,1 = 10 % plus vite), sur le tap et l'auto ensemble. */
+export function bonusDeVitesse(config: ConfigDonjon, j: Joueur): number {
+  return config.vitesse.gain * Math.pow(j.ameliorations.vitesse, config.vitesse.exposant)
+}
+
+/** La recharge du tap de ce joueur, en ms : la base divisée par la Vitesse. */
+export function rechargeDe(config: ConfigDonjon, j: Joueur): number {
+  return config.tap.recharge / (1 + bonusDeVitesse(config, j))
 }
 
 /** L'intervalle entre deux coups d'auto de ce joueur, en ms entières, toujours plus long que la recharge. */
 export function periodeDe(config: ConfigDonjon, j: Joueur): number {
-  const r = config.tap.recharge
-  return Math.max(r + 1, Math.ceil(r * periodeEnRecharges(config, j)))
+  const r = rechargeDe(config, j)
+  return Math.max(Math.ceil(r) + 1, Math.ceil(r * periodeEnRecharges(config, j)))
 }
 
 /** Le DPS de l'auto hors critique : un coup par période. */
@@ -73,7 +82,7 @@ export function multCritDe(config: ConfigDonjon, j: Joueur): number {
 
 /** Le gain de vitesse de l'auto sur son départ (+0,1 = 10 % plus vite). */
 export function gainDeVitesseAuto(config: ConfigDonjon, j: Joueur): number {
-  return config.auto.depart / periodeEnRecharges(config, j) - 1
+  return bonusDeVitesse(config, j)
 }
 
 /** Le facteur moyen des critiques : ce que rend un coup en moyenne. */
@@ -153,7 +162,7 @@ export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
 
 /** Le DPS d'un spammeur à ce niveau (un tap à chaque fin de recharge) : l'étalon de la forme. */
 export function dpsDeSpam(config: ConfigDonjon, j: Joueur): number {
-  return (degatsDuTap(config, j) * facteurCritMoyen(config, j) * 1000) / config.tap.recharge
+  return (degatsDuTap(config, j) * facteurCritMoyen(config, j) * 1000) / rechargeDe(config, j)
 }
 
 /** Le tap est-il rechargé à l'instant t ? */
@@ -230,7 +239,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     niveau: 1,
     points: 0,
     offre: [],
-    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, recuperation: 0 },
+    ameliorations: { tap: 0, vitesse: 0, chanceCrit: 0, multCrit: 0, recuperation: 0 },
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,
@@ -450,7 +459,7 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   }
   j.forme = forme
   j.formeA = t
-  j.prochainTap = t + config.tap.recharge
+  j.prochainTap = t + rechargeDe(config, j)
 }
 
 // ---------------------------------------------------------------- l'extérieur

@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -55,23 +55,23 @@ verifier('les niveaux donnent des points', tue.joueurs[0].points >= 1 && tue.jou
 // L'OFFRE : chaque point ouvre trois améliorations au choix.
 const ja0 = tue.joueurs[0]
 verifier('un point ouvre une offre de trois améliorations différentes', ja0.points >= 1 && ja0.offre.length === C.points.tailleOffre && new Set(ja0.offre).size === C.points.tailleOffre)
-const horsOffre = (['tap', 'auto', 'chanceCrit', 'multCrit', 'recuperation'] as const).find((q) => !ja0.offre.includes(q))!
+const horsOffre = (['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation'] as const).find((q) => !ja0.offre.includes(q))!
 verifier('on ne prend pas hors de son offre', appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: horsOffre }).joueurs[0].ameliorations[horsOffre] === 0)
 const pris = appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: ja0.offre[0] }).joueurs[0]
 verifier('prendre une option : un rang, un point de moins, une offre neuve s\'il en reste', pris.ameliorations[ja0.offre[0]] === 1 && pris.points === ja0.points - 1 && (pris.points === 0 ? pris.offre.length === 0 : pris.offre.length === C.points.tailleOffre))
-const avecAuto = { ...tue, joueurs: tue.joueurs.map((j) => ({ ...j, offre: ['auto', 'tap', 'recuperation'] as typeof j.offre })) }
-const achete = appliquer(C, avecAuto, { joueur: 'a', t: tue.t, type: 'acheter', quoi: 'auto' })
-verifier('prendre l\'auto-tap le rend plus rapide', periodeDe(C, achete.joueurs[0]) < periodeDe(C, tue.joueurs[0]) && dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
+const avecAuto = { ...tue, joueurs: tue.joueurs.map((j) => ({ ...j, offre: ['vitesse', 'tap', 'recuperation'] as typeof j.offre })) }
+const achete = appliquer(C, avecAuto, { joueur: 'a', t: tue.t, type: 'acheter', quoi: 'vitesse' })
+verifier('prendre la Vitesse accélère le tap et l\'auto', rechargeDe(C, achete.joueurs[0]) < rechargeDe(C, tue.joueurs[0]) && periodeDe(C, achete.joueurs[0]) < periodeDe(C, tue.joueurs[0]) && dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
 const sansPoints = { ...achete, joueurs: achete.joueurs.map((j) => ({ ...j, points: 0 })) }
 verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: 'a', t: sansPoints.t, type: 'acheter', quoi: 'tap' }).joueurs[0].ameliorations.tap === 0)
 verifier('sans points, pas d\'offre', appliquer(C, sansPoints, { joueur: 'a', t: sansPoints.t, type: 'taper', n: 0 }).joueurs[0].offre.length === 0)
 
 const P = periodeDe(C, e.joueurs[0])
 verifier(`l'auto part à ${C.auto.depart} recharges du tap`, periodeDe(C, e.joueurs[0]) === C.tap.recharge * C.auto.depart)
-const auRang = (r: number) => ({ ...e.joueurs[0], ameliorations: { ...e.joueurs[0].ameliorations, auto: r } })
-const gains = [0, 1, 10, 20].map((r) => periodeEnRecharges(C, auRang(r)) - periodeEnRecharges(C, auRang(r + 1)))
-verifier('chaque rang rapproche l\'auto du tap, de moins en moins', gains.every((g, i) => g > 0 && (i === 0 || g < gains[i - 1])))
-verifier('l\'auto n\'est jamais plus rapide que le tap, même au rang 500', [50, 200, 500].every((r) => periodeDe(C, auRang(r)) > C.tap.recharge))
+const auRang = (r: number) => ({ ...e.joueurs[0], ameliorations: { ...e.joueurs[0].ameliorations, vitesse: r } })
+const pasDeVitesse = [0, 1, 5, 20, 60].map((r) => 1 / rechargeDe(C, auRang(r + 1)) - 1 / rechargeDe(C, auRang(r)))
+verifier('la Vitesse rend de moins en moins', pasDeVitesse.every((g, i) => g > 0 && (i === 0 || g < pasDeVitesse[i - 1])))
+verifier('l\'auto suit le tap, à 10 recharges, et n\'est jamais plus rapide', [0, 50, 500].every((r) => periodeDe(C, auRang(r)) > rechargeDe(C, auRang(r)) && Math.abs(periodeDe(C, auRang(r)) / rechargeDe(C, auRang(r)) - C.auto.depart) < 0.1))
 // TOUTES LES AMÉLIORATIONS RENDENT DE MOINS EN MOINS.
 type Piste = 'tap' | 'chanceCrit' | 'multCrit'
 const rang = (quoi: Piste, r: number) => ({ ...e.joueurs[0], ameliorations: { ...e.joueurs[0].ameliorations, [quoi]: r } })
@@ -162,7 +162,7 @@ verifier('Récupération : le repos se gagne aussi plus vite', formeA(C, stat('r
 const fini = avancer(C, achete, C.saison.duree + 1)
 verifier('la saison finie est archivée', fini.archives.length === 1 && fini.archives[0].etageParJour.length === 7)
 verifier('la saison suivante repart de l\'étage 1', fini.saison.numero === 2 && fini.ennemi.etage === 1)
-verifier('les joueurs restent, remis à zéro', fini.joueurs.length === 1 && fini.joueurs[0].niveau === 1 && fini.joueurs[0].ameliorations.auto === 0)
+verifier('les joueurs restent, remis à zéro', fini.joueurs.length === 1 && fini.joueurs[0].niveau === 1 && fini.joueurs[0].ameliorations.vitesse === 0)
 verifier('trois semaines passent trois saisons', avancer(C, achete, 3 * C.saison.duree + 1).saison.numero === 4)
 
 let h = nouvelleHorloge(1000, 0, 1)

@@ -462,6 +462,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `forme.reposMax` = 200 % (`reposMaxDe` reste, pour un système qui le
   monterait un jour). Cinq améliorations générales : Coup, Auto-tap,
   Critique, Force, Récupération ; l'offre en tire trois.
+- **LA VITESSE REMPLACE L'AUTO-TAP** (Keko, 03/11 : « rajouter vitesse
+  d'attaque, qui réduit le CD d'attaque, ce qui impacte aussi
+  indirectement la vitesse de l'auto ; tu crois qu'on devrait fusionner les
+  deux ? » — « option A »). Une seule stat : la recharge du tap se divise
+  par `1 + 0,1 · rang^0,8` (+10 % au rang 1, +63 % au 10, sans plafond), et
+  l'auto, toujours à 10 recharges, suit du même pas. Garder les deux aurait
+  fait un faux choix : l'auto fait 99,5 % des dégâts, et la vitesse
+  d'attaque aurait tout fait de l'Auto-tap, et plus. L'idée d'une auto qui
+  se rapproche du tap est partie avec elle. Les bots visent la Vitesse là
+  où ils visaient l'Auto-tap, et tapent au rythme de LEUR recharge. Le jour
+  des armes, la Vitesse s'appliquera à la recharge de l'arme. Mesuré : la
+  saison descend à l'étage 84–86 (107–110 avec l'Auto-tap, qui montait à
+  +142 % au rang 10). Le levier, balayé sur 3 graines : gain 0,15 → 92,
+  0,2 → 99, 0,25 → 105 ; laissé à 0,1, à rejuger par Keko.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

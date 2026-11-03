@@ -18,8 +18,8 @@ const MINUTE = 60 * SECONDE
 const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
-export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'recuperation'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'recuperation']
+export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'recuperation'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -116,17 +116,27 @@ export const DONJON = {
    * chacun tombent sur les multiples de sa période depuis le début de la
    * saison. LA PÉRIODE SE COMPTE EN RECHARGES DU TAP, ET N'EST JAMAIS PLUS
    * COURTE (Keko : « l'auto-tap ne doit jamais être plus rapide que le
-   * manuel ; on commence à 5 fois le CD manuel » — puis « plutôt 10 fois » —
-   * « et chaque upgrade ramène la
-   * vitesse auto vers le CD manuel sans jamais l'atteindre ») :
-   * `recharge × (1 + (depart − 1) · garde^rang)` — chaque rang d'« Auto-tap »
-   * retire `1 − garde` de l'écart qui reste (rendement décroissant).
+   * manuel », « 10 fois le CD manuel ») : `depart` recharges, toujours. Une
+   * amélioration « Auto-tap » la rapprochait de la recharge ; elle est
+   * devenue la Vitesse, qui accélère les deux ensemble (ci-dessous).
    */
   auto: {
-    /** La période au rang 0, en recharges du tap : 1 000 %. */
+    /** La période de l'auto, en recharges du tap : 10, toujours (la Vitesse accélère les deux ensemble). */
     depart: 10,
-    /** La part de l'écart à la recharge que garde chaque rang : 10 % de moins par rang. */
-    garde: 0.9,
+  },
+
+  /**
+   * LA VITESSE (Keko : « rajouter vitesse d'attaque, qui réduit le CD
+   * d'attaque, ce qui impacte aussi indirectement la vitesse de l'auto ;
+   * on fusionne les deux ? » — option A, une seule stat). Elle remplace
+   * l'Auto-tap : la recharge du tap se divise par `1 + gain · rang^exposant`
+   * (sans plafond, de moins en moins par rang), et l'auto, à `auto.depart`
+   * recharges, suit du même pas — jamais plus vite que le tap. Le jour des
+   * armes, elle s'appliquera à la recharge de l'arme.
+   */
+  vitesse: {
+    gain: 0.1,
+    exposant: 0.8,
   },
 
   crit: {
@@ -205,21 +215,21 @@ export const DONJON = {
         nom: 'Bot assidu',
         passagesParJour: 8,
         taps: [30, 50],
-        poids: { tap: 3, auto: 3, chanceCrit: 1, multCrit: 1 },
+        poids: { tap: 3, vitesse: 3, chanceCrit: 1, multCrit: 1 },
       },
       {
         id: 'occasionnel-a',
         nom: 'Bot occasionnel A',
         passagesParJour: 2,
         taps: [20, 40],
-        poids: { tap: 1, auto: 3, chanceCrit: 1, multCrit: 1 },
+        poids: { tap: 1, vitesse: 3, chanceCrit: 1, multCrit: 1 },
       },
       {
         id: 'occasionnel-b',
         nom: 'Bot occasionnel B',
         passagesParJour: 2,
         taps: [15, 35],
-        poids: { tap: 2, auto: 2, chanceCrit: 1, multCrit: 1 },
+        poids: { tap: 2, vitesse: 2, chanceCrit: 1, multCrit: 1 },
       },
       {
         id: 'fantome',
@@ -227,7 +237,7 @@ export const DONJON = {
         passagesParJour: 1 / 3,
         taps: [10, 30],
         // Le Coup fait aussi les dégâts de l'auto : même le fantôme en achète.
-        poids: { tap: 1, auto: 1, chanceCrit: 0, multCrit: 0 },
+        poids: { tap: 1, vitesse: 1, chanceCrit: 0, multCrit: 0 },
       },
     ] as ProfilBot[],
   },

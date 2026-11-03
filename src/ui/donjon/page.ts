@@ -46,6 +46,7 @@ import {
   multCritDe,
   multiplicateurDeForme,
   periodeDe,
+  rechargeDe,
   tapPret,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
@@ -124,7 +125,7 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
  */
 const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
   tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => bonus(bonusDuCoup(C, j)) },
-  auto: { nom: 'Auto-tap', role: 'La vitesse du coup tout seul, même absent', valeur: (j) => bonus(gainDeVitesseAuto(C, j)) },
+  vitesse: { nom: 'Vitesse', role: "Le tap et l'auto frappent plus vite", valeur: (j) => bonus(gainDeVitesseAuto(C, j)) },
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
   multCrit: { nom: 'Force', role: 'Les dégâts d\'un coup critique', valeur: (j) => pourcent(multCritDe(C, j)) },
   recuperation: { nom: 'Récupération', role: 'La fatigue passe et le repos vient plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
@@ -668,7 +669,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
     // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
     const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
-    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart) + 1e-9)} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart) - 1e-9)}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart) + 1e-9)} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart) - 1e-9)}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(rechargeDe(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 
@@ -935,7 +936,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (valeurForme.textContent !== pourCent) valeurForme.textContent = pourCent
     if (!bulle.hidden) remplirLaBulle()
     // Le voile de recharge : plein au tap, il se vide de haut en bas.
-    const resteRecharge = Math.max(0, Math.min(1, (j.prochainTap - t) / C.tap.recharge))
+    const resteRecharge = Math.max(0, Math.min(1, (j.prochainTap - t) / rechargeDe(C, j)))
     voileRecharge.style.clipPath = `inset(${100 * (1 - resteRecharge)}% 0 0 0)`
     requestAnimationFrame(image)
   }

@@ -103,7 +103,9 @@ export async function jouerLesBots(
     let etat = await partage.agir({ joueur: profil.id, t, type: 'taper', n: 1 })
     const restants = (b.restants ?? 0) - 1
     if (restants > 0) {
-      suite[profil.id] = { prochain: t + config.tap.recharge, rng: b.rng, restants }
+      // Le tap suivant à sa fin de recharge (la sienne : la Vitesse la raccourcit).
+      const prochain = etat.joueurs.find((x) => x.id === profil.id)?.prochainTap ?? t + config.tap.recharge
+      suite[profil.id] = { prochain: Math.max(prochain, t + 1), rng: b.rng, restants }
       continue
     }
     // Le passage est fini : il redépense, et le suivant est tiré.
