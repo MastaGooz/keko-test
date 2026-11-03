@@ -81,8 +81,11 @@ const borne = (n: number) => (n < 1e4 ? String(Math.round(n)) : nombre(n))
 /** Un bonus : « +30 % », « +0 % ». */
 const bonus = (x: number) => `+${Math.round(x * 100)} %`
 
-/** Une durée courte en secondes : « 2,0 s », « 1,85 s ». */
-const secondes = (ms: number) => `${(ms / 1000).toFixed(2).replace(/0$/, '').replace('.', ',')} s`
+/** Une durée courte en secondes, à trois décimales au plus : « 2,5 s », « 0,175 s », « 2,0 s ». */
+const secondes = (ms: number) => {
+  const texte = (ms / 1000).toFixed(3).replace(/0+$/, '')
+  return `${(texte.endsWith('.') ? `${texte}0` : texte).replace('.', ',')} s`
+}
 
 function duree(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -131,11 +134,18 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
   recuperation: { nom: 'Récupération', role: 'La fatigue passe et le repos vient plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
 }
 
-/** Ce que dit chaque arme, dans les réglages. */
-const DIT_L_ARME: Record<TypeArme, string> = {
-  epee: 'équilibrée, Récupération +20 %',
-  dague: 'rapide, Critique +5 points',
-  baton: 'lent, Dégâts critiques +50 %',
+/**
+ * LES ARMES À L'ÉCRAN (Keko : « une interface intégrée pour changer d'arme
+ * plutôt que dans le menu debug, avec une image d'arme ») : leur image, leur
+ * caractère, leur bonus. Les images viennent du tri de Keko (`Desktop\\Style
+ * \\tri`) : l'épée est l'objet n° 010 ; la dague la capacité n° 119 ; le
+ * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer.
+ */
+const IMAGE_DE_L_ARME: Record<TypeArme, string> = { epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp' }
+const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
+  epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
+  dague: { caractere: 'Rapide', bonus: 'Critique +5 points' },
+  baton: { caractere: 'Lent', bonus: 'Dégâts critiques +50 %' },
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
@@ -190,7 +200,7 @@ const CONTOUR = 'M50,3 H82 A15,15 0 0 1 97,18 V82 A15,15 0 0 1 82,97 H18 A15,15 
  */
 const ICONE_ATTAQUE = 'capacites/attaque.webp'
 
-type Feuille = 'ameliorations' | 'classement' | 'journal' | 'reglages'
+type Feuille = 'ameliorations' | 'armes' | 'classement' | 'journal' | 'reglages'
 
 export async function monterDonjon(racine: HTMLElement, build: string): Promise<void> {
   const parametres = new URLSearchParams(location.search)
@@ -322,6 +332,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   cadre.innerHTML = `<svg class="donjon-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="donjon-contour-fond" d="${CONTOUR}"/><path class="donjon-contour-plein" pathLength="1" d="${CONTOUR}"/></svg>`
   cadre.prepend(attaque)
   cadre.append(bulle)
+  // L'EMPLACEMENT D'ARME, à gauche du bouton : l'arme portée ; une tape
+  // ouvre l'armurerie.
+  const emplacement = bouton('donjon-emplacement')
+  emplacement.setAttribute('aria-label', 'Armes')
+  const imageArme = el('img', 'donjon-emplacement-image')
+  imageArme.alt = ''
+  imageArme.draggable = false
+  const nomArme = el('span', 'donjon-emplacement-nom')
+  emplacement.append(imageArme, nomArme)
+  cadre.append(emplacement)
+  let armeVue = ''
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
   // LA FORME, sous le bouton (Keko : « un marqueur sur un trait, la zone du
@@ -389,7 +410,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let feuilleFigee = false
   let cleDeLaFeuille = ''
 
-  const TITRES: Record<Feuille, string> = { ameliorations: 'Améliorations', classement: 'Classement', journal: 'Journal', reglages: 'Réglages' }
+  const TITRES: Record<Feuille, string> = { ameliorations: 'Améliorations', armes: 'Armes', classement: 'Classement', journal: 'Journal', reglages: 'Réglages' }
   function ouvrir(f: Feuille): void {
     ouverte = f
     cleDeLaFeuille = ''
@@ -406,6 +427,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   boutonReglages.addEventListener('click', () => ouvrir('reglages'))
   fil.addEventListener('click', () => ouvrir('journal'))
   bande.addEventListener('click', () => ouvrir('ameliorations'))
+  emplacement.addEventListener('click', () => ouvrir('armes'))
   fermer.addEventListener('click', fermerLaFeuille)
   voile.addEventListener('click', (ev) => {
     if (ev.target === voile) fermerLaFeuille()
@@ -444,25 +466,37 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       recommencer.textContent = 'Recommencer la saison'
     }, 3000)
   })
-  // L'ARME : son type dit quelle caractéristique fait ses dégâts. On en
-  // change ici, pour essayer les trois (en attendant les vraies armes).
-  const armes = el('div', 'donjon-vitesses')
-  const ditArme = el('div', 'donjon-build')
-  const boutonsArme = ARMES.map((arme) => {
-    const b = bouton('donjon-vitesse', C.armes[arme].nom)
+  // L'ARMURERIE, faite une fois : une carte par arme (image, caractère,
+  // dégâts, recharge, bonus) ; une tape équipe, et la feuille se referme.
+  const armurerie = el('div', 'donjon-armes')
+  const cartesArme = ARMES.map((arme) => {
+    const a = C.armes[arme]
+    const b = bouton('donjon-arme')
+    const image = el('img', 'donjon-arme-image')
+    image.src = url(IMAGE_DE_L_ARME[arme])
+    image.alt = ''
+    image.draggable = false
+    const texte = el('span', 'donjon-arme-texte')
+    texte.append(
+      el('span', 'donjon-arme-nom', `${a.nom} · ${DIT_L_ARME[arme].caractere.toLowerCase()}`),
+      el('span', 'donjon-arme-ligne', `Dégâts ${a.degats} · recharge ${secondes(a.recharge)} · auto ${secondes(a.recharge * C.auto.depart)}`),
+      el('span', 'donjon-arme-bonus', DIT_L_ARME[arme].bonus),
+    )
+    const etat = el('span', 'donjon-arme-etat')
+    b.append(image, texte, etat)
     b.addEventListener('click', () => {
+      if (moi().arme === arme) return
       void partage.agir({ joueur: MOI, t: maintenant(), type: 'equiper', arme }).then(() => {
         sauver()
         dessiner()
+        emplacement.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25) rotate(-8deg)' }, { transform: 'scale(1)' }], { duration: 360, easing: 'ease-out' })
+        setTimeout(fermerLaFeuille, 250)
       })
     })
-    armes.append(b)
-    return { arme, b }
+    armurerie.append(b)
+    return { arme, b, etat }
   })
   reglages.append(
-    el('div', 'donjon-reglage-titre', 'Arme'),
-    armes,
-    ditArme,
     el('div', 'donjon-reglage-titre', 'Vitesse du temps'),
     vitesses,
     recommencer,
@@ -799,9 +833,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     bande.classList.toggle('pret', j.points > 0)
 
     for (const [i, b] of boutonsVitesse.entries()) b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse)
-    for (const { arme, b } of boutonsArme) b.classList.toggle('actif', arme === j.arme)
-    const dit = `${C.armes[j.arme].nom} : ${DIT_L_ARME[j.arme]}`
-    if (ditArme.textContent !== dit) ditArme.textContent = dit
+    if (armeVue !== j.arme) {
+      armeVue = j.arme
+      imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
+      nomArme.textContent = C.armes[j.arme].nom
+    }
     if (ouverte !== null) dessinerLaFeuille(ouverte)
   }
 
@@ -821,6 +857,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (cleDeLaFeuille !== 'ameliorations') {
         cleDeLaFeuille = 'ameliorations'
         feuilleCorps.replaceChildren(choix)
+      }
+      return
+    }
+    if (f === 'armes') {
+      const j = moi()
+      for (const c of cartesArme) {
+        const portee = c.arme === j.arme
+        c.b.classList.toggle('portee', portee)
+        c.etat.textContent = portee ? 'Équipée' : 'Équiper'
+      }
+      if (cleDeLaFeuille !== 'armes') {
+        cleDeLaFeuille = 'armes'
+        feuilleCorps.replaceChildren(armurerie)
       }
       return
     }
@@ -938,7 +987,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         [{ filter: 'drop-shadow(0 0 0.9rem #e8f6ff) brightness(1.8)' }, { filter: 'drop-shadow(0 0 0.3rem #a9dcff) brightness(1)' }],
         { duration: 320, easing: 'ease-out' },
       )
-      cadre.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' })
+      // Le bouton et son contour bondissent, pas l'emplacement d'arme voisin.
+      const bond = [{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.3 }, { transform: 'scale(1)' }]
+      attaque.animate(bond, { duration: 240, easing: 'ease-out' })
+      contour.animate(bond, { duration: 240, easing: 'ease-out', composite: 'add' })
       cumulAuto = 0
       coupsDuLot = 0
       critiquesDuLot = 0

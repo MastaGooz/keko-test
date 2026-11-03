@@ -514,6 +514,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
 - **« COUP » DEVIENT « DÉGÂTS », « FORCE » DEVIENT « DÉGÂTS CRITIQUES »**
   (Keko, 03/11). Les noms à l'écran seulement ; les clés restent `tap` et
   `multCrit`.
+- **L'ARMURERIE** (Keko, 03/11 : « une interface intégrée pour changer d'arme
+  plutôt que dans le menu debug, avec une image d'arme »). Un emplacement à
+  gauche du bouton d'attaque montre l'arme portée (image et nom) ; une tape
+  ouvre la feuille « Armes » : une carte par arme (image, caractère, dégâts,
+  recharge, rythme de l'auto, bonus), l'arme portée cerclée d'or
+  (« Équipée »), une tape sur une autre l'équipe et referme. Le choix a
+  quitté les réglages. Images du tri de Keko (`Desktop\Style\tri`, prises
+  dans `images-alpha`, rognées, 256 carré, `public/armes/`) : l'épée = objet
+  n° 010 ; la dague = capacité n° 119 (la main et la dague) ; **le bâton =
+  capacité n° 116 (la magie), faute d'image de bâton : à remplacer** quand
+  Keko en aura une.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
