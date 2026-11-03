@@ -530,6 +530,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   d'attaque, je veux garder l'emplacement pour éventuellement d'autres
   boutons d'attaque plus tard »). Il est sur la ligne du personnage, à
   gauche de la bande du niveau : l'arme, puis le niveau qui ouvre les stats.
+- **LES BOUTONS SANS MOTS** (Keko, 03/11 : « enlève les mots sur les boutons
+  attaquer et sur celui de l'arme ; le bouton de l'arme n'est pas assez
+  différencié du fond »). Le bouton d'attaque ne porte plus que son image
+  (agrandie), l'emplacement d'arme que l'image de l'arme, sur un parchemin
+  cerné d'or ; les noms passent dans `aria-label`.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -311,14 +311,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const arene = el('div', 'donjon-arene')
   const cadre = el('div', 'donjon-attaque-cadre')
   const attaque = bouton('donjon-attaque')
+  attaque.setAttribute('aria-label', 'Attaquer')
   if (parametres.get('icone') === 'epee') {
-    attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
+    attaque.innerHTML = ICONE_EPEE
   } else {
     const dessin = el('img', 'donjon-attaque-dessin')
     dessin.src = url(ICONE_ATTAQUE)
     dessin.alt = ''
     dessin.draggable = false
-    attaque.append(dessin, el('span', undefined, 'Attaquer'))
+    // Sans mot (Keko : « enlève les mots sur les boutons ») : l'image dit tout.
+    attaque.append(dessin)
   }
   // LA RECHARGE DU TAP (Keko : « quand on appuie le bouton se colore et la
   // coloration se vide de haut en bas pour indiquer le CD ») : un voile sur
@@ -340,8 +342,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const imageArme = el('img', 'donjon-emplacement-image')
   imageArme.alt = ''
   imageArme.draggable = false
-  const nomArme = el('span', 'donjon-emplacement-nom')
-  emplacement.append(imageArme, nomArme)
+  emplacement.append(imageArme)
   let armeVue = ''
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
@@ -839,7 +840,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (armeVue !== j.arme) {
       armeVue = j.arme
       imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
-      nomArme.textContent = C.armes[j.arme].nom
+      emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}`)
     }
     if (ouverte !== null) dessinerLaFeuille(ouverte)
   }
