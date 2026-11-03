@@ -13,7 +13,7 @@ cinquième joueur à côté des quatre bots.
 
 | fichier | ce qu'il fait |
 |---|---|
-| `src/logic/donjon/config.ts` | **tout l'équilibrage** : PV, XP, coûts, gains, fatigue, repos, profils des bots, vitesses |
+| `src/logic/donjon/config.ts` | **tout l'équilibrage** : PV, XP, coûts, gains, forme, profils des bots, vitesses |
 | `src/logic/donjon/types.ts` | `EtatDonjon`, `Joueur`, `Ennemi`, `Evenement`, `Action`, `BonusPermanents` (vide : le futur prestige) |
 | `src/logic/donjon/regles.ts` | le réducteur unique : `appliquer(config, etat, action)`, `avancer(config, etat, t)` |
 | `src/logic/donjon/ennemi.ts` | PV de l'étage, nom tiré de (seed de saison, étage) |
@@ -51,7 +51,7 @@ cinquième joueur à côté des quatre bots.
   compte que l'auto ACHETÉ, sinon le premier tap passait de 10 à 50.
 - **Le tap suit l'auto-tap** (`tap.secondesDeDps`) : chaque tap ajoute N
   secondes de son DPS. Sans ça, au troisième jour un tap ne pèse plus rien.
-- **Le spam n'est pas obligatoire, grâce à la fatigue** : les `seuil` premiers
+- (Remplacé le 03/11 par LA FORME, plus bas.) **Le spam n'est pas obligatoire, grâce à la fatigue** : les `seuil` premiers
   taps frappent à plein, puis chaque tap rend `1/(1 + pente·excès)`. La
   fatigue fond de moitié toutes les `demiVie`.
 - **Le repos** : l'absence se convertit en taps renforcés (×3, jusqu'à 60).
@@ -100,7 +100,7 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   et ses quatre choix (nom, rôle, valeur avant → après, coût). La feuille se
   referme seule quand plus rien n'est payable. Sans point, la même tape
   montre les choix éteints.
-- **Le repos et la fatigue** ne s'affichent qu'en pastilles sur la scène, et
+- (Avant la forme.) **Le repos et la fatigue** ne s'affichent qu'en pastilles sur la scène, et
   seulement quand ils jouent.
 - **Le retour au doigt est léger** : l'ennemi s'écrase et s'éclaire, le
   chiffre s'envole du doigt (doré et plus gros pour un critique), le suivant
@@ -219,6 +219,30 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   haut avec les infos de saison plutôt que sur le monstre »). La pastille
   « Étage N » (parchemin) a quitté la scène pour la tête, à gauche de la
   saison et du temps qui reste ; elle enfle toujours à chaque étage.
+- **LA FORME REMPLACE LA FATIGUE ET LE REPOS** (Keko, 03/11 : « il favorise
+  les attaques lentes et fortes plutôt que les attaques rapides et moins
+  fortes car il boost un nombre donné d'attaques ; un continuum qui tend
+  vers 0 % - 200 % entre fatigue max et repos max ; que la fatigue se gagne
+  non pas en coups mais autrement afin que plus tard, si on implante des
+  choses comme la vitesse d'attaque, elle ne déséquilibre pas le système ;
+  un marqueur sur un trait, la zone du milieu = normal, les côtés = fatigue
+  / repos, sous le bouton d'attaque »). Un seul curseur par joueur, de −1
+  (épuisé) à +1 (reposé), qui multiplie chaque tap par `1 + forme` (0 % à
+  200 %). **Il se gagne et se perd AU TEMPS** : un tap tient le joueur « en
+  action » 1,5 s (`forme.fenetre`), et chaque minute en action coûte 0,2,
+  qu'on y tape une fois par seconde ou dix (vérifié : deux minutes à 1 tap/s
+  ou à 5 taps/s laissent la même forme). Hors action, la forme remonte vite
+  jusqu'au milieu (d'épuisé à normal en 30 min) puis lentement (de normal à
+  reposé en 8 h). En chiffres : reposé, on frappe à 200 % et il faut 5 min
+  d'action pour revenir à 100 %, puis 5 de plus pour tomber à 0 %. Joueur :
+  `forme`, `formeA`, `actifJusqua` (une sauvegarde d'avant repart au
+  milieu). L'auto n'y est pas soumis. À l'écran, sous le bouton, un trait
+  gris → crème → jaune, la zone normale (80 à 120 %) marquée au milieu, un
+  marqueur et la valeur sous lui ; les pastilles de la scène sont parties.
+  Le chiffre d'un tap tire en continu vers le jaune ou le gris (plein aux
+  quatre cinquièmes du chemin). *Un client peut encore envoyer `taper n=1000`
+  en une action pour le prix d'une fenêtre* : le jour du backend, le
+  serveur bornera `n`. Le texte du bouton suit sa taille (`cqh`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

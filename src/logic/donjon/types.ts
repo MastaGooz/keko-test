@@ -29,10 +29,13 @@ export type Joueur = {
   degatsTap: number
   degatsAuto: number
   kills: number
-  /** La fatigue au moment de `dernierTap`, et le repos accumulé à ce moment-là. */
-  fatigue: number
-  repos: number
-  dernierTap: number
+  /**
+   * La forme (−1 épuisé … +1 reposé) à l'instant `formeA`, et la fin de la
+   * dernière action (`actifJusqua` : le dernier tap plus la fenêtre).
+   */
+  forme: number
+  formeA: number
+  actifJusqua: number
   bonus: BonusPermanents
 }
 

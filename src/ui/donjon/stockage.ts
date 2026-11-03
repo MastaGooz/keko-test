@@ -33,6 +33,15 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     ) {
       return null
     }
+    // Une sauvegarde d'avant la forme (fatigue et repos comptés en taps) :
+    // chacun repart au milieu.
+    for (const j of e.joueurs) {
+      if (typeof j.forme !== 'number') {
+        j.forme = 0
+        j.formeA = e.t
+        j.actifJusqua = e.t
+      }
+    }
     return s as SauvegardeDonjon
   } catch {
     return null

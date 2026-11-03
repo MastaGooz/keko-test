@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, efficaciteDuTap, etatInitial, multCritDe, periodeDe } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, etatInitial, formeA, multCritDe, multiplicateurDeForme, periodeDe } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -47,8 +47,8 @@ verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: '
 const P = C.auto.periode
 verifier('l\'auto frappe dès le début, sans rien acheter', avancer(C, e, 10 * P).joueurs[0].degatsAuto > 0)
 verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1).joueurs[0].degatsAuto === 0 && avancer(C, e, P).joueurs[0].degatsAuto > 0)
-const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, fatigue: 500, repos: 60 })) }
-verifier('l\'auto ignore la fatigue et le repos', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
+const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: -1 })) }
+verifier('l\'auto ignore la forme', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
 const ja = e.joueurs[0]
 verifier('un coup d\'auto frappe exactement comme un tap', degatsDuCoupAuto(C, ja) === degatsDuTap(C, ja))
 const critiques = Array.from({ length: 4000 }, (_, k) => autoCritique(C, e.saison.seed, (k + 1) * P, ja)).filter(Boolean).length
@@ -68,13 +68,29 @@ const enDeux = avancer(C, avancer(C, achete, 2000 + H / 2), 2000 + H)
 verifier('avancer en deux fois = en une', Math.abs(enDeux.joueurs[0].degatsAuto - plusTard.joueurs[0].degatsAuto) < 1e-6 && enDeux.ennemi.etage === plusTard.ennemi.etage)
 verifier('avancer ne recule pas', avancer(C, plusTard, 0) === plusTard)
 
-verifier('sous le seuil, le tap frappe à plein', efficaciteDuTap(C, 0) === 1)
-verifier('au-delà, il rend moins', efficaciteDuTap(C, C.fatigue.seuil + 20) < 0.5)
-const spam = appliquer(C, e, { joueur: 'a', t: 1000, type: 'taper', n: 200 })
-const sage = appliquer(C, e, { joueur: 'a', t: 1000, type: 'taper', n: C.fatigue.seuil })
-const parTapSpam = spam.joueurs[0].degatsTap / 200
-const parTapSage = sage.joueurs[0].degatsTap / C.fatigue.seuil
-verifier('le spam rend moins par tap', parTapSpam < parTapSage)
+// LA FORME : un continuum de 0 % à 200 %, qui se gagne et se perd au temps.
+verifier('la forme va de 0 % à 200 %, 100 % au milieu', multiplicateurDeForme(-1) === 0 && multiplicateurDeForme(0) === 1 && multiplicateurDeForme(1) === 2)
+const neuf = e.joueurs[0]
+verifier('au repos, la forme monte jusqu\'à 200 %', formeA(C, neuf, 9 * H) === 1 && formeA(C, neuf, H) > 0 && formeA(C, neuf, H) < 1)
+/** Un joueur qui tape toutes les `pas` ms pendant `duree`. */
+function taperPendant(pas: number, duree: number): EtatDonjon {
+  let x = e
+  for (let t = 1000; t <= 1000 + duree; t += pas) x = appliquer(C, x, { joueur: 'a', t, type: 'taper', n: 1 })
+  return x
+}
+const lent = taperPendant(1000, 120_000)
+const rapide = taperPendant(200, 120_000)
+const fl = formeA(C, lent.joueurs[0], 121_000)
+const fr = formeA(C, rapide.joueurs[0], 121_000)
+verifier('en action, la forme baisse', fl < 0 && fl > -1)
+verifier('taper vite ou lentement use autant (le temps, pas les coups)', Math.abs(fl - fr) < 1e-9)
+const epuiseLa = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: -1, formeA: 0, actifJusqua: 0 })) }
+verifier('épuisé, on revient au milieu en une demi-heure', Math.abs(formeA(C, epuiseLa.joueurs[0], H / 2)) < 1e-9)
+const repose = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: 1, formeA: 0, actifJusqua: 0 })) }
+const unTapRepose = appliquer(C, repose, { joueur: 'a', t: 0, type: 'taper', n: 1 })
+const unTapNeuf = appliquer(C, e, { joueur: 'a', t: 0, type: 'taper', n: 1 })
+const rapport = unTapRepose.joueurs[0].degatsTap / unTapNeuf.joueurs[0].degatsTap
+verifier('reposé, un tap frappe double', rapport === 2 || rapport === 2 / multCritDe(C, neuf) || rapport === 2 * multCritDe(C, neuf))
 
 const fini = avancer(C, achete, C.saison.duree + 1)
 verifier('la saison finie est archivée', fini.archives.length === 1 && fini.archives[0].etageParJour.length === 7)

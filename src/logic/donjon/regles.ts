@@ -62,7 +62,7 @@ export function dpsEffectifDe(config: ConfigDonjon, j: Joueur): number {
   return dpsDe(config, j) * facteurCritMoyen(config, j)
 }
 
-/** Un coup d'auto : exactement un tap, hors critique (ni fatigue ni repos). */
+/** Un coup d'auto : exactement un tap, hors critique (sans la forme). */
 export function degatsDuCoupAuto(config: ConfigDonjon, j: Joueur): number {
   return degatsDeBaseDuTap(config, j)
 }
@@ -100,7 +100,7 @@ export function coupsAutoA(config: ConfigDonjon, debut: number, t: number, j: Jo
   return Math.max(0, Math.floor((t - debut) / periodeDe(config, j)))
 }
 
-/** Un tap hors critique, fatigue et repos : les dégâts du Coup. */
+/** Un tap hors critique et hors forme : les dégâts du Coup. */
 export function degatsDuTap(config: ConfigDonjon, j: Joueur): number {
   return degatsDeBaseDuTap(config, j)
 }
@@ -117,22 +117,36 @@ export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
   return Math.round(config.xp.base * Math.pow(niveau, config.xp.exposant))
 }
 
-/** La fatigue à l'instant t : elle fond de moitié toutes les `demiVie`. */
-export function fatigueA(config: ConfigDonjon, j: Joueur, t: number): number {
-  const ecoule = Math.max(0, t - j.dernierTap)
-  return j.fatigue * Math.pow(0.5, ecoule / config.fatigue.demiVie)
+const MINUTE = 60_000
+
+/** La forme remonte, hors action, pendant `heures` : vite sous le milieu, lentement au-dessus. */
+function reprendre(config: ConfigDonjon, forme: number, heures: number): number {
+  const f = config.forme
+  if (forme < 0) {
+    const jusquAuMilieu = -forme / f.recuperationParHeure
+    if (heures <= jusquAuMilieu) return forme + heures * f.recuperationParHeure
+    heures -= jusquAuMilieu
+    forme = 0
+  }
+  return Math.min(1, forme + heures * f.reposParHeure)
 }
 
-/** Le repos à l'instant t : l'absence se convertit en taps renforcés. */
-export function reposA(config: ConfigDonjon, j: Joueur, t: number): number {
-  const ecoule = Math.max(0, t - j.dernierTap)
-  return Math.min(config.repos.max, j.repos + (ecoule / HEURE) * config.repos.parHeure)
+/**
+ * LA FORME À L'INSTANT t, de −1 (épuisé) à +1 (reposé). Depuis `formeA`, le
+ * temps encore « en action » (jusqu'à `actifJusqua`) l'use, le reste la
+ * reprend. *Elle ne compte pas les coups* : dix taps ou un seul dans la même
+ * seconde coûtent pareil.
+ */
+export function formeA(config: ConfigDonjon, j: Joueur, t: number): number {
+  if (t <= j.formeA) return j.forme
+  const finAction = Math.min(t, Math.max(j.formeA, j.actifJusqua))
+  const usee = Math.max(-1, j.forme - ((finAction - j.formeA) / MINUTE) * config.forme.usureParMinute)
+  return t > finAction ? reprendre(config, usee, (t - finAction) / HEURE) : usee
 }
 
-/** Ce que rend un tap porté par cette fatigue : plein sous le seuil, puis décroissant. */
-export function efficaciteDuTap(config: ConfigDonjon, fatigue: number): number {
-  const exces = fatigue - config.fatigue.seuil
-  return exces < 0 ? 1 : 1 / (1 + config.fatigue.pente * (exces + 1))
+/** Ce que la forme fait d'un tap : de 0 % (épuisé) à 200 % (reposé), 100 % au milieu. */
+export function multiplicateurDeForme(forme: number): number {
+  return 1 + Math.max(-1, Math.min(1, forme))
 }
 
 // ---------------------------------------------------------------- l'état
@@ -149,9 +163,9 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,
-    fatigue: 0,
-    repos: 0,
-    dernierTap: t,
+    forme: 0,
+    formeA: t,
+    actifJusqua: t,
     bonus: {},
   }
 }
@@ -321,15 +335,12 @@ function avancerSurPlace(config: ConfigDonjon, e: EtatDonjon, t: number): void {
 }
 
 function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: number): void {
-  let fatigue = fatigueA(config, j, t)
-  let repos = reposA(config, j, t)
+  // La forme de l'instant porte tous les taps de l'action ; puis le joueur
+  // est « en action » jusqu'à la fin de la fenêtre.
+  const forme = formeA(config, j, t)
+  const mult = multiplicateurDeForme(forme)
   for (let k = 0; k < n; k++) {
-    let degats = degatsDuTap(config, j) * efficaciteDuTap(config, fatigue)
-    fatigue += 1
-    if (repos >= 1) {
-      degats *= config.repos.mult
-      repos -= 1
-    }
+    let degats = degatsDuTap(config, j) * mult
     if (tirer(e) < chanceCritDe(config, j)) degats *= multCritDe(config, j)
     // Le surplus d'un coup fatal est perdu : un tap frappe un ennemi.
     const porte = Math.min(degats, e.ennemi.pv)
@@ -338,9 +349,9 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
     gagnerXp(config, e, j, porte * config.xp.parDegat, t)
     if (e.ennemi.pv <= 0) achever(config, e, j, t)
   }
-  j.fatigue = fatigue
-  j.repos = repos
-  j.dernierTap = t
+  j.forme = forme
+  j.formeA = t
+  j.actifJusqua = Math.max(j.actifJusqua, t + config.forme.fenetre)
 }
 
 // ---------------------------------------------------------------- l'extérieur

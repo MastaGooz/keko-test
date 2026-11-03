@@ -72,7 +72,7 @@ export const DONJON = {
    * L'AUTO-TAP EST UN TAP QUI SE DONNE TOUT SEUL (Keko : « mettre les coups
    * auto exactement comme les autres et avec les mêmes dégâts »). Dès le
    * début, chaque joueur frappe un coup toutes les `periode` : les dégâts du
-   * Coup, critique compris, sans fatigue ni repos. L'amélioration « Auto-tap »
+   * Coup, critique compris, sans la forme (ni fatigue ni repos). L'amélioration « Auto-tap »
    * en raccourcit l'intervalle : `periode / (1 + acceleration · rang)`, en
    * millisecondes entières, jamais sous `periodeMin`. Les coups de chacun
    * tombent sur les multiples de sa période depuis le début de la saison.
@@ -92,25 +92,25 @@ export const DONJON = {
   },
 
   /**
-   * LA FATIGUE : le spam n'est pas obligatoire. Les `seuil` premiers taps
-   * frappent à plein, ensuite chaque tap rend `1 / (1 + pente · excès)`. Elle
-   * fond de moitié toutes les `demiVie`.
+   * LA FORME : un seul curseur, de −1 (épuisé) à +1 (reposé), qui multiplie
+   * les taps de 0 % à 200 % (`1 + forme`), 100 % au milieu (Keko : « un
+   * continuum qui tend vers 0 % - 200 % entre fatigue max et repos max »).
+   * ELLE SE GAGNE ET SE PERD AU TEMPS, PAS AUX COUPS (Keko : « que plus tard,
+   * si on implante la vitesse d'attaque, elle ne déséquilibre pas le
+   * système ») : un tap tient le joueur « en action » pendant `fenetre` ;
+   * chaque minute en action coûte `usureParMinute`, quel que soit le nombre
+   * de taps. Hors action, la forme remonte : vite jusqu'au milieu
+   * (`recuperationParHeure`), lentement au-delà (`reposParHeure`).
+   * L'auto n'y est pas soumis.
    */
-  fatigue: {
-    seuil: 30,
-    pente: 0.08,
-    demiVie: 20 * MINUTE,
-  },
-
-  /**
-   * LE REPOS : l'absence se convertit en taps renforcés (×`mult`), jusqu'à
-   * `max`. Celui qui revient après une journée frappe fort sans avoir à
-   * rattraper ; celui qui ne part jamais n'en a pas.
-   */
-  repos: {
-    parHeure: 4,
-    max: 60,
-    mult: 3,
+  forme: {
+    fenetre: 1.5 * SECONDE,
+    /** En action : de reposé à normal en 5 min, de normal à épuisé en 5 de plus. */
+    usureParMinute: 0.2,
+    /** Hors action, sous le milieu : d'épuisé à normal en 30 min. */
+    recuperationParHeure: 2,
+    /** Hors action, au-dessus du milieu : de normal à reposé en 8 h. */
+    reposParHeure: 0.125,
   },
 
   bots: {

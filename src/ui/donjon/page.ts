@@ -34,13 +34,12 @@ import {
   degatsDuCoupAuto,
   degatsDuTap,
   facteurCritMoyen,
-  efficaciteDuTap,
   etatInitial,
-  fatigueA,
+  formeA,
   jourDeLaSaison,
   multCritDe,
+  multiplicateurDeForme,
   periodeDe,
-  reposA,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
 import type { EtatDonjon, Evenement, Joueur } from '../../logic/donjon/types.ts'
@@ -151,6 +150,12 @@ const TEINTES = {
 /** La taille des chiffres de dégâts, en rem : `min` jusqu'à 1, + `parDecade` par facteur 10. */
 const TAILLE = { min: 1.3, parDecade: 0.45, max: 4 }
 
+/**
+ * La zone « normale » du trait de forme, de −ZONE à +ZONE (80 % à 120 %) :
+ * le CSS du trait dessine la même (`donjon-forme-trait`, 40 % à 60 %).
+ */
+const ZONE_NORMALE = 0.2
+
 /** Le contour du bouton d'attaque, du milieu du haut, dans le sens des aiguilles. */
 const CONTOUR = 'M50,3 H82 A15,15 0 0 1 97,18 V82 A15,15 0 0 1 82,97 H18 A15,15 0 0 1 3,82 V18 A15,15 0 0 1 18,3 Z'
 
@@ -230,8 +235,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     return img
   }
   let portrait = nouveauPortrait()
-  const etats = el('div', 'donjon-etats')
-  scene.append(portrait, etats)
+  scene.append(portrait)
 
   // Sous la scène : le nom, ce qu'il est, ses PV.
   const fiche = el('section', 'donjon-fiche')
@@ -273,7 +277,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   cadre.prepend(attaque)
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
-  arene.append(cadre)
+  // LA FORME, sous le bouton (Keko : « un marqueur sur un trait, la zone du
+  // milieu = normal, les côtés = fatigue / repos ») : de 0 % à 200 %.
+  const jaugeForme = el('div', 'donjon-forme')
+  const traitForme = el('div', 'donjon-forme-trait')
+  const marqueurForme = el('div', 'donjon-forme-marqueur')
+  const valeurForme = el('span', 'donjon-forme-valeur')
+  marqueurForme.append(valeurForme)
+  traitForme.append(marqueurForme)
+  jaugeForme.append(el('span', 'donjon-forme-bout', 'Fatigue'), traitForme, el('span', 'donjon-forme-bout', 'Repos'))
+  arene.append(cadre, jaugeForme)
 
   // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
   page.append(tete, scene, fiche, arene, bande, fil)
@@ -426,20 +439,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   /**
    * LA COULEUR DIT CE QUI A PORTÉ LE COUP (Keko : « fatigue = gris / repos =
    * jaune / critique = orange / normal = blanc », et l'auto blanc comme les
-   * autres). Le
-   * critique l'emporte sur le repos ; la fatigue grise ensuite le chiffre,
-   * d'autant plus qu'il rend moins (`usure` = 1 − l'efficacité du tap) :
-   * 35 % de gris au premier coup fatigué, gris plein quand le tap ne rend
-   * plus qu'un quart. Un critique ne grise qu'à moitié : il doit rester
-   * orange pour qu'on le reconnaisse. L'auto n'est jamais fatiguée, et son
-   * critique est orange comme celui d'un tap.
+   * autres). Elle suit la forme en continu : le blanc tire vers le jaune
+   * au-dessus du milieu, vers le gris en dessous, plein aux quatre cinquièmes
+   * du chemin. Le critique reste orange ; la fatigue ne le grise qu'à
+   * moitié, pour qu'on le reconnaisse. L'auto n'a pas de forme.
    */
-  function teinteDuChiffre(genre: Genre, repose: boolean, usure: number): string {
+  function teinteDuChiffre(genre: Genre, forme: number): string {
     const critique = STYLES[genre].critique
-    const base = critique ? TEINTES.critique : repose ? TEINTES.repos : TEINTES.normal
-    const plafond = critique ? 0.5 : 1
-    const part = usure > 0 ? plafond * (0.35 + 0.65 * Math.min(1, usure / 0.75)) : 0
-    const [r, g, b] = base.map((c, i) => Math.round(c + (TEINTES.fatigue[i] - c) * part))
+    const base = critique ? TEINTES.critique : TEINTES.normal
+    const vers = forme < 0 ? TEINTES.fatigue : critique ? TEINTES.critique : TEINTES.repos
+    const part = Math.min(1, Math.abs(forme) / 0.8) * (critique && forme < 0 ? 0.5 : 1)
+    const [r, g, b] = base.map((c, i) => Math.round(c + (vers[i] - c) * part))
     return `rgb(${r}, ${g}, ${b})`
   }
 
@@ -526,16 +536,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function frapper(): void {
     const t = maintenant()
     const avant = moi()
-    const efficacite = efficaciteDuTap(C, fatigueA(C, avant, t))
-    const repose = reposA(C, avant, t) >= 1
-    const attendu = degatsDuTap(C, avant) * efficacite * (repose ? C.repos.mult : 1)
+    const forme = formeA(C, avant, t)
+    const attendu = degatsDuTap(C, avant) * multiplicateurDeForme(forme)
     const dejaInfliges = avant.degatsTap
     const [x, y] = surLEnnemi(-0.08, 0)
     attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
     void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
       const inflige = moi().degatsTap - dejaInfliges
       const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
-      const couleur = teinteDuChiffre(genre, repose, 1 - efficacite)
+      const couleur = teinteDuChiffre(genre, forme)
       impact(x, y, genre, couleur)
       envoler(x, y, inflige, genre, couleur)
       dessiner()
@@ -634,15 +643,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const part = Math.max(0, etat.ennemi.pv) / etat.ennemi.pvMax
     pv.style.width = `${100 * part}%`
     pvTexte.textContent = `${nombre(Math.max(0, etat.ennemi.pv))} / ${nombre(etat.ennemi.pvMax)}`
-
-    // Le repos et la fatigue ne se montrent que quand ils jouent.
-    const efficacite = efficaciteDuTap(C, fatigueA(C, j, t))
-    const repos = Math.floor(reposA(C, j, t))
-    const pastilles: string[] = []
-    if (repos >= 1) pastilles.push(`<span class="donjon-etat repos">Repos ×${C.repos.mult} · ${repos}</span>`)
-    if (efficacite < 1) pastilles.push(`<span class="donjon-etat fatigue">Fatigue · ${pourcent(efficacite)}</span>`)
-    const html = pastilles.join('')
-    if (etats.innerHTML !== html) etats.innerHTML = html
 
     // La dernière nouvelle.
     const dernier = etat.journal[etat.journal.length - 1]
@@ -790,7 +790,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       dernierAuto = reel
       const [x, y] = surLEnnemi(0.24, -0.12)
       const genre: Genre = coupsDuLot === 1 && critiquesDuLot === 1 ? 'autoCritique' : 'auto'
-      const couleur = teinteDuChiffre(genre, false, 0)
+      const couleur = teinteDuChiffre(genre, 0)
       impact(x, y, genre, couleur)
       envoler(x, y, cumulAuto, genre, couleur)
       // Le contour complet se lance : il flambe et le bouton bondit.
@@ -809,6 +809,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % periode) / periode
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
+    // La forme glisse en continu : le marqueur la suit à chaque image.
+    const forme = formeA(C, j, t)
+    marqueurForme.style.left = `${(100 * (forme + 1)) / 2}%`
+    marqueurForme.dataset.zone = forme < -ZONE_NORMALE ? 'fatigue' : forme > ZONE_NORMALE ? 'repos' : 'normale'
+    const pourCent = `${Math.round(100 * multiplicateurDeForme(forme))} %`
+    if (valeurForme.textContent !== pourCent) valeurForme.textContent = pourCent
     const texte = `Auto · ${secondes(periode)}`
     if (valeurAuto.textContent !== texte) valeurAuto.textContent = texte
     requestAnimationFrame(image)
