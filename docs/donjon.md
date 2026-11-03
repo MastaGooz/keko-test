@@ -288,7 +288,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   « Attaquer ». Tenu 0,45 s, il montre une bulle de parchemin au-dessus de
   lui : les dégâts d'un coup et « un coup toutes les 2,0 s » ; le doigt levé
   la cache. L'appui frappe quand même une fois. Pas de menu du navigateur
-  (`contextmenu` annulé, `-webkit-touch-callout: none`).
+  (`contextmenu` annulé, `-webkit-touch-callout: none`). Depuis la recharge,
+  la bulle dit aussi le DPS MAX exact (Keko : « maintenant qu'on a un CD, on
+  peut calculer le DPS max exact ») : le tap à chaque fin de recharge
+  (`dpsDeSpam`, l'étalon de la forme) plus l'auto (`dpsEffectifDe`),
+  critiques à la moyenne, forme à 100 % — « 42 + 5,3 auto » au départ.
 - **LE TAP A UNE RECHARGE** (Keko, 03/11 : « un CD sur le bouton, qui
   correspond à la vitesse d'attaque du tap, disons 1 s pour tester ; quand on
   appuie le bouton se colore et la coloration se vide de haut en bas »).

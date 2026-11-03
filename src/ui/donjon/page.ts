@@ -33,6 +33,8 @@ import {
   coupsAutoA,
   coutDe,
   degatsDuCoupAuto,
+  dpsDeSpam,
+  dpsEffectifDe,
   degatsDuTap,
   facteurCritMoyen,
   etatInitial,
@@ -599,7 +601,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   attaque.addEventListener('contextmenu', (ev) => ev.preventDefault())
   function remplirLaBulle(): void {
     const j = moi()
-    const html = `<div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
+    // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
+    const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
+    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 
