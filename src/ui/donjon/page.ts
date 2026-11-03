@@ -29,7 +29,6 @@ import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   autoCritique,
   bonusDeForme,
-  bonusDeSagesse,
   bonusDuCoup,
   gainDeVitesseAuto,
   bornesDeLaForme,
@@ -132,7 +131,6 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
   ardeur: { nom: 'Ardeur', role: 'La force des taps au plus haut du repos', valeur: (j) => pourcent(reposMaxDe(C, j)) },
   recuperation: { nom: 'Récupération', role: 'La fatigue passe plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
   sommeil: { nom: 'Sommeil', role: 'Le repos se gagne plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'sommeil')) },
-  sagesse: { nom: 'Sagesse', role: "L'expérience gagnée, taps et auto", valeur: (j) => bonus(bonusDeSagesse(C, j)) },
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {

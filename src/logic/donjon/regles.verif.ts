@@ -55,7 +55,7 @@ verifier('les niveaux donnent des points', tue.joueurs[0].points >= 1 && tue.jou
 // L'OFFRE : chaque point ouvre trois améliorations au choix.
 const ja0 = tue.joueurs[0]
 verifier('un point ouvre une offre de trois améliorations différentes', ja0.points >= 1 && ja0.offre.length === C.points.tailleOffre && new Set(ja0.offre).size === C.points.tailleOffre)
-const horsOffre = (['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil', 'sagesse'] as const).find((q) => !ja0.offre.includes(q))!
+const horsOffre = (['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil'] as const).find((q) => !ja0.offre.includes(q))!
 verifier('on ne prend pas hors de son offre', appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: horsOffre }).joueurs[0].ameliorations[horsOffre] === 0)
 const pris = appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: ja0.offre[0] }).joueurs[0]
 verifier('prendre une option : un rang, un point de moins, une offre neuve s\'il en reste', pris.ameliorations[ja0.offre[0]] === 1 && pris.points === ja0.points - 1 && (pris.points === 0 ? pris.offre.length === 0 : pris.offre.length === C.points.tailleOffre))
@@ -159,10 +159,6 @@ verifier('Ardeur : reposé, on frappe au nouveau haut', Math.abs(multiplicateurD
 verifier('Ardeur ne change pas la durée : le palier et la fatigue restent', multiplicateurDeForme(C, stat('ardeur', 5), B.palierHaut) === 1 && multiplicateurDeForme(C, stat('ardeur', 5), B.min) === 0)
 const epuiseRang = (r: number) => ({ ...stat('recuperation', r), forme: B.min, formeA: 0 })
 verifier('Récupération : la fatigue passe plus vite', formeA(C, epuiseRang(5), H / 6) > formeA(C, epuiseRang(0), H / 6))
-const sage5 = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, ameliorations: { ...j.ameliorations, sagesse: 5 } })) }
-const xpSans = appliquer(C, e, { joueur: 'a', t: 1000, type: 'taper', n: 1 }).joueurs[0].xp
-const xpAvec = appliquer(C, sage5, { joueur: 'a', t: 1000, type: 'taper', n: 1 }).joueurs[0].xp
-verifier("Sagesse : le même coup rapporte plus d'XP", xpAvec > xpSans * 1.3)
 verifier('Sommeil : le repos se gagne plus vite', formeA(C, stat('sommeil', 5), 3 * H) > formeA(C, stat('sommeil', 0), 3 * H))
 
 const fini = avancer(C, achete, C.saison.duree + 1)

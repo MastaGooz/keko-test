@@ -443,6 +443,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   3,0) : retenus *seuls les niveaux donnent un choix* (le coup fatal n'en
   donne plus) et la courbe d'XP à 2,7 — étage 101, assidu 37 %, fantôme
   12 % (104 / 35 % / 16 % avant).
+- **LA SAGESSE EST PARTIE** (Keko, 03/11 : « l'xp est déjà boostée car elle
+  dépend des dégâts, qui sont déjà boostés » — « retire Sagesse »). L'XP
+  vaut les dégâts infligés : toute amélioration de dégâts monte déjà l'XP,
+  et la Sagesse la multipliait encore (boule de neige). Retirée du jeu ; une
+  sauvegarde qui l'avait dans son offre la retire. L'autre voie (détacher
+  l'XP des dégâts, et garder un bonus d'XP) reste en réserve. Restent sept
+  améliorations générales ; les autres idées (tueurs de race, Ferveur /
+  Veille, XP de repos, Assiduité, Inspiration, rareté des offres…) ont leur
+  place dans des systèmes spécifiques à venir, pas ici (Keko).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
