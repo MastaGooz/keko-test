@@ -285,8 +285,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // à 100 % (Keko : « augmenter la taille de la zone centrale »).
   const BORNES = bornesDeLaForme(C)
   const surLeTrait = (forme: number) => (100 * (forme - BORNES.min)) / (BORNES.max - BORNES.min)
-  const debutPalier = surLeTrait(0)
-  const finPalier = surLeTrait(BORNES.palier)
+  const debutPalier = surLeTrait(BORNES.palierBas)
+  const finPalier = surLeTrait(BORNES.palierHaut)
   traitForme.style.background = `linear-gradient(to right, #3f3f3f 0%, #a8a8a8 ${debutPalier}%, #fff ${debutPalier}% ${finPalier}%, #ffe58a ${finPalier}%, #ffcf2e 100%)`
   arene.append(cadre, jaugeForme)
 

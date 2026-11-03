@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, etatInitial, formeA, multCritDe, multiplicateurDeForme, periodeDe } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, etatInitial, formeA, multCritDe, multiplicateurDeForme, periodeDe } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -47,7 +47,7 @@ verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: '
 const P = C.auto.periode
 verifier('l\'auto frappe dès le début, sans rien acheter', avancer(C, e, 10 * P).joueurs[0].degatsAuto > 0)
 verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1).joueurs[0].degatsAuto === 0 && avancer(C, e, P).joueurs[0].degatsAuto > 0)
-const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: -C.forme.fatigue })) }
+const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: bornesDeLaForme(C).min })) }
 verifier('l\'auto ignore la forme', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
 const ja = e.joueurs[0]
 verifier('un coup d\'auto frappe exactement comme un tap', degatsDuCoupAuto(C, ja) === degatsDuTap(C, ja))
@@ -68,13 +68,16 @@ const enDeux = avancer(C, avancer(C, achete, 2000 + H / 2), 2000 + H)
 verifier('avancer en deux fois = en une', Math.abs(enDeux.joueurs[0].degatsAuto - plusTard.joueurs[0].degatsAuto) < 1e-6 && enDeux.ennemi.etage === plusTard.ennemi.etage)
 verifier('avancer ne recule pas', avancer(C, plusTard, 0) === plusTard)
 
-// LA FORME : de 0 % à 200 %, un palier à 100 %, comptée en minutes de spam.
+// LA FORME : de 0 % à 200 %, un palier à 100 % autour du milieu, en minutes de spam.
 const F = C.forme
+const B = bornesDeLaForme(C)
 const mf = (r: number) => multiplicateurDeForme(C, r)
-verifier('la forme va de 0 % à 200 %, avec un palier à 100 %', mf(-F.fatigue) === 0 && mf(0) === 1 && mf(F.palier / 2) === 1 && mf(F.palier) === 1 && mf(F.palier + F.repos) === 2)
+verifier('la forme va de 0 % à 200 %, avec un palier à 100 % autour du milieu', mf(B.min) === 0 && mf(B.palierBas) === 1 && mf(0) === 1 && mf(B.palierHaut) === 1 && mf(B.max) === 2)
+verifier('le palier fait au moins le tiers du trait', (B.palierHaut - B.palierBas) / (B.max - B.min) >= 1 / 3 - 1e-9)
 const neuf = e.joueurs[0]
-verifier('un joueur neuf est en haut du palier', neuf.forme === F.palier && mf(formeA(C, neuf, 0)) === 1)
-verifier('au repos, la forme monte jusqu\'à 200 %', mf(formeA(C, neuf, 9 * H)) === 2 && mf(formeA(C, neuf, H)) > 1 && mf(formeA(C, neuf, H)) < 2)
+verifier('un joueur neuf est pile au milieu', neuf.forme === 0)
+verifier('sans rien faire, on ne passe pas tout de suite en repos', mf(formeA(C, neuf, H)) === 1 && formeA(C, neuf, H) > 0)
+verifier('au repos, la forme monte jusqu\'à 200 %', mf(formeA(C, neuf, 8 * H)) === 2 && mf(formeA(C, neuf, 4 * H)) > 1 && mf(formeA(C, neuf, 4 * H)) < 2)
 /** Un joueur qui tape `cadence` fois par seconde pendant `duree` ms. */
 function spammer(cadence: number, duree: number): EtatDonjon {
   let x = e
@@ -82,18 +85,19 @@ function spammer(cadence: number, duree: number): EtatDonjon {
   return x
 }
 const sage = spammer(F.cadenceSpam, 45_000)
-verifier('45 s de spam : toujours 100 % (le palier)', mf(formeA(C, sage.joueurs[0], 46_000)) === 1)
-const long = spammer(F.cadenceSpam, 180_000)
-const mLong = mf(formeA(C, long.joueurs[0], 181_000))
-verifier('3 min de spam : la fatigue est là', mLong < 0.8 && mLong > 0.4)
+const fSage = formeA(C, sage.joueurs[0], 46_000)
+verifier('45 s de spam : 100 %, le marqueur a glissé à gauche', mf(fSage) === 1 && fSage < 0)
+const long = spammer(F.cadenceSpam, 120_000)
+const mLong = mf(formeA(C, long.joueurs[0], 121_000))
+verifier('2 min de spam : la fatigue est là', mLong < 0.8 && mLong > 0.3)
 // Mêmes dégâts, même usure : 720 taps d'un coup ou un par un au même instant.
 const enUn = appliquer(C, e, { joueur: 'a', t: 0, type: 'taper', n: 720 })
 let unParUn = e
 for (let k = 0; k < 720; k++) unParUn = appliquer(C, unParUn, { joueur: 'a', t: 0, type: 'taper', n: 1 })
 verifier('l\'usure suit les dégâts, pas le découpage des taps', Math.abs(enUn.joueurs[0].forme - unParUn.joueurs[0].forme) < 1e-9)
-const epuiseLa = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: -F.fatigue, formeA: 0 })) }
-verifier('épuisé, on revient à 100 % en une demi-heure', mf(formeA(C, epuiseLa.joueurs[0], H / 2)) === 1 && mf(formeA(C, epuiseLa.joueurs[0], H / 4)) < 1)
-const repose = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: F.palier + F.repos, formeA: 0 })) }
+const epuiseLa = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: B.min, formeA: 0 })) }
+verifier('épuisé, on revient au milieu en une demi-heure', Math.abs(formeA(C, epuiseLa.joueurs[0], H / 2)) < 1e-9 && mf(formeA(C, epuiseLa.joueurs[0], H / 6)) < 1)
+const repose = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: B.max, formeA: 0 })) }
 const unTapRepose = appliquer(C, repose, { joueur: 'a', t: 0, type: 'taper', n: 1 })
 const unTapNeuf = appliquer(C, e, { joueur: 'a', t: 0, type: 'taper', n: 1 })
 const rapport = unTapRepose.joueurs[0].degatsTap / unTapNeuf.joueurs[0].degatsTap

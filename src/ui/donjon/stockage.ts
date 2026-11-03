@@ -7,12 +7,14 @@
  */
 import type { EtatDesBots } from '../../logic/donjon/bots.ts'
 import type { Horloge } from '../../logic/donjon/horloge.ts'
-import { DONJON } from '../../logic/donjon/config.ts'
 import type { EtatDonjon, Joueur } from '../../logic/donjon/types.ts'
 
 const CLE = 'keko-donjon'
 
-export type SauvegardeDonjon = { etat: EtatDonjon; horloge: Horloge; bots: EtatDesBots }
+/** L'échelle de la forme des joueurs : change quand son sens change. */
+const VERSION_DE_LA_FORME = 3
+
+export type SauvegardeDonjon = { etat: EtatDonjon; horloge: Horloge; bots: EtatDesBots; forme?: number }
 
 export function lireLeDonjon(): SauvegardeDonjon | null {
   try {
@@ -34,18 +36,16 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     ) {
       return null
     }
-    // Les sauvegardes d'avant : la fatigue et le repos comptés en taps
-    // (chacun repart en haut du palier), puis la forme de −1 à +1 comptée au
-    // temps (`actifJusqua`), qu'on remet à l'échelle des minutes de spam.
-    const f = DONJON.forme
-    for (const j of e.joueurs as (Joueur & { actifJusqua?: number })[]) {
-      if (typeof j.forme !== 'number' || typeof j.formeA !== 'number') {
-        j.forme = f.palier
+    // UNE FORME D'UNE AUTRE ÉCHELLE (les versions d'avant : fatigue et repos
+    // en taps, puis au temps, puis en minutes de spam sans milieu) : chacun
+    // repart pile au milieu.
+    if (s.forme !== VERSION_DE_LA_FORME) {
+      for (const j of e.joueurs as (Joueur & { actifJusqua?: number })[]) {
+        j.forme = 0
         j.formeA = e.t
-      } else if ('actifJusqua' in j) {
-        j.forme = j.forme < 0 ? j.forme * f.fatigue : f.palier + j.forme * f.repos
         delete j.actifJusqua
       }
+      s.forme = VERSION_DE_LA_FORME
     }
     return s as SauvegardeDonjon
   } catch {
@@ -55,7 +55,7 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
 
 export function ecrireLeDonjon(s: SauvegardeDonjon): void {
   try {
-    localStorage.setItem(CLE, JSON.stringify(s))
+    localStorage.setItem(CLE, JSON.stringify({ ...s, forme: VERSION_DE_LA_FORME }))
   } catch {
     // Plein ou bloqué : le donjon continue en mémoire.
   }

@@ -92,29 +92,33 @@ export const DONJON = {
   },
 
   /**
-   * LA FORME : une réserve qui multiplie les taps de 0 % à 200 % (Keko : « un
+   * LA FORME : un curseur qui multiplie les taps de 0 % à 200 % (Keko : « un
    * continuum qui tend vers 0 % - 200 % entre fatigue max et repos max »).
    * ELLE SE COMPTE EN MINUTES DE SPAM (Keko : « calculer le DPS moyen et dire
    * que la fatigue commence à partir d'un nombre de dégâts infligés égal à
-   * 1 min de spam ») : un tap en use ce que ses dégâts (critique compris,
-   * forme non comprise) représentent du DPS d'un spammeur
-   * (`cadenceSpam` taps par seconde, critiques à la moyenne). Un coup lent et
-   * fort use autant que plusieurs rapides et faibles pour les mêmes dégâts.
-   * De haut en bas : `repos` minutes de 200 % à 100 %, un `palier` à 100 %
-   * (la fatigue ne commence qu'après), `fatigue` minutes de 100 % à 0 %. Le
-   * temps la refait : vite jusqu'au haut du palier (`recuperationParHeure`),
-   * lentement au-delà (`reposParHeure`). Un joueur neuf est en haut du palier.
-   * L'auto n'y est pas soumis.
+   * 1 min de spam ») : un tap la pousse vers la gauche de ce que ses dégâts
+   * (critique compris, forme non comprise) représentent du DPS d'un
+   * spammeur (`cadenceSpam` taps par seconde, critiques à la moyenne). Un
+   * coup lent et fort use autant que plusieurs rapides et faibles pour les
+   * mêmes dégâts. ON COMMENCE PILE AU MILIEU (0) d'un `palier` à 100 % qui
+   * s'étend de −palier/2 à +palier/2 (Keko : « commencer pile au milieu »,
+   * la zone centrale « au moins 1/3 de la barre ») ; au-delà, `fatigue`
+   * minutes jusqu'à 0 % à gauche, `repos` minutes jusqu'à 200 % à droite.
+   * Le temps la pousse vers la droite : vite sous le milieu
+   * (`recuperationParHeure`), lentement au-dessus (`reposParHeure`) — « si
+   * tu fais rien tu passes pas tout de suite en repos ». L'auto n'y est pas
+   * soumis.
    */
   forme: {
     cadenceSpam: 6,
-    palier: 1,
-    fatigue: 5,
-    repos: 5,
-    /** Sous le haut du palier : d'épuisé à 100 % en 30 min. */
-    recuperationParHeure: 10,
-    /** Au-dessus : du palier à 200 % en 8 h. */
-    reposParHeure: 0.625,
+    /** Une minute de spam de chaque côté du milieu avant la fatigue. */
+    palier: 2,
+    fatigue: 2,
+    repos: 2,
+    /** Sous le milieu : du fond au milieu (3 min de spam) en 30 min. */
+    recuperationParHeure: 6,
+    /** Au-dessus : du milieu à 200 % (3 min de spam) en 8 h ; le repos commence après 2 h 40. */
+    reposParHeure: 0.375,
   },
 
   bots: {

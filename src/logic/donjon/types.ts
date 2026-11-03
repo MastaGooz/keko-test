@@ -30,8 +30,8 @@ export type Joueur = {
   degatsAuto: number
   kills: number
   /**
-   * La forme, en minutes de spam (de −`fatigue` épuisé à `palier` + `repos`
-   * reposé, voir `config.forme`), à l'instant `formeA`.
+   * La forme, en minutes de spam autour du milieu (0 : on y commence ; voir
+   * `config.forme` et `bornesDeLaForme`), à l'instant `formeA`.
    */
   forme: number
   formeA: number

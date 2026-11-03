@@ -263,6 +263,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   est à la même échelle (la zone blanche est le palier, 1/11 du trait),
   dessiné par la page depuis la config. *La version d'avant (au temps
   passé « en action ») usait la forme dès le premier tap.*
+- **ON COMMENCE PILE AU MILIEU, LE PALIER FAIT LE TIERS DU TRAIT** (Keko,
+  03/11 : « on commence direct à droite de la zone blanche. Il faudrait
+  commencer pile au milieu, et en cas d'inaction augmenter vers la droite et
+  en cas d'action vers la gauche ; la zone centrale au moins 1/3 de la
+  barre ; si tu fais rien tu passes pas tout de suite en repos »). La forme
+  est repérée autour du milieu (0, où l'on commence) : le palier à 100 % va
+  de −1 à +1 minute de spam, la fatigue 2 minutes de plus à gauche (0 %),
+  le repos 2 de plus à droite (200 %) — le palier fait donc le tiers du
+  trait, et la fatigue commence toujours après une minute de spam depuis le
+  milieu. Le temps pousse vers la droite : du fond au milieu en 30 min, puis
+  du milieu à 200 % en 8 h (le repos ne commence qu'après 2 h 40). *Les
+  pentes ont raccourci* : de 100 % à 0 % en 2 min de spam (5 avant), de
+  200 % à 100 % en 2 (5 avant), pour tenir le tiers. Une sauvegarde d'une
+  autre échelle repart au milieu (`VERSION_DE_LA_FORME` dans `stockage.ts`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
