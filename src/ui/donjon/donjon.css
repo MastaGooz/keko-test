@@ -186,7 +186,6 @@
   pointer-events: none;
   font-family: var(--d-titre);
   font-weight: 800;
-  font-size: 2.6rem;
   line-height: 1;
   -webkit-text-stroke: 0.14em var(--d-encre);
   paint-order: stroke fill;
@@ -197,14 +196,9 @@
 }
 
 .donjon-degat.critique {
-  font-size: 3.4rem;
   text-shadow:
     0 0.12em 0 var(--d-encre),
     0 0 0.5em rgba(255, 130, 30, 0.85);
-}
-
-.donjon-degat.auto {
-  font-size: 1.9rem;
 }
 
 .donjon-degat-mot {
@@ -214,30 +208,30 @@
   color: #ffe2c4;
 }
 
-/* L'étoile d'impact : huit pointes, un cœur blanc. */
-.donjon-impact {
+/* L'onde de choc : un anneau qui s'ouvre et s'efface, à la couleur du coup
+   (`currentColor`, posé par la page). */
+.donjon-onde {
   position: absolute;
   z-index: 2;
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  border: 0.35rem solid currentColor;
+  box-shadow:
+    0 0 0.6rem currentColor,
+    inset 0 0 0.6rem currentColor;
   pointer-events: none;
-  background:
-    radial-gradient(circle, #fff 0 7%, rgba(255, 255, 255, 0) 20%),
-    repeating-conic-gradient(rgba(255, 244, 214, 0.95) 0deg 9deg, rgba(255, 244, 214, 0) 13deg 45deg);
-  -webkit-mask: radial-gradient(circle, #000 0 30%, rgba(0, 0, 0, 0.8) 45%, transparent 70%);
-  mask: radial-gradient(circle, #000 0 30%, rgba(0, 0, 0, 0.8) 45%, transparent 70%);
 }
 
-.donjon-impact.critique {
-  background:
-    radial-gradient(circle, #fff 0 8%, rgba(255, 170, 90, 0) 22%),
-    repeating-conic-gradient(rgba(255, 140, 40, 1) 0deg 9deg, rgba(255, 140, 40, 0) 13deg 45deg);
-}
-
-.donjon-impact.auto {
-  background:
-    radial-gradient(circle, #e8f6ff 0 6%, rgba(169, 220, 255, 0) 18%),
-    repeating-conic-gradient(rgba(169, 220, 255, 0.9) 0deg 8deg, rgba(169, 220, 255, 0) 12deg 45deg);
+/* Les particules : de petits éclats ronds qui s'éparpillent et retombent. */
+.donjon-particule {
+  position: absolute;
+  z-index: 2;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0.35rem rgba(255, 255, 255, 0.6);
+  pointer-events: none;
 }
 
 /* ------------------------------------------------ l'ennemi */

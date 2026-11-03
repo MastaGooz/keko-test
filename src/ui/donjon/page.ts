@@ -10,8 +10,8 @@
  * et les réglages (vitesse, recommencer) s'ouvrent en feuille.
  *
  * Retour au doigt (Keko : « plus juicy et visibles ») : le bouton s'enfonce,
- * l'ennemi blanchit et recule sous une étoile d'impact, le chiffre jaillit
- * de lui, gros et cerné d'encre (doré et secoué pour un critique). L'AUTO
+ * l'ennemi blanchit et recule sous une onde de choc et ses particules, le
+ * chiffre jaillit de lui, cerné d'encre, d'autant plus gros qu'il est grand. L'AUTO
  * frappe dès le début, par coups : le contour du bouton s'éclaire jusqu'au
  * prochain, et quand il est complet le coup part, son chiffre (bleu) jaillit
  * de l'ennemi. Pas de son.
@@ -143,6 +143,9 @@ const TEINTES = {
   auto: [169, 220, 255],
   fatigue: [150, 150, 150],
 }
+
+/** La taille des chiffres de dégâts, en rem : `min` jusqu'à 1, + `parDecade` par facteur 10. */
+const TAILLE = { min: 1.3, parDecade: 0.45, max: 4 }
 
 /** Le contour du bouton d'attaque, du milieu du haut, dans le sens des aiguilles. */
 const CONTOUR = 'M50,3 H82 A15,15 0 0 1 97,18 V82 A15,15 0 0 1 82,97 H18 A15,15 0 0 1 3,82 V18 A15,15 0 0 1 18,3 Z'
@@ -375,11 +378,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   type Genre = 'tap' | 'critique' | 'auto'
 
   /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
-  function envoler(x: number, y: number, texte: string, genre: Genre, repose = false, usure = 0): void {
+  function envoler(x: number, y: number, valeur: number, genre: Genre, couleur: string): void {
     const n = el('div', `donjon-degat ${genre}`)
-    n.style.color = teinteDuChiffre(genre, repose, usure)
+    n.style.color = couleur
+    n.style.fontSize = `${tailleDuChiffre(valeur, genre)}rem`
     if (genre === 'critique') n.append(el('span', 'donjon-degat-mot', 'Critique !'))
-    n.append(el('span', undefined, texte))
+    n.append(el('span', undefined, nombre(valeur)))
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     scene.append(n)
@@ -417,22 +421,59 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     return `rgb(${r}, ${g}, ${b})`
   }
 
-  /** L'étoile d'impact là où le coup porte, et l'ennemi qui blanchit et recule. */
-  function impact(x: number, y: number, genre: Genre): void {
-    const etoile = el('div', `donjon-impact ${genre}`)
-    etoile.style.left = `${x}px`
-    etoile.style.top = `${y}px`
-    scene.append(etoile)
-    const taille = genre === 'critique' ? 1.9 : genre === 'auto' ? 0.9 : 1.3
-    const tour = Math.random() * 90
-    etoile.animate(
+  /**
+   * LA TAILLE DU CHIFFRE SUIT SA VALEUR (Keko : « une taille minimale pour 1
+   * ou moins et qui grossit en fonction ») : `TAILLE.min` jusqu'à 1, puis
+   * `TAILLE.parDecade` de plus à chaque facteur 10, plafonnée à `TAILLE.max`.
+   * Le critique est un peu plus gros, l'auto un peu plus petit.
+   */
+  function tailleDuChiffre(valeur: number, genre: Genre): number {
+    const brute = Math.min(TAILLE.max, TAILLE.min + TAILLE.parDecade * Math.log10(Math.max(1, valeur)))
+    return brute * (genre === 'critique' ? 1.2 : genre === 'auto' ? 0.8 : 1)
+  }
+
+  /**
+   * L'IMPACT : une petite onde de choc et des particules qui s'éparpillent
+   * (Keko : l'étoile « correspond à un coup de poing »), à la couleur du
+   * chiffre ; l'ennemi blanchit et recule.
+   */
+  function impact(x: number, y: number, genre: Genre, couleur: string): void {
+    const fort = genre === 'critique' ? 1.6 : genre === 'auto' ? 0.7 : 1
+    const onde = el('div', 'donjon-onde')
+    onde.style.left = `${x}px`
+    onde.style.top = `${y}px`
+    onde.style.color = couleur
+    scene.append(onde)
+    onde.animate(
       [
-        { transform: `translate(-50%, -50%) scale(0.2) rotate(${tour}deg)`, opacity: 1 },
-        { transform: `translate(-50%, -50%) scale(${taille}) rotate(${tour + 25}deg)`, opacity: 0.9, offset: 0.4 },
-        { transform: `translate(-50%, -50%) scale(${taille * 1.2}) rotate(${tour + 35}deg)`, opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(0.15)', opacity: 1, borderWidth: '0.4rem', easing: 'ease-out' },
+        { transform: `translate(-50%, -50%) scale(${fort * 0.75})`, opacity: 0.9, borderWidth: '0.2rem', offset: 0.45, easing: 'ease-in' },
+        { transform: `translate(-50%, -50%) scale(${fort})`, opacity: 0, borderWidth: '0.05rem' },
       ],
-      { duration: genre === 'critique' ? 380 : 260, easing: 'ease-out' },
-    ).onfinish = () => etoile.remove()
+      { duration: 380 },
+    ).onfinish = () => onde.remove()
+
+    const combien = genre === 'critique' ? 12 : genre === 'auto' ? 5 : 8
+    for (let i = 0; i < combien; i++) {
+      const p = el('div', 'donjon-particule')
+      p.style.left = `${x}px`
+      p.style.top = `${y}px`
+      p.style.background = couleur
+      scene.append(p)
+      // Le hasard de l'écran, pas celui des règles.
+      const angle = ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
+      const loin = (28 + Math.random() * 34) * fort
+      const dx = Math.cos(angle) * loin
+      const dy = Math.sin(angle) * loin
+      p.animate(
+        [
+          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx * 0.8}px), calc(-50% + ${dy * 0.8}px)) scale(0.8)`, opacity: 1, offset: 0.55 },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 14}px)) scale(0.2)`, opacity: 0 },
+        ],
+        { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
+      ).onfinish = () => p.remove()
+    }
 
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase.
     const recul = (x < scene.clientWidth / 2 ? 1 : -1) * (genre === 'critique' ? 14 : genre === 'auto' ? 4 : 8)
@@ -472,8 +513,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
       const inflige = moi().degatsTap - dejaInfliges
       const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
-      impact(x, y, genre)
-      envoler(x, y, nombre(inflige), genre, repose, 1 - efficacite)
+      const couleur = teinteDuChiffre(genre, repose, 1 - efficacite)
+      impact(x, y, genre, couleur)
+      envoler(x, y, inflige, genre, couleur)
       dessiner()
     })
   }
@@ -704,8 +746,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (cumulAuto > 0 && reel - dernierAuto >= CADENCE_AUTO) {
       dernierAuto = reel
       const [x, y] = surLEnnemi(0.24, -0.12)
-      impact(x, y, 'auto')
-      envoler(x, y, nombre(cumulAuto), 'auto')
+      const couleur = teinteDuChiffre('auto', false, 0)
+      impact(x, y, 'auto', couleur)
+      envoler(x, y, cumulAuto, 'auto', couleur)
       // Le contour complet se lance : il flambe et le bouton bondit.
       contour.animate(
         [{ filter: 'drop-shadow(0 0 0.9rem #e8f6ff) brightness(1.8)' }, { filter: 'drop-shadow(0 0 0.3rem #a9dcff) brightness(1)' }],

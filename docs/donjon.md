@@ -172,6 +172,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   repos. Les couleurs ne sont écrites qu'une fois, dans
   `TEINTES` (`page.ts`) ; le CSS ne garde que les tailles et les ombres.
   Les pastilles « Repos » et « Fatigue » de la scène suivent : jaune et gris.
+- **LA TAILLE DU CHIFFRE SUIT SA VALEUR, L'IMPACT EST UNE ONDE** (Keko,
+  03/11 : « ajuster la taille des chiffres en fonction du nombre, avec une
+  taille minimale pour 1 ou moins », et l'étoile « correspond à un coup de
+  poing », à remplacer par « une petite onde de choc avec des petites
+  particules »). La taille vaut 1,3 rem jusqu'à 1, puis 0,45 rem de plus
+  par facteur 10, plafonnée à 4 rem (`TAILLE`) : 10 → 1,75, 100 → 2,2,
+  1 k → 2,65, 1 M → 4. Le critique ×1,2, l'auto ×0,8. *Le plafond tombe
+  vers le million : en fin de saison, les gros coups seront tous au
+  plafond.* L'impact est un anneau qui s'ouvre et s'efface et 5 à 12
+  particules qui s'éparpillent et retombent un peu, à la couleur du
+  chiffre (critique plus grand, auto plus petit).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
