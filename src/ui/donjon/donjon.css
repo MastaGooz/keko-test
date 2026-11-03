@@ -1,7 +1,8 @@
 /* LE DONJON COOPÉRATIF — `?donjon`. La DA du gacha, « taverne & parchemin » :
    bois sombre, parchemin, encre brune, or ; Grenze pour les noms et les
    chiffres, Baloo pour le reste. La page tient dans l'écran, rien ne défile
-   hors des feuilles. L'ennemi (la scène) prend toute la place qui reste. */
+   hors des feuilles. La scène a une hauteur bornée ; la place qui reste va
+   au gros bouton rond « Attaquer », en bas, sous le pouce. */
 
 .donjon {
   --d-fond: #1b130d;
@@ -93,8 +94,9 @@
 
 .donjon-scene {
   position: relative;
-  flex: 1;
-  min-height: 11rem;
+  flex: 0 1 auto;
+  height: clamp(9rem, 32vh, 16rem);
+  min-height: 9rem;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -105,9 +107,6 @@
   background-size: cover;
   background-position: center 65%;
   box-shadow: inset 0 0 3rem rgba(0, 0, 0, 0.45);
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
 }
 
 /* L'ombre sous ses pieds. */
@@ -172,31 +171,6 @@
 
 .donjon-etat.fatigue {
   color: #ffb36b;
-}
-
-.donjon-indice {
-  position: absolute;
-  bottom: 0.7rem;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.2rem 0.9rem;
-  border-radius: 999px;
-  background: rgba(20, 12, 6, 0.75);
-  font-weight: 700;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  pointer-events: none;
-  animation: donjon-respire 1.6s ease-in-out infinite;
-}
-
-.donjon-indice[hidden] {
-  display: none;
-}
-
-@keyframes donjon-respire {
-  50% {
-    opacity: 0.55;
-  }
 }
 
 /* Le chiffre qui s'envole. */
@@ -392,6 +366,57 @@
 
 .donjon-points:empty {
   display: none;
+}
+
+/* ------------------------------------------------ attaquer */
+
+.donjon-arene {
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* `.donjon .donjon-attaque` : `.donjon button` remet la police héritée. */
+.donjon .donjon-attaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  height: min(10rem, 100%);
+  min-height: 5.5rem;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #f8d98a, var(--d-or) 50%, #a5762a);
+  color: var(--d-encre) !important;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: clamp(1.1rem, 4.5vh, 1.6rem);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -7px 0 rgba(61, 39, 22, 0.35),
+    0 0 0 4px var(--d-fond),
+    0 0 0 6px var(--d-or-sombre),
+    0 0.5rem 1.2rem rgba(0, 0, 0, 0.5);
+}
+
+.donjon-attaque svg {
+  width: 38%;
+  height: 38%;
+}
+
+.donjon .donjon-attaque:active {
+  background: radial-gradient(circle at 38% 30%, #e8c470, #cf9a3c 50%, #8f6522);
+  box-shadow:
+    inset 0 4px 8px rgba(61, 39, 22, 0.4),
+    0 0 0 4px var(--d-fond),
+    0 0 0 6px var(--d-or-sombre),
+    0 0.2rem 0.5rem rgba(0, 0, 0, 0.5);
 }
 
 /* ------------------------------------------------ les choix (dans la feuille) */

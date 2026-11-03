@@ -392,8 +392,8 @@ Un clicker coopératif à saisons (Keko, 02/11) : un ennemi commun, des étages,
 une semaine par saison, quatre bots et le joueur. **Tout l'équilibrage est
 dans `logic/donjon/config.ts`** ; un seul réducteur (`appliquer`) derrière
 l'interface `EtatPartage`, prête pour un backend ; l'auto-tap se résout par
-événements. L'ennemi est une carte du pool sur le camp de sa race, et c'est
-lui qu'on tape ; le niveau est le bouton des améliorations (il s'allume
+événements. L'ennemi est une carte du pool sur le camp de sa race, dans une
+scène bornée ; on frappe par le bouton « Attaquer », en bas ; le niveau est le bouton des améliorations (il s'allume
 quand il reste des points) ; toutes les classes CSS sont préfixées `donjon-` (`.moi` est
 prise par l'archive). `npm run donjon` simule une saison. `&neuf` repart de zéro. Tout
 est dans `docs/donjon.md`.

@@ -1,15 +1,17 @@
 /**
  * LE DONJON COOPÉRATIF À L'ÉCRAN — `?donjon`.
  *
- * Du DOM simple, sans React ni three. **L'ennemi EST le bouton** : une carte
- * du pool orc/gobelin debout sur le camp de sa race, qu'on tape (Keko : « l'ui
- * surchargé et pas très beau » — le gros bouton, les onglets et la vitesse
- * sont partis). Sous lui, son nom et ses PV, la dernière nouvelle du journal,
- * le niveau. Les améliorations (une tape sur le niveau), le classement, le
- * journal entier et les réglages (vitesse, recommencer) s'ouvrent en feuille.
+ * Du DOM simple, sans React ni three. L'ennemi est une carte du pool
+ * orc/gobelin debout sur le camp de sa race, dans une scène de hauteur bornée
+ * (Keko : « l'ennemi prend trop de place »). Sous lui, son nom et ses PV ; en
+ * bas, sous le pouce, la dernière nouvelle du journal, le niveau et le bouton
+ * « Attaquer » (Keko : « un bouton d'attaque plutôt que tap sur le monstre »).
+ * Les améliorations (une tape sur le niveau), le classement, le journal entier
+ * et les réglages (vitesse, recommencer) s'ouvrent en feuille.
  *
- * Retour au doigt LÉGER (choisi par Keko) : l'ennemi s'écrase, le chiffre
- * s'envole (doré pour un critique), le suivant surgit à la mort. Pas de son.
+ * Retour au doigt LÉGER (choisi par Keko) : le bouton s'enfonce, l'ennemi
+ * s'écrase, le chiffre s'envole de lui (doré pour un critique), le suivant
+ * surgit à la mort. Pas de son.
  *
  * *Toutes les règles sont dans `logic/donjon/`* ; ici on lit l'horloge, on
  * joue les bots à leur heure et on dessine. Le joueur passe par `agir`, comme
@@ -125,6 +127,9 @@ const ICONE_TROPHEE =
 const ICONE_REGLAGES =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>'
 
+const ICONE_EPEE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H20v5.5L9 20l-5.5-5.5z"/><path d="M5.5 12.5l6 6M3 21l3.5-3.5"/></svg>'
+
 type Feuille = 'ameliorations' | 'classement' | 'journal' | 'reglages'
 
 export async function monterDonjon(racine: HTMLElement, build: string): Promise<void> {
@@ -189,10 +194,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   boutonReglages.setAttribute('aria-label', 'Réglages')
   tete.append(infos, boutonClassement, boutonReglages)
 
-  // La scène : le camp, l'ennemi debout dessus. C'est elle qu'on tape.
+  // La scène : le camp, l'ennemi debout dessus. On ne la tape plus : c'est
+  // le bouton « Attaquer » qui frappe.
   const scene = el('div', 'donjon-scene')
-  scene.setAttribute('role', 'button')
-  scene.setAttribute('aria-label', 'Frapper l\'ennemi')
   const nouveauPortrait = () => {
     const img = el('img', 'donjon-portrait')
     img.alt = ''
@@ -202,8 +206,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let portrait = nouveauPortrait()
   const pastilleEtage = el('div', 'donjon-pastille-etage')
   const etats = el('div', 'donjon-etats')
-  const indice = el('div', 'donjon-indice', 'Touchez l\'ennemi pour frapper')
-  scene.append(portrait, pastilleEtage, etats, indice)
+  scene.append(portrait, pastilleEtage, etats)
 
   // Sous la scène : le nom, ce qu'il est, ses PV.
   const fiche = el('section', 'donjon-fiche')
@@ -231,7 +234,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const points = el('span', 'donjon-points')
   bande.append(niveau, xp, points)
 
-  page.append(tete, scene, fiche, fil, bande)
+  // LE BOUTON D'ATTAQUE, rond, au milieu de la place qui reste, sous le pouce.
+  const arene = el('div', 'donjon-arene')
+  const attaque = bouton('donjon-attaque')
+  attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
+  arene.append(attaque)
+
+  page.append(tete, scene, fiche, fil, bande, arene)
 
   // Les quatre choix, faits une fois (redessinés à chaque tic, les boutons
   // perdraient le clic entre l'appui et le relâchement). Ils vivent dans la
@@ -352,15 +361,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => n.remove()
   }
 
-  scene.addEventListener('pointerdown', (ev) => {
-    if (ev.button !== 0) return
+  function frapper(): void {
     const t = maintenant()
     const avant = moi()
     const attendu = degatsDuTap(C, avant) * efficaciteDuTap(C, fatigueA(C, avant, t)) * (reposA(C, avant, t) >= 1 ? C.repos.mult : 1)
     const dejaInfliges = avant.degatsTap
-    const boite = scene.getBoundingClientRect()
-    const x = ev.clientX - boite.left
-    const y = ev.clientY - boite.top
+    // Le chiffre part de l'ennemi, un peu au hasard pour que les taps
+    // rapides ne s'empilent pas (le hasard de l'écran, pas celui des règles).
+    const x = scene.clientWidth * (0.5 + (Math.random() - 0.5) * 0.4)
+    const y = scene.clientHeight * (0.45 + (Math.random() - 0.5) * 0.2)
+    attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.95)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
     portrait.animate(
       [
         { transform: 'scale(1)', filter: 'brightness(1)' },
@@ -375,6 +385,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       envoler(x, y, nombre(inflige), critique)
       dessiner()
     })
+  }
+
+  // Au pointeur dès l'appui (un clic attendrait le relâchement) ; au clavier
+  // par le clic, qui n'a pas d'appui (`detail` 0).
+  attaque.addEventListener('pointerdown', (ev) => {
+    if (ev.button === 0) frapper()
+  })
+  attaque.addEventListener('click', (ev) => {
+    if (ev.detail === 0) frapper()
   })
 
   // ------------------------------------------------ le dessin
@@ -469,7 +488,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (efficacite < 1) pastilles.push(`<span class="donjon-etat fatigue">Fatigue · ${pourcent(efficacite)}</span>`)
     const html = pastilles.join('')
     if (etats.innerHTML !== html) etats.innerHTML = html
-    indice.hidden = j.degatsTap > 0
 
     // La dernière nouvelle.
     const dernier = etat.journal[etat.journal.length - 1]

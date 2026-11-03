@@ -106,6 +106,16 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   du suivant), et le nouveau est décodé à part puis posé d'un coup. Mesuré
   par une sonde à chaque image : 0 image fautive sur 11 morts, le nouveau
   posé en 0 à 28 ms.
+- **UN BOUTON « ATTAQUER » PLUTÔT QUE L'ENNEMI À TAPER** (Keko, 03/11 :
+  « l'ennemi prend trop de place et il faudrait un bouton d'attaque plutôt
+  que tap sur le monstre »). La scène n'a plus toute la place qui reste :
+  sa hauteur est bornée (`clamp(9rem, 32vh, 16rem)`). Le bas de l'écran,
+  sous le pouce, porte la dernière nouvelle, le niveau puis un gros bouton
+  d'or ROND « Attaquer », centré dans la place qui reste (10 rem au plus,
+  5,5 au moins : un bouton large laissait un trou vide au milieu de
+  l'écran). Il frappe dès l'appui. Le bouton
+  s'enfonce, l'ennemi s'écrase toujours et le chiffre s'envole de lui, un
+  peu au hasard. L'indice « Touchez l'ennemi » est parti avec le geste.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
