@@ -525,6 +525,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   n° 010 ; la dague = capacité n° 119 (la main et la dague) ; **le bâton =
   capacité n° 116 (la magie), faute d'image de bâton : à remplacer** quand
   Keko en aura une.
+- **L'EMPLACEMENT D'ARME QUITTE LA LIGNE D'ATTAQUE** (Keko, 03/11 : « je
+  voudrais pas mettre le bouton équipement sur la ligne du bouton
+  d'attaque, je veux garder l'emplacement pour éventuellement d'autres
+  boutons d'attaque plus tard »). Il est sur la ligne du personnage, à
+  gauche de la bande du niveau : l'arme, puis le niveau qui ouvre les stats.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

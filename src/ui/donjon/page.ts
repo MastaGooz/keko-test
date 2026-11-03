@@ -332,8 +332,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   cadre.innerHTML = `<svg class="donjon-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="donjon-contour-fond" d="${CONTOUR}"/><path class="donjon-contour-plein" pathLength="1" d="${CONTOUR}"/></svg>`
   cadre.prepend(attaque)
   cadre.append(bulle)
-  // L'EMPLACEMENT D'ARME, à gauche du bouton : l'arme portée ; une tape
-  // ouvre l'armurerie.
+  // L'EMPLACEMENT D'ARME, sur la ligne du niveau (Keko : « pas sur la ligne
+  // du bouton d'attaque, je veux garder l'emplacement pour d'autres boutons
+  // d'attaque plus tard ») : l'arme portée ; une tape ouvre l'armurerie.
   const emplacement = bouton('donjon-emplacement')
   emplacement.setAttribute('aria-label', 'Armes')
   const imageArme = el('img', 'donjon-emplacement-image')
@@ -341,7 +342,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   imageArme.draggable = false
   const nomArme = el('span', 'donjon-emplacement-nom')
   emplacement.append(imageArme, nomArme)
-  cadre.append(emplacement)
   let armeVue = ''
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
@@ -364,7 +364,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   arene.append(cadre, jaugeForme)
 
   // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
-  page.append(tete, scene, fiche, arene, bande, fil)
+  // La ligne du personnage : son arme, puis son niveau (qui ouvre ses stats).
+  const perso = el('div', 'donjon-perso')
+  perso.append(emplacement, bande)
+  page.append(tete, scene, fiche, arene, perso, fil)
 
   // Les cinq stats, faites une fois (redessinées à chaque tic, les boutons
   // perdraient le clic entre l'appui et le relâchement). Un point par niveau,
