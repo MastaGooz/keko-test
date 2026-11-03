@@ -46,7 +46,6 @@ import {
   multCritDe,
   multiplicateurDeForme,
   periodeDe,
-  reposMaxDe,
   tapPret,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
@@ -128,7 +127,6 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
   auto: { nom: 'Auto-tap', role: 'La vitesse du coup tout seul, même absent', valeur: (j) => bonus(gainDeVitesseAuto(C, j)) },
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
   multCrit: { nom: 'Force', role: 'Les dégâts d\'un coup critique', valeur: (j) => pourcent(multCritDe(C, j)) },
-  ardeur: { nom: 'Ardeur', role: 'La force des taps au plus haut du repos', valeur: (j) => pourcent(reposMaxDe(C, j)) },
   recuperation: { nom: 'Récupération', role: 'La fatigue passe et le repos vient plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
 }
 

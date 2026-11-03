@@ -172,14 +172,14 @@ export function bornesDeLaForme(config: ConfigDonjon): { min: number; palierBas:
 }
 
 /** Le bonus d'une stat de la forme (+0,15 = +15 %). */
-export function bonusDeForme(config: ConfigDonjon, j: Joueur, quoi: 'ardeur' | 'recuperation'): number {
+export function bonusDeForme(config: ConfigDonjon, j: Joueur, quoi: 'recuperation'): number {
   const s = config.forme[quoi]
   return bonusDecroissant(s.gain, s.exposant, j.ameliorations[quoi])
 }
 
-/** Le haut du repos : 200 % au rang 0 d'Ardeur, puis de plus en plus haut. */
-export function reposMaxDe(config: ConfigDonjon, j: Joueur): number {
-  return 1 + (1 + bonusDeForme(config, j, 'ardeur'))
+/** Le haut du repos (200 %) ; le joueur est là pour le jour où un système le montera. */
+export function reposMaxDe(config: ConfigDonjon, _j: Joueur): number {
+  return config.forme.reposMax
 }
 
 /** Le temps pousse la forme vers la droite : vite jusqu'au milieu, lentement au-delà. */
@@ -230,7 +230,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     niveau: 1,
     points: 0,
     offre: [],
-    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, ardeur: 0, recuperation: 0 },
+    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, recuperation: 0 },
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,

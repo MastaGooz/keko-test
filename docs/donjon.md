@@ -457,6 +457,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   Récupération (+15 % au rang 1, de moins en moins) accélère les deux
   moitiés du chemin : la fatigue se résorbe et le repos se remplit. Six
   améliorations. Une offre qui nommait le Sommeil se retire.
+- **L'ARDEUR EST PARTIE** (Keko, 03/11 : « je pense pas qu'on devrait toucher
+  au maximum de repos en stat générale »). Le haut du repos est fixe,
+  `forme.reposMax` = 200 % (`reposMaxDe` reste, pour un système qui le
+  monterait un jour). Cinq améliorations générales : Coup, Auto-tap,
+  Critique, Force, Récupération ; l'offre en tire trois.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

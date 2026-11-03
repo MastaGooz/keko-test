@@ -18,8 +18,8 @@ const MINUTE = 60 * SECONDE
 const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
-export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'ardeur' | 'recuperation'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation']
+export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'recuperation'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'recuperation']
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -187,7 +187,12 @@ export const DONJON = {
      */
     entreeRepos: 1.5,
     entreeFatigue: 0.5,
-    ardeur: { gain: 0.15, exposant: 0.8 },
+    /**
+     * Le haut du repos : 200 %, fixe. L'Ardeur, qui le montait, n'est plus
+     * une amélioration générale (Keko : « je pense pas qu'on devrait toucher
+     * au maximum de repos en stat générale »).
+     */
+    reposMax: 2,
     recuperation: { gain: 0.15, exposant: 0.8 },
   },
 
