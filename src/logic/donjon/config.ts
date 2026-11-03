@@ -18,8 +18,25 @@ const MINUTE = 60 * SECONDE
 const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
-export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'recuperation'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
+/**
+ * LES CARACTÉRISTIQUES (Keko : « convertir notre tableau en système de
+ * caracs : force, dex, intel, stamina ; chaque carac augmente une partie des
+ * stats, en distinguant les armes de force / agilité / intel » ; « 1 point
+ * de carac par niveau, c'est tout »). Le nom de type reste `CleAmelioration`
+ * (et le champ `ameliorations`) : ce sont elles qu'on améliore.
+ * - FORCE : les dégâts des armes de force, et les dégâts critiques ;
+ * - DEXTÉRITÉ : les dégâts des armes d'agilité, et la vitesse (tap et auto) ;
+ * - INTELLIGENCE : les dégâts des armes d'intel, et la chance de critique ;
+ * - ENDURANCE : la récupération de la forme, rien d'autre (Keko : « le bonus
+ *   de récup est déjà un bonus de dégâts, c'est assez fort »).
+ */
+export type CleAmelioration = 'force' | 'dexterite' | 'intelligence' | 'endurance'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['force', 'dexterite', 'intelligence', 'endurance']
+
+/** Le type d'une arme : la caractéristique qui fait ses dégâts. */
+export type TypeArme = 'force' | 'agilite' | 'intel'
+export const ARMES: readonly TypeArme[] = ['force', 'agilite', 'intel']
+export const CARAC_DE_L_ARME: Record<TypeArme, CleAmelioration> = { force: 'force', agilite: 'dexterite', intel: 'intelligence' }
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -29,7 +46,9 @@ export type ProfilBot = {
   passagesParJour: number
   /** Le nombre de taps d'un passage, tiré dans [min, max]. */
   taps: [number, number]
-  /** La règle de dépense : il achète la piste la plus en retard sur son poids (absente : jamais). */
+  /** Son arme. */
+  arme: TypeArme
+  /** La règle de dépense : il met son point dans la caractéristique la plus en retard sur son poids (absente : jamais). */
   poids: Partial<Record<CleAmelioration, number>>
 }
 
@@ -70,7 +89,6 @@ export const DONJON = {
   points: {
     parNiveau: 1,
     parKill: 0,
-    tailleOffre: 3,
   },
 
   /**
@@ -215,29 +233,32 @@ export const DONJON = {
         nom: 'Bot assidu',
         passagesParJour: 8,
         taps: [30, 50],
-        poids: { tap: 3, vitesse: 3, chanceCrit: 1, multCrit: 1 },
+        arme: 'force',
+        poids: { force: 3, dexterite: 2, intelligence: 1 },
       },
       {
         id: 'occasionnel-a',
         nom: 'Bot occasionnel A',
         passagesParJour: 2,
         taps: [20, 40],
-        poids: { tap: 1, vitesse: 3, chanceCrit: 1, multCrit: 1 },
+        arme: 'agilite',
+        poids: { dexterite: 3, intelligence: 1, force: 1 },
       },
       {
         id: 'occasionnel-b',
         nom: 'Bot occasionnel B',
         passagesParJour: 2,
         taps: [15, 35],
-        poids: { tap: 2, vitesse: 2, chanceCrit: 1, multCrit: 1 },
+        arme: 'intel',
+        poids: { intelligence: 3, dexterite: 1, force: 1 },
       },
       {
         id: 'fantome',
         nom: 'Bot fantôme',
         passagesParJour: 1 / 3,
         taps: [10, 30],
-        // Le Coup fait aussi les dégâts de l'auto : même le fantôme en achète.
-        poids: { tap: 1, vitesse: 1, chanceCrit: 0, multCrit: 0 },
+        arme: 'force',
+        poids: { force: 2, dexterite: 1 },
       },
     ] as ProfilBot[],
   },

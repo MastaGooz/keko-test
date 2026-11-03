@@ -61,7 +61,7 @@ export async function simulerSaison(config: ConfigDonjon, seed: number): Promise
   let maintenant = debut
   const partage = etatPartageLocal(config, etatInitial(config, seed, debut), () => maintenant)
   for (const p of config.bots.profils) {
-    await partage.agir({ joueur: p.id, t: debut, type: 'rejoindre', nom: p.nom, bot: p.id })
+    await partage.agir({ joueur: p.id, t: debut, type: 'rejoindre', nom: p.nom, bot: p.id, arme: p.arme })
   }
   await jouerLesBots(config, partage, botsInitiaux(config, seed, debut), fin - 1)
   maintenant = fin

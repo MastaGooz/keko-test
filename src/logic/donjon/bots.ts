@@ -10,11 +10,11 @@
  * qu'on lui donne (sinon l'état partagé partirait dans le futur et le tap
  * d'un humain, ramené à l'heure de l'état, attendrait sa recharge).
  *
- * **La règle de choix** : dans son offre de trois, il prend la piste la plus
- * en retard sur son poids (`(rang + 1) / poids` le plus petit).
+ * **La règle de dépense** : chaque point va à la caractéristique la plus en
+ * retard sur son poids (`(points + 1) / poids` le plus petit).
  */
 import { createRng } from '../rng.ts'
-import { JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
+import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
 import type { EtatPartage } from './partage.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -41,19 +41,16 @@ export function botsInitiaux(config: ConfigDonjon, seed: number, t: number): Eta
   return bots
 }
 
-/**
- * Le choix dans son offre, ou null sans offre : la piste la plus en retard
- * sur son poids ; une piste qu'il ne vise pas (poids absent) ne passe qu'en
- * dernier recours — il ne garde jamais un point.
- */
+/** Où il met son point, ou null sans point : la caractéristique la plus en retard sur son poids. */
 export function choixDuBot(_config: ConfigDonjon, etat: EtatDonjon, profil: ProfilBot): CleAmelioration | null {
   const j = etat.joueurs.find((x) => x.id === profil.id)
-  if (j === undefined || j.points <= 0 || j.offre.length === 0) return null
+  if (j === undefined || j.points <= 0) return null
   let meilleure: CleAmelioration | null = null
   let score = Infinity
-  for (const quoi of j.offre) {
+  for (const quoi of AMELIORATIONS) {
     const poids = profil.poids[quoi] ?? 0
-    const s = poids > 0 ? (j.ameliorations[quoi] + 1) / poids : 1e9 + j.ameliorations[quoi]
+    if (poids <= 0) continue
+    const s = (j.ameliorations[quoi] + 1) / poids
     if (s < score) {
       score = s
       meilleure = quoi
@@ -92,7 +89,7 @@ export async function jouerLesBots(
     const t = b.prochain
     if ((b.restants ?? 0) <= 0) {
       // Le début d'un passage : il revient, dépense, tire son nombre de taps.
-      let etat = await partage.agir({ joueur: profil.id, t, type: 'rejoindre', nom: profil.nom, bot: profil.id })
+      let etat = await partage.agir({ joueur: profil.id, t, type: 'rejoindre', nom: profil.nom, bot: profil.id, arme: profil.arme })
       etat = await depenser(config, partage, profil, etat, t)
       const tire = tirage(b.rng)
       const [min, max] = profil.taps

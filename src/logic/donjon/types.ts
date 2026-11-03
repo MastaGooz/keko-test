@@ -5,7 +5,7 @@
  * c'est ce qui permettra de remplacer l'état local par un backend sans toucher
  * aux règles.
  */
-import type { CleAmelioration } from './config.ts'
+import type { CleAmelioration, TypeArme } from './config.ts'
 
 export type Ameliorations = Record<CleAmelioration, number>
 
@@ -24,8 +24,8 @@ export type Joueur = {
   niveau: number
   /** Points d'amélioration non dépensés. */
   points: number
-  /** L'offre du point en cours : les améliorations au choix (vide sans point). */
-  offre: CleAmelioration[]
+  /** Son arme : le type qui fait ses dégâts (force, agilité, intel). */
+  arme: TypeArme
   ameliorations: Ameliorations
   /** Les dégâts de la saison, par origine. */
   degatsTap: number
@@ -99,7 +99,8 @@ export type EtatDonjon = {
 }
 
 export type Action = { joueur: string; t: number } & (
-  | { type: 'rejoindre'; nom: string; bot: string | null }
+  | { type: 'rejoindre'; nom: string; bot: string | null; arme?: TypeArme }
+  | { type: 'equiper'; arme: TypeArme }
   | { type: 'taper'; n: number }
   | { type: 'acheter'; quoi: CleAmelioration }
 )

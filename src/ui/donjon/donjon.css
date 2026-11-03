@@ -656,11 +656,20 @@
 }
 
 .donjon-choix-valeur {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
   font-family: var(--d-titre);
   font-weight: 800;
   font-size: 1.05rem;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+/* Un effet d'une caractéristique : « Dégâts +30 % → +52 % ». */
+.donjon-choix-effet {
+  font-size: 0.85rem;
 }
 
 .donjon-choix-cout {

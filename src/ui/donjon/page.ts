@@ -22,15 +22,15 @@
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
-import { AMELIORATIONS, DONJON, JOUR, type CleAmelioration } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type TypeArme } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   autoCritique,
   bonusDeForme,
-  bonusDuCoup,
-  gainDeVitesseAuto,
+  bonusDArme,
+  bonusDeVitesse,
   bornesDeLaForme,
   chanceCritDe,
   coupsAutoA,
@@ -118,17 +118,47 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
   }
 }
 
+/** Le nom des armes, par type. */
+const NOM_DE_L_ARME: Record<TypeArme, string> = { force: 'Épée', agilite: 'Dague', intel: 'Bâton' }
+
 /**
- * Les quatre choix d'amélioration : un nom, ce qu'il fait, la valeur qu'il
- * fait monter — EN % (Keko : « on exprime en % plutôt qu'en chiffre absolu ;
- * pareil pour la vitesse auto, en % de gain de vitesse »).
+ * LES QUATRE CARACTÉRISTIQUES à l'écran : un nom, ce qu'elles nourrissent, et
+ * leurs effets EN % (Keko : « on exprime en % plutôt qu'en chiffre absolu »).
+ * L'effet d'arme ne compte que si l'on porte une arme de ce type : sinon la
+ * ligne le dit, sans chiffre.
  */
-const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
-  tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => bonus(bonusDuCoup(C, j)) },
-  vitesse: { nom: 'Vitesse', role: "Le tap et l'auto frappent plus vite", valeur: (j) => bonus(gainDeVitesseAuto(C, j)) },
-  chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
-  multCrit: { nom: 'Force', role: 'Les dégâts d\'un coup critique', valeur: (j) => pourcent(multCritDe(C, j)) },
-  recuperation: { nom: 'Récupération', role: 'La fatigue passe et le repos vient plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
+type Effet = { nom: string; valeur: (j: Joueur) => string } | { arme: TypeArme }
+const CARACS: Record<CleAmelioration, { nom: string; role: string; effets: Effet[] }> = {
+  force: {
+    nom: 'Force',
+    role: 'Armes de force · dégâts critiques',
+    effets: [{ arme: 'force' }, { nom: 'Critiques', valeur: (j) => pourcent(multCritDe(C, j)) }],
+  },
+  dexterite: {
+    nom: 'Dextérité',
+    role: "Armes d'agilité · vitesse du tap et de l'auto",
+    effets: [{ arme: 'agilite' }, { nom: 'Vitesse', valeur: (j) => bonus(bonusDeVitesse(C, j)) }],
+  },
+  intelligence: {
+    nom: 'Intelligence',
+    role: "Armes d'intel · chance de critique",
+    effets: [{ arme: 'intel' }, { nom: 'Chance crit.', valeur: (j) => pourcentFin(chanceCritDe(C, j)) }],
+  },
+  endurance: {
+    nom: 'Endurance',
+    role: 'La fatigue passe et le repos vient plus vite',
+    effets: [{ nom: 'Récupération', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) }],
+  },
+}
+
+/** Le texte d'un effet : « Dégâts +30 % → +52 % », ou sa valeur seule sans point à mettre. */
+function texteDeLEffet(effet: Effet, j: Joueur, apres: Joueur | null): string {
+  if ('arme' in effet) {
+    if (j.arme !== effet.arme) return `Dégâts (${NOM_DE_L_ARME[effet.arme].toLowerCase()}, pas la vôtre)`
+    const v = (x: Joueur) => bonus(bonusDArme(C, x, effet.arme))
+    return apres === null ? `Dégâts ${v(j)}` : `Dégâts ${v(j)} → ${v(apres)}`
+  }
+  return apres === null ? `${effet.nom} ${effet.valeur(j)}` : `${effet.nom} ${effet.valeur(j)} → ${effet.valeur(apres)}`
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
@@ -338,16 +368,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
   page.append(tete, scene, fiche, arene, bande, fil)
 
-  // Les lignes des améliorations, faites une fois (redessinées à chaque tic,
-  // les boutons perdraient le clic entre l'appui et le relâchement). Avec des
-  // points, la feuille n'en montre que l'OFFRE, trois tirées au hasard (Keko :
-  // « avoir le choix entre 3 options plutôt que toute la liste ») ; sans
-  // point, toutes, éteintes, pour voir ses rangs.
+  // Les quatre caractéristiques, faites une fois (redessinées à chaque tic,
+  // les boutons perdraient le clic entre l'appui et le relâchement). Un point
+  // par niveau, à mettre où l'on veut (Keko : « 1 point de carac par niveau,
+  // c'est tout ») ; sans point, elles restent là, éteintes, pour se lire.
   const choix = el('div', 'donjon-choix')
   const lesChoix = AMELIORATIONS.map((quoi) => {
     const b = bouton('donjon-choix-ligne')
     const texte = el('span', 'donjon-choix-texte')
-    texte.append(el('span', 'donjon-choix-nom', CHOIX[quoi].nom), el('span', 'donjon-choix-role', CHOIX[quoi].role))
+    texte.append(el('span', 'donjon-choix-nom', CARACS[quoi].nom), el('span', 'donjon-choix-role', CARACS[quoi].role))
     const valeur = el('span', 'donjon-choix-valeur')
     const cout = el('span', 'donjon-choix-cout')
     b.append(texte, valeur, cout)
@@ -355,14 +384,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       void partage.agir({ joueur: MOI, t: maintenant(), type: 'acheter', quoi }).then(() => {
         b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         sauver()
-        // Plus de point : on retourne au combat, la feuille FIGÉE sur l'offre
-        // le temps de se fermer (redessinée, elle montrait la liste entière
-        // une fraction de seconde — Keko) ; sinon l'offre suivante arrive.
+        // Plus de point : on retourne au combat, la feuille FIGÉE le temps de
+        // se fermer (redessinée, elle s'éteignait sous le doigt).
         const dernier = moi().points <= 0
         if (dernier) feuilleFigee = true
         dessiner()
         if (dernier) setTimeout(fermerLaFeuille, 350)
-        else choix.animate([{ opacity: 0.2, transform: 'translateY(0.6rem)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' })
       })
     })
     choix.append(b)
@@ -441,7 +468,23 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       recommencer.textContent = 'Recommencer la saison'
     }, 3000)
   })
+  // L'ARME : son type dit quelle caractéristique fait ses dégâts. On en
+  // change ici, pour essayer les trois (en attendant les vraies armes).
+  const armes = el('div', 'donjon-vitesses')
+  const boutonsArme = ARMES.map((arme) => {
+    const b = bouton('donjon-vitesse', NOM_DE_L_ARME[arme])
+    b.addEventListener('click', () => {
+      void partage.agir({ joueur: MOI, t: maintenant(), type: 'equiper', arme }).then(() => {
+        sauver()
+        dessiner()
+      })
+    })
+    armes.append(b)
+    return { arme, b }
+  })
   reglages.append(
+    el('div', 'donjon-reglage-titre', 'Arme (épée : Force, dague : Dextérité, bâton : Intelligence)'),
+    armes,
     el('div', 'donjon-reglage-titre', 'Vitesse du temps'),
     vitesses,
     recommencer,
@@ -669,7 +712,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
     // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
     const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
-    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart) + 1e-9)} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart) - 1e-9)}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(rechargeDe(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    const html = `<div class="donjon-bulle-ligne"><span>Arme</span><b>${NOM_DE_L_ARME[j.arme]}</b></div><div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart) + 1e-9)} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart) - 1e-9)}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(rechargeDe(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 
@@ -774,10 +817,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       niveauVu = j.niveau
     }
     xpPlein.style.width = `${(100 * j.xp) / xpPourNiveau(C, j.niveau)}%`
-    points.textContent = j.points > 0 ? `${j.points} choix ›` : ''
+    points.textContent = j.points > 0 ? `${j.points} point${j.points > 1 ? 's' : ''} ›` : ''
     bande.classList.toggle('pret', j.points > 0)
 
     for (const [i, b] of boutonsVitesse.entries()) b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse)
+    for (const { arme, b } of boutonsArme) b.classList.toggle('actif', arme === j.arme)
     if (ouverte !== null) dessinerLaFeuille(ouverte)
   }
 
@@ -785,15 +829,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (f === 'ameliorations') {
       if (feuilleFigee) return
       const j = moi()
-      const offre = j.points > 0 ? j.offre : []
-      feuilleTitre.textContent = offre.length > 0 ? `Niveau ${j.niveau} · ${j.points} choix` : 'Vos améliorations'
+      const aDonner = j.points > 0
+      feuilleTitre.textContent = aDonner ? `Niveau ${j.niveau} · ${j.points} point${j.points > 1 ? 's' : ''}` : `Caractéristiques · ${NOM_DE_L_ARME[j.arme]}`
       for (const c of lesChoix) {
-        const place = offre.indexOf(c.quoi)
-        c.b.hidden = offre.length > 0 && place < 0
-        c.b.style.order = String(Math.max(0, place))
-        c.valeur.textContent = offre.length > 0 ? `${CHOIX[c.quoi].valeur(j)} → ${CHOIX[c.quoi].valeur(auRangSuivant(j, c.quoi))}` : CHOIX[c.quoi].valeur(j)
-        c.cout.textContent = `rang ${j.ameliorations[c.quoi]}`
-        c.b.disabled = offre.length === 0
+        const apres = aDonner ? auRangSuivant(j, c.quoi) : null
+        const lignes = CARACS[c.quoi].effets.map((effet) => texteDeLEffet(effet, j, apres))
+        if (c.valeur.childElementCount !== lignes.length || [...c.valeur.children].some((n, i) => n.textContent !== lignes[i])) {
+          c.valeur.replaceChildren(...lignes.map((l) => el('span', 'donjon-choix-effet', l)))
+        }
+        c.cout.textContent = String(j.ameliorations[c.quoi])
+        c.b.disabled = !aDonner
       }
       if (cleDeLaFeuille !== 'ameliorations') {
         cleDeLaFeuille = 'ameliorations'

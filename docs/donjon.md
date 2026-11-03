@@ -476,6 +476,28 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   saison descend à l'étage 84–86 (107–110 avec l'Auto-tap, qui montait à
   +142 % au rang 10). Le levier, balayé sur 3 graines : gain 0,15 → 92,
   0,2 → 99, 0,25 → 105 ; laissé à 0,1, à rejuger par Keko.
+- **LES CARACTÉRISTIQUES REMPLACENT LES AMÉLIORATIONS** (Keko, 03/11 :
+  « convertir notre tableau en système de caracs : force, dex, intel,
+  stamina ; chaque carac augmente une partie des stats, en distinguant les
+  armes de force / agilité / intel » ; « endurance ne devrait pas avoir de
+  bonus de dégâts » ; « l'intel qui accélère l'auto orienterait les builds
+  vers du passif » ; « 1 point de carac par niveau, c'est tout »).
+  **Force** : dégâts des armes de force + dégâts critiques. **Dextérité** :
+  dégâts des armes d'agilité + vitesse (tap et auto). **Intelligence** :
+  dégâts des armes d'intel + chance de critique. **Endurance** :
+  récupération de la forme, rien d'autre. Mêmes formules qu'avant (dégâts
+  d'arme `0,3 · points^0,8`, vitesse `0,1 · …`, critique vers 100 %,
+  force des critiques `0,125 · …`, récupération `0,15 · …`). Un point par
+  niveau, placé librement ; plus d'offre au hasard. Chaque joueur porte un
+  TYPE D'ARME (`Joueur.arme`, action `equiper`) : épée (force), dague
+  (agilité), bâton (intel) — le joueur démarre à l'épée et en change dans
+  les réglages, en attendant les vraies armes. Bots : l'assidu et le
+  fantôme à l'épée, A à la dague, B au bâton. Le type de champ reste
+  `ameliorations` / `CleAmelioration`. Une sauvegarde d'avant rend tous ses
+  points (un par niveau gagné) à replacer. Mesuré : étage 105–106 ; **la
+  Dextérité domine** (A fait 32–34 % des dégâts, l'assidu 26 %) : sa
+  secondaire, la vitesse, multiplie les dégâts comme sa principale. À
+  rejuger par Keko.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

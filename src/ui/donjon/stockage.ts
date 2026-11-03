@@ -7,10 +7,11 @@
  */
 import type { EtatDesBots } from '../../logic/donjon/bots.ts'
 import type { Horloge } from '../../logic/donjon/horloge.ts'
-import { AMELIORATIONS } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON } from '../../logic/donjon/config.ts'
 import type { EtatDonjon, Joueur } from '../../logic/donjon/types.ts'
 
 const CLE = 'keko-donjon'
+const PROFILS = DONJON.bots.profils
 
 /** L'échelle de la forme des joueurs : change quand son sens change. */
 const VERSION_DE_LA_FORME = 3
@@ -52,10 +53,16 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     // d'avant une amélioration : elle est au rang 0.
     for (const j of e.joueurs) {
       if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
+      // D'avant les caractéristiques (Coup, Vitesse, Critique… ou l'offre de
+      // trois) : tout est rendu en points, un par niveau gagné, à replacer.
+      const vieux = j as Joueur & { offre?: unknown }
+      if (typeof j.ameliorations?.force !== 'number') {
+        j.ameliorations = { force: 0, dexterite: 0, intelligence: 0, endurance: 0 }
+        j.points = Math.max(0, j.niveau - 1)
+      }
       for (const quoi of AMELIORATIONS) if (typeof j.ameliorations[quoi] !== 'number') j.ameliorations[quoi] = 0
-      // D'avant l'offre de trois, ou une offre qui nomme une amélioration
-      // partie (la Sagesse) : elle se retire au premier calcul des règles.
-      if (!Array.isArray(j.offre) || j.offre.some((q) => !AMELIORATIONS.includes(q))) j.offre = []
+      delete vieux.offre
+      if (!ARMES.includes(j.arme)) j.arme = PROFILS.find((p) => p.id === j.id)?.arme ?? 'force'
     }
     return s as SauvegardeDonjon
   } catch {
