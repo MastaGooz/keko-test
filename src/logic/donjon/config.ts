@@ -18,8 +18,8 @@ const MINUTE = 60 * SECONDE
 const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
-export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'ardeur' | 'recuperation' | 'sommeil'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil']
+export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'ardeur' | 'recuperation' | 'sommeil' | 'sagesse'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil', 'sagesse']
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -51,6 +51,12 @@ export const DONJON = {
     parDegat: 1,
     base: 40,
     exposant: 2.4,
+    /**
+     * SAGESSE (Keko : « on peut rajouter un bonus d'XP en stat ? ») : toute
+     * l'XP gagnée, des taps comme de l'auto, × `1 + gain · rang^exposant`,
+     * sans plafond, de moins en moins par rang.
+     */
+    sagesse: { gain: 0.15, exposant: 0.8 },
   },
 
   /** Ce que rapporte une amélioration, et ce qu'elle coûte. */

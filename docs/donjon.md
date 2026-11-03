@@ -411,6 +411,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   ou tombe déjà à 50 % côté fatigue (puis descend à 0 %) :
   `forme.entreeRepos`, `forme.entreeFatigue`. Le palier reste à 100 %, les
   durées ne bougent pas. La teinte suit (déjà forte au saut).
+- **SAGESSE, LE BONUS D'XP** (Keko, 03/11 : « on peut rajouter un bonus d'XP
+  en stat ? »). Toute l'XP gagnée, des taps comme de l'auto, ×
+  `1 + 0,15 · rang^0,8` (+15 % au rang 1, +95 % au 10, sans plafond), dans
+  `gagnerXp`. Plus d'XP, plus de niveaux, donc plus de points : elle
+  s'auto-entretient, à surveiller. Les bots ne l'achètent pas.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -235,7 +235,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     xp: 0,
     niveau: 1,
     points: 0,
-    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, ardeur: 0, recuperation: 0, sommeil: 0 },
+    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, ardeur: 0, recuperation: 0, sommeil: 0, sagesse: 0 },
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,
@@ -280,8 +280,14 @@ function noter(config: ConfigDonjon, e: EtatDonjon, evenement: Evenement): void 
   if (e.journal.length > config.saison.journalMax) e.journal.splice(0, e.journal.length - config.saison.journalMax)
 }
 
+/** Le bonus d'XP de la Sagesse (+0,15 = +15 %). */
+export function bonusDeSagesse(config: ConfigDonjon, j: Joueur): number {
+  const s = config.xp.sagesse
+  return bonusDecroissant(s.gain, s.exposant, j.ameliorations.sagesse)
+}
+
 function gagnerXp(config: ConfigDonjon, e: EtatDonjon, j: Joueur, xp: number, t: number): void {
-  j.xp += xp
+  j.xp += xp * (1 + bonusDeSagesse(config, j))
   let besoin = xpPourNiveau(config, j.niveau)
   while (j.xp >= besoin) {
     j.xp -= besoin

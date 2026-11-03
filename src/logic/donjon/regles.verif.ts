@@ -150,6 +150,10 @@ verifier('Ardeur : reposé, on frappe au nouveau haut', Math.abs(multiplicateurD
 verifier('Ardeur ne change pas la durée : le palier et la fatigue restent', multiplicateurDeForme(C, stat('ardeur', 5), B.palierHaut) === 1 && multiplicateurDeForme(C, stat('ardeur', 5), B.min) === 0)
 const epuiseRang = (r: number) => ({ ...stat('recuperation', r), forme: B.min, formeA: 0 })
 verifier('Récupération : la fatigue passe plus vite', formeA(C, epuiseRang(5), H / 6) > formeA(C, epuiseRang(0), H / 6))
+const sage5 = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, ameliorations: { ...j.ameliorations, sagesse: 5 } })) }
+const xpSans = appliquer(C, e, { joueur: 'a', t: 1000, type: 'taper', n: 1 }).joueurs[0].xp
+const xpAvec = appliquer(C, sage5, { joueur: 'a', t: 1000, type: 'taper', n: 1 }).joueurs[0].xp
+verifier("Sagesse : le même coup rapporte plus d'XP", xpAvec > xpSans * 1.3)
 verifier('Sommeil : le repos se gagne plus vite', formeA(C, stat('sommeil', 5), 3 * H) > formeA(C, stat('sommeil', 0), 3 * H))
 
 const fini = avancer(C, achete, C.saison.duree + 1)
