@@ -535,6 +535,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   différencié du fond »). Le bouton d'attaque ne porte plus que son image
   (agrandie), l'emplacement d'arme que l'image de l'arme, sur un parchemin
   cerné d'or ; les noms passent dans `aria-label`.
+- **L'ARME SUR LE CUIR VIOLET** (Keko, 03/11 : « la couleur du bouton pas
+  terrible » ; choisi : le cuir violet). L'emplacement d'arme prend le cuir
+  aubergine des dos de cartes (`DOS_CUIR`), au liseré d'or, avec une
+  couture dorée en pointillé à 4 px du bord.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
