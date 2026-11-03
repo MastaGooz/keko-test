@@ -486,10 +486,10 @@
 
 /* ------------------------------------------------ la forme */
 
-/* Un trait de 0 % à 200 % : fatigue à gauche (gris), repos à droite (jaune),
-   et le blanc à 100 % SEULEMENT, un trait fin au milieu (Keko : « la zone
-   blanche doit correspondre à 100 % uniquement »). Le marqueur dit où l'on
-   est, à la couleur qu'aurait un tap, la valeur sous lui. */
+/* Un trait à l'échelle de la forme : fatigue à gauche (gris), le palier à
+   100 % en blanc, repos à droite (jaune). Ses couleurs sont posées par la
+   page (`traitForme`), à la place que la config donne au palier. Le marqueur
+   dit où l'on est, à la couleur qu'aurait un tap, la valeur sous lui. */
 .donjon-forme {
   display: flex;
   align-items: center;
@@ -507,14 +507,6 @@
   flex: 1;
   height: 0.55rem;
   border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    #3f3f3f 0%,
-    #a8a8a8 49.2%,
-    #fff 49.2% 50.8%,
-    #ffe58a 50.8%,
-    #ffcf2e 100%
-  );
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 

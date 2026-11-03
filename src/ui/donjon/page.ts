@@ -28,6 +28,7 @@ import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   autoCritique,
+  bornesDeLaForme,
   chanceCritDe,
   coupsAutoA,
   coutDe,
@@ -280,6 +281,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   marqueurForme.append(valeurForme)
   traitForme.append(marqueurForme)
   jaugeForme.append(el('span', 'donjon-forme-bout', 'Fatigue'), traitForme, el('span', 'donjon-forme-bout', 'Repos'))
+  // Le trait est à l'échelle de la forme : la zone blanche, c'est le palier
+  // à 100 % (Keko : « augmenter la taille de la zone centrale »).
+  const BORNES = bornesDeLaForme(C)
+  const surLeTrait = (forme: number) => (100 * (forme - BORNES.min)) / (BORNES.max - BORNES.min)
+  const debutPalier = surLeTrait(0)
+  const finPalier = surLeTrait(BORNES.palier)
+  traitForme.style.background = `linear-gradient(to right, #3f3f3f 0%, #a8a8a8 ${debutPalier}%, #fff ${debutPalier}% ${finPalier}%, #ffe58a ${finPalier}%, #ffcf2e 100%)`
   arene.append(cadre, jaugeForme)
 
   // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
@@ -433,16 +441,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   /**
    * LA COULEUR DIT CE QUI A PORTÉ LE COUP (Keko : « fatigue = gris / repos =
    * jaune / critique = orange / normal = blanc », et l'auto blanc comme les
-   * autres). Elle suit la forme en continu : le blanc tire vers le jaune
-   * au-dessus du milieu, vers le gris en dessous, plein aux quatre cinquièmes
-   * du chemin. Le critique reste orange ; la fatigue ne le grise qu'à
-   * moitié, pour qu'on le reconnaisse. L'auto n'a pas de forme.
+   * autres). Elle suit la forme en continu (`ecart` = multiplicateur − 1) :
+   * le blanc tire vers le jaune au-dessus de 100 %, vers le gris en dessous,
+   * plein aux quatre cinquièmes du chemin. Le critique reste orange ; la
+   * fatigue ne le grise qu'à moitié, pour qu'on le reconnaisse. L'auto n'a
+   * pas de forme.
    */
-  function teinteDuChiffre(genre: Genre, forme: number): string {
+  function teinteDuChiffre(genre: Genre, ecart: number): string {
     const critique = STYLES[genre].critique
     const base = critique ? TEINTES.critique : TEINTES.normal
-    const vers = forme < 0 ? TEINTES.fatigue : critique ? TEINTES.critique : TEINTES.repos
-    const part = Math.min(1, Math.abs(forme) / 0.8) * (critique && forme < 0 ? 0.5 : 1)
+    const vers = ecart < 0 ? TEINTES.fatigue : critique ? TEINTES.critique : TEINTES.repos
+    const part = Math.min(1, Math.abs(ecart) / 0.8) * (critique && ecart < 0 ? 0.5 : 1)
     const [r, g, b] = base.map((c, i) => Math.round(c + (vers[i] - c) * part))
     return `rgb(${r}, ${g}, ${b})`
   }
@@ -530,15 +539,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function frapper(): void {
     const t = maintenant()
     const avant = moi()
-    const forme = formeA(C, avant, t)
-    const attendu = degatsDuTap(C, avant) * multiplicateurDeForme(forme)
+    const mult = multiplicateurDeForme(C, formeA(C, avant, t))
+    const attendu = degatsDuTap(C, avant) * mult
     const dejaInfliges = avant.degatsTap
     const [x, y] = surLEnnemi(-0.08, 0)
     attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
     void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
       const inflige = moi().degatsTap - dejaInfliges
       const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
-      const couleur = teinteDuChiffre(genre, forme)
+      const couleur = teinteDuChiffre(genre, mult - 1)
       impact(x, y, genre, couleur)
       envoler(x, y, inflige, genre, couleur)
       dessiner()
@@ -805,10 +814,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
     // La forme glisse en continu : le marqueur la suit à chaque image.
     const forme = formeA(C, j, t)
-    marqueurForme.style.left = `${(100 * (forme + 1)) / 2}%`
-    // Le marqueur prend la couleur qu'aurait un tap : blanc à 100 % seulement.
-    marqueurForme.style.background = teinteDuChiffre('tap', forme)
-    const pourCent = `${Math.round(100 * multiplicateurDeForme(forme))} %`
+    const mult = multiplicateurDeForme(C, forme)
+    marqueurForme.style.left = `${surLeTrait(forme)}%`
+    // Le marqueur prend la couleur qu'aurait un tap : blanc sur le palier.
+    marqueurForme.style.background = teinteDuChiffre('tap', mult - 1)
+    const pourCent = `${Math.round(100 * mult)} %`
     if (valeurForme.textContent !== pourCent) valeurForme.textContent = pourCent
     const texte = `Auto · ${secondes(periode)}`
     if (valeurAuto.textContent !== texte) valeurAuto.textContent = texte

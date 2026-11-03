@@ -92,25 +92,29 @@ export const DONJON = {
   },
 
   /**
-   * LA FORME : un seul curseur, de −1 (épuisé) à +1 (reposé), qui multiplie
-   * les taps de 0 % à 200 % (`1 + forme`), 100 % au milieu (Keko : « un
+   * LA FORME : une réserve qui multiplie les taps de 0 % à 200 % (Keko : « un
    * continuum qui tend vers 0 % - 200 % entre fatigue max et repos max »).
-   * ELLE SE GAGNE ET SE PERD AU TEMPS, PAS AUX COUPS (Keko : « que plus tard,
-   * si on implante la vitesse d'attaque, elle ne déséquilibre pas le
-   * système ») : un tap tient le joueur « en action » pendant `fenetre` ;
-   * chaque minute en action coûte `usureParMinute`, quel que soit le nombre
-   * de taps. Hors action, la forme remonte : vite jusqu'au milieu
-   * (`recuperationParHeure`), lentement au-delà (`reposParHeure`).
+   * ELLE SE COMPTE EN MINUTES DE SPAM (Keko : « calculer le DPS moyen et dire
+   * que la fatigue commence à partir d'un nombre de dégâts infligés égal à
+   * 1 min de spam ») : un tap en use ce que ses dégâts (critique compris,
+   * forme non comprise) représentent du DPS d'un spammeur
+   * (`cadenceSpam` taps par seconde, critiques à la moyenne). Un coup lent et
+   * fort use autant que plusieurs rapides et faibles pour les mêmes dégâts.
+   * De haut en bas : `repos` minutes de 200 % à 100 %, un `palier` à 100 %
+   * (la fatigue ne commence qu'après), `fatigue` minutes de 100 % à 0 %. Le
+   * temps la refait : vite jusqu'au haut du palier (`recuperationParHeure`),
+   * lentement au-delà (`reposParHeure`). Un joueur neuf est en haut du palier.
    * L'auto n'y est pas soumis.
    */
   forme: {
-    fenetre: 1.5 * SECONDE,
-    /** En action : de reposé à normal en 5 min, de normal à épuisé en 5 de plus. */
-    usureParMinute: 0.2,
-    /** Hors action, sous le milieu : d'épuisé à normal en 30 min. */
-    recuperationParHeure: 2,
-    /** Hors action, au-dessus du milieu : de normal à reposé en 8 h. */
-    reposParHeure: 0.125,
+    cadenceSpam: 6,
+    palier: 1,
+    fatigue: 5,
+    repos: 5,
+    /** Sous le haut du palier : d'épuisé à 100 % en 30 min. */
+    recuperationParHeure: 10,
+    /** Au-dessus : du palier à 200 % en 8 h. */
+    reposParHeure: 0.625,
   },
 
   bots: {

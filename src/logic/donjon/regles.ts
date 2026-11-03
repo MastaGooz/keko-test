@@ -117,41 +117,49 @@ export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
   return Math.round(config.xp.base * Math.pow(niveau, config.xp.exposant))
 }
 
-const MINUTE = 60_000
+/** Le DPS d'un spammeur à ce niveau : l'étalon de la forme. */
+export function dpsDeSpam(config: ConfigDonjon, j: Joueur): number {
+  return degatsDuTap(config, j) * facteurCritMoyen(config, j) * config.forme.cadenceSpam
+}
 
-/** La forme remonte, hors action, pendant `heures` : vite sous le milieu, lentement au-dessus. */
+/** Les bornes de la forme, en minutes de spam : épuisé, haut du palier, reposé. */
+export function bornesDeLaForme(config: ConfigDonjon): { min: number; palier: number; max: number } {
+  const f = config.forme
+  return { min: -f.fatigue, palier: f.palier, max: f.palier + f.repos }
+}
+
+/** La forme reprend avec le temps : vite jusqu'au haut du palier, lentement au-delà. */
 function reprendre(config: ConfigDonjon, forme: number, heures: number): number {
   const f = config.forme
-  if (forme < 0) {
-    const jusquAuMilieu = -forme / f.recuperationParHeure
-    if (heures <= jusquAuMilieu) return forme + heures * f.recuperationParHeure
-    heures -= jusquAuMilieu
-    forme = 0
+  if (forme < f.palier) {
+    const jusquAuPalier = (f.palier - forme) / f.recuperationParHeure
+    if (heures <= jusquAuPalier) return forme + heures * f.recuperationParHeure
+    heures -= jusquAuPalier
+    forme = f.palier
   }
-  return Math.min(1, forme + heures * f.reposParHeure)
+  return Math.min(f.palier + f.repos, forme + heures * f.reposParHeure)
+}
+
+/** LA FORME À L'INSTANT t, en minutes de spam : celle du dernier tap, reprise depuis. */
+export function formeA(config: ConfigDonjon, j: Joueur, t: number): number {
+  return t <= j.formeA ? j.forme : reprendre(config, j.forme, (t - j.formeA) / HEURE)
 }
 
 /**
- * LA FORME À L'INSTANT t, de −1 (épuisé) à +1 (reposé). Depuis `formeA`, le
- * temps encore « en action » (jusqu'à `actifJusqua`) l'use, le reste la
- * reprend. *Elle ne compte pas les coups* : dix taps ou un seul dans la même
- * seconde coûtent pareil.
+ * Ce que la forme fait d'un tap : 0 % épuisé, 100 % sur tout le palier,
+ * 200 % reposé, en continu entre les deux.
  */
-export function formeA(config: ConfigDonjon, j: Joueur, t: number): number {
-  if (t <= j.formeA) return j.forme
-  const finAction = Math.min(t, Math.max(j.formeA, j.actifJusqua))
-  const usee = Math.max(-1, j.forme - ((finAction - j.formeA) / MINUTE) * config.forme.usureParMinute)
-  return t > finAction ? reprendre(config, usee, (t - finAction) / HEURE) : usee
-}
-
-/** Ce que la forme fait d'un tap : de 0 % (épuisé) à 200 % (reposé), 100 % au milieu. */
-export function multiplicateurDeForme(forme: number): number {
-  return 1 + Math.max(-1, Math.min(1, forme))
+export function multiplicateurDeForme(config: ConfigDonjon, forme: number): number {
+  const f = config.forme
+  if (forme < 0) return Math.max(0, 1 + forme / f.fatigue)
+  if (forme <= f.palier) return 1
+  return Math.min(2, 1 + (forme - f.palier) / f.repos)
 }
 
 // ---------------------------------------------------------------- l'état
 
-export function nouveauJoueur(id: string, nom: string, bot: string | null, t: number): Joueur {
+/** Un joueur neuf est en haut du palier : la fatigue ne commence qu'après une minute de spam. */
+export function nouveauJoueur(id: string, nom: string, bot: string | null, t: number, palier = 1): Joueur {
   return {
     id,
     nom,
@@ -163,9 +171,8 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,
-    forme: 0,
+    forme: palier,
     formeA: t,
-    actifJusqua: t,
     bonus: {},
   }
 }
@@ -315,7 +322,7 @@ function finirLaSaison(config: ConfigDonjon, e: EtatDonjon): void {
   const seed = (Math.imul(e.saison.seed ^ numero, 0x27d4eb2d) + numero) >>> 0
   e.saison = { numero, seed, debut: fin, fin: fin + config.saison.duree }
   e.ennemi = ennemiDeLEtage(config, seed, 1)
-  e.joueurs = e.joueurs.map((j) => ({ ...nouveauJoueur(j.id, j.nom, j.bot, fin), bonus: j.bonus }))
+  e.joueurs = e.joueurs.map((j) => ({ ...nouveauJoueur(j.id, j.nom, j.bot, fin, config.forme.palier), bonus: j.bonus }))
   e.etageParJour = []
   e.journal = []
   noter(config, e, { t: fin, joueur: null, type: 'fin', saison: numero - 1, etage })
@@ -335,13 +342,14 @@ function avancerSurPlace(config: ConfigDonjon, e: EtatDonjon, t: number): void {
 }
 
 function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: number): void {
-  // La forme de l'instant porte tous les taps de l'action ; puis le joueur
-  // est « en action » jusqu'à la fin de la fenêtre.
-  const forme = formeA(config, j, t)
-  const mult = multiplicateurDeForme(forme)
+  // Chaque tap use la forme de ce que ses dégâts valent en minutes de spam.
+  let forme = formeA(config, j, t)
+  const minuteDeSpam = dpsDeSpam(config, j) * 60
   for (let k = 0; k < n; k++) {
-    let degats = degatsDuTap(config, j) * mult
-    if (tirer(e) < chanceCritDe(config, j)) degats *= multCritDe(config, j)
+    let brut = degatsDuTap(config, j)
+    if (tirer(e) < chanceCritDe(config, j)) brut *= multCritDe(config, j)
+    const degats = brut * multiplicateurDeForme(config, forme)
+    forme = Math.max(-config.forme.fatigue, forme - brut / minuteDeSpam)
     // Le surplus d'un coup fatal est perdu : un tap frappe un ennemi.
     const porte = Math.min(degats, e.ennemi.pv)
     j.degatsTap += porte
@@ -351,7 +359,6 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   }
   j.forme = forme
   j.formeA = t
-  j.actifJusqua = Math.max(j.actifJusqua, t + config.forme.fenetre)
 }
 
 // ---------------------------------------------------------------- l'extérieur
@@ -377,7 +384,7 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
   switch (action.type) {
     case 'rejoindre':
       if (j === undefined) {
-        e.joueurs.push(nouveauJoueur(action.joueur, action.nom, action.bot, t))
+        e.joueurs.push(nouveauJoueur(action.joueur, action.nom, action.bot, t, config.forme.palier))
         noter(config, e, { t, joueur: action.joueur, type: 'entree' })
       }
       break

@@ -246,6 +246,23 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   quatre cinquièmes du chemin). *Un client peut encore envoyer `taper n=1000`
   en une action pour le prix d'une fenêtre* : le jour du backend, le
   serveur bornera `n`. Le texte du bouton suit sa taille (`cqh`).
+- **LA FORME SE COMPTE EN MINUTES DE SPAM, AVEC UN PALIER À 100 %** (Keko,
+  03/11 : « je mets à peine quelques coups et je tombe à 99 % alors que la
+  fatigue devrait venir moins vite. On devrait calculer le DPS moyen et dire
+  que la fatigue commence à partir d'un nombre de dégâts infligés égal à
+  1 min de spam », et « augmenter la taille de la zone centrale du 100 % »).
+  L'étalon est le DPS d'un spammeur (`dpsDeSpam` : le tap, critiques à la
+  moyenne, × `cadenceSpam` = 6 taps/s). Un tap use la forme de ce que ses
+  dégâts (critique compris, forme non comprise) valent en minutes de ce DPS :
+  pour les mêmes dégâts, un coup lent et fort use autant que plusieurs
+  rapides et faibles, et une vitesse d'attaque future ne changerait rien.
+  L'échelle : 5 min de spam de 200 % à 100 %, un PALIER d'1 min à 100 %,
+  5 min de 100 % à 0 %. Un joueur neuf est en haut du palier. Le temps la
+  refait : du fond au haut du palier en 30 min, du palier à 200 % en 8 h.
+  Mesuré : 45 s de spam laissent 100 %, 3 min tombent vers 70 %. Le trait
+  est à la même échelle (la zone blanche est le palier, 1/11 du trait),
+  dessiné par la page depuis la config. *La version d'avant (au temps
+  passé « en action ») usait la forme dès le premier tap.*
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -30,12 +30,11 @@ export type Joueur = {
   degatsAuto: number
   kills: number
   /**
-   * La forme (−1 épuisé … +1 reposé) à l'instant `formeA`, et la fin de la
-   * dernière action (`actifJusqua` : le dernier tap plus la fenêtre).
+   * La forme, en minutes de spam (de −`fatigue` épuisé à `palier` + `repos`
+   * reposé, voir `config.forme`), à l'instant `formeA`.
    */
   forme: number
   formeA: number
-  actifJusqua: number
   bonus: BonusPermanents
 }
 

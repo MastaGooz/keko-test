@@ -7,7 +7,8 @@
  */
 import type { EtatDesBots } from '../../logic/donjon/bots.ts'
 import type { Horloge } from '../../logic/donjon/horloge.ts'
-import type { EtatDonjon } from '../../logic/donjon/types.ts'
+import { DONJON } from '../../logic/donjon/config.ts'
+import type { EtatDonjon, Joueur } from '../../logic/donjon/types.ts'
 
 const CLE = 'keko-donjon'
 
@@ -33,13 +34,17 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     ) {
       return null
     }
-    // Une sauvegarde d'avant la forme (fatigue et repos comptés en taps) :
-    // chacun repart au milieu.
-    for (const j of e.joueurs) {
-      if (typeof j.forme !== 'number') {
-        j.forme = 0
+    // Les sauvegardes d'avant : la fatigue et le repos comptés en taps
+    // (chacun repart en haut du palier), puis la forme de −1 à +1 comptée au
+    // temps (`actifJusqua`), qu'on remet à l'échelle des minutes de spam.
+    const f = DONJON.forme
+    for (const j of e.joueurs as (Joueur & { actifJusqua?: number })[]) {
+      if (typeof j.forme !== 'number' || typeof j.formeA !== 'number') {
+        j.forme = f.palier
         j.formeA = e.t
-        j.actifJusqua = e.t
+      } else if ('actifJusqua' in j) {
+        j.forme = j.forme < 0 ? j.forme * f.fatigue : f.palier + j.forme * f.repos
+        delete j.actifJusqua
       }
     }
     return s as SauvegardeDonjon
