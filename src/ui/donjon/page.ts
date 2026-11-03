@@ -77,8 +77,8 @@ function nombre(n: number): string {
 const pourcent = (x: number) => `${Math.round(x * 100)} %`
 /** Un pourcentage à un chiffre après la virgule : « 6,9 % ». */
 const pourcentFin = (x: number) => `${(x * 100).toFixed(1).replace('.', ',')} %`
-/** Une borne de la plage de dégâts : une décimale sous 100 (« 11,5 »), sinon comme `nombre`. */
-const borne = (n: number) => (n < 100 ? n.toFixed(1).replace(/\.0$/, '').replace('.', ',') : nombre(n))
+/** Une borne de la plage de dégâts, en entier comme les coups (abrégée au-delà de 10 000). */
+const borne = (n: number) => (n < 1e4 ? String(Math.round(n)) : nombre(n))
 /** Un bonus : « +30 % », « +0 % ». */
 const bonus = (x: number) => `+${Math.round(x * 100)} %`
 
@@ -642,7 +642,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
     // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
     const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
-    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart))} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart) + 1e-9)} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart) - 1e-9)}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 

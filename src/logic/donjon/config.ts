@@ -84,7 +84,9 @@ export const DONJON = {
      * fixe ? » — « ok essaie ça ») : chaque coup, tap ou auto, vaut de
      * `1 − ecart` à `1 + ecart` de sa valeur, tiré uniformément, avant le
      * critique. La moyenne ne bouge pas ; à ±15 %, un coup normal (115 % au
-     * plus) ne rejoint jamais un critique (170 % au moins).
+     * plus) ne rejoint jamais un critique (170 % au moins). CHAQUE COUP EST
+     * ARRONDI À L'ENTIER LE PLUS PROCHE (Keko : « arrondir les chiffres
+     * décimaux à l'entier le plus proche »), plage, critique et forme compris.
      */
     ecart: 0.15,
     /**

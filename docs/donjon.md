@@ -398,6 +398,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   Un coup de base à 100 (PV ×10, XP par dégât ÷10, chaque coup arrondi)
   montrait des centaines dès le premier ennemi. Revenu au coup de 10 et à
   la plage 8,5 – 11,5 ; les chiffres décimaux restent sous 10.
+- **CHAQUE COUP EST ARRONDI À L'ENTIER, À L'ÉCHELLE D'ORIGINE** (Keko, 03/11 :
+  « on peut arrondir les chiffres décimaux à l'entier le plus proche ? »,
+  après le retrait de l'échelle ×10). Le coup de base reste 10 ; chaque
+  coup, tap ou auto, est arrondi (plage, critique et forme compris) : au
+  départ 9, 10 ou 11, un critique 17 à 23, un tap fatigué 8, 5, 3…. La
+  bulle dit « Dégâts 9 – 11 ». La moyenne garde ±3 %.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
