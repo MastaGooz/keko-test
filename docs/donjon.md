@@ -332,6 +332,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `public/capacites/attaque.webp`. Un premier essai avait pris les dessins de
   compétence de l'archive (Taille, Estoc, Riposte) : ce n'était pas eux.
   `&icone=epee` rend l'épée dessinée.
+- **L'AUTO SE COMPTE EN RECHARGES DU TAP, JAMAIS PLUS VITE** (Keko, 03/11 :
+  « l'auto-tap ne doit jamais être plus rapide que le manuel ; plutôt qu'un
+  chiffre absolu, exprimer la vitesse auto en % du CD manuel ; on commence à
+  5 fois le CD manuel et chaque upgrade ramène la vitesse auto vers le CD
+  manuel sans jamais l'atteindre (rendement décroissant) »). Période =
+  `recharge × (1 + 4 · 0,9^rang)` (`periodeEnRecharges`) : 500 % au départ,
+  460 % au rang 1, 239 % au rang 10, 149 % au rang 20, 117 % au rang 30 ;
+  en ms entières arrondies au-dessus, toujours plus longue que la recharge
+  (vérifié jusqu'au rang 500). Avec la recharge à 0,25 s, l'auto part à
+  1,25 s (il était à 2 s) : le départ va plus vite. Le panneau dit
+  « 500 % → 460 % », la bulle « 500 % · 1,25 s ».
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -77,16 +77,21 @@ export const DONJON = {
   /**
    * L'AUTO-TAP EST UN TAP QUI SE DONNE TOUT SEUL (Keko : « mettre les coups
    * auto exactement comme les autres et avec les mêmes dégâts »). Dès le
-   * début, chaque joueur frappe un coup toutes les `periode` : les dégâts du
-   * Coup, critique compris, sans la forme (ni fatigue ni repos). L'amélioration « Auto-tap »
-   * en raccourcit l'intervalle : `periode / (1 + acceleration · rang)`, en
-   * millisecondes entières, jamais sous `periodeMin`. Les coups de chacun
-   * tombent sur les multiples de sa période depuis le début de la saison.
+   * début, chaque joueur frappe un coup à chaque période : les dégâts du
+   * Coup, critique compris, sans la forme (ni fatigue ni repos). Les coups de
+   * chacun tombent sur les multiples de sa période depuis le début de la
+   * saison. LA PÉRIODE SE COMPTE EN RECHARGES DU TAP, ET N'EST JAMAIS PLUS
+   * COURTE (Keko : « l'auto-tap ne doit jamais être plus rapide que le
+   * manuel ; on commence à 5 fois le CD manuel et chaque upgrade ramène la
+   * vitesse auto vers le CD manuel sans jamais l'atteindre ») :
+   * `recharge × (1 + (depart − 1) · garde^rang)` — chaque rang d'« Auto-tap »
+   * retire `1 − garde` de l'écart qui reste (rendement décroissant).
    */
   auto: {
-    periode: 2 * SECONDE,
-    acceleration: 0.08,
-    periodeMin: 250,
+    /** La période au rang 0, en recharges du tap : 500 %. */
+    depart: 5,
+    /** La part de l'écart à la recharge que garde chaque rang : 10 % de moins par rang. */
+    garde: 0.9,
   },
 
   crit: {

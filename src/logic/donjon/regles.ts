@@ -32,10 +32,16 @@ export function degatsDeBaseDuTap(config: ConfigDonjon, j: Joueur): number {
   return config.tap.base + config.tap.parRang * j.ameliorations.tap
 }
 
-/** L'intervalle entre deux coups d'auto de ce joueur, en ms entières. */
-export function periodeDe(config: ConfigDonjon, j: Joueur): number {
+/** La période de l'auto en recharges du tap : de `depart` vers 1, sans jamais l'atteindre. */
+export function periodeEnRecharges(config: ConfigDonjon, j: Joueur): number {
   const a = config.auto
-  return Math.max(a.periodeMin, Math.round(a.periode / (1 + a.acceleration * j.ameliorations.auto)))
+  return 1 + (a.depart - 1) * Math.pow(a.garde, j.ameliorations.auto)
+}
+
+/** L'intervalle entre deux coups d'auto de ce joueur, en ms entières, toujours plus long que la recharge. */
+export function periodeDe(config: ConfigDonjon, j: Joueur): number {
+  const r = config.tap.recharge
+  return Math.max(r + 1, Math.ceil(r * periodeEnRecharges(config, j)))
 }
 
 /** Le DPS de l'auto hors critique : un coup par période. */
