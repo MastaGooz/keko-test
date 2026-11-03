@@ -3,17 +3,18 @@
  *
  * Du DOM simple, sans React ni three. L'ennemi est une carte du pool
  * orc/gobelin debout sur le camp de sa race, dans une scène de hauteur bornée
- * (Keko : « l'ennemi prend trop de place »). Sous lui, son nom et ses PV ; en
- * bas, sous le pouce, la dernière nouvelle du journal, le niveau et le bouton
- * « Attaquer » (Keko : « un bouton d'attaque plutôt que tap sur le monstre »).
+ * (Keko : « l'ennemi prend trop de place »). Sous lui, son nom et ses PV,
+ * puis le bouton carré « Attaquer » (Keko : « un bouton d'attaque plutôt que
+ * tap sur le monstre »), le niveau et, tout en bas, la dernière nouvelle.
  * Les améliorations (une tape sur le niveau), le classement, le journal entier
  * et les réglages (vitesse, recommencer) s'ouvrent en feuille.
  *
  * Retour au doigt (Keko : « plus juicy et visibles ») : le bouton s'enfonce,
  * l'ennemi blanchit et recule sous une étoile d'impact, le chiffre jaillit
  * de lui, gros et cerné d'encre (doré et secoué pour un critique). L'AUTO
- * frappe dès le début, par coups : une jauge ronde sur la scène dit le
- * prochain, et son chiffre (bleu) jaillit de l'ennemi. Pas de son.
+ * frappe dès le début, par coups : le contour du bouton s'éclaire jusqu'au
+ * prochain, et quand il est complet le coup part, son chiffre (bleu) jaillit
+ * de l'ennemi. Pas de son.
  *
  * *Toutes les règles sont dans `logic/donjon/`* ; ici on lit l'horloge, on
  * joue les bots à leur heure et on dessine. Le joueur passe par `agir`, comme
@@ -134,6 +135,9 @@ const ICONE_REGLAGES =
 const ICONE_EPEE =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H20v5.5L9 20l-5.5-5.5z"/><path d="M5.5 12.5l6 6M3 21l3.5-3.5"/></svg>'
 
+/** Le contour du bouton d'attaque, du milieu du haut, dans le sens des aiguilles. */
+const CONTOUR = 'M50,3 H82 A15,15 0 0 1 97,18 V82 A15,15 0 0 1 82,97 H18 A15,15 0 0 1 3,82 V18 A15,15 0 0 1 18,3 Z'
+
 type Feuille = 'ameliorations' | 'classement' | 'journal' | 'reglages'
 
 export async function monterDonjon(racine: HTMLElement, build: string): Promise<void> {
@@ -210,12 +214,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let portrait = nouveauPortrait()
   const pastilleEtage = el('div', 'donjon-pastille-etage')
   const etats = el('div', 'donjon-etats')
-  // La jauge de l'auto : elle se remplit jusqu'au prochain coup.
-  const jaugeAuto = el('div', 'donjon-auto')
-  const anneauAuto = el('span', 'donjon-auto-anneau')
-  const valeurAuto = el('span', 'donjon-auto-valeur')
-  jaugeAuto.append(anneauAuto, valeurAuto)
-  scene.append(portrait, pastilleEtage, etats, jaugeAuto)
+  scene.append(portrait, pastilleEtage, etats)
 
   // Sous la scène : le nom, ce qu'il est, ses PV.
   const fiche = el('section', 'donjon-fiche')
@@ -243,13 +242,24 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const points = el('span', 'donjon-points')
   bande.append(niveau, xp, points)
 
-  // LE BOUTON D'ATTAQUE, rond, au milieu de la place qui reste, sous le pouce.
+  // LE BOUTON D'ATTAQUE, carré, au milieu de la place qui reste (Keko : « le
+  // bouton attaque devrait être carré et le timing auto indiqué par le
+  // contour du carré qui s'éclaire et se lance quand il est complet »). Le
+  // contour est un tracé qui part du haut et fait le tour, au rythme de l'auto.
   const arene = el('div', 'donjon-arene')
+  const cadre = el('div', 'donjon-attaque-cadre')
   const attaque = bouton('donjon-attaque')
+  const valeurAuto = el('span', 'donjon-attaque-auto')
   attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
-  arene.append(attaque)
+  attaque.append(valeurAuto)
+  cadre.innerHTML = `<svg class="donjon-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="donjon-contour-fond" d="${CONTOUR}"/><path class="donjon-contour-plein" pathLength="1" d="${CONTOUR}"/></svg>`
+  cadre.prepend(attaque)
+  const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
+  const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
+  arene.append(cadre)
 
-  page.append(tete, scene, fiche, fil, bande, arene)
+  // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
+  page.append(tete, scene, fiche, arene, bande, fil)
 
   // Les quatre choix, faits une fois (redessinés à chaque tic, les boutons
   // perdraient le clic entre l'appui et le relâchement). Ils vivent dans la
@@ -642,6 +652,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // coup franchi fait jaillir son chiffre. Aux vitesses où plusieurs coups
   // tombent par image, on les cumule et on n'en montre qu'un par `CADENCE_AUTO`.
   const CADENCE_AUTO = 300
+  const FLAMBEE = 220
   let coupVu = -1
   let saisonVue = -1
   let cumulAuto = 0
@@ -666,14 +677,21 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const [x, y] = surLEnnemi(0.24, -0.12)
       impact(x, y, 'auto')
       envoler(x, y, nombre(cumulAuto), 'auto')
-      jaugeAuto.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
+      // Le contour complet se lance : il flambe et le bouton bondit.
+      contour.animate(
+        [{ filter: 'drop-shadow(0 0 0.9rem #e8f6ff) brightness(1.8)' }, { filter: 'drop-shadow(0 0 0.3rem #a9dcff) brightness(1)' }],
+        { duration: 320, easing: 'ease-out' },
+      )
+      cadre.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' })
       cumulAuto = 0
     }
-    // Trop rapide pour se lire : la jauge reste pleine.
+    // Trop rapide pour se lire : le contour reste plein.
+    // Au lancement, il reste plein le temps de flamber, puis repart de zéro.
     const rapide = C.auto.periode / horloge.vitesse < CADENCE_AUTO
-    const part = rapide ? 1 : ((t - debutSaison) % C.auto.periode) / C.auto.periode
-    anneauAuto.style.setProperty('--p', String(part))
-    const texte = nombre(degatsDuCoupAuto(C, j))
+    const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % C.auto.periode) / C.auto.periode
+    contourPlein.style.strokeDasharray = `${part} 1`
+    contourPlein.style.opacity = String(0.55 + 0.45 * part)
+    const texte = `Auto ${nombre(degatsDuCoupAuto(C, j))}`
     if (valeurAuto.textContent !== texte) valeurAuto.textContent = texte
     requestAnimationFrame(image)
   }

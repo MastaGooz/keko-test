@@ -143,6 +143,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'écran). Il frappe dès l'appui. Le bouton
   s'enfonce, l'ennemi s'écrase toujours et le chiffre s'envole de lui, un
   peu au hasard. L'indice « Touchez l'ennemi » est parti avec le geste.
+- **LE BOUTON CARRÉ, ET L'AUTO SUR SON CONTOUR** (Keko, 03/11 : « passer
+  l'xp sous le bouton d'attaque et le journal en dessous de l'xp tout en
+  bas. Et le bouton attaque devrait être carré et le timing auto indiqué
+  par le contour du carré qui s'éclaire et se lance quand il est complet »).
+  De haut en bas : l'ennemi, sa fiche, le bouton, le niveau, le journal.
+  Le bouton est carré (coins à 14 %) et dit « Auto 4,2 » sous « Attaquer ».
+  Autour, un contour bleu (le bleu des chiffres de l'auto) part du milieu
+  du haut et fait le tour en 2 s (un tracé SVG, `pathLength` 1, dont on
+  règle `stroke-dasharray`). Complet, le coup part : le contour flambe, le
+  bouton bondit, et le chiffre jaillit de l'ennemi. La jauge ronde de la
+  scène est partie.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -2,7 +2,8 @@
    bois sombre, parchemin, encre brune, or ; Grenze pour les noms et les
    chiffres, Baloo pour le reste. La page tient dans l'écran, rien ne défile
    hors des feuilles. La scène a une hauteur bornée ; la place qui reste va
-   au gros bouton rond « Attaquer », en bas, sous le pouce. */
+   au gros bouton carré « Attaquer », sous le pouce, puis le niveau et le
+   journal tout en bas. */
 
 .donjon {
   --d-fond: #1b130d;
@@ -241,41 +242,6 @@
     repeating-conic-gradient(rgba(169, 220, 255, 0.9) 0deg 8deg, rgba(169, 220, 255, 0) 12deg 45deg);
 }
 
-/* La jauge de l'auto : un anneau qui se remplit jusqu'au prochain coup. */
-.donjon-auto {
-  position: absolute;
-  left: 0.6rem;
-  bottom: 0.6rem;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.65rem 0.2rem 0.2rem;
-  border-radius: 999px;
-  background: rgba(20, 12, 6, 0.75);
-  color: #a9dcff;
-  font-weight: 800;
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-}
-
-.donjon-auto-anneau {
-  --p: 0;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, rgb(20, 12, 6) 0 52%, transparent 54%),
-    conic-gradient(#a9dcff calc(var(--p) * 360deg), rgba(169, 220, 255, 0.18) 0);
-}
-
-.donjon-auto-valeur::before {
-  content: 'Auto ';
-  color: var(--d-doux);
-  font-weight: 700;
-}
-
 /* ------------------------------------------------ l'ennemi */
 
 .donjon-fiche {
@@ -341,7 +307,6 @@
   background: none;
   border: none;
   border-top: 1px solid var(--d-trait);
-  border-bottom: 1px solid var(--d-trait);
   color: var(--d-doux) !important;
   font-size: 0.9rem;
   text-align: left;
@@ -462,44 +427,82 @@
   justify-content: center;
 }
 
+/* Le cadre porte le bouton et son contour, qui déborde de 7 px tout autour. */
+.donjon-attaque-cadre {
+  position: relative;
+  height: min(10rem, 100% - 14px);
+  min-height: 5.5rem;
+  aspect-ratio: 1;
+}
+
 /* `.donjon .donjon-attaque` : `.donjon button` remet la police héritée. */
 .donjon .donjon-attaque {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
-  height: min(10rem, 100%);
-  min-height: 5.5rem;
-  aspect-ratio: 1;
+  gap: 0.05rem;
+  width: 100%;
+  height: 100%;
   padding: 0;
   border: none;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 30%, #f8d98a, var(--d-or) 50%, #a5762a);
+  border-radius: 14%;
+  background: radial-gradient(circle at 38% 28%, #f8d98a, var(--d-or) 55%, #a5762a);
   color: var(--d-encre) !important;
   font-family: var(--d-titre);
   font-weight: 800;
   font-size: clamp(1.1rem, 4.5vh, 1.6rem);
+  line-height: 1.05;
   box-shadow:
     inset 0 3px 0 rgba(255, 255, 255, 0.45),
     inset 0 -7px 0 rgba(61, 39, 22, 0.35),
-    0 0 0 4px var(--d-fond),
-    0 0 0 6px var(--d-or-sombre),
     0 0.5rem 1.2rem rgba(0, 0, 0, 0.5);
 }
 
 .donjon-attaque svg {
-  width: 38%;
-  height: 38%;
+  width: 36%;
+  height: 36%;
+}
+
+.donjon-attaque-auto {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 0.55em;
+  font-weight: 700;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
 }
 
 .donjon .donjon-attaque:active {
-  background: radial-gradient(circle at 38% 30%, #e8c470, #cf9a3c 50%, #8f6522);
+  background: radial-gradient(circle at 38% 28%, #e8c470, #cf9a3c 55%, #8f6522);
   box-shadow:
     inset 0 4px 8px rgba(61, 39, 22, 0.4),
-    0 0 0 4px var(--d-fond),
-    0 0 0 6px var(--d-or-sombre),
     0 0.2rem 0.5rem rgba(0, 0, 0, 0.5);
+}
+
+/* Le contour de l'auto : un fond éteint, et le tracé qui s'éclaire autour. */
+.donjon-contour {
+  position: absolute;
+  inset: -7px;
+  width: calc(100% + 14px);
+  height: calc(100% + 14px);
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.3rem #a9dcff);
+}
+
+.donjon-contour path {
+  fill: none;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+.donjon-contour-fond {
+  stroke: rgba(169, 220, 255, 0.16);
+}
+
+.donjon-contour-plein {
+  stroke: #cfeaff;
+  stroke-dasharray: 0 1;
 }
 
 /* ------------------------------------------------ les choix (dans la feuille) */
