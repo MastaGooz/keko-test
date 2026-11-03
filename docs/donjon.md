@@ -318,7 +318,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   chance et la force du joueur) ; le repos passe de 2 minutes à 1 : on le
   vide en une minute de spam. Le trait n'est plus symétrique (fatigue 2,
   blanc 2, repos 1 : 40 / 40 / 20 %). Le temps garde sa pente : le repos
-  commence après 2 h 40, plein à 5 h 20 (8 h avant).
+  commence après 2 h 40, plein à 5 h 20 (8 h avant). **Annulé aussitôt**
+  (Keko : « oups, passe le repos à 2 min, je me suis trompé ») : le repos
+  revaut 2 minutes, le trait redevient 1/3 · 1/3 · 1/3, plein à 8 h.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
