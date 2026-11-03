@@ -583,10 +583,31 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
   }
 
-  /** Un point sur l'ennemi, un peu au hasard pour que les coups ne s'empilent pas. */
+  /**
+   * UN POINT SUR LE DESSIN DE L'ENNEMI, un peu au hasard pour que les coups ne
+   * s'empilent pas. Calé sur l'image réellement peinte (le portrait est en
+   * `object-fit: contain`, sa boîte est plus large que le dessin) : rapporté
+   * à la scène, un coup d'auto tombait parfois à côté du personnage (Keko).
+   * `dx`, `dy` décalent du centre du dessin, en fraction de sa taille.
+   */
   function surLEnnemi(dx: number, dy: number): [number, number] {
+    // La boîte de MISE EN PAGE (offset*), pas `getBoundingClientRect` : le
+    // portrait recule, s'écrase et surgit en `transform`, qui la déformait.
+    const nl = portrait.naturalWidth
+    const nh = portrait.naturalHeight
+    let x0 = 0
+    let y0 = 0
+    let l = scene.clientWidth
+    let h = scene.clientHeight
+    if (nl > 0 && nh > 0 && portrait.offsetWidth > 0) {
+      const echelle = Math.min(portrait.offsetWidth / nl, portrait.offsetHeight / nh)
+      l = nl * echelle
+      h = nh * echelle
+      x0 = portrait.offsetLeft + (portrait.offsetWidth - l) / 2
+      y0 = portrait.offsetTop + (portrait.offsetHeight - h) / 2
+    }
     // Le hasard de l'écran, pas celui des règles.
-    return [scene.clientWidth * (0.5 + dx + (Math.random() - 0.5) * 0.3), scene.clientHeight * (0.45 + dy + (Math.random() - 0.5) * 0.2)]
+    return [x0 + l * (0.5 + dx + (Math.random() - 0.5) * 0.24), y0 + h * (0.42 + dy + (Math.random() - 0.5) * 0.2)]
   }
 
   function frapper(): void {
@@ -597,7 +618,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
     const attendu = degatsDuTap(C, avant) * mult
     const dejaInfliges = avant.degatsTap
-    const [x, y] = surLEnnemi(-0.08, 0)
+    const [x, y] = surLEnnemi(-0.1, 0)
     attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
     void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
       const inflige = moi().degatsTap - dejaInfliges
@@ -876,7 +897,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const reel = performance.now()
     if (cumulAuto > 0 && reel - dernierAuto >= CADENCE_AUTO) {
       dernierAuto = reel
-      const [x, y] = surLEnnemi(0.24, -0.12)
+      const [x, y] = surLEnnemi(0.12, -0.06)
       const genre: Genre = coupsDuLot === 1 && critiquesDuLot === 1 ? 'autoCritique' : 'auto'
       const couleur = teinteDuChiffre(genre, 0)
       impact(x, y, genre, couleur)

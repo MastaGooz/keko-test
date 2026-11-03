@@ -416,6 +416,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `1 + 0,15 · rang^0,8` (+15 % au rang 1, +95 % au 10, sans plafond), dans
   `gagnerXp`. Plus d'XP, plus de niveaux, donc plus de points : elle
   s'auto-entretient, à surveiller. Les bots ne l'achètent pas.
+- **LES COUPS TOMBENT SUR LE DESSIN** (Keko, 03/11 : « le coup auto tombe en
+  dehors de la cible visuellement, c'est normal ? »). Non : le point
+  d'impact était pris dans la scène entière (l'auto à +24 % du centre, plus
+  ±15 % au hasard). `surLEnnemi` le prend maintenant dans l'image
+  réellement peinte du portrait (`object-fit: contain`, calculée depuis
+  `naturalWidth`) : taps un peu à gauche du centre, auto un peu à droite,
+  ±12 % au hasard.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
