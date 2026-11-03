@@ -451,6 +451,15 @@
   pointer-events: none;
 }
 
+/* La capacité du tri de Keko ; un cerne d'encre la détache de l'or. */
+.donjon-attaque-dessin {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0.15rem 0.2rem rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
 .donjon-attaque svg {
   width: 36%;
   height: 36%;

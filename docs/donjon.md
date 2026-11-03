@@ -321,6 +321,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   commence après 2 h 40, plein à 5 h 20 (8 h avant). **Annulé aussitôt**
   (Keko : « oups, passe le repos à 2 min, je me suis trompé ») : le repos
   revaut 2 minutes, le trait redevient 1/3 · 1/3 · 1/3, plein à 8 h.
+- **LE BOUTON PORTE UNE CAPACITÉ DU TRI DE KEKO** (Keko, 03/11 : « on a des
+  images de compétences, tu peux tester de l'utiliser pour le bouton
+  attaque », puis « non, je parle des images qu'on avait triées »). Le tri
+  est `Desktop\Style	ri\capacites` (48 icônes, n° 101 à 148, planche
+  `categorie-capacites.jpg`). Retenue : la **109**, l'épée qui tranche dans
+  les flammes (choix de moi ; autres candidates : 112 le poing, 119 la
+  dague, 123 la hache en feu). Prise dans `images-alpha\` (détourée),
+  rognée au dessin (boîte alpha > 16, 3 % d'air), 512 carré, WebP 88 :
+  `public/capacites/attaque.webp`. Un premier essai avait pris les dessins de
+  compétence de l'archive (Taille, Estoc, Riposte) : ce n'était pas eux.
+  `&icone=epee` rend l'épée dessinée.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

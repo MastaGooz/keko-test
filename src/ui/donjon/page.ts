@@ -160,6 +160,14 @@ const TAILLE = { min: 1.3, parDecade: 0.45, max: 4 }
 /** Le contour du bouton d'attaque, du milieu du haut, dans le sens des aiguilles. */
 const CONTOUR = 'M50,3 H82 A15,15 0 0 1 97,18 V82 A15,15 0 0 1 82,97 H18 A15,15 0 0 1 3,82 V18 A15,15 0 0 1 18,3 Z'
 
+/**
+ * L'ICÔNE DU BOUTON D'ATTAQUE : une capacité du tri de Keko (Keko : « les
+ * images qu'on avait triées », `Desktop\Style\tri\capacites`), la n° 109,
+ * l'épée qui tranche dans les flammes — rognée au dessin depuis sa version
+ * détourée (`images-alpha`), 512 carré. `&icone=epee` rend l'épée dessinée.
+ */
+const ICONE_ATTAQUE = 'capacites/attaque.webp'
+
 type Feuille = 'ameliorations' | 'classement' | 'journal' | 'reglages'
 
 export async function monterDonjon(racine: HTMLElement, build: string): Promise<void> {
@@ -271,7 +279,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const arene = el('div', 'donjon-arene')
   const cadre = el('div', 'donjon-attaque-cadre')
   const attaque = bouton('donjon-attaque')
-  attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
+  if (parametres.get('icone') === 'epee') {
+    attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
+  } else {
+    const dessin = el('img', 'donjon-attaque-dessin')
+    dessin.src = url(ICONE_ATTAQUE)
+    dessin.alt = ''
+    dessin.draggable = false
+    attaque.append(dessin, el('span', undefined, 'Attaquer'))
+  }
   // LA RECHARGE DU TAP (Keko : « quand on appuie le bouton se colore et la
   // coloration se vide de haut en bas pour indiquer le CD ») : un voile sur
   // le bouton, à la hauteur de ce qui reste à recharger.
