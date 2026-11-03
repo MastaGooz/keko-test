@@ -380,6 +380,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   absent vaut zéro). *Elles ne jouent que sur les taps*, qui pèsent 0,2 à
   0,5 % des dégâts : appliquer la forme à l'auto, ou peser plus les taps,
   reste à trancher par Keko.
+- **UNE PLAGE DE DÉGÂTS, ±15 %** (Keko, 03/11 : « une plage de dégâts plutôt
+  qu'un nombre fixe ? » — « ok essaie ça »). Chaque coup, tap ou auto, vaut
+  de 85 % à 115 % de sa valeur, tiré uniformément, avant le critique
+  (`tap.ecart`). Le tap tire son écart au RNG seedé de l'état ; l'auto par
+  une fonction de (saison, instant, joueur), comme son critique
+  (`degatsDuCoupAutoA`, lue aussi par l'écran) : le temps découpé donne
+  toujours les mêmes coups. La moyenne ne bouge pas (vérifié à 2 % sur
+  2 000 coups) : le DPS max devient un DPS moyen, la saison simulée ne
+  change pas. Un normal (115 % au plus) ne rejoint jamais un critique
+  (170 % au moins) ; l'écran reconnaît le critique d'un tap au milieu des
+  deux. La bulle dit « Dégâts 8,5 – 11,5 » ; « DPS max » y reste le DPS au
+  rythme de la recharge, désormais en moyenne.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

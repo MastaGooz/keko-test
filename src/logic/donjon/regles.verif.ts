@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -88,7 +88,20 @@ const k = Array.from({ length: 50 }, (_, i) => i + 1).find((i) => autoCritique(C
 const solide = { ...e, ennemi: { ...e.ennemi, pv: 1e9, pvMax: 1e9 } }
 const avantCrit = avancer(C, solide, (k - 1) * P).joueurs[0].degatsAuto
 const apresCrit = avancer(C, solide, k * P).joueurs[0].degatsAuto
-verifier('le coup critique de l\'auto porte le multiplicateur', Math.abs(apresCrit - avantCrit - degatsDuCoupAuto(C, ja) * multCritDe(C, ja)) < 1e-9)
+const coupCritique = apresCrit - avantCrit
+verifier('le coup critique de l\'auto porte le multiplicateur', Math.abs(coupCritique - degatsDuCoupAutoA(C, e.saison.seed, k * P, ja)) < 1e-9 && coupCritique >= degatsDuCoupAuto(C, ja) * (1 - C.tap.ecart) * multCritDe(C, ja) - 1e-9)
+// LA PLAGE DE DÉGÂTS : chaque coup varie autour de sa valeur, la moyenne reste.
+const coupsAuto = Array.from({ length: 2000 }, (_, i) => degatsDuCoupAutoA(C, e.saison.seed, (i + 1) * P, ja))
+const normaux = coupsAuto.filter((_, i) => !autoCritique(C, e.saison.seed, (i + 1) * P, ja))
+const base = degatsDuCoupAuto(C, ja)
+verifier('un coup d\'auto varie dans sa plage', normaux.every((d) => d >= base * (1 - C.tap.ecart) - 1e-9 && d <= base * (1 + C.tap.ecart) + 1e-9) && new Set(normaux.map((d) => d.toFixed(3))).size > 100)
+verifier('la plage garde la moyenne', Math.abs(normaux.reduce((s, d) => s + d, 0) / normaux.length / base - 1) < 0.02)
+const tapsVus = [1, 2, 3, 4, 5, 6, 7, 8].map((graine) => {
+  let x = etatInitial(C, graine, 0)
+  x = appliquer(C, x, { joueur: 'a', t: 0, type: 'rejoindre', nom: 'A', bot: null })
+  return appliquer(C, x, { joueur: 'a', t: 1000, type: 'taper', n: 1 }).joueurs[0].degatsTap
+})
+verifier('un tap varie aussi', new Set(tapsVus.map((d) => d.toFixed(3))).size > 4 && tapsVus.every((d) => d >= base * (1 - C.tap.ecart) - 1e-9))
 const pvDeux = avancer(C, avancer(C, e, 7 * P + 300), 31 * P + 10)
 verifier('l\'auto en deux fois = en une (coups)', pvDeux.ennemi.pv === avancer(C, e, 31 * P + 10).ennemi.pv)
 

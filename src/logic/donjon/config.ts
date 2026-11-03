@@ -80,6 +80,14 @@ export const DONJON = {
     gain: 0.3,
     exposant: 0.8,
     /**
+     * LA PLAGE DE DÉGÂTS (Keko : « une plage de dégâts plutôt qu'un nombre
+     * fixe ? » — « ok essaie ça ») : chaque coup, tap ou auto, vaut de
+     * `1 − ecart` à `1 + ecart` de sa valeur, tiré uniformément, avant le
+     * critique. La moyenne ne bouge pas ; à ±15 %, un coup normal (115 % au
+     * plus) ne rejoint jamais un critique (170 % au moins).
+     */
+    ecart: 0.15,
+    /**
      * LA RECHARGE DU TAP, sa vitesse d'attaque (Keko : « un CD sur le bouton,
      * disons 1 s pour tester », puis 0,5 s, puis 0,25 s) : un
      * tap au plus par `recharge`.

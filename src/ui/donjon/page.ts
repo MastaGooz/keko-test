@@ -36,6 +36,7 @@ import {
   coupsAutoA,
   coutDe,
   degatsDuCoupAuto,
+  degatsDuCoupAutoA,
   dpsDeSpam,
   dpsEffectifDe,
   degatsDuTap,
@@ -76,6 +77,8 @@ function nombre(n: number): string {
 const pourcent = (x: number) => `${Math.round(x * 100)} %`
 /** Un pourcentage à un chiffre après la virgule : « 6,9 % ». */
 const pourcentFin = (x: number) => `${(x * 100).toFixed(1).replace('.', ',')} %`
+/** Une borne de la plage de dégâts : une décimale sous 100 (« 11,5 »), sinon comme `nombre`. */
+const borne = (n: number) => (n < 100 ? n.toFixed(1).replace(/\.0$/, '').replace('.', ',') : nombre(n))
 /** Un bonus : « +30 % », « +0 % ». */
 const bonus = (x: number) => `+${Math.round(x * 100)} %`
 
@@ -596,7 +599,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
     void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
       const inflige = moi().degatsTap - dejaInfliges
-      const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
+      // Critique si au-dessus du milieu entre le plus fort coup normal et le
+      // plus faible critique (la plage les sépare).
+      const e = C.tap.ecart
+      const seuil = (attendu * (1 + e + (1 - e) * multCritDe(C, avant))) / 2
+      const genre: Genre = inflige > seuil ? 'critique' : 'tap'
       const couleur = teinteDuChiffre(genre, mult - 1)
       impact(x, y, genre, couleur)
       envoler(x, y, inflige, genre, couleur)
@@ -635,7 +642,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
     // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
     const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
-    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart))} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 
@@ -856,7 +863,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       } else {
         for (let k = coupVu + 1; k <= coup; k++) {
           const critique = autoCritique(C, etat.saison.seed, k * periode, j)
-          cumulAuto += degatsDuCoupAuto(C, j) * (critique ? multCritDe(C, j) : 1)
+          cumulAuto += degatsDuCoupAutoA(C, etat.saison.seed, k * periode, j)
           if (critique) critiquesDuLot += 1
         }
       }

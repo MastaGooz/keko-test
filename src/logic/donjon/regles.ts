@@ -110,6 +110,23 @@ function critiqueTire(config: ConfigDonjon, seed: number, dans: number, empreint
   return h / 4294967296 < chanceCritDe(config, j)
 }
 
+/** L'écart d'un coup d'auto dans sa plage (de 1 − ecart à 1 + ecart), une fonction de l'instant, comme son critique. */
+function variationTiree(config: ConfigDonjon, seed: number, dans: number, empreinte: number): number {
+  const h = melanger(seed ^ melanger((dans + 0x85ebca6b) >>> 0) ^ melanger(empreinte))
+  return 1 + config.tap.ecart * (2 * (h / 4294967296) - 1)
+}
+
+/**
+ * CE QUE PORTE LE COUP D'AUTO DE CE JOUEUR, `dans` ms après le début de la
+ * saison : sa valeur, son écart dans la plage, son critique. Les règles et
+ * l'écran lisent la même.
+ */
+export function degatsDuCoupAutoA(config: ConfigDonjon, seed: number, dans: number, j: Joueur): number {
+  const empreinte = empreinteDe(j.id)
+  const crit = critiqueTire(config, seed, dans, empreinte, j) ? multCritDe(config, j) : 1
+  return degatsDuCoupAuto(config, j) * variationTiree(config, seed, dans, empreinte) * crit
+}
+
 /**
  * LE COUP D'AUTO DE CE JOUEUR, `dans` ms après le début de la saison, EST-IL
  * CRITIQUE ? Une fonction de (graine de la saison, instant, joueur) : les
@@ -319,7 +336,8 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
     for (let i = 0; i < n; i++) {
       ceCoup[i] = 0
       if (prochain[i] !== t) continue
-      ceCoup[i] = base[i] * (critiqueTire(config, seed, t - debut, empreintes[i], e.joueurs[i]) ? mult[i] : 1)
+      const crit = critiqueTire(config, seed, t - debut, empreintes[i], e.joueurs[i]) ? mult[i] : 1
+      ceCoup[i] = base[i] * variationTiree(config, seed, t - debut, empreintes[i]) * crit
       total += ceCoup[i]
       prochain[i] += periodes[i]
     }
@@ -402,7 +420,8 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   let forme = formeA(config, j, t)
   const minuteDeSpam = dpsDeSpam(config, j) * 60
   for (let k = 0; k < n; k++) {
-    let brut = degatsDuTap(config, j)
+    // Son écart dans la plage, puis son critique.
+    let brut = degatsDuTap(config, j) * (1 + config.tap.ecart * (2 * tirer(e) - 1))
     if (tirer(e) < chanceCritDe(config, j)) brut *= multCritDe(config, j)
     const degats = brut * multiplicateurDeForme(config, j, forme)
     forme = Math.max(bornesDeLaForme(config).min, forme - brut / minuteDeSpam)
