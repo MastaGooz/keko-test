@@ -282,6 +282,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   reste blanc au début »). Dès que la forme sort du palier, d'un côté ou de
   l'autre, le chiffre et le marqueur ont déjà 40 % de gris ou de jaune
   (`TEINTE_MIN`), puis la teinte monte jusqu'au plein ; sur le palier, blanc.
+- **LES INFOS DE L'ATTAQUE À L'APPUI LONG** (Keko, 03/11 : « enlève les infos
+  auto 2 s sur le bouton ; affiche les infos de l'attaque quand on laisse le
+  tap enfoncé (dégâts, vitesse d'attaque auto) »). Le bouton ne dit plus que
+  « Attaquer ». Tenu 0,45 s, il montre une bulle de parchemin au-dessus de
+  lui : les dégâts d'un coup et « un coup toutes les 2,0 s » ; le doigt levé
+  la cache. L'appui frappe quand même une fois. Pas de menu du navigateur
+  (`contextmenu` annulé, `-webkit-touch-callout: none`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

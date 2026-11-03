@@ -268,11 +268,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const arene = el('div', 'donjon-arene')
   const cadre = el('div', 'donjon-attaque-cadre')
   const attaque = bouton('donjon-attaque')
-  const valeurAuto = el('span', 'donjon-attaque-auto')
   attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
-  attaque.append(valeurAuto)
+  // Les infos de l'attaque, montrées tant que le bouton reste enfoncé (Keko :
+  // « affiche les infos de l'attaque quand on laisse le tap enfoncé »).
+  const bulle = el('div', 'donjon-bulle')
+  bulle.hidden = true
   cadre.innerHTML = `<svg class="donjon-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="donjon-contour-fond" d="${CONTOUR}"/><path class="donjon-contour-plein" pathLength="1" d="${CONTOUR}"/></svg>`
   cadre.prepend(attaque)
+  cadre.append(bulle)
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
   // LA FORME, sous le bouton (Keko : « un marqueur sur un trait, la zone du
@@ -563,11 +566,34 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // Au pointeur dès l'appui (un clic attendrait le relâchement) ; au clavier
   // par le clic, qui n'a pas d'appui (`detail` 0).
   attaque.addEventListener('pointerdown', (ev) => {
-    if (ev.button === 0) frapper()
+    if (ev.button !== 0) return
+    frapper()
+    clearTimeout(appui)
+    appui = window.setTimeout(montrerLaBulle, APPUI_LONG)
   })
   attaque.addEventListener('click', (ev) => {
     if (ev.detail === 0) frapper()
   })
+  // L'APPUI LONG montre les infos ; le doigt levé (ou parti) les cache. Le
+  // premier tap a frappé quand même. Pas de menu du navigateur sur l'appui.
+  const APPUI_LONG = 450
+  let appui = 0
+  function montrerLaBulle(): void {
+    remplirLaBulle()
+    bulle.hidden = false
+    bulle.animate([{ opacity: 0, transform: 'translate(-50%, 0.4rem)' }, { opacity: 1, transform: 'translate(-50%, 0)' }], { duration: 160, easing: 'ease-out' })
+  }
+  function cacherLaBulle(): void {
+    clearTimeout(appui)
+    bulle.hidden = true
+  }
+  for (const fin of ['pointerup', 'pointercancel', 'pointerleave'] as const) attaque.addEventListener(fin, cacherLaBulle)
+  attaque.addEventListener('contextmenu', (ev) => ev.preventDefault())
+  function remplirLaBulle(): void {
+    const j = moi()
+    const html = `<div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    if (bulle.innerHTML !== html) bulle.innerHTML = html
+  }
 
   // ------------------------------------------------ le dessin
   let etageVu = -1
@@ -826,8 +852,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     marqueurForme.style.background = teinteDuChiffre('tap', mult - 1)
     const pourCent = `${Math.round(100 * mult)} %`
     if (valeurForme.textContent !== pourCent) valeurForme.textContent = pourCent
-    const texte = `Auto · ${secondes(periode)}`
-    if (valeurAuto.textContent !== texte) valeurAuto.textContent = texte
+    if (!bulle.hidden) remplirLaBulle()
     requestAnimationFrame(image)
   }
 

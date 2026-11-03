@@ -416,6 +416,7 @@
 
 /* `.donjon .donjon-attaque` : `.donjon button` remet la police héritée. */
 .donjon .donjon-attaque {
+  -webkit-touch-callout: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -443,19 +444,59 @@
   height: 36%;
 }
 
-.donjon-attaque-auto {
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 0.55em;
-  font-weight: 700;
-  opacity: 0.7;
-  font-variant-numeric: tabular-nums;
-}
 
 .donjon .donjon-attaque:active {
   background: radial-gradient(circle at 38% 28%, #e8c470, #cf9a3c 55%, #8f6522);
   box-shadow:
     inset 0 4px 8px rgba(61, 39, 22, 0.4),
     0 0.2rem 0.5rem rgba(0, 0, 0, 0.5);
+}
+
+/* Les infos de l'attaque, en bulle de parchemin au-dessus du bouton,
+   pendant l'appui long. */
+.donjon-bulle {
+  position: absolute;
+  bottom: calc(100% + 0.9rem);
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  min-width: 13rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.8rem;
+  background: var(--d-parchemin);
+  color: var(--d-encre);
+  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.donjon-bulle[hidden] {
+  display: none;
+}
+
+/* La pointe vers le bouton. */
+.donjon-bulle::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 0.45rem solid transparent;
+  border-top-color: var(--d-parchemin);
+}
+
+.donjon-bulle-ligne {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.donjon-bulle-ligne b {
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.05rem;
 }
 
 /* Le contour de l'auto : un fond éteint, et le tracé qui s'éclaire autour. */
