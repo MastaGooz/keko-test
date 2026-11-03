@@ -148,6 +148,9 @@ const TEINTES = {
   fatigue: [150, 150, 150],
 }
 
+/** La part de teinte dès qu'on est en fatigue ou en repos, si peu que ce soit. */
+const TEINTE_MIN = 0.4
+
 /** La taille des chiffres de dégâts, en rem : `min` jusqu'à 1, + `parDecade` par facteur 10. */
 const TAILLE = { min: 1.3, parDecade: 0.45, max: 4 }
 
@@ -443,7 +446,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * jaune / critique = orange / normal = blanc », et l'auto blanc comme les
    * autres). Elle suit la forme en continu (`ecart` = multiplicateur − 1) :
    * le blanc tire vers le jaune au-dessus de 100 %, vers le gris en dessous,
-   * plein aux quatre cinquièmes du chemin. Le critique reste orange ; la
+   * plein aux quatre cinquièmes du chemin. DÈS QU'ON SORT DU PALIER, LA
+   * TEINTE EST DÉJÀ À `TEINTE_MIN` (Keko : « on devrait le voir dès qu'on y
+   * est, mais ça reste blanc au début »). Le critique reste orange ; la
    * fatigue ne le grise qu'à moitié, pour qu'on le reconnaisse. L'auto n'a
    * pas de forme.
    */
@@ -451,7 +456,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const critique = STYLES[genre].critique
     const base = critique ? TEINTES.critique : TEINTES.normal
     const vers = ecart < 0 ? TEINTES.fatigue : critique ? TEINTES.critique : TEINTES.repos
-    const part = Math.min(1, Math.abs(ecart) / 0.8) * (critique && ecart < 0 ? 0.5 : 1)
+    const pente = ecart === 0 ? 0 : TEINTE_MIN + (1 - TEINTE_MIN) * Math.min(1, Math.abs(ecart) / 0.8)
+    const part = pente * (critique && ecart < 0 ? 0.5 : 1)
     const [r, g, b] = base.map((c, i) => Math.round(c + (vers[i] - c) * part))
     return `rgb(${r}, ${g}, ${b})`
   }

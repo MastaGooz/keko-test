@@ -277,6 +277,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   pentes ont raccourci* : de 100 % à 0 % en 2 min de spam (5 avant), de
   200 % à 100 % en 2 (5 avant), pour tenir le tiers. Une sauvegarde d'une
   autre échelle repart au milieu (`VERSION_DE_LA_FORME` dans `stockage.ts`).
+- **LA TEINTE A UN PLANCHER** (Keko, 03/11 : « un cap minimum de coloration
+  à la fatigue et au repos, on devrait le voir dès qu'on y est, mais ça
+  reste blanc au début »). Dès que la forme sort du palier, d'un côté ou de
+  l'autre, le chiffre et le marqueur ont déjà 40 % de gris ou de jaune
+  (`TEINTE_MIN`), puis la teinte monte jusqu'au plein ; sur le palier, blanc.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
