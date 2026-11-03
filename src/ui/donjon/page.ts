@@ -124,10 +124,10 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
  * compris pour la Critique, la Force et la Récupération.
  */
 const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
-  tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => bonus(bonusDuCoup(C, j)) },
+  tap: { nom: 'Dégâts', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => bonus(bonusDuCoup(C, j)) },
   vitesse: { nom: 'Vitesse', role: "Le tap et l'auto frappent plus vite", valeur: (j) => bonus(bonusDeVitesse(C, j)) },
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
-  multCrit: { nom: 'Force', role: "Les dégâts d'un coup critique", valeur: (j) => pourcent(multCritDe(C, j)) },
+  multCrit: { nom: 'Dégâts critiques', role: "Ce que multiplie un coup critique", valeur: (j) => pourcent(multCritDe(C, j)) },
   recuperation: { nom: 'Récupération', role: 'La fatigue passe et le repos vient plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
 }
 
@@ -135,7 +135,7 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
 const DIT_L_ARME: Record<TypeArme, string> = {
   epee: 'équilibrée, Récupération +20 %',
   dague: 'rapide, Critique +5 points',
-  baton: 'lent, Force +50 %',
+  baton: 'lent, Dégâts critiques +50 %',
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {

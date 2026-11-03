@@ -511,6 +511,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   Critique +5 points ; **bâton** 15 / 0,375 s, Force +50 %. On en change dans
   les réglages. Bots : épée (assidu, fantôme), dague (A), bâton (B). Une
   sauvegarde d'une autre forme rend ses points, un par niveau gagné.
+- **« COUP » DEVIENT « DÉGÂTS », « FORCE » DEVIENT « DÉGÂTS CRITIQUES »**
+  (Keko, 03/11). Les noms à l'écran seulement ; les clés restent `tap` et
+  `multCrit`.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
