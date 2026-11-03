@@ -359,9 +359,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       void partage.agir({ joueur: MOI, t: maintenant(), type: 'acheter', quoi }).then(() => {
         b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         sauver()
+        // Plus de point : on retourne au combat, la feuille FIGÉE sur l'offre
+        // le temps de se fermer (redessinée, elle montrait la liste entière
+        // une fraction de seconde — Keko) ; sinon l'offre suivante arrive.
+        const dernier = moi().points <= 0
+        if (dernier) feuilleFigee = true
         dessiner()
-        // Plus de point : on retourne au combat ; sinon l'offre suivante arrive.
-        if (moi().points <= 0) setTimeout(fermerLaFeuille, 350)
+        if (dernier) setTimeout(fermerLaFeuille, 350)
         else choix.animate([{ opacity: 0.2, transform: 'translateY(0.6rem)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' })
       })
     })
@@ -382,6 +386,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   voile.append(feuille)
   page.append(voile)
   let ouverte: Feuille | null = null
+  /** La feuille ne se redessine plus : elle se ferme sur ce qu'elle montrait. */
+  let feuilleFigee = false
   let cleDeLaFeuille = ''
 
   const TITRES: Record<Feuille, string> = { ameliorations: 'Améliorations', classement: 'Classement', journal: 'Journal', reglages: 'Réglages' }
@@ -394,6 +400,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
   function fermerLaFeuille(): void {
     ouverte = null
+    feuilleFigee = false
     voile.classList.remove('ouvert')
   }
   boutonClassement.addEventListener('click', () => ouvrir('classement'))
@@ -780,6 +787,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   function dessinerLaFeuille(f: Feuille): void {
     if (f === 'ameliorations') {
+      if (feuilleFigee) return
       const j = moi()
       const offre = j.points > 0 ? j.offre : []
       feuilleTitre.textContent = offre.length > 0 ? `Niveau ${j.niveau} · ${j.points} choix` : 'Vos améliorations'
