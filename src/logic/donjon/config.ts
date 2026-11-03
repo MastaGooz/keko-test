@@ -42,15 +42,13 @@ export const DONJON = {
 
   /** PV de l'étage n : `base · n^exposant`. Polynomial : le donjon se durcit sans mur. */
   ennemi: {
-    /** ×10 avec les dégâts (Keko : « que les chiffres soient toujours entiers »). */
-    pvBase: 1200,
+    pvBase: 120,
     exposant: 2.2,
   },
 
   /** L'XP pour passer du niveau n au suivant : `base · n^exposant`. */
   xp: {
-    /** ÷10 quand les dégâts ont pris ×10 : les niveaux restent les mêmes. */
-    parDegat: 0.1,
+    parDegat: 1,
     base: 40,
     exposant: 2.4,
   },
@@ -77,13 +75,7 @@ export const DONJON = {
    */
   /** Dégâts d'un COUP (un tap, ou un coup d'auto) : `base × (1 + gain · rang^exposant)`. */
   tap: {
-    /**
-     * LES DÉGÂTS SONT DES ENTIERS (Keko : « rework les échelles de dégâts
-     * pour que les chiffres soient toujours entiers ») : un coup de base vaut
-     * 100 (il valait 10, les PV et l'XP ont suivi), et chaque coup est
-     * arrondi à l'entier, plage, critique et forme compris.
-     */
-    base: 100,
+    base: 10,
     /** +30 % au premier rang de « Coup », puis de moins en moins. */
     gain: 0.3,
     exposant: 0.8,

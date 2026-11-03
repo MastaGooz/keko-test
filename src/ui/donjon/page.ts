@@ -77,8 +77,8 @@ function nombre(n: number): string {
 const pourcent = (x: number) => `${Math.round(x * 100)} %`
 /** Un pourcentage à un chiffre après la virgule : « 6,9 % ». */
 const pourcentFin = (x: number) => `${(x * 100).toFixed(1).replace('.', ',')} %`
-/** Une borne de la plage de dégâts : l'entier arrondi (« 115 », pas « 114 »), abrégé au-delà de 10 000. */
-const borne = (n: number) => (n < 1e4 ? String(Math.round(n)) : nombre(n))
+/** Une borne de la plage de dégâts : une décimale sous 100 (« 11,5 »), sinon comme `nombre`. */
+const borne = (n: number) => (n < 100 ? n.toFixed(1).replace(/\.0$/, '').replace('.', ',') : nombre(n))
 /** Un bonus : « +30 % », « +0 % ». */
 const bonus = (x: number) => `+${Math.round(x * 100)} %`
 

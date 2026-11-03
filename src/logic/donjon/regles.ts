@@ -124,7 +124,7 @@ function variationTiree(config: ConfigDonjon, seed: number, dans: number, emprei
 export function degatsDuCoupAutoA(config: ConfigDonjon, seed: number, dans: number, j: Joueur): number {
   const empreinte = empreinteDe(j.id)
   const crit = critiqueTire(config, seed, dans, empreinte, j) ? multCritDe(config, j) : 1
-  return Math.round(degatsDuCoupAuto(config, j) * variationTiree(config, seed, dans, empreinte) * crit)
+  return degatsDuCoupAuto(config, j) * variationTiree(config, seed, dans, empreinte) * crit
 }
 
 /**
@@ -337,7 +337,7 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
       ceCoup[i] = 0
       if (prochain[i] !== t) continue
       const crit = critiqueTire(config, seed, t - debut, empreintes[i], e.joueurs[i]) ? mult[i] : 1
-      ceCoup[i] = Math.round(base[i] * variationTiree(config, seed, t - debut, empreintes[i]) * crit)
+      ceCoup[i] = base[i] * variationTiree(config, seed, t - debut, empreintes[i]) * crit
       total += ceCoup[i]
       prochain[i] += periodes[i]
     }
@@ -423,7 +423,7 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
     // Son écart dans la plage, puis son critique.
     let brut = degatsDuTap(config, j) * (1 + config.tap.ecart * (2 * tirer(e) - 1))
     if (tirer(e) < chanceCritDe(config, j)) brut *= multCritDe(config, j)
-    const degats = Math.round(brut * multiplicateurDeForme(config, j, forme))
+    const degats = brut * multiplicateurDeForme(config, j, forme)
     forme = Math.max(bornesDeLaForme(config).min, forme - brut / minuteDeSpam)
     // Le surplus d'un coup fatal est perdu : un tap frappe un ennemi.
     const porte = Math.min(degats, e.ennemi.pv)

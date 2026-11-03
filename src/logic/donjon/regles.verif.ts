@@ -89,20 +89,19 @@ const solide = { ...e, ennemi: { ...e.ennemi, pv: 1e9, pvMax: 1e9 } }
 const avantCrit = avancer(C, solide, (k - 1) * P).joueurs[0].degatsAuto
 const apresCrit = avancer(C, solide, k * P).joueurs[0].degatsAuto
 const coupCritique = apresCrit - avantCrit
-verifier('le coup critique de l\'auto porte le multiplicateur', Math.abs(coupCritique - degatsDuCoupAutoA(C, e.saison.seed, k * P, ja)) < 1e-9 && coupCritique >= degatsDuCoupAuto(C, ja) * (1 - C.tap.ecart) * multCritDe(C, ja) - 0.5)
+verifier('le coup critique de l\'auto porte le multiplicateur', Math.abs(coupCritique - degatsDuCoupAutoA(C, e.saison.seed, k * P, ja)) < 1e-9 && coupCritique >= degatsDuCoupAuto(C, ja) * (1 - C.tap.ecart) * multCritDe(C, ja) - 1e-9)
 // LA PLAGE DE DÉGÂTS : chaque coup varie autour de sa valeur, la moyenne reste.
 const coupsAuto = Array.from({ length: 2000 }, (_, i) => degatsDuCoupAutoA(C, e.saison.seed, (i + 1) * P, ja))
 const normaux = coupsAuto.filter((_, i) => !autoCritique(C, e.saison.seed, (i + 1) * P, ja))
 const base = degatsDuCoupAuto(C, ja)
-verifier('un coup d\'auto varie dans sa plage', normaux.every((d) => d >= base * (1 - C.tap.ecart) - 0.5 && d <= base * (1 + C.tap.ecart) + 0.5) && new Set(normaux).size > 20)
-verifier('chaque coup est un entier', coupsAuto.every((d) => Number.isInteger(d)))
+verifier('un coup d\'auto varie dans sa plage', normaux.every((d) => d >= base * (1 - C.tap.ecart) - 1e-9 && d <= base * (1 + C.tap.ecart) + 1e-9) && new Set(normaux.map((d) => d.toFixed(3))).size > 100)
 verifier('la plage garde la moyenne', Math.abs(normaux.reduce((s, d) => s + d, 0) / normaux.length / base - 1) < 0.02)
 const tapsVus = [1, 2, 3, 4, 5, 6, 7, 8].map((graine) => {
   let x = etatInitial(C, graine, 0)
   x = appliquer(C, x, { joueur: 'a', t: 0, type: 'rejoindre', nom: 'A', bot: null })
   return appliquer(C, x, { joueur: 'a', t: 1000, type: 'taper', n: 1 }).joueurs[0].degatsTap
 })
-verifier('un tap varie aussi, en entiers', new Set(tapsVus).size > 4 && tapsVus.every((d) => Number.isInteger(d) && d >= base * (1 - C.tap.ecart) - 0.5))
+verifier('un tap varie aussi', new Set(tapsVus.map((d) => d.toFixed(3))).size > 4 && tapsVus.every((d) => d >= base * (1 - C.tap.ecart) - 1e-9))
 const pvDeux = avancer(C, avancer(C, e, 7 * P + 300), 31 * P + 10)
 verifier('l\'auto en deux fois = en une (coups)', pvDeux.ennemi.pv === avancer(C, e, 31 * P + 10).ennemi.pv)
 
@@ -141,7 +140,7 @@ const unTapRepose = appliquer(C, repose, { joueur: 'a', t: 0, type: 'taper', n: 
 verifier('le DPS du spammeur suit la recharge', Math.abs(dpsDeSpam(C, neuf) - (degatsDuTap(C, neuf) * facteurCritMoyen(C, neuf) * 1000) / R) < 1e-9)
 const unTapNeuf = appliquer(C, e, { joueur: 'a', t: 0, type: 'taper', n: 1 })
 const rapport = unTapRepose.joueurs[0].degatsTap / unTapNeuf.joueurs[0].degatsTap
-verifier("reposé, un tap frappe double (à l'arrondi près)", Math.abs(rapport - 2) < 0.02)
+verifier('reposé, un tap frappe double', Math.abs(rapport - 2) < 1e-9)
 // LES STATS DE LA FORME : l'intensité ou le temps hors jeu, jamais la durée d'une session.
 const stat = (quoi: 'ardeur' | 'recuperation' | 'sommeil', r: number) => ({ ...neuf, ameliorations: { ...neuf.ameliorations, [quoi]: r } })
 verifier('Ardeur : le haut du repos monte, de moins en moins', reposMaxDe(C, stat('ardeur', 0)) === 2 && decroit((r) => reposMaxDe(C, stat('ardeur', r))))

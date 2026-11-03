@@ -392,15 +392,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (170 % au moins) ; l'écran reconnaît le critique d'un tap au milieu des
   deux. La bulle dit « Dégâts 8,5 – 11,5 » ; « DPS max » y reste le DPS au
   rythme de la recharge, désormais en moyenne.
-- **LES DÉGÂTS SONT DES ENTIERS** (Keko, 03/11 : « rework les échelles de
-  dégâts pour que les chiffres soient toujours entiers »). Tout ×10 : un
-  coup de base vaut 100 (plage 85 – 115), les PV des ennemis 1 200 × n^2,2,
-  et l'XP par dégât ÷10 (0,1) pour garder les mêmes niveaux. Chaque coup
-  est arrondi à l'entier, plage, critique et forme compris (le tap dans
-  `taper`, l'auto dans `resoudreLAuto` et `degatsDuCoupAutoA`). Les totaux
-  d'un joueur restent fractionnaires au coup fatal de l'auto (partagé au
-  prorata), ce qui ne se voit pas. Mêmes étages en simulation. La bulle
-  dit « Dégâts 85 – 115 », « DPS max 420 + 42 auto ».
+- **DES DÉGÂTS ENTIERS PAR UNE ÉCHELLE ×10 : ESSAYÉ ET RETIRÉ** (Keko, 03/11 :
+  « rework les échelles de dégâts pour que les chiffres soient toujours
+  entiers », puis « ça va pas, c'est trop gros dès le début… rollback »).
+  Un coup de base à 100 (PV ×10, XP par dégât ÷10, chaque coup arrondi)
+  montrait des centaines dès le premier ennemi. Revenu au coup de 10 et à
+  la plage 8,5 – 11,5 ; les chiffres décimaux restent sous 10.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
