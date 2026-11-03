@@ -67,15 +67,23 @@ export const DONJON = {
     base: 10,
     parRang: 6,
     /**
-     * LE TAP SUIT L'AUTO-TAP : chaque tap ajoute N secondes de son DPS. Sans
-     * ça, au troisième jour un tap ne pèse plus rien face à l'auto.
+     * LE TAP SUIT L'AUTO-TAP : chaque tap ajoute N secondes du DPS ACHETÉ
+     * (sans la base de l'auto). Sans ça, au troisième jour un tap ne pèse plus
+     * rien face à l'auto.
      */
     secondesDeDps: 20,
   },
 
+  /**
+   * L'AUTO-ATTAQUE frappe DÈS LE DÉBUT (Keko : « donner dès le début des
+   * attaques auto ») : `base` de DPS au rang 0, plus `parRang` par rang. Elle
+   * frappe PAR COUPS, toutes les `periode`, à la même cadence pour tous (des
+   * coups calés sur le début de la saison), et ignore la fatigue et le repos.
+   */
   auto: {
-    /** DPS par rang ; rang 0 = pas d'auto-tap. */
+    base: 2,
     parRang: 0.6,
+    periode: 2 * SECONDE,
   },
 
   crit: {

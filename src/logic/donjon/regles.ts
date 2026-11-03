@@ -7,12 +7,13 @@
  * où l'état partagé vivra sur un serveur, c'est ce même réducteur qui y
  * tournera.
  *
- * **L'AUTO-TAP SE RÉSOUT PAR ÉVÉNEMENTS, PAS SECONDE PAR SECONDE.** Entre deux
- * actions, le DPS de chacun ne bouge pas (il ne change qu'à l'achat) : on
- * calcule donc directement l'instant où l'ennemi tombe, et le coup fatal va à
- * l'un des joueurs, tiré au hasard seedé au prorata de son DPS. Une semaine
- * d'absence se résout en autant de pas que d'ennemis tués, et le rattrapage
- * est exact.
+ * **L'AUTO-TAP SE RÉSOUT PAR ÉVÉNEMENTS, PAS COUP PAR COUP.** Il frappe par
+ * coups, tous ensemble, toutes les `auto.periode` depuis le début de la
+ * saison. Entre deux actions, le DPS de chacun ne bouge pas (il ne change
+ * qu'à l'achat) : on calcule donc directement le coup où l'ennemi tombe, et
+ * le coup fatal va à l'un des joueurs, tiré au hasard seedé au prorata de son
+ * DPS. Une semaine d'absence se résout en autant de pas que d'ennemis tués,
+ * et le rattrapage est exact.
  */
 import { createRng } from '../rng.ts'
 import { JOUR, type CleAmelioration, type ConfigDonjon } from './config.ts'
@@ -29,8 +30,9 @@ export function degatsDeBaseDuTap(config: ConfigDonjon, j: Joueur): number {
   return config.tap.base + config.tap.parRang * j.ameliorations.tap
 }
 
+/** Le DPS de l'auto, base comprise : il frappe dès le rang 0. */
 export function dpsDe(config: ConfigDonjon, j: Joueur): number {
-  return config.auto.parRang * j.ameliorations.auto
+  return config.auto.base + config.auto.parRang * j.ameliorations.auto
 }
 
 export function chanceCritDe(config: ConfigDonjon, j: Joueur): number {
@@ -52,9 +54,19 @@ export function dpsEffectifDe(config: ConfigDonjon, j: Joueur): number {
   return dpsDe(config, j) * facteurCritMoyen(config, j)
 }
 
-/** Un tap hors critique, fatigue et repos : la base plus N secondes d'auto. */
+/** Un coup d'auto (tous les `auto.periode`), critiques à l'espérance. */
+export function degatsDuCoupAuto(config: ConfigDonjon, j: Joueur): number {
+  return (dpsEffectifDe(config, j) * config.auto.periode) / 1000
+}
+
+/** Le nombre de coups d'auto frappés depuis le début de la saison jusqu'à t. */
+export function coupsAutoA(config: ConfigDonjon, debut: number, t: number): number {
+  return Math.max(0, Math.floor((t - debut) / config.auto.periode))
+}
+
+/** Un tap hors critique, fatigue et repos : la base plus N secondes de l'auto ACHETÉ. */
 export function degatsDuTap(config: ConfigDonjon, j: Joueur): number {
-  return degatsDeBaseDuTap(config, j) + config.tap.secondesDeDps * dpsDe(config, j)
+  return degatsDeBaseDuTap(config, j) + config.tap.secondesDeDps * config.auto.parRang * j.ameliorations.auto
 }
 
 export function coutDuRang(config: ConfigDonjon, rang: number): number {
@@ -161,25 +173,34 @@ function achever(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): voi
   e.ennemi = ennemiDeLEtage(config, e.saison.seed, e.ennemi.etage + 1)
 }
 
-/** L'auto-tap de tous, de `de` à `a`, dans la même saison et le même jour. */
+/**
+ * L'auto-tap de tous, sur les coups de `de` (exclu) à `a` (inclus), dans la
+ * même saison et le même jour. Le coup fatal ne porte que ce qui restait :
+ * le suivant frappe l'ennemi d'après.
+ */
 function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: number): void {
-  const parJoueur = e.joueurs.map((j) => dpsEffectifDe(config, j))
+  const parJoueur = e.joueurs.map((j) => degatsDuCoupAuto(config, j))
   const total = parJoueur.reduce((s, d) => s + d, 0)
-  if (total <= 0 || a <= de) return
+  const debut = e.saison.debut
+  let coup = coupsAutoA(config, debut, de)
+  const dernier = coupsAutoA(config, debut, a)
+  if (total <= 0 || dernier <= coup) return
 
-  let t = de
   for (;;) {
-    const reste = (a - t) / 1000
-    const avantLaMort = e.ennemi.pv / total
-    const duree = Math.min(reste, avantLaMort)
-    const instant = t + duree * 1000
+    const reste = dernier - coup
+    const avantLaMort = Math.ceil(e.ennemi.pv / total - 1e-9)
+    const coups = Math.min(reste, avantLaMort)
+    coup += coups
+    const instant = debut + coup * config.auto.periode
+    // Le dernier coup sur un ennemi qui tombe ne porte que ses PV.
+    const porte = Math.min(total * coups, e.ennemi.pv)
     e.joueurs.forEach((j, i) => {
-      const degats = parJoueur[i] * duree
+      const degats = (parJoueur[i] / total) * porte
       j.degatsAuto += degats
       gagnerXp(config, e, j, degats * config.xp.parDegat, instant)
     })
     if (avantLaMort > reste) {
-      e.ennemi.pv -= total * duree
+      e.ennemi.pv -= porte
       return
     }
     // Le coup fatal, au prorata du DPS de chacun.
@@ -193,7 +214,6 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
       }
     }
     achever(config, e, tueur, instant)
-    t = instant
   }
 }
 

@@ -39,6 +39,16 @@ cinquième joueur à côté des quatre bots.
   avancer en deux fois donne le même résultat qu'en une (c'est vérifié).
 - **L'auto-tap frappe à l'espérance des critiques** ; les taps tirent leurs
   critiques un à un.
+- **L'AUTO FRAPPE DÈS LE DÉBUT, PAR COUPS** (Keko, 03/11 : « donner dès le
+  début des attaques auto (qui ignorent la fatigue et le repos) avec un
+  timing visuel et les chiffres sur le monstre »). `auto.base` (2 de DPS)
+  au rang 0, plus `parRang` par rang. Les coups tombent toutes les
+  `auto.periode` (2 s), à la même heure pour tous, calés sur le début de la
+  saison (`coupsAutoA`). La résolution reste par événements : on compte
+  directement les coups jusqu'à la mort (`ceil(pv / coup)`), et le coup
+  fatal ne porte que les PV qui restaient. L'auto ignore la fatigue et le
+  repos (vérifié). *La base ne gonfle pas le tap* : `secondesDeDps` ne
+  compte que l'auto ACHETÉ, sinon le premier tap passait de 10 à 50.
 - **Le tap suit l'auto-tap** (`tap.secondesDeDps`) : chaque tap ajoute N
   secondes de son DPS. Sans ça, au troisième jour un tap ne pèse plus rien.
 - **Le spam n'est pas obligatoire, grâce à la fatigue** : les `seuil` premiers
@@ -96,6 +106,23 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   chiffre s'envole du doigt (doré et plus gros pour un critique), le suivant
   surgit à la mort pendant que la barre tremble, et la pastille du niveau
   enfle à chaque montée. Pas de son.
+- **PLUS JUICY** (Keko, 03/11 : « les chiffres des dégâts plus juicy et
+  visibles, et une petite animation d'impact sur le monstre »). Le chiffre
+  est en Grenze, gros (2,6 rem, 3,4 pour un critique), cerné d'encre
+  (`-webkit-text-stroke` sous le remplissage, `paint-order: stroke`). Il
+  jaillit en gonflant, penché, puis monte et s'efface. Un critique dit
+  « Critique ! » au-dessus, en or, et secoue la scène. L'impact est une
+  étoile à huit pointes là où le coup porte, et l'ennemi blanchit, recule
+  du côté opposé et s'écrase. *Le temps de l'animation reste linéaire, la
+  courbe est par segment* : une courbe sur l'ensemble avalait le moment
+  plein, et le chiffre était presque effacé à 60 ms (mesuré).
+- **L'AUTO SE VOIT** : une jauge ronde en bas à gauche de la scène
+  (« Auto 4,2 ») se remplit jusqu'au prochain coup, et chaque coup fait
+  jaillir son chiffre en bleu, plus petit, sur le côté droit de l'ennemi
+  (les taps tombent au centre gauche). Aux vitesses où plusieurs coups
+  tombent par image, ils sont cumulés et montrés au plus un toutes les
+  300 ms, la jauge restant pleine. On ne montre que l'auto du joueur ; celle
+  des autres se lit à la barre de PV.
 - **Le portrait suivant ne passe jamais par l'ancien** (Keko, 03/11 : « le
   prochain conserve l'image de l'ennemi précédent brièvement »). Il y avait
   deux causes. Le `src` était changé sur l'image affichée, qui garde
@@ -120,6 +147,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
 
+## Le rapport après l'auto de départ (03/11, graine 1)
+
+```
+étage atteint par jour : J1 28 · J2 39 · J3 47 · J4 53 · J5 58 · J6 63 · J7 67
+dégâts totaux : 26.67 M (taps 5.4 %, auto 94.6 %)
+Bot assidu        26.0 %  (dont taps 11.9 %)  niveau 50  kills 19
+Bot occasionnel A 30.5 %  (dont taps  3.8 %)  niveau 52  kills 21
+Bot occasionnel B 22.6 %  (dont taps  4.4 %)  niveau 48  kills 17
+Bot fantôme       20.9 %  (dont taps  0.5 %)  niveau 47  kills  9
+```
+
+Sur 8 graines : étage final de 67 à 68. La base de l'auto resserre les
+parts (le fantôme monte à ~20 %) et fait baisser celle des taps.
+
 ## Le premier rapport (graine 1, config initiale)
 
 ```
@@ -137,5 +178,7 @@ fantôme de 10 à 19 %. *Tous ces chiffres sont de moi, à rejuger par Keko.*
 ## Ce qui reste à trancher par Keko
 
 - Tout l'équilibrage (`config.ts`), sur le rapport de `npm run donjon`.
-- La part des taps (8 % au total, 15 % chez l'assidu) : assez « utile » ?
+- La part des taps (8 % au total au départ, 5,4 % depuis l'auto de
+  départ) : assez « utile » ?
+- L'auto de départ (2 de DPS, un coup toutes les 2 s).
 - Le prestige (`BonusPermanents`, vide) et le backend en ligne.

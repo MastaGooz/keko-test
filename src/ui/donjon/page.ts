@@ -9,9 +9,11 @@
  * Les améliorations (une tape sur le niveau), le classement, le journal entier
  * et les réglages (vitesse, recommencer) s'ouvrent en feuille.
  *
- * Retour au doigt LÉGER (choisi par Keko) : le bouton s'enfonce, l'ennemi
- * s'écrase, le chiffre s'envole de lui (doré pour un critique), le suivant
- * surgit à la mort. Pas de son.
+ * Retour au doigt (Keko : « plus juicy et visibles ») : le bouton s'enfonce,
+ * l'ennemi blanchit et recule sous une étoile d'impact, le chiffre jaillit
+ * de lui, gros et cerné d'encre (doré et secoué pour un critique). L'AUTO
+ * frappe dès le début, par coups : une jauge ronde sur la scène dit le
+ * prochain, et son chiffre (bleu) jaillit de l'ennemi. Pas de son.
  *
  * *Toutes les règles sont dans `logic/donjon/`* ; ici on lit l'horloge, on
  * joue les bots à leur heure et on dessine. Le joueur passe par `agir`, comme
@@ -25,7 +27,9 @@ import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   chanceCritDe,
+  coupsAutoA,
   coutDe,
+  degatsDuCoupAuto,
   degatsDuTap,
   dpsEffectifDe,
   efficaciteDuTap,
@@ -206,7 +210,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let portrait = nouveauPortrait()
   const pastilleEtage = el('div', 'donjon-pastille-etage')
   const etats = el('div', 'donjon-etats')
-  scene.append(portrait, pastilleEtage, etats)
+  // La jauge de l'auto : elle se remplit jusqu'au prochain coup.
+  const jaugeAuto = el('div', 'donjon-auto')
+  const anneauAuto = el('span', 'donjon-auto-anneau')
+  const valeurAuto = el('span', 'donjon-auto-valeur')
+  jaugeAuto.append(anneauAuto, valeurAuto)
+  scene.append(portrait, pastilleEtage, etats, jaugeAuto)
 
   // Sous la scène : le nom, ce qu'il est, ses PV.
   const fiche = el('section', 'donjon-fiche')
@@ -344,21 +353,74 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   )
 
   // ------------------------------------------------ le geste
-  /** Le chiffre qui s'envole du doigt. */
-  function envoler(x: number, y: number, texte: string, critique: boolean): void {
-    const n = el('div', critique ? 'donjon-degat critique' : 'donjon-degat', texte)
+  type Genre = 'tap' | 'critique' | 'auto'
+
+  /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
+  function envoler(x: number, y: number, texte: string, genre: Genre): void {
+    const n = el('div', `donjon-degat ${genre}`)
+    if (genre === 'critique') n.append(el('span', 'donjon-degat-mot', 'Critique !'))
+    n.append(el('span', undefined, texte))
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     scene.append(n)
-    const derive = (Math.random() - 0.5) * 40
+    const derive = (Math.random() - 0.5) * 60
+    const penche = (Math.random() - 0.5) * (genre === 'critique' ? 24 : 12)
+    const gros = genre === 'critique' ? 1.7 : genre === 'auto' ? 1.25 : 1.45
+    // Le temps reste linéaire, chaque segment a sa courbe : une courbe sur
+    // l'ensemble avalait le moment plein et effaçait le chiffre presque aussitôt.
     n.animate(
       [
-        { transform: 'translate(-50%, -50%) scale(0.6)', opacity: 1 },
-        { transform: `translate(calc(-50% + ${derive * 0.4}px), -120%) scale(${critique ? 1.35 : 1.1})`, opacity: 1, offset: 0.25 },
-        { transform: `translate(calc(-50% + ${derive}px), -260%) scale(1)`, opacity: 0 },
+        { transform: `translate(-50%, -50%) scale(0.3) rotate(${penche}deg)`, opacity: 1, easing: 'ease-out' },
+        { transform: `translate(-50%, -60%) scale(${gros}) rotate(${penche}deg)`, opacity: 1, offset: 0.1, easing: 'ease-in-out' },
+        { transform: `translate(calc(-50% + ${derive * 0.3}px), -80%) scale(1) rotate(${penche * 0.5}deg)`, opacity: 1, offset: 0.25, easing: 'ease-out' },
+        { transform: `translate(calc(-50% + ${derive * 0.8}px), -170%) scale(0.95) rotate(0deg)`, opacity: 1, offset: 0.7, easing: 'ease-in' },
+        { transform: `translate(calc(-50% + ${derive}px), -230%) scale(0.85) rotate(0deg)`, opacity: 0 },
       ],
-      { duration: critique ? 900 : 700, easing: 'ease-out' },
+      { duration: genre === 'critique' ? 1200 : 950 },
     ).onfinish = () => n.remove()
+  }
+
+  /** L'étoile d'impact là où le coup porte, et l'ennemi qui blanchit et recule. */
+  function impact(x: number, y: number, genre: Genre): void {
+    const etoile = el('div', `donjon-impact ${genre}`)
+    etoile.style.left = `${x}px`
+    etoile.style.top = `${y}px`
+    scene.append(etoile)
+    const taille = genre === 'critique' ? 1.9 : genre === 'auto' ? 0.9 : 1.3
+    const tour = Math.random() * 90
+    etoile.animate(
+      [
+        { transform: `translate(-50%, -50%) scale(0.2) rotate(${tour}deg)`, opacity: 1 },
+        { transform: `translate(-50%, -50%) scale(${taille}) rotate(${tour + 25}deg)`, opacity: 0.9, offset: 0.4 },
+        { transform: `translate(-50%, -50%) scale(${taille * 1.2}) rotate(${tour + 35}deg)`, opacity: 0 },
+      ],
+      { duration: genre === 'critique' ? 380 : 260, easing: 'ease-out' },
+    ).onfinish = () => etoile.remove()
+
+    // L'ennemi recule du côté opposé au coup, blanchit, s'écrase.
+    const recul = (x < scene.clientWidth / 2 ? 1 : -1) * (genre === 'critique' ? 14 : genre === 'auto' ? 4 : 8)
+    const blanc = genre === 'auto' ? 1.5 : 2.6
+    portrait.animate(
+      [
+        { transform: 'none', filter: 'brightness(1)' },
+        { transform: `translateX(${recul}px) scale(1.06, 0.9) rotate(${recul * 0.3}deg)`, filter: `brightness(${blanc}) saturate(0.4)`, offset: 0.2 },
+        { transform: `translateX(${-recul * 0.3}px) scale(0.98, 1.03)`, filter: 'brightness(1.1)', offset: 0.55 },
+        { transform: 'none', filter: 'brightness(1)' },
+      ],
+      { duration: genre === 'critique' ? 320 : 220, easing: 'ease-out' },
+    )
+    if (genre === 'critique') {
+      scene.animate(
+        [{ transform: 'none' }, { transform: 'translate(-5px, 3px)' }, { transform: 'translate(5px, -3px)' }, { transform: 'translate(-3px, 2px)' }, { transform: 'none' }],
+        { duration: 260 },
+      )
+    }
+  }
+
+  /** Un point sur l'ennemi, un peu au hasard pour que les coups ne s'empilent pas. */
+  function surLEnnemi(dx: number, dy: number): [number, number] {
+    // Le hasard de l'écran, pas celui des règles.
+    return [scene.clientWidth * (0.5 + dx + (Math.random() - 0.5) * 0.3), scene.clientHeight * (0.45 + dy + (Math.random() - 0.5) * 0.2)]
   }
 
   function frapper(): void {
@@ -366,23 +428,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const avant = moi()
     const attendu = degatsDuTap(C, avant) * efficaciteDuTap(C, fatigueA(C, avant, t)) * (reposA(C, avant, t) >= 1 ? C.repos.mult : 1)
     const dejaInfliges = avant.degatsTap
-    // Le chiffre part de l'ennemi, un peu au hasard pour que les taps
-    // rapides ne s'empilent pas (le hasard de l'écran, pas celui des règles).
-    const x = scene.clientWidth * (0.5 + (Math.random() - 0.5) * 0.4)
-    const y = scene.clientHeight * (0.45 + (Math.random() - 0.5) * 0.2)
-    attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.95)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
-    portrait.animate(
-      [
-        { transform: 'scale(1)', filter: 'brightness(1)' },
-        { transform: 'scale(1.04, 0.92)', filter: 'brightness(1.5)', offset: 0.3 },
-        { transform: 'scale(1)', filter: 'brightness(1)' },
-      ],
-      { duration: 160, easing: 'ease-out' },
-    )
+    const [x, y] = surLEnnemi(-0.08, 0)
+    attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
     void partage.agir({ joueur: MOI, t, type: 'taper', n: 1 }).then(() => {
       const inflige = moi().degatsTap - dejaInfliges
-      const critique = inflige > attendu * 1.05
-      envoler(x, y, nombre(inflige), critique)
+      const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
+      impact(x, y, genre)
+      envoler(x, y, nombre(inflige), genre)
       dessiner()
     })
   }
@@ -584,6 +636,48 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     feuilleCorps.replaceChildren(liste, passees)
   }
 
+  // ------------------------------------------------ l'auto, à chaque image
+  // Les coups de l'auto tombent à heure fixe (tous les `auto.periode` depuis
+  // le début de la saison) : la jauge se remplit vers le prochain, et chaque
+  // coup franchi fait jaillir son chiffre. Aux vitesses où plusieurs coups
+  // tombent par image, on les cumule et on n'en montre qu'un par `CADENCE_AUTO`.
+  const CADENCE_AUTO = 300
+  let coupVu = -1
+  let saisonVue = -1
+  let cumulAuto = 0
+  let dernierAuto = 0
+  function image(): void {
+    const t = maintenant()
+    const j = moi()
+    const debutSaison = etat.saison.debut
+    const coup = coupsAutoA(C, debutSaison, t)
+    if (saisonVue !== etat.saison.numero || coup < coupVu) {
+      saisonVue = etat.saison.numero
+      coupVu = coup
+    }
+    if (coup > coupVu) {
+      cumulAuto += degatsDuCoupAuto(C, j) * (coup - coupVu)
+      coupVu = coup
+      void tic()
+    }
+    const reel = performance.now()
+    if (cumulAuto > 0 && reel - dernierAuto >= CADENCE_AUTO) {
+      dernierAuto = reel
+      const [x, y] = surLEnnemi(0.24, -0.12)
+      impact(x, y, 'auto')
+      envoler(x, y, nombre(cumulAuto), 'auto')
+      jaugeAuto.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
+      cumulAuto = 0
+    }
+    // Trop rapide pour se lire : la jauge reste pleine.
+    const rapide = C.auto.periode / horloge.vitesse < CADENCE_AUTO
+    const part = rapide ? 1 : ((t - debutSaison) % C.auto.periode) / C.auto.periode
+    anneauAuto.style.setProperty('--p', String(part))
+    const texte = nombre(degatsDuCoupAuto(C, j))
+    if (valeurAuto.textContent !== texte) valeurAuto.textContent = texte
+    requestAnimationFrame(image)
+  }
+
   // ------------------------------------------------ le temps
   let occupe = false
   async function tic(): Promise<void> {
@@ -608,6 +702,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // Sans catalogue, l'ennemi garde son nom engendré.
     })
   setInterval(() => void tic(), 200)
+  requestAnimationFrame(image)
   setInterval(sauver, 2000)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') sauver()

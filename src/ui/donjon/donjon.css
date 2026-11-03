@@ -173,24 +173,107 @@
   color: #ffb36b;
 }
 
-/* Le chiffre qui s'envole. */
+/* Le chiffre qui jaillit : gros, cerné d'encre, lisible sur n'importe quel
+   camp. Blanc pour un tap, or pour un critique, bleu pour l'auto. */
 .donjon-degat {
   position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   pointer-events: none;
   font-family: var(--d-titre);
   font-weight: 800;
-  font-size: 1.7rem;
+  font-size: 2.6rem;
+  line-height: 1;
   color: #fff;
+  -webkit-text-stroke: 0.14em var(--d-encre);
+  paint-order: stroke fill;
   text-shadow:
-    0 0 2px var(--d-encre),
-    0 2px 0 var(--d-encre),
-    0 0 0.6rem rgba(0, 0, 0, 0.6);
+    0 0.12em 0 var(--d-encre),
+    0 0.2em 0.4em rgba(0, 0, 0, 0.55);
   white-space: nowrap;
 }
 
 .donjon-degat.critique {
-  font-size: 2.3rem;
-  color: var(--d-or);
+  font-size: 3.4rem;
+  color: #ffd25e;
+  text-shadow:
+    0 0.12em 0 var(--d-encre),
+    0 0 0.5em rgba(255, 190, 60, 0.85);
+}
+
+.donjon-degat.auto {
+  font-size: 1.9rem;
+  color: #a9dcff;
+}
+
+.donjon-degat-mot {
+  font-size: 0.42em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff3c4;
+}
+
+/* L'étoile d'impact : huit pointes, un cœur blanc. */
+.donjon-impact {
+  position: absolute;
+  z-index: 2;
+  width: 6rem;
+  height: 6rem;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, #fff 0 7%, rgba(255, 255, 255, 0) 20%),
+    repeating-conic-gradient(rgba(255, 244, 214, 0.95) 0deg 9deg, rgba(255, 244, 214, 0) 13deg 45deg);
+  -webkit-mask: radial-gradient(circle, #000 0 30%, rgba(0, 0, 0, 0.8) 45%, transparent 70%);
+  mask: radial-gradient(circle, #000 0 30%, rgba(0, 0, 0, 0.8) 45%, transparent 70%);
+}
+
+.donjon-impact.critique {
+  background:
+    radial-gradient(circle, #fff 0 8%, rgba(255, 220, 120, 0) 22%),
+    repeating-conic-gradient(rgba(255, 205, 90, 1) 0deg 9deg, rgba(255, 205, 90, 0) 13deg 45deg);
+}
+
+.donjon-impact.auto {
+  background:
+    radial-gradient(circle, #e8f6ff 0 6%, rgba(169, 220, 255, 0) 18%),
+    repeating-conic-gradient(rgba(169, 220, 255, 0.9) 0deg 8deg, rgba(169, 220, 255, 0) 12deg 45deg);
+}
+
+/* La jauge de l'auto : un anneau qui se remplit jusqu'au prochain coup. */
+.donjon-auto {
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem 0.2rem 0.2rem;
+  border-radius: 999px;
+  background: rgba(20, 12, 6, 0.75);
+  color: #a9dcff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.donjon-auto-anneau {
+  --p: 0;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgb(20, 12, 6) 0 52%, transparent 54%),
+    conic-gradient(#a9dcff calc(var(--p) * 360deg), rgba(169, 220, 255, 0.18) 0);
+}
+
+.donjon-auto-valeur::before {
+  content: 'Auto ';
+  color: var(--d-doux);
+  font-weight: 700;
 }
 
 /* ------------------------------------------------ l'ennemi */

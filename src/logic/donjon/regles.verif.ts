@@ -40,9 +40,17 @@ verifier('assez de taps achèvent l\'ennemi', tue.ennemi.etage > 1 && tue.joueur
 verifier('le coup fatal donne un point', tue.joueurs[0].points >= 1)
 
 const achete = appliquer(C, tue, { joueur: 'a', t: 2000, type: 'acheter', quoi: 'auto' })
-verifier('acheter l\'auto-tap le donne', dpsDe(C, achete.joueurs[0]) > 0)
+verifier('acheter l\'auto-tap le renforce', dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
 const sansPoints = { ...achete, joueurs: achete.joueurs.map((j) => ({ ...j, points: 0 })) }
 verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: 'a', t: 3000, type: 'acheter', quoi: 'tap' }).joueurs[0].ameliorations.tap === 0)
+
+const P = C.auto.periode
+verifier('l\'auto frappe dès le début, sans rien acheter', avancer(C, e, 10 * P).joueurs[0].degatsAuto > 0)
+verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1).joueurs[0].degatsAuto === 0 && avancer(C, e, P).joueurs[0].degatsAuto > 0)
+const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, fatigue: 500, repos: 60 })) }
+verifier('l\'auto ignore la fatigue et le repos', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
+const pvDeux = avancer(C, avancer(C, e, 7 * P + 300), 31 * P + 10)
+verifier('l\'auto en deux fois = en une (coups)', pvDeux.ennemi.pv === avancer(C, e, 31 * P + 10).ennemi.pv)
 
 const plusTard = avancer(C, achete, 2000 + H)
 verifier('l\'auto-tap frappe en l\'absence', plusTard.joueurs[0].degatsAuto > 0)
@@ -61,7 +69,7 @@ verifier('le spam rend moins par tap', parTapSpam < parTapSage)
 const fini = avancer(C, achete, C.saison.duree + 1)
 verifier('la saison finie est archivée', fini.archives.length === 1 && fini.archives[0].etageParJour.length === 7)
 verifier('la saison suivante repart de l\'étage 1', fini.saison.numero === 2 && fini.ennemi.etage === 1)
-verifier('les joueurs restent, remis à zéro', fini.joueurs.length === 1 && fini.joueurs[0].niveau === 1 && dpsDe(C, fini.joueurs[0]) === 0)
+verifier('les joueurs restent, remis à zéro', fini.joueurs.length === 1 && fini.joueurs[0].niveau === 1 && fini.joueurs[0].ameliorations.auto === 0)
 verifier('trois semaines passent trois saisons', avancer(C, achete, 3 * C.saison.duree + 1).saison.numero === 4)
 
 let h = nouvelleHorloge(1000, 0, 1)
