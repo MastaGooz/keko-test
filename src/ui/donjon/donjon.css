@@ -597,11 +597,13 @@
 
 /* ------------------------------------------------ les choix (dans la feuille) */
 
+/* De l'air sur les côtés : la feuille défile (`overflow-y: auto` coupe aussi
+   en largeur), et le liseré d'or de chaque ligne déborde de 2 px. */
 .donjon-choix {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  padding: 0.3rem 0 0.4rem;
+  padding: 0.3rem 4px 0.4rem;
 }
 
 .donjon-choix-ligne {
