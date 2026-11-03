@@ -622,6 +622,10 @@
     0 0 0 2px var(--d-or);
 }
 
+.donjon-choix-ligne[hidden] {
+  display: none;
+}
+
 .donjon-choix-ligne:disabled {
   cursor: default;
   background: #3e2e20;

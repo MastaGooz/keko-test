@@ -35,7 +35,6 @@ import {
   bornesDeLaForme,
   chanceCritDe,
   coupsAutoA,
-  coutDe,
   degatsDuCoupAuto,
   degatsDuCoupAutoA,
   dpsDeSpam,
@@ -343,9 +342,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
   page.append(tete, scene, fiche, arene, bande, fil)
 
-  // Les quatre choix, faits une fois (redessinés à chaque tic, les boutons
-  // perdraient le clic entre l'appui et le relâchement). Ils vivent dans la
-  // feuille des améliorations.
+  // Les lignes des améliorations, faites une fois (redessinées à chaque tic,
+  // les boutons perdraient le clic entre l'appui et le relâchement). Avec des
+  // points, la feuille n'en montre que l'OFFRE, trois tirées au hasard (Keko :
+  // « avoir le choix entre 3 options plutôt que toute la liste ») ; sans
+  // point, toutes, éteintes, pour voir ses rangs.
   const choix = el('div', 'donjon-choix')
   const lesChoix = AMELIORATIONS.map((quoi) => {
     const b = bouton('donjon-choix-ligne')
@@ -359,9 +360,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         sauver()
         dessiner()
-        // Plus rien à payer : on retourne au combat.
-        const j = moi()
-        if (!AMELIORATIONS.some((q) => j.points >= coutDe(C, j, q))) setTimeout(fermerLaFeuille, 350)
+        // Plus de point : on retourne au combat ; sinon l'offre suivante arrive.
+        if (moi().points <= 0) setTimeout(fermerLaFeuille, 350)
+        else choix.animate([{ opacity: 0.2, transform: 'translateY(0.6rem)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' })
       })
     })
     choix.append(b)
@@ -770,7 +771,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       niveauVu = j.niveau
     }
     xpPlein.style.width = `${(100 * j.xp) / xpPourNiveau(C, j.niveau)}%`
-    points.textContent = j.points > 0 ? `${j.points} point${j.points > 1 ? 's' : ''} ›` : ''
+    points.textContent = j.points > 0 ? `${j.points} choix ›` : ''
     bande.classList.toggle('pret', j.points > 0)
 
     for (const [i, b] of boutonsVitesse.entries()) b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse)
@@ -780,12 +781,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function dessinerLaFeuille(f: Feuille): void {
     if (f === 'ameliorations') {
       const j = moi()
-      feuilleTitre.textContent = `Niveau ${j.niveau} · ${j.points} point${j.points > 1 ? 's' : ''}`
+      const offre = j.points > 0 ? j.offre : []
+      feuilleTitre.textContent = offre.length > 0 ? `Niveau ${j.niveau} · ${j.points} choix` : 'Vos améliorations'
       for (const c of lesChoix) {
-        const cout = coutDe(C, j, c.quoi)
-        c.valeur.textContent = `${CHOIX[c.quoi].valeur(j)} → ${CHOIX[c.quoi].valeur(auRangSuivant(j, c.quoi))}`
-        c.cout.textContent = `${cout} pt${cout > 1 ? 's' : ''}`
-        c.b.disabled = j.points < cout
+        const place = offre.indexOf(c.quoi)
+        c.b.hidden = offre.length > 0 && place < 0
+        c.b.style.order = String(Math.max(0, place))
+        c.valeur.textContent = offre.length > 0 ? `${CHOIX[c.quoi].valeur(j)} → ${CHOIX[c.quoi].valeur(auRangSuivant(j, c.quoi))}` : CHOIX[c.quoi].valeur(j)
+        c.cout.textContent = `rang ${j.ameliorations[c.quoi]}`
+        c.b.disabled = offre.length === 0
       }
       if (cleDeLaFeuille !== 'ameliorations') {
         cleDeLaFeuille = 'ameliorations'

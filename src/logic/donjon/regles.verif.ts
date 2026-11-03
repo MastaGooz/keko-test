@@ -50,12 +50,21 @@ verifier('une action de 50 taps n\'en frappe qu\'un', enRafale.joueurs[0].degats
 
 const tue = taperSuite(e, 30, 1000)
 verifier('assez de taps achèvent l\'ennemi', tue.ennemi.etage > 1 && tue.joueurs[0].kills >= 1)
-verifier('le coup fatal donne un point', tue.joueurs[0].points >= 1)
+verifier('les niveaux donnent des points', tue.joueurs[0].points >= 1 && tue.joueurs[0].niveau > 1)
 
-const achete = appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: 'auto' })
-verifier('acheter l\'auto-tap le rend plus rapide', periodeDe(C, achete.joueurs[0]) < periodeDe(C, tue.joueurs[0]) && dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
+// L'OFFRE : chaque point ouvre trois améliorations au choix.
+const ja0 = tue.joueurs[0]
+verifier('un point ouvre une offre de trois améliorations différentes', ja0.points >= 1 && ja0.offre.length === C.points.tailleOffre && new Set(ja0.offre).size === C.points.tailleOffre)
+const horsOffre = (['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil', 'sagesse'] as const).find((q) => !ja0.offre.includes(q))!
+verifier('on ne prend pas hors de son offre', appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: horsOffre }).joueurs[0].ameliorations[horsOffre] === 0)
+const pris = appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: ja0.offre[0] }).joueurs[0]
+verifier('prendre une option : un rang, un point de moins, une offre neuve s\'il en reste', pris.ameliorations[ja0.offre[0]] === 1 && pris.points === ja0.points - 1 && (pris.points === 0 ? pris.offre.length === 0 : pris.offre.length === C.points.tailleOffre))
+const avecAuto = { ...tue, joueurs: tue.joueurs.map((j) => ({ ...j, offre: ['auto', 'tap', 'sommeil'] as typeof j.offre })) }
+const achete = appliquer(C, avecAuto, { joueur: 'a', t: tue.t, type: 'acheter', quoi: 'auto' })
+verifier('prendre l\'auto-tap le rend plus rapide', periodeDe(C, achete.joueurs[0]) < periodeDe(C, tue.joueurs[0]) && dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
 const sansPoints = { ...achete, joueurs: achete.joueurs.map((j) => ({ ...j, points: 0 })) }
 verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: 'a', t: sansPoints.t, type: 'acheter', quoi: 'tap' }).joueurs[0].ameliorations.tap === 0)
+verifier('sans points, pas d\'offre', appliquer(C, sansPoints, { joueur: 'a', t: sansPoints.t, type: 'taper', n: 0 }).joueurs[0].offre.length === 0)
 
 const P = periodeDe(C, e.joueurs[0])
 verifier(`l'auto part à ${C.auto.depart} recharges du tap`, periodeDe(C, e.joueurs[0]) === C.tap.recharge * C.auto.depart)

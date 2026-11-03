@@ -10,14 +10,12 @@
  * qu'on lui donne (sinon l'état partagé partirait dans le futur et le tap
  * d'un humain, ramené à l'heure de l'état, attendrait sa recharge).
  *
- * **La règle de dépense** : il achète la piste la plus en retard sur son poids
- * (`(rang + 1) / poids` le plus petit). S'il ne peut pas la payer, il
- * économise.
+ * **La règle de choix** : dans son offre de trois, il prend la piste la plus
+ * en retard sur son poids (`(rang + 1) / poids` le plus petit).
  */
 import { createRng } from '../rng.ts'
-import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
+import { JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
 import type { EtatPartage } from './partage.ts'
-import { coutDe } from './regles.ts'
 import type { EtatDonjon } from './types.ts'
 
 /** `restants` : les taps qu'il lui reste dans le passage en cours (0 ou absent : le prochain geste est un passage). */
@@ -43,22 +41,25 @@ export function botsInitiaux(config: ConfigDonjon, seed: number, t: number): Eta
   return bots
 }
 
-/** La piste à acheter, ou null s'il économise. */
-export function choixDuBot(config: ConfigDonjon, etat: EtatDonjon, profil: ProfilBot): CleAmelioration | null {
+/**
+ * Le choix dans son offre, ou null sans offre : la piste la plus en retard
+ * sur son poids ; une piste qu'il ne vise pas (poids absent) ne passe qu'en
+ * dernier recours — il ne garde jamais un point.
+ */
+export function choixDuBot(_config: ConfigDonjon, etat: EtatDonjon, profil: ProfilBot): CleAmelioration | null {
   const j = etat.joueurs.find((x) => x.id === profil.id)
-  if (j === undefined) return null
+  if (j === undefined || j.points <= 0 || j.offre.length === 0) return null
   let meilleure: CleAmelioration | null = null
   let score = Infinity
-  for (const quoi of AMELIORATIONS) {
+  for (const quoi of j.offre) {
     const poids = profil.poids[quoi] ?? 0
-    if (poids <= 0) continue
-    const s = (j.ameliorations[quoi] + 1) / poids
+    const s = poids > 0 ? (j.ameliorations[quoi] + 1) / poids : 1e9 + j.ameliorations[quoi]
     if (s < score) {
       score = s
       meilleure = quoi
     }
   }
-  return meilleure !== null && j.points >= coutDe(config, j, meilleure) ? meilleure : null
+  return meilleure
 }
 
 async function depenser(config: ConfigDonjon, partage: EtatPartage, profil: ProfilBot, etat: EtatDonjon, t: number): Promise<EtatDonjon> {

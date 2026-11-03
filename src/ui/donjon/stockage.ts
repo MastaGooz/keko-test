@@ -53,6 +53,8 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     for (const j of e.joueurs) {
       if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
       for (const quoi of AMELIORATIONS) if (typeof j.ameliorations[quoi] !== 'number') j.ameliorations[quoi] = 0
+      // D'avant l'offre de trois : elle se tire au premier calcul des règles.
+      if (!Array.isArray(j.offre)) j.offre = []
     }
     return s as SauvegardeDonjon
   } catch {

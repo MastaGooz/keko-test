@@ -24,6 +24,8 @@ export type Joueur = {
   niveau: number
   /** Points d'amélioration non dépensés. */
   points: number
+  /** L'offre du point en cours : les améliorations au choix (vide sans point). */
+  offre: CleAmelioration[]
   ameliorations: Ameliorations
   /** Les dégâts de la saison, par origine. */
   degatsTap: number

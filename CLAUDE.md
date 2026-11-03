@@ -395,7 +395,7 @@ l'interface `EtatPartage`, prête pour un backend ; l'auto est un tap qui se don
 seul (mêmes dégâts, toutes les 2 s, « Auto-tap » l'accélère ; le contour du bouton l'annonce), chacun peut être critique (une fonction de l'instant, pas un tirage).
 La FORME (0 à 200 % sur les taps) se compte en minutes de spam (dégâts ÷ DPS d'un spammeur), on commence au milieu d'un palier à 100 % (±1 min, le tiers du trait) ; un trait sous le bouton la montre. Le tap a une recharge (0,25 s), règle comprise ; un voile la montre sur le bouton. L'ennemi est une carte du pool sur le camp de sa race, dans une
 scène bornée ; on frappe par le bouton « Attaquer », en bas ; le niveau est le bouton des améliorations (il s'allume
-quand il reste des points) ; toutes les classes CSS sont préfixées `donjon-` (`.moi` est
+quand il reste des points ; chaque point ouvre trois options tirées au hasard, sans coût) ; toutes les classes CSS sont préfixées `donjon-` (`.moi` est
 prise par l'archive). `npm run donjon` simule une saison. `&neuf` repart de zéro. Tout
 est dans `docs/donjon.md`.
 

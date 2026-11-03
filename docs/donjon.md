@@ -423,6 +423,26 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   réellement peinte du portrait (`object-fit: contain`, calculée depuis
   `naturalWidth`) : taps un peu à gauche du centre, auto un peu à droite,
   ±12 % au hasard.
+- **TROIS OPTIONS AU HASARD PAR POINT** (Keko, 03/11 : « quand on level up, ce
+  serait bien d'avoir le choix entre 3 options plutôt que toute la liste, au
+  hasard »). Chaque point (un par niveau, un par coup fatal) ouvre une
+  OFFRE de trois améliorations différentes parmi les huit (`Joueur.offre`,
+  tirée au RNG seedé de l'état par `assurerLesOffres`, à la fin de chaque
+  `appliquer` et `avancer`) ; on en prend une, elle gagne un rang, le point
+  part, une offre neuve vient s'il en reste. Hors de son offre, rien ne se
+  prend. **Plus de coût par rang** (il montait d'un point tous les quatre
+  rangs) : le rendement décroissant des effets en tient lieu. Les bots
+  prennent dans leur offre la piste la plus en retard sur leur poids, et à
+  défaut celle qu'ils ne visent pas : ils ne gardent jamais un point. À
+  l'écran : « N choix › » sur la bande, la feuille « Niveau N · P choix »
+  et ses trois lignes (valeur avant → après, le rang à la place du coût) ;
+  sans point, « Vos améliorations », les huit éteintes. **Sans coût, l'équilibre
+  cassait** : chaque point valait un rang, environ cinq fois plus de rangs
+  qu'avant, et l'assidu raflait tout (étage 217, 59 % des dégâts, niveau
+  212). Balayé sur 3 graines (coups fatals sans point, courbe d'XP de 2,4 à
+  3,0) : retenus *seuls les niveaux donnent un choix* (le coup fatal n'en
+  donne plus) et la courbe d'XP à 2,7 — étage 101, assidu 37 %, fantôme
+  12 % (104 / 35 % / 16 % avant).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

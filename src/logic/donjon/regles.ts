@@ -18,7 +18,7 @@
  * instant. Les coups se résolvent un à un, dans l'ordre du temps.
  */
 import { createRng } from '../rng.ts'
-import { JOUR, type CleAmelioration, type ConfigDonjon } from './config.ts'
+import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon } from './config.ts'
 import { ennemiDeLEtage } from './ennemi.ts'
 import type { Action, EtatDonjon, Evenement, Joueur, SaisonArchivee } from './types.ts'
 
@@ -146,13 +146,6 @@ export function degatsDuTap(config: ConfigDonjon, j: Joueur): number {
   return degatsDeBaseDuTap(config, j)
 }
 
-export function coutDuRang(config: ConfigDonjon, rang: number): number {
-  return config.points.coutBase + Math.floor(rang * config.points.coutPente)
-}
-
-export function coutDe(config: ConfigDonjon, j: Joueur, quoi: CleAmelioration): number {
-  return coutDuRang(config, j.ameliorations[quoi])
-}
 
 export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
   return Math.round(config.xp.base * Math.pow(niveau, config.xp.exposant))
@@ -235,6 +228,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     xp: 0,
     niveau: 1,
     points: 0,
+    offre: [],
     ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, ardeur: 0, recuperation: 0, sommeil: 0, sagesse: 0 },
     degatsTap: 0,
     degatsAuto: 0,
@@ -295,6 +289,24 @@ function gagnerXp(config: ConfigDonjon, e: EtatDonjon, j: Joueur, xp: number, t:
     j.points += config.points.parNiveau
     noter(config, e, { t, joueur: j.id, type: 'niveau', niveau: j.niveau })
     besoin = xpPourNiveau(config, j.niveau)
+  }
+}
+
+/** Tire une offre : `tailleOffre` améliorations différentes, au hasard seedé de l'état. */
+function tirerUneOffre(config: ConfigDonjon, e: EtatDonjon): CleAmelioration[] {
+  const reste = [...AMELIORATIONS]
+  const offre: CleAmelioration[] = []
+  while (offre.length < Math.min(config.points.tailleOffre, AMELIORATIONS.length)) {
+    offre.push(reste.splice(Math.floor(tirer(e) * reste.length), 1)[0])
+  }
+  return offre
+}
+
+/** Qui a des points sans offre en reçoit une ; qui n'en a plus n'en garde pas. */
+function assurerLesOffres(config: ConfigDonjon, e: EtatDonjon): void {
+  for (const j of e.joueurs) {
+    if (j.points > 0 && j.offre.length === 0) j.offre = tirerUneOffre(config, e)
+    else if (j.points <= 0 && j.offre.length > 0) j.offre = []
   }
 }
 
@@ -415,6 +427,7 @@ function avancerSurPlace(config: ConfigDonjon, e: EtatDonjon, t: number): void {
     if (borne === prochainJour) e.etageParJour.push(e.ennemi.etage)
     if (borne === e.saison.fin) finirLaSaison(config, e)
   }
+  assurerLesOffres(config, e)
 }
 
 /**
@@ -476,14 +489,14 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
       if (j !== undefined && action.n > 0) taper(config, e, j, Math.floor(action.n), t)
       break
     case 'acheter':
-      if (j !== undefined) {
-        const cout = coutDe(config, j, action.quoi)
-        if (j.points >= cout) {
-          j.points -= cout
-          j.ameliorations[action.quoi] += 1
-        }
+      // On ne prend que dans son offre ; le point part, une offre neuve vient s'il en reste.
+      if (j !== undefined && j.points > 0 && j.offre.includes(action.quoi)) {
+        j.points -= 1
+        j.ameliorations[action.quoi] += 1
+        j.offre = []
       }
       break
   }
+  assurerLesOffres(config, e)
   return e
 }

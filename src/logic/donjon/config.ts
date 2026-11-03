@@ -50,7 +50,7 @@ export const DONJON = {
   xp: {
     parDegat: 1,
     base: 40,
-    exposant: 2.4,
+    exposant: 2.7,
     /**
      * SAGESSE (Keko : « on peut rajouter un bonus d'XP en stat ? ») : toute
      * l'XP gagnée, des taps comme de l'auto, × `1 + gain · rang^exposant`,
@@ -59,13 +59,21 @@ export const DONJON = {
     sagesse: { gain: 0.15, exposant: 0.8 },
   },
 
-  /** Ce que rapporte une amélioration, et ce qu'elle coûte. */
+  /**
+   * LES POINTS ET L'OFFRE (Keko : « quand on level up, avoir le choix entre
+   * 3 options plutôt que toute la liste, au hasard »). Chaque point (un par
+   * niveau) ouvre une OFFRE de `tailleOffre` améliorations différentes,
+   * tirées au hasard seedé ; on en prend une, elle gagne un rang, le point
+   * part. *Plus de coût par rang* : le rendement décroissant des effets en
+   * tient lieu. Sans coût, chaque point valait un rang (environ cinq fois
+   * plus de rangs qu'avant) et l'assidu raflait tout (étage 217, 59 % des
+   * dégâts, mesuré) : le coup fatal ne rapporte plus de point, et la courbe
+   * d'XP est plus raide (2,7 au lieu de 2,4) — étage 101, assidu 37 %.
+   */
   points: {
     parNiveau: 1,
-    parKill: 1,
-    /** Le rang r coûte `base + floor(r · pente)` points. */
-    coutBase: 1,
-    coutPente: 0.25,
+    parKill: 0,
+    tailleOffre: 3,
   },
 
   /**
