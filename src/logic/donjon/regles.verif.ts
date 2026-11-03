@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, dpsDe, efficaciteDuTap, etatInitial, multCritDe } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, efficaciteDuTap, etatInitial, multCritDe, periodeDe } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -40,7 +40,7 @@ verifier('assez de taps achèvent l\'ennemi', tue.ennemi.etage > 1 && tue.joueur
 verifier('le coup fatal donne un point', tue.joueurs[0].points >= 1)
 
 const achete = appliquer(C, tue, { joueur: 'a', t: 2000, type: 'acheter', quoi: 'auto' })
-verifier('acheter l\'auto-tap le renforce', dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
+verifier('acheter l\'auto-tap le rend plus rapide', periodeDe(C, achete.joueurs[0]) < periodeDe(C, tue.joueurs[0]) && dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
 const sansPoints = { ...achete, joueurs: achete.joueurs.map((j) => ({ ...j, points: 0 })) }
 verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: 'a', t: 3000, type: 'acheter', quoi: 'tap' }).joueurs[0].ameliorations.tap === 0)
 
@@ -50,10 +50,11 @@ verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1
 const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, fatigue: 500, repos: 60 })) }
 verifier('l\'auto ignore la fatigue et le repos', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
 const ja = e.joueurs[0]
-const critiques = Array.from({ length: 4000 }, (_, k) => autoCritique(C, e.saison.seed, k + 1, ja)).filter(Boolean).length
+verifier('un coup d\'auto frappe exactement comme un tap', degatsDuCoupAuto(C, ja) === degatsDuTap(C, ja))
+const critiques = Array.from({ length: 4000 }, (_, k) => autoCritique(C, e.saison.seed, (k + 1) * P, ja)).filter(Boolean).length
 verifier('l\'auto peut être critique, à la bonne fréquence', Math.abs(critiques / 4000 - chanceCritDe(C, ja)) < 0.015)
-verifier('un coup d\'auto critique est une fonction du coup', autoCritique(C, e.saison.seed, 77, ja) === autoCritique(C, e.saison.seed, 77, ja))
-const k = Array.from({ length: 50 }, (_, i) => i + 1).find((i) => autoCritique(C, e.saison.seed, i, ja))!
+verifier('un coup d\'auto critique est une fonction du coup', autoCritique(C, e.saison.seed, 77 * P, ja) === autoCritique(C, e.saison.seed, 77 * P, ja))
+const k = Array.from({ length: 50 }, (_, i) => i + 1).find((i) => autoCritique(C, e.saison.seed, i * P, ja))!
 const solide = { ...e, ennemi: { ...e.ennemi, pv: 1e9, pvMax: 1e9 } }
 const avantCrit = avancer(C, solide, (k - 1) * P).joueurs[0].degatsAuto
 const apresCrit = avancer(C, solide, k * P).joueurs[0].degatsAuto

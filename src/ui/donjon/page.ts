@@ -33,13 +33,13 @@ import {
   coutDe,
   degatsDuCoupAuto,
   degatsDuTap,
-  dpsEffectifDe,
   facteurCritMoyen,
   efficaciteDuTap,
   etatInitial,
   fatigueA,
   jourDeLaSaison,
   multCritDe,
+  periodeDe,
   reposA,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
@@ -67,6 +67,9 @@ function nombre(n: number): string {
 }
 
 const pourcent = (x: number) => `${Math.round(x * 100)} %`
+
+/** Une durée courte en secondes : « 2,0 s », « 1,85 s ». */
+const secondes = (ms: number) => `${(ms / 1000).toFixed(2).replace(/0$/, '').replace('.', ',')} s`
 
 function duree(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -104,8 +107,8 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
 
 /** Les quatre choix d'amélioration : un nom, ce qu'il fait, la valeur qu'il fait monter. */
 const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
-  tap: { nom: 'Coup', role: 'Les dégâts de chaque tap', valeur: (j) => nombre(degatsDuTap(C, j)) },
-  auto: { nom: 'Auto-tap', role: 'Des dégâts chaque seconde, même absent', valeur: (j) => `${nombre(dpsEffectifDe(C, j))}/s` },
+  tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => nombre(degatsDuTap(C, j)) },
+  auto: { nom: 'Auto-tap', role: 'Un coup tout seul, même absent, plus souvent', valeur: (j) => secondes(periodeDe(C, j)) },
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcent(chanceCritDe(C, j)) },
   multCrit: { nom: 'Force', role: 'Ce que multiplie un coup critique', valeur: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
 }
@@ -142,7 +145,6 @@ const TEINTES = {
   normal: [255, 255, 255],
   repos: [255, 222, 70],
   critique: [255, 140, 40],
-  auto: [169, 220, 255],
   fatigue: [150, 150, 150],
 }
 
@@ -387,8 +389,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const STYLES: Record<Genre, { taille: number; pop: number; penche: number; duree: number; onde: number; particules: number; recul: number; blanc: number; secousse: boolean; critique: boolean }> = {
     tap: { taille: 1, pop: 1.45, penche: 12, duree: 950, onde: 1, particules: 8, recul: 8, blanc: 2.6, secousse: false, critique: false },
     critique: { taille: 1.2, pop: 1.7, penche: 24, duree: 1200, onde: 1.6, particules: 12, recul: 14, blanc: 2.6, secousse: true, critique: true },
-    auto: { taille: 0.8, pop: 1.25, penche: 12, duree: 950, onde: 0.7, particules: 5, recul: 4, blanc: 1.5, secousse: false, critique: false },
-    autoCritique: { taille: 1, pop: 1.6, penche: 20, duree: 1200, onde: 1.2, particules: 10, recul: 9, blanc: 2.2, secousse: false, critique: true },
+    // Un coup d'auto est un tap (Keko : « exactement comme les autres ») ;
+    // seul le critique de l'auto ne secoue pas la scène.
+    auto: { taille: 1, pop: 1.45, penche: 12, duree: 950, onde: 1, particules: 8, recul: 8, blanc: 2.6, secousse: false, critique: false },
+    autoCritique: { taille: 1.2, pop: 1.7, penche: 24, duree: 1200, onde: 1.6, particules: 12, recul: 14, blanc: 2.6, secousse: false, critique: true },
   }
 
   /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
@@ -420,7 +424,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * LA COULEUR DIT CE QUI A PORTÉ LE COUP (Keko : « fatigue = gris / repos =
-   * jaune / critique = orange / normal = blanc / auto = bleuté »). Le
+   * jaune / critique = orange / normal = blanc », et l'auto blanc comme les
+   * autres). Le
    * critique l'emporte sur le repos ; la fatigue grise ensuite le chiffre,
    * d'autant plus qu'il rend moins (`usure` = 1 − l'efficacité du tap) :
    * 35 % de gris au premier coup fatigué, gris plein quand le tap ne rend
@@ -430,7 +435,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   function teinteDuChiffre(genre: Genre, repose: boolean, usure: number): string {
     const critique = STYLES[genre].critique
-    const base = critique ? TEINTES.critique : genre === 'auto' ? TEINTES.auto : repose ? TEINTES.repos : TEINTES.normal
+    const base = critique ? TEINTES.critique : repose ? TEINTES.repos : TEINTES.normal
     const plafond = critique ? 0.5 : 1
     const part = usure > 0 ? plafond * (0.35 + 0.65 * Math.min(1, usure / 0.75)) : 0
     const [r, g, b] = base.map((c, i) => Math.round(c + (TEINTES.fatigue[i] - c) * part))
@@ -734,8 +739,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   // ------------------------------------------------ l'auto, à chaque image
-  // Les coups de l'auto tombent à heure fixe (tous les `auto.periode` depuis
-  // le début de la saison) : la jauge se remplit vers le prochain, et chaque
+  // Les coups de l'auto tombent à heure fixe (tous les multiples de la
+  // période du joueur depuis le début de la saison) : la jauge se remplit vers le prochain, et chaque
   // coup franchi fait jaillir son chiffre — orange et « Critique ! » quand
   // ce coup-là l'a été (`autoCritique`, la même fonction que les règles).
   // Aux vitesses où plusieurs coups tombent par image, on les cumule et on
@@ -747,6 +752,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const LOT_MAX = 1000
   let coupVu = -1
   let saisonVue = -1
+  let periodeVue = -1
   let cumulAuto = 0
   let coupsDuLot = 0
   let critiquesDuLot = 0
@@ -755,9 +761,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const t = maintenant()
     const j = moi()
     const debutSaison = etat.saison.debut
-    const coup = coupsAutoA(C, debutSaison, t)
-    if (saisonVue !== etat.saison.numero || coup < coupVu) {
+    const periode = periodeDe(C, j)
+    const coup = coupsAutoA(C, debutSaison, t, j)
+    // Une saison neuve, ou une période changée (un achat) : on repart du coup présent.
+    if (saisonVue !== etat.saison.numero || periode !== periodeVue || coup < coupVu) {
       saisonVue = etat.saison.numero
+      periodeVue = periode
       coupVu = coup
     }
     if (coup > coupVu) {
@@ -766,7 +775,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         cumulAuto += degatsDuCoupAuto(C, j) * facteurCritMoyen(C, j) * n
       } else {
         for (let k = coupVu + 1; k <= coup; k++) {
-          const critique = autoCritique(C, etat.saison.seed, k, j)
+          const critique = autoCritique(C, etat.saison.seed, k * periode, j)
           cumulAuto += degatsDuCoupAuto(C, j) * (critique ? multCritDe(C, j) : 1)
           if (critique) critiquesDuLot += 1
         }
@@ -795,11 +804,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
     // Trop rapide pour se lire : le contour reste plein.
     // Au lancement, il reste plein le temps de flamber, puis repart de zéro.
-    const rapide = C.auto.periode / horloge.vitesse < CADENCE_AUTO
-    const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % C.auto.periode) / C.auto.periode
+    const rapide = periode / horloge.vitesse < CADENCE_AUTO
+    const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % periode) / periode
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
-    const texte = `Auto ${nombre(degatsDuCoupAuto(C, j))}`
+    const texte = `Auto · ${secondes(periode)}`
     if (valeurAuto.textContent !== texte) valeurAuto.textContent = texte
     requestAnimationFrame(image)
   }

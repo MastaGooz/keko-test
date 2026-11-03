@@ -197,6 +197,24 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   coup d'auto critique jaillit en orange avec « Critique ! », une onde plus
   grande ; le bouton dit le coup hors critique (« Auto 4 »). Aux vitesses
   rapides, un lot de plusieurs coups ne se dit jamais critique.
+- **L'AUTO-TAP EST UN TAP QUI SE DONNE TOUT SEUL** (Keko, 03/11 : « pourquoi
+  on met pas les coups auto en blanc exactement comme les autres et avec
+  les mêmes dégâts » ; tranché pour « un tap, plus rapide »). Un coup d'auto
+  fait les dégâts du Coup, critique compris, sans fatigue ni repos, et son
+  chiffre est blanc, au même style qu'un tap. L'amélioration « Auto-tap »
+  raccourcit l'intervalle : `2 s / (1 + 0,08 · rang)`, jamais sous 0,25 s.
+  Les coups de chacun tombent sur les multiples de SA période depuis le
+  début de la saison ; la résolution prend les coups dans l'ordre du temps
+  (ceux du même instant ensemble), et le critique est une fonction de
+  l'instant. Le tap a perdu son bonus « +20 s d'auto » (il serait devenu
+  circulaire). Le bouton dit « Auto · 2,0 s », le panneau « 2,0 s → 1,85 s ».
+  **Ce que ça a coûté, mesuré** : Coup et Auto-tap se multiplient, et la
+  première version (Coup +6, +15 % de vitesse par rang) montait à l'étage
+  172. Balayage sur 3 graines (vitesse 3 à 15 %, Coup +2 à +6) : retenu
+  +8 % et +3 (étage 112 à 115 sur 8 graines). Le fantôme n'achetait que de
+  l'auto : il achète maintenant aussi du Coup (sinon 4 % des dégâts).
+  **Les taps ne pèsent plus que 0,3 % des dégâts** : un tap vaut un coup
+  d'auto, soit 2 s d'auto, contre 20 s avant. À rejuger par Keko.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
@@ -232,7 +250,7 @@ fantôme de 10 à 19 %. *Tous ces chiffres sont de moi, à rejuger par Keko.*
 ## Ce qui reste à trancher par Keko
 
 - Tout l'équilibrage (`config.ts`), sur le rapport de `npm run donjon`.
-- La part des taps (8 % au total au départ, 5,4 % depuis l'auto de
-  départ) : assez « utile » ?
-- L'auto de départ (2 de DPS, un coup toutes les 2 s).
+- La part des taps : 8 % au départ, 5,4 % avec l'auto de départ, 0,3 %
+  depuis que l'auto est un tap. Un tap ne vaut plus qu'un coup d'auto.
+- La vitesse de l'auto (2 s, +8 % par rang) et le Coup (+3 par rang).
 - Le prestige (`BonusPermanents`, vide) et le backend en ligne.

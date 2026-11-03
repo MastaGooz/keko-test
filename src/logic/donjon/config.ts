@@ -62,29 +62,25 @@ export const DONJON = {
     coutPente: 0.25,
   },
 
+  /** Dégâts d'un COUP (un tap, ou un coup d'auto) au rang 0, puis par rang de « Coup ». */
   tap: {
-    /** Dégâts d'un tap au rang 0, puis par rang. */
     base: 10,
-    parRang: 6,
-    /**
-     * LE TAP SUIT L'AUTO-TAP : chaque tap ajoute N secondes du DPS ACHETÉ
-     * (sans la base de l'auto). Sans ça, au troisième jour un tap ne pèse plus
-     * rien face à l'auto.
-     */
-    secondesDeDps: 20,
+    parRang: 3,
   },
 
   /**
-   * L'AUTO-ATTAQUE frappe DÈS LE DÉBUT (Keko : « donner dès le début des
-   * attaques auto ») : `base` de DPS au rang 0, plus `parRang` par rang. Elle
-   * frappe PAR COUPS, toutes les `periode`, à la même cadence pour tous (des
-   * coups calés sur le début de la saison), et ignore la fatigue et le repos.
-   * Chaque coup peut être critique, aux mêmes chance et force que les taps.
+   * L'AUTO-TAP EST UN TAP QUI SE DONNE TOUT SEUL (Keko : « mettre les coups
+   * auto exactement comme les autres et avec les mêmes dégâts »). Dès le
+   * début, chaque joueur frappe un coup toutes les `periode` : les dégâts du
+   * Coup, critique compris, sans fatigue ni repos. L'amélioration « Auto-tap »
+   * en raccourcit l'intervalle : `periode / (1 + acceleration · rang)`, en
+   * millisecondes entières, jamais sous `periodeMin`. Les coups de chacun
+   * tombent sur les multiples de sa période depuis le début de la saison.
    */
   auto: {
-    base: 2,
-    parRang: 0.6,
     periode: 2 * SECONDE,
+    acceleration: 0.08,
+    periodeMin: 250,
   },
 
   crit: {
@@ -150,7 +146,8 @@ export const DONJON = {
         nom: 'Bot fantôme',
         passagesParJour: 1 / 3,
         taps: [10, 30],
-        poids: { tap: 0, auto: 1, chanceCrit: 0, multCrit: 0 },
+        // Le Coup fait aussi les dégâts de l'auto : même le fantôme en achète.
+        poids: { tap: 1, auto: 1, chanceCrit: 0, multCrit: 0 },
       },
     ] as ProfilBot[],
   },
