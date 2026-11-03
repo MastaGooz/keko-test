@@ -57,6 +57,13 @@
   min-width: 0;
 }
 
+.donjon-saison,
+.donjon-reste {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .donjon-saison {
   font-family: var(--d-titre);
   font-weight: 800;
@@ -65,7 +72,7 @@
 }
 
 .donjon-reste {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--d-doux);
   font-variant-numeric: tabular-nums;
 }
@@ -89,6 +96,21 @@
 
 .donjon-icone:active {
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* L'étage, en tête de page avec la saison. */
+.donjon-pastille-etage {
+  flex-shrink: 0;
+  margin-right: 0.3rem;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--d-parchemin);
+  color: var(--d-encre);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.35);
 }
 
 /* ------------------------------------------------ la scène */
@@ -134,19 +156,6 @@
   filter: drop-shadow(0 0.3rem 0.4rem rgba(0, 0, 0, 0.35));
 }
 
-.donjon-pastille-etage {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  padding: 0.15rem 0.7rem;
-  border-radius: 999px;
-  background: var(--d-parchemin);
-  color: var(--d-encre);
-  font-family: var(--d-titre);
-  font-weight: 800;
-  font-size: 1.05rem;
-  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.35);
-}
 
 .donjon-etats {
   position: absolute;

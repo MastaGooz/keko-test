@@ -204,8 +204,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const page = el('div', 'donjon')
   racine.append(page)
 
-  // La tête : la saison, le temps qui reste, deux icônes.
+  // La tête : l'étage (Keko : « en haut avec les infos de saison plutôt que
+  // sur le monstre »), la saison, le temps qui reste, deux icônes.
   const tete = el('header', 'donjon-tete')
+  const pastilleEtage = el('div', 'donjon-pastille-etage')
   const saison = el('div', 'donjon-saison')
   const reste = el('div', 'donjon-reste')
   const infos = el('div', 'donjon-tete-infos')
@@ -216,7 +218,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const boutonReglages = bouton('donjon-icone')
   boutonReglages.innerHTML = ICONE_REGLAGES
   boutonReglages.setAttribute('aria-label', 'Réglages')
-  tete.append(infos, boutonClassement, boutonReglages)
+  tete.append(pastilleEtage, infos, boutonClassement, boutonReglages)
 
   // La scène : le camp, l'ennemi debout dessus. On ne la tape plus : c'est
   // le bouton « Attaquer » qui frappe.
@@ -228,9 +230,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     return img
   }
   let portrait = nouveauPortrait()
-  const pastilleEtage = el('div', 'donjon-pastille-etage')
   const etats = el('div', 'donjon-etats')
-  scene.append(portrait, pastilleEtage, etats)
+  scene.append(portrait, etats)
 
   // Sous la scène : le nom, ce qu'il est, ses PV.
   const fiche = el('section', 'donjon-fiche')

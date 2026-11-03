@@ -215,6 +215,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'auto : il achète maintenant aussi du Coup (sinon 4 % des dégâts).
   **Les taps ne pèsent plus que 0,3 % des dégâts** : un tap vaut un coup
   d'auto, soit 2 s d'auto, contre 20 s avant. À rejuger par Keko.
+- **L'ÉTAGE EST EN TÊTE** (Keko, 03/11 : « l'étage devrait être affiché en
+  haut avec les infos de saison plutôt que sur le monstre »). La pastille
+  « Étage N » (parchemin) a quitté la scène pour la tête, à gauche de la
+  saison et du temps qui reste ; elle enfle toujours à chaque étage.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
