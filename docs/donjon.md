@@ -154,12 +154,24 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   règle `stroke-dasharray`). Complet, le coup part : le contour flambe, le
   bouton bondit, et le chiffre jaillit de l'ennemi. La jauge ronde de la
   scène est partie.
-- **LA FATIGUE SE VOIT AU CHIFFRE** (Keko, 03/11 : « colorer en orange les
+- **LA FATIGUE SE VOIT AU CHIFFRE** (remplacé par le gris, ci-dessous ;
+  Keko, 03/11 : « colorer en orange les
   popup number affectés par la fatigue, avec la teinte orange qui augmente
   avec le niveau de fatigue »). Un tap qui ne frappe plus à plein tire son
   chiffre vers l'orange (`teinteDeFatigue`), d'autant plus qu'il rend moins :
   35 % d'orange au premier coup fatigué, orange plein quand il ne rend plus
   qu'un quart. Le critique part de son or. L'auto n'est jamais fatiguée.
+- **LE CODE DES COULEURS DES CHIFFRES** (Keko, 03/11, refait juste après
+  l'orange de fatigue : « fatigue = gris / repos = jaune / critique =
+  orange / normal = blanc / auto = bleuté »). Blanc pour un tap normal, jaune
+  pour un tap porté par le repos (×3), orange pour un critique (et son
+  étoile d'impact), bleu pour l'auto. La fatigue GRISE le chiffre, d'autant
+  plus qu'il rend moins (35 % de gris au premier coup fatigué, gris plein à
+  un quart d'efficacité). Un critique ne grise qu'à moitié : gris plein, il
+  ne se distinguait plus d'un tap (mesuré). Le critique l'emporte sur le
+  repos. Les couleurs ne sont écrites qu'une fois, dans
+  `TEINTES` (`page.ts`) ; le CSS ne garde que les tailles et les ombres.
+  Les pastilles « Repos » et « Fatigue » de la scène suivent : jaune et gris.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

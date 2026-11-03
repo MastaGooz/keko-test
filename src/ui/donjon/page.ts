@@ -135,6 +135,15 @@ const ICONE_REGLAGES =
 const ICONE_EPEE =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H20v5.5L9 20l-5.5-5.5z"/><path d="M5.5 12.5l6 6M3 21l3.5-3.5"/></svg>'
 
+/** Les couleurs des chiffres de dégâts, en RVB : la seule place où elles sont écrites. */
+const TEINTES = {
+  normal: [255, 255, 255],
+  repos: [255, 222, 70],
+  critique: [255, 140, 40],
+  auto: [169, 220, 255],
+  fatigue: [150, 150, 150],
+}
+
 /** Le contour du bouton d'attaque, du milieu du haut, dans le sens des aiguilles. */
 const CONTOUR = 'M50,3 H82 A15,15 0 0 1 97,18 V82 A15,15 0 0 1 82,97 H18 A15,15 0 0 1 3,82 V18 A15,15 0 0 1 18,3 Z'
 
@@ -366,9 +375,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   type Genre = 'tap' | 'critique' | 'auto'
 
   /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
-  function envoler(x: number, y: number, texte: string, genre: Genre, usure = 0): void {
+  function envoler(x: number, y: number, texte: string, genre: Genre, repose = false, usure = 0): void {
     const n = el('div', `donjon-degat ${genre}`)
-    if (usure > 0) n.style.color = teinteDeFatigue(genre, usure)
+    n.style.color = teinteDuChiffre(genre, repose, usure)
     if (genre === 'critique') n.append(el('span', 'donjon-degat-mot', 'Critique !'))
     n.append(el('span', undefined, texte))
     n.style.left = `${x}px`
@@ -392,16 +401,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   /**
-   * UN COUP FATIGUÉ TIRE VERS L'ORANGE (Keko : « la teinte orange augmente
-   * avec le niveau de fatigue »). `usure` = 1 − l'efficacité du tap. Le
-   * premier coup fatigué est déjà nettement orangé (35 %), plein orange quand
-   * le tap ne rend plus qu'un quart.
+   * LA COULEUR DIT CE QUI A PORTÉ LE COUP (Keko : « fatigue = gris / repos =
+   * jaune / critique = orange / normal = blanc / auto = bleuté »). Le
+   * critique l'emporte sur le repos ; la fatigue grise ensuite le chiffre,
+   * d'autant plus qu'il rend moins (`usure` = 1 − l'efficacité du tap) :
+   * 35 % de gris au premier coup fatigué, gris plein quand le tap ne rend
+   * plus qu'un quart. Un critique ne grise qu'à moitié : il doit rester
+   * orange pour qu'on le reconnaisse. L'auto n'est jamais fatiguée.
    */
-  function teinteDeFatigue(genre: Genre, usure: number): string {
-    const part = 0.35 + 0.65 * Math.min(1, usure / 0.75)
-    const base = genre === 'critique' ? [255, 210, 94] : [255, 255, 255]
-    const orange = [255, 122, 26]
-    const [r, g, b] = base.map((c, i) => Math.round(c + (orange[i] - c) * part))
+  function teinteDuChiffre(genre: Genre, repose: boolean, usure: number): string {
+    const base = genre === 'auto' ? TEINTES.auto : genre === 'critique' ? TEINTES.critique : repose ? TEINTES.repos : TEINTES.normal
+    const plafond = genre === 'critique' ? 0.5 : 1
+    const part = usure > 0 ? plafond * (0.35 + 0.65 * Math.min(1, usure / 0.75)) : 0
+    const [r, g, b] = base.map((c, i) => Math.round(c + (TEINTES.fatigue[i] - c) * part))
     return `rgb(${r}, ${g}, ${b})`
   }
 
@@ -452,7 +464,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const t = maintenant()
     const avant = moi()
     const efficacite = efficaciteDuTap(C, fatigueA(C, avant, t))
-    const attendu = degatsDuTap(C, avant) * efficacite * (reposA(C, avant, t) >= 1 ? C.repos.mult : 1)
+    const repose = reposA(C, avant, t) >= 1
+    const attendu = degatsDuTap(C, avant) * efficacite * (repose ? C.repos.mult : 1)
     const dejaInfliges = avant.degatsTap
     const [x, y] = surLEnnemi(-0.08, 0)
     attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
@@ -460,7 +473,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const inflige = moi().degatsTap - dejaInfliges
       const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
       impact(x, y, genre)
-      envoler(x, y, nombre(inflige), genre, 1 - efficacite)
+      envoler(x, y, nombre(inflige), genre, repose, 1 - efficacite)
       dessiner()
     })
   }
