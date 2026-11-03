@@ -68,9 +68,10 @@ export const DONJON = {
     parRang: 3,
     /**
      * LA RECHARGE DU TAP, sa vitesse d'attaque (Keko : « un CD sur le bouton,
-     * disons 1 s pour tester ») : un tap au plus par `recharge`.
+     * disons 1 s pour tester », puis « mets le CD à 0,5 s pour voir ») : un
+     * tap au plus par `recharge`.
      */
-    recharge: 1 * SECONDE,
+    recharge: 0.5 * SECONDE,
   },
 
   /**

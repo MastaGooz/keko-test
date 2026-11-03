@@ -99,9 +99,10 @@ verifier('45 s de spam : 100 %, le marqueur a glissé à gauche', mf(fSage) === 
 const long = spammer(120_000)
 const mLong = mf(formeA(C, long.joueurs[0], 121_000))
 verifier('2 min de spam : la fatigue est là', mLong < 0.8 && mLong > 0.3)
-const minute = taperSuite(e, 60, 1000)
-const fm = formeA(C, minute.joueurs[0], 1000 + 59 * R)
-verifier('60 taps (une minute de spam) usent une minute de forme', fm < -0.6 && fm > -1.3)
+const tapsParMinute = 60_000 / R
+const minute = taperSuite(e, tapsParMinute, 1000)
+const fm = formeA(C, minute.joueurs[0], 1000 + (tapsParMinute - 1) * R)
+verifier('une minute de spam (un tap par recharge) use une minute de forme', fm < -0.6 && fm > -1.3)
 const epuiseLa = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: B.min, formeA: 0 })) }
 verifier('épuisé, on revient au milieu en une demi-heure', Math.abs(formeA(C, epuiseLa.joueurs[0], H / 2)) < 1e-9 && mf(formeA(C, epuiseLa.joueurs[0], H / 6)) < 1)
 const repose = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: B.max, formeA: 0 })) }

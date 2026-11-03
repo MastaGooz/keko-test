@@ -302,7 +302,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   de l'humain, ramené à l'heure de l'état, attendait sa recharge). À
   l'écran : un voile brun sur le bouton au tap, qui se vide de haut en bas
   (posé à chaque image depuis `prochainTap`) ; l'appui long dit aussi la
-  recharge. L'équilibrage ne bouge pas (étage 113 à 115).
+  recharge. L'équilibrage ne bouge pas (étage 113 à 115). **Puis 0,5 s**
+  (Keko : « mets le CD à 0,5 s pour voir ») : une minute de spam vaut
+  120 taps, la forme se consomme à la même vitesse en minutes.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
