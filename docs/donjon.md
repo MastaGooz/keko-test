@@ -304,7 +304,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (posé à chaque image depuis `prochainTap`) ; l'appui long dit aussi la
   recharge. L'équilibrage ne bouge pas (étage 113 à 115). **Puis 0,5 s**
   (Keko : « mets le CD à 0,5 s pour voir ») : une minute de spam vaut
-  120 taps, la forme se consomme à la même vitesse en minutes.
+  120 taps, la forme se consomme à la même vitesse en minutes. **Puis
+  0,25 s** (Keko : « essaie 0,25 ») : une minute de spam vaut 240 taps.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
