@@ -310,6 +310,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (Keko : « mets le CD à 0,5 s pour voir ») : une minute de spam vaut
   120 taps, la forme se consomme à la même vitesse en minutes. **Puis
   0,25 s** (Keko : « essaie 0,25 ») : une minute de spam vaut 240 taps.
+- **LE REPOS VAUT UNE MINUTE DE DPS** (Keko, 03/11 : « pour calculer la
+  consommation de repos, on peut calculer 1 min de DPS (en prenant en
+  compte le taux de crit et la puissance des crits réels), et pour passer
+  du milieu à la droite ou à la gauche du blanc on prend 1 min aussi »).
+  Les crits réels et le palier à ±1 min y étaient déjà (`dpsDeSpam` lit la
+  chance et la force du joueur) ; le repos passe de 2 minutes à 1 : on le
+  vide en une minute de spam. Le trait n'est plus symétrique (fatigue 2,
+  blanc 2, repos 1 : 40 / 40 / 20 %). Le temps garde sa pente : le repos
+  commence après 2 h 40, plein à 5 h 20 (8 h avant).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

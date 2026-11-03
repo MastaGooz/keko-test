@@ -119,10 +119,11 @@ export const DONJON = {
     /** Une minute de spam de chaque côté du milieu avant la fatigue. */
     palier: 2,
     fatigue: 2,
-    repos: 2,
+    /** Une minute de spam pour consommer tout le repos (Keko : « on peut calculer 1 min de DPS »). */
+    repos: 1,
     /** Sous le milieu : du fond au milieu (3 min de spam) en 30 min. */
     recuperationParHeure: 6,
-    /** Au-dessus : du milieu à 200 % (3 min de spam) en 8 h ; le repos commence après 2 h 40. */
+    /** Au-dessus : du milieu à 200 % (2 min de spam) en 5 h 20 ; le repos commence après 2 h 40. */
     reposParHeure: 0.375,
   },
 
