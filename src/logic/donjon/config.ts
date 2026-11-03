@@ -166,6 +166,14 @@ export const DONJON = {
      * ce bonus. RÉCUPÉRATION : la fatigue se résorbe plus vite. SOMMEIL : le
      * repos se remplit plus vite.
      */
+    /**
+     * UN SAUT À LA SORTIE DU BLANC (Keko : « un petit cap qui commence à
+     * 150 % jusqu'à 200 % au max, et de 50 % à 0 % en fatigue ») : un pas
+     * dans le repos frappe déjà à `entreeRepos`, un pas dans la fatigue
+     * tombe déjà à `entreeFatigue`.
+     */
+    entreeRepos: 1.5,
+    entreeFatigue: 0.5,
     ardeur: { gain: 0.15, exposant: 0.8 },
     recuperation: { gain: 0.15, exposant: 0.8 },
     sommeil: { gain: 0.15, exposant: 0.8 },

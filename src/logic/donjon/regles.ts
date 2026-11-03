@@ -210,16 +210,18 @@ export function formeA(config: ConfigDonjon, j: Joueur, t: number): number {
 }
 
 /**
- * Ce que la forme fait d'un tap : 0 % épuisé, 100 % sur tout le palier,
- * le haut du repos (200 % sans Ardeur) reposé, en continu entre les deux.
+ * Ce que la forme fait d'un tap : 100 % sur tout le palier ; en le quittant,
+ * un saut — `entreeFatigue` (50 %) d'un côté, qui descend jusqu'à 0 %
+ * épuisé, `entreeRepos` (150 %) de l'autre, qui monte jusqu'au haut du
+ * repos (200 % sans Ardeur).
  */
 export function multiplicateurDeForme(config: ConfigDonjon, j: Joueur, forme: number): number {
   const f = config.forme
   const b = bornesDeLaForme(config)
-  if (forme < b.palierBas) return Math.max(0, 1 + (forme - b.palierBas) / f.fatigue)
+  if (forme < b.palierBas) return Math.max(0, f.entreeFatigue * (1 + (forme - b.palierBas) / f.fatigue))
   if (forme <= b.palierHaut) return 1
   const haut = reposMaxDe(config, j)
-  return Math.min(haut, 1 + ((forme - b.palierHaut) / f.repos) * (haut - 1))
+  return Math.min(haut, f.entreeRepos + ((forme - b.palierHaut) / f.repos) * (haut - f.entreeRepos))
 }
 
 // ---------------------------------------------------------------- l'état

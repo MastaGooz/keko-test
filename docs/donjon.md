@@ -404,6 +404,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   coup, tap ou auto, est arrondi (plage, critique et forme compris) : au
   départ 9, 10 ou 11, un critique 17 à 23, un tap fatigué 8, 5, 3…. La
   bulle dit « Dégâts 9 – 11 ». La moyenne garde ±3 %.
+- **UN SAUT À LA SORTIE DU BLANC : 150 % → 200 %, 50 % → 0 %** (Keko, 03/11 :
+  « on devrait pas mettre un petit cap qui commence à 150 % jusqu'à 200 %
+  au max ? et de 50 % à 0 % en fatigue ? »). Un pas hors du palier frappe
+  déjà à 150 % côté repos (puis monte au haut du repos, 200 % sans Ardeur)
+  ou tombe déjà à 50 % côté fatigue (puis descend à 0 %) :
+  `forme.entreeRepos`, `forme.entreeFatigue`. Le palier reste à 100 %, les
+  durées ne bougent pas. La teinte suit (déjà forte au saut).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
