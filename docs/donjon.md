@@ -154,6 +154,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   règle `stroke-dasharray`). Complet, le coup part : le contour flambe, le
   bouton bondit, et le chiffre jaillit de l'ennemi. La jauge ronde de la
   scène est partie.
+- **LA FATIGUE SE VOIT AU CHIFFRE** (Keko, 03/11 : « colorer en orange les
+  popup number affectés par la fatigue, avec la teinte orange qui augmente
+  avec le niveau de fatigue »). Un tap qui ne frappe plus à plein tire son
+  chiffre vers l'orange (`teinteDeFatigue`), d'autant plus qu'il rend moins :
+  35 % d'orange au premier coup fatigué, orange plein quand il ne rend plus
+  qu'un quart. Le critique part de son or. L'auto n'est jamais fatiguée.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

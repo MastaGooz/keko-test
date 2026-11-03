@@ -366,8 +366,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   type Genre = 'tap' | 'critique' | 'auto'
 
   /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
-  function envoler(x: number, y: number, texte: string, genre: Genre): void {
+  function envoler(x: number, y: number, texte: string, genre: Genre, usure = 0): void {
     const n = el('div', `donjon-degat ${genre}`)
+    if (usure > 0) n.style.color = teinteDeFatigue(genre, usure)
     if (genre === 'critique') n.append(el('span', 'donjon-degat-mot', 'Critique !'))
     n.append(el('span', undefined, texte))
     n.style.left = `${x}px`
@@ -388,6 +389,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: genre === 'critique' ? 1200 : 950 },
     ).onfinish = () => n.remove()
+  }
+
+  /**
+   * UN COUP FATIGUÉ TIRE VERS L'ORANGE (Keko : « la teinte orange augmente
+   * avec le niveau de fatigue »). `usure` = 1 − l'efficacité du tap. Le
+   * premier coup fatigué est déjà nettement orangé (35 %), plein orange quand
+   * le tap ne rend plus qu'un quart.
+   */
+  function teinteDeFatigue(genre: Genre, usure: number): string {
+    const part = 0.35 + 0.65 * Math.min(1, usure / 0.75)
+    const base = genre === 'critique' ? [255, 210, 94] : [255, 255, 255]
+    const orange = [255, 122, 26]
+    const [r, g, b] = base.map((c, i) => Math.round(c + (orange[i] - c) * part))
+    return `rgb(${r}, ${g}, ${b})`
   }
 
   /** L'étoile d'impact là où le coup porte, et l'ennemi qui blanchit et recule. */
@@ -436,7 +451,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function frapper(): void {
     const t = maintenant()
     const avant = moi()
-    const attendu = degatsDuTap(C, avant) * efficaciteDuTap(C, fatigueA(C, avant, t)) * (reposA(C, avant, t) >= 1 ? C.repos.mult : 1)
+    const efficacite = efficaciteDuTap(C, fatigueA(C, avant, t))
+    const attendu = degatsDuTap(C, avant) * efficacite * (reposA(C, avant, t) >= 1 ? C.repos.mult : 1)
     const dejaInfliges = avant.degatsTap
     const [x, y] = surLEnnemi(-0.08, 0)
     attaque.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.93)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' })
@@ -444,7 +460,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const inflige = moi().degatsTap - dejaInfliges
       const genre: Genre = inflige > attendu * 1.05 ? 'critique' : 'tap'
       impact(x, y, genre)
-      envoler(x, y, nombre(inflige), genre)
+      envoler(x, y, nombre(inflige), genre, 1 - efficacite)
       dessiner()
     })
   }
