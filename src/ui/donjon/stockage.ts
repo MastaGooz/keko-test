@@ -47,6 +47,10 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
       }
       s.forme = VERSION_DE_LA_FORME
     }
+    // Une sauvegarde d'avant la recharge du tap : il est prêt tout de suite.
+    for (const j of e.joueurs) {
+      if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
+    }
     return s as SauvegardeDonjon
   } catch {
     return null
