@@ -183,6 +183,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   plafond.* L'impact est un anneau qui s'ouvre et s'efface et 5 à 12
   particules qui s'éparpillent et retombent un peu, à la couleur du
   chiffre (critique plus grand, auto plus petit).
+- **L'AUTO PEUT ÊTRE CRITIQUE** (Keko, 03/11 : « il faudrait que les auto
+  puissent aussi crit »). Chaque coup d'auto de chaque joueur est critique
+  ou non, aux mêmes chance et force que ses taps. Ce n'est pas un tirage qui
+  use le RNG de l'état mais une FONCTION de (graine de la saison, numéro du
+  coup, joueur) (`autoCritique`, un hachage) : résoudre le temps en une fois
+  ou en plusieurs donne les mêmes coups (vérifié), et l'écran sait
+  exactement quel coup du joueur a été critique. La résolution passe donc
+  coup par coup (une semaine = 302 400 coups, une boucle de quelques
+  dizaines de ms ; la simulation reste à 0,1 s) au lieu de sauter à la mort
+  de l'ennemi. En moyenne rien ne change : l'ancienne auto frappait déjà à
+  l'espérance des critiques (même rapport à 0,5 % près). À l'écran, un
+  coup d'auto critique jaillit en orange avec « Critique ! », une onde plus
+  grande ; le bouton dit le coup hors critique (« Auto 4 »). Aux vitesses
+  rapides, un lot de plusieurs coups ne se dit jamais critique.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

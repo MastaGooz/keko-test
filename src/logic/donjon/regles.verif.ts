@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, avancer, dpsDe, efficaciteDuTap, etatInitial } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, dpsDe, efficaciteDuTap, etatInitial, multCritDe } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -49,6 +49,15 @@ verifier('l\'auto frappe dès le début, sans rien acheter', avancer(C, e, 10 * 
 verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1).joueurs[0].degatsAuto === 0 && avancer(C, e, P).joueurs[0].degatsAuto > 0)
 const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, fatigue: 500, repos: 60 })) }
 verifier('l\'auto ignore la fatigue et le repos', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
+const ja = e.joueurs[0]
+const critiques = Array.from({ length: 4000 }, (_, k) => autoCritique(C, e.saison.seed, k + 1, ja)).filter(Boolean).length
+verifier('l\'auto peut être critique, à la bonne fréquence', Math.abs(critiques / 4000 - chanceCritDe(C, ja)) < 0.015)
+verifier('un coup d\'auto critique est une fonction du coup', autoCritique(C, e.saison.seed, 77, ja) === autoCritique(C, e.saison.seed, 77, ja))
+const k = Array.from({ length: 50 }, (_, i) => i + 1).find((i) => autoCritique(C, e.saison.seed, i, ja))!
+const solide = { ...e, ennemi: { ...e.ennemi, pv: 1e9, pvMax: 1e9 } }
+const avantCrit = avancer(C, solide, (k - 1) * P).joueurs[0].degatsAuto
+const apresCrit = avancer(C, solide, k * P).joueurs[0].degatsAuto
+verifier('le coup critique de l\'auto porte le multiplicateur', Math.abs(apresCrit - avantCrit - degatsDuCoupAuto(C, ja) * multCritDe(C, ja)) < 1e-9)
 const pvDeux = avancer(C, avancer(C, e, 7 * P + 300), 31 * P + 10)
 verifier('l\'auto en deux fois = en une (coups)', pvDeux.ennemi.pv === avancer(C, e, 31 * P + 10).ennemi.pv)
 

@@ -7,13 +7,15 @@
  * où l'état partagé vivra sur un serveur, c'est ce même réducteur qui y
  * tournera.
  *
- * **L'AUTO-TAP SE RÉSOUT PAR ÉVÉNEMENTS, PAS COUP PAR COUP.** Il frappe par
- * coups, tous ensemble, toutes les `auto.periode` depuis le début de la
- * saison. Entre deux actions, le DPS de chacun ne bouge pas (il ne change
- * qu'à l'achat) : on calcule donc directement le coup où l'ennemi tombe, et
- * le coup fatal va à l'un des joueurs, tiré au hasard seedé au prorata de son
- * DPS. Une semaine d'absence se résout en autant de pas que d'ennemis tués,
- * et le rattrapage est exact.
+ * **L'AUTO-TAP FRAPPE PAR COUPS, ET CHAQUE COUP PEUT ÊTRE CRITIQUE.** Tous
+ * ensemble, toutes les `auto.periode` depuis le début de la saison. Le
+ * critique d'un coup est une FONCTION de (saison, numéro du coup, joueur)
+ * (`autoCritique`), pas un tirage qui use le RNG de l'état : résoudre une
+ * heure en une fois ou en deux donne les mêmes coups, et l'écran sait
+ * exactement quel coup du joueur a été critique. Le coup fatal va à l'un des
+ * joueurs, tiré au hasard seedé au prorata de ce que chacun a frappé sur ce
+ * coup. Une semaine d'absence, c'est 302 400 coups : une boucle de quelques
+ * dizaines de millisecondes.
  */
 import { createRng } from '../rng.ts'
 import { JOUR, type CleAmelioration, type ConfigDonjon } from './config.ts'
@@ -44,19 +46,50 @@ export function multCritDe(config: ConfigDonjon, j: Joueur): number {
   return config.crit.multBase + config.crit.multParRang * j.ameliorations.multCrit
 }
 
-/** L'auto-tap ne tire pas ses critiques un à un : il frappe à leur espérance. */
+/** Le facteur moyen des critiques : ce que rend un coup en moyenne. */
 export function facteurCritMoyen(config: ConfigDonjon, j: Joueur): number {
   return 1 + chanceCritDe(config, j) * (multCritDe(config, j) - 1)
 }
 
-/** Les dégâts par seconde de l'auto-tap, critiques compris. */
+/** Les dégâts par seconde de l'auto-tap, critiques compris EN MOYENNE (pour l'affichage). */
 export function dpsEffectifDe(config: ConfigDonjon, j: Joueur): number {
   return dpsDe(config, j) * facteurCritMoyen(config, j)
 }
 
-/** Un coup d'auto (tous les `auto.periode`), critiques à l'espérance. */
+/** Un coup d'auto (tous les `auto.periode`), hors critique. */
 export function degatsDuCoupAuto(config: ConfigDonjon, j: Joueur): number {
-  return (dpsEffectifDe(config, j) * config.auto.periode) / 1000
+  return (dpsDe(config, j) * config.auto.periode) / 1000
+}
+
+/** Un entier 32 bits mélangé (le finaliseur de murmur3) : même entrée, même sortie. */
+function melanger(x: number): number {
+  x = Math.imul(x ^ (x >>> 16), 0x7feb352d)
+  x = Math.imul(x ^ (x >>> 15), 0x846ca68b)
+  return (x ^ (x >>> 16)) >>> 0
+}
+
+function empreinteDe(id: string): number {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619)
+  return h >>> 0
+}
+
+function critiqueTire(config: ConfigDonjon, seed: number, coup: number, empreinte: number, j: Joueur): boolean {
+  const h = melanger(seed ^ melanger((coup + 0x9e3779b9) >>> 0) ^ empreinte)
+  return h / 4294967296 < chanceCritDe(config, j)
+}
+
+/**
+ * LE COUP D'AUTO N° `coup` DE CE JOUEUR EST-IL CRITIQUE ? Une fonction de
+ * (graine de la saison, coup, joueur) : les règles et l'écran lisent la même.
+ */
+export function autoCritique(config: ConfigDonjon, seed: number, coup: number, j: Joueur): boolean {
+  return critiqueTire(config, seed, coup, empreinteDe(j.id), j)
+}
+
+/** Ce que porte le coup d'auto n° `coup` de ce joueur, critique compris. */
+export function degatsDuCoupAutoN(config: ConfigDonjon, seed: number, coup: number, j: Joueur): number {
+  return degatsDuCoupAuto(config, j) * (autoCritique(config, seed, coup, j) ? multCritDe(config, j) : 1)
 }
 
 /** Le nombre de coups d'auto frappés depuis le début de la saison jusqu'à t. */
@@ -175,39 +208,55 @@ function achever(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): voi
 
 /**
  * L'auto-tap de tous, sur les coups de `de` (exclu) à `a` (inclus), dans la
- * même saison et le même jour. Le coup fatal ne porte que ce qui restait :
- * le suivant frappe l'ennemi d'après.
+ * même saison et le même jour, coup par coup (chacun peut être critique).
+ * Le coup fatal ne porte que ce qui restait : le suivant frappe l'ennemi
+ * d'après. L'XP se verse par tranche (à chaque mort, et à la fin).
  */
 function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: number): void {
-  const parJoueur = e.joueurs.map((j) => degatsDuCoupAuto(config, j))
-  const total = parJoueur.reduce((s, d) => s + d, 0)
   const debut = e.saison.debut
   let coup = coupsAutoA(config, debut, de)
   const dernier = coupsAutoA(config, debut, a)
-  if (total <= 0 || dernier <= coup) return
+  const n = e.joueurs.length
+  if (dernier <= coup || n === 0) return
 
-  for (;;) {
-    const reste = dernier - coup
-    const avantLaMort = Math.ceil(e.ennemi.pv / total - 1e-9)
-    const coups = Math.min(reste, avantLaMort)
-    coup += coups
-    const instant = debut + coup * config.auto.periode
-    // Le dernier coup sur un ennemi qui tombe ne porte que ses PV.
-    const porte = Math.min(total * coups, e.ennemi.pv)
+  // Le DPS ne bouge pas entre deux actions : on le lit une fois.
+  const base = e.joueurs.map((j) => degatsDuCoupAuto(config, j))
+  const mult = e.joueurs.map((j) => multCritDe(config, j))
+  const empreintes = e.joueurs.map((j) => empreinteDe(j.id))
+  const seed = e.saison.seed
+  const cumul = new Array<number>(n).fill(0)
+  const ceCoup = new Array<number>(n).fill(0)
+  const verser = (instant: number) => {
     e.joueurs.forEach((j, i) => {
-      const degats = (parJoueur[i] / total) * porte
-      j.degatsAuto += degats
-      gagnerXp(config, e, j, degats * config.xp.parDegat, instant)
+      if (cumul[i] <= 0) return
+      j.degatsAuto += cumul[i]
+      gagnerXp(config, e, j, cumul[i] * config.xp.parDegat, instant)
+      cumul[i] = 0
     })
-    if (avantLaMort > reste) {
-      e.ennemi.pv -= porte
-      return
+  }
+
+  while (coup < dernier) {
+    coup += 1
+    let total = 0
+    for (let i = 0; i < n; i++) {
+      ceCoup[i] = base[i] * (critiqueTire(config, seed, coup, empreintes[i], e.joueurs[i]) ? mult[i] : 1)
+      total += ceCoup[i]
     }
-    // Le coup fatal, au prorata du DPS de chacun.
+    if (total <= 0) continue
+    if (total < e.ennemi.pv) {
+      for (let i = 0; i < n; i++) cumul[i] += ceCoup[i]
+      e.ennemi.pv -= total
+      continue
+    }
+    // Le coup fatal ne porte que les PV qui restaient, au prorata de chacun.
+    const instant = debut + coup * config.auto.periode
+    const part = e.ennemi.pv / total
+    for (let i = 0; i < n; i++) cumul[i] += ceCoup[i] * part
+    verser(instant)
     let tirage = tirer(e) * total
-    let tueur = e.joueurs[e.joueurs.length - 1]
-    for (let i = 0; i < e.joueurs.length; i++) {
-      tirage -= parJoueur[i]
+    let tueur = e.joueurs[n - 1]
+    for (let i = 0; i < n; i++) {
+      tirage -= ceCoup[i]
       if (tirage < 0) {
         tueur = e.joueurs[i]
         break
@@ -215,6 +264,7 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
     }
     achever(config, e, tueur, instant)
   }
+  verser(debut + dernier * config.auto.periode)
 }
 
 function archiver(e: EtatDonjon): SaisonArchivee {

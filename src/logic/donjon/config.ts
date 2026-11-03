@@ -79,6 +79,7 @@ export const DONJON = {
    * attaques auto ») : `base` de DPS au rang 0, plus `parRang` par rang. Elle
    * frappe PAR COUPS, toutes les `periode`, à la même cadence pour tous (des
    * coups calés sur le début de la saison), et ignore la fatigue et le repos.
+   * Chaque coup peut être critique, aux mêmes chance et force que les taps.
    */
   auto: {
     base: 2,

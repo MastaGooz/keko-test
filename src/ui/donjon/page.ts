@@ -27,12 +27,14 @@ import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
+  autoCritique,
   chanceCritDe,
   coupsAutoA,
   coutDe,
   degatsDuCoupAuto,
   degatsDuTap,
   dpsEffectifDe,
+  facteurCritMoyen,
   efficaciteDuTap,
   etatInitial,
   fatigueA,
@@ -375,21 +377,33 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   )
 
   // ------------------------------------------------ le geste
-  type Genre = 'tap' | 'critique' | 'auto'
+  type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique'
+
+  /**
+   * Ce qui change d'un genre de coup à l'autre : la taille du chiffre (×),
+   * son gonflement, son penché, sa durée, l'onde, les particules, le recul et
+   * l'éclair de l'ennemi, la secousse de la scène.
+   */
+  const STYLES: Record<Genre, { taille: number; pop: number; penche: number; duree: number; onde: number; particules: number; recul: number; blanc: number; secousse: boolean; critique: boolean }> = {
+    tap: { taille: 1, pop: 1.45, penche: 12, duree: 950, onde: 1, particules: 8, recul: 8, blanc: 2.6, secousse: false, critique: false },
+    critique: { taille: 1.2, pop: 1.7, penche: 24, duree: 1200, onde: 1.6, particules: 12, recul: 14, blanc: 2.6, secousse: true, critique: true },
+    auto: { taille: 0.8, pop: 1.25, penche: 12, duree: 950, onde: 0.7, particules: 5, recul: 4, blanc: 1.5, secousse: false, critique: false },
+    autoCritique: { taille: 1, pop: 1.6, penche: 20, duree: 1200, onde: 1.2, particules: 10, recul: 9, blanc: 2.2, secousse: false, critique: true },
+  }
 
   /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
   function envoler(x: number, y: number, valeur: number, genre: Genre, couleur: string): void {
     const n = el('div', `donjon-degat ${genre}`)
     n.style.color = couleur
     n.style.fontSize = `${tailleDuChiffre(valeur, genre)}rem`
-    if (genre === 'critique') n.append(el('span', 'donjon-degat-mot', 'Critique !'))
+    if (STYLES[genre].critique) n.append(el('span', 'donjon-degat-mot', 'Critique !'))
     n.append(el('span', undefined, nombre(valeur)))
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     scene.append(n)
     const derive = (Math.random() - 0.5) * 60
-    const penche = (Math.random() - 0.5) * (genre === 'critique' ? 24 : 12)
-    const gros = genre === 'critique' ? 1.7 : genre === 'auto' ? 1.25 : 1.45
+    const penche = (Math.random() - 0.5) * STYLES[genre].penche
+    const gros = STYLES[genre].pop
     // Le temps reste linéaire, chaque segment a sa courbe : une courbe sur
     // l'ensemble avalait le moment plein et effaçait le chiffre presque aussitôt.
     n.animate(
@@ -400,7 +414,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: `translate(calc(-50% + ${derive * 0.8}px), -170%) scale(0.95) rotate(0deg)`, opacity: 1, offset: 0.7, easing: 'ease-in' },
         { transform: `translate(calc(-50% + ${derive}px), -230%) scale(0.85) rotate(0deg)`, opacity: 0 },
       ],
-      { duration: genre === 'critique' ? 1200 : 950 },
+      { duration: STYLES[genre].duree },
     ).onfinish = () => n.remove()
   }
 
@@ -411,11 +425,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * d'autant plus qu'il rend moins (`usure` = 1 − l'efficacité du tap) :
    * 35 % de gris au premier coup fatigué, gris plein quand le tap ne rend
    * plus qu'un quart. Un critique ne grise qu'à moitié : il doit rester
-   * orange pour qu'on le reconnaisse. L'auto n'est jamais fatiguée.
+   * orange pour qu'on le reconnaisse. L'auto n'est jamais fatiguée, et son
+   * critique est orange comme celui d'un tap.
    */
   function teinteDuChiffre(genre: Genre, repose: boolean, usure: number): string {
-    const base = genre === 'auto' ? TEINTES.auto : genre === 'critique' ? TEINTES.critique : repose ? TEINTES.repos : TEINTES.normal
-    const plafond = genre === 'critique' ? 0.5 : 1
+    const critique = STYLES[genre].critique
+    const base = critique ? TEINTES.critique : genre === 'auto' ? TEINTES.auto : repose ? TEINTES.repos : TEINTES.normal
+    const plafond = critique ? 0.5 : 1
     const part = usure > 0 ? plafond * (0.35 + 0.65 * Math.min(1, usure / 0.75)) : 0
     const [r, g, b] = base.map((c, i) => Math.round(c + (TEINTES.fatigue[i] - c) * part))
     return `rgb(${r}, ${g}, ${b})`
@@ -429,7 +445,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   function tailleDuChiffre(valeur: number, genre: Genre): number {
     const brute = Math.min(TAILLE.max, TAILLE.min + TAILLE.parDecade * Math.log10(Math.max(1, valeur)))
-    return brute * (genre === 'critique' ? 1.2 : genre === 'auto' ? 0.8 : 1)
+    return brute * STYLES[genre].taille
   }
 
   /**
@@ -438,7 +454,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * chiffre ; l'ennemi blanchit et recule.
    */
   function impact(x: number, y: number, genre: Genre, couleur: string): void {
-    const fort = genre === 'critique' ? 1.6 : genre === 'auto' ? 0.7 : 1
+    const fort = STYLES[genre].onde
     const onde = el('div', 'donjon-onde')
     onde.style.left = `${x}px`
     onde.style.top = `${y}px`
@@ -453,7 +469,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       { duration: 380 },
     ).onfinish = () => onde.remove()
 
-    const combien = genre === 'critique' ? 12 : genre === 'auto' ? 5 : 8
+    const combien = STYLES[genre].particules
     for (let i = 0; i < combien; i++) {
       const p = el('div', 'donjon-particule')
       p.style.left = `${x}px`
@@ -476,8 +492,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
 
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase.
-    const recul = (x < scene.clientWidth / 2 ? 1 : -1) * (genre === 'critique' ? 14 : genre === 'auto' ? 4 : 8)
-    const blanc = genre === 'auto' ? 1.5 : 2.6
+    const recul = (x < scene.clientWidth / 2 ? 1 : -1) * STYLES[genre].recul
+    const blanc = STYLES[genre].blanc
     portrait.animate(
       [
         { transform: 'none', filter: 'brightness(1)' },
@@ -485,9 +501,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: `translateX(${-recul * 0.3}px) scale(0.98, 1.03)`, filter: 'brightness(1.1)', offset: 0.55 },
         { transform: 'none', filter: 'brightness(1)' },
       ],
-      { duration: genre === 'critique' ? 320 : 220, easing: 'ease-out' },
+      { duration: STYLES[genre].critique ? 320 : 220, easing: 'ease-out' },
     )
-    if (genre === 'critique') {
+    if (STYLES[genre].secousse) {
       scene.animate(
         [{ transform: 'none' }, { transform: 'translate(-5px, 3px)' }, { transform: 'translate(5px, -3px)' }, { transform: 'translate(-3px, 2px)' }, { transform: 'none' }],
         { duration: 260 },
@@ -720,13 +736,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // ------------------------------------------------ l'auto, à chaque image
   // Les coups de l'auto tombent à heure fixe (tous les `auto.periode` depuis
   // le début de la saison) : la jauge se remplit vers le prochain, et chaque
-  // coup franchi fait jaillir son chiffre. Aux vitesses où plusieurs coups
-  // tombent par image, on les cumule et on n'en montre qu'un par `CADENCE_AUTO`.
+  // coup franchi fait jaillir son chiffre — orange et « Critique ! » quand
+  // ce coup-là l'a été (`autoCritique`, la même fonction que les règles).
+  // Aux vitesses où plusieurs coups tombent par image, on les cumule et on
+  // n'en montre qu'un par `CADENCE_AUTO` ; un lot ne se dit critique que
+  // s'il tient en un seul coup.
   const CADENCE_AUTO = 300
   const FLAMBEE = 220
+  /** Au-delà, un rattrapage (page en veille) : on cumule à la moyenne. */
+  const LOT_MAX = 1000
   let coupVu = -1
   let saisonVue = -1
   let cumulAuto = 0
+  let coupsDuLot = 0
+  let critiquesDuLot = 0
   let dernierAuto = 0
   function image(): void {
     const t = maintenant()
@@ -738,7 +761,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       coupVu = coup
     }
     if (coup > coupVu) {
-      cumulAuto += degatsDuCoupAuto(C, j) * (coup - coupVu)
+      const n = coup - coupVu
+      if (n > LOT_MAX) {
+        cumulAuto += degatsDuCoupAuto(C, j) * facteurCritMoyen(C, j) * n
+      } else {
+        for (let k = coupVu + 1; k <= coup; k++) {
+          const critique = autoCritique(C, etat.saison.seed, k, j)
+          cumulAuto += degatsDuCoupAuto(C, j) * (critique ? multCritDe(C, j) : 1)
+          if (critique) critiquesDuLot += 1
+        }
+      }
+      coupsDuLot += n
       coupVu = coup
       void tic()
     }
@@ -746,9 +779,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (cumulAuto > 0 && reel - dernierAuto >= CADENCE_AUTO) {
       dernierAuto = reel
       const [x, y] = surLEnnemi(0.24, -0.12)
-      const couleur = teinteDuChiffre('auto', false, 0)
-      impact(x, y, 'auto', couleur)
-      envoler(x, y, cumulAuto, 'auto', couleur)
+      const genre: Genre = coupsDuLot === 1 && critiquesDuLot === 1 ? 'autoCritique' : 'auto'
+      const couleur = teinteDuChiffre(genre, false, 0)
+      impact(x, y, genre, couleur)
+      envoler(x, y, cumulAuto, genre, couleur)
       // Le contour complet se lance : il flambe et le bouton bondit.
       contour.animate(
         [{ filter: 'drop-shadow(0 0 0.9rem #e8f6ff) brightness(1.8)' }, { filter: 'drop-shadow(0 0 0.3rem #a9dcff) brightness(1)' }],
@@ -756,6 +790,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       )
       cadre.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' })
       cumulAuto = 0
+      coupsDuLot = 0
+      critiquesDuLot = 0
     }
     // Trop rapide pour se lire : le contour reste plein.
     // Au lancement, il reste plein le temps de flamber, puis repart de zéro.
