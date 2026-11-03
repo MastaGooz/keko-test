@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -63,6 +63,18 @@ const auRang = (r: number) => ({ ...e.joueurs[0], ameliorations: { ...e.joueurs[
 const gains = [0, 1, 10, 20].map((r) => periodeEnRecharges(C, auRang(r)) - periodeEnRecharges(C, auRang(r + 1)))
 verifier('chaque rang rapproche l\'auto du tap, de moins en moins', gains.every((g, i) => g > 0 && (i === 0 || g < gains[i - 1])))
 verifier('l\'auto n\'est jamais plus rapide que le tap, même au rang 500', [50, 200, 500].every((r) => periodeDe(C, auRang(r)) > C.tap.recharge))
+// TOUTES LES AMÉLIORATIONS RENDENT DE MOINS EN MOINS.
+type Piste = 'tap' | 'chanceCrit' | 'multCrit'
+const rang = (quoi: Piste, r: number) => ({ ...e.joueurs[0], ameliorations: { ...e.joueurs[0].ameliorations, [quoi]: r } })
+const decroit = (f: (r: number) => number) => {
+  const pas = [0, 1, 5, 20, 60].map((r) => f(r + 1) - f(r))
+  return pas.every((g, i) => g > 0 && (i === 0 || g < pas[i - 1]))
+}
+verifier('le Coup rend de moins en moins', decroit((r) => degatsDuTap(C, rang('tap', r))))
+verifier('la Critique rend de moins en moins', decroit((r) => chanceCritDe(C, rang('chanceCrit', r))))
+verifier('la Force rend de moins en moins', decroit((r) => forceDe(C, rang('multCrit', r))))
+verifier('la Critique n\'atteint jamais 100 %', [100, 1000].every((r) => chanceCritDe(C, rang('chanceCrit', r)) < 1))
+verifier('le Coup et la Force n\'ont pas de plafond', degatsDuTap(C, rang('tap', 1000)) > 2 * degatsDuTap(C, rang('tap', 300)) && forceDe(C, rang('multCrit', 1000)) > 1.5 * forceDe(C, rang('multCrit', 300)))
 verifier('l\'auto frappe dès le début, sans rien acheter', avancer(C, e, 10 * P).joueurs[0].degatsAuto > 0)
 verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1).joueurs[0].degatsAuto === 0 && avancer(C, e, P).joueurs[0].degatsAuto > 0)
 const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: bornesDeLaForme(C).min })) }

@@ -62,10 +62,23 @@ export const DONJON = {
     coutPente: 0.25,
   },
 
-  /** Dégâts d'un COUP (un tap, ou un coup d'auto) au rang 0, puis par rang de « Coup ». */
+  /**
+   * TOUTES LES AMÉLIORATIONS RENDENT DE MOINS EN MOINS (Keko : « il faudrait
+   * que toutes les upgrades aient un rendement décroissant » ; « pour les
+   * chances de crit il ne faut jamais atteindre 100 %, mais pour le coup et
+   * la force de critique, pas de limite infranchissable, quand même un
+   * rendement décroissant, et on exprime en % »). Le Coup et la Force : un
+   * bonus en % de la base, `gain · rang^exposant` (exposant < 1 : chaque rang
+   * rapporte moins que le précédent, sans plafond). La Critique et l'Auto :
+   * chaque rang retire une part de l'écart qui reste à leur borne, qu'ils
+   * n'atteignent jamais.
+   */
+  /** Dégâts d'un COUP (un tap, ou un coup d'auto) : `base × (1 + gain · rang^exposant)`. */
   tap: {
     base: 10,
-    parRang: 3,
+    /** +30 % au premier rang de « Coup », puis de moins en moins. */
+    gain: 0.3,
+    exposant: 0.8,
     /**
      * LA RECHARGE DU TAP, sa vitesse d'attaque (Keko : « un CD sur le bouton,
      * disons 1 s pour tester », puis 0,5 s, puis 0,25 s) : un
@@ -96,11 +109,13 @@ export const DONJON = {
   },
 
   crit: {
+    /** La chance : `1 − (1 − base) · garde^rang`, vers 100 % sans jamais l'atteindre. */
     chanceBase: 0.05,
-    chanceParRang: 0.02,
-    chanceMax: 0.5,
+    chanceGarde: 0.98,
+    /** La force (ce que multiplie un critique) : `base × (1 + gain · rang^exposant)`, sans plafond. */
     multBase: 2,
-    multParRang: 0.25,
+    multGain: 0.125,
+    multExposant: 0.8,
   },
 
   /**

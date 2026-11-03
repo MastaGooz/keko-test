@@ -348,6 +348,22 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   avec la recharge à 0,25 s ; le panneau dit « 2,5 s → 2,27 s », la bulle
   « un coup toutes les 2,5 s ». Le calcul reste en recharges ; la saison
   simulée redescend à l'étage 124–126.
+- **TOUTES LES AMÉLIORATIONS RENDENT DE MOINS EN MOINS, EXPRIMÉES EN %**
+  (Keko, 03/11 : « il faudrait que toutes les upgrades aient un rendement
+  décroissant » ; « pour les chances de crit il ne faut jamais atteindre
+  100 %, mais pour le coup et la force de critique, pas de limite
+  infranchissable mais quand même un rendement décroissant, et on exprime
+  en % ; pareil pour la vitesse auto, en % de gain de vitesse »).
+  **Coup** : `10 × (1 + 0,3 · rang^0,8)` — +30 % au rang 1, +189 % au 10,
+  +458 % au 30 (il était à +3 par rang, soit +900 % au 30). **Force** :
+  `×2 × (1 + 0,125 · rang^0,8)` — 225 % au rang 1, 358 % au 10 (450 %
+  avant). **Critique** : `1 − 0,95 · 0,98^rang` — 6,9 % au rang 1, 22 % au
+  10, 48 % au 30, jamais 100 % (plafonnée à 50 % avant). **Auto-tap** : la
+  même formule (vers la recharge), dite en gain de vitesse : +10 % au rang
+  1. Le panneau dit « Coup +0 % → +30 % », « Auto-tap +0 % → +10 % »,
+  « Critique 5,0 % → 6,9 % », « Force 200 % → 225 % ». Vérifié : chaque
+  rang rapporte moins que le précédent, la Critique reste sous 100 % au
+  rang 1 000, le Coup et la Force y montent encore.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

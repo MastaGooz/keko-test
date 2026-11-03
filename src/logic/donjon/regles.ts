@@ -28,8 +28,18 @@ const ARCHIVES_MAX = 20
 
 // ---------------------------------------------------------------- les effets
 
+/** Un bonus sans plafond mais décroissant : `gain · rang^exposant` (0 au rang 0). */
+function bonusDecroissant(gain: number, exposant: number, rang: number): number {
+  return gain * Math.pow(rang, exposant)
+}
+
+/** Le bonus de dégâts du Coup, en fraction de la base (+0,3 = +30 %). */
+export function bonusDuCoup(config: ConfigDonjon, j: Joueur): number {
+  return bonusDecroissant(config.tap.gain, config.tap.exposant, j.ameliorations.tap)
+}
+
 export function degatsDeBaseDuTap(config: ConfigDonjon, j: Joueur): number {
-  return config.tap.base + config.tap.parRang * j.ameliorations.tap
+  return config.tap.base * (1 + bonusDuCoup(config, j))
 }
 
 /** La période de l'auto en recharges du tap : de `depart` vers 1, sans jamais l'atteindre. */
@@ -49,13 +59,21 @@ export function dpsDe(config: ConfigDonjon, j: Joueur): number {
   return (degatsDeBaseDuTap(config, j) * 1000) / periodeDe(config, j)
 }
 
+/** La chance de critique : vers 100 % sans jamais l'atteindre. */
 export function chanceCritDe(config: ConfigDonjon, j: Joueur): number {
   const c = config.crit
-  return Math.min(c.chanceMax, c.chanceBase + c.chanceParRang * j.ameliorations.chanceCrit)
+  return 1 - (1 - c.chanceBase) * Math.pow(c.chanceGarde, j.ameliorations.chanceCrit)
 }
 
+/** Ce que multiplie un critique : sans plafond, de moins en moins par rang. */
 export function multCritDe(config: ConfigDonjon, j: Joueur): number {
-  return config.crit.multBase + config.crit.multParRang * j.ameliorations.multCrit
+  const c = config.crit
+  return c.multBase * (1 + bonusDecroissant(c.multGain, c.multExposant, j.ameliorations.multCrit))
+}
+
+/** Le gain de vitesse de l'auto sur son départ (+0,1 = 10 % plus vite). */
+export function gainDeVitesseAuto(config: ConfigDonjon, j: Joueur): number {
+  return config.auto.depart / periodeEnRecharges(config, j) - 1
 }
 
 /** Le facteur moyen des critiques : ce que rend un coup en moyenne. */

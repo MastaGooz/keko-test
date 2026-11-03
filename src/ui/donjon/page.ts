@@ -28,6 +28,8 @@ import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   autoCritique,
+  bonusDuCoup,
+  gainDeVitesseAuto,
   bornesDeLaForme,
   chanceCritDe,
   coupsAutoA,
@@ -70,6 +72,10 @@ function nombre(n: number): string {
 }
 
 const pourcent = (x: number) => `${Math.round(x * 100)} %`
+/** Un pourcentage à un chiffre après la virgule : « 6,9 % ». */
+const pourcentFin = (x: number) => `${(x * 100).toFixed(1).replace('.', ',')} %`
+/** Un bonus : « +30 % », « +0 % ». */
+const bonus = (x: number) => `+${Math.round(x * 100)} %`
 
 /** Une durée courte en secondes : « 2,0 s », « 1,85 s ». */
 const secondes = (ms: number) => `${(ms / 1000).toFixed(2).replace(/0$/, '').replace('.', ',')} s`
@@ -108,12 +114,16 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
   }
 }
 
-/** Les quatre choix d'amélioration : un nom, ce qu'il fait, la valeur qu'il fait monter. */
+/**
+ * Les quatre choix d'amélioration : un nom, ce qu'il fait, la valeur qu'il
+ * fait monter — EN % (Keko : « on exprime en % plutôt qu'en chiffre absolu ;
+ * pareil pour la vitesse auto, en % de gain de vitesse »).
+ */
 const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
-  tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => nombre(degatsDuTap(C, j)) },
-  auto: { nom: 'Auto-tap', role: 'Un coup tout seul, même absent, plus souvent', valeur: (j) => secondes(periodeDe(C, j)) },
-  chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcent(chanceCritDe(C, j)) },
-  multCrit: { nom: 'Force', role: 'Ce que multiplie un coup critique', valeur: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
+  tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => bonus(bonusDuCoup(C, j)) },
+  auto: { nom: 'Auto-tap', role: 'La vitesse du coup tout seul, même absent', valeur: (j) => bonus(gainDeVitesseAuto(C, j)) },
+  chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
+  multCrit: { nom: 'Force', role: 'Les dégâts d\'un coup critique', valeur: (j) => pourcent(multCritDe(C, j)) },
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
