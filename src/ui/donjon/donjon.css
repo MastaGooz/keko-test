@@ -486,9 +486,10 @@
 
 /* ------------------------------------------------ la forme */
 
-/* Un trait de 0 % à 200 % : fatigue à gauche (gris), normal au milieu (de
-   80 % à 120 %, `ZONE_NORMALE`), repos à droite (jaune). Le marqueur dit où
-   l'on est, la valeur sous lui. */
+/* Un trait de 0 % à 200 % : fatigue à gauche (gris), repos à droite (jaune),
+   et le blanc à 100 % SEULEMENT, un trait fin au milieu (Keko : « la zone
+   blanche doit correspondre à 100 % uniquement »). Le marqueur dit où l'on
+   est, à la couleur qu'aurait un tap, la valeur sous lui. */
 .donjon-forme {
   display: flex;
   align-items: center;
@@ -509,11 +510,9 @@
   background: linear-gradient(
     to right,
     #3f3f3f 0%,
-    #9a9a9a 39.5%,
-    var(--d-fond) 39.5% 40.5%,
-    #efe6d2 40.5% 59.5%,
-    var(--d-fond) 59.5% 60.5%,
-    #ffe58a 60.5%,
+    #a8a8a8 49.2%,
+    #fff 49.2% 50.8%,
+    #ffe58a 50.8%,
     #ffcf2e 100%
   );
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -529,15 +528,6 @@
   background: #efe6d2;
   border: 2px solid var(--d-encre);
   box-shadow: 0 0.1rem 0.35rem rgba(0, 0, 0, 0.6);
-  transition: background 0.3s;
-}
-
-.donjon-forme-marqueur[data-zone='fatigue'] {
-  background: #9a9a9a;
-}
-
-.donjon-forme-marqueur[data-zone='repos'] {
-  background: #ffd84a;
 }
 
 .donjon-forme-valeur {

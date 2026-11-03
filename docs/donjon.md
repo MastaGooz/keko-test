@@ -237,8 +237,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   d'action pour revenir à 100 %, puis 5 de plus pour tomber à 0 %. Joueur :
   `forme`, `formeA`, `actifJusqua` (une sauvegarde d'avant repart au
   milieu). L'auto n'y est pas soumis. À l'écran, sous le bouton, un trait
-  gris → crème → jaune, la zone normale (80 à 120 %) marquée au milieu, un
-  marqueur et la valeur sous lui ; les pastilles de la scène sont parties.
+  gris → jaune, avec le BLANC À 100 % SEULEMENT, un trait fin au milieu
+  (Keko : « la zone blanche doit correspondre à 100 % uniquement » ; une
+  première version marquait une zone normale de 80 à 120 %), un marqueur à
+  la couleur qu'aurait un tap, la valeur sous lui ; les pastilles de la
+  scène sont parties.
   Le chiffre d'un tap tire en continu vers le jaune ou le gris (plein aux
   quatre cinquièmes du chemin). *Un client peut encore envoyer `taper n=1000`
   en une action pour le prix d'une fenêtre* : le jour du backend, le
