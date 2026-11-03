@@ -539,6 +539,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   terrible » ; choisi : le cuir violet). L'emplacement d'arme prend le cuir
   aubergine des dos de cartes (`DOS_CUIR`), au liseré d'or, avec une
   couture dorée en pointillé à 4 px du bord.
+- **L'ARME DANS L'OR DU BOUTON D'ATTAQUE** (Keko, 03/11 : « j'aime pas le
+  violet, les pointillés » ; choisi : l'or). L'emplacement d'arme prend le
+  même or bombé que le bouton d'attaque, sans couture.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

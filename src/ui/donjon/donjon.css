@@ -485,10 +485,9 @@
   min-width: 0;
 }
 
-/* L'emplacement d'arme, sur la ligne du niveau : l'arme portée, sur le CUIR
-   VIOLET des dos de cartes (`DOS_CUIR`, rgb(80, 34, 92)) au liseré d'or et
-   à la couture dorée (Keko : le bois s'y confondait, le parchemin était
-   « pas terrible »). */
+/* L'emplacement d'arme, sur la ligne du niveau : l'arme portée, dans le
+   même OR bombé que le bouton d'attaque (Keko : le bois s'y confondait, le
+   parchemin et le cuir violet à couture n'allaient pas). */
 .donjon .donjon-emplacement {
   position: relative;
   flex-shrink: 0;
@@ -499,26 +498,15 @@
   padding: 0;
   border: none;
   border-radius: 0.8rem;
-  background: radial-gradient(circle at 40% 30%, #7c3c8c, rgb(80, 34, 92) 55%, #2e1336);
+  background: radial-gradient(circle at 38% 28%, #f8d98a, var(--d-or) 55%, #a5762a);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -3px 0 rgba(0, 0, 0, 0.35),
-    0 0 0 2px var(--d-or),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -4px 0 rgba(61, 39, 22, 0.35),
     0 0.25rem 0.6rem rgba(0, 0, 0, 0.5);
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--d-doux) !important;
-}
-
-/* La couture, à quelques pixels du bord. */
-.donjon-emplacement::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 0.55rem;
-  border: 1px dashed rgba(232, 181, 77, 0.55);
-  pointer-events: none;
 }
 
 .donjon-emplacement:active {
