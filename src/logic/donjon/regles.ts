@@ -161,33 +161,48 @@ export function bornesDeLaForme(config: ConfigDonjon): { min: number; palierBas:
   return { min: -demi - f.fatigue, palierBas: -demi, palierHaut: demi, max: demi + f.repos }
 }
 
+/** Le bonus d'une stat de la forme (+0,15 = +15 %). */
+export function bonusDeForme(config: ConfigDonjon, j: Joueur, quoi: 'ardeur' | 'recuperation' | 'sommeil'): number {
+  const s = config.forme[quoi]
+  return bonusDecroissant(s.gain, s.exposant, j.ameliorations[quoi])
+}
+
+/** Le haut du repos : 200 % au rang 0 d'Ardeur, puis de plus en plus haut. */
+export function reposMaxDe(config: ConfigDonjon, j: Joueur): number {
+  return 1 + (1 + bonusDeForme(config, j, 'ardeur'))
+}
+
 /** Le temps pousse la forme vers la droite : vite jusqu'au milieu, lentement au-delà. */
-function reprendre(config: ConfigDonjon, forme: number, heures: number): number {
+function reprendre(config: ConfigDonjon, j: Joueur, forme: number, heures: number): number {
   const f = config.forme
+  // Récupération et Sommeil accélèrent chacun sa moitié du chemin.
+  const recuperation = f.recuperationParHeure * (1 + bonusDeForme(config, j, 'recuperation'))
+  const repos = f.reposParHeure * (1 + bonusDeForme(config, j, 'sommeil'))
   if (forme < 0) {
-    const jusquAuMilieu = -forme / f.recuperationParHeure
-    if (heures <= jusquAuMilieu) return forme + heures * f.recuperationParHeure
+    const jusquAuMilieu = -forme / recuperation
+    if (heures <= jusquAuMilieu) return forme + heures * recuperation
     heures -= jusquAuMilieu
     forme = 0
   }
-  return Math.min(bornesDeLaForme(config).max, forme + heures * f.reposParHeure)
+  return Math.min(bornesDeLaForme(config).max, forme + heures * repos)
 }
 
 /** LA FORME À L'INSTANT t, en minutes de spam : celle du dernier tap, reprise depuis. */
 export function formeA(config: ConfigDonjon, j: Joueur, t: number): number {
-  return t <= j.formeA ? j.forme : reprendre(config, j.forme, (t - j.formeA) / HEURE)
+  return t <= j.formeA ? j.forme : reprendre(config, j, j.forme, (t - j.formeA) / HEURE)
 }
 
 /**
  * Ce que la forme fait d'un tap : 0 % épuisé, 100 % sur tout le palier,
- * 200 % reposé, en continu entre les deux.
+ * le haut du repos (200 % sans Ardeur) reposé, en continu entre les deux.
  */
-export function multiplicateurDeForme(config: ConfigDonjon, forme: number): number {
+export function multiplicateurDeForme(config: ConfigDonjon, j: Joueur, forme: number): number {
   const f = config.forme
   const b = bornesDeLaForme(config)
   if (forme < b.palierBas) return Math.max(0, 1 + (forme - b.palierBas) / f.fatigue)
   if (forme <= b.palierHaut) return 1
-  return Math.min(2, 1 + (forme - b.palierHaut) / f.repos)
+  const haut = reposMaxDe(config, j)
+  return Math.min(haut, 1 + ((forme - b.palierHaut) / f.repos) * (haut - 1))
 }
 
 // ---------------------------------------------------------------- l'état
@@ -201,7 +216,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     xp: 0,
     niveau: 1,
     points: 0,
-    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0 },
+    ameliorations: { tap: 0, auto: 0, chanceCrit: 0, multCrit: 0, ardeur: 0, recuperation: 0, sommeil: 0 },
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,
@@ -389,7 +404,7 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   for (let k = 0; k < n; k++) {
     let brut = degatsDuTap(config, j)
     if (tirer(e) < chanceCritDe(config, j)) brut *= multCritDe(config, j)
-    const degats = brut * multiplicateurDeForme(config, forme)
+    const degats = brut * multiplicateurDeForme(config, j, forme)
     forme = Math.max(bornesDeLaForme(config).min, forme - brut / minuteDeSpam)
     // Le surplus d'un coup fatal est perdu : un tap frappe un ennemi.
     const porte = Math.min(degats, e.ennemi.pv)

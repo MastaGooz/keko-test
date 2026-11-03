@@ -364,6 +364,22 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   « Critique 5,0 % → 6,9 % », « Force 200 % → 225 % ». Vérifié : chaque
   rang rapporte moins que le précédent, la Critique reste sous 100 % au
   rang 1 000, le Coup et la Force y montent encore.
+- **TROIS STATS DE LA FORME : ARDEUR, RÉCUPÉRATION, SOMMEIL** (Keko,
+  03/11 : « des stats qui jouent sur le système de fatigue » ; « augmenter
+  la durée des paliers n'est pas super, on ne veut pas forcer les joueurs à
+  spammer plus longtemps, le temps fixe permet un passage rapide » ; « on va
+  tout implanter sauf Entrain »). *Elles jouent sur l'intensité ou sur le
+  temps hors du jeu, jamais sur la durée d'une session* : écartées,
+  Endurance, Réserve, Souffle (elles allongent la session), Ténacité,
+  Frénésie, Adrénaline (elles récompensent le spam fatigué) ; Entrain (le
+  bonus coopératif) attend. Toutes en `1 + 0,15 · rang^0,8` (+15 % au rang
+  1, +95 % au 10, sans plafond). ARDEUR : le haut du repos (200 % → 215 %…),
+  la pente du repos suit, le palier et la fatigue ne bougent pas.
+  RÉCUPÉRATION : la vitesse du retour depuis la fatigue. SOMMEIL : la
+  vitesse du remplissage du repos. Les bots ne les achètent pas (un poids
+  absent vaut zéro). *Elles ne jouent que sur les taps*, qui pèsent 0,2 à
+  0,5 % des dégâts : appliquer la forme à l'auto, ou peser plus les taps,
+  reste à trancher par Keko.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

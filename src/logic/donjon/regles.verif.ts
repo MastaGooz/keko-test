@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, periodeEnRecharges, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -101,7 +101,7 @@ verifier('avancer ne recule pas', avancer(C, plusTard, 0) === plusTard)
 
 // LA FORME : de 0 % à 200 %, un palier à 100 % autour du milieu, en minutes de spam.
 const B =bornesDeLaForme(C)
-const mf = (r: number) => multiplicateurDeForme(C, r)
+const mf = (r: number) => multiplicateurDeForme(C, e.joueurs[0], r)
 verifier('la forme va de 0 % à 200 %, avec un palier à 100 % autour du milieu', mf(B.min) === 0 && mf(B.palierBas) === 1 && mf(0) === 1 && mf(B.palierHaut) === 1 && mf(B.max) === 2)
 verifier('le palier fait au moins le tiers du trait', (B.palierHaut - B.palierBas) / (B.max - B.min) >= 1 / 3 - 1e-9)
 const neuf = e.joueurs[0]
@@ -128,6 +128,14 @@ verifier('le DPS du spammeur suit la recharge', Math.abs(dpsDeSpam(C, neuf) - (d
 const unTapNeuf = appliquer(C, e, { joueur: 'a', t: 0, type: 'taper', n: 1 })
 const rapport = unTapRepose.joueurs[0].degatsTap / unTapNeuf.joueurs[0].degatsTap
 verifier('reposé, un tap frappe double', Math.abs(rapport - 2) < 1e-9)
+// LES STATS DE LA FORME : l'intensité ou le temps hors jeu, jamais la durée d'une session.
+const stat = (quoi: 'ardeur' | 'recuperation' | 'sommeil', r: number) => ({ ...neuf, ameliorations: { ...neuf.ameliorations, [quoi]: r } })
+verifier('Ardeur : le haut du repos monte, de moins en moins', reposMaxDe(C, stat('ardeur', 0)) === 2 && decroit((r) => reposMaxDe(C, stat('ardeur', r))))
+verifier('Ardeur : reposé, on frappe au nouveau haut', Math.abs(multiplicateurDeForme(C, stat('ardeur', 5), B.max) - reposMaxDe(C, stat('ardeur', 5))) < 1e-9)
+verifier('Ardeur ne change pas la durée : le palier et la fatigue restent', multiplicateurDeForme(C, stat('ardeur', 5), B.palierHaut) === 1 && multiplicateurDeForme(C, stat('ardeur', 5), B.min) === 0)
+const epuiseRang = (r: number) => ({ ...stat('recuperation', r), forme: B.min, formeA: 0 })
+verifier('Récupération : la fatigue passe plus vite', formeA(C, epuiseRang(5), H / 6) > formeA(C, epuiseRang(0), H / 6))
+verifier('Sommeil : le repos se gagne plus vite', formeA(C, stat('sommeil', 5), 3 * H) > formeA(C, stat('sommeil', 0), 3 * H))
 
 const fini = avancer(C, achete, C.saison.duree + 1)
 verifier('la saison finie est archivée', fini.archives.length === 1 && fini.archives[0].etageParJour.length === 7)

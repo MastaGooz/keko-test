@@ -28,6 +28,7 @@ import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   autoCritique,
+  bonusDeForme,
   bonusDuCoup,
   gainDeVitesseAuto,
   bornesDeLaForme,
@@ -45,6 +46,7 @@ import {
   multCritDe,
   multiplicateurDeForme,
   periodeDe,
+  reposMaxDe,
   tapPret,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
@@ -124,6 +126,9 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
   auto: { nom: 'Auto-tap', role: 'La vitesse du coup tout seul, même absent', valeur: (j) => bonus(gainDeVitesseAuto(C, j)) },
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
   multCrit: { nom: 'Force', role: 'Les dégâts d\'un coup critique', valeur: (j) => pourcent(multCritDe(C, j)) },
+  ardeur: { nom: 'Ardeur', role: 'La force des taps au plus haut du repos', valeur: (j) => pourcent(reposMaxDe(C, j)) },
+  recuperation: { nom: 'Récupération', role: 'La fatigue passe plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
+  sommeil: { nom: 'Sommeil', role: 'Le repos se gagne plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'sommeil')) },
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
@@ -584,7 +589,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const avant = moi()
     // En recharge, le tap ne part pas (la règle le refuserait).
     if (!tapPret(avant, t)) return
-    const mult = multiplicateurDeForme(C, formeA(C, avant, t))
+    const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
     const attendu = degatsDuTap(C, avant) * mult
     const dejaInfliges = avant.degatsTap
     const [x, y] = surLEnnemi(-0.08, 0)
@@ -885,7 +890,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
     // La forme glisse en continu : le marqueur la suit à chaque image.
     const forme = formeA(C, j, t)
-    const mult = multiplicateurDeForme(C, forme)
+    const mult = multiplicateurDeForme(C, j, forme)
     marqueurForme.style.left = `${surLeTrait(forme)}%`
     // Le marqueur prend la couleur qu'aurait un tap : blanc sur le palier.
     marqueurForme.style.background = teinteDuChiffre('tap', mult - 1)

@@ -7,6 +7,7 @@
  */
 import type { EtatDesBots } from '../../logic/donjon/bots.ts'
 import type { Horloge } from '../../logic/donjon/horloge.ts'
+import { AMELIORATIONS } from '../../logic/donjon/config.ts'
 import type { EtatDonjon, Joueur } from '../../logic/donjon/types.ts'
 
 const CLE = 'keko-donjon'
@@ -47,9 +48,11 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
       }
       s.forme = VERSION_DE_LA_FORME
     }
-    // Une sauvegarde d'avant la recharge du tap : il est prêt tout de suite.
+    // Une sauvegarde d'avant la recharge du tap : il est prêt tout de suite ;
+    // d'avant une amélioration : elle est au rang 0.
     for (const j of e.joueurs) {
       if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
+      for (const quoi of AMELIORATIONS) if (typeof j.ameliorations[quoi] !== 'number') j.ameliorations[quoi] = 0
     }
     return s as SauvegardeDonjon
   } catch {

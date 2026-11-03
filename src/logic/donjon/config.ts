@@ -18,8 +18,8 @@ const MINUTE = 60 * SECONDE
 const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
-export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit']
+export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'ardeur' | 'recuperation' | 'sommeil'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil']
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -29,8 +29,8 @@ export type ProfilBot = {
   passagesParJour: number
   /** Le nombre de taps d'un passage, tiré dans [min, max]. */
   taps: [number, number]
-  /** La règle de dépense : il achète la piste la plus en retard sur son poids. */
-  poids: Record<CleAmelioration, number>
+  /** La règle de dépense : il achète la piste la plus en retard sur son poids (absente : jamais). */
+  poids: Partial<Record<CleAmelioration, number>>
 }
 
 export const DONJON = {
@@ -146,6 +146,19 @@ export const DONJON = {
     recuperationParHeure: 6,
     /** Au-dessus : du milieu à 200 % (3 min de spam) en 8 h ; le repos commence après 2 h 40. */
     reposParHeure: 0.375,
+    /**
+     * LES STATS DE LA FORME (Keko : « des stats qui jouent sur le système de
+     * fatigue » ; « augmenter la durée des paliers n'est pas super, on ne
+     * veut pas forcer les joueurs à spammer plus longtemps ») : elles jouent
+     * sur l'intensité ou sur le temps hors du jeu, jamais sur la durée d'une
+     * session. Toutes en `1 + gain · rang^exposant`, sans plafond, de moins en
+     * moins par rang. ARDEUR : le haut du repos (200 % au rang 0) monte de
+     * ce bonus. RÉCUPÉRATION : la fatigue se résorbe plus vite. SOMMEIL : le
+     * repos se remplit plus vite.
+     */
+    ardeur: { gain: 0.15, exposant: 0.8 },
+    recuperation: { gain: 0.15, exposant: 0.8 },
+    sommeil: { gain: 0.15, exposant: 0.8 },
   },
 
   bots: {

@@ -50,7 +50,7 @@ export function choixDuBot(config: ConfigDonjon, etat: EtatDonjon, profil: Profi
   let meilleure: CleAmelioration | null = null
   let score = Infinity
   for (const quoi of AMELIORATIONS) {
-    const poids = profil.poids[quoi]
+    const poids = profil.poids[quoi] ?? 0
     if (poids <= 0) continue
     const s = (j.ameliorations[quoi] + 1) / poids
     if (s < score) {
