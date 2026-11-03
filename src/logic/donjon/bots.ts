@@ -1,11 +1,14 @@
 /**
  * LES BOTS : des joueurs comme les autres, qui passent par `agir`.
  *
- * Chaque bot a son planning (le prochain passage) et son propre RNG seedé,
- * tenus HORS de l'état partagé : ce sont des clients, pas des règles. Pendant
- * un passage il dépense ses points, tape par salves, puis redépense ; entre
- * deux passages, seul son auto-tap tourne (et c'est l'état partagé qui le
- * résout).
+ * Chaque bot a son planning (son prochain geste) et son propre RNG seedé,
+ * tenus HORS de l'état partagé : ce sont des clients, pas des règles. Un
+ * passage : il dépense ses points, tape un coup à chaque fin de recharge
+ * jusqu'à son compte, puis redépense ; entre deux passages, seul son
+ * auto-tap tourne (et c'est l'état partagé qui le résout). *Chaque tap est
+ * un geste à son heure* : un passage ne joue jamais en avance sur le temps
+ * qu'on lui donne (sinon l'état partagé partirait dans le futur et le tap
+ * d'un humain, ramené à l'heure de l'état, attendrait sa recharge).
  *
  * **La règle de dépense** : il achète la piste la plus en retard sur son poids
  * (`(rang + 1) / poids` le plus petit). S'il ne peut pas la payer, il
@@ -17,7 +20,8 @@ import type { EtatPartage } from './partage.ts'
 import { coutDe } from './regles.ts'
 import type { EtatDonjon } from './types.ts'
 
-export type EtatDesBots = Record<string, { prochain: number; rng: number }>
+/** `restants` : les taps qu'il lui reste dans le passage en cours (0 ou absent : le prochain geste est un passage). */
+export type EtatDesBots = Record<string, { prochain: number; rng: number; restants?: number }>
 
 function tirage(rngEtat: number): { v: number; rng: number } {
   const r = createRng(rngEtat)
@@ -64,28 +68,10 @@ async function depenser(config: ConfigDonjon, partage: EtatPartage, profil: Prof
   return etat
 }
 
-/** Un passage : dépenser, taper par salves, redépenser. Rend le RNG avancé. */
-async function passage(config: ConfigDonjon, partage: EtatPartage, profil: ProfilBot, t: number, rng: number): Promise<number> {
-  let etat = await partage.agir({ joueur: profil.id, t, type: 'rejoindre', nom: profil.nom, bot: profil.id })
-  etat = await depenser(config, partage, profil, etat, t)
-
-  const tire = tirage(rng)
-  const [min, max] = profil.taps
-  let reste = min + Math.floor(tire.v * (max - min + 1))
-  let instant = t
-  while (reste > 0) {
-    const n = Math.min(reste, config.bots.tapsParSalve)
-    etat = await partage.agir({ joueur: profil.id, t: instant, type: 'taper', n })
-    reste -= n
-    instant += config.bots.ecartSalve
-  }
-  await depenser(config, partage, profil, etat, instant)
-  return tire.rng
-}
-
 /**
- * Joue, dans l'ordre du temps, tous les passages prévus jusqu'à `jusqua`.
- * Rend le planning suivant.
+ * Joue, dans l'ordre du temps, tous les gestes des bots prévus jusqu'à
+ * `jusqua` : le début d'un passage (rejoindre, dépenser, tirer son nombre de
+ * taps), chacun de ses taps, et à la fin la redépense. Rend le planning suivant.
  */
 export async function jouerLesBots(
   config: ConfigDonjon,
@@ -102,9 +88,28 @@ export async function jouerLesBots(
     }
     if (profil === null) return suite
     const b = suite[profil.id]
-    const rng = await passage(config, partage, profil, b.prochain, b.rng)
-    const ecart = tirage(rng)
+    const t = b.prochain
+    if ((b.restants ?? 0) <= 0) {
+      // Le début d'un passage : il revient, dépense, tire son nombre de taps.
+      let etat = await partage.agir({ joueur: profil.id, t, type: 'rejoindre', nom: profil.nom, bot: profil.id })
+      etat = await depenser(config, partage, profil, etat, t)
+      const tire = tirage(b.rng)
+      const [min, max] = profil.taps
+      suite[profil.id] = { prochain: t, rng: tire.rng, restants: min + Math.floor(tire.v * (max - min + 1)) }
+      continue
+    }
+    // Un tap, puis le suivant à la fin de la recharge.
+    let etat = await partage.agir({ joueur: profil.id, t, type: 'taper', n: 1 })
+    const restants = (b.restants ?? 0) - 1
+    if (restants > 0) {
+      suite[profil.id] = { prochain: t + config.tap.recharge, rng: b.rng, restants }
+      continue
+    }
+    // Le passage est fini : il redépense, et le suivant est tiré.
+    etat = await depenser(config, partage, profil, etat, t)
+    void etat
+    const ecart = tirage(b.rng)
     const e = config.bots.ecartPassage
-    suite[profil.id] = { prochain: b.prochain + ecartMoyen(profil) * (1 - e + 2 * e * ecart.v), rng: ecart.rng }
+    suite[profil.id] = { prochain: t + ecartMoyen(profil) * (1 - e + 2 * e * ecart.v), rng: ecart.rng, restants: 0 }
   }
 }

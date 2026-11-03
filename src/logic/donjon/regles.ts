@@ -117,9 +117,14 @@ export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
   return Math.round(config.xp.base * Math.pow(niveau, config.xp.exposant))
 }
 
-/** Le DPS d'un spammeur à ce niveau : l'étalon de la forme. */
+/** Le DPS d'un spammeur à ce niveau (un tap à chaque fin de recharge) : l'étalon de la forme. */
 export function dpsDeSpam(config: ConfigDonjon, j: Joueur): number {
-  return degatsDuTap(config, j) * facteurCritMoyen(config, j) * config.forme.cadenceSpam
+  return (degatsDuTap(config, j) * facteurCritMoyen(config, j) * 1000) / config.tap.recharge
+}
+
+/** Le tap est-il rechargé à l'instant t ? */
+export function tapPret(j: Joueur, t: number): boolean {
+  return t >= j.prochainTap
 }
 
 /**
@@ -178,6 +183,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     kills: 0,
     forme: 0,
     formeA: t,
+    prochainTap: t,
     bonus: {},
   }
 }
@@ -346,7 +352,13 @@ function avancerSurPlace(config: ConfigDonjon, e: EtatDonjon, t: number): void {
   }
 }
 
+/**
+ * UN TAP PAR RECHARGE : un tap pendant la recharge ne fait rien, et une
+ * action de n taps n'en frappe qu'un (le temps ne se devance pas).
+ */
 function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: number): void {
+  if (!tapPret(j, t)) return
+  n = Math.min(n, 1)
   // Chaque tap use la forme de ce que ses dégâts valent en minutes de spam.
   let forme = formeA(config, j, t)
   const minuteDeSpam = dpsDeSpam(config, j) * 60
@@ -364,6 +376,7 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   }
   j.forme = forme
   j.formeA = t
+  j.prochainTap = t + config.tap.recharge
 }
 
 // ---------------------------------------------------------------- l'extérieur

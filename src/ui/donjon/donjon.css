@@ -417,6 +417,8 @@
 /* `.donjon .donjon-attaque` : `.donjon button` remet la police héritée. */
 .donjon .donjon-attaque {
   -webkit-touch-callout: none;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -437,6 +439,16 @@
     inset 0 3px 0 rgba(255, 255, 255, 0.45),
     inset 0 -7px 0 rgba(61, 39, 22, 0.35),
     0 0.5rem 1.2rem rgba(0, 0, 0, 0.5);
+}
+
+/* Le voile de recharge : il couvre le bouton au tap et se vide de haut en
+   bas, bord droit (découpé par `clip-path`, posé à chaque image). */
+.donjon-recharge {
+  position: absolute;
+  inset: 0;
+  background: rgba(61, 39, 22, 0.55);
+  clip-path: inset(100% 0 0 0);
+  pointer-events: none;
 }
 
 .donjon-attaque svg {

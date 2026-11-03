@@ -41,6 +41,7 @@ import {
   multCritDe,
   multiplicateurDeForme,
   periodeDe,
+  tapPret,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
 import type { EtatDonjon, Evenement, Joueur } from '../../logic/donjon/types.ts'
@@ -269,6 +270,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const cadre = el('div', 'donjon-attaque-cadre')
   const attaque = bouton('donjon-attaque')
   attaque.innerHTML = `${ICONE_EPEE}<span>Attaquer</span>`
+  // LA RECHARGE DU TAP (Keko : « quand on appuie le bouton se colore et la
+  // coloration se vide de haut en bas pour indiquer le CD ») : un voile sur
+  // le bouton, à la hauteur de ce qui reste à recharger.
+  const voileRecharge = el('span', 'donjon-recharge')
+  attaque.prepend(voileRecharge)
   // Les infos de l'attaque, montrées tant que le bouton reste enfoncé (Keko :
   // « affiche les infos de l'attaque quand on laisse le tap enfoncé »).
   const bulle = el('div', 'donjon-bulle')
@@ -548,6 +554,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function frapper(): void {
     const t = maintenant()
     const avant = moi()
+    // En recharge, le tap ne part pas (la règle le refuserait).
+    if (!tapPret(avant, t)) return
     const mult = multiplicateurDeForme(C, formeA(C, avant, t))
     const attendu = degatsDuTap(C, avant) * mult
     const dejaInfliges = avant.degatsTap
@@ -591,7 +599,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   attaque.addEventListener('contextmenu', (ev) => ev.preventDefault())
   function remplirLaBulle(): void {
     const j = moi()
-    const html = `<div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    const html = `<div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 
@@ -853,6 +861,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const pourCent = `${Math.round(100 * mult)} %`
     if (valeurForme.textContent !== pourCent) valeurForme.textContent = pourCent
     if (!bulle.hidden) remplirLaBulle()
+    // Le voile de recharge : plein au tap, il se vide de haut en bas.
+    const resteRecharge = Math.max(0, Math.min(1, (j.prochainTap - t) / C.tap.recharge))
+    voileRecharge.style.clipPath = `inset(${100 * (1 - resteRecharge)}% 0 0 0)`
     requestAnimationFrame(image)
   }
 

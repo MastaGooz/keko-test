@@ -289,6 +289,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   lui : les dégâts d'un coup et « un coup toutes les 2,0 s » ; le doigt levé
   la cache. L'appui frappe quand même une fois. Pas de menu du navigateur
   (`contextmenu` annulé, `-webkit-touch-callout: none`).
+- **LE TAP A UNE RECHARGE** (Keko, 03/11 : « un CD sur le bouton, qui
+  correspond à la vitesse d'attaque du tap, disons 1 s pour tester ; quand on
+  appuie le bouton se colore et la coloration se vide de haut en bas »).
+  C'est une RÈGLE (`tap.recharge`, `Joueur.prochainTap`, `tapPret`) : un tap
+  pendant la recharge ne fait rien, et une action de n taps n'en frappe
+  qu'un. Le spammeur étalon de la forme tape donc à chaque fin de recharge :
+  une minute de spam = 60 taps (environ 380 avant, à 6 taps/s), ce qui rend
+  la fatigue et le repos bien plus rapides à consommer. Les bots tapent un
+  coup par recharge, *chaque tap à son heure* : un passage ne joue plus en
+  avance sur le temps (sinon l'état partagé partait dans le futur et le tap
+  de l'humain, ramené à l'heure de l'état, attendait sa recharge). À
+  l'écran : un voile brun sur le bouton au tap, qui se vide de haut en bas
+  (posé à chaque image depuis `prochainTap`) ; l'appui long dit aussi la
+  recharge. L'équilibrage ne bouge pas (étage 113 à 115).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

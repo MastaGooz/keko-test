@@ -35,6 +35,8 @@ export type Joueur = {
    */
   forme: number
   formeA: number
+  /** Le tap est rechargé à partir de cet instant (`tap.recharge` après le dernier). */
+  prochainTap: number
   bonus: BonusPermanents
 }
 

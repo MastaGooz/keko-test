@@ -66,6 +66,11 @@ export const DONJON = {
   tap: {
     base: 10,
     parRang: 3,
+    /**
+     * LA RECHARGE DU TAP, sa vitesse d'attaque (Keko : « un CD sur le bouton,
+     * disons 1 s pour tester ») : un tap au plus par `recharge`.
+     */
+    recharge: 1 * SECONDE,
   },
 
   /**
@@ -98,7 +103,7 @@ export const DONJON = {
    * que la fatigue commence à partir d'un nombre de dégâts infligés égal à
    * 1 min de spam ») : un tap la pousse vers la gauche de ce que ses dégâts
    * (critique compris, forme non comprise) représentent du DPS d'un
-   * spammeur (`cadenceSpam` taps par seconde, critiques à la moyenne). Un
+   * spammeur — un tap à chaque fin de recharge, critiques à la moyenne. Un
    * coup lent et fort use autant que plusieurs rapides et faibles pour les
    * mêmes dégâts. ON COMMENCE PILE AU MILIEU (0) d'un `palier` à 100 % qui
    * s'étend de −palier/2 à +palier/2 (Keko : « commencer pile au milieu »,
@@ -110,7 +115,6 @@ export const DONJON = {
    * soumis.
    */
   forme: {
-    cadenceSpam: 6,
     /** Une minute de spam de chaque côté du milieu avant la fatigue. */
     palier: 2,
     fatigue: 2,
@@ -124,9 +128,6 @@ export const DONJON = {
   bots: {
     /** Écart entre deux passages : la moyenne × un facteur tiré dans [1 − e, 1 + e]. */
     ecartPassage: 0.5,
-    /** Les taps d'un passage partent par paquets, à quelques secondes d'écart. */
-    tapsParSalve: 10,
-    ecartSalve: 4 * SECONDE,
     profils: [
       {
         id: 'assidu',
