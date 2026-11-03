@@ -77,9 +77,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   reste le repli sans catalogue, et celui du rapport.
 - **Le reste est réduit à l'essentiel** : le nom et les PV, la dernière
   nouvelle du journal (une tape ouvre le journal entier), le niveau et sa
-  jauge, les points, puis quatre tuiles de parchemin (Coup, Auto, Critique,
-  Force) qui s'allument quand on peut les payer. Le classement (trophée) et
+  jauge, puis (avant le 03/11) quatre tuiles de parchemin (Coup, Auto,
+  Critique, Force) qui s'allumaient quand on pouvait les payer. Le classement (trophée) et
   les réglages (vitesse, « Recommencer ») s'ouvrent en feuille.
+- **LE NIVEAU EST LE BOUTON DES AMÉLIORATIONS** (Keko, 03/11 : « en cas de
+  levelup, on met le bouton du niveau cliquable ou un panneau de choix
+  apparaît » ; tranché pour la pastille cliquable plutôt qu'un panneau qui
+  s'ouvre seul, qui couperait les taps en plein passage). Les quatre tuiles
+  ont quitté l'écran principal. La bande du niveau (pastille, jauge d'XP)
+  est un bouton : avec des points, la pastille passe à l'or et rebondit, et
+  « N points › » s'affiche. Une tape ouvre la feuille « Niveau N · P points »
+  et ses quatre choix (nom, rôle, valeur avant → après, coût). La feuille se
+  referme seule quand plus rien n'est payable. Sans point, la même tape
+  montre les choix éteints.
 - **Le repos et la fatigue** ne s'affichent qu'en pastilles sur la scène, et
   seulement quand ils jouent.
 - **Le retour au doigt est léger** : l'ennemi s'écrase et s'éclaire, le

@@ -5,8 +5,8 @@
  * du pool orc/gobelin debout sur le camp de sa race, qu'on tape (Keko : « l'ui
  * surchargé et pas très beau » — le gros bouton, les onglets et la vitesse
  * sont partis). Sous lui, son nom et ses PV, la dernière nouvelle du journal,
- * le niveau et les quatre améliorations. Le classement, le journal entier et
- * les réglages (vitesse, recommencer) s'ouvrent en feuille.
+ * le niveau. Les améliorations (une tape sur le niveau), le classement, le
+ * journal entier et les réglages (vitesse, recommencer) s'ouvrent en feuille.
  *
  * Retour au doigt LÉGER (choisi par Keko) : l'ennemi s'écrase, le chiffre
  * s'envole (doré pour un critique), le suivant surgit à la mort. Pas de son.
@@ -93,12 +93,16 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
   }
 }
 
-/** Les quatre tuiles : un mot, et la valeur qu'elle fait monter. */
-const TUILES: Record<CleAmelioration, { nom: string; valeur: (j: Joueur) => string }> = {
-  tap: { nom: 'Coup', valeur: (j) => nombre(degatsDuTap(C, j)) },
-  auto: { nom: 'Auto', valeur: (j) => `${nombre(dpsEffectifDe(C, j))}/s` },
-  chanceCrit: { nom: 'Critique', valeur: (j) => pourcent(chanceCritDe(C, j)) },
-  multCrit: { nom: 'Force', valeur: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
+/** Les quatre choix d'amélioration : un nom, ce qu'il fait, la valeur qu'il fait monter. */
+const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
+  tap: { nom: 'Coup', role: 'Les dégâts de chaque tap', valeur: (j) => nombre(degatsDuTap(C, j)) },
+  auto: { nom: 'Auto-tap', role: 'Des dégâts chaque seconde, même absent', valeur: (j) => `${nombre(dpsEffectifDe(C, j))}/s` },
+  chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcent(chanceCritDe(C, j)) },
+  multCrit: { nom: 'Force', role: 'Ce que multiplie un coup critique', valeur: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
+}
+
+function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
+  return { ...j, ameliorations: { ...j.ameliorations, [quoi]: j.ameliorations[quoi] + 1 } }
 }
 
 // ---------------------------------------------------------------- le DOM
@@ -121,7 +125,7 @@ const ICONE_TROPHEE =
 const ICONE_REGLAGES =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>'
 
-type Feuille = 'classement' | 'journal' | 'reglages'
+type Feuille = 'ameliorations' | 'classement' | 'journal' | 'reglages'
 
 export async function monterDonjon(racine: HTMLElement, build: string): Promise<void> {
   const parametres = new URLSearchParams(location.search)
@@ -214,36 +218,45 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // La dernière nouvelle : une tape ouvre le journal.
   const fil = bouton('donjon-fil')
 
-  // Le joueur : son niveau, l'XP, ses points.
-  const bande = el('section', 'donjon-bande')
-  const niveau = el('div', 'donjon-niveau')
-  const xp = el('div', 'donjon-xp')
-  const xpPlein = el('div', 'donjon-xp-plein')
+  // LE NIVEAU EST LE BOUTON DES AMÉLIORATIONS (Keko : « en cas de levelup,
+  // on met le bouton du niveau cliquable »). Tant qu'il reste des points, la
+  // pastille s'allume et rebondit, et une tape ouvre les quatre choix ; rien
+  // n'interrompt les taps. Sans point, la même tape montre les choix éteints.
+  const bande = bouton('donjon-bande')
+  bande.setAttribute('aria-label', 'Améliorations')
+  const niveau = el('span', 'donjon-niveau')
+  const xp = el('span', 'donjon-xp')
+  const xpPlein = el('span', 'donjon-xp-plein')
   xp.append(xpPlein)
-  const points = el('div', 'donjon-points')
+  const points = el('span', 'donjon-points')
   bande.append(niveau, xp, points)
 
-  // Les quatre améliorations, faites une fois (redessinées à chaque tic, les
-  // boutons perdraient le clic entre l'appui et le relâchement).
-  const tuiles = el('section', 'donjon-tuiles')
-  const lesTuiles = AMELIORATIONS.map((quoi) => {
-    const b = bouton('donjon-tuile')
-    const titre = el('span', 'donjon-tuile-nom', TUILES[quoi].nom)
-    const valeur = el('span', 'donjon-tuile-valeur')
-    const cout = el('span', 'donjon-tuile-cout')
-    b.append(titre, valeur, cout)
+  page.append(tete, scene, fiche, fil, bande)
+
+  // Les quatre choix, faits une fois (redessinés à chaque tic, les boutons
+  // perdraient le clic entre l'appui et le relâchement). Ils vivent dans la
+  // feuille des améliorations.
+  const choix = el('div', 'donjon-choix')
+  const lesChoix = AMELIORATIONS.map((quoi) => {
+    const b = bouton('donjon-choix-ligne')
+    const texte = el('span', 'donjon-choix-texte')
+    texte.append(el('span', 'donjon-choix-nom', CHOIX[quoi].nom), el('span', 'donjon-choix-role', CHOIX[quoi].role))
+    const valeur = el('span', 'donjon-choix-valeur')
+    const cout = el('span', 'donjon-choix-cout')
+    b.append(texte, valeur, cout)
     b.addEventListener('click', () => {
       void partage.agir({ joueur: MOI, t: maintenant(), type: 'acheter', quoi }).then(() => {
-        b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
+        b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         sauver()
         dessiner()
+        // Plus rien à payer : on retourne au combat.
+        const j = moi()
+        if (!AMELIORATIONS.some((q) => j.points >= coutDe(C, j, q))) setTimeout(fermerLaFeuille, 350)
       })
     })
-    tuiles.append(b)
+    choix.append(b)
     return { quoi, b, valeur, cout }
   })
-
-  page.append(tete, scene, fiche, fil, bande, tuiles)
 
   // ------------------------------------------------ la feuille
   const voile = el('div', 'donjon-voile')
@@ -260,7 +273,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let ouverte: Feuille | null = null
   let cleDeLaFeuille = ''
 
-  const TITRES: Record<Feuille, string> = { classement: 'Classement', journal: 'Journal', reglages: 'Réglages' }
+  const TITRES: Record<Feuille, string> = { ameliorations: 'Améliorations', classement: 'Classement', journal: 'Journal', reglages: 'Réglages' }
   function ouvrir(f: Feuille): void {
     ouverte = f
     cleDeLaFeuille = ''
@@ -275,6 +288,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   boutonClassement.addEventListener('click', () => ouvrir('classement'))
   boutonReglages.addEventListener('click', () => ouvrir('reglages'))
   fil.addEventListener('click', () => ouvrir('journal'))
+  bande.addEventListener('click', () => ouvrir('ameliorations'))
   fermer.addEventListener('click', fermerLaFeuille)
   voile.addEventListener('click', (ev) => {
     if (ev.target === voile) fermerLaFeuille()
@@ -474,21 +488,29 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       niveauVu = j.niveau
     }
     xpPlein.style.width = `${(100 * j.xp) / xpPourNiveau(C, j.niveau)}%`
-    points.textContent = j.points > 0 ? `${j.points} pt${j.points > 1 ? 's' : ''}` : ''
-    points.classList.toggle('vide', j.points === 0)
-
-    for (const tuile of lesTuiles) {
-      const cout = coutDe(C, j, tuile.quoi)
-      tuile.valeur.textContent = TUILES[tuile.quoi].valeur(j)
-      tuile.cout.textContent = `${cout} pt${cout > 1 ? 's' : ''}`
-      tuile.b.disabled = j.points < cout
-    }
+    points.textContent = j.points > 0 ? `${j.points} point${j.points > 1 ? 's' : ''} ›` : ''
+    bande.classList.toggle('pret', j.points > 0)
 
     for (const [i, b] of boutonsVitesse.entries()) b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse)
     if (ouverte !== null) dessinerLaFeuille(ouverte)
   }
 
   function dessinerLaFeuille(f: Feuille): void {
+    if (f === 'ameliorations') {
+      const j = moi()
+      feuilleTitre.textContent = `Niveau ${j.niveau} · ${j.points} point${j.points > 1 ? 's' : ''}`
+      for (const c of lesChoix) {
+        const cout = coutDe(C, j, c.quoi)
+        c.valeur.textContent = `${CHOIX[c.quoi].valeur(j)} → ${CHOIX[c.quoi].valeur(auRangSuivant(j, c.quoi))}`
+        c.cout.textContent = `${cout} pt${cout > 1 ? 's' : ''}`
+        c.b.disabled = j.points < cout
+      }
+      if (cleDeLaFeuille !== 'ameliorations') {
+        cleDeLaFeuille = 'ameliorations'
+        feuilleCorps.replaceChildren(choix)
+      }
+      return
+    }
     if (f === 'reglages') {
       if (cleDeLaFeuille !== 'reglages') {
         cleDeLaFeuille = 'reglages'
