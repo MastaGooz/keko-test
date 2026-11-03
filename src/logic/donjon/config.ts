@@ -18,8 +18,8 @@ const MINUTE = 60 * SECONDE
 const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
-export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'ardeur' | 'recuperation' | 'sommeil'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil']
+export type CleAmelioration = 'tap' | 'auto' | 'chanceCrit' | 'multCrit' | 'ardeur' | 'recuperation'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation']
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -174,8 +174,10 @@ export const DONJON = {
      * sur l'intensité ou sur le temps hors du jeu, jamais sur la durée d'une
      * session. Toutes en `1 + gain · rang^exposant`, sans plafond, de moins en
      * moins par rang. ARDEUR : le haut du repos (200 % au rang 0) monte de
-     * ce bonus. RÉCUPÉRATION : la fatigue se résorbe plus vite. SOMMEIL : le
-     * repos se remplit plus vite.
+     * ce bonus. RÉCUPÉRATION : la forme se refait plus vite, des deux côtés —
+     * la fatigue se résorbe et le repos se remplit (Keko : « fusionner la
+     * récup de fatigue et la vitesse de repos en une seule stat » ; c'étaient
+     * Récupération et Sommeil).
      */
     /**
      * UN SAUT À LA SORTIE DU BLANC (Keko : « un petit cap qui commence à
@@ -187,7 +189,6 @@ export const DONJON = {
     entreeFatigue: 0.5,
     ardeur: { gain: 0.15, exposant: 0.8 },
     recuperation: { gain: 0.15, exposant: 0.8 },
-    sommeil: { gain: 0.15, exposant: 0.8 },
   },
 
   bots: {

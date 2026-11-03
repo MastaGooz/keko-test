@@ -452,6 +452,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   améliorations générales ; les autres idées (tueurs de race, Ferveur /
   Veille, XP de repos, Assiduité, Inspiration, rareté des offres…) ont leur
   place dans des systèmes spécifiques à venir, pas ici (Keko).
+- **RÉCUPÉRATION ET SOMMEIL NE FONT PLUS QU'UNE** (Keko, 03/11 : « fusionner
+  la récup de fatigue et la vitesse de repos en une seule stat »). La
+  Récupération (+15 % au rang 1, de moins en moins) accélère les deux
+  moitiés du chemin : la fatigue se résorbe et le repos se remplit. Six
+  améliorations. Une offre qui nommait le Sommeil se retire.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -129,8 +129,7 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcentFin(chanceCritDe(C, j)) },
   multCrit: { nom: 'Force', role: 'Les dégâts d\'un coup critique', valeur: (j) => pourcent(multCritDe(C, j)) },
   ardeur: { nom: 'Ardeur', role: 'La force des taps au plus haut du repos', valeur: (j) => pourcent(reposMaxDe(C, j)) },
-  recuperation: { nom: 'Récupération', role: 'La fatigue passe plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
-  sommeil: { nom: 'Sommeil', role: 'Le repos se gagne plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'sommeil')) },
+  recuperation: { nom: 'Récupération', role: 'La fatigue passe et le repos vient plus vite', valeur: (j) => bonus(bonusDeForme(C, j, 'recuperation')) },
 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {

@@ -55,11 +55,11 @@ verifier('les niveaux donnent des points', tue.joueurs[0].points >= 1 && tue.jou
 // L'OFFRE : chaque point ouvre trois améliorations au choix.
 const ja0 = tue.joueurs[0]
 verifier('un point ouvre une offre de trois améliorations différentes', ja0.points >= 1 && ja0.offre.length === C.points.tailleOffre && new Set(ja0.offre).size === C.points.tailleOffre)
-const horsOffre = (['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation', 'sommeil'] as const).find((q) => !ja0.offre.includes(q))!
+const horsOffre = (['tap', 'auto', 'chanceCrit', 'multCrit', 'ardeur', 'recuperation'] as const).find((q) => !ja0.offre.includes(q))!
 verifier('on ne prend pas hors de son offre', appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: horsOffre }).joueurs[0].ameliorations[horsOffre] === 0)
 const pris = appliquer(C, tue, { joueur: 'a', t: tue.t, type: 'acheter', quoi: ja0.offre[0] }).joueurs[0]
 verifier('prendre une option : un rang, un point de moins, une offre neuve s\'il en reste', pris.ameliorations[ja0.offre[0]] === 1 && pris.points === ja0.points - 1 && (pris.points === 0 ? pris.offre.length === 0 : pris.offre.length === C.points.tailleOffre))
-const avecAuto = { ...tue, joueurs: tue.joueurs.map((j) => ({ ...j, offre: ['auto', 'tap', 'sommeil'] as typeof j.offre })) }
+const avecAuto = { ...tue, joueurs: tue.joueurs.map((j) => ({ ...j, offre: ['auto', 'tap', 'ardeur'] as typeof j.offre })) }
 const achete = appliquer(C, avecAuto, { joueur: 'a', t: tue.t, type: 'acheter', quoi: 'auto' })
 verifier('prendre l\'auto-tap le rend plus rapide', periodeDe(C, achete.joueurs[0]) < periodeDe(C, tue.joueurs[0]) && dpsDe(C, achete.joueurs[0]) > dpsDe(C, tue.joueurs[0]))
 const sansPoints = { ...achete, joueurs: achete.joueurs.map((j) => ({ ...j, points: 0 })) }
@@ -153,13 +153,13 @@ const unTapNeuf = appliquer(C, e, { joueur: 'a', t: 0, type: 'taper', n: 1 })
 const rapport = unTapRepose.joueurs[0].degatsTap / unTapNeuf.joueurs[0].degatsTap
 verifier("reposé, un tap frappe double (à l'arrondi près)", Math.abs(rapport - 2) < 0.15)
 // LES STATS DE LA FORME : l'intensité ou le temps hors jeu, jamais la durée d'une session.
-const stat = (quoi: 'ardeur' | 'recuperation' | 'sommeil', r: number) => ({ ...neuf, ameliorations: { ...neuf.ameliorations, [quoi]: r } })
+const stat = (quoi: 'ardeur' | 'recuperation', r: number) => ({ ...neuf, ameliorations: { ...neuf.ameliorations, [quoi]: r } })
 verifier('Ardeur : le haut du repos monte, de moins en moins', reposMaxDe(C, stat('ardeur', 0)) === 2 && decroit((r) => reposMaxDe(C, stat('ardeur', r))))
 verifier('Ardeur : reposé, on frappe au nouveau haut', Math.abs(multiplicateurDeForme(C, stat('ardeur', 5), B.max) - reposMaxDe(C, stat('ardeur', 5))) < 1e-9)
 verifier('Ardeur ne change pas la durée : le palier et la fatigue restent', multiplicateurDeForme(C, stat('ardeur', 5), B.palierHaut) === 1 && multiplicateurDeForme(C, stat('ardeur', 5), B.min) === 0)
 const epuiseRang = (r: number) => ({ ...stat('recuperation', r), forme: B.min, formeA: 0 })
 verifier('Récupération : la fatigue passe plus vite', formeA(C, epuiseRang(5), H / 6) > formeA(C, epuiseRang(0), H / 6))
-verifier('Sommeil : le repos se gagne plus vite', formeA(C, stat('sommeil', 5), 3 * H) > formeA(C, stat('sommeil', 0), 3 * H))
+verifier('Récupération : le repos se gagne aussi plus vite', formeA(C, stat('recuperation', 5), 3 * H) > formeA(C, stat('recuperation', 0), 3 * H))
 
 const fini = avancer(C, achete, C.saison.duree + 1)
 verifier('la saison finie est archivée', fini.archives.length === 1 && fini.archives[0].etageParJour.length === 7)
