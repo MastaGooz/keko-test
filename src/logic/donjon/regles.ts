@@ -18,7 +18,7 @@
  * instant. Les coups se résolvent un à un, dans l'ordre du temps.
  */
 import { createRng } from '../rng.ts'
-import { AMELIORATIONS, ARMES, CARAC_DE_L_ARME, JOUR, type ConfigDonjon, type TypeArme } from './config.ts'
+import { AMELIORATIONS, ARMES, JOUR, type ConfigDonjon, type TypeArme } from './config.ts'
 import { ennemiDeLEtage } from './ennemi.ts'
 import type { Action, EtatDonjon, Evenement, Joueur, SaisonArchivee } from './types.ts'
 
@@ -33,18 +33,18 @@ function bonusDecroissant(gain: number, exposant: number, rang: number): number 
   return gain * Math.pow(rang, exposant)
 }
 
-/** Le bonus de dégâts d'une caractéristique d'arme (+0,3 = +30 %), qu'on la porte ou non. */
-export function bonusDArme(config: ConfigDonjon, j: Joueur, arme: TypeArme): number {
-  return bonusDecroissant(config.tap.gain, config.tap.exposant, j.ameliorations[CARAC_DE_L_ARME[arme]])
+/** L'arme de ce joueur : ses dégâts, sa recharge, son bonus. */
+export function armeDe(config: ConfigDonjon, j: Joueur) {
+  return config.armes[j.arme] ?? config.armes.epee
 }
 
-/** Le bonus de dégâts de SON arme : la caractéristique de son type. */
+/** Le bonus de dégâts du Coup, en fraction de la base (+0,3 = +30 %). */
 export function bonusDuCoup(config: ConfigDonjon, j: Joueur): number {
-  return bonusDArme(config, j, j.arme)
+  return bonusDecroissant(config.tap.gain, config.tap.exposant, j.ameliorations.tap)
 }
 
 export function degatsDeBaseDuTap(config: ConfigDonjon, j: Joueur): number {
-  return config.tap.base * (1 + bonusDuCoup(config, j))
+  return armeDe(config, j).degats * (1 + bonusDuCoup(config, j))
 }
 
 /** La période de l'auto en recharges du tap : de `depart` vers 1, sans jamais l'atteindre. */
@@ -52,14 +52,14 @@ export function periodeEnRecharges(config: ConfigDonjon, _j: Joueur): number {
   return config.auto.depart
 }
 
-/** Le bonus de vitesse de la Dextérité (+0,1 = 10 % plus vite), sur le tap et l'auto ensemble. */
+/** Le bonus de la Vitesse (+0,1 = 10 % plus vite), sur le tap et l'auto ensemble. */
 export function bonusDeVitesse(config: ConfigDonjon, j: Joueur): number {
-  return config.vitesse.gain * Math.pow(j.ameliorations.dexterite, config.vitesse.exposant)
+  return config.vitesse.gain * Math.pow(j.ameliorations.vitesse, config.vitesse.exposant)
 }
 
 /** La recharge du tap de ce joueur, en ms : la base divisée par la Vitesse. */
 export function rechargeDe(config: ConfigDonjon, j: Joueur): number {
-  return config.tap.recharge / (1 + bonusDeVitesse(config, j))
+  return armeDe(config, j).recharge / (1 + bonusDeVitesse(config, j))
 }
 
 /** L'intervalle entre deux coups d'auto de ce joueur, en ms entières, toujours plus long que la recharge. */
@@ -73,16 +73,16 @@ export function dpsDe(config: ConfigDonjon, j: Joueur): number {
   return (degatsDeBaseDuTap(config, j) * 1000) / periodeDe(config, j)
 }
 
-/** La chance de critique (Intelligence) : vers 100 % sans jamais l'atteindre. */
+/** La chance de critique (Critique, plus le bonus de l'arme) : vers 100 % sans jamais l'atteindre. */
 export function chanceCritDe(config: ConfigDonjon, j: Joueur): number {
   const c = config.crit
-  return 1 - (1 - c.chanceBase) * Math.pow(c.chanceGarde, j.ameliorations.intelligence)
+  return 1 - (1 - c.chanceBase - armeDe(config, j).chanceCrit) * Math.pow(c.chanceGarde, j.ameliorations.chanceCrit)
 }
 
-/** Ce que multiplie un critique (Force) : sans plafond, de moins en moins par point. */
+/** Ce que multiplie un critique (Force, plus le bonus de l'arme) : sans plafond, de moins en moins par point. */
 export function multCritDe(config: ConfigDonjon, j: Joueur): number {
   const c = config.crit
-  return c.multBase * (1 + bonusDecroissant(c.multGain, c.multExposant, j.ameliorations.force))
+  return (c.multBase + armeDe(config, j).multCrit) * (1 + bonusDecroissant(c.multGain, c.multExposant, j.ameliorations.multCrit))
 }
 
 /** Le gain de vitesse de l'auto sur son départ (+0,1 = 10 % plus vite). */
@@ -186,10 +186,10 @@ export function bornesDeLaForme(config: ConfigDonjon): { min: number; palierBas:
 }
 
 /** Le bonus d'une stat de la forme (+0,15 = +15 %). */
-/** Le bonus de récupération de l'Endurance (+0,15 = +15 %). */
+/** Le bonus de Récupération (+0,15 = +15 %), plus celui de l'arme (l'épée). */
 export function bonusDeForme(config: ConfigDonjon, j: Joueur, quoi: 'recuperation'): number {
   const s = config.forme[quoi]
-  return bonusDecroissant(s.gain, s.exposant, j.ameliorations.endurance)
+  return bonusDecroissant(s.gain, s.exposant, j.ameliorations.recuperation) + armeDe(config, j).recuperation
 }
 
 /** Le haut du repos (200 %) ; le joueur est là pour le jour où un système le montera. */
@@ -236,7 +236,7 @@ export function multiplicateurDeForme(config: ConfigDonjon, j: Joueur, forme: nu
 // ---------------------------------------------------------------- l'état
 
 /** Un joueur neuf est pile au milieu de la forme (0). */
-export function nouveauJoueur(id: string, nom: string, bot: string | null, t: number, arme: TypeArme = 'force'): Joueur {
+export function nouveauJoueur(id: string, nom: string, bot: string | null, t: number, arme: TypeArme = 'epee'): Joueur {
   return {
     id,
     nom,
@@ -245,7 +245,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     niveau: 1,
     points: 0,
     arme,
-    ameliorations: { force: 0, dexterite: 0, intelligence: 0, endurance: 0 },
+    ameliorations: { tap: 0, vitesse: 0, chanceCrit: 0, multCrit: 0, recuperation: 0 },
     degatsTap: 0,
     degatsAuto: 0,
     kills: 0,

@@ -19,24 +19,18 @@ const HEURE = 60 * MINUTE
 export const JOUR = 24 * HEURE
 
 /**
- * LES CARACTÉRISTIQUES (Keko : « convertir notre tableau en système de
- * caracs : force, dex, intel, stamina ; chaque carac augmente une partie des
- * stats, en distinguant les armes de force / agilité / intel » ; « 1 point
- * de carac par niveau, c'est tout »). Le nom de type reste `CleAmelioration`
- * (et le champ `ameliorations`) : ce sont elles qu'on améliore.
- * - FORCE : les dégâts des armes de force, et les dégâts critiques ;
- * - DEXTÉRITÉ : les dégâts des armes d'agilité, et la vitesse (tap et auto) ;
- * - INTELLIGENCE : les dégâts des armes d'intel, et la chance de critique ;
- * - ENDURANCE : la récupération de la forme, rien d'autre (Keko : « le bonus
- *   de récup est déjà un bonus de dégâts, c'est assez fort »).
+ * LES CINQ STATS, UN POINT PAR NIVEAU, PLACÉ LIBREMENT (Keko : « 1 point par
+ * niveau, c'est tout » ; « j'ai peur qu'on ferme trop le build des joueurs
+ * avec le système de caracs » — retour aux stats libres, l'identité passe
+ * par l'ARME). Coup (dégâts), Vitesse (le tap et l'auto), Critique (la
+ * chance), Force (les dégâts critiques), Récupération (la forme).
  */
-export type CleAmelioration = 'force' | 'dexterite' | 'intelligence' | 'endurance'
-export const AMELIORATIONS: readonly CleAmelioration[] = ['force', 'dexterite', 'intelligence', 'endurance']
+export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'recuperation'
+export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
-/** Le type d'une arme : la caractéristique qui fait ses dégâts. */
-export type TypeArme = 'force' | 'agilite' | 'intel'
-export const ARMES: readonly TypeArme[] = ['force', 'agilite', 'intel']
-export const CARAC_DE_L_ARME: Record<TypeArme, CleAmelioration> = { force: 'force', agilite: 'dexterite', intel: 'intelligence' }
+/** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
+export type TypeArme = 'epee' | 'dague' | 'baton'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton']
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -103,8 +97,21 @@ export const DONJON = {
    * n'atteignent jamais.
    */
   /** Dégâts d'un COUP (un tap, ou un coup d'auto) : `base × (1 + gain · rang^exposant)`. */
+  /**
+   * LES ARMES DONNENT L'IDENTITÉ (Keko, option 1 : « revenir aux 5 stats
+   * libres, et donner l'identité par l'arme elle-même ») : des dégâts, une
+   * recharge (l'auto suit, à `auto.depart` recharges), un petit bonus. Le DPS
+   * de base est le même (40 avant critiques) ; le bonus fait la différence.
+   * Épée équilibrée (Récupération +20 %), dague rapide (+5 points de chance
+   * de critique), bâton lent (+50 % de dégâts critiques).
+   */
+  armes: {
+    epee: { nom: 'Épée', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2 },
+    dague: { nom: 'Dague', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0 },
+    baton: { nom: 'Bâton', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0 },
+  } as Record<TypeArme, { nom: string; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number }>,
+
   tap: {
-    base: 10,
     /** +30 % au premier rang de « Coup », puis de moins en moins. */
     gain: 0.3,
     exposant: 0.8,
@@ -118,12 +125,9 @@ export const DONJON = {
      * décimaux à l'entier le plus proche »), plage, critique et forme compris.
      */
     ecart: 0.15,
-    /**
-     * LA RECHARGE DU TAP, sa vitesse d'attaque (Keko : « un CD sur le bouton,
-     * disons 1 s pour tester », puis 0,5 s, puis 0,25 s) : un
-     * tap au plus par `recharge`.
-     */
-    recharge: 0.25 * SECONDE,
+    // LA RECHARGE DU TAP, sa vitesse d'attaque (Keko : « un CD sur le bouton,
+    // disons 1 s pour tester », puis 0,5 s, puis 0,25 s) : un tap au plus
+    // par recharge. Elle est maintenant celle de l'ARME (`armes`).
   },
 
   /**
@@ -233,32 +237,32 @@ export const DONJON = {
         nom: 'Bot assidu',
         passagesParJour: 8,
         taps: [30, 50],
-        arme: 'force',
-        poids: { force: 3, dexterite: 2, intelligence: 1 },
+        arme: 'epee',
+        poids: { tap: 3, vitesse: 3, chanceCrit: 1, multCrit: 1 },
       },
       {
         id: 'occasionnel-a',
         nom: 'Bot occasionnel A',
         passagesParJour: 2,
         taps: [20, 40],
-        arme: 'agilite',
-        poids: { dexterite: 3, intelligence: 1, force: 1 },
+        arme: 'dague',
+        poids: { tap: 1, vitesse: 3, chanceCrit: 1, multCrit: 1 },
       },
       {
         id: 'occasionnel-b',
         nom: 'Bot occasionnel B',
         passagesParJour: 2,
         taps: [15, 35],
-        arme: 'intel',
-        poids: { intelligence: 3, dexterite: 1, force: 1 },
+        arme: 'baton',
+        poids: { tap: 2, vitesse: 2, chanceCrit: 1, multCrit: 1 },
       },
       {
         id: 'fantome',
         nom: 'Bot fantôme',
         passagesParJour: 1 / 3,
         taps: [10, 30],
-        arme: 'force',
-        poids: { force: 2, dexterite: 1 },
+        arme: 'epee',
+        poids: { tap: 1, vitesse: 1 },
       },
     ] as ProfilBot[],
   },

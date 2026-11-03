@@ -498,6 +498,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   Dextérité domine** (A fait 32–34 % des dégâts, l'assidu 26 %) : sa
   secondaire, la vitesse, multiplie les dégâts comme sa principale. À
   rejuger par Keko.
+- **RETOUR AUX CINQ STATS LIBRES ; L'ARME FAIT L'IDENTITÉ** (Keko, 03/11 :
+  « j'ai peur qu'on ferme trop le build des joueurs avec le système de
+  caracs vs le système où on choisit les 5 stats » — « ok pour la 1 »). Les
+  caractéristiques liaient des effets (un point de Force = dégâts ET
+  critiques ; la vitesse imposait la Dextérité, à moitié perdue sans
+  dague) : chaque arme poussait vers une seule réponse. Retour à Coup,
+  Vitesse, Critique, Force, Récupération, un point par niveau, placé
+  librement. L'ARME (`config.armes`) porte des dégâts, une recharge (l'auto
+  suit, à 10 recharges) et un petit bonus, au même DPS de base (40) :
+  **épée** 10 / 0,25 s, Récupération +20 % ; **dague** 7 / 0,175 s,
+  Critique +5 points ; **bâton** 15 / 0,375 s, Force +50 %. On en change dans
+  les réglages. Bots : épée (assidu, fantôme), dague (A), bâton (B). Une
+  sauvegarde d'une autre forme rend ses points, un par niveau gagné.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

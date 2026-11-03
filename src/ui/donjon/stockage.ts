@@ -53,16 +53,18 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     // d'avant une amélioration : elle est au rang 0.
     for (const j of e.joueurs) {
       if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
-      // D'avant les caractéristiques (Coup, Vitesse, Critique… ou l'offre de
-      // trois) : tout est rendu en points, un par niveau gagné, à replacer.
+      // D'une autre forme de progression (l'offre de trois, les
+      // caractéristiques…) : tout est rendu en points, un par niveau gagné,
+      // à replacer dans les cinq stats.
       const vieux = j as Joueur & { offre?: unknown }
-      if (typeof j.ameliorations?.force !== 'number') {
-        j.ameliorations = { force: 0, dexterite: 0, intelligence: 0, endurance: 0 }
+      const connues = j.ameliorations !== undefined && Object.keys(j.ameliorations).every((q) => (AMELIORATIONS as readonly string[]).includes(q))
+      if (!connues || vieux.offre !== undefined) {
+        j.ameliorations = { tap: 0, vitesse: 0, chanceCrit: 0, multCrit: 0, recuperation: 0 }
         j.points = Math.max(0, j.niveau - 1)
       }
       for (const quoi of AMELIORATIONS) if (typeof j.ameliorations[quoi] !== 'number') j.ameliorations[quoi] = 0
       delete vieux.offre
-      if (!ARMES.includes(j.arme)) j.arme = PROFILS.find((p) => p.id === j.id)?.arme ?? 'force'
+      if (!ARMES.includes(j.arme)) j.arme = PROFILS.find((p) => p.id === j.id)?.arme ?? 'epee'
     }
     return s as SauvegardeDonjon
   } catch {

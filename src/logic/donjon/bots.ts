@@ -101,7 +101,7 @@ export async function jouerLesBots(
     const restants = (b.restants ?? 0) - 1
     if (restants > 0) {
       // Le tap suivant à sa fin de recharge (la sienne : la Vitesse la raccourcit).
-      const prochain = etat.joueurs.find((x) => x.id === profil.id)?.prochainTap ?? t + config.tap.recharge
+      const prochain = etat.joueurs.find((x) => x.id === profil.id)?.prochainTap ?? t + config.armes[profil.arme].recharge
       suite[profil.id] = { prochain: Math.max(prochain, t + 1), rng: b.rng, restants }
       continue
     }
