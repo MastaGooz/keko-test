@@ -342,7 +342,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   en ms entières arrondies au-dessus, toujours plus longue que la recharge
   (vérifié jusqu'au rang 500). Avec la recharge à 0,25 s, l'auto part à
   1,25 s (il était à 2 s) : le départ va plus vite. Le panneau dit
-  « 500 % → 460 % », la bulle « 500 % · 1,25 s ».
+  « 500 % → 460 % », la bulle « 500 % · 1,25 s ». **Puis 10 fois la recharge**
+  (Keko : « mets plutôt 10× le CD manuel, et exprime l'amélioration en temps
+  absolu, plus parlant ») : `1 + 9 · 0,9^rang` recharges, 2,5 s au départ
+  avec la recharge à 0,25 s ; le panneau dit « 2,5 s → 2,27 s », la bulle
+  « un coup toutes les 2,5 s ». Le calcul reste en recharges ; la saison
+  simulée redescend à l'étage 124–126.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -43,7 +43,6 @@ import {
   multCritDe,
   multiplicateurDeForme,
   periodeDe,
-  periodeEnRecharges,
   tapPret,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
@@ -112,7 +111,7 @@ function phrase(etat: EtatDonjon, ev: Evenement): string {
 /** Les quatre choix d'amélioration : un nom, ce qu'il fait, la valeur qu'il fait monter. */
 const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Joueur) => string }> = {
   tap: { nom: 'Coup', role: 'Les dégâts de chaque coup, tap ou auto', valeur: (j) => nombre(degatsDuTap(C, j)) },
-  auto: { nom: 'Auto-tap', role: 'Un coup tout seul, même absent, en % de la recharge', valeur: (j) => pourcent(periodeEnRecharges(C, j)) },
+  auto: { nom: 'Auto-tap', role: 'Un coup tout seul, même absent, plus souvent', valeur: (j) => secondes(periodeDe(C, j)) },
   chanceCrit: { nom: 'Critique', role: 'La chance de frapper un coup critique', valeur: (j) => pourcent(chanceCritDe(C, j)) },
   multCrit: { nom: 'Force', role: 'Ce que multiplie un coup critique', valeur: (j) => `×${multCritDe(C, j).toFixed(2).replace('.', ',')}` },
 }
@@ -621,7 +620,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
     // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
     const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
-    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>${pourcent(periodeEnRecharges(C, j))} · ${secondes(periodeDe(C, j))}</b></div>`
+    const html = `<div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${nombre(degatsDuTap(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(C.tap.recharge)}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 

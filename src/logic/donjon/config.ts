@@ -82,14 +82,15 @@ export const DONJON = {
    * chacun tombent sur les multiples de sa période depuis le début de la
    * saison. LA PÉRIODE SE COMPTE EN RECHARGES DU TAP, ET N'EST JAMAIS PLUS
    * COURTE (Keko : « l'auto-tap ne doit jamais être plus rapide que le
-   * manuel ; on commence à 5 fois le CD manuel et chaque upgrade ramène la
+   * manuel ; on commence à 5 fois le CD manuel » — puis « plutôt 10 fois » —
+   * « et chaque upgrade ramène la
    * vitesse auto vers le CD manuel sans jamais l'atteindre ») :
    * `recharge × (1 + (depart − 1) · garde^rang)` — chaque rang d'« Auto-tap »
    * retire `1 − garde` de l'écart qui reste (rendement décroissant).
    */
   auto: {
-    /** La période au rang 0, en recharges du tap : 500 %. */
-    depart: 5,
+    /** La période au rang 0, en recharges du tap : 1 000 %. */
+    depart: 10,
     /** La part de l'écart à la recharge que garde chaque rang : 10 % de moins par rang. */
     garde: 0.9,
   },

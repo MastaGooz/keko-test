@@ -58,7 +58,7 @@ const sansPoints = { ...achete, joueurs: achete.joueurs.map((j) => ({ ...j, poin
 verifier('sans points, rien ne s\'achète', appliquer(C, sansPoints, { joueur: 'a', t: sansPoints.t, type: 'acheter', quoi: 'tap' }).joueurs[0].ameliorations.tap === 0)
 
 const P = periodeDe(C, e.joueurs[0])
-verifier('l\'auto part à 5 recharges du tap', periodeDe(C, e.joueurs[0]) === C.tap.recharge * C.auto.depart)
+verifier(`l'auto part à ${C.auto.depart} recharges du tap`, periodeDe(C, e.joueurs[0]) === C.tap.recharge * C.auto.depart)
 const auRang = (r: number) => ({ ...e.joueurs[0], ameliorations: { ...e.joueurs[0].ameliorations, auto: r } })
 const gains = [0, 1, 10, 20].map((r) => periodeEnRecharges(C, auRang(r)) - periodeEnRecharges(C, auRang(r + 1)))
 verifier('chaque rang rapproche l\'auto du tap, de moins en moins', gains.every((g, i) => g > 0 && (i === 0 || g < gains[i - 1])))
