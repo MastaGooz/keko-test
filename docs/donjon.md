@@ -568,6 +568,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (couleur) sur le bouton ») : un cadre de 3 px à la couleur du cran de
   l'arme portée, comme sa case dans la grille (`--rarete`) ; le nom du cran
   passe dans l'étiquette d'accessibilité.
+- **LA FICHE D'ARME EN TROIS CHIFFRES** (Keko, 04/11 : « une seule stat
+  vitesse en affichant la vitesse auto (la manuelle est un dérivé) » ; « plutôt
+  que DPS max, le DPS moyen, écrit juste DPS ») : Dégâts (la plage), Vitesse
+  (l'intervalle de l'auto) et DPS (`dpsEffectifDe` : dégâts moyens, critiques
+  à la moyenne, au rythme de l'auto). La recharge du tap n'y est plus ; la
+  bulle de l'appui long garde le détail.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

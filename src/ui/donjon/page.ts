@@ -594,14 +594,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       return { texte: texte(x - y), mieux: signe * (x - y) > 0 }
     }
     const signe = (d: number, f: (x: number) => string) => `${d > 0 ? '+' : '−'}${f(Math.abs(d))}`
+    // TROIS CHIFFRES (Keko : « une seule stat vitesse, la vitesse auto — la
+    // manuelle en dérive » ; « le DPS moyen, écrit juste DPS ») : les dégâts,
+    // l'intervalle de l'auto, et le DPS qu'ils font — dégâts moyens,
+    // critiques à la moyenne, au rythme de l'auto. Le tap, dix fois plus
+    // rapide, le multiplie d'autant pour toutes les armes.
     const moyen = degatsDuTap(C, avec)
-    const dps = dpsDeSpam(C, avec) + dpsEffectifDe(C, avec)
-    const dpsPorte = dpsDeSpam(C, j) + dpsEffectifDe(C, j)
+    const dps = dpsEffectifDe(C, avec)
     const lignes = [
       ligneDeFiche('Dégâts', `${borne(moyen * (1 - C.tap.ecart) + 1e-9)} – ${borne(moyen * (1 + C.tap.ecart) - 1e-9)}`, ecart(moyen, degatsDuTap(C, j), 1, (d) => signe(d, nombre))),
-      ligneDeFiche('Recharge', secondes(rechargeDe(C, avec)), ecart(rechargeDe(C, avec), rechargeDe(C, j), -1, (d) => signe(d, secondes))),
-      ligneDeFiche('Auto', secondes(periodeDe(C, avec)), ecart(periodeDe(C, avec), periodeDe(C, j), -1, (d) => signe(d, secondes))),
-      ligneDeFiche('DPS max', nombre(dps), ecart(dps, dpsPorte, 1, (d) => signe(d, nombre))),
+      ligneDeFiche('Vitesse', secondes(periodeDe(C, avec)), ecart(periodeDe(C, avec), periodeDe(C, j), -1, (d) => signe(d, secondes))),
+      ligneDeFiche('DPS', nombre(dps), ecart(dps, dpsEffectifDe(C, j), 1, (d) => signe(d, nombre))),
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
