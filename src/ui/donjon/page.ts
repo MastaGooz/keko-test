@@ -154,7 +154,7 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 109 (l'épée dans sa traînée de feu), et les deux haches, la n° 123 (la
  * hache dans son anneau de feu ; la seule hache du tri), et les deux
  * massues, la n° 115 (le poing de pierre qui écrase ; pas de massue dans le
- * tri), provisoires elles aussi.
+ * tri), et la lance, la n° 124 (le trident à la corde), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -167,6 +167,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   hacheDeuxMains: 'armes/hache.webp',
   massue: 'armes/massue.webp',
   massueDeuxMains: 'armes/massue.webp',
+  lance: 'armes/lance.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -178,6 +179,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   hacheDeuxMains: { caractere: 'Massive', bonus: "Aucun pour l'instant" },
   massue: { caractere: 'Écrasante', bonus: "Aucun pour l'instant" },
   massueDeuxMains: { caractere: 'Colossale', bonus: "Aucun pour l'instant" },
+  lance: { caractere: 'Perçante', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -764,6 +766,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // entre-temps), se résorbe en 110.
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
+  // Le coup de lance : il perce à 60 ms, appuie 50 ms, se retire en 120.
+  const CONTACT_LANCE = 60
+  const TENUE_LANCE = 50
+  const RETRAIT_LANCE = 120
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
@@ -949,6 +955,89 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   /**
+   * UN TRAIT DE LUMIÈRE DROIT, de `longueur` et de demi-épaisseur `largeur`,
+   * qui finit sur le point touché, dans la direction `angle` : `profil` dit
+   * sa largeur le long du trait (0 = la queue, 1 = la tête). `dessiner` le
+   * trace entre `queue` et `tete` (0 = son départ, 1 = le point), gonflé de
+   * `gonfle`. Le poignard et la lance le partagent.
+   */
+  function traitDroit(x: number, y: number, couleur: string, angle: number, longueur: number, largeur: number, profil: (v: number) => number) {
+    // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
+    const a = (angle * Math.PI) / 180
+    const [dx, dy] = [Math.cos(a), Math.sin(a)]
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    // Une vraie boîte autour du trait, centrée sur le point : sur une boîte
+    // nulle, la lueur serait rognée.
+    const demi = longueur + 3 * largeur
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    trace.append(forme)
+    scene.append(trace)
+    const dessiner = (queue: number, tete: number, gonfle: number) => {
+      if (tete - queue < 0.01) return forme.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 24; i++) {
+        const v = i / 24
+        const h = largeur * gonfle * profil(v)
+        const recul = (1 - (queue + (tete - queue) * v)) * longueur
+        const [cx, cy] = [-dx * recul, -dy * recul]
+        dehors.push(`${(cx - dy * h).toFixed(1)} ${(cy + dx * h).toFixed(1)}`)
+        dedans.push(`${(cx + dy * h).toFixed(1)} ${(cy - dx * h).toFixed(1)}`)
+      }
+      forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    return { dessiner, trace }
+  }
+
+  /**
+   * LE COUP DE LANCE (Keko : « on essaie la lance maintenant ? ») : un ESTOC
+   * — un trait de lumière long et fin, une hampe qui s'élargit en une tête
+   * en feuille, pointue, qui jaillit du bas (de celui qui tient la lance),
+   * perce le point, s'y enfonce d'un cran, puis SE RETIRE aussitôt en
+   * s'effaçant : la lance ne reste pas plantée, à la différence de la flèche
+   * et de la dague. Les étincelles traversent l'ennemi, dans le sens du
+   * coup. Un coup sur deux penché de l'autre côté. Le critique l'épaissit
+   * comme celui de la dague.
+   */
+  let coteDeLaLance = 1
+  function lance(x: number, y: number, k: number, couleur: string, angle: number): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    // La hampe (une pointe courte à la queue), la tête qui s'élargit, puis la pointe.
+    const profil = (v: number) => (v < 0.06 ? v / 0.06 : v < 0.66 ? 0.5 : v < 0.84 ? 0.5 + (0.5 * (v - 0.66)) / 0.18 : (1 - v) / 0.16)
+    const { dessiner, trace } = traitDroit(x, y, couleur, angle, 6.5 * rem, 0.42 * rem * (1 + (k - 1) * 2), profil)
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t < CONTACT_LANCE) {
+        // Elle jaillit en accélérant, hampe comprise.
+        const p = (t / CONTACT_LANCE) ** 2
+        dessiner(Math.max(0, p - 0.95), p, 1)
+      } else if (t < CONTACT_LANCE + TENUE_LANCE) {
+        // Elle perce : la pointe s'enfonce d'un cran, le trait gonfle.
+        const ms = t - CONTACT_LANCE
+        dessiner(0.05, 1 + 0.08 * Math.min(1, ms / 25), 1 + 0.25 * Math.max(0, 1 - ms / TENUE_LANCE))
+      } else if (t < CONTACT_LANCE + TENUE_LANCE + RETRAIT_LANCE) {
+        // Elle se retire : la tête recule vers la hampe, et s'efface.
+        const q = (t - CONTACT_LANCE - TENUE_LANCE) / RETRAIT_LANCE
+        dessiner(0.05, 1.08 - 0.55 * q * q, 1 - 0.3 * q)
+        trace.style.opacity = `${1 - q}`
+      } else {
+        trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(depart)
+  }
+
+  /**
    * LE COUP DE POIGNARD DE LA DAGUE (Keko : « un truc qui se plante, mais dans
    * un arc, comme un coup de poignard » — puis « un effet, pas directement le
    * dessin d'une dague ») : un TRAIT DE LUMIÈRE, comme l'entaille de l'épée,
@@ -969,43 +1058,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function poignard(x: number, y: number, k: number, couleur: string, finale: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // Le critique ne l'allonge pas, il l'épaissit (Keko : « d'un poil », puis
-    // « plus épaisses ») : l'écart de `k` doublé, ×1,8 au lieu de ×1,4.
-    const longueur = 3.6 * rem
-    const largeur = 0.32 * rem * (1 + (k - 1) * 2)
-    // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
-    const a = (finale * Math.PI) / 180
-    const [dx, dy] = [Math.cos(a), Math.sin(a)]
-    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    trace.setAttribute('class', 'donjon-course')
-    trace.setAttribute('aria-hidden', 'true')
-    // Une vraie boîte autour du trait, centrée sur le point : sur une boîte
-    // nulle, la lueur serait rognée.
-    const demi = longueur + 3 * largeur
-    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
-    trace.style.width = trace.style.height = `${2 * demi}px`
-    trace.style.left = `${x - demi}px`
-    trace.style.top = `${y - demi}px`
-    trace.style.color = couleur
-    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    trace.append(forme)
-    scene.append(trace)
-    // Le trait entre `queue` et `tete` (0 = son départ, 1 = le point
-    // touché) : une pointe courte au bout de la queue, puis de la même
-    // largeur jusqu'au bout planté, coupé à plat.
-    const dessiner = (queue: number, tete: number, gonfle: number) => {
-      if (tete - queue < 0.01) return forme.setAttribute('d', '')
-      const dehors: string[] = []
-      const dedans: string[] = []
-      for (let i = 0; i <= 20; i++) {
-        const v = i / 20
-        const h = largeur * gonfle * (v < 0.14 ? v / 0.14 : 1)
-        const recul = (1 - (queue + (tete - queue) * v)) * longueur
-        const [cx, cy] = [-dx * recul, -dy * recul]
-        dehors.push(`${(cx - dy * h).toFixed(1)} ${(cy + dx * h).toFixed(1)}`)
-        dedans.push(`${(cx + dy * h).toFixed(1)} ${(cy - dx * h).toFixed(1)}`)
-      }
-      forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
-    }
+    // « plus épaisses ») : l'écart de `k` doublé, ×1,8 au lieu de ×1,4. Une
+    // pointe courte au bout de la queue, puis de la même largeur jusqu'au
+    // bout planté, coupé à plat.
+    const { dessiner, trace } = traitDroit(x, y, couleur, finale, 3.6 * rem, 0.32 * rem * (1 + (k - 1) * 2), (v) => (v < 0.14 ? v / 0.14 : 1))
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
@@ -1193,7 +1249,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     let aPlat = false
     // L'arc tire la flèche ; la dague plante son poignard (ou la flèche, `&fleche`).
     const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
-    const pique = arme === 'dague' || arme === 'arc'
+    // La lance aussi pique, mais d'un estoc qui se retire.
+    const enLance = arme === 'lance'
+    const pique = arme === 'dague' || arme === 'arc' || enLance
     // Les massues et le bâton cognent ; les armes à deux mains (le bâton en
     // est une) en version longue.
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains'
@@ -1213,10 +1271,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // descendait à la verticale, sa courbe montait loin au-dessus du point),
     // presque à plat : 22° sous l'horizontale (Keko : « la dague vient un peu
     // trop du haut » ; elle en descendait de 45°) ; penchés au hasard.
-    if (pique && !enFleche) coteDuPoignard = -coteDuPoignard
-    const anglePique = enFleche ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 68 + (Math.random() - 0.5) * 20
+    if (pique && !enFleche && !enLance) coteDuPoignard = -coteDuPoignard
+    // La lance monte du bas, penchée d'un côté puis de l'autre.
+    if (enLance) coteDeLaLance = -coteDeLaLance
+    const anglePique = enLance
+      ? -90 + coteDeLaLance * 18 + (Math.random() - 0.5) * 24
+      : enFleche
+        ? -90 + (Math.random() - 0.5) * 70
+        : 90 - coteDuPoignard * 68 + (Math.random() - 0.5) * 20
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? (longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_POIGNARD) : masse ? (longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (masse) {
       // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
       // deux dans l'autre sens.
@@ -1239,7 +1303,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
-      if (enFleche) fleche(x, y, k, couleur, anglePique)
+      if (enLance) lance(x, y, k, couleur, anglePique)
+      else if (enFleche) fleche(x, y, k, couleur, anglePique)
       else poignard(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).
@@ -1297,7 +1362,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         : lame
         ? ((angleLame * sensDeLaLame + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
         : pique
-          ? ((anglePique + 180 + (Math.random() - 0.5) * 80) * Math.PI) / 180
+          ? ((anglePique + (enLance ? 0 : 180) + (Math.random() - 0.5) * 80) * Math.PI) / 180
           : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
       const loin = (28 + Math.random() * 34) * fort * (lourde ? 2 : lame ? 1.7 : pique ? 1.2 : 1)
       const dx = Math.cos(angle) * loin
