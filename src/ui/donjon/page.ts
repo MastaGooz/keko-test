@@ -150,14 +150,23 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * \\tri`) : l'épée est l'objet n° 010 ; la dague la capacité n° 119 ; le
  * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer ;
  * les mains nues, la capacité n° 118 (le coup de pied), en attendant leur icône ;
- * l'arc, la capacité n° 117 (l'arc et la cible), provisoire lui aussi.
+ * l'arc, la capacité n° 117 (l'arc et la cible), et l'épée à deux mains, la
+ * n° 109 (l'épée dans sa traînée de feu), provisoires elles aussi.
  */
-const IMAGE_DE_L_ARME: Record<Equipement, string> = { mains: 'armes/mains.webp', epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp', arc: 'armes/arc.webp' }
+const IMAGE_DE_L_ARME: Record<Equipement, string> = {
+  mains: 'armes/mains.webp',
+  epee: 'armes/epee.webp',
+  dague: 'armes/dague.webp',
+  baton: 'armes/baton.webp',
+  arc: 'armes/arc.webp',
+  deuxMains: 'armes/deux-mains.webp',
+}
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
   dague: { caractere: 'Rapide', bonus: 'Critique +5 points' },
   baton: { caractere: 'Lent', bonus: 'Dégâts critiques +50 %' },
   arc: { caractere: 'À distance', bonus: "Aucun pour l'instant" },
+  deuxMains: { caractere: 'Lourde', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -693,15 +702,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
-    // SON PASSIF, celui de toute sa classe (Keko) ; l'arc n'a pas encore le sien.
-    if (arme !== 'arc') {
+    // SON PASSIF, celui de toute sa classe (Keko) ; l'arc et l'épée à deux
+    // mains n'ont pas encore le leur.
+    if (arme in C.passifs) {
       const passif = el('div', 'donjon-fiche-capacite')
       const iconePassif = el('img')
-      iconePassif.src = url(IMAGE_DU_PASSIF[arme])
+      iconePassif.src = url(IMAGE_DU_PASSIF[arme as ArmeAPassif])
       iconePassif.alt = ''
       iconePassif.draggable = false
       const textePassif = el('div')
-      textePassif.append(el('b', undefined, C.passifs[arme].nom), el('span', undefined, effetDuPassif(arme)))
+      textePassif.append(el('b', undefined, C.passifs[arme as ArmeAPassif].nom), el('span', undefined, effetDuPassif(arme as ArmeAPassif)))
       passif.append(iconePassif, textePassif)
       lignes.push(el('div', 'donjon-fiche-section', 'Passif'), passif)
     }
@@ -853,14 +863,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * sens de la lame.
    */
   let sensDeLaLame = 1
-  function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number): void {
+  /**
+   * L'ENTAILLE LOURDE DE L'ÉPÉE À DEUX MAINS (`lourde`) : la même entaille,
+   * 1,45 fois plus grande et un tiers plus épaisse, tracée plus lentement
+   * (340 ms) ; elle FEND de haut en bas, presque à la verticale, le croissant
+   * bombant d'un côté puis de l'autre (`bombe`).
+   */
+  function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number, lourde = false, bombe = 1): void {
     const n = el('div', 'donjon-entaille')
     n.innerHTML = '<svg viewBox="-10 -20 120 70" aria-hidden="true"><path d="M0 26 Q50 -10 100 26 Q50 1 0 26Z"/></svg>'
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const k = 1 + 0.65 * (fort - 1)
-    n.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${sens * k}, ${k})`
+    const k = (1 + 0.65 * (fort - 1)) * (lourde ? 1.45 : 1)
+    n.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${sens * k}, ${bombe * k * (lourde ? 1.35 : 1)})`
     scene.append(n)
     n.animate(
       [
@@ -868,7 +884,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { maskPosition: '50% 0', offset: 0.35, easing: 'ease-in' },
         { maskPosition: '0% 0' },
       ],
-      { duration: 260, delay: retard, fill: 'backwards' },
+      { duration: lourde ? 340 : 260, delay: retard, fill: 'backwards' },
     ).onfinish = () => n.remove()
   }
 
@@ -1130,7 +1146,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // celles du bâton écrasent ; le reste (mains nues, capacités) frappe
     // d'une onde ronde.
     const arme = genre.startsWith('capacite') ? null : moi().arme
-    const lame = arme === 'epee'
+    // L'épée à deux mains tranche aussi, en lourd : elle fend de haut en bas.
+    const lourde = arme === 'deuxMains'
+    const lame = arme === 'epee' || lourde
+    let angleLourd = 90
     // L'arc tire la flèche ; la dague plante son poignard (ou la flèche, `&fleche`).
     const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
     const pique = arme === 'dague' || arme === 'arc'
@@ -1151,7 +1170,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // penchés au hasard.
     if (pique && !enFleche) coteDuPoignard = -coteDuPoignard
     const anglePique = enFleche ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
-    const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : 0
+    // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
+    const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : lourde ? 90 : 0
     if (masse) {
       // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
       // deux dans l'autre sens.
@@ -1182,6 +1202,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const a = (anglePique * Math.PI) / 180
         scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
+    } else if (lourde) {
+      // Presque à la verticale, penchée d'un côté puis de l'autre ; le
+      // croissant bombe du côté d'où vient la lame.
+      sensDeLaLame = -sensDeLaLame
+      const angle = 90 + sensDeLaLame * 14 + (Math.random() - 0.5) * 20
+      entaille(x, y, fort, couleur, angle, 1, 0, true, sensDeLaLame)
+      angleLourd = angle
+      // La scène est enfoncée vers le bas, plus fort que sous l'épée (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        scene.animate([{ transform: 'none' }, { transform: 'translateY(7px)', offset: 0.25 }, { transform: 'translateY(-2px)', offset: 0.6 }, { transform: 'none' }], { duration: 200, delay: contact, easing: 'ease-out' })
+      }
     } else if (lame) {
       sensDeLaLame = -sensDeLaLame
       entaille(x, y, fort, couleur, angleLame * sensDeLaLame, sensDeLaLame, 0)
@@ -1195,7 +1226,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       impactRond(x, y, fort, couleur)
     }
 
-    const combien = STYLES[genre].particules + (lame ? 4 : 0)
+    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : 0)
     const trait = lame || pique
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
@@ -1206,12 +1237,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // Le hasard de l'écran, pas celui des règles. Sous la lame, les
       // étincelles filent le long de l'entaille, des deux côtés ; sous l'estoc,
       // elles jaillissent de la plaie, en gerbe serrée vers celui qui frappe.
-      const angle = lame
+      const angle = lourde
+        ? ((angleLourd + (i % 2) * 180 + (Math.random() - 0.5) * 70) * Math.PI) / 180
+        : lame
         ? ((angleLame * sensDeLaLame + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
         : pique
           ? ((anglePique + 180 + (Math.random() - 0.5) * 80) * Math.PI) / 180
           : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
-      const loin = (28 + Math.random() * 34) * fort * (lame ? 1.7 : pique ? 1.2 : 1)
+      const loin = (28 + Math.random() * 34) * fort * (lourde ? 2 : lame ? 1.7 : pique ? 1.2 : 1)
       const dx = Math.cos(angle) * loin
       const dy = Math.sin(angle) * loin
       // Sous le bâton, des points de lumière s'écartent à peine et MONTENT,
@@ -1233,7 +1266,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // l'estoc partent quand la pointe entre.
       if (trait) {
         const r = `rotate(${angle}rad)`
-        if (pique) p.style.opacity = '0'
+        if (contact > 0) p.style.opacity = '0'
         p.animate(
           [
             { transform: `translate(-50%, -50%) ${r} scaleX(1.6)`, opacity: 1 },
@@ -1253,7 +1286,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
       ).onfinish = () => p.remove()
     }
-    reculer(x, genre, lame || pique || masse, pique ? (anglePique * Math.PI) / 180 : undefined, contact, masse)
+    reculer(x, genre, lourde ? 150 : lame || pique || masse ? 70 : 0, pique ? (anglePique * Math.PI) / 180 : undefined, contact, masse || lourde)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
@@ -1273,7 +1306,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => onde.remove()
   }
 
-  function reculer(x: number, genre: Genre, arret = false, axe?: number, retard = 0, ecrase = false): void {
+  function reculer(x: number, genre: Genre, arret = 0, axe?: number, retard = 0, ecrase = false): void {
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase. Sous la
     // lame, il se FIGE un instant dans sa pose touchée (l'arrêt sur coup).
     // Sous l'estoc (`axe`, la direction du coup), il est POUSSÉ dans l'axe de
@@ -1304,7 +1337,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: rebond, filter: 'brightness(1.1)', offset: arret ? 0.65 : 0.55 },
         { transform: 'none', filter: 'brightness(1)' },
       ],
-      { duration: (STYLES[genre].critique ? 320 : 220) + (arret ? 70 : 0), delay: retard, easing: 'ease-out' },
+      { duration: (STYLES[genre].critique ? 320 : 220) + arret, delay: retard, easing: 'ease-out' },
     )
     if (STYLES[genre].secousse) {
       scene.animate(

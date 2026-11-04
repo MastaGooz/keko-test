@@ -773,6 +773,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   retirait au bout de 75 ms) ; l'anneau qui se referme, la
   gerbe d'étincelles vers le tireur et l'ennemi poussé dans l'axe sont ceux
   du poignard. Les bots gardent leurs armes.
+- **L'ÉPÉE À DEUX MAINS, PROVISOIRE** (Keko, 04/11 : « maintenant on fait
+  l'épée à deux mains ? ») : une cinquième arme (`deuxMains`), « Lourde »,
+  20 de dégâts toutes les 0,5 s (le DPS de base des autres), ni bonus, ni
+  capacité, ni passif encore ; icône provisoire : la capacité n° 109 (l'épée
+  dans sa traînée de feu). SON COUP FEND : l'entaille de l'épée en lourd
+  (`entaille(…, lourde)`), 1,45 fois plus grande, un tiers plus épaisse,
+  tracée en 340 ms au lieu de 260, presque à la verticale de haut en bas
+  (90° ±14°, d'un côté puis de l'autre, ±10° au hasard ; le croissant bombe
+  du côté d'où vient la lame). Le choc attend que la lame passe au point
+  (90 ms) : huit étincelles en traits de plus que l'épée, qui filent deux
+  fois plus loin le long de la lame ; l'ennemi est TASSÉ vers le bas et
+  FIGÉ deux fois plus longtemps que sous l'épée (150 ms au lieu de 70) ; la
+  scène est enfoncée de 7 px puis rebondit. Le critique est 1,4 fois plus
+  gros, comme partout.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

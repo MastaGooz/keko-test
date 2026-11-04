@@ -231,6 +231,10 @@ verifier("on reprend son arme, ses capacités en recharge", !capacitePrete(C, ap
 const jArc = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'arc' }).joueurs[0]
 verifier("l'arc s'équipe, sans capacité ni passif", jArc.arme === 'arc' && capacitesDe(C, jArc).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jArc, 1) === null)
 verifier("l'arc a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jArc) / periodeDe(C, jArc) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
+// L'ÉPÉE À DEUX MAINS, PROVISOIRE elle aussi.
+const jDeux = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'deuxMains' }).joueurs[0]
+verifier("l'épée à deux mains s'équipe, sans capacité ni passif", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jDeux, 1) === null)
+verifier("l'épée à deux mains a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jDeux) / periodeDe(C, jDeux) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 const me = appliquer(C, avecArme('baton', 5), { joueur: 'a', t: 0, type: 'lancer', capacite: 'meditation' })
 verifier("Méditation rend une minute de forme", me.joueurs[0].forme === 1)
 
