@@ -845,9 +845,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   s'élargit en une TÊTE EN FEUILLE pointue (0,84 rem au plus large), qui
   jaillit du bas — de celui qui tient la lance —, penché de 18° d'un côté
   puis de l'autre (±12°) ; il perce le point (60 ms), s'y enfonce d'un cran,
-  RESTE PLANTÉ le temps du poignard (180 ms) puis se résorbe comme lui, la
-  queue rattrapant la pointe (Keko : « la laisser plantée comme la dague,
-  ça marche bien avec les armes thrust » ; il se retirait aussitôt). Les
+  RESTE PLANTÉ 260 ms, plus que le poignard (Keko : « la laisser plantée
+  comme la dague, ça marche bien avec les armes thrust », puis « un peu
+  plus longtemps » ; il se retirait aussitôt, puis restait 180 ms), puis se
+  résorbe comme lui, la queue rattrapant la pointe. Les
   étincelles TRAVERSENT l'ennemi, dans le sens du coup (celles de la dague
   et de la flèche jaillissent vers le tireur) ; l'anneau qui se referme et
   l'ennemi poussé dans l'axe sont ceux des autres estocs. Le critique

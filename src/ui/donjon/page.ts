@@ -766,9 +766,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // entre-temps), se résorbe en 110.
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
-  // Le coup de lance : il perce à 60 ms, reste fiché le temps du poignard,
-  // se résorbe comme lui.
+  // Le coup de lance : il perce à 60 ms, reste fiché 260 ms (plus que le
+  // poignard ; Keko : « un peu plus longtemps »), se résorbe comme lui.
   const CONTACT_LANCE = 60
+  const TENUE_LANCE = 260
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
@@ -1018,14 +1019,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // Elle jaillit en accélérant, hampe comprise.
         const p = (t / CONTACT_LANCE) ** 2
         dessiner(Math.max(0, p - 0.95), p, 1)
-      } else if (t < CONTACT_LANCE + TENUE_POIGNARD) {
+      } else if (t < CONTACT_LANCE + TENUE_LANCE) {
         // Elle perce : la pointe s'enfonce d'un cran, le trait gonfle et se
         // rassied, puis elle reste plantée.
         const ms = t - CONTACT_LANCE
         dessiner(0.05, 1 + 0.08 * Math.min(1, ms / 25), 1 + 0.25 * Math.max(0, 1 - ms / 60))
-      } else if (t < CONTACT_LANCE + TENUE_POIGNARD + VIDANGE_POIGNARD) {
+      } else if (t < CONTACT_LANCE + TENUE_LANCE + VIDANGE_POIGNARD) {
         // Elle se résorbe dans le point : la queue rattrape la pointe.
-        const q = (t - CONTACT_LANCE - TENUE_POIGNARD) / VIDANGE_POIGNARD
+        const q = (t - CONTACT_LANCE - TENUE_LANCE) / VIDANGE_POIGNARD
         dessiner(0.05 + 0.98 * q * q, 1.08, 1 - 0.4 * q)
       } else {
         trace.remove()
