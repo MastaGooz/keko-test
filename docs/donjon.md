@@ -795,7 +795,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (`entaille(…, lourde)`), 1,45 fois plus grande, un tiers plus épaisse,
   tracée en 340 ms au lieu de 260, presque à la verticale de haut en bas
   (90° ±14°, d'un côté puis de l'autre, ±10° au hasard ; le croissant bombe
-  du côté d'où vient la lame). Le choc attend que la lame passe au point
+  du côté d'où vient la lame) — OU À PLAT, une fois sur deux au hasard, de
+  gauche à droite ou de droite à gauche (±15° ; Keko : « elles tapent
+  uniquement verticalement, on peut permettre des frappes horizontales ? ») :
+  fauché, l'ennemi est poussé dans le sens de la lame au lieu d'être tassé,
+  et la scène bouge dans ce sens. Le choc attend que la lame passe au point
   (90 ms) : huit étincelles en traits de plus que l'épée, qui filent deux
   fois plus loin le long de la lame ; l'ennemi est TASSÉ vers le bas et
   FIGÉ deux fois plus longtemps que sous l'épée (150 ms au lieu de 70) ; la

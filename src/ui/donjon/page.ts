@@ -1190,6 +1190,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const lame = arme === 'epee' || arme === 'hache' || lourde
     const droite = arme === 'epee' || arme === 'deuxMains'
     let angleLourd = 90
+    let aPlat = false
     // L'arc tire la flèche ; la dague plante son poignard (ou la flèche, `&fleche`).
     const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
     const pique = arme === 'dague' || arme === 'arc'
@@ -1247,15 +1248,22 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (lourde) {
-      // Presque à la verticale, penchée d'un côté puis de l'autre ; le
+      // Une fois sur deux au hasard, elle FAUCHE À PLAT, de gauche à droite
+      // ou de droite à gauche (Keko : « elles tapent uniquement
+      // verticalement, on peut permettre des frappes horizontales ? ») ;
+      // sinon elle fend de haut en bas, penchée d'un côté puis de l'autre. Le
       // croissant bombe du côté d'où vient la lame.
       sensDeLaLame = -sensDeLaLame
-      const angle = 90 + sensDeLaLame * 14 + (Math.random() - 0.5) * 20
+      aPlat = Math.random() < 0.5
+      const angle = aPlat ? (sensDeLaLame > 0 ? 0 : 180) + (Math.random() - 0.5) * 30 : 90 + sensDeLaLame * 14 + (Math.random() - 0.5) * 20
       entaille(x, y, fort, couleur, angle, 1, 0, true, sensDeLaLame, droite)
       angleLourd = angle
-      // La scène est enfoncée vers le bas, plus fort que sous l'épée (le critique a sa secousse).
+      // La scène est enfoncée dans le sens du coup, plus fort que sous l'épée
+      // (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
-        scene.animate([{ transform: 'none' }, { transform: 'translateY(7px)', offset: 0.25 }, { transform: 'translateY(-2px)', offset: 0.6 }, { transform: 'none' }], { duration: 200, delay: contact, easing: 'ease-out' })
+        const a = (angle * Math.PI) / 180
+        const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
+        scene.animate([{ transform: 'none' }, { transform: pas(7), offset: 0.25 }, { transform: pas(-2), offset: 0.6 }, { transform: 'none' }], { duration: 200, delay: contact, easing: 'ease-out' })
       }
     } else if (lame) {
       sensDeLaLame = -sensDeLaLame
@@ -1330,7 +1338,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
       ).onfinish = () => p.remove()
     }
-    reculer(x, genre, lourde ? 150 : longue ? 120 : lame || pique || masse ? 70 : 0, pique ? (anglePique * Math.PI) / 180 : undefined, contact, masse || lourde)
+    // Fendu, l'ennemi est tassé ; fauché à plat, poussé dans le sens de la lame.
+    const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
+    reculer(x, genre, lourde ? 150 : longue ? 120 : lame || pique || masse ? 70 : 0, axe, contact, masse || (lourde && !aPlat))
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
