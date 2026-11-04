@@ -824,7 +824,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * l'autre puis s'efface dans le même sens — par un MASQUE À BORDS FONDUS
    * qui glisse : une découpe droite (`clip-path`) laissait un bout plat
    * (Keko) et rognait la lueur. Penché au hasard, un coup sur deux dans l'autre sens. Le
-   * critique en trace une seconde, croisée. DU PUNCH AUTOUR (Keko : « ça
+   * critique en trace une seule, PLUS GROSSE (×1,4 ; Keko : « éviter le
+   * double slash, plutôt une version un peu plus grosse »). DU PUNCH AUTOUR (Keko : « ça
    * manque un peu d'impact » — puis « je ne voulais pas toucher aux slashs,
    * plutôt au feel autour ») : l'entaille garde sa forme, tracée un peu plus
    * vite ; les étincelles sont des traits qui filent, l'ennemi se fige un instant dans
@@ -838,7 +839,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const k = 0.75 + 0.25 * fort
+    const k = 1 + 0.65 * (fort - 1)
     n.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${sens * k}, ${k})`
     scene.append(n)
     n.animate(
@@ -861,9 +862,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (lame) {
       sensDeLaLame = -sensDeLaLame
       entaille(x, y, fort, couleur, angleLame * sensDeLaLame, sensDeLaLame, 0)
-      if (STYLES[genre].critique) entaille(x, y, fort, couleur, -angleLame * sensDeLaLame + 10, -sensDeLaLame, 70)
       // La scène bouge d'un cran dans le sens de la lame (le critique a sa secousse).
-      else {
+      if (!STYLES[genre].secousse) {
         const a = (angleLame * sensDeLaLame * Math.PI) / 180
         const d = 4 * sensDeLaLame
         scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`, offset: 0.25 }, { transform: 'none' }], { duration: 120, easing: 'ease-out' })

@@ -690,7 +690,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   lieu d'être pointu, un peu épais » : la découpe droite du premier essai,
   `clip-path`, laissait un bout plat et rognait la lueur ; le croissant est
   deux fois plus fin), penché au hasard, un coup sur deux dans l'autre
-  sens ; le critique en croise une seconde. DU PUNCH (Keko : « ça manque
+  sens ; le critique en trace une seule, 1,4 fois plus grosse (Keko :
+  « éviter le double slash » ; il en croisait une seconde). DU PUNCH (Keko : « ça manque
   un peu d'impact ») : le trait est tracé un peu plus vite (260 ms au lieu
   de 320) et GARDE SA FORME (Keko : « je ne voulais pas toucher aux slashs,
   plutôt au feel autour » ; un premier essai l'étirait en l'amincissant) ;
