@@ -263,11 +263,6 @@
 
 .donjon-estoc path {
   fill: #fffdf4;
-  /* Un fin trait d'encre : sans lui, la flèche se perd sur l'ennemi qui blanchit. */
-  stroke: rgba(42, 26, 16, 0.7);
-  stroke-width: 1.2px;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
 }
 
 /* Le coup de poignard : un trait de lumière sur un arc, redessiné à chaque
