@@ -519,6 +519,127 @@
   filter: grayscale(1) brightness(0.75) drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre));
 }
 
+/* LES CIBLES DU PASSIF, sur l'ennemi : au-dessus du portrait, sous les chiffres. */
+.donjon-passif {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.donjon .donjon-cible {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  margin: -1.7rem 0 0 -1.7rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+/* Le temps qui reste : un anneau qui se resserre sur la cible. */
+.donjon .donjon-cible::after {
+  content: '';
+  position: absolute;
+  inset: -0.2rem;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  transform: scale(calc(1 + var(--reste, 1) * 0.9));
+  opacity: calc(0.25 + var(--reste, 1) * 0.6);
+  pointer-events: none;
+}
+
+/* La dague : un point faible, cœur rouge vif. */
+.donjon .donjon-cible.point {
+  color: #ffe2a0 !important;
+  background: radial-gradient(circle, #fff6d6 0 18%, #ff7a3d 30%, #c3221b 62%, rgba(195, 34, 27, 0) 72%);
+  box-shadow: 0 0 1rem rgba(255, 110, 60, 0.85);
+  animation: donjon-cible-bat 0.5s ease-in-out infinite alternate;
+}
+
+/* Le bâton : des runes violettes numérotées ; touchées, elles s'allument d'or. */
+.donjon .donjon-cible.rune {
+  color: #f3dcff !important;
+  background: radial-gradient(circle, #7d3fd0 0 55%, #3d1a75 70%);
+  box-shadow:
+    inset 0 0 0 2px #d9b6ff,
+    0 0 0.9rem rgba(170, 100, 255, 0.85);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.6rem;
+}
+
+.donjon .donjon-cible.rune:not(.suivante)::after {
+  display: none;
+}
+
+.donjon .donjon-cible.rune.allumee {
+  color: var(--d-encre) !important;
+  background: radial-gradient(circle at 38% 28%, #f8d98a, var(--d-or) 55%, #a5762a);
+  box-shadow: 0 0 1rem rgba(255, 210, 110, 0.9);
+  pointer-events: none;
+}
+
+.donjon .donjon-cible.ratee {
+  background: radial-gradient(circle, #ff5a4a 0 55%, #7a1410 72%);
+  animation: donjon-cible-ratee 0.25s ease-in-out 2;
+}
+
+/* L'épée : l'ennemi arme son coup — un « ! » rouge au-dessus de lui, et il rougeoie. */
+.donjon-cible.riposte {
+  color: #ffd2c4;
+  background: radial-gradient(circle, #e8392b 0 58%, rgba(232, 57, 43, 0) 70%);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 2rem;
+  pointer-events: none !important;
+  animation: donjon-cible-bat 0.25s ease-in-out infinite alternate;
+}
+
+.donjon-scene.riposte {
+  border-color: #e8392b;
+  cursor: pointer;
+}
+
+.donjon-scene.riposte .donjon-portrait {
+  animation: donjon-riposte 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes donjon-riposte {
+  from {
+    filter: drop-shadow(0 0 0.3rem rgba(232, 57, 43, 0.6));
+  }
+  to {
+    filter: drop-shadow(0 0 1rem rgba(232, 57, 43, 1)) brightness(1.15);
+  }
+}
+
+@keyframes donjon-cible-bat {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.1;
+  }
+}
+
+@keyframes donjon-cible-ratee {
+  0%,
+  100% {
+    translate: 0;
+  }
+  33% {
+    translate: -5px 0;
+  }
+  66% {
+    translate: 5px 0;
+  }
+}
+
 /* Le nom d'une capacité à effet, annoncé au milieu de la scène. */
 .donjon-annonce {
   position: absolute;
@@ -697,6 +818,11 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.6;
+}
+
+.donjon-fiche-passif {
+  font-size: 0.85rem;
+  line-height: 1.25;
 }
 
 .donjon-fiche-capacite {

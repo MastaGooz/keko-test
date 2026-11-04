@@ -58,6 +58,23 @@ export type Capacite = {
   forme?: number
 }
 
+/**
+ * LE PASSIF DE CLASSE (Keko : « un passif qui dépendrait de la classe d'arme,
+ * le même pour tous les bâtons, qui change profondément le gameplay — faire
+ * apparaître des choses à toucher sur l'ennemi »). Un ÉVÉNEMENT par tranche
+ * de `periode` ms, ouvert `duree` ms à un instant tiré dans la tranche ; on
+ * touche ses `cibles` dans l'ordre, et la dernière déclenche le `coup` (en
+ * taps, critique forcé si `critique`). Il n'use pas la forme.
+ */
+export type Passif = {
+  nom: string
+  periode: number
+  duree: number
+  cibles: number
+  coup: number
+  critique?: boolean
+}
+
 /** Le cran d'une arme, les cinq des cartes (Keko : les armes porteront une rareté). */
 export type RareteArme = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire'
 
@@ -73,6 +90,8 @@ export type ProfilBot = {
   arme: TypeArme
   /** La règle de dépense : il met son point dans la caractéristique la plus en retard sur son poids (absente : jamais). */
   poids: Partial<Record<CleAmelioration, number>>
+  /** La part des événements du passif qu'il réussit, quand il est là (0 à 1). */
+  adresse: number
 }
 
 export const DONJON = {
@@ -142,6 +161,21 @@ export const DONJON = {
     TypeArme,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: [CleCapacite, CleCapacite] }
   >,
+
+  /**
+   * LES PASSIFS DE CLASSE (Keko, 04/11 : « je valide tout »), chiffres de moi.
+   * Un geste par classe : l'ÉPÉE riposte (réflexe — l'ennemi arme son coup,
+   * on le touche dans la fenêtre), la DAGUE vise les points faibles
+   * (précision — une cible sur l'ennemi, un coup critique forcé, un cran de
+   * Furie), le BÂTON trace ses runes (séquence — trois, dans l'ordre ; une
+   * erreur les efface). Tout réussi en spammant, chacun ajoute de 35 à 50 %
+   * aux taps de son arme.
+   */
+  passifs: {
+    epee: { nom: 'Riposte', periode: 12 * SECONDE, duree: 1.2 * SECONDE, cibles: 1, coup: 20 },
+    dague: { nom: 'Points faibles', periode: 3 * SECONDE, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
+    baton: { nom: 'Runes', periode: 15 * SECONDE, duree: 5 * SECONDE, cibles: 3, coup: 20 },
+  } as Record<TypeArme, Passif>,
 
   /**
    * LE POOL DES CAPACITÉS (Keko, 04/11 : « je valide tout »), chiffres de moi.
@@ -288,6 +322,7 @@ export const DONJON = {
         taps: [30, 50],
         arme: 'epee',
         poids: { tap: 3, vitesse: 3, chanceCrit: 1, multCrit: 1 },
+        adresse: 0.8,
       },
       {
         id: 'occasionnel-a',
@@ -296,6 +331,7 @@ export const DONJON = {
         taps: [20, 40],
         arme: 'dague',
         poids: { tap: 1, vitesse: 3, chanceCrit: 1, multCrit: 1 },
+        adresse: 0.6,
       },
       {
         id: 'occasionnel-b',
@@ -304,6 +340,7 @@ export const DONJON = {
         taps: [15, 35],
         arme: 'baton',
         poids: { tap: 2, vitesse: 2, chanceCrit: 1, multCrit: 1 },
+        adresse: 0.6,
       },
       {
         id: 'fantome',
@@ -312,6 +349,7 @@ export const DONJON = {
         taps: [10, 30],
         arme: 'epee',
         poids: { tap: 1, vitesse: 1 },
+        adresse: 0.3,
       },
     ] as ProfilBot[],
   },

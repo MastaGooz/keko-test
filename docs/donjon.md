@@ -624,6 +624,36 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `en-recharge` grise l'image d'une capacité tant qu'elle n'est pas prête
   (Furie comprise), en plus du voile. L'attaque l'a eue un temps : au spam,
   elle clignotait (Keko : « étant donné le spam ça rend mal »), retirée.
+- **LES PASSIFS DE CLASSE** (Keko, 04/11 : « un passif qui dépendrait de la
+  classe d'arme — le même pour tous les bâtons — qui influencerait le
+  gameplay, faire spawn des choses interactibles sur l'ennemi… qu'en
+  fonction de l'arme le gameplay change profondément » ; les trois gestes,
+  les Runes pour le bâton et les trois d'un coup : « je valide tout »).
+  - *Un geste par classe* (`config.passifs`, chiffres de moi) : l'ÉPÉE
+    **Riposte** (réflexe : toutes les 12 s, l'ennemi rougeoie 1,2 s sous un
+    « ! » ; le toucher, n'importe où dans la scène, riposte à ×20) ; la
+    DAGUE **Points faibles** (précision : toutes les 3 s, une cible 1,5 s sur
+    le corps ; touchée, ×3 critique forcé et un cran de Furie) ; le BÂTON
+    **Runes** (séquence : toutes les 15 s, trois runes numérotées en cercle
+    pendant 5 s ; dans l'ordre, elles explosent à ×20 ; une erreur les
+    efface). Tout réussi en spammant, chacun ajoute 35 à 50 % aux taps.
+  - *Les règles* : l'événement d'une tranche est une FONCTION de (graine,
+    tranche, joueur, arme) (`evenementDuPassif`, `evenementA`), comme le
+    critique de l'auto : les règles et l'écran lisent le même, personne ne
+    peut en inventer un. L'action `toucher` (événement, cible) n'est jouée
+    que dans la fenêtre et dans l'ordre (`Joueur.passif` : le dernier
+    événement et son étape, -1 : raté). Le coup passe par `frapperFort`
+    (celui des capacités) : critique tiré ou forcé, forme et effets compris,
+    sans user la forme. Changer d'arme repart d'un passif vierge.
+  - *Les bots* réussissent un événement selon leur `adresse` (assidu 0,8,
+    occasionnels 0,6, fantôme 0,3), tirée par (bot, événement), quand il
+    tombe pendant un de leurs passages.
+  - *L'écran* : une couche au-dessus du portrait (`.donjon-passif`) dessine
+    les cibles de l'événement ouvert, à leur place sur le dessin
+    (`cadreDuDessin`), un anneau qui se resserre pour le temps qui reste ;
+    une rune touchée s'allume d'or, une rune hors d'ordre tremble en rouge.
+    Le coup jaillit sous le nom du passif. La fiche d'arme a sa section
+    « Passif ». Les cibles sont dessinées en CSS (pas d'image).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

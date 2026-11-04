@@ -45,6 +45,11 @@ export type Joueur = {
   critiques: number
   /** Les effets en cours, jusqu'à cet instant inclus : Brise-garde, Lames de l'ombre. */
   effets: Partial<Record<CleCapacite, number>>
+  /**
+   * Le passif de classe : le dernier événement touché (son numéro de
+   * tranche, -1 : aucun) et l'étape — les cibles touchées, ou -1 : raté.
+   */
+  passif: { evenement: number; etape: number }
   bonus: BonusPermanents
 }
 
@@ -110,4 +115,5 @@ export type Action = { joueur: string; t: number } & (
   | { type: 'taper'; n: number }
   | { type: 'acheter'; quoi: CleAmelioration }
   | { type: 'lancer'; capacite: CleCapacite }
+  | { type: 'toucher'; evenement: number; cible: number }
 )

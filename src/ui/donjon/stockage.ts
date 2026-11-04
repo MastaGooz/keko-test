@@ -57,6 +57,8 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
       if (typeof j.capacitesPretes !== 'object' || j.capacitesPretes === null) j.capacitesPretes = {}
       if (typeof j.critiques !== 'number') j.critiques = 0
       if (typeof j.effets !== 'object' || j.effets === null) j.effets = {}
+      // D'avant les passifs : aucun événement touché.
+      if (typeof j.passif !== 'object' || j.passif === null) j.passif = { evenement: -1, etape: 0 }
       // D'une autre forme de progression (l'offre de trois, les
       // caractéristiques…) : tout est rendu en points, un par niveau gagné,
       // à replacer dans les cinq stats.

@@ -43,18 +43,23 @@ import {
   dpsEffectifDe,
   degatsDuTap,
   effetEnCours,
+  etapeDuPassif,
+  evenementA,
   facteurCritMoyen,
   etatInitial,
   formeA,
   jourDeLaSaison,
   multCritDe,
   multiplicateurDeForme,
+  passifDe,
+  passifOuvert,
   periodeDe,
   rechargeDe,
   tapPret,
   xpPourNiveau,
 } from '../../logic/donjon/regles.ts'
 import type { EtatDonjon, Evenement, Joueur } from '../../logic/donjon/types.ts'
+import type { EvenementDuPassif } from '../../logic/donjon/regles.ts'
 import { NOM_DE_LA_RACE, NOM_DU_ROLE, type CarteEmoji } from '../../logic/emoji/types.ts'
 import { chargerEmojis } from '../emoji.ts'
 import { ecrireLeDonjon, lireLeDonjon, oublierLeDonjon } from './stockage.ts'
@@ -184,6 +189,14 @@ function effetDeLaCapacite(cle: CleCapacite): string {
 function quandLaCapacite(cle: CleCapacite): string {
   const c = C.capacites[cle]
   return c.critiques !== undefined ? `après ${c.critiques} critiques` : `toutes les ${secondesRondes(c.recharge ?? 0)}`
+}
+
+/** Ce que fait le passif d'une classe d'arme, en une phrase. */
+function effetDuPassif(arme: TypeArme): string {
+  const p = C.passifs[arme]
+  if (arme === 'epee') return `L'ennemi arme parfois un coup : touchez-le dans la seconde pour riposter (×${p.coup})`
+  if (arme === 'dague') return `Des points faibles s'allument sur l'ennemi : touchés, un coup critique (×${p.coup}) et un cran de Furie`
+  return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
 }
 
 /** Une ligne de bulle : un nom, une valeur. */
@@ -662,6 +675,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
+    // SON PASSIF, celui de toute sa classe (Keko).
+    lignes.push(el('div', 'donjon-fiche-section', `Passif · ${C.passifs[arme].nom}`), el('div', 'donjon-fiche-passif', effetDuPassif(arme)))
     // SES DEUX CAPACITÉS, à la place de la section « Effet » prévue (Keko).
     lignes.push(el('div', 'donjon-fiche-section', 'Capacités'))
     for (const cle of a.capacites) {
@@ -844,6 +859,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * `dx`, `dy` décalent du centre du dessin, en fraction de sa taille.
    */
   function surLEnnemi(dx: number, dy: number): [number, number] {
+    const { x0, y0, l, h } = cadreDuDessin()
+    // Le hasard de l'écran, pas celui des règles.
+    return [x0 + l * (0.5 + dx + (Math.random() - 0.5) * 0.24), y0 + h * (0.42 + dy + (Math.random() - 0.5) * 0.2)]
+  }
+
+  /** Le dessin de l'ennemi dans la scène : son coin, sa largeur, sa hauteur. */
+  function cadreDuDessin(): { x0: number; y0: number; l: number; h: number } {
     // La boîte de MISE EN PAGE (offset*), pas `getBoundingClientRect` : le
     // portrait recule, s'écrase et surgit en `transform`, qui la déformait.
     const nl = portrait.naturalWidth
@@ -859,9 +881,101 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       x0 = portrait.offsetLeft + (portrait.offsetWidth - l) / 2
       y0 = portrait.offsetTop + (portrait.offsetHeight - h) / 2
     }
-    // Le hasard de l'écran, pas celui des règles.
-    return [x0 + l * (0.5 + dx + (Math.random() - 0.5) * 0.24), y0 + h * (0.42 + dy + (Math.random() - 0.5) * 0.2)]
+    return { x0, y0, l, h }
   }
+
+  // ------------------------------------------------ le passif de classe
+  // LES CIBLES DU PASSIF (Keko : « faire apparaître des choses interactibles
+  // sur l'ennemi ») : la Riposte allume tout l'ennemi (on le touche, où que
+  // ce soit), un point faible est une cible, les runes trois cibles
+  // numérotées. Elles sont dessinées d'après l'événement que lisent les
+  // règles ; une cible qui n'a plus lieu d'être s'efface en fondu.
+  const couchePassif = el('div', 'donjon-passif')
+  scene.append(couchePassif)
+  const ciblesVues = new Map<string, HTMLElement>()
+
+  function effacerLaCible(cle: string): void {
+    const n = ciblesVues.get(cle)
+    if (n === undefined) return
+    ciblesVues.delete(cle)
+    n.style.pointerEvents = 'none'
+    n.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 220, easing: 'ease-out' }).onfinish = () => n.remove()
+  }
+
+  /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
+  function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
+    const ouvert = ev !== null && passifOuvert(C, j, ev)
+    scene.classList.toggle('riposte', ouvert && j.arme === 'epee')
+    const voulues = new Set<string>()
+    if (ouvert && ev !== null) {
+      const { x0, y0, l, h } = cadreDuDessin()
+      const reste = Math.max(0, Math.min(1, (ev.fin - t) / passifDe(C, j).duree))
+      const etape = etapeDuPassif(j, ev.k)
+      ev.cibles.forEach((c, i) => {
+        // La Riposte n'a qu'un signal au-dessus de la tête ; les runes déjà touchées restent allumées.
+        const genre = j.arme === 'epee' ? 'riposte' : j.arme === 'dague' ? 'point' : 'rune'
+        const cle = `${j.arme}:${ev.k}:${i}`
+        voulues.add(cle)
+        let n = ciblesVues.get(cle)
+        if (n === undefined) {
+          n = genre === 'riposte' ? el('div', 'donjon-cible riposte', '!') : bouton(`donjon-cible ${genre}`, genre === 'rune' ? String(i + 1) : undefined)
+          if (genre !== 'riposte') {
+            n.setAttribute('aria-label', genre === 'rune' ? `Rune ${i + 1}` : 'Point faible')
+            n.addEventListener('pointerdown', (e) => {
+              e.stopPropagation()
+              toucherLePassif(ev.k, i, n!)
+            })
+          }
+          couchePassif.append(n)
+          ciblesVues.set(cle, n)
+          n.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 220, easing: 'ease-out' })
+        }
+        const ici = genre === 'riposte' ? { x: 0.5, y: 0.08 } : c
+        n.style.left = `${x0 + l * ici.x}px`
+        n.style.top = `${y0 + h * ici.y}px`
+        n.style.setProperty('--reste', reste.toFixed(3))
+        n.classList.toggle('allumee', genre === 'rune' && i < etape)
+        n.classList.toggle('suivante', genre === 'rune' && i === etape)
+      })
+    }
+    for (const cle of [...ciblesVues.keys()]) if (!voulues.has(cle)) effacerLaCible(cle)
+  }
+
+  /**
+   * TOUCHER UNE CIBLE : l'action part, et si le coup est tombé il jaillit
+   * sous le nom du passif. Une rune hors d'ordre tremble en rouge.
+   */
+  function toucherLePassif(k: number, cible: number, n: HTMLElement | null): void {
+    const t = maintenant()
+    const avant = moi()
+    const p = passifDe(C, avant)
+    const etape = etapeDuPassif(avant, k)
+    const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
+    const attendu = degatsDuTap(C, avant) * p.coup * mult * (1 + bonusDEffetsA(C, avant, t))
+    const dejaInfliges = avant.degatsTap
+    if (n !== null && cible !== etape) n.classList.add('ratee')
+    void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: k, cible }).then(() => {
+      const inflige = moi().degatsTap - dejaInfliges
+      if (inflige > 0) {
+        const e = C.tap.ecart
+        const seuil = (attendu * (1 + e + (1 - e) * multCritDe(C, avant))) / 2
+        const genre: Genre = p.critique === true || inflige > seuil ? 'capaciteCritique' : 'capacite'
+        const [x, y] = surLEnnemi(0, -0.05)
+        const couleur = teinteDuChiffre(genre, mult - 1)
+        impact(x, y, genre, couleur)
+        envoler(x, y, inflige, genre, couleur, p.nom === 'Points faibles' ? 'Point faible' : p.nom)
+      }
+      dessiner()
+    })
+  }
+
+  // La Riposte : on touche l'ennemi, n'importe où dans la scène.
+  scene.addEventListener('pointerdown', () => {
+    const j = moi()
+    if (j.arme !== 'epee') return
+    const ev = evenementA(C, etat.saison.seed, etat.saison.debut, j, maintenant())
+    if (ev !== null && passifOuvert(C, j, ev)) toucherLePassif(ev.k, 0, null)
+  })
 
   function frapper(): void {
     const t = maintenant()
@@ -1288,6 +1402,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % periode) / periode
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
+    dessinerLePassif(evenementA(C, etat.saison.seed, debutSaison, j, t), j, t)
     // La forme glisse en continu : le marqueur la suit à chaque image.
     const forme = formeA(C, j, t)
     const mult = multiplicateurDeForme(C, j, forme)

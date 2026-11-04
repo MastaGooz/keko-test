@@ -16,7 +16,7 @@
 import { createRng } from '../rng.ts'
 import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
 import type { EtatPartage } from './partage.ts'
-import { capacitePrete, capacitesDe } from './regles.ts'
+import { capacitePrete, capacitesDe, evenementA, passifDe, passifOuvert } from './regles.ts'
 import type { EtatDonjon } from './types.ts'
 
 /** `restants` : les taps qu'il lui reste dans le passage en cours (0 ou absent : le prochain geste est un passage). */
@@ -26,6 +26,13 @@ function tirage(rngEtat: number): { v: number; rng: number } {
   const r = createRng(rngEtat)
   const v = r.next()
   return { v, rng: r.getState() }
+}
+
+/** Le bot réussit-il l'événement k de son passif ? Un tirage fixé par (bot, événement). */
+function reussit(profil: ProfilBot, k: number): boolean {
+  let h = 2166136261
+  for (let i = 0; i < profil.id.length; i++) h = Math.imul(h ^ profil.id.charCodeAt(i), 16777619)
+  return tirage((h ^ Math.imul(k + 1, 0x9e3779b9)) >>> 0).v < profil.adresse
 }
 
 function ecartMoyen(profil: ProfilBot): number {
@@ -104,6 +111,12 @@ export async function jouerLesBots(
     if (moi !== undefined) {
       for (const capacite of capacitesDe(config, moi)) {
         if (capacitePrete(config, moi, capacite, t)) etat = await partage.agir({ joueur: profil.id, t, type: 'lancer', capacite })
+      }
+      // Son passif : un événement ouvert, il le réussit selon son adresse
+      // (une fonction de l'événement : il ne retente pas un raté).
+      const ev = evenementA(config, etat.saison.seed, etat.saison.debut, moi, t)
+      if (ev !== null && passifOuvert(config, moi, ev) && reussit(profil, ev.k)) {
+        for (let cible = 0; cible < passifDe(config, moi).cibles; cible++) etat = await partage.agir({ joueur: profil.id, t, type: 'toucher', evenement: ev.k, cible })
       }
     }
     const restants = (b.restants ?? 0) - 1

@@ -219,6 +219,54 @@ function compterUnCritique(config: ConfigDonjon, j: Joueur): void {
   j.critiques = Math.min(critiquesMax(config), j.critiques + 1)
 }
 
+// ---------------------------------------------------------------- le passif de classe
+
+/** Un événement du passif : sa tranche `k`, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi). */
+export type EvenementDuPassif = { k: number; debut: number; fin: number; cibles: { x: number; y: number }[] }
+
+export function passifDe(config: ConfigDonjon, j: Joueur) {
+  return config.passifs[j.arme] ?? config.passifs.epee
+}
+
+/**
+ * L'ÉVÉNEMENT DE LA TRANCHE k de ce joueur : une fonction de (graine de la
+ * saison, tranche, joueur, arme), comme le critique de l'auto — les règles
+ * et l'écran lisent le même, et personne ne peut en inventer un. Une cible
+ * seule tombe sur le corps ; plusieurs se rangent en cercle autour du centre.
+ */
+export function evenementDuPassif(config: ConfigDonjon, seed: number, debutSaison: number, j: Joueur, k: number): EvenementDuPassif {
+  const p = passifDe(config, j)
+  const empreinte = empreinteDe(`${j.id}:${j.arme}`)
+  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  const debut = debutSaison + k * p.periode + tire(1) * (p.periode - p.duree)
+  const cibles =
+    p.cibles === 1
+      ? [{ x: 0.3 + 0.4 * tire(2), y: 0.3 + 0.35 * tire(3) }]
+      : Array.from({ length: p.cibles }, (_, i) => {
+          const angle = 2 * Math.PI * (tire(2) + i / p.cibles)
+          return { x: 0.5 + 0.3 * Math.cos(angle), y: 0.45 + 0.25 * Math.sin(angle) }
+        })
+  return { k, debut, fin: debut + p.duree, cibles }
+}
+
+/** L'événement ouvert à l'instant t, ou null (un par tranche, jamais deux à la fois). */
+export function evenementA(config: ConfigDonjon, seed: number, debutSaison: number, j: Joueur, t: number): EvenementDuPassif | null {
+  if (t < debutSaison) return null
+  const ev = evenementDuPassif(config, seed, debutSaison, j, Math.floor((t - debutSaison) / passifDe(config, j).periode))
+  return t >= ev.debut && t <= ev.fin ? ev : null
+}
+
+/** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
+export function etapeDuPassif(j: Joueur, k: number): number {
+  return j.passif.evenement === k ? j.passif.etape : 0
+}
+
+/** Reste-t-il quelque chose à toucher dans cet événement ? */
+export function passifOuvert(config: ConfigDonjon, j: Joueur, ev: EvenementDuPassif): boolean {
+  const etape = etapeDuPassif(j, ev.k)
+  return etape >= 0 && etape < passifDe(config, j).cibles
+}
+
 export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
   return Math.round(config.xp.base * Math.pow(niveau, config.xp.exposant))
 }
@@ -313,6 +361,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     capacitesPretes: {},
     critiques: 0,
     effets: {},
+    passif: { evenement: -1, etape: 0 },
     bonus: {},
   }
 }
@@ -535,6 +584,37 @@ function porter(config: ConfigDonjon, e: EtatDonjon, j: Joueur, degats: number, 
 }
 
 /**
+ * UN COUP FORT (capacité, passif) : `fois` taps, dans la plage, critique tiré
+ * (ou forcé), la forme et les effets compris — sans user la forme.
+ */
+function frapperFort(config: ConfigDonjon, e: EtatDonjon, j: Joueur, fois: number, t: number, critiqueForce: boolean): void {
+  let brut = degatsDuTap(config, j) * fois * (1 + config.tap.ecart * (2 * tirer(e) - 1))
+  if (tirer(e) < chanceCritDe(config, j) || critiqueForce) {
+    brut *= multCritDe(config, j)
+    compterUnCritique(config, j)
+  }
+  porter(config, e, j, Math.round(brut * multiplicateurDeForme(config, j, formeA(config, j, t)) * (1 + bonusDEffetsA(config, j, t))), t)
+}
+
+/**
+ * TOUCHER UNE CIBLE DU PASSIF : seulement dans la fenêtre de l'événement
+ * `k`, et dans l'ordre. La bonne cible avance l'étape, la dernière frappe ;
+ * une autre, quand il y en a plusieurs (les runes), rate l'événement.
+ */
+function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cible: number, t: number): void {
+  const ev = evenementA(config, e.saison.seed, e.saison.debut, j, t)
+  if (ev === null || ev.k !== k || !passifOuvert(config, j, ev)) return
+  const p = passifDe(config, j)
+  const etape = etapeDuPassif(j, k)
+  if (cible !== etape) {
+    if (p.cibles > 1) j.passif = { evenement: k, etape: -1 }
+    return
+  }
+  j.passif = { evenement: k, etape: etape + 1 }
+  if (etape + 1 === p.cibles) frapperFort(config, e, j, p.coup, t, p.critique === true)
+}
+
+/**
  * UNE CAPACITÉ PART : sa recharge repart (ou ses critiques retombent à zéro),
  * puis son effet. Un coup vaut `coup` taps, dans la plage, peut être
  * critique, subit la forme et les effets — sans user la forme. Un effet
@@ -545,14 +625,7 @@ function lancer(config: ConfigDonjon, e: EtatDonjon, j: Joueur, cle: CleCapacite
   const c = config.capacites[cle]
   if (c.recharge !== undefined) j.capacitesPretes[cle] = t + c.recharge
   if (c.critiques !== undefined) j.critiques = 0
-  if (c.coup !== undefined) {
-    let brut = degatsDuTap(config, j) * c.coup * (1 + config.tap.ecart * (2 * tirer(e) - 1))
-    if (tirer(e) < chanceCritDe(config, j)) {
-      brut *= multCritDe(config, j)
-      compterUnCritique(config, j)
-    }
-    porter(config, e, j, Math.round(brut * multiplicateurDeForme(config, j, formeA(config, j, t)) * (1 + bonusDEffetsA(config, j, t))), t)
-  }
+  if (c.coup !== undefined) frapperFort(config, e, j, c.coup, t, false)
   if (c.duree !== undefined) j.effets[cle] = t + c.duree
   if (c.forme !== undefined) {
     j.forme = Math.min(bornesDeLaForme(config).max, formeA(config, j, t) + c.forme)
@@ -597,6 +670,9 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
         j.ameliorations[action.quoi] += 1
       }
       break
+    case 'toucher':
+      if (j !== undefined && Number.isInteger(action.evenement) && Number.isInteger(action.cible)) toucher(config, e, j, action.evenement, action.cible, t)
+      break
     case 'lancer':
       if (j !== undefined && CAPACITES.includes(action.capacite)) lancer(config, e, j, action.capacite, t)
       break
@@ -605,6 +681,8 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
       // swaps d'abus ») : chacune repart de zéro, la Furie de zéro critique.
       if (j !== undefined && ARMES.includes(action.arme) && action.arme !== j.arme) {
         j.arme = action.arme
+        // Les événements du passif sont ceux de la nouvelle arme.
+        j.passif = { evenement: -1, etape: 0 }
         for (const cle of capacitesDe(config, j)) {
           const recharge = config.capacites[cle].recharge
           if (recharge !== undefined) j.capacitesPretes[cle] = t + recharge
