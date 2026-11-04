@@ -29,8 +29,10 @@ export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'r
 export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
-export type TypeArme = 'epee' | 'dague' | 'baton'
-export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton']
+export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc']
+/** Les armes qui ont un passif de classe (l'arc n'a pas encore le sien). */
+export type ArmeAPassif = 'epee' | 'dague' | 'baton'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -159,12 +161,16 @@ export const DONJON = {
    * Épée équilibrée (Récupération +20 %), dague rapide (+5 points de chance
    * de critique), bâton lent (+50 % de dégâts critiques). À MAINS NUES, la
    * moitié des dégâts de l'épée, sans bonus ni capacité (chiffres de moi).
+   * L'ARC est PROVISOIRE (Keko, 04/11 : « essayons l'arc » — pour son coup à
+   * l'écran, la flèche) : le DPS de base des autres (12 toutes les 0,3 s),
+   * ni bonus, ni capacité, ni passif tant qu'ils ne sont pas définis.
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2, capacites: ['frappeLourde', 'briseGarde'] },
     dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0, capacites: ['lamesOmbre', 'furie'] },
     baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0, capacites: ['bouleDeFeu', 'meditation'] },
+    arc: { nom: 'Arc', rarete: 'commune', degats: 12, recharge: 0.3 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
   } as Record<
     Equipement,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }
@@ -183,7 +189,7 @@ export const DONJON = {
     epee: { nom: 'Riposte', periode: 12 * SECONDE, duree: 1.2 * SECONDE, cibles: 1, coup: 20 },
     dague: { nom: 'Points faibles', periode: 3 * SECONDE, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
     baton: { nom: 'Runes', periode: 15 * SECONDE, duree: 5 * SECONDE, cibles: 3, coup: 20 },
-  } as Record<TypeArme, Passif>,
+  } as Record<ArmeAPassif, Passif>,
 
   /**
    * LE POOL DES CAPACITÉS (Keko, 04/11 : « je valide tout »), chiffres de moi.

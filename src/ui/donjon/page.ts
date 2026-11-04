@@ -22,7 +22,7 @@
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
-import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type CleCapacite, type Equipement, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON, JOUR, type ArmeAPassif, type CleAmelioration, type CleCapacite, type Equipement, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
@@ -149,13 +149,15 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * caractère, leur bonus. Les images viennent du tri de Keko (`Desktop\\Style
  * \\tri`) : l'épée est l'objet n° 010 ; la dague la capacité n° 119 ; le
  * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer ;
- * les mains nues, la capacité n° 118 (le coup de pied), en attendant leur icône.
+ * les mains nues, la capacité n° 118 (le coup de pied), en attendant leur icône ;
+ * l'arc, la capacité n° 117 (l'arc et la cible), provisoire lui aussi.
  */
-const IMAGE_DE_L_ARME: Record<Equipement, string> = { mains: 'armes/mains.webp', epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp' }
+const IMAGE_DE_L_ARME: Record<Equipement, string> = { mains: 'armes/mains.webp', epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp', arc: 'armes/arc.webp' }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
   dague: { caractere: 'Rapide', bonus: 'Critique +5 points' },
   baton: { caractere: 'Lent', bonus: 'Dégâts critiques +50 %' },
+  arc: { caractere: 'À distance', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -198,10 +200,10 @@ function quandLaCapacite(cle: CleCapacite): string {
  * Riposte n° 111 (le bouclier qui pare), Points faibles n° 138 (l'œil),
  * Runes n° 141 (les cristaux).
  */
-const IMAGE_DU_PASSIF: Record<TypeArme, string> = { epee: 'passifs/riposte.webp', dague: 'passifs/points-faibles.webp', baton: 'passifs/runes.webp' }
+const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = { epee: 'passifs/riposte.webp', dague: 'passifs/points-faibles.webp', baton: 'passifs/runes.webp' }
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
-function effetDuPassif(arme: TypeArme): string {
+function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (arme === 'epee') return `L'ennemi arme parfois un coup : touchez-le dans la seconde pour riposter (×${p.coup})`
   if (arme === 'dague') return `Des points faibles s'allument sur l'ennemi : touchés, un coup critique (×${p.coup}) et un cran de Furie`
@@ -691,18 +693,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
-    // SON PASSIF, celui de toute sa classe (Keko).
-    const passif = el('div', 'donjon-fiche-capacite')
-    const iconePassif = el('img')
-    iconePassif.src = url(IMAGE_DU_PASSIF[arme])
-    iconePassif.alt = ''
-    iconePassif.draggable = false
-    const textePassif = el('div')
-    textePassif.append(el('b', undefined, C.passifs[arme].nom), el('span', undefined, effetDuPassif(arme)))
-    passif.append(iconePassif, textePassif)
-    lignes.push(el('div', 'donjon-fiche-section', 'Passif'), passif)
+    // SON PASSIF, celui de toute sa classe (Keko) ; l'arc n'a pas encore le sien.
+    if (arme !== 'arc') {
+      const passif = el('div', 'donjon-fiche-capacite')
+      const iconePassif = el('img')
+      iconePassif.src = url(IMAGE_DU_PASSIF[arme])
+      iconePassif.alt = ''
+      iconePassif.draggable = false
+      const textePassif = el('div')
+      textePassif.append(el('b', undefined, C.passifs[arme].nom), el('span', undefined, effetDuPassif(arme)))
+      passif.append(iconePassif, textePassif)
+      lignes.push(el('div', 'donjon-fiche-section', 'Passif'), passif)
+    }
     // SES DEUX CAPACITÉS, à la place de la section « Effet » prévue (Keko).
-    lignes.push(el('div', 'donjon-fiche-section', 'Capacités'))
+    if (a.capacites.length > 0) lignes.push(el('div', 'donjon-fiche-section', 'Capacités'))
     for (const cle of a.capacites) {
       const ligne = el('div', 'donjon-fiche-capacite')
       const image = el('img')
@@ -730,8 +734,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   )
 
   // ------------------------------------------------ le geste
-  // La dague plante un trait au bout d'un arc (le coup de poignard) ; `&fleche`
-  // lui rend la flèche droite, rangée pour l'arc.
+  // La dague plante un trait au bout d'un arc (le coup de poignard) ; la
+  // flèche droite, son premier essai, est celle de l'ARC — `&fleche` la rend
+  // aussi à la dague.
   const FLECHE = parametres.has('fleche')
   // Le coup de poignard : il touche à 95 ms, reste fiché 60 ms, se résorbe en 110.
   const CONTACT_POIGNARD = 95
@@ -868,11 +873,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   /**
-   * LA FLÈCHE (le premier estoc de la dague ; Keko : « ça fait très flèche,
-   * on le garde pour les arcs ») : une lame fine et pointue qui file droit
-   * vers le point touché et s'y FICHE — elle arrive en accélérant, s'arrête
-   * net, s'enfonce d'un cran, reste plantée un instant puis se retire. Elle
-   * monte du bas. Rangée pour l'arc ; `&fleche` la rend à la dague.
+   * LA FLÈCHE DE L'ARC (le premier estoc de la dague ; Keko : « ça fait très
+   * flèche, on le garde pour les arcs », puis « essayons l'arc, reprends
+   * ça ») : une lame fine et pointue qui file droit vers le point touché et
+   * s'y FICHE — elle arrive en accélérant, s'arrête net, s'enfonce d'un cran,
+   * reste plantée un instant puis se retire. Elle monte du bas, de celui qui
+   * tire. `&fleche` la rend aussi à la dague.
    */
   function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
     const n = el('div', 'donjon-estoc')
@@ -1114,7 +1120,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // d'une onde ronde.
     const arme = genre.startsWith('capacite') ? null : moi().arme
     const lame = arme === 'epee'
-    const pique = arme === 'dague'
+    // L'arc tire la flèche ; la dague plante son poignard (ou la flèche, `&fleche`).
+    const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
+    const pique = arme === 'dague' || arme === 'arc'
     const masse = arme === 'baton'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
     // lames (Keko : « pas comme la dague ») ; le chiffre reste où il est.
@@ -1130,9 +1138,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // diagonale vers le bas (Keko : « ça frappe un peu trop le haut » — il
     // descendait à la verticale, sa courbe montait loin au-dessus du point) ;
     // penchés au hasard.
-    if (pique && !FLECHE) coteDuPoignard = -coteDuPoignard
-    const anglePique = FLECHE ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
-    const contact = pique ? (FLECHE ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : 0
+    if (pique && !enFleche) coteDuPoignard = -coteDuPoignard
+    const anglePique = enFleche ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
+    const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : 0
     if (masse) {
       // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
       // deux dans l'autre sens.
@@ -1147,7 +1155,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
-      if (FLECHE) fleche(x, y, k, couleur, anglePique)
+      if (enFleche) fleche(x, y, k, couleur, anglePique)
       else poignard(x, y, k, couleur, anglePique, coteDuPoignard)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).

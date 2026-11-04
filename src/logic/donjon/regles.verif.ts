@@ -227,6 +227,10 @@ verifier('à mains nues, aucune capacité ne part', appliquer(C, nu, { joueur: '
 verifier('à mains nues, aucun événement de passif', evenementDuPassif(C, nu.saison.seed, 0, jn, 1) === null && evenementA(C, nu.saison.seed, 0, jn, auMilieu) === null)
 verifier("à mains nues, la moitié des dégâts de l'épée", Math.abs(degatsDuTap(C, jn) / degatsDuTap(C, jc) - 0.5) < 1e-9)
 verifier("on reprend son arme, ses capacités en recharge", !capacitePrete(C, appliquer(C, nu, { joueur: 'a', t: 200, type: 'equiper', arme: 'epee' }).joueurs[0], 'frappeLourde', 200))
+// L'ARC, PROVISOIRE : ni capacité, ni passif, le même DPS de base que l'épée.
+const jArc = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'arc' }).joueurs[0]
+verifier("l'arc s'équipe, sans capacité ni passif", jArc.arme === 'arc' && capacitesDe(C, jArc).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jArc, 1) === null)
+verifier("l'arc a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jArc) / periodeDe(C, jArc) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 const me = appliquer(C, avecArme('baton', 5), { joueur: 'a', t: 0, type: 'lancer', capacite: 'meditation' })
 verifier("Méditation rend une minute de forme", me.joueurs[0].forme === 1)
 

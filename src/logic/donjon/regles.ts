@@ -18,7 +18,7 @@
  * instant. Les coups se résolvent un à un, dans l'ordre du temps.
  */
 import { createRng } from '../rng.ts'
-import { AMELIORATIONS, CAPACITES, EQUIPEMENTS, JOUR, type CleCapacite, type ConfigDonjon, type Passif, type Equipement } from './config.ts'
+import { AMELIORATIONS, CAPACITES, EQUIPEMENTS, JOUR, type ArmeAPassif, type CleCapacite, type ConfigDonjon, type Passif, type Equipement } from './config.ts'
 import { ennemiDeLEtage } from './ennemi.ts'
 import type { Action, EtatDonjon, Evenement, Joueur, SaisonArchivee } from './types.ts'
 
@@ -226,7 +226,7 @@ export type EvenementDuPassif = { k: number; debut: number; fin: number; cibles:
 
 /** Le passif de la classe d'arme de ce joueur ; à mains nues, aucun. */
 export function passifDe(config: ConfigDonjon, j: Joueur): Passif | null {
-  return j.arme === 'mains' ? null : (config.passifs[j.arme] ?? config.passifs.epee)
+  return j.arme in config.passifs ? config.passifs[j.arme as ArmeAPassif] : null
 }
 
 /**

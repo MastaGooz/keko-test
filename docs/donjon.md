@@ -723,8 +723,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   un trait 1,4 fois plus gros, comme l'épée. Un second essai plantait le
   DESSIN d'un poignard (manche, garde, lame) au bout de l'arc : retiré.
   **LA FLÈCHE**, le premier essai (une lame fine qui file droit et se fiche,
-  `fleche`, `.donjon-estoc`), est GARDÉE POUR L'ARC : `&fleche` la rend à
-  la dague.
+  `fleche`, `.donjon-estoc`), est devenue le coup de L'ARC (ci-dessous) ;
+  `&fleche` la rend aussi à la dague.
 - **LE COUP DE BÂTON, EN MASSUE** (Keko, 04/11 : « fais ce que tu penses
   être le mieux », puis « un effet de slash avec la partie avant arrondie,
   en mode coup de club ; on laisse les runes de côté, on utilisera ça
@@ -754,6 +754,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `cercleDeRune`, `.donjon-rune-cercle`), avec un élan à tête ronde qui
   tombait d'en haut (retiré), est RANGÉ POUR AILLEURS : `&rune` le rend au
   bâton.
+- **L'ARC, PROVISOIRE** (Keko, 04/11 : « passons à l'attaque de base d'une
+  autre classe, essayons l'arc » — « dans les premiers essais de dague je
+  t'avais dit qu'on garderait ça pour l'arc, reprends ça » ; icône
+  provisoire) : une quatrième arme dans l'armurerie (`arc` dans `ARMES`),
+  le DPS de base des autres (12 de dégâts toutes les 0,3 s), « À distance »,
+  ni bonus, ni capacité, ni passif tant qu'ils ne sont pas définis
+  (`ArmeAPassif` : les armes qui en ont un ; la fiche tait les sections
+  vides). Son icône est la capacité n° 117 (l'arc et la cible), en
+  attendant la sienne. SON COUP EST LA FLÈCHE : elle monte du bas, de celui
+  qui tire (±35°), file droit, se fiche au point touché (50 ms), s'enfonce
+  d'un cran, reste plantée puis se retire ; l'anneau qui se referme, la
+  gerbe d'étincelles vers le tireur et l'ennemi poussé dans l'axe sont ceux
+  du poignard. Les bots gardent leurs armes.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
