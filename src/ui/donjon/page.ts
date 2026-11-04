@@ -730,14 +730,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   )
 
   // ------------------------------------------------ le geste
-  // La dague plante sa lame au bout d'un arc (le coup de poignard) ; `&fleche`
+  // La dague plante un trait au bout d'un arc (le coup de poignard) ; `&fleche`
   // lui rend la flèche droite, rangée pour l'arc.
   const FLECHE = parametres.has('fleche')
-  const DUREE_POIGNARD = 260
+  // Le coup de poignard : il touche à 95 ms, reste fiché 60 ms, se résorbe en 110.
   const CONTACT_POIGNARD = 95
+  const TENUE_POIGNARD = 60
+  const VIDANGE_POIGNARD = 110
   const BALAYAGE_POIGNARD = 80
-  // Le poignard accélère jusqu'au contact.
-  const ACCELERE = 'cubic-bezier(0.5, 0, 0.9, 0.5)'
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
   /**
@@ -890,72 +890,75 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * LE COUP DE POIGNARD DE LA DAGUE (Keko : « un truc qui se plante, mais dans
-   * un arc, comme un coup de poignard ») : la lame arrive POINTE DEVANT sur
-   * une courbe — un bras qui tourne autour de l'épaule, la lame couchée sur
-   * la tangente —, accélère, se plante au bout de l'arc, s'enfonce d'un cran,
-   * reste fichée un instant puis se retire. Un trait fin suit sa course. Elle
-   * finit vers le bas (on frappe par-dessus), penchée au hasard, un coup sur
-   * deux de l'autre côté. Le critique plante une lame 1,4 fois plus grosse,
-   * comme l'épée.
+   * un arc, comme un coup de poignard » — puis « un effet, pas directement le
+   * dessin d'une dague ») : un TRAIT DE LUMIÈRE, comme l'entaille de l'épée,
+   * mais qui file sur une courbe, effilé à la queue et POINTU DEVANT, et se
+   * plante au bout de son arc : il accélère, touche, s'enfonce d'un cran,
+   * reste fiché un instant, puis se résorbe dans le point touché, la queue
+   * rattrapant la pointe. La courbe est celle d'un bras qui frappe
+   * par-dessus : elle finit vers le bas, penchée au hasard, un coup sur deux
+   * de l'autre côté. Redessiné à chaque image (un `d` ne s'anime pas
+   * partout). Le critique trace un trait 1,4 fois plus gros, comme l'épée.
    */
   let coteDuPoignard = 1
   function poignard(x: number, y: number, k: number, couleur: string, finale: number, cote: number): void {
-    // Le bras finit perpendiculaire à la lame ; son épaule s'en déduit.
-    const rayon = 4.6 * parseFloat(getComputedStyle(document.documentElement).fontSize) * k
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    // L'arc finit perpendiculaire au coup ; son centre (l'épaule) s'en déduit.
+    const rayon = 4.6 * rem * k
+    const largeur = 0.3 * rem * k
     const fin = finale - cote * 90
     const debut = fin - cote * BALAYAGE_POIGNARD
     const a = (fin * Math.PI) / 180
-    const ex = x - Math.cos(a) * rayon
-    const ey = y - Math.sin(a) * rayon
-    // Le trait de la course : l'arc du bout de la lame, jusqu'au point.
-    const d0 = (debut * Math.PI) / 180
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
-    trace.style.left = `${ex}px`
-    trace.style.top = `${ey}px`
+    // Une vraie boîte autour de l'arc : sur une boîte nulle, la lueur serait rognée.
+    const demi = rayon + 3 * largeur
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - Math.cos(a) * rayon - demi}px`
+    trace.style.top = `${y - Math.sin(a) * rayon - demi}px`
     trace.style.color = couleur
-    const arc = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    arc.setAttribute('d', `M${Math.cos(d0) * rayon} ${Math.sin(d0) * rayon} A${rayon} ${rayon} 0 0 ${cote > 0 ? 1 : 0} ${Math.cos(a) * rayon} ${Math.sin(a) * rayon}`)
-    const long = (rayon * BALAYAGE_POIGNARD * Math.PI) / 180
-    arc.style.strokeDasharray = `${long}`
-    trace.append(arc)
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    trace.append(forme)
     scene.append(trace)
-    const course = CONTACT_POIGNARD / DUREE_POIGNARD
-    arc.animate(
-      [
-        { strokeDashoffset: `${long}`, easing: ACCELERE },
-        { strokeDashoffset: '0', offset: course },
-        { strokeDashoffset: '0' },
-      ],
-      { duration: DUREE_POIGNARD },
-    )
-    trace.animate([{ opacity: 1 }, { opacity: 1, offset: course }, { opacity: 0 }], { duration: DUREE_POIGNARD * 0.8 }).onfinish = () => trace.remove()
-    // Le bras : une boîte nulle posée sur l'épaule, qui tourne ; la lame à
-    // son bout, pointe sur le cercle, couchée dans le sens de la course.
-    const bras = el('div', 'donjon-bras')
-    bras.style.left = `${ex}px`
-    bras.style.top = `${ey}px`
-    const n = el('div', 'donjon-poignard')
-    n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 -1.6 L18 -1.6 L18 1.6 L0 1.6Z M18 -5.2 L23 -5.2 L23 5.2 L18 5.2Z M23 -3.2 Q60 -3.4 82 -2.2 L100 0 L82 2.2 Q60 3.4 23 3.2Z"/></svg>'
-    n.style.color = couleur
-    n.style.left = `${rayon}px`
-    n.style.transform = `translate(-100%, -50%) rotate(${cote * 90}deg) scale(${k})`
-    bras.append(n)
-    scene.append(bras)
-    const tourne = (angle: number) => `rotate(${angle}deg)`
-    bras.animate(
-      [
-        { transform: tourne(debut), easing: ACCELERE },
-        { transform: tourne(fin), offset: course, easing: 'ease-out' },
-        { transform: tourne(fin + cote * 4), offset: course + 0.08 },
-        { transform: tourne(fin + cote * 4), offset: 0.72, easing: 'ease-in' },
-        { transform: tourne(fin - cote * 10) },
-      ],
-      { duration: DUREE_POIGNARD },
-    ).onfinish = () => bras.remove()
-    // Pleine dès le début de sa course, effacée en se retirant.
-    bras.animate([{ opacity: 0 }, { opacity: 1, offset: 0.06 }, { opacity: 1, offset: 0.72 }, { opacity: 0 }], { duration: DUREE_POIGNARD })
+    // Le trait entre `queue` et `tete` (0 = départ de l'arc, 1 = le point
+    // touché) : effilé de la queue au plus large, puis droit à la pointe.
+    const dessiner = (queue: number, tete: number, gonfle: number) => {
+      if (tete - queue < 0.01) return forme.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 20; i++) {
+        const v = i / 20
+        const h = largeur * gonfle * (v < 0.78 ? (v / 0.78) ** 1.5 : (1 - v) / 0.22)
+        const t = (((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180)
+        dehors.push(`${(Math.cos(t) * (rayon + h)).toFixed(1)} ${(Math.sin(t) * (rayon + h)).toFixed(1)}`)
+        dedans.push(`${(Math.cos(t) * (rayon - h)).toFixed(1)} ${(Math.sin(t) * (rayon - h)).toFixed(1)}`)
+      }
+      forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t < CONTACT_POIGNARD) {
+        // Il accélère jusqu'au contact ; la queue part du début de l'arc.
+        const p = (t / CONTACT_POIGNARD) ** 2
+        dessiner(Math.max(0, p - 0.8), p, 1)
+      } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD) {
+        // Fiché : la pointe s'enfonce d'un cran, le trait se gonfle et se rassied.
+        const q = (t - CONTACT_POIGNARD) / TENUE_POIGNARD
+        dessiner(0.2, 1 + 0.06 * Math.min(1, q * 3), 1 + 0.3 * (1 - q))
+      } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD + VIDANGE_POIGNARD) {
+        // Il se résorbe dans le point : la queue rattrape la pointe.
+        const q = (t - CONTACT_POIGNARD - TENUE_POIGNARD) / VIDANGE_POIGNARD
+        dessiner(0.2 + 0.86 * q * q, 1.06, 1 - 0.4 * q)
+      } else {
+        trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(depart)
   }
 
   /** L'anneau qui se referme sur le point, quand la pointe entre (celui du poing s'ouvre). */
