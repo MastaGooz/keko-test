@@ -969,7 +969,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // Le critique ne l'allonge pas, il l'épaissit d'un poil (Keko) : la
     // moitié de l'écart de `k`, ×1,2 au lieu de ×1,4.
-    const longueur = 5.5 * rem
+    const longueur = 4.5 * rem
     const largeur = 0.32 * rem * (1 + (k - 1) / 2)
     // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
     const a = (finale * Math.PI) / 180
