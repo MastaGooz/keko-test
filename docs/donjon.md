@@ -764,7 +764,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   vides). Son icône est la capacité n° 117 (l'arc et la cible), en
   attendant la sienne. SON COUP EST LA FLÈCHE : elle monte du bas, de celui
   qui tire (±35°), file droit, se fiche au point touché (50 ms), s'enfonce
-  d'un cran, reste plantée puis se retire ; l'anneau qui se referme, la
+  d'un cran, VIBRE, reste plantée ~280 ms puis s'efface sur place (475 ms
+  en tout) — pleine, la queue à peine fondue, cernée d'un fin trait d'encre
+  (sans lui, elle se perdait sur l'ennemi qui blanchit) (Keko : « un peu trop
+  transparentes, il faudrait qu'elles restent plantées un court instant » :
+  elle partait à 60 % d'opacité, sa queue fondue sur la moitié, et se
+  retirait au bout de 75 ms) ; l'anneau qui se referme, la
   gerbe d'étincelles vers le tireur et l'ennemi poussé dans l'axe sont ceux
   du poignard. Les bots gardent leurs armes.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans

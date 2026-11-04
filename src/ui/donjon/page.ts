@@ -877,7 +877,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * flèche, on le garde pour les arcs », puis « essayons l'arc, reprends
    * ça ») : une lame fine et pointue qui file droit vers le point touché et
    * s'y FICHE — elle arrive en accélérant, s'arrête net, s'enfonce d'un cran,
-   * reste plantée un instant puis se retire. Elle monte du bas, de celui qui
+   * vibre, reste plantée un court instant puis s'efface sur place ; pleine,
+   * la queue à peine fondue (Keko : « un peu trop transparentes »). Elle monte du bas, de celui qui
    * tire. `&fleche` la rend aussi à la dague.
    */
   function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
@@ -887,17 +888,26 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const pose = (avance: string, etire: number) => `translate(-100%, -50%) rotate(${angle}deg) translateX(${avance}) scale(${k * etire}, ${k})`
+    const pose = (avance: string, etire: number, vibre = 0) => `translate(-100%, -50%) rotate(${angle + vibre}deg) translateX(${avance}) scale(${k * etire}, ${k})`
     scene.append(n)
+    // Elle touche à 50 ms, s'enfonce, VIBRE en se plantant, reste fichée
+    // ~280 ms (Keko : « qu'elle reste plantée un court instant »), puis
+    // s'efface sur place.
+    const duree = 475
+    const a = (ms: number) => ms / duree
     n.animate(
       [
-        { transform: pose('-3.5rem', 1.35), opacity: 0.6, easing: 'cubic-bezier(0.5, 0, 1, 1)' },
-        { transform: pose('0rem', 1.1), opacity: 1, offset: 0.24, easing: 'ease-out' },
-        { transform: pose('0.35rem', 1), opacity: 1, offset: 0.34 },
-        { transform: pose('0.35rem', 1), opacity: 1, offset: 0.66, easing: 'ease-in' },
-        { transform: pose('-1.6rem', 0.9), opacity: 0 },
+        { transform: pose('-3.5rem', 1.35), easing: 'cubic-bezier(0.5, 0, 1, 1)' },
+        { transform: pose('0rem', 1.1), offset: a(50), easing: 'ease-out' },
+        { transform: pose('0.35rem', 1, 3), offset: a(75) },
+        { transform: pose('0.35rem', 1, -2.2), offset: a(105) },
+        { transform: pose('0.35rem', 1, 1.2), offset: a(135) },
+        { transform: pose('0.35rem', 1, -0.5), offset: a(165) },
+        { transform: pose('0.35rem', 1), offset: a(195) },
+        { transform: pose('0.35rem', 1), opacity: 1, offset: a(355), easing: 'ease-in' },
+        { transform: pose('0.35rem', 1), opacity: 0 },
       ],
-      { duration: 230 },
+      { duration: duree },
     ).onfinish = () => n.remove()
   }
 
