@@ -152,7 +152,9 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * les mains nues, la capacité n° 118 (le coup de pied), en attendant leur icône ;
  * l'arc, la capacité n° 117 (l'arc et la cible), l'épée à deux mains, la
  * n° 109 (l'épée dans sa traînée de feu), et les deux haches, la n° 123 (la
- * hache dans son anneau de feu ; la seule hache du tri), provisoires elles aussi.
+ * hache dans son anneau de feu ; la seule hache du tri), et les deux
+ * massues, la n° 115 (le poing de pierre qui écrase ; pas de massue dans le
+ * tri), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -163,6 +165,8 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   deuxMains: 'armes/deux-mains.webp',
   hache: 'armes/hache.webp',
   hacheDeuxMains: 'armes/hache.webp',
+  massue: 'armes/massue.webp',
+  massueDeuxMains: 'armes/massue.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -172,6 +176,8 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   deuxMains: { caractere: 'Lourde', bonus: "Aucun pour l'instant" },
   hache: { caractere: 'Brutale', bonus: "Aucun pour l'instant" },
   hacheDeuxMains: { caractere: 'Massive', bonus: "Aucun pour l'instant" },
+  massue: { caractere: 'Écrasante', bonus: "Aucun pour l'instant" },
+  massueDeuxMains: { caractere: 'Colossale', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -764,6 +770,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_BATON = 85
   const VIDANGE_MASSUE = 140
   const BALAYAGE_MASSUE = 100
+  // Sa version longue (les massues à deux mains et les bâtons) : 120° balayés
+  // en 220 ms, le choc à 110 ms, effacée en 170.
+  const CONTACT_LONG = 110
+  const VIDANGE_LONG = 170
+  const BALAYAGE_LONG = 120
   const RUNE = parametres.has('rune')
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
@@ -1023,14 +1034,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   let coteDeLaMassue = 1
   let pencheDeLaMassue = 0
-  function massue(x: number, y: number, k: number, couleur: string, penche: number, cote: number): void {
+  function massue(x: number, y: number, k: number, couleur: string, penche: number, cote: number, longue = false): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const rayon = 6.5 * rem * k
-    const largeur = 0.55 * rem * k
+    // LA VERSION LONGUE (`longue`, les massues à deux mains et les bâtons) :
+    // un arc plus grand et plus ample, un trait plus épais, une course plus lente.
+    const rayon = (longue ? 8.8 : 6.5) * rem * k
+    const largeur = (longue ? 0.65 : 0.55) * rem * k
+    const balayage = longue ? BALAYAGE_LONG : BALAYAGE_MASSUE
+    const contact = longue ? CONTACT_LONG : CONTACT_BATON
+    const vidange = longue ? VIDANGE_LONG : VIDANGE_MASSUE
     // Le milieu de l'arc sur le point, son centre en dessous : l'arc bombe vers le haut.
     const milieu = -90 + penche
-    const debut = milieu - (cote * BALAYAGE_MASSUE) / 2
-    const fin = milieu + (cote * BALAYAGE_MASSUE) / 2
+    const debut = milieu - (cote * balayage) / 2
+    const fin = milieu + (cote * balayage) / 2
     const a = (milieu * Math.PI) / 180
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
@@ -1064,17 +1080,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       forme.setAttribute('d', `M${dehors.join(' L')} A${h.toFixed(1)} ${h.toFixed(1)} 0 0 ${cote > 0 ? 1 : 0} ${bout} L${dedans.reverse().join(' L')}Z`)
     }
     const depart = performance.now()
-    const course = 2 * CONTACT_BATON
+    const course = 2 * contact
     const image = (maintenant: number) => {
       const t = maintenant - depart
       if (t < course) {
         // La tête balaie l'arc ; le trait gonfle quand elle passe au point.
         const p = t / course
-        const choc = Math.exp(-(((t - CONTACT_BATON) / 28) ** 2))
+        const choc = Math.exp(-(((t - contact) / 28) ** 2))
         dessiner(Math.max(0, p - 0.95), p, 0.85 + 0.15 * p + 0.35 * choc)
-      } else if (t < course + VIDANGE_MASSUE) {
+      } else if (t < course + vidange) {
         // La queue rattrape la tête, et le trait s'efface.
-        const q = (t - course) / VIDANGE_MASSUE
+        const q = (t - course) / vidange
         dessiner(0.05 + 0.95 * q, 1, 1 - 0.3 * q)
         trace.style.opacity = `${1 - q * q}`
       } else {
@@ -1165,7 +1181,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // L'arc tire la flèche ; la dague plante son poignard (ou la flèche, `&fleche`).
     const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
     const pique = arme === 'dague' || arme === 'arc'
-    const masse = arme === 'baton'
+    // Les massues et le bâton cognent ; les armes à deux mains (le bâton en
+    // est une) en version longue.
+    const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains'
+    const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
     // lames (Keko : « pas comme la dague ») ; le chiffre reste où il est.
     if (masse) {
@@ -1183,7 +1202,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (pique && !enFleche) coteDuPoignard = -coteDuPoignard
     const anglePique = enFleche ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : lourde ? 90 : 0
+    const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? (longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (masse) {
       // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
       // deux dans l'autre sens.
@@ -1197,7 +1216,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         if (Math.abs(penche - pencheDeLaMassue) >= 25) break
       }
       pencheDeLaMassue = penche
-      massue(x, y, k, couleur, penche, coteDeLaMassue)
+      massue(x, y, k, couleur, penche, coteDeLaMassue, longue)
       ondeAplatie(x, y, k, couleur, contact)
       if (RUNE) cercleDeRune(x, y, k, couleur, contact)
       // La scène est tassée d'un cran vers le bas (le critique a sa secousse).
@@ -1298,7 +1317,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
       ).onfinish = () => p.remove()
     }
-    reculer(x, genre, lourde ? 150 : lame || pique || masse ? 70 : 0, pique ? (anglePique * Math.PI) / 180 : undefined, contact, masse || lourde)
+    reculer(x, genre, lourde ? 150 : longue ? 120 : lame || pique || masse ? 70 : 0, pique ? (anglePique * Math.PI) / 180 : undefined, contact, masse || lourde)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */

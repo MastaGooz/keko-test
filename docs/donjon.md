@@ -802,6 +802,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   chacune avec son angle, sa taille et son punch d'avant. Le reste du coup
   (étincelles, arrêt sur coup, secousse, ennemi tassé sous les deux mains)
   suit la lame, pas sa forme.
+- **LES MASSUES, ET LA MASSUE LONGUE DES ARMES À DEUX MAINS** (Keko, 04/11 :
+  « l'animation actuelle du bâton pour les massues à une main, et une
+  version plus longue pour les massues à deux mains, dont les bâtons ») :
+  deux armes provisoires de plus, la MASSUE (« Écrasante », 13 toutes les
+  0,325 s) et la MASSUE À DEUX MAINS (« Colossale », 24 toutes les 0,6 s)
+  — le DPS de base, ni bonus, ni capacité, ni passif ; icône provisoire pour
+  les deux : la capacité n° 115 (le poing de pierre qui écrase ; pas de
+  massue dans le tri). La massue trace LE COUP DE MASSUE décrit plus haut ;
+  la massue à deux mains ET LE BÂTON (une arme à deux mains) tracent sa
+  VERSION LONGUE (`massue(…, longue)`) : un arc de 8,8 rem au lieu de 6,5,
+  balayé sur 120° au lieu de 100, un trait de 1,3 rem au plus épais au lieu
+  de 1,1, une course plus lente (le choc à 110 ms au lieu de 85, 220 ms en
+  tout, effacé en 170), l'ennemi figé 120 ms au lieu de 70.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
