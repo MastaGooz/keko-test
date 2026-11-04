@@ -22,22 +22,27 @@
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
-import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type CleCapacite, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
 import {
   autoCritique,
+  avanceeDeCapacite,
+  bonusDEffetsA,
   bonusDeForme,
   bonusDeVitesse,
   bonusDuCoup,
   bornesDeLaForme,
+  capacitePrete,
+  capacitesDe,
   chanceCritDe,
   coupsAutoA,
   degatsDuCoupAuto,
   degatsDuCoupAutoA,
   dpsEffectifDe,
   degatsDuTap,
+  effetEnCours,
   facteurCritMoyen,
   etatInitial,
   formeA,
@@ -141,15 +146,48 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer.
  */
 const IMAGE_DE_L_ARME: Record<TypeArme, string> = { epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp' }
-/**
- * `effet` : le passif d'une arme, en phrase (Keko : les armes porteront des
- * effets spéciaux) ; la fiche ne montre sa section que s'il y en a un.
- */
-const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string; effet?: string }> = {
+const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
   dague: { caractere: 'Rapide', bonus: 'Critique +5 points' },
   baton: { caractere: 'Lent', bonus: 'Dégâts critiques +50 %' },
 }
+
+/**
+ * LES CAPACITÉS À L'ÉCRAN : leur image, du tri de Keko (`Desktop\Style\tri
+ * \capacites`, prises détourées dans `images-alpha`, rognées, 256 carré) —
+ * Frappe lourde n° 112, Brise-garde n° 122, Lames de l'ombre n° 105, Furie
+ * n° 132, Boule de feu n° 101, Méditation n° 131.
+ */
+const IMAGE_DE_LA_CAPACITE: Record<CleCapacite, string> = {
+  frappeLourde: 'capacites/frappe-lourde.webp',
+  briseGarde: 'capacites/brise-garde.webp',
+  lamesOmbre: 'capacites/lames-ombre.webp',
+  furie: 'capacites/furie.webp',
+  bouleDeFeu: 'capacites/boule-de-feu.webp',
+  meditation: 'capacites/meditation.webp',
+}
+
+/** Des secondes rondes : « 20 s », l'unité jamais seule à la ligne. */
+const secondesRondes = (ms: number) => `${Math.round(ms / 1000)}\u00a0s`
+
+/** Ce que fait une capacité, en une phrase lue dans sa config. */
+function effetDeLaCapacite(cle: CleCapacite): string {
+  const c = C.capacites[cle]
+  if (c.coup !== undefined) return `Un coup à ×${c.coup} les dégâts du tap`
+  if (c.bonus !== undefined) return `+${Math.round(c.bonus * 100)} % à tous vos coups pendant ${secondesRondes(c.duree ?? 0)}`
+  if (c.critique === true) return `Chaque tap est critique pendant ${secondesRondes(c.duree ?? 0)}`
+  if (c.forme !== undefined) return `La forme remonte de ${c.forme} min de spam vers le repos`
+  return ''
+}
+
+/** Quand elle est prête : sa recharge, ou sa condition. */
+function quandLaCapacite(cle: CleCapacite): string {
+  const c = C.capacites[cle]
+  return c.critiques !== undefined ? `après ${c.critiques} critiques` : `toutes les ${secondesRondes(c.recharge ?? 0)}`
+}
+
+/** Une ligne de bulle : un nom, une valeur. */
+const ligneDeBulle = (nom: string, valeur: string) => `<div class="donjon-bulle-ligne"><span>${nom}</span><b>${valeur}</b></div>`
 
 /** Les crans des armes, nommés et colorés comme les cartes. */
 const RARETE: Record<RareteArme, { nom: string; couleur: string }> = {
@@ -365,6 +403,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   cadre.innerHTML = `<svg class="donjon-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="donjon-contour-fond" d="${CONTOUR}"/><path class="donjon-contour-plein" pathLength="1" d="${CONTOUR}"/></svg>`
   cadre.prepend(attaque)
   cadre.append(bulle)
+  // LES DEUX CAPACITÉS DE L'ARME, de part et d'autre de l'attaque (Keko :
+  // « deux boutons d'action à chaque arme, à gauche et à droite de
+  // l'attaque »). Le même or, plus petites ; le même voile, qui dit la
+  // recharge ou la condition (les critiques de la Furie).
+  const boutonsCapacite = (['gauche', 'droite'] as const).map((cote) => {
+    const b = bouton(`donjon-capacite ${cote}`)
+    const voile = el('span', 'donjon-recharge')
+    const image = el('img', 'donjon-capacite-dessin')
+    image.alt = ''
+    image.draggable = false
+    b.append(voile, image)
+    cadre.append(b)
+    return { b, voile, image }
+  })
   // L'EMPLACEMENT D'ARME, sur la ligne du niveau (Keko : « pas sur la ligne
   // du bouton d'attaque, je veux garder l'emplacement pour d'autres boutons
   // d'attaque plus tard ») : l'arme portée ; une tape ouvre l'armurerie.
@@ -610,8 +662,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
-    const effet = DIT_L_ARME[arme].effet
-    if (effet !== undefined) lignes.push(el('div', 'donjon-fiche-section', 'Effet'), el('div', 'donjon-fiche-texte', effet))
+    // SES DEUX CAPACITÉS, à la place de la section « Effet » prévue (Keko).
+    lignes.push(el('div', 'donjon-fiche-section', 'Capacités'))
+    for (const cle of a.capacites) {
+      const ligne = el('div', 'donjon-fiche-capacite')
+      const image = el('img')
+      image.src = url(IMAGE_DE_LA_CAPACITE[cle])
+      image.alt = ''
+      image.draggable = false
+      const texte = el('div')
+      texte.append(el('b', undefined, C.capacites[cle].nom), el('span', undefined, `${effetDeLaCapacite(cle)}, ${quandLaCapacite(cle)}`))
+      ligne.append(image, texte)
+      lignes.push(ligne)
+    }
     ficheLignes.replaceChildren(...lignes)
     equiper.textContent = estPortee ? 'Équipée' : 'Équiper'
     equiper.disabled = estPortee
@@ -628,7 +691,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   )
 
   // ------------------------------------------------ le geste
-  type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique'
+  type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
   /**
    * Ce qui change d'un genre de coup à l'autre : la taille du chiffre (×),
@@ -642,14 +705,21 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // seul le critique de l'auto ne secoue pas la scène.
     auto: { taille: 1, pop: 1.45, penche: 12, duree: 950, onde: 1, particules: 8, recul: 8, blanc: 2.6, secousse: false, critique: false },
     autoCritique: { taille: 1.2, pop: 1.7, penche: 24, duree: 1200, onde: 1.6, particules: 12, recul: 14, blanc: 2.6, secousse: false, critique: true },
+    // Une capacité frappe plus fort que tout : plus gros, plus long, secoué.
+    capacite: { taille: 1.3, pop: 1.9, penche: 16, duree: 1400, onde: 2.2, particules: 18, recul: 20, blanc: 3, secousse: true, critique: false },
+    capaciteCritique: { taille: 1.45, pop: 2.1, penche: 24, duree: 1500, onde: 2.6, particules: 22, recul: 24, blanc: 3, secousse: true, critique: true },
   }
 
-  /** Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et s'efface. */
-  function envoler(x: number, y: number, valeur: number, genre: Genre, couleur: string): void {
+  /**
+   * Le chiffre qui jaillit de l'ennemi : il gonfle d'un coup, puis monte et
+   * s'efface. `mot` au-dessus (le nom d'une capacité), sinon « Critique ! ».
+   */
+  function envoler(x: number, y: number, valeur: number, genre: Genre, couleur: string, mot?: string): void {
     const n = el('div', `donjon-degat ${genre}`)
     n.style.color = couleur
     n.style.fontSize = `${tailleDuChiffre(valeur, genre)}rem`
-    if (STYLES[genre].critique) n.append(el('span', 'donjon-degat-mot', 'Critique !'))
+    if (mot !== undefined) n.append(el('span', 'donjon-degat-mot', STYLES[genre].critique ? `${mot} critique !` : mot))
+    else if (STYLES[genre].critique) n.append(el('span', 'donjon-degat-mot', 'Critique !'))
     n.append(el('span', undefined, nombre(valeur)))
     n.style.left = `${x}px`
     n.style.top = `${y}px`
@@ -822,6 +892,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   attaque.addEventListener('pointerdown', (ev) => {
     if (ev.button !== 0) return
     frapper()
+    remplir = remplirLaBulle
     clearTimeout(appui)
     appui = window.setTimeout(montrerLaBulle, APPUI_LONG)
   })
@@ -832,8 +903,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // premier tap a frappé quand même. Pas de menu du navigateur sur l'appui.
   const APPUI_LONG = 450
   let appui = 0
+  /** Ce que dit la bulle : l'attaque, ou la capacité tenue. */
+  let remplir: () => void = () => remplirLaBulle()
   function montrerLaBulle(): void {
-    remplirLaBulle()
+    remplir()
     bulle.hidden = false
     bulle.animate([{ opacity: 0, transform: 'translate(-50%, 0.4rem)' }, { opacity: 1, transform: 'translate(-50%, 0)' }], { duration: 160, easing: 'ease-out' })
   }
@@ -847,7 +920,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const j = moi()
     // LES TROIS CHIFFRES DE LA FICHE D'ARME (Keko : « la même chose sur les
     // stats du bouton attaque ») : dégâts, vitesse de l'auto, DPS moyen.
-    const ligne = (nom: string, valeur: string) => `<div class="donjon-bulle-ligne"><span>${nom}</span><b>${valeur}</b></div>`
+    const ligne = ligneDeBulle
     const moyen = degatsDuTap(C, j)
     const html =
       ligne('Arme', C.armes[j.arme].nom) +
@@ -855,6 +928,85 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ligne('Vitesse', secondes(periodeDe(C, j))) +
       ligne('DPS', nombre(dpsEffectifDe(C, j)))
     if (bulle.innerHTML !== html) bulle.innerHTML = html
+  }
+
+  /** La bulle d'une capacité : son nom, ce qu'elle fait, quand elle revient. */
+  function remplirLaBulleDe(i: number): void {
+    const j = moi()
+    const t = maintenant()
+    const cle = capacitesDe(C, j)[i]
+    const c = C.capacites[cle]
+    let etat = 'prête'
+    if (!capacitePrete(C, j, cle, t)) {
+      etat = c.critiques !== undefined ? `${j.critiques} / ${c.critiques} critiques` : `dans ${secondesRondes(Math.max(0, (j.capacitesPretes[cle] ?? t) - t))}`
+    }
+    const html = `<div class="donjon-bulle-titre">${c.nom}</div><div class="donjon-bulle-texte">${effetDeLaCapacite(cle)}, ${quandLaCapacite(cle)}.</div>${ligneDeBulle('État', etat)}`
+    if (bulle.innerHTML !== html) bulle.innerHTML = html
+  }
+
+  /** Un mot qui s'annonce au milieu de la scène : la capacité sans coup (un effet). */
+  function annoncer(texte: string): void {
+    const n = el('div', 'donjon-annonce', texte)
+    scene.append(n)
+    n.animate(
+      [
+        { transform: 'translate(-50%, -50%) scale(0.4)', opacity: 0, easing: 'ease-out' },
+        { transform: 'translate(-50%, -50%) scale(1.15)', opacity: 1, offset: 0.15, easing: 'ease-in-out' },
+        { transform: 'translate(-50%, -60%) scale(1)', opacity: 1, offset: 0.7, easing: 'ease-in' },
+        { transform: 'translate(-50%, -90%) scale(0.95)', opacity: 0 },
+      ],
+      { duration: 1400 },
+    ).onfinish = () => n.remove()
+  }
+
+  /**
+   * UNE CAPACITÉ PART : pas prête, le bouton tremble et rien ne part. Un coup
+   * jaillit comme un tap, en plus gros, sous son nom ; un effet s'annonce.
+   */
+  function lancerCapacite(i: number): void {
+    const t = maintenant()
+    const avant = moi()
+    const cle = capacitesDe(C, avant)[i]
+    const b = boutonsCapacite[i].b
+    if (!capacitePrete(C, avant, cle, t)) {
+      b.animate([{ translate: '0' }, { translate: '-4px 0' }, { translate: '4px 0' }, { translate: '0' }], { duration: 200 })
+      return
+    }
+    const c = C.capacites[cle]
+    const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
+    const attendu = degatsDuTap(C, avant) * (c.coup ?? 0) * mult * (1 + bonusDEffetsA(C, avant, t))
+    const dejaInfliges = avant.degatsTap
+    b.animate([{ scale: '1' }, { scale: '0.88', offset: 0.3 }, { scale: '1.08', offset: 0.65 }, { scale: '1' }], { duration: 260, easing: 'ease-out' })
+    void partage.agir({ joueur: MOI, t, type: 'lancer', capacite: cle }).then(() => {
+      if (c.coup !== undefined) {
+        const inflige = moi().degatsTap - dejaInfliges
+        const e = C.tap.ecart
+        const seuil = (attendu * (1 + e + (1 - e) * multCritDe(C, avant))) / 2
+        const genre: Genre = inflige > seuil ? 'capaciteCritique' : 'capacite'
+        const [x, y] = surLEnnemi(0, -0.05)
+        const couleur = teinteDuChiffre(genre, mult - 1)
+        impact(x, y, genre, couleur)
+        envoler(x, y, inflige, genre, couleur, c.nom)
+      } else {
+        annoncer(c.nom)
+      }
+      dessiner()
+    })
+  }
+
+  for (const [i, { b }] of boutonsCapacite.entries()) {
+    b.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return
+      lancerCapacite(i)
+      remplir = () => remplirLaBulleDe(i)
+      clearTimeout(appui)
+      appui = window.setTimeout(montrerLaBulle, APPUI_LONG)
+    })
+    b.addEventListener('click', (ev) => {
+      if (ev.detail === 0) lancerCapacite(i)
+    })
+    for (const fin of ['pointerup', 'pointercancel', 'pointerleave'] as const) b.addEventListener(fin, cacherLaBulle)
+    b.addEventListener('contextmenu', (ev) => ev.preventDefault())
   }
 
   // ------------------------------------------------ le dessin
@@ -968,6 +1120,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (armeVue !== `${j.arme}:${place}`) {
       armeVue = `${j.arme}:${place}`
       imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
+      for (const [i, cle] of capacitesDe(C, j).entries()) {
+        boutonsCapacite[i].image.src = url(IMAGE_DE_LA_CAPACITE[cle])
+        boutonsCapacite[i].b.setAttribute('aria-label', C.capacites[cle].nom)
+      }
       emplacement.style.setProperty('--rarete', RARETE[inventaire[place].rarete].couleur)
       emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}, ${RARETE[inventaire[place].rarete].nom.toLowerCase()}`)
     }
@@ -1097,7 +1253,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       } else {
         for (let k = coupVu + 1; k <= coup; k++) {
           const critique = autoCritique(C, etat.saison.seed, k * periode, j)
-          cumulAuto += degatsDuCoupAutoA(C, etat.saison.seed, k * periode, j)
+          cumulAuto += degatsDuCoupAutoA(C, etat.saison.seed, k * periode, j, debutSaison + k * periode)
           if (critique) critiquesDuLot += 1
         }
       }
@@ -1140,10 +1296,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     marqueurForme.style.background = teinteDuChiffre('tap', mult - 1)
     const pourCent = `${Math.round(100 * mult)} %`
     if (valeurForme.textContent !== pourCent) valeurForme.textContent = pourCent
-    if (!bulle.hidden) remplirLaBulle()
+    if (!bulle.hidden) remplir()
     // Le voile de recharge : plein au tap, il se vide de haut en bas.
     const resteRecharge = Math.max(0, Math.min(1, (j.prochainTap - t) / rechargeDe(C, j)))
     voileRecharge.style.clipPath = `inset(${100 * (1 - resteRecharge)}% 0 0 0)`
+    // Les capacités : le même voile ; prêtes, elles brillent ; leur effet
+    // en cours, elles battent.
+    for (const [i, cle] of capacitesDe(C, j).entries()) {
+      const { b, voile } = boutonsCapacite[i]
+      const avancee = avanceeDeCapacite(C, j, cle, t)
+      voile.style.clipPath = `inset(${100 * avancee}% 0 0 0)`
+      b.classList.toggle('prete', avancee >= 1)
+      b.classList.toggle('active', effetEnCours(j, cle, t))
+    }
     requestAnimationFrame(image)
   }
 

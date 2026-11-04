@@ -18,7 +18,7 @@
  * instant. Les coups se résolvent un à un, dans l'ordre du temps.
  */
 import { createRng } from '../rng.ts'
-import { AMELIORATIONS, ARMES, JOUR, type ConfigDonjon, type TypeArme } from './config.ts'
+import { AMELIORATIONS, ARMES, CAPACITES, JOUR, type CleCapacite, type ConfigDonjon, type TypeArme } from './config.ts'
 import { ennemiDeLEtage } from './ennemi.ts'
 import type { Action, EtatDonjon, Evenement, Joueur, SaisonArchivee } from './types.ts'
 
@@ -132,13 +132,15 @@ function variationTiree(config: ConfigDonjon, seed: number, dans: number, emprei
 
 /**
  * CE QUE PORTE LE COUP D'AUTO DE CE JOUEUR, `dans` ms après le début de la
- * saison : sa valeur, son écart dans la plage, son critique. Les règles et
- * l'écran lisent la même.
+ * saison : sa valeur, son écart dans la plage, son critique — et, si l'écran
+ * donne l'`instant` du coup, le bonus des effets en cours (Brise-garde). Les
+ * règles et l'écran lisent la même.
  */
-export function degatsDuCoupAutoA(config: ConfigDonjon, seed: number, dans: number, j: Joueur): number {
+export function degatsDuCoupAutoA(config: ConfigDonjon, seed: number, dans: number, j: Joueur, instant?: number): number {
   const empreinte = empreinteDe(j.id)
   const crit = critiqueTire(config, seed, dans, empreinte, j) ? multCritDe(config, j) : 1
-  return Math.round(degatsDuCoupAuto(config, j) * variationTiree(config, seed, dans, empreinte) * crit)
+  const bonus = instant === undefined ? 0 : bonusDEffetsA(config, j, instant)
+  return Math.round(degatsDuCoupAuto(config, j) * (1 + bonus) * variationTiree(config, seed, dans, empreinte) * crit)
 }
 
 /**
@@ -160,6 +162,62 @@ export function degatsDuTap(config: ConfigDonjon, j: Joueur): number {
   return degatsDeBaseDuTap(config, j)
 }
 
+
+// ---------------------------------------------------------------- les capacités
+
+/** Les deux capacités de l'arme de ce joueur : la gauche, la droite. */
+export function capacitesDe(config: ConfigDonjon, j: Joueur): readonly [CleCapacite, CleCapacite] {
+  return armeDe(config, j).capacites
+}
+
+/** L'effet de cette capacité court-il encore à l'instant t (sa fin comprise) ? */
+export function effetEnCours(j: Joueur, cle: CleCapacite, t: number): boolean {
+  const fin = j.effets[cle]
+  return fin !== undefined && t <= fin
+}
+
+/** Le bonus de dégâts des effets dont la fin passe le test `court` (Brise-garde : +0,5). */
+function bonusDesEffets(config: ConfigDonjon, j: Joueur, court: (fin: number) => boolean): number {
+  let bonus = 0
+  for (const cle of CAPACITES) {
+    const fin = j.effets[cle]
+    if (fin !== undefined && court(fin)) bonus += config.capacites[cle].bonus ?? 0
+  }
+  return bonus
+}
+
+/** Le bonus de dégâts des effets qui courent à l'instant t. */
+export function bonusDEffetsA(config: ConfigDonjon, j: Joueur, t: number): number {
+  return bonusDesEffets(config, j, (fin) => t <= fin)
+}
+
+/** Les taps sont-ils tous critiques à l'instant t (Lames de l'ombre) ? */
+export function tapsCritiquesA(config: ConfigDonjon, j: Joueur, t: number): boolean {
+  return CAPACITES.some((cle) => config.capacites[cle].critique === true && effetEnCours(j, cle, t))
+}
+
+/** Où en est la capacité, de 0 à 1 (1 : prête) : sa recharge, ou ses critiques comptés. */
+export function avanceeDeCapacite(config: ConfigDonjon, j: Joueur, cle: CleCapacite, t: number): number {
+  const c = config.capacites[cle]
+  if (c.critiques !== undefined) return Math.min(1, j.critiques / c.critiques)
+  const prete = j.capacitesPretes[cle]
+  if (prete === undefined || t >= prete) return 1
+  return Math.max(0, 1 - (prete - t) / (c.recharge ?? 1))
+}
+
+/** La capacité peut-elle partir à l'instant t ? Seulement l'une des deux de son arme, et prête. */
+export function capacitePrete(config: ConfigDonjon, j: Joueur, cle: CleCapacite, t: number): boolean {
+  return capacitesDe(config, j).includes(cle) && avanceeDeCapacite(config, j, cle, t) >= 1
+}
+
+/** On ne compte pas plus de critiques que la plus gourmande des capacités n'en demande. */
+function critiquesMax(config: ConfigDonjon): number {
+  return Math.max(0, ...CAPACITES.map((cle) => config.capacites[cle].critiques ?? 0))
+}
+
+function compterUnCritique(config: ConfigDonjon, j: Joueur): void {
+  j.critiques = Math.min(critiquesMax(config), j.critiques + 1)
+}
 
 export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
   return Math.round(config.xp.base * Math.pow(niveau, config.xp.exposant))
@@ -252,6 +310,9 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     forme: 0,
     formeA: t,
     prochainTap: t,
+    capacitesPretes: {},
+    critiques: 0,
+    effets: {},
     bonus: {},
   }
 }
@@ -322,9 +383,11 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
   const debut = e.saison.debut
   const seed = e.saison.seed
 
-  // Rien ne bouge entre deux actions : on lit chacun une fois.
+  // Rien ne bouge entre deux actions : on lit chacun une fois. Les effets
+  // aussi : le temps se coupe à la fin de chacun (`avancerSurPlace`), et un
+  // effet qui finit après `de` court sur toute la tranche (ses coups sont après `de`).
   const periodes = e.joueurs.map((j) => periodeDe(config, j))
-  const base = e.joueurs.map((j) => degatsDuCoupAuto(config, j))
+  const base = e.joueurs.map((j) => degatsDuCoupAuto(config, j) * (1 + bonusDesEffets(config, j, (fin) => fin > de)))
   const mult = e.joueurs.map((j) => multCritDe(config, j))
   const empreintes = e.joueurs.map((j) => empreinteDe(j.id))
   // Le prochain coup de chacun : le premier multiple de sa période après `de`.
@@ -348,8 +411,9 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
     for (let i = 0; i < n; i++) {
       ceCoup[i] = 0
       if (prochain[i] !== t) continue
-      const crit = critiqueTire(config, seed, t - debut, empreintes[i], e.joueurs[i]) ? mult[i] : 1
-      ceCoup[i] = Math.round(base[i] * variationTiree(config, seed, t - debut, empreintes[i]) * crit)
+      const critique = critiqueTire(config, seed, t - debut, empreintes[i], e.joueurs[i])
+      if (critique) compterUnCritique(config, e.joueurs[i])
+      ceCoup[i] = Math.round(base[i] * variationTiree(config, seed, t - debut, empreintes[i]) * (critique ? mult[i] : 1))
       total += ceCoup[i]
       prochain[i] += periodes[i]
     }
@@ -410,10 +474,22 @@ function finirLaSaison(config: ConfigDonjon, e: EtatDonjon): void {
 }
 
 /** Résout le temps sur la copie `e`, jusqu'à t. */
+/** La prochaine fin d'effet après l'instant de l'état : l'auto change de dégâts là. */
+function prochaineFinDEffet(e: EtatDonjon): number {
+  let fin = Infinity
+  for (const j of e.joueurs) {
+    for (const cle of CAPACITES) {
+      const f = j.effets[cle]
+      if (f !== undefined && f > e.t && f < fin) fin = f
+    }
+  }
+  return fin
+}
+
 function avancerSurPlace(config: ConfigDonjon, e: EtatDonjon, t: number): void {
   while (t > e.t) {
     const prochainJour = e.saison.debut + (e.etageParJour.length + 1) * JOUR
-    const borne = Math.min(t, prochainJour, e.saison.fin)
+    const borne = Math.min(t, prochainJour, e.saison.fin, prochaineFinDEffet(e))
     resoudreLAuto(config, e, e.t, borne)
     e.t = borne
     if (borne === prochainJour) e.etageParJour.push(e.ennemi.etage)
@@ -433,20 +509,55 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   const minuteDeSpam = dpsDeSpam(config, j) * 60
   for (let k = 0; k < n; k++) {
     // Son écart dans la plage, puis son critique.
+    // Lames de l'ombre : le critique est forcé, le tirage a lieu quand même.
     let brut = degatsDuTap(config, j) * (1 + config.tap.ecart * (2 * tirer(e) - 1))
-    if (tirer(e) < chanceCritDe(config, j)) brut *= multCritDe(config, j)
-    const degats = Math.round(brut * multiplicateurDeForme(config, j, forme))
+    if (tirer(e) < chanceCritDe(config, j) || tapsCritiquesA(config, j, t)) {
+      brut *= multCritDe(config, j)
+      compterUnCritique(config, j)
+    }
+    const degats = Math.round(brut * multiplicateurDeForme(config, j, forme) * (1 + bonusDEffetsA(config, j, t)))
     forme = Math.max(bornesDeLaForme(config).min, forme - brut / minuteDeSpam)
-    // Le surplus d'un coup fatal est perdu : un tap frappe un ennemi.
-    const porte = Math.min(degats, e.ennemi.pv)
-    j.degatsTap += porte
-    e.ennemi.pv -= porte
-    gagnerXp(config, e, j, porte * config.xp.parDegat, t)
-    if (e.ennemi.pv <= 0) achever(config, e, j, t)
+    porter(config, e, j, degats, t)
   }
   j.forme = forme
   j.formeA = t
   j.prochainTap = t + rechargeDe(config, j)
+}
+
+/** Le surplus d'un coup fatal est perdu : un coup frappe un ennemi. */
+function porter(config: ConfigDonjon, e: EtatDonjon, j: Joueur, degats: number, t: number): void {
+  const porte = Math.min(degats, e.ennemi.pv)
+  // Le geste du joueur : les capacités comptent avec ses taps.
+  j.degatsTap += porte
+  e.ennemi.pv -= porte
+  gagnerXp(config, e, j, porte * config.xp.parDegat, t)
+  if (e.ennemi.pv <= 0) achever(config, e, j, t)
+}
+
+/**
+ * UNE CAPACITÉ PART : sa recharge repart (ou ses critiques retombent à zéro),
+ * puis son effet. Un coup vaut `coup` taps, dans la plage, peut être
+ * critique, subit la forme et les effets — sans user la forme. Un effet
+ * court `duree` ms. La Méditation rend `forme` minutes de forme.
+ */
+function lancer(config: ConfigDonjon, e: EtatDonjon, j: Joueur, cle: CleCapacite, t: number): void {
+  if (!capacitePrete(config, j, cle, t)) return
+  const c = config.capacites[cle]
+  if (c.recharge !== undefined) j.capacitesPretes[cle] = t + c.recharge
+  if (c.critiques !== undefined) j.critiques = 0
+  if (c.coup !== undefined) {
+    let brut = degatsDuTap(config, j) * c.coup * (1 + config.tap.ecart * (2 * tirer(e) - 1))
+    if (tirer(e) < chanceCritDe(config, j)) {
+      brut *= multCritDe(config, j)
+      compterUnCritique(config, j)
+    }
+    porter(config, e, j, Math.round(brut * multiplicateurDeForme(config, j, formeA(config, j, t)) * (1 + bonusDEffetsA(config, j, t))), t)
+  }
+  if (c.duree !== undefined) j.effets[cle] = t + c.duree
+  if (c.forme !== undefined) {
+    j.forme = Math.min(bornesDeLaForme(config).max, formeA(config, j, t) + c.forme)
+    j.formeA = t
+  }
 }
 
 // ---------------------------------------------------------------- l'extérieur
@@ -485,6 +596,9 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
         j.points -= 1
         j.ameliorations[action.quoi] += 1
       }
+      break
+    case 'lancer':
+      if (j !== undefined && CAPACITES.includes(action.capacite)) lancer(config, e, j, action.capacite, t)
       break
     case 'equiper':
       if (j !== undefined && ARMES.includes(action.arme)) j.arme = action.arme

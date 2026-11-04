@@ -581,6 +581,39 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
 - **LA BULLE DU BOUTON D'ATTAQUE COMME LA FICHE** (Keko, 04/11 : « la même
   chose sur les stats du bouton attaque ») : l'arme, puis Dégâts, Vitesse
   (l'auto) et DPS (moyen) ; la recharge du tap et le DPS max n'y sont plus.
+- **LES CAPACITÉS** (Keko, 04/11 : « deux boutons d'action à chaque arme, à
+  gauche et à droite de l'attaque ; un pool de capacités, chaque arme en
+  prend deux selon son type ; plus puissantes, une recharge plus longue —
+  pas un truc qu'on spamme — ou un déclenchement conditionnel » ; le pool,
+  la répartition et les chiffres proposés : « je valide tout »).
+  - *Les règles* (`config.capacites`, `lancer` dans `regles.ts`, l'action
+    `lancer`) : une capacité est prête après sa `recharge` (comptée du
+    lancer) ou après `critiques` coups critiques (tap, auto ou capacité,
+    comptés dans `Joueur.critiques`, plafonnés). Un `coup` vaut N taps,
+    dans la plage, peut être critique, subit la forme et les effets, **sans
+    user la forme**. Un effet court `duree` (`Joueur.effets`, fin comprise) :
+    le temps se coupe à sa fin pour que l'auto change de dégâts au bon coup,
+    et l'écran lit les mêmes coups (`degatsDuCoupAutoA(…, instant)`). Les
+    dégâts des capacités comptent avec ceux des taps (le geste du joueur).
+  - *Le pool écrit* : Frappe lourde (×15, 20 s), Brise-garde (+50 % à tous
+    vos coups pendant 10 s, 45 s), Lames de l'ombre (chaque tap critique
+    pendant 5 s, 30 s), Furie (×25 après 10 critiques), Boule de feu (×30,
+    40 s), Méditation (+1 min de forme, 60 s). Épée : Frappe lourde,
+    Brise-garde ; dague : Lames de l'ombre, Furie ; bâton : Boule de feu,
+    Méditation. **Poison, Coup de grâce et Second souffle**, validés pour de
+    futures armes, ne sont pas encore écrits.
+  - *Les bots* lancent chaque capacité prête à chacun de leurs taps.
+  - *L'écran* : deux boutons d'or plus petits de part et d'autre de
+    l'attaque (`.donjon-capacite`, centrés sur sa hauteur, leur côté pris
+    dans la largeur qui reste), le même voile de recharge (ou de critiques
+    pour la Furie), un liseré clair quand elle est prête, un battement tant
+    que son effet court ; pas prête, le bouton tremble. Un coup jaillit
+    comme un tap en plus gros, sous son nom ; un effet s'annonce au milieu
+    de la scène. L'appui long montre la bulle de la capacité (ce qu'elle
+    fait, quand elle revient, son état). La fiche d'arme a sa section
+    « Capacités » à la place de l'« Effet » prévu. Images du tri de Keko
+    (`tri\capacites`, détourées, 256 carré, `public/capacites/`) : n° 112,
+    122, 105, 132, 101, 131.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -53,6 +53,10 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     // d'avant une amélioration : elle est au rang 0.
     for (const j of e.joueurs) {
       if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
+      // D'avant les capacités : toutes prêtes, aucun critique compté, aucun effet.
+      if (typeof j.capacitesPretes !== 'object' || j.capacitesPretes === null) j.capacitesPretes = {}
+      if (typeof j.critiques !== 'number') j.critiques = 0
+      if (typeof j.effets !== 'object' || j.effets === null) j.effets = {}
       // D'une autre forme de progression (l'offre de trois, les
       // caractéristiques…) : tout est rendu en points, un par niveau gagné,
       // à replacer dans les cinq stats.

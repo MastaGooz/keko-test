@@ -4,7 +4,7 @@
  * Chaque bot a son planning (son prochain geste) et son propre RNG seedé,
  * tenus HORS de l'état partagé : ce sont des clients, pas des règles. Un
  * passage : il dépense ses points, tape un coup à chaque fin de recharge
- * jusqu'à son compte, puis redépense ; entre deux passages, seul son
+ * jusqu'à son compte (et lance chaque capacité dès qu'elle est prête), puis redépense ; entre deux passages, seul son
  * auto-tap tourne (et c'est l'état partagé qui le résout). *Chaque tap est
  * un geste à son heure* : un passage ne joue jamais en avance sur le temps
  * qu'on lui donne (sinon l'état partagé partirait dans le futur et le tap
@@ -16,6 +16,7 @@
 import { createRng } from '../rng.ts'
 import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
 import type { EtatPartage } from './partage.ts'
+import { capacitePrete, capacitesDe } from './regles.ts'
 import type { EtatDonjon } from './types.ts'
 
 /** `restants` : les taps qu'il lui reste dans le passage en cours (0 ou absent : le prochain geste est un passage). */
@@ -96,8 +97,15 @@ export async function jouerLesBots(
       suite[profil.id] = { prochain: t, rng: tire.rng, restants: min + Math.floor(tire.v * (max - min + 1)) }
       continue
     }
-    // Un tap, puis le suivant à la fin de la recharge.
+    // Un tap, puis le suivant à la fin de la recharge ; ses capacités
+    // partent dès qu'elles sont prêtes, au même instant.
     let etat = await partage.agir({ joueur: profil.id, t, type: 'taper', n: 1 })
+    const moi = etat.joueurs.find((x) => x.id === profil.id)
+    if (moi !== undefined) {
+      for (const capacite of capacitesDe(config, moi)) {
+        if (capacitePrete(config, moi, capacite, t)) etat = await partage.agir({ joueur: profil.id, t, type: 'lancer', capacite })
+      }
+    }
     const restants = (b.restants ?? 0) - 1
     if (restants > 0) {
       // Le tap suivant à sa fin de recharge (la sienne : la Vitesse la raccourcit).

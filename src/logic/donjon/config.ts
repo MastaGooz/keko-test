@@ -31,6 +31,33 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
 export type TypeArme = 'epee' | 'dague' | 'baton'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton']
+/**
+ * LES CAPACITÉS : deux boutons de chaque côté de l'attaque, pris dans un pool
+ * selon l'arme (Keko : « plus puissantes, un temps de recharge plus long que
+ * l'attaque — pas un truc qu'on spamme — ou un déclenchement conditionnel »).
+ * Le pool validé compte aussi Poison, Coup de grâce et Second souffle, gardés
+ * pour de futures armes : ils ne sont pas encore écrits (`docs/donjon.md`).
+ */
+export type CleCapacite = 'frappeLourde' | 'briseGarde' | 'lamesOmbre' | 'furie' | 'bouleDeFeu' | 'meditation'
+export const CAPACITES: readonly CleCapacite[] = ['frappeLourde', 'briseGarde', 'lamesOmbre', 'furie', 'bouleDeFeu', 'meditation']
+
+/**
+ * Une capacité : prête après sa `recharge` (ms, comptée du lancer) ou après
+ * `critiques` coups critiques ; puis son effet — un `coup` (× les dégâts du
+ * tap), un `bonus` sur tous vos coups pendant `duree`, des taps tous
+ * critiques pendant `duree` (`critique`), ou `forme` minutes de forme rendues.
+ */
+export type Capacite = {
+  nom: string
+  recharge?: number
+  critiques?: number
+  coup?: number
+  bonus?: number
+  critique?: boolean
+  duree?: number
+  forme?: number
+}
+
 /** Le cran d'une arme, les cinq des cartes (Keko : les armes porteront une rareté). */
 export type RareteArme = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire'
 
@@ -108,10 +135,30 @@ export const DONJON = {
    * de critique), bâton lent (+50 % de dégâts critiques).
    */
   armes: {
-    epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2 },
-    dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0 },
-    baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0 },
-  } as Record<TypeArme, { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number }>,
+    epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2, capacites: ['frappeLourde', 'briseGarde'] },
+    dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0, capacites: ['lamesOmbre', 'furie'] },
+    baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0, capacites: ['bouleDeFeu', 'meditation'] },
+  } as Record<
+    TypeArme,
+    { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: [CleCapacite, CleCapacite] }
+  >,
+
+  /**
+   * LE POOL DES CAPACITÉS (Keko, 04/11 : « je valide tout »), chiffres de moi.
+   * Le tap spammé fait ~46 de DPS : « un coup ×15 toutes les 20 s » en
+   * ajoute ~7,5, un sixième. Une capacité subit la forme comme le tap, mais
+   * n'en use pas : elle ne se spamme pas. L'épée : Frappe lourde et
+   * Brise-garde ; la dague : Lames de l'ombre et Furie (ses critiques la
+   * remplissent, les Lames d'un coup) ; le bâton : Boule de feu et Méditation.
+   */
+  capacites: {
+    frappeLourde: { nom: 'Frappe lourde', recharge: 20 * SECONDE, coup: 15 },
+    briseGarde: { nom: 'Brise-garde', recharge: 45 * SECONDE, bonus: 0.5, duree: 10 * SECONDE },
+    lamesOmbre: { nom: "Lames de l'ombre", recharge: 30 * SECONDE, critique: true, duree: 5 * SECONDE },
+    furie: { nom: 'Furie', critiques: 10, coup: 25 },
+    bouleDeFeu: { nom: 'Boule de feu', recharge: 40 * SECONDE, coup: 30 },
+    meditation: { nom: 'Méditation', recharge: 60 * SECONDE, forme: 1 },
+  } as Record<CleCapacite, Capacite>,
 
   tap: {
     /** +30 % au premier rang de « Coup », puis de moins en moins. */

@@ -5,7 +5,7 @@
 import { DONJON } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -159,6 +159,37 @@ verifier('le haut du repos est fixe : 200 %', reposMaxDe(C, neuf) === 2 && multi
 const epuiseRang = (r: number) => ({ ...stat('recuperation', r), forme: B.min, formeA: 0 })
 verifier('Récupération : la fatigue passe plus vite', formeA(C, epuiseRang(5), H / 6) > formeA(C, epuiseRang(0), H / 6))
 verifier('Récupération : le repos se gagne aussi plus vite', formeA(C, stat('recuperation', 5), 3 * H) > formeA(C, stat('recuperation', 0), 3 * H))
+
+// LES CAPACITÉS : deux par arme, plus fortes que le tap, sans user la forme.
+/** Un ennemi qui ne meurt pas : les coups se comptent entiers. */
+const increvable = (x: EtatDonjon): EtatDonjon => ({ ...x, ennemi: { ...x.ennemi, pv: 1e12, pvMax: 1e12 } })
+const avecArme = (arme: 'epee' | 'dague' | 'baton', graine: number) => increvable(appliquer(C, etatInitial(C, graine, 0), { joueur: 'a', t: 0, type: 'rejoindre', nom: 'A', bot: null, arme }))
+const c0 = avecArme('epee', 3)
+const jc = c0.joueurs[0]
+verifier("l'épée porte Frappe lourde et Brise-garde", capacitesDe(C, jc).join() === 'frappeLourde,briseGarde')
+const f1 = appliquer(C, c0, { joueur: 'a', t: 100, type: 'lancer', capacite: 'frappeLourde' })
+const coupF = f1.joueurs[0].degatsTap
+verifier('Frappe lourde vaut quinze taps (plage et critique compris)', coupF >= degatsDuTap(C, jc) * 15 * (1 - C.tap.ecart) - 1 && coupF <= degatsDuTap(C, jc) * 15 * (1 + C.tap.ecart) * multCritDe(C, jc) + 1)
+verifier("une capacité n'use pas la forme", formeA(C, f1.joueurs[0], 100) === formeA(C, jc, 100))
+verifier('en recharge, elle ne part pas', appliquer(C, f1, { joueur: 'a', t: 5000, type: 'lancer', capacite: 'frappeLourde' }).joueurs[0].degatsTap === coupF)
+verifier('rechargée, elle repart', appliquer(C, f1, { joueur: 'a', t: 100 + 20_000, type: 'lancer', capacite: 'frappeLourde' }).joueurs[0].degatsTap > coupF)
+verifier("la capacité d'une autre arme ne part pas", appliquer(C, c0, { joueur: 'a', t: 100, type: 'lancer', capacite: 'bouleDeFeu' }).joueurs[0].degatsTap === 0)
+const bg = appliquer(C, c0, { joueur: 'a', t: 100, type: 'lancer', capacite: 'briseGarde' })
+const auto = (x: EtatDonjon, t: number) => avancer(C, x, t).joueurs[0].degatsAuto
+verifier("Brise-garde : l'auto frappe 50 % plus fort pendant 10 s", Math.abs(auto(bg, 10_100) / auto(c0, 10_100) - 1.5) < 0.1)
+verifier('Brise-garde fini, les coups redeviennent les mêmes', auto(bg, 60_000) - auto(bg, 10_100) === auto(c0, 60_000) - auto(c0, 10_100))
+const Pc = periodeDe(C, jc)
+const lus = Array.from({ length: Math.floor(10_100 / Pc) }, (_, i) => degatsDuCoupAutoA(C, bg.saison.seed, (i + 1) * Pc, bg.joueurs[0], (i + 1) * Pc)).reduce((x, y) => x + y, 0)
+verifier("l'écran lit les mêmes coups d'auto sous Brise-garde", lus === auto(bg, 10_100))
+let d = appliquer(C, avecArme('dague', 4), { joueur: 'a', t: 0, type: 'lancer', capacite: 'lamesOmbre' })
+const jd = d.joueurs[0]
+for (let k = 0; k < 20; k++) d = appliquer(C, d, { joueur: 'a', t: k * rechargeDe(C, jd), type: 'taper', n: 1 })
+verifier("Lames de l'ombre : vingt taps, vingt critiques", d.joueurs[0].degatsTap >= 20 * (degatsDuTap(C, jd) * (1 - C.tap.ecart) * multCritDe(C, jd) - 1))
+verifier('les critiques remplissent la Furie (dix au plus)', d.joueurs[0].critiques === 10 && capacitePrete(C, d.joueurs[0], 'furie', d.t))
+const fu = appliquer(C, d, { joueur: 'a', t: d.t, type: 'lancer', capacite: 'furie' })
+verifier('la Furie frappe et repart de zéro', fu.joueurs[0].degatsTap > d.joueurs[0].degatsTap && fu.joueurs[0].critiques <= 1 && !capacitePrete(C, fu.joueurs[0], 'furie', fu.t))
+const me = appliquer(C, avecArme('baton', 5), { joueur: 'a', t: 0, type: 'lancer', capacite: 'meditation' })
+verifier("Méditation rend une minute de forme", me.joueurs[0].forme === 1)
 
 const fini = avancer(C, achete, C.saison.duree + 1)
 verifier('la saison finie est archivée', fini.archives.length === 1 && fini.archives[0].etageParJour.length === 7)

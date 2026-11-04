@@ -5,7 +5,7 @@
  * c'est ce qui permettra de remplacer l'état local par un backend sans toucher
  * aux règles.
  */
-import type { CleAmelioration, TypeArme } from './config.ts'
+import type { CleAmelioration, CleCapacite, TypeArme } from './config.ts'
 
 export type Ameliorations = Record<CleAmelioration, number>
 
@@ -39,6 +39,12 @@ export type Joueur = {
   formeA: number
   /** Le tap est rechargé à partir de cet instant (`tap.recharge` après le dernier). */
   prochainTap: number
+  /** Chaque capacité à recharge est prête à partir de cet instant (absente : prête). */
+  capacitesPretes: Partial<Record<CleCapacite, number>>
+  /** Les coups critiques comptés depuis la dernière Furie (plafonnés à ce qu'elle demande). */
+  critiques: number
+  /** Les effets en cours, jusqu'à cet instant inclus : Brise-garde, Lames de l'ombre. */
+  effets: Partial<Record<CleCapacite, number>>
   bonus: BonusPermanents
 }
 
@@ -103,4 +109,5 @@ export type Action = { joueur: string; t: number } & (
   | { type: 'equiper'; arme: TypeArme }
   | { type: 'taper'; n: number }
   | { type: 'acheter'; quoi: CleAmelioration }
+  | { type: 'lancer'; capacite: CleCapacite }
 )

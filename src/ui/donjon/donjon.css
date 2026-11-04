@@ -451,6 +451,85 @@
   pointer-events: none;
 }
 
+/* LES DEUX CAPACITÉS, de part et d'autre de l'attaque : le même or, plus
+   petites, centrées sur sa hauteur ; leur côté tient dans la largeur qui
+   reste (la page fait 32rem au plus, 1rem de marge de chaque côté). */
+.donjon .donjon-capacite {
+  --cote: min(46cqh, calc((min(100vw, 32rem) - 2rem - 100cqh) / 2 - 1.5rem));
+  -webkit-touch-callout: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  width: var(--cote);
+  height: var(--cote);
+  min-width: 48px;
+  min-height: 48px;
+  margin: auto 0;
+  padding: 0;
+  border: none;
+  border-radius: 16%;
+}
+
+.donjon .donjon-capacite.gauche {
+  right: calc(100% + 1.1rem);
+}
+
+.donjon .donjon-capacite.droite {
+  left: calc(100% + 1.1rem);
+}
+
+/* Prête : un liseré clair et une lueur d'or. */
+.donjon .donjon-capacite.prete {
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -6px 0 rgba(61, 39, 22, 0.35),
+    0 0 0 2px #fff3cf,
+    0 0 0.9rem rgba(255, 214, 120, 0.7);
+}
+
+/* Son effet court (Brise-garde, Lames de l'ombre) : elle bat. */
+.donjon .donjon-capacite.active {
+  animation: donjon-capacite-active 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes donjon-capacite-active {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(1.3) drop-shadow(0 0 0.5rem #ffd36e);
+  }
+}
+
+.donjon-capacite-dessin {
+  position: relative;
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0.1rem 0.15rem rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+/* Le nom d'une capacité à effet, annoncé au milieu de la scène. */
+.donjon-annonce {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  z-index: 3;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 2rem;
+  color: #ffe6a0;
+  white-space: nowrap;
+  text-shadow:
+    0 0 0.2rem #3d2716,
+    0 0.15rem 0.5rem rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
 /* La capacité du tri de Keko ; un cerne d'encre la détache de l'or. */
 .donjon-attaque-dessin {
   width: 74%;
@@ -614,6 +693,32 @@
   opacity: 0.6;
 }
 
+.donjon-fiche-capacite {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.donjon-fiche-capacite img {
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.donjon-fiche-capacite div {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.donjon-fiche-capacite b {
+  font-size: 0.95rem;
+}
+
 .donjon-fiche-texte {
   font-size: 0.9rem;
   font-weight: 700;
@@ -728,6 +833,19 @@
   transform: translateX(-50%);
   border: 0.45rem solid transparent;
   border-top-color: var(--d-parchemin);
+}
+
+.donjon-bulle-titre {
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.donjon-bulle-texte {
+  max-width: 15rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
 }
 
 .donjon-bulle-ligne {
