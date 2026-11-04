@@ -500,9 +500,11 @@
   border: none;
   border-radius: 0.8rem;
   background: radial-gradient(circle at 38% 28%, #767b83, #4b4f56 55%, #2e3136);
+  /* Le cadre dit le cran de l'arme portée (`--rarete`, posé par la page). */
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -4px 0 rgba(0, 0, 0, 0.3),
+    inset 0 0 0 3px var(--rarete, transparent),
+    inset 0 5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -6px 0 rgba(0, 0, 0, 0.3),
     0 0.25rem 0.6rem rgba(0, 0, 0, 0.5);
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 0.7rem;

@@ -952,10 +952,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     bande.classList.toggle('pret', j.points > 0)
 
     for (const [i, b] of boutonsVitesse.entries()) b.classList.toggle('actif', C.vitesses[i] === horloge.vitesse)
-    if (armeVue !== j.arme) {
-      armeVue = j.arme
+    // L'arme portée, et le RAPPEL DE SON CRAN (Keko) : le cadre de
+    // l'emplacement prend la couleur du cran, comme sa case dans la grille.
+    const place = placePortee()
+    if (armeVue !== `${j.arme}:${place}`) {
+      armeVue = `${j.arme}:${place}`
       imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
-      emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}`)
+      emplacement.style.setProperty('--rarete', RARETE[inventaire[place].rarete].couleur)
+      emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}, ${RARETE[inventaire[place].rarete].nom.toLowerCase()}`)
     }
     if (ouverte !== null) dessinerLaFeuille(ouverte)
   }

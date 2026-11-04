@@ -564,6 +564,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   dans le bouton, il faudrait une couleur plus neutre ») : le même bombé que
   le bouton d'attaque, en gris ardoise ; l'or des gardes et la lame claire
   ressortent dessus.
+- **LE CRAN SUR L'EMPLACEMENT** (Keko, 04/11 : « un rappel de la rareté
+  (couleur) sur le bouton ») : un cadre de 3 px à la couleur du cran de
+  l'arme portée, comme sa case dans la grille (`--rarete`) ; le nom du cran
+  passe dans l'étiquette d'accessibilité.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
