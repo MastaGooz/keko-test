@@ -734,7 +734,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   S'ÉPAISSIT vers l'avant et finit en TÊTE RONDE (un demi-cercle qui bombe
   dans le sens de la course) : il accélère, cogne le point (85 ms), la tête
   s'écrase et gonfle (40 ms), puis il s'efface, la queue rattrapant la tête
-  (140 ms). Il tombe de côté en diagonale (30° de la verticale, ±15°), un
+  (140 ms). Il frappe l'ennemi EN SON CENTRE (le milieu du dessin, à 45 %
+  de sa hauteur), pas au point du coup comme les lames (Keko : « pas comme
+  la dague ») ; le chiffre reste au point du coup. Il tombe de côté en diagonale (30° de la verticale, ±15°), un
   coup sur deux de l'autre côté. Au contact, une onde APLATIE s'étale comme
   un choc au sol (`ondeAplatie`) ; les étincelles sont des POINTS DE
   LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;

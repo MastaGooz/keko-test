@@ -1114,6 +1114,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const lame = arme === 'epee'
     const pique = arme === 'dague'
     const masse = arme === 'baton'
+    // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
+    // lames (Keko : « pas comme la dague ») ; le chiffre reste où il est.
+    if (masse) {
+      const { x0, y0, l, h } = cadreDuDessin()
+      x = x0 + l * 0.5
+      y = y0 + h * 0.45
+    }
     // Le hasard de l'écran, pas celui des règles.
     const angleLame = -30 + (Math.random() - 0.5) * 40
     // La direction de la pointe au contact : la flèche monte du bas ; le
