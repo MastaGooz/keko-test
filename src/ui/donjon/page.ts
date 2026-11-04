@@ -763,7 +763,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 60
   const VIDANGE_POIGNARD = 110
-  const BALAYAGE_POIGNARD = 55
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
   // rangé pour ailleurs.
@@ -951,36 +950,38 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * LE COUP DE POIGNARD DE LA DAGUE (Keko : « un truc qui se plante, mais dans
    * un arc, comme un coup de poignard » — puis « un effet, pas directement le
    * dessin d'une dague ») : un TRAIT DE LUMIÈRE, comme l'entaille de l'épée,
-   * mais qui file sur une courbe, effilé à la queue et POINTU DEVANT, et se
-   * plante au bout de son arc : il accélère, touche, s'enfonce d'un cran,
-   * reste fiché un instant, puis se résorbe dans le point touché, la queue
-   * rattrapant la pointe. La courbe arrive de côté et finit en diagonale
-   * vers le bas (`finale`), un coup sur deux de l'autre côté. Redessiné à chaque image (un `d` ne s'anime pas
-   * partout). Le critique trace un trait 1,4 fois plus gros, comme l'épée.
+   * effilé à la queue et POINTU DEVANT, qui file DROIT (Keko : « laisser
+   * tomber le côté arc et faire un truc plus droit » ; il filait sur un arc
+   * de 55°) et se plante au point touché : il accélère, touche, s'enfonce
+   * d'un cran, reste fiché un instant, puis se résorbe dans le point, la
+   * queue rattrapant la pointe. Il arrive de côté en diagonale vers le bas
+   * (`finale`), un coup sur deux de l'autre côté. Redessiné à chaque image
+   * (un `d` ne s'anime pas partout). Le critique trace un trait 1,4 fois
+   * plus gros, comme l'épée.
    */
   let coteDuPoignard = 1
-  function poignard(x: number, y: number, k: number, couleur: string, finale: number, cote: number): void {
+  function poignard(x: number, y: number, k: number, couleur: string, finale: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    // L'arc finit perpendiculaire au coup ; son centre (l'épaule) s'en déduit.
-    const rayon = 7.5 * rem * k
+    const longueur = 6.5 * rem * k
     const largeur = 0.5 * rem * k
-    const fin = finale - cote * 90
-    const debut = fin - cote * BALAYAGE_POIGNARD
-    const a = (fin * Math.PI) / 180
+    // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
+    const a = (finale * Math.PI) / 180
+    const [dx, dy] = [Math.cos(a), Math.sin(a)]
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
-    // Une vraie boîte autour de l'arc : sur une boîte nulle, la lueur serait rognée.
-    const demi = rayon + 3 * largeur
+    // Une vraie boîte autour du trait, centrée sur le point : sur une boîte
+    // nulle, la lueur serait rognée.
+    const demi = longueur + 3 * largeur
     trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
     trace.style.width = trace.style.height = `${2 * demi}px`
-    trace.style.left = `${x - Math.cos(a) * rayon - demi}px`
-    trace.style.top = `${y - Math.sin(a) * rayon - demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
     trace.style.color = couleur
     const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     trace.append(forme)
     scene.append(trace)
-    // Le trait entre `queue` et `tete` (0 = départ de l'arc, 1 = le point
+    // Le trait entre `queue` et `tete` (0 = son départ, 1 = le point
     // touché) : effilé de la queue au plus large, puis droit à la pointe.
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
@@ -989,9 +990,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       for (let i = 0; i <= 20; i++) {
         const v = i / 20
         const h = largeur * gonfle * (v < 0.78 ? (v / 0.78) ** 1.5 : (1 - v) / 0.22)
-        const t = (((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180)
-        dehors.push(`${(Math.cos(t) * (rayon + h)).toFixed(1)} ${(Math.sin(t) * (rayon + h)).toFixed(1)}`)
-        dedans.push(`${(Math.cos(t) * (rayon - h)).toFixed(1)} ${(Math.sin(t) * (rayon - h)).toFixed(1)}`)
+        const recul = (1 - (queue + (tete - queue) * v)) * longueur
+        const [cx, cy] = [-dx * recul, -dy * recul]
+        dehors.push(`${(cx - dy * h).toFixed(1)} ${(cy + dx * h).toFixed(1)}`)
+        dedans.push(`${(cx + dy * h).toFixed(1)} ${(cy - dx * h).toFixed(1)}`)
       }
       forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
     }
@@ -999,7 +1001,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const image = (maintenant: number) => {
       const t = maintenant - depart
       if (t < CONTACT_POIGNARD) {
-        // Il accélère jusqu'au contact ; la queue part du début de l'arc.
+        // Il accélère jusqu'au contact ; la queue part de son départ.
         const p = (t / CONTACT_POIGNARD) ** 2
         dessiner(Math.max(0, p - 0.8), p, 1)
       } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD) {
@@ -1226,7 +1228,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
       if (enFleche) fleche(x, y, k, couleur, anglePique)
-      else poignard(x, y, k, couleur, anglePique, coteDuPoignard)
+      else poignard(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
