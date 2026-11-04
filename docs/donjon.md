@@ -844,9 +844,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   ESTOC (`lance`) : un trait de lumière long (6,5 rem) et fin, une HAMPE qui
   s'élargit en une TÊTE EN FEUILLE pointue (0,84 rem au plus large), qui
   jaillit du bas — de celui qui tient la lance —, penché de 18° d'un côté
-  puis de l'autre (±12°) ; il perce le point (60 ms), s'y enfonce d'un cran
-  (50 ms), puis SE RETIRE aussitôt en s'effaçant (120 ms) : la lance ne
-  reste pas plantée, à la différence de la flèche et de la dague. Les
+  puis de l'autre (±12°) ; il perce le point (60 ms), s'y enfonce d'un cran,
+  RESTE PLANTÉ le temps du poignard (180 ms) puis se résorbe comme lui, la
+  queue rattrapant la pointe (Keko : « la laisser plantée comme la dague,
+  ça marche bien avec les armes thrust » ; il se retirait aussitôt). Les
   étincelles TRAVERSENT l'ennemi, dans le sens du coup (celles de la dague
   et de la flèche jaillissent vers le tireur) ; l'anneau qui se referme et
   l'ennemi poussé dans l'axe sont ceux des autres estocs. Le critique

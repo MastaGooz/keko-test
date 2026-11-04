@@ -766,10 +766,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // entre-temps), se résorbe en 110.
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
-  // Le coup de lance : il perce à 60 ms, appuie 50 ms, se retire en 120.
+  // Le coup de lance : il perce à 60 ms, reste fiché le temps du poignard,
+  // se résorbe comme lui.
   const CONTACT_LANCE = 60
-  const TENUE_LANCE = 50
-  const RETRAIT_LANCE = 120
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
@@ -1000,10 +999,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * LE COUP DE LANCE (Keko : « on essaie la lance maintenant ? ») : un ESTOC
    * — un trait de lumière long et fin, une hampe qui s'élargit en une tête
    * en feuille, pointue, qui jaillit du bas (de celui qui tient la lance),
-   * perce le point, s'y enfonce d'un cran, puis SE RETIRE aussitôt en
-   * s'effaçant : la lance ne reste pas plantée, à la différence de la flèche
-   * et de la dague. Les étincelles traversent l'ennemi, dans le sens du
-   * coup. Un coup sur deux penché de l'autre côté. Le critique l'épaissit
+   * perce le point, s'y enfonce d'un cran, RESTE PLANTÉE comme la dague,
+   * puis se résorbe dans le point (Keko : « la laisser plantée comme la
+   * dague, ça marche bien avec les armes thrust » ; elle se retirait
+   * aussitôt). Les étincelles traversent l'ennemi, dans le sens du coup. Un coup sur deux penché de l'autre côté. Le critique l'épaissit
    * comme celui de la dague.
    */
   let coteDeLaLance = 1
@@ -1019,15 +1018,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // Elle jaillit en accélérant, hampe comprise.
         const p = (t / CONTACT_LANCE) ** 2
         dessiner(Math.max(0, p - 0.95), p, 1)
-      } else if (t < CONTACT_LANCE + TENUE_LANCE) {
-        // Elle perce : la pointe s'enfonce d'un cran, le trait gonfle.
+      } else if (t < CONTACT_LANCE + TENUE_POIGNARD) {
+        // Elle perce : la pointe s'enfonce d'un cran, le trait gonfle et se
+        // rassied, puis elle reste plantée.
         const ms = t - CONTACT_LANCE
-        dessiner(0.05, 1 + 0.08 * Math.min(1, ms / 25), 1 + 0.25 * Math.max(0, 1 - ms / TENUE_LANCE))
-      } else if (t < CONTACT_LANCE + TENUE_LANCE + RETRAIT_LANCE) {
-        // Elle se retire : la tête recule vers la hampe, et s'efface.
-        const q = (t - CONTACT_LANCE - TENUE_LANCE) / RETRAIT_LANCE
-        dessiner(0.05, 1.08 - 0.55 * q * q, 1 - 0.3 * q)
-        trace.style.opacity = `${1 - q}`
+        dessiner(0.05, 1 + 0.08 * Math.min(1, ms / 25), 1 + 0.25 * Math.max(0, 1 - ms / 60))
+      } else if (t < CONTACT_LANCE + TENUE_POIGNARD + VIDANGE_POIGNARD) {
+        // Elle se résorbe dans le point : la queue rattrape la pointe.
+        const q = (t - CONTACT_LANCE - TENUE_POIGNARD) / VIDANGE_POIGNARD
+        dessiner(0.05 + 0.98 * q * q, 1.08, 1 - 0.4 * q)
       } else {
         trace.remove()
         return
