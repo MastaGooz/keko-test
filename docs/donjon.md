@@ -660,6 +660,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   la ligne des capacités (icône, nom, effet). Du tri de Keko
   (`images-alpha`, 256 carré, `public/passifs/`) : Riposte n° 111 (le
   bouclier qui pare), Points faibles n° 138 (l'œil), Runes n° 141 (les cristaux).
+- **À MAINS NUES** (Keko, 04/11 : « permettre de déséquiper l'arme pour
+  être à mains nues, sans capacité ») : `Equipement` = une arme ou
+  `'mains'` (`EQUIPEMENTS`) ; `armes.mains` a la moitié des dégâts de
+  l'épée, la même recharge, ni bonus, ni capacité (`capacites: []`), et
+  pas de passif (`passifDe` rend null, aucun événement). Sur la fiche de
+  l'arme portée, « Équipée » est devenu « Déséquiper » (en ardoise) ;
+  l'emplacement vide dit « Mains nues », les deux boutons de capacité
+  s'en vont. Reprendre une arme met ses capacités en recharge, comme tout
+  changement. Les chiffres sont de moi, à rejuger.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

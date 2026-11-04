@@ -446,7 +446,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const imageArme = el('img', 'donjon-emplacement-image')
   imageArme.alt = ''
   imageArme.draggable = false
-  emplacement.append(imageArme)
+  // À mains nues, l'emplacement est vide et le dit.
+  const sansArme = el('span', 'donjon-emplacement-vide', 'Mains nues')
+  emplacement.append(imageArme, sansArme)
   let armeVue = ''
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
@@ -618,16 +620,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   })
   const cases = Math.max(GRILLE.casesMin, Math.ceil(inventaire.length / GRILLE.colonnes) * GRILLE.colonnes)
   for (let k = inventaire.length; k < cases; k++) grille.append(el('div', 'donjon-case-vide'))
-  /** La place portée suit l'arme du joueur, si elle a changé ailleurs (une sauvegarde, un réglage). */
+  /** La place portée suit l'arme du joueur, si elle a changé ailleurs (une sauvegarde, un réglage) ; -1 à mains nues. */
   function placePortee(): number {
     const arme = moi().arme
+    if (arme === 'mains') return -1
     if (inventaire[portee]?.arme !== arme) portee = Math.max(0, inventaire.findIndex((p) => p.arme === arme))
     return portee
   }
+  // « Équiper » l'arme choisie ; sur l'arme portée, « Déséquiper » (Keko :
+  // « déséquiper l'arme pour être à mains nues, sans capacité »).
   equiper.addEventListener('click', () => {
-    if (choisie === placePortee()) return
-    const { arme } = inventaire[choisie]
-    portee = choisie
+    const quitter = choisie === placePortee()
+    const arme = quitter ? 'mains' : inventaire[choisie].arme
+    if (!quitter) portee = choisie
     void partage.agir({ joueur: MOI, t: maintenant(), type: 'equiper', arme }).then(() => {
       sauver()
       dessiner()
@@ -707,8 +712,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       lignes.push(ligne)
     }
     ficheLignes.replaceChildren(...lignes)
-    equiper.textContent = estPortee ? 'Équipée' : 'Équiper'
-    equiper.disabled = estPortee
+    equiper.textContent = estPortee ? 'Déséquiper' : 'Équiper'
+    equiper.classList.toggle('quitter', estPortee)
     for (const [k, b] of casesArme.entries()) {
       b.classList.toggle('portee', k === ici)
       b.classList.toggle('choisie', k === choisie)
@@ -925,7 +930,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const voulues = new Set<string>()
     if (ouvert && ev !== null) {
       const { x0, y0, l, h } = cadreDuDessin()
-      const reste = Math.max(0, Math.min(1, (ev.fin - t) / passifDe(C, j).duree))
+      const reste = Math.max(0, Math.min(1, (ev.fin - t) / (passifDe(C, j)?.duree ?? 1)))
       const etape = etapeDuPassif(j, ev.k)
       ev.cibles.forEach((c, i) => {
         // La Riposte n'a qu'un signal au-dessus de la tête ; les runes déjà touchées restent allumées.
@@ -965,6 +970,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const t = maintenant()
     const avant = moi()
     const p = passifDe(C, avant)
+    if (p === null) return
     const etape = etapeDuPassif(avant, k)
     const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
     const attendu = degatsDuTap(C, avant) * p.coup * mult * (1 + bonusDEffetsA(C, avant, t))
@@ -1249,13 +1255,25 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const place = placePortee()
     if (armeVue !== `${j.arme}:${place}`) {
       armeVue = `${j.arme}:${place}`
-      imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
-      for (const [i, cle] of capacitesDe(C, j).entries()) {
-        boutonsCapacite[i].image.src = url(IMAGE_DE_LA_CAPACITE[cle])
-        boutonsCapacite[i].b.setAttribute('aria-label', C.capacites[cle].nom)
+      const capacites = capacitesDe(C, j)
+      for (const [i, { b, image }] of boutonsCapacite.entries()) {
+        const cle = capacites[i]
+        // À mains nues, pas de capacité : leurs boutons s'en vont.
+        b.hidden = cle === undefined
+        if (cle === undefined) continue
+        image.src = url(IMAGE_DE_LA_CAPACITE[cle])
+        b.setAttribute('aria-label', C.capacites[cle].nom)
       }
-      emplacement.style.setProperty('--rarete', RARETE[inventaire[place].rarete].couleur)
-      emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}, ${RARETE[inventaire[place].rarete].nom.toLowerCase()}`)
+      emplacement.classList.toggle('vide', j.arme === 'mains')
+      if (j.arme === 'mains') {
+        imageArme.removeAttribute('src')
+        emplacement.style.removeProperty('--rarete')
+        emplacement.setAttribute('aria-label', 'Arme : mains nues')
+      } else {
+        imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
+        emplacement.style.setProperty('--rarete', RARETE[inventaire[place].rarete].couleur)
+        emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}, ${RARETE[inventaire[place].rarete].nom.toLowerCase()}`)
+      }
     }
     if (ouverte !== null) dessinerLaFeuille(ouverte)
   }
@@ -1281,9 +1299,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
     if (f === 'armes') {
       if (cleDeLaFeuille !== 'armes') {
-        // À l'ouverture, la fiche montre l'arme portée.
+        // À l'ouverture, la fiche montre l'arme portée (à mains nues, la dernière portée).
         cleDeLaFeuille = 'armes'
-        choisie = placePortee()
+        const ici = placePortee()
+        choisie = ici >= 0 ? ici : portee
         cleDeLaFiche = ''
         feuilleCorps.replaceChildren(armurerie)
       }

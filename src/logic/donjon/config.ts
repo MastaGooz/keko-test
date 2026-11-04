@@ -32,6 +32,12 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton']
 /**
+ * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
+ * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
+ */
+export type Equipement = TypeArme | 'mains'
+export const EQUIPEMENTS: readonly Equipement[] = ['mains', ...ARMES]
+/**
  * LES CAPACITÉS : deux boutons de chaque côté de l'attaque, pris dans un pool
  * selon l'arme (Keko : « plus puissantes, un temps de recharge plus long que
  * l'attaque — pas un truc qu'on spamme — ou un déclenchement conditionnel »).
@@ -151,15 +157,17 @@ export const DONJON = {
    * recharge (l'auto suit, à `auto.depart` recharges), un petit bonus. Le DPS
    * de base est le même (40 avant critiques) ; le bonus fait la différence.
    * Épée équilibrée (Récupération +20 %), dague rapide (+5 points de chance
-   * de critique), bâton lent (+50 % de dégâts critiques).
+   * de critique), bâton lent (+50 % de dégâts critiques). À MAINS NUES, la
+   * moitié des dégâts de l'épée, sans bonus ni capacité (chiffres de moi).
    */
   armes: {
+    mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2, capacites: ['frappeLourde', 'briseGarde'] },
     dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0, capacites: ['lamesOmbre', 'furie'] },
     baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0, capacites: ['bouleDeFeu', 'meditation'] },
   } as Record<
-    TypeArme,
-    { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: [CleCapacite, CleCapacite] }
+    Equipement,
+    { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }
   >,
 
   /**

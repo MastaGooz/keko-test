@@ -7,7 +7,7 @@
  */
 import type { EtatDesBots } from '../../logic/donjon/bots.ts'
 import type { Horloge } from '../../logic/donjon/horloge.ts'
-import { AMELIORATIONS, ARMES, DONJON } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, DONJON, EQUIPEMENTS } from '../../logic/donjon/config.ts'
 import type { EtatDonjon, Joueur } from '../../logic/donjon/types.ts'
 
 const CLE = 'keko-donjon'
@@ -70,7 +70,7 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
       }
       for (const quoi of AMELIORATIONS) if (typeof j.ameliorations[quoi] !== 'number') j.ameliorations[quoi] = 0
       delete vieux.offre
-      if (!ARMES.includes(j.arme)) j.arme = PROFILS.find((p) => p.id === j.id)?.arme ?? 'epee'
+      if (!EQUIPEMENTS.includes(j.arme)) j.arme = PROFILS.find((p) => p.id === j.id)?.arme ?? 'epee'
     }
     return s as SauvegardeDonjon
   } catch {

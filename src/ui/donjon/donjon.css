@@ -729,6 +729,29 @@
   pointer-events: none;
 }
 
+/* À mains nues : l'emplacement vide, son nom à la place de l'arme. */
+.donjon-emplacement-vide {
+  display: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.05;
+  text-align: center;
+  color: #c9cdd3;
+  pointer-events: none;
+}
+
+.donjon-emplacement.vide .donjon-emplacement-vide {
+  display: block;
+}
+
+.donjon-emplacement.vide .donjon-emplacement-image {
+  display: none;
+}
+
+.donjon .donjon-capacite[hidden] {
+  display: none;
+}
+
 /* L'armurerie : la fiche de l'arme choisie, puis la grille des armes. */
 .donjon-armes {
   display: flex;
@@ -868,10 +891,13 @@
   color: var(--d-encre) !important;
 }
 
-.donjon .donjon-equiper:disabled {
-  background: rgba(61, 39, 22, 0.15);
-  box-shadow: none;
-  color: rgba(61, 39, 22, 0.55) !important;
+/* Sur l'arme portée : « Déséquiper », en ardoise, l'or reste à « Équiper ». */
+.donjon .donjon-equiper.quitter {
+  background: radial-gradient(circle at 38% 28%, #767b83, #4b4f56 55%, #2e3136);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.3);
+  color: #eef0f3 !important;
 }
 
 .donjon-grille-armes {

@@ -116,7 +116,7 @@ export async function jouerLesBots(
       // (une fonction de l'événement : il ne retente pas un raté).
       const ev = evenementA(config, etat.saison.seed, etat.saison.debut, moi, t)
       if (ev !== null && passifOuvert(config, moi, ev) && reussit(profil, ev.k)) {
-        for (let cible = 0; cible < passifDe(config, moi).cibles; cible++) etat = await partage.agir({ joueur: profil.id, t, type: 'toucher', evenement: ev.k, cible })
+        for (let cible = 0; cible < (passifDe(config, moi)?.cibles ?? 0); cible++) etat = await partage.agir({ joueur: profil.id, t, type: 'toucher', evenement: ev.k, cible })
       }
     }
     const restants = (b.restants ?? 0) - 1
