@@ -729,15 +729,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   être le mieux », puis « un effet de slash avec la partie avant arrondie,
   en mode coup de club ; on laisse les runes de côté, on utilisera ça
   ailleurs ») : l'épée tranche, la dague plante, le bâton COGNE. Un trait de
-  lumière sur un arc large (`massue`, `.donjon-course` comme le poignard :
-  100° d'un arc de 6,5 rem, 1,1 rem au plus épais), effilé à la queue, qui
-  S'ÉPAISSIT vers l'avant et finit en TÊTE RONDE (un demi-cercle qui bombe
-  dans le sens de la course) : il accélère, cogne le point (85 ms), la tête
-  s'écrase et gonfle (40 ms), puis il s'efface, la queue rattrapant la tête
-  (140 ms). Il frappe l'ennemi EN SON CENTRE (le milieu du dessin, à 45 %
-  de sa hauteur), pas au point du coup comme les lames (Keko : « pas comme
-  la dague ») ; le chiffre reste au point du coup. Il tombe de côté en diagonale (30° de la verticale, ±15°), un
-  coup sur deux de l'autre côté. Au contact, une onde APLATIE s'étale comme
+  lumière qui BALAIE un arc large À TRAVERS l'ennemi (`massue`,
+  `.donjon-course` comme le poignard : 100° d'un arc de 6,5 rem, 1,1 rem au
+  plus épais), effilé à la queue, qui S'ÉPAISSIT vers l'avant et finit en
+  TÊTE RONDE (un demi-cercle qui bombe dans le sens de la course). C'EST
+  L'ARC QUI TAPE, pas son bout (Keko : « c'est toujours l'extrémité du slash
+  qui tape, comme s'il se plantait ; un slash club, c'est l'arc qui tape ») :
+  le milieu de l'arc passe sur le CENTRE de l'ennemi (le milieu du dessin, à
+  45 % de sa hauteur, pas le point du coup comme les lames — Keko : « pas
+  comme la dague » ; le chiffre reste au point du coup), la tête y passe à
+  85 ms et le trait gonfle au passage (le choc), continue de l'autre côté
+  (170 ms en tout), puis s'efface, la queue rattrapant la tête (140 ms).
+  L'arc bombe vers le haut, penché au hasard (±20°), un coup sur deux dans
+  l'autre sens. Au contact, une onde APLATIE s'étale comme
   un choc au sol (`ondeAplatie`) ; les étincelles sont des POINTS DE
   LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;
   l'ennemi est TASSÉ vers le bas puis se relève, figé un instant comme sous

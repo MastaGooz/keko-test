@@ -738,11 +738,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const TENUE_POIGNARD = 60
   const VIDANGE_POIGNARD = 110
   const BALAYAGE_POIGNARD = 55
-  // Le coup de massue du bâton : il cogne à 85 ms, s'écrase 40 ms, s'efface
-  // en 140 ; son arc est plus ample que celui du poignard. `&rune` lui rend
-  // le cercle de rune, rangé pour ailleurs.
+  // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
+  // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
+  // rangé pour ailleurs.
   const CONTACT_BATON = 85
-  const TENUE_MASSUE = 40
   const VIDANGE_MASSUE = 140
   const BALAYAGE_MASSUE = 100
   const RUNE = parametres.has('rune')
@@ -970,22 +969,27 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * LE COUP DE BÂTON, EN MASSUE (Keko : « un effet de slash avec la partie
-   * avant arrondie, en mode coup de club ») : un TRAIT DE LUMIÈRE sur un arc
-   * large, comme le poignard mais plus ample et plus épais, effilé à la
-   * queue, qui s'ÉPAISSIT vers l'avant et finit en TÊTE RONDE. Il accélère,
-   * cogne le point (la tête s'écrase et gonfle), puis s'efface, la queue
-   * rattrapant la tête. Il tombe de côté en diagonale, un coup sur deux de
-   * l'autre côté. Redessiné à chaque image, comme le poignard. Le critique
-   * est 1,4 fois plus gros.
+   * avant arrondie, en mode coup de club » — puis « c'est toujours
+   * l'extrémité du slash qui tape, comme s'il se plantait ; un slash club,
+   * c'est l'arc qui tape ») : un TRAIT DE LUMIÈRE qui BALAIE un arc large À
+   * TRAVERS l'ennemi, comme l'entaille de l'épée — le milieu de l'arc passe
+   * sur le point touché —, effilé à la queue, qui s'ÉPAISSIT vers l'avant et
+   * finit en TÊTE RONDE. Le trait gonfle quand la tête passe au point (le
+   * choc), continue sa course de l'autre côté, puis s'efface, la queue
+   * rattrapant la tête. L'arc bombe vers le haut, penché au hasard (`penche`),
+   * un coup sur deux dans l'autre sens. Redessiné à chaque image, comme le
+   * poignard. Le critique est 1,4 fois plus gros.
    */
   let coteDeLaMassue = 1
-  function massue(x: number, y: number, k: number, couleur: string, finale: number, cote: number): void {
+  function massue(x: number, y: number, k: number, couleur: string, penche: number, cote: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const rayon = 6.5 * rem * k
     const largeur = 0.55 * rem * k
-    const fin = finale - cote * 90
-    const debut = fin - cote * BALAYAGE_MASSUE
-    const a = (fin * Math.PI) / 180
+    // Le milieu de l'arc sur le point, son centre en dessous : l'arc bombe vers le haut.
+    const milieu = -90 + penche
+    const debut = milieu - (cote * BALAYAGE_MASSUE) / 2
+    const fin = milieu + (cote * BALAYAGE_MASSUE) / 2
+    const a = (milieu * Math.PI) / 180
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
@@ -999,9 +1003,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     trace.append(forme)
     scene.append(trace)
     const point = (t: number, r: number) => `${(Math.cos(t) * r).toFixed(1)} ${(Math.sin(t) * r).toFixed(1)}`
-    // Le trait entre `queue` et `tete` (0 = départ de l'arc, 1 = le point
-    // touché) : effilé à la queue, plein aux trois quarts, fermé devant par un
-    // demi-cercle qui bombe dans le sens de la course.
+    // Le trait entre `queue` et `tete` (0 = départ de l'arc, ½ = le point
+    // touché, 1 = sa fin) : effilé à la queue, plein aux trois quarts, fermé
+    // devant par un demi-cercle qui bombe dans le sens de la course.
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
       const dehors: string[] = []
@@ -1018,20 +1022,18 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       forme.setAttribute('d', `M${dehors.join(' L')} A${h.toFixed(1)} ${h.toFixed(1)} 0 0 ${cote > 0 ? 1 : 0} ${bout} L${dedans.reverse().join(' L')}Z`)
     }
     const depart = performance.now()
+    const course = 2 * CONTACT_BATON
     const image = (maintenant: number) => {
       const t = maintenant - depart
-      if (t < CONTACT_BATON) {
-        // Il accélère jusqu'au contact.
-        const p = (t / CONTACT_BATON) ** 2
-        dessiner(Math.max(0, p - 0.85), p, 0.8 + 0.2 * p)
-      } else if (t < CONTACT_BATON + TENUE_MASSUE) {
-        // Le choc : la tête s'écrase et gonfle, puis se rassied.
-        const q = (t - CONTACT_BATON) / TENUE_MASSUE
-        dessiner(0.15, 1, 1 + 0.35 * (1 - q))
-      } else if (t < CONTACT_BATON + TENUE_MASSUE + VIDANGE_MASSUE) {
+      if (t < course) {
+        // La tête balaie l'arc ; le trait gonfle quand elle passe au point.
+        const p = t / course
+        const choc = Math.exp(-(((t - CONTACT_BATON) / 28) ** 2))
+        dessiner(Math.max(0, p - 0.6), p, 0.85 + 0.15 * p + 0.35 * choc)
+      } else if (t < course + VIDANGE_MASSUE) {
         // La queue rattrape la tête, et le trait s'efface.
-        const q = (t - CONTACT_BATON - TENUE_MASSUE) / VIDANGE_MASSUE
-        dessiner(0.15 + 0.8 * q * q, 1, 1 - 0.3 * q)
+        const q = (t - course) / VIDANGE_MASSUE
+        dessiner(0.4 + 0.6 * q, 1, 1 - 0.3 * q)
         trace.style.opacity = `${1 - q * q}`
       } else {
         trace.remove()
@@ -1132,10 +1134,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const anglePique = FLECHE ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
     const contact = pique ? (FLECHE ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : 0
     if (masse) {
-      // La massue tombe de côté en diagonale, un coup sur deux de l'autre.
+      // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
+      // deux dans l'autre sens.
       const k = 1 + 0.65 * (fort - 1)
       coteDeLaMassue = -coteDeLaMassue
-      massue(x, y, k, couleur, 90 - coteDeLaMassue * 30 + (Math.random() - 0.5) * 30, coteDeLaMassue)
+      massue(x, y, k, couleur, (Math.random() - 0.5) * 40, coteDeLaMassue)
       ondeAplatie(x, y, k, couleur, contact)
       if (RUNE) cercleDeRune(x, y, k, couleur, contact)
       // La scène est tassée d'un cran vers le bas (le critique a sa secousse).
