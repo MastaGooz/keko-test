@@ -1248,14 +1248,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (lourde) {
-      // Une fois sur deux au hasard, elle FAUCHE À PLAT, de gauche à droite
-      // ou de droite à gauche (Keko : « elles tapent uniquement
-      // verticalement, on peut permettre des frappes horizontales ? ») ;
-      // sinon elle fend de haut en bas, penchée d'un côté puis de l'autre. Le
-      // croissant bombe du côté d'où vient la lame.
+      // UN ANGLE CONTINU, de la fauche à plat à la fente de haut en bas, tiré
+      // au hasard (Keko : « elles tapent uniquement verticalement », puis
+      // « ça fait trop vertical ou horizontal, il faudrait un angle
+      // continu ») : un coup sur deux elle vient de la gauche (0° à 90°), un
+      // coup sur deux de la droite (180° à 90°). Le croissant bombe du côté
+      // d'où vient la lame. Près de la verticale (à 25° près), l'ennemi est
+      // tassé ; sinon, poussé dans le sens de la lame.
       sensDeLaLame = -sensDeLaLame
-      aPlat = Math.random() < 0.5
-      const angle = aPlat ? (sensDeLaLame > 0 ? 0 : 180) + (Math.random() - 0.5) * 30 : 90 + sensDeLaLame * 14 + (Math.random() - 0.5) * 20
+      const ouverture = Math.random() * 90
+      const angle = sensDeLaLame > 0 ? ouverture : 180 - ouverture
+      aPlat = ouverture < 65
       entaille(x, y, fort, couleur, angle, 1, 0, true, sensDeLaLame, droite)
       angleLourd = angle
       // La scène est enfoncée dans le sens du coup, plus fort que sous l'épée
