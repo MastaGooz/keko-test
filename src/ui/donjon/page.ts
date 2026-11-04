@@ -852,14 +852,70 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => n.remove()
   }
 
+  /**
+   * L'ESTOC DE LA DAGUE (Keko : « un coup pas en slash, plutôt planté ») : une
+   * lame fine et pointue qui file vers le point touché et s'y FICHE — elle
+   * arrive en accélérant, s'arrête net, s'enfonce d'un cran, reste plantée un
+   * instant puis se retire. Au contact, un anneau qui se REFERME sur le point
+   * (celui du poing s'ouvre : l'estoc entre). Elle monte du bas, penchée au
+   * hasard ; le critique plante une lame 1,4 fois plus grosse, comme l'épée.
+   * Courte (230 ms) : la dague frappe toutes les 0,175 s.
+   */
+  function estoc(x: number, y: number, fort: number, couleur: string, angle: number): void {
+    const n = el('div', 'donjon-estoc')
+    n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 L72 -3.4 L100 0 L72 3.4Z"/></svg>'
+    // La pointe sur le point touché : la boîte finit au point, on tourne autour.
+    n.style.left = `${x}px`
+    n.style.top = `${y}px`
+    n.style.color = couleur
+    const k = 1 + 0.65 * (fort - 1)
+    const pose = (avance: string, etire: number) => `translate(-100%, -50%) rotate(${angle}deg) translateX(${avance}) scale(${k * etire}, ${k})`
+    scene.append(n)
+    n.animate(
+      [
+        { transform: pose('-3.5rem', 1.35), opacity: 0.6, easing: 'cubic-bezier(0.5, 0, 1, 1)' },
+        { transform: pose('0rem', 1.1), opacity: 1, offset: 0.24, easing: 'ease-out' },
+        { transform: pose('0.35rem', 1), opacity: 1, offset: 0.34 },
+        { transform: pose('0.35rem', 1), opacity: 1, offset: 0.66, easing: 'ease-in' },
+        { transform: pose('-1.6rem', 0.9), opacity: 0 },
+      ],
+      { duration: 230 },
+    ).onfinish = () => n.remove()
+    // L'anneau qui se referme, au moment où la pointe entre.
+    const o = el('div', 'donjon-onde')
+    o.style.left = `${x}px`
+    o.style.top = `${y}px`
+    o.style.color = couleur
+    scene.append(o)
+    o.animate(
+      [
+        { transform: `translate(-50%, -50%) scale(${0.55 * k})`, opacity: 0, borderWidth: '0.08rem', easing: 'ease-in' },
+        { transform: `translate(-50%, -50%) scale(${0.45 * k})`, opacity: 0.9, borderWidth: '0.12rem', offset: 0.2, easing: 'cubic-bezier(0.4, 0, 1, 1)' },
+        { transform: 'translate(-50%, -50%) scale(0.05)', opacity: 0.2, borderWidth: '0.5rem' },
+      ],
+      { duration: 170, delay: 45, fill: 'backwards' },
+    ).onfinish = () => o.remove()
+  }
+
   function impact(x: number, y: number, genre: Genre, couleur: string): void {
     const fort = STYLES[genre].onde
-    // L'attaque et l'auto de l'épée tranchent ; le reste (mains nues, autres
-    // armes, capacités, passifs) frappe d'une onde ronde.
-    const lame = moi().arme === 'epee' && !genre.startsWith('capacite')
+    // L'attaque et l'auto de l'épée tranchent, celles de la dague piquent ; le
+    // reste (mains nues, bâton, capacités) frappe d'une onde ronde.
+    const arme = genre.startsWith('capacite') ? null : moi().arme
+    const lame = arme === 'epee'
+    const pique = arme === 'dague'
     // Le hasard de l'écran, pas celui des règles.
     const angleLame = -30 + (Math.random() - 0.5) * 40
-    if (lame) {
+    // L'estoc monte du bas (on frappe d'en dessous), penché d'un côté ou de l'autre.
+    const anglePique = -90 + (Math.random() - 0.5) * 70
+    if (pique) {
+      estoc(x, y, fort, couleur, anglePique)
+      // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        const a = (anglePique * Math.PI) / 180
+        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: 50, easing: 'ease-out' })
+      }
+    } else if (lame) {
       sensDeLaLame = -sensDeLaLame
       entaille(x, y, fort, couleur, angleLame * sensDeLaLame, sensDeLaLame, 0)
       // La scène bouge d'un cran dans le sens de la lame (le critique a sa secousse).
@@ -873,30 +929,36 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
 
     const combien = STYLES[genre].particules + (lame ? 4 : 0)
+    const trait = lame || pique
     for (let i = 0; i < combien; i++) {
-      const p = el('div', lame ? 'donjon-particule trait' : 'donjon-particule')
+      const p = el('div', trait ? 'donjon-particule trait' : 'donjon-particule')
       p.style.left = `${x}px`
       p.style.top = `${y}px`
       p.style.background = couleur
       scene.append(p)
       // Le hasard de l'écran, pas celui des règles. Sous la lame, les
-      // étincelles filent le long de l'entaille, des deux côtés.
+      // étincelles filent le long de l'entaille, des deux côtés ; sous l'estoc,
+      // elles jaillissent de la plaie, en gerbe serrée vers celui qui frappe.
       const angle = lame
         ? ((angleLame * sensDeLaLame + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
-        : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
-      const loin = (28 + Math.random() * 34) * fort * (lame ? 1.7 : 1)
+        : pique
+          ? ((anglePique + 180 + (Math.random() - 0.5) * 80) * Math.PI) / 180
+          : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
+      const loin = (28 + Math.random() * 34) * fort * (lame ? 1.7 : pique ? 1.2 : 1)
       const dx = Math.cos(angle) * loin
       const dy = Math.sin(angle) * loin
-      // Les traits filent droit, couchés sur leur course, et vite.
-      if (lame) {
+      // Les traits filent droit, couchés sur leur course, et vite ; ceux de
+      // l'estoc partent quand la pointe entre.
+      if (trait) {
         const r = `rotate(${angle}rad)`
+        if (pique) p.style.opacity = '0'
         p.animate(
           [
             { transform: `translate(-50%, -50%) ${r} scaleX(1.6)`, opacity: 1 },
             { transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) ${r} scaleX(1)`, opacity: 1, offset: 0.5 },
             { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 6}px)) ${r} scaleX(0.2)`, opacity: 0 },
           ],
-          { duration: 260 + Math.random() * 140, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+          { duration: 260 + Math.random() * 140, delay: pique ? 50 : 0, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
         ).onfinish = () => p.remove()
         continue
       }
@@ -909,7 +971,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
       ).onfinish = () => p.remove()
     }
-    reculer(x, genre, lame)
+    reculer(x, genre, lame || pique, pique ? (anglePique * Math.PI) / 180 : undefined)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
@@ -929,21 +991,28 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => onde.remove()
   }
 
-  function reculer(x: number, genre: Genre, arret = false): void {
+  function reculer(x: number, genre: Genre, arret = false, axe?: number): void {
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase. Sous la
     // lame, il se FIGE un instant dans sa pose touchée (l'arrêt sur coup).
+    // Sous l'estoc (`axe`, la direction du coup), il est POUSSÉ dans l'axe de
+    // la pointe et rapetisse, enfoncé, quand elle entre.
     const recul = (x < scene.clientWidth / 2 ? 1 : -1) * STYLES[genre].recul
     const blanc = STYLES[genre].blanc
-    const touche = { transform: `translateX(${recul}px) scale(1.06, 0.9) rotate(${recul * 0.3}deg)`, filter: `brightness(${blanc}) saturate(0.4)` }
+    const pousse = axe === undefined ? null : [Math.cos(axe) * STYLES[genre].recul * 0.7, Math.sin(axe) * STYLES[genre].recul * 0.7]
+    const touche = {
+      transform: pousse ? `translate(${pousse[0]}px, ${pousse[1]}px) scale(0.95)` : `translateX(${recul}px) scale(1.06, 0.9) rotate(${recul * 0.3}deg)`,
+      filter: `brightness(${blanc}) saturate(0.4)`,
+    }
+    const rebond = pousse ? `translate(${-pousse[0] * 0.25}px, ${-pousse[1] * 0.25}px) scale(1.01)` : `translateX(${-recul * 0.3}px) scale(0.98, 1.03)`
     portrait.animate(
       [
         { transform: 'none', filter: 'brightness(1)' },
         { ...touche, offset: arret ? 0.08 : 0.2 },
         ...(arret ? [{ ...touche, offset: 0.35 }] : []),
-        { transform: `translateX(${-recul * 0.3}px) scale(0.98, 1.03)`, filter: 'brightness(1.1)', offset: arret ? 0.65 : 0.55 },
+        { transform: rebond, filter: 'brightness(1.1)', offset: arret ? 0.65 : 0.55 },
         { transform: 'none', filter: 'brightness(1)' },
       ],
-      { duration: (STYLES[genre].critique ? 320 : 220) + (arret ? 70 : 0), easing: 'ease-out' },
+      { duration: (STYLES[genre].critique ? 320 : 220) + (arret ? 70 : 0), delay: pousse ? 50 : 0, easing: 'ease-out' },
     )
     if (STYLES[genre].secousse) {
       scene.animate(

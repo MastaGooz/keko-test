@@ -698,10 +698,22 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   les étincelles sont des traits qui filent ; l'ennemi se FIGE
   ~70 ms dans sa pose touchée (l'arrêt sur coup) ; la scène bouge de 4 px
   dans le sens de la lame. Les étincelles filent le long
-  de l'entaille. L'onde ronde reste aux mains nues, aux autres armes, aux
-  capacités et aux passifs (`impactRond`).
+  de l'entaille. L'onde ronde reste aux mains nues, au
+  bâton et aux capacités (`impactRond`).
   Un éclat à quatre branches cerné d'or claquait aussi au point touché :
   retiré (Keko : « l'étoile par-dessus le slash, ça fait trop »).
+- **L'ESTOC DE LA DAGUE** (Keko, 04/11 : « un coup pas en slash, plutôt
+  planté ») : l'attaque et l'auto de la dague plantent une lame fine et
+  pointue (`estoc`, `.donjon-estoc`, un SVG qui tourne autour de sa pointe
+  posée sur le point touché, la queue en fondu) qui monte du bas, penchée au
+  hasard (±35°) : elle arrive en accélérant, s'arrête net, s'enfonce d'un
+  cran, reste plantée un instant puis se retire — 230 ms, la dague frappe
+  toutes les 0,175 s. Au contact, un anneau qui SE REFERME sur le point
+  (celui du poing s'ouvre : l'estoc entre) ; les étincelles en traits
+  jaillissent de la plaie en gerbe serrée vers celui qui frappe ; l'ennemi
+  est POUSSÉ dans l'axe de la pointe et rapetisse, enfoncé, figé un instant
+  comme sous l'épée ; la scène est poussée de 3 px dans l'axe. Le critique
+  plante une lame 1,4 fois plus grosse, comme l'épée.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

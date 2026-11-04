@@ -240,6 +240,31 @@
   fill: #fffdf4;
 }
 
+/* L'estoc de la dague : une lame fine, pointe à droite, qui tourne autour de
+   sa pointe (posée sur le point touché) ; la queue s'efface en fondu. */
+.donjon-estoc {
+  position: absolute;
+  z-index: 2;
+  width: 6rem;
+  height: 0.8rem;
+  transform-origin: 100% 50%;
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.1rem currentColor) drop-shadow(0 0 0.45rem currentColor);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 55%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 55%);
+}
+
+.donjon-estoc svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.donjon-estoc path {
+  fill: #fffdf4;
+}
+
 /* Les particules : de petits éclats ronds qui s'éparpillent et retombent. */
 .donjon-particule {
   position: absolute;
