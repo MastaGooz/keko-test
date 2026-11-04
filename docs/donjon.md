@@ -709,7 +709,7 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'attaque et l'auto de la dague tracent un TRAIT DE LUMIÈRE, comme
   l'entaille de l'épée, sur une courbe — effilé à la queue, POINTU DEVANT
   (`poignard`, `.donjon-course`, un SVG redessiné à chaque image : un `d`
-  ne s'anime pas partout ; 80° d'un arc de 4,6 rem) : il accélère, touche
+  ne s'anime pas partout ; 80° d'un arc de 6 rem, 0,8 rem au plus large ; Keko : « un peu plus gros », il en faisait 4,6 et 0,6) : il accélère, touche
   (95 ms), s'enfonce d'un cran en se gonflant, reste fiché 60 ms, puis se
   résorbe dans le point, la queue rattrapant la pointe (110 ms) — la dague
   frappe toutes les 0,175 s. La courbe est celle d'un bras qui frappe

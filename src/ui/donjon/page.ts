@@ -904,8 +904,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function poignard(x: number, y: number, k: number, couleur: string, finale: number, cote: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // L'arc finit perpendiculaire au coup ; son centre (l'épaule) s'en déduit.
-    const rayon = 4.6 * rem * k
-    const largeur = 0.3 * rem * k
+    const rayon = 6 * rem * k
+    const largeur = 0.4 * rem * k
     const fin = finale - cote * 90
     const debut = fin - cote * BALAYAGE_POIGNARD
     const a = (fin * Math.PI) / 180
