@@ -847,8 +847,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   puis de l'autre (±12°) ; il perce le point (60 ms), s'y enfonce d'un cran,
   RESTE PLANTÉ 260 ms, plus que le poignard (Keko : « la laisser plantée
   comme la dague, ça marche bien avec les armes thrust », puis « un peu
-  plus longtemps » ; il se retirait aussitôt, puis restait 180 ms), puis se
-  résorbe comme lui, la queue rattrapant la pointe. Les
+  plus longtemps » ; il se retirait aussitôt, puis restait 180 ms), puis
+  S'EFFACE TEL QUEL en 90 ms (Keko : « plutôt que la réduire en taille pour
+  disparaître, la fade telle quelle rapidement » ; il se résorbait comme le
+  poignard, la queue rattrapant la pointe). Les
   étincelles TRAVERSENT l'ennemi, dans le sens du coup (celles de la dague
   et de la flèche jaillissent vers le tireur) ; l'anneau qui se referme et
   l'ennemi poussé dans l'axe sont ceux des autres estocs. Le critique

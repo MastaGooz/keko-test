@@ -767,9 +767,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
   // Le coup de lance : il perce à 60 ms, reste fiché 260 ms (plus que le
-  // poignard ; Keko : « un peu plus longtemps »), se résorbe comme lui.
+  // poignard ; Keko : « un peu plus longtemps »), s'efface sur place en 90.
   const CONTACT_LANCE = 60
   const TENUE_LANCE = 260
+  const FONDU_LANCE = 90
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
@@ -1001,7 +1002,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * — un trait de lumière long et fin, une hampe qui s'élargit en une tête
    * en feuille, pointue, qui jaillit du bas (de celui qui tient la lance),
    * perce le point, s'y enfonce d'un cran, RESTE PLANTÉE comme la dague,
-   * puis se résorbe dans le point (Keko : « la laisser plantée comme la
+   * puis s'efface telle quelle, vite (Keko : « la laisser plantée comme la
    * dague, ça marche bien avec les armes thrust » ; elle se retirait
    * aussitôt). Les étincelles traversent l'ennemi, dans le sens du coup. Un coup sur deux penché de l'autre côté. Le critique l'épaissit
    * comme celui de la dague.
@@ -1024,10 +1025,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // rassied, puis elle reste plantée.
         const ms = t - CONTACT_LANCE
         dessiner(0.05, 1 + 0.08 * Math.min(1, ms / 25), 1 + 0.25 * Math.max(0, 1 - ms / 60))
-      } else if (t < CONTACT_LANCE + TENUE_LANCE + VIDANGE_POIGNARD) {
-        // Elle se résorbe dans le point : la queue rattrape la pointe.
-        const q = (t - CONTACT_LANCE - TENUE_LANCE) / VIDANGE_POIGNARD
-        dessiner(0.05 + 0.98 * q * q, 1.08, 1 - 0.4 * q)
+      } else if (t < CONTACT_LANCE + TENUE_LANCE + FONDU_LANCE) {
+        // Elle s'efface TELLE QUELLE, vite (Keko : « plutôt que la réduire en
+        // taille pour disparaître, la fade telle quelle rapidement »).
+        const q = (t - CONTACT_LANCE - TENUE_LANCE) / FONDU_LANCE
+        dessiner(0.05, 1.08, 1)
+        trace.style.opacity = `${1 - q}`
       } else {
         trace.remove()
         return
