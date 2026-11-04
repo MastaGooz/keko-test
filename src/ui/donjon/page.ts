@@ -759,9 +759,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // flèche droite, son premier essai, est celle de l'ARC — `&fleche` la rend
   // aussi à la dague.
   const FLECHE = parametres.has('fleche')
-  // Le coup de poignard : il touche à 95 ms, reste fiché 60 ms, se résorbe en 110.
+  // Le coup de poignard : il touche à 95 ms, reste fiché 260 ms (comme la
+  // flèche ; Keko : « laisser un peu la dague plantée »), se résorbe en 110.
   const CONTACT_POIGNARD = 95
-  const TENUE_POIGNARD = 60
+  const TENUE_POIGNARD = 260
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
@@ -1009,9 +1010,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const p = (t / CONTACT_POIGNARD) ** 2
         dessiner(Math.max(0, p - 0.8), p, 1)
       } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD) {
-        // Fiché : la pointe s'enfonce d'un cran, le trait se gonfle et se rassied.
-        const q = (t - CONTACT_POIGNARD) / TENUE_POIGNARD
-        dessiner(0.2, 1 + 0.06 * Math.min(1, q * 3), 1 + 0.3 * (1 - q))
+        // Fiché : la pointe s'enfonce d'un cran (20 ms), le trait se gonfle et
+        // se rassied (60 ms), puis reste planté.
+        const ms = t - CONTACT_POIGNARD
+        dessiner(0.2, 1 + 0.06 * Math.min(1, ms / 20), 1 + 0.3 * Math.max(0, 1 - ms / 60))
       } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD + VIDANGE_POIGNARD) {
         // Il se résorbe dans le point : la queue rattrape la pointe.
         const q = (t - CONTACT_POIGNARD - TENUE_POIGNARD) / VIDANGE_POIGNARD
