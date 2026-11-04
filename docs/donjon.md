@@ -621,8 +621,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
 - **EN RECHARGE, L'ILLUSTRATION SE GRISE** (Keko, 04/11 : « parfois pas
   très lisible que la capacité est en CD, surtout pour la conditionnelle…
   on pourrait croire que son fond est juste plus foncé ») : la classe
-  `en-recharge` grise l'image de l'attaque pendant sa recharge et celle
-  d'une capacité tant qu'elle n'est pas prête (Furie comprise), en plus du voile.
+  `en-recharge` grise l'image d'une capacité tant qu'elle n'est pas prête
+  (Furie comprise), en plus du voile. L'attaque l'a eue un temps : au spam,
+  elle clignotait (Keko : « étant donné le spam ça rend mal »), retirée.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
