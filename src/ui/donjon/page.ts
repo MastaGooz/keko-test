@@ -827,8 +827,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * critique en trace une seconde, croisée. DU PUNCH AUTOUR (Keko : « ça
    * manque un peu d'impact » — puis « je ne voulais pas toucher aux slashs,
    * plutôt au feel autour ») : l'entaille garde sa forme, tracée un peu plus
-   * vite ; un éclat à quatre branches claque au point touché, les
-   * étincelles sont des traits qui filent, l'ennemi se fige un instant dans
+   * vite ; les étincelles sont des traits qui filent, l'ennemi se fige un instant dans
    * sa pose touchée (l'arrêt sur coup) et la scène bouge d'un cran dans le
    * sens de la lame.
    */
@@ -850,20 +849,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: 260, delay: retard, fill: 'backwards' },
     ).onfinish = () => n.remove()
-    // L'éclat claque quand la lame passe au point touché.
-    const e = el('div', 'donjon-eclat')
-    e.style.left = `${x}px`
-    e.style.top = `${y}px`
-    e.style.color = couleur
-    scene.append(e)
-    e.animate(
-      [
-        { transform: `translate(-50%, -50%) rotate(${angle}deg) scale(0)`, opacity: 1, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' },
-        { transform: `translate(-50%, -50%) rotate(${angle + 15}deg) scale(${1.1 * k})`, opacity: 1, offset: 0.35, easing: 'ease-in' },
-        { transform: `translate(-50%, -50%) rotate(${angle + 25}deg) scale(${0.3 * k})`, opacity: 0 },
-      ],
-      { duration: 200, delay: retard + 35, fill: 'backwards' },
-    ).onfinish = () => e.remove()
   }
 
   function impact(x: number, y: number, genre: Genre, couleur: string): void {

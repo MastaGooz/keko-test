@@ -694,13 +694,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   un peu d'impact ») : le trait est tracé un peu plus vite (260 ms au lieu
   de 320) et GARDE SA FORME (Keko : « je ne voulais pas toucher aux slashs,
   plutôt au feel autour » ; un premier essai l'étirait en l'amincissant) ;
-  un éclat à quatre branches claque au point touché, cerné
-  d'or (blanc seul, il se perdait sur l'ennemi qui blanchit au même
-  instant) ; les étincelles sont des traits qui filent ; l'ennemi se FIGE
+  les étincelles sont des traits qui filent ; l'ennemi se FIGE
   ~70 ms dans sa pose touchée (l'arrêt sur coup) ; la scène bouge de 4 px
   dans le sens de la lame. Les étincelles filent le long
   de l'entaille. L'onde ronde reste aux mains nues, aux autres armes, aux
   capacités et aux passifs (`impactRond`).
+  Un éclat à quatre branches cerné d'or claquait aussi au point touché :
+  retiré (Keko : « l'étoile par-dessus le slash, ça fait trop »).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
