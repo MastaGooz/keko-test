@@ -240,6 +240,28 @@
   fill: #fffdf4;
 }
 
+/* L'éclat du coup de lame : une étoile à quatre branches, blanche, cernée
+   d'or et de la couleur du coup (la lueur sur la boîte, l'étoile découpée dedans :
+   `clip-path` rognerait la lueur). */
+.donjon-eclat {
+  position: absolute;
+  z-index: 3;
+  width: 6rem;
+  height: 6rem;
+  /* Une lueur d'or sous celle du coup : l'ennemi blanchit au même instant,
+     un éclat seulement blanc s'y perdait. */
+  filter: drop-shadow(0 0 0.15rem #ffb02e) drop-shadow(0 0 0.6rem currentColor);
+  pointer-events: none;
+}
+
+.donjon-eclat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fffdf4;
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+}
+
 /* Les particules : de petits éclats ronds qui s'éparpillent et retombent. */
 .donjon-particule {
   position: absolute;
@@ -249,6 +271,13 @@
   border-radius: 50%;
   box-shadow: 0 0 0.35rem rgba(255, 255, 255, 0.6);
   pointer-events: none;
+}
+
+/* Sous la lame, les étincelles sont des traits. */
+.donjon-particule.trait {
+  width: 1rem;
+  height: 0.16rem;
+  border-radius: 0.1rem;
 }
 
 /* ------------------------------------------------ l'ennemi */

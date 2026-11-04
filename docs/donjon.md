@@ -690,7 +690,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   lieu d'être pointu, un peu épais » : la découpe droite du premier essai,
   `clip-path`, laissait un bout plat et rognait la lueur ; le croissant est
   deux fois plus fin), penché au hasard, un coup sur deux dans l'autre
-  sens ; le critique en croise une seconde. Les étincelles filent le long
+  sens ; le critique en croise une seconde. DU PUNCH (Keko : « ça manque
+  un peu d'impact ») : le trait part sec (260 ms) et s'étire en
+  s'amincissant ; un éclat à quatre branches claque au point touché, cerné
+  d'or (blanc seul, il se perdait sur l'ennemi qui blanchit au même
+  instant) ; les étincelles sont des traits qui filent ; l'ennemi se FIGE
+  ~70 ms dans sa pose touchée (l'arrêt sur coup) ; la scène bouge de 4 px
+  dans le sens de la lame. Les étincelles filent le long
   de l'entaille. L'onde ronde reste aux mains nues, aux autres armes, aux
   capacités et aux passifs (`impactRond`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
