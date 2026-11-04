@@ -654,6 +654,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     une rune touchée s'allume d'or, une rune hors d'ordre tremble en rouge.
     Le coup jaillit sous le nom du passif. La fiche d'arme a sa section
     « Passif ». Les cibles sont dessinées en CSS (pas d'image).
+- **L'ICÔNE DU PASSIF** (Keko, 04/11 : « une icône, comme les capacités,
+  sur le passif dans la description de l'arme, pour que les joueurs
+  puissent l'identifier rapidement ») : la section « Passif » de la fiche a
+  la ligne des capacités (icône, nom, effet). Du tri de Keko
+  (`images-alpha`, 256 carré, `public/passifs/`) : Riposte n° 111 (le
+  bouclier qui pare), Points faibles n° 138 (l'œil), Runes n° 141 (les cristaux).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

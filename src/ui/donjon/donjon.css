@@ -820,11 +820,6 @@
   opacity: 0.6;
 }
 
-.donjon-fiche-passif {
-  font-size: 0.85rem;
-  line-height: 1.25;
-}
-
 .donjon-fiche-capacite {
   display: flex;
   align-items: center;

@@ -191,6 +191,14 @@ function quandLaCapacite(cle: CleCapacite): string {
   return c.critiques !== undefined ? `après ${c.critiques} critiques` : `toutes les ${secondesRondes(c.recharge ?? 0)}`
 }
 
+/**
+ * L'ICÔNE DU PASSIF (Keko : « une icône, comme les capacités, pour que les
+ * joueurs l'identifient rapidement »), du tri de Keko, détourée, 256 carré :
+ * Riposte n° 111 (le bouclier qui pare), Points faibles n° 138 (l'œil),
+ * Runes n° 141 (les cristaux).
+ */
+const IMAGE_DU_PASSIF: Record<TypeArme, string> = { epee: 'passifs/riposte.webp', dague: 'passifs/points-faibles.webp', baton: 'passifs/runes.webp' }
+
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: TypeArme): string {
   const p = C.passifs[arme]
@@ -676,7 +684,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
     // SON PASSIF, celui de toute sa classe (Keko).
-    lignes.push(el('div', 'donjon-fiche-section', `Passif · ${C.passifs[arme].nom}`), el('div', 'donjon-fiche-passif', effetDuPassif(arme)))
+    const passif = el('div', 'donjon-fiche-capacite')
+    const iconePassif = el('img')
+    iconePassif.src = url(IMAGE_DU_PASSIF[arme])
+    iconePassif.alt = ''
+    iconePassif.draggable = false
+    const textePassif = el('div')
+    textePassif.append(el('b', undefined, C.passifs[arme].nom), el('span', undefined, effetDuPassif(arme)))
+    passif.append(iconePassif, textePassif)
+    lignes.push(el('div', 'donjon-fiche-section', 'Passif'), passif)
     // SES DEUX CAPACITÉS, à la place de la section « Effet » prévue (Keko).
     lignes.push(el('div', 'donjon-fiche-section', 'Capacités'))
     for (const cle of a.capacites) {
