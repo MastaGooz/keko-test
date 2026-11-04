@@ -614,6 +614,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     « Capacités » à la place de l'« Effet » prévu. Images du tri de Keko
     (`tri\capacites`, détourées, 256 carré, `public/capacites/`) : n° 112,
     122, 105, 132, 101, 131.
+- **CHANGER D'ARME MET SES CAPACITÉS EN RECHARGE** (Keko, 04/11 : « pour
+  éviter les swaps d'abus ») : à l'équipement, les deux capacités de la
+  nouvelle arme repartent de zéro (toute leur recharge), la Furie de zéro
+  critique. Remettre l'arme qu'on porte ne change rien.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

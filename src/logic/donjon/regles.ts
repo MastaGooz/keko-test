@@ -601,7 +601,16 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
       if (j !== undefined && CAPACITES.includes(action.capacite)) lancer(config, e, j, action.capacite, t)
       break
     case 'equiper':
-      if (j !== undefined && ARMES.includes(action.arme)) j.arme = action.arme
+      // CHANGER D'ARME MET SES CAPACITÉS EN RECHARGE (Keko : « pour éviter les
+      // swaps d'abus ») : chacune repart de zéro, la Furie de zéro critique.
+      if (j !== undefined && ARMES.includes(action.arme) && action.arme !== j.arme) {
+        j.arme = action.arme
+        for (const cle of capacitesDe(config, j)) {
+          const recharge = config.capacites[cle].recharge
+          if (recharge !== undefined) j.capacitesPretes[cle] = t + recharge
+        }
+        if (capacitesDe(config, j).some((cle) => config.capacites[cle].critiques !== undefined)) j.critiques = 0
+      }
       break
   }
   return e
