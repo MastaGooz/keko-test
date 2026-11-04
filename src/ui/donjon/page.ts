@@ -759,10 +759,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // flèche droite, son premier essai, est celle de l'ARC — `&fleche` la rend
   // aussi à la dague.
   const FLECHE = parametres.has('fleche')
-  // Le coup de poignard : il touche à 95 ms, reste fiché 260 ms (comme la
-  // flèche ; Keko : « laisser un peu la dague plantée »), se résorbe en 110.
+  // Le coup de poignard : il touche à 95 ms, reste fiché 180 ms (Keko :
+  // « laisser un peu la dague plantée », puis « diminue un peu » ; 260 ms
+  // entre-temps), se résorbe en 110.
   const CONTACT_POIGNARD = 95
-  const TENUE_POIGNARD = 260
+  const TENUE_POIGNARD = 180
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
