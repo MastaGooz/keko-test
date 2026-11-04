@@ -725,24 +725,26 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   **LA FLÈCHE**, le premier essai (une lame fine qui file droit et se fiche,
   `fleche`, `.donjon-estoc`), est GARDÉE POUR L'ARC : `&fleche` la rend à
   la dague.
-- **LE COUP DE BÂTON** (Keko, 04/11 : « fais ce que tu penses être le
-  mieux », parmi trois pistes — le coup sourd, le coup chargé de magie, le
-  sort pur) : le COUP CHARGÉ DE MAGIE. L'épée tranche, la dague pique, le
-  bâton ÉCRASE, et c'est l'arme du mage (Boule de feu, Méditation, Runes).
-  Un coup de mêlée — pas un sort, pour ne pas refaire le projectile que la
-  dague avait d'abord été : un trait d'élan court et épais, la tête ronde
-  (`coupDeBaton`, `.donjon-elan`), tombe d'en haut (±15°) et s'écrase sur
-  le point (contact à 60 ms, 150 ms en tout) ; au contact, une onde
-  APLATIE s'étale comme un choc au sol (l'anneau du poing écrasé au tiers
-  en hauteur, 360 ms), et un CERCLE DE RUNE (`.donjon-rune-cercle` : deux
-  cercles, l'intérieur en pointillé, huit losanges) s'ouvre en tournant
-  puis s'efface (480 ms, un coup sur deux dans l'autre sens) — l'écho des
-  Runes du passif sans s'y confondre : celles-là se touchent, celui-ci
-  n'est qu'un effet. Les étincelles sont des POINTS DE LUMIÈRE
-  (`.donjon-particule.lueur`) qui s'écartent à peine et MONTENT
-  lentement ; l'ennemi est TASSÉ vers le bas puis se relève, figé un
-  instant comme sous les lames ; la scène est tassée de 4 px. Le critique
-  est 1,4 fois plus gros.
+- **LE COUP DE BÂTON, EN MASSUE** (Keko, 04/11 : « fais ce que tu penses
+  être le mieux », puis « un effet de slash avec la partie avant arrondie,
+  en mode coup de club ; on laisse les runes de côté, on utilisera ça
+  ailleurs ») : l'épée tranche, la dague plante, le bâton COGNE. Un trait de
+  lumière sur un arc large (`massue`, `.donjon-course` comme le poignard :
+  100° d'un arc de 6,5 rem, 1,1 rem au plus épais), effilé à la queue, qui
+  S'ÉPAISSIT vers l'avant et finit en TÊTE RONDE (un demi-cercle qui bombe
+  dans le sens de la course) : il accélère, cogne le point (85 ms), la tête
+  s'écrase et gonfle (40 ms), puis il s'efface, la queue rattrapant la tête
+  (140 ms). Il tombe de côté en diagonale (30° de la verticale, ±15°), un
+  coup sur deux de l'autre côté. Au contact, une onde APLATIE s'étale comme
+  un choc au sol (`ondeAplatie`) ; les étincelles sont des POINTS DE
+  LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;
+  l'ennemi est TASSÉ vers le bas puis se relève, figé un instant comme sous
+  les lames ; la scène est tassée de 4 px. Le critique est 1,4 fois plus
+  gros. **LE CERCLE DE RUNE** du premier essai (deux cercles, l'intérieur
+  en pointillé, huit losanges, qui s'ouvrent en tournant ;
+  `cercleDeRune`, `.donjon-rune-cercle`), avec un élan à tête ronde qui
+  tombait d'en haut (retiré), est RANGÉ POUR AILLEURS : `&rune` le rend au
+  bâton.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -738,8 +738,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const TENUE_POIGNARD = 60
   const VIDANGE_POIGNARD = 110
   const BALAYAGE_POIGNARD = 55
-  // Le coup de bâton touche à 60 ms (son élan tombe d'en haut).
-  const CONTACT_BATON = 60
+  // Le coup de massue du bâton : il cogne à 85 ms, s'écrase 40 ms, s'efface
+  // en 140 ; son arc est plus ample que celui du poignard. `&rune` lui rend
+  // le cercle de rune, rangé pour ailleurs.
+  const CONTACT_BATON = 85
+  const TENUE_MASSUE = 40
+  const VIDANGE_MASSUE = 140
+  const BALAYAGE_MASSUE = 100
+  const RUNE = parametres.has('rune')
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
   /**
@@ -963,38 +969,86 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   /**
-   * LE COUP DE BÂTON (Keko : « fais ce que tu penses être le mieux » — l'épée
-   * tranche, la dague pique, le bâton ÉCRASE, et c'est l'arme du mage) : un
-   * coup de MÊLÉE chargé de magie. Un trait d'élan court et épais, la tête
-   * ronde, tombe d'en haut sur le point et s'y écrase ; au contact, une onde
-   * APLATIE s'étale comme un choc au sol, et un CERCLE DE RUNE s'ouvre en
-   * tournant puis s'efface — l'écho des Runes du passif, sans s'y confondre :
-   * celles-là se touchent, celui-ci n'est qu'un effet. Le critique est 1,4
-   * fois plus gros, comme les deux lames.
+   * LE COUP DE BÂTON, EN MASSUE (Keko : « un effet de slash avec la partie
+   * avant arrondie, en mode coup de club ») : un TRAIT DE LUMIÈRE sur un arc
+   * large, comme le poignard mais plus ample et plus épais, effilé à la
+   * queue, qui s'ÉPAISSIT vers l'avant et finit en TÊTE RONDE. Il accélère,
+   * cogne le point (la tête s'écrase et gonfle), puis s'efface, la queue
+   * rattrapant la tête. Il tombe de côté en diagonale, un coup sur deux de
+   * l'autre côté. Redessiné à chaque image, comme le poignard. Le critique
+   * est 1,4 fois plus gros.
    */
-  let sensDeLaRune = 1
-  function coupDeBaton(x: number, y: number, k: number, couleur: string, angle: number): void {
-    // L'élan : la tête sur le point, la boîte tourne autour (comme la flèche).
-    const n = el('div', 'donjon-elan')
-    n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 Q55 -4.6 88 -4.6 Q100 -4.6 100 0 Q100 4.6 88 4.6 Q55 4.6 0 0Z"/></svg>'
-    n.style.left = `${x}px`
-    n.style.top = `${y}px`
-    n.style.color = couleur
-    const pose = (avance: string, long: number, large: number) => `translate(-100%, -50%) rotate(${angle}deg) translateX(${avance}) scale(${k * long}, ${k * large})`
-    scene.append(n)
-    n.animate(
-      [
-        { transform: pose('-3rem', 1.2, 0.8), opacity: 0.4, easing: 'cubic-bezier(0.5, 0, 1, 1)' },
-        { transform: pose('0rem', 1, 1), opacity: 1, offset: CONTACT_BATON / 150, easing: 'ease-out' },
-        { transform: pose('0rem', 0.3, 1.7), opacity: 0 },
-      ],
-      { duration: 150 },
-    ).onfinish = () => n.remove()
-    // L'onde aplatie : le choc s'étale à l'horizontale.
+  let coteDeLaMassue = 1
+  function massue(x: number, y: number, k: number, couleur: string, finale: number, cote: number): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const rayon = 6.5 * rem * k
+    const largeur = 0.55 * rem * k
+    const fin = finale - cote * 90
+    const debut = fin - cote * BALAYAGE_MASSUE
+    const a = (fin * Math.PI) / 180
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = rayon + 3 * largeur
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - Math.cos(a) * rayon - demi}px`
+    trace.style.top = `${y - Math.sin(a) * rayon - demi}px`
+    trace.style.color = couleur
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    trace.append(forme)
+    scene.append(trace)
+    const point = (t: number, r: number) => `${(Math.cos(t) * r).toFixed(1)} ${(Math.sin(t) * r).toFixed(1)}`
+    // Le trait entre `queue` et `tete` (0 = départ de l'arc, 1 = le point
+    // touché) : effilé à la queue, plein aux trois quarts, fermé devant par un
+    // demi-cercle qui bombe dans le sens de la course.
+    const dessiner = (queue: number, tete: number, gonfle: number) => {
+      if (tete - queue < 0.01) return forme.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      let h = 0
+      for (let i = 0; i <= 20; i++) {
+        const v = i / 20
+        h = largeur * gonfle * Math.min(1, v / 0.75) ** 1.3
+        const t = ((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180
+        dehors.push(point(t, rayon + h))
+        dedans.push(point(t, rayon - h))
+      }
+      const bout = dedans.pop()!
+      forme.setAttribute('d', `M${dehors.join(' L')} A${h.toFixed(1)} ${h.toFixed(1)} 0 0 ${cote > 0 ? 1 : 0} ${bout} L${dedans.reverse().join(' L')}Z`)
+    }
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t < CONTACT_BATON) {
+        // Il accélère jusqu'au contact.
+        const p = (t / CONTACT_BATON) ** 2
+        dessiner(Math.max(0, p - 0.85), p, 0.8 + 0.2 * p)
+      } else if (t < CONTACT_BATON + TENUE_MASSUE) {
+        // Le choc : la tête s'écrase et gonfle, puis se rassied.
+        const q = (t - CONTACT_BATON) / TENUE_MASSUE
+        dessiner(0.15, 1, 1 + 0.35 * (1 - q))
+      } else if (t < CONTACT_BATON + TENUE_MASSUE + VIDANGE_MASSUE) {
+        // La queue rattrape la tête, et le trait s'efface.
+        const q = (t - CONTACT_BATON - TENUE_MASSUE) / VIDANGE_MASSUE
+        dessiner(0.15 + 0.8 * q * q, 1, 1 - 0.3 * q)
+        trace.style.opacity = `${1 - q * q}`
+      } else {
+        trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(depart)
+  }
+
+  /** L'onde aplatie du bâton : le choc s'étale à l'horizontale, comme au sol. */
+  function ondeAplatie(x: number, y: number, k: number, couleur: string, retard: number): void {
     const o = el('div', 'donjon-onde')
     o.style.left = `${x}px`
     o.style.top = `${y}px`
     o.style.color = couleur
+    o.style.opacity = '0'
     scene.append(o)
     o.animate(
       [
@@ -1002,10 +1056,18 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: `translate(-50%, -50%) scale(${0.95 * k}, ${0.33 * k})`, opacity: 0.85, borderWidth: '0.22rem', offset: 0.45, easing: 'ease-in' },
         { transform: `translate(-50%, -50%) scale(${1.25 * k}, ${0.44 * k})`, opacity: 0, borderWidth: '0.05rem' },
       ],
-      { duration: 360, delay: CONTACT_BATON },
+      { duration: 360, delay: retard },
     ).onfinish = () => o.remove()
-    o.style.opacity = '0'
-    // Le cercle de rune : deux cercles et huit losanges, qui tournent en s'ouvrant.
+  }
+
+  /**
+   * LE CERCLE DE RUNE (le premier coup de bâton ; Keko : « on laisse les
+   * runes de côté, on utilisera ça ailleurs ») : deux cercles, l'intérieur
+   * en pointillé, et huit losanges, qui s'ouvrent en tournant au point
+   * touché puis s'effacent. Rangé ; `&rune` le rend au bâton.
+   */
+  let sensDeLaRune = 1
+  function cercleDeRune(x: number, y: number, k: number, couleur: string, retard: number): void {
     sensDeLaRune = -sensDeLaRune
     const c = el('div', 'donjon-rune-cercle')
     const losanges = Array.from({ length: 8 }, (_, i) => `<path transform="rotate(${i * 45}) translate(0 -39)" d="M0 -4.2 L2.4 0 L0 4.2 L-2.4 0Z"/>`).join('')
@@ -1022,7 +1084,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: tour(5, 0.95), opacity: 1, offset: 0.3, easing: 'ease-out' },
         { transform: tour(30, 1.08), opacity: 0 },
       ],
-      { duration: 480, delay: CONTACT_BATON },
+      { duration: 480, delay: retard },
     ).onfinish = () => c.remove()
   }
 
@@ -1063,8 +1125,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const anglePique = FLECHE ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
     const contact = pique ? (FLECHE ? 50 : CONTACT_POIGNARD) : masse ? CONTACT_BATON : 0
     if (masse) {
-      // L'élan tombe d'en haut, à peine penché.
-      coupDeBaton(x, y, 1 + 0.65 * (fort - 1), couleur, 90 + (Math.random() - 0.5) * 30)
+      // La massue tombe de côté en diagonale, un coup sur deux de l'autre.
+      const k = 1 + 0.65 * (fort - 1)
+      coteDeLaMassue = -coteDeLaMassue
+      massue(x, y, k, couleur, 90 - coteDeLaMassue * 30 + (Math.random() - 0.5) * 30, coteDeLaMassue)
+      ondeAplatie(x, y, k, couleur, contact)
+      if (RUNE) cercleDeRune(x, y, k, couleur, contact)
       // La scène est tassée d'un cran vers le bas (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
         scene.animate([{ transform: 'none' }, { transform: 'translateY(4px)', offset: 0.3 }, { transform: 'none' }], { duration: 140, delay: contact, easing: 'ease-out' })
