@@ -737,7 +737,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 60
   const VIDANGE_POIGNARD = 110
-  const BALAYAGE_POIGNARD = 80
+  const BALAYAGE_POIGNARD = 55
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
   /**
