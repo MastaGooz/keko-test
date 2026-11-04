@@ -1199,10 +1199,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // La direction de la pointe au contact : la flèche monte du bas ; le
     // poignard arrive DE CÔTÉ, un coup sur deux de l'autre, et se plante en
     // diagonale vers le bas (Keko : « ça frappe un peu trop le haut » — il
-    // descendait à la verticale, sa courbe montait loin au-dessus du point) ;
-    // penchés au hasard.
+    // descendait à la verticale, sa courbe montait loin au-dessus du point),
+    // presque à plat : 22° sous l'horizontale (Keko : « la dague vient un peu
+    // trop du haut » ; elle en descendait de 45°) ; penchés au hasard.
     if (pique && !enFleche) coteDuPoignard = -coteDuPoignard
-    const anglePique = enFleche ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
+    const anglePique = enFleche ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 68 + (Math.random() - 0.5) * 20
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
     const contact = pique ? (enFleche ? 50 : CONTACT_POIGNARD) : masse ? (longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (masse) {
