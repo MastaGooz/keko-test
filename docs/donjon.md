@@ -841,8 +841,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   maintenant ? ») : une dixième arme (`lance`), « Perçante », 12 toutes les
   0,3 s (le DPS de base), ni bonus, ni capacité, ni passif ; icône
   provisoire : la capacité n° 124 (le trident à la corde). SON COUP EST UN
-  ESTOC (`lance`) : un trait de lumière long (6,5 rem) et fin, une HAMPE qui
-  s'élargit en une TÊTE EN FEUILLE pointue (0,84 rem au plus large), qui
+  ESTOC (`lance`) : un trait de lumière long (7,5 rem) et fin, une HAMPE qui
+  s'élargit en une TÊTE EN FEUILLE pointue (0,96 rem au plus large ; Keko :
+  « augmente un peu la taille » ; 6,5 et 0,84 avant), qui
   jaillit du bas — de celui qui tient la lance —, penché de 18° d'un côté
   puis de l'autre (±12°) ; il arrive ENTIER, de 4 rem en retrait, étiré par
   la vitesse, et se resserre en touchant (Keko : « il faudrait donner un

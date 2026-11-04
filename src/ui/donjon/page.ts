@@ -1014,8 +1014,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // La hampe (une pointe courte à la queue), la tête qui s'élargit, puis la pointe.
     const profil = (v: number) => (v < 0.06 ? v / 0.06 : v < 0.66 ? 0.5 : v < 0.84 ? 0.5 + (0.5 * (v - 0.66)) / 0.18 : (1 - v) / 0.16)
-    const longueur = 6.5 * rem
-    const { dessiner, trace } = traitDroit(x, y, couleur, angle, longueur, 0.42 * rem * (1 + (k - 1) * 2), profil, 1.4)
+    // Un peu plus grande (Keko : « augmente un peu la taille » ; 6,5 et 0,42).
+    const longueur = 7.5 * rem
+    const { dessiner, trace } = traitDroit(x, y, couleur, angle, longueur, 0.48 * rem * (1 + (k - 1) * 2), profil, 1.4)
     // L'ÉLAN (Keko : « on dirait qu'elle apparaît directement sur place ») :
     // elle arrive ENTIÈRE de 4 rem en retrait, étirée par la vitesse, et se
     // resserre en touchant.
