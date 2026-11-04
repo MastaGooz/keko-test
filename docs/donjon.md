@@ -698,8 +698,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   les étincelles sont des traits qui filent ; l'ennemi se FIGE
   ~70 ms dans sa pose touchée (l'arrêt sur coup) ; la scène bouge de 4 px
   dans le sens de la lame. Les étincelles filent le long
-  de l'entaille. L'onde ronde reste aux mains nues, au
-  bâton et aux capacités (`impactRond`).
+  de l'entaille. L'onde ronde reste aux mains nues et aux capacités
+  (`impactRond`).
   Un éclat à quatre branches cerné d'or claquait aussi au point touché :
   retiré (Keko : « l'étoile par-dessus le slash, ça fait trop »).
 - **LE COUP DE POIGNARD DE LA DAGUE** (Keko, 04/11 : « un coup pas en
@@ -725,6 +725,24 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   **LA FLÈCHE**, le premier essai (une lame fine qui file droit et se fiche,
   `fleche`, `.donjon-estoc`), est GARDÉE POUR L'ARC : `&fleche` la rend à
   la dague.
+- **LE COUP DE BÂTON** (Keko, 04/11 : « fais ce que tu penses être le
+  mieux », parmi trois pistes — le coup sourd, le coup chargé de magie, le
+  sort pur) : le COUP CHARGÉ DE MAGIE. L'épée tranche, la dague pique, le
+  bâton ÉCRASE, et c'est l'arme du mage (Boule de feu, Méditation, Runes).
+  Un coup de mêlée — pas un sort, pour ne pas refaire le projectile que la
+  dague avait d'abord été : un trait d'élan court et épais, la tête ronde
+  (`coupDeBaton`, `.donjon-elan`), tombe d'en haut (±15°) et s'écrase sur
+  le point (contact à 60 ms, 150 ms en tout) ; au contact, une onde
+  APLATIE s'étale comme un choc au sol (l'anneau du poing écrasé au tiers
+  en hauteur, 360 ms), et un CERCLE DE RUNE (`.donjon-rune-cercle` : deux
+  cercles, l'intérieur en pointillé, huit losanges) s'ouvre en tournant
+  puis s'efface (480 ms, un coup sur deux dans l'autre sens) — l'écho des
+  Runes du passif sans s'y confondre : celles-là se touchent, celui-ci
+  n'est qu'un effet. Les étincelles sont des POINTS DE LUMIÈRE
+  (`.donjon-particule.lueur`) qui s'écartent à peine et MONTENT
+  lentement ; l'ennemi est TASSÉ vers le bas puis se relève, figé un
+  instant comme sous les lames ; la scène est tassée de 4 px. Le critique
+  est 1,4 fois plus gros.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
