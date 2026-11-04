@@ -36,7 +36,6 @@ import {
   coupsAutoA,
   degatsDuCoupAuto,
   degatsDuCoupAutoA,
-  dpsDeSpam,
   dpsEffectifDe,
   degatsDuTap,
   facteurCritMoyen,
@@ -846,10 +845,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   attaque.addEventListener('contextmenu', (ev) => ev.preventDefault())
   function remplirLaBulle(): void {
     const j = moi()
-    // LE DPS MAX, exact depuis la recharge (Keko) : le tap à chaque fin de
-    // recharge, plus l'auto, critiques à la moyenne, forme à 100 %.
-    const dpsMax = `${nombre(dpsDeSpam(C, j))} + ${nombre(dpsEffectifDe(C, j))} auto`
-    const html = `<div class="donjon-bulle-ligne"><span>Arme</span><b>${C.armes[j.arme].nom}</b></div><div class="donjon-bulle-ligne"><span>DPS max</span><b>${dpsMax}</b></div><div class="donjon-bulle-ligne"><span>Dégâts</span><b>${borne(degatsDuTap(C, j) * (1 - C.tap.ecart) + 1e-9)} – ${borne(degatsDuTap(C, j) * (1 + C.tap.ecart) - 1e-9)}</b></div><div class="donjon-bulle-ligne"><span>Recharge</span><b>${secondes(rechargeDe(C, j))}</b></div><div class="donjon-bulle-ligne"><span>Auto</span><b>un coup toutes les ${secondes(periodeDe(C, j))}</b></div>`
+    // LES TROIS CHIFFRES DE LA FICHE D'ARME (Keko : « la même chose sur les
+    // stats du bouton attaque ») : dégâts, vitesse de l'auto, DPS moyen.
+    const ligne = (nom: string, valeur: string) => `<div class="donjon-bulle-ligne"><span>${nom}</span><b>${valeur}</b></div>`
+    const moyen = degatsDuTap(C, j)
+    const html =
+      ligne('Arme', C.armes[j.arme].nom) +
+      ligne('Dégâts', `${borne(moyen * (1 - C.tap.ecart) + 1e-9)} – ${borne(moyen * (1 + C.tap.ecart) - 1e-9)}`) +
+      ligne('Vitesse', secondes(periodeDe(C, j))) +
+      ligne('DPS', nombre(dpsEffectifDe(C, j)))
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 

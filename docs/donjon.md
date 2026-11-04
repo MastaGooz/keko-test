@@ -578,6 +578,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   identiques ») : sur la fiche d'une autre arme, un chiffre égal à celui de
   l'arme portée porte un « = » bleu (`.donjon-egal`) ; l'arme portée
   elle-même ne se compare toujours à rien.
+- **LA BULLE DU BOUTON D'ATTAQUE COMME LA FICHE** (Keko, 04/11 : « la même
+  chose sur les stats du bouton attaque ») : l'arme, puis Dégâts, Vitesse
+  (l'auto) et DPS (moyen) ; la recharge du tap et le DPS max n'y sont plus.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
