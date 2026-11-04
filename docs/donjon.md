@@ -666,8 +666,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'épée, la même recharge, ni bonus, ni capacité (`capacites: []`), et
   pas de passif (`passifDe` rend null, aucun événement). Sur la fiche de
   l'arme portée, « Équipée » est devenu « Déséquiper » (en ardoise) ;
-  l'emplacement vide dit « Mains nues », les deux boutons de capacité
-  s'en vont. Reprendre une arme met ses capacités en recharge, comme tout
+  l'emplacement montre leur icône, sans cadre de cran (Keko : « une icône
+  plutôt qu'un texte, un placeholder au pire » : la capacité n° 118 du tri,
+  le coup de pied, `public/armes/mains.webp`, en attendant la sienne) ; les
+  deux boutons de capacité s'en vont. Reprendre une arme met ses capacités en recharge, comme tout
   changement. Les chiffres sont de moi, à rejuger.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.

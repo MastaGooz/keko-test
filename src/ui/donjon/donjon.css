@@ -729,25 +729,6 @@
   pointer-events: none;
 }
 
-/* À mains nues : l'emplacement vide, son nom à la place de l'arme. */
-.donjon-emplacement-vide {
-  display: none;
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1.05;
-  text-align: center;
-  color: #c9cdd3;
-  pointer-events: none;
-}
-
-.donjon-emplacement.vide .donjon-emplacement-vide {
-  display: block;
-}
-
-.donjon-emplacement.vide .donjon-emplacement-image {
-  display: none;
-}
-
 .donjon .donjon-capacite[hidden] {
   display: none;
 }

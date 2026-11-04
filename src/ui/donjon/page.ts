@@ -22,7 +22,7 @@
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
-import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type CleCapacite, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type CleCapacite, type Equipement, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
@@ -148,9 +148,10 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * plutôt que dans le menu debug, avec une image d'arme ») : leur image, leur
  * caractère, leur bonus. Les images viennent du tri de Keko (`Desktop\\Style
  * \\tri`) : l'épée est l'objet n° 010 ; la dague la capacité n° 119 ; le
- * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer.
+ * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer ;
+ * les mains nues, la capacité n° 118 (le coup de pied), en attendant leur icône.
  */
-const IMAGE_DE_L_ARME: Record<TypeArme, string> = { epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp' }
+const IMAGE_DE_L_ARME: Record<Equipement, string> = { mains: 'armes/mains.webp', epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp' }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
   dague: { caractere: 'Rapide', bonus: 'Critique +5 points' },
@@ -446,9 +447,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const imageArme = el('img', 'donjon-emplacement-image')
   imageArme.alt = ''
   imageArme.draggable = false
-  // À mains nues, l'emplacement est vide et le dit.
-  const sansArme = el('span', 'donjon-emplacement-vide', 'Mains nues')
-  emplacement.append(imageArme, sansArme)
+  emplacement.append(imageArme)
   let armeVue = ''
   const contour = cadre.querySelector<SVGSVGElement>('.donjon-contour')!
   const contourPlein = cadre.querySelector<SVGPathElement>('.donjon-contour-plein')!
@@ -1264,13 +1263,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         image.src = url(IMAGE_DE_LA_CAPACITE[cle])
         b.setAttribute('aria-label', C.capacites[cle].nom)
       }
-      emplacement.classList.toggle('vide', j.arme === 'mains')
+      // À mains nues, leur icône, sans cadre de cran.
+      imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
       if (j.arme === 'mains') {
-        imageArme.removeAttribute('src')
         emplacement.style.removeProperty('--rarete')
         emplacement.setAttribute('aria-label', 'Arme : mains nues')
       } else {
-        imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
         emplacement.style.setProperty('--rarete', RARETE[inventaire[place].rarete].couleur)
         emplacement.setAttribute('aria-label', `Arme : ${C.armes[j.arme].nom}, ${RARETE[inventaire[place].rarete].nom.toLowerCase()}`)
       }
