@@ -740,7 +740,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   comme la dague » ; le chiffre reste au point du coup), la tête y passe à
   85 ms et le trait gonfle au passage (le choc), continue de l'autre côté
   (170 ms en tout), puis s'efface, la queue rattrapant la tête (140 ms).
-  L'arc bombe vers le haut, penché au hasard (±20°), un coup sur deux dans
+  La traînée couvre presque tout l'arc (95°) et reste pleine dès ses deux
+  cinquièmes, comme un manche (Keko : « trop courte, il faudrait l'allonger
+  pour l'aspect bâton » ; elle en couvrait 60°, effilée sur les trois
+  quarts). L'arc bombe vers le haut, penché au hasard (±20°), un coup sur deux dans
   l'autre sens. Au contact, une onde APLATIE s'étale comme
   un choc au sol (`ondeAplatie`) ; les étincelles sont des POINTS DE
   LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;

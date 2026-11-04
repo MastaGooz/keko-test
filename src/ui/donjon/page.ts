@@ -1004,7 +1004,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     scene.append(trace)
     const point = (t: number, r: number) => `${(Math.cos(t) * r).toFixed(1)} ${(Math.sin(t) * r).toFixed(1)}`
     // Le trait entre `queue` et `tete` (0 = départ de l'arc, ½ = le point
-    // touché, 1 = sa fin) : effilé à la queue, plein aux trois quarts, fermé
+    // touché, 1 = sa fin) : effilé à la queue, plein dès les deux cinquièmes (un manche), fermé
     // devant par un demi-cercle qui bombe dans le sens de la course.
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
@@ -1013,7 +1013,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       let h = 0
       for (let i = 0; i <= 20; i++) {
         const v = i / 20
-        h = largeur * gonfle * Math.min(1, v / 0.75) ** 1.3
+        h = largeur * gonfle * Math.min(1, v / 0.4) ** 1.3
         const t = ((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180
         dehors.push(point(t, rayon + h))
         dedans.push(point(t, rayon - h))
@@ -1029,11 +1029,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // La tête balaie l'arc ; le trait gonfle quand elle passe au point.
         const p = t / course
         const choc = Math.exp(-(((t - CONTACT_BATON) / 28) ** 2))
-        dessiner(Math.max(0, p - 0.6), p, 0.85 + 0.15 * p + 0.35 * choc)
+        dessiner(Math.max(0, p - 0.95), p, 0.85 + 0.15 * p + 0.35 * choc)
       } else if (t < course + VIDANGE_MASSUE) {
         // La queue rattrape la tête, et le trait s'efface.
         const q = (t - course) / VIDANGE_MASSUE
-        dessiner(0.4 + 0.6 * q, 1, 1 - 0.3 * q)
+        dessiner(0.05 + 0.95 * q, 1, 1 - 0.3 * q)
         trace.style.opacity = `${1 - q * q}`
       } else {
         trace.remove()
