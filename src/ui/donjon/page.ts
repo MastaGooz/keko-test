@@ -730,6 +730,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   )
 
   // ------------------------------------------------ le geste
+  // La dague plante sa lame au bout d'un arc (le coup de poignard) ; `&fleche`
+  // lui rend la flèche droite, rangée pour l'arc.
+  const FLECHE = parametres.has('fleche')
+  const DUREE_POIGNARD = 260
+  const CONTACT_POIGNARD = 95
+  const BALAYAGE_POIGNARD = 80
+  // Le poignard accélère jusqu'au contact.
+  const ACCELERE = 'cubic-bezier(0.5, 0, 0.9, 0.5)'
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
   /**
@@ -853,22 +861,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   /**
-   * L'ESTOC DE LA DAGUE (Keko : « un coup pas en slash, plutôt planté ») : une
-   * lame fine et pointue qui file vers le point touché et s'y FICHE — elle
-   * arrive en accélérant, s'arrête net, s'enfonce d'un cran, reste plantée un
-   * instant puis se retire. Au contact, un anneau qui se REFERME sur le point
-   * (celui du poing s'ouvre : l'estoc entre). Elle monte du bas, penchée au
-   * hasard ; le critique plante une lame 1,4 fois plus grosse, comme l'épée.
-   * Courte (230 ms) : la dague frappe toutes les 0,175 s.
+   * LA FLÈCHE (le premier estoc de la dague ; Keko : « ça fait très flèche,
+   * on le garde pour les arcs ») : une lame fine et pointue qui file droit
+   * vers le point touché et s'y FICHE — elle arrive en accélérant, s'arrête
+   * net, s'enfonce d'un cran, reste plantée un instant puis se retire. Elle
+   * monte du bas. Rangée pour l'arc ; `&fleche` la rend à la dague.
    */
-  function estoc(x: number, y: number, fort: number, couleur: string, angle: number): void {
+  function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 L72 -3.4 L100 0 L72 3.4Z"/></svg>'
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const k = 1 + 0.65 * (fort - 1)
     const pose = (avance: string, etire: number) => `translate(-100%, -50%) rotate(${angle}deg) translateX(${avance}) scale(${k * etire}, ${k})`
     scene.append(n)
     n.animate(
@@ -881,7 +886,80 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: 230 },
     ).onfinish = () => n.remove()
-    // L'anneau qui se referme, au moment où la pointe entre.
+  }
+
+  /**
+   * LE COUP DE POIGNARD DE LA DAGUE (Keko : « un truc qui se plante, mais dans
+   * un arc, comme un coup de poignard ») : la lame arrive POINTE DEVANT sur
+   * une courbe — un bras qui tourne autour de l'épaule, la lame couchée sur
+   * la tangente —, accélère, se plante au bout de l'arc, s'enfonce d'un cran,
+   * reste fichée un instant puis se retire. Un trait fin suit sa course. Elle
+   * finit vers le bas (on frappe par-dessus), penchée au hasard, un coup sur
+   * deux de l'autre côté. Le critique plante une lame 1,4 fois plus grosse,
+   * comme l'épée.
+   */
+  let coteDuPoignard = 1
+  function poignard(x: number, y: number, k: number, couleur: string, finale: number, cote: number): void {
+    // Le bras finit perpendiculaire à la lame ; son épaule s'en déduit.
+    const rayon = 4.6 * parseFloat(getComputedStyle(document.documentElement).fontSize) * k
+    const fin = finale - cote * 90
+    const debut = fin - cote * BALAYAGE_POIGNARD
+    const a = (fin * Math.PI) / 180
+    const ex = x - Math.cos(a) * rayon
+    const ey = y - Math.sin(a) * rayon
+    // Le trait de la course : l'arc du bout de la lame, jusqu'au point.
+    const d0 = (debut * Math.PI) / 180
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    trace.style.left = `${ex}px`
+    trace.style.top = `${ey}px`
+    trace.style.color = couleur
+    const arc = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    arc.setAttribute('d', `M${Math.cos(d0) * rayon} ${Math.sin(d0) * rayon} A${rayon} ${rayon} 0 0 ${cote > 0 ? 1 : 0} ${Math.cos(a) * rayon} ${Math.sin(a) * rayon}`)
+    const long = (rayon * BALAYAGE_POIGNARD * Math.PI) / 180
+    arc.style.strokeDasharray = `${long}`
+    trace.append(arc)
+    scene.append(trace)
+    const course = CONTACT_POIGNARD / DUREE_POIGNARD
+    arc.animate(
+      [
+        { strokeDashoffset: `${long}`, easing: ACCELERE },
+        { strokeDashoffset: '0', offset: course },
+        { strokeDashoffset: '0' },
+      ],
+      { duration: DUREE_POIGNARD },
+    )
+    trace.animate([{ opacity: 1 }, { opacity: 1, offset: course }, { opacity: 0 }], { duration: DUREE_POIGNARD * 0.8 }).onfinish = () => trace.remove()
+    // Le bras : une boîte nulle posée sur l'épaule, qui tourne ; la lame à
+    // son bout, pointe sur le cercle, couchée dans le sens de la course.
+    const bras = el('div', 'donjon-bras')
+    bras.style.left = `${ex}px`
+    bras.style.top = `${ey}px`
+    const n = el('div', 'donjon-poignard')
+    n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 -1.6 L18 -1.6 L18 1.6 L0 1.6Z M18 -5.2 L23 -5.2 L23 5.2 L18 5.2Z M23 -3.2 Q60 -3.4 82 -2.2 L100 0 L82 2.2 Q60 3.4 23 3.2Z"/></svg>'
+    n.style.color = couleur
+    n.style.left = `${rayon}px`
+    n.style.transform = `translate(-100%, -50%) rotate(${cote * 90}deg) scale(${k})`
+    bras.append(n)
+    scene.append(bras)
+    const tourne = (angle: number) => `rotate(${angle}deg)`
+    bras.animate(
+      [
+        { transform: tourne(debut), easing: ACCELERE },
+        { transform: tourne(fin), offset: course, easing: 'ease-out' },
+        { transform: tourne(fin + cote * 4), offset: course + 0.08 },
+        { transform: tourne(fin + cote * 4), offset: 0.72, easing: 'ease-in' },
+        { transform: tourne(fin - cote * 10) },
+      ],
+      { duration: DUREE_POIGNARD },
+    ).onfinish = () => bras.remove()
+    // Pleine dès le début de sa course, effacée en se retirant.
+    bras.animate([{ opacity: 0 }, { opacity: 1, offset: 0.06 }, { opacity: 1, offset: 0.72 }, { opacity: 0 }], { duration: DUREE_POIGNARD })
+  }
+
+  /** L'anneau qui se referme sur le point, quand la pointe entre (celui du poing s'ouvre). */
+  function anneauQuiSeReferme(x: number, y: number, k: number, couleur: string, retard: number): void {
     const o = el('div', 'donjon-onde')
     o.style.left = `${x}px`
     o.style.top = `${y}px`
@@ -893,7 +971,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: `translate(-50%, -50%) scale(${0.45 * k})`, opacity: 0.9, borderWidth: '0.12rem', offset: 0.2, easing: 'cubic-bezier(0.4, 0, 1, 1)' },
         { transform: 'translate(-50%, -50%) scale(0.05)', opacity: 0.2, borderWidth: '0.5rem' },
       ],
-      { duration: 170, delay: 45, fill: 'backwards' },
+      { duration: 170, delay: retard, fill: 'backwards' },
     ).onfinish = () => o.remove()
   }
 
@@ -906,14 +984,22 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const pique = arme === 'dague'
     // Le hasard de l'écran, pas celui des règles.
     const angleLame = -30 + (Math.random() - 0.5) * 40
-    // L'estoc monte du bas (on frappe d'en dessous), penché d'un côté ou de l'autre.
-    const anglePique = -90 + (Math.random() - 0.5) * 70
+    // La direction de la pointe au contact : la flèche monte du bas, le
+    // poignard descend par-dessus ; penchés au hasard.
+    const anglePique = FLECHE ? -90 + (Math.random() - 0.5) * 70 : 90 + (Math.random() - 0.5) * 50
+    const contact = pique ? (FLECHE ? 50 : CONTACT_POIGNARD) : 0
     if (pique) {
-      estoc(x, y, fort, couleur, anglePique)
+      const k = 1 + 0.65 * (fort - 1)
+      if (FLECHE) fleche(x, y, k, couleur, anglePique)
+      else {
+        coteDuPoignard = -coteDuPoignard
+        poignard(x, y, k, couleur, anglePique, coteDuPoignard)
+      }
+      anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
         const a = (anglePique * Math.PI) / 180
-        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: 50, easing: 'ease-out' })
+        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (lame) {
       sensDeLaLame = -sensDeLaLame
@@ -958,7 +1044,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
             { transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) ${r} scaleX(1)`, opacity: 1, offset: 0.5 },
             { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 6}px)) ${r} scaleX(0.2)`, opacity: 0 },
           ],
-          { duration: 260 + Math.random() * 140, delay: pique ? 50 : 0, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+          { duration: 260 + Math.random() * 140, delay: contact, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
         ).onfinish = () => p.remove()
         continue
       }
@@ -971,7 +1057,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
       ).onfinish = () => p.remove()
     }
-    reculer(x, genre, lame || pique, pique ? (anglePique * Math.PI) / 180 : undefined)
+    reculer(x, genre, lame || pique, pique ? (anglePique * Math.PI) / 180 : undefined, contact)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
@@ -991,7 +1077,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => onde.remove()
   }
 
-  function reculer(x: number, genre: Genre, arret = false, axe?: number): void {
+  function reculer(x: number, genre: Genre, arret = false, axe?: number, retard = 0): void {
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase. Sous la
     // lame, il se FIGE un instant dans sa pose touchée (l'arrêt sur coup).
     // Sous l'estoc (`axe`, la direction du coup), il est POUSSÉ dans l'axe de
@@ -1012,7 +1098,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: rebond, filter: 'brightness(1.1)', offset: arret ? 0.65 : 0.55 },
         { transform: 'none', filter: 'brightness(1)' },
       ],
-      { duration: (STYLES[genre].critique ? 320 : 220) + (arret ? 70 : 0), delay: pousse ? 50 : 0, easing: 'ease-out' },
+      { duration: (STYLES[genre].critique ? 320 : 220) + (arret ? 70 : 0), delay: retard, easing: 'ease-out' },
     )
     if (STYLES[genre].secousse) {
       scene.animate(

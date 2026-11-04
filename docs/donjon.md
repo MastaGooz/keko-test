@@ -702,18 +702,26 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   bâton et aux capacités (`impactRond`).
   Un éclat à quatre branches cerné d'or claquait aussi au point touché :
   retiré (Keko : « l'étoile par-dessus le slash, ça fait trop »).
-- **L'ESTOC DE LA DAGUE** (Keko, 04/11 : « un coup pas en slash, plutôt
-  planté ») : l'attaque et l'auto de la dague plantent une lame fine et
-  pointue (`estoc`, `.donjon-estoc`, un SVG qui tourne autour de sa pointe
-  posée sur le point touché, la queue en fondu) qui monte du bas, penchée au
-  hasard (±35°) : elle arrive en accélérant, s'arrête net, s'enfonce d'un
-  cran, reste plantée un instant puis se retire — 230 ms, la dague frappe
-  toutes les 0,175 s. Au contact, un anneau qui SE REFERME sur le point
-  (celui du poing s'ouvre : l'estoc entre) ; les étincelles en traits
-  jaillissent de la plaie en gerbe serrée vers celui qui frappe ; l'ennemi
-  est POUSSÉ dans l'axe de la pointe et rapetisse, enfoncé, figé un instant
-  comme sous l'épée ; la scène est poussée de 3 px dans l'axe. Le critique
-  plante une lame 1,4 fois plus grosse, comme l'épée.
+- **LE COUP DE POIGNARD DE LA DAGUE** (Keko, 04/11 : « un coup pas en
+  slash, plutôt planté », puis « ça fait très flèche, on le garde pour les
+  arcs — un truc qui se plante mais dans un arc, comme un coup de
+  poignard ») : l'attaque et l'auto de la dague plantent un poignard blanc
+  (manche, garde, lame ; un fin trait d'encre, sinon il se perd sur l'ennemi
+  qui blanchit) qui arrive POINTE DEVANT sur une courbe (`poignard`,
+  `.donjon-bras` qui tourne autour d'une épaule, `.donjon-poignard` couché
+  sur la tangente à son bout, 80° de balayage) : il accélère, se plante au
+  bout de l'arc (95 ms), s'enfonce d'un cran, reste fiché, puis se retire —
+  260 ms, la dague frappe toutes les 0,175 s. Il finit vers le bas (on
+  frappe par-dessus), penché au hasard (±25°), un coup sur deux de l'autre
+  côté ; un trait fin suit sa course (`.donjon-course`). Au contact, un
+  anneau qui SE REFERME sur le point (celui du poing s'ouvre : la lame
+  entre) ; les étincelles en traits jaillissent de la plaie en gerbe serrée
+  vers celui qui frappe ; l'ennemi est POUSSÉ dans l'axe de la pointe et
+  rapetisse, figé un instant comme sous l'épée ; la scène est poussée de
+  3 px dans l'axe. Le critique plante une lame 1,4 fois plus grosse, comme
+  l'épée. **LA FLÈCHE**, le premier essai (une lame fine qui file droit et
+  se fiche, `fleche`, `.donjon-estoc`), est GARDÉE POUR L'ARC : `&fleche` la
+  rend à la dague.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

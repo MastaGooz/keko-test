@@ -265,6 +265,59 @@
   fill: #fffdf4;
 }
 
+/* Le coup de poignard : un bras de taille nulle posé sur l'épaule, qui
+   tourne ; la lame (manche, garde, lame) à son bout, la pointe sur le
+   cercle. Le trait de la course est l'arc du bout de la lame. */
+.donjon-bras {
+  position: absolute;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.donjon-poignard {
+  position: absolute;
+  top: 0;
+  width: 5rem;
+  height: 1.2rem;
+  transform-origin: 100% 50%;
+  filter: drop-shadow(0 0 0.1rem currentColor) drop-shadow(0 0 0.45rem currentColor);
+}
+
+.donjon-poignard svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.donjon-poignard path {
+  fill: #fffdf4;
+  /* Un fin trait d'encre : sans lui, la lame se perd sur l'ennemi qui blanchit. */
+  stroke: rgba(42, 26, 16, 0.75);
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.donjon-course {
+  position: absolute;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.3rem currentColor);
+}
+
+.donjon-course path {
+  fill: none;
+  stroke: #fffdf4;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
 /* Les particules : de petits éclats ronds qui s'éparpillent et retombent. */
 .donjon-particule {
   position: absolute;
