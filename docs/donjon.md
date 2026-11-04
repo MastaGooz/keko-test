@@ -708,7 +708,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   poignard », puis « un effet, pas directement le dessin d'une dague ») :
   l'attaque et l'auto de la dague tracent un TRAIT DE LUMIÈRE, comme
   l'entaille de l'épée, qui file DROIT (Keko : « laisser tomber le côté arc
-  et faire un truc plus droit » : 6,5 rem en ligne droite ; il filait sur
+  et faire un truc plus droit » : 5,5 rem en ligne droite — « un poil
+  moins longue », il en faisait 6,5 ; il filait sur
   une courbe, décrite ci-après) — un rectangle de lumière, d'une pointe
   COURTE au bout de la queue (14 % de sa longueur ; Keko : « plutôt qu'une
   queue pointue, une forme droite », puis « une forme en pointe au bout, mais

@@ -965,7 +965,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let coteDuPoignard = 1
   function poignard(x: number, y: number, k: number, couleur: string, finale: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const longueur = 6.5 * rem * k
+    const longueur = 5.5 * rem * k
     const largeur = 0.32 * rem * k
     // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
     const a = (finale * Math.PI) / 180
