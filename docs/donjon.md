@@ -685,8 +685,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
 - **L'ENTAILLE DE L'ÉPÉE** (Keko, 04/11 : « un effet de slash pour
   l'épée, l'animation actuelle correspond aux mains nues ») : l'attaque et
   l'auto de l'épée tracent un croissant blanc cerné de la couleur du coup
-  (`entaille`, `.donjon-entaille`, un SVG révélé puis effacé par
-  `clip-path`, 300 ms), penché au hasard, un coup sur deux dans l'autre
+  (`entaille`, `.donjon-entaille`, un SVG révélé puis effacé par un
+  MASQUE À BORDS FONDUS qui glisse, 320 ms — Keko : « un côté est plat au
+  lieu d'être pointu, un peu épais » : la découpe droite du premier essai,
+  `clip-path`, laissait un bout plat et rognait la lueur ; le croissant est
+  deux fois plus fin), penché au hasard, un coup sur deux dans l'autre
   sens ; le critique en croise une seconde. Les étincelles filent le long
   de l'entaille. L'onde ronde reste aux mains nues, aux autres armes, aux
   capacités et aux passifs (`impactRond`).

@@ -819,15 +819,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   /**
    * L'ENTAILLE DE L'ÉPÉE (Keko : « un effet de slash pour l'épée, l'animation
-   * actuelle correspond aux mains nues ») : un croissant blanc, cerné de la
-   * couleur du coup, qui se trace d'un bout à l'autre puis s'efface dans le
-   * même sens. Penché au hasard, un coup sur deux dans l'autre sens. Le
+   * actuelle correspond aux mains nues ») : un croissant blanc, fin, pointu
+   * aux deux bouts, cerné de la couleur du coup, qui se trace d'un bout à
+   * l'autre puis s'efface dans le même sens — par un MASQUE À BORDS FONDUS
+   * qui glisse : une découpe droite (`clip-path`) laissait un bout plat
+   * (Keko) et rognait la lueur. Penché au hasard, un coup sur deux dans l'autre sens. Le
    * critique en trace une seconde, croisée. Rend l'angle de la lame.
    */
   let sensDeLaLame = 1
   function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number): void {
     const n = el('div', 'donjon-entaille')
-    n.innerHTML = '<svg viewBox="0 0 100 30" aria-hidden="true"><path d="M0 26 Q50 -10 100 26 Q50 12 0 26Z"/></svg>'
+    n.innerHTML = '<svg viewBox="-10 -20 120 70" aria-hidden="true"><path d="M0 26 Q50 -10 100 26 Q50 1 0 26Z"/></svg>'
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
@@ -835,11 +837,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     scene.append(n)
     n.animate(
       [
-        { clipPath: 'inset(0 100% 0 0)', opacity: 1, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
-        { clipPath: 'inset(0 0 0 0)', opacity: 1, offset: 0.3, easing: 'ease-in' },
-        { clipPath: 'inset(0 0 0 100%)', opacity: 0.3 },
+        { maskPosition: '100% 0', easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
+        { maskPosition: '50% 0', offset: 0.35, easing: 'ease-in' },
+        { maskPosition: '0% 0' },
       ],
-      { duration: 300, delay: retard, fill: 'backwards' },
+      { duration: 320, delay: retard, fill: 'backwards' },
     ).onfinish = () => n.remove()
   }
 
