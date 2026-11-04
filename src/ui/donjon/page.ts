@@ -951,7 +951,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * LE COUP DE POIGNARD DE LA DAGUE (Keko : « un truc qui se plante, mais dans
    * un arc, comme un coup de poignard » — puis « un effet, pas directement le
    * dessin d'une dague ») : un TRAIT DE LUMIÈRE, comme l'entaille de l'épée,
-   * un rectangle de lumière, POINTU DEVANT et d'une pointe COURTE au bout de
+   * un rectangle de lumière, PLAT DEVANT (Keko : « aplatir la dague à
+   * l'extrémité où elle se plante » ; elle y était pointue) et d'une pointe COURTE au bout de
    * la queue (Keko : « plutôt qu'une queue pointue, une forme droite », puis
    * « une forme en pointe au bout, mais à la fin du rectangle » ; elle
    * s'effilait sur les trois quarts), qui file DROIT (Keko : « laisser
@@ -987,14 +988,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     scene.append(trace)
     // Le trait entre `queue` et `tete` (0 = son départ, 1 = le point
     // touché) : une pointe courte au bout de la queue, puis de la même
-    // largeur, puis droit à la pointe.
+    // largeur jusqu'au bout planté, coupé à plat.
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
       const dehors: string[] = []
       const dedans: string[] = []
       for (let i = 0; i <= 20; i++) {
         const v = i / 20
-        const h = largeur * gonfle * (v < 0.14 ? v / 0.14 : v < 0.78 ? 1 : (1 - v) / 0.22)
+        const h = largeur * gonfle * (v < 0.14 ? v / 0.14 : 1)
         const recul = (1 - (queue + (tete - queue) * v)) * longueur
         const [cx, cy] = [-dx * recul, -dy * recul]
         dehors.push(`${(cx - dy * h).toFixed(1)} ${(cy + dx * h).toFixed(1)}`)
