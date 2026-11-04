@@ -586,7 +586,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
 | `?camp=0`, `?camp=ancien`, `?brillantfond=doux\|eclat` | les cartes sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur, ou sous les pointes brillantes de l'éclat |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
-| `?donjon`, `&neuf` | le donjon coopératif ; `&neuf` (ou le bouton « Recommencer », deux tapes) oublie la saison de cet appareil |
+| `?donjon`, `&neuf`, `&armes=N` | le donjon coopératif ; `&neuf` (ou le bouton « Recommencer », deux tapes) oublie la saison de cet appareil ; `&armes=N` montre N armes dans l'armurerie (test de la grille) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |

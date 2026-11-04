@@ -554,6 +554,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   pour plus tard : la RARETÉ (posée : `rarete` dans `armes`, les trois sont
   communes, les cinq couleurs des cartes dans `RARETE`), le NIVEAU (sa place :
   à côté du cran dans la sous-ligne), les EFFETS SPÉCIAUX (la section).
+- **`&armes=N`, L'INVENTAIRE DE TEST** (Keko, 04/11 : « fais un test avec 15
+  armes dans l'inventaire ») : N places, les trois armes en boucle, le cran
+  montant toutes les trois (15 = les trois armes dans les cinq crans). Le
+  cran n'y est qu'une couleur, les chiffres restent ceux de l'arme. Une arme
+  peut donc être en plusieurs exemplaires : la grille retient la PLACE portée
+  (`portee`), pas seulement le type.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

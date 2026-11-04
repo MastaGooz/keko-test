@@ -164,6 +164,22 @@ const RARETE: Record<RareteArme, { nom: string; couleur: string }> = {
 /** La grille de l'armurerie : des rangées de quatre, deux au moins (des places vides). */
 const GRILLE = { colonnes: 4, casesMin: 8 }
 
+/** Une place de l'inventaire : une arme, et son cran. */
+type Possedee = { arme: TypeArme; rarete: RareteArme }
+
+/**
+ * L'INVENTAIRE D'ARMES. Pour l'instant, les trois armes du jeu. `&armes=N`
+ * (Keko : « fais un test avec 15 armes dans l'inventaire ») en montre N, les
+ * trois en boucle, le cran montant tous les trois (15 = les trois armes dans
+ * les cinq crans) — pour juger la grille, le cran n'y change pas les chiffres.
+ */
+function inventaireDArmes(parametres: URLSearchParams): Possedee[] {
+  const n = Number(parametres.get('armes'))
+  if (!parametres.has('armes') || !Number.isInteger(n) || n < 1) return ARMES.map((arme) => ({ arme, rarete: C.armes[arme].rarete }))
+  const crans = Object.keys(RARETE) as RareteArme[]
+  return Array.from({ length: Math.min(n, 60) }, (_, k) => ({ arme: ARMES[k % ARMES.length], rarete: crans[Math.floor(k / ARMES.length) % crans.length] }))
+}
+
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
   return { ...j, ameliorations: { ...j.ameliorations, [quoi]: j.ameliorations[quoi] + 1 } }
 }
@@ -507,10 +523,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   ficheArme.append(ficheEntete, ficheLignes, equiper)
   const grille = el('div', 'donjon-grille-armes')
   armurerie.append(ficheArme, grille)
-  let armeChoisie: TypeArme = 'epee'
-  const casesArme = ARMES.map((arme) => {
+  const inventaire = inventaireDArmes(parametres)
+  /** La place choisie, et celle de l'arme portée (une arme peut être en plusieurs exemplaires). */
+  let choisie = 0
+  let portee = 0
+  const casesArme = inventaire.map(({ arme, rarete }, k) => {
     const b = bouton('donjon-case-arme')
-    b.style.setProperty('--rarete', RARETE[C.armes[arme].rarete].couleur)
+    b.style.setProperty('--rarete', RARETE[rarete].couleur)
     b.setAttribute('aria-label', C.armes[arme].nom)
     const image = el('img')
     image.src = url(IMAGE_DE_L_ARME[arme])
@@ -518,18 +537,25 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     image.draggable = false
     b.append(image)
     b.addEventListener('click', () => {
-      armeChoisie = arme
+      choisie = k
       cleDeLaFiche = ''
       dessiner()
     })
     grille.append(b)
-    return { arme, b }
+    return b
   })
-  const cases = Math.max(GRILLE.casesMin, Math.ceil(ARMES.length / GRILLE.colonnes) * GRILLE.colonnes)
-  for (let k = ARMES.length; k < cases; k++) grille.append(el('div', 'donjon-case-vide'))
+  const cases = Math.max(GRILLE.casesMin, Math.ceil(inventaire.length / GRILLE.colonnes) * GRILLE.colonnes)
+  for (let k = inventaire.length; k < cases; k++) grille.append(el('div', 'donjon-case-vide'))
+  /** La place portée suit l'arme du joueur, si elle a changé ailleurs (une sauvegarde, un réglage). */
+  function placePortee(): number {
+    const arme = moi().arme
+    if (inventaire[portee]?.arme !== arme) portee = Math.max(0, inventaire.findIndex((p) => p.arme === arme))
+    return portee
+  }
   equiper.addEventListener('click', () => {
-    const arme = armeChoisie
-    if (moi().arme === arme) return
+    if (choisie === placePortee()) return
+    const { arme } = inventaire[choisie]
+    portee = choisie
     void partage.agir({ joueur: MOI, t: maintenant(), type: 'equiper', arme }).then(() => {
       sauver()
       dessiner()
@@ -550,20 +576,21 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
   function dessinerLaFiche(): void {
     const j = moi()
-    const arme = armeChoisie
-    const cle = `${arme}:${j.arme}:${AMELIORATIONS.map((q) => j.ameliorations[q]).join(',')}`
+    const ici = placePortee()
+    const { arme, rarete } = inventaire[choisie]
+    const cle = `${choisie}:${ici}:${AMELIORATIONS.map((q) => j.ameliorations[q]).join(',')}`
     if (cle === cleDeLaFiche) return
     cleDeLaFiche = cle
     const a = C.armes[arme]
-    const portee = arme === j.arme
+    const estPortee = choisie === ici
     const avec = { ...j, arme }
-    ficheArme.style.setProperty('--rarete', RARETE[a.rarete].couleur)
+    ficheArme.style.setProperty('--rarete', RARETE[rarete].couleur)
     ficheImage.src = url(IMAGE_DE_L_ARME[arme])
     ficheNom.textContent = a.nom
-    ficheSous.textContent = `${RARETE[a.rarete].nom} · ${DIT_L_ARME[arme].caractere}`
+    ficheSous.textContent = `${RARETE[rarete].nom} · ${DIT_L_ARME[arme].caractere}`
     // L'écart se dit seulement s'il existe : `signe` dit quel sens est le mieux.
     const ecart = (x: number, y: number, signe: 1 | -1, texte: (d: number) => string) => {
-      if (portee || Math.abs(x - y) < 1e-9) return undefined
+      if (estPortee || Math.abs(x - y) < 1e-9) return undefined
       return { texte: texte(x - y), mieux: signe * (x - y) > 0 }
     }
     const signe = (d: number, f: (x: number) => string) => `${d > 0 ? '+' : '−'}${f(Math.abs(d))}`
@@ -581,11 +608,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const effet = DIT_L_ARME[arme].effet
     if (effet !== undefined) lignes.push(el('div', 'donjon-fiche-section', 'Effet'), el('div', 'donjon-fiche-texte', effet))
     ficheLignes.replaceChildren(...lignes)
-    equiper.textContent = portee ? 'Équipée' : 'Équiper'
-    equiper.disabled = portee
-    for (const c of casesArme) {
-      c.b.classList.toggle('portee', c.arme === j.arme)
-      c.b.classList.toggle('choisie', c.arme === arme)
+    equiper.textContent = estPortee ? 'Équipée' : 'Équiper'
+    equiper.disabled = estPortee
+    for (const [k, b] of casesArme.entries()) {
+      b.classList.toggle('portee', k === ici)
+      b.classList.toggle('choisie', k === choisie)
     }
   }
   reglages.append(
@@ -956,7 +983,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (cleDeLaFeuille !== 'armes') {
         // À l'ouverture, la fiche montre l'arme portée.
         cleDeLaFeuille = 'armes'
-        armeChoisie = moi().arme
+        choisie = placePortee()
         cleDeLaFiche = ''
         feuilleCorps.replaceChildren(armurerie)
       }
