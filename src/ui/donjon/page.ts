@@ -817,8 +817,76 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * (Keko : l'étoile « correspond à un coup de poing »), à la couleur du
    * chiffre ; l'ennemi blanchit et recule.
    */
+  /**
+   * L'ENTAILLE DE L'ÉPÉE (Keko : « un effet de slash pour l'épée, l'animation
+   * actuelle correspond aux mains nues ») : un croissant blanc, cerné de la
+   * couleur du coup, qui se trace d'un bout à l'autre puis s'efface dans le
+   * même sens. Penché au hasard, un coup sur deux dans l'autre sens. Le
+   * critique en trace une seconde, croisée. Rend l'angle de la lame.
+   */
+  let sensDeLaLame = 1
+  function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number): void {
+    const n = el('div', 'donjon-entaille')
+    n.innerHTML = '<svg viewBox="0 0 100 30" aria-hidden="true"><path d="M0 26 Q50 -10 100 26 Q50 12 0 26Z"/></svg>'
+    n.style.left = `${x}px`
+    n.style.top = `${y}px`
+    n.style.color = couleur
+    n.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${sens * (0.75 + 0.25 * fort)}, ${0.75 + 0.25 * fort})`
+    scene.append(n)
+    n.animate(
+      [
+        { clipPath: 'inset(0 100% 0 0)', opacity: 1, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
+        { clipPath: 'inset(0 0 0 0)', opacity: 1, offset: 0.3, easing: 'ease-in' },
+        { clipPath: 'inset(0 0 0 100%)', opacity: 0.3 },
+      ],
+      { duration: 300, delay: retard, fill: 'backwards' },
+    ).onfinish = () => n.remove()
+  }
+
   function impact(x: number, y: number, genre: Genre, couleur: string): void {
     const fort = STYLES[genre].onde
+    // L'attaque et l'auto de l'épée tranchent ; le reste (mains nues, autres
+    // armes, capacités, passifs) frappe d'une onde ronde.
+    const lame = moi().arme === 'epee' && !genre.startsWith('capacite')
+    // Le hasard de l'écran, pas celui des règles.
+    const angleLame = -30 + (Math.random() - 0.5) * 40
+    if (lame) {
+      sensDeLaLame = -sensDeLaLame
+      entaille(x, y, fort, couleur, angleLame * sensDeLaLame, sensDeLaLame, 0)
+      if (STYLES[genre].critique) entaille(x, y, fort, couleur, -angleLame * sensDeLaLame + 10, -sensDeLaLame, 70)
+    } else {
+      impactRond(x, y, fort, couleur)
+    }
+
+    const combien = STYLES[genre].particules
+    for (let i = 0; i < combien; i++) {
+      const p = el('div', 'donjon-particule')
+      p.style.left = `${x}px`
+      p.style.top = `${y}px`
+      p.style.background = couleur
+      scene.append(p)
+      // Le hasard de l'écran, pas celui des règles. Sous la lame, les
+      // étincelles filent le long de l'entaille, des deux côtés.
+      const angle = lame
+        ? ((angleLame * sensDeLaLame + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
+        : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
+      const loin = (28 + Math.random() * 34) * fort * (lame ? 1.3 : 1)
+      const dx = Math.cos(angle) * loin
+      const dy = Math.sin(angle) * loin
+      p.animate(
+        [
+          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx * 0.8}px), calc(-50% + ${dy * 0.8}px)) scale(0.8)`, opacity: 1, offset: 0.55 },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 14}px)) scale(0.2)`, opacity: 0 },
+        ],
+        { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
+      ).onfinish = () => p.remove()
+    }
+    reculer(x, genre)
+  }
+
+  /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
+  function impactRond(x: number, y: number, fort: number, couleur: string): void {
     const onde = el('div', 'donjon-onde')
     onde.style.left = `${x}px`
     onde.style.top = `${y}px`
@@ -832,29 +900,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: 380 },
     ).onfinish = () => onde.remove()
+  }
 
-    const combien = STYLES[genre].particules
-    for (let i = 0; i < combien; i++) {
-      const p = el('div', 'donjon-particule')
-      p.style.left = `${x}px`
-      p.style.top = `${y}px`
-      p.style.background = couleur
-      scene.append(p)
-      // Le hasard de l'écran, pas celui des règles.
-      const angle = ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
-      const loin = (28 + Math.random() * 34) * fort
-      const dx = Math.cos(angle) * loin
-      const dy = Math.sin(angle) * loin
-      p.animate(
-        [
-          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-          { transform: `translate(calc(-50% + ${dx * 0.8}px), calc(-50% + ${dy * 0.8}px)) scale(0.8)`, opacity: 1, offset: 0.55 },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 14}px)) scale(0.2)`, opacity: 0 },
-        ],
-        { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
-      ).onfinish = () => p.remove()
-    }
-
+  function reculer(x: number, genre: Genre): void {
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase.
     const recul = (x < scene.clientWidth / 2 ? 1 : -1) * STYLES[genre].recul
     const blanc = STYLES[genre].blanc

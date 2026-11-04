@@ -682,6 +682,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   lit plus la hauteur de l'arène : `clamp(5.5rem, 21dvh, 10rem)`. Le
   bandeau plutôt que la barre posée sur le portrait : rien ne cache le
   décor ni les cibles des passifs.
+- **L'ENTAILLE DE L'ÉPÉE** (Keko, 04/11 : « un effet de slash pour
+  l'épée, l'animation actuelle correspond aux mains nues ») : l'attaque et
+  l'auto de l'épée tracent un croissant blanc cerné de la couleur du coup
+  (`entaille`, `.donjon-entaille`, un SVG révélé puis effacé par
+  `clip-path`, 300 ms), penché au hasard, un coup sur deux dans l'autre
+  sens ; le critique en croise une seconde. Les étincelles filent le long
+  de l'entaille. L'onde ronde reste aux mains nues, aux autres armes, aux
+  capacités et aux passifs (`impactRond`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

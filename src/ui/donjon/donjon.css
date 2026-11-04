@@ -207,6 +207,28 @@
   pointer-events: none;
 }
 
+/* L'entaille de l'épée : un croissant blanc cerné de la couleur du coup
+   (`color`, posé par la page), tracé puis effacé par `clip-path`. */
+.donjon-entaille {
+  position: absolute;
+  z-index: 2;
+  width: 11rem;
+  aspect-ratio: 100 / 30;
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.15rem currentColor) drop-shadow(0 0 0.7rem currentColor);
+}
+
+.donjon-entaille svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.donjon-entaille path {
+  fill: #fffdf4;
+}
+
 /* Les particules : de petits éclats ronds qui s'éparpillent et retombent. */
 .donjon-particule {
   position: absolute;
