@@ -709,7 +709,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'attaque et l'auto de la dague tracent un TRAIT DE LUMIÈRE, comme
   l'entaille de l'épée, qui file DROIT (Keko : « laisser tomber le côté arc
   et faire un truc plus droit » : 6,5 rem en ligne droite ; il filait sur
-  une courbe, décrite ci-après) — effilé à la queue, POINTU DEVANT
+  une courbe, décrite ci-après) — la queue COUPÉE DROIT, de la même largeur
+  jusqu'à la pointe (Keko : « plutôt qu'une queue pointue, une forme
+  droite » ; elle s'effilait), POINTU DEVANT
   (`poignard`, `.donjon-course`, un SVG redessiné à chaque image : un `d`
   ne s'anime pas partout ; 55° d'un arc de 7,5 rem, 1 rem au plus large ; Keko : « un peu plus gros », il en faisait 4,6 et 0,6 ; puis « que des côtés, ça fait projectile au lieu de mêlée, diminue un peu l'arc », il en balayait 80° ; puis « un peu trop petit » : tout agrandi d'un quart, l'arc gardé à 55°) : il accélère, touche
   (95 ms), s'enfonce d'un cran en se gonflant, reste fiché 60 ms, puis se
