@@ -743,7 +743,7 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   La traînée couvre presque tout l'arc (95°) et reste pleine dès ses deux
   cinquièmes, comme un manche (Keko : « trop courte, il faudrait l'allonger
   pour l'aspect bâton » ; elle en couvrait 60°, effilée sur les trois
-  quarts). L'arc bombe vers le haut, penché au hasard (±20°), un coup sur deux dans
+  quarts). L'arc bombe vers le haut, penché au hasard (±50°, et d'au moins 25° de plus ou de moins que le précédent — Keko : « l'angle de frappe est quasi toujours le même » ; il l'était de ±20°), un coup sur deux dans
   l'autre sens. Au contact, une onde APLATIE s'étale comme
   un choc au sol (`ondeAplatie`) ; les étincelles sont des POINTS DE
   LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;

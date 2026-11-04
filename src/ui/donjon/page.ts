@@ -987,6 +987,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * poignard. Le critique est 1,4 fois plus gros.
    */
   let coteDeLaMassue = 1
+  let pencheDeLaMassue = 0
   function massue(x: number, y: number, k: number, couleur: string, penche: number, cote: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const rayon = 6.5 * rem * k
@@ -1146,7 +1147,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // deux dans l'autre sens.
       const k = 1 + 0.65 * (fort - 1)
       coteDeLaMassue = -coteDeLaMassue
-      massue(x, y, k, couleur, (Math.random() - 0.5) * 40, coteDeLaMassue)
+      // Penchée de ±50°, et d'au moins 25° de plus ou de moins que la
+      // précédente (Keko : « l'angle de frappe est quasi toujours le même »).
+      let penche = 0
+      for (let essai = 0; essai < 8; essai++) {
+        penche = (Math.random() - 0.5) * 100
+        if (Math.abs(penche - pencheDeLaMassue) >= 25) break
+      }
+      pencheDeLaMassue = penche
+      massue(x, y, k, couleur, penche, coteDeLaMassue)
       ondeAplatie(x, y, k, couleur, contact)
       if (RUNE) cercleDeRune(x, y, k, couleur, contact)
       // La scène est tassée d'un cran vers le bas (le critique a sa secousse).
