@@ -708,8 +708,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   poignard », puis « un effet, pas directement le dessin d'une dague ») :
   l'attaque et l'auto de la dague tracent un TRAIT DE LUMIÈRE, comme
   l'entaille de l'épée, qui file DROIT (Keko : « laisser tomber le côté arc
-  et faire un truc plus droit » : 4,5 rem en ligne droite — « un poil
-  moins longue », puis « diminue la longueur », il en a fait 6,5 puis 5,5 ; il filait sur
+  et faire un truc plus droit » : 3,6 rem en ligne droite — « un poil
+  moins longue », « diminue la longueur », « encore moins longues », il en
+  a fait 6,5, 5,5 puis 4,5 ; il filait sur
   une courbe, décrite ci-après) — un rectangle de lumière, d'une pointe
   COURTE au bout de la queue (14 % de sa longueur ; Keko : « plutôt qu'une
   queue pointue, une forme droite », puis « une forme en pointe au bout, mais
@@ -731,8 +732,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   jaillissent de la plaie en gerbe serrée vers celui qui frappe ; l'ennemi
   est POUSSÉ dans l'axe de la pointe et rapetisse, figé un instant comme
   sous l'épée ; la scène est poussée de 3 px dans l'axe. Le critique ne
-  l'allonge pas, il l'épaissit d'un poil, ×1,2 (Keko ; il le grossissait de
-  1,4 fois en tout, comme l'épée). Un second essai plantait le
+  l'allonge pas, il l'ÉPAISSIT, ×1,8 (Keko : « d'un poil », puis « plus
+  épaisses » ; ×1,2 entre-temps, et d'abord 1,4 fois en tout, comme l'épée). Un second essai plantait le
   DESSIN d'un poignard (manche, garde, lame) au bout de l'arc : retiré.
   **LA FLÈCHE**, le premier essai (une lame fine qui file droit et se fiche,
   `fleche`, `.donjon-estoc`), est devenue le coup de L'ARC (ci-dessous) ;
