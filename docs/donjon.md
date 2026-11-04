@@ -787,6 +787,21 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   FIGÉ deux fois plus longtemps que sous l'épée (150 ms au lieu de 70) ; la
   scène est enfoncée de 7 px puis rebondit. Le critique est 1,4 fois plus
   gros, comme partout.
+- **LES HACHES PRENNENT LES CROISSANTS, LES ÉPÉES TRANCHENT DROIT** (Keko,
+  04/11 : « on utilise le slash épée et le slash épée à deux mains pour la
+  hache et la hache à deux mains, et on crée des slashs épée droits pour
+  l'épée et l'épée à deux mains ») : deux armes provisoires de plus, la
+  HACHE (« Brutale », 11 toutes les 0,275 s) et la HACHE À DEUX MAINS
+  (« Massive », 22 toutes les 0,55 s) — le DPS de base, ni bonus, ni
+  capacité, ni passif ; icône provisoire pour les deux : la capacité n° 123
+  (la hache dans son anneau de feu, la seule hache du tri). La hache trace
+  L'ENTAILLE EN CROISSANT de l'épée décrite plus haut, la hache à deux mains
+  son ENTAILLE LOURDE ; l'épée et l'épée à deux mains tracent désormais une
+  ENTAILLE DROITE (`entaille(…, droite)` : un trait droit, pointu aux deux
+  bouts, de l'épaisseur du croissant au milieu, révélé par le même masque),
+  chacune avec son angle, sa taille et son punch d'avant. Le reste du coup
+  (étincelles, arrêt sur coup, secousse, ennemi tassé sous les deux mains)
+  suit la lame, pas sa forme.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

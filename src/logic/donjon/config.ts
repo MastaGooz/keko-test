@@ -29,9 +29,9 @@ export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'r
 export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
-export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains'
-export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains']
-/** Les armes qui ont un passif de classe (l'arc et l'épée à deux mains n'ont pas encore le leur). */
+export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains']
+/** Les armes qui ont un passif de classe (les quatre provisoires n'ont pas encore le leur). */
 export type ArmeAPassif = 'epee' | 'dague' | 'baton'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
@@ -165,7 +165,10 @@ export const DONJON = {
    * l'écran, la flèche) : le DPS de base des autres (12 toutes les 0,3 s),
    * ni bonus, ni capacité, ni passif tant qu'ils ne sont pas définis.
    * L'ÉPÉE À DEUX MAINS aussi (Keko : « on fait l'épée à deux mains ? ») :
-   * lente et lourde, 20 toutes les 0,5 s — le même DPS de base.
+   * lente et lourde, 20 toutes les 0,5 s — le même DPS de base. La HACHE
+   * et la HACHE À DEUX MAINS aussi (Keko : « on utilise le slash épée et le
+   * slash épée à deux mains pour la hache et la hache à deux mains ») : 11
+   * toutes les 0,275 s, 22 toutes les 0,55 s.
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
@@ -174,6 +177,8 @@ export const DONJON = {
     baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0, capacites: ['bouleDeFeu', 'meditation'] },
     arc: { nom: 'Arc', rarete: 'commune', degats: 12, recharge: 0.3 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     deuxMains: { nom: 'Épée à deux mains', rarete: 'commune', degats: 20, recharge: 0.5 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
+    hache: { nom: 'Hache', rarete: 'commune', degats: 11, recharge: 0.275 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
+    hacheDeuxMains: { nom: 'Hache à deux mains', rarete: 'commune', degats: 22, recharge: 0.55 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
   } as Record<
     Equipement,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }

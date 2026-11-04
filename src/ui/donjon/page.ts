@@ -150,8 +150,9 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * \\tri`) : l'épée est l'objet n° 010 ; la dague la capacité n° 119 ; le
  * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer ;
  * les mains nues, la capacité n° 118 (le coup de pied), en attendant leur icône ;
- * l'arc, la capacité n° 117 (l'arc et la cible), et l'épée à deux mains, la
- * n° 109 (l'épée dans sa traînée de feu), provisoires elles aussi.
+ * l'arc, la capacité n° 117 (l'arc et la cible), l'épée à deux mains, la
+ * n° 109 (l'épée dans sa traînée de feu), et les deux haches, la n° 123 (la
+ * hache dans son anneau de feu ; la seule hache du tri), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -160,6 +161,8 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   baton: 'armes/baton.webp',
   arc: 'armes/arc.webp',
   deuxMains: 'armes/deux-mains.webp',
+  hache: 'armes/hache.webp',
+  hacheDeuxMains: 'armes/hache.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -167,6 +170,8 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   baton: { caractere: 'Lent', bonus: 'Dégâts critiques +50 %' },
   arc: { caractere: 'À distance', bonus: "Aucun pour l'instant" },
   deuxMains: { caractere: 'Lourde', bonus: "Aucun pour l'instant" },
+  hache: { caractere: 'Brutale', bonus: "Aucun pour l'instant" },
+  hacheDeuxMains: { caractere: 'Massive', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -864,14 +869,18 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   let sensDeLaLame = 1
   /**
-   * L'ENTAILLE LOURDE DE L'ÉPÉE À DEUX MAINS (`lourde`) : la même entaille,
+   * L'ENTAILLE LOURDE (`lourde`, les armes à deux mains) : la même entaille,
    * 1,45 fois plus grande et un tiers plus épaisse, tracée plus lentement
    * (340 ms) ; elle FEND de haut en bas, presque à la verticale, le croissant
-   * bombant d'un côté puis de l'autre (`bombe`).
+   * bombant d'un côté puis de l'autre (`bombe`). L'ENTAILLE DROITE (`droite`,
+   * les épées ; Keko : « des slashs épée droits pour l'épée et l'épée à deux
+   * mains » — le croissant est passé aux haches) : un trait droit, fin,
+   * pointu aux deux bouts, de la même épaisseur au milieu, tracé pareil.
    */
-  function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number, lourde = false, bombe = 1): void {
+  function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number, lourde = false, bombe = 1, droite = false): void {
     const n = el('div', 'donjon-entaille')
-    n.innerHTML = '<svg viewBox="-10 -20 120 70" aria-hidden="true"><path d="M0 26 Q50 -10 100 26 Q50 1 0 26Z"/></svg>'
+    const forme = droite ? 'M0 15 Q50 9.5 100 15 Q50 20.5 0 15Z' : 'M0 26 Q50 -10 100 26 Q50 1 0 26Z'
+    n.innerHTML = `<svg viewBox="-10 -20 120 70" aria-hidden="true"><path d="${forme}"/></svg>`
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
@@ -1146,9 +1155,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // celles du bâton écrasent ; le reste (mains nues, capacités) frappe
     // d'une onde ronde.
     const arme = genre.startsWith('capacite') ? null : moi().arme
-    // L'épée à deux mains tranche aussi, en lourd : elle fend de haut en bas.
-    const lourde = arme === 'deuxMains'
-    const lame = arme === 'epee' || lourde
+    // Les épées et les haches tranchent, les armes à deux mains en lourd (elles
+    // fendent de haut en bas) ; le trait des épées est DROIT, celui des haches
+    // en croissant.
+    const lourde = arme === 'deuxMains' || arme === 'hacheDeuxMains'
+    const lame = arme === 'epee' || arme === 'hache' || lourde
+    const droite = arme === 'epee' || arme === 'deuxMains'
     let angleLourd = 90
     // L'arc tire la flèche ; la dague plante son poignard (ou la flèche, `&fleche`).
     const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
@@ -1207,7 +1219,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // croissant bombe du côté d'où vient la lame.
       sensDeLaLame = -sensDeLaLame
       const angle = 90 + sensDeLaLame * 14 + (Math.random() - 0.5) * 20
-      entaille(x, y, fort, couleur, angle, 1, 0, true, sensDeLaLame)
+      entaille(x, y, fort, couleur, angle, 1, 0, true, sensDeLaLame, droite)
       angleLourd = angle
       // La scène est enfoncée vers le bas, plus fort que sous l'épée (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
@@ -1215,7 +1227,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
     } else if (lame) {
       sensDeLaLame = -sensDeLaLame
-      entaille(x, y, fort, couleur, angleLame * sensDeLaLame, sensDeLaLame, 0)
+      entaille(x, y, fort, couleur, angleLame * sensDeLaLame, sensDeLaLame, 0, false, 1, droite)
       // La scène bouge d'un cran dans le sens de la lame (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
         const a = (angleLame * sensDeLaLame * Math.PI) / 180
