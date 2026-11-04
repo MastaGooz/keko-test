@@ -469,11 +469,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   traitForme.style.background = `linear-gradient(to right, #3f3f3f 0%, #a8a8a8 ${debutPalier}%, #fff ${debutPalier}% ${finPalier}%, #ffe58a ${finPalier}%, #ffcf2e 100%)`
   arene.append(cadre, jaugeForme)
 
-  // De haut en bas : l'ennemi, le bouton, le niveau, et tout en bas le journal.
+  // De haut en bas : le nom et la vie de l'ennemi, l'ennemi, le bouton, le
+  // niveau, et tout en bas le journal. LA BARRE DE VIE EST AU-DESSUS DE LA
+  // SCÈNE (Keko : « diminuer l'espace entre les boutons et le monstre pour
+  // faciliter les actions ») : le monstre, qu'on touche pour les passifs,
+  // descend juste au-dessus de l'attaque, plus près du pouce.
   // La ligne du personnage : son arme, puis son niveau (qui ouvre ses stats).
   const perso = el('div', 'donjon-perso')
   perso.append(emplacement, bande)
-  page.append(tete, scene, fiche, arene, perso, fil)
+  page.append(tete, fiche, scene, arene, perso, fil)
 
   // Les cinq stats, faites une fois (redessinées à chaque tic, les boutons
   // perdraient le clic entre l'appui et le relâchement). Un point par niveau,

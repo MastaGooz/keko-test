@@ -117,8 +117,9 @@
 
 .donjon-scene {
   position: relative;
-  flex: 0 1 auto;
-  height: clamp(9rem, 32vh, 16rem);
+  /* La scène prend la place libre (le bouton ne la centre plus) : le monstre,
+     posé en bas, reste au-dessus de l'attaque ; un grand écran agrandit le ciel. */
+  flex: 1 1 0;
   min-height: 9rem;
   display: flex;
   align-items: flex-end;
@@ -394,7 +395,7 @@
 /* ------------------------------------------------ attaquer */
 
 .donjon-arene {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   padding: 0.5rem 0;
   display: flex;
@@ -409,8 +410,8 @@
   position: relative;
   /* Le texte du bouton suit sa taille (`cqh`) : sur petit écran il rapetisse. */
   container-type: size;
-  height: min(10rem, 100% - 14px - 3.2rem);
-  min-height: 5.5rem;
+  /* À la hauteur de l'écran (la scène prend la place libre, plus l'arène) : 10rem, moins sur un écran court. */
+  height: clamp(5.5rem, 21dvh, 10rem);
   aspect-ratio: 1;
 }
 

@@ -671,6 +671,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   le coup de pied, `public/armes/mains.webp`, en attendant la sienne) ; les
   deux boutons de capacité s'en vont. Reprendre une arme met ses capacités en recharge, comme tout
   changement. Les chiffres sont de moi, à rejuger.
+- **LA BARRE DE VIE AU-DESSUS DE LA SCÈNE** (Keko, 04/11 : « diminuer
+  l'espace entre les boutons et le monstre afin de faciliter la réalisation
+  des actions » ; « fais ce que tu penses être le mieux ») : le nom et la
+  barre passent entre la tête et la scène, et c'est la SCÈNE qui prend la
+  place libre (`flex: 1`), plus l'arène qui centrait le bouton dans du vide.
+  Le monstre, posé en bas de sa scène, finit juste au-dessus des boutons :
+  sur un 390 × 844, de ~170 px d'écart à ~30. Un grand écran agrandit le
+  ciel, le monstre garde sa largeur (22rem au plus). Le bouton d'attaque ne
+  lit plus la hauteur de l'arène : `clamp(5.5rem, 21dvh, 10rem)`. Le
+  bandeau plutôt que la barre posée sur le portrait : rien ne cache le
+  décor ni les cibles des passifs.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
