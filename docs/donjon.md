@@ -712,9 +712,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   ne s'anime pas partout ; 80° d'un arc de 6 rem, 0,8 rem au plus large ; Keko : « un peu plus gros », il en faisait 4,6 et 0,6) : il accélère, touche
   (95 ms), s'enfonce d'un cran en se gonflant, reste fiché 60 ms, puis se
   résorbe dans le point, la queue rattrapant la pointe (110 ms) — la dague
-  frappe toutes les 0,175 s. La courbe est celle d'un bras qui frappe
-  par-dessus : elle finit vers le bas, penchée au hasard (±25°), un coup sur
-  deux de l'autre côté. Au contact, un anneau qui SE REFERME sur le point
+  frappe toutes les 0,175 s. La courbe arrive DE CÔTÉ et se plante en diagonale vers le bas (45°,
+  ±15° au hasard), un coup sur deux de l'autre côté (Keko : « ça frappe un
+  peu trop le haut » : elle descendait à la verticale, et sa courbe montait
+  d'un rayon au-dessus du point ; de côté, d'un tiers de rayon). Au contact, un anneau qui SE REFERME sur le point
   (celui du poing s'ouvre : la lame entre) ; les étincelles en traits
   jaillissent de la plaie en gerbe serrée vers celui qui frappe ; l'ennemi
   est POUSSÉ dans l'axe de la pointe et rapetisse, figé un instant comme

@@ -895,9 +895,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * mais qui file sur une courbe, effilé à la queue et POINTU DEVANT, et se
    * plante au bout de son arc : il accélère, touche, s'enfonce d'un cran,
    * reste fiché un instant, puis se résorbe dans le point touché, la queue
-   * rattrapant la pointe. La courbe est celle d'un bras qui frappe
-   * par-dessus : elle finit vers le bas, penchée au hasard, un coup sur deux
-   * de l'autre côté. Redessiné à chaque image (un `d` ne s'anime pas
+   * rattrapant la pointe. La courbe arrive de côté et finit en diagonale
+   * vers le bas (`finale`), un coup sur deux de l'autre côté. Redessiné à chaque image (un `d` ne s'anime pas
    * partout). Le critique trace un trait 1,4 fois plus gros, comme l'épée.
    */
   let coteDuPoignard = 1
@@ -987,17 +986,18 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const pique = arme === 'dague'
     // Le hasard de l'écran, pas celui des règles.
     const angleLame = -30 + (Math.random() - 0.5) * 40
-    // La direction de la pointe au contact : la flèche monte du bas, le
-    // poignard descend par-dessus ; penchés au hasard.
-    const anglePique = FLECHE ? -90 + (Math.random() - 0.5) * 70 : 90 + (Math.random() - 0.5) * 50
+    // La direction de la pointe au contact : la flèche monte du bas ; le
+    // poignard arrive DE CÔTÉ, un coup sur deux de l'autre, et se plante en
+    // diagonale vers le bas (Keko : « ça frappe un peu trop le haut » — il
+    // descendait à la verticale, sa courbe montait loin au-dessus du point) ;
+    // penchés au hasard.
+    if (pique && !FLECHE) coteDuPoignard = -coteDuPoignard
+    const anglePique = FLECHE ? -90 + (Math.random() - 0.5) * 70 : 90 - coteDuPoignard * 45 + (Math.random() - 0.5) * 30
     const contact = pique ? (FLECHE ? 50 : CONTACT_POIGNARD) : 0
     if (pique) {
       const k = 1 + 0.65 * (fort - 1)
       if (FLECHE) fleche(x, y, k, couleur, anglePique)
-      else {
-        coteDuPoignard = -coteDuPoignard
-        poignard(x, y, k, couleur, anglePique, coteDuPoignard)
-      }
+      else poignard(x, y, k, couleur, anglePique, coteDuPoignard)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
