@@ -766,10 +766,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // entre-temps), se résorbe en 110.
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
-  // Le coup de lance : il perce à 60 ms, reste fiché 260 ms (plus que le
+  // Le coup de lance : il perce à 100 ms (son élan), reste fiché 260 ms (plus que le
   // poignard ; Keko : « un peu plus longtemps »), s'efface sur place en 160
   // (« un peu plus long, le fade » ; 90 avant).
-  const CONTACT_LANCE = 60
+  const CONTACT_LANCE = 100
   const TENUE_LANCE = 260
   const FONDU_LANCE = 160
   const VIDANGE_POIGNARD = 110
@@ -961,9 +961,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * qui finit sur le point touché, dans la direction `angle` : `profil` dit
    * sa largeur le long du trait (0 = la queue, 1 = la tête). `dessiner` le
    * trace entre `queue` et `tete` (0 = son départ, 1 = le point), gonflé de
-   * `gonfle`. Le poignard et la lance le partagent.
+   * `gonfle`. Le poignard et la lance le partagent. `elan` : jusqu'où, en
+   * longueurs, il peut venir de derrière son départ (la boîte s'agrandit).
    */
-  function traitDroit(x: number, y: number, couleur: string, angle: number, longueur: number, largeur: number, profil: (v: number) => number) {
+  function traitDroit(x: number, y: number, couleur: string, angle: number, longueur: number, largeur: number, profil: (v: number) => number, elan = 0) {
     // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
     const a = (angle * Math.PI) / 180
     const [dx, dy] = [Math.cos(a), Math.sin(a)]
@@ -972,7 +973,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     trace.setAttribute('aria-hidden', 'true')
     // Une vraie boîte autour du trait, centrée sur le point : sur une boîte
     // nulle, la lueur serait rognée.
-    const demi = longueur + 3 * largeur
+    const demi = longueur * (1 + elan) + 3 * largeur
     trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
     trace.style.width = trace.style.height = `${2 * demi}px`
     trace.style.left = `${x - demi}px`
@@ -1013,14 +1014,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // La hampe (une pointe courte à la queue), la tête qui s'élargit, puis la pointe.
     const profil = (v: number) => (v < 0.06 ? v / 0.06 : v < 0.66 ? 0.5 : v < 0.84 ? 0.5 + (0.5 * (v - 0.66)) / 0.18 : (1 - v) / 0.16)
-    const { dessiner, trace } = traitDroit(x, y, couleur, angle, 6.5 * rem, 0.42 * rem * (1 + (k - 1) * 2), profil)
+    const longueur = 6.5 * rem
+    const { dessiner, trace } = traitDroit(x, y, couleur, angle, longueur, 0.42 * rem * (1 + (k - 1) * 2), profil, 1.4)
+    // L'ÉLAN (Keko : « on dirait qu'elle apparaît directement sur place ») :
+    // elle arrive ENTIÈRE de 4 rem en retrait, étirée par la vitesse, et se
+    // resserre en touchant.
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
       if (t < CONTACT_LANCE) {
-        // Elle jaillit en accélérant, hampe comprise.
         const p = (t / CONTACT_LANCE) ** 2
-        dessiner(Math.max(0, p - 0.95), p, 1)
+        const tete = 1 - ((1 - p) * 4 * rem) / longueur
+        dessiner(tete - 0.95 - 0.35 * (1 - p), tete, 1)
+        trace.style.opacity = `${Math.min(1, t / 25)}`
       } else if (t < CONTACT_LANCE + TENUE_LANCE) {
         // Elle perce : la pointe s'enfonce d'un cran, le trait gonfle et se
         // rassied, puis elle reste plantée.
