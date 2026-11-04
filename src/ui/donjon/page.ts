@@ -824,11 +824,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * l'autre puis s'efface dans le même sens — par un MASQUE À BORDS FONDUS
    * qui glisse : une découpe droite (`clip-path`) laissait un bout plat
    * (Keko) et rognait la lueur. Penché au hasard, un coup sur deux dans l'autre sens. Le
-   * critique en trace une seconde, croisée. DU PUNCH (Keko : « ça manque un
-   * peu d'impact ») : le trait part sec et s'étire en s'amincissant, un
-   * éclat à quatre branches claque au point touché, les étincelles sont des
-   * traits qui filent, l'ennemi se fige un instant dans sa pose touchée
-   * (l'arrêt sur coup) et la scène bouge d'un cran dans le sens de la lame.
+   * critique en trace une seconde, croisée. DU PUNCH AUTOUR (Keko : « ça
+   * manque un peu d'impact » — puis « je ne voulais pas toucher aux slashs,
+   * plutôt au feel autour ») : l'entaille garde sa forme, tracée un peu plus
+   * vite ; un éclat à quatre branches claque au point touché, les
+   * étincelles sont des traits qui filent, l'ennemi se fige un instant dans
+   * sa pose touchée (l'arrêt sur coup) et la scène bouge d'un cran dans le
+   * sens de la lame.
    */
   let sensDeLaLame = 1
   function entaille(x: number, y: number, fort: number, couleur: string, angle: number, sens: number, retard: number): void {
@@ -838,13 +840,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.top = `${y}px`
     n.style.color = couleur
     const k = 0.75 + 0.25 * fort
-    const pose = (l: number, h: number) => `translate(-50%, -50%) rotate(${angle}deg) scale(${sens * k * l}, ${k * h})`
+    n.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${sens * k}, ${k})`
     scene.append(n)
     n.animate(
       [
-        { maskPosition: '100% 0', transform: pose(0.8, 0.7), easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' },
-        { maskPosition: '50% 0', transform: pose(1.08, 1.2), offset: 0.25, easing: 'ease-in' },
-        { maskPosition: '0% 0', transform: pose(1.2, 0.45) },
+        { maskPosition: '100% 0', easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
+        { maskPosition: '50% 0', offset: 0.35, easing: 'ease-in' },
+        { maskPosition: '0% 0' },
       ],
       { duration: 260, delay: retard, fill: 'backwards' },
     ).onfinish = () => n.remove()
