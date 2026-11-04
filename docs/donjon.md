@@ -712,7 +712,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   une courbe, décrite ci-après) — un rectangle de lumière, d'une pointe
   COURTE au bout de la queue (14 % de sa longueur ; Keko : « plutôt qu'une
   queue pointue, une forme droite », puis « une forme en pointe au bout, mais
-  à la fin du rectangle » ; elle s'effilait sur les trois quarts), POINTU DEVANT
+  à la fin du rectangle » ; elle s'effilait sur les trois quarts), 0,64 rem
+  d'épaisseur (Keko : « moins épaisse » ; 1 rem avant), POINTU DEVANT
   (`poignard`, `.donjon-course`, un SVG redessiné à chaque image : un `d`
   ne s'anime pas partout ; 55° d'un arc de 7,5 rem, 1 rem au plus large ; Keko : « un peu plus gros », il en faisait 4,6 et 0,6 ; puis « que des côtés, ça fait projectile au lieu de mêlée, diminue un peu l'arc », il en balayait 80° ; puis « un peu trop petit » : tout agrandi d'un quart, l'arc gardé à 55°) : il accélère, touche
   (95 ms), s'enfonce d'un cran en se gonflant, reste fiché 60 ms, puis se
