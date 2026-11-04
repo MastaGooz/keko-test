@@ -22,7 +22,7 @@
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
-import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type TypeArme } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON, JOUR, type CleAmelioration, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
@@ -142,11 +142,27 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * bâton, faute d'image de bâton, la capacité n° 116 (la magie) — à remplacer.
  */
 const IMAGE_DE_L_ARME: Record<TypeArme, string> = { epee: 'armes/epee.webp', dague: 'armes/dague.webp', baton: 'armes/baton.webp' }
-const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
+/**
+ * `effet` : le passif d'une arme, en phrase (Keko : les armes porteront des
+ * effets spéciaux) ; la fiche ne montre sa section que s'il y en a un.
+ */
+const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string; effet?: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
   dague: { caractere: 'Rapide', bonus: 'Critique +5 points' },
   baton: { caractere: 'Lent', bonus: 'Dégâts critiques +50 %' },
 }
+
+/** Les crans des armes, nommés et colorés comme les cartes. */
+const RARETE: Record<RareteArme, { nom: string; couleur: string }> = {
+  commune: { nom: 'Commune', couleur: '#d9d2c3' },
+  peuCommune: { nom: 'Peu commune', couleur: '#6cc04a' },
+  rare: { nom: 'Rare', couleur: '#4b92e6' },
+  epique: { nom: 'Épique', couleur: '#a861e6' },
+  legendaire: { nom: 'Légendaire', couleur: '#f39a2b' },
+}
+
+/** La grille de l'armurerie : des rangées de quatre, deux au moins (des places vides). */
+const GRILLE = { colonnes: 4, casesMin: 8 }
 
 function auRangSuivant(j: Joueur, quoi: CleAmelioration): Joueur {
   return { ...j, ameliorations: { ...j.ameliorations, [quoi]: j.ameliorations[quoi] + 1 } }
@@ -470,36 +486,108 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       recommencer.textContent = 'Recommencer la saison'
     }, 3000)
   })
-  // L'ARMURERIE, faite une fois : une carte par arme (image, caractère,
-  // dégâts, recharge, bonus) ; une tape équipe, et la feuille se referme.
+  // L'ARMURERIE (Keko : « y'a pas mieux qu'une liste ? », les armes vont se
+  // multiplier et porter plus d'infos) : en haut la FICHE de l'arme choisie,
+  // ses chiffres avec vos stats, comparés à l'arme portée (▲ ▼) ; en bas la
+  // GRILLE des armes, cadre à la couleur du cran. Une tape choisit,
+  // « Équiper » confirme, et la feuille se referme.
   const armurerie = el('div', 'donjon-armes')
-  const cartesArme = ARMES.map((arme) => {
-    const a = C.armes[arme]
-    const b = bouton('donjon-arme')
-    const image = el('img', 'donjon-arme-image')
+  const ficheArme = el('div', 'donjon-fiche-arme')
+  const ficheImage = el('img', 'donjon-fiche-image')
+  ficheImage.alt = ''
+  ficheImage.draggable = false
+  const ficheNom = el('div', 'donjon-fiche-nom')
+  const ficheSous = el('div', 'donjon-fiche-sous')
+  const ficheEntete = el('div', 'donjon-fiche-entete')
+  const ficheTitres = el('div', 'donjon-fiche-titres')
+  ficheTitres.append(ficheNom, ficheSous)
+  ficheEntete.append(ficheImage, ficheTitres)
+  const ficheLignes = el('div', 'donjon-fiche-lignes')
+  const equiper = bouton('donjon-equiper')
+  ficheArme.append(ficheEntete, ficheLignes, equiper)
+  const grille = el('div', 'donjon-grille-armes')
+  armurerie.append(ficheArme, grille)
+  let armeChoisie: TypeArme = 'epee'
+  const casesArme = ARMES.map((arme) => {
+    const b = bouton('donjon-case-arme')
+    b.style.setProperty('--rarete', RARETE[C.armes[arme].rarete].couleur)
+    b.setAttribute('aria-label', C.armes[arme].nom)
+    const image = el('img')
     image.src = url(IMAGE_DE_L_ARME[arme])
     image.alt = ''
     image.draggable = false
-    const texte = el('span', 'donjon-arme-texte')
-    texte.append(
-      el('span', 'donjon-arme-nom', `${a.nom} · ${DIT_L_ARME[arme].caractere.toLowerCase()}`),
-      el('span', 'donjon-arme-ligne', `Dégâts ${a.degats} · recharge ${secondes(a.recharge)} · auto ${secondes(a.recharge * C.auto.depart)}`),
-      el('span', 'donjon-arme-bonus', DIT_L_ARME[arme].bonus),
-    )
-    const etat = el('span', 'donjon-arme-etat')
-    b.append(image, texte, etat)
+    b.append(image)
     b.addEventListener('click', () => {
-      if (moi().arme === arme) return
-      void partage.agir({ joueur: MOI, t: maintenant(), type: 'equiper', arme }).then(() => {
-        sauver()
-        dessiner()
-        emplacement.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25) rotate(-8deg)' }, { transform: 'scale(1)' }], { duration: 360, easing: 'ease-out' })
-        setTimeout(fermerLaFeuille, 250)
-      })
+      armeChoisie = arme
+      cleDeLaFiche = ''
+      dessiner()
     })
-    armurerie.append(b)
-    return { arme, b, etat }
+    grille.append(b)
+    return { arme, b }
   })
+  const cases = Math.max(GRILLE.casesMin, Math.ceil(ARMES.length / GRILLE.colonnes) * GRILLE.colonnes)
+  for (let k = ARMES.length; k < cases; k++) grille.append(el('div', 'donjon-case-vide'))
+  equiper.addEventListener('click', () => {
+    const arme = armeChoisie
+    if (moi().arme === arme) return
+    void partage.agir({ joueur: MOI, t: maintenant(), type: 'equiper', arme }).then(() => {
+      sauver()
+      dessiner()
+      emplacement.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25) rotate(-8deg)' }, { transform: 'scale(1)' }], { duration: 360, easing: 'ease-out' })
+      setTimeout(fermerLaFeuille, 250)
+    })
+  })
+  let cleDeLaFiche = ''
+  /**
+   * Une ligne de la fiche : son nom, sa valeur, et l'écart à l'arme portée
+   * (▲ mieux, ▼ moins bien), absent s'il est nul ou si c'est l'arme portée.
+   */
+  function ligneDeFiche(nom: string, valeur: string, ecart?: { texte: string; mieux: boolean }): HTMLElement {
+    const l = el('div', 'donjon-fiche-ligne')
+    l.append(el('span', undefined, nom), el('b', undefined, valeur))
+    if (ecart !== undefined) l.append(el('span', ecart.mieux ? 'donjon-mieux' : 'donjon-moins', `${ecart.mieux ? '▲' : '▼'} ${ecart.texte}`))
+    return l
+  }
+  function dessinerLaFiche(): void {
+    const j = moi()
+    const arme = armeChoisie
+    const cle = `${arme}:${j.arme}:${AMELIORATIONS.map((q) => j.ameliorations[q]).join(',')}`
+    if (cle === cleDeLaFiche) return
+    cleDeLaFiche = cle
+    const a = C.armes[arme]
+    const portee = arme === j.arme
+    const avec = { ...j, arme }
+    ficheArme.style.setProperty('--rarete', RARETE[a.rarete].couleur)
+    ficheImage.src = url(IMAGE_DE_L_ARME[arme])
+    ficheNom.textContent = a.nom
+    ficheSous.textContent = `${RARETE[a.rarete].nom} · ${DIT_L_ARME[arme].caractere}`
+    // L'écart se dit seulement s'il existe : `signe` dit quel sens est le mieux.
+    const ecart = (x: number, y: number, signe: 1 | -1, texte: (d: number) => string) => {
+      if (portee || Math.abs(x - y) < 1e-9) return undefined
+      return { texte: texte(x - y), mieux: signe * (x - y) > 0 }
+    }
+    const signe = (d: number, f: (x: number) => string) => `${d > 0 ? '+' : '−'}${f(Math.abs(d))}`
+    const moyen = degatsDuTap(C, avec)
+    const dps = dpsDeSpam(C, avec) + dpsEffectifDe(C, avec)
+    const dpsPorte = dpsDeSpam(C, j) + dpsEffectifDe(C, j)
+    const lignes = [
+      ligneDeFiche('Dégâts', `${borne(moyen * (1 - C.tap.ecart) + 1e-9)} – ${borne(moyen * (1 + C.tap.ecart) - 1e-9)}`, ecart(moyen, degatsDuTap(C, j), 1, (d) => signe(d, nombre))),
+      ligneDeFiche('Recharge', secondes(rechargeDe(C, avec)), ecart(rechargeDe(C, avec), rechargeDe(C, j), -1, (d) => signe(d, secondes))),
+      ligneDeFiche('Auto', secondes(periodeDe(C, avec)), ecart(periodeDe(C, avec), periodeDe(C, j), -1, (d) => signe(d, secondes))),
+      ligneDeFiche('DPS max', nombre(dps), ecart(dps, dpsPorte, 1, (d) => signe(d, nombre))),
+      el('div', 'donjon-fiche-section', 'Bonus'),
+      el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
+    ]
+    const effet = DIT_L_ARME[arme].effet
+    if (effet !== undefined) lignes.push(el('div', 'donjon-fiche-section', 'Effet'), el('div', 'donjon-fiche-texte', effet))
+    ficheLignes.replaceChildren(...lignes)
+    equiper.textContent = portee ? 'Équipée' : 'Équiper'
+    equiper.disabled = portee
+    for (const c of casesArme) {
+      c.b.classList.toggle('portee', c.arme === j.arme)
+      c.b.classList.toggle('choisie', c.arme === arme)
+    }
+  }
   reglages.append(
     el('div', 'donjon-reglage-titre', 'Vitesse du temps'),
     vitesses,
@@ -865,16 +953,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       return
     }
     if (f === 'armes') {
-      const j = moi()
-      for (const c of cartesArme) {
-        const portee = c.arme === j.arme
-        c.b.classList.toggle('portee', portee)
-        c.etat.textContent = portee ? 'Équipée' : 'Équiper'
-      }
       if (cleDeLaFeuille !== 'armes') {
+        // À l'ouverture, la fiche montre l'arme portée.
         cleDeLaFeuille = 'armes'
+        armeChoisie = moi().arme
+        cleDeLaFiche = ''
         feuilleCorps.replaceChildren(armurerie)
       }
+      dessinerLaFiche()
       return
     }
     if (f === 'reglages') {

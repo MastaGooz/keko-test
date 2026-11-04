@@ -542,6 +542,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
 - **L'ARME DANS L'OR DU BOUTON D'ATTAQUE** (Keko, 03/11 : « j'aime pas le
   violet, les pointillés » ; choisi : l'or). L'emplacement d'arme prend le
   même or bombé que le bouton d'attaque, sans couture.
+- **L'ARMURERIE EN FICHE + GRILLE** (Keko, 04/11 : « y'a pas mieux qu'une
+  liste ? », et « les armes vont porter plus d'info »). En haut, la FICHE de
+  l'arme choisie : image, nom, cran et caractère, puis ses chiffres AVEC VOS
+  STATS (dégâts, recharge, auto, DPS max), chacun comparé à l'arme portée
+  (▲ vert mieux, ▼ rouge moins bien, rien si c'est la même) ; la section
+  « Bonus », et « Effet » seulement si l'arme en a un (`DIT_L_ARME.effet`).
+  En bas, la GRILLE (quatre colonnes, huit cases au moins, les vides en
+  creux pour la place) : cadre à la couleur du cran, pastille d'or sur l'arme
+  portée. Une tape choisit, « Équiper » confirme et referme. Keko a retenu
+  pour plus tard : la RARETÉ (posée : `rarete` dans `armes`, les trois sont
+  communes, les cinq couleurs des cartes dans `RARETE`), le NIVEAU (sa place :
+  à côté du cran dans la sous-ligne), les EFFETS SPÉCIAUX (la section).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

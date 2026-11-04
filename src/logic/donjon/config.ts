@@ -31,6 +31,8 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
 export type TypeArme = 'epee' | 'dague' | 'baton'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton']
+/** Le cran d'une arme, les cinq des cartes (Keko : les armes porteront une rareté). */
+export type RareteArme = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire'
 
 export type ProfilBot = {
   /** L'identifiant du joueur, stable d'une saison à l'autre. */
@@ -106,10 +108,10 @@ export const DONJON = {
    * de critique), bâton lent (+50 % de dégâts critiques).
    */
   armes: {
-    epee: { nom: 'Épée', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2 },
-    dague: { nom: 'Dague', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0 },
-    baton: { nom: 'Bâton', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0 },
-  } as Record<TypeArme, { nom: string; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number }>,
+    epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2 },
+    dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0 },
+    baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0 },
+  } as Record<TypeArme, { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number }>,
 
   tap: {
     /** +30 % au premier rang de « Coup », puis de moins en moins. */
