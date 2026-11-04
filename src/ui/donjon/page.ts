@@ -1317,10 +1317,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       else if (enFleche) fleche(x, y, k, couleur, anglePique)
       else poignard(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
-      // La scène est poussée d'un cran dans l'axe du coup (le critique a sa secousse).
+      // La scène est poussée d'un cran dans l'axe du coup (le critique a sa
+      // secousse) ; sous la lance, d'un vrai coup, qui rebondit (Keko : « ça
+      // manque encore un peu d'impact, on peut augmenter le shake ? »).
       if (!STYLES[genre].secousse) {
         const a = (anglePique * Math.PI) / 180
-        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
+        const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
+        if (enLance) scene.animate([{ transform: 'none' }, { transform: pas(9), offset: 0.2 }, { transform: pas(-3), offset: 0.5 }, { transform: pas(1.5), offset: 0.75 }, { transform: 'none' }], { duration: 240, delay: contact, easing: 'ease-out' })
+        else scene.animate([{ transform: 'none' }, { transform: pas(3), offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (lourde) {
       // UN ANGLE CONTINU, de la fauche à plat à la fente de haut en bas, tiré

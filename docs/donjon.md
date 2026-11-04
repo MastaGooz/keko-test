@@ -857,7 +857,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   poignard, la queue rattrapant la pointe). Les
   étincelles TRAVERSENT l'ennemi, dans le sens du coup (celles de la dague
   et de la flèche jaillissent vers le tireur) ; l'anneau qui se referme et
-  l'ennemi poussé dans l'axe sont ceux des autres estocs. Le critique
+  l'ennemi poussé dans l'axe sont ceux des autres estocs ; la scène est
+  poussée de 9 px dans l'axe puis rebondit (-3, +1,5 ; 240 ms) — Keko : « ça
+  manque encore un peu d'impact, on peut augmenter le shake ? » ; 3 px comme
+  la dague avant. Le critique
   l'épaissit, comme celui de la dague. Le dessin du trait droit est partagé
   avec le poignard (`traitDroit`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
