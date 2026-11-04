@@ -583,7 +583,8 @@
 }
 
 .donjon-mieux,
-.donjon-moins {
+.donjon-moins,
+.donjon-egal {
   font-size: 0.8rem;
   font-weight: 700;
   white-space: nowrap;
@@ -595,6 +596,11 @@
 
 .donjon-moins {
   color: #b23a2c;
+}
+
+.donjon-egal {
+  color: #2f6fb8;
+  font-size: 0.95rem;
 }
 
 .donjon-fiche-section {

@@ -574,6 +574,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (l'intervalle de l'auto) et DPS (`dpsEffectifDe` : dégâts moyens, critiques
   à la moyenne, au rythme de l'auto). La recharge du tap n'y est plus ; la
   bulle de l'appui long garde le détail.
+- **« = » EN BLEU** (Keko, 04/11 : « un signe = bleu quand les stats sont
+  identiques ») : sur la fiche d'une autre arme, un chiffre égal à celui de
+  l'arme portée porte un « = » bleu (`.donjon-egal`) ; l'arme portée
+  elle-même ne se compare toujours à rien.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

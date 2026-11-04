@@ -566,12 +566,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let cleDeLaFiche = ''
   /**
    * Une ligne de la fiche : son nom, sa valeur, et l'écart à l'arme portée
-   * (▲ mieux, ▼ moins bien), absent s'il est nul ou si c'est l'arme portée.
+   * (▲ mieux, ▼ moins bien, = en bleu si c'est pareil — Keko), absent pour
+   * l'arme portée elle-même.
    */
-  function ligneDeFiche(nom: string, valeur: string, ecart?: { texte: string; mieux: boolean }): HTMLElement {
+  function ligneDeFiche(nom: string, valeur: string, ecart?: { texte: string; mieux: boolean } | 'egal'): HTMLElement {
     const l = el('div', 'donjon-fiche-ligne')
     l.append(el('span', undefined, nom), el('b', undefined, valeur))
-    if (ecart !== undefined) l.append(el('span', ecart.mieux ? 'donjon-mieux' : 'donjon-moins', `${ecart.mieux ? '▲' : '▼'} ${ecart.texte}`))
+    if (ecart === 'egal') l.append(el('span', 'donjon-egal', '='))
+    else if (ecart !== undefined) l.append(el('span', ecart.mieux ? 'donjon-mieux' : 'donjon-moins', `${ecart.mieux ? '▲' : '▼'} ${ecart.texte}`))
     return l
   }
   function dessinerLaFiche(): void {
@@ -590,7 +592,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ficheSous.textContent = `${RARETE[rarete].nom} · ${DIT_L_ARME[arme].caractere}`
     // L'écart se dit seulement s'il existe : `signe` dit quel sens est le mieux.
     const ecart = (x: number, y: number, signe: 1 | -1, texte: (d: number) => string) => {
-      if (estPortee || Math.abs(x - y) < 1e-9) return undefined
+      if (estPortee) return undefined
+      if (Math.abs(x - y) < 1e-9) return 'egal' as const
       return { texte: texte(x - y), mieux: signe * (x - y) > 0 }
     }
     const signe = (d: number, f: (x: number) => string) => `${d > 0 ? '+' : '−'}${f(Math.abs(d))}`
