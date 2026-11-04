@@ -560,6 +560,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   cran n'y est qu'une couleur, les chiffres restent ceux de l'arme. Une arme
   peut donc être en plusieurs exemplaires : la grille retient la PLACE portée
   (`portee`), pas seulement le type.
+- **L'EMPLACEMENT D'ARME EN ARDOISE** (Keko, 04/11 : « le jaune se confond
+  dans le bouton, il faudrait une couleur plus neutre ») : le même bombé que
+  le bouton d'attaque, en gris ardoise ; l'or des gardes et la lame claire
+  ressortent dessus.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

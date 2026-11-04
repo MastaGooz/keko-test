@@ -485,9 +485,10 @@
   min-width: 0;
 }
 
-/* L'emplacement d'arme, sur la ligne du niveau : l'arme portée, dans le
-   même OR bombé que le bouton d'attaque (Keko : le bois s'y confondait, le
-   parchemin et le cuir violet à couture n'allaient pas). */
+/* L'emplacement d'arme, sur la ligne du niveau : l'arme portée, bombée
+   comme le bouton d'attaque mais en ARDOISE neutre (Keko : le bois s'y
+   confondait, le parchemin et le cuir violet à couture n'allaient pas, et
+   « le jaune se confond », l'or des gardes d'arme s'y perdait). */
 .donjon .donjon-emplacement {
   position: relative;
   flex-shrink: 0;
@@ -498,10 +499,10 @@
   padding: 0;
   border: none;
   border-radius: 0.8rem;
-  background: radial-gradient(circle at 38% 28%, #f8d98a, var(--d-or) 55%, #a5762a);
+  background: radial-gradient(circle at 38% 28%, #767b83, #4b4f56 55%, #2e3136);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -4px 0 rgba(61, 39, 22, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.3),
     0 0.25rem 0.6rem rgba(0, 0, 0, 0.5);
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 0.7rem;
