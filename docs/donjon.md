@@ -730,8 +730,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (celui du poing s'ouvre : la lame entre) ; les étincelles en traits
   jaillissent de la plaie en gerbe serrée vers celui qui frappe ; l'ennemi
   est POUSSÉ dans l'axe de la pointe et rapetisse, figé un instant comme
-  sous l'épée ; la scène est poussée de 3 px dans l'axe. Le critique trace
-  un trait 1,4 fois plus gros, comme l'épée. Un second essai plantait le
+  sous l'épée ; la scène est poussée de 3 px dans l'axe. Le critique ne
+  l'allonge pas, il l'épaissit d'un poil, ×1,2 (Keko ; il le grossissait de
+  1,4 fois en tout, comme l'épée). Un second essai plantait le
   DESSIN d'un poignard (manche, garde, lame) au bout de l'arc : retiré.
   **LA FLÈCHE**, le premier essai (une lame fine qui file droit et se fiche,
   `fleche`, `.donjon-estoc`), est devenue le coup de L'ARC (ci-dessous) ;

@@ -961,14 +961,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * d'un cran, reste fiché un instant, puis se résorbe dans le point, la
    * queue rattrapant la pointe. Il arrive de côté en diagonale vers le bas
    * (`finale`), un coup sur deux de l'autre côté. Redessiné à chaque image
-   * (un `d` ne s'anime pas partout). Le critique trace un trait 1,4 fois
-   * plus gros, comme l'épée.
+   * (un `d` ne s'anime pas partout). Le critique ne l'allonge pas : il
+   * l'épaissit d'un poil (×1,2).
    */
   let coteDuPoignard = 1
   function poignard(x: number, y: number, k: number, couleur: string, finale: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const longueur = 5.5 * rem * k
-    const largeur = 0.32 * rem * k
+    // Le critique ne l'allonge pas, il l'épaissit d'un poil (Keko) : la
+    // moitié de l'écart de `k`, ×1,2 au lieu de ×1,4.
+    const longueur = 5.5 * rem
+    const largeur = 0.32 * rem * (1 + (k - 1) / 2)
     // La direction du coup, et sa normale (le trait s'épaissit de part et d'autre).
     const a = (finale * Math.PI) / 180
     const [dx, dy] = [Math.cos(a), Math.sin(a)]
