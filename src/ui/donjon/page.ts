@@ -767,10 +767,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
   // Le coup de lance : il perce à 60 ms, reste fiché 260 ms (plus que le
-  // poignard ; Keko : « un peu plus longtemps »), s'efface sur place en 90.
+  // poignard ; Keko : « un peu plus longtemps »), s'efface sur place en 160
+  // (« un peu plus long, le fade » ; 90 avant).
   const CONTACT_LANCE = 60
   const TENUE_LANCE = 260
-  const FONDU_LANCE = 90
+  const FONDU_LANCE = 160
   const VIDANGE_POIGNARD = 110
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
