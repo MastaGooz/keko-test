@@ -513,6 +513,14 @@
   pointer-events: none;
 }
 
+/* En recharge, l'illustration se grise : le voile seul se lisait comme un
+   fond plus sombre (Keko), surtout sur la Furie, qui ne bouge qu'aux critiques. */
+.donjon .en-recharge .donjon-capacite-dessin,
+.donjon .en-recharge .donjon-attaque-dessin,
+.donjon .en-recharge svg {
+  filter: grayscale(1) brightness(0.75) drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre));
+}
+
 /* Le nom d'une capacité à effet, annoncé au milieu de la scène. */
 .donjon-annonce {
   position: absolute;

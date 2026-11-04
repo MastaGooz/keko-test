@@ -618,6 +618,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   éviter les swaps d'abus ») : à l'équipement, les deux capacités de la
   nouvelle arme repartent de zéro (toute leur recharge), la Furie de zéro
   critique. Remettre l'arme qu'on porte ne change rien.
+- **EN RECHARGE, L'ILLUSTRATION SE GRISE** (Keko, 04/11 : « parfois pas
+  très lisible que la capacité est en CD, surtout pour la conditionnelle…
+  on pourrait croire que son fond est juste plus foncé ») : la classe
+  `en-recharge` grise l'image de l'attaque pendant sa recharge et celle
+  d'une capacité tant qu'elle n'est pas prête (Furie comprise), en plus du voile.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

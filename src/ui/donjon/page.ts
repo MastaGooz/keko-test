@@ -1300,6 +1300,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Le voile de recharge : plein au tap, il se vide de haut en bas.
     const resteRecharge = Math.max(0, Math.min(1, (j.prochainTap - t) / rechargeDe(C, j)))
     voileRecharge.style.clipPath = `inset(${100 * (1 - resteRecharge)}% 0 0 0)`
+    // EN RECHARGE, L'ILLUSTRATION SE GRISE (Keko : « parfois pas très lisible
+    // que la capacité est en CD, surtout la conditionnelle qui ne bouge pas
+    // régulièrement ») : l'attaque comme les capacités.
+    attaque.classList.toggle('en-recharge', resteRecharge > 0)
     // Les capacités : le même voile ; prêtes, elles brillent ; leur effet
     // en cours, elles battent.
     for (const [i, cle] of capacitesDe(C, j).entries()) {
@@ -1307,6 +1311,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const avancee = avanceeDeCapacite(C, j, cle, t)
       voile.style.clipPath = `inset(${100 * avancee}% 0 0 0)`
       b.classList.toggle('prete', avancee >= 1)
+      b.classList.toggle('en-recharge', avancee < 1)
       b.classList.toggle('active', effetEnCours(j, cle, t))
     }
     requestAnimationFrame(image)
