@@ -770,11 +770,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_BATON = 85
   const VIDANGE_MASSUE = 140
   const BALAYAGE_MASSUE = 100
-  // Sa version longue (les massues à deux mains et les bâtons) : 120° balayés
+  // Sa version longue (les massues à deux mains et les bâtons) : 110° balayés
   // en 220 ms, le choc à 110 ms, effacée en 170.
   const CONTACT_LONG = 110
   const VIDANGE_LONG = 170
-  const BALAYAGE_LONG = 120
+  const BALAYAGE_LONG = 110
   const RUNE = parametres.has('rune')
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
@@ -1038,7 +1038,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // LA VERSION LONGUE (`longue`, les massues à deux mains et les bâtons) :
     // un arc plus grand et plus ample, un trait plus épais, une course plus lente.
-    const rayon = (longue ? 8.8 : 6.5) * rem * k
+    const rayon = (longue ? 7.6 : 6.5) * rem * k
     const largeur = (longue ? 0.65 : 0.55) * rem * k
     const balayage = longue ? BALAYAGE_LONG : BALAYAGE_MASSUE
     const contact = longue ? CONTACT_LONG : CONTACT_BATON

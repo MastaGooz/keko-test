@@ -811,8 +811,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   les deux : la capacité n° 115 (le poing de pierre qui écrase ; pas de
   massue dans le tri). La massue trace LE COUP DE MASSUE décrit plus haut ;
   la massue à deux mains ET LE BÂTON (une arme à deux mains) tracent sa
-  VERSION LONGUE (`massue(…, longue)`) : un arc de 8,8 rem au lieu de 6,5,
-  balayé sur 120° au lieu de 100, un trait de 1,3 rem au plus épais au lieu
+  VERSION LONGUE (`massue(…, longue)`) : un arc de 7,6 rem au lieu de 6,5,
+  balayé sur 110° au lieu de 100 (Keko : « un peu trop long » ; il en
+  faisait 8,8 et 120°), un trait de 1,3 rem au plus épais au lieu
   de 1,1, une course plus lente (le choc à 110 ms au lieu de 85, 220 ms en
   tout, effacé en 170), l'ennemi figé 120 ms au lieu de 70.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
