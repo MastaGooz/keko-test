@@ -253,13 +253,18 @@ function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: num
       { x: cx + dx, y: cy + dy },
     ]
   }
-  // Une cible seule, en série : loin de celle d'avant (un cinquième du dessin au moins).
+  // Une cible seule ; en série, la plus loin de celle d'avant parmi huit tirées : il faut y aller.
   if (p.cibles === 1) {
-    const avant = rang > 0 ? ciblesDuPassif(p, seed, j, k, rang - 1)[0] : null
-    for (let essai = 0; ; essai++) {
-      const c = { x: 0.3 + 0.4 * tire(2 + 2 * essai), y: 0.3 + 0.35 * tire(3 + 2 * essai) }
-      if (avant === null || essai >= 5 || Math.hypot(c.x - avant.x, c.y - avant.y) >= 0.2) return [c]
+    const tiree = (essai: number) => ({ x: 0.3 + 0.4 * tire(2 + 2 * essai), y: 0.3 + 0.35 * tire(3 + 2 * essai) })
+    if (rang === 0) return [tiree(0)]
+    const avant = ciblesDuPassif(p, seed, j, k, rang - 1)[0]
+    const loin = (c: { x: number; y: number }) => Math.hypot(c.x - avant.x, c.y - avant.y)
+    let meilleure = tiree(0)
+    for (let essai = 1; essai < 8; essai++) {
+      const c = tiree(essai)
+      if (loin(c) > loin(meilleure)) meilleure = c
     }
+    return [meilleure]
   }
   return Array.from({ length: p.cibles }, (_, i) => {
         const angle = 2 * Math.PI * (tire(2) + i / p.cibles)

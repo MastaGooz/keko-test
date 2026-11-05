@@ -1357,6 +1357,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (130 ms puis 12 de moins à chaque, 55 au plus vite), une gerbe, un
   sursaut ; le TOTAL jaillit au bout (« Points faibles ×N ») et la barre de
   vie tombe avec lui.
+  - Puis (Keko : « pas besoin de laisser affichés les ronds validés ; il
+    faut reprendre les textes et couleurs de validation, et rendre la
+    difficulté équivalente à la Taille — là, c'est trop facile, car tu as
+    juste à cliquer ») : plus de marque à l'écran (la place est gardée pour
+    la frappe finale) ; chaque point touché est SALUÉ comme une Taille
+    (`apprecier` : « Bien ! » crème, « Super ! » or clair… « Légendaire ×N
+    ! ») ; la série est AUSSI DURE : 1 s au lieu de 1,2, et chaque rond
+    presque moitié plus court (×0,55 au lieu de ×0,85 : 1, 0,55, 0,3, 0,17,
+    0,09 s — avec la grâce de 0,25 s, le cinquième tient 0,34 s, comme la
+    marge du cinquième trait une fois tracé), chacun LE PLUS LOIN du
+    précédent parmi huit tirés (le premier venu à un cinquième au moins,
+    avant) : il faut y aller.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

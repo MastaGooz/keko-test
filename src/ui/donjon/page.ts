@@ -3022,24 +3022,22 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * que la Taille, sans la traînée ; le joueur doit les cliquer à temps, et
    * une fois qu'il échoue, on plante une animation d'attaque à l'endroit de
    * chaque rond réussi ») : le rond net, l'anneau qui se referme ; touché, il
-   * éclate et laisse une MARQUE sur l'ennemi ; manqué, il rougit sous sa
-   * croix — puis, l'encaissement venu (`passif.dernier`), chaque marque est
-   * frappée d'une plaie, de plus en plus vite, et le total jaillit.
+   * éclate sous le salut de la Taille (« Bien ! », « Super ! »… ; Keko :
+   * « reprendre les textes et couleurs de validation »), et sa place est
+   * gardée, sans rien laisser à l'écran (Keko : « pas besoin de laisser
+   * affichés les ronds validés ») ; manqué, il rougit sous sa croix — puis,
+   * l'encaissement venu (`passif.dernier`), chaque place est frappée d'une
+   * plaie, de plus en plus vite, et le total jaillit.
    */
   const pointsEnJeu = new Set<string>()
-  const marquesDesPoints = new Map<string, { n: HTMLElement; c: { x: number; y: number } }[]>()
+  const marquesDesPoints = new Map<string, { c: { x: number; y: number } }[]>()
   // Celle d'avant ce chargement ne se rejoue pas.
   const dernierAuChargement = moi().passif.dernier
   let frappeVue = dernierAuChargement === undefined ? '' : `${moi().arme}:${dernierAuChargement.evenement}`
 
-  function poserLaMarque(serie: string, c: { x: number; y: number }, x: number, y: number): void {
-    const n = el('div', 'donjon-marque')
-    n.style.left = `${x}px`
-    n.style.top = `${y}px`
-    couchePassif.append(n)
-    n.animate([{ transform: 'scale(2.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 180, easing: 'ease-out' })
+  function poserLaMarque(serie: string, c: { x: number; y: number }): void {
     const marques = marquesDesPoints.get(serie) ?? []
-    marques.push({ n, c })
+    marques.push({ c })
     marquesDesPoints.set(serie, marques)
   }
 
@@ -3055,7 +3053,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       setTimeout(() => {
         const { x0, y0, l, h } = cadreDuDessin()
         const [x, y] = [x0 + l * m.c.x, y0 + h * m.c.y]
-        m.n.remove()
         plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
         for (let e = 0; e < 8; e++) {
           const p = el('div', 'donjon-particule trait')
@@ -3106,7 +3103,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // Au-delà de la grâce, les règles le refuseraient : on ne le salue pas.
         if (!pointsEnJeu.has(cle) || quand > ev.fin + grace) return
         pointsEnJeu.delete(cle)
-        poserLaMarque(serie, c, parseFloat(rond.style.left), parseFloat(rond.style.top))
+        poserLaMarque(serie, c)
+        apprecier(ev.rang)
         void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ev.k, cible: 0 }).then(() => dessiner())
       })
       couchePassif.append(rond)
