@@ -158,7 +158,7 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 127 (la roche qui éclate ; le seul marteau du tri est celui d'un
  * personnage), et l'arbalète, la n° 110 (la silhouette qui décoche un trait ;
  * pas d'arbalète dans le tri), et le pistolet, la n° 144 (le trait qui finit en
- * éclat ; pas d'arme à feu dans le tri), provisoires elles aussi.
+ * éclat ; pas d'arme à feu dans le tri) — le mousquet aussi —, provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -176,6 +176,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   marteauDeuxMains: 'armes/marteau.webp',
   arbalete: 'armes/arbalete.webp',
   pistolet: 'armes/pistolet.webp',
+  mousquet: 'armes/pistolet.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -192,6 +193,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   marteauDeuxMains: { caractere: 'Titanesque', bonus: "Aucun pour l'instant" },
   arbalete: { caractere: 'Puissante', bonus: "Aucun pour l'instant" },
   pistolet: { caractere: 'Détonante', bonus: "Aucun pour l'instant" },
+  mousquet: { caractere: 'Fracassante', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -1408,7 +1410,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const enMarteau = arme === 'marteau' || arme === 'marteauDeuxMains'
     const marteauLourd = arme === 'marteauDeuxMains'
     // Le pistolet explose au point touché.
-    const enFeu = arme === 'pistolet'
+    const enFeu = arme === 'pistolet' || arme === 'mousquet'
+    const feuLourd = arme === 'mousquet'
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1453,12 +1456,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
     const contact = enFeu ? CONTACT_BALLE : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
-      explosion(x, y, 1 + 0.65 * (fort - 1), couleur)
-      // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa secousse).
+      explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
+      // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
+      // secousse) ; sous le mousquet, plus fort et plus long.
       if (!STYLES[genre].secousse) {
         const a = Math.random() * 2 * Math.PI
-        const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
-        scene.animate([{ transform: 'none' }, { transform: pas(5), offset: 0.2 }, { transform: pas(-4), offset: 0.45 }, { transform: pas(2), offset: 0.7 }, { transform: 'none' }], { duration: 160, delay: contact, easing: 'ease-out' })
+        const d = feuLourd ? 8 : 5
+        const pas = (u: number) => `translate(${Math.cos(a) * d * u}px, ${Math.sin(a) * d * u}px)`
+        scene.animate([{ transform: 'none' }, { transform: pas(1), offset: 0.2 }, { transform: pas(-0.8), offset: 0.45 }, { transform: pas(0.4), offset: 0.7 }, { transform: 'none' }], { duration: feuLourd ? 230 : 160, delay: contact, easing: 'ease-out' })
       }
     } else if (enMarteau) {
       const k = 1 + 0.65 * (fort - 1)
@@ -1540,7 +1545,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       impactRond(x, y, fort, couleur)
     }
 
-    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : enFeu ? 6 : 0)
+    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 12 : enFeu ? 6 : 0)
     const trait = lame || pique || enFeu
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
@@ -1558,7 +1563,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         : pique
           ? ((anglePique + (enLance ? 0 : 180) + (Math.random() - 0.5) * 80) * Math.PI) / 180
           : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
-      const loin = (28 + Math.random() * 34) * fort * (lourde ? 2 : lame ? 1.7 : enFeu ? 1.5 : pique ? 1.2 : 1)
+      const loin = (28 + Math.random() * 34) * fort * (lourde || feuLourd ? 2 : lame ? 1.7 : enFeu ? 1.5 : pique ? 1.2 : 1)
       const dx = Math.cos(angle) * loin
       const dy = Math.sin(angle) * loin
       // Sous le bâton, des points de lumière s'écartent à peine et MONTENT,
@@ -1604,7 +1609,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd ? 150 : longue || enMarteau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
   }
 
   /**
@@ -1616,13 +1621,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * chaque coup, qui jaillit en 60 ms, tourne un peu et s'éteint en
    * grandissant ; les étincelles en traits partent dans tous les sens (dans
    * `impact`). Plus d'onde ronde (Keko : « ça ressemble trop aux mains
-   * nues » : c'est leur coup).
+   * nues » : c'est leur coup). LA VERSION LOURDE (`lourd`, le mousquet ;
+   * Keko : « la version à deux mains ») : un traçant plus long et plus épais,
+   * un éclat et un flash plus grands, qui s'éteignent plus lentement.
    */
-  function explosion(x: number, y: number, k: number, couleur: string): void {
+  function explosion(x: number, y: number, k: number, couleur: string, lourd = false): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // Le traçant : il monte du bas, penché au hasard, et s'éteint au contact.
     const angle = -90 + (Math.random() - 0.5) * 50
-    const balle = traitDroit(x, y, couleur, angle, 7 * rem, 0.1 * rem * k, (v) => v)
+    const balle = traitDroit(x, y, couleur, angle, (lourd ? 8.5 : 7) * rem, (lourd ? 0.18 : 0.1) * rem * k, (v) => v)
     const tir = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - tir
@@ -1640,7 +1647,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       requestAnimationFrame(image)
     }
     image(tir)
-    const rayon = 1.7 * rem * k
+    const rayon = (lourd ? 2.5 : 1.7) * rem * k
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
@@ -1660,7 +1667,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
     // Le flash, derrière l'éclat.
     const flash = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    flash.setAttribute('r', (rayon * 0.6).toFixed(1))
+    flash.setAttribute('r', (rayon * (lourd ? 0.7 : 0.6)).toFixed(1))
     const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     forme.setAttribute('d', `M${sommets.join(' L')}Z`)
     trace.append(flash, forme)
@@ -1673,14 +1680,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: `scale(1) rotate(${sens * 8}deg)`, opacity: 1, offset: 0.3, easing: 'ease-in' },
         { transform: `scale(1.25) rotate(${sens * 14}deg)`, opacity: 0 },
       ],
-      { duration: 200, delay: CONTACT_BALLE },
+      { duration: lourd ? 280 : 200, delay: CONTACT_BALLE },
     ).onfinish = () => trace.remove()
     flash.animate(
       [
         { transform: 'scale(0.4)', opacity: 1, easing: 'ease-out' },
         { transform: 'scale(1.6)', opacity: 0 },
       ],
-      { duration: 120, delay: CONTACT_BALLE, fill: 'backwards' },
+      { duration: lourd ? 170 : 120, delay: CONTACT_BALLE, fill: 'backwards' },
     )
   }
 

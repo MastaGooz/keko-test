@@ -983,6 +983,16 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   jusqu'au point en 40 ms — le contact, où partent l'éclat, les étincelles,
   la secousse et le recul — et s'éteint en 50 ; un FLASH, un disque de
   lumière derrière l'éclat, qui éclate et s'éteint en 120 ms.
+- **LE MOUSQUET, PROVISOIRE** (Keko, 05/11 : « la version à deux mains » du
+  pistolet) : « Fracassante », 26 toutes les 0,65 s — le DPS de base, ni
+  bonus, ni capacité, ni passif ; l'icône du pistolet. Son coup est
+  L'EXPLOSION EN VERSION LOURDE (`explosion(…, lourd)`) : un traçant de
+  8,5 rem au lieu de 7, 0,36 rem au plus épais au lieu de 0,2 ; un éclat de
+  2,5 rem au lieu de 1,7, éteint en 280 ms au lieu de 200 ; un flash aux sept
+  dixièmes de l'éclat au lieu de six, éteint en 170 ms au lieu de 120 ; douze
+  étincelles de plus au lieu de six, deux fois plus loin au lieu d'une fois
+  et demie ; la scène secouée de 8 px en 230 ms au lieu de 5 en 160 ; l'ennemi
+  figé 150 ms comme sous les autres armes à deux mains.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
