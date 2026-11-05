@@ -900,7 +900,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   côté du point, à sa hauteur : la tête arrive d'en haut en accélérant
   (120 ms, le contact) et S'ARRÊTE sur le point en descendant à la verticale,
   son plat à l'horizontale ; elle gonfle au choc, reste posée 90 ms, puis
-  s'efface telle quelle en 160. Un coup sur deux de l'autre côté. Il frappe
+  s'efface telle quelle en 160. Un coup sur deux de l'autre côté. Puis
+  (Keko : « moins long et extrémité plus large, et tape à différents angles
+  aussi ») : un arc de 5 rem, la traînée sur 60 % de l'arc en tombant (85 %
+  avant) et 60 % posée, la TÊTE ÉLARGIE ×1,7 sur son dernier quart, coupée à
+  plat ; le tout PENCHÉ autour du point de ±35°, d'au moins 20° de plus ou
+  de moins que le précédent (le plat n'est donc plus toujours horizontal). Il frappe
   au centre de l'ennemi comme la massue, avec ses points de lumière ;
   l'ennemi est ÉCRASÉ (tassé vers le bas puis relevé, comme sous le bâton
   d'avant), figé 120 ms ; la scène est tassée de 7 px, avec un rebond.

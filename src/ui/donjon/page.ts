@@ -1220,17 +1220,28 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * arrive d'en haut, en accélérant, et S'ARRÊTE sur le point en descendant
    * à la verticale, son plat à l'horizontale. Elle gonfle au choc, reste
    * posée un instant, puis s'efface telle quelle. Un coup sur deux de l'autre
-   * côté. Le critique est 1,4 fois plus gros.
+   * côté, et le tout PENCHÉ au hasard autour du point (Keko : « tape à
+   * différents angles aussi »). Plus court, la TÊTE ÉLARGIE au bout (Keko :
+   * « moins long et extrémité plus large » ; 6 rem, la traînée sur 85 % de
+   * l'arc, de la même largeur jusqu'au plat). Le critique est 1,4 fois plus gros.
    */
   let coteDuMarteau = 1
+  let pencheDuMarteau = 0
   function marteau(x: number, y: number, k: number, couleur: string): void {
     coteDuMarteau = -coteDuMarteau
     const cote = coteDuMarteau
+    // Penché de ±35°, et d'au moins 20° de plus ou de moins que le précédent.
+    let penche = 0
+    for (let essai = 0; essai < 8; essai++) {
+      penche = (Math.random() - 0.5) * 70
+      if (Math.abs(penche - pencheDuMarteau) >= 20) break
+    }
+    pencheDuMarteau = penche
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const rayon = 6 * rem * k
+    const rayon = 5 * rem * k
     const largeur = 0.6 * rem * k
-    // Le point à l'horizontale du centre : à sa droite, ou à sa gauche.
-    const fin = cote > 0 ? 0 : 180
+    // Le point à l'horizontale du centre (à sa droite, ou à sa gauche), penché.
+    const fin = (cote > 0 ? 0 : 180) + penche
     const debut = fin - cote * BALAYAGE_MARTEAU
     const a = (fin * Math.PI) / 180
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -1247,14 +1258,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     scene.append(trace)
     const point = (t: number, r: number) => `${(Math.cos(t) * r).toFixed(1)} ${(Math.sin(t) * r).toFixed(1)}`
     // Le trait entre `queue` et `tete` (0 = départ de l'arc, 1 = le point) :
-    // effilé à la queue, plein dès les deux cinquièmes, coupé à plat devant.
+    // effilé à la queue, plein dès les deux cinquièmes, qui s'élargit en tête
+    // sur son dernier quart (×1,7) et finit coupé à plat.
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
       const dehors: string[] = []
       const dedans: string[] = []
       for (let i = 0; i <= 20; i++) {
         const v = i / 20
-        const h = largeur * gonfle * Math.min(1, v / 0.4) ** 1.3
+        const b = Math.min(1, Math.max(0, (v - 0.75) / 0.2))
+        const h = largeur * gonfle * Math.min(1, v / 0.4) ** 1.3 * (1 + 0.7 * b * b * (3 - 2 * b))
         const t = ((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180
         dehors.push(point(t, rayon + h))
         dedans.push(point(t, rayon - h))
@@ -1267,11 +1280,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (t < CONTACT_MARTEAU) {
         // Il tombe en accélérant ; la traînée s'allonge avec la vitesse.
         const p = (t / CONTACT_MARTEAU) ** 2
-        dessiner(Math.max(0, p - 0.85), p, 0.85 + 0.15 * p)
+        dessiner(Math.max(0, p - 0.6), p, 0.85 + 0.15 * p)
       } else if (t < CONTACT_MARTEAU + TENUE_MARTEAU + FONDU_MARTEAU) {
         // Posé : il gonfle au choc et se rassied, puis s'efface tel quel.
         const ms = t - CONTACT_MARTEAU
-        dessiner(0.15, 1, 1 + 0.35 * Math.max(0, 1 - ms / 60))
+        dessiner(0.4, 1, 1 + 0.35 * Math.max(0, 1 - ms / 60))
         trace.style.opacity = `${1 - Math.max(0, (ms - TENUE_MARTEAU) / FONDU_MARTEAU)}`
       } else {
         trace.remove()
