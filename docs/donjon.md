@@ -1491,6 +1491,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   suspens et la grande entaille la suivent (`traitCourbe`, prolongée de 30 %
   de part et d'autre), la gerbe aussi. Chance ramenée à leur cadence (2,2 %
   / 0,275 s ; 4,4 % / 0,55 s), pitié 136 et 68 taps ; icône de la Riposte.
+- **LE FRACAS EST VALIDÉ** (Keko, 05/11 : « ok, c'est bon pour les masses,
+  etc. ») : massue, massue à deux mains, marteau, marteau à deux mains,
+  fléau — la ligne (la bande claire seule), le trait qui file vers le cadre
+  fixe du milieu (`zone` 0,19), le cadre qui s'allume et se remplit au coup
+  juste, rouge à l'échec, la série au centre, la frappe en un seul coup
+  cumulé dans le noir. Restent à juger, chiffres de moi : les chances, la
+  pitié, le ×5 par coup juste, la course (1,2 s, ×0,7) ; le nom et l'icône
+  (celle de la Riposte). La Fauche des haches attend son jugement.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
