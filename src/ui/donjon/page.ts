@@ -817,7 +817,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const BALAYAGE_MARTEAU_LOURD = 125
   // La balle du pistolet arrive en 40 ms.
   const CONTACT_BALLE = 40
-  // Le fouet claque à 130 ms ; la boule du fléau frappe à 140, posée 90.
+  // Le fouet claque à 130 ms (le milieu de son balancier, 260 en tout) ; la
+  // boule du fléau frappe à 140, posée 90.
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
   const TENUE_FLEAU = 90
@@ -1653,80 +1654,87 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * LE COUP DE FOUET (Keko : « essayons la catégorie fouet, chaîne, fléau ») :
-   * un trait de lumière, épais au manche et fin au bout, qui SE DÉROULE d'en
-   * bas (d'un côté puis de l'autre) sur une courbe, parcouru d'une onde qui
-   * file vers le bout ; le bout accélère, la courbe SE TEND en arrivant sur le
-   * point — le contact, où il CLAQUE (`claquement`) —, une dernière onde le
-   * secoue, puis il s'efface. Le critique l'épaissit. Sa courbe est un S
-   * (Keko : « il ressemble à un projectile courbé, il faudrait rajouter une
-   * deuxième courbe au bout » ; il bombait d'un seul côté) : elle bombe d'un
-   * côté près du manche, et repart de l'autre, plus fort, vers le bout.
+   * un trait de lumière, épais au manche et fin au bout, courbé EN S (Keko :
+   * « il ressemble à un projectile courbé, il faudrait rajouter une deuxième
+   * courbe au bout ») — il bombe d'un côté près du manche, et repart de
+   * l'autre, plus fort, vers le bout. Il frappe EN BALANCIER (Keko :
+   * « l'impact devrait se faire à l'arc de la deuxième courbe plutôt qu'à la
+   * pointe, et le mouvement devrait être un balancier » ; il se déroulait
+   * jusqu'au point, la pointe devant) : il pivote autour de son manche, posé
+   * en bas, sur 110°, lent au départ, au plus vite au milieu — où le VENTRE DE
+   * SA DEUXIÈME COURBE passe sur le point (le contact, où il claque,
+   * `claquement`) —, lent à la fin ; le bout traîne en arrière avec la
+   * vitesse. Puis il s'efface. Un coup sur deux de l'autre côté, en miroir.
+   * Le critique l'épaissit.
    */
   let coteDuFouet = 1
   function fouet(x: number, y: number, k: number, couleur: string): void {
     coteDuFouet = -coteDuFouet
     const cote = coteDuFouet
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const longueur = 8 * rem
+    const longueur = 7.5 * rem
     const largeur = 0.2 * rem * (1 + (k - 1) * 2)
-    // D'où il part : d'en bas, d'un côté puis de l'autre, penché au hasard ;
-    // la courbe en S, celle d'un fouet lancé (le point est en 0, 0) : deux
-    // points de contrôle, au tiers et aux deux tiers, de part et d'autre.
-    const depuis = ((90 + cote * 45 + (Math.random() - 0.5) * 30) * Math.PI) / 180
-    const [ox, oy] = [Math.cos(depuis) * longueur, Math.sin(depuis) * longueur]
-    const [nx, ny] = [-Math.sin(depuis) * cote, Math.cos(depuis) * cote]
-    const [c1x, c1y] = [(ox * 2) / 3 + nx * 0.4 * longueur, (oy * 2) / 3 + ny * 0.4 * longueur]
-    const [c2x, c2y] = [ox / 3 - nx * 0.55 * longueur, oy / 3 - ny * 0.55 * longueur]
+    // Sa forme, le manche en 0, 0 et le fouet le long de x : le S, et le bout
+    // qui traîne derrière le mouvement, d'autant plus que `vite` est grand.
+    const forme = (s: number, vite: number): [number, number] => [
+      s * longueur,
+      cote * longueur * (0.11 * Math.sin(2 * Math.PI * s) * (0.7 + 0.6 * s) - 0.1 * vite * s * s),
+    ]
+    // Le ventre de la deuxième courbe, au plus vite : c'est lui qui frappe.
+    const [vx, vy] = forme(0.77, 1)
+    const rayonVentre = Math.hypot(vx, vy)
+    // Le manche, en bas, d'un côté ; au contact, le ventre est sur le point (0, 0).
+    const versLePoint = ((-90 + cote * 35 + (Math.random() - 0.5) * 20) * Math.PI) / 180
+    const [hx, hy] = [-Math.cos(versLePoint) * rayonVentre, -Math.sin(versLePoint) * rayonVentre]
+    const auContact = versLePoint - Math.atan2(vy, vx)
+    const balayage = (110 * Math.PI) / 180
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
-    const demi = longueur * 1.25
+    const demi = rayonVentre + longueur * 1.1
     trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
     trace.style.width = trace.style.height = `${2 * demi}px`
     trace.style.left = `${x - demi}px`
     trace.style.top = `${y - demi}px`
     trace.style.color = couleur
-    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    trace.append(forme)
+    trace.style.opacity = '0'
+    const trait = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    trace.append(trait)
     scene.append(trace)
-    // Le fouet du manche (0) jusqu'à `fin` (1 = le point), écarté de sa courbe
-    // par une onde d'`ampleur`, décalée de `phase`.
-    const dessiner = (fin: number, ampleur: number, phase: number) => {
-      if (fin < 0.01) return forme.setAttribute('d', '')
+    // Le fouet tourné de `angle` autour du manche, sa traîne selon `vite`.
+    const dessiner = (angle: number, vite: number) => {
+      const [c, si] = [Math.cos(angle), Math.sin(angle)]
+      const points: [number, number][] = []
+      for (let i = 0; i <= 40; i++) {
+        const [lx, ly] = forme(i / 40, vite)
+        points.push([hx + c * lx - si * ly, hy + si * lx + c * ly])
+      }
       const dehors: string[] = []
       const dedans: string[] = []
-      for (let i = 0; i <= 40; i++) {
-        const s = (fin * i) / 40
-        const u = 1 - s
-        const bx = u * u * u * ox + 3 * u * u * s * c1x + 3 * u * s * s * c2x
-        const by = u * u * u * oy + 3 * u * u * s * c1y + 3 * u * s * s * c2y
-        let tx = 3 * u * u * (c1x - ox) + 6 * u * s * (c2x - c1x) - 3 * s * s * c2x
-        let ty = 3 * u * u * (c1y - oy) + 6 * u * s * (c2y - c1y) - 3 * s * s * c2y
-        const n = Math.hypot(tx, ty) || 1
-        tx /= n
-        ty /= n
-        const onde = ampleur * Math.sin(3 * Math.PI * s - phase) * Math.sin(Math.PI * s)
-        const [px, py] = [bx - ty * onde, by + tx * onde]
-        const h = largeur * (1 - 0.8 * s) * Math.min(1, s / 0.08)
+      points.forEach(([px, py], i) => {
+        const [ax, ay] = points[Math.max(0, i - 1)]
+        const [bx, by] = points[Math.min(40, i + 1)]
+        const n = Math.hypot(bx - ax, by - ay) || 1
+        const [tx, ty] = [(bx - ax) / n, (by - ay) / n]
+        const v = i / 40
+        const h = largeur * (1 - 0.8 * v) * Math.min(1, v / 0.08)
         dehors.push(`${(px - ty * h).toFixed(1)} ${(py + tx * h).toFixed(1)}`)
         dedans.push(`${(px + ty * h).toFixed(1)} ${(py - tx * h).toFixed(1)}`)
-      }
-      forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+      })
+      trait.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
     }
+    const course = 2 * CONTACT_FOUET
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
-      if (t < CONTACT_FOUET) {
-        // Il se déroule en accélérant ; l'onde s'aplatit à mesure qu'il se tend.
-        const p = (t / CONTACT_FOUET) ** 2
-        dessiner(p, 0.9 * rem * (1 - p), (9 * t) / CONTACT_FOUET)
-      } else if (t < CONTACT_FOUET + 70) {
-        // Le claquement le secoue d'une dernière onde.
-        const q = (t - CONTACT_FOUET) / 70
-        dessiner(1, 0.45 * rem * Math.sin(Math.PI * q), 9 + 6 * q)
-      } else if (t < CONTACT_FOUET + 70 + 140) {
-        const q = (t - CONTACT_FOUET - 70) / 140
-        dessiner(1, 0, 15)
+      if (t < course) {
+        // Le balancier : lent aux deux bouts, au plus vite au milieu (le contact).
+        const u = t / course
+        dessiner(auContact + (cote * balayage * Math.sin(Math.PI * (u - 0.5))) / 2, Math.cos(Math.PI * (u - 0.5)))
+        trace.style.opacity = `${Math.min(1, t / 40)}`
+      } else if (t < course + 140) {
+        const q = (t - course) / 140
+        dessiner(auContact + (cote * balayage) / 2, 0)
         trace.style.opacity = `${1 - q * q}`
       } else {
         trace.remove()

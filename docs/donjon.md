@@ -1045,6 +1045,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   le bout (0,55, aux deux tiers) ; elle bombait d'un seul côté. La boule du
   fléau porte HUIT POINTES (une étoile de 1,6 fois son rayon), et tourne de
   220° en tombant.
+- **LE FOUET FRAPPE EN BALANCIER, PAR LE VENTRE DE SA DEUXIÈME COURBE**
+  (Keko, 05/11 : « l'impact du fouet devrait se faire à l'arc de la deuxième
+  courbe plutôt qu'à la pointe, et le mouvement devrait être un
+  balancier ») : il ne se déroule plus jusqu'au point. Son S (7,5 rem) PIVOTE
+  autour de son manche, posé en bas d'un côté (le point à 35° de la
+  verticale, ±10°), sur 110° en 260 ms, lent aux deux bouts et au plus vite
+  au milieu (un sinus) ; à ce milieu (130 ms, le contact, où il claque), le
+  VENTRE DE SA DEUXIÈME COURBE (aux trois quarts de sa longueur) passe sur
+  le point ; le bout traîne en arrière avec la vitesse (un dixième de sa
+  longueur au plus vite). Il apparaît en 40 ms, s'efface en 140 à la fin de
+  sa course. Un coup sur deux de l'autre côté, en miroir.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
