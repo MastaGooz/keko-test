@@ -794,6 +794,21 @@
   pointer-events: none;
 }
 
+/* La marque d'un point faible touché : elle attend sur l'ennemi la frappe de la série. */
+.donjon-marque {
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: -0.45rem 0 0 -0.45rem;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, #fff6d6 0 25%, #ff7a3d 45%, #c3221b 75%);
+  box-shadow:
+    0 0 0 0.12rem #2a1406,
+    0 0 0.6rem rgba(255, 110, 60, 0.95);
+  animation: donjon-cible-bat 0.4s ease-in-out infinite alternate;
+}
+
 /* Le salut de la série de Tailles (« Bien ! », « Super ! »…), au-dessus de l'ennemi. */
 .donjon-appreciation {
   position: absolute;

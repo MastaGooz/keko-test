@@ -243,7 +243,7 @@ export function passifVierge(): Joueur['passif'] {
  */
 function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: number): { x: number; y: number }[] {
   const empreinte = empreinteDe(`${j.id}:${j.arme}`)
-  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n + 16 * rang, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n + 64 * rang, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
   if (p.trait === true) {
     const angle = 2 * Math.PI * tire(2)
     const [cx, cy] = [0.5 + 0.08 * (2 * tire(3) - 1), 0.45 + 0.06 * (2 * tire(4) - 1)]
@@ -253,9 +253,15 @@ function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: num
       { x: cx + dx, y: cy + dy },
     ]
   }
-  return p.cibles === 1
-    ? [{ x: 0.3 + 0.4 * tire(2), y: 0.3 + 0.35 * tire(3) }]
-    : Array.from({ length: p.cibles }, (_, i) => {
+  // Une cible seule, en série : loin de celle d'avant (un cinquième du dessin au moins).
+  if (p.cibles === 1) {
+    const avant = rang > 0 ? ciblesDuPassif(p, seed, j, k, rang - 1)[0] : null
+    for (let essai = 0; ; essai++) {
+      const c = { x: 0.3 + 0.4 * tire(2 + 2 * essai), y: 0.3 + 0.35 * tire(3 + 2 * essai) }
+      if (avant === null || essai >= 5 || Math.hypot(c.x - avant.x, c.y - avant.y) >= 0.2) return [c]
+    }
+  }
+  return Array.from({ length: p.cibles }, (_, i) => {
         const angle = 2 * Math.PI * (tire(2) + i / p.cibles)
         return { x: 0.5 + 0.3 * Math.cos(angle), y: 0.45 + 0.25 * Math.sin(angle) }
       })
@@ -563,6 +569,38 @@ function finirLaSaison(config: ConfigDonjon, e: EtatDonjon): void {
   noter(config, e, { t: fin, joueur: null, type: 'debut', saison: numero })
 }
 
+/**
+ * LA SÉRIE À CUMUL S'ENCAISSE AU PREMIER MANQUÉ (les Points faibles ; Keko :
+ * « pas de dégâts après chaque réussite individuelle ») : sa fenêtre et sa
+ * grâce passées (ou de force, quand on change d'arme), chaque point touché
+ * frappe un `coup` ; `dernier` le garde pour l'écran. Une série sans aucun
+ * point se ferme sans rien.
+ */
+function encaisserLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number, force = false): void {
+  const p = passifDe(config, j)
+  if (p === null || p.cumul !== true) return
+  const { evenement, etape, fin, rang } = j.passif
+  if (evenement < 0 || etape < 0 || etape >= p.cibles) return
+  if (!force && t <= fin + (p.grace ?? 0)) return
+  j.passif = { ...j.passif, etape: -1 }
+  if (rang === 0) return
+  const avant = j.degatsTap
+  for (let i = 0; i < rang; i++) frapperFort(config, e, j, p.coup, t, p.critique === true)
+  j.passif = { ...j.passif, dernier: { evenement, coups: rang, degats: j.degatsTap - avant } }
+}
+
+/** Le prochain instant où une série à cumul s'encaisse (juste après sa grâce). */
+function prochaineFinDePassif(config: ConfigDonjon, e: EtatDonjon): number {
+  let fin = Infinity
+  for (const j of e.joueurs) {
+    const p = passifDe(config, j)
+    if (p === null || p.cumul !== true || j.passif.evenement < 0 || j.passif.etape < 0 || j.passif.etape >= p.cibles) continue
+    const f = j.passif.fin + (p.grace ?? 0) + 1
+    if (f > e.t && f < fin) fin = f
+  }
+  return fin
+}
+
 /** Résout le temps sur la copie `e`, jusqu'à t. */
 /** La prochaine fin d'effet après l'instant de l'état : l'auto change de dégâts là. */
 function prochaineFinDEffet(e: EtatDonjon): number {
@@ -579,9 +617,10 @@ function prochaineFinDEffet(e: EtatDonjon): number {
 function avancerSurPlace(config: ConfigDonjon, e: EtatDonjon, t: number): void {
   while (t > e.t) {
     const prochainJour = e.saison.debut + (e.etageParJour.length + 1) * JOUR
-    const borne = Math.min(t, prochainJour, e.saison.fin, prochaineFinDEffet(e))
+    const borne = Math.min(t, prochainJour, e.saison.fin, prochaineFinDEffet(e), prochaineFinDePassif(config, e))
     resoudreLAuto(config, e, e.t, borne)
     e.t = borne
+    for (const j of e.joueurs) encaisserLePassif(config, e, j, e.t)
     if (borne === prochainJour) e.etageParJour.push(e.ennemi.etage)
     if (borne === e.saison.fin) finirLaSaison(config, e)
   }
@@ -656,7 +695,8 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   }
   j.passif = { ...j.passif, etape: etape + 1 }
   if (etape + 1 !== p.cibles) return
-  frapperFort(config, e, j, p.coup, t, p.critique === true)
+  // À cumul, le coup attend la fin de la série.
+  if (p.cumul !== true) frapperFort(config, e, j, p.coup, t, p.critique === true)
   // LA SÉRIE : le suivant s'ouvre après le coup, plus court, au rang d'après.
   if (p.serie !== undefined) {
     const rang = j.passif.rang + 1
@@ -732,6 +772,8 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
       // swaps d'abus ») : chacune repart de zéro, la Furie de zéro critique.
       // Déséquiper, c'est prendre ses mains nues.
       if (j !== undefined && EQUIPEMENTS.includes(action.arme) && action.arme !== j.arme) {
+        // Une série en cours s'encaisse avant que l'arme change.
+        encaisserLePassif(config, e, j, t, true)
         j.arme = action.arme
         // Le passif repart vierge, celui de la nouvelle arme.
         j.passif = passifVierge()

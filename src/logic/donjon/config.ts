@@ -98,6 +98,11 @@ export type Passif = {
    * L'écran garde le trait traçable aussi longtemps : ils jugent pareil.
    */
   grace?: number
+  /**
+   * LE CUMUL (les Points faibles) : un point touché ne frappe pas tout de
+   * suite ; la série s'encaisse au premier manqué, un `coup` par point.
+   */
+  cumul?: boolean
   duree: number
   cibles: number
   coup: number
@@ -268,11 +273,18 @@ export const DONJON = {
    * impossible en rapidité, mais le joueur doit avoir l'impression que c'est
    * sans limite ») : chaque trait réussi en ouvre un autre 0,65 s plus tard
    * (le temps du coup), plus court d'un tiers — 2 s, 1,3, 0,85, 0,55, 0,36…
+   * LES POINTS FAIBLES EN SÉRIE (Keko, 05/11 : « un système de combo comme la
+   * Taille : des ronds avec la même animation, sans la traînée ; le joueur
+   * doit les cliquer à temps, et une fois qu'il échoue, on plante une
+   * animation d'attaque à l'endroit de chaque rond réussi — pas de dégâts
+   * après chaque réussite individuelle ») : un rond à la fois, 1,2 s, puis
+   * chacun 15 % plus court (0,12 s entre deux) ; au premier manqué, chaque
+   * point touché frappe ×3, critique, un cran de Furie.
    */
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
-    dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
+    dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1.2 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,
 

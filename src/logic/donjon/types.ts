@@ -49,9 +49,10 @@ export type Joueur = {
    * Le passif de classe : le dernier événement ouvert (son numéro, -1 :
    * aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 : raté —, les
    * taps sans événement depuis (la pitié) et, en série, les réussites qui
-   * l'ont précédé dans le même événement (`rang`).
+   * l'ont précédé dans le même événement (`rang`) ; `dernier` : la dernière
+   * série encaissée d'un passif à cumul (l'écran en joue la frappe).
    */
-  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; rang: number }
+  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; rang: number; dernier?: { evenement: number; coups: number; degats: number } }
   bonus: BonusPermanents
 }
 

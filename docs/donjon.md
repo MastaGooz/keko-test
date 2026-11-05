@@ -1334,6 +1334,29 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   rouge. Restent à juger, chiffres de moi : la chance (2 %, 4 %), la pitié,
   le ×20 par trait, la durée et le raccourci de la série ; l'icône est
   encore celle de la Riposte.
+- **LES POINTS FAIBLES EN SÉRIE** (Keko, 05/11 : « Point faible, c'est
+  intéressant, mais on veut un système de combo comme la Taille : on affiche
+  des ronds avec la même animation, sans la traînée ; le joueur doit les
+  cliquer à temps, et une fois qu'il échoue, on plante une animation
+  d'attaque à l'endroit de chaque rond réussi — pas de dégâts après chaque
+  réussite individuelle »). Les règles (`config.passifs.dague` : `serie`,
+  `grace`, `cumul`) : un rond à la fois, le premier 1,2 s, chacun 15 % plus
+  court (1,2, 1,02, 0,87, 0,74, 0,63…), 0,12 s entre deux, la même grâce de
+  0,25 s ; chacun à un cinquième du dessin au moins du précédent
+  (`ciblesDuPassif`) ; touché, il NE FRAPPE PAS (`cumul`) : la série
+  S'ENCAISSE AU PREMIER MANQUÉ, la fenêtre et la grâce passées
+  (`encaisserLePassif`, joué par le temps lui-même — `avancerSurPlace` s'y
+  arrête, `prochaineFinDePassif` —, ou de force quand on change d'arme) :
+  chaque point touché frappe ×3, critique, un cran de Furie ; la série est
+  gardée dans `Joueur.passif.dernier` (numéro, coups, dégâts) pour l'écran.
+  Rien touché, rien. Chiffres de moi, à rejuger. L'écran : le ROND NET de la
+  Taille et son anneau qui se referme (sans trait) ; touché, il éclate et
+  laisse une MARQUE rouge qui bat sur l'ennemi ; manqué, il rougit sous sa
+  croix ; puis, l'encaissement lu (`frapperLesPoints`), chaque marque est
+  frappée d'une PLAIE critique, l'une après l'autre de plus en plus vite
+  (130 ms puis 12 de moins à chaque, 55 au plus vite), une gerbe, un
+  sursaut ; le TOTAL jaillit au bout (« Points faibles ×N ») et la barre de
+  vie tombe avec lui.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -273,7 +273,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = { epee: 'passifs/riposte.we
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (arme === 'dague') return `Des points faibles s'allument sur l'ennemi : touchés, un coup critique (×${p.coup}) et un cran de Furie`
+  if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique, un cran de Furie)`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
 }
 
@@ -2743,6 +2743,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     traitsVus.delete(cle)
     n.style.pointerEvents = 'none'
     if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
+    // Un point faible qui n'a pas été touché : manqué.
+    if (pointsEnJeu.delete(cle)) return marquerLEchec(n, n)
     // Le trait couvre la scène : il s'éteint sans grandir.
     const grandit = !n.classList.contains('donjon-trait')
     n.animate([{ opacity: 1 }, grandit ? { opacity: 0, transform: 'scale(1.4)' } : { opacity: 0 }], { duration: grandit ? 220 : 320, easing: 'ease-out' }).onfinish = () => n.remove()
@@ -2999,15 +3001,125 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   function echouerLeTrait(tr: Trait): void {
     tr.suivi = false
-    tr.depart.classList.add('echouee')
-    tr.depart.append(el('span', 'donjon-croix', '✕'))
-    tr.depart.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.25 }, { transform: 'scale(0.95)' }], { duration: 420, easing: 'ease-out' })
+    marquerLEchec(tr.depart, tr.n)
+  }
+
+  /** Le rond manqué (celui d'un trait, ou un point faible) : rouge, barré, une onde ; puis `conteneur` s'éteint. */
+  function marquerLEchec(rond: HTMLElement, conteneur: HTMLElement): void {
+    rond.classList.add('echouee')
+    rond.append(el('span', 'donjon-croix', '✕'))
+    rond.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.25 }, { transform: 'scale(0.95)' }], { duration: 420, easing: 'ease-out' })
     const onde = el('div', 'donjon-echec-onde')
-    onde.style.left = tr.depart.style.left
-    onde.style.top = tr.depart.style.top
+    onde.style.left = rond.style.left
+    onde.style.top = rond.style.top
     couchePassif.append(onde)
     onde.animate([{ transform: 'scale(0.7)', opacity: 1 }, { transform: 'scale(2.4)', opacity: 0 }], { duration: 520, easing: 'ease-out' }).onfinish = () => onde.remove()
-    tr.n.animate([{ opacity: 1 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], { duration: 700 }).onfinish = () => tr.n.remove()
+    conteneur.animate([{ opacity: 1 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], { duration: 700 }).onfinish = () => conteneur.remove()
+  }
+
+  /**
+   * LES POINTS FAIBLES EN SÉRIE (Keko : « des ronds avec la même animation
+   * que la Taille, sans la traînée ; le joueur doit les cliquer à temps, et
+   * une fois qu'il échoue, on plante une animation d'attaque à l'endroit de
+   * chaque rond réussi ») : le rond net, l'anneau qui se referme ; touché, il
+   * éclate et laisse une MARQUE sur l'ennemi ; manqué, il rougit sous sa
+   * croix — puis, l'encaissement venu (`passif.dernier`), chaque marque est
+   * frappée d'une plaie, de plus en plus vite, et le total jaillit.
+   */
+  const pointsEnJeu = new Set<string>()
+  const marquesDesPoints = new Map<string, { n: HTMLElement; c: { x: number; y: number } }[]>()
+  // Celle d'avant ce chargement ne se rejoue pas.
+  const dernierAuChargement = moi().passif.dernier
+  let frappeVue = dernierAuChargement === undefined ? '' : `${moi().arme}:${dernierAuChargement.evenement}`
+
+  function poserLaMarque(serie: string, c: { x: number; y: number }, x: number, y: number): void {
+    const n = el('div', 'donjon-marque')
+    n.style.left = `${x}px`
+    n.style.top = `${y}px`
+    couchePassif.append(n)
+    n.animate([{ transform: 'scale(2.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 180, easing: 'ease-out' })
+    const marques = marquesDesPoints.get(serie) ?? []
+    marques.push({ n, c })
+    marquesDesPoints.set(serie, marques)
+  }
+
+  /** La frappe des points faibles : une plaie sur chaque marque, l'une après l'autre, de plus en plus vite ; puis le total. */
+  function frapperLesPoints(serie: string, coups: number, degats: number): void {
+    const marques = marquesDesPoints.get(serie) ?? []
+    marquesDesPoints.delete(serie)
+    const couleur = teinteDuChiffre('capaciteCritique', 0)
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    // La barre de vie tombe avec le total.
+    let delai = 280
+    marques.forEach((m, i) => {
+      setTimeout(() => {
+        const { x0, y0, l, h } = cadreDuDessin()
+        const [x, y] = [x0 + l * m.c.x, y0 + h * m.c.y]
+        m.n.remove()
+        plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
+        for (let e = 0; e < 8; e++) {
+          const p = el('div', 'donjon-particule trait')
+          p.style.left = `${x}px`
+          p.style.top = `${y}px`
+          p.style.background = couleur
+          scene.append(p)
+          const a = Math.random() * 2 * Math.PI
+          const loin = (1.2 + Math.random() * 1.6) * rem
+          p.animate(
+            [
+              { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.6)`, opacity: 1 },
+              { transform: `translate(calc(-50% + ${Math.cos(a) * loin}px), calc(-50% + ${Math.sin(a) * loin}px)) rotate(${a}rad) scaleX(0.2)`, opacity: 0 },
+            ],
+            { duration: 280 + Math.random() * 120, delay: CONTACT_PLAIE, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+          ).onfinish = () => p.remove()
+        }
+        reculer(x, 'critique', 70, undefined, CONTACT_PLAIE)
+        const d = 4 + Math.min(6, i)
+        scene.animate([{ transform: 'none' }, { transform: `translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 110, delay: CONTACT_PLAIE })
+      }, delai)
+      delai += Math.max(55, 130 - 12 * i)
+    })
+    pvRetenus = degats
+    retenusJusqua = performance.now() + delai + 60
+    setTimeout(() => {
+      const [x, y] = surLEnnemi(0, -0.05)
+      envoler(x, y, degats, 'capacite', couleur, `Points faibles ×${coups}`)
+      dessiner()
+    }, delai + 60)
+  }
+
+  function dessinerLePoint(ev: EvenementDuPassif, j: Joueur, t: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const serie = `${j.arme}:${ev.k}`
+    const cle = `${serie}:${ev.rang}:point`
+    voulues.add(cle)
+    const grace = passifDe(C, j)?.grace ?? 0
+    let n = ciblesVues.get(cle)
+    if (n === undefined) {
+      // Le rond net de la Taille (ses styles), sans traînée.
+      const rond = bouton('donjon-cible trait point-faible')
+      n = rond
+      rond.setAttribute('aria-label', 'Point faible')
+      const c = ev.cibles[0]
+      rond.addEventListener('pointerdown', (e) => {
+        e.stopPropagation()
+        const quand = maintenant()
+        // Au-delà de la grâce, les règles le refuseraient : on ne le salue pas.
+        if (!pointsEnJeu.has(cle) || quand > ev.fin + grace) return
+        pointsEnJeu.delete(cle)
+        poserLaMarque(serie, c, parseFloat(rond.style.left), parseFloat(rond.style.top))
+        void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ev.k, cible: 0 }).then(() => dessiner())
+      })
+      couchePassif.append(rond)
+      ciblesVues.set(cle, rond)
+      pointsEnJeu.add(cle)
+      rond.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 160, easing: 'ease-out' })
+    }
+    const [px, py] = surLeDessin(ev.cibles[0])
+    n.style.left = `${px}px`
+    n.style.top = `${py}px`
+    // L'anneau touche le rond à la fin de la grâce : c'est là qu'il est manqué.
+    const jusqua = ev.fin + grace
+    n.style.setProperty('--reste', Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))).toFixed(3))
   }
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
@@ -3045,6 +3157,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
     const voulues = new Set<string>()
+    // Une série de points faibles vient d'être encaissée : sa frappe.
+    const dernier = j.passif.dernier
+    if (dernier !== undefined && `${j.arme}:${dernier.evenement}` !== frappeVue) {
+      frappeVue = `${j.arme}:${dernier.evenement}`
+      frapperLesPoints(frappeVue, dernier.coups, dernier.degats)
+    }
     if (ouvert && ev !== null) {
       const { x0, y0, l, h } = cadreDuDessin()
       // Le temps qui reste, sur la fenêtre de CE trait (la série les raccourcit).
@@ -3069,7 +3187,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const jusqua = ev.fin + (passifDe(C, j)?.grace ?? 0)
         placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin)
       }
-      if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
+      if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)
+      else if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
         // Les runes déjà touchées restent allumées.
         const genre = j.arme === 'dague' ? 'point' : 'rune'
         const cle = `${j.arme}:${ev.k}:${i}`
