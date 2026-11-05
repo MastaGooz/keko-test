@@ -2233,7 +2233,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
       d = `M${sommets.join(' L')}Z`
     }
-    const copies = [0.2, 0.45, 1].map((opacite) => {
+    // Les fantômes du boomerang plus pleins (Keko : « un peu trop transparent »).
+    const copies = (boomerang ? [0.35, 0.65, 1] : [0.2, 0.45, 1]).map((opacite) => {
       const f = document.createElementNS('http://www.w3.org/2000/svg', 'path')
       f.setAttribute('d', d)
       f.style.opacity = `${opacite}`
@@ -2257,9 +2258,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           const [px, py] = chemin(w)
           poser(f, px, py, cote * vitesse * instant(w))
         })
-        // Le boomerang s'efface sur la seconde moitié de son retour.
+        // Le boomerang s'efface sur le dernier quart de son retour (la moitié avant).
         const retour = Math.max(0, z - 1)
-        trace.style.opacity = `${Math.min(1, t / 30) * (1 - Math.max(0, (retour - 0.5) / 0.5) ** 2)}`
+        trace.style.opacity = `${Math.min(1, t / 30) * (1 - Math.max(0, (retour - 0.75) / 0.25) ** 2)}`
       } else if (!boomerang && t < contact + TENUE_JET + 160) {
         // Fiché : il s'arrête net (Keko : « arrête la rotation du shuriken quand
         // il se plante » ; il tournait encore en ralentissant), s'enfonce d'un

@@ -1142,6 +1142,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     plante ») : la poignée du kunai va de 35 à 58 au lieu de 13 à 58 (sur 100,
     l'anneau suit) ; le boomerang tourne à 2° par ms au lieu de 3,4 ; le
     shuriken fiché s'arrête net au lieu de tourner encore.
+  - Puis le boomerang moins transparent (Keko) : ses fantômes à 35 et 65 %
+    au lieu de 20 et 45, et il ne s'efface que sur le dernier quart de son
+    retour au lieu de la seconde moitié.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
