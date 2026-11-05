@@ -1255,6 +1255,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     jaillissent des deux côtés au passage de la lame ; l'ennemi figé 180 ms,
     blanchi, repoussé comme sous un critique. Le chiffre jaillit au milieu du
     trait (le coup rond des capacités n'est plus joué par-dessus).
+  - Puis (Keko : « pas assez juicy et punchy ; on pourrait mettre un temps
+    entre la réussite et le coup, avec un assombrissement noir du cadre
+    ennemi, avant le slash qui arrive en flash puissant ») : LE SUSPENS
+    (`PAUSE_TAILLE`, 380 ms) — la scène plonge dans le noir (92 %, un peu
+    moins au milieu) et se resserre de 3,5 %, un fil de lumière d'or se
+    tend du milieu vers les bouts le long du trait ; puis LE COUP, d'un seul
+    éclat — l'entaille jaillit en 40 ms au lieu de 90, 1,8 rem d'épais,
+    prolongée de 45 % de chaque côté, l'éclair couvre la scène entière de
+    blanc, le noir se lève dessous, la scène resserrée est frappée (18 px,
+    amorti en 520 ms), 56 étincelles plus loin, l'ennemi figé 220 ms. LE
+    CHIFFRE ET LA BARRE DE VIE ATTENDENT LE COUP : les règles jouent la
+    taille à la réussite (la fenêtre ne doit rien perdre au suspens), mais
+    l'écran retient les PV qu'elle a ôtés (`pvRetenus`) jusqu'au coup.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

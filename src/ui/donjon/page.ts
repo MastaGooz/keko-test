@@ -2818,10 +2818,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         tr.fini = true
         tr.avance = 1
         // Le grand coup part au geste, sans attendre les règles ; le guide s'efface sous lui.
+        const reussite = performance.now()
         n.style.visibility = 'hidden'
         grandeTaille(tr.a, tr.b)
         const milieu: [number, number] = [(tr.a[0] + tr.b[0]) / 2, (tr.a[1] + tr.b[1]) / 2]
-        void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu))
+        void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu, reussite + PAUSE_TAILLE))
       }
       dessinerLAvance(tr)
     })
@@ -2836,75 +2837,111 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   /**
    * LE GRAND COUP DE LA TAILLE (Keko : « quand c'est réussi il faudrait un
    * effet vraiment puissant, avec un slash plus gros et un tremblement, voire
-   * un gros flash, des particules ») : le long du trait tracé, une entaille de
-   * lumière bien plus grande que celle de l'épée, prolongée d'un tiers de
-   * chaque côté, qui jaillit d'un bout à l'autre (90 ms), tient, puis
-   * s'amincit et s'éteint ; un éclair blanc sur toute la scène, la scène qui
-   * tremble en travers du trait, une gerbe d'étincelles de part et d'autre
-   * qui suit la lame, l'ennemi figé, blanchi, repoussé.
+   * un gros flash, des particules », puis « pas assez juicy et punchy : un
+   * temps entre la réussite et le coup, avec un assombrissement noir du cadre
+   * ennemi, avant le slash qui arrive en flash puissant »). D'abord LE
+   * SUSPENS (`PAUSE_TAILLE`) : la scène plonge dans le noir et se resserre
+   * d'un cran, un fil de lumière se tend le long du trait. Puis LE COUP, d'un
+   * seul éclat : une entaille d'or bien plus grande que celle de l'épée,
+   * prolongée de part et d'autre, qui jaillit en 40 ms, tient, s'amincit et
+   * s'éteint ; un éclair blanc qui couvre la scène ; le noir se lève ; la
+   * scène tremble en travers du trait ; une gerbe d'étincelles des deux
+   * côtés ; l'ennemi figé, blanchi, repoussé.
    */
+  const PAUSE_TAILLE = 380
   function grandeTaille(a: [number, number], b: [number, number]): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const long = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
     const [ux, uy] = [(b[0] - a[0]) / long, (b[1] - a[1]) / long]
-    const prolonge = 0.35 * long
+    const prolonge = 0.45 * long
     const [tx, ty] = [b[0] + ux * prolonge, b[1] + uy * prolonge]
     const [mx, my] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    const angleDuTrait = (Math.atan2(uy, ux) * 180) / Math.PI
     const or = '#ffd27a'
-    // L'entaille : pointue aux deux bouts, 1,5 rem d'épais au milieu.
-    const { dessiner: tracer, trace } = traitDroit(tx, ty, or, (Math.atan2(uy, ux) * 180) / Math.PI, long + 2 * prolonge, 0.75 * rem, (v) => Math.sin(Math.PI * v) ** 0.7)
-    trace.style.zIndex = '3'
+    // Le noir tombe sur la scène, qui se resserre ; il se lève au coup.
+    const nuit = el('div', 'donjon-nuit-taille')
+    scene.append(nuit)
+    nuit.animate([{ opacity: 0 }, { opacity: 0.9, offset: 0.55 }, { opacity: 0.92 }], { duration: PAUSE_TAILLE, easing: 'ease-out', fill: 'forwards' })
+    const serre = scene.animate([{ transform: 'none' }, { transform: 'scale(1.035)' }], { duration: PAUSE_TAILLE, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' })
+    // Le fil de lumière qui se tend le long du trait, de plus en plus vif.
+    const { dessiner: tendre, trace: fil } = traitDroit(tx, ty, or, angleDuTrait, long + 2 * prolonge, 0.09 * rem, (v) => Math.sin(Math.PI * v) ** 0.5)
+    fil.style.zIndex = '4'
     const debut = performance.now()
-    const image = (maintenant: number) => {
-      const s = maintenant - debut
-      if (s < 90) tracer(0, 1 - (1 - s / 90) ** 2, 1.15)
-      else if (s < 170) tracer(0, 1, 1.15 + 0.15 * ((s - 90) / 80))
-      else if (s < 420) {
-        const q = (s - 170) / 250
-        tracer(0, 1, 1.3 * (1 - q) ** 1.5)
-        trace.style.opacity = `${1 - q * q}`
-      } else return trace.remove()
+    const suspens = (maintenant: number) => {
+      const q = Math.min(1, (maintenant - debut) / PAUSE_TAILLE)
+      if (q >= 1) return fil.remove()
+      tendre(0.5 - 0.5 * q ** 0.6, 0.5 + 0.5 * q ** 0.6, 0.6 + 0.8 * q)
+      fil.style.opacity = `${0.3 + 0.7 * q}`
+      requestAnimationFrame(suspens)
+    }
+    requestAnimationFrame(suspens)
+    setTimeout(() => {
+      // LE COUP. L'entaille : pointue aux deux bouts, 1,8 rem d'épais au milieu.
+      const { dessiner: trancher, trace } = traitDroit(tx, ty, or, angleDuTrait, long + 2 * prolonge, 0.9 * rem, (v) => Math.sin(Math.PI * v) ** 0.7)
+      trace.style.zIndex = '4'
+      const coup = performance.now()
+      const image = (maintenant: number) => {
+        const s = maintenant - coup
+        if (s < 40) trancher(0, 1 - (1 - s / 40) ** 2, 1.2)
+        else if (s < 150) trancher(0, 1, 1.2 + 0.2 * ((s - 40) / 110))
+        else if (s < 450) {
+          const q = (s - 150) / 300
+          trancher(0, 1, 1.4 * (1 - q) ** 1.5)
+          trace.style.opacity = `${1 - q * q}`
+        } else return trace.remove()
+        requestAnimationFrame(image)
+      }
       requestAnimationFrame(image)
-    }
-    requestAnimationFrame(image)
-    // L'éclair, centré sur le milieu du trait.
-    const flash = el('div', 'donjon-flash-taille')
-    flash.style.setProperty('--x', `${mx}px`)
-    flash.style.setProperty('--y', `${my}px`)
-    scene.append(flash)
-    flash.animate([{ opacity: 0.9 }, { opacity: 0.9, offset: 0.15 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' }).onfinish = () => flash.remove()
-    // La scène tremble en travers du trait, et s'amortit.
-    const pas = (d: number) => `translate(${(-uy * d).toFixed(1)}px, ${(ux * d).toFixed(1)}px)`
-    scene.animate(
-      [{ transform: 'none' }, { transform: pas(14), offset: 0.1 }, { transform: pas(-11), offset: 0.28 }, { transform: pas(7), offset: 0.46 }, { transform: pas(-4), offset: 0.64 }, { transform: pas(2), offset: 0.82 }, { transform: 'none' }],
-      { duration: 460, easing: 'ease-out' },
-    )
-    // La gerbe : des traits d'or et de blanc jaillissent des deux côtés du
-    // trait, un peu vers l'avant, au passage de la lame.
-    for (let i = 0; i < 40; i++) {
-      const v = Math.random()
-      const cote = i % 2 === 0 ? 1 : -1
-      const angle = Math.atan2(ux * cote + uy * 0.5, -uy * cote + ux * 0.5) + (Math.random() - 0.5) * 0.9
-      const loin = (2 + Math.random() * 4) * rem
-      const [dx, dy] = [Math.cos(angle) * loin, Math.sin(angle) * loin]
-      const p = el('div', 'donjon-particule trait')
-      p.style.left = `${a[0] + (b[0] - a[0]) * v}px`
-      p.style.top = `${a[1] + (b[1] - a[1]) * v}px`
-      p.style.background = i % 3 === 0 ? or : '#fffdf4'
-      p.style.zIndex = '3'
-      p.style.opacity = '0'
-      scene.append(p)
-      const r = `rotate(${angle}rad)`
-      p.animate(
+      // L'éclair : la scène entière blanchit, puis s'éteint ; le noir se lève derrière.
+      const flash = el('div', 'donjon-flash-taille')
+      flash.style.setProperty('--x', `${mx}px`)
+      flash.style.setProperty('--y', `${my}px`)
+      scene.append(flash)
+      flash.animate([{ opacity: 1 }, { opacity: 1, offset: 0.18 }, { opacity: 0 }], { duration: 380, easing: 'ease-out' }).onfinish = () => flash.remove()
+      nuit.animate([{ opacity: 0.92 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' }).onfinish = () => nuit.remove()
+      // La scène, resserrée, est frappée : elle tremble en travers du trait et revient.
+      serre.cancel()
+      const pas = (d: number) => `translate(${(-uy * d).toFixed(1)}px, ${(ux * d).toFixed(1)}px)`
+      scene.animate(
         [
-          { transform: `translate(-50%, -50%) ${r} scaleX(2.2)`, opacity: 1 },
-          { transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) ${r} scaleX(1.3)`, opacity: 1, offset: 0.5 },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 10}px)) ${r} scaleX(0.2)`, opacity: 0 },
+          { transform: `scale(1.035) ${pas(18)}` },
+          { transform: pas(-14), offset: 0.16 },
+          { transform: pas(9), offset: 0.34 },
+          { transform: pas(-5), offset: 0.52 },
+          { transform: pas(2.5), offset: 0.72 },
+          { transform: 'none' },
         ],
-        { duration: 380 + Math.random() * 260, delay: 20 + v * 70, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
-      ).onfinish = () => p.remove()
-    }
-    reculer(mx, 'capaciteCritique', 180)
+        { duration: 520, easing: 'ease-out' },
+      )
+      // La gerbe : des traits d'or et de blanc jaillissent des deux côtés du
+      // trait, un peu vers l'avant, au passage de la lame.
+      for (let i = 0; i < 56; i++) {
+        const v = Math.random()
+        const cote = i % 2 === 0 ? 1 : -1
+        const angle = Math.atan2(ux * cote + uy * 0.5, -uy * cote + ux * 0.5) + (Math.random() - 0.5) * 0.9
+        const loin = (2.5 + Math.random() * 5) * rem
+        const [dx, dy] = [Math.cos(angle) * loin, Math.sin(angle) * loin]
+        const p = el('div', 'donjon-particule trait')
+        p.style.left = `${a[0] + (b[0] - a[0]) * (1.6 * v - 0.3)}px`
+        p.style.top = `${a[1] + (b[1] - a[1]) * (1.6 * v - 0.3)}px`
+        p.style.background = i % 3 === 0 ? or : '#fffdf4'
+        p.style.zIndex = '4'
+        p.style.opacity = '0'
+        scene.append(p)
+        const r = `rotate(${angle}rad)`
+        p.animate(
+          [
+            { transform: `translate(-50%, -50%) ${r} scaleX(2.6)`, opacity: 1 },
+            { transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) ${r} scaleX(1.4)`, opacity: 1, offset: 0.5 },
+            { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 10}px)) ${r} scaleX(0.2)`, opacity: 0 },
+          ],
+          { duration: 420 + Math.random() * 300, delay: 10 + v * 35, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+        ).onfinish = () => p.remove()
+      }
+      reculer(mx, 'capaciteCritique', 220)
+      // La barre de vie tombe au coup, pas à la réussite.
+      dessiner()
+    }, PAUSE_TAILLE)
   }
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
@@ -2992,9 +3029,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   /**
    * TOUCHER UNE CIBLE : l'action part, et si le coup est tombé il jaillit
    * sous le nom du passif. Une rune hors d'ordre tremble en rouge. `ou` : le
-   * coup a déjà eu son effet (la Taille), le chiffre jaillit là.
+   * coup a déjà eu son effet (la Taille), le chiffre jaillit là ; `au` : il
+   * ne tombe qu'à cet instant (`performance.now`), et la barre de vie garde
+   * ses PV jusque-là.
    */
-  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number]): void {
+  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number], au = 0): void {
     const t = maintenant()
     const avant = moi()
     const p = passifDe(C, avant)
@@ -3013,7 +3052,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const [x, y] = ou ?? surLEnnemi(0, -0.05)
         const couleur = teinteDuChiffre(genre, mult - 1)
         if (ou === undefined) impact(x, y, genre, couleur)
-        envoler(x, y, inflige, genre, couleur, p.nom === 'Points faibles' ? 'Point faible' : p.nom)
+        const attente = au - performance.now()
+        if (attente > 0) {
+          pvRetenus = inflige
+          retenusJusqua = au
+          setTimeout(() => envoler(x, y, inflige, genre, couleur, p.nom), attente)
+        } else envoler(x, y, inflige, genre, couleur, p.nom === 'Points faibles' ? 'Point faible' : p.nom)
       }
       dessiner()
     })
@@ -3224,6 +3268,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
   }
 
+  let pvRetenus = 0
+  let retenusJusqua = 0
   function dessiner(): void {
     const t = Math.max(maintenant(), etat.t)
     const j = moi()
@@ -3245,9 +3291,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       etageVu = etat.ennemi.etage
       pastilleEtage.textContent = `Étage ${etageVu}`
     }
-    const part = Math.max(0, etat.ennemi.pv) / etat.ennemi.pvMax
+    // Les PV qu'un coup en suspens (la Taille) n'a pas encore montré tomber.
+    const pvVus = Math.min(etat.ennemi.pvMax, Math.max(0, etat.ennemi.pv) + (performance.now() < retenusJusqua ? pvRetenus : 0))
+    const part = pvVus / etat.ennemi.pvMax
     pv.style.width = `${100 * part}%`
-    pvTexte.textContent = `${nombre(Math.max(0, etat.ennemi.pv))} / ${nombre(etat.ennemi.pvMax)}`
+    pvTexte.textContent = `${nombre(pvVus)} / ${nombre(etat.ennemi.pvMax)}`
 
     // La dernière nouvelle.
     const dernier = etat.journal[etat.journal.length - 1]

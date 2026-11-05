@@ -755,13 +755,23 @@
   fill: #fffdf4;
 }
 
-/* Le grand coup de la Taille : un éclair blanc sur toute la scène, plus vif au milieu du trait. */
-.donjon-flash-taille {
+/* Le suspens de la Taille : la scène plonge dans le noir, un peu moins au milieu. */
+.donjon-nuit-taille {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  background: radial-gradient(circle at var(--x) var(--y), #fff 0, rgba(255, 246, 220, 0.9) 18%, rgba(255, 214, 130, 0.45) 55%, rgba(255, 214, 130, 0.15) 100%);
+  opacity: 0;
+  background: radial-gradient(circle, rgba(8, 4, 2, 0.82), #000 75%);
+}
+
+/* Le grand coup de la Taille : un éclair blanc sur toute la scène, plus vif au milieu du trait. */
+.donjon-flash-taille {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--x) var(--y), #fff 0, #fff 22%, rgba(255, 246, 220, 0.92) 45%, rgba(255, 214, 130, 0.6) 100%);
 }
 
 .donjon .donjon-cible.trait {
