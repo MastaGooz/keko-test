@@ -158,7 +158,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 127 (la roche qui éclate ; le seul marteau du tri est celui d'un
  * personnage), et l'arbalète, la n° 110 (la silhouette qui décoche un trait ;
  * pas d'arbalète dans le tri), et le pistolet, la n° 144 (le trait qui finit en
- * éclat ; pas d'arme à feu dans le tri) — le mousquet aussi —, provisoires elles aussi.
+ * éclat ; pas d'arme à feu dans le tri) — le mousquet aussi —, et la rapière,
+ * la n° 107 (l'épée fine à l'étoile), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -177,6 +178,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   arbalete: 'armes/arbalete.webp',
   pistolet: 'armes/pistolet.webp',
   mousquet: 'armes/pistolet.webp',
+  rapiere: 'armes/rapiere.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -194,6 +196,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   arbalete: { caractere: 'Puissante', bonus: "Aucun pour l'instant" },
   pistolet: { caractere: 'Détonante', bonus: "Aucun pour l'instant" },
   mousquet: { caractere: 'Fracassante', bonus: "Aucun pour l'instant" },
+  rapiere: { caractere: 'Précise', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -1048,16 +1051,23 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * puis s'efface telle quelle, vite (Keko : « la laisser plantée comme la
    * dague, ça marche bien avec les armes thrust » ; elle se retirait
    * aussitôt). Les étincelles traversent l'ennemi, dans le sens du coup. Un coup sur deux penché de l'autre côté. Le critique l'épaissit
-   * comme celui de la dague.
+   * comme celui de la dague. L'AIGUILLE DE LA RAPIÈRE (`aiguille` ; Keko :
+   * « l'effet lance, mais avec une aiguille ») : le même estoc, son élan, sa
+   * tenue et son fondu, mais un trait fin et droit, d'une seule largeur, qui
+   * s'effile en une longue pointe sur son dernier quart.
    */
   let coteDeLaLance = 1
-  function lance(x: number, y: number, k: number, couleur: string, angle: number): void {
+  function lance(x: number, y: number, k: number, couleur: string, angle: number, aiguille = false): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    // La hampe (une pointe courte à la queue), la tête qui s'élargit, puis la pointe.
-    const profil = (v: number) => (v < 0.06 ? v / 0.06 : v < 0.66 ? 0.5 : v < 0.84 ? 0.5 + (0.5 * (v - 0.66)) / 0.18 : (1 - v) / 0.16)
-    // Un peu plus grande (Keko : « augmente un peu la taille » ; 6,5 et 0,42).
-    const longueur = 7.5 * rem
-    const { dessiner, trace } = traitDroit(x, y, couleur, angle, longueur, 0.48 * rem * (1 + (k - 1) * 2), profil, 1.4)
+    // La hampe (une pointe courte à la queue), la tête qui s'élargit, puis la
+    // pointe ; l'aiguille : droite, puis effilée sur son dernier quart.
+    const profil = aiguille
+      ? (v: number) => (v < 0.04 ? v / 0.04 : v < 0.75 ? 1 : (1 - v) / 0.25)
+      : (v: number) => (v < 0.06 ? v / 0.06 : v < 0.66 ? 0.5 : v < 0.84 ? 0.5 + (0.5 * (v - 0.66)) / 0.18 : (1 - v) / 0.16)
+    // Un peu plus grande (Keko : « augmente un peu la taille » ; 6,5 et 0,42) ;
+    // l'aiguille un peu plus courte, et fine (0,24 rem).
+    const longueur = (aiguille ? 6.5 : 7.5) * rem
+    const { dessiner, trace } = traitDroit(x, y, couleur, angle, longueur, (aiguille ? 0.12 : 0.48) * rem * (1 + (k - 1) * 2), profil, 1.4)
     // L'ÉLAN (Keko : « on dirait qu'elle apparaît directement sur place ») :
     // elle arrive ENTIÈRE de 4 rem en retrait, étirée par la vitesse, et se
     // resserre en touchant.
@@ -1400,8 +1410,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // plaie (ou tire la flèche, `&fleche`).
     const enArbalete = arme === 'arbalete'
     const enFleche = arme === 'arc' || enArbalete || (arme === 'dague' && FLECHE)
-    // La lance aussi pique, mais d'un estoc qui se retire.
-    const enLance = arme === 'lance'
+    // La lance aussi pique, mais d'un estoc qui se retire ; la rapière aussi,
+    // d'une aiguille.
+    const enRapiere = arme === 'rapiere'
+    const enLance = arme === 'lance' || enRapiere
     const pique = arme === 'dague' || arme === 'arc' || enArbalete || enLance
     // Les massues et le bâton cognent ; les armes à deux mains (le bâton en
     // est une) en version longue.
@@ -1495,7 +1507,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
-      if (enLance) lance(x, y, k, couleur, anglePique)
+      if (enLance) lance(x, y, k, couleur, anglePique, enRapiere)
       else if (enFleche) fleche(x, y, k, couleur, anglePique, enArbalete)
       else plaie(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
@@ -1506,7 +1518,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const a = (anglePique * Math.PI) / 180
         const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
         if (enLance || enArbalete) {
-          const d = enLance ? 9 : 7
+          const d = enRapiere ? 5 : enLance ? 9 : 7
           scene.animate([{ transform: 'none' }, { transform: pas(d), offset: 0.2 }, { transform: pas(-d / 3), offset: 0.5 }, { transform: pas(d / 6), offset: 0.75 }, { transform: 'none' }], { duration: 240, delay: contact, easing: 'ease-out' })
         }
         else scene.animate([{ transform: 'none' }, { transform: pas(3), offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })

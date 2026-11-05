@@ -1002,6 +1002,16 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   trois quarts en 220, dix-huit étincelles de plus deux fois et demie plus
   loin, la scène secouée de 11 px en 280 ms. L'arrêt sur coup reste à la
   main qui tient l'arme : 90 ms sous le pistolet, 150 sous le mousquet.
+- **LA RAPIÈRE, PROVISOIRE** (Keko, 05/11 : « on va rajouter la rapière, car
+  elle n'est pas couverte ; il faudrait l'effet lance, mais avec une
+  aiguille ») : « Précise », 11 toutes les 0,275 s — le DPS de base, ni bonus,
+  ni capacité, ni passif ; icône provisoire, la capacité n° 107 (l'épée fine
+  à l'étoile). Son coup est L'ESTOC DE LA LANCE EN AIGUILLE
+  (`lance(…, aiguille)`) : le même élan, la même tenue, le même fondu, la
+  même direction (du bas, un coup sur deux de l'autre côté), mais un trait
+  de 6,5 rem au lieu de 7,5, droit et d'une seule largeur (0,24 rem au lieu
+  d'une tête de 0,96), effilé en longue pointe sur son dernier quart ; la
+  scène secouée de 5 px au lieu de 9.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
