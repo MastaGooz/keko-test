@@ -1165,6 +1165,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   grandissant (140 ms). La première frappe (200 ms) ; les points de lumière
   qui montent de la massue ; au hasard sur le dessin ; l'ennemi recule comme
   sous l'épée ; pas de secousse.
+- **LA BAGUETTE, PROVISOIRE : LE PREMIER PROJECTILE MAGIQUE** (Keko, 05/11 :
+  « on passe à la magie, essayons un projectile magique ») : « Arcanique »,
+  10 toutes les 0,25 s — le DPS de base, ni bonus, ni capacité, ni passif ;
+  icône, la capacité n° 140 (la comète qui frappe le miroir). Son coup
+  (`orbe`) : un CŒUR de lumière (0,84 rem) dans un HALO à 40 % qui pulse,
+  deux petites lueurs qui TOURNENT autour, une TRAÎNÉE de comète sur le
+  tiers de la course, effilée, qui ondule en spirale ; il part d'en bas, d'un
+  côté puis de l'autre (4 à 5 rem de côté, 5 plus bas), sur une courbe, prend
+  de la vitesse et frappe en 170 ms, où il ÉCLATE (`eclatMagique`) : un flash
+  qui s'ouvre (160 ms) et six petites étoiles à quatre branches qui
+  jaillissent en tournant (380 à 500 ms). Les points de lumière qui montent
+  de la massue ; au hasard sur le dessin ; la scène sursaute de 3 px ;
+  l'ennemi recule comme sous l'épée.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

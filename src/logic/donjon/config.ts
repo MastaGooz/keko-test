@@ -29,8 +29,8 @@ export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'r
 export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
-export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth'
-export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth']
+export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les sept provisoires n'ont pas encore le leur). */
 export type ArmeAPassif = 'epee' | 'dague' | 'baton'
 /**
@@ -190,7 +190,9 @@ export const DONJON = {
    * 0,2 s, 14 toutes les 0,35 s, 9 toutes les 0,225 s. Le COUTEAU DE LANCER
    * aussi (Keko : « comme le kunai, mais avec une forme de couteau ») : 10
    * toutes les 0,25 s. Le LUTH aussi (Keko : « un instrument de musique, des
-   * notes comme projectiles ») : 10 toutes les 0,25 s.
+   * notes comme projectiles ») : 10 toutes les 0,25 s. La BAGUETTE aussi
+   * (Keko : « on passe à la magie, essayons un projectile magique ») : 10
+   * toutes les 0,25 s.
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
@@ -219,6 +221,7 @@ export const DONJON = {
     kunai: { nom: 'Kunai', rarete: 'commune', degats: 9, recharge: 0.225 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     couteau: { nom: 'Couteau de lancer', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     luth: { nom: 'Luth', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
+    baguette: { nom: 'Baguette', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
   } as Record<
     Equipement,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }

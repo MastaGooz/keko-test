@@ -165,7 +165,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 108 (les pierres au-dessus de la main), le shuriken, la n° 142 (le
  * tourbillon), le boomerang, la n° 126 (la tornade), et le kunai, la n° 121
  * (la silhouette au couteau), le couteau de lancer, celle de la dague, et le
- * luth, l'objet n° 008 (le luth), provisoires elles aussi.
+ * luth, l'objet n° 008 (le luth), et la baguette, la n° 140 (la comète qui
+ * frappe le miroir), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -194,6 +195,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   kunai: 'armes/kunai.webp',
   couteau: 'armes/dague.webp',
   luth: 'armes/luth.webp',
+  baguette: 'armes/baguette.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -221,6 +223,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   kunai: { caractere: 'Acéré', bonus: "Aucun pour l'instant" },
   couteau: { caractere: 'Affûté', bonus: "Aucun pour l'instant" },
   luth: { caractere: 'Envoûtant', bonus: "Aucun pour l'instant" },
+  baguette: { caractere: 'Arcanique', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -847,6 +850,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const TENUE_JET = 160
   // Chaque note du luth vole 200 ms ; la première frappe à son arrivée.
   const VOL_NOTE = 200
+  // L'orbe de la baguette frappe à 170 ms.
+  const CONTACT_ORBE = 170
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
   const TENUE_FLEAU = 90
@@ -1504,6 +1509,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     let angleJet = -90
     // Le luth joue des notes.
     const enMusique = arme === 'luth'
+    // La baguette lance un orbe.
+    const enOrbe = arme === 'baguette'
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1519,7 +1526,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde || enJet || enMusique) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde || enJet || enMusique || enOrbe) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1546,7 +1553,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enMusique ? VOL_NOTE : enJet ? (enBoomerang ? CONTACT_BOOMERANG : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enOrbe ? CONTACT_ORBE : enMusique ? VOL_NOTE : enJet ? (enBoomerang ? CONTACT_BOOMERANG : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1565,6 +1572,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!STYLES[genre].secousse) {
         const d = marteauLourd ? 11 : 7
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
+      }
+    } else if (enOrbe) {
+      orbe(x, y, 1 + 0.65 * (fort - 1), couleur)
+      // La scène sursaute d'un cran (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        const a = Math.random() * 2 * Math.PI
+        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 3}px, ${Math.sin(a) * 3}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (enMusique) {
       notes(x, y, 1 + 0.65 * (fort - 1), couleur)
@@ -1680,7 +1694,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const trait = lame || pique || enFeu || enFouet || enGriffes || enJet
     for (let i = 0; i < combien; i++) {
       // Sous le luth aussi, des points de lumière qui montent.
-      const braises = masse || enMusique
+      const braises = masse || enMusique || enOrbe
       const p = el('div', trait ? 'donjon-particule trait' : braises ? 'donjon-particule lueur' : 'donjon-particule')
       p.style.left = `${x}px`
       p.style.top = `${y}px`
@@ -1748,7 +1762,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = enJet ? (angleJet * Math.PI) / 180 : pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || enBoomerang ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet || enMusique ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || enBoomerang ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet || enMusique || enOrbe ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
   }
 
   /**
@@ -2381,6 +2395,143 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         requestAnimationFrame(image)
       }
       requestAnimationFrame(image)
+    }
+  }
+
+  /**
+   * L'ORBE DE LA BAGUETTE (Keko : « on passe à la magie, essayons un
+   * projectile magique ») : un CŒUR de lumière dans un HALO qui pulse, deux
+   * petites lueurs qui TOURNENT autour, une TRAÎNÉE de comète qui ondule en
+   * spirale derrière lui ; il part d'en bas, d'un côté puis de l'autre, sur
+   * une courbe, et frappe le point (le contact) où il ÉCLATE
+   * (`eclatMagique`). Le critique le grossit.
+   */
+  let coteDeLOrbe = 1
+  function orbe(x: number, y: number, k: number, couleur: string): void {
+    coteDeLOrbe = -coteDeLOrbe
+    const cote = coteDeLOrbe
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const coeur = 0.42 * rem * k
+    // Le départ, en bas d'un côté ; la courbe bombe d'un côté (le point est en 0, 0).
+    const [sx, sy] = [cote * (4 + Math.random()) * rem, 5 * rem]
+    const [cx, cy] = [sx / 2 + cote * 1.5 * rem, sy / 2 - 1 * rem]
+    const point = (u: number): [number, number] => {
+      const v = 1 - u
+      return [v * v * sx + 2 * v * u * cx, v * v * sy + 2 * v * u * cy]
+    }
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = Math.max(Math.abs(sx), sy) + 2 * rem
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    trace.style.opacity = '0'
+    const rond = (r: number, opacite = 1) => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+      c.setAttribute('r', r.toFixed(1))
+      c.style.opacity = `${opacite}`
+      return c
+    }
+    const halo = rond(coeur * 1.9, 0.4)
+    const sillage = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    sillage.style.opacity = '0.85'
+    const centre = rond(coeur)
+    const lueurs = [rond(coeur * 0.3), rond(coeur * 0.3)]
+    trace.append(halo, sillage, centre, ...lueurs)
+    scene.append(trace)
+    const dessiner = (u: number, t: number) => {
+      const [px, py] = point(u)
+      for (const c of [halo, centre]) {
+        c.setAttribute('cx', px.toFixed(1))
+        c.setAttribute('cy', py.toFixed(1))
+      }
+      halo.setAttribute('r', (coeur * (1.8 + 0.25 * Math.sin(t / 22))).toFixed(1))
+      lueurs.forEach((c, i) => {
+        const a = t / 28 + i * Math.PI
+        c.setAttribute('cx', (px + Math.cos(a) * coeur * 1.6).toFixed(1))
+        c.setAttribute('cy', (py + Math.sin(a) * coeur * 1.6).toFixed(1))
+      })
+      // La traînée : le tiers de la course derrière lui, effilée, qui ondule.
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 20; i++) {
+        const v = i / 20
+        const w = Math.max(0, u - 0.35 * (1 - v))
+        const [ax, ay] = point(w)
+        const [bx, by] = point(Math.min(1, w + 0.01))
+        const n = Math.hypot(bx - ax, by - ay) || 1
+        const [nx, ny] = [-(by - ay) / n, (bx - ax) / n]
+        const onde = 0.28 * rem * k * v * Math.sin(6 * Math.PI * v - t / 18)
+        const [mx, my] = [ax + nx * onde, ay + ny * onde]
+        const h = coeur * 0.85 * v ** 1.3
+        dehors.push(`${(mx + nx * h).toFixed(1)} ${(my + ny * h).toFixed(1)}`)
+        dedans.push(`${(mx - nx * h).toFixed(1)} ${(my - ny * h).toFixed(1)}`)
+      }
+      sillage.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t >= CONTACT_ORBE) {
+        trace.remove()
+        eclatMagique(x, y, k, couleur)
+        return
+      }
+      // Il prend de la vitesse, puis file.
+      const q = t / CONTACT_ORBE
+      dessiner(q * q * (1.6 - 0.6 * q), t)
+      trace.style.opacity = `${Math.min(1, t / 30)}`
+      requestAnimationFrame(image)
+    }
+    image(depart)
+  }
+
+  /** L'orbe éclate : un flash qui s'ouvre, et six petites étoiles qui jaillissent en tournant. */
+  function eclatMagique(x: number, y: number, k: number, couleur: string): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const boite = (demi: number) => {
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      s.setAttribute('class', 'donjon-course')
+      s.setAttribute('aria-hidden', 'true')
+      s.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+      s.style.width = s.style.height = `${2 * demi}px`
+      s.style.left = `${x - demi}px`
+      s.style.top = `${y - demi}px`
+      s.style.color = couleur
+      scene.append(s)
+      return s
+    }
+    const flash = boite(1.6 * rem * k)
+    const rond = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    rond.setAttribute('r', (0.9 * rem * k).toFixed(1))
+    flash.append(rond)
+    flash.animate([{ transform: 'scale(0.4)', opacity: 1, easing: 'ease-out' }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 160 }).onfinish = () => flash.remove()
+    const depart = Math.random() * 60
+    for (let i = 0; i < 6; i++) {
+      const r = (0.22 + Math.random() * 0.1) * rem * k
+      const etoile = boite(r * 1.5)
+      const sommets: string[] = []
+      for (let j = 0; j < 8; j++) {
+        const a = (j * Math.PI) / 4
+        const d = j % 2 === 0 ? r : r * 0.32
+        sommets.push(`${(Math.cos(a) * d).toFixed(1)} ${(Math.sin(a) * d).toFixed(1)}`)
+      }
+      const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      forme.setAttribute('d', `M${sommets.join(' L')}Z`)
+      etoile.append(forme)
+      const a = ((depart + i * 60 + (Math.random() - 0.5) * 25) * Math.PI) / 180
+      const loin = (1.4 + Math.random() * 0.8) * rem * k
+      const tourne = (Math.random() < 0.5 ? -1 : 1) * (120 + Math.random() * 120)
+      etoile.animate(
+        [
+          { transform: 'translate(0, 0) scale(0.4) rotate(0deg)', opacity: 1, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' },
+          { transform: `translate(${Math.cos(a) * loin}px, ${Math.sin(a) * loin}px) scale(1) rotate(${tourne}deg)`, opacity: 0 },
+        ],
+        { duration: 380 + Math.random() * 120 },
+      ).onfinish = () => etoile.remove()
     }
   }
 
