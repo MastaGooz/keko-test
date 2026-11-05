@@ -993,6 +993,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   étincelles de plus au lieu de six, deux fois plus loin au lieu d'une fois
   et demie ; la scène secouée de 8 px en 230 ms au lieu de 5 en 160 ; l'ennemi
   figé 150 ms comme sous les autres armes à deux mains.
+- **LE PISTOLET PREND L'EXPLOSION DU MOUSQUET, LE MOUSQUET UNE PLUS GROSSE**
+  (Keko, 05/11 : « l'animation deux mains pour le une main, et une plus
+  grosse pour la deux mains ») : le pistolet trace 8,5 rem sur 0,36, éclate
+  sur 2,5 rem en 280 ms, le flash aux sept dixièmes en 170, douze étincelles
+  de plus deux fois plus loin, la scène secouée de 8 px en 230 ms ; le
+  mousquet trace 10 rem sur 0,52, éclate sur 3,4 rem en 340 ms, le flash aux
+  trois quarts en 220, dix-huit étincelles de plus deux fois et demie plus
+  loin, la scène secouée de 11 px en 280 ms. L'arrêt sur coup reste à la
+  main qui tient l'arme : 90 ms sous le pistolet, 150 sous le mousquet.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
