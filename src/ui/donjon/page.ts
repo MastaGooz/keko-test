@@ -1951,7 +1951,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const cote = coteDuFleau
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const rayon = 5.5 * rem * k
-    const boule = 0.55 * rem * k
+    // Une boule et une chaîne plus grosses (Keko : « l'animation du fléau est trop petite » ; 0,55 et 0,09).
+    const boule = 0.88 * rem * k
     const penche = (Math.random() - 0.5) * 50
     const fin = (cote > 0 ? 0 : 180) + penche
     const debut = fin - cote * 130
@@ -1968,7 +1969,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const sillage = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     const maillons = Array.from({ length: 11 }, () => {
       const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-      c.setAttribute('r', (0.09 * rem * k).toFixed(1))
+      c.setAttribute('r', (0.14 * rem * k).toFixed(1))
       return c
     })
     // La boule et ses huit pointes, dessinées autour de 0, 0, posées par `transform`.
@@ -3103,7 +3104,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (arme === 'lance' || arme === 'rapiere') lance(x, y, k, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
       else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, k, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
       else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, k, couleur, arme === 'marteauDeuxMains')
-      else if (arme === 'fleau') fleau(x, y, k, couleur)
+      else if (arme === 'fleau') fleau(x, y, k * 1.3, couleur)
       else plaie(x, y, k, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
     }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)

@@ -1428,6 +1428,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     × les réussites : ×5, ×10, ×15…, un seul chiffre). L'écran le frappe
     d'UN coup de l'arme d'autant plus gros (×1,25 par réussite au-delà de
     la première, ×2,2 au plus), sa gerbe et son sursaut avec.
+  - Puis (Keko : « l'animation du fléau est trop petite, il faudrait la
+    grossir ») : la boule du fléau passe de 0,55 à 0,88 rem (pointes
+    comprises) et les maillons de 0,09 à 0,14 — partout, l'attaque de base
+    aussi —, et au Fracas le fléau frappe 1,3 fois plus grand encore.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
