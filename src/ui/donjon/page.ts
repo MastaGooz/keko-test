@@ -3050,7 +3050,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * dernier, l'éclair blanc couvre la scène, le noir se lève, la scène
    * resserrée est frappée et tremble, l'ennemi est figé, et le total jaillit.
    */
-  function frapperLesPoints(serie: string, coups: number, degats: number): void {
+  function frapperLesPoints(serie: string, degats: number): void {
     const marques = marquesDesPoints.get(serie) ?? []
     marquesDesPoints.delete(serie)
     const couleur = teinteDuChiffre('capaciteCritique', 0)
@@ -3133,7 +3133,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 520, easing: 'ease-out' },
       )
       reculer(x, 'capaciteCritique', 220)
-      envoler(x, y, degats, 'capacite', couleur, `Points faibles ×${coups}`)
+      envoler(x, y, degats, 'capacite', couleur, 'Point faible')
       dessiner()
     }, coup)
   }
@@ -3148,7 +3148,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const dernier = j.passif.dernier
     if (dernier !== undefined && `${j.arme}:${dernier.evenement}` !== frappeVue) {
       frappeVue = `${j.arme}:${dernier.evenement}`
-      frapperLesPoints(frappeVue, dernier.coups, dernier.degats)
+      frapperLesPoints(frappeVue, dernier.degats)
     }
   }
 

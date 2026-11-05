@@ -1378,6 +1378,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     sursauts ; au dernier, LA LIBÉRATION : l'éclair blanc sur toute la
     scène, le noir qui se lève, la scène frappée (18 px, amortie en 520
     ms), l'ennemi figé 220 ms, et le total.
+  - Puis le total sous « Point faible » seul (Keko : « inutile de mettre
+    Points faibles ×3, mets juste Point faible »).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
