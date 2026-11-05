@@ -757,43 +757,78 @@
   fill: #fffdf4;
 }
 
-/* LA JAUGE DU FRACAS : une barre sur l'ennemi, un curseur qui la parcourt, la zone verte au bout (le temps
-   juste) ; la zone s'allume quand le curseur y est ; manquée, la barre rougit. */
+/* LA LIGNE DU FRACAS : un curseur file sur une ligne vers le cercle vide du milieu (le temps juste) ; le
+   cercle s'allume quand le curseur y est ; juste, il se remplit du rond des Points faibles ; manquée, la
+   ligne rougit. */
 .donjon-jauge {
   position: absolute;
-  height: 1.2rem;
-  margin-top: -0.6rem;
-  border-radius: 0.6rem;
+  height: 2.4rem;
+  margin-top: -1.2rem;
   pointer-events: none;
-  background: rgba(20, 10, 4, 0.78);
-  box-shadow:
-    0 0 0 0.16rem #fffdf4,
-    0 0 0.7rem rgba(255, 214, 130, 0.9);
 }
 
-.donjon-jauge-zone {
+.donjon-jauge::before {
+  content: '';
   position: absolute;
-  top: 0;
+  left: 0;
   right: 0;
-  bottom: 0;
-  width: var(--zone, 15%);
-  border-radius: 0 0.6rem 0.6rem 0;
-  background: #2f8f4a;
+  top: 50%;
+  height: 0.22rem;
+  margin-top: -0.11rem;
+  border-radius: 0.11rem;
+  background: #fffdf4;
+  box-shadow:
+    0 0 0 0.08rem #2a1406,
+    0 0 0.5rem rgba(255, 214, 130, 0.9);
 }
 
-.donjon-jauge.dedans .donjon-jauge-zone,
-.donjon-jauge.frappee .donjon-jauge-zone {
-  background: #6fe38a;
-  box-shadow: 0 0 0.9rem rgba(111, 227, 138, 1);
+.donjon-jauge-cercle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  width: 2.36rem;
+  height: 2.36rem;
+  margin: -1.18rem 0 0 -1.18rem;
+  border-radius: 50%;
+  border: 0.18rem solid #fffdf4;
+  background: rgba(20, 10, 4, 0.7);
+  box-shadow:
+    0 0 0 0.08rem #2a1406,
+    0 0 0.5rem rgba(255, 214, 130, 0.8);
+}
+
+.donjon-jauge.dedans .donjon-jauge-cercle {
+  border-color: #ffd27a;
+  box-shadow:
+    0 0 0 0.08rem #2a1406,
+    0 0 1rem rgba(255, 214, 130, 1);
+}
+
+/* Juste : le cercle se remplit du rond des Points faibles (crème, cerné d'or). */
+.donjon-jauge.frappee .donjon-jauge-cercle {
+  border-color: #d99a2b;
+  background: #fffdf4;
+  box-shadow: 0 0 0.9rem rgba(255, 214, 130, 1);
+  animation: donjon-cercle-rempli 0.22s ease-out;
+}
+
+@keyframes donjon-cercle-rempli {
+  from {
+    scale: 1.45;
+  }
+  to {
+    scale: 1;
+  }
 }
 
 .donjon-jauge-curseur {
   position: absolute;
-  top: -0.4rem;
-  bottom: -0.4rem;
+  top: 50%;
   left: var(--avance, 0%);
   width: 0.36rem;
-  margin-left: -0.18rem;
+  height: 1.6rem;
+  margin: -0.8rem 0 0 -0.18rem;
   border-radius: 0.18rem;
   background: #fffdf4;
   box-shadow:
@@ -801,14 +836,17 @@
     0 0 0.5rem rgba(255, 253, 244, 0.9);
 }
 
-.donjon-jauge.echouee {
-  box-shadow:
-    0 0 0 0.16rem #e8392b,
-    0 0 0.9rem rgba(255, 60, 40, 0.95);
+.donjon-jauge.frappee .donjon-jauge-curseur {
+  opacity: 0;
 }
 
-.donjon-jauge.echouee .donjon-jauge-zone {
-  background: #7a1410;
+.donjon-jauge.echouee::before {
+  background: #e8392b;
+}
+
+.donjon-jauge.echouee .donjon-jauge-cercle {
+  border-color: #e8392b;
+  box-shadow: 0 0 0.9rem rgba(255, 60, 40, 0.95);
 }
 
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste

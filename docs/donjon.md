@@ -1444,6 +1444,16 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     L'ENNEMI, n'importe où dans la scène : trop tôt, la barre rougit,
     tremble et s'éteint, et la série s'encaisse ; dans la zone, le salut ;
     le curseur au bout sans geste, raté pareil. Les règles ne changent pas.
+  - Puis LA LIGNE (Keko : « plutôt qu'une jauge, on peut dessiner une ligne
+    avec le rond au centre plutôt qu'à droite, avec un cercle vide, et au
+    moment du clic on le remplit avec le même rond que Point faible ») : une
+    ligne crème sur l'ennemi, un CERCLE VIDE en son milieu (la taille du
+    rond des Points faibles), le curseur part du bout gauche et atteint le
+    cercle au temps juste (il le dépasse à peine : la fenêtre finit 0,1 s
+    après) ; le cercle s'allume d'or tant que c'est le moment ; touché juste,
+    il SE REMPLIT du rond crème cerné d'or, d'un rebond, et le curseur
+    s'efface ; trop tôt ou passé, la ligne et le cercle rougissent. Les
+    règles ne changent pas.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

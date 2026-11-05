@@ -286,7 +286,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (p.timing !== undefined) return `Une jauge s'allume sur l'ennemi : touchez-le quand le curseur est dans la zone verte ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
+  if (p.timing !== undefined) return `Un curseur file sur une ligne vers un cercle : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
@@ -2761,8 +2761,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
     // Un point faible qui n'a pas été touché : manqué.
     if (pointsEnJeu.delete(cle)) return n.classList.contains('donjon-jauge') ? echouerLaJauge(n) : marquerLEchec(n, n)
-    // Le trait couvre la scène : il s'éteint sans grandir.
-    const grandit = !n.classList.contains('donjon-trait')
+    // Le trait couvre la scène, la ligne du Fracas montre son cercle rempli : ils s'éteignent sans grandir.
+    const grandit = !n.classList.contains('donjon-trait') && !n.classList.contains('donjon-jauge')
     n.animate([{ opacity: 1 }, grandit ? { opacity: 0, transform: 'scale(1.4)' } : { opacity: 0 }], { duration: grandit ? 220 : 320, easing: 'ease-out' }).onfinish = () => n.remove()
   }
 
@@ -3249,11 +3249,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * LA JAUGE DU FRACAS (Keko : « ce n'est pas clair : les autres armes
    * utilisent le rond pour le temps restant, et ici pour un timing précis,
    * ça porte à confusion ; il faudrait un autre type de télégraphe » ; la
-   * jauge à curseur, choisie) : une barre sur l'ennemi, un curseur qui la
-   * parcourt, la ZONE VERTE à son bout — le temps juste, `timing` de part et
-   * d'autre ; elle s'allume quand le curseur y entre. On touche L'ENNEMI
-   * (toute la scène) : trop tôt, c'est raté sur-le-champ ; dans la zone,
-   * c'est juste ; le curseur au bout, c'est passé.
+   * jauge à curseur, choisie) — puis UNE LIGNE (Keko : « plutôt qu'une
+   * jauge, une ligne avec le rond au centre plutôt qu'à droite, un cercle
+   * vide, et au moment du clic on le remplit avec le même rond que Point
+   * faible ») : un curseur file de son bout gauche vers le CERCLE VIDE du
+   * milieu, qu'il atteint au temps juste (`timing` de part et d'autre :
+   * le cercle s'allume) ; il le dépasse à peine. On touche L'ENNEMI (toute
+   * la scène) : trop tôt, c'est raté sur-le-champ ; juste, le cercle se
+   * REMPLIT du rond des Points faibles ; passé, c'est raté.
    */
   let jaugeActive: { cle: string; serie: string; ev: EvenementDuPassif; timing: number; n: HTMLElement } | null = null
 
@@ -3264,14 +3267,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     let n = ciblesVues.get(cle)
     if (n === undefined) {
       n = el('div', 'donjon-jauge')
-      const zone = el('div', 'donjon-jauge-zone')
-      const curseur = el('div', 'donjon-jauge-curseur')
-      n.append(zone, curseur)
+      n.append(el('div', 'donjon-jauge-cercle'), el('div', 'donjon-jauge-curseur'))
       couchePassif.append(n)
       ciblesVues.set(cle, n)
       pointsEnJeu.add(cle)
-      // La zone : le temps juste à `timing` près, au bout de la barre.
-      n.style.setProperty('--zone', `${((2 * timing) / (ev.fin - ev.debut)) * 100}%`)
       n.animate([{ opacity: 0, transform: 'scaleX(0.6)' }, { opacity: 1, transform: 'scaleX(1)' }], { duration: 140, easing: 'ease-out' })
     }
     jaugeActive = { cle, serie, ev, timing, n }
@@ -3282,9 +3281,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.width = `${largeur}px`
     n.style.left = `${px - largeur / 2}px`
     n.style.top = `${py}px`
-    const avance = Math.max(0, Math.min(1, (t - ev.debut) / (ev.fin - ev.debut)))
+    // Le curseur est au cercle (le milieu) au temps juste.
+    const juste = ev.fin - timing
+    const avance = Math.max(0, Math.min(1, (0.5 * (t - ev.debut)) / Math.max(1, juste - ev.debut)))
     n.style.setProperty('--avance', `${avance * 100}%`)
-    n.classList.toggle('dedans', Math.abs(t - (ev.fin - timing)) <= timing)
+    n.classList.toggle('dedans', Math.abs(t - juste) <= timing)
   }
 
   /** La jauge manquée : elle rougit, tremble et s'éteint. */
