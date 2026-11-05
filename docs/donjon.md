@@ -1417,6 +1417,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   marteau et fléau 4,7 %, marteau à deux mains 8,75 % ; pitié à trois
   fois l'attente). Nom, chiffres et icône (celle de la Riposte) de moi, à
   rejuger.
+  - Puis (Keko : « il faudrait indiquer quand il est trop tôt et quand le
+    moment est bon, en colorant le rond ») : le rond est ROUGE-ORANGÉ trop
+    tôt et VERT au temps juste (les 0,2 s de la tolérance), cerné de sa
+    teinte sombre ; le manqué garde son rouge vif barré.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

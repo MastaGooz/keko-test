@@ -757,6 +757,21 @@
   fill: #fffdf4;
 }
 
+/* Le Fracas : le rond dit le moment — rouge trop tôt, vert au temps juste (le manqué, plus bas, l'emporte). */
+.donjon .donjon-cible.trait.trop-tot::before {
+  background: #e8603a;
+  box-shadow:
+    0 0 0 0.18rem #7a2a12,
+    0 0 0.6rem rgba(232, 96, 58, 0.8);
+}
+
+.donjon .donjon-cible.trait.juste::before {
+  background: #6fe38a;
+  box-shadow:
+    0 0 0 0.18rem #1f7a3a,
+    0 0 1rem rgba(111, 227, 138, 1);
+}
+
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste
    le rond, ça suffit, pas besoin de mettre la trajectoire en rouge aussi »). */
 .donjon .donjon-cible.trait.echouee {

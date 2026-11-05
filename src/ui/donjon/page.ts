@@ -3252,6 +3252,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // L'anneau touche le rond à la fin de la grâce, là où il est manqué — ou,
     // au Fracas, au temps juste, et il passe au travers pendant la tolérance.
     n.style.setProperty('--reste', Math.max(timing === undefined ? 0 : -0.3, Math.min(1, (juste - t) / (juste - ev.debut))).toFixed(3))
+    // Au Fracas, le rond dit le moment (Keko : « indiquer quand il est trop
+    // tôt et quand le moment est bon, en colorant le rond ») : rouge trop tôt,
+    // vert au temps juste.
+    if (timing !== undefined) {
+      n.classList.toggle('trop-tot', t < juste - timing)
+      n.classList.toggle('juste', Math.abs(t - juste) <= timing)
+    }
   }
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
