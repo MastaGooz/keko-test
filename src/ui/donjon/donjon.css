@@ -833,17 +833,18 @@
   }
 }
 
+/* Ce qui file : un trait crème cerné d'or, debout sur la ligne (Keko : « remplace le rond qui bouge par un trait »). */
 .donjon-jauge-curseur {
   position: absolute;
   top: 50%;
   left: var(--avance, 0%);
-  width: 1.3rem;
-  height: 1.3rem;
-  margin: -0.65rem 0 0 -0.65rem;
-  border-radius: 50%;
+  width: 0.4rem;
+  height: 2rem;
+  margin: -1rem 0 0 -0.2rem;
+  border-radius: 0.2rem;
   background: #fffdf4;
   box-shadow:
-    0 0 0 0.16rem #d99a2b,
+    0 0 0 0.14rem #d99a2b,
     0 0 0.6rem rgba(255, 214, 130, 0.9);
 }
 
@@ -860,7 +861,7 @@
 .donjon-jauge.echouee .donjon-jauge-curseur {
   background: #e8392b;
   box-shadow:
-    0 0 0 0.16rem #7a1410,
+    0 0 0 0.14rem #7a1410,
     0 0 0.8rem rgba(255, 60, 40, 0.9);
 }
 

@@ -1465,6 +1465,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     s'élargit quand le rond accélère (la tolérance en temps ne change
     pas) ; il s'allume d'or quand le rond y est, se remplit de crème cerné
     d'or au coup juste ; manqué, le cadre et le rond rougissent.
+  - Puis (Keko : « remplace le rond qui bouge par un trait ») : ce qui file
+    est un TRAIT debout, crème cerné d'or (0,4 × 2 rem).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -286,7 +286,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (p.timing !== undefined) return `Un rond file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
+  if (p.timing !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
@@ -3261,7 +3261,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * cible, un rectangle, et le style graphique du télégraphe assorti à
    * celui des épées, des dagues ») : la bande claire et les tirets qui
    * filent de la Taille, cernés de sombre sous une lueur d'or ; le curseur
-   * est le rond net crème cerné d'or ; le CADRE a LA LARGEUR DU TEMPS
+   * est un trait crème cerné d'or (le rond net, d'abord ; Keko : « remplace
+   * le rond qui bouge par un trait ») ; le CADRE a LA LARGEUR DU TEMPS
    * JUSTE (ce que le rond parcourt en `timing` de part et d'autre), il
    * s'élargit donc quand le rond accélère.
    */
