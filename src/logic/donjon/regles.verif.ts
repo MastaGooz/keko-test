@@ -235,8 +235,8 @@ verifier("l'arc a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jArc) / p
 const jDeux = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'deuxMains' }).joueurs[0]
 verifier("l'épée à deux mains s'équipe, sans capacité ni passif", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jDeux, 1) === null)
 verifier("l'épée à deux mains a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jDeux) / periodeDe(C, jDeux) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
-// LES DEUX HACHES, LES DEUX MASSUES, LA LANCE ET LES DEUX MARTEAUX, PROVISOIRES elles aussi.
-for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains'] as const) {
+// LES DEUX HACHES, LES DEUX MASSUES, LA LANCE, LES DEUX MARTEAUX ET L'ARBALÈTE, PROVISOIRES elles aussi.
+for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
   verifier(`${C.armes[arme].nom} s'équipe, sans capacité ni passif`, jH.arme === arme && capacitesDe(C, jH).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jH, 1) === null)
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)

@@ -156,7 +156,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * massues, la n° 115 (le poing de pierre qui écrase ; pas de massue dans le
  * tri), la lance, la n° 124 (le trident à la corde), et les deux marteaux, la
  * n° 127 (la roche qui éclate ; le seul marteau du tri est celui d'un
- * personnage), provisoires elles aussi.
+ * personnage), et l'arbalète, la n° 110 (la silhouette qui décoche un trait ;
+ * pas d'arbalète dans le tri), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -172,6 +173,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   lance: 'armes/lance.webp',
   marteau: 'armes/marteau.webp',
   marteauDeuxMains: 'armes/marteau.webp',
+  arbalete: 'armes/arbalete.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -186,6 +188,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   lance: { caractere: 'Perçante', bonus: "Aucun pour l'instant" },
   marteau: { caractere: 'Accablant', bonus: "Aucun pour l'instant" },
   marteauDeuxMains: { caractere: 'Titanesque', bonus: "Aucun pour l'instant" },
+  arbalete: { caractere: 'Puissante', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -948,9 +951,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * UNE POINTE au bout (Keko : « finalement, ajoute une pointe au bout » :
    * elle s'aplatissait en se plantant), un fer en triangle qui reste pointu.
    * Plus courte (Keko : « raccourcis un peu les flèches » ; 6 rem).
-   * `&fleche` la rend aussi à la dague.
+   * `&fleche` la rend aussi à la dague. LE CARREAU DE L'ARBALÈTE (`gros` ;
+   * Keko : « une arbalète, en mode grosse flèche ») : la même flèche, un quart
+   * plus longue et 1,8 fois plus épaisse, qui s'enfonce plus loin.
    */
-  function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
+  function fleche(x: number, y: number, k: number, couleur: string, angle: number, gros = false): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
     // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
@@ -960,7 +965,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const pose = (avance: string, etire: number, vibre = 0) => `translate(-100%, -50%) rotate(${angle + vibre}deg) translateX(${avance}) scale(${k * etire}, ${k})`
+    const [long, epais] = gros ? [1.25, 1.8] : [1, 1]
+    const pose = (avance: string, etire: number, vibre = 0) => `translate(-100%, -50%) rotate(${angle + vibre}deg) translateX(${avance}) scale(${k * etire * long}, ${k * epais})`
+    const fiche = gros ? '0.55rem' : '0.35rem'
     scene.append(n)
     // Elle touche à 50 ms, s'enfonce, VIBRE en se plantant, reste fichée
     // ~280 ms (Keko : « qu'elle reste plantée un court instant »), puis
@@ -971,13 +978,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       [
         { transform: pose('-3.5rem', 1.35), easing: 'cubic-bezier(0.5, 0, 1, 1)' },
         { transform: pose('0rem', 1.1), offset: a(50), easing: 'ease-out' },
-        { transform: pose('0.35rem', 1, 3), offset: a(75) },
-        { transform: pose('0.35rem', 1, -2.2), offset: a(105) },
-        { transform: pose('0.35rem', 1, 1.2), offset: a(135) },
-        { transform: pose('0.35rem', 1, -0.5), offset: a(165) },
-        { transform: pose('0.35rem', 1), offset: a(195) },
-        { transform: pose('0.35rem', 1), opacity: 1, offset: a(355), easing: 'ease-in' },
-        { transform: pose('0.35rem', 1), opacity: 0 },
+        { transform: pose(fiche, 1, 3), offset: a(75) },
+        { transform: pose(fiche, 1, -2.2), offset: a(105) },
+        { transform: pose(fiche, 1, 1.2), offset: a(135) },
+        { transform: pose(fiche, 1, -0.5), offset: a(165) },
+        { transform: pose(fiche, 1), offset: a(195) },
+        { transform: pose(fiche, 1), opacity: 1, offset: a(355), easing: 'ease-in' },
+        { transform: pose(fiche, 1), opacity: 0 },
       ],
       { duration: duree },
     ).onfinish = () => n.remove()
@@ -1382,11 +1389,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const droite = arme === 'epee' || arme === 'deuxMains'
     let angleLourd = 90
     let aPlat = false
-    // L'arc tire la flèche ; la dague ouvre une plaie (ou tire la flèche, `&fleche`).
-    const enFleche = arme === 'arc' || (arme === 'dague' && FLECHE)
+    // L'arc tire la flèche, l'arbalète son gros carreau ; la dague ouvre une
+    // plaie (ou tire la flèche, `&fleche`).
+    const enArbalete = arme === 'arbalete'
+    const enFleche = arme === 'arc' || enArbalete || (arme === 'dague' && FLECHE)
     // La lance aussi pique, mais d'un estoc qui se retire.
     const enLance = arme === 'lance'
-    const pique = arme === 'dague' || arme === 'arc' || enLance
+    const pique = arme === 'dague' || arme === 'arc' || enArbalete || enLance
     // Les massues et le bâton cognent ; les armes à deux mains (le bâton en
     // est une) en version longue.
     // Le marteau aussi, mais il tombe et ÉCRASE (Keko : « avec écrasement,
@@ -1467,7 +1476,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
       if (enLance) lance(x, y, k, couleur, anglePique)
-      else if (enFleche) fleche(x, y, k, couleur, anglePique)
+      else if (enFleche) fleche(x, y, k, couleur, anglePique, enArbalete)
       else plaie(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa
@@ -1476,7 +1485,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!STYLES[genre].secousse) {
         const a = (anglePique * Math.PI) / 180
         const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
-        if (enLance) scene.animate([{ transform: 'none' }, { transform: pas(9), offset: 0.2 }, { transform: pas(-3), offset: 0.5 }, { transform: pas(1.5), offset: 0.75 }, { transform: 'none' }], { duration: 240, delay: contact, easing: 'ease-out' })
+        if (enLance || enArbalete) {
+          const d = enLance ? 9 : 7
+          scene.animate([{ transform: 'none' }, { transform: pas(d), offset: 0.2 }, { transform: pas(-d / 3), offset: 0.5 }, { transform: pas(d / 6), offset: 0.75 }, { transform: 'none' }], { duration: 240, delay: contact, easing: 'ease-out' })
+        }
         else scene.animate([{ transform: 'none' }, { transform: pas(3), offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (lourde) {
@@ -1577,7 +1589,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd ? 150 : longue || enMarteau ? 120 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
+    reculer(x, genre, lourde || marteauLourd ? 150 : longue || enMarteau || enArbalete ? 120 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */

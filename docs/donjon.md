@@ -949,6 +949,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   demi-largeur à sa base) au bout de la hampe droite, qui RESTE POINTU — la
   pointe ne s'aplatit plus en se plantant (les deux entrées plus haut) ;
   4,8 rem de long au lieu de 6 (`.donjon-estoc`).
+- **L'ARBALÈTE, PROVISOIRE** (Keko, 05/11 : « une arbalète, en mode grosse
+  flèche ») : « Puissante », 20 toutes les 0,5 s — le DPS de base, ni bonus,
+  ni capacité, ni passif ; icône provisoire, la capacité n° 110 (la
+  silhouette qui décoche un trait ; pas d'arbalète dans le tri). Son coup est
+  LE CARREAU (`fleche(…, gros)`) : la flèche de l'arc, un quart plus longue
+  et 1,8 fois plus épaisse, qui s'enfonce de 0,55 rem au lieu de 0,35 ; la
+  scène secouée dans l'axe comme sous la lance (7 px au lieu de 9, avec
+  rebond ; 3 px sous l'arc), l'ennemi figé 120 ms au lieu de 70.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
