@@ -760,10 +760,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // La dague ouvre une plaie ; la flèche droite, son premier essai, est celle
   // de l'ARC — `&fleche` la rend aussi à la dague.
   const FLECHE = parametres.has('fleche')
-  // La plaie : coupée en 70 ms (le contact), ouverte en 130, tenue 150,
-  // effacée telle quelle comme la lance.
-  const CONTACT_PLAIE = 70
-  const OUVERTURE_PLAIE = 130
+  // La plaie : ouverte du milieu vers les bouts en 140 ms (le contact à 40),
+  // tenue 150, effacée telle quelle comme la lance.
+  const CONTACT_PLAIE = 40
+  const OUVERTURE_PLAIE = 140
   const TENUE_PLAIE = 150
   // Le coup de lance : il perce à 100 ms (son élan), reste fiché 260 ms (plus que le
   // poignard ; Keko : « un peu plus longtemps »), s'efface sur place en 160
@@ -1050,8 +1050,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   /**
    * LA PLAIE DE LA DAGUE (Keko : « la dague, on va la rework : un slash qui
    * s'ouvre façon plaie » ; elle plantait un trait de lumière, le coup de
-   * poignard, rendu à `git log`) : une COUPE fine trace la diagonale, puis
-   * S'OUVRE en amande par le milieu, toute en lumière comme les autres coups
+   * poignard, rendu à `git log`) : une amande de lumière qui S'OUVRE SUR SA
+   * LONGUEUR, du point touché vers ses deux bouts (Keko : « fais-les s'ouvrir
+   * sur la longueur », du milieu vers les bouts ; une coupe fine traçait la
+   * diagonale, puis s'élargissait), toute en lumière comme les autres coups
    * (Keko : « pas de noir » ; une chair sombre l'emplissait), reste ouverte
    * un instant et s'efface telle quelle. Centrée sur le point touché, un coup
    * sur deux de l'autre côté. Le critique ne l'allonge pas, il l'ouvre plus
@@ -1062,7 +1064,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function plaie(x: number, y: number, k: number, couleur: string, angle: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const longueur = 4.2 * rem
-    const largeur = 0.42 * rem * (1 + (k - 1) * 2)
+    // Moins épaisse (Keko ; 0,42).
+    const largeur = 0.28 * rem * (1 + (k - 1) * 2)
     const a = (angle * Math.PI) / 180
     const [dx, dy] = [Math.cos(a), Math.sin(a)]
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -1093,23 +1096,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
       forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
     }
-    const fine = 0.16 * largeur
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
-      if (t < CONTACT_PLAIE) {
-        // La coupe file d'un bout à l'autre, fine, en ralentissant.
-        const p = 1 - (1 - t / CONTACT_PLAIE) ** 2
-        amande(levres, 0, p, fine)
-      } else if (t < CONTACT_PLAIE + OUVERTURE_PLAIE) {
-        // Elle s'ouvre par le milieu, un peu au-delà, et se rassied.
-        const q = (t - CONTACT_PLAIE) / OUVERTURE_PLAIE
-        const o = 1 - (1 - q) ** 3 + 0.12 * Math.sin(Math.PI * q)
-        amande(levres, 0, 1, fine + (largeur - fine) * o)
-      } else if (t < CONTACT_PLAIE + OUVERTURE_PLAIE + TENUE_PLAIE + FONDU_PLAIE) {
+      if (t < OUVERTURE_PLAIE) {
+        // Elle s'allonge du point vers ses deux bouts, vite puis en
+        // ralentissant, et s'élargit un peu avec sa longueur (courte et
+        // pleine, elle serait ronde).
+        const p = 1 - (1 - t / OUVERTURE_PLAIE) ** 3
+        amande(levres, 0.5 - p / 2, 0.5 + p / 2, largeur * (0.35 + 0.65 * p))
+      } else if (t < OUVERTURE_PLAIE + TENUE_PLAIE + FONDU_PLAIE) {
         // Ouverte, puis effacée telle quelle.
         amande(levres, 0, 1, largeur)
-        const q = Math.max(0, (t - CONTACT_PLAIE - OUVERTURE_PLAIE - TENUE_PLAIE) / FONDU_PLAIE)
+        const q = Math.max(0, (t - OUVERTURE_PLAIE - TENUE_PLAIE) / FONDU_PLAIE)
         trace.style.opacity = `${1 - q}`
       } else {
         trace.remove()

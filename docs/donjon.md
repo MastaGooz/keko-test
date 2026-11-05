@@ -876,11 +876,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   avec le poignard (`traitDroit`).
 - **LA DAGUE OUVRE UNE PLAIE** (Keko, 05/11 : « la dague, on va la rework :
   un slash qui s'ouvre façon plaie ») : le coup de poignard décrit plus haut
-  est remplacé (`git log` le garde). Une COUPE fine trace une diagonale de
-  4,2 rem centrée sur le point (35° sous l'horizontale, ±15°, un coup sur
-  deux de l'autre côté) en 70 ms — le contact —, puis S'OUVRE en amande par
-  le milieu en 130 ms, un peu au-delà avant de se rasseoir, jusqu'à 0,84 rem
-  d'ouverture, toute en lumière comme les autres coups (Keko : « la forme
+  est remplacé (`git log` le garde). Une amande de 4,2 rem, centrée sur le
+  point (35° sous l'horizontale, ±15°, un coup sur deux de l'autre côté),
+  S'OUVRE SUR SA LONGUEUR, du point vers ses deux bouts, en 140 ms (le
+  contact à 40), jusqu'à 0,56 rem d'ouverture (Keko : « moins épaisses, et
+  fais-les s'ouvrir sur la longueur », du milieu vers les bouts ; une coupe
+  fine traçait d'abord la diagonale en 70 ms, puis s'élargissait en 130,
+  jusqu'à 0,84 rem), toute en lumière comme les autres coups (Keko : « la forme
   est bien, mais pas de noir, garde le même style que les autres effets » ;
   une chair sombre, #2a0a10, l'emplissait) ; elle reste ouverte 150 ms et
   s'efface telle quelle en 160, comme la lance (`plaie`). Le critique ne
