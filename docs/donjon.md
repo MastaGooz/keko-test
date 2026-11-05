@@ -910,7 +910,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   bizarre ; et il ne tape que le haut du corps, il faudrait diversifier ») :
   le trait, pointu à la queue, S'ÉLARGIT D'UN SEUL TENANT jusqu'à la tête
   (×1,7, `1,7 v^1,5`, 40 pas ; plein dès les deux cinquièmes, il se renflait
-  en tête et le bord faisait un coude), et il frappe au
+  en tête et le bord faisait un coude) ; puis PLUS PLEIN (Keko : « un peu
+  plus plein, moins transparent » : `1,7 v^0,8` au lieu de `v^1,5`, dont la
+  moitié arrière n'était qu'un fil sous la lueur), et son fondu ACCÉLÈRE
+  (`1 − q²`, même durée : régulier, il passait la plupart de son temps posé
+  à demi transparent) — les deux marteaux ; et il frappe au
   HASARD SUR LE DESSIN comme la dague (il frappait au centre, comme la
   massue). Ses points de lumière sont ceux de la massue ;
   l'ennemi est ÉCRASÉ (tassé vers le bas puis relevé, comme sous le bâton

@@ -1272,14 +1272,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // pointu à la queue, il S'ÉLARGIT D'UN SEUL TENANT jusqu'à la tête (×1,7)
     // et finit coupé à plat (Keko : « pas en arc lisse, il y a comme un angle
     // bizarre » : plein dès les deux cinquièmes, il se renflait en tête sur
-    // son dernier quart, et le bord faisait un coude), sur 40 pas.
+    // son dernier quart, et le bord faisait un coude), sur 40 pas ; PLEIN
+    // (Keko : « un peu plus plein, moins transparent » : en `v^1,5`, sa moitié
+    // arrière n'était qu'un fil où la lueur dominait).
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
       const dehors: string[] = []
       const dedans: string[] = []
       for (let i = 0; i <= 40; i++) {
         const v = i / 40
-        const h = largeur * gonfle * 1.7 * v ** 1.5
+        const h = largeur * gonfle * 1.7 * v ** 0.8
         const t = ((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180
         dehors.push(point(t, rayon + h))
         dedans.push(point(t, rayon - h))
@@ -1294,10 +1296,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const p = (t / contact) ** 2
         dessiner(Math.max(0, p - 0.6), p, 0.85 + 0.15 * p)
       } else if (t < contact + tenue + FONDU_MARTEAU) {
-        // Posé : il gonfle au choc et se rassied, puis s'efface tel quel.
+        // Posé : il gonfle au choc et se rassied, puis s'efface tel quel, opaque
+        // plus longtemps (le fondu accélère ; régulier, il passait la plupart
+        // de son temps posé à demi transparent).
         const ms = t - contact
         dessiner(0.4, 1, 1 + 0.35 * Math.max(0, 1 - ms / 60))
-        trace.style.opacity = `${1 - Math.max(0, (ms - tenue) / FONDU_MARTEAU)}`
+        trace.style.opacity = `${1 - Math.max(0, (ms - tenue) / FONDU_MARTEAU) ** 2}`
       } else {
         trace.remove()
         return
