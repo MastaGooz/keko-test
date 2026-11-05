@@ -279,7 +279,8 @@
 }
 
 .donjon-course path,
-.donjon-course circle {
+.donjon-course circle,
+.donjon-course ellipse {
   fill: #fffdf4;
 }
 

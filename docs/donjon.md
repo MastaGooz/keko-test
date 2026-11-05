@@ -1153,6 +1153,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   quarts de long et douze dixièmes d'épais, une LAME au dos droit et au
   tranchant bombé (de 50 à 100, la pointe près de l'axe), une GARDE en
   travers, un MANCHE court et un POMMEAU rond.
+- **LE LUTH, PROVISOIRE** (Keko, 05/11 : « un instrument de musique, des
+  notes comme projectiles ») : « Envoûtant », 10 toutes les 0,25 s — le DPS
+  de base, ni bonus, ni capacité, ni passif ; icône, l'objet n° 008 (le
+  luth). Son coup (`notes`) : trois CROCHES de lumière (une tête ovale
+  penchée de 0,8 rem, une hampe, un crochet) partent d'en bas l'une après
+  l'autre (45 ms), d'un côté puis de l'autre, et FLOTTENT jusqu'au point en
+  200 ms, de plus en plus lentement, en ondulant (0,6 rem, deux ondes qui
+  s'amortissent) et en se balançant (±15°) ; chacune, en arrivant, ÉCLATE
+  en petits rayons (`claquement`, aux six dixièmes) et s'éteint en
+  grandissant (140 ms). La première frappe (200 ms) ; les points de lumière
+  qui montent de la massue ; au hasard sur le dessin ; l'ennemi recule comme
+  sous l'épée ; pas de secousse.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

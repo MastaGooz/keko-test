@@ -164,8 +164,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 133 (le loup spectral ; pas de griffes dans le tri), et la fronde, la
  * n° 108 (les pierres au-dessus de la main), le shuriken, la n° 142 (le
  * tourbillon), le boomerang, la n° 126 (la tornade), et le kunai, la n° 121
- * (la silhouette au couteau), et le couteau de lancer, celle de la dague,
- * provisoires elles aussi.
+ * (la silhouette au couteau), le couteau de lancer, celle de la dague, et le
+ * luth, l'objet n° 008 (le luth), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -193,6 +193,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   boomerang: 'armes/boomerang.webp',
   kunai: 'armes/kunai.webp',
   couteau: 'armes/dague.webp',
+  luth: 'armes/luth.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -219,6 +220,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   boomerang: { caractere: 'Revenant', bonus: "Aucun pour l'instant" },
   kunai: { caractere: 'Acéré', bonus: "Aucun pour l'instant" },
   couteau: { caractere: 'Affûté', bonus: "Aucun pour l'instant" },
+  luth: { caractere: 'Envoûtant', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -843,6 +845,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_BOOMERANG = 130
   const RETOUR_BOOMERANG = 200
   const TENUE_JET = 160
+  // Chaque note du luth vole 200 ms ; la première frappe à son arrivée.
+  const VOL_NOTE = 200
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
   const TENUE_FLEAU = 90
@@ -1498,6 +1502,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const enJet = arme === 'shuriken' || arme === 'boomerang'
     const enBoomerang = arme === 'boomerang'
     let angleJet = -90
+    // Le luth joue des notes.
+    const enMusique = arme === 'luth'
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1513,7 +1519,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde || enJet) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde || enJet || enMusique) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1540,7 +1546,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enJet ? (enBoomerang ? CONTACT_BOOMERANG : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enMusique ? VOL_NOTE : enJet ? (enBoomerang ? CONTACT_BOOMERANG : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1560,6 +1566,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const d = marteauLourd ? 11 : 7
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
       }
+    } else if (enMusique) {
+      notes(x, y, 1 + 0.65 * (fort - 1), couleur)
     } else if (enJet) {
       angleJet = jet(x, y, 1 + 0.65 * (fort - 1), couleur, enBoomerang)
       // La scène est poussée d'un cran dans le sens du jet (le critique a sa secousse).
@@ -1671,7 +1679,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const combien = enFronde ? Math.round(STYLES[genre].particules * 0.6) : STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : enGriffes ? 5 : 0)
     const trait = lame || pique || enFeu || enFouet || enGriffes || enJet
     for (let i = 0; i < combien; i++) {
-      const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
+      // Sous le luth aussi, des points de lumière qui montent.
+      const braises = masse || enMusique
+      const p = el('div', trait ? 'donjon-particule trait' : braises ? 'donjon-particule lueur' : 'donjon-particule')
       p.style.left = `${x}px`
       p.style.top = `${y}px`
       p.style.background = couleur
@@ -1697,7 +1707,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const dy = Math.sin(angle) * loin
       // Sous le bâton, des points de lumière s'écartent à peine et MONTENT,
       // lentement, comme des braises de magie.
-      if (masse) {
+      if (braises) {
         const d = loin * 0.45
         p.style.opacity = '0'
         p.animate(
@@ -1738,7 +1748,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = enJet ? (angleJet * Math.PI) / 180 : pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || enBoomerang ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || enBoomerang ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet || enMusique ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
   }
 
   /**
@@ -2296,6 +2306,82 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
     image(depart)
     return (arrivee * 180) / Math.PI
+  }
+
+  /**
+   * LES NOTES DU LUTH (Keko : « un instrument de musique, des notes comme
+   * projectiles ») : trois CROCHES de lumière (une tête ovale penchée, une
+   * hampe, un crochet) partent d'en bas l'une après l'autre (45 ms), d'un
+   * côté puis de l'autre, et FLOTTENT jusqu'au point en ondulant et en se
+   * balançant, de plus en plus lentement ; chacune, en arrivant, ÉCLATE en
+   * petits rayons (`claquement`) et s'éteint en grandissant. Le critique les
+   * grossit.
+   */
+  let coteDesNotes = 1
+  function notes(x: number, y: number, k: number, couleur: string): void {
+    coteDesNotes = -coteDesNotes
+    const cote = coteDesNotes
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    // L'unité de la croche : sa tête fait 6,4 unités de large.
+    const u = 0.13 * rem * k
+    for (let i = 0; i < 3; i++) {
+      const retard = i * 45
+      // Le départ, en bas d'un côté, chaque note un peu plus loin que la précédente.
+      const [sx, sy] = [cote * (2.2 + i * 0.9 + (Math.random() - 0.5)) * rem, (4.5 + Math.random() * 1.5) * rem]
+      const n = Math.hypot(sx, sy)
+      const [nx, ny] = [-sy / n, sx / n]
+      const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      trace.setAttribute('class', 'donjon-course')
+      trace.setAttribute('aria-hidden', 'true')
+      const demi = Math.max(Math.abs(sx), sy) + 2 * rem
+      trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+      trace.style.width = trace.style.height = `${2 * demi}px`
+      trace.style.left = `${x - demi}px`
+      trace.style.top = `${y - demi}px`
+      trace.style.color = couleur
+      trace.style.opacity = '0'
+      const note = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+      const tete = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
+      tete.setAttribute('rx', (3.2 * u).toFixed(1))
+      tete.setAttribute('ry', (2.3 * u).toFixed(1))
+      tete.setAttribute('transform', 'rotate(-25)')
+      const hampe = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      const v = (a: number, b: number) => `${(a * u).toFixed(1)} ${(b * u).toFixed(1)}`
+      hampe.setAttribute('d', `M${v(2.4, -0.8)} L${v(2.4, -11)} L${v(3.4, -11)} L${v(3.4, -0.8)}Z M${v(3.4, -11)} Q${v(8.5, -8)} ${v(7, -3.5)} Q${v(6.8, -6.5)} ${v(3.4, -7.5)}Z`)
+      note.append(tete, hampe)
+      trace.append(note)
+      scene.append(trace)
+      let eclatee = false
+      const depart = performance.now()
+      const image = (maintenant: number) => {
+        const t = maintenant - depart - retard
+        if (t < 0) return requestAnimationFrame(image)
+        if (t < VOL_NOTE) {
+          // Elle flotte vers le point en ralentissant, ondule de part et
+          // d'autre de sa route et se balance.
+          const q = t / VOL_NOTE
+          const e = 1 - (1 - q) ** 2
+          const onde = 0.6 * rem * Math.sin(4 * Math.PI * q) * (1 - q)
+          const [px, py] = [sx * (1 - e) + nx * onde, sy * (1 - e) + ny * onde]
+          note.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${(15 * Math.sin(3 * Math.PI * q)).toFixed(1)})`)
+          trace.style.opacity = `${Math.min(1, t / 30)}`
+        } else if (t < VOL_NOTE + 140) {
+          // Arrivée : elle éclate en petits rayons et s'éteint en grandissant.
+          if (!eclatee) {
+            eclatee = true
+            claquement(x, y, 0.6 * k, couleur, 0)
+          }
+          const p = (t - VOL_NOTE) / 140
+          note.setAttribute('transform', `scale(${(1 + 0.6 * p).toFixed(2)})`)
+          trace.style.opacity = `${1 - p}`
+        } else {
+          trace.remove()
+          return
+        }
+        requestAnimationFrame(image)
+      }
+      requestAnimationFrame(image)
+    }
   }
 
   /**
