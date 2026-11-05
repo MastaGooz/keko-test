@@ -1313,8 +1313,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     son rond devient rouge, se barre d'un « ✕ », grossit, tremble et lâche
     une onde rouge (0,52 s), puis tout s'éteint (0,7 s) ; la trajectoire
     garde sa couleur (Keko : « juste le rond, ça suffit, pas besoin de
-    mettre la trajectoire en rouge aussi » ; elle virait au rouge aussi). Un écart du doigt, qu'on peut retenter, garde son
-    simple tremblement.
+    mettre la trajectoire en rouge aussi » ; elle virait au rouge aussi).
+    Un écart du doigt, qu'on peut retenter, garde son simple tremblement.
+  - Puis (Keko : « un rond plus net au milieu, bien délimité, et le cercle
+    qui se referme devrait réduire en taille de manière linéaire, et l'échec
+    se produit quand le cercle se superpose avec le périmètre du rond ») :
+    le départ est un ROND NET de 2 rem (crème, cerné d'or), immobile (il ne
+    bat plus), dans une cible de 3,4 rem pour le doigt ; L'ANNEAU se referme
+    en TAILLE (de 6,4 rem à 2,36 rem, l'épaisseur constante), linéairement,
+    sur toute la fenêtre GRÂCE COMPRISE : il touche le bord du rond à
+    l'instant exact de l'échec (il s'arrêtait avant, à la fin sans la grâce,
+    et rétrécissait en échelle). Manqué, le rond seul vire au rouge sous sa
+    croix.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

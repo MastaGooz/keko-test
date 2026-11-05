@@ -761,8 +761,6 @@
    le rond, ça suffit, pas besoin de mettre la trajectoire en rouge aussi »). */
 .donjon .donjon-cible.trait.echouee {
   color: #fff !important;
-  background: radial-gradient(circle, #ff5a4a 0 55%, #7a1410 72%);
-  box-shadow: 0 0 1rem rgba(255, 60, 40, 0.9);
   font-family: var(--d-titre);
   font-weight: 800;
   font-size: 1.7rem;
@@ -771,6 +769,18 @@
 
 .donjon .donjon-cible.trait.echouee::after {
   display: none;
+}
+
+.donjon .donjon-cible.trait.echouee::before {
+  background: #e8392b;
+  box-shadow:
+    0 0 0 0.18rem #7a1410,
+    0 0 1rem rgba(255, 60, 40, 0.9);
+}
+
+/* La croix passe devant le rond. */
+.donjon-croix {
+  position: relative;
 }
 
 .donjon-echec-onde {
@@ -822,11 +832,46 @@
   background: radial-gradient(circle at var(--x) var(--y), #fff 0, #fff 22%, rgba(255, 246, 220, 0.92) 45%, rgba(255, 214, 130, 0.6) 100%);
 }
 
+/* Le départ du trait : un rond net, bien délimité (Keko), immobile, dans une cible de 3,4 rem pour le doigt ;
+   l'anneau du temps se referme sur lui LINÉAIREMENT, en taille et non en échelle, et touche son bord à
+   l'instant exact de l'échec (la fin de la grâce comprise) : l'anneau sur le bord, c'est manqué. */
 .donjon .donjon-cible.trait {
   color: #fffdf4 !important;
-  background: radial-gradient(circle, #fffdf4 0 24%, rgba(255, 214, 130, 0.9) 36%, rgba(255, 214, 130, 0) 70%);
+  background: none;
   touch-action: none;
-  animation: donjon-cible-bat 0.5s ease-in-out infinite alternate;
+  animation: none;
+}
+
+.donjon .donjon-cible.trait::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  border-radius: 50%;
+  background: #fffdf4;
+  box-shadow:
+    0 0 0 0.18rem #d99a2b,
+    0 0 0.7rem rgba(255, 214, 130, 0.9);
+}
+
+.donjon .donjon-cible.trait::after {
+  box-sizing: border-box;
+  inset: calc(0.52rem - var(--reste, 1) * 2rem);
+  border: 0.2rem solid #fffdf4;
+  transform: none;
+  opacity: 0.95;
+  box-shadow: 0 0 0.4rem rgba(255, 214, 130, 0.9);
+}
+
+.donjon .donjon-cible.trait.ratee {
+  background: none;
+}
+
+.donjon .donjon-cible.trait.ratee::before {
+  background: #ff8a7a;
 }
 
 @keyframes donjon-cible-bat {

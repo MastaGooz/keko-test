@@ -3000,7 +3000,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function echouerLeTrait(tr: Trait): void {
     tr.suivi = false
     tr.depart.classList.add('echouee')
-    tr.depart.textContent = '✕'
+    tr.depart.append(el('span', 'donjon-croix', '✕'))
     tr.depart.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.25 }, { transform: 'scale(0.95)' }], { duration: 420, easing: 'ease-out' })
     const onde = el('div', 'donjon-echec-onde')
     onde.style.left = tr.depart.style.left
@@ -3065,7 +3065,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           if (ev.rang === 0) tr.n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
           tr.depart.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         }
-        placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), reste, ev.fin)
+        // L'anneau se referme jusqu'à la fin de la grâce : c'est là qu'il touche le rond, et que c'est manqué.
+        const jusqua = ev.fin + (passifDe(C, j)?.grace ?? 0)
+        placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin)
       }
       if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
         // Les runes déjà touchées restent allumées.
