@@ -160,7 +160,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * pas d'arbalète dans le tri), et le pistolet, la n° 144 (le trait qui finit en
  * éclat ; pas d'arme à feu dans le tri) — le mousquet aussi —, et la rapière,
  * la n° 107 (l'épée fine à l'étoile), et le fouet et le fléau, la n° 135 (la
- * silhouette enchaînée ; ni fouet ni fléau dans le tri), provisoires elles aussi.
+ * silhouette enchaînée ; ni fouet ni fléau dans le tri), et les griffes, la
+ * n° 133 (le loup spectral ; pas de griffes dans le tri), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -182,6 +183,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   rapiere: 'armes/rapiere.webp',
   fouet: 'armes/chaine.webp',
   fleau: 'armes/chaine.webp',
+  griffes: 'armes/griffes.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -202,6 +204,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   rapiere: { caractere: 'Précise', bonus: "Aucun pour l'instant" },
   fouet: { caractere: 'Cinglant', bonus: "Aucun pour l'instant" },
   fleau: { caractere: 'Implacable', bonus: "Aucun pour l'instant" },
+  griffes: { caractere: 'Lacérantes', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -1436,6 +1439,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Le fouet claque ; le fléau tombe et écrase, comme le marteau.
     const enFouet = arme === 'fouet'
     const enFleau = arme === 'fleau'
+    // Les griffes lacèrent de trois entailles, en diagonale vers le bas, un
+    // coup sur deux de l'autre côté.
+    const enGriffes = arme === 'griffes'
+    if (enGriffes) sensDesGriffes = -sensDesGriffes
+    const angleGriffes = (sensDesGriffes > 0 ? 55 : 125) + (Math.random() - 0.5) * 24
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1451,7 +1459,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1478,7 +1486,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enGriffes ? 40 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1497,6 +1505,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!STYLES[genre].secousse) {
         const d = marteauLourd ? 11 : 7
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
+      }
+    } else if (enGriffes) {
+      griffes(x, y, 1 + 0.65 * (fort - 1), couleur, angleGriffes)
+      // La scène est tirée d'un cran dans le sens des griffes (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        const a = (angleGriffes * Math.PI) / 180
+        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 4}px, ${Math.sin(a) * 4}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 130, delay: contact, easing: 'ease-out' })
       }
     } else if (enFouet) {
       const k = 1 + 0.65 * (fort - 1)
@@ -1584,8 +1599,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       impactRond(x, y, fort, couleur)
     }
 
-    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : 0)
-    const trait = lame || pique || enFeu || enFouet
+    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : enGriffes ? 5 : 0)
+    const trait = lame || pique || enFeu || enFouet || enGriffes
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
       p.style.left = `${x}px`
@@ -1595,7 +1610,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // Le hasard de l'écran, pas celui des règles. Sous la lame, les
       // étincelles filent le long de l'entaille, des deux côtés ; sous l'estoc,
       // elles jaillissent de la plaie, en gerbe serrée vers celui qui frappe.
-      const angle = lourde
+      const angle = enGriffes
+        ? ((angleGriffes + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
+        : lourde
         ? ((angleLourd + (i % 2) * 180 + (Math.random() - 0.5) * 70) * Math.PI) / 180
         : lame
         ? ((angleLame * sensDeLaLame + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
@@ -1648,7 +1665,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse || enFouet ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
   }
 
   /**
@@ -1668,6 +1685,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * pas ».)
    */
   let coteDuFouet = 1
+  let sensDesGriffes = 1
   function fouet(x: number, y: number, k: number, couleur: string): void {
     coteDuFouet = -coteDuFouet
     const cote = coteDuFouet
@@ -1890,6 +1908,74 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         trace.remove()
         return
       }
+      requestAnimationFrame(image)
+    }
+    image(depart)
+  }
+
+  /**
+   * LES GRIFFES (Keko : « les griffes, gantelets à lames — on a déjà les
+   * poings avec les mains nues ») : TROIS ENTAILLES parallèles, fines et un
+   * peu courbes, tracées d'un même geste en diagonale vers le bas, un coup sur
+   * deux de l'autre côté ; elles partent l'une après l'autre (18 ms), celle du
+   * milieu plus longue, chacune une amande de lumière qui file de son départ
+   * à son bout (70 ms), puis toutes s'effacent. Le critique les épaissit.
+   */
+  function griffes(x: number, y: number, k: number, couleur: string, angle: number): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const longueur = 3.6 * rem * k
+    const largeur = 0.16 * rem * (1 + (k - 1) * 2)
+    const ecart = 0.6 * rem * k
+    const bombe = 0.2 * rem * k
+    const a = (angle * Math.PI) / 180
+    const [dx, dy] = [Math.cos(a), Math.sin(a)]
+    const [nx, ny] = [-dy, dx]
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = longueur / 2 + 2 * ecart + 3 * largeur
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    const marques = [-1, 0, 1].map((rang) => {
+      const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      trace.append(forme)
+      return { forme, decale: rang * ecart, long: rang === 0 ? 1 : 0.82, retard: (rang + 1) * 18 }
+    })
+    scene.append(trace)
+    // Une marque, de son départ jusqu'à `fin` (1 = son bout) : une amande
+    // pointue aux deux bouts, courbée d'un côté.
+    const dessiner = (m: (typeof marques)[number], fin: number) => {
+      if (fin < 0.01) return m.forme.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 20; i++) {
+        const v = i / 20
+        const g = fin * v
+        const le = (g - 0.5) * longueur * m.long
+        const ecarte = m.decale + bombe * Math.sin(Math.PI * g)
+        const [cx, cy] = [dx * le + nx * ecarte, dy * le + ny * ecarte]
+        const e = largeur * Math.sin(Math.PI * v) ** 0.7
+        dehors.push(`${(cx - nx * e).toFixed(1)} ${(cy - ny * e).toFixed(1)}`)
+        dedans.push(`${(cx + nx * e).toFixed(1)} ${(cy + ny * e).toFixed(1)}`)
+      }
+      m.forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    const fondu = 2 * 18 + 70 + 60
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t >= fondu + 150) {
+        trace.remove()
+        return
+      }
+      for (const m of marques) {
+        const u = (t - m.retard) / 70
+        dessiner(m, u <= 0 ? 0 : 1 - (1 - Math.min(1, u)) ** 2)
+      }
+      trace.style.opacity = `${1 - Math.max(0, (t - fondu) / 150) ** 2}`
       requestAnimationFrame(image)
     }
     image(depart)

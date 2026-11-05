@@ -1063,6 +1063,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   COURBE (le point de la seconde moitié le plus écarté de la corde, du côté
   de la seconde bosse) tombe sur le point touché, la pointe au-delà. Le
   claquement part du ventre.
+- **LES GRIFFES, PROVISOIRES** (Keko, 05/11 : « les griffes, gantelets à
+  lames — on a déjà les poings avec les mains nues ») : « Lacérantes », 7
+  toutes les 0,175 s — le DPS de base, ni bonus, ni capacité, ni passif ;
+  icône provisoire, la capacité n° 133 (le loup spectral ; pas de griffes
+  dans le tri). Leur coup (`griffes`) : TROIS ENTAILLES parallèles (0,6 rem
+  d'écart), fines (0,32 rem au plus épais) et un peu courbes (0,2 rem), de
+  3,6 rem — celles des bords aux huit dixièmes —, en diagonale vers le bas
+  (55° sous l'horizontale, ±12°), un coup sur deux de l'autre côté ; elles
+  partent l'une après l'autre (18 ms), chacune une amande de lumière qui
+  file de son départ à son bout en 70 ms, puis toutes s'effacent (150 ms).
+  Au hasard sur le dessin, comme la dague ; le contact à 40 ms ; étincelles
+  en traits le long des griffes, cinq de plus ; la scène tirée de 4 px dans
+  leur sens ; l'ennemi recule comme sous l'épée.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
