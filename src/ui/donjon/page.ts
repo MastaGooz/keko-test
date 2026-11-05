@@ -939,11 +939,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * s'y FICHE — elle arrive en accélérant, s'arrête net, s'enfonce d'un cran,
    * vibre, reste plantée un court instant puis s'efface sur place ; pleine,
    * la queue à peine fondue (Keko : « un peu trop transparentes »). Elle monte du bas, de celui qui
-   * tire. `&fleche` la rend aussi à la dague.
+   * tire. Sa POINTE S'APLATIT en se plantant (Keko : « aplatir l'extrémité au
+   * moment où elle se plante ») : pointue en vol, elle s'écrase au contact en
+   * un bout plat, un peu plus large d'abord, et le reste. `&fleche` la rend
+   * aussi à la dague.
    */
   function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 L72 -3.4 L100 0 L72 3.4Z"/></svg>'
+    // Le bout, de demi-largeur `e` : 0, la pointe ; 3,4, plat de la largeur du fer.
+    const bout = n.querySelector('path')!
+    const aplatir = (e: number) => bout.setAttribute('d', `M0 0 L72 -3.4 L100 ${(-e).toFixed(2)} L100 ${e.toFixed(2)} L72 3.4Z`)
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
     n.style.left = `${x}px`
     n.style.top = `${y}px`
@@ -969,6 +975,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: duree },
     ).onfinish = () => n.remove()
+    // Au contact (50 ms), la pointe s'écrase en 45 ms : 4,2 au plus, puis 3,4.
+    const depart = performance.now()
+    const ecraser = (maintenant: number) => {
+      const ms = maintenant - depart - 50
+      if (ms >= 45) return aplatir(3.4)
+      if (ms > 0) aplatir(ms < 20 ? (4.2 * ms) / 20 : 4.2 - (0.8 * (ms - 20)) / 25)
+      requestAnimationFrame(ecraser)
+    }
+    requestAnimationFrame(ecraser)
   }
 
   /**

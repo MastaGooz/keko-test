@@ -927,6 +927,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   chute plus lente (le contact à 160 ms au lieu de 120), posé 120 ms au lieu
   de 90 ; l'ennemi écrasé et figé 150 ms comme sous les autres armes à deux
   mains ; la scène tassée de 11 px en 260 ms au lieu de 7 en 200.
+- **LA POINTE DE LA FLÈCHE S'APLATIT EN SE PLANTANT** (Keko, 05/11 :
+  « aplatir l'extrémité au moment où elle se plante ») : pointue en vol, elle
+  s'écrase au contact (50 ms) en un bout plat — sa demi-largeur monte à 4,2
+  en 20 ms (le fer en fait 3,4, sur une boîte de 12), puis se rassied à 3,4
+  en 25 — et le reste jusqu'au fondu. Le `d` est réécrit à chaque image (un
+  `d` ne s'anime pas partout), au rythme de `requestAnimationFrame`.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
