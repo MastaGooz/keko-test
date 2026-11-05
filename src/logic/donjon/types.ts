@@ -47,10 +47,11 @@ export type Joueur = {
   effets: Partial<Record<CleCapacite, number>>
   /**
    * Le passif de classe : le dernier événement ouvert (son numéro, -1 :
-   * aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 : raté — et les
-   * taps sans événement depuis (la pitié).
+   * aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 : raté —, les
+   * taps sans événement depuis (la pitié) et, en série, les réussites qui
+   * l'ont précédé dans le même événement (`rang`).
    */
-  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number }
+  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; rang: number }
   bonus: BonusPermanents
 }
 

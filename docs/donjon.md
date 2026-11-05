@@ -1268,6 +1268,25 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     CHIFFRE ET LA BARRE DE VIE ATTENDENT LE COUP : les règles jouent la
     taille à la réussite (la fenêtre ne doit rien perdre au suspens), mais
     l'écran retient les PV qu'elle a ôtés (`pvRetenus`) jusqu'au coup.
+  - Puis LA SÉRIE (Keko : « et si on enchaînait plusieurs slashs
+    d'affilée, avec un timing de plus en plus court ? » ; le joueur les
+    trace ; « autant de traits que réussis, chacun fait ×20, en sachant que
+    réussir 5 devient quasi impossible en rapidité, mais le joueur doit
+    avoir l'impression que c'est sans limite ; à chaque réussite on fait
+    bien, puis super, puis excellent, etc., comme dans Paper Mario »). Les
+    règles (`Passif.serie`, `Joueur.passif.rang`) : le dernier bout touché
+    frappe ×20 puis rouvre LE MÊME événement au rang suivant, `entre` (0,65
+    s, le temps du coup à l'écran) plus tard, sa fenêtre raccourcie d'un
+    tiers (`raccourci` 0,65 : 2 s, 1,3, 0,85, 0,55, 0,36…) ; ses bouts sont
+    ailleurs (le rang entre dans le tirage des cibles) ; aucun tap n'ouvre
+    d'événement pendant qu'un trait attend son heure ; le temps passé ou un
+    bout à l'envers, la série finit. Les bots la suivent, leur adresse
+    fondant de 40 % par rang. L'écran : chaque coup GROSSIT avec le rang
+    (tremblement et gerbe ×1,25 par rang, au plus ×2) et un SALUT jaillit
+    au-dessus de l'ennemi (`APPRECIATIONS`) : « Bien ! », « Super ! »,
+    « Excellent ! », « Fabuleux ! », « Prodigieux ! », « Divin ! »,
+    « Légendaire ! », puis « Légendaire ×2 ! », ×3… — chacun sa couleur,
+    plus gros, penché d'un côté puis de l'autre.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

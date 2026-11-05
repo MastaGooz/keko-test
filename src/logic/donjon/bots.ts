@@ -28,11 +28,15 @@ function tirage(rngEtat: number): { v: number; rng: number } {
   return { v, rng: r.getState() }
 }
 
-/** Le bot réussit-il l'événement k de son passif ? Un tirage fixé par (bot, événement). */
-function reussit(profil: ProfilBot, k: number): boolean {
+/**
+ * Le bot réussit-il l'événement k de son passif, au rang `rang` de sa série ?
+ * Un tirage fixé par (bot, événement, rang) ; chaque rang de plus, son
+ * adresse fond de 40 % (la série raccourcit : il ne l'enchaîne pas sans fin).
+ */
+function reussit(profil: ProfilBot, k: number, rang: number): boolean {
   let h = 2166136261
   for (let i = 0; i < profil.id.length; i++) h = Math.imul(h ^ profil.id.charCodeAt(i), 16777619)
-  return tirage((h ^ Math.imul(k + 1, 0x9e3779b9)) >>> 0).v < profil.adresse
+  return tirage((h ^ Math.imul(k + 1, 0x9e3779b9) ^ Math.imul(rang, 0x85ebca6b)) >>> 0).v < profil.adresse * 0.6 ** rang
 }
 
 function ecartMoyen(profil: ProfilBot): number {
@@ -115,7 +119,7 @@ export async function jouerLesBots(
       // Son passif : un événement ouvert, il le réussit selon son adresse
       // (une fonction de l'événement : il ne retente pas un raté).
       const ev = evenementA(config, etat.saison.seed, moi, t)
-      if (ev !== null && passifOuvert(config, moi, ev) && reussit(profil, ev.k)) {
+      if (ev !== null && passifOuvert(config, moi, ev) && reussit(profil, ev.k, ev.rang)) {
         for (let cible = 0; cible < (passifDe(config, moi)?.cibles ?? 0); cible++) etat = await partage.agir({ joueur: profil.id, t, type: 'toucher', evenement: ev.k, cible })
       }
     }

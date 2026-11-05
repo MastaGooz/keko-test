@@ -85,6 +85,11 @@ export type Passif = {
   pitie: number
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
+  /**
+   * LA SÉRIE : réussi, l'événement en rouvre un autre `entre` ms plus tard,
+   * plus court de `raccourci` à chaque fois, sans fin — jusqu'au premier raté.
+   */
+  serie?: { entre: number; raccourci: number }
   duree: number
   cibles: number
   coup: number
@@ -250,11 +255,15 @@ export const DONJON = {
    * trait droit ; « Taille », ×20 gardé) : à la place de la Riposte, un
    * trait en travers de l'ennemi, ses deux bouts dans l'ordre, 2 s pour le
    * voir et le tracer ; l'épée à deux mains, deux fois plus lente, a deux
-   * fois plus de chance par tap.
+   * fois plus de chance par tap. EN SÉRIE (Keko : « autant de traits que
+   * réussis, chacun fait ×20, en sachant que réussir 5 devient quasi
+   * impossible en rapidité, mais le joueur doit avoir l'impression que c'est
+   * sans limite ») : chaque trait réussi en ouvre un autre 0,65 s plus tard
+   * (le temps du coup), plus court d'un tiers — 2 s, 1,3, 0,85, 0,55, 0,36…
    */
   passifs: {
-    epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true },
-    deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true },
+    epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 } },
+    deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 } },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,

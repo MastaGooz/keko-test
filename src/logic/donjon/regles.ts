@@ -221,8 +221,8 @@ function compterUnCritique(config: ConfigDonjon, j: Joueur): void {
 
 // ---------------------------------------------------------------- le passif de classe
 
-/** Un événement du passif : son numéro `k`, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi). */
-export type EvenementDuPassif = { k: number; debut: number; fin: number; cibles: { x: number; y: number }[] }
+/** Un événement du passif : son numéro `k`, son rang dans la série, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi). */
+export type EvenementDuPassif = { k: number; rang: number; debut: number; fin: number; cibles: { x: number; y: number }[] }
 
 /** Le passif de la classe d'arme de ce joueur ; à mains nues, aucun. */
 export function passifDe(config: ConfigDonjon, j: Joueur): Passif | null {
@@ -231,19 +231,19 @@ export function passifDe(config: ConfigDonjon, j: Joueur): Passif | null {
 
 /** Un passif sans aucun événement ouvert. */
 export function passifVierge(): Joueur['passif'] {
-  return { evenement: -1, etape: 0, debut: 0, fin: -1, sans: 0 }
+  return { evenement: -1, etape: 0, debut: 0, fin: -1, sans: 0, rang: 0 }
 }
 
 /**
- * LES CIBLES DE L'ÉVÉNEMENT k de ce joueur : une fonction de (graine de la
- * saison, numéro, joueur, arme), comme le critique de l'auto — les règles et
+ * LES CIBLES DE L'ÉVÉNEMENT k de ce joueur, au rang `rang` de sa série : une
+ * fonction de (graine de la saison, numéro, rang, joueur, arme), comme le critique de l'auto — les règles et
  * l'écran lisent les mêmes. Une cible seule tombe sur le corps ; plusieurs se
  * rangent en cercle autour du centre ; un trait passe par le milieu du corps,
  * dans tous les sens, ses deux bouts sur le dessin.
  */
-function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number): { x: number; y: number }[] {
+function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: number): { x: number; y: number }[] {
   const empreinte = empreinteDe(`${j.id}:${j.arme}`)
-  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n + 16 * rang, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
   if (p.trait === true) {
     const angle = 2 * Math.PI * tire(2)
     const [cx, cy] = [0.5 + 0.08 * (2 * tire(3) - 1), 0.45 + 0.06 * (2 * tire(4) - 1)]
@@ -261,26 +261,27 @@ function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number): { x: num
       })
 }
 
-/** L'événement ouvert à l'instant t (un tap l'a ouvert), ou null : jamais deux à la fois. */
+/** L'événement ouvert à l'instant t (un tap l'a ouvert, ou la série), ou null : jamais deux à la fois. */
 export function evenementA(config: ConfigDonjon, seed: number, j: Joueur, t: number): EvenementDuPassif | null {
   const p = passifDe(config, j)
-  const { evenement: k, debut, fin } = j.passif
+  const { evenement: k, debut, fin, rang } = j.passif
   if (p === null || k < 0 || t < debut || t > fin) return null
-  return { k, debut, fin, cibles: ciblesDuPassif(p, seed, j, k) }
+  return { k, rang, debut, fin, cibles: ciblesDuPassif(p, seed, j, k, rang) }
 }
 
 /**
  * UN TAP PEUT OUVRIR UN ÉVÉNEMENT (Keko : « un % de chance à chaque tap ») :
  * sur `chance`, ou à coup sûr au `pitie`-ième tap sans ; jamais tant que le
- * précédent reste à toucher (Keko : un événement ouvert bloque le suivant).
+ * précédent reste à toucher (Keko : un événement ouvert bloque le suivant),
+ * ni tant que le trait suivant d'une série attend son heure.
  */
 function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): void {
   const p = passifDe(config, j)
   if (p === null) return
-  const ev = evenementA(config, e.saison.seed, j, t)
-  if (ev !== null && passifOuvert(config, j, ev)) return
+  const { evenement, etape, fin } = j.passif
+  if (evenement >= 0 && t <= fin && etape >= 0 && etape < p.cibles) return
   const sans = j.passif.sans + 1
-  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + p.duree, sans: 0 }
+  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + p.duree, sans: 0, rang: 0 }
   else j.passif = { ...j.passif, sans }
 }
 
@@ -642,7 +643,14 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
     return
   }
   j.passif = { ...j.passif, etape: etape + 1 }
-  if (etape + 1 === p.cibles) frapperFort(config, e, j, p.coup, t, p.critique === true)
+  if (etape + 1 !== p.cibles) return
+  frapperFort(config, e, j, p.coup, t, p.critique === true)
+  // LA SÉRIE : le suivant s'ouvre après le coup, plus court, au rang d'après.
+  if (p.serie !== undefined) {
+    const rang = j.passif.rang + 1
+    const debut = t + p.serie.entre
+    j.passif = { ...j.passif, etape: 0, rang, debut, fin: debut + p.duree * p.serie.raccourci ** rang }
+  }
 }
 
 /**

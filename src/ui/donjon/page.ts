@@ -2753,15 +2753,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * temps, une flèche au bout. Le doigt part du rond et suit le trait ; ce
    * qu'il a parcouru s'allume ; trop loin du trait, revenu en arrière ou levé
    * avant le bout, il repart de zéro — on réessaie tant que le temps court.
-   * Au bout, les deux bouts sont touchés dans l'ordre et le coup tombe.
+   * Au bout, les deux bouts sont touchés dans l'ordre et le coup tombe. EN
+   * SÉRIE (Keko : « enchaîner plusieurs slashs d'affilée, avec un timing de
+   * plus en plus court ») : après le coup, un autre trait, ailleurs, plus
+   * court ; chaque réussite est saluée (`APPRECIATIONS`, Keko : « bien, puis
+   * super, puis excellent, etc., comme dans Paper Mario »), et le coup
+   * grossit avec le rang.
    */
-  type Trait = { n: HTMLElement; bande: SVGLineElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
+  type Trait = { rang: number; n: HTMLElement; bande: SVGLineElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
   const traitsVus = new Map<string, Trait>()
   // Le doigt peut s'écarter de 2 rem du trait ; il en parcourt les neuf dixièmes.
   const ECART_DU_TRAIT = 2
   const BOUT_DU_TRAIT = 0.9
 
-  function creerLeTrait(k: number): Trait {
+  function creerLeTrait(k: number, rang: number): Trait {
     const SVG = 'http://www.w3.org/2000/svg'
     const n = el('div', 'donjon-trait')
     const svg = document.createElementNS(SVG, 'svg')
@@ -2780,7 +2785,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const depart = bouton('donjon-cible trait')
     depart.setAttribute('aria-label', 'Départ de la taille')
     n.append(svg, depart)
-    const tr: Trait = { n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
+    const tr: Trait = { rang, n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
     let rem = 16
     const rater = () => {
       tr.suivi = false
@@ -2820,7 +2825,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // Le grand coup part au geste, sans attendre les règles ; le guide s'efface sous lui.
         const reussite = performance.now()
         n.style.visibility = 'hidden'
-        grandeTaille(tr.a, tr.b)
+        grandeTaille(tr.a, tr.b, tr.rang)
         const milieu: [number, number] = [(tr.a[0] + tr.b[0]) / 2, (tr.a[1] + tr.b[1]) / 2]
         void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu, reussite + PAUSE_TAILLE))
       }
@@ -2849,7 +2854,40 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * côtés ; l'ennemi figé, blanchi, repoussé.
    */
   const PAUSE_TAILLE = 380
-  function grandeTaille(a: [number, number], b: [number, number]): void {
+  /** Les saluts de la série, un par réussite ; au-delà du dernier, il se compte. */
+  const APPRECIATIONS: [string, string][] = [
+    ['Bien !', '#fffdf4'],
+    ['Super !', '#ffd27a'],
+    ['Excellent !', '#ffa23d'],
+    ['Fabuleux !', '#ff6b8a'],
+    ['Prodigieux !', '#c58bff'],
+    ['Divin !', '#7fe0ff'],
+    ['Légendaire !', '#ffe066'],
+  ]
+  function apprecier(rang: number): void {
+    const [mot, couleur] = APPRECIATIONS[Math.min(rang, APPRECIATIONS.length - 1)]
+    const au = rang - APPRECIATIONS.length + 2
+    for (const vieux of scene.querySelectorAll('.donjon-appreciation')) vieux.remove()
+    const n = el('div', 'donjon-appreciation', au > 1 ? `Légendaire ×${au} !` : mot)
+    n.style.color = couleur
+    n.style.fontSize = `${Math.min(3.4, 2.2 + 0.25 * rang)}rem`
+    scene.append(n)
+    const penche = rang % 2 === 0 ? -6 : 6
+    n.animate(
+      [
+        { transform: `translate(-50%, -50%) scale(0.2) rotate(${penche * 2}deg)`, opacity: 0 },
+        { transform: `translate(-50%, -50%) scale(1.35) rotate(${penche}deg)`, opacity: 1, offset: 0.12, easing: 'ease-out' },
+        { transform: `translate(-50%, -50%) scale(1) rotate(${penche}deg)`, opacity: 1, offset: 0.25 },
+        { transform: `translate(-50%, -50%) scale(1) rotate(${penche}deg)`, opacity: 1, offset: 0.75, easing: 'ease-in' },
+        { transform: `translate(-50%, -90%) scale(0.9) rotate(${penche}deg)`, opacity: 0 },
+      ],
+      { duration: 1000 },
+    ).onfinish = () => n.remove()
+  }
+
+  function grandeTaille(a: [number, number], b: [number, number], rang: number): void {
+    // Le coup grossit avec la série.
+    const fort = Math.min(2, 1 + 0.25 * rang)
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const long = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
     const [ux, uy] = [(b[0] - a[0]) / long, (b[1] - a[1]) / long]
@@ -2868,7 +2906,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     fil.style.zIndex = '4'
     const debut = performance.now()
     const suspens = (maintenant: number) => {
-      const q = Math.min(1, (maintenant - debut) / PAUSE_TAILLE)
+      // L'image peut dater d'avant le départ : jamais de puissance d'un négatif.
+      const q = Math.min(1, Math.max(0, (maintenant - debut) / PAUSE_TAILLE))
       if (q >= 1) return fil.remove()
       tendre(0.5 - 0.5 * q ** 0.6, 0.5 + 0.5 * q ** 0.6, 0.6 + 0.8 * q)
       fil.style.opacity = `${0.3 + 0.7 * q}`
@@ -2904,18 +2943,18 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const pas = (d: number) => `translate(${(-uy * d).toFixed(1)}px, ${(ux * d).toFixed(1)}px)`
       scene.animate(
         [
-          { transform: `scale(1.035) ${pas(18)}` },
-          { transform: pas(-14), offset: 0.16 },
-          { transform: pas(9), offset: 0.34 },
-          { transform: pas(-5), offset: 0.52 },
-          { transform: pas(2.5), offset: 0.72 },
+          { transform: `scale(1.035) ${pas(18 * fort)}` },
+          { transform: pas(-14 * fort), offset: 0.16 },
+          { transform: pas(9 * fort), offset: 0.34 },
+          { transform: pas(-5 * fort), offset: 0.52 },
+          { transform: pas(2.5 * fort), offset: 0.72 },
           { transform: 'none' },
         ],
         { duration: 520, easing: 'ease-out' },
       )
       // La gerbe : des traits d'or et de blanc jaillissent des deux côtés du
       // trait, un peu vers l'avant, au passage de la lame.
-      for (let i = 0; i < 56; i++) {
+      for (let i = 0; i < Math.round(56 * fort); i++) {
         const v = Math.random()
         const cote = i % 2 === 0 ? 1 : -1
         const angle = Math.atan2(ux * cote + uy * 0.5, -uy * cote + ux * 0.5) + (Math.random() - 0.5) * 0.9
@@ -2939,6 +2978,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ).onfinish = () => p.remove()
       }
       reculer(mx, 'capaciteCritique', 220)
+      apprecier(rang)
       // La barre de vie tombe au coup, pas à la réussite.
       dessiner()
     }, PAUSE_TAILLE)
@@ -2980,16 +3020,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const voulues = new Set<string>()
     if (ouvert && ev !== null) {
       const { x0, y0, l, h } = cadreDuDessin()
-      const reste = Math.max(0, Math.min(1, (ev.fin - t) / (passifDe(C, j)?.duree ?? 1)))
+      // Le temps qui reste, sur la fenêtre de CE trait (la série les raccourcit).
+      const reste = Math.max(0, Math.min(1, (ev.fin - t) / Math.max(1, ev.fin - ev.debut)))
       const etape = etapeDuPassif(j, ev.k)
       const surLeDessin = (c: { x: number; y: number }): [number, number] => [x0 + l * c.x, y0 + h * c.y]
       if (passifDe(C, j)?.trait === true) {
         // La Taille : un seul trait pour ses deux bouts.
-        const cle = `${j.arme}:${ev.k}:trait`
+        const cle = `${j.arme}:${ev.k}:${ev.rang}:trait`
         voulues.add(cle)
         let tr = traitsVus.get(cle)
         if (tr === undefined) {
-          tr = creerLeTrait(ev.k)
+          tr = creerLeTrait(ev.k, ev.rang)
           traitsVus.set(cle, tr)
           ciblesVues.set(cle, tr.n)
           couchePassif.append(tr.n)
