@@ -29,8 +29,8 @@ export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'r
 export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
-export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance'
-export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance']
+export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau']
 /** Les armes qui ont un passif de classe (les sept provisoires n'ont pas encore le leur). */
 export type ArmeAPassif = 'epee' | 'dague' | 'baton'
 /**
@@ -172,7 +172,9 @@ export const DONJON = {
    * MAINS aussi (Keko : « l'animation actuelle du bâton pour les massues à une
    * main, une version plus longue pour les massues à deux mains, dont les
    * bâtons ») : 13 toutes les 0,325 s, 24 toutes les 0,6 s. La LANCE aussi
-   * (Keko : « on essaie la lance maintenant ? ») : 12 toutes les 0,3 s.
+   * (Keko : « on essaie la lance maintenant ? ») : 12 toutes les 0,3 s. Le
+   * MARTEAU aussi (Keko : « un marteau, avec écrasement ») : 15 toutes les
+   * 0,375 s.
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
@@ -186,6 +188,7 @@ export const DONJON = {
     massue: { nom: 'Massue', rarete: 'commune', degats: 13, recharge: 0.325 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     massueDeuxMains: { nom: 'Massue à deux mains', rarete: 'commune', degats: 24, recharge: 0.6 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     lance: { nom: 'Lance', rarete: 'commune', degats: 12, recharge: 0.3 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
+    marteau: { nom: 'Marteau', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
   } as Record<
     Equipement,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }

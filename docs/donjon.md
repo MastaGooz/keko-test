@@ -889,6 +889,21 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'allonge pas, il l'ouvre plus grand. Le point varie sur le dessin comme
   avant ; l'anneau, les étincelles, la poussée et la secousse restent
   ceux du poignard, dans l'axe de la coupe.
+- **LE MARTEAU, PROVISOIRE** (Keko, 05/11 : « un marteau, avec écrasement
+  comme le faisait le bâton avant, et avec un arc comme la massue mais à bout
+  plat, qui vient taper et finit avec le plat horizontal ») : « Accablant »,
+  15 toutes les 0,375 s — le DPS de base, ni bonus, ni capacité, ni passif ;
+  icône provisoire, la capacité n° 127 (la roche qui éclate ; le seul
+  marteau du tri est celui d'un personnage, le n° 018). Son coup (`marteau`)
+  est le trait de la massue, effilé à la queue et plein devant, mais COUPÉ À
+  PLAT au bout, qui TOMBE sur un arc de 6 rem et 110° dont le centre est à
+  côté du point, à sa hauteur : la tête arrive d'en haut en accélérant
+  (120 ms, le contact) et S'ARRÊTE sur le point en descendant à la verticale,
+  son plat à l'horizontale ; elle gonfle au choc, reste posée 90 ms, puis
+  s'efface telle quelle en 160. Un coup sur deux de l'autre côté. Il frappe
+  au centre de l'ennemi comme la massue, avec ses points de lumière ;
+  l'ennemi est ÉCRASÉ (tassé vers le bas puis relevé, comme sous le bâton
+  d'avant), figé 120 ms ; la scène est tassée de 7 px, avec un rebond.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
