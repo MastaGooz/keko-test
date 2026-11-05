@@ -1621,6 +1621,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       p.style.left = `${x}px`
       p.style.top = `${y}px`
       p.style.background = couleur
+      // Sous la fronde, des étincelles plus petites (Keko : « réduis encore la taille des particules »).
+      if (enFronde) p.style.width = p.style.height = '0.24rem'
       scene.append(p)
       // Le hasard de l'écran, pas celui des règles. Sous la lame, les
       // étincelles filent le long de l'entaille, des deux côtés ; sous l'estoc,
@@ -2104,7 +2106,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     for (let i = 0; i < 4; i++) {
       const eclat = boite(0.5 * rem * k)
       const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      forme.setAttribute('d', caillou((0.13 + Math.random() * 0.1) * rem * k))
+      // Petits (Keko : « réduis encore la taille des particules » ; 0,13 à 0,23 rem).
+      forme.setAttribute('d', caillou((0.08 + Math.random() * 0.06) * rem * k))
       eclat.append(forme)
       // Vers le haut, en éventail, puis la pesanteur les ramène plus bas que le point.
       const a = ((-90 + (i - 1.5) * 35 + (Math.random() - 0.5) * 20) * Math.PI) / 180

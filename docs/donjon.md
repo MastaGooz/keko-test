@@ -1100,7 +1100,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   l'ennemi recule comme sous l'épée. Pas encore de zone : une seule pierre.
   Puis (Keko : « augmente la taille du projectile et diminue un peu les
   particules ») : la pierre fait 1,1 rem au lieu de 0,76 ; quatre éclats au
-  lieu de six, et six dixièmes des étincelles du coup.
+  lieu de six, et six dixièmes des étincelles du coup. Puis plus petits
+  (Keko : « réduis encore la taille des particules ») : les éclats de 0,16 à
+  0,28 rem au lieu de 0,26 à 0,46, les étincelles de 0,24 rem au lieu de 0,4.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
