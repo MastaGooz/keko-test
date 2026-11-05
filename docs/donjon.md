@@ -1103,6 +1103,22 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   lieu de six, et six dixièmes des étincelles du coup. Puis plus petits
   (Keko : « réduis encore la taille des particules ») : les éclats de 0,16 à
   0,28 rem au lieu de 0,26 à 0,46, les étincelles de 0,24 rem au lieu de 0,4.
+- **LES ARMES DE JET : LE SHURIKEN ET LA HACHE DE LANCER, PROVISOIRES**
+  (Keko, 05/11 : « on essaie les armes de jet ? ») : le SHURIKEN
+  (« Tournoyant », 8 toutes les 0,2 s ; icône, la capacité n° 142, le
+  tourbillon) et la HACHE DE LANCER (« Tournoyante », 14 toutes les 0,35 s ;
+  l'icône de la hache) — le DPS de base, ni bonus, ni capacité, ni passif.
+  Leur coup (`jet`) : un projectile qui TOURNOIE — une étoile à quatre
+  branches de 1,8 rem, trois tours et demi en 90 ms ; ou un croissant de
+  2,2 rem, deux tours en 130 ms — part d'en bas, d'un côté puis de l'autre
+  (4 à 5 rem de côté, 5 plus bas), sur une courbe douce, DEUX IMAGES FANTÔMES
+  derrière lui (le flou du tournoiement, aux deux et quatre dixièmes) ; au
+  contact, il SE FICHE : la rotation s'arrête net, il s'enfonce de 0,3 rem
+  dans le sens d'arrivée et vibre (9° qui s'amortissent), reste planté
+  160 ms puis s'efface (160). Au hasard sur le dessin ; étincelles en traits
+  vers celui qui lance ; l'ennemi poussé dans le sens du jet, figé 70 ms
+  (120 sous la hache) ; la scène poussée de 3 px (6 sous la hache). Le
+  boomerang et le chakram, qui reviennent, sont pour plus tard.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -162,7 +162,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * la n° 107 (l'épée fine à l'étoile), et le fouet et le fléau, la n° 135 (la
  * silhouette enchaînée ; ni fouet ni fléau dans le tri), et les griffes, la
  * n° 133 (le loup spectral ; pas de griffes dans le tri), et la fronde, la
- * n° 108 (les pierres au-dessus de la main), provisoires elles aussi.
+ * n° 108 (les pierres au-dessus de la main), le shuriken, la n° 142 (le
+ * tourbillon), et la hache de lancer, celle de la hache, provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -186,6 +187,8 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   fleau: 'armes/chaine.webp',
   griffes: 'armes/griffes.webp',
   fronde: 'armes/fronde.webp',
+  shuriken: 'armes/shuriken.webp',
+  hacheDeLancer: 'armes/hache.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -208,6 +211,8 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   fleau: { caractere: 'Implacable', bonus: "Aucun pour l'instant" },
   griffes: { caractere: 'Lacérantes', bonus: "Aucun pour l'instant" },
   fronde: { caractere: 'Plongeante', bonus: "Aucun pour l'instant" },
+  shuriken: { caractere: 'Tournoyant', bonus: "Aucun pour l'instant" },
+  hacheDeLancer: { caractere: 'Tournoyante', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -827,6 +832,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // Chaque griffe se trace en 110 ms ; la pierre de la fronde retombe en 220.
   const TRACE_GRIFFE = 110
   const CONTACT_FRONDE = 220
+  // Le shuriken arrive en 90 ms, la hache de lancer en 130 ; fichés 160 ms.
+  const CONTACT_SHURIKEN = 90
+  const CONTACT_HACHE_JETEE = 130
+  const TENUE_JET = 160
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
   const TENUE_FLEAU = 90
@@ -1452,6 +1461,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const angleGriffes = (sensDesGriffes > 0 ? 55 : 125) + (Math.random() - 0.5) * 24
     // La fronde tire en cloche.
     const enFronde = arme === 'fronde'
+    // Les armes de jet tournoient et se fichent.
+    const enJet = arme === 'shuriken' || arme === 'hacheDeLancer'
+    const hacheJetee = arme === 'hacheDeLancer'
+    let angleJet = -90
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1467,7 +1480,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde || enJet) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1494,7 +1507,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enJet ? (hacheJetee ? CONTACT_HACHE_JETEE : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1513,6 +1526,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!STYLES[genre].secousse) {
         const d = marteauLourd ? 11 : 7
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
+      }
+    } else if (enJet) {
+      angleJet = jet(x, y, 1 + 0.65 * (fort - 1), couleur, hacheJetee)
+      // La scène est poussée d'un cran dans le sens du jet (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        const a = (angleJet * Math.PI) / 180
+        const d = hacheJetee ? 6 : 3
+        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 140, delay: contact, easing: 'ease-out' })
       }
     } else if (enFronde) {
       fronde(x, y, 1 + 0.65 * (fort - 1), couleur)
@@ -1615,7 +1636,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
     // Sous la fronde, moins d'étincelles : ses éclats de pierre font le reste (Keko : « diminue un peu les particules »).
     const combien = enFronde ? Math.round(STYLES[genre].particules * 0.6) : STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : enGriffes ? 5 : 0)
-    const trait = lame || pique || enFeu || enFouet || enGriffes
+    const trait = lame || pique || enFeu || enFouet || enGriffes || enJet
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
       p.style.left = `${x}px`
@@ -1627,7 +1648,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // Le hasard de l'écran, pas celui des règles. Sous la lame, les
       // étincelles filent le long de l'entaille, des deux côtés ; sous l'estoc,
       // elles jaillissent de la plaie, en gerbe serrée vers celui qui frappe.
-      const angle = enGriffes
+      const angle = enJet
+        ? ((angleJet + 180 + (Math.random() - 0.5) * 80) * Math.PI) / 180
+        : enGriffes
         ? ((angleGriffes + (i % 2) * 180 + (Math.random() - 0.5) * 50) * Math.PI) / 180
         : lourde
         ? ((angleLourd + (i % 2) * 180 + (Math.random() - 0.5) * 70) * Math.PI) / 180
@@ -1679,10 +1702,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ).onfinish = () => p.remove()
     }
     // Fendu, l'ennemi est tassé ; fauché à plat, poussé dans le sens de la lame.
-    const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
+    const axe = enJet ? (angleJet * Math.PI) / 180 : pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || hacheJetee ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
   }
 
   /**
@@ -2123,6 +2146,101 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 420 + Math.random() * 120 },
       ).onfinish = () => eclat.remove()
     }
+  }
+
+  /**
+   * LES ARMES DE JET (Keko : « on essaie les armes de jet ? ») : un projectile
+   * qui TOURNOIE — l'étoile à quatre branches du SHURIKEN, ou le croissant de
+   * la HACHE DE LANCER, plus gros et plus lent (`hache`) — part d'en bas,
+   * d'un côté puis de l'autre, sur une courbe douce, deux images fantômes
+   * derrière lui (le flou du tournoiement) ; au contact, il SE FICHE : la
+   * rotation s'arrête net, il s'enfonce d'un cran et vibre, reste planté un
+   * instant puis s'efface. Rend la direction d'arrivée (en degrés), pour les
+   * étincelles et la poussée. Le critique est 1,4 fois plus gros.
+   */
+  let coteDuJet = 1
+  function jet(x: number, y: number, k: number, couleur: string, hache: boolean): number {
+    coteDuJet = -coteDuJet
+    const cote = coteDuJet
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const contact = hache ? CONTACT_HACHE_JETEE : CONTACT_SHURIKEN
+    const tours = hache ? 2 : 3.5
+    const taille = (hache ? 1.1 : 0.9) * rem * k
+    // Le départ, en bas d'un côté ; la courbe bombe d'un côté (le point est en 0, 0).
+    const [sx, sy] = [cote * (4 + Math.random()) * rem, 5 * rem]
+    const [cx, cy] = [sx / 2 + cote * 1.2 * rem, sy / 2 - 0.6 * rem]
+    const point = (u: number): [number, number] => {
+      const v = 1 - u
+      return [v * v * sx + 2 * v * u * cx, v * v * sy + 2 * v * u * cy]
+    }
+    // La direction d'arrivée : la tangente au point.
+    const arrivee = Math.atan2(-cy, -cx)
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = Math.max(Math.abs(sx), sy) + 2 * taille
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    // La forme, autour de 0, 0 : l'étoile à quatre branches, ou le croissant.
+    let d = ''
+    if (hache) {
+      const r = taille
+      d = `M${(-r).toFixed(1)} 0 A${r.toFixed(1)} ${r.toFixed(1)} 0 1 1 ${r.toFixed(1)} 0 A${(r * 1.25).toFixed(1)} ${(r * 0.85).toFixed(1)} 0 1 0 ${(-r).toFixed(1)} 0Z`
+    } else {
+      const sommets: string[] = []
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4
+        const r = i % 2 === 0 ? taille : taille * 0.3
+        sommets.push(`${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`)
+      }
+      d = `M${sommets.join(' L')}Z`
+    }
+    const copies = [0.2, 0.45, 1].map((opacite) => {
+      const f = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      f.setAttribute('d', d)
+      f.style.opacity = `${opacite}`
+      trace.append(f)
+      return f
+    })
+    scene.append(trace)
+    const poser = (f: SVGPathElement, px: number, py: number, angle: number) =>
+      f.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${angle.toFixed(1)})`)
+    const fiche = 0.3 * rem
+    const [fx, fy] = [Math.cos(arrivee) * fiche, Math.sin(arrivee) * fiche]
+    const angleFinal = cote * tours * 360
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t < contact) {
+        // Il file en tournant ; les fantômes le suivent, un peu en retard.
+        const u = t / contact
+        copies.forEach((f, i) => {
+          const w = Math.max(0, u - (2 - i) * 0.07)
+          const [px, py] = point(w)
+          poser(f, px, py, cote * tours * 360 * w)
+        })
+        trace.style.opacity = `${Math.min(1, t / 30)}`
+      } else if (t < contact + TENUE_JET + 160) {
+        // Fiché : il s'enfonce d'un cran, vibre, puis s'efface tel quel.
+        const ms = t - contact
+        const enfonce = Math.min(1, ms / 25)
+        const vibre = 9 * Math.exp(-ms / 45) * Math.sin(ms / 9)
+        copies.forEach((f, i) => {
+          if (i < 2) return f.setAttribute('d', '')
+          poser(f, fx * enfonce, fy * enfonce, angleFinal + vibre)
+        })
+        trace.style.opacity = `${1 - Math.max(0, (ms - TENUE_JET) / 160) ** 2}`
+      } else {
+        trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(depart)
+    return (arrivee * 180) / Math.PI
   }
 
   /**
