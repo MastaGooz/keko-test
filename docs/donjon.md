@@ -1476,6 +1476,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     tolérance), la fenêtre finissant à la sortie du cadre) : ±0,21 s au
     premier rond, ±0,1 au troisième, ±0,05 au cinquième — le cadre est le
     même à l'écran, le curseur va plus vite, c'est plus dur.
+  - Puis la ligne SANS SES TIRETS (Keko : « enlève le trait de pointillés,
+    je pense que ça sert à rien ») : la bande claire seule.
 - **LES HACHES FAUCHENT** (Keko, 05/11 : « va pour les haches » ; la Taille
   en arc, le croissant de leur coup) : `config.passifs.hache` et
   `.hacheDeuxMains`, « Fauche », la Taille entière (le suspens, le grand

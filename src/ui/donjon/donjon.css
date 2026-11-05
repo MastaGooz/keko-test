@@ -760,8 +760,8 @@
   fill: #fffdf4;
 }
 
-/* LA LIGNE DU FRACAS, au style de la Taille : la bande claire, les tirets pleins qui filent dans le sens du
-   rond, cernés de sombre sous une lueur d'or ; le rond net crème cerné d'or y file vers le CADRE du milieu
+/* LA LIGNE DU FRACAS, au style de la Taille : la bande claire, cernée de sombre sous une lueur d'or (sans les
+   tirets, retirés) ; le rond net crème cerné d'or y file vers le CADRE du milieu
    (le temps juste, sa largeur calculée), qui s'allume quand le rond y est ; juste, il se remplit ; manqué, il
    rougit. */
 .donjon-jauge {
@@ -782,23 +782,6 @@
   margin-top: -0.75rem;
   border-radius: 0.75rem;
   background: rgba(255, 236, 190, 0.38);
-}
-
-.donjon-jauge-tirets {
-  position: absolute;
-  left: 0.5rem;
-  right: 0.5rem;
-  top: 50%;
-  height: 0.42rem;
-  margin-top: -0.21rem;
-  background: repeating-linear-gradient(90deg, #fffdf4 0 0.7rem, transparent 0.7rem 1.3rem);
-  animation: donjon-tirets-filent 0.45s linear infinite;
-}
-
-@keyframes donjon-tirets-filent {
-  to {
-    background-position: 1.3rem 0;
-  }
 }
 
 .donjon-jauge-cible {

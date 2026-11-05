@@ -3336,7 +3336,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     let n = ciblesVues.get(cle)
     if (n === undefined) {
       n = el('div', 'donjon-jauge')
-      n.append(el('div', 'donjon-jauge-tirets'), el('div', 'donjon-jauge-cible'), el('div', 'donjon-jauge-curseur'))
+      // Sans les tirets de la Taille (Keko : « enlève le trait de pointillés, ça sert à rien »).
+      n.append(el('div', 'donjon-jauge-cible'), el('div', 'donjon-jauge-curseur'))
       couchePassif.append(n)
       ciblesVues.set(cle, n)
       pointsEnJeu.add(cle)
