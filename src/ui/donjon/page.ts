@@ -1067,6 +1067,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * l'épaissit (×1,8).
    */
   let coteDuPoignard = 1
+  let pointDuPoignard: [number, number] = [0.5, 0.45]
   function poignard(x: number, y: number, k: number, couleur: string, finale: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     // Le critique ne l'allonge pas, il l'épaissit (Keko : « d'un poil », puis
@@ -1257,6 +1258,24 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const { x0, y0, l, h } = cadreDuDessin()
       x = x0 + l * 0.5
       y = y0 + h * 0.45
+    }
+    // La dague se plante PARTOUT SUR LE DESSIN (Keko : « les dagues se plantent
+    // toujours en haut à gauche de la cible, on peut pas varier ? ») : au
+    // hasard sur la moitié du milieu en largeur et de 25 à 65 % de la hauteur,
+    // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
+    // reste où il est.
+    if (arme === 'dague' && !FLECHE) {
+      const { x0, y0, l, h } = cadreDuDessin()
+      let fx = 0.5
+      let fy = 0.45
+      for (let essai = 0; essai < 8; essai++) {
+        fx = 0.5 + (Math.random() - 0.5) * 0.5
+        fy = 0.45 + (Math.random() - 0.5) * 0.4
+        if (Math.hypot(fx - pointDuPoignard[0], fy - pointDuPoignard[1]) >= 0.2) break
+      }
+      pointDuPoignard = [fx, fy]
+      x = x0 + l * fx
+      y = y0 + h * fy
     }
     // Le hasard de l'écran, pas celui des règles.
     const angleLame = -30 + (Math.random() - 0.5) * 40

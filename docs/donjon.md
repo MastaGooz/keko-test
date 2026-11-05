@@ -734,7 +734,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (celui du poing s'ouvre : la lame entre) ; les étincelles en traits
   jaillissent de la plaie en gerbe serrée vers celui qui frappe ; l'ennemi
   est POUSSÉ dans l'axe de la pointe et rapetisse, figé un instant comme
-  sous l'épée ; la scène est poussée de 3 px dans l'axe. Le critique ne
+  sous l'épée ; la scène est poussée de 3 px dans l'axe. Elle se plante
+  PARTOUT SUR LE DESSIN (Keko : « les dagues se plantent toujours en haut à
+  gauche de la cible, on peut pas varier ? » ; elle allait au point du tap,
+  un peu à gauche et en haut) : au hasard sur la moitié du milieu en
+  largeur, de 25 à 65 % de la hauteur, à un cinquième du dessin au moins du
+  coup d'avant ; le chiffre reste au point du tap. Le critique ne
   l'allonge pas, il l'ÉPAISSIT, ×1,8 (Keko : « d'un poil », puis « plus
   épaisses » ; ×1,2 entre-temps, et d'abord 1,4 fois en tout, comme l'épée). Un second essai plantait le
   DESSIN d'un poignard (manche, garde, lame) au bout de l'arc : retiré.
