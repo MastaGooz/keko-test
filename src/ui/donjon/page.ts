@@ -154,7 +154,7 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 109 (l'épée dans sa traînée de feu), et les deux haches, la n° 123 (la
  * hache dans son anneau de feu ; la seule hache du tri), et les deux
  * massues, la n° 115 (le poing de pierre qui écrase ; pas de massue dans le
- * tri), la lance, la n° 124 (le trident à la corde), et le marteau, la
+ * tri), la lance, la n° 124 (le trident à la corde), et les deux marteaux, la
  * n° 127 (la roche qui éclate ; le seul marteau du tri est celui d'un
  * personnage), provisoires elles aussi.
  */
@@ -171,6 +171,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   massueDeuxMains: 'armes/massue.webp',
   lance: 'armes/lance.webp',
   marteau: 'armes/marteau.webp',
+  marteauDeuxMains: 'armes/marteau.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -184,6 +185,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   massueDeuxMains: { caractere: 'Colossale', bonus: "Aucun pour l'instant" },
   lance: { caractere: 'Perçante', bonus: "Aucun pour l'instant" },
   marteau: { caractere: 'Accablant', bonus: "Aucun pour l'instant" },
+  marteauDeuxMains: { caractere: 'Titanesque', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -793,6 +795,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const TENUE_MARTEAU = 90
   const FONDU_MARTEAU = 160
   const BALAYAGE_MARTEAU = 110
+  // Sa version lourde (le marteau à deux mains) : 125° en 160 ms, posé 120.
+  const CONTACT_MARTEAU_LOURD = 160
+  const TENUE_MARTEAU_LOURD = 120
+  const BALAYAGE_MARTEAU_LOURD = 125
   const RUNE = parametres.has('rune')
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
@@ -1224,10 +1230,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * différents angles aussi »). Plus court, la TÊTE ÉLARGIE au bout (Keko :
    * « moins long et extrémité plus large » ; 6 rem, la traînée sur 85 % de
    * l'arc, de la même largeur jusqu'au plat). Le critique est 1,4 fois plus gros.
+   * LA VERSION LOURDE (`lourd`, le marteau à deux mains ; Keko : « une
+   * version deux mains ? ») : un arc plus grand et plus ample, un trait plus
+   * épais, une chute plus lente, posé plus longtemps.
    */
   let coteDuMarteau = 1
   let pencheDuMarteau = 0
-  function marteau(x: number, y: number, k: number, couleur: string): void {
+  function marteau(x: number, y: number, k: number, couleur: string, lourd = false): void {
     coteDuMarteau = -coteDuMarteau
     const cote = coteDuMarteau
     // Penché de ±35°, et d'au moins 20° de plus ou de moins que le précédent.
@@ -1238,11 +1247,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
     pencheDuMarteau = penche
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const rayon = 5 * rem * k
-    const largeur = 0.6 * rem * k
+    const rayon = (lourd ? 6.5 : 5) * rem * k
+    const largeur = (lourd ? 0.8 : 0.6) * rem * k
+    const contact = lourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU
+    const tenue = lourd ? TENUE_MARTEAU_LOURD : TENUE_MARTEAU
     // Le point à l'horizontale du centre (à sa droite, ou à sa gauche), penché.
     const fin = (cote > 0 ? 0 : 180) + penche
-    const debut = fin - cote * BALAYAGE_MARTEAU
+    const debut = fin - cote * (lourd ? BALAYAGE_MARTEAU_LOURD : BALAYAGE_MARTEAU)
     const a = (fin * Math.PI) / 180
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
@@ -1278,15 +1289,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
-      if (t < CONTACT_MARTEAU) {
+      if (t < contact) {
         // Il tombe en accélérant ; la traînée s'allonge avec la vitesse.
-        const p = (t / CONTACT_MARTEAU) ** 2
+        const p = (t / contact) ** 2
         dessiner(Math.max(0, p - 0.6), p, 0.85 + 0.15 * p)
-      } else if (t < CONTACT_MARTEAU + TENUE_MARTEAU + FONDU_MARTEAU) {
+      } else if (t < contact + tenue + FONDU_MARTEAU) {
         // Posé : il gonfle au choc et se rassied, puis s'efface tel quel.
-        const ms = t - CONTACT_MARTEAU
+        const ms = t - contact
         dessiner(0.4, 1, 1 + 0.35 * Math.max(0, 1 - ms / 60))
-        trace.style.opacity = `${1 - Math.max(0, (ms - TENUE_MARTEAU) / FONDU_MARTEAU)}`
+        trace.style.opacity = `${1 - Math.max(0, (ms - tenue) / FONDU_MARTEAU)}`
       } else {
         trace.remove()
         return
@@ -1364,7 +1375,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // est une) en version longue.
     // Le marteau aussi, mais il tombe et ÉCRASE (Keko : « avec écrasement,
     // comme le faisait le bâton avant »).
-    const enMarteau = arme === 'marteau'
+    const enMarteau = arme === 'marteau' || arme === 'marteauDeuxMains'
+    const marteauLourd = arme === 'marteauDeuxMains'
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1407,13 +1419,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? CONTACT_MARTEAU : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enMarteau) {
       const k = 1 + 0.65 * (fort - 1)
-      marteau(x, y, k, couleur)
-      // La scène est tassée vers le bas, d'un vrai coup (le critique a sa secousse).
+      marteau(x, y, k, couleur, marteauLourd)
+      // La scène est tassée vers le bas, d'un vrai coup (le critique a sa
+      // secousse) ; sous les deux mains, plus fort et plus long.
       if (!STYLES[genre].secousse) {
-        scene.animate([{ transform: 'none' }, { transform: 'translateY(7px)', offset: 0.25 }, { transform: 'translateY(-2px)', offset: 0.55 }, { transform: 'none' }], { duration: 200, delay: contact, easing: 'ease-out' })
+        const d = marteauLourd ? 11 : 7
+        scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
       }
     } else if (masse) {
       // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
@@ -1547,7 +1561,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde ? 150 : longue || enMarteau ? 120 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
+    reculer(x, genre, lourde || marteauLourd ? 150 : longue || enMarteau ? 120 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */

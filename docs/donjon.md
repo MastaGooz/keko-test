@@ -915,6 +915,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   massue). Ses points de lumière sont ceux de la massue ;
   l'ennemi est ÉCRASÉ (tassé vers le bas puis relevé, comme sous le bâton
   d'avant), figé 120 ms ; la scène est tassée de 7 px, avec un rebond.
+- **LE MARTEAU À DEUX MAINS, PROVISOIRE** (Keko, 05/11 : « une version deux
+  mains ? ») : « Titanesque », 28 toutes les 0,7 s — le DPS de base, ni
+  bonus, ni capacité, ni passif ; l'icône du marteau. Le coup du marteau en
+  VERSION LOURDE (`marteau(…, lourd)`) : un arc de 6,5 rem au lieu de 5,
+  balayé sur 125° au lieu de 110, un trait de 0,8 rem au lieu de 0,6, une
+  chute plus lente (le contact à 160 ms au lieu de 120), posé 120 ms au lieu
+  de 90 ; l'ennemi écrasé et figé 150 ms comme sous les autres armes à deux
+  mains ; la scène tassée de 11 px en 260 ms au lieu de 7 en 200.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
