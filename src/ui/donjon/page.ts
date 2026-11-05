@@ -3048,11 +3048,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * resserre, et chaque point touché s'y rallume, l'un après l'autre ; puis,
    * dans le noir, une plaie critique sur chacun, de plus en plus vite ; au
    * dernier, l'éclair blanc couvre la scène, le noir se lève, la scène
-   * resserrée est frappée et tremble, l'ennemi est figé, et le total jaillit.
+   * resserrée est frappée et tremble, l'ennemi est figé. UN CHIFFRE PAR COUP
+   * (Keko : « plutôt que d'afficher un chiffre, on affiche un chiffre pour
+   * chaque hit ») : chaque plaie fait jaillir le sien (`detail`, ceux des
+   * règles), et la barre de vie descend coup par coup.
    */
-  function frapperLesPoints(serie: string, degats: number): void {
-    const marques = marquesDesPoints.get(serie) ?? []
+  function frapperLesPoints(serie: string, detail: number[]): void {
+    const vues = marquesDesPoints.get(serie) ?? []
     marquesDesPoints.delete(serie)
+    // Les places touchées ; un coup sans place connue (la page rechargée) tombe au hasard sur le corps.
+    const marques = detail.map((_, i) => vues[i] ?? { c: { x: 0.3 + 0.4 * Math.random(), y: 0.3 + 0.35 * Math.random() } })
     const couleur = teinteDuChiffre('capaciteCritique', 0)
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const ici = (c: { x: number; y: number }): [number, number] => {
@@ -3110,13 +3115,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const d = 4 + Math.min(6, i)
         const pas = `scale(1.035) translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`
         scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: CONTACT_PLAIE })
+        // Son chiffre, quand la plaie s'ouvre ; la barre descend d'autant.
+        setTimeout(() => {
+          envoler(x, y, detail[i], 'capacite', couleur)
+          pvRetenus = Math.max(0, pvRetenus - detail[i])
+          dessiner()
+        }, CONTACT_PLAIE)
       }, delai)
       delai += Math.max(55, 130 - 12 * i)
     })
     const coup = delai + 60
-    pvRetenus = degats
+    pvRetenus = detail.reduce((x, y) => x + y, 0)
     retenusJusqua = performance.now() + coup
-    // La libération : l'éclair, le noir qui se lève, la scène frappée, le total.
+    // La libération : l'éclair, le noir qui se lève, la scène frappée.
     setTimeout(() => {
       const [x, y] = surLEnnemi(0, -0.05)
       const flash = el('div', 'donjon-flash-taille')
@@ -3133,7 +3144,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { duration: 520, easing: 'ease-out' },
       )
       reculer(x, 'capaciteCritique', 220)
-      envoler(x, y, degats, 'capacite', couleur, 'Point faible')
       dessiner()
     }, coup)
   }
@@ -3148,7 +3158,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const dernier = j.passif.dernier
     if (dernier !== undefined && `${j.arme}:${dernier.evenement}` !== frappeVue) {
       frappeVue = `${j.arme}:${dernier.evenement}`
-      frapperLesPoints(frappeVue, dernier.degats)
+      frapperLesPoints(frappeVue, dernier.detail ?? [dernier.degats])
     }
   }
 

@@ -1380,6 +1380,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     ms), l'ennemi figé 220 ms, et le total.
   - Puis le total sous « Point faible » seul (Keko : « inutile de mettre
     Points faibles ×3, mets juste Point faible »).
+  - Puis UN CHIFFRE PAR COUP (Keko : « plutôt que d'afficher un chiffre, on
+    affiche un chiffre pour chaque hit ») : les règles gardent le détail des
+    coups (`passif.dernier.detail`, leur somme est le total) ; chaque plaie
+    fait jaillir le sien, à sa place, quand elle s'ouvre, et la barre de vie
+    descend coup par coup ; plus de total à la libération.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

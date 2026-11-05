@@ -258,6 +258,8 @@ const encaisse = avancer(C, pf2, apres)
 const temoin = avancer(C, dg, apres)
 const unPoint = degatsDuTap(C, dg.joueurs[0]) * PF.coup * (1 - C.tap.ecart) * multCritDe(C, dg.joueurs[0])
 verifier('au premier manqué, chaque point touché frappe ×3 critique', encaisse.joueurs[0].degatsTap - dg.joueurs[0].degatsTap >= 2 * unPoint - 2 && encaisse.joueurs[0].passif.dernier?.coups === 2)
+const dernier = encaisse.joueurs[0].passif.dernier
+verifier('un chiffre par coup, leur somme pour total', dernier?.detail?.length === 2 && dernier.detail.reduce((x, y) => x + y, 0) === dernier.degats)
 verifier('un cran de Furie par point', encaisse.joueurs[0].critiques - temoin.joueurs[0].critiques === 2)
 verifier("manqué d'emblée, rien ne frappe", temoin.joueurs[0].degatsTap === dg.joueurs[0].degatsTap && temoin.joueurs[0].passif.dernier === undefined)
 verifier("changer d'arme encaisse la série en cours", appliquer(C, pf2, { joueur: 'a', t: evD2!.debut + 10, type: 'equiper', arme: 'epee' }).joueurs[0].degatsTap - dg.joueurs[0].degatsTap >= 2 * unPoint - 2)

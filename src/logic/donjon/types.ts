@@ -50,9 +50,10 @@ export type Joueur = {
    * aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 : raté —, les
    * taps sans événement depuis (la pitié) et, en série, les réussites qui
    * l'ont précédé dans le même événement (`rang`) ; `dernier` : la dernière
-   * série encaissée d'un passif à cumul (l'écran en joue la frappe).
+   * série encaissée d'un passif à cumul (l'écran en joue la frappe, un
+   * chiffre par coup : `detail`).
    */
-  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; rang: number; dernier?: { evenement: number; coups: number; degats: number } }
+  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; rang: number; dernier?: { evenement: number; coups: number; degats: number; detail?: number[] } }
   bonus: BonusPermanents
 }
 

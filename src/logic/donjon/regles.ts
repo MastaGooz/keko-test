@@ -590,8 +590,13 @@ function encaisserLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: nu
   j.passif = { ...j.passif, etape: -1 }
   if (rang === 0) return
   const avant = j.degatsTap
-  for (let i = 0; i < rang; i++) frapperFort(config, e, j, p.coup, t, p.critique === true)
-  j.passif = { ...j.passif, dernier: { evenement, coups: rang, degats: j.degatsTap - avant } }
+  const detail: number[] = []
+  for (let i = 0; i < rang; i++) {
+    const a = j.degatsTap
+    frapperFort(config, e, j, p.coup, t, p.critique === true)
+    detail.push(j.degatsTap - a)
+  }
+  j.passif = { ...j.passif, dernier: { evenement, coups: rang, degats: j.degatsTap - avant, detail } }
 }
 
 /** Le prochain instant où une série à cumul s'encaisse (juste après sa grâce). */
