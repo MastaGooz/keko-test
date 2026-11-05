@@ -763,7 +763,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const FLECHE = parametres.has('fleche')
   // Le coup de poignard : il touche à 95 ms, reste fiché 180 ms (Keko :
   // « laisser un peu la dague plantée », puis « diminue un peu » ; 260 ms
-  // entre-temps), se résorbe en 110.
+  // entre-temps), puis s'efface tel quel comme la lance (Keko : « le même
+  // fading que les lances plutôt que le rétrécissement » ; il se résorbait en 110).
   const CONTACT_POIGNARD = 95
   const TENUE_POIGNARD = 180
   // Le coup de lance : il perce à 100 ms (son élan), reste fiché 260 ms (plus que le
@@ -772,7 +773,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_LANCE = 100
   const TENUE_LANCE = 260
   const FONDU_LANCE = 160
-  const VIDANGE_POIGNARD = 110
+  const FONDU_POIGNARD = FONDU_LANCE
   // Le coup de massue du bâton : il balaie son arc en 170 ms, cogne au
   // milieu (85 ms), s'efface en 140. `&rune` lui rend le cercle de rune,
   // rangé pour ailleurs.
@@ -1059,8 +1060,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * s'effilait sur les trois quarts), qui file DROIT (Keko : « laisser
    * tomber le côté arc et faire un truc plus droit » ; il filait sur un arc
    * de 55°) et se plante au point touché : il accélère, touche, s'enfonce
-   * d'un cran, reste fiché un instant, puis se résorbe dans le point, la
-   * queue rattrapant la pointe. Il arrive de côté en diagonale vers le bas
+   * d'un cran, reste fiché un instant, puis s'efface tel quel, comme la
+   * lance. Il arrive de côté en diagonale vers le bas
    * (`finale`), un coup sur deux de l'autre côté. Redessiné à chaque image
    * (un `d` ne s'anime pas partout). Le critique ne l'allonge pas : il
    * l'épaissit (×1,8).
@@ -1085,10 +1086,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // se rassied (60 ms), puis reste planté.
         const ms = t - CONTACT_POIGNARD
         dessiner(0.2, 1 + 0.06 * Math.min(1, ms / 20), 1 + 0.3 * Math.max(0, 1 - ms / 60))
-      } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD + VIDANGE_POIGNARD) {
-        // Il se résorbe dans le point : la queue rattrape la pointe.
-        const q = (t - CONTACT_POIGNARD - TENUE_POIGNARD) / VIDANGE_POIGNARD
-        dessiner(0.2 + 0.86 * q * q, 1.06, 1 - 0.4 * q)
+      } else if (t < CONTACT_POIGNARD + TENUE_POIGNARD + FONDU_POIGNARD) {
+        // Il s'efface TEL QUEL, comme la lance.
+        const q = (t - CONTACT_POIGNARD - TENUE_POIGNARD) / FONDU_POIGNARD
+        dessiner(0.2, 1.06, 1)
+        trace.style.opacity = `${1 - q}`
       } else {
         trace.remove()
         return
