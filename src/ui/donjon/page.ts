@@ -3117,7 +3117,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: CONTACT_PLAIE })
         // Son chiffre, quand la plaie s'ouvre ; la barre descend d'autant.
         setTimeout(() => {
-          envoler(x, y, detail[i], 'capacite', couleur)
+          envoler(x, y, detail[i], 'capacite', couleur, 'Point faible')
           pvRetenus = Math.max(0, pvRetenus - detail[i])
           dessiner()
         }, CONTACT_PLAIE)

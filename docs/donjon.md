@@ -1384,7 +1384,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     affiche un chiffre pour chaque hit ») : les règles gardent le détail des
     coups (`passif.dernier.detail`, leur somme est le total) ; chaque plaie
     fait jaillir le sien, à sa place, quand elle s'ouvre, et la barre de vie
-    descend coup par coup ; plus de total à la libération.
+    descend coup par coup ; plus de total à la libération. Chaque chiffre
+    porte « Point faible » (Keko : « il faut écrire Point faible sur le
+    chiffre de chaque hit »).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
