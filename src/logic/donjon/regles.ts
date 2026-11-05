@@ -279,10 +279,22 @@ function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: n
   const p = passifDe(config, j)
   if (p === null) return
   const { evenement, etape, fin } = j.passif
-  if (evenement >= 0 && t <= fin && etape >= 0 && etape < p.cibles) return
+  if (evenement >= 0 && t <= fin + (p.grace ?? 0) && etape >= 0 && etape < p.cibles) return
   const sans = j.passif.sans + 1
   if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + p.duree, sans: 0, rang: 0 }
   else j.passif = { ...j.passif, sans }
+}
+
+/**
+ * L'événement qu'un geste peut encore toucher à l'instant t : l'ouvert, ou
+ * celui qui vient de finir, pendant sa grâce. L'écran le dessine aussi
+ * longtemps.
+ */
+export function evenementTouchable(config: ConfigDonjon, seed: number, j: Joueur, t: number): EvenementDuPassif | null {
+  const ev = evenementA(config, seed, j, t)
+  if (ev !== null) return ev
+  const grace = passifDe(config, j)?.grace ?? 0
+  return grace > 0 && t > j.passif.fin && t <= j.passif.fin + grace ? evenementA(config, seed, j, j.passif.fin) : null
 }
 
 /** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
@@ -633,7 +645,7 @@ function frapperFort(config: ConfigDonjon, e: EtatDonjon, j: Joueur, fois: numbe
  * une autre, quand il y en a plusieurs (les runes), rate l'événement.
  */
 function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cible: number, t: number): void {
-  const ev = evenementA(config, e.saison.seed, j, t)
+  const ev = evenementTouchable(config, e.saison.seed, j, t)
   if (ev === null || ev.k !== k || !passifOuvert(config, j, ev)) return
   const p = passifDe(config, j)
   if (p === null) return

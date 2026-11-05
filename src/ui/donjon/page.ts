@@ -44,7 +44,7 @@ import {
   degatsDuTap,
   effetEnCours,
   etapeDuPassif,
-  evenementA,
+  evenementTouchable,
   facteurCritMoyen,
   etatInitial,
   formeA,
@@ -2760,7 +2760,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * super, puis excellent, etc., comme dans Paper Mario »), et le coup
    * grossit avec le rang.
    */
-  type Trait = { rang: number; n: HTMLElement; bande: SVGLineElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
+  type Trait = { fin: number; rang: number; n: HTMLElement; bande: SVGLineElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
   const traitsVus = new Map<string, Trait>()
   // Le doigt peut s'écarter de 2 rem du trait ; il en parcourt les neuf dixièmes.
   const ECART_DU_TRAIT = 2
@@ -2785,7 +2785,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const depart = bouton('donjon-cible trait')
     depart.setAttribute('aria-label', 'Départ de la taille')
     n.append(svg, depart)
-    const tr: Trait = { rang, n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
+    const tr: Trait = { fin: Infinity, rang, n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
     let rem = 16
     const rater = () => {
       tr.suivi = false
@@ -2819,15 +2819,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (ecart > ECART_DU_TRAIT * rem || u < tr.avance - 0.25) return rater()
       tr.avance = Math.max(tr.avance, Math.min(1, u))
       if (tr.avance >= BOUT_DU_TRAIT) {
+        // Au bout après la grâce, c'est trop tard : les règles le refuseraient.
+        const t = maintenant()
+        if (t > tr.fin + (passifDe(C, moi())?.grace ?? 0)) return rater()
         tr.suivi = false
         tr.fini = true
         tr.avance = 1
-        // Le grand coup part au geste, sans attendre les règles ; le guide s'efface sous lui.
+        // Le grand coup part au geste, sans attendre les règles ; le guide
+        // s'efface sous lui. Les deux bouts partent au même instant.
         const reussite = performance.now()
         n.style.visibility = 'hidden'
         grandeTaille(tr.a, tr.b, tr.rang)
         const milieu: [number, number] = [(tr.a[0] + tr.b[0]) / 2, (tr.a[1] + tr.b[1]) / 2]
-        void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu, reussite + PAUSE_TAILLE))
+        void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu, reussite + PAUSE_TAILLE, t))
       }
       dessinerLAvance(tr)
     })
@@ -2985,7 +2989,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
-  function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number): void {
+  function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number, fin: number): void {
+    tr.fin = fin
     tr.a = a
     tr.b = b
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -3038,7 +3043,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           if (ev.rang === 0) tr.n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
           tr.depart.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         }
-        placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), reste)
+        placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), reste, ev.fin)
       }
       if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
         // Les runes déjà touchées restent allumées.
@@ -3075,8 +3080,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * ne tombe qu'à cet instant (`performance.now`), et la barre de vie garde
    * ses PV jusque-là.
    */
-  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number], au = 0): void {
-    const t = maintenant()
+  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number], au = 0, quand?: number): void {
+    const t = quand ?? maintenant()
     const avant = moi()
     const p = passifDe(C, avant)
     if (p === null) return
@@ -3546,7 +3551,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % periode) / periode
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
-    dessinerLePassif(evenementA(C, etat.saison.seed, j, t), j, t)
+    // Pendant sa grâce, le trait fini reste traçable.
+    dessinerLePassif(evenementTouchable(C, etat.saison.seed, j, t), j, t)
     // La forme glisse en continu : le marqueur la suit à chaque image.
     const forme = formeA(C, j, t)
     const mult = multiplicateurDeForme(C, j, forme)

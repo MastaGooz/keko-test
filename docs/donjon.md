@@ -1293,6 +1293,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     qu'il soit fini. Les cibles du passif passent AU-DESSUS du noir et de
     l'éclair (`.donjon-passif` z 5, les chiffres z 6, le salut z 7), et les
     traits de la série s'allument d'un coup, sans fondu.
+  - Puis la vraie cause (Keko : « en fait, si je valide une étape trop
+    tard, elle est bonne, mais derrière la prochaine n'apparaît pas, alors
+    qu'une étape réussie doit toujours résulter avec la suivante » ;
+    reproduite au téléphone simulé, processeur ralenti ×4, au toucher : le
+    « Fabuleux ! » à 0,55 s sortait, sans chiffre ni suite) : l'écran
+    retire le trait à l'image d'après sa fin, et sur un téléphone chargé
+    cette image tarde — le geste fini APRÈS la fin était salué par l'écran,
+    refusé par les règles. LA GRÂCE (`Passif.grace`, 0,25 s pour la
+    Taille ; `evenementTouchable`) : les règles acceptent un geste fini
+    jusqu'à 0,25 s après la fin, et l'écran garde le trait traçable
+    exactement aussi longtemps (il dessine `evenementTouchable`) et refuse
+    au-delà (le rond tremble, pas de coup) ; les deux bouts partent au même
+    instant. *L'écran et les règles jugent avec la même horloge et la même
+    borne : ce que l'écran salue est toujours compté.*
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

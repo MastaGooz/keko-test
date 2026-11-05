@@ -90,6 +90,14 @@ export type Passif = {
    * plus court de `raccourci` à chaque fois, sans fin — jusqu'au premier raté.
    */
   serie?: { entre: number; raccourci: number }
+  /**
+   * LA GRÂCE : un geste fini jusqu'à `grace` ms après la fin compte encore
+   * (Keko : « si je valide une étape trop tard, elle est bonne mais la
+   * suivante n'apparaît pas, alors qu'une étape réussie doit toujours
+   * amener la suivante » — l'écran l'acceptait, les règles l'avaient fermée).
+   * L'écran garde le trait traçable aussi longtemps : ils jugent pareil.
+   */
+  grace?: number
   duree: number
   cibles: number
   coup: number
@@ -262,8 +270,8 @@ export const DONJON = {
    * (le temps du coup), plus court d'un tiers — 2 s, 1,3, 0,85, 0,55, 0,36…
    */
   passifs: {
-    epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 } },
-    deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 } },
+    epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
+    deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,
