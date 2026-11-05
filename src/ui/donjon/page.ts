@@ -273,6 +273,12 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   dague: 'passifs/points-faibles.webp',
   lance: 'passifs/points-faibles.webp',
   rapiere: 'passifs/points-faibles.webp',
+  // Le Fracas emprunte l'icône de la Riposte en attendant la sienne.
+  massue: 'passifs/riposte.webp',
+  massueDeuxMains: 'passifs/riposte.webp',
+  marteau: 'passifs/riposte.webp',
+  marteauDeuxMains: 'passifs/riposte.webp',
+  fleau: 'passifs/riposte.webp',
   baton: 'passifs/runes.webp',
 }
 
@@ -280,6 +286,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
+  if (p.timing !== undefined) return `Un anneau se referme sur un rond : touchez-le pile quand il le recouvre ; chaque coup juste en appelle un plus rapide ; au premier raté, chacun frappe (×${p.coup})`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
@@ -3066,14 +3073,34 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     marquesDesPoints.delete(serie)
     // Les places touchées ; un coup sans place connue (la page rechargée) tombe au hasard sur le corps.
     const marques = detail.map((_, i) => vues[i] ?? { c: { x: 0.3 + 0.4 * Math.random(), y: 0.3 + 0.35 * Math.random() } })
-    const couleur = teinteDuChiffre('capaciteCritique', 0)
     // Chaque coup est celui de l'arme (Keko : « il faut utiliser l'animation de
     // l'arme pour les coups multiples ») : la plaie de la dague, l'estoc de la
-    // lance, l'aiguille de la rapière ; le chiffre tombe à son contact.
+    // lance, l'aiguille de la rapière, la massue qui cogne, le marteau qui
+    // écrase, le fléau qui tombe ; le chiffre tombe à son contact.
     const arme = serie.split(':')[0]
-    const contact = arme === 'lance' || arme === 'rapiere' ? CONTACT_LANCE : CONTACT_PLAIE
+    const passif = arme in C.passifs ? C.passifs[arme as ArmeAPassif] : null
+    const couleur = teinteDuChiffre(passif?.critique === true ? 'capaciteCritique' : 'capacite', 0)
+    const mot = passif?.nom === 'Points faibles' ? 'Point faible' : (passif?.nom ?? '')
+    const contact =
+      arme === 'lance' || arme === 'rapiere'
+        ? CONTACT_LANCE
+        : arme === 'massue'
+          ? CONTACT_BATON
+          : arme === 'massueDeuxMains'
+            ? CONTACT_LONG
+            : arme === 'marteau'
+              ? CONTACT_MARTEAU
+              : arme === 'marteauDeuxMains'
+                ? CONTACT_MARTEAU_LOURD
+                : arme === 'fleau'
+                  ? CONTACT_FLEAU
+                  : CONTACT_PLAIE
+    const ecrase = arme === 'marteau' || arme === 'marteauDeuxMains' || arme === 'fleau'
     const frapperIci = (x: number, y: number, i: number) => {
       if (arme === 'lance' || arme === 'rapiere') lance(x, y, 1.3, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
+      else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, 1.3, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
+      else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, 1.3, couleur, arme === 'marteauDeuxMains')
+      else if (arme === 'fleau') fleau(x, y, 1.3, couleur)
       else plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
     }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -3127,14 +3154,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
             { duration: 300 + Math.random() * 140, delay: contact, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
           ).onfinish = () => p.remove()
         }
-        reculer(x, 'critique', 70, undefined, contact)
+        reculer(x, 'critique', 70, undefined, contact, ecrase)
         // La scène reste resserrée sous chaque plaie.
         const d = 4 + Math.min(6, i)
         const pas = `scale(1.035) translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`
         scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: contact })
         // Son chiffre, au contact du coup ; la barre descend d'autant.
         setTimeout(() => {
-          envoler(x, y, detail[i], 'capacite', couleur, 'Point faible')
+          envoler(x, y, detail[i], 'capacite', couleur, mot)
           pvRetenus = Math.max(0, pvRetenus - detail[i])
           dessiner()
         }, contact)
@@ -3184,18 +3211,31 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const cle = `${serie}:${ev.rang}:point`
     voulues.add(cle)
     const grace = passifDe(C, j)?.grace ?? 0
+    // Le Fracas : l'anneau recouvre le rond à `juste`, à `timing` près.
+    const timing = passifDe(C, j)?.timing
+    const juste = timing === undefined ? ev.fin + grace : ev.fin - timing
     let n = ciblesVues.get(cle)
     if (n === undefined) {
       // Le rond net de la Taille (ses styles), sans traînée.
       const rond = bouton('donjon-cible trait point-faible')
       n = rond
-      rond.setAttribute('aria-label', 'Point faible')
+      rond.setAttribute('aria-label', timing === undefined ? 'Point faible' : 'Fracas')
       const c = ev.cibles[0]
       rond.addEventListener('pointerdown', (e) => {
         e.stopPropagation()
         const quand = maintenant()
+        if (!pointsEnJeu.has(cle)) return
+        // Trop tôt pour le Fracas : raté sur-le-champ (les règles encaissent la série).
+        if (timing !== undefined && Math.abs(quand - juste) > timing) {
+          pointsEnJeu.delete(cle)
+          ciblesVues.delete(cle)
+          rond.style.pointerEvents = 'none'
+          marquerLEchec(rond, rond)
+          void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ev.k, cible: 0 }).then(() => dessiner())
+          return
+        }
         // Au-delà de la grâce, les règles le refuseraient : on ne le salue pas.
-        if (!pointsEnJeu.has(cle) || quand > ev.fin + grace) return
+        if (quand > ev.fin + grace) return
         pointsEnJeu.delete(cle)
         poserLaMarque(serie, c)
         apprecier(ev.rang)
@@ -3209,9 +3249,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const [px, py] = surLeDessin(ev.cibles[0])
     n.style.left = `${px}px`
     n.style.top = `${py}px`
-    // L'anneau touche le rond à la fin de la grâce : c'est là qu'il est manqué.
-    const jusqua = ev.fin + grace
-    n.style.setProperty('--reste', Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))).toFixed(3))
+    // L'anneau touche le rond à la fin de la grâce, là où il est manqué — ou,
+    // au Fracas, au temps juste, et il passe au travers pendant la tolérance.
+    n.style.setProperty('--reste', Math.max(timing === undefined ? 0 : -0.3, Math.min(1, (juste - t) / (juste - ev.debut))).toFixed(3))
   }
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */

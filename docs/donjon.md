@@ -1399,6 +1399,24 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     l'aiguille de la rapière (`lance(…, aiguille)`), d'en bas, d'un côté
     puis de l'autre —, le chiffre au contact (`CONTACT_LANCE`,
     `CONTACT_PLAIE`).
+- **LE FRACAS DES CONTONDANTES** (Keko, 05/11 : « il faut taper au timing
+  exact, au moment où le cercle superpose le rond » ; la massue, la massue à
+  deux mains, les deux marteaux, le fléau) : la série à cumul des Points
+  faibles, mais AU TEMPS JUSTE (`Passif.timing`) — l'anneau recouvre le
+  rond 1,2 s après son apparition (la fenêtre de 1,3 s finit 0,1 s après),
+  et il faut le toucher à 0,1 s près : TROP TÔT, c'est raté, sur-le-champ
+  (le rond rougit sous sa croix, les règles encaissent la série) ; trop
+  tard, la fenêtre est passée (raté aussi). L'anneau passe au travers du
+  rond pendant la tolérance. Chaque rond suivant, il va 30 % plus vite
+  (`raccourci` 0,7 : 1,2, 0,81, 0,54, 0,35, 0,21 s), 0,3 s entre deux ; au
+  premier raté, chaque coup juste frappe ×5 (sans critique forcé), dans le
+  noir de la frappe des Points faibles, avec LE COUP DE L'ARME (la massue
+  qui cogne, longue à deux mains, le marteau qui écrase, le fléau qui
+  tombe), un chiffre « Fracas » chacun. Chance par tap pour un événement
+  toutes les 8 s environ au spam (massue 4 %, massue à deux mains 7,5 %,
+  marteau et fléau 4,7 %, marteau à deux mains 8,75 % ; pitié à trois
+  fois l'attente). Nom, chiffres et icône (celle de la Riposte) de moi, à
+  rejuger.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

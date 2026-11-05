@@ -703,6 +703,8 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
     if (p.cibles > 1) j.passif = { ...j.passif, etape: -1 }
     return
   }
+  // AU TEMPS JUSTE : touché trop tôt, la série est ratée, et s'encaisse.
+  if (p.timing !== undefined && Math.abs(t - (ev.fin - p.timing)) > p.timing) return encaisserLePassif(config, e, j, t, true)
   j.passif = { ...j.passif, etape: etape + 1 }
   if (etape + 1 !== p.cibles) return
   // À cumul, le coup attend la fin de la série.

@@ -32,7 +32,7 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée, et la lance et la rapière, qui percent comme la dague). */
-export type ArmeAPassif = 'epee' | 'deuxMains' | 'dague' | 'lance' | 'rapiere' | 'baton'
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -103,6 +103,13 @@ export type Passif = {
    * suite ; la série s'encaisse au premier manqué, un `coup` par point.
    */
   cumul?: boolean
+  /**
+   * LE TEMPS JUSTE (le Fracas des contondantes) : on touche quand l'anneau
+   * recouvre le rond, à `timing` ms près — à la fin de la fenêtre moins
+   * `timing`. Trop tôt, c'est raté (la série s'encaisse) ; trop tard, la
+   * fenêtre est passée.
+   */
+  timing?: number
   duree: number
   cibles: number
   coup: number
@@ -286,12 +293,25 @@ export const DONJON = {
    * « on l'applique aussi à la lance et la rapière ? ») : la même série, la
    * chance par tap ramenée à leur cadence (la dague 6 % toutes les 0,175 s ;
    * la lance, 0,3 s, 10 % ; la rapière, 0,275 s, 9,5 %), la pitié aussi.
+   * LES CONTONDANTES FRAPPENT EN FRACAS (Keko, 05/11 : « il faut taper au
+   * timing exact, au moment où le cercle superpose le rond ») : la série
+   * des Points faibles, mais au temps juste — l'anneau recouvre le rond
+   * 1,2 s après son apparition, et il faut toucher à 0,1 s près ; trop tôt,
+   * c'est raté. Chaque rond suivant, l'anneau va 30 % plus vite (1,2, 0,81,
+   * 0,54, 0,35, 0,21 s) ; au premier raté, chaque coup juste frappe ×5. Un
+   * événement toutes les 8 s environ au spam (la massue 4 %, les armes à deux
+   * mains 7,5 % et 8,75 %, le marteau et le fléau 4,7 %), chiffres de moi.
    */
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
+    massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
+    massueDeuxMains: { nom: 'Fracas', chance: 0.075, pitie: 40, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
+    marteau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
+    marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
+    fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,
