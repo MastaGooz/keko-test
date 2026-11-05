@@ -1012,6 +1012,31 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   de 6,5 rem au lieu de 7,5, droit et d'une seule largeur (0,24 rem au lieu
   d'une tête de 0,96), effilé en longue pointe sur son dernier quart ; la
   scène secouée de 5 px au lieu de 9.
+- **LE FOUET ET LE FLÉAU D'ARMES, PROVISOIRES** (Keko, 05/11 : « passons à
+  ta liste non couverte ; essayons la catégorie fouet, chaîne, fléau ») :
+  le FOUET (« Cinglant », 10 toutes les 0,25 s) et le FLÉAU (« Implacable »,
+  15 toutes les 0,375 s) — le DPS de base, ni bonus, ni capacité, ni
+  passif ; icône provisoire pour les deux, la capacité n° 135 (la silhouette
+  enchaînée ; ni fouet ni fléau dans le tri). La CHAÎNE n'a pas encore son
+  arme : elle reprendra l'un des deux. Les deux frappent au hasard sur le
+  dessin, comme la dague.
+  - LE FOUET (`fouet`) : un trait de 8 rem, épais au manche (0,4 rem) et fin
+    au bout, qui SE DÉROULE d'en bas, d'un côté puis de l'autre (45° de la
+    verticale, ±15°), sur une courbe qui bombe d'un côté ; une onde le
+    parcourt vers le bout et s'aplatit à mesure qu'il se tend ; le bout
+    accélère jusqu'au point (130 ms, le contact), où il CLAQUE
+    (`claquement` : huit rayons fins, longs et courts, qui jaillissent et
+    s'éteignent en 150 ms) ; une dernière onde le secoue (70 ms), puis il
+    s'efface (140). Étincelles en traits dans tous les sens, quatre de
+    plus ; la scène sursaute de 4 px ; l'ennemi recule comme sous l'épée.
+  - LE FLÉAU (`fleau`) : une BOULE de lumière (1,1 rem) au bout d'une CHAÎNE
+    de onze maillons (des points), qui tombe d'en haut sur un arc de 5,5 rem
+    et 130° dont le centre est à côté du point, comme le marteau (penché de
+    ±25°, un coup sur deux de l'autre côté) ; la chaîne PLOIE en arrière avec
+    la vitesse, une traînée suit la boule ; elle frappe en descendant
+    (140 ms), reste posée 90 ms — la chaîne se redresse — puis s'efface
+    comme le marteau. L'ennemi est ÉCRASÉ, figé 120 ms, la scène tassée de
+    7 px, les points de lumière de la massue.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

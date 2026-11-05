@@ -159,7 +159,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * personnage), et l'arbalète, la n° 110 (la silhouette qui décoche un trait ;
  * pas d'arbalète dans le tri), et le pistolet, la n° 144 (le trait qui finit en
  * éclat ; pas d'arme à feu dans le tri) — le mousquet aussi —, et la rapière,
- * la n° 107 (l'épée fine à l'étoile), provisoires elles aussi.
+ * la n° 107 (l'épée fine à l'étoile), et le fouet et le fléau, la n° 135 (la
+ * silhouette enchaînée ; ni fouet ni fléau dans le tri), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -179,6 +180,8 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   pistolet: 'armes/pistolet.webp',
   mousquet: 'armes/pistolet.webp',
   rapiere: 'armes/rapiere.webp',
+  fouet: 'armes/chaine.webp',
+  fleau: 'armes/chaine.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -197,6 +200,8 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   pistolet: { caractere: 'Détonante', bonus: "Aucun pour l'instant" },
   mousquet: { caractere: 'Fracassante', bonus: "Aucun pour l'instant" },
   rapiere: { caractere: 'Précise', bonus: "Aucun pour l'instant" },
+  fouet: { caractere: 'Cinglant', bonus: "Aucun pour l'instant" },
+  fleau: { caractere: 'Implacable', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -812,6 +817,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const BALAYAGE_MARTEAU_LOURD = 125
   // La balle du pistolet arrive en 40 ms.
   const CONTACT_BALLE = 40
+  // Le fouet claque à 130 ms ; la boule du fléau frappe à 140, posée 90.
+  const CONTACT_FOUET = 130
+  const CONTACT_FLEAU = 140
+  const TENUE_FLEAU = 90
   const RUNE = parametres.has('rune')
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
@@ -1424,11 +1433,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Le pistolet explose au point touché.
     const enFeu = arme === 'pistolet' || arme === 'mousquet'
     const feuLourd = arme === 'mousquet'
-    const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau
+    // Le fouet claque ; le fléau tombe et écrase, comme le marteau.
+    const enFouet = arme === 'fouet'
+    const enFleau = arme === 'fleau'
+    const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
     // lames (Keko : « pas comme la dague ») ; le chiffre reste où il est.
-    if (masse && !enMarteau) {
+    if (masse && !enMarteau && !enFleau) {
       const { x0, y0, l, h } = cadreDuDessin()
       x = x0 + l * 0.5
       y = y0 + h * 0.45
@@ -1439,7 +1451,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1466,7 +1478,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enFeu ? CONTACT_BALLE : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1485,6 +1497,21 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!STYLES[genre].secousse) {
         const d = marteauLourd ? 11 : 7
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
+      }
+    } else if (enFouet) {
+      const k = 1 + 0.65 * (fort - 1)
+      fouet(x, y, k, couleur)
+      claquement(x, y, k, couleur, contact)
+      // La scène sursaute, sèche (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        const a = Math.random() * 2 * Math.PI
+        scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * 4}px, ${Math.sin(a) * 4}px)`, offset: 0.25 }, { transform: 'none' }], { duration: 110, delay: contact, easing: 'ease-out' })
+      }
+    } else if (enFleau) {
+      fleau(x, y, 1 + 0.65 * (fort - 1), couleur)
+      // La scène est tassée vers le bas, comme sous le marteau (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        scene.animate([{ transform: 'none' }, { transform: 'translateY(7px)', offset: 0.25 }, { transform: 'translateY(-2px)', offset: 0.55 }, { transform: 'none' }], { duration: 200, delay: contact, easing: 'ease-out' })
       }
     } else if (masse) {
       // La massue balaie à travers l'ennemi, penchée au hasard, un coup sur
@@ -1557,8 +1584,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       impactRond(x, y, fort, couleur)
     }
 
-    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : 0)
-    const trait = lame || pique || enFeu
+    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : 0)
+    const trait = lame || pique || enFeu || enFouet
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
       p.style.left = `${x}px`
@@ -1621,7 +1648,218 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse || enFouet ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+  }
+
+  /**
+   * LE COUP DE FOUET (Keko : « essayons la catégorie fouet, chaîne, fléau ») :
+   * un trait de lumière, épais au manche et fin au bout, qui SE DÉROULE d'en
+   * bas (d'un côté puis de l'autre) sur une courbe, parcouru d'une onde qui
+   * file vers le bout ; le bout accélère, la courbe SE TEND en arrivant sur le
+   * point — le contact, où il CLAQUE (`claquement`) —, une dernière onde le
+   * secoue, puis il s'efface. Le critique l'épaissit.
+   */
+  let coteDuFouet = 1
+  function fouet(x: number, y: number, k: number, couleur: string): void {
+    coteDuFouet = -coteDuFouet
+    const cote = coteDuFouet
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const longueur = 8 * rem
+    const largeur = 0.2 * rem * (1 + (k - 1) * 2)
+    // D'où il part : d'en bas, d'un côté puis de l'autre, penché au hasard ;
+    // la courbe bombe d'un côté, celle d'un fouet lancé (le point est en 0, 0).
+    const depuis = ((90 + cote * 45 + (Math.random() - 0.5) * 30) * Math.PI) / 180
+    const [ox, oy] = [Math.cos(depuis) * longueur, Math.sin(depuis) * longueur]
+    const [cx, cy] = [ox / 2 - Math.sin(depuis) * 0.35 * longueur * cote, oy / 2 + Math.cos(depuis) * 0.35 * longueur * cote]
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = longueur * 1.25
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    trace.append(forme)
+    scene.append(trace)
+    // Le fouet du manche (0) jusqu'à `fin` (1 = le point), écarté de sa courbe
+    // par une onde d'`ampleur`, décalée de `phase`.
+    const dessiner = (fin: number, ampleur: number, phase: number) => {
+      if (fin < 0.01) return forme.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 40; i++) {
+        const s = (fin * i) / 40
+        const u = 1 - s
+        const bx = u * u * ox + 2 * u * s * cx
+        const by = u * u * oy + 2 * u * s * cy
+        let tx = 2 * u * (cx - ox) - 2 * s * cx
+        let ty = 2 * u * (cy - oy) - 2 * s * cy
+        const n = Math.hypot(tx, ty) || 1
+        tx /= n
+        ty /= n
+        const onde = ampleur * Math.sin(3 * Math.PI * s - phase) * Math.sin(Math.PI * s)
+        const [px, py] = [bx - ty * onde, by + tx * onde]
+        const h = largeur * (1 - 0.8 * s) * Math.min(1, s / 0.08)
+        dehors.push(`${(px - ty * h).toFixed(1)} ${(py + tx * h).toFixed(1)}`)
+        dedans.push(`${(px + ty * h).toFixed(1)} ${(py - tx * h).toFixed(1)}`)
+      }
+      forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t < CONTACT_FOUET) {
+        // Il se déroule en accélérant ; l'onde s'aplatit à mesure qu'il se tend.
+        const p = (t / CONTACT_FOUET) ** 2
+        dessiner(p, 0.9 * rem * (1 - p), (9 * t) / CONTACT_FOUET)
+      } else if (t < CONTACT_FOUET + 70) {
+        // Le claquement le secoue d'une dernière onde.
+        const q = (t - CONTACT_FOUET) / 70
+        dessiner(1, 0.45 * rem * Math.sin(Math.PI * q), 9 + 6 * q)
+      } else if (t < CONTACT_FOUET + 70 + 140) {
+        const q = (t - CONTACT_FOUET - 70) / 140
+        dessiner(1, 0, 15)
+        trace.style.opacity = `${1 - q * q}`
+      } else {
+        trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(depart)
+  }
+
+  /** Le claquement du fouet : huit rayons fins qui jaillissent du point et s'éteignent, très vite. */
+  function claquement(x: number, y: number, k: number, couleur: string, retard: number): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const rayon = 1.1 * rem * k
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = rayon * 1.5
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    const rayons: string[] = []
+    const depart = Math.random() * Math.PI
+    const e = 0.09 * rem * k
+    for (let i = 0; i < 8; i++) {
+      const a = depart + (i * Math.PI) / 4
+      const r = rayon * (i % 2 === 0 ? 1 : 0.65)
+      const [dx, dy] = [Math.cos(a), Math.sin(a)]
+      const r0 = 0.3 * rayon
+      rayons.push(
+        `M${(dx * r0 - dy * e).toFixed(1)} ${(dy * r0 + dx * e).toFixed(1)} L${(dx * r).toFixed(1)} ${(dy * r).toFixed(1)} L${(dx * r0 + dy * e).toFixed(1)} ${(dy * r0 - dx * e).toFixed(1)}Z`,
+      )
+    }
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    forme.setAttribute('d', rayons.join(' '))
+    trace.append(forme)
+    scene.append(trace)
+    trace.animate(
+      [
+        { transform: 'scale(0.3)', opacity: 1, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
+        { transform: 'scale(1)', opacity: 1, offset: 0.4, easing: 'ease-in' },
+        { transform: 'scale(1.15)', opacity: 0 },
+      ],
+      { duration: 150, delay: retard, fill: 'backwards' },
+    ).onfinish = () => trace.remove()
+  }
+
+  /**
+   * LE COUP DE FLÉAU (Keko : « essayons la catégorie fouet, chaîne, fléau ») :
+   * une BOULE de lumière au bout d'une CHAÎNE de maillons (des points), qui
+   * tombe d'en haut sur un arc dont le centre est à côté du point, comme le
+   * marteau ; la chaîne traîne derrière la boule, ployée par la vitesse, une
+   * traînée suit la boule ; elle frappe le point en descendant (le contact),
+   * l'écrase, reste posée un instant puis s'efface. Un coup sur deux de
+   * l'autre côté, penché au hasard. Le critique est 1,4 fois plus gros.
+   */
+  let coteDuFleau = 1
+  function fleau(x: number, y: number, k: number, couleur: string): void {
+    coteDuFleau = -coteDuFleau
+    const cote = coteDuFleau
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const rayon = 5.5 * rem * k
+    const boule = 0.55 * rem * k
+    const penche = (Math.random() - 0.5) * 50
+    const fin = (cote > 0 ? 0 : 180) + penche
+    const debut = fin - cote * 130
+    const a0 = (fin * Math.PI) / 180
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = rayon + 3 * boule
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - Math.cos(a0) * rayon - demi}px`
+    trace.style.top = `${y - Math.sin(a0) * rayon - demi}px`
+    trace.style.color = couleur
+    const sillage = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    const maillons = Array.from({ length: 11 }, () => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+      c.setAttribute('r', (0.09 * rem * k).toFixed(1))
+      return c
+    })
+    const tete = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    tete.setAttribute('r', boule.toFixed(1))
+    trace.append(sillage, ...maillons, tete)
+    scene.append(trace)
+    const rad = (d: number) => (d * Math.PI) / 180
+    // La boule à `p` de sa course (0 = départ, 1 = le point), sa chaîne ployée
+    // de `ploie` degrés en arrière, sa traînée sur `sillon` de la course.
+    const dessiner = (p: number, ploie: number, sillon: number) => {
+      const a = rad(debut + (fin - debut) * p)
+      const [bx, by] = [Math.cos(a) * rayon, Math.sin(a) * rayon]
+      tete.setAttribute('cx', bx.toFixed(1))
+      tete.setAttribute('cy', by.toFixed(1))
+      // La chaîne, du tiers du rayon jusqu'à la boule, courbée en arrière.
+      const ar = a - rad(cote * ploie)
+      const [ax, ay] = [Math.cos(ar) * rayon * 0.3, Math.sin(ar) * rayon * 0.3]
+      const [qx, qy] = [Math.cos(a - rad(cote * ploie * 0.6)) * rayon * 0.7, Math.sin(a - rad(cote * ploie * 0.6)) * rayon * 0.7]
+      maillons.forEach((c, i) => {
+        const s = i / maillons.length
+        const u = 1 - s
+        c.setAttribute('cx', (u * u * ax + 2 * u * s * qx + s * s * bx).toFixed(1))
+        c.setAttribute('cy', (u * u * ay + 2 * u * s * qy + s * s * by).toFixed(1))
+      })
+      // La traînée : un arc derrière la boule, effilé, aussi large qu'elle au bout.
+      if (sillon <= 0.005) return sillage.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 16; i++) {
+        const v = i / 16
+        const t = rad(debut + (fin - debut) * Math.max(0, p - sillon * (1 - v)))
+        const h = boule * 0.8 * v ** 1.2
+        dehors.push(`${(Math.cos(t) * (rayon + h)).toFixed(1)} ${(Math.sin(t) * (rayon + h)).toFixed(1)}`)
+        dedans.push(`${(Math.cos(t) * (rayon - h)).toFixed(1)} ${(Math.sin(t) * (rayon - h)).toFixed(1)}`)
+      }
+      sillage.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t < CONTACT_FLEAU) {
+        // Elle tombe en accélérant ; la chaîne ploie et la traînée s'allonge avec la vitesse.
+        const p = (t / CONTACT_FLEAU) ** 2
+        dessiner(p, 18 * p, 0.35 * p)
+      } else if (t < CONTACT_FLEAU + TENUE_FLEAU + FONDU_MARTEAU) {
+        // Posée : la chaîne se redresse, la traînée se résorbe, puis tout s'efface.
+        const ms = t - CONTACT_FLEAU
+        const r = Math.max(0, 1 - ms / 80)
+        dessiner(1, 18 * r, 0.35 * r)
+        trace.style.opacity = `${1 - Math.max(0, (ms - TENUE_FLEAU) / FONDU_MARTEAU) ** 2}`
+      } else {
+        trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(depart)
   }
 
   /**
