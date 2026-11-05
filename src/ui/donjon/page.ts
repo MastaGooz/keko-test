@@ -2993,12 +2993,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   /**
    * LE TRAIT MANQUÉ (Keko : « en cas d'échec, il faudrait le signifier au
    * joueur, par exemple par une animation rouge au niveau du cercle ») : le
-   * temps passé sans qu'il soit tracé, il vire au rouge, son rond se barre
-   * d'une croix, tremble et lâche une onde rouge, puis tout s'éteint.
+   * temps passé sans qu'il soit tracé, son rond vire au rouge, se barre d'une
+   * croix, tremble et lâche une onde rouge, puis tout s'éteint ; la
+   * trajectoire garde sa couleur (Keko : « juste le rond, ça suffit »).
    */
   function echouerLeTrait(tr: Trait): void {
     tr.suivi = false
-    tr.n.classList.add('echoue')
     tr.depart.classList.add('echouee')
     tr.depart.textContent = '✕'
     tr.depart.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.25 }, { transform: 'scale(0.95)' }], { duration: 420, easing: 'ease-out' })
