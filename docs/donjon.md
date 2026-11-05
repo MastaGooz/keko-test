@@ -1085,6 +1085,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   part tracée, et ne se lisait pas comme un geste. Le contact passe à 55 ms.
   Puis un poil plus grosses (Keko) : tout d'un cinquième, 4,3 rem de long,
   0,38 au plus épais, 0,72 d'écart.
+- **LA FRONDE, PROVISOIRE** (Keko, 05/11 : « maintenant on va faire les tirs
+  en cloche, la fronde ») : « Plongeante », 12 toutes les 0,3 s — le DPS de
+  base, ni bonus, ni capacité, ni passif ; icône provisoire, la capacité
+  n° 108 (les pierres au-dessus de la main). Son coup (`fronde`) : une
+  PIERRE de lumière (0,76 rem, sept sommets inégaux) part d'en bas, d'un côté
+  puis de l'autre (3 à 4,5 rem de côté, 6 rem plus bas), MONTE EN CLOCHE (4 à
+  5 rem au-dessus de la corde) et RETOMBE sur le point en 220 ms — une
+  parabole, à vitesse constante en travers —, en tournant (400°), une
+  traînée effilée sur le dernier quart de sa course ; au contact, elle
+  ÉCLATE (`eclatsDePierre`) : un bref flash (130 ms) et six éclats qui
+  jaillissent vers le haut en éventail et retombent plus bas que le point
+  (420 à 540 ms). Au hasard sur le dessin ; la scène tassée de 5 px ;
+  l'ennemi recule comme sous l'épée. Pas encore de zone : une seule pierre.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

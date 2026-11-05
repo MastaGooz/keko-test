@@ -161,7 +161,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * éclat ; pas d'arme à feu dans le tri) — le mousquet aussi —, et la rapière,
  * la n° 107 (l'épée fine à l'étoile), et le fouet et le fléau, la n° 135 (la
  * silhouette enchaînée ; ni fouet ni fléau dans le tri), et les griffes, la
- * n° 133 (le loup spectral ; pas de griffes dans le tri), provisoires elles aussi.
+ * n° 133 (le loup spectral ; pas de griffes dans le tri), et la fronde, la
+ * n° 108 (les pierres au-dessus de la main), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -184,6 +185,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   fouet: 'armes/chaine.webp',
   fleau: 'armes/chaine.webp',
   griffes: 'armes/griffes.webp',
+  fronde: 'armes/fronde.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -205,6 +207,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   fouet: { caractere: 'Cinglant', bonus: "Aucun pour l'instant" },
   fleau: { caractere: 'Implacable', bonus: "Aucun pour l'instant" },
   griffes: { caractere: 'Lacérantes', bonus: "Aucun pour l'instant" },
+  fronde: { caractere: 'Plongeante', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -821,8 +824,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // La balle du pistolet arrive en 40 ms.
   const CONTACT_BALLE = 40
   // Le fouet claque à 130 ms ; la boule du fléau frappe à 140, posée 90.
-  // Chaque griffe se trace en 110 ms.
+  // Chaque griffe se trace en 110 ms ; la pierre de la fronde retombe en 220.
   const TRACE_GRIFFE = 110
+  const CONTACT_FRONDE = 220
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
   const TENUE_FLEAU = 90
@@ -1446,6 +1450,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const enGriffes = arme === 'griffes'
     if (enGriffes) sensDesGriffes = -sensDesGriffes
     const angleGriffes = (sensDesGriffes > 0 ? 55 : 125) + (Math.random() - 0.5) * 24
+    // La fronde tire en cloche.
+    const enFronde = arme === 'fronde'
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1461,7 +1467,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu || enFouet || enFleau || enGriffes || enFronde) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1488,7 +1494,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1507,6 +1513,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!STYLES[genre].secousse) {
         const d = marteauLourd ? 11 : 7
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
+      }
+    } else if (enFronde) {
+      fronde(x, y, 1 + 0.65 * (fort - 1), couleur)
+      // La scène est tassée d'un cran vers le bas : la pierre tombe (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        scene.animate([{ transform: 'none' }, { transform: 'translateY(5px)', offset: 0.25 }, { transform: 'none' }], { duration: 150, delay: contact, easing: 'ease-out' })
       }
     } else if (enGriffes) {
       griffes(x, y, 1 + 0.65 * (fort - 1), couleur, angleGriffes)
@@ -1667,7 +1679,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
   }
 
   /**
@@ -1988,6 +2000,124 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       requestAnimationFrame(image)
     }
     image(depart)
+  }
+
+  /**
+   * LE TIR DE FRONDE (Keko : « les tirs en cloche, la fronde ») : une PIERRE de
+   * lumière, aux bords inégaux, part d'en bas, d'un côté puis de l'autre,
+   * MONTE EN CLOCHE au-dessus du point et RETOMBE dessus (une parabole, à
+   * vitesse constante en travers : la pesanteur), en tournant, une traînée
+   * effilée derrière elle ; au contact, elle ÉCLATE : un bref flash, et six
+   * éclats qui jaillissent vers le haut et retombent. Le critique est 1,4 fois
+   * plus gros.
+   */
+  let coteDeLaFronde = 1
+  function fronde(x: number, y: number, k: number, couleur: string): void {
+    coteDeLaFronde = -coteDeLaFronde
+    const cote = coteDeLaFronde
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    // Le départ, en bas d'un côté ; la hauteur de la cloche au-dessus de la corde.
+    const [sx, sy] = [cote * (3 + Math.random() * 1.5) * rem, 6 * rem]
+    const haut = (4 + Math.random()) * rem
+    const pierre = 0.38 * rem * k
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = Math.max(Math.abs(sx), sy, haut) + 2 * rem
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    const sillage = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    // La pierre : sept sommets, plus ou moins loin, dessinés autour de 0, 0.
+    const caillou = (r: number) => {
+      const sommets: string[] = []
+      for (let i = 0; i < 7; i++) {
+        const a = (i * 2 * Math.PI) / 7
+        const d = r * (0.75 + Math.random() * 0.25)
+        sommets.push(`${(Math.cos(a) * d).toFixed(1)} ${(Math.sin(a) * d).toFixed(1)}`)
+      }
+      return `M${sommets.join(' L')}Z`
+    }
+    const tete = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    tete.setAttribute('d', caillou(pierre))
+    trace.append(sillage, tete)
+    scene.append(trace)
+    // Le point de la cloche à `u` de la course (0 = le départ, 1 = le point touché).
+    const point = (u: number): [number, number] => [sx * (1 - u), sy * (1 - u) - 4 * haut * u * (1 - u)]
+    const dessiner = (u: number) => {
+      const [px, py] = point(u)
+      tete.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${(cote * 400 * u).toFixed(1)})`)
+      // La traînée : le dernier quart de la course, effilé, aussi large que la pierre au bout.
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 16; i++) {
+        const v = i / 16
+        const w = Math.max(0, u - 0.25 * (1 - v))
+        const [ax, ay] = point(w)
+        const [bx, by] = point(Math.min(1, w + 0.01))
+        const n = Math.hypot(bx - ax, by - ay) || 1
+        const h = pierre * 0.7 * v ** 1.2
+        dehors.push(`${(ax - ((by - ay) / n) * h).toFixed(1)} ${(ay + ((bx - ax) / n) * h).toFixed(1)}`)
+        dedans.push(`${(ax + ((by - ay) / n) * h).toFixed(1)} ${(ay - ((bx - ax) / n) * h).toFixed(1)}`)
+      }
+      sillage.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    const depart = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - depart
+      if (t >= CONTACT_FRONDE) {
+        trace.remove()
+        eclatsDePierre(x, y, k, couleur, caillou)
+        return
+      }
+      dessiner(t / CONTACT_FRONDE)
+      trace.style.opacity = `${Math.min(1, t / 30)}`
+      requestAnimationFrame(image)
+    }
+    image(depart)
+  }
+
+  /** La pierre éclate : un bref flash, et six éclats qui jaillissent vers le haut et retombent. */
+  function eclatsDePierre(x: number, y: number, k: number, couleur: string, caillou: (r: number) => string): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const boite = (demi: number) => {
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      s.setAttribute('class', 'donjon-course')
+      s.setAttribute('aria-hidden', 'true')
+      s.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+      s.style.width = s.style.height = `${2 * demi}px`
+      s.style.left = `${x - demi}px`
+      s.style.top = `${y - demi}px`
+      s.style.color = couleur
+      scene.append(s)
+      return s
+    }
+    const flash = boite(1.2 * rem * k)
+    const rond = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    rond.setAttribute('r', (0.7 * rem * k).toFixed(1))
+    flash.append(rond)
+    flash.animate([{ transform: 'scale(0.4)', opacity: 1, easing: 'ease-out' }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 130 }).onfinish = () => flash.remove()
+    for (let i = 0; i < 6; i++) {
+      const eclat = boite(0.5 * rem * k)
+      const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      forme.setAttribute('d', caillou((0.13 + Math.random() * 0.1) * rem * k))
+      eclat.append(forme)
+      // Vers le haut, en éventail, puis la pesanteur les ramène plus bas que le point.
+      const a = ((-90 + (i - 2.5) * 30 + (Math.random() - 0.5) * 20) * Math.PI) / 180
+      const loin = (1.2 + Math.random() * 1) * rem * k
+      const [dx, dy] = [Math.cos(a) * loin, Math.sin(a) * loin]
+      const tourne = (Math.random() - 0.5) * 540
+      eclat.animate(
+        [
+          { transform: 'translate(0, 0) rotate(0deg)', opacity: 1, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
+          { transform: `translate(${dx}px, ${dy}px) rotate(${tourne / 2}deg)`, opacity: 1, offset: 0.4, easing: 'cubic-bezier(0.5, 0, 0.9, 0.6)' },
+          { transform: `translate(${dx * 1.5}px, ${dy * 0.2 + 1.6 * rem}px) rotate(${tourne}deg)`, opacity: 0 },
+        ],
+        { duration: 420 + Math.random() * 120 },
+      ).onfinish = () => eclat.remove()
+    }
   }
 
   /**
