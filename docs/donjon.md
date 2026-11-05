@@ -1393,6 +1393,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   cadence pour le même rythme par seconde (dague 6 % / 0,175 s ; lance 10 %
   / 0,3 s ; rapière 9,5 % / 0,275 s ; la pitié de même : 50, 30, 32 taps).
   Leur fiche tait le cran de Furie (elles n'ont pas la Furie).
+  - Puis (Keko : « attention, il faut utiliser l'animation de l'arme pour
+    les coups multiples ») : la frappe des points faibles joue LE COUP DE
+    L'ARME sur chaque point — la plaie de la dague, l'estoc de la lance,
+    l'aiguille de la rapière (`lance(…, aiguille)`), d'en bas, d'un côté
+    puis de l'autre —, le chiffre au contact (`CONTACT_LANCE`,
+    `CONTACT_PLAIE`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

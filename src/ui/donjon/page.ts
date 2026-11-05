@@ -3067,6 +3067,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Les places touchées ; un coup sans place connue (la page rechargée) tombe au hasard sur le corps.
     const marques = detail.map((_, i) => vues[i] ?? { c: { x: 0.3 + 0.4 * Math.random(), y: 0.3 + 0.35 * Math.random() } })
     const couleur = teinteDuChiffre('capaciteCritique', 0)
+    // Chaque coup est celui de l'arme (Keko : « il faut utiliser l'animation de
+    // l'arme pour les coups multiples ») : la plaie de la dague, l'estoc de la
+    // lance, l'aiguille de la rapière ; le chiffre tombe à son contact.
+    const arme = serie.split(':')[0]
+    const contact = arme === 'lance' || arme === 'rapiere' ? CONTACT_LANCE : CONTACT_PLAIE
+    const frapperIci = (x: number, y: number, i: number) => {
+      if (arme === 'lance' || arme === 'rapiere') lance(x, y, 1.3, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
+      else plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
+    }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const ici = (c: { x: number; y: number }): [number, number] => {
       const { x0, y0, l, h } = cadreDuDessin()
@@ -3097,9 +3106,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       setTimeout(() => {
         const [x, y] = ici(m.c)
         lueurs[i].remove()
-        // La plaie passe au-dessus du noir.
+        // Le coup passe au-dessus du noir.
         const avant = scene.childElementCount
-        plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
+        frapperIci(x, y, i)
         for (const n of [...scene.children].slice(avant)) (n as HTMLElement).style.zIndex = '4'
         for (let e = 0; e < 10; e++) {
           const p = el('div', 'donjon-particule trait')
@@ -3115,20 +3124,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
               { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.8)`, opacity: 1 },
               { transform: `translate(calc(-50% + ${Math.cos(a) * loin}px), calc(-50% + ${Math.sin(a) * loin}px)) rotate(${a}rad) scaleX(0.2)`, opacity: 0 },
             ],
-            { duration: 300 + Math.random() * 140, delay: CONTACT_PLAIE, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+            { duration: 300 + Math.random() * 140, delay: contact, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
           ).onfinish = () => p.remove()
         }
-        reculer(x, 'critique', 70, undefined, CONTACT_PLAIE)
+        reculer(x, 'critique', 70, undefined, contact)
         // La scène reste resserrée sous chaque plaie.
         const d = 4 + Math.min(6, i)
         const pas = `scale(1.035) translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`
-        scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: CONTACT_PLAIE })
-        // Son chiffre, quand la plaie s'ouvre ; la barre descend d'autant.
+        scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: contact })
+        // Son chiffre, au contact du coup ; la barre descend d'autant.
         setTimeout(() => {
           envoler(x, y, detail[i], 'capacite', couleur, 'Point faible')
           pvRetenus = Math.max(0, pvRetenus - detail[i])
           dessiner()
-        }, CONTACT_PLAIE)
+        }, contact)
       }, delai)
       delai += Math.max(55, 130 - 12 * i)
     })
