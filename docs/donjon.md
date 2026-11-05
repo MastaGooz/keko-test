@@ -965,6 +965,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   bords. Le masque est passé sur le `svg` dedans : le dessin est fondu, sa
   lueur déborde librement. *Un masque sur l'élément qui porte la lueur la
   rogne à sa boîte.*
+- **LE PISTOLET, PROVISOIRE** (Keko, 05/11 : « une arme à feu, type médiéval
+  fantasy, à une main ; on peut tenter une petite explosion, un impact ? ») :
+  « Détonante », 14 toutes les 0,35 s — le DPS de base, ni bonus, ni
+  capacité, ni passif ; icône provisoire, la capacité n° 144 (le trait qui
+  finit en éclat ; pas d'arme à feu dans le tri). Son coup est une
+  EXPLOSION (`explosion`) au point touché, au hasard sur le dessin comme la
+  dague, sans course : un ÉCLAT de lumière en étoile (dix pointes de 0,65 à 1
+  fois 1,7 rem, tirées à chaque coup, entre des creux au tiers) qui jaillit
+  en 60 ms, tourne de 14° et s'éteint en grandissant (200 ms) ; l'onde ronde
+  du poing, aux trois quarts, autour ; des étincelles en traits dans tous les
+  sens, six de plus, une fois et demie plus loin ; la scène tressaute, sèche
+  (5, −4, 2 px dans un sens au hasard, 160 ms) ; l'ennemi recule comme sous
+  l'épée, figé 90 ms.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

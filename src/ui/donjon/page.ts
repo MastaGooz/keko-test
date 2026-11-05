@@ -157,7 +157,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * tri), la lance, la n° 124 (le trident à la corde), et les deux marteaux, la
  * n° 127 (la roche qui éclate ; le seul marteau du tri est celui d'un
  * personnage), et l'arbalète, la n° 110 (la silhouette qui décoche un trait ;
- * pas d'arbalète dans le tri), provisoires elles aussi.
+ * pas d'arbalète dans le tri), et le pistolet, la n° 144 (le trait qui finit en
+ * éclat ; pas d'arme à feu dans le tri), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -174,6 +175,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   marteau: 'armes/marteau.webp',
   marteauDeuxMains: 'armes/marteau.webp',
   arbalete: 'armes/arbalete.webp',
+  pistolet: 'armes/pistolet.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -189,6 +191,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   marteau: { caractere: 'Accablant', bonus: "Aucun pour l'instant" },
   marteauDeuxMains: { caractere: 'Titanesque', bonus: "Aucun pour l'instant" },
   arbalete: { caractere: 'Puissante', bonus: "Aucun pour l'instant" },
+  pistolet: { caractere: 'Détonante', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -1402,6 +1405,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // comme le faisait le bâton avant »).
     const enMarteau = arme === 'marteau' || arme === 'marteauDeuxMains'
     const marteauLourd = arme === 'marteauDeuxMains'
+    // Le pistolet explose au point touché.
+    const enFeu = arme === 'pistolet'
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
@@ -1417,7 +1422,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
     // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
     // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
-    if ((arme === 'dague' && !FLECHE) || enMarteau) {
+    if ((arme === 'dague' && !FLECHE) || enMarteau || enFeu) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
@@ -1445,7 +1450,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
     const contact = pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
-    if (enMarteau) {
+    if (enFeu) {
+      explosion(x, y, 1 + 0.65 * (fort - 1), couleur)
+      // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa secousse).
+      if (!STYLES[genre].secousse) {
+        const a = Math.random() * 2 * Math.PI
+        const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
+        scene.animate([{ transform: 'none' }, { transform: pas(5), offset: 0.2 }, { transform: pas(-4), offset: 0.45 }, { transform: pas(2), offset: 0.7 }, { transform: 'none' }], { duration: 160, easing: 'ease-out' })
+      }
+    } else if (enMarteau) {
       const k = 1 + 0.65 * (fort - 1)
       marteau(x, y, k, couleur, marteauLourd)
       // La scène est tassée vers le bas, d'un vrai coup (le critique a sa
@@ -1525,8 +1538,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       impactRond(x, y, fort, couleur)
     }
 
-    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : 0)
-    const trait = lame || pique
+    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : enFeu ? 6 : 0)
+    const trait = lame || pique || enFeu
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
       p.style.left = `${x}px`
@@ -1543,7 +1556,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         : pique
           ? ((anglePique + (enLance ? 0 : 180) + (Math.random() - 0.5) * 80) * Math.PI) / 180
           : ((i + Math.random() * 0.8) / combien) * 2 * Math.PI
-      const loin = (28 + Math.random() * 34) * fort * (lourde ? 2 : lame ? 1.7 : pique ? 1.2 : 1)
+      const loin = (28 + Math.random() * 34) * fort * (lourde ? 2 : lame ? 1.7 : enFeu ? 1.5 : pique ? 1.2 : 1)
       const dx = Math.cos(angle) * loin
       const dy = Math.sin(angle) * loin
       // Sous le bâton, des points de lumière s'écartent à peine et MONTENT,
@@ -1589,7 +1602,51 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd ? 150 : longue || enMarteau || enArbalete ? 120 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
+    reculer(x, genre, lourde || marteauLourd ? 150 : longue || enMarteau || enArbalete ? 120 : enFeu ? 90 : lame || pique || masse ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau)
+  }
+
+  /**
+   * L'EXPLOSION DU PISTOLET (Keko : « une arme à feu, type médiéval fantasy, à
+   * une main ; on peut tenter une petite explosion, un impact ? ») : la balle
+   * frappe d'un coup, sans course — un ÉCLAT de lumière en étoile, aux
+   * pointes inégales tirées à chaque coup, qui jaillit en 60 ms, tourne un peu
+   * et s'éteint en grandissant ; l'onde ronde du poing, plus petite, autour ;
+   * les étincelles en traits partent dans tous les sens (dans `impact`).
+   */
+  function explosion(x: number, y: number, k: number, couleur: string): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const rayon = 1.7 * rem * k
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const demi = rayon * 1.6
+    trace.setAttribute('viewBox', `${-demi} ${-demi} ${2 * demi} ${2 * demi}`)
+    trace.style.width = trace.style.height = `${2 * demi}px`
+    trace.style.left = `${x - demi}px`
+    trace.style.top = `${y - demi}px`
+    trace.style.color = couleur
+    // Dix pointes, longues ou courtes au hasard, entre des creux au tiers.
+    const sommets: string[] = []
+    const depart = Math.random() * Math.PI
+    for (let i = 0; i < 20; i++) {
+      const a = depart + (i * Math.PI) / 10
+      const r = i % 2 === 0 ? rayon * (0.65 + Math.random() * 0.35) : rayon * 0.34
+      sommets.push(`${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`)
+    }
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    forme.setAttribute('d', `M${sommets.join(' L')}Z`)
+    trace.append(forme)
+    scene.append(trace)
+    const sens = Math.random() < 0.5 ? -1 : 1
+    trace.animate(
+      [
+        { transform: 'scale(0.2) rotate(0deg)', opacity: 1, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
+        { transform: `scale(1) rotate(${sens * 8}deg)`, opacity: 1, offset: 0.3, easing: 'ease-in' },
+        { transform: `scale(1.25) rotate(${sens * 14}deg)`, opacity: 0 },
+      ],
+      { duration: 200 },
+    ).onfinish = () => trace.remove()
+    impactRond(x, y, 0.75 * k, couleur)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */

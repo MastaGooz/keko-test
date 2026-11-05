@@ -29,8 +29,8 @@ export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'r
 export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
-export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete'
-export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete']
+export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet']
 /** Les armes qui ont un passif de classe (les sept provisoires n'ont pas encore le leur). */
 export type ArmeAPassif = 'epee' | 'dague' | 'baton'
 /**
@@ -176,7 +176,8 @@ export const DONJON = {
    * MARTEAU aussi (Keko : « un marteau, avec écrasement ») : 15 toutes les
    * 0,375 s, et le MARTEAU À DEUX MAINS (« une version deux mains ? ») : 28
    * toutes les 0,7 s. L'ARBALÈTE aussi (Keko : « une arbalète, en mode grosse
-   * flèche ») : 20 toutes les 0,5 s.
+   * flèche ») : 20 toutes les 0,5 s. Le PISTOLET aussi (Keko : « une arme à
+   * feu, type médiéval fantasy, à une main ») : 14 toutes les 0,35 s.
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
@@ -193,6 +194,7 @@ export const DONJON = {
     marteau: { nom: 'Marteau', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     marteauDeuxMains: { nom: 'Marteau à deux mains', rarete: 'commune', degats: 28, recharge: 0.7 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     arbalete: { nom: 'Arbalète', rarete: 'commune', degats: 20, recharge: 0.5 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
+    pistolet: { nom: 'Pistolet', rarete: 'commune', degats: 14, recharge: 0.35 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
   } as Record<
     Equipement,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }
