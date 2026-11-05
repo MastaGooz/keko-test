@@ -1369,6 +1369,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     marge du cinquième trait une fois tracé), chacun LE PLUS LOIN du
     précédent parmi huit tirés (le premier venu à un cinquième au moins,
     avant) : il faut y aller.
+  - Puis (Keko : « il faut le même effet de noir / puissance qu'à la
+    Taille lors de la libération du combo final ») : la frappe
+    (`frapperLesPoints`) commence par LE SUSPENS de la Taille (le noir, la
+    scène resserrée, `PAUSE_TAILLE`), où chaque point touché se RALLUME
+    l'un après l'autre (une lueur orange, `.donjon-lueur-point`) ; les
+    plaies tombent DANS LE NOIR, la scène restant resserrée sous leurs
+    sursauts ; au dernier, LA LIBÉRATION : l'éclair blanc sur toute la
+    scène, le noir qui se lève, la scène frappée (18 px, amortie en 520
+    ms), l'ennemi figé 220 ms, et le total.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

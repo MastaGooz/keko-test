@@ -3041,48 +3041,115 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     marquesDesPoints.set(serie, marques)
   }
 
-  /** La frappe des points faibles : une plaie sur chaque marque, l'une après l'autre, de plus en plus vite ; puis le total. */
+  /**
+   * LA FRAPPE DES POINTS FAIBLES, avec le noir et la puissance de la Taille
+   * (Keko : « il faut le même effet de noir / puissance qu'à la Taille lors
+   * de la libération du combo final ») : la scène plonge dans le noir et se
+   * resserre, et chaque point touché s'y rallume, l'un après l'autre ; puis,
+   * dans le noir, une plaie critique sur chacun, de plus en plus vite ; au
+   * dernier, l'éclair blanc couvre la scène, le noir se lève, la scène
+   * resserrée est frappée et tremble, l'ennemi est figé, et le total jaillit.
+   */
   function frapperLesPoints(serie: string, coups: number, degats: number): void {
     const marques = marquesDesPoints.get(serie) ?? []
     marquesDesPoints.delete(serie)
     const couleur = teinteDuChiffre('capaciteCritique', 0)
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    // La barre de vie tombe avec le total.
-    let delai = 280
+    const ici = (c: { x: number; y: number }): [number, number] => {
+      const { x0, y0, l, h } = cadreDuDessin()
+      return [x0 + l * c.x, y0 + h * c.y]
+    }
+    // Le suspens : le noir, la scène qui se resserre, les points qui se rallument.
+    const nuit = el('div', 'donjon-nuit-taille')
+    scene.append(nuit)
+    nuit.animate([{ opacity: 0 }, { opacity: 0.9, offset: 0.55 }, { opacity: 0.92 }], { duration: PAUSE_TAILLE, easing: 'ease-out', fill: 'forwards' })
+    const serre = scene.animate([{ transform: 'none' }, { transform: 'scale(1.035)' }], { duration: PAUSE_TAILLE, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' })
+    const lueurs = marques.map((m, i) => {
+      const [x, y] = ici(m.c)
+      const n = el('div', 'donjon-lueur-point')
+      n.style.left = `${x}px`
+      n.style.top = `${y}px`
+      scene.append(n)
+      n.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.4)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], {
+        duration: 160,
+        delay: (i * (PAUSE_TAILLE - 160)) / Math.max(1, marques.length),
+        easing: 'ease-out',
+        fill: 'backwards',
+      })
+      return n
+    })
+    // Les plaies, dans le noir, de plus en plus vite.
+    let delai = PAUSE_TAILLE
     marques.forEach((m, i) => {
       setTimeout(() => {
-        const { x0, y0, l, h } = cadreDuDessin()
-        const [x, y] = [x0 + l * m.c.x, y0 + h * m.c.y]
+        const [x, y] = ici(m.c)
+        lueurs[i].remove()
+        // La plaie passe au-dessus du noir.
+        const avant = scene.childElementCount
         plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
-        for (let e = 0; e < 8; e++) {
+        for (const n of [...scene.children].slice(avant)) (n as HTMLElement).style.zIndex = '4'
+        for (let e = 0; e < 10; e++) {
           const p = el('div', 'donjon-particule trait')
           p.style.left = `${x}px`
           p.style.top = `${y}px`
-          p.style.background = couleur
+          p.style.background = e % 3 === 0 ? '#fffdf4' : couleur
+          p.style.zIndex = '4'
           scene.append(p)
           const a = Math.random() * 2 * Math.PI
-          const loin = (1.2 + Math.random() * 1.6) * rem
+          const loin = (1.4 + Math.random() * 2) * rem
           p.animate(
             [
-              { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.6)`, opacity: 1 },
+              { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.8)`, opacity: 1 },
               { transform: `translate(calc(-50% + ${Math.cos(a) * loin}px), calc(-50% + ${Math.sin(a) * loin}px)) rotate(${a}rad) scaleX(0.2)`, opacity: 0 },
             ],
-            { duration: 280 + Math.random() * 120, delay: CONTACT_PLAIE, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+            { duration: 300 + Math.random() * 140, delay: CONTACT_PLAIE, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
           ).onfinish = () => p.remove()
         }
         reculer(x, 'critique', 70, undefined, CONTACT_PLAIE)
+        // La scène reste resserrée sous chaque plaie.
         const d = 4 + Math.min(6, i)
-        scene.animate([{ transform: 'none' }, { transform: `translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 110, delay: CONTACT_PLAIE })
+        const pas = `scale(1.035) translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`
+        scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: CONTACT_PLAIE })
       }, delai)
       delai += Math.max(55, 130 - 12 * i)
     })
+    const coup = delai + 60
     pvRetenus = degats
-    retenusJusqua = performance.now() + delai + 60
+    retenusJusqua = performance.now() + coup
+    // La libération : l'éclair, le noir qui se lève, la scène frappée, le total.
     setTimeout(() => {
       const [x, y] = surLEnnemi(0, -0.05)
+      const flash = el('div', 'donjon-flash-taille')
+      flash.style.setProperty('--x', `${x}px`)
+      flash.style.setProperty('--y', `${y}px`)
+      scene.append(flash)
+      flash.animate([{ opacity: 1 }, { opacity: 1, offset: 0.18 }, { opacity: 0 }], { duration: 380, easing: 'ease-out' }).onfinish = () => flash.remove()
+      nuit.animate([{ opacity: 0.92 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' }).onfinish = () => nuit.remove()
+      serre.cancel()
+      const a = Math.random() * 2 * Math.PI
+      const pas = (u: number) => `translate(${(Math.cos(a) * u).toFixed(1)}px, ${(Math.sin(a) * u).toFixed(1)}px)`
+      scene.animate(
+        [{ transform: `scale(1.035) ${pas(18)}` }, { transform: pas(-14), offset: 0.16 }, { transform: pas(9), offset: 0.34 }, { transform: pas(-5), offset: 0.52 }, { transform: pas(2.5), offset: 0.72 }, { transform: 'none' }],
+        { duration: 520, easing: 'ease-out' },
+      )
+      reculer(x, 'capaciteCritique', 220)
       envoler(x, y, degats, 'capacite', couleur, `Points faibles ×${coups}`)
       dessiner()
-    }, delai + 60)
+    }, coup)
+  }
+
+  /**
+   * Une série de points faibles vient d'être encaissée : sa frappe. Lu aussi
+   * par `dessiner`, AVANT la barre de vie : sinon elle tombait à
+   * l'encaissement, remontait quand la frappe retenait ses PV, puis
+   * retombait.
+   */
+  function lancerLaFrappe(j: Joueur): void {
+    const dernier = j.passif.dernier
+    if (dernier !== undefined && `${j.arme}:${dernier.evenement}` !== frappeVue) {
+      frappeVue = `${j.arme}:${dernier.evenement}`
+      frapperLesPoints(frappeVue, dernier.coups, dernier.degats)
+    }
   }
 
   function dessinerLePoint(ev: EvenementDuPassif, j: Joueur, t: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
@@ -3155,12 +3222,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
     const voulues = new Set<string>()
-    // Une série de points faibles vient d'être encaissée : sa frappe.
-    const dernier = j.passif.dernier
-    if (dernier !== undefined && `${j.arme}:${dernier.evenement}` !== frappeVue) {
-      frappeVue = `${j.arme}:${dernier.evenement}`
-      frapperLesPoints(frappeVue, dernier.coups, dernier.degats)
-    }
+    lancerLaFrappe(j)
     if (ouvert && ev !== null) {
       const { x0, y0, l, h } = cadreDuDessin()
       // Le temps qui reste, sur la fenêtre de CE trait (la série les raccourcit).
@@ -3479,7 +3541,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       etageVu = etat.ennemi.etage
       pastilleEtage.textContent = `Étage ${etageVu}`
     }
-    // Les PV qu'un coup en suspens (la Taille) n'a pas encore montré tomber.
+    // Les PV qu'un coup en suspens (la Taille, les Points faibles) n'a pas encore montré tomber.
+    lancerLaFrappe(j)
     const pvVus = Math.min(etat.ennemi.pvMax, Math.max(0, etat.ennemi.pv) + (performance.now() < retenusJusqua ? pvRetenus : 0))
     const part = pvVus / etat.ennemi.pvMax
     pv.style.width = `${100 * part}%`

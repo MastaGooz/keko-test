@@ -794,6 +794,19 @@
   pointer-events: none;
 }
 
+/* La frappe des points faibles : dans le noir, chaque point touché se rallume avant sa plaie. */
+.donjon-lueur-point {
+  position: absolute;
+  z-index: 5;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: -0.55rem 0 0 -0.55rem;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, #fff 0 30%, #ffb35a 55%, rgba(255, 120, 50, 0) 72%);
+  box-shadow: 0 0 0.9rem rgba(255, 138, 61, 0.95);
+}
+
 /* Le salut des séries — la Taille, les Points faibles (« Bien ! », « Super ! »…) —, au-dessus de l'ennemi. */
 .donjon-appreciation {
   position: absolute;
