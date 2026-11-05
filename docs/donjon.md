@@ -937,8 +937,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   forme droite plutôt que pointue vers la queue, et une forme qui rappelle un
   peu les plumes, un losange à la fin ») : sur sa boîte de 100 × 12, un
   LOSANGE à la queue (de 0 à 22, 3,4 de demi-largeur au plus, comme le fer),
-  une HAMPE DROITE de 1,6 de demi-largeur, puis le FER (de 72 à 100) ; elle
-  s'effilait du fer à la queue. Le fondu de la queue (`.donjon-estoc`, son
+  une HAMPE DROITE de 1,6 de demi-largeur, puis une POINTE COURTE (de 88 à
+  100) de la même largeur, qui s'aplatit à cette largeur (2,2 au plus, puis
+  1,6) — Keko : « un rectangle plus épais à l'avant, c'est pas beau » : le
+  FER, de 72 à 100 et de 3,4, aplati, faisait un bloc plus large que la
+  hampe ; elle s'effilait, avant, du fer à la queue. Le fondu de la queue (`.donjon-estoc`, son
   masque) part de 75 % au lieu de 35 % : les plumes s'y perdaient.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.

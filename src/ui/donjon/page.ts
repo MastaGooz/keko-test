@@ -944,18 +944,21 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * un bout plat, un peu plus large d'abord, et le reste. Une HAMPE DROITE
    * et un EMPENNAGE en losange à la queue (Keko : « une forme droite plutôt
    * que pointue vers la queue, et une forme qui rappelle un peu les plumes,
-   * un losange à la fin » ; elle s'effilait du fer jusqu'à la queue).
+   * un losange à la fin » ; elle s'effilait du fer jusqu'à la queue), SANS
+   * FER ÉLARGI (Keko : « un rectangle plus épais à l'avant, c'est pas beau » :
+   * aplati, le fer devenait un bloc plus large que la hampe) — une pointe
+   * courte, de la largeur de la hampe, qui s'aplatit à cette largeur.
    * `&fleche` la rend aussi à la dague.
    */
   function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
     // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
-    // le fer (de 72 à 100) ; son bout, de demi-largeur `e` : 0, la pointe ;
-    // 3,4, plat de la largeur du fer.
+    // la pointe (de 88 à 100) ; son bout, de demi-largeur `e` : 0, pointu ;
+    // 1,6, plat de la largeur de la hampe.
     const bout = n.querySelector('path')!
     const aplatir = (e: number) =>
-      bout.setAttribute('d', `M0 0 L11 -3.4 L22 -1.6 L72 -1.6 L72 -3.4 L100 ${(-e).toFixed(2)} L100 ${e.toFixed(2)} L72 3.4 L72 1.6 L22 1.6 L11 3.4Z`)
+      bout.setAttribute('d', `M0 0 L11 -3.4 L22 -1.6 L88 -1.6 L100 ${(-e).toFixed(2)} L100 ${e.toFixed(2)} L88 1.6 L22 1.6 L11 3.4Z`)
     aplatir(0)
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
     n.style.left = `${x}px`
@@ -982,12 +985,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: duree },
     ).onfinish = () => n.remove()
-    // Au contact (50 ms), la pointe s'écrase en 45 ms : 4,2 au plus, puis 3,4.
+    // Au contact (50 ms), la pointe s'écrase en 45 ms : 2,2 au plus, puis 1,6.
     const depart = performance.now()
     const ecraser = (maintenant: number) => {
       const ms = maintenant - depart - 50
-      if (ms >= 45) return aplatir(3.4)
-      if (ms > 0) aplatir(ms < 20 ? (4.2 * ms) / 20 : 4.2 - (0.8 * (ms - 20)) / 25)
+      if (ms >= 45) return aplatir(1.6)
+      if (ms > 0) aplatir(ms < 20 ? (2.2 * ms) / 20 : 2.2 - (0.6 * (ms - 20)) / 25)
       requestAnimationFrame(ecraser)
     }
     requestAnimationFrame(ecraser)
