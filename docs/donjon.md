@@ -880,8 +880,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   4,2 rem centrée sur le point (35° sous l'horizontale, ±15°, un coup sur
   deux de l'autre côté) en 70 ms — le contact —, puis S'OUVRE en amande par
   le milieu en 130 ms, un peu au-delà avant de se rasseoir, jusqu'à 0,84 rem
-  d'ouverture ; la CHAIR sombre (`.donjon-course path.chair`, #2a0a10)
-  apparaît au fond juste après les lèvres ; elle reste ouverte 150 ms et
+  d'ouverture, toute en lumière comme les autres coups (Keko : « la forme
+  est bien, mais pas de noir, garde le même style que les autres effets » ;
+  une chair sombre, #2a0a10, l'emplissait) ; elle reste ouverte 150 ms et
   s'efface telle quelle en 160, comme la lance (`plaie`). Le critique ne
   l'allonge pas, il l'ouvre plus grand. Le point varie sur le dessin comme
   avant ; l'anneau, les étincelles, la poussée et la secousse restent

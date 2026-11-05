@@ -1051,7 +1051,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * LA PLAIE DE LA DAGUE (Keko : « la dague, on va la rework : un slash qui
    * s'ouvre façon plaie » ; elle plantait un trait de lumière, le coup de
    * poignard, rendu à `git log`) : une COUPE fine trace la diagonale, puis
-   * S'OUVRE en amande par le milieu, la chair sombre au fond, reste ouverte
+   * S'OUVRE en amande par le milieu, toute en lumière comme les autres coups
+   * (Keko : « pas de noir » ; une chair sombre l'emplissait), reste ouverte
    * un instant et s'efface telle quelle. Centrée sur le point touché, un coup
    * sur deux de l'autre côté. Le critique ne l'allonge pas, il l'ouvre plus
    * grand (l'écart de `k` doublé, comme le poignard l'épaississait).
@@ -1074,9 +1075,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     trace.style.top = `${y - demi}px`
     trace.style.color = couleur
     const levres = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    const chair = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    chair.setAttribute('class', 'chair')
-    trace.append(levres, chair)
+    trace.append(levres)
     scene.append(trace)
     // Une amande pointue aux deux bouts, de `debut` à `fin` le long de la
     // coupe (0 et 1 : ses deux bouts), de demi-ouverture `h` au milieu.
@@ -1103,16 +1102,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const p = 1 - (1 - t / CONTACT_PLAIE) ** 2
         amande(levres, 0, p, fine)
       } else if (t < CONTACT_PLAIE + OUVERTURE_PLAIE) {
-        // Elle s'ouvre par le milieu, un peu au-delà, et se rassied ; la
-        // chair apparaît au fond, un temps après les lèvres.
+        // Elle s'ouvre par le milieu, un peu au-delà, et se rassied.
         const q = (t - CONTACT_PLAIE) / OUVERTURE_PLAIE
         const o = 1 - (1 - q) ** 3 + 0.12 * Math.sin(Math.PI * q)
         amande(levres, 0, 1, fine + (largeur - fine) * o)
-        amande(chair, 0.12, 0.88, 0.5 * largeur * Math.max(0, o - 0.15) / 0.85)
       } else if (t < CONTACT_PLAIE + OUVERTURE_PLAIE + TENUE_PLAIE + FONDU_PLAIE) {
         // Ouverte, puis effacée telle quelle.
         amande(levres, 0, 1, largeur)
-        amande(chair, 0.12, 0.88, 0.5 * largeur)
         const q = Math.max(0, (t - CONTACT_PLAIE - OUVERTURE_PLAIE - TENUE_PLAIE) / FONDU_PLAIE)
         trace.style.opacity = `${1 - q}`
       } else {
