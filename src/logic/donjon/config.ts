@@ -85,8 +85,15 @@ export type Passif = {
   pitie: number
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
-  /** Le trait est un ARC, en croissant comme le coup des haches (la Fauche) ; l'écran seul le courbe. */
+  /** Le trait est un ARC, en croissant (la Fauche des haches, retirée ; l'écran sait encore le courber). */
   courbe?: boolean
+  /**
+   * L'ÉLAN (les haches) : on pose le doigt (la cible 0) dans la fenêtre, la
+   * charge monte en `charge` ms (raccourcie avec la série), et on lâche (la
+   * cible 1) quand elle est dans `zone` (en part de la charge pleine) ; trop
+   * tôt ou trop tard, c'est raté.
+   */
+  elan?: { charge: number; zone: [number, number] }
   /**
    * LA SÉRIE : réussi, l'événement en rouvre un autre `entre` ms plus tard,
    * plus court de `raccourci` à chaque fois, sans fin — jusqu'au premier raté.
@@ -288,10 +295,14 @@ export const DONJON = {
    * impossible en rapidité, mais le joueur doit avoir l'impression que c'est
    * sans limite ») : chaque trait réussi en ouvre un autre 0,65 s plus tard
    * (le temps du coup), plus court d'un tiers — 2 s, 1,3, 0,85, 0,55, 0,36…
-   * LES HACHES FAUCHENT (Keko, 05/11 : « va pour les haches » — la Taille en
-   * arc, le croissant de leur coup) : la même série, le trait courbé, la
-   * chance ramenée à leur cadence (2,2 % toutes les 0,275 s, 4,4 % toutes
-   * les 0,55 s).
+   * LES HACHES PRENNENT L'ÉLAN (Keko, 05/11 : la Fauche, la Taille en arc,
+   * « pas convaincu : c'est comme les épées en plus dur, il faudrait
+   * différencier davantage » ; parmi trois, « tenir puis lâcher ») : on pose
+   * le doigt dans les 2 s, la charge monte en 1 s, on lâche dans la zone
+   * dorée (72 à 92 % de la charge, 0,2 s) ; chaque élan réussi frappe ×20
+   * aussitôt et en appelle un autre 0,5 s plus tard, sa fenêtre et sa charge
+   * raccourcies d'un quart (1, 0,75, 0,56, 0,42, 0,32 s). La chance ramenée
+   * à leur cadence (2,2 % toutes les 0,275 s, 4,4 % toutes les 0,55 s).
    * LES POINTS FAIBLES EN SÉRIE (Keko, 05/11 : « un système de combo comme la
    * Taille : des ronds avec la même animation, sans la traînée ; le joueur
    * doit les cliquer à temps, et une fois qu'il échoue, on plante une
@@ -325,8 +336,8 @@ export const DONJON = {
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
-    hache: { nom: 'Fauche', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, courbe: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
-    hacheDeuxMains: { nom: 'Fauche', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, courbe: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
+    hache: { nom: 'Élan', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE },
+    hacheDeuxMains: { nom: 'Élan', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },

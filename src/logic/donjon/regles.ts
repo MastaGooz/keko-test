@@ -320,6 +320,11 @@ export function toleranceDe(p: Passif, ev: { debut: number; fin: number }): numb
   return ((p.zone ?? 0) * (ev.fin - ev.debut)) / (1 + (p.zone ?? 0))
 }
 
+/** LA CHARGE DE L'ÉLAN au rang `rang` de la série (ms) : elle raccourcit comme la fenêtre. */
+export function chargeDe(p: Passif, rang: number): number {
+  return (p.elan?.charge ?? 0) * (p.serie?.raccourci ?? 1) ** rang
+}
+
 /** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
 export function etapeDuPassif(j: Joueur, k: number): number {
   return j.passif.evenement === k ? j.passif.etape : 0
@@ -718,6 +723,19 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   }
   // AU TEMPS JUSTE : touché trop tôt, la série est ratée, et s'encaisse.
   if (p.zone !== undefined && Math.abs(t - (ev.fin - toleranceDe(p, ev))) > toleranceDe(p, ev)) return encaisserLePassif(config, e, j, t, true)
+  // L'ÉLAN : le doigt posé, la charge monte, la fenêtre court jusqu'au bout
+  // de la zone ; lâché hors de la zone, c'est raté.
+  if (p.elan !== undefined && cible === 0) {
+    j.passif = { ...j.passif, etape: 1, appui: t, fin: t + chargeDe(p, j.passif.rang) * p.elan.zone[1] }
+    return
+  }
+  if (p.elan !== undefined && cible === 1) {
+    const charge = (t - (j.passif.appui ?? t)) / chargeDe(p, j.passif.rang)
+    if (charge < p.elan.zone[0] || charge > p.elan.zone[1]) {
+      j.passif = { ...j.passif, etape: -1 }
+      return
+    }
+  }
   j.passif = { ...j.passif, etape: etape + 1 }
   if (etape + 1 !== p.cibles) return
   // À cumul, le coup attend la fin de la série.
@@ -726,7 +744,7 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   if (p.serie !== undefined) {
     const rang = j.passif.rang + 1
     const debut = t + p.serie.entre
-    j.passif = { ...j.passif, etape: 0, rang, debut, fin: debut + p.duree * p.serie.raccourci ** rang }
+    j.passif = { ...j.passif, etape: 0, rang, debut, fin: debut + p.duree * p.serie.raccourci ** rang, appui: undefined }
   }
 }
 

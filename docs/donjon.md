@@ -1499,6 +1499,29 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   cumulé dans le noir. Restent à juger, chiffres de moi : les chances, la
   pitié, le ×5 par coup juste, la course (1,2 s, ×0,7) ; le nom et l'icône
   (celle de la Riposte). La Fauche des haches attend son jugement.
+- **LES HACHES PRENNENT L'ÉLAN, LA FAUCHE EST PARTIE** (Keko, 05/11 : « pour
+  les haches je suis pas convaincu : c'est comme les épées en plus dur, il
+  faudrait différencier davantage » ; parmi trois gestes neufs, « tenir puis
+  lâcher »). Les règles (`Passif.elan`, `chargeDe`, `Joueur.passif.appui`) :
+  deux cibles — POSER le doigt (la 0) dans la fenêtre de 2 s, qui la
+  prolonge jusqu'au bout de la zone ; LÂCHER (la 1) quand la charge (1 s
+  pleine) est entre 72 et 92 % — trop tôt ou trop tard, raté ; réussi, ×20
+  aussitôt, et l'élan suivant s'ouvre 0,5 s plus tard, sa fenêtre et sa
+  charge raccourcies d'un quart (1, 0,75, 0,56, 0,42, 0,32 s : la zone
+  passe de 0,2 à 0,06 s). Les bots lâchent au milieu de la zone. L'écran
+  (`dessinerLElan`, `lacherLElan`, `grandElan`) : une JAUGE DEBOUT au centre
+  de l'ennemi (la bande claire de la ligne du Fracas), sa ZONE DORÉE en
+  haut, la CHARGE crème qui monte du bas ; elle bat tant qu'on n'a pas
+  posé le doigt ; on pose et on lâche N'IMPORTE OÙ DANS LA SCÈNE ; la zone
+  s'allume quand la charge y est ; réussi, la HACHE S'ABAT — une grande
+  entaille en croissant de haut en bas, un éclair bref, la scène tassée,
+  une gerbe, l'ennemi figé et écrasé — et le salut ; raté (lâché trop tôt,
+  ou la zone dépassée), la jauge rougit. La Fauche (la Taille en arc)
+  quitte la config ; l'écran sait encore courber un trait (`courbe`).
+  *Le temps juste se date au geste* (`instantDu` : l'heure du jeu moins le
+  retard de traitement, `performance.now() − timeStamp`) : un fil chargé
+  traitait le doigt levé 0,1 à 0,25 s trop tard en capture, et l'élan bien
+  lâché passait la zone. Le Fracas aussi.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

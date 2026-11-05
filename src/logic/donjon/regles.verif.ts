@@ -5,7 +5,7 @@
 import { DONJON, type ConfigDonjon } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, type EvenementDuPassif } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, chargeDe, type EvenementDuPassif } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -320,11 +320,17 @@ const evM3 = evenementA(C, bon2.saison.seed, bon2.joueurs[0], evM2.fin - toleran
 verifier('le cadre ne change pas : la tolérance suit la course', Math.abs(toleranceDe(FR, evM2) / (evM2.fin - toleranceDe(FR, evM2) - evM2.debut) - FR.zone!) < 1e-9 && toleranceDe(FR, evM2) < tolM)
 const deuxJustes = appliquer(C, bon2, { joueur: 'a', t: evM3.debut + 10, type: 'toucher', evenement: evM.k, cible: 0 })
 verifier('deux coups justes tombent en UN coup, ×10', deuxJustes.joueurs[0].passif.dernier?.detail?.length === 1 && deuxJustes.joueurs[0].degatsTap - ms.joueurs[0].degatsTap >= degatsDuTap(C, ms.joueurs[0]) * FR.coup * 2 * (1 - C.tap.ecart) - 1)
-// Les haches fauchent : la Taille, en arc.
-for (const arme of ['hache', 'hacheDeuxMains'] as const) {
-  const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  verifier(`${C.armes[arme].nom} : la Fauche, un trait en arc`, passifDe(C, jH)?.nom === 'Fauche' && passifDe(C, jH)?.trait === true && passifDe(C, jH)?.courbe === true)
-}
+// L'ÉLAN DES HACHES : poser le doigt, lâcher dans la zone de la charge.
+const { etat: hx, ev: evH } = jusquAuPassif(C, increvable(appliquer(C, etatInitial(C, 9, 0), { joueur: 'a', t: 0, type: 'rejoindre', nom: 'A', bot: null, arme: 'hache' })))
+const EL = C.passifs.hache
+const pose = appliquer(C, hx, { joueur: 'a', t: evH.debut + 300, type: 'toucher', evenement: evH.k, cible: 0 })
+const lache = (x: EtatDonjon, part: number) => appliquer(C, x, { joueur: 'a', t: evH.debut + 300 + chargeDe(EL, 0) * part, type: 'toucher', evenement: evH.k, cible: 1 })
+verifier('Élan : posé, rien ne frappe encore', pose.joueurs[0].degatsTap === hx.joueurs[0].degatsTap && pose.joueurs[0].passif.etape === 1)
+verifier('lâché trop tôt, raté', lache(pose, EL.elan!.zone[0] - 0.05).joueurs[0].passif.etape === -1 && lache(pose, EL.elan!.zone[0] - 0.05).joueurs[0].degatsTap === hx.joueurs[0].degatsTap)
+const bienLache = lache(pose, (EL.elan!.zone[0] + EL.elan!.zone[1]) / 2)
+verifier('lâché dans la zone, il frappe ×20 aussitôt, et la série continue', bienLache.joueurs[0].degatsTap - hx.joueurs[0].degatsTap >= degatsDuTap(C, hx.joueurs[0]) * 20 * (1 - C.tap.ecart) - 1 && bienLache.joueurs[0].passif.rang === 1)
+verifier('trop tard (la zone passée), raté', lache(pose, EL.elan!.zone[1] + 0.02).joueurs[0].degatsTap === hx.joueurs[0].degatsTap)
+verifier('la charge suivante, plus courte', Math.abs(chargeDe(EL, 1) - EL.elan!.charge * EL.serie!.raccourci) < 1e-9)
 // La lance et la rapière ont les Points faibles de la dague.
 for (const arme of ['lance', 'rapiere'] as const) {
   const jP = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]

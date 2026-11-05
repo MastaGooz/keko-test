@@ -46,6 +46,7 @@ import {
   etapeDuPassif,
   evenementTouchable,
   toleranceDe,
+  chargeDe,
   facteurCritMoyen,
   etatInitial,
   formeA,
@@ -289,6 +290,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
+  if (p.elan !== undefined) return `Une jauge d'élan s'allume : posez le doigt sur l'ennemi, la hache se charge ; lâchez dans la zone dorée pour frapper (×${p.coup}) ; chaque élan réussi en appelle un plus rapide`
   if (p.zone !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
@@ -3325,6 +3327,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * JUSTE (ce que le rond parcourt en `timing` de part et d'autre), il
    * s'élargit donc quand le rond accélère.
    */
+  /**
+   * L'INSTANT DU GESTE, pas celui où la page le traite : un fil chargé (une
+   * image lourde, un téléphone lent) traite un doigt levé avec du retard, et
+   * un temps juste se jouait trop tard. `timeStamp` date l'événement.
+   */
+  function instantDu(e: Event): number {
+    return maintenant() - Math.max(0, performance.now() - e.timeStamp)
+  }
+
   let jaugeActive: { cle: string; serie: string; ev: EvenementDuPassif; tolerance: number; n: HTMLElement } | null = null
 
   function dessinerLaJauge(ev: EvenementDuPassif, j: Joueur, t: number, p: Passif, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
@@ -3359,6 +3370,130 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.classList.toggle('dedans', Math.abs(t - juste) <= tolerance)
   }
 
+  /**
+   * L'ÉLAN DES HACHES (Keko : « tenir puis lâcher ») : une JAUGE DEBOUT au
+   * centre de l'ennemi, au style des autres (la bande claire cernée d'or), et
+   * sa ZONE DORÉE en haut ; on pose le doigt sur l'ennemi (toute la scène),
+   * la charge y monte ; on lâche dans la zone : la hache s'abat (`grandElan`),
+   * et l'élan suivant s'allume ; lâché trop tôt, ou la zone dépassée, la
+   * jauge rougit. Les règles jugent pareil (`chargeDe`, la cible 0 posée, la
+   * cible 1 lâchée).
+   */
+  let elanActif: { cle: string; ev: EvenementDuPassif; p: Passif; n: HTMLElement; appui: number | null } | null = null
+
+  function dessinerLElan(ev: EvenementDuPassif, j: Joueur, t: number, p: Passif, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const cle = `${j.arme}:${ev.k}:${ev.rang}:elan`
+    voulues.add(cle)
+    let n = ciblesVues.get(cle)
+    if (n === undefined) {
+      n = el('div', 'donjon-jauge donjon-elan')
+      n.append(el('div', 'donjon-elan-zone'), el('div', 'donjon-elan-charge'))
+      const [z0, z1] = p.elan!.zone
+      n.style.setProperty('--z0', `${z0 * 100}%`)
+      n.style.setProperty('--z1', `${z1 * 100}%`)
+      couchePassif.append(n)
+      ciblesVues.set(cle, n)
+      pointsEnJeu.add(cle)
+      n.animate([{ opacity: 0, transform: 'scaleY(0.6)' }, { opacity: 1, transform: 'scaleY(1)' }], { duration: 140, easing: 'ease-out' })
+      elanActif = { cle, ev, p, n, appui: null }
+    }
+    const [px, py] = surLeDessin(ev.cibles[0])
+    n.style.left = `${px}px`
+    n.style.top = `${py}px`
+    const ea = elanActif
+    if (ea === null || ea.cle !== cle) return
+    // La charge monte tant que le doigt est posé ; la zone passée, c'est raté.
+    const charge = ea.appui === null ? 0 : (t - ea.appui) / chargeDe(p, ev.rang)
+    n.style.setProperty('--charge', `${Math.min(1, charge) * 100}%`)
+    n.classList.toggle('attend', ea.appui === null)
+    n.classList.toggle('dedans', charge >= p.elan!.zone[0] && charge <= p.elan!.zone[1])
+    if (ea.appui !== null && charge > p.elan!.zone[1] + (p.grace ?? 0) / chargeDe(p, ev.rang)) lacherLElan(t)
+  }
+
+  /** Le doigt quitte l'ennemi (ou la zone est passée) : l'élan se juge. */
+  function lacherLElan(quand: number): void {
+    const ea = elanActif
+    if (ea === null || ea.appui === null || !pointsEnJeu.has(ea.cle)) return
+    pointsEnJeu.delete(ea.cle)
+    const charge = (quand - ea.appui) / chargeDe(ea.p, ea.ev.rang)
+    const [z0, z1] = ea.p.elan!.zone
+    elanActif = null
+    if (charge < z0 || charge > z1) {
+      ciblesVues.delete(ea.cle)
+      echouerLaJauge(ea.n)
+      void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ea.ev.k, cible: 1 }).then(() => dessiner())
+      return
+    }
+    ea.n.classList.add('frappee')
+    apprecier(ea.ev.rang)
+    grandElan(ea.ev.rang)
+    // Le chiffre jaillit au centre quand la hache touche.
+    const { x0, y0, l, h } = cadreDuDessin()
+    toucherLePassif(ea.ev.k, 1, null, [x0 + l * 0.5, y0 + h * 0.45], performance.now() + 90, quand)
+  }
+
+  scene.addEventListener('pointerdown', (e) => {
+    const ea = elanActif
+    if (ea === null || ea.appui !== null || !pointsEnJeu.has(ea.cle)) return
+    const quand = instantDu(e)
+    if (quand < ea.ev.debut || quand > ea.ev.fin + (ea.p.grace ?? 0)) return
+    ea.appui = quand
+    // Le doigt peut glisser hors de la scène : elle le garde jusqu'au lâcher.
+    try {
+      scene.setPointerCapture(e.pointerId)
+    } catch {
+      // Un pointeur déjà levé : le lâcher viendra quand même.
+    }
+    void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ea.ev.k, cible: 0 })
+  })
+  const lacherDuDoigt = (e: PointerEvent) => {
+    if (elanActif?.appui != null) lacherLElan(instantDu(e))
+  }
+  scene.addEventListener('pointerup', lacherDuDoigt)
+  scene.addEventListener('pointercancel', lacherDuDoigt)
+
+  /**
+   * LA HACHE S'ABAT (l'Élan réussi) : une grande entaille en croissant, de
+   * haut en bas, d'un côté puis de l'autre, qui grossit avec la série ; la
+   * scène tassée et secouée, une gerbe, l'ennemi figé et écrasé, un éclair
+   * bref. Le chiffre jaillit des règles (`toucherLePassif`, après).
+   */
+  function grandElan(rang: number): void {
+    const fort = Math.min(2, 1 + 0.2 * rang)
+    const { x0, y0, l, h } = cadreDuDessin()
+    const [x, y] = [x0 + l * 0.5, y0 + h * 0.45]
+    const or = '#ffd27a'
+    const sens = rang % 2 === 0 ? 1 : -1
+    entaille(x, y, 2.2 * fort, or, 90 + sens * 12, sens, 0, true, sens, false)
+    const flash = el('div', 'donjon-flash-taille')
+    flash.style.setProperty('--x', `${x}px`)
+    flash.style.setProperty('--y', `${y}px`)
+    scene.append(flash)
+    flash.animate([{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, delay: 90, easing: 'ease-out', fill: 'backwards' }).onfinish = () => flash.remove()
+    const d = 12 * fort
+    scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.2 }, { transform: `translateY(${-d * 0.4}px)`, offset: 0.45 }, { transform: `translateY(${d * 0.2}px)`, offset: 0.7 }, { transform: 'none' }], { duration: 420, delay: 90, easing: 'ease-out' })
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    for (let i = 0; i < Math.round(30 * fort); i++) {
+      const p = el('div', 'donjon-particule trait')
+      p.style.left = `${x}px`
+      p.style.top = `${y}px`
+      p.style.background = i % 3 === 0 ? or : '#fffdf4'
+      p.style.zIndex = '4'
+      p.style.opacity = '0'
+      scene.append(p)
+      const a = Math.PI * (i % 2 === 0 ? 0 : 1) + (Math.random() - 0.5) * 1.4
+      const loin = (2 + Math.random() * 3.5) * rem * fort
+      p.animate(
+        [
+          { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(2)`, opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(a) * loin}px), calc(-50% + ${Math.sin(a) * loin + 12}px)) rotate(${a}rad) scaleX(0.2)`, opacity: 0 },
+        ],
+        { duration: 380 + Math.random() * 220, delay: 90, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+      ).onfinish = () => p.remove()
+    }
+    reculer(x, 'capaciteCritique', 200, undefined, 90, true)
+  }
+
   /** La jauge manquée : elle rougit, tremble et s'éteint. */
   function echouerLaJauge(n: HTMLElement): void {
     n.classList.add('echouee')
@@ -3368,10 +3503,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
   // On touche l'ennemi, n'importe où dans la scène, pour frapper au temps juste.
-  scene.addEventListener('pointerdown', () => {
+  scene.addEventListener('pointerdown', (e) => {
     const ja = jaugeActive
     if (ja === null || !pointsEnJeu.has(ja.cle)) return
-    const quand = maintenant()
+    const quand = instantDu(e)
     const juste = ja.ev.fin - ja.tolerance
     pointsEnJeu.delete(ja.cle)
     if (Math.abs(quand - juste) > ja.tolerance) {
@@ -3449,7 +3584,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         placerLeTrait(tr, a, b, Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin, c)
       }
       const p = passifDe(C, j)
-      if (p?.zone !== undefined) dessinerLaJauge(ev, j, t, p, voulues, surLeDessin)
+      if (p?.elan !== undefined) dessinerLElan(ev, j, t, p, voulues, surLeDessin)
+      else if (p?.zone !== undefined) dessinerLaJauge(ev, j, t, p, voulues, surLeDessin)
       else if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)
       else if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
         // Les runes déjà touchées restent allumées.
