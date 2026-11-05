@@ -933,6 +933,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   en 20 ms (le fer en fait 3,4, sur une boîte de 12), puis se rassied à 3,4
   en 25 — et le reste jusqu'au fondu. Le `d` est réécrit à chaque image (un
   `d` ne s'anime pas partout), au rythme de `requestAnimationFrame`.
+- **LA FLÈCHE A UNE HAMPE DROITE ET UN EMPENNAGE** (Keko, 05/11 : « une
+  forme droite plutôt que pointue vers la queue, et une forme qui rappelle un
+  peu les plumes, un losange à la fin ») : sur sa boîte de 100 × 12, un
+  LOSANGE à la queue (de 0 à 22, 3,4 de demi-largeur au plus, comme le fer),
+  une HAMPE DROITE de 1,6 de demi-largeur, puis le FER (de 72 à 100) ; elle
+  s'effilait du fer à la queue. Le fondu de la queue (`.donjon-estoc`, son
+  masque) part de 75 % au lieu de 35 % : les plumes s'y perdaient.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

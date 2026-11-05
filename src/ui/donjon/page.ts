@@ -941,15 +941,22 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * la queue à peine fondue (Keko : « un peu trop transparentes »). Elle monte du bas, de celui qui
    * tire. Sa POINTE S'APLATIT en se plantant (Keko : « aplatir l'extrémité au
    * moment où elle se plante ») : pointue en vol, elle s'écrase au contact en
-   * un bout plat, un peu plus large d'abord, et le reste. `&fleche` la rend
-   * aussi à la dague.
+   * un bout plat, un peu plus large d'abord, et le reste. Une HAMPE DROITE
+   * et un EMPENNAGE en losange à la queue (Keko : « une forme droite plutôt
+   * que pointue vers la queue, et une forme qui rappelle un peu les plumes,
+   * un losange à la fin » ; elle s'effilait du fer jusqu'à la queue).
+   * `&fleche` la rend aussi à la dague.
    */
   function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
     const n = el('div', 'donjon-estoc')
-    n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 L72 -3.4 L100 0 L72 3.4Z"/></svg>'
-    // Le bout, de demi-largeur `e` : 0, la pointe ; 3,4, plat de la largeur du fer.
+    n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
+    // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
+    // le fer (de 72 à 100) ; son bout, de demi-largeur `e` : 0, la pointe ;
+    // 3,4, plat de la largeur du fer.
     const bout = n.querySelector('path')!
-    const aplatir = (e: number) => bout.setAttribute('d', `M0 0 L72 -3.4 L100 ${(-e).toFixed(2)} L100 ${e.toFixed(2)} L72 3.4Z`)
+    const aplatir = (e: number) =>
+      bout.setAttribute('d', `M0 0 L11 -3.4 L22 -1.6 L72 -1.6 L72 -3.4 L100 ${(-e).toFixed(2)} L100 ${e.toFixed(2)} L72 3.4 L72 1.6 L22 1.6 L11 3.4Z`)
+    aplatir(0)
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
     n.style.left = `${x}px`
     n.style.top = `${y}px`
