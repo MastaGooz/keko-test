@@ -164,7 +164,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * n° 133 (le loup spectral ; pas de griffes dans le tri), et la fronde, la
  * n° 108 (les pierres au-dessus de la main), le shuriken, la n° 142 (le
  * tourbillon), le boomerang, la n° 126 (la tornade), et le kunai, la n° 121
- * (la silhouette au couteau), provisoires elles aussi.
+ * (la silhouette au couteau), et le couteau de lancer, celle de la dague,
+ * provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -191,6 +192,7 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   shuriken: 'armes/shuriken.webp',
   boomerang: 'armes/boomerang.webp',
   kunai: 'armes/kunai.webp',
+  couteau: 'armes/dague.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -216,6 +218,7 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   shuriken: { caractere: 'Tournoyant', bonus: "Aucun pour l'instant" },
   boomerang: { caractere: 'Revenant', bonus: "Aucun pour l'instant" },
   kunai: { caractere: 'Acéré', bonus: "Aucun pour l'instant" },
+  couteau: { caractere: 'Affûté', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -996,9 +999,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * Keko : « une arbalète, en mode grosse flèche ») : la même flèche, un quart
    * plus longue et 1,8 fois plus épaisse, qui s'enfonce plus loin. LE KUNAI
    * (`kunai` ; Keko : « ajoute le kunai ») : lancé de même, mais une lame en
-   * feuille, une poignée fine et un ANNEAU au bout, plus court.
+   * feuille, une poignée fine et un ANNEAU au bout, plus court. LE COUTEAU DE
+   * LANCER (`couteau` ; Keko : « comme le kunai, mais avec une forme de
+   * couteau ») : une lame au dos droit et au tranchant bombé, une garde, un
+   * manche court au pommeau rond.
    */
-  function fleche(x: number, y: number, k: number, couleur: string, angle: number, gros = false, kunai = false): void {
+  function fleche(x: number, y: number, k: number, couleur: string, angle: number, gros = false, forme: 'fleche' | 'kunai' | 'couteau' = 'fleche'): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
     // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
@@ -1007,7 +1013,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // la taille de la tige » ; elle partait de 13), et l'anneau, rond une fois
     // la boîte étirée (sept dixièmes de long, onze dixièmes d'épais), évidé.
     const trait = n.querySelector('path')!
-    if (kunai) {
+    // Le couteau : la lame (de 50 à 100, le dos en haut, le tranchant bombé
+    // dessous, la pointe près de l'axe), la garde, le manche et le pommeau,
+    // rond une fois la boîte étirée (trois quarts de long, douze dixièmes
+    // d'épais) ; tous tracés dans le même sens, sans trou au recouvrement.
+    if (forme === 'couteau') {
+      trait.setAttribute(
+        'd',
+        'M50 -2.2 L90 -2.2 L100 -0.4 Q86 3.4 62 3 L50 2.6Z M46 -3.6 L50.5 -3.6 L50.5 3.6 L46 3.6Z M21 -1.4 L46 -1.4 L46 1.4 L21 1.4Z M14.3 0 A4.7 2.1 0 1 1 23.7 0 A4.7 2.1 0 1 1 14.3 0Z',
+      )
+    } else if (forme === 'kunai') {
       trait.setAttribute('fill-rule', 'evenodd')
       trait.setAttribute(
         'd',
@@ -1018,7 +1033,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const [long, epais] = gros ? [1.25, 1.8] : kunai ? [0.7, 1.1] : [1, 1]
+    const [long, epais] = gros ? [1.25, 1.8] : forme === 'kunai' ? [0.7, 1.1] : forme === 'couteau' ? [0.75, 1.2] : [1, 1]
     const pose = (avance: string, etire: number, vibre = 0) => `translate(-100%, -50%) rotate(${angle + vibre}deg) translateX(${avance}) scale(${k * etire * long}, ${k * epais})`
     const fiche = gros ? '0.55rem' : '0.35rem'
     scene.append(n)
@@ -1452,8 +1467,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // L'arc tire la flèche, l'arbalète son gros carreau ; la dague ouvre une
     // plaie (ou tire la flèche, `&fleche`).
     const enArbalete = arme === 'arbalete'
-    // Le kunai se lance comme la flèche, sa forme à lui.
-    const enKunai = arme === 'kunai'
+    // Le kunai et le couteau de lancer se lancent comme la flèche, leur forme à eux.
+    const enKunai = arme === 'kunai' || arme === 'couteau'
     const enFleche = arme === 'arc' || enArbalete || enKunai || (arme === 'dague' && FLECHE)
     // La lance aussi pique, mais d'un estoc qui se retire ; la rapière aussi,
     // d'une aiguille.
@@ -1603,7 +1618,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
       if (enLance) lance(x, y, k, couleur, anglePique, enRapiere)
-      else if (enFleche) fleche(x, y, k, couleur, anglePique, enArbalete, enKunai)
+      else if (enFleche) fleche(x, y, k, couleur, anglePique, enArbalete, arme === 'kunai' ? 'kunai' : arme === 'couteau' ? 'couteau' : 'fleche')
       else plaie(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa

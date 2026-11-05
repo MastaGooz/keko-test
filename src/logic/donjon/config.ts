@@ -29,8 +29,8 @@ export type CleAmelioration = 'tap' | 'vitesse' | 'chanceCrit' | 'multCrit' | 'r
 export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'chanceCrit', 'multCrit', 'recuperation']
 
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
-export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai'
-export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai']
+export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau'
+export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau']
 /** Les armes qui ont un passif de classe (les sept provisoires n'ont pas encore le leur). */
 export type ArmeAPassif = 'epee' | 'dague' | 'baton'
 /**
@@ -187,7 +187,9 @@ export const DONJON = {
    * 12 toutes les 0,3 s. Le SHURIKEN, le BOOMERANG et le KUNAI aussi (Keko :
    * « on essaie les armes de jet ? », puis « oublie la hache de lancer, on
    * l'utilise pour faire un boomerang, et ajoute le kunai ») : 8 toutes les
-   * 0,2 s, 14 toutes les 0,35 s, 9 toutes les 0,225 s.
+   * 0,2 s, 14 toutes les 0,35 s, 9 toutes les 0,225 s. Le COUTEAU DE LANCER
+   * aussi (Keko : « comme le kunai, mais avec une forme de couteau ») : 10
+   * toutes les 0,25 s.
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
@@ -214,6 +216,7 @@ export const DONJON = {
     shuriken: { nom: 'Shuriken', rarete: 'commune', degats: 8, recharge: 0.2 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     boomerang: { nom: 'Boomerang', rarete: 'commune', degats: 14, recharge: 0.35 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     kunai: { nom: 'Kunai', rarete: 'commune', degats: 9, recharge: 0.225 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
+    couteau: { nom: 'Couteau de lancer', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
   } as Record<
     Equipement,
     { nom: string; rarete: RareteArme; degats: number; recharge: number; chanceCrit: number; multCrit: number; recuperation: number; capacites: readonly CleCapacite[] }

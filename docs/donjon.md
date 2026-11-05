@@ -1145,6 +1145,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   - Puis le boomerang moins transparent (Keko) : ses fantômes à 35 et 65 %
     au lieu de 20 et 45, et il ne s'efface que sur le dernier quart de son
     retour au lieu de la seconde moitié.
+- **LE COUTEAU DE LANCER, PROVISOIRE** (Keko, 05/11 : « couteau de lancer ?
+  comme le kunai, mais avec une forme de couteau ») : « Affûté », 10 toutes
+  les 0,25 s — le DPS de base, ni bonus, ni capacité, ni passif ; l'icône de
+  la dague. Il se lance comme le kunai et la flèche (`fleche(…, 'couteau')`,
+  la forme passe d'un booléen à un nom) : sur sa boîte de 100 × 12, aux trois
+  quarts de long et douze dixièmes d'épais, une LAME au dos droit et au
+  tranchant bombé (de 50 à 100, la pointe près de l'axe), une GARDE en
+  travers, un MANCHE court et un POMMEAU rond.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
