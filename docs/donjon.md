@@ -1037,6 +1037,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     (140 ms), reste posée 90 ms — la chaîne se redresse — puis s'efface
     comme le marteau. L'ennemi est ÉCRASÉ, figé 120 ms, la scène tassée de
     7 px, les points de lumière de la massue.
+- **LE FOUET EN S, LA BOULE DU FLÉAU HÉRISSÉE** (Keko, 05/11 : « on peut
+  rajouter des pics sur la boule du fléau ? et le fouet ressemble à un
+  projectile courbé, il faudrait rajouter une deuxième courbe au bout ») :
+  la courbe du fouet est une cubique EN S — elle bombe d'un côté près du
+  manche (0,4 de sa longueur, au tiers) et repart de l'autre, plus fort, vers
+  le bout (0,55, aux deux tiers) ; elle bombait d'un seul côté. La boule du
+  fléau porte HUIT POINTES (une étoile de 1,6 fois son rayon), et tourne de
+  220° en tombant.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

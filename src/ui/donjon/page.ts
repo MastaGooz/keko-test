@@ -1657,7 +1657,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * bas (d'un côté puis de l'autre) sur une courbe, parcouru d'une onde qui
    * file vers le bout ; le bout accélère, la courbe SE TEND en arrivant sur le
    * point — le contact, où il CLAQUE (`claquement`) —, une dernière onde le
-   * secoue, puis il s'efface. Le critique l'épaissit.
+   * secoue, puis il s'efface. Le critique l'épaissit. Sa courbe est un S
+   * (Keko : « il ressemble à un projectile courbé, il faudrait rajouter une
+   * deuxième courbe au bout » ; il bombait d'un seul côté) : elle bombe d'un
+   * côté près du manche, et repart de l'autre, plus fort, vers le bout.
    */
   let coteDuFouet = 1
   function fouet(x: number, y: number, k: number, couleur: string): void {
@@ -1667,10 +1670,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const longueur = 8 * rem
     const largeur = 0.2 * rem * (1 + (k - 1) * 2)
     // D'où il part : d'en bas, d'un côté puis de l'autre, penché au hasard ;
-    // la courbe bombe d'un côté, celle d'un fouet lancé (le point est en 0, 0).
+    // la courbe en S, celle d'un fouet lancé (le point est en 0, 0) : deux
+    // points de contrôle, au tiers et aux deux tiers, de part et d'autre.
     const depuis = ((90 + cote * 45 + (Math.random() - 0.5) * 30) * Math.PI) / 180
     const [ox, oy] = [Math.cos(depuis) * longueur, Math.sin(depuis) * longueur]
-    const [cx, cy] = [ox / 2 - Math.sin(depuis) * 0.35 * longueur * cote, oy / 2 + Math.cos(depuis) * 0.35 * longueur * cote]
+    const [nx, ny] = [-Math.sin(depuis) * cote, Math.cos(depuis) * cote]
+    const [c1x, c1y] = [(ox * 2) / 3 + nx * 0.4 * longueur, (oy * 2) / 3 + ny * 0.4 * longueur]
+    const [c2x, c2y] = [ox / 3 - nx * 0.55 * longueur, oy / 3 - ny * 0.55 * longueur]
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
@@ -1692,10 +1698,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       for (let i = 0; i <= 40; i++) {
         const s = (fin * i) / 40
         const u = 1 - s
-        const bx = u * u * ox + 2 * u * s * cx
-        const by = u * u * oy + 2 * u * s * cy
-        let tx = 2 * u * (cx - ox) - 2 * s * cx
-        let ty = 2 * u * (cy - oy) - 2 * s * cy
+        const bx = u * u * u * ox + 3 * u * u * s * c1x + 3 * u * s * s * c2x
+        const by = u * u * u * oy + 3 * u * u * s * c1y + 3 * u * s * s * c2y
+        let tx = 3 * u * u * (c1x - ox) + 6 * u * s * (c2x - c1x) - 3 * s * s * c2x
+        let ty = 3 * u * u * (c1y - oy) + 6 * u * s * (c2y - c1y) - 3 * s * s * c2y
         const n = Math.hypot(tx, ty) || 1
         tx /= n
         ty /= n
@@ -1777,7 +1783,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * marteau ; la chaîne traîne derrière la boule, ployée par la vitesse, une
    * traînée suit la boule ; elle frappe le point en descendant (le contact),
    * l'écrase, reste posée un instant puis s'efface. Un coup sur deux de
-   * l'autre côté, penché au hasard. Le critique est 1,4 fois plus gros.
+   * l'autre côté, penché au hasard. Le critique est 1,4 fois plus gros. La
+   * boule est HÉRISSÉE de huit pointes (Keko : « rajouter des pics sur la
+   * boule »), et tourne en tombant.
    */
   let coteDuFleau = 1
   function fleau(x: number, y: number, k: number, couleur: string): void {
@@ -1805,8 +1813,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       c.setAttribute('r', (0.09 * rem * k).toFixed(1))
       return c
     })
-    const tete = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    tete.setAttribute('r', boule.toFixed(1))
+    // La boule et ses huit pointes, dessinées autour de 0, 0, posées par `transform`.
+    const tete = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    const pointes: string[] = []
+    for (let i = 0; i < 16; i++) {
+      const a = (i * Math.PI) / 8
+      const r = i % 2 === 0 ? boule * 1.6 : boule
+      pointes.push(`${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`)
+    }
+    tete.setAttribute('d', `M${pointes.join(' L')}Z`)
     trace.append(sillage, ...maillons, tete)
     scene.append(trace)
     const rad = (d: number) => (d * Math.PI) / 180
@@ -1815,8 +1830,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const dessiner = (p: number, ploie: number, sillon: number) => {
       const a = rad(debut + (fin - debut) * p)
       const [bx, by] = [Math.cos(a) * rayon, Math.sin(a) * rayon]
-      tete.setAttribute('cx', bx.toFixed(1))
-      tete.setAttribute('cy', by.toFixed(1))
+      tete.setAttribute('transform', `translate(${bx.toFixed(1)} ${by.toFixed(1)}) rotate(${(cote * 220 * p).toFixed(1)})`)
       // La chaîne, du tiers du rayon jusqu'à la boule, courbée en arrière.
       const ar = a - rad(cote * ploie)
       const [ax, ay] = [Math.cos(ar) * rayon * 0.3, Math.sin(ar) * rayon * 0.3]
