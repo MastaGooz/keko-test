@@ -757,19 +757,58 @@
   fill: #fffdf4;
 }
 
-/* Le Fracas : le rond dit le moment — rouge trop tôt, vert au temps juste (le manqué, plus bas, l'emporte). */
-.donjon .donjon-cible.trait.trop-tot::before {
-  background: #e8603a;
+/* LA JAUGE DU FRACAS : une barre sur l'ennemi, un curseur qui la parcourt, la zone verte au bout (le temps
+   juste) ; la zone s'allume quand le curseur y est ; manquée, la barre rougit. */
+.donjon-jauge {
+  position: absolute;
+  height: 1.2rem;
+  margin-top: -0.6rem;
+  border-radius: 0.6rem;
+  pointer-events: none;
+  background: rgba(20, 10, 4, 0.78);
   box-shadow:
-    0 0 0 0.18rem #7a2a12,
-    0 0 0.6rem rgba(232, 96, 58, 0.8);
+    0 0 0 0.16rem #fffdf4,
+    0 0 0.7rem rgba(255, 214, 130, 0.9);
 }
 
-.donjon .donjon-cible.trait.juste::before {
+.donjon-jauge-zone {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--zone, 15%);
+  border-radius: 0 0.6rem 0.6rem 0;
+  background: #2f8f4a;
+}
+
+.donjon-jauge.dedans .donjon-jauge-zone,
+.donjon-jauge.frappee .donjon-jauge-zone {
   background: #6fe38a;
+  box-shadow: 0 0 0.9rem rgba(111, 227, 138, 1);
+}
+
+.donjon-jauge-curseur {
+  position: absolute;
+  top: -0.4rem;
+  bottom: -0.4rem;
+  left: var(--avance, 0%);
+  width: 0.36rem;
+  margin-left: -0.18rem;
+  border-radius: 0.18rem;
+  background: #fffdf4;
   box-shadow:
-    0 0 0 0.18rem #1f7a3a,
-    0 0 1rem rgba(111, 227, 138, 1);
+    0 0 0 0.1rem #2a1406,
+    0 0 0.5rem rgba(255, 253, 244, 0.9);
+}
+
+.donjon-jauge.echouee {
+  box-shadow:
+    0 0 0 0.16rem #e8392b,
+    0 0 0.9rem rgba(255, 60, 40, 0.95);
+}
+
+.donjon-jauge.echouee .donjon-jauge-zone {
+  background: #7a1410;
 }
 
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste

@@ -286,7 +286,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (p.timing !== undefined) return `Un anneau se referme sur un rond : touchez-le pile quand il le recouvre ; chaque coup juste en appelle un plus rapide ; au premier raté, chacun frappe (×${p.coup})`
+  if (p.timing !== undefined) return `Une jauge s'allume sur l'ennemi : touchez-le quand le curseur est dans la zone verte ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
@@ -2760,7 +2760,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.pointerEvents = 'none'
     if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
     // Un point faible qui n'a pas été touché : manqué.
-    if (pointsEnJeu.delete(cle)) return marquerLEchec(n, n)
+    if (pointsEnJeu.delete(cle)) return n.classList.contains('donjon-jauge') ? echouerLaJauge(n) : marquerLEchec(n, n)
     // Le trait couvre la scène : il s'éteint sans grandir.
     const grandit = !n.classList.contains('donjon-trait')
     n.animate([{ opacity: 1 }, grandit ? { opacity: 0, transform: 'scale(1.4)' } : { opacity: 0 }], { duration: grandit ? 220 : 320, easing: 'ease-out' }).onfinish = () => n.remove()
@@ -3215,31 +3215,18 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const cle = `${serie}:${ev.rang}:point`
     voulues.add(cle)
     const grace = passifDe(C, j)?.grace ?? 0
-    // Le Fracas : l'anneau recouvre le rond à `juste`, à `timing` près.
-    const timing = passifDe(C, j)?.timing
-    const juste = timing === undefined ? ev.fin + grace : ev.fin - timing
     let n = ciblesVues.get(cle)
     if (n === undefined) {
       // Le rond net de la Taille (ses styles), sans traînée.
       const rond = bouton('donjon-cible trait point-faible')
       n = rond
-      rond.setAttribute('aria-label', timing === undefined ? 'Point faible' : 'Fracas')
+      rond.setAttribute('aria-label', 'Point faible')
       const c = ev.cibles[0]
       rond.addEventListener('pointerdown', (e) => {
         e.stopPropagation()
         const quand = maintenant()
-        if (!pointsEnJeu.has(cle)) return
-        // Trop tôt pour le Fracas : raté sur-le-champ (les règles encaissent la série).
-        if (timing !== undefined && Math.abs(quand - juste) > timing) {
-          pointsEnJeu.delete(cle)
-          ciblesVues.delete(cle)
-          rond.style.pointerEvents = 'none'
-          marquerLEchec(rond, rond)
-          void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ev.k, cible: 0 }).then(() => dessiner())
-          return
-        }
         // Au-delà de la grâce, les règles le refuseraient : on ne le salue pas.
-        if (quand > ev.fin + grace) return
+        if (!pointsEnJeu.has(cle) || quand > ev.fin + grace) return
         pointsEnJeu.delete(cle)
         poserLaMarque(serie, c)
         apprecier(ev.rang)
@@ -3253,17 +3240,79 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const [px, py] = surLeDessin(ev.cibles[0])
     n.style.left = `${px}px`
     n.style.top = `${py}px`
-    // L'anneau touche le rond à la fin de la grâce, là où il est manqué — ou,
-    // au Fracas, au temps juste, et il passe au travers pendant la tolérance.
-    n.style.setProperty('--reste', Math.max(timing === undefined ? 0 : -0.3, Math.min(1, (juste - t) / (juste - ev.debut))).toFixed(3))
-    // Au Fracas, le rond dit le moment (Keko : « indiquer quand il est trop
-    // tôt et quand le moment est bon, en colorant le rond ») : rouge trop tôt,
-    // vert au temps juste.
-    if (timing !== undefined) {
-      n.classList.toggle('trop-tot', t < juste - timing)
-      n.classList.toggle('juste', Math.abs(t - juste) <= timing)
-    }
+    // L'anneau touche le rond à la fin de la grâce : c'est là qu'il est manqué.
+    const jusqua = ev.fin + grace
+    n.style.setProperty('--reste', Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))).toFixed(3))
   }
+
+  /**
+   * LA JAUGE DU FRACAS (Keko : « ce n'est pas clair : les autres armes
+   * utilisent le rond pour le temps restant, et ici pour un timing précis,
+   * ça porte à confusion ; il faudrait un autre type de télégraphe » ; la
+   * jauge à curseur, choisie) : une barre sur l'ennemi, un curseur qui la
+   * parcourt, la ZONE VERTE à son bout — le temps juste, `timing` de part et
+   * d'autre ; elle s'allume quand le curseur y entre. On touche L'ENNEMI
+   * (toute la scène) : trop tôt, c'est raté sur-le-champ ; dans la zone,
+   * c'est juste ; le curseur au bout, c'est passé.
+   */
+  let jaugeActive: { cle: string; serie: string; ev: EvenementDuPassif; timing: number; n: HTMLElement } | null = null
+
+  function dessinerLaJauge(ev: EvenementDuPassif, j: Joueur, t: number, timing: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const serie = `${j.arme}:${ev.k}`
+    const cle = `${serie}:${ev.rang}:jauge`
+    voulues.add(cle)
+    let n = ciblesVues.get(cle)
+    if (n === undefined) {
+      n = el('div', 'donjon-jauge')
+      const zone = el('div', 'donjon-jauge-zone')
+      const curseur = el('div', 'donjon-jauge-curseur')
+      n.append(zone, curseur)
+      couchePassif.append(n)
+      ciblesVues.set(cle, n)
+      pointsEnJeu.add(cle)
+      // La zone : le temps juste à `timing` près, au bout de la barre.
+      n.style.setProperty('--zone', `${((2 * timing) / (ev.fin - ev.debut)) * 100}%`)
+      n.animate([{ opacity: 0, transform: 'scaleX(0.6)' }, { opacity: 1, transform: 'scaleX(1)' }], { duration: 140, easing: 'ease-out' })
+    }
+    jaugeActive = { cle, serie, ev, timing, n }
+    const { l } = cadreDuDessin()
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const largeur = Math.min(16 * rem, 0.8 * l)
+    const [px, py] = surLeDessin(ev.cibles[0])
+    n.style.width = `${largeur}px`
+    n.style.left = `${px - largeur / 2}px`
+    n.style.top = `${py}px`
+    const avance = Math.max(0, Math.min(1, (t - ev.debut) / (ev.fin - ev.debut)))
+    n.style.setProperty('--avance', `${avance * 100}%`)
+    n.classList.toggle('dedans', Math.abs(t - (ev.fin - timing)) <= timing)
+  }
+
+  /** La jauge manquée : elle rougit, tremble et s'éteint. */
+  function echouerLaJauge(n: HTMLElement): void {
+    n.classList.add('echouee')
+    n.style.pointerEvents = 'none'
+    n.animate([{ translate: '0' }, { translate: '-6px 0' }, { translate: '6px 0' }, { translate: '-4px 0' }, { translate: '0' }], { duration: 260 })
+    n.animate([{ opacity: 1 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: 600 }).onfinish = () => n.remove()
+  }
+
+  // On touche l'ennemi, n'importe où dans la scène, pour frapper au temps juste.
+  scene.addEventListener('pointerdown', () => {
+    const ja = jaugeActive
+    if (ja === null || !pointsEnJeu.has(ja.cle)) return
+    const quand = maintenant()
+    const juste = ja.ev.fin - ja.timing
+    pointsEnJeu.delete(ja.cle)
+    if (Math.abs(quand - juste) > ja.timing) {
+      // Trop tôt (ou trop tard) : raté sur-le-champ (les règles encaissent la série).
+      ciblesVues.delete(ja.cle)
+      echouerLaJauge(ja.n)
+    } else {
+      poserLaMarque(ja.serie, ja.ev.cibles[0])
+      apprecier(ja.ev.rang)
+      ja.n.classList.add('frappee')
+    }
+    void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ja.ev.k, cible: 0 }).then(() => dessiner())
+  })
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
   function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number, fin: number): void {
@@ -3325,7 +3374,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const jusqua = ev.fin + (passifDe(C, j)?.grace ?? 0)
         placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin)
       }
-      if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)
+      const timing = passifDe(C, j)?.timing
+      if (timing !== undefined) dessinerLaJauge(ev, j, t, timing, voulues, surLeDessin)
+      else if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)
       else if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
         // Les runes déjà touchées restent allumées.
         const genre = j.arme === 'dague' ? 'point' : 'rune'

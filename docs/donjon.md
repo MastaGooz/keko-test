@@ -1432,6 +1432,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     grossir ») : la boule du fléau passe de 0,55 à 0,88 rem (pointes
     comprises) et les maillons de 0,09 à 0,14 — partout, l'attaque de base
     aussi —, et au Fracas le fléau frappe 1,3 fois plus grand encore.
+  - Puis LA JAUGE (Keko : « ce n'est pas clair finalement, car les autres
+    armes utilisent le cercle pour indiquer le temps restant, et ici on
+    l'utilise pour un timing précis : ça porte à confusion ; il faudrait un
+    autre type de télégraphe » ; parmi trois, la jauge à curseur) : le rond
+    et ses couleurs quittent le Fracas (`dessinerLaJauge`). Une BARRE sur
+    l'ennemi (16 rem, ou 80 % du dessin), un CURSEUR qui la parcourt de la
+    fenêtre entière, la ZONE VERTE à son bout (le temps juste, 0,1 s de part
+    et d'autre, sa largeur calculée de la fenêtre : elle grandit quand le
+    curseur accélère) ; elle s'allume quand le curseur y est. On touche
+    L'ENNEMI, n'importe où dans la scène : trop tôt, la barre rougit,
+    tremble et s'éteint, et la série s'encaisse ; dans la zone, le salut ;
+    le curseur au bout sans geste, raté pareil. Les règles ne changent pas.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
