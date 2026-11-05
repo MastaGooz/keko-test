@@ -874,6 +874,18 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   la dague avant. Le critique
   l'épaissit, comme celui de la dague. Le dessin du trait droit est partagé
   avec le poignard (`traitDroit`).
+- **LA DAGUE OUVRE UNE PLAIE** (Keko, 05/11 : « la dague, on va la rework :
+  un slash qui s'ouvre façon plaie ») : le coup de poignard décrit plus haut
+  est remplacé (`git log` le garde). Une COUPE fine trace une diagonale de
+  4,2 rem centrée sur le point (35° sous l'horizontale, ±15°, un coup sur
+  deux de l'autre côté) en 70 ms — le contact —, puis S'OUVRE en amande par
+  le milieu en 130 ms, un peu au-delà avant de se rasseoir, jusqu'à 0,84 rem
+  d'ouverture ; la CHAIR sombre (`.donjon-course path.chair`, #2a0a10)
+  apparaît au fond juste après les lèvres ; elle reste ouverte 150 ms et
+  s'efface telle quelle en 160, comme la lance (`plaie`). Le critique ne
+  l'allonge pas, il l'ouvre plus grand. Le point varie sur le dessin comme
+  avant ; l'anneau, les étincelles, la poussée et la secousse restent
+  ceux du poignard, dans l'axe de la coupe.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

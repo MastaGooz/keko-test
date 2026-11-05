@@ -279,6 +279,11 @@
   fill: #fffdf4;
 }
 
+/* La chair au fond de la plaie de la dague. */
+.donjon-course path.chair {
+  fill: #2a0a10;
+}
+
 /* Le cercle de rune (rangé, `&rune`). */
 .donjon-rune-cercle svg {
   display: block;
