@@ -22,7 +22,7 @@
  */
 import './donjon.css'
 import { botsInitiaux, jouerLesBots, type EtatDesBots } from '../../logic/donjon/bots.ts'
-import { AMELIORATIONS, ARMES, DONJON, JOUR, type ArmeAPassif, type CleAmelioration, type CleCapacite, type Equipement, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
+import { AMELIORATIONS, ARMES, DONJON, JOUR, type ArmeAPassif, type Passif, type CleAmelioration, type CleCapacite, type Equipement, type RareteArme, type TypeArme } from '../../logic/donjon/config.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu, type Horloge } from '../../logic/donjon/horloge.ts'
 import { portraitDeLEtage } from '../../logic/donjon/ennemi.ts'
 import { etatPartageLocal } from '../../logic/donjon/partage.ts'
@@ -45,6 +45,7 @@ import {
   effetEnCours,
   etapeDuPassif,
   evenementTouchable,
+  toleranceDe,
   facteurCritMoyen,
   etatInitial,
   formeA,
@@ -288,7 +289,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (p.timing !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
+  if (p.zone !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
@@ -3319,13 +3320,16 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * celui des épées, des dagues ») : la bande claire et les tirets qui
    * filent de la Taille, cernés de sombre sous une lueur d'or ; le curseur
    * est un trait crème cerné d'or (le rond net, d'abord ; Keko : « remplace
-   * le rond qui bouge par un trait ») ; le CADRE a LA LARGEUR DU TEMPS
+   * le rond qui bouge par un trait ») ; LE CADRE NE CHANGE PLUS DE TAILLE
+   * (Keko : seul le curseur va plus vite ; `zone`, `toleranceDe`) ; le CADRE a LA LARGEUR DU TEMPS
    * JUSTE (ce que le rond parcourt en `timing` de part et d'autre), il
    * s'élargit donc quand le rond accélère.
    */
-  let jaugeActive: { cle: string; serie: string; ev: EvenementDuPassif; timing: number; n: HTMLElement } | null = null
+  let jaugeActive: { cle: string; serie: string; ev: EvenementDuPassif; tolerance: number; n: HTMLElement } | null = null
 
-  function dessinerLaJauge(ev: EvenementDuPassif, j: Joueur, t: number, timing: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+  function dessinerLaJauge(ev: EvenementDuPassif, j: Joueur, t: number, p: Passif, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    // Le cadre ne change pas de taille (Keko) : la tolérance suit la course.
+    const tolerance = toleranceDe(p, ev)
     const serie = `${j.arme}:${ev.k}`
     const cle = `${serie}:${ev.rang}:jauge`
     voulues.add(cle)
@@ -3338,7 +3342,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       pointsEnJeu.add(cle)
       n.animate([{ opacity: 0, transform: 'scaleX(0.6)' }, { opacity: 1, transform: 'scaleX(1)' }], { duration: 140, easing: 'ease-out' })
     }
-    jaugeActive = { cle, serie, ev, timing, n }
+    jaugeActive = { cle, serie, ev, tolerance, n }
     const { l } = cadreDuDessin()
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const largeur = Math.min(16 * rem, 0.8 * l)
@@ -3346,12 +3350,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.width = `${largeur}px`
     n.style.left = `${px - largeur / 2}px`
     n.style.top = `${py}px`
-    // Le curseur est au cadre (le milieu) au temps juste ; le cadre fait ce qu'il parcourt en ±`timing`.
-    const juste = ev.fin - timing
-    n.style.setProperty('--cible', `${Math.max(0.9 * rem, (largeur * timing) / Math.max(1, juste - ev.debut))}px`)
+    // Le curseur est au cadre (le milieu) au temps juste ; le cadre fait `zone` de sa course, de part et d'autre.
+    const juste = ev.fin - tolerance
+    n.style.setProperty('--cible', `${largeur * (p.zone ?? 0)}px`)
     const avance = Math.max(0, Math.min(1, (0.5 * (t - ev.debut)) / Math.max(1, juste - ev.debut)))
     n.style.setProperty('--avance', `${avance * 100}%`)
-    n.classList.toggle('dedans', Math.abs(t - juste) <= timing)
+    n.classList.toggle('dedans', Math.abs(t - juste) <= tolerance)
   }
 
   /** La jauge manquée : elle rougit, tremble et s'éteint. */
@@ -3367,9 +3371,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const ja = jaugeActive
     if (ja === null || !pointsEnJeu.has(ja.cle)) return
     const quand = maintenant()
-    const juste = ja.ev.fin - ja.timing
+    const juste = ja.ev.fin - ja.tolerance
     pointsEnJeu.delete(ja.cle)
-    if (Math.abs(quand - juste) > ja.timing) {
+    if (Math.abs(quand - juste) > ja.tolerance) {
       // Trop tôt (ou trop tard) : raté sur-le-champ (les règles encaissent la série).
       ciblesVues.delete(ja.cle)
       echouerLaJauge(ja.n)
@@ -3443,8 +3447,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const c: [number, number] = [(a[0] + b[0]) / 2 - (b[1] - a[1]) * bombe, (a[1] + b[1]) / 2 + (b[0] - a[0]) * bombe]
         placerLeTrait(tr, a, b, Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin, c)
       }
-      const timing = passifDe(C, j)?.timing
-      if (timing !== undefined) dessinerLaJauge(ev, j, t, timing, voulues, surLeDessin)
+      const p = passifDe(C, j)
+      if (p?.zone !== undefined) dessinerLaJauge(ev, j, t, p, voulues, surLeDessin)
       else if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)
       else if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
         // Les runes déjà touchées restent allumées.

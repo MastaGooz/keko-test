@@ -1467,6 +1467,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     d'or au coup juste ; manqué, le cadre et le rond rougissent.
   - Puis (Keko : « remplace le rond qui bouge par un trait ») : ce qui file
     est un TRAIT debout, crème cerné d'or (0,4 × 2 rem).
+  - Puis LE CADRE FIXE (Keko : « le rectangle ne devrait pas changer de
+    taille, seule la barre avance plus vite ; prends le rectangle 3 en
+    base ») : `Passif.timing` (une tolérance fixe en temps) devient
+    `Passif.zone` (la demi-largeur du cadre en part de la course jusqu'au
+    milieu, 0,19 — la largeur qu'avait le cadre au troisième rond) ; la
+    tolérance en temps SUIT LA COURSE (`toleranceDe` : zone × (course +
+    tolérance), la fenêtre finissant à la sortie du cadre) : ±0,21 s au
+    premier rond, ±0,1 au troisième, ±0,05 au cinquième — le cadre est le
+    même à l'écran, le curseur va plus vite, c'est plus dur.
 - **LES HACHES FAUCHENT** (Keko, 05/11 : « va pour les haches » ; la Taille
   en arc, le croissant de leur coup) : `config.passifs.hache` et
   `.hacheDeuxMains`, « Fauche », la Taille entière (le suspens, le grand

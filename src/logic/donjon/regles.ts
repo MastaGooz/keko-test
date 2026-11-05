@@ -310,6 +310,16 @@ export function evenementTouchable(config: ConfigDonjon, seed: number, j: Joueur
   return grace > 0 && t > j.passif.fin && t <= j.passif.fin + grace ? evenementA(config, seed, j, j.passif.fin) : null
 }
 
+/**
+ * LA TOLÉRANCE DU TEMPS JUSTE d'un événement (le Fracas) : le cadre fait
+ * `zone` de la course jusqu'au milieu, de part et d'autre, et la fenêtre
+ * finit quand le curseur sort du cadre — d'où
+ * tolérance = zone × (course + tolérance).
+ */
+export function toleranceDe(p: Passif, ev: { debut: number; fin: number }): number {
+  return ((p.zone ?? 0) * (ev.fin - ev.debut)) / (1 + (p.zone ?? 0))
+}
+
 /** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
 export function etapeDuPassif(j: Joueur, k: number): number {
   return j.passif.evenement === k ? j.passif.etape : 0
@@ -707,7 +717,7 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
     return
   }
   // AU TEMPS JUSTE : touché trop tôt, la série est ratée, et s'encaisse.
-  if (p.timing !== undefined && Math.abs(t - (ev.fin - p.timing)) > p.timing) return encaisserLePassif(config, e, j, t, true)
+  if (p.zone !== undefined && Math.abs(t - (ev.fin - toleranceDe(p, ev))) > toleranceDe(p, ev)) return encaisserLePassif(config, e, j, t, true)
   j.passif = { ...j.passif, etape: etape + 1 }
   if (etape + 1 !== p.cibles) return
   // À cumul, le coup attend la fin de la série.

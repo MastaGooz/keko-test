@@ -106,12 +106,14 @@ export type Passif = {
    */
   cumul?: boolean
   /**
-   * LE TEMPS JUSTE (le Fracas des contondantes) : on touche quand l'anneau
-   * recouvre le rond, à `timing` ms près — à la fin de la fenêtre moins
-   * `timing`. Trop tôt, c'est raté (la série s'encaisse) ; trop tard, la
-   * fenêtre est passée.
+   * LE TEMPS JUSTE (le Fracas des contondantes) : on touche quand le curseur
+   * est dans le cadre du milieu. `zone` : la demi-largeur du cadre, en part
+   * de la course jusqu'au milieu — LE CADRE NE CHANGE PAS DE TAILLE, seul le
+   * curseur va plus vite (Keko) : la tolérance en temps suit la course
+   * (`toleranceDe`). Trop tôt, c'est raté (la série s'encaisse) ; passé le
+   * cadre, la fenêtre est finie.
    */
-  timing?: number
+  zone?: number
   /** Tous ses ronds au même endroit, au centre du dessin (le Fracas). */
   centre?: boolean
   /** La série s'encaisse en UN SEUL COUP, de `coup` × les réussites (le Fracas). */
@@ -314,7 +316,11 @@ export const DONJON = {
    * Le rond AU CENTRE, les suivants à la même place, et la série tombe EN UN
    * SEUL COUP PUISSANT qui cumule les réussites (Keko : « mettre le rond au
    * centre, et les suivants à sa même place, puis libérer un seul coup
-   * puissant qui cumule toutes les réussites »).
+   * puissant qui cumule toutes les réussites »). Le CADRE de taille fixe,
+   * celui du troisième rond d'alors (Keko : « le rectangle ne devrait pas
+   * changer de taille, seule la barre avance plus vite ; prends le rectangle
+   * 3 en base ») : `zone` 0,19 de la course, soit ±0,21 s au premier rond,
+   * ±0,1 au troisième, ±0,05 au cinquième.
    */
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
@@ -323,11 +329,11 @@ export const DONJON = {
     hacheDeuxMains: { nom: 'Fauche', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, courbe: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
-    massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
-    massueDeuxMains: { nom: 'Fracas', chance: 0.075, pitie: 40, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
-    marteau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
-    marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
-    fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
+    massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    massueDeuxMains: { nom: 'Fracas', chance: 0.075, pitie: 40, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    marteau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,
