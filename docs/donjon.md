@@ -1178,6 +1178,20 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   jaillissent en tournant (380 à 500 ms). Les points de lumière qui montent
   de la massue ; au hasard sur le dessin ; la scène sursaute de 3 px ;
   l'ennemi recule comme sous l'épée.
+- **LE BÂTON LANCE UN GROS ORBE** (Keko, 05/11 : « ce projectile magique ira
+  bien avec les baguettes ; maintenant un projectile pour les bâtons, qui
+  remplacera l'animation actuelle des bâtons, type magie ; plus lent mais
+  plus puissant que celui de la baguette ») : le bâton ne cogne plus en
+  massue longue (la massue à deux mains la garde) ; il lance L'ORBE EN
+  VERSION LOURDE (`orbe(…, lourd)`) : un cœur de 1,4 rem au lieu de 0,84,
+  trois lueurs au lieu de deux, une traînée sur 45 % de la course au lieu de
+  35, qui ondule de 0,4 rem au lieu de 0,28, le contact à 280 ms au lieu de
+  170 ; il éclate plus grand (`eclatMagique(…, lourd)` : un flash de 3 rem
+  au lieu de 1,8, éteint en 240 ms ; neuf étoiles au lieu de six, plus
+  grosses, deux fois plus loin, plus lentes). Six points de lumière de plus ;
+  la scène secouée de 8 px avec rebond au lieu de 3 ; l'ennemi figé 120 ms.
+  Il frappe au hasard sur le dessin, comme la baguette. `&rune` lui rend
+  toujours le cercle de rune.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
