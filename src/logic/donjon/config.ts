@@ -32,7 +32,7 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée, et la lance et la rapière, qui percent comme la dague). */
-export type ArmeAPassif = 'epee' | 'deuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton'
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -85,6 +85,8 @@ export type Passif = {
   pitie: number
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
+  /** Le trait est un ARC, en croissant comme le coup des haches (la Fauche) ; l'écran seul le courbe. */
+  courbe?: boolean
   /**
    * LA SÉRIE : réussi, l'événement en rouvre un autre `entre` ms plus tard,
    * plus court de `raccourci` à chaque fois, sans fin — jusqu'au premier raté.
@@ -284,6 +286,10 @@ export const DONJON = {
    * impossible en rapidité, mais le joueur doit avoir l'impression que c'est
    * sans limite ») : chaque trait réussi en ouvre un autre 0,65 s plus tard
    * (le temps du coup), plus court d'un tiers — 2 s, 1,3, 0,85, 0,55, 0,36…
+   * LES HACHES FAUCHENT (Keko, 05/11 : « va pour les haches » — la Taille en
+   * arc, le croissant de leur coup) : la même série, le trait courbé, la
+   * chance ramenée à leur cadence (2,2 % toutes les 0,275 s, 4,4 % toutes
+   * les 0,55 s).
    * LES POINTS FAIBLES EN SÉRIE (Keko, 05/11 : « un système de combo comme la
    * Taille : des ronds avec la même animation, sans la traînée ; le joueur
    * doit les cliquer à temps, et une fois qu'il échoue, on plante une
@@ -313,6 +319,8 @@ export const DONJON = {
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
+    hache: { nom: 'Fauche', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, courbe: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
+    hacheDeuxMains: { nom: 'Fauche', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, courbe: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },

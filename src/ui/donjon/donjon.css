@@ -728,12 +728,14 @@
 }
 
 .donjon-trait-bande {
+  fill: none;
   stroke: rgba(255, 236, 190, 0.38);
   stroke-width: 1.5rem;
   stroke-linecap: round;
 }
 
 .donjon-trait-guide {
+  fill: none;
   stroke: #fffdf4;
   stroke-width: 0.42rem;
   stroke-linecap: round;
@@ -748,6 +750,7 @@
 }
 
 .donjon-trait-fait {
+  fill: none;
   stroke: #fffdf4;
   stroke-width: 0.7rem;
   stroke-linecap: round;

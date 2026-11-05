@@ -270,6 +270,8 @@ function quandLaCapacite(cle: CleCapacite): string {
 const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   epee: 'passifs/riposte.webp',
   deuxMains: 'passifs/riposte.webp',
+  hache: 'passifs/riposte.webp',
+  hacheDeuxMains: 'passifs/riposte.webp',
   dague: 'passifs/points-faibles.webp',
   lance: 'passifs/points-faibles.webp',
   rapiere: 'passifs/points-faibles.webp',
@@ -285,7 +287,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
-  if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
+  if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
   if (p.timing !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
@@ -2778,9 +2780,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * plus en plus court ») : après le coup, un autre trait, ailleurs, plus
    * court ; chaque réussite est saluée (`APPRECIATIONS`, Keko : « bien, puis
    * super, puis excellent, etc., comme dans Paper Mario »), et le coup
-   * grossit avec le rang.
+   * grossit avec le rang. LA FAUCHE DES HACHES (Keko : « va pour les haches »)
+   * : le même trait, EN ARC (`c`, le point de contrôle d'une courbe
+   * quadratique ; au milieu, le trait est droit), bombé d'un côté puis de
+   * l'autre ; le doigt suit la courbe.
    */
-  type Trait = { fin: number; rang: number; n: HTMLElement; bande: SVGLineElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
+  type Trait = { fin: number; rang: number; n: HTMLElement; bande: SVGPathElement; guide: SVGPathElement; fait: SVGPathElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; c: [number, number]; avance: number; suivi: boolean; fini: boolean }
+  /** Le point du trait a → c → b au paramètre u (une quadratique ; c au milieu, droite). */
+  const pointDuTrait = (a: [number, number], c: [number, number], b: [number, number], u: number): [number, number] => [
+    (1 - u) * (1 - u) * a[0] + 2 * (1 - u) * u * c[0] + u * u * b[0],
+    (1 - u) * (1 - u) * a[1] + 2 * (1 - u) * u * c[1] + u * u * b[1],
+  ]
   const traitsVus = new Map<string, Trait>()
   // Le doigt peut s'écarter de 2 rem du trait ; il en parcourt les neuf dixièmes.
   const ECART_DU_TRAIT = 2
@@ -2791,7 +2801,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const n = el('div', 'donjon-trait')
     const svg = document.createElementNS(SVG, 'svg')
     const ligne = (classe: string) => {
-      const x = document.createElementNS(SVG, 'line')
+      const x = document.createElementNS(SVG, 'path')
       x.setAttribute('class', classe)
       svg.append(x)
       return x
@@ -2805,7 +2815,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const depart = bouton('donjon-cible trait')
     depart.setAttribute('aria-label', 'Départ de la taille')
     n.append(svg, depart)
-    const tr: Trait = { fin: Infinity, rang, n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
+    const tr: Trait = { fin: Infinity, rang, n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], c: [0, 0], avance: 0, suivi: false, fini: false }
     let rem = 16
     const rater = () => {
       tr.suivi = false
@@ -2830,12 +2840,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (!tr.suivi) return
       const r = couchePassif.getBoundingClientRect()
       const [px, py] = [e.clientX - r.left, e.clientY - r.top]
-      const [ax, ay] = tr.a
-      const [dx, dy] = [tr.b[0] - ax, tr.b[1] - ay]
-      const long = Math.hypot(dx, dy) || 1
-      // Où en est le doigt le long du trait, et à quelle distance de lui.
-      const u = ((px - ax) * dx + (py - ay) * dy) / (long * long)
-      const ecart = Math.abs((px - ax) * dy - (py - ay) * dx) / long
+      // Où en est le doigt le long du trait (droit ou en arc), et à quelle
+      // distance de lui : le plus proche de 49 points de la courbe.
+      let u = 0
+      let ecart = Infinity
+      for (let i = 0; i <= 48; i++) {
+        const [qx, qy] = pointDuTrait(tr.a, tr.c, tr.b, i / 48)
+        const d = Math.hypot(px - qx, py - qy)
+        if (d < ecart) [ecart, u] = [d, i / 48]
+      }
       if (ecart > ECART_DU_TRAIT * rem || u < tr.avance - 0.25) return rater()
       tr.avance = Math.max(tr.avance, Math.min(1, u))
       if (tr.avance >= BOUT_DU_TRAIT) {
@@ -2849,8 +2862,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         // s'efface sous lui. Les deux bouts partent au même instant.
         const reussite = performance.now()
         n.style.visibility = 'hidden'
-        grandeTaille(tr.a, tr.b, tr.rang)
-        const milieu: [number, number] = [(tr.a[0] + tr.b[0]) / 2, (tr.a[1] + tr.b[1]) / 2]
+        grandeTaille(tr.a, tr.b, tr.rang, tr.c)
+        const milieu = pointDuTrait(tr.a, tr.c, tr.b, 0.5)
         void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu, reussite + PAUSE_TAILLE, t))
       }
       dessinerLAvance(tr)
@@ -2909,7 +2922,46 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => n.remove()
   }
 
-  function grandeTaille(a: [number, number], b: [number, number], rang: number): void {
+  /**
+   * UN TRAIT DE LUMIÈRE EN ARC (la Fauche) : le long de la courbe a → c → b,
+   * prolongée de 30 % de part et d'autre, de demi-épaisseur `largeur` selon
+   * `profil` ; `dessiner(queue, tete, gonfle)` comme celui de `traitDroit`
+   * (0 = le départ prolongé, 1 = le bout prolongé).
+   */
+  function traitCourbe(a: [number, number], c: [number, number], b: [number, number], couleur: string, largeur: number, profil: (v: number) => number) {
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    trace.setAttribute('class', 'donjon-course')
+    trace.setAttribute('aria-hidden', 'true')
+    const [w, h] = [scene.clientWidth, scene.clientHeight]
+    trace.setAttribute('viewBox', `0 0 ${w} ${h}`)
+    trace.style.left = trace.style.top = '0px'
+    trace.style.width = `${w}px`
+    trace.style.height = `${h}px`
+    trace.style.color = couleur
+    const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    trace.append(forme)
+    scene.append(trace)
+    const dessiner = (queue: number, tete: number, gonfle: number) => {
+      if (tete - queue < 0.01) return forme.setAttribute('d', '')
+      const dehors: string[] = []
+      const dedans: string[] = []
+      for (let i = 0; i <= 40; i++) {
+        const u = -0.3 + 1.6 * (queue + ((tete - queue) * i) / 40)
+        const [x, y] = pointDuTrait(a, c, b, u)
+        let [dx, dy] = [2 * (1 - u) * (c[0] - a[0]) + 2 * u * (b[0] - c[0]), 2 * (1 - u) * (c[1] - a[1]) + 2 * u * (b[1] - c[1])]
+        const n = Math.hypot(dx, dy) || 1
+        dx /= n
+        dy /= n
+        const e = largeur * gonfle * profil(i / 40)
+        dehors.push(`${(x - dy * e).toFixed(1)} ${(y + dx * e).toFixed(1)}`)
+        dedans.push(`${(x + dy * e).toFixed(1)} ${(y - dx * e).toFixed(1)}`)
+      }
+      forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
+    }
+    return { dessiner, trace }
+  }
+
+  function grandeTaille(a: [number, number], b: [number, number], rang: number, c: [number, number] | null = null): void {
     // Le coup grossit avec la série.
     const fort = Math.min(2, 1 + 0.25 * rang)
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -2920,13 +2972,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const [mx, my] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
     const angleDuTrait = (Math.atan2(uy, ux) * 180) / Math.PI
     const or = '#ffd27a'
+    // Droit, il file de part et d'autre ; en arc (la Fauche), il suit la courbe.
+    const enArc = c !== null && Math.hypot(c[0] - mx, c[1] - my) > 1
+    const tracerLeLong = (largeur: number, profil: (v: number) => number) =>
+      enArc ? traitCourbe(a, c!, b, or, largeur, profil) : traitDroit(tx, ty, or, angleDuTrait, long + 2 * prolonge, largeur, profil)
     // Le noir tombe sur la scène, qui se resserre ; il se lève au coup.
     const nuit = el('div', 'donjon-nuit-taille')
     scene.append(nuit)
     nuit.animate([{ opacity: 0 }, { opacity: 0.9, offset: 0.55 }, { opacity: 0.92 }], { duration: PAUSE_TAILLE, easing: 'ease-out', fill: 'forwards' })
     const serre = scene.animate([{ transform: 'none' }, { transform: 'scale(1.035)' }], { duration: PAUSE_TAILLE, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' })
     // Le fil de lumière qui se tend le long du trait, de plus en plus vif.
-    const { dessiner: tendre, trace: fil } = traitDroit(tx, ty, or, angleDuTrait, long + 2 * prolonge, 0.09 * rem, (v) => Math.sin(Math.PI * v) ** 0.5)
+    const { dessiner: tendre, trace: fil } = tracerLeLong(0.09 * rem, (v) => Math.sin(Math.PI * v) ** 0.5)
     fil.style.zIndex = '4'
     const debut = performance.now()
     const suspens = (maintenant: number) => {
@@ -2940,7 +2996,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     requestAnimationFrame(suspens)
     setTimeout(() => {
       // LE COUP. L'entaille : pointue aux deux bouts, 1,8 rem d'épais au milieu.
-      const { dessiner: trancher, trace } = traitDroit(tx, ty, or, angleDuTrait, long + 2 * prolonge, 0.9 * rem, (v) => Math.sin(Math.PI * v) ** 0.7)
+      const { dessiner: trancher, trace } = tracerLeLong(0.9 * rem, (v) => Math.sin(Math.PI * v) ** 0.7)
       trace.style.zIndex = '4'
       const coup = performance.now()
       const image = (maintenant: number) => {
@@ -2985,8 +3041,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const loin = (2.5 + Math.random() * 5) * rem
         const [dx, dy] = [Math.cos(angle) * loin, Math.sin(angle) * loin]
         const p = el('div', 'donjon-particule trait')
-        p.style.left = `${a[0] + (b[0] - a[0]) * (1.6 * v - 0.3)}px`
-        p.style.top = `${a[1] + (b[1] - a[1]) * (1.6 * v - 0.3)}px`
+        const [ox, oy] = pointDuTrait(a, enArc ? c! : [mx, my], b, 1.6 * v - 0.3)
+        p.style.left = `${ox}px`
+        p.style.top = `${oy}px`
         p.style.background = i % 3 === 0 ? or : '#fffdf4'
         p.style.zIndex = '4'
         p.style.opacity = '0'
@@ -3325,22 +3382,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   })
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
-  function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number, fin: number): void {
+  function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number, fin: number, c: [number, number]): void {
     tr.fin = fin
     tr.a = a
     tr.b = b
+    tr.c = c
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    for (const x of [tr.bande, tr.guide, tr.fait]) {
-      x.setAttribute('x1', a[0].toFixed(1))
-      x.setAttribute('y1', a[1].toFixed(1))
-    }
-    for (const x of [tr.bande, tr.guide]) {
-      x.setAttribute('x2', b[0].toFixed(1))
-      x.setAttribute('y2', b[1].toFixed(1))
-    }
-    // La flèche, pointée dans le sens du trait, au-delà de son bout.
-    const long = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
-    const [ux, uy] = [(b[0] - a[0]) / long, (b[1] - a[1]) / long]
+    const p = (q: [number, number]) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`
+    for (const x of [tr.bande, tr.guide]) x.setAttribute('d', `M${p(a)} Q${p(c)} ${p(b)}`)
+    // La flèche, pointée dans le sens où le trait arrive, au-delà de son bout.
+    const long = Math.hypot(b[0] - c[0], b[1] - c[1]) || 1
+    const [ux, uy] = [(b[0] - c[0]) / long, (b[1] - c[1]) / long]
     const point = (av: number, cote: number) => `${(b[0] + ux * av * rem - uy * cote * rem).toFixed(1)} ${(b[1] + uy * av * rem + ux * cote * rem).toFixed(1)}`
     tr.fleche.setAttribute('d', `M${point(1.1, 0)} L${point(-0.2, 0.75)} L${point(0.2, 0)} L${point(-0.2, -0.75)}Z`)
     tr.depart.style.left = `${a[0]}px`
@@ -3349,10 +3401,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     dessinerLAvance(tr)
   }
 
-  /** Ce que le doigt a parcouru du trait, allumé. */
+  /** Ce que le doigt a parcouru du trait, allumé : la courbe coupée à `avance`. */
   function dessinerLAvance(tr: Trait): void {
-    tr.fait.setAttribute('x2', (tr.a[0] + (tr.b[0] - tr.a[0]) * tr.avance).toFixed(1))
-    tr.fait.setAttribute('y2', (tr.a[1] + (tr.b[1] - tr.a[1]) * tr.avance).toFixed(1))
+    const u = tr.avance
+    const milieu: [number, number] = [tr.a[0] + (tr.c[0] - tr.a[0]) * u, tr.a[1] + (tr.c[1] - tr.a[1]) * u]
+    const bout = pointDuTrait(tr.a, tr.c, tr.b, u)
+    const p = (q: [number, number]) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`
+    tr.fait.setAttribute('d', `M${p(tr.a)} Q${p(milieu)} ${p(bout)}`)
   }
 
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
@@ -3382,7 +3437,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         }
         // L'anneau se referme jusqu'à la fin de la grâce : c'est là qu'il touche le rond, et que c'est manqué.
         const jusqua = ev.fin + (passifDe(C, j)?.grace ?? 0)
-        placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin)
+        // Droit (c au milieu), ou en arc pour la Fauche : bombé du tiers de sa longueur, d'un côté puis de l'autre.
+        const [a, b] = [surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1])]
+        const bombe = passifDe(C, j)?.courbe === true ? (0.32 * ((ev.k + ev.rang) % 2 === 0 ? 1 : -1)) : 0
+        const c: [number, number] = [(a[0] + b[0]) / 2 - (b[1] - a[1]) * bombe, (a[1] + b[1]) / 2 + (b[0] - a[0]) * bombe]
+        placerLeTrait(tr, a, b, Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin, c)
       }
       const timing = passifDe(C, j)?.timing
       if (timing !== undefined) dessinerLaJauge(ev, j, t, timing, voulues, surLeDessin)

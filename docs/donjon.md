@@ -1467,6 +1467,19 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     d'or au coup juste ; manqué, le cadre et le rond rougissent.
   - Puis (Keko : « remplace le rond qui bouge par un trait ») : ce qui file
     est un TRAIT debout, crème cerné d'or (0,4 × 2 rem).
+- **LES HACHES FAUCHENT** (Keko, 05/11 : « va pour les haches » ; la Taille
+  en arc, le croissant de leur coup) : `config.passifs.hache` et
+  `.hacheDeuxMains`, « Fauche », la Taille entière (le suspens, le grand
+  coup, la série, les saluts, la grâce, l'échec au rond rouge) et
+  `courbe: true` — l'écran seul le courbe, les règles n'ont que les deux
+  bouts. Le trait est devenu UNE COURBE QUADRATIQUE pour tous (`Trait.c`,
+  `pointDuTrait` ; au milieu, la Taille reste droite) : la Fauche bombe du
+  tiers de sa longueur, d'un côté puis de l'autre (numéro + rang) ; le doigt
+  la suit (le plus proche de 49 points de la courbe), le parcouru s'allume
+  sur la courbe coupée, la flèche suit la tangente d'arrivée ; le fil du
+  suspens et la grande entaille la suivent (`traitCourbe`, prolongée de 30 %
+  de part et d'autre), la gerbe aussi. Chance ramenée à leur cadence (2,2 %
+  / 0,275 s ; 4,4 % / 0,55 s), pitié 136 et 68 taps ; icône de la Riposte.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
