@@ -1325,6 +1325,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     l'instant exact de l'échec (il s'arrêtait avant, à la fin sans la grâce,
     et rétrécissait en échelle). Manqué, le rond seul vire au rouge sous sa
     croix.
+- **LA TAILLE EST VALIDÉE** (Keko, 05/11 : « c'est validé pour la taille »),
+  telle que décrite ci-dessus : le trait à tracer, le suspens noir, le grand
+  coup, la série sans fin aux saluts (« Bien ! » crème, « Super ! » or clair,
+  « Excellent ! » orange, « Fabuleux ! » rose, « Prodigieux ! » violet,
+  « Divin ! » bleu ciel, « Légendaire ! » puis « Légendaire ×N ! » jaune
+  doré), la grâce, l'anneau qui se referme sur le rond net, l'échec au rond
+  rouge. Restent à juger, chiffres de moi : la chance (2 %, 4 %), la pitié,
+  le ×20 par trait, la durée et le raccourci de la série ; l'icône est
+  encore celle de la Riposte.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
