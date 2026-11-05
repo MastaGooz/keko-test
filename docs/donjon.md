@@ -977,7 +977,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   du poing, aux trois quarts, autour ; des étincelles en traits dans tous les
   sens, six de plus, une fois et demie plus loin ; la scène tressaute, sèche
   (5, −4, 2 px dans un sens au hasard, 160 ms) ; l'ennemi recule comme sous
-  l'épée, figé 90 ms.
+  l'épée, figé 90 ms. Puis (Keko : « ça ressemble trop aux mains nues ») :
+  plus d'onde ronde, c'est le coup des mains nues ; un TRAÇANT, la balle
+  (un trait de 7 rem, 0,2 rem au plus épais, pointu derrière), monte du bas
+  jusqu'au point en 40 ms — le contact, où partent l'éclat, les étincelles,
+  la secousse et le recul — et s'éteint en 50 ; un FLASH, un disque de
+  lumière derrière l'éclat, qui éclate et s'éteint en 120 ms.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

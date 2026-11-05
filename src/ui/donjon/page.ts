@@ -805,6 +805,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const CONTACT_MARTEAU_LOURD = 160
   const TENUE_MARTEAU_LOURD = 120
   const BALAYAGE_MARTEAU_LOURD = 125
+  // La balle du pistolet arrive en 40 ms.
+  const CONTACT_BALLE = 40
   const RUNE = parametres.has('rune')
   type Genre = 'tap' | 'critique' | 'auto' | 'autoCritique' | 'capacite' | 'capaciteCritique'
 
@@ -1449,14 +1451,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enFeu ? CONTACT_BALLE : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
         const a = Math.random() * 2 * Math.PI
         const pas = (d: number) => `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`
-        scene.animate([{ transform: 'none' }, { transform: pas(5), offset: 0.2 }, { transform: pas(-4), offset: 0.45 }, { transform: pas(2), offset: 0.7 }, { transform: 'none' }], { duration: 160, easing: 'ease-out' })
+        scene.animate([{ transform: 'none' }, { transform: pas(5), offset: 0.2 }, { transform: pas(-4), offset: 0.45 }, { transform: pas(2), offset: 0.7 }, { transform: 'none' }], { duration: 160, delay: contact, easing: 'ease-out' })
       }
     } else if (enMarteau) {
       const k = 1 + 0.65 * (fort - 1)
@@ -1607,14 +1609,37 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * L'EXPLOSION DU PISTOLET (Keko : « une arme à feu, type médiéval fantasy, à
-   * une main ; on peut tenter une petite explosion, un impact ? ») : la balle
-   * frappe d'un coup, sans course — un ÉCLAT de lumière en étoile, aux
-   * pointes inégales tirées à chaque coup, qui jaillit en 60 ms, tourne un peu
-   * et s'éteint en grandissant ; l'onde ronde du poing, plus petite, autour ;
-   * les étincelles en traits partent dans tous les sens (dans `impact`).
+   * une main ; on peut tenter une petite explosion, un impact ? ») : un
+   * TRAÇANT, la balle, fin et très rapide, monte de celui qui tire jusqu'au
+   * point (40 ms, le contact) ; là, un FLASH, un disque de lumière qui éclate
+   * et s'éteint vite, et un ÉCLAT en étoile, aux pointes inégales tirées à
+   * chaque coup, qui jaillit en 60 ms, tourne un peu et s'éteint en
+   * grandissant ; les étincelles en traits partent dans tous les sens (dans
+   * `impact`). Plus d'onde ronde (Keko : « ça ressemble trop aux mains
+   * nues » : c'est leur coup).
    */
   function explosion(x: number, y: number, k: number, couleur: string): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    // Le traçant : il monte du bas, penché au hasard, et s'éteint au contact.
+    const angle = -90 + (Math.random() - 0.5) * 50
+    const balle = traitDroit(x, y, couleur, angle, 7 * rem, 0.1 * rem * k, (v) => v)
+    const tir = performance.now()
+    const image = (maintenant: number) => {
+      const t = maintenant - tir
+      if (t < CONTACT_BALLE) {
+        const p = t / CONTACT_BALLE
+        balle.dessiner(Math.max(0, p - 0.7), p, 1)
+      } else if (t < CONTACT_BALLE + 50) {
+        const q = (t - CONTACT_BALLE) / 50
+        balle.dessiner(0.3 + 0.7 * q, 1, 1 - 0.5 * q)
+        balle.trace.style.opacity = `${1 - q}`
+      } else {
+        balle.trace.remove()
+        return
+      }
+      requestAnimationFrame(image)
+    }
+    image(tir)
     const rayon = 1.7 * rem * k
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
@@ -1633,9 +1658,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const r = i % 2 === 0 ? rayon * (0.65 + Math.random() * 0.35) : rayon * 0.34
       sommets.push(`${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`)
     }
+    // Le flash, derrière l'éclat.
+    const flash = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    flash.setAttribute('r', (rayon * 0.6).toFixed(1))
     const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     forme.setAttribute('d', `M${sommets.join(' L')}Z`)
-    trace.append(forme)
+    trace.append(flash, forme)
+    trace.style.opacity = '0'
     scene.append(trace)
     const sens = Math.random() < 0.5 ? -1 : 1
     trace.animate(
@@ -1644,9 +1673,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         { transform: `scale(1) rotate(${sens * 8}deg)`, opacity: 1, offset: 0.3, easing: 'ease-in' },
         { transform: `scale(1.25) rotate(${sens * 14}deg)`, opacity: 0 },
       ],
-      { duration: 200 },
+      { duration: 200, delay: CONTACT_BALLE },
     ).onfinish = () => trace.remove()
-    impactRond(x, y, 0.75 * k, couleur)
+    flash.animate(
+      [
+        { transform: 'scale(0.4)', opacity: 1, easing: 'ease-out' },
+        { transform: 'scale(1.6)', opacity: 0 },
+      ],
+      { duration: 120, delay: CONTACT_BALLE, fill: 'backwards' },
+    )
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
