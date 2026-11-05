@@ -286,7 +286,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (p.timing !== undefined) return `Un curseur file sur une ligne vers un cercle : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
+  if (p.timing !== undefined) return `Un rond file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
   if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
@@ -3256,7 +3256,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * milieu, qu'il atteint au temps juste (`timing` de part et d'autre :
    * le cercle s'allume) ; il le dépasse à peine. On touche L'ENNEMI (toute
    * la scène) : trop tôt, c'est raté sur-le-champ ; juste, le cercle se
-   * REMPLIT du rond des Points faibles ; passé, c'est raté.
+   * REMPLIT du rond des Points faibles ; passé, c'est raté. Puis UN CADRE
+   * au lieu du cercle, et le style des autres (Keko : « plutôt qu'un rond
+   * cible, un rectangle, et le style graphique du télégraphe assorti à
+   * celui des épées, des dagues ») : la bande claire et les tirets qui
+   * filent de la Taille, cernés de sombre sous une lueur d'or ; le curseur
+   * est le rond net crème cerné d'or ; le CADRE a LA LARGEUR DU TEMPS
+   * JUSTE (ce que le rond parcourt en `timing` de part et d'autre), il
+   * s'élargit donc quand le rond accélère.
    */
   let jaugeActive: { cle: string; serie: string; ev: EvenementDuPassif; timing: number; n: HTMLElement } | null = null
 
@@ -3267,7 +3274,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     let n = ciblesVues.get(cle)
     if (n === undefined) {
       n = el('div', 'donjon-jauge')
-      n.append(el('div', 'donjon-jauge-cercle'), el('div', 'donjon-jauge-curseur'))
+      n.append(el('div', 'donjon-jauge-tirets'), el('div', 'donjon-jauge-cible'), el('div', 'donjon-jauge-curseur'))
       couchePassif.append(n)
       ciblesVues.set(cle, n)
       pointsEnJeu.add(cle)
@@ -3281,8 +3288,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.width = `${largeur}px`
     n.style.left = `${px - largeur / 2}px`
     n.style.top = `${py}px`
-    // Le curseur est au cercle (le milieu) au temps juste.
+    // Le curseur est au cadre (le milieu) au temps juste ; le cadre fait ce qu'il parcourt en ±`timing`.
     const juste = ev.fin - timing
+    n.style.setProperty('--cible', `${Math.max(0.9 * rem, (largeur * timing) / Math.max(1, juste - ev.debut))}px`)
     const avance = Math.max(0, Math.min(1, (0.5 * (t - ev.debut)) / Math.max(1, juste - ev.debut)))
     n.style.setProperty('--avance', `${avance * 100}%`)
     n.classList.toggle('dedans', Math.abs(t - juste) <= timing)

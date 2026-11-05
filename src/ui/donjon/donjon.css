@@ -757,14 +757,16 @@
   fill: #fffdf4;
 }
 
-/* LA LIGNE DU FRACAS : un curseur file sur une ligne vers le cercle vide du milieu (le temps juste) ; le
-   cercle s'allume quand le curseur y est ; juste, il se remplit du rond des Points faibles ; manquée, la
-   ligne rougit. */
+/* LA LIGNE DU FRACAS, au style de la Taille : la bande claire, les tirets pleins qui filent dans le sens du
+   rond, cernés de sombre sous une lueur d'or ; le rond net crème cerné d'or y file vers le CADRE du milieu
+   (le temps juste, sa largeur calculée), qui s'allume quand le rond y est ; juste, il se remplit ; manqué, il
+   rougit. */
 .donjon-jauge {
   position: absolute;
   height: 2.4rem;
   margin-top: -1.2rem;
   pointer-events: none;
+  filter: drop-shadow(0 0 0.12rem rgba(40, 18, 0, 0.95)) drop-shadow(0 0 0.45rem rgba(255, 214, 130, 1));
 }
 
 .donjon-jauge::before {
@@ -773,49 +775,58 @@
   left: 0;
   right: 0;
   top: 50%;
-  height: 0.22rem;
-  margin-top: -0.11rem;
-  border-radius: 0.11rem;
-  background: #fffdf4;
-  box-shadow:
-    0 0 0 0.08rem #2a1406,
-    0 0 0.5rem rgba(255, 214, 130, 0.9);
+  height: 1.5rem;
+  margin-top: -0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 236, 190, 0.38);
 }
 
-.donjon-jauge-cercle {
+.donjon-jauge-tirets {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  top: 50%;
+  height: 0.42rem;
+  margin-top: -0.21rem;
+  background: repeating-linear-gradient(90deg, #fffdf4 0 0.7rem, transparent 0.7rem 1.3rem);
+  animation: donjon-tirets-filent 0.45s linear infinite;
+}
+
+@keyframes donjon-tirets-filent {
+  to {
+    background-position: 1.3rem 0;
+  }
+}
+
+.donjon-jauge-cible {
   position: absolute;
   left: 50%;
   top: 50%;
   box-sizing: border-box;
-  width: 2.36rem;
-  height: 2.36rem;
-  margin: -1.18rem 0 0 -1.18rem;
-  border-radius: 50%;
-  border: 0.18rem solid #fffdf4;
-  background: rgba(20, 10, 4, 0.7);
-  box-shadow:
-    0 0 0 0.08rem #2a1406,
-    0 0 0.5rem rgba(255, 214, 130, 0.8);
+  width: var(--cible, 2rem);
+  height: 2.2rem;
+  margin: -1.1rem 0 0 calc(var(--cible, 2rem) / -2);
+  border-radius: 0.3rem;
+  border: 0.2rem solid #fffdf4;
+  background: rgba(20, 10, 4, 0.45);
 }
 
-.donjon-jauge.dedans .donjon-jauge-cercle {
+.donjon-jauge.dedans .donjon-jauge-cible {
   border-color: #ffd27a;
-  box-shadow:
-    0 0 0 0.08rem #2a1406,
-    0 0 1rem rgba(255, 214, 130, 1);
+  box-shadow: 0 0 0.9rem rgba(255, 214, 130, 1);
 }
 
-/* Juste : le cercle se remplit du rond des Points faibles (crème, cerné d'or). */
-.donjon-jauge.frappee .donjon-jauge-cercle {
+/* Juste : le cadre se remplit, crème cerné d'or, comme le rond des Points faibles. */
+.donjon-jauge.frappee .donjon-jauge-cible {
   border-color: #d99a2b;
   background: #fffdf4;
-  box-shadow: 0 0 0.9rem rgba(255, 214, 130, 1);
-  animation: donjon-cercle-rempli 0.22s ease-out;
+  box-shadow: 0 0 1rem rgba(255, 214, 130, 1);
+  animation: donjon-cadre-rempli 0.22s ease-out;
 }
 
-@keyframes donjon-cercle-rempli {
+@keyframes donjon-cadre-rempli {
   from {
-    scale: 1.45;
+    scale: 1.35;
   }
   to {
     scale: 1;
@@ -826,27 +837,31 @@
   position: absolute;
   top: 50%;
   left: var(--avance, 0%);
-  width: 0.36rem;
-  height: 1.6rem;
-  margin: -0.8rem 0 0 -0.18rem;
-  border-radius: 0.18rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: -0.65rem 0 0 -0.65rem;
+  border-radius: 50%;
   background: #fffdf4;
   box-shadow:
-    0 0 0 0.1rem #2a1406,
-    0 0 0.5rem rgba(255, 253, 244, 0.9);
+    0 0 0 0.16rem #d99a2b,
+    0 0 0.6rem rgba(255, 214, 130, 0.9);
 }
 
 .donjon-jauge.frappee .donjon-jauge-curseur {
   opacity: 0;
 }
 
-.donjon-jauge.echouee::before {
-  background: #e8392b;
+.donjon-jauge.echouee .donjon-jauge-cible {
+  border-color: #e8392b;
+  background: rgba(122, 20, 16, 0.6);
+  box-shadow: 0 0 0.9rem rgba(255, 60, 40, 0.95);
 }
 
-.donjon-jauge.echouee .donjon-jauge-cercle {
-  border-color: #e8392b;
-  box-shadow: 0 0 0.9rem rgba(255, 60, 40, 0.95);
+.donjon-jauge.echouee .donjon-jauge-curseur {
+  background: #e8392b;
+  box-shadow:
+    0 0 0 0.16rem #7a1410,
+    0 0 0.8rem rgba(255, 60, 40, 0.9);
 }
 
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste

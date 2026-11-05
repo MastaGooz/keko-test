@@ -1454,6 +1454,17 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     il SE REMPLIT du rond crème cerné d'or, d'un rebond, et le curseur
     s'efface ; trop tôt ou passé, la ligne et le cercle rougissent. Les
     règles ne changent pas.
+  - Puis UN CADRE et le style des autres (Keko : « plutôt qu'un rond cible,
+    on devrait mettre un rectangle, et changer le style graphique du
+    télégraphe pour qu'il matche celui des épées, dagues, etc. ») : la
+    ligne prend la BANDE claire et les TIRETS pleins qui filent de la
+    Taille, cernés de sombre sous sa lueur d'or ; ce qui file est le ROND
+    NET crème cerné d'or ; la cible est un CADRE (2,2 rem de haut) dont LA
+    LARGEUR EST LE TEMPS JUSTE — ce que le rond parcourt en 0,1 s de part
+    et d'autre (`--cible`, 0,9 rem au moins) : étroit au premier coup, il
+    s'élargit quand le rond accélère (la tolérance en temps ne change
+    pas) ; il s'allume d'or quand le rond y est, se remplit de crème cerné
+    d'or au coup juste ; manqué, le cadre et le rond rougissent.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
