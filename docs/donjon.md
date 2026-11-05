@@ -957,6 +957,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   et 1,8 fois plus épaisse, qui s'enfonce de 0,55 rem au lieu de 0,35 ; la
   scène secouée dans l'axe comme sous la lance (7 px au lieu de 9, avec
   rebond ; 3 px sous l'arc), l'ennemi figé 120 ms au lieu de 70.
+- **PLUS DE RECTANGLE AUTOUR DES FLÈCHES** (Keko, 05/11 : « comme un
+  rectangle blanc autour des flèches, sur arc et arbalète ») : le fondu de la
+  queue était un masque sur la boîte `.donjon-estoc`, qui porte aussi la
+  lueur (`drop-shadow`) ; le masque s'applique APRÈS le filtre et coupe tout
+  ce qui dépasse la boîte, si bien que la lueur s'arrêtait net sur ses
+  bords. Le masque est passé sur le `svg` dedans : le dessin est fondu, sa
+  lueur déborde librement. *Un masque sur l'élément qui porte la lueur la
+  rogne à sa boîte.*
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

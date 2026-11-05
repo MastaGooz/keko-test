@@ -240,8 +240,11 @@
   fill: #fffdf4;
 }
 
-/* L'estoc de la dague : une lame fine, pointe à droite, qui tourne autour de
-   sa pointe (posée sur le point touché) ; la queue s'efface en fondu. */
+/* La flèche de l'arc (et le carreau de l'arbalète) : pointe à droite, elle
+   tourne autour de sa pointe (posée sur le point touché) ; la queue s'efface
+   en fondu. Le fondu est sur le DESSIN, pas sur la boîte (Keko : « comme un
+   rectangle blanc autour des flèches » : le masque, appliqué après le filtre,
+   coupait net la lueur aux bords de la boîte). */
 .donjon-estoc {
   position: absolute;
   z-index: 2;
@@ -250,8 +253,6 @@
   transform-origin: 100% 50%;
   pointer-events: none;
   filter: drop-shadow(0 0 0.1rem currentColor) drop-shadow(0 0 0.45rem currentColor);
-  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.75) 0%, #000 30%);
-  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.75) 0%, #000 30%);
 }
 
 .donjon-estoc svg {
@@ -259,6 +260,8 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.75) 0%, #000 30%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.75) 0%, #000 30%);
 }
 
 .donjon-estoc path {
