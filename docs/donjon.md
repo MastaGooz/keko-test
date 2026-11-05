@@ -760,8 +760,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   cinquièmes, comme un manche (Keko : « trop courte, il faudrait l'allonger
   pour l'aspect bâton » ; elle en couvrait 60°, effilée sur les trois
   quarts). L'arc bombe vers le haut, penché au hasard (±50°, et d'au moins 25° de plus ou de moins que le précédent — Keko : « l'angle de frappe est quasi toujours le même » ; il l'était de ±20°), un coup sur deux dans
-  l'autre sens. Au contact, une onde APLATIE s'étale comme
-  un choc au sol (`ondeAplatie`) ; les étincelles sont des POINTS DE
+  l'autre sens. Au contact, plus d'onde (Keko : « l'onde d'impact des
+  massues et bâton, on peut la retirer » ; une onde APLATIE s'étalait comme
+  un choc au sol, `ondeAplatie`, retirée) ; les étincelles sont des POINTS DE
   LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;
   l'ennemi est TASSÉ vers le bas puis se relève, figé un instant comme sous
   les lames ; la scène est tassée de 4 px. Le critique est 1,4 fois plus

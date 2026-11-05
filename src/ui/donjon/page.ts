@@ -1183,24 +1183,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     image(depart)
   }
 
-  /** L'onde aplatie du bâton : le choc s'étale à l'horizontale, comme au sol. */
-  function ondeAplatie(x: number, y: number, k: number, couleur: string, retard: number): void {
-    const o = el('div', 'donjon-onde')
-    o.style.left = `${x}px`
-    o.style.top = `${y}px`
-    o.style.color = couleur
-    o.style.opacity = '0'
-    scene.append(o)
-    o.animate(
-      [
-        { transform: `translate(-50%, -50%) scale(${0.2 * k}, ${0.07 * k})`, opacity: 1, borderWidth: '0.5rem', easing: 'ease-out' },
-        { transform: `translate(-50%, -50%) scale(${0.95 * k}, ${0.33 * k})`, opacity: 0.85, borderWidth: '0.22rem', offset: 0.45, easing: 'ease-in' },
-        { transform: `translate(-50%, -50%) scale(${1.25 * k}, ${0.44 * k})`, opacity: 0, borderWidth: '0.05rem' },
-      ],
-      { duration: 360, delay: retard },
-    ).onfinish = () => o.remove()
-  }
-
   /**
    * LE CERCLE DE RUNE (le premier coup de bâton ; Keko : « on laisse les
    * runes de côté, on utilisera ça ailleurs ») : deux cercles, l'intérieur
@@ -1308,7 +1290,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
       pencheDeLaMassue = penche
       massue(x, y, k, couleur, penche, coteDeLaMassue, longue)
-      ondeAplatie(x, y, k, couleur, contact)
       if (RUNE) cercleDeRune(x, y, k, couleur, contact)
       // La scène est tassée d'un cran vers le bas (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
