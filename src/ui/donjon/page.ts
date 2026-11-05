@@ -1613,7 +1613,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       impactRond(x, y, fort, couleur)
     }
 
-    const combien = STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : enGriffes ? 5 : 0)
+    // Sous la fronde, moins d'étincelles : ses éclats de pierre font le reste (Keko : « diminue un peu les particules »).
+    const combien = enFronde ? Math.round(STYLES[genre].particules * 0.6) : STYLES[genre].particules + (lourde ? 8 : lame ? 4 : feuLourd ? 18 : enFeu ? 12 : enFouet ? 4 : enGriffes ? 5 : 0)
     const trait = lame || pique || enFeu || enFouet || enGriffes
     for (let i = 0; i < combien; i++) {
       const p = el('div', trait ? 'donjon-particule trait' : masse ? 'donjon-particule lueur' : 'donjon-particule')
@@ -2007,7 +2008,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * lumière, aux bords inégaux, part d'en bas, d'un côté puis de l'autre,
    * MONTE EN CLOCHE au-dessus du point et RETOMBE dessus (une parabole, à
    * vitesse constante en travers : la pesanteur), en tournant, une traînée
-   * effilée derrière elle ; au contact, elle ÉCLATE : un bref flash, et six
+   * effilée derrière elle ; au contact, elle ÉCLATE : un bref flash, et quatre
    * éclats qui jaillissent vers le haut et retombent. Le critique est 1,4 fois
    * plus gros.
    */
@@ -2019,7 +2020,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Le départ, en bas d'un côté ; la hauteur de la cloche au-dessus de la corde.
     const [sx, sy] = [cote * (3 + Math.random() * 1.5) * rem, 6 * rem]
     const haut = (4 + Math.random()) * rem
-    const pierre = 0.38 * rem * k
+    // Plus grosse (Keko : « augmente la taille du projectile » ; 0,38).
+    const pierre = 0.55 * rem * k
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     trace.setAttribute('class', 'donjon-course')
     trace.setAttribute('aria-hidden', 'true')
@@ -2079,7 +2081,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     image(depart)
   }
 
-  /** La pierre éclate : un bref flash, et six éclats qui jaillissent vers le haut et retombent. */
+  /** La pierre éclate : un bref flash, et quatre éclats qui jaillissent vers le haut et retombent. */
   function eclatsDePierre(x: number, y: number, k: number, couleur: string, caillou: (r: number) => string): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const boite = (demi: number) => {
@@ -2099,13 +2101,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     rond.setAttribute('r', (0.7 * rem * k).toFixed(1))
     flash.append(rond)
     flash.animate([{ transform: 'scale(0.4)', opacity: 1, easing: 'ease-out' }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 130 }).onfinish = () => flash.remove()
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       const eclat = boite(0.5 * rem * k)
       const forme = document.createElementNS('http://www.w3.org/2000/svg', 'path')
       forme.setAttribute('d', caillou((0.13 + Math.random() * 0.1) * rem * k))
       eclat.append(forme)
       // Vers le haut, en éventail, puis la pesanteur les ramène plus bas que le point.
-      const a = ((-90 + (i - 2.5) * 30 + (Math.random() - 0.5) * 20) * Math.PI) / 180
+      const a = ((-90 + (i - 1.5) * 35 + (Math.random() - 0.5) * 20) * Math.PI) / 180
       const loin = (1.2 + Math.random() * 1) * rem * k
       const [dx, dy] = [Math.cos(a) * loin, Math.sin(a) * loin]
       const tourne = (Math.random() - 0.5) * 540

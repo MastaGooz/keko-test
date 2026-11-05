@@ -1098,6 +1098,9 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   jaillissent vers le haut en éventail et retombent plus bas que le point
   (420 à 540 ms). Au hasard sur le dessin ; la scène tassée de 5 px ;
   l'ennemi recule comme sous l'épée. Pas encore de zone : une seule pierre.
+  Puis (Keko : « augmente la taille du projectile et diminue un peu les
+  particules ») : la pierre fait 1,1 rem au lieu de 0,76 ; quatre éclats au
+  lieu de six, et six dixièmes des étincelles du coup.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
