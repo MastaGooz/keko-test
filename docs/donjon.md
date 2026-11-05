@@ -769,8 +769,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   massues et bâton, on peut la retirer » ; une onde APLATIE s'étalait comme
   un choc au sol, `ondeAplatie`, retirée) ; les étincelles sont des POINTS DE
   LUMIÈRE (`.donjon-particule.lueur`) qui s'écartent à peine et montent ;
-  l'ennemi est TASSÉ vers le bas puis se relève, figé un instant comme sous
-  les lames ; la scène est tassée de 4 px. Le critique est 1,4 fois plus
+  l'ennemi RECULE comme sous l'épée (Keko : « supprimer l'écrasement du
+  perso avec massue, bâton… et mettre la même animation », celle de l'épée
+  et de la hache ; il était TASSÉ vers le bas puis se relevait), figé un
+  instant comme sous les lames ; la scène est tassée de 4 px. Le critique est 1,4 fois plus
   gros. **LE CERCLE DE RUNE** du premier essai (deux cercles, l'intérieur
   en pointillé, huit losanges, qui s'ouvrent en tournant ;
   `cercleDeRune`, `.donjon-rune-cercle`), avec un élan à tête ronde qui

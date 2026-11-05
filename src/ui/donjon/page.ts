@@ -1425,7 +1425,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     }
     // Fendu, l'ennemi est tassé ; fauché à plat, poussé dans le sens de la lame.
     const axe = pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
-    reculer(x, genre, lourde ? 150 : longue ? 120 : lame || pique || masse ? 70 : 0, axe, contact, masse || (lourde && !aPlat))
+    // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko).
+    reculer(x, genre, lourde ? 150 : longue ? 120 : lame || pique || masse ? 70 : 0, axe, contact, lourde && !aPlat)
   }
 
   /** L'onde ronde : un anneau qui s'ouvre et s'efface (le coup de poing). */
@@ -1449,8 +1450,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // L'ennemi recule du côté opposé au coup, blanchit, s'écrase. Sous la
     // lame, il se FIGE un instant dans sa pose touchée (l'arrêt sur coup).
     // Sous l'estoc (`axe`, la direction du coup), il est POUSSÉ dans l'axe de
-    // la pointe et rapetisse, enfoncé, quand elle entre. Sous le bâton
-    // (`ecrase`), il est TASSÉ vers le bas, puis se relève.
+    // la pointe et rapetisse, enfoncé, quand elle entre. Sous les armes à deux
+    // mains qui frappent de haut (`ecrase`), il est TASSÉ vers le bas, puis se relève.
     const recul = (x < scene.clientWidth / 2 ? 1 : -1) * STYLES[genre].recul
     const blanc = STYLES[genre].blanc
     const pousse = axe === undefined ? null : [Math.cos(axe) * STYLES[genre].recul * 0.7, Math.sin(axe) * STYLES[genre].recul * 0.7]
