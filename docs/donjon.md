@@ -905,8 +905,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   aussi ») : un arc de 5 rem, la traînée sur 60 % de l'arc en tombant (85 %
   avant) et 60 % posée, la TÊTE ÉLARGIE ×1,7 sur son dernier quart, coupée à
   plat ; le tout PENCHÉ autour du point de ±35°, d'au moins 20° de plus ou
-  de moins que le précédent (le plat n'est donc plus toujours horizontal). Il frappe
-  au centre de l'ennemi comme la massue, avec ses points de lumière ;
+  de moins que le précédent (le plat n'est donc plus toujours horizontal).
+  Puis (Keko : « la partie arc n'est pas en arc lisse, il y a comme un angle
+  bizarre ; et il ne tape que le haut du corps, il faudrait diversifier ») :
+  le trait, pointu à la queue, S'ÉLARGIT D'UN SEUL TENANT jusqu'à la tête
+  (×1,7, `1,7 v^1,5`, 40 pas ; plein dès les deux cinquièmes, il se renflait
+  en tête et le bord faisait un coude), et il frappe au
+  HASARD SUR LE DESSIN comme la dague (il frappait au centre, comme la
+  massue). Ses points de lumière sont ceux de la massue ;
   l'ennemi est ÉCRASÉ (tassé vers le bas puis relevé, comme sous le bâton
   d'avant), figé 120 ms ; la scène est tassée de 7 px, avec un rebond.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans

@@ -1258,16 +1258,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     scene.append(trace)
     const point = (t: number, r: number) => `${(Math.cos(t) * r).toFixed(1)} ${(Math.sin(t) * r).toFixed(1)}`
     // Le trait entre `queue` et `tete` (0 = départ de l'arc, 1 = le point) :
-    // effilé à la queue, plein dès les deux cinquièmes, qui s'élargit en tête
-    // sur son dernier quart (×1,7) et finit coupé à plat.
+    // pointu à la queue, il S'ÉLARGIT D'UN SEUL TENANT jusqu'à la tête (×1,7)
+    // et finit coupé à plat (Keko : « pas en arc lisse, il y a comme un angle
+    // bizarre » : plein dès les deux cinquièmes, il se renflait en tête sur
+    // son dernier quart, et le bord faisait un coude), sur 40 pas.
     const dessiner = (queue: number, tete: number, gonfle: number) => {
       if (tete - queue < 0.01) return forme.setAttribute('d', '')
       const dehors: string[] = []
       const dedans: string[] = []
-      for (let i = 0; i <= 20; i++) {
-        const v = i / 20
-        const b = Math.min(1, Math.max(0, (v - 0.75) / 0.2))
-        const h = largeur * gonfle * Math.min(1, v / 0.4) ** 1.3 * (1 + 0.7 * b * b * (3 - 2 * b))
+      for (let i = 0; i <= 40; i++) {
+        const v = i / 40
+        const h = largeur * gonfle * 1.7 * v ** 1.5
         const t = ((debut + (fin - debut) * (queue + (tete - queue) * v)) * Math.PI) / 180
         dehors.push(point(t, rayon + h))
         dedans.push(point(t, rayon - h))
@@ -1368,7 +1369,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
     // La massue frappe l'ennemi EN SON CENTRE, pas au point du coup comme les
     // lames (Keko : « pas comme la dague ») ; le chiffre reste où il est.
-    if (masse) {
+    if (masse && !enMarteau) {
       const { x0, y0, l, h } = cadreDuDessin()
       x = x0 + l * 0.5
       y = y0 + h * 0.45
@@ -1377,8 +1378,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // toujours en haut à gauche de la cible, on peut pas varier ? ») : au
     // hasard sur la moitié du milieu en largeur et de 25 à 65 % de la hauteur,
     // et loin du coup d'avant (un cinquième du dessin au moins) ; le chiffre
-    // reste où il est.
-    if (arme === 'dague' && !FLECHE) {
+    // reste où il est. Le marteau aussi (Keko : « il ne tape que le haut du
+    // corps, il faudrait diversifier » ; il frappait au centre, comme la massue).
+    if ((arme === 'dague' && !FLECHE) || enMarteau) {
       const { x0, y0, l, h } = cadreDuDessin()
       let fx = 0.5
       let fy = 0.45
