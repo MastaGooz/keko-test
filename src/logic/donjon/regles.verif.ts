@@ -301,9 +301,15 @@ const jDeux = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'de
 verifier("l'épée à deux mains s'équipe, sans capacité, avec la Taille des épées", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && passifDe(C, jDeux)?.nom === 'Taille')
 verifier("l'épée à deux mains a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jDeux) / periodeDe(C, jDeux) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 // LES DEUX HACHES, LES DEUX MASSUES, LA LANCE, LES DEUX MARTEAUX, L'ARBALÈTE, LE PISTOLET, LE MOUSQUET, LA RAPIÈRE, LE FOUET, LE FLÉAU, LES GRIFFES, LA FRONDE, LE SHURIKEN, LE BOOMERANG, LE KUNAI, LE COUTEAU DE LANCER, LE LUTH ET LA BAGUETTE, PROVISOIRES elles aussi.
+// La lance et la rapière ont les Points faibles de la dague.
+for (const arme of ['lance', 'rapiere'] as const) {
+  const jP = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
+  verifier(`${C.armes[arme].nom} : les Points faibles de la dague`, passifDe(C, jP)?.nom === 'Points faibles' && passifDe(C, jP)?.cumul === true)
+}
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  verifier(`${C.armes[arme].nom} s'équipe, sans capacité ni passif`, jH.arme === arme && capacitesDe(C, jH).length === 0 && passifDe(C, jH) === null)
+  const aSonPassif = arme === 'lance' || arme === 'rapiere'
+  verifier(`${C.armes[arme].nom} s'équipe, sans capacité${aSonPassif ? '' : ' ni passif'}`, jH.arme === arme && capacitesDe(C, jH).length === 0 && (aSonPassif || passifDe(C, jH) === null))
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 }
 const me = appliquer(C, avecArme('baton', 5), { joueur: 'a', t: 0, type: 'lancer', capacite: 'meditation' })

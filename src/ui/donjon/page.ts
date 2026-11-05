@@ -267,13 +267,21 @@ function quandLaCapacite(cle: CleCapacite): string {
  * Runes n° 141 (les cristaux).
  */
 // La Taille garde l'icône de la Riposte en attendant la sienne.
-const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = { epee: 'passifs/riposte.webp', deuxMains: 'passifs/riposte.webp', dague: 'passifs/points-faibles.webp', baton: 'passifs/runes.webp' }
+const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
+  epee: 'passifs/riposte.webp',
+  deuxMains: 'passifs/riposte.webp',
+  dague: 'passifs/points-faibles.webp',
+  lance: 'passifs/points-faibles.webp',
+  rapiere: 'passifs/points-faibles.webp',
+  baton: 'passifs/runes.webp',
+}
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
-  if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique, un cran de Furie)`
+  // La Furie est à la dague seule.
+  if (p.cumul === true) return `Des points faibles s'allument l'un après l'autre, de plus en plus vite : touchez-les à temps ; au premier manqué, chacun frappe (×${p.coup} critique${arme === 'dague' ? ', un cran de Furie' : ''})`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
 }
 

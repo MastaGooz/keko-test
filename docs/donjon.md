@@ -1387,6 +1387,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     descend coup par coup ; plus de total à la libération. Chaque chiffre
     porte « Point faible » (Keko : « il faut écrire Point faible sur le
     chiffre de chaque hit »).
+- **LA LANCE ET LA RAPIÈRE ONT LES POINTS FAIBLES** (Keko, 05/11 : « nickel,
+  on l'applique aussi à la lance et la rapière ? ») : la même série, la même
+  frappe (des plaies, comme la dague), la chance par tap ramenée à leur
+  cadence pour le même rythme par seconde (dague 6 % / 0,175 s ; lance 10 %
+  / 0,3 s ; rapière 9,5 % / 0,275 s ; la pitié de même : 50, 30, 32 taps).
+  Leur fiche tait le cran de Furie (elles n'ont pas la Furie).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
