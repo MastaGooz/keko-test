@@ -266,12 +266,13 @@ function quandLaCapacite(cle: CleCapacite): string {
  * Riposte n° 111 (le bouclier qui pare), Points faibles n° 138 (l'œil),
  * Runes n° 141 (les cristaux).
  */
-const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = { epee: 'passifs/riposte.webp', dague: 'passifs/points-faibles.webp', baton: 'passifs/runes.webp' }
+// La Taille garde l'icône de la Riposte en attendant la sienne.
+const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = { epee: 'passifs/riposte.webp', deuxMains: 'passifs/riposte.webp', dague: 'passifs/points-faibles.webp', baton: 'passifs/runes.webp' }
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
-  if (arme === 'epee') return `L'ennemi arme parfois un coup : touchez-le dans la seconde pour riposter (×${p.coup})`
+  if (p.trait === true) return `Un trait s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
   if (arme === 'dague') return `Des points faibles s'allument sur l'ennemi : touchés, un coup critique (×${p.coup}) et un cran de Furie`
   return `${p.cibles} runes apparaissent : touchées dans l'ordre, elles explosent (×${p.coup}) ; une erreur les efface`
 }
@@ -759,8 +760,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
-    // SON PASSIF, celui de toute sa classe (Keko) ; l'arc et l'épée à deux
-    // mains n'ont pas encore le leur.
+    // SON PASSIF, celui de toute sa classe (Keko) ; les provisoires n'ont pas
+    // encore le leur, sauf l'épée à deux mains, une épée.
     if (arme in C.passifs) {
       const passif = el('div', 'donjon-fiche-capacite')
       const iconePassif = el('img')
@@ -2727,9 +2728,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   // ------------------------------------------------ le passif de classe
   // LES CIBLES DU PASSIF (Keko : « faire apparaître des choses interactibles
-  // sur l'ennemi ») : la Riposte allume tout l'ennemi (on le touche, où que
-  // ce soit), un point faible est une cible, les runes trois cibles
-  // numérotées. Elles sont dessinées d'après l'événement que lisent les
+  // sur l'ennemi ») : la Taille un trait à tracer, un point faible est une
+  // cible, les runes trois cibles numérotées. Elles sont dessinées d'après l'événement que lisent les
   // règles ; une cible qui n'a plus lieu d'être s'efface en fondu.
   const couchePassif = el('div', 'donjon-passif')
   scene.append(couchePassif)
@@ -2739,41 +2739,168 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const n = ciblesVues.get(cle)
     if (n === undefined) return
     ciblesVues.delete(cle)
+    traitsVus.delete(cle)
     n.style.pointerEvents = 'none'
-    n.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 220, easing: 'ease-out' }).onfinish = () => n.remove()
+    // Le trait couvre la scène : il s'éteint sans grandir.
+    const grandit = !n.classList.contains('donjon-trait')
+    n.animate([{ opacity: 1 }, grandit ? { opacity: 0, transform: 'scale(1.4)' } : { opacity: 0 }], { duration: grandit ? 220 : 320, easing: 'ease-out' }).onfinish = () => n.remove()
+  }
+
+  /**
+   * LA TAILLE DES ÉPÉES (Keko : « on trace une trajectoire de slash et le
+   * joueur doit la tracer au doigt avant la fin du timer ») : un trait en
+   * pointillé en travers de l'ennemi, son départ une cible à l'anneau du
+   * temps, une flèche au bout. Le doigt part du rond et suit le trait ; ce
+   * qu'il a parcouru s'allume ; trop loin du trait, revenu en arrière ou levé
+   * avant le bout, il repart de zéro — on réessaie tant que le temps court.
+   * Au bout, les deux bouts sont touchés dans l'ordre et le coup tombe.
+   */
+  type Trait = { n: HTMLElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
+  const traitsVus = new Map<string, Trait>()
+  // Le doigt peut s'écarter de 2 rem du trait ; il en parcourt les neuf dixièmes.
+  const ECART_DU_TRAIT = 2
+  const BOUT_DU_TRAIT = 0.9
+
+  function creerLeTrait(k: number): Trait {
+    const SVG = 'http://www.w3.org/2000/svg'
+    const n = el('div', 'donjon-trait')
+    const svg = document.createElementNS(SVG, 'svg')
+    const ligne = (classe: string) => {
+      const x = document.createElementNS(SVG, 'line')
+      x.setAttribute('class', classe)
+      svg.append(x)
+      return x
+    }
+    const guide = ligne('donjon-trait-guide')
+    const fait = ligne('donjon-trait-fait')
+    const fleche = document.createElementNS(SVG, 'path')
+    fleche.setAttribute('class', 'donjon-trait-fleche')
+    svg.append(fleche)
+    const depart = bouton('donjon-cible trait')
+    depart.setAttribute('aria-label', 'Départ de la taille')
+    n.append(svg, depart)
+    const tr: Trait = { n, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
+    let rem = 16
+    const rater = () => {
+      tr.suivi = false
+      tr.avance = 0
+      dessinerLAvance(tr)
+      depart.classList.remove('ratee')
+      void depart.offsetWidth
+      depart.classList.add('ratee')
+    }
+    depart.addEventListener('animationend', (e) => {
+      if (e.animationName === 'donjon-cible-ratee') depart.classList.remove('ratee')
+    })
+    depart.addEventListener('pointerdown', (e) => {
+      e.stopPropagation()
+      if (tr.fini) return
+      depart.setPointerCapture(e.pointerId)
+      rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+      tr.suivi = true
+      tr.avance = 0
+    })
+    depart.addEventListener('pointermove', (e) => {
+      if (!tr.suivi) return
+      const r = couchePassif.getBoundingClientRect()
+      const [px, py] = [e.clientX - r.left, e.clientY - r.top]
+      const [ax, ay] = tr.a
+      const [dx, dy] = [tr.b[0] - ax, tr.b[1] - ay]
+      const long = Math.hypot(dx, dy) || 1
+      // Où en est le doigt le long du trait, et à quelle distance de lui.
+      const u = ((px - ax) * dx + (py - ay) * dy) / (long * long)
+      const ecart = Math.abs((px - ax) * dy - (py - ay) * dx) / long
+      if (ecart > ECART_DU_TRAIT * rem || u < tr.avance - 0.25) return rater()
+      tr.avance = Math.max(tr.avance, Math.min(1, u))
+      if (tr.avance >= BOUT_DU_TRAIT) {
+        tr.suivi = false
+        tr.fini = true
+        tr.avance = 1
+        n.classList.add('reussi')
+        void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null))
+      }
+      dessinerLAvance(tr)
+    })
+    const lacher = () => {
+      if (tr.suivi) rater()
+    }
+    depart.addEventListener('pointerup', lacher)
+    depart.addEventListener('pointercancel', lacher)
+    return tr
+  }
+
+  /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
+  function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number): void {
+    tr.a = a
+    tr.b = b
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    for (const x of [tr.guide, tr.fait]) {
+      x.setAttribute('x1', a[0].toFixed(1))
+      x.setAttribute('y1', a[1].toFixed(1))
+    }
+    tr.guide.setAttribute('x2', b[0].toFixed(1))
+    tr.guide.setAttribute('y2', b[1].toFixed(1))
+    // La flèche, pointée dans le sens du trait, au-delà de son bout.
+    const long = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
+    const [ux, uy] = [(b[0] - a[0]) / long, (b[1] - a[1]) / long]
+    const point = (av: number, cote: number) => `${(b[0] + ux * av * rem - uy * cote * rem).toFixed(1)} ${(b[1] + uy * av * rem + ux * cote * rem).toFixed(1)}`
+    tr.fleche.setAttribute('d', `M${point(1.1, 0)} L${point(-0.2, 0.75)} L${point(0.2, 0)} L${point(-0.2, -0.75)}Z`)
+    tr.depart.style.left = `${a[0]}px`
+    tr.depart.style.top = `${a[1]}px`
+    tr.depart.style.setProperty('--reste', reste.toFixed(3))
+    dessinerLAvance(tr)
+  }
+
+  /** Ce que le doigt a parcouru du trait, allumé. */
+  function dessinerLAvance(tr: Trait): void {
+    tr.fait.setAttribute('x2', (tr.a[0] + (tr.b[0] - tr.a[0]) * tr.avance).toFixed(1))
+    tr.fait.setAttribute('y2', (tr.a[1] + (tr.b[1] - tr.a[1]) * tr.avance).toFixed(1))
   }
 
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
-    scene.classList.toggle('riposte', ouvert && j.arme === 'epee')
     const voulues = new Set<string>()
     if (ouvert && ev !== null) {
       const { x0, y0, l, h } = cadreDuDessin()
       const reste = Math.max(0, Math.min(1, (ev.fin - t) / (passifDe(C, j)?.duree ?? 1)))
       const etape = etapeDuPassif(j, ev.k)
-      ev.cibles.forEach((c, i) => {
-        // La Riposte n'a qu'un signal au-dessus de la tête ; les runes déjà touchées restent allumées.
-        const genre = j.arme === 'epee' ? 'riposte' : j.arme === 'dague' ? 'point' : 'rune'
+      const surLeDessin = (c: { x: number; y: number }): [number, number] => [x0 + l * c.x, y0 + h * c.y]
+      if (passifDe(C, j)?.trait === true) {
+        // La Taille : un seul trait pour ses deux bouts.
+        const cle = `${j.arme}:${ev.k}:trait`
+        voulues.add(cle)
+        let tr = traitsVus.get(cle)
+        if (tr === undefined) {
+          tr = creerLeTrait(ev.k)
+          traitsVus.set(cle, tr)
+          ciblesVues.set(cle, tr.n)
+          couchePassif.append(tr.n)
+          tr.n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
+          tr.depart.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
+        }
+        placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), reste)
+      }
+      if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {
+        // Les runes déjà touchées restent allumées.
+        const genre = j.arme === 'dague' ? 'point' : 'rune'
         const cle = `${j.arme}:${ev.k}:${i}`
         voulues.add(cle)
         let n = ciblesVues.get(cle)
         if (n === undefined) {
-          n = genre === 'riposte' ? el('div', 'donjon-cible riposte', '!') : bouton(`donjon-cible ${genre}`, genre === 'rune' ? String(i + 1) : undefined)
-          if (genre !== 'riposte') {
-            n.setAttribute('aria-label', genre === 'rune' ? `Rune ${i + 1}` : 'Point faible')
-            n.addEventListener('pointerdown', (e) => {
-              e.stopPropagation()
-              toucherLePassif(ev.k, i, n!)
-            })
-          }
+          n = bouton(`donjon-cible ${genre}`, genre === 'rune' ? String(i + 1) : undefined)
+          n.setAttribute('aria-label', genre === 'rune' ? `Rune ${i + 1}` : 'Point faible')
+          n.addEventListener('pointerdown', (e) => {
+            e.stopPropagation()
+            toucherLePassif(ev.k, i, n!)
+          })
           couchePassif.append(n)
           ciblesVues.set(cle, n)
           n.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 220, easing: 'ease-out' })
         }
-        const ici = genre === 'riposte' ? { x: 0.5, y: 0.08 } : c
-        n.style.left = `${x0 + l * ici.x}px`
-        n.style.top = `${y0 + h * ici.y}px`
+        const [px, py] = surLeDessin(c)
+        n.style.left = `${px}px`
+        n.style.top = `${py}px`
         n.style.setProperty('--reste', reste.toFixed(3))
         n.classList.toggle('allumee', genre === 'rune' && i < etape)
         n.classList.toggle('suivante', genre === 'rune' && i === etape)
@@ -2810,14 +2937,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       dessiner()
     })
   }
-
-  // La Riposte : on touche l'ennemi, n'importe où dans la scène.
-  scene.addEventListener('pointerdown', () => {
-    const j = moi()
-    if (j.arme !== 'epee') return
-    const ev = evenementA(C, etat.saison.seed, j, maintenant())
-    if (ev !== null && passifOuvert(C, j, ev)) toucherLePassif(ev.k, 0, null)
-  })
 
   function frapper(): void {
     const t = maintenant()

@@ -238,11 +238,21 @@ export function passifVierge(): Joueur['passif'] {
  * LES CIBLES DE L'ÉVÉNEMENT k de ce joueur : une fonction de (graine de la
  * saison, numéro, joueur, arme), comme le critique de l'auto — les règles et
  * l'écran lisent les mêmes. Une cible seule tombe sur le corps ; plusieurs se
- * rangent en cercle autour du centre.
+ * rangent en cercle autour du centre ; un trait passe par le milieu du corps,
+ * dans tous les sens, ses deux bouts sur le dessin.
  */
 function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number): { x: number; y: number }[] {
   const empreinte = empreinteDe(`${j.id}:${j.arme}`)
   const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  if (p.trait === true) {
+    const angle = 2 * Math.PI * tire(2)
+    const [cx, cy] = [0.5 + 0.08 * (2 * tire(3) - 1), 0.45 + 0.06 * (2 * tire(4) - 1)]
+    const [dx, dy] = [0.3 * Math.cos(angle), 0.27 * Math.sin(angle)]
+    return [
+      { x: cx - dx, y: cy - dy },
+      { x: cx + dx, y: cy + dy },
+    ]
+  }
   return p.cibles === 1
     ? [{ x: 0.3 + 0.4 * tire(2), y: 0.3 + 0.35 * tire(3) }]
     : Array.from({ length: p.cibles }, (_, i) => {

@@ -1221,6 +1221,25 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   taps). *À chance égale, une arme rapide ouvre plus souvent par seconde* ;
   c'est la chance de chaque passif qui le corrige. Une sauvegarde d'avant
   repart d'un passif vierge.
+- **LES ÉPÉES TAILLENT** (Keko, 05/11 : « pour les épées je propose de
+  changer : on trace une trajectoire de slash et le joueur doit la tracer au
+  doigt avant la fin du timer » ; à mes questions : l'épée et l'épée à deux
+  mains, un trait droit, un nom neuf, ×20 gardé). La RIPOSTE EST PARTIE
+  (l'ennemi rougeoyant, le « ! », la scène qu'on touche n'importe où). Le
+  passif « Taille » (`config.passifs.epee` et `.deuxMains`, `trait: true`) a
+  deux cibles, LES DEUX BOUTS D'UN TRAIT (`ciblesDuPassif` : par le milieu du
+  corps à ±8 % / ±6 %, dans tous les sens, 0,6 du dessin de large et 0,54 de
+  haut), touchées dans l'ordre (un seul bout ne frappe pas ; à l'envers, il
+  est raté) ; 2 s au lieu de 1,2 pour le voir et le tracer ; l'épée à deux
+  mains, deux fois plus lente, a deux fois plus de chance (4 %, pitié 75) —
+  ses taps valent le double, le gain par seconde est le même. L'ÉCRAN
+  (`creerLeTrait`, `placerLeTrait`) : un pointillé lumineux en travers de
+  l'ennemi, son départ une cible ronde à l'anneau du temps, une flèche au
+  bout ; le doigt part du rond (capturé) et suit le trait, ce qu'il a
+  parcouru s'allume ; à plus de 2 rem du trait, revenu d'un quart en
+  arrière ou levé, il repart de zéro (le rond tremble) et on réessaie tant
+  que le temps court ; aux neuf dixièmes, les deux bouts partent et le coup
+  jaillit sous « Taille ». L'icône est encore celle de la Riposte.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

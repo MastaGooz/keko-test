@@ -31,8 +31,8 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 /** Les armes : chacune ses dégâts, sa recharge, son petit bonus (voir `armes`). */
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
-/** Les armes qui ont un passif de classe (les sept provisoires n'ont pas encore le leur). */
-export type ArmeAPassif = 'epee' | 'dague' | 'baton'
+/** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée). */
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'dague' | 'baton'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -83,6 +83,8 @@ export type Passif = {
   chance: number
   /** Le tap qui l'ouvre à coup sûr, compté depuis le dernier événement. */
   pitie: number
+  /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
+  trait?: boolean
   duree: number
   cibles: number
   coup: number
@@ -242,10 +244,17 @@ export const DONJON = {
    * erreur les efface). Tout réussi en spammant, chacun ajoute de 35 à 50 %
    * aux taps de son arme. LA CHANCE PAR TAP garde la cadence des anciennes
    * tranches au spam (recharge ÷ période : 0,25 s ÷ 12 s, 0,175 ÷ 3,
-   * 0,375 ÷ 15), la pitié à trois fois l'attente moyenne.
+   * 0,375 ÷ 15), la pitié à trois fois l'attente moyenne. LES ÉPÉES TAILLENT
+   * (Keko, 05/11 : « on trace une trajectoire de slash et le joueur doit la
+   * tracer au doigt avant la fin du timer » ; l'épée à deux mains aussi ; un
+   * trait droit ; « Taille », ×20 gardé) : à la place de la Riposte, un
+   * trait en travers de l'ennemi, ses deux bouts dans l'ordre, 2 s pour le
+   * voir et le tracer ; l'épée à deux mains, deux fois plus lente, a deux
+   * fois plus de chance par tap.
    */
   passifs: {
-    epee: { nom: 'Riposte', chance: 0.02, pitie: 150, duree: 1.2 * SECONDE, cibles: 1, coup: 20 },
+    epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true },
+    deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,

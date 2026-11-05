@@ -217,11 +217,17 @@ for (let t = ouvert.joueurs[0].prochainTap; t < ev0.fin; t = bloque.joueurs[0].p
 verifier('un événement ouvert bloque le suivant', bloque.joueurs[0].passif.evenement === ev0.k && bloque.joueurs[0].passif.debut === ev0.debut)
 const sansChance = { ...C, passifs: { ...C.passifs, epee: { ...C.passifs.epee, chance: 0 } } }
 verifier(`la pitié : sans chance, le ${C.passifs.epee.pitie}e tap l'ouvre`, jusquAuPassif(sansChance, c0).taps === C.passifs.epee.pitie)
-const ri = appliquer(C, ouvert, { joueur: 'a', t: auMilieu, type: 'toucher', evenement: ev0.k, cible: 0 })
+/** Tracer le trait de la Taille : ses deux bouts, dans l'ordre (ou à l'envers). */
+const tracer = (x: EtatDonjon, t: number, envers = false) =>
+  appliquer(C, appliquer(C, x, { joueur: 'a', t, type: 'toucher', evenement: ev0.k, cible: envers ? 1 : 0 }), { joueur: 'a', t, type: 'toucher', evenement: ev0.k, cible: envers ? 0 : 1 })
+verifier('Taille : un trait de deux bouts, sur le dessin', ev0.cibles.length === 2 && ev0.cibles.every((c) => c.x > 0.1 && c.x < 0.9 && c.y > 0.1 && c.y < 0.8))
+const ri = tracer(ouvert, auMilieu)
 const coupR = ri.joueurs[0].degatsTap - ouvert.joueurs[0].degatsTap
-verifier('Riposte : vingt taps dans la fenêtre', coupR >= degatsDuTap(C, jc) * 20 * (1 - C.tap.ecart) - 1)
-verifier('une riposte par événement', appliquer(C, ri, { joueur: 'a', t: auMilieu + 1, type: 'toucher', evenement: ev0.k, cible: 0 }).joueurs[0].degatsTap === ri.joueurs[0].degatsTap)
-verifier('hors de la fenêtre, rien', appliquer(C, ouvert, { joueur: 'a', t: ev0.fin + 1, type: 'toucher', evenement: ev0.k, cible: 0 }).joueurs[0].degatsTap === ouvert.joueurs[0].degatsTap)
+verifier('Taille : vingt taps, le trait tracé dans la fenêtre', coupR >= degatsDuTap(C, jc) * 20 * (1 - C.tap.ecart) - 1)
+verifier('un seul bout ne frappe pas', appliquer(C, ouvert, { joueur: 'a', t: auMilieu, type: 'toucher', evenement: ev0.k, cible: 0 }).joueurs[0].degatsTap === ouvert.joueurs[0].degatsTap)
+verifier("tracé à l'envers, rien", tracer(tracer(ouvert, auMilieu, true), auMilieu + 1).joueurs[0].degatsTap === ouvert.joueurs[0].degatsTap)
+verifier('une taille par événement', tracer(ri, auMilieu + 1).joueurs[0].degatsTap === ri.joueurs[0].degatsTap)
+verifier('hors de la fenêtre, rien', tracer(ouvert, ev0.fin + 1).joueurs[0].degatsTap === ouvert.joueurs[0].degatsTap)
 verifier("un passif n'use pas la forme", formeA(C, ri.joueurs[0], auMilieu) === formeA(C, ouvert.joueurs[0], auMilieu))
 const { etat: dg, ev: evD } = jusquAuPassif(C, avecArme('dague', 6))
 const pf = appliquer(C, dg, { joueur: 'a', t: evD.debut, type: 'toucher', evenement: evD.k, cible: 0 })
@@ -261,7 +267,7 @@ verifier("l'arc s'équipe, sans capacité ni passif", jArc.arme === 'arc' && cap
 verifier("l'arc a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jArc) / periodeDe(C, jArc) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 // L'ÉPÉE À DEUX MAINS, PROVISOIRE elle aussi.
 const jDeux = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'deuxMains' }).joueurs[0]
-verifier("l'épée à deux mains s'équipe, sans capacité ni passif", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && passifDe(C, jDeux) === null)
+verifier("l'épée à deux mains s'équipe, sans capacité, avec la Taille des épées", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && passifDe(C, jDeux)?.nom === 'Taille')
 verifier("l'épée à deux mains a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jDeux) / periodeDe(C, jDeux) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 // LES DEUX HACHES, LES DEUX MASSUES, LA LANCE, LES DEUX MARTEAUX, L'ARBALÈTE, LE PISTOLET, LE MOUSQUET, LA RAPIÈRE, LE FOUET, LE FLÉAU, LES GRIFFES, LA FRONDE, LE SHURIKEN, LE BOOMERANG, LE KUNAI, LE COUTEAU DE LANCER, LE LUTH ET LA BAGUETTE, PROVISOIRES elles aussi.
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {

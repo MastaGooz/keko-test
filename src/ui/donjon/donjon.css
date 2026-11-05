@@ -707,33 +707,48 @@
   animation: donjon-cible-ratee 0.25s ease-in-out 2;
 }
 
-/* L'épée : l'ennemi arme son coup — un « ! » rouge au-dessus de lui, et il rougeoie. */
-.donjon-cible.riposte {
-  color: #ffd2c4;
-  background: radial-gradient(circle, #e8392b 0 58%, rgba(232, 57, 43, 0) 70%);
-  font-family: var(--d-titre);
-  font-weight: 800;
-  font-size: 2rem;
-  pointer-events: none !important;
-  animation: donjon-cible-bat 0.25s ease-in-out infinite alternate;
+/* Les épées : un trait en pointillé à tracer, du rond jusqu'à la flèche ; le parcouru s'allume. */
+.donjon-trait {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.donjon-scene.riposte {
-  border-color: #e8392b;
-  cursor: pointer;
+.donjon-trait svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 0.3rem rgba(255, 214, 130, 0.9));
 }
 
-.donjon-scene.riposte .donjon-portrait {
-  animation: donjon-riposte 0.3s ease-in-out infinite alternate;
+.donjon-trait-guide {
+  stroke: rgba(255, 253, 244, 0.6);
+  stroke-width: 0.35rem;
+  stroke-linecap: round;
+  stroke-dasharray: 0.05rem 0.8rem;
 }
 
-@keyframes donjon-riposte {
-  from {
-    filter: drop-shadow(0 0 0.3rem rgba(232, 57, 43, 0.6));
-  }
-  to {
-    filter: drop-shadow(0 0 1rem rgba(232, 57, 43, 1)) brightness(1.15);
-  }
+.donjon-trait-fait {
+  stroke: #fffdf4;
+  stroke-width: 0.55rem;
+  stroke-linecap: round;
+}
+
+.donjon-trait-fleche {
+  fill: #fffdf4;
+}
+
+.donjon-trait.reussi svg {
+  filter: drop-shadow(0 0 0.5rem #fff) drop-shadow(0 0 1.2rem rgba(255, 214, 130, 1));
+}
+
+.donjon .donjon-cible.trait {
+  color: #fffdf4 !important;
+  background: radial-gradient(circle, #fffdf4 0 24%, rgba(255, 214, 130, 0.9) 36%, rgba(255, 214, 130, 0) 70%);
+  touch-action: none;
+  animation: donjon-cible-bat 0.5s ease-in-out infinite alternate;
 }
 
 @keyframes donjon-cible-bat {
