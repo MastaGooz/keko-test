@@ -1056,6 +1056,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   le point ; le bout traîne en arrière avec la vitesse (un dixième de sa
   longueur au plus vite). Il apparaît en 40 ms, s'efface en 140 à la fin de
   sa course. Un coup sur deux de l'autre côté, en miroir.
+- **LE BALANCIER RETIRÉ, LE VENTRE GARDÉ** (Keko, 05/11 : « non, ça va pas :
+  rollback sur le balancier, mais garde l'endroit d'impact ») : le fouet se
+  DÉROULE de nouveau d'en bas, en S, jusqu'à se tendre et claquer (130 ms) ;
+  mais tout le fouet est décalé pour que, tendu, le VENTRE DE SA DEUXIÈME
+  COURBE (le point de la seconde moitié le plus écarté de la corde, du côté
+  de la seconde bosse) tombe sur le point touché, la pointe au-delà. Le
+  claquement part du ventre.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
