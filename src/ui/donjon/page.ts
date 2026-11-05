@@ -1929,10 +1929,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    */
   function griffes(x: number, y: number, k: number, couleur: string, angle: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const longueur = 3.6 * rem * k
-    const largeur = 0.16 * rem * (1 + (k - 1) * 2)
-    const ecart = 0.6 * rem * k
-    const bombe = 0.2 * rem * k
+    // Un poil plus grosses (Keko ; d'un cinquième : 3,6 rem, 0,16, 0,6, 0,2).
+    const taille = 1.2 * rem
+    const longueur = 3.6 * taille * k
+    const largeur = 0.16 * taille * (1 + (k - 1) * 2)
+    const ecart = 0.6 * taille * k
+    const bombe = 0.2 * taille * k
     const a = (angle * Math.PI) / 180
     const [dx, dy] = [Math.cos(a), Math.sin(a)]
     const [nx, ny] = [-dy, dx]

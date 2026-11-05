@@ -1083,6 +1083,8 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   tracée s'effile sur ses derniers 15 %), en 110 ms au lieu de 70, de plus en
   plus lentement ; avant, l'amande se refaisait à chaque image sur la seule
   part tracée, et ne se lisait pas comme un geste. Le contact passe à 55 ms.
+  Puis un poil plus grosses (Keko) : tout d'un cinquième, 4,3 rem de long,
+  0,38 au plus épais, 0,72 d'écart.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
