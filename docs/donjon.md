@@ -1137,6 +1137,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     la silhouette au couteau) se lance comme la flèche de l'arc (`fleche(…,
     kunai)`), plus court (sept dixièmes) : une lame en feuille, une poignée
     fine et un ANNEAU évidé au bout.
+  - Puis (Keko : « diminue la taille de la tige des kunai, diminue la vitesse
+    de rotation du boomerang, et arrête la rotation du shuriken quand il se
+    plante ») : la poignée du kunai va de 35 à 58 au lieu de 13 à 58 (sur 100,
+    l'anneau suit) ; le boomerang tourne à 2° par ms au lieu de 3,4 ; le
+    shuriken fiché s'arrête net au lieu de tourner encore.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

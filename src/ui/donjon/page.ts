@@ -1003,14 +1003,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
     // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
     // le fer en triangle (de 82 à 100, 3,4 de demi-largeur à sa base).
-    // Le kunai : la lame (de 58 à 100), la poignée, et l'anneau, rond une fois
+    // Le kunai : la lame (de 58 à 100), la poignée, courte (Keko : « diminue
+    // la taille de la tige » ; elle partait de 13), et l'anneau, rond une fois
     // la boîte étirée (sept dixièmes de long, onze dixièmes d'épais), évidé.
     const trait = n.querySelector('path')!
     if (kunai) {
       trait.setAttribute('fill-rule', 'evenodd')
       trait.setAttribute(
         'd',
-        'M100 0 L76 -3.4 L58 -1.1 L13.4 -1.1 L13.4 1.1 L58 1.1 L76 3.4Z M0.4 0 A6.5 3 0 1 0 13.4 0 A6.5 3 0 1 0 0.4 0Z M3.3 0 A3.6 1.6 0 1 0 10.5 0 A3.6 1.6 0 1 0 3.3 0Z',
+        'M100 0 L76 -3.4 L58 -1.1 L35.4 -1.1 L35.4 1.1 L58 1.1 L76 3.4Z M22.4 0 A6.5 3 0 1 0 35.4 0 A6.5 3 0 1 0 22.4 0Z M25.3 0 A3.6 1.6 0 1 0 32.5 0 A3.6 1.6 0 1 0 25.3 0Z',
       )
     } else trait.setAttribute('d', 'M0 0 L11 -3.4 L22 -1.6 L82 -1.6 L82 -3.4 L100 0 L82 3.4 L82 1.6 L22 1.6 L11 3.4Z')
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
@@ -2169,9 +2170,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * LES ARMES DE JET (Keko : « on essaie les armes de jet ? ») : un projectile
    * qui TOURNOIE part d'en bas, d'un côté puis de l'autre, sur une courbe
    * douce, deux images fantômes derrière lui (le flou du tournoiement). Le
-   * SHURIKEN, une étoile à quatre branches, SE FICHE, s'enfonce d'un cran et
-   * CONTINUE DE TOURNER en ralentissant, comme une lame qui mord, puis
-   * s'efface (Keko : « fais tourner les étoiles » : trois tours et demi en
+   * SHURIKEN, une étoile à quatre branches, SE FICHE, s'arrête net, s'enfonce
+   * d'un cran, puis s'efface (Keko : « fais tourner les étoiles » : trois tours et demi en
    * 90 ms, à quatre branches pareilles, se lisaient comme une étoile figée
    * qui tremble). Le BOOMERANG (`boomerang` : le croissant de la hache de
    * lancer, retirée — Keko : « oublie la hache de lancer, on l'utilise pour
@@ -2189,7 +2189,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // La rotation, en degrés par milliseconde : moins de la moitié de la
     // symétrie de la forme d'une image à l'autre, sinon elle semble figée,
     // ou tourner à rebours.
-    const vitesse = boomerang ? 3.4 : 1.5
+    // Le boomerang moins vite (Keko : « diminue la vitesse de rotation » ; 3,4).
+    const vitesse = boomerang ? 2 : 1.5
     const taille = (boomerang ? 1.1 : 0.9) * rem * k
     // Le départ, en bas d'un côté ; la courbe bombe d'un côté (le point est en 0, 0).
     const [sx, sy] = [cote * (4 + Math.random()) * rem, 5 * rem]
@@ -2260,10 +2261,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const retour = Math.max(0, z - 1)
         trace.style.opacity = `${Math.min(1, t / 30) * (1 - Math.max(0, (retour - 0.5) / 0.5) ** 2)}`
       } else if (!boomerang && t < contact + TENUE_JET + 160) {
-        // Fiché : il s'enfonce d'un cran, tourne encore en ralentissant, puis s'efface.
+        // Fiché : il s'arrête net (Keko : « arrête la rotation du shuriken quand
+        // il se plante » ; il tournait encore en ralentissant), s'enfonce d'un
+        // cran, puis s'efface.
         const ms = t - contact
         const enfonce = Math.min(1, ms / 25)
-        const angle = cote * vitesse * (contact + 90 * (1 - Math.exp(-ms / 90)))
+        const angle = cote * vitesse * contact
         copies.forEach((f, i) => {
           if (i < 2) return f.setAttribute('d', '')
           poser(f, fx * enfonce, fy * enfonce, angle)
