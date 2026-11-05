@@ -1287,6 +1287,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     « Excellent ! », « Fabuleux ! », « Prodigieux ! », « Divin ! »,
     « Légendaire ! », puis « Légendaire ×2 ! », ×3… — chacun sa couleur,
     plus gros, penché d'un côté puis de l'autre.
+  - Puis (Keko : « quand je réussis le Fabuleux, rien ne se lance
+    derrière ») : le cinquième trait (0,36 s) s'ouvrait SOUS l'éclair du
+    coup d'avant, qui s'éteint encore à 0,65 s — on ne le voyait pas avant
+    qu'il soit fini. Les cibles du passif passent AU-DESSUS du noir et de
+    l'éclair (`.donjon-passif` z 5, les chiffres z 6, le salut z 7), et les
+    traits de la série s'allument d'un coup, sans fondu.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -3034,7 +3034,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           traitsVus.set(cle, tr)
           ciblesVues.set(cle, tr.n)
           couchePassif.append(tr.n)
-          tr.n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
+          // Le premier trait s'allume en fondu ; ceux de la série, courts, d'un coup.
+          if (ev.rang === 0) tr.n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
           tr.depart.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
         }
         placerLeTrait(tr, surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1]), reste)

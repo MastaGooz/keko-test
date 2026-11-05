@@ -163,7 +163,7 @@
    le jaune au repos et vers le gris en fatigue, orange en critique. */
 .donjon-degat {
   position: absolute;
-  z-index: 3;
+  z-index: 6;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -637,11 +637,13 @@
   filter: grayscale(1) brightness(0.75) drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre));
 }
 
-/* LES CIBLES DU PASSIF, sur l'ennemi : au-dessus du portrait, sous les chiffres. */
+/* LES CIBLES DU PASSIF, sur l'ennemi : au-dessus du portrait, sous les chiffres — et au-dessus du noir et
+   de l'éclair de la Taille : le trait suivant d'une série s'ouvre pendant que l'éclair s'éteint, et il est
+   court (Keko : « quand je réussis le Fabuleux, rien ne se lance derrière » — il était dessous). */
 .donjon-passif {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -760,7 +762,7 @@
   position: absolute;
   left: 50%;
   top: 16%;
-  z-index: 5;
+  z-index: 7;
   pointer-events: none;
   white-space: nowrap;
   font-family: var(--d-titre);
