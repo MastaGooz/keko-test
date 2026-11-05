@@ -1421,6 +1421,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     moment est bon, en colorant le rond ») : le rond est ROUGE-ORANGÉ trop
     tôt et VERT au temps juste (les 0,2 s de la tolérance), cerné de sa
     teinte sombre ; le manqué garde son rouge vif barré.
+  - Puis (Keko : « on devrait mettre le rond au centre, et les suivants à
+    sa même place, puis libérer un seul coup puissant qui cumule toutes les
+    réussites ») : `Passif.centre` (tous les ronds au centre du dessin, 0,5
+    × 0,45) et `Passif.enUnCoup` (la série s'encaisse en UN coup de `coup`
+    × les réussites : ×5, ×10, ×15…, un seul chiffre). L'écran le frappe
+    d'UN coup de l'arme d'autant plus gros (×1,25 par réussite au-delà de
+    la première, ×2,2 au plus), sa gerbe et son sursaut avec.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

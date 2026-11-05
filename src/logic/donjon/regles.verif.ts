@@ -313,6 +313,11 @@ const evM2 = evenementA(C, bon.saison.seed, bon.joueurs[0], juste + 50 + FR.seri
 const rate = appliquer(C, bon, { joueur: 'a', t: evM2.debut + 10, type: 'toucher', evenement: evM.k, cible: 0 })
 verifier('le suivant raté trop tôt, chaque coup juste frappe ×5', rate.joueurs[0].degatsTap - ms.joueurs[0].degatsTap >= degatsDuTap(C, ms.joueurs[0]) * FR.coup * (1 - C.tap.ecart) - 1 && rate.joueurs[0].passif.dernier?.coups === 1)
 verifier("l'anneau du suivant va plus vite", Math.abs(evM2.fin - evM2.debut - FR.duree * FR.serie!.raccourci) < 1e-6)
+verifier('au centre, et le suivant à la même place', evM.cibles[0].x === 0.5 && evM.cibles[0].y === 0.45 && JSON.stringify(evM2.cibles) === JSON.stringify(evM.cibles))
+const bon2 = appliquer(C, bon, { joueur: 'a', t: evM2.fin - FR.timing!, type: 'toucher', evenement: evM.k, cible: 0 })
+const evM3 = evenementA(C, bon2.saison.seed, bon2.joueurs[0], evM2.fin - FR.timing! + FR.serie!.entre + 1)!
+const deuxJustes = appliquer(C, bon2, { joueur: 'a', t: evM3.debut + 10, type: 'toucher', evenement: evM.k, cible: 0 })
+verifier('deux coups justes tombent en UN coup, ×10', deuxJustes.joueurs[0].passif.dernier?.detail?.length === 1 && deuxJustes.joueurs[0].degatsTap - ms.joueurs[0].degatsTap >= degatsDuTap(C, ms.joueurs[0]) * FR.coup * 2 * (1 - C.tap.ecart) - 1)
 // La lance et la rapière ont les Points faibles de la dague.
 for (const arme of ['lance', 'rapiere'] as const) {
   const jP = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]

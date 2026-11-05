@@ -110,6 +110,10 @@ export type Passif = {
    * fenêtre est passée.
    */
   timing?: number
+  /** Tous ses ronds au même endroit, au centre du dessin (le Fracas). */
+  centre?: boolean
+  /** La série s'encaisse en UN SEUL COUP, de `coup` × les réussites (le Fracas). */
+  enUnCoup?: boolean
   duree: number
   cibles: number
   coup: number
@@ -301,17 +305,21 @@ export const DONJON = {
    * 0,54, 0,35, 0,21 s) ; au premier raté, chaque coup juste frappe ×5. Un
    * événement toutes les 8 s environ au spam (la massue 4 %, les armes à deux
    * mains 7,5 % et 8,75 %, le marteau et le fléau 4,7 %), chiffres de moi.
+   * Le rond AU CENTRE, les suivants à la même place, et la série tombe EN UN
+   * SEUL COUP PUISSANT qui cumule les réussites (Keko : « mettre le rond au
+   * centre, et les suivants à sa même place, puis libérer un seul coup
+   * puissant qui cumule toutes les réussites »).
    */
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
-    massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
-    massueDeuxMains: { nom: 'Fracas', chance: 0.075, pitie: 40, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
-    marteau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
-    marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
-    fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE },
+    massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
+    massueDeuxMains: { nom: 'Fracas', chance: 0.075, pitie: 40, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
+    marteau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
+    marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
+    fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, timing: 0.1 * SECONDE, centre: true, enUnCoup: true },
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,

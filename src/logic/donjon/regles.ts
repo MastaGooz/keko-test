@@ -253,6 +253,8 @@ function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: num
       { x: cx + dx, y: cy + dy },
     ]
   }
+  // Au centre du dessin, toujours (le Fracas).
+  if (p.centre === true) return Array.from({ length: p.cibles }, () => ({ x: 0.5, y: 0.45 }))
   // Une cible seule ; en série, la plus loin de celle d'avant parmi huit tirées : il faut y aller.
   if (p.cibles === 1) {
     const tiree = (essai: number) => ({ x: 0.3 + 0.4 * tire(2 + 2 * essai), y: 0.3 + 0.35 * tire(3 + 2 * essai) })
@@ -591,9 +593,10 @@ function encaisserLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: nu
   if (rang === 0) return
   const avant = j.degatsTap
   const detail: number[] = []
-  for (let i = 0; i < rang; i++) {
+  // En un seul coup (le Fracas), ou un coup par réussite.
+  for (let i = 0; i < (p.enUnCoup === true ? 1 : rang); i++) {
     const a = j.degatsTap
-    frapperFort(config, e, j, p.coup, t, p.critique === true)
+    frapperFort(config, e, j, p.enUnCoup === true ? p.coup * rang : p.coup, t, p.critique === true)
     detail.push(j.degatsTap - a)
   }
   j.passif = { ...j.passif, dernier: { evenement, coups: rang, degats: j.degatsTap - avant, detail } }

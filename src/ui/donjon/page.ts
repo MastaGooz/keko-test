@@ -3068,7 +3068,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * chaque hit ») : chaque plaie fait jaillir le sien (`detail`, ceux des
    * règles), et la barre de vie descend coup par coup.
    */
-  function frapperLesPoints(serie: string, detail: number[]): void {
+  function frapperLesPoints(serie: string, detail: number[], coups: number): void {
     const vues = marquesDesPoints.get(serie) ?? []
     marquesDesPoints.delete(serie)
     // Les places touchées ; un coup sans place connue (la page rechargée) tombe au hasard sur le corps.
@@ -3096,12 +3096,15 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
                   ? CONTACT_FLEAU
                   : CONTACT_PLAIE
     const ecrase = arme === 'marteau' || arme === 'marteauDeuxMains' || arme === 'fleau'
+    // EN UN SEUL COUP (le Fracas), il grossit des réussites qu'il cumule.
+    const fort = passif?.enUnCoup === true ? Math.min(2.2, 1 + 0.25 * (coups - 1)) : 1
+    const k = 1.3 * fort
     const frapperIci = (x: number, y: number, i: number) => {
-      if (arme === 'lance' || arme === 'rapiere') lance(x, y, 1.3, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
-      else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, 1.3, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
-      else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, 1.3, couleur, arme === 'marteauDeuxMains')
-      else if (arme === 'fleau') fleau(x, y, 1.3, couleur)
-      else plaie(x, y, 1.3, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
+      if (arme === 'lance' || arme === 'rapiere') lance(x, y, k, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
+      else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, k, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
+      else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, k, couleur, arme === 'marteauDeuxMains')
+      else if (arme === 'fleau') fleau(x, y, k, couleur)
+      else plaie(x, y, k, couleur, (i % 2 === 0 ? 35 : 145) + (Math.random() - 0.5) * 30)
     }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
     const ici = (c: { x: number; y: number }): [number, number] => {
@@ -3137,7 +3140,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const avant = scene.childElementCount
         frapperIci(x, y, i)
         for (const n of [...scene.children].slice(avant)) (n as HTMLElement).style.zIndex = '4'
-        for (let e = 0; e < 10; e++) {
+        for (let e = 0; e < Math.round(10 * fort * fort); e++) {
           const p = el('div', 'donjon-particule trait')
           p.style.left = `${x}px`
           p.style.top = `${y}px`
@@ -3145,7 +3148,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           p.style.zIndex = '4'
           scene.append(p)
           const a = Math.random() * 2 * Math.PI
-          const loin = (1.4 + Math.random() * 2) * rem
+          const loin = (1.4 + Math.random() * 2) * rem * fort
           p.animate(
             [
               { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.8)`, opacity: 1 },
@@ -3156,7 +3159,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         }
         reculer(x, 'critique', 70, undefined, contact, ecrase)
         // La scène reste resserrée sous chaque plaie.
-        const d = 4 + Math.min(6, i)
+        const d = (4 + Math.min(6, i)) * fort
         const pas = `scale(1.035) translate(${(Math.random() - 0.5) * 2 * d}px, ${(Math.random() - 0.5) * 2 * d}px)`
         scene.animate([{ transform: 'scale(1.035)' }, { transform: pas, offset: 0.3 }, { transform: 'scale(1.035)' }], { duration: 110, delay: contact })
         // Son chiffre, au contact du coup ; la barre descend d'autant.
@@ -3202,7 +3205,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const dernier = j.passif.dernier
     if (dernier !== undefined && `${j.arme}:${dernier.evenement}` !== frappeVue) {
       frappeVue = `${j.arme}:${dernier.evenement}`
-      frapperLesPoints(frappeVue, dernier.detail ?? [dernier.degats])
+      frapperLesPoints(frappeVue, dernier.detail ?? [dernier.degats], dernier.coups)
     }
   }
 
