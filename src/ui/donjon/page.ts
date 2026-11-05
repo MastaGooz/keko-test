@@ -821,6 +821,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // La balle du pistolet arrive en 40 ms.
   const CONTACT_BALLE = 40
   // Le fouet claque à 130 ms ; la boule du fléau frappe à 140, posée 90.
+  // Chaque griffe se trace en 110 ms.
+  const TRACE_GRIFFE = 110
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
   const TENUE_FLEAU = 90
@@ -1486,7 +1488,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enGriffes ? 40 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1918,8 +1920,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * poings avec les mains nues ») : TROIS ENTAILLES parallèles, fines et un
    * peu courbes, tracées d'un même geste en diagonale vers le bas, un coup sur
    * deux de l'autre côté ; elles partent l'une après l'autre (18 ms), celle du
-   * milieu plus longue, chacune une amande de lumière qui file de son départ
-   * à son bout (70 ms), puis toutes s'effacent. Le critique les épaissit.
+   * milieu plus longue, chacune une amande de lumière qui SE DESSINE DANS LE
+   * SENS DU GESTE (Keko : « que l'animation se dessine dans un sens, comme
+   * l'action de griffer » : l'amande se refaisait à chaque image sur la part
+   * tracée, et filait en 70 ms) — sa forme est fixe, dévoilée de haut en bas
+   * derrière une pointe qui avance, en 110 ms —, puis toutes s'effacent. Le
+   * critique les épaissit.
    */
   function griffes(x: number, y: number, k: number, couleur: string, angle: number): void {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -1946,7 +1952,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     })
     scene.append(trace)
     // Une marque, de son départ jusqu'à `fin` (1 = son bout) : une amande
-    // pointue aux deux bouts, courbée d'un côté.
+    // pointue aux deux bouts, courbée d'un côté, dont la part tracée finit en
+    // pointe (la griffe qui tire).
     const dessiner = (m: (typeof marques)[number], fin: number) => {
       if (fin < 0.01) return m.forme.setAttribute('d', '')
       const dehors: string[] = []
@@ -1957,13 +1964,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const le = (g - 0.5) * longueur * m.long
         const ecarte = m.decale + bombe * Math.sin(Math.PI * g)
         const [cx, cy] = [dx * le + nx * ecarte, dy * le + ny * ecarte]
-        const e = largeur * Math.sin(Math.PI * v) ** 0.7
+        const e = largeur * Math.sin(Math.PI * g) ** 0.7 * Math.min(1, (fin - g) / 0.15 + (fin >= 1 ? 1 : 0))
         dehors.push(`${(cx - nx * e).toFixed(1)} ${(cy - ny * e).toFixed(1)}`)
         dedans.push(`${(cx + nx * e).toFixed(1)} ${(cy + ny * e).toFixed(1)}`)
       }
       m.forme.setAttribute('d', `M${dehors.join(' L')} L${dedans.reverse().join(' L')}Z`)
     }
-    const fondu = 2 * 18 + 70 + 60
+    const fondu = 2 * 18 + TRACE_GRIFFE + 60
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
@@ -1972,8 +1979,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         return
       }
       for (const m of marques) {
-        const u = (t - m.retard) / 70
-        dessiner(m, u <= 0 ? 0 : 1 - (1 - Math.min(1, u)) ** 2)
+        const u = (t - m.retard) / TRACE_GRIFFE
+        dessiner(m, u <= 0 ? 0 : 1 - (1 - Math.min(1, u)) ** 1.6)
       }
       trace.style.opacity = `${1 - Math.max(0, (t - fondu) / 150) ** 2}`
       requestAnimationFrame(image)

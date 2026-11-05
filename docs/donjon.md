@@ -1076,6 +1076,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   Au hasard sur le dessin, comme la dague ; le contact à 40 ms ; étincelles
   en traits le long des griffes, cinq de plus ; la scène tirée de 4 px dans
   leur sens ; l'ennemi recule comme sous l'épée.
+- **LES GRIFFES SE DESSINENT DANS LE SENS DU GESTE** (Keko, 05/11 : « il
+  faudrait que l'animation se dessine dans un sens, comme l'action de
+  griffer ») : chaque entaille a une FORME FIXE (son amande sur toute sa
+  longueur), DÉVOILÉE de haut en bas derrière une POINTE qui avance (la part
+  tracée s'effile sur ses derniers 15 %), en 110 ms au lieu de 70, de plus en
+  plus lentement ; avant, l'amande se refaisait à chaque image sur la seule
+  part tracée, et ne se lisait pas comme un geste. Le contact passe à 55 ms.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
