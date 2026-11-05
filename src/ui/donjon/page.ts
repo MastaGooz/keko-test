@@ -2755,7 +2755,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * avant le bout, il repart de zéro — on réessaie tant que le temps court.
    * Au bout, les deux bouts sont touchés dans l'ordre et le coup tombe.
    */
-  type Trait = { n: HTMLElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
+  type Trait = { n: HTMLElement; bande: SVGLineElement; guide: SVGLineElement; fait: SVGLineElement; fleche: SVGPathElement; depart: HTMLElement; a: [number, number]; b: [number, number]; avance: number; suivi: boolean; fini: boolean }
   const traitsVus = new Map<string, Trait>()
   // Le doigt peut s'écarter de 2 rem du trait ; il en parcourt les neuf dixièmes.
   const ECART_DU_TRAIT = 2
@@ -2771,6 +2771,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       svg.append(x)
       return x
     }
+    const bande = ligne('donjon-trait-bande')
     const guide = ligne('donjon-trait-guide')
     const fait = ligne('donjon-trait-fait')
     const fleche = document.createElementNS(SVG, 'path')
@@ -2779,7 +2780,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const depart = bouton('donjon-cible trait')
     depart.setAttribute('aria-label', 'Départ de la taille')
     n.append(svg, depart)
-    const tr: Trait = { n, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
+    const tr: Trait = { n, bande, guide, fait, fleche, depart, a: [0, 0], b: [0, 0], avance: 0, suivi: false, fini: false }
     let rem = 16
     const rater = () => {
       tr.suivi = false
@@ -2816,8 +2817,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         tr.suivi = false
         tr.fini = true
         tr.avance = 1
-        n.classList.add('reussi')
-        void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null))
+        // Le grand coup part au geste, sans attendre les règles ; le guide s'efface sous lui.
+        n.style.visibility = 'hidden'
+        grandeTaille(tr.a, tr.b)
+        const milieu: [number, number] = [(tr.a[0] + tr.b[0]) / 2, (tr.a[1] + tr.b[1]) / 2]
+        void partage.agir({ joueur: MOI, t: maintenant(), type: 'toucher', evenement: k, cible: 0 }).then(() => toucherLePassif(k, 1, null, milieu))
       }
       dessinerLAvance(tr)
     })
@@ -2829,17 +2833,93 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     return tr
   }
 
+  /**
+   * LE GRAND COUP DE LA TAILLE (Keko : « quand c'est réussi il faudrait un
+   * effet vraiment puissant, avec un slash plus gros et un tremblement, voire
+   * un gros flash, des particules ») : le long du trait tracé, une entaille de
+   * lumière bien plus grande que celle de l'épée, prolongée d'un tiers de
+   * chaque côté, qui jaillit d'un bout à l'autre (90 ms), tient, puis
+   * s'amincit et s'éteint ; un éclair blanc sur toute la scène, la scène qui
+   * tremble en travers du trait, une gerbe d'étincelles de part et d'autre
+   * qui suit la lame, l'ennemi figé, blanchi, repoussé.
+   */
+  function grandeTaille(a: [number, number], b: [number, number]): void {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const long = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
+    const [ux, uy] = [(b[0] - a[0]) / long, (b[1] - a[1]) / long]
+    const prolonge = 0.35 * long
+    const [tx, ty] = [b[0] + ux * prolonge, b[1] + uy * prolonge]
+    const [mx, my] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    const or = '#ffd27a'
+    // L'entaille : pointue aux deux bouts, 1,5 rem d'épais au milieu.
+    const { dessiner: tracer, trace } = traitDroit(tx, ty, or, (Math.atan2(uy, ux) * 180) / Math.PI, long + 2 * prolonge, 0.75 * rem, (v) => Math.sin(Math.PI * v) ** 0.7)
+    trace.style.zIndex = '3'
+    const debut = performance.now()
+    const image = (maintenant: number) => {
+      const s = maintenant - debut
+      if (s < 90) tracer(0, 1 - (1 - s / 90) ** 2, 1.15)
+      else if (s < 170) tracer(0, 1, 1.15 + 0.15 * ((s - 90) / 80))
+      else if (s < 420) {
+        const q = (s - 170) / 250
+        tracer(0, 1, 1.3 * (1 - q) ** 1.5)
+        trace.style.opacity = `${1 - q * q}`
+      } else return trace.remove()
+      requestAnimationFrame(image)
+    }
+    requestAnimationFrame(image)
+    // L'éclair, centré sur le milieu du trait.
+    const flash = el('div', 'donjon-flash-taille')
+    flash.style.setProperty('--x', `${mx}px`)
+    flash.style.setProperty('--y', `${my}px`)
+    scene.append(flash)
+    flash.animate([{ opacity: 0.9 }, { opacity: 0.9, offset: 0.15 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' }).onfinish = () => flash.remove()
+    // La scène tremble en travers du trait, et s'amortit.
+    const pas = (d: number) => `translate(${(-uy * d).toFixed(1)}px, ${(ux * d).toFixed(1)}px)`
+    scene.animate(
+      [{ transform: 'none' }, { transform: pas(14), offset: 0.1 }, { transform: pas(-11), offset: 0.28 }, { transform: pas(7), offset: 0.46 }, { transform: pas(-4), offset: 0.64 }, { transform: pas(2), offset: 0.82 }, { transform: 'none' }],
+      { duration: 460, easing: 'ease-out' },
+    )
+    // La gerbe : des traits d'or et de blanc jaillissent des deux côtés du
+    // trait, un peu vers l'avant, au passage de la lame.
+    for (let i = 0; i < 40; i++) {
+      const v = Math.random()
+      const cote = i % 2 === 0 ? 1 : -1
+      const angle = Math.atan2(ux * cote + uy * 0.5, -uy * cote + ux * 0.5) + (Math.random() - 0.5) * 0.9
+      const loin = (2 + Math.random() * 4) * rem
+      const [dx, dy] = [Math.cos(angle) * loin, Math.sin(angle) * loin]
+      const p = el('div', 'donjon-particule trait')
+      p.style.left = `${a[0] + (b[0] - a[0]) * v}px`
+      p.style.top = `${a[1] + (b[1] - a[1]) * v}px`
+      p.style.background = i % 3 === 0 ? or : '#fffdf4'
+      p.style.zIndex = '3'
+      p.style.opacity = '0'
+      scene.append(p)
+      const r = `rotate(${angle}rad)`
+      p.animate(
+        [
+          { transform: `translate(-50%, -50%) ${r} scaleX(2.2)`, opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) ${r} scaleX(1.3)`, opacity: 1, offset: 0.5 },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 10}px)) ${r} scaleX(0.2)`, opacity: 0 },
+        ],
+        { duration: 380 + Math.random() * 260, delay: 20 + v * 70, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+      ).onfinish = () => p.remove()
+    }
+    reculer(mx, 'capaciteCritique', 180)
+  }
+
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
   function placerLeTrait(tr: Trait, a: [number, number], b: [number, number], reste: number): void {
     tr.a = a
     tr.b = b
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    for (const x of [tr.guide, tr.fait]) {
+    for (const x of [tr.bande, tr.guide, tr.fait]) {
       x.setAttribute('x1', a[0].toFixed(1))
       x.setAttribute('y1', a[1].toFixed(1))
     }
-    tr.guide.setAttribute('x2', b[0].toFixed(1))
-    tr.guide.setAttribute('y2', b[1].toFixed(1))
+    for (const x of [tr.bande, tr.guide]) {
+      x.setAttribute('x2', b[0].toFixed(1))
+      x.setAttribute('y2', b[1].toFixed(1))
+    }
     // La flèche, pointée dans le sens du trait, au-delà de son bout.
     const long = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
     const [ux, uy] = [(b[0] - a[0]) / long, (b[1] - a[1]) / long]
@@ -2911,9 +2991,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * TOUCHER UNE CIBLE : l'action part, et si le coup est tombé il jaillit
-   * sous le nom du passif. Une rune hors d'ordre tremble en rouge.
+   * sous le nom du passif. Une rune hors d'ordre tremble en rouge. `ou` : le
+   * coup a déjà eu son effet (la Taille), le chiffre jaillit là.
    */
-  function toucherLePassif(k: number, cible: number, n: HTMLElement | null): void {
+  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number]): void {
     const t = maintenant()
     const avant = moi()
     const p = passifDe(C, avant)
@@ -2929,9 +3010,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const e = C.tap.ecart
         const seuil = (attendu * (1 + e + (1 - e) * multCritDe(C, avant))) / 2
         const genre: Genre = p.critique === true || inflige > seuil ? 'capaciteCritique' : 'capacite'
-        const [x, y] = surLEnnemi(0, -0.05)
+        const [x, y] = ou ?? surLEnnemi(0, -0.05)
         const couleur = teinteDuChiffre(genre, mult - 1)
-        impact(x, y, genre, couleur)
+        if (ou === undefined) impact(x, y, genre, couleur)
         envoler(x, y, inflige, genre, couleur, p.nom === 'Points faibles' ? 'Point faible' : p.nom)
       }
       dessiner()

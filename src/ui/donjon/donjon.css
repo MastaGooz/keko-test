@@ -707,7 +707,9 @@
   animation: donjon-cible-ratee 0.25s ease-in-out 2;
 }
 
-/* Les épées : un trait en pointillé à tracer, du rond jusqu'à la flèche ; le parcouru s'allume. */
+/* Les épées : un trait à tracer, du rond jusqu'à la flèche — une bande claire, des tirets pleins qui filent
+   dans le sens du geste, cernés de sombre pour se lire sur tous les fonds (Keko : « trop transparente ») ;
+   le parcouru s'allume. */
 .donjon-trait {
   position: absolute;
   inset: 0;
@@ -720,19 +722,32 @@
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 0 0.3rem rgba(255, 214, 130, 0.9));
+  filter: drop-shadow(0 0 0.12rem rgba(40, 18, 0, 0.95)) drop-shadow(0 0 0.45rem rgba(255, 214, 130, 1));
+}
+
+.donjon-trait-bande {
+  stroke: rgba(255, 236, 190, 0.38);
+  stroke-width: 1.5rem;
+  stroke-linecap: round;
 }
 
 .donjon-trait-guide {
-  stroke: rgba(255, 253, 244, 0.6);
-  stroke-width: 0.35rem;
+  stroke: #fffdf4;
+  stroke-width: 0.42rem;
   stroke-linecap: round;
-  stroke-dasharray: 0.05rem 0.8rem;
+  stroke-dasharray: 0.7rem 0.6rem;
+  animation: donjon-trait-file 0.45s linear infinite;
+}
+
+@keyframes donjon-trait-file {
+  to {
+    stroke-dashoffset: -1.3rem;
+  }
 }
 
 .donjon-trait-fait {
   stroke: #fffdf4;
-  stroke-width: 0.55rem;
+  stroke-width: 0.7rem;
   stroke-linecap: round;
 }
 
@@ -740,8 +755,13 @@
   fill: #fffdf4;
 }
 
-.donjon-trait.reussi svg {
-  filter: drop-shadow(0 0 0.5rem #fff) drop-shadow(0 0 1.2rem rgba(255, 214, 130, 1));
+/* Le grand coup de la Taille : un éclair blanc sur toute la scène, plus vif au milieu du trait. */
+.donjon-flash-taille {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--x) var(--y), #fff 0, rgba(255, 246, 220, 0.9) 18%, rgba(255, 214, 130, 0.45) 55%, rgba(255, 214, 130, 0.15) 100%);
 }
 
 .donjon .donjon-cible.trait {

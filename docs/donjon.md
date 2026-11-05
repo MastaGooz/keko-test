@@ -1240,6 +1240,21 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   arrière ou levé, il repart de zéro (le rond tremble) et on réessaie tant
   que le temps court ; aux neuf dixièmes, les deux bouts partent et le coup
   jaillit sous « Taille ». L'icône est encore celle de la Riposte.
+  - Puis (Keko : « on ne voit pas très bien la trajectoire, trop
+    transparente ; et quand c'est réussi il faudrait un effet vraiment
+    puissant, avec un slash plus gros et un tremblement, voire un gros
+    flash, des particules ») : le trait est une BANDE claire de 1,5 rem sous
+    des TIRETS PLEINS qui filent dans le sens du geste, le tout cerné de
+    sombre et d'une lueur d'or ; le parcouru s'allume plus épais. Réussi, le
+    GRAND COUP part au geste, sans attendre les règles (`grandeTaille`) : une
+    entaille de lumière d'or le long du trait, prolongée d'un tiers de chaque
+    côté, 1,5 rem d'épais au milieu, qui jaillit en 90 ms, tient, s'amincit
+    et s'éteint (420 ms) ; un ÉCLAIR blanc sur toute la scène, plus vif au
+    milieu du trait (320 ms) ; la scène TREMBLE en travers du trait (14 px,
+    cinq rebonds amortis, 460 ms) ; QUARANTE étincelles d'or et de blanc
+    jaillissent des deux côtés au passage de la lame ; l'ennemi figé 180 ms,
+    blanchi, repoussé comme sous un critique. Le chiffre jaillit au milieu du
+    trait (le coup rond des capacités n'est plus joué par-dessus).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
