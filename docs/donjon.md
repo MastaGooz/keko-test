@@ -1119,6 +1119,24 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   vers celui qui lance ; l'ennemi poussé dans le sens du jet, figé 70 ms
   (120 sous la hache) ; la scène poussée de 3 px (6 sous la hache). Le
   boomerang et le chakram, qui reviennent, sont pour plus tard.
+- **LE SHURIKEN TOURNE, LE BOOMERANG REVIENT, LE KUNAI** (Keko, 05/11 :
+  « fais tourner les étoiles ; oublie la hache de lancer, on l'utilise pour
+  faire un boomerang, on a juste à le faire revenir ; et ajoute le kunai ») :
+  - LE SHURIKEN se lisait figé : trois tours et demi en 90 ms, c'est 230°
+    d'une image à l'autre, et à quatre branches pareilles l'œil voit 50° ou
+    un tremblement. Il tourne à 1,5° par ms (25° par image), arrive en
+    120 ms, et une fois fiché CONTINUE DE TOURNER en ralentissant (+135°),
+    comme une lame qui mord ; plus de vibration. *Une forme symétrique ne
+    doit pas tourner de plus de la moitié de sa symétrie par image.*
+  - LE BOOMERANG (« Revenant », 14 toutes les 0,35 s ; icône, la capacité
+    n° 126, la tornade) remplace la hache de lancer : son croissant tourne à
+    3,4° par ms, frappe (130 ms), puis REPART vers le départ sur une courbe
+    qui bombe de l'autre côté (200 ms), en tournant toujours, et s'efface sur
+    la seconde moitié du retour. Il ne se fiche pas.
+  - LE KUNAI (« Acéré », 9 toutes les 0,225 s ; icône, la capacité n° 121,
+    la silhouette au couteau) se lance comme la flèche de l'arc (`fleche(…,
+    kunai)`), plus court (sept dixièmes) : une lame en feuille, une poignée
+    fine et un ANNEAU évidé au bout.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

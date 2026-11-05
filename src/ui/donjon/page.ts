@@ -163,7 +163,8 @@ const CHOIX: Record<CleAmelioration, { nom: string; role: string; valeur: (j: Jo
  * silhouette enchaînée ; ni fouet ni fléau dans le tri), et les griffes, la
  * n° 133 (le loup spectral ; pas de griffes dans le tri), et la fronde, la
  * n° 108 (les pierres au-dessus de la main), le shuriken, la n° 142 (le
- * tourbillon), et la hache de lancer, celle de la hache, provisoires elles aussi.
+ * tourbillon), le boomerang, la n° 126 (la tornade), et le kunai, la n° 121
+ * (la silhouette au couteau), provisoires elles aussi.
  */
 const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   mains: 'armes/mains.webp',
@@ -188,7 +189,8 @@ const IMAGE_DE_L_ARME: Record<Equipement, string> = {
   griffes: 'armes/griffes.webp',
   fronde: 'armes/fronde.webp',
   shuriken: 'armes/shuriken.webp',
-  hacheDeLancer: 'armes/hache.webp',
+  boomerang: 'armes/boomerang.webp',
+  kunai: 'armes/kunai.webp',
 }
 const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   epee: { caractere: 'Équilibrée', bonus: 'Récupération +20 %' },
@@ -212,7 +214,8 @@ const DIT_L_ARME: Record<TypeArme, { caractere: string; bonus: string }> = {
   griffes: { caractere: 'Lacérantes', bonus: "Aucun pour l'instant" },
   fronde: { caractere: 'Plongeante', bonus: "Aucun pour l'instant" },
   shuriken: { caractere: 'Tournoyant', bonus: "Aucun pour l'instant" },
-  hacheDeLancer: { caractere: 'Tournoyante', bonus: "Aucun pour l'instant" },
+  boomerang: { caractere: 'Revenant', bonus: "Aucun pour l'instant" },
+  kunai: { caractere: 'Acéré', bonus: "Aucun pour l'instant" },
 }
 
 /**
@@ -832,9 +835,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   // Chaque griffe se trace en 110 ms ; la pierre de la fronde retombe en 220.
   const TRACE_GRIFFE = 110
   const CONTACT_FRONDE = 220
-  // Le shuriken arrive en 90 ms, la hache de lancer en 130 ; fichés 160 ms.
-  const CONTACT_SHURIKEN = 90
-  const CONTACT_HACHE_JETEE = 130
+  // Le shuriken arrive en 120 ms, fiché 160 ; le boomerang en 130, revenu en 200.
+  const CONTACT_SHURIKEN = 120
+  const CONTACT_BOOMERANG = 130
+  const RETOUR_BOOMERANG = 200
   const TENUE_JET = 160
   const CONTACT_FOUET = 130
   const CONTACT_FLEAU = 140
@@ -990,19 +994,30 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * Plus courte (Keko : « raccourcis un peu les flèches » ; 6 rem).
    * `&fleche` la rend aussi à la dague. LE CARREAU DE L'ARBALÈTE (`gros` ;
    * Keko : « une arbalète, en mode grosse flèche ») : la même flèche, un quart
-   * plus longue et 1,8 fois plus épaisse, qui s'enfonce plus loin.
+   * plus longue et 1,8 fois plus épaisse, qui s'enfonce plus loin. LE KUNAI
+   * (`kunai` ; Keko : « ajoute le kunai ») : lancé de même, mais une lame en
+   * feuille, une poignée fine et un ANNEAU au bout, plus court.
    */
-  function fleche(x: number, y: number, k: number, couleur: string, angle: number, gros = false): void {
+  function fleche(x: number, y: number, k: number, couleur: string, angle: number, gros = false, kunai = false): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
     // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
     // le fer en triangle (de 82 à 100, 3,4 de demi-largeur à sa base).
-    n.querySelector('path')!.setAttribute('d', 'M0 0 L11 -3.4 L22 -1.6 L82 -1.6 L82 -3.4 L100 0 L82 3.4 L82 1.6 L22 1.6 L11 3.4Z')
+    // Le kunai : la lame (de 58 à 100), la poignée, et l'anneau, rond une fois
+    // la boîte étirée (sept dixièmes de long, onze dixièmes d'épais), évidé.
+    const trait = n.querySelector('path')!
+    if (kunai) {
+      trait.setAttribute('fill-rule', 'evenodd')
+      trait.setAttribute(
+        'd',
+        'M100 0 L76 -3.4 L58 -1.1 L13.4 -1.1 L13.4 1.1 L58 1.1 L76 3.4Z M0.4 0 A6.5 3 0 1 0 13.4 0 A6.5 3 0 1 0 0.4 0Z M3.3 0 A3.6 1.6 0 1 0 10.5 0 A3.6 1.6 0 1 0 3.3 0Z',
+      )
+    } else trait.setAttribute('d', 'M0 0 L11 -3.4 L22 -1.6 L82 -1.6 L82 -3.4 L100 0 L82 3.4 L82 1.6 L22 1.6 L11 3.4Z')
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
     n.style.left = `${x}px`
     n.style.top = `${y}px`
     n.style.color = couleur
-    const [long, epais] = gros ? [1.25, 1.8] : [1, 1]
+    const [long, epais] = gros ? [1.25, 1.8] : kunai ? [0.7, 1.1] : [1, 1]
     const pose = (avance: string, etire: number, vibre = 0) => `translate(-100%, -50%) rotate(${angle + vibre}deg) translateX(${avance}) scale(${k * etire * long}, ${k * epais})`
     const fiche = gros ? '0.55rem' : '0.35rem'
     scene.append(n)
@@ -1436,12 +1451,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // L'arc tire la flèche, l'arbalète son gros carreau ; la dague ouvre une
     // plaie (ou tire la flèche, `&fleche`).
     const enArbalete = arme === 'arbalete'
-    const enFleche = arme === 'arc' || enArbalete || (arme === 'dague' && FLECHE)
+    // Le kunai se lance comme la flèche, sa forme à lui.
+    const enKunai = arme === 'kunai'
+    const enFleche = arme === 'arc' || enArbalete || enKunai || (arme === 'dague' && FLECHE)
     // La lance aussi pique, mais d'un estoc qui se retire ; la rapière aussi,
     // d'une aiguille.
     const enRapiere = arme === 'rapiere'
     const enLance = arme === 'lance' || enRapiere
-    const pique = arme === 'dague' || arme === 'arc' || enArbalete || enLance
+    const pique = arme === 'dague' || arme === 'arc' || enArbalete || enKunai || enLance
     // Les massues et le bâton cognent ; les armes à deux mains (le bâton en
     // est une) en version longue.
     // Le marteau aussi, mais il tombe et ÉCRASE (Keko : « avec écrasement,
@@ -1462,8 +1479,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // La fronde tire en cloche.
     const enFronde = arme === 'fronde'
     // Les armes de jet tournoient et se fichent.
-    const enJet = arme === 'shuriken' || arme === 'hacheDeLancer'
-    const hacheJetee = arme === 'hacheDeLancer'
+    const enJet = arme === 'shuriken' || arme === 'boomerang'
+    const enBoomerang = arme === 'boomerang'
     let angleJet = -90
     const masse = arme === 'baton' || arme === 'massue' || arme === 'massueDeuxMains' || enMarteau || enFleau
     const longue = arme === 'baton' || arme === 'massueDeuxMains'
@@ -1507,7 +1524,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         ? -90 + (Math.random() - 0.5) * 70
         : (coteDuPoignard > 0 ? 35 : 145) + (Math.random() - 0.5) * 30
     // L'entaille lourde passe au point vers 90 ms : le choc l'attend.
-    const contact = enJet ? (hacheJetee ? CONTACT_HACHE_JETEE : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
+    const contact = enJet ? (enBoomerang ? CONTACT_BOOMERANG : CONTACT_SHURIKEN) : enFronde ? CONTACT_FRONDE : enGriffes ? 55 : enFeu ? CONTACT_BALLE : enFouet ? CONTACT_FOUET : enFleau ? CONTACT_FLEAU : pique ? (enLance ? CONTACT_LANCE : enFleche ? 50 : CONTACT_PLAIE) : masse ? (enMarteau ? (marteauLourd ? CONTACT_MARTEAU_LOURD : CONTACT_MARTEAU) : longue ? CONTACT_LONG : CONTACT_BATON) : lourde ? 90 : 0
     if (enFeu) {
       explosion(x, y, 1 + 0.65 * (fort - 1), couleur, feuLourd)
       // La scène tressaute, sèche, d'un côté puis de l'autre (le critique a sa
@@ -1528,11 +1545,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         scene.animate([{ transform: 'none' }, { transform: `translateY(${d}px)`, offset: 0.25 }, { transform: `translateY(${-d * 0.3}px)`, offset: 0.55 }, { transform: 'none' }], { duration: marteauLourd ? 260 : 200, delay: contact, easing: 'ease-out' })
       }
     } else if (enJet) {
-      angleJet = jet(x, y, 1 + 0.65 * (fort - 1), couleur, hacheJetee)
+      angleJet = jet(x, y, 1 + 0.65 * (fort - 1), couleur, enBoomerang)
       // La scène est poussée d'un cran dans le sens du jet (le critique a sa secousse).
       if (!STYLES[genre].secousse) {
         const a = (angleJet * Math.PI) / 180
-        const d = hacheJetee ? 6 : 3
+        const d = enBoomerang ? 6 : 3
         scene.animate([{ transform: 'none' }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`, offset: 0.3 }, { transform: 'none' }], { duration: 140, delay: contact, easing: 'ease-out' })
       }
     } else if (enFronde) {
@@ -1585,7 +1602,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     } else if (pique) {
       const k = 1 + 0.65 * (fort - 1)
       if (enLance) lance(x, y, k, couleur, anglePique, enRapiere)
-      else if (enFleche) fleche(x, y, k, couleur, anglePique, enArbalete)
+      else if (enFleche) fleche(x, y, k, couleur, anglePique, enArbalete, enKunai)
       else plaie(x, y, k, couleur, anglePique)
       anneauQuiSeReferme(x, y, k, couleur, contact - 5)
       // La scène est poussée d'un cran dans l'axe du coup (le critique a sa
@@ -1705,7 +1722,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const axe = enJet ? (angleJet * Math.PI) / 180 : pique ? (anglePique * Math.PI) / 180 : aPlat ? (angleLourd * Math.PI) / 180 : undefined
     // Sous la massue, plus d'écrasement : il recule comme sous l'épée (Keko) ;
     // le marteau, lui, écrase.
-    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || hacheJetee ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
+    reculer(x, genre, lourde || marteauLourd || feuLourd ? 150 : longue || enMarteau || enFleau || enArbalete || enBoomerang ? 120 : enFeu ? 90 : lame || pique || masse || enFouet || enGriffes || enFronde || enJet ? 70 : 0, axe, contact, (lourde && !aPlat) || enMarteau || enFleau)
   }
 
   /**
@@ -2150,29 +2167,46 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * LES ARMES DE JET (Keko : « on essaie les armes de jet ? ») : un projectile
-   * qui TOURNOIE — l'étoile à quatre branches du SHURIKEN, ou le croissant de
-   * la HACHE DE LANCER, plus gros et plus lent (`hache`) — part d'en bas,
-   * d'un côté puis de l'autre, sur une courbe douce, deux images fantômes
-   * derrière lui (le flou du tournoiement) ; au contact, il SE FICHE : la
-   * rotation s'arrête net, il s'enfonce d'un cran et vibre, reste planté un
-   * instant puis s'efface. Rend la direction d'arrivée (en degrés), pour les
+   * qui TOURNOIE part d'en bas, d'un côté puis de l'autre, sur une courbe
+   * douce, deux images fantômes derrière lui (le flou du tournoiement). Le
+   * SHURIKEN, une étoile à quatre branches, SE FICHE, s'enfonce d'un cran et
+   * CONTINUE DE TOURNER en ralentissant, comme une lame qui mord, puis
+   * s'efface (Keko : « fais tourner les étoiles » : trois tours et demi en
+   * 90 ms, à quatre branches pareilles, se lisaient comme une étoile figée
+   * qui tremble). Le BOOMERANG (`boomerang` : le croissant de la hache de
+   * lancer, retirée — Keko : « oublie la hache de lancer, on l'utilise pour
+   * faire un boomerang, on a juste à le faire revenir ») frappe et REPART
+   * vers celui qui l'a lancé, sur une autre courbe, en tournant toujours, et
+   * s'efface en revenant. Rend la direction d'arrivée (en degrés), pour les
    * étincelles et la poussée. Le critique est 1,4 fois plus gros.
    */
   let coteDuJet = 1
-  function jet(x: number, y: number, k: number, couleur: string, hache: boolean): number {
+  function jet(x: number, y: number, k: number, couleur: string, boomerang: boolean): number {
     coteDuJet = -coteDuJet
     const cote = coteDuJet
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    const contact = hache ? CONTACT_HACHE_JETEE : CONTACT_SHURIKEN
-    const tours = hache ? 2 : 3.5
-    const taille = (hache ? 1.1 : 0.9) * rem * k
+    const contact = boomerang ? CONTACT_BOOMERANG : CONTACT_SHURIKEN
+    // La rotation, en degrés par milliseconde : moins de la moitié de la
+    // symétrie de la forme d'une image à l'autre, sinon elle semble figée,
+    // ou tourner à rebours.
+    const vitesse = boomerang ? 3.4 : 1.5
+    const taille = (boomerang ? 1.1 : 0.9) * rem * k
     // Le départ, en bas d'un côté ; la courbe bombe d'un côté (le point est en 0, 0).
     const [sx, sy] = [cote * (4 + Math.random()) * rem, 5 * rem]
     const [cx, cy] = [sx / 2 + cote * 1.2 * rem, sy / 2 - 0.6 * rem]
-    const point = (u: number): [number, number] => {
+    // Le retour du boomerang, du point vers le départ, bombe de l'autre côté.
+    const [rx, ry] = [sx / 2 - cote * 1.6 * rem, sy / 2 - 1.8 * rem]
+    // Le chemin entier : 0 à 1, l'aller ; 1 à 2, le retour.
+    const chemin = (z: number): [number, number] => {
+      if (z <= 1) {
+        const v = 1 - z
+        return [v * v * sx + 2 * v * z * cx, v * v * sy + 2 * v * z * cy]
+      }
+      const u = z - 1
       const v = 1 - u
-      return [v * v * sx + 2 * v * u * cx, v * v * sy + 2 * v * u * cy]
+      return [2 * v * u * rx + u * u * sx, 2 * v * u * ry + u * u * sy]
     }
+    const instant = (z: number) => (z <= 1 ? z * contact : contact + (z - 1) * RETOUR_BOOMERANG)
     // La direction d'arrivée : la tangente au point.
     const arrivee = Math.atan2(-cy, -cx)
     const trace = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -2184,9 +2218,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     trace.style.left = `${x - demi}px`
     trace.style.top = `${y - demi}px`
     trace.style.color = couleur
-    // La forme, autour de 0, 0 : l'étoile à quatre branches, ou le croissant.
+    // La forme, autour de 0, 0 : le croissant, ou l'étoile à quatre branches.
     let d = ''
-    if (hache) {
+    if (boomerang) {
       const r = taille
       d = `M${(-r).toFixed(1)} 0 A${r.toFixed(1)} ${r.toFixed(1)} 0 1 1 ${r.toFixed(1)} 0 A${(r * 1.25).toFixed(1)} ${(r * 0.85).toFixed(1)} 0 1 0 ${(-r).toFixed(1)} 0Z`
     } else {
@@ -2210,27 +2244,29 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       f.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${angle.toFixed(1)})`)
     const fiche = 0.3 * rem
     const [fx, fy] = [Math.cos(arrivee) * fiche, Math.sin(arrivee) * fiche]
-    const angleFinal = cote * tours * 360
     const depart = performance.now()
     const image = (maintenant: number) => {
       const t = maintenant - depart
-      if (t < contact) {
+      const enVol = t < contact || (boomerang && t < contact + RETOUR_BOOMERANG)
+      if (enVol) {
         // Il file en tournant ; les fantômes le suivent, un peu en retard.
-        const u = t / contact
+        const z = t < contact ? t / contact : 1 + (t - contact) / RETOUR_BOOMERANG
         copies.forEach((f, i) => {
-          const w = Math.max(0, u - (2 - i) * 0.07)
-          const [px, py] = point(w)
-          poser(f, px, py, cote * tours * 360 * w)
+          const w = Math.max(0, z - (2 - i) * 0.07)
+          const [px, py] = chemin(w)
+          poser(f, px, py, cote * vitesse * instant(w))
         })
-        trace.style.opacity = `${Math.min(1, t / 30)}`
-      } else if (t < contact + TENUE_JET + 160) {
-        // Fiché : il s'enfonce d'un cran, vibre, puis s'efface tel quel.
+        // Le boomerang s'efface sur la seconde moitié de son retour.
+        const retour = Math.max(0, z - 1)
+        trace.style.opacity = `${Math.min(1, t / 30) * (1 - Math.max(0, (retour - 0.5) / 0.5) ** 2)}`
+      } else if (!boomerang && t < contact + TENUE_JET + 160) {
+        // Fiché : il s'enfonce d'un cran, tourne encore en ralentissant, puis s'efface.
         const ms = t - contact
         const enfonce = Math.min(1, ms / 25)
-        const vibre = 9 * Math.exp(-ms / 45) * Math.sin(ms / 9)
+        const angle = cote * vitesse * (contact + 90 * (1 - Math.exp(-ms / 90)))
         copies.forEach((f, i) => {
           if (i < 2) return f.setAttribute('d', '')
-          poser(f, fx * enfonce, fy * enfonce, angleFinal + vibre)
+          poser(f, fx * enfonce, fy * enfonce, angle)
         })
         trace.style.opacity = `${1 - Math.max(0, (ms - TENUE_JET) / 160) ** 2}`
       } else {
