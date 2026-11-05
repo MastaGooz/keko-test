@@ -757,6 +757,50 @@
   fill: #fffdf4;
 }
 
+/* Le trait manqué : il vire au rouge, son rond se barre d'une croix et lâche une onde rouge. */
+.donjon-trait.echoue svg {
+  filter: drop-shadow(0 0 0.12rem rgba(40, 0, 0, 0.95)) drop-shadow(0 0 0.5rem rgba(255, 60, 40, 1));
+}
+
+.donjon-trait.echoue .donjon-trait-guide,
+.donjon-trait.echoue .donjon-trait-fait {
+  stroke: #ff4a3a;
+  animation: none;
+}
+
+.donjon-trait.echoue .donjon-trait-bande {
+  stroke: rgba(255, 74, 58, 0.35);
+}
+
+.donjon-trait.echoue .donjon-trait-fleche {
+  fill: #ff4a3a;
+}
+
+.donjon .donjon-cible.trait.echouee {
+  color: #fff !important;
+  background: radial-gradient(circle, #ff5a4a 0 55%, #7a1410 72%);
+  box-shadow: 0 0 1rem rgba(255, 60, 40, 0.9);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.7rem;
+  animation: donjon-cible-ratee 0.25s ease-in-out 2;
+}
+
+.donjon .donjon-cible.trait.echouee::after {
+  display: none;
+}
+
+.donjon-echec-onde {
+  position: absolute;
+  width: 3.4rem;
+  height: 3.4rem;
+  margin: -1.7rem 0 0 -1.7rem;
+  border: 0.3rem solid #ff4a3a;
+  border-radius: 50%;
+  box-shadow: 0 0 0.8rem rgba(255, 60, 40, 0.9);
+  pointer-events: none;
+}
+
 /* Le salut de la série de Tailles (« Bien ! », « Super ! »…), au-dessus de l'ennemi. */
 .donjon-appreciation {
   position: absolute;

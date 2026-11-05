@@ -1307,6 +1307,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     au-delà (le rond tremble, pas de coup) ; les deux bouts partent au même
     instant. *L'écran et les règles jugent avec la même horloge et la même
     borne : ce que l'écran salue est toujours compté.*
+  - Puis LE TRAIT MANQUÉ (Keko : « en cas d'échec, il faudrait le signifier
+    au joueur, par exemple par une animation rouge au niveau du cercle »)
+    (`echouerLeTrait`) : le temps et la grâce passés sans qu'il soit tracé,
+    le trait vire au rouge (tirets figés), son rond devient rouge, se barre
+    d'un « ✕ », grossit, tremble et lâche une onde rouge (0,52 s), puis
+    tout s'éteint (0,7 s). Un écart du doigt, qu'on peut retenter, garde son
+    simple tremblement.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

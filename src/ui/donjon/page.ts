@@ -2739,8 +2739,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const n = ciblesVues.get(cle)
     if (n === undefined) return
     ciblesVues.delete(cle)
+    const tr = traitsVus.get(cle)
     traitsVus.delete(cle)
     n.style.pointerEvents = 'none'
+    if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
     // Le trait couvre la scène : il s'éteint sans grandir.
     const grandit = !n.classList.contains('donjon-trait')
     n.animate([{ opacity: 1 }, grandit ? { opacity: 0, transform: 'scale(1.4)' } : { opacity: 0 }], { duration: grandit ? 220 : 320, easing: 'ease-out' }).onfinish = () => n.remove()
@@ -2986,6 +2988,26 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // La barre de vie tombe au coup, pas à la réussite.
       dessiner()
     }, PAUSE_TAILLE)
+  }
+
+  /**
+   * LE TRAIT MANQUÉ (Keko : « en cas d'échec, il faudrait le signifier au
+   * joueur, par exemple par une animation rouge au niveau du cercle ») : le
+   * temps passé sans qu'il soit tracé, il vire au rouge, son rond se barre
+   * d'une croix, tremble et lâche une onde rouge, puis tout s'éteint.
+   */
+  function echouerLeTrait(tr: Trait): void {
+    tr.suivi = false
+    tr.n.classList.add('echoue')
+    tr.depart.classList.add('echouee')
+    tr.depart.textContent = '✕'
+    tr.depart.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.25 }, { transform: 'scale(0.95)' }], { duration: 420, easing: 'ease-out' })
+    const onde = el('div', 'donjon-echec-onde')
+    onde.style.left = tr.depart.style.left
+    onde.style.top = tr.depart.style.top
+    couchePassif.append(onde)
+    onde.animate([{ transform: 'scale(0.7)', opacity: 1 }, { transform: 'scale(2.4)', opacity: 0 }], { duration: 520, easing: 'ease-out' }).onfinish = () => onde.remove()
+    tr.n.animate([{ opacity: 1 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], { duration: 700 }).onfinish = () => tr.n.remove()
   }
 
   /** Le trait à sa place sur le dessin (en px de la scène), le temps qui reste sur son départ. */
