@@ -245,7 +245,7 @@
 .donjon-estoc {
   position: absolute;
   z-index: 2;
-  width: 6rem;
+  width: 4.8rem;
   height: 0.8rem;
   transform-origin: 100% 50%;
   pointer-events: none;

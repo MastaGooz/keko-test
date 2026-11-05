@@ -939,27 +939,23 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * s'y FICHE — elle arrive en accélérant, s'arrête net, s'enfonce d'un cran,
    * vibre, reste plantée un court instant puis s'efface sur place ; pleine,
    * la queue à peine fondue (Keko : « un peu trop transparentes »). Elle monte du bas, de celui qui
-   * tire. Sa POINTE S'APLATIT en se plantant (Keko : « aplatir l'extrémité au
-   * moment où elle se plante ») : pointue en vol, elle s'écrase au contact en
-   * un bout plat, un peu plus large d'abord, et le reste. Une HAMPE DROITE
+   * tire. Une HAMPE DROITE
    * et un EMPENNAGE en losange à la queue (Keko : « une forme droite plutôt
    * que pointue vers la queue, et une forme qui rappelle un peu les plumes,
    * un losange à la fin » ; elle s'effilait du fer jusqu'à la queue), SANS
    * FER ÉLARGI (Keko : « un rectangle plus épais à l'avant, c'est pas beau » :
-   * aplati, le fer devenait un bloc plus large que la hampe) — une pointe
-   * courte, de la largeur de la hampe, qui s'aplatit à cette largeur.
+   * aplati, le fer devenait un bloc plus large que la hampe), et finalement
+   * UNE POINTE au bout (Keko : « finalement, ajoute une pointe au bout » :
+   * elle s'aplatissait en se plantant), un fer en triangle qui reste pointu.
+   * Plus courte (Keko : « raccourcis un peu les flèches » ; 6 rem).
    * `&fleche` la rend aussi à la dague.
    */
   function fleche(x: number, y: number, k: number, couleur: string, angle: number): void {
     const n = el('div', 'donjon-estoc')
     n.innerHTML = '<svg viewBox="0 -6 100 12" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'
     // L'empennage (un losange, de 0 à 22), la hampe droite (demi-largeur 1,6),
-    // la pointe (de 88 à 100) ; son bout, de demi-largeur `e` : 0, pointu ;
-    // 1,6, plat de la largeur de la hampe.
-    const bout = n.querySelector('path')!
-    const aplatir = (e: number) =>
-      bout.setAttribute('d', `M0 0 L11 -3.4 L22 -1.6 L88 -1.6 L100 ${(-e).toFixed(2)} L100 ${e.toFixed(2)} L88 1.6 L22 1.6 L11 3.4Z`)
-    aplatir(0)
+    // le fer en triangle (de 82 à 100, 3,4 de demi-largeur à sa base).
+    n.querySelector('path')!.setAttribute('d', 'M0 0 L11 -3.4 L22 -1.6 L82 -1.6 L82 -3.4 L100 0 L82 3.4 L82 1.6 L22 1.6 L11 3.4Z')
     // La pointe sur le point touché : la boîte finit au point, on tourne autour.
     n.style.left = `${x}px`
     n.style.top = `${y}px`
@@ -985,15 +981,6 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ],
       { duration: duree },
     ).onfinish = () => n.remove()
-    // Au contact (50 ms), la pointe s'écrase en 45 ms : 2,2 au plus, puis 1,6.
-    const depart = performance.now()
-    const ecraser = (maintenant: number) => {
-      const ms = maintenant - depart - 50
-      if (ms >= 45) return aplatir(1.6)
-      if (ms > 0) aplatir(ms < 20 ? (2.2 * ms) / 20 : 2.2 - (0.6 * (ms - 20)) / 25)
-      requestAnimationFrame(ecraser)
-    }
-    requestAnimationFrame(ecraser)
   }
 
   /**

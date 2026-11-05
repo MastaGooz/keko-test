@@ -943,6 +943,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   FER, de 72 à 100 et de 3,4, aplati, faisait un bloc plus large que la
   hampe ; elle s'effilait, avant, du fer à la queue. Le fondu de la queue (`.donjon-estoc`, son
   masque) part de 75 % au lieu de 35 % : les plumes s'y perdaient.
+- **LA FLÈCHE RETROUVE UNE POINTE, ET RACCOURCIT** (Keko, 05/11 :
+  « raccourcis un peu les flèches, et finalement ajoute une pointe au
+  bout ») : un FER EN TRIANGLE (de 82 à 100 sur sa boîte, 3,4 de
+  demi-largeur à sa base) au bout de la hampe droite, qui RESTE POINTU — la
+  pointe ne s'aplatit plus en se plantant (les deux entrées plus haut) ;
+  4,8 rem de long au lieu de 6 (`.donjon-estoc`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
