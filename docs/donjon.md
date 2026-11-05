@@ -1192,6 +1192,16 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   la scène secouée de 8 px avec rebond au lieu de 3 ; l'ennemi figé 120 ms.
   Il frappe au hasard sur le dessin, comme la baguette. `&rune` lui rend
   toujours le cercle de rune.
+- **LES ATTAQUES DE BASE SONT COMPLÈTES** (Keko, 05/11 : « les pistes que tu
+  évoques tombent plutôt dans le champ des capacités ; donc on est bon sur
+  les attaques de base ») : vingt-six coups, un par arme. Les gestes qui
+  manquaient — la bombe ou la fiole qui éclate en zone, l'éclair qui frappe
+  sans voyage, le jet continu (souffle, rayon), le coup de bouclier frontal,
+  le cercle au sol (le cercle de rune rangé), l'invocation, et la couche
+  d'éléments (feu, glace, foudre, poison) qui teinterait les coups — sont
+  RANGÉS POUR LES CAPACITÉS. Les armes « presque couvertes » (faux,
+  hallebarde, katana, javelot, sarbacane, chakram, chaîne, nunchaku, canon,
+  grimoire) reprendront un coup existant le jour où elles entreront.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
