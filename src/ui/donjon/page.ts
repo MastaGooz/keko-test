@@ -2815,7 +2815,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   scene.addEventListener('pointerdown', () => {
     const j = moi()
     if (j.arme !== 'epee') return
-    const ev = evenementA(C, etat.saison.seed, etat.saison.debut, j, maintenant())
+    const ev = evenementA(C, etat.saison.seed, j, maintenant())
     if (ev !== null && passifOuvert(C, j, ev)) toucherLePassif(ev.k, 0, null)
   })
 
@@ -3256,7 +3256,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % periode) / periode
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
-    dessinerLePassif(evenementA(C, etat.saison.seed, debutSaison, j, t), j, t)
+    dessinerLePassif(evenementA(C, etat.saison.seed, j, t), j, t)
     // La forme glisse en continu : le marqueur la suit à chaque image.
     const forme = formeA(C, j, t)
     const mult = multiplicateurDeForme(C, j, forme)

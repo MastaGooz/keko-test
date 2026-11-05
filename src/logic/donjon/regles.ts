@@ -221,7 +221,7 @@ function compterUnCritique(config: ConfigDonjon, j: Joueur): void {
 
 // ---------------------------------------------------------------- le passif de classe
 
-/** Un événement du passif : sa tranche `k`, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi). */
+/** Un événement du passif : son numéro `k`, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi). */
 export type EvenementDuPassif = { k: number; debut: number; fin: number; cibles: { x: number; y: number }[] }
 
 /** Le passif de la classe d'arme de ce joueur ; à mains nues, aucun. */
@@ -229,34 +229,49 @@ export function passifDe(config: ConfigDonjon, j: Joueur): Passif | null {
   return j.arme in config.passifs ? config.passifs[j.arme as ArmeAPassif] : null
 }
 
-/**
- * L'ÉVÉNEMENT DE LA TRANCHE k de ce joueur : une fonction de (graine de la
- * saison, tranche, joueur, arme), comme le critique de l'auto — les règles
- * et l'écran lisent le même, et personne ne peut en inventer un. Une cible
- * seule tombe sur le corps ; plusieurs se rangent en cercle autour du centre.
- */
-export function evenementDuPassif(config: ConfigDonjon, seed: number, debutSaison: number, j: Joueur, k: number): EvenementDuPassif | null {
-  const p = passifDe(config, j)
-  if (p === null) return null
-  const empreinte = empreinteDe(`${j.id}:${j.arme}`)
-  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
-  const debut = debutSaison + k * p.periode + tire(1) * (p.periode - p.duree)
-  const cibles =
-    p.cibles === 1
-      ? [{ x: 0.3 + 0.4 * tire(2), y: 0.3 + 0.35 * tire(3) }]
-      : Array.from({ length: p.cibles }, (_, i) => {
-          const angle = 2 * Math.PI * (tire(2) + i / p.cibles)
-          return { x: 0.5 + 0.3 * Math.cos(angle), y: 0.45 + 0.25 * Math.sin(angle) }
-        })
-  return { k, debut, fin: debut + p.duree, cibles }
+/** Un passif sans aucun événement ouvert. */
+export function passifVierge(): Joueur['passif'] {
+  return { evenement: -1, etape: 0, debut: 0, fin: -1, sans: 0 }
 }
 
-/** L'événement ouvert à l'instant t, ou null (un par tranche, jamais deux à la fois). */
-export function evenementA(config: ConfigDonjon, seed: number, debutSaison: number, j: Joueur, t: number): EvenementDuPassif | null {
+/**
+ * LES CIBLES DE L'ÉVÉNEMENT k de ce joueur : une fonction de (graine de la
+ * saison, numéro, joueur, arme), comme le critique de l'auto — les règles et
+ * l'écran lisent les mêmes. Une cible seule tombe sur le corps ; plusieurs se
+ * rangent en cercle autour du centre.
+ */
+function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number): { x: number; y: number }[] {
+  const empreinte = empreinteDe(`${j.id}:${j.arme}`)
+  const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  return p.cibles === 1
+    ? [{ x: 0.3 + 0.4 * tire(2), y: 0.3 + 0.35 * tire(3) }]
+    : Array.from({ length: p.cibles }, (_, i) => {
+        const angle = 2 * Math.PI * (tire(2) + i / p.cibles)
+        return { x: 0.5 + 0.3 * Math.cos(angle), y: 0.45 + 0.25 * Math.sin(angle) }
+      })
+}
+
+/** L'événement ouvert à l'instant t (un tap l'a ouvert), ou null : jamais deux à la fois. */
+export function evenementA(config: ConfigDonjon, seed: number, j: Joueur, t: number): EvenementDuPassif | null {
   const p = passifDe(config, j)
-  if (t < debutSaison || p === null) return null
-  const ev = evenementDuPassif(config, seed, debutSaison, j, Math.floor((t - debutSaison) / p.periode))
-  return ev !== null && t >= ev.debut && t <= ev.fin ? ev : null
+  const { evenement: k, debut, fin } = j.passif
+  if (p === null || k < 0 || t < debut || t > fin) return null
+  return { k, debut, fin, cibles: ciblesDuPassif(p, seed, j, k) }
+}
+
+/**
+ * UN TAP PEUT OUVRIR UN ÉVÉNEMENT (Keko : « un % de chance à chaque tap ») :
+ * sur `chance`, ou à coup sûr au `pitie`-ième tap sans ; jamais tant que le
+ * précédent reste à toucher (Keko : un événement ouvert bloque le suivant).
+ */
+function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): void {
+  const p = passifDe(config, j)
+  if (p === null) return
+  const ev = evenementA(config, e.saison.seed, j, t)
+  if (ev !== null && passifOuvert(config, j, ev)) return
+  const sans = j.passif.sans + 1
+  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + p.duree, sans: 0 }
+  else j.passif = { ...j.passif, sans }
 }
 
 /** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
@@ -364,7 +379,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     capacitesPretes: {},
     critiques: 0,
     effets: {},
-    passif: { evenement: -1, etape: 0 },
+    passif: passifVierge(),
     bonus: {},
   }
 }
@@ -574,6 +589,8 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   j.forme = forme
   j.formeA = t
   j.prochainTap = t + rechargeDe(config, j)
+  // Le tap à la main seul ouvre le passif : l'auto ne passe pas par ici.
+  declencherLePassif(config, e, j, t)
 }
 
 /** Le surplus d'un coup fatal est perdu : un coup frappe un ennemi. */
@@ -601,20 +618,20 @@ function frapperFort(config: ConfigDonjon, e: EtatDonjon, j: Joueur, fois: numbe
 
 /**
  * TOUCHER UNE CIBLE DU PASSIF : seulement dans la fenêtre de l'événement
- * `k`, et dans l'ordre. La bonne cible avance l'étape, la dernière frappe ;
+ * `k` ouvert, et dans l'ordre. La bonne cible avance l'étape, la dernière frappe ;
  * une autre, quand il y en a plusieurs (les runes), rate l'événement.
  */
 function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cible: number, t: number): void {
-  const ev = evenementA(config, e.saison.seed, e.saison.debut, j, t)
+  const ev = evenementA(config, e.saison.seed, j, t)
   if (ev === null || ev.k !== k || !passifOuvert(config, j, ev)) return
   const p = passifDe(config, j)
   if (p === null) return
   const etape = etapeDuPassif(j, k)
   if (cible !== etape) {
-    if (p.cibles > 1) j.passif = { evenement: k, etape: -1 }
+    if (p.cibles > 1) j.passif = { ...j.passif, etape: -1 }
     return
   }
-  j.passif = { evenement: k, etape: etape + 1 }
+  j.passif = { ...j.passif, etape: etape + 1 }
   if (etape + 1 === p.cibles) frapperFort(config, e, j, p.coup, t, p.critique === true)
 }
 
@@ -686,8 +703,8 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
       // Déséquiper, c'est prendre ses mains nues.
       if (j !== undefined && EQUIPEMENTS.includes(action.arme) && action.arme !== j.arme) {
         j.arme = action.arme
-        // Les événements du passif sont ceux de la nouvelle arme.
-        j.passif = { evenement: -1, etape: 0 }
+        // Le passif repart vierge, celui de la nouvelle arme.
+        j.passif = passifVierge()
         for (const cle of capacitesDe(config, j)) {
           const recharge = config.capacites[cle].recharge
           if (recharge !== undefined) j.capacitesPretes[cle] = t + recharge

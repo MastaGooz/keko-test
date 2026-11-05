@@ -114,7 +114,7 @@ export async function jouerLesBots(
       }
       // Son passif : un événement ouvert, il le réussit selon son adresse
       // (une fonction de l'événement : il ne retente pas un raté).
-      const ev = evenementA(config, etat.saison.seed, etat.saison.debut, moi, t)
+      const ev = evenementA(config, etat.saison.seed, moi, t)
       if (ev !== null && passifOuvert(config, moi, ev) && reussit(profil, ev.k)) {
         for (let cible = 0; cible < (passifDe(config, moi)?.cibles ?? 0); cible++) etat = await partage.agir({ joueur: profil.id, t, type: 'toucher', evenement: ev.k, cible })
       }

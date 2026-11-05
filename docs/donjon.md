@@ -1202,6 +1202,25 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   RANGÉS POUR LES CAPACITÉS. Les armes « presque couvertes » (faux,
   hallebarde, katana, javelot, sarbacane, chakram, chaîne, nunchaku, canon,
   grimoire) reprendront un coup existant le jour où elles entreront.
+- **LE PASSIF SE DÉCLENCHE AU TAP** (Keko, 05/11 : « je pense que le
+  déclencheur devrait être un % de chance à chaque tap pour tous, avec un %
+  qui dépend de l'effet/classe » ; puis, à mes trois questions : l'auto-tap
+  ne déclenche pas, un événement ouvert bloque le suivant, une pitié). Les
+  tranches périodiques sont parties : chaque passif a sa `chance` et sa
+  `pitie` (`config.passifs`). Le TAP À LA MAIN (`taper`, que l'auto ne
+  traverse pas) tire sa chance au RNG de l'état (`declencherLePassif`),
+  seulement si aucun événement ne reste à toucher (ni ouvert, ni en cours) ;
+  au `pitie`-ième tap sans événement, il s'ouvre à coup sûr. L'événement
+  s'ouvre À L'INSTANT DU TAP pour sa `duree`, son numéro suit le précédent,
+  et il est GARDÉ dans l'état (`Joueur.passif` : numéro, fenêtre, étape,
+  taps sans) ; ses cibles restent une fonction de (graine, numéro, joueur,
+  arme). `evenementA` lit l'état et ne prend plus le début de saison ;
+  `evenementDuPassif` est parti. Chiffres de moi, à rejuger : la chance
+  garde la cadence des tranches au spam (recharge ÷ période : épée 2 %,
+  dague 6 %, bâton 2,5 %), la pitié à trois fois l'attente (150, 50, 120
+  taps). *À chance égale, une arme rapide ouvre plus souvent par seconde* ;
+  c'est la chance de chaque passif qui le corrige. Une sauvegarde d'avant
+  repart d'un passif vierge.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

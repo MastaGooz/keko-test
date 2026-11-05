@@ -69,14 +69,20 @@ export type Capacite = {
 /**
  * LE PASSIF DE CLASSE (Keko : « un passif qui dépendrait de la classe d'arme,
  * le même pour tous les bâtons, qui change profondément le gameplay — faire
- * apparaître des choses à toucher sur l'ennemi »). Un ÉVÉNEMENT par tranche
- * de `periode` ms, ouvert `duree` ms à un instant tiré dans la tranche ; on
- * touche ses `cibles` dans l'ordre, et la dernière déclenche le `coup` (en
- * taps, critique forcé si `critique`). Il n'use pas la forme.
+ * apparaître des choses à toucher sur l'ennemi »). UN TAP SUR `chance`
+ * OUVRE UN ÉVÉNEMENT (Keko, 05/11 : « un % de chance à chaque tap pour tous,
+ * avec un % qui dépend de l'effet/classe ») — le tap à la main seul, pas
+ * l'auto ; aucun ne s'ouvre tant que le précédent n'est ni touché ni
+ * expiré ; au `pitie`-ième tap sans, il s'ouvre à coup sûr. Il dure `duree`
+ * ms ; on touche ses `cibles` dans l'ordre, et la dernière déclenche le
+ * `coup` (en taps, critique forcé si `critique`). Il n'use pas la forme.
  */
 export type Passif = {
   nom: string
-  periode: number
+  /** La chance qu'un tap ouvre un événement (0 à 1). */
+  chance: number
+  /** Le tap qui l'ouvre à coup sûr, compté depuis le dernier événement. */
+  pitie: number
   duree: number
   cibles: number
   coup: number
@@ -234,12 +240,14 @@ export const DONJON = {
    * (précision — une cible sur l'ennemi, un coup critique forcé, un cran de
    * Furie), le BÂTON trace ses runes (séquence — trois, dans l'ordre ; une
    * erreur les efface). Tout réussi en spammant, chacun ajoute de 35 à 50 %
-   * aux taps de son arme.
+   * aux taps de son arme. LA CHANCE PAR TAP garde la cadence des anciennes
+   * tranches au spam (recharge ÷ période : 0,25 s ÷ 12 s, 0,175 ÷ 3,
+   * 0,375 ÷ 15), la pitié à trois fois l'attente moyenne.
    */
   passifs: {
-    epee: { nom: 'Riposte', periode: 12 * SECONDE, duree: 1.2 * SECONDE, cibles: 1, coup: 20 },
-    dague: { nom: 'Points faibles', periode: 3 * SECONDE, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
-    baton: { nom: 'Runes', periode: 15 * SECONDE, duree: 5 * SECONDE, cibles: 3, coup: 20 },
+    epee: { nom: 'Riposte', chance: 0.02, pitie: 150, duree: 1.2 * SECONDE, cibles: 1, coup: 20 },
+    dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1.5 * SECONDE, cibles: 1, coup: 3, critique: true },
+    baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
   } as Record<ArmeAPassif, Passif>,
 
   /**

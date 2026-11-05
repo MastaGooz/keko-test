@@ -46,10 +46,11 @@ export type Joueur = {
   /** Les effets en cours, jusqu'à cet instant inclus : Brise-garde, Lames de l'ombre. */
   effets: Partial<Record<CleCapacite, number>>
   /**
-   * Le passif de classe : le dernier événement touché (son numéro de
-   * tranche, -1 : aucun) et l'étape — les cibles touchées, ou -1 : raté.
+   * Le passif de classe : le dernier événement ouvert (son numéro, -1 :
+   * aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 : raté — et les
+   * taps sans événement depuis (la pitié).
    */
-  passif: { evenement: number; etape: number }
+  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number }
   bonus: BonusPermanents
 }
 

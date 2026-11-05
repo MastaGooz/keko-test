@@ -8,6 +8,7 @@
 import type { EtatDesBots } from '../../logic/donjon/bots.ts'
 import type { Horloge } from '../../logic/donjon/horloge.ts'
 import { AMELIORATIONS, DONJON, EQUIPEMENTS } from '../../logic/donjon/config.ts'
+import { passifVierge } from '../../logic/donjon/regles.ts'
 import type { EtatDonjon, Joueur } from '../../logic/donjon/types.ts'
 
 const CLE = 'keko-donjon'
@@ -57,8 +58,8 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
       if (typeof j.capacitesPretes !== 'object' || j.capacitesPretes === null) j.capacitesPretes = {}
       if (typeof j.critiques !== 'number') j.critiques = 0
       if (typeof j.effets !== 'object' || j.effets === null) j.effets = {}
-      // D'avant les passifs : aucun événement touché.
-      if (typeof j.passif !== 'object' || j.passif === null) j.passif = { evenement: -1, etape: 0 }
+      // D'avant les passifs, ou d'avant leur chance par tap : aucun événement ouvert.
+      if (typeof j.passif !== 'object' || j.passif === null || typeof j.passif.sans !== 'number') j.passif = passifVierge()
       // D'une autre forme de progression (l'offre de trois, les
       // caractéristiques…) : tout est rendu en points, un par niveau gagné,
       // à replacer dans les cinq stats.

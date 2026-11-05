@@ -2,10 +2,10 @@
  * Vérifications du donjon coopératif, sans navigateur et sans attendre : le
  * temps est injecté.
  */
-import { DONJON } from './config.ts'
+import { DONJON, type ConfigDonjon } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, evenementDuPassif } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, type EvenementDuPassif } from './regles.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -194,51 +194,79 @@ verifier('elles reviennent après leur recharge', capacitePrete(C, change.joueur
 const versDague = appliquer(C, d, { joueur: 'a', t: d.t, type: 'equiper', arme: 'epee' })
 verifier('passer à la dague repart de zéro critique', appliquer(C, versDague, { joueur: 'a', t: d.t, type: 'equiper', arme: 'dague' }).joueurs[0].critiques === 0)
 verifier("remettre la même arme ne recharge rien", capacitePrete(C, appliquer(C, c0, { joueur: 'a', t: 1000, type: 'equiper', arme: 'epee' }).joueurs[0], 'frappeLourde', 1000))
-// LES PASSIFS DE CLASSE : un événement à toucher dans sa fenêtre, dans l'ordre.
-const ev0 = evenementDuPassif(C, c0.saison.seed, c0.saison.debut, jc, 1)!
+// LES PASSIFS DE CLASSE : un tap a une chance d'ouvrir un événement, à toucher dans sa fenêtre, dans l'ordre.
+/** Tape à chaque fin de recharge jusqu'à ouvrir un événement du passif. */
+function jusquAuPassif(config: ConfigDonjon, x: EtatDonjon): { etat: EtatDonjon; ev: EvenementDuPassif; taps: number } {
+  let t = x.t
+  for (let taps = 1; taps <= 1000; taps++) {
+    x = appliquer(config, x, { joueur: 'a', t, type: 'taper', n: 1 })
+    const ev = evenementA(config, x.saison.seed, x.joueurs[0], t)
+    if (ev !== null) return { etat: x, ev, taps }
+    t = x.joueurs[0].prochainTap
+  }
+  throw new Error('aucun événement de passif')
+}
+const { etat: ouvert, ev: ev0 } = jusquAuPassif(C, c0)
 const auMilieu = (ev0.debut + ev0.fin) / 2
-verifier('un événement par tranche, dans sa tranche', ev0.debut >= C.passifs.epee.periode && ev0.fin <= 2 * C.passifs.epee.periode)
-verifier("l'événement est le même lu deux fois", JSON.stringify(ev0) === JSON.stringify(evenementDuPassif(C, c0.saison.seed, c0.saison.debut, jc, 1)))
-verifier('ouvert dans sa fenêtre, fermé après', evenementA(C, c0.saison.seed, 0, jc, auMilieu)?.k === 1 && evenementA(C, c0.saison.seed, 0, jc, ev0.fin + 1) === null)
-const ri = appliquer(C, c0, { joueur: 'a', t: auMilieu, type: 'toucher', evenement: 1, cible: 0 })
-const coupR = ri.joueurs[0].degatsTap
+verifier("un tap ouvre l'événement, pour sa durée", ev0.debut === ouvert.t && ev0.fin === ev0.debut + C.passifs.epee.duree)
+verifier("l'événement est le même lu deux fois", JSON.stringify(ev0) === JSON.stringify(evenementA(C, ouvert.saison.seed, ouvert.joueurs[0], auMilieu)))
+verifier('ouvert dans sa fenêtre, fermé après', evenementA(C, ouvert.saison.seed, ouvert.joueurs[0], auMilieu)?.k === ev0.k && evenementA(C, ouvert.saison.seed, ouvert.joueurs[0], ev0.fin + 1) === null)
+verifier("l'auto n'ouvre rien", evenementA(C, c0.saison.seed, avancer(C, c0, H).joueurs[0], H) === null && avancer(C, c0, H).joueurs[0].passif.evenement === -1)
+let bloque = ouvert
+for (let t = ouvert.joueurs[0].prochainTap; t < ev0.fin; t = bloque.joueurs[0].prochainTap) bloque = appliquer(C, bloque, { joueur: 'a', t, type: 'taper', n: 1 })
+verifier('un événement ouvert bloque le suivant', bloque.joueurs[0].passif.evenement === ev0.k && bloque.joueurs[0].passif.debut === ev0.debut)
+const sansChance = { ...C, passifs: { ...C.passifs, epee: { ...C.passifs.epee, chance: 0 } } }
+verifier(`la pitié : sans chance, le ${C.passifs.epee.pitie}e tap l'ouvre`, jusquAuPassif(sansChance, c0).taps === C.passifs.epee.pitie)
+const ri = appliquer(C, ouvert, { joueur: 'a', t: auMilieu, type: 'toucher', evenement: ev0.k, cible: 0 })
+const coupR = ri.joueurs[0].degatsTap - ouvert.joueurs[0].degatsTap
 verifier('Riposte : vingt taps dans la fenêtre', coupR >= degatsDuTap(C, jc) * 20 * (1 - C.tap.ecart) - 1)
-verifier('une riposte par événement', appliquer(C, ri, { joueur: 'a', t: auMilieu + 1, type: 'toucher', evenement: 1, cible: 0 }).joueurs[0].degatsTap === coupR)
-verifier('hors de la fenêtre, rien', appliquer(C, c0, { joueur: 'a', t: ev0.fin + 1, type: 'toucher', evenement: 1, cible: 0 }).joueurs[0].degatsTap === 0)
-verifier("un passif n'use pas la forme", formeA(C, ri.joueurs[0], auMilieu) === formeA(C, jc, auMilieu))
-const dg = avecArme('dague', 6)
-const evD = evenementDuPassif(C, dg.saison.seed, 0, dg.joueurs[0], 2)!
-const pf = appliquer(C, dg, { joueur: 'a', t: evD.debut, type: 'toucher', evenement: 2, cible: 0 })
-verifier('Point faible : un coup critique forcé, un cran de Furie', pf.joueurs[0].degatsTap >= degatsDuTap(C, dg.joueurs[0]) * 3 * (1 - C.tap.ecart) * multCritDe(C, dg.joueurs[0]) - 1 && pf.joueurs[0].critiques === 1)
-const bt = avecArme('baton', 7)
-const evB = evenementDuPassif(C, bt.saison.seed, 0, bt.joueurs[0], 1)!
-const rune = (x: EtatDonjon, cible: number) => appliquer(C, x, { joueur: 'a', t: evB.debut + 100 * (cible + 1), type: 'toucher', evenement: 1, cible })
+verifier('une riposte par événement', appliquer(C, ri, { joueur: 'a', t: auMilieu + 1, type: 'toucher', evenement: ev0.k, cible: 0 }).joueurs[0].degatsTap === ri.joueurs[0].degatsTap)
+verifier('hors de la fenêtre, rien', appliquer(C, ouvert, { joueur: 'a', t: ev0.fin + 1, type: 'toucher', evenement: ev0.k, cible: 0 }).joueurs[0].degatsTap === ouvert.joueurs[0].degatsTap)
+verifier("un passif n'use pas la forme", formeA(C, ri.joueurs[0], auMilieu) === formeA(C, ouvert.joueurs[0], auMilieu))
+const { etat: dg, ev: evD } = jusquAuPassif(C, avecArme('dague', 6))
+const pf = appliquer(C, dg, { joueur: 'a', t: evD.debut, type: 'toucher', evenement: evD.k, cible: 0 })
+verifier('Point faible : un coup critique forcé, un cran de Furie', pf.joueurs[0].degatsTap - dg.joueurs[0].degatsTap >= degatsDuTap(C, dg.joueurs[0]) * 3 * (1 - C.tap.ecart) * multCritDe(C, dg.joueurs[0]) - 1 && pf.joueurs[0].critiques === dg.joueurs[0].critiques + 1)
+const { etat: bt, ev: evB } = jusquAuPassif(C, avecArme('baton', 7))
+const avantRunes = bt.joueurs[0].degatsTap
+const rune = (x: EtatDonjon, cible: number) => appliquer(C, x, { joueur: 'a', t: evB.debut + 100 * (cible + 1), type: 'toucher', evenement: evB.k, cible })
 verifier('Runes : trois cibles en cercle', evB.cibles.length === 3)
 const deuxRunes = rune(rune(bt, 0), 1)
-verifier('deux runes sur trois ne frappent pas', deuxRunes.joueurs[0].degatsTap === 0 && deuxRunes.joueurs[0].passif.etape === 2)
-verifier('la troisième frappe', rune(deuxRunes, 2).joueurs[0].degatsTap >= degatsDuTap(C, bt.joueurs[0]) * 20 * (1 - C.tap.ecart) - 1)
+verifier('deux runes sur trois ne frappent pas', deuxRunes.joueurs[0].degatsTap === avantRunes && deuxRunes.joueurs[0].passif.etape === 2)
+verifier('la troisième frappe', rune(deuxRunes, 2).joueurs[0].degatsTap - avantRunes >= degatsDuTap(C, bt.joueurs[0]) * 20 * (1 - C.tap.ecart) - 1)
 const erreur = rune(rune(bt, 0), 2)
-verifier("une rune hors d'ordre efface l'événement", erreur.joueurs[0].passif.etape === -1 && rune(erreur, 1).joueurs[0].degatsTap === 0)
+verifier("une rune hors d'ordre efface l'événement", erreur.joueurs[0].passif.etape === -1 && rune(erreur, 1).joueurs[0].degatsTap === avantRunes)
+const apresErreur = appliquer(C, erreur, { joueur: 'a', t: Math.max(erreur.t, erreur.joueurs[0].prochainTap), type: 'taper', n: 1 })
+verifier('raté, il ne bloque plus le suivant', apresErreur.joueurs[0].passif.sans === 1 || apresErreur.joueurs[0].passif.evenement === evB.k + 1)
 // À MAINS NUES : déséquiper ôte les capacités et le passif.
+/** Deux cents taps à mains nues n'ouvrent aucun événement. */
+function jusquAuPassifNu(x: EtatDonjon): boolean {
+  let t = x.t
+  for (let i = 0; i < 200; i++) {
+    x = appliquer(C, x, { joueur: 'a', t, type: 'taper', n: 1 })
+    if (x.joueurs[0].passif.evenement !== -1) return false
+    t = x.joueurs[0].prochainTap
+  }
+  return true
+}
 const nu = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'mains' })
 const jn = nu.joueurs[0]
 verifier('déséquiper : mains nues', jn.arme === 'mains' && capacitesDe(C, jn).length === 0)
 verifier('à mains nues, aucune capacité ne part', appliquer(C, nu, { joueur: 'a', t: 100, type: 'lancer', capacite: 'frappeLourde' }).joueurs[0].degatsTap === 0)
-verifier('à mains nues, aucun événement de passif', evenementDuPassif(C, nu.saison.seed, 0, jn, 1) === null && evenementA(C, nu.saison.seed, 0, jn, auMilieu) === null)
+verifier('à mains nues, aucun événement de passif', passifDe(C, jn) === null && jusquAuPassifNu(nu))
 verifier("à mains nues, la moitié des dégâts de l'épée", Math.abs(degatsDuTap(C, jn) / degatsDuTap(C, jc) - 0.5) < 1e-9)
 verifier("on reprend son arme, ses capacités en recharge", !capacitePrete(C, appliquer(C, nu, { joueur: 'a', t: 200, type: 'equiper', arme: 'epee' }).joueurs[0], 'frappeLourde', 200))
 // L'ARC, PROVISOIRE : ni capacité, ni passif, le même DPS de base que l'épée.
 const jArc = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'arc' }).joueurs[0]
-verifier("l'arc s'équipe, sans capacité ni passif", jArc.arme === 'arc' && capacitesDe(C, jArc).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jArc, 1) === null)
+verifier("l'arc s'équipe, sans capacité ni passif", jArc.arme === 'arc' && capacitesDe(C, jArc).length === 0 && passifDe(C, jArc) === null)
 verifier("l'arc a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jArc) / periodeDe(C, jArc) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 // L'ÉPÉE À DEUX MAINS, PROVISOIRE elle aussi.
 const jDeux = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'deuxMains' }).joueurs[0]
-verifier("l'épée à deux mains s'équipe, sans capacité ni passif", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jDeux, 1) === null)
+verifier("l'épée à deux mains s'équipe, sans capacité ni passif", jDeux.arme === 'deuxMains' && capacitesDe(C, jDeux).length === 0 && passifDe(C, jDeux) === null)
 verifier("l'épée à deux mains a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jDeux) / periodeDe(C, jDeux) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 // LES DEUX HACHES, LES DEUX MASSUES, LA LANCE, LES DEUX MARTEAUX, L'ARBALÈTE, LE PISTOLET, LE MOUSQUET, LA RAPIÈRE, LE FOUET, LE FLÉAU, LES GRIFFES, LA FRONDE, LE SHURIKEN, LE BOOMERANG, LE KUNAI, LE COUTEAU DE LANCER, LE LUTH ET LA BAGUETTE, PROVISOIRES elles aussi.
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  verifier(`${C.armes[arme].nom} s'équipe, sans capacité ni passif`, jH.arme === arme && capacitesDe(C, jH).length === 0 && evenementDuPassif(C, c0.saison.seed, 0, jH, 1) === null)
+  verifier(`${C.armes[arme].nom} s'équipe, sans capacité ni passif`, jH.arme === arme && capacitesDe(C, jH).length === 0 && passifDe(C, jH) === null)
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 }
 const me = appliquer(C, avecArme('baton', 5), { joueur: 'a', t: 0, type: 'lancer', capacite: 'meditation' })
