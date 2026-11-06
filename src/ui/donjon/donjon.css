@@ -950,6 +950,45 @@
   stroke: #ffd27a;
 }
 
+/* LA RAFALE DES GRIFFES : le compte des taps au centre, au style des saluts, et dessous la ligne du temps du
+   Fracas (la bande claire sous la lueur d'or), dont le trait crème se vide. */
+.donjon-rafale-compte {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  color: #fffdf4;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 2.6rem;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 0.12rem 0 #2a1406,
+    0.1rem 0 0 #2a1406,
+    -0.1rem 0 0 #2a1406,
+    0 -0.1rem 0 #2a1406,
+    0 0 0.8rem rgba(255, 214, 130, 1);
+}
+
+.donjon-rafale-temps {
+  position: absolute;
+  height: 1.5rem;
+  margin-top: -0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 236, 190, 0.38);
+  filter: drop-shadow(0 0 0.12rem rgba(40, 18, 0, 0.95)) drop-shadow(0 0 0.45rem rgba(255, 214, 130, 1));
+}
+
+.donjon-rafale-reste {
+  position: absolute;
+  left: 0.3rem;
+  top: 50%;
+  width: calc((100% - 0.6rem) * var(--reste, 1));
+  height: 0.5rem;
+  margin-top: -0.25rem;
+  border-radius: 0.25rem;
+  background: #fffdf4;
+}
+
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste
    le rond, ça suffit, pas besoin de mettre la trajectoire en rouge aussi »). */
 .donjon .donjon-cible.trait.echouee {

@@ -277,6 +277,16 @@ verifier('le doigt levé : la série tombe en un coup, ×20 par rune', leve.joue
 const erreur = rune(rune(bt, 0), 2)
 verifier("un point hors d'ordre rate la rune", erreur.joueurs[0].passif.etape === -1 && rune(erreur, 1).joueurs[0].degatsTap === avantRunes)
 verifier('la plus longue rune a six points', ciblesDe(C.passifs.baton, 10) === 6)
+// LA RAFALE DES GRIFFES : chaque tap compte, pas trop vite, et tout frappe à la fin.
+const { etat: gr, ev: evG } = jusquAuPassif(C, increvable(appliquer(C, etatInitial(C, 11, 0), { joueur: 'a', t: 0, type: 'rejoindre', nom: 'A', bot: null, arme: 'griffes' })))
+let tapote = gr
+for (let i = 0; i < 16; i++) tapote = appliquer(C, tapote, { joueur: 'a', t: evG.debut + 100 + i * 110, type: 'toucher', evenement: evG.k, cible: 0 })
+const tropVite = appliquer(C, tapote, { joueur: 'a', t: evG.debut + 100 + 15 * 110 + 10, type: 'toucher', evenement: evG.k, cible: 0 })
+verifier('Lacération : seize taps comptés, rien ne frappe encore', tapote.joueurs[0].passif.rang === 16 && tapote.joueurs[0].degatsTap === gr.joueurs[0].degatsTap)
+verifier('un tap trop rapproché ne compte pas', tropVite.joueurs[0].passif.rang === 16)
+const finRafale = avancer(C, tapote, evG.fin + 10)
+verifier('la fenêtre passée, seize coups ×1, un chiffre chacun', finRafale.joueurs[0].passif.dernier?.detail?.length === 16 && finRafale.joueurs[0].degatsTap - gr.joueurs[0].degatsTap >= 16 * degatsDuTap(C, gr.joueurs[0]) * (1 - C.tap.ecart) - 16)
+verifier('après la fenêtre, un tap ne compte plus', appliquer(C, tapote, { joueur: 'a', t: evG.fin + 5, type: 'toucher', evenement: evG.k, cible: 0 }).joueurs[0].passif.rang === 16)
 // Aucun trait ne passe sur un point pas encore relié (Wunjo et Raidho avaient leur point 4 sur le trait du 1 au 2).
 const distanceAuTrait = (q: [number, number], a: [number, number], b: [number, number]) => {
   const [dx, dy] = [b[0] - a[0], b[1] - a[1]]
@@ -362,7 +372,7 @@ for (const arme of ['lance', 'rapiere'] as const) {
 }
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette'] as string[]).includes(arme)
+  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette', 'griffes'] as string[]).includes(arme)
   verifier(`${C.armes[arme].nom} s'équipe, sans capacité${aSonPassif ? '' : ' ni passif'}`, jH.arme === arme && capacitesDe(C, jH).length === 0 && (aSonPassif || passifDe(C, jH) === null))
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 }

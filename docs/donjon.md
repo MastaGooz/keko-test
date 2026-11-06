@@ -1585,6 +1585,21 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   `pourLesTests` sur tous les passifs — la chance ×10, au plus 50 %, la
   pitié ÷10. Les chiffres écrits restent ceux du jeu ; À REMETTRE À 1
   avant de juger l'équilibrage.
+- **LES GRIFFES LACÈRENT EN RAFALE** (Keko, 06/11 : « griffes : on va faire
+  le truc de tapoter le plus vite possible, et à la fin on libère une série
+  de coups » ; choix : un coup par tap, 2 s, partout sur l'ennemi). Les
+  règles (`Passif.rafale`) : chaque tap de la fenêtre compte (le `rang`),
+  pas plus vite qu'un tous les 50 ms ; la fenêtre passée, la série
+  s'encaisse, un coup ×1 par tap (à huit taps par seconde, ×16, une
+  Taille) ; 1,4 % par tap (la cadence de la Taille), la pitié à trois fois
+  l'attente. Les bots tapotent huit fois par seconde. L'écran
+  (`dessinerLaRafale`) : « Tapotez ! » au centre, puis le compte « ×N »
+  qui bondit à chaque tap, au style des saluts ; dessous, la ligne du temps
+  au style du Fracas, dont le trait crème se vide ; chaque tap lâche une
+  étincelle où il tombe et GARDE SA PLACE — à la fin, la frappe des séries
+  (le noir, puis chaque coup) y revient en GRIFFURE, d'un côté puis de
+  l'autre, de plus en plus vite, un chiffre « Lacération » chacune, puis
+  l'éclair. Le nom, l'icône (celle de la Riposte) et les chiffres, de moi.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

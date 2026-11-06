@@ -730,6 +730,12 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   if (ev === null || ev.k !== k || !passifOuvert(config, j, ev)) return
   const p = passifDe(config, j)
   if (p === null) return
+  // LA RAFALE : chaque tap de la fenêtre compte (le rang), pas plus vite que `ecart` ; elle s'encaisse à sa fin.
+  if (p.rafale !== undefined) {
+    if (t > j.passif.fin || (j.passif.appui !== undefined && t - j.passif.appui < p.rafale.ecart)) return
+    j.passif = { ...j.passif, rang: j.passif.rang + 1, appui: t }
+    return
+  }
   const etape = etapeDuPassif(j, k)
   if (cible !== etape) {
     // À cumul, le manqué encaisse la série (la rune : un mauvais point, ou le doigt levé).

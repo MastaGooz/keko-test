@@ -285,11 +285,13 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   fleau: 'passifs/riposte.webp',
   baton: 'passifs/runes.webp',
   baguette: 'passifs/runes.webp',
+  griffes: 'passifs/riposte.webp',
 }
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
+  if (p.rafale !== undefined) return `Une rafale s'ouvre : tapotez l'ennemi le plus vite possible pendant ${p.duree / 1000} s ; à la fin, chaque tap revient en griffure (×${p.coup} chacune)`
   if (p.rune === true) return `Une rune s'allume sur l'ennemi : posez le doigt sur le point 1 et, sans le lever, reliez les points dans l'ordre avant la fin du temps ; chaque rune réussie en appelle une plus longue ; au premier raté, tout tombe en un coup (×${p.coup} par rune)`
   if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
   if (p.elan !== undefined) return `Une jauge d'élan s'allume : posez le doigt sur l'ennemi, la hache se charge ; lâchez dans la zone dorée ; chaque élan réussi en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par élan réussi)`
@@ -2768,6 +2770,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     traitsVus.delete(cle)
     n.style.pointerEvents = 'none'
     if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
+    if (rafaleActive?.cle === cle) rafaleActive = null
     // Une rune en jeu que les règles ont fermée (le temps passé) : ratée.
     if (runeActive !== null && runeActive.cle === cle && !runeActive.fini) return raterLaRune(runeActive, runeActive.points[runeActive.atteints] ?? runeActive.points[0], false)
     // Un point faible qui n'a pas été touché : manqué.
@@ -3152,7 +3155,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const magie = arme === 'baton' || arme === 'baguette'
     const contact = hache
       ? CONTACT_HACHE
-      : magie
+      : arme === 'griffes'
+        ? 55
+        : magie
         ? arme === 'baton' ? CONTACT_ORBE_LOURD : CONTACT_ORBE
         : arme === 'lance' || arme === 'rapiere'
         ? CONTACT_LANCE
@@ -3176,6 +3181,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (hache) entaille(x, y, 1.7 * k, couleur, 102, 1, 0, true, 1, false)
       // L'orbe de l'arme (le gros du bâton), grossi des runes réussies.
       else if (magie) orbe(x, y, k, couleur, arme === 'baton')
+      // Les griffes, d'un côté puis de l'autre.
+      else if (arme === 'griffes') griffes(x, y, k, couleur, (i % 2 === 0 ? 55 : 125) + (Math.random() - 0.5) * 24)
       else if (arme === 'lance' || arme === 'rapiere') lance(x, y, k, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
       else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, k, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
       else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, k, couleur, arme === 'marteauDeuxMains')
@@ -3708,6 +3715,83 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   }
 
 
+  /**
+   * LA RAFALE DES GRIFFES (Keko : « tapoter le plus vite possible, et à la
+   * fin on libère une série de coups » ; un coup par tap, 2 s, partout sur
+   * l'ennemi) : au centre, « Tapotez ! », puis le compte des taps qui bondit
+   * à chacun ; dessous, la ligne du temps (le style du Fracas) qui se vide.
+   * Chaque tap laisse une étincelle où il tombe, et sa place est gardée : à
+   * la fin, chaque tap y revient en griffure (`frapperLesPoints`), de plus
+   * en plus vite, un chiffre chacune.
+   */
+  let rafaleActive: { cle: string; serie: string; ev: EvenementDuPassif; n: HTMLElement; compte: HTMLElement; temps: HTMLElement; taps: number; dernier: number } | null = null
+
+  function dessinerLaRafale(ev: EvenementDuPassif, j: Joueur, t: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const cle = `${j.arme}:${ev.k}:rafale`
+    voulues.add(cle)
+    if (!ciblesVues.has(cle)) {
+      const n = el('div', 'donjon-trait donjon-rafale')
+      const temps = el('div', 'donjon-rafale-temps')
+      temps.append(el('div', 'donjon-rafale-reste'))
+      const compte = el('div', 'donjon-rafale-compte', 'Tapotez !')
+      n.append(temps, compte)
+      couchePassif.append(n)
+      ciblesVues.set(cle, n)
+      n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' })
+      compte.animate([{ transform: 'translate(-50%, -50%) scale(0.4)' }, { transform: 'translate(-50%, -50%) scale(1.15)', offset: 0.6 }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 240, easing: 'ease-out' })
+      rafaleActive = { cle, serie: `${j.arme}:${ev.k}`, ev, n, compte, temps, taps: 0, dernier: -Infinity }
+    }
+    const ra = rafaleActive
+    if (ra === null || ra.cle !== cle) return
+    ra.ev = ev
+    const [cx, cy] = surLeDessin({ x: 0.5, y: 0.42 })
+    ra.compte.style.left = `${cx}px`
+    ra.compte.style.top = `${cy}px`
+    const [gx, ty] = surLeDessin({ x: 0.2, y: 0.62 })
+    const [dx] = surLeDessin({ x: 0.8, y: 0.62 })
+    ra.temps.style.left = `${gx}px`
+    ra.temps.style.top = `${ty}px`
+    ra.temps.style.width = `${dx - gx}px`
+    ra.temps.style.setProperty('--reste', Math.max(0, Math.min(1, (ev.fin - t) / Math.max(1, ev.fin - ev.debut))).toFixed(3))
+  }
+
+  // On tapote n'importe où sur l'ennemi : chaque tap compte, pas plus vite que la règle.
+  scene.addEventListener('pointerdown', (e) => {
+    const ra = rafaleActive
+    if (ra === null) return
+    const p = passifDe(C, moi())
+    const quand = instantDu(e)
+    if (p?.rafale === undefined || quand < ra.ev.debut || quand > ra.ev.fin || quand - ra.dernier < p.rafale.ecart) return
+    ra.dernier = quand
+    ra.taps += 1
+    ra.compte.textContent = `×${ra.taps}`
+    ra.compte.animate([{ transform: 'translate(-50%, -50%) scale(1.3)' }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 120, easing: 'ease-out' })
+    // Sa place, sur le dessin : la griffure de la fin y reviendra.
+    const r = couchePassif.getBoundingClientRect()
+    const [px, py] = [e.clientX - r.left, e.clientY - r.top]
+    const { x0, y0, l, h } = cadreDuDessin()
+    poserLaMarque(ra.serie, { x: Math.max(0.15, Math.min(0.85, (px - x0) / l)), y: Math.max(0.15, Math.min(0.8, (py - y0) / h)) })
+    // Une étincelle où le doigt tombe.
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    for (let i = 0; i < 4; i++) {
+      const s = el('div', 'donjon-particule trait')
+      s.style.left = `${px}px`
+      s.style.top = `${py}px`
+      s.style.background = i % 2 === 0 ? '#fffdf4' : '#ffd27a'
+      couchePassif.append(s)
+      const a = Math.random() * 2 * Math.PI
+      const loin = (0.6 + Math.random() * 0.8) * rem
+      s.animate(
+        [
+          { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.4)`, opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(a) * loin}px), calc(-50% + ${Math.sin(a) * loin}px)) rotate(${a}rad) scaleX(0.2)`, opacity: 0 },
+        ],
+        { duration: 220, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+      ).onfinish = () => s.remove()
+    }
+    void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ra.ev.k, cible: 0 })
+  })
+
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
@@ -3743,6 +3827,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       }
       const p = passifDe(C, j)
       if (p?.rune === true) dessinerLaRune(ev, j, t, voulues, surLeDessin)
+      else if (p?.rafale !== undefined) dessinerLaRafale(ev, j, t, voulues, surLeDessin)
       else if (p?.elan !== undefined) dessinerLElan(ev, j, t, p, voulues, surLeDessin)
       else if (p?.zone !== undefined) dessinerLaJauge(ev, j, t, p, voulues, surLeDessin)
       else if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)

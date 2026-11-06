@@ -32,7 +32,7 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée, et la lance et la rapière, qui percent comme la dague). */
-export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette'
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette' | 'griffes'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -90,6 +90,12 @@ export type Passif = {
    * point ou le doigt levé, c'est raté.
    */
   rune?: boolean
+  /**
+   * LA RAFALE (les griffes) : chaque tap dans la fenêtre compte, pas plus
+   * vite qu'un tous les `ecart` ms ; la fenêtre passée, la série s'encaisse
+   * (à cumul : un `coup` par tap).
+   */
+  rafale?: { ecart: number }
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
   /** Le trait est un ARC, en croissant (la Fauche des haches, retirée ; l'écran sait encore le courber). */
@@ -362,6 +368,12 @@ export const DONJON = {
    * tombe en un coup, ×20 par rune. La chance de la Taille ramenée à leur
    * cadence (un événement toutes les 12,5 s au spam : le bâton 3 %, la
    * baguette 2 %), la pitié à trois fois l'attente.
+   * LES GRIFFES LACÈRENT EN RAFALE (Keko, 06/11 : « tapoter le plus vite
+   * possible, et à la fin on libère une série de coups » ; un coup par tap,
+   * 2 s, partout sur l'ennemi) : chaque tap des 2 s compte (un tous les
+   * 50 ms au plus, vingt par seconde), et la fenêtre passée, chacun frappe
+   * ×1 — à huit taps par seconde, ×16, une Taille. La chance de la Taille à
+   * leur cadence (0,175 s : 1,4 %), la pitié à trois fois l'attente.
    */
   passifs: pourLesTests({
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
@@ -377,6 +389,7 @@ export const DONJON = {
     fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    griffes: { nom: 'Lacération', chance: 0.014, pitie: 214, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50 }, cumul: true },
     baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
   } as Record<ArmeAPassif, Passif>),
 
