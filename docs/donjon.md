@@ -1648,6 +1648,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     réussirait). La corde, le viseur, la traînée et `touch-action: none`
     partent avec lui ; la consigne dit « Touchez la cible ! ». Les règles
     n'ont pas bougé.
+  - LA CIBLE PREND LES COULEURS DES AUTRES PASSIFS (Keko : « plus cohérent
+    avec les autres télégraphes, niveau couleur ») : plus de rouge en
+    temps normal — le rond net crème cerné d'or (Points faibles, Fracas),
+    un anneau et un cœur d'or dedans, cerné de sombre sous la lueur d'or ;
+    touchée, elle passe à l'or (le point de rune relié) ; le rouge est
+    gardé pour le raté, comme partout.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
