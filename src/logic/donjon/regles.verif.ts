@@ -286,6 +286,8 @@ const distanceAuTrait = (q: [number, number], a: [number, number], b: [number, n
 const runesTrompeuses = RUNES.filter((r) =>
   r.points.some((_, i) => i + 1 < r.points.length && r.points.some((q, j) => j > i + 1 && !r.points.slice(0, i + 1).some((d) => d[0] === q[0] && d[1] === q[1]) && distanceAuTrait(q, r.points[i], r.points[i + 1]) < 0.15)),
 )
+const runesFermees = RUNES.filter((r) => r.points.some((q, i) => r.points.some((d, j) => j < i && d[0] === q[0] && d[1] === q[1])))
+verifier(`toutes les runes sont ouvertes${runesFermees.length > 0 ? ' : ' + runesFermees.map((r) => r.nom).join(', ') : ''}`, runesFermees.length === 0)
 verifier(`aucun trait de rune ne passe sur un point à venir${runesTrompeuses.length > 0 ? ' : ' + runesTrompeuses.map((r) => r.nom).join(', ') : ''}`, runesTrompeuses.length === 0)
 const apresErreur = appliquer(C, erreur, { joueur: 'a', t: Math.max(erreur.t, erreur.joueurs[0].prochainTap), type: 'taper', n: 1 })
 verifier('raté, il ne bloque plus le suivant', apresErreur.joueurs[0].passif.sans === 1 || apresErreur.joueurs[0].passif.evenement === evB.k + 1)

@@ -1573,6 +1573,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     leur jonction (le trait qui repasse sur un point déjà relié ne fait
     rien), et la vérification interdit qu'un trait passe à moins de 0,15
     d'un point à venir.
+  - Puis TOUTES OUVERTES (Keko : « parfois il y a des runes qui relient le
+    dernier chiffre au 1, ce qui n'est pas normal » ; choix : les retirer
+    plutôt que d'écrire « 1 · 5 » au départ) : le triangle, le losange, le
+    sablier, l'étoile et Othala, qui revenaient au départ, cèdent la place
+    à Eihwaz (4), Mannaz et le Serpent (5), le Créneau et la Spirale (6) ;
+    la vérification interdit qu'une rune repasse par un de ses points.
 - **LES PASSIFS PROCENT DIX FOIS PLUS, POUR LES TESTS** (Keko, 06/11 :
   « tu peux augmenter grandement la chance de proc des armes pour les
   tests ») : `PROC_DE_TEST` (10) dans `config.ts`, appliqué par
