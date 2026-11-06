@@ -1007,6 +1007,11 @@
 /* LA VISÉE : le rail pointillé de la cible ; la cible, des anneaux crème et rouges au cœur d'or, sous la lueur
    d'or, l'anneau du temps qui se referme sur elle ; la corde, deux élastiques de cuir doré de l'ancre au doigt ;
    la ligne de visée en tirets, jusqu'au viseur, qui s'allume d'or sur la cible. */
+/* Avec une arme qui vise, le glisser sur la scène est à la corde, pas au navigateur. */
+.donjon-scene.donjon-a-viser {
+  touch-action: none;
+}
+
 .donjon-visee-rail {
   fill: none;
   stroke: rgba(255, 236, 190, 0.55);

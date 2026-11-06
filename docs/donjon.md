@@ -1632,6 +1632,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   première cible. À la fin, chaque tir revient en flèche (en gros carreau
   pour l'arbalète, en pierre en cloche pour la fronde), puis le chiffre
   unique. Le nom, l'icône (l'œil des Points faibles) et les chiffres, de moi.
+  - Puis AU DOIGT (Keko : « j'arrive pas à réussir, il faut faire quoi ? ») :
+    le navigateur prenait le glisser sur la scène pour un défilement et
+    annulait le geste au premier mouvement (`pointercancel`, pris pour un
+    lâcher) — la souris et les captures en événements synthétiques ne le
+    voyaient pas ; mesuré en vrais événements tactiles (CDP
+    `Input.dispatchTouchEvent`). La scène prend `touch-action: none` tant
+    que l'arme vise (`donjon-a-viser`), et un geste annulé détend la corde
+    sans tirer. *Un geste qui glisse se teste au toucher, pas à la souris.*
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

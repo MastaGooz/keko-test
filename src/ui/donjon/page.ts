@@ -4033,13 +4033,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     else raterLaVisee(vi, true, quand)
   }
   scene.addEventListener('pointerup', lacherLaCorde)
-  scene.addEventListener('pointercancel', lacherLaCorde)
+  // Le geste annulé (le navigateur l'a pris) : la corde se détend, rien ne part.
+  scene.addEventListener('pointercancel', (e) => {
+    if (corde?.pointeur === e.pointerId) corde = null
+  })
 
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
     const voulues = new Set<string>()
     lancerLaFrappe(j)
+    // AU DOIGT, la scène garde le glisser pour la corde (Keko : « j'arrive pas à réussir ») : sans cela le
+    // navigateur le prend pour un défilement et annule le geste au premier mouvement.
+    scene.classList.toggle('donjon-a-viser', passifDe(C, j)?.visee !== undefined)
     if (ouvert && ev !== null) {
       const { x0, y0, l, h } = cadreDuDessin()
       // Le temps qui reste, sur la fenêtre de CE trait (la série les raccourcit).
