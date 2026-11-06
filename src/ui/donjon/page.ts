@@ -3377,9 +3377,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * la charge y monte ; on lâche dans la zone : la hache s'abat (`grandElan`),
    * et l'élan suivant s'allume ; lâché trop tôt, ou la zone dépassée, la
    * jauge rougit. Les règles jugent pareil (`chargeDe`, la cible 0 posée, la
-   * cible 1 lâchée).
+   * cible 1 lâchée). Puis la ligne du Fracas mise debout (Keko : « rapprocher
+   * la barre du style des massues ») : son cadre pour la zone, son trait,
+   * couché, pour la charge ; et le doigt reposé entre deux élans compte pour
+   * le suivant (`doigtPose`).
    */
   let elanActif: { cle: string; ev: EvenementDuPassif; p: Passif; n: HTMLElement; appui: number | null } | null = null
+  /** Le doigt posé sur la scène hors d'un élan ouvert (entre deux élans d'une série), et depuis quand. */
+  let doigtPose: number | null = null
 
   function dessinerLElan(ev: EvenementDuPassif, j: Joueur, t: number, p: Passif, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
     const cle = `${j.arme}:${ev.k}:${ev.rang}:elan`
@@ -3387,7 +3392,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     let n = ciblesVues.get(cle)
     if (n === undefined) {
       n = el('div', 'donjon-jauge donjon-elan')
-      n.append(el('div', 'donjon-elan-zone'), el('div', 'donjon-elan-charge'))
+      n.append(el('div', 'donjon-jauge-cible donjon-elan-zone'), el('div', 'donjon-jauge-curseur donjon-elan-charge'))
       const [z0, z1] = p.elan!.zone
       n.style.setProperty('--z0', `${z0 * 100}%`)
       n.style.setProperty('--z1', `${z1 * 100}%`)
@@ -3396,6 +3401,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       pointsEnJeu.add(cle)
       n.animate([{ opacity: 0, transform: 'scaleY(0.6)' }, { opacity: 1, transform: 'scaleY(1)' }], { duration: 140, easing: 'ease-out' })
       elanActif = { cle, ev, p, n, appui: null }
+      // Le doigt reposé avant que l'élan suivant s'allume (Keko : « réappuyer
+      // directement après la validation ») : la charge part à son ouverture.
+      if (doigtPose !== null) {
+        const appui = Math.max(doigtPose, ev.debut)
+        elanActif.appui = appui
+        void partage.agir({ joueur: MOI, t: appui, type: 'toucher', evenement: ev.k, cible: 0 })
+      }
     }
     const [px, py] = surLeDessin(ev.cibles[0])
     n.style.left = `${px}px`
@@ -3434,19 +3446,26 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   scene.addEventListener('pointerdown', (e) => {
     const ea = elanActif
-    if (ea === null || ea.appui !== null || !pointsEnJeu.has(ea.cle)) return
     const quand = instantDu(e)
-    if (quand < ea.ev.debut || quand > ea.ev.fin + (ea.p.grace ?? 0)) return
-    ea.appui = quand
+    const ouvert = ea !== null && ea.appui === null && pointsEnJeu.has(ea.cle) && quand >= ea.ev.debut && quand <= ea.ev.fin + (ea.p.grace ?? 0)
+    // Entre deux élans d'une série, le doigt posé attend le suivant.
+    const enSerie = !ouvert && passifDe(C, moi())?.elan !== undefined
+    if (!ouvert && !enSerie) return
     // Le doigt peut glisser hors de la scène : elle le garde jusqu'au lâcher.
     try {
       scene.setPointerCapture(e.pointerId)
     } catch {
       // Un pointeur déjà levé : le lâcher viendra quand même.
     }
-    void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ea.ev.k, cible: 0 })
+    if (!ouvert) {
+      doigtPose = quand
+      return
+    }
+    ea!.appui = quand
+    void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ea!.ev.k, cible: 0 })
   })
   const lacherDuDoigt = (e: PointerEvent) => {
+    doigtPose = null
     if (elanActif?.appui != null) lacherLElan(instantDu(e))
   }
   scene.addEventListener('pointerup', lacherDuDoigt)

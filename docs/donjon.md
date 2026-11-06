@@ -1522,6 +1522,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   retard de traitement, `performance.now() − timeStamp`) : un fil chargé
   traitait le doigt levé 0,1 à 0,25 s trop tard en capture, et l'élan bien
   lâché passait la zone. Le Fracas aussi.
+  - Puis (Keko, 06/11 : « rapprocher la barre du style graphique de celle
+    des massues, et surtout permettre le réappuyage/maintien direct après
+    la validation d'une étape ») : la jauge EST la ligne du Fracas mise
+    debout — la même bande claire, la zone est le même CADRE crème (allumé
+    d'or, rempli au lâcher juste, rouge au manqué), la charge le même
+    TRAIT, couché, qui monte ; et LE DOIGT REPOSÉ ENTRE DEUX ÉLANS
+    (`doigtPose`, la scène le capture) compte pour le suivant : la charge
+    part à son ouverture, le doigt tenu.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
