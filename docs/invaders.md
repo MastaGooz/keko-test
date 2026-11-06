@@ -37,3 +37,37 @@ Les visuels : le joueur est un chasseur humain (`keko`), chaque vague une
 race (alien les vagues impaires, biologique les paires), combat en haut et
 minage en bas, la soucoupe une station alien, les abris des astéroïdes. Les
 ennemis sont tournés nez en bas et se dandinent.
+
+## La tourelle — `?tourelle`
+
+La variante où l'on ne bouge pas (Keko, 06/11 : « on est en bas de l'écran au
+milieu, les ennemis foncent sur nous, et on attaque en auto »), et ce que fait
+le joueur, tranché par Keko : **améliorer entre les vagues**.
+
+- `src/logic/invaders/tourelle.ts` — pur : `nouvelleTourelle`,
+  `avancerTourelle(config, etat, dt)`, `choisir(config, etat, i)`. La
+  tourelle vise l'ennemi le plus proche, là où il sera quand le tir arrivera,
+  et tire seule. Quatre ennemis : l'éclaireur (rapide, fragile), le soldat,
+  le plongeur (il ondule de côté, dès la vague 2), la brute (lente, solide,
+  dès la vague 3, de plus en plus fréquente). Au contact ils frappent et
+  meurent. Vague n : `6 + 3n` ennemis, de plus en plus serrés.
+- Entre deux vagues, TROIS AMÉLIORATIONS AU CHOIX, tirées au hasard seedé
+  (comme l'offre du donjon) : Canons lourds (+30 % de dégâts), Culasse rapide
+  (+20 % de cadence), Tir multiple (un projectile de plus, 4 au plus), Obus
+  perforants (3 au plus), Blindage (+4 PV), Nanorobots (0,3 PV/s), Bouclier
+  (un choc par vague), Visée laser (+10 % de coup double, 5 au plus),
+  Charges explosives (3 au plus), et la Réparation (tous les PV), offerte
+  seulement blessé. Une amélioration au maximum n'est plus offerte.
+- LES ENNEMIS SE DURCISSENT EN EXPONENTIELLE (PV × 1,13 par vague, vitesse
+  +2 %) : linéaires, ils ne suivaient pas les améliorations, qui se
+  multiplient — au hasard des choix, la tourelle tenait encore à la vague 55
+  après une demi-heure. À 1,13, mesuré sur huit graines : sans rien prendre,
+  elle tombe vers la vague 4 (une minute) ; au hasard, de la 7 à la 24 (3 à
+  10 min) ; en privilégiant l'attaque, de la 6 à la 34 (jusqu'à 16 min).
+- `src/ui/invaders/tourelle.ts` — l'écran : la tourelle est votre vaisseau,
+  qui pivote vers sa cible ; les ennemis sont des vaisseaux engendrés, nez
+  vers la tourelle (la brute est une station qui tourne), un dessin neuf par
+  vague, alien et biologique en alternance ; leur barre de PV dès qu'ils
+  sont touchés ; la barre de PV de la tourelle dessous ; le choix en trois
+  cartes. Le record (la vague atteinte) vit dans `keko-tourelle-record`.
+- `src/ui/invaders/commun.ts` — les sprites et le record, partagés avec `?invaders`.

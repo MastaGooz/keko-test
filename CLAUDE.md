@@ -588,6 +588,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?donjon`, `&neuf`, `&armes=N`, `&fleche`, `&rune` | le donjon coopératif ; `&neuf` (ou le bouton « Recommencer », deux tapes) oublie la saison de cet appareil ; `&armes=N` montre N armes dans l'armurerie (test de la grille) ; `&fleche` rend à la dague la flèche de l'arc ; `&rune` rend au bâton le cercle de rune, gardé pour ailleurs |
 | `?invaders` | les envahisseurs, un side project : un Space Invaders au doigt, les vaisseaux du générateur (`docs/invaders.md`) |
+| `?tourelle` | sa variante : la tourelle fixe tire seule, les ennemis foncent, trois améliorations au choix entre les vagues |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |

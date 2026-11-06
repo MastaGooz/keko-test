@@ -13,49 +13,15 @@
  * souris, il suit le pointeur.
  */
 import './invaders.css'
-import { genererDessin, type Famille, type Race } from '../../logic/procgen/index.ts'
+import type { Race } from '../../logic/procgen/index.ts'
 import { avancer, HAUTEUR, INVADERS as C, LARGEUR, nouvellePartie, positionDe, vitesseDeMarche, type EtatInvaders, type EvenementInvaders } from '../../logic/invaders/jeu.ts'
-import { svgTexte } from '../procgen/svg.ts'
+import { ecrireRecord, lireRecord, sprite } from './commun.ts'
 import { ouvrirLeSon, sonAbri, sonExplosion, sonPas, sonPerdu, sonSoucoupe, sonTir, sonTouche, sonVague } from './sons.ts'
 
 const PAS = 1000 / 60
 const CLE_RECORD = 'keko-invaders-record'
 
-function lireRecord(): number {
-  try {
-    return Number(localStorage.getItem(CLE_RECORD)) || 0
-  } catch {
-    return 0
-  }
-}
-
-function ecrireRecord(score: number): void {
-  try {
-    localStorage.setItem(CLE_RECORD, String(score))
-  } catch {
-    // Sans stockage, le record ne survit pas au rechargement.
-  }
-}
-
 // ---------------------------------------------------------------- les sprites
-
-/** Un dessin engendré, rendu une fois en image (`null` tant qu'il charge). */
-const sprites = new Map<string, HTMLImageElement | null>()
-
-function sprite(famille: Famille, id: string, race: Race): HTMLImageElement | null {
-  const cle = `${famille}:${race}:${id}`
-  if (!sprites.has(cle)) {
-    sprites.set(cle, null)
-    const img = new Image()
-    const url = URL.createObjectURL(new Blob([svgTexte(genererDessin(famille, id, race), 256, `iv${sprites.size}`)], { type: 'image/svg+xml' }))
-    img.onload = () => {
-      sprites.set(cle, img)
-      URL.revokeObjectURL(url)
-    }
-    img.src = url
-  }
-  return sprites.get(cle) ?? null
-}
 
 /** La race d'une vague : alien, puis biologique, en alternance. */
 function raceDeLaVague(vague: number): Race {
@@ -95,7 +61,7 @@ export function monterInvaders(racine: HTMLElement, build: string): void {
 
   let etat: EtatInvaders = nouvellePartie(C, 1)
   let enJeu = false
-  let record = lireRecord()
+  let record = lireRecord(CLE_RECORD)
   let cibleX: number | null = null
   let accumule = 0
   let avant = performance.now()
@@ -261,7 +227,7 @@ export function monterInvaders(racine: HTMLElement, build: string): void {
         perduA = performance.now()
         if (ev.score > record) {
           record = ev.score
-          ecrireRecord(record)
+          ecrireRecord(CLE_RECORD, record)
         }
         sonPerdu()
         montrerLEcran()
