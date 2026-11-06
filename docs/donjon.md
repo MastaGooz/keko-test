@@ -1654,6 +1654,15 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     un anneau et un cœur d'or dedans, cerné de sombre sous la lueur d'or ;
     touchée, elle passe à l'or (le point de rune relié) ; le rouge est
     gardé pour le raté, comme partout.
+- LES GESTES DEVIENNENT DES COMPÉTENCES, LE PASSIF DEVIENT PASSIF (Keko,
+  06/11 : « ce qu'on a fait pour les classes d'armes devrait plutôt être
+  déclenché comme une compétence de l'arme ; des passifs, de vrais effets
+  passifs, pas quelque chose qui demande une intervention manuelle ; on
+  garde ce qu'on a fait, on le greffera aux capacités des armes »). La
+  Taille, l'Élan, les Points faibles, le Fracas, la Lacération, la Visée et
+  les Runes restent dans le code tels quels, en attendant d'être lancés
+  depuis une capacité ; chacune des 26 armes reçoit un passif à elle, un
+  effet permanent sans geste.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
