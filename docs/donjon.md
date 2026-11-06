@@ -1600,6 +1600,11 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   (le noir, puis chaque coup) y revient en GRIFFURE, d'un côté puis de
   l'autre, de plus en plus vite, un chiffre « Lacération » chacune, puis
   l'éclair. Le nom, l'icône (celle de la Riposte) et les chiffres, de moi.
+  - Puis LE TEMPS PART DU PREMIER TAP (Keko : « démarrer le timer à
+    partir du premier tap, et s'il n'y a pas de tap rapidement, c'est
+    échec ») : ouverte, la rafale attend 1,5 s (`rafale.attente`) ; le
+    premier tap pose la fin à lui + 2 s ; sans tap, elle se ferme sans rien
+    — « Tapotez ! » bat, la ligne reste pleine, puis rougit et s'éteint.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -2770,7 +2770,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     traitsVus.delete(cle)
     n.style.pointerEvents = 'none'
     if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
-    if (rafaleActive?.cle === cle) rafaleActive = null
+    if (rafaleActive?.cle === cle) {
+      const ra = rafaleActive
+      rafaleActive = null
+      // Pas un tap dans l'attente : raté.
+      if (ra.taps === 0) return echouerLaJauge(ra.n)
+    }
     // Une rune en jeu que les règles ont fermée (le temps passé) : ratée.
     if (runeActive !== null && runeActive.cle === cle && !runeActive.fini) return raterLaRune(runeActive, runeActive.points[runeActive.atteints] ?? runeActive.points[0], false)
     // Un point faible qui n'a pas été touché : manqué.
@@ -3720,6 +3725,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * fin on libère une série de coups » ; un coup par tap, 2 s, partout sur
    * l'ennemi) : au centre, « Tapotez ! », puis le compte des taps qui bondit
    * à chacun ; dessous, la ligne du temps (le style du Fracas) qui se vide.
+   * LE TEMPS PART DU PREMIER TAP (Keko) : jusque-là la ligne reste pleine et
+   * « Tapotez ! » bat ; sans tap dans l'attente, il rougit, tremble, s'éteint.
    * Chaque tap laisse une étincelle où il tombe, et sa place est gardée : à
    * la fin, chaque tap y revient en griffure (`frapperLesPoints`), de plus
    * en plus vite, un chiffre chacune.
@@ -3752,7 +3759,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ra.temps.style.left = `${gx}px`
     ra.temps.style.top = `${ty}px`
     ra.temps.style.width = `${dx - gx}px`
-    ra.temps.style.setProperty('--reste', Math.max(0, Math.min(1, (ev.fin - t) / Math.max(1, ev.fin - ev.debut))).toFixed(3))
+    // Pleine tant que le premier tap n'est pas là ; puis le temps de la rafale, depuis lui.
+    const p = passifDe(C, j)
+    const reste = ra.taps === 0 || p === null ? 1 : (ev.fin - t) / Math.max(1, p.duree)
+    ra.temps.style.setProperty('--reste', Math.max(0, Math.min(1, reste)).toFixed(3))
+    ra.compte.classList.toggle('attend', ra.taps === 0)
   }
 
   // On tapote n'importe où sur l'ennemi : chaque tap compte, pas plus vite que la règle.

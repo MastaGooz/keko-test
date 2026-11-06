@@ -91,11 +91,12 @@ export type Passif = {
    */
   rune?: boolean
   /**
-   * LA RAFALE (les griffes) : chaque tap dans la fenêtre compte, pas plus
-   * vite qu'un tous les `ecart` ms ; la fenêtre passée, la série s'encaisse
-   * (à cumul : un `coup` par tap).
+   * LA RAFALE (les griffes) : ouverte, elle attend le premier tap `attente`
+   * ms (sans lui, c'est raté) ; LE TEMPS PART DE CE TAP (Keko), `duree` ms ;
+   * chaque tap compte, pas plus vite qu'un tous les `ecart` ms ; la fenêtre
+   * passée, la série s'encaisse (à cumul : un `coup` par tap).
    */
-  rafale?: { ecart: number }
+  rafale?: { ecart: number; attente: number }
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
   /** Le trait est un ARC, en croissant (la Fauche des haches, retirée ; l'écran sait encore le courber). */
@@ -373,7 +374,10 @@ export const DONJON = {
    * 2 s, partout sur l'ennemi) : chaque tap des 2 s compte (un tous les
    * 50 ms au plus, vingt par seconde), et la fenêtre passée, chacun frappe
    * ×1 — à huit taps par seconde, ×16, une Taille. La chance de la Taille à
-   * leur cadence (0,175 s : 1,4 %), la pitié à trois fois l'attente.
+   * leur cadence (0,175 s : 1,4 %), la pitié à trois fois l'attente. LE
+   * TEMPS PART DU PREMIER TAP (Keko : « démarrer le timer à partir du
+   * premier tap, et s'il n'y a pas de tap rapidement, c'est échec ») : 1,5 s
+   * pour le donner.
    */
   passifs: pourLesTests({
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
@@ -389,7 +393,7 @@ export const DONJON = {
     fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
-    griffes: { nom: 'Lacération', chance: 0.014, pitie: 214, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50 }, cumul: true },
+    griffes: { nom: 'Lacération', chance: 0.014, pitie: 214, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
     baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
   } as Record<ArmeAPassif, Passif>),
 

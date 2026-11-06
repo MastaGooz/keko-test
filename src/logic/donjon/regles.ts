@@ -302,7 +302,8 @@ function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: n
   const { evenement, etape, fin, rang } = j.passif
   if (evenement >= 0 && t <= fin + (p.grace ?? 0) && etape >= 0 && etape < ciblesDe(p, rang)) return
   const sans = j.passif.sans + 1
-  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + p.duree, sans: 0, rang: 0 }
+  // La rafale attend d'abord son premier tap.
+  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + (p.rafale?.attente ?? p.duree), sans: 0, rang: 0 }
   else j.passif = { ...j.passif, sans }
 }
 
@@ -733,7 +734,8 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   // LA RAFALE : chaque tap de la fenêtre compte (le rang), pas plus vite que `ecart` ; elle s'encaisse à sa fin.
   if (p.rafale !== undefined) {
     if (t > j.passif.fin || (j.passif.appui !== undefined && t - j.passif.appui < p.rafale.ecart)) return
-    j.passif = { ...j.passif, rang: j.passif.rang + 1, appui: t }
+    // Le premier tap lance le temps.
+    j.passif = { ...j.passif, rang: j.passif.rang + 1, appui: t, fin: j.passif.rang === 0 ? t + p.duree : j.passif.fin }
     return
   }
   const etape = etapeDuPassif(j, k)

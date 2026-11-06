@@ -123,8 +123,8 @@ export async function jouerLesBots(
         // L'Élan : il lâche au milieu de la zone.
         const p = passifDe(config, moi)
         const lacher = p?.elan === undefined ? 0 : (chargeDe(p, ev.rang) * (p.elan.zone[0] + p.elan.zone[1])) / 2
-        // La rafale : il tapote huit fois par seconde, toute la fenêtre.
-        if (p?.rafale !== undefined) for (let i = 0; i < Math.floor((ev.fin - t) / 125); i++) etat = await partage.agir({ joueur: profil.id, t: t + i * 125, type: 'toucher', evenement: ev.k, cible: 0 })
+        // La rafale : il tapote huit fois par seconde, toute la fenêtre (elle part de son premier tap).
+        if (p?.rafale !== undefined) for (let i = 0; i < Math.floor(p.duree / 125); i++) etat = await partage.agir({ joueur: profil.id, t: t + i * 125, type: 'toucher', evenement: ev.k, cible: 0 })
         else for (let cible = 0; cible < (p === null ? 0 : ciblesDe(p, ev.rang)); cible++) etat = await partage.agir({ joueur: profil.id, t: t + (cible === 1 ? lacher : 0), type: 'toucher', evenement: ev.k, cible })
       }
     }

@@ -284,9 +284,13 @@ for (let i = 0; i < 16; i++) tapote = appliquer(C, tapote, { joueur: 'a', t: evG
 const tropVite = appliquer(C, tapote, { joueur: 'a', t: evG.debut + 100 + 15 * 110 + 10, type: 'toucher', evenement: evG.k, cible: 0 })
 verifier('Lacération : seize taps comptés, rien ne frappe encore', tapote.joueurs[0].passif.rang === 16 && tapote.joueurs[0].degatsTap === gr.joueurs[0].degatsTap)
 verifier('un tap trop rapproché ne compte pas', tropVite.joueurs[0].passif.rang === 16)
-const finRafale = avancer(C, tapote, evG.fin + 10)
+const finDuTemps = tapote.joueurs[0].passif.fin
+verifier('le temps part du premier tap', finDuTemps === evG.debut + 100 + C.passifs.griffes.duree && evG.fin === evG.debut + C.passifs.griffes.rafale!.attente)
+const finRafale = avancer(C, tapote, finDuTemps + 10)
 verifier('la fenêtre passée, seize coups ×1, un chiffre chacun', finRafale.joueurs[0].passif.dernier?.detail?.length === 16 && finRafale.joueurs[0].degatsTap - gr.joueurs[0].degatsTap >= 16 * degatsDuTap(C, gr.joueurs[0]) * (1 - C.tap.ecart) - 16)
-verifier('après la fenêtre, un tap ne compte plus', appliquer(C, tapote, { joueur: 'a', t: evG.fin + 5, type: 'toucher', evenement: evG.k, cible: 0 }).joueurs[0].passif.rang === 16)
+verifier('après la fenêtre, un tap ne compte plus', appliquer(C, tapote, { joueur: 'a', t: finDuTemps + 5, type: 'toucher', evenement: evG.k, cible: 0 }).joueurs[0].passif.rang === 16)
+const sansTap = avancer(C, gr, evG.fin + 10)
+verifier("sans tap dans l'attente, raté, rien ne frappe", sansTap.joueurs[0].passif.etape === -1 && sansTap.joueurs[0].degatsTap === gr.joueurs[0].degatsTap && appliquer(C, gr, { joueur: 'a', t: evG.fin + 5, type: 'toucher', evenement: evG.k, cible: 0 }).joueurs[0].passif.rang === 0)
 // Aucun trait ne passe sur un point pas encore relié (Wunjo et Raidho avaient leur point 4 sur le trait du 1 au 2).
 const distanceAuTrait = (q: [number, number], a: [number, number], b: [number, number]) => {
   const [dx, dy] = [b[0] - a[0], b[1] - a[1]]

@@ -969,6 +969,21 @@
     0 0 0.8rem rgba(255, 214, 130, 1);
 }
 
+/* Il attend le premier tap : « Tapotez ! » bat. */
+.donjon-rafale-compte.attend {
+  animation: donjon-cible-bat 0.35s ease-in-out infinite alternate;
+}
+
+/* Pas de tap dans l'attente : le mot et la ligne rougissent. */
+.donjon-rafale.echouee .donjon-rafale-compte {
+  color: #ff8a7a;
+  animation: none;
+}
+
+.donjon-rafale.echouee .donjon-rafale-reste {
+  background: #e8392b;
+}
+
 .donjon-rafale-temps {
   position: absolute;
   height: 1.5rem;
