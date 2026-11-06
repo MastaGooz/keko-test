@@ -22,7 +22,7 @@ export const SURVIVOR = {
   },
 } as const
 
-export type ConfigSurvivor = typeof SURVIVOR
+export type ConfigSurvivor = { vitesse: number; reponse: number; manche: { rayon: number; mort: number } }
 
 export type Vecteur = { x: number; y: number }
 

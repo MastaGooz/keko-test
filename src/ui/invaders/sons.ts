@@ -34,7 +34,7 @@ function enveloppe(g: GainNode, t0: number, pic: number, duree: number): void {
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree)
 }
 
-function note(type: OscillatorType, depart: number, arrivee: number, duree: number, pic: number, decale = 0): void {
+export function note(type: OscillatorType, depart: number, arrivee: number, duree: number, pic: number, decale = 0): void {
   const c = pret()
   if (c === null) return
   try {
@@ -53,7 +53,7 @@ function note(type: OscillatorType, depart: number, arrivee: number, duree: numb
   }
 }
 
-function souffle(duree: number, frequence: number, pic: number): void {
+export function souffle(duree: number, frequence: number, pic: number): void {
   const c = pret()
   if (c === null) return
   try {
