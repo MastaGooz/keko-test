@@ -1640,6 +1640,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     `Input.dispatchTouchEvent`). La scène prend `touch-action: none` tant
     que l'arme vise (`donjon-a-viser`), et un geste annulé détend la corde
     sans tirer. *Un geste qui glisse se teste au toucher, pas à la souris.*
+  - Puis LE LANCE-PIERRE EST RETIRÉ (Keko : « pas ergonomique, vaut mieux
+    une cible qui se déplace sur un segment et le joueur doit la
+    toucher ») : la cible et son rail restent, on la TOUCHE ; jugée là où
+    elle était à l'instant du geste (`instantDu`), son rayon et un demi-rem ;
+    une tape ailleurs sur la scène, c'est raté (sinon tapoter partout la
+    réussirait). La corde, le viseur, la traînée et `touch-action: none`
+    partent avec lui ; la consigne dit « Touchez la cible ! ». Les règles
+    n'ont pas bougé.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

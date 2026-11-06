@@ -101,8 +101,8 @@ export type Passif = {
    * LA VISÉE (l'arc, l'arbalète, la fronde) : sa cible fait l'aller-retour
    * entre ses deux bouts (`positionDeLaVisee`), en `traversee` ms par
    * passage (raccourci avec la série) ; elle fait `rayon` du dessin en
-   * largeur. L'écran juge le tir (le viseur sur la cible : la cible 0 ; à
-   * côté : une autre, et c'est raté).
+   * largeur. L'écran juge la tape (sur la cible : la cible 0 ; à côté :
+   * une autre, et c'est raté).
    */
   visee?: { traversee: number; rayon: number }
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
@@ -387,10 +387,11 @@ export const DONJON = {
    * premier tap, et s'il n'y a pas de tap rapidement, c'est échec ») : 1,5 s
    * pour le donner. LE FOUET AUSSI (Keko : « on peut mettre ça au fouet
    * aussi ») : la même rafale, la chance à sa cadence (0,25 s : 2 %).
-   * LE TIR VISE (Keko, 06/11 : l'arc, l'arbalète et la fronde ; « la Visée,
-   * au lance-pierre ») : une cible fait l'aller-retour en travers de
-   * l'ennemi ; on pose le doigt, on tire en arrière, le viseur part à
-   * l'opposé, et on lâche quand il est sur elle. 3 s pour tirer, la cible
+   * LE TIR VISE (Keko, 06/11 : l'arc, l'arbalète et la fronde, « la
+   * Visée » ; le lance-pierre essayé, « pas ergonomique : une cible qui se
+   * déplace sur un segment, et le joueur doit la toucher ») : une cible
+   * fait l'aller-retour en travers de l'ennemi, on la touche ; une tape à
+   * côté, c'est raté. 3 s pour la toucher, la cible
    * passe en 1,4 s ; chaque tir réussi en ouvre un autre 0,5 s plus tard,
    * tout 15 % plus court (la cible plus rapide d'autant) ; au premier raté
    * (à côté, ou le temps passé), tout tombe en un coup, ×20 par tir. La
