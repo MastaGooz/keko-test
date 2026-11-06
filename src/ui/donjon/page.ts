@@ -4429,6 +4429,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   let coupVu = -1
   let saisonVue = -1
   let periodeVue = -1
+  let ancreVue = -1
   let cumulAuto = 0
   let coupsDuLot = 0
   let critiquesDuLot = 0
@@ -4438,11 +4439,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const j = moi()
     const debutSaison = etat.saison.debut
     const periode = periodeDe(C, j)
-    const coup = coupsAutoA(C, debutSaison, t, j)
-    // Une saison neuve, ou une période changée (un achat) : on repart du coup présent.
-    if (saisonVue !== etat.saison.numero || periode !== periodeVue || coup < coupVu) {
+    // L'auto compte de son `autoDepuis`, que chaque tap à la main remet à zéro.
+    const ancre = j.autoDepuis
+    const coup = coupsAutoA(C, t, j)
+    // Une saison neuve, une période changée (un achat) ou remise à zéro (un tap) : on repart du coup présent.
+    if (saisonVue !== etat.saison.numero || periode !== periodeVue || ancre !== ancreVue || coup < coupVu) {
       saisonVue = etat.saison.numero
       periodeVue = periode
+      ancreVue = ancre
       coupVu = coup
     }
     if (coup > coupVu) {
@@ -4451,8 +4455,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         cumulAuto += degatsDuCoupAuto(C, j) * facteurCritMoyen(C, j) * n
       } else {
         for (let k = coupVu + 1; k <= coup; k++) {
-          const critique = autoCritique(C, etat.saison.seed, k * periode, j)
-          cumulAuto += degatsDuCoupAutoA(C, etat.saison.seed, k * periode, j, debutSaison + k * periode)
+          const instant = ancre + k * periode
+          const critique = autoCritique(C, etat.saison.seed, instant - debutSaison, j)
+          cumulAuto += degatsDuCoupAutoA(C, etat.saison.seed, instant - debutSaison, j, instant)
           if (critique) critiquesDuLot += 1
         }
       }
@@ -4484,7 +4489,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Trop rapide pour se lire : le contour reste plein.
     // Au lancement, il reste plein le temps de flamber, puis repart de zéro.
     const rapide = periode / horloge.vitesse < CADENCE_AUTO
-    const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : ((t - debutSaison) % periode) / periode
+    const part = rapide || reel - dernierAuto < FLAMBEE ? 1 : (Math.max(0, t - ancre) % periode) / periode
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
     // Pendant sa grâce, le trait fini reste traçable.

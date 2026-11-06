@@ -462,8 +462,10 @@ export const DONJON = {
    * auto exactement comme les autres et avec les mêmes dégâts »). Dès le
    * début, chaque joueur frappe un coup à chaque période : les dégâts du
    * Coup, critique compris, sans la forme (ni fatigue ni repos). Les coups de
-   * chacun tombent sur les multiples de sa période depuis le début de la
-   * saison. LA PÉRIODE SE COMPTE EN RECHARGES DU TAP, ET N'EST JAMAIS PLUS
+   * chacun tombent sur les multiples de sa période depuis son entrée dans la
+   * saison — ET UN TAP À LA MAIN REMET LA PÉRIODE À ZÉRO (Keko : « afin que
+   * les deux ne se superposent pas ») : tant qu'on tape, l'auto attend, et il
+   * reprend une période après le dernier tap. LA PÉRIODE SE COMPTE EN RECHARGES DU TAP, ET N'EST JAMAIS PLUS
    * COURTE (Keko : « l'auto-tap ne doit jamais être plus rapide que le
    * manuel », « 10 fois le CD manuel ») : `depart` recharges, toujours. Une
    * amélioration « Auto-tap » la rapprochait de la recharge ; elle est

@@ -1654,6 +1654,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     un anneau et un cœur d'or dedans, cerné de sombre sous la lueur d'or ;
     touchée, elle passe à l'or (le point de rune relié) ; le rouge est
     gardé pour le raté, comme partout.
+- UN TAP À LA MAIN REMET L'AUTO À ZÉRO (Keko, 06/11 : « afin que les deux ne
+  se superposent pas ») : l'auto compte sa période depuis `autoDepuis`
+  (l'entrée dans la saison, puis le dernier tap à la main), plus depuis le
+  début de la saison. Tant qu'on tape, il attend ; il repart une période
+  après le dernier tap, et le contour du bouton repart de zéro à chaque tap.
+  Les capacités ne le remettent pas à zéro. Une sauvegarde d'avant compte
+  du début de la saison. La saison simulée ne bouge pas (étage 87) : l'auto
+  y frappe surtout pendant l'absence.
 - LES GESTES DEVIENNENT DES COMPÉTENCES, LE PASSIF DEVIENT PASSIF (Keko,
   06/11 : « ce qu'on a fait pour les classes d'armes devrait plutôt être
   déclenché comme une compétence de l'arme ; des passifs, de vrais effets

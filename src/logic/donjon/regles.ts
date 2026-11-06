@@ -8,8 +8,9 @@
  * tournera.
  *
  * **L'AUTO-TAP EST UN TAP QUI SE DONNE TOUT SEUL.** Chaque joueur frappe un
- * coup (les dégâts du Coup) sur chaque multiple de SA période depuis le
- * début de la saison ; les coups de même instant tombent ensemble. Le
+ * coup (les dégâts du Coup) sur chaque multiple de SA période depuis son
+ * `autoDepuis` — son entrée, puis son dernier tap à la main, qui remet la
+ * période à zéro ; les coups de même instant tombent ensemble. Le
  * critique d'un coup est une FONCTION de (saison, instant, joueur)
  * (`autoCritique`), pas un tirage qui use le RNG de l'état : résoudre une
  * heure en une fois ou en deux donne les mêmes coups, et l'écran sait
@@ -153,9 +154,9 @@ export function autoCritique(config: ConfigDonjon, seed: number, dans: number, j
   return critiqueTire(config, seed, dans, empreinteDe(j.id), j)
 }
 
-/** Le nombre de coups d'auto de ce joueur depuis le début de la saison jusqu'à t. */
-export function coupsAutoA(config: ConfigDonjon, debut: number, t: number, j: Joueur): number {
-  return Math.max(0, Math.floor((t - debut) / periodeDe(config, j)))
+/** Le nombre de coups d'auto de ce joueur depuis son `autoDepuis` jusqu'à t. */
+export function coupsAutoA(config: ConfigDonjon, t: number, j: Joueur): number {
+  return Math.max(0, Math.floor((t - j.autoDepuis) / periodeDe(config, j)))
 }
 
 /** Un tap hors critique et hors forme : les dégâts du Coup. */
@@ -464,6 +465,7 @@ export function nouveauJoueur(id: string, nom: string, bot: string | null, t: nu
     forme: 0,
     formeA: t,
     prochainTap: t,
+    autoDepuis: t,
     capacitesPretes: {},
     critiques: 0,
     effets: {},
@@ -527,7 +529,7 @@ function achever(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): voi
 
 /**
  * L'auto-tap de tous, de `de` (exclu) à `a` (inclus), dans la même saison et
- * le même jour : chaque joueur frappe sur les multiples de sa période, les
+ * le même jour : chaque joueur frappe sur les multiples de sa période depuis son `autoDepuis`, les
  * coups du même instant ensemble, chacun peut être critique. Le coup fatal ne
  * porte que ce qui restait : les suivants frappent l'ennemi d'après. L'XP se
  * verse par tranche (à chaque mort, et à la fin).
@@ -545,8 +547,11 @@ function resoudreLAuto(config: ConfigDonjon, e: EtatDonjon, de: number, a: numbe
   const base = e.joueurs.map((j) => degatsDuCoupAuto(config, j) * (1 + bonusDesEffets(config, j, (fin) => fin > de)))
   const mult = e.joueurs.map((j) => multCritDe(config, j))
   const empreintes = e.joueurs.map((j) => empreinteDe(j.id))
-  // Le prochain coup de chacun : le premier multiple de sa période après `de`.
-  const prochain = periodes.map((p) => debut + (Math.floor((de - debut) / p) + 1) * p)
+  // Le prochain coup de chacun : le premier multiple de sa période après `de`, compté de son `autoDepuis`.
+  const prochain = periodes.map((p, i) => {
+    const ancre = e.joueurs[i].autoDepuis
+    return ancre + (Math.floor((de - ancre) / p) + 1) * p
+  })
   const cumul = new Array<number>(n).fill(0)
   const ceCoup = new Array<number>(n).fill(0)
   const verser = (instant: number) => {
@@ -716,6 +721,8 @@ function taper(config: ConfigDonjon, e: EtatDonjon, j: Joueur, n: number, t: num
   j.forme = forme
   j.formeA = t
   j.prochainTap = t + rechargeDe(config, j)
+  // Le tap à la main remet la période de l'auto à zéro : les deux ne se superposent pas.
+  j.autoDepuis = t
   // Le tap à la main seul ouvre le passif : l'auto ne passe pas par ici.
   declencherLePassif(config, e, j, t)
 }

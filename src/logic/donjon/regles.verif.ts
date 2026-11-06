@@ -88,6 +88,13 @@ verifier('la Critique n\'atteint jamais 100 %', [100, 1000].every((r) => chanceC
 verifier('le Coup et la Force n\'ont pas de plafond', degatsDuTap(C, rang('tap', 1000)) > 2 * degatsDuTap(C, rang('tap', 300)) && forceDe(C, rang('multCrit', 1000)) > 1.5 * forceDe(C, rang('multCrit', 300)))
 verifier('l\'auto frappe dès le début, sans rien acheter', avancer(C, e, 10 * P).joueurs[0].degatsAuto > 0)
 verifier('l\'auto frappe par coups : rien avant le premier', avancer(C, e, P - 1).joueurs[0].degatsAuto === 0 && avancer(C, e, P).joueurs[0].degatsAuto > 0)
+// UN TAP À LA MAIN REMET LA PÉRIODE DE L'AUTO À ZÉRO (Keko : « afin que les deux ne se superposent pas »).
+const solideA = { ...e, ennemi: { ...e.ennemi, pv: 1e9, pvMax: 1e9 } }
+const tapeAuMilieu = appliquer(C, solideA, { joueur: 'a', t: e.t + P / 2, type: 'taper', n: 1 })
+verifier("un tap à la main repousse l'auto d'une période entière", avancer(C, tapeAuMilieu, e.t + P / 2 + P - 1).joueurs[0].degatsAuto === 0 && avancer(C, tapeAuMilieu, e.t + P / 2 + P).joueurs[0].degatsAuto > 0)
+let spam = solideA
+for (let k = 0; k < 40; k++) spam = appliquer(C, spam, { joueur: 'a', t: Math.max(spam.t, spam.joueurs[0].prochainTap), type: 'taper', n: 1 })
+verifier("tant qu'on tape, l'auto attend", spam.joueurs[0].degatsAuto === 0 && spam.t > 3 * P)
 const epuise = { ...e, joueurs: e.joueurs.map((j) => ({ ...j, forme: bornesDeLaForme(C).min })) }
 verifier('l\'auto ignore la forme', avancer(C, epuise, 20 * P).joueurs[0].degatsAuto === avancer(C, e, 20 * P).joueurs[0].degatsAuto)
 const ja = e.joueurs[0]

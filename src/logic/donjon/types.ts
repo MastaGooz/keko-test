@@ -39,6 +39,8 @@ export type Joueur = {
   formeA: number
   /** Le tap est rechargé à partir de cet instant (`tap.recharge` après le dernier). */
   prochainTap: number
+  /** L'auto compte sa période depuis cet instant : l'entrée dans la saison, puis le dernier tap à la main. */
+  autoDepuis: number
   /** Chaque capacité à recharge est prête à partir de cet instant (absente : prête). */
   capacitesPretes: Partial<Record<CleCapacite, number>>
   /** Les coups critiques comptés depuis la dernière Furie (plafonnés à ce qu'elle demande). */

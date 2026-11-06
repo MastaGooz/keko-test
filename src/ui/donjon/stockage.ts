@@ -54,6 +54,8 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
     // d'avant une amélioration : elle est au rang 0.
     for (const j of e.joueurs) {
       if (typeof j.prochainTap !== 'number') j.prochainTap = e.t
+      // D'avant l'auto remis à zéro par le tap : il comptait du début de la saison.
+      if (typeof j.autoDepuis !== 'number') j.autoDepuis = e.saison.debut
       // D'avant les capacités : toutes prêtes, aucun critique compté, aucun effet.
       if (typeof j.capacitesPretes !== 'object' || j.capacitesPretes === null) j.capacitesPretes = {}
       if (typeof j.critiques !== 'number') j.critiques = 0
