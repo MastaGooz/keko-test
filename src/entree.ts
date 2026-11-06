@@ -58,6 +58,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('survivor')) {
+  // LE SURVIVOR, un side project : un héros à déplacer, rien d'autre (pour juger le contrôle).
+  void import('./ui/survivor/page.ts').then(({ monterSurvivor }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterSurvivor(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('tourelle')) {
   // LA TOURELLE, la variante des envahisseurs où l'on ne bouge pas.
   void import('./ui/invaders/tourelle.ts').then(({ monterTourelle }) => {
