@@ -16,7 +16,7 @@
 import { createRng } from '../rng.ts'
 import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
 import type { EtatPartage } from './partage.ts'
-import { capacitePrete, capacitesDe, chargeDe, evenementA, passifDe, passifOuvert } from './regles.ts'
+import { capacitePrete, capacitesDe, chargeDe, ciblesDe, evenementA, passifDe, passifOuvert } from './regles.ts'
 import type { EtatDonjon } from './types.ts'
 
 /** `restants` : les taps qu'il lui reste dans le passage en cours (0 ou absent : le prochain geste est un passage). */
@@ -123,7 +123,7 @@ export async function jouerLesBots(
         // L'Élan : il lâche au milieu de la zone.
         const p = passifDe(config, moi)
         const lacher = p?.elan === undefined ? 0 : (chargeDe(p, ev.rang) * (p.elan.zone[0] + p.elan.zone[1])) / 2
-        for (let cible = 0; cible < (p?.cibles ?? 0); cible++) etat = await partage.agir({ joueur: profil.id, t: t + (cible === 1 ? lacher : 0), type: 'toucher', evenement: ev.k, cible })
+        for (let cible = 0; cible < (p === null ? 0 : ciblesDe(p, ev.rang)); cible++) etat = await partage.agir({ joueur: profil.id, t: t + (cible === 1 ? lacher : 0), type: 'toucher', evenement: ev.k, cible })
       }
     }
     const restants = (b.restants ?? 0) - 1

@@ -1538,6 +1538,34 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     joué par la frappe des séries (`frapperLesPoints`) : le noir, puis la
     grande entaille en croissant au centre, qui grossit des réussites, le
     chiffre « Élan », l'éclair.
+- **LE BÂTON ET LA BAGUETTE TRACENT DES RUNES** (Keko, 06/11 : « on va
+  travailler bâton et baguette : on change le truc pour un dessin de rune au
+  doigt ; à la place de cliquer des ronds, on drag à partir d'un point 1
+  vers un point X » ; parmi les choix : des formes fixes, en série avec un
+  gros coup à la fin, raté au doigt levé ou au mauvais point). Les règles :
+  `Passif.rune`, le catalogue `logic/donjon/runes.ts` (quatorze runes d'un
+  seul trait, inspirées du futhark, de trois à six points ; une rune fermée
+  revient à son départ), tirée par la graine, parfois en miroir ; le nombre
+  de cibles dépend du rang (`ciblesDe` : trois, puis un de plus à chaque
+  rune, jusqu'à six), toutes les règles le lisent. Chaque point atteint est
+  une cible touchée dans l'ordre ; un point hors d'ordre (ou le doigt levé,
+  que l'écran dit par une cible -1) encaisse la série — À CUMUL, UN MAUVAIS
+  POINT ENCAISSE, il n'efface plus. La première rune a 2,5 s, chacune 15 %
+  de moins, 0,5 s entre deux, 0,25 s de grâce ; au premier raté, UN coup de
+  ×20 par rune (`enUnCoup`). Le bâton 3 %, la baguette 2 % par tap (un
+  événement toutes les 12,5 s au spam, comme la Taille), la pitié à trois
+  fois l'attente. L'écran (`creerLaRune`, `dessinerLaRune`, `dessinerLeFil`)
+  : la rune en BANDE claire et TIRETS qui filent dans l'ordre (le style de
+  la Taille), le départ le rond net à l'anneau du temps, les autres points
+  de petits ronds nets, tous NUMÉROTÉS ; on pose le doigt sur le 1 et, sans
+  le lever, on passe par chacun (atteint à 1,5 rem, un mauvais point à
+  1 rem) : le relié s'allume, un FIL suit le doigt, les points reliés
+  passent à l'or, le suivant bat ; au bout, la rune s'illumine d'or sous le
+  salut ; raté, le point fautif rougit sous sa croix. La frappe des séries
+  joue l'ORBE de l'arme (le gros du bâton), grossi des runes réussies. Les
+  anciennes Runes (trois ronds à toucher dans l'ordre, 5 s) sont parties ;
+  l'écran sait encore dessiner des ronds numérotés. Chiffres de moi, à
+  rejuger ; le nom et l'icône (celle des anciennes Runes) aussi.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

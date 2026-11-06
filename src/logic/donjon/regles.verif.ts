@@ -5,7 +5,8 @@
 import { DONJON, type ConfigDonjon } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, chargeDe, type EvenementDuPassif } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, chargeDe, ciblesDe, type EvenementDuPassif } from './regles.ts'
+import { RUNES } from './runes.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
 
@@ -265,13 +266,17 @@ verifier("manqué d'emblée, rien ne frappe", temoin.joueurs[0].degatsTap === dg
 verifier("changer d'arme encaisse la série en cours", appliquer(C, pf2, { joueur: 'a', t: evD2!.debut + 10, type: 'equiper', arme: 'epee' }).joueurs[0].degatsTap - dg.joueurs[0].degatsTap >= 2 * unPoint - 2)
 const { etat: bt, ev: evB } = jusquAuPassif(C, avecArme('baton', 7))
 const avantRunes = bt.joueurs[0].degatsTap
-const rune = (x: EtatDonjon, cible: number) => appliquer(C, x, { joueur: 'a', t: evB.debut + 100 * (cible + 1), type: 'toucher', evenement: evB.k, cible })
-verifier('Runes : trois cibles en cercle', evB.cibles.length === 3)
-const deuxRunes = rune(rune(bt, 0), 1)
-verifier('deux runes sur trois ne frappent pas', deuxRunes.joueurs[0].degatsTap === avantRunes && deuxRunes.joueurs[0].passif.etape === 2)
-verifier('la troisième frappe', rune(deuxRunes, 2).joueurs[0].degatsTap - avantRunes >= degatsDuTap(C, bt.joueurs[0]) * 20 * (1 - C.tap.ecart) - 1)
+const rune = (x: EtatDonjon, cible: number, debut = evB.debut) => appliquer(C, x, { joueur: 'a', t: debut + 100 * (cible + 1), type: 'toucher', evenement: evB.k, cible })
+verifier('Runes : une rune de trois points, du catalogue', evB.cibles.length === 3 && RUNES.some((r) => r.points.every(([x, y], i) => y === evB.cibles[i].y && (x === evB.cibles[i].x || 1 - x === evB.cibles[i].x))))
+const troisPoints = rune(rune(rune(bt, 0), 1), 2)
+verifier('la rune reliée ne frappe pas encore, la suivante a un point de plus', troisPoints.joueurs[0].degatsTap === avantRunes && troisPoints.joueurs[0].passif.rang === 1 && ciblesDe(C.passifs.baton, 1) === 4)
+const evB2 = evenementA(C, troisPoints.saison.seed, troisPoints.joueurs[0], troisPoints.joueurs[0].passif.debut)!
+verifier('la deuxième rune : quatre points', evB2.cibles.length === 4)
+const leve = appliquer(C, rune(troisPoints, 0, evB2.debut), { joueur: 'a', t: evB2.debut + 300, type: 'toucher', evenement: evB.k, cible: -1 })
+verifier('le doigt levé : la série tombe en un coup, ×20 par rune', leve.joueurs[0].passif.dernier?.coups === 1 && leve.joueurs[0].passif.dernier?.detail?.length === 1 && leve.joueurs[0].degatsTap - avantRunes >= degatsDuTap(C, bt.joueurs[0]) * 20 * (1 - C.tap.ecart) - 1)
 const erreur = rune(rune(bt, 0), 2)
-verifier("une rune hors d'ordre efface l'événement", erreur.joueurs[0].passif.etape === -1 && rune(erreur, 1).joueurs[0].degatsTap === avantRunes)
+verifier("un point hors d'ordre rate la rune", erreur.joueurs[0].passif.etape === -1 && rune(erreur, 1).joueurs[0].degatsTap === avantRunes)
+verifier('la plus longue rune a six points', ciblesDe(C.passifs.baton, 10) === 6)
 const apresErreur = appliquer(C, erreur, { joueur: 'a', t: Math.max(erreur.t, erreur.joueurs[0].prochainTap), type: 'taper', n: 1 })
 verifier('raté, il ne bloque plus le suivant', apresErreur.joueurs[0].passif.sans === 1 || apresErreur.joueurs[0].passif.evenement === evB.k + 1)
 // À MAINS NUES : déséquiper ôte les capacités et le passif.
@@ -345,7 +350,7 @@ for (const arme of ['lance', 'rapiere'] as const) {
 }
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau'] as string[]).includes(arme)
+  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette'] as string[]).includes(arme)
   verifier(`${C.armes[arme].nom} s'équipe, sans capacité${aSonPassif ? '' : ' ni passif'}`, jH.arme === arme && capacitesDe(C, jH).length === 0 && (aSonPassif || passifDe(C, jH) === null))
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 }

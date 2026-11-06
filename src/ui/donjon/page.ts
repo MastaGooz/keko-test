@@ -284,11 +284,13 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   marteauDeuxMains: 'passifs/riposte.webp',
   fleau: 'passifs/riposte.webp',
   baton: 'passifs/runes.webp',
+  baguette: 'passifs/runes.webp',
 }
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
+  if (p.rune === true) return `Une rune s'allume sur l'ennemi : posez le doigt sur le point 1 et, sans le lever, reliez les points dans l'ordre avant la fin du temps ; chaque rune réussie en appelle une plus longue ; au premier raté, tout tombe en un coup (×${p.coup} par rune)`
   if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
   if (p.elan !== undefined) return `Une jauge d'élan s'allume : posez le doigt sur l'ennemi, la hache se charge ; lâchez dans la zone dorée ; chaque élan réussi en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par élan réussi)`
   if (p.zone !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
@@ -2766,6 +2768,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     traitsVus.delete(cle)
     n.style.pointerEvents = 'none'
     if (tr !== undefined && !tr.fini) return echouerLeTrait(tr)
+    // Une rune en jeu que les règles ont fermée (le temps passé) : ratée.
+    if (runeActive !== null && runeActive.cle === cle && !runeActive.fini) return raterLaRune(runeActive, runeActive.points[runeActive.atteints] ?? runeActive.points[0], false)
     // Un point faible qui n'a pas été touché : manqué.
     if (pointsEnJeu.delete(cle)) return n.classList.contains('donjon-jauge') ? echouerLaJauge(n) : marquerLEchec(n, n)
     // Le trait couvre la scène, la ligne du Fracas montre son cercle rempli : ils s'éteignent sans grandir.
@@ -3145,9 +3149,12 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const couleur = teinteDuChiffre(passif?.critique === true ? 'capaciteCritique' : 'capacite', 0)
     const mot = passif?.nom === 'Points faibles' ? 'Point faible' : (passif?.nom ?? '')
     const hache = arme === 'hache' || arme === 'hacheDeuxMains'
+    const magie = arme === 'baton' || arme === 'baguette'
     const contact = hache
       ? CONTACT_HACHE
-      : arme === 'lance' || arme === 'rapiere'
+      : magie
+        ? arme === 'baton' ? CONTACT_ORBE_LOURD : CONTACT_ORBE
+        : arme === 'lance' || arme === 'rapiere'
         ? CONTACT_LANCE
         : arme === 'massue'
           ? CONTACT_BATON
@@ -3167,6 +3174,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const frapperIci = (x: number, y: number, i: number) => {
       // La hache s'abat en grand croissant, de haut en bas.
       if (hache) entaille(x, y, 1.7 * k, couleur, 102, 1, 0, true, 1, false)
+      // L'orbe de l'arme (le gros du bâton), grossi des runes réussies.
+      else if (magie) orbe(x, y, k, couleur, arme === 'baton')
       else if (arme === 'lance' || arme === 'rapiere') lance(x, y, k, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
       else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, k, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
       else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, k, couleur, arme === 'marteauDeuxMains')
@@ -3534,6 +3543,171 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     tr.fait.setAttribute('d', `M${p(tr.a)} Q${p(milieu)} ${p(bout)}`)
   }
 
+  /**
+   * LES RUNES DU BÂTON ET DE LA BAGUETTE (Keko : « un dessin de rune au
+   * doigt : au lieu de cliquer des ronds, on drag à partir d'un point 1 vers
+   * un point X ») : la rune du catalogue en bande claire et tirets qui filent
+   * dans l'ordre (le style de la Taille), ses points numérotés, le premier le
+   * rond net à l'anneau du temps. On pose le doigt sur le 1 et, sans le
+   * lever, on passe par chacun dans l'ordre : ce qui est relié s'allume, un
+   * fil suit le doigt. Le dernier atteint : le salut, la rune s'illumine, la
+   * suivante a un point de plus. Un mauvais point, le doigt levé ou le temps
+   * passé : raté, et la série tombe en un coup (`frapperLesPoints`).
+   */
+  type RuneEnJeu = { cle: string; serie: string; ev: EvenementDuPassif; n: HTMLElement; bande: SVGPathElement; guide: SVGPathElement; fait: SVGPathElement; points: HTMLElement[]; pos: [number, number][]; atteints: number; doigt: [number, number] | null; fini: boolean }
+  let runeActive: RuneEnJeu | null = null
+  // Les runes ratées : elles ne renaissent pas tant que les règles les tiennent ouvertes.
+  const runesRatees = new Set<string>()
+  // Le doigt atteint un point à 1,5 rem de son centre ; il en touche un mauvais à 1 rem.
+  const ATTEINT_RUNE = 1.5
+  const FAUX_RUNE = 1
+
+  function creerLaRune(cle: string, serie: string, ev: EvenementDuPassif): RuneEnJeu {
+    const SVG = 'http://www.w3.org/2000/svg'
+    const n = el('div', 'donjon-trait donjon-rune')
+    const svg = document.createElementNS(SVG, 'svg')
+    const ligne = (classe: string) => {
+      const x = document.createElementNS(SVG, 'path')
+      x.setAttribute('class', classe)
+      svg.append(x)
+      return x
+    }
+    const bande = ligne('donjon-trait-bande')
+    const guide = ligne('donjon-trait-guide')
+    const fait = ligne('donjon-trait-fait')
+    n.append(svg)
+    // Un rond par place : une rune fermée revient sur son départ, qui sert deux fois.
+    const premiereA = (c: { x: number; y: number }) => ev.cibles.findIndex((d) => Math.abs(c.x - d.x) < 1e-6 && Math.abs(c.y - d.y) < 1e-6)
+    const ronds: HTMLElement[] = []
+    ev.cibles.forEach((c, i) => {
+      if (premiereA(c) < i) return
+      const p = bouton(i === 0 ? 'donjon-cible trait' : 'donjon-cible trait donjon-rune-point')
+      p.append(el('span', 'donjon-rune-numero', String(i + 1)))
+      p.setAttribute('aria-label', i === 0 ? 'Départ de la rune' : `Point ${i + 1} de la rune`)
+      n.append(p)
+      ronds[i] = p
+    })
+    const points = ev.cibles.map((c) => ronds[premiereA(c)])
+    const ru: RuneEnJeu = { cle, serie, ev, n, bande, guide, fait, points, pos: [], atteints: 0, doigt: null, fini: false }
+    const depart = points[0]
+    const grace = () => passifDe(C, moi())?.grace ?? 0
+    let rem = 16
+    depart.addEventListener('pointerdown', (e) => {
+      e.stopPropagation()
+      if (ru.fini || ru.atteints > 0) return
+      const t = instantDu(e)
+      if (t > ru.ev.fin + grace()) return
+      try {
+        depart.setPointerCapture(e.pointerId)
+      } catch {
+        // Un pointeur déjà levé : le lâcher viendra quand même.
+      }
+      rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+      ru.atteints = 1
+      void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: ru.ev.k, cible: 0 })
+      dessinerLeFil(ru)
+    })
+    depart.addEventListener('pointermove', (e) => {
+      if (ru.fini || ru.atteints === 0) return
+      const r = couchePassif.getBoundingClientRect()
+      ru.doigt = [e.clientX - r.left, e.clientY - r.top]
+      const loin = (q: [number, number]) => Math.hypot(ru.doigt![0] - q[0], ru.doigt![1] - q[1])
+      const i = ru.atteints
+      if (loin(ru.pos[i]) < ATTEINT_RUNE * rem) {
+        const t = instantDu(e)
+        if (t > ru.ev.fin + grace()) return raterLaRune(ru, ru.points[i], false)
+        ru.atteints = i + 1
+        void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: ru.ev.k, cible: i }).then(() => dessiner())
+        if (ru.atteints === ru.pos.length) return reussirLaRune(ru)
+      } else {
+        // Un point pas encore relié, ailleurs que ceux déjà reliés : c'est le mauvais.
+        for (let j = i + 1; j < ru.pos.length; j++) {
+          if (ru.points.indexOf(ru.points[j]) < i) continue
+          if (loin(ru.pos[j]) < FAUX_RUNE * rem) return raterLaRune(ru, ru.points[j], true, instantDu(e))
+        }
+      }
+      dessinerLeFil(ru)
+    })
+    const lacher = (e: PointerEvent) => {
+      if (!ru.fini && ru.atteints > 0) raterLaRune(ru, ru.points[ru.atteints], true, instantDu(e))
+    }
+    depart.addEventListener('pointerup', lacher)
+    depart.addEventListener('pointercancel', lacher)
+    return ru
+  }
+
+  function dessinerLaRune(ev: EvenementDuPassif, j: Joueur, t: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const cle = `${j.arme}:${ev.k}:${ev.rang}:rune`
+    if (runesRatees.has(cle)) return
+    voulues.add(cle)
+    if (!ciblesVues.has(cle)) {
+      const nouvelle = creerLaRune(cle, `${j.arme}:${ev.k}`, ev)
+      runeActive = nouvelle
+      ciblesVues.set(cle, nouvelle.n)
+      pointsEnJeu.add(cle)
+      couchePassif.append(nouvelle.n)
+      // La première s'allume en fondu ; celles de la série, d'un coup.
+      if (ev.rang === 0) nouvelle.n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
+      for (const p of new Set(nouvelle.points)) p.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 220, easing: 'ease-out' })
+    }
+    const ru = runeActive
+    if (ru === null || ru.cle !== cle) return
+    ru.pos = ev.cibles.map(surLeDessin)
+    const p = (q: [number, number]) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`
+    const d = 'M' + ru.pos.map(p).join(' L')
+    ru.bande.setAttribute('d', d)
+    ru.guide.setAttribute('d', d)
+    ru.pos.forEach((q, i) => {
+      ru.points[i].style.left = `${q[0]}px`
+      ru.points[i].style.top = `${q[1]}px`
+    })
+    // L'anneau du départ se referme jusqu'à la fin de la grâce ; au bord, c'est manqué.
+    const jusqua = ev.fin + (passifDe(C, j)?.grace ?? 0)
+    ru.points[0].style.setProperty('--reste', Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))).toFixed(3))
+    if (t > jusqua) return raterLaRune(ru, ru.points[ru.atteints] ?? ru.points[0], false)
+    dessinerLeFil(ru)
+  }
+
+  /** Ce qui est relié s'allume, et le fil suit le doigt ; le point suivant bat. */
+  function dessinerLeFil(ru: RuneEnJeu): void {
+    const p = (q: [number, number]) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`
+    const chemin = [...ru.pos.slice(0, ru.atteints), ...(!ru.fini && ru.atteints > 0 && ru.doigt !== null ? [ru.doigt] : [])]
+    ru.fait.setAttribute('d', chemin.length > 0 ? 'M' + chemin.map(p).join(' L') : '')
+    for (const n of new Set(ru.points)) {
+      const places = ru.points.flatMap((x, i) => (x === n ? [i] : []))
+      n.classList.toggle('atteint', places.some((i) => i < ru.atteints))
+      n.classList.toggle('suivant', !ru.fini && places.includes(ru.atteints))
+    }
+  }
+
+  /** La rune reliée jusqu'au bout : le salut, elle s'illumine ; la suivante viendra des règles. */
+  function reussirLaRune(ru: RuneEnJeu): void {
+    ru.fini = true
+    ru.doigt = null
+    pointsEnJeu.delete(ru.cle)
+    runeActive = null
+    ru.n.classList.add('reussie')
+    ru.n.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' })
+    apprecier(ru.ev.rang)
+    poserLaMarque(ru.serie, { x: 0.5, y: 0.45 })
+    dessinerLeFil(ru)
+  }
+
+  /** Raté : le point fautif (ou celui qu'on n'a pas atteint) rougit sous sa croix, la rune s'éteint ; les règles encaissent. */
+  function raterLaRune(ru: RuneEnJeu, fautif: HTMLElement, dire: boolean, quand?: number): void {
+    ru.fini = true
+    ru.doigt = null
+    pointsEnJeu.delete(ru.cle)
+    if (runeActive === ru) runeActive = null
+    ciblesVues.delete(ru.cle)
+    runesRatees.add(ru.cle)
+    dessinerLeFil(ru)
+    marquerLEchec(fautif, ru.n)
+    // Un mauvais point ou le doigt levé : les règles l'apprennent (une cible hors d'ordre) ; le temps passé, elles le savent.
+    if (dire) void partage.agir({ joueur: MOI, t: quand ?? maintenant(), type: 'toucher', evenement: ru.ev.k, cible: -1 }).then(() => dessiner())
+  }
+
+
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
@@ -3568,7 +3742,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         placerLeTrait(tr, a, b, Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin, c)
       }
       const p = passifDe(C, j)
-      if (p?.elan !== undefined) dessinerLElan(ev, j, t, p, voulues, surLeDessin)
+      if (p?.rune === true) dessinerLaRune(ev, j, t, voulues, surLeDessin)
+      else if (p?.elan !== undefined) dessinerLElan(ev, j, t, p, voulues, surLeDessin)
       else if (p?.zone !== undefined) dessinerLaJauge(ev, j, t, p, voulues, surLeDessin)
       else if (passifDe(C, j)?.cumul === true) dessinerLePoint(ev, j, t, voulues, surLeDessin)
       else if (passifDe(C, j)?.trait !== true) ev.cibles.forEach((c, i) => {

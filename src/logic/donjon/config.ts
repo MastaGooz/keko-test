@@ -32,7 +32,7 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée, et la lance et la rapière, qui percent comme la dague). */
-export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton'
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -83,6 +83,13 @@ export type Passif = {
   chance: number
   /** Le tap qui l'ouvre à coup sûr, compté depuis le dernier événement. */
   pitie: number
+  /**
+   * LA RUNE (le bâton et la baguette) : ses cibles sont les points d'une rune
+   * du catalogue (`runes.ts`), à relier d'un seul trait, dans l'ordre ; la
+   * première en a `cibles`, chacune de la série un de plus. Un mauvais
+   * point ou le doigt levé, c'est raté.
+   */
+  rune?: boolean
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
   /** Le trait est un ARC, en croissant (la Fauche des haches, retirée ; l'écran sait encore le courber). */
@@ -332,6 +339,15 @@ export const DONJON = {
    * changer de taille, seule la barre avance plus vite ; prends le rectangle
    * 3 en base ») : `zone` 0,19 de la course, soit ±0,21 s au premier rond,
    * ±0,1 au troisième, ±0,05 au cinquième.
+   * LE BÂTON ET LA BAGUETTE TRACENT DES RUNES (Keko, 06/11 : « un dessin de
+   * rune au doigt : au lieu de cliquer des ronds, on drag d'un point 1 vers
+   * un point X » ; des formes fixes, en série, un gros coup à la fin, raté
+   * au doigt levé ou au mauvais point) : la première rune a trois points et
+   * 2,5 s, chacune de la série un point de plus (jusqu'à six) et 15 % de
+   * temps en moins (2,5, 2,1, 1,8, 1,5, 1,3 s) ; au premier raté, tout
+   * tombe en un coup, ×20 par rune. La chance de la Taille ramenée à leur
+   * cadence (un événement toutes les 12,5 s au spam : le bâton 3 %, la
+   * baguette 2 %), la pitié à trois fois l'attente.
    */
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
@@ -346,7 +362,8 @@ export const DONJON = {
     marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
     fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
-    baton: { nom: 'Runes', chance: 0.025, pitie: 120, duree: 5 * SECONDE, cibles: 3, coup: 20 },
+    baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
   } as Record<ArmeAPassif, Passif>,
 
   /**

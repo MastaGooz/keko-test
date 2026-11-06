@@ -20,6 +20,7 @@
 import { createRng } from '../rng.ts'
 import { AMELIORATIONS, CAPACITES, EQUIPEMENTS, JOUR, type ArmeAPassif, type CleCapacite, type ConfigDonjon, type Passif, type Equipement } from './config.ts'
 import { ennemiDeLEtage } from './ennemi.ts'
+import { POINTS_MAX, RUNES } from './runes.ts'
 import type { Action, EtatDonjon, Evenement, Joueur, SaisonArchivee } from './types.ts'
 
 const HEURE = 3_600_000
@@ -244,6 +245,13 @@ export function passifVierge(): Joueur['passif'] {
 function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: number): { x: number; y: number }[] {
   const empreinte = empreinteDe(`${j.id}:${j.arme}`)
   const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n + 64 * rang, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  // UNE RUNE du catalogue, de son nombre de points, parfois en miroir.
+  if (p.rune === true) {
+    const formes = RUNES.filter((r) => r.points.length === ciblesDe(p, rang))
+    const forme = formes[Math.floor(tire(2) * formes.length)]
+    const miroir = tire(3) < 0.5
+    return forme.points.map(([x, y]) => ({ x: miroir ? 1 - x : x, y }))
+  }
   if (p.trait === true) {
     const angle = 2 * Math.PI * tire(2)
     const [cx, cy] = [0.5 + 0.08 * (2 * tire(3) - 1), 0.45 + 0.06 * (2 * tire(4) - 1)]
@@ -291,8 +299,8 @@ export function evenementA(config: ConfigDonjon, seed: number, j: Joueur, t: num
 function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): void {
   const p = passifDe(config, j)
   if (p === null) return
-  const { evenement, etape, fin } = j.passif
-  if (evenement >= 0 && t <= fin + (p.grace ?? 0) && etape >= 0 && etape < p.cibles) return
+  const { evenement, etape, fin, rang } = j.passif
+  if (evenement >= 0 && t <= fin + (p.grace ?? 0) && etape >= 0 && etape < ciblesDe(p, rang)) return
   const sans = j.passif.sans + 1
   if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + p.duree, sans: 0, rang: 0 }
   else j.passif = { ...j.passif, sans }
@@ -325,6 +333,11 @@ export function chargeDe(p: Passif, rang: number): number {
   return (p.elan?.charge ?? 0) * (p.serie?.raccourci ?? 1) ** rang
 }
 
+/** Le nombre de cibles d'un événement au rang `rang` : une rune en demande un de plus à chaque fois, jusqu'à la plus longue. */
+export function ciblesDe(p: Passif, rang: number): number {
+  return p.rune === true ? Math.min(POINTS_MAX, p.cibles + rang) : p.cibles
+}
+
 /** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
 export function etapeDuPassif(j: Joueur, k: number): number {
   return j.passif.evenement === k ? j.passif.etape : 0
@@ -333,7 +346,8 @@ export function etapeDuPassif(j: Joueur, k: number): number {
 /** Reste-t-il quelque chose à toucher dans cet événement ? */
 export function passifOuvert(config: ConfigDonjon, j: Joueur, ev: EvenementDuPassif): boolean {
   const etape = etapeDuPassif(j, ev.k)
-  return etape >= 0 && etape < (passifDe(config, j)?.cibles ?? 0)
+  const p = passifDe(config, j)
+  return p !== null && etape >= 0 && etape < ciblesDe(p, ev.rang)
 }
 
 export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
@@ -602,7 +616,7 @@ function encaisserLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: nu
   const p = passifDe(config, j)
   if (p === null || p.cumul !== true) return
   const { evenement, etape, fin, rang } = j.passif
-  if (evenement < 0 || etape < 0 || etape >= p.cibles) return
+  if (evenement < 0 || etape < 0 || etape >= ciblesDe(p, rang)) return
   if (!force && t <= fin + (p.grace ?? 0)) return
   j.passif = { ...j.passif, etape: -1 }
   if (rang === 0) return
@@ -622,7 +636,7 @@ function prochaineFinDePassif(config: ConfigDonjon, e: EtatDonjon): number {
   let fin = Infinity
   for (const j of e.joueurs) {
     const p = passifDe(config, j)
-    if (p === null || p.cumul !== true || j.passif.evenement < 0 || j.passif.etape < 0 || j.passif.etape >= p.cibles) continue
+    if (p === null || p.cumul !== true || j.passif.evenement < 0 || j.passif.etape < 0 || j.passif.etape >= ciblesDe(p, j.passif.rang)) continue
     const f = j.passif.fin + (p.grace ?? 0) + 1
     if (f > e.t && f < fin) fin = f
   }
@@ -718,7 +732,11 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   if (p === null) return
   const etape = etapeDuPassif(j, k)
   if (cible !== etape) {
-    if (p.cibles > 1) j.passif = { ...j.passif, etape: -1 }
+    // À cumul, le manqué encaisse la série (la rune : un mauvais point, ou le doigt levé).
+    if (ciblesDe(p, j.passif.rang) > 1) {
+      if (p.cumul === true) return encaisserLePassif(config, e, j, t, true)
+      j.passif = { ...j.passif, etape: -1 }
+    }
     return
   }
   // AU TEMPS JUSTE : touché trop tôt, la série est ratée, et s'encaisse.
@@ -739,7 +757,7 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
     }
   }
   j.passif = { ...j.passif, etape: etape + 1 }
-  if (etape + 1 !== p.cibles) return
+  if (etape + 1 !== ciblesDe(p, j.passif.rang)) return
   // À cumul, le coup attend la fin de la série.
   if (p.cumul !== true) frapperFort(config, e, j, p.coup, t, p.critique === true)
   // LA SÉRIE : le suivant s'ouvre après le coup, plus court, au rang d'après.

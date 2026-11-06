@@ -892,6 +892,64 @@
   margin: 0 0 -0.2rem -1rem;
 }
 
+/* LES RUNES : le style de la Taille — la bande claire et les tirets qui filent dans l'ordre, cernés de sombre
+   sous la lueur d'or ; le départ est le rond net à l'anneau du temps, les autres points de plus petits ronds
+   nets, tous numérotés ; reliés, ils passent à l'or ; le suivant bat. */
+.donjon-rune path {
+  stroke-linejoin: round;
+}
+
+.donjon .donjon-cible.trait.donjon-rune-point {
+  width: 2.8rem;
+  height: 2.8rem;
+  margin: -1.4rem 0 0 -1.4rem;
+  pointer-events: none;
+}
+
+.donjon .donjon-cible.trait.donjon-rune-point::before {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: -0.8rem 0 0 -0.8rem;
+}
+
+.donjon .donjon-cible.trait.donjon-rune-point::after {
+  display: none;
+}
+
+.donjon-rune-numero {
+  position: relative;
+  color: var(--d-encre);
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.donjon .donjon-cible.trait.atteint::before {
+  background: #ffd27a;
+  box-shadow:
+    0 0 0 0.18rem #fffdf4,
+    0 0 0.9rem rgba(255, 214, 130, 1);
+}
+
+.donjon .donjon-cible.trait.suivant:not(.echouee) {
+  animation: donjon-cible-bat 0.4s ease-in-out infinite alternate;
+}
+
+.donjon .donjon-cible.trait.echouee .donjon-rune-numero {
+  display: none;
+}
+
+/* Reliée jusqu'au bout : la rune s'illumine d'or. */
+.donjon-rune.reussie .donjon-trait-guide {
+  opacity: 0;
+}
+
+.donjon-rune.reussie .donjon-trait-fait {
+  stroke: #ffd27a;
+}
+
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste
    le rond, ça suffit, pas besoin de mettre la trajectoire en rouge aussi »). */
 .donjon .donjon-cible.trait.echouee {
