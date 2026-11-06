@@ -32,7 +32,7 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée, et la lance et la rapière, qui percent comme la dague). */
-export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette' | 'griffes'
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette' | 'griffes' | 'fouet'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -377,7 +377,8 @@ export const DONJON = {
    * leur cadence (0,175 s : 1,4 %), la pitié à trois fois l'attente. LE
    * TEMPS PART DU PREMIER TAP (Keko : « démarrer le timer à partir du
    * premier tap, et s'il n'y a pas de tap rapidement, c'est échec ») : 1,5 s
-   * pour le donner.
+   * pour le donner. LE FOUET AUSSI (Keko : « on peut mettre ça au fouet
+   * aussi ») : la même rafale, la chance à sa cadence (0,25 s : 2 %).
    */
   passifs: pourLesTests({
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
@@ -394,6 +395,7 @@ export const DONJON = {
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
     griffes: { nom: 'Lacération', chance: 0.014, pitie: 214, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
+    fouet: { nom: 'Lacération', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
     baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
   } as Record<ArmeAPassif, Passif>),
 

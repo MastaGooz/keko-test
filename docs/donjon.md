@@ -1605,6 +1605,10 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     échec ») : ouverte, la rafale attend 1,5 s (`rafale.attente`) ; le
     premier tap pose la fin à lui + 2 s ; sans tap, elle se ferme sans rien
     — « Tapotez ! » bat, la ligne reste pleine, puis rougit et s'éteint.
+  - Puis LE FOUET AUSSI (Keko : « je pense qu'on peut mettre ça au fouet
+    aussi ») : la même Lacération, la chance à sa cadence (0,25 s : 2 %,
+    la pitié 150) ; à la fin, chaque tap revient en claquement du fouet
+    (`fouet` + `claquement`).
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

@@ -285,6 +285,7 @@ const tropVite = appliquer(C, tapote, { joueur: 'a', t: evG.debut + 100 + 15 * 1
 verifier('Lacération : seize taps comptés, rien ne frappe encore', tapote.joueurs[0].passif.rang === 16 && tapote.joueurs[0].degatsTap === gr.joueurs[0].degatsTap)
 verifier('un tap trop rapproché ne compte pas', tropVite.joueurs[0].passif.rang === 16)
 const finDuTemps = tapote.joueurs[0].passif.fin
+verifier('le fouet a la rafale des griffes', JSON.stringify(C.passifs.fouet.rafale) === JSON.stringify(C.passifs.griffes.rafale) && C.passifs.fouet.coup === C.passifs.griffes.coup)
 verifier('le temps part du premier tap', finDuTemps === evG.debut + 100 + C.passifs.griffes.duree && evG.fin === evG.debut + C.passifs.griffes.rafale!.attente)
 const finRafale = avancer(C, tapote, finDuTemps + 10)
 verifier('la fenêtre passée, seize coups ×1, un chiffre chacun', finRafale.joueurs[0].passif.dernier?.detail?.length === 16 && finRafale.joueurs[0].degatsTap - gr.joueurs[0].degatsTap >= 16 * degatsDuTap(C, gr.joueurs[0]) * (1 - C.tap.ecart) - 16)
@@ -376,7 +377,7 @@ for (const arme of ['lance', 'rapiere'] as const) {
 }
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette', 'griffes'] as string[]).includes(arme)
+  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette', 'griffes', 'fouet'] as string[]).includes(arme)
   verifier(`${C.armes[arme].nom} s'équipe, sans capacité${aSonPassif ? '' : ' ni passif'}`, jH.arme === arme && capacitesDe(C, jH).length === 0 && (aSonPassif || passifDe(C, jH) === null))
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 }

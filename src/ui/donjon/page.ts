@@ -286,6 +286,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   baton: 'passifs/runes.webp',
   baguette: 'passifs/runes.webp',
   griffes: 'passifs/riposte.webp',
+  fouet: 'passifs/riposte.webp',
 }
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
@@ -3162,7 +3163,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ? CONTACT_HACHE
       : arme === 'griffes'
         ? 55
-        : magie
+        : arme === 'fouet'
+          ? CONTACT_FOUET
+          : magie
         ? arme === 'baton' ? CONTACT_ORBE_LOURD : CONTACT_ORBE
         : arme === 'lance' || arme === 'rapiere'
         ? CONTACT_LANCE
@@ -3188,6 +3191,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       else if (magie) orbe(x, y, k, couleur, arme === 'baton')
       // Les griffes, d'un côté puis de l'autre.
       else if (arme === 'griffes') griffes(x, y, k, couleur, (i % 2 === 0 ? 55 : 125) + (Math.random() - 0.5) * 24)
+      // Le fouet claque, sa mèche et son éclat.
+      else if (arme === 'fouet') {
+        fouet(x, y, k, couleur)
+        claquement(x, y, k, couleur, contact)
+      }
       else if (arme === 'lance' || arme === 'rapiere') lance(x, y, k, couleur, -90 + (i % 2 === 0 ? -18 : 18) + (Math.random() - 0.5) * 24, arme === 'rapiere')
       else if (arme === 'massue' || arme === 'massueDeuxMains') massue(x, y, k, couleur, (Math.random() - 0.5) * 100, i % 2 === 0 ? 1 : -1, arme === 'massueDeuxMains')
       else if (arme === 'marteau' || arme === 'marteauDeuxMains') marteau(x, y, k, couleur, arme === 'marteauDeuxMains')
