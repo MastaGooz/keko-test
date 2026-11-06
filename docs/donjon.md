@@ -1566,6 +1566,13 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
   anciennes Runes (trois ronds à toucher dans l'ordre, 5 s) sont parties ;
   l'écran sait encore dessiner des ronds numérotés. Chiffres de moi, à
   rejuger ; le nom et l'icône (celle des anciennes Runes) aussi.
+  - Puis (Keko : « il y a un bug : le 4 se trouve entre le 1 et le 2 au
+    deuxième passage, et c'est l'échec systématique ») : Wunjo et Raidho
+    avaient leur dernier point SUR le trait du 1 au 2, que le doigt
+    touchait en passant — le mauvais point. Elles partent maintenant de
+    leur jonction (le trait qui repasse sur un point déjà relié ne fait
+    rien), et la vérification interdit qu'un trait passe à moins de 0,15
+    d'un point à venir.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

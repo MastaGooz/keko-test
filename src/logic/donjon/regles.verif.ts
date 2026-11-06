@@ -277,6 +277,16 @@ verifier('le doigt levé : la série tombe en un coup, ×20 par rune', leve.joue
 const erreur = rune(rune(bt, 0), 2)
 verifier("un point hors d'ordre rate la rune", erreur.joueurs[0].passif.etape === -1 && rune(erreur, 1).joueurs[0].degatsTap === avantRunes)
 verifier('la plus longue rune a six points', ciblesDe(C.passifs.baton, 10) === 6)
+// Aucun trait ne passe sur un point pas encore relié (Wunjo et Raidho avaient leur point 4 sur le trait du 1 au 2).
+const distanceAuTrait = (q: [number, number], a: [number, number], b: [number, number]) => {
+  const [dx, dy] = [b[0] - a[0], b[1] - a[1]]
+  const u = Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / (dx * dx + dy * dy)))
+  return Math.hypot(q[0] - a[0] - u * dx, q[1] - a[1] - u * dy)
+}
+const runesTrompeuses = RUNES.filter((r) =>
+  r.points.some((_, i) => i + 1 < r.points.length && r.points.some((q, j) => j > i + 1 && !r.points.slice(0, i + 1).some((d) => d[0] === q[0] && d[1] === q[1]) && distanceAuTrait(q, r.points[i], r.points[i + 1]) < 0.15)),
+)
+verifier(`aucun trait de rune ne passe sur un point à venir${runesTrompeuses.length > 0 ? ' : ' + runesTrompeuses.map((r) => r.nom).join(', ') : ''}`, runesTrompeuses.length === 0)
 const apresErreur = appliquer(C, erreur, { joueur: 'a', t: Math.max(erreur.t, erreur.joueurs[0].prochainTap), type: 'taper', n: 1 })
 verifier('raté, il ne bloque plus le suivant', apresErreur.joueurs[0].passif.sans === 1 || apresErreur.joueurs[0].passif.evenement === evB.k + 1)
 // À MAINS NUES : déséquiper ôte les capacités et le passif.
