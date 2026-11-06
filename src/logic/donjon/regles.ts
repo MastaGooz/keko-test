@@ -732,6 +732,8 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   if (p.elan !== undefined && cible === 1) {
     const charge = (t - (j.passif.appui ?? t)) / chargeDe(p, j.passif.rang)
     if (charge < p.elan.zone[0] || charge > p.elan.zone[1]) {
+      // À cumul, le manqué encaisse la série.
+      if (p.cumul === true) return encaisserLePassif(config, e, j, t, true)
       j.passif = { ...j.passif, etape: -1 }
       return
     }

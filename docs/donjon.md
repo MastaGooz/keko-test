@@ -1530,6 +1530,14 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     TRAIT, couché, qui monte ; et LE DOIGT REPOSÉ ENTRE DEUX ÉLANS
     (`doigtPose`, la scène le capture) compte pour le suivant : la charge
     part à son ouverture, le doigt tenu.
+  - Puis UN GROS COUP À LA FIN, comme le Fracas (Keko : « le coup à la fin
+    de chaque jauge empêche de voir la jauge suivante ») : `cumul` et
+    `enUnCoup` — un élan réussi ne fait que le salut (le cadre rempli) ;
+    au premier manqué (lâché hors de la zone, ou la fenêtre passée), la
+    série s'encaisse en UN coup de ×20 par élan réussi (`coup × rang`),
+    joué par la frappe des séries (`frapperLesPoints`) : le noir, puis la
+    grande entaille en croissant au centre, qui grossit des réussites, le
+    chiffre « Élan », l'éclair.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

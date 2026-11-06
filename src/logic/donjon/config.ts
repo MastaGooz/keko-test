@@ -336,8 +336,8 @@ export const DONJON = {
   passifs: {
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
-    hache: { nom: 'Élan', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE },
-    hacheDeuxMains: { nom: 'Élan', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE },
+    hache: { nom: 'Élan', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
+    hacheDeuxMains: { nom: 'Élan', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
     dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },

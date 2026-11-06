@@ -328,8 +328,15 @@ const lache = (x: EtatDonjon, part: number) => appliquer(C, x, { joueur: 'a', t:
 verifier('Élan : posé, rien ne frappe encore', pose.joueurs[0].degatsTap === hx.joueurs[0].degatsTap && pose.joueurs[0].passif.etape === 1)
 verifier('lâché trop tôt, raté', lache(pose, EL.elan!.zone[0] - 0.05).joueurs[0].passif.etape === -1 && lache(pose, EL.elan!.zone[0] - 0.05).joueurs[0].degatsTap === hx.joueurs[0].degatsTap)
 const bienLache = lache(pose, (EL.elan!.zone[0] + EL.elan!.zone[1]) / 2)
-verifier('lâché dans la zone, il frappe ×20 aussitôt, et la série continue', bienLache.joueurs[0].degatsTap - hx.joueurs[0].degatsTap >= degatsDuTap(C, hx.joueurs[0]) * 20 * (1 - C.tap.ecart) - 1 && bienLache.joueurs[0].passif.rang === 1)
+verifier('lâché dans la zone, rien ne frappe encore, et la série continue', bienLache.joueurs[0].degatsTap === hx.joueurs[0].degatsTap && bienLache.joueurs[0].passif.rang === 1)
 verifier('trop tard (la zone passée), raté', lache(pose, EL.elan!.zone[1] + 0.02).joueurs[0].degatsTap === hx.joueurs[0].degatsTap)
+// Le deuxième élan manqué : les deux réussis tombent en UN coup, ×20 chacun (Keko : « un gros coup à la fin »).
+const evH2 = evenementA(C, bienLache.saison.seed, bienLache.joueurs[0], bienLache.joueurs[0].passif.debut)!
+const pose2 = appliquer(C, bienLache, { joueur: 'a', t: evH2.debut + 10, type: 'toucher', evenement: evH.k, cible: 0 })
+const deuxBons = appliquer(C, appliquer(C, pose2, { joueur: 'a', t: evH2.debut + 10 + chargeDe(EL, 1) * 0.82, type: 'toucher', evenement: evH.k, cible: 1 }), { joueur: 'a', t: evH2.debut + 10 + chargeDe(EL, 1) * 0.82 + 1, type: 'toucher', evenement: evH.k, cible: 0 })
+const finElan = appliquer(C, deuxBons, { joueur: 'a', t: deuxBons.joueurs[0].passif.debut + 10, type: 'toucher', evenement: evH.k, cible: 0 })
+const rateElan = appliquer(C, finElan, { joueur: 'a', t: deuxBons.joueurs[0].passif.debut + 20, type: 'toucher', evenement: evH.k, cible: 1 })
+verifier('deux élans réussis, puis manqué : un seul coup ×40', rateElan.joueurs[0].passif.dernier?.detail?.length === 1 && rateElan.joueurs[0].passif.dernier?.coups === 2 && rateElan.joueurs[0].degatsTap - hx.joueurs[0].degatsTap >= degatsDuTap(C, hx.joueurs[0]) * EL.coup * 2 * (1 - C.tap.ecart) - 1)
 verifier('la charge suivante, plus courte', Math.abs(chargeDe(EL, 1) - EL.elan!.charge * EL.serie!.raccourci) < 1e-9)
 // La lance et la rapière ont les Points faibles de la dague.
 for (const arme of ['lance', 'rapiere'] as const) {
