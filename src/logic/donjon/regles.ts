@@ -252,6 +252,16 @@ function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: num
     const miroir = tire(3) < 0.5
     return forme.points.map(([x, y]) => ({ x: miroir ? 1 - x : x, y }))
   }
+  // LA VISÉE : les deux bouts du rail de la cible, en travers du corps, d'un côté ou de l'autre, un peu penché.
+  if (p.visee !== undefined) {
+    const y = 0.28 + 0.3 * tire(3)
+    const penche = 0.12 * (2 * tire(4) - 1)
+    const bouts = [
+      { x: 0.22, y: y - penche / 2 },
+      { x: 0.78, y: y + penche / 2 },
+    ]
+    return tire(2) < 0.5 ? bouts : bouts.reverse()
+  }
   if (p.trait === true) {
     const angle = 2 * Math.PI * tire(2)
     const [cx, cy] = [0.5 + 0.08 * (2 * tire(3) - 1), 0.45 + 0.06 * (2 * tire(4) - 1)]
@@ -332,6 +342,18 @@ export function toleranceDe(p: Passif, ev: { debut: number; fin: number }): numb
 /** LA CHARGE DE L'ÉLAN au rang `rang` de la série (ms) : elle raccourcit comme la fenêtre. */
 export function chargeDe(p: Passif, rang: number): number {
   return (p.elan?.charge ?? 0) * (p.serie?.raccourci ?? 1) ** rang
+}
+
+/**
+ * OÙ EST LA CIBLE DE LA VISÉE à l'instant t, en fractions du dessin : elle
+ * part du premier bout, va au second en `traversee` (raccourcie avec la
+ * série), et revient, ralentie aux bouts.
+ */
+export function positionDeLaVisee(p: Passif, ev: EvenementDuPassif, t: number): { x: number; y: number } {
+  const [a, b] = ev.cibles
+  const traversee = (p.visee?.traversee ?? 1) * (p.serie?.raccourci ?? 1) ** ev.rang
+  const s = (1 - Math.cos((Math.PI * Math.max(0, t - ev.debut)) / traversee)) / 2
+  return { x: a.x + (b.x - a.x) * s, y: a.y + (b.y - a.y) * s }
 }
 
 /** Le nombre de cibles d'un événement au rang `rang` : une rune en demande un de plus à chaque fois, jusqu'à la plus longue. */
@@ -740,8 +762,8 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   }
   const etape = etapeDuPassif(j, k)
   if (cible !== etape) {
-    // À cumul, le manqué encaisse la série (la rune : un mauvais point, ou le doigt levé).
-    if (ciblesDe(p, j.passif.rang) > 1) {
+    // À cumul, le manqué encaisse la série (la rune : un mauvais point, ou le doigt levé ; la visée : le tir à côté).
+    if (ciblesDe(p, j.passif.rang) > 1 || p.visee !== undefined) {
       if (p.cumul === true) return encaisserLePassif(config, e, j, t, true)
       j.passif = { ...j.passif, etape: -1 }
     }

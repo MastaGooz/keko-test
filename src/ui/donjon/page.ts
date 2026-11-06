@@ -56,6 +56,7 @@ import {
   passifDe,
   passifOuvert,
   periodeDe,
+  positionDeLaVisee,
   rechargeDe,
   tapPret,
   xpPourNiveau,
@@ -287,11 +288,16 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   baguette: 'passifs/runes.webp',
   griffes: 'passifs/riposte.webp',
   fouet: 'passifs/riposte.webp',
+  // La Visée emprunte l'œil des Points faibles en attendant la sienne.
+  arc: 'passifs/points-faibles.webp',
+  arbalete: 'passifs/points-faibles.webp',
+  fronde: 'passifs/points-faibles.webp',
 }
 
 /** Ce que fait le passif d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
+  if (p.visee !== undefined) return `Une cible traverse l'ennemi : posez le doigt, tirez en arrière comme une fronde, et lâchez quand le viseur est sur elle ; chaque tir réussi en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par tir)`
   if (p.rafale !== undefined) return `Une rafale s'ouvre : tapotez l'ennemi le plus vite possible pendant ${p.duree / 1000} s ; à la fin, chaque tap revient en griffure (×${p.coup} chacune)`
   if (p.rune === true) return `Une rune s'allume sur l'ennemi : posez le doigt sur le point 1 et, sans le lever, reliez les points dans l'ordre avant la fin du temps ; chaque rune réussie en appelle une plus longue ; au premier raté, tout tombe en un coup (×${p.coup} par rune)`
   if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
@@ -2777,6 +2783,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // Pas un tap dans l'attente : raté.
       if (ra.taps === 0) return echouerLaJauge(ra.n)
     }
+    // La cible de la visée que les règles ont fermée (le temps passé) : ratée.
+    if (viseeActive !== null && viseeActive.cle === cle && !viseeActive.fini) return raterLaVisee(viseeActive, false)
     // Une rune en jeu que les règles ont fermée (le temps passé) : ratée.
     if (runeActive !== null && runeActive.cle === cle && !runeActive.fini) return raterLaRune(runeActive, runeActive.points[runeActive.atteints] ?? runeActive.points[0], false)
     // Un point faible qui n'a pas été touché : manqué.
@@ -3163,6 +3171,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       ? CONTACT_HACHE
       : arme === 'griffes'
         ? 55
+        : arme === 'arc' || arme === 'arbalete'
+          ? 50
+          : arme === 'fronde'
+            ? CONTACT_FRONDE
         : arme === 'fouet'
           ? CONTACT_FOUET
           : magie
@@ -3191,6 +3203,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       else if (magie) orbe(x, y, k, couleur, arme === 'baton')
       // Les griffes, d'un côté puis de l'autre.
       else if (arme === 'griffes') griffes(x, y, k, couleur, (i % 2 === 0 ? 55 : 125) + (Math.random() - 0.5) * 24)
+      // La flèche (le gros carreau de l'arbalète) monte du bas ; la pierre de la fronde tombe en cloche.
+      else if (arme === 'arc' || arme === 'arbalete') fleche(x, y, k, couleur, -90 + (Math.random() - 0.5) * 70, arme === 'arbalete')
+      else if (arme === 'fronde') fronde(x, y, k, couleur)
       // Le fouet claque, sa mèche et son éclat.
       else if (arme === 'fouet') {
         fouet(x, y, k, couleur)
@@ -3811,6 +3826,215 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: ra.ev.k, cible: 0 })
   })
 
+  /**
+   * LA VISÉE DE L'ARC, DE L'ARBALÈTE ET DE LA FRONDE (Keko : une cible
+   * traverse l'ennemi, on tire le doigt en arrière et on lâche quand le
+   * viseur est dessus ; « au lance-pierre ») : la cible, des anneaux, fait
+   * l'aller-retour sur son rail pointillé (`positionDeLaVisee`, celle des
+   * règles), l'anneau du temps se refermant sur elle. On pose le doigt
+   * n'importe où sur la scène et on tire : deux élastiques vont de l'ancre au
+   * doigt, et le viseur part À L'OPPOSÉ, `GAIN_VISEE` fois plus loin — le
+   * doigt ne cache jamais ce qu'il vise ; sur la cible, il s'allume d'or.
+   * Lâché sur elle : le trait part, la cible éclate sous le salut, la
+   * suivante va plus vite ; à côté, ou le temps passé : raté, et la série
+   * tombe en un coup (`frapperLesPoints`). Lâché sans tension, rien ne part.
+   * Le doigt posé entre deux cibles d'une série reste tendu pour la suivante.
+   */
+  type ViseeEnJeu = { cle: string; serie: string; ev: EvenementDuPassif; p: Passif; n: HTMLElement; elastiques: SVGPathElement; ligne: SVGPathElement; rail: SVGPathElement; cible: HTMLElement; viseur: HTMLElement; consigne: HTMLElement | null; fini: boolean }
+  let viseeActive: ViseeEnJeu | null = null
+  // Les cibles ratées : elles ne renaissent pas tant que les règles les tiennent ouvertes.
+  const viseesRatees = new Set<string>()
+  /** La corde tendue : où le doigt s'est posé (l'ancre), où il est ; elle vit hors des cibles (tendue entre deux). */
+  let corde: { ancre: [number, number]; doigt: [number, number]; pointeur: number } | null = null
+  // Le viseur va deux fois plus loin que le doigt ; il faut tirer d'un rem pour bander ; il touche à un demi-rem du bord.
+  const GAIN_VISEE = 2
+  const TENSION_VISEE = 1
+  const MARGE_VISEE = 0.5
+
+  /** Le viseur de la corde tendue, en px de la couche ; null tant qu'elle n'est pas bandée. */
+  function viseurDeLaCorde(): [number, number] | null {
+    if (corde === null) return null
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const [dx, dy] = [corde.ancre[0] - corde.doigt[0], corde.ancre[1] - corde.doigt[1]]
+    if (Math.hypot(dx, dy) < TENSION_VISEE * rem) return null
+    return [corde.ancre[0] + GAIN_VISEE * dx, corde.ancre[1] + GAIN_VISEE * dy]
+  }
+
+  function dessinerLaVisee(ev: EvenementDuPassif, j: Joueur, t: number, p: Passif, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const cle = `${j.arme}:${ev.k}:${ev.rang}:visee`
+    if (viseesRatees.has(cle)) return
+    voulues.add(cle)
+    if (!ciblesVues.has(cle)) {
+      const SVG = 'http://www.w3.org/2000/svg'
+      const n = el('div', 'donjon-trait donjon-visee')
+      const svg = document.createElementNS(SVG, 'svg')
+      const trace = (classe: string) => {
+        const x = document.createElementNS(SVG, 'path')
+        x.setAttribute('class', classe)
+        svg.append(x)
+        return x
+      }
+      const rail = trace('donjon-visee-rail')
+      const ligne = trace('donjon-visee-ligne')
+      const elastiques = trace('donjon-visee-elastique')
+      const cible = el('div', 'donjon-visee-cible')
+      const viseur = el('div', 'donjon-visee-viseur')
+      // La consigne, à la première cible seulement, tant que la corde n'est pas tendue.
+      const consigne = ev.rang === 0 ? el('div', 'donjon-visee-consigne', 'Tirez en arrière, lâchez sur la cible') : null
+      n.append(svg, cible, viseur, ...(consigne === null ? [] : [consigne]))
+      couchePassif.append(n)
+      ciblesVues.set(cle, n)
+      if (ev.rang === 0) n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
+      cible.animate([{ scale: '0' }, { scale: '1.15', offset: 0.6 }, { scale: '1' }], { duration: 220, easing: 'ease-out' })
+      viseeActive = { cle, serie: `${j.arme}:${ev.k}`, ev, p, n, elastiques, ligne, rail, cible, viseur, consigne, fini: false }
+    }
+    const vi = viseeActive
+    if (vi === null || vi.cle !== cle) return
+    vi.ev = ev
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    const q = (x: [number, number]) => `${x[0].toFixed(1)} ${x[1].toFixed(1)}`
+    const [a, b] = [surLeDessin(ev.cibles[0]), surLeDessin(ev.cibles[1])]
+    vi.rail.setAttribute('d', `M${q(a)} L${q(b)}`)
+    // La cible, à sa place sur le rail ; l'anneau se referme jusqu'à la fin de la grâce.
+    const [cx, cy] = surLeDessin(positionDeLaVisee(p, ev, t))
+    const rayon = (p.visee?.rayon ?? 0.1) * cadreDuDessin().l
+    vi.cible.style.left = `${cx}px`
+    vi.cible.style.top = `${cy}px`
+    vi.cible.style.width = vi.cible.style.height = `${2 * rayon}px`
+    vi.cible.style.margin = `${-rayon}px 0 0 ${-rayon}px`
+    const jusqua = ev.fin + (p.grace ?? 0)
+    vi.cible.style.setProperty('--reste', Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))).toFixed(3))
+    if (t > jusqua) return raterLaVisee(vi, false)
+    // La corde : les élastiques de l'ancre (ses deux branches) au doigt, le viseur à l'opposé.
+    const vise = viseurDeLaCorde()
+    if (corde !== null && vise !== null) {
+      const [ax, ay] = corde.ancre
+      const fourche = 1.3 * rem
+      vi.elastiques.setAttribute('d', `M${q([ax - fourche, ay])} L${q(corde.doigt)} L${q([ax + fourche, ay])}`)
+      vi.ligne.setAttribute('d', `M${q(corde.ancre)} L${q(vise)}`)
+      vi.viseur.style.left = `${vise[0]}px`
+      vi.viseur.style.top = `${vise[1]}px`
+      vi.viseur.classList.toggle('dessus', Math.hypot(vise[0] - cx, vise[1] - cy) <= rayon + MARGE_VISEE * rem)
+    } else {
+      vi.elastiques.setAttribute('d', '')
+      vi.ligne.setAttribute('d', '')
+    }
+    vi.n.classList.toggle('tendue', vise !== null)
+    if (vi.consigne !== null) {
+      const [gx, gy] = surLeDessin({ x: 0.5, y: 0.86 })
+      vi.consigne.style.left = `${gx}px`
+      vi.consigne.style.top = `${gy}px`
+      vi.consigne.classList.toggle('cachee', corde !== null)
+    }
+  }
+
+  /** Le trait qui part de l'ancre jusqu'où le viseur était : une traînée claire, brève. */
+  function tirerLeTrait(de: [number, number], a: [number, number]): void {
+    const n = el('div', 'donjon-visee-tir')
+    const angle = Math.atan2(a[1] - de[1], a[0] - de[0])
+    n.style.left = `${de[0]}px`
+    n.style.top = `${de[1]}px`
+    n.style.width = `${Math.hypot(a[0] - de[0], a[1] - de[1])}px`
+    couchePassif.append(n)
+    n.animate(
+      [
+        { transform: `rotate(${angle}rad) scaleX(0)`, opacity: 1 },
+        { transform: `rotate(${angle}rad) scaleX(1)`, opacity: 1, offset: 0.45 },
+        { transform: `rotate(${angle}rad) scaleX(1)`, opacity: 0 },
+      ],
+      { duration: 200, easing: 'ease-out' },
+    ).onfinish = () => n.remove()
+  }
+
+  /** La cible touchée : elle éclate d'or sous le salut ; la suivante viendra des règles. */
+  function reussirLaVisee(vi: ViseeEnJeu, ou: [number, number], quand: number): void {
+    vi.fini = true
+    viseeActive = null
+    // La corde est partie : ni élastiques ni viseur pendant que la cible s'éteint.
+    vi.n.classList.remove('tendue')
+    vi.elastiques.setAttribute('d', '')
+    vi.ligne.setAttribute('d', '')
+    vi.cible.classList.add('touchee')
+    vi.cible.animate([{ scale: '1' }, { scale: '1.5', opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'forwards' })
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    for (let i = 0; i < 8; i++) {
+      const s = el('div', 'donjon-particule trait')
+      s.style.left = `${ou[0]}px`
+      s.style.top = `${ou[1]}px`
+      s.style.background = i % 2 === 0 ? '#fffdf4' : '#ffd27a'
+      couchePassif.append(s)
+      const a = Math.random() * 2 * Math.PI
+      const loin = (1 + Math.random()) * rem
+      s.animate(
+        [
+          { transform: `translate(-50%, -50%) rotate(${a}rad) scaleX(1.6)`, opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(a) * loin}px), calc(-50% + ${Math.sin(a) * loin}px)) rotate(${a}rad) scaleX(0.2)`, opacity: 0 },
+        ],
+        { duration: 280, easing: 'cubic-bezier(0.05, 0.9, 0.2, 1)' },
+      ).onfinish = () => s.remove()
+    }
+    apprecier(vi.ev.rang)
+    const { x0, y0, l, h } = cadreDuDessin()
+    poserLaMarque(vi.serie, { x: (ou[0] - x0) / l, y: (ou[1] - y0) / h })
+    void partage.agir({ joueur: MOI, t: quand, type: 'toucher', evenement: vi.ev.k, cible: 0 }).then(() => dessiner())
+  }
+
+  /** Raté : la cible rougit sous sa croix et s'éteint ; tiré à côté, les règles l'apprennent (le temps passé, elles le savent). */
+  function raterLaVisee(vi: ViseeEnJeu, dire: boolean, quand?: number): void {
+    vi.fini = true
+    if (viseeActive === vi) viseeActive = null
+    ciblesVues.delete(vi.cle)
+    viseesRatees.add(vi.cle)
+    vi.n.classList.remove('tendue')
+    vi.elastiques.setAttribute('d', '')
+    vi.ligne.setAttribute('d', '')
+    marquerLEchec(vi.cible, vi.n)
+    if (dire) void partage.agir({ joueur: MOI, t: quand ?? maintenant(), type: 'toucher', evenement: vi.ev.k, cible: -1 }).then(() => dessiner())
+  }
+
+  /** Le doigt, en px de la couche des cibles. */
+  const dansLaCouche = (e: PointerEvent): [number, number] => {
+    const r = couchePassif.getBoundingClientRect()
+    return [e.clientX - r.left, e.clientY - r.top]
+  }
+
+  // On pose le doigt n'importe où sur la scène : la corde se tend (aussi entre deux cibles d'une série).
+  scene.addEventListener('pointerdown', (e) => {
+    if (corde !== null || passifDe(C, moi())?.visee === undefined) return
+    const ici = dansLaCouche(e)
+    corde = { ancre: ici, doigt: ici, pointeur: e.pointerId }
+    try {
+      scene.setPointerCapture(e.pointerId)
+    } catch {
+      // Un pointeur déjà levé : le lâcher viendra quand même.
+    }
+  })
+  scene.addEventListener('pointermove', (e) => {
+    if (corde === null || corde.pointeur !== e.pointerId) return
+    corde.doigt = dansLaCouche(e)
+  })
+  const lacherLaCorde = (e: PointerEvent) => {
+    if (corde === null || corde.pointeur !== e.pointerId) return
+    corde.doigt = dansLaCouche(e)
+    const ancre = corde.ancre
+    const vise = viseurDeLaCorde()
+    corde = null
+    const vi = viseeActive
+    // Sans cible, ou sans tension : rien ne part.
+    if (vi === null || vi.fini || vise === null) return
+    const quand = instantDu(e)
+    if (quand < vi.ev.debut) return
+    const { x0, y0, l, h } = cadreDuDessin()
+    const c = positionDeLaVisee(vi.p, vi.ev, quand)
+    const ou: [number, number] = [x0 + l * c.x, y0 + h * c.y]
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    tirerLeTrait(ancre, vise)
+    if (Math.hypot(vise[0] - ou[0], vise[1] - ou[1]) <= (vi.p.visee?.rayon ?? 0.1) * l + MARGE_VISEE * rem) reussirLaVisee(vi, ou, quand)
+    else raterLaVisee(vi, true, quand)
+  }
+  scene.addEventListener('pointerup', lacherLaCorde)
+  scene.addEventListener('pointercancel', lacherLaCorde)
+
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
@@ -3845,7 +4069,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         placerLeTrait(tr, a, b, Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin, c)
       }
       const p = passifDe(C, j)
-      if (p?.rune === true) dessinerLaRune(ev, j, t, voulues, surLeDessin)
+      if (p?.visee !== undefined) dessinerLaVisee(ev, j, t, p, voulues, surLeDessin)
+      else if (p?.rune === true) dessinerLaRune(ev, j, t, voulues, surLeDessin)
       else if (p?.rafale !== undefined) dessinerLaRafale(ev, j, t, voulues, surLeDessin)
       else if (p?.elan !== undefined) dessinerLElan(ev, j, t, p, voulues, surLeDessin)
       else if (p?.zone !== undefined) dessinerLaJauge(ev, j, t, p, voulues, surLeDessin)

@@ -32,7 +32,7 @@ export const AMELIORATIONS: readonly CleAmelioration[] = ['tap', 'vitesse', 'cha
 export type TypeArme = 'epee' | 'dague' | 'baton' | 'arc' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'massue' | 'massueDeuxMains' | 'lance' | 'marteau' | 'marteauDeuxMains' | 'arbalete' | 'pistolet' | 'mousquet' | 'rapiere' | 'fouet' | 'fleau' | 'griffes' | 'fronde' | 'shuriken' | 'boomerang' | 'kunai' | 'couteau' | 'luth' | 'baguette'
 export const ARMES: readonly TypeArme[] = ['epee', 'dague', 'baton', 'arc', 'deuxMains', 'hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette']
 /** Les armes qui ont un passif de classe (les provisoires n'ont pas encore le leur, sauf l'épée à deux mains, une épée, et la lance et la rapière, qui percent comme la dague). */
-export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette' | 'griffes' | 'fouet'
+export type ArmeAPassif = 'epee' | 'deuxMains' | 'hache' | 'hacheDeuxMains' | 'dague' | 'lance' | 'rapiere' | 'massue' | 'massueDeuxMains' | 'marteau' | 'marteauDeuxMains' | 'fleau' | 'baton' | 'baguette' | 'griffes' | 'fouet' | 'arc' | 'arbalete' | 'fronde'
 /**
  * CE QU'ON A EN MAIN : une arme, ou rien (Keko : « déséquiper l'arme pour
  * être à mains nues, sans capacité ») — ni capacité, ni passif de classe.
@@ -97,6 +97,14 @@ export type Passif = {
    * passée, la série s'encaisse (à cumul : un `coup` par tap).
    */
   rafale?: { ecart: number; attente: number }
+  /**
+   * LA VISÉE (l'arc, l'arbalète, la fronde) : sa cible fait l'aller-retour
+   * entre ses deux bouts (`positionDeLaVisee`), en `traversee` ms par
+   * passage (raccourci avec la série) ; elle fait `rayon` du dessin en
+   * largeur. L'écran juge le tir (le viseur sur la cible : la cible 0 ; à
+   * côté : une autre, et c'est raté).
+   */
+  visee?: { traversee: number; rayon: number }
   /** Ses deux cibles sont les bouts d'un TRAIT à tracer d'un geste (la Taille des épées). */
   trait?: boolean
   /** Le trait est un ARC, en croissant (la Fauche des haches, retirée ; l'écran sait encore le courber). */
@@ -379,6 +387,16 @@ export const DONJON = {
    * premier tap, et s'il n'y a pas de tap rapidement, c'est échec ») : 1,5 s
    * pour le donner. LE FOUET AUSSI (Keko : « on peut mettre ça au fouet
    * aussi ») : la même rafale, la chance à sa cadence (0,25 s : 2 %).
+   * LE TIR VISE (Keko, 06/11 : l'arc, l'arbalète et la fronde ; « la Visée,
+   * au lance-pierre ») : une cible fait l'aller-retour en travers de
+   * l'ennemi ; on pose le doigt, on tire en arrière, le viseur part à
+   * l'opposé, et on lâche quand il est sur elle. 3 s pour tirer, la cible
+   * passe en 1,4 s ; chaque tir réussi en ouvre un autre 0,5 s plus tard,
+   * tout 15 % plus court (la cible plus rapide d'autant) ; au premier raté
+   * (à côté, ou le temps passé), tout tombe en un coup, ×20 par tir. La
+   * chance de la Taille à leur cadence (un événement toutes les 12,5 s au
+   * spam : l'arc et la fronde 2,4 %, l'arbalète 4 %), la pitié à trois fois
+   * l'attente.
    */
   passifs: pourLesTests({
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
@@ -396,6 +414,9 @@ export const DONJON = {
     baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
     griffes: { nom: 'Lacération', chance: 0.014, pitie: 214, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
     fouet: { nom: 'Lacération', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
+    arc: { nom: 'Visée', chance: 0.024, pitie: 125, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    arbalete: { nom: 'Visée', chance: 0.04, pitie: 75, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    fronde: { nom: 'Visée', chance: 0.024, pitie: 125, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
     baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
   } as Record<ArmeAPassif, Passif>),
 

@@ -1609,6 +1609,29 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     aussi ») : la même Lacération, la chance à sa cadence (0,25 s : 2 %,
     la pitié 150) ; à la fin, chaque tap revient en claquement du fouet
     (`fouet` + `claquement`).
+- **L'ARC, L'ARBALÈTE ET LA FRONDE VISENT** (Keko, 06/11 : parmi quatre
+  gestes proposés pour les classes restantes, « Tir : la Visée », puis,
+  pour viser, « le lance-pierre »). Les règles (`Passif.visee`) : la cible
+  fait l'aller-retour entre les deux bouts d'un rail en travers du corps
+  (`positionDeLaVisee`, ralentie aux bouts), 1,4 s par passage ; 3 s pour
+  tirer ; l'écran juge le tir (la cible 0 : touchée ; une autre : à côté,
+  la série s'encaisse) ; touchée, une autre 0,5 s plus tard, tout 15 %
+  plus court, la cible plus rapide d'autant ; au premier raté ou le temps
+  passé, tout tombe en un coup, ×20 par tir. 2,4 % par tap pour l'arc et la
+  fronde, 4 % pour l'arbalète (un événement toutes les 12,5 s au spam), la
+  pitié à trois fois l'attente. L'écran (`dessinerLaVisee`) : la cible à
+  anneaux sur son rail pointillé, l'anneau du temps qui se resserre ; le
+  doigt posé n'importe où et tiré en arrière tend deux élastiques de
+  l'ancre au doigt, et le viseur part À L'OPPOSÉ, deux fois plus loin
+  (`GAIN_VISEE`) — le doigt ne cache rien ; il faut tirer d'un rem pour
+  bander, sinon rien ne part ; sur la cible (son rayon plus un demi-rem),
+  le viseur s'allume d'or. Lâché : une traînée part de l'ancre ; touchée,
+  la cible éclate sous le salut, et sa place est gardée ; à côté, elle
+  rougit sous sa croix. La corde tendue entre deux cibles reste tendue pour
+  la suivante. La consigne « Tirez en arrière, lâchez sur la cible » à la
+  première cible. À la fin, chaque tir revient en flèche (en gros carreau
+  pour l'arbalète, en pierre en cloche pour la fronde), puis le chiffre
+  unique. Le nom, l'icône (l'œil des Points faibles) et les chiffres, de moi.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.

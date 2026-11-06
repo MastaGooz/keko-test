@@ -1004,6 +1004,165 @@
   background: #fffdf4;
 }
 
+/* LA VISÉE : le rail pointillé de la cible ; la cible, des anneaux crème et rouges au cœur d'or, sous la lueur
+   d'or, l'anneau du temps qui se referme sur elle ; la corde, deux élastiques de cuir doré de l'ancre au doigt ;
+   la ligne de visée en tirets, jusqu'au viseur, qui s'allume d'or sur la cible. */
+.donjon-visee-rail {
+  fill: none;
+  stroke: rgba(255, 236, 190, 0.55);
+  stroke-width: 0.3rem;
+  stroke-linecap: round;
+  stroke-dasharray: 0.05rem 0.7rem;
+}
+
+.donjon-visee-elastique {
+  fill: none;
+  stroke: #e9c27a;
+  stroke-width: 0.32rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.donjon-visee-ligne {
+  fill: none;
+  stroke: #fffdf4;
+  stroke-width: 0.18rem;
+  stroke-linecap: round;
+  stroke-dasharray: 0.35rem 0.45rem;
+  opacity: 0.85;
+}
+
+.donjon-visee-cible {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.7rem;
+  background: radial-gradient(circle, #ffd27a 0 16%, #fffdf4 17% 34%, #c3221b 35% 52%, #fffdf4 53% 70%, #c3221b 71% 90%, rgba(195, 34, 27, 0) 92%);
+  box-shadow:
+    0 0 0 0.15rem rgba(40, 18, 0, 0.6),
+    0 0 0.9rem rgba(255, 214, 130, 0.95);
+}
+
+/* Le temps qui reste : un anneau crème qui se resserre sur la cible, jusqu'à son bord. */
+.donjon-visee-cible::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  inset: calc(var(--reste, 1) * -1.6rem);
+  border: 0.2rem solid #fffdf4;
+  border-radius: 50%;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.donjon-visee-cible.touchee {
+  background: radial-gradient(circle, #fffdf4 0 30%, #ffd27a 55%, rgba(255, 210, 122, 0) 72%);
+}
+
+.donjon-visee-cible.echouee {
+  background: radial-gradient(circle, #e8392b 0 70%, rgba(232, 57, 43, 0) 72%);
+  box-shadow:
+    0 0 0 0.18rem #7a1410,
+    0 0 1rem rgba(255, 60, 40, 0.9);
+}
+
+.donjon-visee-cible.echouee::after,
+.donjon-visee-cible.touchee::after {
+  display: none;
+}
+
+/* Le viseur : un rond cerné, sa croix ; il n'apparaît que la corde bandée. */
+.donjon-visee-viseur {
+  position: absolute;
+  display: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin: -1.3rem 0 0 -1.3rem;
+  border: 0.2rem solid #fffdf4;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.12rem rgba(40, 18, 0, 0.8),
+    inset 0 0 0 0.12rem rgba(40, 18, 0, 0.8);
+  pointer-events: none;
+}
+
+.donjon-visee-viseur::before,
+.donjon-visee-viseur::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0.08rem rgba(40, 18, 0, 0.8);
+}
+
+.donjon-visee-viseur {
+  color: #fffdf4;
+}
+
+.donjon-visee-viseur::before {
+  width: 1rem;
+  height: 0.16rem;
+  margin: -0.08rem 0 0 -0.5rem;
+}
+
+.donjon-visee-viseur::after {
+  width: 0.16rem;
+  height: 1rem;
+  margin: -0.5rem 0 0 -0.08rem;
+}
+
+.donjon-visee.tendue .donjon-visee-viseur {
+  display: block;
+}
+
+.donjon-visee-viseur.dessus {
+  color: #ffd27a;
+  border-color: #ffd27a;
+  scale: 1.15;
+  filter: drop-shadow(0 0 0.4rem rgba(255, 214, 130, 1));
+}
+
+/* La consigne, à la première cible, au style du compte de la rafale, plus petite ; elle s'efface la corde tendue. */
+.donjon-visee-consigne {
+  position: absolute;
+  width: 15rem;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #fffdf4;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 1.15rem;
+  line-height: 1.15;
+  text-shadow:
+    0 0.1rem 0 #2a1406,
+    0.08rem 0 0 #2a1406,
+    -0.08rem 0 0 #2a1406,
+    0 -0.08rem 0 #2a1406,
+    0 0 0.6rem rgba(255, 214, 130, 1);
+  transition: opacity 0.15s;
+}
+
+.donjon-visee-consigne.cachee {
+  opacity: 0;
+}
+
+/* Le trait qui part : une traînée claire, de l'ancre au viseur. */
+.donjon-visee-tir {
+  position: absolute;
+  height: 0.3rem;
+  margin-top: -0.15rem;
+  transform-origin: 0 50%;
+  border-radius: 0.15rem;
+  background: linear-gradient(90deg, rgba(255, 253, 244, 0), #fffdf4 70%, #ffd27a);
+  box-shadow: 0 0 0.5rem rgba(255, 214, 130, 0.9);
+  pointer-events: none;
+}
+
 /* Le trait manqué : son rond seul vire au rouge, se barre d'une croix et lâche une onde rouge (Keko : « juste
    le rond, ça suffit, pas besoin de mettre la trajectoire en rouge aussi »). */
 .donjon .donjon-cible.trait.echouee {

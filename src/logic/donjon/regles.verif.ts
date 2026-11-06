@@ -5,7 +5,7 @@
 import { DONJON, type ConfigDonjon } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, chargeDe, ciblesDe, type EvenementDuPassif } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, chargeDe, ciblesDe, positionDeLaVisee, type EvenementDuPassif } from './regles.ts'
 import { RUNES } from './runes.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
@@ -292,6 +292,23 @@ verifier('la fenêtre passée, seize coups ×1, un chiffre chacun', finRafale.jo
 verifier('après la fenêtre, un tap ne compte plus', appliquer(C, tapote, { joueur: 'a', t: finDuTemps + 5, type: 'toucher', evenement: evG.k, cible: 0 }).joueurs[0].passif.rang === 16)
 const sansTap = avancer(C, gr, evG.fin + 10)
 verifier("sans tap dans l'attente, raté, rien ne frappe", sansTap.joueurs[0].passif.etape === -1 && sansTap.joueurs[0].degatsTap === gr.joueurs[0].degatsTap && appliquer(C, gr, { joueur: 'a', t: evG.fin + 5, type: 'toucher', evenement: evG.k, cible: 0 }).joueurs[0].passif.rang === 0)
+// LA VISÉE : la cible va et vient sur son rail ; touchée, elle attend ; au premier raté, tout tombe en un coup.
+const VI = C.passifs.arc
+const { etat: ar, ev: evA } = jusquAuPassif(C, increvable(appliquer(C, etatInitial(C, 12, 0), { joueur: 'a', t: 0, type: 'rejoindre', nom: 'A', bot: null, arme: 'arc' })))
+const proche = (c: { x: number; y: number }, d: { x: number; y: number }) => Math.hypot(c.x - d.x, c.y - d.y) < 1e-9
+verifier('Visée : un rail de deux bouts, en travers du dessin', evA.cibles.length === 2 && Math.abs(evA.cibles[0].x - evA.cibles[1].x) > 0.5 && evA.cibles.every((c) => c.y > 0.15 && c.y < 0.75))
+verifier('la cible part du premier bout, atteint le second en une traversée, et revient', proche(positionDeLaVisee(VI, evA, evA.debut), evA.cibles[0]) && proche(positionDeLaVisee(VI, evA, evA.debut + VI.visee!.traversee), evA.cibles[1]) && proche(positionDeLaVisee(VI, evA, evA.debut + 2 * VI.visee!.traversee), evA.cibles[0]))
+const tir1 = appliquer(C, ar, { joueur: 'a', t: evA.debut + 800, type: 'toucher', evenement: evA.k, cible: 0 })
+const evA2 = evenementA(C, tir1.saison.seed, tir1.joueurs[0], evA.debut + 800 + VI.serie!.entre + 1)
+verifier('touchée, elle ne frappe pas encore ; la suivante, plus courte, sa cible plus rapide', tir1.joueurs[0].degatsTap === ar.joueurs[0].degatsTap && evA2 !== null && evA2.rang === 1 && Math.abs(evA2.fin - evA2.debut - VI.duree * VI.serie!.raccourci) < 1e-6 && proche(positionDeLaVisee(VI, evA2, evA2.debut + VI.visee!.traversee * VI.serie!.raccourci), evA2.cibles[1]))
+const tir2 = appliquer(C, tir1, { joueur: 'a', t: evA2!.debut + 500, type: 'toucher', evenement: evA.k, cible: 0 })
+const aCote = appliquer(C, tir2, { joueur: 'a', t: tir2.joueurs[0].passif.debut + 400, type: 'toucher', evenement: evA.k, cible: -1 })
+verifier('un tir à côté : la série tombe en un coup, ×20 par tir', aCote.joueurs[0].passif.dernier?.coups === 2 && aCote.joueurs[0].passif.dernier?.detail?.length === 1 && aCote.joueurs[0].degatsTap - ar.joueurs[0].degatsTap >= degatsDuTap(C, ar.joueurs[0]) * 40 * (1 - C.tap.ecart) - 1)
+const tropTard = avancer(C, tir2, tir2.joueurs[0].passif.fin + VI.grace! + 2)
+verifier('le temps passé : pareil', tropTard.joueurs[0].passif.dernier?.coups === 2 && tropTard.joueurs[0].degatsTap > ar.joueurs[0].degatsTap)
+const rateDEmblee = appliquer(C, ar, { joueur: 'a', t: evA.debut + 300, type: 'toucher', evenement: evA.k, cible: -1 })
+verifier("à côté d'emblée, rien ne frappe", rateDEmblee.joueurs[0].passif.etape === -1 && rateDEmblee.joueurs[0].degatsTap === ar.joueurs[0].degatsTap)
+verifier("l'arbalète et la fronde visent aussi", C.passifs.arbalete.visee !== undefined && C.passifs.fronde.visee !== undefined)
 // Aucun trait ne passe sur un point pas encore relié (Wunjo et Raidho avaient leur point 4 sur le trait du 1 au 2).
 const distanceAuTrait = (q: [number, number], a: [number, number], b: [number, number]) => {
   const [dx, dy] = [b[0] - a[0], b[1] - a[1]]
@@ -324,9 +341,9 @@ verifier('à mains nues, aucune capacité ne part', appliquer(C, nu, { joueur: '
 verifier('à mains nues, aucun événement de passif', passifDe(C, jn) === null && jusquAuPassifNu(nu))
 verifier("à mains nues, la moitié des dégâts de l'épée", Math.abs(degatsDuTap(C, jn) / degatsDuTap(C, jc) - 0.5) < 1e-9)
 verifier("on reprend son arme, ses capacités en recharge", !capacitePrete(C, appliquer(C, nu, { joueur: 'a', t: 200, type: 'equiper', arme: 'epee' }).joueurs[0], 'frappeLourde', 200))
-// L'ARC, PROVISOIRE : ni capacité, ni passif, le même DPS de base que l'épée.
+// L'ARC, PROVISOIRE : sans capacité, le même DPS de base que l'épée ; il a la Visée.
 const jArc = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'arc' }).joueurs[0]
-verifier("l'arc s'équipe, sans capacité ni passif", jArc.arme === 'arc' && capacitesDe(C, jArc).length === 0 && passifDe(C, jArc) === null)
+verifier("l'arc s'équipe, sans capacité, avec la Visée", jArc.arme === 'arc' && capacitesDe(C, jArc).length === 0 && passifDe(C, jArc)?.nom === 'Visée')
 verifier("l'arc a le DPS de base de l'épée", Math.abs(degatsDuTap(C, jArc) / periodeDe(C, jArc) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 // L'ÉPÉE À DEUX MAINS, PROVISOIRE elle aussi.
 const jDeux = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme: 'deuxMains' }).joueurs[0]
@@ -377,7 +394,7 @@ for (const arme of ['lance', 'rapiere'] as const) {
 }
 for (const arme of ['hache', 'hacheDeuxMains', 'massue', 'massueDeuxMains', 'lance', 'marteau', 'marteauDeuxMains', 'arbalete', 'pistolet', 'mousquet', 'rapiere', 'fouet', 'fleau', 'griffes', 'fronde', 'shuriken', 'boomerang', 'kunai', 'couteau', 'luth', 'baguette'] as const) {
   const jH = appliquer(C, c0, { joueur: 'a', t: 100, type: 'equiper', arme }).joueurs[0]
-  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette', 'griffes', 'fouet'] as string[]).includes(arme)
+  const aSonPassif = (['hache', 'hacheDeuxMains', 'lance', 'rapiere', 'massue', 'massueDeuxMains', 'marteau', 'marteauDeuxMains', 'fleau', 'baguette', 'griffes', 'fouet', 'arc', 'arbalete', 'fronde'] as string[]).includes(arme)
   verifier(`${C.armes[arme].nom} s'équipe, sans capacité${aSonPassif ? '' : ' ni passif'}`, jH.arme === arme && capacitesDe(C, jH).length === 0 && (aSonPassif || passifDe(C, jH) === null))
   verifier(`${C.armes[arme].nom} a le DPS de base de l'épée`, Math.abs(degatsDuTap(C, jH) / periodeDe(C, jH) / (degatsDuTap(C, jc) / periodeDe(C, jc)) - 1) < 1e-9)
 }
