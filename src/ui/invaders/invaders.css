@@ -1,0 +1,97 @@
+/* LES ENVAHISSEURS — `?invaders`. Le canvas couvre l'écran ; rien ne défile, rien ne se sélectionne. */
+html.invaders-page,
+html.invaders-page body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #04030c;
+}
+
+.invaders {
+  position: fixed;
+  inset: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.invaders-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  touch-action: none;
+}
+
+/* L'accueil et la fin : par-dessus le jeu, la tape passe au canvas. */
+.invaders-ecran {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0 16px;
+  pointer-events: none;
+  text-align: center;
+  color: #fff;
+  font-family: Orbitron, sans-serif;
+  background: radial-gradient(circle at 50% 45%, rgba(40, 20, 90, 0.35), rgba(4, 3, 12, 0.55));
+}
+
+.invaders-ecran[hidden] {
+  display: none;
+}
+
+.invaders-titre {
+  font-weight: 900;
+  font-size: clamp(2rem, 11vw, 3.4rem);
+  letter-spacing: 0.06em;
+  text-shadow:
+    0 0 0.6rem #8a5cff,
+    0 0 1.6rem #5a2cff;
+}
+
+.invaders-score-final {
+  font-weight: 900;
+  font-size: 2.6rem;
+  color: #ffd27a;
+  text-shadow: 0 0 0.8rem rgba(255, 180, 60, 0.8);
+}
+
+.invaders-record {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 20rem;
+  line-height: 1.4;
+}
+
+.invaders-go {
+  margin-top: 1.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #9fe8ff;
+  animation: invaders-bat 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes invaders-bat {
+  from {
+    opacity: 0.45;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1.04;
+  }
+}
+
+.invaders-build {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font: 0.65rem sans-serif;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}

@@ -58,6 +58,13 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('invaders')) {
+  // LES ENVAHISSEURS, un side project (Keko : « juste pour le fun et
+  // l'exploration ») : un canvas, sans React ni three.
+  void import('./ui/invaders/page.ts').then(({ monterInvaders }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterInvaders(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('ecusson')) {
   // La planche des symboles de coût : *ce qui a servi à choisir doit rester
   // ouvrable, même une fois le choix fait.*

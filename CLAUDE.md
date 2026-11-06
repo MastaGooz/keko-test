@@ -587,6 +587,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?camp=0`, `?camp=ancien`, `?brillantfond=doux\|eclat` | les cartes sur l'éclat ; le premier camp (rochers devant) ; le camp sous une lueur, ou sous les pointes brillantes de l'éclat |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?donjon`, `&neuf`, `&armes=N`, `&fleche`, `&rune` | le donjon coopératif ; `&neuf` (ou le bouton « Recommencer », deux tapes) oublie la saison de cet appareil ; `&armes=N` montre N armes dans l'armurerie (test de la grille) ; `&fleche` rend à la dague la flèche de l'arc ; `&rune` rend au bâton le cercle de rune, gardé pour ailleurs |
+| `?invaders` | les envahisseurs, un side project : un Space Invaders au doigt, les vaisseaux du générateur (`docs/invaders.md`) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
@@ -683,6 +684,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/archive-extraction.md` | le jeu d'extraction entier, du concept au moteur 3D |
 | `docs/donjon.md` | le donjon coopératif : ses fichiers, ses décisions, le premier rapport |
 | `docs/procgen.md` | le générateur d'icônes (toutes ses familles) et sa page de preview |
+| `docs/invaders.md` | les envahisseurs (`?invaders`), le side project Space Invaders |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour
