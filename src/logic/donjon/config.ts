@@ -157,6 +157,20 @@ export type ProfilBot = {
   adresse: number
 }
 
+/**
+ * POUR LES TESTS (Keko, 06/11 : « augmenter grandement la chance de proc
+ * des armes pour les tests ») : la chance de chaque passif ×10 (au plus une
+ * chance sur deux), la pitié ÷10. Les chiffres écrits sont ceux du jeu ;
+ * `PROC_DE_TEST = 1` les rend.
+ */
+const PROC_DE_TEST = 10
+
+function pourLesTests(passifs: Record<ArmeAPassif, Passif>): Record<ArmeAPassif, Passif> {
+  return Object.fromEntries(
+    Object.entries(passifs).map(([arme, p]) => [arme, { ...p, chance: Math.min(0.5, p.chance * PROC_DE_TEST), pitie: Math.max(2, Math.ceil(p.pitie / PROC_DE_TEST)) }]),
+  ) as Record<ArmeAPassif, Passif>
+}
+
 export const DONJON = {
   saison: {
     duree: 7 * JOUR,
@@ -349,7 +363,7 @@ export const DONJON = {
    * cadence (un événement toutes les 12,5 s au spam : le bâton 3 %, la
    * baguette 2 %), la pitié à trois fois l'attente.
    */
-  passifs: {
+  passifs: pourLesTests({
     epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
     hache: { nom: 'Élan', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
@@ -364,7 +378,7 @@ export const DONJON = {
     rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
     baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
     baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
-  } as Record<ArmeAPassif, Passif>,
+  } as Record<ArmeAPassif, Passif>),
 
   /**
    * LE POOL DES CAPACITÉS (Keko, 04/11 : « je valide tout »), chiffres de moi.

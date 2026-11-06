@@ -1573,6 +1573,12 @@ orc/gobelin (« oui, les portraits ») et un retour au doigt léger.
     leur jonction (le trait qui repasse sur un point déjà relié ne fait
     rien), et la vérification interdit qu'un trait passe à moins de 0,15
     d'un point à venir.
+- **LES PASSIFS PROCENT DIX FOIS PLUS, POUR LES TESTS** (Keko, 06/11 :
+  « tu peux augmenter grandement la chance de proc des armes pour les
+  tests ») : `PROC_DE_TEST` (10) dans `config.ts`, appliqué par
+  `pourLesTests` sur tous les passifs — la chance ×10, au plus 50 %, la
+  pitié ÷10. Les chiffres écrits restent ceux du jeu ; À REMETTRE À 1
+  avant de juger l'équilibrage.
 - *Aucune classe nue dans ce mode* : `.moi` (et d'autres) existe dans
   `styles.css` de l'archive, et elle a sorti deux fois une ligne du flux.
   Tout est préfixé `donjon-`.
