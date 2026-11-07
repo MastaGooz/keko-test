@@ -45,3 +45,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # 07/11 : quatre déploiements de suite ont dépassé les 10 min par défaut (« syncing_files » puis plus rien), sans incident annoncé chez GitHub ; on laisse 25 min.
+          timeout: 1500000
