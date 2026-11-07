@@ -21,11 +21,24 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
 
 - **Six éléments** (Magicka en a huit) : feu, froid, foudre, terre, puis
   **vie et mort** (Keko, 07/11 : « on peut ajouter vie et mort, comme dans
-  Magicka ? ») — six boutons sur une ligne en bas, 48 px chacun au moins sur
-  un téléphone étroit ; *huit ne tiendraient pas*. **Trois au plus dans la
-  file** (Magicka : cinq). Les orbes de la file s'affichent en bas avec le
-  nom du sort qu'elle lancerait, et tournent autour du magicien. Au clavier,
-  1 à 6.
+  Magicka ? »). **Trois au plus dans la file** (Magicka : cinq). Les orbes de
+  la file s'affichent en bas avec le nom du sort qu'elle lancerait, et
+  tournent autour du magicien. Au clavier, 1 à 6.
+- **LA ROUE SOUS LE DOIGT** (Keko, 07/11 : « ce serait sympa d'avoir un
+  système plus ergonomique : on choisit les éléments dans une roue ? On tape
+  et on slide dans le sens de l'élément, avec six quartiers ») — elle
+  remplace les boutons (d'abord quatre, puis six sur une ligne, 48 px chacun
+  sur un téléphone étroit : ça tenait, mais le pouce devait descendre tout
+  en bas). On pose le doigt N'IMPORTE OÙ sur le terrain : la roue apparaît
+  là (rayon 72 px) ; on glisse vers un quartier (18 px au moins) et on
+  relâche pour ajouter l'élément ; on relâche SANS glisser pour lancer le
+  sort vers le point touché. **Les opposés sont face à face** : feu en haut,
+  froid en bas ; foudre en haut à droite, terre en bas à gauche ; vie en bas
+  à droite, mort en haut à gauche (`ROUE`, le quartier i centré sur
+  −90° + 60° × i). Le quartier visé s'allume et son nom s'affiche au-dessus.
+  Une roue-légende (SVG, 3,2 rem) reste en bas à côté de la file pour
+  apprendre les directions. Un `pointercancel` (le navigateur reprend le
+  geste) n'ajoute ni ne lance rien.
 - **Les opposés s'annulent en entrant** : le feu efface un froid de la file
   (et inversement), la foudre une terre, la vie une mort. Un ✕ vide la file.
 - **La mort fait un RAYON** (l'arcane de Magicka) : une ligne droite depuis

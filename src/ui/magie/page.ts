@@ -4,10 +4,14 @@
  * lance des sorts à la Magicka »). Vue de dessus : la tour au milieu du
  * terrain libre, le magicien dessus ; les ennemis arrivent de tous les bords.
  *
- * En bas, la FILE du sort (trois orbes, le nom de ce qu'elle lancerait) et
- * les six ÉLÉMENTS ; une tape sur le terrain lance le sort vers ce point.
- * Les orbes de la file tournent aussi autour du magicien. Au clavier : 1 à 6
- * pour les éléments, la souris pour viser.
+ * LA ROUE SOUS LE DOIGT (Keko : « on tape et on slide dans le sens de
+ * l'élément, avec six quartiers sur la roue ») : on pose le doigt n'importe
+ * où sur le terrain, une roue à six quartiers apparaît ; on glisse vers un
+ * quartier et on relâche pour ajouter l'élément ; une tape sans glisser lance
+ * le sort vers ce point. En bas, la FILE du sort (trois orbes, le nom de ce
+ * qu'elle lancerait) et une roue-légende. Les orbes de la file tournent aussi
+ * autour du magicien. Au clavier : 1 à 6 pour les éléments, la souris pour
+ * viser.
  */
 import './magie.css'
 import { ajouter, avancer, effetsDuSort, elementDe, ELEMENTS, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Forme, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
@@ -43,6 +47,24 @@ const ICONE_DU_SORT: Record<Exclude<Forme, 'aucun'>, string> = {
 }
 /** L'élément dont la forme prend la couleur (le souffle et l'élémentaire : celui de la file). */
 const ELEMENT_DE_LA_FORME: Record<Exclude<Forme, 'aucun' | 'souffle' | 'elementaire'>, Element> = { rocher: 'terre', eclair: 'foudre', rayon: 'mort', halo: 'vie' }
+/**
+ * LA ROUE DES ÉLÉMENTS (Keko : « on tape et on slide dans le sens de l'élément,
+ * avec six quartiers sur la roue ») : six quartiers, les opposés face à face —
+ * le feu en haut et le froid en bas, la foudre en haut à droite et la terre en
+ * bas à gauche, la vie en bas à droite et la mort en haut à gauche. Le
+ * quartier i est centré sur −90° + i × 60°.
+ */
+const ROUE: Element[] = ['feu', 'foudre', 'vie', 'froid', 'terre', 'mort']
+/** Le rayon de la roue sous le doigt, et la distance à glisser avant qu'un quartier ne compte (en px CSS). */
+const ROUE_RAYON = 72
+const ROUE_SEUIL = 18
+const ICONE_PATH: Record<Element, Path2D> = Object.fromEntries(ELEMENTS.map((k) => [k, new Path2D(ICONE[k])])) as Record<Element, Path2D>
+/** Le quartier de la roue vers lequel pointe (dx, dy), ou `null` si le doigt n'a pas assez glissé. */
+function quartier(dx: number, dy: number): Element | null {
+  if (Math.hypot(dx, dy) < ROUE_SEUIL) return null
+  const a = Math.atan2(dy, dx) + Math.PI / 2
+  return ROUE[((Math.round(a / (Math.PI / 3)) % 6) + 6) % 6]
+}
 const ID_ENNEMI: Record<TypeEnnemi, string> = { gobelin: 'heros-12', orc: 'heros-17', esprit: 'survivant', golem: 'monstre-0', squelette: 'squelette-4' }
 const ID_MAGICIEN = 'heros-14'
 
@@ -92,25 +114,31 @@ export function monterMagie(racine: HTMLElement, build: string): void {
   const vider = el('button', 'magie-vider', '✕')
   vider.type = 'button'
   vider.setAttribute('aria-label', 'Vider la file')
-  file.append(...orbes, iconeDuSort, nom, vider)
-  const elements = el('div', 'magie-elements')
-  for (const k of ELEMENTS) {
-    const b = el('button', 'magie-element')
-    b.type = 'button'
-    b.style.setProperty('--teinte', TEINTE[k])
-    const icone = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    icone.setAttribute('viewBox', '0 0 24 24')
-    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    trace.setAttribute('d', ICONE[k])
-    icone.append(trace)
-    b.append(icone, el('span', '', NOM[k]))
-    b.addEventListener('pointerdown', (ev) => {
-      ev.preventDefault()
-      composer(k)
-    })
-    elements.append(b)
-  }
-  bas.append(file, elements)
+  // La roue-légende : les six quartiers, pour apprendre les directions ; la vraie roue naît sous le doigt.
+  const legende = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  legende.setAttribute('class', 'magie-roue-legende')
+  legende.setAttribute('viewBox', '-50 -50 100 100')
+  ROUE.forEach((k, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 3
+    const quart = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    const r0 = 13
+    const r1 = 48
+    const a0 = a - Math.PI / 6
+    const a1 = a + Math.PI / 6
+    quart.setAttribute('d', `M${r0 * Math.cos(a0)} ${r0 * Math.sin(a0)}L${r1 * Math.cos(a0)} ${r1 * Math.sin(a0)}A${r1} ${r1} 0 0 1 ${r1 * Math.cos(a1)} ${r1 * Math.sin(a1)}L${r0 * Math.cos(a1)} ${r0 * Math.sin(a1)}A${r0} ${r0} 0 0 0 ${r0 * Math.cos(a0)} ${r0 * Math.sin(a0)}Z`)
+    quart.setAttribute('fill', TEINTE[k])
+    quart.setAttribute('fill-opacity', '0.35')
+    quart.setAttribute('stroke', TEINTE[k])
+    const icone = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    icone.setAttribute('d', ICONE[k])
+    icone.setAttribute('transform', `translate(${31 * Math.cos(a) - 9} ${31 * Math.sin(a) - 9}) scale(0.75)`)
+    icone.setAttribute('fill', 'none')
+    icone.setAttribute('stroke', '#fff')
+    icone.setAttribute('stroke-width', '2.2')
+    legende.append(quart, icone)
+  })
+  file.prepend(legende)
+  bas.append(file)
   const ecran = el('div', 'magie-ecran')
   const pied = el('div', 'magie-build', `build ${build}`)
   racine.append(canvas, haut, bas, ecran, pied)
@@ -173,7 +201,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
   }
   montrerEcran(
     'La tour du magicien',
-    `Composez un sort avec les éléments du bas (trois au plus), puis touchez le terrain pour le lancer. La terre jette un rocher, la foudre saute d’ennemi en ennemi, la mort transperce en ligne, le feu et le froid soufflent, la vie soigne la tour — et avec un autre élément, elle invoque un petit élémentaire. Les opposés s’annulent : feu et froid, foudre et terre, vie et mort.${record > 0 ? ` Record : vague ${record}.` : ''}`,
+    `Posez le doigt sur le terrain : une roue apparaît. Glissez vers un élément et relâchez pour l’ajouter au sort (trois au plus) ; touchez sans glisser pour lancer le sort vers ce point. La terre jette un rocher, la foudre saute d’ennemi en ennemi, la mort transperce en ligne, le feu et le froid soufflent, la vie soigne la tour — et avec un autre élément, elle invoque un petit élémentaire. Les opposés s’annulent : feu et froid, foudre et terre, vie et mort.${record > 0 ? ` Record : vague ${record}.` : ''}`,
     'Touchez pour jouer',
   )
 
@@ -202,15 +230,11 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     majFile()
   })
 
-  canvas.addEventListener('pointerdown', (ev) => {
-    if (!enJeu) {
-      if (performance.now() / 1000 >= rejouableA) lancerLaPartie()
-      return
-    }
-    ouvrirLeSon()
-    const p = { x: (ev.clientX * dpr - ox) / s, y: (ev.clientY * dpr - oy) / s }
+  /** Le sort part vers ce point de l'écran (en px CSS). */
+  function lancerVers(clientX: number, clientY: number): void {
+    const p = { x: (clientX * dpr - ox) / s, y: (clientY * dpr - oy) / s }
     if (e.file.length === 0) {
-      chiffres.push({ x: p.x, y: p.y, texte: 'Choisissez des éléments', couleur: '#d8d2e6', vie: 0 })
+      chiffres.push({ x: p.x, y: p.y, texte: 'Glissez vers un élément', couleur: '#d8d2e6', vie: 0 })
       return
     }
     if (!pret(e)) return
@@ -221,7 +245,39 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     chiffres.push({ x: 0, y: -17, texte: nomDuSort(e.file).replace(/ ×\d$/, ''), couleur: TEINTE[premier], vie: 0 })
     for (const x of lancer(C, e, p)) vivre(x)
     majFile()
+  }
+
+  // LA ROUE SOUS LE DOIGT : on pose le doigt n'importe où, la roue apparaît ; on glisse vers un quartier et on relâche
+  // pour ajouter l'élément ; on relâche sans glisser pour lancer le sort vers ce point.
+  let geste: { id: number; x: number; y: number; dx: number; dy: number; element: Element | null } | null = null
+  racine.addEventListener('pointerdown', (ev) => {
+    if ((ev.target as HTMLElement).closest('button') !== null) return
+    if (!enJeu) {
+      if (performance.now() / 1000 >= rejouableA) lancerLaPartie()
+      return
+    }
+    ev.preventDefault()
+    ouvrirLeSon()
+    if (geste !== null) return
+    geste = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, dx: 0, dy: 0, element: null }
+    racine.setPointerCapture(ev.pointerId)
   })
+  racine.addEventListener('pointermove', (ev) => {
+    if (geste === null || ev.pointerId !== geste.id) return
+    geste.dx = ev.clientX - geste.x
+    geste.dy = ev.clientY - geste.y
+    geste.element = quartier(geste.dx, geste.dy)
+  })
+  const finDuGeste = (ev: PointerEvent, annule: boolean) => {
+    if (geste === null || ev.pointerId !== geste.id) return
+    const g = geste
+    geste = null
+    if (annule) return
+    if (g.element !== null) composer(g.element)
+    else lancerVers(g.x, g.y)
+  }
+  racine.addEventListener('pointerup', (ev) => finDuGeste(ev, false))
+  racine.addEventListener('pointercancel', (ev) => finDuGeste(ev, true))
   window.addEventListener('keydown', (ev) => {
     if (ev.repeat) return
     const i = Number(ev.key) - 1
@@ -265,8 +321,8 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       })
       .join(' + ')
     nom.replaceChildren(
-      el('span', 'magie-nom-titre', sort === '' ? 'Choisissez jusqu’à trois éléments' : sort),
-      el('small', '', sort === '' ? 'Les opposés s’annulent : feu et froid, foudre et terre, vie et mort' : [recette, ...effetsDuSort(C, e.file)].join(' · ')),
+      el('span', 'magie-nom-titre', sort === '' ? 'Glissez vers un élément' : sort),
+      el('small', '', sort === '' ? 'Posez le doigt, glissez vers un quartier, relâchez ; touchez sans glisser pour lancer' : [recette, ...effetsDuSort(C, e.file)].join(' · ')),
     )
     vider.hidden = e.file.length === 0
   }
@@ -775,6 +831,53 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     }
   }
 
+  /** La roue sous le doigt : six quartiers, celui que le doigt vise s'allume, son nom au-dessus. */
+  function dessinerLaRoue(g0: { x: number; y: number; dx: number; dy: number; element: Element | null }): void {
+    const cx = g0.x * dpr
+    const cy = g0.y * dpr
+    const R = ROUE_RAYON * dpr
+    const r0 = ROUE_SEUIL * dpr
+    ROUE.forEach((k, i) => {
+      const a = -Math.PI / 2 + (i * Math.PI) / 3
+      const vise = g0.element === k
+      g.beginPath()
+      g.arc(cx, cy, vise ? R * 1.08 : R, a - Math.PI / 6, a + Math.PI / 6)
+      g.arc(cx, cy, r0, a + Math.PI / 6, a - Math.PI / 6, true)
+      g.closePath()
+      g.fillStyle = vise ? TEINTE[k] : `${TEINTE[k]}55`
+      g.fill()
+      g.strokeStyle = vise ? '#ffffff' : TEINTE[k]
+      g.lineWidth = (vise ? 2.5 : 1.2) * dpr
+      g.stroke()
+      // L'icône, tracée depuis son chemin SVG (24 × 24).
+      const taille = (vise ? 30 : 24) * dpr
+      const k2 = taille / 24
+      g.save()
+      g.translate(cx + Math.cos(a) * R * 0.62 - taille / 2, cy + Math.sin(a) * R * 0.62 - taille / 2)
+      g.scale(k2, k2)
+      g.strokeStyle = vise ? '#1e1038' : '#ffffff'
+      g.lineWidth = 2.2
+      g.lineCap = 'round'
+      g.lineJoin = 'round'
+      g.stroke(ICONE_PATH[k])
+      g.restore()
+    })
+    // Le doigt, et le nom du quartier visé.
+    g.fillStyle = 'rgba(255, 255, 255, 0.9)'
+    g.beginPath()
+    g.arc(cx + g0.dx * dpr, cy + g0.dy * dpr, 5 * dpr, 0, Math.PI * 2)
+    g.fill()
+    if (g0.element !== null) {
+      g.textAlign = 'center'
+      g.font = `800 ${18 * dpr}px 'Baloo 2', sans-serif`
+      g.fillStyle = TEINTE[g0.element]
+      g.strokeStyle = 'rgba(0, 0, 0, 0.75)'
+      g.lineWidth = 4 * dpr
+      g.strokeText(NOM[g0.element], cx, cy - R - 14 * dpr)
+      g.fillText(NOM[g0.element], cx, cy - R - 14 * dpr)
+    }
+  }
+
   // ---------------------------------------------------------------- la boucle
 
   let avant = performance.now()
@@ -815,6 +918,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     dessinerLesElementaires(t)
     dessinerLesRochers()
     dessinerLeMagicien(t)
+    if (geste !== null) dessinerLaRoue(geste)
     for (const p of eclats) {
       g.globalAlpha = 1 - p.vie / p.duree
       g.fillStyle = p.couleur

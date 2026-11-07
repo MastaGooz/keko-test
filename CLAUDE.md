@@ -591,7 +591,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?tourelle` | sa variante : la tourelle fixe tire seule, les ennemis foncent, trois améliorations au choix entre les vagues |
 | `?survivor`, `&controle=suivre` | un Vampire Survivors : le héros au manche flottant, les armes frappent seules, trois choix à chaque niveau ; l'autre contrôle, le héros marche vers le doigt (`docs/survivor.md`) |
 | `?commande`, `&acte=N` | la commande action, un side project : un roguelike au tour par tour à la Paper Mario : un petit magicien et ses sorts, chacun son geste (la boule de feu qu'on charge, l'éclair aux anneaux, les missiles qu'on tapote), la garde au bon moment, sur une carte à embranchements (élites, feux, boutiques, événements, or et objets) ; `&acte=N` commence à l'acte N (`docs/commande.md`) |
-| `?magie` | la tour du magicien, un side project : des ennemis approchent de tous les bords, on compose ses sorts à la Magicka (feu, froid, foudre, terre, vie, mort ; trois au plus, les opposés s'annulent) et on touche le terrain pour les lancer (`docs/magie.md`) |
+| `?magie` | la tour du magicien, un side project : des ennemis approchent de tous les bords, on compose ses sorts à la Magicka (feu, froid, foudre, terre, vie, mort ; trois au plus, les opposés s'annulent) et on les choisit sur une roue sous le doigt (glisser vers un quartier), une tape lançant le sort vers ce point (`docs/magie.md`) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
