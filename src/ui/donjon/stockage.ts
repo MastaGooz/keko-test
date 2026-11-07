@@ -64,6 +64,8 @@ export function lireLeDonjon(): SauvegardeDonjon | null {
       if (typeof j.passif !== 'object' || j.passif === null || typeof j.passif.sans !== 'number') j.passif = passifVierge()
       // D'avant la série : au premier rang.
       if (typeof j.passif.rang !== 'number') j.passif.rang = 0
+      // D'avant le geste à charger (07/11) : déchargé.
+      if (typeof j.passif.charge !== 'number') j.passif.charge = 0
       // D'une autre forme de progression (l'offre de trois, les
       // caractéristiques…) : tout est rendu en points, un par niveau gagné,
       // à replacer dans les cinq stats.

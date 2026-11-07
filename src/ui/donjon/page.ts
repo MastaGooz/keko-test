@@ -45,6 +45,8 @@ import {
   effetEnCours,
   etapeDuPassif,
   evenementTouchable,
+  gestePret,
+  chargeDuGeste,
   toleranceDe,
   chargeDe,
   facteurCritMoyen,
@@ -294,13 +296,26 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
   fronde: 'passifs/points-faibles.webp',
 }
 
-/** Ce que fait le passif d'une classe d'arme, en une phrase. */
+/**
+ * Ce que fait l'Ouverture, le passif simple de toutes les classes (Keko,
+ * 07/11 : « des formes plus simples pour les déclenchements passifs »), en
+ * une phrase, avec les chiffres de cette arme.
+ */
+function effetDeLOuverture(arme: ArmeAPassif): string {
+  const p = C.passifs[arme]
+  return `À chaque tap, ${Math.round(1000 * p.chance) / 10} % de chance qu'une ouverture s'offre sur l'ennemi pendant ${C.ouverture.duree / 1000} s : touchez-la, elle frappe ×${p.ouverture} ; au plus tard au ${p.pitie}e tap`
+}
+
+/** L'Ouverture emprunte l'œil des Points faibles en attendant son icône. */
+const IMAGE_DE_L_OUVERTURE = 'passifs/points-faibles.webp'
+
+/** Ce que fait le geste d'une classe d'arme, en une phrase. */
 function effetDuPassif(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
   if (p.visee !== undefined) return `Une cible va et vient sur l'ennemi : touchez-la ; une tape à côté, c'est raté ; chaque tir réussi en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par tir)`
   if (p.rafale !== undefined) return `Une rafale s'ouvre : tapotez l'ennemi le plus vite possible pendant ${p.duree / 1000} s ; à la fin, chaque tap revient en griffure (×${p.coup} chacune)`
   if (p.rune === true) return `Une rune s'allume sur l'ennemi : posez le doigt sur le point 1 et, sans le lever, reliez les points dans l'ordre avant la fin du temps ; chaque rune réussie en appelle une plus longue ; au premier raté, tout tombe en un coup (×${p.coup} par rune)`
-  if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume parfois sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps (×${p.coup})`
+  if (p.trait === true) return `Un ${p.courbe === true ? 'arc' : 'trait'} s'allume sur l'ennemi : tracez-le d'un geste, du rond jusqu'à la flèche, avant la fin du temps ; chaque trait réussi en appelle un plus court (×${p.coup} par trait)`
   if (p.elan !== undefined) return `Une jauge d'élan s'allume : posez le doigt sur l'ennemi, la hache se charge ; lâchez dans la zone dorée ; chaque élan réussi en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par élan réussi)`
   if (p.zone !== undefined) return `Un trait file sur une ligne vers un cadre : touchez l'ennemi quand il est dedans ; chaque coup juste en appelle un plus rapide ; au premier raté, tout tombe en un coup (×${p.coup} par coup juste)`
   // La Furie est à la dague seule.
@@ -567,7 +582,20 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const debutPalier = surLeTrait(BORNES.palierBas)
   const finPalier = surLeTrait(BORNES.palierHaut)
   traitForme.style.background = `linear-gradient(to right, #3f3f3f 0%, #a8a8a8 ${debutPalier}%, #fff ${debutPalier}% ${finPalier}%, #ffe58a ${finPalier}%, #ffcf2e 100%)`
-  arene.append(cadre, jaugeForme)
+  // LE BOUTON DU GESTE (Keko, 07/11 : « passer les déclenchements passifs en
+  // compétence active, plus fun quand on le déclenche soi-même ») : une
+  // barre sous l'attaque, qui se remplit d'or à chaque tap à la main ;
+  // pleine, elle brille, et une tape ouvre le geste (la Taille, le Fracas…).
+  // Pas sur la ligne de l'attaque : les capacités y prennent toute la place.
+  const geste = bouton('donjon-geste')
+  const chargeGeste = el('span', 'donjon-geste-charge')
+  const imageGeste = el('img', 'donjon-geste-dessin')
+  imageGeste.alt = ''
+  imageGeste.draggable = false
+  const nomGeste = el('span', 'donjon-geste-nom')
+  const compteGeste = el('span', 'donjon-geste-compte')
+  geste.append(chargeGeste, imageGeste, nomGeste, compteGeste)
+  arene.append(cadre, geste, jaugeForme)
 
   // De haut en bas : le nom et la vie de l'ennemi, l'ennemi, le bouton, le
   // niveau, et tout en bas le journal. LA BARRE DE VIE EST AU-DESSUS DE LA
@@ -791,18 +819,28 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       el('div', 'donjon-fiche-section', 'Bonus'),
       el('div', 'donjon-fiche-texte', DIT_L_ARME[arme].bonus),
     ]
-    // SON PASSIF, celui de toute sa classe (Keko) ; les provisoires n'ont pas
-    // encore le leur, sauf l'épée à deux mains, une épée.
+    // SON GESTE, celui de toute sa classe (Keko), une compétence active qui
+    // se charge en taps ; puis SON PASSIF, l'Ouverture (07/11). Les
+    // provisoires n'ont pas encore les leurs, sauf l'épée à deux mains, une épée.
     if (arme in C.passifs) {
+      const p = C.passifs[arme as ArmeAPassif]
+      const geste = el('div', 'donjon-fiche-capacite')
+      const iconeGeste = el('img')
+      iconeGeste.src = url(IMAGE_DU_PASSIF[arme as ArmeAPassif])
+      iconeGeste.alt = ''
+      iconeGeste.draggable = false
+      const texteGeste = el('div')
+      texteGeste.append(el('b', undefined, p.nom), el('span', undefined, `${effetDuPassif(arme as ArmeAPassif)}. Se charge en ${p.taps} taps à la main ; le bouton sous l'attaque l'ouvre`))
+      geste.append(iconeGeste, texteGeste)
       const passif = el('div', 'donjon-fiche-capacite')
       const iconePassif = el('img')
-      iconePassif.src = url(IMAGE_DU_PASSIF[arme as ArmeAPassif])
+      iconePassif.src = url(IMAGE_DE_L_OUVERTURE)
       iconePassif.alt = ''
       iconePassif.draggable = false
       const textePassif = el('div')
-      textePassif.append(el('b', undefined, C.passifs[arme as ArmeAPassif].nom), el('span', undefined, effetDuPassif(arme as ArmeAPassif)))
+      textePassif.append(el('b', undefined, C.ouverture.nom), el('span', undefined, effetDeLOuverture(arme as ArmeAPassif)))
       passif.append(iconePassif, textePassif)
-      lignes.push(el('div', 'donjon-fiche-section', 'Passif'), passif)
+      lignes.push(el('div', 'donjon-fiche-section', 'Geste'), geste, el('div', 'donjon-fiche-section', 'Passif'), passif)
     }
     // SES DEUX CAPACITÉS, à la place de la section « Effet » prévue (Keko).
     if (a.capacites.length > 0) lignes.push(el('div', 'donjon-fiche-section', 'Capacités'))
@@ -3940,6 +3978,33 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     else raterLaVisee(vi, true, quand)
   })
 
+  /**
+   * L'OUVERTURE (Keko, 07/11 : « des formes plus simples pour les
+   * déclenchements passifs ») : une seule cible, d'or, sur le corps de
+   * l'ennemi, l'anneau du temps qui se resserre ; une tape, et elle frappe.
+   * Sans série, sans grâce : passée, elle s'efface.
+   */
+  function dessinerLOuverture(ev: EvenementDuPassif, j: Joueur, t: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
+    const cle = `${j.arme}:${ev.k}:ouverture`
+    voulues.add(cle)
+    let n = ciblesVues.get(cle)
+    if (n === undefined) {
+      n = bouton('donjon-cible ouverture')
+      n.setAttribute('aria-label', C.ouverture.nom)
+      n.addEventListener('pointerdown', (e) => {
+        e.stopPropagation()
+        toucherLePassif(ev.k, 0, n!)
+      })
+      couchePassif.append(n)
+      ciblesVues.set(cle, n)
+      n.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 220, easing: 'ease-out' })
+    }
+    const [px, py] = surLeDessin(ev.cibles[0])
+    n.style.left = `${px}px`
+    n.style.top = `${py}px`
+    n.style.setProperty('--reste', Math.max(0, Math.min(1, (ev.fin - t) / Math.max(1, ev.fin - ev.debut))).toFixed(3))
+  }
+
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
   function dessinerLePassif(ev: EvenementDuPassif | null, j: Joueur, t: number): void {
     const ouvert = ev !== null && passifOuvert(C, j, ev)
@@ -3951,7 +4016,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       const reste = Math.max(0, Math.min(1, (ev.fin - t) / Math.max(1, ev.fin - ev.debut)))
       const etape = etapeDuPassif(j, ev.k)
       const surLeDessin = (c: { x: number; y: number }): [number, number] => [x0 + l * c.x, y0 + h * c.y]
-      if (passifDe(C, j)?.trait === true) {
+      // L'OUVERTURE (le passif) : une cible d'or, une tape ; rien d'autre ne se dessine.
+      if (ev.simple) dessinerLOuverture(ev, j, t, voulues, surLeDessin)
+      else if (passifDe(C, j)?.trait === true) {
         // La Taille : un seul trait pour ses deux bouts.
         const cle = `${j.arme}:${ev.k}:${ev.rang}:trait`
         voulues.add(cle)
@@ -3974,7 +4041,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         placerLeTrait(tr, a, b, Math.max(0, Math.min(1, (jusqua - t) / (jusqua - ev.debut))), ev.fin, c)
       }
       const p = passifDe(C, j)
-      if (p?.visee !== undefined) dessinerLaVisee(ev, j, t, p, voulues, surLeDessin)
+      if (ev.simple) {
+        // Dessinée plus haut.
+      } else if (p?.visee !== undefined) dessinerLaVisee(ev, j, t, p, voulues, surLeDessin)
       else if (p?.rune === true) dessinerLaRune(ev, j, t, voulues, surLeDessin)
       else if (p?.rafale !== undefined) dessinerLaRafale(ev, j, t, voulues, surLeDessin)
       else if (p?.elan !== undefined) dessinerLElan(ev, j, t, p, voulues, surLeDessin)
@@ -4021,8 +4090,10 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const p = passifDe(C, avant)
     if (p === null) return
     const etape = etapeDuPassif(avant, k)
+    // Une Ouverture (le passif) : son coup à elle, son nom, jamais de critique forcé.
+    const simple = avant.passif.evenement === k && avant.passif.simple === true
     const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
-    const attendu = degatsDuTap(C, avant) * p.coup * mult * (1 + bonusDEffetsA(C, avant, t))
+    const attendu = degatsDuTap(C, avant) * (simple ? p.ouverture : p.coup) * mult * (1 + bonusDEffetsA(C, avant, t))
     const dejaInfliges = avant.degatsTap
     if (n !== null && cible !== etape) n.classList.add('ratee')
     void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: k, cible }).then(() => {
@@ -4030,7 +4101,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       if (inflige > 0) {
         const e = C.tap.ecart
         const seuil = (attendu * (1 + e + (1 - e) * multCritDe(C, avant))) / 2
-        const genre: Genre = p.critique === true || inflige > seuil ? 'capaciteCritique' : 'capacite'
+        const genre: Genre = (p.critique === true && !simple) || inflige > seuil ? 'capaciteCritique' : 'capacite'
         const [x, y] = ou ?? surLEnnemi(0, -0.05)
         const couleur = teinteDuChiffre(genre, mult - 1)
         if (ou === undefined) impact(x, y, genre, couleur)
@@ -4039,7 +4110,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           pvRetenus = inflige
           retenusJusqua = au
           setTimeout(() => envoler(x, y, inflige, genre, couleur, p.nom), attente)
-        } else envoler(x, y, inflige, genre, couleur, p.nom === 'Points faibles' ? 'Point faible' : p.nom)
+        } else envoler(x, y, inflige, genre, couleur, simple ? C.ouverture.nom : p.nom === 'Points faibles' ? 'Point faible' : p.nom)
       }
       dessiner()
     })
@@ -4175,6 +4246,45 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       dessiner()
     })
   }
+
+  /** La bulle du geste : son nom, ce qu'il fait, où en est sa charge. */
+  function remplirLaBulleDuGeste(): void {
+    const j = moi()
+    const p = passifDe(C, j)
+    if (p === null) return
+    const etat = gestePret(C, j, maintenant()) ? 'prêt' : `${Math.min(j.passif.charge, p.taps)} / ${p.taps} taps`
+    const html = `<div class="donjon-bulle-titre">${p.nom}</div><div class="donjon-bulle-texte">${effetDuPassif(j.arme as ArmeAPassif)}. Se charge en ${p.taps} taps à la main.</div>${ligneDeBulle('Charge', etat)}`
+    if (bulle.innerHTML !== html) bulle.innerHTML = html
+  }
+
+  /**
+   * LE GESTE PART (Keko, 07/11) : pas chargé, le bouton tremble et rien ne
+   * part ; chargé, il s'ouvre sur l'ennemi comme le faisait le hasard, et la
+   * barre retombe à zéro.
+   */
+  function lancerLeGeste(): void {
+    const t = maintenant()
+    const avant = moi()
+    if (!gestePret(C, avant, t)) {
+      geste.animate([{ translate: '0' }, { translate: '-4px 0' }, { translate: '4px 0' }, { translate: '0' }], { duration: 200 })
+      return
+    }
+    geste.animate([{ scale: '1' }, { scale: '0.94', offset: 0.3 }, { scale: '1.04', offset: 0.65 }, { scale: '1' }], { duration: 260, easing: 'ease-out' })
+    void partage.agir({ joueur: MOI, t, type: 'geste' }).then(() => dessiner())
+  }
+
+  geste.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== 0) return
+    lancerLeGeste()
+    remplir = remplirLaBulleDuGeste
+    clearTimeout(appui)
+    appui = window.setTimeout(montrerLaBulle, APPUI_LONG)
+  })
+  geste.addEventListener('click', (ev) => {
+    if (ev.detail === 0) lancerLeGeste()
+  })
+  for (const fin of ['pointerup', 'pointercancel', 'pointerleave'] as const) geste.addEventListener(fin, cacherLaBulle)
+  geste.addEventListener('contextmenu', (ev) => ev.preventDefault())
 
   for (const [i, { b }] of boutonsCapacite.entries()) {
     b.addEventListener('pointerdown', (ev) => {
@@ -4314,6 +4424,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         if (cle === undefined) continue
         image.src = url(IMAGE_DE_LA_CAPACITE[cle])
         b.setAttribute('aria-label', C.capacites[cle].nom)
+      }
+      // Le geste de sa classe ; à mains nues (ou une arme sans geste), le bouton s'en va.
+      const p = passifDe(C, j)
+      geste.hidden = p === null
+      if (p !== null) {
+        imageGeste.src = url(IMAGE_DU_PASSIF[j.arme as ArmeAPassif])
+        nomGeste.textContent = p.nom
+        geste.setAttribute('aria-label', `Geste : ${p.nom}`)
       }
       // À mains nues, leur icône, sans cadre de cran.
       imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
@@ -4518,6 +4636,17 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       // celle de l'attaque : au spam, elle clignotait (Keko : « ça rend mal »).
       b.classList.toggle('en-recharge', avancee < 1)
       b.classList.toggle('active', effetEnCours(j, cle, t))
+    }
+    // Le geste : sa charge se remplit de gauche à droite ; pleine, il brille.
+    const pGeste = passifDe(C, j)
+    if (pGeste !== null) {
+      const charge = chargeDuGeste(C, j)
+      chargeGeste.style.clipPath = `inset(0 ${100 * (1 - charge)}% 0 0)`
+      const pret = gestePret(C, j, t)
+      geste.classList.toggle('prete', pret)
+      geste.classList.toggle('en-recharge', charge < 1)
+      const compte = pret ? 'Prêt' : `${Math.min(j.passif.charge, pGeste.taps)} / ${pGeste.taps}`
+      if (compteGeste.textContent !== compte) compteGeste.textContent = compte
     }
     requestAnimationFrame(image)
   }

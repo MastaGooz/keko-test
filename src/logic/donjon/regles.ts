@@ -223,17 +223,44 @@ function compterUnCritique(config: ConfigDonjon, j: Joueur): void {
 
 // ---------------------------------------------------------------- le passif de classe
 
-/** Un événement du passif : son numéro `k`, son rang dans la série, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi). */
-export type EvenementDuPassif = { k: number; rang: number; debut: number; fin: number; cibles: { x: number; y: number }[] }
+/**
+ * Un événement du geste ou du passif : son numéro `k`, son rang dans la
+ * série, sa fenêtre, ses cibles (en fractions du dessin de l'ennemi) ;
+ * `simple` : une Ouverture (le passif, une cible, un coup) plutôt que le geste.
+ */
+export type EvenementDuPassif = { k: number; rang: number; debut: number; fin: number; simple: boolean; cibles: { x: number; y: number }[] }
 
 /** Le passif de la classe d'arme de ce joueur ; à mains nues, aucun. */
 export function passifDe(config: ConfigDonjon, j: Joueur): Passif | null {
   return j.arme in config.passifs ? config.passifs[j.arme as ArmeAPassif] : null
 }
 
-/** Un passif sans aucun événement ouvert. */
+/** Un passif sans aucun événement ouvert, le geste déchargé. */
 export function passifVierge(): Joueur['passif'] {
-  return { evenement: -1, etape: 0, debut: 0, fin: -1, sans: 0, rang: 0 }
+  return { evenement: -1, etape: 0, debut: 0, fin: -1, sans: 0, charge: 0, rang: 0 }
+}
+
+/** La charge du geste de ce joueur, de 0 à 1 ; sans geste, 0. */
+export function chargeDuGeste(config: ConfigDonjon, j: Joueur): number {
+  const p = passifDe(config, j)
+  return p === null ? 0 : Math.max(0, Math.min(1, j.passif.charge / p.taps))
+}
+
+/** Un événement (geste ou Ouverture) reste-t-il à toucher à l'instant t ? Tant qu'il l'est, rien d'autre ne s'ouvre. */
+function evenementEnCours(config: ConfigDonjon, j: Joueur, t: number): boolean {
+  const p = passifDe(config, j)
+  if (p === null) return false
+  const { evenement, etape, fin, rang, simple } = j.passif
+  return evenement >= 0 && t <= fin + (simple === true ? 0 : (p.grace ?? 0)) && etape >= 0 && etape < ciblesDe(p, rang, simple === true)
+}
+
+/**
+ * LE GESTE EST PRÊT quand sa charge est pleine et qu'aucun geste ne reste à
+ * toucher (une Ouverture ouverte, elle, s'efface devant lui).
+ */
+export function gestePret(config: ConfigDonjon, j: Joueur, t: number): boolean {
+  const p = passifDe(config, j)
+  return p !== null && j.passif.charge >= p.taps && !(evenementEnCours(config, j, t) && j.passif.simple !== true)
 }
 
 /**
@@ -243,9 +270,11 @@ export function passifVierge(): Joueur['passif'] {
  * rangent en cercle autour du centre ; un trait passe par le milieu du corps,
  * dans tous les sens, ses deux bouts sur le dessin.
  */
-function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: number): { x: number; y: number }[] {
+function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: number, simple: boolean): { x: number; y: number }[] {
   const empreinte = empreinteDe(`${j.id}:${j.arme}`)
   const tire = (n: number) => melanger(seed ^ melanger((Math.imul(k, 0x9e3779b1) + Math.imul(n + 64 * rang, 0x85ebca6b)) >>> 0) ^ empreinte) / 4294967296
+  // L'OUVERTURE : une seule cible, sur le corps, quelle que soit l'arme.
+  if (simple) return [{ x: 0.3 + 0.4 * tire(2), y: 0.3 + 0.35 * tire(3) }]
   // UNE RUNE du catalogue, de son nombre de points, parfois en miroir.
   if (p.rune === true) {
     const formes = RUNES.filter((r) => r.points.length === ciblesDe(p, rang))
@@ -278,7 +307,7 @@ function ciblesDuPassif(p: Passif, seed: number, j: Joueur, k: number, rang: num
   if (p.cibles === 1) {
     const tiree = (essai: number) => ({ x: 0.3 + 0.4 * tire(2 + 2 * essai), y: 0.3 + 0.35 * tire(3 + 2 * essai) })
     if (rang === 0) return [tiree(0)]
-    const avant = ciblesDuPassif(p, seed, j, k, rang - 1)[0]
+    const avant = ciblesDuPassif(p, seed, j, k, rang - 1, false)[0]
     const loin = (c: { x: number; y: number }) => Math.hypot(c.x - avant.x, c.y - avant.y)
     let meilleure = tiree(0)
     for (let essai = 1; essai < 8; essai++) {
@@ -298,24 +327,39 @@ export function evenementA(config: ConfigDonjon, seed: number, j: Joueur, t: num
   const p = passifDe(config, j)
   const { evenement: k, debut, fin, rang } = j.passif
   if (p === null || k < 0 || t < debut || t > fin) return null
-  return { k, rang, debut, fin, cibles: ciblesDuPassif(p, seed, j, k, rang) }
+  const simple = j.passif.simple === true
+  return { k, rang, debut, fin, simple, cibles: ciblesDuPassif(p, seed, j, k, rang, simple) }
 }
 
 /**
- * UN TAP PEUT OUVRIR UN ÉVÉNEMENT (Keko : « un % de chance à chaque tap ») :
- * sur `chance`, ou à coup sûr au `pitie`-ième tap sans ; jamais tant que le
- * précédent reste à toucher (Keko : un événement ouvert bloque le suivant),
- * ni tant que le trait suivant d'une série attend son heure.
+ * UN TAP À LA MAIN CHARGE LE GESTE d'un cran (Keko, 07/11 : la compétence
+ * active), et PEUT OUVRIR UNE OUVERTURE (Keko, 05/11 : « un % de chance à
+ * chaque tap ») : sur `chance`, ou à coup sûr au `pitie`-ième tap sans ;
+ * jamais tant qu'un événement reste à toucher (Keko : un événement ouvert
+ * bloque le suivant), ni tant que le trait suivant d'une série attend son
+ * heure.
  */
 function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number): void {
   const p = passifDe(config, j)
   if (p === null) return
-  const { evenement, etape, fin, rang } = j.passif
-  if (evenement >= 0 && t <= fin + (p.grace ?? 0) && etape >= 0 && etape < ciblesDe(p, rang)) return
+  j.passif = { ...j.passif, charge: Math.min(p.taps, j.passif.charge + 1) }
+  if (evenementEnCours(config, j, t)) return
   const sans = j.passif.sans + 1
-  // La rafale attend d'abord son premier tap.
-  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + (p.rafale?.attente ?? p.duree), sans: 0, rang: 0 }
+  if (tirer(e) < p.chance || sans >= p.pitie) j.passif = { ...j.passif, evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + config.ouverture.duree, sans: 0, rang: 0, simple: true, appui: undefined }
   else j.passif = { ...j.passif, sans }
+}
+
+/**
+ * LE GESTE PART (Keko, 07/11 : « plus fun quand on le déclenche soi-même ») :
+ * chargé, et aucun geste à toucher, il ouvre son événement à l'instant même
+ * — le même qu'ouvrait le hasard — et sa charge retombe à zéro. Une
+ * Ouverture encore ouverte s'efface devant lui. Pas chargé, rien.
+ */
+function declencherLeGeste(config: ConfigDonjon, j: Joueur, t: number): void {
+  const p = passifDe(config, j)
+  if (p === null || !gestePret(config, j, t)) return
+  // La rafale attend d'abord son premier tap.
+  j.passif = { ...j.passif, evenement: j.passif.evenement + 1, etape: 0, debut: t, fin: t + (p.rafale?.attente ?? p.duree), charge: 0, rang: 0, simple: false, appui: undefined }
 }
 
 /**
@@ -326,7 +370,8 @@ function declencherLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: n
 export function evenementTouchable(config: ConfigDonjon, seed: number, j: Joueur, t: number): EvenementDuPassif | null {
   const ev = evenementA(config, seed, j, t)
   if (ev !== null) return ev
-  const grace = passifDe(config, j)?.grace ?? 0
+  // L'Ouverture n'a pas de grâce : elle se touche dans sa fenêtre, ou pas.
+  const grace = j.passif.simple === true ? 0 : (passifDe(config, j)?.grace ?? 0)
   return grace > 0 && t > j.passif.fin && t <= j.passif.fin + grace ? evenementA(config, seed, j, j.passif.fin) : null
 }
 
@@ -357,8 +402,9 @@ export function positionDeLaVisee(p: Passif, ev: EvenementDuPassif, t: number): 
   return { x: a.x + (b.x - a.x) * s, y: a.y + (b.y - a.y) * s }
 }
 
-/** Le nombre de cibles d'un événement au rang `rang` : une rune en demande un de plus à chaque fois, jusqu'à la plus longue. */
-export function ciblesDe(p: Passif, rang: number): number {
+/** Le nombre de cibles d'un événement au rang `rang` : une rune en demande un de plus à chaque fois, jusqu'à la plus longue ; une Ouverture, une seule. */
+export function ciblesDe(p: Passif, rang: number, simple = false): number {
+  if (simple) return 1
   return p.rune === true ? Math.min(POINTS_MAX, p.cibles + rang) : p.cibles
 }
 
@@ -371,7 +417,7 @@ export function etapeDuPassif(j: Joueur, k: number): number {
 export function passifOuvert(config: ConfigDonjon, j: Joueur, ev: EvenementDuPassif): boolean {
   const etape = etapeDuPassif(j, ev.k)
   const p = passifDe(config, j)
-  return p !== null && etape >= 0 && etape < ciblesDe(p, ev.rang)
+  return p !== null && etape >= 0 && etape < ciblesDe(p, ev.rang, ev.simple)
 }
 
 export function xpPourNiveau(config: ConfigDonjon, niveau: number): number {
@@ -642,7 +688,8 @@ function finirLaSaison(config: ConfigDonjon, e: EtatDonjon): void {
  */
 function encaisserLePassif(config: ConfigDonjon, e: EtatDonjon, j: Joueur, t: number, force = false): void {
   const p = passifDe(config, j)
-  if (p === null || p.cumul !== true) return
+  // Une Ouverture ne cumule rien : touchée, elle a frappé ; sinon, rien.
+  if (p === null || p.cumul !== true || j.passif.simple === true) return
   const { evenement, etape, fin, rang } = j.passif
   if (evenement < 0 || etape < 0 || etape >= ciblesDe(p, rang)) return
   if (!force && t <= fin + (p.grace ?? 0)) return
@@ -664,7 +711,7 @@ function prochaineFinDePassif(config: ConfigDonjon, e: EtatDonjon): number {
   let fin = Infinity
   for (const j of e.joueurs) {
     const p = passifDe(config, j)
-    if (p === null || p.cumul !== true || j.passif.evenement < 0 || j.passif.etape < 0 || j.passif.etape >= ciblesDe(p, j.passif.rang)) continue
+    if (p === null || p.cumul !== true || j.passif.simple === true || j.passif.evenement < 0 || j.passif.etape < 0 || j.passif.etape >= ciblesDe(p, j.passif.rang)) continue
     const f = j.passif.fin + (p.grace ?? 0) + 1
     if (f > e.t && f < fin) fin = f
   }
@@ -760,6 +807,13 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   if (ev === null || ev.k !== k || !passifOuvert(config, j, ev)) return
   const p = passifDe(config, j)
   if (p === null) return
+  // L'OUVERTURE : sa cible touchée frappe `ouverture` taps, sans série ; une autre cible, rien.
+  if (ev.simple) {
+    if (cible !== 0) return
+    j.passif = { ...j.passif, etape: 1 }
+    frapperFort(config, e, j, p.ouverture, t, false)
+    return
+  }
   // LA RAFALE : chaque tap de la fenêtre compte (le rang), pas plus vite que `ecart` ; elle s'encaisse à sa fin.
   if (p.rafale !== undefined) {
     if (t > j.passif.fin || (j.passif.appui !== undefined && t - j.passif.appui < p.rafale.ecart)) return
@@ -867,6 +921,9 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
     case 'lancer':
       if (j !== undefined && CAPACITES.includes(action.capacite)) lancer(config, e, j, action.capacite, t)
       break
+    case 'geste':
+      if (j !== undefined) declencherLeGeste(config, j, t)
+      break
     case 'equiper':
       // CHANGER D'ARME MET SES CAPACITÉS EN RECHARGE (Keko : « pour éviter les
       // swaps d'abus ») : chacune repart de zéro, la Furie de zéro critique.
@@ -875,7 +932,7 @@ export function appliquer(config: ConfigDonjon, etat: EtatDonjon, action: Action
         // Une série en cours s'encaisse avant que l'arme change.
         encaisserLePassif(config, e, j, t, true)
         j.arme = action.arme
-        // Le passif repart vierge, celui de la nouvelle arme.
+        // Le geste repart vierge et déchargé, celui de la nouvelle arme (pas de swap d'abus ici non plus).
         j.passif = passifVierge()
         for (const cle of capacitesDe(config, j)) {
           const recharge = config.capacites[cle].recharge

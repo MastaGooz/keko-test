@@ -4,7 +4,8 @@
  * Chaque bot a son planning (son prochain geste) et son propre RNG seedé,
  * tenus HORS de l'état partagé : ce sont des clients, pas des règles. Un
  * passage : il dépense ses points, tape un coup à chaque fin de recharge
- * jusqu'à son compte (et lance chaque capacité dès qu'elle est prête), puis redépense ; entre deux passages, seul son
+ * jusqu'à son compte (et lance chaque capacité dès qu'elle est prête, son
+ * geste dès qu'il est chargé), puis redépense ; entre deux passages, seul son
  * auto-tap tourne (et c'est l'état partagé qui le résout). *Chaque tap est
  * un geste à son heure* : un passage ne joue jamais en avance sur le temps
  * qu'on lui donne (sinon l'état partagé partirait dans le futur et le tap
@@ -16,7 +17,7 @@
 import { createRng } from '../rng.ts'
 import { AMELIORATIONS, JOUR, type CleAmelioration, type ConfigDonjon, type ProfilBot } from './config.ts'
 import type { EtatPartage } from './partage.ts'
-import { capacitePrete, capacitesDe, chargeDe, ciblesDe, evenementA, passifDe, passifOuvert } from './regles.ts'
+import { capacitePrete, capacitesDe, chargeDe, ciblesDe, evenementA, gestePret, passifDe, passifOuvert } from './regles.ts'
 import type { EtatDonjon } from './types.ts'
 
 /** `restants` : les taps qu'il lui reste dans le passage en cours (0 ou absent : le prochain geste est un passage). */
@@ -111,20 +112,27 @@ export async function jouerLesBots(
     // Un tap, puis le suivant à la fin de la recharge ; ses capacités
     // partent dès qu'elles sont prêtes, au même instant.
     let etat = await partage.agir({ joueur: profil.id, t, type: 'taper', n: 1 })
-    const moi = etat.joueurs.find((x) => x.id === profil.id)
+    let moi = etat.joueurs.find((x) => x.id === profil.id)
     if (moi !== undefined) {
       for (const capacite of capacitesDe(config, moi)) {
         if (capacitePrete(config, moi, capacite, t)) etat = await partage.agir({ joueur: profil.id, t, type: 'lancer', capacite })
       }
-      // Son passif : un événement ouvert, il le réussit selon son adresse
-      // (une fonction de l'événement : il ne retente pas un raté).
+      // Son geste : chargé, il l'ouvre aussitôt, comme une capacité.
+      if (gestePret(config, moi, t)) {
+        etat = await partage.agir({ joueur: profil.id, t, type: 'geste' })
+        moi = etat.joueurs.find((x) => x.id === profil.id) ?? moi
+      }
+      // Un événement ouvert (le geste, ou une Ouverture) : il le réussit
+      // selon son adresse (une fonction de l'événement : il ne retente pas un raté).
       const ev = evenementA(config, etat.saison.seed, moi, t)
       if (ev !== null && passifOuvert(config, moi, ev) && reussit(profil, ev.k, ev.rang)) {
-        // L'Élan : il lâche au milieu de la zone.
         const p = passifDe(config, moi)
+        // L'Élan : il lâche au milieu de la zone.
         const lacher = p?.elan === undefined ? 0 : (chargeDe(p, ev.rang) * (p.elan.zone[0] + p.elan.zone[1])) / 2
+        // L'Ouverture : une cible, touchée tout de suite.
+        if (ev.simple) etat = await partage.agir({ joueur: profil.id, t, type: 'toucher', evenement: ev.k, cible: 0 })
         // La rafale : il tapote huit fois par seconde, toute la fenêtre (elle part de son premier tap).
-        if (p?.rafale !== undefined) for (let i = 0; i < Math.floor(p.duree / 125); i++) etat = await partage.agir({ joueur: profil.id, t: t + i * 125, type: 'toucher', evenement: ev.k, cible: 0 })
+        else if (p?.rafale !== undefined) for (let i = 0; i < Math.floor(p.duree / 125); i++) etat = await partage.agir({ joueur: profil.id, t: t + i * 125, type: 'toucher', evenement: ev.k, cible: 0 })
         else for (let cible = 0; cible < (p === null ? 0 : ciblesDe(p, ev.rang)); cible++) etat = await partage.agir({ joueur: profil.id, t: t + (cible === 1 ? lacher : 0), type: 'toucher', evenement: ev.k, cible })
       }
     }

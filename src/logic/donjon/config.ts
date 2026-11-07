@@ -67,22 +67,38 @@ export type Capacite = {
 }
 
 /**
- * LE PASSIF DE CLASSE (Keko : « un passif qui dépendrait de la classe d'arme,
+ * LE GESTE DE CLASSE (Keko : « un passif qui dépendrait de la classe d'arme,
  * le même pour tous les bâtons, qui change profondément le gameplay — faire
- * apparaître des choses à toucher sur l'ennemi »). UN TAP SUR `chance`
- * OUVRE UN ÉVÉNEMENT (Keko, 05/11 : « un % de chance à chaque tap pour tous,
- * avec un % qui dépend de l'effet/classe ») — le tap à la main seul, pas
- * l'auto ; aucun ne s'ouvre tant que le précédent n'est ni touché ni
- * expiré ; au `pitie`-ième tap sans, il s'ouvre à coup sûr. Il dure `duree`
- * ms ; on touche ses `cibles` dans l'ordre, et la dernière déclenche le
- * `coup` (en taps, critique forcé si `critique`). Il n'use pas la forme.
+ * apparaître des choses à toucher sur l'ennemi »). D'abord ouvert au hasard
+ * par un tap sur `chance` (Keko, 05/11), IL EST DEVENU UNE COMPÉTENCE ACTIVE
+ * (Keko, 07/11) : `taps` taps à la main le chargent, un bouton l'ouvre. Il
+ * dure `duree` ms ; on touche ses `cibles` dans l'ordre, et la dernière
+ * déclenche le `coup` (en taps, critique forcé si `critique`). Il n'use pas
+ * la forme. La chance par tap reste à L'OUVERTURE, le passif simple : une
+ * cible, un coup (`ouverture`) ; aucune ne s'ouvre tant qu'un événement
+ * reste à toucher ; au `pitie`-ième tap sans, elle s'ouvre à coup sûr.
  */
 export type Passif = {
   nom: string
-  /** La chance qu'un tap ouvre un événement (0 à 1). */
+  /**
+   * LE GESTE EST UNE COMPÉTENCE ACTIVE (Keko, 07/11 : « passer les
+   * déclenchements passifs en compétence active, plus fun quand on le
+   * déclenche soi-même ») : il se CHARGE de `taps` taps à la main (l'auto
+   * ne compte pas), puis un bouton l'ouvre quand on veut — l'événement
+   * est le même qu'avant, à la main près.
+   */
+  taps: number
+  /**
+   * L'OUVERTURE, le passif simple qui reste au hasard (Keko : « des formes
+   * plus simples pour les déclenchements passifs ») : un tap sur `chance`
+   * (0 à 1) fait apparaître UNE cible sur l'ennemi, `config.ouverture.duree`
+   * ms ; touchée, elle frappe `ouverture` taps, et c'est tout.
+   */
   chance: number
-  /** Le tap qui l'ouvre à coup sûr, compté depuis le dernier événement. */
+  /** Le tap qui ouvre une Ouverture à coup sûr, compté depuis la dernière. */
   pitie: number
+  /** Le coup de l'Ouverture, en taps. */
+  ouverture: number
   /**
    * LA RUNE (le bâton et la baguette) : ses cibles sont les points d'une rune
    * du catalogue (`runes.ts`), à relier d'un seul trait, dans l'ordre ; la
@@ -180,9 +196,13 @@ export type ProfilBot = {
  */
 const PROC_DE_TEST = 10
 
+/** La chance de l'Ouverture ×10 (au plus une sur deux), sa pitié ÷10, et la charge du geste ÷10 (deux taps au moins). */
 function pourLesTests(passifs: Record<ArmeAPassif, Passif>): Record<ArmeAPassif, Passif> {
   return Object.fromEntries(
-    Object.entries(passifs).map(([arme, p]) => [arme, { ...p, chance: Math.min(0.5, p.chance * PROC_DE_TEST), pitie: Math.max(2, Math.ceil(p.pitie / PROC_DE_TEST)) }]),
+    Object.entries(passifs).map(([arme, p]) => [
+      arme,
+      { ...p, chance: Math.min(0.5, p.chance * PROC_DE_TEST), pitie: Math.max(2, Math.ceil(p.pitie / PROC_DE_TEST)), taps: Math.max(2, Math.ceil(p.taps / PROC_DE_TEST)) },
+    ]),
   ) as Record<ArmeAPassif, Passif>
 }
 
@@ -399,27 +419,46 @@ export const DONJON = {
    * spam : l'arc et la fronde 2,4 %, l'arbalète 4 %), la pitié à trois fois
    * l'attente.
    */
+  /**
+   * LA CHARGE DU GESTE : `taps` = 1 ÷ l'ancienne chance par tap (l'épée 50,
+   * la dague 17, le bâton 33…) — au spam, le geste revient à la même cadence
+   * qu'avant, mais c'est le joueur qui l'ouvre. L'OUVERTURE : la chance et
+   * la pitié d'avant, et un coup de 0,1 ÷ chance (l'épée ×5, la dague ×2,
+   * les griffes ×7) : à chaque tap, elle rend un dixième de tap en moyenne,
+   * quelle que soit l'arme. Chiffres de moi, à rejuger.
+   */
   passifs: pourLesTests({
-    epee: { nom: 'Taille', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
-    deuxMains: { nom: 'Taille', chance: 0.04, pitie: 75, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
-    hache: { nom: 'Élan', chance: 0.022, pitie: 136, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
-    hacheDeuxMains: { nom: 'Élan', chance: 0.044, pitie: 68, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
-    dague: { nom: 'Points faibles', chance: 0.06, pitie: 50, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
-    lance: { nom: 'Points faibles', chance: 0.1, pitie: 30, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
-    massue: { nom: 'Fracas', chance: 0.04, pitie: 75, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
-    massueDeuxMains: { nom: 'Fracas', chance: 0.075, pitie: 40, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
-    marteau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
-    marteauDeuxMains: { nom: 'Fracas', chance: 0.0875, pitie: 34, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
-    fleau: { nom: 'Fracas', chance: 0.047, pitie: 64, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
-    rapiere: { nom: 'Points faibles', chance: 0.095, pitie: 32, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
-    baton: { nom: 'Runes', chance: 0.03, pitie: 100, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
-    griffes: { nom: 'Lacération', chance: 0.014, pitie: 214, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
-    fouet: { nom: 'Lacération', chance: 0.02, pitie: 150, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
-    arc: { nom: 'Visée', chance: 0.024, pitie: 125, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
-    arbalete: { nom: 'Visée', chance: 0.04, pitie: 75, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
-    fronde: { nom: 'Visée', chance: 0.024, pitie: 125, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
-    baguette: { nom: 'Runes', chance: 0.02, pitie: 150, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    epee: { nom: 'Taille', taps: 50, chance: 0.02, pitie: 150, ouverture: 5, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
+    deuxMains: { nom: 'Taille', taps: 25, chance: 0.04, pitie: 75, ouverture: 2, duree: 2 * SECONDE, cibles: 2, coup: 20, trait: true, serie: { entre: 0.65 * SECONDE, raccourci: 0.65 }, grace: 0.25 * SECONDE },
+    hache: { nom: 'Élan', taps: 45, chance: 0.022, pitie: 136, ouverture: 5, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
+    hacheDeuxMains: { nom: 'Élan', taps: 23, chance: 0.044, pitie: 68, ouverture: 2, duree: 2 * SECONDE, cibles: 2, coup: 20, centre: true, elan: { charge: 1 * SECONDE, zone: [0.72, 0.92] }, serie: { entre: 0.5 * SECONDE, raccourci: 0.75 }, grace: 0.1 * SECONDE, cumul: true, enUnCoup: true },
+    dague: { nom: 'Points faibles', taps: 17, chance: 0.06, pitie: 50, ouverture: 2, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
+    lance: { nom: 'Points faibles', taps: 10, chance: 0.1, pitie: 30, ouverture: 1, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
+    massue: { nom: 'Fracas', taps: 25, chance: 0.04, pitie: 75, ouverture: 2, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    massueDeuxMains: { nom: 'Fracas', taps: 13, chance: 0.075, pitie: 40, ouverture: 1, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    marteau: { nom: 'Fracas', taps: 21, chance: 0.047, pitie: 64, ouverture: 2, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    marteauDeuxMains: { nom: 'Fracas', taps: 11, chance: 0.0875, pitie: 34, ouverture: 1, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    fleau: { nom: 'Fracas', taps: 21, chance: 0.047, pitie: 64, ouverture: 2, duree: 1.3 * SECONDE, cibles: 1, coup: 5, serie: { entre: 0.3 * SECONDE, raccourci: 0.7 }, cumul: true, zone: 0.19, centre: true, enUnCoup: true },
+    rapiere: { nom: 'Points faibles', taps: 11, chance: 0.095, pitie: 32, ouverture: 1, duree: 1 * SECONDE, cibles: 1, coup: 3, critique: true, serie: { entre: 0.12 * SECONDE, raccourci: 0.55 }, grace: 0.25 * SECONDE, cumul: true },
+    baton: { nom: 'Runes', taps: 33, chance: 0.03, pitie: 100, ouverture: 3, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    griffes: { nom: 'Lacération', taps: 71, chance: 0.014, pitie: 214, ouverture: 7, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
+    fouet: { nom: 'Lacération', taps: 50, chance: 0.02, pitie: 150, ouverture: 5, duree: 2 * SECONDE, cibles: 1, coup: 1, centre: true, rafale: { ecart: 50, attente: 1.5 * SECONDE }, cumul: true },
+    arc: { nom: 'Visée', taps: 42, chance: 0.024, pitie: 125, ouverture: 4, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    arbalete: { nom: 'Visée', taps: 25, chance: 0.04, pitie: 75, ouverture: 2, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    fronde: { nom: 'Visée', taps: 42, chance: 0.024, pitie: 125, ouverture: 4, duree: 3 * SECONDE, cibles: 1, coup: 20, visee: { traversee: 1.4 * SECONDE, rayon: 0.1 }, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
+    baguette: { nom: 'Runes', taps: 50, chance: 0.02, pitie: 150, ouverture: 5, duree: 2.5 * SECONDE, cibles: 3, coup: 20, rune: true, serie: { entre: 0.5 * SECONDE, raccourci: 0.85 }, grace: 0.25 * SECONDE, cumul: true, enUnCoup: true },
   } as Record<ArmeAPassif, Passif>),
+
+  /**
+   * L'OUVERTURE, le passif simple de toutes les classes (Keko, 07/11 : « des
+   * formes plus simples pour les déclenchements passifs ») : une cible sur
+   * le corps, `duree` ms pour la toucher, un coup (`ouverture` du passif de
+   * l'arme). Sans série, sans grâce, sans cumul.
+   */
+  ouverture: {
+    nom: 'Ouverture',
+    duree: 1.2 * SECONDE,
+  },
 
   /**
    * LE POOL DES CAPACITÉS (Keko, 04/11 : « je valide tout »), chiffres de moi.

@@ -71,6 +71,47 @@ cinquième joueur à côté des quatre bots.
   ×1000, et la rouvrir rattrape tout (bots compris, à l'heure de chacun de
   leurs passages).
 
+- **LE GESTE DEVIENT UNE COMPÉTENCE ACTIVE, ET LE PASSIF SE SIMPLIFIE** (Keko,
+  07/11 : « on va passer les déclenchements passifs en compétence active,
+  plus fun quand on le déclenche soi-même, et on va créer des formes plus
+  simples pour les déclenchements passifs »). Ce qu'on appelait le passif —
+  la Taille, l'Élan, les Points faibles, le Fracas, la Lacération, la
+  Visée, les Runes — s'appelle maintenant LE GESTE, et c'est le joueur qui
+  l'ouvre :
+  - *La charge* : chaque tap à la main (jamais l'auto) le charge d'un cran,
+    jusqu'à `taps` (`config.passifs`) ; `taps` = 1 ÷ l'ancienne chance par
+    tap (l'épée 50, l'épée à deux mains 25, les haches 45 et 23, la dague
+    17, la lance 10, les massues 25 et 13, les marteaux 21 et 11, le fléau
+    21, la rapière 11, le bâton 33, les griffes 71, le fouet 50, l'arc et la
+    fronde 42, l'arbalète 25, la baguette 50) : au spam, le geste revient à la
+    même cadence qu'avant, mais à l'instant choisi. Les taps chargent aussi
+    pendant un geste ouvert ; changer d'arme décharge (comme les capacités,
+    pas de swap d'abus). L'action `geste` (`declencherLeGeste`, `gestePret`,
+    `chargeDuGeste`) ouvre le même événement qu'ouvrait le hasard, charge à
+    zéro ; refusée tant qu'un geste reste à toucher. Les bots l'ouvrent dès
+    qu'il est chargé, comme une capacité.
+  - *L'écran* : UN BOUTON-BARRE sous l'attaque (`.donjon-geste`, 20 rem au
+    plus, 2,6 rem de haut), en ardoise, que l'or remplit de gauche à droite
+    avec la charge ; l'icône du geste, son nom, « 12 / 50 » puis « Prêt » ;
+    plein, il brille et bat comme une capacité en effet ; pas chargé, il
+    tremble et son icône se grise. L'appui long montre sa bulle. Il n'est
+    pas sur la ligne de l'attaque : les deux capacités y prennent toute la
+    largeur d'un téléphone. La fiche d'arme a une section « Geste » (… « se
+    charge en N taps à la main ») et une section « Passif ».
+  - *L'OUVERTURE, le passif simple* (`config.ouverture`) : la chance par tap
+    et la pitié d'avant restent, mais elles n'ouvrent plus qu'UNE CIBLE d'or
+    sur le corps de l'ennemi, 1,2 s (`simple: true` sur l'événement, une
+    cible tirée comme un Point faible), la même pour toutes les classes ;
+    touchée, elle frappe `ouverture` taps (0,1 ÷ chance, arrondi : l'épée
+    ×5, la dague ×2, la lance ×1, les griffes ×7 — à chaque tap, un dixième
+    de tap en moyenne, quelle que soit l'arme) ; passée, rien. Sans série,
+    sans grâce, sans cumul, jamais de critique forcé. Aucune ne s'ouvre tant
+    qu'un événement reste à toucher ; un geste chargé s'ouvre par-dessus une
+    Ouverture ouverte. L'icône est l'œil des Points faibles, en attendant la
+    sienne. `PROC_DE_TEST` divise aussi la charge par dix.
+  - Une sauvegarde d'avant repart déchargée (`charge: 0`). Chiffres de moi,
+    à rejuger.
+
 ## L'écran
 
 **Première version (02/11)** : un gros bouton « Attaquer », trois onglets

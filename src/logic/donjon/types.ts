@@ -48,15 +48,17 @@ export type Joueur = {
   /** Les effets en cours, jusqu'à cet instant inclus : Brise-garde, Lames de l'ombre. */
   effets: Partial<Record<CleCapacite, number>>
   /**
-   * Le passif de classe : le dernier événement ouvert (son numéro, -1 :
-   * aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 : raté —, les
-   * taps sans événement depuis (la pitié) et, en série, les réussites qui
-   * l'ont précédé dans le même événement (`rang`) ; `appui` : l'instant où
-   * le doigt s'est posé (l'Élan) ; `dernier` : la dernière
-   * série encaissée d'un passif à cumul (l'écran en joue la frappe, un
-   * chiffre par coup : `detail`).
+   * Le geste de classe et son passif : le dernier événement ouvert (son
+   * numéro, -1 : aucun), sa fenêtre, l'étape — les cibles touchées, ou -1 :
+   * raté —, `simple` s'il est une Ouverture (le passif) plutôt que le geste ;
+   * `charge` : les taps à la main qui chargent le geste depuis le dernier
+   * (plafonnés à ce qu'il demande) ; `sans` : les taps sans Ouverture
+   * depuis la dernière (la pitié) ; en série, les réussites qui ont précédé
+   * dans le même événement (`rang`) ; `appui` : l'instant où le doigt s'est
+   * posé (l'Élan) ; `dernier` : la dernière série encaissée d'un geste à
+   * cumul (l'écran en joue la frappe, un chiffre par coup : `detail`).
    */
-  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; rang: number; dernier?: { evenement: number; coups: number; degats: number; detail?: number[] }; appui?: number }
+  passif: { evenement: number; etape: number; debut: number; fin: number; sans: number; charge: number; rang: number; simple?: boolean; dernier?: { evenement: number; coups: number; degats: number; detail?: number[] }; appui?: number }
   bonus: BonusPermanents
 }
 
@@ -122,5 +124,6 @@ export type Action = { joueur: string; t: number } & (
   | { type: 'taper'; n: number }
   | { type: 'acheter'; quoi: CleAmelioration }
   | { type: 'lancer'; capacite: CleCapacite }
+  | { type: 'geste' }
   | { type: 'toucher'; evenement: number; cible: number }
 )

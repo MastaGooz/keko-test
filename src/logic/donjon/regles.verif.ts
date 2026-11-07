@@ -5,7 +5,7 @@
 import { DONJON, type ConfigDonjon } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, passifDe, toleranceDe, chargeDe, ciblesDe, positionDeLaVisee, type EvenementDuPassif } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, gestePret, passifDe, toleranceDe, chargeDe, ciblesDe, positionDeLaVisee, type EvenementDuPassif } from './regles.ts'
 import { RUNES } from './runes.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
@@ -202,29 +202,63 @@ verifier('elles reviennent après leur recharge', capacitePrete(C, change.joueur
 const versDague = appliquer(C, d, { joueur: 'a', t: d.t, type: 'equiper', arme: 'epee' })
 verifier('passer à la dague repart de zéro critique', appliquer(C, versDague, { joueur: 'a', t: d.t, type: 'equiper', arme: 'dague' }).joueurs[0].critiques === 0)
 verifier("remettre la même arme ne recharge rien", capacitePrete(C, appliquer(C, c0, { joueur: 'a', t: 1000, type: 'equiper', arme: 'epee' }).joueurs[0], 'frappeLourde', 1000))
-// LES PASSIFS DE CLASSE : un tap a une chance d'ouvrir un événement, à toucher dans sa fenêtre, dans l'ordre.
-/** Tape à chaque fin de recharge jusqu'à ouvrir un événement du passif. */
+// LE GESTE DE CLASSE, UNE COMPÉTENCE ACTIVE (07/11) : les taps à la main le chargent, une action l'ouvre ; on touche ses cibles dans sa fenêtre, dans l'ordre.
+/** Tape à chaque fin de recharge jusqu'à charger le geste, puis l'ouvre. */
 function jusquAuPassif(config: ConfigDonjon, x: EtatDonjon): { etat: EtatDonjon; ev: EvenementDuPassif; taps: number } {
   let t = x.t
   for (let taps = 1; taps <= 1000; taps++) {
     x = appliquer(config, x, { joueur: 'a', t, type: 'taper', n: 1 })
-    const ev = evenementA(config, x.saison.seed, x.joueurs[0], t)
-    if (ev !== null) return { etat: x, ev, taps }
+    if (gestePret(config, x.joueurs[0], t)) {
+      x = appliquer(config, x, { joueur: 'a', t, type: 'geste' })
+      const ev = evenementA(config, x.saison.seed, x.joueurs[0], t)
+      if (ev === null || ev.simple) throw new Error("le geste chargé ne s'est pas ouvert")
+      return { etat: x, ev, taps }
+    }
     t = x.joueurs[0].prochainTap
   }
-  throw new Error('aucun événement de passif')
+  throw new Error('le geste ne se charge pas')
 }
-const { etat: ouvert, ev: ev0 } = jusquAuPassif(C, c0)
+/** Tape à chaque fin de recharge jusqu'à ce qu'une Ouverture (le passif) s'offre. */
+function jusquALOuverture(config: ConfigDonjon, x: EtatDonjon): { etat: EtatDonjon; ev: EvenementDuPassif; taps: number } {
+  let t = x.t
+  for (let taps = 1; taps <= 1000; taps++) {
+    x = appliquer(config, x, { joueur: 'a', t, type: 'taper', n: 1 })
+    const ev = evenementA(config, x.saison.seed, x.joueurs[0], t)
+    if (ev !== null && ev.simple) return { etat: x, ev, taps }
+    t = x.joueurs[0].prochainTap
+  }
+  throw new Error('aucune Ouverture')
+}
+verifier('le geste pas chargé ne part pas', appliquer(C, c0, { joueur: 'a', t: 0, type: 'geste' }).joueurs[0].passif.evenement === -1 && !gestePret(C, jc, 0))
+const { etat: ouvert, ev: ev0, taps: tapsDeCharge } = jusquAuPassif(C, c0)
 const auMilieu = (ev0.debut + ev0.fin) / 2
-verifier("un tap ouvre l'événement, pour sa durée", ev0.debut === ouvert.t && ev0.fin === ev0.debut + C.passifs.epee.duree)
+verifier(`${C.passifs.epee.taps} taps à la main chargent le geste`, tapsDeCharge === C.passifs.epee.taps)
+verifier('ouvert, le geste a tout déchargé', ouvert.joueurs[0].passif.charge === 0 && ouvert.joueurs[0].passif.simple === false)
+verifier("le geste ouvre l'événement à l'instant, pour sa durée", ev0.debut === ouvert.t && ev0.fin === ev0.debut + C.passifs.epee.duree && !ev0.simple)
 verifier("l'événement est le même lu deux fois", JSON.stringify(ev0) === JSON.stringify(evenementA(C, ouvert.saison.seed, ouvert.joueurs[0], auMilieu)))
 verifier('ouvert dans sa fenêtre, fermé après', evenementA(C, ouvert.saison.seed, ouvert.joueurs[0], auMilieu)?.k === ev0.k && evenementA(C, ouvert.saison.seed, ouvert.joueurs[0], ev0.fin + 1) === null)
 verifier("l'auto n'ouvre rien", evenementA(C, c0.saison.seed, avancer(C, c0, H).joueurs[0], H) === null && avancer(C, c0, H).joueurs[0].passif.evenement === -1)
 let bloque = ouvert
 for (let t = ouvert.joueurs[0].prochainTap; t < ev0.fin; t = bloque.joueurs[0].prochainTap) bloque = appliquer(C, bloque, { joueur: 'a', t, type: 'taper', n: 1 })
 verifier('un événement ouvert bloque le suivant', bloque.joueurs[0].passif.evenement === ev0.k && bloque.joueurs[0].passif.debut === ev0.debut)
+verifier('pendant le geste, les taps rechargent déjà', bloque.joueurs[0].passif.charge > 0)
+const rechargeEnPlein = { ...ouvert, joueurs: [{ ...ouvert.joueurs[0], passif: { ...ouvert.joueurs[0].passif, charge: C.passifs.epee.taps } }] }
+verifier("chargé, le geste n'en ouvre pas un second tant que le premier reste à toucher", !gestePret(C, rechargeEnPlein.joueurs[0], auMilieu) && appliquer(C, rechargeEnPlein, { joueur: 'a', t: auMilieu, type: 'geste' }).joueurs[0].passif.evenement === ev0.k)
+// L'OUVERTURE, le passif simple : un tap sur `chance` l'offre, une cible, un coup.
 const sansChance = { ...C, passifs: { ...C.passifs, epee: { ...C.passifs.epee, chance: 0 } } }
-verifier(`la pitié : sans chance, le ${C.passifs.epee.pitie}e tap l'ouvre`, jusquAuPassif(sansChance, c0).taps === C.passifs.epee.pitie)
+const { etat: ou, ev: evO, taps: tapsAvantOuverture } = jusquALOuverture(sansChance, c0)
+verifier(`la pitié : sans chance, le ${C.passifs.epee.pitie}e tap offre une Ouverture`, tapsAvantOuverture === C.passifs.epee.pitie)
+verifier("l'Ouverture : une cible sur le corps, pour sa durée", evO.simple && evO.cibles.length === 1 && evO.cibles[0].x > 0.2 && evO.cibles[0].x < 0.8 && evO.fin - evO.debut === C.ouverture.duree)
+const ouTouchee = appliquer(sansChance, ou, { joueur: 'a', t: evO.debut + 300, type: 'toucher', evenement: evO.k, cible: 0 })
+verifier(`touchée, elle frappe ×${C.passifs.epee.ouverture}`, ouTouchee.joueurs[0].degatsTap - ou.joueurs[0].degatsTap >= degatsDuTap(C, jc) * C.passifs.epee.ouverture * (1 - C.tap.ecart) - 1 && ouTouchee.joueurs[0].passif.etape === 1)
+verifier('une seule fois', appliquer(sansChance, ouTouchee, { joueur: 'a', t: evO.debut + 400, type: 'toucher', evenement: evO.k, cible: 0 }).joueurs[0].degatsTap === ouTouchee.joueurs[0].degatsTap)
+verifier("l'Ouverture n'a pas de série : touchée, rien ne se rouvre", ouTouchee.joueurs[0].passif.rang === 0 && ouTouchee.joueurs[0].passif.debut === evO.debut && evenementA(sansChance, ouTouchee.saison.seed, ouTouchee.joueurs[0], evO.fin + 1) === null)
+verifier('passée, rien', appliquer(sansChance, ou, { joueur: 'a', t: evO.fin + 1, type: 'toucher', evenement: evO.k, cible: 0 }).joueurs[0].degatsTap === ou.joueurs[0].degatsTap)
+verifier("l'Ouverture ne charge pas le geste de plus que le tap", ou.joueurs[0].passif.charge === Math.min(C.passifs.epee.taps, tapsAvantOuverture))
+const chargeSousOuverture = { ...ou, joueurs: [{ ...ou.joueurs[0], passif: { ...ou.joueurs[0].passif, charge: C.passifs.epee.taps } }] }
+const parDessus = appliquer(sansChance, chargeSousOuverture, { joueur: 'a', t: evO.debut + 100, type: 'geste' })
+verifier("le geste chargé s'ouvre par-dessus une Ouverture", gestePret(C, chargeSousOuverture.joueurs[0], evO.debut + 100) && parDessus.joueurs[0].passif.evenement === evO.k + 1 && parDessus.joueurs[0].passif.simple === false)
+verifier("l'auto n'offre pas d'Ouverture non plus", avancer(C, c0, H).joueurs[0].passif.evenement === -1 && avancer(C, c0, H).joueurs[0].passif.charge === 0)
 /** Tracer le trait de la Taille : ses deux bouts, dans l'ordre (ou à l'envers). */
 const tracer = (x: EtatDonjon, t: number, envers = false) =>
   appliquer(C, appliquer(C, x, { joueur: 'a', t, type: 'toucher', evenement: ev0.k, cible: envers ? 1 : 0 }), { joueur: 'a', t, type: 'toucher', evenement: ev0.k, cible: envers ? 0 : 1 })

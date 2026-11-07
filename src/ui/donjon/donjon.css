@@ -637,6 +637,94 @@
   filter: grayscale(1) brightness(0.75) drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre));
 }
 
+/* LE BOUTON DU GESTE (Keko, 07/11 : la compétence active) : une barre sous
+   l'attaque, en ardoise, que l'or remplit de gauche à droite à chaque tap à
+   la main ; pleine, elle brille et bat ; l'icône du geste à gauche, son nom
+   au milieu, la charge à droite. */
+.donjon .donjon-geste {
+  -webkit-touch-callout: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  width: min(20rem, 100%);
+  height: 2.6rem;
+  flex-shrink: 0;
+  margin-top: -0.3rem;
+  padding: 0 0.8rem 0 0.35rem;
+  border: none;
+  border-radius: 999px;
+  background: radial-gradient(circle at 38% 28%, #767b83, #4b4f56 55%, #2e3136);
+  color: var(--d-doux) !important;
+  font-family: var(--d-titre);
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.3),
+    0 0.25rem 0.6rem rgba(0, 0, 0, 0.5);
+}
+
+.donjon .donjon-geste[hidden] {
+  display: none;
+}
+
+/* La charge : l'or de l'attaque, découpé à droite (`clip-path`, posé à chaque image). */
+.donjon-geste-charge {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 38% 28%, #f8d98a, var(--d-or) 55%, #a5762a);
+  clip-path: inset(0 100% 0 0);
+  pointer-events: none;
+}
+
+.donjon .donjon-geste.prete {
+  color: var(--d-encre) !important;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -4px 0 rgba(61, 39, 22, 0.35),
+    0 0 0 2px #fff3cf,
+    0 0 0.9rem rgba(255, 214, 120, 0.7);
+  animation: donjon-capacite-active 0.7s ease-in-out infinite alternate;
+}
+
+.donjon .donjon-geste:active {
+  transform: scale(0.97);
+}
+
+.donjon-geste-dessin {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px var(--d-encre)) drop-shadow(0 0 1px var(--d-encre));
+  pointer-events: none;
+}
+
+/* Pas chargé, l'illustration se grise, comme une capacité en recharge. */
+.donjon .donjon-geste.en-recharge .donjon-geste-dessin {
+  filter: grayscale(1) brightness(0.8) drop-shadow(0 0 1px var(--d-encre));
+}
+
+.donjon-geste-nom {
+  position: relative;
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.donjon-geste-compte {
+  position: relative;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* LES CIBLES DU PASSIF, sur l'ennemi : au-dessus du portrait, sous les chiffres — et au-dessus du noir et
    de l'éclair de la Taille : le trait suivant d'une série s'ouvre pendant que l'éclair s'éteint, et il est
    court (Keko : « quand je réussis le Fabuleux, rien ne se lance derrière » — il était dessous). */
@@ -671,6 +759,14 @@
   transform: scale(calc(1 + var(--reste, 1) * 0.9));
   opacity: calc(0.25 + var(--reste, 1) * 0.6);
   pointer-events: none;
+}
+
+/* L'OUVERTURE, le passif de toutes les classes : une cible d'or, cœur clair, qui bat doucement. */
+.donjon .donjon-cible.ouverture {
+  color: #fff3cf !important;
+  background: radial-gradient(circle, #fff8e1 0 18%, #ffd36e 30%, #b07a1f 62%, rgba(176, 122, 31, 0) 72%);
+  box-shadow: 0 0 1rem rgba(255, 210, 110, 0.85);
+  animation: donjon-cible-bat 0.5s ease-in-out infinite alternate;
 }
 
 /* La dague : un point faible, cœur rouge vif. */
