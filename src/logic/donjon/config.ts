@@ -464,6 +464,14 @@ export const DONJON = {
   ouverture: {
     nom: 'Ouverture',
     duree: 1.2 * SECONDE,
+    /**
+     * L'OUVERTURE PARFAITE (Keko, 07/11 : « quand le joueur clique pile au
+     * dernier moment, quand le cercle se superpose au bord du rond, l'effet
+     * est décuplé ») : touchée dans les `fenetre` dernières ms (l'anneau du
+     * temps sur le bord du rond), le coup est multiplié par `fois`. Dix,
+     * comme Keko l'a dit ; à rejuger.
+     */
+    parfaite: { fenetre: 180, fois: 10 },
   },
 
   /**

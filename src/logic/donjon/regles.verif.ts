@@ -5,7 +5,7 @@
 import { DONJON, type ConfigDonjon } from './config.ts'
 import { nomDeLEnnemi, pvDeLEtage } from './ennemi.ts'
 import { changerDeVitesse, nouvelleHorloge, tempsDeJeu } from './horloge.ts'
-import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, gestePret, passifDe, toleranceDe, chargeDe, ciblesDe, positionDeLaVisee, type EvenementDuPassif } from './regles.ts'
+import { appliquer, autoCritique, avancer, chanceCritDe, degatsDuCoupAuto, degatsDuTap, dpsDe, bornesDeLaForme, dpsDeSpam, etatInitial, rechargeDe, multCritDe as forceDe, facteurCritMoyen, formeA, multCritDe, multiplicateurDeForme, periodeDe, reposMaxDe, degatsDuCoupAutoA, bonusDeForme, capacitesDe, capacitePrete, evenementA, gestePret, ouvertureParfaite, passifDe, toleranceDe, chargeDe, ciblesDe, positionDeLaVisee, type EvenementDuPassif } from './regles.ts'
 import { RUNES } from './runes.ts'
 import { simulerSaison } from './simulation.ts'
 import type { EtatDonjon } from './types.ts'
@@ -256,6 +256,11 @@ verifier("l'Ouverture : une cible sur le corps, pour sa durée", evO.simple && e
 const ouTouchee = appliquer(sansChance, ou, { joueur: 'a', t: evO.debut + 300, type: 'toucher', evenement: evO.k, cible: 0 })
 verifier(`touchée, elle frappe ×${C.passifs.epee.ouverture}`, ouTouchee.joueurs[0].degatsTap - ou.joueurs[0].degatsTap >= degatsDuTap(C, jc) * C.passifs.epee.ouverture * (1 - C.tap.ecart) - 1 && ouTouchee.joueurs[0].passif.etape === 1)
 verifier('une seule fois', appliquer(sansChance, ouTouchee, { joueur: 'a', t: evO.debut + 400, type: 'toucher', evenement: evO.k, cible: 0 }).joueurs[0].degatsTap === ouTouchee.joueurs[0].degatsTap)
+verifier("touchée tôt, pas plus qu'un coup ordinaire (critique compris)", ouTouchee.joueurs[0].degatsTap - ou.joueurs[0].degatsTap <= degatsDuTap(C, jc) * C.passifs.epee.ouverture * (1 + C.tap.ecart) * multCritDe(C, jc) + 1)
+const PARF = C.ouverture.parfaite
+const ouParfaite = appliquer(sansChance, ou, { joueur: 'a', t: evO.fin - PARF.fenetre / 2, type: 'toucher', evenement: evO.k, cible: 0 })
+verifier(`parfaite (les ${PARF.fenetre} dernières ms) : le coup ×${PARF.fois}`, ouvertureParfaite(C, evO, evO.fin - PARF.fenetre / 2) && !ouvertureParfaite(C, evO, evO.fin - PARF.fenetre - 1) && !ouvertureParfaite(C, evO, evO.fin + 1) && ouParfaite.joueurs[0].degatsTap - ou.joueurs[0].degatsTap >= degatsDuTap(C, jc) * C.passifs.epee.ouverture * PARF.fois * (1 - C.tap.ecart) - 1)
+verifier('parfaite à la toute dernière ms aussi', appliquer(sansChance, ou, { joueur: 'a', t: evO.fin, type: 'toucher', evenement: evO.k, cible: 0 }).joueurs[0].degatsTap - ou.joueurs[0].degatsTap >= degatsDuTap(C, jc) * C.passifs.epee.ouverture * PARF.fois * (1 - C.tap.ecart) - 1)
 verifier("l'Ouverture n'a pas de série : touchée, rien ne se rouvre", ouTouchee.joueurs[0].passif.rang === 0 && ouTouchee.joueurs[0].passif.debut === evO.debut && evenementA(sansChance, ouTouchee.saison.seed, ouTouchee.joueurs[0], evO.fin + 1) === null)
 verifier('passée, rien', appliquer(sansChance, ou, { joueur: 'a', t: evO.fin + 1, type: 'toucher', evenement: evO.k, cible: 0 }).joueurs[0].degatsTap === ou.joueurs[0].degatsTap)
 verifier("l'Ouverture ne charge pas le geste de plus que le tap", ou.joueurs[0].passif.charge === Math.min(C.passifs.epee.taps, tapsAvantOuverture))

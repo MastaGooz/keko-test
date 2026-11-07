@@ -408,6 +408,11 @@ export function ciblesDe(p: Passif, rang: number, simple = false): number {
   return p.rune === true ? Math.min(POINTS_MAX, p.cibles + rang) : p.cibles
 }
 
+/** L'instant t est-il dans la fenêtre PARFAITE d'une Ouverture : ses dernières ms, l'anneau du temps sur le bord du rond ? */
+export function ouvertureParfaite(config: ConfigDonjon, ev: { fin: number }, t: number): boolean {
+  return t <= ev.fin && ev.fin - t <= config.ouverture.parfaite.fenetre
+}
+
 /** Où en est ce joueur dans l'événement k : les cibles touchées, ou -1 s'il l'a raté. */
 export function etapeDuPassif(j: Joueur, k: number): number {
   return j.passif.evenement === k ? j.passif.etape : 0
@@ -808,10 +813,11 @@ function toucher(config: ConfigDonjon, e: EtatDonjon, j: Joueur, k: number, cibl
   const p = passifDe(config, j)
   if (p === null) return
   // L'OUVERTURE : sa cible touchée frappe `ouverture` taps, sans série ; une autre cible, rien.
+  // PARFAITE (touchée dans les dernières ms, l'anneau sur le bord du rond) : le coup est multiplié.
   if (ev.simple) {
     if (cible !== 0) return
     j.passif = { ...j.passif, etape: 1 }
-    frapperFort(config, e, j, p.ouverture, t, false)
+    frapperFort(config, e, j, p.ouverture * (ouvertureParfaite(config, ev, t) ? config.ouverture.parfaite.fois : 1), t, false)
     return
   }
   // LA RAFALE : chaque tap de la fenêtre compte (le rang), pas plus vite que `ecart` ; elle s'encaisse à sa fin.

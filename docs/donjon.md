@@ -130,6 +130,16 @@ cinquième joueur à côté des quatre bots.
     d'une onde ronde), `toucherLePassif(…, frappeIci)` le joue au rond et
     y fait jaillir le chiffre ; la massue, elle, cogne au centre comme
     toujours (la règle de Keko), le chiffre reste sur la cible.
+  - **L'OUVERTURE PARFAITE** (Keko : « quand le joueur clique pile au
+    dernier moment, quand le cercle se superpose au bord du rond, l'effet
+    est décuplé ») : touchée dans les 180 dernières ms de sa fenêtre
+    (`config.ouverture.parfaite`, `ouvertureParfaite`), le coup est ×10
+    (l'épée : ×50 au lieu de ×5) — dix, comme Keko l'a dit, à rejuger ; les
+    règles jugent à l'instant du doigt (`instantDu`), pas du traitement.
+    À l'écran, l'anneau vire à l'or et s'épaissit pendant la fenêtre ; réussi,
+    le rond s'allume d'or, « Fabuleux ! » salue, et le chiffre dit
+    « Ouverture parfaite ». Les bots touchent dès l'ouverture : jamais
+    parfaits.
 
 ## L'écran
 

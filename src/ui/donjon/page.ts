@@ -46,6 +46,7 @@ import {
   etapeDuPassif,
   evenementTouchable,
   gestePret,
+  ouvertureParfaite,
   chargeDuGeste,
   toleranceDe,
   chargeDe,
@@ -303,7 +304,7 @@ const IMAGE_DU_PASSIF: Record<ArmeAPassif, string> = {
  */
 function effetDeLOuverture(arme: ArmeAPassif): string {
   const p = C.passifs[arme]
-  return `À chaque tap, ${Math.round(1000 * p.chance) / 10} % de chance qu'une ouverture s'offre sur l'ennemi pendant ${C.ouverture.duree / 1000} s : touchez-la, elle frappe ×${p.ouverture} ; au plus tard au ${p.pitie}e tap`
+  return `À chaque tap, ${Math.round(1000 * p.chance) / 10} % de chance qu'une ouverture s'offre sur l'ennemi pendant ${C.ouverture.duree / 1000} s : touchez-la, elle frappe ×${p.ouverture} — pile quand l'anneau touche le bord du rond, ×${p.ouverture * C.ouverture.parfaite.fois} ; au plus tard au ${p.pitie}e tap`
 }
 
 /** L'Ouverture emprunte l'œil des Points faibles en attendant son icône. */
@@ -4003,7 +4004,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         e.stopPropagation()
         if (!pointsEnJeu.delete(cle)) return
         // Le coup de l'arme tombe SUR LA CIBLE, et le chiffre y jaillit (Keko).
-        toucherLePassif(ev.k, 0, n!, [parseFloat(n!.style.left), parseFloat(n!.style.top)], 0, undefined, true)
+        // L'instant du doigt, pas celui du traitement : la fenêtre parfaite se joue à la ms.
+        const quand = Math.min(instantDu(e), maintenant())
+        if (ouvertureParfaite(C, ev, quand)) {
+          n!.classList.add('atteint')
+          apprecier(3)
+        }
+        toucherLePassif(ev.k, 0, n!, [parseFloat(n!.style.left), parseFloat(n!.style.top)], 0, quand, true)
       })
       couchePassif.append(n)
       ciblesVues.set(cle, n)
@@ -4015,6 +4022,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     n.style.left = `${px}px`
     n.style.top = `${py}px`
     n.style.setProperty('--reste', Math.max(0, Math.min(1, (ev.fin - t) / Math.max(1, ev.fin - ev.debut))).toFixed(3))
+    // LA FENÊTRE PARFAITE (Keko : « pile au dernier moment, quand le cercle se superpose au bord du rond ») : l'anneau vire à l'or.
+    n.classList.toggle('juste', ouvertureParfaite(C, ev, t))
   }
 
   /** À chaque image : les cibles de l'événement ouvert, à leur place, avec leur temps qui reste. */
@@ -4106,8 +4115,9 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const etape = etapeDuPassif(avant, k)
     // Une Ouverture (le passif) : son coup à elle, son nom, jamais de critique forcé.
     const simple = avant.passif.evenement === k && avant.passif.simple === true
+    const parfaite = simple && ouvertureParfaite(C, avant.passif, t)
     const mult = multiplicateurDeForme(C, avant, formeA(C, avant, t))
-    const attendu = degatsDuTap(C, avant) * (simple ? p.ouverture : p.coup) * mult * (1 + bonusDEffetsA(C, avant, t))
+    const attendu = degatsDuTap(C, avant) * (simple ? p.ouverture * (parfaite ? C.ouverture.parfaite.fois : 1) : p.coup) * mult * (1 + bonusDEffetsA(C, avant, t))
     const dejaInfliges = avant.degatsTap
     if (n !== null && cible !== etape) n.classList.add('ratee')
     void partage.agir({ joueur: MOI, t, type: 'toucher', evenement: k, cible }).then(() => {
@@ -4125,7 +4135,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
           pvRetenus = inflige
           retenusJusqua = au
           setTimeout(() => envoler(x, y, inflige, genre, couleur, p.nom), attente)
-        } else envoler(x, y, inflige, genre, couleur, simple ? C.ouverture.nom : p.nom === 'Points faibles' ? 'Point faible' : p.nom)
+        } else envoler(x, y, inflige, genre, couleur, simple ? (parfaite ? 'Ouverture parfaite' : C.ouverture.nom) : p.nom === 'Points faibles' ? 'Point faible' : p.nom)
       }
       dessiner()
     })

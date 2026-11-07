@@ -673,7 +673,16 @@
   pointer-events: none;
 }
 
-/* L'OUVERTURE, le passif de toutes les classes, a le rond net des Points faibles (`.trait.point-faible`, Keko). */
+/* L'OUVERTURE, le passif de toutes les classes, a le rond net des Points faibles (`.trait.point-faible`, Keko).
+   Dans sa fenêtre PARFAITE (les dernières ms, l'anneau sur le bord du rond), l'anneau vire à l'or et s'épaissit :
+   c'est le moment (Keko : « pile au dernier moment, l'effet décuplé »). */
+.donjon .donjon-cible.ouverture.juste::after {
+  border-color: #ffd27a;
+  border-width: 0.28rem;
+  box-shadow:
+    0 0 0.6rem rgba(255, 214, 130, 1),
+    inset 0 0 0.4rem rgba(255, 214, 130, 0.8);
+}
 
 /* La dague : un point faible, cœur rouge vif. */
 .donjon .donjon-cible.point {
