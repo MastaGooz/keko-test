@@ -2,30 +2,33 @@
  * LA COMMANDE ACTION — `?commande`, un side project (Keko, 07/11 : « un jeu à
  * commande action (style Paper Mario), ça se fait ? » puis « vas-y, fais un
  * proto »). Un combat au tour par tour où le bon geste au bon moment change
- * le coup :
+ * le coup ; pendant le tour de l'ennemi, une tape juste avant le coup PARE
+ * (un dégât de moins) ; plus juste encore, la parade est PARFAITE (aucun
+ * dégât, une riposte). Une tape ratée bloque la garde un instant : on ne pare
+ * pas en tapotant.
  *
- * - le SAUT retombe sur l'ennemi ; une tape à l'atterrissage le fait
- *   REBONDIR (un coup de plus, une fenêtre plus étroite à chaque fois) ;
- * - le MARTEAU se charge doigt posé ; lâché quand la charge est pleine, il
- *   frappe fort, trop tôt ou trop tard, il frappe mou ;
- * - pendant le tour de l'ennemi, une tape juste avant le coup PARE (un dégât
- *   de moins) ; plus juste encore, la parade est PARFAITE (aucun dégât, une
- *   riposte). Une tape ratée bloque la garde un instant : on ne pare pas en
- *   tapotant.
+ * Puis le roguelike (« des ennemis de plus en plus forts et des
+ * améliorations »), puis la CARTE (« un peu pauvre en strat long terme »,
+ * `carte.ts`) : on choisit sa route entre combats, élites, feux de camp,
+ * boutiques et événements ; l'or des victoires, d'autant plus que les gestes
+ * étaient justes ; le sac et ses objets.
  *
- * Puis « faudrait un genre de roguelike où on progresse sur des ennemis de
- * plus en plus forts et où on gagne des améliorations » : une COURSE sans
- * fin, étage par étage. Après chaque victoire, le héros souffle (quelques PV)
- * et choisit une amélioration parmi trois ; les ennemis grossissent avec
- * l'étage, de nouveaux types arrivent, un chef tous les cinq étages.
+ * Puis « plutôt un petit magicien ? Et dès le début on choisit un sort ? Et
+ * chaque sort a une commande action ? Au début simple, un peu comme dans
+ * l'idle game qu'on avait pour les capacités ». **Le héros est un magicien
+ * qui lance ses SORTS de sa place**, chacun son geste, repris des passifs du
+ * donjon :
  *
- * Puis « un peu pauvre en strat long terme » : **la course passe par une
- * CARTE** (`carte.ts`) — on choisit sa route d'un acte à l'autre, entre
- * combats, élites (plus dures, mieux payées), feux de camp (se soigner ou
- * s'entraîner), boutiques et événements (un pari) ; les victoires rapportent
- * de l'OR, d'autant plus que les gestes étaient justes ; l'or s'échange à la
- * boutique contre des améliorations et des OBJETS, qu'on garde dans le sac
- * pour le bon moment (la potion, la bombe, le fumigène, le piment).
+ * - la BOULE DE FEU se charge doigt posé ; lâchée quand l'étoile s'allume,
+ *   elle frappe fort (l'Élan des haches) ;
+ * - l'ÉCLAIR : un anneau se referme sur l'ennemi ; une tape quand il se
+ *   referme en appelle un autre, plus rapide (le Fracas des massues, en
+ *   chaîne) — chaque anneau refermé frappe ;
+ * - les MISSILES : tapoter le plus vite possible pendant deux secondes ;
+ *   tant de tapes font un missile qui porte (la Lacération des griffes).
+ *
+ * On en choisit un au départ, les autres s'apprennent en route (une
+ * amélioration « Grimoire »).
  *
  * Pur : le temps est injecté, en secondes, sur la même horloge pour `avancer`
  * et pour les gestes — la page donne l'horodatage de l'événement, pas
@@ -36,7 +39,15 @@
 import { createRng, type Rng } from '../rng.ts'
 import { accessibles, CARTE, nouvelleCarte, type Carte, type Place, type Salle } from './carte.ts'
 
-export type TypeEnnemi = 'brigand' | 'piques' | 'lutin' | 'brute' | 'chapardeur'
+export type Sort = 'feu' | 'eclair' | 'missiles'
+export const LES_SORTS: Sort[] = ['feu', 'eclair', 'missiles']
+export const SORTS: Record<Sort, { nom: string; geste: string; effet: string }> = {
+  feu: { nom: 'Boule de feu', geste: 'Tenez, lâchez à l’étoile', effet: 'Un gros coup, si on la lâche au bon moment' },
+  eclair: { nom: 'Éclair', geste: 'Touchez quand l’anneau se referme', effet: 'Des éclairs en chaîne, tant qu’on touche juste' },
+  missiles: { nom: 'Missiles', geste: 'Tapotez le plus vite possible', effet: 'Une salve, d’autant plus forte qu’on tapote vite' },
+}
+
+export type TypeEnnemi = 'brigand' | 'lutin' | 'squelette' | 'brute' | 'chapardeur'
 
 export type Modele = {
   nom: string
@@ -51,9 +62,7 @@ export type Modele = {
   /** L'élan avant la ruée, tiré entre ces deux durées : on ne pare pas au métronome. */
   elanMin: number
   elanMax: number
-  /** Sauter dessus blesse le héros. */
-  piques: boolean
-  /** Le marteau ne l'atteint pas. */
+  /** Il vole (la page le dessine en l'air). */
   volant: boolean
   /** Le premier étage où il peut paraître. */
   depuis: number
@@ -62,49 +71,70 @@ export type Modele = {
 /** L'ennemi en scène : un modèle, grossi pour son étage. */
 export type Ennemi = Omit<Modele, 'chef' | 'depuis'> & { type: TypeEnnemi; estChef: boolean }
 
-export type Bonus = 'bottes' | 'ressort' | 'semelles' | 'marteau' | 'poigne' | 'bouclier' | 'reflexes' | 'contre' | 'epines' | 'coeur' | 'repas'
+/** Les améliorations ; `feu`, `eclair` et `missiles` apprennent le sort. */
+export type Bonus =
+  | Sort
+  | 'brasier'
+  | 'concentration'
+  | 'conducteur'
+  | 'orage'
+  | 'focale'
+  | 'salve'
+  | 'endurance'
+  | 'bouclier'
+  | 'reflexes'
+  | 'contre'
+  | 'epines'
+  | 'coeur'
+  | 'repas'
 
 export const COMMANDE = {
   heros: { pv: 10 },
   /** L'ennemi entre en scène. */
   arrivee: 0.8,
-  /** Le héros court jusqu'à l'ennemi, puis revient. */
-  course: 0.45,
-  retour: 0.5,
   /** L'ennemi abattu tombe avant le choix de l'amélioration. */
   ko: 0.7,
   /** Les PV rendus après chaque victoire. */
   repos: 2,
   /** Le temps qu'un geste met à arriver après l'instant qu'il porte. */
   delai: 0.03,
-  saut: {
-    /** De l'envol à la première retombée. */
-    envol: 0.5,
-    /** Du premier atterrissage au deuxième ; chaque rebond suivant est plus court. */
-    rebond: 0.5,
-    raccourci: 0.88,
-    /** Le nombre d'atterrissages au plus. */
-    max: 5,
-    degats: 1,
-    /** La fenêtre du rebond : tant avant l'atterrissage, tant après ; elle se resserre à chaque rebond. */
-    avant: 0.16,
-    apres: 0.06,
-    resserre: 0.85,
-    /** Sauter sur des piques. */
-    piques: 1,
-  },
-  marteau: {
-    /** Sans appui, le héros frappe mou au bout de ce temps. */
+  feu: {
+    /** Le magicien lève son bâton. */
+    prepare: 0.25,
+    /** Sans appui, la boule part molle au bout de ce temps. */
     attente: 2,
     /** Le temps de charge, puis la zone où lâcher. */
     charge: 0.8,
     zone: 0.35,
-    /** Du lâcher au coup. */
-    elan: 0.15,
-    /** Le coup porté, le héros reste un instant avant de revenir. */
-    pause: 0.25,
+    /** Le vol de la boule, du lâcher au coup. */
+    vol: 0.35,
+    /** Le coup porté, un instant avant le tour de l'ennemi. */
+    pause: 0.4,
     fort: 3,
     faible: 1,
+  },
+  eclair: {
+    prepare: 0.25,
+    /** Le premier anneau se referme en tant ; chaque suivant plus vite. */
+    premier: 0.8,
+    raccourci: 0.85,
+    /** Le nombre d'éclairs au plus. */
+    max: 5,
+    degats: 1,
+    /** La fenêtre : tant avant que l'anneau se referme, tant après ; elle se resserre à chaque anneau. */
+    avant: 0.12,
+    apres: 0.06,
+    resserre: 0.9,
+    pause: 0.4,
+  },
+  missiles: {
+    /** « Prêt… » avant que les tapes comptent. */
+    prepare: 0.6,
+    duree: 2,
+    /** Tant de tapes font un missile qui porte (un dégât). */
+    parDegat: 4,
+    vol: 0.25,
+    pause: 0.35,
   },
   garde: {
     avant: 0.16,
@@ -146,25 +176,29 @@ export const COMMANDE = {
     marchand: 15,
   },
   modeles: {
-    brigand: { nom: 'Brigand', chef: 'Chef brigand', conseil: 'Rien de spécial.', pv: 5, attaque: 2, coups: 1, elanMin: 0.5, elanMax: 1.3, piques: false, volant: false, depuis: 1 },
-    piques: { nom: 'Garde à piques', chef: 'Capitaine à piques', conseil: 'Des piques sur le casque : ne sautez pas dessus.', pv: 6, attaque: 2, coups: 1, elanMin: 0.5, elanMax: 1.3, piques: true, volant: false, depuis: 2 },
-    lutin: { nom: 'Lutin ailé', chef: 'Reine des lutins', conseil: 'Il vole, hors de portée du marteau.', pv: 5, attaque: 2, coups: 2, elanMin: 0.45, elanMax: 1.1, piques: false, volant: true, depuis: 3 },
-    brute: { nom: 'Brute', chef: 'Brute énorme', conseil: 'Lente à frapper, mais elle frappe fort : attendez-la.', pv: 9, attaque: 4, coups: 1, elanMin: 1.2, elanMax: 2.2, piques: false, volant: false, depuis: 4 },
-    chapardeur: { nom: 'Chapardeur', chef: 'Maître chapardeur', conseil: 'De petits coups, très vite.', pv: 4, attaque: 1, coups: 3, elanMin: 0.25, elanMax: 0.6, piques: false, volant: false, depuis: 7 },
+    brigand: { nom: 'Brigand', chef: 'Chef brigand', conseil: 'Rien de spécial.', pv: 5, attaque: 2, coups: 1, elanMin: 0.5, elanMax: 1.3, volant: false, depuis: 1 },
+    lutin: { nom: 'Lutin ailé', chef: 'Reine des lutins', conseil: 'Il volette autour de vous.', pv: 5, attaque: 2, coups: 2, elanMin: 0.45, elanMax: 1.1, volant: true, depuis: 2 },
+    squelette: { nom: 'Squelette', chef: 'Roi squelette', conseil: 'Imprévisible : son élan varie beaucoup.', pv: 6, attaque: 2, coups: 1, elanMin: 0.3, elanMax: 1.9, volant: false, depuis: 3 },
+    brute: { nom: 'Brute', chef: 'Brute énorme', conseil: 'Lente à frapper, mais elle frappe fort : attendez-la.', pv: 9, attaque: 4, coups: 1, elanMin: 1.2, elanMax: 2.2, volant: false, depuis: 4 },
+    chapardeur: { nom: 'Chapardeur', chef: 'Maître chapardeur', conseil: 'De petits coups, très vite.', pv: 4, attaque: 1, coups: 3, elanMin: 0.25, elanMax: 0.6, volant: false, depuis: 7 },
   } as Record<TypeEnnemi, Modele>,
   /** Une amélioration se prend au plus tant de fois (sauf le cœur et le repas). */
   bonusMax: 3,
   bonus: {
-    /** +1 dégât à chaque atterrissage. */
-    bottes: 1,
-    /** +1 atterrissage au plus. */
-    ressort: 1,
-    /** La fenêtre du rebond, élargie de tant. */
-    semelles: 0.3,
-    /** +2 au coup fort du marteau. */
-    marteau: 2,
-    /** La zone où lâcher le marteau, élargie de tant. */
-    poigne: 0.4,
+    /** +2 à la boule de feu chargée. */
+    brasier: 2,
+    /** La zone où lâcher la boule de feu, élargie de tant. */
+    concentration: 0.4,
+    /** +1 dégât à chaque éclair. */
+    conducteur: 1,
+    /** +1 éclair au plus. */
+    orage: 1,
+    /** La fenêtre de l'anneau, élargie de tant. */
+    focale: 0.3,
+    /** Une tape de moins par missile qui porte (jamais moins de deux). */
+    salve: 1,
+    /** La salve dure tant de plus. */
+    endurance: 0.6,
     /** La garde ôte un dégât de plus. */
     bouclier: 1,
     /** Les fenêtres de la garde, élargies de tant. */
@@ -177,7 +211,7 @@ export const COMMANDE = {
     coeur: 3,
     /** Rend tant de PV. */
     repas: 5,
-  } as Record<Bonus, number>,
+  } as Record<Exclude<Bonus, Sort>, number>,
 }
 
 export type ConfigCommande = typeof COMMANDE
@@ -187,7 +221,7 @@ export const OBJETS: Record<Objet, { nom: string; effet: string }> = {
   potion: { nom: 'Potion', effet: 'Rend 5 PV' },
   bombe: { nom: 'Bombe', effet: '6 dégâts, sans geste' },
   fumigene: { nom: 'Fumigène', effet: "L'ennemi passe son prochain tour" },
-  piment: { nom: 'Piment', effet: 'La prochaine attaque fait double dégâts' },
+  piment: { nom: 'Piment', effet: 'Le prochain sort fait double dégâts' },
 }
 
 export type CleEvenement = 'fontaine' | 'marchand' | 'coffre' | 'autel'
@@ -200,17 +234,17 @@ export const EVENEMENTS: Record<CleEvenement, { titre: string; texte: string; ac
 
 export type Article = ({ sorte: 'bonus'; bonus: Bonus } | { sorte: 'objet'; objet: Objet } | { sorte: 'soin' }) & { prix: number; vendu: boolean }
 
-export type Phase = 'carte' | 'arrivee' | 'choix' | 'saut' | 'marteau' | 'ennemi' | 'ko' | 'butin' | 'repos' | 'boutique' | 'evenement' | 'perdu'
-export type Attaque = 'saut' | 'marteau'
+export type Phase = 'depart' | 'carte' | 'arrivee' | 'choix' | Sort | 'ennemi' | 'ko' | 'butin' | 'repos' | 'boutique' | 'evenement' | 'perdu'
 
-export type Atterrissage = {
+/** Un anneau de l'éclair : l'instant où il se referme, et la tape qui y répond. */
+export type Anneau = {
   t: number
-  /** La part de la fenêtre avant l'atterrissage (elle se resserre). */
+  /** La part de la fenêtre avant qu'il se referme (elle se resserre). */
   avant: number
   tape: 'aucune' | 'bien' | 'rate'
-  /** Le coup est porté (à l'atterrissage même). */
+  /** L'éclair est tombé (à l'instant même). */
   porte: boolean
-  /** Le rebond est décidé (après la fenêtre). */
+  /** L'anneau suivant est décidé (après la fenêtre). */
   resolu: boolean
 }
 
@@ -232,9 +266,11 @@ export type EtatCombat = {
   salle: Salle
   or: number
   objets: Objet[]
+  /** Les sorts connus, dans l'ordre où on les a appris. */
+  sorts: Sort[]
   /** Les gestes réussis dans ce combat (ils paient). */
   gestes: number
-  /** Le piment : la prochaine attaque fait double dégâts ; le fumigène : l'ennemi passe son prochain tour. */
+  /** Le piment : le prochain sort fait double dégâts ; le fumigène : l'ennemi passe son prochain tour. */
   piment: boolean
   fumee: boolean
   boutique: Article[]
@@ -245,28 +281,30 @@ export type EtatCombat = {
   bonus: Partial<Record<Bonus, number>>
   /** Les trois améliorations offertes, en phase `butin`. */
   offre: Bonus[]
-  atterrissages: Atterrissage[]
-  marteau: { arrivee: number; appui: number | null; frappe: number | null; fort: boolean; pleine: boolean; porte: boolean }
+  feu: { pret: number; appui: number | null; frappe: number | null; fort: boolean; pleine: boolean; porte: boolean }
+  anneaux: Anneau[]
+  missiles: { debut: number; fin: number; taps: number; coups: { t: number; porte: boolean }[] }
+  /** L'instant où le sort est fini et où l'ennemi peut répondre. */
+  finAction: number | null
   coups: Coup[]
   /** La garde est bloquée jusque-là. */
   verrou: number
   /** La dernière tape de garde (la page lève le bouclier). */
   gardeA: number
-  /** L'instant où le héros repart vers sa place, son action finie. */
-  retour: number | null
   /** L'instant où l'ennemi est tombé. */
   koA: number
-  stats: { rebonds: number; charges: number; gardes: number; parfaites: number }
+  stats: { eclairs: number; charges: number; missiles: number; gardes: number; parfaites: number }
 }
 
 export type Evenement =
   | { type: 'arrivee'; etage: number; chef: boolean; elite: boolean }
   | { type: 'bien'; serie: number }
   | { type: 'rate' }
-  | { type: 'atterrit'; degats: number; serie: number }
-  | { type: 'piques'; degats: number }
+  | { type: 'eclair'; degats: number; serie: number }
   | { type: 'pleine' }
-  | { type: 'frappe'; degats: number; fort: boolean }
+  | { type: 'boule'; degats: number; fort: boolean }
+  | { type: 'tape'; taps: number; missile: boolean }
+  | { type: 'missile'; degats: number }
   | { type: 'garde'; qualite: 'garde' | 'parfaite' | 'trop-tot' }
   | { type: 'coup'; degats: number; garde: 'aucune' | 'garde' | 'parfaite' }
   | { type: 'riposte'; degats: number }
@@ -278,7 +316,7 @@ export type Evenement =
   | { type: 'acte'; acte: number }
   | { type: 'perdu' }
 
-// ---------------------------------------------------------------- l'étage
+// ---------------------------------------------------------------- les ennemis
 
 export type Rang = 'combat' | 'elite' | 'chef'
 
@@ -301,7 +339,6 @@ export function ennemiDuType(c: ConfigCommande, type: TypeEnnemi, etage: number,
     coups,
     elanMin: m.elanMin,
     elanMax: m.elanMax,
-    piques: m.piques,
     volant: m.volant,
     estChef: chef,
   }
@@ -319,28 +356,38 @@ function ennemiDeLEtage(c: ConfigCommande, etage: number, sorte: Rang, rng: Rng)
 // ---------------------------------------------------------------- les améliorations
 
 const rang = (e: EtatCombat, b: Bonus) => e.bonus[b] ?? 0
+const valeur = (c: ConfigCommande, e: EtatCombat, b: Exclude<Bonus, Sort>) => rang(e, b) * c.bonus[b]
 
 export function pvMaxDe(c: ConfigCommande, e: EtatCombat): number {
-  return c.heros.pv + rang(e, 'coeur') * c.bonus.coeur
+  return c.heros.pv + valeur(c, e, 'coeur')
 }
 
-const degatsDuSaut = (c: ConfigCommande, e: EtatCombat) => c.saut.degats + rang(e, 'bottes') * c.bonus.bottes
-const sautsMax = (c: ConfigCommande, e: EtatCombat) => c.saut.max + rang(e, 'ressort') * c.bonus.ressort
-const largeurDuRebond = (c: ConfigCommande, e: EtatCombat) => 1 + rang(e, 'semelles') * c.bonus.semelles
-const coupFort = (c: ConfigCommande, e: EtatCombat) => c.marteau.fort + rang(e, 'marteau') * c.bonus.marteau
-/** La zone où lâcher le marteau, améliorations comprises. */
-export function zoneDuMarteau(c: ConfigCommande, e: EtatCombat): number {
-  return c.marteau.zone * (1 + rang(e, 'poigne') * c.bonus.poigne)
+/** La zone où lâcher la boule de feu, améliorations comprises. */
+export function zoneDuFeu(c: ConfigCommande, e: EtatCombat): number {
+  return c.feu.zone * (1 + valeur(c, e, 'concentration'))
 }
-const largeurDeGarde = (c: ConfigCommande, e: EtatCombat) => 1 + rang(e, 'reflexes') * c.bonus.reflexes
+const largeurDeLAnneau = (c: ConfigCommande, e: EtatCombat) => 1 + valeur(c, e, 'focale')
+const largeurDeGarde = (c: ConfigCommande, e: EtatCombat) => 1 + valeur(c, e, 'reflexes')
+/** Tant de tapes font un missile qui porte. */
+export function tapesParMissile(c: ConfigCommande, e: EtatCombat): number {
+  return Math.max(2, c.missiles.parDegat - valeur(c, e, 'salve'))
+}
+
+/** Le sort dont dépend une amélioration (elle n'est offerte que s'il est connu). */
+const SORT_DU_BONUS: Partial<Record<Bonus, Sort>> = { brasier: 'feu', concentration: 'feu', conducteur: 'eclair', orage: 'eclair', focale: 'eclair', salve: 'missiles', endurance: 'missiles' }
 
 /** Ce qu'une amélioration offerte dit d'elle, pour la page. */
 export const BONUS: Record<Bonus, { nom: string; effet: string }> = {
-  bottes: { nom: 'Bottes ferrées', effet: '+1 dégât à chaque atterrissage' },
-  ressort: { nom: 'Ressort', effet: 'Un rebond de plus au saut' },
-  semelles: { nom: 'Semelles souples', effet: 'Le rebond se prend plus facilement' },
-  marteau: { nom: 'Gros marteau', effet: '+2 dégâts au marteau chargé' },
-  poigne: { nom: 'Bonne poigne', effet: 'Plus de temps pour lâcher le marteau' },
+  feu: { nom: 'Grimoire : Boule de feu', effet: 'Apprendre le sort (tenez, lâchez à l’étoile)' },
+  eclair: { nom: 'Grimoire : Éclair', effet: 'Apprendre le sort (touchez quand l’anneau se referme)' },
+  missiles: { nom: 'Grimoire : Missiles', effet: 'Apprendre le sort (tapotez vite)' },
+  brasier: { nom: 'Brasier', effet: '+2 dégâts à la boule de feu chargée' },
+  concentration: { nom: 'Concentration', effet: 'Plus de temps pour lâcher la boule de feu' },
+  conducteur: { nom: 'Conducteur', effet: '+1 dégât à chaque éclair' },
+  orage: { nom: 'Orage', effet: 'Un éclair de plus dans la chaîne' },
+  focale: { nom: 'Focale', effet: 'L’anneau de l’éclair se prend plus facilement' },
+  salve: { nom: 'Salve', effet: 'Les missiles portent avec moins de tapes' },
+  endurance: { nom: 'Endurance', effet: 'La salve de missiles dure plus longtemps' },
   bouclier: { nom: 'Bouclier', effet: 'La garde ôte un dégât de plus' },
   reflexes: { nom: 'Réflexes', effet: 'La garde se prend plus facilement' },
   contre: { nom: 'Contre', effet: '+1 dégât à la riposte de la parade parfaite' },
@@ -349,9 +396,14 @@ export const BONUS: Record<Bonus, { nom: string; effet: string }> = {
   repas: { nom: 'Repas', effet: 'Rend 5 PV' },
 }
 
-/** Trois améliorations différentes : pas une qui soit au plus haut, pas de repas si le héros est en pleine forme. */
+const estSort = (b: Bonus): b is Sort => (LES_SORTS as Bonus[]).includes(b)
+
+/** Trois améliorations différentes : un sort qu'on ne connaît pas, ce qui renforce un sort connu, le reste ; pas une au plus haut, pas de repas en pleine forme. */
 function offrir(c: ConfigCommande, e: EtatCombat, rng: Rng): Bonus[] {
   const possibles = (Object.keys(BONUS) as Bonus[]).filter((b) => {
+    if (estSort(b)) return !e.sorts.includes(b)
+    const sort = SORT_DU_BONUS[b]
+    if (sort !== undefined && !e.sorts.includes(sort)) return false
     if (b === 'repas') return e.pv < pvMaxDe(c, e)
     if (b === 'coeur') return true
     return rang(e, b) < c.bonusMax
@@ -365,26 +417,27 @@ export function rangDuBonus(e: EtatCombat, b: Bonus): number {
   return rang(e, b)
 }
 
-// ---------------------------------------------------------------- le combat
+// ---------------------------------------------------------------- la course
 
-/** Une course neuve, devant la carte de l'acte `acte`. */
+/** Une course neuve : on choisit son premier sort, puis la carte de l'acte `acte`. */
 export function nouvelleCourse(c: ConfigCommande, graine: number, t: number, acte = 1): EtatCombat {
   const rng = createRng(graine)
   const carte = nouvelleCarte(rng)
   const e = etatNeuf(c, rng.getState(), t, carte, ennemiDuType(c, 'brigand', 1))
   e.acte = acte
   e.etage = (acte - 1) * CARTE.rangs
-  e.phase = 'carte'
+  e.phase = 'depart'
   return e
 }
 
-/** Un combat d'emblée, à l'étage `etage` (pour les vérifications). */
+/** Un combat d'emblée, à l'étage `etage`, tous les sorts connus (pour les vérifications). */
 export function nouveauCombat(c: ConfigCommande, graine: number, t: number, etage = 1): EtatCombat {
   const rng = createRng(graine)
   const carte = nouvelleCarte(rng)
   const e = etatNeuf(c, 0, t, carte, ennemiDeLEtage(c, etage, 'combat', rng))
   e.graine = rng.getState()
   e.etage = etage
+  e.sorts = [...LES_SORTS]
   return e
 }
 
@@ -402,6 +455,7 @@ function etatNeuf(c: ConfigCommande, graine: number, t: number, carte: Carte, en
     salle: 'combat',
     or: 0,
     objets: ['potion'],
+    sorts: [],
     gestes: 0,
     piment: false,
     fumee: false,
@@ -411,29 +465,37 @@ function etatNeuf(c: ConfigCommande, graine: number, t: number, carte: Carte, en
     pvEnnemi: ennemi.pv,
     bonus: {},
     offre: [],
-    atterrissages: [],
-    marteau: { arrivee: 0, appui: null, frappe: null, fort: false, pleine: false, porte: false },
+    feu: { pret: 0, appui: null, frappe: null, fort: false, pleine: false, porte: false },
+    anneaux: [],
+    missiles: { debut: 0, fin: 0, taps: 0, coups: [] },
+    finAction: null,
     coups: [],
     verrou: -Infinity,
     gardeA: -Infinity,
-    retour: null,
     koA: -Infinity,
-    stats: { rebonds: 0, charges: 0, gardes: 0, parfaites: 0 },
+    stats: { eclairs: 0, charges: 0, missiles: 0, gardes: 0, parfaites: 0 },
   }
+}
+
+/** Le premier sort, choisi au départ ; la carte s'ouvre. */
+export function choisirLePremierSort(e: EtatCombat, sort: Sort, t: number): boolean {
+  if (e.phase !== 'depart') return false
+  e.sorts = [sort]
+  passer(e, 'carte', t)
+  return true
 }
 
 export function ennemiDe(_c: ConfigCommande, e: EtatCombat): Ennemi {
   return e.ennemi
 }
 
-export function peutAttaquer(_c: ConfigCommande, e: EtatCombat, a: Attaque): boolean {
-  return e.phase === 'choix' && !(a === 'marteau' && e.ennemi.volant)
+export function peutLancer(e: EtatCombat, sort: Sort): boolean {
+  return e.phase === 'choix' && e.sorts.includes(sort)
 }
 
 function passer(e: EtatCombat, phase: Phase, t: number): void {
   e.phase = phase
   e.debut = t
-  e.retour = null
 }
 
 function blesserLEnnemi(e: EtatCombat, degats: number, t: number, ev: Evenement[]): void {
@@ -462,18 +524,14 @@ function commencerLeTour(e: EtatCombat, c: ConfigCommande, t0: number, ev: Evene
   ev.push({ type: 'tour' })
 }
 
-/** L'action du héros est finie quand il est revenu à sa place. */
-function finDeLAction(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): boolean {
-  if (e.retour === null) return false
-  const fin = e.retour + c.retour
-  if (t < fin) return false
+/** Le sort fini, l'ennemi tombe, tousse (le fumigène) ou répond. */
+function finDeLAction(e: EtatCombat, c: ConfigCommande, t: number, ev: Evenement[]): boolean {
+  if (e.finAction === null || t < e.finAction) return false
+  const fin = e.finAction
+  e.finAction = null
   e.piment = false
-  if (e.pv <= 0) {
-    passer(e, 'perdu', fin)
-    ev.push({ type: 'perdu' })
-  } else if (e.pvEnnemi <= 0) passer(e, 'ko', fin)
+  if (e.pvEnnemi <= 0) passer(e, 'ko', fin)
   else if (e.fumee) {
-    // Le fumigène : l'ennemi tousse, c'est encore au héros.
     e.fumee = false
     passer(e, 'choix', fin)
     ev.push({ type: 'fumee' })
@@ -483,76 +541,92 @@ function finDeLAction(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement
 
 /** Une transition, s'il y en a une à faire à l'instant `t` ; `false` quand tout est à jour. */
 function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): boolean {
+  const piment = e.piment ? 2 : 1
   switch (e.phase) {
     case 'arrivee':
       if (t < e.debut + c.arrivee) return false
       passer(e, 'choix', e.debut + c.arrivee)
       return true
 
-    case 'saut': {
-      const a = e.atterrissages[e.atterrissages.length - 1]
-      if (!a.porte) {
-        if (t < a.t) return false
-        a.porte = true
-        if (e.ennemi.piques) {
-          e.pv = Math.max(0, e.pv - c.saut.piques)
-          ev.push({ type: 'piques', degats: c.saut.piques })
-          a.resolu = true
-          e.retour = a.t
+    case 'feu': {
+      const f = e.feu
+      if (f.frappe === null) {
+        if (f.appui === null) {
+          if (t < f.pret + c.feu.attente + c.delai) return false
+          f.frappe = f.pret + c.feu.attente
+          f.fort = false
           return true
         }
-        const degats = degatsDuSaut(c, e) * (e.piment ? 2 : 1)
-        blesserLEnnemi(e, degats, a.t, ev)
-        ev.push({ type: 'atterrit', degats, serie: e.atterrissages.length })
-        return true
-      }
-      if (!a.resolu) {
-        if (t < a.t + c.saut.apres * largeurDuRebond(c, e) + c.delai) return false
-        a.resolu = true
-        const n = e.atterrissages.length
-        if (a.tape === 'bien' && n < sautsMax(c, e) && e.pvEnnemi > 0) {
-          e.atterrissages.push({ t: a.t + c.saut.rebond * c.saut.raccourci ** (n - 1), avant: a.avant * c.saut.resserre, tape: 'aucune', porte: false, resolu: false })
-        } else e.retour = a.t
-        return true
-      }
-      return finDeLAction(c, e, t, ev)
-    }
-
-    case 'marteau': {
-      const m = e.marteau
-      if (m.frappe === null) {
-        if (m.appui === null) {
-          if (t < m.arrivee + c.marteau.attente + c.delai) return false
-          m.frappe = m.arrivee + c.marteau.attente
-          m.fort = false
-          return true
-        }
-        if (!m.pleine && t >= m.appui + c.marteau.charge) {
-          m.pleine = true
+        if (!f.pleine && t >= f.appui + c.feu.charge) {
+          f.pleine = true
           ev.push({ type: 'pleine' })
           return true
         }
-        const fin = m.appui + c.marteau.charge + zoneDuMarteau(c, e)
+        const fin = f.appui + c.feu.charge + zoneDuFeu(c, e)
         if (t < fin + c.delai) return false
-        // Tenu trop longtemps : le héros frappe mou de lui-même.
-        m.frappe = fin
-        m.fort = false
+        // Tenue trop longtemps : la boule part molle d'elle-même.
+        f.frappe = fin
+        f.fort = false
         return true
       }
-      if (!m.porte) {
-        if (t < m.frappe + c.marteau.elan) return false
-        m.porte = true
-        const degats = (m.fort ? coupFort(c, e) : c.marteau.faible) * (e.piment ? 2 : 1)
-        if (m.fort) {
+      if (!f.porte) {
+        if (t < f.frappe + c.feu.vol) return false
+        f.porte = true
+        const degats = (f.fort ? c.feu.fort + valeur(c, e, 'brasier') : c.feu.faible) * piment
+        if (f.fort) {
           e.stats.charges += 1
           e.gestes += 1
         }
-        blesserLEnnemi(e, degats, m.frappe + c.marteau.elan, ev)
-        ev.push({ type: 'frappe', degats, fort: m.fort })
-        e.retour = m.frappe + c.marteau.elan + c.marteau.pause
+        blesserLEnnemi(e, degats, f.frappe + c.feu.vol, ev)
+        ev.push({ type: 'boule', degats, fort: f.fort })
+        e.finAction = f.frappe + c.feu.vol + c.feu.pause
         return true
       }
-      return finDeLAction(c, e, t, ev)
+      return finDeLAction(e, c, t, ev)
+    }
+
+    case 'eclair': {
+      const a = e.anneaux[e.anneaux.length - 1]
+      if (!a.porte) {
+        if (t < a.t) return false
+        a.porte = true
+        const degats = (c.eclair.degats + valeur(c, e, 'conducteur')) * piment
+        e.stats.eclairs += 1
+        blesserLEnnemi(e, degats, a.t, ev)
+        ev.push({ type: 'eclair', degats, serie: e.anneaux.length })
+        return true
+      }
+      if (!a.resolu) {
+        if (t < a.t + c.eclair.apres * largeurDeLAnneau(c, e) + c.delai) return false
+        a.resolu = true
+        const n = e.anneaux.length
+        if (a.tape === 'bien' && n < c.eclair.max + valeur(c, e, 'orage') && e.pvEnnemi > 0) {
+          e.anneaux.push({ t: a.t + c.eclair.premier * c.eclair.raccourci ** n, avant: a.avant * c.eclair.resserre, tape: 'aucune', porte: false, resolu: false })
+        } else e.finAction = a.t + c.eclair.pause
+        return true
+      }
+      return finDeLAction(e, c, t, ev)
+    }
+
+    case 'missiles': {
+      const m = e.missiles
+      const k = m.coups.find((x) => !x.porte && t >= x.t)
+      if (k !== undefined) {
+        k.porte = true
+        e.stats.missiles += 1
+        blesserLEnnemi(e, piment, k.t, ev)
+        ev.push({ type: 'missile', degats: piment })
+        return true
+      }
+      if (e.finAction === null) {
+        // La salve finit à son heure, ou dès que l'ennemi tombe.
+        if (t < m.fin + c.delai && e.pvEnnemi > 0) return false
+        const dernier = Math.max(Math.min(t, m.fin), ...m.coups.map((x) => x.t))
+        e.finAction = dernier + c.missiles.pause
+        e.gestes += Math.max(0, m.coups.length - 2)
+        return true
+      }
+      return finDeLAction(e, c, t, ev)
     }
 
     case 'ennemi': {
@@ -561,7 +635,7 @@ function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): bo
         if (k.resolu) continue
         if (t < k.impact + c.garde.apres * largeurDeGarde(c, e) + c.delai) return false
         k.resolu = true
-        const reduit = c.garde.reduit + rang(e, 'bouclier') * c.bonus.bouclier
+        const reduit = c.garde.reduit + valeur(c, e, 'bouclier')
         const degats = k.garde === 'parfaite' ? 0 : k.garde === 'garde' ? Math.max(0, e.ennemi.attaque - reduit) : e.ennemi.attaque
         e.pv = Math.max(0, e.pv - degats)
         ev.push({ type: 'coup', degats, garde: k.garde })
@@ -574,7 +648,7 @@ function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): bo
           e.gestes += 2
         }
         // La riposte de la parade parfaite, les épines de toute garde.
-        const renvoi = (k.garde === 'parfaite' ? c.garde.riposte + rang(e, 'contre') * c.bonus.contre : 0) + (k.garde !== 'aucune' ? rang(e, 'epines') * c.bonus.epines : 0)
+        const renvoi = (k.garde === 'parfaite' ? c.garde.riposte + valeur(c, e, 'contre') : 0) + (k.garde !== 'aucune' ? valeur(c, e, 'epines') : 0)
         if (renvoi > 0) {
           blesserLEnnemi(e, renvoi, k.impact, ev)
           ev.push({ type: 'riposte', degats: renvoi })
@@ -624,20 +698,87 @@ export function avancer(c: ConfigCommande, e: EtatCombat, t: number): Evenement[
   return ev
 }
 
-/** Le héros choisit son attaque à l'instant `t`. */
-export function choisir(c: ConfigCommande, e: EtatCombat, a: Attaque, t: number): boolean {
-  if (!peutAttaquer(c, e, a)) return false
-  if (a === 'saut') {
-    e.atterrissages = [{ t: t + c.course + c.saut.envol, avant: c.saut.avant, tape: 'aucune', porte: false, resolu: false }]
-  } else {
-    e.marteau = { arrivee: t + c.course, appui: null, frappe: null, fort: false, pleine: false, porte: false }
+/** Le magicien lance un sort à l'instant `t`. */
+export function lancer(c: ConfigCommande, e: EtatCombat, sort: Sort, t: number): boolean {
+  if (!peutLancer(e, sort)) return false
+  e.finAction = null
+  if (sort === 'feu') e.feu = { pret: t + c.feu.prepare, appui: null, frappe: null, fort: false, pleine: false, porte: false }
+  else if (sort === 'eclair') e.anneaux = [{ t: t + c.eclair.prepare + c.eclair.premier, avant: c.eclair.avant, tape: 'aucune', porte: false, resolu: false }]
+  else {
+    const debut = t + c.missiles.prepare
+    e.missiles = { debut, fin: debut + c.missiles.duree + valeur(c, e, 'endurance'), taps: 0, coups: [] }
   }
-  passer(e, a, t)
+  passer(e, sort, t)
   return true
 }
 
+/** Le doigt se pose à l'instant `t`. */
+export function toucher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[] {
+  if (e.phase === 'eclair') {
+    const a = e.anneaux[e.anneaux.length - 1]
+    if (a.tape !== 'aucune' || a.resolu) return []
+    const large = largeurDeLAnneau(c, e)
+    if (t < a.t - a.avant * large) {
+      a.tape = 'rate'
+      return [{ type: 'rate' }]
+    }
+    if (t > a.t + c.eclair.apres * large) return []
+    a.tape = 'bien'
+    e.gestes += 1
+    return [{ type: 'bien', serie: e.anneaux.length }]
+  }
+  if (e.phase === 'feu') {
+    const f = e.feu
+    // Le doigt posé pendant que le bâton se lève compte : la charge commence quand il est prêt.
+    if (f.appui === null && f.frappe === null) f.appui = Math.max(t, f.pret)
+    return []
+  }
+  if (e.phase === 'missiles') {
+    const m = e.missiles
+    if (t < m.debut || t > m.fin || e.pvEnnemi <= 0) return []
+    m.taps += 1
+    const porte = m.taps % tapesParMissile(c, e) === 0
+    if (porte) m.coups.push({ t: t + c.missiles.vol, porte: false })
+    return [{ type: 'tape', taps: m.taps, missile: porte }]
+  }
+  if (e.phase === 'ennemi') {
+    if (t < e.verrou) return []
+    e.verrou = t + c.garde.verrou
+    e.gardeA = t
+    const large = largeurDeGarde(c, e)
+    const k = e.coups.find((x) => !x.resolu && x.garde === 'aucune' && t <= x.impact + c.garde.apres * large)
+    if (k === undefined) return []
+    const d = t - k.impact
+    if (d >= -c.garde.parfaiteAvant * large && d <= c.garde.parfaiteApres * large) k.garde = 'parfaite'
+    else if (d >= -c.garde.avant * large) k.garde = 'garde'
+    else return [{ type: 'garde', qualite: 'trop-tot' }]
+    return [{ type: 'garde', qualite: k.garde }]
+  }
+  return []
+}
+
+/** Le doigt se lève à l'instant `t`. */
+export function lacher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[] {
+  if (e.phase !== 'feu') return []
+  const f = e.feu
+  if (f.appui === null || f.frappe !== null) return []
+  if (t < f.appui) {
+    // Lâché avant que le bâton soit levé : il faudra reposer le doigt.
+    f.appui = null
+    return []
+  }
+  const tenu = t - f.appui
+  f.fort = tenu >= c.feu.charge && tenu <= c.feu.charge + zoneDuFeu(c, e)
+  f.frappe = t
+  return []
+}
+
+// ---------------------------------------------------------------- le butin
+
 function appliquerBonus(c: ConfigCommande, e: EtatCombat, b: Bonus): void {
-  if (b === 'repas') e.pv = Math.min(pvMaxDe(c, e), e.pv + c.bonus.repas)
+  if (estSort(b)) {
+    if (!e.sorts.includes(b)) e.sorts.push(b)
+  } else if (b === 'repas') e.pv = Math.min(pvMaxDe(c, e), e.pv + c.bonus.repas)
   else {
     e.bonus[b] = rang(e, b) + 1
     if (b === 'coeur') e.pv += c.bonus.coeur
@@ -742,7 +883,8 @@ export function empecheDAcheter(c: ConfigCommande, e: EtatCombat, i: number): st
   if (e.or < a.prix) return 'Pas assez d’or'
   if (a.sorte === 'objet' && e.objets.length >= c.salles.sac) return 'Sac plein'
   if (a.sorte === 'soin' && e.pv >= pvMaxDe(c, e)) return 'Déjà en forme'
-  if (a.sorte === 'bonus' && rang(e, a.bonus) >= c.bonusMax && a.bonus !== 'coeur') return 'Au plus haut'
+  if (a.sorte === 'bonus' && estSort(a.bonus) && e.sorts.includes(a.bonus)) return 'Déjà connu'
+  if (a.sorte === 'bonus' && !estSort(a.bonus) && rang(e, a.bonus) >= c.bonusMax && a.bonus !== 'coeur') return 'Au plus haut'
   return null
 }
 
@@ -760,7 +902,6 @@ export function acheter(c: ConfigCommande, e: EtatCombat, i: number): boolean {
 /** On quitte la boutique ou l'événement. */
 export function quitter(e: EtatCombat, t: number): Evenement[] {
   if (e.phase !== 'boutique' && e.phase !== 'evenement') return []
-  e.evenement = null
   return versLaCarte(e, t)
 }
 
@@ -833,58 +974,4 @@ export function utiliser(c: ConfigCommande, e: EtatCombat, i: number, t: number)
   ev.unshift({ type: 'objet', objet: o, degats })
   if (e.pvEnnemi <= 0) passer(e, 'ko', t)
   return ev
-}
-
-/** Le doigt se pose à l'instant `t`. */
-export function toucher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[] {
-  if (e.phase === 'saut') {
-    const a = e.atterrissages[e.atterrissages.length - 1]
-    if (a.tape !== 'aucune' || a.resolu || e.ennemi.piques) return []
-    const large = largeurDuRebond(c, e)
-    if (t < a.t - a.avant * large) {
-      a.tape = 'rate'
-      return [{ type: 'rate' }]
-    }
-    if (t > a.t + c.saut.apres * large) return []
-    a.tape = 'bien'
-    e.stats.rebonds += 1
-    e.gestes += 1
-    return [{ type: 'bien', serie: e.atterrissages.length }]
-  }
-  if (e.phase === 'marteau') {
-    const m = e.marteau
-    // Le doigt posé pendant la course compte : la charge commence à l'arrivée.
-    if (m.appui === null && m.frappe === null) m.appui = Math.max(t, m.arrivee)
-    return []
-  }
-  if (e.phase === 'ennemi') {
-    if (t < e.verrou) return []
-    e.verrou = t + c.garde.verrou
-    e.gardeA = t
-    const large = largeurDeGarde(c, e)
-    const k = e.coups.find((x) => !x.resolu && x.garde === 'aucune' && t <= x.impact + c.garde.apres * large)
-    if (k === undefined) return []
-    const d = t - k.impact
-    if (d >= -c.garde.parfaiteAvant * large && d <= c.garde.parfaiteApres * large) k.garde = 'parfaite'
-    else if (d >= -c.garde.avant * large) k.garde = 'garde'
-    else return [{ type: 'garde', qualite: 'trop-tot' }]
-    return [{ type: 'garde', qualite: k.garde }]
-  }
-  return []
-}
-
-/** Le doigt se lève à l'instant `t`. */
-export function lacher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[] {
-  if (e.phase !== 'marteau') return []
-  const m = e.marteau
-  if (m.appui === null || m.frappe !== null) return []
-  if (t < m.appui) {
-    // Lâché pendant la course : il faudra reposer le doigt.
-    m.appui = null
-    return []
-  }
-  const tenu = t - m.appui
-  m.fort = tenu >= c.marteau.charge && tenu <= c.marteau.charge + zoneDuMarteau(c, e)
-  m.frappe = t
-  return []
 }

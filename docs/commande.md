@@ -71,6 +71,47 @@ boutique ; Keko : « ok vas-y ». **Le choix de route devient la stratégie** :
   18, 20, 12, 4, 6, 6 ; qui ne touche rien, à l'étage 2 ou 3.
 - `&acte=N` commence la course à l'acte N.
 
+## Le petit magicien et ses sorts
+
+Keko (07/11), la carte essayée : « on peut plutôt avoir un petit magicien ?
+Et dès le début on choisit un sort ? Et chaque sort a une commande action ?
+Au début simple, un peu comme dans l'idle game qu'on avait pour les
+capacités ». **Le saut et le marteau sont partis** ; le héros est un
+magicien (le personnage du générateur, coiffé d'un chapeau pointu, un bâton
+à la main) qui **lance ses sorts de sa place**. Chaque sort reprend un passif
+de classe du donjon (`docs/donjon.md`) :
+
+| sort | le geste | repris de | chiffres (de moi) |
+|---|---|---|---|
+| **Boule de feu** | tenir, lâcher quand l'étoile s'allume | l'Élan des haches | charge 0,8 s, zone 0,35 s ; 3 dégâts, sinon 1 |
+| **Éclair** | toucher quand l'anneau se referme sur le cercle ; juste, il en appelle un autre, plus rapide | le Fracas des massues, en chaîne | premier anneau 0,8 s, ×0,85 ensuite ; fenêtre 120 ms avant, 60 ms après, resserrée ×0,9 ; 1 dégât par éclair, 5 au plus |
+| **Missiles** | tapoter le plus vite possible pendant 2 s | la Lacération des griffes | 4 tapes font un missile qui porte (1 dégât) |
+
+- **On en choisit un au départ** (« Votre premier sort ») ; les autres
+  s'apprennent par un **Grimoire**, offert comme une amélioration (après un
+  combat, au feu, à l'autel, à la boutique). Les améliorations d'un sort ne
+  sont offertes que s'il est connu : Brasier (+2 à la boule chargée),
+  Concentration (zone +40 %), Conducteur (+1 par éclair), Orage (un éclair
+  de plus), Focale (fenêtre +30 %), Salve (une tape de moins par missile,
+  jamais moins de deux), Endurance (+0,6 s de salve).
+- **L'anneau se voit** (un cercle pointillé doré, l'anneau bleu qui se
+  referme dessus) : plus facile que le saut, qui n'avait que le mouvement —
+  « au début simple ».
+- Les ennemis ne punissent plus une attaque (les piques, le vol contre le
+  marteau sont partis avec elles) ; le **Squelette** (étage 3, élan de 0,3 à
+  1,9 s) prend la place du Garde à piques : il apprend à attendre sans
+  deviner.
+- **Le clic fantôme** : la tape qui ouvre un écran est suivie, au lâcher,
+  d'un clic que le navigateur envoie au même endroit, sur l'écran qui vient
+  de s'ouvrir — « Touchez pour jouer » choisissait ainsi le premier sort
+  tout seul. Tout bouton qui vient d'apparaître (panneau, carte, menu, sac)
+  ignore les clics 400 ms (`tropTot`).
+- Mesuré par les robots (60 % de gestes réussis, dix tapes par seconde ×
+  l'adresse aux missiles) : la boule de feu d'abord tombe aux étages 24, 21,
+  19, 12, 41, 6, 15, 10 ; l'éclair d'abord, 24, 20, 18, 19, 12, 30, 14, 6 ;
+  les missiles d'abord, 7, 12, 18, 12, 8, 9, 19, 8 (le robot tapote à six
+  par seconde : un vrai pouce fait mieux).
+
 ## Les fichiers
 
 - `src/logic/commande/carte.ts` — pur : la carte d'un acte (ses rangs, ses

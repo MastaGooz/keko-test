@@ -10,10 +10,16 @@
  * la boutique, l'événement et le choix d'amélioration sont des panneaux ; le
  * sac s'ouvre au-dessus du menu, pendant son tour.
  *
+ * Le héros est un PETIT MAGICIEN (Keko : « plutôt un petit magicien ? ») : le
+ * personnage du générateur coiffé d'un chapeau pointu, un bâton à la main ;
+ * il lance ses sorts de sa place — la boule de feu part du bâton, l'anneau de
+ * l'éclair se referme sur l'ennemi et la foudre tombe du ciel, chaque tape
+ * des missiles en lance un petit.
+ *
  * Les gestes portent l'horodatage de leur événement (`timeStamp`, la même
  * horloge que `performance.now()`) : la règle juge l'instant où le doigt
  * s'est posé, pas celui où la page l'a traité. Au clavier : espace (ou
- * Entrée) pour le geste, 1 et 2 pour les attaques.
+ * Entrée) pour le geste, 1, 2 et 3 pour les sorts.
  */
 import './commande.css'
 import { CARTE, type Salle } from '../../logic/commande/carte.ts'
@@ -22,17 +28,19 @@ import {
   allerA,
   avancer,
   BONUS,
-  choisir,
+  choisirLePremierSort,
   COMMANDE as C,
   empecheDAcheter,
   ennemiDe,
   EVENEMENTS,
   lacher,
+  lancer as lancerLeSort,
+  LES_SORTS,
   nouveauCombat,
   nouvelleCourse,
   OBJETS,
   peutAccepter,
-  peutAttaquer,
+  peutLancer,
   prendre,
   pvMaxDe,
   quitter,
@@ -41,34 +49,38 @@ import {
   sallesAccessibles,
   seReposer,
   sEntrainer,
+  SORTS,
+  tapesParMissile,
   toucher,
   utiliser,
   type Article,
-  type Attaque,
   type Bonus,
   type EtatCombat,
   type Evenement,
+  type Sort,
   type TypeEnnemi,
 } from '../../logic/commande/combat.ts'
 import { ecrireRecord, lireRecord, sprite } from '../invaders/commun.ts'
 import {
   ouvrirLeSon,
   sonArrivee,
-  sonAtterrit,
   sonBien,
   sonBlesse,
+  sonBoule,
   sonButin,
   sonChef,
+  sonEclair,
+  sonMissile,
   sonObjet,
   sonOr,
   sonPas,
   sonGarde,
   sonKo,
-  sonMarteau,
   sonPerdu,
   sonPleine,
   sonRate,
   sonRuee,
+  sonTape,
 } from './sons.ts'
 
 /** La scène : le héros et l'ennemi, en unités ; le sol est à y = 0, y monte. */
@@ -77,13 +89,14 @@ const X_ENNEMI = 19
 const TAILLE = 17
 /** La hauteur où vole le Lutin ailé. */
 const VOL = 10
-/** Où le héros prend son élan pour sauter, et où il se tient pour frapper au marteau. */
-const X_ELAN = X_ENNEMI - 15
-const X_MARTEAU = X_ENNEMI - 12
+/** Le bout du bâton du magicien, d'où partent les sorts. */
+const BATON = { x: X_HEROS + 5, y: TAILLE * 1.02 }
+/** La couleur de chaque sort (la pierre du bâton, ses effets). */
+const TEINTE: Record<Sort, string> = { feu: '#ff8a3a', eclair: '#8fe0ff', missiles: '#c79bff' }
 
 /** Les personnages du générateur, comme ceux du survivor. */
 const ID_HEROS = 'survivant'
-const ID_ENNEMI: Record<TypeEnnemi, string> = { brigand: 'heros-12', piques: 'heros-17', lutin: 'heros-14', brute: 'heros-16', chapardeur: 'monstre-0' }
+const ID_ENNEMI: Record<TypeEnnemi, string> = { brigand: 'heros-12', squelette: 'heros-17', lutin: 'heros-14', brute: 'heros-16', chapardeur: 'monstre-0' }
 /** Un chef est plus grand, une élite un peu. */
 const TAILLE_CHEF = 1.3
 const TAILLE_ELITE = 1.15
@@ -108,7 +121,6 @@ const melange = (a: number, b: number, u: number) => a + (b - a) * u
 /** Une cloche de hauteur `haut` sur u de 0 à 1. */
 const cloche = (haut: number, u: number) => 4 * haut * u * (1 - u)
 
-type Pose = { x: number; y: number; regard: 1 | -1; vole: boolean; court: boolean }
 type Eclat = { x: number; y: number; vx: number; vy: number; vie: number; duree: number; couleur: string; taille: number }
 type Bulle = { x: number; y: number; texte: string; couleur: string; taille: number; vie: number; duree: number }
 
@@ -152,18 +164,24 @@ export function monterCommande(racine: HTMLElement, build: string): void {
 
   const consigne = el('div', 'commande-consigne')
   const menu = el('div', 'commande-menu')
-  function bouton(a: Attaque, nom: string): { b: HTMLButtonElement; geste: HTMLSpanElement } {
-    const b = el('button', 'commande-attaque')
-    b.type = 'button'
-    const geste = el('span', 'commande-attaque-geste')
-    b.append(el('span', 'commande-attaque-nom', nom), geste)
-    b.addEventListener('click', () => attaquer(a))
-    menu.append(b)
-    return { b, geste }
+  /** Les sorts du menu, refaits quand on en apprend un. */
+  let menuMontre = ''
+  function majMenu(): void {
+    const cle = e.sorts.join()
+    if (cle === menuMontre) return
+    menuMontre = cle
+    menu.replaceChildren(
+      ...e.sorts.map((s) => {
+        const b = el('button', `commande-attaque commande-attaque-${s}`)
+        b.type = 'button'
+        b.append(el('span', 'commande-attaque-nom', SORTS[s].nom), el('span', 'commande-attaque-geste', SORTS[s].geste))
+        b.addEventListener('click', () => {
+          if (!tropTot()) lancerUnSort(s)
+        })
+        return b
+      }),
+    )
   }
-  const boutonSaut = bouton('saut', 'Saut')
-  const boutonMarteau = bouton('marteau', 'Marteau')
-  boutonSaut.geste.textContent = 'Touchez à chaque atterrissage'
 
   const sac = el('div', 'commande-sac')
   sac.hidden = true
@@ -226,8 +244,19 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     ecran.hidden = false
   }
 
+  /**
+   * LE CLIC FANTÔME : la tape qui ouvre un écran est suivie, au lâcher, d'un
+   * clic que le navigateur envoie au même endroit — sur l'écran qui vient de
+   * s'ouvrir (« Touchez pour jouer » choisissait ainsi le premier sort tout
+   * seul). Un bouton qui vient d'apparaître ignore donc les clics un instant.
+   */
+  let ouvertA = 0
+  const ouvrir = () => (ouvertA = performance.now())
+  const tropTot = () => performance.now() - ouvertA < 400
+
   /** Un panneau qui prend la tape : le choix, le feu, la boutique, l'événement. */
   function montrerPanneau(...enfants: HTMLElement[]): void {
+    ouvrir()
     ecran.classList.add('commande-ecran-panneau')
     ecran.replaceChildren(...enfants)
     ecran.hidden = false
@@ -245,6 +274,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     carte.append(el('span', 'commande-choix-nom', nom), el('span', 'commande-choix-effet', effet), el('span', 'commande-choix-rang', empeche ?? petit))
     carte.disabled = empeche !== null
     carte.addEventListener('click', () => {
+      if (tropTot()) return
       ouvrirLeSon()
       action()
     })
@@ -255,6 +285,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     b.type = 'button'
     b.disabled = desactive
     b.addEventListener('click', () => {
+      if (tropTot()) return
       ouvrirLeSon()
       action()
     })
@@ -269,7 +300,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
 
   function bilan(): string {
     const s = e.stats
-    return `Rebonds : ${s.rebonds} · Marteaux chargés : ${s.charges} · Gardes : ${s.gardes} · Parades parfaites : ${s.parfaites}`
+    return `Éclairs : ${s.eclairs} · Boules chargées : ${s.charges} · Missiles : ${s.missiles} · Gardes : ${s.gardes} · Parades parfaites : ${s.parfaites}`
   }
 
   function lancer(): void {
@@ -287,7 +318,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
 
   montrerEcran(
     'Commande action',
-    `Un combat au tour par tour : le bon geste au bon moment frappe plus fort, et pare les coups. Choisissez votre route jusqu’au chef, et montez le plus haut possible.${record > 0 ? ` Record : étage ${record}.` : ''}`,
+    `Un petit magicien, des sorts au tour par tour : le bon geste au bon moment frappe plus fort, et pare les coups. Choisissez votre route jusqu’au chef, et montez le plus haut possible.${record > 0 ? ` Record : étage ${record}.` : ''}`,
     'Touchez pour jouer',
   )
 
@@ -316,6 +347,21 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       el('div', 'commande-sous-titre', apresCombat ? `Étage ${e.etage} franchi` : 'Une amélioration'),
       el('div', 'commande-texte', `${gains.length > 0 ? `${gains.join(' · ')}. ` : ''}Choisissez une amélioration.`),
       liste(...offre),
+    )
+  }
+
+  /** Le premier sort, au départ : un seul, les autres s'apprennent en route. */
+  function montrerLeGrimoire(): void {
+    montrerPanneau(
+      el('div', 'commande-sous-titre', 'Votre premier sort'),
+      el('div', 'commande-texte', 'Le magicien n’en connaît qu’un au départ ; les autres s’apprennent en route.'),
+      liste(
+        ...LES_SORTS.map((s) =>
+          carteDeChoix(SORTS[s].nom, SORTS[s].effet, SORTS[s].geste, () => {
+            choisirLePremierSort(e, s, horloge())
+          }),
+        ),
+      ),
     )
   }
 
@@ -367,7 +413,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
         icone.append(trace)
         b.append(icone, el('span', 'commande-salle-nom', SALLES[n.salle].nom))
         b.addEventListener('click', () => {
-          if (!ouverte(r, i)) return
+          if (!ouverte(r, i) || tropTot()) return
           ouvrirLeSon()
           sonPas()
           for (const x of allerA(C, e, { rang: r, i }, horloge())) vivre(x)
@@ -379,6 +425,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     const tete = el('div', 'commande-carte-tete')
     tete.append(el('div', 'commande-carte-titre', `Acte ${e.acte}`), el('div', 'commande-texte', `${etatDuHeros()} · Sac : ${sacTexte}`), el('div', 'commande-carte-consigne', 'Choisissez votre route'))
     carteEl.replaceChildren(tete, plateau)
+    ouvrir()
   }
 
   function montrerLeFeu(): void {
@@ -463,7 +510,8 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     if (e.phase === 'carte') {
       fermerLePanneau()
       montrerLaCarte()
-    } else if (e.phase === 'repos') montrerLeFeu()
+    } else if (e.phase === 'depart') montrerLeGrimoire()
+    else if (e.phase === 'repos') montrerLeFeu()
     else if (e.phase === 'boutique') montrerLaBoutique()
     else if (e.phase === 'evenement') montrerLEvenement()
     else if (e.phase === 'butin') {
@@ -488,6 +536,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
         b.type = 'button'
         b.append(el('span', 'commande-objet-nom', OBJETS[o].nom), el('span', 'commande-objet-effet', OBJETS[o].effet))
         b.addEventListener('click', () => {
+          if (tropTot()) return
           ouvrirLeSon()
           for (const x of utiliser(C, e, i, horloge())) vivre(x)
         })
@@ -497,10 +546,10 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     sac.hidden = !visible || e.objets.length === 0
   }
 
-  function attaquer(a: Attaque): void {
-    if (!enJeu) return
+  function lancerUnSort(s: Sort): void {
+    if (!enJeu || !peutLancer(e, s)) return
     ouvrirLeSon()
-    choisir(C, e, a, horloge())
+    lancerLeSort(C, e, s, horloge())
   }
 
   // ---------------------------------------------------------------- les gestes
@@ -528,8 +577,10 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     if (ev.key === ' ' || ev.key === 'Enter') {
       ev.preventDefault()
       geste(ev)
-    } else if (ev.key === '1') attaquer('saut')
-    else if (ev.key === '2') attaquer('marteau')
+    } else if (ev.key >= '1' && ev.key <= '3') {
+      const s = e.sorts[Number(ev.key) - 1]
+      if (s !== undefined) lancerUnSort(s)
+    }
   })
   window.addEventListener('keyup', (ev) => {
     if (ev.key === ' ' || ev.key === 'Enter') lever(ev)
@@ -557,57 +608,74 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   const tailleEnnemi = () => TAILLE * (e.ennemi.estChef ? TAILLE_CHEF : e.salle === 'elite' ? TAILLE_ELITE : 1)
   const teteEnnemi = () => (ennemiDe(C, e).volant ? VOL : 0) + tailleEnnemi() * 0.8
 
+  /** La foudre tombée, les missiles en vol : dessinés le temps de leur vie (en secondes, à l'horloge de la page). */
+  const foudres: { t: number; points: [number, number][] }[] = []
+  const projectiles: { t: number; gros: boolean; dy: number }[] = []
+  function foudre(t: number): void {
+    const points: [number, number][] = []
+    const haut = 70
+    const bas = teteEnnemi() - 2
+    for (let i = 0; i <= 7; i++) points.push([X_ENNEMI + (i === 0 || i === 7 ? 0 : (Math.random() - 0.5) * 7), haut + ((bas - haut) * i) / 7])
+    foudres.push({ t, points })
+  }
+
   function vivre(ev: Evenement): void {
     const yTete = teteEnnemi()
+    const t = horloge()
     switch (ev.type) {
       case 'bien':
         sonBien(ev.serie)
         vibrer(10)
-        bulle(X_ENNEMI, yTete + 9, ev.serie >= 4 ? 'Superbe !' : ev.serie >= 2 ? 'Encore !' : 'Bien !', '#ffd27a', 3.2 + ev.serie * 0.3)
+        bulle(X_ENNEMI, yTete + 9, ev.serie >= 4 ? 'Superbe !' : ev.serie >= 2 ? 'Encore !' : 'Bien !', '#8fe0ff', 3.2 + ev.serie * 0.3)
         break
       case 'rate':
         sonRate()
         bulle(X_ENNEMI - 6, yTete + 9, 'Trop tôt', '#b9b3c9', 3)
         break
-      case 'atterrit':
-        sonAtterrit()
+      case 'eclair':
+        sonEclair()
+        foudre(t)
         ecrase = 1
         flashEnnemi = 1
-        secousse = Math.max(secousse, 0.35)
-        bulle(X_ENNEMI + 6, yTete - 2, String(ev.degats), '#ff6a5a', 4.2)
-        eclater(X_ENNEMI, yTete, '#fff2c0', 7, 14)
-        break
-      case 'piques':
-        sonBlesse()
-        vibrer(50)
-        flashHeros = 1
-        flashRouge = 1
-        secousse = 0.6
-        bulle(X_ENNEMI - 8, yTete + 8, 'Aïe, des piques !', '#ff8a7a', 3.2, 900)
+        flashOr = Math.max(flashOr, 0.35)
+        secousse = Math.max(secousse, 0.4)
+        bulle(X_ENNEMI + 6, yTete - 2, String(ev.degats), '#8fe0ff', 4.2)
+        eclater(X_ENNEMI, yTete, '#d8f4ff', 9, 16)
         break
       case 'pleine':
         sonPleine()
-        eclater(X_MARTEAU, TAILLE + 4, '#ffd27a', 8, 10)
+        eclater(BATON.x, BATON.y, '#ffd27a', 10, 10)
         break
-      case 'frappe': {
-        sonMarteau(ev.fort)
+      case 'boule': {
+        sonBoule(ev.fort)
         flashEnnemi = 1
         ecrase = 1
         bulle(X_ENNEMI + 6, yTete - 2, String(ev.degats), ev.fort ? '#ffd27a' : '#ff6a5a', ev.fort ? 6 : 4)
+        eclater(X_ENNEMI - 2, TAILLE * 0.5, ev.fort ? '#ffb030' : '#ff8a3a', ev.fort ? 26 : 10, ev.fort ? 28 : 16)
         if (ev.fort) {
           vibrer(35)
           secousse = 1
           flashOr = 1
           bulle(X_ENNEMI - 4, yTete + 9, 'Excellent !', '#ffd27a', 4.6, 900)
-          eclater(X_ENNEMI - 3, TAILLE * 0.6, '#ffd27a', 22, 26)
         } else {
-          const m = e.marteau
-          const mot = m.appui === null ? 'Trop lent' : (m.frappe ?? 0) - m.appui < C.marteau.charge ? 'Trop tôt' : 'Trop tard'
+          const f = e.feu
+          const mot = f.appui === null ? 'Trop lent' : (f.frappe ?? 0) - f.appui < C.feu.charge ? 'Trop tôt' : 'Trop tard'
           bulle(X_ENNEMI - 6, yTete + 9, mot, '#b9b3c9', 3)
           secousse = Math.max(secousse, 0.3)
         }
         break
       }
+      case 'tape':
+        sonTape(ev.taps, ev.missile)
+        projectiles.push({ t, gros: ev.missile, dy: (Math.random() - 0.5) * 8 })
+        break
+      case 'missile':
+        sonMissile()
+        flashEnnemi = 1
+        ecrase = Math.max(ecrase, 0.5)
+        bulle(X_ENNEMI + 4 + Math.random() * 4, yTete - 2 + Math.random() * 3, String(ev.degats), '#c79bff', 3.6, 500)
+        eclater(X_ENNEMI - 2, TAILLE * 0.55, '#e2ccff', 5, 12)
+        break
       case 'garde':
         if (ev.qualite === 'trop-tot') bulle(X_HEROS, TAILLE + 6, 'Trop tôt', '#b9b3c9', 3)
         break
@@ -690,7 +758,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
         setTimeout(
           () =>
             montrerEcran(
-              'Le héros est tombé',
+              'Le magicien est tombé',
               `Acte ${e.acte}, étage ${e.etage}, contre : ${ennemiDe(C, e).nom}. ${nouveau ? 'Nouveau record !' : `Record : étage ${record}.`} ${bilan()}.`,
               'Touchez pour rejouer',
             ),
@@ -702,46 +770,6 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   }
 
   // ---------------------------------------------------------------- les positions
-
-  function poseDuHeros(t: number): Pose {
-    const chez: Pose = { x: X_HEROS, y: 0, regard: 1, vole: false, court: false }
-    const retour = (x0: number, y0: number, haut: number): Pose => {
-      const u = clamp((t - e.retour!) / C.retour)
-      if (u >= 1) return chez
-      return { x: melange(x0, X_HEROS, lisse(u)), y: melange(y0, 0, u) + cloche(haut, u), regard: -1, vole: haut > 0, court: haut === 0 }
-    }
-    if (e.phase === 'saut') {
-      const elan = e.debut + C.course
-      if (t < elan) return { x: melange(X_HEROS, X_ELAN, lisse((t - e.debut) / C.course)), y: 0, regard: 1, vole: false, court: true }
-      const L = e.atterrissages
-      const tete = teteEnnemi()
-      if (t < L[0].t) {
-        const u = (t - elan) / (L[0].t - elan)
-        return { x: melange(X_ELAN, X_ENNEMI, u), y: melange(0, tete, u) + cloche(16, u), regard: 1, vole: true, court: false }
-      }
-      if (e.retour !== null && t >= e.retour) return retour(X_ENNEMI, tete, 14)
-      for (let k = L.length - 1; k >= 1; k--) {
-        if (t >= L[k - 1].t && t < L[k].t) {
-          const d = L[k].t - L[k - 1].t
-          return { x: X_ENNEMI, y: tete + cloche(50 * d * d, (t - L[k - 1].t) / d), regard: 1, vole: true, court: false }
-        }
-      }
-      // Après le dernier atterrissage, la décision tombe dans un instant : on part déjà vers le rebond s'il est gagné.
-      const der = L[L.length - 1]
-      if (t >= der.t && der.tape === 'bien') {
-        const d = C.saut.rebond * C.saut.raccourci ** (L.length - 1)
-        return { x: X_ENNEMI, y: tete + cloche(50 * d * d, clamp((t - der.t) / d)), regard: 1, vole: true, court: false }
-      }
-      return { x: X_ENNEMI, y: tete, regard: 1, vole: false, court: false }
-    }
-    if (e.phase === 'marteau') {
-      const m = e.marteau
-      if (t < m.arrivee) return { x: melange(X_HEROS, X_MARTEAU, lisse((t - e.debut) / C.course)), y: 0, regard: 1, vole: false, court: true }
-      if (e.retour !== null && t >= e.retour) return retour(X_MARTEAU, 0, 0)
-      return { x: X_MARTEAU, y: 0, regard: 1, vole: false, court: false }
-    }
-    return chez
-  }
 
   function poseDeLEnnemi(t: number): { x: number; y: number; penche: number; alpha: number } {
     const en = ennemiDe(C, e)
@@ -773,6 +801,9 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     }
     return { x: X_ENNEMI, y: haut, penche: 0, alpha: 1 }
   }
+
+  /** Le centre du corps de l'ennemi, là où visent les sorts. */
+  const coeurDeLEnnemi = () => ({ x: X_ENNEMI, y: (ennemiDe(C, e).volant ? VOL : 0) + tailleEnnemi() * 0.45 })
 
   // ---------------------------------------------------------------- le dessin
 
@@ -882,108 +913,79 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       }
     }
     personnage(imageEnnemi(en.type), p.x, p.y, -1, p.penche, flashEnnemi, 1 - ecrase * 0.25, tE)
-    if (en.piques) {
-      // Les piques du casque.
-      const yh = p.y + tE * 0.8 * (1 - ecrase * 0.25)
-      g.fillStyle = '#d6dbe4'
-      g.strokeStyle = '#3a3f4a'
-      g.lineWidth = Math.max(1, 0.25 * echelle)
-      for (const dx of [-3, 0, 3]) {
-        g.beginPath()
-        g.moveTo(sx(p.x + dx - 1.2), sy(yh))
-        g.lineTo(sx(p.x + dx), sy(yh + (dx === 0 ? 4 : 3)))
-        g.lineTo(sx(p.x + dx + 1.2), sy(yh))
-        g.closePath()
-        g.fill()
-        g.stroke()
-      }
-    }
     g.globalAlpha = 1
   }
 
-  /** L'angle du marteau : 0 debout, positif vers l'avant. */
-  function angleDuMarteau(t: number): number | null {
-    if (e.phase !== 'marteau') return null
-    const m = e.marteau
-    if (e.retour !== null && t >= e.retour) return -0.9
-    if (t < m.arrivee) return -0.9
-    const leve = (s: number) => -0.5 - 1.5 * clamp((s - (m.appui ?? s)) / C.marteau.charge)
-    if (m.frappe === null) {
-      if (m.appui === null) return -0.5 + Math.sin(t * 6) * 0.08
-      const a = leve(t)
-      return m.pleine ? a + Math.sin(t * 70) * 0.05 : a
+  /** Le sort en cours (la pierre du bâton en prend la couleur). */
+  const sortEnCours = (): Sort | null => (e.phase === 'feu' || e.phase === 'eclair' || e.phase === 'missiles' ? e.phase : null)
+
+  function rond(x: number, y: number, r: number, couleur: string, lueur = 0): void {
+    g.fillStyle = couleur
+    if (lueur > 0) {
+      g.shadowColor = couleur
+      g.shadowBlur = lueur * echelle
     }
-    const depart = m.appui === null ? -0.5 : leve(m.frappe)
-    return melange(depart, 1.75, lisse((t - m.frappe) / C.marteau.elan))
+    g.beginPath()
+    g.arc(sx(x), sy(y), r * echelle, 0, Math.PI * 2)
+    g.fill()
+    g.shadowBlur = 0
   }
 
+  /** Le petit magicien : le personnage, son chapeau pointu, son bâton. */
   function dessinerLeHeros(t: number): void {
-    const p = poseDuHeros(t)
-    ombre(p.x, p.y)
-    const course = p.court ? Math.abs(Math.sin(t * 18)) * 1.2 : 0
-    const respire = !p.court && !p.vole ? Math.sin(t * 3) * 0.02 : 0
-    personnage(imageHeros(), p.x, p.y + course, p.regard, p.court ? 0.12 : 0, flashHeros, 1 + respire)
-    const angle = angleDuMarteau(t)
-    if (angle !== null) {
-      // Le marteau, tenu à la main : le manche, puis la tête en travers.
-      const mx = sx(p.x + 1.5)
-      const my = sy(p.y + TAILLE * 0.42)
-      g.save()
-      g.translate(mx, my)
-      g.rotate(angle)
-      g.fillStyle = '#7a5230'
-      g.fillRect(-0.4 * echelle, -10 * echelle, 0.8 * echelle, 10 * echelle)
-      g.fillStyle = '#9aa3b2'
-      g.strokeStyle = '#3a3f4a'
-      g.lineWidth = Math.max(1, 0.3 * echelle)
-      g.beginPath()
-      g.roundRect(-3.2 * echelle, -13 * echelle, 6.4 * echelle, 3.6 * echelle, 0.6 * echelle)
-      g.fill()
-      g.stroke()
-      g.restore()
-    }
-    // Le bouclier, levé un instant à chaque tape de garde.
+    const x = X_HEROS
+    const lance = sortEnCours() !== null
+    const respire = Math.sin(t * 3) * 0.02
+    ombre(x, 0)
+    personnage(imageHeros(), x, 0, 1, lance ? -0.06 : 0, flashHeros, 1 + respire)
+    const yt = TAILLE * (0.8 + respire)
+    // Le chapeau : un bord, un cône qui penche, une étoile.
+    g.fillStyle = '#4b2a8a'
+    g.strokeStyle = '#1e1038'
+    g.lineWidth = Math.max(1, 0.3 * echelle)
+    g.beginPath()
+    g.ellipse(sx(x), sy(yt), 5.2 * echelle, 1.3 * echelle, 0, 0, Math.PI * 2)
+    g.fill()
+    g.stroke()
+    const plie = Math.sin(t * 2.2) * 0.6 - 1.5
+    g.beginPath()
+    g.moveTo(sx(x - 3.4), sy(yt + 0.3))
+    g.quadraticCurveTo(sx(x - 0.5), sy(yt + 7), sx(x + plie), sy(yt + 9.5))
+    g.quadraticCurveTo(sx(x + 1.2), sy(yt + 6), sx(x + 3.4), sy(yt + 0.3))
+    g.closePath()
+    g.fill()
+    g.stroke()
+    g.fillStyle = '#ffd27a'
+    g.font = `800 ${2.2 * echelle}px sans-serif`
+    g.textAlign = 'center'
+    g.fillText('★', sx(x - 0.3), sy(yt + 2.6))
+    // Le bâton, et sa pierre.
+    g.strokeStyle = '#6b4424'
+    g.lineWidth = 0.9 * echelle
+    g.lineCap = 'round'
+    g.beginPath()
+    g.moveTo(sx(x + 3.6), sy(0.6))
+    g.lineTo(sx(BATON.x), sy(BATON.y - 1))
+    g.stroke()
+    const s = sortEnCours()
+    const pierre = s !== null ? TEINTE[s] : '#b8a8ff'
+    rond(BATON.x, BATON.y, 1.2 + (s !== null ? Math.sin(t * 12) * 0.2 : 0), pierre, s !== null ? 3 : 1.5)
+    // Le bouclier magique, levé un instant à chaque tape de garde.
     if (e.phase === 'ennemi' && t - e.gardeA < 0.25) {
       const u = (t - e.gardeA) / 0.25
       g.globalAlpha = 1 - u * u
-      g.fillStyle = '#c9953f'
-      g.strokeStyle = '#ffe9b0'
-      g.lineWidth = Math.max(1, 0.4 * echelle)
+      g.strokeStyle = '#bfe6ff'
+      g.fillStyle = 'rgba(150, 210, 255, 0.25)'
+      g.lineWidth = Math.max(1, 0.5 * echelle)
       g.beginPath()
-      g.ellipse(sx(p.x + 5), sy(p.y + TAILLE * 0.45), 2 * echelle, 4.6 * echelle, 0, 0, Math.PI * 2)
+      g.arc(sx(x + 1), sy(TAILLE * 0.5), (TAILLE * 0.62 + u * 2) * echelle, -Math.PI / 2.4, Math.PI / 2.4)
       g.fill()
       g.stroke()
       g.globalAlpha = 1
     }
   }
 
-  /** La jauge du marteau, au-dessus du héros : elle se remplit, l'étoile s'allume quand il faut lâcher. */
-  function dessinerLaCharge(t: number): void {
-    if (e.phase !== 'marteau') return
-    const m = e.marteau
-    if (m.appui === null || m.frappe !== null || t < m.appui) return
-    const u = clamp((t - m.appui) / C.marteau.charge)
-    const x0 = sx(X_MARTEAU - 7)
-    const y0 = sy(TAILLE + 5)
-    const L = 12 * echelle
-    const H = 1.6 * echelle
-    g.fillStyle = 'rgba(0, 0, 0, 0.6)'
-    g.beginPath()
-    g.roundRect(x0, y0, L, H, H / 2)
-    g.fill()
-    g.fillStyle = m.pleine ? '#ffd27a' : '#e6e1f0'
-    g.beginPath()
-    g.roundRect(x0, y0, Math.max(H, L * u), H, H / 2)
-    g.fill()
-    // L'étoile au bout.
-    const cx = x0 + L + 2.6 * echelle
-    const cy = y0 + H / 2
-    const r = (m.pleine ? 2.2 + Math.sin(t * 20) * 0.3 : 1.6) * echelle
-    g.fillStyle = m.pleine ? '#ffd27a' : 'rgba(255, 255, 255, 0.3)'
-    if (m.pleine) {
-      g.shadowColor = '#ffb030'
-      g.shadowBlur = 2 * echelle
-    }
+  function etoile(cx: number, cy: number, r: number): void {
     g.beginPath()
     for (let i = 0; i < 10; i++) {
       const a = -Math.PI / 2 + (i * Math.PI) / 5
@@ -992,7 +994,147 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     }
     g.closePath()
     g.fill()
-    g.shadowBlur = 0
+  }
+
+  /** Les sorts à l'écran : la boule de feu qui se charge et part, l'anneau de l'éclair et la foudre, la salve. */
+  function dessinerLesSorts(t: number): void {
+    const cible = coeurDeLEnnemi()
+    if (e.phase === 'feu') {
+      const f = e.feu
+      if (f.frappe === null && f.appui !== null && t >= f.appui) {
+        // La boule grossit au bout du bâton ; la jauge au-dessus, l'étoile quand il faut lâcher.
+        const u = clamp((t - f.appui) / C.feu.charge)
+        rond(BATON.x, BATON.y + 1.5, 1 + u * 2.4 + (f.pleine ? Math.sin(t * 30) * 0.3 : 0), f.pleine ? '#ffd27a' : '#ff8a3a', 4)
+        const x0 = sx(X_HEROS - 7)
+        const y0 = sy(TAILLE + 13)
+        const L = 12 * echelle
+        const H = 1.6 * echelle
+        g.fillStyle = 'rgba(0, 0, 0, 0.6)'
+        g.beginPath()
+        g.roundRect(x0, y0, L, H, H / 2)
+        g.fill()
+        g.fillStyle = f.pleine ? '#ffd27a' : '#ffb07a'
+        g.beginPath()
+        g.roundRect(x0, y0, Math.max(H, L * u), H, H / 2)
+        g.fill()
+        g.fillStyle = f.pleine ? '#ffd27a' : 'rgba(255, 255, 255, 0.3)'
+        if (f.pleine) {
+          g.shadowColor = '#ffb030'
+          g.shadowBlur = 2 * echelle
+        }
+        etoile(x0 + L + 2.6 * echelle, y0 + H / 2, (f.pleine ? 2.2 + Math.sin(t * 20) * 0.3 : 1.6) * echelle)
+        g.shadowBlur = 0
+      } else if (f.frappe !== null && !f.porte) {
+        // La boule part en cloche vers l'ennemi.
+        const u = clamp((t - f.frappe) / C.feu.vol)
+        const x = melange(BATON.x, cible.x, u)
+        const y = melange(BATON.y + 1.5, cible.y, u) + cloche(6, u)
+        const r = f.fort ? 3.4 : 1.8
+        for (let i = 1; i <= 4; i++) {
+          const v = clamp(u - i * 0.06)
+          g.globalAlpha = 0.5 - i * 0.1
+          rond(melange(BATON.x, cible.x, v), melange(BATON.y + 1.5, cible.y, v) + cloche(6, v), r * (1 - i * 0.15), '#ff6a2a')
+        }
+        g.globalAlpha = 1
+        rond(x, y, r, f.fort ? '#ffd27a' : '#ff8a3a', 5)
+      }
+    }
+    if (e.phase === 'eclair') {
+      const a = e.anneaux[e.anneaux.length - 1]
+      if (!a.porte) {
+        // L'anneau part de loin et se referme sur le cercle : on touche quand ils se recouvrent.
+        const depart = e.anneaux.length > 1 ? e.anneaux[e.anneaux.length - 2].t : e.debut + C.eclair.prepare
+        const u = clamp((t - depart) / (a.t - depart))
+        const rCible = 4.5
+        const r = melange(rCible + 16, rCible, u)
+        g.strokeStyle = 'rgba(255, 210, 122, 0.85)'
+        g.lineWidth = 0.5 * echelle
+        g.setLineDash([1.2 * echelle, 1 * echelle])
+        g.beginPath()
+        g.arc(sx(cible.x), sy(cible.y), rCible * echelle, 0, Math.PI * 2)
+        g.stroke()
+        g.setLineDash([])
+        g.strokeStyle = TEINTE.eclair
+        g.globalAlpha = 0.35 + 0.65 * u
+        g.lineWidth = (0.6 + u * 0.6) * echelle
+        g.shadowColor = TEINTE.eclair
+        g.shadowBlur = 2 * echelle
+        g.beginPath()
+        g.arc(sx(cible.x), sy(cible.y), r * echelle, 0, Math.PI * 2)
+        g.stroke()
+        g.shadowBlur = 0
+        g.globalAlpha = 1
+      }
+    }
+    if (e.phase === 'missiles') {
+      const m = e.missiles
+      const x0 = sx(X_HEROS - 7)
+      const y0 = sy(TAILLE + 13)
+      const L = 14 * echelle
+      const H = 1.4 * echelle
+      if (t <= m.fin) {
+        // Le temps qui reste, et le compte des tapes.
+        const reste = t < m.debut ? 1 : 1 - clamp((t - m.debut) / (m.fin - m.debut))
+        g.fillStyle = 'rgba(0, 0, 0, 0.6)'
+        g.beginPath()
+        g.roundRect(x0, y0, L, H, H / 2)
+        g.fill()
+        g.fillStyle = TEINTE.missiles
+        g.beginPath()
+        g.roundRect(x0, y0, Math.max(H, L * reste), H, H / 2)
+        g.fill()
+      }
+      if (m.taps > 0) {
+        g.font = `800 ${3.4 * echelle}px 'Baloo 2', sans-serif`
+        g.textAlign = 'center'
+        g.lineWidth = 0.6 * echelle
+        g.strokeStyle = 'rgba(0, 0, 0, 0.75)'
+        g.fillStyle = '#e2ccff'
+        const texte = `×${m.taps}`
+        g.strokeText(texte, sx(X_HEROS), y0 - 1.2 * echelle)
+        g.fillText(texte, sx(X_HEROS), y0 - 1.2 * echelle)
+        // Les tapes qui manquent au prochain missile, en points sous la jauge.
+        const n = tapesParMissile(C, e)
+        for (let i = 0; i < n; i++) {
+          g.fillStyle = i < m.taps % n ? TEINTE.missiles : 'rgba(255, 255, 255, 0.25)'
+          g.beginPath()
+          g.arc(x0 + (i + 0.5) * (L / n), y0 + H + 1.4 * echelle, 0.5 * echelle, 0, Math.PI * 2)
+          g.fill()
+        }
+      }
+    }
+    // Les missiles en vol (une tape, un petit ; celle qui porte, un gros).
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+      const p = projectiles[i]
+      const u = (t - p.t) / C.missiles.vol
+      if (u >= 1) {
+        projectiles.splice(i, 1)
+        continue
+      }
+      const x = melange(BATON.x, cible.x, u)
+      const y = melange(BATON.y, cible.y, u) + Math.sin(u * Math.PI) * p.dy
+      rond(x, y, p.gros ? 1.4 : 0.6, p.gros ? '#f2e6ff' : TEINTE.missiles, p.gros ? 3 : 1.5)
+    }
+    // La foudre, du ciel à l'ennemi.
+    for (let i = foudres.length - 1; i >= 0; i--) {
+      const f = foudres[i]
+      const u = (t - f.t) / 0.22
+      if (u >= 1) {
+        foudres.splice(i, 1)
+        continue
+      }
+      g.globalAlpha = 1 - u
+      g.strokeStyle = '#ffffff'
+      g.shadowColor = TEINTE.eclair
+      g.shadowBlur = 3 * echelle
+      g.lineWidth = 0.8 * echelle
+      g.lineJoin = 'round'
+      g.beginPath()
+      f.points.forEach(([x, y], k) => (k === 0 ? g.moveTo(sx(x), sy(y)) : g.lineTo(sx(x), sy(y))))
+      g.stroke()
+      g.shadowBlur = 0
+      g.globalAlpha = 1
+    }
   }
 
   // ---------------------------------------------------------------- le chrome
@@ -1000,23 +1142,24 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   let consigneMontree = ''
   function majChrome(t: number): void {
     const en = ennemiDe(C, e)
+    campHeros.nom.textContent = 'Magicien'
     campHeros.remplie.style.width = `${(100 * e.pv) / pvMaxDe(C, e)}%`
     campHeros.detail.textContent = etatDuHeros()
     campEnnemi.nom.textContent = en.nom
     campEnnemi.remplie.style.width = `${(100 * e.pvEnnemi) / en.pv}%`
     campEnnemi.detail.textContent = `Étage ${e.etage}`
     const choix = enJeu && e.phase === 'choix'
+    // Le menu qui réapparaît : la tape de garde qui finissait le tour ne doit pas y lancer un sort.
+    if (choix && menu.hidden) ouvrir()
     menu.hidden = !choix
+    if (choix) majMenu()
     majSac(choix)
-    if (choix) {
-      boutonMarteau.b.disabled = !peutAttaquer(C, e, 'marteau')
-      boutonMarteau.geste.textContent = boutonMarteau.b.disabled ? 'Hors de portée' : 'Tenez, lâchez à l’étoile'
-    }
     let texte = ''
     if (enJeu) {
       if (e.phase === 'choix') texte = en.conseil
-      else if (e.phase === 'saut') texte = en.piques ? '' : 'Touchez à l’atterrissage pour rebondir'
-      else if (e.phase === 'marteau') texte = e.marteau.frappe !== null ? '' : e.marteau.appui === null || t < e.marteau.appui ? 'Posez le doigt et tenez' : 'Lâchez quand l’étoile s’allume'
+      else if (e.phase === 'feu') texte = e.feu.frappe !== null ? '' : e.feu.appui === null || t < e.feu.appui ? 'Posez le doigt et tenez' : 'Lâchez quand l’étoile s’allume'
+      else if (e.phase === 'eclair') texte = e.finAction !== null ? '' : 'Touchez quand l’anneau touche le cercle'
+      else if (e.phase === 'missiles') texte = t < e.missiles.debut ? 'Prêt…' : t <= e.missiles.fin ? 'Tapotez !' : ''
       else if (e.phase === 'ennemi') texte = 'Touchez juste avant le coup pour parer'
     }
     if (texte !== consigneMontree) {
@@ -1078,7 +1221,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     dessinerLaScene(w, h)
     if (combatEnScene()) dessinerLEnnemi(t)
     dessinerLeHeros(t)
-    dessinerLaCharge(t)
+    dessinerLesSorts(t)
     for (const p of eclats) {
       g.globalAlpha = 1 - p.vie / p.duree
       g.fillStyle = p.couleur

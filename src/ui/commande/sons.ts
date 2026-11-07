@@ -19,10 +19,10 @@ export function sonRate(): void {
   note('sawtooth', 140, 110, 0.18, 0.08)
 }
 
-/** Le héros retombe sur l'ennemi. */
-export function sonAtterrit(): void {
-  note('triangle', 260, 90, 0.1, 0.22)
-  souffle(0.06, 1800, 0.2)
+/** La foudre tombe : un craquement. */
+export function sonEclair(): void {
+  souffle(0.25, 7000, 0.4)
+  note('sawtooth', 160, 50, 0.22, 0.14)
 }
 
 /** La charge du marteau est pleine : un tintement. */
@@ -31,14 +31,26 @@ export function sonPleine(): void {
   note('sine', 1980, 1980, 0.2, 0.06, 0.04)
 }
 
-/** Le marteau frappe : fort, un grand choc ; mou, un petit. */
-export function sonMarteau(fort: boolean): void {
+/** La boule de feu explose : chargée, un grand souffle ; molle, un petit. */
+export function sonBoule(fort: boolean): void {
   if (fort) {
-    note('sawtooth', 180, 45, 0.3, 0.3)
-    souffle(0.3, 3000, 0.45)
+    note('sawtooth', 180, 40, 0.4, 0.3)
+    souffle(0.45, 2500, 0.5)
   } else {
-    note('triangle', 200, 120, 0.1, 0.18)
+    souffle(0.15, 1500, 0.25)
+    note('triangle', 220, 120, 0.1, 0.15)
   }
+}
+
+/** Une tape de la salve : un petit tir, qui monte avec le compte ; celle qui porte sonne plus clair. */
+export function sonTape(taps: number, porte: boolean): void {
+  const f = 520 * 2 ** (Math.min(taps, 36) / 36)
+  note('square', f, f * 1.5, 0.04, porte ? 0.06 : 0.03)
+}
+
+/** Un missile qui porte. */
+export function sonMissile(): void {
+  note('triangle', 900, 300, 0.08, 0.12)
 }
 
 /** La garde : un choc de métal ; parfaite, un éclat clair. */
