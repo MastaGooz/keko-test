@@ -1,7 +1,7 @@
 /**
  * Vérifications de la tour du magicien, sans navigateur : le temps est injecté.
  */
-import { ajouter, avancer, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, type Element, type EtatMagie, type Evenement, type TypeEnnemi } from './jeu.ts'
+import { ajouter, avancer, effetsDuSort, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, type Element, type EtatMagie, type Evenement, type TypeEnnemi } from './jeu.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -43,7 +43,8 @@ verifier('le froid annule un feu', a[0].type === 'annule' && f.file.join() === '
 ajouter(C, f, 'terre')
 verifier('la terre annule la foudre', f.file.join() === 'feu')
 verifier('la forme : de la terre, un rocher ; de la foudre, un éclair ; du feu ou du froid, un souffle', formeDe(['terre', 'feu']) === 'rocher' && formeDe(['foudre', 'froid']) === 'eclair' && formeDe(['froid']) === 'souffle' && formeDe([]) === 'aucun')
-verifier('le nom du sort', nomDuSort(['terre', 'feu']) === 'Météore ×2' && nomDuSort(['feu']) === 'Jet de flammes' && nomDuSort(['foudre', 'froid', 'froid']) === 'Éclair glacé ×3')
+verifier('le nom du sort : feu + foudre = éclair de feu', nomDuSort(['feu', 'foudre']) === 'Éclair de feu ×2' && nomDuSort(['terre', 'feu']) === 'Rocher de feu ×2' && nomDuSort(['feu']) === 'Jet de flammes' && nomDuSort(['foudre', 'froid', 'froid']) === 'Éclair de givre ×3')
+verifier('ce que fera le sort', effetsDuSort(C, ['foudre', 'feu']).join() === 'saute sur 3 ennemis,brûle' && effetsDuSort(C, ['froid', 'froid', 'froid']).join() === 'cône devant la tour,gèle')
 
 // ---------------------------------------------------------------- le souffle
 

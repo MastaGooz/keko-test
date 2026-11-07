@@ -37,9 +37,15 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
   par élément, portée 34, ±29°).
 - **Les effets s'ajoutent** : le feu brûle (2 dégâts par seconde par feu,
   3 s), le froid ralentit (25 % par froid, 3 s ; trois froids gèlent 2 s),
-  la terre repousse. Le nom du sort le dit : Jet de flammes, Souffle de
-  givre, Éclair ardent, Éclair glacé, Rocher, Météore, Rocher de glace, ×2
-  ou ×3.
+  la terre repousse.
+- **L'indication du sort** (Keko : « faudrait ajouter une indication (icône
+  + nom), ex. feu + foudre = éclair de feu ») : à côté de la file, l'ICÔNE de
+  la forme (le rocher, l'éclair, le souffle), tracée à la couleur de son
+  élément et remplie de celle de l'élément qui la modifie ; le NOM (Éclair,
+  Éclair de feu, Éclair de givre, Rocher, Rocher de feu, Rocher de glace,
+  Jet de flammes, Souffle de givre, ×2 ou ×3) ; dessous, la RECETTE et ce
+  que fera le sort (« Feu + Foudre · saute sur 3 ennemis · brûle »,
+  `effetsDuSort`). Au lancer, le nom s'affiche au-dessus de la tour.
 - **Quatre ennemis**, chacun sa vague d'arrivée :
 
   | ennemi | dès la vague | PV | vitesse | coup sur la tour | faiblesse |

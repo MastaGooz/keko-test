@@ -10,7 +10,7 @@
  * pour les éléments, la souris pour viser.
  */
 import './magie.css'
-import { ajouter, avancer, ELEMENTS, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
+import { ajouter, avancer, effetsDuSort, ELEMENTS, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
 import { ecrireRecord, lireRecord, sprite } from '../invaders/commun.ts'
 import { ouvrirLeSon, sonAnnule, sonEclair, sonElement, sonImpact, sonJet, sonMort, sonPerdu, sonPleine, sonSouffle, sonTouche, sonTour, sonVague } from './sons.ts'
 
@@ -29,6 +29,12 @@ const ICONE: Record<Element, string> = {
   froid: 'M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 4.5l3 2 3-2M9 19.5l3-2 3 2',
   foudre: 'M13 3L5 14h6l-1 7 8-11h-6z',
   terre: 'M4 17l3-7 4-3 5 1 4 5-1 5-6 2-6-1z',
+}
+/** L'icône d'un sort : sa forme (le rocher, l'éclair, le souffle). */
+const ICONE_DU_SORT = {
+  rocher: ICONE.terre,
+  eclair: ICONE.foudre,
+  souffle: 'M3 12L20 5M3 12h18M3 12l17 7M20 5a14 14 0 0 1 0 14',
 }
 const ID_ENNEMI: Record<TypeEnnemi, string> = { gobelin: 'heros-12', orc: 'heros-17', esprit: 'survivant', golem: 'monstre-0' }
 const ID_MAGICIEN = 'heros-14'
@@ -75,10 +81,11 @@ export function monterMagie(racine: HTMLElement, build: string): void {
   const file = el('div', 'magie-file')
   const orbes = [0, 1, 2].map(() => el('div', 'magie-orbe'))
   const nom = el('div', 'magie-nom')
+  const iconeDuSort = el('div', 'magie-icone')
   const vider = el('button', 'magie-vider', '✕')
   vider.type = 'button'
   vider.setAttribute('aria-label', 'Vider la file')
-  file.append(...orbes, nom, vider)
+  file.append(...orbes, iconeDuSort, nom, vider)
   const elements = el('div', 'magie-elements')
   for (const k of ELEMENTS) {
     const b = el('button', 'magie-element')
@@ -202,6 +209,9 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     if (!pret(e)) return
     regard = p.x >= 0 ? 1 : -1
     lanceA = e.t
+    // Le nom du sort s'affiche au-dessus de la tour, à sa couleur.
+    const premier = e.file.find((k) => k === 'feu' || k === 'froid') ?? e.file[0]
+    chiffres.push({ x: 0, y: -17, texte: nomDuSort(e.file).replace(/ ×\d$/, ''), couleur: TEINTE[premier], vie: 0 })
     for (const x of lancer(C, e, p)) vivre(x)
     majFile()
   })
@@ -219,7 +229,35 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       o.style.background = k === undefined ? '' : `radial-gradient(circle at 35% 35%, #fff, ${TEINTE[k]} 55%)`
     })
     const sort = nomDuSort(e.file)
-    nom.replaceChildren(sort === '' ? document.createTextNode('Choisissez jusqu’à trois éléments') : document.createTextNode(sort), el('small', '', sort === '' ? 'Le feu et le froid s’annulent, la foudre et la terre aussi' : 'Touchez le terrain pour le lancer'))
+    const forme = formeDe(e.file)
+    iconeDuSort.hidden = forme === 'aucun'
+    if (forme !== 'aucun') {
+      // L'icône : la forme tracée à la couleur de son élément, remplie de celle qui la modifie.
+      const n = (k: Element) => e.file.filter((x) => x === k).length
+      const trait = forme === 'rocher' ? TEINTE.terre : forme === 'eclair' ? TEINTE.foudre : TEINTE[n('feu') > 0 ? 'feu' : 'froid']
+      const ajout = forme !== 'souffle' && n('feu') + n('froid') > 0 ? TEINTE[n('feu') > 0 ? 'feu' : 'froid'] : 'none'
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      svg.setAttribute('viewBox', '0 0 24 24')
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      p.setAttribute('d', ICONE_DU_SORT[forme])
+      p.setAttribute('stroke', trait)
+      p.setAttribute('fill', ajout)
+      p.setAttribute('fill-opacity', '0.6')
+      svg.append(p)
+      iconeDuSort.replaceChildren(svg)
+      iconeDuSort.style.boxShadow = `0 0 0.8rem ${ajout === 'none' ? trait : ajout}`
+    }
+    // La recette, puis ce que fera le sort.
+    const recette = ELEMENTS.filter((k) => e.file.includes(k))
+      .map((k) => {
+        const combien = e.file.filter((x) => x === k).length
+        return `${NOM[k]}${combien > 1 ? ` ×${combien}` : ''}`
+      })
+      .join(' + ')
+    nom.replaceChildren(
+      document.createTextNode(sort === '' ? 'Choisissez jusqu’à trois éléments' : sort),
+      el('small', '', sort === '' ? 'Le feu et le froid s’annulent, la foudre et la terre aussi' : [recette, ...effetsDuSort(C, e.file)].join(' · ')),
+    )
     vider.hidden = e.file.length === 0
   }
 

@@ -99,6 +99,29 @@ html.magie-page body {
   }
 }
 
+.magie-icone {
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: rgba(0, 0, 0, 0.45);
+  animation: magie-entre 0.18s ease-out both;
+}
+
+.magie-icone[hidden] {
+  display: none;
+}
+
+.magie-icone svg {
+  width: 2rem;
+  height: 2rem;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .magie-nom {
   flex: 1;
   font: 800 1rem 'Baloo 2', sans-serif;

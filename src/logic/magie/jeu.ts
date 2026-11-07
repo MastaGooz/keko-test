@@ -150,15 +150,30 @@ export function formeDe(file: Element[]): Forme {
   return 'aucun'
 }
 
-/** Le nom du sort que la file lancerait, pour la page. */
+/** Le nom du sort que la file lancerait, pour la page (Keko : « feu + foudre = éclair de feu »). */
 export function nomDuSort(file: Element[]): string {
   const n = compter(file)
   const forme = formeDe(file)
   const force = file.length > 1 ? ` ×${file.length}` : ''
-  if (forme === 'rocher') return `${n.feu > 0 ? 'Météore' : n.froid > 0 ? 'Rocher de glace' : 'Rocher'}${force}`
-  if (forme === 'eclair') return `${n.feu > 0 ? 'Éclair ardent' : n.froid > 0 ? 'Éclair glacé' : 'Éclair'}${force}`
+  const de = n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de glace' : ''
+  if (forme === 'rocher') return `Rocher${de}${force}`
+  if (forme === 'eclair') return `Éclair${n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de givre' : ''}${force}`
   if (forme === 'souffle') return `${n.feu > 0 ? 'Jet de flammes' : 'Souffle de givre'}${force}`
   return ''
+}
+
+/** Ce que fera le sort, en quelques mots : sa forme, puis ce que chaque élément y ajoute. */
+export function effetsDuSort(c: ConfigMagie, file: Element[]): string[] {
+  const n = compter(file)
+  const forme = formeDe(file)
+  if (forme === 'aucun') return []
+  const effets: string[] = []
+  if (forme === 'rocher') effets.push(n.feu > 0 ? 'explose large' : 'éclate sur le point touché', 'repousse')
+  if (forme === 'eclair') effets.push(`saute sur ${1 + c.eclair.sautsParFoudre * n.foudre} ennemis`)
+  if (forme === 'souffle') effets.push('cône devant la tour')
+  if (n.feu > 0) effets.push('brûle')
+  if (n.froid > 0) effets.push(n.froid >= c.gel.glace ? 'gèle' : 'ralentit')
+  return effets
 }
 
 /** Un élément entre dans la file : il annule son opposé s'il y est, sinon il s'ajoute (trois au plus). */
