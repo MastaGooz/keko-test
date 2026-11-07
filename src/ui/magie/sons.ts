@@ -17,12 +17,23 @@ function bride(sorte: string, ms: number): boolean {
   return true
 }
 
-const NOTE: Record<Element, number> = { feu: 392, froid: 659, foudre: 880, terre: 196 }
+const NOTE: Record<Element, number> = { feu: 392, froid: 659, foudre: 880, terre: 196, vie: 523, mort: 147 }
 
 /** Un élément entre dans la file. */
 export function sonElement(el: Element, rang: number): void {
   const f = NOTE[el] * 2 ** (rang / 12)
-  note(el === 'terre' ? 'triangle' : el === 'foudre' ? 'square' : 'sine', f, f, 0.14, 0.12)
+  note(el === 'terre' || el === 'mort' ? 'triangle' : el === 'foudre' ? 'square' : 'sine', f, f, 0.14, 0.12)
+}
+
+/** Le rayon de mort : un bourdon grave qui tient. */
+export function sonRayon(): void {
+  note('sawtooth', 110, 90, 0.35, 0.16)
+  souffle(0.3, 1200, 0.25)
+}
+
+/** Le halo de vie : un accord clair qui monte. */
+export function sonHalo(): void {
+  ;[523, 659, 784].forEach((f, i) => note('sine', f, f * 1.01, 0.3, 0.1, i * 0.06))
 }
 
 /** Deux opposés s'annulent : un pschitt. */

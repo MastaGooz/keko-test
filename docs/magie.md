@@ -19,13 +19,33 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
 
 ## Les décisions (de moi, à rejuger par Keko)
 
-- **Quatre éléments** (Magicka en a huit) : feu, froid, foudre, terre, en
-  quatre gros boutons en bas — *au doigt, huit boutons ne tiennent pas*.
-  **Trois au plus dans la file** (Magicka : cinq). Les orbes de la file
-  s'affichent en bas avec le nom du sort qu'elle lancerait, et tournent
-  autour du magicien.
+- **Six éléments** (Magicka en a huit) : feu, froid, foudre, terre, puis
+  **vie et mort** (Keko, 07/11 : « on peut ajouter vie et mort, comme dans
+  Magicka ? ») — six boutons sur une ligne en bas, 48 px chacun au moins sur
+  un téléphone étroit ; *huit ne tiendraient pas*. **Trois au plus dans la
+  file** (Magicka : cinq). Les orbes de la file s'affichent en bas avec le
+  nom du sort qu'elle lancerait, et tournent autour du magicien. Au clavier,
+  1 à 6.
 - **Les opposés s'annulent en entrant** : le feu efface un froid de la file
-  (et inversement), la foudre une terre. Un ✕ vide la file.
+  (et inversement), la foudre une terre, la vie une mort. Un ✕ vide la file.
+- **La mort fait un RAYON** (l'arcane de Magicka) : une ligne droite depuis
+  la tour, portée 44, qui transperce tout ce qu'elle croise à 3 unités de la
+  ligne (8 dégâts par mort, 3 par autre élément) ; elle passe après la terre
+  et la foudre (mort + terre = rocher de mort, mort + foudre = éclair de
+  mort) mais avant le feu et le froid (mort + feu = rayon de mort ardent).
+  **Son effet : elle affaiblit** — les touchés prennent 25 % de dégâts en
+  plus par mort (75 % au plus) pendant 4 s ; un cerne violet le montre.
+- **La vie soigne la tour.** Seule dans la file, c'est un **HALO** : la tour
+  regagne 3 PV par vie (jusqu'à 20), et les morts-vivants à moins de 18
+  unités brûlent (5 par vie, doublés par leur faiblesse). Dans un autre
+  sort, elle **draine** : chaque ennemi touché rend 1 PV par vie à la tour.
+  *La vie ne blesse pas les vivants* (faiblesse 0, sans afficher
+  « Insensible » : c'est sa nature, pas une résistance) — l'éclair de vie
+  ne fait que les dégâts de la foudre.
+- **Le squelette**, cinquième ennemi, dès la vague 5 : 18 PV, vitesse 5,5,
+  2 par coup ; **la mort ne lui fait rien, la vie le brûle (double)**. Le
+  même générateur que les autres, délavé en os (`filter: grayscale`), une
+  brume verdâtre autour.
 - **On lance en touchant le terrain** : le sort part vers ce point ; puis
   0,35 s de recharge.
 - **La forme vient de la composition** : de la terre, un **rocher** jeté sur
@@ -50,7 +70,7 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
   selon le nombre de lignes du titre, c'est perturbant ») : le nom sur une
   ligne, la recette sur deux au plus — le panneau ne bouge plus, ni la tour,
   qui se centre dessus.
-- **Quatre ennemis**, chacun sa vague d'arrivée :
+- **Cinq ennemis**, chacun sa vague d'arrivée :
 
   | ennemi | dès la vague | PV | vitesse | coup sur la tour | faiblesse |
   |---|---|---|---|---|---|
@@ -58,6 +78,7 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
   | Orc | 2 | 30 | 4,5 | 3 | — |
   | Esprit de feu | 3 | 14 | 6,5 | 2 | insensible au feu, le froid double |
   | Golem | 4 | 40 | 3,5 | 4 | la foudre ×0,25, le feu ×0,5, la terre double |
+  | Squelette | 5 | 18 | 5,5 | 2 | insensible à la mort, la vie double |
 
   Le type nouveau d'une vague ouvre la marche, seul.
 - **Les vagues** : 4 + 2 × (n − 1) ennemis sur 14 s, nés juste hors de

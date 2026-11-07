@@ -4,15 +4,19 @@
  * approchent, et on lance des sorts à la Magicka »).
  *
  * **Le sort se COMPOSE** : on empile jusqu'à trois éléments (feu, froid,
- * foudre, terre), puis on touche le terrain pour le lancer vers ce point. La
- * composition donne la FORME — de la terre, un ROCHER lancé sur le point ;
- * sinon de la foudre, un ÉCLAIR qui saute d'ennemi en ennemi ; sinon un
- * SOUFFLE en cône (de flammes ou de givre) — et chaque élément y ajoute son
- * effet : le feu brûle, le froid ralentit (trois froids gèlent), la terre
- * repousse. **Les opposés s'annulent** en entrant dans la file : le feu et le
- * froid, la foudre et la terre. Certains ennemis résistent à un élément (un
- * esprit de feu ne brûle pas, la foudre glisse sur le golem) : il faut
- * changer de sort.
+ * foudre, terre, vie, mort), puis on touche le terrain pour le lancer vers ce
+ * point. La composition donne la FORME — de la terre, un ROCHER lancé sur le
+ * point ; sinon de la foudre, un ÉCLAIR qui saute d'ennemi en ennemi ; sinon
+ * de la mort, un RAYON qui transperce tout en ligne ; sinon un SOUFFLE en cône
+ * (de flammes ou de givre) ; de la vie seule, un HALO autour de la tour — et
+ * chaque élément y ajoute son effet : le feu brûle, le froid ralentit (trois
+ * froids gèlent), la terre repousse, la mort affaiblit, la vie soigne la tour
+ * (le halo), ou lui rend un peu de vie par ennemi touché (un drain). **Les
+ * opposés s'annulent** en entrant dans la file : le feu et le froid, la foudre
+ * et la terre, la vie et la mort (Keko, 07/11 : « on peut ajouter vie et mort,
+ * comme dans Magicka ? »). Certains ennemis résistent à un élément (un esprit
+ * de feu ne brûle pas, la foudre glisse sur le golem, la mort ne fait rien au
+ * squelette, que la vie brûle) : il faut changer de sort.
  *
  * Les ennemis naissent hors de l'écran, par vagues, et marchent sur la tour ;
  * au pied de la tour, ils frappent. La partie s'arrête quand la tour tombe ;
@@ -24,12 +28,13 @@
  */
 import { createRng } from '../rng.ts'
 
-export type Element = 'feu' | 'froid' | 'foudre' | 'terre'
-export const ELEMENTS: Element[] = ['feu', 'froid', 'foudre', 'terre']
-export const OPPOSE: Record<Element, Element> = { feu: 'froid', froid: 'feu', foudre: 'terre', terre: 'foudre' }
+export type Element = 'feu' | 'froid' | 'foudre' | 'terre' | 'vie' | 'mort'
+export const ELEMENTS: Element[] = ['feu', 'froid', 'foudre', 'terre', 'vie', 'mort']
+export const OPPOSE: Record<Element, Element> = { feu: 'froid', froid: 'feu', foudre: 'terre', terre: 'foudre', vie: 'mort', mort: 'vie' }
 
-export type TypeEnnemi = 'gobelin' | 'orc' | 'esprit' | 'golem'
+export type TypeEnnemi = 'gobelin' | 'orc' | 'esprit' | 'golem' | 'squelette'
 export type Compte = Record<Element, number>
+const VIDE: Compte = { feu: 0, froid: 0, foudre: 0, terre: 0, vie: 0, mort: 0 }
 
 export const MAGIE = {
   /** Trois éléments au plus dans la file. */
@@ -47,18 +52,26 @@ export const MAGIE = {
   rocher: { vitesse: 85, degats: 7, degatsAutres: 3, rayon: 5, rayonParFeu: 3, recul: 5, porteeMax: 75 },
   /** L'éclair : il part sur l'ennemi le plus proche dans le cône, puis saute ; ses dégâts par foudre (et par autre élément). */
   eclair: { portee: 48, angle: 0.7, saut: 20, degats: 6, degatsAutres: 2, sautsParFoudre: 2 },
+  /** Le rayon de mort : une ligne depuis la tour, qui transperce tout ce qu'elle croise (à tant de la ligne) ; ses dégâts par mort (et par autre élément). */
+  rayon: { portee: 44, largeur: 3, degats: 8, degatsAutres: 3 },
+  /** La mort affaiblit : les touchés prennent tant de dégâts en plus par mort, tant de secondes. */
+  affaiblissement: { part: 0.25, max: 0.75, duree: 4 },
+  /** La vie : le halo (de la vie seule) soigne la tour de tant par vie et brûle les morts-vivants dans son rayon ; dans un autre sort, chaque ennemi touché rend tant par vie à la tour. */
+  vie: { soin: 3, rayon: 18, degats: 5, drain: 1 },
   ennemis: {
     gobelin: { nom: 'Gobelin', pv: 10, vitesse: 7, degats: 1, rayon: 2.6, depuis: 1, poids: 4 },
     orc: { nom: 'Orc', pv: 30, vitesse: 4.5, degats: 3, rayon: 3.6, depuis: 2, poids: 2 },
     esprit: { nom: 'Esprit de feu', pv: 14, vitesse: 6.5, degats: 2, rayon: 2.8, depuis: 3, poids: 2 },
     golem: { nom: 'Golem', pv: 40, vitesse: 3.5, degats: 4, rayon: 4.2, depuis: 4, poids: 1 },
+    squelette: { nom: 'Squelette', pv: 18, vitesse: 5.5, degats: 2, rayon: 3, depuis: 5, poids: 2 },
   } satisfies Record<TypeEnnemi, { nom: string; pv: number; vitesse: number; degats: number; rayon: number; depuis: number; poids: number }>,
-  /** Ce que chaque élément fait à chaque ennemi (1 : normal). */
+  /** Ce que chaque élément fait à chaque ennemi (1 : normal). La vie ne blesse que les morts-vivants ; la mort ne leur fait rien. */
   faiblesses: {
-    gobelin: { feu: 1, froid: 1, foudre: 1, terre: 1 },
-    orc: { feu: 1, froid: 1, foudre: 1, terre: 1 },
-    esprit: { feu: 0, froid: 2, foudre: 1, terre: 1 },
-    golem: { feu: 0.5, froid: 1, foudre: 0.25, terre: 2 },
+    gobelin: { feu: 1, froid: 1, foudre: 1, terre: 1, vie: 0, mort: 1 },
+    orc: { feu: 1, froid: 1, foudre: 1, terre: 1, vie: 0, mort: 1 },
+    esprit: { feu: 0, froid: 2, foudre: 1, terre: 1, vie: 0, mort: 1 },
+    golem: { feu: 0.5, froid: 1, foudre: 0.25, terre: 2, vie: 0, mort: 1 },
+    squelette: { feu: 1, froid: 1, foudre: 1, terre: 1, vie: 2, mort: 0 },
   } satisfies Record<TypeEnnemi, Compte>,
   /** Un ennemi au pied de la tour frappe toutes les tant de secondes. */
   attaque: 1.2,
@@ -78,7 +91,7 @@ export const MAGIE = {
 }
 
 export type ConfigMagie = typeof MAGIE
-export type Forme = 'aucun' | 'souffle' | 'eclair' | 'rocher'
+export type Forme = 'aucun' | 'souffle' | 'eclair' | 'rocher' | 'rayon' | 'halo'
 /** Ce que montre l'écran, autour de la tour (en unités du monde). */
 export type Vue = { gauche: number; droite: number; haut: number; bas: number }
 export type Point = { x: number; y: number }
@@ -93,6 +106,8 @@ export type Ennemi = {
   /** La brûlure en cours : ses dégâts par seconde, jusqu'à quand. */
   brule: { dps: number; fin: number } | null
   ralenti: { part: number; fin: number } | null
+  /** Affaibli par la mort : il prend tant de dégâts en plus, jusqu'à quand. */
+  affaibli: { part: number; fin: number } | null
   /** Gelé jusque-là. */
   geleA: number
   /** Son prochain coup sur la tour. */
@@ -126,6 +141,10 @@ export type Evenement =
   | { type: 'pleine' }
   | { type: 'souffle'; dir: Point; n: Compte }
   | { type: 'eclair'; points: Point[]; n: Compte }
+  | { type: 'rayon'; dir: Point; n: Compte }
+  | { type: 'halo'; n: Compte }
+  /** La tour regagne tant de PV (le halo, ou un drain). */
+  | { type: 'soigne'; pv: number }
   | { type: 'jet'; id: number; n: Compte }
   | { type: 'impact'; x: number; y: number; rayon: number; n: Compte }
   | { type: 'touche'; id: number; x: number; y: number; degats: number; resiste: boolean }
@@ -139,14 +158,19 @@ export function nouvellePartie(c: ConfigMagie, graine: number): EtatMagie {
   return { t: 0, graine: graine >>> 0, phase: 'jeu', pv: c.tour.pv, file: [], pretA: 0, vague: 0, aFaire: [], prochaineVague: c.vague.pause, ennemis: [], rochers: [], prochainId: 1, abattus: 0 }
 }
 
-const compter = (file: Element[]): Compte => ({ feu: 0, froid: 0, foudre: 0, terre: 0, ...Object.fromEntries(ELEMENTS.map((k) => [k, file.filter((x) => x === k).length])) })
+const compter = (file: Element[]): Compte => ({ ...VIDE, ...Object.fromEntries(ELEMENTS.map((k) => [k, file.filter((x) => x === k).length])) })
 
-/** La forme d'un sort : de la terre, un rocher ; sinon de la foudre, un éclair ; sinon du feu ou du froid, un souffle. */
+/** Les dégâts de chaque élément du paquet : `degats` pour l'élément qui fait la forme, `autres` pour ceux qui l'accompagnent. */
+const paquet = (n: Compte, principal: Element | null, degats: number, autres: number): Compte => ({ ...VIDE, ...Object.fromEntries(ELEMENTS.map((k) => [k, (k === principal ? degats : autres) * n[k]])) })
+
+/** La forme d'un sort : de la terre, un rocher ; sinon de la foudre, un éclair ; sinon de la mort, un rayon ; sinon du feu ou du froid, un souffle ; de la vie seule, un halo. */
 export function formeDe(file: Element[]): Forme {
   const n = compter(file)
   if (n.terre > 0) return 'rocher'
   if (n.foudre > 0) return 'eclair'
+  if (n.mort > 0) return 'rayon'
   if (n.feu + n.froid > 0) return 'souffle'
+  if (n.vie > 0) return 'halo'
   return 'aucun'
 }
 
@@ -155,10 +179,12 @@ export function nomDuSort(file: Element[]): string {
   const n = compter(file)
   const forme = formeDe(file)
   const force = file.length > 1 ? ` ×${file.length}` : ''
-  const de = n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de glace' : ''
+  const de = n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de glace' : n.mort > 0 ? ' de mort' : n.vie > 0 ? ' de vie' : ''
   if (forme === 'rocher') return `Rocher${de}${force}`
-  if (forme === 'eclair') return `Éclair${n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de givre' : ''}${force}`
-  if (forme === 'souffle') return `${n.feu > 0 ? 'Jet de flammes' : 'Souffle de givre'}${force}`
+  if (forme === 'eclair') return `Éclair${n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de givre' : n.mort > 0 ? ' de mort' : n.vie > 0 ? ' de vie' : ''}${force}`
+  if (forme === 'rayon') return `Rayon de mort${n.feu > 0 ? ' ardent' : n.froid > 0 ? ' glacé' : ''}${force}`
+  if (forme === 'souffle') return `${n.vie > 0 ? (n.feu > 0 ? 'Flammes de vie' : 'Givre de vie') : n.feu > 0 ? 'Jet de flammes' : 'Souffle de givre'}${force}`
+  if (forme === 'halo') return `Halo de vie${force}`
   return ''
 }
 
@@ -170,9 +196,13 @@ export function effetsDuSort(c: ConfigMagie, file: Element[]): string[] {
   const effets: string[] = []
   if (forme === 'rocher') effets.push(n.feu > 0 ? 'explose large' : 'éclate', 'repousse')
   if (forme === 'eclair') effets.push(`saute sur ${1 + c.eclair.sautsParFoudre * n.foudre} ennemis`)
+  if (forme === 'rayon') effets.push('transperce en ligne')
   if (forme === 'souffle') effets.push('cône devant la tour')
+  if (forme === 'halo') effets.push(`soigne la tour de ${c.vie.soin * n.vie}`, 'brûle les morts-vivants autour')
   if (n.feu > 0) effets.push('brûle')
   if (n.froid > 0) effets.push(n.froid >= c.gel.glace ? 'gèle' : 'ralentit')
+  if (n.mort > 0) effets.push('affaiblit')
+  if (n.vie > 0 && forme !== 'halo') effets.push('draine')
   return effets
 }
 
@@ -201,14 +231,24 @@ export function pret(e: EtatMagie): boolean {
 
 const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y)
 
-/** Les dégâts d'un paquet d'éléments sur un ennemi, ses faiblesses comprises ; puis la brûlure, le froid, le recul. */
+/** La tour regagne `pv` (jusqu'à son maximum) ; l'événement dit combien. */
+function soigner(c: ConfigMagie, e: EtatMagie, pv: number, ev: Evenement[]): void {
+  const gagne = Math.min(c.tour.pv, e.pv + pv) - e.pv
+  if (gagne <= 0) return
+  e.pv += gagne
+  ev.push({ type: 'soigne', pv: gagne })
+}
+
+/** Les dégâts d'un paquet d'éléments sur un ennemi, ses faiblesses comprises (et son affaiblissement) ; puis la brûlure, le froid, le recul, l'affaiblissement, le drain. */
 function frapper(c: ConfigMagie, e: EtatMagie, en: Ennemi, parElement: Compte, n: Compte, ev: Evenement[], recul: Point | null = null): void {
   if (en.pv <= 0) return
   const f = c.faiblesses[en.type]
   let degats = 0
   for (const k of ELEMENTS) degats += parElement[k] * f[k]
+  if (en.affaibli !== null && e.t < en.affaibli.fin) degats *= 1 + en.affaibli.part
   degats = Math.round(degats)
-  const resiste = ELEMENTS.some((k) => parElement[k] > 0 && f[k] < 1)
+  // La vie ne blesse pas les vivants : ce n'est pas une résistance, c'est sa nature.
+  const resiste = ELEMENTS.some((k) => k !== 'vie' && parElement[k] > 0 && f[k] < 1)
   en.pv -= degats
   ev.push({ type: 'touche', id: en.id, x: en.x, y: en.y, degats, resiste })
   if (n.feu > 0 && f.feu > 0) en.brule = { dps: c.brulure.dps * n.feu * f.feu, fin: e.t + c.brulure.duree }
@@ -219,6 +259,8 @@ function frapper(c: ConfigMagie, e: EtatMagie, en: Ennemi, parElement: Compte, n
       ev.push({ type: 'gele', id: en.id })
     }
   }
+  if (n.mort > 0 && f.mort > 0) en.affaibli = { part: Math.min(c.affaiblissement.max, c.affaiblissement.part * n.mort), fin: e.t + c.affaiblissement.duree }
+  if (n.vie > 0) soigner(c, e, c.vie.drain * n.vie, ev)
   if (recul !== null && n.terre > 0) {
     const d = Math.hypot(en.x - recul.x, en.y - recul.y) || 1
     en.x += ((en.x - recul.x) / d) * c.rocher.recul * n.terre
@@ -253,15 +295,32 @@ export function lancer(c: ConfigMagie, e: EtatMagie, cible: Point): Evenement[] 
 
   if (forme === 'souffle') {
     ev.push({ type: 'souffle', dir, n })
-    const parElement: Compte = { feu: c.cone.degats * n.feu, froid: c.cone.degats * n.froid, foudre: 0, terre: 0 }
+    const parElement = paquet(n, null, c.cone.degats, c.cone.degats)
     for (const en of vivants) {
       const d = Math.hypot(en.x, en.y)
       const r = c.ennemis[en.type].rayon
       if (d - r <= c.cone.portee && ecart(dir, en) <= c.cone.demiAngle + Math.atan2(r, Math.max(d, 1))) frapper(c, e, en, parElement, n, ev)
     }
+  } else if (forme === 'halo') {
+    // La vie seule : la tour se soigne, et les morts-vivants autour d'elle brûlent.
+    ev.push({ type: 'halo', n })
+    soigner(c, e, c.vie.soin * n.vie, ev)
+    const parElement = paquet(n, 'vie', c.vie.degats, 0)
+    // Le halo soigne déjà : il ne draine pas par-dessus.
+    const sansDrain: Compte = { ...n, vie: 0 }
+    for (const en of vivants) if (Math.hypot(en.x, en.y) - c.ennemis[en.type].rayon <= c.vie.rayon && c.faiblesses[en.type].vie > 0) frapper(c, e, en, parElement, sansDrain, ev)
+  } else if (forme === 'rayon') {
+    // La mort : une ligne depuis la tour, qui transperce tout ce qu'elle croise.
+    ev.push({ type: 'rayon', dir, n })
+    const parElement = paquet(n, 'mort', c.rayon.degats, c.rayon.degatsAutres)
+    for (const en of vivants) {
+      const le = en.x * dir.x + en.y * dir.y
+      const ecartLigne = Math.abs(en.x * dir.y - en.y * dir.x)
+      if (le > 0 && le - c.ennemis[en.type].rayon <= c.rayon.portee && ecartLigne <= c.rayon.largeur + c.ennemis[en.type].rayon) frapper(c, e, en, parElement, n, ev)
+    }
   } else if (forme === 'eclair') {
     // Le premier touché : le plus proche de la tour, dans le cône visé ; puis il saute au plus proche qu'il n'a pas touché.
-    const parElement: Compte = { feu: c.eclair.degatsAutres * n.feu, froid: c.eclair.degatsAutres * n.froid, foudre: c.eclair.degats * n.foudre, terre: 0 }
+    const parElement = paquet(n, 'foudre', c.eclair.degats, c.eclair.degatsAutres)
     const sauts = 1 + c.eclair.sautsParFoudre * n.foudre
     const points: Point[] = [{ x: 0, y: 0 }]
     const touches: Ennemi[] = []
@@ -341,7 +400,7 @@ export function avancer(c: ConfigMagie, e: EtatMagie, dt: number, vue: Vue): Eve
       const m = c.ennemis[type]
       const p = horsDeLEcran(vue, c.vague.marge, rng.next() * Math.PI * 2)
       const pv = Math.round(m.pv * (1 + c.vague.durcissement * (e.vague - 1)))
-      e.ennemis.push({ id: e.prochainId++, type, x: p.x, y: p.y, pv, pvMax: pv, brule: null, ralenti: null, geleA: 0, coupA: 0 })
+      e.ennemis.push({ id: e.prochainId++, type, x: p.x, y: p.y, pv, pvMax: pv, brule: null, ralenti: null, affaibli: null, geleA: 0, coupA: 0 })
     }
     e.graine = rng.getState()
   }
@@ -359,7 +418,7 @@ export function avancer(c: ConfigMagie, e: EtatMagie, dt: number, vue: Vue): Eve
       }
       const rayon = c.rocher.rayon + c.rocher.rayonParFeu * r.n.feu
       ev.push({ type: 'impact', x: r.x, y: r.y, rayon, n: r.n })
-      const parElement: Compte = { feu: c.rocher.degatsAutres * r.n.feu, froid: c.rocher.degatsAutres * r.n.froid, foudre: 0, terre: c.rocher.degats * r.n.terre }
+      const parElement = paquet(r.n, 'terre', c.rocher.degats, c.rocher.degatsAutres)
       for (const en of e.ennemis) if (en.pv > 0 && dist(en, r) <= rayon + c.ennemis[en.type].rayon) frapper(c, e, en, parElement, r.n, ev, { x: r.x, y: r.y })
       e.rochers.splice(i, 1)
     } else {
@@ -383,6 +442,7 @@ export function avancer(c: ConfigMagie, e: EtatMagie, dt: number, vue: Vue): Eve
       }
     }
     if (en.ralenti !== null && e.t >= en.ralenti.fin) en.ralenti = null
+    if (en.affaibli !== null && e.t >= en.affaibli.fin) en.affaibli = null
     const d = Math.hypot(en.x, en.y)
     const auPied = c.tour.rayon + m.rayon
     if (d > auPied) {

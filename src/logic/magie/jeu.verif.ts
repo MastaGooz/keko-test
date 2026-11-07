@@ -25,7 +25,7 @@ function calme(...ennemis: [TypeEnnemi, number, number][]): EtatMagie {
   e.vague = 1
   for (const [type, x, y] of ennemis) {
     const pv = C.ennemis[type].pv
-    e.ennemis.push({ id: e.prochainId++, type, x, y, pv, pvMax: pv, brule: null, ralenti: null, geleA: 0, coupA: 0 })
+    e.ennemis.push({ id: e.prochainId++, type, x, y, pv, pvMax: pv, brule: null, ralenti: null, affaibli: null, geleA: 0, coupA: 0 })
   }
   return e
 }
@@ -43,8 +43,13 @@ verifier('le froid annule un feu', a[0].type === 'annule' && f.file.join() === '
 ajouter(C, f, 'terre')
 verifier('la terre annule la foudre', f.file.join() === 'feu')
 verifier('la forme : de la terre, un rocher ; de la foudre, un éclair ; du feu ou du froid, un souffle', formeDe(['terre', 'feu']) === 'rocher' && formeDe(['foudre', 'froid']) === 'eclair' && formeDe(['froid']) === 'souffle' && formeDe([]) === 'aucun')
+verifier('… de la mort, un rayon ; de la vie seule, un halo ; la vie avec du feu, un souffle', formeDe(['mort', 'feu']) === 'rayon' && formeDe(['vie', 'vie']) === 'halo' && formeDe(['vie', 'feu']) === 'souffle' && formeDe(['mort', 'terre']) === 'rocher')
 verifier('le nom du sort : feu + foudre = éclair de feu', nomDuSort(['feu', 'foudre']) === 'Éclair de feu ×2' && nomDuSort(['terre', 'feu']) === 'Rocher de feu ×2' && nomDuSort(['feu']) === 'Jet de flammes' && nomDuSort(['foudre', 'froid', 'froid']) === 'Éclair de givre ×3')
-verifier('ce que fera le sort', effetsDuSort(C, ['foudre', 'feu']).join() === 'saute sur 3 ennemis,brûle' && effetsDuSort(C, ['froid', 'froid', 'froid']).join() === 'cône devant la tour,gèle')
+verifier('… rayon de mort, halo de vie, éclair de vie', nomDuSort(['mort']) === 'Rayon de mort' && nomDuSort(['mort', 'feu']) === 'Rayon de mort ardent ×2' && nomDuSort(['vie']) === 'Halo de vie' && nomDuSort(['foudre', 'vie']) === 'Éclair de vie ×2' && nomDuSort(['vie', 'froid']) === 'Givre de vie ×2')
+verifier('ce que fera le sort', effetsDuSort(C, ['foudre', 'feu']).join() === 'saute sur 3 ennemis,brûle' && effetsDuSort(C, ['froid', 'froid', 'froid']).join() === 'cône devant la tour,gèle' && effetsDuSort(C, ['mort']).join() === 'transperce en ligne,affaiblit' &&effetsDuSort(C, ['terre', 'vie']).join() === 'éclate,repousse,draine')
+const vm = nouvellePartie(C, 1)
+composer(vm, 'vie', 'mort')
+verifier('la mort annule la vie', vm.file.length === 0)
 
 // ---------------------------------------------------------------- le souffle
 
@@ -119,6 +124,38 @@ lancer(C, meteore, { x: 50, y: 0 })
 const evMeteore = jouer(meteore, 1)
 verifier('le feu élargit l’impact du rocher', evMeteore.some((x) => x.type === 'impact' && x.rayon === C.rocher.rayon + C.rocher.rayonParFeu) && meteore.ennemis[1].pv < C.ennemis.orc.pv)
 
+// ---------------------------------------------------------------- la mort, la vie
+
+const ligne = calme(['orc', 15, 0], ['orc', 30, 1], ['orc', 30, 12], ['orc', -20, 0])
+composer(ligne, 'mort')
+const evLigne = lancer(C, ligne, { x: 1, y: 0 })
+verifier('le rayon de mort transperce tout en ligne, pas à côté, pas derrière', evLigne.some((x) => x.type === 'rayon') && ligne.ennemis[0].pv === C.ennemis.orc.pv - C.rayon.degats && ligne.ennemis[1].pv === C.ennemis.orc.pv - C.rayon.degats && ligne.ennemis[2].pv === C.ennemis.orc.pv && ligne.ennemis[3].pv === C.ennemis.orc.pv)
+const faible = calme(['orc', 20, 0])
+composer(faible, 'mort', 'mort')
+lancer(C, faible, { x: 1, y: 0 })
+jouer(faible, 0.5)
+const pvApresMort = faible.ennemis[0].pv
+composer(faible, 'feu')
+lancer(C, faible, { x: 1, y: 0 })
+verifier('la mort affaiblit : le coup suivant fait plus mal', faible.ennemis[0].affaibli !== null && pvApresMort - faible.ennemis[0].pv === Math.round(C.cone.degats * (1 + 2 * C.affaiblissement.part)))
+const os = calme(['squelette', 20, 0])
+composer(os, 'mort', 'mort', 'mort')
+lancer(C, os, { x: 1, y: 0 })
+verifier('la mort ne fait rien au squelette', os.ennemis[0].pv === C.ennemis.squelette.pv)
+const halo = calme(['squelette', 12, 0], ['gobelin', 0, -12], ['squelette', 40, 0])
+halo.pv = 10
+composer(halo, 'vie', 'vie')
+const evHalo = lancer(C, halo, { x: 1, y: 0 })
+verifier('le halo de vie soigne la tour (sans drainer en plus), tue le squelette proche (20 pour 18 PV), épargne le gobelin et le squelette loin', evHalo.some((x) => x.type === 'halo') && halo.pv === 10 + 2 * C.vie.soin && halo.ennemis[0].pv <= 0 && halo.ennemis[1].pv === C.ennemis.gobelin.pv && halo.ennemis[2].pv === C.ennemis.squelette.pv)
+const plein = calme()
+composer(plein, 'vie')
+verifier('la tour pleine ne se soigne pas au-delà', lancer(C, plein, { x: 1, y: 0 }).every((x) => x.type !== 'soigne') && plein.pv === C.tour.pv)
+const drain = calme(['gobelin', 20, 0], ['gobelin', 24, 3])
+drain.pv = 10
+composer(drain, 'foudre', 'vie')
+lancer(C, drain, { x: 1, y: 0 })
+verifier("l'éclair de vie blesse les vivants (la foudre seule) et draine : un PV par ennemi touché", drain.pv === 10 + 2 * C.vie.drain && drain.ennemis[0].pv === C.ennemis.gobelin.pv - C.eclair.degats)
+
 // ---------------------------------------------------------------- les ennemis, les vagues
 
 const assaut = calme(['orc', 0, 30])
@@ -145,7 +182,8 @@ function robot(graine: number, cadence: number): EtatMagie {
     avancer(C, e, PAS, VUE)
     if (e.t < prochain || e.ennemis.length === 0) continue
     const cible = [...e.ennemis].sort((u, v) => Math.hypot(u.x, u.y) - Math.hypot(v.x, v.y))[0]
-    const file: Element[] = cible.type === 'esprit' ? ['froid', 'froid', 'froid'] : cible.type === 'golem' ? ['terre', 'terre', 'terre'] : Math.hypot(cible.x, cible.y) < 30 ? ['feu', 'feu', 'feu'] : ['foudre', 'foudre', 'foudre']
+    const pres = Math.hypot(cible.x, cible.y) < 30
+    const file: Element[] = cible.type === 'esprit' ? ['froid', 'froid', 'froid'] : cible.type === 'golem' ? ['terre', 'terre', 'terre'] : cible.type === 'squelette' ? (pres ? ['feu', 'vie', 'vie'] : ['foudre', 'vie', 'vie']) : pres ? ['feu', 'feu', 'feu'] : ['foudre', 'foudre', 'foudre']
     composer(e, ...file)
     lancer(C, e, { x: cible.x, y: cible.y })
     prochain = e.t + cadence

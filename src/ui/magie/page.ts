@@ -5,14 +5,14 @@
  * terrain libre, le magicien dessus ; les ennemis arrivent de tous les bords.
  *
  * En bas, la FILE du sort (trois orbes, le nom de ce qu'elle lancerait) et
- * les quatre ÉLÉMENTS ; une tape sur le terrain lance le sort vers ce point.
- * Les orbes de la file tournent aussi autour du magicien. Au clavier : 1 à 4
+ * les six ÉLÉMENTS ; une tape sur le terrain lance le sort vers ce point.
+ * Les orbes de la file tournent aussi autour du magicien. Au clavier : 1 à 6
  * pour les éléments, la souris pour viser.
  */
 import './magie.css'
-import { ajouter, avancer, effetsDuSort, ELEMENTS, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
+import { ajouter, avancer, effetsDuSort, ELEMENTS, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Forme, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
 import { ecrireRecord, lireRecord, sprite } from '../invaders/commun.ts'
-import { ouvrirLeSon, sonAnnule, sonEclair, sonElement, sonImpact, sonJet, sonMort, sonPerdu, sonPleine, sonSouffle, sonTouche, sonTour, sonVague } from './sons.ts'
+import { ouvrirLeSon, sonAnnule, sonEclair, sonElement, sonHalo, sonImpact, sonJet, sonMort, sonPerdu, sonPleine, sonRayon, sonSouffle, sonTouche, sonTour, sonVague } from './sons.ts'
 
 const PAS = 1 / 60
 /** La largeur de l'écran montre tant d'unités. */
@@ -21,22 +21,28 @@ const CLE_RECORD = 'keko-magie-record'
 /** Les cases du sol (chacune tire son décor de ses coordonnées). */
 const CASE = 8
 
-const TEINTE: Record<Element, string> = { feu: '#ff7a2a', froid: '#8fe0ff', foudre: '#ffe066', terre: '#c89a5a' }
-const NOM: Record<Element, string> = { feu: 'Feu', froid: 'Froid', foudre: 'Foudre', terre: 'Terre' }
+const TEINTE: Record<Element, string> = { feu: '#ff7a2a', froid: '#8fe0ff', foudre: '#ffe066', terre: '#c89a5a', vie: '#8cff9a', mort: '#c07cff' }
+const NOM: Record<Element, string> = { feu: 'Feu', froid: 'Froid', foudre: 'Foudre', terre: 'Terre', vie: 'Vie', mort: 'Mort' }
 /** Les icônes des éléments, tracées en SVG (24 × 24). */
 const ICONE: Record<Element, string> = {
   feu: 'M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 2 1 3 3 3 3s-1-4 0-7z',
   froid: 'M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 4.5l3 2 3-2M9 19.5l3-2 3 2',
   foudre: 'M13 3L5 14h6l-1 7 8-11h-6z',
   terre: 'M4 17l3-7 4-3 5 1 4 5-1 5-6 2-6-1z',
+  vie: 'M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z',
+  mort: 'M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.2 3 5.5V19h8v-3.5c1.6-1.3 3-2.9 3-5.5a7 7 0 0 0-7-7zM9.5 11h.01M14.5 11h.01M10.5 19v2M13.5 19v2',
 }
-/** L'icône d'un sort : sa forme (le rocher, l'éclair, le souffle). */
-const ICONE_DU_SORT = {
+/** L'icône d'un sort : sa forme (le rocher, l'éclair, le rayon, le souffle, le halo). */
+const ICONE_DU_SORT: Record<Exclude<Forme, 'aucun'>, string> = {
   rocher: ICONE.terre,
   eclair: ICONE.foudre,
+  rayon: 'M3 12h17M16 8l4 4-4 4M7 8l1 2M7 16l1-2',
   souffle: 'M3 12L20 5M3 12h18M3 12l17 7M20 5a14 14 0 0 1 0 14',
+  halo: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 8v8M8 12h8',
 }
-const ID_ENNEMI: Record<TypeEnnemi, string> = { gobelin: 'heros-12', orc: 'heros-17', esprit: 'survivant', golem: 'monstre-0' }
+/** L'élément dont la forme prend la couleur. */
+const ELEMENT_DE_LA_FORME: Record<Exclude<Forme, 'aucun' | 'souffle'>, Element> = { rocher: 'terre', eclair: 'foudre', rayon: 'mort', halo: 'vie' }
+const ID_ENNEMI: Record<TypeEnnemi, string> = { gobelin: 'heros-12', orc: 'heros-17', esprit: 'survivant', golem: 'monstre-0', squelette: 'squelette-4' }
 const ID_MAGICIEN = 'heros-14'
 
 function hache(x: number, y: number, sel: number): number {
@@ -47,7 +53,7 @@ function hache(x: number, y: number, sel: number): number {
 
 type Eclat = { x: number; y: number; vx: number; vy: number; vie: number; duree: number; couleur: string; taille: number }
 type Chiffre = { x: number; y: number; texte: string; couleur: string; vie: number }
-type Trace = { t: number; duree: number } & ({ sorte: 'souffle'; dir: Point; couleurs: string[] } | { sorte: 'eclair'; points: Point[]; couleur: string } | { sorte: 'impact'; x: number; y: number; rayon: number; couleur: string })
+type Trace = { t: number; duree: number } & ({ sorte: 'souffle'; dir: Point; couleurs: string[] } | { sorte: 'eclair'; points: Point[]; couleur: string } | { sorte: 'impact'; x: number; y: number; rayon: number; couleur: string } | { sorte: 'rayon'; dir: Point; couleur: string } | { sorte: 'halo'; rayon: number })
 
 /** La couleur dominante d'un sort, d'après ses éléments. */
 function couleurDe(n: Record<Element, number>, repli: Element): string {
@@ -166,7 +172,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
   }
   montrerEcran(
     'La tour du magicien',
-    `Composez un sort avec les éléments du bas (trois au plus), puis touchez le terrain pour le lancer. La terre jette un rocher, la foudre saute d’ennemi en ennemi, le feu et le froid soufflent ; le feu et le froid s’annulent, la foudre et la terre aussi.${record > 0 ? ` Record : vague ${record}.` : ''}`,
+    `Composez un sort avec les éléments du bas (trois au plus), puis touchez le terrain pour le lancer. La terre jette un rocher, la foudre saute d’ennemi en ennemi, la mort transperce en ligne, le feu et le froid soufflent, la vie soigne la tour. Les opposés s’annulent : feu et froid, foudre et terre, vie et mort.${record > 0 ? ` Record : vague ${record}.` : ''}`,
     'Touchez pour jouer',
   )
 
@@ -234,8 +240,10 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     if (forme !== 'aucun') {
       // L'icône : la forme tracée à la couleur de son élément, remplie de celle qui la modifie.
       const n = (k: Element) => e.file.filter((x) => x === k).length
-      const trait = forme === 'rocher' ? TEINTE.terre : forme === 'eclair' ? TEINTE.foudre : TEINTE[n('feu') > 0 ? 'feu' : 'froid']
-      const ajout = forme !== 'souffle' && n('feu') + n('froid') > 0 ? TEINTE[n('feu') > 0 ? 'feu' : 'froid'] : 'none'
+      const elementDuTrait: Element = forme === 'souffle' ? (n('feu') > 0 ? 'feu' : 'froid') : ELEMENT_DE_LA_FORME[forme]
+      const trait = TEINTE[elementDuTrait]
+      const modifie = (['feu', 'froid', 'mort', 'vie'] as Element[]).find((k) => n(k) > 0 && k !== elementDuTrait && !(forme === 'souffle' && (k === 'feu' || k === 'froid')))
+      const ajout = modifie !== undefined ? TEINTE[modifie] : 'none'
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
       svg.setAttribute('viewBox', '0 0 24 24')
       const p = document.createElementNS('http://www.w3.org/2000/svg', 'path')
@@ -256,7 +264,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       .join(' + ')
     nom.replaceChildren(
       el('span', 'magie-nom-titre', sort === '' ? 'Choisissez jusqu’à trois éléments' : sort),
-      el('small', '', sort === '' ? 'Le feu et le froid s’annulent, la foudre et la terre aussi' : [recette, ...effetsDuSort(C, e.file)].join(' · ')),
+      el('small', '', sort === '' ? 'Les opposés s’annulent : feu et froid, foudre et terre, vie et mort' : [recette, ...effetsDuSort(C, e.file)].join(' · ')),
     )
     vider.hidden = e.file.length === 0
   }
@@ -305,6 +313,29 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       case 'eclair':
         sonEclair()
         traces.push({ sorte: 'eclair', points: ev.points, couleur: couleurDe(ev.n, 'foudre'), t: e.t, duree: 0.28 })
+        break
+      case 'rayon': {
+        sonRayon()
+        secousse = Math.max(secousse, 0.3)
+        traces.push({ sorte: 'rayon', dir: ev.dir, couleur: couleurDe(ev.n, 'mort'), t: e.t, duree: 0.35 })
+        // Des étincelles le long de la ligne.
+        for (let i = 0; i < 16; i++) {
+          const d = C.tour.rayon + Math.random() * (C.rayon.portee - C.tour.rayon)
+          eclats.push({ x: ev.dir.x * d, y: ev.dir.y * d, vx: -ev.dir.y * (Math.random() - 0.5) * 30, vy: ev.dir.x * (Math.random() - 0.5) * 30, vie: 0, duree: 400, couleur: i % 3 === 0 ? '#ffffff' : TEINTE.mort, taille: 0.4 + Math.random() * 0.5 })
+        }
+        break
+      }
+      case 'halo':
+        sonHalo()
+        traces.push({ sorte: 'halo', rayon: C.vie.rayon, t: e.t, duree: 0.6 })
+        for (let i = 0; i < 20; i++) {
+          const a = Math.random() * Math.PI * 2
+          const d = 4 + Math.random() * 6
+          eclats.push({ x: Math.cos(a) * d, y: Math.sin(a) * d, vx: 0, vy: -8 - Math.random() * 8, vie: 0, duree: 600, couleur: i % 2 === 0 ? '#ffffff' : TEINTE.vie, taille: 0.4 + Math.random() * 0.5 })
+        }
+        break
+      case 'soigne':
+        chiffres.push({ x: 0, y: -12, texte: `+${ev.pv}`, couleur: TEINTE.vie, vie: 0 })
         break
       case 'jet':
         sonJet()
@@ -517,10 +548,12 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       g.beginPath()
       g.ellipse(x, y + m.rayon * 0.9 * s, m.rayon * 0.9 * s, m.rayon * 0.35 * s, 0, 0, Math.PI * 2)
       g.fill()
-      if (en.type === 'esprit') {
+      if (en.type === 'esprit' || en.type === 'squelette') {
+        // L'esprit de feu brûle ; le squelette traîne une brume verdâtre.
+        const teinte = en.type === 'esprit' ? '255, 140, 40' : '140, 220, 120'
         const aura = g.createRadialGradient(x, y, 0, x, y, m.rayon * 1.8 * s)
-        aura.addColorStop(0, 'rgba(255, 140, 40, 0.55)')
-        aura.addColorStop(1, 'rgba(255, 140, 40, 0)')
+        aura.addColorStop(0, `rgba(${teinte}, ${en.type === 'esprit' ? 0.55 : 0.35})`)
+        aura.addColorStop(1, `rgba(${teinte}, 0)`)
         g.fillStyle = aura
         g.beginPath()
         g.arc(x, y, m.rayon * 1.8 * s, 0, Math.PI * 2)
@@ -531,7 +564,10 @@ export function monterMagie(racine: HTMLElement, build: string): void {
         g.save()
         g.translate(x, y + m.rayon * s - pas)
         g.scale(en.x > 0 ? -1 : 1, 1)
+        // Le squelette : le même générateur, délavé en os.
+        if (en.type === 'squelette') g.filter = 'grayscale(1) brightness(1.5) contrast(1.1)'
         g.drawImage(img, -taille / 2, -taille * 0.92, taille, taille)
+        g.filter = 'none'
         const touche = touches.get(en.id)
         if (touche !== undefined && e.t - touche < 0.12) {
           g.globalCompositeOperation = 'lighter'
@@ -552,6 +588,14 @@ export function monterMagie(racine: HTMLElement, build: string): void {
         g.beginPath()
         g.arc(x, y, m.rayon * 1.2 * s, 0, Math.PI * 2)
         g.fill()
+      }
+      if (en.affaibli !== null) {
+        // Affaibli par la mort : un cerne violet qui palpite.
+        g.strokeStyle = `rgba(192, 124, 255, ${0.5 + Math.sin(t * 8) * 0.25})`
+        g.lineWidth = Math.max(1, 0.3 * s)
+        g.beginPath()
+        g.arc(x, y + m.rayon * 0.9 * s, m.rayon * 1.1 * s, 0, Math.PI * 2)
+        g.stroke()
       }
       if (en.brule !== null && Math.random() < 0.35) eclats.push({ x: en.x + (Math.random() - 0.5) * m.rayon, y: en.y - m.rayon * 0.5, vx: 0, vy: -9, vie: 0, duree: 380, couleur: Math.random() < 0.5 ? '#ffb030' : '#ff6a2a', taille: 0.5 })
       if (en.pv < en.pvMax) {
@@ -626,6 +670,39 @@ export function monterMagie(racine: HTMLElement, build: string): void {
         g.lineWidth = 0.25 * s
         g.stroke()
         g.shadowBlur = 0
+      } else if (tr.sorte === 'rayon') {
+        // Le rayon de mort : un trait large et sombre, un cœur blanc, qui part de la tour.
+        const a = Math.atan2(tr.dir.y, tr.dir.x)
+        const x1 = sx(Math.cos(a) * C.tour.rayon)
+        const y1 = sy(Math.sin(a) * C.tour.rayon)
+        const x2 = sx(Math.cos(a) * C.rayon.portee)
+        const y2 = sy(Math.sin(a) * C.rayon.portee)
+        g.lineCap = 'round'
+        g.strokeStyle = tr.couleur
+        g.shadowColor = tr.couleur
+        g.shadowBlur = 4 * s
+        g.lineWidth = C.rayon.largeur * 2 * (1 - u * 0.5) * s
+        g.beginPath()
+        g.moveTo(x1, y1)
+        g.lineTo(x2, y2)
+        g.stroke()
+        g.strokeStyle = '#ffffff'
+        g.lineWidth = 0.8 * (1 - u) * s
+        g.stroke()
+        g.shadowBlur = 0
+      } else if (tr.sorte === 'halo') {
+        // Le halo de vie : un disque vert qui s'étend autour de la tour, puis s'efface.
+        const r = tr.rayon * (0.3 + u * 0.7) * s
+        const grad = g.createRadialGradient(sx(0), sy(0), r * 0.5, sx(0), sy(0), r)
+        grad.addColorStop(0, 'rgba(140, 255, 154, 0)')
+        grad.addColorStop(1, 'rgba(140, 255, 154, 0.55)')
+        g.fillStyle = grad
+        g.beginPath()
+        g.arc(sx(0), sy(0), r, 0, Math.PI * 2)
+        g.fill()
+        g.strokeStyle = TEINTE.vie
+        g.lineWidth = 0.5 * s
+        g.stroke()
       } else {
         g.strokeStyle = tr.couleur
         g.lineWidth = (1 - u) * 1.2 * s
