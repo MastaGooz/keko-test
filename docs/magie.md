@@ -37,11 +37,27 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
   plus par mort (75 % au plus) pendant 4 s ; un cerne violet le montre.
 - **La vie soigne la tour.** Seule dans la file, c'est un **HALO** : la tour
   regagne 3 PV par vie (jusqu'à 20), et les morts-vivants à moins de 18
-  unités brûlent (5 par vie, doublés par leur faiblesse). Dans un autre
-  sort, elle **draine** : chaque ennemi touché rend 1 PV par vie à la tour.
-  *La vie ne blesse pas les vivants* (faiblesse 0, sans afficher
-  « Insensible » : c'est sa nature, pas une résistance) — l'éclair de vie
-  ne fait que les dégâts de la foudre.
+  unités brûlent (5 par vie, doublés par leur faiblesse). *La vie ne blesse
+  pas les vivants* (faiblesse 0, sans afficher « Insensible » : c'est sa
+  nature, pas une résistance). *Un premier essai la faisait **drainer** dans
+  les autres sorts (1 PV à la tour par ennemi touché) ; l'élémentaire l'a
+  remplacé le même jour.*
+- **La vie + un élément d'attaque INVOQUE UN ÉLÉMENTAIRE** (Keko, 07/11 :
+  « ce serait cool que vie + feu / glace / foudre / terre crée un petit
+  élémentaire ») — cette forme passe avant toutes les autres. L'élément est
+  *le premier élément d'attaque posé* (vie + foudre + feu : de foudre ; le
+  troisième ne compte pas) ; **sa force, le nombre de fois où cet élément
+  est dans le sort** (vie + feu + feu : frappe ×2) ; **sa durée, 10 s, plus
+  5 s par vie en plus** (vie + vie + feu : 15 s). Il naît au point touché
+  (à 30 unités de la tour au plus), court sur l'ennemi le plus proche et le
+  frappe à sa cadence, à la manière de son élément : **le feu** (vitesse 9,
+  au contact, toutes les 0,7 s, 2 par force) brûle ; **la glace** (8, au
+  contact, 0,8 s, 2) ralentit ; **la foudre** (6, de loin — 16 unités —,
+  0,9 s, 3) zappe sans bouger ; **la terre** (4, au contact, 1,2 s, 6)
+  repousse. **Trois à la fois** : le plus vieux s'efface quand un quatrième
+  naît. Les ennemis l'ignorent (ils marchent sur la tour) : il n'a pas de
+  PV, seulement son temps, montré par un anneau vert à ses pieds. Dessiné
+  comme une goutte de sa couleur, deux yeux, qui frétille.
 - **Le squelette**, cinquième ennemi, dès la vague 5 : 18 PV, vitesse 5,5,
   2 par coup ; **la mort ne lui fait rien, la vie le brûle (double)**. Le
   même générateur que les autres, délavé en os (`filter: grayscale`), une

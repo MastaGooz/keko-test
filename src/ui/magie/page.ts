@@ -10,9 +10,9 @@
  * pour les éléments, la souris pour viser.
  */
 import './magie.css'
-import { ajouter, avancer, effetsDuSort, ELEMENTS, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Forme, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
+import { ajouter, avancer, effetsDuSort, elementDe, ELEMENTS, formeDe, lancer, MAGIE as C, nomDuSort, nouvellePartie, pret, viderLaFile, type Element, type EtatMagie, type Evenement, type Forme, type Point, type TypeEnnemi } from '../../logic/magie/jeu.ts'
 import { ecrireRecord, lireRecord, sprite } from '../invaders/commun.ts'
-import { ouvrirLeSon, sonAnnule, sonEclair, sonElement, sonHalo, sonImpact, sonJet, sonMort, sonPerdu, sonPleine, sonRayon, sonSouffle, sonTouche, sonTour, sonVague } from './sons.ts'
+import { ouvrirLeSon, sonAnnule, sonDisparait, sonEclair, sonElement, sonHalo, sonImpact, sonInvoque, sonJet, sonMort, sonPerdu, sonPleine, sonRayon, sonSouffle, sonTouche, sonTour, sonVague } from './sons.ts'
 
 const PAS = 1 / 60
 /** La largeur de l'écran montre tant d'unités. */
@@ -39,9 +39,10 @@ const ICONE_DU_SORT: Record<Exclude<Forme, 'aucun'>, string> = {
   rayon: 'M3 12h17M16 8l4 4-4 4M7 8l1 2M7 16l1-2',
   souffle: 'M3 12L20 5M3 12h18M3 12l17 7M20 5a14 14 0 0 1 0 14',
   halo: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 8v8M8 12h8',
+  elementaire: 'M12 4a7 7 0 0 1 7 7v7l-2.3-1.5L14.3 18 12 16.5 9.7 18l-2.4-1.5L5 18v-7a7 7 0 0 1 7-7zM9.5 11h.01M14.5 11h.01',
 }
-/** L'élément dont la forme prend la couleur. */
-const ELEMENT_DE_LA_FORME: Record<Exclude<Forme, 'aucun' | 'souffle'>, Element> = { rocher: 'terre', eclair: 'foudre', rayon: 'mort', halo: 'vie' }
+/** L'élément dont la forme prend la couleur (le souffle et l'élémentaire : celui de la file). */
+const ELEMENT_DE_LA_FORME: Record<Exclude<Forme, 'aucun' | 'souffle' | 'elementaire'>, Element> = { rocher: 'terre', eclair: 'foudre', rayon: 'mort', halo: 'vie' }
 const ID_ENNEMI: Record<TypeEnnemi, string> = { gobelin: 'heros-12', orc: 'heros-17', esprit: 'survivant', golem: 'monstre-0', squelette: 'squelette-4' }
 const ID_MAGICIEN = 'heros-14'
 
@@ -172,7 +173,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
   }
   montrerEcran(
     'La tour du magicien',
-    `Composez un sort avec les éléments du bas (trois au plus), puis touchez le terrain pour le lancer. La terre jette un rocher, la foudre saute d’ennemi en ennemi, la mort transperce en ligne, le feu et le froid soufflent, la vie soigne la tour. Les opposés s’annulent : feu et froid, foudre et terre, vie et mort.${record > 0 ? ` Record : vague ${record}.` : ''}`,
+    `Composez un sort avec les éléments du bas (trois au plus), puis touchez le terrain pour le lancer. La terre jette un rocher, la foudre saute d’ennemi en ennemi, la mort transperce en ligne, le feu et le froid soufflent, la vie soigne la tour — et avec un autre élément, elle invoque un petit élémentaire. Les opposés s’annulent : feu et froid, foudre et terre, vie et mort.${record > 0 ? ` Record : vague ${record}.` : ''}`,
     'Touchez pour jouer',
   )
 
@@ -240,9 +241,10 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     if (forme !== 'aucun') {
       // L'icône : la forme tracée à la couleur de son élément, remplie de celle qui la modifie.
       const n = (k: Element) => e.file.filter((x) => x === k).length
-      const elementDuTrait: Element = forme === 'souffle' ? (n('feu') > 0 ? 'feu' : 'froid') : ELEMENT_DE_LA_FORME[forme]
+      const elementDuTrait: Element = forme === 'souffle' ? (n('feu') > 0 ? 'feu' : 'froid') : forme === 'elementaire' ? elementDe(e.file)! : ELEMENT_DE_LA_FORME[forme]
       const trait = TEINTE[elementDuTrait]
-      const modifie = (['feu', 'froid', 'mort', 'vie'] as Element[]).find((k) => n(k) > 0 && k !== elementDuTrait && !(forme === 'souffle' && (k === 'feu' || k === 'froid')))
+      // L'élémentaire : la créature à la couleur de son élément, remplie de vie.
+      const modifie = forme === 'elementaire' ? 'vie' : (['feu', 'froid', 'mort', 'vie'] as Element[]).find((k) => n(k) > 0 && k !== elementDuTrait && !(forme === 'souffle' && (k === 'feu' || k === 'froid')))
       const ajout = modifie !== undefined ? TEINTE[modifie] : 'none'
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
       svg.setAttribute('viewBox', '0 0 24 24')
@@ -336,6 +338,20 @@ export function monterMagie(racine: HTMLElement, build: string): void {
         break
       case 'soigne':
         chiffres.push({ x: 0, y: -12, texte: `+${ev.pv}`, couleur: TEINTE.vie, vie: 0 })
+        break
+      case 'invoque':
+        sonInvoque(ev.element)
+        eclater(ev.x, ev.y, TEINTE[ev.element], 14, 16)
+        eclater(ev.x, ev.y, TEINTE.vie, 8, 10)
+        break
+      case 'coup':
+        // La foudre zappe de loin ; les autres frappent au contact, une gerbe sur la cible.
+        if (ev.element === 'foudre') traces.push({ sorte: 'eclair', points: [ev.de, ev.a], couleur: TEINTE.foudre, t: e.t, duree: 0.18 })
+        else eclater(ev.a.x, ev.a.y, TEINTE[ev.element], 6, 12)
+        break
+      case 'disparait':
+        sonDisparait()
+        eclater(ev.x, ev.y, TEINTE[ev.element], 10, 8)
         break
       case 'jet':
         sonJet()
@@ -608,6 +624,51 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     }
   }
 
+  /** Les élémentaires : une petite flamme de leur couleur, deux yeux, un anneau de vie qui se vide. */
+  function dessinerLesElementaires(t: number): void {
+    for (const el of e.elementaires) {
+      const couleur = TEINTE[el.element]
+      const x = sx(el.x)
+      const y = sy(el.y)
+      const r = (1.6 + el.force * 0.4) * s
+      const saut = Math.abs(Math.sin(t * 7 + el.id)) * 0.6 * s
+      const reste = (el.fin - e.t) / (el.fin - el.ne)
+      g.fillStyle = 'rgba(0, 0, 0, 0.3)'
+      g.beginPath()
+      g.ellipse(x, y + r * 0.9, r * 0.9, r * 0.35, 0, 0, Math.PI * 2)
+      g.fill()
+      // Le corps : une goutte qui frétille.
+      g.fillStyle = couleur
+      g.shadowColor = couleur
+      g.shadowBlur = 2.5 * s
+      g.beginPath()
+      g.moveTo(x, y - r * 1.9 - saut)
+      g.quadraticCurveTo(x + r * 1.1, y - r * 0.6 - saut, x + r * 0.9, y + r * 0.3 - saut)
+      g.quadraticCurveTo(x, y + r * 1.1 - saut, x - r * 0.9, y + r * 0.3 - saut)
+      g.quadraticCurveTo(x - r * 1.1, y - r * 0.6 - saut, x, y - r * 1.9 - saut)
+      g.fill()
+      g.shadowBlur = 0
+      g.fillStyle = 'rgba(255, 255, 255, 0.55)'
+      g.beginPath()
+      g.arc(x - r * 0.25, y - r * 0.5 - saut, r * 0.35, 0, Math.PI * 2)
+      g.fill()
+      // Les yeux.
+      g.fillStyle = '#1e1038'
+      for (const k of [-1, 1]) {
+        g.beginPath()
+        g.arc(x + k * r * 0.35, y - r * 0.15 - saut, r * 0.16, 0, Math.PI * 2)
+        g.fill()
+      }
+      // Le temps qu'il lui reste, en anneau de vie.
+      g.strokeStyle = TEINTE.vie
+      g.lineWidth = Math.max(1, 0.25 * s)
+      g.beginPath()
+      g.arc(x, y + r * 0.9, r * 1.2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reste)
+      g.stroke()
+      if (Math.random() < 0.25) eclats.push({ x: el.x + (Math.random() - 0.5) * 1.5, y: el.y - 1, vx: 0, vy: -6, vie: 0, duree: 350, couleur, taille: 0.35 })
+    }
+  }
+
   function dessinerLesRochers(): void {
     for (const r of e.rochers) {
       const couleur = r.n.feu > 0 ? '#ff8a3a' : r.n.froid > 0 ? '#bfeaff' : '#8a6a44'
@@ -751,6 +812,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     dessinerLaTour()
     dessinerLesTraces()
     dessinerLesEnnemis(t)
+    dessinerLesElementaires(t)
     dessinerLesRochers()
     dessinerLeMagicien(t)
     for (const p of eclats) {

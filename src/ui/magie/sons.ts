@@ -31,6 +31,18 @@ export function sonRayon(): void {
   souffle(0.3, 1200, 0.25)
 }
 
+/** Un élémentaire naît : la note de son élément, puis celle de la vie, en trille. */
+export function sonInvoque(el: Element): void {
+  note('sine', NOTE[el], NOTE[el] * 1.5, 0.18, 0.12)
+  note('sine', NOTE.vie, NOTE.vie * 1.25, 0.2, 0.1, 0.1)
+  souffle(0.2, 4000, 0.15)
+}
+
+/** Il s'efface : un petit soupir. */
+export function sonDisparait(): void {
+  if (bride('disparait', 80)) note('sine', 600, 300, 0.2, 0.06)
+}
+
 /** Le halo de vie : un accord clair qui monte. */
 export function sonHalo(): void {
   ;[523, 659, 784].forEach((f, i) => note('sine', f, f * 1.01, 0.3, 0.1, i * 0.06))

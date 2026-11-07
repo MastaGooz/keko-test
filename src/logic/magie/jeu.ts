@@ -11,7 +11,10 @@
  * (de flammes ou de givre) ; de la vie seule, un HALO autour de la tour — et
  * chaque élément y ajoute son effet : le feu brûle, le froid ralentit (trois
  * froids gèlent), la terre repousse, la mort affaiblit, la vie soigne la tour
- * (le halo), ou lui rend un peu de vie par ennemi touché (un drain). **Les
+ * (le halo) ; **la vie avec un élément d'attaque INVOQUE UN PETIT
+ * ÉLÉMENTAIRE** de cet élément (Keko : « ce serait cool que vie + feu / glace
+ * / foudre / terre crée un petit élémentaire »), posé où l'on touche, qui court
+ * sur l'ennemi le plus proche et le frappe à sa manière, un temps. **Les
  * opposés s'annulent** en entrant dans la file : le feu et le froid, la foudre
  * et la terre, la vie et la mort (Keko, 07/11 : « on peut ajouter vie et mort,
  * comme dans Magicka ? »). Certains ennemis résistent à un élément (un esprit
@@ -56,8 +59,21 @@ export const MAGIE = {
   rayon: { portee: 44, largeur: 3, degats: 8, degatsAutres: 3 },
   /** La mort affaiblit : les touchés prennent tant de dégâts en plus par mort, tant de secondes. */
   affaiblissement: { part: 0.25, max: 0.75, duree: 4 },
-  /** La vie : le halo (de la vie seule) soigne la tour de tant par vie et brûle les morts-vivants dans son rayon ; dans un autre sort, chaque ennemi touché rend tant par vie à la tour. */
-  vie: { soin: 3, rayon: 18, degats: 5, drain: 1 },
+  /** La vie : le halo (de la vie seule) soigne la tour de tant par vie et brûle les morts-vivants dans son rayon. */
+  vie: { soin: 3, rayon: 18, degats: 5 },
+  /** L'élémentaire (la vie + un élément d'attaque) : posé à tant de la tour au plus, il vit tant de secondes (plus tant par vie en plus), tant à la fois ; chacun sa vitesse, sa portée, sa cadence, ses dégâts par élément. */
+  elementaire: {
+    max: 3,
+    duree: 10,
+    dureeParVie: 5,
+    porteeInvocation: 30,
+    par: {
+      feu: { vitesse: 9, portee: 4, cadence: 0.7, degats: 2 },
+      froid: { vitesse: 8, portee: 5, cadence: 0.8, degats: 2 },
+      foudre: { vitesse: 6, portee: 16, cadence: 0.9, degats: 3 },
+      terre: { vitesse: 4, portee: 4, cadence: 1.2, degats: 6 },
+    } satisfies Partial<Record<Element, { vitesse: number; portee: number; cadence: number; degats: number }>>,
+  },
   ennemis: {
     gobelin: { nom: 'Gobelin', pv: 10, vitesse: 7, degats: 1, rayon: 2.6, depuis: 1, poids: 4 },
     orc: { nom: 'Orc', pv: 30, vitesse: 4.5, degats: 3, rayon: 3.6, depuis: 2, poids: 2 },
@@ -91,7 +107,10 @@ export const MAGIE = {
 }
 
 export type ConfigMagie = typeof MAGIE
-export type Forme = 'aucun' | 'souffle' | 'eclair' | 'rocher' | 'rayon' | 'halo'
+export type Forme = 'aucun' | 'souffle' | 'eclair' | 'rocher' | 'rayon' | 'halo' | 'elementaire'
+/** Les éléments qui peuvent faire un élémentaire (avec la vie). */
+export type ElementDAttaque = 'feu' | 'froid' | 'foudre' | 'terre'
+const ATTAQUE: ElementDAttaque[] = ['feu', 'froid', 'foudre', 'terre']
 /** Ce que montre l'écran, autour de la tour (en unités du monde). */
 export type Vue = { gauche: number; droite: number; haut: number; bas: number }
 export type Point = { x: number; y: number }
@@ -115,6 +134,8 @@ export type Ennemi = {
 }
 
 export type Rocher = { id: number; x: number; y: number; cible: Point; n: Compte }
+/** Un élémentaire invoqué : son élément, combien de fois il était dans le sort (sa force), jusqu'à quand il vit, son prochain coup. */
+export type Elementaire = { id: number; element: ElementDAttaque; force: number; x: number; y: number; ne: number; fin: number; coupA: number }
 
 export type EtatMagie = {
   t: number
@@ -131,6 +152,7 @@ export type EtatMagie = {
   prochaineVague: number | null
   ennemis: Ennemi[]
   rochers: Rocher[]
+  elementaires: Elementaire[]
   prochainId: number
   abattus: number
 }
@@ -143,8 +165,12 @@ export type Evenement =
   | { type: 'eclair'; points: Point[]; n: Compte }
   | { type: 'rayon'; dir: Point; n: Compte }
   | { type: 'halo'; n: Compte }
-  /** La tour regagne tant de PV (le halo, ou un drain). */
+  /** La tour regagne tant de PV (le halo). */
   | { type: 'soigne'; pv: number }
+  | { type: 'invoque'; id: number; x: number; y: number; element: ElementDAttaque }
+  /** Un élémentaire frappe un ennemi, de là à là. */
+  | { type: 'coup'; id: number; de: Point; a: Point; element: ElementDAttaque }
+  | { type: 'disparait'; id: number; x: number; y: number; element: ElementDAttaque }
   | { type: 'jet'; id: number; n: Compte }
   | { type: 'impact'; x: number; y: number; rayon: number; n: Compte }
   | { type: 'touche'; id: number; x: number; y: number; degats: number; resiste: boolean }
@@ -155,7 +181,7 @@ export type Evenement =
   | { type: 'perdu' }
 
 export function nouvellePartie(c: ConfigMagie, graine: number): EtatMagie {
-  return { t: 0, graine: graine >>> 0, phase: 'jeu', pv: c.tour.pv, file: [], pretA: 0, vague: 0, aFaire: [], prochaineVague: c.vague.pause, ennemis: [], rochers: [], prochainId: 1, abattus: 0 }
+  return { t: 0, graine: graine >>> 0, phase: 'jeu', pv: c.tour.pv, file: [], pretA: 0, vague: 0, aFaire: [], prochaineVague: c.vague.pause, ennemis: [], rochers: [], elementaires: [], prochainId: 1, abattus: 0 }
 }
 
 const compter = (file: Element[]): Compte => ({ ...VIDE, ...Object.fromEntries(ELEMENTS.map((k) => [k, file.filter((x) => x === k).length])) })
@@ -163,9 +189,16 @@ const compter = (file: Element[]): Compte => ({ ...VIDE, ...Object.fromEntries(E
 /** Les dégâts de chaque élément du paquet : `degats` pour l'élément qui fait la forme, `autres` pour ceux qui l'accompagnent. */
 const paquet = (n: Compte, principal: Element | null, degats: number, autres: number): Compte => ({ ...VIDE, ...Object.fromEntries(ELEMENTS.map((k) => [k, (k === principal ? degats : autres) * n[k]])) })
 
-/** La forme d'un sort : de la terre, un rocher ; sinon de la foudre, un éclair ; sinon de la mort, un rayon ; sinon du feu ou du froid, un souffle ; de la vie seule, un halo. */
+/** L'élément de l'élémentaire qu'une file invoquerait : le premier élément d'attaque posé (avec la vie) ; `null` sinon. */
+export function elementDe(file: Element[]): ElementDAttaque | null {
+  if (!file.includes('vie')) return null
+  return (file.find((k) => (ATTAQUE as Element[]).includes(k)) as ElementDAttaque | undefined) ?? null
+}
+
+/** La forme d'un sort : de la vie et un élément d'attaque, un élémentaire ; sinon de la terre, un rocher ; sinon de la foudre, un éclair ; sinon de la mort, un rayon ; sinon du feu ou du froid, un souffle ; de la vie seule, un halo. */
 export function formeDe(file: Element[]): Forme {
   const n = compter(file)
+  if (elementDe(file) !== null) return 'elementaire'
   if (n.terre > 0) return 'rocher'
   if (n.foudre > 0) return 'eclair'
   if (n.mort > 0) return 'rayon'
@@ -179,11 +212,12 @@ export function nomDuSort(file: Element[]): string {
   const n = compter(file)
   const forme = formeDe(file)
   const force = file.length > 1 ? ` ×${file.length}` : ''
-  const de = n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de glace' : n.mort > 0 ? ' de mort' : n.vie > 0 ? ' de vie' : ''
+  const de = n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de glace' : n.mort > 0 ? ' de mort' : ''
+  if (forme === 'elementaire') return `Élémentaire${{ feu: ' de feu', froid: ' de glace', foudre: ' de foudre', terre: ' de terre' }[elementDe(file)!]}${force}`
   if (forme === 'rocher') return `Rocher${de}${force}`
-  if (forme === 'eclair') return `Éclair${n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de givre' : n.mort > 0 ? ' de mort' : n.vie > 0 ? ' de vie' : ''}${force}`
+  if (forme === 'eclair') return `Éclair${n.feu > 0 ? ' de feu' : n.froid > 0 ? ' de givre' : n.mort > 0 ? ' de mort' : ''}${force}`
   if (forme === 'rayon') return `Rayon de mort${n.feu > 0 ? ' ardent' : n.froid > 0 ? ' glacé' : ''}${force}`
-  if (forme === 'souffle') return `${n.vie > 0 ? (n.feu > 0 ? 'Flammes de vie' : 'Givre de vie') : n.feu > 0 ? 'Jet de flammes' : 'Souffle de givre'}${force}`
+  if (forme === 'souffle') return `${n.feu > 0 ? 'Jet de flammes' : 'Souffle de givre'}${force}`
   if (forme === 'halo') return `Halo de vie${force}`
   return ''
 }
@@ -194,6 +228,12 @@ export function effetsDuSort(c: ConfigMagie, file: Element[]): string[] {
   const forme = formeDe(file)
   if (forme === 'aucun') return []
   const effets: string[] = []
+  if (forme === 'elementaire') {
+    const el = elementDe(file)!
+    const vies = n.vie
+    effets.push(`combat ${c.elementaire.duree + c.elementaire.dureeParVie * (vies - 1)} s`, n[el] > 1 ? `frappe ×${n[el]}` : '', { feu: 'brûle', froid: 'ralentit', foudre: 'frappe de loin', terre: 'repousse' }[el])
+    return effets.filter((x) => x !== '')
+  }
   if (forme === 'rocher') effets.push(n.feu > 0 ? 'explose large' : 'éclate', 'repousse')
   if (forme === 'eclair') effets.push(`saute sur ${1 + c.eclair.sautsParFoudre * n.foudre} ennemis`)
   if (forme === 'rayon') effets.push('transperce en ligne')
@@ -202,7 +242,6 @@ export function effetsDuSort(c: ConfigMagie, file: Element[]): string[] {
   if (n.feu > 0) effets.push('brûle')
   if (n.froid > 0) effets.push(n.froid >= c.gel.glace ? 'gèle' : 'ralentit')
   if (n.mort > 0) effets.push('affaiblit')
-  if (n.vie > 0 && forme !== 'halo') effets.push('draine')
   return effets
 }
 
@@ -239,7 +278,7 @@ function soigner(c: ConfigMagie, e: EtatMagie, pv: number, ev: Evenement[]): voi
   ev.push({ type: 'soigne', pv: gagne })
 }
 
-/** Les dégâts d'un paquet d'éléments sur un ennemi, ses faiblesses comprises (et son affaiblissement) ; puis la brûlure, le froid, le recul, l'affaiblissement, le drain. */
+/** Les dégâts d'un paquet d'éléments sur un ennemi, ses faiblesses comprises (et son affaiblissement) ; puis la brûlure, le froid, le recul, l'affaiblissement. */
 function frapper(c: ConfigMagie, e: EtatMagie, en: Ennemi, parElement: Compte, n: Compte, ev: Evenement[], recul: Point | null = null): void {
   if (en.pv <= 0) return
   const f = c.faiblesses[en.type]
@@ -260,7 +299,6 @@ function frapper(c: ConfigMagie, e: EtatMagie, en: Ennemi, parElement: Compte, n
     }
   }
   if (n.mort > 0 && f.mort > 0) en.affaibli = { part: Math.min(c.affaiblissement.max, c.affaiblissement.part * n.mort), fin: e.t + c.affaiblissement.duree }
-  if (n.vie > 0) soigner(c, e, c.vie.drain * n.vie, ev)
   if (recul !== null && n.terre > 0) {
     const d = Math.hypot(en.x - recul.x, en.y - recul.y) || 1
     en.x += ((en.x - recul.x) / d) * c.rocher.recul * n.terre
@@ -286,6 +324,7 @@ export function lancer(c: ConfigMagie, e: EtatMagie, cible: Point): Evenement[] 
   if (!pret(e) || e.file.length === 0) return []
   const n = compter(e.file)
   const forme = formeDe(e.file)
+  const elementaire = elementDe(e.file)
   e.file = []
   e.pretA = e.t + c.recharge
   const l = Math.hypot(cible.x, cible.y) || 1
@@ -306,9 +345,18 @@ export function lancer(c: ConfigMagie, e: EtatMagie, cible: Point): Evenement[] 
     ev.push({ type: 'halo', n })
     soigner(c, e, c.vie.soin * n.vie, ev)
     const parElement = paquet(n, 'vie', c.vie.degats, 0)
-    // Le halo soigne déjà : il ne draine pas par-dessus.
-    const sansDrain: Compte = { ...n, vie: 0 }
-    for (const en of vivants) if (Math.hypot(en.x, en.y) - c.ennemis[en.type].rayon <= c.vie.rayon && c.faiblesses[en.type].vie > 0) frapper(c, e, en, parElement, sansDrain, ev)
+    for (const en of vivants) if (Math.hypot(en.x, en.y) - c.ennemis[en.type].rayon <= c.vie.rayon && c.faiblesses[en.type].vie > 0) frapper(c, e, en, parElement, n, ev)
+  } else if (forme === 'elementaire') {
+    // La vie et un élément d'attaque : un élémentaire naît au point touché (à portée d'invocation), le plus vieux s'efface s'ils sont trop.
+    const el = elementaire!
+    const porte = Math.min(l, c.elementaire.porteeInvocation)
+    while (e.elementaires.length >= c.elementaire.max) {
+      const vieux = e.elementaires.shift()!
+      ev.push({ type: 'disparait', id: vieux.id, x: vieux.x, y: vieux.y, element: vieux.element })
+    }
+    const inv: Elementaire = { id: e.prochainId++, element: el, force: n[el], x: dir.x * porte, y: dir.y * porte, ne: e.t, fin: e.t + c.elementaire.duree + c.elementaire.dureeParVie * (n.vie - 1), coupA: e.t + 0.3 }
+    e.elementaires.push(inv)
+    ev.push({ type: 'invoque', id: inv.id, x: inv.x, y: inv.y, element: el })
   } else if (forme === 'rayon') {
     // La mort : une ligne depuis la tour, qui transperce tout ce qu'elle croise.
     ev.push({ type: 'rayon', dir, n })
@@ -424,6 +472,32 @@ export function avancer(c: ConfigMagie, e: EtatMagie, dt: number, vue: Vue): Eve
     } else {
       r.x += ((r.cible.x - r.x) / reste) * pas
       r.y += ((r.cible.y - r.y) / reste) * pas
+    }
+  }
+
+  // Les élémentaires : ils s'effacent à leur heure ; sinon ils courent sur l'ennemi le plus proche et le frappent à leur cadence, à la manière de leur élément.
+  for (let i = e.elementaires.length - 1; i >= 0; i--) {
+    const el = e.elementaires[i]
+    if (e.t >= el.fin) {
+      ev.push({ type: 'disparait', id: el.id, x: el.x, y: el.y, element: el.element })
+      e.elementaires.splice(i, 1)
+      continue
+    }
+    const p = c.elementaire.par[el.element]
+    const cible = e.ennemis.filter((en) => en.pv > 0).sort((a, b) => dist(a, el) - dist(b, el))[0]
+    if (cible === undefined) continue
+    const d = dist(cible, el)
+    const aPortee = p.portee + c.ennemis[cible.type].rayon
+    if (d > aPortee) {
+      const pas = Math.min(p.vitesse * dt, d - aPortee)
+      el.x += ((cible.x - el.x) / d) * pas
+      el.y += ((cible.y - el.y) / d) * pas
+    } else if (e.t >= el.coupA) {
+      el.coupA = e.t + p.cadence
+      ev.push({ type: 'coup', id: el.id, de: { x: el.x, y: el.y }, a: { x: cible.x, y: cible.y }, element: el.element })
+      const parElement: Compte = { ...VIDE, [el.element]: p.degats * el.force }
+      const n: Compte = { ...VIDE, [el.element]: el.force }
+      frapper(c, e, cible, parElement, n, ev, { x: el.x, y: el.y })
     }
   }
 
