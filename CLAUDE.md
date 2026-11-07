@@ -590,6 +590,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?invaders` | les envahisseurs, un side project : un Space Invaders au doigt, les vaisseaux du générateur (`docs/invaders.md`) |
 | `?tourelle` | sa variante : la tourelle fixe tire seule, les ennemis foncent, trois améliorations au choix entre les vagues |
 | `?survivor`, `&controle=suivre` | un Vampire Survivors : le héros au manche flottant, les armes frappent seules, trois choix à chaque niveau ; l'autre contrôle, le héros marche vers le doigt (`docs/survivor.md`) |
+| `?commande`, `&ennemi=N` | la commande action, un side project : un combat au tour par tour à la Paper Mario (le saut qui rebondit, le marteau qu'on charge, la garde au bon moment) ; `&ennemi=N` commence au N-ième ennemi (`docs/commande.md`) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
@@ -688,6 +689,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/procgen.md` | le générateur d'icônes (toutes ses familles) et sa page de preview |
 | `docs/invaders.md` | les envahisseurs (`?invaders`), le side project Space Invaders |
 | `docs/survivor.md` | le survivor (`?survivor`), un Vampire Survivors en side project |
+| `docs/commande.md` | la commande action (`?commande`), un combat à la Paper Mario en side project |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour

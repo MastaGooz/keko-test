@@ -58,6 +58,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('commande')) {
+  // LA COMMANDE ACTION, un side project : un combat au tour par tour à la Paper Mario.
+  void import('./ui/commande/page.ts').then(({ monterCommande }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterCommande(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('survivor')) {
   // LE SURVIVOR, un side project : un héros à déplacer, rien d'autre (pour juger le contrôle).
   void import('./ui/survivor/page.ts').then(({ monterSurvivor }) => {
