@@ -108,7 +108,16 @@ export function monterMagie(racine: HTMLElement, build: string): void {
 
   const bas = el('div', 'magie-bas')
   const file = el('div', 'magie-file')
-  const orbes = [0, 1, 2].map(() => el('div', 'magie-orbe'))
+  // Les trois orbes de la file, chacun avec l'icône de son élément (Keko : « il faudrait quand même voir les éléments activés et le résultat »).
+  const orbes = [0, 1, 2].map(() => {
+    const o = el('div', 'magie-orbe')
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('viewBox', '0 0 24 24')
+    svg.append(document.createElementNS('http://www.w3.org/2000/svg', 'path'))
+    o.append(svg)
+    return o
+  })
+  const egal = el('span', 'magie-egal', '=')
   const nom = el('div', 'magie-nom')
   const iconeDuSort = el('div', 'magie-icone')
   const vider = el('button', 'magie-vider', '✕')
@@ -137,8 +146,9 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     icone.setAttribute('stroke-width', '2.2')
     legende.append(quart, icone)
   })
-  file.prepend(legende)
-  bas.append(file)
+  // Deux lignes : la légende, les orbes, « = », l'icône du sort, le ✕ ; puis, sur toute la largeur, le nom du sort et ce qu'il fera.
+  file.append(legende, ...orbes, egal, iconeDuSort, vider)
+  bas.append(file, nom)
   const ecran = el('div', 'magie-ecran')
   const pied = el('div', 'magie-build', `build ${build}`)
   racine.append(canvas, haut, bas, ecran, pied)
@@ -290,7 +300,10 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       const k = e.file[i]
       o.className = k === undefined ? 'magie-orbe' : 'magie-orbe magie-orbe-pleine'
       o.style.background = k === undefined ? '' : `radial-gradient(circle at 35% 35%, #fff, ${TEINTE[k]} 55%)`
+      o.style.boxShadow = k === undefined ? '' : `0 0 0.6rem ${TEINTE[k]}`
+      o.querySelector('path')!.setAttribute('d', k === undefined ? '' : ICONE[k])
     })
+    egal.hidden = e.file.length === 0
     const sort = nomDuSort(e.file)
     const forme = formeDe(e.file)
     iconeDuSort.hidden = forme === 'aucun'

@@ -74,26 +74,48 @@ html.magie-page body {
   display: none;
 }
 
+/* La première ligne : la légende, les trois orbes, « = », l'icône du sort, le ✕. */
 .magie-file {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* Une hauteur fixe : la longueur du nom ou de la recette ne fait plus bouger le panneau (ni la tour, qui se centre dessus). */
-  height: 3.4rem;
-  margin-bottom: 0.5rem;
+  height: 3.2rem;
+  margin-bottom: 0.3rem;
 }
 
 .magie-orbe {
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 2.3rem;
+  height: 2.3rem;
   flex: none;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
   border: 2px dashed rgba(255, 255, 255, 0.25);
+}
+
+.magie-orbe svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: #1e1038;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .magie-orbe-pleine {
   border: 2px solid rgba(255, 255, 255, 0.85);
   animation: magie-entre 0.18s ease-out both;
+}
+
+.magie-egal {
+  flex: none;
+  font: 800 1.3rem 'Baloo 2', sans-serif;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.magie-egal[hidden] {
+  display: none;
 }
 
 @keyframes magie-entre {
@@ -125,13 +147,12 @@ html.magie-page body {
   stroke-linejoin: round;
 }
 
+/* La seconde ligne : le nom du sort, puis la recette et ses effets, sur toute la largeur. Hauteur fixe : le panneau ne bouge pas. */
 .magie-nom {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: 100%;
+  height: 3.3rem;
   overflow: hidden;
   font: 800 1rem 'Baloo 2', sans-serif;
   line-height: 1.15;
@@ -160,6 +181,7 @@ html.magie-page body {
 
 .magie-vider {
   flex: none;
+  margin-left: auto;
   min-width: 48px;
   min-height: 48px;
   border: 2px solid rgba(255, 255, 255, 0.3);
