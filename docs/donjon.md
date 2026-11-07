@@ -111,6 +111,19 @@ cinquième joueur à côté des quatre bots.
     sienne. `PROC_DE_TEST` divise aussi la charge par dix.
   - Une sauvegarde d'avant repart déchargée (`charge: 0`). Chiffres de moi,
     à rejuger.
+  - Puis (Keko : « je pensais à le mettre dans une capacité sur les boutons
+    actuels, pas rajouter un bouton en dessous ») : LA BARRE EST PARTIE. Le
+    geste est LE BOUTON DE GAUCHE de l'attaque, au style des capacités : le
+    voile se vide avec la charge, prêt il brille, ouvert sur l'ennemi il bat,
+    pas chargé il tremble ; l'appui long montre sa bulle (`actionsDe` : le
+    geste, puis les capacités, deux boutons au plus). Il n'y a donc plus
+    qu'UNE CAPACITÉ PAR ARME, à droite : l'épée garde Frappe lourde, la dague
+    la Furie (ses Points faibles la remplissent), le bâton la Boule de feu ;
+    Brise-garde, Lames de l'ombre et Méditation restent dans le pool, sans
+    arme, en attendant une place (les tests les prennent sur une config qui
+    les rend). *Mon choix, à rejuger : l'autre voie était d'empiler deux
+    boutons de chaque côté.* L'Ouverture a le rond net des Points faibles
+    (Keko : la cible d'or qui battait « n'est pas très belle »).
 
 ## L'écran
 

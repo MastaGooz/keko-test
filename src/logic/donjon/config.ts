@@ -300,9 +300,15 @@ export const DONJON = {
    */
   armes: {
     mains: { nom: 'Mains nues', rarete: 'commune', degats: 5, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
-    epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2, capacites: ['frappeLourde', 'briseGarde'] },
-    dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0, capacites: ['lamesOmbre', 'furie'] },
-    baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0, capacites: ['bouleDeFeu', 'meditation'] },
+    // UNE CAPACITÉ PAR ARME depuis que LE GESTE EST SUR LE BOUTON DE GAUCHE
+    // (Keko, 07/11 : « le mettre dans une capacité sur les boutons actuels,
+    // pas rajouter un bouton en dessous ») : l'épée garde Frappe lourde, la
+    // dague la Furie (que ses Points faibles remplissent), le bâton la Boule
+    // de feu ; Brise-garde, Lames de l'ombre et Méditation restent écrites,
+    // sans arme, en attendant une place. Mon choix, à rejuger.
+    epee: { nom: 'Épée', rarete: 'commune', degats: 10, recharge: 0.25 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0.2, capacites: ['frappeLourde'] },
+    dague: { nom: 'Dague', rarete: 'commune', degats: 7, recharge: 0.175 * SECONDE, chanceCrit: 0.05, multCrit: 0, recuperation: 0, capacites: ['furie'] },
+    baton: { nom: 'Bâton', rarete: 'commune', degats: 15, recharge: 0.375 * SECONDE, chanceCrit: 0, multCrit: 0.5, recuperation: 0, capacites: ['bouleDeFeu'] },
     arc: { nom: 'Arc', rarete: 'commune', degats: 12, recharge: 0.3 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     deuxMains: { nom: 'Épée à deux mains', rarete: 'commune', degats: 20, recharge: 0.5 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },
     hache: { nom: 'Hache', rarete: 'commune', degats: 11, recharge: 0.275 * SECONDE, chanceCrit: 0, multCrit: 0, recuperation: 0, capacites: [] },

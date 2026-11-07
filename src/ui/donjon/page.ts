@@ -540,10 +540,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   cadre.innerHTML = `<svg class="donjon-contour" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="donjon-contour-fond" d="${CONTOUR}"/><path class="donjon-contour-plein" pathLength="1" d="${CONTOUR}"/></svg>`
   cadre.prepend(attaque)
   cadre.append(bulle)
-  // LES DEUX CAPACITÉS DE L'ARME, de part et d'autre de l'attaque (Keko :
+  // LES DEUX BOUTONS D'ACTION, de part et d'autre de l'attaque (Keko :
   // « deux boutons d'action à chaque arme, à gauche et à droite de
-  // l'attaque »). Le même or, plus petites ; le même voile, qui dit la
-  // recharge ou la condition (les critiques de la Furie).
+  // l'attaque ») : le geste de la classe à gauche, la capacité de l'arme à
+  // droite (`actionsDe`). Le même or, plus petits ; le même voile, qui dit la
+  // charge, la recharge ou la condition (les critiques de la Furie).
   const boutonsCapacite = (['gauche', 'droite'] as const).map((cote) => {
     const b = bouton(`donjon-capacite ${cote}`)
     const voile = el('span', 'donjon-recharge')
@@ -582,20 +583,23 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   const debutPalier = surLeTrait(BORNES.palierBas)
   const finPalier = surLeTrait(BORNES.palierHaut)
   traitForme.style.background = `linear-gradient(to right, #3f3f3f 0%, #a8a8a8 ${debutPalier}%, #fff ${debutPalier}% ${finPalier}%, #ffe58a ${finPalier}%, #ffcf2e 100%)`
-  // LE BOUTON DU GESTE (Keko, 07/11 : « passer les déclenchements passifs en
-  // compétence active, plus fun quand on le déclenche soi-même ») : une
-  // barre sous l'attaque, qui se remplit d'or à chaque tap à la main ;
-  // pleine, elle brille, et une tape ouvre le geste (la Taille, le Fracas…).
-  // Pas sur la ligne de l'attaque : les capacités y prennent toute la place.
-  const geste = bouton('donjon-geste')
-  const chargeGeste = el('span', 'donjon-geste-charge')
-  const imageGeste = el('img', 'donjon-geste-dessin')
-  imageGeste.alt = ''
-  imageGeste.draggable = false
-  const nomGeste = el('span', 'donjon-geste-nom')
-  const compteGeste = el('span', 'donjon-geste-compte')
-  geste.append(chargeGeste, imageGeste, nomGeste, compteGeste)
-  arene.append(cadre, geste, jaugeForme)
+  arene.append(cadre, jaugeForme)
+
+  /**
+   * CE QUE PORTENT LES DEUX BOUTONS (Keko, 07/11 : « mettre le geste dans
+   * une capacité sur les boutons actuels, pas rajouter un bouton en
+   * dessous » — une première version avait une barre de charge sous
+   * l'attaque) : À GAUCHE LE GESTE de la classe (la Taille, le Fracas, les
+   * Runes…), qui se charge aux taps à la main ; À DROITE LA CAPACITÉ de
+   * l'arme. Une arme sans geste (les mains nues) n'a que ses capacités.
+   */
+  type ActionDuBouton = { type: 'geste' } | { type: 'capacite'; cle: CleCapacite }
+  function actionsDe(j: Joueur): ActionDuBouton[] {
+    const actions: ActionDuBouton[] = []
+    if (passifDe(C, j) !== null) actions.push({ type: 'geste' })
+    for (const cle of capacitesDe(C, j)) actions.push({ type: 'capacite', cle })
+    return actions.slice(0, boutonsCapacite.length)
+  }
 
   // De haut en bas : le nom et la vie de l'ennemi, l'ennemi, le bouton, le
   // niveau, et tout en bas le journal. LA BARRE DE VIE EST AU-DESSUS DE LA
@@ -830,7 +834,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       iconeGeste.alt = ''
       iconeGeste.draggable = false
       const texteGeste = el('div')
-      texteGeste.append(el('b', undefined, p.nom), el('span', undefined, `${effetDuPassif(arme as ArmeAPassif)}. Se charge en ${p.taps} taps à la main ; le bouton sous l'attaque l'ouvre`))
+      texteGeste.append(el('b', undefined, p.nom), el('span', undefined, `${effetDuPassif(arme as ArmeAPassif)}. Se charge en ${p.taps} taps à la main ; le bouton à gauche de l'attaque l'ouvre`))
       geste.append(iconeGeste, texteGeste)
       const passif = el('div', 'donjon-fiche-capacite')
       const iconePassif = el('img')
@@ -4189,11 +4193,14 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     if (bulle.innerHTML !== html) bulle.innerHTML = html
   }
 
-  /** La bulle d'une capacité : son nom, ce qu'elle fait, quand elle revient. */
+  /** La bulle d'un bouton : le geste, ou une capacité (son nom, ce qu'elle fait, quand elle revient). */
   function remplirLaBulleDe(i: number): void {
     const j = moi()
     const t = maintenant()
-    const cle = capacitesDe(C, j)[i]
+    const a = actionsDe(j)[i]
+    if (a === undefined) return
+    if (a.type === 'geste') return remplirLaBulleDuGeste()
+    const cle = a.cle
     const c = C.capacites[cle]
     let etat = 'prête'
     if (!capacitePrete(C, j, cle, t)) {
@@ -4225,8 +4232,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
   function lancerCapacite(i: number): void {
     const t = maintenant()
     const avant = moi()
-    const cle = capacitesDe(C, avant)[i]
+    const a = actionsDe(avant)[i]
     const b = boutonsCapacite[i].b
+    if (a === undefined) return
+    if (a.type === 'geste') return lancerLeGeste(b)
+    const cle = a.cle
     if (!capacitePrete(C, avant, cle, t)) {
       b.animate([{ translate: '0' }, { translate: '-4px 0' }, { translate: '4px 0' }, { translate: '0' }], { duration: 200 })
       return
@@ -4265,32 +4275,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * LE GESTE PART (Keko, 07/11) : pas chargé, le bouton tremble et rien ne
-   * part ; chargé, il s'ouvre sur l'ennemi comme le faisait le hasard, et la
-   * barre retombe à zéro.
+   * part ; chargé, il s'ouvre sur l'ennemi comme le faisait le hasard, et sa
+   * charge retombe à zéro.
    */
-  function lancerLeGeste(): void {
+  function lancerLeGeste(b: HTMLElement): void {
     const t = maintenant()
     const avant = moi()
     if (!gestePret(C, avant, t)) {
-      geste.animate([{ translate: '0' }, { translate: '-4px 0' }, { translate: '4px 0' }, { translate: '0' }], { duration: 200 })
+      b.animate([{ translate: '0' }, { translate: '-4px 0' }, { translate: '4px 0' }, { translate: '0' }], { duration: 200 })
       return
     }
-    geste.animate([{ scale: '1' }, { scale: '0.94', offset: 0.3 }, { scale: '1.04', offset: 0.65 }, { scale: '1' }], { duration: 260, easing: 'ease-out' })
+    b.animate([{ scale: '1' }, { scale: '0.88', offset: 0.3 }, { scale: '1.08', offset: 0.65 }, { scale: '1' }], { duration: 260, easing: 'ease-out' })
     void partage.agir({ joueur: MOI, t, type: 'geste' }).then(() => dessiner())
   }
-
-  geste.addEventListener('pointerdown', (ev) => {
-    if (ev.button !== 0) return
-    lancerLeGeste()
-    remplir = remplirLaBulleDuGeste
-    clearTimeout(appui)
-    appui = window.setTimeout(montrerLaBulle, APPUI_LONG)
-  })
-  geste.addEventListener('click', (ev) => {
-    if (ev.detail === 0) lancerLeGeste()
-  })
-  for (const fin of ['pointerup', 'pointercancel', 'pointerleave'] as const) geste.addEventListener(fin, cacherLaBulle)
-  geste.addEventListener('contextmenu', (ev) => ev.preventDefault())
 
   for (const [i, { b }] of boutonsCapacite.entries()) {
     b.addEventListener('pointerdown', (ev) => {
@@ -4422,22 +4419,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     const place = placePortee()
     if (armeVue !== `${j.arme}:${place}`) {
       armeVue = `${j.arme}:${place}`
-      const capacites = capacitesDe(C, j)
+      const actions = actionsDe(j)
       for (const [i, { b, image }] of boutonsCapacite.entries()) {
-        const cle = capacites[i]
-        // À mains nues, pas de capacité : leurs boutons s'en vont.
-        b.hidden = cle === undefined
-        if (cle === undefined) continue
-        image.src = url(IMAGE_DE_LA_CAPACITE[cle])
-        b.setAttribute('aria-label', C.capacites[cle].nom)
-      }
-      // Le geste de sa classe ; à mains nues (ou une arme sans geste), le bouton s'en va.
-      const p = passifDe(C, j)
-      geste.hidden = p === null
-      if (p !== null) {
-        imageGeste.src = url(IMAGE_DU_PASSIF[j.arme as ArmeAPassif])
-        nomGeste.textContent = p.nom
-        geste.setAttribute('aria-label', `Geste : ${p.nom}`)
+        const a = actions[i]
+        // Sans geste ni capacité (les mains nues), le bouton s'en va.
+        b.hidden = a === undefined
+        if (a === undefined) continue
+        if (a.type === 'geste') {
+          image.src = url(IMAGE_DU_PASSIF[j.arme as ArmeAPassif])
+          b.setAttribute('aria-label', `Geste : ${passifDe(C, j)?.nom ?? ''}`)
+        } else {
+          image.src = url(IMAGE_DE_LA_CAPACITE[a.cle])
+          b.setAttribute('aria-label', C.capacites[a.cle].nom)
+        }
       }
       // À mains nues, leur icône, sans cadre de cran.
       imageArme.src = url(IMAGE_DE_L_ARME[j.arme])
@@ -4617,7 +4611,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     contourPlein.style.strokeDasharray = `${part} 1`
     contourPlein.style.opacity = String(0.55 + 0.45 * part)
     // Pendant sa grâce, le trait fini reste traçable.
-    dessinerLePassif(evenementTouchable(C, etat.saison.seed, j, t), j, t)
+    const evTouchable = evenementTouchable(C, etat.saison.seed, j, t)
+    dessinerLePassif(evTouchable, j, t)
     // La forme glisse en continu : le marqueur la suit à chaque image.
     const forme = formeA(C, j, t)
     const mult = multiplicateurDeForme(C, j, forme)
@@ -4630,29 +4625,19 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     // Le voile de recharge : plein au tap, il se vide de haut en bas.
     const resteRecharge = Math.max(0, Math.min(1, (j.prochainTap - t) / rechargeDe(C, j)))
     voileRecharge.style.clipPath = `inset(${100 * (1 - resteRecharge)}% 0 0 0)`
-    // Les capacités : le même voile ; prêtes, elles brillent ; leur effet
-    // en cours, elles battent.
-    for (const [i, cle] of capacitesDe(C, j).entries()) {
+    // Les deux boutons : le même voile, qui dit la recharge d'une capacité ou
+    // la charge du geste (ses taps) ; prêts, ils brillent ; l'effet d'une
+    // capacité en cours, ou le geste ouvert sur l'ennemi, ils battent.
+    for (const [i, a] of actionsDe(j).entries()) {
       const { b, voile } = boutonsCapacite[i]
-      const avancee = avanceeDeCapacite(C, j, cle, t)
+      const avancee = a.type === 'geste' ? chargeDuGeste(C, j) : avanceeDeCapacite(C, j, a.cle, t)
       voile.style.clipPath = `inset(${100 * avancee}% 0 0 0)`
-      b.classList.toggle('prete', avancee >= 1)
+      b.classList.toggle('prete', a.type === 'geste' ? gestePret(C, j, t) : avancee >= 1)
       // EN RECHARGE, L'ILLUSTRATION SE GRISE (Keko : « parfois pas très
       // lisible que la capacité est en CD, surtout la conditionnelle ») — pas
       // celle de l'attaque : au spam, elle clignotait (Keko : « ça rend mal »).
       b.classList.toggle('en-recharge', avancee < 1)
-      b.classList.toggle('active', effetEnCours(j, cle, t))
-    }
-    // Le geste : sa charge se remplit de gauche à droite ; pleine, il brille.
-    const pGeste = passifDe(C, j)
-    if (pGeste !== null) {
-      const charge = chargeDuGeste(C, j)
-      chargeGeste.style.clipPath = `inset(0 ${100 * (1 - charge)}% 0 0)`
-      const pret = gestePret(C, j, t)
-      geste.classList.toggle('prete', pret)
-      geste.classList.toggle('en-recharge', charge < 1)
-      const compte = pret ? 'Prêt' : `${Math.min(j.passif.charge, pGeste.taps)} / ${pGeste.taps}`
-      if (compteGeste.textContent !== compte) compteGeste.textContent = compte
+      b.classList.toggle('active', a.type === 'geste' ? evTouchable !== null && !evTouchable.simple && passifOuvert(C, j, evTouchable) : effetEnCours(j, a.cle, t))
     }
     requestAnimationFrame(image)
   }
