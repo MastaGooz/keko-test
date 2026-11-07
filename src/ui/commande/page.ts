@@ -4,25 +4,46 @@
  * de côté : le héros à gauche, l'ennemi à droite ; le menu des attaques, la
  * consigne, les jauges et les écrans sont du DOM, le reste est un canvas.
  *
+ * La course passe par une CARTE (Keko : « un peu pauvre en strat long
+ * terme ») : un panneau par-dessus la scène, les salles en boutons reliés
+ * par des chemins, du premier rang en bas au chef en haut ; le feu de camp,
+ * la boutique, l'événement et le choix d'amélioration sont des panneaux ; le
+ * sac s'ouvre au-dessus du menu, pendant son tour.
+ *
  * Les gestes portent l'horodatage de leur événement (`timeStamp`, la même
  * horloge que `performance.now()`) : la règle juge l'instant où le doigt
  * s'est posé, pas celui où la page l'a traité. Au clavier : espace (ou
  * Entrée) pour le geste, 1 et 2 pour les attaques.
  */
 import './commande.css'
+import { CARTE, type Salle } from '../../logic/commande/carte.ts'
 import {
+  acheter,
+  allerA,
   avancer,
   BONUS,
   choisir,
   COMMANDE as C,
+  empecheDAcheter,
   ennemiDe,
+  EVENEMENTS,
   lacher,
   nouveauCombat,
+  nouvelleCourse,
+  OBJETS,
+  peutAccepter,
   peutAttaquer,
   prendre,
   pvMaxDe,
+  quitter,
   rangDuBonus,
+  repondre,
+  sallesAccessibles,
+  seReposer,
+  sEntrainer,
   toucher,
+  utiliser,
+  type Article,
   type Attaque,
   type Bonus,
   type EtatCombat,
@@ -38,6 +59,9 @@ import {
   sonBlesse,
   sonButin,
   sonChef,
+  sonObjet,
+  sonOr,
+  sonPas,
   sonGarde,
   sonKo,
   sonMarteau,
@@ -60,8 +84,19 @@ const X_MARTEAU = X_ENNEMI - 12
 /** Les personnages du générateur, comme ceux du survivor. */
 const ID_HEROS = 'survivant'
 const ID_ENNEMI: Record<TypeEnnemi, string> = { brigand: 'heros-12', piques: 'heros-17', lutin: 'heros-14', brute: 'heros-16', chapardeur: 'monstre-0' }
-/** Un chef est plus grand. */
+/** Un chef est plus grand, une élite un peu. */
 const TAILLE_CHEF = 1.3
+const TAILLE_ELITE = 1.15
+/** Les salles de la carte : leur nom, et leur icône (tracée en SVG, 24 × 24). */
+const SALLES: Record<Salle, { nom: string; icone: string }> = {
+  combat: { nom: 'Combat', icone: 'M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5M3 21l3-3M21 21l-3-3' },
+  elite: { nom: 'Élite', icone: 'M12 3a7 7 0 0 0-7 7c0 3 2 4 2 6h10c0-2 2-3 2-6a7 7 0 0 0-7-7zM9 19v2M12 19v2M15 19v2M9 10.5h1M14 10.5h1' },
+  repos: { nom: 'Feu', icone: 'M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 2 1 3 3 3 3s-1-4 0-7zM5 21l14-3M5 18l14 3' },
+  boutique: { nom: 'Boutique', icone: 'M7 8h10l2 12H5zM9 8a3 3 0 0 1 6 0' },
+  evenement: { nom: 'Mystère', icone: 'M9 9a3 3 0 1 1 4 2.8c-.7.3-1 1-1 1.7V15M12 19v.5' },
+  chef: { nom: 'Chef', icone: 'M3 8l4 4 5-7 5 7 4-4-2 11H5z' },
+}
+const SVG = 'http://www.w3.org/2000/svg'
 const CLE_RECORD = 'keko-commande-record'
 
 const clamp = (u: number) => (u < 0 ? 0 : u > 1 ? 1 : u)
@@ -130,9 +165,13 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   const boutonMarteau = bouton('marteau', 'Marteau')
   boutonSaut.geste.textContent = 'Touchez à chaque atterrissage'
 
+  const sac = el('div', 'commande-sac')
+  sac.hidden = true
   const ecran = el('div', 'commande-ecran')
+  const carteEl = el('div', 'commande-carte')
+  carteEl.hidden = true
   const pied = el('div', 'commande-build', `build ${build}`)
-  racine.append(canvas, haut, consigne, menu, ecran, pied)
+  racine.append(canvas, haut, consigne, sac, menu, ecran, carteEl, pied)
 
   const horloge = () => performance.now() / 1000
   let e: EtatCombat = nouveauCombat(C, 1, horloge())
@@ -182,9 +221,51 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- les écrans
 
   function montrerEcran(titre: string, texte: string, go: string): void {
+    ecran.classList.remove('commande-ecran-panneau')
     ecran.replaceChildren(el('div', 'commande-titre', titre), el('div', 'commande-texte', texte), el('div', 'commande-go', go))
     ecran.hidden = false
   }
+
+  /** Un panneau qui prend la tape : le choix, le feu, la boutique, l'événement. */
+  function montrerPanneau(...enfants: HTMLElement[]): void {
+    ecran.classList.add('commande-ecran-panneau')
+    ecran.replaceChildren(...enfants)
+    ecran.hidden = false
+  }
+  function fermerLePanneau(): void {
+    if (!ecran.classList.contains('commande-ecran-panneau')) return
+    ecran.classList.remove('commande-ecran-panneau')
+    ecran.hidden = true
+  }
+
+  /** Une carte de choix : un nom, un effet, une ligne en petit. */
+  function carteDeChoix(nom: string, effet: string, petit: string, action: () => void, empeche: string | null = null): HTMLButtonElement {
+    const carte = el('button', 'commande-choix')
+    carte.type = 'button'
+    carte.append(el('span', 'commande-choix-nom', nom), el('span', 'commande-choix-effet', effet), el('span', 'commande-choix-rang', empeche ?? petit))
+    carte.disabled = empeche !== null
+    carte.addEventListener('click', () => {
+      ouvrirLeSon()
+      action()
+    })
+    return carte
+  }
+  function boutonSimple(texte: string, action: () => void, desactive = false): HTMLButtonElement {
+    const b = el('button', 'commande-bouton', texte)
+    b.type = 'button'
+    b.disabled = desactive
+    b.addEventListener('click', () => {
+      ouvrirLeSon()
+      action()
+    })
+    return b
+  }
+  const liste = (...cartes: HTMLElement[]) => {
+    const l = el('div', 'commande-offre')
+    l.append(...cartes)
+    return l
+  }
+  const etatDuHeros = () => `PV ${e.pv} / ${pvMaxDe(C, e)} · ${e.or} or`
 
   function bilan(): string {
     const s = e.stats
@@ -193,48 +274,227 @@ export function monterCommande(racine: HTMLElement, build: string): void {
 
   function lancer(): void {
     ouvrirLeSon()
-    // `&etage=N` commence la course à l'étage N (pour tester sans jouer les premiers).
-    const depart = Math.max(1, Math.floor(Number(new URLSearchParams(location.search).get('etage'))) || 1)
-    e = nouveauCombat(C, (Math.random() * 2 ** 32) >>> 0, horloge(), depart)
+    // `&acte=N` commence la course à l'acte N (pour tester sans jouer les premiers).
+    const acte = Math.max(1, Math.floor(Number(new URLSearchParams(location.search).get('acte'))) || 1)
+    e = nouvelleCourse(C, (Math.random() * 2 ** 32) >>> 0, horloge(), acte)
+    phaseMontree = ''
     enJeu = true
     rueesSifflees = 0
     eclats.length = 0
     bulles.length = 0
     ecran.hidden = true
-    sonArrivee()
   }
 
   montrerEcran(
     'Commande action',
-    `Un combat au tour par tour : le bon geste au bon moment frappe plus fort, et pare les coups. Montez le plus haut possible, une amélioration à chaque étage.${record > 0 ? ` Record : étage ${record}.` : ''}`,
+    `Un combat au tour par tour : le bon geste au bon moment frappe plus fort, et pare les coups. Choisissez votre route jusqu’au chef, et montez le plus haut possible.${record > 0 ? ` Record : étage ${record}.` : ''}`,
     'Touchez pour jouer',
   )
 
-  /** Le choix de l'amélioration, après chaque victoire. */
-  function montrerLeButin(soin: number): void {
-    const offre = e.offre.map((b: Bonus, i: number) => {
-      const carte = el('button', 'commande-choix')
-      carte.type = 'button'
-      const r = rangDuBonus(e, b)
-      const rangTexte = b === 'repas' ? '' : r === 0 ? 'Nouveau' : `Niveau ${r + 1}`
-      carte.append(el('span', 'commande-choix-nom', BONUS[b].nom), el('span', 'commande-choix-effet', BONUS[b].effet), el('span', 'commande-choix-rang', rangTexte))
-      carte.addEventListener('click', () => {
+  const rangTexte = (b: Bonus) => (b === 'repas' ? '' : rangDuBonus(e, b) === 0 ? 'Nouveau' : `Niveau ${rangDuBonus(e, b) + 1}`)
+
+  /** Ce que la dernière victoire a rapporté (pour le dire au choix). */
+  let dernierButin: Extract<Evenement, { type: 'butin' }> | null = null
+
+  /** Le choix de l'amélioration : après une victoire, au feu de camp, à l'autel. */
+  function montrerLeButin(apresCombat: boolean): void {
+    const offre = e.offre.map((b: Bonus, i: number) =>
+      carteDeChoix(BONUS[b].nom, BONUS[b].effet, rangTexte(b), () => {
         if (e.phase !== 'butin') return
-        ecran.hidden = true
-        ecran.classList.remove('commande-ecran-butin')
         for (const x of prendre(C, e, i, horloge())) vivre(x)
-      })
+      }),
+    )
+    const gains: string[] = []
+    // L'autel : ce qu'il en a coûté.
+    if (!apresCombat && e.evenement?.issue) gains.push(e.evenement.issue.replace(/[.…]$/, ''))
+    if (apresCombat && dernierButin !== null) {
+      if (dernierButin.soin > 0) gains.push(`+${dernierButin.soin} PV`)
+      gains.push(`+${dernierButin.or} or`)
+      if (dernierButin.objet !== null) gains.push(`${OBJETS[dernierButin.objet].nom.toLowerCase()} dans le sac`)
+    }
+    montrerPanneau(
+      el('div', 'commande-sous-titre', apresCombat ? `Étage ${e.etage} franchi` : 'Une amélioration'),
+      el('div', 'commande-texte', `${gains.length > 0 ? `${gains.join(' · ')}. ` : ''}Choisissez une amélioration.`),
+      liste(...offre),
+    )
+  }
+
+  /** La carte de l'acte : les salles du premier rang en bas, le chef en haut, les chemins entre elles. */
+  function montrerLaCarte(): void {
+    const ouvertes = sallesAccessibles(e)
+    const passee = (r: number, i: number) => e.chemin.some((p) => p.rang === r && p.i === i)
+    const ouverte = (r: number, i: number) => ouvertes.some((p) => p.rang === r && p.i === i)
+    const ici = (r: number, i: number) => e.place !== null && e.place.rang === r && e.place.i === i
+    const ou = (r: number, x: number) => ({ x: 12 + x * 76, y: 94 - (r / (CARTE.rangs - 1)) * 86 })
+    const plateau = el('div', 'commande-plateau')
+    const traits = document.createElementNS(SVG, 'svg')
+    traits.setAttribute('class', 'commande-chemins')
+    traits.setAttribute('viewBox', '0 0 100 100')
+    traits.setAttribute('preserveAspectRatio', 'none')
+    e.carte.forEach((rang, r) =>
+      rang.forEach((n, i) => {
+        for (const j of n.suivants) {
+          const a = ou(r, n.x)
+          const b = ou(r + 1, e.carte[r + 1][j].x)
+          const trait = document.createElementNS(SVG, 'line')
+          trait.setAttribute('x1', String(a.x))
+          trait.setAttribute('y1', String(a.y))
+          trait.setAttribute('x2', String(b.x))
+          trait.setAttribute('y2', String(b.y))
+          const pris = passee(r, i) && passee(r + 1, j)
+          trait.setAttribute('class', pris ? 'commande-chemin-pris' : ici(r, i) ? 'commande-chemin-ouvert' : 'commande-chemin')
+          traits.append(trait)
+        }
+      }),
+    )
+    plateau.append(traits)
+    e.carte.forEach((rang, r) =>
+      rang.forEach((n, i) => {
+        const p = ou(r, n.x)
+        const b = el('button', `commande-salle commande-salle-${n.salle}`)
+        b.type = 'button'
+        b.style.left = `${p.x}%`
+        b.style.top = `${p.y}%`
+        if (ouverte(r, i)) b.classList.add('commande-salle-ouverte')
+        else if (passee(r, i)) b.classList.add('commande-salle-passee')
+        else b.disabled = true
+        if (ici(r, i)) b.classList.add('commande-salle-ici')
+        const icone = document.createElementNS(SVG, 'svg')
+        icone.setAttribute('viewBox', '0 0 24 24')
+        icone.setAttribute('class', 'commande-salle-icone')
+        const trace = document.createElementNS(SVG, 'path')
+        trace.setAttribute('d', SALLES[n.salle].icone)
+        icone.append(trace)
+        b.append(icone, el('span', 'commande-salle-nom', SALLES[n.salle].nom))
+        b.addEventListener('click', () => {
+          if (!ouverte(r, i)) return
+          ouvrirLeSon()
+          sonPas()
+          for (const x of allerA(C, e, { rang: r, i }, horloge())) vivre(x)
+        })
+        plateau.append(b)
+      }),
+    )
+    const sacTexte = e.objets.length > 0 ? e.objets.map((o) => OBJETS[o].nom).join(', ') : 'vide'
+    const tete = el('div', 'commande-carte-tete')
+    tete.append(el('div', 'commande-carte-titre', `Acte ${e.acte}`), el('div', 'commande-texte', `${etatDuHeros()} · Sac : ${sacTexte}`), el('div', 'commande-carte-consigne', 'Choisissez votre route'))
+    carteEl.replaceChildren(tete, plateau)
+  }
+
+  function montrerLeFeu(): void {
+    const soin = Math.min(Math.round(pvMaxDe(C, e) * C.salles.feu), pvMaxDe(C, e) - e.pv)
+    montrerPanneau(
+      el('div', 'commande-sous-titre', 'Feu de camp'),
+      el('div', 'commande-texte', etatDuHeros()),
+      liste(
+        carteDeChoix('Se reposer', soin > 0 ? `+${soin} PV` : 'Déjà en pleine forme', '', () => {
+          if (seReposer(C, e, horloge()) > 0) bulle(X_HEROS, TAILLE + 6, `+${soin} PV`, '#a6f07a', 3.6, 900)
+        }),
+        carteDeChoix('S’entraîner', 'Une amélioration au choix', '', () => sEntrainer(C, e, horloge())),
+      ),
+    )
+  }
+
+  function nomDeLArticle(a: Article): [string, string, string] {
+    if (a.sorte === 'bonus') return [BONUS[a.bonus].nom, BONUS[a.bonus].effet, rangTexte(a.bonus)]
+    if (a.sorte === 'objet') return [OBJETS[a.objet].nom, OBJETS[a.objet].effet, 'Objet']
+    return ['Soin', `+${C.salles.soin} PV`, '']
+  }
+
+  function montrerLaBoutique(): void {
+    const articles = e.boutique.map((a, i) => {
+      const [nom, effet, petit] = nomDeLArticle(a)
+      const empeche = empecheDAcheter(C, e, i)
+      const carte = carteDeChoix(nom, effet, petit, () => {
+        if (acheter(C, e, i)) {
+          sonOr()
+          montrerLaBoutique()
+        }
+      }, empeche)
+      carte.append(el('span', 'commande-prix', a.vendu ? '' : `${a.prix} or`))
       return carte
     })
-    const liste = el('div', 'commande-offre')
-    liste.append(...offre)
-    ecran.replaceChildren(
-      el('div', 'commande-sous-titre', `Étage ${e.etage} franchi`),
-      el('div', 'commande-texte', soin > 0 ? `Le héros souffle : +${soin} PV. Choisissez une amélioration.` : 'Choisissez une amélioration.'),
-      liste,
+    montrerPanneau(
+      el('div', 'commande-sous-titre', 'Boutique'),
+      el('div', 'commande-texte', etatDuHeros()),
+      liste(...articles),
+      boutonSimple('Partir', () => {
+        for (const x of quitter(e, horloge())) vivre(x)
+      }),
     )
-    ecran.classList.add('commande-ecran-butin')
-    ecran.hidden = false
+  }
+
+  function montrerLEvenement(): void {
+    const ev = e.evenement
+    if (ev === null) return
+    const fiche = EVENEMENTS[ev.cle]
+    if (ev.issue !== null) {
+      montrerPanneau(
+        el('div', 'commande-sous-titre', fiche.titre),
+        el('div', 'commande-texte', ev.issue),
+        el('div', 'commande-texte', etatDuHeros()),
+        boutonSimple('Continuer', () => {
+          for (const x of quitter(e, horloge())) vivre(x)
+        }),
+      )
+      return
+    }
+    const choix = el('div', 'commande-boutons')
+    choix.append(
+      boutonSimple(fiche.accepter, () => {
+        repondre(C, e, true, horloge())
+        if (e.phase === 'evenement') montrerLEvenement()
+      }, !peutAccepter(C, e)),
+      boutonSimple('Partir', () => {
+        repondre(C, e, false, horloge())
+        montrerLEvenement()
+      }),
+    )
+    montrerPanneau(el('div', 'commande-sous-titre', fiche.titre), el('div', 'commande-texte', fiche.texte), el('div', 'commande-texte', etatDuHeros()), choix)
+  }
+
+  /** La phase a changé : la carte, le panneau qu'il faut. */
+  let phaseMontree = ''
+  function suivreLaPhase(): void {
+    if (!enJeu || e.phase === phaseMontree) return
+    const precedente = phaseMontree
+    phaseMontree = e.phase
+    carteEl.hidden = e.phase !== 'carte'
+    if (e.phase === 'carte') {
+      fermerLePanneau()
+      montrerLaCarte()
+    } else if (e.phase === 'repos') montrerLeFeu()
+    else if (e.phase === 'boutique') montrerLaBoutique()
+    else if (e.phase === 'evenement') montrerLEvenement()
+    else if (e.phase === 'butin') {
+      // Après un combat, on laisse l'ennemi tomber avant d'ouvrir le choix.
+      if (precedente === 'ko')
+        setTimeout(() => {
+          if (e.phase === 'butin') montrerLeButin(true)
+        }, 500)
+      else montrerLeButin(false)
+    } else fermerLePanneau()
+  }
+
+  /** Le sac, au-dessus du menu : un bouton par objet. */
+  let sacMontre = ''
+  function majSac(visible: boolean): void {
+    const cle = visible ? e.objets.join() : ''
+    if (cle === sacMontre) return
+    sacMontre = cle
+    sac.replaceChildren(
+      ...(visible ? e.objets : []).map((o, i) => {
+        const b = el('button', 'commande-objet')
+        b.type = 'button'
+        b.append(el('span', 'commande-objet-nom', OBJETS[o].nom), el('span', 'commande-objet-effet', OBJETS[o].effet))
+        b.addEventListener('click', () => {
+          ouvrirLeSon()
+          for (const x of utiliser(C, e, i, horloge())) vivre(x)
+        })
+        return b
+      }),
+    )
+    sac.hidden = !visible || e.objets.length === 0
   }
 
   function attaquer(a: Attaque): void {
@@ -294,7 +554,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       // Sans vibreur, rien.
     }
   }
-  const tailleEnnemi = () => TAILLE * (e.ennemi.estChef ? TAILLE_CHEF : 1)
+  const tailleEnnemi = () => TAILLE * (e.ennemi.estChef ? TAILLE_CHEF : e.salle === 'elite' ? TAILLE_ELITE : 1)
   const teteEnnemi = () => (ennemiDe(C, e).volant ? VOL : 0) + tailleEnnemi() * 0.8
 
   function vivre(ev: Evenement): void {
@@ -389,14 +649,34 @@ export function monterCommande(racine: HTMLElement, build: string): void {
         if (ev.chef) {
           sonChef()
           bulle(X_ENNEMI - 6, TAILLE * TAILLE_CHEF + 6, 'Un chef !', '#ffd27a', 4.4, 1100)
+        } else if (ev.elite) {
+          sonChef()
+          bulle(X_ENNEMI - 6, TAILLE * TAILLE_ELITE + 6, 'Une élite !', '#ff8a7a', 4.2, 1100)
         } else sonArrivee()
         break
       case 'butin':
         sonButin()
+        sonOr()
+        dernierButin = ev
         if (ev.soin > 0) bulle(X_HEROS, TAILLE + 6, `+${ev.soin} PV`, '#a6f07a', 3.6, 900)
-        setTimeout(() => {
-          if (e.phase === 'butin') montrerLeButin(ev.soin)
-        }, 500)
+        bulle(X_HEROS, TAILLE + 11, `+${ev.or} or`, '#ffd27a', 3.6, 900)
+        break
+      case 'objet':
+        sonObjet(ev.objet)
+        if (ev.objet === 'potion') bulle(X_HEROS, TAILLE + 6, `+${C.salles.potion} PV`, '#a6f07a', 3.8, 900)
+        else if (ev.objet === 'bombe') {
+          flashEnnemi = 1
+          secousse = 1
+          flashOr = 0.6
+          eclater(X_ENNEMI, TAILLE * 0.5, '#ffb030', 26, 30)
+          bulle(X_ENNEMI + 6, yTete - 2, String(ev.degats), '#ffd27a', 5)
+        } else if (ev.objet === 'fumigene') {
+          eclater(X_ENNEMI, TAILLE * 0.5, '#b9b3c9', 30, 12)
+          bulle(X_ENNEMI - 6, yTete + 8, 'Fumée !', '#d8d2e6', 4, 900)
+        } else bulle(X_HEROS, TAILLE + 6, 'Piment !', '#ff6a5a', 4, 900)
+        break
+      case 'fumee':
+        bulle(X_ENNEMI - 6, yTete + 8, 'Il tousse…', '#d8d2e6', 3.6, 900)
         break
       case 'perdu': {
         sonPerdu()
@@ -408,7 +688,12 @@ export function monterCommande(racine: HTMLElement, build: string): void {
           ecrireRecord(CLE_RECORD, record)
         }
         setTimeout(
-          () => montrerEcran('Le héros est tombé', `Étage ${e.etage}, contre : ${ennemiDe(C, e).nom}. ${nouveau ? 'Nouveau record !' : `Record : étage ${record}.`} ${bilan()}.`, 'Touchez pour rejouer'),
+          () =>
+            montrerEcran(
+              'Le héros est tombé',
+              `Acte ${e.acte}, étage ${e.etage}, contre : ${ennemiDe(C, e).nom}. ${nouveau ? 'Nouveau record !' : `Record : étage ${record}.`} ${bilan()}.`,
+              'Touchez pour rejouer',
+            ),
           800,
         )
         break
@@ -716,12 +1001,13 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   function majChrome(t: number): void {
     const en = ennemiDe(C, e)
     campHeros.remplie.style.width = `${(100 * e.pv) / pvMaxDe(C, e)}%`
-    campHeros.detail.textContent = `PV ${e.pv} / ${pvMaxDe(C, e)}`
+    campHeros.detail.textContent = etatDuHeros()
     campEnnemi.nom.textContent = en.nom
     campEnnemi.remplie.style.width = `${(100 * e.pvEnnemi) / en.pv}%`
     campEnnemi.detail.textContent = `Étage ${e.etage}`
     const choix = enJeu && e.phase === 'choix'
     menu.hidden = !choix
+    majSac(choix)
     if (choix) {
       boutonMarteau.b.disabled = !peutAttaquer(C, e, 'marteau')
       boutonMarteau.geste.textContent = boutonMarteau.b.disabled ? 'Hors de portée' : 'Tenez, lâchez à l’étoile'
@@ -740,6 +1026,14 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   }
 
   // ---------------------------------------------------------------- la boucle
+
+  /** Un ennemi est en scène : dans une salle de combat, pas sur la carte ni dans un panneau qui ne le suit pas. */
+  function combatEnScene(): boolean {
+    if (!enJeu && e.phase !== 'perdu') return !ecran.hidden
+    if (e.salle !== 'combat' && e.salle !== 'elite' && e.salle !== 'chef') return false
+    if (e.phase === 'carte' || e.phase === 'repos' || e.phase === 'boutique' || e.phase === 'evenement') return false
+    return !(e.phase === 'butin' && e.pvEnnemi > 0)
+  }
 
   let avant = performance.now()
   function image(ms: number): void {
@@ -782,7 +1076,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     ox = (Math.random() - 0.5) * secousse * 1.6
     oy = (Math.random() - 0.5) * secousse * 1.6
     dessinerLaScene(w, h)
-    dessinerLEnnemi(t)
+    if (combatEnScene()) dessinerLEnnemi(t)
     dessinerLeHeros(t)
     dessinerLaCharge(t)
     for (const p of eclats) {
@@ -818,8 +1112,9 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       g.fillStyle = `rgba(255, 220, 140, ${0.22 * flashOr})`
       g.fillRect(0, 0, w, h)
     }
-    haut.hidden = !enJeu && e.phase !== 'perdu'
+    haut.hidden = !combatEnScene()
     majChrome(t)
+    suivreLaPhase()
     requestAnimationFrame(image)
   }
   requestAnimationFrame(image)

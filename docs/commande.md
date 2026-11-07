@@ -36,9 +36,47 @@ par étage** :
   gestes tombe entre les étages 5 et 22** (8, 5, 10, 7, 10, 11, 22, 5 sur
   huit graines). Les robots prennent toujours la première amélioration.
 
+## La carte, l'or, les objets
+
+Keko (07/11), la course essayée : « sympa, mais un peu pauvre en strat long
+terme ». Je proposais une carte à embranchements avec de l'or et une
+boutique ; Keko : « ok vas-y ». **Le choix de route devient la stratégie** :
+
+- **Un acte est une carte de six rangs** (`logic/commande/carte.ts`) : deux
+  ou trois salles par rang, chacune reliée à ses voisines du rang suivant ;
+  le premier rang est fait de combats, l'avant-dernier de feux de camp (et
+  parfois d'une boutique), le dernier est le chef. Au milieu, au hasard
+  (poids) : combat 5, élite 2 (pas avant le troisième rang), boutique 2,
+  événement 2, feu 1. Le chef abattu, l'acte suivant commence sur une carte
+  neuve ; **l'étage est le rang, compté d'un acte à l'autre** (l'acte deux
+  commence à l'étage sept) et c'est lui qui grossit les ennemis.
+- **L'élite** : ×1,6 PV, +1 d'attaque, rapporte 25 or au lieu de 10, et un
+  objet si le sac a de la place. **Le chef** : 45 or. **Chaque geste réussi**
+  du combat ajoute 1 or (une parade parfaite, 2) : *bien jouer paie.*
+- **Le feu de camp** : se reposer (40 % des PV max) ou s'entraîner (une
+  amélioration au choix).
+- **La boutique** : trois améliorations (45 or), deux objets (20 or), un
+  soin de 6 PV (15 or), chacun une fois.
+- **Les événements**, un pari ou rien : la fontaine trouble (moitié +3 PV
+  max, moitié −3 PV), le marchand louche (15 or pour un objet au hasard), le
+  coffre piégé (+25 or, −2 PV), l'autel (4 PV pour une amélioration).
+- **Le sac** tient trois objets, on part avec une potion ; on s'en sert
+  pendant son tour, sans le perdre : la potion (+5 PV), la bombe (6 dégâts,
+  sans geste), le fumigène (l'ennemi passe son prochain tour), le piment (la
+  prochaine attaque fait double dégâts).
+- Le Chapardeur arrive à l'étage 7 (le début de l'acte deux).
+- Mesuré par les robots (ils prennent la première route, se soignent au feu
+  sous 60 %, achètent la première amélioration qu'ils peuvent, refusent les
+  paris) : un joueur qui réussit 60 % de ses gestes tombe aux étages 16, 18,
+  18, 20, 12, 4, 6, 6 ; qui ne touche rien, à l'étage 2 ou 3.
+- `&acte=N` commence la course à l'acte N.
+
 ## Les fichiers
 
-- `src/logic/commande/combat.ts` — pur : le combat entier, **le temps
+- `src/logic/commande/carte.ts` — pur : la carte d'un acte (ses rangs, ses
+  salles, ses chemins) et les salles accessibles.
+- `src/logic/commande/combat.ts` — pur : le combat entier, la course (or,
+  boutique, feu, événements, objets), **le temps
   injecté** (en secondes). `avancer` fait les transitions jusqu'à l'instant
   donné ; `choisir`, `toucher`, `lacher` reçoivent l'instant du geste.
   Vérifié par `combat.verif.ts` (dans `npm run verif`), dont un joueur adroit
@@ -80,7 +118,6 @@ par étage** :
 - La consigne dit toujours le geste à faire (c'est un proto : on juge le
   geste, pas sa découverte).
 - Au clavier : espace ou Entrée pour le geste, 1 et 2 pour les attaques.
-- `&etage=N` commence la course à l'étage N.
 
 ## Ce qui reste ouvert
 

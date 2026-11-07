@@ -590,7 +590,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?invaders` | les envahisseurs, un side project : un Space Invaders au doigt, les vaisseaux du générateur (`docs/invaders.md`) |
 | `?tourelle` | sa variante : la tourelle fixe tire seule, les ennemis foncent, trois améliorations au choix entre les vagues |
 | `?survivor`, `&controle=suivre` | un Vampire Survivors : le héros au manche flottant, les armes frappent seules, trois choix à chaque niveau ; l'autre contrôle, le héros marche vers le doigt (`docs/survivor.md`) |
-| `?commande`, `&etage=N` | la commande action, un side project : un roguelike au tour par tour à la Paper Mario (le saut qui rebondit, le marteau qu'on charge, la garde au bon moment ; une amélioration au choix à chaque étage) ; `&etage=N` commence à l'étage N (`docs/commande.md`) |
+| `?commande`, `&acte=N` | la commande action, un side project : un roguelike au tour par tour à la Paper Mario (le saut qui rebondit, le marteau qu'on charge, la garde au bon moment), sur une carte à embranchements (élites, feux, boutiques, événements, or et objets) ; `&acte=N` commence à l'acte N (`docs/commande.md`) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |

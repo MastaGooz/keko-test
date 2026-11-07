@@ -77,6 +77,26 @@ export function sonButin(): void {
   ;[523, 659, 784, 1047].forEach((f, i) => note('triangle', f, f, 0.16, 0.15, i * 0.08))
 }
 
+/** De l'or : des pièces qui tintent. */
+export function sonOr(): void {
+  ;[1568, 2093, 1760].forEach((f, i) => note('square', f, f, 0.06, 0.05, i * 0.05))
+}
+
+/** Un pas sur la carte. */
+export function sonPas(): void {
+  note('triangle', 330, 220, 0.08, 0.1)
+}
+
+/** Un objet sorti du sac. */
+export function sonObjet(objet: 'potion' | 'bombe' | 'fumigene' | 'piment'): void {
+  if (objet === 'bombe') {
+    note('sawtooth', 120, 35, 0.5, 0.3)
+    souffle(0.5, 2500, 0.5)
+  } else if (objet === 'fumigene') souffle(0.6, 900, 0.3)
+  else if (objet === 'potion') [523, 784, 1047].forEach((f, i) => note('sine', f, f, 0.15, 0.1, i * 0.06))
+  else note('square', 880, 1760, 0.15, 0.08)
+}
+
 /** Un chef entre : un grondement. */
 export function sonChef(): void {
   note('sawtooth', 70, 55, 0.8, 0.25)
