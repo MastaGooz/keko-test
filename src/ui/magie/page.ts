@@ -58,6 +58,8 @@ const ROUE: Element[] = ['feu', 'foudre', 'vie', 'froid', 'terre', 'mort']
 /** Le rayon de la roue sous le doigt, et la distance à glisser avant qu'un quartier ne compte (en px CSS). */
 const ROUE_RAYON = 72
 const ROUE_SEUIL = 18
+/** La roue n'apparaît qu'après tant de ms d'appui (ou dès que le doigt glisse) : une tape qui lance un sort ne la fait pas clignoter (Keko : « éviter qu'elle spam à chaque sort lancé »). */
+const ROUE_DELAI = 180
 const ICONE_PATH: Record<Element, Path2D> = Object.fromEntries(ELEMENTS.map((k) => [k, new Path2D(ICONE[k])])) as Record<Element, Path2D>
 /** Le quartier de la roue vers lequel pointe (dx, dy), ou `null` si le doigt n'a pas assez glissé. */
 function quartier(dx: number, dy: number): Element | null {
@@ -259,7 +261,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
 
   // LA ROUE SOUS LE DOIGT : on pose le doigt n'importe où, la roue apparaît ; on glisse vers un quartier et on relâche
   // pour ajouter l'élément ; on relâche sans glisser pour lancer le sort vers ce point.
-  let geste: { id: number; x: number; y: number; dx: number; dy: number; element: Element | null } | null = null
+  let geste: { id: number; x: number; y: number; dx: number; dy: number; element: Element | null; t0: number } | null = null
   racine.addEventListener('pointerdown', (ev) => {
     if ((ev.target as HTMLElement).closest('button') !== null) return
     if (!enJeu) {
@@ -269,7 +271,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     ev.preventDefault()
     ouvrirLeSon()
     if (geste !== null) return
-    geste = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, dx: 0, dy: 0, element: null }
+    geste = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, dx: 0, dy: 0, element: null, t0: performance.now() }
     racine.setPointerCapture(ev.pointerId)
   })
   racine.addEventListener('pointermove', (ev) => {
@@ -845,11 +847,13 @@ export function monterMagie(racine: HTMLElement, build: string): void {
   }
 
   /** La roue sous le doigt : six quartiers, celui que le doigt vise s'allume, son nom au-dessus. */
-  function dessinerLaRoue(g0: { x: number; y: number; dx: number; dy: number; element: Element | null }): void {
+  function dessinerLaRoue(g0: { x: number; y: number; dx: number; dy: number; element: Element | null }, entree: number): void {
     const cx = g0.x * dpr
     const cy = g0.y * dpr
-    const R = ROUE_RAYON * dpr
+    // Elle s'ouvre en un clin d'œil, de 70 % à sa taille.
+    const R = ROUE_RAYON * dpr * (0.7 + 0.3 * Math.max(0, entree))
     const r0 = ROUE_SEUIL * dpr
+    g.globalAlpha = Math.max(0.35, entree)
     ROUE.forEach((k, i) => {
       const a = -Math.PI / 2 + (i * Math.PI) / 3
       const vise = g0.element === k
@@ -889,6 +893,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       g.strokeText(NOM[g0.element], cx, cy - R - 14 * dpr)
       g.fillText(NOM[g0.element], cx, cy - R - 14 * dpr)
     }
+    g.globalAlpha = 1
   }
 
   // ---------------------------------------------------------------- la boucle
@@ -931,7 +936,8 @@ export function monterMagie(racine: HTMLElement, build: string): void {
     dessinerLesElementaires(t)
     dessinerLesRochers()
     dessinerLeMagicien(t)
-    if (geste !== null) dessinerLaRoue(geste)
+    // La roue : après le délai d'appui, ou dès que le doigt a glissé ; une tape brève ne la montre pas.
+    if (geste !== null && (ms - geste.t0 >= ROUE_DELAI || Math.hypot(geste.dx, geste.dy) >= ROUE_SEUIL)) dessinerLaRoue(geste, Math.min(1, (ms - geste.t0 - ROUE_DELAI) / 120 + 0.5))
     for (const p of eclats) {
       g.globalAlpha = 1 - p.vie / p.duree
       g.fillStyle = p.couleur

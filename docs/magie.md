@@ -38,7 +38,17 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
   −90° + 60° × i). Le quartier visé s'allume et son nom s'affiche au-dessus.
   Une roue-légende (SVG, 3,2 rem) reste en bas à côté de la file pour
   apprendre les directions. Un `pointercancel` (le navigateur reprend le
-  geste) n'ajoute ni ne lance rien.
+  geste) n'ajoute ni ne lance rien. **La roue n'apparaît qu'après 180 ms
+  d'appui**, ou dès que le doigt a glissé de 18 px (Keko : « empêcher la
+  roue d'apparaître immédiatement, plutôt après un bref délai d'appui, pour
+  éviter qu'elle spam à chaque sort lancé ») : une tape qui lance un sort ne
+  la fait pas clignoter ; elle s'ouvre alors en 120 ms, de 70 % à sa taille.
+  Le panneau du bas est sur DEUX LIGNES depuis que la légende y est (la
+  première version avait perdu la ligne qui attachait les orbes et le nom au
+  panneau — Keko : « il faudrait quand même voir les éléments activés et le
+  résultat ») : la légende, les trois orbes (l'icône de l'élément dedans),
+  « = », l'icône du sort, le ✕ ; puis le nom et ce qu'il fera sur toute la
+  largeur, à hauteur fixe.
 - **Les opposés s'annulent en entrant** : le feu efface un froid de la file
   (et inversement), la foudre une terre, la vie une mort. Un ✕ vide la file.
 - **La mort fait un RAYON** (l'arcane de Magicka) : une ligne droite depuis
