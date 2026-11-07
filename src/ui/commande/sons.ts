@@ -72,8 +72,15 @@ export function sonArrivee(): void {
   note('triangle', 196, 262, 0.2, 0.1)
 }
 
-export function sonGagne(): void {
-  ;[523, 659, 784, 1047, 784, 1047].forEach((f, i) => note('triangle', f, f, 0.18, 0.15, i * 0.1))
+/** L'étage franchi : un arpège, avant le choix. */
+export function sonButin(): void {
+  ;[523, 659, 784, 1047].forEach((f, i) => note('triangle', f, f, 0.16, 0.15, i * 0.08))
+}
+
+/** Un chef entre : un grondement. */
+export function sonChef(): void {
+  note('sawtooth', 70, 55, 0.8, 0.25)
+  souffle(0.6, 400, 0.3)
 }
 
 export function sonPerdu(): void {

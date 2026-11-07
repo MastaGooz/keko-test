@@ -216,6 +216,74 @@ html.commande-page body {
   }
 }
 
+/* Le choix de l'amélioration : l'écran prend la tape. */
+.commande-ecran-butin {
+  pointer-events: auto;
+  gap: 0.5rem;
+  background: rgba(8, 5, 15, 0.75);
+}
+
+.commande-sous-titre {
+  font: 800 2.2rem Grenze, serif;
+  color: #ffd27a;
+  text-shadow: 0 0 0.9rem rgba(255, 170, 60, 0.6);
+}
+
+.commande-offre {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(22rem, 100%);
+  margin-top: 0.6rem;
+}
+
+.commande-choix {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 4.4rem;
+  padding: 0.7rem 1rem;
+  border: 2px solid #c9953f;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #4a3220, #2a1c12);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 220, 150, 0.15),
+    0 0.3rem 0.8rem rgba(0, 0, 0, 0.5);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: commande-entre 0.3s ease-out both;
+}
+
+.commande-choix:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.commande-choix:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.commande-choix:active {
+  scale: 0.97;
+  border-color: #ffd27a;
+}
+
+.commande-choix-nom {
+  font: 800 1.2rem Grenze, serif;
+  color: #ffd27a;
+}
+
+.commande-choix-effet {
+  font: 700 1rem 'Baloo 2', sans-serif;
+  line-height: 1.2;
+}
+
+.commande-choix-rang {
+  font: 700 0.75rem 'Baloo 2', sans-serif;
+  color: #9fe8ff;
+}
+
 .commande-build {
   position: absolute;
   right: 6px;

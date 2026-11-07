@@ -12,25 +12,32 @@
 import './commande.css'
 import {
   avancer,
+  BONUS,
   choisir,
   COMMANDE as C,
   ennemiDe,
   lacher,
   nouveauCombat,
   peutAttaquer,
+  prendre,
+  pvMaxDe,
+  rangDuBonus,
   toucher,
   type Attaque,
+  type Bonus,
   type EtatCombat,
   type Evenement,
+  type TypeEnnemi,
 } from '../../logic/commande/combat.ts'
-import { sprite } from '../invaders/commun.ts'
+import { ecrireRecord, lireRecord, sprite } from '../invaders/commun.ts'
 import {
   ouvrirLeSon,
   sonArrivee,
   sonAtterrit,
   sonBien,
   sonBlesse,
-  sonGagne,
+  sonButin,
+  sonChef,
   sonGarde,
   sonKo,
   sonMarteau,
@@ -52,7 +59,10 @@ const X_MARTEAU = X_ENNEMI - 12
 
 /** Les personnages du générateur, comme ceux du survivor. */
 const ID_HEROS = 'survivant'
-const ID_ENNEMIS = ['heros-12', 'heros-17', 'heros-14']
+const ID_ENNEMI: Record<TypeEnnemi, string> = { brigand: 'heros-12', piques: 'heros-17', lutin: 'heros-14', brute: 'heros-16', chapardeur: 'monstre-0' }
+/** Un chef est plus grand. */
+const TAILLE_CHEF = 1.3
+const CLE_RECORD = 'keko-commande-record'
 
 const clamp = (u: number) => (u < 0 ? 0 : u > 1 ? 1 : u)
 const lisse = (u: number) => {
@@ -141,9 +151,10 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   let rueesSifflees = 0
 
   const imageHeros = () => sprite('perso-pixel', ID_HEROS, 'humain')
-  const imageEnnemi = (rang: number) => sprite('perso-pixel', ID_ENNEMIS[rang % ID_ENNEMIS.length], 'humain')
+  const imageEnnemi = (type: TypeEnnemi) => sprite('perso-pixel', ID_ENNEMI[type], 'humain')
   imageHeros()
-  ID_ENNEMIS.forEach((_, i) => imageEnnemi(i))
+  for (const k of Object.keys(ID_ENNEMI) as TypeEnnemi[]) imageEnnemi(k)
+  let record = lireRecord(CLE_RECORD)
 
   // ---------------------------------------------------------------- le cadre
 
@@ -182,13 +193,9 @@ export function monterCommande(racine: HTMLElement, build: string): void {
 
   function lancer(): void {
     ouvrirLeSon()
-    e = nouveauCombat(C, (Math.random() * 2 ** 32) >>> 0, horloge())
-    // `&ennemi=N` commence au N-ième ennemi (pour le tester sans jouer les premiers).
-    const depart = Number(new URLSearchParams(location.search).get('ennemi')) - 1
-    if (depart > 0 && depart < C.ennemis.length) {
-      e.rang = depart
-      e.pvEnnemi = C.ennemis[depart].pv
-    }
+    // `&etage=N` commence la course à l'étage N (pour tester sans jouer les premiers).
+    const depart = Math.max(1, Math.floor(Number(new URLSearchParams(location.search).get('etage'))) || 1)
+    e = nouveauCombat(C, (Math.random() * 2 ** 32) >>> 0, horloge(), depart)
     enJeu = true
     rueesSifflees = 0
     eclats.length = 0
@@ -197,7 +204,38 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     sonArrivee()
   }
 
-  montrerEcran('Commande action', 'Un combat au tour par tour : le bon geste au bon moment frappe plus fort, et pare les coups.', 'Touchez pour jouer')
+  montrerEcran(
+    'Commande action',
+    `Un combat au tour par tour : le bon geste au bon moment frappe plus fort, et pare les coups. Montez le plus haut possible, une amélioration à chaque étage.${record > 0 ? ` Record : étage ${record}.` : ''}`,
+    'Touchez pour jouer',
+  )
+
+  /** Le choix de l'amélioration, après chaque victoire. */
+  function montrerLeButin(soin: number): void {
+    const offre = e.offre.map((b: Bonus, i: number) => {
+      const carte = el('button', 'commande-choix')
+      carte.type = 'button'
+      const r = rangDuBonus(e, b)
+      const rangTexte = b === 'repas' ? '' : r === 0 ? 'Nouveau' : `Niveau ${r + 1}`
+      carte.append(el('span', 'commande-choix-nom', BONUS[b].nom), el('span', 'commande-choix-effet', BONUS[b].effet), el('span', 'commande-choix-rang', rangTexte))
+      carte.addEventListener('click', () => {
+        if (e.phase !== 'butin') return
+        ecran.hidden = true
+        ecran.classList.remove('commande-ecran-butin')
+        for (const x of prendre(C, e, i, horloge())) vivre(x)
+      })
+      return carte
+    })
+    const liste = el('div', 'commande-offre')
+    liste.append(...offre)
+    ecran.replaceChildren(
+      el('div', 'commande-sous-titre', `Étage ${e.etage} franchi`),
+      el('div', 'commande-texte', soin > 0 ? `Le héros souffle : +${soin} PV. Choisissez une amélioration.` : 'Choisissez une amélioration.'),
+      liste,
+    )
+    ecran.classList.add('commande-ecran-butin')
+    ecran.hidden = false
+  }
 
   function attaquer(a: Attaque): void {
     if (!enJeu) return
@@ -256,7 +294,8 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       // Sans vibreur, rien.
     }
   }
-  const teteEnnemi = () => (ennemiDe(C, e).volant ? VOL : 0) + TAILLE * 0.8
+  const tailleEnnemi = () => TAILLE * (e.ennemi.estChef ? TAILLE_CHEF : 1)
+  const teteEnnemi = () => (ennemiDe(C, e).volant ? VOL : 0) + tailleEnnemi() * 0.8
 
   function vivre(ev: Evenement): void {
     const yTete = teteEnnemi()
@@ -347,20 +386,33 @@ export function monterCommande(racine: HTMLElement, build: string): void {
         rueesSifflees = 0
         break
       case 'arrivee':
-        sonArrivee()
+        if (ev.chef) {
+          sonChef()
+          bulle(X_ENNEMI - 6, TAILLE * TAILLE_CHEF + 6, 'Un chef !', '#ffd27a', 4.4, 1100)
+        } else sonArrivee()
         break
-      case 'gagne':
-        sonGagne()
-        enJeu = false
-        rejouableA = horloge() + 1
-        setTimeout(() => montrerEcran('Victoire !', `${bilan()}. PV restants : ${e.pv} / ${C.heros.pv}.`, 'Touchez pour rejouer'), 600)
+      case 'butin':
+        sonButin()
+        if (ev.soin > 0) bulle(X_HEROS, TAILLE + 6, `+${ev.soin} PV`, '#a6f07a', 3.6, 900)
+        setTimeout(() => {
+          if (e.phase === 'butin') montrerLeButin(ev.soin)
+        }, 500)
         break
-      case 'perdu':
+      case 'perdu': {
         sonPerdu()
         enJeu = false
         rejouableA = horloge() + 1.2
-        setTimeout(() => montrerEcran('Le héros est tombé', `Contre : ${ennemiDe(C, e).nom}. ${bilan()}.`, 'Touchez pour rejouer'), 800)
+        const nouveau = e.etage > record
+        if (nouveau) {
+          record = e.etage
+          ecrireRecord(CLE_RECORD, record)
+        }
+        setTimeout(
+          () => montrerEcran('Le héros est tombé', `Étage ${e.etage}, contre : ${ennemiDe(C, e).nom}. ${nouveau ? 'Nouveau record !' : `Record : étage ${record}.`} ${bilan()}.`, 'Touchez pour rejouer'),
+          800,
+        )
         break
+      }
     }
   }
 
@@ -507,9 +559,9 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   }
 
   /** Un personnage, les pieds à (x, y). */
-  function personnage(img: HTMLImageElement | null, x: number, y: number, regard: number, penche: number, blanc: number, etire = 1): void {
+  function personnage(img: HTMLImageElement | null, x: number, y: number, regard: number, penche: number, blanc: number, etire = 1, taille = TAILLE): void {
     if (img === null) return
-    const t = TAILLE * echelle
+    const t = taille * echelle
     g.save()
     g.translate(sx(x), sy(y))
     g.rotate(penche * regard)
@@ -527,6 +579,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
     const en = ennemiDe(C, e)
     const p = poseDeLEnnemi(t)
     if (p.alpha <= 0) return
+    const tE = tailleEnnemi()
     ombre(p.x, p.y)
     g.globalAlpha = p.alpha
     if (en.volant) {
@@ -535,7 +588,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       g.fillStyle = 'rgba(210, 235, 255, 0.75)'
       for (const s of [-1, 1]) {
         g.save()
-        g.translate(sx(p.x + s * 1.5), sy(p.y + TAILLE * 0.55))
+        g.translate(sx(p.x + s * 1.5), sy(p.y + tE * 0.55))
         g.rotate(s * (0.6 + bat))
         g.beginPath()
         g.ellipse(s * 3 * echelle, 0, 3.4 * echelle, 1.6 * echelle, 0, 0, Math.PI * 2)
@@ -543,10 +596,10 @@ export function monterCommande(racine: HTMLElement, build: string): void {
         g.restore()
       }
     }
-    personnage(imageEnnemi(e.rang), p.x, p.y, -1, p.penche, flashEnnemi, 1 - ecrase * 0.25)
+    personnage(imageEnnemi(en.type), p.x, p.y, -1, p.penche, flashEnnemi, 1 - ecrase * 0.25, tE)
     if (en.piques) {
       // Les piques du casque.
-      const yh = p.y + TAILLE * 0.8 * (1 - ecrase * 0.25)
+      const yh = p.y + tE * 0.8 * (1 - ecrase * 0.25)
       g.fillStyle = '#d6dbe4'
       g.strokeStyle = '#3a3f4a'
       g.lineWidth = Math.max(1, 0.25 * echelle)
@@ -662,11 +715,11 @@ export function monterCommande(racine: HTMLElement, build: string): void {
   let consigneMontree = ''
   function majChrome(t: number): void {
     const en = ennemiDe(C, e)
-    campHeros.remplie.style.width = `${(100 * e.pv) / C.heros.pv}%`
-    campHeros.detail.textContent = `PV ${e.pv} / ${C.heros.pv}`
+    campHeros.remplie.style.width = `${(100 * e.pv) / pvMaxDe(C, e)}%`
+    campHeros.detail.textContent = `PV ${e.pv} / ${pvMaxDe(C, e)}`
     campEnnemi.nom.textContent = en.nom
     campEnnemi.remplie.style.width = `${(100 * e.pvEnnemi) / en.pv}%`
-    campEnnemi.detail.textContent = `Ennemi ${e.rang + 1} / ${C.ennemis.length}`
+    campEnnemi.detail.textContent = `Étage ${e.etage}`
     const choix = enJeu && e.phase === 'choix'
     menu.hidden = !choix
     if (choix) {
@@ -765,7 +818,7 @@ export function monterCommande(racine: HTMLElement, build: string): void {
       g.fillStyle = `rgba(255, 220, 140, ${0.22 * flashOr})`
       g.fillRect(0, 0, w, h)
     }
-    haut.hidden = !enJeu && e.phase !== 'gagne' && e.phase !== 'perdu'
+    haut.hidden = !enJeu && e.phase !== 'perdu'
     majChrome(t)
     requestAnimationFrame(image)
   }

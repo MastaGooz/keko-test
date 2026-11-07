@@ -13,30 +13,47 @@
  *   riposte). Une tape ratée bloque la garde un instant : on ne pare pas en
  *   tapotant.
  *
- * Trois ennemis à la suite, chacun pour une raison : le Brigand pour
- * apprendre, le Garde à piques (on ne saute pas dessus), le Lutin ailé (hors
- * de portée du marteau, il frappe deux fois).
+ * Puis « faudrait un genre de roguelike où on progresse sur des ennemis de
+ * plus en plus forts et où on gagne des améliorations » : une COURSE sans
+ * fin, étage par étage. Après chaque victoire, le héros souffle (quelques PV)
+ * et choisit une amélioration parmi trois ; les ennemis grossissent avec
+ * l'étage, de nouveaux types arrivent, un chef tous les cinq étages.
  *
  * Pur : le temps est injecté, en secondes, sur la même horloge pour `avancer`
  * et pour les gestes — la page donne l'horodatage de l'événement, pas
  * l'instant où elle le traite. Une décision qui attend un geste attend aussi
  * `delai` de plus : le geste peut arriver un peu après l'instant qu'il porte.
+ * Tout tirage passe par la graine.
  */
-import { createRng } from '../rng.ts'
+import { createRng, type Rng } from '../rng.ts'
 
-export type Ennemi = {
+export type TypeEnnemi = 'brigand' | 'piques' | 'lutin' | 'brute' | 'chapardeur'
+
+export type Modele = {
   nom: string
+  /** Le nom de son chef. */
+  chef: string
   /** Ce que la page en dit au moment de choisir. */
   conseil: string
   pv: number
   attaque: number
   /** Le nombre de coups par tour. */
   coups: number
+  /** L'élan avant la ruée, tiré entre ces deux durées : on ne pare pas au métronome. */
+  elanMin: number
+  elanMax: number
   /** Sauter dessus blesse le héros. */
   piques: boolean
   /** Le marteau ne l'atteint pas. */
   volant: boolean
+  /** Le premier étage où il peut paraître. */
+  depuis: number
 }
+
+/** L'ennemi en scène : un modèle, grossi pour son étage. */
+export type Ennemi = Omit<Modele, 'chef' | 'depuis'> & { type: TypeEnnemi; estChef: boolean }
+
+export type Bonus = 'bottes' | 'ressort' | 'semelles' | 'marteau' | 'poigne' | 'bouclier' | 'reflexes' | 'contre' | 'epines' | 'coeur' | 'repas'
 
 export const COMMANDE = {
   heros: { pv: 10 },
@@ -45,8 +62,10 @@ export const COMMANDE = {
   /** Le héros court jusqu'à l'ennemi, puis revient. */
   course: 0.45,
   retour: 0.5,
-  /** L'ennemi abattu tombe avant que le suivant entre. */
+  /** L'ennemi abattu tombe avant le choix de l'amélioration. */
   ko: 0.7,
+  /** Les PV rendus après chaque victoire. */
+  repos: 2,
   /** Le temps qu'un geste met à arriver après l'instant qu'il porte. */
   delai: 0.03,
   saut: {
@@ -85,25 +104,59 @@ export const COMMANDE = {
     parfaiteApres: 0.03,
     /** Après une tape, la garde est bloquée ce temps-là. */
     verrou: 0.45,
+    /** Les dégâts qu'ôte une garde. */
+    reduit: 1,
     riposte: 1,
   },
-  ennemi: {
-    /** L'élan avant la ruée, tiré entre ces deux durées : on ne pare pas au métronome. */
-    elanMin: 0.5,
-    elanMax: 1.3,
-    ruee: 0.25,
-    recul: 0.45,
+  ennemi: { ruee: 0.25, recul: 0.45 },
+  /** Ce que l'étage fait aux ennemis. */
+  etages: {
+    /** Les PV grossissent de tant par étage. */
+    croissance: 0.2,
+    /** Un point d'attaque de plus tous les tant d'étages. */
+    attaqueTous: 4,
+    /** Un chef tous les tant d'étages : plus de PV, un point d'attaque et un coup de plus. */
+    chefTous: 5,
+    chef: { pv: 2.2, attaque: 1, coups: 1 },
   },
-  ennemis: [
-    { nom: 'Brigand', conseil: 'Un brigand : rien de spécial.', pv: 5, attaque: 2, coups: 1, piques: false, volant: false },
-    { nom: 'Garde à piques', conseil: 'Des piques sur le casque : ne sautez pas dessus.', pv: 6, attaque: 2, coups: 1, piques: true, volant: false },
-    { nom: 'Lutin ailé', conseil: 'Il vole, hors de portée du marteau, et frappe deux fois.', pv: 6, attaque: 2, coups: 2, piques: false, volant: true },
-  ] as Ennemi[],
+  modeles: {
+    brigand: { nom: 'Brigand', chef: 'Chef brigand', conseil: 'Rien de spécial.', pv: 5, attaque: 2, coups: 1, elanMin: 0.5, elanMax: 1.3, piques: false, volant: false, depuis: 1 },
+    piques: { nom: 'Garde à piques', chef: 'Capitaine à piques', conseil: 'Des piques sur le casque : ne sautez pas dessus.', pv: 6, attaque: 2, coups: 1, elanMin: 0.5, elanMax: 1.3, piques: true, volant: false, depuis: 2 },
+    lutin: { nom: 'Lutin ailé', chef: 'Reine des lutins', conseil: 'Il vole, hors de portée du marteau.', pv: 5, attaque: 2, coups: 2, elanMin: 0.45, elanMax: 1.1, piques: false, volant: true, depuis: 3 },
+    brute: { nom: 'Brute', chef: 'Brute énorme', conseil: 'Lente à frapper, mais elle frappe fort : attendez-la.', pv: 9, attaque: 4, coups: 1, elanMin: 1.2, elanMax: 2.2, piques: false, volant: false, depuis: 4 },
+    chapardeur: { nom: 'Chapardeur', chef: 'Maître chapardeur', conseil: 'De petits coups, très vite.', pv: 4, attaque: 1, coups: 3, elanMin: 0.25, elanMax: 0.6, piques: false, volant: false, depuis: 6 },
+  } as Record<TypeEnnemi, Modele>,
+  /** Une amélioration se prend au plus tant de fois (sauf le cœur et le repas). */
+  bonusMax: 3,
+  bonus: {
+    /** +1 dégât à chaque atterrissage. */
+    bottes: 1,
+    /** +1 atterrissage au plus. */
+    ressort: 1,
+    /** La fenêtre du rebond, élargie de tant. */
+    semelles: 0.3,
+    /** +2 au coup fort du marteau. */
+    marteau: 2,
+    /** La zone où lâcher le marteau, élargie de tant. */
+    poigne: 0.4,
+    /** La garde ôte un dégât de plus. */
+    bouclier: 1,
+    /** Les fenêtres de la garde, élargies de tant. */
+    reflexes: 0.3,
+    /** +1 à la riposte de la parade parfaite. */
+    contre: 1,
+    /** Une garde (même pas parfaite) renvoie tant de dégâts. */
+    epines: 1,
+    /** +3 PV max, rendus aussitôt. */
+    coeur: 3,
+    /** Rend tant de PV. */
+    repas: 5,
+  } as Record<Bonus, number>,
 }
 
 export type ConfigCommande = typeof COMMANDE
 
-export type Phase = 'arrivee' | 'choix' | 'saut' | 'marteau' | 'ennemi' | 'ko' | 'gagne' | 'perdu'
+export type Phase = 'arrivee' | 'choix' | 'saut' | 'marteau' | 'ennemi' | 'ko' | 'butin' | 'perdu'
 export type Attaque = 'saut' | 'marteau'
 
 export type Atterrissage = {
@@ -125,9 +178,14 @@ export type EtatCombat = {
   /** L'instant où la phase a commencé. */
   debut: number
   pv: number
-  /** L'ennemi en scène, dans `ennemis`. */
-  rang: number
+  /** L'étage, à partir de 1 : un ennemi par étage. */
+  etage: number
+  ennemi: Ennemi
   pvEnnemi: number
+  /** Les améliorations prises, et combien de fois. */
+  bonus: Partial<Record<Bonus, number>>
+  /** Les trois améliorations offertes, en phase `butin`. */
+  offre: Bonus[]
   atterrissages: Atterrissage[]
   marteau: { arrivee: number; appui: number | null; frappe: number | null; fort: boolean; pleine: boolean; porte: boolean }
   coups: Coup[]
@@ -143,7 +201,7 @@ export type EtatCombat = {
 }
 
 export type Evenement =
-  | { type: 'arrivee'; rang: number }
+  | { type: 'arrivee'; etage: number; chef: boolean }
   | { type: 'bien'; serie: number }
   | { type: 'rate' }
   | { type: 'atterrit'; degats: number; serie: number }
@@ -155,17 +213,107 @@ export type Evenement =
   | { type: 'riposte'; degats: number }
   | { type: 'ko' }
   | { type: 'tour' }
-  | { type: 'gagne' }
+  | { type: 'butin'; soin: number }
   | { type: 'perdu' }
 
-export function nouveauCombat(c: ConfigCommande, graine: number, t: number): EtatCombat {
+// ---------------------------------------------------------------- l'étage
+
+/** Un ennemi de ce type, grossi pour son étage ; `chef`, son chef. */
+export function ennemiDuType(c: ConfigCommande, type: TypeEnnemi, etage: number, chef = false): Ennemi {
+  const m = c.modeles[type]
+  const grossi = 1 + c.etages.croissance * (etage - 1)
+  const attaque = m.attaque + Math.floor((etage - 1) / c.etages.attaqueTous)
+  const coups = m.coups + (chef ? c.etages.chef.coups : 0)
   return {
-    graine: graine >>> 0,
+    type,
+    nom: chef ? m.chef : m.nom,
+    // « Rien de spécial » ne se dit pas d'un chef.
+    conseil: `${chef ? 'Un chef : plus solide et plus fort.' : ''}${chef && type === 'brigand' ? '' : `${chef ? ' ' : ''}${m.conseil}`}${coups > 1 ? ` ${coups} coups par tour.` : ''}`,
+    pv: Math.round(m.pv * grossi * (chef ? c.etages.chef.pv : 1)),
+    attaque: attaque + (chef ? c.etages.chef.attaque : 0),
+    coups,
+    elanMin: m.elanMin,
+    elanMax: m.elanMax,
+    piques: m.piques,
+    volant: m.volant,
+    estChef: chef,
+  }
+}
+
+/** L'ennemi de l'étage : les trois premiers apprennent un type chacun, puis le hasard parmi ceux qui sont arrivés. */
+function ennemiDeLEtage(c: ConfigCommande, etage: number, rng: Rng): Ennemi {
+  const types = Object.keys(c.modeles) as TypeEnnemi[]
+  const neuf = types.find((k) => c.modeles[k].depuis === etage)
+  const chef = etage % c.etages.chefTous === 0
+  if (neuf !== undefined && !chef) return ennemiDuType(c, neuf, etage)
+  const arrives = types.filter((k) => c.modeles[k].depuis <= etage)
+  return ennemiDuType(c, arrives[Math.floor(rng.next() * arrives.length)], etage, chef)
+}
+
+// ---------------------------------------------------------------- les améliorations
+
+const rang = (e: EtatCombat, b: Bonus) => e.bonus[b] ?? 0
+
+export function pvMaxDe(c: ConfigCommande, e: EtatCombat): number {
+  return c.heros.pv + rang(e, 'coeur') * c.bonus.coeur
+}
+
+const degatsDuSaut = (c: ConfigCommande, e: EtatCombat) => c.saut.degats + rang(e, 'bottes') * c.bonus.bottes
+const sautsMax = (c: ConfigCommande, e: EtatCombat) => c.saut.max + rang(e, 'ressort') * c.bonus.ressort
+const largeurDuRebond = (c: ConfigCommande, e: EtatCombat) => 1 + rang(e, 'semelles') * c.bonus.semelles
+const coupFort = (c: ConfigCommande, e: EtatCombat) => c.marteau.fort + rang(e, 'marteau') * c.bonus.marteau
+/** La zone où lâcher le marteau, améliorations comprises. */
+export function zoneDuMarteau(c: ConfigCommande, e: EtatCombat): number {
+  return c.marteau.zone * (1 + rang(e, 'poigne') * c.bonus.poigne)
+}
+const largeurDeGarde = (c: ConfigCommande, e: EtatCombat) => 1 + rang(e, 'reflexes') * c.bonus.reflexes
+
+/** Ce qu'une amélioration offerte dit d'elle, pour la page. */
+export const BONUS: Record<Bonus, { nom: string; effet: string }> = {
+  bottes: { nom: 'Bottes ferrées', effet: '+1 dégât à chaque atterrissage' },
+  ressort: { nom: 'Ressort', effet: 'Un rebond de plus au saut' },
+  semelles: { nom: 'Semelles souples', effet: 'Le rebond se prend plus facilement' },
+  marteau: { nom: 'Gros marteau', effet: '+2 dégâts au marteau chargé' },
+  poigne: { nom: 'Bonne poigne', effet: 'Plus de temps pour lâcher le marteau' },
+  bouclier: { nom: 'Bouclier', effet: 'La garde ôte un dégât de plus' },
+  reflexes: { nom: 'Réflexes', effet: 'La garde se prend plus facilement' },
+  contre: { nom: 'Contre', effet: '+1 dégât à la riposte de la parade parfaite' },
+  epines: { nom: 'Épines', effet: 'Chaque garde renvoie un dégât' },
+  coeur: { nom: 'Cœur', effet: '+3 PV max' },
+  repas: { nom: 'Repas', effet: 'Rend 5 PV' },
+}
+
+/** Trois améliorations différentes : pas une qui soit au plus haut, pas de repas si le héros est en pleine forme. */
+function offrir(c: ConfigCommande, e: EtatCombat, rng: Rng): Bonus[] {
+  const possibles = (Object.keys(BONUS) as Bonus[]).filter((b) => {
+    if (b === 'repas') return e.pv < pvMaxDe(c, e)
+    if (b === 'coeur') return true
+    return rang(e, b) < c.bonusMax
+  })
+  const offre: Bonus[] = []
+  while (offre.length < 3 && possibles.length > 0) offre.push(possibles.splice(Math.floor(rng.next() * possibles.length), 1)[0])
+  return offre
+}
+
+export function rangDuBonus(e: EtatCombat, b: Bonus): number {
+  return rang(e, b)
+}
+
+// ---------------------------------------------------------------- le combat
+
+export function nouveauCombat(c: ConfigCommande, graine: number, t: number, etage = 1): EtatCombat {
+  const rng = createRng(graine)
+  const ennemi = ennemiDeLEtage(c, etage, rng)
+  return {
+    graine: rng.getState(),
     phase: 'arrivee',
     debut: t,
     pv: c.heros.pv,
-    rang: 0,
-    pvEnnemi: c.ennemis[0].pv,
+    etage,
+    ennemi,
+    pvEnnemi: ennemi.pv,
+    bonus: {},
+    offre: [],
     atterrissages: [],
     marteau: { arrivee: 0, appui: null, frappe: null, fort: false, pleine: false, porte: false },
     coups: [],
@@ -177,12 +325,12 @@ export function nouveauCombat(c: ConfigCommande, graine: number, t: number): Eta
   }
 }
 
-export function ennemiDe(c: ConfigCommande, e: EtatCombat): Ennemi {
-  return c.ennemis[e.rang]
+export function ennemiDe(_c: ConfigCommande, e: EtatCombat): Ennemi {
+  return e.ennemi
 }
 
-export function peutAttaquer(c: ConfigCommande, e: EtatCombat, a: Attaque): boolean {
-  return e.phase === 'choix' && !(a === 'marteau' && ennemiDe(c, e).volant)
+export function peutAttaquer(_c: ConfigCommande, e: EtatCombat, a: Attaque): boolean {
+  return e.phase === 'choix' && !(a === 'marteau' && e.ennemi.volant)
 }
 
 function passer(e: EtatCombat, phase: Phase, t: number): void {
@@ -201,12 +349,12 @@ function blesserLEnnemi(e: EtatCombat, degats: number, t: number, ev: Evenement[
 }
 
 /** Le tour de l'ennemi : ses coups sont tirés d'avance, chacun son élan. */
-function commencerLeTour(c: ConfigCommande, e: EtatCombat, t0: number, ev: Evenement[]): void {
+function commencerLeTour(e: EtatCombat, c: ConfigCommande, t0: number, ev: Evenement[]): void {
   const rng = createRng(e.graine)
   e.coups = []
   let s = t0
-  for (let i = 0; i < ennemiDe(c, e).coups; i++) {
-    const elan = c.ennemi.elanMin + rng.next() * (c.ennemi.elanMax - c.ennemi.elanMin)
+  for (let i = 0; i < e.ennemi.coups; i++) {
+    const elan = e.ennemi.elanMin + rng.next() * (e.ennemi.elanMax - e.ennemi.elanMin)
     const impact = s + elan + c.ennemi.ruee
     e.coups.push({ elan: s, impact, garde: 'aucune', resolu: false })
     s = impact + c.ennemi.recul
@@ -226,7 +374,7 @@ function finDeLAction(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement
     passer(e, 'perdu', fin)
     ev.push({ type: 'perdu' })
   } else if (e.pvEnnemi <= 0) passer(e, 'ko', fin)
-  else commencerLeTour(c, e, fin, ev)
+  else commencerLeTour(e, c, fin, ev)
   return true
 }
 
@@ -243,22 +391,23 @@ function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): bo
       if (!a.porte) {
         if (t < a.t) return false
         a.porte = true
-        if (ennemiDe(c, e).piques) {
+        if (e.ennemi.piques) {
           e.pv = Math.max(0, e.pv - c.saut.piques)
           ev.push({ type: 'piques', degats: c.saut.piques })
           a.resolu = true
           e.retour = a.t
           return true
         }
-        blesserLEnnemi(e, c.saut.degats, a.t, ev)
-        ev.push({ type: 'atterrit', degats: c.saut.degats, serie: e.atterrissages.length })
+        const degats = degatsDuSaut(c, e)
+        blesserLEnnemi(e, degats, a.t, ev)
+        ev.push({ type: 'atterrit', degats, serie: e.atterrissages.length })
         return true
       }
       if (!a.resolu) {
-        if (t < a.t + c.saut.apres + c.delai) return false
+        if (t < a.t + c.saut.apres * largeurDuRebond(c, e) + c.delai) return false
         a.resolu = true
         const n = e.atterrissages.length
-        if (a.tape === 'bien' && n < c.saut.max && e.pvEnnemi > 0) {
+        if (a.tape === 'bien' && n < sautsMax(c, e) && e.pvEnnemi > 0) {
           e.atterrissages.push({ t: a.t + c.saut.rebond * c.saut.raccourci ** (n - 1), avant: a.avant * c.saut.resserre, tape: 'aucune', porte: false, resolu: false })
         } else e.retour = a.t
         return true
@@ -280,16 +429,17 @@ function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): bo
           ev.push({ type: 'pleine' })
           return true
         }
-        if (t < m.appui + c.marteau.charge + c.marteau.zone + c.delai) return false
+        const fin = m.appui + c.marteau.charge + zoneDuMarteau(c, e)
+        if (t < fin + c.delai) return false
         // Tenu trop longtemps : le héros frappe mou de lui-même.
-        m.frappe = m.appui + c.marteau.charge + c.marteau.zone
+        m.frappe = fin
         m.fort = false
         return true
       }
       if (!m.porte) {
         if (t < m.frappe + c.marteau.elan) return false
         m.porte = true
-        const degats = m.fort ? c.marteau.fort : c.marteau.faible
+        const degats = m.fort ? coupFort(c, e) : c.marteau.faible
         if (m.fort) e.stats.charges += 1
         blesserLEnnemi(e, degats, m.frappe + c.marteau.elan, ev)
         ev.push({ type: 'frappe', degats, fort: m.fort })
@@ -303,22 +453,24 @@ function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): bo
       for (let i = 0; i < e.coups.length; i++) {
         const k = e.coups[i]
         if (k.resolu) continue
-        if (t < k.impact + c.garde.apres + c.delai) return false
+        if (t < k.impact + c.garde.apres * largeurDeGarde(c, e) + c.delai) return false
         k.resolu = true
-        const attaque = ennemiDe(c, e).attaque
-        const degats = k.garde === 'parfaite' ? 0 : k.garde === 'garde' ? Math.max(0, attaque - 1) : attaque
+        const reduit = c.garde.reduit + rang(e, 'bouclier') * c.bonus.bouclier
+        const degats = k.garde === 'parfaite' ? 0 : k.garde === 'garde' ? Math.max(0, e.ennemi.attaque - reduit) : e.ennemi.attaque
         e.pv = Math.max(0, e.pv - degats)
         ev.push({ type: 'coup', degats, garde: k.garde })
         if (k.garde === 'garde') e.stats.gardes += 1
-        if (k.garde === 'parfaite') {
-          e.stats.parfaites += 1
-          blesserLEnnemi(e, c.garde.riposte, k.impact, ev)
-          ev.push({ type: 'riposte', degats: c.garde.riposte })
+        if (k.garde === 'parfaite') e.stats.parfaites += 1
+        // La riposte de la parade parfaite, les épines de toute garde.
+        const renvoi = (k.garde === 'parfaite' ? c.garde.riposte + rang(e, 'contre') * c.bonus.contre : 0) + (k.garde !== 'aucune' ? rang(e, 'epines') * c.bonus.epines : 0)
+        if (renvoi > 0) {
+          blesserLEnnemi(e, renvoi, k.impact, ev)
+          ev.push({ type: 'riposte', degats: renvoi })
         }
         if (e.pv <= 0) {
           passer(e, 'perdu', t)
           ev.push({ type: 'perdu' })
-        } else if (e.pvEnnemi <= 0) e.coups.length = i + 1 // abattu par la riposte : il ne frappe plus
+        } else if (e.pvEnnemi <= 0) e.coups.length = i + 1 // abattu en pleine attaque : il ne frappe plus
         return true
       }
       const fin = e.coups[e.coups.length - 1].impact + c.ennemi.recul
@@ -329,16 +481,14 @@ function unPas(c: ConfigCommande, e: EtatCombat, t: number, ev: Evenement[]): bo
 
     case 'ko': {
       if (t < e.debut + c.ko) return false
-      const fin = e.debut + c.ko
-      if (e.rang + 1 < c.ennemis.length) {
-        e.rang += 1
-        e.pvEnnemi = c.ennemis[e.rang].pv
-        passer(e, 'arrivee', fin)
-        ev.push({ type: 'arrivee', rang: e.rang })
-      } else {
-        passer(e, 'gagne', fin)
-        ev.push({ type: 'gagne' })
-      }
+      // Le héros souffle, puis choisit son amélioration.
+      const soin = Math.min(c.repos, pvMaxDe(c, e) - e.pv)
+      e.pv += soin
+      const rng = createRng(e.graine)
+      e.offre = offrir(c, e, rng)
+      e.graine = rng.getState()
+      passer(e, 'butin', e.debut + c.ko)
+      ev.push({ type: 'butin', soin })
       return true
     }
 
@@ -366,16 +516,36 @@ export function choisir(c: ConfigCommande, e: EtatCombat, a: Attaque, t: number)
   return true
 }
 
+/** L'amélioration `i` de l'offre est prise ; l'ennemi de l'étage suivant entre. */
+export function prendre(c: ConfigCommande, e: EtatCombat, i: number, t: number): Evenement[] {
+  if (e.phase !== 'butin' || i < 0 || i >= e.offre.length) return []
+  const b = e.offre[i]
+  if (b === 'repas') e.pv = Math.min(pvMaxDe(c, e), e.pv + c.bonus.repas)
+  else {
+    e.bonus[b] = rang(e, b) + 1
+    if (b === 'coeur') e.pv += c.bonus.coeur
+  }
+  e.offre = []
+  e.etage += 1
+  const rng = createRng(e.graine)
+  e.ennemi = ennemiDeLEtage(c, e.etage, rng)
+  e.graine = rng.getState()
+  e.pvEnnemi = e.ennemi.pv
+  passer(e, 'arrivee', t)
+  return [{ type: 'arrivee', etage: e.etage, chef: e.ennemi.estChef }]
+}
+
 /** Le doigt se pose à l'instant `t`. */
 export function toucher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[] {
   if (e.phase === 'saut') {
     const a = e.atterrissages[e.atterrissages.length - 1]
-    if (a.tape !== 'aucune' || a.resolu || ennemiDe(c, e).piques) return []
-    if (t < a.t - a.avant) {
+    if (a.tape !== 'aucune' || a.resolu || e.ennemi.piques) return []
+    const large = largeurDuRebond(c, e)
+    if (t < a.t - a.avant * large) {
       a.tape = 'rate'
       return [{ type: 'rate' }]
     }
-    if (t > a.t + c.saut.apres) return []
+    if (t > a.t + c.saut.apres * large) return []
     a.tape = 'bien'
     e.stats.rebonds += 1
     return [{ type: 'bien', serie: e.atterrissages.length }]
@@ -390,11 +560,12 @@ export function toucher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[
     if (t < e.verrou) return []
     e.verrou = t + c.garde.verrou
     e.gardeA = t
-    const k = e.coups.find((x) => !x.resolu && x.garde === 'aucune' && t <= x.impact + c.garde.apres)
+    const large = largeurDeGarde(c, e)
+    const k = e.coups.find((x) => !x.resolu && x.garde === 'aucune' && t <= x.impact + c.garde.apres * large)
     if (k === undefined) return []
     const d = t - k.impact
-    if (d >= -c.garde.parfaiteAvant && d <= c.garde.parfaiteApres) k.garde = 'parfaite'
-    else if (d >= -c.garde.avant) k.garde = 'garde'
+    if (d >= -c.garde.parfaiteAvant * large && d <= c.garde.parfaiteApres * large) k.garde = 'parfaite'
+    else if (d >= -c.garde.avant * large) k.garde = 'garde'
     else return [{ type: 'garde', qualite: 'trop-tot' }]
     return [{ type: 'garde', qualite: k.garde }]
   }
@@ -412,7 +583,7 @@ export function lacher(c: ConfigCommande, e: EtatCombat, t: number): Evenement[]
     return []
   }
   const tenu = t - m.appui
-  m.fort = tenu >= c.marteau.charge && tenu <= c.marteau.charge + c.marteau.zone
+  m.fort = tenu >= c.marteau.charge && tenu <= c.marteau.charge + zoneDuMarteau(c, e)
   m.frappe = t
   return []
 }
