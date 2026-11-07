@@ -255,7 +255,7 @@ export function monterMagie(racine: HTMLElement, build: string): void {
       })
       .join(' + ')
     nom.replaceChildren(
-      document.createTextNode(sort === '' ? 'Choisissez jusqu’à trois éléments' : sort),
+      el('span', 'magie-nom-titre', sort === '' ? 'Choisissez jusqu’à trois éléments' : sort),
       el('small', '', sort === '' ? 'Le feu et le froid s’annulent, la foudre et la terre aussi' : [recette, ...effetsDuSort(C, e.file)].join(' · ')),
     )
     vider.hidden = e.file.length === 0

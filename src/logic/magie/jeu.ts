@@ -168,7 +168,7 @@ export function effetsDuSort(c: ConfigMagie, file: Element[]): string[] {
   const forme = formeDe(file)
   if (forme === 'aucun') return []
   const effets: string[] = []
-  if (forme === 'rocher') effets.push(n.feu > 0 ? 'explose large' : 'éclate sur le point touché', 'repousse')
+  if (forme === 'rocher') effets.push(n.feu > 0 ? 'explose large' : 'éclate', 'repousse')
   if (forme === 'eclair') effets.push(`saute sur ${1 + c.eclair.sautsParFoudre * n.foudre} ennemis`)
   if (forme === 'souffle') effets.push('cône devant la tour')
   if (n.feu > 0) effets.push('brûle')

@@ -46,6 +46,10 @@ des ennemis qui approchent. Et on lance des sorts à la Magicka ».
   Jet de flammes, Souffle de givre, ×2 ou ×3) ; dessous, la RECETTE et ce
   que fera le sort (« Feu + Foudre · saute sur 3 ennemis · brûle »,
   `effetsDuSort`). Au lancer, le nom s'affiche au-dessus de la tour.
+  **Cette ligne a une hauteur fixe** (Keko : « l'UI en bas change de taille
+  selon le nombre de lignes du titre, c'est perturbant ») : le nom sur une
+  ligne, la recette sur deux au plus — le panneau ne bouge plus, ni la tour,
+  qui se centre dessus.
 - **Quatre ennemis**, chacun sa vague d'arrivée :
 
   | ennemi | dès la vague | PV | vitesse | coup sur la tour | faiblesse |

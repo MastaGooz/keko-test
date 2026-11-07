@@ -76,7 +76,8 @@ html.magie-page body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: 3rem;
+  /* Une hauteur fixe : la longueur du nom ou de la recette ne fait plus bouger le panneau (ni la tour, qui se centre dessus). */
+  height: 3.4rem;
   margin-bottom: 0.5rem;
 }
 
@@ -124,14 +125,32 @@ html.magie-page body {
 
 .magie-nom {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
   font: 800 1rem 'Baloo 2', sans-serif;
   line-height: 1.15;
   color: #fff;
   text-shadow: 0 0.1rem 0.3rem rgba(0, 0, 0, 0.8);
 }
 
+/* Le nom sur une ligne, la recette sur deux au plus. */
+.magie-nom-titre {
+  flex: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .magie-nom small {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   font-weight: 700;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.65);
