@@ -1536,12 +1536,13 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
     ).onfinish = () => o.remove()
   }
 
-  function impact(x: number, y: number, genre: Genre, couleur: string): void {
+  function impact(x: number, y: number, genre: Genre, couleur: string, armeDuCoup?: Equipement | null): void {
     const fort = STYLES[genre].onde
     // L'attaque et l'auto de l'épée tranchent, celles de la dague piquent,
     // celles du bâton écrasent ; le reste (mains nues, capacités) frappe
-    // d'une onde ronde.
-    const arme = genre.startsWith('capacite') ? null : moi().arme
+    // d'une onde ronde — sauf si l'appelant nomme l'arme du coup (l'Ouverture :
+    // Keko, « une animation d'arme qui cible l'endroit »).
+    const arme = armeDuCoup !== undefined ? armeDuCoup : genre.startsWith('capacite') ? null : moi().arme
     // Les épées et les haches tranchent, les armes à deux mains en lourd (elles
     // fendent de haut en bas) ; le trait des épées est DROIT, celui des haches
     // en croissant.
@@ -4001,7 +4002,8 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
       n.addEventListener('pointerdown', (e) => {
         e.stopPropagation()
         if (!pointsEnJeu.delete(cle)) return
-        toucherLePassif(ev.k, 0, n!)
+        // Le coup de l'arme tombe SUR LA CIBLE, et le chiffre y jaillit (Keko).
+        toucherLePassif(ev.k, 0, n!, [parseFloat(n!.style.left), parseFloat(n!.style.top)], 0, undefined, true)
       })
       couchePassif.append(n)
       ciblesVues.set(cle, n)
@@ -4092,9 +4094,11 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
    * sous le nom du passif. Une rune hors d'ordre tremble en rouge. `ou` : le
    * coup a déjà eu son effet (la Taille), le chiffre jaillit là ; `au` : il
    * ne tombe qu'à cet instant (`performance.now`), et la barre de vie garde
-   * ses PV jusque-là.
+   * ses PV jusque-là. `frappeIci` (l'Ouverture) : le coup de l'ARME est joué
+   * en `ou`, et le chiffre y jaillit aussi (Keko : « une animation d'arme
+   * qui cible l'endroit, et l'effet / le nombre à l'endroit de la cible »).
    */
-  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number], au = 0, quand?: number): void {
+  function toucherLePassif(k: number, cible: number, n: HTMLElement | null, ou?: [number, number], au = 0, quand?: number, frappeIci = false): void {
     const t = quand ?? maintenant()
     const avant = moi()
     const p = passifDe(C, avant)
@@ -4115,6 +4119,7 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
         const [x, y] = ou ?? surLEnnemi(0, -0.05)
         const couleur = teinteDuChiffre(genre, mult - 1)
         if (ou === undefined) impact(x, y, genre, couleur)
+        else if (frappeIci) impact(x, y, genre, couleur, avant.arme)
         const attente = au - performance.now()
         if (attente > 0) {
           pvRetenus = inflige

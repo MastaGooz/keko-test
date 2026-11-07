@@ -123,7 +123,13 @@ cinquième joueur à côté des quatre bots.
     arme, en attendant une place (les tests les prennent sur une config qui
     les rend). *Mon choix, à rejuger : l'autre voie était d'empiler deux
     boutons de chaque côté.* L'Ouverture a le rond net des Points faibles
-    (Keko : la cible d'or qui battait « n'est pas très belle »).
+    (Keko : la cible d'or qui battait « n'est pas très belle »), et
+    TOUCHÉE, LE COUP DE L'ARME TOMBE SUR ELLE (Keko : « une animation d'arme
+    qui cible l'endroit, et l'effet / le nombre à l'endroit de la cible ») :
+    `impact` prend l'arme du coup en paramètre (sinon une capacité frappe
+    d'une onde ronde), `toucherLePassif(…, frappeIci)` le joue au rond et
+    y fait jaillir le chiffre ; la massue, elle, cogne au centre comme
+    toujours (la règle de Keko), le chiffre reste sur la cible.
 
 ## L'écran
 
