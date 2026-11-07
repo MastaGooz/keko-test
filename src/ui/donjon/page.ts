@@ -3980,23 +3980,29 @@ export async function monterDonjon(racine: HTMLElement, build: string): Promise<
 
   /**
    * L'OUVERTURE (Keko, 07/11 : « des formes plus simples pour les
-   * déclenchements passifs ») : une seule cible, d'or, sur le corps de
-   * l'ennemi, l'anneau du temps qui se resserre ; une tape, et elle frappe.
-   * Sans série, sans grâce : passée, elle s'efface.
+   * déclenchements passifs ») : une seule cible sur le corps de l'ennemi, LE
+   * ROND NET DES POINTS FAIBLES (Keko : « le même style que les ronds du
+   * pouvoir des dagues » — la première version, une cible d'or qui battait,
+   * « n'est pas très belle »), l'anneau du temps qui se referme sur lui ; une
+   * tape, et elle frappe. Sans série, sans grâce : passée, le rond se barre
+   * d'une croix rouge comme un point faible manqué.
    */
   function dessinerLOuverture(ev: EvenementDuPassif, j: Joueur, t: number, voulues: Set<string>, surLeDessin: (c: { x: number; y: number }) => [number, number]): void {
     const cle = `${j.arme}:${ev.k}:ouverture`
     voulues.add(cle)
     let n = ciblesVues.get(cle)
     if (n === undefined) {
-      n = bouton('donjon-cible ouverture')
+      n = bouton('donjon-cible trait point-faible ouverture')
       n.setAttribute('aria-label', C.ouverture.nom)
       n.addEventListener('pointerdown', (e) => {
         e.stopPropagation()
+        if (!pointsEnJeu.delete(cle)) return
         toucherLePassif(ev.k, 0, n!)
       })
       couchePassif.append(n)
       ciblesVues.set(cle, n)
+      // Manquée, elle est marquée comme un point faible (`effacerLaCible`).
+      pointsEnJeu.add(cle)
       n.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 220, easing: 'ease-out' })
     }
     const [px, py] = surLeDessin(ev.cibles[0])

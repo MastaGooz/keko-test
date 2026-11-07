@@ -761,13 +761,7 @@
   pointer-events: none;
 }
 
-/* L'OUVERTURE, le passif de toutes les classes : une cible d'or, cœur clair, qui bat doucement. */
-.donjon .donjon-cible.ouverture {
-  color: #fff3cf !important;
-  background: radial-gradient(circle, #fff8e1 0 18%, #ffd36e 30%, #b07a1f 62%, rgba(176, 122, 31, 0) 72%);
-  box-shadow: 0 0 1rem rgba(255, 210, 110, 0.85);
-  animation: donjon-cible-bat 0.5s ease-in-out infinite alternate;
-}
+/* L'OUVERTURE, le passif de toutes les classes, a le rond net des Points faibles (`.trait.point-faible`, Keko). */
 
 /* La dague : un point faible, cœur rouge vif. */
 .donjon .donjon-cible.point {
