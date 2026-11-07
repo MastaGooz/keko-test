@@ -58,6 +58,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('magie')) {
+  // LA TOUR DU MAGICIEN, un side project : des sorts composés à la Magicka contre ce qui approche.
+  void import('./ui/magie/page.ts').then(({ monterMagie }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterMagie(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('commande')) {
   // LA COMMANDE ACTION, un side project : un combat au tour par tour à la Paper Mario.
   void import('./ui/commande/page.ts').then(({ monterCommande }) => {
