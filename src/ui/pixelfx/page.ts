@@ -20,6 +20,7 @@
 import './pixelfx.css'
 import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
+import { NOS_EFFETS } from './fx/keko/index.ts'
 
 type Meta = {
   name?: string
@@ -45,7 +46,8 @@ type Noyau = {
   PAL?: Record<string, string[]>
 }
 const N = noyau as unknown as Noyau
-const EFFETS = effects as Record<string, Module>
+/** Nos effets d'abord (la catégorie « keko »), puis les 244 du dépôt. */
+const EFFETS = { ...NOS_EFFETS, ...effects } as Record<string, Module>
 
 const FONDS = ['dark', 'ground', 'sky', 'light', 'black', 'none']
 /** Des palettes à nous, en plus de celles du dépôt (s'il en exporte) : pour voir un effet aux couleurs de Néon. */
@@ -105,7 +107,7 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   lecteur.append(canvas, nom, desc, reglages)
 
   const ids = Object.keys(EFFETS)
-  let id = ids.includes('explosions/big-explosion') ? 'explosions/big-explosion' : ids[0]
+  let id = ids.includes('keko/frappe-du-niveau') ? 'keko/frappe-du-niveau' : ids[0]
   let flip = false
   let seed = 0
   let enMarche = true
