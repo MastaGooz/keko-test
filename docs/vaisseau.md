@@ -127,7 +127,7 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 ## L'ennemi (Keko, 08/11 : « on rajoute un ennemi qui mine et qui tire ? »)
 
-- **Un rival, un à la fois** : il naît à 10 s (puis 18 s après sa mort), à
+- **Un rival, un à la fois** : il naît à 10 s (puis 5 s après sa mort, d'une autre direction — Keko : « quand l'ennemi meurt, un autre spawn ailleurs quelques secondes après » ; 18 s au départ, trop long pour qu'on le remarque), à
   230 unités dans une direction tirée de la graine du monde, le nez vers le
   joueur. Le même corps que le joueur, un moteur moins vif (poussée 120,
   110 de pointe, 5 rad/s), 36 points que le foreur du joueur creuse comme une
