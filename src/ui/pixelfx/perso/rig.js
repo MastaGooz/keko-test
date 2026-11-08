@@ -111,7 +111,7 @@ function solve(pose) {
   const hipTurn = M.turn + (turn - M.turn) * 0.45, tilt = Math.atan2(lean, 13);
   const Rp = mm(rotZ(-tilt * 0.25), rotY(-hipTurn)), Rc = mm(rotZ(-tilt), rotY(-turn));
   // feet first: the pelvis sinks if that's what it takes for both legs to reach them
-  const ankleN = [q.ffx, -q.ffy - 1.8, q.fzz ?? 2.4], ankleF = [q.fbx, -q.fby - 1.8, q.bzz ?? -2.4];
+  const E = PERSO.echelle, ankleN = [q.ffx, -q.ffy - 1.8 * E, q.fzz ?? 2.4 * E], ankleF = [q.fbx, -q.fby - 1.8 * E, q.bzz ?? -2.4 * E];
   let pelvis = [lean * 0.2, M.pelvis - q.crouch, 0];
   const hipAt = (s) => add(pelvis, mv(Rp, [0, -M.hipDown, s * M.hipOut]));
   const maxLeg = (M.thigh + M.shin) * 0.995;
@@ -176,6 +176,8 @@ const Zb = new Float32Array(BW * BH), Tone = new Float32Array(BW * BH), Part = n
 const touched = [];
 const LIGHT = unit([-0.55, 0.72, 0.5]);
 let clipBody = false, clipWeapon = false, curFrameIndex = 0, curDim = 0, onlyPart = 0, curColor = 0;
+// PERSO : la hauteur sous laquelle le corps est coupé (la semelle à plat), à l'échelle du personnage
+const SOL = () => 1.5 * PERSO.echelle;
 const FRAME_IDS = ["pelvis", "waist", "chest", "head", "neck", "upperN", "foreN", "upperF", "foreF", "thighN", "shinN", "thighF", "shinF", "footN", "footF"];
 function plot(i, z, tone, part, mat, wx, wy, color) {
   if (onlyPart && part !== onlyPart) return;
@@ -195,7 +197,7 @@ function sphere(c, r, part, mat) {
   for (let wy = y0; wy <= y1; wy++)
     for (let wx = x0; wx <= x1; wx++) {
       const dx = wx - c[0], dy = wy - c[1], d2 = dx * dx + dy * dy;
-      if (d2 > r * r || (clipBody && wy < 1.5)) continue;
+      if (d2 > r * r || (clipBody && wy < SOL())) continue;
       const dz = Math.sqrt(r * r - d2), n = [dx / r, dy / r, dz / r], i = (OY - wy) * BW + (OX + wx);
       plot(i, c[2] + dz, dot(n, LIGHT), part, mat, wx, wy, curColor);
     }
@@ -217,7 +219,7 @@ function ellipsoid(c, R, r, part, mat) {
   void Rt;
   for (let wy = y0; wy <= y1; wy++)
     for (let wx = x0; wx <= x1; wx++) {
-      if (clipBody && wy < 1.5) continue;
+      if (clipBody && wy < SOL()) continue;
       const dx = wx - c[0], dy = wy - c[1];
       const qa = A[8], qb = 2 * (A[2] * dx + A[5] * dy), qc = A[0] * dx * dx + 2 * A[1] * dx * dy + A[4] * dy * dy - 1, disc = qb * qb - 4 * qa * qc;
       if (disc < 0) continue;
@@ -250,7 +252,7 @@ function drawBody(S) {
   // PERSO : les parties en plus, posées dans le repère de la tête (x devant, y en haut, z vers nous)
   if (T.oreilles) {
     const L = T.oreilles;
-    for (const s of [1, -1]) sweep(surTete([-0.6, 1.0, s * 2.3]), surTete([-1.1 * L, 1.0 + 2.6 * L, s * (2.3 + 1.9 * L)]), 1.0 * h, 0.3 * h, s > 0 ? PART.earN : PART.earF, 0);
+    for (const s of [1, -1]) sweep(surTete([-0.4, 0.9, s * 2.4]), surTete([-1.6 * L, 1.2 + 2.2 * L, s * (2.4 + 1.6 * L)]), 1.25 * h, 0.35 * h, s > 0 ? PART.earN : PART.earF, 0);
   }
   if (T.nez) sphere(surTete([3.1, -0.8, 0.2]), T.nez * h, PART.nez, 0);
   if (T.defenses) {
@@ -285,7 +287,7 @@ function drawBody(S) {
     sweep(L.joint, L.end, 2.15 * m, 1.4 * m, sh, 0, 0.4);
     useFrame(nameFt);
     const R = F_(nameFt).R, a = F_(nameFt).t;
-    sweep(add(a, mv(R, [-1.5, -0.6, 0])), add(a, mv(R, [4.6, -1.1, 0])), 1.7 * e, 1.25 * e, fo, 0);
+    sweep(add(a, mv(R, [-1.5 * e, -0.6 * e, 0])), add(a, mv(R, [4.6 * e, -1.1 * e, 0])), 1.7 * e, 1.25 * e, fo, 0);
   };
   leg(false, legN, hipN, PART.thighN, PART.kneeN, PART.shinN, PART.footN, "thighN", "shinN", "footN");
   leg(true, legF, hipF, PART.thighF, PART.kneeF, PART.shinF, PART.footF, "thighF", "shinF", "footF");

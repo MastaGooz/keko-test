@@ -168,7 +168,12 @@ palette écrits en dur, sans variante prévue.
   numéro de partie donc leur trait d'encre) ; **les poses des effets restent
   écrites pour l'humain de 38 px et sont mises à l'échelle du personnage**
   (mains, pieds, accroupi, penché), si bien que tous les coups du dépôt lui
-  vont ; les armes gardent leur taille (un gobelin à grande épée). Le script
+  vont ; les armes gardent leur taille (un gobelin à grande épée) ; **la
+  cheville, l'écart des pieds et la coupe de la semelle** (le dépôt coupe le
+  corps sous 1,5 px pour poser le pied à plat) **suivent l'échelle aussi** :
+  sans ça, le pied plus fin du gobelin, posé trop bas, passait entièrement
+  sous la coupe et il semblait enfoncé dans le sol (Keko, sur le lancer de
+  boule de feu). Le script
   `patch-rig.py` du scratchpad refait ce fichier depuis le dépôt : on y
   retouche les remplacements, pas la copie. `HUMAIN` est le mannequin.
 - **`perso/gobelin.js`** — `GOBELIN` : 78 % de l'humain, tête ×1,3, oreilles
