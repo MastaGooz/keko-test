@@ -113,7 +113,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Trois minerais — le fer, l’or, le cristal — et leurs filons se voient sur les roches : plus il y en a, plus elle est riche ; l’or et le cristal sont loin des stations. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Trois minerais — le fer dans la roche grise, l’or dans l’ocre, le cristal dans la bleutée — et leurs veines et pépites disent la richesse de la roche ; l’or et le cristal sont loin des stations. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 
@@ -618,7 +618,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             case 'eclat': {
               // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-              const roche = rocheDe(ev.graine)
+              const roche = rocheDe(ev.minerai)
               const n = 6 + Math.round(ev.rayon)
               for (let i = 0; i < n; i++) {
                 const a = R.range(0, Math.PI * 2)
@@ -701,7 +701,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < n; i++) {
             const a = Math.atan2(ny / l, nx / l) + R.range(-1.2, 1.2)
             const vit = R.range(30, 60 + choc.force)
-            etincelles.ajouter('etincelle', choc.x, choc.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.25, 0.6), R.next() < 0.5 ? N.WHITE : rocheDe(choc.asteroide)[5], 1, 2.5)
+            etincelles.ajouter('etincelle', choc.x, choc.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.25, 0.6), R.next() < 0.5 ? N.WHITE : rocheDe(asteroidesVisibles(CONF, m, choc.x, choc.y, 20).find((r) => r.id === choc.asteroide)?.minerai ?? 'fer')[5], 1, 2.5)
           }
           flashs.push({ x: choc.x, y: choc.y, t0: t, r: -1 })
         }

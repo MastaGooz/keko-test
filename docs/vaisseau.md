@@ -278,7 +278,13 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 - **Trois minerais, du commun au rare** (`MINERAIS`) : le FER (acier
   bleuté), l'OR (jaune), le CRISTAL (turquoise). **Chaque roche en porte
-  un**, tiré de sa case, **et une RICHESSE** de 0,25 à 1 biaisée vers les
+  un, ET SA COULEUR LE DIT** (Keko, 09/11 : « la couleur de la roche doit
+  indiquer le minerai, ce qui permet aux veines / pépites d'indiquer la
+  richesse » ; avant, les trois roches étaient tirées de la graine, purement
+  esthétiques) : le fer dans la roche GRISE, l'or dans l'OCRE, le cristal
+  dans la BLEUTÉE (`rocheDe(minerai)`) ; les veines et des PÉPITES
+  incrustées (des points clairs, `R × richesse × 0,5`) disent la richesse.
+  Chaque roche porte son minerai tiré de sa case, **et une RICHESSE** de 0,25 à 1 biaisée vers les
   pauvres (`Asteroide.minerai`, `richesse`). Éclatée, elle rend des pépites
   de son minerai, en nombre selon sa taille ET sa richesse (une pauvre en
   rend le tiers d'une riche : `0,4 + 1,2 × richesse`).

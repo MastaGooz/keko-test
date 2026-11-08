@@ -9,8 +9,8 @@
  * VEINES DE MINERAI SONT DES ARÊTES COLORÉES : un joint sur quatre sur une roche pauvre, tous sur une riche, fins, de
  * la teinte du minerai, plus clairs côté lumière, un pixel sombre dessous — c'est la même structure qui fait la roche et
  * ses filons (les joints larges à nodules ronds, essayés : « des plaques et des ronds, pas beau »). Par-dessus : un GRAIN (un bruit fractal seedé, quantifié à un ton, seuillé), une LUMIÈRE
- * DE BORD sur l'arête éclairée et une ombre sur l'arête opposée, quelques piqûres, un liseré sombre. Trois roches :
- * grise, ocre, bleutée, tirées de la graine. Le cristal scintille sur ses veines.
+ * DE BORD sur l'arête éclairée et une ombre sur l'arête opposée, quelques piqûres, un liseré sombre. LA COULEUR DE LA ROCHE DIT SON
+ * MINERAI : grise pour le fer, ocre pour l'or, bleutée pour le cristal ; des PÉPITES incrustées disent la richesse. Le cristal scintille sur ses veines.
  *
  * Tout est fonction de la graine et du temps : rien n'est stocké, et le même astéroïde se redessine pareil.
  */
@@ -27,7 +27,7 @@ export type PeintreRoche = {
 type Noyau = { fit(palette: string[], n: number): number[]; fbm(x: number, y: number, seed?: number, octaves?: number): number; PAL: Record<string, string[]> }
 const N = noyau as unknown as Noyau
 
-/** Les trois roches, du sombre au clair, huit tons. */
+/** Les trois roches, du sombre au clair, huit tons : la grise, l'ocre, la bleutée. */
 const ROCHES = [
   N.fit(N.PAL.stone, 8),
   N.fit(['#120d08', '#2a1e14', '#47321e', '#69492a', '#8e6638', '#b08a58', '#d2b088', '#f0dcc0'], 8),
@@ -56,8 +56,13 @@ function sommets(a: Asteroide, angle: number, cx: number, cy: number): { pts: nu
   return { pts, n, rayons }
 }
 
-/** La roche (ses huit tons) d'une graine : les morceaux d'un astéroïde éclaté en sont. */
-export const rocheDe = (graine: number): number[] => ROCHES[Math.floor(tire(graine, 9) * ROCHES.length)]
+/**
+ * LA COULEUR DE LA ROCHE DIT SON MINERAI (Keko, 09/11 : « la couleur de la roche doit indiquer le minerai, ce qui
+ * permet aux veines et aux pépites d'indiquer la richesse ») : le fer dans la grise, l'or dans l'ocre, le cristal dans
+ * la bleutée. Les morceaux d'un astéroïde éclaté en sont. (Tirée de la graine avant, purement esthétique.)
+ */
+const ROCHE_DU: Record<Minerai, number[]> = { fer: ROCHES[0], or: ROCHES[1], cristal: ROCHES[2] }
+export const rocheDe = (minerai: Minerai): number[] => ROCHE_DU[minerai]
 
 /** Une cellule de la roche : son point (déjà tourné, relatif au centre), le ton de son bloc. */
 type Cellule = { x: number; y: number; ton: number }
@@ -67,7 +72,7 @@ type Cellule = { x: number; y: number; ton: number }
  * l'instant t. Le peintre est supposé placé à l'origine.
  */
 export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: number, cy: number): void {
-  const C = rocheDe(a.graine)
+  const C = rocheDe(a.minerai)
   const T = TEINTES_MINERAI[a.minerai]
   const angle = a.angle0 + t * a.vitesseAngulaire
   const { pts, n, rayons } = sommets(a, angle, cx, cy)
@@ -177,5 +182,16 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     const th = angle + tire(a.graine, 15, i) * Math.PI * 2
     const d = R * (0.2 + 0.55 * tire(a.graine, 16, i))
     p.dot(cx + Math.cos(th) * d, cy + Math.sin(th) * d, C[2], 0.9)
+  }
+  // LES PÉPITES INCRUSTÉES (Keko : « rajouter des pépites pour indiquer la richesse / concentration ») : des points
+  // clairs du minerai dans les blocs, d'autant plus nombreux que la roche est riche, un pixel sombre dessous
+  const npe = Math.round(R * a.richesse * 0.5)
+  for (let i = 0; i < npe; i++) {
+    const th = angle + tire(a.graine, 50, i) * Math.PI * 2
+    const d = R * (0.1 + 0.55 * tire(a.graine, 51, i))
+    const x = cx + Math.cos(th) * d
+    const y = cy + Math.sin(th) * d
+    p.dot(x + 1, y + 1, T[0], 0.8)
+    p.dot(x, y, a.minerai === 'cristal' && Math.sin(t * 4 + i * 1.9) > 0.5 ? T[4] : T[3])
   }
 }
