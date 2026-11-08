@@ -292,13 +292,15 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   ensemble plus cohérent avec les veines » ; *les grains épars d'abord, puis
   des grains à forme par minerai, faisaient brouillon ; des lignes brisées
   d'un pixel, puis des rubans courbes posés par-dessus, « pas super bien
-  réalisées »*) — entre une cellule et sa plus proche voisine, le joint est
-  plus large (1,1 à 1,5), de la teinte du minerai, cœur clair, un liseré
-  sombre de part et d'autre, un NODULE rond au milieu (contour sombre, éclat
-  vers la lumière) ; un à cinq joints selon la richesse et la taille
-  (`richesse × (1 + cellules/4)`) ; le cristal scintille sur ses veines, le
-  fer a un point blanc à ses nodules. *C'est la même structure qui fait la
-  roche et ses filons.* Une roche sans grain n'existe pas (un au moins).
+  réalisées » ; des joints larges à nodules ronds : « ça fait juste des
+  plaques et des ronds, c'est pas beau — colorer les arêtes de la couleur du
+  minerai »*) — **chaque arête entre deux blocs est, ou non, une veine**,
+  tirée de la paire et de la richesse : une roche pauvre a un joint sur quatre
+  de minerai, une riche les a tous, et toujours au moins un (le premier bloc
+  avec son plus proche voisin) ; la veine est fine (0,8 à 1), de la teinte du
+  minerai, plus claire du côté du bloc tourné vers la lumière, un pixel
+  sombre dessous ; le cristal scintille sur les siennes. *C'est la même
+  structure qui fait la roche et ses filons.* Une roche sans grain n'existe pas (un au moins).
 - **Le porté se compte par minerai** (`Monde.cargaison`, le total dans
   `minerai`), **le trésor aussi** (`tresor`, le total dans `banque`) ; le
   rival a sa cargaison et la rend minerai par minerai (plus 3 de fer). En

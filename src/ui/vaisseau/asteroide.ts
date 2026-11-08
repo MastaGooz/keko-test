@@ -6,9 +6,9 @@
  * avec lui), et chaque cellule est un BLOC qui prend la lumière selon sa direction depuis le centre (la lumière vient
  * d'en haut à gauche, un peu de face) et un relief qui lui est propre — en tournant, les blocs s'allument et
  * s'éteignent l'un après l'autre, la roche se lit en volume. Entre les blocs, des JOINTS sombres d'un pixel ; et LES
- * VEINES DE MINERAI SONT DES JOINTS REMPLIS : les joints choisis (un à cinq selon la richesse et la taille) sont plus
- * larges, de la teinte du minerai, cœur clair, un liseré sombre, un nodule rond au milieu — c'est la même structure qui
- * fait la roche et ses filons. Par-dessus : un GRAIN (un bruit fractal seedé, quantifié à un ton, seuillé), une LUMIÈRE
+ * VEINES DE MINERAI SONT DES ARÊTES COLORÉES : un joint sur quatre sur une roche pauvre, tous sur une riche, fins, de
+ * la teinte du minerai, plus clairs côté lumière, un pixel sombre dessous — c'est la même structure qui fait la roche et
+ * ses filons (les joints larges à nodules ronds, essayés : « des plaques et des ronds, pas beau »). Par-dessus : un GRAIN (un bruit fractal seedé, quantifié à un ton, seuillé), une LUMIÈRE
  * DE BORD sur l'arête éclairée et une ombre sur l'arête opposée, quelques piqûres, un liseré sombre. Trois roches :
  * grise, ocre, bleutée, tirées de la graine. Le cristal scintille sur ses veines.
  *
@@ -93,21 +93,22 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     const ton = eclat > 0.62 ? 5 : eclat > 0.42 ? 4 : eclat > 0.22 ? 3 : eclat > 0.05 ? 2 : 1
     cellules.push({ x: lx * cosA - ly * sinA, y: lx * sinA + ly * cosA, ton })
   }
-  // LES VEINES : des joints choisis, entre une cellule et sa plus proche voisine ; un à cinq selon la richesse et la taille
-  const nv = Math.max(1, Math.round(a.richesse * (1 + nc / 4)))
+  // LES VEINES : DES ARÊTES COLORÉES (Keko : « colorer les arêtes de la couleur du minerai, là ça fait juste des
+  // plaques et des ronds ») — chaque joint entre deux blocs est, ou non, une veine, tiré de la paire et de la richesse :
+  // une roche pauvre a un joint sur quatre de minerai, une riche les a tous ; au moins un, celui du premier bloc avec
+  // son plus proche voisin, pour qu'on lise toujours le minerai
   const veines = new Set<number>()
-  for (let v = 0; v < nv; v++) {
-    const i = Math.floor(tire(a.graine, 34, v) * nc)
+  for (let i = 0; i < nc; i++) for (let j = i + 1; j < nc; j++) if (tire(a.graine, 34, i, j) < a.richesse) veines.add(i * 64 + j)
+  {
     let j = -1
     let dj = Infinity
-    for (let k = 0; k < nc; k++) {
-      if (k === i) continue
-      const d = Math.hypot(cellules[k].x - cellules[i].x, cellules[k].y - cellules[i].y)
+    for (let k = 1; k < nc; k++) {
+      const d = Math.hypot(cellules[k].x - cellules[0].x, cellules[k].y - cellules[0].y)
       if (d < dj) (dj = d), (j = k)
     }
-    if (j >= 0) veines.add(Math.min(i, j) * 64 + Math.max(i, j))
+    if (j > 0) veines.add(j)
   }
-  const largeurVeine = R > 9 ? 1.5 : 1.1
+  const largeurVeine = R > 9 ? 1 : 0.8
 
   // le liseré : le même polygone, un pixel plus large
   p.poly(pts.map(([x, y]) => [cx + (x - cx) * (1 + 1.3 / R), cy + (y - cy) * (1 + 1.3 / R)]), C[0])
@@ -135,13 +136,18 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     const u = (th / (Math.PI * 2)) * n - k
     const rBord = rayons[k] * (1 - u) + rayons[(k + 1) % n] * u
     const auBord = rBord - d
-    // une veine : le joint rempli de minerai, large, cœur clair, un liseré sombre de part et d'autre
+    // une veine : l'arête entre les deux blocs, fine, de la teinte du minerai, plus claire côté lumière, un pixel sombre dessous
     if (veines.has(Math.min(c1, c2) * 64 + Math.max(c1, c2)) && auBord > 0.8) {
       if (joint < largeurVeine) {
         if (a.minerai === 'cristal' && scintille && ((x * 7 + y * 13) & 7) === 0) return T[4]
-        return joint < largeurVeine * 0.45 ? T[3] : T[2]
+        const vx = cellules[c2].x - cellules[c1].x
+        const vy = cellules[c2].y - cellules[c1].y
+        const lv = Math.hypot(vx, vy) || 1
+        // le côté du joint tourné vers la lumière brille
+        const versLaLumiere = ((cellules[c1].x - cellules[c2].x) * LUMIERE.x + (cellules[c1].y - cellules[c2].y) * LUMIERE.y) / lv
+        return versLaLumiere > 0 ? T[3] : T[2]
       }
-      if (joint < largeurVeine + 1.1) return T[0]
+      if (joint < largeurVeine + 0.9) return T[0]
     } else if (joint < 0.7 && auBord > 1) return C[1] // le joint sombre entre deux blocs
     // le ton du bloc, puis le grain : un bruit à l'échelle du quart de la roche, qui ne bouge que d'un ton et seulement où il est franc
     let ton = cellules[c1].ton
@@ -165,18 +171,6 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     }
     return C[Math.max(1, Math.min(6, ton))]
   })
-  // LES NODULES : au milieu de chaque veine, un rond du minerai, contour sombre, éclat vers la lumière
-  for (const cle of veines) {
-    const i = Math.floor(cle / 64)
-    const j = cle % 64
-    const mx = cx + (cellules[i].x + cellules[j].x) / 2
-    const my = cy + (cellules[i].y + cellules[j].y) / 2
-    if (Math.hypot(mx - cx, my - cy) > R * 0.62) continue
-    const r = largeurVeine + 0.6
-    p.circle(mx, my, r + 1, T[0], 0.9)
-    p.circle(mx, my, r, T[2])
-    p.dot(mx + LUMIERE.x * r * 0.6, my + LUMIERE.y * r * 0.6, a.minerai === 'fer' || (a.minerai === 'cristal' && scintille) ? T[4] : T[3])
-  }
   // quelques piqûres
   const np = Math.floor(R / 3)
   for (let i = 0; i < np; i++) {
