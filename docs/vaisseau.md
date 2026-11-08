@@ -275,12 +275,14 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   part d'or monte de 16 à 38 %, celle du cristal de 3 à 16 %, sur 3 000
   unités) : s'éloigner des stations paie, et c'est là qu'est le risque.
   Chiffres de moi, à rejuger.
-- **Les filons se voient sur la roche** (`asteroide.ts`) : des grains de la
-  teinte du minerai, d'autant plus nombreux que la roche est grande et riche
-  (`R² × 0,07 × richesse`), **et chacun sa forme** (la couleur seule se
-  confondait avec l'une des trois roches, le fer avec la bleutée) : le fer en
-  bloc carré d'acier à l'angle brillant, l'or en grain rond à l'éclat clair,
-  le cristal en éclat vertical qui scintille. Une roche sans grain n'existe pas (un au moins).
+- **Les filons se voient sur la roche** (`asteroide.ts`) : des VEINES, des
+  lignes brisées de la teinte du minerai qui courent dans la roche (Keko :
+  « des veines de la couleur du minerai » ; *les grains épars d'abord, puis
+  des grains à forme par minerai, faisaient brouillon*), une à trois selon la
+  richesse, de deux à quatre segments d'autant plus longs que la roche est
+  riche, à cœur clair et bord sombre (épaisses de deux sur les grandes
+  roches), un éclat clair au milieu des segments ; le cristal scintille le
+  long des siennes. Une roche sans grain n'existe pas (un au moins).
 - **Le porté se compte par minerai** (`Monde.cargaison`, le total dans
   `minerai`), **le trésor aussi** (`tresor`, le total dans `banque`) ; le
   rival a sa cargaison et la rend minerai par minerai (plus 3 de fer). En

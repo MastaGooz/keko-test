@@ -148,31 +148,38 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     p.dot(cx + Math.cos(th) * d, cy + Math.sin(th) * d, C[2], 0.9)
   }
   // LES FILONS (Keko : « que les pépites se voient sur les astéroïdes, pour savoir lesquels sont riches ou pauvres et
-  // quel minerai ils contiennent ») : des grains du minerai incrustés, d'autant plus nombreux que la roche est grande et
-  // riche — et CHACUN SA FORME, parce que la couleur seule se confond avec l'une des trois roches : le fer en BLOC
-  // carré d'acier à l'angle brillant, l'or en GRAIN rond à l'éclat clair, le cristal en ÉCLAT vertical qui scintille
+  // quel minerai ils contiennent » ; puis « des veines de la couleur du minerai » — les grains épars faisaient
+  // brouillon) : des VEINES, des lignes brisées de la teinte du minerai qui courent dans la roche, une à trois selon la
+  // richesse, plus longues sur une roche riche, à cœur clair avec un bord sombre (épaisses de deux sur les grandes
+  // roches) ; le cristal scintille le long des siennes
   const T = TEINTES_MINERAI[a.minerai]
-  const nv = Math.max(1, Math.round(R * R * 0.07 * a.richesse))
+  const nv = 1 + Math.round(a.richesse * 2)
   for (let i = 0; i < nv; i++) {
-    const th = angle + tire(a.graine, 40, i) * Math.PI * 2
-    const d = R * (0.1 + 0.52 * tire(a.graine, 41, i))
-    const x = cx + Math.cos(th) * d
-    const y = cy + Math.sin(th) * d
-    if (a.minerai === 'fer') {
-      p.dot(x, y, T[3])
-      p.dot(x + 1, y, T[2])
-      p.dot(x, y + 1, T[2])
-      p.dot(x + 1, y + 1, T[0])
-    } else if (a.minerai === 'or') {
-      const cote = tire(a.graine, 42, i) < 0.5
-      p.dot(x, y, T[2])
-      p.dot(x + (cote ? 1 : 0), y + (cote ? 0 : 1), T[1])
-      p.dot(x - 1, y - 1, T[3], 0.9)
-    } else {
-      p.dot(x, y - 1, T[3])
-      p.dot(x, y, T[2])
-      p.dot(x, y + 1, T[1])
-      if (Math.sin(t * 3 + i * 2.1) > 0.8) p.dot(x, y, T[4])
+    let th = angle + tire(a.graine, 40, i) * Math.PI * 2
+    const d0 = R * (0.05 + 0.35 * tire(a.graine, 41, i))
+    let x = cx + Math.cos(th + 2.1) * d0
+    let y = cy + Math.sin(th + 2.1) * d0
+    const pas = 2 + Math.round(tire(a.graine, 42, i) * 2 * a.richesse)
+    for (let k = 0; k < pas; k++) {
+      th += (tire(a.graine, 43, i, k) - 0.5) * 1.4
+      const L = R * (0.16 + 0.2 * a.richesse * tire(a.graine, 44, i, k))
+      const x2 = x + Math.cos(th) * L
+      const y2 = y + Math.sin(th) * L
+      if (Math.hypot(x2 - cx, y2 - cy) > R * 0.7) break
+      // le bord sombre, décalé d'un pixel du côté opposé à la lumière, puis le cœur clair
+      p.line(x + 1, y + 1, x2 + 1, y2 + 1, T[0], 0.9)
+      if (R > 9) p.line(x, y + 1, x2, y2 + 1, T[1])
+      // (le fer, acier bleuté, se perdait sur la roche bleutée : sa veine est presque blanche, son bord sombre la détache)
+      p.line(x, y, x2, y2, a.minerai === 'fer' ? T[3] : T[2])
+      // un éclat clair au milieu du segment ; le cristal scintille
+      const mx = (x + x2) / 2
+      const my = (y + y2) / 2
+      if (a.minerai === 'cristal') {
+        if (Math.sin(t * 3 + i * 2.1 + k * 1.3) > 0.6) p.dot(mx, my, T[4])
+        else p.dot(mx, my, T[3])
+      } else if (tire(a.graine, 45, i, k) < 0.6) p.dot(mx, my, a.minerai === 'fer' ? T[4] : T[3])
+      x = x2
+      y = y2
     }
   }
 }
