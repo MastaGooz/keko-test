@@ -6,11 +6,14 @@ import { Particles, P, Rng, fit, PAL } from "pixelfx";
 
 const PAS = 0.42, D = 2 * PAS;
 const MARCHE = { lean: 3, hy: 0.3 };
-// les clés d'un pas : appui (le pied proche devant), passage (le pied loin levé), appui (le pied loin devant), passage
-const APPUI_N = { ...MARCHE, crouch: 1, ffx: 9, ffy: 0, fbx: -8, fby: 0, fx: -8, fy: -12, bx: 11, by: -16 };
-const PASSAGE_F = { ...MARCHE, crouch: 3, ffx: 1, ffy: 0, fbx: 0, fby: -5, fx: 1, fy: -14, bx: 3, by: -15 };
-const APPUI_F = { ...MARCHE, crouch: 1, ffx: -8, ffy: 0, fbx: 9, fby: 0, fx: 11, fy: -16, bx: -7, by: -12 };
-const PASSAGE_N = { ...MARCHE, crouch: 3, ffx: 0, ffy: -5, fbx: 1, fby: 0, fx: 3, fy: -15, bx: 1, by: -14 };
+// les clés d'un pas : appui (le pied proche devant), passage (le pied loin levé), appui (le pied loin devant), passage.
+// `ffy`/`fby` sont la hauteur des CHEVILLES : -4 au sol (la pose de repos du dépôt), plus haut quand le pied est levé —
+// à 0, les pieds s'enfonçaient dans le sol (Keko). Le corps est au plus BAS à l'appui (jambes écartées) et au plus
+// HAUT au passage (la jambe d'appui tendue) : c'est ce qui fait le rebond d'une marche.
+const APPUI_N = { ...MARCHE, crouch: 3, ffx: 9, ffy: -4, fbx: -8, fby: -4, fx: -8, fy: -12, bx: 11, by: -16 };
+const PASSAGE_F = { ...MARCHE, crouch: 0, ffx: 1, ffy: -4, fbx: 0, fby: -9, fx: 1, fy: -14, bx: 3, by: -15 };
+const APPUI_F = { ...MARCHE, crouch: 3, ffx: -8, ffy: -4, fbx: 9, fby: -4, fx: 11, fy: -16, bx: -7, by: -12 };
+const PASSAGE_N = { ...MARCHE, crouch: 0, ffx: 0, ffy: -9, fbx: 1, fby: -4, fx: 3, fy: -15, bx: 1, by: -14 };
 
 export const meta = {
   name: "Gobelin qui marche",
