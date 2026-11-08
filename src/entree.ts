@@ -58,6 +58,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('neon')) {
+  // NÉON, un side project : un cercle qui ne bouge pas, des formes néon qui descendent, et l'on pare au doigt.
+  void import('./ui/neon/page.ts').then(({ monterNeon }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterNeon(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('magie')) {
   // LA TOUR DU MAGICIEN, un side project : des sorts composés à la Magicka contre ce qui approche.
   void import('./ui/magie/page.ts').then(({ monterMagie }) => {

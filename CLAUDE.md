@@ -592,6 +592,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?survivor`, `&controle=suivre` | un Vampire Survivors : le héros au manche flottant, les armes frappent seules, trois choix à chaque niveau ; l'autre contrôle, le héros marche vers le doigt (`docs/survivor.md`) |
 | `?commande`, `&acte=N` | la commande action, un side project : un roguelike au tour par tour à la Paper Mario : un petit magicien et ses sorts, chacun son geste (la boule de feu qu'on charge, l'éclair aux anneaux, les missiles qu'on tapote), la garde au bon moment, sur une carte à embranchements (élites, feux, boutiques, événements, or et objets) ; `&acte=N` commence à l'acte N (`docs/commande.md`) |
 | `?magie` | la tour du magicien, un side project : des ennemis approchent de tous les bords, on compose ses sorts à la Magicka (feu, froid, foudre, terre, vie, mort ; trois au plus, les opposés s'annulent) et on les choisit sur une roue sous le doigt (glisser vers un quartier), une tape lançant le sort vers ce point (`docs/magie.md`) |
+| `?neon` | Néon, un side project : un arcade incrémental/roguelike en formes néon sur fond sombre ; le cercle en bas ne bouge pas et tire seul, les formes descendent, on tape pour PARER juste avant le contact (pile dessus : parfaite, ×3 et une onde) ; trois améliorations à chaque niveau (`docs/neon.md`) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
@@ -692,6 +693,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/survivor.md` | le survivor (`?survivor`), un Vampire Survivors en side project |
 | `docs/commande.md` | la commande action (`?commande`), un combat à la Paper Mario en side project |
 | `docs/magie.md` | la tour du magicien (`?magie`), des sorts composés à la Magicka en side project |
+| `docs/neon.md` | Néon (`?neon`), l'arcade incrémental/roguelike où l'on pare au doigt, en side project |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour

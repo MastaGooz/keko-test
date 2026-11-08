@@ -1,0 +1,316 @@
+/* NÉON — `?neon`. Le canvas couvre l'écran ; rien ne défile, rien ne se sélectionne. */
+html.neon-page,
+html.neon-page body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #05050d;
+}
+
+.neon {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  font-family: Orbitron, 'Baloo 2', sans-serif;
+  color: #e8f6ff;
+}
+
+.neon-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  touch-action: none;
+}
+
+/* En haut : les PV (des traits néon), le niveau et sa jauge, les abattus. */
+.neon-haut {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 0;
+  pointer-events: none;
+  font: 700 0.85rem Orbitron, sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 0.5rem rgba(25, 242, 255, 0.7);
+}
+
+.neon-haut[hidden] {
+  display: none;
+}
+
+.neon-pv {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.neon-pv i {
+  display: block;
+  width: 0.55rem;
+  height: 1.1rem;
+  border-radius: 0.15rem;
+  background: #19f2ff;
+  box-shadow:
+    0 0 0.4rem #19f2ff,
+    0 0 1rem rgba(25, 242, 255, 0.6);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.neon-pv i.vide {
+  background: rgba(25, 242, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(25, 242, 255, 0.4);
+}
+
+.neon-niveau {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.neon-niveau span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neon-jauge {
+  height: 0.4rem;
+  border-radius: 0.2rem;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 43, 214, 0.5);
+  overflow: hidden;
+}
+
+.neon-jauge-remplie {
+  height: 100%;
+  background: linear-gradient(90deg, #ff2bd6, #ff8df0);
+  box-shadow: 0 0 0.6rem #ff2bd6;
+  transition: width 0.15s;
+}
+
+.neon-abattus {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Le combo, au-dessus du cercle : il grossit avec la série. */
+.neon-combo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  font: 900 1.4rem Orbitron, sans-serif;
+  color: #fff;
+  text-shadow:
+    0 0 0.4rem #ffd23a,
+    0 0 1.2rem rgba(255, 210, 58, 0.8);
+  transition: opacity 0.3s;
+}
+
+.neon-combo small {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: #ffd23a;
+}
+
+.neon-combo.bat {
+  animation: neon-bat 0.25s ease-out;
+}
+
+@keyframes neon-bat {
+  from {
+    scale: 1.5;
+  }
+}
+
+/* Les écrans par-dessus le jeu : l'accueil, la fin (la tape passe au canvas), les choix (non). */
+.neon-ecran {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 0 16px;
+  pointer-events: none;
+  text-align: center;
+  background: radial-gradient(circle at 50% 40%, rgba(25, 242, 255, 0.08), rgba(5, 5, 13, 0.82) 70%);
+}
+
+.neon-ecran[hidden] {
+  display: none;
+}
+
+.neon-titre {
+  font: 900 clamp(2.6rem, 16vw, 4.4rem) Orbitron, sans-serif;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow:
+    0 0 0.3rem #fff,
+    0 0 1rem #19f2ff,
+    0 0 2.5rem #19f2ff,
+    0 0 4rem rgba(255, 43, 214, 0.8);
+  animation: neon-clignote 4s infinite;
+}
+
+@keyframes neon-clignote {
+  0%,
+  18%,
+  22%,
+  100% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0.55;
+  }
+}
+
+.neon-texte {
+  font: 600 0.95rem 'Baloo 2', sans-serif;
+  max-width: 22rem;
+  line-height: 1.4;
+  color: rgba(232, 246, 255, 0.9);
+  text-shadow: 0 0 0.6rem rgba(0, 0, 0, 0.9);
+}
+
+.neon-texte b {
+  color: #ffd23a;
+}
+
+.neon-go {
+  margin-top: 0.8rem;
+  font: 700 1rem Orbitron, sans-serif;
+  letter-spacing: 0.1em;
+  color: #19f2ff;
+  text-shadow: 0 0 0.8rem #19f2ff;
+  animation: neon-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes neon-pulse {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* LES CHOIX d'un niveau : trois cartes néon, en colonne ; la tape y reste. */
+.neon-choix {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0 16px;
+  background: rgba(5, 5, 13, 0.78);
+  animation: neon-apparait 0.2s ease-out;
+}
+
+.neon-choix[hidden] {
+  display: none;
+}
+
+@keyframes neon-apparait {
+  from {
+    opacity: 0;
+  }
+}
+
+.neon-choix-titre {
+  font: 900 1.3rem Orbitron, sans-serif;
+  letter-spacing: 0.1em;
+  color: #ff2bd6;
+  text-shadow:
+    0 0 0.5rem #ff2bd6,
+    0 0 1.5rem rgba(255, 43, 214, 0.7);
+  margin-bottom: 0.4rem;
+}
+
+.neon-carte {
+  --c: #19f2ff;
+  width: min(100%, 22rem);
+  min-height: 4.6rem;
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--c);
+  border-radius: 0.8rem;
+  background: rgba(5, 5, 13, 0.85);
+  box-shadow:
+    0 0 0.6rem var(--c),
+    inset 0 0 1.2rem color-mix(in srgb, var(--c) 18%, transparent);
+  color: #fff;
+  text-align: left;
+  font-family: 'Baloo 2', sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: neon-glisse 0.3s ease-out both;
+}
+
+.neon-carte:nth-child(3) {
+  animation-delay: 0.07s;
+}
+
+.neon-carte:nth-child(4) {
+  animation-delay: 0.14s;
+}
+
+@keyframes neon-glisse {
+  from {
+    opacity: 0;
+    translate: 0 1rem;
+  }
+}
+
+.neon-carte:active {
+  scale: 0.97;
+  background: color-mix(in srgb, var(--c) 25%, #05050d);
+}
+
+.neon-carte-nom {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font: 700 1rem Orbitron, sans-serif;
+  letter-spacing: 0.05em;
+  color: var(--c);
+  text-shadow: 0 0 0.5rem var(--c);
+}
+
+.neon-carte-rang {
+  font: 600 0.7rem 'Baloo 2', sans-serif;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.1em;
+}
+
+.neon-carte-effet {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  color: rgba(232, 246, 255, 0.85);
+}
+
+.neon-build {
+  position: absolute;
+  right: 6px;
+  bottom: calc(4px + env(safe-area-inset-bottom));
+  font: 0.6rem sans-serif;
+  color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
