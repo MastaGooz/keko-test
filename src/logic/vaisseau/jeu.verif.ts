@@ -209,6 +209,29 @@ la.vaisseau = { ...nouveauVaisseau(), x: lointaine.x + 10, y: lointaine.y }
 let deposesLa = 0
 let ouLa: { x: number; y: number } | null = null
 for (let i = 0; i < 60; i++) for (const e of avancerLeMonde(C, la, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'depose') (deposesLa++, (ouLa = { x: e.x, y: e.y }))
+// L'EXTRACTION (Keko) : né à quai, le compte ne court pas ; sorti puis revenu, il monte, retombe à zéro si on ressort,
+// et au bout de la durée la partie est extraite
+const ex = nouveauMonde()
+ex.prochainEnnemiA = 1e9
+for (let i = 0; i < 60 * 11; i++) avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
+verifier('né à quai, le compte de l’extraction ne court pas', ex.phase === 'vol' && ex.extraction === 0)
+ex.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 }
+avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
+ex.vaisseau = nouveauVaisseau()
+for (let i = 0; i < 60 * 5; i++) avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
+const aMiChemin = ex.extraction
+ex.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 }
+avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
+verifier('revenu à quai le compte monte, ressorti il retombe à zéro', aMiChemin > 4.9 && aMiChemin < 5.1 && ex.extraction === 0 && ex.phase === 'vol')
+ex.vaisseau = nouveauVaisseau()
+let extraits = 0
+let ouEx: { x: number; y: number } | null = null
+let pasEx = 0
+while (ex.phase === 'vol' && pasEx < 60 * 12) {
+  for (const e of avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'extrait') (extraits++, (ouEx = { x: e.x, y: e.y }))
+  pasEx++
+}
+verifier('resté à quai jusqu’au bout, la partie est extraite', ex.phase === 'extrait' && extraits === 1 && ouEx !== null && ouEx!.x === 0 && ouEx!.y === 0 && Math.abs(pasEx / 60 - C.extraction.duree) < 0.1)
 verifier('on dépose à n’importe quelle station, et le dépôt dit laquelle', deposesLa === 2 && la.banque === 2 && ouLa !== null && ouLa!.x === lointaine.x && ouLa!.y === lointaine.y)
 
 const p = nouveauMonde()

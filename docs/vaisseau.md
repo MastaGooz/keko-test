@@ -202,6 +202,25 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   vol : on la survole.
 - **La flèche vers le rival est retirée** (Keko) : on le découvre.
 
+## L'extraction (Keko, 08/11 : « un genre de timer quand le joueur est dans la zone de l'extracteur, et si le joueur reste jusqu'au bout la partie prend fin »)
+
+- **À quai, un compte monte pendant 10 s** (`extraction.duree`, de moi, à
+  rejuger) ; on sort du parvis, il retombe à zéro ; au bout, la partie est
+  EXTRAITE (`phase: 'extrait'`, l'événement dit la station) : l'expédition
+  est achevée, gagnée. Le dépôt continue pendant le compte. **Il ne court
+  qu'après être sorti une fois d'un parvis** (`Monde.sorti`) : on naît à
+  quai, et dix secondes d'hésitation au départ ne doivent pas finir la
+  partie. Trois vérifications : né à quai rien ne court ; revenu le compte
+  monte et ressorti il retombe ; resté, extrait à la seconde près.
+- **À l'écran** : un arc d'or de 48 points se referme le long du parvis
+  depuis le haut (en retrait de 3 du pointillé qui tourne), la tête blanche,
+  les secondes qui restent en police pixel au-dessus de la station ; au bout,
+  la station flambe d'or, l'anneau de flash, une vibration, et après une
+  seconde l'écran « Expédition achevée » dit la banque. Repartir ouvre une
+  nouvelle expédition : la banque reste (comme après une coque percée), tout
+  le reste repart à neuf. *Ce que vaut la banque entre deux expéditions reste
+  à trancher par Keko* (un total, une boutique, un score).
+
 ## Les grains de l'espace (Keko, 08/11 : « des débris d'explosion tombent vers le bas comme s'il y avait de la gravité, il ne faudrait pas »)
 
 Les particules du dépôt sont faites pour un sol : l'étincelle tombe à

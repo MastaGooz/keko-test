@@ -109,7 +109,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Déposez-les à une station : elles sont rares et la flèche jaune montre la plus proche. Ce que vous portez se perd avec la coque, ce qui est déposé reste. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Déposez-les à une station : elles sont rares et la flèche jaune montre la plus proche. Ce que vous portez se perd avec la coque, ce qui est déposé reste. Restez dix secondes dans la zone d’une station pour achever l’expédition. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 
@@ -167,9 +167,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- le manche (celui du survivor)
   let manche: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
   const touches = new Set<string>()
-  /** Le premier toucher décolle ; après une coque percée, il repart à neuf. */
+  /** Le premier toucher décolle ; après une coque percée ou une extraction, il repart à neuf (la banque reste). */
   function demarrer(): void {
-    if (m.phase === 'perdu') {
+    if (m.phase !== 'vol') {
       if (t - perduA < 1.2) return
       const banque = m.banque
       m = nouveauMonde(CONF)
@@ -382,7 +382,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sx = st.x - camera.x + W / 2
         const sy = st.y - camera.y + H / 2
         if (sx < -40 || sy < -40 || sx > W + 40 || sy > H + 40) continue
-        const aQuai = m.phase === 'vol' && st.x === proche.x && st.y === proche.y && Math.hypot(v.x - st.x, v.y - st.y) <= CONF.station.portee
+        const aQuai = m.phase !== 'perdu' && st.x === proche.x && st.y === proche.y && Math.hypot(v.x - st.x, v.y - st.y) <= CONF.station.portee
         // le parvis : un cercle pointillé qui dit la portée, plus net à quai
         for (let k = 0; k < 36; k++) {
           const a = (k / 36) * Math.PI * 2 + t * 0.25
@@ -390,6 +390,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
         if (aQuai && t - depotA < 0.2) p.glow(sx, sy, CONF.station.rayon * 2.4, PEPITE[2], 0.4)
+        // LE COMPTE DE L'EXTRACTION (Keko) : à quai, un arc d'or se referme le long du parvis depuis le haut, et le
+        // nombre de secondes qui restent au-dessus de la station ; au bout, l'arc est plein et la station flambe d'or
+        if (aQuai && m.extraction > 0) {
+          const u = Math.min(1, m.extraction / CONF.extraction.duree)
+          const n = Math.round(u * 48)
+          for (let k = 0; k < n; k++) {
+            const a = -Math.PI / 2 + (k / 48) * Math.PI * 2
+            p.dot(sx + Math.cos(a) * (CONF.station.portee - 3), sy + Math.sin(a) * (CONF.station.portee - 3), k === n - 1 ? N.WHITE : PEPITE[3])
+          }
+          if (m.phase === 'extrait') p.glow(sx, sy, CONF.station.portee * 1.6, PEPITE[2], 0.5 + 0.2 * Math.sin(t * 6))
+          else p.text(String(Math.ceil(CONF.extraction.duree - m.extraction)), sx, sy - CONF.station.rayon - 16, PEPITE[3], { font: 'big', scale: 1, align: 'center', outline: COQUE[0] })
+        }
       }
     // les pépites déposées : elles volent du vaisseau au cœur de la station qui les a prises
     for (let i = depots.length - 1; i >= 0; i--) {
@@ -614,6 +626,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
               break
             }
+            case 'extrait': {
+              // resté à quai jusqu'au bout : l'expédition est achevée ; l'écran de fin vient après une seconde d'or
+              perduA = t
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: CONF.station.rayon })
+              secousse = 0.5
+              if (typeof navigator.vibrate === 'function') navigator.vibrate([40, 60, 40])
+              ecran.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `${m.banque} pépite${m.banque > 1 ? 's' : ''} en banque. Repartir ouvre une nouvelle expédition : la banque reste, le reste repart à neuf.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              break
+            }
             case 'perdu': {
               // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
               perduA = t
@@ -721,8 +742,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     dessinerLesStations(p)
     dessinerLesEnnemis(p)
-    if (m.phase === 'vol') dessinerLeVaisseau(p)
-    else if (ecran.hidden && t - perduA > 1) ecran.hidden = false
+    if (m.phase !== 'perdu') dessinerLeVaisseau(p)
+    if (m.phase !== 'vol' && ecran.hidden && t - perduA > 1) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
     dessinerLePointeur(p)

@@ -64,6 +64,12 @@ export const VAISSEAU = {
    * porte se perd avec la coque ; ce qui est en banque reste.
    */
   station: { case: 4500, rayon: 11, portee: 36, cadence: 0.12 },
+  /**
+   * L'EXTRACTION (Keko : « un timer quand le joueur est dans la zone de l'extracteur ; s'il reste jusqu'au bout, la
+   * partie prend fin ») : à quai, un compte monte pendant tant de secondes ; on en sort, il retombe à zéro ; au bout,
+   * la partie est EXTRAITE (finie, gagnée). Il ne court qu'après être sorti une fois du parvis : on naît à quai.
+   */
+  extraction: { duree: 10 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -139,7 +145,8 @@ export type Ennemi = {
 /** Tout le monde : le joueur, les ennemis, ce que les lasers ont creusé, les roches parties, les pépites, les traits, le minerai. */
 export type Monde = {
   t: number
-  phase: 'vol' | 'perdu'
+  /** En vol ; perdu (la coque percée) ; extrait (resté à quai jusqu'au bout du compte : la partie est finie, gagnée). */
+  phase: 'vol' | 'perdu' | 'extrait'
   vaisseau: Vaisseau
   coque: number
   forage: Forage | null
@@ -155,6 +162,9 @@ export type Monde = {
   banque: number
   /** Le prochain dépôt possible, quand on est à quai. */
   deposeA: number
+  /** Le compte de l'extraction (secondes passées à quai d'affilée), et si le vaisseau est déjà sorti d'un parvis. */
+  extraction: number
+  sorti: boolean
   prochainId: number
   graine: number
 }
@@ -165,6 +175,7 @@ export type Evenement =
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi' }
   /** Une pépite déposée à la station. */
   | { type: 'depose'; x: number; y: number }
+  | { type: 'extrait'; x: number; y: number }
   | { type: 'tir'; x: number; y: number }
   | { type: 'touche'; x: number; y: number }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -177,7 +188,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, deposeA: 0, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, deposeA: 0, extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -555,6 +566,20 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       ev.push({ type: 'depose', x: st.x, y: st.y })
     }
   } else m.deposeA = m.t + c.station.cadence * 0.5
+  // L'EXTRACTION : à quai (après être sorti une fois d'un parvis), le compte monte ; au bout, la partie est extraite
+  if (Math.hypot(v.x - st.x, v.y - st.y) <= c.station.portee) {
+    if (m.sorti) {
+      m.extraction += dt
+      if (m.extraction >= c.extraction.duree) {
+        m.extraction = c.extraction.duree
+        m.phase = 'extrait'
+        ev.push({ type: 'extrait', x: st.x, y: st.y })
+      }
+    }
+  } else {
+    m.extraction = 0
+    m.sorti = true
+  }
 
   // les traits : ils volent, s'éteignent, s'écrasent sur une roche, touchent le joueur
   for (let i = m.tirs.length - 1; i >= 0; i--) {
