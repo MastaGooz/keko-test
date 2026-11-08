@@ -67,15 +67,12 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
 
   // L'ANNEAU : des tôles segmentées, ombrées, une couture tous les 30°, des rivets côté lumière, des hublots
   p.ring(sx, sy, rayon + 0.6, 4.2, A[0])
-  p.ring(sx, sy, rayon, 3, (x, y) => {
-    const dx = x - sx
-    const dy = y - sy
-    const d = Math.hypot(dx, dy) || 1
-    const a = Math.atan2(dy, dx) - rot
-    const seg = ((a / (Math.PI / 6)) % 1 + 1) % 1
+  // (la couleur-fonction d'un `ring` du peintre reçoit (v : 0 au bord intérieur, 1 au bord extérieur ; l'angle), PAS des
+  // pixels — lue comme des pixels, elle rendait n'importe quel ton, et l'anneau clignotait en noir : Keko)
+  p.ring(sx, sy, rayon, 3, (v, ang) => {
+    const seg = ((((ang - rot) / (Math.PI / 6)) % 1) + 1) % 1
     if (seg < 0.08) return A[2]
-    const bord = d - rayon
-    const l = lum(dx / d, dy / d) * 0.75 - 0.12 + (bord > 0.9 ? 0.2 : bord < -0.9 ? -0.25 : 0)
+    const l = lum(Math.cos(ang), Math.sin(ang)) * 0.75 - 0.12 + (v > 0.8 ? 0.2 : v < 0.2 ? -0.25 : 0)
     return tonDe(A, l)
   })
   for (let i = 0; i < 12; i++) {
@@ -131,8 +128,9 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
   }
   // le dôme : une verrière bombée, son reflet vers la lumière ; à quai, elle s'allume d'or
   p.circle(sx, sy, 3.6, A[0])
-  p.circle(sx, sy, 2.9, (x, y) => {
-    const l = lum((x - sx) / 2.9, (y - sy) / 2.9)
+  // (un `circle` reçoit (d : 0 au centre, 1 au bord ; l'angle))
+  p.circle(sx, sy, 2.9, (d, ang) => {
+    const l = lum(Math.cos(ang), Math.sin(ang)) * d
     const V = aQuai ? T.or : T.verre
     return l > 0.45 ? V[3] : l > -0.1 ? V[2] : V[1]
   })

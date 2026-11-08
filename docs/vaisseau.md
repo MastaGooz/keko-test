@@ -159,7 +159,11 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   reflet ; un anneau de tôles segmentées qui tourne lentement, ombré, rivets
   et hublots qui s'allument tour à tour ; quatre entretoises ; deux panneaux
   solaires quadrillés de cellules bleu nuit ; un mât au fanal rouge qui bat.
-  *La première version était un anneau plat et quatre ronds.*
+  *La première version était un anneau plat et quatre ronds.* **Piège du
+  peintre** : la couleur-fonction d'un `ring` reçoit (v, angle), celle d'un
+  `circle` (d, angle), pas des pixels (seuls `poly` et `shade` donnent des
+  pixels) ; lue comme des pixels, elle rendait n'importe quel ton et l'anneau
+  clignotait en noir (Keko).
 - **Un POINTEUR au bord de l'écran** (Keko) quand la station est hors champ :
   une petite station en icône et une flèche, d'or qui bat quand on porte du
   minerai, de verrière sinon. À quai avec du minerai à bord, une pépite part toutes les 0,12 s
