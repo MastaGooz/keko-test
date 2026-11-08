@@ -24,6 +24,7 @@ type Peintre = {
   dot(x: number, y: number, c: number, a?: number): void
   circle(x: number, y: number, r: number, c: number, a?: number): void
   ring(x: number, y: number, r: number, w: number, c: number, a?: number): void
+  text(texte: string, x: number, y: number, c: number, o?: { font?: string; scale?: number; align?: string; outline?: number; shadow?: number; a?: number }): void
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
@@ -88,9 +89,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ecran = el('div', 'vaisseau-ecran')
   ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Les astéroïdes repoussent. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
-  const compteur = el('div', 'vaisseau-minerai', '')
-  compteur.hidden = true
-  racine.append(scene, surcouche, ecran, compteur, pied)
+  racine.append(scene, surcouche, ecran, pied)
 
   // ---------------------------------------------------------------- l'état
   const m = nouveauMonde()
@@ -107,7 +106,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const etincelles = new N.Particles({ rng: R, ground: () => Infinity, sparks: [N.WHITE, LASER[4], LASER[3], LASER[2]] })
   const morceaux = new N.Bits({ ground: () => Infinity })
   const flashs: { x: number; y: number; t0: number; r: number }[] = []
-  let minerai = -1
+  /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
+  const envols: { x: number; y: number; t0: number }[] = []
+  let affiche = 0
+  let allumeA = -10
+  const COMPTEUR = { x: 16, y: 6 }
   let secousse = 0
   let flamme = 0
   let t = 0
@@ -287,6 +290,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
 
+  /** Le score, en haut à gauche de la scène : une pépite en icône, le nombre en police pixel du dépôt ; les pépites en vol y arrivent. */
+  function dessinerLeScore(p: Peintre): void {
+    // les pépites en vol : de la place du vaisseau à l'écran vers le compteur, en accélérant, une traînée de lumière
+    for (let i = envols.length - 1; i >= 0; i--) {
+      const e = envols[i]
+      const u = (t - e.t0) / 0.45
+      if (u >= 1) {
+        envols.splice(i, 1)
+        affiche += 1
+        allumeA = t
+        continue
+      }
+      const k = u * u * (3 - 2 * u)
+      const x0 = e.x - camera.x + W / 2
+      const y0 = e.y - camera.y + H / 2
+      const x = x0 + (COMPTEUR.x - x0) * k
+      const y = y0 + (COMPTEUR.y + 4 - y0) * k
+      p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], PEPITE[2])
+      p.dot(x, y - 1, PEPITE[3])
+      p.glow(x, y, 6, PEPITE[2], 0.5)
+    }
+    if (affiche === 0 && envols.length === 0) return
+    const allume = t - allumeA < 0.18
+    const haut = allume ? -1 : 0
+    // l'icône : une pépite, qui saute avec le compteur
+    const ix = COMPTEUR.x - 9
+    const iy = COMPTEUR.y + 5 + haut
+    p.poly([[ix, iy - 3], [ix + 3, iy], [ix, iy + 3], [ix - 3, iy]], PEPITE[2])
+    p.dot(ix, iy - 1, PEPITE[3])
+    p.dot(ix - 1, iy, PEPITE[4])
+    p.dot(ix + 1, iy + 1, PEPITE[1])
+    p.glow(ix, iy, 6, PEPITE[2], allume ? 0.8 : 0.3)
+    p.text(String(affiche), COMPTEUR.x, COMPTEUR.y + haut, allume ? N.WHITE : PEPITE[3], { font: 'big', scale: 1, align: 'left', outline: COQUE[0] })
+    if (allume) N.sparkle(p, ix, iy, 1 + 3 * Math.sin(((t - allumeA) / 0.18) * Math.PI), PEPITE[4], PEPITE[2], 0.5)
+  }
+
   /** Les pépites : de petits losanges d'or qui respirent, un éclat, une lueur. */
   function dessinerLesPepites(p: Peintre): void {
     for (const pe of m.pepites) {
@@ -369,7 +408,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, Math.min(1, 0.3 + ec.rayon / 20))
           if (typeof navigator.vibrate === 'function') navigator.vibrate(30)
         }
-        for (const pe of r.ramasses) flashs.push({ x: pe.x, y: pe.y, t0: t, r: 0 })
+        for (const pe of r.ramasses) {
+          flashs.push({ x: pe.x, y: pe.y, t0: t, r: 0 })
+          envols.push({ x: v.x, y: v.y, t0: t })
+        }
         for (const choc of r.chocs) {
           secousse = Math.min(1, 0.3 + choc.force / 120)
           if (typeof navigator.vibrate === 'function') navigator.vibrate(Math.round(10 + choc.force / 4))
@@ -441,19 +483,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     dessinerLeVaisseau(p)
     dessinerLeLaser(p)
+    dessinerLeScore(p)
     for (const e of effets) e.fx.draw(frame)
     N.composite(frame, img.data, FOND)
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
     canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
-    if (m.minerai !== minerai) {
-      minerai = m.minerai
-      compteur.textContent = `⛏ ${minerai}`
-      compteur.hidden = minerai === 0
-      compteur.classList.remove('vaisseau-minerai-saute')
-      void compteur.offsetWidth
-      compteur.classList.add('vaisseau-minerai-saute')
-    }
     dessinerLeManche()
     requestAnimationFrame(image)
   }

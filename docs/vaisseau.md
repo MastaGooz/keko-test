@@ -96,7 +96,11 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   sans pesanteur, qui tournent et s'éteignent) aux tons de sa roche, une
   secousse ; elle laisse `0,45 × rayon` PÉPITES d'or qui dérivent en
   freinant, puis sont AIMANTÉES par le vaisseau à 44 unités et montent à
-  bord à 5 : un éclat, le compteur « ⛏ » en haut à gauche saute. *Une roche
+  bord à 5 : un éclat, puis **la pépite VOLE du vaisseau au compteur**, qui
+  ne compte qu'à son arrivée et s'allume (Keko : « dessiner le score en haut
+  en pixel ») — le compteur est PEINT DANS LA SCÈNE, une pépite en icône et le
+  nombre dans la police pixel du dépôt (`p.text`, `big`, un contour sombre),
+  pas un texte DOM par-dessus. *Une roche
   partie ne repousse plus et ne revient pas* (`detruits`, que la règle du
   vaisseau reçoit : la première version filtrait seulement les étincelles,
   et la roche fantôme poussait encore — Keko : « je collisionne toujours

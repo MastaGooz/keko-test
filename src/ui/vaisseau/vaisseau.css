@@ -93,28 +93,3 @@ html.vaisseau-page body {
   color: rgba(236, 232, 244, 0.35);
   pointer-events: none;
 }
-
-/* Le minerai à bord, en haut à gauche ; il saute quand une pépite monte. */
-.vaisseau-minerai {
-  position: absolute;
-  top: calc(10px + env(safe-area-inset-top));
-  left: 16px;
-  font: 800 1.1rem 'Baloo 2', sans-serif;
-  color: #ffd23a;
-  text-shadow: 0 0.1rem 0.3rem rgba(0, 0, 0, 0.8);
-  pointer-events: none;
-}
-
-.vaisseau-minerai[hidden] {
-  display: none;
-}
-
-.vaisseau-minerai-saute {
-  animation: vaisseau-saute 0.25s ease-out;
-}
-
-@keyframes vaisseau-saute {
-  30% {
-    transform: scale(1.35);
-  }
-}
