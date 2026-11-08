@@ -53,8 +53,9 @@ type Noyau = {
 const N = noyau as unknown as Noyau
 const FX = effects as Record<string, Module>
 
+/** La scène fait 180 px de large ; SA HAUTEUR SUIT L'ÉCRAN (Keko : « le score est trop bas, il n'est plus en haut » — à 320 px fixes, centrée, elle laissait cent pixels de noir au-dessus d'elle). */
 const W = 180
-const H = 320
+let H = 320
 const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
@@ -100,8 +101,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let v: Vaisseau = m.vaisseau
   let enJeu = false
   let zoom = 2
-  const frame = N.createFrame(W, H)
-  const img = g.createImageData(W, H)
+  let frame = N.createFrame(W, H)
+  let img = g.createImageData(W, H)
   const R = new N.Rng(7)
   const braises = new N.Particles({ rng: R, ground: () => Infinity, sparks: [N.WHITE, FEU[6], FEU[5], FEU[4]] })
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
@@ -114,7 +115,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const envols: { x: number; y: number; t0: number }[] = []
   let affiche = minerai0
   let allumeA = -10
-  const COMPTEUR = { x: 16, y: 6 }
+  const COMPTEUR = { x: 16, y: 10 }
   let secousse = 0
   let flamme = 0
   let t = 0
@@ -122,7 +123,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const camera = { x: 0, y: 0 }
 
   function cadrer(): void {
-    zoom = Math.max(1, Math.min(6, Math.floor(Math.min(racine.clientWidth / W, racine.clientHeight / H))))
+    // le zoom vient de la largeur ; la hauteur du tampon est celle de l'écran à ce zoom, bornée (480 px de tampon au plus)
+    zoom = Math.max(1, Math.min(6, Math.floor(racine.clientWidth / W)))
+    const h = Math.max(120, Math.min(480, Math.ceil(racine.clientHeight / zoom)))
+    if (h !== H || canvas.height !== h) {
+      H = h
+      canvas.height = H
+      frame = N.createFrame(W, H)
+      img = g.createImageData(W, H)
+    }
     canvas.style.width = `${W * zoom}px`
     canvas.style.height = `${H * zoom}px`
     surcouche.width = Math.round(racine.clientWidth * dpr)

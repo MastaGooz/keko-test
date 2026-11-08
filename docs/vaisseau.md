@@ -28,8 +28,10 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   vers les petits), posé dans la case d'après ses coordonnées hachées ; rien
   à 70 unités du départ, pour apprendre le manche à vide. Rien n'est stocké :
   on retrouve le même astéroïde en revenant.
-- **Tout en pixel art dans un tampon de 180 × 320** (portrait), agrandi par
-  un entier (×2 au téléphone) : le vaisseau au centre, tourné vers son cap par
+- **Tout en pixel art dans un tampon de 180 px de large, haut comme
+  l'écran** (au zoom entier donné par la largeur : ×2 au téléphone, 422 px de
+  haut sur un 390 × 844 ; 480 au plus — la première version faisait 320 de
+  haut, centrée, et Keko : « le score est trop bas, il n'est plus en haut ») : le vaisseau au centre, tourné vers son cap par
   le peintre du dépôt (`place(x, y, flip, angle)` : le pixel art tourné est
   recalculé à chaque image, pas une image tournée) — une coque ombrée depuis
   le dessus, deux ailes à bande rouge, une verrière cyan, une tuyère, deux
