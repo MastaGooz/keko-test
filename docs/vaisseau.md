@@ -148,6 +148,19 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   temps, et l'écran « Coque percée » n'arrive qu'une seconde après, quand la
   boule de feu est passée.
 
+## Les grains de l'espace (Keko, 08/11 : « des débris d'explosion tombent vers le bas comme s'il y avait de la gravité, il ne faudrait pas »)
+
+Les particules du dépôt sont faites pour un sol : l'étincelle tombe à
+950 unités/s² et rebondit, la braise monte, le feu et la fumée s'élèvent.
+`src/ui/pixelfx/fx/keko/_espace.js` (`Grains`) les remplace partout dans le
+jeu : étincelle (un trait étiré sur sa vitesse, blanc en tête, qui
+refroidit), braise (un point qui refroidit et clignote en mourant), feu (un
+rond qui refroidit par la rampe du feu puis devient fumée), fumée (un rond
+translucide qui grossit et s'éclaircit) — tout file droit et freine dans le
+vide. L'explosion, le moteur, le forage, les chocs et les traits reçus les
+utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
+étincelles tombaient aussi.
+
 ## L'ennemi (Keko, 08/11 : « on rajoute un ennemi qui mine et qui tire ? »)
 
 - **Un rival, un à la fois** : il naît à 10 s (puis 5 s après sa mort, d'une autre direction — Keko : « quand l'ennemi meurt, un autre spawn ailleurs quelques secondes après » ; 18 s au départ, trop long pour qu'on le remarque), à

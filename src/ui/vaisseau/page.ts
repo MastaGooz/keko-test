@@ -12,10 +12,10 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { effects } from 'pixelfx/fx/index'
 import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
+import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
 type Module = { meta?: Record<string, unknown> }
@@ -52,7 +52,6 @@ type Noyau = {
   WHITE: number
 }
 const N = noyau as unknown as Noyau
-const FX = effects as Record<string, Module>
 
 /** La scène fait 180 px de large ; SA HAUTEUR SUIT L'ÉCRAN (Keko : « le score est trop bas, il n'est plus en haut » — à 320 px fixes, centrée, elle laissait cent pixels de noir au-dessus d'elle). */
 const W = 180
@@ -117,11 +116,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let frame = N.createFrame(W, H)
   let img = g.createImageData(W, H)
   const R = new N.Rng(7)
-  const braises = new N.Particles({ rng: R, ground: () => Infinity, sparks: [N.WHITE, FEU[6], FEU[5], FEU[4]] })
+  /** Les grains de l'espace : sans pesanteur ni montée (Keko : « des débris tombent vers le bas comme s'il y avait de la gravité »). */
+  const braises = new Grains(R)
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
   let effets: { fx: Instance; x: number; y: number }[] = []
   /** Le forage : les étincelles du point d'impact, les morceaux des roches éclatées (sans pesanteur : l'espace), les flashs. */
-  const etincelles = new N.Particles({ rng: R, ground: () => Infinity, sparks: [N.WHITE, LASER[4], LASER[3], LASER[2]] })
+  const etincelles = new Grains(R)
   const morceaux = new N.Bits({ ground: () => Infinity })
   const flashs: { x: number; y: number; t0: number; r: number }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
@@ -490,8 +490,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const d = Math.hypot(nx, ny) || 1
           const a = Math.atan2(ny, nx) + R.range(-1.1, 1.1)
           const vit = R.range(30, 90) * (0.6 + f.part)
-          etincelles.spawn(N.P.SPARK, f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + depuis.vx * 0.2, Math.sin(a) * vit + depuis.vy * 0.2, R.range(0.2, 0.45), N.WHITE, 1)
-          if (R.next() < 0.25) etincelles.spawn(N.P.GRIT, f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), f.sorte === 'roche' ? rocheDe(f.cible)[4] : ROUGE[4], 1)
+          etincelles.ajouter('etincelle', f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + depuis.vx * 0.2, Math.sin(a) * vit + depuis.vy * 0.2, R.range(0.2, 0.45), R.next() < 0.5 ? LASER[4] : LASER[3], 1, 2.5)
+          if (R.next() < 0.25) etincelles.ajouter('braise', f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), 0, 1, 1.5)
         }
         for (const ev of r.evenements) {
           switch (ev.type) {
@@ -519,8 +519,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               toucheA = t
               secousse = Math.max(secousse, 0.7)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
-              const mod = FX['impacts/hit-spark']
-              if (mod !== undefined) effets.push({ fx: N.createFx(mod, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, height: 0, angle: Math.atan2(ev.x - v.x, -(ev.y - v.y)), palette: N.PAL.blood }), x: ev.x, y: ev.y })
+              for (let i = 0; i < 10; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(30, 110)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), R.next() < 0.5 ? N.WHITE : ROUGE[4], 1, 2.5)
+              }
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
               break
             }
             case 'ennemiDetruit': {
@@ -557,16 +561,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (const choc of r.chocs) {
           secousse = Math.min(1, 0.3 + choc.force / 120)
           if (typeof navigator.vibrate === 'function') navigator.vibrate(Math.round(10 + choc.force / 4))
-          const mod = FX['impacts/hit-spark']
-          if (mod !== undefined) {
-            // l'étincelle du dépôt frappe à `height` au-dessus de son origine (un impact sur un sol) : ici la frappe est À
-            // l'origine (height 0), et le « haut » de l'effet est la normale de la roche, pour que les éclats en jaillissent
-            // et y retombent — Keko : « le point de naissance des étincelles est toujours décalé »
-            const nx = v.x - choc.x
-            const ny = v.y - choc.y
-            const fx = N.createFx(mod, { x: choc.x - camera.x + W / 2, y: choc.y - camera.y + H / 2, height: 0, angle: Math.atan2(nx, -ny), palette: N.PAL.stone })
-            effets.push({ fx, x: choc.x, y: choc.y })
+          // une gerbe d'étincelles le long de la normale (celles du dépôt tombent : c'est l'espace)
+          const nx = v.x - choc.x
+          const ny = v.y - choc.y
+          const l = Math.hypot(nx, ny) || 1
+          const n = 6 + Math.round(choc.force / 8)
+          for (let i = 0; i < n; i++) {
+            const a = Math.atan2(ny / l, nx / l) + R.range(-1.2, 1.2)
+            const vit = R.range(30, 60 + choc.force)
+            etincelles.ajouter('etincelle', choc.x, choc.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.25, 0.6), R.next() < 0.5 ? N.WHITE : rocheDe(choc.asteroide)[5], 1, 2.5)
           }
+          flashs.push({ x: choc.x, y: choc.y, t0: t, r: -1 })
         }
         // les braises du moteur, en coordonnées du monde, derrière la tuyère
         if (v.poussee > 0.05) {
@@ -575,7 +580,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const bx = v.x - Math.cos(v.cap) * 8
             const by = v.y - Math.sin(v.cap) * 8
             const vitesse = 30 + 40 * v.poussee
-            braises.spawn(N.P.EMBER, bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), FEU[5], R.range(0.6, 1.2))
+            braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), 0, 1, 2)
           }
         }
       }
@@ -586,7 +591,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (e.corps.poussee > 0.05 && R.next() < 0.5) {
           const b = e.corps
           const vitesse = 30 + 40 * b.poussee
-          braises.spawn(N.P.EMBER, b.x - Math.cos(b.cap) * 8 + R.range(-1, 1), b.y - Math.sin(b.cap) * 8 + R.range(-1, 1), b.vx * 0.3 - Math.cos(b.cap) * vitesse + R.range(-8, 8), b.vy * 0.3 - Math.sin(b.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), FEU[5], R.range(0.6, 1.2))
+          braises.ajouter('braise', b.x - Math.cos(b.cap) * 8 + R.range(-1, 1), b.y - Math.sin(b.cap) * 8 + R.range(-1, 1), b.vx * 0.3 - Math.cos(b.cap) * vitesse + R.range(-8, 8), b.vy * 0.3 - Math.sin(b.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), 0, 1, 2)
         }
       }
     }
@@ -626,6 +631,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (f.r === 0) {
         // une pépite montée à bord : un éclat
         N.sparkle(p, f.x, f.y, 1 + 3 * Math.sin(u * Math.PI), PEPITE[3], PEPITE[2], 0.5 * (1 - u))
+        continue
+      }
+      if (f.r === -1) {
+        // un choc : un point blanc et une lueur, trois images
+        if (u < 0.4) {
+          p.circle(f.x, f.y, 1.5 * (1 - u / 0.4) + 0.5, N.WHITE)
+          p.glow(f.x, f.y, 10, LASER[4], 0.6 * (1 - u / 0.4))
+        }
         continue
       }
       p.glow(f.x, f.y, f.r * 2 + 10, LASER[4], 0.8 * (1 - u))
