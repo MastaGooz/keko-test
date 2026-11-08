@@ -21,6 +21,8 @@ import './pixelfx.css'
 import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
 import { NOS_EFFETS } from './fx/keko/index.ts'
+import { creerActe, HUMAIN } from './perso/acte.js'
+import { GOBELIN } from './perso/gobelin.js'
 
 type Meta = {
   name?: string
@@ -34,7 +36,7 @@ type Meta = {
   tags?: string[]
   options?: Record<string, unknown>
 }
-type Module = { meta?: Meta; create?: (o: Record<string, unknown>) => unknown }
+type Module = { meta?: Meta; act?: unknown; create?: (o: Record<string, unknown>) => unknown }
 type Instance = { t: number; update(dt: number): void; draw(frame: unknown, couche?: string): void; done(): boolean }
 type Noyau = {
   createFrame(w: number, h: number): unknown
@@ -103,7 +105,11 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
     enMarche = !enMarche
     pause.textContent = enMarche ? 'Pause' : 'Reprendre'
   })
-  reglages.append(choixPalette, choixFond, choixVitesse, retourner, graine, pause)
+  /** Qui joue l'acte : le mannequin du dépôt (son propre dessin), ou un de NOS personnages posés par notre squelette. */
+  const PERSONNAGES = { gobelin: GOBELIN, humain: HUMAIN }
+  const choixPersonnage = el('select', 'pixelfx-personnage')
+  choixPersonnage.append(new Option('gobelin', 'gobelin'), new Option('mannequin du dépôt', 'mannequin'), new Option('humain (notre squelette)', 'humain'))
+  reglages.append(choixPalette, choixFond, choixVitesse, retourner, graine, pause, choixPersonnage)
   lecteur.append(canvas, nom, desc, reglages)
 
   const ids = Object.keys(EFFETS)
@@ -124,7 +130,9 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   function charger(): void {
     const mod = EFFETS[id]
     const meta = metaDe(mod)
-    const acte = id.startsWith('moves/')
+    // un acte : le personnage joue (les « coups » du dépôt, et nos effets qui exportent `act`)
+    const acte = id.startsWith('moves/') || mod.act !== undefined
+    choixPersonnage.hidden = !acte
     const [w, h] = meta.size ?? [160, 120]
     const [ox, oy] = meta.origin ?? [Math.floor(w / 2), Math.floor(h / 2)]
     // Une scène un peu plus large que l'effet, au format 16/10 au moins.
@@ -150,7 +158,8 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
     if (seed > 0) options.seed = seed
     if (choixPalette.value !== '') options.palette = PALETTES[choixPalette.value]
     try {
-      instance = (scene.acte ? N.createAct : N.createFx)(mod, options)
+      const perso = PERSONNAGES[choixPersonnage.value as keyof typeof PERSONNAGES]
+      instance = scene.acte && perso !== undefined ? (creerActe(mod, options, perso) as Instance) : (scene.acte ? N.createAct : N.createFx)(mod, options)
     } catch (erreur) {
       instance = null
       desc.textContent = `Cet effet n'a pas pu se créer : ${String(erreur)}`
@@ -160,6 +169,7 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   }
 
   choixPalette.addEventListener('change', rejouer)
+  choixPersonnage.addEventListener('change', rejouer)
   choixFond.addEventListener('change', charger)
 
   let precedent = performance.now()

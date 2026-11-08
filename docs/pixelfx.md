@@ -142,6 +142,54 @@ la capture CDP (`capture.mjs` du scratchpad : Chrome sans tête en
 les erreurs de console et les `loadingFailed` relevés) ; `--screenshot` seul
 capturait avant les scripts.
 
+## Nos personnages — le squelette paramétré (08/11)
+
+Keko : « je vois qu'il y a des personnages aussi, tu serais capable d'en créer
+d'autres ? » puis « tente de me faire un gobelin et de le faire marcher ». Le
+personnage du dépôt n'est pas un sprite : c'est UN mannequin en 3D
+(`src/core/rig.js`, os à longueurs fixes, solveur depuis les mains et les
+pieds, cuit en quatre tons et un trait d'encre), aux mesures, volumes et
+palette écrits en dur, sans variante prévue.
+
+- **`src/ui/pixelfx/perso/rig.js`** — le fichier du dépôt recopié (MIT, le
+  crédit en tête) et PARAMÉTRÉ PAR UN PERSONNAGE : `posed(pose, perso)`.
+  `armer(perso)` pose la palette, les mesures (`echelle`, `jambes`, `bras`,
+  `ventre`, `tete`) et la pose de repos par personnage ; les volumes du corps
+  suivent `echelle`, `membres`, `ventre`, `tete` ; des parties en plus dans le
+  repère de la tête (`traits` : oreilles, nez, défenses, yeux, avec leur
+  numéro de partie donc leur trait d'encre) ; **les poses des effets restent
+  écrites pour l'humain de 38 px et sont mises à l'échelle du personnage**
+  (mains, pieds, accroupi, penché), si bien que tous les coups du dépôt lui
+  vont ; les armes gardent leur taille (un gobelin à grande épée). Le script
+  `patch-rig.py` du scratchpad refait ce fichier depuis le dépôt : on y
+  retouche les remplacements, pas la copie. `HUMAIN` est le mannequin.
+- **`perso/gobelin.js`** — `GOBELIN` : 78 % de l'humain, tête ×1,3, oreilles
+  longues (1,4) pointées haut et arrière, nez, petites défenses, yeux jaunes,
+  membres ×0,82, jambes ×0,86, bras ×1,1, ventre ×1,1, peau verte.
+- **`perso/acte.js`** — `creerActe(mod, o, perso)` : l'acte du dépôt
+  (`createAct`) tient tout — effet, poses, cibles, gel, secousse — mais
+  dessine son mannequin ; on lui demande tout sauf le corps et on peint le
+  nôtre à sa place, dans l'ordre du dépôt (arrière, cibles, ombre, corps,
+  avant, paille). Les images rémanentes et la poussière des pas du dépôt
+  restent privées à son acte.
+- **`keko/gobelin-marche`** — le cycle de marche : une boucle de 0,84 s, deux
+  pas, quatre clés (appui, passage, appui, passage), bras en opposition,
+  rebond au passage, penché de 3, l'effet ne dessinant que la poussière des
+  pas ; l'acte est jugé sur ses images consécutives à 12 i/s (`acte.mjs` du
+  scratchpad, l'équivalent de `tools/act.mjs` pour nos personnages ;
+  `debout.mjs` rend humain et gobelin côte à côte en cinq poses). Premier
+  tour : la foulée trop courte (±7 → ±9), les oreilles qui se lisaient en
+  capuche (base plus fine, plus longues, plus hautes).
+- **Le banc** : un choix « personnage » apparaît sur tout ce qui a un acte
+  (nos effets qui exportent `act`, les `moves/` du dépôt) : gobelin, le
+  mannequin du dépôt (son propre dessin), l'humain par notre squelette.
+
+Ce qui n'est pas fait : les effets `actor: 2` (statuts, auras) dessinent
+toujours le sprite HERO2 du dépôt ; la correspondance `src` (le pixel de la
+pose → le pixel du corps debout, pour le givre et le poison qui suivent le
+corps) est calculée sur la grille 24 × 38 de l'humain ; pas d'orc encore,
+c'est le même fichier avec d'autres chiffres.
+
 ## Ce qu'on en pense
 
 À écrire quand Keko aura regardé. Les pistes : les impacts et explosions des
