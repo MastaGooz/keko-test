@@ -15,6 +15,7 @@ import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
 import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
+import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
 type Module = { meta?: Record<string, unknown> }
@@ -67,11 +68,8 @@ const ROUGE = N.fit(['#1a0a0e', '#4a1a22', '#7a2a36', '#a8404c', '#d06a70', '#f0
 const VERRIERE_ENNEMIE = N.fit(['#4a2a06', '#d07a18', '#ffc860', '#ffffff'], 4)
 const VIOLET = N.fit(['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'], 6)
 const BLANC = N.fit(['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'], 7)
-/** L'explosion d'un vaisseau : celle de plasma du dépôt (sans sol ni fumée : l'espace), en feu pour le joueur, en rouge pour le rival (Keko : « on avait des trucs plus jolis dans pixelfx sur les explosions »). */
-const EXPLOSION_JOUEUR = ['#2a0a08', '#8c1d1c', '#f2701f', '#ffae35', '#ffe27a', '#fff8d6', '#ffffff']
-const EXPLOSION_RIVAL = ['#2a0610', '#8a1030', '#e0304a', '#ff6a5a', '#ffb090', '#ffe0d0', '#ffffff']
-const ACCENT_JOUEUR = ['#3a1a06', '#a85a10', '#ffb020', '#ffe080', '#fff6d0']
-const ACCENT_RIVAL = ['#2a0a2a', '#7a1a6a', '#d040b0', '#ff90e0', '#ffd8f4']
+/** L'explosion d'un vaisseau : celle du dépôt sans son sol, à la taille du vaisseau (Keko : « l'effet nommé Explosion en version sans sol et à la taille du vaisseau ») ; le rival en rouge, ses morceaux de sa coque. */
+const EXPLOSION_RIVAL = ['#3a0a12', '#a01030', '#e0304a', '#ff6a5a', '#ffa080', '#ffd0b0', '#ffe8dc', '#ffffff']
 const FOND = N.hex('#07060f')
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
@@ -505,10 +503,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
-              {
-                const mod = FX['explosions/plasma-explosion']
-                if (mod !== undefined) effets.push({ fx: N.createFx(mod, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, palette: EXPLOSION_RIVAL, accent: ACCENT_RIVAL, seed: ev.id }), x: ev.x, y: ev.y })
-              }
+              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, palette: EXPLOSION_RIVAL, debris: '#7a2a36', size: 0.35, seed: ev.id }), x: ev.x, y: ev.y })
               for (let i = 0; i < 14; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 110)
@@ -522,10 +517,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             case 'perdu': {
               // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
               perduA = t
-              {
-                const mod = FX['explosions/plasma-explosion']
-                if (mod !== undefined) effets.push({ fx: N.createFx(mod, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, palette: EXPLOSION_JOUEUR, accent: ACCENT_JOUEUR, seed: 5 }), x: v.x, y: v.y })
-              }
+              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, debris: '#46587a', size: 0.45, seed: 5 }), x: v.x, y: v.y })
               for (let i = 0; i < 18; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 120)

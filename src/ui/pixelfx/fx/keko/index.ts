@@ -12,7 +12,7 @@ import * as cryogenieSol from './cryogenie-sol.js'
 import * as gobelinMarche from './gobelin-marche.js'
 import * as gobelinBestiole from './gobelin-bestiole.js'
 import * as magicienBestiole from './magicien-bestiole.js'
-import * as explosion from './explosion.js'
+import * as explosionEspace from './explosion-espace.js'
 
 export const NOS_EFFETS: Record<string, unknown> = {
   'keko/frappe-du-niveau': frappeDuNiveau,
@@ -23,5 +23,5 @@ export const NOS_EFFETS: Record<string, unknown> = {
   'keko/gobelin-marche': gobelinMarche,
   'keko/gobelin-bestiole': gobelinBestiole,
   'keko/magicien-bestiole': magicienBestiole,
-  'keko/explosion': explosion,
+  'keko/explosion-espace': explosionEspace,
 }

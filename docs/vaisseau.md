@@ -127,13 +127,19 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 ## Les explosions (Keko, 08/11 : « une petite explosion et disparition à la mort du joueur ou du vaisseau ennemi »)
 
-- **C'est l'explosion de PLASMA du dépôt** (`explosions/plasma-explosion`,
-  1,7 s, sans sol ni fumée : un flash, une boule qui gonfle en une coque qui
-  s'amincit, des anneaux de choc dans la profondeur, des arcs) — Keko, devant
-  ma première version maison (`keko/explosion`, restée au banc) : « c'est pas
-  fou, on avait des trucs plus jolis dans pixelfx ». Recolorée en feu pour
-  le joueur, en rouge pour le rival. Le rival l'a à sa mort avec ses morceaux
-  rouges ; le joueur l'a avec des morceaux de sa coque, il DISPARAÎT (plus
+- **C'est l'EXPLOSION du dépôt, SANS SON SOL, à la taille du vaisseau**
+  (`keko/explosion-espace`, au banc) — Keko : « je voyais plutôt l'effet
+  nommé Explosion en version sans sol et à la taille qui match celle du
+  vaisseau ». `explosions/small-explosion` copiée, et débarrassée de tout ce
+  qui tient au plancher (le roussi, la poussière qui roule, la colonne de
+  terre, les braises qui atterrissent, les cailloux qui rebondissent) et de
+  sa montée (pas de haut dans l'espace) : le flash, deux anneaux de choc
+  debout, la boule de feu qui refroidit en fumée, les étincelles et les
+  braises dans toutes les directions, des morceaux qui flottent en tournant.
+  `size` 0,35 pour le rival (recolorée en rouge, morceaux de sa coque), 0,45
+  pour le joueur. *Deux essais avant : une version maison (« c'est pas fou »)
+  et l'explosion de plasma (« beaucoup trop gros »).* Le rival l'a à sa mort
+  avec ses morceaux rouges ; le joueur l'a avec des morceaux de sa coque, il DISPARAÎT (plus
   dessiné, son laser non plus), une secousse et une vibration en trois
   temps, et l'écran « Coque percée » n'arrive qu'une seconde après, quand la
   boule de feu est passée.
