@@ -9,7 +9,7 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
 ## Les fichiers
 
 - `src/logic/neon/jeu.ts` — pur et seedé : le cercle, le tir automatique, les
-  trois formes, les losanges, la parade et sa fenêtre, l'onde, les
+  trois formes, les petits hexagones, la parade et sa fenêtre, l'onde, les
   niveaux et les améliorations. Le temps est injecté (en secondes), l'état
   modifié en place ; le monde a le cercle à l'origine, y vers le bas ; la page
   dit ce qu'elle montre (`Vue`). Vérifié par `jeu.verif.ts` (dans
@@ -35,11 +35,11 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   0,3 s** (« Raté », l'anneau rougit et se pointille) : on ne pare pas en
   tapotant — la règle de la garde de la commande action.
 - **Ce que fait la parade** : un ennemi paré encaisse 5, recule (40 unités/s
-  qui s'amortissent sur 0,6 s) et reste étourdi ce temps-là ; un losange paré
+  qui s'amortissent sur 0,6 s) et reste étourdi ce temps-là ; un petit hexagone paré
   **repart sur son tireur** (qui a dérivé depuis — un premier essai le
   renvoyait tout droit, et il manquait), 1,4 fois plus vite, avec les dégâts
   de la parade. **Parfaite : ×3, et une ONDE DE CHOC** (rayon 18, 3 dégâts,
-  recul 25) qui frappe tout autour du cercle et balaie les losanges ; le temps
+  recul 25) qui frappe tout autour du cercle et balaie les petits hexagones ; le temps
   ralentit à 25 % pendant 0,22 s. *Le losange renvoyé par une parfaite
   traversait tout ce qu'il croisait ; Keko (08/11) : « on va enlever le renvoi
   de losange perçant de la parade parfaite » — il s'arrête au premier touché,
@@ -57,12 +57,12 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   | forme | dès | PV | vitesse | coup | rôle |
   |---|---|---|---|---|---|
   | Triangle (magenta) | 0 s | 3 | 14 | 1 | fonce droit, la chair à parade |
-  | Hexagone (violet) | 20 s | 6 | 9 | — | s'arrête à 55 du cercle, respire 0,9 s, dérive de côté, tire un losange (vitesse 34, 1 dégât) toutes les 1,8 s ; son cœur jaune s'allume la demi-seconde d'avant |
+  | Hexagone (violet) | 20 s | 6 | 9 | — | s'arrête à 55 du cercle, respire 0,9 s, dérive de côté, tire un petit hexagone (vitesse 34, 1 dégât) toutes les 1,8 s ; son cœur jaune s'allume la demi-seconde d'avant |
   | Carré (orange) | 35 s | 9 | 7 | 2 | lent et dur : une parade ne le tue pas, il revient |
 
-  Les tirs du cercle ignorent les losanges : **les losanges, il faut les
-  parer**. Un ennemi qui touche sans être paré éclate sur le cercle (il lui
-  coûte son coup) ; un losange aussi.
+  Les ronds du cercle ignorent les petits hexagones : **ceux-là, il faut
+  les parer**. Un ennemi qui touche sans être paré éclate sur le cercle (il lui
+  coûte son coup) ; un petit hexagone aussi.
 - **Les naissances** : une toutes les 1,5 s au départ (±30 %), jusqu'à une
   toutes les 0,4 s au bout de 3 min ; les PV ×(1 + 1,2 par minute), la
   vitesse ×(1 + 0,12 par minute), plafonnée à ×1,8.
@@ -91,6 +91,14 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   niveau 3 ; en parant, il tient les 10 min de la mesure (niveau 18, ~1 200
   abattus) — un robot ne rate jamais. C'est le
   joueur qui dira si la montée est trop lente.
+- **L'IDENTITÉ DES FORMES** (Keko, 08/11 : « il faudrait donner une
+  identité aux formes : déjà une forme ne devrait pas en tirer une autre. Le
+  rond tire des ronds, etc. ») : le cercle tire des RONDS (des traits cyan
+  avant) ; l'hexagone tire de PETITS HEXAGONES violets qui tournent (des
+  losanges jaunes avant) — renvoyés par une parade, ils passent à l'or ; le
+  triangle POINTE vers le cercle au lieu de tournoyer (sa pointe est sa
+  course) ; le carré BASCULE d'un quart de tour à la fois, lourd ;
+  l'hexagone tourne doucement sur lui-même. Les règles ne changent pas.
 - *Le cœur jaune de l'hexagone grossissait sans fin pendant sa descente*
   (Keko, 08/11 : « les ennemis violets grossissent dans une forme jaune
   pleine ») : la part « bientôt » n'était pas bornée alors que, avant la

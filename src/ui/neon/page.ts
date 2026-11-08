@@ -6,7 +6,7 @@
  * ennemi nous touche (ou un projectile), on peut taper pour parer »).
  *
  * Un canvas : le fond sombre et sa grille qui défile, le cercle en bas, les
- * formes qui descendent, les losanges, les tirs — tout tracé en néon (un halo
+ * formes qui descendent, leurs petits hexagones, les ronds du cercle — tout tracé en néon (un halo
  * additif, un trait de couleur, un cœur blanc). **Une tape n'importe où PARE**
  * (au clavier : la barre d'espace). L'anneau de garde autour du cercle dit
  * quand : il s'allume en blanc quand quelque chose est dans la fenêtre, en or
@@ -17,7 +17,7 @@
 import './neon.css'
 import { avancer, choisir, NEON as C, nouvellePartie, parable, parer, type CleAmelioration, type EtatNeon, type Evenement, type TypeEnnemi } from '../../logic/neon/jeu.ts'
 import { ecrireRecord, lireRecord } from '../invaders/commun.ts'
-import { ouvrirLeSon, sonChoix, sonCoup, sonLosange, sonMort, sonNiveau, sonOnde, sonParade, sonParfaite, sonPerdu, sonRate, sonTir, sonTouche } from './sons.ts'
+import { ouvrirLeSon, sonChoix, sonCoup, sonProjectile, sonMort, sonNiveau, sonOnde, sonParade, sonParfaite, sonPerdu, sonRate, sonTir, sonTouche } from './sons.ts'
 
 /** Le pas des règles : fin, les fenêtres de parade se jouent à 30 ms. */
 const PAS = 1 / 120
@@ -125,7 +125,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
   }
   montrerEcran(
     'NÉON',
-    `Le cercle tire tout seul sur ce qui descend. Vous, vous <b>parez</b> : touchez l’écran juste avant qu’une forme ou un losange ne touche le cercle — l’anneau de garde s’allume quand c’est le moment. <b>Pile au contact</b>, la parade est parfaite : trois fois plus forte, et une onde balaie tout autour. Une tape dans le vide bloque la garde un instant. À chaque niveau, trois améliorations, prenez-en une.${record > 0 ? ` Record : ${record} abattus.` : ''}`,
+    `Le cercle tire tout seul sur ce qui descend. Vous, vous <b>parez</b> : touchez l’écran juste avant qu’une forme ou un petit hexagone ne touche le cercle — l’anneau de garde s’allume quand c’est le moment. <b>Pile au contact</b>, la parade est parfaite : trois fois plus forte, et une onde balaie tout autour. Une tape dans le vide bloque la garde un instant. À chaque niveau, trois améliorations, prenez-en une.${record > 0 ? ` Record : ${record} abattus.` : ''}`,
     'TOUCHEZ POUR JOUER',
   )
 
@@ -268,7 +268,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
         majHaut()
         break
       case 'projectile':
-        sonLosange()
+        sonProjectile()
         break
       case 'naissance':
         break
@@ -439,7 +439,11 @@ export function monterNeon(racine: HTMLElement, build: string): void {
       const etourdi = e.t < en.etourdiA
       // Le corps : un polygone néon ; touché, il s'emplit de blanc ; étourdi, il tremble.
       const tx = etourdi ? (Math.random() - 0.5) * 0.6 * s : 0
-      const angle = en.type === 'carre' ? en.angle + Math.PI / 4 : en.type === 'triangle' ? en.angle + Math.PI / 2 : en.angle
+      // L'IDENTITÉ DES FORMES (Keko) : le triangle POINTE vers le cercle (sa pointe est sa course), le carré BASCULE d'un quart
+      // de tour à la fois (il roule, lourd), l'hexagone tourne doucement sur lui-même.
+      const quart = Math.PI / 2
+      const bascule = Math.floor(en.angle / quart) * quart + quart * Math.min(1, ((en.angle % quart) / quart) * 2.5) ** 2
+      const angle = en.type === 'triangle' ? Math.atan2(-en.y, -en.x) : en.type === 'carre' ? bascule + Math.PI / 4 : en.angle
       if (blanc) {
         g.fillStyle = 'rgba(255, 255, 255, 0.85)'
         g.beginPath()
@@ -478,54 +482,70 @@ export function monterNeon(racine: HTMLElement, build: string): void {
     }
   }
 
-  function dessinerLesLosanges(t: number): void {
+  /** Les petits hexagones tirés par les hexagones : la forme tire sa forme (Keko : « une forme ne devrait pas en tirer une autre »). */
+  function dessinerLesProjectiles(t: number): void {
     const p = enJeu ? parable(C, e) : null
     for (const pr of e.projectiles) {
       const cx = sx(pr.x)
       const cy = sy(pr.y)
       const a = Math.atan2(pr.vy, pr.vx)
       const r = C.hexagone.tir.rayon * s
-      const forme = () => {
-        g.moveTo(cx + Math.cos(a) * r * 1.8, cy + Math.sin(a) * r * 1.8)
-        g.lineTo(cx + Math.cos(a + Math.PI / 2) * r * 0.8, cy + Math.sin(a + Math.PI / 2) * r * 0.8)
-        g.lineTo(cx - Math.cos(a) * r * 1.8, cy - Math.sin(a) * r * 1.8)
-        g.lineTo(cx - Math.cos(a + Math.PI / 2) * r * 0.8, cy - Math.sin(a + Math.PI / 2) * r * 0.8)
-        g.closePath()
-      }
-      // La traînée.
-      g.strokeStyle = 'rgba(255, 242, 58, 0.25)'
-      g.lineWidth = 0.6 * s
+      const couleur = TEINTE.hexagone
+      // La traînée, dans la couleur de l'hexagone.
+      g.strokeStyle = 'rgba(166, 107, 255, 0.3)'
+      g.lineWidth = 0.7 * s
       g.beginPath()
       g.moveTo(cx, cy)
-      g.lineTo(cx - Math.cos(a) * 6 * s, cy - Math.sin(a) * 6 * s)
+      g.lineTo(cx - Math.cos(a) * 5 * s, cy - Math.sin(a) * 5 * s)
       g.stroke()
-      g.fillStyle = 'rgba(255, 242, 58, 0.35)'
+      const forme = () => polygone(cx, cy, r, 6, t * 6 + pr.id)
+      g.fillStyle = 'rgba(166, 107, 255, 0.35)'
       g.beginPath()
       forme()
       g.fill()
-      neon(forme, '#fff23a', 0.3 * s)
+      neon(forme, couleur, 0.3 * s)
       if (p !== null && p.sorte === 'projectile' && p.id === pr.id) {
         neon(() => cercle(cx, cy, r + 2.6 * s), p.parfaite ? OR : '#ffffff', 0.3 * s, 0.9 + 0.1 * Math.sin(t * 40))
       }
     }
   }
 
-  function dessinerLesTirs(): void {
+  /** Les tirs du cercle sont des RONDS (Keko : « le rond tire des ronds ») ; un petit hexagone renvoyé par une parade reste un hexagone, passé à l'or. */
+  function dessinerLesTirs(t: number): void {
     for (const tir of e.tirs) {
       const v = Math.hypot(tir.vx, tir.vy) || 1
-      const long = (tir.renvoye ? 5 : 4) * s
-      const x1 = sx(tir.x)
-      const y1 = sy(tir.y)
-      const x0 = x1 - (tir.vx / v) * long
-      const y0 = y1 - (tir.vy / v) * long
-      neon(
-        () => {
-          g.moveTo(x0, y0)
-          g.lineTo(x1, y1)
-        },
-        tir.renvoye ? OR : CYAN,
-        (tir.renvoye ? 0.45 : 0.3) * s,
-      )
+      const cx = sx(tir.x)
+      const cy = sy(tir.y)
+      if (tir.renvoye) {
+        const r = C.hexagone.tir.rayon * s
+        g.strokeStyle = 'rgba(255, 210, 58, 0.3)'
+        g.lineWidth = 0.7 * s
+        g.beginPath()
+        g.moveTo(cx, cy)
+        g.lineTo(cx - (tir.vx / v) * 5 * s, cy - (tir.vy / v) * 5 * s)
+        g.stroke()
+        const forme = () => polygone(cx, cy, r, 6, t * 8)
+        g.fillStyle = 'rgba(255, 210, 58, 0.4)'
+        g.beginPath()
+        forme()
+        g.fill()
+        neon(forme, OR, 0.35 * s)
+        continue
+      }
+      const r = C.tir.rayon * s
+      // Une courte traînée derrière le rond.
+      g.strokeStyle = 'rgba(25, 242, 255, 0.25)'
+      g.lineWidth = r * 1.2
+      g.lineCap = 'round'
+      g.beginPath()
+      g.moveTo(cx, cy)
+      g.lineTo(cx - (tir.vx / v) * 3 * s, cy - (tir.vy / v) * 3 * s)
+      g.stroke()
+      g.fillStyle = 'rgba(25, 242, 255, 0.5)'
+      g.beginPath()
+      cercle(cx, cy, r)
+      g.fill()
+      neon(() => cercle(cx, cy, r), CYAN, 0.28 * s)
     }
   }
 
@@ -636,9 +656,9 @@ export function monterNeon(racine: HTMLElement, build: string): void {
     flashRouge = Math.max(0, flashRouge - dt * 3)
 
     dessinerLeFond()
-    dessinerLesTirs()
+    dessinerLesTirs(maintenant)
     dessinerLesEnnemis(maintenant)
-    dessinerLesLosanges(maintenant)
+    dessinerLesProjectiles(maintenant)
     dessinerLeCercle(maintenant)
     dessinerLesEffets(dt)
     dessinerLaBanniere()

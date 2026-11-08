@@ -36,7 +36,7 @@ export type Point = { x: number; y: number }
 
 export const NEON = {
   cercle: { rayon: 6, pv: 5 },
-  /** Le tir automatique : sa cadence, ses dégâts, sa vitesse, son rayon ; l'écart des tirs d'une salve (radians). */
+  /** Le tir automatique — des RONDS, le rond tire des ronds (Keko) : sa cadence, ses dégâts, sa vitesse, son rayon ; l'écart des tirs d'une salve (radians). */
   tir: { cadence: 0.5, degats: 1, vitesse: 80, rayon: 1.2, ecart: 0.14 },
   parade: {
     /** Une tape tant de secondes AVANT le contact pare ; tant APRÈS, encore (le coup se résout alors seulement). */
@@ -62,7 +62,7 @@ export const NEON = {
     carre: { nom: 'Carré', pv: 9, vitesse: 7, degats: 2, rayon: 4, depuis: 35, poids: 2, xp: 8 },
     hexagone: { nom: 'Hexagone', pv: 6, vitesse: 9, degats: 1, rayon: 3.6, depuis: 20, poids: 2, xp: 6 },
   },
-  /** L'hexagone s'arrête à tant du cercle, dérive de côté, et tire des losanges : leur cadence, leur vitesse, leur rayon, leurs dégâts. */
+  /** L'hexagone s'arrête à tant du cercle, dérive de côté, et tire de PETITS HEXAGONES (la forme tire sa forme, Keko) : leur cadence, leur vitesse, leur rayon, leurs dégâts. */
   hexagone: { halte: 55, derive: 6, tir: { cadence: 1.8, vitesse: 34, rayon: 1.6, degats: 1 } },
   /** Les naissances : l'intervalle au départ, son plancher, en combien de secondes il le rejoint ; la largeur où l'on naît ; tant au-dessus du haut de l'écran. */
   naissance: { intervalle: 1.5, plancher: 0.4, en: 180, x: 40, dessus: 6 },
@@ -106,7 +106,7 @@ export type Ennemi = {
   /** Pour le dessin : l'angle de la forme. */
   angle: number
 }
-/** Un losange tiré par un hexagone, vers le cercle. */
+/** Un petit hexagone tiré par un hexagone, vers le cercle. */
 export type Projectile = { id: number; x: number; y: number; vx: number; vy: number; contactA: number | null; /** L'hexagone qui l'a tiré. */ de: number }
 /** Un tir du cercle — ou un projectile renvoyé par une parade. */
 export type Tir = { x: number; y: number; vx: number; vy: number; degats: number; percant: number; touches: number[]; renvoye: boolean }
@@ -310,7 +310,7 @@ export function parer(config: ConfigNeon, e: EtatNeon, retard = 0): Evenement[] 
     const i = e.projectiles.findIndex((x) => x.id === cible.id)
     const pr = e.projectiles[i]
     e.projectiles.splice(i, 1)
-    // Le losange repart sur son tireur (il a dérivé depuis) — ou sur l'ennemi le plus proche —, plus vite. Il s'arrête au premier touché,
+    // Le petit hexagone repart sur son tireur (il a dérivé depuis) — ou sur l'ennemi le plus proche —, plus vite. Il s'arrête au premier touché,
     // parfait ou non (Keko, 08/11 : « on va enlever le renvoi de losange perçant de la parade parfaite »).
     const v = Math.hypot(pr.vx, pr.vy) * config.parade.renvoi || config.hexagone.tir.vitesse * config.parade.renvoi
     const vers = e.ennemis.find((x) => x.id === pr.de) ?? e.ennemis.reduce<Ennemi | null>((m, x) => (m === null || Math.hypot(x.x - pr.x, x.y - pr.y) < Math.hypot(m.x - pr.x, m.y - pr.y) ? x : m), null)
@@ -336,7 +336,7 @@ export function parer(config: ConfigNeon, e: EtatNeon, retard = 0): Evenement[] 
       touches += 1
       blesser(config, e, en, plus, ev)
     }
-    // L'onde balaie aussi les losanges.
+    // L'onde balaie aussi les petits hexagones.
     e.projectiles = e.projectiles.filter((pr) => Math.hypot(pr.x, pr.y) > rayon)
     ev.push({ type: 'onde', rayon, touches })
   }
@@ -551,7 +551,7 @@ export function avancer(config: ConfigNeon, e: EtatNeon, dt: number, vue: Vue): 
     }
   }
 
-  // LES TIRS du cercle (et les losanges renvoyés) frappent ce qu'ils croisent.
+  // LES RONDS du cercle (et les petits hexagones renvoyés) frappent ce qu'ils croisent.
   for (const tir of [...e.tirs]) {
     tir.x += tir.vx * dt
     tir.y += tir.vy * dt

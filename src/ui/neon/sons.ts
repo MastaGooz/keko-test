@@ -57,9 +57,9 @@ export function sonMort(): void {
   note('square', 400, 120, 0.1, 0.08)
 }
 
-/** Un hexagone tire un losange. */
-export function sonLosange(): void {
-  if (bride('losange', 60)) note('sawtooth', 500, 900, 0.08, 0.05)
+/** Un hexagone tire un petit hexagone. */
+export function sonProjectile(): void {
+  if (bride('projectile', 60)) note('sawtooth', 500, 900, 0.08, 0.05)
 }
 
 /** Le cercle encaisse : grave, qui tombe. */
