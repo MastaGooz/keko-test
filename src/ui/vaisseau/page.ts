@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
-import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
@@ -62,6 +62,11 @@ const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 const FEU = N.fit(N.PAL.fire, 8)
 const LASER = N.fit(['#3a0a10', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0', '#ffffff'], 6)
 const PEPITE = N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5)
+/** L'ennemi : une coque rouge sombre, une verrière orange, un laser violet. */
+const ROUGE = N.fit(['#1a0a0e', '#4a1a22', '#7a2a36', '#a8404c', '#d06a70', '#f0a0a0', '#ffffff'], 7)
+const VERRIERE_ENNEMIE = N.fit(['#4a2a06', '#d07a18', '#ffc860', '#ffffff'], 4)
+const VIOLET = N.fit(['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'], 6)
+const BLANC = N.fit(['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'], 7)
 const FOND = N.hex('#07060f')
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
@@ -73,6 +78,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const suivre = parametres.get('controle') === 'suivre'
   /** `&minerai=N` : part avec N pepites a bord, pour voir le compteur sans miner (ce qui se teste doit s'ouvrir d'un lien). */
   const minerai0 = Math.max(0, Number(parametres.get('minerai')) || 0)
+  /** `&ennemi` : l'ennemi naît tout de suite, tout près (pour le voir sans attendre). */
+  const CONF: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0, distance: 90 } } : C
 
   function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe: string, texte = ''): HTMLElementTagNameMap[K] {
     const n = document.createElement(tag)
@@ -96,9 +103,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   racine.append(scene, surcouche, ecran, pied)
 
   // ---------------------------------------------------------------- l'état
-  const m = nouveauMonde()
+  let m = nouveauMonde(CONF)
   m.minerai = minerai0
   let v: Vaisseau = m.vaisseau
+  let perduA = -10
+  let toucheA = -10
+  const flammesEnnemies = new Map<number, number>()
   let enJeu = false
   let zoom = 2
   let frame = N.createFrame(W, H)
@@ -141,11 +151,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- le manche (celui du survivor)
   let manche: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
   const touches = new Set<string>()
-  racine.addEventListener('pointerdown', (ev) => {
-    if (!enJeu) {
-      enJeu = true
-      ecran.hidden = true
+  /** Le premier toucher décolle ; après une coque percée, il repart à neuf. */
+  function demarrer(): void {
+    if (m.phase === 'perdu') {
+      if (t - perduA < 0.8) return
+      m = nouveauMonde(CONF)
+      effets = []
+      flashs.length = 0
+      envols.length = 0
+      affiche = 0
+      flammesEnnemies.clear()
+      v = m.vaisseau
+      camera.x = 0
+      camera.y = 0
     }
+    enJeu = true
+    ecran.hidden = true
+  }
+  racine.addEventListener('pointerdown', (ev) => {
+    demarrer()
     if (manche !== null) return
     ev.preventDefault()
     racine.setPointerCapture(ev.pointerId)
@@ -164,10 +188,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   racine.addEventListener('pointercancel', lever)
   window.addEventListener('keydown', (ev) => {
     touches.add(ev.key.toLowerCase())
-    if (!enJeu) {
-      enJeu = true
-      ecran.hidden = true
-    }
+    demarrer()
   })
   window.addEventListener('keyup', (ev) => touches.delete(ev.key.toLowerCase()))
   window.addEventListener('blur', () => {
@@ -229,77 +250,101 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /**
-   * Le vaisseau, dessiné le nez vers +x puis tourné vers son cap : la coque, les ailes, la verrière, le moteur et sa
-   * flamme. IL PREND LA LUMIÈRE DU MONDE (Keko : « on peut le faire pour le vaisseau aussi ? ») : la direction de la
-   * lumière est ramenée dans son repère (tournée de −cap), la coque est ombrée par une normale approchée (un fuseau
-   * bombé), les ailes par leur inclinaison, et le reflet de la verrière glisse du côté de la lumière.
+   * UN vaisseau (le joueur ou un ennemi), dessiné le nez vers +x puis tourné vers son cap : la coque, les ailes, la
+   * verrière, le moteur et sa flamme, le foreur sur le toit. IL PREND LA LUMIÈRE DU MONDE (Keko : « on peut le faire
+   * pour le vaisseau aussi ? ») : la direction de la lumière est ramenée dans son repère (tournée de −cap), la coque est
+   * ombrée par une normale approchée (un fuseau bombé), les ailes par leur inclinaison, et le reflet de la verrière
+   * glisse du côté de la lumière. `vise` : l'angle du canon (local) ; `tire` : il creuse.
    */
-  function dessinerLeVaisseau(p: Peintre): void {
-    // À SA PLACE DANS LE MONDE, pas au centre de l'écran : la caméra prend de l'avance sur lui, et le dessiner au centre
-    // le décalait de ses braises et de ses étincelles (Keko : « un offset bizarre diagonal »)
-    p.place(v.x - camera.x + W / 2, v.y - camera.y + H / 2, false, v.cap)
-    const lx = Math.cos(v.cap) * LUMIERE.x + Math.sin(v.cap) * LUMIERE.y
-    const ly = -Math.sin(v.cap) * LUMIERE.x + Math.cos(v.cap) * LUMIERE.y
-    const tonDe = (lum: number) => (lum > 0.72 ? COQUE[6] : lum > 0.5 ? COQUE[5] : lum > 0.28 ? COQUE[4] : lum > 0.08 ? COQUE[3] : COQUE[2])
-    const coque = [[9, 0], [3, -3], [-5, -4], [-7, -2], [-7, 2], [-5, 4], [3, 3]]
-    // la flamme, derrière : deux langues qui vacillent, et une lueur
-    if (flamme > 0.02) {
-      const L = (3 + 7 * flamme) * (0.85 + 0.15 * Math.sin(t * 60))
+  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, coque: number[], verre: number[], vise: number, tire: boolean): void {
+    p.place(corps.x - camera.x + W / 2, corps.y - camera.y + H / 2, false, corps.cap)
+    const lx = Math.cos(corps.cap) * LUMIERE.x + Math.sin(corps.cap) * LUMIERE.y
+    const ly = -Math.sin(corps.cap) * LUMIERE.x + Math.cos(corps.cap) * LUMIERE.y
+    const tonDe = (lum: number) => (lum > 0.72 ? coque[6] : lum > 0.5 ? coque[5] : lum > 0.28 ? coque[4] : lum > 0.08 ? coque[3] : coque[2])
+    const forme = [[9, 0], [3, -3], [-5, -4], [-7, -2], [-7, 2], [-5, 4], [3, 3]]
+    if (flam > 0.02) {
+      const L = (3 + 7 * flam) * (0.85 + 0.15 * Math.sin(t * 60))
       p.poly([[-7, -1.8], [-7 - L, 0], [-7, 1.8]], FEU[4])
       p.poly([[-7, -1], [-7 - L * 0.6, 0], [-7, 1]], FEU[6])
-      p.glow(-8 - L * 0.4, 0, 6 + 6 * flamme, FEU[5], 0.5 + 0.4 * flamme)
+      p.glow(-8 - L * 0.4, 0, 6 + 6 * flam, FEU[5], 0.5 + 0.4 * flam)
     }
-    // les ailes : en arrière, de part et d'autre, une bande rouge
     for (const s of [-1, 1]) {
-      // l'aile : une plaque inclinée vers l'extérieur, plus sombre au bout
-      const lumAile = 0.3 + 0.45 * (s * 0.5 * ly + LUMIERE.z) 
+      const lumAile = 0.3 + 0.45 * (s * 0.5 * ly + LUMIERE.z)
       p.poly([[0, s * 2.5], [-6, s * 8], [-8, s * 8], [-6, s * 2.5]], (_x, y) => (s * y < 5 ? tonDe(lumAile) : tonDe(lumAile - 0.22)))
       p.line(-6.5, s * 7, -7.5, s * 7, N.hex('#d8403a'))
     }
-    // le liseré, la coque ombrée (la lumière vient d'en haut à gauche de l'écran : on prend le dessus de la coque)
-    p.poly(coque.map(([x, y]) => [x * 1.12 + (x > 0 ? 0.4 : -0.4), y * 1.25]), COQUE[0])
-    // la coque : un fuseau bombé, sa normale approchée par (x/10, y/3.5, de face)
-    p.poly(coque, (x, y) => tonDe((x / 10) * lx * 0.35 + (y / 3.5) * ly * 0.8 + LUMIERE.z * 0.9))
+    p.poly(forme.map(([x, y]) => [x * 1.12 + (x > 0 ? 0.4 : -0.4), y * 1.25]), coque[0])
+    p.poly(forme, (x, y) => tonDe((x / 10) * lx * 0.35 + (y / 3.5) * ly * 0.8 + LUMIERE.z * 0.9))
     p.line(-5, 0, 6, 0, tonDe(LUMIERE.z * 0.9 - 0.1))
-    // la verrière et son éclat, qui glisse du côté de la lumière
-    p.circle(3, 0, 1.8, VERRIERE[1])
-    p.dot(3 + lx * 0.9, ly * 0.9, VERRIERE[2])
-    p.dot(3 + lx * 1.4, ly * 1.4, VERRIERE[3])
-    // le moteur : la tuyère sombre, un feu de position de chaque côté
-    p.poly([[-7, -1.8], [-8, -1.3], [-8, 1.3], [-7, 1.8]], COQUE[1])
+    p.circle(3, 0, 1.8, verre[1])
+    p.dot(3 + lx * 0.9, ly * 0.9, verre[2])
+    p.dot(3 + lx * 1.4, ly * 1.4, verre[3])
+    p.poly([[-7, -1.8], [-8, -1.3], [-8, 1.3], [-7, 1.8]], coque[1])
     p.dot(-6, -3.6, N.hex('#ff5a5a'))
     p.dot(-6, 3.6, N.hex('#4aff7a'))
-    p.glow(3, 0, 5, VERRIERE[2], 0.25)
-    // LE FOREUR SUR LE TOIT (Keko) : un dôme au milieu de la coque, un canon qui vise la roche creusée (ou devant)
-    const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
-    p.circle(-1.5, 0, 2.1, COQUE[1])
-    p.circle(-1.8, -0.4, 1.3, COQUE[3])
-    p.dot(-2.2, -0.8, COQUE[5])
-    p.line(-1.5, 0, -1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, COQUE[2])
-    p.dot(-1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, m.forage !== null ? LASER[5] : LASER[2])
+    p.glow(3, 0, 5, verre[2], 0.25)
+    // le foreur sur le toit : un dôme au milieu de la coque, un canon qui vise
+    p.circle(-1.5, 0, 2.1, coque[1])
+    p.circle(-1.8, -0.4, 1.3, coque[3])
+    p.dot(-2.2, -0.8, coque[5])
+    p.line(-1.5, 0, -1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, coque[2])
+    p.dot(-1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, tire ? LASER[5] : LASER[2])
     p.place(0, 0)
   }
 
-  /** Le rayon du foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords rouges, une lueur ; l'impact brûle. */
-  function dessinerLeLaser(p: Peintre): void {
-    if (m.forage === null) return
-    const f = m.forage
-    const vise = Math.atan2(f.y - v.y, f.x - v.x)
-    const x0 = v.x + Math.cos(v.cap) * -1.5 + Math.cos(vise) * 4.5
-    const y0 = v.y + Math.sin(v.cap) * -1.5 + Math.sin(vise) * 4.5
+  function dessinerLeVaisseau(p: Peintre): void {
+    const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
+    const blanchi = t - toucheA < 0.1
+    dessinerUnVaisseau(p, v, flamme, blanchi ? BLANC : COQUE, blanchi ? BLANC : VERRIERE, vise, m.forage !== null)
+  }
+
+  function dessinerLesEnnemis(p: Peintre): void {
+    for (const e of m.ennemis) {
+      const b = e.corps
+      const cible = e.forage !== null ? e.forage : e.fait === 'chasse' ? { x: v.x, y: v.y } : null
+      const vise = cible !== null ? Math.atan2(cible.y - b.y, cible.x - b.x) - b.cap : 0
+      const blanchi = m.forage !== null && m.forage.sorte === 'ennemi' && m.forage.cible === e.id && Math.floor(t * 20) % 2 === 0
+      dessinerUnVaisseau(p, b, flammesEnnemies.get(e.id) ?? 0, blanchi ? BLANC : ROUGE, blanchi ? BLANC : VERRIERE_ENNEMIE, vise, e.forage !== null)
+    }
+  }
+
+  /** Les traits de l'ennemi : un fuseau violet-blanc le long de sa vitesse, une lueur. */
+  function dessinerLesTirs(p: Peintre): void {
     p.place(W / 2 - camera.x, H / 2 - camera.y)
+    for (const tr of m.tirs) {
+      const l = Math.hypot(tr.vx, tr.vy) || 1
+      const ux = tr.vx / l
+      const uy = tr.vy / l
+      p.line(tr.x - ux * 5, tr.y - uy * 5, tr.x - ux * 2, tr.y - uy * 2, VIOLET[2])
+      p.line(tr.x - ux * 2, tr.y - uy * 2, tr.x, tr.y, VIOLET[4])
+      p.px(tr.x, tr.y, N.WHITE)
+      p.glow(tr.x, tr.y, 6, VIOLET[3], 0.6)
+    }
+    p.place(0, 0)
+  }
+
+  /** Un rayon de foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords colorés, une lueur ; l'impact brûle. */
+  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[]): void {
+    const vise = Math.atan2(f.y - depuis.y, f.x - depuis.x)
+    const x0 = depuis.x + Math.cos(depuis.cap) * -1.5 + Math.cos(vise) * 4.5
+    const y0 = depuis.y + Math.sin(depuis.cap) * -1.5 + Math.sin(vise) * 4.5
     const px = -Math.sin(vise)
     const py = Math.cos(vise)
     const vacille = 0.75 + 0.25 * Math.sin(t * 70)
-    p.line(x0 + px, y0 + py, f.x + px, f.y + py, LASER[2], 0.7)
-    p.line(x0 - px, y0 - py, f.x - px, f.y - py, LASER[2], 0.7)
-    p.line(x0, y0, f.x, f.y, LASER[4], 1)
+    p.line(x0 + px, y0 + py, f.x + px, f.y + py, teintes[2], 0.7)
+    p.line(x0 - px, y0 - py, f.x - px, f.y - py, teintes[2], 0.7)
+    p.line(x0, y0, f.x, f.y, teintes[4], 1)
     p.line(x0, y0, f.x, f.y, N.WHITE, vacille)
-    p.glowLine(x0, y0, f.x, f.y, 4, LASER[3], 0.45)
-    // l'impact : un point blanc, une lueur qui grandit avec la part creusée
+    p.glowLine(x0, y0, f.x, f.y, 4, teintes[3], 0.45)
     p.circle(f.x, f.y, 1.2 + f.part, N.WHITE)
-    p.glow(f.x, f.y, 8 + 10 * f.part, LASER[4], 0.6 + 0.4 * vacille)
+    p.glow(f.x, f.y, 8 + 10 * f.part, teintes[4], 0.6 + 0.4 * vacille)
     p.glow(f.x, f.y, 3, N.WHITE, 0.5)
+  }
+
+  function dessinerLesLasers(p: Peintre): void {
+    p.place(W / 2 - camera.x, H / 2 - camera.y)
+    if (m.forage !== null) dessinerUnLaser(p, v, m.forage, LASER)
+    for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET)
     p.place(0, 0)
   }
 
@@ -323,6 +368,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], PEPITE[2])
       p.dot(x, y - 1, PEPITE[3])
       p.glow(x, y, 6, PEPITE[2], 0.5)
+    }
+    // la coque, en haut à droite : une case par point, pleine ou vide ; elle clignote quand on vient d'être touché
+    for (let i = 0; i < CONF.coque; i++) {
+      const x = W - 8 - (CONF.coque - 1 - i) * 6
+      const plein = i < m.coque
+      const chaud = t - toucheA < 0.3 && Math.floor(t * 16) % 2 === 0
+      p.poly([[x - 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], plein ? (chaud ? N.WHITE : COQUE[5]) : COQUE[1])
+      if (plein) p.dot(x - 1, COMPTEUR.y + 3, COQUE[6])
     }
     if (affiche === 0 && envols.length === 0) return
     const allume = t - allumeA < 0.18
@@ -394,36 +447,73 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const direction = directionVoulue()
       while (accumule >= PAS) {
         accumule -= PAS
-        const r = avancerLeMonde(C, m, PAS, direction)
+        const r = avancerLeMonde(CONF, m, PAS, direction)
         v = m.vaisseau
-        // le laser creuse : des étincelles au point d'impact, le long de la normale de la roche
-        if (m.forage !== null && R.next() < 0.6) {
-          const f = m.forage
-          const nx = v.x - f.x
-          const ny = v.y - f.y
+        // les lasers creusent : des étincelles au point d'impact, le long de la normale (le joueur, et chaque ennemi qui mine)
+        const forages: { f: Forage; depuis: Vaisseau }[] = []
+        if (m.forage !== null) forages.push({ f: m.forage, depuis: v })
+        for (const e of m.ennemis) if (e.forage !== null) forages.push({ f: e.forage, depuis: e.corps })
+        for (const { f, depuis } of forages) {
+          if (R.next() >= 0.6) continue
+          const nx = depuis.x - f.x
+          const ny = depuis.y - f.y
           const d = Math.hypot(nx, ny) || 1
           const a = Math.atan2(ny, nx) + R.range(-1.1, 1.1)
           const vit = R.range(30, 90) * (0.6 + f.part)
-          etincelles.spawn(N.P.SPARK, f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + v.vx * 0.2, Math.sin(a) * vit + v.vy * 0.2, R.range(0.2, 0.45), N.WHITE, 1)
-          if (R.next() < 0.25) etincelles.spawn(N.P.GRIT, f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), rocheDe(m.forage.cible)[4], 1)
+          etincelles.spawn(N.P.SPARK, f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + depuis.vx * 0.2, Math.sin(a) * vit + depuis.vy * 0.2, R.range(0.2, 0.45), N.WHITE, 1)
+          if (R.next() < 0.25) etincelles.spawn(N.P.GRIT, f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), f.sorte === 'roche' ? rocheDe(f.cible)[4] : ROUGE[4], 1)
         }
-        // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
-        for (const ec of r.eclats) {
-          flashs.push({ x: ec.x, y: ec.y, t0: t, r: ec.rayon })
-          const roche = rocheDe(ec.graine)
-          const n = 6 + Math.round(ec.rayon)
-          for (let i = 0; i < n; i++) {
-            const a = R.range(0, Math.PI * 2)
-            const d = R.range(0, ec.rayon * 0.7)
-            const vit = R.range(25, 90)
-            morceaux.add({ kind: N.B.SHARD, x: ec.x + Math.cos(a) * d, y: ec.y + Math.sin(a) * d, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, g: 0, drag: 1.1, bounce: 0, life: R.range(0.8, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-9, 9), s: R.range(1.5, 2.5 + ec.rayon * 0.15), c: roche[2 + Math.floor(R.next() * 4)] })
+        for (const ev of r.evenements) {
+          switch (ev.type) {
+            case 'eclat': {
+              // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+              const roche = rocheDe(ev.graine)
+              const n = 6 + Math.round(ev.rayon)
+              for (let i = 0; i < n; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const d = R.range(0, ev.rayon * 0.7)
+                const vit = R.range(25, 90)
+                morceaux.add({ kind: N.B.SHARD, x: ev.x + Math.cos(a) * d, y: ev.y + Math.sin(a) * d, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, g: 0, drag: 1.1, bounce: 0, life: R.range(0.8, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-9, 9), s: R.range(1.5, 2.5 + ev.rayon * 0.15), c: roche[2 + Math.floor(R.next() * 4)] })
+              }
+              secousse = Math.max(secousse, Math.min(1, 0.3 + ev.rayon / 20))
+              if (typeof navigator.vibrate === 'function') navigator.vibrate(30)
+              break
+            }
+            case 'ramasse':
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0 })
+              if (ev.par === 'joueur') envols.push({ x: v.x, y: v.y, t0: t })
+              break
+            case 'touche': {
+              // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
+              toucheA = t
+              secousse = Math.max(secousse, 0.7)
+              if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
+              const mod = FX['impacts/hit-spark']
+              if (mod !== undefined) effets.push({ fx: N.createFx(mod, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, height: 0, angle: Math.atan2(ev.x - v.x, -(ev.y - v.y)), palette: N.PAL.blood }), x: ev.x, y: ev.y })
+              break
+            }
+            case 'ennemiDetruit': {
+              // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: 7 })
+              for (let i = 0; i < 14; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(30, 110)
+                morceaux.add({ kind: N.B.SHARD, x: ev.x, y: ev.y, vx: Math.cos(a) * vit + ev.vx * 0.4, vy: Math.sin(a) * vit + ev.vy * 0.4, g: 0, drag: 1.2, bounce: 0, life: R.range(0.8, 1.5), a: R.range(0, Math.PI * 2), va: R.range(-10, 10), s: R.range(1.5, 3), c: ROUGE[1 + Math.floor(R.next() * 4)] })
+              }
+              secousse = Math.max(secousse, 0.6)
+              flammesEnnemies.delete(ev.id)
+              if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
+              break
+            }
+            case 'perdu':
+              perduA = t
+              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} à bord. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              ecran.hidden = false
+              break
+            default:
+              break
           }
-          secousse = Math.max(secousse, Math.min(1, 0.3 + ec.rayon / 20))
-          if (typeof navigator.vibrate === 'function') navigator.vibrate(30)
-        }
-        for (const pe of r.ramasses) {
-          flashs.push({ x: pe.x, y: pe.y, t0: t, r: 0 })
-          envols.push({ x: v.x, y: v.y, t0: t })
         }
         for (const choc of r.chocs) {
           secousse = Math.min(1, 0.3 + choc.force / 120)
@@ -451,6 +541,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       flamme += (v.poussee - flamme) * Math.min(1, dt * 14)
+      for (const e of m.ennemis) {
+        const f = flammesEnnemies.get(e.id) ?? 0
+        flammesEnnemies.set(e.id, f + (e.corps.poussee - f) * Math.min(1, dt * 14))
+        if (e.corps.poussee > 0.05 && R.next() < 0.5) {
+          const b = e.corps
+          const vitesse = 30 + 40 * b.poussee
+          braises.spawn(N.P.EMBER, b.x - Math.cos(b.cap) * 8 + R.range(-1, 1), b.y - Math.sin(b.cap) * 8 + R.range(-1, 1), b.vx * 0.3 - Math.cos(b.cap) * vitesse + R.range(-8, 8), b.vy * 0.3 - Math.sin(b.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), FEU[5], R.range(0.6, 1.2))
+        }
+      }
     }
     // la caméra suit, avec un peu d'avance dans le sens de la vitesse
     const viseX = v.x + v.vx * 0.35
@@ -494,8 +593,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
     }
     p.place(0, 0)
+    dessinerLesEnnemis(p)
     dessinerLeVaisseau(p)
-    dessinerLeLaser(p)
+    dessinerLesTirs(p)
+    dessinerLesLasers(p)
     dessinerLeScore(p)
     for (const e of effets) e.fx.draw(frame)
     N.composite(frame, img.data, FOND)

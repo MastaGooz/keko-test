@@ -115,6 +115,39 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   grains de la roche), la roche qui tremble d'autant plus qu'elle est près
   d'éclater. Tout est dans le monde (le peintre posé sur la caméra).
 
+## L'ennemi (Keko, 08/11 : « on rajoute un ennemi qui mine et qui tire ? »)
+
+- **Un rival, un à la fois** : il naît à 10 s (puis 18 s après sa mort), à
+  230 unités dans une direction tirée de la graine du monde, le nez vers le
+  joueur. Le même corps que le joueur, un moteur moins vif (poussée 120,
+  110 de pointe, 5 rad/s), 36 points que le foreur du joueur creuse comme une
+  roche.
+- **Il MINE** quand il ne voit pas le joueur : la roche la plus proche de
+  lui à 260 unités, qu'il rejoint jusqu'à portée de laser, puis il freine et
+  la creuse au même débit — *les deux creusent les mêmes roches* (`creuse`
+  est partagé). Ses pépites viennent à lui (l'aimant tire chaque pépite vers
+  le vaisseau le plus proche) et font son `butin`. Sans roche à portée, il
+  dérive vers le joueur.
+- **Il CHASSE** dès qu'il voit le joueur (130 unités) : il se tient à 80,
+  HORS DE PORTÉE DU FORAGE DU JOUEUR (64) — la première version le tenait à
+  58 et le laser l'abattait tout seul —, le nez sur lui, et tire toutes les
+  1,8 s un trait à 130 unités/s qui vise avec de l'avance (la position du
+  joueur plus sa vitesse fois le temps de vol) et une dispersion de ±0,16 rad
+  tirée du monde — *mesuré à la capture : à 1,3 s et 170 unités/s sans
+  dispersion, un joueur immobile mourait en six secondes*. Un trait vit 2 s, s'écrase
+  sur une roche, et enlève un point de COQUE au joueur (5 au départ, des
+  cases en haut à droite). Coque percée : la partie est perdue, un toucher
+  repart à neuf.
+- **Pour l'abattre** il faut le rattraper (le joueur va plus vite) jusqu'à
+  moins de 64 : le laser vise l'ennemi dès qu'il est plus près qu'une roche.
+  Abattu, il éclate en morceaux rouges et rend son butin plus 3 pépites.
+- **Le dessin** : la même fonction de vaisseau avec une coque rouge sombre et
+  une verrière orange ; son laser est violet ; ses traits des fuseaux
+  violet-blanc ; il clignote blanc quand le laser du joueur le creuse ; le
+  joueur blanchit une image quand un trait le touche, avec une étincelle de
+  sang, une secousse et une vibration. `&ennemi` le fait naître tout de
+  suite à 90 unités, pour le voir sans attendre.
+
 ## Ce qui reste à faire
 
 - Rien ne se joue : ni tir, ni collecte, ni ennemi — c'est voulu pour juger
