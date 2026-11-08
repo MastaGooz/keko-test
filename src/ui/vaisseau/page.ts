@@ -397,7 +397,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // LE COMPTE DE L'EXTRACTION (Keko) : à quai, un arc d'or CONTINU (Keko : « plutôt qu'en pointillé ») se referme
         // le long du parvis depuis le haut, la tête blanche, et le nombre de secondes qui restent au-dessus de la
         // station ; au bout, l'arc est plein et la station flambe d'or
-        if (aQuai && m.extraction > 0) {
+        // (il se dessine aussi hors du parvis, tant que le compte redescend : la lumière reste et le cercle se vide,
+        // au lieu de tout faire disparaître — Keko)
+        const laProche = st.x === proche.x && st.y === proche.y
+        if (laProche && m.extraction > 0) {
           // (Keko : « le cercle de chargement manque de juice, une lumière plutôt qu'un cercle juste blanc ») : l'arc est
           // UNE LUMIÈRE — une bande d'or sombre et large dessous, le trait d'or clair au cœur blanc vers la tête, une
           // lueur posée tout le long, une tête qui bat et scintille et sème des étincelles, la station de plus en plus
@@ -414,15 +417,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // le départ de l'arc, en haut, a la même lumière que la tête (Keko : « l'effet de flare également au début »)
           const dx0 = sx + Math.cos(a0) * r
           const dy0 = sy + Math.sin(a0) * r
-          p.glow(dx0, dy0, 14, PEPITE[3], 0.6 + 0.4 * bat)
-          p.glow(dx0, dy0, 5, N.WHITE, 0.5 * bat)
-          N.sparkle(p, dx0, dy0, 2 + 2 * bat, N.WHITE, PEPITE[3], 0.7)
+          p.glow(dx0, dy0, 9, PEPITE[3], 0.6 + 0.4 * bat)
+          p.glow(dx0, dy0, 3.5, N.WHITE, 0.5 * bat)
+          N.sparkle(p, dx0, dy0, 1.5 + 1.5 * bat, N.WHITE, PEPITE[3], 0.7)
           const hx = sx + Math.cos(a1) * r
           const hy = sy + Math.sin(a1) * r
           if (u < 1) {
-            p.glow(hx, hy, 14, PEPITE[3], 0.6 + 0.4 * bat)
-            p.glow(hx, hy, 5, N.WHITE, 0.5 * bat)
-            N.sparkle(p, hx, hy, 2 + 2 * bat, N.WHITE, PEPITE[3], 0.7)
+            p.glow(hx, hy, 9, PEPITE[3], 0.6 + 0.4 * bat)
+            p.glow(hx, hy, 3.5, N.WHITE, 0.5 * bat)
+            N.sparkle(p, hx, hy, 1.5 + 1.5 * bat, N.WHITE, PEPITE[3], 0.7)
             // la tête sème des étincelles d'or (dans le monde : l'écran recule de la caméra)
             if (R.next() < 0.45) {
               const an = a1 + Math.PI / 2 + R.range(-0.6, 0.6)

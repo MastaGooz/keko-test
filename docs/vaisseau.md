@@ -233,7 +233,11 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   et blanc vers la tête, une lueur posée tous les 7 px le long, une tête qui
   bat (9 rad/s), scintille et sème des étincelles d'or dans le monde, la
   même lueur au départ de l'arc, en haut (Keko : « l'effet de flare également
-  au début du cercle, en plus de l'autre bout »), la
+  au début du cercle, en plus de l'autre bout » ; puis « diminue un peu la
+  taille des flares » : lueur 9, cœur blanc 3,5, scintillement 1,5 à 3), **et
+  l'arc reste dessiné hors du parvis tant que le compte redescend** (Keko :
+  « quand on sort, que la lumière reste mais que le cercle se vide, plutôt que
+  tout faire disparaître »), la
   station de plus en plus allumée à mesure que l'arc se referme —, les
   secondes qui restent en police pixel au-dessus de la station (`&quai` fait
   courir le compte dès le départ, pour juger l'arc d'un lien) ; au bout, la station flambe d'or et **le vaisseau
