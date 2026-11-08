@@ -237,8 +237,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     couches.forEach((couche, n) => {
       const ox = camera.x * couche.parallaxe
       const oy = camera.y * couche.parallaxe
-      const i0 = Math.floor(ox / couche.pas) - 1
-      const j0 = Math.floor(oy / couche.pas) - 1
+      // (les cases balayées partent du BORD de l'écran, pas de son centre : balayées depuis le centre, le haut restait
+      // vide sur une demi-hauteur — Keko : « sur tél, les étoiles n'existent pas en haut de l'écran » ; sur PC le tampon
+      // est si bas que ça ne se voyait pas)
+      const i0 = Math.floor((ox - W / 2) / couche.pas) - 1
+      const j0 = Math.floor((oy - H / 2) / couche.pas) - 1
       for (let j = j0; j <= j0 + Math.ceil(H / couche.pas) + 2; j++)
         for (let i = i0; i <= i0 + Math.ceil(W / couche.pas) + 2; i++) {
           if (tire(i, j, 11 + n) > couche.proba) continue
@@ -260,8 +263,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pas = 220
     const ox = camera.x * 0.1
     const oy = camera.y * 0.1
-    for (let j = Math.floor(oy / pas) - 1; j <= Math.floor((oy + H) / pas) + 1; j++)
-      for (let i = Math.floor(ox / pas) - 1; i <= Math.floor((ox + W) / pas) + 1; i++) {
+    for (let j = Math.floor((oy - H / 2) / pas) - 1; j <= Math.floor((oy + H / 2) / pas) + 1; j++)
+      for (let i = Math.floor((ox - W / 2) / pas) - 1; i <= Math.floor((ox + W / 2) / pas) + 1; i++) {
         if (tire(i, j, 71) > 0.6) continue
         const x = (i + tire(i, j, 72)) * pas - ox + W / 2
         const y = (j + tire(i, j, 73)) * pas - oy + H / 2

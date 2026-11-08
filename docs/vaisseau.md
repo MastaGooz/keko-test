@@ -85,6 +85,14 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   il n'est au centre qu'à l'arrêt ; les braises et les étincelles étaient
   dans le monde, lui non.
 
+- **Le ciel se balaie depuis le BORD de l'écran, pas depuis son centre**
+  (Keko, 08/11 : « sur tél, les étoiles n'existent pas en haut de l'écran,
+  elles apparaissent vers la moitié ») : les cases d'étoiles partaient de la
+  caméra et se dessinaient décalées de W/2, H/2 ; sur un tampon de 480 de
+  haut, les 144 px du haut restaient vides. Sur PC le tampon fait 180 de haut
+  et le trou n'existait pas — *ce qui marche sur la machine de dev et pas chez
+  Keko se vérifie à SA taille d'écran* (la capture CDP en 390 × 1200).
+
 ## Le forage (Keko, 08/11 : « un dispositif de forage laser sur le toit du vaisseau qui permet de miner les astéroïdes »)
 
 - **Le laser vise seul** : un seul doigt pilote déjà, on ne lui demande pas
