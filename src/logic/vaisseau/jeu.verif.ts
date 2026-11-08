@@ -33,6 +33,11 @@ const dedans: Vaisseau = { ...nouveauVaisseau(), x: a.x - a.rayon + 1, y: a.y, v
 const choc = avancer(C, dedans, 1 / 60, { x: 0, y: 0 })
 verifier('un choc repousse le vaisseau hors de l’astéroïde', Math.hypot(choc.vaisseau.x - a.x, choc.vaisseau.y - a.y) >= a.rayon + C.rayon - 1e-6)
 verifier('et rend un rebond', choc.chocs.length === 1 && choc.vaisseau.vx < 0)
+// s'appuyer doucement contre la roche n'est pas un choc, et un contact qui dure n'en refait pas
+const appui: Vaisseau = { ...nouveauVaisseau(), x: a.x - a.rayon - C.rayon + 0.5, y: a.y, vx: 4, vy: 0 }
+verifier('un contact doux ne fait pas de choc', avancer(C, appui, 1 / 60, { x: 1, y: 0 }).chocs.length === 0)
+const deja: Vaisseau = { ...dedans, contact: a.id }
+verifier('un contact qui dure ne refait pas de choc', avancer(C, deja, 1 / 60, { x: 0, y: 0 }).chocs.length === 0)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

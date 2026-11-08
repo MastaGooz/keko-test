@@ -34,6 +34,8 @@ export const VAISSEAU = {
   rayon: 4,
   /** La part de vitesse rendue par un rebond sur un astéroïde. */
   rebond: 0.45,
+  /** En dessous de cette vitesse normale, toucher une roche n'est pas un choc (on s'y appuie, on glisse le long). */
+  seuilChoc: 12,
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -61,6 +63,8 @@ export type Vaisseau = {
   poussee: number
   /** Le chemin parcouru, en unités. */
   parcouru: number
+  /** L'astéroïde contre lequel on était au pas précédent (`null` sinon) : un contact qui dure n'est pas un nouveau choc. */
+  contact: number | null
 }
 
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }
@@ -68,7 +72,7 @@ export type Asteroide = { id: number; x: number; y: number; rayon: number; grain
 export type Choc = { x: number; y: number; force: number; asteroide: number }
 
 export function nouveauVaisseau(): Vaisseau {
-  return { x: 0, y: 0, vx: 0, vy: 0, cap: -Math.PI / 2, poussee: 0, parcouru: 0 }
+  return { x: 0, y: 0, vx: 0, vy: 0, cap: -Math.PI / 2, poussee: 0, parcouru: 0, contact: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -138,8 +142,11 @@ export function avancer(c: ConfigVaisseau, v: Vaisseau, dt: number, direction: V
   cap += Math.sign(ecart) * Math.min(Math.abs(ecart), c.rotation * dt)
   let x = v.x + vx * dt
   let y = v.y + vy * dt
-  // les chocs : repoussé hors de l'astéroïde, la vitesse normale rendue en partie
+  // les chocs : repoussé hors de l'astéroïde, la vitesse normale rendue en partie ; un choc n'est rapporté que s'il
+  // est franc (au-dessus du seuil) et nouveau (on ne touchait pas déjà cette roche) — Keko : « si je colle doucement
+  // un astéroïde ça en génère en continu »
   const chocs: Choc[] = []
+  let contact: number | null = null
   for (const a of asteroidesAutour(c, x, y, c.champ.rayonMax + c.rayon + 2)) {
     const dx = x - a.x
     const dy = y - a.y
@@ -154,8 +161,9 @@ export function avancer(c: ConfigVaisseau, v: Vaisseau, dt: number, direction: V
     if (vn < 0) {
       vx -= (1 + c.rebond) * vn * nx
       vy -= (1 + c.rebond) * vn * ny
-      chocs.push({ x: a.x + nx * a.rayon, y: a.y + ny * a.rayon, force: -vn, asteroide: a.id })
+      if (-vn >= c.seuilChoc && v.contact !== a.id) chocs.push({ x: a.x + nx * a.rayon, y: a.y + ny * a.rayon, force: -vn, asteroide: a.id })
     }
+    contact = a.id
   }
-  return { vaisseau: { x, y, vx, vy, cap, poussee: force, parcouru: v.parcouru + vitesse * dt }, chocs }
+  return { vaisseau: { x, y, vx, vy, cap, poussee: force, parcouru: v.parcouru + vitesse * dt, contact }, chocs }
 }

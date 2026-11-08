@@ -203,7 +203,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * bombé), les ailes par leur inclinaison, et le reflet de la verrière glisse du côté de la lumière.
    */
   function dessinerLeVaisseau(p: Peintre): void {
-    p.place(W / 2, H / 2, false, v.cap)
+    // À SA PLACE DANS LE MONDE, pas au centre de l'écran : la caméra prend de l'avance sur lui, et le dessiner au centre
+    // le décalait de ses braises et de ses étincelles (Keko : « un offset bizarre diagonal »)
+    p.place(v.x - camera.x + W / 2, v.y - camera.y + H / 2, false, v.cap)
     const lx = Math.cos(v.cap) * LUMIERE.x + Math.sin(v.cap) * LUMIERE.y
     const ly = -Math.sin(v.cap) * LUMIERE.x + Math.cos(v.cap) * LUMIERE.y
     const tonDe = (lum: number) => (lum > 0.72 ? COQUE[6] : lum > 0.5 ? COQUE[5] : lum > 0.28 ? COQUE[4] : lum > 0.08 ? COQUE[3] : COQUE[2])

@@ -67,7 +67,17 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   sa vitesse, amortie (gain 4/s) : on voit devant soi quand on va vite.
 - **Un choc** : l'étincelle `impacts/hit-spark` du dépôt (palette pierre)
   au point de contact, orientée depuis le vaisseau, une secousse et une
-  vibration proportionnelles à la vitesse normale.
+  vibration proportionnelles à la vitesse normale. **Un choc est franc et
+  nouveau** (Keko : « si je colle doucement un astéroïde ça en génère en
+  continu ») : au-dessous de 12 unités/s de vitesse normale on s'appuie sans
+  étincelle, et tant qu'on reste contre la même roche (`contact`) il n'y a
+  pas de second choc ; la poussée hors de la roche, elle, joue à chaque pas.
+- **Le vaisseau se dessine À SA PLACE DANS LE MONDE**, pas au centre de
+  l'écran (Keko : « le feu du réacteur démarre trop loin derrière quand je
+  vais vite, un offset bizarre diagonal en virage, et entre le point de
+  collision et les étincelles ») : la caméra prend de l'avance sur lui, donc
+  il n'est au centre qu'à l'arrêt ; les braises et les étincelles étaient
+  dans le monde, lui non.
 
 ## Ce qui reste à faire
 
