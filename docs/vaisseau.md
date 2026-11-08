@@ -151,9 +151,18 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 ## La station d'extraction (Keko, 08/11 : « un point d'extraction où déposer les ressources qu'on porte »)
 
 - **Au point de départ**, dont le vide (70 unités sans roche) devient le
-  parvis : un anneau d'acier autour d'un cœur, quatre nacelles qui tournent
-  lentement, un fanal qui bat, un cercle pointillé qui dit sa portée (26
-  unités). À quai avec du minerai à bord, une pépite part toutes les 0,12 s
+  parvis (un cercle pointillé qui dit sa portée, 26 unités). **Son dessin
+  est dans `station.ts`**, en planche hors navigateur comme les roches (Keko :
+  « l'extraction n'a pas la texture au niveau des autres éléments ») : un
+  moyeu octogonal en tôles à facettes qui prennent la lumière du monde, une
+  couture entre les pans, des rivets côté clair, un dôme de verrière au
+  reflet ; un anneau de tôles segmentées qui tourne lentement, ombré, rivets
+  et hublots qui s'allument tour à tour ; quatre entretoises ; deux panneaux
+  solaires quadrillés de cellules bleu nuit ; un mât au fanal rouge qui bat.
+  *La première version était un anneau plat et quatre ronds.*
+- **Un POINTEUR au bord de l'écran** (Keko) quand la station est hors champ :
+  une petite station en icône et une flèche, d'or qui bat quand on porte du
+  minerai, de verrière sinon. À quai avec du minerai à bord, une pépite part toutes les 0,12 s
   du vaisseau au cœur de la station, l'anneau luit d'or, et la BANQUE compte
   à l'arrivée (une icône de station et son nombre à côté du porté, en haut à
   gauche). **Ce qu'on porte se perd avec la coque ; la banque reste** d'une

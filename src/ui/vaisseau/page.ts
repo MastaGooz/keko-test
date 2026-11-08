@@ -14,6 +14,7 @@ import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
+import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -67,6 +68,14 @@ const ROUGE = N.fit(['#1a0a0e', '#4a1a22', '#7a2a36', '#a8404c', '#d06a70', '#f0
 const VERRIERE_ENNEMIE = N.fit(['#4a2a06', '#d07a18', '#ffc860', '#ffffff'], 4)
 const VIOLET = N.fit(['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'], 6)
 const BLANC = N.fit(['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'], 7)
+/** Les teintes de la station : l'acier, la verrière, l'or du quai, le fanal, les cellules des panneaux. */
+const TEINTES_STATION = {
+  acier: N.fit(['#0c0e14', '#1c2230', '#2e3648', '#4a5468', '#6e7a90', '#9aa6ba', '#d0d8e6', '#ffffff'], 8),
+  verre: VERRIERE,
+  or: PEPITE,
+  rouge: N.hex('#ff3a3a'),
+  cellule: N.fit(['#0a1430', '#152a60', '#2a4a9a'], 3),
+}
 /** L'explosion d'un vaisseau : celle du dépôt sans son sol, à la taille du vaisseau (Keko : « l'effet nommé Explosion en version sans sol et à la taille du vaisseau ») ; le rival en rouge, ses morceaux de sa coque. */
 const EXPLOSION_RIVAL = ['#3a0a12', '#a01030', '#e0304a', '#ff6a5a', '#ffa080', '#ffd0b0', '#ffe8dc', '#ffffff']
 const FOND = N.hex('#07060f')
@@ -359,46 +368,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
 
-  /**
-   * LA STATION D'EXTRACTION, au point de départ : un anneau d'acier autour d'un cœur, quatre nacelles, un fanal qui bat,
-   * et quand le vaisseau est à quai, l'anneau s'allume et les pépites déposées y volent. Elle prend la lumière du monde.
-   */
+  /** La station d'extraction (son dessin est dans `station.ts`), son parvis, et les pépites déposées qui y volent. */
   function dessinerLaStation(p: Peintre): void {
     const sx = CONF.station.x - camera.x + W / 2
     const sy = CONF.station.y - camera.y + H / 2
-    if (sx < -40 || sy < -40 || sx > W + 40 || sy > H + 40) return
-    const R0 = CONF.station.rayon
     const aQuai = m.phase === 'vol' && Math.hypot(v.x - CONF.station.x, v.y - CONF.station.y) <= CONF.station.portee
-    const lent = t * 0.25
-    // le parvis : un cercle pointillé qui dit la portée, plus net à quai
-    for (let i = 0; i < 36; i++) {
-      const a = (i / 36) * Math.PI * 2 + lent
-      p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
+    if (sx > -40 && sy > -40 && sx < W + 40 && sy < H + 40) {
+      // le parvis : un cercle pointillé qui dit la portée, plus net à quai
+      for (let i = 0; i < 36; i++) {
+        const a = (i / 36) * Math.PI * 2 + t * 0.25
+        p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
+      }
+      dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
+      if (aQuai && t - depotA < 0.2) p.glow(sx, sy, CONF.station.rayon * 2.4, PEPITE[2], 0.4)
     }
-    // les nacelles : quatre, qui tournent lentement avec l'anneau, éclairées d'un côté
-    for (let i = 0; i < 4; i++) {
-      const a = lent + (i * Math.PI) / 2
-      const x = sx + Math.cos(a) * (R0 + 2)
-      const y = sy + Math.sin(a) * (R0 + 2)
-      p.circle(x, y, 2.6, COQUE[0])
-      p.circle(x, y, 2, (px, py) => ((px - x) * LUMIERE.x + (py - y) * LUMIERE.y > 0.3 ? COQUE[5] : COQUE[3]))
-      p.dot(x + LUMIERE.x * 1.2, y + LUMIERE.y * 1.2, COQUE[6])
-    }
-    // l'anneau : acier, un bord sombre, un bord éclairé côté lumière
-    p.ring(sx, sy, R0 + 0.5, 3.5, COQUE[0])
-    p.ring(sx, sy, R0, 2.4, (px, py) => ((px - sx) * LUMIERE.x + (py - sy) * LUMIERE.y > R0 * 0.35 ? COQUE[5] : (px - sx) * LUMIERE.x + (py - sy) * LUMIERE.y < -R0 * 0.35 ? COQUE[2] : COQUE[4]))
-    // les rayons de l'anneau au cœur, et le cœur : une verrière qui s'allume à quai
-    for (let i = 0; i < 4; i++) {
-      const a = lent + Math.PI / 4 + (i * Math.PI) / 2
-      p.line(sx + Math.cos(a) * 4, sy + Math.sin(a) * 4, sx + Math.cos(a) * (R0 - 1), sy + Math.sin(a) * (R0 - 1), COQUE[3])
-    }
-    p.circle(sx, sy, 4.2, COQUE[0])
-    p.circle(sx, sy, 3.4, aQuai ? PEPITE[2] : VERRIERE[1])
-    p.dot(sx - 1, sy - 1, aQuai ? PEPITE[4] : VERRIERE[3])
-    // le fanal : il bat ; à quai, l'anneau entier luit d'or
-    const bat = 0.5 + 0.5 * Math.sin(t * 4)
-    p.glow(sx, sy, 10, aQuai ? PEPITE[2] : VERRIERE[2], 0.25 + 0.35 * bat)
-    if (aQuai) p.glow(sx, sy, R0 * 2.2, PEPITE[2], 0.35 + 0.25 * (t - depotA < 0.2 ? 1 : 0))
     // les pépites déposées : elles volent du vaisseau au cœur de la station
     for (let i = depots.length - 1; i >= 0; i--) {
       const d = depots[i]
@@ -416,6 +399,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.dot(x, y - 1, PEPITE[3])
       p.glow(x, y, 6, PEPITE[2], 0.5)
     }
+  }
+
+  /** Le pointeur vers la station quand elle est hors champ (Keko) : une petite station en icône au bord de l'écran, et une flèche ; il bat quand on porte du minerai. */
+  function dessinerLePointeur(p: Peintre): void {
+    const dx = CONF.station.x - camera.x
+    const dy = CONF.station.y - camera.y
+    const marge = 12
+    if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) return
+    const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
+    const x = Math.round(W / 2 + dx * k)
+    const y = Math.round(H / 2 + dy * k)
+    const a = Math.atan2(dy, dx)
+    const porte = m.minerai > 0
+    const bat = porte ? 0.6 + 0.4 * Math.sin(t * 6) : 0.8
+    const c = porte ? PEPITE[2] : VERRIERE[2]
+    // l'icône : un petit anneau et son cœur, en retrait du bord ; la flèche devant, vers la station
+    const ix = x - Math.cos(a) * 6
+    const iy = y - Math.sin(a) * 6
+    p.ring(ix, iy, 3.2, 1.4, TEINTES_STATION.acier[5], bat)
+    p.dot(ix, iy, c, bat)
+    const pointe = [x + Math.cos(a) * 3, y + Math.sin(a) * 3]
+    p.poly([pointe, [x + Math.cos(a + 2.4) * 3.5, y + Math.sin(a + 2.4) * 3.5], [x + Math.cos(a - 2.4) * 3.5, y + Math.sin(a - 2.4) * 3.5]], c, bat)
+    p.glow(ix, iy, 7, c, 0.35 * bat)
   }
 
   /** Le score, en haut à gauche de la scène : une pépite en icône, le nombre en police pixel du dépôt ; les pépites en vol y arrivent. */
@@ -709,6 +715,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else if (ecran.hidden && t - perduA > 1) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
+    dessinerLePointeur(p)
     dessinerLeScore(p)
     for (const e of effets) e.fx.draw(frame)
     N.composite(frame, img.data, FOND)
