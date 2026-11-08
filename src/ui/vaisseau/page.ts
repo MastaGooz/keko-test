@@ -61,8 +61,7 @@ const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 const FEU = N.fit(N.PAL.fire, 8)
-/** Le laser du joueur : le cyan de sa verrière (il était rouge-orangé, et se confondait avec le rival, qui est rouge). */
-const LASER = N.fit(['#062a3a', '#0a7090', '#19c0e0', '#6fe8ff', '#c8f8ff', '#ffffff'], 6)
+const LASER = N.fit(['#3a0a10', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0', '#ffffff'], 6)
 const PEPITE = N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5)
 /** L'ennemi : une coque rouge sombre, une verrière orange, un laser violet. */
 const ROUGE = N.fit(['#1a0a0e', '#4a1a22', '#7a2a36', '#a8404c', '#d06a70', '#f0a0a0', '#ffffff'], 7)
@@ -345,43 +344,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /** Un rayon de foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords colorés, une lueur ; l'impact brûle. */
-  /**
-   * Un laser, du canon de `depuis` au point `f`. DEUX ÉCRITURES, pour qu'on ne confonde jamais les deux rayons (Keko :
-   * « on n'arrive pas à distinguer les deux rayons, le joueur va être confus ») : celui du joueur est un TRAIT FIN
-   * CONTINU au cœur blanc, cyan comme sa verrière ; celui du rival (`pulse`) est une CHAÎNE DE PULSATIONS violettes
-   * qui courent vers la cible, plus large, sans cœur blanc, un anneau à l'impact.
-   */
-  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[], pulse: boolean): void {
+  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[]): void {
     const vise = Math.atan2(f.y - depuis.y, f.x - depuis.x)
     const x0 = depuis.x + Math.cos(depuis.cap) * -1.5 + Math.cos(vise) * 4.5
     const y0 = depuis.y + Math.sin(depuis.cap) * -1.5 + Math.sin(vise) * 4.5
     const px = -Math.sin(vise)
     const py = Math.cos(vise)
     const vacille = 0.75 + 0.25 * Math.sin(t * 70)
-    if (pulse) {
-      const ux = Math.cos(vise)
-      const uy = Math.sin(vise)
-      const L = Math.hypot(f.x - x0, f.y - y0)
-      // le fourreau sombre, large de trois
-      p.line(x0 + px, y0 + py, f.x + px, f.y + py, teintes[1], 0.85)
-      p.line(x0 - px, y0 - py, f.x - px, f.y - py, teintes[1], 0.85)
-      p.line(x0, y0, f.x, f.y, teintes[2], 1)
-      // les pulsations : des segments de 4 tous les 8, qui courent vers la cible
-      const pas = 8
-      const dep = (t * 110) % pas
-      for (let s = dep - pas; s < L; s += pas) {
-        const a = Math.max(0, s)
-        const b = Math.min(L, s + 4)
-        if (b <= a) continue
-        p.line(x0 + ux * a, y0 + uy * a, x0 + ux * b, y0 + uy * b, teintes[4], 1)
-        p.line(x0 + ux * a + px, y0 + uy * a + py, x0 + ux * b + px, y0 + uy * b + py, teintes[3], 0.8)
-        p.line(x0 + ux * a - px, y0 + uy * a - py, x0 + ux * b - px, y0 + uy * b - py, teintes[3], 0.8)
-      }
-      p.glowLine(x0, y0, f.x, f.y, 5, teintes[2], 0.4)
-      p.ring(f.x, f.y, 2.2 + f.part * 1.5, 1.2, teintes[4])
-      p.glow(f.x, f.y, 9 + 8 * f.part, teintes[3], 0.6 + 0.3 * vacille)
-      return
-    }
     p.line(x0 + px, y0 + py, f.x + px, f.y + py, teintes[2], 0.7)
     p.line(x0 - px, y0 - py, f.x - px, f.y - py, teintes[2], 0.7)
     p.line(x0, y0, f.x, f.y, teintes[4], 1)
@@ -394,8 +363,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLesLasers(p: Peintre): void {
     p.place(W / 2 - camera.x, H / 2 - camera.y)
-    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER, false)
-    for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET, true)
+    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER)
+    for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET)
     p.place(0, 0)
   }
 
@@ -581,8 +550,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const d = Math.hypot(nx, ny) || 1
           const a = Math.atan2(ny, nx) + R.range(-1.1, 1.1)
           const vit = R.range(30, 90) * (0.6 + f.part)
-          const T = depuis === v ? LASER : VIOLET
-          etincelles.ajouter('etincelle', f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + depuis.vx * 0.2, Math.sin(a) * vit + depuis.vy * 0.2, R.range(0.2, 0.45), R.next() < 0.5 ? T[4] : T[3], 1, 2.5)
+          etincelles.ajouter('etincelle', f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + depuis.vx * 0.2, Math.sin(a) * vit + depuis.vy * 0.2, R.range(0.2, 0.45), R.next() < 0.5 ? LASER[4] : LASER[3], 1, 2.5)
           if (R.next() < 0.25) etincelles.ajouter('braise', f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), 0, 1, 1.5)
         }
         for (const ev of r.evenements) {

@@ -109,7 +109,7 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   et la roche fantôme poussait encore — Keko : « je collisionne toujours
   avec son ancienne position »), tout le reste du champ reste seedé.
 - **Le dessin** : le dôme et le canon sur la coque (au milieu, « le toit »
-  vu de dessus), un rayon à cœur blanc qui tremble entre deux bords cyan (rouges au départ, voir « L'ennemi ») et
+  vu de dessus), un rayon à cœur blanc qui tremble entre deux bords rouges et
   une lueur, un point d'impact qui chauffe avec la part creusée, des
   étincelles qui jaillissent de l'impact le long de la normale (et quelques
   grains de la roche), la roche qui tremble d'autant plus qu'elle est près
@@ -231,14 +231,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   n'a jamais tiré au laser sur lui, il le fait seulement en chasse. Chiffre
   de moi, à rejuger.
 - **Le dessin** : la même fonction de vaisseau avec une coque rouge sombre et
-  une verrière orange ; son laser est violet, **ET EN PULSATIONS** (Keko,
-  08/11 : « on n'arrive pas à distinguer les deux rayons, le joueur va être
-  confus » : les deux étaient le même trait fin au cœur blanc, et le laser du
-  joueur était ROUGE-ORANGÉ, la couleur du rival — il est passé au CYAN de sa
-  verrière, étincelles et flashs compris, et le rival a sa propre écriture :
-  un fourreau violet large de trois, des segments de 4 tous les 8 qui courent
-  vers la cible à 110 px/s, pas de cœur blanc, un anneau à l'impact) ; ses traits des fuseaux
-  violet-blanc ; il clignote blanc quand le laser du joueur le creuse ; le
+  une verrière orange ; son laser est violet ; ses traits des fuseaux
+  violet-blanc ; *essayé et retiré (Keko, 08/11) : deux écritures de laser, le
+  joueur en trait fin cyan, le rival en pulsations violettes larges — « reviens
+  à l'ancien laser, il était mieux ; le problème ne venait pas du laser mais de
+  la superposition des deux lasers, qui rend la situation peu lisible » (en
+  face à face, les deux rayons sont sur le même axe) ; à trancher autrement* ; il clignote blanc quand le laser du joueur le creuse ; le
   joueur blanchit une image quand un trait le touche, avec une étincelle de
   sang, une secousse et une vibration. `&ennemi` le fait naître tout de
   suite à 90 unités, pour le voir sans attendre.
