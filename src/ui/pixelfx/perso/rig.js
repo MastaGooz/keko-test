@@ -230,7 +230,7 @@ function ellipsoid(c, R, r, part, mat) {
 }
 // parts: each has its own number, so edges between them can be seen
 // PERSO : nez, oreilles, défenses et yeux ont leur numéro, donc leur trait d'encre contre la tête
-const PART = { nez: 25, earN: 26, earF: 27, defense: 28, oeil: 29, pelvis: 1, waist: 2, chest: 3, neck: 4, head: 5, face: 6, upperN: 7, elbowN: 8, foreN: 9, handN: 10, upperF: 11, elbowF: 12, foreF: 13, handF: 14, thighN: 15, kneeN: 16, shinN: 17, footN: 18, thighF: 19, kneeF: 20, shinF: 21, footF: 22, weapon: 23, offWeapon: 24 };
+const PART = { nez: 25, earN: 26, earF: 27, defense: 28, oeil: 29, chapeau: 30, pelvis: 1, waist: 2, chest: 3, neck: 4, head: 5, face: 6, upperN: 7, elbowN: 8, foreN: 9, handN: 10, upperF: 11, elbowF: 12, foreF: 13, handF: 14, thighN: 15, kneeN: 16, shinN: 17, footN: 18, thighF: 19, kneeF: 20, shinF: 21, footF: 22, weapon: 23, offWeapon: 24 };
 const useFrame = (name) => { curFrameIndex = FRAME_IDS.indexOf(name); };
 
 function drawBody(S) {
@@ -253,6 +253,11 @@ function drawBody(S) {
   if (T.oreilles) {
     const L = T.oreilles;
     for (const s of [1, -1]) sweep(surTete([-0.4, 0.9, s * 2.4]), surTete([-1.6 * L, 1.2 + 2.2 * L, s * (2.4 + 1.6 * L)]), 1.25 * h, 0.35 * h, s > 0 ? PART.earN : PART.earF, 0);
+  }
+  if (T.chapeau) {
+    const hc = T.chapeau;
+    ellipsoid(surTete([0.2, 2.5, 0]), Rh, [4.4 * h, 0.55 * h, 4.4 * h], PART.chapeau, 0);
+    sweep(surTete([0.1, 2.7, 0]), surTete([-1.2 * hc, 2.7 + 6.5 * hc, 0]), 2.5 * h, 0.3 * h, PART.chapeau, 0);
   }
   if (T.nez) sphere(surTete([3.1, -0.8, 0.2]), T.nez * h, PART.nez, 0);
   if (T.defenses) {
@@ -401,6 +406,10 @@ export const WEAPONS = {
   launcher: { two: -9, draw(T) {
     for (let i = -14; i <= 22; i += 0.4) for (let k = -6; k <= -1; k += 0.4) T(i, k, k < -4.8 ? STEEL.oliveA : k > -2.2 ? STEEL.oliveD : Math.abs(i - 3) < 1.4 ? STEEL.gold : STEEL.olive);
     for (let k = -6.8; k <= -0.2; k += 0.4) (T(22.4, k, STEEL.b), T(-14.4, k, STEEL.d));
+  } },
+  staff: { two: -9, draw(T) {
+    haft(T, -14, 24, STEEL.wood, STEEL.woodD, 0.7);
+    for (let i = 22; i <= 27.2; i += 0.4) for (let k = -2.6; k <= 2.6; k += 0.4) if (Math.hypot(i - 24.6, k) <= 2.5) T(i, k, k < -0.8 && i < 24.6 ? STEEL.hi : k > 0.9 || i > 26 ? STEEL.goldD : STEEL.gold);
   } },
   handle: { draw(T) {
     haft(T, -2.6, 6, STEEL.grip, STEEL.gripD);

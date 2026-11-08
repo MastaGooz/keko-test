@@ -1,4 +1,5 @@
 // La déclaration de l'effet JS voisin, pour TypeScript : la page pose ses propres types.
 export const meta: Record<string, unknown>
-export const act: Record<string, unknown>
+
 export function create(o: Record<string, unknown>): unknown
+export const act: { poses: unknown[] }

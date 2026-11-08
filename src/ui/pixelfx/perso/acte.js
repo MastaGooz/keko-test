@@ -52,3 +52,38 @@ export function dessinerLeCorps(acte, frame, perso, X, Y, flip) {
   if (actif) fx.draw(frame, "front");
   for (const cible of acte.targets) cible.drawStraw(frame.color, W, H, FX, FY, flip);
 }
+
+/**
+ * Peint une pose d'un personnage dans `frame`, les pieds en (X, Y) : ce qu'il faut à un jeu qui tient ses propres
+ * personnages (le proto du magicien). `teinte` et `k` (0..1) tirent les couleurs du corps vers une couleur (le gel,
+ * la brûlure, l'affaiblissement), l'encre exceptée ; `alpha` (0..1) le tramé d'un corps qui s'efface.
+ */
+export function peindrePose(frame, pose, perso, X, Y, flip, teinte = 0, k = 0, alpha = 1) {
+  const W = frame.w, H = frame.h, r = posed(pose, perso);
+  const tr = teinte & 255, tg = (teinte >>> 8) & 255, tb = (teinte >>> 16) & 255;
+  for (let i = 0; i < r.n; i++) {
+    const px = flip ? X - r.xs[i] - 1 : X + r.xs[i], py = Y + r.ys[i];
+    if (px < 0 || py < 0 || px >= W || py >= H) continue;
+    if (alpha < 1 && ((px + py) & 1 ? alpha < 0.75 : alpha < 0.25)) continue;
+    let c = r.color[i];
+    if (k > 0 && !r.ink[i]) {
+      const cr = c & 255, cg = (c >>> 8) & 255, cb = (c >>> 16) & 255;
+      c = (255 << 24) | (Math.round(cb + (tb - cb) * k) << 16) | (Math.round(cg + (tg - cg) * k) << 8) | Math.round(cr + (tr - cr) * k);
+    }
+    frame.color[py * W + px] = c;
+  }
+  return r;
+}
+
+/** L'ombre au sol d'un personnage, celle du dépôt : plus large les pieds écartés. */
+export function peindreOmbre(frame, pose, perso, X, Y) {
+  const W = frame.w, H = frame.h, q = pose, ry = Math.round(q.y ?? 0);
+  const hw = Math.round((10 + (Math.abs((q.ffx ?? -2) - (q.fbx ?? 3)) >> 1)) * perso.echelle) - Math.min(8, Math.abs(ry) >> 1);
+  if (Y < 0 || Y >= H) return;
+  for (let dy = 0; dy < 2; dy++)
+    for (let x = -hw + dy * 2; x <= hw - dy * 2; x++) {
+      const px = X + x, i = (Y + dy) * W + px;
+      if (px < 0 || px >= W || Y + dy >= H) continue;
+      frame.color[i] = (frame.color[i] & 0xffffff) | (Math.max(frame.color[i] >>> 24, 110) << 24);
+    }
+}

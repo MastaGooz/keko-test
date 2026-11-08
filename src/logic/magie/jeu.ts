@@ -111,8 +111,8 @@ export type Forme = 'aucun' | 'souffle' | 'eclair' | 'rocher' | 'rayon' | 'halo'
 /** Les éléments qui peuvent faire un élémentaire (avec la vie). */
 export type ElementDAttaque = 'feu' | 'froid' | 'foudre' | 'terre'
 const ATTAQUE: ElementDAttaque[] = ['feu', 'froid', 'foudre', 'terre']
-/** Ce que montre l'écran, autour de la tour (en unités du monde). */
-export type Vue = { gauche: number; droite: number; haut: number; bas: number }
+/** Ce que montre l'écran, autour de la tour (en unités du monde). `cote` : la VUE DE CÔTÉ du proto du magicien (`?magicien`), où les ennemis naissent à droite, sur la ligne du sol. */
+export type Vue = { gauche: number; droite: number; haut: number; bas: number; cote?: boolean }
 export type Point = { x: number; y: number }
 
 export type Ennemi = {
@@ -397,6 +397,8 @@ export function lancer(c: ConfigMagie, e: EtatMagie, cible: Point): Evenement[] 
 
 /** Le point où naît un ennemi : juste hors de l'écran, dans une direction tirée. */
 function horsDeLEcran(vue: Vue, marge: number, angle: number): Point {
+  // Vue de côté : tout arrive par la droite, au sol.
+  if (vue.cote === true) return { x: vue.droite + marge, y: 0 }
   const dx = Math.cos(angle)
   const dy = Math.sin(angle)
   const bordX = dx > 0 ? vue.droite + marge : -vue.gauche - marge

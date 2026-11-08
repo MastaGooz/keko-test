@@ -1,0 +1,224 @@
+/* LE MAGICIEN — `?magicien`. Une colonne : la barre du haut, la scène en pixel art agrandie en entier, la file du sort. Rien ne défile. */
+html.magicien-page,
+html.magicien-page body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #0d0c14;
+}
+
+.magicien {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0d0c14;
+  color: #ece8f4;
+  font-family: 'Baloo 2', sans-serif;
+  /* La roue se tire au doigt depuis n'importe où : rien ne doit défiler. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* En haut : la vague, les PV du magicien, les abattus. */
+.magicien-haut {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 6px;
+  font: 800 1rem 'Baloo 2', sans-serif;
+  color: #fff;
+  text-shadow: 0 0.1rem 0.3rem rgba(0, 0, 0, 0.8);
+}
+
+.magicien-haut[hidden] {
+  display: none;
+}
+
+.magicien-jauge {
+  flex: 1;
+  height: 0.8rem;
+  border-radius: 0.4rem;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.magicien-jauge-remplie {
+  height: 100%;
+  background: linear-gradient(90deg, #6f84e6, #a9bdff);
+  transition: width 0.2s;
+}
+
+/* La scène : le canvas de 192 × 112, agrandi par un entier, centré. */
+.magicien-scene {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
+}
+
+.magicien-canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border-radius: 0.4rem;
+  box-shadow: 0 0.6rem 2rem rgba(0, 0, 0, 0.6);
+}
+
+/* En bas : la file du sort (trois orbes, le nom, le ✕). */
+.magicien-bas {
+  padding: 0.5rem 16px calc(0.8rem + env(safe-area-inset-bottom));
+}
+
+.magicien-bas[hidden] {
+  display: none;
+}
+
+.magicien-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.2rem;
+}
+
+.magicien-orbe {
+  width: 2.3rem;
+  height: 2.3rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+}
+
+.magicien-orbe svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: #1e1038;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.magicien-orbe-pleine {
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  animation: magicien-entre 0.18s ease-out both;
+}
+
+@keyframes magicien-entre {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.magicien-nom {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.magicien-nom-titre {
+  font-weight: 800;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.magicien-nom small {
+  font-size: 0.75rem;
+  color: rgba(236, 232, 244, 0.7);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.magicien-vider {
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: 800 1.1rem 'Baloo 2', sans-serif;
+  touch-action: manipulation;
+}
+
+.magicien-vider[hidden] {
+  display: none;
+}
+
+/* La surcouche : la roue sous le doigt, les chiffres, la bannière, le voile rouge. */
+.magicien-surcouche {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* L'écran d'accueil et de fin. */
+.magicien-ecran {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 2rem 1.5rem;
+  background: rgba(13, 12, 20, 0.86);
+  text-align: center;
+}
+
+.magicien-ecran[hidden] {
+  display: none;
+}
+
+.magicien-ecran h1 {
+  margin: 0;
+  font: 800 2.2rem Grenze, serif;
+  color: #ffd27a;
+}
+
+.magicien-ecran p {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: rgba(236, 232, 244, 0.85);
+}
+
+.magicien-go {
+  font-weight: 800;
+  color: #fff;
+  animation: magicien-respire 1.4s ease-in-out infinite;
+}
+
+@keyframes magicien-respire {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.magicien-build {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.2rem;
+  font-size: 0.6rem;
+  color: rgba(236, 232, 244, 0.35);
+  pointer-events: none;
+}

@@ -197,6 +197,10 @@ palette écrits en dur, sans variante prévue.
   (nos effets qui exportent `act`, les `moves/` du dépôt) : gobelin, le
   mannequin du dépôt (son propre dessin), l'humain par notre squelette.
 
+**Les personnages servent déjà** : `?magicien` (`docs/magicien.md`) les fait
+jouer dans un jeu — le magicien (chapeau, bâton `staff`), le gobelin, l'orc,
+le golem, le squelette (`personnages.js`), peints par `peindrePose`.
+
 Ce qui n'est pas fait : les effets `actor: 2` (statuts, auras) dessinent
 toujours le sprite HERO2 du dépôt ; la correspondance `src` (le pixel de la
 pose → le pixel du corps debout, pour le givre et le poison qui suivent le

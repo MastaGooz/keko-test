@@ -70,6 +70,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) monterNeon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('magicien')) {
+  // LE MAGICIEN, un side project : la tour du magicien VUE DE CÔTÉ, en pixel art (pixelfx) — le magicien à gauche, les gobelins par la droite.
+  void import('./ui/magicien/page.ts').then(({ monterMagicien }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterMagicien(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('magie')) {
   // LA TOUR DU MAGICIEN, un side project : des sorts composés à la Magicka contre ce qui approche.
   void import('./ui/magie/page.ts').then(({ monterMagie }) => {
