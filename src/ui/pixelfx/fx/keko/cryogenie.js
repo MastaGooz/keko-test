@@ -8,7 +8,7 @@
 // ombrage : une face claire, une face sombre, l'arête blanche, la pointe blanche, un liseré sombre.
 import { Particles, Bits, Lights, P, B, Rng, fit, flare, sparkle, band, clamp, smooth, ease, TAU, WHITE } from "pixelfx";
 
-const CHARGE = 0.6, Y = -58, POUSSE = 0.32, TENUE = 1.05, ECLAT = CHARGE + TENUE;
+const CHARGE = 0.6, POUSSE = 0.32, TENUE = 1.05, ECLAT = CHARGE + TENUE;
 
 export const meta = {
   name: "Cryogénie",
@@ -23,8 +23,14 @@ export const meta = {
   options: { palette: ["#151a3d", "#212f6b", "#2c58aa", "#3a8bd8", "#62c8f4", "#a6ecff", "#dcfbff", "#ffffff"], seed: 9 },
 };
 
-export function create(o) {
-  const C = fit(o.palette, 8), R = new Rng(o.seed), sol = () => 0;
+/**
+ * Les deux versions sortent d'ici : EN L'AIR (le point à 58 px du sol, les cristaux dans toutes les directions)
+ * ou AU SOL (`auSol`, Keko : « une version posée au sol » ; le point sur le plancher, les cristaux en éventail
+ * vers le haut, l'anneau couché sur le sol, le givre qui s'étend avec lui). `cryogenie-sol.js` prend la seconde.
+ */
+export function fabriquer(auSol) {
+  return function create(o) {
+  const C = fit(o.palette, 8), R = new Rng(o.seed), sol = () => 0, Y = auSol ? -4 : -58;
   const ps = new Particles({ rng: R, ground: sol, sparks: [C[7], C[6], C[5], C[4]], haze: C[5] });
   const bits = new Bits({ ground: sol }), lumieres = new Lights();
   // les cristaux : douze grands à angles réguliers brouillés, douze petits entre eux, quelques pointes
@@ -38,9 +44,22 @@ export function create(o) {
       cristaux.push({ a, L: longueur, w: R.range(w[0], w[1]), t0: CHARGE + R.range(0, delai), ph: R.next(), fond: i % 2 === 1 });
     }
   };
-  poser(12, -Math.PI / 2, [34, 54], [10, 14], 0.1);
-  poser(12, -Math.PI / 2 + Math.PI / 12, [14, 26], [5, 8], 0.16);
-  poser(8, R.range(0, TAU), [8, 14], [3, 4], 0.22);
+  /** Au sol : n cristaux en éventail de la gauche à la droite, au-dessus du plancher. */
+  const eventail = (n, dec, L, w, delai) => {
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI + 0.12 + dec + ((Math.PI - 0.24 - 2 * dec) * i) / (n - 1) + R.range(-0.06, 0.06);
+      cristaux.push({ a, L: R.range(L[0], L[1]), w: R.range(w[0], w[1]), t0: CHARGE + R.range(0, delai), ph: R.next(), fond: i % 2 === 1 });
+    }
+  };
+  if (auSol) {
+    eventail(9, 0, [34, 54], [10, 14], 0.1);
+    eventail(8, 0.17, [14, 26], [5, 8], 0.16);
+    eventail(6, 0.05, [8, 14], [3, 4], 0.22);
+  } else {
+    poser(12, -Math.PI / 2, [34, 54], [10, 14], 0.1);
+    poser(12, -Math.PI / 2 + Math.PI / 12, [14, 26], [5, 8], 0.16);
+    poser(8, R.range(0, TAU), [8, 14], [3, 4], 0.22);
+  }
 
   /** Un cristal qui pointe de (0, Y) dans la direction a : un pic effilé, ombré comme ceux du dépôt. */
   function cristal(p, c, g, blanc, reflet, fonce) {
@@ -83,9 +102,25 @@ export function create(o) {
 
   let t = 0, lance = false, eclate = false;
 
+  /** L'anneau du flash : debout autour du point en l'air ; couché sur le sol au sol, la moitié lointaine derrière. */
+  function anneau(p, fond) {
+    if (!lance) return;
+    const u = (t - CHARGE) / 0.45;
+    if (u >= 1) return;
+    const r = 6 + (auSol ? 76 : 60) * ease.outCubic(u), ep = Math.max(1, 4 * (1 - u));
+    if (auSol) {
+      band(p, 0, 0, r, 0.16, ep, 1.1 - u, C, (g) => Math.sin(g) < 0 === fond, u < 0.2);
+      if (!fond) for (const c of [-1, 1]) p.glow(c * r, -2, 20, C[5], 0.45 * (1 - u));
+    } else if (!fond) {
+      band(p, 0, Y, r, 1, ep, 1.1 - u, C, (g) => Y + Math.sin(g) * r < -1, u < 0.2);
+      p.glowRing(0, Y, r, 6, C[5], 0.4 * (1 - u));
+    }
+  }
+
   function lancer() {
     lance = true;
-    lumieres.add(0, Y, 90, C[4], 0.9, 0.6);
+    // au sol, la grande lumière est relevée : centrée sur le plancher, elle fuyait sous la toile
+    lumieres.add(0, auSol ? Y - 22 : Y, 90, C[4], 0.9, 0.6);
     lumieres.add(0, Y, 48, WHITE, 0.8, 0.12);
     // la bourrasque : des flocons et des éclats dans toutes les directions
     // les flocons ne traversent pas le sol : on les jette dans la moitié haute
@@ -94,10 +129,10 @@ export function create(o) {
       ps.spawn(P.FLAKE, 0, Y, Math.cos(a) * v, Math.sin(a) * v, R.range(1, 1.7), R.chance(0.6) ? WHITE : C[6], R.range(0.5, 1.6));
     }
     for (let i = 0; i < 16; i++) {
-      const a = R.range(0, TAU), v = R.range(90, 200);
+      const a = auSol ? R.range(-Math.PI, 0) : R.range(0, TAU), v = R.range(90, 200);
       bits.add({ kind: B.SHARD, x: 0, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0.7, drag: 0.7, bounce: 0.3, life: R.range(0.7, 1.1), a: R.range(0, TAU), va: R.range(-20, 20), s: R.range(1.5, 3), c: R.pick([C[7], C[6], C[5]]) });
     }
-    for (let i = 0; i < 6; i++) ps.spawn(P.VAPOUR, R.range(-6, 6), Y + R.range(-6, 6), R.range(-40, 40), R.range(-30, 20), R.range(0.5, 0.9), C[6], R.range(3, 5));
+    for (let i = 0; i < 6; i++) ps.spawn(P.VAPOUR, R.range(-6, 6), Y + R.range(-6, 6), R.range(-40, 40), auSol ? -R.range(2, 12) : R.range(-30, 20), R.range(0.5, 0.9), C[6], R.range(3, 5));
   }
 
   function eclater() {
@@ -126,11 +161,12 @@ export function create(o) {
         // le froid afflue : des traits convergent vers l'étincelle, de plus en plus vite
         const k = t / CHARGE;
         if (R.chance(0.5 + k)) {
-          const a = R.range(0, TAU), D = R.range(24, 56), T = R.range(0.18, 0.3), v = (D * 3) / (Math.exp(3 * T) - 1);
-          const x = Math.cos(a) * D, y = Y + Math.sin(a) * D, l = Math.hypot(x, y - Y) || 1;
+          // au sol, le froid vient de la moitié haute : rien ne part de sous le plancher
+          const a = auSol ? R.range(-Math.PI, 0) : R.range(0, TAU), D = R.range(24, 56), T = R.range(0.18, 0.3), v = (D * 3) / (Math.exp(3 * T) - 1);
+          const x = Math.cos(a) * D, y = Math.min(-1, Y + Math.sin(a) * D), l = Math.hypot(x, y - Y) || 1;
           ps.spawn(P.STREAK, x, y, (-x / l) * v, ((Y - y) / l) * v, T, R.chance(0.5) ? C[6] : C[5]);
         }
-        if (R.chance(0.3)) ps.spawn(P.STAR, R.range(-6, 6), Y + R.range(-6, 6), 0, -2, R.range(0.15, 0.3), R.chance(0.5) ? WHITE : C[6], R.range(0.5, 1.2));
+        if (R.chance(0.3)) ps.spawn(P.STAR, R.range(-6, 6), Math.min(-1, Y + R.range(-6, 6)), 0, -2, R.range(0.15, 0.3), R.chance(0.5) ? WHITE : C[6], R.range(0.5, 1.2));
       }
       if (!lance && t >= CHARGE) lancer();
       if (!eclate && t >= ECLAT) eclater();
@@ -147,14 +183,15 @@ export function create(o) {
       lumieres.update(dt);
     },
     drawBack(p) {
+      anneau(p, true);
       // le sol gèle sous le sort : une lueur froide, un givre qui s'étend puis fond
       if (lance) {
         const k = smooth(CHARGE, CHARGE + 0.4, t) * (1 - smooth(ECLAT + 0.3, ECLAT + 1, t));
         if (k > 0) {
           for (let i = -2; i <= 2; i++) p.glow(i * 22, -3, 26, C[4], 0.15 * k);
-          const portee = 56 * k;
+          const P0 = auSol ? 80 : 56, portee = P0 * k;
           for (let x = -Math.floor(portee); x <= portee; x++) {
-            const q = Math.abs(x) / 56;
+            const q = Math.abs(x) / P0;
             if (((x * 7919) % 11) / 11 < 0.6 - q * 0.4) p.dot(x, 0, ((x * 31) % 7) / 7 < 0.3 ? WHITE : C[6], k * (1 - q * 0.5));
           }
         }
@@ -190,12 +227,7 @@ export function create(o) {
           flare(p, 0, Y, 48 * Math.pow(1 - a, 1.4), 1 - a, C);
           p.glow(0, Y, 56, WHITE, 0.6 * (1 - a));
         }
-        const u = s / 0.45;
-        if (u < 1) {
-          const r = 6 + 60 * ease.outCubic(u);
-          band(p, 0, Y, r, 1, Math.max(1, 4 * (1 - u)), 1.1 - u, C, (g) => Y + Math.sin(g) * r < -1, u < 0.2);
-          p.glowRing(0, Y, r, 6, C[5], 0.4 * (1 - u));
-        }
+        anneau(p, false);
         // la glace tient : elle luit, et juste avant d'éclater elle flashe
         if (!eclate && s > POUSSE) {
           const pre = clamp((t - (ECLAT - 0.12)) / 0.12);
@@ -213,4 +245,7 @@ export function create(o) {
       lumieres.draw(p);
     },
   };
+  };
 }
+
+export const create = fabriquer(false);

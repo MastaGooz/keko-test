@@ -101,6 +101,17 @@ puis le contrôle.* Trois effets tirés du projet, chacun d'une famille :
   l'anneau), l'éclatement était une bouillie d'éclats et de ronds de vapeur
   grise (moitié moins, plus courts, la vapeur sur les grands du fond seuls),
   et la toile s'est élargie trois fois pour les éclats des autres graines.
+- **`keko/cryogenie-sol`** (Keko : « une version posée au sol, comme le sont
+  certains effets déjà ») — **la même fabrique** (`fabriquer(auSol)` dans
+  `cryogenie.js`, le fichier au sol n'a que son `meta`) : le point sur le
+  plancher, les cristaux en ÉVENTAIL de la gauche à la droite au-dessus du
+  sol (neuf grands, huit petits, six pointes), l'anneau COUCHÉ sur le sol
+  (`band` à `sy` 0,16, la moitié lointaine derrière), le givre qui s'étend
+  plus loin, les éclats et les flocons jetés vers le haut ; la grande lumière
+  du flash est relevée de 22 px (centrée sur le plancher, elle fuyait sous la
+  toile) et le froid afflue de la moitié haute seulement (sondé : les traits
+  partaient de 52 px sous le sol). 280 × 156, 3 s. *Une retouche faite à
+  l'une vaut pour l'autre.*
 
 **Ce que les tours ont corrigé** : les trois débordaient de leur toile (les
 étincelles d'une autre graine vont plus loin que celles de la graine 1 ; le
