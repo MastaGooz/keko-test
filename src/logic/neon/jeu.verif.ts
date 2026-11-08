@@ -1,7 +1,7 @@
 /**
  * Vérifications de Néon, sans navigateur : le temps est injecté.
  */
-import { avancer, choisir, degatsDeParade, NEON as C, nouvellePartie, parable, parer, type Ennemi, type EtatNeon, type Evenement, type TypeEnnemi } from './jeu.ts'
+import { avancer, choisir, choixPossible, degatsDeParade, NEON as C, nouvellePartie, parable, parer, prochainContact, type Ennemi, type EtatNeon, type Evenement, type TypeEnnemi } from './jeu.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -140,7 +140,23 @@ const niveau = calme()
 niveau.xp = C.niveau.base - 1
 triangleA(niveau, 0.1)
 const evNiveau = parer(C, niveau)
-verifier('assez d’expérience : un niveau, trois choix différents, le jeu s’arrête', evNiveau.some((x) => x.type === 'niveau') && niveau.phase === 'choix' && niveau.choix.length === 3 && new Set(niveau.choix).size === 3 && niveau.niveau === 2)
+verifier("assez d'expérience : le niveau est gagné, mais le choix attend", !evNiveau.some((x) => x.type === 'niveau') && niveau.phase === 'jeu' && niveau.niveau === 2 && niveau.niveauxDus === 1)
+verifier("le moment est calme (plus rien n'approche) : au pas suivant, trois choix différents, le jeu s'arrête", choixPossible(C, niveau) && jouer(niveau, PAS).some((x) => x.type === 'niveau') && niveau.phase === 'choix' && niveau.choix.length === 3 && new Set(niveau.choix).size === 3 && niveau.niveauxDus === 0)
+const presse = calme()
+presse.niveauxDus = 1
+presse.niveauDepuis = 0
+triangleA(presse, 0.5)
+verifier("un triangle à 0,5 s du contact : pas calme, le choix attend", Math.abs(prochainContact(C, presse) - 0.5) < 0.01 && !choixPossible(C, presse) && jouer(presse, PAS).length === 0 && presse.phase === 'jeu')
+const tard = calme()
+tard.niveauxDus = 1
+tard.niveauDepuis = -C.niveau.attente
+triangleA(tard, 0.5)
+verifier("l'attente passée, il s'ouvre dès que rien n'est dans la fenêtre", choixPossible(C, tard) && jouer(tard, PAS).some((x) => x.type === 'niveau'))
+const tardFenetre = calme()
+tardFenetre.niveauxDus = 1
+tardFenetre.niveauDepuis = -C.niveau.attente
+triangleA(tardFenetre, 0.15)
+verifier("mais jamais pendant une parade possible", !choixPossible(C, tardFenetre))
 verifier("arrêté, le temps n'avance plus", jouer(niveau, 1).length === 0 && niveau.t < 0.1)
 const iCarapace = niveau.choix.indexOf('carapace')
 const choisi = iCarapace >= 0 ? 'carapace' : niveau.choix[0]

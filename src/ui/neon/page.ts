@@ -27,8 +27,9 @@ const HAUTEUR_MIN = 130
 /** Le cercle est à tant d'unités du bas de l'écran. */
 const BAS = 16
 const CLE_RECORD = 'keko-neon-record'
-/** La parade parfaite ralentit le temps un instant. */
+/** La parade parfaite ralentit le temps un instant ; après un choix, le jeu repart au ralenti pour retrouver le rythme. */
 const RALENTI = { duree: 0.22, facteur: 0.25 }
+const REPRISE = { duree: 0.6, facteur: 0.3 }
 
 const CYAN = '#19f2ff'
 const OR = '#ffd23a'
@@ -85,7 +86,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
   const touches = new Map<number, number>()
   let flashRouge = 0
   let secousse = 0
-  let ralentiJusqua = -1
+  let ralenti: { jusqua: number; facteur: number } = { jusqua: -1, facteur: 1 }
   let banniere: { texte: string; t: number } | null = null
   let pvAffiches = ''
 
@@ -195,7 +196,11 @@ export function monterNeon(racine: HTMLElement, build: string): void {
   function prendre(i: number): void {
     if (e.phase !== 'choix') return
     for (const x of choisir(C, e, i)) vivre(x)
-    if (e.phase !== 'choix') choix.hidden = true
+    if (e.phase !== 'choix') {
+      choix.hidden = true
+      // Le jeu repart au ralenti : le temps de reprendre le rythme (Keko : « le choix casse le rythme »).
+      ralenti = { jusqua: performance.now() / 1000 + REPRISE.duree, facteur: REPRISE.facteur }
+    }
     majHaut()
   }
 
@@ -239,7 +244,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
         flashs.push({ x: ev.x, y: ev.y, t: e.t, parfaite })
         eclater(ev.x, ev.y, parfaite ? OR : '#ffffff', parfaite ? 16 : 8, parfaite ? 30 : 18)
         chiffres.push({ x: ev.x, y: ev.y - 7, texte: parfaite ? 'PARFAITE' : 'Parade', couleur: parfaite ? OR : CYAN, vie: 0, gros: parfaite })
-        if (parfaite) ralentiJusqua = performance.now() / 1000 + RALENTI.duree
+        if (parfaite) ralenti = { jusqua: performance.now() / 1000 + RALENTI.duree, facteur: RALENTI.facteur }
         break
       }
       case 'onde':
@@ -301,7 +306,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
       pvAffiches = cle
       pvBloc.replaceChildren(...Array.from({ length: e.pvMax }, (_, i) => el('i', i < e.pv ? '' : 'vide')))
     }
-    niveauTexte.textContent = `NIV ${e.niveau}`
+    niveauTexte.textContent = `NIV ${e.niveau}${e.niveauxDus > 0 ? ' \u25B2' : ''}`
     remplie.style.width = `${Math.min(100, (100 * e.xp) / e.xpSuivant)}%`
     abattusTexte.textContent = `${e.abattus}`
   }
@@ -613,7 +618,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
     let dt = Math.min(0.05, (ms - precedent) / 1000)
     precedent = ms
     const maintenant = ms / 1000
-    if (maintenant < ralentiJusqua) dt *= RALENTI.facteur
+    if (maintenant < ralenti.jusqua) dt *= ralenti.facteur
     if (enJeu) {
       reste += dt
       let n = 0
@@ -646,7 +651,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
     if (enJeu) {
       remplie.style.width = `${Math.min(100, (100 * e.xp) / e.xpSuivant)}%`
       abattusTexte.textContent = `${e.abattus}`
-      niveauTexte.textContent = `NIV ${e.niveau}`
+      niveauTexte.textContent = `NIV ${e.niveau}${e.niveauxDus > 0 ? ' \u25B2' : ''}`
     }
     requestAnimationFrame(image)
   }

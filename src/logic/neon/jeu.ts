@@ -16,7 +16,11 @@
  * « enlève le système de combo de parade pour l'instant ».)*
  *
  * **Roguelike** : chaque niveau (l'expérience des ennemis abattus) arrête le
- * jeu et offre trois améliorations, on en prend une. La partie s'arrête
+ * jeu et offre trois améliorations, on en prend une — **mais pas au milieu
+ * d'une parade** (Keko, 08/11 : « le choix instantané me tue parfois, il casse
+ * le rythme et je foire ma parade en cours ») : le niveau attend un moment
+ * calme, rien à moins de `calme` s du contact ; passé `attente` s sans
+ * calme, il s'ouvre dès que rien n'est dans la fenêtre de parade. La partie s'arrête
  * quand le cercle s'éteint ; le record est le nombre d'abattus.
  *
  * Pur et seedé : le temps est injecté (en secondes), l'état modifié en place.
@@ -64,8 +68,8 @@ export const NEON = {
   naissance: { intervalle: 1.5, plancher: 0.4, en: 180, x: 40, dessus: 6 },
   /** Les ennemis forcissent : leurs PV ×(1 + tant par minute), leur vitesse ×(1 + tant par minute), plafonnée. */
   croissance: { pvParMinute: 1.2, vitesseParMinute: 0.12, vitesseMax: 1.8 },
-  /** L'expérience du premier niveau, puis ×facteur à chaque niveau. */
-  niveau: { base: 12, facteur: 1.35, choix: 3 },
+  /** L'expérience du premier niveau, puis ×facteur à chaque niveau ; le choix attend un moment calme (rien à moins de tant de s du contact), au plus tant de s. */
+  niveau: { base: 12, facteur: 1.35, choix: 3, calme: 0.8, attente: 6 },
   /** Ce que donne chaque rang d'une amélioration. */
   ameliorations: {
     cadence: { nom: 'Cadence', effet: 'Le cercle tire 25 % plus vite', max: 6, part: 0.25 },
@@ -116,6 +120,9 @@ export type EtatNeon = {
   niveau: number
   xp: number
   xpSuivant: number
+  /** Les niveaux gagnés dont le choix attend un moment calme, et depuis quand. */
+  niveauxDus: number
+  niveauDepuis: number
   abattus: number
   parades: number
   parfaites: number
@@ -164,6 +171,8 @@ export function nouvellePartie(config: ConfigNeon, seed: number): EtatNeon {
     niveau: 1,
     xp: 0,
     xpSuivant: config.niveau.base,
+    niveauxDus: 0,
+    niveauDepuis: 0,
     abattus: 0,
     parades: 0,
     parfaites: 0,
@@ -343,15 +352,37 @@ function blesser(config: ConfigNeon, e: EtatNeon, en: Ennemi, degats: number, ev
   e.abattus += 1
   ev.push({ type: 'mort', x: en.x, y: en.y, ennemi: en.type })
   e.xp += config.ennemis[en.type].xp
-  if (e.xp >= e.xpSuivant && e.phase === 'jeu') monterDeNiveau(config, e, ev)
+  while (e.xp >= e.xpSuivant) {
+    // Le niveau est gagné tout de suite ; son choix attendra un moment calme (`ouvrirLeChoix`).
+    e.xp -= e.xpSuivant
+    e.niveau += 1
+    e.xpSuivant = Math.round(config.niveau.base * config.niveau.facteur ** (e.niveau - 1))
+    if (e.niveauxDus === 0) e.niveauDepuis = e.t
+    e.niveauxDus += 1
+  }
 }
 
 // ---------------------------------------------------------------- les niveaux
 
-function monterDeNiveau(config: ConfigNeon, e: EtatNeon, ev: Evenement[]): void {
-  e.xp -= e.xpSuivant
-  e.niveau += 1
-  e.xpSuivant = Math.round(config.niveau.base * config.niveau.facteur ** (e.niveau - 1))
+/** Dans combien de temps la chose la plus pressante touche le cercle (0 si l'une est déjà collée). */
+export function prochainContact(config: ConfigNeon, e: EtatNeon): number {
+  let min = Infinity
+  for (const en of e.ennemis) min = Math.min(min, tempsAvantContact(config, cinematiqueDe(config, e, en)))
+  for (const pr of e.projectiles) min = Math.min(min, tempsAvantContact(config, { ...pr, rayon: config.hexagone.tir.rayon }))
+  return min
+}
+
+/** Le moment est-il bon pour ouvrir le choix d'un niveau dû : calme, ou, l'attente passée, au moins rien dans la fenêtre ? */
+export function choixPossible(config: ConfigNeon, e: EtatNeon): boolean {
+  if (e.niveauxDus === 0 || e.phase !== 'jeu') return false
+  const contact = prochainContact(config, e)
+  if (contact >= config.niveau.calme) return true
+  return e.t - e.niveauDepuis >= config.niveau.attente && parable(config, e) === null && contact > config.parade.avant * largeurDeGarde(config, e)
+}
+
+function ouvrirLeChoix(config: ConfigNeon, e: EtatNeon, ev: Evenement[]): void {
+  e.niveauxDus -= 1
+  if (e.niveauxDus > 0) e.niveauDepuis = e.t
   // Trois améliorations au hasard parmi celles qui ne sont pas au bout.
   const possibles = CLES.filter((k) => e.ameliorations[k] < config.ameliorations[k].max)
   const choix: CleAmelioration[] = []
@@ -367,6 +398,7 @@ function monterDeNiveau(config: ConfigNeon, e: EtatNeon, ev: Evenement[]): void 
 
 /** On prend la i-ième amélioration offerte ; le jeu reprend. */
 export function choisir(config: ConfigNeon, e: EtatNeon, i: number): Evenement[] {
+  void config
   if (e.phase !== 'choix') return []
   const cle = e.choix[i]
   if (cle === undefined) return []
@@ -378,8 +410,7 @@ export function choisir(config: ConfigNeon, e: EtatNeon, i: number): Evenement[]
   e.choix = []
   e.phase = 'jeu'
   const ev: Evenement[] = [{ type: 'amelioration', cle, rang: e.ameliorations[cle] }]
-  // Un second niveau gagné d'un coup (une onde qui fauche tout) attend son tour.
-  if (e.xp >= e.xpSuivant) monterDeNiveau(config, e, ev)
+  // Un second niveau dû (une onde qui fauche tout) s'ouvrira au prochain pas, le moment est encore calme.
   return ev
 }
 
@@ -388,6 +419,11 @@ export function choisir(config: ConfigNeon, e: EtatNeon, i: number): Evenement[]
 export function avancer(config: ConfigNeon, e: EtatNeon, dt: number, vue: Vue): Evenement[] {
   if (e.phase !== 'jeu') return []
   const ev: Evenement[] = []
+  // UN NIVEAU DÛ s'ouvre quand le moment est calme — jamais au milieu d'une parade.
+  if (choixPossible(config, e)) {
+    ouvrirLeChoix(config, e, ev)
+    if (e.phase !== 'jeu') return ev
+  }
   e.t += dt
   const t = e.t
 

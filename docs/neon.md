@@ -73,6 +73,15 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   Perçant (traverse un ennemi de plus, 3), Garde large (fenêtres +30 %, 4),
   Riposte (la parade +4, 6), Onde de choc (rayon +6, dégâts +3, 4), Carapace
   (+1 PV max et 1 rendu, 5), Lenteur (ennemis −10 %, 4). Au clavier, 1 à 3.
+  **Le choix attend un moment calme** (Keko, 08/11 : « le choix instantané
+  me tue parfois car il casse le rythme et je foire ma parade en cours ») :
+  le niveau est gagné tout de suite (« NIV 3 ▲ » en haut), mais les cartes
+  ne s'ouvrent que quand rien n'est à moins de 0,8 s du contact
+  (`prochainContact`, `choixPossible`) ; passé 6 s sans calme, dès que rien
+  n'est dans la fenêtre de parade — jamais au milieu d'une parade possible.
+  Après le choix, le jeu repart 0,6 s à 30 % de vitesse (`REPRISE`), le
+  temps de reprendre le rythme. *La première version ouvrait les cartes à
+  l'instant même.*
 - **Le cercle a 5 PV**, des traits néon en haut à gauche. Le record est le
   nombre d'abattus (`keko-neon-record`).
 - **L'écran** montre 80 unités de large et au moins 130 de haut (sur un PC
