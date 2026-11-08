@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, nouveauVaisseau, VAISSEAU as C, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, nouveauMonde, nouveauVaisseau, solidite, VAISSEAU as C, type Vaisseau } from './jeu.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -38,6 +38,28 @@ const appui: Vaisseau = { ...nouveauVaisseau(), x: a.x - a.rayon - C.rayon + 0.5
 verifier('un contact doux ne fait pas de choc', avancer(C, appui, 1 / 60, { x: 1, y: 0 }).chocs.length === 0)
 const deja: Vaisseau = { ...dedans, contact: a.id }
 verifier('un contact qui dure ne refait pas de choc', avancer(C, deja, 1 / 60, { x: 0, y: 0 }).chocs.length === 0)
+
+// le forage : posé près d'une roche, le laser la vise ; il la creuse à son débit ; elle éclate en pépites, qui montent à bord
+const m = nouveauMonde()
+m.vaisseau = { ...nouveauVaisseau(), x: a.x - a.rayon - 20, y: a.y }
+avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 })
+verifier('à portée, le laser vise la roche la plus proche, sur sa surface', m.forage !== null && m.forage.cible === a.id && Math.abs(Math.hypot(m.forage.x - a.x, m.forage.y - a.y) - a.rayon) < 0.01)
+const loin = nouveauMonde()
+loin.vaisseau = { ...nouveauVaisseau(), x: a.x - a.rayon - C.forage.portee - 30, y: a.y }
+avancerLeMonde(C, loin, 1 / 60, { x: 0, y: 0 })
+verifier('hors de portée, pas de forage', loin.forage === null)
+let eclats = 0
+let pas = 0
+while (eclats === 0 && pas < 2000) {
+  eclats += avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 }).eclats.length
+  pas++
+}
+const attendu = solidite(C, a) / C.forage.debit
+verifier('la roche éclate quand sa solidité est creusée', eclats === 1 && Math.abs(pas / 60 - attendu) < 0.1)
+verifier('elle est partie et a laissé des pépites', m.detruits.has(a.id) && m.pepites.length >= 1 && m.forage === null)
+let ramasses = 0
+for (let i = 0; i < 600 && m.pepites.length > 0; i++) ramasses += avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 }).ramasses.length
+verifier('les pépites viennent au vaisseau et montent à bord', m.pepites.length === 0 && ramasses >= 1 && m.minerai === ramasses)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

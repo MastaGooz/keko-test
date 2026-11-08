@@ -50,8 +50,11 @@ function sommets(a: Asteroide, angle: number, cx: number, cy: number): { pts: nu
  * Dessine l'astéroïde `a` dans le peintre, son centre en (cx, cy) (coordonnées du tampon), tourné de son angle à
  * l'instant t. Le peintre est supposé placé à l'origine.
  */
+/** La roche (ses huit tons) d'une graine : les morceaux d'un astéroïde éclaté en sont. */
+export const rocheDe = (graine: number): number[] => ROCHES[Math.floor(tire(graine, 9) * ROCHES.length)]
+
 export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: number, cy: number): void {
-  const C = ROCHES[Math.floor(tire(a.graine, 9) * ROCHES.length)]
+  const C = rocheDe(a.graine)
   const angle = a.angle0 + t * a.vitesseAngulaire
   const { pts, n, rayons } = sommets(a, angle, cx, cy)
   const R = a.rayon

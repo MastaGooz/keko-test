@@ -47,6 +47,13 @@ export const VAISSEAU = {
     /** Autour du point de départ, rien : le joueur apprend le manche à vide. */
     vide: 70,
   },
+  /**
+   * LE FORAGE (Keko : « un dispositif de forage laser sur le toit du vaisseau qui permet de miner les astéroïdes ») :
+   * le laser vise seul la roche la plus proche à portée et la creuse à tant de points par seconde ; une roche a
+   * `durete × rayon²` points ; éclatée, elle laisse des pépites (tant par unité de rayon) qui viennent au vaisseau
+   * quand il passe à portée d'aimant, et comptent une fois à bord.
+   */
+  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5 },
 } as const
 export type ConfigVaisseau = typeof VAISSEAU
 /** Le manche du vaisseau dans la langue du survivor (sa vitesse et sa réponse n'y servent pas). */
@@ -68,6 +75,27 @@ export type Vaisseau = {
 }
 
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }
+/** Le laser en train de creuser : la roche, le point d'impact sur sa surface, la part déjà creusée (0 à 1). */
+export type Forage = { cible: number; x: number; y: number; part: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number }
+/** Une roche qui éclate : où, sa taille, sa graine (pour les morceaux). */
+export type Eclat = { x: number; y: number; rayon: number; graine: number }
+
+/** Tout le monde : le vaisseau, ce que le laser a creusé, les roches parties, les pépites en vol, le minerai à bord. */
+export type Monde = {
+  vaisseau: Vaisseau
+  forage: Forage | null
+  /** Les points creusés par roche (son id), tant qu'elle tient. */
+  creuse: Map<number, number>
+  detruits: Set<number>
+  pepites: Pepite[]
+  minerai: number
+  prochainId: number
+}
+
+export function nouveauMonde(): Monde {
+  return { vaisseau: nouveauVaisseau(), forage: null, creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, prochainId: 1 }
+}
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number }
 
@@ -166,4 +194,84 @@ export function avancer(c: ConfigVaisseau, v: Vaisseau, dt: number, direction: V
     contact = a.id
   }
   return { vaisseau: { x, y, vx, vy, cap, poussee: force, parcouru: v.parcouru + vitesse * dt, contact }, chocs }
+}
+
+/** Les points qu'une roche peut encaisser avant d'éclater. */
+export const solidite = (c: ConfigVaisseau, a: Asteroide): number => c.forage.durete * a.rayon * a.rayon
+
+/** Les astéroïdes autour de (x, y) qui tiennent encore. */
+export function asteroidesVisibles(c: ConfigVaisseau, m: Monde, x: number, y: number, portee: number): Asteroide[] {
+  return asteroidesAutour(c, x, y, portee).filter((a) => !m.detruits.has(a.id))
+}
+
+/**
+ * Fait avancer LE MONDE de `dt` secondes : le vaisseau (et ses chocs), le laser qui vise la roche la plus proche à
+ * portée et la creuse, les roches qui éclatent en pépites, les pépites aimantées et ramassées. Modifie `m` en place ;
+ * rend ce qui s'est passé.
+ */
+export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur): { chocs: Choc[]; eclats: Eclat[]; ramasses: Pepite[] } {
+  const r = avancer(c, m.vaisseau, dt, direction)
+  m.vaisseau = r.vaisseau
+  const v = m.vaisseau
+  const eclats: Eclat[] = []
+  const ramasses: Pepite[] = []
+  // les chocs contre une roche détruite n'existent pas : on filtre après coup (la roche partie ne repousse plus)
+  const chocs = r.chocs.filter((ch) => !m.detruits.has(ch.asteroide))
+  // le laser : la roche la plus proche (de sa surface) à portée
+  let cible: Asteroide | null = null
+  let meilleure = Infinity
+  for (const a of asteroidesVisibles(c, m, v.x, v.y, c.forage.portee + c.champ.rayonMax)) {
+    const d = Math.hypot(a.x - v.x, a.y - v.y) - a.rayon
+    if (d <= c.forage.portee && d < meilleure) {
+      meilleure = d
+      cible = a
+    }
+  }
+  if (cible === null) m.forage = null
+  else {
+    const dx = cible.x - v.x
+    const dy = cible.y - v.y
+    const d = Math.hypot(dx, dy) || 1
+    const creuse = (m.creuse.get(cible.id) ?? 0) + c.forage.debit * dt
+    const total = solidite(c, cible)
+    if (creuse >= total) {
+      m.creuse.delete(cible.id)
+      m.detruits.add(cible.id)
+      m.forage = null
+      eclats.push({ x: cible.x, y: cible.y, rayon: cible.rayon, graine: cible.graine })
+      const n = Math.max(1, Math.round(cible.rayon * c.forage.pepitesParRayon))
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + tire(cible.graine, 20, i) * 1.2
+        const vit = 20 + 40 * tire(cible.graine, 21, i)
+        m.pepites.push({ id: m.prochainId++, x: cible.x + Math.cos(a) * cible.rayon * 0.5, y: cible.y + Math.sin(a) * cible.rayon * 0.5, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, graine: hache(cible.graine, i) })
+      }
+    } else {
+      m.creuse.set(cible.id, creuse)
+      m.forage = { cible: cible.id, x: cible.x - (dx / d) * cible.rayon, y: cible.y - (dy / d) * cible.rayon, part: creuse / total }
+    }
+  }
+  // les pépites : elles dérivent en freinant, viennent au vaisseau à portée d'aimant, montent à bord au contact
+  for (let i = m.pepites.length - 1; i >= 0; i--) {
+    const p = m.pepites[i]
+    const dx = v.x - p.x
+    const dy = v.y - p.y
+    const d = Math.hypot(dx, dy) || 1
+    if (d <= c.forage.ramassage) {
+      m.pepites.splice(i, 1)
+      m.minerai += 1
+      ramasses.push(p)
+      continue
+    }
+    const frein = Math.exp(-2.5 * dt)
+    p.vx *= frein
+    p.vy *= frein
+    if (d <= c.forage.aimant) {
+      const tirage = c.forage.vitessePepite * (1 - d / c.forage.aimant) + 40
+      p.vx += (dx / d) * tirage * dt * 6
+      p.vy += (dy / d) * tirage * dt * 6
+    }
+    p.x += p.vx * dt
+    p.y += p.vy * dt
+  }
+  return { chocs, eclats, ramasses }
 }

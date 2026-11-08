@@ -13,8 +13,8 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
-import { asteroidesAutour, avancer, centreQuiSuit, directionDuManche, MANCHE, nouveauVaisseau, tire, VAISSEAU as C, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { dessinerAsteroide, LUMIERE } from './asteroide.ts'
+import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
 type Module = { meta?: Record<string, unknown> }
@@ -23,12 +23,15 @@ type Peintre = {
   px(x: number, y: number, c: number): void
   dot(x: number, y: number, c: number, a?: number): void
   circle(x: number, y: number, r: number, c: number, a?: number): void
+  ring(x: number, y: number, r: number, w: number, c: number, a?: number): void
+  glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
   glow(x: number, y: number, r: number, c: number, k?: number): void
 }
 type Particules = { spawn(k: number, x: number, y: number, vx: number, vy: number, vie: number, c?: number, taille?: number): void; update(dt: number): void; draw(p: Peintre, couche?: string): void }
+type Morceaux = { add(b: Record<string, unknown>): void; update(dt: number): void; draw(p: Peintre): void }
 type Noyau = {
   createFrame(w: number, h: number): { w: number; h: number; color: Uint32Array; light: Uint32Array }
   clearFrame<T>(f: T): T
@@ -38,6 +41,9 @@ type Noyau = {
   fit(palette: string[], n: number): number[]
   hex(h: string): number
   Particles: new (o: Record<string, unknown>) => Particules
+  Bits: new (o: Record<string, unknown>) => Morceaux
+  B: Record<string, number>
+  sparkle(p: Peintre, x: number, y: number, bras: number, c: number, pointe?: number, k?: number): void
   Rng: new (graine: number) => { next(): number; range(a: number, b: number): number }
   P: Record<string, number>
   PAL: Record<string, string[]>
@@ -52,6 +58,8 @@ const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 const FEU = N.fit(N.PAL.fire, 8)
+const LASER = N.fit(['#3a0a10', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0', '#ffffff'], 6)
+const PEPITE = N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5)
 const FOND = N.hex('#07060f')
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
@@ -80,10 +88,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ecran = el('div', 'vaisseau-ecran')
   ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Les astéroïdes repoussent. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
-  racine.append(scene, surcouche, ecran, pied)
+  const compteur = el('div', 'vaisseau-minerai', '')
+  compteur.hidden = true
+  racine.append(scene, surcouche, ecran, compteur, pied)
 
   // ---------------------------------------------------------------- l'état
-  let v: Vaisseau = nouveauVaisseau()
+  const m = nouveauMonde()
+  let v: Vaisseau = m.vaisseau
   let enJeu = false
   let zoom = 2
   const frame = N.createFrame(W, H)
@@ -92,6 +103,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const braises = new N.Particles({ rng: R, ground: () => Infinity, sparks: [N.WHITE, FEU[6], FEU[5], FEU[4]] })
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
   let effets: { fx: Instance; x: number; y: number }[] = []
+  /** Le forage : les étincelles du point d'impact, les morceaux des roches éclatées (sans pesanteur : l'espace), les flashs. */
+  const etincelles = new N.Particles({ rng: R, ground: () => Infinity, sparks: [N.WHITE, LASER[4], LASER[3], LASER[2]] })
+  const morceaux = new N.Bits({ ground: () => Infinity })
+  const flashs: { x: number; y: number; t0: number; r: number }[] = []
+  let minerai = -1
   let secousse = 0
   let flamme = 0
   let t = 0
@@ -238,7 +254,49 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.dot(-6, -3.6, N.hex('#ff5a5a'))
     p.dot(-6, 3.6, N.hex('#4aff7a'))
     p.glow(3, 0, 5, VERRIERE[2], 0.25)
+    // LE FOREUR SUR LE TOIT (Keko) : un dôme au milieu de la coque, un canon qui vise la roche creusée (ou devant)
+    const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
+    p.circle(-1.5, 0, 2.1, COQUE[1])
+    p.circle(-1.8, -0.4, 1.3, COQUE[3])
+    p.dot(-2.2, -0.8, COQUE[5])
+    p.line(-1.5, 0, -1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, COQUE[2])
+    p.dot(-1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, m.forage !== null ? LASER[5] : LASER[2])
     p.place(0, 0)
+  }
+
+  /** Le rayon du foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords rouges, une lueur ; l'impact brûle. */
+  function dessinerLeLaser(p: Peintre): void {
+    if (m.forage === null) return
+    const f = m.forage
+    const vise = Math.atan2(f.y - v.y, f.x - v.x)
+    const x0 = v.x + Math.cos(v.cap) * -1.5 + Math.cos(vise) * 4.5
+    const y0 = v.y + Math.sin(v.cap) * -1.5 + Math.sin(vise) * 4.5
+    p.place(W / 2 - camera.x, H / 2 - camera.y)
+    const px = -Math.sin(vise)
+    const py = Math.cos(vise)
+    const vacille = 0.75 + 0.25 * Math.sin(t * 70)
+    p.line(x0 + px, y0 + py, f.x + px, f.y + py, LASER[2], 0.7)
+    p.line(x0 - px, y0 - py, f.x - px, f.y - py, LASER[2], 0.7)
+    p.line(x0, y0, f.x, f.y, LASER[4], 1)
+    p.line(x0, y0, f.x, f.y, N.WHITE, vacille)
+    p.glowLine(x0, y0, f.x, f.y, 4, LASER[3], 0.45)
+    // l'impact : un point blanc, une lueur qui grandit avec la part creusée
+    p.circle(f.x, f.y, 1.2 + f.part, N.WHITE)
+    p.glow(f.x, f.y, 8 + 10 * f.part, LASER[4], 0.6 + 0.4 * vacille)
+    p.glow(f.x, f.y, 3, N.WHITE, 0.5)
+    p.place(0, 0)
+  }
+
+  /** Les pépites : de petits losanges d'or qui respirent, un éclat, une lueur. */
+  function dessinerLesPepites(p: Peintre): void {
+    for (const pe of m.pepites) {
+      const k = 0.6 + 0.4 * Math.sin(t * 6 + pe.graine)
+      p.poly([[pe.x, pe.y - 2], [pe.x + 2, pe.y], [pe.x, pe.y + 2], [pe.x - 2, pe.y]], PEPITE[2])
+      p.dot(pe.x, pe.y - 1, PEPITE[3])
+      p.dot(pe.x - 1, pe.y, PEPITE[4], k)
+      p.dot(pe.x + 1, pe.y + 1, PEPITE[1])
+      p.glow(pe.x, pe.y, 5, PEPITE[2], 0.35 * k)
+    }
   }
 
   function dessinerLeManche(): void {
@@ -284,8 +342,34 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const direction = directionVoulue()
       while (accumule >= PAS) {
         accumule -= PAS
-        const r = avancer(C, v, PAS, direction)
-        v = r.vaisseau
+        const r = avancerLeMonde(C, m, PAS, direction)
+        v = m.vaisseau
+        // le laser creuse : des étincelles au point d'impact, le long de la normale de la roche
+        if (m.forage !== null && R.next() < 0.6) {
+          const f = m.forage
+          const nx = v.x - f.x
+          const ny = v.y - f.y
+          const d = Math.hypot(nx, ny) || 1
+          const a = Math.atan2(ny, nx) + R.range(-1.1, 1.1)
+          const vit = R.range(30, 90) * (0.6 + f.part)
+          etincelles.spawn(N.P.SPARK, f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + v.vx * 0.2, Math.sin(a) * vit + v.vy * 0.2, R.range(0.2, 0.45), N.WHITE, 1)
+          if (R.next() < 0.25) etincelles.spawn(N.P.GRIT, f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), rocheDe(m.forage.cible)[4], 1)
+        }
+        // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
+        for (const ec of r.eclats) {
+          flashs.push({ x: ec.x, y: ec.y, t0: t, r: ec.rayon })
+          const roche = rocheDe(ec.graine)
+          const n = 6 + Math.round(ec.rayon)
+          for (let i = 0; i < n; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const d = R.range(0, ec.rayon * 0.7)
+            const vit = R.range(25, 90)
+            morceaux.add({ kind: N.B.SHARD, x: ec.x + Math.cos(a) * d, y: ec.y + Math.sin(a) * d, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, g: 0, drag: 1.1, bounce: 0, life: R.range(0.8, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-9, 9), s: R.range(1.5, 2.5 + ec.rayon * 0.15), c: roche[2 + Math.floor(R.next() * 4)] })
+          }
+          secousse = Math.max(secousse, Math.min(1, 0.3 + ec.rayon / 20))
+          if (typeof navigator.vibrate === 'function') navigator.vibrate(30)
+        }
+        for (const pe of r.ramasses) flashs.push({ x: pe.x, y: pe.y, t0: t, r: 0 })
         for (const choc of r.chocs) {
           secousse = Math.min(1, 0.3 + choc.force / 120)
           if (typeof navigator.vibrate === 'function') navigator.vibrate(Math.round(10 + choc.force / 4))
@@ -319,6 +403,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     camera.x += (viseX - camera.x) * Math.min(1, dt * 4)
     camera.y += (viseY - camera.y) * Math.min(1, dt * 4)
     braises.update(dt)
+    etincelles.update(dt)
+    morceaux.update(dt)
+    for (let i = flashs.length - 1; i >= 0; i--) if (t - flashs[i].t0 > 0.4) flashs.splice(i, 1)
     for (const e of effets) {
       e.fx.update(dt)
       e.fx.options.x = e.x - camera.x + W / 2
@@ -329,17 +416,44 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     N.clearFrame(frame)
     const p = N.painterFor(frame)
     dessinerLeCiel(p)
-    for (const a of asteroidesAutour(C, camera.x, camera.y, Math.max(W, H) / 2 + C.champ.rayonMax + 4)) dessinerAsteroide(p, a, t, a.x - camera.x + W / 2, a.y - camera.y + H / 2)
-    // les braises et les étincelles sont dans le monde : le peintre se place sur la caméra
+    for (const a of asteroidesVisibles(C, m, camera.x, camera.y, Math.max(W, H) / 2 + C.champ.rayonMax + 4)) {
+      // la roche qu'on creuse tremble, d'autant plus qu'elle est près d'éclater
+      const creusee = m.forage !== null && m.forage.cible === a.id
+      const tremble = creusee ? (0.5 + m.forage!.part) * 1.2 : 0
+      dessinerAsteroide(p, a, t, a.x - camera.x + W / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0), a.y - camera.y + H / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0))
+    }
+    // les braises, les morceaux, les pépites, les étincelles sont dans le monde : le peintre se place sur la caméra
     p.place(W / 2 - camera.x, H / 2 - camera.y)
     braises.draw(p)
+    morceaux.draw(p)
+    dessinerLesPepites(p)
+    etincelles.draw(p)
+    for (const f of flashs) {
+      const u = (t - f.t0) / 0.4
+      if (f.r === 0) {
+        // une pépite montée à bord : un éclat
+        N.sparkle(p, f.x, f.y, 1 + 3 * Math.sin(u * Math.PI), PEPITE[3], PEPITE[2], 0.5 * (1 - u))
+        continue
+      }
+      p.glow(f.x, f.y, f.r * 2 + 10, LASER[4], 0.8 * (1 - u))
+      p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
+    }
     p.place(0, 0)
     dessinerLeVaisseau(p)
+    dessinerLeLaser(p)
     for (const e of effets) e.fx.draw(frame)
     N.composite(frame, img.data, FOND)
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
     canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
+    if (m.minerai !== minerai) {
+      minerai = m.minerai
+      compteur.textContent = `⛏ ${minerai}`
+      compteur.hidden = minerai === 0
+      compteur.classList.remove('vaisseau-minerai-saute')
+      void compteur.offsetWidth
+      compteur.classList.add('vaisseau-minerai-saute')
+    }
     dessinerLeManche()
     requestAnimationFrame(image)
   }

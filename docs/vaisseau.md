@@ -83,6 +83,29 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   il n'est au centre qu'à l'arrêt ; les braises et les étincelles étaient
   dans le monde, lui non.
 
+## Le forage (Keko, 08/11 : « un dispositif de forage laser sur le toit du vaisseau qui permet de miner les astéroïdes »)
+
+- **Le laser vise seul** : un seul doigt pilote déjà, on ne lui demande pas
+  de viser. À portée (64 unités de la surface), la roche la plus proche est
+  prise pour cible, le canon du toit se tourne vers elle, et le rayon la
+  creuse à 28 points par seconde ; une roche a `0,6 × rayon²` points (une
+  petite de 5 tient 0,5 s, une grosse de 14 plus de 4 s). On peut creuser en
+  passant, ou s'arrêter devant. Ce qui est creusé reste creusé si l'on
+  s'éloigne (`creuse`, par roche).
+- **Elle éclate** : un flash et un anneau, ses morceaux (les `Bits` du dépôt,
+  sans pesanteur, qui tournent et s'éteignent) aux tons de sa roche, une
+  secousse ; elle laisse `0,45 × rayon` PÉPITES d'or qui dérivent en
+  freinant, puis sont AIMANTÉES par le vaisseau à 44 unités et montent à
+  bord à 5 : un éclat, le compteur « ⛏ » en haut à gauche saute. *Une roche
+  partie ne repousse plus et ne revient pas* (`detruits`), tout le reste du
+  champ reste seedé.
+- **Le dessin** : le dôme et le canon sur la coque (au milieu, « le toit »
+  vu de dessus), un rayon à cœur blanc qui tremble entre deux bords rouges et
+  une lueur, un point d'impact qui chauffe avec la part creusée, des
+  étincelles qui jaillissent de l'impact le long de la normale (et quelques
+  grains de la roche), la roche qui tremble d'autant plus qu'elle est près
+  d'éclater. Tout est dans le monde (le peintre posé sur la caméra).
+
 ## Ce qui reste à faire
 
 - Rien ne se joue : ni tir, ni collecte, ni ennemi — c'est voulu pour juger
