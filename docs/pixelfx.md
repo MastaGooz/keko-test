@@ -208,6 +208,22 @@ qui suit avec un retard, les oreilles qui battent, la massue sur l'épaule
 qui ballotte, l'œil jaune qui cligne une fois par boucle, de la poussière à
 chaque pas, l'ombre au sol. 72 × 56, 0,72 s, 22 px de haut. Deux tours : les
 membres en traits d'un pixel se lisaient filiformes, ils sont en tubes.
+**Le magicien BESTIOLE** (`keko/magicien-bestiole`, Keko : « c'est beaucoup
+mieux, et si tu fais le magicien avec cette méthode ? ») — debout, face à
+droite, le bâton devant lui : une robe en cloche tracée au `shade` (trois
+plis à l'ombre, la poitrine à la lumière, l'ourlet qui ondule d'un bruit
+bouclé, `lnoise`), une ceinture à boucle d'or, la manche et la main sur le
+bâton, une longue barbe qui se balance, la tête au nez et au sourcil
+broussailleux, un clin d'œil, le chapeau à large bord dont la pointe dodeline
+en retard sur la respiration ; l'orbe d'or du bâton palpite (deux battements
+par boucle), luit, sème des étincelles qui montent (`cycle`), un éclat au
+début de chaque boucle ; son reflet sur le chapeau et sur le sol. 80 × 68,
+2,4 s, 40 px de haut avec le chapeau. *Le piège de la couture* : le
+contrôle signalait 147 px changés entre la dernière image et la première ;
+le corps respirait par `round(-0,5 + 0,8·sin)`, et l'arrondi de -0,5 donne 0
+quand celui de -0,57 donne -1 : tout le corps sautait d'un pixel au
+raccord. À -0,4, plus de saut.
+
 **Les deux méthodes côte à côte dans le banc** : le squelette donne un corps
 qui joue n'importe quelle pose (les coups du dépôt lui vont) mais garde
 l'allure de mannequin ; la bestiole a plus de caractère (le nez, la dent, la
