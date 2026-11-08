@@ -40,7 +40,10 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   renvoyait tout droit, et il manquait), 1,4 fois plus vite, avec les dégâts
   de la parade. **Parfaite : ×3, et une ONDE DE CHOC** (rayon 18, 3 dégâts,
   recul 25) qui frappe tout autour du cercle et balaie les losanges ; le temps
-  ralentit à 25 % pendant 0,22 s. *Un COMBO de parades (+10 % aux dégâts de
+  ralentit à 25 % pendant 0,22 s. *Le losange renvoyé par une parfaite
+  traversait tout ce qu'il croisait ; Keko (08/11) : « on va enlever le renvoi
+  de losange perçant de la parade parfaite » — il s'arrête au premier touché,
+  parfait ou non.* *Un COMBO de parades (+10 % aux dégâts de
   parade par parade d'affilée, cassé par un coup, affiché au-dessus du
   cercle) a vécu une heure : Keko, 08/11, « pas mal mais enlève le système
   de combo de parade pour l'instant » — parti des règles, de l'écran et de

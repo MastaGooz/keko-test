@@ -112,6 +112,14 @@ verifier("paré, il repart vers l'hexagone", evRenvoi[0]?.type === 'parade' && e
 const evRetour = jouer(losange, 2.5)
 verifier("et le frappe des dégâts de la parade, même s'il a dérivé", evRetour.some((x) => x.type === 'touche' && x.id === hex.id && x.degats === 5))
 
+const parfaitLosange = calme()
+const hexP = poser(parfaitLosange, 'hexagone', 0, -C.hexagone.halte)
+hexP.tirA = 0
+let m = 0
+while (parable(C, parfaitLosange)?.parfaite !== true && m++ < 4000) avancer(C, parfaitLosange, PAS, VUE)
+parer(C, parfaitLosange)
+verifier("un losange paré parfaitement repart ×3, mais ne traverse plus rien", parfaitLosange.tirs.length === 1 && parfaitLosange.tirs[0].degats === 15 && parfaitLosange.tirs[0].percant === 0)
+
 const pasPare = calme()
 const hex2 = poser(pasPare, 'hexagone', 0, -C.hexagone.halte)
 hex2.tirA = 0

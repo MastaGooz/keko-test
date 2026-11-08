@@ -300,13 +300,14 @@ export function parer(config: ConfigNeon, e: EtatNeon, retard = 0): Evenement[] 
     const i = e.projectiles.findIndex((x) => x.id === cible.id)
     const pr = e.projectiles[i]
     e.projectiles.splice(i, 1)
-    // Le losange repart sur son tireur (il a dérivé depuis) — ou sur l'ennemi le plus proche —, plus vite ; parfait, il traverse tout.
+    // Le losange repart sur son tireur (il a dérivé depuis) — ou sur l'ennemi le plus proche —, plus vite. Il s'arrête au premier touché,
+    // parfait ou non (Keko, 08/11 : « on va enlever le renvoi de losange perçant de la parade parfaite »).
     const v = Math.hypot(pr.vx, pr.vy) * config.parade.renvoi || config.hexagone.tir.vitesse * config.parade.renvoi
     const vers = e.ennemis.find((x) => x.id === pr.de) ?? e.ennemis.reduce<Ennemi | null>((m, x) => (m === null || Math.hypot(x.x - pr.x, x.y - pr.y) < Math.hypot(m.x - pr.x, m.y - pr.y) ? x : m), null)
     const dx = vers !== null ? vers.x - pr.x : -pr.vx
     const dy = vers !== null ? vers.y - pr.y : -pr.vy
     const d = Math.hypot(dx, dy) || 1
-    e.tirs.push({ x: pr.x, y: pr.y, vx: (dx / d) * v, vy: (dy / d) * v, degats, percant: cible.parfaite ? 99 : 0, touches: [], renvoye: true })
+    e.tirs.push({ x: pr.x, y: pr.y, vx: (dx / d) * v, vy: (dy / d) * v, degats, percant: 0, touches: [], renvoye: true })
   }
   ev.unshift({ type: 'parade', qualite: cible.parfaite ? 'parfaite' : 'parade', sorte: cible.sorte, x: cible.x, y: cible.y, degats })
   if (cible.parfaite) {
