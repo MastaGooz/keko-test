@@ -104,38 +104,6 @@ html.neon-page body {
   white-space: nowrap;
 }
 
-/* Le combo, au-dessus du cercle : il grossit avec la série. */
-.neon-combo {
-  position: absolute;
-  left: 0;
-  right: 0;
-  text-align: center;
-  pointer-events: none;
-  font: 900 1.4rem Orbitron, sans-serif;
-  color: #fff;
-  text-shadow:
-    0 0 0.4rem #ffd23a,
-    0 0 1.2rem rgba(255, 210, 58, 0.8);
-  transition: opacity 0.3s;
-}
-
-.neon-combo small {
-  display: block;
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  color: #ffd23a;
-}
-
-.neon-combo.bat {
-  animation: neon-bat 0.25s ease-out;
-}
-
-@keyframes neon-bat {
-  from {
-    scale: 1.5;
-  }
-}
-
 /* Les écrans par-dessus le jeu : l'accueil, la fin (la tape passe au canvas), les choix (non). */
 .neon-ecran {
   position: absolute;

@@ -56,7 +56,7 @@ const tj = triangleA(juste, 0.15)
 const p1 = parable(C, juste)
 verifier('à 0,15 s du contact, le triangle est parable, pas parfait', p1 !== null && p1.sorte === 'ennemi' && p1.id === tj.id && !p1.parfaite && Math.abs(p1.ecart - 0.15) < 0.01)
 const evJuste = parer(C, juste)
-verifier('paré, il encaisse 5 et meurt', evJuste[0]?.type === 'parade' && evJuste[0].qualite === 'parade' && evJuste[0].degats === 5 && evJuste.some((x) => x.type === 'mort') && juste.abattus === 1 && juste.combo === 1)
+verifier('paré, il encaisse 5 et meurt', evJuste[0]?.type === 'parade' && evJuste[0].qualite === 'parade' && evJuste[0].degats === 5 && evJuste.some((x) => x.type === 'mort') && juste.abattus === 1)
 verifier("pas d'onde sans parfaite", !evJuste.some((x) => x.type === 'onde'))
 
 const parfait = calme()
@@ -75,9 +75,9 @@ const tot = calme()
 triangleA(tot, 0.15)
 verifier("et dans l'autre sens : parable maintenant, il ne l'était pas quand le doigt a touché il y a 0,1 s", parable(C, tot) !== null && parable(C, tot, 0.1) === null)
 
-const combo = calme()
-combo.combo = 5
-verifier('le combo renforce la parade (+10 % par parade d’affilée)', degatsDeParade(C, combo, false) === Math.round(5 * 1.5))
+const riposte = calme()
+riposte.ameliorations.riposte = 2
+verifier('la Riposte renforce la parade (+4 par rang)', degatsDeParade(C, riposte, false) === 13 && degatsDeParade(C, riposte, true) === 39)
 
 // ---------------------------------------------------------------- le contact
 
@@ -86,7 +86,7 @@ const tc = triangleA(contact, 0.2)
 jouer(contact, 0.21)
 verifier('arrivé au cercle, le triangle y reste collé un instant, et se pare encore', tc.contactA !== null && parable(C, contact) !== null && parable(C, contact)!.parfaite)
 const evCoup = jouer(contact, C.parade.apres + 0.02)
-verifier("pas paré, le coup tombe : 1 PV de moins, le triangle s'efface, le combo tombe", evCoup.some((x) => x.type === 'coup' && x.degats === 1) && contact.pv === 4 && contact.ennemis.length === 0)
+verifier("pas paré, le coup tombe : 1 PV de moins, le triangle s'efface", evCoup.some((x) => x.type === 'coup' && x.degats === 1) && contact.pv === 4 && contact.ennemis.length === 0)
 
 const recul = calme()
 const tr = poser(recul, 'carre', 0, -(C.cercle.rayon + C.ennemis.carre.rayon + 0.15 * C.ennemis.carre.vitesse))

@@ -12,8 +12,8 @@
  * et recule, le projectile repart d'où il vient. Dans la fenêtre PARFAITE, la
  * parade frappe trois fois plus et lâche une ONDE DE CHOC autour du cercle.
  * Une tape dans le vide bloque la parade un instant : on ne pare pas en
- * tapotant. Les parades d'affilée font un COMBO qui renforce la parade ; un
- * coup encaissé le casse.
+ * tapotant. *(Un combo de parades a existé une heure, Keko l'a retiré :
+ * « enlève le système de combo de parade pour l'instant ».)*
  *
  * **Roguelike** : chaque niveau (l'expérience des ennemis abattus) arrête le
  * jeu et offre trois améliorations, on en prend une. La partie s'arrête
@@ -50,9 +50,6 @@ export const NEON = {
     etourdi: 0.6,
     /** Le projectile paré repart d'où il vient, tant plus vite ; il frappe comme la parade. */
     renvoi: 1.4,
-    /** Chaque parade d'affilée ajoute tant (en part) aux dégâts de parade, jusqu'à tant de parades. */
-    combo: 0.1,
-    comboMax: 50,
   },
   /** L'onde de la parade parfaite : son rayon, ses dégâts, le recul qu'elle donne. */
   onde: { rayon: 18, degats: 3, recul: 25 },
@@ -120,8 +117,6 @@ export type EtatNeon = {
   xp: number
   xpSuivant: number
   abattus: number
-  combo: number
-  meilleurCombo: number
   parades: number
   parfaites: number
   /** La parade est bloquée jusque-là (une tape dans le vide). */
@@ -144,7 +139,7 @@ export type Evenement =
   | { type: 'tir'; n: number }
   | { type: 'touche'; id: number; x: number; y: number; degats: number; ennemi: TypeEnnemi }
   | { type: 'mort'; x: number; y: number; ennemi: TypeEnnemi }
-  | { type: 'parade'; qualite: 'parade' | 'parfaite'; sorte: 'ennemi' | 'projectile'; x: number; y: number; degats: number; combo: number }
+  | { type: 'parade'; qualite: 'parade' | 'parfaite'; sorte: 'ennemi' | 'projectile'; x: number; y: number; degats: number }
   | { type: 'rate' }
   | { type: 'bloque' }
   | { type: 'onde'; rayon: number; touches: number }
@@ -170,8 +165,6 @@ export function nouvellePartie(config: ConfigNeon, seed: number): EtatNeon {
     xp: 0,
     xpSuivant: config.niveau.base,
     abattus: 0,
-    combo: 0,
-    meilleurCombo: 0,
     parades: 0,
     parfaites: 0,
     verrouA: -Infinity,
@@ -212,10 +205,10 @@ export function tirsParSalve(e: EtatNeon): number {
 export function largeurDeGarde(config: ConfigNeon, e: EtatNeon): number {
   return 1 + config.ameliorations.garde.part * e.ameliorations.garde
 }
-/** Les dégâts d'une parade : la base, la riposte, le combo en cours, et ×3 si parfaite. */
+/** Les dégâts d'une parade : la base, la riposte, et ×3 si parfaite. */
 export function degatsDeParade(config: ConfigNeon, e: EtatNeon, parfaite: boolean): number {
   const base = config.parade.degats + config.ameliorations.riposte.plus * e.ameliorations.riposte
-  return Math.round(base * (1 + config.parade.combo * Math.min(config.parade.comboMax, e.combo)) * (parfaite ? config.parade.parfaite : 1))
+  return Math.round(base * (parfaite ? config.parade.parfaite : 1))
 }
 export function rayonDeLOnde(config: ConfigNeon, e: EtatNeon): number {
   return config.onde.rayon + config.ameliorations.onde.rayon * e.ameliorations.onde
@@ -291,8 +284,6 @@ export function parer(config: ConfigNeon, e: EtatNeon, retard = 0): Evenement[] 
   }
   const ev: Evenement[] = []
   const degats = degatsDeParade(config, e, cible.parfaite)
-  e.combo += 1
-  e.meilleurCombo = Math.max(e.meilleurCombo, e.combo)
   e.parades += 1
   if (cible.parfaite) e.parfaites += 1
   e.paradeA = e.t
@@ -317,7 +308,7 @@ export function parer(config: ConfigNeon, e: EtatNeon, retard = 0): Evenement[] 
     const d = Math.hypot(dx, dy) || 1
     e.tirs.push({ x: pr.x, y: pr.y, vx: (dx / d) * v, vy: (dy / d) * v, degats, percant: cible.parfaite ? 99 : 0, touches: [], renvoye: true })
   }
-  ev.unshift({ type: 'parade', qualite: cible.parfaite ? 'parfaite' : 'parade', sorte: cible.sorte, x: cible.x, y: cible.y, degats, combo: e.combo })
+  ev.unshift({ type: 'parade', qualite: cible.parfaite ? 'parfaite' : 'parade', sorte: cible.sorte, x: cible.x, y: cible.y, degats })
   if (cible.parfaite) {
     // L'ONDE DE CHOC : tout ce qui est autour du cercle encaisse et recule (sauf l'ennemi paré, qui a déjà eu son compte).
     const rayon = rayonDeLOnde(config, e)
@@ -539,11 +530,10 @@ export function avancer(config: ConfigNeon, e: EtatNeon, dt: number, vue: Vue): 
   return ev
 }
 
-/** Le cercle encaisse : le combo tombe ; à zéro, la partie est perdue. */
+/** Le cercle encaisse ; à zéro, la partie est perdue. */
 function encaisser(config: ConfigNeon, e: EtatNeon, degats: number, x: number, y: number, sorte: 'ennemi' | 'projectile', ev: Evenement[]): void {
   void config
   e.pv = Math.max(0, e.pv - degats)
-  e.combo = 0
   ev.push({ type: 'coup', degats, x, y, sorte })
   if (e.pv === 0) {
     e.phase = 'perdu'

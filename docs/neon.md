@@ -9,14 +9,14 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
 ## Les fichiers
 
 - `src/logic/neon/jeu.ts` — pur et seedé : le cercle, le tir automatique, les
-  trois formes, les losanges, la parade et sa fenêtre, l'onde, le combo, les
+  trois formes, les losanges, la parade et sa fenêtre, l'onde, les
   niveaux et les améliorations. Le temps est injecté (en secondes), l'état
   modifié en place ; le monde a le cercle à l'origine, y vers le bas ; la page
   dit ce qu'elle montre (`Vue`). Vérifié par `jeu.verif.ts` (dans
   `npm run verif`), qui mesure aussi trois robots.
 - `src/ui/neon/page.ts` + `neon.css` — le canvas néon (un halo additif, un
   trait de couleur, un cœur blanc par forme), la grille qui défile, l'anneau
-  de garde, les effets ; en DOM les PV, le niveau, les abattus, le combo, les
+  de garde, les effets ; en DOM les PV, le niveau, les abattus, les
   cartes d'un niveau, l'accueil et la fin. Classes préfixées `neon-`.
   `sons.ts` : les sons, sur la mécanique de ceux des envahisseurs.
 
@@ -40,9 +40,11 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   renvoyait tout droit, et il manquait), 1,4 fois plus vite, avec les dégâts
   de la parade. **Parfaite : ×3, et une ONDE DE CHOC** (rayon 18, 3 dégâts,
   recul 25) qui frappe tout autour du cercle et balaie les losanges ; le temps
-  ralentit à 25 % pendant 0,22 s. **Le combo** : chaque parade d'affilée
-  ajoute 10 % aux dégâts de parade (jusqu'à 50 parades) ; un coup encaissé le
-  casse. Le combo s'affiche au-dessus du cercle dès ×2.
+  ralentit à 25 % pendant 0,22 s. *Un COMBO de parades (+10 % aux dégâts de
+  parade par parade d'affilée, cassé par un coup, affiché au-dessus du
+  cercle) a vécu une heure : Keko, 08/11, « pas mal mais enlève le système
+  de combo de parade pour l'instant » — parti des règles, de l'écran et de
+  la fin de partie ; `git log` le garde.*
 - **L'anneau de garde** autour du cercle est le repère : éteint, il s'allume
   en blanc quand quelque chose est dans la fenêtre, en or dans la fenêtre
   parfaite ; la chose elle-même se cercle de la même couleur. Rien d'autre
@@ -75,7 +77,7 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
 - **Mesuré** par un robot qui pare dès que la fenêtre s'ouvre (et prend
   toujours la première amélioration) : sans parer, le cercle s'éteint à 38 s,
   niveau 3 ; en parant, il tient les 10 min de la mesure (niveau 18, ~1 200
-  abattus) — un robot ne rate jamais et ne casse jamais son combo. C'est le
+  abattus) — un robot ne rate jamais. C'est le
   joueur qui dira si la montée est trop lente.
 - **Pas encore** : la part incrémentale entre les parties (des éclats gardés,
   un atelier d'améliorations permanentes) ; d'autres commandes action que la

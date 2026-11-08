@@ -11,7 +11,7 @@
  * (au clavier : la barre d'espace). L'anneau de garde autour du cercle dit
  * quand : il s'allume en blanc quand quelque chose est dans la fenêtre, en or
  * dans la fenêtre parfaite ; la forme elle-même se cercle de la même couleur.
- * En DOM : les PV, le niveau et sa jauge, les abattus, le combo, les trois
+ * En DOM : les PV, le niveau et sa jauge, les abattus, les trois
  * cartes d'un niveau, l'accueil et la fin. Classes préfixées `neon-`.
  */
 import './neon.css'
@@ -67,12 +67,11 @@ export function monterNeon(racine: HTMLElement, build: string): void {
   niveauBloc.append(niveauTexte, jauge)
   const abattusTexte = el('div', 'neon-abattus')
   haut.append(pvBloc, niveauBloc, abattusTexte)
-  const combo = el('div', 'neon-combo')
   const choix = el('div', 'neon-choix')
   choix.hidden = true
   const ecran = el('div', 'neon-ecran')
   const pied = el('div', 'neon-build', `build ${build}`)
-  racine.append(canvas, haut, combo, choix, ecran, pied)
+  racine.append(canvas, haut, choix, ecran, pied)
 
   let e: EtatNeon = nouvellePartie(C, 1)
   let enJeu = false
@@ -88,7 +87,6 @@ export function monterNeon(racine: HTMLElement, build: string): void {
   let secousse = 0
   let ralentiJusqua = -1
   let banniere: { texte: string; t: number } | null = null
-  let dernierCombo = 0
   let pvAffiches = ''
 
   // ---------------------------------------------------------------- le cadre
@@ -110,7 +108,6 @@ export function monterNeon(racine: HTMLElement, build: string): void {
     s = Math.min(canvas.width / LARGEUR, canvas.height / HAUTEUR_MIN)
     ox = canvas.width / 2
     oy = canvas.height - BAS * s
-    combo.style.top = `${(oy - (C.cercle.rayon + 16) * s) / dpr}px`
   }
   window.addEventListener('resize', cadrer)
   const sx = (x: number) => ox + x * s + secousseX
@@ -127,7 +124,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
   }
   montrerEcran(
     'NÉON',
-    `Le cercle tire tout seul sur ce qui descend. Vous, vous <b>parez</b> : touchez l’écran juste avant qu’une forme ou un losange ne touche le cercle — l’anneau de garde s’allume quand c’est le moment. <b>Pile au contact</b>, la parade est parfaite : trois fois plus forte, et une onde balaie tout autour. Une tape dans le vide bloque la garde un instant. Les parades d’affilée font un combo ; à chaque niveau, trois améliorations, prenez-en une.${record > 0 ? ` Record : ${record} abattus.` : ''}`,
+    `Le cercle tire tout seul sur ce qui descend. Vous, vous <b>parez</b> : touchez l’écran juste avant qu’une forme ou un losange ne touche le cercle — l’anneau de garde s’allume quand c’est le moment. <b>Pile au contact</b>, la parade est parfaite : trois fois plus forte, et une onde balaie tout autour. Une tape dans le vide bloque la garde un instant. À chaque niveau, trois améliorations, prenez-en une.${record > 0 ? ` Record : ${record} abattus.` : ''}`,
     'TOUCHEZ POUR JOUER',
   )
 
@@ -143,7 +140,6 @@ export function monterNeon(racine: HTMLElement, build: string): void {
     flashs.length = 0
     touches.clear()
     banniere = null
-    dernierCombo = 0
     majHaut()
   }
 
@@ -238,7 +234,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
       case 'parade': {
         const parfaite = ev.qualite === 'parfaite'
         if (parfaite) sonParfaite()
-        else sonParade(ev.combo)
+        else sonParade()
         vibrer(parfaite ? 30 : 12)
         flashs.push({ x: ev.x, y: ev.y, t: e.t, parfaite })
         eclater(ev.x, ev.y, parfaite ? OR : '#ffffff', parfaite ? 16 : 8, parfaite ? 30 : 18)
@@ -291,7 +287,7 @@ export function monterNeon(racine: HTMLElement, build: string): void {
           record = e.abattus
           ecrireRecord(CLE_RECORD, record)
         }
-        setTimeout(() => montrerEcran('ÉTEINT', `Niveau ${e.niveau} · ${e.abattus} abattus · combo ×${e.meilleurCombo} · ${e.parfaites} parade${e.parfaites > 1 ? 's' : ''} parfaite${e.parfaites > 1 ? 's' : ''}. ${nouveau ? '<b>Nouveau record !</b>' : `Record : ${record} abattus.`}`, 'TOUCHEZ POUR REJOUER'), 900)
+        setTimeout(() => montrerEcran('ÉTEINT', `Niveau ${e.niveau} · ${e.abattus} abattus · ${e.parfaites} parade${e.parfaites > 1 ? 's' : ''} parfaite${e.parfaites > 1 ? 's' : ''}. ${nouveau ? '<b>Nouveau record !</b>' : `Record : ${record} abattus.`}`, 'TOUCHEZ POUR REJOUER'), 900)
         break
       }
     }
@@ -645,24 +641,12 @@ export function monterNeon(racine: HTMLElement, build: string): void {
       g.fillRect(0, 0, canvas.width, canvas.height)
     }
 
-    // Le haut et le combo.
+    // Le haut.
     haut.hidden = !enJeu && e.phase !== 'perdu' && e.phase !== 'choix'
     if (enJeu) {
       remplie.style.width = `${Math.min(100, (100 * e.xp) / e.xpSuivant)}%`
       abattusTexte.textContent = `${e.abattus}`
       niveauTexte.textContent = `NIV ${e.niveau}`
-      if (e.combo !== dernierCombo) {
-        if (e.combo > dernierCombo) {
-          combo.classList.remove('bat')
-          void combo.offsetWidth
-          combo.classList.add('bat')
-        }
-        dernierCombo = e.combo
-      }
-    }
-    combo.style.opacity = enJeu && e.combo >= 2 ? '1' : '0'
-    if (e.combo >= 2) {
-      combo.replaceChildren(`×${e.combo}`, el('small', '', 'COMBO'))
     }
     requestAnimationFrame(image)
   }

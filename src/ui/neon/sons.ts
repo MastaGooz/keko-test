@@ -22,9 +22,8 @@ export function sonTir(): void {
 }
 
 /** La parade : un clang métallique clair. */
-export function sonParade(combo: number): void {
-  const f = 660 * 2 ** (Math.min(12, combo) / 12)
-  note('square', f, f * 0.9, 0.12, 0.14)
+export function sonParade(): void {
+  note('square', 660, 600, 0.12, 0.14)
   souffle(0.08, 6000, 0.2)
 }
 
