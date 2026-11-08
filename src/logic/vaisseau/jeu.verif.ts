@@ -60,6 +60,10 @@ verifier('elle est partie et a laissé des pépites', m.detruits.has(a.id) && m.
 let ramasses = 0
 for (let i = 0; i < 600 && m.pepites.length > 0; i++) ramasses += avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 }).ramasses.length
 verifier('les pépites viennent au vaisseau et montent à bord', m.pepites.length === 0 && ramasses >= 1 && m.minerai === ramasses)
+// la roche partie ne repousse plus : on traverse son ancienne place
+m.vaisseau = { ...m.vaisseau, x: a.x, y: a.y, vx: 0, vy: 0 }
+const traverse = avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 })
+verifier('une roche détruite ne repousse plus le vaisseau', traverse.chocs.length === 0 && Math.abs(m.vaisseau.x - a.x) < 0.01 && Math.abs(m.vaisseau.y - a.y) < 0.01)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

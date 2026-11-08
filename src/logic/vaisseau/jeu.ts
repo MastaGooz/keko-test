@@ -150,7 +150,7 @@ const ecartDAngle = (de: number, vers: number): number => Math.atan2(Math.sin(ve
  * Fait avancer le vaisseau de `dt` secondes sous la direction du manche (longueur 0 à 1) : la poussée, le frein du
  * vide, le plafond, le nez qui se tourne, puis les chocs contre les astéroïdes. Rend l'état neuf et les chocs.
  */
-export function avancer(c: ConfigVaisseau, v: Vaisseau, dt: number, direction: Vecteur): { vaisseau: Vaisseau; chocs: Choc[] } {
+export function avancer(c: ConfigVaisseau, v: Vaisseau, dt: number, direction: Vecteur, detruits: ReadonlySet<number> = new Set()): { vaisseau: Vaisseau; chocs: Choc[] } {
   const n = Math.hypot(direction.x, direction.y)
   const force = Math.min(1, n)
   let vx = v.vx + (n > 0 ? (direction.x / n) * force * c.poussee * dt : 0)
@@ -176,6 +176,8 @@ export function avancer(c: ConfigVaisseau, v: Vaisseau, dt: number, direction: V
   const chocs: Choc[] = []
   let contact: number | null = null
   for (const a of asteroidesAutour(c, x, y, c.champ.rayonMax + c.rayon + 2)) {
+    // une roche partie n'est plus là (Keko : « je collisionne toujours avec son ancienne position »)
+    if (detruits.has(a.id)) continue
     const dx = x - a.x
     const dy = y - a.y
     const d = Math.hypot(dx, dy) || 0.001
@@ -210,13 +212,12 @@ export function asteroidesVisibles(c: ConfigVaisseau, m: Monde, x: number, y: nu
  * rend ce qui s'est passé.
  */
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur): { chocs: Choc[]; eclats: Eclat[]; ramasses: Pepite[] } {
-  const r = avancer(c, m.vaisseau, dt, direction)
+  const r = avancer(c, m.vaisseau, dt, direction, m.detruits)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const eclats: Eclat[] = []
   const ramasses: Pepite[] = []
-  // les chocs contre une roche détruite n'existent pas : on filtre après coup (la roche partie ne repousse plus)
-  const chocs = r.chocs.filter((ch) => !m.detruits.has(ch.asteroide))
+  const chocs = r.chocs
   // le laser : la roche la plus proche (de sa surface) à portée
   let cible: Asteroide | null = null
   let meilleure = Infinity

@@ -97,8 +97,10 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   secousse ; elle laisse `0,45 × rayon` PÉPITES d'or qui dérivent en
   freinant, puis sont AIMANTÉES par le vaisseau à 44 unités et montent à
   bord à 5 : un éclat, le compteur « ⛏ » en haut à gauche saute. *Une roche
-  partie ne repousse plus et ne revient pas* (`detruits`), tout le reste du
-  champ reste seedé.
+  partie ne repousse plus et ne revient pas* (`detruits`, que la règle du
+  vaisseau reçoit : la première version filtrait seulement les étincelles,
+  et la roche fantôme poussait encore — Keko : « je collisionne toujours
+  avec son ancienne position »), tout le reste du champ reste seedé.
 - **Le dessin** : le dôme et le canon sur la coque (au milieu, « le toit »
   vu de dessus), un rayon à cœur blanc qui tremble entre deux bords rouges et
   une lueur, un point d'impact qui chauffe avec la part creusée, des
