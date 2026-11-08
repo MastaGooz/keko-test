@@ -506,7 +506,8 @@ export function avancer(config: ConfigNeon, e: EtatNeon, dt: number, vue: Vue): 
     const d = Math.hypot(en.x, en.y) || 1
     const v = vitesseDe(config, e, en.type)
     if (en.type === 'hexagone' && d <= config.hexagone.halte + 0.5) {
-      // Il dérive de côté et tire vers le cercle.
+      // Il dérive de côté et tire vers le cercle. Arrivé à sa halte, il respire une demi-cadence avant son premier tir (son cœur s'allume : le joueur voit venir).
+      if (en.tirA < t) en.tirA = t + config.hexagone.tir.cadence / 2
       en.x += en.sens * config.hexagone.derive * dt
       if (Math.abs(en.x) > vue.demiLargeur - c.rayon - 2) en.sens = en.sens === 1 ? -1 : 1
       if (t >= en.tirA) {

@@ -57,7 +57,7 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   | forme | dès | PV | vitesse | coup | rôle |
   |---|---|---|---|---|---|
   | Triangle (magenta) | 0 s | 3 | 14 | 1 | fonce droit, la chair à parade |
-  | Hexagone (violet) | 20 s | 6 | 9 | — | s'arrête à 55 du cercle, dérive de côté, tire un losange (vitesse 34, 1 dégât) toutes les 1,8 s ; son cœur s'allume avant |
+  | Hexagone (violet) | 20 s | 6 | 9 | — | s'arrête à 55 du cercle, respire 0,9 s, dérive de côté, tire un losange (vitesse 34, 1 dégât) toutes les 1,8 s ; son cœur jaune s'allume la demi-seconde d'avant |
   | Carré (orange) | 35 s | 9 | 7 | 2 | lent et dur : une parade ne le tue pas, il revient |
 
   Les tirs du cercle ignorent les losanges : **les losanges, il faut les
@@ -91,6 +91,11 @@ ennemi nous touche (ou un projectile), on peut tap pour parer. »
   niveau 3 ; en parant, il tient les 10 min de la mesure (niveau 18, ~1 200
   abattus) — un robot ne rate jamais. C'est le
   joueur qui dira si la montée est trop lente.
+- *Le cœur jaune de l'hexagone grossissait sans fin pendant sa descente*
+  (Keko, 08/11 : « les ennemis violets grossissent dans une forme jaune
+  pleine ») : la part « bientôt » n'était pas bornée alors que, avant la
+  halte, le prochain tir est déjà « passé ». Bornée à 1 ; et l'hexagone
+  respire une demi-cadence en arrivant, son cœur s'allume, on le voit venir.
 - **Pas encore** : la part incrémentale entre les parties (des éclats gardés,
   un atelier d'améliorations permanentes) ; d'autres commandes action que la
   parade (un rechargement actif du tir, une charge) ; un boss. À trancher par

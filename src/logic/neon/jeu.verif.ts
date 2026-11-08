@@ -100,8 +100,9 @@ verifier('le carré paré survit, recule, puis revient', tr.pv === C.ennemis.car
 const losange = calme()
 const hex = poser(losange, 'hexagone', 0, -C.hexagone.halte)
 hex.tirA = 0
-const evTir = jouer(losange, 0.05)
-verifier("l'hexagone à sa halte tire un losange vers le cercle", evTir.some((x) => x.type === 'projectile') && losange.projectiles.length === 1 && losange.projectiles[0].vy > 0)
+verifier("l'hexagone arrivé à sa halte respire une demi-cadence avant de tirer", !jouer(losange, 0.05).some((x) => x.type === 'projectile') && hex.tirA > losange.t)
+const evTir = jouer(losange, C.hexagone.tir.cadence / 2)
+verifier("puis tire un losange vers le cercle", evTir.some((x) => x.type === 'projectile') && losange.projectiles.length === 1 && losange.projectiles[0].vy > 0)
 // On avance jusqu'à ce qu'il soit parable.
 let n = 0
 while (parable(C, losange) === null && n++ < 2000) avancer(C, losange, PAS, VUE)

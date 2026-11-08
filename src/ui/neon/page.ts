@@ -454,7 +454,8 @@ export function monterNeon(racine: HTMLElement, build: string): void {
       neon(() => polygone(cx + tx, cy, r, COTES[en.type], angle), couleur, 0.35 * s, etourdi ? 0.6 : 1)
       if (en.type === 'hexagone') {
         // Le cœur de l'hexagone s'allume avant de tirer.
-        const bientot = Math.max(0, 1 - (en.tirA - e.t) / 0.5)
+        // Borné des deux côtés : avant sa halte, son prochain tir est déjà « passé », et le cœur grossissait sans fin (Keko : « ils grossissent dans une forme jaune pleine »).
+        const bientot = Math.max(0, Math.min(1, 1 - (en.tirA - e.t) / 0.5))
         g.fillStyle = `rgba(255, 242, 58, ${0.15 + 0.7 * bientot})`
         g.beginPath()
         polygone(cx, cy, r * (0.3 + 0.2 * bientot), 6, -en.angle)
