@@ -16,6 +16,8 @@ import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, M
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
+import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
+import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
@@ -30,6 +32,7 @@ type Peintre = {
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
+  arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
   glow(x: number, y: number, r: number, c: number, k?: number): void
 }
@@ -317,7 +320,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
-    const blanchi = t - toucheA < 0.1
+    const blanchi = t - toucheA < 0.1 || m.phase === 'extrait'
     dessinerUnVaisseau(p, v, flamme, blanchi ? BLANC : COQUE, blanchi ? BLANC : VERRIERE, vise, m.forage !== null)
   }
 
@@ -390,15 +393,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
         if (aQuai && t - depotA < 0.2) p.glow(sx, sy, CONF.station.rayon * 2.4, PEPITE[2], 0.4)
-        // LE COMPTE DE L'EXTRACTION (Keko) : à quai, un arc d'or se referme le long du parvis depuis le haut, et le
-        // nombre de secondes qui restent au-dessus de la station ; au bout, l'arc est plein et la station flambe d'or
+        // LE COMPTE DE L'EXTRACTION (Keko) : à quai, un arc d'or CONTINU (Keko : « plutôt qu'en pointillé ») se referme
+        // le long du parvis depuis le haut, la tête blanche, et le nombre de secondes qui restent au-dessus de la
+        // station ; au bout, l'arc est plein et la station flambe d'or
         if (aQuai && m.extraction > 0) {
           const u = Math.min(1, m.extraction / CONF.extraction.duree)
-          const n = Math.round(u * 48)
-          for (let k = 0; k < n; k++) {
-            const a = -Math.PI / 2 + (k / 48) * Math.PI * 2
-            p.dot(sx + Math.cos(a) * (CONF.station.portee - 3), sy + Math.sin(a) * (CONF.station.portee - 3), k === n - 1 ? N.WHITE : PEPITE[3])
-          }
+          const a0 = -Math.PI / 2
+          const a1 = a0 + u * Math.PI * 2
+          p.arc(sx, sy, CONF.station.portee - 2, 2, a0, a1, PEPITE[3])
+          if (u < 1) p.dot(sx + Math.cos(a1) * (CONF.station.portee - 3), sy + Math.sin(a1) * (CONF.station.portee - 3), N.WHITE)
           if (m.phase === 'extrait') p.glow(sx, sy, CONF.station.portee * 1.6, PEPITE[2], 0.5 + 0.2 * Math.sin(t * 6))
           else p.text(String(Math.ceil(CONF.extraction.duree - m.extraction)), sx, sy - CONF.station.rayon - 16, PEPITE[3], { font: 'big', scale: 1, align: 'center', outline: COQUE[0] })
         }
@@ -627,9 +630,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'extrait': {
-              // resté à quai jusqu'au bout : l'expédition est achevée ; l'écran de fin vient après une seconde d'or
+              // resté à quai jusqu'au bout : le vaisseau se TÉLÉPORTE (Keko) — dessiné blanchi jusqu'à l'éclair, puis
+              // l'effet prend le relais et il n'est plus dessiné ; l'écran de fin vient quand l'effet est passé
               perduA = t
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: CONF.station.rayon })
+              effets.push({ fx: N.createFx(TELEPORTATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 3 }), x: v.x, y: v.y })
               secousse = 0.5
               if (typeof navigator.vibrate === 'function') navigator.vibrate([40, 60, 40])
               ecran.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `${m.banque} pépite${m.banque > 1 ? 's' : ''} en banque. Repartir ouvre une nouvelle expédition : la banque reste, le reste repart à neuf.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
@@ -742,8 +746,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     dessinerLesStations(p)
     dessinerLesEnnemis(p)
-    if (m.phase !== 'perdu') dessinerLeVaisseau(p)
-    if (m.phase !== 'vol' && ecran.hidden && t - perduA > 1) ecran.hidden = false
+    if (m.phase === 'vol' || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
+    if (m.phase !== 'vol' && ecran.hidden && t - perduA > (m.phase === 'extrait' ? 1.7 : 1)) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
     dessinerLePointeur(p)

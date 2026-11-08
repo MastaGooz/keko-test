@@ -212,11 +212,18 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   quai, et dix secondes d'hésitation au départ ne doivent pas finir la
   partie. Trois vérifications : né à quai rien ne court ; revenu le compte
   monte et ressorti il retombe ; resté, extrait à la seconde près.
-- **À l'écran** : un arc d'or de 48 points se referme le long du parvis
-  depuis le haut (en retrait de 3 du pointillé qui tourne), la tête blanche,
-  les secondes qui restent en police pixel au-dessus de la station ; au bout,
-  la station flambe d'or, l'anneau de flash, une vibration, et après une
-  seconde l'écran « Expédition achevée » dit la banque. Repartir ouvre une
+- **À l'écran** : un arc d'or CONTINU (`p.arc`, large de 2 ; en points
+  d'abord, Keko : « le cercle de chargement continu plutôt qu'en pointillé »)
+  se referme le long du parvis depuis le haut (en retrait de 2 du pointillé
+  qui tourne), la tête blanche, les secondes qui restent en police pixel
+  au-dessus de la station ; au bout, la station flambe d'or et **le vaisseau
+  se TÉLÉPORTE** (Keko : « un effet de téléporte qui fait disparaître le
+  vaisseau » — `keko/teleportation`, au banc : le blink-out du dépôt sans
+  personnage ni sol, vu de dessus, à la taille du vaisseau ; des filets de
+  lumière accourent, le pourtour crépite, le vaisseau est dessiné blanchi
+  jusqu'à l'éclair à 0,4 s puis l'effet le remplace : serré en une ligne, un
+  point, un éclatement d'étincelles sans pesanteur, un anneau), une
+  vibration, et après 1,7 s l'écran « Expédition achevée » dit la banque. Repartir ouvre une
   nouvelle expédition : la banque reste (comme après une coque percée), tout
   le reste repart à neuf. *Ce que vaut la banque entre deux expéditions reste
   à trancher par Keko* (un total, une boutique, un score).
