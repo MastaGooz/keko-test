@@ -80,8 +80,10 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- le lecteur
 
   const lecteur = el('div', 'pixelfx-lecteur')
+  const ecran = el('div', 'pixelfx-ecran')
   const canvas = document.createElement('canvas')
   canvas.className = 'pixelfx-canvas'
+  ecran.append(canvas)
   const g = canvas.getContext('2d')!
   const nom = el('div', 'pixelfx-nom')
   const desc = el('p', 'pixelfx-desc')
@@ -93,16 +95,21 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   const choixVitesse = el('select', '')
   choixVitesse.append(new Option('vitesse ×1', '1'), new Option('×0,5', '0.5'), new Option('×0,25', '0.25'), new Option('×2', '2'))
   /**
-   * Le zoom (Keko : « pourquoi certains trucs sont zoomés et d'autres moins ? ») : « auto » étire le canvas à la
-   * largeur du lecteur, donc un petit effet (72 px) est agrandi bien plus qu'un grand (280 px) ; un zoom fixe donne à
-   * chaque pixel de l'effet le même nombre de pixels d'écran, quel que soit l'effet — borné à la largeur du lecteur.
+   * Le zoom (Keko : « la taille d'un pixel sur les deux images n'est pas la même, on le voit aux dalles du sol »).
+   * PAR DÉFAUT LE PIXEL A LA MÊME TAILLE POUR TOUS LES EFFETS : un zoom fixe, choisi d'après la largeur de l'écran
+   * (×2 sur un téléphone, ×4 sur un PC), et un effet plus large que le lecteur SE FAIT DÉFILER de côté au lieu de
+   * rapetisser. « Étirer » est l'ancien lecteur, qui emplissait la largeur quel que soit l'effet.
    */
   const choixZoom = el('select', '')
-  choixZoom.append(new Option('zoom auto', '0'), new Option('×1', '1'), new Option('×2', '2'), new Option('×3', '3'), new Option('×4', '4'), new Option('×6', '6'))
+  const zoomParDefaut = Math.max(2, Math.min(4, Math.round((window.innerWidth - 24) / 180)))
+  choixZoom.append(...[1, 2, 3, 4, 6].map((z) => new Option(`zoom ×${z}`, String(z))), new Option('étirer', '0'))
+  choixZoom.value = String(zoomParDefaut)
   function zoomer(): void {
     const z = Number(choixZoom.value)
     canvas.style.width = z > 0 ? `${canvas.width * z}px` : ''
     canvas.classList.toggle('fixe', z > 0)
+    // l'écran se centre sur l'origine de l'effet (les pieds du personnage, le point du sort)
+    if (z > 0 && scene !== null) ecran.scrollLeft = Math.max(0, scene.x * z - ecran.clientWidth / 2)
   }
   choixZoom.addEventListener('change', zoomer)
   const retourner = bouton('', 'Retourner', () => {
@@ -123,7 +130,7 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   const choixPersonnage = el('select', 'pixelfx-personnage')
   choixPersonnage.append(new Option('gobelin', 'gobelin'), new Option('mannequin du dépôt', 'mannequin'), new Option('humain (notre squelette)', 'humain'))
   reglages.append(choixPalette, choixFond, choixVitesse, choixZoom, retourner, graine, pause, choixPersonnage)
-  lecteur.append(canvas, nom, desc, reglages)
+  lecteur.append(ecran, nom, desc, reglages)
 
   const ids = Object.keys(EFFETS)
   let id = ids.includes('keko/frappe-du-niveau') ? 'keko/frappe-du-niveau' : ids[0]
@@ -156,10 +163,10 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
     const y = Math.floor((H - h) / 2) + oy
     canvas.width = W
     canvas.height = H
-    zoomer()
     const sorteDeFond = choixFond.value === '' ? (meta.bg ?? 'dark') : choixFond.value
     const fond = sorteDeFond === 'none' ? null : N.backdrop(sorteDeFond, W, H, y)
     scene = { W, H, x, y, frame: N.createFrame(W, H), img: g.createImageData(W, H), fond, meta, acte }
+    zoomer()
     nom.replaceChildren(document.createTextNode(meta.name ?? id), el('small', '', `${id} · ${w}×${h} · ${meta.loop ? 'boucle' : `${meta.duration} s`} · ${meta.fps} i/s`))
     desc.textContent = meta.desc ?? ''
     rejouer()

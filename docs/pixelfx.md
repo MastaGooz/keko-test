@@ -50,10 +50,14 @@ juger. Rien d'autre que le banc ne l'importe.
   exporte, et trois à nous : néon cyan, néon magenta, or — pour voir un
   effet aux couleurs de Néon), le fond (le sien, ou dark, ground, sky, light,
   black, aucun), la vitesse (×1, ×0,5, ×0,25, ×2), **le zoom** (Keko, 08/11 :
-  « pourquoi certains trucs sont zoomés et d'autres moins ? » — « auto »
-  étire le canvas à la largeur du lecteur, donc un effet de 72 px est agrandi
-  bien plus qu'un de 280 ; ×1 à ×6 donnent à chaque pixel de l'effet le même
-  nombre de pixels d'écran, bornés à la largeur du lecteur), Retourner,
+  « la taille d'un pixel sur les deux images n'est pas la même, on le voit
+  aux dalles du sol » — le lecteur étirait chaque canvas à sa largeur, donc un
+  effet de 72 px était agrandi bien plus qu'un de 280 ; **par défaut le pixel
+  a maintenant la même taille pour tous les effets** : un zoom fixe choisi
+  d'après la largeur de l'écran, ×2 au téléphone, ×4 sur PC, et un effet plus
+  large que le lecteur SE FAIT DÉFILER de côté, centré sur son origine, au
+  lieu de rapetisser ; ×1 à ×6 au choix, « étirer » est l'ancien lecteur),
+  Retourner,
   Autre graine, Pause, et le personnage quand il y a un acte.
 - Un effet qui casse (création, mise à jour ou dessin) ne casse pas le banc :
   le message s'affiche à la place de la description.

@@ -41,10 +41,21 @@ html.pixelfx-page body {
   border-radius: 0.5rem;
 }
 
-/* Un zoom fixe : la largeur est posée en pixels par la page, la hauteur suit, et le lecteur borne le tout. */
+/* L'écran du lecteur : un effet plus large que lui se fait défiler de côté, le pixel garde sa taille. */
+.pixelfx-ecran {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 0.5rem;
+  background: #15131d;
+  scrollbar-width: thin;
+}
+
+/* Un zoom fixe : la largeur est posée en pixels par la page, la hauteur suit ; seule la hauteur est bornée. */
 .pixelfx-canvas.fixe {
-  max-width: 100%;
+  width: auto;
+  max-width: none;
   height: auto;
+  max-height: 60vh;
 }
 
 .pixelfx-nom {
