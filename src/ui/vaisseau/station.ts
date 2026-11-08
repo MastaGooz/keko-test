@@ -73,7 +73,7 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
     const d = Math.hypot(dx, dy) || 1
     const a = Math.atan2(dy, dx) - rot
     const seg = ((a / (Math.PI / 6)) % 1 + 1) % 1
-    if (seg < 0.08) return A[1]
+    if (seg < 0.08) return A[2]
     const bord = d - rayon
     const l = lum(dx / d, dy / d) * 0.75 - 0.12 + (bord > 0.9 ? 0.2 : bord < -0.9 ? -0.25 : 0)
     return tonDe(A, l)
@@ -87,7 +87,8 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
     if (i % 2 === 0) {
       const phase = (t * (aQuai ? 6 : 2) - i * 0.5) % 6
       const allume = phase >= 0 && phase < 1.2
-      p.px(sx + cx * rayon, sy + cy * rayon, allume ? (aQuai ? T.or[3] : T.verre[2]) : T.verre[0])
+      // (eteint, un hublot garde un ton d'acier moyen : au ton le plus sombre de la verriere, il clignotait en noir)
+      p.px(sx + cx * rayon, sy + cy * rayon, allume ? (aQuai ? T.or[3] : T.verre[2]) : A[3])
       if (allume) p.glow(sx + cx * rayon, sy + cy * rayon, 4, aQuai ? T.or[2] : T.verre[1], 0.5)
     }
   }
@@ -121,7 +122,7 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
     const am = rot * 0.5 + ((k + 0.5) / pans) * Math.PI * 2
     const nx = Math.cos(am)
     const ny = Math.sin(am)
-    if (u < 0.07 || u > 0.93) return A[1]
+    if (u < 0.07 || u > 0.93) return A[2]
     return tonDe(A, lum(nx, ny) * 0.8 + 0.1)
   })
   for (let k = 0; k < pans; k++) {
