@@ -1,0 +1,95 @@
+/* LE VAISSEAU — `?vaisseau`. La scène en pixel art agrandie en entier, centrée sur fond noir ; rien ne défile. */
+html.vaisseau-page,
+html.vaisseau-page body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #07060f;
+}
+
+.vaisseau {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #07060f;
+  color: #ece8f4;
+  font-family: 'Baloo 2', sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.vaisseau-scene {
+  display: grid;
+  place-items: center;
+}
+
+.vaisseau-canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.vaisseau-surcouche {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.vaisseau-ecran {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 2rem 1.5rem;
+  background: rgba(7, 6, 15, 0.72);
+  text-align: center;
+  pointer-events: none;
+}
+
+.vaisseau-ecran[hidden] {
+  display: none;
+}
+
+.vaisseau-ecran h1 {
+  margin: 0;
+  font: 800 2.2rem Grenze, serif;
+  color: #9fb4d2;
+}
+
+.vaisseau-ecran p {
+  margin: 0;
+  max-width: 30rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: rgba(236, 232, 244, 0.85);
+}
+
+.vaisseau-go {
+  font-weight: 800;
+  color: #fff;
+  animation: vaisseau-respire 1.4s ease-in-out infinite;
+}
+
+@keyframes vaisseau-respire {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.vaisseau-build {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.2rem;
+  font-size: 0.6rem;
+  color: rgba(236, 232, 244, 0.35);
+  pointer-events: none;
+}

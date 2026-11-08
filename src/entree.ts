@@ -70,6 +70,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) monterNeon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('vaisseau')) {
+  // LE VAISSEAU, un side project : un petit vaisseau en pixel art au manche flottant, l'espace et des astéroïdes.
+  void import('./ui/vaisseau/page.ts').then(({ monterVaisseau }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterVaisseau(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('magicien')) {
   // LE MAGICIEN, un side project : la tour du magicien VUE DE CÔTÉ, en pixel art (pixelfx) — le magicien à gauche, les gobelins par la droite.
   void import('./ui/magicien/page.ts').then(({ monterMagicien }) => {
