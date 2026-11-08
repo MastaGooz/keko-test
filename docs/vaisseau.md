@@ -100,7 +100,8 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   ne compte qu'à son arrivée et s'allume (Keko : « dessiner le score en haut
   en pixel ») — le compteur est PEINT DANS LA SCÈNE, une pépite en icône et le
   nombre dans la police pixel du dépôt (`p.text`, `big`, un contour sombre),
-  pas un texte DOM par-dessus. *Une roche
+  pas un texte DOM par-dessus. `&minerai=N` part avec N pépites à bord, pour
+  voir le compteur sans miner. *Une roche
   partie ne repousse plus et ne revient pas* (`detruits`, que la règle du
   vaisseau reçoit : la première version filtrait seulement les étincelles,
   et la roche fantôme poussait encore — Keko : « je collisionne toujours

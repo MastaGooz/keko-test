@@ -68,7 +68,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   document.documentElement.classList.add('vaisseau-page')
   racine.classList.add('vaisseau')
   const dpr = Math.min(2, window.devicePixelRatio || 1)
-  const suivre = new URLSearchParams(location.search).get('controle') === 'suivre'
+  const parametres = new URLSearchParams(location.search)
+  const suivre = parametres.get('controle') === 'suivre'
+  /** `&minerai=N` : part avec N pepites a bord, pour voir le compteur sans miner (ce qui se teste doit s'ouvrir d'un lien). */
+  const minerai0 = Math.max(0, Number(parametres.get('minerai')) || 0)
 
   function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe: string, texte = ''): HTMLElementTagNameMap[K] {
     const n = document.createElement(tag)
@@ -93,6 +96,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- l'état
   const m = nouveauMonde()
+  m.minerai = minerai0
   let v: Vaisseau = m.vaisseau
   let enJeu = false
   let zoom = 2
@@ -108,7 +112,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const flashs: { x: number; y: number; t0: number; r: number }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
   const envols: { x: number; y: number; t0: number }[] = []
-  let affiche = 0
+  let affiche = minerai0
   let allumeA = -10
   const COMPTEUR = { x: 16, y: 6 }
   let secousse = 0
