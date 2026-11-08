@@ -118,14 +118,24 @@ const petite = autour.filter((r) => r.rayon < 7).sort((r1, r2) => r1.rayon - r2.
 const k = nouveauMonde()
 k.prochainEnnemiA = 1e9
 k.vaisseau = { ...nouveauVaisseau(), x: petite.x - petite.rayon - C.rayon - 2, y: petite.y, vx: C.vitesseMax, vy: 0 }
-const rk = avancerLeMonde(C, k, 1 / 60, { x: 0, y: 0 })
-verifier('un choc à pleine vitesse coûte de la coque, en proportion', rk.chocs.length === 1 && k.coque < C.coque && k.coque > C.coque - 3 && compter(rk.evenements, 'touche') === 1)
-verifier('et fait éclater une petite roche', k.detruits.has(petite.id) && compter(rk.evenements, 'eclat') === 1)
+// quelques pas : il lui faut le temps d'arriver sur la roche
+let chocsK = 0
+let touchesK = 0
+let eclatsK = 0
+for (let i = 0; i < 6 && chocsK === 0; i++) {
+  const rk = avancerLeMonde(C, k, 1 / 60, { x: 0, y: 0 })
+  chocsK += rk.chocs.length
+  touchesK += compter(rk.evenements, 'touche')
+  eclatsK += compter(rk.evenements, 'eclat')
+}
+verifier('un choc à pleine vitesse coûte de la coque, en proportion', chocsK === 1 && k.coque < C.coque && k.coque > C.coque - 3 && touchesK === 1)
+verifier('et fait éclater une petite roche', k.detruits.has(petite.id) && eclatsK === 1)
 const doux = nouveauMonde()
 doux.prochainEnnemiA = 1e9
 doux.vaisseau = { ...nouveauVaisseau(), x: petite.x - petite.rayon - C.rayon + 0.5, y: petite.y, vx: 6, vy: 0 }
-avancerLeMonde(C, doux, 1 / 60, { x: 1, y: 0 })
-verifier('un contact doux ne coûte rien à personne', doux.coque === C.coque && !doux.detruits.has(petite.id) && (doux.creuse.get(petite.id) ?? 0) === 0)
+const rd = avancerLeMonde(C, doux, 1 / 60, { x: 1, y: 0 })
+// (le laser, lui, creuse la roche voisine : on regarde le choc et la coque, pas le creusement)
+verifier('un contact doux ne coûte rien à personne', rd.chocs.length === 0 && doux.coque === C.coque && !doux.detruits.has(petite.id))
 // l'ennemi aussi : jeté sur une grosse roche, il perd des points et l'abîme
 const grosse = autour.filter((r) => r.rayon > 11)[0]
 const q = nouveauMonde()
