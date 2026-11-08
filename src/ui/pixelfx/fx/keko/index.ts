@@ -7,9 +7,11 @@
 import * as frappeDuNiveau from './frappe-du-niveau.js'
 import * as dechirure from './dechirure.js'
 import * as ouverture from './ouverture.js'
+import * as cryogenie from './cryogenie.js'
 
 export const NOS_EFFETS: Record<string, unknown> = {
   'keko/frappe-du-niveau': frappeDuNiveau,
   'keko/dechirure': dechirure,
   'keko/ouverture': ouverture,
+  'keko/cryogenie': cryogenie,
 }

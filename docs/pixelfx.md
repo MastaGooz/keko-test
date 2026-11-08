@@ -80,6 +80,27 @@ puis le contrôle.* Trois effets tirés du projet, chacun d'une famille :
   visée qui tourne, trois battements du cœur qui lancent une onde, deux éclats
   qui courent sur l'anneau, des paillettes (`cycle`), puis tout se referme au
   centre. 116 × 116, 1,2 s — la durée de l'ouverture dans le jeu.
+- **`keko/cryogenie`** (simulé ; Keko, 08/11 : « une petite étincelle de
+  givre qui brille puis un gros flash de givre avec d'énormes cristaux de
+  glace qui se forment dans toutes les directions à partir du point, comme le
+  sort Cryogénie dans Tales of Symphonia ») — trois temps : l'étincelle, une
+  croix qui clignote et grossit avec deux battements pendant que des traits
+  de froid affluent vers elle (`P.STREAK`, la recette de la nova de givre) ;
+  le flash, un disque blanc, un éclair à huit rayons, un anneau debout
+  (`band` à `sy` 1, gardé au-dessus du sol), flocons et éclats ; les
+  cristaux, douze grands et douze petits plus huit pointes, qui jaillissent
+  du point en étoile (`ease.outBack`, blancs leur première image, un sur deux
+  au fond et plus sombre), un reflet courant sur l'arête, le sol qui givre ;
+  la glace tient une seconde, flashe blanc, et ÉCLATE en éclats qui
+  retombent et rebondissent. **Les cristaux radiaux sont dessinés dans
+  l'effet** : le `crystal` du dépôt ne pousse que vers le haut ; le nôtre
+  reprend son ombrage (face claire, face sombre, arête et pointe blanches,
+  liseré sombre) le long d'une direction, et une pointe qui vise le sol
+  s'arrête à lui. 280 × 156, 3 s. *Les tours* : les flocons jetés dans toutes
+  les directions traversaient le sol (ils partent dans la moitié haute, comme
+  l'anneau), l'éclatement était une bouillie d'éclats et de ronds de vapeur
+  grise (moitié moins, plus courts, la vapeur sur les grands du fond seuls),
+  et la toile s'est élargie trois fois pour les éclats des autres graines.
 
 **Ce que les tours ont corrigé** : les trois débordaient de leur toile (les
 étincelles d'une autre graine vont plus loin que celles de la graine 1 ; le
