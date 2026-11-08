@@ -125,6 +125,18 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   rien à personne. Le rival peut se tuer sur une roche. Les cases de coque se
   vident par le haut à mesure que le point s'entame.
 
+## Les explosions (Keko, 08/11 : « une petite explosion et disparition à la mort du joueur ou du vaisseau ennemi »)
+
+- `keko/explosion` (au banc aussi) : un flash blanc, une boule de feu qui
+  grossit d'un coup, refroidit du blanc au rouge et se troue par le milieu,
+  un anneau, vingt étincelles qui filent et refroidissent, huit ronds de
+  fumée translucides qui s'écartent. Sans sol, c'est l'espace ; `taille`
+  l'agrandit. Le rival l'a à sa mort avec ses morceaux rouges ; le joueur
+  l'a un peu plus grande avec des morceaux de sa coque, il DISPARAÎT (plus
+  dessiné, son laser non plus), une secousse et une vibration en trois
+  temps, et l'écran « Coque percée » n'arrive qu'une seconde après, quand la
+  boule de feu est passée.
+
 ## L'ennemi (Keko, 08/11 : « on rajoute un ennemi qui mine et qui tire ? »)
 
 - **Un rival, un à la fois** : il naît à 10 s (puis 5 s après sa mort, d'une autre direction — Keko : « quand l'ennemi meurt, un autre spawn ailleurs quelques secondes après » ; 18 s au départ, trop long pour qu'on le remarque), à

@@ -15,6 +15,7 @@ import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
 import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
+import * as EXPLOSION from '../pixelfx/fx/keko/explosion.js'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
 type Module = { meta?: Record<string, unknown> }
@@ -154,7 +155,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le premier toucher décolle ; après une coque percée, il repart à neuf. */
   function demarrer(): void {
     if (m.phase === 'perdu') {
-      if (t - perduA < 0.8) return
+      if (t - perduA < 1.2) return
       m = nouveauMonde(CONF)
       effets = []
       flashs.length = 0
@@ -343,7 +344,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLesLasers(p: Peintre): void {
     p.place(W / 2 - camera.x, H / 2 - camera.y)
-    if (m.forage !== null) dessinerUnLaser(p, v, m.forage, LASER)
+    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER)
     for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET)
     p.place(0, 0)
   }
@@ -500,7 +501,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: 7 })
+              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, taille: 1, seed: ev.id }), x: ev.x, y: ev.y })
               for (let i = 0; i < 14; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 110)
@@ -511,11 +512,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
               break
             }
-            case 'perdu':
+            case 'perdu': {
+              // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
               perduA = t
+              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, taille: 1.3, seed: 5 }), x: v.x, y: v.y })
+              for (let i = 0; i < 18; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(30, 120)
+                morceaux.add({ kind: N.B.SHARD, x: v.x, y: v.y, vx: Math.cos(a) * vit + v.vx * 0.4, vy: Math.sin(a) * vit + v.vy * 0.4, g: 0, drag: 1.2, bounce: 0, life: R.range(0.9, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-10, 10), s: R.range(1.5, 3), c: COQUE[1 + Math.floor(R.next() * 4)] })
+              }
+              secousse = 1
+              if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
               ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} à bord. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
-              ecran.hidden = false
               break
+            }
             default:
               break
           }
@@ -599,7 +609,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
     dessinerLesEnnemis(p)
-    dessinerLeVaisseau(p)
+    if (m.phase === 'vol') dessinerLeVaisseau(p)
+    else if (ecran.hidden && t - perduA > 1) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
     dessinerLeScore(p)
