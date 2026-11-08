@@ -33,11 +33,18 @@ html.pixelfx-page body {
   display: block;
   width: 100%;
   max-height: 46vh;
+  margin: 0 auto;
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   background: #15131d;
   border-radius: 0.5rem;
+}
+
+/* Un zoom fixe : la largeur est posée en pixels par la page, la hauteur suit, et le lecteur borne le tout. */
+.pixelfx-canvas.fixe {
+  max-width: 100%;
+  height: auto;
 }
 
 .pixelfx-nom {

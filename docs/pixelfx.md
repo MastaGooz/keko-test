@@ -49,8 +49,12 @@ juger. Rien d'autre que le banc ne l'importe.
 - Les réglages : la palette (la sienne, les palettes du dépôt s'il en
   exporte, et trois à nous : néon cyan, néon magenta, or — pour voir un
   effet aux couleurs de Néon), le fond (le sien, ou dark, ground, sky, light,
-  black, aucun), la vitesse (×1, ×0,5, ×0,25, ×2), Retourner, Autre graine,
-  Pause.
+  black, aucun), la vitesse (×1, ×0,5, ×0,25, ×2), **le zoom** (Keko, 08/11 :
+  « pourquoi certains trucs sont zoomés et d'autres moins ? » — « auto »
+  étire le canvas à la largeur du lecteur, donc un effet de 72 px est agrandi
+  bien plus qu'un de 280 ; ×1 à ×6 donnent à chaque pixel de l'effet le même
+  nombre de pixels d'écran, bornés à la largeur du lecteur), Retourner,
+  Autre graine, Pause, et le personnage quand il y a un acte.
 - Un effet qui casse (création, mise à jour ou dessin) ne casse pas le banc :
   le message s'affiche à la place de la description.
 

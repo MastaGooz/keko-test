@@ -92,6 +92,19 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   choixFond.append(new Option('son fond', ''), ...FONDS.map((k) => new Option(`fond ${k}`, k)))
   const choixVitesse = el('select', '')
   choixVitesse.append(new Option('vitesse ×1', '1'), new Option('×0,5', '0.5'), new Option('×0,25', '0.25'), new Option('×2', '2'))
+  /**
+   * Le zoom (Keko : « pourquoi certains trucs sont zoomés et d'autres moins ? ») : « auto » étire le canvas à la
+   * largeur du lecteur, donc un petit effet (72 px) est agrandi bien plus qu'un grand (280 px) ; un zoom fixe donne à
+   * chaque pixel de l'effet le même nombre de pixels d'écran, quel que soit l'effet — borné à la largeur du lecteur.
+   */
+  const choixZoom = el('select', '')
+  choixZoom.append(new Option('zoom auto', '0'), new Option('×1', '1'), new Option('×2', '2'), new Option('×3', '3'), new Option('×4', '4'), new Option('×6', '6'))
+  function zoomer(): void {
+    const z = Number(choixZoom.value)
+    canvas.style.width = z > 0 ? `${canvas.width * z}px` : ''
+    canvas.classList.toggle('fixe', z > 0)
+  }
+  choixZoom.addEventListener('change', zoomer)
   const retourner = bouton('', 'Retourner', () => {
     flip = !flip
     retourner.classList.toggle('actif', flip)
@@ -109,7 +122,7 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
   const PERSONNAGES = { gobelin: GOBELIN, humain: HUMAIN }
   const choixPersonnage = el('select', 'pixelfx-personnage')
   choixPersonnage.append(new Option('gobelin', 'gobelin'), new Option('mannequin du dépôt', 'mannequin'), new Option('humain (notre squelette)', 'humain'))
-  reglages.append(choixPalette, choixFond, choixVitesse, retourner, graine, pause, choixPersonnage)
+  reglages.append(choixPalette, choixFond, choixVitesse, choixZoom, retourner, graine, pause, choixPersonnage)
   lecteur.append(canvas, nom, desc, reglages)
 
   const ids = Object.keys(EFFETS)
@@ -143,6 +156,7 @@ export function monterPixelfx(racine: HTMLElement, build: string): void {
     const y = Math.floor((H - h) / 2) + oy
     canvas.width = W
     canvas.height = H
+    zoomer()
     const sorteDeFond = choixFond.value === '' ? (meta.bg ?? 'dark') : choixFond.value
     const fond = sorteDeFond === 'none' ? null : N.backdrop(sorteDeFond, W, H, y)
     scene = { W, H, x, y, frame: N.createFrame(W, H), img: g.createImageData(W, H), fond, meta, acte }
