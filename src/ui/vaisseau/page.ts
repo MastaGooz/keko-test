@@ -291,7 +291,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (typeof navigator.vibrate === 'function') navigator.vibrate(Math.round(10 + choc.force / 4))
           const mod = FX['impacts/hit-spark']
           if (mod !== undefined) {
-            const fx = N.createFx(mod, { x: choc.x - camera.x + W / 2, y: choc.y - camera.y + H / 2, angle: Math.atan2(choc.y - v.y, choc.x - v.x), palette: N.PAL.stone })
+            // l'étincelle du dépôt frappe à `height` au-dessus de son origine (un impact sur un sol) : ici la frappe est À
+            // l'origine (height 0), et le « haut » de l'effet est la normale de la roche, pour que les éclats en jaillissent
+            // et y retombent — Keko : « le point de naissance des étincelles est toujours décalé »
+            const nx = v.x - choc.x
+            const ny = v.y - choc.y
+            const fx = N.createFx(mod, { x: choc.x - camera.x + W / 2, y: choc.y - camera.y + H / 2, height: 0, angle: Math.atan2(nx, -ny), palette: N.PAL.stone })
             effets.push({ fx, x: choc.x, y: choc.y })
           }
         }

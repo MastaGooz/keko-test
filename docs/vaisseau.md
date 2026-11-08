@@ -72,6 +72,10 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   continu ») : au-dessous de 12 unités/s de vitesse normale on s'appuie sans
   étincelle, et tant qu'on reste contre la même roche (`contact`) il n'y a
   pas de second choc ; la poussée hors de la roche, elle, joue à chaque pas.
+  **L'étincelle frappe à son origine** (`height: 0` : celle du dépôt frappe
+  à 20 px au-dessus, c'est un impact sur un sol — tourné par l'angle du
+  choc, ce 20 px était le « décalage » que Keko voyait), et son haut est la
+  normale de la roche : les éclats en jaillissent et y retombent.
 - **Le vaisseau se dessine À SA PLACE DANS LE MONDE**, pas au centre de
   l'écran (Keko : « le feu du réacteur démarre trop loin derrière quand je
   vais vite, un offset bizarre diagonal en virage, et entre le point de
