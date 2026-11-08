@@ -30,9 +30,8 @@ type Peintre = {
   ring(x: number, y: number, r: number, w: number, c: number | ((x: number, y: number) => number), a?: number): void
   text(texte: string, x: number, y: number, c: number, o?: { font?: string; scale?: number; align?: string; outline?: number; shadow?: number; a?: number }): void
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
-  arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
+  arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number | ((u: number, v: number) => number), a?: number): void
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
-  arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
   glow(x: number, y: number, r: number, c: number, k?: number): void
 }
@@ -117,7 +116,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   racine.append(scene, surcouche, ecran, pied)
 
   // ---------------------------------------------------------------- l'état
-  let m = nouveauMonde(CONF)
+  /** `&quai` : le compte de l'extraction court dès le départ, sans sortir du parvis — pour juger l'arc d'un lien. */
+  const monterLeMonde = () => {
+    const monde = nouveauMonde(CONF)
+    if (parametres.has('quai')) monde.sorti = true
+    return monde
+  }
+  let m = monterLeMonde()
   m.minerai = minerai0
   let v: Vaisseau = m.vaisseau
   let perduA = -10
@@ -175,7 +180,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (m.phase !== 'vol') {
       if (t - perduA < 1.2) return
       const banque = m.banque
-      m = nouveauMonde(CONF)
+      m = monterLeMonde()
       m.banque = banque
       effets = []
       flashs.length = 0
@@ -397,11 +402,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // le long du parvis depuis le haut, la tête blanche, et le nombre de secondes qui restent au-dessus de la
         // station ; au bout, l'arc est plein et la station flambe d'or
         if (aQuai && m.extraction > 0) {
+          // (Keko : « le cercle de chargement manque de juice, une lumière plutôt qu'un cercle juste blanc ») : l'arc est
+          // UNE LUMIÈRE — une bande d'or sombre et large dessous, le trait d'or clair au cœur blanc vers la tête, une
+          // lueur posée tout le long, une tête qui bat et scintille et sème des étincelles, la station de plus en plus
+          // allumée à mesure que l'arc se referme
           const u = Math.min(1, m.extraction / CONF.extraction.duree)
+          const bat = 0.75 + 0.25 * Math.sin(t * 9)
           const a0 = -Math.PI / 2
           const a1 = a0 + u * Math.PI * 2
-          p.arc(sx, sy, CONF.station.portee - 2, 2, a0, a1, PEPITE[3])
-          if (u < 1) p.dot(sx + Math.cos(a1) * (CONF.station.portee - 3), sy + Math.sin(a1) * (CONF.station.portee - 3), N.WHITE)
+          const r = CONF.station.portee - 2
+          p.arc(sx, sy, r + 1, 4.5, a0, a1, PEPITE[1], 0.55)
+          p.arc(sx, sy, r, 2.2, a0, a1, (ua, va) => (ua > 0.94 ? N.WHITE : va < 0.45 ? PEPITE[4] : PEPITE[3]))
+          const pas = 7 / r
+          for (let a = a0; a <= a1; a += pas) p.glow(sx + Math.cos(a) * r, sy + Math.sin(a) * r, 8, PEPITE[2], 0.28)
+          const hx = sx + Math.cos(a1) * r
+          const hy = sy + Math.sin(a1) * r
+          if (u < 1) {
+            p.glow(hx, hy, 14, PEPITE[3], 0.6 + 0.4 * bat)
+            p.glow(hx, hy, 5, N.WHITE, 0.5 * bat)
+            N.sparkle(p, hx, hy, 2 + 2 * bat, N.WHITE, PEPITE[3], 0.7)
+            // la tête sème des étincelles d'or (dans le monde : l'écran recule de la caméra)
+            if (R.next() < 0.45) {
+              const an = a1 + Math.PI / 2 + R.range(-0.6, 0.6)
+              const vit = R.range(8, 30)
+              etincelles.ajouter('etincelle', hx - W / 2 + camera.x, hy - H / 2 + camera.y, Math.cos(an) * vit, Math.sin(an) * vit, R.range(0.25, 0.6), R.next() < 0.5 ? PEPITE[3] : PEPITE[4], 1, 2)
+            }
+          }
+          p.glow(sx, sy, CONF.station.portee * 1.3, PEPITE[2], 0.1 + 0.35 * u * bat)
           if (m.phase === 'extrait') p.glow(sx, sy, CONF.station.portee * 1.6, PEPITE[2], 0.5 + 0.2 * Math.sin(t * 6))
           else p.text(String(Math.ceil(CONF.extraction.duree - m.extraction)), sx, sy - CONF.station.rayon - 16, PEPITE[3], { font: 'big', scale: 1, align: 'center', outline: COQUE[0] })
         }

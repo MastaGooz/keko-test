@@ -212,11 +212,17 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   quai, et dix secondes d'hésitation au départ ne doivent pas finir la
   partie. Trois vérifications : né à quai rien ne court ; revenu le compte
   monte et ressorti il retombe ; resté, extrait à la seconde près.
-- **À l'écran** : un arc d'or CONTINU (`p.arc`, large de 2 ; en points
-  d'abord, Keko : « le cercle de chargement continu plutôt qu'en pointillé »)
-  se referme le long du parvis depuis le haut (en retrait de 2 du pointillé
-  qui tourne), la tête blanche, les secondes qui restent en police pixel
-  au-dessus de la station ; au bout, la station flambe d'or et **le vaisseau
+- **À l'écran** : un arc d'or CONTINU (`p.arc` ; en points d'abord, Keko :
+  « le cercle de chargement continu plutôt qu'en pointillé ») se referme le
+  long du parvis depuis le haut (en retrait de 2 du pointillé qui tourne),
+  **et c'est une LUMIÈRE** (Keko : « il manque de juice, une lumière plutôt
+  qu'un cercle juste blanc » : un trait plat d'or d'abord) — une bande d'or
+  sombre large de 4,5 dessous, le trait de 2,2 d'or clair au cœur plus clair
+  et blanc vers la tête, une lueur posée tous les 7 px le long, une tête qui
+  bat (9 rad/s), scintille et sème des étincelles d'or dans le monde, la
+  station de plus en plus allumée à mesure que l'arc se referme —, les
+  secondes qui restent en police pixel au-dessus de la station (`&quai` fait
+  courir le compte dès le départ, pour juger l'arc d'un lien) ; au bout, la station flambe d'or et **le vaisseau
   se TÉLÉPORTE** (Keko : « un effet de téléporte qui fait disparaître le
   vaisseau » — `keko/teleportation`, au banc : le blink-out du dépôt sans
   personnage ni sol, vu de dessus, à la taille du vaisseau ; des filets de
