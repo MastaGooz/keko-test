@@ -401,27 +401,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
-  /** Le pointeur vers la station quand elle est hors champ (Keko) : une petite station en icône au bord de l'écran, et une flèche ; il bat quand on porte du minerai. */
+  /**
+   * Une simple flèche jaune au bord de l'écran vers la station hors champ (Keko : « une simple flèche comme ce qu'on
+   * avait pour l'ennemi, mais en jaune » — la petite station en icône, qui battait, « n'est pas très belle et clignote
+   * bizarrement »). Elle ne bat pas.
+   */
   function dessinerLePointeur(p: Peintre): void {
     const dx = CONF.station.x - camera.x
     const dy = CONF.station.y - camera.y
-    const marge = 12
+    const marge = 10
     if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) return
+    // le point du bord dans sa direction
     const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
-    const x = Math.round(W / 2 + dx * k)
-    const y = Math.round(H / 2 + dy * k)
+    const x = W / 2 + dx * k
+    const y = H / 2 + dy * k
     const a = Math.atan2(dy, dx)
-    const porte = m.minerai > 0
-    const bat = porte ? 0.6 + 0.4 * Math.sin(t * 6) : 0.8
-    const c = porte ? PEPITE[2] : VERRIERE[2]
-    // l'icône : un petit anneau et son cœur, en retrait du bord ; la flèche devant, vers la station
-    const ix = x - Math.cos(a) * 6
-    const iy = y - Math.sin(a) * 6
-    p.ring(ix, iy, 3.2, 1.4, TEINTES_STATION.acier[5], bat)
-    p.dot(ix, iy, c, bat)
-    const pointe = [x + Math.cos(a) * 3, y + Math.sin(a) * 3]
-    p.poly([pointe, [x + Math.cos(a + 2.4) * 3.5, y + Math.sin(a + 2.4) * 3.5], [x + Math.cos(a - 2.4) * 3.5, y + Math.sin(a - 2.4) * 3.5]], c, bat)
-    p.glow(ix, iy, 7, c, 0.35 * bat)
+    const pointe = [x + Math.cos(a) * 4, y + Math.sin(a) * 4]
+    const g1 = [x + Math.cos(a + 2.5) * 4, y + Math.sin(a + 2.5) * 4]
+    const g2 = [x + Math.cos(a - 2.5) * 4, y + Math.sin(a - 2.5) * 4]
+    p.poly([pointe, g1, g2], PEPITE[2])
+    p.px(pointe[0], pointe[1], PEPITE[3])
+    p.glow(x, y, 6, PEPITE[2], 0.4)
   }
 
   /** Le score, en haut à gauche de la scène : une pépite en icône, le nombre en police pixel du dépôt ; les pépites en vol y arrivent. */

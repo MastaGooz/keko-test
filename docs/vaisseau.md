@@ -164,9 +164,12 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   `circle` (d, angle), pas des pixels (seuls `poly` et `shade` donnent des
   pixels) ; lue comme des pixels, elle rendait n'importe quel ton et l'anneau
   clignotait en noir (Keko).
-- **Un POINTEUR au bord de l'écran** (Keko) quand la station est hors champ :
-  une petite station en icône et une flèche, d'or qui bat quand on porte du
-  minerai, de verrière sinon. À quai avec du minerai à bord, une pépite part toutes les 0,12 s
+- **Une FLÈCHE JAUNE au bord de l'écran** quand la station est hors champ :
+  la même que celle qu'on avait vers le rival, en jaune pépite, qui ne bat
+  pas (Keko, 08/11 : la première version, une petite station en icône et une
+  flèche, d'or qui battait quand on portait du minerai, de verrière sinon,
+  « n'est pas très belle et clignote bizarrement — une simple flèche comme ce
+  qu'on avait pour l'ennemi, mais en jaune »). À quai avec du minerai à bord, une pépite part toutes les 0,12 s
   du vaisseau au cœur de la station, l'anneau luit d'or, et la BANQUE compte
   à l'arrivée (une icône de station et son nombre à côté du porté, en haut à
   gauche). **Ce qu'on porte se perd avec la coque ; la banque reste** d'une
@@ -191,9 +194,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 ## L'ennemi (Keko, 08/11 : « on rajoute un ennemi qui mine et qui tire ? »)
 
 - **Un rival, un à la fois** : il naît à 10 s (puis 5 s après sa mort, d'une autre direction — Keko : « quand l'ennemi meurt, un autre spawn ailleurs quelques secondes après » ; 18 s au départ, trop long pour qu'on le remarque), à
-  230 unités dans une direction tirée de la graine du monde, le nez vers le
-  joueur. Le même corps que le joueur, un moteur moins vif (poussée 120,
-  110 de pointe, 5 rad/s), 36 points que le foreur du joueur creuse comme une
+  320 unités dans une direction tirée de la graine du monde, le nez vers le
+  joueur (200 avant le 08/11 — Keko : « parfois on le voit apparaître de
+  nulle part » : l'écran le plus haut fait 180 × 480, soit 256 de demi-
+  diagonale, plus l'avance de la caméra ; *cette note disait 230 quand le
+  code disait 200*). Le même corps que le joueur, un moteur moins vif (poussée 120,
+  85 de pointe, 5 rad/s), 36 points que le foreur du joueur creuse comme une
   roche.
 - **Il MINE** quand il ne voit pas le joueur : la roche la plus proche de
   lui à 260 unités **parmi celles du TERRITOIRE DU JOUEUR** (à 150 unités du

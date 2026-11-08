@@ -78,7 +78,8 @@ export const VAISSEAU = {
    */
   forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5 },
   /**
-   * L'ENNEMI : il apparaît à tant de secondes puis tant après sa mort, à tant d'unités ; il a tant de points (le laser
+   * L'ENNEMI : il apparaît à tant de secondes puis tant après sa mort, à tant d'unités (hors de l'écran le plus haut, 180
+   * sur 480, avance de caméra comprise : à 200, Keko le voyait « apparaître de nulle part ») ; il a tant de points (le laser
    * du joueur les creuse comme une roche), pousse et va moins vite que le joueur ; il cherche une roche à tant de lui,
    * mais SEULEMENT DANS LE TERRITOIRE DU JOUEUR (à tant du joueur : il vient miner dans son coin, sinon on ne le voit
    * jamais — Keko : « parfois j'ai l'impression de ne pas trouver l'ennemi ») ; il
@@ -87,7 +88,7 @@ export const VAISSEAU = {
    * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 200, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite, tout près). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
