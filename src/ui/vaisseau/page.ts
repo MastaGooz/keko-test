@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, stationDeLaCase, stationLaPlusProche, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -109,7 +109,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Revenez à la station pour les déposer : ce que vous portez se perd avec la coque, ce qui est déposé reste. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Déposez-les à une station : il y en a une tous les 900 unités, la flèche jaune montre la plus proche. Ce que vous portez se perd avec la coque, ce qui est déposé reste. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 
@@ -136,8 +136,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
   const envols: { x: number; y: number; t0: number }[] = []
   let affiche = minerai0
-  /** Les pépites déposées : elles volent du vaisseau à la station (dans le monde), la banque ne compte qu'à l'arrivée. */
-  const depots: { x: number; y: number; t0: number }[] = []
+  /** Les pépites déposées : elles volent du vaisseau à la station qui les a prises (dans le monde), la banque ne compte qu'à l'arrivée. */
+  const depots: { x: number; y: number; cx: number; cy: number; t0: number }[] = []
   let afficheBanque = 0
   let depotA = -10
   let allumeA = -10
@@ -371,21 +371,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
 
-  /** La station d'extraction (son dessin est dans `station.ts`), son parvis, et les pépites déposées qui y volent. */
-  function dessinerLaStation(p: Peintre): void {
-    const sx = CONF.station.x - camera.x + W / 2
-    const sy = CONF.station.y - camera.y + H / 2
-    const aQuai = m.phase === 'vol' && Math.hypot(v.x - CONF.station.x, v.y - CONF.station.y) <= CONF.station.portee
-    if (sx > -40 && sy > -40 && sx < W + 40 && sy < H + 40) {
-      // le parvis : un cercle pointillé qui dit la portée, plus net à quai
-      for (let i = 0; i < 36; i++) {
-        const a = (i / 36) * Math.PI * 2 + t * 0.25
-        p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
+  /** Les stations d'extraction en vue (leur dessin est dans `station.ts`), leur parvis, et les pépites déposées qui y volent. */
+  function dessinerLesStations(p: Peintre): void {
+    const proche = stationLaPlusProche(CONF, v.x, v.y)
+    const i0 = Math.round(camera.x / CONF.station.case)
+    const j0 = Math.round(camera.y / CONF.station.case)
+    for (let j = j0 - 1; j <= j0 + 1; j++)
+      for (let i = i0 - 1; i <= i0 + 1; i++) {
+        const st = stationDeLaCase(CONF, i, j)
+        const sx = st.x - camera.x + W / 2
+        const sy = st.y - camera.y + H / 2
+        if (sx < -40 || sy < -40 || sx > W + 40 || sy > H + 40) continue
+        const aQuai = m.phase === 'vol' && st.x === proche.x && st.y === proche.y && Math.hypot(v.x - st.x, v.y - st.y) <= CONF.station.portee
+        // le parvis : un cercle pointillé qui dit la portée, plus net à quai
+        for (let k = 0; k < 36; k++) {
+          const a = (k / 36) * Math.PI * 2 + t * 0.25
+          p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
+        }
+        dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
+        if (aQuai && t - depotA < 0.2) p.glow(sx, sy, CONF.station.rayon * 2.4, PEPITE[2], 0.4)
       }
-      dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
-      if (aQuai && t - depotA < 0.2) p.glow(sx, sy, CONF.station.rayon * 2.4, PEPITE[2], 0.4)
-    }
-    // les pépites déposées : elles volent du vaisseau au cœur de la station
+    // les pépites déposées : elles volent du vaisseau au cœur de la station qui les a prises
     for (let i = depots.length - 1; i >= 0; i--) {
       const d = depots[i]
       const u = (t - d.t0) / 0.4
@@ -396,8 +402,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         continue
       }
       const k = u * u * (3 - 2 * u)
-      const x = d.x - camera.x + W / 2 + (sx - (d.x - camera.x + W / 2)) * k
-      const y = d.y - camera.y + H / 2 + (sy - (d.y - camera.y + H / 2)) * k
+      const x = d.x + (d.cx - d.x) * k - camera.x + W / 2
+      const y = d.y + (d.cy - d.y) * k - camera.y + H / 2
       p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], PEPITE[2])
       p.dot(x, y - 1, PEPITE[3])
       p.glow(x, y, 6, PEPITE[2], 0.5)
@@ -410,8 +416,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * bizarrement »). Elle ne bat pas.
    */
   function dessinerLePointeur(p: Peintre): void {
-    const dx = CONF.station.x - camera.x
-    const dy = CONF.station.y - camera.y
+    const st = stationLaPlusProche(CONF, v.x, v.y)
+    const dx = st.x - camera.x
+    const dy = st.y - camera.y
     const marge = 10
     if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) return
     // le point du bord dans sa direction
@@ -578,7 +585,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (ev.par === 'joueur') envols.push({ x: v.x, y: v.y, t0: t })
               break
             case 'depose':
-              depots.push({ x: v.x, y: v.y, t0: t })
+              depots.push({ x: v.x, y: v.y, cx: ev.x, cy: ev.y, t0: t })
               affiche = Math.max(0, affiche - 1)
               break
             case 'touche': {
@@ -618,7 +625,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} perdue${m.minerai > 1 ? 's' : ''} avec la coque, ${m.banque} en banque à la station. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} perdue${m.minerai > 1 ? 's' : ''} avec la coque, ${m.banque} en banque. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
               break
             }
             default:
@@ -712,7 +719,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
     }
     p.place(0, 0)
-    dessinerLaStation(p)
+    dessinerLesStations(p)
     dessinerLesEnnemis(p)
     if (m.phase === 'vol') dessinerLeVaisseau(p)
     else if (ecran.hidden && t - perduA > 1) ecran.hidden = false

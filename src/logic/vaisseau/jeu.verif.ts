@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, nouveauMonde, nouveauVaisseau, solidite, VAISSEAU as C, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, nouveauMonde, nouveauVaisseau, solidite, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type Evenement, type Vaisseau } from './jeu.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -184,6 +184,32 @@ loinSt.minerai = 3
 loinSt.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 }
 for (let i = 0; i < 60; i++) avancerLeMonde(C, loinSt, 1 / 60, { x: 0, y: 0 })
 verifier('loin de la station, on garde tout à bord', loinSt.minerai === 3 && loinSt.banque === 0)
+// LES STATIONS SONT PARTOUT (Keko) : une par case de 900, celle du départ en (0, 0), chacune dans sa case ; la plus
+// proche n'est jamais à plus d'une case ; le vide du champ entoure chacune ; on dépose à n'importe laquelle
+const origine = stationDeLaCase(C, 0, 0)
+let dansSaCase = true
+let plusLoinQue = 0
+for (let j = -4; j <= 4; j++)
+  for (let i = -4; i <= 4; i++) {
+    const st = stationDeLaCase(C, i, j)
+    if (Math.abs(st.x - i * C.station.case) > C.station.case / 2 || Math.abs(st.y - j * C.station.case) > C.station.case / 2) dansSaCase = false
+  }
+for (const [x, y] of [[2000, -1300], [-5000, 4200], [731, 12], [-120, -3300]]) {
+  const st = stationLaPlusProche(C, x, y)
+  plusLoinQue = Math.max(plusLoinQue, Math.hypot(st.x - x, st.y - y))
+}
+verifier('une station par case, celle du départ au départ, jamais à plus d’une case', origine.x === 0 && origine.y === 0 && dansSaCase && plusLoinQue <= C.station.case * Math.SQRT1_2 * 1.4 + 1)
+const lointaine = stationDeLaCase(C, 3, -2)
+const autourDElle = asteroidesAutour(C, lointaine.x, lointaine.y, C.champ.vide + C.champ.rayonMax)
+verifier('le vide du champ entoure chaque station', (lointaine.x !== 0 || lointaine.y !== 0) && autourDElle.every((a) => Math.hypot(a.x - lointaine.x, a.y - lointaine.y) >= C.champ.vide + a.rayon))
+const la = nouveauMonde()
+la.prochainEnnemiA = 1e9
+la.minerai = 2
+la.vaisseau = { ...nouveauVaisseau(), x: lointaine.x + 10, y: lointaine.y }
+let deposesLa = 0
+let ouLa: { x: number; y: number } | null = null
+for (let i = 0; i < 60; i++) for (const e of avancerLeMonde(C, la, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'depose') (deposesLa++, (ouLa = { x: e.x, y: e.y }))
+verifier('on dépose à n’importe quelle station, et le dépôt dit laquelle', deposesLa === 2 && la.banque === 2 && ouLa !== null && ouLa!.x === lointaine.x && ouLa!.y === lointaine.y)
 
 const p = nouveauMonde()
 p.coque = 1

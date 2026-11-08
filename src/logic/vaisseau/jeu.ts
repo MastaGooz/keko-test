@@ -55,11 +55,14 @@ export const VAISSEAU = {
    */
   collision: { degatsCoque: 0.02, degatsEnnemi: 0.12, degatsRoche: 0.3, evite: 24 },
   /**
-   * LA STATION D'EXTRACTION (Keko : « un point d'extraction où déposer les ressources qu'on porte ») : posée au point de
-   * départ (le vide autour sert de parvis), elle prend le minerai porté quand le vaisseau est à portée, une pépite toutes
-   * les tant de secondes, et le met en BANQUE. Ce qu'on porte se perd avec la coque ; ce qui est en banque reste.
+   * LES STATIONS D'EXTRACTION (Keko : « un point d'extraction où déposer les ressources qu'on porte » ; puis « on
+   * devrait mettre des extracteurs régulièrement, si le joueur se balade pendant vingt minutes ça va être compliqué ») :
+   * UNE PAR CASE de tant d'unités, posée dans sa case d'après ses coordonnées hachées (celle de la case (0, 0) est au
+   * point de départ), le vide du champ autour de chacune en parvis. Une station prend le minerai porté quand le
+   * vaisseau est à portée, une pépite toutes les tant de secondes, et le met en BANQUE (une seule, commune). Ce qu'on
+   * porte se perd avec la coque ; ce qui est en banque reste.
    */
-  station: { x: 0, y: 0, rayon: 11, portee: 36, cadence: 0.12 },
+  station: { case: 900, rayon: 11, portee: 36, cadence: 0.12 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -160,7 +163,7 @@ export type Evenement =
   | { type: 'eclat'; x: number; y: number; rayon: number; graine: number }
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi' }
   /** Une pépite déposée à la station. */
-  | { type: 'depose' }
+  | { type: 'depose'; x: number; y: number }
   | { type: 'tir'; x: number; y: number }
   | { type: 'touche'; x: number; y: number }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -196,8 +199,36 @@ export function asteroideDeLaCase(c: ConfigVaisseau, i: number, j: number): Aste
   const rayon = c.champ.rayonMin + (c.champ.rayonMax - c.champ.rayonMin) * tire(i, j, 2) ** 1.6
   const x = (i + 0.2 + 0.6 * tire(i, j, 3)) * taille
   const y = (j + 0.2 + 0.6 * tire(i, j, 4)) * taille
-  if (Math.hypot(x, y) < c.champ.vide + rayon) return null
+  // le vide autour de chaque station (le parvis)
+  const st = stationLaPlusProche(c, x, y)
+  if (Math.hypot(x - st.x, y - st.y) < c.champ.vide + rayon) return null
   return { id: hache(i, j), x, y, rayon, graine: hache(i, j, 5), angle0: tire(i, j, 6) * Math.PI * 2, vitesseAngulaire: (tire(i, j, 7) - 0.5) * 1.2 }
+}
+
+/**
+ * LES STATIONS : une par case de `station.case` unités, les cases centrées sur les multiples (la case (i, j) va de
+ * (i − ½) à (i + ½)) ; celle de (0, 0) est au point de départ, les autres à ±0,2 case de leur centre d'après leurs
+ * coordonnées hachées. Rien n'est stocké : on retrouve la même station en revenant.
+ */
+export function stationDeLaCase(c: ConfigVaisseau, i: number, j: number): Vecteur {
+  if (i === 0 && j === 0) return { x: 0, y: 0 }
+  const taille = c.station.case
+  return { x: (i + (tire(i, j, 81) - 0.5) * 0.4) * taille, y: (j + (tire(i, j, 82) - 0.5) * 0.4) * taille }
+}
+
+/** La station la plus proche de (x, y), parmi celles des neuf cases autour (une station ne sort jamais de sa case). */
+export function stationLaPlusProche(c: ConfigVaisseau, x: number, y: number): Vecteur {
+  const i0 = Math.round(x / c.station.case)
+  const j0 = Math.round(y / c.station.case)
+  let meilleure: Vecteur = { x: 0, y: 0 }
+  let dmin = Infinity
+  for (let j = j0 - 1; j <= j0 + 1; j++)
+    for (let i = i0 - 1; i <= i0 + 1; i++) {
+      const st = stationDeLaCase(c, i, j)
+      const d = Math.hypot(st.x - x, st.y - y)
+      if (d < dmin) (dmin = d), (meilleure = st)
+    }
+  return meilleure
 }
 
 /** Les astéroïdes dont la case touche le carré de demi-côté `portee` autour de (x, y). */
@@ -513,13 +544,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, c.forage.debit * dt, ev)
   else m.forage = null
 
-  // la station : à quai avec du minerai à bord, on dépose une pépite à la cadence
-  if (m.minerai > 0 && Math.hypot(v.x - c.station.x, v.y - c.station.y) <= c.station.portee) {
+  // la station la plus proche : à quai avec du minerai à bord, on dépose une pépite à la cadence
+  const st = stationLaPlusProche(c, v.x, v.y)
+  if (m.minerai > 0 && Math.hypot(v.x - st.x, v.y - st.y) <= c.station.portee) {
     if (m.t >= m.deposeA) {
       m.deposeA = m.t + c.station.cadence
       m.minerai -= 1
       m.banque += 1
-      ev.push({ type: 'depose' })
+      ev.push({ type: 'depose', x: st.x, y: st.y })
     }
   } else m.deposeA = m.t + c.station.cadence * 0.5
 

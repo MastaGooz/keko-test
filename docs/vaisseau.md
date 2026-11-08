@@ -26,8 +26,8 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 - **Le champ d'astéroïdes est infini et seedé** : des cases de 110 unités,
   une sur deux environ porte un astéroïde (rayon 5 à 14, tiré avec un biais
   vers les petits), posé dans la case d'après ses coordonnées hachées ; rien
-  à 70 unités du départ, pour apprendre le manche à vide. Rien n'est stocké :
-  on retrouve le même astéroïde en revenant.
+  à 70 unités de chaque station (du départ d'abord, pour apprendre le manche
+  à vide). Rien n'est stocké : on retrouve le même astéroïde en revenant.
 - **Tout en pixel art dans un tampon de 180 px de large, haut comme
   l'écran** (au zoom entier donné par la largeur : ×2 au téléphone, 422 px de
   haut sur un 390 × 844 ; 480 au plus — la première version faisait 320 de
@@ -158,8 +158,21 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 ## La station d'extraction (Keko, 08/11 : « un point d'extraction où déposer les ressources qu'on porte »)
 
-- **Au point de départ**, dont le vide (70 unités sans roche) devient le
-  parvis (un cercle pointillé qui dit sa portée, 36 unités — 26 au départ, élargie « un peu » à la demande de Keko). **Son dessin
+- **UNE STATION PAR CASE DE 900 UNITÉS** (Keko, 08/11 : « on devrait mettre
+  des extracteurs régulièrement à des endroits, non ? si le joueur se balade
+  pendant vingt minutes ça va être compliqué ») : les cases sont centrées sur
+  les multiples de 900, celle de (0, 0) garde la station au point de départ,
+  les autres sont posées à ±0,2 case de leur centre d'après leurs coordonnées
+  hachées (`stationDeLaCase`) — rien n'est stocké, comme les roches. La plus
+  proche (`stationLaPlusProche`, les neuf cases autour) prend le dépôt, la
+  flèche jaune la montre, l'événement « depose » dit laquelle pour que les
+  pépites y volent. De n'importe où, la plus proche est à 900 unités au pire
+  (un coin de case, les deux stations décalées à l'opposé), 450 en moyenne :
+  quatre à neuf secondes de vol. La banque reste unique. *900 est de moi, à
+  rejuger : plus serré, la station n'est plus un refuge ; plus lâche, on
+  retrouve le long retour à vide.*
+- **Chaque station a son parvis**, le vide du champ (70 unités sans roche) qui
+  devient le (un cercle pointillé qui dit sa portée, 36 unités — 26 au départ, élargie « un peu » à la demande de Keko). **Son dessin
   est dans `station.ts`**, en planche hors navigateur comme les roches (Keko :
   « l'extraction n'a pas la texture au niveau des autres éléments ») : un
   moyeu octogonal en tôles à facettes qui prennent la lumière du monde, une
