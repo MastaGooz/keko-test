@@ -253,6 +253,16 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   le reste repart à neuf. *Ce que vaut la banque entre deux expéditions reste
   à trancher par Keko* (un total, une boutique, un score).
 
+- **L'ARRIVÉE est une téléportation aussi** (Keko : « comme si le vaisseau
+  était téléporté sur l'extracteur ») : chaque expédition, la première comme
+  celles d'après « repartir », commence par la MATÉRIALISATION
+  (`keko/materialisation`, au banc : la téléportation à l'envers — des
+  étincelles spiralent vers le point, un point de lumière s'ouvre en ligne
+  puis en disque blanc de la taille du vaisseau, un anneau part) ; le
+  vaisseau n'est dessiné qu'à l'ouverture du disque (`APPARAIT`, 0,68 s),
+  blanchi jusqu'à `REFROIDI` (0,98 s), et ne répond pas au manche avant
+  d'être apparu.
+
 ## Les grains de l'espace (Keko, 08/11 : « des débris d'explosion tombent vers le bas comme s'il y avait de la gravité, il ne faudrait pas »)
 
 Les particules du dépôt sont faites pour un sol : l'étincelle tombe à

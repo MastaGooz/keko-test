@@ -18,6 +18,8 @@ import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
+import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
+import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
@@ -126,6 +128,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   m.minerai = minerai0
   let v: Vaisseau = m.vaisseau
   let perduA = -10
+  /** L'instant de l'arrivée par téléportation (chaque expédition commence par là : le vaisseau n'est dessiné qu'à `ARRIVE_A`, blanchi jusqu'à `REFROIDI_A`, et ne répond pas avant). */
+  let arriveA = -10
   let toucheA = -10
   const flammesEnnemies = new Map<number, number>()
   let enJeu = false
@@ -175,6 +179,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const touches = new Set<string>()
   /** Le premier toucher décolle ; après une coque percée ou une extraction, il repart à neuf (la banque reste). */
   function demarrer(): void {
+    const neuf = !enJeu || m.phase !== 'vol'
     if (m.phase !== 'vol') {
       if (t - perduA < 1.2) return
       const banque = m.banque
@@ -192,6 +197,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     enJeu = true
     ecran.hidden = true
+    // L'ARRIVÉE (Keko : « une animation de téléportation aussi au début, comme si le vaisseau était téléporté sur
+    // l'extracteur ») : la matérialisation à la place du vaisseau, qui n'apparaît qu'à son ouverture
+    if (neuf) {
+      arriveA = t
+      effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
+    }
   }
   racine.addEventListener('pointerdown', (ev) => {
     demarrer()
@@ -322,7 +333,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
-    const blanchi = t - toucheA < 0.1 || m.phase === 'extrait'
+    const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
     dessinerUnVaisseau(p, v, flamme, blanchi ? BLANC : COQUE, blanchi ? BLANC : VERRIERE, vise, m.forage !== null)
   }
 
@@ -577,7 +588,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     t += dt
     if (enJeu) {
       accumule += dt
-      const direction = directionVoulue()
+      const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
       while (accumule >= PAS) {
         accumule -= PAS
         const r = avancerLeMonde(CONF, m, PAS, direction)
@@ -764,7 +775,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     dessinerLesStations(p)
     dessinerLesEnnemis(p)
-    if (m.phase === 'vol' || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
+    if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     if (m.phase !== 'vol' && ecran.hidden && t - perduA > (m.phase === 'extrait' ? 1.7 : 1)) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
