@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, stationDeLaCase, stationLaPlusProche, tire, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -347,7 +347,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const vise = cible !== null ? Math.atan2(cible.y - b.y, cible.x - b.x) - b.cap : 0
       const blanchi = m.forage !== null && m.forage.sorte === 'ennemi' && m.forage.cible === e.id && Math.floor(t * 20) % 2 === 0
       dessinerUnVaisseau(p, b, flammesEnnemies.get(e.id) ?? 0, blanchi ? BLANC : ROUGE, blanchi ? BLANC : VERRIERE_ENNEMIE, vise, e.forage !== null)
+      // sa vie restante, sous lui (Keko : « afficher la vie restante des ennemis et astéroïdes »)
+      dessinerUneJauge(p, b.x - camera.x + W / 2, b.y - camera.y + H / 2 + CONF.ennemi.rayon + 4, 12, e.pv / CONF.ennemi.pv, ROUGE[4], blanchi)
     }
+  }
+
+  /**
+   * Une jauge de vie en pixel : un pixel de haut, encadrée de sombre, large de `w`, pleine à `part` ; `chaud` la blanchit
+   * (on vient de frapper). Le peintre est supposé à l'origine, (x, y) en coordonnées du tampon, centrées.
+   */
+  function dessinerUneJauge(p: Peintre, x: number, y: number, w: number, part: number, teinte: number, chaud: boolean): void {
+    const x0 = Math.round(x - w / 2)
+    const yy = Math.round(y)
+    p.line(x0 - 1, yy - 1, x0 + w, yy - 1, COQUE[0])
+    p.line(x0 - 1, yy + 1, x0 + w, yy + 1, COQUE[0])
+    p.dot(x0 - 1, yy, COQUE[0])
+    p.dot(x0 + w, yy, COQUE[0])
+    p.line(x0, yy, x0 + w - 1, yy, COQUE[1])
+    const plein = Math.max(part > 0 ? 1 : 0, Math.round(w * Math.min(1, part)))
+    if (plein > 0) p.line(x0, yy, x0 + plein - 1, yy, chaud ? N.WHITE : teinte)
   }
 
   /** Les traits de l'ennemi : un fuseau violet-blanc le long de sa vitesse, une lueur. */
@@ -751,6 +769,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const creusee = m.forage !== null && m.forage.cible === a.id
       const tremble = creusee ? (0.5 + m.forage!.part) * 1.2 : 0
       dessinerAsteroide(p, a, t, a.x - camera.x + W / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0), a.y - camera.y + H / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0))
+      // sa solidité restante, sous elle, dès qu'elle est entamée (Keko) — pas avant : le champ serait couvert de jauges
+      const creuse = m.creuse.get(a.id) ?? 0
+      if (creuse > 0) dessinerUneJauge(p, a.x - camera.x + W / 2, a.y - camera.y + H / 2 + a.rayon + 4, Math.max(8, Math.round(a.rayon * 1.6)), 1 - creuse / solidite(CONF, a), COQUE[5], creusee && Math.floor(t * 20) % 2 === 0)
     }
     // les braises, les morceaux, les pépites, les étincelles sont dans le monde : le peintre se place sur la caméra
     p.place(W / 2 - camera.x, H / 2 - camera.y)

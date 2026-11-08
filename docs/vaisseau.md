@@ -274,6 +274,15 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   blanchi jusqu'à `REFROIDI` (0,98 s), et ne répond pas au manche avant
   d'être apparu.
 
+## Les jauges de vie (Keko, 09/11 : « afficher la vie restante des ennemis et astéroïdes »)
+
+- **Une jauge d'un pixel de haut, encadrée de sombre**, sous le rival (12 de
+  large, rouge, toujours visible : il est seul) et sous chaque roche
+  **entamée** (1,6 R de large, acier clair ; une roche intacte n'en a pas,
+  sinon le champ serait couvert de jauges) ; elle blanchit au coup qui porte
+  (le laser du joueur dessus, un clignotement à 10 Hz). La solidité restante
+  est `1 − creusé / solidité`, la vie du rival `pv / 36`. `dessinerUneJauge`.
+
 ## Les minerais (Keko, 08/11 : « récolter différentes ressources ? des tiers de ressources, et que les pépites se voient sur les astéroïdes pour savoir lesquels sont riches / pauvres et quel type de minerai ils contiennent »)
 
 - **Trois minerais, du commun au rare** (`MINERAIS`) : le FER (acier
