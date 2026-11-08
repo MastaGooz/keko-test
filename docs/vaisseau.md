@@ -115,6 +115,16 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   grains de la roche), la roche qui tremble d'autant plus qu'elle est près
   d'éclater. Tout est dans le monde (le peintre posé sur la caméra).
 
+## Les chocs font mal (Keko, 08/11 : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ; pareil pour l'ennemi »)
+
+- Au-delà du seuil de choc (12 unités/s), chaque unité de vitesse normale
+  coûte 0,02 point de coque au joueur, 0,3 point au rival, et creuse la
+  roche de 0,3 point : à pleine vitesse (110), le joueur perd 2 points sur
+  5 et la roche en prend 29 — une roche de 6 de rayon éclate d'un coup (et
+  laisse ses pépites), une de 14 en demande quatre. Un contact doux ne coûte
+  rien à personne. Le rival peut se tuer sur une roche. Les cases de coque se
+  vident par le haut à mesure que le point s'entame.
+
 ## L'ennemi (Keko, 08/11 : « on rajoute un ennemi qui mine et qui tire ? »)
 
 - **Un rival, un à la fois** : il naît à 10 s (puis 18 s après sa mort), à

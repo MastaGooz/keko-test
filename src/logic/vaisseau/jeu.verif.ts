@@ -113,6 +113,30 @@ while (abattu === 0 && pasZ < 60 * 20) {
   pasZ++
 }
 verifier('le laser creuse l’ennemi et l’abat', abattu === 1 && z.ennemis.length === 0 && z.pepites.length >= C.ennemi.butinRendu)
+// LES CHOCS FONT MAL : lancé à pleine vitesse sur une petite roche, le joueur perd de la coque et la roche éclate
+const petite = autour.filter((r) => r.rayon < 7).sort((r1, r2) => r1.rayon - r2.rayon)[0]
+const k = nouveauMonde()
+k.prochainEnnemiA = 1e9
+k.vaisseau = { ...nouveauVaisseau(), x: petite.x - petite.rayon - C.rayon - 2, y: petite.y, vx: C.vitesseMax, vy: 0 }
+const rk = avancerLeMonde(C, k, 1 / 60, { x: 0, y: 0 })
+verifier('un choc à pleine vitesse coûte de la coque, en proportion', rk.chocs.length === 1 && k.coque < C.coque && k.coque > C.coque - 3 && compter(rk.evenements, 'touche') === 1)
+verifier('et fait éclater une petite roche', k.detruits.has(petite.id) && compter(rk.evenements, 'eclat') === 1)
+const doux = nouveauMonde()
+doux.prochainEnnemiA = 1e9
+doux.vaisseau = { ...nouveauVaisseau(), x: petite.x - petite.rayon - C.rayon + 0.5, y: petite.y, vx: 6, vy: 0 }
+avancerLeMonde(C, doux, 1 / 60, { x: 1, y: 0 })
+verifier('un contact doux ne coûte rien à personne', doux.coque === C.coque && !doux.detruits.has(petite.id) && (doux.creuse.get(petite.id) ?? 0) === 0)
+// l'ennemi aussi : jeté sur une grosse roche, il perd des points et l'abîme
+const grosse = autour.filter((r) => r.rayon > 11)[0]
+const q = nouveauMonde()
+q.prochainEnnemiA = 0
+avancerLeMonde(C, q, 1 / 60, { x: 0, y: 0 })
+const enq = q.ennemis[0]
+enq.corps = { ...enq.corps, x: grosse.x - grosse.rayon - C.ennemi.rayon - 1, y: grosse.y, vx: C.ennemi.vitesseMax, vy: 0 }
+q.vaisseau = { ...nouveauVaisseau(), x: grosse.x + 500, y: grosse.y + 500 }
+const rq = avancerLeMonde(C, q, 1 / 60, { x: 0, y: 0 })
+verifier('le rival qui heurte une roche perd des points et l’abîme', enq.pv < C.ennemi.pv && (q.creuse.get(grosse.id) ?? 0) > 0 && rq.chocs.length === 1)
+
 const p = nouveauMonde()
 p.coque = 1
 p.tirs.push({ id: 1, x: 0, y: 0, vx: 0, vy: 0, vie: 1 })

@@ -372,10 +372,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // la coque, en haut à droite : une case par point, pleine ou vide ; elle clignote quand on vient d'être touché
     for (let i = 0; i < CONF.coque; i++) {
       const x = W - 8 - (CONF.coque - 1 - i) * 6
-      const plein = i < m.coque
+      // la case se vide par le haut à mesure que le point s'entame (les chocs coûtent des fractions)
+      const part = Math.max(0, Math.min(1, m.coque - i))
       const chaud = t - toucheA < 0.3 && Math.floor(t * 16) % 2 === 0
-      p.poly([[x - 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], plein ? (chaud ? N.WHITE : COQUE[5]) : COQUE[1])
-      if (plein) p.dot(x - 1, COMPTEUR.y + 3, COQUE[6])
+      p.poly([[x - 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], COQUE[1])
+      if (part > 0) {
+        const haut = COMPTEUR.y + 6 - Math.max(1, Math.round(4 * part))
+        p.poly([[x - 2, haut], [x + 2, haut], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], chaud ? N.WHITE : COQUE[5])
+        if (part >= 1) p.dot(x - 1, COMPTEUR.y + 3, COQUE[6])
+      }
     }
     if (affiche === 0 && envols.length === 0) return
     const allume = t - allumeA < 0.18

@@ -44,8 +44,15 @@ export const VAISSEAU = {
   rebond: 0.45,
   /** En dessous de cette vitesse normale, toucher une roche n'est pas un choc (on s'y appuie, on glisse le long). */
   seuilChoc: 12,
-  /** La coque du joueur : tant de coups avant d'être percée. */
+  /** La coque du joueur : tant de points avant d'être percée (un trait en enlève un, un choc en enlève selon sa vitesse). */
   coque: 5,
+  /**
+   * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
+   * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou
+   * l'ennemi) et creuse la roche de tant de points. À pleine vitesse (110), le joueur perd 2 points et la roche en
+   * prend 29 : une roche de 6 de rayon éclate d'un coup, une de 14 (118 points) en demande quatre.
+   */
+  collision: { degatsCoque: 0.02, degatsEnnemi: 0.3, degatsRoche: 0.3 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -280,6 +287,12 @@ function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecte
     m.creuse.set(a.id, creuse)
     return { sorte: 'roche', cible: a.id, x: a.x - (dx / d) * a.rayon, y: a.y - (dy / d) * a.rayon, part: creuse / total }
   }
+  eclaterLaRoche(c, m, a, ev)
+  return null
+}
+
+/** La roche éclate : elle quitte le monde et laisse ses pépites. */
+function eclaterLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, ev: Evenement[]): void {
   m.creuse.delete(a.id)
   m.detruits.add(a.id)
   ev.push({ type: 'eclat', x: a.x, y: a.y, rayon: a.rayon, graine: a.graine })
@@ -289,7 +302,33 @@ function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecte
     const vit = 20 + 40 * tire(a.graine, 21, i)
     m.pepites.push({ id: m.prochainId++, x: a.x + Math.cos(an) * a.rayon * 0.5, y: a.y + Math.sin(an) * a.rayon * 0.5, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, graine: hache(a.graine, i) })
   }
-  return null
+}
+
+/** Un choc abîme la roche heurtée de tant de points ; elle éclate si elle n'en peut plus. */
+function abimerLaRoche(c: ConfigVaisseau, m: Monde, choc: Choc, points: number, ev: Evenement[]): void {
+  if (points <= 0) return
+  const a = asteroidesVisibles(c, m, choc.x, choc.y, c.champ.rayonMax + 2).find((r) => r.id === choc.asteroide)
+  if (a === undefined) return
+  const creuse = (m.creuse.get(a.id) ?? 0) + points
+  if (creuse >= solidite(c, a)) eclaterLaRoche(c, m, a, ev)
+  else m.creuse.set(a.id, creuse)
+}
+
+/** Les points qu'un choc coûte, par unité de vitesse au-delà du seuil. */
+const coutDuChoc = (c: ConfigVaisseau, choc: Choc, parUnite: number): number => Math.max(0, choc.force - c.seuilChoc) * parUnite
+
+/** L'ennemi est abattu : il quitte le monde, le suivant est annoncé, il rend son butin et des pépites. */
+function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
+  m.ennemis = m.ennemis.filter((x) => x !== e)
+  m.prochainEnnemiA = m.t + c.ennemi.revient
+  if (m.forage !== null && m.forage.sorte === 'ennemi' && m.forage.cible === e.id) m.forage = null
+  ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy })
+  const n = e.butin + c.ennemi.butinRendu
+  for (let i = 0; i < n; i++) {
+    const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
+    const vit = 20 + 40 * tire(e.id, 31, i)
+    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i) })
+  }
 }
 
 /** L'ennemi naît au loin, dans une direction tirée de la graine du monde, et regarde le joueur. */
@@ -304,8 +343,8 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
 
-/** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. */
-function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): void {
+/** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. Rend ses chocs. */
+function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
   const v = m.vaisseau
   const b = e.corps
   const dxj = v.x - b.x
@@ -362,6 +401,12 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
   e.corps = r.vaisseau
   // en chasse, le nez reste sur le joueur
   if (e.fait === 'chasse') e.corps = { ...e.corps, cap: Math.atan2(dyj, dxj) }
+  // ses chocs lui coûtent des points, et abîment la roche
+  for (const choc of r.chocs) {
+    e.pv -= coutDuChoc(c, choc, c.collision.degatsEnnemi)
+    abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
+  }
+  return r.chocs
 }
 
 /**
@@ -376,11 +421,28 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const r = voler(c, c, m.vaisseau, dt, direction, m.detruits)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
-  const chocs = r.chocs
+  const chocs = [...r.chocs]
+  // les chocs du joueur : la coque en souffre selon la vitesse, la roche aussi
+  for (const choc of r.chocs) {
+    const degats = coutDuChoc(c, choc, c.collision.degatsCoque)
+    abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
+    if (degats <= 0) continue
+    m.coque -= degats
+    ev.push({ type: 'touche', x: choc.x, y: choc.y })
+    if (m.coque <= 0) {
+      m.coque = 0
+      m.phase = 'perdu'
+      ev.push({ type: 'perdu' })
+      return { chocs, evenements: ev }
+    }
+  }
 
-  // l'ennemi : il naît à l'heure dite, un à la fois
+  // l'ennemi : il naît à l'heure dite, un à la fois ; ses chocs comptent aussi, et peuvent l'abattre
   if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA) faireNaitreUnEnnemi(c, m, ev)
-  for (const e of m.ennemis) conduireLEnnemi(c, m, e, dt, ev)
+  for (const e of [...m.ennemis]) {
+    chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
 
   // le laser du joueur : le plus proche à portée, roche ou ennemi
   const roche = rocheLaPlusProche(c, m, v.x, v.y, c.forage.portee)
@@ -397,16 +459,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const d = Math.hypot(dx, dy) || 1
     ev.push({ type: 'ennemiTouche', id: e.id })
     if (e.pv <= 0) {
-      m.ennemis = m.ennemis.filter((x) => x !== e)
-      m.prochainEnnemiA = m.t + c.ennemi.revient
       m.forage = null
-      ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy })
-      const n = e.butin + c.ennemi.butinRendu
-      for (let i = 0; i < n; i++) {
-        const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
-        const vit = 20 + 40 * tire(e.id, 31, i)
-        m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i) })
-      }
+      abattreLEnnemi(c, m, e, ev)
     } else m.forage = { sorte: 'ennemi', cible: e.id, x: e.corps.x - (dx / d) * c.ennemi.rayon, y: e.corps.y - (dy / d) * c.ennemi.rayon, part: 1 - e.pv / c.ennemi.pv }
   } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, c.forage.debit * dt, ev)
   else m.forage = null
@@ -423,6 +477,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       m.coque -= 1
       ev.push({ type: 'touche', x: tr.x, y: tr.y })
       if (m.coque <= 0) {
+        m.coque = 0
         m.phase = 'perdu'
         ev.push({ type: 'perdu' })
       }
