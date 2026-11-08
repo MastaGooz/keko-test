@@ -29,8 +29,8 @@ const ROCHES = [
   N.fit(['#120d08', '#2a1e14', '#47321e', '#69492a', '#8e6638', '#b08a58', '#d2b088', '#f0dcc0'], 8),
   N.fit(['#0a0e18', '#1a2232', '#2c3a50', '#425470', '#5c7090', '#7f94b4', '#a8bcd6', '#d8e6f8'], 8),
 ]
-/** La lumière : d'en haut à gauche, un peu de face (le z). */
-const LUMIERE = { x: -0.55, y: -0.72, z: 0.42 }
+/** La lumière du monde : d'en haut à gauche, un peu de face (le z). Les astéroïdes ET le vaisseau la prennent. */
+export const LUMIERE = { x: -0.55, y: -0.72, z: 0.42 }
 
 /** Les sommets du polygone de la roche, tirés de sa graine, tournés de `angle`, centrés en (cx, cy). */
 function sommets(a: Asteroide, angle: number, cx: number, cy: number): { pts: number[][]; n: number; rayons: number[] } {

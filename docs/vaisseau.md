@@ -56,6 +56,13 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   FISSURES brisées ; des piqûres ; trois roches (grise, ocre, bleutée) tirées
   de la graine. *La première version était un aplat en quatre tons par la
   normale et deux ronds sombres.*
+- **Le vaisseau prend la même lumière** (Keko, après avoir remarqué que les
+  astéroïdes gardent leur côté éclairé en tournant : « on peut le faire pour
+  le vaisseau aussi ? ») : la direction de la lumière est ramenée dans son
+  repère (tournée de −cap), la coque est ombrée par une normale approchée
+  (un fuseau bombé), les ailes par leur inclinaison vers l'extérieur, et le
+  reflet de la verrière glisse du côté de la lumière. Son dessus n'est plus
+  clair par définition : il l'est quand il regarde le soleil.
 - **La caméra suit avec de l'avance** : elle vise le vaisseau plus 0,35 s de
   sa vitesse, amortie (gain 4/s) : on voit devant soi quand on va vite.
 - **Un choc** : l'étincelle `impacts/hit-spark` du dépôt (palette pierre)

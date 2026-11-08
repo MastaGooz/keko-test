@@ -14,7 +14,7 @@ import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
 import { asteroidesAutour, avancer, centreQuiSuit, directionDuManche, MANCHE, nouveauVaisseau, tire, VAISSEAU as C, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { dessinerAsteroide } from './asteroide.ts'
+import { dessinerAsteroide, LUMIERE } from './asteroide.ts'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
 type Module = { meta?: Record<string, unknown> }
@@ -196,9 +196,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
   }
 
-  /** Le vaisseau, dessiné le nez vers +x puis tourné vers son cap : la coque, les ailes, la verrière, le moteur et sa flamme. */
+  /**
+   * Le vaisseau, dessiné le nez vers +x puis tourné vers son cap : la coque, les ailes, la verrière, le moteur et sa
+   * flamme. IL PREND LA LUMIÈRE DU MONDE (Keko : « on peut le faire pour le vaisseau aussi ? ») : la direction de la
+   * lumière est ramenée dans son repère (tournée de −cap), la coque est ombrée par une normale approchée (un fuseau
+   * bombé), les ailes par leur inclinaison, et le reflet de la verrière glisse du côté de la lumière.
+   */
   function dessinerLeVaisseau(p: Peintre): void {
     p.place(W / 2, H / 2, false, v.cap)
+    const lx = Math.cos(v.cap) * LUMIERE.x + Math.sin(v.cap) * LUMIERE.y
+    const ly = -Math.sin(v.cap) * LUMIERE.x + Math.cos(v.cap) * LUMIERE.y
+    const tonDe = (lum: number) => (lum > 0.72 ? COQUE[6] : lum > 0.5 ? COQUE[5] : lum > 0.28 ? COQUE[4] : lum > 0.08 ? COQUE[3] : COQUE[2])
     const coque = [[9, 0], [3, -3], [-5, -4], [-7, -2], [-7, 2], [-5, 4], [3, 3]]
     // la flamme, derrière : deux langues qui vacillent, et une lueur
     if (flamme > 0.02) {
@@ -209,17 +217,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // les ailes : en arrière, de part et d'autre, une bande rouge
     for (const s of [-1, 1]) {
-      p.poly([[0, s * 2.5], [-6, s * 8], [-8, s * 8], [-6, s * 2.5]], (_x, y) => (s * y < 5 ? COQUE[3] : COQUE[2]))
+      // l'aile : une plaque inclinée vers l'extérieur, plus sombre au bout
+      const lumAile = 0.3 + 0.45 * (s * 0.5 * ly + LUMIERE.z) 
+      p.poly([[0, s * 2.5], [-6, s * 8], [-8, s * 8], [-6, s * 2.5]], (_x, y) => (s * y < 5 ? tonDe(lumAile) : tonDe(lumAile - 0.22)))
       p.line(-6.5, s * 7, -7.5, s * 7, N.hex('#d8403a'))
     }
     // le liseré, la coque ombrée (la lumière vient d'en haut à gauche de l'écran : on prend le dessus de la coque)
     p.poly(coque.map(([x, y]) => [x * 1.12 + (x > 0 ? 0.4 : -0.4), y * 1.25]), COQUE[0])
-    p.poly(coque, (_x, y) => (y < -1.2 ? COQUE[5] : y < 1 ? COQUE[4] : COQUE[2]))
-    p.line(-5, 0, 6, 0, COQUE[3])
-    // la verrière et son éclat
+    // la coque : un fuseau bombé, sa normale approchée par (x/10, y/3.5, de face)
+    p.poly(coque, (x, y) => tonDe((x / 10) * lx * 0.35 + (y / 3.5) * ly * 0.8 + LUMIERE.z * 0.9))
+    p.line(-5, 0, 6, 0, tonDe(LUMIERE.z * 0.9 - 0.1))
+    // la verrière et son éclat, qui glisse du côté de la lumière
     p.circle(3, 0, 1.8, VERRIERE[1])
-    p.dot(3.5, -0.6, VERRIERE[2])
-    p.dot(4, -1, VERRIERE[3])
+    p.dot(3 + lx * 0.9, ly * 0.9, VERRIERE[2])
+    p.dot(3 + lx * 1.4, ly * 1.4, VERRIERE[3])
     // le moteur : la tuyère sombre, un feu de position de chaque côté
     p.poly([[-7, -1.8], [-8, -1.3], [-8, 1.3], [-7, 1.8]], COQUE[1])
     p.dot(-6, -3.6, N.hex('#ff5a5a'))
