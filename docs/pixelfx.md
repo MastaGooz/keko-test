@@ -224,6 +224,13 @@ le corps respirait par `round(-0,5 + 0,8·sin)`, et l'arrondi de -0,5 donne 0
 quand celui de -0,57 donne -1 : tout le corps sautait d'un pixel au
 raccord. À -0,4, plus de saut.
 
+**Les deux bestioles ont leur action pour le jeu** (`?magicien`, qui les
+utilise depuis le 08/11 au soir) : le coup de massue du gobelin et
+l'incantation du magicien, des poses calculées d'une phase (le script
+`poses-bestioles.mjs` du scratchpad les rend image par image), peintes par
+`peindreGobelin` / `peindreMagicien` dans le peintre du jeu, teintées d'un
+état par `Grid.recolor` (le contour, étiqueté 255, épargné).
+
 **Les deux méthodes côte à côte dans le banc** : le squelette donne un corps
 qui joue n'importe quelle pose (les coups du dépôt lui vont) mais garde
 l'allure de mannequin ; la bestiole a plus de caractère (le nez, la dent, la

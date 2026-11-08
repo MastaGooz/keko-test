@@ -24,9 +24,10 @@ import { ajouter, avancer, effetsDuSort, ELEMENTS, lancer, MAGIE as C, nomDuSort
 import { ecrireRecord, lireRecord } from '../invaders/commun.ts'
 import { ouvrirLeSon, sonAnnule, sonDisparait, sonEclair, sonElement, sonHalo, sonImpact, sonInvoque, sonJet, sonMort, sonPerdu, sonPleine, sonRayon, sonSouffle, sonTouche, sonTour, sonVague } from '../magie/sons.ts'
 import { peindreOmbre, peindrePose, type Personnage, type Pose } from '../pixelfx/perso/acte.js'
-import { GOBELIN } from '../pixelfx/perso/gobelin.js'
-import { GOLEM, MAGICIEN, ORC, SQUELETTE } from '../pixelfx/perso/personnages.js'
+import { GOLEM, ORC, SQUELETTE } from '../pixelfx/perso/personnages.js'
 import { act as marche } from '../pixelfx/fx/keko/gobelin-marche.js'
+import { D as PAS_GOBELIN, palettesGobelin, peindreGobelin } from '../pixelfx/fx/keko/gobelin-bestiole.js'
+import { INCANTATION, INCANTE, palettesMagicien, peindreMagicien, positionOrbe } from '../pixelfx/fx/keko/magicien-bestiole.js'
 
 // ---------------------------------------------------------------- le dépôt, typé à notre usage
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
@@ -46,6 +47,7 @@ type Noyau = {
   createFx(mod: Module, o: Record<string, unknown>): Instance
   composite(f: unknown, sortie: Uint8ClampedArray, fond: Uint32Array | null): void
   backdrop(sorte: string, w: number, h: number, sol: number): Uint32Array
+  painterFor(frame: unknown): { place(x: number, y: number, flip?: boolean, angle?: number): unknown }
   poseAt(piste: [number, Pose, string?][], t: number): Pose
   bolt(r: { next(): number }, x0: number, y0: number, x1: number, y1: number, o?: { jag?: number; depth?: number }): number[][]
   fit(palette: string[], n: number): number[]
@@ -65,8 +67,11 @@ const OX = 30
 const S = 2
 const PAS = 1 / 60
 const CLE_RECORD = 'keko-magicien-record'
-/** La main du magicien, d'où partent les sorts (en px de la scène, depuis ses pieds). */
-const MAIN = { x: 14, y: -24 }
+/** L'orbe du bâton quand il pointe : d'où partent les sorts (en px de la scène, depuis les pieds du magicien). */
+const MAIN = positionOrbe(INCANTE)
+/** LES PERSONNAGES SONT LES BESTIOLES (Keko : « reprendre le jeu avec le nouveau gobelin et le nouveau sorcier ») : le gobelin et le magicien dessinés pixel par pixel ; les autres ennemis gardent le squelette en attendant leur bestiole. */
+const PAL_GOBELIN = palettesGobelin()
+const PAL_MAGICIEN = palettesMagicien()
 
 const TEINTE: Record<Element, string> = { feu: '#ff7a2a', froid: '#8fe0ff', foudre: '#ffe066', terre: '#c89a5a', vie: '#8cff9a', mort: '#c07cff' }
 const NOM: Record<Element, string> = { feu: 'Feu', froid: 'Froid', foudre: 'Foudre', terre: 'Terre', vie: 'Vie', mort: 'Mort' }
@@ -98,15 +103,6 @@ function quartier(dx: number, dy: number): Element | null {
 }
 
 // ---------------------------------------------------------------- les poses
-/** Le magicien : le bâton tenu droit ; il respire. */
-const REPOS: Pose = { weapon: 'staff', crouch: 1, fx: 8, fy: -19, sa: -1.25, bx: -6, by: -17, ffx: 5, fbx: -5 }
-const RESPIRE: [number, Pose, string?][] = [[0, REPOS], [1.1, { ...REPOS, crouch: 2, fy: -18, by: -16 }], [2.2, REPOS]]
-/** L'incantation : le bâton se lève, puis pointe d'un coup ; le sort part à `INCANTE`. */
-const LEVE: Pose = { ...REPOS, crouch: 0, lean: -3, fx: 4, fy: -30, sa: -1.5, bx: 10, by: -32, armsFront: true }
-const POINTE: Pose = { ...REPOS, crouch: 3, lean: 5, fx: 18, fy: -22, sa: -0.15, bx: 16, by: -24, ffx: 10, fbx: -6, armsFront: true }
-const INCANTATION: [number, Pose, string?][] = [[0, REPOS], [0.14, LEVE], [0.2, POINTE, 'snap'], [0.75, REPOS]]
-const INCANTE = 0.2
-const TOUCHE_MAGICIEN: [number, Pose, string?][] = [[0, { ...REPOS, lean: -6, crouch: 3, hy: -1 }], [0.35, REPOS]]
 /** Les ennemis : la marche du gobelin, et une attaque (l'élan, le coup qui tombe à `C.attaque`, la garde). */
 const MARCHE = marche.poses as [number, Pose, string?][]
 const MARCHE_D = MARCHE[MARCHE.length - 1][0]
@@ -114,7 +110,7 @@ const GARDE: Pose = { crouch: 2, lean: 2, fx: 6, fy: -16, bx: -4, by: -15, ffx: 
 const ELAN: Pose = { ...GARDE, lean: -4, crouch: 3, fx: -6, fy: -24, bx: -6, by: -18 }
 const COUP: Pose = { ...GARDE, lean: 7, crouch: 4, fx: 17, fy: -19, bx: 2, by: -16, ffx: 9, fbx: -3 }
 const ATTAQUE: [number, Pose, string?][] = [[0, GARDE], [C.attaque - 0.3, ELAN], [C.attaque - 0.1, COUP, 'snap'], [C.attaque, GARDE]]
-const PERSONNAGE: Partial<Record<TypeEnnemi, Personnage>> = { gobelin: GOBELIN, orc: ORC, golem: GOLEM, squelette: SQUELETTE }
+const PERSONNAGE: Partial<Record<TypeEnnemi, Personnage>> = { orc: ORC, golem: GOLEM, squelette: SQUELETTE }
 
 // ---------------------------------------------------------------- nos petits effets
 /** L'éclair : des traits brisés d'un point au suivant, blancs sur une lueur jaune, qui tremblent et s'éteignent. */
@@ -522,15 +518,8 @@ export function monterMagicien(racine: HTMLElement, build: string): void {
         if (v.flamme !== null) v.flamme.options.x = X
         continue
       }
-      const perso = PERSONNAGE[en.type] ?? GOBELIN
-      let pose: Pose
-      if (auPied) {
-        const phase = Math.min(C.attaque, Math.max(0, C.attaque - (en.coupA - e.t)))
-        pose = N.poseAt(ATTAQUE, gele ? 0 : phase)
-      } else {
-        if (!gele) v.horloge += dt * ((m.vitesse * (1 - (en.ralenti?.part ?? 0))) / 7)
-        pose = N.poseAt(MARCHE, v.horloge % MARCHE_D)
-      }
+      const phase = auPied ? Math.min(C.attaque, Math.max(0, C.attaque - (en.coupA - e.t))) : 0
+      if (!auPied && !gele) v.horloge += dt * ((m.vitesse * (1 - (en.ralenti?.part ?? 0))) / 7)
       let teinte = 0
       let k = 0
       if (gele) (teinte = teinteDe('#a8e8ff')), (k = 0.7)
@@ -538,11 +527,23 @@ export function monterMagicien(racine: HTMLElement, build: string): void {
       else if (en.affaibli !== null && e.t < en.affaibli.fin) (teinte = teinteDe('#c07cff')), (k = 0.3)
       else if (en.ralenti !== null && e.t < en.ralenti.fin) (teinte = teinteDe('#8fe0ff')), (k = 0.2)
       if (e.t - v.flash < 0.07) (teinte = 0xffffffff), (k = 0.85)
-      peindreOmbre(frame, pose, perso, X, SOL)
-      peindrePose(frame, pose, perso, X, SOL, true, teinte, k)
+      let hauteur = 40
+      if (en.type === 'gobelin') {
+        // la bestiole : la marche à la phase de son horloge (deux pas par boucle), ou le coup à la phase du prochain coup
+        const p = N.painterFor(frame)
+        p.place(X, SOL, true)
+        peindreGobelin(p, { t: e.t + en.id * 0.37, marche: auPied ? null : (v.horloge % PAS_GOBELIN) / PAS_GOBELIN, attaque: auPied ? (gele ? 0 : phase / C.attaque) : null, teinte, k }, PAL_GOBELIN)
+        hauteur = 26
+      } else {
+        const perso = PERSONNAGE[en.type] ?? ORC
+        const pose: Pose = auPied ? N.poseAt(ATTAQUE, gele ? 0 : phase) : N.poseAt(MARCHE, v.horloge % MARCHE_D)
+        peindreOmbre(frame, pose, perso, X, SOL)
+        peindrePose(frame, pose, perso, X, SOL, true, teinte, k)
+        hauteur = Math.round(40 * perso.echelle)
+      }
       // la barre de vie, quand il a été touché
       if (en.pv < en.pvMax) {
-        const haut = SOL - Math.round(40 * perso.echelle) - 4
+        const haut = SOL - hauteur - 4
         const largeur = 12
         for (let i = 0; i < largeur; i++) frame.color[haut * W + X - 6 + i] = i < Math.round((largeur * en.pv) / en.pvMax) ? 0xff3ad64a : 0xff202028
       }
@@ -550,12 +551,9 @@ export function monterMagicien(racine: HTMLElement, build: string): void {
   }
 
   function dessinerLeMagicien(): void {
-    let pose: Pose
-    if (e.t - toucheA < 0.35) pose = N.poseAt(TOUCHE_MAGICIEN, e.t - toucheA)
-    else if (e.t - incanteA < 0.75) pose = N.poseAt(INCANTATION, e.t - incanteA)
-    else pose = N.poseAt(RESPIRE, e.t % 2.2)
-    peindreOmbre(frame, pose, MAGICIEN, OX, SOL)
-    peindrePose(frame, pose, MAGICIEN, OX, SOL, regard < 0, 0xffffffff, e.t - toucheA < 0.08 ? 0.8 : 0)
+    const p = N.painterFor(frame)
+    p.place(OX, SOL, regard < 0)
+    peindreMagicien(p, { t: e.t, incante: e.t - incanteA < INCANTATION ? e.t - incanteA : null, touche: e.t - toucheA < 0.3 }, PAL_MAGICIEN)
   }
 
   /** La roue sous le doigt (celle de la tour), sur la surcouche. */

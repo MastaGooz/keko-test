@@ -18,8 +18,24 @@ marche sur la même ligne.
 
 Le dessin est celui de pixelfx :
 
-- **Les personnages sont NOS mannequins** (`ui/pixelfx/perso/`), posés par le
-  squelette image par image : le MAGICIEN (`personnages.js` : grand, mince,
+- **LE MAGICIEN ET LE GOBELIN SONT LES BESTIOLES** (Keko, 08/11, après les
+  avoir vus dans le banc : « c'est beaucoup mieux » puis « reprendre le jeu
+  avec le nouveau gobelin et le nouveau sorcier ») : `keko/gobelin-bestiole`
+  et `keko/magicien-bestiole` exportent chacun une fonction de peinture
+  (`peindreGobelin`, `peindreMagicien`) qui dessine le personnage dans le
+  peintre du jeu, placé à ses pieds et retourné au besoin, d'après un ÉTAT :
+  le gobelin marche (la phase de son horloge, deux pas par boucle) ou
+  ATTAQUE (une phase de coup calée sur `coupA` : la garde, l'élan de la massue
+  en arrière avec le corps qui se cabre, le coup qui tombe devant avec le
+  corps qui plonge, le retour) ; le magicien respire, INCANTE (le bâton se
+  lève en arrière, puis POINTE d'un coup devant lui, l'orbe flambe ; le sort
+  part à 0,2 s, de l'orbe — `positionOrbe`, à 36 px devant ses pieds) ou
+  ENCAISSE (il se cabre, les yeux fermés). Les états se lisent à la teinte
+  (les cellules de la grille recolorées, le contour épargné). Les trois
+  autres ennemis à corps gardent le squelette en attendant leur bestiole.
+- **Les mannequins du squelette** (`ui/pixelfx/perso/`), posés image par
+  image, restent pour l'orc, le golem et le squelette — et le MAGICIEN du
+  squelette (`personnages.js` : grand, mince,
   chapeau pointu — un bord plat et un cône un peu penché, trait `chapeau` du
   squelette —, robe bleue, son bâton est l'arme `staff` ajoutée au squelette,
   un manche de bois à orbe d'or), le GOBELIN, l'ORC (large, défenses
@@ -82,6 +98,9 @@ Le dessin est celui de pixelfx :
   tour. S'il doit marcher, le cycle est prêt.
 - Les ennemis se chevauchent au pied du magicien (ils s'arrêtent tous à la
   même distance) : une file d'attente, ou le second qui frappe par-dessus.
+- L'orc, le golem et le squelette en bestioles, pour que tout le monde soit
+  du même dessin ; et une mort dessinée (le gobelin qui tombe) à la place du
+  poof.
 - Mesuré seulement au scénario de capture (démarrer, terre + feu, lancer :
   le rocher vole, frappe, le gobelin tombe en poof) ; pas encore joué au
   doigt.
