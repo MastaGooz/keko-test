@@ -197,6 +197,22 @@ palette écrits en dur, sans variante prévue.
   (nos effets qui exportent `act`, les `moves/` du dépôt) : gobelin, le
   mannequin du dépôt (son propre dessin), l'humain par notre squelette.
 
+**Le gobelin BESTIOLE** (`keko/gobelin-bestiole`, Keko : « tu essaies de
+créer un gobelin avec cette méthode ? ») — le même gobelin SANS le squelette,
+à la manière des bestioles du dépôt : une grille hors écran
+(`critters/_lib.js` : `Grid`, ses ellipses ombrées par leur normale, ses
+tubes, ses polygones, un contour d'un pixel choisi par côté), tout calculé
+depuis la phase du pas — deux pattes à deux segments (le pied qui se lève en
+passant devant, le genou poussé en arrière), le corps qui rebondit, la tête
+qui suit avec un retard, les oreilles qui battent, la massue sur l'épaule
+qui ballotte, l'œil jaune qui cligne une fois par boucle, de la poussière à
+chaque pas, l'ombre au sol. 72 × 56, 0,72 s, 22 px de haut. Deux tours : les
+membres en traits d'un pixel se lisaient filiformes, ils sont en tubes.
+**Les deux méthodes côte à côte dans le banc** : le squelette donne un corps
+qui joue n'importe quelle pose (les coups du dépôt lui vont) mais garde
+l'allure de mannequin ; la bestiole a plus de caractère (le nez, la dent, la
+massue) et ne sait faire que ce qu'on lui a écrit — ici, trotter.
+
 **Les personnages servent déjà** : `?magicien` (`docs/magicien.md`) les fait
 jouer dans un jeu — le magicien (chapeau, bâton `staff`), le gobelin, l'orc,
 le golem, le squelette (`personnages.js`), peints par `peindrePose`.
