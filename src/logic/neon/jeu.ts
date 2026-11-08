@@ -99,9 +99,10 @@ export type Ennemi = {
   etourdiA: number
   reculVx: number
   reculVy: number
-  /** L'hexagone : son prochain tir, et le sens de sa dérive. */
+  /** L'hexagone : son prochain tir, le sens de sa dérive, et s'il est arrivé à sa halte. */
   tirA: number
   sens: 1 | -1
+  enHalte: boolean
   /** Pour le dessin : l'angle de la forme. */
   angle: number
 }
@@ -452,8 +453,9 @@ export function avancer(config: ConfigNeon, e: EtatNeon, dt: number, vue: Vue): 
       etourdiA: -Infinity,
       reculVx: 0,
       reculVy: 0,
-      tirA: t + config.hexagone.tir.cadence * (0.5 + tirer(e) * 0.5),
+      tirA: Infinity,
       sens: tirer(e) < 0.5 ? -1 : 1,
+      enHalte: false,
       angle: tirer(e) * Math.PI * 2,
     })
     ev.push({ type: 'naissance', ennemi: type })
@@ -507,7 +509,11 @@ export function avancer(config: ConfigNeon, e: EtatNeon, dt: number, vue: Vue): 
     const v = vitesseDe(config, e, en.type)
     if (en.type === 'hexagone' && d <= config.hexagone.halte + 0.5) {
       // Il dérive de côté et tire vers le cercle. Arrivé à sa halte, il respire une demi-cadence avant son premier tir (son cœur s'allume : le joueur voit venir).
-      if (en.tirA < t) en.tirA = t + config.hexagone.tir.cadence / 2
+      // (Un premier jet repoussait le tir dès que son instant était passé — à chaque pas, donc jamais de tir ; la vérif l'a dit.)
+      if (!en.enHalte) {
+        en.enHalte = true
+        en.tirA = t + config.hexagone.tir.cadence / 2
+      }
       en.x += en.sens * config.hexagone.derive * dt
       if (Math.abs(en.x) > vue.demiLargeur - c.rayon - 2) en.sens = en.sens === 1 ? -1 : 1
       if (t >= en.tirA) {

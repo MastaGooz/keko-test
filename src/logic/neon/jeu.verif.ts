@@ -28,7 +28,7 @@ function calme(...ennemis: [TypeEnnemi, number, number][]): EtatNeon {
 }
 function poser(e: EtatNeon, type: TypeEnnemi, x: number, y: number): Ennemi {
   const pv = C.ennemis[type].pv
-  const en: Ennemi = { id: e.prochainId++, type, x, y, pv, pvMax: pv, contactA: null, etourdiA: -Infinity, reculVx: 0, reculVy: 0, tirA: Infinity, sens: 1, angle: 0 }
+  const en: Ennemi = { id: e.prochainId++, type, x, y, pv, pvMax: pv, contactA: null, etourdiA: -Infinity, reculVx: 0, reculVy: 0, tirA: Infinity, sens: 1, enHalte: false, angle: 0 }
   e.ennemis.push(en)
   return en
 }
@@ -99,8 +99,7 @@ verifier('le carré paré survit, recule, puis revient', tr.pv === C.ennemis.car
 
 const losange = calme()
 const hex = poser(losange, 'hexagone', 0, -C.hexagone.halte)
-hex.tirA = 0
-verifier("l'hexagone arrivé à sa halte respire une demi-cadence avant de tirer", !jouer(losange, 0.05).some((x) => x.type === 'projectile') && hex.tirA > losange.t)
+verifier("l'hexagone arrivé à sa halte respire une demi-cadence avant de tirer", !jouer(losange, 0.05).some((x) => x.type === 'projectile') && hex.enHalte && Math.abs(hex.tirA - C.hexagone.tir.cadence / 2) < 0.02)
 const evTir = jouer(losange, C.hexagone.tir.cadence / 2)
 verifier("puis tire un losange vers le cercle", evTir.some((x) => x.type === 'projectile') && losange.projectiles.length === 1 && losange.projectiles[0].vy > 0)
 // On avance jusqu'à ce qu'il soit parable.
@@ -114,17 +113,16 @@ const evRetour = jouer(losange, 2.5)
 verifier("et le frappe des dégâts de la parade, même s'il a dérivé", evRetour.some((x) => x.type === 'touche' && x.id === hex.id && x.degats === 5))
 
 const parfaitLosange = calme()
-const hexP = poser(parfaitLosange, 'hexagone', 0, -C.hexagone.halte)
-hexP.tirA = 0
+poser(parfaitLosange, 'hexagone', 0, -C.hexagone.halte)
 let m = 0
 while (parable(C, parfaitLosange)?.parfaite !== true && m++ < 4000) avancer(C, parfaitLosange, PAS, VUE)
 parer(C, parfaitLosange)
 verifier("un losange paré parfaitement repart ×3, mais ne traverse plus rien", parfaitLosange.tirs.length === 1 && parfaitLosange.tirs[0].degats === 15 && parfaitLosange.tirs[0].percant === 0)
 
 const pasPare = calme()
-const hex2 = poser(pasPare, 'hexagone', 0, -C.hexagone.halte)
-hex2.tirA = 0
+poser(pasPare, 'hexagone', 0, -C.hexagone.halte)
 const evPerce = jouer(pasPare, 4)
+verifier("et il tire toutes les 1,8 s", evPerce.filter((x) => x.type === 'projectile').length === 2)
 verifier('un losange non paré coûte 1 PV', evPerce.filter((x) => x.type === 'coup' && x.sorte === 'projectile' && x.degats === 1).length === 5 - pasPare.pv && pasPare.pv < 5)
 
 // ---------------------------------------------------------------- le tir automatique et les niveaux
