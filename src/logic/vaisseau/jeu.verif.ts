@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, nouveauMonde, nouveauVaisseau, solidite, VAISSEAU as C, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, nouveauMonde, nouveauVaisseau, solidite, VAISSEAU as C, type Evenement, type Monde, type Vaisseau } from './jeu.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -104,6 +104,31 @@ for (let i = 0; i < 60 * 14 && w.coque > 1; i++) {
 }
 verifier('le joueur à portée, il chasse et tire', w.ennemis[0]?.fait === 'chasse' && tirs >= 3)
 verifier('ses traits percent la coque', touches >= 1 && w.coque === C.coque - touches)
+// SON LASER EN PLUS (Keko) : tenu à portée de forage du joueur, il le brûle au rayon ; tenu plus loin (mais en vue), non
+const brule = nouveauMonde()
+brule.prochainEnnemiA = 0
+avancerLeMonde(C, brule, 1 / 60, { x: 0, y: 0 })
+brule.detruits = new Set(asteroidesAutour(C, 0, 0, 400).map((r) => r.id))
+const tenir = (monde: Monde, distance: number, secondes: number): { laser: boolean; coque: number; touches: number } => {
+  let laser = false
+  let touches = 0
+  monde.coque = C.coque
+  monde.tirs = []
+  for (let i = 0; i < 60 * secondes; i++) {
+    const en = monde.ennemis[0]
+    en.corps = { ...en.corps, x: monde.vaisseau.x - distance, y: monde.vaisseau.y, vx: 0, vy: 0 }
+    en.pv = C.ennemi.pv // (le laser du joueur le creuse : on le garde en vie)
+    const r = avancerLeMonde(C, monde, 1 / 60, { x: 0, y: 0 })
+    if (monde.ennemis[0]?.forage?.sorte === 'joueur') laser = true
+    touches += compter(r.evenements, 'touche')
+    monde.tirs = [] // (ses traits ne comptent pas ici)
+  }
+  return { laser, coque: monde.coque, touches }
+}
+const pres = tenir(brule, C.forage.portee - 10, 1.5) // (1,5 s : à la seconde pile, l'arrondi flottant laisse le point entier à un cheveu)
+verifier('à portée de forage, son laser brûle la coque en plus des traits', pres.laser && Math.abs(pres.coque - (C.coque - C.ennemi.laserCoque * 1.5)) < 0.1 && pres.touches === 1)
+const loinL = tenir(brule, C.forage.portee + 20, 1)
+verifier('plus loin, en vue, il ne fait que tirer', !loinL.laser && loinL.coque === C.coque && brule.ennemis[0].fait === 'chasse')
 // le laser du joueur creuse l'ennemi quand il est plus près qu'une roche, et l'abat
 const z = nouveauMonde()
 z.prochainEnnemiA = 0
