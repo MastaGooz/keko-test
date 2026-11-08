@@ -44,7 +44,18 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   0,1 ; des astéroïdes en polygones à 7–10 sommets tirés de leur graine,
   ombrés depuis le haut à gauche, un liseré sombre, un à trois cratères,
   tournant lentement.
-- **LES ASTÉROÏDES SONT DES ROCHES À FACETTES** (Keko : « un aspect plus
+- **LES ASTÉROÏDES SONT DES ROCHES EN CELLULES** (Keko, 08/11, à propos des
+  veines : « peut-être rework la structure des astéroïdes pour un ensemble
+  plus cohérent avec les veines ») : le polygone est pavé par un VORONOÏ de
+  quelques graines tirées de la sienne (3 + R/3, elles tournent avec lui),
+  chaque cellule est un BLOC qui prend la lumière selon sa direction depuis
+  le centre et un relief propre, un joint sombre d'un pixel entre les blocs,
+  l'arête côté lumière un ton plus claire ; **les veines de minerai sont des
+  joints remplis** (ci-dessous). Les cratères et les fissures de la version
+  à facettes sont partis avec elle ; le grain, la lumière de bord, les
+  piqûres et le liseré restent. *La version à facettes, qui suit, est
+  l'histoire.*
+- **LES ASTÉROÏDES ÉTAIENT DES ROCHES À FACETTES** (Keko : « un aspect plus
   travaillé à la texture des astéroïdes ? » ; `src/ui/vaisseau/asteroide.ts`,
   un module à part pour le rendre en planche hors navigateur,
   `asteroides.mjs` du scratchpad) : le polygone est découpé en quartiers
@@ -275,14 +286,19 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   part d'or monte de 16 à 38 %, celle du cristal de 3 à 16 %, sur 3 000
   unités) : s'éloigner des stations paie, et c'est là qu'est le risque.
   Chiffres de moi, à rejuger.
-- **Les filons se voient sur la roche** (`asteroide.ts`) : des VEINES, des
-  lignes brisées de la teinte du minerai qui courent dans la roche (Keko :
-  « des veines de la couleur du minerai » ; *les grains épars d'abord, puis
-  des grains à forme par minerai, faisaient brouillon*), une à trois selon la
-  richesse, de deux à quatre segments d'autant plus longs que la roche est
-  riche, à cœur clair et bord sombre (épaisses de deux sur les grandes
-  roches), un éclat clair au milieu des segments ; le cristal scintille le
-  long des siennes. Une roche sans grain n'existe pas (un au moins).
+- **Les filons se voient sur la roche** (`asteroide.ts`) : **les veines sont
+  des JOINTS DE LA ROCHE REMPLIS DE MINERAI** (Keko : « des veines de la
+  couleur du minerai », puis « rework la structure des astéroïdes pour un
+  ensemble plus cohérent avec les veines » ; *les grains épars d'abord, puis
+  des grains à forme par minerai, faisaient brouillon ; des lignes brisées
+  d'un pixel, puis des rubans courbes posés par-dessus, « pas super bien
+  réalisées »*) — entre une cellule et sa plus proche voisine, le joint est
+  plus large (1,1 à 1,5), de la teinte du minerai, cœur clair, un liseré
+  sombre de part et d'autre, un NODULE rond au milieu (contour sombre, éclat
+  vers la lumière) ; un à cinq joints selon la richesse et la taille
+  (`richesse × (1 + cellules/4)`) ; le cristal scintille sur ses veines, le
+  fer a un point blanc à ses nodules. *C'est la même structure qui fait la
+  roche et ses filons.* Une roche sans grain n'existe pas (un au moins).
 - **Le porté se compte par minerai** (`Monde.cargaison`, le total dans
   `minerai`), **le trésor aussi** (`tresor`, le total dans `banque`) ; le
   rival a sa cargaison et la rend minerai par minerai (plus 3 de fer). En

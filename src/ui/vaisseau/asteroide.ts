@@ -1,12 +1,16 @@
 /**
- * L'ASTÉROÏDE EN PIXEL ART (Keko : « on peut donner un aspect plus travaillé à la texture des astéroïdes ? »).
+ * L'ASTÉROÏDE EN PIXEL ART (Keko : « on peut donner un aspect plus travaillé à la texture des astéroïdes ? », puis,
+ * pour les filons : « peut-être rework la structure des astéroïdes pour un ensemble plus cohérent avec les veines »).
  *
- * Une roche À FACETTES : le polygone est découpé en quartiers depuis son centre, et chaque quartier est une face qui
- * prend la lumière selon l'orientation de son arête (la lumière vient d'en haut à gauche, un peu de face) — en
- * tournant, les faces s'allument et s'éteignent l'une après l'autre, et la roche se lit en volume. Par-dessus : un
- * GRAIN (un bruit fractal seedé, quantifié à un ton et seuillé pour ne pas moucheter), une LUMIÈRE DE BORD sur l'arête
- * éclairée et une ombre sur l'arête opposée, des CRATÈRES à cuvette sombre et rebord éclairé côté opposé à la lumière,
- * des FISSURES d'un pixel, et un liseré sombre. Trois roches : grise, ocre, bleutée, tirées de la graine.
+ * Une roche EN CELLULES : le polygone est pavé par un Voronoï de quelques graines tirées de la sienne (elles tournent
+ * avec lui), et chaque cellule est un BLOC qui prend la lumière selon sa direction depuis le centre (la lumière vient
+ * d'en haut à gauche, un peu de face) et un relief qui lui est propre — en tournant, les blocs s'allument et
+ * s'éteignent l'un après l'autre, la roche se lit en volume. Entre les blocs, des JOINTS sombres d'un pixel ; et LES
+ * VEINES DE MINERAI SONT DES JOINTS REMPLIS : les joints choisis (un à cinq selon la richesse et la taille) sont plus
+ * larges, de la teinte du minerai, cœur clair, un liseré sombre, un nodule rond au milieu — c'est la même structure qui
+ * fait la roche et ses filons. Par-dessus : un GRAIN (un bruit fractal seedé, quantifié à un ton, seuillé), une LUMIÈRE
+ * DE BORD sur l'arête éclairée et une ombre sur l'arête opposée, quelques piqûres, un liseré sombre. Trois roches :
+ * grise, ocre, bleutée, tirées de la graine. Le cristal scintille sur ses veines.
  *
  * Tout est fonction de la graine et du temps : rien n'est stocké, et le même astéroïde se redessine pareil.
  */
@@ -29,7 +33,7 @@ const ROCHES = [
   N.fit(['#120d08', '#2a1e14', '#47321e', '#69492a', '#8e6638', '#b08a58', '#d2b088', '#f0dcc0'], 8),
   N.fit(['#0a0e18', '#1a2232', '#2c3a50', '#425470', '#5c7090', '#7f94b4', '#a8bcd6', '#d8e6f8'], 8),
 ]
-/** Les teintes des trois minerais (sombre → clair → blanc) : l'acier du fer, l'or, la turquoise du cristal. Les pépites, les filons et les compteurs les partagent. */
+/** Les teintes des trois minerais (sombre → clair → blanc) : l'acier du fer, l'or, la turquoise du cristal. Les pépites, les veines et les compteurs les partagent. */
 export const TEINTES_MINERAI: Record<Minerai, number[]> = {
   fer: N.fit(['#243040', '#5a7088', '#a4b8cc', '#e8f0f8', '#ffffff'], 5),
   or: N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5),
@@ -52,93 +56,126 @@ function sommets(a: Asteroide, angle: number, cx: number, cy: number): { pts: nu
   return { pts, n, rayons }
 }
 
+/** La roche (ses huit tons) d'une graine : les morceaux d'un astéroïde éclaté en sont. */
+export const rocheDe = (graine: number): number[] => ROCHES[Math.floor(tire(graine, 9) * ROCHES.length)]
+
+/** Une cellule de la roche : son point (déjà tourné, relatif au centre), le ton de son bloc. */
+type Cellule = { x: number; y: number; ton: number }
+
 /**
  * Dessine l'astéroïde `a` dans le peintre, son centre en (cx, cy) (coordonnées du tampon), tourné de son angle à
  * l'instant t. Le peintre est supposé placé à l'origine.
  */
-/** La roche (ses huit tons) d'une graine : les morceaux d'un astéroïde éclaté en sont. */
-export const rocheDe = (graine: number): number[] => ROCHES[Math.floor(tire(graine, 9) * ROCHES.length)]
-
 export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: number, cy: number): void {
   const C = rocheDe(a.graine)
+  const T = TEINTES_MINERAI[a.minerai]
   const angle = a.angle0 + t * a.vitesseAngulaire
   const { pts, n, rayons } = sommets(a, angle, cx, cy)
   const R = a.rayon
-  // les normales des faces : chaque quartier k va du sommet k au sommet k+1 ; sa face regarde vers le milieu de l'arête
-  const faces: { nx: number; ny: number; eclat: number }[] = []
-  for (let k = 0; k < n; k++) {
-    const [x0, y0] = pts[k]
-    const [x1, y1] = pts[(k + 1) % n]
-    const mx = (x0 + x1) / 2 - cx
-    const my = (y0 + y1) / 2 - cy
-    const l = Math.hypot(mx, my) || 1
-    const nx = mx / l
-    const ny = my / l
-    // la face est inclinée : son z vaut la part de rayon qu'il lui reste vers le centre
-    const pente = 0.55 + 0.35 * tire(a.graine, 3, k)
-    const eclat = (nx * LUMIERE.x + ny * LUMIERE.y) * pente + LUMIERE.z * (1 - pente) * 1.6
-    faces.push({ nx, ny, eclat })
+  const cosA = Math.cos(angle)
+  const sinA = Math.sin(angle)
+
+  // LES CELLULES : des graines dans le disque, tournées avec la roche ; chacune un ton selon la lumière reçue par son bloc
+  // (trois cellules de plus par 3 unités de rayon : davantage, une petite roche n'était plus que des joints)
+  const nc = 3 + Math.floor(R / 3)
+  const cellules: Cellule[] = []
+  for (let i = 0; i < nc; i++) {
+    const th = tire(a.graine, 30, i) * Math.PI * 2
+    const d = R * (0.15 + 0.7 * Math.sqrt(tire(a.graine, 31, i)))
+    const lx = Math.cos(th) * d
+    const ly = Math.sin(th) * d
+    // la normale du bloc : vers l'extérieur depuis le centre, inclinée selon un relief propre
+    const l = Math.hypot(lx, ly) || 1
+    const pente = 0.45 + 0.4 * tire(a.graine, 32, i)
+    const wx = (lx / l) * cosA - (ly / l) * sinA
+    const wy = (lx / l) * sinA + (ly / l) * cosA
+    const eclat = (wx * LUMIERE.x + wy * LUMIERE.y) * pente + LUMIERE.z * (1 - pente) * 1.6 + 0.12 + (tire(a.graine, 33, i) - 0.5) * 0.3
+    const ton = eclat > 0.62 ? 5 : eclat > 0.42 ? 4 : eclat > 0.22 ? 3 : eclat > 0.05 ? 2 : 1
+    cellules.push({ x: lx * cosA - ly * sinA, y: lx * sinA + ly * cosA, ton })
   }
+  // LES VEINES : des joints choisis, entre une cellule et sa plus proche voisine ; un à cinq selon la richesse et la taille
+  const nv = Math.max(1, Math.round(a.richesse * (1 + nc / 4)))
+  const veines = new Set<number>()
+  for (let v = 0; v < nv; v++) {
+    const i = Math.floor(tire(a.graine, 34, v) * nc)
+    let j = -1
+    let dj = Infinity
+    for (let k = 0; k < nc; k++) {
+      if (k === i) continue
+      const d = Math.hypot(cellules[k].x - cellules[i].x, cellules[k].y - cellules[i].y)
+      if (d < dj) (dj = d), (j = k)
+    }
+    if (j >= 0) veines.add(Math.min(i, j) * 64 + Math.max(i, j))
+  }
+  const largeurVeine = R > 9 ? 1.5 : 1.1
+
   // le liseré : le même polygone, un pixel plus large
   p.poly(pts.map(([x, y]) => [cx + (x - cx) * (1 + 1.3 / R), cy + (y - cy) * (1 + 1.3 / R)]), C[0])
-  // la roche : la face du quartier, le grain, la lumière de bord
+  // la roche : la cellule du pixel, son ton, le grain, les joints, les veines, la lumière de bord
+  const scintille = Math.sin(t * 3) > 0.7
   p.poly(pts, (x, y) => {
     const dx = x - cx
     const dy = y - cy
     const d = Math.hypot(dx, dy)
+    // les deux cellules les plus proches
+    let c1 = 0
+    let c2 = 0
+    let d1 = Infinity
+    let d2 = Infinity
+    for (let i = 0; i < nc; i++) {
+      const dd = Math.hypot(dx - cellules[i].x, dy - cellules[i].y)
+      if (dd < d1) (d2 = d1), (c2 = c1), (d1 = dd), (c1 = i)
+      else if (dd < d2) (d2 = dd), (c2 = i)
+    }
+    const joint = d2 - d1
+    // le rayon du bord dans cette direction (interpolé entre les deux sommets du quartier), pour la lumière de bord
     let th = Math.atan2(dy, dx) - angle
     th = ((th % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
     const k = Math.min(n - 1, Math.floor((th / (Math.PI * 2)) * n))
-    const f = faces[k]
-    // le rayon du bord dans cette direction (interpolé entre les deux sommets du quartier)
     const u = (th / (Math.PI * 2)) * n - k
     const rBord = rayons[k] * (1 - u) + rayons[(k + 1) % n] * u
     const auBord = rBord - d
-    // le ton de la face, puis le grain : un bruit à l'échelle du quart de la roche, qui ne bouge que d'un ton et seulement où il est franc
-    let ton = f.eclat > 0.62 ? 5 : f.eclat > 0.42 ? 4 : f.eclat > 0.22 ? 3 : f.eclat > 0.05 ? 2 : 1
-    const grain = N.fbm((dx * Math.cos(-angle) - dy * Math.sin(-angle)) / (R * 0.45), (dx * Math.sin(-angle) + dy * Math.cos(-angle)) / (R * 0.45), a.graine & 0xffff, 2)
+    // une veine : le joint rempli de minerai, large, cœur clair, un liseré sombre de part et d'autre
+    if (veines.has(Math.min(c1, c2) * 64 + Math.max(c1, c2)) && auBord > 0.8) {
+      if (joint < largeurVeine) {
+        if (a.minerai === 'cristal' && scintille && ((x * 7 + y * 13) & 7) === 0) return T[4]
+        return joint < largeurVeine * 0.45 ? T[3] : T[2]
+      }
+      if (joint < largeurVeine + 1.1) return T[0]
+    } else if (joint < 0.7 && auBord > 1) return C[1] // le joint sombre entre deux blocs
+    // le ton du bloc, puis le grain : un bruit à l'échelle du quart de la roche, qui ne bouge que d'un ton et seulement où il est franc
+    let ton = cellules[c1].ton
+    const grain = N.fbm((dx * cosA + dy * sinA) / (R * 0.45), (-dx * sinA + dy * cosA) / (R * 0.45), a.graine & 0xffff, 2)
     if (grain > 0.3) ton += 1
     else if (grain < -0.3) ton -= 1
+    // l'arête du bloc côté lumière est un peu plus claire (le relief des blocs)
+    if (joint < 1.8 && auBord > 1) {
+      const vx = cellules[c2].x - cellules[c1].x
+      const vy = cellules[c2].y - cellules[c1].y
+      const lv = Math.hypot(vx, vy) || 1
+      if ((vx / lv) * LUMIERE.x + (vy / lv) * LUMIERE.y < -0.4) ton += 1
+    }
     // la lumière de bord : l'arête éclairée prend un éclat, l'arête à l'ombre s'assombrit
-    const versLumiere = f.nx * LUMIERE.x + f.ny * LUMIERE.y
+    const nx = dx / (d || 1)
+    const ny = dy / (d || 1)
+    const versLumiere = nx * LUMIERE.x + ny * LUMIERE.y
     if (auBord < 1.3 && R > 6) {
       if (versLumiere > 0.35) ton = Math.max(ton, 6)
       else if (versLumiere < -0.3) ton = Math.min(ton, 1)
     }
     return C[Math.max(1, Math.min(6, ton))]
   })
-  // les cratères : une cuvette sombre, son fond plus sombre vers la lumière, un rebord éclairé à l'opposé
-  const nc = R > 7 ? 2 + Math.floor(tire(a.graine, 4) * 2) : 1
-  for (let i = 0; i < nc; i++) {
-    const th = angle + tire(a.graine, 5, i) * Math.PI * 2
-    const d = R * (0.1 + 0.5 * tire(a.graine, 6, i))
-    const r = Math.max(1.2, R * (0.14 + 0.18 * tire(a.graine, 7, i)))
-    const x = cx + Math.cos(th) * d
-    const y = cy + Math.sin(th) * d
-    p.circle(x, y, r, C[2])
-    p.circle(x + LUMIERE.x * r * 0.35, y + LUMIERE.y * r * 0.35, r * 0.7, C[1])
-    if (r >= 2) p.arc(x, y, r + 0.3, 1, Math.atan2(-LUMIERE.y, -LUMIERE.x) - 1.1, Math.atan2(-LUMIERE.y, -LUMIERE.x) + 1.1, C[6], 0.9)
-    else p.dot(x - LUMIERE.x * r, y - LUMIERE.y * r, C[6], 0.9)
-  }
-  // les fissures : une ou deux lignes brisées sombres, qui partent d'un cratère ou du bord
-  if (R > 7) {
-    const nf = 1 + Math.floor(tire(a.graine, 10) * 2)
-    for (let i = 0; i < nf; i++) {
-      let th = angle + tire(a.graine, 11, i) * Math.PI * 2
-      let x = cx + Math.cos(th) * R * 0.2
-      let y = cy + Math.sin(th) * R * 0.2
-      const pas = 2 + Math.floor(tire(a.graine, 12, i) * 3)
-      for (let s = 0; s < pas; s++) {
-        th += (tire(a.graine, 13, i, s) - 0.5) * 1.2
-        const L = R * (0.15 + 0.15 * tire(a.graine, 14, i, s))
-        const x2 = x + Math.cos(th) * L
-        const y2 = y + Math.sin(th) * L
-        if (Math.hypot(x2 - cx, y2 - cy) > R * 0.78) break
-        p.line(x, y, x2, y2, C[1])
-        x = x2
-        y = y2
-      }
-    }
+  // LES NODULES : au milieu de chaque veine, un rond du minerai, contour sombre, éclat vers la lumière
+  for (const cle of veines) {
+    const i = Math.floor(cle / 64)
+    const j = cle % 64
+    const mx = cx + (cellules[i].x + cellules[j].x) / 2
+    const my = cy + (cellules[i].y + cellules[j].y) / 2
+    if (Math.hypot(mx - cx, my - cy) > R * 0.62) continue
+    const r = largeurVeine + 0.6
+    p.circle(mx, my, r + 1, T[0], 0.9)
+    p.circle(mx, my, r, T[2])
+    p.dot(mx + LUMIERE.x * r * 0.6, my + LUMIERE.y * r * 0.6, a.minerai === 'fer' || (a.minerai === 'cristal' && scintille) ? T[4] : T[3])
   }
   // quelques piqûres
   const np = Math.floor(R / 3)
@@ -146,40 +183,5 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     const th = angle + tire(a.graine, 15, i) * Math.PI * 2
     const d = R * (0.2 + 0.55 * tire(a.graine, 16, i))
     p.dot(cx + Math.cos(th) * d, cy + Math.sin(th) * d, C[2], 0.9)
-  }
-  // LES FILONS (Keko : « que les pépites se voient sur les astéroïdes, pour savoir lesquels sont riches ou pauvres et
-  // quel minerai ils contiennent » ; puis « des veines de la couleur du minerai » — les grains épars faisaient
-  // brouillon) : des VEINES, des lignes brisées de la teinte du minerai qui courent dans la roche, une à trois selon la
-  // richesse, plus longues sur une roche riche, à cœur clair avec un bord sombre (épaisses de deux sur les grandes
-  // roches) ; le cristal scintille le long des siennes
-  const T = TEINTES_MINERAI[a.minerai]
-  const nv = 1 + Math.round(a.richesse * 2)
-  for (let i = 0; i < nv; i++) {
-    let th = angle + tire(a.graine, 40, i) * Math.PI * 2
-    const d0 = R * (0.05 + 0.35 * tire(a.graine, 41, i))
-    let x = cx + Math.cos(th + 2.1) * d0
-    let y = cy + Math.sin(th + 2.1) * d0
-    const pas = 2 + Math.round(tire(a.graine, 42, i) * 2 * a.richesse)
-    for (let k = 0; k < pas; k++) {
-      th += (tire(a.graine, 43, i, k) - 0.5) * 1.4
-      const L = R * (0.16 + 0.2 * a.richesse * tire(a.graine, 44, i, k))
-      const x2 = x + Math.cos(th) * L
-      const y2 = y + Math.sin(th) * L
-      if (Math.hypot(x2 - cx, y2 - cy) > R * 0.7) break
-      // le bord sombre, décalé d'un pixel du côté opposé à la lumière, puis le cœur clair
-      p.line(x + 1, y + 1, x2 + 1, y2 + 1, T[0], 0.9)
-      if (R > 9) p.line(x, y + 1, x2, y2 + 1, T[1])
-      // (le fer, acier bleuté, se perdait sur la roche bleutée : sa veine est presque blanche, son bord sombre la détache)
-      p.line(x, y, x2, y2, a.minerai === 'fer' ? T[3] : T[2])
-      // un éclat clair au milieu du segment ; le cristal scintille
-      const mx = (x + x2) / 2
-      const my = (y + y2) / 2
-      if (a.minerai === 'cristal') {
-        if (Math.sin(t * 3 + i * 2.1 + k * 1.3) > 0.6) p.dot(mx, my, T[4])
-        else p.dot(mx, my, T[3])
-      } else if (tire(a.graine, 45, i, k) < 0.6) p.dot(mx, my, a.minerai === 'fer' ? T[4] : T[3])
-      x = x2
-      y = y2
-    }
   }
 }
