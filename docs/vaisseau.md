@@ -42,6 +42,20 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   0,1 ; des astéroïdes en polygones à 7–10 sommets tirés de leur graine,
   ombrés depuis le haut à gauche, un liseré sombre, un à trois cratères,
   tournant lentement.
+- **LES ASTÉROÏDES SONT DES ROCHES À FACETTES** (Keko : « un aspect plus
+  travaillé à la texture des astéroïdes ? » ; `src/ui/vaisseau/asteroide.ts`,
+  un module à part pour le rendre en planche hors navigateur,
+  `asteroides.mjs` du scratchpad) : le polygone est découpé en quartiers
+  depuis son centre, chaque quartier est une face qui prend la lumière selon
+  l'orientation de son arête et une pente tirée de la graine — en tournant,
+  les faces s'allument l'une après l'autre ; un GRAIN (bruit fractal seedé,
+  tourné avec la roche, quantifié à ±1 ton et seuillé à 0,3 pour ne pas
+  moucheter) ; une LUMIÈRE DE BORD sur l'arête éclairée, une ombre sur
+  l'opposée (les roches de plus de 6 px) ; des CRATÈRES à cuvette sombre,
+  fond décalé vers la lumière, rebord éclairé à l'opposé ; une ou deux
+  FISSURES brisées ; des piqûres ; trois roches (grise, ocre, bleutée) tirées
+  de la graine. *La première version était un aplat en quatre tons par la
+  normale et deux ronds sombres.*
 - **La caméra suit avec de l'avance** : elle vise le vaisseau plus 0,35 s de
   sa vitesse, amortie (gain 4/s) : on voit devant soi quand on va vite.
 - **Un choc** : l'étincelle `impacts/hit-spark` du dépôt (palette pierre)

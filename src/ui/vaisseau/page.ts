@@ -13,7 +13,8 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { effects } from 'pixelfx/fx/index'
-import { asteroidesAutour, avancer, centreQuiSuit, directionDuManche, MANCHE, nouveauVaisseau, tire, VAISSEAU as C, type Asteroide, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesAutour, avancer, centreQuiSuit, directionDuManche, MANCHE, nouveauVaisseau, tire, VAISSEAU as C, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { dessinerAsteroide } from './asteroide.ts'
 
 type Instance = { t: number; options: Record<string, unknown>; update(dt: number): void; draw(frame: unknown, couche?: string): void; stop(): void; done(): boolean }
 type Module = { meta?: Record<string, unknown> }
@@ -22,6 +23,7 @@ type Peintre = {
   px(x: number, y: number, c: number): void
   dot(x: number, y: number, c: number, a?: number): void
   circle(x: number, y: number, r: number, c: number, a?: number): void
+  arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
   glow(x: number, y: number, r: number, c: number, k?: number): void
@@ -50,7 +52,6 @@ const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 const FEU = N.fit(N.PAL.fire, 8)
-const ROCHE = N.fit(N.PAL.stone, 8)
 const FOND = N.hex('#07060f')
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
@@ -195,40 +196,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
   }
 
-  /** Un astéroïde : un polygone rocheux tiré de sa graine, ombré depuis le haut à gauche, des cratères, un liseré sombre. */
-  function dessinerAsteroide(p: Peintre, a: Asteroide): void {
-    const n = 7 + Math.floor(tire(a.graine, 1) * 4)
-    const angle = a.angle0 + t * a.vitesseAngulaire
-    const pts: number[][] = []
-    for (let k = 0; k < n; k++) {
-      const th = angle + (k / n) * Math.PI * 2
-      const r = a.rayon * (0.72 + 0.28 * tire(a.graine, 2, k))
-      pts.push([a.x - camera.x + W / 2 + Math.cos(th) * r, a.y - camera.y + H / 2 + Math.sin(th) * r])
-    }
-    const cx = a.x - camera.x + W / 2
-    const cy = a.y - camera.y + H / 2
-    // le liseré : le même polygone, un pixel plus large
-    p.poly(pts.map(([x, y]) => [cx + (x - cx) * (1 + 1.2 / a.rayon), cy + (y - cy) * (1 + 1.2 / a.rayon)]), ROCHE[0])
-    p.poly(pts, (x, y) => {
-      const nx = (x - cx) / a.rayon
-      const ny = (y - cy) / a.rayon
-      const lumiere = nx * -0.6 + ny * -0.8
-      return lumiere > 0.45 ? ROCHE[5] : lumiere > 0.05 ? ROCHE[4] : lumiere > -0.4 ? ROCHE[3] : ROCHE[2]
-    })
-    // les cratères : deux ou trois creux sombres, un bord clair en bas à droite
-    const nc = 1 + Math.floor(tire(a.graine, 3) * 3)
-    for (let k = 0; k < nc; k++) {
-      const th = angle + tire(a.graine, 4, k) * Math.PI * 2
-      const d = a.rayon * (0.15 + 0.45 * tire(a.graine, 5, k))
-      const r = Math.max(1, a.rayon * (0.12 + 0.16 * tire(a.graine, 6, k)))
-      const x = cx + Math.cos(th) * d
-      const y = cy + Math.sin(th) * d
-      p.circle(x, y, r, ROCHE[2])
-      p.circle(x - r * 0.3, y - r * 0.3, r * 0.7, ROCHE[1])
-      p.dot(x + r * 0.6, y + r * 0.6, ROCHE[5], 0.8)
-    }
-  }
-
   /** Le vaisseau, dessiné le nez vers +x puis tourné vers son cap : la coque, les ailes, la verrière, le moteur et sa flamme. */
   function dessinerLeVaisseau(p: Peintre): void {
     p.place(W / 2, H / 2, false, v.cap)
@@ -344,7 +311,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     N.clearFrame(frame)
     const p = N.painterFor(frame)
     dessinerLeCiel(p)
-    for (const a of asteroidesAutour(C, camera.x, camera.y, Math.max(W, H) / 2 + C.champ.rayonMax + 4)) dessinerAsteroide(p, a)
+    for (const a of asteroidesAutour(C, camera.x, camera.y, Math.max(W, H) / 2 + C.champ.rayonMax + 4)) dessinerAsteroide(p, a, t, a.x - camera.x + W / 2, a.y - camera.y + H / 2)
     // les braises et les étincelles sont dans le monde : le peintre se place sur la caméra
     p.place(W / 2 - camera.x, H / 2 - camera.y)
     braises.draw(p)
