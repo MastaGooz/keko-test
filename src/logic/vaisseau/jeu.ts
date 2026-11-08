@@ -64,6 +64,13 @@ export const VAISSEAU = {
    * moyen de sécuriser les ressources ») : le minerai reste à bord jusqu'à l'EXTRACTION, et se perd avec la coque.
    * (`cadence` reste pour la cadence d'un éventuel retour du dépôt ; plus rien ne la lit.)
    */
+  /**
+   * LES FILONS (Keko : « récolter différentes ressources, des tiers de ressources ») : trois minerais, le FER (commun),
+   * l'OR (peu commun), le CRISTAL (rare). Chaque roche en porte un, tiré de sa case, et une RICHESSE (0,25 à 1, biaisée
+   * vers les pauvres) qui dit combien de pépites elle rend. L'or et le cristal sont plus fréquents LOIN du départ (la
+   * part monte de `…Pres` à `…Loin` sur `horizon` unités) : s'éloigner des stations paie, et c'est là qu'est le risque.
+   */
+  filons: { horizon: 3000, orPres: 0.16, orLoin: 0.38, cristalPres: 0.03, cristalLoin: 0.16 },
   station: { case: 4500, rayon: 11, portee: 36, cadence: 0.12 },
   /**
    * L'EXTRACTION (Keko : « un timer quand le joueur est dans la zone de l'extracteur ; s'il reste jusqu'au bout, la
@@ -125,11 +132,20 @@ export type Vaisseau = {
   contact: number | null
 }
 
-export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }
+/** Les trois minerais, du commun au rare. */
+export const MINERAIS = ['fer', 'or', 'cristal'] as const
+export type Minerai = (typeof MINERAIS)[number]
+/** Tant de pépites de chaque minerai. */
+export type Cargaison = Record<Minerai, number>
+export const cargaisonVide = (): Cargaison => ({ fer: 0, or: 0, cristal: 0 })
+/** Le nombre de pépites d'une cargaison. */
+export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
+/** Une roche : son minerai et sa richesse (0,25 à 1) disent ce qu'elle rend ; ses filons se voient dessus. */
+export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Le laser en train de creuser : ce qu'il creuse (une roche, ou un ennemi), le point d'impact, la part déjà creusée (0 à 1). */
 /** Un laser posé sur sa cible : une roche, ou l'ennemi (le laser du joueur seul : le rival ne mine que des roches). */
 export type Forage = { sorte: 'roche' | 'ennemi'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number }
 /** Un trait tiré par l'ennemi. */
@@ -144,6 +160,7 @@ export type Ennemi = {
   forage: Forage | null
   tirA: number
   butin: number
+  cargaison: Cargaison
 }
 
 /** Tout le monde : le joueur, les ennemis, ce que les lasers ont creusé, les roches parties, les pépites, les traits, le minerai. */
@@ -161,9 +178,11 @@ export type Monde = {
   creuse: Map<number, number>
   detruits: Set<number>
   pepites: Pepite[]
-  /** Le minerai PORTÉ (à bord, perdu avec la coque), et la BANQUE : le total extrait, qui ne bouge qu'à une extraction. */
+  /** Le minerai PORTÉ (à bord, perdu avec la coque), et la BANQUE : le total extrait, qui ne bouge qu'à une extraction — en nombre de pépites, et par minerai (`cargaison`, `tresor`). */
   minerai: number
   banque: number
+  cargaison: Cargaison
+  tresor: Cargaison
   /** Le compte de l'extraction (secondes passées à quai d'affilée), et si le vaisseau est déjà sorti d'un parvis. */
   extraction: number
   sorti: boolean
@@ -173,10 +192,10 @@ export type Monde = {
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
 export type Evenement =
-  | { type: 'eclat'; x: number; y: number; rayon: number; graine: number }
-  | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi' }
+  | { type: 'eclat'; x: number; y: number; rayon: number; graine: number; minerai: Minerai }
+  | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi'; minerai: Minerai }
   /** Une pépite déposée à la station. */
-  | { type: 'extrait'; x: number; y: number; pepites: number }
+  | { type: 'extrait'; x: number; y: number; pepites: number; cargaison: Cargaison }
   | { type: 'tir'; x: number; y: number }
   | { type: 'touche'; x: number; y: number }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -189,7 +208,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -215,7 +234,14 @@ export function asteroideDeLaCase(c: ConfigVaisseau, i: number, j: number): Aste
   // le vide autour de chaque station (le parvis)
   const st = stationLaPlusProche(c, x, y)
   if (Math.hypot(x - st.x, y - st.y) < c.champ.vide + rayon) return null
-  return { id: hache(i, j), x, y, rayon, graine: hache(i, j, 5), angle0: tire(i, j, 6) * Math.PI * 2, vitesseAngulaire: (tire(i, j, 7) - 0.5) * 1.2 }
+  // le filon : l'or et le cristal plus fréquents loin du départ ; la richesse biaisée vers les pauvres
+  const loin = Math.min(1, Math.hypot(x, y) / c.filons.horizon)
+  const pc = c.filons.cristalPres + (c.filons.cristalLoin - c.filons.cristalPres) * loin
+  const po = c.filons.orPres + (c.filons.orLoin - c.filons.orPres) * loin
+  const u = tire(i, j, 8)
+  const minerai: Minerai = u < pc ? 'cristal' : u < pc + po ? 'or' : 'fer'
+  const richesse = 0.25 + 0.75 * tire(i, j, 9) ** 1.4
+  return { id: hache(i, j), x, y, rayon, graine: hache(i, j, 5), angle0: tire(i, j, 6) * Math.PI * 2, vitesseAngulaire: (tire(i, j, 7) - 0.5) * 1.2, minerai, richesse }
 }
 
 /**
@@ -358,12 +384,13 @@ function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecte
 function eclaterLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, ev: Evenement[]): void {
   m.creuse.delete(a.id)
   m.detruits.add(a.id)
-  ev.push({ type: 'eclat', x: a.x, y: a.y, rayon: a.rayon, graine: a.graine })
-  const n = Math.max(1, Math.round(a.rayon * c.forage.pepitesParRayon))
+  ev.push({ type: 'eclat', x: a.x, y: a.y, rayon: a.rayon, graine: a.graine, minerai: a.minerai })
+  // tant de pépites de son minerai : selon sa taille ET sa richesse (une pauvre en rend le tiers d'une riche)
+  const n = Math.max(1, Math.round(a.rayon * c.forage.pepitesParRayon * (0.4 + 1.2 * a.richesse)))
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(a.graine, 20, i) * 1.2
     const vit = 20 + 40 * tire(a.graine, 21, i)
-    m.pepites.push({ id: m.prochainId++, x: a.x + Math.cos(an) * a.rayon * 0.5, y: a.y + Math.sin(an) * a.rayon * 0.5, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, graine: hache(a.graine, i) })
+    m.pepites.push({ id: m.prochainId++, x: a.x + Math.cos(an) * a.rayon * 0.5, y: a.y + Math.sin(an) * a.rayon * 0.5, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, graine: hache(a.graine, i), minerai: a.minerai })
   }
 }
 
@@ -386,11 +413,15 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   m.prochainEnnemiA = m.t + c.ennemi.revient
   if (m.forage !== null && m.forage.sorte === 'ennemi' && m.forage.cible === e.id) m.forage = null
   ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy })
-  const n = e.butin + c.ennemi.butinRendu
+  // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
+  const rendues: Minerai[] = []
+  for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
+  for (let i = 0; i < c.ennemi.butinRendu; i++) rendues.push('fer')
+  const n = rendues.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
     const vit = 20 + 40 * tire(e.id, 31, i)
-    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i) })
+    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i] })
   }
 }
 
@@ -409,7 +440,7 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
     x = v.x + Math.cos(a) * c.ennemi.distance
     y = v.y + Math.sin(a) * c.ennemi.distance
   }
-  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(v.y - y, v.x - x) }, pv: c.ennemi.pv, fait: 'mine', roche: null, forage: null, tirA: m.t + c.ennemi.cadence, butin: 0 }
+  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(v.y - y, v.x - x) }, pv: c.ennemi.pv, fait: 'mine', roche: null, forage: null, tirA: m.t + c.ennemi.cadence, butin: 0, cargaison: cargaisonVide() }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
@@ -569,9 +600,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         m.extraction = c.extraction.duree
         m.phase = 'extrait'
         const pepites = m.minerai
+        const cargaison = { ...m.cargaison }
         m.banque += pepites
         m.minerai = 0
-        ev.push({ type: 'extrait', x: st.x, y: st.y, pepites })
+        for (const k of MINERAIS) {
+          m.tresor[k] += m.cargaison[k]
+          m.cargaison[k] = 0
+        }
+        ev.push({ type: 'extrait', x: st.x, y: st.y, pepites, cargaison })
       }
     }
   } else {
@@ -615,9 +651,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const d = dmin || 1
     if (d <= c.forage.ramassage) {
       m.pepites.splice(i, 1)
-      if (plusProche.e === null) m.minerai += 1
-      else plusProche.e.butin += 1
-      ev.push({ type: 'ramasse', x: p.x, y: p.y, par: plusProche.par })
+      if (plusProche.e === null) {
+        m.minerai += 1
+        m.cargaison[p.minerai] += 1
+      } else {
+        plusProche.e.butin += 1
+        plusProche.e.cargaison[p.minerai] += 1
+      }
+      ev.push({ type: 'ramasse', x: p.x, y: p.y, par: plusProche.par, minerai: p.minerai })
       continue
     }
     const frein = Math.exp(-2.5 * dt)

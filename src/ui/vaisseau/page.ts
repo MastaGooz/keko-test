@@ -12,8 +12,8 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, centreQuiSuit, directionDuManche, MANCHE, nouveauMonde, stationDeLaCase, stationLaPlusProche, tire, VAISSEAU as C, type ConfigVaisseau, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { dessinerAsteroide, LUMIERE, rocheDe } from './asteroide.ts'
+import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, stationDeLaCase, stationLaPlusProche, tire, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
@@ -113,7 +113,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Trois minerais — le fer, l’or, le cristal — et leurs filons se voient sur les roches : plus il y en a, plus elle est riche ; l’or et le cristal sont loin des stations. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 
@@ -126,6 +126,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   let m = monterLeMonde()
   m.minerai = minerai0
+  m.cargaison.fer = minerai0
   let v: Vaisseau = m.vaisseau
   let perduA = -10
   /** L'instant de l'arrivée par téléportation (chaque expédition commence par là : le vaisseau n'est dessiné qu'à `ARRIVE_A`, blanchi jusqu'à `REFROIDI_A`, et ne répond pas avant). */
@@ -144,14 +145,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le forage : les étincelles du point d'impact, les morceaux des roches éclatées (sans pesanteur : l'espace), les flashs. */
   const etincelles = new Grains(R)
   const morceaux = new N.Bits({ ground: () => Infinity })
-  const flashs: { x: number; y: number; t0: number; r: number }[] = []
+  const flashs: { x: number; y: number; t0: number; r: number; c?: number[] }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
-  const envols: { x: number; y: number; t0: number }[] = []
-  let affiche = minerai0
-  let afficheBanque = 0
-  let depotA = -10
-  let allumeA = -10
+  const envols: { x: number; y: number; t0: number; minerai: Minerai }[] = []
+  /** Ce que les compteurs montrent, par minerai (les pépites en vol n'y sont pas encore). Rien ne montre ce qui est déjà extrait (Keko). */
+  const affiche: Cargaison = { ...cargaisonVide(), fer: minerai0 }
+  const allumeA: Cargaison = { fer: -10, or: -10, cristal: -10 }
   const COMPTEUR = { x: 16, y: 10 }
+  /** Une cargaison en mots : « 4 fer, 2 or, 1 cristal », ou « rien ». */
+  const nommer = (c: Cargaison): string => MINERAIS.filter((k) => c[k] > 0).map((k) => `${c[k]} ${k}`).join(', ') || 'rien'
   let secousse = 0
   let flamme = 0
   let t = 0
@@ -183,13 +185,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (m.phase !== 'vol') {
       if (t - perduA < 1.2) return
       const banque = m.banque
+      const tresor = m.tresor
       m = monterLeMonde()
       m.banque = banque
+      m.tresor = tresor
       effets = []
       flashs.length = 0
       envols.length = 0
-      affiche = 0
-      afficheBanque = m.banque
+      for (const k of MINERAIS) affiche[k] = 0
       flammesEnnemies.clear()
       v = m.vaisseau
       camera.x = 0
@@ -478,26 +481,34 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.glow(x, y, 6, PEPITE[2], 0.4)
   }
 
-  /** Le score, en haut à gauche de la scène : une pépite en icône, le nombre en police pixel du dépôt ; les pépites en vol y arrivent. */
+  /**
+   * LE PORTÉ, en haut à gauche : une ligne par minerai qu'on a (fer, or, cristal — Keko : « des tiers de
+   * ressources »), une pépite de sa couleur et son nombre ; les pépites ramassées y volent. RIEN NE MONTRE CE QUI EST
+   * DÉJÀ EXTRAIT (Keko : « ne pas afficher les ressources déjà extraites ») : le total ne se lit qu'aux écrans de fin.
+   * La coque en haut à droite.
+   */
   function dessinerLeScore(p: Peintre): void {
-    // les pépites en vol : de la place du vaisseau à l'écran vers le compteur, en accélérant, une traînée de lumière
+    const visibles = MINERAIS.filter((k) => affiche[k] > 0 || envols.some((e) => e.minerai === k))
+    const ligneDe = (k: Minerai) => COMPTEUR.y + visibles.indexOf(k) * 11
+    // les pépites en vol : de la place du vaisseau à l'écran vers le compteur de leur minerai, en accélérant
     for (let i = envols.length - 1; i >= 0; i--) {
       const e = envols[i]
       const u = (t - e.t0) / 0.45
       if (u >= 1) {
         envols.splice(i, 1)
-        affiche += 1
-        allumeA = t
+        affiche[e.minerai] += 1
+        allumeA[e.minerai] = t
         continue
       }
+      const T = TEINTES_MINERAI[e.minerai]
       const k = u * u * (3 - 2 * u)
       const x0 = e.x - camera.x + W / 2
       const y0 = e.y - camera.y + H / 2
       const x = x0 + (COMPTEUR.x - x0) * k
-      const y = y0 + (COMPTEUR.y + 4 - y0) * k
-      p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], PEPITE[2])
-      p.dot(x, y - 1, PEPITE[3])
-      p.glow(x, y, 6, PEPITE[2], 0.5)
+      const y = y0 + (ligneDe(e.minerai) + 4 - y0) * k
+      p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], T[2])
+      p.dot(x, y - 1, T[3])
+      p.glow(x, y, 6, T[2], 0.5)
     }
     // la coque, en haut à droite : une case par point, pleine ou vide ; elle clignote quand on vient d'être touché
     for (let i = 0; i < CONF.coque; i++) {
@@ -512,39 +523,34 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (part >= 1) p.dot(x - 1, COMPTEUR.y + 3, COQUE[6])
       }
     }
-    // la banque (le total extrait), à côté du porté : une petite station en icône et son nombre
-    if (afficheBanque > 0) {
-      const bx = COMPTEUR.x + 30
-      const by = COMPTEUR.y + 5
-      const chaud = t - depotA < 0.18
-      p.ring(bx, by - (chaud ? 1 : 0), 3, 1.4, COQUE[4])
-      p.dot(bx, by - (chaud ? 1 : 0), chaud ? PEPITE[3] : VERRIERE[2])
-      p.text(String(afficheBanque), bx + 7, COMPTEUR.y - (chaud ? 1 : 0), chaud ? N.WHITE : COQUE[5], { font: 'big', scale: 1, align: 'left', outline: COQUE[0] })
+    // les compteurs du porté : l'icône (une pépite de la couleur du minerai) qui saute avec le nombre quand une arrive
+    for (const k of visibles) {
+      const T = TEINTES_MINERAI[k]
+      const allume = t - allumeA[k] < 0.18
+      const haut = allume ? -1 : 0
+      const ly = ligneDe(k)
+      const ix = COMPTEUR.x - 9
+      const iy = ly + 5 + haut
+      p.poly([[ix, iy - 3], [ix + 3, iy], [ix, iy + 3], [ix - 3, iy]], T[2])
+      p.dot(ix, iy - 1, T[3])
+      p.dot(ix - 1, iy, T[4])
+      p.dot(ix + 1, iy + 1, T[1])
+      p.glow(ix, iy, 6, T[2], allume ? 0.8 : 0.3)
+      p.text(String(affiche[k]), COMPTEUR.x, ly + haut, allume ? N.WHITE : T[3], { font: 'big', scale: 1, align: 'left', outline: COQUE[0] })
+      if (allume) N.sparkle(p, ix, iy, 1 + 3 * Math.sin(((t - allumeA[k]) / 0.18) * Math.PI), T[4], T[2], 0.5)
     }
-    if (affiche === 0 && envols.length === 0) return
-    const allume = t - allumeA < 0.18
-    const haut = allume ? -1 : 0
-    // l'icône : une pépite, qui saute avec le compteur
-    const ix = COMPTEUR.x - 9
-    const iy = COMPTEUR.y + 5 + haut
-    p.poly([[ix, iy - 3], [ix + 3, iy], [ix, iy + 3], [ix - 3, iy]], PEPITE[2])
-    p.dot(ix, iy - 1, PEPITE[3])
-    p.dot(ix - 1, iy, PEPITE[4])
-    p.dot(ix + 1, iy + 1, PEPITE[1])
-    p.glow(ix, iy, 6, PEPITE[2], allume ? 0.8 : 0.3)
-    p.text(String(affiche), COMPTEUR.x, COMPTEUR.y + haut, allume ? N.WHITE : PEPITE[3], { font: 'big', scale: 1, align: 'left', outline: COQUE[0] })
-    if (allume) N.sparkle(p, ix, iy, 1 + 3 * Math.sin(((t - allumeA) / 0.18) * Math.PI), PEPITE[4], PEPITE[2], 0.5)
   }
 
-  /** Les pépites : de petits losanges d'or qui respirent, un éclat, une lueur. */
+  /** Les pépites libres, aux teintes de leur minerai. */
   function dessinerLesPepites(p: Peintre): void {
     for (const pe of m.pepites) {
+      const T = TEINTES_MINERAI[pe.minerai]
       const k = 0.6 + 0.4 * Math.sin(t * 6 + pe.graine)
-      p.poly([[pe.x, pe.y - 2], [pe.x + 2, pe.y], [pe.x, pe.y + 2], [pe.x - 2, pe.y]], PEPITE[2])
-      p.dot(pe.x, pe.y - 1, PEPITE[3])
-      p.dot(pe.x - 1, pe.y, PEPITE[4], k)
-      p.dot(pe.x + 1, pe.y + 1, PEPITE[1])
-      p.glow(pe.x, pe.y, 5, PEPITE[2], 0.35 * k)
+      p.poly([[pe.x, pe.y - 2], [pe.x + 2, pe.y], [pe.x, pe.y + 2], [pe.x - 2, pe.y]], T[2])
+      p.dot(pe.x, pe.y - 1, T[3])
+      p.dot(pe.x - 1, pe.y, T[4], k)
+      p.dot(pe.x + 1, pe.y + 1, T[1])
+      p.glow(pe.x, pe.y, 5, T[2], 0.35 * k)
     }
   }
 
@@ -625,8 +631,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'ramasse':
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0 })
-              if (ev.par === 'joueur') envols.push({ x: v.x, y: v.y, t0: t })
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
+              if (ev.par === 'joueur') envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai })
               break
             case 'touche': {
               // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
@@ -661,11 +667,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               effets.push({ fx: N.createFx(TELEPORTATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 3 }), x: v.x, y: v.y })
               secousse = 0.5
               if (typeof navigator.vibrate === 'function') navigator.vibrate([40, 60, 40])
-              // le porté passe en banque : le compteur du haut se vide, celui de la banque prend le total
-              affiche = 0
-              afficheBanque = m.banque
-              depotA = t
-              ecran.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `${ev.pepites} pépite${ev.pepites > 1 ? 's' : ''} extraite${ev.pepites > 1 ? 's' : ''}, ${m.banque} au total. Repartir ouvre une nouvelle expédition : le total reste, le reste repart à neuf.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              // le porté passe en banque : les compteurs du haut se vident (le total ne s'affiche pas : l'écran le dit)
+              for (const k of MINERAIS) affiche[k] = 0
+              ecran.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `Extrait : ${nommer(ev.cargaison)}. Au total, toutes expéditions : ${nommer(m.tresor)}. Repartir ouvre une nouvelle expédition : le total reste, le reste repart à neuf.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
               break
             }
             case 'perdu': {
@@ -679,7 +683,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} perdue${m.minerai > 1 ? 's' : ''} avec la coque — seule l’extraction les aurait mises à l’abri. ${m.banque} extraite${m.banque > 1 ? 's' : ''} au total. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `Perdu avec la coque : ${nommer(m.cargaison)} — seule l’extraction les aurait mis à l’abri. Au total extrait : ${nommer(m.tresor)}. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
               break
             }
             default:
@@ -758,7 +762,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = (t - f.t0) / 0.4
       if (f.r === 0) {
         // une pépite montée à bord : un éclat
-        N.sparkle(p, f.x, f.y, 1 + 3 * Math.sin(u * Math.PI), PEPITE[3], PEPITE[2], 0.5 * (1 - u))
+        N.sparkle(p, f.x, f.y, 1 + 3 * Math.sin(u * Math.PI), (f.c ?? PEPITE)[3], (f.c ?? PEPITE)[2], 0.5 * (1 - u))
         continue
       }
       if (f.r === -1) {

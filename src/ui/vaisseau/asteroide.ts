@@ -11,7 +11,7 @@
  * Tout est fonction de la graine et du temps : rien n'est stocké, et le même astéroïde se redessine pareil.
  */
 import * as noyau from 'pixelfx'
-import { tire, type Asteroide } from '../../logic/vaisseau/jeu.ts'
+import { tire, type Asteroide, type Minerai } from '../../logic/vaisseau/jeu.ts'
 
 export type PeintreRoche = {
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
@@ -29,6 +29,12 @@ const ROCHES = [
   N.fit(['#120d08', '#2a1e14', '#47321e', '#69492a', '#8e6638', '#b08a58', '#d2b088', '#f0dcc0'], 8),
   N.fit(['#0a0e18', '#1a2232', '#2c3a50', '#425470', '#5c7090', '#7f94b4', '#a8bcd6', '#d8e6f8'], 8),
 ]
+/** Les teintes des trois minerais (sombre → clair → blanc) : l'acier du fer, l'or, la turquoise du cristal. Les pépites, les filons et les compteurs les partagent. */
+export const TEINTES_MINERAI: Record<Minerai, number[]> = {
+  fer: N.fit(['#243040', '#5a7088', '#a4b8cc', '#e8f0f8', '#ffffff'], 5),
+  or: N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5),
+  cristal: N.fit(['#063a30', '#10a080', '#3ff0c8', '#b8fff0', '#ffffff'], 5),
+}
 /** La lumière du monde : d'en haut à gauche, un peu de face (le z). Les astéroïdes ET le vaisseau la prennent. */
 export const LUMIERE = { x: -0.55, y: -0.72, z: 0.42 }
 
@@ -140,5 +146,33 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     const th = angle + tire(a.graine, 15, i) * Math.PI * 2
     const d = R * (0.2 + 0.55 * tire(a.graine, 16, i))
     p.dot(cx + Math.cos(th) * d, cy + Math.sin(th) * d, C[2], 0.9)
+  }
+  // LES FILONS (Keko : « que les pépites se voient sur les astéroïdes, pour savoir lesquels sont riches ou pauvres et
+  // quel minerai ils contiennent ») : des grains du minerai incrustés, d'autant plus nombreux que la roche est grande et
+  // riche — et CHACUN SA FORME, parce que la couleur seule se confond avec l'une des trois roches : le fer en BLOC
+  // carré d'acier à l'angle brillant, l'or en GRAIN rond à l'éclat clair, le cristal en ÉCLAT vertical qui scintille
+  const T = TEINTES_MINERAI[a.minerai]
+  const nv = Math.max(1, Math.round(R * R * 0.07 * a.richesse))
+  for (let i = 0; i < nv; i++) {
+    const th = angle + tire(a.graine, 40, i) * Math.PI * 2
+    const d = R * (0.1 + 0.52 * tire(a.graine, 41, i))
+    const x = cx + Math.cos(th) * d
+    const y = cy + Math.sin(th) * d
+    if (a.minerai === 'fer') {
+      p.dot(x, y, T[3])
+      p.dot(x + 1, y, T[2])
+      p.dot(x, y + 1, T[2])
+      p.dot(x + 1, y + 1, T[0])
+    } else if (a.minerai === 'or') {
+      const cote = tire(a.graine, 42, i) < 0.5
+      p.dot(x, y, T[2])
+      p.dot(x + (cote ? 1 : 0), y + (cote ? 0 : 1), T[1])
+      p.dot(x - 1, y - 1, T[3], 0.9)
+    } else {
+      p.dot(x, y - 1, T[3])
+      p.dot(x, y, T[2])
+      p.dot(x, y + 1, T[1])
+      if (Math.sin(t * 3 + i * 2.1) > 0.8) p.dot(x, y, T[4])
+    }
   }
 }

@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, nouveauMonde, nouveauVaisseau, solidite, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type Evenement, type Vaisseau } from './jeu.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -63,6 +63,14 @@ verifier('elle est partie et a laissé des pépites', m.detruits.has(a.id) && m.
 let ramasses = 0
 for (let i = 0; i < 600 && m.pepites.length > 0; i++) ramasses += compter(avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 }).evenements, 'ramasse')
 verifier('les pépites viennent au vaisseau et montent à bord', m.pepites.length === 0 && ramasses >= 1 && m.minerai === ramasses)
+verifier('la cargaison dit le minerai de chaque pépite', totalDe(m.cargaison) === m.minerai && m.cargaison[a.minerai] >= 1)
+// LES FILONS (Keko) : chaque roche a un minerai et une richesse ; l'or et le cristal sont plus fréquents loin du départ
+const pres = asteroidesAutour(C, 0, 0, 1500)
+const loinDuDepart = asteroidesAutour(C, 9000, 9000, 1500)
+const saine = (r: { minerai: string; richesse: number }) => (MINERAIS as readonly string[]).includes(r.minerai) && r.richesse >= 0.25 && r.richesse <= 1
+const partRare = (l: { minerai: string }[]) => l.filter((r) => r.minerai !== 'fer').length / l.length
+verifier('chaque roche porte un minerai et une richesse', pres.length > 50 && pres.every(saine) && loinDuDepart.every(saine))
+verifier('l’or et le cristal sont plus fréquents loin du départ', partRare(loinDuDepart) > partRare(pres) + 0.1 && pres.some((r) => r.minerai === 'cristal'))
 // la roche partie ne repousse plus : on traverse son ancienne place
 m.vaisseau = { ...m.vaisseau, x: a.x, y: a.y, vx: 0, vy: 0 }
 const traverse = avancerLeMonde(C, m, 1 / 60, { x: 0, y: 0 })
@@ -220,6 +228,7 @@ for (let i = 0; i < 60; i++) avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
 verifier('revenu à quai le compte monte, ressorti il redescend (il ne retombe pas à zéro)', aMiChemin > 4.9 && aMiChemin < 5.1 && ex.extraction > 3.9 && ex.extraction < 4.1 && ex.phase === 'vol')
 ex.vaisseau = nouveauVaisseau()
 ex.minerai = 7
+ex.cargaison = { fer: 4, or: 2, cristal: 1 }
 const resteEx = C.extraction.duree - ex.extraction
 let extraits = 0
 let ouEx: { x: number; y: number; pepites: number } | null = null
@@ -228,7 +237,7 @@ while (ex.phase === 'vol' && pasEx < 60 * 12) {
   for (const e of avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'extrait') (extraits++, (ouEx = { x: e.x, y: e.y, pepites: e.pepites }))
   pasEx++
 }
-verifier('resté à quai jusqu’au bout, la partie est extraite et le porté passe en banque', ex.phase === 'extrait' && extraits === 1 && ouEx !== null && ouEx!.x === 0 && ouEx!.y === 0 && ouEx!.pepites === 7 && ex.banque === 7 && ex.minerai === 0 && Math.abs(pasEx / 60 - resteEx) < 0.1)
+verifier('resté à quai jusqu’au bout, la partie est extraite et le porté passe en banque', ex.phase === 'extrait' && extraits === 1 && ouEx !== null && ouEx!.x === 0 && ouEx!.y === 0 && ouEx!.pepites === 7 && ex.banque === 7 && ex.minerai === 0 && ex.tresor.or === 2 && ex.tresor.cristal === 1 && totalDe(ex.cargaison) === 0 && Math.abs(pasEx / 60 - resteEx) < 0.1)
 // LE RIVAL ACCOURT vers une extraction en cours (Keko : les dix secondes doivent être une menace) : hors de vue mais à
 // portée d'« accourt », il chasse dès que le compte court, et mine sinon
 const acc = nouveauMonde()

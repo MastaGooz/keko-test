@@ -263,6 +263,37 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   blanchi jusqu'à `REFROIDI` (0,98 s), et ne répond pas au manche avant
   d'être apparu.
 
+## Les minerais (Keko, 08/11 : « récolter différentes ressources ? des tiers de ressources, et que les pépites se voient sur les astéroïdes pour savoir lesquels sont riches / pauvres et quel type de minerai ils contiennent »)
+
+- **Trois minerais, du commun au rare** (`MINERAIS`) : le FER (acier
+  bleuté), l'OR (jaune), le CRISTAL (turquoise). **Chaque roche en porte
+  un**, tiré de sa case, **et une RICHESSE** de 0,25 à 1 biaisée vers les
+  pauvres (`Asteroide.minerai`, `richesse`). Éclatée, elle rend des pépites
+  de son minerai, en nombre selon sa taille ET sa richesse (une pauvre en
+  rend le tiers d'une riche : `0,4 + 1,2 × richesse`).
+- **L'or et le cristal sont plus fréquents loin du départ** (`filons` : la
+  part d'or monte de 16 à 38 %, celle du cristal de 3 à 16 %, sur 3 000
+  unités) : s'éloigner des stations paie, et c'est là qu'est le risque.
+  Chiffres de moi, à rejuger.
+- **Les filons se voient sur la roche** (`asteroide.ts`) : des grains de la
+  teinte du minerai, d'autant plus nombreux que la roche est grande et riche
+  (`R² × 0,07 × richesse`), **et chacun sa forme** (la couleur seule se
+  confondait avec l'une des trois roches, le fer avec la bleutée) : le fer en
+  bloc carré d'acier à l'angle brillant, l'or en grain rond à l'éclat clair,
+  le cristal en éclat vertical qui scintille. Une roche sans grain n'existe pas (un au moins).
+- **Le porté se compte par minerai** (`Monde.cargaison`, le total dans
+  `minerai`), **le trésor aussi** (`tresor`, le total dans `banque`) ; le
+  rival a sa cargaison et la rend minerai par minerai (plus 3 de fer). En
+  haut à gauche, **une ligne par minerai qu'on porte**, pépite de sa couleur
+  et nombre, les pépites y volent ; **rien ne montre ce qui est déjà
+  extrait** (Keko : « ne pas afficher les ressources déjà extraites ») — le
+  total ne se lit qu'aux écrans de fin (« Extrait : 4 fer, 2 or ») ; l'icône
+  de banque est partie. Les pépites libres et leur flash ont la teinte de
+  leur minerai. `TEINTES_MINERAI` est partagé par les filons, les pépites et
+  les compteurs. Vérifié : la cargaison suit les pépites ; chaque roche a un
+  minerai et une richesse ; loin du départ l'or et le cristal sont plus
+  fréquents ; l'extraction verse la cargaison au trésor.
+
 ## Les grains de l'espace (Keko, 08/11 : « des débris d'explosion tombent vers le bas comme s'il y avait de la gravité, il ne faudrait pas »)
 
 Les particules du dépôt sont faites pour un sol : l'étincelle tombe à
