@@ -109,7 +109,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Déposez-les à une station : il y en a une tous les 900 unités, la flèche jaune montre la plus proche. Ce que vous portez se perd avec la coque, ce qui est déposé reste. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Déposez-les à une station : elles sont rares et la flèche jaune montre la plus proche. Ce que vous portez se perd avec la coque, ce qui est déposé reste. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 

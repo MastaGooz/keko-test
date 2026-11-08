@@ -158,19 +158,21 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 ## La station d'extraction (Keko, 08/11 : « un point d'extraction où déposer les ressources qu'on porte »)
 
-- **UNE STATION PAR CASE DE 900 UNITÉS** (Keko, 08/11 : « on devrait mettre
+- **UNE STATION PAR CASE DE 2 000 UNITÉS** (Keko, 08/11 : « on devrait mettre
   des extracteurs régulièrement à des endroits, non ? si le joueur se balade
   pendant vingt minutes ça va être compliqué ») : les cases sont centrées sur
-  les multiples de 900, celle de (0, 0) garde la station au point de départ,
+  les multiples de 2 000, celle de (0, 0) garde la station au point de départ,
   les autres sont posées à ±0,2 case de leur centre d'après leurs coordonnées
   hachées (`stationDeLaCase`) — rien n'est stocké, comme les roches. La plus
   proche (`stationLaPlusProche`, les neuf cases autour) prend le dépôt, la
   flèche jaune la montre, l'événement « depose » dit laquelle pour que les
-  pépites y volent. De n'importe où, la plus proche est à 900 unités au pire
-  (un coin de case, les deux stations décalées à l'opposé), 450 en moyenne :
-  quatre à neuf secondes de vol. La banque reste unique. *900 est de moi, à
-  rejuger : plus serré, la station n'est plus un refuge ; plus lâche, on
-  retrouve le long retour à vide.*
+  pépites y volent. De n'importe où, la plus proche est à 2 000 unités au pire
+  (un coin de case, les deux stations décalées à l'opposé), 1 000 en moyenne :
+  dix à vingt secondes de vol à pleine vitesse. La banque reste unique.
+  **Posées à 900 d'abord, Keko : « c'est trop fréquent, on veut que le joueur
+  ait des points d'extraction mais qu'il y ait quand même une prise de risque
+  à s'éloigner »** — à 2 000, le retour avec les poches pleines est un vrai
+  trajet, pendant lequel le rival peut tout faire perdre.
 - **Chaque station a son parvis**, le vide du champ (70 unités sans roche) qui
   devient le (un cercle pointillé qui dit sa portée, 36 unités — 26 au départ, élargie « un peu » à la demande de Keko). **Son dessin
   est dans `station.ts`**, en planche hors navigateur comme les roches (Keko :

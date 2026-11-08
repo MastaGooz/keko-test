@@ -57,12 +57,13 @@ export const VAISSEAU = {
   /**
    * LES STATIONS D'EXTRACTION (Keko : « un point d'extraction où déposer les ressources qu'on porte » ; puis « on
    * devrait mettre des extracteurs régulièrement, si le joueur se balade pendant vingt minutes ça va être compliqué ») :
-   * UNE PAR CASE de tant d'unités, posée dans sa case d'après ses coordonnées hachées (celle de la case (0, 0) est au
+   * UNE PAR CASE de tant d'unités (900 d'abord : « trop fréquent, on veut qu'il y ait quand même une prise de risque à
+   * s'éloigner »), posée dans sa case d'après ses coordonnées hachées (celle de la case (0, 0) est au
    * point de départ), le vide du champ autour de chacune en parvis. Une station prend le minerai porté quand le
    * vaisseau est à portée, une pépite toutes les tant de secondes, et le met en BANQUE (une seule, commune). Ce qu'on
    * porte se perd avec la coque ; ce qui est en banque reste.
    */
-  station: { case: 900, rayon: 11, portee: 36, cadence: 0.12 },
+  station: { case: 2000, rayon: 11, portee: 36, cadence: 0.12 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
