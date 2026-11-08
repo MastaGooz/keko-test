@@ -415,11 +415,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const pas = 7 / r
           for (let a = a0; a <= a1; a += pas) p.glow(sx + Math.cos(a) * r, sy + Math.sin(a) * r, 8, PEPITE[2], 0.28)
           // le départ de l'arc, en haut, a la même lumière que la tête (Keko : « l'effet de flare également au début »)
+          // (les deux flares s'éteignent quand le cercle est plein — Keko)
           const dx0 = sx + Math.cos(a0) * r
           const dy0 = sy + Math.sin(a0) * r
-          p.glow(dx0, dy0, 9, PEPITE[3], 0.6 + 0.4 * bat)
-          p.glow(dx0, dy0, 3.5, N.WHITE, 0.5 * bat)
-          N.sparkle(p, dx0, dy0, 1.5 + 1.5 * bat, N.WHITE, PEPITE[3], 0.7)
+          if (u < 1) {
+            p.glow(dx0, dy0, 9, PEPITE[3], 0.6 + 0.4 * bat)
+            p.glow(dx0, dy0, 3.5, N.WHITE, 0.5 * bat)
+            N.sparkle(p, dx0, dy0, 1.5 + 1.5 * bat, N.WHITE, PEPITE[3], 0.7)
+          }
           const hx = sx + Math.cos(a1) * r
           const hy = sy + Math.sin(a1) * r
           if (u < 1) {
