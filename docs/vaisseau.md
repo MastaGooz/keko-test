@@ -219,17 +219,18 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - **Pour l'abattre** il faut le rattraper (le joueur va plus vite) jusqu'à
   moins de 64 : le laser vise l'ennemi dès qu'il est plus près qu'une roche.
   Abattu, il éclate en morceaux rouges et rend son butin plus 3 pépites.
-- **ET SON LASER, EN PLUS DES TRAITS** (Keko, 08/11 : « il devrait tirer à
-  distance et laser en plus quand on est à portée, pas à la place ») : le
-  joueur à portée de forage (64), le rival pose son rayon violet sur lui et
-  lui brûle 1 point de coque par seconde (`laserCoque`), les traits
-  continuant. Chaque point entier perdu est une touche (flash, étincelles,
-  secousse) ; les cases de coque se vident en continu. *Foncer sur lui pour
-  le forer est donc une course* : le laser du joueur l'abat en 1,3 s, le sien
-  perce une coque neuve en 5. Un `Forage` a une troisième sorte, `joueur`.
-  Les deux lasers ne se remplacent pas : un rival qui ne voit plus le joueur
-  n'a jamais tiré au laser sur lui, il le fait seulement en chasse. Chiffre
-  de moi, à rejuger.
+- **SON LASER NE L'ATTAQUE PAS** : *essayé et retiré le 08/11.* Keko avait
+  demandé « qu'il tire à distance et laser en plus quand on est à portée (pas
+  à la place) » : à portée de forage (64), le rival posait son rayon sur le
+  joueur et lui brûlait 1 point de coque par seconde (`laserCoque`), chaque
+  point entier perdu étant une touche. **En face à face, les deux rayons sont
+  sur le même axe, de canon à canon, et se recouvrent** : « la superposition
+  des deux lasers rend la situation peu lisible ». Deux écritures de laser
+  (trait fin cyan contre pulsations violettes) n'y ont rien fait. Tranché :
+  « on va juste empêcher l'ennemi d'utiliser le laser de manière offensive ».
+  Le rayon violet ne sert qu'à miner, les traits restent sa seule arme ; une
+  vérification le garantit. Reste du passage : un trait ne touche plus une
+  partie déjà perdue (sinon « perdu » partait deux fois dans le même pas).
 - **Le dessin** : la même fonction de vaisseau avec une coque rouge sombre et
   une verrière orange ; son laser est violet ; ses traits des fuseaux
   violet-blanc ; *essayé et retiré (Keko, 08/11) : deux écritures de laser, le

@@ -83,11 +83,11 @@ export const VAISSEAU = {
    * mais SEULEMENT DANS LE TERRITOIRE DU JOUEUR (à tant du joueur : il vient miner dans son coin, sinon on ne le voit
    * jamais — Keko : « parfois j'ai l'impression de ne pas trouver l'ennemi ») ; il
    * voit le joueur à tant, se tient à tant de lui, et tire toutes les tant de secondes des traits à tant d'unités par
-   * seconde qui vivent tant ; un trait enlève un point de coque. EN PLUS, à portée de forage, son laser brûle la coque
-   * du joueur à tant de points par seconde (Keko : « il devrait tirer à distance et laser en plus quand on est à
-   * portée, pas à la place »). Abattu, il rend son butin plus tant de pépites.
+   * seconde qui vivent tant ; un trait enlève un point de coque. SON LASER NE SERT QU'À MINER (Keko, 08/11 : essayé
+   * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
+   * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 200, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, laserCoque: 1, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 200, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite, tout près). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
@@ -112,8 +112,8 @@ export type Vaisseau = {
 
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }
 /** Le laser en train de creuser : ce qu'il creuse (une roche, ou un ennemi), le point d'impact, la part déjà creusée (0 à 1). */
-/** Un laser posé sur sa cible : une roche, l'ennemi (le laser du joueur) ou le joueur (celui de l'ennemi) ; `cible` est l'identifiant (0 pour le joueur). */
-export type Forage = { sorte: 'roche' | 'ennemi' | 'joueur'; cible: number; x: number; y: number; part: number }
+/** Un laser posé sur sa cible : une roche, ou l'ennemi (le laser du joueur seul : le rival ne mine que des roches). */
+export type Forage = { sorte: 'roche' | 'ennemi'; cible: number; x: number; y: number; part: number }
 export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number }
@@ -395,19 +395,6 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
       const y0 = b.y + Math.sin(angle) * (c.ennemi.rayon + 3)
       m.tirs.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * c.ennemi.vitesseTir, vy: Math.sin(angle) * c.ennemi.vitesseTir, vie: c.ennemi.vieTir })
       ev.push({ type: 'tir', x: x0, y: y0 })
-    }
-    // ET SON LASER, EN PLUS DES TRAITS (Keko) : le joueur à portée de forage, son rayon lui brûle la coque à tant de
-    // points par seconde ; chaque point entier perdu est une touche (le flash, l'étincelle), la coque à zéro perd la partie
-    if (dj - c.rayon <= c.forage.portee) {
-      const avant = Math.ceil(m.coque)
-      m.coque -= c.ennemi.laserCoque * dt
-      e.forage = { sorte: 'joueur', cible: 0, x: v.x - (dxj / dj) * c.rayon, y: v.y - (dyj / dj) * c.rayon, part: 1 - m.coque / c.coque }
-      if (Math.ceil(m.coque) < avant) ev.push({ type: 'touche', x: e.forage.x, y: e.forage.y })
-      if (m.coque <= 0) {
-        m.coque = 0
-        m.phase = 'perdu'
-        ev.push({ type: 'perdu' })
-      }
     }
   } else {
     // LA MINE : sa roche, ou la plus proche de lui ; il s'en approche à portée de laser, puis la creuse ; sans roche, il dérive vers le joueur
