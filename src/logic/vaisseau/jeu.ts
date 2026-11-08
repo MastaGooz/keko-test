@@ -59,7 +59,7 @@ export const VAISSEAU = {
    * départ (le vide autour sert de parvis), elle prend le minerai porté quand le vaisseau est à portée, une pépite toutes
    * les tant de secondes, et le met en BANQUE. Ce qu'on porte se perd avec la coque ; ce qui est en banque reste.
    */
-  station: { x: 0, y: 0, rayon: 11, portee: 26, cadence: 0.12 },
+  station: { x: 0, y: 0, rayon: 11, portee: 36, cadence: 0.12 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {

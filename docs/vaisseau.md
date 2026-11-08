@@ -151,7 +151,7 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 ## La station d'extraction (Keko, 08/11 : « un point d'extraction où déposer les ressources qu'on porte »)
 
 - **Au point de départ**, dont le vide (70 unités sans roche) devient le
-  parvis (un cercle pointillé qui dit sa portée, 26 unités). **Son dessin
+  parvis (un cercle pointillé qui dit sa portée, 36 unités — 26 au départ, élargie « un peu » à la demande de Keko). **Son dessin
   est dans `station.ts`**, en planche hors navigateur comme les roches (Keko :
   « l'extraction n'a pas la texture au niveau des autres éléments ») : un
   moyeu octogonal en tôles à facettes qui prennent la lumière du monde, une
