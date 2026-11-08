@@ -172,18 +172,13 @@ const rq = avancerLeMonde(C, q, 1 / 60, { x: 0, y: 0 })
 verifier('le rival qui heurte une roche perd des points et l’abîme', enq.pv < C.ennemi.pv && (q.creuse.get(grosse.id) ?? 0) > 0 && rq.chocs.length === 1)
 
 // LA STATION : à quai avec du minerai, on dépose à la cadence ; loin d'elle, rien
+// RIEN NE SE DÉPOSE AU PASSAGE (Keko : l'extraction est le seul moyen de sécuriser) : à quai, le minerai reste à bord
 const st = nouveauMonde()
 st.prochainEnnemiA = 1e9
 st.minerai = 5
-let deposes = 0
-for (let i = 0; i < 60 * 2; i++) deposes += compter(avancerLeMonde(C, st, 1 / 60, { x: 0, y: 0 }).evenements, 'depose')
-verifier('à quai, le minerai porté passe en banque', deposes === 5 && st.minerai === 0 && st.banque === 5)
-const loinSt = nouveauMonde()
-loinSt.prochainEnnemiA = 1e9
-loinSt.minerai = 3
-loinSt.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 }
-for (let i = 0; i < 60; i++) avancerLeMonde(C, loinSt, 1 / 60, { x: 0, y: 0 })
-verifier('loin de la station, on garde tout à bord', loinSt.minerai === 3 && loinSt.banque === 0)
+st.sorti = true
+for (let i = 0; i < 60 * 2; i++) avancerLeMonde(C, st, 1 / 60, { x: 0, y: 0 })
+verifier('à quai, le minerai porté reste à bord tant que l’extraction n’est pas finie', st.minerai === 5 && st.banque === 0 && st.extraction > 1.9)
 // LES STATIONS SONT PARTOUT (Keko) : une par case de 900, celle du départ en (0, 0), chacune dans sa case ; la plus
 // proche n'est jamais à plus d'une case ; le vide du champ entoure chacune ; on dépose à n'importe laquelle
 const origine = stationDeLaCase(C, 0, 0)
@@ -205,10 +200,10 @@ verifier('le vide du champ entoure chaque station', (lointaine.x !== 0 || lointa
 const la = nouveauMonde()
 la.prochainEnnemiA = 1e9
 la.minerai = 2
+la.sorti = true
 la.vaisseau = { ...nouveauVaisseau(), x: lointaine.x + 10, y: lointaine.y }
-let deposesLa = 0
 let ouLa: { x: number; y: number } | null = null
-for (let i = 0; i < 60; i++) for (const e of avancerLeMonde(C, la, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'depose') (deposesLa++, (ouLa = { x: e.x, y: e.y }))
+for (let i = 0; i < 60 * 11 && la.phase === 'vol'; i++) for (const e of avancerLeMonde(C, la, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'extrait') ouLa = { x: e.x, y: e.y }
 // L'EXTRACTION (Keko) : né à quai, le compte ne court pas ; sorti puis revenu, il monte, retombe à zéro si on ressort,
 // et au bout de la durée la partie est extraite
 const ex = nouveauMonde()
@@ -221,18 +216,38 @@ ex.vaisseau = nouveauVaisseau()
 for (let i = 0; i < 60 * 5; i++) avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
 const aMiChemin = ex.extraction
 ex.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 }
-avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
-verifier('revenu à quai le compte monte, ressorti il retombe à zéro', aMiChemin > 4.9 && aMiChemin < 5.1 && ex.extraction === 0 && ex.phase === 'vol')
+for (let i = 0; i < 60; i++) avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 })
+verifier('revenu à quai le compte monte, ressorti il redescend (il ne retombe pas à zéro)', aMiChemin > 4.9 && aMiChemin < 5.1 && ex.extraction > 3.9 && ex.extraction < 4.1 && ex.phase === 'vol')
 ex.vaisseau = nouveauVaisseau()
+ex.minerai = 7
+const resteEx = C.extraction.duree - ex.extraction
 let extraits = 0
-let ouEx: { x: number; y: number } | null = null
+let ouEx: { x: number; y: number; pepites: number } | null = null
 let pasEx = 0
 while (ex.phase === 'vol' && pasEx < 60 * 12) {
-  for (const e of avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'extrait') (extraits++, (ouEx = { x: e.x, y: e.y }))
+  for (const e of avancerLeMonde(C, ex, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'extrait') (extraits++, (ouEx = { x: e.x, y: e.y, pepites: e.pepites }))
   pasEx++
 }
-verifier('resté à quai jusqu’au bout, la partie est extraite', ex.phase === 'extrait' && extraits === 1 && ouEx !== null && ouEx!.x === 0 && ouEx!.y === 0 && Math.abs(pasEx / 60 - C.extraction.duree) < 0.1)
-verifier('on dépose à n’importe quelle station, et le dépôt dit laquelle', deposesLa === 2 && la.banque === 2 && ouLa !== null && ouLa!.x === lointaine.x && ouLa!.y === lointaine.y)
+verifier('resté à quai jusqu’au bout, la partie est extraite et le porté passe en banque', ex.phase === 'extrait' && extraits === 1 && ouEx !== null && ouEx!.x === 0 && ouEx!.y === 0 && ouEx!.pepites === 7 && ex.banque === 7 && ex.minerai === 0 && Math.abs(pasEx / 60 - resteEx) < 0.1)
+// LE RIVAL ACCOURT vers une extraction en cours (Keko : les dix secondes doivent être une menace) : hors de vue mais à
+// portée d'« accourt », il chasse dès que le compte court, et mine sinon
+const acc = nouveauMonde()
+acc.prochainEnnemiA = 0
+avancerLeMonde(C, acc, 1 / 60, { x: 0, y: 0 })
+acc.detruits = new Set(asteroidesAutour(C, 0, 0, 600).map((r) => r.id))
+acc.sorti = true
+const poserLeRival = (d: number) => (acc.ennemis[0].corps = { ...acc.ennemis[0].corps, x: d, y: 0, vx: 0, vy: 0 })
+poserLeRival(C.ennemi.voit + 100)
+acc.extraction = 0
+acc.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 } // hors du parvis : le compte ne court pas
+for (let i = 0; i < 30; i++) avancerLeMonde(C, acc, 1 / 60, { x: 0, y: 0 })
+const sansCompte = acc.ennemis[0].fait
+poserLeRival(C.ennemi.voit + 100)
+acc.vaisseau = nouveauVaisseau() // à quai : le compte court
+let tireDeLoin = 0
+for (let i = 0; i < 30; i++) tireDeLoin += compter(avancerLeMonde(C, acc, 1 / 60, { x: 0, y: 0 }).evenements, 'tir')
+verifier('le rival accourt vers une extraction en cours, sans tirer avant de voir', sansCompte === 'mine' && acc.extraction > 0.4 && acc.ennemis[0].fait === 'chasse' && acc.ennemis[0].corps.x < C.ennemi.voit + 100 - 5 && tireDeLoin === 0)
+verifier('on s’extrait à n’importe quelle station, et l’événement dit laquelle', la.phase === 'extrait' && la.banque === 2 && ouLa !== null && ouLa!.x === lointaine.x && ouLa!.y === lointaine.y)
 
 const p = nouveauMonde()
 p.coque = 1

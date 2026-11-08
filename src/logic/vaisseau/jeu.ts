@@ -59,15 +59,18 @@ export const VAISSEAU = {
    * devrait mettre des extracteurs régulièrement, si le joueur se balade pendant vingt minutes ça va être compliqué ») :
    * UNE PAR CASE de tant d'unités (900 d'abord, puis 2 000 : « trop fréquent, on veut qu'il y ait quand même une prise de
    * risque à s'éloigner » ; « encore trop fréquent »), posée dans sa case d'après ses coordonnées hachées (celle de la case (0, 0) est au
-   * point de départ), le vide du champ autour de chacune en parvis. Une station prend le minerai porté quand le
-   * vaisseau est à portée, une pépite toutes les tant de secondes, et le met en BANQUE (une seule, commune). Ce qu'on
-   * porte se perd avec la coque ; ce qui est en banque reste.
+   * point de départ), le vide du champ autour de chacune en parvis. RIEN NE S'Y DÉPOSE AU PASSAGE (Keko : « on peut
+   * extraire les ressources sans mettre fin à la partie, donc à quoi sert le timer ? il faudrait que ce soit le seul
+   * moyen de sécuriser les ressources ») : le minerai reste à bord jusqu'à l'EXTRACTION, et se perd avec la coque.
+   * (`cadence` reste pour la cadence d'un éventuel retour du dépôt ; plus rien ne la lit.)
    */
   station: { case: 4500, rayon: 11, portee: 36, cadence: 0.12 },
   /**
    * L'EXTRACTION (Keko : « un timer quand le joueur est dans la zone de l'extracteur ; s'il reste jusqu'au bout, la
-   * partie prend fin ») : à quai, un compte monte pendant tant de secondes ; on en sort, il retombe à zéro ; au bout,
-   * la partie est EXTRAITE (finie, gagnée). Il ne court qu'après être sorti une fois du parvis : on naît à quai.
+   * partie prend fin ») : à quai, un compte monte pendant tant de secondes ; on en sort, il REDESCEND à la même
+   * vitesse (il retombait à zéro : un frôlement du bord punissait tout) ; au bout, la partie est EXTRAITE (finie,
+   * gagnée) et TOUT LE MINERAI PORTÉ PASSE EN BANQUE — le seul moyen de le mettre à l'abri. Il ne court qu'après être
+   * sorti une fois du parvis : on naît à quai.
    */
   extraction: { duree: 10 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
@@ -94,11 +97,12 @@ export const VAISSEAU = {
    * mais SEULEMENT DANS LE TERRITOIRE DU JOUEUR (à tant du joueur : il vient miner dans son coin, sinon on ne le voit
    * jamais — Keko : « parfois j'ai l'impression de ne pas trouver l'ennemi ») ; il
    * voit le joueur à tant, se tient à tant de lui, et tire toutes les tant de secondes des traits à tant d'unités par
-   * seconde qui vivent tant ; un trait enlève un point de coque. SON LASER NE SERT QU'À MINER (Keko, 08/11 : essayé
+   * seconde qui vivent tant ; UNE EXTRACTION EN COURS, il la voit de plus loin (`accourt`) et vient (les dix secondes
+   * à quai doivent être une menace, pas une formalité) ; un trait enlève un point de coque. SON LASER NE SERT QU'À MINER (Keko, 08/11 : essayé
    * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, accourt: 420, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite, tout près). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
@@ -157,11 +161,9 @@ export type Monde = {
   creuse: Map<number, number>
   detruits: Set<number>
   pepites: Pepite[]
-  /** Le minerai PORTÉ (à bord), et celui en BANQUE (déposé à la station). */
+  /** Le minerai PORTÉ (à bord, perdu avec la coque), et la BANQUE : le total extrait, qui ne bouge qu'à une extraction. */
   minerai: number
   banque: number
-  /** Le prochain dépôt possible, quand on est à quai. */
-  deposeA: number
   /** Le compte de l'extraction (secondes passées à quai d'affilée), et si le vaisseau est déjà sorti d'un parvis. */
   extraction: number
   sorti: boolean
@@ -174,8 +176,7 @@ export type Evenement =
   | { type: 'eclat'; x: number; y: number; rayon: number; graine: number }
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi' }
   /** Une pépite déposée à la station. */
-  | { type: 'depose'; x: number; y: number }
-  | { type: 'extrait'; x: number; y: number }
+  | { type: 'extrait'; x: number; y: number; pepites: number }
   | { type: 'tir'; x: number; y: number }
   | { type: 'touche'; x: number; y: number }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -188,7 +189,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, deposeA: 0, extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -422,13 +423,15 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
   const dj = Math.hypot(dxj, dyj) || 1
   let direction: Vecteur = { x: 0, y: 0 }
   e.forage = null
-  if (dj <= c.ennemi.voit && m.phase === 'vol') {
-    // LA CHASSE : il se tient à distance du joueur (il s'approche s'il est loin, recule s'il est trop près), et tire avec de l'avance
+  if ((dj <= c.ennemi.voit || (m.extraction > 0 && dj <= c.ennemi.accourt)) && m.phase === 'vol') {
+    // LA CHASSE : il se tient à distance du joueur (il s'approche s'il est loin, recule s'il est trop près), et tire avec
+    // de l'avance — dès qu'il le voit, ou de plus loin quand une EXTRACTION est en cours (il accourt, sans tirer tant
+    // qu'il ne le voit pas)
     e.fait = 'chasse'
     const ecart = dj - c.ennemi.tient
     const k = Math.max(-1, Math.min(1, ecart / 25))
     direction = { x: (dxj / dj) * k, y: (dyj / dj) * k }
-    if (m.t >= e.tirA) {
+    if (m.t >= e.tirA && dj <= c.ennemi.voit) {
       e.tirA = m.t + c.ennemi.cadence
       const temps = dj / c.ennemi.vitesseTir
       const cx = v.x + v.vx * temps - b.x
@@ -556,28 +559,23 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, c.forage.debit * dt, ev)
   else m.forage = null
 
-  // la station la plus proche : à quai avec du minerai à bord, on dépose une pépite à la cadence
+  // L'EXTRACTION, à la station la plus proche : à quai (après être sorti une fois d'un parvis), le compte monte ; hors
+  // du parvis il redescend ; au bout, la partie est extraite et tout le minerai porté passe en banque
   const st = stationLaPlusProche(c, v.x, v.y)
-  if (m.minerai > 0 && Math.hypot(v.x - st.x, v.y - st.y) <= c.station.portee) {
-    if (m.t >= m.deposeA) {
-      m.deposeA = m.t + c.station.cadence
-      m.minerai -= 1
-      m.banque += 1
-      ev.push({ type: 'depose', x: st.x, y: st.y })
-    }
-  } else m.deposeA = m.t + c.station.cadence * 0.5
-  // L'EXTRACTION : à quai (après être sorti une fois d'un parvis), le compte monte ; au bout, la partie est extraite
   if (Math.hypot(v.x - st.x, v.y - st.y) <= c.station.portee) {
     if (m.sorti) {
       m.extraction += dt
       if (m.extraction >= c.extraction.duree) {
         m.extraction = c.extraction.duree
         m.phase = 'extrait'
-        ev.push({ type: 'extrait', x: st.x, y: st.y })
+        const pepites = m.minerai
+        m.banque += pepites
+        m.minerai = 0
+        ev.push({ type: 'extrait', x: st.x, y: st.y, pepites })
       }
     }
   } else {
-    m.extraction = 0
+    m.extraction = Math.max(0, m.extraction - dt)
     m.sorti = true
   }
 

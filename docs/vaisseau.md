@@ -193,25 +193,37 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   pas (Keko, 08/11 : la première version, une petite station en icône et une
   flèche, d'or qui battait quand on portait du minerai, de verrière sinon,
   « n'est pas très belle et clignote bizarrement — une simple flèche comme ce
-  qu'on avait pour l'ennemi, mais en jaune »). À quai avec du minerai à bord, une pépite part toutes les 0,12 s
-  du vaisseau au cœur de la station, l'anneau luit d'or, et la BANQUE compte
-  à l'arrivée (une icône de station et son nombre à côté du porté, en haut à
-  gauche). **Ce qu'on porte se perd avec la coque ; la banque reste** d'une
-  partie à l'autre (gardée par la page au « repartir »). La règle est pure
-  (`station`, `banque`, `deposeA`) et vérifiée. La station ne gêne pas le
-  vol : on la survole.
+  qu'on avait pour l'ennemi, mais en jaune »).
+- **PLUS DE DÉPÔT AU PASSAGE** (Keko, 08/11 : « on a un paradoxe : on peut
+  extraire les ressources sans mettre fin à la partie, donc à quoi sert le
+  timer ? pour lui donner un sens il faudrait que ce soit le seul moyen de
+  sécuriser les ressources ») : *la première station prenait le minerai à
+  quai, une pépite toutes les 0,12 s qui volait du vaisseau à son cœur, et
+  la banque comptait à l'arrivée* — retiré. **Le minerai reste à bord jusqu'à
+  l'EXTRACTION, et se perd avec la coque** ; la BANQUE est le total extrait
+  des expéditions achevées, elle ne bouge qu'à une extraction (une icône de
+  station et son nombre à côté du porté, en haut à gauche), et reste d'une
+  partie à l'autre (gardée par la page au « repartir »). La station ne gêne
+  pas le vol : on la survole.
 - **La flèche vers le rival est retirée** (Keko) : on le découvre.
 
 ## L'extraction (Keko, 08/11 : « un genre de timer quand le joueur est dans la zone de l'extracteur, et si le joueur reste jusqu'au bout la partie prend fin »)
 
 - **À quai, un compte monte pendant 10 s** (`extraction.duree`, de moi, à
-  rejuger) ; on sort du parvis, il retombe à zéro ; au bout, la partie est
-  EXTRAITE (`phase: 'extrait'`, l'événement dit la station) : l'expédition
-  est achevée, gagnée. Le dépôt continue pendant le compte. **Il ne court
-  qu'après être sorti une fois d'un parvis** (`Monde.sorti`) : on naît à
-  quai, et dix secondes d'hésitation au départ ne doivent pas finir la
-  partie. Trois vérifications : né à quai rien ne court ; revenu le compte
-  monte et ressorti il retombe ; resté, extrait à la seconde près.
+  rejuger) ; on sort du parvis, **il redescend à la même vitesse** (il
+  retombait à zéro : un frôlement du bord punissait tout) ; au bout, la
+  partie est EXTRAITE (`phase: 'extrait'`, l'événement dit la station et le
+  nombre de pépites) : **tout le minerai porté passe en banque**, l'expédition
+  est achevée, gagnée — *c'est le seul moyen de mettre le minerai à l'abri*
+  (voir « plus de dépôt au passage »). **Il ne court qu'après être sorti une
+  fois d'un parvis** (`Monde.sorti`) : on naît à quai, et dix secondes
+  d'hésitation au départ ne doivent pas finir la partie. **Le rival accourt
+  vers une extraction en cours** (`ennemi.accourt`, 420 unités, contre 130
+  pour le voir ; il ne tire qu'en vue) : les dix secondes immobile à quai
+  doivent être une menace, pas une formalité. Vérifications : né à quai rien
+  ne court ; revenu le compte monte et ressorti il redescend ; resté, extrait
+  à la seconde près et le porté en banque ; à quai le minerai reste à bord ;
+  le rival accourt sans tirer avant de voir.
 - **À l'écran** : un arc d'or CONTINU (`p.arc` ; en points d'abord, Keko :
   « le cercle de chargement continu plutôt qu'en pointillé ») se referme le
   long du parvis depuis le haut (en retrait de 2 du pointillé qui tourne),
