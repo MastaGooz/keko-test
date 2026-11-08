@@ -148,6 +148,20 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   temps, et l'écran « Coque percée » n'arrive qu'une seconde après, quand la
   boule de feu est passée.
 
+## La station d'extraction (Keko, 08/11 : « un point d'extraction où déposer les ressources qu'on porte »)
+
+- **Au point de départ**, dont le vide (70 unités sans roche) devient le
+  parvis : un anneau d'acier autour d'un cœur, quatre nacelles qui tournent
+  lentement, un fanal qui bat, un cercle pointillé qui dit sa portée (26
+  unités). À quai avec du minerai à bord, une pépite part toutes les 0,12 s
+  du vaisseau au cœur de la station, l'anneau luit d'or, et la BANQUE compte
+  à l'arrivée (une icône de station et son nombre à côté du porté, en haut à
+  gauche). **Ce qu'on porte se perd avec la coque ; la banque reste** d'une
+  partie à l'autre (gardée par la page au « repartir »). La règle est pure
+  (`station`, `banque`, `deposeA`) et vérifiée. La station ne gêne pas le
+  vol : on la survole.
+- **La flèche vers le rival est retirée** (Keko) : on le découvre.
+
 ## Les grains de l'espace (Keko, 08/11 : « des débris d'explosion tombent vers le bas comme s'il y avait de la gravité, il ne faudrait pas »)
 
 Les particules du dépôt sont faites pour un sol : l'étincelle tombe à
@@ -173,9 +187,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   joueur ; sans roche là, il vient vers lui) — Keko : « parfois j'ai
   l'impression de ne pas trouver l'ennemi » : né à 230 unités et minant là
   où il était, on ne le voyait jamais ; il naît maintenant à 200, hors des
-  roches (douze essais autour du joueur), et **une flèche rouge au bord de
-  l'écran** pointe vers lui tant qu'il est hors champ, qui bat quand il
-  chasse ; qu'il rejoint jusqu'à portée de laser, puis il freine et
+  roches (douze essais autour du joueur) ; *une flèche au bord de l'écran l'a
+  désigné un temps, Keko l'a fait retirer* ; qu'il rejoint jusqu'à portée de laser, puis il freine et
   la creuse au même débit — *les deux creusent les mêmes roches* (`creuse`
   est partagé). Ses pépites viennent à lui (l'aimant tire chaque pépite vers
   le vaisseau le plus proche) et font son `butin`. Sans roche à portée, il

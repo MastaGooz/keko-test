@@ -54,6 +54,12 @@ export const VAISSEAU = {
    * roches à moins de `evite` unités (il est poussé à l'écart) : sondé, une seule collision lui coûtait 72 % de sa vie.
    */
   collision: { degatsCoque: 0.02, degatsEnnemi: 0.12, degatsRoche: 0.3, evite: 24 },
+  /**
+   * LA STATION D'EXTRACTION (Keko : « un point d'extraction où déposer les ressources qu'on porte ») : posée au point de
+   * départ (le vide autour sert de parvis), elle prend le minerai porté quand le vaisseau est à portée, une pépite toutes
+   * les tant de secondes, et le met en BANQUE. Ce qu'on porte se perd avec la coque ; ce qui est en banque reste.
+   */
+  station: { x: 0, y: 0, rayon: 11, portee: 26, cadence: 0.12 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -136,7 +142,11 @@ export type Monde = {
   creuse: Map<number, number>
   detruits: Set<number>
   pepites: Pepite[]
+  /** Le minerai PORTÉ (à bord), et celui en BANQUE (déposé à la station). */
   minerai: number
+  banque: number
+  /** Le prochain dépôt possible, quand on est à quai. */
+  deposeA: number
   prochainId: number
   graine: number
 }
@@ -145,6 +155,8 @@ export type Monde = {
 export type Evenement =
   | { type: 'eclat'; x: number; y: number; rayon: number; graine: number }
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi' }
+  /** Une pépite déposée à la station. */
+  | { type: 'depose' }
   | { type: 'tir'; x: number; y: number }
   | { type: 'touche'; x: number; y: number }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -157,7 +169,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, deposeA: 0, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -496,6 +508,16 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     } else m.forage = { sorte: 'ennemi', cible: e.id, x: e.corps.x - (dx / d) * c.ennemi.rayon, y: e.corps.y - (dy / d) * c.ennemi.rayon, part: 1 - e.pv / c.ennemi.pv }
   } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, c.forage.debit * dt, ev)
   else m.forage = null
+
+  // la station : à quai avec du minerai à bord, on dépose une pépite à la cadence
+  if (m.minerai > 0 && Math.hypot(v.x - c.station.x, v.y - c.station.y) <= c.station.portee) {
+    if (m.t >= m.deposeA) {
+      m.deposeA = m.t + c.station.cadence
+      m.minerai -= 1
+      m.banque += 1
+      ev.push({ type: 'depose' })
+    }
+  } else m.deposeA = m.t + c.station.cadence * 0.5
 
   // les traits : ils volent, s'éteignent, s'écrasent sur une roche, touchent le joueur
   for (let i = m.tirs.length - 1; i >= 0; i--) {

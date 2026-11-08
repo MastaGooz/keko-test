@@ -153,6 +153,20 @@ q.vaisseau = { ...nouveauVaisseau(), x: grosse.x + 500, y: grosse.y + 500 }
 const rq = avancerLeMonde(C, q, 1 / 60, { x: 0, y: 0 })
 verifier('le rival qui heurte une roche perd des points et l’abîme', enq.pv < C.ennemi.pv && (q.creuse.get(grosse.id) ?? 0) > 0 && rq.chocs.length === 1)
 
+// LA STATION : à quai avec du minerai, on dépose à la cadence ; loin d'elle, rien
+const st = nouveauMonde()
+st.prochainEnnemiA = 1e9
+st.minerai = 5
+let deposes = 0
+for (let i = 0; i < 60 * 2; i++) deposes += compter(avancerLeMonde(C, st, 1 / 60, { x: 0, y: 0 }).evenements, 'depose')
+verifier('à quai, le minerai porté passe en banque', deposes === 5 && st.minerai === 0 && st.banque === 5)
+const loinSt = nouveauMonde()
+loinSt.prochainEnnemiA = 1e9
+loinSt.minerai = 3
+loinSt.vaisseau = { ...nouveauVaisseau(), x: C.station.portee + 40, y: 0 }
+for (let i = 0; i < 60; i++) avancerLeMonde(C, loinSt, 1 / 60, { x: 0, y: 0 })
+verifier('loin de la station, on garde tout à bord', loinSt.minerai === 3 && loinSt.banque === 0)
+
 const p = nouveauMonde()
 p.coque = 1
 p.tirs.push({ id: 1, x: 0, y: 0, vx: 0, vy: 0, vie: 1 })

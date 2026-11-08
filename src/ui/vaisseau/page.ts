@@ -23,8 +23,8 @@ type Peintre = {
   place(x: number, y: number, flip?: boolean, angle?: number): Peintre
   px(x: number, y: number, c: number): void
   dot(x: number, y: number, c: number, a?: number): void
-  circle(x: number, y: number, r: number, c: number, a?: number): void
-  ring(x: number, y: number, r: number, w: number, c: number, a?: number): void
+  circle(x: number, y: number, r: number, c: number | ((x: number, y: number) => number), a?: number): void
+  ring(x: number, y: number, r: number, w: number, c: number | ((x: number, y: number) => number), a?: number): void
   text(texte: string, x: number, y: number, c: number, o?: { font?: string; scale?: number; align?: string; outline?: number; shadow?: number; a?: number }): void
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
@@ -100,7 +100,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Les astéroïdes repoussent. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Revenez à la station pour les déposer : ce que vous portez se perd avec la coque, ce qui est déposé reste. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 
@@ -127,6 +127,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
   const envols: { x: number; y: number; t0: number }[] = []
   let affiche = minerai0
+  /** Les pépites déposées : elles volent du vaisseau à la station (dans le monde), la banque ne compte qu'à l'arrivée. */
+  const depots: { x: number; y: number; t0: number }[] = []
+  let afficheBanque = 0
+  let depotA = -10
   let allumeA = -10
   const COMPTEUR = { x: 16, y: 10 }
   let secousse = 0
@@ -158,11 +162,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function demarrer(): void {
     if (m.phase === 'perdu') {
       if (t - perduA < 1.2) return
+      const banque = m.banque
       m = nouveauMonde(CONF)
+      m.banque = banque
       effets = []
       flashs.length = 0
       envols.length = 0
       affiche = 0
+      afficheBanque = m.banque
+      depots.length = 0
       flammesEnnemies.clear()
       v = m.vaisseau
       camera.x = 0
@@ -351,25 +359,62 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
 
-  /** Une flèche au bord de l'écran vers le rival hors champ (Keko : « j'ai l'impression de ne pas trouver l'ennemi ») ; elle bat quand il chasse. */
-  function dessinerLaFleche(p: Peintre): void {
-    for (const e of m.ennemis) {
-      const dx = e.corps.x - camera.x
-      const dy = e.corps.y - camera.y
-      const marge = 10
-      if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) continue
-      // le point du bord dans sa direction
-      const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
-      const x = W / 2 + dx * k
-      const y = H / 2 + dy * k
-      const a = Math.atan2(dy, dx)
-      const bat = e.fait === 'chasse' ? 0.6 + 0.4 * Math.sin(t * 14) : 1
-      const pointe = [x + Math.cos(a) * 4, y + Math.sin(a) * 4]
-      const g1 = [x + Math.cos(a + 2.5) * 4, y + Math.sin(a + 2.5) * 4]
-      const g2 = [x + Math.cos(a - 2.5) * 4, y + Math.sin(a - 2.5) * 4]
-      p.poly([pointe, g1, g2], ROUGE[3], bat)
-      p.px(pointe[0], pointe[1], ROUGE[5])
-      p.glow(x, y, 6, ROUGE[4], 0.4 * bat)
+  /**
+   * LA STATION D'EXTRACTION, au point de départ : un anneau d'acier autour d'un cœur, quatre nacelles, un fanal qui bat,
+   * et quand le vaisseau est à quai, l'anneau s'allume et les pépites déposées y volent. Elle prend la lumière du monde.
+   */
+  function dessinerLaStation(p: Peintre): void {
+    const sx = CONF.station.x - camera.x + W / 2
+    const sy = CONF.station.y - camera.y + H / 2
+    if (sx < -40 || sy < -40 || sx > W + 40 || sy > H + 40) return
+    const R0 = CONF.station.rayon
+    const aQuai = m.phase === 'vol' && Math.hypot(v.x - CONF.station.x, v.y - CONF.station.y) <= CONF.station.portee
+    const lent = t * 0.25
+    // le parvis : un cercle pointillé qui dit la portée, plus net à quai
+    for (let i = 0; i < 36; i++) {
+      const a = (i / 36) * Math.PI * 2 + lent
+      p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
+    }
+    // les nacelles : quatre, qui tournent lentement avec l'anneau, éclairées d'un côté
+    for (let i = 0; i < 4; i++) {
+      const a = lent + (i * Math.PI) / 2
+      const x = sx + Math.cos(a) * (R0 + 2)
+      const y = sy + Math.sin(a) * (R0 + 2)
+      p.circle(x, y, 2.6, COQUE[0])
+      p.circle(x, y, 2, (px, py) => ((px - x) * LUMIERE.x + (py - y) * LUMIERE.y > 0.3 ? COQUE[5] : COQUE[3]))
+      p.dot(x + LUMIERE.x * 1.2, y + LUMIERE.y * 1.2, COQUE[6])
+    }
+    // l'anneau : acier, un bord sombre, un bord éclairé côté lumière
+    p.ring(sx, sy, R0 + 0.5, 3.5, COQUE[0])
+    p.ring(sx, sy, R0, 2.4, (px, py) => ((px - sx) * LUMIERE.x + (py - sy) * LUMIERE.y > R0 * 0.35 ? COQUE[5] : (px - sx) * LUMIERE.x + (py - sy) * LUMIERE.y < -R0 * 0.35 ? COQUE[2] : COQUE[4]))
+    // les rayons de l'anneau au cœur, et le cœur : une verrière qui s'allume à quai
+    for (let i = 0; i < 4; i++) {
+      const a = lent + Math.PI / 4 + (i * Math.PI) / 2
+      p.line(sx + Math.cos(a) * 4, sy + Math.sin(a) * 4, sx + Math.cos(a) * (R0 - 1), sy + Math.sin(a) * (R0 - 1), COQUE[3])
+    }
+    p.circle(sx, sy, 4.2, COQUE[0])
+    p.circle(sx, sy, 3.4, aQuai ? PEPITE[2] : VERRIERE[1])
+    p.dot(sx - 1, sy - 1, aQuai ? PEPITE[4] : VERRIERE[3])
+    // le fanal : il bat ; à quai, l'anneau entier luit d'or
+    const bat = 0.5 + 0.5 * Math.sin(t * 4)
+    p.glow(sx, sy, 10, aQuai ? PEPITE[2] : VERRIERE[2], 0.25 + 0.35 * bat)
+    if (aQuai) p.glow(sx, sy, R0 * 2.2, PEPITE[2], 0.35 + 0.25 * (t - depotA < 0.2 ? 1 : 0))
+    // les pépites déposées : elles volent du vaisseau au cœur de la station
+    for (let i = depots.length - 1; i >= 0; i--) {
+      const d = depots[i]
+      const u = (t - d.t0) / 0.4
+      if (u >= 1) {
+        depots.splice(i, 1)
+        afficheBanque += 1
+        depotA = t
+        continue
+      }
+      const k = u * u * (3 - 2 * u)
+      const x = d.x - camera.x + W / 2 + (sx - (d.x - camera.x + W / 2)) * k
+      const y = d.y - camera.y + H / 2 + (sy - (d.y - camera.y + H / 2)) * k
+      p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], PEPITE[2])
+      p.dot(x, y - 1, PEPITE[3])
+      p.glow(x, y, 6, PEPITE[2], 0.5)
     }
   }
 
@@ -406,6 +451,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.poly([[x - 2, haut], [x + 2, haut], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], chaud ? N.WHITE : COQUE[5])
         if (part >= 1) p.dot(x - 1, COMPTEUR.y + 3, COQUE[6])
       }
+    }
+    // la banque, à côté du porté : une petite station en icône et son nombre
+    if (afficheBanque > 0 || depots.length > 0) {
+      const bx = COMPTEUR.x + 30
+      const by = COMPTEUR.y + 5
+      const chaud = t - depotA < 0.18
+      p.ring(bx, by - (chaud ? 1 : 0), 3, 1.4, COQUE[4])
+      p.dot(bx, by - (chaud ? 1 : 0), chaud ? PEPITE[3] : VERRIERE[2])
+      p.text(String(afficheBanque), bx + 7, COMPTEUR.y - (chaud ? 1 : 0), chaud ? N.WHITE : COQUE[5], { font: 'big', scale: 1, align: 'left', outline: COQUE[0] })
     }
     if (affiche === 0 && envols.length === 0) return
     const allume = t - allumeA < 0.18
@@ -514,6 +568,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0 })
               if (ev.par === 'joueur') envols.push({ x: v.x, y: v.y, t0: t })
               break
+            case 'depose':
+              depots.push({ x: v.x, y: v.y, t0: t })
+              affiche = Math.max(0, affiche - 1)
+              break
             case 'touche': {
               // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
               toucheA = t
@@ -551,7 +609,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} à bord. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `${m.minerai} pépite${m.minerai > 1 ? 's' : ''} perdue${m.minerai > 1 ? 's' : ''} avec la coque, ${m.banque} en banque à la station. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
               break
             }
             default:
@@ -645,12 +703,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
     }
     p.place(0, 0)
+    dessinerLaStation(p)
     dessinerLesEnnemis(p)
     if (m.phase === 'vol') dessinerLeVaisseau(p)
     else if (ecran.hidden && t - perduA > 1) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
-    dessinerLaFleche(p)
     dessinerLeScore(p)
     for (const e of effets) e.fx.draw(frame)
     N.composite(frame, img.data, FOND)
