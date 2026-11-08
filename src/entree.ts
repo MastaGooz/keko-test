@@ -58,6 +58,12 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) void monterDonjon(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('pixelfx')) {
+  // LE BANC PIXELFX : les 244 effets en pixel art de patch-gg/pixelfx, à regarder un par un (Keko : « je veux juste voir ce que ça donne »).
+  void import('./ui/pixelfx/page.ts').then(({ monterPixelfx }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterPixelfx(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('neon')) {
   // NÉON, un side project : un cercle qui ne bouge pas, des formes néon qui descendent, et l'on pare au doigt.
   void import('./ui/neon/page.ts').then(({ monterNeon }) => {

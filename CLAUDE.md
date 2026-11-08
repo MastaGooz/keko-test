@@ -593,6 +593,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?commande`, `&acte=N` | la commande action, un side project : un roguelike au tour par tour à la Paper Mario : un petit magicien et ses sorts, chacun son geste (la boule de feu qu'on charge, l'éclair aux anneaux, les missiles qu'on tapote), la garde au bon moment, sur une carte à embranchements (élites, feux, boutiques, événements, or et objets) ; `&acte=N` commence à l'acte N (`docs/commande.md`) |
 | `?magie` | la tour du magicien, un side project : des ennemis approchent de tous les bords, on compose ses sorts à la Magicka (feu, froid, foudre, terre, vie, mort ; trois au plus, les opposés s'annulent) et on les choisit sur une roue sous le doigt (glisser vers un quartier), une tape lançant le sort vers ce point (`docs/magie.md`) |
 | `?neon` | Néon, un side project : un arcade incrémental/roguelike en formes néon sur fond sombre ; le cercle en bas ne bouge pas et tire seul, les formes descendent, on tape pour PARER juste avant le contact (pile dessus : parfaite, ×3 et une onde) ; trois améliorations à chaque niveau (`docs/neon.md`) |
+| `?pixelfx` | le banc des effets `pixelfx` (patch-gg/pixelfx, MIT, la première dépendance de code, à la demande de Keko pour juger) : les 244 effets en pixel art listés par catégorie, le lecteur en haut (palette, fond, graine, retourné, vitesse) (`docs/pixelfx.md`) |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 | `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
@@ -649,7 +650,9 @@ ajuster après.
 **Ce que Keko doit juger doit être présentable** — « tester avec un truc un
 minimum visuellement agréable aide beaucoup ». Pas de dépendance, pas
 d'asset qui ne vienne pas de Keko ; ses images (WebP avec perte, 1024 × 1463
-pour une illustration) et ses sons sont servis depuis `public/`.
+pour une illustration) et ses sons sont servis depuis `public/`. *Une
+exception, décidée par Keko le 08/11 : `pixelfx` (du code MIT, pas un
+asset), installé pour le banc `?pixelfx` ; rien d'autre ne l'importe encore.*
 
 **On mesure, on ne devine pas** : une sonde dans la page, une capture, un
 balayage hors navigateur contre les mêmes modules. Un chiffre écrit dans une
@@ -694,6 +697,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/commande.md` | la commande action (`?commande`), un combat à la Paper Mario en side project |
 | `docs/magie.md` | la tour du magicien (`?magie`), des sorts composés à la Magicka en side project |
 | `docs/neon.md` | Néon (`?neon`), l'arcade incrémental/roguelike où l'on pare au doigt, en side project |
+| `docs/pixelfx.md` | le banc des effets pixelfx (`?pixelfx`), et ce qu'on en pense |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour
