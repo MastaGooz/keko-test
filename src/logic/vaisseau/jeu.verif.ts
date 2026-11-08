@@ -74,24 +74,30 @@ let apparu: Evenement | undefined
 for (let i = 0; i < Math.ceil(C.ennemi.apparait * 60) + 2 && apparu === undefined; i++) apparu = avancerLeMonde(C, w, 1 / 60, { x: 0, y: 0 }).evenements.find((e) => e.type === 'ennemiApparait')
 verifier('l’ennemi apparaît à l’heure dite, au loin', apparu !== undefined && w.ennemis.length === 1 && Math.abs(Math.hypot(w.ennemis[0].corps.x, w.ennemis[0].corps.y) - C.ennemi.distance) < 1)
 let aMine = false
-let aChasse = false
+let tirLoin = false
 let tirs = 0
 for (let i = 0; i < 60 * 25; i++) {
   const r = avancerLeMonde(C, w, 1 / 60, { x: 0, y: 0 })
   const e = w.ennemis[0]
   if (e === undefined) break
   if (e.fait === 'mine' && e.forage !== null) aMine = true
-  if (e.fait === 'chasse') aChasse = true
+  if (compter(r.evenements, 'tir') > 0 && Math.hypot(e.corps.x - w.vaisseau.x, e.corps.y - w.vaisseau.y) > C.ennemi.voit + 1) tirLoin = true
   tirs += compter(r.evenements, 'tir')
 }
-verifier('loin du joueur, il trouve une roche et la mine', aMine)
-verifier('il ne chasse pas un joueur qu’il ne voit pas', !aChasse && tirs === 0)
+verifier('il trouve une roche et la mine', aMine)
+const sienne = w.ennemis[0]?.roche
+const roches = asteroidesAutour(C, 0, 0, 600)
+const laRoche = roches.find((r) => r.id === sienne)
+verifier('et c’est une roche du territoire du joueur', laRoche !== undefined && Math.hypot(laRoche.x, laRoche.y) - laRoche.rayon <= C.ennemi.territoire)
+verifier('il ne tire jamais sur un joueur qu’il ne voit pas', !tirLoin)
 // le joueur se pose à côté de lui : il chasse, tire, et les traits percent la coque
 const e0 = w.ennemis[0]
 w.vaisseau = { ...nouveauVaisseau(), x: e0.corps.x + C.ennemi.tient, y: e0.corps.y }
 w.detruits = new Set(asteroidesAutour(C, w.vaisseau.x, w.vaisseau.y, 300).map((r) => r.id)) // le champ dégagé : rien n'arrête les traits
 let touches = 0
-for (let i = 0; i < 60 * 12 && w.coque > 1; i++) {
+tirs = 0
+w.coque = C.coque // (il a pu tirer sur le joueur immobile pendant la phase de mine : on repart d'une coque neuve)
+for (let i = 0; i < 60 * 14 && w.coque > 1; i++) {
   const r = avancerLeMonde(C, w, 1 / 60, { x: 0, y: 0 })
   tirs += compter(r.evenements, 'tir')
   touches += compter(r.evenements, 'touche')

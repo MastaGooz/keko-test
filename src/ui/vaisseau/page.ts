@@ -351,6 +351,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
 
+  /** Une flèche au bord de l'écran vers le rival hors champ (Keko : « j'ai l'impression de ne pas trouver l'ennemi ») ; elle bat quand il chasse. */
+  function dessinerLaFleche(p: Peintre): void {
+    for (const e of m.ennemis) {
+      const dx = e.corps.x - camera.x
+      const dy = e.corps.y - camera.y
+      const marge = 10
+      if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) continue
+      // le point du bord dans sa direction
+      const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
+      const x = W / 2 + dx * k
+      const y = H / 2 + dy * k
+      const a = Math.atan2(dy, dx)
+      const bat = e.fait === 'chasse' ? 0.6 + 0.4 * Math.sin(t * 14) : 1
+      const pointe = [x + Math.cos(a) * 4, y + Math.sin(a) * 4]
+      const g1 = [x + Math.cos(a + 2.5) * 4, y + Math.sin(a + 2.5) * 4]
+      const g2 = [x + Math.cos(a - 2.5) * 4, y + Math.sin(a - 2.5) * 4]
+      p.poly([pointe, g1, g2], ROUGE[3], bat)
+      p.px(pointe[0], pointe[1], ROUGE[5])
+      p.glow(x, y, 6, ROUGE[4], 0.4 * bat)
+    }
+  }
+
   /** Le score, en haut à gauche de la scène : une pépite en icône, le nombre en police pixel du dépôt ; les pépites en vol y arrivent. */
   function dessinerLeScore(p: Peintre): void {
     // les pépites en vol : de la place du vaisseau à l'écran vers le compteur, en accélérant, une traînée de lumière
@@ -615,6 +637,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else if (ecran.hidden && t - perduA > 1) ecran.hidden = false
     dessinerLesTirs(p)
     dessinerLesLasers(p)
+    dessinerLaFleche(p)
     dessinerLeScore(p)
     for (const e of effets) e.fx.draw(frame)
     N.composite(frame, img.data, FOND)

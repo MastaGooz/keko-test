@@ -122,8 +122,12 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   roche de 0,3 point : à pleine vitesse (110), le joueur perd 2 points sur
   5 et la roche en prend 29 — une roche de 6 de rayon éclate d'un coup (et
   laisse ses pépites), une de 14 en demande quatre. Un contact doux ne coûte
-  rien à personne. Le rival peut se tuer sur une roche. Les cases de coque se
-  vident par le haut à mesure que le point s'entame.
+  rien à personne. Le rival en souffre moins (0,12 par unité : sondé, à 0,3
+  une seule collision lui coûtait 72 % de sa vie et il mourait souvent seul
+  — Keko : « il se tue contre un astéroïde et ne respawn pas ? ») et ÉVITE
+  les roches qu'il frôle (poussé à l'écart à moins de 24 unités, sauf celle
+  qu'il mine). Les cases de coque se vident par le haut à mesure que le point
+  s'entame.
 
 ## Les explosions (Keko, 08/11 : « une petite explosion et disparition à la mort du joueur ou du vaisseau ennemi »)
 
@@ -152,7 +156,13 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   110 de pointe, 5 rad/s), 36 points que le foreur du joueur creuse comme une
   roche.
 - **Il MINE** quand il ne voit pas le joueur : la roche la plus proche de
-  lui à 260 unités, qu'il rejoint jusqu'à portée de laser, puis il freine et
+  lui à 260 unités **parmi celles du TERRITOIRE DU JOUEUR** (à 150 unités du
+  joueur ; sans roche là, il vient vers lui) — Keko : « parfois j'ai
+  l'impression de ne pas trouver l'ennemi » : né à 230 unités et minant là
+  où il était, on ne le voyait jamais ; il naît maintenant à 200, hors des
+  roches (douze essais autour du joueur), et **une flèche rouge au bord de
+  l'écran** pointe vers lui tant qu'il est hors champ, qui bat quand il
+  chasse ; qu'il rejoint jusqu'à portée de laser, puis il freine et
   la creuse au même débit — *les deux creusent les mêmes roches* (`creuse`
   est partagé). Ses pépites viennent à lui (l'aimant tire chaque pépite vers
   le vaisseau le plus proche) et font son `butin`. Sans roche à portée, il

@@ -50,9 +50,10 @@ export const VAISSEAU = {
    * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
    * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou
    * l'ennemi) et creuse la roche de tant de points. À pleine vitesse (110), le joueur perd 2 points et la roche en
-   * prend 29 : une roche de 6 de rayon éclate d'un coup, une de 14 (118 points) en demande quatre.
+   * prend 29 : une roche de 6 de rayon éclate d'un coup, une de 14 (118 points) en demande quatre. Le rival ÉVITE les
+   * roches à moins de `evite` unités (il est poussé à l'écart) : sondé, une seule collision lui coûtait 72 % de sa vie.
    */
-  collision: { degatsCoque: 0.02, degatsEnnemi: 0.3, degatsRoche: 0.3 },
+  collision: { degatsCoque: 0.02, degatsEnnemi: 0.12, degatsRoche: 0.3, evite: 24 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -72,11 +73,13 @@ export const VAISSEAU = {
   forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5 },
   /**
    * L'ENNEMI : il apparaît à tant de secondes puis tant après sa mort, à tant d'unités ; il a tant de points (le laser
-   * du joueur les creuse comme une roche), pousse et va moins vite que le joueur ; il cherche une roche à tant ; il
+   * du joueur les creuse comme une roche), pousse et va moins vite que le joueur ; il cherche une roche à tant de lui,
+   * mais SEULEMENT DANS LE TERRITOIRE DU JOUEUR (à tant du joueur : il vient miner dans son coin, sinon on ne le voit
+   * jamais — Keko : « parfois j'ai l'impression de ne pas trouver l'ennemi ») ; il
    * voit le joueur à tant, se tient à tant de lui, et tire toutes les tant de secondes des traits à tant d'unités par
    * seconde qui vivent tant ; un trait enlève un point de coque. Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 230, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 200, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite, tout près). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
@@ -333,11 +336,19 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
 
 /** L'ennemi naît au loin, dans une direction tirée de la graine du monde, et regarde le joueur. */
 function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
-  const a = tire(m.graine, m.prochainId, 3) * Math.PI * 2
-  m.graine = hache(m.graine, 7)
   const v = m.vaisseau
-  const x = v.x + Math.cos(a) * c.ennemi.distance
-  const y = v.y + Math.sin(a) * c.ennemi.distance
+  let a = tire(m.graine, m.prochainId, 3) * Math.PI * 2
+  m.graine = hache(m.graine, 7)
+  let x = v.x + Math.cos(a) * c.ennemi.distance
+  let y = v.y + Math.sin(a) * c.ennemi.distance
+  // pas dans une roche : on tourne autour du joueur jusqu'à un coin libre
+  for (let essai = 0; essai < 12; essai++) {
+    const libre = asteroidesVisibles(c, m, x, y, c.champ.rayonMax + 20).every((r) => Math.hypot(r.x - x, r.y - y) > r.rayon + c.ennemi.rayon + 12)
+    if (libre) break
+    a += Math.PI / 6
+    x = v.x + Math.cos(a) * c.ennemi.distance
+    y = v.y + Math.sin(a) * c.ennemi.distance
+  }
   const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(v.y - y, v.x - x) }, pv: c.ennemi.pv, fait: 'mine', roche: null, forage: null, tirA: m.t + c.ennemi.cadence, butin: 0 }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
@@ -376,11 +387,19 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
     let roche: Asteroide | null = null
     if (e.roche !== null && !m.detruits.has(e.roche)) roche = asteroidesVisibles(c, m, b.x, b.y, c.ennemi.cherche + c.champ.rayonMax).find((a) => a.id === e.roche) ?? null
     if (roche === null) {
-      const proche = rocheLaPlusProche(c, m, b.x, b.y, c.ennemi.cherche)
-      roche = proche?.roche ?? null
+      // la roche la plus proche de LUI parmi celles du TERRITOIRE DU JOUEUR : il vient miner dans son coin
+      let meilleure: Asteroide | null = null
+      let dmin = Infinity
+      for (const r of asteroidesVisibles(c, m, v.x, v.y, c.ennemi.territoire + c.champ.rayonMax)) {
+        if (Math.hypot(r.x - v.x, r.y - v.y) - r.rayon > c.ennemi.territoire) continue
+        const d = Math.hypot(r.x - b.x, r.y - b.y) - r.rayon
+        if (d <= c.ennemi.cherche && d < dmin) (dmin = d), (meilleure = r)
+      }
+      roche = meilleure
       e.roche = roche?.id ?? null
     }
-    if (roche === null) direction = { x: (dxj / dj) * 0.4, y: (dyj / dj) * 0.4 }
+    // sans roche à miner près du joueur, il vient vers lui
+    if (roche === null) direction = { x: (dxj / dj) * 0.7, y: (dyj / dj) * 0.7 }
     else {
       const dx = roche.x - b.x
       const dy = roche.y - b.y
@@ -397,6 +416,19 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
       }
     }
   }
+  // il évite les roches qui ne sont pas la sienne : poussé à l'écart de celles qu'il frôle
+  for (const r of asteroidesVisibles(c, m, b.x, b.y, c.collision.evite + c.champ.rayonMax)) {
+    if (e.roche === r.id && e.fait === 'mine') continue
+    const dx = b.x - r.x
+    const dy = b.y - r.y
+    const dist = Math.hypot(dx, dy) || 1
+    const marge = dist - r.rayon - c.ennemi.rayon
+    if (marge > c.collision.evite) continue
+    const k = (1 - Math.max(0, marge) / c.collision.evite) * 1.3
+    direction = { x: direction.x + (dx / dist) * k, y: direction.y + (dy / dist) * k }
+  }
+  const l = Math.hypot(direction.x, direction.y)
+  if (l > 1) direction = { x: direction.x / l, y: direction.y / l }
   const r = voler(c, c.ennemi, b, dt, direction, m.detruits)
   e.corps = r.vaisseau
   // en chasse, le nez reste sur le joueur
