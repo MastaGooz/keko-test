@@ -253,31 +253,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  /** LE SYMBOLE DES CRÉDITS (Keko : « un C avec une barre verticale au milieu ») : un C ouvert à droite, un fût qui le traverse, vert, le fût plus clair, une ombre dessous ; agrandi k fois, à droite d'un nombre. */
-  function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
-    const r = 2.4 * k
-    p.arc(x, y + 1, r, 1, 0.75, Math.PI * 2 - 0.75, RUNE[0])
-    p.line(x, y - 3.2 * k + 1, x, y + 3.2 * k + 1, RUNE[0])
-    p.arc(x, y, r, 1, 0.75, Math.PI * 2 - 0.75, RUNE[1])
-    p.line(x, y - 3.2 * k, x, y + 3.2 * k, RUNE[2])
-    p.rect(Math.round(x), Math.round(y - 3.2 * k), 1, 1, RUNE[3])
-    p.glow(x, y, 4 * k, RUNE[2], 0.3)
+  /**
+   * LE SYMBOLE DES CRÉDITS (Keko : « un C avec une barre verticale au milieu ; les deux bouts du C à droite dépassent
+   * la barre, le côté gauche bien arrondi ») : un C de rayon 3,2 ouvert de ±52° à droite, un fût au centre qui dépasse
+   * en haut et en bas, vert, le fût plus clair, une ombre dessous. UNE SEULE TAILLE, partout (Keko).
+   */
+  function dessinerUnCredit(p: Peintre, x: number, y: number): void {
+    const r = 3.2
+    const ouverture = 0.9
+    p.arc(x, y + 1, r, 1, ouverture, Math.PI * 2 - ouverture, RUNE[0])
+    p.line(x, y - 3, x, y + 5, RUNE[0])
+    p.arc(x, y, r, 1, ouverture, Math.PI * 2 - ouverture, RUNE[1])
+    p.line(x, y - 4, x, y + 4, RUNE[2])
+    p.rect(Math.round(x), Math.round(y - 4), 1, 1, RUNE[3])
+    p.glow(x, y, 5, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
   function nombreDeCredits(p: Peintre, n: number, x: number, y: number, c: number, centre = false): void {
     const w = p.measure(String(n), { font: 'big' })[0]
-    const x0 = centre ? x - (w + 10) / 2 : x - w - 10
+    const x0 = centre ? x - (w + 12) / 2 : x - w - 12
     p.text(String(n), x0, y, c, { font: 'big' })
-    dessinerUnCredit(p, x0 + w + 6, y + 3, 1.2)
+    dessinerUnCredit(p, x0 + w + 7, y + 3)
   }
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
   /**
-   * L'ICÔNE D'UN MINERAI, agrandie k fois — UNE FORME PAR MINERAI (Keko : « une icône différente pour la forme / texture
+   * L'ICÔNE D'UN MINERAI, à sa seule taille — UNE FORME PAR MINERAI (Keko : « une icône différente pour la forme / texture
    * des différents minerais ») : le FER, un caillou anguleux et mat, grené ; l'OR, une pépite en losange qui brille ;
    * le CRISTAL, une pointe effilée à facettes, translucide.
    */
-  function dessinerUneRessource(p: Peintre, x: number, y: number, minerai: Minerai, k: number): void {
+  function dessinerUneRessource(p: Peintre, x: number, y: number, minerai: Minerai): void {
+    const k = 2 // UNE SEULE TAILLE, partout (Keko : « ne change jamais la taille des icônes »)
     const T = TEINTES_MINERAI[minerai]
     if (minerai === 'fer') {
       p.poly([[x - 2 * k, y - k], [x - 0.5 * k, y - 2 * k], [x + 1.5 * k, y - 1.5 * k], [x + 2 * k, y + 0.5 * k], [x + 0.5 * k, y + 2 * k], [x - 1.5 * k, y + 1.5 * k]], T[1])
@@ -440,7 +446,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         const choisi = k === mineraiChoisi
         panel(p, x, y, cw, ch, choisi ? ENCRE_OR : ENCRE, { r: 2 })
-        dessinerUneRessource(p, x + cw / 2, y + 10, k, 2)
+        dessinerUneRessource(p, x + cw / 2, y + 10, k)
         p.text(String(tresor[k]), x + cw / 2, y + ch - 7, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center' })
         zones.push({ x, y, w: cw, h: ch, action: () => (mineraiChoisi = k) })
       }
@@ -535,7 +541,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
     // l'icône juste à gauche du nom, le nom décalé d'autant ; la description centrée dans ses trois lignes (Keko)
     const ln = p.measure(texteNu(fiche.nom), { font: 'big' })[0]
-    dessinerUneRessource(p, W / 2 - ln / 2 - 4, y + 10, k, 2) // (l'icône à deux pixels du nom, à cinq du bord haut ; le nom centré sur sa hauteur)
+    dessinerUneRessource(p, W / 2 - ln / 2 - 4, y + 10, k) // (l'icône à deux pixels du nom, à cinq du bord haut ; le nom centré sur sa hauteur)
     p.text(texteNu(fiche.nom), W / 2 + 5, y + 7, PEPITE[3], { font: 'big', align: 'center' })
     const haut = y + 19 + Math.floor(((LIGNES - L.length) * 7) / 2)
     L.forEach((li, i) => p.text(li, W / 2, haut + i * 7, COQUE[5], { align: 'center' }))
@@ -554,7 +560,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       credits = r.credits
       sauver()
     }, true)
-    if (tresor[k] > 0) dessinerUnCredit(p, W / 2 + p.measure(`VENDRE : ${gain}`, { font: 'big' })[0] / 2 + 7, by + 6, 1.2)
+    if (tresor[k] > 0) dessinerUnCredit(p, W / 2 + p.measure(`VENDRE : ${gain}`, { font: 'big' })[0] / 2 + 8, by + 6)
     y += hp + 4
     // les crédits qu'on a, sous le panneau
     p.text('CREDITS', W / 2 - 6, y + 2, COQUE[4], { align: 'right' })
@@ -625,7 +631,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const k of MINERAIS) {
         if (pc.prix[k] <= 0) continue
         const assez = tresor[k] >= pc.prix[k]
-        dessinerUneRessource(p, px + 5, py + 4, k, 2) // (le même symbole qu'à l'inventaire, à la même taille — Keko)
+        dessinerUneRessource(p, px + 5, py + 4, k) // (le même symbole qu'à l'inventaire, à la même taille — Keko)
         const mot = `${pc.prix[k]} / ${tresor[k]}`
         p.text(mot, px + 14, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
         px += 14 + p.measure(mot, { font: 'big' })[0] + 10
