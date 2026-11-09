@@ -557,9 +557,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   LIGNES fixes (Keko : la hauteur ne change pas d'un minerai à l'autre),
   un peu d'air, SA « VALEUR UNITAIRE » EN
   CRÉDITS la pépite — **les crédits sont la monnaie du jeu** (Keko), gardés
-  avec le trésor, avec LEUR SYMBOLE, UNE RUNE VERTE qui luit — un éclair en trois traits,
-  la rune du soleil —, à droite du nombre (Keko ; une pièce d'or d'abord,
-  puis une rune à branches, puis un sceau à losange) —, le stock, et VENDRE TOUT, qui change le stock en crédits
+  avec le trésor, avec LEUR SYMBOLE, UNE LETTRE D'UN ALPHABET INCONNU, verte, qui luit — un
+  fût, une barre en tête qui retombe en demi-jambage, une barre au milieu,
+  un point au pied —, à droite du nombre (Keko ; une pièce d'or d'abord,
+  puis une rune à branches, un sceau à losange, un éclair : « ça fait un
+  éclair, c'est pas terrible ») —, le stock, et VENDRE TOUT, qui change le stock en crédits
   (`vendre` ; *de moi : une valeur sans vente n'aurait pas de sens ; fer 2,
   or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. Les
   pièces se paient encore en fer. Dans le panneau d'une pièce qu'on n'a

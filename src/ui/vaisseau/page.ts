@@ -253,20 +253,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  /** LE SYMBOLE DES CRÉDITS (Keko : « une rune verte » ; troisième essai) : un ÉCLAIR en trois traits, la rune du soleil, vert, le trait du milieu plus clair, les pointes allumées ; agrandi k fois, à droite d'un nombre. */
+  /**
+   * LE SYMBOLE DES CRÉDITS (Keko : « une rune verte… il faudrait que ça ressemble à une lettre d'un alphabet inconnu ») :
+   * une LETTRE inventée — un fût à gauche, une barre en tête qui retombe à droite en un demi-jambage, une barre au
+   * milieu, un point au pied —, verte, le fût plus clair, une ombre dessous ; agrandie k fois, à droite d'un nombre.
+   */
   function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
-    const a = [x + 1.6 * k, y - 3 * k]
-    const b = [x - 1.4 * k, y - 0.6 * k]
-    const c = [x + 1.4 * k, y + 0.6 * k]
-    const d = [x - 1.6 * k, y + 3 * k]
-    p.line(a[0], a[1] + 1, b[0], b[1] + 1, RUNE[0])
-    p.line(b[0], b[1] + 1, c[0], c[1] + 1, RUNE[0])
-    p.line(c[0], c[1] + 1, d[0], d[1] + 1, RUNE[0])
-    p.line(a[0], a[1], b[0], b[1], RUNE[1])
-    p.line(b[0], b[1], c[0], c[1], RUNE[2])
-    p.line(c[0], c[1], d[0], d[1], RUNE[1])
-    p.rect(Math.round(a[0] - 0.5), Math.round(a[1] - 0.5), 1, 1, RUNE[3])
-    p.rect(Math.round(d[0] - 0.5), Math.round(d[1] - 0.5), 1, 1, RUNE[3])
+    const g = x - 1.6 * k
+    const d = x + 1.6 * k
+    const traits: [number, number, number, number][] = [
+      [g, y - 3 * k, g, y + 3 * k],
+      [g, y - 3 * k, d, y - 3 * k],
+      [d, y - 3 * k, d, y - 0.8 * k],
+      [g, y + 0.4 * k, x + 0.9 * k, y + 0.4 * k],
+    ]
+    for (const [x0, y0, x1, y1] of traits) p.line(x0, y0 + 1, x1, y1 + 1, RUNE[0])
+    for (const [x0, y0, x1, y1] of traits) p.line(x0, y0, x1, y1, RUNE[1])
+    p.line(g, y - 3 * k, g, y + 3 * k, RUNE[2])
+    p.rect(Math.round(x + 0.9 * k), Math.round(y + 2.4 * k), 1, 1, RUNE[3])
+    p.rect(Math.round(g), Math.round(y - 3 * k), 1, 1, RUNE[3])
     p.glow(x, y, 4 * k, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
