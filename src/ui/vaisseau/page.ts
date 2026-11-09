@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, armesMontees, bilanDEnergie, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, armesMontees, bilanDEnergie, capacite, peutDecoller, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -218,6 +218,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function demarrer(): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
+    if (!peutDecoller(configDuHangar(BASE, hangar))) return // (le budget d'énergie ne tient pas : cloué au sol)
     CONF = configDuHangar(BASE, hangar)
     m = monterLeMonde()
     m.minerai = minerai0
@@ -536,7 +537,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const bilan = bilanDEnergie(configDuHangar(BASE, hangar))
       const motBilan = `${bilan >= 0 ? '+' : '-'}${Math.abs(bilan) < 9.95 ? Math.abs(bilan).toFixed(1) : Math.round(Math.abs(bilan))}`
       p.text('ENERGIE', cx + 25, hautScene - 9, COQUE[4], { align: 'right' })
-      p.text(motBilan, cx + 30, hautScene - 10, bilan >= 0 ? RUNE[2] : ROUGE[4], { font: 'big' })
+      p.text(motBilan, cx + 30, hautScene - 10, bilan >= 0 ? RUNE[2] : (Math.floor(t * 3) % 2 === 0 ? ROUGE[4] : ROUGE[3]), { font: 'big' })
     } else {
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
@@ -832,15 +833,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bh = 20
     const bx = W / 2 - bw / 2
     const byy = H - 33
+    // SOUS ZÉRO D'ÉNERGIE, ON NE DÉCOLLE PAS (Keko : « un budget au hangar, rien en vol ») : le bouton s'éteint et le dit
+    const decollable = peutDecoller(configDuHangar(BASE, hangar))
     const respire = 0.6 + 0.4 * Math.sin(t * 4)
-    p.glow(W / 2, byy + bh / 2, 44, PEPITE[2], 0.12 + 0.12 * respire)
+    if (decollable) p.glow(W / 2, byy + bh / 2, 44, PEPITE[2], 0.12 + 0.12 * respire)
     panel(p, bx - 2, byy - 2, bw + 4, bh + 4, ENCRE, { r: 3 })
     const cycle = (t % 4) / 4
-    panel(p, bx, byy, bw, bh, ENCRE_OR, { r: 2, shine: cycle < 0.45 ? bx - 12 + ((bw + 36) * cycle) / 0.45 : null })
-    motEnRelief(p, 'Decoller', W / 2, byy + 6, 1, true)
-    p.text('>>', bx + 8, byy + 8, PEPITE[3])
-    p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
-    zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
+    panel(p, bx, byy, bw, bh, decollable ? ENCRE_OR : ENCRE, { r: 2, shine: decollable && cycle < 0.45 ? bx - 12 + ((bw + 36) * cycle) / 0.45 : null })
+    motEnRelief(p, 'Decoller', W / 2, byy + 6, 1, decollable)
+    if (decollable) {
+      p.text('>>', bx + 8, byy + 8, PEPITE[3])
+      p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
+      zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
+    } else p.text('PAS ASSEZ D’ENERGIE', W / 2, byy - 9, ROUGE[4], { align: 'center' })
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
   }
@@ -1248,7 +1253,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** LE RADAR (un outil du hangar) : le rival le plus proche à sa portée, hors de l'écran, est désigné par une flèche rouge au bord, qui bat. */
   function dessinerLeRadar(p: Peintre): void {
-    if (CONF.radar.portee <= 0 || m.aPlat) return
+    if (CONF.radar.portee <= 0) return
     let cible: Vaisseau | null = null
     let dmin = CONF.radar.portee
     for (const e of m.ennemis) {
@@ -1312,19 +1317,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.poly([[x - 2, haut], [x + 2, haut], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], t - bouclierA < 0.3 && Math.floor(t * 16) % 2 === 0 ? N.WHITE : VERRIERE[2])
       }
     }
-    // L'ÉNERGIE (Keko : « une barre d'énergie dans l'UI ») : sous les cases de coque, une barre cyan qui se vide ; à
-    // plat, elle clignote rouge
-    const be = { x: W - 8 - 44, y: COMPTEUR.y + 9, w: 46, h: 3 }
-    p.rect(be.x - 1, be.y - 1, be.w + 2, be.h + 2, COQUE[0])
-    p.rect(be.x, be.y, be.w, be.h, COQUE[1])
-    const part = Math.max(0, Math.min(1, m.energie / CONF.energie.max))
-    const pleinE = Math.round(be.w * part)
-    if (pleinE > 0) {
-      const teinteE = m.aPlat ? (Math.floor(t * 8) % 2 === 0 ? ROUGE[4] : ROUGE[2]) : part < 0.25 ? PEPITE[2] : VERRIERE[2]
-      p.rect(be.x, be.y, pleinE, be.h, teinteE)
-      p.rect(be.x, be.y, pleinE, 1, m.aPlat ? ROUGE[5] : part < 0.25 ? PEPITE[3] : VERRIERE[3])
-    }
-    if (m.aPlat && Math.floor(t * 4) % 2 === 0) p.text('A PLAT', be.x + be.w, be.y + 5, ROUGE[4], { align: 'right' })
     // LA SOUTE (la capacité de la coque) : sous les compteurs du porté, ce qu'on porte sur ce qu'on peut ; pleine, en rouge
     const soutePleine = m.minerai >= CONF.capacite
     p.text(`SOUTE ${m.minerai}/${CONF.capacite}`, COMPTEUR.x, COMPTEUR.y + visibles.length * 11 + (visibles.length > 0 ? 2 : 0), soutePleine ? (Math.floor(t * 4) % 2 === 0 ? ROUGE[4] : ROUGE[3]) : COQUE[3])

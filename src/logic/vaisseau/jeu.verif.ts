@@ -348,39 +348,6 @@ for (let i = 0; i < 60 * 6; i++) {
   if (fu.ennemis[0].fait === 'fuit') fuitVu = true
 }
 verifier('peu chargé il chasse ; chargé il fuit plein gaz sans tirer, jusqu’au large, puis remine', peuCharge === 'chasse' && fuitVu && tireEnFuyant === 0 && fu.ennemis[0].corps.x > C.ennemi.lache - 2 && fu.ennemis[0].fait === 'mine' && fu.coque === C.coque)
-// L'ÉNERGIE (Keko) : pousser et creuser vident la réserve plus vite que le réacteur ne la remplit ; à plat le vaisseau
-// rampe et la foreuse s'éteint ; immobile, la réserve remonte et tout repart à un cinquième
-const en = nouveauMonde({ ...C, energie: { ...C.energie, max: 20, recharge: 1 } })
-en.prochainEnnemiA = 1e9
-en.detruits = new Set(asteroidesAutour(C, 0, 0, 1600).map((r) => r.id)) // (il file à 110 par seconde : rien à creuser sur sa route)
-let aPlatA = -1
-for (let i = 0; i < 60 * 20 && aPlatA < 0; i++) {
-  avancerLeMonde({ ...C, energie: { ...C.energie, max: 20, recharge: 1 } }, en, 1 / 60, { x: 1, y: 0 })
-  if (en.aPlat) aPlatA = i / 60
-}
-verifier('pousser sans cesse vide une petite réserve (20, rechargée de 1) en dix secondes environ', aPlatA > 8 && aPlatA < 12)
-const vitesseAPlat = Math.hypot(en.vaisseau.vx, en.vaisseau.vy)
-for (let i = 0; i < 60; i++) avancerLeMonde({ ...C, energie: { ...C.energie, max: 20, recharge: 1 } }, en, 1 / 60, { x: 1, y: 0 })
-verifier('à plat, la pointe tombe à 30 % : le vaisseau, qui filait à la pointe de série, rampe', vitesseAPlat <= C.vitesseMax * C.energie.rampePointe + 1 && Math.hypot(en.vaisseau.vx, en.vaisseau.vy) <= C.vitesseMax * C.energie.rampePointe + 1 && Math.hypot(en.vaisseau.vx, en.vaisseau.vy) < C.vitesseMax * 0.5)
-let repartA = -1
-for (let i = 0; i < 60 * 10 && repartA < 0; i++) {
-  avancerLeMonde({ ...C, energie: { ...C.energie, max: 20, recharge: 1 } }, en, 1 / 60, { x: 0, y: 0 })
-  if (!en.aPlat) repartA = i / 60
-}
-verifier('immobile, le réacteur remonte la réserve et tout repart au cinquième (4 sur 20 : trois à quatre secondes depuis le fond)', repartA > 2.5 && repartA < 4.6 && en.energie >= 4)
-// (près d'une roche : le parvis de la station est vide)
-const uneRoche = asteroidesAutour(C, 600, 0, 200)[0]
-const creuse = nouveauMonde(C)
-creuse.prochainEnnemiA = 1e9
-creuse.vaisseau = { ...nouveauVaisseau(), x: uneRoche.x + uneRoche.rayon + 30, y: uneRoche.y }
-for (let i = 0; i < 60 * 3; i++) avancerLeMonde(C, creuse, 1 / 60, { x: 0, y: 0 })
-const foree = nouveauMonde(C)
-foree.prochainEnnemiA = 1e9
-foree.vaisseau = { ...nouveauVaisseau(), x: uneRoche.x + uneRoche.rayon + 30, y: uneRoche.y }
-foree.aPlat = true
-foree.energie = 1
-for (let i = 0; i < 60 * 3; i++) avancerLeMonde(C, foree, 1 / 60, { x: 0, y: 0 })
-verifier('de série, immobile, la foreuse creuse (la roche s’entame ou éclate) et la réserve tient ; à plat elle s’éteint', (creuse.creuse.size > 0 || creuse.detruits.size > 0) && creuse.energie > C.energie.max * 0.8 && foree.forage === null && foree.creuse.size === 0 && foree.detruits.size === 0)
 // LA SOUTE (la capacité de la coque — Keko) : pleine, la pépite reste là, ni aimantée ni ramassée
 const soute = nouveauMonde({ ...C, capacite: 2 })
 soute.prochainEnnemiA = 1e9

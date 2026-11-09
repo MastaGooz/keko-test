@@ -56,10 +56,9 @@ export type Piece = {
   radar?: number
   /** La coque : tant de pépites en soute. */
   capacite?: number
-  /** Un réacteur : sa réserve d'énergie, et ce qu'il rend par seconde. */
-  energie?: number
-  recharge?: number
-  /** Ce que la pièce consomme d'énergie, par seconde quand elle agit (une arme : par coup, dans `arme.conso`). */
+  /** Un réacteur : LA PUISSANCE qu'il rend — le budget que les autres pièces se partagent. */
+  puissance?: number
+  /** Ce que la pièce prend de puissance (une arme : par coup, dans `arme.conso`, ramené à sa cadence). */
   conso?: number
   /** Une arme : ce qu'elle tire. */
   arme?: Arme
@@ -83,9 +82,9 @@ export const PIECES: Piece[] = [
   { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', note: 'Tire seul sur le rival a portee.', prix: 24, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false, conso: 3 } },
   { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', note: 'Disperse ses balles.', prix: 44, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false, conso: 1 } },
   { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', note: 'Guide : le missile tourne vers le rival.', prix: 68, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true, conso: 8 } },
-  { id: 'reacteur-1', sorte: 'reacteur', cran: 1, nom: 'Reacteur de serie', dit: '100 d’energie, en rend 6 par seconde.', prix: 0, poids: 8, energie: 100, recharge: 6 },
-  { id: 'reacteur-2', sorte: 'reacteur', cran: 2, nom: 'Reacteur renforce', dit: '140 d’energie, en rend 9 par seconde.', prix: 40, poids: 12, energie: 140, recharge: 9 },
-  { id: 'reacteur-3', sorte: 'reacteur', cran: 3, nom: 'Reacteur a fusion', dit: '200 d’energie, en rend 13 par seconde.', note: 'Un coeur qui luit.', prix: 90, poids: 16, energie: 200, recharge: 13 },
+  { id: 'reacteur-1', sorte: 'reacteur', cran: 1, nom: 'Reacteur de serie', dit: 'Une puissance de 10, le budget des autres pieces.', prix: 0, poids: 8, puissance: 10 },
+  { id: 'reacteur-2', sorte: 'reacteur', cran: 2, nom: 'Reacteur renforce', dit: 'Une puissance de 14.', prix: 40, poids: 12, puissance: 14 },
+  { id: 'reacteur-3', sorte: 'reacteur', cran: 3, nom: 'Reacteur a fusion', dit: 'Une puissance de 18.', note: 'Un coeur qui luit.', prix: 90, poids: 16, puissance: 18 },
 ]
 
 /**
@@ -101,7 +100,7 @@ export function ajouterLesPiecesDEssai(): void {
   for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (4 + i * 3), poids: Math.round(n(i + 1, 2, 10)), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4), aimant: n(i + 4, 0.8, 1.8), conso: n(i + 6, 2, 6) })
   for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-radar-${i}`, sorte: 'outil', cran: 2, famille: 'radar', nom: `Radar d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 4), poids: 1 + i, radar: 200 + i * 150 })
   for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 3), poids: Math.round(n(i + 5, 2, 10)), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false, conso: n(i + 3, 1, 8) } })
-  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-reacteur-${i}`, sorte: 'reacteur', cran: 2, nom: `Reacteur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (10 + i * 6), poids: 6 + i * 2, energie: 80 + i * 25, recharge: n(i, 4, 16) })
+  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-reacteur-${i}`, sorte: 'reacteur', cran: 2, nom: `Reacteur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (10 + i * 6), poids: 6 + i * 2, puissance: Math.round(n(i, 6, 18)) })
 }
 
 /** Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les outils et les armes montés (dans l'ordre : la première arme à gauche). */
@@ -204,7 +203,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   return {
     ...c,
     capacite: co.capacite ?? c.capacite,
-    energie: { ...c.energie, max: re.energie ?? c.energie.max, recharge: re.recharge ?? c.energie.recharge },
+    puissance: re.puissance ?? c.puissance,
     conso: { propulseur: (pr.conso ?? 0) * poids, foreuse: fo?.conso ?? 0, radar: montes(h, 'outil').filter((p) => p.radar !== undefined).reduce((a, p) => a + (p.conso ?? 0), 0), bouclier: co.conso ?? 0 },
     poussee: (c.poussee * (pr.poussee ?? 1)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
@@ -219,15 +218,15 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
 }
 
 /**
- * LE BILAN D'ÉNERGIE d'une configuration, par seconde, TOUT ALLUMÉ (Keko : « afficher le budget énergie comme le poids
- * au-dessus ») : ce que le réacteur rend, moins ce que prennent le propulseur qui pousse, la foreuse qui creuse, le
- * radar, le bouclier qui se recharge et chaque arme qui tire à sa cadence. Positif : le vaisseau tient en continu ;
- * négatif : il entame sa réserve quand tout tourne.
+ * LE BUDGET D'ÉNERGIE d'une configuration (Keko : « un budget au hangar, rien en vol ») : la puissance du réacteur moins ce
+ * que prennent le propulseur (rapporté au poids), la foreuse, le radar, le bouclier et chaque arme à sa cadence.
+ * Négatif : le vaisseau NE DÉCOLLE PAS — on change une pièce, ou de réacteur.
  */
 export function bilanDEnergie(c: ConfigVaisseau): number {
   const armes = c.armes.reduce((a, arme) => a + arme.conso / arme.cadence, 0)
-  return c.energie.recharge - (c.conso.propulseur + c.conso.foreuse + c.conso.radar + c.conso.bouclier + armes)
+  return c.puissance - (c.conso.propulseur + c.conso.foreuse + c.conso.radar + c.conso.bouclier + armes)
 }
+export const peutDecoller = (c: ConfigVaisseau): boolean => bilanDEnergie(c) >= -1e-9
 
 /** Une jauge du panneau de description : son nom, la valeur de la pièce, le plus du catalogue (la barre pleine). */
 export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean; /** Un simple nombre (des places d'outils, d'armes), ni barre ni cellules (Keko). */ nombre?: boolean }
@@ -250,8 +249,7 @@ export function jaugesDe(p: Piece): Jauge[] {
   }
   if (p.sorte === 'reacteur') {
     return [
-      { nom: 'Energie', valeur: p.energie ?? 0, max: max((q) => q.energie ?? 0) },
-      { nom: 'Recharge', valeur: p.recharge ?? 0, max: max((q) => q.recharge ?? 0) },
+      { nom: 'Puissance', valeur: p.puissance ?? 0, max: max((q) => q.puissance ?? 0) },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
     ]
   }
