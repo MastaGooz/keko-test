@@ -518,12 +518,20 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   du vaisseau ») : la scène fait 120 px de tampon, le vaisseau est agrandi
   deux fois (trois avant), et le bloc scène + interface se centre sur la
   hauteur de l'interface mesurée à l'image d'avant, le sol du hangar montant
-  jusqu'au bord. Le trésor ; QUATRE ONGLETS (propulseur, coque, outils,
-  armes — **OUTILS et ARMES disent leurs places, occupées / portées**,
-  « OUTILS 1/2 », Keko : « ce n'est pas lisible ») ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une ligne de 13 px
-  chacune — le nom en grande police, et à droite MONTEE, POSSEDEE ou le
-  prix, doré si le trésor y suffit —, la choisie surlignée d'un chevron ;
-  puis LE PANNEAU DE DESCRIPTION (Keko : « un vrai panneau de description
+  jusqu'au bord. Le trésor ; UN SÉLECTEUR DE CATÉGORIE À FLÈCHES
+  (« ‹ OUTILS › », autant de catégories qu'on voudra — Keko : « on aura
+  plus de parties de vaisseau, sur une ligne ça ne logera pas » ; *quatre
+  onglets en ligne un temps*), DES PUCES DE SOUS-CATÉGORIE quand la
+  catégorie a des familles (TOUT · FOREUSES · RADARS — Keko : « sélectionner
+  des sous-catégories »), puis LA LISTE : quatre rangées visibles de 13 px —
+  le nom en grande police, et à droite MONTEE, POSSEDEE ou le prix, doré si
+  le trésor y suffit —, la choisie surlignée d'un chevron, QUI SE FAIT
+  GLISSER AU DOIGT quand elle déborde (une rangée par 13 px de tampon, un
+  ascenseur à droite ; une tape sans mouvement choisit la rangée — Keko :
+  « énormément de pièces, un moyen de se déplacer dans une longue liste »),
+  et en tête les places occupées / portées pour les outils et les armes
+  (« PLACES 1/2 » — Keko : « pas dans le bouton respectif ») ;
+  puis LE PANNEAU DE DESCRIPTION, À HAUTEUR FIXE (cinq jauges au plus) (Keko : « un vrai panneau de description
   des éléments : des jauges vitesse / accélération / maniabilité pour le
   propulseur, le nombre d'armes portables par la coque, une jauge de
   blindage, de bouclier et de poids ») : le nom, et SES JAUGES (`jaugesDe`,

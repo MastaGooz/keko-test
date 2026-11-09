@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, armesMontees, capacite, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, armesMontees, capacite, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -248,7 +248,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
   const ONGLETS: Sorte[] = ['propulseur', 'coque', 'outil', 'arme']
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
-  const nomDOnglet = (o: Sorte): string => (o === 'outil' ? `OUTILS ${hangar.outils.length}/${capacite(hangar, 'outil')}` : o === 'arme' ? `ARMES ${hangar.armes.length}/${capacite(hangar, 'arme')}` : o === 'coque' ? 'COQUE' : 'PROPULSEUR')
+  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'COQUE', outil: 'OUTILS', arme: 'ARMES' }
+  /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
+  const NOMS_FAMILLE: Record<string, string> = { foreuse: 'FOREUSES', radar: 'RADARS' }
+  const famillesDe = (o: Sorte): string[] => [...new Set(piecesDe(o).map((pc) => pc.famille).filter((f): f is string => f !== undefined))]
+  const sousCategorie: Record<Sorte, string | null> = { propulseur: null, coque: null, outil: null, arme: null }
+  /** La liste visible d'une catégorie : ses pièces, ou celles de la sous-catégorie choisie. */
+  const listeVisible = (o: Sorte): Piece[] => piecesDe(o).filter((pc) => sousCategorie[o] === null || pc.famille === sousCategorie[o])
+  /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
+  const RANGEES = 4
+  const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
+  /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean } | null = null
+  /** La zone qui se fait glisser, refaite à chaque image comme les autres. */
+  let zoneGlissante: { x: number; y: number; w: number; h: number } | null = null
   let onglet: Sorte = 'propulseur'
   /** LA VUE : le hangar (les pièces) ou L'ENTREPÔT (l'inventaire des ressources — Keko : « on en aura beaucoup à l'avenir »). */
   let vue: 'hangar' | 'entrepot' = 'hangar'
@@ -365,7 +378,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   /** La scène (le sol du hangar jusqu'au bas de l'aire) a UNE HAUTEUR FIXE, celle qu'elle avait au hangar avec trois jauges (Keko : « il ne faut pas que la hauteur de la zone supérieure change en fonction des éléments en dessous »). */
-  const hauteurDeScene = (): number => Math.max(120, Math.floor((H - 10 - 290) / 2) + 120)
+  const hauteurDeScene = (): number => Math.max(96, Math.min(Math.floor((H - 10 - 290) / 2) + 120, H - 243))
   /** La largeur de la bande des onglets, à gauche de la scène, où rien d'autre ne se dessine. */
   const BANDE = 52
   let hautScene = 178
@@ -606,62 +619,95 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = hautScene + 4
     if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
     else {
-    // les onglets, centrés
-    const largeurs = ONGLETS.map((o) => p.measure(nomDOnglet(o))[0] + 6)
-    let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (ONGLETS.length - 1) * 2) / 2)
-    ONGLETS.forEach((o, i) => {
-      const w = largeurs[i]
-      const actif = o === onglet
-      panel(p, x, y, w, 13, actif ? ENCRE_OR : ENCRE, { r: 2 })
-      p.text(nomDOnglet(o), x + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
-      if (!actif) zones.push({ x, y, w, h: 13, action: () => (onglet = o) })
-      x += w + 2
-    })
+    // LE SÉLECTEUR DE CATÉGORIE À FLÈCHES (Keko : « on aura plus de parties de vaisseau, sur une ligne ça ne logera
+    // pas ») : ‹ OUTILS › — autant de catégories qu'on veut ; une tape sur une flèche passe à la suivante
+    const io = ONGLETS.indexOf(onglet)
+    panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
+    p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+    bouton(p, 6, y + 1, 13, 11, '<', true, () => (onglet = ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
+    bouton(p, W - 19, y + 1, 13, 11, '>', true, () => (onglet = ONGLETS[(io + 1) % ONGLETS.length]))
     y += 15
-    // la liste des pièces de l'onglet
-    const liste = piecesDe(onglet)
-    const hl = liste.length * 13 + 4
+    // LES PUCES DE SOUS-CATÉGORIE (Keko : « sélectionner des sous-catégories, comme les foreuses / radars dans outils »)
+    const familles = famillesDe(onglet)
+    if (familles.length > 0) {
+      const puces: (string | null)[] = [null, ...familles]
+      const noms = puces.map((f) => (f === null ? 'TOUT' : (NOMS_FAMILLE[f] ?? f.toUpperCase())))
+      const largeurs = noms.map((n) => p.measure(n)[0] + 8)
+      let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (puces.length - 1) * 2) / 2)
+      puces.forEach((f, i) => {
+        const actif = sousCategorie[onglet] === f
+        panel(p, x, y, largeurs[i], 11, actif ? ENCRE_OR : ENCRE, { r: 2 })
+        p.text(noms[i], x + largeurs[i] / 2, y + 3, actif ? N.WHITE : COQUE[4], { align: 'center' })
+        if (!actif) {
+          zones.push({ x, y, w: largeurs[i], h: 11, action: () => ((sousCategorie[onglet] = f), (defil[onglet] = 0)) })
+        }
+        x += largeurs[i] + 2
+      })
+      y += 13
+    }
+    // LA LISTE, quatre rangées visibles, qui se fait glisser ; en tête, les places occupées / portées (Keko : pas dans
+    // les boutons) ; un ascenseur à droite quand elle déborde
+    const liste = listeVisible(onglet)
+    const hl = 9 + RANGEES * 13 + 3
     panel(p, 4, y, W - 8, hl, ENCRE, { r: 2 })
-    liste.forEach((pc, i) => {
-      const ly = y + 2 + i * 13
+    p.text(`${liste.length} ${liste.length > 1 ? 'PIECES' : 'PIECE'}`, 9, y + 3, COQUE[3])
+    if (onglet === 'outil' || onglet === 'arme') p.text(`PLACES ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W - 9, y + 3, PEPITE[3], { align: 'right' })
+    const maxDefil = Math.max(0, liste.length - RANGEES)
+    defil[onglet] = Math.max(0, Math.min(maxDefil, defil[onglet]))
+    const depart = Math.round(defil[onglet])
+    const yl = y + 9
+    zoneGlissante = maxDefil > 0 ? { x: 4, y: yl, w: W - 8, h: RANGEES * 13 } : null
+    for (let i = depart; i < Math.min(liste.length, depart + RANGEES); i++) {
+      const pc = liste[i]
+      const ly = yl + (i - depart) * 13
       const choisie = choix[onglet] === pc.id
       const montee = estMontee(hangar, pc.id)
       const aLui = possede(hangar, pc.id)
       if (choisie) {
-        p.rect(6, ly, W - 12, 13, COQUE[1], 0.9)
+        p.rect(6, ly, W - (maxDefil > 0 ? 18 : 12), 13, COQUE[1], 0.9)
         p.text('>', 9, ly + 3, PEPITE[3], { font: 'big' })
       }
       p.text(texteNu(pc.nom), 16, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3], { font: 'big' })
       const etat = montee ? 'MONTEE' : aLui ? 'POSSEDEE' : nommer(pc.prix)
-      p.text(texteNu(etat), W - 9, ly + 4, montee ? PEPITE[2] : aLui ? COQUE[4] : peutAcheter(hangar, tresor, pc.id) ? PEPITE[3] : COQUE[2], { align: 'right' })
+      p.text(texteNu(etat), W - (maxDefil > 0 ? 15 : 9), ly + 4, montee ? PEPITE[2] : aLui ? COQUE[4] : peutAcheter(hangar, tresor, pc.id) ? PEPITE[3] : COQUE[2], { align: 'right' })
       zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
-    })
+    }
+    if (maxDefil > 0) {
+      // l'ascenseur : la glissière, et le curseur long comme la part visible
+      const hg = RANGEES * 13 - 2
+      p.rect(W - 10, yl + 1, 3, hg, ENCRE.outline)
+      const hc = Math.max(6, Math.round((hg * RANGEES) / liste.length))
+      const yc = yl + 1 + Math.round(((hg - hc) * defil[onglet]) / maxDefil)
+      p.rect(W - 10, yc, 3, hc, COQUE[3])
+      p.rect(W - 10, yc, 3, 1, COQUE[5])
+    }
     y += hl + 3
-    // le panneau de description : le nom, les jauges, le bouton
-    const pc = pieceDe(choix[onglet]) ?? liste[0]
+    // LE PANNEAU DE DESCRIPTION, À HAUTEUR FIXE (cinq jauges au plus, le prix, le bouton) : le nom, les jauges, le bouton
+    const pc = pieceDe(choix[onglet]) ?? liste[0] ?? piecesDe(onglet)[0]
     const jauges = jaugesDe(pc)
     const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
     const aAcheter = !possede(hangar, pc.id)
-    const hd = 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 18
+    const JAUGES_MAX = 5
+    const hd = 16 + JAUGES_MAX * 10 + 11 + 18
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     p.text(texteNu(pc.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids'))
     if (aAcheter) {
-      // LE PRIX AVEC LE SOLDE (Keko : « quand on veut payer quelque chose, le solde s'affiche avec le prix ») : par minerai, l'icône, le prix / ce qu'on a — en or si ça suffit, en rouge sinon
-      const py = y + 16 + jauges.length * 10
+      // LE PRIX AVEC LE SOLDE (Keko) : par minerai, l'icône, le prix / ce qu'on a — en or si ça suffit, en rouge sinon
+      const py = y + 16 + JAUGES_MAX * 10
       p.text('PRIX', 10, py + 2, COQUE[4])
       let px = 66
       for (const k of MINERAIS) {
         if (pc.prix[k] <= 0) continue
         const assez = tresor[k] >= pc.prix[k]
-        dessinerUneRessource(p, px + 5, py + 4, k) // (le même symbole qu'à l'inventaire, à la même taille — Keko)
+        dessinerUneRessource(p, px + 5, py + 4, k)
         const mot = `${pc.prix[k]} / ${tresor[k]}`
         p.text(mot, px + 14, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
         px += 14 + p.measure(mot, { font: 'big' })[0] + 10
       }
     }
-    const by = y + 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 2
+    const by = y + 16 + JAUGES_MAX * 10 + 11 + 2
     const bw = 104
     if (estMontee(hangar, pc.id)) {
       if (pc.sorte === 'arme' || pc.sorte === 'outil') {
@@ -712,8 +758,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   racine.addEventListener('pointerdown', (ev) => {
     if (ecranVisible()) {
-      // l'écran en pixels : une tape sur une de ses zones
+      // l'écran en pixels : sur la liste, un glisser commence (la tape se décide au relâchement) ; ailleurs, une tape sur une zone
       const q = enTampon(ev.clientX, ev.clientY)
+      const g = zoneGlissante
+      if (g !== null && q.x >= g.x && q.x < g.x + g.w && q.y >= g.y && q.y < g.y + g.h) {
+        glisse = { x: q.x, y: q.y, defil0: defil[onglet], bouge: false }
+        return
+      }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
       if (z !== undefined) z.action()
       return
@@ -725,11 +776,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     manche = { id: ev.pointerId, centre: p, doigt: p }
   })
   racine.addEventListener('pointermove', (ev) => {
+    if (glisse !== null) {
+      // la liste suit le doigt, une rangée par 13 pixels de tampon
+      const q = enTampon(ev.clientX, ev.clientY)
+      if (Math.abs(q.y - glisse.y) > 2) glisse.bouge = true
+      defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
+      return
+    }
     if (manche === null || ev.pointerId !== manche.id) return
     const doigt = { x: ev.clientX, y: ev.clientY }
     manche = { id: manche.id, centre: suivre ? manche.centre : centreQuiSuit(MANCHE, manche.centre, doigt), doigt }
   })
   const lever = (ev: PointerEvent) => {
+    if (glisse !== null) {
+      // relâché sans avoir bougé : c'était une tape, sur la rangée touchée
+      if (!glisse.bouge) {
+        const q = glisse
+        const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
+        if (z !== undefined) z.action()
+      }
+      defil[onglet] = Math.round(defil[onglet])
+      glisse = null
+    }
     if (manche !== null && ev.pointerId === manche.id) manche = null
   }
   racine.addEventListener('pointerup', lever)
