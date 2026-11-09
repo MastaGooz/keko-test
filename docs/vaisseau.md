@@ -512,7 +512,10 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   dans la règle : accélération, vitesse, maniabilité ; blindage, bouclier,
   armes, poids ; forage, portée, aimant ; dégâts par seconde, par coup,
   portée) — des barres creuses pleines au maximum du catalogue, le poids en
-  rouge, et UN REPÈRE BLANC à la valeur de la pièce montée quand on en
+  rouge, **et DES CELLULES pour les quantités entières** (Keko : « des
+  jauges à cellules pour les éléments discrets : armes, PV… ») : une case
+  par point de blindage, de bouclier (cyan) et par arme, pleines jusqu'à la
+  valeur —, et UN REPÈRE BLANC à la valeur de la pièce montée quand on en
   regarde une autre, pour comparer d'un coup d'œil —, et le bouton qui va
   avec, en lettres en relief : ACHETER (une tape paie ET monte), MONTER,
   DEMONTER (une arme), COQUE PLEINE éteint, ou MONTEE sans bouton. *Choisir

@@ -66,7 +66,7 @@ verifier('relu : n’importe quoi donne un hangar neuf', JSON.stringify(lireHang
 verifier('relu : une pièce montée au mauvais emplacement redevient de série ; une arme non possédée tombe', monteeA(lireHangar({ possedees: ['foreuse-2'], montees: { propulseur: 'foreuse-2' } }), 'propulseur').cran === 1 && lireHangar({ armes: ['arme-canon'] }).armes.length === 0)
 verifier('relu : un hangar d’avant les armes (sans le champ) en a zéro', lireHangar({ possedees: ['propulseur-2'], montees: { propulseur: 'propulseur-2' } }).armes.length === 0)
 const jc = jaugesDe(PIECES.find((p) => p.id === 'coque-3')!)
-verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/2, armes 2/2, poids 1,1/1,3 ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}`).join(';') === 'Blindage 5/8;Bouclier 2/2;Armes 2/2;Poids 1.1/1.3' && PIECES.every((p) => jaugesDe(p).length >= 3 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
+verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/2, armes 2/2, poids 1,1/1,3 ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}${j.cellules ? '#' : ''}`).join(';') === 'Blindage 5/8#;Bouclier 2/2#;Armes 2/2#;Poids 1.1/1.3' && PIECES.every((p) => jaugesDe(p).length >= 3 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
 const tr = lireTresor({ fer: 7.9, or: -3, cristal: 'x', autre: 1 })
 verifier('le trésor relu : des entiers positifs, zéro sinon', tr.fer === 7 && tr.or === 0 && tr.cristal === 0 && lireTresor(undefined).fer === 0)
 

@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -368,17 +368,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       L.forEach((li, i) => p.text(li, W / 2, 18 + i * 7, COQUE[5], { align: 'center' }))
     }
   }
-  /** Une jauge du panneau : son nom à gauche, une barre creuse pleine au plus du catalogue, un repère blanc à la valeur de la pièce montée. */
-  function dessinerUneJaugeDePiece(p: Peintre, y: number, nom: string, part: number, repere: number | null, rouge: boolean): void {
-    p.text(texteNu(nom), 10, y + 1, COQUE[4])
+  /**
+   * Une jauge du panneau : son nom à gauche, puis — une quantité entière (points, armes) : DES CELLULES, une par unité,
+   * pleines jusqu'à la valeur (Keko : « des jauges à cellules pour les éléments discrets ») ; sinon une barre creuse
+   * pleine au plus du catalogue — et un repère blanc à la valeur de la pièce montée.
+   */
+  function dessinerUneJaugeDePiece(p: Peintre, y: number, j: Jauge, repere: number | null, rouge: boolean): void {
+    p.text(texteNu(j.nom), 10, y + 1, COQUE[4])
     const bx = 66
     const bw = W - 12 - bx
+    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : rouge ? ROUGE[3] : PEPITE[2]
+    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : PEPITE[3]
+    if (j.cellules) {
+      const n = Math.max(1, Math.round(j.max))
+      const lc = Math.floor((bw - (n - 1)) / n)
+      for (let i = 0; i < n; i++) {
+        const cx = bx + i * (lc + 1)
+        p.rect(cx, y, lc, 5, ENCRE.outline)
+        p.rect(cx + 1, y + 1, lc - 2, 3, COQUE[1])
+        if (i < Math.round(j.valeur)) {
+          p.rect(cx + 1, y + 1, lc - 2, 3, teinte)
+          p.rect(cx + 1, y + 1, lc - 2, 1, clair)
+        }
+      }
+      if (repere !== null) {
+        const k = Math.round(repere * n)
+        p.rect(bx + k * (lc + 1) - 1, y - 1, 1, 7, N.WHITE)
+      }
+      return
+    }
+    const part = j.valeur / j.max
     p.rect(bx, y, bw, 5, ENCRE.outline)
     p.rect(bx + 1, y + 1, bw - 2, 3, COQUE[1])
     const plein = Math.round((bw - 2) * Math.min(1, part))
     if (plein > 0) {
-      p.rect(bx + 1, y + 1, plein, 3, rouge ? ROUGE[3] : PEPITE[2])
-      p.rect(bx + 1, y + 1, plein, 1, rouge ? ROUGE[5] : PEPITE[3])
+      p.rect(bx + 1, y + 1, plein, 3, teinte)
+      p.rect(bx + 1, y + 1, plein, 1, clair)
     }
     if (repere !== null) p.rect(bx + 1 + Math.round((bw - 2) * Math.min(1, repere)) - 1, y - 1, 1, 7, N.WHITE)
   }
@@ -438,7 +463,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const hd = 16 + jauges.length * 10 + 18
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     p.text(texteNu(pc.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
-    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j.nom, j.valeur / j.max, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids'))
+    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids'))
     const by = y + 16 + jauges.length * 10 + 2
     const bw = 104
     if (estMontee(hangar, pc.id)) {
