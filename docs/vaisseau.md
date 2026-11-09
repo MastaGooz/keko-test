@@ -453,15 +453,20 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   quel*, sinon chaque achat l'aurait amélioré avec nous. La relecture tombe
   les pièces inconnues, garde toujours les séries, remet de série une pièce
   montée qu'on n'a pas.
-- **L'écran** : l'accueil (puis le bilan) porte le hangar dessous — l'APERÇU
-  du vaisseau tel que monté (le même dessin que dans le jeu, dans un tampon
-  de 40 px agrandi quatre fois : un entier, sinon les pixels bavent), le
-  trésor, un bloc par emplacement, trois pièces par bloc (montée, possédée :
-  une tape la monte ; à son prix : une tape l'achète ET la monte ; grisée si
-  le trésor n'y suffit pas), et le bouton « Décoller » — *le toucher
-  n'importe où ne décolle plus*, le hangar se touche. L'écran défile si le
-  téléphone est court. `&tresor=N` pose N fer de trésor pour essayer les
-  achats d'un lien.
+- **L'écran** : l'accueil (puis le bilan) porte le hangar dessous, EN
+  PIXELS (voir « Tout en pixels ») — l'APERÇU du vaisseau tel que monté (le
+  même dessin que dans le jeu, agrandi 2,5 fois par un peintre qui multiplie
+  les coordonnées locales, flamme allumée), le trésor, un bloc par
+  emplacement : **deux flèches feuillettent ses trois pièces** (180 px de
+  large ne tiennent pas trois pièces de front ; à l'ouverture, la montée), le
+  nom, ce qu'elle change, et son état — MONTEE, un bouton MONTER (possédée),
+  ou son prix en bouton, allumé si le trésor y suffit (une tape l'achète ET
+  la monte) —, puis le bouton « Décoller » : *le toucher n'importe où ne
+  décolle plus*, le hangar se touche. Le bloc se centre sur la hauteur qu'il
+  a prise à l'image d'avant (une passe, pas deux). *La première écriture
+  était en HTML (des boutons, du CSS) : Keko l'a refusée le jour même —
+  « je ne veux plus un seul élément non pixel ».* `&tresor=N` pose N fer de
+  trésor pour essayer les achats d'un lien.
 - **Les pièces se voient en vol** : le propulseur élargit la tuyère et
   allonge la flamme à chaque cran, bleue au troisième (ionique) ; la foreuse
   grossit le dôme et le canon, une arête claire au deuxième, un liseré rouge
@@ -470,6 +475,41 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - **Chaque décollage refait la configuration des pièces montées** et un
   monde neuf ; le trésor se sauve à l'extraction même, pas à la fin de
   l'écran.
+
+## Tout en pixels (Keko, 09/11 : « je ne veux plus un seul élément non pixel »)
+
+- **Il n'y a plus qu'un canvas.** L'accueil, le bilan, le hangar, le manche
+  et la date du build sont dessinés dans le tampon du jeu, avec le peintre
+  de pixelfx : plus de surcouche, plus d'écran HTML, plus de pied de page.
+- **La police est celle du dépôt** (`font.js` : mini 3 × 5, big 5 × 7),
+  des CAPITALES SANS ACCENTS — un signe qu'elle n'a pas serait une espace.
+  `texteNu` ramène tout texte à ce qu'elle sait écrire (les accents tombent,
+  les apostrophes typographiques et les tirets longs se simplifient, les
+  guillemets partent) : « Décoller » → « DECOLLER ». *Des capitales sans
+  accents sont l'usage des jeux en pixels ; des accents sur 5 px de haut ne
+  tiendraient pas.* L'accueil a été raccourci pour tenir dans 180 px.
+- **L'écran** : un voile (`rect` à 0,72 sur tout le tampon : tramé, comme
+  tout alpha du peintre — les lumières du jeu passent au travers, c'est
+  bien), le titre en grande police (×2 s'il tient dans la largeur, sinon
+  ×1), un paragraphe replié à la mesure (`measure`), le hangar, « Décoller »
+  (un cadre d'or qui respire d'une lueur), la date du build en bas à droite
+  en petite police. Les compteurs et les cases de coque ne se dessinent pas
+  sous le voile.
+- **Les boutons sont des zones** : chaque image dessinée refait la liste des
+  rectangles touchables (en pixels du tampon, avec leur action) ; un
+  `pointerdown` quand l'écran est là se convertit en pixels du tampon
+  (`enTampon`, par le rectangle du canvas et le zoom) et touche la première
+  zone qui le contient — rien d'autre ne se passe sur l'écran. Un bouton
+  éteint (gris) ne pose pas de zone. Les cadres : fond sombre translucide,
+  bord d'un pixel, coins coupés — l'écriture de `panel` des effets `ui/` du
+  dépôt, en plus simple.
+- **Le manche en pixels** : l'anneau au centre posé (rayon 56 px d'écran,
+  donc 56 ÷ zoom pixels du tampon), un disque sombre tramé dessous, le pouce
+  blanc opaque vers le doigt ; `&controle=suivre` : un anneau sous le doigt.
+- **Le zoom vient aussi de la hauteur** : l'écran veut 320 px de tampon ;
+  sur un PC en 1 080 de haut, le zoom passe de 6 à 3 (la scène est plus
+  petite à l'écran, mais l'accueil et le hangar tiennent). Le téléphone ne
+  change pas (zoom 2, 422 px de tampon).
 
 ## Ce qui reste à faire
 

@@ -36,6 +36,8 @@ type Peintre = {
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number | ((u: number, v: number) => number), a?: number): void
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
+  rect(x: number, y: number, w: number, h: number, c: number, a?: number): void
+  measure(texte: string, o?: { font?: string; scale?: number }): [number, number]
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
   glow(x: number, y: number, r: number, c: number, k?: number): void
 }
@@ -87,12 +89,18 @@ const TEINTES_STATION = {
 /** L'explosion d'un vaisseau : celle du dépôt sans son sol, à la taille du vaisseau (Keko : « l'effet nommé Explosion en version sans sol et à la taille du vaisseau ») ; le rival en rouge, ses morceaux de sa coque. */
 const EXPLOSION_RIVAL = ['#3a0a12', '#a01030', '#e0304a', '#ff6a5a', '#ffa080', '#ffd0b0', '#ffe8dc', '#ffffff']
 const FOND = N.hex('#07060f')
+/**
+ * Le texte pour la police en pixels du dépôt (3 × 5 et 5 × 7, des capitales sans accents) : « Décoller » → « DECOLLER ».
+ * Un signe qu'elle n'a pas serait une espace.
+ */
+const texteNu = (s: string): string => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'").replace(/[—–]/g, '-').replace(/[«»"]/g, '').toUpperCase()
+/** L'accueil, court : tout l'écran est en pixels et tient dans 180 px de large. */
+const INTRO = 'Posez le doigt : un manche pousse le vaisseau, relachez, il glisse. Le foreur du toit creuse seul la roche la plus proche, les pepites viennent a vous. Le fer est dans la roche grise, l’or dans l’ocre, le cristal dans la bleutee, loin des stations. Le minerai reste a bord et se perd avec la coque : seule l’extraction le met a l’abri, dix secondes dans la zone d’une station (la fleche jaune). Le minerai extrait achete des pieces au hangar.'
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
 export function monterVaisseau(racine: HTMLElement, build: string): void {
   document.documentElement.classList.add('vaisseau-page')
   racine.classList.add('vaisseau')
-  const dpr = Math.min(2, window.devicePixelRatio || 1)
   const parametres = new URLSearchParams(location.search)
   const suivre = parametres.get('controle') === 'suivre'
   /** `&minerai=N` : part avec N pepites a bord, pour voir le compteur sans miner (ce qui se teste doit s'ouvrir d'un lien). */
@@ -112,37 +120,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La configuration du vaisseau du joueur : celle de série passée par les pièces montées — refaite à chaque décollage. */
   let CONF: ConfigVaisseau = configDuHangar(BASE, hangar)
 
-  function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe: string, texte = ''): HTMLElementTagNameMap[K] {
-    const n = document.createElement(tag)
-    n.className = classe
-    n.textContent = texte
-    return n
-  }
-  const scene = el('div', 'vaisseau-scene')
+  const scene = document.createElement('div')
+  scene.className = 'vaisseau-scene'
   const canvas = document.createElement('canvas')
   canvas.className = 'vaisseau-canvas'
   canvas.width = W
   canvas.height = H
   const g = canvas.getContext('2d')!
   scene.append(canvas)
-  const surcouche = document.createElement('canvas')
-  surcouche.className = 'vaisseau-surcouche'
-  const gs = surcouche.getContext('2d')!
-  const ecran = el('div', 'vaisseau-ecran')
-  const contenu = el('div', 'vaisseau-ecran-contenu')
-  /** L'en-tête de l'écran : le titre et le texte (l'accueil, puis le bilan de l'expédition) ; le hangar et le bouton restent dessous. */
-  const enTete = el('div', 'vaisseau-entete')
-  enTete.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Trois minerais — le fer dans la roche grise, l’or dans l’ocre, le cristal dans la bleutée — et leurs veines et pépites disent la richesse de la roche ; l’or et le cristal sont loin des stations. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Le minerai extrait achète des pièces au hangar, ci-dessous. Au clavier : les flèches ou ZQSD.'))
-  const panneau = el('div', 'vaisseau-hangar')
-  const decoller = el('button', 'vaisseau-decoller', 'Décoller')
-  decoller.type = 'button'
-  contenu.append(enTete, panneau, decoller)
-  ecran.append(contenu)
-  // le hangar se touche : ses touchers ne décollent pas, le bouton seul le fait
-  ecran.addEventListener('pointerdown', (ev) => ev.stopPropagation())
-  decoller.addEventListener('click', () => demarrer())
-  const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
-  racine.append(scene, surcouche, ecran, pied)
+  racine.append(scene)
+  /**
+   * L'ÉCRAN (l'accueil, le bilan, le hangar) EST EN PIXELS, dans le même tampon que le jeu (Keko, 09/11 : « je ne veux
+   * plus un seul élément non pixel ») : un titre, un texte, puis le hangar et « Décoller » ; ses zones touchables sont
+   * refaites à chaque image dessinée, en pixels du tampon.
+   */
+  let titre = 'LE VAISSEAU'
+  let texte = INTRO
+  let zones: { x: number; y: number; w: number; h: number; action: () => void }[] = []
 
   // ---------------------------------------------------------------- l'état
   /** `&quai` : le compte de l'extraction court dès le départ, sans sortir du parvis — pour juger l'arc d'un lien. */
@@ -188,8 +182,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const camera = { x: 0, y: 0 }
 
   function cadrer(): void {
-    // le zoom vient de la largeur ; la hauteur du tampon est celle de l'écran à ce zoom, bornée (480 px de tampon au plus)
-    zoom = Math.max(1, Math.min(6, Math.floor(racine.clientWidth / W)))
+    // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
+    // tampon — sur un PC en 1080 de haut, 3 plutôt que 6 ; la hauteur du tampon est celle de l'écran à ce zoom, bornée à 480
+    zoom = Math.max(1, Math.min(6, Math.floor(racine.clientWidth / W), Math.floor(racine.clientHeight / 320)))
     const h = Math.max(120, Math.min(480, Math.ceil(racine.clientHeight / zoom)))
     if (h !== H || canvas.height !== h) {
       H = h
@@ -199,8 +194,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     canvas.style.width = `${W * zoom}px`
     canvas.style.height = `${H * zoom}px`
-    surcouche.width = Math.round(racine.clientWidth * dpr)
-    surcouche.height = Math.round(racine.clientHeight * dpr)
   }
 
   // ---------------------------------------------------------------- le manche (celui du survivor)
@@ -230,73 +223,146 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     camera.x = 0
     camera.y = 0
     enJeu = true
-    ecran.hidden = true
     // L'ARRIVÉE (Keko : « une animation de téléportation aussi au début, comme si le vaisseau était téléporté sur
     // l'extracteur ») : la matérialisation à la place du vaisseau, qui n'apparaît qu'à son ouverture
     arriveA = t
     effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
   }
 
-  // ---------------------------------------------------------------- le hangar
-  const NOMS_EMPLACEMENT: Record<Emplacement, string> = { propulseur: 'Propulseur', foreuse: 'Foreuse' }
+  // ---------------------------------------------------------------- le hangar, en pixels
+  const NOMS_EMPLACEMENT: Record<Emplacement, string> = { propulseur: 'PROPULSEUR', foreuse: 'FOREUSE' }
   /** Les crans des pièces montées, lus par le dessin du vaisseau (le rival est de série). */
   type Crans = { propulseur: number; foreuse: number }
   const CRANS_SERIE: Crans = { propulseur: 1, foreuse: 1 }
   const cransMontes = (): Crans => ({ propulseur: monteeA(hangar, 'propulseur').cran, foreuse: monteeA(hangar, 'foreuse').cran })
-  /** L'APERÇU du vaisseau au hangar : le même dessin que dans le jeu, dans un petit tampon, avec les pièces montées, la flamme allumée. */
-  const APERCU = 40 // (agrandi quatre fois par le CSS : un entier, sinon les pixels bavent)
-  const apercu = document.createElement('canvas')
-  apercu.className = 'vaisseau-apercu'
-  apercu.width = APERCU
-  apercu.height = APERCU
-  const ga = apercu.getContext('2d')!
-  const cadreApercu = N.createFrame(APERCU, APERCU)
-  const imgApercu = ga.createImageData(APERCU, APERCU)
-  function dessinerLApercu(): void {
-    N.clearFrame(cadreApercu)
-    const p = N.painterFor(cadreApercu)
-    dessinerVaisseauA(p, APERCU / 2, APERCU / 2 + 3, -Math.PI / 2, 0.55 + 0.1 * Math.sin(t * 5), COQUE, VERRIERE, 0, false, cransMontes())
-    N.composite(cadreApercu, imgApercu.data, null)
-    ga.putImageData(imgApercu, 0, 0)
+  /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
+  const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
+  let ecranEtait = false
+  /** La hauteur que l'écran a prise à la dernière image : il se centre dessus à la suivante (une passe, pas deux). */
+  let hauteurEcran = 300
+  /** La pièce que chaque emplacement MONTRE au hangar : on feuillette avec les flèches (180 px de large ne tiennent pas trois pièces de front) ; à l'ouverture, la montée. */
+  const feuillete: Record<Emplacement, number> = { propulseur: 0, foreuse: 0 }
+  function ouvrirLeHangar(): void {
+    for (const e of EMPLACEMENTS) feuillete[e] = Math.max(0, piecesDe(e).findIndex((pc) => pc.id === hangar.montees[e]))
   }
-  /**
-   * Le hangar : l'aperçu, le trésor, puis chaque emplacement et ses trois pièces — montée, possédée (une tape la monte),
-   * ou à son prix (une tape l'achète ET la monte ; grisée si le trésor n'y suffit pas). Tout se sauve à chaque geste.
-   */
-  function montrerLeHangar(): void {
-    panneau.replaceChildren(apercu, el('p', 'vaisseau-tresor', `Trésor : ${nommer(tresor)}`))
-    for (const e of EMPLACEMENTS) {
-      const bloc = el('div', 'vaisseau-emplacement')
-      bloc.append(el('h2', '', NOMS_EMPLACEMENT[e]))
-      const rangee = el('div', 'vaisseau-pieces')
-      for (const pc of piecesDe(e)) {
-        const b = el('button', 'vaisseau-piece')
-        b.type = 'button'
-        const montee = hangar.montees[e] === pc.id
-        const aLui = possede(hangar, pc.id)
-        b.classList.toggle('montee', montee)
-        b.classList.toggle('possedee', aLui)
-        b.disabled = !aLui && !peutAcheter(hangar, tresor, pc.id)
-        b.append(el('strong', '', pc.nom), el('span', 'vaisseau-piece-dit', pc.dit), el('span', 'vaisseau-piece-etat', montee ? 'Montée' : aLui ? 'Monter' : nommer(pc.prix)))
-        b.addEventListener('click', () => {
-          if (aLui) hangar = monter(hangar, pc.id)
-          else {
-            const r = acheter(hangar, tresor, pc.id)
-            if (r === null) return
-            hangar = r.hangar
-            tresor = r.tresor
-          }
-          sauverHangar(hangar, tresor)
-          montrerLeHangar()
-        })
-        rangee.append(b)
+  const OR_SOMBRE = N.hex('#3a2a06')
+  /** Un cadre en pixels : un fond sombre translucide, un bord d'un pixel, les coins coupés. */
+  function cadre(p: Peintre, x: number, y: number, w: number, h: number, bord: number, fond = COQUE[0], a = 0.85): void {
+    p.rect(x + 1, y + 1, w - 2, h - 2, fond, a)
+    p.line(x + 1, y, x + w - 2, y, bord)
+    p.line(x + 1, y + h - 1, x + w - 2, y + h - 1, bord)
+    p.line(x, y + 1, x, y + h - 2, bord)
+    p.line(x + w - 1, y + 1, x + w - 1, y + h - 2, bord)
+  }
+  /** Un bouton : un cadre et son mot ; `vif` l'allume (or) et le rend touchable, éteint il est gris et ne fait rien. */
+  function bouton(p: Peintre, x: number, y: number, w: number, h: number, mot: string, vif: boolean, action: () => void, grand = false): void {
+    cadre(p, x, y, w, h, vif ? PEPITE[2] : COQUE[2], vif ? OR_SOMBRE : COQUE[0], 0.9)
+    p.text(texteNu(mot), x + w / 2, y + Math.floor((h - (grand ? 7 : 5)) / 2), vif ? N.WHITE : COQUE[3], { font: grand ? 'big' : 'mini', align: 'center' })
+    if (vif) zones.push({ x, y, w, h, action })
+  }
+  /** Un paragraphe en petite police, replié à `largeur`, centré sur x ; rend la hauteur prise. */
+  function paragraphe(p: Peintre, s: string, x: number, y: number, largeur: number, c: number): number {
+    const lignes: string[] = []
+    let l = ''
+    for (const mot of texteNu(s).split(' ')) {
+      const essai = l === '' ? mot : `${l} ${mot}`
+      if (l === '' || p.measure(essai)[0] <= largeur) l = essai
+      else {
+        lignes.push(l)
+        l = mot
       }
-      bloc.append(rangee)
-      panneau.append(bloc)
+    }
+    if (l !== '') lignes.push(l)
+    lignes.forEach((li, i) => p.text(li, x, y + i * 7, c, { align: 'center' }))
+    return lignes.length * 7
+  }
+  /** Le même peintre, les coordonnées locales multipliées par k (l'ancre de `place` ne l'est pas) : l'aperçu du vaisseau en grand. */
+  function agrandi(p: Peintre, k: number): Peintre {
+    return {
+      ...p,
+      place: (x, y, flip, angle) => p.place(x, y, flip, angle),
+      px: (x, y, c) => p.rect(x * k, y * k, k, k, c),
+      dot: (x, y, c, a) => p.rect(Math.round(x * k - k / 2), Math.round(y * k - k / 2), k, k, c, a),
+      circle: (x, y, r, c, a) => p.circle(x * k, y * k, r * k, c, a),
+      ring: (x, y, r, w, c, a) => p.ring(x * k, y * k, r * k, w * k, c, a),
+      poly: (pts, c, a) => p.poly(pts.map(([x, y]) => [x * k, y * k]), c, a),
+      line: (x0, y0, x1, y1, c, a) => p.line(x0 * k, y0 * k, x1 * k, y1 * k, c, a),
+      glow: (x, y, r, c, kk) => p.glow(x * k, y * k, r * k, c, kk),
     }
   }
+  /**
+   * L'écran en pixels : le voile, le titre, le texte, l'aperçu du vaisseau tel que monté (agrandi 2,5 fois, flamme
+   * allumée), le trésor, puis chaque emplacement — flèches pour feuilleter, le nom de la pièce montrée, ce qu'elle
+   * change, et son état : MONTEE, un bouton MONTER (possédée), ou son prix en bouton (allumé si le trésor y suffit : une
+   * tape l'achète ET la monte). « Décoller » en bas, la date du build tout en bas. Tout se sauve à chaque geste.
+   */
+  function dessinerLEcran(p: Peintre): void {
+    zones = []
+    p.place(0, 0)
+    p.rect(0, 0, W, H, FOND, 0.72)
+    const y0 = Math.max(6, Math.floor((H - 8 - hauteurEcran) / 2))
+    let y = y0
+    const k = p.measure(titre, { font: 'big' })[0] * 2 <= W - 8 ? 2 : 1
+    p.text(titre, W / 2, y, COQUE[4], { font: 'big', scale: k, align: 'center', outline: COQUE[0] })
+    y += 7 * k + 6
+    y += paragraphe(p, texte, W / 2, y, W - 12, COQUE[5]) + 4
+    // l'aperçu
+    const K = 2.5
+    dessinerVaisseauA(agrandi(p, K), W / 2, y + 14, -Math.PI / 2, 0.35 + 0.08 * Math.sin(t * 5), COQUE, VERRIERE, 0, false, cransMontes())
+    y += 60
+    p.text(texteNu(`Tresor : ${nommer(tresor)}`), W / 2, y, PEPITE[2], { align: 'center' })
+    y += 10
+    for (const e of EMPLACEMENTS) {
+      const liste = piecesDe(e)
+      const i = feuillete[e]
+      const pc = liste[i]
+      p.text(NOMS_EMPLACEMENT[e], 8, y, COQUE[4], { font: 'big' })
+      p.line(8 + p.measure(NOMS_EMPLACEMENT[e], { font: 'big' })[0] + 4, y + 4, W - 8, y + 4, COQUE[2])
+      y += 10
+      bouton(p, 8, y - 1, 13, 13, '<', i > 0, () => (feuillete[e] = i - 1))
+      bouton(p, W - 21, y - 1, 13, 13, '>', i < liste.length - 1, () => (feuillete[e] = i + 1))
+      const montee = hangar.montees[e] === pc.id
+      p.text(texteNu(pc.nom), W / 2, y + 3, montee ? N.WHITE : COQUE[5], { align: 'center' })
+      y += 15
+      y += paragraphe(p, pc.dit, W / 2, y, W - 44, COQUE[3]) + 3
+      if (montee) p.text('MONTEE', W / 2, y + 3, PEPITE[2], { align: 'center' })
+      else if (possede(hangar, pc.id)) {
+        bouton(p, W / 2 - 30, y, 60, 11, 'MONTER', true, () => {
+          hangar = monter(hangar, pc.id)
+          sauverHangar(hangar, tresor)
+        })
+      } else {
+        bouton(p, W / 2 - 30, y, 60, 11, nommer(pc.prix), peutAcheter(hangar, tresor, pc.id), () => {
+          const r = acheter(hangar, tresor, pc.id)
+          if (r === null) return
+          hangar = r.hangar
+          tresor = r.tresor
+          sauverHangar(hangar, tresor)
+        })
+      }
+      y += 17
+    }
+    // Décoller : un bouton d'or qui respire
+    const respire = 0.6 + 0.4 * Math.sin(t * 4)
+    p.glow(W / 2, y + 8, 34, PEPITE[2], 0.2 * respire)
+    bouton(p, W / 2 - 40, y, 80, 17, 'Decoller', true, () => demarrer(), true)
+    hauteurEcran = y + 17 - y0
+    // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
+    p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
+  }
+  /** Un point de l'écran en pixels du tampon. */
+  const enTampon = (x: number, y: number): Vecteur => {
+    const r = canvas.getBoundingClientRect()
+    return { x: (x - r.left) / zoom, y: (y - r.top) / zoom }
+  }
   racine.addEventListener('pointerdown', (ev) => {
-    demarrer()
+    if (ecranVisible()) {
+      // l'écran en pixels : une tape sur une de ses zones
+      const q = enTampon(ev.clientX, ev.clientY)
+      const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
+      if (z !== undefined) z.action()
+      return
+    }
     if (manche !== null) return
     ev.preventDefault()
     racine.setPointerCapture(ev.pointerId)
@@ -680,35 +746,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
-  function dessinerLeManche(): void {
-    gs.clearRect(0, 0, surcouche.width, surcouche.height)
+  /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
+  function dessinerLeManche(p: Peintre): void {
     if (manche === null) return
-    const r = C.manche.rayon * dpr
+    p.place(0, 0)
+    const r = C.manche.rayon / zoom
+    const doigt = enTampon(manche.doigt.x, manche.doigt.y)
     if (suivre) {
-      gs.strokeStyle = 'rgba(255, 255, 255, 0.5)'
-      gs.lineWidth = 2 * dpr
-      gs.beginPath()
-      gs.arc(manche.doigt.x * dpr, manche.doigt.y * dpr, 18 * dpr, 0, Math.PI * 2)
-      gs.stroke()
+      p.ring(doigt.x, doigt.y, 18 / zoom, 1, N.WHITE, 0.5)
       return
     }
-    const x = manche.centre.x * dpr
-    const y = manche.centre.y * dpr
-    gs.fillStyle = 'rgba(0, 0, 0, 0.25)'
-    gs.strokeStyle = 'rgba(255, 255, 255, 0.45)'
-    gs.lineWidth = 2.5 * dpr
-    gs.beginPath()
-    gs.arc(x, y, r, 0, Math.PI * 2)
-    gs.fill()
-    gs.stroke()
+    const centre = enTampon(manche.centre.x, manche.centre.y)
+    p.circle(centre.x, centre.y, r, COQUE[0], 0.25)
+    p.ring(centre.x, centre.y, r, 1, COQUE[4]) // (opaque : tramé, l'anneau faisait du bruit)
     const dx = manche.doigt.x - manche.centre.x
     const dy = manche.doigt.y - manche.centre.y
     const d = Math.hypot(dx, dy)
     const k = d > C.manche.rayon ? C.manche.rayon / d : 1
-    gs.fillStyle = 'rgba(255, 255, 255, 0.7)'
-    gs.beginPath()
-    gs.arc(x + dx * k * dpr, y + dy * k * dpr, r * 0.42, 0, Math.PI * 2)
-    gs.fill()
+    p.circle(centre.x + (dx * k) / zoom, centre.y + (dy * k) / zoom, r * 0.42, COQUE[6])
   }
 
   // ---------------------------------------------------------------- la boucle
@@ -798,7 +853,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
               tresor = { ...m.tresor }
               sauverHangar(hangar, tresor)
-              enTete.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `Extrait : ${nommer(ev.cargaison)}. Le trésor, toutes expéditions : ${nommer(m.tresor)} — il achète des pièces au hangar, ci-dessous. Décoller ouvre une nouvelle expédition.`))
+              titre = 'EXPEDITION ACHEVEE'
+              texte = `Extrait : ${nommer(ev.cargaison)}. Le tresor, toutes expeditions : ${nommer(m.tresor)}. Il achete des pieces au hangar. Decoller ouvre une nouvelle expedition.`
               break
             }
             case 'perdu': {
@@ -812,7 +868,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              enTete.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `Perdu avec la coque : ${nommer(m.cargaison)} — seule l’extraction les aurait mis à l’abri. Le trésor (${nommer(m.tresor)}) et les pièces du hangar restent. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit ; chargé, il fuit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`))
+              titre = 'COQUE PERCEE'
+              texte = `Perdu avec la coque : ${nommer(m.cargaison)}. Seule l’extraction les aurait mis a l’abri. Le tresor (${nommer(m.tresor)}) et les pieces du hangar restent. Le rival rode toujours : il tire des qu’il vous voit, et fuit une fois charge.`
               break
             }
             default:
@@ -912,24 +969,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesStations(p)
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
-    if (m.phase !== 'vol' && ecran.hidden && t - perduA > (m.phase === 'extrait' ? 1.7 : 1)) {
-      montrerLeHangar()
-      ecran.hidden = false
-    }
     dessinerLesTirs(p)
     dessinerLesLasers(p)
     dessinerLePointeur(p)
-    dessinerLeScore(p)
+    if (!ecranVisible()) dessinerLeScore(p) // (sous l'écran, pas de compteurs)
     for (const e of effets) e.fx.draw(frame)
+    // l'écran en pixels par-dessus le jeu quand rien ne vole (le hangar s'ouvre sur la pièce montée), puis le manche
+    const visible = ecranVisible()
+    if (visible && !ecranEtait) ouvrirLeHangar()
+    ecranEtait = visible
+    if (visible) dessinerLEcran(p)
+    dessinerLeManche(p)
     N.composite(frame, img.data, FOND)
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
     canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
-    dessinerLeManche()
-    if (!ecran.hidden) dessinerLApercu()
     requestAnimationFrame(image)
   }
-  montrerLeHangar()
+  ouvrirLeHangar()
   cadrer()
   new ResizeObserver(cadrer).observe(racine)
   requestAnimationFrame(image)
