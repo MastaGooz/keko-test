@@ -354,7 +354,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * largeur et hauteur une fois le nez en haut, pour remplir `bw` × `bh` à trois pixels du bord.
    */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 13] : pc.sorte === 'coque' ? [14, 14] : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
+    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 13] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
     const k = Math.max(1, Math.floor(Math.min((bw - 6) / ew, (bh - 6) / eh) * 2) / 2)
     const q = agrandi(p, k)
     q.place(x, y, false, -Math.PI / 2)
@@ -376,7 +376,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       q.poly(forme, peau[4])
       q.poly(forme.map(([fx, fy]) => [fx * 0.75 + 0.5, fy * 0.6]), peau[5])
       if (pc.cran === 2) for (const [rx, ry] of [[3, -1.2], [3, 1.2], [-1.5, -2], [-1.5, 2], [-4, -1.2], [-4, 1.2]]) q.dot(rx, ry, peau[1])
-      if (pc.cran === 3) q.ring(0, 0, 8.5, 1, VERRIERE[2], 0.6)
+      if (pc.cran === 3) q.ring(0, 0, 8, 1, VERRIERE[2], 0.6) // (l'anneau compte dans l'encombrement : il débordait de la case)
     } else if (pc.sorte === 'outil' && pc.famille === 'foreuse') {
       const cf = pc.cran
       const dome = 2.1 + 0.4 * (cf - 1)
@@ -725,9 +725,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE BOUTON, ENTRE LA LISTE ET LES STATS (Keko) : ACHETER (une tape paie ET équipe), EQUIPER, RETIRER, PLACES
     // PLEINES éteint, ou EQUIPE sans bouton
     const pc = pieceDe(choix[onglet]) ?? liste[0] ?? piecesDe(onglet)[0]
-    const bw = 104
+    // le bouton à la largeur de son mot, plus huit pixels de chaque côté (Keko : trop large pour « Équiper »)
+    const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 16
     if (estMontee(hangar, pc.id)) {
       if (pc.sorte === 'arme' || pc.sorte === 'outil') {
+        const bw = largeurDe('Retirer')
         bouton(p, W / 2 - bw / 2, y, bw, 13, 'Retirer', true, () => {
           hangar = demonter(hangar, pc.id)
           sauver()
@@ -735,11 +737,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       } else motEnRelief(p, 'Equipe', W / 2, y + 3, 1, true)
     } else if (possede(hangar, pc.id)) {
       const place = peutMonter(hangar, pc.id)
+      const bw = largeurDe(place ? 'Equiper' : 'Places pleines')
       bouton(p, W / 2 - bw / 2, y, bw, 13, place ? 'Equiper' : 'Places pleines', place, () => {
         hangar = monter(hangar, pc.id)
         sauver()
       }, true)
     } else {
+      const bw = largeurDe(`Acheter ${nommer(pc.prix)}`)
       bouton(p, W / 2 - bw / 2, y, bw, 13, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
         const r = acheter(hangar, tresor, pc.id)
         if (r === null) return
