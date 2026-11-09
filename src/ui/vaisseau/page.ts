@@ -702,13 +702,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LA LISTE, quatre rangées visibles, qui se fait glisser ; en tête, les places occupées / portées (Keko : pas dans
     // les boutons) ; un ascenseur à droite quand elle déborde
     const liste = listeVisible(onglet)
-    const hl = 9 + RANGEES * 13 + 3
+    const hl = RANGEES * 13 + 4
     panel(p, 4, y, W - 8, hl, ENCRE, { r: 2 })
-    if (onglet === 'outil' || onglet === 'arme') p.text(`PLACES ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W - 9, y + 3, PEPITE[3], { align: 'right' })
     const maxDefil = Math.max(0, liste.length - RANGEES)
     defil[onglet] = Math.max(0, Math.min(maxDefil, defil[onglet]))
     const depart = Math.round(defil[onglet])
-    const yl = y + 9
+    const yl = y + 2
     zoneGlissante = maxDefil > 0 ? { x: 4, y: yl, w: W - 8, h: RANGEES * 13 } : null
     for (let i = depart; i < Math.min(liste.length, depart + RANGEES); i++) {
       const pc = liste[i]
@@ -741,6 +740,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE BOUTON, ENTRE LA LISTE ET LES STATS (Keko) : ACHETER (une tape paie ET équipe), EQUIPER, RETIRER, PLACES
     // PLEINES éteint, ou EQUIPE sans bouton
     const pc = pieceDe(choix[onglet]) ?? liste[0] ?? piecesDe(onglet)[0]
+    // les places occupées / portées, à droite de la ligne du bouton (Keko : « plutôt sur la ligne du bouton équiper »)
+    if (onglet === 'outil' || onglet === 'arme') p.text(`PLACES ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W - 9, y + 4, PEPITE[3], { align: 'right' })
     // le bouton à la largeur de son mot, plus huit pixels de chaque côté (Keko : trop large pour « Équiper »)
     const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 16
     if (estMontee(hangar, pc.id)) {
