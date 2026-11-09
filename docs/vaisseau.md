@@ -460,11 +460,24 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
     ou choc), et se recharge de 0,5 point par seconde passé 4 s sans coup
     (`bouclier: { points, delai, regain }`) ; un anneau cyan autour du
     vaisseau tant qu'il en reste, des cases cyan à gauche de la coque.
-  - FOREUSE (débit, portée, aimant) : de série ; lourde 10 fer (débit ×1,4,
-    aimant ×1,25) ; à long faisceau 28 fer (×1,8, portée ×1,25, aimant ×1,6).
+  - OUTILS, autant que la coque en porte (Keko, 09/11 : « et si on changeait
+    l'emplacement de la foreuse pour un emplacement utilitaire ? la foreuse,
+    ou à la place un radar qui détecte les ennemis si le joueur veut
+    chasser, ou d'autres outils ») : de série un outil (blindée un, à
+    bouclier deux). LES FOREUSES : de série ; lourde 10 fer (débit ×1,4,
+    aimant ×1,25) ; longue 28 fer (×1,8, portée ×1,25, aimant ×1,6) — *une
+    foreuse chasse la foreuse* (`famille`) : acheter la lourde la monte à la
+    place de celle de série, même sans place libre ; la meilleure montée
+    compte, sans foreuse on NE CREUSE PAS (débit et portée nuls, l'aimant de
+    série pour ramasser le butin du rival). LE RADAR 16 fer : à 600 unités,
+    le rival hors de l'écran est désigné par une flèche rouge au bord, qui
+    bat (`radar.portee` dans la configuration, lu par la page) — *le
+    chasseur démonte sa foreuse, prend le radar et vit du butin du rival*.
     `foreuse: { debit, portee, aimant }` ne porte que sur le foreur et
     l'aimant DU JOUEUR : *le rival creuse avec `forage` tel quel*, sinon
-    chaque achat l'aurait amélioré avec nous.
+    chaque achat l'aurait amélioré avec nous. Sur le vaisseau : sans
+    foreuse, pas de foreur sur le toit ; le radar est un mât à l'arrière
+    avec une antenne qui tourne et un point vert qui bat.
   - ARMES, autant que la coque en porte (deux au plus, `ARMES_MAX`), aucune
     de série : canon 12 fer (un
     obus toutes les 1,1 s, 6 points, porte à 120) ; mitrailleuse 22 fer
@@ -505,8 +518,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   du vaisseau ») : la scène fait 120 px de tampon, le vaisseau est agrandi
   deux fois (trois avant), et le bloc scène + interface se centre sur la
   hauteur de l'interface mesurée à l'image d'avant, le sol du hangar montant
-  jusqu'au bord. Le trésor ; QUATRE ONGLETS (propulseur, coque, foreuse,
-  armes) ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une ligne de 13 px
+  jusqu'au bord. Le trésor ; QUATRE ONGLETS (propulseur, coque, outils,
+  armes — **OUTILS et ARMES disent leurs places, occupées / portées**,
+  « OUTILS 1/2 », Keko : « ce n'est pas lisible ») ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une ligne de 13 px
   chacune — le nom en grande police, et à droite MONTEE, POSSEDEE ou le
   prix, doré si le trésor y suffit —, la choisie surlignée d'un chevron ;
   puis LE PANNEAU DE DESCRIPTION (Keko : « un vrai panneau de description
@@ -522,7 +536,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   valeur —, et UN REPÈRE BLANC à la valeur de la pièce montée quand on en
   regarde une autre, pour comparer d'un coup d'œil —, et le bouton qui va
   avec, en lettres en relief : ACHETER (une tape paie ET monte), MONTER,
-  DEMONTER (une arme), COQUE PLEINE éteint, ou MONTEE sans bouton. *Choisir
+  DEMONTER (un outil, une arme), PLACES PLEINES éteint (`peutMonter`), ou
+  MONTEE sans bouton. *Choisir
   puis agir : pas d'achat par une tape malheureuse.* Les plaques sont le
   `panel` des effets `ui/` du dépôt
   (contour, rebord lit, corps, bas ombré), « Décoller » un mot en relief de

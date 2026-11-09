@@ -55,6 +55,8 @@ export const VAISSEAU = {
   foreuse: { debit: 1, portee: 1, aimant: 1 },
   /** LES ARMES du joueur, montées au hangar (deux au plus) : chacune tire seule sur le rival le plus proche à sa portée. Aucune de série. */
   armes: [] as Arme[],
+  /** LE RADAR du joueur (un outil du hangar) : à tant d'unités, le rival est désigné au bord de l'écran ; zéro, pas de radar. La page le lit, la règle n'en fait rien. */
+  radar: { portee: 0 },
   /**
    * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
    * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou

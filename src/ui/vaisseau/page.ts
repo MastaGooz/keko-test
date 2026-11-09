@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, vendre, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, armesMontees, capacite, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -239,15 +239,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes, lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { propulseur: number; coque: number; foreuse: number; armes: string[]; bouclier: number }
-  const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, armes: [], bouclier: 0 }
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: monteeA(hangar, 'foreuse').cran, armes: armesMontees(hangar).map((pc) => pc.arme!.id), bouclier })
+  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; armes: string[]; bouclier: number }
+  const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, armes: [], bouclier: 0 }
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, armes: armesMontees(hangar).map((pc) => pc.arme!.id), bouclier })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
-  const ONGLETS: Sorte[] = ['propulseur', 'coque', 'foreuse', 'arme']
-  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'COQUE', foreuse: 'FOREUSE', arme: 'ARMES' }
+  const ONGLETS: Sorte[] = ['propulseur', 'coque', 'outil', 'arme']
+  /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
+  const nomDOnglet = (o: Sorte): string => (o === 'outil' ? `OUTILS ${hangar.outils.length}/${capacite(hangar, 'outil')}` : o === 'arme' ? `ARMES ${hangar.armes.length}/${capacite(hangar, 'arme')}` : o === 'coque' ? 'COQUE' : 'PROPULSEUR')
   let onglet: Sorte = 'propulseur'
   /** LA VUE : le hangar (les pièces) ou L'ENTREPÔT (l'inventaire des ressources — Keko : « on en aura beaucoup à l'avenir »). */
   let vue: 'hangar' | 'entrepot' = 'hangar'
@@ -311,9 +312,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(x, y, 4 * k, T[2], 0.35 * (0.7 + 0.3 * Math.sin(t * 3)))
     }
   }
-  const choix: Record<Sorte, string> = { propulseur: 'propulseur-1', coque: 'coque-1', foreuse: 'foreuse-1', arme: 'arme-canon' }
+  const choix: Record<Sorte, string> = { propulseur: 'propulseur-1', coque: 'coque-1', outil: 'foreuse-1', arme: 'arme-canon' }
   function ouvrirLeHangar(): void {
     for (const e of EMPLACEMENTS) choix[e] = hangar.montees[e]
+    choix.outil = hangar.outils[0] ?? 'foreuse-1'
     choix.arme = hangar.armes[0] ?? 'arme-canon'
   }
   /** Les encres des plaques (l'écriture de `panel` des effets ui/ du dépôt), l'or des plaques vives. */
@@ -605,13 +607,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
     else {
     // les onglets, centrés
-    const largeurs = ONGLETS.map((o) => p.measure(NOMS_ONGLET[o])[0] + 8)
+    const largeurs = ONGLETS.map((o) => p.measure(nomDOnglet(o))[0] + 6)
     let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (ONGLETS.length - 1) * 2) / 2)
     ONGLETS.forEach((o, i) => {
       const w = largeurs[i]
       const actif = o === onglet
       panel(p, x, y, w, 13, actif ? ENCRE_OR : ENCRE, { r: 2 })
-      p.text(NOMS_ONGLET[o], x + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
+      p.text(nomDOnglet(o), x + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
       if (!actif) zones.push({ x, y, w, h: 13, action: () => (onglet = o) })
       x += w + 2
     })
@@ -638,7 +640,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le panneau de description : le nom, les jauges, le bouton
     const pc = pieceDe(choix[onglet]) ?? liste[0]
     const jauges = jaugesDe(pc)
-    const enPlace = pc.sorte === 'arme' ? null : monteeA(hangar, pc.sorte)
+    const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
     const aAcheter = !possede(hangar, pc.id)
     const hd = 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 18
@@ -662,15 +664,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const by = y + 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 2
     const bw = 104
     if (estMontee(hangar, pc.id)) {
-      if (pc.sorte === 'arme') {
+      if (pc.sorte === 'arme' || pc.sorte === 'outil') {
         bouton(p, W / 2 - bw / 2, by, bw, 13, 'Demonter', true, () => {
           hangar = demonter(hangar, pc.id)
           sauver()
         }, true)
       } else motEnRelief(p, 'Montee', W / 2, by + 3, 1, true)
     } else if (possede(hangar, pc.id)) {
-      const place = pc.sorte !== 'arme' || hangar.armes.length < armesMax(hangar)
-      bouton(p, W / 2 - bw / 2, by, bw, 13, place ? 'Monter' : 'Coque pleine', place, () => {
+      const place = peutMonter(hangar, pc.id)
+      bouton(p, W / 2 - bw / 2, by, bw, 13, place ? 'Monter' : 'Places pleines', place, () => {
         hangar = monter(hangar, pc.id)
         sauver()
       }, true)
@@ -865,16 +867,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.dot(-6, 3.6, N.hex('#4aff7a'))
     p.glow(3, 0, 5, verre[2], 0.25)
     // le foreur sur le toit : un dôme au milieu de la coque, un canon qui vise — plus gros à chaque cran de foreuse
-    const cf = allure.foreuse
-    const dome = 2.1 + 0.4 * (cf - 1)
-    const canon = 4.5 + (cf - 1)
-    p.circle(-1.5, 0, dome, coque[1])
-    p.circle(-1.8, -0.4, dome * 0.62, coque[3])
-    p.dot(-2.2, -0.8, coque[5])
-    if (cf >= 3) p.ring(-1.5, 0, dome, 1, LASER[2], 0.7)
-    p.line(-1.5, 0, -1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, coque[2])
-    if (cf >= 2) p.line(-1.5 + Math.cos(vise) * 1.5, Math.sin(vise) * 1.5, -1.5 + Math.cos(vise) * (canon - 1), Math.sin(vise) * (canon - 1), coque[4])
-    p.dot(-1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, tire ? LASER[5] : LASER[2])
+    const cf = allure.foreuse // (0 : pas de foreuse, pas de foreur sur le toit)
+    if (cf > 0) {
+      const dome = 2.1 + 0.4 * (cf - 1)
+      const canon = 4.5 + (cf - 1)
+      p.circle(-1.5, 0, dome, coque[1])
+      p.circle(-1.8, -0.4, dome * 0.62, coque[3])
+      p.dot(-2.2, -0.8, coque[5])
+      if (cf >= 3) p.ring(-1.5, 0, dome, 1, LASER[2], 0.7)
+      p.line(-1.5, 0, -1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, coque[2])
+      if (cf >= 2) p.line(-1.5 + Math.cos(vise) * 1.5, Math.sin(vise) * 1.5, -1.5 + Math.cos(vise) * (canon - 1), Math.sin(vise) * (canon - 1), coque[4])
+      p.dot(-1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, tire ? LASER[5] : LASER[2])
+    }
+    // le radar : un mât à l'arrière du toit et une antenne qui tourne, un point vert qui bat
+    if (allure.radar) {
+      const ar = t * 4
+      p.dot(-4.5, 0, coque[1])
+      p.line(-4.5 - Math.cos(ar) * 2, -Math.sin(ar) * 2, -4.5 + Math.cos(ar) * 2, Math.sin(ar) * 2, coque[4])
+      p.dot(-4.5, 0, Math.sin(t * 6) > 0 ? RUNE[2] : RUNE[1])
+    }
     if (allure.bouclier > 0) p.ring(0, 0, 10, 1, verre[2], 0.25 + 0.35 * allure.bouclier * (0.75 + 0.25 * Math.sin(t * 6)))
     p.place(0, 0)
   }
@@ -1072,6 +1083,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.poly([pointe, g1, g2], PEPITE[2])
     p.px(pointe[0], pointe[1], PEPITE[3])
     p.glow(x, y, 6, PEPITE[2], 0.4)
+  }
+
+  /** LE RADAR (un outil du hangar) : le rival le plus proche à sa portée, hors de l'écran, est désigné par une flèche rouge au bord, qui bat. */
+  function dessinerLeRadar(p: Peintre): void {
+    if (CONF.radar.portee <= 0) return
+    let cible: Vaisseau | null = null
+    let dmin = CONF.radar.portee
+    for (const e of m.ennemis) {
+      const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+      if (d <= dmin) (dmin = d), (cible = e.corps)
+    }
+    if (cible === null) return
+    const dx = cible.x - camera.x
+    const dy = cible.y - camera.y
+    const marge = 10
+    if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) return
+    const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
+    const x = W / 2 + dx * k
+    const y = H / 2 + dy * k
+    const a = Math.atan2(dy, dx)
+    const bat = Math.sin(t * 8) > 0
+    const pointe = [x + Math.cos(a) * 4, y + Math.sin(a) * 4]
+    const g1 = [x + Math.cos(a + 2.5) * 4, y + Math.sin(a + 2.5) * 4]
+    const g2 = [x + Math.cos(a - 2.5) * 4, y + Math.sin(a - 2.5) * 4]
+    p.poly([pointe, g1, g2], bat ? ROUGE[4] : ROUGE[3])
+    p.px(pointe[0], pointe[1], ROUGE[5])
+    p.glow(x, y, 6, ROUGE[3], bat ? 0.5 : 0.3)
   }
 
   /**
@@ -1420,6 +1458,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTirs(p)
     dessinerLesLasers(p)
     dessinerLePointeur(p)
+    dessinerLeRadar(p)
     dessinerLeScore(p)
     for (const e of effets) e.fx.draw(frame)
     dessinerLeManche(p)
