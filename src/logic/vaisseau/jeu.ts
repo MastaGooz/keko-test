@@ -46,6 +46,8 @@ export const VAISSEAU = {
   seuilChoc: 12,
   /** La coque du joueur : tant de points avant d'être percée (un trait en enlève un, un choc en enlève selon sa vitesse). */
   coque: 5,
+  /** LE FOREUR DU JOUEUR d'après la pièce montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage` (1 = de série). Le rival creuse avec `forage` tel quel. */
+  foreuse: { debit: 1, portee: 1 },
   /**
    * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
    * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou
@@ -584,16 +586,18 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 
-  // le laser du joueur : le plus proche à portée, roche ou ennemi
-  const roche = rocheLaPlusProche(c, m, v.x, v.y, c.forage.portee)
+  // le laser du joueur : le plus proche à portée, roche ou ennemi — au débit et à la portée de SA foreuse (le hangar)
+  const portee = c.forage.portee * c.foreuse.portee
+  const debit = c.forage.debit * c.foreuse.debit
+  const roche = rocheLaPlusProche(c, m, v.x, v.y, portee)
   let ennemi: { e: Ennemi; d: number } | null = null
   for (const e of m.ennemis) {
     const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y) - c.ennemi.rayon
-    if (d <= c.forage.portee && (ennemi === null || d < ennemi.d)) ennemi = { e, d }
+    if (d <= portee && (ennemi === null || d < ennemi.d)) ennemi = { e, d }
   }
   if (ennemi !== null && (roche === null || ennemi.d < roche.d)) {
     const e = ennemi.e
-    e.pv -= c.forage.debit * dt
+    e.pv -= debit * dt
     const dx = e.corps.x - v.x
     const dy = e.corps.y - v.y
     const d = Math.hypot(dx, dy) || 1
@@ -602,7 +606,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       m.forage = null
       abattreLEnnemi(c, m, e, ev)
     } else m.forage = { sorte: 'ennemi', cible: e.id, x: e.corps.x - (dx / d) * c.ennemi.rayon, y: e.corps.y - (dy / d) * c.ennemi.rayon, part: 1 - e.pv / c.ennemi.pv }
-  } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, c.forage.debit * dt, ev)
+  } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, debit * dt, ev)
   else m.forage = null
 
   // L'EXTRACTION, à la station la plus proche : à quai (après être sorti une fois d'un parvis), le compte monte ; hors

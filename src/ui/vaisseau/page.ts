@@ -12,7 +12,9 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { acheter, configDuHangar, EMPLACEMENTS, monteeA, monter, peutAcheter, piecesDe, possede, type Emplacement } from '../../logic/vaisseau/hangar.ts'
+import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -65,6 +67,8 @@ const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 const FEU = N.fit(N.PAL.fire, 8)
+/** La flamme du propulseur ionique (cran 3 du hangar) : bleue. */
+const ION = N.fit(['#061a3a', '#0a3a7a', '#1a7ad0', '#3ab0ff', '#80e0ff', '#c8f4ff', '#ffffff', '#ffffff'], 8)
 const LASER = N.fit(['#3a0a10', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0', '#ffffff'], 6)
 const PEPITE = N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5)
 /** L'ennemi : une coque rouge sombre, une verrière orange, un laser violet. */
@@ -94,7 +98,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** `&minerai=N` : part avec N pepites a bord, pour voir le compteur sans miner (ce qui se teste doit s'ouvrir d'un lien). */
   const minerai0 = Math.max(0, Number(parametres.get('minerai')) || 0)
   /** `&ennemi` : l'ennemi naît tout de suite (pour le voir sans attendre) — à la même distance qu'en jeu : né à 90, on le voyait apparaître à l'écran (Keko : « il devrait toujours apparaître hors champ »). */
-  const CONF: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0 } } : C
+  const BASE: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0 } } : C
+  /**
+   * LE HANGAR (Keko, 09/11 : « un menu avant de lancer la game où le joueur choisit son vaisseau en sélectionnant les
+   * différentes pièces qu'il possède ») : les pièces possédées et montées, et le TRÉSOR des expéditions achevées, gardés
+   * sur l'appareil (`ui/vaisseau/hangar.ts`). `&tresor=N` pose N fer de trésor, pour essayer les achats d'un lien.
+   */
+  let { hangar, tresor } = chargerHangar()
+  if (parametres.has('tresor')) {
+    tresor = { ...tresor, fer: Math.max(0, Number(parametres.get('tresor')) || 0) }
+    sauverHangar(hangar, tresor)
+  }
+  /** La configuration du vaisseau du joueur : celle de série passée par les pièces montées — refaite à chaque décollage. */
+  let CONF: ConfigVaisseau = configDuHangar(BASE, hangar)
 
   function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe: string, texte = ''): HTMLElementTagNameMap[K] {
     const n = document.createElement(tag)
@@ -113,7 +129,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   surcouche.className = 'vaisseau-surcouche'
   const gs = surcouche.getContext('2d')!
   const ecran = el('div', 'vaisseau-ecran')
-  ecran.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Trois minerais — le fer dans la roche grise, l’or dans l’ocre, le cristal dans la bleutée — et leurs veines et pépites disent la richesse de la roche ; l’or et le cristal sont loin des stations. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Au clavier : les flèches ou ZQSD.'), el('p', 'vaisseau-go', 'Touchez pour décoller'))
+  const contenu = el('div', 'vaisseau-ecran-contenu')
+  /** L'en-tête de l'écran : le titre et le texte (l'accueil, puis le bilan de l'expédition) ; le hangar et le bouton restent dessous. */
+  const enTete = el('div', 'vaisseau-entete')
+  enTete.append(el('h1', '', 'Le vaisseau'), el('p', '', 'Posez le doigt n’importe où : un manche apparaît. Il pousse le vaisseau dans sa direction ; relâchez, il glisse. Le foreur du toit creuse seul la roche la plus proche ; les pépites viennent à vous. Trois minerais — le fer dans la roche grise, l’or dans l’ocre, le cristal dans la bleutée — et leurs veines et pépites disent la richesse de la roche ; l’or et le cristal sont loin des stations. Le minerai reste à bord et se perd avec la coque : seule l’EXTRACTION le met à l’abri — restez dix secondes dans la zone d’une station (rares ; la flèche jaune montre la plus proche), et l’expédition s’achève. Le minerai extrait achète des pièces au hangar, ci-dessous. Au clavier : les flèches ou ZQSD.'))
+  const panneau = el('div', 'vaisseau-hangar')
+  const decoller = el('button', 'vaisseau-decoller', 'Décoller')
+  decoller.type = 'button'
+  contenu.append(enTete, panneau, decoller)
+  ecran.append(contenu)
+  // le hangar se touche : ses touchers ne décollent pas, le bouton seul le fait
+  ecran.addEventListener('pointerdown', (ev) => ev.stopPropagation())
+  decoller.addEventListener('click', () => demarrer())
   const pied = el('div', 'vaisseau-build', `vaisseau · build ${build}`)
   racine.append(scene, surcouche, ecran, pied)
 
@@ -179,32 +206,93 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- le manche (celui du survivor)
   let manche: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
   const touches = new Set<string>()
-  /** Le premier toucher décolle ; après une coque percée ou une extraction, il repart à neuf (la banque reste). */
+  /**
+   * Le décollage, depuis le hangar (le bouton) ou au clavier : l'expédition part à neuf avec le vaisseau tel que monté
+   * (la configuration se refait des pièces) ; après une coque percée ou une extraction, pareil — le trésor et les pièces
+   * restent, c'est tout ce qui reste.
+   */
   function demarrer(): void {
-    const neuf = !enJeu || m.phase !== 'vol'
-    if (m.phase !== 'vol') {
-      if (t - perduA < 1.2) return
-      const banque = m.banque
-      const tresor = m.tresor
-      m = monterLeMonde()
-      m.banque = banque
-      m.tresor = tresor
-      effets = []
-      flashs.length = 0
-      envols.length = 0
-      for (const k of MINERAIS) affiche[k] = 0
-      flammesEnnemies.clear()
-      v = m.vaisseau
-      camera.x = 0
-      camera.y = 0
-    }
+    if (enJeu && m.phase === 'vol') return
+    if (enJeu && t - perduA < 1.2) return
+    CONF = configDuHangar(BASE, hangar)
+    m = monterLeMonde()
+    m.minerai = minerai0
+    m.cargaison.fer = minerai0
+    m.tresor = { ...tresor }
+    m.banque = totalDe(tresor)
+    effets = []
+    flashs.length = 0
+    envols.length = 0
+    for (const k of MINERAIS) affiche[k] = 0
+    affiche.fer = minerai0
+    flammesEnnemies.clear()
+    v = m.vaisseau
+    camera.x = 0
+    camera.y = 0
     enJeu = true
     ecran.hidden = true
     // L'ARRIVÉE (Keko : « une animation de téléportation aussi au début, comme si le vaisseau était téléporté sur
     // l'extracteur ») : la matérialisation à la place du vaisseau, qui n'apparaît qu'à son ouverture
-    if (neuf) {
-      arriveA = t
-      effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
+    arriveA = t
+    effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
+  }
+
+  // ---------------------------------------------------------------- le hangar
+  const NOMS_EMPLACEMENT: Record<Emplacement, string> = { propulseur: 'Propulseur', foreuse: 'Foreuse' }
+  /** Les crans des pièces montées, lus par le dessin du vaisseau (le rival est de série). */
+  type Crans = { propulseur: number; foreuse: number }
+  const CRANS_SERIE: Crans = { propulseur: 1, foreuse: 1 }
+  const cransMontes = (): Crans => ({ propulseur: monteeA(hangar, 'propulseur').cran, foreuse: monteeA(hangar, 'foreuse').cran })
+  /** L'APERÇU du vaisseau au hangar : le même dessin que dans le jeu, dans un petit tampon, avec les pièces montées, la flamme allumée. */
+  const APERCU = 40 // (agrandi quatre fois par le CSS : un entier, sinon les pixels bavent)
+  const apercu = document.createElement('canvas')
+  apercu.className = 'vaisseau-apercu'
+  apercu.width = APERCU
+  apercu.height = APERCU
+  const ga = apercu.getContext('2d')!
+  const cadreApercu = N.createFrame(APERCU, APERCU)
+  const imgApercu = ga.createImageData(APERCU, APERCU)
+  function dessinerLApercu(): void {
+    N.clearFrame(cadreApercu)
+    const p = N.painterFor(cadreApercu)
+    dessinerVaisseauA(p, APERCU / 2, APERCU / 2 + 3, -Math.PI / 2, 0.55 + 0.1 * Math.sin(t * 5), COQUE, VERRIERE, 0, false, cransMontes())
+    N.composite(cadreApercu, imgApercu.data, null)
+    ga.putImageData(imgApercu, 0, 0)
+  }
+  /**
+   * Le hangar : l'aperçu, le trésor, puis chaque emplacement et ses trois pièces — montée, possédée (une tape la monte),
+   * ou à son prix (une tape l'achète ET la monte ; grisée si le trésor n'y suffit pas). Tout se sauve à chaque geste.
+   */
+  function montrerLeHangar(): void {
+    panneau.replaceChildren(apercu, el('p', 'vaisseau-tresor', `Trésor : ${nommer(tresor)}`))
+    for (const e of EMPLACEMENTS) {
+      const bloc = el('div', 'vaisseau-emplacement')
+      bloc.append(el('h2', '', NOMS_EMPLACEMENT[e]))
+      const rangee = el('div', 'vaisseau-pieces')
+      for (const pc of piecesDe(e)) {
+        const b = el('button', 'vaisseau-piece')
+        b.type = 'button'
+        const montee = hangar.montees[e] === pc.id
+        const aLui = possede(hangar, pc.id)
+        b.classList.toggle('montee', montee)
+        b.classList.toggle('possedee', aLui)
+        b.disabled = !aLui && !peutAcheter(hangar, tresor, pc.id)
+        b.append(el('strong', '', pc.nom), el('span', 'vaisseau-piece-dit', pc.dit), el('span', 'vaisseau-piece-etat', montee ? 'Montée' : aLui ? 'Monter' : nommer(pc.prix)))
+        b.addEventListener('click', () => {
+          if (aLui) hangar = monter(hangar, pc.id)
+          else {
+            const r = acheter(hangar, tresor, pc.id)
+            if (r === null) return
+            hangar = r.hangar
+            tresor = r.tresor
+          }
+          sauverHangar(hangar, tresor)
+          montrerLeHangar()
+        })
+        rangee.append(b)
+      }
+      bloc.append(rangee)
+      panneau.append(bloc)
     }
   }
   racine.addEventListener('pointerdown', (ev) => {
@@ -298,17 +386,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * ombrée par une normale approchée (un fuseau bombé), les ailes par leur inclinaison, et le reflet de la verrière
    * glisse du côté de la lumière. `vise` : l'angle du canon (local) ; `tire` : il creuse.
    */
-  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, coque: number[], verre: number[], vise: number, tire: boolean): void {
-    p.place(corps.x - camera.x + W / 2, corps.y - camera.y + H / 2, false, corps.cap)
-    const lx = Math.cos(corps.cap) * LUMIERE.x + Math.sin(corps.cap) * LUMIERE.y
-    const ly = -Math.sin(corps.cap) * LUMIERE.x + Math.cos(corps.cap) * LUMIERE.y
+  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, coque: number[], verre: number[], vise: number, tire: boolean, crans: Crans = CRANS_SERIE): void {
+    dessinerVaisseauA(p, corps.x - camera.x + W / 2, corps.y - camera.y + H / 2, corps.cap, flam, coque, verre, vise, tire, crans)
+  }
+  /**
+   * Le même vaisseau à un point du tampon (l'aperçu du hangar s'en sert). LES PIÈCES SE VOIENT (Keko : choisir son
+   * vaisseau pièce par pièce) : le propulseur élargit la tuyère et allonge la flamme à chaque cran, bleue au troisième
+   * (ionique) ; la foreuse grossit le dôme et le canon, le canon prend une arête claire au deuxième, un liseré rouge
+   * cerne le dôme au troisième (le long faisceau).
+   */
+  function dessinerVaisseauA(p: Peintre, sx: number, sy: number, cap: number, flam: number, coque: number[], verre: number[], vise: number, tire: boolean, crans: Crans): void {
+    p.place(sx, sy, false, cap)
+    const lx = Math.cos(cap) * LUMIERE.x + Math.sin(cap) * LUMIERE.y
+    const ly = -Math.sin(cap) * LUMIERE.x + Math.cos(cap) * LUMIERE.y
     const tonDe = (lum: number) => (lum > 0.72 ? coque[6] : lum > 0.5 ? coque[5] : lum > 0.28 ? coque[4] : lum > 0.08 ? coque[3] : coque[2])
     const forme = [[9, 0], [3, -3], [-5, -4], [-7, -2], [-7, 2], [-5, 4], [3, 3]]
+    const cp = crans.propulseur
+    const tuyere = 1.8 + 0.5 * (cp - 1)
+    const feu = cp >= 3 ? ION : FEU
     if (flam > 0.02) {
-      const L = (3 + 7 * flam) * (0.85 + 0.15 * Math.sin(t * 60))
-      p.poly([[-7, -1.8], [-7 - L, 0], [-7, 1.8]], FEU[4])
-      p.poly([[-7, -1], [-7 - L * 0.6, 0], [-7, 1]], FEU[6])
-      p.glow(-8 - L * 0.4, 0, 6 + 6 * flam, FEU[5], 0.5 + 0.4 * flam)
+      const L = (3 + 7 * flam) * (1 + 0.25 * (cp - 1)) * (0.85 + 0.15 * Math.sin(t * 60))
+      p.poly([[-7, -tuyere], [-7 - L, 0], [-7, tuyere]], feu[4])
+      p.poly([[-7, -tuyere * 0.55], [-7 - L * 0.6, 0], [-7, tuyere * 0.55]], feu[6])
+      p.glow(-8 - L * 0.4, 0, 6 + 6 * flam + 2 * (cp - 1), feu[5], 0.5 + 0.4 * flam)
     }
     for (const s of [-1, 1]) {
       const lumAile = 0.3 + 0.45 * (s * 0.5 * ly + LUMIERE.z)
@@ -321,23 +421,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.circle(3, 0, 1.8, verre[1])
     p.dot(3 + lx * 0.9, ly * 0.9, verre[2])
     p.dot(3 + lx * 1.4, ly * 1.4, verre[3])
-    p.poly([[-7, -1.8], [-8, -1.3], [-8, 1.3], [-7, 1.8]], coque[1])
+    // la tuyère : plus large à chaque cran de propulseur, un cœur bleu quand il est ionique
+    const fond = -8 - 0.5 * (cp - 1)
+    p.poly([[-7, -tuyere], [fond, -tuyere * 0.72], [fond, tuyere * 0.72], [-7, tuyere]], coque[1])
+    if (cp >= 3) p.dot(fond + 0.5, 0, ION[5])
     p.dot(-6, -3.6, N.hex('#ff5a5a'))
     p.dot(-6, 3.6, N.hex('#4aff7a'))
     p.glow(3, 0, 5, verre[2], 0.25)
-    // le foreur sur le toit : un dôme au milieu de la coque, un canon qui vise
-    p.circle(-1.5, 0, 2.1, coque[1])
-    p.circle(-1.8, -0.4, 1.3, coque[3])
+    // le foreur sur le toit : un dôme au milieu de la coque, un canon qui vise — plus gros à chaque cran de foreuse
+    const cf = crans.foreuse
+    const dome = 2.1 + 0.4 * (cf - 1)
+    const canon = 4.5 + (cf - 1)
+    p.circle(-1.5, 0, dome, coque[1])
+    p.circle(-1.8, -0.4, dome * 0.62, coque[3])
     p.dot(-2.2, -0.8, coque[5])
-    p.line(-1.5, 0, -1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, coque[2])
-    p.dot(-1.5 + Math.cos(vise) * 4.5, Math.sin(vise) * 4.5, tire ? LASER[5] : LASER[2])
+    if (cf >= 3) p.ring(-1.5, 0, dome, 1, LASER[2], 0.7)
+    p.line(-1.5, 0, -1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, coque[2])
+    if (cf >= 2) p.line(-1.5 + Math.cos(vise) * 1.5, Math.sin(vise) * 1.5, -1.5 + Math.cos(vise) * (canon - 1), Math.sin(vise) * (canon - 1), coque[4])
+    p.dot(-1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, tire ? LASER[5] : LASER[2])
     p.place(0, 0)
   }
 
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
-    dessinerUnVaisseau(p, v, flamme, blanchi ? BLANC : COQUE, blanchi ? BLANC : VERRIERE, vise, m.forage !== null)
+    dessinerUnVaisseau(p, v, flamme, blanchi ? BLANC : COQUE, blanchi ? BLANC : VERRIERE, vise, m.forage !== null, cransMontes())
   }
 
   function dessinerLesEnnemis(p: Peintre): void {
@@ -687,7 +795,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (typeof navigator.vibrate === 'function') navigator.vibrate([40, 60, 40])
               // le porté passe en banque : les compteurs du haut se vident (le total ne s'affiche pas : l'écran le dit)
               for (const k of MINERAIS) affiche[k] = 0
-              ecran.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `Extrait : ${nommer(ev.cargaison)}. Au total, toutes expéditions : ${nommer(m.tresor)}. Repartir ouvre une nouvelle expédition : le total reste, le reste repart à neuf.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
+              tresor = { ...m.tresor }
+              sauverHangar(hangar, tresor)
+              enTete.replaceChildren(el('h1', '', 'Expédition achevée'), el('p', '', `Extrait : ${nommer(ev.cargaison)}. Le trésor, toutes expéditions : ${nommer(m.tresor)} — il achète des pièces au hangar, ci-dessous. Décoller ouvre une nouvelle expédition.`))
               break
             }
             case 'perdu': {
@@ -701,7 +812,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              ecran.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `Perdu avec la coque : ${nommer(m.cargaison)} — seule l’extraction les aurait mis à l’abri. Au total extrait : ${nommer(m.tresor)}. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`), el('p', 'vaisseau-go', 'Touchez pour repartir'))
+              enTete.replaceChildren(el('h1', '', 'Coque percée'), el('p', '', `Perdu avec la coque : ${nommer(m.cargaison)} — seule l’extraction les aurait mis à l’abri. Le trésor (${nommer(m.tresor)}) et les pièces du hangar restent. Le rival rôde toujours : il mine les mêmes roches que vous, et tire dès qu’il vous voit ; chargé, il fuit. Votre foreur le creuse comme une roche s’il est plus près qu’elle.`))
               break
             }
             default:
@@ -801,7 +912,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesStations(p)
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
-    if (m.phase !== 'vol' && ecran.hidden && t - perduA > (m.phase === 'extrait' ? 1.7 : 1)) ecran.hidden = false
+    if (m.phase !== 'vol' && ecran.hidden && t - perduA > (m.phase === 'extrait' ? 1.7 : 1)) {
+      montrerLeHangar()
+      ecran.hidden = false
+    }
     dessinerLesTirs(p)
     dessinerLesLasers(p)
     dessinerLePointeur(p)
@@ -812,8 +926,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     secousse = Math.max(0, secousse - dt / 0.25)
     canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
     dessinerLeManche()
+    if (!ecran.hidden) dessinerLApercu()
     requestAnimationFrame(image)
   }
+  montrerLeHangar()
   cadrer()
   new ResizeObserver(cadrer).observe(racine)
   requestAnimationFrame(image)

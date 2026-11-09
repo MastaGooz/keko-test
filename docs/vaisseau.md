@@ -12,6 +12,11 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
   Vérifié par `jeu.verif.ts` (dans `npm run verif`).
 - `src/ui/vaisseau/page.ts` + `vaisseau.css` — la scène en pixel art
   (pixelfx), le manche sur une surcouche. Classes préfixées `vaisseau-`.
+- `src/logic/vaisseau/hangar.ts` — pur : le catalogue des pièces, le hangar
+  (possédées, montées), l'achat, le montage, la configuration qui en sort,
+  la relecture sans confiance. Vérifié par `hangar.verif.ts`.
+- `src/ui/vaisseau/hangar.ts` — le hangar et le trésor dans `localStorage`
+  (`keko-vaisseau-hangar`), le seul à y toucher.
 
 ## Les décisions (de moi, à rejuger par Keko)
 
@@ -421,11 +426,58 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   route de test qui change deux choses à la fois fait prendre l'une pour
   l'autre* — la seule chose qu'elle raccourcit est l'attente.
 
+## Le hangar (Keko, 09/11 : « un menu avant de lancer la game où le joueur choisit son vaisseau en sélectionnant les différentes pièces qu'il possède (propulseur, ailes, foreuse, arme...) »)
+
+- **Tranché par Keko** : les pièces s'ACHÈTENT (pas de largage) ; un vrai
+  emplacement d'ARME viendra pour le joueur ; on commence par DEUX
+  emplacements, propulseur et foreuse, achetables au fer, pour juger le
+  menu et le dessin avant d'élargir — *une notion à la fois*.
+- **Ce que ça ferme** : la banque n'avait aucun usage entre deux
+  expéditions. Le TRÉSOR (le minerai des expéditions achevées, par minerai)
+  achète des pièces qui RESTENT ACQUISES — seul le minerai porté se perd
+  avec la coque. *Le trésor et le hangar sont gardés sur l'appareil*, comme
+  la collection ; il n'y a pas de compte.
+- **Le catalogue** (`PIECES`, trois crans par emplacement, le premier de
+  série et possédé d'office ; *prix et facteurs de moi, à rejuger* — une
+  roche rend deux à sept pépites) : propulseur renforcé 12 fer (poussée
+  ×1,25, pointe ×1,15), ionique 30 fer (×1,6, ×1,35, nez ×1,2) ; foreuse
+  lourde 10 fer (débit ×1,4), à long faisceau 28 fer (débit ×1,8, portée
+  ×1,25 — 80 unités : *le rival qui se tient à 80 pour tirer entre à
+  portée*, c'est le premier achat qui change le combat). L'or et le cristal
+  attendent les crans d'après.
+- **La règle est pure** (`hangar.ts`) : le hangar est une valeur, l'achat et
+  le montage rendent un hangar neuf, `configDuHangar` traduit les pièces en
+  facteurs sur la configuration de série — poussée, pointe, nez, et
+  `foreuse: { debit, portee }`, un champ de configuration NOUVEAU qui ne
+  porte que sur le foreur du joueur : *le rival creuse avec `forage` tel
+  quel*, sinon chaque achat l'aurait amélioré avec nous. La relecture tombe
+  les pièces inconnues, garde toujours les séries, remet de série une pièce
+  montée qu'on n'a pas.
+- **L'écran** : l'accueil (puis le bilan) porte le hangar dessous — l'APERÇU
+  du vaisseau tel que monté (le même dessin que dans le jeu, dans un tampon
+  de 40 px agrandi quatre fois : un entier, sinon les pixels bavent), le
+  trésor, un bloc par emplacement, trois pièces par bloc (montée, possédée :
+  une tape la monte ; à son prix : une tape l'achète ET la monte ; grisée si
+  le trésor n'y suffit pas), et le bouton « Décoller » — *le toucher
+  n'importe où ne décolle plus*, le hangar se touche. L'écran défile si le
+  téléphone est court. `&tresor=N` pose N fer de trésor pour essayer les
+  achats d'un lien.
+- **Les pièces se voient en vol** : le propulseur élargit la tuyère et
+  allonge la flamme à chaque cran, bleue au troisième (ionique) ; la foreuse
+  grossit le dôme et le canon, une arête claire au deuxième, un liseré rouge
+  autour du dôme au troisième. Le rival reste de série. *À faire : les
+  braises du propulseur ionique restent orange.*
+- **Chaque décollage refait la configuration des pièces montées** et un
+  monde neuf ; le trésor se sauve à l'extraction même, pas à la fin de
+  l'écran.
+
 ## Ce qui reste à faire
 
-- Rien ne se joue : ni tir, ni collecte, ni ennemi — c'est voulu pour juger
-  le contrôle et le rendu d'abord.
-- Les astéroïdes pourraient se casser (les `Bits` du dépôt) ; un vaisseau
-  bestiole plus détaillé si le style plaît.
-- Mesuré seulement au scénario de capture (décoller, pousser en haut à
-  droite deux secondes) ; pas encore joué au doigt.
+- **L'ARME du joueur** (tranché par Keko, 09/11) : un troisième emplacement,
+  un vrai tir — à concevoir avec lui (cadence, portée, ce que ça fait au
+  rival et aux roches).
+- Les ailes (rotation, coque ?), la soute (ce qu'on peut porter) ; des crans
+  payés en or et en cristal, pour que la distance paie en pièces.
+- Un indice visuel sur le rival chargé (sa fuite le dit seulement).
+
+- Un vaisseau bestiole plus détaillé si le style plaît.
