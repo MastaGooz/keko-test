@@ -677,9 +677,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const io = ONGLETS.indexOf(onglet)
     // les flèches aux deux bouts, à la hauteur de la barre, la barre entre elles (Keko : la barre dépassait des boutons)
     panel(p, 19, y, W - 38, 13, ENCRE, { r: 2 })
-    // le titre, suivi pour les outils et les armes des places occupées / portées, « OUTILS 1/2 », dans le même style (Keko)
-    const titreOnglet = onglet === 'outil' || onglet === 'arme' ? `${NOMS_ONGLET[onglet]} ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}` : NOMS_ONGLET[onglet]
-    p.text(titreOnglet, W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+    // le titre ; pour les outils et les armes, LES PLACES EN CELLULES à sa droite — une case par place portée par la
+    // coque, pleine si elle est occupée (Keko : « plutôt que x/x, des cellules qui se remplissent »)
+    p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+    if (onglet === 'outil' || onglet === 'arme') {
+      const occupees = (onglet === 'outil' ? hangar.outils : hangar.armes).length
+      const places = capacite(hangar, onglet)
+      let cx = W / 2 + p.measure(NOMS_ONGLET[onglet], { font: 'big' })[0] / 2 + 6
+      for (let i = 0; i < places; i++) {
+        p.rect(cx, y + 3, 6, 7, ENCRE.outline)
+        p.rect(cx + 1, y + 4, 4, 5, i < occupees ? PEPITE[2] : COQUE[1])
+        if (i < occupees) p.rect(cx + 1, y + 4, 4, 1, PEPITE[3])
+        cx += 8
+      }
+    }
     bouton(p, 4, y, 13, 13, '<', true, () => (onglet = ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
     bouton(p, W - 17, y, 13, 13, '>', true, () => (onglet = ONGLETS[(io + 1) % ONGLETS.length]))
     y += 15
