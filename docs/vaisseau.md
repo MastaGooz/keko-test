@@ -539,8 +539,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   s'y dessine (Keko : « plus tard il y aura d'autres onglets, on ne veut pas
   le vaisseau ou l'inventaire dans cette zone »), l'aire et la grille se
   centrent à sa droite. **L'entrepôt a son propre fond** (Keko : « pas le
-  fond du hangar ») : un mur de rayonnages d'acier verdâtre, montants et
-  tablettes à l'ombre, un liseré jaune et noir le long de la bande. **La
+  fond du hangar ») : un mur UNI d'acier verdâtre, moucheté — *des
+  rayonnages à montants et tablettes ont vécu dix minutes : « on dirait un
+  autre grid derrière, très peu lisible »*. **La grille remplit toute la
+  zone** à droite de la bande : quatre colonnes, autant de rangées qu'il en
+  tient (Keko). **La
   scène a une hauteur fixe** (Keko : « il ne faut pas que
   la hauteur de la zone supérieure change en fonction des éléments en
   dessous » — elle se centrait sur l'interface ; les cartons sont partis).
@@ -563,8 +566,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   bouton RESET (Keko). *Retirés le jour même, à la demande
   de Keko : le total extrait sous l'inventaire (« inutile ») et une bande des
   ressources sous les vues (« quand on aura dix minerais différents elle sera
-  inexploitable »).* **Un bouton de test RESET en haut à droite de la
-  scène** (Keko) remet toute la progression de l'appareil à zéro — hangar,
+  inexploitable »).* **Un bouton de test RESET tout en bas à gauche de
+  l'écran** (Keko ; en haut à droite de la scène d'abord) remet toute la progression de l'appareil à zéro — hangar,
   trésor, crédits — en deux tapes (RESET, puis SUR ? pendant deux
   secondes).
 - **Chaque décollage refait la configuration des pièces montées** et un

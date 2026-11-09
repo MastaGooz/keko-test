@@ -374,27 +374,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let y = 4; y < hautScene; y += 24) p.line(BANDE, y, W - 1, y, NUIT)
       for (let x = BANDE + 6; x < W; x += 24) for (let y = 4; y < hautScene; y += 24) p.dot(x + 2, y + 2, COQUE[1])
     } else {
-      // LE FOND DE L'ENTREPÔT (Keko : « un autre fond pour l'inventaire, pas le fond du hangar ») : un mur de rayonnages
-      // d'acier verdâtre, des montants, des tablettes à l'ombre, un liseré jaune et noir le long de la bande
-      const MUR = N.hex('#101a16')
-      const MONTANT = N.hex('#1e2c26')
-      const TABLETTE = N.hex('#2c3e36')
+      // LE FOND DE L'ENTREPÔT (Keko : « un autre fond pour l'inventaire, pas le fond du hangar », puis « on dirait un
+      // autre grid derrière, très peu lisible ») : un mur uni d'acier verdâtre, quelques mouchetures, rien qui fasse
+      // des lignes sous la grille
+      const MUR = N.hex('#121c18')
       p.rect(BANDE, 0, W - BANDE, hautScene, MUR)
-      for (let y = 10; y < hautScene; y += 18) {
-        p.rect(BANDE, y, W - BANDE, 2, TABLETTE)
-        p.rect(BANDE, y + 2, W - BANDE, 3, NUIT, 0.6)
+      for (let i = 0; i < 70; i++) {
+        const mx = BANDE + Math.floor(tire(i, 1, 77) * (W - BANDE))
+        const my = Math.floor(tire(i, 2, 77) * hautScene)
+        p.dot(mx, my, tire(i, 3, 77) < 0.5 ? N.hex('#0c1310') : N.hex('#1a2822'))
       }
-      for (let x = BANDE + 4; x < W; x += 32) {
-        p.rect(x, 0, 3, hautScene, MONTANT)
-        for (let y = 6; y < hautScene; y += 18) p.dot(x + 1, y, TABLETTE)
-      }
-      for (let y = 0; y < hautScene; y += 6) p.rect(BANDE, y, 2, 3, PEPITE[1])
     }
     // la bande des onglets : une plaque sombre, un trait qui la sépare de la scène
     p.rect(0, 0, BANDE, hautScene, NUIT)
     p.line(BANDE - 1, 0, BANDE - 1, hautScene - 1, COQUE[1])
     // les lampes : un boîtier, un halo chaud, hors de la bande
-    for (const lx of [BANDE + 8, W - 11]) {
+    for (const lx of [BANDE + 8, W - 9]) {
       p.glow(lx, 6, 50, N.hex('#ffd8a0'), 0.3)
       p.rect(lx - 3, 0, 6, 3, COQUE[2])
       p.rect(lx - 2, 3, 4, 1, PEPITE[3])
@@ -424,12 +419,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else {
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
+      // la grille remplit toute la zone à droite de la bande (Keko) : quatre colonnes, autant de rangées qu'il en tient
       const COL = 4
-      const RANG = 3
       const cw = 28
       const ch = 26
+      const RANG = Math.max(1, Math.floor((hautScene - 8) / (ch + 3)))
       const gx = BANDE + Math.floor((W - BANDE - (COL * cw + (COL - 1) * 3)) / 2)
-      const gy = hautScene - 10 - RANG * (ch + 3) + 3
+      const gy = Math.floor((hautScene - (RANG * (ch + 3) - 3)) / 2)
       for (let i = 0; i < COL * RANG; i++) {
         const x = gx + (i % COL) * (cw + 3)
         const y = gy + Math.floor(i / COL) * (ch + 3)
@@ -456,9 +452,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(vv === 'hangar' ? 'HANGAR' : 'ENTREPOT', 3 + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
       if (!actif) zones.push({ x: 3, y, w, h: 12, action: () => (vue = vv) })
     })
-    // le bouton de test, en haut à droite : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
+    // le bouton de test, tout en bas à gauche de l'écran (Keko) : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
     const demande = t - resetDemandeA < 2
-    bouton(p, W - 34, 4, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
+    bouton(p, 3, H - 14, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
       if (!demande) {
         resetDemandeA = t
         return
