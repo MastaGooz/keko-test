@@ -349,10 +349,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LE GRAPHISME D'UNE PIÈCE, dans la case du panneau (Keko) : le propulseur, sa tuyère et sa flamme ; la coque, le fuselage
    * de sa peau ; une foreuse, son dôme et son canon ; le radar, son mât et son antenne ; une arme, ce qu'on voit sous
-   * l'aile — les mêmes traits que sur le vaisseau, agrandis trois fois, centrés sur (x, y).
+   * l'aile — les mêmes traits que sur le vaisseau, centrés sur (x, y), ET MIS À L'ÉCHELLE DE LA CASE (Keko : « chaque
+   * visuel doit être rescalé pour loger dans la zone, pas taille réelle ») : d'après l'encombrement de chaque pièce,
+   * largeur et hauteur une fois le nez en haut, pour remplir `bw` × `bh` à trois pixels du bord.
    */
-  function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number): void {
-    const q = agrandi(p, 3)
+  function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
+    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 13] : pc.sorte === 'coque' ? [14, 14] : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
+    const k = Math.max(1, Math.floor(Math.min((bw - 6) / ew, (bh - 6) / eh) * 2) / 2)
+    const q = agrandi(p, k)
     q.place(x, y, false, -Math.PI / 2)
     if (pc.sorte === 'propulseur') {
       const cp = pc.cran
@@ -754,7 +758,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const hd = Math.max(50, 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 4)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     panel(p, 8, y + 4, 42, hd - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
-    dessinerLePictogramme(p, pc, 29, y + hd / 2)
+    dessinerLePictogramme(p, pc, 29, y + hd / 2, 42, hd - 8)
     const gx = 54
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
