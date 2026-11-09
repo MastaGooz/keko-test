@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, vendre, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -113,10 +113,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * différentes pièces qu'il possède ») : les pièces possédées et montées, et le TRÉSOR des expéditions achevées, gardés
    * sur l'appareil (`ui/vaisseau/hangar.ts`). `&tresor=N` pose N fer de trésor, pour essayer les achats d'un lien.
    */
-  let { hangar, tresor } = chargerHangar()
+  let { hangar, tresor, credits } = chargerHangar()
+  const sauver = (): void => sauverHangar(hangar, tresor, credits)
   if (parametres.has('tresor')) {
     tresor = { ...tresor, fer: Math.max(0, Number(parametres.get('tresor')) || 0) }
-    sauverHangar(hangar, tresor)
+    sauver()
   }
   /** La configuration du vaisseau du joueur : celle de série passée par les pièces montées — refaite à chaque décollage. */
   let CONF: ConfigVaisseau = configDuHangar(BASE, hangar)
@@ -250,13 +251,34 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  /** L'icône d'une ressource : la pépite du jeu (un losange de sa teinte, un éclat), agrandie k fois. */
-  function dessinerUneRessource(p: Peintre, x: number, y: number, T: number[], k: number): void {
-    p.poly([[x, y - 2 * k], [x + 2 * k, y], [x, y + 2 * k], [x - 2 * k, y]], T[2])
-    p.poly([[x, y - 2 * k + 1], [x + k - 0.5, y - k + 0.5], [x - k + 0.5, y - k + 0.5]], T[3])
-    p.rect(x - k, y - 1, 1, 1, T[4])
-    p.rect(x + 1, y + k - 1, k, 1, T[1])
-    p.glow(x, y, 4 * k, T[2], 0.25)
+  /** Le minerai choisi à l'entrepôt. */
+  let mineraiChoisi: Minerai = 'fer'
+  /**
+   * L'ICÔNE D'UN MINERAI, agrandie k fois — UNE FORME PAR MINERAI (Keko : « une icône différente pour la forme / texture
+   * des différents minerais ») : le FER, un caillou anguleux et mat, grené ; l'OR, une pépite en losange qui brille ;
+   * le CRISTAL, une pointe effilée à facettes, translucide.
+   */
+  function dessinerUneRessource(p: Peintre, x: number, y: number, minerai: Minerai, k: number): void {
+    const T = TEINTES_MINERAI[minerai]
+    if (minerai === 'fer') {
+      p.poly([[x - 2 * k, y - k], [x - 0.5 * k, y - 2 * k], [x + 1.5 * k, y - 1.5 * k], [x + 2 * k, y + 0.5 * k], [x + 0.5 * k, y + 2 * k], [x - 1.5 * k, y + 1.5 * k]], T[1])
+      p.poly([[x - 1.5 * k, y - k], [x - 0.5 * k, y - 1.5 * k], [x + k, y - k], [x + 0.5 * k, y + 0.5 * k], [x - k, y + 0.5 * k]], T[2])
+      p.rect(x - k, y - k, 1, 1, T[3])
+      p.rect(x + 0.5 * k, y + k, 1, 1, T[0])
+      p.rect(x - 1.5 * k, y + k, 1, 1, T[0])
+    } else if (minerai === 'or') {
+      p.poly([[x, y - 2 * k], [x + 2 * k, y], [x, y + 2 * k], [x - 2 * k, y]], T[2])
+      p.poly([[x, y - 2 * k + 1], [x + k - 0.5, y - k + 0.5], [x - k + 0.5, y - k + 0.5]], T[3])
+      p.rect(x - k, y - 1, 1, 1, T[4])
+      p.rect(x + 1, y + k - 1, k, 1, T[1])
+      p.glow(x, y, 4 * k, T[2], 0.3)
+    } else {
+      p.poly([[x, y - 2.5 * k], [x + 1.2 * k, y - 0.5 * k], [x + 0.8 * k, y + 2 * k], [x - 0.8 * k, y + 2 * k], [x - 1.2 * k, y - 0.5 * k]], T[1])
+      p.poly([[x, y - 2.5 * k], [x + 1.2 * k, y - 0.5 * k], [x + 0.3 * k, y + 2 * k], [x, y - 0.5 * k]], T[2])
+      p.poly([[x, y - 2.5 * k], [x, y - 0.5 * k], [x - 0.4 * k, y + 2 * k], [x - 1.2 * k, y - 0.5 * k]], T[3])
+      p.rect(x - 0.5 * k, y - 1.5 * k, 1, Math.max(1, k), T[4])
+      p.glow(x, y, 4 * k, T[2], 0.35 * (0.7 + 0.3 * Math.sin(t * 3)))
+    }
   }
   const choix: Record<Sorte, string> = { propulseur: 'propulseur-1', coque: 'coque-1', foreuse: 'foreuse-1', arme: 'arme-canon' }
   function ouvrirLeHangar(): void {
@@ -309,10 +331,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glow: (x, y, r, c, kk) => p.glow(x * k, y * k, r * k, c, kk),
     }
   }
-  /** La scène fait 120 px de haut (Keko : « réduire la taille du hangar et du vaisseau ») ; le bloc scène + interface se centre sur la hauteur de l'interface mesurée à l'image d'avant (une passe, pas deux). Le sol monte jusqu'au bord. */
-  const HAUT_SCENE = 120
-  let hauteurUI = 170
-  let hautScene = HAUT_SCENE
+  /** La scène (le sol du hangar jusqu'au bas de l'aire) a UNE HAUTEUR FIXE, celle qu'elle avait au hangar avec trois jauges (Keko : « il ne faut pas que la hauteur de la zone supérieure change en fonction des éléments en dessous »). */
+  const hauteurDeScene = (): number => Math.max(120, Math.floor((H - 10 - 290) / 2) + 120)
+  let hautScene = 178
   /**
    * LE HANGAR, VU DE DESSUS (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière, ni les consignes en
    * haut ; voir le vaisseau dans un hangar, posé ») : un sol de plaques rivetées, une aire d'atterrissage cerclée de
@@ -323,63 +344,78 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLeHangar(p: Peintre): void {
     zones = [] // (la scène se dessine la première : le bouton RESET pose la première zone de l'image)
     p.place(0, 0)
-    const y0 = Math.max(0, Math.floor((H - 10 - (HAUT_SCENE + hauteurUI + 6)) / 2))
-    hautScene = y0 + HAUT_SCENE
+    hautScene = hauteurDeScene()
     const cx = W / 2
-    const cy = y0 + 62
+    const cy = hautScene - 58
     // le sol : des plaques, leurs joints sombres, un rivet par plaque
     p.rect(0, 0, W, H, NUIT)
     p.rect(0, 0, W, hautScene, COQUE[0])
     for (let x = 6; x < W; x += 24) p.line(x, 0, x, hautScene - 1, NUIT)
     for (let y = 4; y < hautScene; y += 24) p.line(0, y, W - 1, y, NUIT)
     for (let x = 6; x < W; x += 24) for (let y = 4; y < hautScene; y += 24) p.dot(x + 2, y + 2, COQUE[1])
-    // l'aire : un disque sombre, l'anneau de chevrons, un cercle et une croix de guidage, huit feux qui courent
-    const R0 = 30
-    p.circle(cx, cy, R0 + 3, NUIT)
-    p.circle(cx, cy, R0, COQUE[1])
-    p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))
-    p.ring(cx, cy, R0 - 9, 1, COQUE[2])
-    p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, COQUE[2])
-    p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, COQUE[2])
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2
-      const allume = (Math.floor(t * 4) + i) % 8 < 3
-      const fx = cx + Math.cos(a) * (R0 + 6)
-      const fy = cy + Math.sin(a) * (R0 + 6)
-      p.dot(fx, fy, allume ? PEPITE[3] : PEPITE[0])
-      if (allume) p.glow(fx, fy, 5, PEPITE[2], 0.5)
-    }
     // les lampes des coins : un boîtier, un halo chaud
     for (const lx of [10, W - 11]) {
       p.glow(lx, 6, 50, N.hex('#ffd8a0'), 0.3)
       p.rect(lx - 3, 0, 6, 3, COQUE[2])
       p.rect(lx - 2, 3, 4, 1, PEPITE[3])
     }
-    // des caisses de bois cerclées
-    const caisse = (x: number, y: number, w: number, h: number): void => {
-      p.rect(x, y, w, h, N.hex('#2a1e14'))
-      p.rect(x + 1, y + 1, w - 2, h - 2, N.hex('#47321e'))
-      p.line(x + 1, y + 1, x + w - 2, y + 1, N.hex('#69492a'))
-      p.line(x, y + Math.floor(h / 2), x + w - 1, y + Math.floor(h / 2), N.hex('#2a1e14'))
+    if (vue === 'hangar') {
+      // l'aire : un disque sombre, l'anneau de chevrons, un cercle et une croix de guidage, huit feux qui courent
+      const R0 = 30
+      p.circle(cx, cy, R0 + 3, NUIT)
+      p.circle(cx, cy, R0, COQUE[1])
+      p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))
+      p.ring(cx, cy, R0 - 9, 1, COQUE[2])
+      p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, COQUE[2])
+      p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, COQUE[2])
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2
+        const allume = (Math.floor(t * 4) + i) % 8 < 3
+        const fx = cx + Math.cos(a) * (R0 + 6)
+        const fy = cy + Math.sin(a) * (R0 + 6)
+        p.dot(fx, fy, allume ? PEPITE[3] : PEPITE[0])
+        if (allume) p.glow(fx, fy, 5, PEPITE[2], 0.5)
+      }
+      // l'ombre du vaisseau sur l'aire, puis le vaisseau posé, agrandi deux fois, moteur éteint
+      const K = 2
+      p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
+      const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
+      dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
+    } else {
+      // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
+      // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
+      const COL = 4
+      const RANG = 3
+      const cw = 30
+      const ch = 26
+      const gx = Math.floor((W - (COL * cw + (COL - 1) * 3)) / 2)
+      const gy = hautScene - 10 - RANG * (ch + 3) + 3
+      for (let i = 0; i < COL * RANG; i++) {
+        const x = gx + (i % COL) * (cw + 3)
+        const y = gy + Math.floor(i / COL) * (ch + 3)
+        const k = MINERAIS[i]
+        if (k === undefined) {
+          panel(p, x, y, cw, ch, { ...ENCRE, rim: ENCRE.top, top: ENCRE.body, body: ENCRE.low }, { r: 2 })
+          continue
+        }
+        const choisi = k === mineraiChoisi
+        panel(p, x, y, cw, ch, choisi ? ENCRE_OR : ENCRE, { r: 2 })
+        dessinerUneRessource(p, x + cw / 2, y + 10, k, 2)
+        p.text(String(tresor[k]), x + cw / 2, y + ch - 7, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center' })
+        zones.push({ x, y, w: cw, h: ch, action: () => (mineraiChoisi = k) })
+      }
     }
-    caisse(6, hautScene - 19, 12, 8)
-    caisse(20, hautScene - 16, 8, 6)
-    caisse(W - 22, hautScene - 22, 14, 10)
-    // l'ombre du vaisseau sur l'aire, puis le vaisseau posé, agrandi deux fois, moteur éteint
-    const K = 2
-    p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
-    const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
-    dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
-    // L'ENSEIGNE EST L'INTERRUPTEUR (Keko : « on a déjà un bouton hangar / entrepôt qui sert d'indicateur au-dessus de
-    // l'UI, pourquoi ne pas utiliser ça plutôt qu'ajouter une barre ? ») : les deux mots, l'actif en or, une tape bascule
-    const lh = p.measure('HANGAR')[0]
-    const le = p.measure('ENTREPOT')[0]
-    const we = lh + le + 14
-    panel(p, 3, hautScene - 12, we, 11, ENCRE, { r: 2 })
-    p.text('HANGAR', 7, hautScene - 9, vue === 'hangar' ? PEPITE[3] : COQUE[3])
-    p.text('ENTREPOT', 7 + lh + 6, hautScene - 9, vue === 'entrepot' ? PEPITE[3] : COQUE[3])
-    p.rect(7 + lh + 2, hautScene - 11, 1, 9, ENCRE.rim)
-    zones.push({ x: 3, y: hautScene - 12, w: we, h: 11, action: () => (vue = vue === 'hangar' ? 'entrepot' : 'hangar') })
+    // LES ONGLETS EN COLONNE, à gauche de la scène (Keko : « en colonne sur la gauche de l'écran, qui est inutilisé ») :
+    // HANGAR, ENTREPOT, l'actif en or ; la scène montre l'un ou l'autre
+    const vues = ['hangar', 'entrepot'] as const
+    vues.forEach((vv, i) => {
+      const w = 44
+      const y = 20 + i * 14
+      const actif = vue === vv
+      panel(p, 3, y, w, 12, actif ? ENCRE_OR : ENCRE, { r: 2 })
+      p.text(vv === 'hangar' ? 'HANGAR' : 'ENTREPOT', 3 + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
+      if (!actif) zones.push({ x: 3, y, w, h: 12, action: () => (vue = vv) })
+    })
     // le bouton de test, en haut à droite : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
     const demande = t - resetDemandeA < 2
     bouton(p, W - 34, 4, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
@@ -390,7 +426,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       resetDemandeA = -10
       hangar = hangarNeuf()
       tresor = cargaisonVide()
-      sauverHangar(hangar, tresor)
+      credits = 0
+      sauver()
       ouvrirLeHangar()
       titre = ''
       texte = ''
@@ -443,25 +480,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (repere !== null) p.rect(bx + 1 + Math.round((bw - 2) * Math.min(1, repere)) - 1, y - 1, 1, 7, N.WHITE)
   }
   /**
-   * L'ENTREPÔT (Keko : « un onglet entrepôt à côté du hangar, avec inventaire ») : une case par ressource — son icône en
-   * grand, son nom, son compte —, trois par rangée, de quoi accueillir les tiers à venir (sans total : « inutile »).
-   * Rend le y sous le panneau.
+   * LE BAS DE L'ENTREPÔT (Keko : « la partie inférieure devient la zone avec une petite description du minerai
+   * sélectionné et son prix en crédits ») : la fiche du minerai choisi dans la grille — son nom, deux lignes, sa valeur
+   * en crédits la pépite, ce qu'on en a en stock —, VENDRE TOUT, et les crédits qu'on a. Rend le y sous le panneau.
    */
   function dessinerLEntrepot(p: Peintre, y: number): number {
-    const rangees = Math.ceil(MINERAIS.length / 3)
-    const hp = 16 + rangees * 30 + 2
+    const k = mineraiChoisi
+    const fiche = FICHES_MINERAI[k]
+    const L = replier(p, fiche.dit, W - 20)
+    const hp = 16 + L.length * 7 + 24 + 18
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
-    p.text('INVENTAIRE', W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
-    MINERAIS.forEach((k, i) => {
-      const cx = 7 + (i % 3) * ((W - 14) / 3)
-      const cy = y + 15 + Math.floor(i / 3) * 30
-      const cw = Math.floor((W - 14) / 3) - 2
-      panel(p, cx, cy, cw, 27, tresor[k] > 0 ? ENCRE : { ...ENCRE, rim: ENCRE.top }, { r: 2 })
-      dessinerUneRessource(p, cx + 12, cy + 12, TEINTES_MINERAI[k], 2)
-      p.text(String(tresor[k]), cx + cw - 4, cy + 6, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
-      p.text(texteNu(k), cx + cw - 4, cy + 17, COQUE[4], { align: 'right' })
-    })
-    return y + hp + 4
+    dessinerUneRessource(p, 14, y + 8, k, 1)
+    p.text(texteNu(fiche.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
+    L.forEach((li, i) => p.text(li, W / 2, y + 16 + i * 7, COQUE[5], { align: 'center' }))
+    const ly = y + 16 + L.length * 7 + 2
+    // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
+    p.text('VALEUR', 10, ly + 1, COQUE[4])
+    p.text(texteNu(`${fiche.credits} credits la pepite`), W - 9, ly, PEPITE[3], { font: 'big', align: 'right' })
+    p.text('EN STOCK', 10, ly + 12, COQUE[4])
+    p.text(String(tresor[k]), W - 9, ly + 11, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
+    const by = ly + 24
+    // VENDRE TOUT : le stock du minerai contre ses crédits (de moi : une valeur sans vente n'aurait pas de sens ; à rejuger)
+    const gain = tresor[k] * fiche.credits
+    bouton(p, W / 2 - 52, by, 104, 13, tresor[k] > 0 ? `Vendre : ${gain} cr` : 'Rien a vendre', tresor[k] > 0, () => {
+      const r = vendre(tresor, credits, k)
+      tresor = r.tresor
+      credits = r.credits
+      sauver()
+    }, true)
+    y += hp + 4
+    // les crédits qu'on a, sous le panneau
+    p.text(texteNu(`Credits : ${credits}`), W / 2, y + 1, PEPITE[2], { font: 'big', align: 'center' })
+    return y + 12
   }
   /**
    * L'INTERFACE DU HANGAR, sous la scène, EN GRANDE POLICE (Keko : « les textes et l'interface sont un peu petits ») :
@@ -475,8 +525,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLEcran(p: Peintre): void {
     p.place(0, 0)
-    const y0 = hautScene + 4
-    let y = y0
+    let y = hautScene + 4
     if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
     else {
     // les onglets, centrés
@@ -528,7 +577,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const k of MINERAIS) {
         if (pc.prix[k] <= 0) continue
         const assez = tresor[k] >= pc.prix[k]
-        dessinerUneRessource(p, px + 4, py + 4, TEINTES_MINERAI[k], 1)
+        dessinerUneRessource(p, px + 4, py + 4, k, 1)
         const mot = `${pc.prix[k]} / ${tresor[k]}`
         p.text(mot, px + 11, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
         px += 11 + p.measure(mot, { font: 'big' })[0] + 10
@@ -540,14 +589,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (pc.sorte === 'arme') {
         bouton(p, W / 2 - bw / 2, by, bw, 13, 'Demonter', true, () => {
           hangar = demonter(hangar, pc.id)
-          sauverHangar(hangar, tresor)
+          sauver()
         }, true)
       } else motEnRelief(p, 'Montee', W / 2, by + 3, 1, true)
     } else if (possede(hangar, pc.id)) {
       const place = pc.sorte !== 'arme' || hangar.armes.length < armesMax(hangar)
       bouton(p, W / 2 - bw / 2, by, bw, 13, place ? 'Monter' : 'Coque pleine', place, () => {
         hangar = monter(hangar, pc.id)
-        sauverHangar(hangar, tresor)
+        sauver()
       }, true)
     } else {
       bouton(p, W / 2 - bw / 2, by, bw, 13, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
@@ -555,7 +604,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (r === null) return
         hangar = r.hangar
         tresor = r.tresor
-        sauverHangar(hangar, tresor)
+        sauver()
       }, true)
     }
     y += hd + 4
@@ -564,7 +613,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const respire = 0.6 + 0.4 * Math.sin(t * 4)
     p.glow(W / 2, y + 8, 34, PEPITE[2], 0.2 * respire)
     bouton(p, W / 2 - 44, y, 88, 17, 'Decoller', true, () => demarrer(), true)
-    hauteurUI = y + 17 - y0
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
   }
@@ -1154,7 +1202,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               for (const k of MINERAIS) affiche[k] = 0
               // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
               tresor = { ...m.tresor }
-              sauverHangar(hangar, tresor)
+              sauver()
               titre = 'EXPEDITION ACHEVEE'
               texte = `Extrait : ${nommer(ev.cargaison)}. Tresor : ${nommer(m.tresor)}.`
               break

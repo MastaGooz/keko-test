@@ -13,7 +13,7 @@
  * l'achat, le montage et le démontage rendent un hangar neuf, et `configDuHangar` traduit les pièces en configuration
  * du vaisseau — CELLE DU JOUEUR SEUL : le rival garde la configuration de série.
  */
-import { cargaisonVide, MINERAIS, type Arme, type Cargaison, type ConfigVaisseau } from './jeu.ts'
+import { cargaisonVide, MINERAIS, type Arme, type Cargaison, type ConfigVaisseau, type Minerai } from './jeu.ts'
 
 /** Les emplacements à une pièce ; les armes sont à part (autant que la coque en porte, `ARMES_MAX` au plus). */
 export const EMPLACEMENTS = ['propulseur', 'coque', 'foreuse'] as const
@@ -200,6 +200,27 @@ export function jaugesDe(p: Piece): Jauge[] {
     { nom: 'Portee', valeur: a.portee, max: max((q) => q.arme!.portee) },
   ]
 }
+
+/**
+ * LES FICHES DES MINERAIS, pour l'entrepôt (Keko : « une petite description du minerai sélectionné et son prix en
+ * crédits — on ajoute la monnaie du jeu : les crédits ») : le nom, deux lignes, et ce que l'entrepôt PAIE la pépite,
+ * en crédits. *Les prix sont de moi, à rejuger* : l'or vaut quatre fer, le cristal douze.
+ */
+export const FICHES_MINERAI: Record<Minerai, { nom: string; dit: string; credits: number }> = {
+  fer: { nom: 'Fer', dit: 'Le metal des roches grises, partout autour des stations. Commun, mais tout commence par lui.', credits: 2 },
+  or: { nom: 'Or', dit: 'Dans la roche ocre, loin des stations. Rare, lourd, recherche.', credits: 8 },
+  cristal: { nom: 'Cristal', dit: 'Dans la roche bleutee, aux confins. Tres rare : il scintille sur ses veines.', credits: 25 },
+}
+
+/** Vendre tout un minerai du trésor à l'entrepôt : rend le trésor et les crédits neufs (rien à vendre : les mêmes valeurs). */
+export function vendre(tresor: Cargaison, credits: number, k: Minerai): { tresor: Cargaison; credits: number } {
+  const n = tresor[k]
+  if (n <= 0) return { tresor, credits }
+  return { tresor: { ...tresor, [k]: 0 }, credits: credits + n * FICHES_MINERAI[k].credits }
+}
+
+/** Relit les crédits gardés : un entier positif, zéro sinon. */
+export const lireCredits = (brut: unknown): number => (typeof brut === 'number' && Number.isFinite(brut) && brut > 0 ? Math.floor(brut) : 0)
 
 /** Relit un trésor gardé : des entiers positifs par minerai, zéro sinon. */
 export function lireTresor(brut: unknown): Cargaison {

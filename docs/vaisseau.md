@@ -532,22 +532,32 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   travaillé qu'une ligne de texte pour les ressources, on en aura beaucoup à
   l'avenir (tiers) ; un onglet entrepôt à côté du hangar avec inventaire ;
   quand on veut payer quelque chose, le solde s'affiche avec le prix ») :
-  L'ENSEIGNE de la scène est l'interrupteur — les deux mots, l'actif en or,
-  une tape bascule (Keko : « on a déjà un bouton hangar / entrepôt qui sert
-  d'indicateur au-dessus de l'UI, pourquoi ne pas utiliser ça plutôt
-  qu'ajouter une barre ? » ; *deux grandes plaques en tête ont vécu une
-  heure*). La vue ENTREPOT remplace
-  les pièces par L'INVENTAIRE : une case par ressource, icône en grand (la
-  pépite du jeu : un losange de sa teinte, un éclat), compte et nom, trois
-  par rangée (les tiers à venir feront des rangées). Dans le panneau d'une
-  pièce qu'on n'a pas, une ligne PRIX donne, par minerai, l'icône et
-  « prix / solde », en or si le solde y suffit, en rouge sinon. *Retirés le
-  jour même, à la demande de Keko : le total extrait sous l'inventaire
-  (« inutile ») et une bande des ressources sous les vues (« quand on aura
-  dix minerais différents elle sera inexploitable »).* **Un bouton de test
-  RESET en haut à droite de la scène** (Keko) remet toute la progression de
-  l'appareil à zéro — hangar et trésor — en deux tapes (RESET, puis SUR ?
-  pendant deux secondes).
+  LES DEUX ONGLETS SONT EN COLONNE À GAUCHE DE LA SCÈNE (Keko : « sur la
+  gauche de l'écran, qui est inutilisé » ; *avant : deux grandes plaques en
+  tête, puis l'enseigne du hangar en interrupteur, chacune une heure*),
+  l'actif en or. **La scène a une hauteur fixe** (Keko : « il ne faut pas que
+  la hauteur de la zone supérieure change en fonction des éléments en
+  dessous » — elle se centrait sur l'interface ; les cartons sont partis).
+  La vue ENTREPOT met L'INVENTAIRE À LA PLACE DU VAISSEAU : une grille de
+  douze cases (quatre par rangée), les minerais dans les premières, LES
+  AUTRES VIDES pour la suite, la choisie cerclée d'or ; **une icône par
+  minerai, de forme et de texture propres** (Keko) — le fer un caillou
+  anguleux et mat, l'or une pépite en losange qui brille, le cristal une
+  pointe à facettes qui pulse. Dessous, LA FICHE du minerai choisi
+  (`FICHES_MINERAI`, dans la règle) : son nom, deux lignes, SA VALEUR EN
+  CRÉDITS la pépite — **les crédits sont la monnaie du jeu** (Keko), gardés
+  avec le trésor —, le stock, et VENDRE TOUT, qui change le stock en crédits
+  (`vendre` ; *de moi : une valeur sans vente n'aurait pas de sens ; fer 2,
+  or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. Les
+  pièces se paient encore en fer. Dans le panneau d'une pièce qu'on n'a
+  pas, une ligne PRIX donne, par minerai, l'icône et « prix / solde », en or
+  si le solde y suffit, en rouge sinon. *Retirés le jour même, à la demande
+  de Keko : le total extrait sous l'inventaire (« inutile ») et une bande des
+  ressources sous les vues (« quand on aura dix minerais différents elle sera
+  inexploitable »).* **Un bouton de test RESET en haut à droite de la
+  scène** (Keko) remet toute la progression de l'appareil à zéro — hangar,
+  trésor, crédits — en deux tapes (RESET, puis SUR ? pendant deux
+  secondes).
 - **Chaque décollage refait la configuration des pièces montées** et un
   monde neuf ; le trésor se sauve à l'extraction même.
 

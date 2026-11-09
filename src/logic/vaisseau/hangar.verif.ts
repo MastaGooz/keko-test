@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, ARMES_MAX, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, hangarNeuf, jaugesDe, lireHangar, lireTresor, monteeA, monter, peutAcheter, PIECES, piecesDe } from './hangar.ts'
+import { acheter, ARMES_MAX, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, PIECES, piecesDe, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -67,6 +67,9 @@ verifier('relu : une pièce montée au mauvais emplacement redevient de série ;
 verifier('relu : un hangar d’avant les armes (sans le champ) en a zéro', lireHangar({ possedees: ['propulseur-2'], montees: { propulseur: 'propulseur-2' } }).armes.length === 0)
 const jc = jaugesDe(PIECES.find((p) => p.id === 'coque-3')!)
 verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/2, armes 2/2, poids 1,1/1,3 ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}${j.cellules ? '#' : ''}`).join(';') === 'Blindage 5/8#;Bouclier 2/2#;Armes 2/2#;Poids 1.1/1.3' && PIECES.every((p) => jaugesDe(p).length >= 3 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
+const v1 = vendre({ fer: 7, or: 2, cristal: 0 }, 5, 'or')
+verifier('vendre l’or : le trésor n’en a plus, les crédits montent du prix de la fiche ; rien à vendre ne change rien', v1.tresor.or === 0 && v1.tresor.fer === 7 && v1.credits === 5 + 2 * FICHES_MINERAI.or.credits && vendre(v1.tresor, v1.credits, 'cristal').credits === v1.credits)
+verifier('les crédits relus : un entier positif, zéro sinon', lireCredits(12.7) === 12 && lireCredits(-3) === 0 && lireCredits('x') === 0 && lireCredits(undefined) === 0)
 const tr = lireTresor({ fer: 7.9, or: -3, cristal: 'x', autre: 1 })
 verifier('le trésor relu : des entiers positifs, zéro sinon', tr.fer === 7 && tr.or === 0 && tr.cristal === 0 && lireTresor(undefined).fer === 0)
 
