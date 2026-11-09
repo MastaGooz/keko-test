@@ -546,12 +546,15 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   pointe à facettes qui pulse. Dessous, LA FICHE du minerai choisi
   (`FICHES_MINERAI`, dans la règle) : son nom, deux lignes, SA VALEUR EN
   CRÉDITS la pépite — **les crédits sont la monnaie du jeu** (Keko), gardés
-  avec le trésor —, le stock, et VENDRE TOUT, qui change le stock en crédits
+  avec le trésor, avec LEUR SYMBOLE, une pièce d'or à éclat, à droite du
+  nombre —, le stock, et VENDRE TOUT, qui change le stock en crédits
   (`vendre` ; *de moi : une valeur sans vente n'aurait pas de sens ; fer 2,
   or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. Les
   pièces se paient encore en fer. Dans le panneau d'une pièce qu'on n'a
-  pas, une ligne PRIX donne, par minerai, l'icône et « prix / solde », en or
-  si le solde y suffit, en rouge sinon. *Retirés le jour même, à la demande
+  pas, une ligne PRIX donne, par minerai, l'icône — LA MÊME QU'À L'INVENTAIRE,
+  à la même taille (Keko) — et « prix / solde », en or si le solde y suffit,
+  en rouge sinon. La colonne des onglets part du haut, à la hauteur du
+  bouton RESET (Keko). *Retirés le jour même, à la demande
   de Keko : le total extrait sous l'inventaire (« inutile ») et une bande des
   ressources sous les vues (« quand on aura dix minerais différents elle sera
   inexploitable »).* **Un bouton de test RESET en haut à droite de la

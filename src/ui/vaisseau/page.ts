@@ -251,6 +251,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
+  /** LE SYMBOLE DES CRÉDITS (Keko) : une pièce d'or vue de face, un bord sombre, un éclat, agrandie k fois ; à droite d'un nombre. */
+  function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
+    p.circle(x, y, 2.5 * k, PEPITE[1])
+    p.circle(x, y, 1.8 * k, PEPITE[2])
+    p.rect(x - k, y - 1.5 * k, Math.max(1, k), Math.max(1, k), PEPITE[4])
+    p.rect(x - 0.5 * k, y - 0.5 * k, Math.max(1, k), Math.max(1, Math.round(1.5 * k)), PEPITE[1])
+    p.glow(x, y, 4 * k, PEPITE[2], 0.25)
+  }
+  /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
+  function nombreDeCredits(p: Peintre, n: number, x: number, y: number, c: number, centre = false): void {
+    const w = p.measure(String(n), { font: 'big' })[0]
+    const x0 = centre ? x - (w + 10) / 2 : x - w - 10
+    p.text(String(n), x0, y, c, { font: 'big' })
+    dessinerUnCredit(p, x0 + w + 6, y + 3, 1.2)
+  }
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
   /**
@@ -410,7 +425,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const vues = ['hangar', 'entrepot'] as const
     vues.forEach((vv, i) => {
       const w = 44
-      const y = 20 + i * 14
+      const y = 4 + i * 14
       const actif = vue === vv
       panel(p, 3, y, w, 12, actif ? ENCRE_OR : ENCRE, { r: 2 })
       p.text(vv === 'hangar' ? 'HANGAR' : 'ENTREPOT', 3 + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
@@ -490,27 +505,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const L = replier(p, fiche.dit, W - 20)
     const hp = 16 + L.length * 7 + 24 + 18
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
-    dessinerUneRessource(p, 14, y + 8, k, 1)
+    dessinerUneRessource(p, 16, y + 8, k, 2)
     p.text(texteNu(fiche.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     L.forEach((li, i) => p.text(li, W / 2, y + 16 + i * 7, COQUE[5], { align: 'center' }))
     const ly = y + 16 + L.length * 7 + 2
     // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
-    p.text('VALEUR', 10, ly + 1, COQUE[4])
-    p.text(texteNu(`${fiche.credits} credits la pepite`), W - 9, ly, PEPITE[3], { font: 'big', align: 'right' })
+    p.text('VALEUR LA PEPITE', 10, ly + 1, COQUE[4])
+    nombreDeCredits(p, fiche.credits, W - 9, ly, PEPITE[3])
     p.text('EN STOCK', 10, ly + 12, COQUE[4])
     p.text(String(tresor[k]), W - 9, ly + 11, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
     const by = ly + 24
     // VENDRE TOUT : le stock du minerai contre ses crédits (de moi : une valeur sans vente n'aurait pas de sens ; à rejuger)
     const gain = tresor[k] * fiche.credits
-    bouton(p, W / 2 - 52, by, 104, 13, tresor[k] > 0 ? `Vendre : ${gain} cr` : 'Rien a vendre', tresor[k] > 0, () => {
+    bouton(p, W / 2 - 52, by, 104, 13, tresor[k] > 0 ? `Vendre : ${gain}` : 'Rien a vendre', tresor[k] > 0, () => {
       const r = vendre(tresor, credits, k)
       tresor = r.tresor
       credits = r.credits
       sauver()
     }, true)
+    if (tresor[k] > 0) dessinerUnCredit(p, W / 2 + p.measure(`VENDRE : ${gain}`, { font: 'big' })[0] / 2 + 7, by + 6, 1.2)
     y += hp + 4
     // les crédits qu'on a, sous le panneau
-    p.text(texteNu(`Credits : ${credits}`), W / 2, y + 1, PEPITE[2], { font: 'big', align: 'center' })
+    p.text('CREDITS', W / 2 - 6, y + 2, COQUE[4], { align: 'right' })
+    nombreDeCredits(p, credits, W / 2 + 30, y, PEPITE[2])
     return y + 12
   }
   /**
@@ -577,10 +594,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const k of MINERAIS) {
         if (pc.prix[k] <= 0) continue
         const assez = tresor[k] >= pc.prix[k]
-        dessinerUneRessource(p, px + 4, py + 4, k, 1)
+        dessinerUneRessource(p, px + 5, py + 4, k, 2) // (le même symbole qu'à l'inventaire, à la même taille — Keko)
         const mot = `${pc.prix[k]} / ${tresor[k]}`
-        p.text(mot, px + 11, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
-        px += 11 + p.measure(mot, { font: 'big' })[0] + 10
+        p.text(mot, px + 14, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
+        px += 14 + p.measure(mot, { font: 'big' })[0] + 10
       }
     }
     const by = y + 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 2
