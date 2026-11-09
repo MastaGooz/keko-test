@@ -258,14 +258,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * la barre, le côté gauche bien arrondi ») : un C de rayon 3,2 ouvert de ±52° à droite, un fût au centre qui dépasse
    * en haut et en bas, vert, le fût plus clair, une ombre dessous. UNE SEULE TAILLE, partout (Keko).
    */
-  function dessinerUnCredit(p: Peintre, x: number, y: number): void {
+  function dessinerUnCredit(p: Peintre, x0: number, y0: number): void {
+    // sur des pixels entiers : posé entre deux pixels, le même glyphe ne sortait pas pareil d'un endroit à l'autre (Keko l'a vu sur le bouton Vendre)
+    const x = Math.round(x0)
+    const y = Math.round(y0)
     const r = 3.2
     const ouverture = 0.9
     p.arc(x, y + 1, r, 1, ouverture, Math.PI * 2 - ouverture, RUNE[0])
-    p.line(x, y - 3, x, y + 5, RUNE[0])
+    p.line(x, y - 2, x, y + 4, RUNE[0])
     p.arc(x, y, r, 1, ouverture, Math.PI * 2 - ouverture, RUNE[1])
-    p.line(x, y - 4, x, y + 4, RUNE[2])
-    p.rect(Math.round(x), Math.round(y - 4), 1, 1, RUNE[3])
+    p.line(x, y - 3, x, y + 3, RUNE[2]) // (le fût s'arrête à la hauteur du C, ni plus haut ni plus bas — Keko)
+    p.rect(x, y - 3, 1, 1, RUNE[3])
     p.glow(x, y, 5, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
