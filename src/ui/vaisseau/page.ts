@@ -348,6 +348,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** La scène (le sol du hangar jusqu'au bas de l'aire) a UNE HAUTEUR FIXE, celle qu'elle avait au hangar avec trois jauges (Keko : « il ne faut pas que la hauteur de la zone supérieure change en fonction des éléments en dessous »). */
   const hauteurDeScene = (): number => Math.max(120, Math.floor((H - 10 - 290) / 2) + 120)
+  /** La largeur de la bande des onglets, à gauche de la scène, où rien d'autre ne se dessine. */
+  const BANDE = 52
   let hautScene = 178
   /**
    * LE HANGAR, VU DE DESSUS (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière, ni les consignes en
@@ -360,16 +362,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = [] // (la scène se dessine la première : le bouton RESET pose la première zone de l'image)
     p.place(0, 0)
     hautScene = hauteurDeScene()
-    const cx = W / 2
+    // LA BANDE DES ONGLETS, à gauche, est CONDAMNÉE (Keko : « plus tard il y aura d'autres onglets, on ne veut pas le
+    // vaisseau ou l'inventaire dans cette zone ») : rien de la scène ne s'y dessine, la scène vit à sa droite
+    const cx = BANDE + Math.floor((W - BANDE) / 2)
     const cy = hautScene - 58
-    // le sol : des plaques, leurs joints sombres, un rivet par plaque
     p.rect(0, 0, W, H, NUIT)
-    p.rect(0, 0, W, hautScene, COQUE[0])
-    for (let x = 6; x < W; x += 24) p.line(x, 0, x, hautScene - 1, NUIT)
-    for (let y = 4; y < hautScene; y += 24) p.line(0, y, W - 1, y, NUIT)
-    for (let x = 6; x < W; x += 24) for (let y = 4; y < hautScene; y += 24) p.dot(x + 2, y + 2, COQUE[1])
-    // les lampes des coins : un boîtier, un halo chaud
-    for (const lx of [10, W - 11]) {
+    if (vue === 'hangar') {
+      // le sol du hangar : des plaques, leurs joints sombres, un rivet par plaque
+      p.rect(BANDE, 0, W - BANDE, hautScene, COQUE[0])
+      for (let x = BANDE + 6; x < W; x += 24) p.line(x, 0, x, hautScene - 1, NUIT)
+      for (let y = 4; y < hautScene; y += 24) p.line(BANDE, y, W - 1, y, NUIT)
+      for (let x = BANDE + 6; x < W; x += 24) for (let y = 4; y < hautScene; y += 24) p.dot(x + 2, y + 2, COQUE[1])
+    } else {
+      // LE FOND DE L'ENTREPÔT (Keko : « un autre fond pour l'inventaire, pas le fond du hangar ») : un mur de rayonnages
+      // d'acier verdâtre, des montants, des tablettes à l'ombre, un liseré jaune et noir le long de la bande
+      const MUR = N.hex('#101a16')
+      const MONTANT = N.hex('#1e2c26')
+      const TABLETTE = N.hex('#2c3e36')
+      p.rect(BANDE, 0, W - BANDE, hautScene, MUR)
+      for (let y = 10; y < hautScene; y += 18) {
+        p.rect(BANDE, y, W - BANDE, 2, TABLETTE)
+        p.rect(BANDE, y + 2, W - BANDE, 3, NUIT, 0.6)
+      }
+      for (let x = BANDE + 4; x < W; x += 32) {
+        p.rect(x, 0, 3, hautScene, MONTANT)
+        for (let y = 6; y < hautScene; y += 18) p.dot(x + 1, y, TABLETTE)
+      }
+      for (let y = 0; y < hautScene; y += 6) p.rect(BANDE, y, 2, 3, PEPITE[1])
+    }
+    // la bande des onglets : une plaque sombre, un trait qui la sépare de la scène
+    p.rect(0, 0, BANDE, hautScene, NUIT)
+    p.line(BANDE - 1, 0, BANDE - 1, hautScene - 1, COQUE[1])
+    // les lampes : un boîtier, un halo chaud, hors de la bande
+    for (const lx of [BANDE + 8, W - 11]) {
       p.glow(lx, 6, 50, N.hex('#ffd8a0'), 0.3)
       p.rect(lx - 3, 0, 6, 3, COQUE[2])
       p.rect(lx - 2, 3, 4, 1, PEPITE[3])
@@ -401,9 +426,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
       const COL = 4
       const RANG = 3
-      const cw = 30
+      const cw = 28
       const ch = 26
-      const gx = Math.floor((W - (COL * cw + (COL - 1) * 3)) / 2)
+      const gx = BANDE + Math.floor((W - BANDE - (COL * cw + (COL - 1) * 3)) / 2)
       const gy = hautScene - 10 - RANG * (ch + 3) + 3
       for (let i = 0; i < COL * RANG; i++) {
         const x = gx + (i % COL) * (cw + 3)

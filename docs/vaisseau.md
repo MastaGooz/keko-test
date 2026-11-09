@@ -535,7 +535,13 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   LES DEUX ONGLETS SONT EN COLONNE À GAUCHE DE LA SCÈNE (Keko : « sur la
   gauche de l'écran, qui est inutilisé » ; *avant : deux grandes plaques en
   tête, puis l'enseigne du hangar en interrupteur, chacune une heure*),
-  l'actif en or. **La scène a une hauteur fixe** (Keko : « il ne faut pas que
+  l'actif en or, **dans une BANDE CONDAMNÉE de 52 px** : rien de la scène ne
+  s'y dessine (Keko : « plus tard il y aura d'autres onglets, on ne veut pas
+  le vaisseau ou l'inventaire dans cette zone »), l'aire et la grille se
+  centrent à sa droite. **L'entrepôt a son propre fond** (Keko : « pas le
+  fond du hangar ») : un mur de rayonnages d'acier verdâtre, montants et
+  tablettes à l'ombre, un liseré jaune et noir le long de la bande. **La
+  scène a une hauteur fixe** (Keko : « il ne faut pas que
   la hauteur de la zone supérieure change en fonction des éléments en
   dessous » — elle se centrait sur l'interface ; les cartons sont partis).
   La vue ENTREPOT met L'INVENTAIRE À LA PLACE DU VAISSEAU : une grille de
