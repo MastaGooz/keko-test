@@ -528,6 +528,18 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   seul élément non pixel »), puis des flèches pour feuilleter une pièce à la
   fois (refusées : « un vrai interface qui affiche toutes les pièces »).*
   `&tresor=N` pose N fer de trésor pour essayer les achats d'un lien.
+- **L'ENTREPÔT et la bande des ressources** (Keko : « un affichage plus
+  travaillé qu'une ligne de texte pour les ressources, on en aura beaucoup à
+  l'avenir (tiers) ; un onglet entrepôt à côté du hangar avec inventaire ;
+  quand on veut payer quelque chose, le solde s'affiche avec le prix ») :
+  deux grandes plaques en tête, HANGAR et ENTREPOT ; dessous, dans les deux
+  vues, LA BANDE DES RESSOURCES — chaque minerai, son icône (la pépite du
+  jeu : un losange de sa teinte, un éclat) et son compte, éteint à zéro. La
+  vue ENTREPOT remplace les pièces par L'INVENTAIRE : une case par
+  ressource, icône en grand, compte et nom, trois par rangée (les tiers à
+  venir feront des rangées), le total extrait dessous. Dans le panneau d'une
+  pièce qu'on n'a pas, une ligne PRIX donne, par minerai, l'icône et
+  « prix / solde », en or si le solde y suffit, en rouge sinon.
 - **Chaque décollage refait la configuration des pièces montées** et un
   monde neuf ; le trésor se sauve à l'extraction même.
 
