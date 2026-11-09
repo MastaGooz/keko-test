@@ -637,6 +637,15 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   jusqu'à ce que le réacteur ait rendu UN CINQUIÈME de la réserve (sinon le
   vaisseau clignoterait entre les deux états). `energie: { max, recharge,
   repart, rampePoussee, rampePointe }`.
+- **CHAQUE PIÈCE A UN POIDS** (Keko : « un poids à chaque élément, pour être
+  cohérent ; le poids total joue sur l'inertie et la conso du propulseur ») :
+  coque 20 / 32 / 24, propulseur 6 / 8 / 10, réacteur 8 / 12 / 16, foreuses
+  4 / 6 / 8, radar 2, canon 4, mitrailleuse 5, missiles 8 — une jauge
+  « Poids » rouge sur toute pièce. LE POIDS TOTAL (`poidsTotal`, la somme des
+  pièces montées), rapporté à celui du vaisseau de série (`POIDS_SERIE`, 38),
+  divise la poussée et le frein du vide (lourd : on accélère moins, on glisse
+  plus) et multiplie ce que le propulseur consomme. Il s'affiche sous l'aire
+  du hangar. *La coque seule portait un facteur de poids auparavant.*
 - **À l'écran** : sous les cases de coque, une barre cyan qui se vide, dorée
   sous le quart, rouge et clignotante à plat avec « A PLAT ».
 - **LA SOUTE est une caractéristique de la coque** (`capacite` : de série 20
