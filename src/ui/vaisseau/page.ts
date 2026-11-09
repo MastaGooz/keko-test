@@ -581,9 +581,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : rouge ? ROUGE[3] : PEPITE[2]
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : PEPITE[3]
     if (j.nombre) {
-      // un simple nombre (les places d'outils, d'armes — Keko : « numérique et pas en jauge »), et celui de la pièce en place s'il diffère
+      // un simple nombre (les places d'outils, d'armes — Keko : « numérique et pas en jauge », sans rappel de la pièce en place)
       p.text(String(j.valeur), bx, y - 1, PEPITE[3], { font: 'big' })
-      if (repere !== null && Math.round(repere * j.max) !== j.valeur) p.text(`(${Math.round(repere * j.max)} en place)`, bx + p.measure(String(j.valeur), { font: 'big' })[0] + 4, y + 1, COQUE[3])
       return
     }
     if (j.cellules) {
