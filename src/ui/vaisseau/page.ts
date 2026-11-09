@@ -848,7 +848,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.dot(-1, s * 6.3, N.hex('#ff5a5a'))
       }
     })
-    p.poly(forme.map(([x, y]) => [x * 1.12 + (x > 0 ? 0.4 : -0.4), y * 1.25]), coque[0])
+    // (la coque portait un liseré sombre, un polygone un peu plus large dessous : agrandi au hangar il devenait un gros contour noir, que les ailes n'avaient pas — Keko l'a fait retirer)
     p.poly(forme, (x, y) => tonDe((x / 10) * lx * 0.35 + (y / 3.5) * ly * 0.8 + LUMIERE.z * 0.9))
     p.line(-5, 0, 6, 0, tonDe(LUMIERE.z * 0.9 - 0.1))
     if (allure.coque === 2) for (const [rx, ry] of [[4, -1.6], [4, 1.6], [-2, -2.6], [-2, 2.6], [-5, -1.6], [-5, 1.6]]) p.dot(rx, ry, coque[1])
