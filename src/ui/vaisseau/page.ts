@@ -527,7 +527,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // taille quand on change de minerai »), et un peu d'air avant la valeur et le stock
     const LIGNES = 3
     const L = replier(p, fiche.dit, W - 20).slice(0, LIGNES)
-    const hp = 19 + LIGNES * 7 + 6 + 24 + 18
+    const hp = 19 + LIGNES * 7 + 10 + 24 + 18
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
     // l'icône juste à gauche du nom, le nom décalé d'autant ; la description centrée dans ses trois lignes (Keko)
     const ln = p.measure(texteNu(fiche.nom), { font: 'big' })[0]
@@ -535,7 +535,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(texteNu(fiche.nom), W / 2 + 5, y + 7, PEPITE[3], { font: 'big', align: 'center' })
     const haut = y + 19 + Math.floor(((LIGNES - L.length) * 7) / 2)
     L.forEach((li, i) => p.text(li, W / 2, haut + i * 7, COQUE[5], { align: 'center' }))
-    const ly = y + 19 + LIGNES * 7 + 6
+    const ly = y + 19 + LIGNES * 7 + 10 // (dix pixels d'air sous la description : à trois lignes, le texte touchait la zone sombre)
     // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
     p.text('VALEUR LA PEPITE', 10, ly + 1, COQUE[4])
     nombreDeCredits(p, fiche.credits, W - 9, ly, PEPITE[3])
