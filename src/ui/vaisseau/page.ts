@@ -138,8 +138,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plus un seul élément non pixel ») : un titre, un texte, puis le hangar et « Décoller » ; ses zones touchables sont
    * refaites à chaque image dessinée, en pixels du tampon.
    */
-  let titre = ''
-  let texte = ''
+  /** LE BILAN de la dernière expédition, pour le ruban : son titre, l'étiquette (EXTRAIT ou PERDU) et les ressources, avec leurs icônes (Keko : pas le trésor total). */
+  let bilan: { titre: string; etiquette: string; cargaison: Cargaison } | null = null
   let zones: { x: number; y: number; w: number; h: number; action: () => void }[] = []
 
   // ---------------------------------------------------------------- l'état
@@ -481,8 +481,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       credits = 0
       sauver()
       ouvrirLeHangar()
-      titre = ''
-      texte = ''
+      bilan = null
     })
   }
   /**
@@ -679,13 +678,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
     // le bilan de la dernière expédition, en bandeau EN BAS, au-dessus de « Décoller » (Keko : en haut, il cachait la
     // colonne des onglets et l'entrepôt)
-    if (texte !== '') {
-      const L = replier(p, texte, W - 20)
-      const hb = 19 + L.length * 7
+    if (bilan !== null) {
+      const hb = 32
       const yb = byy - 6 - hb
       panel(p, 4, yb, W - 8, hb, ENCRE, { r: 2 })
-      p.text(titre, W / 2, yb + 4, PEPITE[3], { font: 'big', align: 'center' })
-      L.forEach((li, i) => p.text(li, W / 2, yb + 14 + i * 7, COQUE[5], { align: 'center' }))
+      p.text(bilan.titre, W / 2, yb + 4, PEPITE[3], { font: 'big', align: 'center' })
+      // l'étiquette, puis chaque ressource acquise (ou perdue) : son icône et son compte, la rangée centrée
+      const items = MINERAIS.filter((k) => bilan!.cargaison[k] > 0)
+      const le = p.measure(bilan.etiquette)[0]
+      const largeur = le + 8 + (items.length === 0 ? p.measure('RIEN', { font: 'big' })[0] : items.reduce((a, k) => a + 10 + 3 + p.measure(String(bilan!.cargaison[k]), { font: 'big' })[0] + 8, 0) - 8)
+      let x = Math.floor(W / 2 - largeur / 2)
+      p.text(bilan.etiquette, x, yb + 18, COQUE[4])
+      x += le + 8
+      if (items.length === 0) p.text('RIEN', x, yb + 17, COQUE[3], { font: 'big' })
+      for (const k of items) {
+        dessinerUneRessource(p, x + 5, yb + 20, k)
+        const n = String(bilan.cargaison[k])
+        p.text(n, x + 13, yb + 17, N.WHITE, { font: 'big' })
+        x += 13 + p.measure(n, { font: 'big' })[0] + 8
+      }
     }
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
@@ -1277,8 +1288,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
               tresor = { ...m.tresor }
               sauver()
-              titre = 'EXPEDITION ACHEVEE'
-              texte = `Extrait : ${nommer(ev.cargaison)}. Tresor : ${nommer(m.tresor)}.`
+              bilan = { titre: 'EXPEDITION ACHEVEE', etiquette: 'EXTRAIT', cargaison: { ...ev.cargaison } }
               break
             }
             case 'perdu': {
@@ -1292,8 +1302,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              titre = 'COQUE PERCEE'
-              texte = `Perdu avec la coque : ${nommer(m.cargaison)}. Le tresor (${nommer(m.tresor)}) et les pieces restent.`
+              bilan = { titre: 'COQUE PERCEE', etiquette: 'PERDU', cargaison: { ...m.cargaison } }
               break
             }
             default:
