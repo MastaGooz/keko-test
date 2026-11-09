@@ -360,18 +360,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * largeur et hauteur une fois le nez en haut, pour remplir `bw` × `bh` à trois pixels du bord.
    */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 13] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
+    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 9.5 + 1.5 * pc.cran] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
     const k = Math.max(1, Math.floor(Math.min((bw - 6) / ew, (bh - 6) / eh) * 2) / 2)
     const q = agrandi(p, k)
-    q.place(x, y, false, -Math.PI / 2)
+    // le propulseur s'étire vers l'arrière (sa flamme) : on recule l'origine pour centrer l'ensemble dans la case (la flamme ionique débordait en bas — Keko)
+    const L = pc.sorte === 'propulseur' ? 4 + 1.5 * pc.cran : 0
+    q.place(x, y - ((L - 2) / 2) * k, false, -Math.PI / 2)
     if (pc.sorte === 'propulseur') {
       const cp = pc.cran
       const tuyere = 1.8 + 0.5 * (cp - 1)
       const feu = cp >= 3 ? ION : FEU
-      const L = (4 + 1.5 * cp) * (0.9 + 0.1 * Math.sin(t * 40))
-      q.poly([[-1, -tuyere], [-1 - L, 0], [-1, tuyere]], feu[4])
-      q.poly([[-1, -tuyere * 0.55], [-1 - L * 0.6, 0], [-1, tuyere * 0.55]], feu[6])
-      q.glow(-2 - L * 0.4, 0, 6, feu[5], 0.6)
+      const Lf = L * (0.9 + 0.1 * Math.sin(t * 40))
+      q.poly([[-1, -tuyere], [-1 - Lf, 0], [-1, tuyere]], feu[4])
+      q.poly([[-1, -tuyere * 0.55], [-1 - Lf * 0.6, 0], [-1, tuyere * 0.55]], feu[6])
+      q.glow(-2 - Lf * 0.4, 0, 4, feu[5], 0.5)
       q.poly([[-1, -tuyere], [-2.5, -tuyere * 0.72], [-2.5, tuyere * 0.72], [-1, tuyere]], COQUE[1])
       q.poly([[-1, -tuyere - 0.5], [3, -tuyere - 1], [3, tuyere + 1], [-1, tuyere + 0.5]], COQUE[3])
       q.line(-1, -tuyere - 0.5, 3, -tuyere - 1, COQUE[5])
@@ -578,6 +580,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bw = W - 12 - bx
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : rouge ? ROUGE[3] : PEPITE[2]
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : PEPITE[3]
+    if (j.nombre) {
+      // un simple nombre (les places d'outils, d'armes — Keko : « numérique et pas en jauge »), et celui de la pièce en place s'il diffère
+      p.text(String(j.valeur), bx, y - 1, PEPITE[3], { font: 'big' })
+      if (repere !== null && Math.round(repere * j.max) !== j.valeur) p.text(`(${Math.round(repere * j.max)} en place)`, bx + p.measure(String(j.valeur), { font: 'big' })[0] + 4, y + 1, COQUE[3])
+      return
+    }
     if (j.cellules) {
       const n = Math.max(1, Math.round(j.max))
       const lc = Math.floor((bw - (n - 1)) / n)
@@ -751,17 +759,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         sauver()
       }, true)
     } else {
-      // ACHETER, le prix en crédits et son icône (le mot est centré dans le bouton, l'icône à sa droite)
-      const mot = `Acheter ${pc.prix}`
-      const bw = largeurDe(mot) + 12
-      bouton(p, W / 2 - bw / 2, y, bw, 13, mot, peutAcheter(hangar, credits, pc.id), () => {
+      // ACHETER en relief, puis le prix EN BEIGE (Keko) et l'icône des crédits
+      const vif = peutAcheter(hangar, credits, pc.id)
+      const wa = p.measure('ACHETER', { font: 'big' })[0]
+      const wn = p.measure(String(pc.prix), { font: 'big' })[0]
+      const bw = wa + 5 + wn + 12 + 16
+      const bx = W / 2 - bw / 2
+      bouton(p, bx, y, bw, 13, '', vif, () => {
         const r = acheter(hangar, credits, pc.id)
         if (r === null) return
         hangar = r.hangar
         credits = r.credits
         sauver()
       }, true)
-      dessinerUnCredit(p, W / 2 + p.measure(texteNu(mot), { font: 'big' })[0] / 2 + 8, y + 6)
+      motEnRelief(p, 'Acheter', bx + 8 + wa / 2, y + 3, 1, vif)
+      p.text(String(pc.prix), bx + 8 + wa + 5, y + 3, vif ? PEPITE[3] : COQUE[3], { font: 'big' })
+      dessinerUnCredit(p, bx + 8 + wa + 5 + wn + 6, y + 6)
     }
     y += 16
     // LE PANNEAU DES STATS, à la hauteur de son contenu (Keko) : à gauche LE GRAPHISME DE LA PIÈCE dans sa case, à

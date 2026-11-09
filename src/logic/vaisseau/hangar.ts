@@ -193,7 +193,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
 }
 
 /** Une jauge du panneau de description : son nom, la valeur de la pièce, le plus du catalogue (la barre pleine). */
-export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points, des armes) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean }
+export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean; /** Un simple nombre (des places d'outils, d'armes), ni barre ni cellules (Keko). */ nombre?: boolean }
 /**
  * LES JAUGES d'une pièce (Keko : « un vrai panneau de description : des jauges vitesse / accélération / maniabilité
  * pour le propulseur, le nombre d'armes portables par la coque, une jauge de blindage, de bouclier et de poids ») —
@@ -213,8 +213,8 @@ export function jaugesDe(p: Piece): Jauge[] {
     return [
       { nom: 'Blindage', valeur: p.pv ?? 0, max: max((q) => q.pv ?? 0), cellules: true },
       { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: Math.max(1, max((q) => q.bouclier ?? 0)), cellules: true },
-      { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), cellules: true },
-      { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), cellules: true },
+      { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), nombre: true },
+      { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), nombre: true },
       { nom: 'Poids', valeur: p.poids ?? 1, max: max((q) => q.poids ?? 1) },
     ]
   }
