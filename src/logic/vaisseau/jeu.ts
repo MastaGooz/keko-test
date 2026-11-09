@@ -46,8 +46,15 @@ export const VAISSEAU = {
   seuilChoc: 12,
   /** La coque du joueur : tant de points avant d'être percée (un trait en enlève un, un choc en enlève selon sa vitesse). */
   coque: 5,
-  /** LE FOREUR DU JOUEUR d'après la pièce montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage` (1 = de série). Le rival creuse avec `forage` tel quel. */
-  foreuse: { debit: 1, portee: 1 },
+  /**
+   * LE BOUCLIER du joueur (la coque à bouclier du hangar) : tant de points qui prennent les coups avant la coque, et se
+   * rechargent de `regain` point par seconde passé `delai` secondes sans coup. Zéro point : pas de bouclier.
+   */
+  bouclier: { points: 0, delai: 4, regain: 0.5 },
+  /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
+  foreuse: { debit: 1, portee: 1, aimant: 1 },
+  /** LES ARMES du joueur, montées au hangar (deux au plus) : chacune tire seule sur le rival le plus proche à sa portée. Aucune de série. */
+  armes: [] as Arme[],
   /**
    * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
    * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou
@@ -122,6 +129,9 @@ export type ConfigVaisseau = Large<typeof VAISSEAU>
 /** Le manche du vaisseau dans la langue du survivor (sa vitesse et sa réponse n'y servent pas). */
 export const MANCHE: ConfigSurvivor = { vitesse: 0, reponse: 0, manche: VAISSEAU.manche }
 
+/** Une arme du joueur : sa cadence, ce que fait un coup, sa portée, la vitesse et la vie de ses obus, leur dispersion ; guidée, l'obus tourne vers le rival. */
+export type Arme = { id: string; cadence: number; degats: number; portee: number; vitesse: number; vie: number; dispersion: number; guide: boolean }
+
 export type Vaisseau = {
   x: number
   y: number
@@ -147,14 +157,15 @@ export const cargaisonVide = (): Cargaison => ({ fer: 0, or: 0, cristal: 0 })
 export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 /** Une roche : son minerai et sa richesse (0,25 à 1) disent ce qu'elle rend ; ses filons se voient dessus. */
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
-/** Le laser en train de creuser : ce qu'il creuse (une roche, ou un ennemi), le point d'impact, la part déjà creusée (0 à 1). */
-/** Un laser posé sur sa cible : une roche, ou l'ennemi (le laser du joueur seul : le rival ne mine que des roches). */
-export type Forage = { sorte: 'roche' | 'ennemi'; cible: number; x: number; y: number; part: number }
+/** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
+export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
 export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number }
 /** Un trait tiré par l'ennemi. */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number }
+/** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
+export type Obus = Tir & { degats: number; guide: boolean; arme: string }
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
 export type Ennemi = {
   id: number
@@ -175,10 +186,16 @@ export type Monde = {
   phase: 'vol' | 'perdu' | 'extrait'
   vaisseau: Vaisseau
   coque: number
+  /** Le bouclier qui reste (voir la configuration), et l'instant du dernier coup reçu (il se recharge passé un délai). */
+  bouclier: number
+  toucheA: number
   forage: Forage | null
   ennemis: Ennemi[]
   prochainEnnemiA: number
   tirs: Tir[]
+  /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
+  obus: Obus[]
+  armesA: number[]
   /** Les points creusés par roche (son id), tant qu'elle tient. */
   creuse: Map<number, number>
   detruits: Set<number>
@@ -203,8 +220,13 @@ export type Evenement =
   | { type: 'extrait'; x: number; y: number; pepites: number; cargaison: Cargaison }
   | { type: 'tir'; x: number; y: number }
   | { type: 'touche'; x: number; y: number }
+  /** Le bouclier a pris le coup à la place de la coque. */
+  | { type: 'bouclier'; x: number; y: number }
+  /** Une arme du joueur tire. */
+  | { type: 'obus'; x: number; y: number; arme: string }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
-  | { type: 'ennemiTouche'; id: number }
+  /** Un obus touche le rival. */
+  | { type: 'ennemiTouche'; id: number; x: number; y: number }
   | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number }
   | { type: 'perdu' }
 
@@ -213,7 +235,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -416,7 +438,6 @@ const coutDuChoc = (c: ConfigVaisseau, choc: Choc, parUnite: number): number => 
 function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
-  if (m.forage !== null && m.forage.sorte === 'ennemi' && m.forage.cible === e.id) m.forage = null
   ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy })
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
@@ -556,10 +577,29 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
  * ennemi, les ennemis qui minent ou chassent, leurs traits, les roches qui éclatent, les pépites aimantées et
  * ramassées. Modifie `m` en place ; rend les chocs du joueur et ce qui s'est passé.
  */
+/** Le joueur encaisse un coup : le bouclier le prend s'il en reste (un point par coup, quel qu'il soit), sinon la coque ; percée, la partie est perdue. */
+function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
+  m.toucheA = m.t
+  if (c.bouclier.points > 0 && m.bouclier >= 1) {
+    m.bouclier -= 1
+    ev.push({ type: 'bouclier', x, y })
+    return
+  }
+  m.coque -= degats
+  ev.push({ type: 'touche', x, y })
+  if (m.coque <= 0) {
+    m.coque = 0
+    m.phase = 'perdu'
+    ev.push({ type: 'perdu' })
+  }
+}
+
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
   if (m.phase !== 'vol') return { chocs: [], evenements: ev }
   m.t += dt
+  // le bouclier se recharge, passé le délai sans coup
+  if (c.bouclier.points > 0 && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
   const r = voler(c, c, m.vaisseau, dt, direction, m.detruits)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
@@ -569,14 +609,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const degats = coutDuChoc(c, choc, c.collision.degatsCoque)
     abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
     if (degats <= 0) continue
-    m.coque -= degats
-    ev.push({ type: 'touche', x: choc.x, y: choc.y })
-    if (m.coque <= 0) {
-      m.coque = 0
-      m.phase = 'perdu'
-      ev.push({ type: 'perdu' })
-      return { chocs, evenements: ev }
-    }
+    encaisser(c, m, choc.x, choc.y, degats, ev)
+    if (m.phase !== 'vol') return { chocs, evenements: ev }
   }
 
   // l'ennemi : il naît à l'heure dite, un à la fois ; ses chocs comptent aussi, et peuvent l'abattre
@@ -586,28 +620,63 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 
-  // le laser du joueur : le plus proche à portée, roche ou ennemi — au débit et à la portée de SA foreuse (le hangar)
+  // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES
+  // SEULES : il a creusé le rival un temps, Keko l'a réservé aux astéroïdes, ce sont les armes qui l'attaquent
   const portee = c.forage.portee * c.foreuse.portee
   const debit = c.forage.debit * c.foreuse.debit
   const roche = rocheLaPlusProche(c, m, v.x, v.y, portee)
-  let ennemi: { e: Ennemi; d: number } | null = null
-  for (const e of m.ennemis) {
-    const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y) - c.ennemi.rayon
-    if (d <= portee && (ennemi === null || d < ennemi.d)) ennemi = { e, d }
+  m.forage = roche !== null ? creuserLaRoche(c, m, roche.roche, v, debit * dt, ev) : null
+
+  // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
+  c.armes.forEach((arme, i) => {
+    if (m.t < (m.armesA[i] ?? 0)) return
+    let cible: Ennemi | null = null
+    let dc = Infinity
+    for (const e of m.ennemis) {
+      const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+      if (d <= arme.portee && d < dc) (dc = d), (cible = e)
+    }
+    if (cible === null) return
+    m.armesA[i] = m.t + arme.cadence
+    const temps = dc / arme.vitesse
+    const cx = cible.corps.x + cible.corps.vx * temps - v.x
+    const cy = cible.corps.y + cible.corps.vy * temps - v.y
+    const angle = Math.atan2(cy, cx) + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
+    const x0 = v.x + Math.cos(angle) * (c.rayon + 3)
+    const y0 = v.y + Math.sin(angle) * (c.rayon + 3)
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats, guide: arme.guide, arme: arme.id })
+    ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
+  })
+  // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
+  for (let i = m.obus.length - 1; i >= 0; i--) {
+    const o = m.obus[i]
+    o.vie -= dt
+    if (o.guide && m.ennemis.length > 0) {
+      let cible = m.ennemis[0]
+      for (const e of m.ennemis) if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) < Math.hypot(cible.corps.x - o.x, cible.corps.y - o.y)) cible = e
+      const vit = Math.hypot(o.vx, o.vy)
+      const voulu = Math.atan2(cible.corps.y - o.y, cible.corps.x - o.x)
+      const ecart = ecartDAngle(Math.atan2(o.vy, o.vx), voulu)
+      const cap = Math.atan2(o.vy, o.vx) + Math.sign(ecart) * Math.min(Math.abs(ecart), 3.5 * dt)
+      o.vx = Math.cos(cap) * vit
+      o.vy = Math.sin(cap) * vit
+    }
+    o.x += o.vx * dt
+    o.y += o.vy * dt
+    let fini = o.vie <= 0
+    if (!fini) {
+      for (const e of m.ennemis) {
+        if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.ennemi.rayon + 1.5) continue
+        fini = true
+        e.pv -= o.degats
+        ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y })
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        break
+      }
+    }
+    if (!fini) for (const a of asteroidesVisibles(c, m, o.x, o.y, c.champ.rayonMax + 2)) if (Math.hypot(o.x - a.x, o.y - a.y) <= a.rayon) fini = true
+    if (fini) m.obus.splice(i, 1)
   }
-  if (ennemi !== null && (roche === null || ennemi.d < roche.d)) {
-    const e = ennemi.e
-    e.pv -= debit * dt
-    const dx = e.corps.x - v.x
-    const dy = e.corps.y - v.y
-    const d = Math.hypot(dx, dy) || 1
-    ev.push({ type: 'ennemiTouche', id: e.id })
-    if (e.pv <= 0) {
-      m.forage = null
-      abattreLEnnemi(c, m, e, ev)
-    } else m.forage = { sorte: 'ennemi', cible: e.id, x: e.corps.x - (dx / d) * c.ennemi.rayon, y: e.corps.y - (dy / d) * c.ennemi.rayon, part: 1 - e.pv / c.ennemi.pv }
-  } else if (roche !== null) m.forage = creuserLaRoche(c, m, roche.roche, v, debit * dt, ev)
-  else m.forage = null
 
   // L'EXTRACTION, à la station la plus proche : à quai (après être sorti une fois d'un parvis), le compte monte ; hors
   // du parvis il redescend ; au bout, la partie est extraite et tout le minerai porté passe en banque
@@ -643,13 +712,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     let fini = tr.vie <= 0
     if (!fini && m.phase === 'vol' && Math.hypot(tr.x - v.x, tr.y - v.y) <= c.rayon + 1) {
       fini = true
-      m.coque -= 1
-      ev.push({ type: 'touche', x: tr.x, y: tr.y })
-      if (m.coque <= 0) {
-        m.coque = 0
-        m.phase = 'perdu'
-        ev.push({ type: 'perdu' })
-      }
+      encaisser(c, m, tr.x, tr.y, 1, ev)
     }
     if (!fini) for (const a of asteroidesVisibles(c, m, tr.x, tr.y, c.champ.rayonMax + 2)) if (Math.hypot(tr.x - a.x, tr.y - a.y) <= a.rayon) fini = true
     if (fini) m.tirs.splice(i, 1)
@@ -683,8 +746,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const frein = Math.exp(-2.5 * dt)
     p.vx *= frein
     p.vy *= frein
-    if (d <= c.forage.aimant) {
-      const tirage = c.forage.vitessePepite * (1 - d / c.forage.aimant) + 40
+    const aimant = c.forage.aimant * (plusProche.e === null ? c.foreuse.aimant : 1) // (l'aimant du joueur suit sa foreuse)
+    if (d <= aimant) {
+      const tirage = c.forage.vitessePepite * (1 - d / aimant) + 40
       p.vx += (dx / d) * tirage * dt * 6
       p.vy += (dy / d) * tirage * dt * 6
     }

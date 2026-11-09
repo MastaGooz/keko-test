@@ -1,24 +1,29 @@
 /**
  * LE HANGAR (Keko, 09/11 : « un menu avant de lancer la game où le joueur choisit son vaisseau en sélectionnant les
- * différentes pièces qu'il possède (propulseur, ailes, foreuse, arme...) » ; tranché : « pièces à l'achat », un vrai
- * emplacement d'arme à venir, et d'abord DEUX emplacements pour juger le menu et le dessin).
+ * différentes pièces qu'il possède » ; puis : « un vrai interface qui affiche toutes les pièces : propulseur, coque,
+ * foreuse, arme (plusieurs possibles). Le propulseur règle la maniabilité, la vitesse max et l'accélération. La coque
+ * règle les PV, le système de bouclier éventuel et le poids (donc l'inertie à l'arrêt et l'accélération). La foreuse
+ * règle la puissance de forage, la portée de forage mais aussi la portée du magnétisme des ressources. Les armes règlent
+ * les différentes attaques. Et on va rendre la foreuse exclusive aux astéroïdes (plus une arme) »).
  *
  * Le minerai extrait (le TRÉSOR : celui des expéditions achevées) achète des pièces, qui restent acquises — seul le
- * minerai porté se perd avec la coque. C'est ce qui donne un usage à la banque, et un sens à s'éloigner. Chaque
- * emplacement porte une pièce montée parmi celles qu'on possède ; la pièce de série est possédée d'office. La règle
- * est pure : le hangar est une valeur, l'achat et le montage rendent un hangar neuf, et `configDuHangar` traduit les
- * pièces montées en configuration du vaisseau — des facteurs sur la poussée, la pointe, le nez, le débit et la portée
- * du foreur, CEUX DU JOUEUR SEULS : le rival garde la configuration de série.
+ * minerai porté se perd avec la coque. Trois EMPLACEMENTS à une pièce (propulseur, coque, foreuse : la pièce de série
+ * est possédée d'office) et les ARMES, deux au plus, aucune au départ. La règle est pure : le hangar est une valeur,
+ * l'achat, le montage et le démontage rendent un hangar neuf, et `configDuHangar` traduit les pièces en configuration
+ * du vaisseau — CELLE DU JOUEUR SEUL : le rival garde la configuration de série.
  */
-import { cargaisonVide, MINERAIS, type Cargaison, type ConfigVaisseau } from './jeu.ts'
+import { cargaisonVide, MINERAIS, type Arme, type Cargaison, type ConfigVaisseau } from './jeu.ts'
 
-export const EMPLACEMENTS = ['propulseur', 'foreuse'] as const
+/** Les emplacements à une pièce ; les armes sont à part (`ARMES_MAX`). */
+export const EMPLACEMENTS = ['propulseur', 'coque', 'foreuse'] as const
 export type Emplacement = (typeof EMPLACEMENTS)[number]
+export type Sorte = Emplacement | 'arme'
+export const ARMES_MAX = 2
 
 export type Piece = {
   id: string
-  emplacement: Emplacement
-  /** 1 de série, 2, 3 : le dessin du vaisseau en change. */
+  sorte: Sorte
+  /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
   cran: 1 | 2 | 3
   nom: string
   /** Ce qu'elle change, dit au joueur. */
@@ -28,36 +33,50 @@ export type Piece = {
   poussee?: number
   vitesseMax?: number
   rotation?: number
+  /** La coque : ses points (absolus), son poids (divise la poussée et le frein : lourde, elle accélère moins et glisse plus), son bouclier (des points qui se rechargent). */
+  pv?: number
+  poids?: number
+  bouclier?: number
+  /** La foreuse : le débit et la portée du forage, la portée de l'aimant — des facteurs. */
   debit?: number
   portee?: number
+  aimant?: number
+  /** Une arme : ce qu'elle tire. */
+  arme?: Arme
 }
 
 const prix = (fer: number, or = 0, cristal = 0): Cargaison => ({ fer, or, cristal })
 
 /**
- * Le catalogue : trois crans par emplacement, le premier de série. *Les prix et les facteurs sont de moi, à rejuger* :
- * en fer pour commencer (une roche rend deux à sept pépites), l'or et le cristal attendent les crans d'après.
+ * Le catalogue. *Les prix et les chiffres sont de moi, à rejuger* : en fer pour commencer (une roche rend deux à sept
+ * pépites), l'or et le cristal attendent les crans d'après.
  */
 export const PIECES: readonly Piece[] = [
-  { id: 'propulseur-1', emplacement: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'La poussée et la pointe de série.', prix: prix(0) },
-  { id: 'propulseur-2', emplacement: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Poussée +25 %, pointe +15 %.', prix: prix(12), poussee: 1.25, vitesseMax: 1.15 },
-  { id: 'propulseur-3', emplacement: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Poussée +60 %, pointe +35 %, le nez plus vif.', prix: prix(30), poussee: 1.6, vitesseMax: 1.35, rotation: 1.2 },
-  { id: 'foreuse-1', emplacement: 'foreuse', cran: 1, nom: 'Foreuse de série', dit: 'Le débit et la portée de série.', prix: prix(0) },
-  { id: 'foreuse-2', emplacement: 'foreuse', cran: 2, nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: prix(10), debit: 1.4 },
-  { id: 'foreuse-3', emplacement: 'foreuse', cran: 3, nom: 'Foreuse à long faisceau', dit: 'Creuse 80 % plus vite et porte 25 % plus loin : le rival qui vous tient en joue est à portée.', prix: prix(28), debit: 1.8, portee: 1.25 },
+  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: prix(0) },
+  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: prix(12), poussee: 1.25, vitesseMax: 1.15, rotation: 1.1 },
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', prix: prix(30), poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
+  { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Coque de serie', dit: '5 points de coque, poids de serie.', prix: prix(0), pv: 5, poids: 1 },
+  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Coque blindee', dit: '8 points de coque. Lourde : accelere moins, glisse plus.', prix: prix(14), pv: 8, poids: 1.3 },
+  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points, plus 2 de bouclier qui se rechargent hors des coups. Un peu lourde.', prix: prix(32), pv: 5, poids: 1.1, bouclier: 2 },
+  { id: 'foreuse-1', sorte: 'foreuse', cran: 1, nom: 'Foreuse de serie', dit: 'Debit, portee et aimant de serie.', prix: prix(0) },
+  { id: 'foreuse-2', sorte: 'foreuse', cran: 2, nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite, aimant +25 %.', prix: prix(10), debit: 1.4, aimant: 1.25 },
+  { id: 'foreuse-3', sorte: 'foreuse', cran: 3, nom: 'Foreuse a long faisceau', dit: 'Creuse 80 % plus vite, porte 25 % plus loin, aimant +60 %.', prix: prix(28), debit: 1.8, portee: 1.25, aimant: 1.6 },
+  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', prix: prix(12), arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false } },
+  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', prix: prix(22), arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false } },
+  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', prix: prix(34), arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true } },
 ]
 
-/** Ce qu'on a : les pièces possédées, et celle montée à chaque emplacement. */
-export type Hangar = { possedees: string[]; montees: Record<Emplacement, string> }
+/** Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les armes montées (deux au plus, dans l'ordre : la première à gauche). */
+export type Hangar = { possedees: string[]; montees: Record<Emplacement, string>; armes: string[] }
 
 export const pieceDe = (id: string): Piece | undefined => PIECES.find((p) => p.id === id)
-export const piecesDe = (e: Emplacement): Piece[] => PIECES.filter((p) => p.emplacement === e)
+export const piecesDe = (s: Sorte): Piece[] => PIECES.filter((p) => p.sorte === s)
 const deSerie = (e: Emplacement): Piece => piecesDe(e)[0]
 
 export function hangarNeuf(): Hangar {
   const montees = {} as Record<Emplacement, string>
   for (const e of EMPLACEMENTS) montees[e] = deSerie(e).id
-  return { possedees: EMPLACEMENTS.map((e) => deSerie(e).id), montees }
+  return { possedees: EMPLACEMENTS.map((e) => deSerie(e).id), montees, armes: [] }
 }
 
 export const possede = (h: Hangar, id: string): boolean => h.possedees.includes(id)
@@ -66,8 +85,13 @@ export function peutAcheter(h: Hangar, tresor: Cargaison, id: string): boolean {
   const p = pieceDe(id)
   return p !== undefined && !possede(h, id) && couvre(tresor, p.prix)
 }
+/** Une pièce est montée : à son emplacement, ou parmi les armes. */
+export const estMontee = (h: Hangar, id: string): boolean => {
+  const p = pieceDe(id)
+  return p !== undefined && (p.sorte === 'arme' ? h.armes.includes(id) : h.montees[p.sorte] === id)
+}
 
-/** L'achat : la pièce passe aux possédées ET se monte ; le trésor paie. Rend les deux valeurs neuves, ou null si on ne peut pas. */
+/** L'achat : la pièce passe aux possédées ET se monte (une arme : s'il reste une place) ; le trésor paie. Rend les deux valeurs neuves, ou null si on ne peut pas. */
 export function acheter(h: Hangar, tresor: Cargaison, id: string): { hangar: Hangar; tresor: Cargaison } | null {
   if (!peutAcheter(h, tresor, id)) return null
   const p = pieceDe(id)!
@@ -76,46 +100,59 @@ export function acheter(h: Hangar, tresor: Cargaison, id: string): { hangar: Han
   return { hangar: monter({ ...h, possedees: [...h.possedees, id] }, id), tresor: reste }
 }
 
-/** Monter une pièce possédée à son emplacement ; une pièce qu'on n'a pas laisse le hangar tel quel. */
+/** Monter une pièce possédée : à son emplacement, ou parmi les armes s'il reste une place. Une pièce qu'on n'a pas, ou une arme de trop, laisse le hangar tel quel. */
 export function monter(h: Hangar, id: string): Hangar {
   const p = pieceDe(id)
   if (p === undefined || !possede(h, id)) return h
-  return { ...h, montees: { ...h.montees, [p.emplacement]: id } }
+  if (p.sorte === 'arme') return h.armes.includes(id) || h.armes.length >= ARMES_MAX ? h : { ...h, armes: [...h.armes, id] }
+  return { ...h, montees: { ...h.montees, [p.sorte]: id } }
+}
+
+/** Démonter une arme (les emplacements à une pièce ne se vident pas : on y monte autre chose). */
+export function demonter(h: Hangar, id: string): Hangar {
+  return h.armes.includes(id) ? { ...h, armes: h.armes.filter((a) => a !== id) } : h
 }
 
 export const monteeA = (h: Hangar, e: Emplacement): Piece => pieceDe(h.montees[e]) ?? deSerie(e)
+export const armesMontees = (h: Hangar): Piece[] => h.armes.map((id) => pieceDe(id)).filter((p): p is Piece => p !== undefined && p.arme !== undefined)
 
-/** La configuration du vaisseau d'après les pièces montées : des facteurs sur celle de série. Le rival n'en profite pas (sa section et le `forage` partagé restent de série ; `foreuse` ne porte que sur le foreur du joueur). */
+/**
+ * La configuration du vaisseau d'après les pièces montées : des facteurs sur celle de série, la coque de la coque, les
+ * armes montées. Le rival n'en profite pas (sa section et le `forage` partagé restent de série ; `foreuse` ne porte que
+ * sur le foreur du joueur). Le POIDS divise la poussée et le frein du vide : lourd, on accélère moins et on glisse plus.
+ */
 export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
-  let poussee = 1
-  let vitesseMax = 1
-  let rotation = 1
-  let debit = 1
-  let portee = 1
-  for (const e of EMPLACEMENTS) {
-    const p = monteeA(h, e)
-    poussee *= p.poussee ?? 1
-    vitesseMax *= p.vitesseMax ?? 1
-    rotation *= p.rotation ?? 1
-    debit *= p.debit ?? 1
-    portee *= p.portee ?? 1
+  const pr = monteeA(h, 'propulseur')
+  const co = monteeA(h, 'coque')
+  const fo = monteeA(h, 'foreuse')
+  const poids = co.poids ?? 1
+  return {
+    ...c,
+    poussee: (c.poussee * (pr.poussee ?? 1)) / poids,
+    vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
+    rotation: c.rotation * (pr.rotation ?? 1),
+    frein: c.frein / poids,
+    coque: co.pv ?? c.coque,
+    bouclier: { ...c.bouclier, points: co.bouclier ?? 0 },
+    foreuse: { debit: c.foreuse.debit * (fo.debit ?? 1), portee: c.foreuse.portee * (fo.portee ?? 1), aimant: c.foreuse.aimant * (fo.aimant ?? 1) },
+    armes: armesMontees(h).map((p) => p.arme!),
   }
-  return { ...c, poussee: c.poussee * poussee, vitesseMax: c.vitesseMax * vitesseMax, rotation: c.rotation * rotation, foreuse: { debit: c.foreuse.debit * debit, portee: c.foreuse.portee * portee } }
 }
 
-/** Relit un hangar gardé, sans confiance : les pièces inconnues tombent, celles de série sont toujours possédées, une pièce montée qu'on n'a pas (ou au mauvais emplacement) redevient celle de série. */
+/** Relit un hangar gardé, sans confiance : les pièces inconnues tombent, celles de série sont toujours possédées, une pièce montée qu'on n'a pas (ou au mauvais emplacement) redevient celle de série, les armes de trop ou non possédées tombent. */
 export function lireHangar(brut: unknown): Hangar {
   const h = hangarNeuf()
   if (typeof brut !== 'object' || brut === null) return h
-  const b = brut as { possedees?: unknown; montees?: unknown }
+  const b = brut as { possedees?: unknown; montees?: unknown; armes?: unknown }
   if (Array.isArray(b.possedees)) for (const id of b.possedees) if (typeof id === 'string' && pieceDe(id) !== undefined && !possede(h, id)) h.possedees.push(id)
   if (typeof b.montees === 'object' && b.montees !== null) {
     const mo = b.montees as Record<string, unknown>
     for (const e of EMPLACEMENTS) {
       const id = mo[e]
-      if (typeof id === 'string' && possede(h, id) && pieceDe(id)?.emplacement === e) h.montees[e] = id
+      if (typeof id === 'string' && possede(h, id) && pieceDe(id)?.sorte === e) h.montees[e] = id
     }
   }
+  if (Array.isArray(b.armes)) for (const id of b.armes) if (typeof id === 'string' && possede(h, id) && pieceDe(id)?.sorte === 'arme' && !h.armes.includes(id) && h.armes.length < ARMES_MAX) h.armes.push(id)
   return h
 }
 

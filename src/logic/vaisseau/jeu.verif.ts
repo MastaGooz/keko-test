@@ -1,7 +1,8 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { acheter, configDuHangar, hangarNeuf } from './hangar.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -136,21 +137,87 @@ for (let i = 0; i < 90; i++) {
   brule.tirs = []
 }
 verifier('à portée de forage, en chasse, le rival ne pose pas son laser sur le joueur', !rayonSurLeJoueur && coqueEntiere && brule.ennemis[0].fait === 'chasse')
-// le laser du joueur creuse l'ennemi quand il est plus près qu'une roche, et l'abat
-const z = nouveauMonde()
-z.prochainEnnemiA = 0
-avancerLeMonde(C, z, 1 / 60, { x: 0, y: 0 })
-const en = z.ennemis[0]
-z.vaisseau = { ...nouveauVaisseau(), x: en.corps.x + 30, y: en.corps.y }
-z.detruits = new Set(asteroidesAutour(C, z.vaisseau.x, z.vaisseau.y, 300).map((r) => r.id))
+// LA FOREUSE NE SERT QU'AUX ROCHES (Keko) : collé au rival sans arme, le laser ne l'entame pas ; AVEC UN CANON, il l'abat
+const RICHE = { fer: 999, or: 0, cristal: 0 }
+const armer = (...ids: string[]): ConfigVaisseau => configDuHangar(C, ids.reduce((h, id) => acheter(h, RICHE, id)!.hangar, hangarNeuf()))
+const poserPres = (cfg: ConfigVaisseau) => {
+  const z = nouveauMonde(cfg)
+  z.prochainEnnemiA = 0
+  avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+  const en = z.ennemis[0]
+  z.vaisseau = { ...nouveauVaisseau(), x: en.corps.x + 30, y: en.corps.y }
+  z.detruits = new Set(asteroidesAutour(cfg, z.vaisseau.x, z.vaisseau.y, 300).map((r) => r.id))
+  z.coque = 1000 // (le rival tire : on regarde le rival, pas la coque)
+  return z
+}
+const sansArme = poserPres(C)
+let rayonSurLeRival = false
+for (let i = 0; i < 60 * 3; i++) {
+  avancerLeMonde(C, sansArme, 1 / 60, { x: 0, y: 0 })
+  if (sansArme.forage !== null && sansArme.forage.sorte !== 'roche') rayonSurLeRival = true
+}
+verifier('sans arme, collé au rival trois secondes, le laser ne l’entame pas', !rayonSurLeRival && sansArme.ennemis.length === 1 && sansArme.ennemis[0].pv === C.ennemi.pv && sansArme.obus.length === 0)
+const canon = armer('arme-canon')
+const z = poserPres(canon)
 let abattu = 0
+let obus = 0
+let touchesRival = 0
 let pasZ = 0
 while (abattu === 0 && pasZ < 60 * 20) {
-  const r = avancerLeMonde(C, z, 1 / 60, { x: 0, y: 0 })
+  const r = avancerLeMonde(canon, z, 1 / 60, { x: 0, y: 0 })
   abattu += compter(r.evenements, 'ennemiDetruit')
+  obus += compter(r.evenements, 'obus')
+  touchesRival += compter(r.evenements, 'ennemiTouche')
   pasZ++
 }
-verifier('le laser creuse l’ennemi et l’abat', abattu === 1 && z.ennemis.length === 0 && z.pepites.length >= C.ennemi.butinRendu)
+verifier('avec un canon, les obus partent seuls, touchent le rival et l’abattent (il rend ses pépites)', abattu === 1 && obus >= Math.ceil(C.ennemi.pv / 6) && touchesRival >= Math.ceil(C.ennemi.pv / 6) && z.ennemis.length === 0 && z.pepites.length >= C.ennemi.butinRendu)
+verifier('deux armes montées tirent chacune à leur cadence', armer('arme-canon', 'arme-rafale').armes.length === 2 && armer('arme-canon', 'arme-rafale', 'arme-missiles').armes.length === 2)
+const missiles = armer('arme-missiles')
+const zm = poserPres(missiles)
+zm.vaisseau = { ...zm.vaisseau, x: zm.ennemis[0].corps.x + 150, y: zm.ennemis[0].corps.y + 40 } // (plus loin que le canon, de biais)
+zm.detruits = new Set(asteroidesAutour(missiles, zm.vaisseau.x, zm.vaisseau.y, 400).map((r) => r.id))
+let toucheMissile = 0
+for (let i = 0; i < 60 * 6 && toucheMissile === 0; i++) toucheMissile += compter(avancerLeMonde(missiles, zm, 1 / 60, { x: 0, y: 0 }).evenements, 'ennemiTouche')
+verifier('un missile guidé rattrape le rival de loin', toucheMissile >= 1)
+// LE BOUCLIER (la coque à bouclier) prend les traits avant la coque, puis se recharge — des traits posés à la main : le
+// rival en chasse recule à 80 et sa dispersion fait manquer un trait sur deux, rien de mesurable
+const bouclier = armer('coque-3')
+const zb = nouveauMonde(bouclier)
+zb.prochainEnnemiA = 1e9
+zb.detruits = new Set(asteroidesAutour(bouclier, 0, 0, 300).map((r) => r.id))
+let absorbes = 0
+let touchesCoque = 0
+for (let n = 0; n < 3; n++) {
+  zb.tirs.push({ id: 900 + n, x: -12, y: 0, vx: 120, vy: 0, vie: 1 })
+  for (let i = 0; i < 30 && zb.tirs.length > 0; i++) {
+    const r = avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
+    absorbes += compter(r.evenements, 'bouclier')
+    touchesCoque += compter(r.evenements, 'touche')
+  }
+}
+verifier('le bouclier prend les deux premiers traits, la coque le troisième', absorbes === 2 && touchesCoque === 1 && zb.coque === bouclier.coque - 1 && zb.bouclier < 1)
+for (let i = 0; i < 60 * (bouclier.bouclier.delai + 2 / bouclier.bouclier.regain + 1); i++) avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
+verifier('sans coup, le bouclier se recharge en entier', zb.bouclier === bouclier.bouclier.points)
+// LE POIDS : la coque blindée accélère moins et glisse plus que celle de série
+const lourde = armer('coque-2')
+let vs = nouveauVaisseau()
+let vl = nouveauVaisseau()
+for (let i = 0; i < 60; i++) {
+  vs = avancer(C, vs, 1 / 60, { x: 1, y: 0 }).vaisseau
+  vl = avancer(lourde, vl, 1 / 60, { x: 1, y: 0 }).vaisseau
+}
+const gs = avancer(C, { ...vs, vx: 60, vy: 0 }, 2, { x: 0, y: 0 }).vaisseau
+const gl = avancer(lourde, { ...vl, vx: 60, vy: 0 }, 2, { x: 0, y: 0 }).vaisseau
+verifier('la coque blindée a plus de points, accélère moins et glisse plus', lourde.coque === 8 && vl.vx < vs.vx * 0.9 && gl.vx > gs.vx)
+// L'AIMANT suit la foreuse : une pépite hors de portée de série vient avec la foreuse à long faisceau
+const longue = armer('foreuse-3')
+const aimante = (cfg: ConfigVaisseau) => {
+  const w = nouveauMonde(cfg)
+  w.pepites.push({ id: 99, x: 60, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer' })
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  return w.pepites.length === 0 ? -1 : w.pepites[0].x
+}
+verifier('à 60 unités, la pépite ne bouge pas pour la foreuse de série et vient avec la longue', aimante(C) > 59 && aimante(longue) < 40)
 // LES CHOCS FONT MAL : lancé à pleine vitesse sur une petite roche, le joueur perd de la coque et la roche éclate
 const petite = autour.filter((r) => r.rayon < 7).sort((r1, r2) => r1.rayon - r2.rayon)[0]
 const k = nouveauMonde()

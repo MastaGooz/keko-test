@@ -428,55 +428,89 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 
 ## Le hangar (Keko, 09/11 : « un menu avant de lancer la game où le joueur choisit son vaisseau en sélectionnant les différentes pièces qu'il possède (propulseur, ailes, foreuse, arme...) »)
 
-- **Tranché par Keko** : les pièces s'ACHÈTENT (pas de largage) ; un vrai
-  emplacement d'ARME viendra pour le joueur ; on commence par DEUX
-  emplacements, propulseur et foreuse, achetables au fer, pour juger le
-  menu et le dessin avant d'élargir — *une notion à la fois*.
+- **Tranché par Keko** : les pièces s'ACHÈTENT (pas de largage) ; puis, le
+  même jour : « un vrai interface qui affiche toutes les pièces : propulseur,
+  coque, foreuse, arme (plusieurs possibles). Le propulseur règle la
+  maniabilité, la vitesse max et l'accélération. La coque règle les PV, le
+  système de bouclier éventuel et le poids (donc l'inertie à l'arrêt et
+  l'accélération). La foreuse règle la puissance de forage, la portée de
+  forage mais aussi la portée du magnétisme des ressources. Les armes règlent
+  les différentes attaques. Et on va rendre la foreuse exclusive aux
+  astéroïdes (plus une arme). » Et : « je ne veux pas voir l'extracteur ni
+  le niveau derrière, ni les consignes en haut ; voir le vaisseau dans un
+  hangar, posé. »
 - **Ce que ça ferme** : la banque n'avait aucun usage entre deux
   expéditions. Le TRÉSOR (le minerai des expéditions achevées, par minerai)
   achète des pièces qui RESTENT ACQUISES — seul le minerai porté se perd
   avec la coque. *Le trésor et le hangar sont gardés sur l'appareil*, comme
   la collection ; il n'y a pas de compte.
-- **Le catalogue** (`PIECES`, trois crans par emplacement, le premier de
-  série et possédé d'office ; *prix et facteurs de moi, à rejuger* — une
-  roche rend deux à sept pépites) : propulseur renforcé 12 fer (poussée
-  ×1,25, pointe ×1,15), ionique 30 fer (×1,6, ×1,35, nez ×1,2) ; foreuse
-  lourde 10 fer (débit ×1,4), à long faisceau 28 fer (débit ×1,8, portée
-  ×1,25 — 80 unités : *le rival qui se tient à 80 pour tirer entre à
-  portée*, c'est le premier achat qui change le combat). L'or et le cristal
-  attendent les crans d'après.
-- **La règle est pure** (`hangar.ts`) : le hangar est une valeur, l'achat et
-  le montage rendent un hangar neuf, `configDuHangar` traduit les pièces en
-  facteurs sur la configuration de série — poussée, pointe, nez, et
-  `foreuse: { debit, portee }`, un champ de configuration NOUVEAU qui ne
-  porte que sur le foreur du joueur : *le rival creuse avec `forage` tel
-  quel*, sinon chaque achat l'aurait amélioré avec nous. La relecture tombe
-  les pièces inconnues, garde toujours les séries, remet de série une pièce
-  montée qu'on n'a pas.
-- **L'écran** : l'accueil (puis le bilan) porte le hangar dessous, EN
-  PIXELS (voir « Tout en pixels ») — l'APERÇU du vaisseau tel que monté (le
-  même dessin que dans le jeu, agrandi 2,5 fois par un peintre qui multiplie
-  les coordonnées locales, flamme allumée), le trésor, un bloc par
-  emplacement : **deux flèches feuillettent ses trois pièces** (180 px de
-  large ne tiennent pas trois pièces de front ; à l'ouverture, la montée), le
-  nom, ce qu'elle change, et son état — MONTEE, un bouton MONTER (possédée),
-  ou son prix en bouton, allumé si le trésor y suffit (une tape l'achète ET
-  la monte) —, puis le bouton « Décoller » : *le toucher n'importe où ne
-  décolle plus*, le hangar se touche. Le bloc se centre sur la hauteur qu'il
-  a prise à l'image d'avant (une passe, pas deux). *La première écriture
-  était en HTML (des boutons, du CSS) : Keko l'a refusée le jour même —
-  « je ne veux plus un seul élément non pixel ».* `&tresor=N` pose N fer de
-  trésor pour essayer les achats d'un lien.
-- **Les pièces se voient en vol** : le propulseur élargit la tuyère et
-  allonge la flamme à chaque cran, bleue au troisième (ionique) ; la foreuse
-  grossit le dôme et le canon, une arête claire au deuxième, un liseré rouge
-  autour du dôme au troisième. Le rival reste de série. *À faire : les
-  braises du propulseur ionique restent orange.*
+- **Le catalogue** (`PIECES` ; *prix et chiffres de moi, à rejuger* — une
+  roche rend deux à sept pépites ; tout en fer pour commencer, l'or et le
+  cristal attendent les crans d'après) :
+  - PROPULSEUR (accélération, pointe, nez) : de série ; renforcé 12 fer
+    (×1,25, ×1,15, ×1,1) ; ionique 30 fer (×1,6, ×1,35, ×1,25, flamme bleue).
+  - COQUE (points, poids, bouclier) : de série 5 points ; blindée 14 fer,
+    8 points, poids 1,3 ; à bouclier 32 fer, 5 points + 2 de bouclier, poids
+    1,1. **Le poids divise la poussée ET le frein du vide** : lourd, on
+    accélère moins et on glisse plus — c'est l'inertie que Keko demandait.
+    **Le bouclier** prend les coups avant la coque (un point par coup, trait
+    ou choc), et se recharge de 0,5 point par seconde passé 4 s sans coup
+    (`bouclier: { points, delai, regain }`) ; un anneau cyan autour du
+    vaisseau tant qu'il en reste, des cases cyan à gauche de la coque.
+  - FOREUSE (débit, portée, aimant) : de série ; lourde 10 fer (débit ×1,4,
+    aimant ×1,25) ; à long faisceau 28 fer (×1,8, portée ×1,25, aimant ×1,6).
+    `foreuse: { debit, portee, aimant }` ne porte que sur le foreur et
+    l'aimant DU JOUEUR : *le rival creuse avec `forage` tel quel*, sinon
+    chaque achat l'aurait amélioré avec nous.
+  - ARMES, deux au plus (`ARMES_MAX`), aucune de série : canon 12 fer (un
+    obus toutes les 1,1 s, 6 points, porte à 120) ; mitrailleuse 22 fer
+    (quatre balles par seconde, 1,6 point, porte à 90, disperse) ; missiles
+    34 fer (un missile guidé toutes les 2,8 s, 14 points, porte à 190, tourne
+    à 3,5 rad/s vers le rival). **Chaque arme tire seule** sur le rival le
+    plus proche à sa portée, avec de l'avance (la position plus la vitesse
+    fois le temps de vol) et sa dispersion — *le doigt est sur le manche, le
+    laser tirait déjà seul*. Les obus s'écrasent sur une roche, touchent le
+    rival (il blanchit) ; le rival en chasse se tient à 80, en deçà du canon.
+- **LA FOREUSE NE SERT QU'AUX ROCHES** (Keko) : le laser du joueur ne vise
+  plus le rival (`Forage.sorte` n'est plus que `'roche'`). Sans arme, on ne
+  peut pas l'abattre ; c'est le premier achat qui change le combat.
+- **La règle est pure** (`hangar.ts`) : le hangar est une valeur, l'achat,
+  le montage et le démontage rendent un hangar neuf, `configDuHangar`
+  traduit les pièces en configuration (facteurs, coque, bouclier, armes). La
+  relecture tombe les pièces inconnues, garde toujours les séries, remet de
+  série une pièce montée qu'on n'a pas, borne les armes à deux sans doublon ;
+  un hangar d'avant les armes en a zéro.
+- **LE HANGAR À L'ÉCRAN, vu de dessus, en pixels** (voir « Tout en
+  pixels ») : plus de monde derrière, plus de consignes. Un sol de plaques
+  rivetées, une aire d'atterrissage cerclée de chevrons jaune et noir avec
+  huit feux qui courent, deux lampes chaudes aux coins, des caisses, une
+  enseigne HANGAR, et LE VAISSEAU POSÉ au milieu, moteur éteint, agrandi
+  trois fois, avec ses pièces : tuyère et flamme du propulseur, dôme et
+  canon de la foreuse, acier riveté de la coque blindée, anneau cyan de la
+  coque à bouclier, les armes sous les ailes (la première à gauche, la
+  seconde à droite : canon, un fût ; mitrailleuse, deux ; missiles, une
+  nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau,
+  s'il y en a un.
+- **L'interface, calée en bas** (la scène prend le reste ; la hauteur de
+  l'interface est celle mesurée à l'image d'avant) : le trésor ; QUATRE
+  ONGLETS (propulseur, coque, foreuse, armes) ; LA LISTE DE TOUTES LES
+  PIÈCES de l'onglet, une ligne chacune — le nom, et à droite MONTEE,
+  POSSEDEE ou le prix, doré si le trésor y suffit —, la choisie surlignée
+  d'un chevron ; puis ce qu'elle change, et le bouton qui va avec : ACHETER
+  (une tape paie ET monte), MONTER, DEMONTER (une arme), « 2 ARMES DEJA »
+  éteint, ou MONTEE sans bouton. *Choisir puis agir : pas d'achat par une
+  tape malheureuse.* Les plaques sont le `panel` des effets `ui/` du dépôt
+  (contour, rebord lit, corps, bas ombré), « Décoller » un mot en relief de
+  leur `drawWord` (Keko : « tu t'es bien inspiré de ui/achievement pour le
+  texte et la boîte, et ui/quest-complete pour les sélections ? »). *Deux
+  écritures d'avant, le jour même : des boutons HTML (refusés : « plus un
+  seul élément non pixel »), puis des flèches pour feuilleter une pièce à la
+  fois (refusées : « un vrai interface qui affiche toutes les pièces »).*
+  `&tresor=N` pose N fer de trésor pour essayer les achats d'un lien.
 - **Chaque décollage refait la configuration des pièces montées** et un
-  monde neuf ; le trésor se sauve à l'extraction même, pas à la fin de
-  l'écran.
+  monde neuf ; le trésor se sauve à l'extraction même.
 
-## Tout en pixels (Keko, 09/11 : « je ne veux plus un seul élément non pixel »)
+ : « je ne veux plus un seul élément non pixel »)
 
 - **Il n'y a plus qu'un canvas.** L'accueil, le bilan, le hangar, le manche
   et la date du build sont dessinés dans le tampon du jeu, avec le peintre
@@ -488,13 +522,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   guillemets partent) : « Décoller » → « DECOLLER ». *Des capitales sans
   accents sont l'usage des jeux en pixels ; des accents sur 5 px de haut ne
   tiendraient pas.* L'accueil a été raccourci pour tenir dans 180 px.
-- **L'écran** : un voile (`rect` à 0,72 sur tout le tampon : tramé, comme
-  tout alpha du peintre — les lumières du jeu passent au travers, c'est
-  bien), le titre en grande police (×2 s'il tient dans la largeur, sinon
-  ×1), un paragraphe replié à la mesure (`measure`), le hangar, « Décoller »
-  (un cadre d'or qui respire d'une lueur), la date du build en bas à droite
-  en petite police. Les compteurs et les cases de coque ne se dessinent pas
-  sous le voile.
+- **L'écran** : la scène du hangar à la place du monde (un temps, un voile
+  tramé sur le monde, avec un titre et des consignes — Keko : « ni
+  l'extracteur ni le niveau derrière, ni les consignes en haut »), les
+  textes repliés à la mesure (`measure`), « Décoller » (une plaque d'or qui
+  respire d'une lueur), la date du build en bas à droite en petite police.
 - **Les boutons sont des zones** : chaque image dessinée refait la liste des
   rectangles touchables (en pixels du tampon, avec leur action) ; un
   `pointerdown` quand l'écran est là se convertit en pixels du tampon
@@ -513,11 +545,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 
 ## Ce qui reste à faire
 
-- **L'ARME du joueur** (tranché par Keko, 09/11) : un troisième emplacement,
-  un vrai tir — à concevoir avec lui (cadence, portée, ce que ça fait au
-  rival et aux roches).
-- Les ailes (rotation, coque ?), la soute (ce qu'on peut porter) ; des crans
-  payés en or et en cristal, pour que la distance paie en pièces.
+- Des crans payés en or et en cristal, pour que la distance paie en pièces ;
+  la soute (ce qu'on peut porter) ; les braises du propulseur ionique
+  restent orange ; une traînée aux missiles.
 - Un indice visuel sur le rival chargé (sa fuite le dit seulement).
 
 - Un vaisseau bestiole plus détaillé si le style plaît.
