@@ -798,13 +798,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // en bas, SOUS LES STATS ET L'IMAGE, sur toute la largeur, en petit : ce que les jauges ne disent pas (Keko)
     const note = pc.note === undefined ? [] : replier(p, pc.note, W - 20)
     const hh = Math.max(50, 16 + jauges.length * 10 + 4)
-    const hd = hh + (note.length > 0 ? note.length * 7 + 3 : 0)
+    const hd = hh + (note.length > 0 ? note.length * 7 + 7 : 0) // (quatre pixels d'air de plus avant la note — Keko)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     panel(p, 8, y + 4, 42, hh - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
     dessinerLePictogramme(p, pc, 29, y + hh / 2, 42, hh - 8)
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
-    note.forEach((li, i) => p.text(li, W / 2, y + hh - 1 + i * 7, COQUE[4], { align: 'center' }))
+    note.forEach((li, i) => p.text(li, W / 2, y + hh + 3 + i * 7, COQUE[4], { align: 'center' }))
     y += hd + 4
     }
     // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet
