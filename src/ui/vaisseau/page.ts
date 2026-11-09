@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Jauge, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -248,6 +248,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let onglet: Sorte = 'propulseur'
   /** LA VUE : le hangar (les pièces) ou L'ENTREPÔT (l'inventaire des ressources — Keko : « on en aura beaucoup à l'avenir »). */
   let vue: 'hangar' | 'entrepot' = 'hangar'
+  /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
+  let resetDemandeA = -10
   const NOMS_VUE = { hangar: 'Hangar', entrepot: 'Entrepot' } as const
   /** L'icône d'une ressource : la pépite du jeu (un losange de sa teinte, un éclat), agrandie k fois. */
   function dessinerUneRessource(p: Peintre, x: number, y: number, T: number[], k: number): void {
@@ -320,6 +322,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dernière expédition en bandeau, s'il y en a un (plus aucune consigne sinon).
    */
   function dessinerLeHangar(p: Peintre): void {
+    zones = [] // (la scène se dessine la première : le bouton RESET pose la première zone de l'image)
     p.place(0, 0)
     const y0 = Math.max(0, Math.floor((H - 10 - (HAUT_SCENE + hauteurUI + 6)) / 2))
     hautScene = y0 + HAUT_SCENE
@@ -371,12 +374,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'enseigne
     panel(p, 3, hautScene - 12, 40, 11, ENCRE, { r: 2 })
     p.text(texteNu(NOMS_VUE[vue]), 23, hautScene - 9, PEPITE[3], { align: 'center' })
+    // le bouton de test, en haut à droite : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
+    const demande = t - resetDemandeA < 2
+    bouton(p, W - 34, 4, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
+      if (!demande) {
+        resetDemandeA = t
+        return
+      }
+      resetDemandeA = -10
+      hangar = hangarNeuf()
+      tresor = cargaisonVide()
+      sauverHangar(hangar, tresor)
+      ouvrirLeHangar()
+      titre = ''
+      texte = ''
+    })
     // le bilan de la dernière expédition, en bandeau
     if (texte !== '') {
       const L = replier(p, texte, W - 20)
-      panel(p, 4, 4, W - 8, 19 + L.length * 7, ENCRE, { r: 2 })
-      p.text(titre, W / 2, 8, PEPITE[3], { font: 'big', align: 'center' })
-      L.forEach((li, i) => p.text(li, W / 2, 18 + i * 7, COQUE[5], { align: 'center' }))
+      panel(p, 4, 18, W - 8, 19 + L.length * 7, ENCRE, { r: 2 })
+      p.text(titre, W / 2, 22, PEPITE[3], { font: 'big', align: 'center' })
+      L.forEach((li, i) => p.text(li, W / 2, 32 + i * 7, COQUE[5], { align: 'center' }))
     }
   }
   /**
@@ -420,12 +438,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /**
    * L'ENTREPÔT (Keko : « un onglet entrepôt à côté du hangar, avec inventaire ») : une case par ressource — son icône en
-   * grand, son nom, son compte —, trois par rangée, de quoi accueillir les tiers à venir ; le total en bas. Rend le y
-   * sous le panneau.
+   * grand, son nom, son compte —, trois par rangée, de quoi accueillir les tiers à venir (sans total : « inutile »).
+   * Rend le y sous le panneau.
    */
   function dessinerLEntrepot(p: Peintre, y: number): number {
     const rangees = Math.ceil(MINERAIS.length / 3)
-    const hp = 16 + rangees * 30 + 12
+    const hp = 16 + rangees * 30 + 2
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
     p.text('INVENTAIRE', W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     MINERAIS.forEach((k, i) => {
@@ -437,7 +455,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(String(tresor[k]), cx + cw - 4, cy + 6, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
       p.text(texteNu(k), cx + cw - 4, cy + 17, COQUE[4], { align: 'right' })
     })
-    p.text(texteNu(`${totalDe(tresor)} pepites extraites au total`), W / 2, y + hp - 9, COQUE[4], { align: 'center' })
     return y + hp + 4
   }
   /**
@@ -451,7 +468,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * éteint, ou MONTEE sans bouton. « Décoller » en bas, la date du build tout en bas. Tout se sauve à chaque geste.
    */
   function dessinerLEcran(p: Peintre): void {
-    zones = []
     p.place(0, 0)
     const y0 = hautScene + 4
     let y = y0
@@ -464,14 +480,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       panel(p, x, y, w, 13, actif ? ENCRE_OR : ENCRE, { r: 2 })
       p.text(texteNu(NOMS_VUE[vv]), x + w / 2, y + 3, actif ? N.WHITE : COQUE[4], { font: 'big', align: 'center' })
       if (!actif) zones.push({ x, y, w, h: 13, action: () => (vue = vv) })
-    })
-    y += 15
-    // LA BANDE DES RESSOURCES : chaque minerai, son icône et son compte (Keko : « un affichage plus travaillé qu'une ligne de texte »)
-    panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
-    MINERAIS.forEach((k, i) => {
-      const x = 4 + i * ((W - 8) / 3)
-      dessinerUneRessource(p, x + 12, y + 6, TEINTES_MINERAI[k], 1)
-      p.text(String(tresor[k]), x + 20, y + 3, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big' })
     })
     y += 15
     if (vue === 'entrepot') y = dessinerLEntrepot(p, y)

@@ -532,14 +532,18 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   travaillé qu'une ligne de texte pour les ressources, on en aura beaucoup à
   l'avenir (tiers) ; un onglet entrepôt à côté du hangar avec inventaire ;
   quand on veut payer quelque chose, le solde s'affiche avec le prix ») :
-  deux grandes plaques en tête, HANGAR et ENTREPOT ; dessous, dans les deux
-  vues, LA BANDE DES RESSOURCES — chaque minerai, son icône (la pépite du
-  jeu : un losange de sa teinte, un éclat) et son compte, éteint à zéro. La
-  vue ENTREPOT remplace les pièces par L'INVENTAIRE : une case par
-  ressource, icône en grand, compte et nom, trois par rangée (les tiers à
-  venir feront des rangées), le total extrait dessous. Dans le panneau d'une
+  deux grandes plaques en tête, HANGAR et ENTREPOT. La vue ENTREPOT remplace
+  les pièces par L'INVENTAIRE : une case par ressource, icône en grand (la
+  pépite du jeu : un losange de sa teinte, un éclat), compte et nom, trois
+  par rangée (les tiers à venir feront des rangées). Dans le panneau d'une
   pièce qu'on n'a pas, une ligne PRIX donne, par minerai, l'icône et
-  « prix / solde », en or si le solde y suffit, en rouge sinon.
+  « prix / solde », en or si le solde y suffit, en rouge sinon. *Retirés le
+  jour même, à la demande de Keko : le total extrait sous l'inventaire
+  (« inutile ») et une bande des ressources sous les vues (« quand on aura
+  dix minerais différents elle sera inexploitable »).* **Un bouton de test
+  RESET en haut à droite de la scène** (Keko) remet toute la progression de
+  l'appareil à zéro — hangar et trésor — en deux tapes (RESET, puis SUR ?
+  pendant deux secondes).
 - **Chaque décollage refait la configuration des pièces montées** et un
   monde neuf ; le trésor se sauve à l'extraction même.
 
