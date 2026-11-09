@@ -532,7 +532,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   travaillé qu'une ligne de texte pour les ressources, on en aura beaucoup à
   l'avenir (tiers) ; un onglet entrepôt à côté du hangar avec inventaire ;
   quand on veut payer quelque chose, le solde s'affiche avec le prix ») :
-  deux grandes plaques en tête, HANGAR et ENTREPOT. La vue ENTREPOT remplace
+  L'ENSEIGNE de la scène est l'interrupteur — les deux mots, l'actif en or,
+  une tape bascule (Keko : « on a déjà un bouton hangar / entrepôt qui sert
+  d'indicateur au-dessus de l'UI, pourquoi ne pas utiliser ça plutôt
+  qu'ajouter une barre ? » ; *deux grandes plaques en tête ont vécu une
+  heure*). La vue ENTREPOT remplace
   les pièces par L'INVENTAIRE : une case par ressource, icône en grand (la
   pépite du jeu : un losange de sa teinte, un éclat), compte et nom, trois
   par rangée (les tiers à venir feront des rangées). Dans le panneau d'une

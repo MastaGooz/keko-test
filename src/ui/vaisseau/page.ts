@@ -250,7 +250,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  const NOMS_VUE = { hangar: 'Hangar', entrepot: 'Entrepot' } as const
   /** L'icône d'une ressource : la pépite du jeu (un losange de sa teinte, un éclat), agrandie k fois. */
   function dessinerUneRessource(p: Peintre, x: number, y: number, T: number[], k: number): void {
     p.poly([[x, y - 2 * k], [x + 2 * k, y], [x, y + 2 * k], [x - 2 * k, y]], T[2])
@@ -371,9 +370,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
     const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
     dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
-    // l'enseigne
-    panel(p, 3, hautScene - 12, 40, 11, ENCRE, { r: 2 })
-    p.text(texteNu(NOMS_VUE[vue]), 23, hautScene - 9, PEPITE[3], { align: 'center' })
+    // L'ENSEIGNE EST L'INTERRUPTEUR (Keko : « on a déjà un bouton hangar / entrepôt qui sert d'indicateur au-dessus de
+    // l'UI, pourquoi ne pas utiliser ça plutôt qu'ajouter une barre ? ») : les deux mots, l'actif en or, une tape bascule
+    const lh = p.measure('HANGAR')[0]
+    const le = p.measure('ENTREPOT')[0]
+    const we = lh + le + 14
+    panel(p, 3, hautScene - 12, we, 11, ENCRE, { r: 2 })
+    p.text('HANGAR', 7, hautScene - 9, vue === 'hangar' ? PEPITE[3] : COQUE[3])
+    p.text('ENTREPOT', 7 + lh + 6, hautScene - 9, vue === 'entrepot' ? PEPITE[3] : COQUE[3])
+    p.rect(7 + lh + 2, hautScene - 11, 1, 9, ENCRE.rim)
+    zones.push({ x: 3, y: hautScene - 12, w: we, h: 11, action: () => (vue = vue === 'hangar' ? 'entrepot' : 'hangar') })
     // le bouton de test, en haut à droite : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
     const demande = t - resetDemandeA < 2
     bouton(p, W - 34, 4, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
@@ -471,17 +477,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     const y0 = hautScene + 4
     let y = y0
-    // LES DEUX VUES, en grandes plaques : le hangar, l'entrepôt
-    const vues = ['hangar', 'entrepot'] as const
-    vues.forEach((vv, i) => {
-      const x = 4 + i * ((W - 8) / 2 + 1)
-      const w = (W - 8) / 2 - 1
-      const actif = vue === vv
-      panel(p, x, y, w, 13, actif ? ENCRE_OR : ENCRE, { r: 2 })
-      p.text(texteNu(NOMS_VUE[vv]), x + w / 2, y + 3, actif ? N.WHITE : COQUE[4], { font: 'big', align: 'center' })
-      if (!actif) zones.push({ x, y, w, h: 13, action: () => (vue = vv) })
-    })
-    y += 15
     if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
     else {
     // les onglets, centrés
