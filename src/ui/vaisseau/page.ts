@@ -285,8 +285,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * des différents minerais ») : le FER, un caillou anguleux et mat, grené ; l'OR, une pépite en losange qui brille ;
    * le CRISTAL, une pointe effilée à facettes, translucide.
    */
-  function dessinerUneRessource(p: Peintre, x: number, y: number, minerai: Minerai): void {
+  function dessinerUneRessource(p: Peintre, x0: number, y0: number, minerai: Minerai): void {
     const k = 2 // UNE SEULE TAILLE, partout (Keko : « ne change jamais la taille des icônes »)
+    // sur des pixels entiers : à cheval entre deux, le même tracé sortait différent d'un endroit à l'autre (Keko l'a vu entre l'entrepôt et la fiche)
+    const x = Math.round(x0)
+    const y = Math.round(y0)
     const T = TEINTES_MINERAI[minerai]
     if (minerai === 'fer') {
       p.poly([[x - 2 * k, y - k], [x - 0.5 * k, y - 2 * k], [x + 1.5 * k, y - 1.5 * k], [x + 2 * k, y + 0.5 * k], [x + 0.5 * k, y + 2 * k], [x - 1.5 * k, y + 1.5 * k]], T[1])
