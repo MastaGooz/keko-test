@@ -31,6 +31,8 @@ export type Piece = {
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
+  /** Ce que les jauges ne disent pas (une flamme bleue, un missile guidé…), en petit sous les stats (Keko). */
+  note?: string
   /** Le prix, EN CRÉDITS (Keko : « mets le coût en crédits ») — la monnaie que l'entrepôt rend contre le minerai. */
   prix: number
   /** Les outils d'une même famille se remplacent l'un l'autre quand les places manquent (une foreuse chasse la foreuse). */
@@ -62,17 +64,17 @@ export type Piece = {
 export const PIECES: Piece[] = [
   { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: 0 },
   { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: 24, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1 },
-  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', prix: 60, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Coque de serie', dit: '5 points de coque, un outil, une arme, poids de serie.', prix: 0, pv: 5, poids: 1, armes: 1, outils: 1 },
-  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Coque blindee', dit: '8 points, un outil, deux armes. Lourde : accelere moins, glisse plus.', prix: 28, pv: 8, poids: 1.3, armes: 2, outils: 1 },
-  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', prix: 64, pv: 5, poids: 1.1, bouclier: 2, armes: 2, outils: 2 },
-  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit, portee et aimant de serie.', prix: 0, debit: 1, portee: 1, aimant: 1 },
+  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Coque blindee', dit: '8 points, un outil, deux armes. Lourde : accelere moins, glisse plus.', note: 'Acier rivete.', prix: 28, pv: 8, poids: 1.3, armes: 2, outils: 1 },
+  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge apres 4 s sans coup.', prix: 64, pv: 5, poids: 1.1, bouclier: 2, armes: 2, outils: 2 },
+  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit, portee et aimant de serie.', note: 'Creuse les roches, jamais le rival.', prix: 0, debit: 1, portee: 1, aimant: 1 },
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite, aimant +25 %.', prix: 20, debit: 1.4, portee: 1, aimant: 1.25 },
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin, aimant +60 %.', prix: 56, debit: 1.8, portee: 1.25, aimant: 1.6 },
-  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', prix: 32, radar: 600 },
-  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', prix: 24, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false } },
-  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', prix: 44, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false } },
-  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', prix: 68, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true } },
+  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une fleche rouge au bord de l’ecran designe le rival.', prix: 32, radar: 600 },
+  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', note: 'Tire seul sur le rival a portee.', prix: 24, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false } },
+  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', note: 'Disperse ses balles.', prix: 44, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false } },
+  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', note: 'Guide : le missile tourne vers le rival.', prix: 68, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true } },
 ]
 
 /**
@@ -232,8 +234,8 @@ export function jaugesDe(p: Piece): Jauge[] {
   // une arme : cadence (coups par seconde), dégâts du coup, portée (Keko)
   const a = p.arme!
   return [
-    { nom: 'Cadence', valeur: 1 / a.cadence, max: max((q) => 1 / q.arme!.cadence) },
     { nom: 'Degats', valeur: a.degats, max: max((q) => q.arme!.degats) },
+    { nom: 'Cadence', valeur: 1 / a.cadence, max: max((q) => 1 / q.arme!.cadence) },
     { nom: 'Portee', valeur: a.portee, max: max((q) => q.arme!.portee) },
   ]
 }

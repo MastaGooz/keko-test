@@ -794,13 +794,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const jauges = jaugesDe(pc)
     const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
-    const hd = Math.max(50, 16 + jauges.length * 10 + 4) // (plus de ligne du prix : il est sur le bouton — Keko)
+    const gx = 54
+    // sous les jauges, en petit, ce qu'elles ne disent pas (Keko)
+    const note = pc.note === undefined ? [] : replier(p, pc.note, W - 12 - gx)
+    const hd = Math.max(50, 16 + jauges.length * 10 + (note.length > 0 ? note.length * 7 + 2 : 0) + 4)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     panel(p, 8, y + 4, 42, hd - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
     dessinerLePictogramme(p, pc, 29, y + hd / 2, 42, hd - 8)
-    const gx = 54
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
+    note.forEach((li, i) => p.text(li, gx, y + 16 + jauges.length * 10 + 1 + i * 7, COQUE[4]))
     y += hd + 4
     }
     // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet
