@@ -254,26 +254,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
-   * LE SYMBOLE DES CRÉDITS (Keko : « une rune verte… une lettre d'un alphabet inconnu » ; la précédente : « c'est un P
-   * lol ») : une lettre qui n'est d'aucun alphabet — un grand fût à droite, un petit fût à gauche plus bas, une barre
-   * oblique qui les joint, un crochet au pied du grand, un point au-dessus du petit —, verte, une ombre dessous ;
-   * agrandie k fois, à droite d'un nombre.
+   * LE SYMBOLE DES CRÉDITS (Keko : « une rune verte… une lettre d'un alphabet inconnu », « un peu trop complexe ») :
+   * DEUX TRAITS — un fût, une oblique qui le barre un peu au-dessus du milieu —, verte, le fût plus clair, une ombre
+   * dessous ; agrandie k fois, à droite d'un nombre.
    */
   function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
-    const gd = x + 0.6 * k
-    const pt = x - 1.8 * k
     const traits: [number, number, number, number][] = [
-      [gd, y - 3 * k, gd, y + 3 * k],
-      [pt, y - 0.4 * k, pt, y + 3 * k],
-      [pt, y - 0.4 * k, gd, y - 2 * k],
-      [gd, y + 3 * k, x + 2 * k, y + 3 * k],
-      [x + 2 * k, y + 3 * k, x + 2 * k, y + 1.6 * k],
+      [x, y - 3 * k, x, y + 3 * k],
+      [x + 1.8 * k, y - 1.8 * k, x - 1.8 * k, y + 1 * k],
     ]
     for (const [x0, y0, x1, y1] of traits) p.line(x0, y0 + 1, x1, y1 + 1, RUNE[0])
-    for (const [x0, y0, x1, y1] of traits) p.line(x0, y0, x1, y1, RUNE[1])
-    p.line(gd, y - 3 * k, gd, y + 3 * k, RUNE[2])
-    p.rect(Math.round(pt), Math.round(y - 2.4 * k), 1, 1, RUNE[3])
-    p.rect(Math.round(gd), Math.round(y - 3 * k), 1, 1, RUNE[3])
+    p.line(x + 1.8 * k, y - 1.8 * k, x - 1.8 * k, y + 1 * k, RUNE[1])
+    p.line(x, y - 3 * k, x, y + 3 * k, RUNE[2])
+    p.rect(Math.round(x), Math.round(y - 3 * k), 1, 1, RUNE[3])
+    p.rect(Math.round(x + 1.8 * k), Math.round(y - 1.8 * k), 1, 1, RUNE[3])
     p.glow(x, y, 4 * k, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
