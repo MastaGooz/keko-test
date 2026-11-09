@@ -557,8 +557,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   LIGNES fixes (Keko : la hauteur ne change pas d'un minerai à l'autre),
   un peu d'air, SA « VALEUR UNITAIRE » EN
   CRÉDITS la pépite — **les crédits sont la monnaie du jeu** (Keko), gardés
-  avec le trésor, avec LEUR SYMBOLE, UNE RUNE VERTE qui luit, à droite du
-  nombre (Keko ; une pièce d'or d'abord) —, le stock, et VENDRE TOUT, qui change le stock en crédits
+  avec le trésor, avec LEUR SYMBOLE, UNE RUNE VERTE qui luit — un fût traversé d'un
+  losange, un sceau —, à droite du nombre (Keko ; une pièce d'or d'abord,
+  puis une rune à branches) —, le stock, et VENDRE TOUT, qui change le stock en crédits
   (`vendre` ; *de moi : une valeur sans vente n'aurait pas de sens ; fer 2,
   or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. Les
   pièces se paient encore en fer. Dans le panneau d'une pièce qu'on n'a
@@ -590,8 +591,10 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - **L'écran** : la scène du hangar à la place du monde (un temps, un voile
   tramé sur le monde, avec un titre et des consignes — Keko : « ni
   l'extracteur ni le niveau derrière, ni les consignes en haut »), les
-  textes repliés à la mesure (`measure`), « Décoller » (une plaque d'or qui
-  respire d'une lueur), la date du build en bas à droite en petite police.
+  textes repliés à la mesure (`measure`), « Décoller » TOUT EN BAS, plus gros et plus
+  travaillé (Keko) : un double cadre, une plaque d'or qu'un reflet balaie
+  toutes les quatre secondes (le `shine` de `panel`), le mot en relief, des
+  chevrons, une lueur qui respire, la date du build en bas à droite en petite police.
 - **Les boutons sont des zones** : chaque image dessinée refait la liste des
   rectangles touchables (en pixels du tampon, avec leur action) ; un
   `pointerdown` quand l'écran est là se convertit en pixels du tampon

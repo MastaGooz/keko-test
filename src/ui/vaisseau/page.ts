@@ -253,15 +253,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  /** LE SYMBOLE DES CRÉDITS (Keko : « un autre symbole, par exemple une rune verte ») : une rune, un fût et deux branches, verte, qui luit ; agrandie k fois, à droite d'un nombre. */
+  /** LE SYMBOLE DES CRÉDITS (Keko : « une rune verte » ; deuxième essai) : un sceau — un fût vertical traversé d'un losange, un cœur clair —, vert, qui luit ; agrandi k fois, à droite d'un nombre. */
   function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
-    p.line(x - 0.5 * k, y - 3 * k, x - 0.5 * k, y + 3 * k, RUNE[1])
-    p.line(x - 0.5 * k, y - 3 * k, x + 2 * k, y - 0.5 * k, RUNE[1])
-    p.line(x - 0.5 * k, y - 0.5 * k, x + 2 * k, y + 2 * k, RUNE[1])
-    p.line(x - 0.5 * k, y - 3 * k, x - 0.5 * k, y + 1 * k, RUNE[2])
-    p.line(x - 0.5 * k, y - 3 * k, x + 1.5 * k, y - k, RUNE[2])
-    p.rect(Math.round(x - 0.5 * k), Math.round(y - 3 * k), 1, 1, RUNE[3])
-    p.glow(x + 0.5 * k, y, 4 * k, RUNE[2], 0.3)
+    p.line(x, y - 3.2 * k, x, y + 3.2 * k, RUNE[1])
+    p.poly([[x, y - 2 * k], [x + 2 * k, y], [x, y + 2 * k], [x - 2 * k, y]], RUNE[1])
+    p.poly([[x, y - k], [x + k, y], [x, y + k], [x - k, y]], RUNE[2])
+    p.line(x, y - 3.2 * k, x, y - 2 * k, RUNE[2])
+    p.rect(Math.round(x - 0.5), Math.round(y - 0.5), 1, 1, RUNE[3])
+    p.rect(Math.round(x - 0.5), Math.round(y - 3.2 * k), 1, 1, RUNE[3])
+    p.glow(x, y, 4 * k, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
   function nombreDeCredits(p: Peintre, n: number, x: number, y: number, c: number, centre = false): void {
@@ -657,10 +657,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     y += hd + 4
     }
-    // Décoller : une plaque d'or qui respire d'une lueur
+    // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet
+    // balaie toutes les quatre secondes, le mot en relief, des chevrons, une lueur qui respire
+    const bw = 110
+    const bh = 20
+    const bx = W / 2 - bw / 2
+    const byy = H - 33
     const respire = 0.6 + 0.4 * Math.sin(t * 4)
-    p.glow(W / 2, y + 8, 34, PEPITE[2], 0.2 * respire)
-    bouton(p, W / 2 - 44, y, 88, 17, 'Decoller', true, () => demarrer(), true)
+    p.glow(W / 2, byy + bh / 2, 44, PEPITE[2], 0.12 + 0.12 * respire)
+    panel(p, bx - 2, byy - 2, bw + 4, bh + 4, ENCRE, { r: 3 })
+    const cycle = (t % 4) / 4
+    panel(p, bx, byy, bw, bh, ENCRE_OR, { r: 2, shine: cycle < 0.45 ? bx - 12 + ((bw + 36) * cycle) / 0.45 : null })
+    motEnRelief(p, 'Decoller', W / 2, byy + 6, 1, true)
+    p.text('>>', bx + 8, byy + 8, PEPITE[3])
+    p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
+    zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
   }
