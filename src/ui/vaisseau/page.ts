@@ -138,8 +138,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plus un seul élément non pixel ») : un titre, un texte, puis le hangar et « Décoller » ; ses zones touchables sont
    * refaites à chaque image dessinée, en pixels du tampon.
    */
-  /** LE BILAN de la dernière expédition, pour le ruban : son titre, l'étiquette (EXTRAIT ou PERDU) et les ressources, avec leurs icônes (Keko : pas le trésor total). */
-  let bilan: { titre: string; etiquette: string; cargaison: Cargaison } | null = null
   let zones: { x: number; y: number; w: number; h: number; action: () => void }[] = []
 
   // ---------------------------------------------------------------- l'état
@@ -348,6 +346,68 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else p.text(texteNu(mot), x + w / 2, y + Math.floor((h - 5) / 2), vif ? N.WHITE : COQUE[3], { align: 'center' })
     if (vif) zones.push({ x, y, w, h, action })
   }
+  /**
+   * LE GRAPHISME D'UNE PIÈCE, dans la case du panneau (Keko) : le propulseur, sa tuyère et sa flamme ; la coque, le fuselage
+   * de sa peau ; une foreuse, son dôme et son canon ; le radar, son mât et son antenne ; une arme, ce qu'on voit sous
+   * l'aile — les mêmes traits que sur le vaisseau, agrandis trois fois, centrés sur (x, y).
+   */
+  function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number): void {
+    const q = agrandi(p, 3)
+    q.place(x, y, false, -Math.PI / 2)
+    if (pc.sorte === 'propulseur') {
+      const cp = pc.cran
+      const tuyere = 1.8 + 0.5 * (cp - 1)
+      const feu = cp >= 3 ? ION : FEU
+      const L = (4 + 1.5 * cp) * (0.9 + 0.1 * Math.sin(t * 40))
+      q.poly([[-1, -tuyere], [-1 - L, 0], [-1, tuyere]], feu[4])
+      q.poly([[-1, -tuyere * 0.55], [-1 - L * 0.6, 0], [-1, tuyere * 0.55]], feu[6])
+      q.glow(-2 - L * 0.4, 0, 6, feu[5], 0.6)
+      q.poly([[-1, -tuyere], [-2.5, -tuyere * 0.72], [-2.5, tuyere * 0.72], [-1, tuyere]], COQUE[1])
+      q.poly([[-1, -tuyere - 0.5], [3, -tuyere - 1], [3, tuyere + 1], [-1, tuyere + 0.5]], COQUE[3])
+      q.line(-1, -tuyere - 0.5, 3, -tuyere - 1, COQUE[5])
+    } else if (pc.sorte === 'coque') {
+      const peau = pc.cran === 2 ? BLINDEE : COQUE
+      const forme = [[7, 0], [2, -2.5], [-4, -3.3], [-5.5, -1.6], [-5.5, 1.6], [-4, 3.3], [2, 2.5]]
+      for (const s of [-1, 1]) q.poly([[0, s * 2], [-4.5, s * 6.5], [-6, s * 6.5], [-4.5, s * 2]], peau[3])
+      q.poly(forme, peau[4])
+      q.poly(forme.map(([fx, fy]) => [fx * 0.75 + 0.5, fy * 0.6]), peau[5])
+      if (pc.cran === 2) for (const [rx, ry] of [[3, -1.2], [3, 1.2], [-1.5, -2], [-1.5, 2], [-4, -1.2], [-4, 1.2]]) q.dot(rx, ry, peau[1])
+      if (pc.cran === 3) q.ring(0, 0, 8.5, 1, VERRIERE[2], 0.6)
+    } else if (pc.sorte === 'outil' && pc.famille === 'foreuse') {
+      const cf = pc.cran
+      const dome = 2.1 + 0.4 * (cf - 1)
+      const canon = 4.5 + (cf - 1)
+      q.circle(-1, 0, dome, COQUE[1])
+      q.circle(-1.3, -0.4, dome * 0.62, COQUE[3])
+      q.dot(-1.7, -0.8, COQUE[5])
+      if (cf >= 3) q.ring(-1, 0, dome, 1, LASER[2], 0.7)
+      q.line(-1, 0, -1 + canon, 0, COQUE[2])
+      if (cf >= 2) q.line(0.5, 0, -1 + canon - 1, 0, COQUE[4])
+      q.dot(-1 + canon, 0, LASER[3])
+      q.glow(-1 + canon, 0, 4, LASER[3], 0.5)
+    } else if (pc.sorte === 'outil') {
+      const ar = t * 4
+      q.circle(0, 0, 1.6, COQUE[1])
+      q.line(-Math.cos(ar) * 4, -Math.sin(ar) * 4, Math.cos(ar) * 4, Math.sin(ar) * 4, COQUE[4])
+      q.dot(0, 0, Math.sin(t * 6) > 0 ? RUNE[2] : RUNE[1])
+      q.glow(0, 0, 6, RUNE[2], 0.3)
+    } else {
+      const arme = pc.arme!.id
+      q.poly([[-4, -4], [2, -4], [2, 4], [-4, 4]], COQUE[3])
+      if (arme === 'canon') {
+        q.line(-3, 0, 5, 0, COQUE[2])
+        q.dot(5, 0, COQUE[5])
+      } else if (arme === 'rafale') {
+        q.line(-3, -1.2, 4, -1.2, COQUE[2])
+        q.line(-3, 1.2, 4, 1.2, COQUE[2])
+      } else {
+        q.poly([[-4, -1.6], [3, -1.6], [3, 1.6], [-4, 1.6]], COQUE[1])
+        q.line(-3, 0, 2, 0, COQUE[4])
+        q.dot(4, 0, N.hex('#ff5a5a'))
+      }
+    }
+    q.place(0, 0)
+  }
   /** Un texte replié à `largeur` en petite police, ligne par ligne. */
   function replier(p: Peintre, s: string, largeur: number): string[] {
     const lignes: string[] = []
@@ -447,28 +507,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
       const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
       dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
-      // le bilan de la dernière expédition, en bandeau EN HAUT DE LA SCÈNE, à droite de la bande des onglets, au hangar
-      // seulement (Keko) : le titre, puis EXTRAIT ou PERDU et les ressources de l'expédition avec leurs icônes
-      if (bilan !== null) {
-        const bx0 = BANDE + 4
-        const bw0 = W - 4 - bx0
-        const cxb = bx0 + bw0 / 2
-        panel(p, bx0, 4, bw0, 32, ENCRE, { r: 2 })
-        p.text(bilan.titre, cxb, 8, PEPITE[3], { font: 'big', align: 'center' })
-        const items = MINERAIS.filter((k) => bilan!.cargaison[k] > 0)
-        const le = p.measure(bilan.etiquette)[0]
-        const largeur = le + 8 + (items.length === 0 ? p.measure('RIEN', { font: 'big' })[0] : items.reduce((a, k) => a + 13 + p.measure(String(bilan!.cargaison[k]), { font: 'big' })[0] + 8, 0) - 8)
-        let x = Math.floor(cxb - largeur / 2)
-        p.text(bilan.etiquette, x, 22, COQUE[4])
-        x += le + 8
-        if (items.length === 0) p.text('RIEN', x, 21, COQUE[3], { font: 'big' })
-        for (const k of items) {
-          dessinerUneRessource(p, x + 5, 24, k)
-          const n = String(bilan.cargaison[k])
-          p.text(n, x + 13, 21, N.WHITE, { font: 'big' })
-          x += 13 + p.measure(n, { font: 'big' })[0] + 8
-        }
-      }
     } else {
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
@@ -518,7 +556,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       credits = 0
       sauver()
       ouvrirLeHangar()
-      bilan = null
     })
   }
   /**
@@ -526,9 +563,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * pleines jusqu'à la valeur (Keko : « des jauges à cellules pour les éléments discrets ») ; sinon une barre creuse
    * pleine au plus du catalogue — et un repère blanc à la valeur de la pièce montée.
    */
-  function dessinerUneJaugeDePiece(p: Peintre, y: number, j: Jauge, repere: number | null, rouge: boolean): void {
-    p.text(texteNu(j.nom), 10, y + 1, COQUE[4])
-    const bx = 66
+  function dessinerUneJaugeDePiece(p: Peintre, y: number, j: Jauge, repere: number | null, rouge: boolean, x0 = 10): void {
+    p.text(texteNu(j.nom), x0, y + 1, COQUE[4])
+    const bx = x0 + 50
     const bw = W - 12 - bx
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : rouge ? ROUGE[3] : PEPITE[2]
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : PEPITE[3]
@@ -650,7 +687,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const liste = listeVisible(onglet)
     const hl = 9 + RANGEES * 13 + 3
     panel(p, 4, y, W - 8, hl, ENCRE, { r: 2 })
-    p.text(`${liste.length} ${liste.length > 1 ? 'PIECES' : 'PIECE'}`, 9, y + 3, COQUE[3])
     if (onglet === 'outil' || onglet === 'arme') p.text(`PLACES ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W - 9, y + 3, PEPITE[3], { align: 'right' })
     const maxDefil = Math.max(0, liste.length - RANGEES)
     defil[onglet] = Math.max(0, Math.min(maxDefil, defil[onglet]))
@@ -668,7 +704,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.text('>', 9, ly + 3, PEPITE[3], { font: 'big' })
       }
       p.text(texteNu(pc.nom), 16, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3], { font: 'big' })
-      const etat = montee ? 'MONTEE' : aLui ? 'POSSEDEE' : nommer(pc.prix)
+      const etat = montee ? 'EQUIPE' : aLui ? 'POSSEDE' : nommer(pc.prix)
       p.text(texteNu(etat), W - (maxDefil > 0 ? 15 : 9), ly + 4, montee ? PEPITE[2] : aLui ? COQUE[4] : peutAcheter(hangar, tresor, pc.id) ? PEPITE[3] : COQUE[2], { align: 'right' })
       zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
     }
@@ -682,22 +718,51 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(W - 10, yc, 3, 1, COQUE[5])
     }
     y += hl + 3
-    // LE PANNEAU DE DESCRIPTION, À HAUTEUR FIXE (cinq jauges au plus, le prix, le bouton) : le nom, les jauges, le bouton
+    // LE BOUTON, ENTRE LA LISTE ET LES STATS (Keko) : ACHETER (une tape paie ET équipe), EQUIPER, RETIRER, PLACES
+    // PLEINES éteint, ou EQUIPE sans bouton
     const pc = pieceDe(choix[onglet]) ?? liste[0] ?? piecesDe(onglet)[0]
+    const bw = 104
+    if (estMontee(hangar, pc.id)) {
+      if (pc.sorte === 'arme' || pc.sorte === 'outil') {
+        bouton(p, W / 2 - bw / 2, y, bw, 13, 'Retirer', true, () => {
+          hangar = demonter(hangar, pc.id)
+          sauver()
+        }, true)
+      } else motEnRelief(p, 'Equipe', W / 2, y + 3, 1, true)
+    } else if (possede(hangar, pc.id)) {
+      const place = peutMonter(hangar, pc.id)
+      bouton(p, W / 2 - bw / 2, y, bw, 13, place ? 'Equiper' : 'Places pleines', place, () => {
+        hangar = monter(hangar, pc.id)
+        sauver()
+      }, true)
+    } else {
+      bouton(p, W / 2 - bw / 2, y, bw, 13, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
+        const r = acheter(hangar, tresor, pc.id)
+        if (r === null) return
+        hangar = r.hangar
+        tresor = r.tresor
+        sauver()
+      }, true)
+    }
+    y += 16
+    // LE PANNEAU DES STATS, à la hauteur de son contenu (Keko) : à gauche LE GRAPHISME DE LA PIÈCE dans sa case, à
+    // droite le nom, les jauges (plus courtes) et le prix avec le solde
     const jauges = jaugesDe(pc)
     const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
     const aAcheter = !possede(hangar, pc.id)
-    const JAUGES_MAX = 5
-    const hd = 16 + JAUGES_MAX * 10 + 11 + 18
+    const hd = Math.max(50, 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 4)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
-    p.text(texteNu(pc.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
-    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids'))
+    panel(p, 8, y + 4, 42, hd - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
+    dessinerLePictogramme(p, pc, 29, y + hd / 2)
+    const gx = 54
+    p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
+    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
     if (aAcheter) {
       // LE PRIX AVEC LE SOLDE (Keko) : par minerai, l'icône, le prix / ce qu'on a — en or si ça suffit, en rouge sinon
-      const py = y + 16 + JAUGES_MAX * 10
-      p.text('PRIX', 10, py + 2, COQUE[4])
-      let px = 66
+      const py = y + 16 + jauges.length * 10
+      p.text('PRIX', gx, py + 2, COQUE[4])
+      let px = gx + 28
       for (const k of MINERAIS) {
         if (pc.prix[k] <= 0) continue
         const assez = tresor[k] >= pc.prix[k]
@@ -706,30 +771,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.text(mot, px + 14, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
         px += 14 + p.measure(mot, { font: 'big' })[0] + 10
       }
-    }
-    const by = y + 16 + JAUGES_MAX * 10 + 11 + 2
-    const bw = 104
-    if (estMontee(hangar, pc.id)) {
-      if (pc.sorte === 'arme' || pc.sorte === 'outil') {
-        bouton(p, W / 2 - bw / 2, by, bw, 13, 'Demonter', true, () => {
-          hangar = demonter(hangar, pc.id)
-          sauver()
-        }, true)
-      } else motEnRelief(p, 'Montee', W / 2, by + 3, 1, true)
-    } else if (possede(hangar, pc.id)) {
-      const place = peutMonter(hangar, pc.id)
-      bouton(p, W / 2 - bw / 2, by, bw, 13, place ? 'Monter' : 'Places pleines', place, () => {
-        hangar = monter(hangar, pc.id)
-        sauver()
-      }, true)
-    } else {
-      bouton(p, W / 2 - bw / 2, by, bw, 13, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
-        const r = acheter(hangar, tresor, pc.id)
-        if (r === null) return
-        hangar = r.hangar
-        tresor = r.tresor
-        sauver()
-      }, true)
     }
     y += hd + 4
     }
@@ -1396,7 +1437,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
               tresor = { ...m.tresor }
               sauver()
-              bilan = { titre: 'EXPEDITION ACHEVEE', etiquette: 'EXTRAIT', cargaison: { ...ev.cargaison } }
+              // (le bilan ne s'affiche plus au hangar : Keko l'a fait retirer ; les compteurs et le trésor disent tout)
               break
             }
             case 'perdu': {
@@ -1410,7 +1451,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = 1
               if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              bilan = { titre: 'COQUE PERCEE', etiquette: 'PERDU', cargaison: { ...m.cargaison } }
               break
             }
             default:

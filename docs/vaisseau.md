@@ -507,9 +507,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   canon de la foreuse, acier riveté de la coque blindée, anneau cyan de la
   coque à bouclier, les armes sous les ailes (la première à gauche, la
   seconde à droite : canon, un fût ; mitrailleuse, deux ; missiles, une
-  nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau EN
-  HAUT DE LA SCÈNE, à droite de la bande des onglets, AU HANGAR SEULEMENT,
-  s'il y en a un (en bas au-dessus de « Décoller » un temps — Keko) — le titre, puis EXTRAIT
+  nacelle à pointe rouge). *Le bilan de la dernière expédition s'est affiché
+  en bandeau un temps — en haut, en bas, en haut de la scène — puis Keko l'a
+  fait retirer : les compteurs du vol et le trésor disent tout.* — le titre, puis EXTRAIT
   ou PERDU et les ressources de l'expédition avec leurs icônes, RIEN s'il
   n'y en a pas ; *pas le trésor total* (Keko) (en haut de la scène,
   il cachait la colonne des onglets et l'entrepôt — Keko).
@@ -531,7 +531,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   « énormément de pièces, un moyen de se déplacer dans une longue liste »),
   et en tête les places occupées / portées pour les outils et les armes
   (« PLACES 1/2 » — Keko : « pas dans le bouton respectif ») ;
-  puis LE PANNEAU DE DESCRIPTION, À HAUTEUR FIXE (cinq jauges au plus) (Keko : « un vrai panneau de description
+  puis LE BOUTON (entre la liste et les stats — Keko), puis LE PANNEAU DES
+  STATS, à la hauteur de son contenu, LE GRAPHISME DE LA PIÈCE dans une case
+  à gauche (les mêmes traits que sur le vaisseau, agrandis trois fois) et
+  les jauges, plus courtes, à droite (Keko ; *un panneau à hauteur fixe de
+  cinq jauges a vécu une heure*) (Keko : « un vrai panneau de description
   des éléments : des jauges vitesse / accélération / maniabilité pour le
   propulseur, le nombre d'armes portables par la coque, une jauge de
   blindage, de bouclier et de poids ») : le nom, et SES JAUGES (`jaugesDe`,
@@ -544,8 +548,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   valeur —, et UN REPÈRE BLANC à la valeur de la pièce montée quand on en
   regarde une autre, pour comparer d'un coup d'œil —, et le bouton qui va
   avec, en lettres en relief : ACHETER (une tape paie ET monte), MONTER,
-  DEMONTER (un outil, une arme), PLACES PLEINES éteint (`peutMonter`), ou
-  MONTEE sans bouton. *Choisir
+  RETIRER (un outil, une arme), PLACES PLEINES éteint (`peutMonter`), ou
+  EQUIPE sans bouton — « équipé » plutôt que « monté » (Keko). *Choisir
   puis agir : pas d'achat par une tape malheureuse.* Les plaques sont le
   `panel` des effets `ui/` du dépôt
   (contour, rebord lit, corps, bas ombré), « Décoller » un mot en relief de
