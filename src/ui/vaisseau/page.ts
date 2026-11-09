@@ -548,7 +548,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text('VALEUR UNITAIRE', 10, ly + 1, COQUE[4])
     nombreDeCredits(p, fiche.credits, W - 9, ly, PEPITE[3])
     p.text('EN STOCK', 10, ly + 12, COQUE[4])
-    p.text(String(tresor[k]), W - 9, ly + 11, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
+    // le compte, puis l'icône du minerai à sa droite, comme le symbole des crédits au-dessus (Keko)
+    p.text(String(tresor[k]), W - 21, ly + 11, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
+    dessinerUneRessource(p, W - 13, ly + 14, k)
     const by = ly + 24
     // VENDRE TOUT : le stock du minerai contre ses crédits (de moi : une valeur sans vente n'aurait pas de sens ; à rejuger)
     const gain = tresor[k] * fiche.credits
