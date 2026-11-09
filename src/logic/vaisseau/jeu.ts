@@ -111,7 +111,7 @@ export const VAISSEAU = {
    */
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, accourt: 420, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
-/** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite, tout près). */
+/** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
 export type ConfigVaisseau = Large<typeof VAISSEAU>
 /** Le manche du vaisseau dans la langue du survivor (sa vitesse et sa réponse n'y servent pas). */

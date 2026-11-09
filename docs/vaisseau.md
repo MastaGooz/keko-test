@@ -397,7 +397,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   face à face, les deux rayons sont sur le même axe) ; à trancher autrement* ; il clignote blanc quand le laser du joueur le creuse ; le
   joueur blanchit une image quand un trait le touche, avec une étincelle de
   sang, une secousse et une vibration. `&ennemi` le fait naître tout de
-  suite à 90 unités, pour le voir sans attendre.
+  suite, pour le voir sans attendre — **à la même distance qu'en jeu** : la
+  route l'a d'abord fait naître à 90 unités, et Keko (09/11) l'a vu
+  « apparaître alors qu'il devrait toujours apparaître hors champ » ; *une
+  route de test qui change deux choses à la fois fait prendre l'une pour
+  l'autre* — la seule chose qu'elle raccourcit est l'attente.
 
 ## Ce qui reste à faire
 

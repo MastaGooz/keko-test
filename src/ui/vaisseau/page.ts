@@ -93,8 +93,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const suivre = parametres.get('controle') === 'suivre'
   /** `&minerai=N` : part avec N pepites a bord, pour voir le compteur sans miner (ce qui se teste doit s'ouvrir d'un lien). */
   const minerai0 = Math.max(0, Number(parametres.get('minerai')) || 0)
-  /** `&ennemi` : l'ennemi naît tout de suite, tout près (pour le voir sans attendre). */
-  const CONF: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0, distance: 90 } } : C
+  /** `&ennemi` : l'ennemi naît tout de suite (pour le voir sans attendre) — à la même distance qu'en jeu : né à 90, on le voyait apparaître à l'écran (Keko : « il devrait toujours apparaître hors champ »). */
+  const CONF: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0 } } : C
 
   function el<K extends keyof HTMLElementTagNameMap>(tag: K, classe: string, texte = ''): HTMLElementTagNameMap[K] {
     const n = document.createElement(tag)
