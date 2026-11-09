@@ -171,7 +171,7 @@ while (abattu === 0 && pasZ < 60 * 20) {
   pasZ++
 }
 verifier('avec un canon, les obus partent seuls, touchent le rival et l’abattent (il rend ses pépites)', abattu === 1 && obus >= Math.ceil(C.ennemi.pv / 6) && touchesRival >= Math.ceil(C.ennemi.pv / 6) && z.ennemis.length === 0 && z.pepites.length >= C.ennemi.butinRendu)
-verifier('deux armes montées tirent chacune à leur cadence', armer('arme-canon', 'arme-rafale').armes.length === 2 && armer('arme-canon', 'arme-rafale', 'arme-missiles').armes.length === 2)
+verifier('la coque de série porte une arme, la blindée deux', armer('arme-canon', 'arme-rafale').armes.length === 1 && armer('coque-2', 'arme-canon', 'arme-rafale', 'arme-missiles').armes.length === 2)
 const missiles = armer('arme-missiles')
 const zm = poserPres(missiles)
 zm.vaisseau = { ...zm.vaisseau, x: zm.ennemis[0].corps.x + 150, y: zm.ennemis[0].corps.y + 40 } // (plus loin que le canon, de biais)

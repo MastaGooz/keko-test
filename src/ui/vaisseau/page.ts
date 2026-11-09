@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ARMES_MAX, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, armesMax, armesMontees, configDuHangar, demonter, EMPLACEMENTS, estMontee, jaugesDe, monteeA, monter, peutAcheter, pieceDe, piecesDe, possede, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -297,9 +297,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glow: (x, y, r, c, kk) => p.glow(x * k, y * k, r * k, c, kk),
     }
   }
-  /** L'interface est calée en bas ; la scène du hangar prend ce qui reste au-dessus. Sa hauteur est celle mesurée à l'image d'avant (une passe, pas deux). */
-  let hauteurUI = 125
-  let hautScene = 110
+  /** La scène fait 120 px de haut (Keko : « réduire la taille du hangar et du vaisseau ») ; le bloc scène + interface se centre sur la hauteur de l'interface mesurée à l'image d'avant (une passe, pas deux). Le sol monte jusqu'au bord. */
+  const HAUT_SCENE = 120
+  let hauteurUI = 170
+  let hautScene = HAUT_SCENE
   /**
    * LE HANGAR, VU DE DESSUS (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière, ni les consignes en
    * haut ; voir le vaisseau dans un hangar, posé ») : un sol de plaques rivetées, une aire d'atterrissage cerclée de
@@ -309,9 +310,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLeHangar(p: Peintre): void {
     p.place(0, 0)
-    hautScene = Math.max(96, H - 14 - hauteurUI)
+    const y0 = Math.max(0, Math.floor((H - 10 - (HAUT_SCENE + hauteurUI + 6)) / 2))
+    hautScene = y0 + HAUT_SCENE
     const cx = W / 2
-    const cy = Math.floor(hautScene / 2) + 6
+    const cy = y0 + 62
     // le sol : des plaques, leurs joints sombres, un rivet par plaque
     p.rect(0, 0, W, H, NUIT)
     p.rect(0, 0, W, hautScene, COQUE[0])
@@ -319,13 +321,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let y = 4; y < hautScene; y += 24) p.line(0, y, W - 1, y, NUIT)
     for (let x = 6; x < W; x += 24) for (let y = 4; y < hautScene; y += 24) p.dot(x + 2, y + 2, COQUE[1])
     // l'aire : un disque sombre, l'anneau de chevrons, un cercle et une croix de guidage, huit feux qui courent
-    const R0 = Math.min(44, Math.floor(hautScene / 2) - 10)
+    const R0 = 30
     p.circle(cx, cy, R0 + 3, NUIT)
     p.circle(cx, cy, R0, COQUE[1])
     p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))
-    p.ring(cx, cy, R0 - 11, 1, COQUE[2])
-    p.line(cx - R0 + 14, cy, cx + R0 - 14, cy, COQUE[2])
-    p.line(cx, cy - R0 + 14, cx, cy + R0 - 14, COQUE[2])
+    p.ring(cx, cy, R0 - 9, 1, COQUE[2])
+    p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, COQUE[2])
+    p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, COQUE[2])
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2
       const allume = (Math.floor(t * 4) + i) % 8 < 3
@@ -336,7 +338,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // les lampes des coins : un boîtier, un halo chaud
     for (const lx of [10, W - 11]) {
-      p.glow(lx, 6, 60, N.hex('#ffd8a0'), 0.3)
+      p.glow(lx, 6, 50, N.hex('#ffd8a0'), 0.3)
       p.rect(lx - 3, 0, 6, 3, COQUE[2])
       p.rect(lx - 2, 3, 4, 1, PEPITE[3])
     }
@@ -347,101 +349,125 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.line(x + 1, y + 1, x + w - 2, y + 1, N.hex('#69492a'))
       p.line(x, y + Math.floor(h / 2), x + w - 1, y + Math.floor(h / 2), N.hex('#2a1e14'))
     }
-    caisse(8, hautScene - 24, 14, 10)
-    caisse(24, hautScene - 20, 10, 8)
-    caisse(W - 26, hautScene - 28, 16, 12)
-    // l'ombre du vaisseau sur l'aire, puis le vaisseau posé, agrandi, moteur éteint
-    const K = hautScene > 160 ? 3 : 2.5
+    caisse(6, hautScene - 19, 12, 8)
+    caisse(20, hautScene - 16, 8, 6)
+    caisse(W - 22, hautScene - 22, 14, 10)
+    // l'ombre du vaisseau sur l'aire, puis le vaisseau posé, agrandi deux fois, moteur éteint
+    const K = 2
     p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
     const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
     dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
     // l'enseigne
-    panel(p, 3, hautScene - 13, 40, 11, ENCRE, { r: 2 })
-    p.text('HANGAR', 23, hautScene - 10, PEPITE[3], { align: 'center' })
+    panel(p, 3, hautScene - 12, 40, 11, ENCRE, { r: 2 })
+    p.text('HANGAR', 23, hautScene - 9, PEPITE[3], { align: 'center' })
     // le bilan de la dernière expédition, en bandeau
     if (texte !== '') {
       const L = replier(p, texte, W - 20)
-      panel(p, 4, 4, W - 8, 17 + L.length * 7, ENCRE, { r: 2 })
-      p.text(titre, W / 2, 8, PEPITE[3], { align: 'center' })
-      L.forEach((li, i) => p.text(li, W / 2, 16 + i * 7, COQUE[5], { align: 'center' }))
+      panel(p, 4, 4, W - 8, 19 + L.length * 7, ENCRE, { r: 2 })
+      p.text(titre, W / 2, 8, PEPITE[3], { font: 'big', align: 'center' })
+      L.forEach((li, i) => p.text(li, W / 2, 18 + i * 7, COQUE[5], { align: 'center' }))
     }
   }
+  /** Une jauge du panneau : son nom à gauche, une barre creuse pleine au plus du catalogue, un repère blanc à la valeur de la pièce montée. */
+  function dessinerUneJaugeDePiece(p: Peintre, y: number, nom: string, part: number, repere: number | null, rouge: boolean): void {
+    p.text(texteNu(nom), 10, y + 1, COQUE[4])
+    const bx = 66
+    const bw = W - 12 - bx
+    p.rect(bx, y, bw, 5, ENCRE.outline)
+    p.rect(bx + 1, y + 1, bw - 2, 3, COQUE[1])
+    const plein = Math.round((bw - 2) * Math.min(1, part))
+    if (plein > 0) {
+      p.rect(bx + 1, y + 1, plein, 3, rouge ? ROUGE[3] : PEPITE[2])
+      p.rect(bx + 1, y + 1, plein, 1, rouge ? ROUGE[5] : PEPITE[3])
+    }
+    if (repere !== null) p.rect(bx + 1 + Math.round((bw - 2) * Math.min(1, repere)) - 1, y - 1, 1, 7, N.WHITE)
+  }
   /**
-   * L'INTERFACE DU HANGAR, sous la scène : le trésor ; quatre onglets (propulseur, coque, foreuse, armes) ; LA LISTE DE
-   * TOUTES LES PIÈCES de l'onglet, une ligne chacune — le nom, et à droite MONTEE, POSSEDEE ou le prix (doré si le
-   * trésor y suffit) —, la choisie surlignée ; puis ce qu'elle change et le bouton qui va avec : ACHETER (une tape paie
-   * ET monte), MONTER, DEMONTER (une arme), ou rien si elle est montée. « Décoller » en bas, la date du build tout en
-   * bas. Tout se sauve à chaque geste. Les zones touchables sont refaites à chaque image.
+   * L'INTERFACE DU HANGAR, sous la scène, EN GRANDE POLICE (Keko : « les textes et l'interface sont un peu petits ») :
+   * le trésor ; quatre onglets (propulseur, coque, foreuse, armes) ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une
+   * ligne chacune — le nom, et à droite MONTEE, POSSEDEE ou le prix (doré si le trésor y suffit) —, la choisie
+   * surlignée d'un chevron ; puis LE PANNEAU DE DESCRIPTION : le nom, SES JAUGES (`jaugesDe` : accélération, vitesse,
+   * maniabilité ; blindage, bouclier, armes, poids ; forage, portée, aimant ; dégâts par seconde, par coup, portée —
+   * la barre pleine au plus du catalogue, le poids en rouge, et un repère blanc à la valeur de la pièce montée, pour
+   * comparer), et le bouton qui va avec : ACHETER (une tape paie ET monte), MONTER, DEMONTER (une arme), COQUE PLEINE
+   * éteint, ou MONTEE sans bouton. « Décoller » en bas, la date du build tout en bas. Tout se sauve à chaque geste.
    */
   function dessinerLEcran(p: Peintre): void {
     zones = []
     p.place(0, 0)
     const y0 = hautScene + 4
     let y = y0
-    p.text(texteNu(`Tresor : ${nommer(tresor)}`), W / 2, y, PEPITE[2], { align: 'center' })
-    y += 9
-    // les onglets
-    let x = 4
-    for (const o of ONGLETS) {
-      const w = p.measure(NOMS_ONGLET[o])[0] + 8
+    p.text(texteNu(`Tresor  ${nommer(tresor)}`), W / 2, y, PEPITE[2], { font: 'big', align: 'center' })
+    y += 10
+    // les onglets, centrés
+    const largeurs = ONGLETS.map((o) => p.measure(NOMS_ONGLET[o])[0] + 8)
+    let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (ONGLETS.length - 1) * 2) / 2)
+    ONGLETS.forEach((o, i) => {
+      const w = largeurs[i]
       const actif = o === onglet
-      panel(p, x, y, w, 11, actif ? ENCRE_OR : ENCRE, { r: 2 })
-      p.text(NOMS_ONGLET[o], x + w / 2, y + 3, actif ? N.WHITE : COQUE[4], { align: 'center' })
-      if (!actif) zones.push({ x, y, w, h: 11, action: () => (onglet = o) })
+      panel(p, x, y, w, 13, actif ? ENCRE_OR : ENCRE, { r: 2 })
+      p.text(NOMS_ONGLET[o], x + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
+      if (!actif) zones.push({ x, y, w, h: 13, action: () => (onglet = o) })
       x += w + 2
-    }
-    y += 13
+    })
+    y += 15
     // la liste des pièces de l'onglet
     const liste = piecesDe(onglet)
-    const hl = liste.length * 11 + 4
+    const hl = liste.length * 13 + 4
     panel(p, 4, y, W - 8, hl, ENCRE, { r: 2 })
     liste.forEach((pc, i) => {
-      const ly = y + 2 + i * 11
+      const ly = y + 2 + i * 13
       const choisie = choix[onglet] === pc.id
       const montee = estMontee(hangar, pc.id)
       const aLui = possede(hangar, pc.id)
-      if (choisie) p.rect(6, ly, W - 12, 11, COQUE[1], 0.9)
-      if (choisie) p.text('>', 9, ly + 3, PEPITE[3])
-      p.text(texteNu(pc.nom), 15, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3])
+      if (choisie) {
+        p.rect(6, ly, W - 12, 13, COQUE[1], 0.9)
+        p.text('>', 9, ly + 3, PEPITE[3], { font: 'big' })
+      }
+      p.text(texteNu(pc.nom), 16, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3], { font: 'big' })
       const etat = montee ? 'MONTEE' : aLui ? 'POSSEDEE' : nommer(pc.prix)
-      p.text(texteNu(etat), W - 9, ly + 3, montee ? PEPITE[2] : aLui ? COQUE[4] : peutAcheter(hangar, tresor, pc.id) ? PEPITE[3] : COQUE[2], { align: 'right' })
-      zones.push({ x: 4, y: ly, w: W - 8, h: 11, action: () => (choix[onglet] = pc.id) })
+      p.text(texteNu(etat), W - 9, ly + 4, montee ? PEPITE[2] : aLui ? COQUE[4] : peutAcheter(hangar, tresor, pc.id) ? PEPITE[3] : COQUE[2], { align: 'right' })
+      zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
     })
     y += hl + 3
-    // la pièce choisie : ce qu'elle change, et le bouton qui va avec
+    // le panneau de description : le nom, les jauges, le bouton
     const pc = pieceDe(choix[onglet]) ?? liste[0]
-    const L = replier(p, pc.dit, W - 20)
-    const hd = 6 + L.length * 7 + 15
+    const jauges = jaugesDe(pc)
+    const enPlace = pc.sorte === 'arme' ? null : monteeA(hangar, pc.sorte)
+    const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
+    const hd = 16 + jauges.length * 10 + 18
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
-    L.forEach((li, i) => p.text(li, W / 2, y + 4 + i * 7, COQUE[5], { align: 'center' }))
-    const by = y + 4 + L.length * 7 + 2
+    p.text(texteNu(pc.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
+    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j.nom, j.valeur / j.max, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids'))
+    const by = y + 16 + jauges.length * 10 + 2
+    const bw = 104
     if (estMontee(hangar, pc.id)) {
       if (pc.sorte === 'arme') {
-        bouton(p, W / 2 - 34, by, 68, 11, 'Demonter', true, () => {
+        bouton(p, W / 2 - bw / 2, by, bw, 13, 'Demonter', true, () => {
           hangar = demonter(hangar, pc.id)
           sauverHangar(hangar, tresor)
-        })
-      } else p.text('MONTEE', W / 2, by + 3, PEPITE[2], { align: 'center' })
+        }, true)
+      } else motEnRelief(p, 'Montee', W / 2, by + 3, 1, true)
     } else if (possede(hangar, pc.id)) {
-      const place = pc.sorte !== 'arme' || hangar.armes.length < ARMES_MAX
-      bouton(p, W / 2 - 34, by, 68, 11, place ? 'Monter' : `${ARMES_MAX} armes deja`, place, () => {
+      const place = pc.sorte !== 'arme' || hangar.armes.length < armesMax(hangar)
+      bouton(p, W / 2 - bw / 2, by, bw, 13, place ? 'Monter' : 'Coque pleine', place, () => {
         hangar = monter(hangar, pc.id)
         sauverHangar(hangar, tresor)
-      })
+      }, true)
     } else {
-      bouton(p, W / 2 - 34, by, 68, 11, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
+      bouton(p, W / 2 - bw / 2, by, bw, 13, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
         const r = acheter(hangar, tresor, pc.id)
         if (r === null) return
         hangar = r.hangar
         tresor = r.tresor
         sauverHangar(hangar, tresor)
-      })
+      }, true)
     }
     y += hd + 4
     // Décoller : une plaque d'or qui respire d'une lueur
     const respire = 0.6 + 0.4 * Math.sin(t * 4)
     p.glow(W / 2, y + 8, 34, PEPITE[2], 0.2 * respire)
-    bouton(p, W / 2 - 40, y, 80, 17, 'Decoller', true, () => demarrer(), true)
+    bouton(p, W / 2 - 44, y, 88, 17, 'Decoller', true, () => demarrer(), true)
     hauteurUI = y + 17 - y0
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })

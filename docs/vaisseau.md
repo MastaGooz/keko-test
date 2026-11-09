@@ -449,9 +449,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   cristal attendent les crans d'après) :
   - PROPULSEUR (accélération, pointe, nez) : de série ; renforcé 12 fer
     (×1,25, ×1,15, ×1,1) ; ionique 30 fer (×1,6, ×1,35, ×1,25, flamme bleue).
-  - COQUE (points, poids, bouclier) : de série 5 points ; blindée 14 fer,
-    8 points, poids 1,3 ; à bouclier 32 fer, 5 points + 2 de bouclier, poids
-    1,1. **Le poids divise la poussée ET le frein du vide** : lourd, on
+  - COQUE (points, poids, bouclier, ET LE NOMBRE D'ARMES QU'ELLE PORTE —
+    Keko : « le nombre d'armes portables par la coque ») : de série 5 points,
+    une arme ; blindée 14 fer, 8 points, poids 1,3, deux armes ; à bouclier
+    32 fer, 5 points + 2 de bouclier, poids 1,1, deux armes. Remonter une
+    coque qui en porte moins démonte la dernière arme (`armesMax`). **Le
+    poids divise la poussée ET le frein du vide** : lourd, on
     accélère moins et on glisse plus — c'est l'inertie que Keko demandait.
     **Le bouclier** prend les coups avant la coque (un point par coup, trait
     ou choc), et se recharge de 0,5 point par seconde passé 4 s sans coup
@@ -462,11 +465,13 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
     `foreuse: { debit, portee, aimant }` ne porte que sur le foreur et
     l'aimant DU JOUEUR : *le rival creuse avec `forage` tel quel*, sinon
     chaque achat l'aurait amélioré avec nous.
-  - ARMES, deux au plus (`ARMES_MAX`), aucune de série : canon 12 fer (un
+  - ARMES, autant que la coque en porte (deux au plus, `ARMES_MAX`), aucune
+    de série : canon 12 fer (un
     obus toutes les 1,1 s, 6 points, porte à 120) ; mitrailleuse 22 fer
     (quatre balles par seconde, 1,6 point, porte à 90, disperse) ; missiles
     34 fer (un missile guidé toutes les 2,8 s, 14 points, porte à 190, tourne
-    à 3,5 rad/s vers le rival). **Chaque arme tire seule** sur le rival le
+    à 3,5 rad/s vers le rival). La foreuse longue s'appelait « à long
+    faisceau » : trop long pour une ligne en grande police. **Chaque arme tire seule** sur le rival le
     plus proche à sa portée, avec de l'avance (la position plus la vitesse
     fois le temps de vol) et sa dispersion — *le doigt est sur le manche, le
     laser tirait déjà seul*. Les obus s'écrasent sur une roche, touchent le
@@ -491,15 +496,28 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   seconde à droite : canon, un fût ; mitrailleuse, deux ; missiles, une
   nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau,
   s'il y en a un.
-- **L'interface, calée en bas** (la scène prend le reste ; la hauteur de
-  l'interface est celle mesurée à l'image d'avant) : le trésor ; QUATRE
-  ONGLETS (propulseur, coque, foreuse, armes) ; LA LISTE DE TOUTES LES
-  PIÈCES de l'onglet, une ligne chacune — le nom, et à droite MONTEE,
-  POSSEDEE ou le prix, doré si le trésor y suffit —, la choisie surlignée
-  d'un chevron ; puis ce qu'elle change, et le bouton qui va avec : ACHETER
-  (une tape paie ET monte), MONTER, DEMONTER (une arme), « 2 ARMES DEJA »
-  éteint, ou MONTEE sans bouton. *Choisir puis agir : pas d'achat par une
-  tape malheureuse.* Les plaques sont le `panel` des effets `ui/` du dépôt
+- **L'interface, EN GRANDE POLICE** (Keko : « les textes et l'interface
+  sont un peu petits dans le hangar, on peut réduire la taille du hangar et
+  du vaisseau ») : la scène fait 120 px de tampon, le vaisseau est agrandi
+  deux fois (trois avant), et le bloc scène + interface se centre sur la
+  hauteur de l'interface mesurée à l'image d'avant, le sol du hangar montant
+  jusqu'au bord. Le trésor ; QUATRE ONGLETS (propulseur, coque, foreuse,
+  armes) ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une ligne de 13 px
+  chacune — le nom en grande police, et à droite MONTEE, POSSEDEE ou le
+  prix, doré si le trésor y suffit —, la choisie surlignée d'un chevron ;
+  puis LE PANNEAU DE DESCRIPTION (Keko : « un vrai panneau de description
+  des éléments : des jauges vitesse / accélération / maniabilité pour le
+  propulseur, le nombre d'armes portables par la coque, une jauge de
+  blindage, de bouclier et de poids ») : le nom, et SES JAUGES (`jaugesDe`,
+  dans la règle : accélération, vitesse, maniabilité ; blindage, bouclier,
+  armes, poids ; forage, portée, aimant ; dégâts par seconde, par coup,
+  portée) — des barres creuses pleines au maximum du catalogue, le poids en
+  rouge, et UN REPÈRE BLANC à la valeur de la pièce montée quand on en
+  regarde une autre, pour comparer d'un coup d'œil —, et le bouton qui va
+  avec, en lettres en relief : ACHETER (une tape paie ET monte), MONTER,
+  DEMONTER (une arme), COQUE PLEINE éteint, ou MONTEE sans bouton. *Choisir
+  puis agir : pas d'achat par une tape malheureuse.* Les plaques sont le
+  `panel` des effets `ui/` du dépôt
   (contour, rebord lit, corps, bas ombré), « Décoller » un mot en relief de
   leur `drawWord` (Keko : « tu t'es bien inspiré de ui/achievement pour le
   texte et la boîte, et ui/quest-complete pour les sélections ? »). *Deux
