@@ -564,7 +564,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     y += hp + 4
     // les crédits qu'on a, sous le panneau
     p.text('CREDITS', W / 2 - 6, y + 2, COQUE[4], { align: 'right' })
-    nombreDeCredits(p, credits, W / 2 + 30, y, PEPITE[2])
+    nombreDeCredits(p, credits, W / 2 + 30, y, PEPITE[3]) // (la même couleur que la valeur unitaire — Keko)
     return y + 12
   }
   /**
