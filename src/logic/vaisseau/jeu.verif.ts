@@ -82,25 +82,30 @@ let apparu: Evenement | undefined
 for (let i = 0; i < Math.ceil(C.ennemi.apparait * 60) + 2 && apparu === undefined; i++) apparu = avancerLeMonde(C, w, 1 / 60, { x: 0, y: 0 }).evenements.find((e) => e.type === 'ennemiApparait')
 verifier('l’ennemi apparaît à l’heure dite, au loin', apparu !== undefined && w.ennemis.length === 1 && Math.abs(Math.hypot(w.ennemis[0].corps.x, w.ennemis[0].corps.y) - C.ennemi.distance) < 1)
 let aMine = false
+/** Sa première roche, et où il était en la creusant (plus tard, chargé, il en choisit d'autres ou fuit). */
+let premiere: { roche: number | null; x: number; y: number } | null = null
 let tirLoin = false
 let tirs = 0
 for (let i = 0; i < 60 * 25; i++) {
   const r = avancerLeMonde(C, w, 1 / 60, { x: 0, y: 0 })
   const e = w.ennemis[0]
   if (e === undefined) break
-  if (e.fait === 'mine' && e.forage !== null) aMine = true
+  if (e.fait === 'mine' && e.forage !== null) {
+    aMine = true
+    if (premiere === null) premiere = { roche: e.roche, x: e.corps.x, y: e.corps.y }
+  }
   if (compter(r.evenements, 'tir') > 0 && Math.hypot(e.corps.x - w.vaisseau.x, e.corps.y - w.vaisseau.y) > C.ennemi.voit + 1) tirLoin = true
   tirs += compter(r.evenements, 'tir')
 }
 verifier('il trouve une roche et la mine', aMine)
-const sienne = w.ennemis[0]?.roche
-const roches = asteroidesAutour(C, 0, 0, 600)
-const laRoche = roches.find((r) => r.id === sienne)
-verifier('et c’est une roche près de LUI, là où il rôde', laRoche !== undefined && Math.hypot(laRoche.x - w.ennemis[0].corps.x, laRoche.y - w.ennemis[0].corps.y) - laRoche.rayon <= C.ennemi.cherche && Math.hypot(laRoche.x, laRoche.y) - laRoche.rayon <= C.ennemi.rode)
+const roches = asteroidesAutour(C, 0, 0, 900)
+const laRoche = roches.find((r) => r.id === premiere?.roche)
+verifier('et c’est une roche près de LUI, là où il rôde', laRoche !== undefined && premiere !== null && Math.hypot(laRoche.x - premiere.x, laRoche.y - premiere.y) - laRoche.rayon <= C.ennemi.cherche && Math.hypot(laRoche.x, laRoche.y) - laRoche.rayon <= C.ennemi.rode)
 verifier('il rôde sans se perdre (de roche en roche il reste dans sa laisse)', w.ennemis.length === 1 && Math.hypot(w.ennemis[0].corps.x, w.ennemis[0].corps.y) < C.ennemi.rode + C.ennemi.cherche)
 verifier('il ne tire jamais sur un joueur qu’il ne voit pas', !tirLoin)
 // le joueur se pose à côté de lui : il chasse, tire, et les traits percent la coque
 const e0 = w.ennemis[0]
+e0.butin = 0 // (en 25 s de mine il s'est chargé, et chargé il fuirait)
 w.vaisseau = { ...nouveauVaisseau(), x: e0.corps.x + C.ennemi.tient, y: e0.corps.y }
 w.detruits = new Set(asteroidesAutour(C, w.vaisseau.x, w.vaisseau.y, 300).map((r) => r.id)) // le champ dégagé : rien n'arrête les traits
 let touches = 0
@@ -257,6 +262,25 @@ acc.vaisseau = nouveauVaisseau() // à quai : le compte court
 let tireDeLoin = 0
 for (let i = 0; i < 30; i++) tireDeLoin += compter(avancerLeMonde(C, acc, 1 / 60, { x: 0, y: 0 }).evenements, 'tir')
 verifier('le rival accourt vers une extraction en cours, sans tirer avant de voir', sansCompte === 'mine' && acc.extraction > 0.4 && acc.ennemis[0].fait === 'chasse' && acc.ennemis[0].corps.x < C.ennemi.voit + 100 - 5 && tireDeLoin === 0)
+// CHARGÉ, IL FUIT (Keko : « avec beaucoup de ressources ils fuient le joueur, avec peu le poursuivent ») : le même rival
+// à portée de vue, avec peu de butin il chasse ; avec `fuit` pépites il s'éloigne plein gaz sans tirer, et remine hors de vue
+const fu = nouveauMonde()
+fu.prochainEnnemiA = 0
+avancerLeMonde(C, fu, 1 / 60, { x: 0, y: 0 })
+fu.detruits = new Set(asteroidesAutour(C, 0, 0, 700).map((r) => r.id))
+fu.ennemis[0].corps = { ...fu.ennemis[0].corps, x: C.ennemi.voit - 30, y: 0, vx: 0, vy: 0 }
+fu.ennemis[0].butin = C.ennemi.fuit - 1
+for (let i = 0; i < 30; i++) avancerLeMonde(C, fu, 1 / 60, { x: 0, y: 0 })
+const peuCharge = fu.ennemis[0].fait
+fu.ennemis[0].corps = { ...fu.ennemis[0].corps, x: C.ennemi.voit - 30, y: 0, vx: 0, vy: 0 }
+fu.ennemis[0].butin = C.ennemi.fuit
+let tireEnFuyant = 0
+let fuitVu = false
+for (let i = 0; i < 60 * 6; i++) {
+  tireEnFuyant += compter(avancerLeMonde(C, fu, 1 / 60, { x: 0, y: 0 }).evenements, 'tir')
+  if (fu.ennemis[0].fait === 'fuit') fuitVu = true
+}
+verifier('peu chargé il chasse ; chargé il fuit plein gaz sans tirer, jusqu’au large, puis remine', peuCharge === 'chasse' && fuitVu && tireEnFuyant === 0 && fu.ennemis[0].corps.x > C.ennemi.lache - 2 && fu.ennemis[0].fait === 'mine' && fu.coque === C.coque)
 verifier('on s’extrait à n’importe quelle station, et l’événement dit laquelle', la.phase === 'extrait' && la.banque === 2 && ouLa !== null && ouLa!.x === lointaine.x && ouLa!.y === lointaine.y)
 
 const p = nouveauMonde()

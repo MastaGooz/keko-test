@@ -105,11 +105,14 @@ export const VAISSEAU = {
    * 150, et ne le lâchait plus ; sans laisse du tout, de roche en roche il était à 570 au bout de 25 s, perdu) ; il
    * voit le joueur à tant, se tient à tant de lui, et tire toutes les tant de secondes des traits à tant d'unités par
    * seconde qui vivent tant ; UNE EXTRACTION EN COURS, il la voit de plus loin (`accourt`) et vient (les dix secondes
-   * à quai doivent être une menace, pas une formalité) ; un trait enlève un point de coque. SON LASER NE SERT QU'À MINER (Keko, 08/11 : essayé
+   * à quai doivent être une menace, pas une formalité) ; un trait enlève un point de coque. CHARGÉ de tant de pépites,
+   * IL FUIT au lieu de chasser (Keko, 09/11 : « les vaisseaux ennemis avec beaucoup de ressources fuient le joueur, avec
+   * peu le poursuivent ») : plein gaz à l'opposé dès qu'il voit le joueur, jusqu'à tant (hors écran, sinon il oscillait
+   * au bord de sa vue), sans tirer — il va moins vite, on peut le rattraper, et abattu il rend tout ce qu'il porte. SON LASER NE SERT QU'À MINER (Keko, 08/11 : essayé
    * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
@@ -155,7 +158,7 @@ export type Ennemi = {
   id: number
   corps: Vaisseau
   pv: number
-  fait: 'mine' | 'chasse'
+  fait: 'mine' | 'chasse' | 'fuit'
   roche: number | null
   forage: Forage | null
   tirA: number
@@ -454,7 +457,14 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
   const dj = Math.hypot(dxj, dyj) || 1
   let direction: Vecteur = { x: 0, y: 0 }
   e.forage = null
-  if ((dj <= c.ennemi.voit || (m.extraction > 0 && dj <= c.ennemi.accourt)) && m.phase === 'vol') {
+  const charge = e.butin >= c.ennemi.fuit
+  if (charge && (dj <= c.ennemi.voit || (e.fait === 'fuit' && dj <= c.ennemi.lache)) && m.phase === 'vol') {
+    // LA FUITE : chargé, il protège son butin — plein gaz à l'opposé du joueur, sans tirer (Keko : « avec beaucoup de
+    // ressources, ils fuient le joueur ») ; hors de vue, il retourne miner
+    e.fait = 'fuit'
+    e.roche = null
+    direction = { x: -dxj / dj, y: -dyj / dj }
+  } else if (!charge && (dj <= c.ennemi.voit || (m.extraction > 0 && dj <= c.ennemi.accourt)) && m.phase === 'vol') {
     // LA CHASSE : il se tient à distance du joueur (il s'approche s'il est loin, recule s'il est trop près), et tire avec
     // de l'avance — dès qu'il le voit, ou de plus loin quand une EXTRACTION est en cours (il accourt, sans tirer tant
     // qu'il ne le voit pas)
@@ -485,15 +495,19 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
       let meilleure: Asteroide | null = null
       let dmin = Infinity
       for (const r of asteroidesVisibles(c, m, b.x, b.y, c.ennemi.cherche + c.champ.rayonMax)) {
-        if (Math.hypot(r.x - v.x, r.y - v.y) - r.rayon > c.ennemi.rode) continue
+        const dv = Math.hypot(r.x - v.x, r.y - v.y) - r.rayon
+        if (dv > c.ennemi.rode || (charge && dv < c.ennemi.lache)) continue // (chargé : pas de roche à portée de vue du joueur)
         const d = Math.hypot(r.x - b.x, r.y - b.y) - r.rayon
         if (d <= c.ennemi.cherche && d < dmin) (dmin = d), (meilleure = r)
       }
       roche = meilleure
       e.roche = roche?.id ?? null
     }
-    // sans roche à miner autour de lui où il rôde, il revient vers le joueur
-    if (roche === null) direction = { x: (dxj / dj) * 0.7, y: (dyj / dj) * 0.7 }
+    // sans roche à miner autour de lui où il rôde, il revient vers le joueur — chargé, il reste au large
+    if (roche === null) {
+      if (!charge) direction = { x: (dxj / dj) * 0.7, y: (dyj / dj) * 0.7 }
+      else if (dj < c.ennemi.lache) direction = { x: -dxj / dj, y: -dyj / dj }
+    }
     else {
       const dx = roche.x - b.x
       const dy = roche.y - b.y

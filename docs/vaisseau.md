@@ -380,6 +380,17 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   sur une roche, et enlève un point de COQUE au joueur (5 au départ, des
   cases en haut à droite). Coque percée : la partie est perdue, un toucher
   repart à neuf.
+- **CHARGÉ, IL FUIT** (Keko, 09/11 : « il faudrait que les vaisseaux
+  ennemis avec beaucoup de ressources fuient le joueur (quand celui-ci est
+  dans le champ) et avec peu le poursuivent ») : à partir de 10 pépites de
+  butin (deux ou trois roches — *le seuil est de moi, à rejuger*), dès qu'il
+  voit le joueur (130), il lâche sa roche et pousse plein gaz à l'opposé,
+  sans tirer, **jusqu'à 260** (hors écran — *à la simulation, lâché dès
+  qu'il sortait de sa vue, il oscillait au bord : fuite, retour, fuite*) ;
+  au large, il retourne miner, mais plus une roche à moins de 260 du joueur. Il va moins vite que le joueur
+  (85 contre 110) : on peut le rattraper, et abattu il rend tout ce qu'il
+  porte — *la fuite est l'appât*. Chargé, il n'accourt pas non plus vers une
+  extraction : il protège son butin.
 - **Pour l'abattre** il faut le rattraper (le joueur va plus vite) jusqu'à
   moins de 64 : le laser vise l'ennemi dès qu'il est plus près qu'une roche.
   Abattu, il éclate en morceaux rouges et rend son butin plus 3 pépites.
