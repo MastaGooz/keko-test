@@ -618,6 +618,35 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 
  : « je ne veux plus un seul élément non pixel »)
 
+## L'énergie et la soute (Keko, 09/11 : « le réacteur, on pourrait les différencier par leur énergie totale et leur consommation, et ajouter une barre d'énergie dans l'UI en jeu : quand elle est vide la vitesse est très lente et tous les systèmes sont désactivés ; une stat consommation à chaque outil / arme / propulseur / coque » ; « la soute, autant mettre une caractéristique capacité à la coque »)
+
+- **LE RÉACTEUR est un emplacement** (propulseur, coque, réacteur) : de
+  série 100 d'énergie et 6 par seconde ; renforcé 40 crédits, 140 et 9 ; à
+  fusion 90 crédits, 200 et 13 — *chiffres de moi, à rejuger*. Jauges :
+  énergie, recharge.
+- **Chaque système CONSOMME** (`conso`, une jauge rouge comme le poids) : le
+  propulseur quand on pousse (3, 4, 6 par seconde selon le cran), la foreuse
+  quand elle creuse (3, 4, 5), le radar toujours (1), le bouclier quand il
+  se recharge (2), une arme PAR COUP (canon 3, mitrailleuse 1, missiles 8 —
+  `Arme.conso`). La règle fait le compte à chaque pas : la réserve monte de
+  la recharge, baisse de ce qui agit (`energie`, `aPlat` dans le monde). De
+  série, immobile, la foreuse tient (3 < 6) ; pousser et creuser à la fois
+  (6 = 6) ne recharge plus ; le radar et le bouclier pèsent dessus.
+- **À PLAT** : la poussée tombe au quart, la pointe à 30 %, la foreuse, les
+  armes, le radar et la recharge du bouclier s'éteignent, et on le reste
+  jusqu'à ce que le réacteur ait rendu UN CINQUIÈME de la réserve (sinon le
+  vaisseau clignoterait entre les deux états). `energie: { max, recharge,
+  repart, rampePoussee, rampePointe }`.
+- **À l'écran** : sous les cases de coque, une barre cyan qui se vide, dorée
+  sous le quart, rouge et clignotante à plat avec « A PLAT ».
+- **LA SOUTE est une caractéristique de la coque** (`capacite` : de série 20
+  pépites, blindée 30, à bouclier 24 ; une jauge « Soute » en nombre) :
+  pleine, les pépites ne sont ni aimantées ni ramassées, elles restent là.
+  Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
+  elle est pleine. *Il faut rentrer extraire.*
+
+## Tout en pixels (Keko, 09/11 : « je ne veux plus un seul élément non pixel »)
+
 - **Il n'y a plus qu'un canvas.** L'accueil, le bilan, le hangar, le manche
   et la date du build sont dessinés dans le tampon du jeu, avec le peintre
   de pixelfx : plus de surcouche, plus d'écran HTML, plus de pied de page.

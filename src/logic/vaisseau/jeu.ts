@@ -57,6 +57,18 @@ export const VAISSEAU = {
   armes: [] as Arme[],
   /** LE RADAR du joueur (un outil du hangar) : à tant d'unités, le rival est désigné au bord de l'écran ; zéro, pas de radar. La page le lit, la règle n'en fait rien. */
   radar: { portee: 0 },
+  /** LA CAPACITÉ de la soute (une caractéristique de la coque — Keko) : tant de pépites à bord au plus ; pleine, les pépites restent là où elles sont. */
+  capacite: 20,
+  /**
+   * L'ÉNERGIE (Keko, 09/11 : « une barre d'énergie en jeu ; quand elle est vide la vitesse est très lente et tous les
+   * systèmes sont désactivés ; une stat consommation à chaque outil / arme / propulseur / coque ») : LE RÉACTEUR a tant
+   * d'énergie et en rend tant par seconde ; chaque système en prend tant par seconde quand il agit (le propulseur quand
+   * on pousse, la foreuse quand elle creuse, le radar toujours, le bouclier quand il se recharge ; une arme, tant par
+   * coup, dans `Arme.conso`). À PLAT : la poussée tombe au quart, la pointe à 30 %, foreuse, armes, radar et bouclier
+   * s'éteignent, jusqu'à ce que le réacteur ait rendu un cinquième de la réserve.
+   */
+  energie: { max: 100, recharge: 6, repart: 0.2, rampePoussee: 0.25, rampePointe: 0.3 },
+  conso: { propulseur: 3, foreuse: 3, radar: 0, bouclier: 0 }, // (de série : ni radar ni bouclier ; leurs pièces apportent la leur)
   /**
    * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
    * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou
@@ -132,7 +144,7 @@ export type ConfigVaisseau = Large<typeof VAISSEAU>
 export const MANCHE: ConfigSurvivor = { vitesse: 0, reponse: 0, manche: VAISSEAU.manche }
 
 /** Une arme du joueur : sa cadence, ce que fait un coup, sa portée, la vitesse et la vie de ses obus, leur dispersion ; guidée, l'obus tourne vers le rival. */
-export type Arme = { id: string; cadence: number; degats: number; portee: number; vitesse: number; vie: number; dispersion: number; guide: boolean }
+export type Arme = { id: string; cadence: number; degats: number; portee: number; vitesse: number; vie: number; dispersion: number; guide: boolean; /** L'énergie que prend un coup. */ conso: number }
 
 export type Vaisseau = {
   x: number
@@ -191,6 +203,9 @@ export type Monde = {
   /** Le bouclier qui reste (voir la configuration), et l'instant du dernier coup reçu (il se recharge passé un délai). */
   bouclier: number
   toucheA: number
+  /** L'énergie qui reste, et si l'on est À PLAT (le réacteur doit rendre un cinquième de la réserve avant que tout reparte). */
+  energie: number
+  aPlat: boolean
   forage: Forage | null
   ennemis: Ennemi[]
   prochainEnnemiA: number
@@ -237,7 +252,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, energie: c.energie.max, aPlat: false, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -600,9 +615,21 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const ev: Evenement[] = []
   if (m.phase !== 'vol') return { chocs: [], evenements: ev }
   m.t += dt
-  // le bouclier se recharge, passé le délai sans coup
-  if (c.bouclier.points > 0 && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
-  const r = voler(c, c, m.vaisseau, dt, direction, m.detruits)
+  // L'ÉNERGIE : le réacteur recharge, les systèmes consomment (le propulseur quand on pousse, le radar toujours, le
+  // bouclier quand il se recharge ; la foreuse et les armes plus bas, quand elles agissent) ; à zéro on est À PLAT, et
+  // on le reste jusqu'à un cinquième de la réserve
+  const pousse = Math.hypot(direction.x, direction.y) > 0.05
+  const rechargeBouclier = c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai && !m.aPlat
+  const consoContinue = (pousse && !m.aPlat ? c.conso.propulseur : 0) + (c.radar.portee > 0 && !m.aPlat ? c.conso.radar : 0) + (rechargeBouclier ? c.conso.bouclier : 0)
+  m.energie = Math.min(c.energie.max, m.energie + (c.energie.recharge - consoContinue) * dt)
+  if (m.energie <= 0) {
+    m.energie = 0
+    m.aPlat = true
+  } else if (m.aPlat && m.energie >= c.energie.max * c.energie.repart) m.aPlat = false
+  // le bouclier se recharge, passé le délai sans coup (pas à plat)
+  if (rechargeBouclier) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
+  const moteur = m.aPlat ? { ...c, poussee: c.poussee * c.energie.rampePoussee, vitesseMax: c.vitesseMax * c.energie.rampePointe } : c
+  const r = voler(c, moteur, m.vaisseau, dt, direction, m.detruits)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const chocs = [...r.chocs]
@@ -626,12 +653,13 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // SEULES : il a creusé le rival un temps, Keko l'a réservé aux astéroïdes, ce sont les armes qui l'attaquent
   const portee = c.forage.portee * c.foreuse.portee
   const debit = c.forage.debit * c.foreuse.debit
-  const roche = rocheLaPlusProche(c, m, v.x, v.y, portee)
+  const roche = m.aPlat ? null : rocheLaPlusProche(c, m, v.x, v.y, portee) // (à plat, la foreuse est éteinte)
   m.forage = roche !== null ? creuserLaRoche(c, m, roche.roche, v, debit * dt, ev) : null
+  if (m.forage !== null) m.energie = Math.max(0, m.energie - c.conso.foreuse * dt)
 
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
   c.armes.forEach((arme, i) => {
-    if (m.t < (m.armesA[i] ?? 0)) return
+    if (m.t < (m.armesA[i] ?? 0) || m.aPlat || m.energie < arme.conso) return // (à plat, ou sans l'énergie du coup : pas de tir)
     let cible: Ennemi | null = null
     let dc = Infinity
     for (const e of m.ennemis) {
@@ -640,6 +668,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     if (cible === null) return
     m.armesA[i] = m.t + arme.cadence
+    m.energie -= arme.conso
     const temps = dc / arme.vitesse
     const cx = cible.corps.x + cible.corps.vx * temps - v.x
     const cy = cible.corps.y + cible.corps.vy * temps - v.y
@@ -733,7 +762,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const dx = plusProche.x - p.x
     const dy = plusProche.y - p.y
     const d = dmin || 1
-    if (d <= c.forage.ramassage) {
+    // LA SOUTE PLEINE (la capacité de la coque — Keko) : la pépite reste là, ni ramassée ni aimantée
+    const soutePleine = plusProche.e === null && m.minerai >= c.capacite
+    if (d <= c.forage.ramassage && !soutePleine) {
       m.pepites.splice(i, 1)
       if (plusProche.e === null) {
         m.minerai += 1
@@ -749,7 +780,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     p.vx *= frein
     p.vy *= frein
     const aimant = c.forage.aimant * (plusProche.e === null ? c.foreuse.aimant : 1) // (l'aimant du joueur suit sa foreuse)
-    if (d <= aimant) {
+    if (d <= aimant && !soutePleine) {
       const tirage = c.forage.vitessePepite * (1 - d / aimant) + 40
       p.vx += (dx / d) * tirage * dt * 6
       p.vy += (dy / d) * tirage * dt * 6
