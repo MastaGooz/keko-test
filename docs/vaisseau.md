@@ -555,10 +555,10 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   pointe à facettes qui pulse. Dessous, LA FICHE du minerai choisi
   (`FICHES_MINERAI`, dans la règle) : son nom, une description sur TROIS
   LIGNES fixes (Keko : la hauteur ne change pas d'un minerai à l'autre),
-  un peu d'air, SA VALEUR EN
+  un peu d'air, SA « VALEUR UNITAIRE » EN
   CRÉDITS la pépite — **les crédits sont la monnaie du jeu** (Keko), gardés
-  avec le trésor, avec LEUR SYMBOLE, une pièce d'or à éclat, à droite du
-  nombre —, le stock, et VENDRE TOUT, qui change le stock en crédits
+  avec le trésor, avec LEUR SYMBOLE, UNE RUNE VERTE qui luit, à droite du
+  nombre (Keko ; une pièce d'or d'abord) —, le stock, et VENDRE TOUT, qui change le stock en crédits
   (`vendre` ; *de moi : une valeur sans vente n'aurait pas de sens ; fer 2,
   or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. Les
   pièces se paient encore en fer. Dans le panneau d'une pièce qu'on n'a

@@ -69,6 +69,8 @@ let H = 320
 const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
+/** La rune des crédits : du vert. */
+const RUNE = N.fit(['#0a3a1e', '#1f8a4a', '#4ee08a', '#b8ffd0', '#ffffff'], 5)
 /** La coque blindée du hangar : un acier plus sombre. */
 const BLINDEE = N.fit(['#0e1216', '#20272e', '#36414a', '#54626c', '#7a8c98', '#adbdc6', '#ffffff'], 7)
 const FEU = N.fit(N.PAL.fire, 8)
@@ -251,13 +253,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  /** LE SYMBOLE DES CRÉDITS (Keko) : une pièce d'or vue de face, un bord sombre, un éclat, agrandie k fois ; à droite d'un nombre. */
+  /** LE SYMBOLE DES CRÉDITS (Keko : « un autre symbole, par exemple une rune verte ») : une rune, un fût et deux branches, verte, qui luit ; agrandie k fois, à droite d'un nombre. */
   function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
-    p.circle(x, y, 2.5 * k, PEPITE[1])
-    p.circle(x, y, 1.8 * k, PEPITE[2])
-    p.rect(x - k, y - 1.5 * k, Math.max(1, k), Math.max(1, k), PEPITE[4])
-    p.rect(x - 0.5 * k, y - 0.5 * k, Math.max(1, k), Math.max(1, Math.round(1.5 * k)), PEPITE[1])
-    p.glow(x, y, 4 * k, PEPITE[2], 0.25)
+    p.line(x - 0.5 * k, y - 3 * k, x - 0.5 * k, y + 3 * k, RUNE[1])
+    p.line(x - 0.5 * k, y - 3 * k, x + 2 * k, y - 0.5 * k, RUNE[1])
+    p.line(x - 0.5 * k, y - 0.5 * k, x + 2 * k, y + 2 * k, RUNE[1])
+    p.line(x - 0.5 * k, y - 3 * k, x - 0.5 * k, y + 1 * k, RUNE[2])
+    p.line(x - 0.5 * k, y - 3 * k, x + 1.5 * k, y - k, RUNE[2])
+    p.rect(Math.round(x - 0.5 * k), Math.round(y - 3 * k), 1, 1, RUNE[3])
+    p.glow(x + 0.5 * k, y, 4 * k, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
   function nombreDeCredits(p: Peintre, n: number, x: number, y: number, c: number, centre = false): void {
@@ -537,7 +541,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     L.forEach((li, i) => p.text(li, W / 2, haut + i * 7, COQUE[5], { align: 'center' }))
     const ly = y + 19 + LIGNES * 7 + 10 // (dix pixels d'air sous la description : à trois lignes, le texte touchait la zone sombre)
     // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
-    p.text('VALEUR LA PEPITE', 10, ly + 1, COQUE[4])
+    p.text('VALEUR UNITAIRE', 10, ly + 1, COQUE[4])
     nombreDeCredits(p, fiche.credits, W - 9, ly, PEPITE[3])
     p.text('EN STOCK', 10, ly + 12, COQUE[4])
     p.text(String(tresor[k]), W - 9, ly + 11, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
