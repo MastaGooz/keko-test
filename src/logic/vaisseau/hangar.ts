@@ -218,6 +218,17 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   }
 }
 
+/**
+ * LE BILAN D'ÉNERGIE d'une configuration, par seconde, TOUT ALLUMÉ (Keko : « afficher le budget énergie comme le poids
+ * au-dessus ») : ce que le réacteur rend, moins ce que prennent le propulseur qui pousse, la foreuse qui creuse, le
+ * radar, le bouclier qui se recharge et chaque arme qui tire à sa cadence. Positif : le vaisseau tient en continu ;
+ * négatif : il entame sa réserve quand tout tourne.
+ */
+export function bilanDEnergie(c: ConfigVaisseau): number {
+  const armes = c.armes.reduce((a, arme) => a + arme.conso / arme.cadence, 0)
+  return c.energie.recharge - (c.conso.propulseur + c.conso.foreuse + c.conso.radar + c.conso.bouclier + armes)
+}
+
 /** Une jauge du panneau de description : son nom, la valeur de la pièce, le plus du catalogue (la barre pleine). */
 export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean; /** Un simple nombre (des places d'outils, d'armes), ni barre ni cellules (Keko). */ nombre?: boolean }
 /**

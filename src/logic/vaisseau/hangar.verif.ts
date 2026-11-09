@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, capacite, POIDS_SERIE, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, armesMontees, bilanDEnergie, capacite, POIDS_SERIE, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -92,6 +92,7 @@ const fusion = configDuHangar(C, hF)
 verifier('le réacteur à fusion : 200 d’énergie, 13 par seconde, mais lourd (la conso du propulseur monte avec le poids) ; la coque de série : 20 en soute ; foreuse 3, pas de radar ni de bouclier', fusion.energie.max === 200 && fusion.energie.recharge === 13 && fusion.capacite === 20 && Math.abs(fusion.conso.propulseur - (3 * poidsTotal(hF)) / POIDS_SERIE) < 1e-9 && fusion.conso.propulseur > 3 && fusion.conso.foreuse === 3 && fusion.conso.radar === 0 && fusion.conso.bouclier === 0)
 const equipe = configDuHangar(C, monter(acheter(acheter(neuf, RICHE, 'coque-3')!.hangar, RICHE, 'radar')!.hangar, 'radar'))
 verifier('la coque à bouclier et le radar : 24 en soute, le bouclier consomme 2 et le radar 1 ; une arme porte sa conso par coup', equipe.capacite === 24 && equipe.conso.bouclier === 2 && equipe.conso.radar === 1 && configDuHangar(C, acheter(neuf, RICHE, 'arme-missiles')!.hangar).armes[0].conso === 8)
+verifier('le bilan d’énergie, tout allumé : de série 6 − 3 − 3 = 0 ; avec un canon (3 par coup toutes les 1,1 s) il passe sous zéro ; à fusion il remonte', Math.abs(bilanDEnergie(C)) < 1e-9 && bilanDEnergie(configDuHangar(C, acheter(neuf, RICHE, 'arme-canon')!.hangar)) < 0 && bilanDEnergie(fusion) > 0)
 const tr = lireTresor({ fer: 7.9, or: -3, cristal: 'x', autre: 1 })
 verifier('le trésor relu : des entiers positifs, zéro sinon', tr.fer === 7 && tr.or === 0 && tr.cristal === 0 && lireTresor(undefined).fer === 0)
 

@@ -645,7 +645,13 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   pièces montées), rapporté à celui du vaisseau de série (`POIDS_SERIE`, 38),
   divise la poussée et le frein du vide (lourd : on accélère moins, on glisse
   plus) et multiplie ce que le propulseur consomme. Il s'affiche sous l'aire
-  du hangar. *La coque seule portait un facteur de poids auparavant.*
+  du hangar, à côté du BILAN D'ÉNERGIE (`bilanDEnergie`, par seconde, tout
+  allumé : la recharge moins le propulseur, la foreuse, le radar, le
+  bouclier et chaque arme à sa cadence ; vert s'il tient, rouge s'il entame
+  la réserve — Keko : « afficher le budget énergie comme le poids »,
+  parce que deux chiffres sur le réacteur et une conso par pièce, « c'est
+  un peu complexe à comprendre »). *La coque seule portait un facteur de
+  poids auparavant.*
 - **À l'écran** : sous les cases de coque, une barre cyan qui se vide, dorée
   sous le quart, rouge et clignotante à plat avec « A PLAT ».
 - **LA SOUTE est une caractéristique de la coque** (`capacite` : de série 20
