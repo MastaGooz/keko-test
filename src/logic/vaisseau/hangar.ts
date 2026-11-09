@@ -16,7 +16,7 @@
 import { cargaisonVide, MINERAIS, type Arme, type Cargaison, type ConfigVaisseau, type Minerai } from './jeu.ts'
 
 /** Les emplacements à une pièce ; les outils et les armes sont des LISTES, bornées par la coque. */
-export const EMPLACEMENTS = ['propulseur', 'coque', 'reacteur'] as const
+export const EMPLACEMENTS = ['propulseur', 'coque'] as const
 export type Emplacement = (typeof EMPLACEMENTS)[number]
 export type Liste = 'outil' | 'arme'
 export type Sorte = Emplacement | Liste
@@ -41,7 +41,7 @@ export type Piece = {
   poussee?: number
   vitesseMax?: number
   rotation?: number
-  /** LE POIDS de la pièce (Keko : « un poids à chaque élément, pour être cohérent ») : la somme fait l'inertie du vaisseau et pèse sur la conso du propulseur. */
+  /** LE POIDS de la pièce (Keko : « un poids à chaque élément, pour être cohérent ») : la somme fait l'inertie du vaisseau. */
   poids: number
   /** La coque : ses points (absolus), son bouclier (des points qui se rechargent), les armes et les outils qu'elle porte. */
   pv?: number
@@ -56,10 +56,6 @@ export type Piece = {
   radar?: number
   /** La coque : tant de pépites en soute. */
   capacite?: number
-  /** Un réacteur : LA PUISSANCE qu'il rend — le budget que les autres pièces se partagent. */
-  puissance?: number
-  /** Ce que la pièce prend de puissance (une arme : par coup, dans `arme.conso`, ramené à sa cadence). */
-  conso?: number
   /** Une arme : ce qu'elle tire. */
   arme?: Arme
 }
@@ -69,22 +65,19 @@ export type Piece = {
  * rend deux à sept ; en fer d'abord, Keko les a passés en crédits le 09/11).
  */
 export const PIECES: Piece[] = [
-  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: 0, poids: 6, conso: 3 },
-  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1, conso: 4 },
-  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25, conso: 6 },
+  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: 0, poids: 6},
+  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1},
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25},
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Coque de serie', dit: '5 points de coque, 20 pepites en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
   { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Coque blindee', dit: '8 points, 30 pepites en soute, un outil, deux armes. Lourde.', note: 'Acier rivete.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30 },
-  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge apres 4 s sans coup, et consomme en se rechargeant.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24, conso: 2 },
-  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit, portee et aimant de serie.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1, aimant: 1, conso: 3 },
-  { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite, aimant +25 %.', prix: 20, poids: 6, debit: 1.4, portee: 1, aimant: 1.25, conso: 4 },
-  { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin, aimant +60 %.', prix: 56, poids: 8, debit: 1.8, portee: 1.25, aimant: 1.6, conso: 5 },
-  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une fleche rouge au bord de l’ecran designe le rival. Consomme en continu.', prix: 32, poids: 2, radar: 600, conso: 1 },
-  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', note: 'Tire seul sur le rival a portee.', prix: 24, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false, conso: 3 } },
-  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', note: 'Disperse ses balles.', prix: 44, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false, conso: 1 } },
-  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', note: 'Guide : le missile tourne vers le rival.', prix: 68, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true, conso: 8 } },
-  { id: 'reacteur-1', sorte: 'reacteur', cran: 1, nom: 'Reacteur de serie', dit: 'Une puissance de 10, le budget des autres pieces.', prix: 0, poids: 8, puissance: 10 },
-  { id: 'reacteur-2', sorte: 'reacteur', cran: 2, nom: 'Reacteur renforce', dit: 'Une puissance de 14.', prix: 40, poids: 12, puissance: 14 },
-  { id: 'reacteur-3', sorte: 'reacteur', cran: 3, nom: 'Reacteur a fusion', dit: 'Une puissance de 18.', note: 'Un coeur qui luit.', prix: 90, poids: 16, puissance: 18 },
+  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge apres 4 s sans coup.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
+  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit, portee et aimant de serie.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1, aimant: 1},
+  { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite, aimant +25 %.', prix: 20, poids: 6, debit: 1.4, portee: 1, aimant: 1.25},
+  { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin, aimant +60 %.', prix: 56, poids: 8, debit: 1.8, portee: 1.25, aimant: 1.6},
+  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une fleche rouge au bord de l’ecran designe le rival.', prix: 32, poids: 2, radar: 600},
+  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', note: 'Tire seul sur le rival a portee.', prix: 24, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
+  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', note: 'Disperse ses balles.', prix: 44, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
+  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', note: 'Guide : le missile tourne vers le rival.', prix: 68, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
 ]
 
 /**
@@ -95,12 +88,11 @@ export const PIECES: Piece[] = [
 export function ajouterLesPiecesDEssai(): void {
   if (PIECES.some((p) => p.id.startsWith('essai-'))) return
   const n = (i: number, a: number, b: number): number => a + ((i * 7919) % 100) * (b - a) / 100
-  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 3), poids: Math.round(n(i + 9, 4, 14)), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3), conso: n(i + 7, 2, 7) })
+  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 3), poids: Math.round(n(i + 9, 4, 14)), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3) })
   for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Coque d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (8 + i * 4), pv: 3 + i, poids: 14 + i * 4, bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2), capacite: 10 + i * 5 })
-  for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (4 + i * 3), poids: Math.round(n(i + 1, 2, 10)), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4), aimant: n(i + 4, 0.8, 1.8), conso: n(i + 6, 2, 6) })
+  for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (4 + i * 3), poids: Math.round(n(i + 1, 2, 10)), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4), aimant: n(i + 4, 0.8, 1.8) })
   for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-radar-${i}`, sorte: 'outil', cran: 2, famille: 'radar', nom: `Radar d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 4), poids: 1 + i, radar: 200 + i * 150 })
-  for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 3), poids: Math.round(n(i + 5, 2, 10)), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false, conso: n(i + 3, 1, 8) } })
-  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-reacteur-${i}`, sorte: 'reacteur', cran: 2, nom: `Reacteur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (10 + i * 6), poids: 6 + i * 2, puissance: Math.round(n(i, 6, 18)) })
+  for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 3), poids: Math.round(n(i + 5, 2, 10)), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false } })
 }
 
 /** Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les outils et les armes montés (dans l'ordre : la première arme à gauche). */
@@ -115,7 +107,7 @@ const avecListe = (h: Hangar, l: Liste, ids: string[]): Hangar => (l === 'arme' 
 export function hangarNeuf(): Hangar {
   const montees = {} as Record<Emplacement, string>
   for (const e of EMPLACEMENTS) montees[e] = deSerie(e).id
-  return { possedees: [...EMPLACEMENTS.map((e) => deSerie(e).id), 'foreuse-1'], montees, outils: ['foreuse-1'], armes: [] } // (propulseur, coque, réacteur de série, et la foreuse)
+  return { possedees: [...EMPLACEMENTS.map((e) => deSerie(e).id), 'foreuse-1'], montees, outils: ['foreuse-1'], armes: [] }
 }
 
 export const possede = (h: Hangar, id: string): boolean => h.possedees.includes(id)
@@ -183,7 +175,7 @@ export const armesMontees = (h: Hangar): Piece[] => montes(h, 'arme').filter((p)
 export const piecesMontees = (h: Hangar): Piece[] => [...EMPLACEMENTS.map((e) => monteeA(h, e)), ...montes(h, 'outil'), ...montes(h, 'arme')]
 /** LE POIDS TOTAL du vaisseau : la somme de ses pièces. */
 export const poidsTotal = (h: Hangar): number => piecesMontees(h).reduce((a, p) => a + p.poids, 0)
-/** Le poids du vaisseau de série (propulseur, coque, réacteur, foreuse de série) : à ce poids, l'inertie et la conso sont celles de la configuration. */
+/** Le poids du vaisseau de série (propulseur, coque, foreuse de série) : à ce poids, l'inertie est celle de la configuration. */
 export const POIDS_SERIE = poidsTotal(hangarNeuf())
 
 /**
@@ -195,16 +187,13 @@ export const POIDS_SERIE = poidsTotal(hangarNeuf())
 export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   const pr = monteeA(h, 'propulseur')
   const co = monteeA(h, 'coque')
-  const re = monteeA(h, 'reacteur')
   const fo = foreuseMontee(h)
-  // LE POIDS TOTAL, rapporté à celui de série (Keko : « le poids total du vaisseau joue sur l'inertie et la conso du
-  // propulseur ») : il divise la poussée et le frein du vide, et multiplie ce que le propulseur consomme
-  const poids = poidsTotal(h) / POIDS_SERIE
+  // LE POIDS TOTAL, rapporté à celui de série, un peu ACCENTUÉ (exposant 1,3 — Keko voulait qu'il se sente) : il divise
+  // la poussée et le frein du vide — lourd, on accélère moins et on glisse plus
+  const poids = Math.pow(poidsTotal(h) / POIDS_SERIE, 1.3)
   return {
     ...c,
     capacite: co.capacite ?? c.capacite,
-    puissance: re.puissance ?? c.puissance,
-    conso: { propulseur: (pr.conso ?? 0) * poids, foreuse: fo?.conso ?? 0, radar: montes(h, 'outil').filter((p) => p.radar !== undefined).reduce((a, p) => a + (p.conso ?? 0), 0), bouclier: co.conso ?? 0 },
     poussee: (c.poussee * (pr.poussee ?? 1)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
     rotation: c.rotation * (pr.rotation ?? 1),
@@ -217,16 +206,6 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   }
 }
 
-/**
- * LE BUDGET D'ÉNERGIE d'une configuration (Keko : « un budget au hangar, rien en vol ») : la puissance du réacteur moins ce
- * que prennent le propulseur (rapporté au poids), la foreuse, le radar, le bouclier et chaque arme à sa cadence.
- * Négatif : le vaisseau NE DÉCOLLE PAS — on change une pièce, ou de réacteur.
- */
-export function bilanDEnergie(c: ConfigVaisseau): number {
-  const armes = c.armes.reduce((a, arme) => a + arme.conso / arme.cadence, 0)
-  return c.puissance - (c.conso.propulseur + c.conso.foreuse + c.conso.radar + c.conso.bouclier + armes)
-}
-export const peutDecoller = (c: ConfigVaisseau): boolean => bilanDEnergie(c) >= -1e-9
 
 /** Une jauge du panneau de description : son nom, la valeur de la pièce, le plus du catalogue (la barre pleine). */
 export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean; /** Un simple nombre (des places d'outils, d'armes), ni barre ni cellules (Keko). */ nombre?: boolean }
@@ -244,13 +223,6 @@ export function jaugesDe(p: Piece): Jauge[] {
       { nom: 'Vitesse', valeur: p.vitesseMax ?? 1, max: max((q) => q.vitesseMax ?? 1) },
       { nom: 'Maniabilite', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
-      { nom: 'Conso', valeur: p.conso ?? 0, max: Math.max(1, max((q) => q.conso ?? 0)) },
-    ]
-  }
-  if (p.sorte === 'reacteur') {
-    return [
-      { nom: 'Puissance', valeur: p.puissance ?? 0, max: max((q) => q.puissance ?? 0) },
-      { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
     ]
   }
   if (p.sorte === 'coque') {
@@ -262,13 +234,11 @@ export function jaugesDe(p: Piece): Jauge[] {
       { nom: 'Soute', valeur: p.capacite ?? 0, max: max((q) => q.capacite ?? 0), nombre: true },
       { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), nombre: true },
       { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), nombre: true },
-      ...(p.conso !== undefined ? [{ nom: 'Conso', valeur: p.conso, max: Math.max(1, max((q) => q.conso ?? 0)) }] : []),
     ]
   }
   if (p.sorte === 'outil') {
-    const conso = { nom: 'Conso', valeur: p.conso ?? 0, max: Math.max(1, max((q) => q.conso ?? 0)) }
     const poids = { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) }
-    if (p.radar !== undefined) return [{ nom: 'Detection', valeur: p.radar, max: max((q) => q.radar ?? 0) }, poids, conso]
+    if (p.radar !== undefined) return [{ nom: 'Detection', valeur: p.radar, max: max((q) => q.radar ?? 0) }, poids]
     const foreuses = memes.filter((q) => q.famille === 'foreuse')
     const maxF = (f: (q: Piece) => number): number => Math.max(...foreuses.map(f))
     return [
@@ -276,7 +246,6 @@ export function jaugesDe(p: Piece): Jauge[] {
       { nom: 'Portee', valeur: p.portee ?? 1, max: maxF((q) => q.portee ?? 1) },
       { nom: 'Aimant', valeur: p.aimant ?? 1, max: maxF((q) => q.aimant ?? 1) },
       poids,
-      conso,
     ]
   }
   // une arme : cadence (coups par seconde), dégâts du coup, portée (Keko)
@@ -286,7 +255,6 @@ export function jaugesDe(p: Piece): Jauge[] {
     { nom: 'Cadence', valeur: 1 / a.cadence, max: max((q) => 1 / q.arme!.cadence) },
     { nom: 'Portee', valeur: a.portee, max: max((q) => q.arme!.portee) },
     { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
-    { nom: 'Conso', valeur: a.conso, max: Math.max(1, max((q) => q.arme!.conso)) },
   ]
 }
 

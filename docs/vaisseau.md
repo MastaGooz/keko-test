@@ -618,29 +618,25 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 
  : « je ne veux plus un seul élément non pixel »)
 
-## L'énergie et la soute (Keko, 09/11 : « le réacteur, on pourrait les différencier par leur énergie totale et leur consommation, et ajouter une barre d'énergie dans l'UI en jeu : quand elle est vide la vitesse est très lente et tous les systèmes sont désactivés ; une stat consommation à chaque outil / arme / propulseur / coque » ; « la soute, autant mettre une caractéristique capacité à la coque »)
+## Le poids, la soute, et l'énergie retirée (Keko, 09/11 : « un poids à chaque élément » ; « la soute, autant mettre une caractéristique capacité à la coque » ; « supprime le système d'énergie, on le garde pour autre chose »)
 
-- **L'ÉNERGIE EST UN BUDGET DU HANGAR, RIEN EN VOL** (Keko, le soir même :
+- **L'ÉNERGIE ET LE RÉACTEUR SONT RETIRÉS** (Keko, le 09/11 au soir, après
+  deux écritures le même jour). *L'histoire, pour ne pas la rejouer :* un
+  RÉACTEUR (énergie et recharge) et une CONSOMMATION par pièce, avec une
+  barre en vol — à plat, le vaisseau rampait et tout s'éteignait ; Keko :
   « j'ai peur que le système d'énergie nuise au gameplay / gamefeel, ça
-  apporte quoi de fun finalement ? » — en vol le joueur n'avait aucune prise
-  dessus, le forage et les armes sont automatiques : la réserve baissait
-  pendant qu'il faisait ce que le jeu demande, et à plat il rampait sans
-  comprendre, puis attendait ; *de la friction, pas une décision* ; trois
-  sorties proposées, Keko a pris la première). LE RÉACTEUR est un
-  emplacement (propulseur, coque, réacteur) qui rend une PUISSANCE : de série
-  10 ; renforcé 40 crédits, 14 ; à fusion 90 crédits, 18 — *chiffres de moi,
-  à rejuger*. Chaque système en prend une part (`conso`) : le propulseur (3,
-  4, 6, multiplié par le poids), la foreuse (3, 4, 5), le radar (1), le
-  bouclier (2), une arme par coup ramené à sa cadence (canon 3 / 1,1 s,
-  mitrailleuse 1 / 0,25 s, missiles 8 / 2,8 s — `Arme.conso`). LE BUDGET
-  (`bilanDEnergie`, la puissance moins la somme) s'affiche sous l'aire du
-  hangar à côté du poids, vert s'il tient, rouge clignotant sinon — et SOUS
-  ZÉRO, ON NE DÉCOLLE PAS (`peutDecoller`) : le bouton s'éteint et dit « PAS
-  ASSEZ D'ENERGIE », on change une pièce ou de réacteur. De série, 10 − 3 − 3
-  = +4 : un canon tient encore ; canon, coque à bouclier et radar demandent
-  le réacteur renforcé. *La règle du vol n'y touche plus : la barre, la
-  réserve, l'à plat (poussée au quart, systèmes éteints, retour au cinquième)
-  ont vécu une heure.*
+  apporte quoi de fun finalement ? » (en vol, aucune prise : le forage et
+  les armes sont automatiques, la réserve baissait pendant qu'on faisait ce
+  que le jeu demande — *de la friction, pas une décision*). Puis un BUDGET
+  AU HANGAR seul (une puissance par réacteur, sous zéro on ne décollait
+  pas) ; Keko : « on n'a pas un double système poids / énergie qui répondent
+  au même concept ? », « un réacteur à une seule stat, on prendra toujours le
+  plus puissant », « s'ajuster uniquement par le ratio poids / énergie, je
+  trouve ça pauvre ». Tranché : « supprime le système, on le garde pour
+  autre chose, par exemple des compétences actives ». **Le poids seul fait
+  le budget**, en plus parlant ; le radar et le bouclier ne coûtent plus que
+  leur place et leur poids ; un « réacteur » reviendra le jour où il portera
+  une capacité active en vol, avec un temps de recharge.
 - **CHAQUE PIÈCE A UN POIDS** (Keko : « un poids à chaque élément, pour être
   cohérent ; le poids total joue sur l'inertie et la conso du propulseur ») :
   coque 20 / 32 / 24, propulseur 6 / 8 / 10, réacteur 8 / 12 / 16, foreuses
@@ -648,10 +644,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   « Poids » rouge sur toute pièce. LE POIDS TOTAL (`poidsTotal`, la somme des
   pièces montées), rapporté à celui du vaisseau de série (`POIDS_SERIE`, 38),
   divise la poussée et le frein du vide (lourd : on accélère moins, on glisse
-  plus) et multiplie ce que le propulseur prend au budget. Il s'affiche sous l'aire
-  du hangar, à côté du BUDGET D'ÉNERGIE (Keko : « afficher le budget énergie
-  comme le poids », parce que deux chiffres sur le réacteur et une conso par
-  pièce, « c'est un peu complexe à comprendre »). *La coque seule portait un facteur de
+  plus), UN PEU ACCENTUÉ (exposant 1,3) pour qu'il se sente. Il s'affiche sous l'aire
+  du hangar. *La coque seule portait un facteur de
   poids auparavant.*
 - **LA SOUTE est une caractéristique de la coque** (`capacite` : de série 20
   pépites, blindée 30, à bouclier 24 ; une jauge « Soute » en nombre) :

@@ -60,16 +60,6 @@ export const VAISSEAU = {
   /** LA CAPACITÉ de la soute (une caractéristique de la coque — Keko) : tant de pépites à bord au plus ; pleine, les pépites restent là où elles sont. */
   capacite: 20,
   /**
-   * L'ÉNERGIE EST UN BUDGET DU HANGAR, RIEN EN VOL (Keko, 09/11 : « j'ai peur que le système d'énergie nuise au gameplay /
-   * gamefeel » — une barre qui baissait pendant qu'on faisait ce que le jeu demande, et un vaisseau qui rampait à plat
-   * sans qu'on ait de prise dessus, c'était de la friction, pas une décision ; tranché : « un budget au hangar, rien en
-   * vol ») : le réacteur rend une PUISSANCE, chaque système en prend une part (`conso` : le propulseur, la foreuse, le
-   * radar, le bouclier ; une arme, `Arme.conso` par coup, ramené à sa cadence), et la somme doit tenir dans la puissance
-   * pour décoller. La règle du vol n'y touche pas.
-   */
-  puissance: 10,
-  conso: { propulseur: 3, foreuse: 3, radar: 0, bouclier: 0 }, // (de série : ni radar ni bouclier ; leurs pièces apportent la leur)
-  /**
    * LES CHOCS FONT MAL AUX DEUX (Keko : « des dégâts proportionnels à la vitesse de la collision, aux deux parties ») :
    * au-delà du seuil de choc, chaque unité de vitesse normale coûte tant de points de coque au vaisseau (le joueur ou
    * l'ennemi) et creuse la roche de tant de points. À pleine vitesse (110), le joueur perd 2 points et la roche en
@@ -144,7 +134,7 @@ export type ConfigVaisseau = Large<typeof VAISSEAU>
 export const MANCHE: ConfigSurvivor = { vitesse: 0, reponse: 0, manche: VAISSEAU.manche }
 
 /** Une arme du joueur : sa cadence, ce que fait un coup, sa portée, la vitesse et la vie de ses obus, leur dispersion ; guidée, l'obus tourne vers le rival. */
-export type Arme = { id: string; cadence: number; degats: number; portee: number; vitesse: number; vie: number; dispersion: number; guide: boolean; /** La puissance que prend un coup (ramenée à la cadence dans le budget du hangar). */ conso: number }
+export type Arme = { id: string; cadence: number; degats: number; portee: number; vitesse: number; vie: number; dispersion: number; guide: boolean }
 
 export type Vaisseau = {
   x: number

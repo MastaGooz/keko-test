@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, bilanDEnergie, capacite, peutDecoller, POIDS_SERIE, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, armesMontees, capacite, POIDS_SERIE, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -13,7 +13,7 @@ function verifier(quoi: string, vrai: boolean): void {
 console.log('hangar')
 verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === 3 && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix === 0) && piecesDe('outil').length === 4 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}`))
 const neuf = hangarNeuf()
-verifier('un hangar neuf : les pièces de série montées, la foreuse de série en outil, pas d’arme ; la coque de série porte un outil et une arme', neuf.possedees.length === 4 && EMPLACEMENTS.every((e) => monteeA(neuf, e).cran === 1) && neuf.outils.join(',') === 'foreuse-1' && neuf.armes.length === 0 && capacite(neuf, 'outil') === 1 && capacite(neuf, 'arme') === 1)
+verifier('un hangar neuf : les pièces de série montées, la foreuse de série en outil, pas d’arme ; la coque de série porte un outil et une arme', neuf.possedees.length === 3 && EMPLACEMENTS.every((e) => monteeA(neuf, e).cran === 1) && neuf.outils.join(',') === 'foreuse-1' && neuf.armes.length === 0 && capacite(neuf, 'outil') === 1 && capacite(neuf, 'arme') === 1)
 const pauvre = 5
 verifier('sans assez de crédits, on n’achète pas', !peutAcheter(neuf, pauvre, 'propulseur-2') && acheter(neuf, pauvre, 'propulseur-2') === null)
 verifier('une pièce de série ne s’achète pas (on l’a)', !peutAcheter(neuf, 999, 'propulseur-1'))
@@ -54,14 +54,14 @@ verifier('démonter une arme qui n’est pas montée ne change rien', demonter(g
 verifier('la configuration porte les armes montées, dans l’ordre', configDuHangar(C, g2).armes.map((x) => x.id).join(',') === 'rafale,missiles' && armesMontees(g2).length === 2)
 
 const cfg = configDuHangar(C, a.hangar)
-const fA = poidsTotal(a.hangar) / POIDS_SERIE
+const fA = Math.pow(poidsTotal(a.hangar) / POIDS_SERIE, 1.3)
 verifier('la configuration suit les pièces montées (propulseur renforcé : poussée ×1,25 rapportée au poids, pointe ×1,15 ; le reste de série)', Math.abs(cfg.poussee - (C.poussee * 1.25) / fA) < 1e-9 && fA > 1 && Math.abs(cfg.vitesseMax - C.vitesseMax * 1.15) < 1e-9 && cfg.foreuse.debit === 1 && cfg.coque === C.coque && cfg.bouclier.points === 0 && cfg.armes.length === 0 && cfg.radar.portee === 0 && cfg.ennemi.vitesseMax === C.ennemi.vitesseMax)
 verifier('la configuration de série est inchangée par un hangar neuf', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify(C))
 const blindee = configDuHangar(C, acheter(neuf, RICHE, 'coque-2')!.hangar)
 const hB = acheter(neuf, RICHE, 'coque-2')!.hangar
-const fB = poidsTotal(hB) / POIDS_SERIE
-verifier('la coque blindée : 8 points ; le poids total monte de 20 à 32 de coque, la poussée et le frein sont divisés par ce rapport, la conso du propulseur multipliée', blindee.coque === 8 && POIDS_SERIE === 38 && poidsTotal(hB) === 50 && Math.abs(blindee.poussee - C.poussee / fB) < 1e-9 && Math.abs(blindee.frein - C.frein / fB) < 1e-9 && Math.abs(blindee.conso.propulseur - 3 * fB) < 1e-9 && blindee.vitesseMax === C.vitesseMax)
-verifier('chaque pièce a un poids, et le vaisseau de série pèse la somme des siens', PIECES.every((p) => p.poids > 0) && POIDS_SERIE === 6 + 20 + 8 + 4)
+const fB = Math.pow(poidsTotal(hB) / POIDS_SERIE, 1.3)
+verifier('la coque blindée : 8 points ; le poids total monte de 20 à 32 de coque (30 → 42), la poussée et le frein sont divisés par ce rapport accentué', blindee.coque === 8 && POIDS_SERIE === 30 && poidsTotal(hB) === 42 && Math.abs(blindee.poussee - C.poussee / fB) < 1e-9 && Math.abs(blindee.frein - C.frein / fB) < 1e-9 && blindee.vitesseMax === C.vitesseMax)
+verifier('chaque pièce a un poids, et le vaisseau de série pèse la somme des siens', PIECES.every((p) => p.poids > 0) && POIDS_SERIE === 6 + 20 + 4)
 const bouclier = configDuHangar(C, acheter(neuf, RICHE, 'coque-3')!.hangar)
 verifier('la coque à bouclier : 5 points et 2 de bouclier', bouclier.coque === 5 && bouclier.bouclier.points === 2 && bouclier.bouclier.delai === C.bouclier.delai)
 const serie = nouveauMonde(C)
@@ -75,26 +75,17 @@ const longue = configDuHangar(C, acheter(neuf, RICHE, 'foreuse-3')!.hangar)
 verifier('la foreuse longue, montée à la place de celle de série : débit ×1,8, portée ×1,25, aimant ×1,6 ; le forage partagé reste de série', longue.foreuse.debit === 1.8 && longue.foreuse.portee === 1.25 && longue.foreuse.aimant === 1.6 && longue.forage.portee === C.forage.portee && longue.forage.aimant === C.forage.aimant)
 
 const relu = lireHangar({ possedees: ['foreuse-2', 'inconnue', 42, 'propulseur-3', 'arme-canon', 'arme-rafale', 'arme-missiles'], montees: { propulseur: 'propulseur-3', coque: 'coque-3' }, outils: ['foreuse-2', 'radar'], armes: ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-missiles', 'propulseur-3'] })
-verifier('relu : les inconnues tombent, les séries restent, la coque 3 non possédée redevient de série, les listes bornées à la coque de série, sans doublon ni pièce non possédée', relu.possedees.length === 9 && !relu.possedees.includes('inconnue') && monteeA(relu, 'propulseur').cran === 3 && monteeA(relu, 'coque').cran === 1 && relu.outils.join(',') === 'foreuse-2' && relu.armes.join(',') === 'arme-canon')
+verifier('relu : les inconnues tombent, les séries restent, la coque 3 non possédée redevient de série, les listes bornées à la coque de série, sans doublon ni pièce non possédée', relu.possedees.length === 8 && !relu.possedees.includes('inconnue') && monteeA(relu, 'propulseur').cran === 3 && monteeA(relu, 'coque').cran === 1 && relu.outils.join(',') === 'foreuse-2' && relu.armes.join(',') === 'arme-canon')
 verifier('relu avec la coque à bouclier : deux outils, deux armes', (() => { const r = lireHangar({ possedees: ['coque-3', 'radar', 'arme-canon', 'arme-rafale'], montees: { coque: 'coque-3' }, outils: ['foreuse-1', 'radar'], armes: ['arme-canon', 'arme-rafale'] }); return r.outils.length === 2 && r.armes.length === 2 })())
 verifier('relu : n’importe quoi donne un hangar neuf', JSON.stringify(lireHangar(null)) === JSON.stringify(hangarNeuf()) && JSON.stringify(lireHangar('x')) === JSON.stringify(hangarNeuf()))
 verifier('relu : une pièce montée au mauvais emplacement redevient de série ; une arme non possédée tombe', monteeA(lireHangar({ possedees: ['foreuse-2'], montees: { propulseur: 'foreuse-2' } }), 'propulseur').cran === 1 && lireHangar({ armes: ['arme-canon'] }).armes.length === 0)
 verifier('relu : un hangar d’avant les outils retrouve sa foreuse montée dans ses outils', lireHangar({ possedees: ['foreuse-3'], montees: { foreuse: 'foreuse-3' } }).outils.join(',') === 'foreuse-3' && lireHangar({ possedees: ['propulseur-2'], montees: { propulseur: 'propulseur-2' } }).outils.join(',') === 'foreuse-1')
 verifier('relu : des outils vides restent vides (le chasseur sans foreuse)', lireHangar({ possedees: ['radar'], outils: [] }).outils.length === 0)
 const jc = jaugesDe(PIECES.find((p) => p.id === 'coque-3')!)
-verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/8, poids 24/32, soute, outils 2/2, armes 2/2, conso ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}${j.cellules ? '#' : j.nombre ? 'n' : ''}`).join(';') === 'Blindage 5/8#;Bouclier 2/8#;Poids 24/32;Soute 24/30n;Outils 2/2n;Armes 2/2n;Conso 2/2' && PIECES.every((p) => jaugesDe(p).length >= 1 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
+verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/8, poids 24/32, soute, outils 2/2, armes 2/2 ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}${j.cellules ? '#' : j.nombre ? 'n' : ''}`).join(';') === 'Blindage 5/8#;Bouclier 2/8#;Poids 24/32;Soute 24/30n;Outils 2/2n;Armes 2/2n' && PIECES.every((p) => jaugesDe(p).length >= 1 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
 const v1 = vendre({ fer: 7, or: 2, cristal: 0 }, 5, 'or')
 verifier('vendre l’or : le trésor n’en a plus, les crédits montent du prix de la fiche ; rien à vendre ne change rien', v1.tresor.or === 0 && v1.tresor.fer === 7 && v1.credits === 5 + 2 * FICHES_MINERAI.or.credits && vendre(v1.tresor, v1.credits, 'cristal').credits === v1.credits)
 verifier('les crédits relus : un entier positif, zéro sinon', lireCredits(12.7) === 12 && lireCredits(-3) === 0 && lireCredits('x') === 0 && lireCredits(undefined) === 0)
-// LE RÉACTEUR ET LA CONSOMMATION (Keko) : la configuration porte l'énergie du réacteur monté, la capacité de la coque, la conso de chaque système
-const hF = acheter(neuf, RICHE, 'reacteur-3')!.hangar
-const fusion = configDuHangar(C, hF)
-verifier('le réacteur à fusion : une puissance de 18, mais lourd (la conso du propulseur monte avec le poids) ; la coque de série : 20 en soute ; foreuse 3, pas de radar ni de bouclier', fusion.puissance === 18 && fusion.capacite === 20 && Math.abs(fusion.conso.propulseur - (3 * poidsTotal(hF)) / POIDS_SERIE) < 1e-9 && fusion.conso.propulseur > 3 && fusion.conso.foreuse === 3 && fusion.conso.radar === 0 && fusion.conso.bouclier === 0)
-const equipe = configDuHangar(C, monter(acheter(acheter(neuf, RICHE, 'coque-3')!.hangar, RICHE, 'radar')!.hangar, 'radar'))
-verifier('la coque à bouclier et le radar : 24 en soute, le bouclier consomme 2 et le radar 1 ; une arme porte sa conso par coup', equipe.capacite === 24 && equipe.conso.bouclier === 2 && equipe.conso.radar === 1 && configDuHangar(C, acheter(neuf, RICHE, 'arme-missiles')!.hangar).armes[0].conso === 8)
-const avecCanon = configDuHangar(C, acheter(neuf, RICHE, 'arme-canon')!.hangar)
-const avecCanonEtRadar = configDuHangar(C, monter(acheter(acheter(acheter(neuf, RICHE, 'arme-canon')!.hangar, RICHE, 'coque-3')!.hangar, RICHE, 'radar')!.hangar, 'radar'))
-verifier('le budget : de série 10 − 3 − 3 = +4, on décolle ; un canon (3 par coup toutes les 1,1 s, et son poids) tient encore ; canon, coque à bouclier et radar passent sous zéro et clouent le vaisseau au sol ; à fusion, de la marge', Math.abs(bilanDEnergie(C) - 4) < 1e-9 && peutDecoller(C) && bilanDEnergie(avecCanon) > 0 && peutDecoller(avecCanon) && bilanDEnergie(avecCanonEtRadar) < 0 && !peutDecoller(avecCanonEtRadar) && bilanDEnergie(fusion) > 5)
 const tr = lireTresor({ fer: 7.9, or: -3, cristal: 'x', autre: 1 })
 verifier('le trésor relu : des entiers positifs, zéro sinon', tr.fer === 7 && tr.or === 0 && tr.cristal === 0 && lireTresor(undefined).fer === 0)
 

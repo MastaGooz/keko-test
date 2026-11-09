@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, armesMontees, bilanDEnergie, capacite, peutDecoller, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -218,7 +218,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function demarrer(): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
-    if (!peutDecoller(configDuHangar(BASE, hangar))) return // (le budget d'énergie ne tient pas : cloué au sol)
     CONF = configDuHangar(BASE, hangar)
     m = monterLeMonde()
     m.minerai = minerai0
@@ -251,18 +250,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
-  const ONGLETS: Sorte[] = ['propulseur', 'coque', 'reacteur', 'outil', 'arme']
+  const ONGLETS: Sorte[] = ['propulseur', 'coque', 'outil', 'arme']
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
-  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'COQUE', reacteur: 'REACTEUR', outil: 'OUTILS', arme: 'ARMES' }
+  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'COQUE', outil: 'OUTILS', arme: 'ARMES' }
   /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
   const NOMS_FAMILLE: Record<string, string> = { foreuse: 'FOREUSES', radar: 'RADARS' }
   const famillesDe = (o: Sorte): string[] => [...new Set(piecesDe(o).map((pc) => pc.famille).filter((f): f is string => f !== undefined))]
-  const sousCategorie: Record<Sorte, string | null> = { propulseur: null, coque: null, reacteur: null, outil: null, arme: null }
+  const sousCategorie: Record<Sorte, string | null> = { propulseur: null, coque: null, outil: null, arme: null }
   /** La liste visible d'une catégorie : ses pièces, ou celles de la sous-catégorie choisie. */
   const listeVisible = (o: Sorte): Piece[] => piecesDe(o).filter((pc) => sousCategorie[o] === null || pc.famille === sousCategorie[o])
   /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
   const RANGEES = 4
-  const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, reacteur: 0, outil: 0, arme: 0 }
+  const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
   let glisse: { x: number; y: number; defil0: number; bouge: boolean } | null = null
   /** La zone qui se fait glisser, refaite à chaque image comme les autres. */
@@ -330,7 +329,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(x, y, 4 * k, T[2], 0.35 * (0.7 + 0.3 * Math.sin(t * 3)))
     }
   }
-  const choix: Record<Sorte, string> = { propulseur: 'propulseur-1', coque: 'coque-1', reacteur: 'reacteur-1', outil: 'foreuse-1', arme: 'arme-canon' }
+  const choix: Record<Sorte, string> = { propulseur: 'propulseur-1', coque: 'coque-1', outil: 'foreuse-1', arme: 'arme-canon' }
   function ouvrirLeHangar(): void {
     for (const e of EMPLACEMENTS) choix[e] = hangar.montees[e]
     choix.outil = hangar.outils[0] ?? 'foreuse-1'
@@ -361,7 +360,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * largeur et hauteur une fois le nez en haut, pour remplir `bw` × `bh` à trois pixels du bord.
    */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 9.5 + 1.5 * pc.cran] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'reacteur' ? [10, 10] : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
+    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 9.5 + 1.5 * pc.cran] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
     const k = Math.max(1, Math.floor(Math.min((bw - 6) / ew, (bh - 6) / eh) * 2) / 2)
     const q = agrandi(p, k)
     // le propulseur s'étire vers l'arrière (sa flamme) : on recule l'origine pour centrer l'ensemble dans la case (la flamme ionique débordait en bas — Keko)
@@ -386,17 +385,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       q.poly(forme.map(([fx, fy]) => [fx * 0.75 + 0.5, fy * 0.6]), peau[5])
       if (pc.cran === 2) for (const [rx, ry] of [[3, -1.2], [3, 1.2], [-1.5, -2], [-1.5, 2], [-4, -1.2], [-4, 1.2]]) q.dot(rx, ry, peau[1])
       if (pc.cran === 3) q.ring(0, 0, 8, 1, VERRIERE[2], 0.6) // (l'anneau compte dans l'encombrement : il débordait de la case)
-    } else if (pc.sorte === 'reacteur') {
-      // le réacteur : un cœur qui bat dans un boîtier, des conduits, d'autant plus vif que le cran est haut
-      const bat = 0.75 + 0.25 * Math.sin(t * (3 + pc.cran))
-      q.poly([[-4, -3.5], [4, -3.5], [4, 3.5], [-4, 3.5]], COQUE[2])
-      q.poly([[-3, -2.5], [3, -2.5], [3, 2.5], [-3, 2.5]], COQUE[1])
-      q.circle(0, 0, 1.6 + 0.4 * pc.cran * bat, pc.cran >= 3 ? ION[4] : FEU[4])
-      q.dot(0, 0, N.WHITE)
-      q.line(-4, -1.5, -5, -1.5, COQUE[3])
-      q.line(-4, 1.5, -5, 1.5, COQUE[3])
-      q.line(4, 0, 5, 0, COQUE[3])
-      q.glow(0, 0, 5, pc.cran >= 3 ? ION[3] : FEU[3], 0.5 * bat)
     } else if (pc.sorte === 'outil' && pc.famille === 'foreuse') {
       const cf = pc.cran
       const dome = 2.1 + 0.4 * (cf - 1)
@@ -530,14 +518,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
       const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
       dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
-      // sous l'aire : LE POIDS TOTAL du vaisseau (la somme de ses pièces), et LE BILAN D'ÉNERGIE tout allumé, par seconde,
-      // vert s'il tient, rouge s'il entame sa réserve (Keko : « afficher le budget énergie comme le poids »)
-      p.text('POIDS', cx - 36, hautScene - 9, COQUE[4], { align: 'right' })
-      p.text(String(poidsTotal(hangar)), cx - 31, hautScene - 10, PEPITE[3], { font: 'big' })
-      const bilan = bilanDEnergie(configDuHangar(BASE, hangar))
-      const motBilan = `${bilan >= 0 ? '+' : '-'}${Math.abs(bilan) < 9.95 ? Math.abs(bilan).toFixed(1) : Math.round(Math.abs(bilan))}`
-      p.text('ENERGIE', cx + 25, hautScene - 9, COQUE[4], { align: 'right' })
-      p.text(motBilan, cx + 30, hautScene - 10, bilan >= 0 ? RUNE[2] : (Math.floor(t * 3) % 2 === 0 ? ROUGE[4] : ROUGE[3]), { font: 'big' })
+      // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
+      // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
+      p.text('POIDS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
+      p.text(String(poidsTotal(hangar)), cx + 3, hautScene - 10, PEPITE[3], { font: 'big' })
     } else {
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
@@ -823,7 +807,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     panel(p, 8, y + 4, 42, hh - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
     dessinerLePictogramme(p, pc, 29, y + hh / 2, 42, hh - 8)
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
-    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null || reperes[i] === undefined ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids' || j.nom === 'Conso', gx))
+    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null || reperes[i] === undefined ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
     note.forEach((li, i) => p.text(li, W / 2, y + hh + 3 + i * 7, COQUE[4], { align: 'center' }))
     y += hd + 4
     }
@@ -833,19 +817,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bh = 20
     const bx = W / 2 - bw / 2
     const byy = H - 33
-    // SOUS ZÉRO D'ÉNERGIE, ON NE DÉCOLLE PAS (Keko : « un budget au hangar, rien en vol ») : le bouton s'éteint et le dit
-    const decollable = peutDecoller(configDuHangar(BASE, hangar))
     const respire = 0.6 + 0.4 * Math.sin(t * 4)
-    if (decollable) p.glow(W / 2, byy + bh / 2, 44, PEPITE[2], 0.12 + 0.12 * respire)
+    p.glow(W / 2, byy + bh / 2, 44, PEPITE[2], 0.12 + 0.12 * respire)
     panel(p, bx - 2, byy - 2, bw + 4, bh + 4, ENCRE, { r: 3 })
     const cycle = (t % 4) / 4
-    panel(p, bx, byy, bw, bh, decollable ? ENCRE_OR : ENCRE, { r: 2, shine: decollable && cycle < 0.45 ? bx - 12 + ((bw + 36) * cycle) / 0.45 : null })
-    motEnRelief(p, 'Decoller', W / 2, byy + 6, 1, decollable)
-    if (decollable) {
-      p.text('>>', bx + 8, byy + 8, PEPITE[3])
-      p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
-      zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
-    } else p.text('PAS ASSEZ D’ENERGIE', W / 2, byy - 9, ROUGE[4], { align: 'center' })
+    panel(p, bx, byy, bw, bh, ENCRE_OR, { r: 2, shine: cycle < 0.45 ? bx - 12 + ((bw + 36) * cycle) / 0.45 : null })
+    motEnRelief(p, 'Decoller', W / 2, byy + 6, 1, true)
+    p.text('>>', bx + 8, byy + 8, PEPITE[3])
+    p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
+    zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
   }
