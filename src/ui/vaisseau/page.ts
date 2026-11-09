@@ -675,10 +675,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE SÉLECTEUR DE CATÉGORIE À FLÈCHES (Keko : « on aura plus de parties de vaisseau, sur une ligne ça ne logera
     // pas ») : ‹ OUTILS › — autant de catégories qu'on veut ; une tape sur une flèche passe à la suivante
     const io = ONGLETS.indexOf(onglet)
-    panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
+    // les flèches aux deux bouts, à la hauteur de la barre, la barre entre elles (Keko : la barre dépassait des boutons)
+    panel(p, 19, y, W - 38, 13, ENCRE, { r: 2 })
     p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
-    bouton(p, 6, y + 1, 13, 11, '<', true, () => (onglet = ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
-    bouton(p, W - 19, y + 1, 13, 11, '>', true, () => (onglet = ONGLETS[(io + 1) % ONGLETS.length]))
+    bouton(p, 4, y, 13, 13, '<', true, () => (onglet = ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
+    bouton(p, W - 17, y, 13, 13, '>', true, () => (onglet = ONGLETS[(io + 1) % ONGLETS.length]))
     y += 15
     // LES PUCES DE SOUS-CATÉGORIE (Keko : « sélectionner des sous-catégories, comme les foreuses / radars dans outils »)
     const familles = famillesDe(onglet)
