@@ -494,8 +494,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   canon de la foreuse, acier riveté de la coque blindée, anneau cyan de la
   coque à bouclier, les armes sous les ailes (la première à gauche, la
   seconde à droite : canon, un fût ; mitrailleuse, deux ; missiles, une
-  nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau,
-  s'il y en a un.
+  nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau
+  EN BAS, au-dessus de « Décoller », s'il y en a un (en haut de la scène,
+  il cachait la colonne des onglets et l'entrepôt — Keko).
 - **L'interface, EN GRANDE POLICE** (Keko : « les textes et l'interface
   sont un peu petits dans le hangar, on peut réduire la taille du hangar et
   du vaisseau ») : la scène fait 120 px de tampon, le vaisseau est agrandi

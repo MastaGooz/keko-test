@@ -481,13 +481,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       titre = ''
       texte = ''
     })
-    // le bilan de la dernière expédition, en bandeau
-    if (texte !== '') {
-      const L = replier(p, texte, W - 20)
-      panel(p, 4, 18, W - 8, 19 + L.length * 7, ENCRE, { r: 2 })
-      p.text(titre, W / 2, 22, PEPITE[3], { font: 'big', align: 'center' })
-      L.forEach((li, i) => p.text(li, W / 2, 32 + i * 7, COQUE[5], { align: 'center' }))
-    }
   }
   /**
    * Une jauge du panneau : son nom à gauche, puis — une quantité entière (points, armes) : DES CELLULES, une par unité,
@@ -681,6 +674,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text('>>', bx + 8, byy + 8, PEPITE[3])
     p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
     zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
+    // le bilan de la dernière expédition, en bandeau EN BAS, au-dessus de « Décoller » (Keko : en haut, il cachait la
+    // colonne des onglets et l'entrepôt)
+    if (texte !== '') {
+      const L = replier(p, texte, W - 20)
+      const hb = 19 + L.length * 7
+      const yb = byy - 6 - hb
+      panel(p, 4, yb, W - 8, hb, ENCRE, { r: 2 })
+      p.text(titre, W / 2, yb + 4, PEPITE[3], { font: 'big', align: 'center' })
+      L.forEach((li, i) => p.text(li, W / 2, yb + 14 + i * 7, COQUE[5], { align: 'center' }))
+    }
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
   }
