@@ -677,9 +677,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const io = ONGLETS.indexOf(onglet)
     // les flèches aux deux bouts, à la hauteur de la barre, la barre entre elles (Keko : la barre dépassait des boutons)
     panel(p, 19, y, W - 38, 13, ENCRE, { r: 2 })
-    p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
-    // les places occupées / portées, « 1/2 », juste à côté du titre OUTILS ou ARMES (Keko)
-    if (onglet === 'outil' || onglet === 'arme') p.text(`${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W / 2 + p.measure(NOMS_ONGLET[onglet], { font: 'big' })[0] / 2 + 5, y + 4, PEPITE[3])
+    // le titre, suivi pour les outils et les armes des places occupées / portées, « OUTILS 1/2 », dans le même style (Keko)
+    const titreOnglet = onglet === 'outil' || onglet === 'arme' ? `${NOMS_ONGLET[onglet]} ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}` : NOMS_ONGLET[onglet]
+    p.text(titreOnglet, W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
     bouton(p, 4, y, 13, 13, '<', true, () => (onglet = ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
     bouton(p, W - 17, y, 13, 13, '>', true, () => (onglet = ONGLETS[(io + 1) % ONGLETS.length]))
     y += 15
