@@ -11,22 +11,22 @@ function verifier(quoi: string, vrai: boolean): void {
 }
 
 console.log('hangar')
-verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === 3 && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix.fer === 0) && piecesDe('outil').length === 4 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix.fer > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}`))
+verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === 3 && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix === 0) && piecesDe('outil').length === 4 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}`))
 const neuf = hangarNeuf()
 verifier('un hangar neuf : les pièces de série montées, la foreuse de série en outil, pas d’arme ; la coque de série porte un outil et une arme', neuf.possedees.length === 3 && EMPLACEMENTS.every((e) => monteeA(neuf, e).cran === 1) && neuf.outils.join(',') === 'foreuse-1' && neuf.armes.length === 0 && capacite(neuf, 'outil') === 1 && capacite(neuf, 'arme') === 1)
-const pauvre = { fer: 5, or: 0, cristal: 0 }
-verifier('sans assez de fer, on n’achète pas', !peutAcheter(neuf, pauvre, 'propulseur-2') && acheter(neuf, pauvre, 'propulseur-2') === null)
-verifier('une pièce de série ne s’achète pas (on l’a)', !peutAcheter(neuf, { fer: 99, or: 0, cristal: 0 }, 'propulseur-1'))
-const riche = { fer: 25, or: 3, cristal: 0 }
+const pauvre = 5
+verifier('sans assez de crédits, on n’achète pas', !peutAcheter(neuf, pauvre, 'propulseur-2') && acheter(neuf, pauvre, 'propulseur-2') === null)
+verifier('une pièce de série ne s’achète pas (on l’a)', !peutAcheter(neuf, 999, 'propulseur-1'))
+const riche = 50
 const a = acheter(neuf, riche, 'propulseur-2')!
-verifier('l’achat paie le prix, possède et monte la pièce ; le hangar d’avant ne bouge pas', a !== null && a.tresor.fer === 13 && a.tresor.or === 3 && a.hangar.possedees.includes('propulseur-2') && monteeA(a.hangar, 'propulseur').id === 'propulseur-2' && estMontee(a.hangar, 'propulseur-2') && !neuf.possedees.includes('propulseur-2'))
-verifier('on ne rachète pas une pièce possédée', !peutAcheter(a.hangar, a.tresor, 'propulseur-2'))
+verifier('l’achat paie le prix en crédits, possède et monte la pièce ; le hangar d’avant ne bouge pas', a !== null && a.credits === 50 - 24 && a.hangar.possedees.includes('propulseur-2') && monteeA(a.hangar, 'propulseur').id === 'propulseur-2' && estMontee(a.hangar, 'propulseur-2') && !neuf.possedees.includes('propulseur-2'))
+verifier('on ne rachète pas une pièce possédée', !peutAcheter(a.hangar, a.credits, 'propulseur-2'))
 const remis = monter(a.hangar, 'propulseur-1')
 verifier('on remonte la pièce de série, la renforcée reste possédée', monteeA(remis, 'propulseur').cran === 1 && remis.possedees.includes('propulseur-2'))
 verifier('monter une pièce qu’on n’a pas ne change rien', monter(remis, 'foreuse-3') === remis)
 
 // LES OUTILS : autant que la coque en porte ; une foreuse chasse la foreuse ; le radar prend une place
-const RICHE = { fer: 999, or: 0, cristal: 0 }
+const RICHE = 99999
 let h = acheter(neuf, RICHE, 'foreuse-2')!.hangar
 verifier('acheter la foreuse lourde la monte À LA PLACE de celle de série (une seule place, même famille)', h.outils.join(',') === 'foreuse-2' && h.possedees.includes('foreuse-1') && foreuseMontee(h)?.id === 'foreuse-2')
 h = acheter(h, RICHE, 'radar')!.hangar

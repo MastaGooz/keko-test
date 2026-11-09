@@ -597,8 +597,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   une lettre à barres : « c'est un P lol », une lettre à deux fûts : « un
   peu trop complexe », un fût barré d'une oblique) —, le stock, et VENDRE TOUT, qui change le stock en crédits
   (`vendre` ; *de moi : une valeur sans vente n'aurait pas de sens ; fer 2,
-  or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. Les
-  pièces se paient encore en fer. Dans le panneau d'une pièce qu'on n'a
+  or 8, cristal 25, à rejuger*) ; les crédits qu'on a sous le panneau. LES
+  PIÈCES SE PAIENT EN CRÉDITS (Keko, 09/11 : « mets le coût en crédits avec
+  l'icône » ; en fer jusque-là) : la boucle est minerai → vente à
+  l'entrepôt → crédits → pièces ; le prix, en beige avec l'icône des
+  crédits, est sur la ligne de la pièce et sur le bouton ACHETER, plus dans
+  les stats (« il est déjà sur le bouton »). `&credits=N` pose N crédits. Dans le panneau d'une pièce qu'on n'a
   pas, une ligne PRIX donne, par minerai, l'icône — LA MÊME QU'À L'INVENTAIRE,
   à la même taille (Keko) — et « prix / solde », en or si le solde y suffit,
   en rouge sinon. La colonne des onglets part du haut, à la hauteur du

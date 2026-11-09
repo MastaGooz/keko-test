@@ -115,12 +115,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * différentes pièces qu'il possède ») : les pièces possédées et montées, et le TRÉSOR des expéditions achevées, gardés
    * sur l'appareil (`ui/vaisseau/hangar.ts`). `&tresor=N` pose N fer de trésor, pour essayer les achats d'un lien.
    */
+  /** `&credits=N` : pose N crédits, pour essayer les achats d'un lien. */
+  const credits0 = parametres.has('credits') ? Math.max(0, Number(parametres.get('credits')) || 0) : null
   /** `&pieces` : des dizaines de pièces d'essai dans le catalogue, pour voir le hangar quand il y en a beaucoup (Keko). */
   if (parametres.has('pieces')) ajouterLesPiecesDEssai()
   let { hangar, tresor, credits } = chargerHangar()
   const sauver = (): void => sauverHangar(hangar, tresor, credits)
   if (parametres.has('tresor')) {
     tresor = { ...tresor, fer: Math.max(0, Number(parametres.get('tresor')) || 0) }
+    sauver()
+  }
+  if (credits0 !== null) {
+    credits = credits0
     sauver()
   }
   /** La configuration du vaisseau du joueur : celle de série passée par les pièces montées — refaite à chaque décollage. */
@@ -180,8 +186,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const affiche: Cargaison = { ...cargaisonVide(), fer: minerai0 }
   const allumeA: Cargaison = { fer: -10, or: -10, cristal: -10 }
   const COMPTEUR = { x: 16, y: 10 }
-  /** Une cargaison en mots : « 4 fer, 2 or, 1 cristal », ou « rien ». */
-  const nommer = (c: Cargaison): string => MINERAIS.filter((k) => c[k] > 0).map((k) => `${c[k]} ${k}`).join(', ') || 'rien'
   let secousse = 0
   let flamme = 0
   let t = 0
@@ -709,8 +713,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.text('>', 9, ly + 3, PEPITE[3], { font: 'big' })
       }
       p.text(texteNu(pc.nom), 16, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3], { font: 'big' })
-      const etat = montee ? 'EQUIPE' : aLui ? 'POSSEDE' : nommer(pc.prix)
-      p.text(texteNu(etat), W - (maxDefil > 0 ? 15 : 9), ly + 4, montee ? PEPITE[2] : aLui ? COQUE[4] : peutAcheter(hangar, tresor, pc.id) ? PEPITE[3] : COQUE[2], { align: 'right' })
+      // l'état à droite : EQUIPE, POSSEDE, ou le prix en crédits avec son icône, en beige comme à l'entrepôt (Keko)
+      const xd = W - (maxDefil > 0 ? 15 : 9)
+      if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
+      else if (aLui) p.text('POSSEDE', xd, ly + 4, COQUE[4], { align: 'right' })
+      else nombreDeCredits(p, pc.prix, xd + 2, ly + 3, PEPITE[3])
       zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
     }
     if (maxDefil > 0) {
@@ -744,14 +751,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         sauver()
       }, true)
     } else {
-      const bw = largeurDe(`Acheter ${nommer(pc.prix)}`)
-      bouton(p, W / 2 - bw / 2, y, bw, 13, `Acheter ${nommer(pc.prix)}`, peutAcheter(hangar, tresor, pc.id), () => {
-        const r = acheter(hangar, tresor, pc.id)
+      // ACHETER, le prix en crédits et son icône (le mot est centré dans le bouton, l'icône à sa droite)
+      const mot = `Acheter ${pc.prix}`
+      const bw = largeurDe(mot) + 12
+      bouton(p, W / 2 - bw / 2, y, bw, 13, mot, peutAcheter(hangar, credits, pc.id), () => {
+        const r = acheter(hangar, credits, pc.id)
         if (r === null) return
         hangar = r.hangar
-        tresor = r.tresor
+        credits = r.credits
         sauver()
       }, true)
+      dessinerUnCredit(p, W / 2 + p.measure(texteNu(mot), { font: 'big' })[0] / 2 + 8, y + 6)
     }
     y += 16
     // LE PANNEAU DES STATS, à la hauteur de son contenu (Keko) : à gauche LE GRAPHISME DE LA PIÈCE dans sa case, à
@@ -759,28 +769,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const jauges = jaugesDe(pc)
     const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
-    const aAcheter = !possede(hangar, pc.id)
-    const hd = Math.max(50, 16 + jauges.length * 10 + (aAcheter ? 11 : 0) + 4)
+    const hd = Math.max(50, 16 + jauges.length * 10 + 4) // (plus de ligne du prix : il est sur le bouton — Keko)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     panel(p, 8, y + 4, 42, hd - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
     dessinerLePictogramme(p, pc, 29, y + hd / 2, 42, hd - 8)
     const gx = 54
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
-    if (aAcheter) {
-      // LE PRIX AVEC LE SOLDE (Keko) : par minerai, l'icône, le prix / ce qu'on a — en or si ça suffit, en rouge sinon
-      const py = y + 16 + jauges.length * 10
-      p.text('PRIX', gx, py + 2, COQUE[4])
-      let px = gx + 28
-      for (const k of MINERAIS) {
-        if (pc.prix[k] <= 0) continue
-        const assez = tresor[k] >= pc.prix[k]
-        dessinerUneRessource(p, px + 5, py + 4, k)
-        const mot = `${pc.prix[k]} / ${tresor[k]}`
-        p.text(mot, px + 14, py + 1, assez ? PEPITE[3] : ROUGE[4], { font: 'big' })
-        px += 14 + p.measure(mot, { font: 'big' })[0] + 10
-      }
-    }
     y += hd + 4
     }
     // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet

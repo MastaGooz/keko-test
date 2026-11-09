@@ -31,7 +31,8 @@ export type Piece = {
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
-  prix: Cargaison
+  /** Le prix, EN CRÉDITS (Keko : « mets le coût en crédits ») — la monnaie que l'entrepôt rend contre le minerai. */
+  prix: number
   /** Les outils d'une même famille se remplacent l'un l'autre quand les places manquent (une foreuse chasse la foreuse). */
   famille?: string
   /** Les facteurs sur la configuration de série (absent = 1). */
@@ -54,26 +55,24 @@ export type Piece = {
   arme?: Arme
 }
 
-const prix = (fer: number, or = 0, cristal = 0): Cargaison => ({ fer, or, cristal })
-
 /**
- * Le catalogue. *Les prix et les chiffres sont de moi, à rejuger* : en fer pour commencer (une roche rend deux à sept
- * pépites), l'or et le cristal attendent les crans d'après.
+ * Le catalogue. *Les prix et les chiffres sont de moi, à rejuger* : en crédits (le fer se vend 2 la pépite, une roche en
+ * rend deux à sept ; en fer d'abord, Keko les a passés en crédits le 09/11).
  */
 export const PIECES: Piece[] = [
-  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: prix(0) },
-  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: prix(12), poussee: 1.25, vitesseMax: 1.15, rotation: 1.1 },
-  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', prix: prix(30), poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
-  { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Coque de serie', dit: '5 points de coque, un outil, une arme, poids de serie.', prix: prix(0), pv: 5, poids: 1, armes: 1, outils: 1 },
-  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Coque blindee', dit: '8 points, un outil, deux armes. Lourde : accelere moins, glisse plus.', prix: prix(14), pv: 8, poids: 1.3, armes: 2, outils: 1 },
-  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', prix: prix(32), pv: 5, poids: 1.1, bouclier: 2, armes: 2, outils: 2 },
-  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit, portee et aimant de serie.', prix: prix(0), debit: 1, portee: 1, aimant: 1 },
-  { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite, aimant +25 %.', prix: prix(10), debit: 1.4, portee: 1, aimant: 1.25 },
-  { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin, aimant +60 %.', prix: prix(28), debit: 1.8, portee: 1.25, aimant: 1.6 },
-  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', prix: prix(16), radar: 600 },
-  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', prix: prix(12), arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false } },
-  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', prix: prix(22), arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false } },
-  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', prix: prix(34), arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true } },
+  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: 0 },
+  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: 24, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1 },
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', prix: 60, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
+  { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Coque de serie', dit: '5 points de coque, un outil, une arme, poids de serie.', prix: 0, pv: 5, poids: 1, armes: 1, outils: 1 },
+  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Coque blindee', dit: '8 points, un outil, deux armes. Lourde : accelere moins, glisse plus.', prix: 28, pv: 8, poids: 1.3, armes: 2, outils: 1 },
+  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Coque a bouclier', dit: '5 points et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', prix: 64, pv: 5, poids: 1.1, bouclier: 2, armes: 2, outils: 2 },
+  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit, portee et aimant de serie.', prix: 0, debit: 1, portee: 1, aimant: 1 },
+  { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite, aimant +25 %.', prix: 20, debit: 1.4, portee: 1, aimant: 1.25 },
+  { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin, aimant +60 %.', prix: 56, debit: 1.8, portee: 1.25, aimant: 1.6 },
+  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', prix: 32, radar: 600 },
+  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', prix: 24, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false } },
+  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', prix: 44, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false } },
+  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', prix: 68, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true } },
 ]
 
 /**
@@ -84,11 +83,11 @@ export const PIECES: Piece[] = [
 export function ajouterLesPiecesDEssai(): void {
   if (PIECES.some((p) => p.id.startsWith('essai-'))) return
   const n = (i: number, a: number, b: number): number => a + ((i * 7919) % 100) * (b - a) / 100
-  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(5 + i * 3), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3) })
-  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Coque d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(8 + i * 4), pv: 3 + i, poids: n(i, 0.8, 1.5), bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2) })
-  for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(4 + i * 3), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4), aimant: n(i + 4, 0.8, 1.8) })
-  for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-radar-${i}`, sorte: 'outil', cran: 2, famille: 'radar', nom: `Radar d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(6 + i * 4), radar: 200 + i * 150 })
-  for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(6 + i * 3), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false } })
+  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 3), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3) })
+  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Coque d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (8 + i * 4), pv: 3 + i, poids: n(i, 0.8, 1.5), bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2) })
+  for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (4 + i * 3), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4), aimant: n(i + 4, 0.8, 1.8) })
+  for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-radar-${i}`, sorte: 'outil', cran: 2, famille: 'radar', nom: `Radar d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 4), radar: 200 + i * 150 })
+  for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 3), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false } })
 }
 
 /** Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les outils et les armes montés (dans l'ordre : la première arme à gauche). */
@@ -112,10 +111,9 @@ export const monteeA = (h: Hangar, e: Emplacement): Piece => pieceDe(h.montees[e
 export const capacite = (h: Hangar, l: Liste): number => Math.min(PLACES_MAX, (l === 'arme' ? monteeA(h, 'coque').armes : monteeA(h, 'coque').outils) ?? 1)
 /** Les pièces montées d'une liste, dans l'ordre. */
 export const montes = (h: Hangar, l: Liste): Piece[] => listeDe(h, l).map((id) => pieceDe(id)).filter((p): p is Piece => p !== undefined)
-export const couvre = (tresor: Cargaison, p: Cargaison): boolean => MINERAIS.every((k) => tresor[k] >= p[k])
-export function peutAcheter(h: Hangar, tresor: Cargaison, id: string): boolean {
+export function peutAcheter(h: Hangar, credits: number, id: string): boolean {
   const p = pieceDe(id)
-  return p !== undefined && !possede(h, id) && couvre(tresor, p.prix)
+  return p !== undefined && !possede(h, id) && credits >= p.prix
 }
 /** Une pièce est montée : à son emplacement, ou dans sa liste. */
 export const estMontee = (h: Hangar, id: string): boolean => {
@@ -124,13 +122,11 @@ export const estMontee = (h: Hangar, id: string): boolean => {
   return p.sorte === 'arme' || p.sorte === 'outil' ? listeDe(h, p.sorte).includes(id) : h.montees[p.sorte] === id
 }
 
-/** L'achat : la pièce passe aux possédées ET se monte si elle le peut ; le trésor paie. Rend les deux valeurs neuves, ou null si on ne peut pas. */
-export function acheter(h: Hangar, tresor: Cargaison, id: string): { hangar: Hangar; tresor: Cargaison } | null {
-  if (!peutAcheter(h, tresor, id)) return null
+/** L'achat : la pièce passe aux possédées ET se monte si elle le peut ; les crédits paient. Rend les deux valeurs neuves, ou null si on ne peut pas. */
+export function acheter(h: Hangar, credits: number, id: string): { hangar: Hangar; credits: number } | null {
+  if (!peutAcheter(h, credits, id)) return null
   const p = pieceDe(id)!
-  const reste = { ...tresor }
-  for (const k of MINERAIS) reste[k] -= p.prix[k]
-  return { hangar: monter({ ...h, possedees: [...h.possedees, id] }, id), tresor: reste }
+  return { hangar: monter({ ...h, possedees: [...h.possedees, id] }, id), credits: credits - p.prix }
 }
 
 /** Les listes bornées à ce que la coque porte (une coque qui porte moins démonte les dernières pièces). */

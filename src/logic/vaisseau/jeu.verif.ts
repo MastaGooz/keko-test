@@ -138,7 +138,7 @@ for (let i = 0; i < 90; i++) {
 }
 verifier('à portée de forage, en chasse, le rival ne pose pas son laser sur le joueur', !rayonSurLeJoueur && coqueEntiere && brule.ennemis[0].fait === 'chasse')
 // LA FOREUSE NE SERT QU'AUX ROCHES (Keko) : collé au rival sans arme, le laser ne l'entame pas ; AVEC UN CANON, il l'abat
-const RICHE = { fer: 999, or: 0, cristal: 0 }
+const RICHE = 99999
 const armer = (...ids: string[]): ConfigVaisseau => configDuHangar(C, ids.reduce((h, id) => acheter(h, RICHE, id)!.hangar, hangarNeuf()))
 const poserPres = (cfg: ConfigVaisseau) => {
   const z = nouveauMonde(cfg)
