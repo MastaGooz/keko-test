@@ -211,11 +211,12 @@ export function jaugesDe(p: Piece): Jauge[] {
   }
   if (p.sorte === 'coque') {
     return [
-      { nom: 'Blindage', valeur: p.pv ?? 0, max: max((q) => q.pv ?? 0), cellules: true },
-      { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: Math.max(1, max((q) => q.bouclier ?? 0)), cellules: true },
+      // blindage et bouclier sur HUIT cellules, un plafond fixe pour l'instant (Keko) ; le poids en troisième ligne (Keko)
+      { nom: 'Blindage', valeur: p.pv ?? 0, max: 8, cellules: true },
+      { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: 8, cellules: true },
+      { nom: 'Poids', valeur: p.poids ?? 1, max: max((q) => q.poids ?? 1) },
       { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), nombre: true },
       { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), nombre: true },
-      { nom: 'Poids', valeur: p.poids ?? 1, max: max((q) => q.poids ?? 1) },
     ]
   }
   if (p.sorte === 'outil') {
