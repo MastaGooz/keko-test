@@ -96,7 +96,8 @@ verifier('il trouve une roche et la mine', aMine)
 const sienne = w.ennemis[0]?.roche
 const roches = asteroidesAutour(C, 0, 0, 600)
 const laRoche = roches.find((r) => r.id === sienne)
-verifier('et c’est une roche du territoire du joueur', laRoche !== undefined && Math.hypot(laRoche.x, laRoche.y) - laRoche.rayon <= C.ennemi.territoire)
+verifier('et c’est une roche près de LUI, là où il rôde', laRoche !== undefined && Math.hypot(laRoche.x - w.ennemis[0].corps.x, laRoche.y - w.ennemis[0].corps.y) - laRoche.rayon <= C.ennemi.cherche && Math.hypot(laRoche.x, laRoche.y) - laRoche.rayon <= C.ennemi.rode)
+verifier('il rôde sans se perdre (de roche en roche il reste dans sa laisse)', w.ennemis.length === 1 && Math.hypot(w.ennemis[0].corps.x, w.ennemis[0].corps.y) < C.ennemi.rode + C.ennemi.cherche)
 verifier('il ne tire jamais sur un joueur qu’il ne voit pas', !tirLoin)
 // le joueur se pose à côté de lui : il chasse, tire, et les traits percent la coque
 const e0 = w.ennemis[0]

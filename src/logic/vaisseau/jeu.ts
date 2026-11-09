@@ -100,16 +100,16 @@ export const VAISSEAU = {
   /**
    * L'ENNEMI : il apparaît à tant de secondes puis tant après sa mort, à tant d'unités (hors de l'écran le plus haut, 180
    * sur 480, avance de caméra comprise : à 200, Keko le voyait « apparaître de nulle part ») ; il a tant de points (le laser
-   * du joueur les creuse comme une roche), pousse et va moins vite que le joueur ; il cherche une roche à tant de lui,
-   * mais SEULEMENT DANS LE TERRITOIRE DU JOUEUR (à tant du joueur : il vient miner dans son coin, sinon on ne le voit
-   * jamais — Keko : « parfois j'ai l'impression de ne pas trouver l'ennemi ») ; il
+   * du joueur les creuse comme une roche), pousse et va moins vite que le joueur ; il cherche une roche à tant de LUI, parmi celles à tant du joueur (il RÔDE : il mine là où il est, mais
+   * sans s'éloigner — Keko, 09/11 : « je trouve l'ennemi trop présent » : il venait miner exprès dans le coin du joueur, à
+   * 150, et ne le lâchait plus ; sans laisse du tout, de roche en roche il était à 570 au bout de 25 s, perdu) ; il
    * voit le joueur à tant, se tient à tant de lui, et tire toutes les tant de secondes des traits à tant d'unités par
    * seconde qui vivent tant ; UNE EXTRACTION EN COURS, il la voit de plus loin (`accourt`) et vient (les dix secondes
    * à quai doivent être une menace, pas une formalité) ; un trait enlève un point de coque. SON LASER NE SERT QU'À MINER (Keko, 08/11 : essayé
    * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, territoire: 150, voit: 130, accourt: 420, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
@@ -480,18 +480,19 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
     let roche: Asteroide | null = null
     if (e.roche !== null && !m.detruits.has(e.roche)) roche = asteroidesVisibles(c, m, b.x, b.y, c.ennemi.cherche + c.champ.rayonMax).find((a) => a.id === e.roche) ?? null
     if (roche === null) {
-      // la roche la plus proche de LUI parmi celles du TERRITOIRE DU JOUEUR : il vient miner dans son coin
+      // la roche la plus proche de LUI, parmi celles où il RÔDE (à `rode` du joueur, hors écran) : il mine là où il est et on
+      // le croise (venir exprès dans le coin du joueur le rendait « trop présent » ; sans laisse, il se perdait)
       let meilleure: Asteroide | null = null
       let dmin = Infinity
-      for (const r of asteroidesVisibles(c, m, v.x, v.y, c.ennemi.territoire + c.champ.rayonMax)) {
-        if (Math.hypot(r.x - v.x, r.y - v.y) - r.rayon > c.ennemi.territoire) continue
+      for (const r of asteroidesVisibles(c, m, b.x, b.y, c.ennemi.cherche + c.champ.rayonMax)) {
+        if (Math.hypot(r.x - v.x, r.y - v.y) - r.rayon > c.ennemi.rode) continue
         const d = Math.hypot(r.x - b.x, r.y - b.y) - r.rayon
         if (d <= c.ennemi.cherche && d < dmin) (dmin = d), (meilleure = r)
       }
       roche = meilleure
       e.roche = roche?.id ?? null
     }
-    // sans roche à miner près du joueur, il vient vers lui
+    // sans roche à miner autour de lui où il rôde, il revient vers le joueur
     if (roche === null) direction = { x: (dxj / dj) * 0.7, y: (dyj / dj) * 0.7 }
     else {
       const dx = roche.x - b.x

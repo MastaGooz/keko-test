@@ -353,16 +353,23 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   85 de pointe, 5 rad/s), 36 points que le foreur du joueur creuse comme une
   roche.
 - **Il MINE** quand il ne voit pas le joueur : la roche la plus proche de
-  lui à 260 unités **parmi celles du TERRITOIRE DU JOUEUR** (à 150 unités du
-  joueur ; sans roche là, il vient vers lui) — Keko : « parfois j'ai
-  l'impression de ne pas trouver l'ennemi » : né à 230 unités et minant là
-  où il était, on ne le voyait jamais ; il naît maintenant à 200, hors des
-  roches (douze essais autour du joueur) ; *une flèche au bord de l'écran l'a
-  désigné un temps, Keko l'a fait retirer* ; qu'il rejoint jusqu'à portée de laser, puis il freine et
+  LUI à 260 unités, parmi celles à 450 du joueur — **il RÔDE : il mine là où
+  il est, sans s'éloigner, et on le croise** (Keko, 09/11 : « je trouve
+  l'ennemi trop présent » ; *sans laisse du tout, de roche en roche il était
+  à 570 unités au bout de 25 s de simulation, perdu pour de bon : 450 est de
+  moi, au-delà du plus grand écran, à rejuger* ; de la sortie des roches du 08/11 au
+  09/11, il ne cherchait que **parmi les roches du TERRITOIRE DU JOUEUR**, à
+  150 unités de lui, et venait miner exprès dans son coin — ce qui répondait
+  à « parfois j'ai l'impression de ne pas trouver l'ennemi », quand il
+  naissait à 230 et minait là où il était sans qu'on le voie jamais ; entre
+  les deux, la naissance s'est faite hors des roches (douze essais autour du
+  joueur), puis à 320 : *on le trouve en se déplaçant, il ne colle plus* ;
+  *une flèche au bord de l'écran l'a désigné un temps, Keko l'a fait
+  retirer*) ; qu'il rejoint jusqu'à portée de laser, puis il freine et
   la creuse au même débit — *les deux creusent les mêmes roches* (`creuse`
   est partagé). Ses pépites viennent à lui (l'aimant tire chaque pépite vers
-  le vaisseau le plus proche) et font son `butin`. Sans roche à portée, il
-  dérive vers le joueur.
+  le vaisseau le plus proche) et font son `butin`. Sans roche à portée de
+  lui, il dérive vers le joueur.
 - **Il CHASSE** dès qu'il voit le joueur (130 unités) : il se tient à 80,
   HORS DE PORTÉE DU FORAGE DU JOUEUR (64) — la première version le tenait à
   58 et le laser l'abattait tout seul —, le nez sur lui, et tire toutes les
