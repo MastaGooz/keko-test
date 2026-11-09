@@ -529,9 +529,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const L = replier(p, fiche.dit, W - 20).slice(0, LIGNES)
     const hp = 16 + LIGNES * 7 + 6 + 24 + 18
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
-    dessinerUneRessource(p, 16, y + 8, k, 2)
-    p.text(texteNu(fiche.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
-    L.forEach((li, i) => p.text(li, W / 2, y + 16 + i * 7, COQUE[5], { align: 'center' }))
+    // l'icône juste à gauche du nom, le nom décalé d'autant ; la description centrée dans ses trois lignes (Keko)
+    const ln = p.measure(texteNu(fiche.nom), { font: 'big' })[0]
+    dessinerUneRessource(p, W / 2 - ln / 2 - 9, y + 8, k, 2)
+    p.text(texteNu(fiche.nom), W / 2 + 6, y + 4, PEPITE[3], { font: 'big', align: 'center' })
+    const haut = y + 16 + Math.floor(((LIGNES - L.length) * 7) / 2)
+    L.forEach((li, i) => p.text(li, W / 2, haut + i * 7, COQUE[5], { align: 'center' }))
     const ly = y + 16 + LIGNES * 7 + 6
     // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
     p.text('VALEUR LA PEPITE', 10, ly + 1, COQUE[4])
