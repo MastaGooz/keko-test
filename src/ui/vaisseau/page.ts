@@ -253,21 +253,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vue: 'hangar' | 'entrepot' = 'hangar'
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
-  /**
-   * LE SYMBOLE DES CRÉDITS (Keko : « une rune verte… une lettre d'un alphabet inconnu », « un peu trop complexe ») :
-   * DEUX TRAITS — un fût, une oblique qui le barre un peu au-dessus du milieu —, verte, le fût plus clair, une ombre
-   * dessous ; agrandie k fois, à droite d'un nombre.
-   */
+  /** LE SYMBOLE DES CRÉDITS (Keko : « un C avec une barre verticale au milieu ») : un C ouvert à droite, un fût qui le traverse, vert, le fût plus clair, une ombre dessous ; agrandi k fois, à droite d'un nombre. */
   function dessinerUnCredit(p: Peintre, x: number, y: number, k: number): void {
-    const traits: [number, number, number, number][] = [
-      [x, y - 3 * k, x, y + 3 * k],
-      [x + 1.8 * k, y - 1.8 * k, x - 1.8 * k, y + 1 * k],
-    ]
-    for (const [x0, y0, x1, y1] of traits) p.line(x0, y0 + 1, x1, y1 + 1, RUNE[0])
-    p.line(x + 1.8 * k, y - 1.8 * k, x - 1.8 * k, y + 1 * k, RUNE[1])
-    p.line(x, y - 3 * k, x, y + 3 * k, RUNE[2])
-    p.rect(Math.round(x), Math.round(y - 3 * k), 1, 1, RUNE[3])
-    p.rect(Math.round(x + 1.8 * k), Math.round(y - 1.8 * k), 1, 1, RUNE[3])
+    const r = 2.4 * k
+    p.arc(x, y + 1, r, 1, 0.75, Math.PI * 2 - 0.75, RUNE[0])
+    p.line(x, y - 3.2 * k + 1, x, y + 3.2 * k + 1, RUNE[0])
+    p.arc(x, y, r, 1, 0.75, Math.PI * 2 - 0.75, RUNE[1])
+    p.line(x, y - 3.2 * k, x, y + 3.2 * k, RUNE[2])
+    p.rect(Math.round(x), Math.round(y - 3.2 * k), 1, 1, RUNE[3])
     p.glow(x, y, 4 * k, RUNE[2], 0.3)
   }
   /** Un nombre en grande police suivi du symbole des crédits, calé à droite sur x (ou centré). */
