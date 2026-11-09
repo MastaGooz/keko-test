@@ -678,6 +678,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // les flèches aux deux bouts, à la hauteur de la barre, la barre entre elles (Keko : la barre dépassait des boutons)
     panel(p, 19, y, W - 38, 13, ENCRE, { r: 2 })
     p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+    // les places occupées / portées, « 1/2 », juste à côté du titre OUTILS ou ARMES (Keko)
+    if (onglet === 'outil' || onglet === 'arme') p.text(`${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W / 2 + p.measure(NOMS_ONGLET[onglet], { font: 'big' })[0] / 2 + 5, y + 4, PEPITE[3])
     bouton(p, 4, y, 13, 13, '<', true, () => (onglet = ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
     bouton(p, W - 17, y, 13, 13, '>', true, () => (onglet = ONGLETS[(io + 1) % ONGLETS.length]))
     y += 15
@@ -740,8 +742,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE BOUTON, ENTRE LA LISTE ET LES STATS (Keko) : ACHETER (une tape paie ET équipe), EQUIPER, RETIRER, PLACES
     // PLEINES éteint, ou EQUIPE sans bouton
     const pc = pieceDe(choix[onglet]) ?? liste[0] ?? piecesDe(onglet)[0]
-    // les places occupées / portées, à droite de la ligne du bouton (Keko : « plutôt sur la ligne du bouton équiper »)
-    if (onglet === 'outil' || onglet === 'arme') p.text(`PLACES ${(onglet === 'outil' ? hangar.outils : hangar.armes).length}/${capacite(hangar, onglet)}`, W - 9, y + 4, PEPITE[3], { align: 'right' })
     // le bouton à la largeur de son mot, plus huit pixels de chaque côté (Keko : trop large pour « Équiper »)
     const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 16
     if (estMontee(hangar, pc.id)) {
