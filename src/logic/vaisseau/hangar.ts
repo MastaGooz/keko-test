@@ -229,10 +229,11 @@ export function jaugesDe(p: Piece): Jauge[] {
       { nom: 'Aimant', valeur: p.aimant ?? 1, max: maxF((q) => q.aimant ?? 1) },
     ]
   }
+  // une arme : cadence (coups par seconde), dégâts du coup, portée (Keko)
   const a = p.arme!
   return [
-    { nom: 'Degats/s', valeur: a.degats / a.cadence, max: max((q) => q.arme!.degats / q.arme!.cadence) },
-    { nom: 'Par coup', valeur: a.degats, max: max((q) => q.arme!.degats) },
+    { nom: 'Cadence', valeur: 1 / a.cadence, max: max((q) => 1 / q.arme!.cadence) },
+    { nom: 'Degats', valeur: a.degats, max: max((q) => q.arme!.degats) },
     { nom: 'Portee', valeur: a.portee, max: max((q) => q.arme!.portee) },
   ]
 }
