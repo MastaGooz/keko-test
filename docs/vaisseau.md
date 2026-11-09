@@ -494,8 +494,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   canon de la foreuse, acier riveté de la coque blindée, anneau cyan de la
   coque à bouclier, les armes sous les ailes (la première à gauche, la
   seconde à droite : canon, un fût ; mitrailleuse, deux ; missiles, une
-  nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau
-  EN BAS, au-dessus de « Décoller », s'il y en a un — le titre, puis EXTRAIT
+  nacelle à pointe rouge). Le bilan de la dernière expédition en bandeau EN
+  HAUT DE LA SCÈNE, à droite de la bande des onglets, AU HANGAR SEULEMENT,
+  s'il y en a un (en bas au-dessus de « Décoller » un temps — Keko) — le titre, puis EXTRAIT
   ou PERDU et les ressources de l'expédition avec leurs icônes, RIEN s'il
   n'y en a pas ; *pas le trésor total* (Keko) (en haut de la scène,
   il cachait la colonne des onglets et l'entrepôt — Keko).
