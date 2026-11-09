@@ -795,15 +795,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
     const gx = 54
-    // sous les jauges, en petit, ce qu'elles ne disent pas (Keko)
-    const note = pc.note === undefined ? [] : replier(p, pc.note, W - 12 - gx)
-    const hd = Math.max(50, 16 + jauges.length * 10 + (note.length > 0 ? note.length * 7 + 2 : 0) + 4)
+    // en bas, SOUS LES STATS ET L'IMAGE, sur toute la largeur, en petit : ce que les jauges ne disent pas (Keko)
+    const note = pc.note === undefined ? [] : replier(p, pc.note, W - 20)
+    const hh = Math.max(50, 16 + jauges.length * 10 + 4)
+    const hd = hh + (note.length > 0 ? note.length * 7 + 3 : 0)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
-    panel(p, 8, y + 4, 42, hd - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
-    dessinerLePictogramme(p, pc, 29, y + hd / 2, 42, hd - 8)
+    panel(p, 8, y + 4, 42, hh - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
+    dessinerLePictogramme(p, pc, 29, y + hh / 2, 42, hh - 8)
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
-    note.forEach((li, i) => p.text(li, gx, y + 16 + jauges.length * 10 + 1 + i * 7, COQUE[4]))
+    note.forEach((li, i) => p.text(li, W / 2, y + hh - 1 + i * 7, COQUE[4], { align: 'center' }))
     y += hd + 4
     }
     // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet
