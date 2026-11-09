@@ -523,13 +523,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLEntrepot(p: Peintre, y: number): number {
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
-    const L = replier(p, fiche.dit, W - 20)
-    const hp = 16 + L.length * 7 + 24 + 18
+    // la description tient TROIS LIGNES, toujours (Keko : « fixe la hauteur à trois lignes pour éviter le changement de
+    // taille quand on change de minerai »), et un peu d'air avant la valeur et le stock
+    const LIGNES = 3
+    const L = replier(p, fiche.dit, W - 20).slice(0, LIGNES)
+    const hp = 16 + LIGNES * 7 + 6 + 24 + 18
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
     dessinerUneRessource(p, 16, y + 8, k, 2)
     p.text(texteNu(fiche.nom), W / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
     L.forEach((li, i) => p.text(li, W / 2, y + 16 + i * 7, COQUE[5], { align: 'center' }))
-    const ly = y + 16 + L.length * 7 + 2
+    const ly = y + 16 + LIGNES * 7 + 6
     // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
     p.text('VALEUR LA PEPITE', 10, ly + 1, COQUE[4])
     nombreDeCredits(p, fiche.credits, W - 9, ly, PEPITE[3])

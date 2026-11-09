@@ -553,7 +553,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   minerai, de forme et de texture propres** (Keko) — le fer un caillou
   anguleux et mat, l'or une pépite en losange qui brille, le cristal une
   pointe à facettes qui pulse. Dessous, LA FICHE du minerai choisi
-  (`FICHES_MINERAI`, dans la règle) : son nom, deux lignes, SA VALEUR EN
+  (`FICHES_MINERAI`, dans la règle) : son nom, une description sur TROIS
+  LIGNES fixes (Keko : la hauteur ne change pas d'un minerai à l'autre),
+  un peu d'air, SA VALEUR EN
   CRÉDITS la pépite — **les crédits sont la monnaie du jeu** (Keko), gardés
   avec le trésor, avec LEUR SYMBOLE, une pièce d'or à éclat, à droite du
   nombre —, le stock, et VENDRE TOUT, qui change le stock en crédits
