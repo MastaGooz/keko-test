@@ -60,7 +60,7 @@ const prix = (fer: number, or = 0, cristal = 0): Cargaison => ({ fer, or, crista
  * Le catalogue. *Les prix et les chiffres sont de moi, à rejuger* : en fer pour commencer (une roche rend deux à sept
  * pépites), l'or et le cristal attendent les crans d'après.
  */
-export const PIECES: readonly Piece[] = [
+export const PIECES: Piece[] = [
   { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: prix(0) },
   { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: prix(12), poussee: 1.25, vitesseMax: 1.15, rotation: 1.1 },
   { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', prix: prix(30), poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
@@ -75,6 +75,21 @@ export const PIECES: readonly Piece[] = [
   { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', prix: prix(22), arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false } },
   { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', prix: prix(34), arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true } },
 ]
+
+/**
+ * DES PIÈCES D'ESSAI, pour voir le hangar quand il y en a beaucoup (Keko : « donne-moi plein de pièces de vaisseau pour
+ * test ») : douze propulseurs, six coques, huit foreuses et quatre radars, dix armes, aux chiffres tirés de leur rang.
+ * Ajoutées au catalogue par la page quand on le lui demande (`&pieces`), jamais d'office.
+ */
+export function ajouterLesPiecesDEssai(): void {
+  if (PIECES.some((p) => p.id.startsWith('essai-'))) return
+  const n = (i: number, a: number, b: number): number => a + ((i * 7919) % 100) * (b - a) / 100
+  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(5 + i * 3), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3) })
+  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Coque d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(8 + i * 4), pv: 3 + i, poids: n(i, 0.8, 1.5), bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2) })
+  for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(4 + i * 3), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4), aimant: n(i + 4, 0.8, 1.8) })
+  for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-radar-${i}`, sorte: 'outil', cran: 2, famille: 'radar', nom: `Radar d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(6 + i * 4), radar: 200 + i * 150 })
+  for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: prix(6 + i * 3), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false } })
+}
 
 /** Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les outils et les armes montés (dans l'ordre : la première arme à gauche). */
 export type Hangar = { possedees: string[]; montees: Record<Emplacement, string>; outils: string[]; armes: string[] }

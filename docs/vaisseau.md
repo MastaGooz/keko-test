@@ -558,7 +558,10 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   écritures d'avant, le jour même : des boutons HTML (refusés : « plus un
   seul élément non pixel »), puis des flèches pour feuilleter une pièce à la
   fois (refusées : « un vrai interface qui affiche toutes les pièces »).*
-  `&tresor=N` pose N fer de trésor pour essayer les achats d'un lien.
+  `&tresor=N` pose N fer de
+  trésor pour essayer les achats d'un lien ; `&pieces` ajoute au catalogue
+  des dizaines de pièces d'essai (`ajouterLesPiecesDEssai`), pour voir le
+  hangar quand il y en a beaucoup (Keko) — jamais d'office.
 - **L'ENTREPÔT et la bande des ressources** (Keko : « un affichage plus
   travaillé qu'une ligne de texte pour les ressources, on en aura beaucoup à
   l'avenir (tiers) ; un onglet entrepôt à côté du hangar avec inventaire ;

@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, armesMontees, capacite, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -115,6 +115,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * différentes pièces qu'il possède ») : les pièces possédées et montées, et le TRÉSOR des expéditions achevées, gardés
    * sur l'appareil (`ui/vaisseau/hangar.ts`). `&tresor=N` pose N fer de trésor, pour essayer les achats d'un lien.
    */
+  /** `&pieces` : des dizaines de pièces d'essai dans le catalogue, pour voir le hangar quand il y en a beaucoup (Keko). */
+  if (parametres.has('pieces')) ajouterLesPiecesDEssai()
   let { hangar, tresor, credits } = chargerHangar()
   const sauver = (): void => sauverHangar(hangar, tresor, credits)
   if (parametres.has('tresor')) {
@@ -396,8 +398,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       q.dot(0, 0, Math.sin(t * 6) > 0 ? RUNE[2] : RUNE[1])
       q.glow(0, 0, 6, RUNE[2], 0.3)
     } else {
-      const arme = pc.arme!.id
-      q.poly([[-4, -4], [2, -4], [2, 4], [-4, 4]], COQUE[3])
+      const arme = pc.arme!.id // (pas d'aile dessous : certains vaisseaux n'en auront pas — Keko)
       if (arme === 'canon') {
         q.line(-3, 0, 5, 0, COQUE[2])
         q.dot(5, 0, COQUE[5])
