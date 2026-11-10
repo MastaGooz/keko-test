@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, piecesDe, possede, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -243,9 +243,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes, lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; armes: string[]; bouclier: number }
-  const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, armes: [], bouclier: 0 }
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, armes: armesMontees(hangar).map((pc) => pc.arme!.id), bouclier })
+  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number }
+  const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: armesMontees(hangar).map((pc) => pc.arme!.id), bouclier })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
@@ -254,7 +254,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
   const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'COQUE', outil: 'OUTILS', arme: 'ARMES' }
   /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
-  const NOMS_FAMILLE: Record<string, string> = { foreuse: 'FOREUSES', radar: 'RADARS' }
+  const NOMS_FAMILLE: Record<string, string> = { foreuse: 'FOREUSES', aimant: 'AIMANTS', radar: 'RADARS' }
   const famillesDe = (o: Sorte): string[] => [...new Set(piecesDe(o).map((pc) => pc.famille).filter((f): f is string => f !== undefined))]
   const sousCategorie: Record<Sorte, string | null> = { propulseur: null, coque: null, outil: null, arme: null }
   /** La liste visible d'une catégorie : ses pièces, ou celles de la sous-catégorie choisie. */
@@ -398,6 +398,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (cf >= 2) q.line(0.5, 0, -1 + canon - 1, 0, COQUE[4])
       q.dot(-1 + canon, 0, LASER[3])
       q.glow(-1 + canon, 0, 4, LASER[3], 0.5)
+    } else if (pc.sorte === 'outil' && pc.famille === 'aimant') {
+      // l'aimant : un fer à cheval rouge aux pointes d'acier, plus grand au second cran, qui attire des étincelles
+      const r = 2.6 + 0.6 * (pc.cran - 2)
+      // (le peintre agrandi ne sait pas `arc` : le demi-cercle en segments)
+      for (let i = 0; i < 8; i++) {
+        const a0 = Math.PI / 2 + (i / 8) * Math.PI
+        const a1 = Math.PI / 2 + ((i + 1) / 8) * Math.PI
+        q.line(Math.cos(a0) * r, Math.sin(a0) * r, Math.cos(a1) * r, Math.sin(a1) * r, ROUGE[3])
+      }
+      q.line(0, -r, 3, -r, ROUGE[3])
+      q.line(0, r, 3, r, ROUGE[3])
+      q.line(3, -r, 4.5, -r, COQUE[5])
+      q.line(3, r, 4.5, r, COQUE[5])
+      const a = (t * 3) % 1
+      q.dot(6 - a * 2, -r + a * r, PEPITE[3], 1 - a)
+      q.dot(6 - a * 2, r - a * r, PEPITE[3], 1 - a)
     } else if (pc.sorte === 'outil') {
       const ar = t * 4
       q.circle(0, 0, 1.6, COQUE[1])
@@ -696,7 +712,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * le trésor ; quatre onglets (propulseur, coque, foreuse, armes) ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une
    * ligne chacune — le nom, et à droite MONTEE, POSSEDEE ou le prix (doré si le trésor y suffit) —, la choisie
    * surlignée d'un chevron ; puis LE PANNEAU DE DESCRIPTION : le nom, SES JAUGES (`jaugesDe` : accélération, vitesse,
-   * maniabilité ; blindage, bouclier, armes, poids ; forage, portée, aimant ; dégâts par seconde, par coup, portée —
+   * maniabilité ; blindage, bouclier, armes, poids ; forage, portée ; attraction ; dégâts par seconde, par coup, portée —
    * la barre pleine au plus du catalogue, le poids en rouge, et un repère blanc à la valeur de la pièce montée, pour
    * comparer), et le bouton qui va avec : ACHETER (une tape paie ET monte), MONTER, DEMONTER (une arme), COQUE PLEINE
    * éteint, ou MONTEE sans bouton. « Décoller » en bas, la date du build tout en bas. Tout se sauve à chaque geste.
@@ -1066,6 +1082,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.dot(-1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, tire ? LASER[5] : LASER[2])
     }
     // le radar : un mât à l'arrière du toit et une antenne qui tourne, un point vert qui bat
+    // l'aimant : un petit fer à cheval rouge à l'arrière du toit
+    if (allure.aimant) {
+      p.line(-4.5, -1.5, -3, -1.5, ROUGE[3])
+      p.line(-4.5, 1.5, -3, 1.5, ROUGE[3])
+      p.line(-4.5, -1.5, -4.5, 1.5, ROUGE[3])
+    }
     if (allure.radar) {
       const ar = t * 4
       p.dot(-4.5, 0, coque[1])

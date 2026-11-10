@@ -654,6 +654,17 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## L'aimant devient un outil (Keko, 10/11 : « enlever l'aimant des stats des foreuses, car il faut toujours avoir un effet d'aimant ; plutôt un outil "aimant" qui augmente la puissance de l'aimant »)
+
+- **Les foreuses ne portent plus que le débit et la portée.** Le vaisseau
+  attire TOUJOURS les pépites, à la portée de série (44), foreuse ou pas.
+- **Deux aimants dans les outils** (une famille, une puce AIMANTS) : Aimant
+  24 crédits, 3 T, ×1,6 ; Grand aimant 50 crédits, 5 T, ×2,2 — *de moi, à
+  rejuger*. Le plus fort monté compte (`aimantMonte`). Une jauge
+  « Attraction ». Il prend une place d'outil : sur la coque de série, c'est
+  la foreuse OU l'aimant ; la coque à bouclier porte les deux. Sur le
+  vaisseau, un petit fer à cheval rouge à l'arrière du toit.
+
 ## Le labo et la cible (Keko, 10/11 : « on n'affiche plus dans le hangar les pièces non possédées : on ajoute un onglet labo où le joueur va débloquer les nouvelles pièces » ; « dessiner une cible, un rectangle vert avec juste les angles, autour de la zone du vaisseau où la pièce va »)
 
 - **Trois vues dans la colonne** : HANGAR, LABO, ENTREPOT. LE LABO a le même

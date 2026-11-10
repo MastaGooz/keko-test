@@ -11,7 +11,7 @@ function verifier(quoi: string, vrai: boolean): void {
 }
 
 console.log('hangar')
-verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === 3 && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix === 0) && piecesDe('outil').length === 4 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}`))
+verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses, deux aimants et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === 3 && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix === 0) && piecesDe('outil').length === 6 && piecesDe('outil').filter((p) => p.famille === 'aimant').length === 2 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}`))
 const neuf = hangarNeuf()
 verifier('un hangar neuf : les pièces de série montées, la foreuse de série en outil, pas d’arme ; la coque de série porte un outil et une arme', neuf.possedees.length === 3 && EMPLACEMENTS.every((e) => monteeA(neuf, e).cran === 1) && neuf.outils.join(',') === 'foreuse-1' && neuf.armes.length === 0 && capacite(neuf, 'outil') === 1 && capacite(neuf, 'arme') === 1)
 const pauvre = 5
@@ -76,7 +76,9 @@ for (let i = 0; i < 120; i++) {
 }
 verifier('poussé deux secondes, le vaisseau renforcé est plus loin que celui de série', renforce.vaisseau.x > serie.vaisseau.x * 1.1)
 const longue = configDuHangar(C, achete(neuf, 'foreuse-3'))
-verifier('la foreuse longue, montée à la place de celle de série : débit ×1,8, portée ×1,25, aimant ×1,6 ; le forage partagé reste de série', longue.foreuse.debit === 1.8 && longue.foreuse.portee === 1.25 && longue.foreuse.aimant === 1.6 && longue.forage.portee === C.forage.portee && longue.forage.aimant === C.forage.aimant)
+const aimante = configDuHangar(C, monter(demonter(acheter(neuf, RICHE, 'aimant-1')!.hangar, 'foreuse-1'), 'aimant-1'))
+verifier('l’aimant est un outil (Keko) : la foreuse ne touche plus à l’aimant ; l’aimant monté le porte ×1,6, sans foreuse on ne creuse pas mais on attire', longue.foreuse.aimant === 1 && aimante.foreuse.aimant === 1.6 && aimante.foreuse.debit === 0)
+verifier('la foreuse longue, montée à la place de celle de série : débit ×1,8, portée ×1,25 ; le forage partagé reste de série', longue.foreuse.debit === 1.8 && longue.foreuse.portee === 1.25 && longue.forage.portee === C.forage.portee && longue.forage.aimant === C.forage.aimant)
 
 const relu = lireHangar({ possedees: ['foreuse-2', 'inconnue', 42, 'propulseur-3', 'arme-canon', 'arme-rafale', 'arme-missiles'], montees: { propulseur: 'propulseur-3', coque: 'coque-3' }, outils: ['foreuse-2', 'radar'], armes: ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-missiles', 'propulseur-3'] })
 verifier('relu : les inconnues tombent, les séries restent, la coque 3 non possédée redevient de série, les listes bornées à la coque de série, sans doublon ni pièce non possédée', relu.possedees.length === 8 && !relu.possedees.includes('inconnue') && monteeA(relu, 'propulseur').cran === 3 && monteeA(relu, 'coque').cran === 1 && relu.outils.join(',') === 'foreuse-2' && relu.armes.join(',') === 'arme-canon')

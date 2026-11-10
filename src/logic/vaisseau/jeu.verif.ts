@@ -209,15 +209,15 @@ for (let i = 0; i < 60; i++) {
 const gs = avancer(C, { ...vs, vx: 60, vy: 0 }, 2, { x: 0, y: 0 }).vaisseau
 const gl = avancer(lourde, { ...vl, vx: 60, vy: 0 }, 2, { x: 0, y: 0 }).vaisseau
 verifier('la coque blindée a plus de points, accélère moins et glisse plus', lourde.coque === 8 && vl.vx < vs.vx * 0.9 && gl.vx > gs.vx)
-// L'AIMANT suit la foreuse : une pépite hors de portée de série vient avec la foreuse à long faisceau
-const longue = armer('foreuse-3')
+// L'AIMANT est un outil (Keko) : une pépite hors de portée de série vient avec le grand aimant (sur la coque à deux outils)
+const longue = armer('coque-3', 'aimant-2')
 const aimante = (cfg: ConfigVaisseau) => {
   const w = nouveauMonde(cfg)
   w.pepites.push({ id: 99, x: 60, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer' })
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   return w.pepites.length === 0 ? -1 : w.pepites[0].x
 }
-verifier('à 60 unités, la pépite ne bouge pas pour la foreuse de série et vient avec la longue', aimante(C) > 59 && aimante(longue) < 40)
+verifier('à 60 unités, la pépite ne bouge pas de série et vient avec le grand aimant', aimante(C) > 59 && aimante(longue) < 40)
 // LES CHOCS FONT MAL : lancé à pleine vitesse sur une petite roche, le joueur perd de la coque et la roche éclate
 const petite = autour.filter((r) => r.rayon < 7).sort((r1, r2) => r1.rayon - r2.rayon)[0]
 const k = nouveauMonde()
