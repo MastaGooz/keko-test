@@ -6,6 +6,15 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Le châssis a ses ailes (Keko, 10/11 : « dommage que le châssis ne dessine pas les ailes : il doit inclure tout ce qui ne fait pas partie des autres pièces — les emplacements d'armes sont sur les ailes, donc bien une partie du châssis »)
+
+- **Le pictogramme d'un châssis est la coque ET les ailes** (`formesDuChassis` dans `rendu-vaisseau.ts`) : sa carte du
+  hangar, sa fiche, la pièce qui s'envole à l'achat. Sur le vaisseau les deux restent des couches séparées (les armes
+  et la tuyère passent entre l'aile et la coque). Les ailes sont les mêmes aux trois crans.
+- **La cible verte du châssis encadre tout le vaisseau**, ailes comprises (`zonesDe('coque')`) ; à la vue d'ensemble
+  sa zone touchable s'élargit d'autant, mais elle reste LA DERNIÈRE : la tuyère, l'outil et les armes, posées avant,
+  gardent leur tape.
+
 ## L'étiquette du poids, écrite comme une ligne de fiche (Keko, 10/11 : « la différence de police / taille entre le mot "poids" et le chiffre rend bizarre, ça casse la cohérence »)
 
 - Le mot était en petites capitales du dépôt (`mini`), le nombre dans notre gras : deux polices, deux hauteurs, deux

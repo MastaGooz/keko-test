@@ -311,6 +311,14 @@ export function formesDesAiles(): Forme[] {
   }
   return f
 }
+/**
+ * LE CHÂSSIS ENTIER d'un cran, pour son pictogramme : la coque ET les ailes (Keko, 10/11 : « le châssis doit inclure
+ * tout ce qui ne fait pas partie des autres pièces — les emplacements d'armes sont sur les ailes, donc bien une partie
+ * du châssis »). Sur le vaisseau, les deux restent séparées : les armes et la tuyère passent entre l'aile et la coque.
+ */
+export function formesDuChassis(cran: number): Forme[] {
+  return [...formesDesAiles(), ...formesDeLaCoque(cran)]
+}
 /** LA TUYÈRE d'un cran de propulseur, et sa flamme (longue de 0 à 1). */
 export function formesDuPropulseur(cran: number, flamme: number, t: number): Forme[] {
   const tu = 1.8 + 0.5 * (cran - 1)
