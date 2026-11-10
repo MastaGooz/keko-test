@@ -300,8 +300,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let etape: 'vaisseau' | 'liste' = 'vaisseau'
   /** LA VUE : le hangar (les pièces) ou L'ENTREPÔT (l'inventaire des ressources — Keko : « on en aura beaucoup à l'avenir »). */
-  let vue: 'hangar' | 'labo' | 'entrepot' = 'hangar'
-  const NOMS_VUE = { hangar: 'HANGAR', labo: 'LABO', entrepot: 'ENTREPOT' } as const
+  let vue: string = 'hangar'
+  /**
+   * LES VUES de la colonne : les trois vraies, puis, avec `&onglets=N` (Keko : « fais un test avec 10 onglets »), des
+   * ONGLETS D'ESSAI jusqu'à N en tout — une icône, un nom, une scène vide —, pour juger la colonne quand elle se remplit.
+   */
+  const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge']
+  const VUES: string[] = ['hangar', 'labo', 'entrepot', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 3)))]
+  const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
+  const NOMS_VUE: Record<string, string> = { hangar: 'HANGAR', labo: 'LABO', entrepot: 'ENTREPOT', carte: 'CARTE', atelier: 'ATELIER', marche: 'MARCHE', equipage: 'EQUIPAGE', missions: 'MISSIONS', journal: 'JOURNAL', trophees: 'TROPHEES', radio: 'RADIO', forge: 'FORGE' }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
@@ -643,7 +650,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(BANDE, 0, W - BANDE, hautScene, PLAN)
       for (let x = BANDE + 12; x < W; x += 12) p.line(x, 0, x, hautScene - 1, N.hex('#0f2034'))
       for (let y = 12; y < hautScene; y += 12) p.line(BANDE, y, W - 1, y, N.hex('#0f2034'))
-    } else {
+    } else if (vue === 'entrepot') {
       // LE FOND DE L'ENTREPÔT (Keko : « un autre fond pour l'inventaire, pas le fond du hangar », puis « on dirait un
       // autre grid derrière, très peu lisible ») : un mur uni d'acier verdâtre, quelques mouchetures, rien qui fasse
       // des lignes sous la grille
@@ -727,7 +734,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (vue === 'labo') {
       // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
       // (les crédits totaux sont passés sous le titre de la vue d'ensemble, là où le hangar met son poids — Keko)
-    } else {
+    } else if (vue === 'entrepot') {
       // (les crédits totaux sont sous le titre MATERIAUX, comme au labo — Keko)
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
@@ -755,10 +762,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // LES ONGLETS EN COLONNE, à gauche de la scène (Keko : « en colonne sur la gauche de l'écran, qui est inutilisé ») :
     // HANGAR, ENTREPOT, l'actif en or ; la scène montre l'un ou l'autre
-    const vues = ['hangar', 'labo', 'entrepot'] as const
+    const vues = VUES
     // LA COLONNE EN VALEUR (Keko : « les boutons onglet sont très petits et un peu moches ») : des onglets hauts, une
     // icône dessinée au-dessus du nom — le vaisseau, la fiole, la caisse —, l'actif en or, sa pointe vers la scène
-    vues.forEach((vv, i) => {
+    // AU-DELÀ DE QUATRE, UNE GRILLE D'ICÔNES (deux colonnes, sans nom : le titre de la vue dit où l'on est) — la
+    // colonne tient ainsi une dizaine d'onglets et plus, sans défiler ni rapetisser les grands
+    if (vues.length > 4) vues.forEach((vv, i) => {
+      const s = 22
+      const x = 3 + (i % 2) * (s + 2)
+      const y = 4 + Math.floor(i / 2) * (s + 2)
+      const actif = vue === vv
+      panel(p, x, y, s, s, actif ? ENCRE_OR : ENCRE, { r: 2 })
+      dessinerLIconeDeVue(p, vv, x + s / 2, y + s / 2, actif)
+      if (!actif) zones.push({ x, y, w: s, h: s, action: () => ((vue = vv), (etape = 'vaisseau')) })
+    })
+    else vues.forEach((vv, i) => {
       const w = 44
       const h = 32
       const y = 4 + i * (h + 4)
@@ -835,7 +853,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /** LA LIGNE SOUS UN TITRE (le poids total, les crédits) : le mot et le nombre en grande police, centrés, l'icône des crédits s'il le faut — la petite police, essayée, a été retirée (Keko). */
   /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, la FIOLE du labo et son liquide vert, la CAISSE de l'entrepôt. */
-  function dessinerLIconeDeVue(p: Peintre, vv: 'hangar' | 'labo' | 'entrepot', x0: number, y0: number, actif: boolean): void {
+  function dessinerLIconeDeVue(p: Peintre, vv: string, x0: number, y0: number, actif: boolean): void {
     const x = Math.round(x0)
     const y = Math.round(y0)
     const a = 1 // (opaques toujours : à demi transparentes, elles sortaient tramées — l'onglet éteint se lit à son nom et sa plaque)
@@ -854,7 +872,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.poly([[x - 2.5, y + 1], [x + 3.5, y + 1], [x + 5, y + 5], [x - 4, y + 5]], RUNE[2], a)
       p.rect(x - 2, y + 2, 1, 1, RUNE[3], a)
       p.rect(x + 1, y - 4 - Math.round((t * 4) % 3), 1, 1, RUNE[3], actif ? 1 : 0)
-    } else {
+    } else if (estEssai(vv)) dessinerUneIconeDEssai(p, vv, x, y, OMBRE)
+    else {
       const B = [N.hex('#3a2410'), N.hex('#7a4f24'), N.hex('#a8743a'), N.hex('#d8a865')]
       p.rect(x - 6, y - 5, 13, 11, OMBRE, a)
       p.rect(x - 5, y - 4, 11, 9, B[2], a)
@@ -862,6 +881,51 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 5, y, 11, 1, B[1], a)
       p.line(x - 4, y - 3, x + 4, y + 3, B[1], a)
       p.rect(x - 5, y + 4, 11, 1, B[0], a)
+    }
+  }
+  /** Les icônes des onglets d'essai (`&onglets=N`), une douzaine de pixels chacune, centrées sur (x, y). */
+  function dessinerUneIconeDEssai(p: Peintre, vv: string, x: number, y: number, OMBRE: number): void {
+    const ROUGE_ = N.hex('#d8483a')
+    if (vv === 'carte') {
+      p.rect(x - 6, y - 5, 13, 11, OMBRE)
+      for (let k = 0; k < 3; k++) p.rect(x - 5 + k * 4, y - 4 + (k % 2), 4, 8, k % 2 ? N.hex('#c9b27a') : N.hex('#e6d39c'))
+      p.rect(x + 1, y - 1, 2, 2, ROUGE_)
+    } else if (vv === 'atelier') {
+      for (let e = -1; e <= 1; e++) p.line(x - 5 + e, y + 5, x + 3 + e, y - 3, COQUE[4])
+      p.rect(x + 1, y - 6, 5, 5, COQUE[5])
+      p.rect(x + 3, y - 6, 2, 2, OMBRE)
+    } else if (vv === 'marche') {
+      p.poly([[x - 3, y - 6], [x + 3, y - 6], [x + 6, y - 3], [x + 6, y + 3], [x + 3, y + 6], [x - 3, y + 6], [x - 6, y + 3], [x - 6, y - 3]], OMBRE)
+      p.poly([[x - 2, y - 5], [x + 2, y - 5], [x + 5, y - 2], [x + 5, y + 2], [x + 2, y + 5], [x - 2, y + 5], [x - 5, y + 2], [x - 5, y - 2]], PEPITE[2])
+      p.rect(x - 1, y - 3, 2, 6, PEPITE[3])
+    } else if (vv === 'equipage') {
+      p.rect(x - 3, y - 7, 6, 6, OMBRE)
+      p.rect(x - 2, y - 6, 4, 4, N.hex('#e8b48a'))
+      p.poly([[x - 6, y + 6], [x - 4, y], [x + 4, y], [x + 6, y + 6]], N.hex('#3f6fb0'))
+    } else if (vv === 'missions') {
+      p.line(x - 4, y - 6, x - 4, y + 6, COQUE[5])
+      p.poly([[x - 3, y - 6], [x + 6, y - 3], [x - 3, y]], ROUGE_)
+    } else if (vv === 'journal') {
+      p.rect(x - 5, y - 6, 11, 12, OMBRE)
+      p.rect(x - 4, y - 5, 9, 10, N.hex('#5a3a8a'))
+      p.rect(x - 4, y - 5, 2, 10, N.hex('#3a2460'))
+      p.rect(x, y - 2, 4, 1, PEPITE[2])
+    } else if (vv === 'trophees') {
+      p.poly([[x - 5, y - 6], [x + 5, y - 6], [x + 3, y], [x - 3, y]], PEPITE[2])
+      p.rect(x - 1, y, 2, 4, PEPITE[1])
+      p.rect(x - 4, y + 4, 8, 2, PEPITE[1])
+      p.rect(x - 3, y - 5, 2, 3, PEPITE[3])
+    } else if (vv === 'radio') {
+      p.line(x, y - 2, x, y + 6, COQUE[4])
+      p.rect(x - 1, y - 3, 2, 2, RUNE[2])
+      for (const r of [3, 6]) {
+        p.line(x - r, y - 2 - r, x - r, y - 2 + r, RUNE[2])
+        p.line(x + r, y - 2 - r, x + r, y - 2 + r, RUNE[2])
+      }
+    } else {
+      p.rect(x - 6, y + 2, 12, 4, COQUE[3])
+      p.rect(x - 3, y - 1, 6, 3, COQUE[4])
+      p.rect(x - 1, y - 6, 2, 4, N.hex('#ff8a2a'))
     }
   }
   function ligneSousLeTitre(p: Peintre, y: number, mot: string, val: string, credit: boolean): void {
@@ -926,7 +990,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     let y = hautScene + 4
     zoneGlissante = null
-    if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
+    if (estEssai(vue)) {
+      titreEnTete(p, 4, y, W - 8, NOMS_VUE[vue])
+      p.text("ONGLET D'ESSAI", W / 2, y + HT + 6, COQUE[3], { align: 'center' })
+      y += HT + 16
+    } else if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
     else if (etape === 'vaisseau') {
       // LE TITRE DE LA VUE D'ENSEMBLE (Keko : « mettre un titre, équipement du vaisseau »), dans la plaque de l'en-tête
       // des emplacements, sur toute la largeur

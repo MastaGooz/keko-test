@@ -683,6 +683,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   LA COLONNE DES ONGLETS (Keko : « très petits et un peu moches ») : des onglets
   hauts, une icône dessinée au-dessus du nom (le vaisseau, la fiole, la caisse),
   l'actif en or avec un reflet qui passe et une pointe vers la scène.
+  QUAND LES ONGLETS SE MULTIPLIENT (Keko : « comment on fera quand il y aura plus
+  d'onglets ? », puis « fais un test avec 10 ») : jusqu'à quatre, les grands
+  onglets ; au-delà, UNE GRILLE D'ICÔNES de deux colonnes, sans nom (le titre de
+  la vue dit où l'on est), l'actif en or — une douzaine tiennent dans la bande.
+  `&onglets=N` ajoute des onglets d'essai jusqu'à N (12 au plus) : une icône, un
+  nom, une scène vide.
   La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
   Une seule flèche « < », à gauche de l'en-tête, ramène à la vue d'ensemble
