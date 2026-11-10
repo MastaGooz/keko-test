@@ -6,6 +6,45 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## L'arrivée et la charge de l'extraction ont leur son (Keko, 10/11 : « tu as oublié le son pour le spawn du vaisseau ainsi que celui quand l'extracteur se charge (quand le joueur est dedans et que le cercle se remplit) »)
+
+Deux moments n'avaient JAMAIS eu de son, pas même du temps de ZzFX : la matérialisation du vaisseau au début d'une
+expédition, et les dix secondes du compte à quai. Les deux sont composés dans la famille des autres (ré majeur
+pentatonique, sinus, souffle filtré, réverbération).
+
+- **L'arrivée** (`arrive`, une recette de `synthe.ts`, 2 s) : pendant la spirale, un souffle en bande (400 → 2 600 Hz)
+  et une note (ré4 → ré5) qui montent en s'enflant ; un creux de 60 ms (le point de lumière) ; puis L'ÉCLOSION — une
+  quinte de clochettes (la5, ré6) sur un appui rond, une étincelle de verre. *On arrive comme on repart* : les mêmes
+  clochettes que l'extraction, en plus court. **L'éclosion tombe sur l'image où le vaisseau paraît, par le calcul** :
+  le son dit son instant (`ECLOSION_DE_L_ARRIVEE`, 0,66 s), l'effet dit le sien (`ARRIVE_A`, 0,68 s), et la page fait
+  partir le son `ARRIVE_A − ECLOSION` plus tard, sur l'horloge audio (`jouer(son, ou, dans)`). *Deux endroits qui
+  décrivent la même valeur se désaccordent au premier réglage* : aucun des deux nombres n'est recopié.
+- **La charge** (`voixDeCharge` dans `sons.ts`, une troisième voix continue à côté du propulseur et de la foreuse) :
+  une note ronde (six harmoniques en sinus, le deuxième devant, deux oscillateurs à cinq cents d'écart) qui **monte
+  d'une octave avec l'arc d'or**, ré3 → ré4 — elle arrive sur la nappe (ré4) et la première clochette (ré5, son
+  deuxième harmonique) du son de l'extraction, qui prend sa suite. Son passe-bas s'ouvre (600 → 2 400 Hz), son trémolo
+  presse le pas (3 → 9 Hz), son volume double. **Hors du parvis le compte redescend, la note aussi, à mi-voix** ; à
+  zéro elle se tait. Au bout du compte elle se tait SUR sa note (sans retomber), et un compte qui commence pose sa
+  note pendant que la voix est muette (sans glisser). `regler(poussee, creuse, compte, monte)` : la page lit le sens
+  du compte dans le compte lui-même (`compteVu`), elle ne redit pas la règle du parvis. *C'est la fréquence d'un
+  oscillateur qui glisse, pas un `playbackRate`.*
+
+`&sons=arcade` : ces deux sons n'ont pas d'ancienne version, ils restent composés (`ancienDe`).
+
+### Mesuré
+
+- `arrive` (crête 0,5) : −16,2 dB(A), 1,4 dB sous l'extraction, 2,3 sous le décollage qui le précède ; la montée
+  culmine à −20 dB, l'éclosion à −15 ; 94 % de l'énergie au-dessus de 250 Hz ; bords à zéro ; 61 ms de calcul sur le PC
+  (dans le Worker, après les sons de la base).
+- La charge contre la foreuse (calcul harmonique par harmonique) : au pondéré A, de −7,6 dB au début du compte à
+  +1,6 dB à la fin ; au « téléphone », de −5,4 à +5,8 dB (gain `0,16 × (0,5 + 0,5 u)`).
+- À la sonde (Chrome sans tête, `&quai`) : le son part 20 ms après la matérialisation ; l'oscillateur passe par 162,
+  200, 246 puis 293 Hz, le gain monte de 0,027 à 0,046, puis tombe à zéro quand le son de l'extraction part.
+
+*À juger par Keko* (je n'entends pas) : le timbre des deux ; le niveau de la charge (dix secondes, c'est long : `0.16`
+dans `regler`) ; si la montée d'une octave est trop, ou pas assez ; si l'arrivée couvre trop la queue du décollage.
+
+
 ## Les places sont fixes, et la même pièce se monte à plusieurs (Keko, 10/11 : « quand mon slot arme 1 est vide et que j'équipe une arme sur le slot 2, elle va dans le slot 1. Je voudrais que le joueur puisse choisir où va quelle arme. Et qu'il puisse mettre la même arme sur les deux slots d'armes du moment qu'il l'a débloquée. Pareil pour les outils (même s'il serait stupide de mettre deux radars, le joueur a le choix) »)
 
 Les cases « Arme 1 / Arme 2 / Outil 1 / Outil 2 » existaient à l'écran, mais dessous la liste était DENSE et sans

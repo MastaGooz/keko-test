@@ -6,9 +6,10 @@
 // jeu : tout passe dans un try. Les réglages sont de moi, MESURÉS (niveaux, spectre) mais pas écoutés : à juger à
 // l'oreille.
 import { ZZFX } from 'zzfx'
-import { NOMS_DES_SONS, synthetiser, variantesDe, type Son } from './synthe.ts'
+import { ECLOSION_DE_L_ARRIVEE, NOMS_DES_SONS, synthetiser, variantesDe, type Son } from './synthe.ts'
 
 export type { Son }
+export { ECLOSION_DE_L_ARRIVEE }
 
 /** `&sons=arcade` : les sons d'avant, ceux de ZzFX, et l'ancienne voix de la foreuse. */
 const ARCADE = new URLSearchParams(location.search).get('sons') === 'arcade'
@@ -60,7 +61,11 @@ const SONS_ARCADE = {
   refus: [0.35, 0, 130, 0, 0.06, 0.12, 2, 1, , , , , 0.04],
   /** le décollage : un grondement qui monte */
   decolle: [0.7, 0.1, 70, 0.05, 0.45, 0.5, 4, 1, 5, , , , , 1.2],
-} satisfies Record<Son, Parametres>
+} satisfies Partial<Record<Son, Parametres>>
+/** La ligne ZzFX d'un son, s'il en avait une : les sons nés après le synthé (l'arrivée) n'en ont pas, et restent composés. */
+function ancienDe(son: Son): Parametres | undefined {
+  return ARCADE ? (SONS_ARCADE as Partial<Record<Son, Parametres>>)[son] : undefined
+}
 
 /**
  * LE CONTEXTE AU PLUS COURT (Keko : « encore un petit décalage, le son de collision arrive avec une petite latence ») :
@@ -104,8 +109,9 @@ function ranger(son: Son, variante: number, g: Float32Array, d: Float32Array): A
 function tampon(son: Son, variante: number): AudioBuffer {
   const pret = tampons.get(`${son}:${variante}`)
   if (pret !== undefined) return pret
-  if (ARCADE) {
-    const echantillons = ZZFX.buildSamples(...(SONS_ARCADE[son] as Parametres)) as number[]
+  const ancien = ancienDe(son)
+  if (ancien !== undefined) {
+    const echantillons = ZZFX.buildSamples(...ancien) as number[]
     const b = ZZFX.audioContext.createBuffer(1, echantillons.length, ZZFX.sampleRate)
     b.getChannelData(0).set(echantillons)
     tampons.set(`${son}:${variante}`, b)
@@ -178,9 +184,10 @@ const PORTEE = 320
 /**
  * Joue un son (rien si le contexte dort encore). LE SON DANS L'ESPACE (Keko : « j'entends l'ennemi détruire des
  * rochers comme si j'étais à côté ») : passé `ou`, l'écart au vaisseau, le volume tombe avec la distance (au carré,
- * muet à `PORTEE`) et le son glisse à gauche ou à droite selon l'écart horizontal.
+ * muet à `PORTEE`) et le son glisse à gauche ou à droite selon l'écart horizontal. `dans` : le son part dans tant de
+ * secondes, sur l'horloge audio (pour tomber sur une image qui n'est pas encore là).
  */
-export function jouer(son: Son, ou?: { dx: number; dy: number }): void {
+export function jouer(son: Son, ou?: { dx: number; dy: number }, dans = 0): void {
   try {
     if (ZZFX.audioContext.state !== 'running') return
     let volume = 1
@@ -195,9 +202,9 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }): void {
     const source = ctx.createBufferSource()
     source.buffer = tampon(son, varianteSuivante(son, ctx.currentTime))
     const gain = ctx.createGain()
-    gain.gain.value = (ARCADE ? ZZFX.volume : VOLUME) * volume
+    gain.gain.value = (ancienDe(son) === undefined ? VOLUME : ZZFX.volume) * volume
     source.connect(new StereoPannerNode(ctx, { pan })).connect(gain).connect(ctx.destination)
-    source.start()
+    source.start(ctx.currentTime + dans)
   } catch {
     // un son raté ne casse rien
   }
@@ -207,11 +214,13 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }): void {
  * LES SONS CONTINUS (Keko : « un son pour la foreuse, et un bruit de propulsion quand on avance ») : deux voix qui
  * tournent en permanence, muettes, dont on règle le volume à chaque image — LE PROPULSEUR, un souffle (du bruit
  * filtré bas, qui s'ouvre et monte avec la poussée), LA FOREUSE, un bourdon (voir `voixDeForage`). Elles naissent au premier réglage après le réveil du contexte ; le volume
- * glisse (`setTargetAtTime`) pour ne jamais claquer.
+ * glisse (`setTargetAtTime`) pour ne jamais claquer. Et LA CHARGE de l'extraction (voir `voixDeCharge`).
  */
 type Voix = { gain: GainNode; filtre?: BiquadFilterNode }
 let propulsion: Voix | null = null
 let forage: Voix | null = null
+let charge: (Voix & { notes: OscillatorNode[]; lfo: OscillatorNode }) | null = null
+let chargeMuette = true
 
 function voixDePropulsion(ctx: AudioContext): Voix {
   // une seconde de bruit blanc, en boucle
@@ -279,19 +288,79 @@ function voixDeForage(ctx: AudioContext): Voix {
   return { gain, filtre }
 }
 
-/** Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), et si la foreuse creuse. */
-export function regler(poussee: number, creuse: boolean): void {
+/**
+ * LA CHARGE DE L'EXTRACTION (Keko : « quand l'extracteur se charge, quand le joueur est dedans et que le cercle se
+ * remplit ») : une note ronde qui MONTE avec l'arc d'or — des harmoniques en sinus, le deuxième devant, deux
+ * oscillateurs à cinq cents d'écart. Du début à la fin du compte elle monte d'une octave (ré3 → ré4 : elle arrive sur
+ * la nappe et la première clochette du son de l'extraction, qui prend sa suite), son passe-bas s'ouvre, son trémolo
+ * presse le pas, son volume enfle. Hors du parvis, le compte redescend : la note redescend avec lui, à mi-voix.
+ * Niveau calculé contre la foreuse (voir docs/vaisseau.md).
+ */
+const HARMONIQUES_DE_LA_CHARGE = [0.5, 1, 0.6, 0.35, 0.15, 0.1]
+const RE3 = 146.83
+function voixDeCharge(ctx: AudioContext): NonNullable<typeof charge> {
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 600
+  const tremolo = ctx.createGain()
+  tremolo.gain.value = 0.8
+  const lfo = ctx.createOscillator()
+  lfo.frequency.value = 3
+  const profondeur = ctx.createGain()
+  profondeur.gain.value = 0.2
+  lfo.connect(profondeur).connect(tremolo.gain)
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  const onde = ctx.createPeriodicWave(new Float32Array(HARMONIQUES_DE_LA_CHARGE.length + 1), Float32Array.from([0, ...HARMONIQUES_DE_LA_CHARGE]))
+  const notes = [0, 5].map((cents) => {
+    const o = ctx.createOscillator()
+    o.setPeriodicWave(onde)
+    o.frequency.value = RE3
+    o.detune.value = cents
+    const g = ctx.createGain()
+    g.gain.value = 0.5
+    o.connect(g).connect(filtre)
+    o.start()
+    return o
+  })
+  filtre.connect(tremolo).connect(gain).connect(ctx.destination)
+  lfo.start()
+  return { gain, filtre, notes, lfo }
+}
+
+/**
+ * Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), si la foreuse creuse, où en est le compte
+ * de l'extraction (`compte`, de 0 à 1) et s'il monte (à quai) ou redescend (hors du parvis).
+ */
+export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean): void {
   try {
     const ctx = ZZFX.audioContext
     if (ctx.state !== 'running') return
     if (propulsion === null && poussee > 0.02) propulsion = voixDePropulsion(ctx)
     if (forage === null && creuse) forage = voixDeForage(ctx)
+    if (charge === null && compte > 0) charge = voixDeCharge(ctx)
     const t = ctx.currentTime
     if (propulsion !== null) {
       propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
       propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
     }
     if (forage !== null) forage.gain.gain.setTargetAtTime(creuse ? ZZFX.volume * (ARCADE ? 0.28 : 0.38) : 0, t, 0.04) // (0,18 avant : Keko la veut plus forte ; 0,38 : le bourdon rond, au même niveau mesuré que l'ancien à 0,28)
+    if (charge !== null) {
+      const u = Math.max(0, Math.min(1, compte))
+      charge.gain.gain.setTargetAtTime(u > 0 ? ZZFX.volume * 0.16 * (0.5 + 0.5 * u) * (monte ? 1 : 0.5) : 0, t, 0.06)
+      // la hauteur ne se règle que pendant le compte : au bout (ou au hangar) la voix se tait SUR sa note, sans
+      // retomber ; et un compte qui commence pose sa note pendant que la voix est muette, sans glisser
+      if (u > 0) {
+        const regle = (p: AudioParam, valeur: number, lissage: number): void => {
+          if (chargeMuette) p.setValueAtTime(valeur, t)
+          else p.setTargetAtTime(valeur, t, lissage)
+        }
+        for (const o of charge.notes) regle(o.frequency, RE3 * 2 ** u, 0.05)
+        regle(charge.filtre!.frequency, 600 + 1800 * u, 0.08)
+        regle(charge.lfo.frequency, 3 + 6 * u, 0.08)
+      }
+      chargeMuette = u === 0
+    }
   } catch {
     // un son raté ne casse rien
   }

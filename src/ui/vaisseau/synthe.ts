@@ -207,6 +207,13 @@ const LA6 = 1760
 const SI6 = 1975.53
 const MI7 = 2637.02
 
+/**
+ * L'ÉCLOSION DE L'ARRIVÉE : l'instant, dans le son `arrive`, où la montée cède aux clochettes. La page fait tomber
+ * cet instant sur l'ouverture de la matérialisation (le moment où le vaisseau paraît) — elle le lit ici, elle ne le
+ * recopie pas.
+ */
+export const ECLOSION_DE_L_ARRIVEE = 0.66
+
 type Recette = {
   /** la durée de la table, queue de réverbération comprise (le silence de la fin est rogné) */
   duree: number
@@ -401,6 +408,23 @@ const RECETTES = {
       souffle(m, h, 0, 1, 0, { f: 200, glisse: { vers: 2200, en: 0.9, droit: true }, q: 0.9, bande: true, a: 0.5, d: 0.7, large: true })
       souffle(m, h, 0, 0.6, 0, { f: 400, glisse: { vers: 1200, en: 0.9, droit: true }, a: 0.3, d: 0.8 })
       note(m, 0, 0.5, 0, { f: 98, glisse: { vers: 196, en: 0.9, droit: true }, a: 0.3, d: 0.9, partiels: CORPS, sature: 2 })
+    },
+  },
+  /**
+   * le vaisseau se matérialise (Keko : « le son pour le spawn du vaisseau ») : pendant la spirale, un souffle et une
+   * note qui montent d'une octave en s'enflant ; à l'éclosion, une quinte de clochettes (la, ré) sur un appui rond, une
+   * étincelle de verre au-dessus — la même famille que l'extraction, en plus court : on arrive comme on repart
+   */
+  arrive: {
+    duree: 2, niveau: 0.5, salle: [0.7, 0.3],
+    faire: (m, h) => {
+      const e = ECLOSION_DE_L_ARRIVEE
+      souffle(m, h, 0, 0.4, 0, { f: 400, glisse: { vers: 2600, en: e, droit: true }, q: 1.5, bande: true, a: e * 0.9, d: 0.14, large: true })
+      note(m, 0, 0.3, 0, { f: RE4, glisse: { vers: RE5, en: e, droit: true }, a: e * 0.9, d: 0.14 })
+      note(m, e, 0.45, 0, { f: 230, glisse: { vers: 150, en: 0.1 }, d: 0.24, partiels: CORPS, sature: 1.5 })
+      note(m, e, 0.7, -0.3, { f: LA5, d: 0.45, partiels: CLOCHE, battement: 5 })
+      note(m, e + 0.03, 0.85, 0.3, { f: RE6, d: 0.75, partiels: CLOCHE, battement: 5 })
+      note(m, e + 0.12, 0.22, 0, { f: LA6, d: 0.3, partiels: VERRE })
     },
   },
 } satisfies Record<string, Recette>

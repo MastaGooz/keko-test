@@ -19,7 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
+import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -200,6 +200,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const COMPTEUR = { x: 16, y: 10 }
   let secousse = 0
   let flamme = 0
+  /** Le compte de l'extraction à l'image d'avant, et s'il montait : la voix de la charge suit le compte, pas le parvis. */
+  let compteVu = 0
+  let compteMonte = false
   let t = 0
   /** La caméra : le vaisseau au centre, avec un peu d'avance dans le sens de la vitesse, amortie. */
   const camera = { x: 0, y: 0 }
@@ -250,6 +253,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // L'ARRIVÉE (Keko : « une animation de téléportation aussi au début, comme si le vaisseau était téléporté sur
     // l'extracteur ») : la matérialisation à la place du vaisseau, qui n'apparaît qu'à son ouverture
     arriveA = t
+    // son SON : la montée pendant la spirale, les clochettes à l'instant où le vaisseau paraît (`ARRIVE_A`)
+    jouer('arrive', undefined, Math.max(0, ARRIVE_A - ECLOSION_DE_L_ARRIVEE))
+    compteVu = 0
     effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
   }
 
@@ -2509,8 +2515,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       flamme += (v.poussee - flamme) * Math.min(1, dt * 14)
-      // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse
-      regler(m.phase === 'vol' ? flamme : 0, m.phase === 'vol' && m.forage !== null)
+      // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse, la charge
+      // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
+      if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
+      compteVu = m.extraction
+      regler(m.phase === 'vol' ? flamme : 0, m.phase === 'vol' && m.forage !== null, m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0
@@ -2544,7 +2553,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (visible && !ecranEtait) ouvrirLeHangar()
     ecranEtait = visible
     if (visible) {
-      regler(0, false) // (au hangar, plus de souffle ni de foreuse)
+      regler(0, false, 0, false) // (au hangar, plus de souffle, de foreuse ni de charge)
       // LE HANGAR à la place du monde (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière ») : la scène, puis l'interface
       dessinerLaBase(p)
       N.composite(frame, img.data, FOND)
