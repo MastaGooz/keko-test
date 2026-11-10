@@ -308,10 +308,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LES VUES de la colonne : les trois vraies, puis, avec `&onglets=N` (Keko : « fais un test avec 10 onglets »), des
    * ONGLETS D'ESSAI jusqu'à N en tout — une icône, un nom, une scène vide —, pour juger la colonne quand elle se remplit.
    */
-  const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge']
+  // (et dix RÉSERVÉS de plus, numérotés — Keko : « rajoute dix placeholders pour tester »)
+  const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
   const VUES: string[] = ['hangar', 'labo', 'entrepot', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 3)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
-  const NOMS_VUE: Record<string, string> = { hangar: 'HANGAR', labo: 'LABO', entrepot: 'ENTREPOT', carte: 'CARTE', atelier: 'ATELIER', marche: 'MARCHE', equipage: 'EQUIPAGE', missions: 'MISSIONS', journal: 'JOURNAL', trophees: 'TROPHEES', radio: 'RADIO', forge: 'FORGE' }
+  const NOMS_VUE: Record<string, string> = { hangar: 'HANGAR', labo: 'LABO', entrepot: 'ENTREPOT', carte: 'CARTE', atelier: 'ATELIER', marche: 'MARCHE', equipage: 'EQUIPAGE', missions: 'MISSIONS', journal: 'JOURNAL', trophees: 'TROPHEES', radio: 'RADIO', forge: 'FORGE', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `ESSAI ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
@@ -949,6 +950,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(x - r, y - 2 - r, x - r, y - 2 + r, RUNE[2])
         p.line(x + r, y - 2 - r, x + r, y - 2 + r, RUNE[2])
       }
+    } else if (vv.startsWith('essai-')) {
+      // un réservé : son numéro dans une case pointillée
+      for (let k = -6; k <= 6; k += 2) {
+        p.dot(x + k, y - 6, COQUE[3])
+        p.dot(x + k, y + 6, COQUE[3])
+        p.dot(x - 6, y + k, COQUE[3])
+        p.dot(x + 6, y + k, COQUE[3])
+      }
+      p.text(vv.slice(6), x + 1, y - 3, COQUE[5], { font: 'big', align: 'center' })
     } else {
       p.rect(x - 6, y + 2, 12, 4, COQUE[3])
       p.rect(x - 3, y - 1, 6, 3, COQUE[4])

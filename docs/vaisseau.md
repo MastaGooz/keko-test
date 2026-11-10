@@ -692,7 +692,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   l'entrepôt descend sa grille d'autant. Quand la grille d'onglets dépasse la
   scène (un écran court), ELLE DÉFILE au doigt (Keko) : les cases coupées au bord,
   un ascenseur à droite de la bande (`defilOnglets`).
-  `&onglets=N` ajoute des onglets d'essai jusqu'à N (12 au plus) : une icône, un
+  `  `&onglets=N` ajoute des onglets d'essai jusqu'à N (12 au plus) : une icône, unonglets=N` ajoute des onglets d'essai jusqu'à N (22 au plus, dont dix réservés
+  numérotés) : une icône, un
   nom, une scène vide.
   La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
