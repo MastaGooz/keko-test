@@ -473,6 +473,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return lignes
   }
   /** Le même peintre, les coordonnées locales multipliées par k (l'ancre de `place` ne l'est pas) : le vaisseau en grand. */
+  /** Le même peintre, mais tout ce qu'il peint l'est d'UNE SEULE COULEUR opaque, sans lueur : pour le contour d'une silhouette. */
+  function silhouette(p: Peintre, c: number): Peintre {
+    return {
+      ...p,
+      place: (x, y, flip, angle) => p.place(x, y, flip, angle),
+      px: (x, y) => p.px(x, y, c),
+      dot: (x, y) => p.dot(x, y, c),
+      rect: (x, y, w, h) => p.rect(x, y, w, h, c),
+      circle: (x, y, r) => p.circle(x, y, r, c),
+      ring: (x, y, r, w) => p.ring(x, y, r, w, c),
+      poly: (pts) => p.poly(pts, c),
+      line: (x0, y0, x1, y1) => p.line(x0, y0, x1, y1, c),
+      glow: () => undefined,
+    }
+  }
   function agrandi(p: Peintre, k: number): Peintre {
     return {
       ...p,
@@ -544,12 +559,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (vue === 'hangar') {
       // l'aire : un disque sombre, l'anneau de chevrons, un cercle et une croix de guidage, huit feux qui courent
       const R0 = 30
+      // (le disque est SOMBRE et peu saturé — Keko : le sol se confondait avec des pièces comme les armes ; le vaisseau se
+      // lit par la valeur, quelle que soit la couleur de ses pièces)
+      const SOL = N.hex('#0a0d15')
+      const REPERE = N.hex('#1a2030')
       p.circle(cx, cy, R0 + 3, NUIT)
-      p.circle(cx, cy, R0, COQUE[1])
+      p.circle(cx, cy, R0, SOL)
       p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))
-      p.ring(cx, cy, R0 - 9, 1, COQUE[2])
-      p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, COQUE[2])
-      p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, COQUE[2])
+      p.ring(cx, cy, R0 - 9, 1, REPERE)
+      p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, REPERE)
+      p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, REPERE)
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2
         const allume = (Math.floor(t * 4) + i) % 8 < 3
@@ -560,9 +579,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // l'ombre du vaisseau sur l'aire, puis le vaisseau posé, agrandi deux fois, moteur éteint
       const K = 2
-      p.circle(cx + 1, cy + 2, 7 * K, NUIT, 0.55)
       const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
-      dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
+      const peau = al.coque >= 2 ? BLINDEE : COQUE
+      // un halo clair sous le vaisseau, comme un projecteur, puis LE CONTOUR DE LA SILHOUETTE ENTIÈRE (Keko) : le même
+      // vaisseau peint d'un seul noir, décalé d'un pixel dans les huit directions, sous le vrai — ailes et armes comprises
+      p.glow(cx, cy, 24, N.hex('#8aa0c8'), 0.22)
+      const contour = silhouette(p, N.hex('#04050a'))
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) dessinerVaisseauA(agrandi(contour, K), cx + dx, cy + dy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, { ...al, bouclier: 0 })
+      dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, al)
       // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
       // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
       ligneSousLaScene(p, cx, 'POIDS', `${poidsTotal(hangar)} T`, false)
