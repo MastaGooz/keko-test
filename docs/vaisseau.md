@@ -663,7 +663,18 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   touche une zone du vaisseau ou une case. Puis LA LISTE de cet emplacement
   (les puces si elle a des familles) AVEC LA FICHE de la pièce choisie (le
   bouton, les stats) — *une fiche à part, derrière une tape de plus, a vécu
-  une heure : « pas besoin d'un autre clic »*. La vue d'ensemble porte un titre, « EQUIPEMENT DU VAISSEAU » (au labo,
+  une heure : « pas besoin d'un autre clic »*. UNE CASE PAR PLACE (Keko, 10/11 : « plutôt qu'un seul slot d'armes ou
+  d'outils, deux slots, arme 1 et arme 2, outil 1, outil 2 ; le joueur verrait
+  tout de suite qu'un nouveau slot est apparu quand il change de châssis ») :
+  au hangar, la vue d'ensemble montre le châssis, les propulseurs, puis
+  OUTIL 1…N et ARME 1…N, autant que le châssis en porte. Une tape ouvre la
+  liste de cette place ; « Équiper » y met la pièce choisie (`monterA` : celle
+  qui y était est retirée, ou les deux s'échangent si la pièce était à l'autre
+  place). La fenêtre « Places pleines » est partie, il n'y a plus de plein.
+  Dans la liste, la pièce montée à l'autre place le dit (« ARME 1 ») ; sur le
+  vaisseau, la cible d'une place d'arme n'entoure que son aile. Les flèches
+  parcourent les cases dans cet ordre. Au labo, une case par catégorie.
+  La vue d'ensemble porte un titre, « EQUIPEMENT DU VAISSEAU » (au labo,
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
   Les flèches de l'en-tête font défiler les emplacements (Keko), et un bouton
   RETOUR en bas de la colonne des onglets ramène au vaisseau ;

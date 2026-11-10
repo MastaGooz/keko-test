@@ -172,6 +172,28 @@ export function remplacer(h: Hangar, ancien: string, nouveau: string): Hangar {
   return avecListe(h, n.sorte, ids.map((x) => (x === ancien ? nouveau : x)))
 }
 
+/**
+ * MONTER À UNE PLACE (Keko : « arme 1, arme 2, outil 1, outil 2 » plutôt qu'une liste qu'on remplit) : la pièce va à la
+ * place k de sa liste ; celle qui l'occupait est retirée, et si la pièce était déjà montée ailleurs, les deux
+ * s'échangent. Une place vide (au-delà des occupées) reçoit la pièce à la suite. Hors des places portées par le
+ * châssis, ou une pièce qu'on n'a pas : rien ne change.
+ */
+export function monterA(h: Hangar, id: string, k: number): Hangar {
+  const p = pieceDe(id)
+  if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil') || !possede(h, id) || k < 0 || k >= capacite(h, p.sorte)) return h
+  const ids = [...listeDe(h, p.sorte)]
+  const j = ids.indexOf(id)
+  if (j === k) return h
+  if (k >= ids.length) {
+    if (j >= 0) ids.splice(j, 1)
+    ids.push(id)
+  } else if (j >= 0) {
+    ids[j] = ids[k]
+    ids[k] = id
+  } else ids[k] = id
+  return avecListe(h, p.sorte, ids)
+}
+
 export function demonter(h: Hangar, id: string): Hangar {
   const p = pieceDe(id)
   if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil')) return h

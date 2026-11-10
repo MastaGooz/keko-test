@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, capacite, remplacer, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, armesMontees, capacite, remplacer, monterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -56,6 +56,7 @@ const g2 = monter(demonter(g, 'arme-canon'), 'arme-missiles')
 verifier('démonter une arme libère la place ; l’ordre des armes est celui du montage', g2.armes.join(',') === 'arme-rafale,arme-missiles' && g2.possedees.includes('arme-canon'))
 const g3 = remplacer(g2, 'arme-rafale', 'arme-canon')
 verifier('remplacer une arme montée par une possédée la met à sa place ; remplacer par une pièce d’une autre liste ou déjà montée ne change rien', g3.armes.join(',') === 'arme-canon,arme-missiles' && remplacer(g2, 'arme-rafale', 'foreuse-1') === g2 && remplacer(g2, 'arme-rafale', 'arme-missiles') === g2)
+verifier('monter à une place : la place prise est remplacée, une pièce montée ailleurs s’échange, une place vide prend la suite, hors des places rien', monterA(g2, 'arme-canon', 1).armes.join(',') === 'arme-rafale,arme-canon' && monterA(g2, 'arme-missiles', 0).armes.join(',') === 'arme-missiles,arme-rafale' && monterA(g2, 'arme-rafale', 0) === g2 && monterA(demonter(g2, 'arme-missiles'), 'arme-canon', 1).armes.join(',') === 'arme-rafale,arme-canon' && monterA(g2, 'arme-canon', 2) === g2 && monterA(g2, 'foreuse-1', 5) === g2)
 verifier('démonter une arme qui n’est pas montée ne change rien', demonter(g2, 'arme-canon') === g2)
 verifier('la configuration porte les armes montées, dans l’ordre', configDuHangar(C, g2).armes.map((x) => x.id).join(',') === 'rafale,missiles' && armesMontees(g2).length === 2)
 

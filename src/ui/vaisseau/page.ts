@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, montes, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, remplacer, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
@@ -280,6 +280,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let zoneGlissante: { x: number; y: number; w: number; h: number } | null = null
   let onglet: Sorte = 'propulseur'
   /**
+   * LA PLACE OUVERTE, pour les outils et les armes au hangar (Keko : « deux slots, arme 1 et arme 2, outil 1 et
+   * outil 2 ») : une case par place portée par le châssis dans la vue d'ensemble ; −1 pour une catégorie entière
+   * (le châssis, les propulseurs, et tout au labo).
+   */
+  let place = -1
+  type Case = { o: Sorte; k: number }
+  const listeMontee = (o: Sorte): string[] => (o === 'arme' ? hangar.armes : o === 'outil' ? hangar.outils : [])
+  /** Les cases de la vue d'ensemble, dans l'ordre : au hangar une par place (un nouveau châssis en ajoute), au labo une par catégorie. */
+  const casesDuVaisseau = (): Case[] =>
+    vue === 'hangar' ? ONGLETS.flatMap((o): Case[] => (o === 'outil' || o === 'arme' ? Array.from({ length: capacite(hangar, o) }, (_, k) => ({ o, k })) : [{ o, k: -1 }])) : ONGLETS.map((o) => ({ o, k: -1 }))
+  /** La place ouverte, bornée à ce que porte le châssis monté (−1 hors des outils et des armes du hangar). */
+  const placeOuverte = (): number => (vue === 'hangar' && (onglet === 'outil' || onglet === 'arme') ? Math.max(0, Math.min(place, capacite(hangar, onglet) - 1)) : -1)
+  const titreDe = (c: Case): string => (c.k >= 0 ? `${c.o === 'arme' ? 'ARME' : 'OUTIL'} ${c.k + 1}` : NOMS_ONGLET[c.o])
+  /**
    * L'ÉTAPE DU PARCOURS (Keko : « des étapes intermédiaires avant d'afficher tout le menu du bas ») : au hangar et au
    * labo, on ne voit qu'un niveau à la fois — LE VAISSEAU (quelle partie ?), puis LA LISTE de l'emplacement choisi
    * (laquelle ?), puis LA FICHE de la pièce (je la prends ?) ; une flèche ramène au niveau d'avant.
@@ -315,8 +329,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(String(n), x0, y, c, { font: 'big' })
     dessinerUnCredit(p, x0 + w + 7, y + 3)
   }
-  /** LA FENÊTRE DE REMPLACEMENT : la pièce qu'on veut équiper alors que ses places sont pleines (null : fermée). */
-  let aRemplacer: string | null = null
   /**
    * La ligne sous la scène (le poids au hangar, les crédits au labo et à l'entrepôt), CENTRÉE en entier sur la zone de la
    * scène (Keko) : le mot, six pixels, la valeur, et l'icône des crédits s'il le faut.
@@ -369,10 +381,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
   }
   /** Ouvre la liste d'un emplacement (depuis le vaisseau ou sa rangée de cases). */
-  function ouvrirLEmplacement(o: Sorte): void {
+  function ouvrirLEmplacement(o: Sorte, k = -1): void {
     onglet = o
+    place = k
     etape = 'liste'
     defil[o] = 0
+    // la fiche s'ouvre sur la pièce de cette place, s'il y en a une
+    const occupant = k >= 0 ? listeMontee(o)[k] : undefined
+    if (occupant !== undefined) choix[o] = occupant
   }
   /**
    * L'ÉTAPE DU VAISSEAU, sous la scène : une case par emplacement, deux par rangée — au hangar, le graphisme de la pièce
@@ -382,32 +398,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesEmplacements(p: Peintre, y: number): number {
     const cw = Math.floor((W - 12) / 2)
     const ch = 34
-    ONGLETS.forEach((o, i) => {
+    const cases = casesDuVaisseau()
+    cases.forEach((c, i) => {
+      const o = c.o
       const x = 4 + (i % 2) * (cw + 4)
       const yy = y + Math.floor(i / 2) * (ch + 4)
       panel(p, x, yy, cw, ch, ENCRE, { r: 2 })
-      p.text(NOMS_ONGLET[o], x + cw / 2 + 12, yy + 4, PEPITE[3], { align: 'center' })
+      p.text(titreDe(c), x + cw / 2 + 12, yy + 4, PEPITE[3], { align: 'center' })
       let montee: Piece | undefined
-      if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : (o === 'outil' ? montes(hangar, 'outil') : montes(hangar, 'arme'))[0]
+      if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
       else montee = piecesDe(o).find((pc) => !possede(hangar, pc.id))
       panel(p, x + 3, yy + 3, 24, ch - 6, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
       if (montee !== undefined) dessinerLePictogramme(p, montee, x + 15, yy + ch / 2, 24, ch - 6)
       const ligne = vue === 'labo' ? `${piecesDe(o).filter((pc) => !possede(hangar, pc.id)).length} A DEBLOQUER` : montee === undefined ? 'VIDE' : texteNu(montee.nom)
       const L = replier(p, ligne, cw - 34)
       L.slice(0, 2).forEach((li, k) => p.text(li, x + cw / 2 + 12, yy + 13 + k * 7, vue === 'labo' || montee === undefined ? COQUE[3] : COQUE[5], { align: 'center' }))
-      if (vue === 'hangar' && (o === 'outil' || o === 'arme')) {
-        const occupees = (o === 'outil' ? hangar.outils : hangar.armes).length
-        const places = capacite(hangar, o)
-        let px = x + cw / 2 + 12 - (places * 6 - 1) / 2
-        for (let k = 0; k < places; k++) {
-          p.rect(px, yy + ch - 8, 5, 5, ENCRE.outline)
-          p.rect(px + 1, yy + ch - 7, 3, 3, k < occupees ? PEPITE[2] : COQUE[1])
-          px += 6
-        }
-      }
-      zones.push({ x, y: yy, w: cw, h: ch, action: () => ouvrirLEmplacement(o) })
+      zones.push({ x, y: yy, w: cw, h: ch, action: () => ouvrirLEmplacement(o, c.k) })
     })
-    return y + 2 * (ch + 4)
+    return y + Math.ceil(cases.length / 2) * (ch + 4)
   }
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
@@ -692,7 +700,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // à l'étape du VAISSEAU, toutes les zones, et une tape sur l'une ouvre sa liste (les petites d'abord : le châssis les contient) ; ensuite, celle de l'emplacement ouvert seulement
       const cibles: Sorte[] = etape === 'vaisseau' ? ['propulseur', 'outil', 'arme', 'coque'] : [onglet]
       const vif = Math.sin(t * 5) > -0.3
-      for (const o of cibles) for (const [x0, y0, x1, y1] of zonesDe(o)) {
+      for (const o of cibles) for (const [i, [x0, y0, x1, y1]] of zonesDe(o).entries()) {
+        // une place d'arme ouverte : sa seule aile (Keko : arme 1, arme 2)
+        if (etape !== 'vaisseau' && o === 'arme' && i !== placeOuverte()) continue
         // local (x, y) → écran (cx + y·K, cy − x·K)
         const sx0 = Math.round(cx + Math.min(y0, y1) * K)
         const sx1 = Math.round(cx + Math.max(y0, y1) * K)
@@ -706,7 +716,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.line(x, y, x + dx * L, y, c)
           p.line(x, y, x, y + dy * L, c)
         }
-        if (etape === 'vaisseau') zones.push({ x: sx0 - 2, y: sy0 - 2, w: sx1 - sx0 + 4, h: sy1 - sy0 + 4, action: () => ouvrirLEmplacement(o) })
+        if (etape === 'vaisseau') zones.push({ x: sx0 - 2, y: sy0 - 2, w: sx1 - sx0 + 4, h: sy1 - sy0 + 4, action: () => ouvrirLEmplacement(o, o === 'arme' ? i : o === 'outil' ? 0 : -1) })
       }
     } else if (vue === 'labo') {
       // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
@@ -879,22 +889,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     panel(p, 19, y, W - 38, 13, ENCRE, { r: 2 })
     // le titre ; pour les outils et les armes, LES PLACES EN CELLULES à sa droite — une case par place portée par la
     // coque, pleine si elle est occupée (Keko : « plutôt que x/x, des cellules qui se remplissent »)
-    p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
-    if (vue === 'hangar' && (onglet === 'outil' || onglet === 'arme')) { // (au labo, pas de places à montrer — Keko)
-      const occupees = (onglet === 'outil' ? hangar.outils : hangar.armes).length
-      const places = capacite(hangar, onglet)
-      let cx = W / 2 + p.measure(NOMS_ONGLET[onglet], { font: 'big' })[0] / 2 + 6
-      for (let i = 0; i < places; i++) {
-        p.rect(cx, y + 3, 6, 7, ENCRE.outline)
-        p.rect(cx + 1, y + 4, 4, 5, i < occupees ? PEPITE[2] : COQUE[1])
-        if (i < occupees) p.rect(cx + 1, y + 4, 4, 1, PEPITE[3])
-        cx += 8
-      }
-    }
+    p.text(titreDe({ o: onglet, k: placeOuverte() }), W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
     // les flèches font défiler les emplacements, comme avant (Keko) ; le retour au vaisseau est en bas de la colonne des onglets
-    const io = ONGLETS.indexOf(onglet)
-    bouton(p, 4, y, 13, 13, '<', true, () => ouvrirLEmplacement(ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
-    bouton(p, W - 17, y, 13, 13, '>', true, () => ouvrirLEmplacement(ONGLETS[(io + 1) % ONGLETS.length]))
+    // (elles parcourent les cases de la vue d'ensemble : arme 1, arme 2…)
+    const cs = casesDuVaisseau()
+    const io = Math.max(0, cs.findIndex((c) => c.o === onglet && c.k === placeOuverte()))
+    const vers = (d: number): void => {
+      const c = cs[(io + d + cs.length) % cs.length]
+      ouvrirLEmplacement(c.o, c.k)
+    }
+    bouton(p, 4, y, 13, 13, '<', true, () => vers(-1))
+    bouton(p, W - 17, y, 13, 13, '>', true, () => vers(1))
     y += 15
     // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore (Keko : « on n'affiche plus dans le hangar les pièces non possédées »)
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))
@@ -939,7 +944,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(texteNu(pc.nom), 16, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3], { font: 'big' })
       // l'état à droite : EQUIPE, POSSEDE, ou le prix en crédits avec son icône, en beige comme à l'entrepôt (Keko)
       const xd = W - (maxDefil > 0 ? 15 : 9)
-      if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
+      const ki = placeOuverte()
+      const ailleurs = ki >= 0 ? listeMontee(onglet).indexOf(pc.id) : -1
+      if (ki >= 0 && montee && ailleurs !== ki) p.text(titreDe({ o: onglet, k: ailleurs }), xd, ly + 4, COQUE[4], { align: 'right' })
+      else if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
       else if (!aLui) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, PEPITE[3])
       zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
     }
@@ -964,7 +972,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (pc !== undefined) {
     // le bouton à la largeur de son mot, plus huit pixels de chaque côté (Keko : trop large pour « Équiper »)
     const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 16
-    if (estMontee(hangar, pc.id)) {
+    const ko = placeOuverte()
+    if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
+      // À UNE PLACE (Keko) : « Équiper » la met ici — la pièce qui y était est retirée, ou les deux s'échangent si
+      // celle-ci était montée à l'autre place ; plus de fenêtre « places pleines »
+      const bw = largeurDe('Equiper')
+      bouton(p, W / 2 - bw / 2, y, bw, 13, 'Equiper', true, () => {
+        hangar = monterA(hangar, pc.id, ko)
+        sauver()
+      }, true)
+    } else if (estMontee(hangar, pc.id)) {
       if (pc.sorte === 'arme' || pc.sorte === 'outil') {
         const bw = largeurDe('Retirer')
         bouton(p, W / 2 - bw / 2, y, bw, 13, 'Retirer', true, () => {
@@ -980,13 +997,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (peutMonter(hangar, pc.id)) {
           hangar = monter(hangar, pc.id)
           sauver()
-        } else {
-          // plein : une seule pièce montée, on la remplace sans demander ; plusieurs, la fenêtre demande laquelle (Keko)
-          const montees = pc.sorte === 'arme' ? hangar.armes : hangar.outils
-          if (montees.length === 1) {
-            hangar = remplacer(hangar, montees[0], pc.id)
-            sauver()
-          } else aRemplacer = pc.id
         }
       }, true)
     } else {
@@ -1048,43 +1058,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
     // `&latence`, au hangar aussi : à droite du bouton RESET
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 38, H - 12, N.WHITE, { font: 'big', outline: COQUE[0] })
-    if (aRemplacer !== null) dessinerLeRemplacement(p)
-  }
-  /**
-   * LA FENÊTRE DE REMPLACEMENT (Keko : « il faudrait toujours pouvoir équiper ; si on est plein, un popup le dit et
-   * demande quel équipement on veut remplacer ») : un voile sur tout l'écran, une plaque au milieu — « PLACES PLEINES »,
-   * la question, une rangée par pièce montée de la liste (son graphisme, son nom), une tape remplace, et « Annuler ».
-   * Tant qu'elle est ouverte, seules ses zones répondent.
-   */
-  function dessinerLeRemplacement(p: Peintre): void {
-    const nouveau = aRemplacer === null ? undefined : pieceDe(aRemplacer)
-    if (nouveau === undefined || (nouveau.sorte !== 'arme' && nouveau.sorte !== 'outil')) {
-      aRemplacer = null
-      return
-    }
-    zones = []
-    p.place(0, 0)
-    p.rect(0, 0, W, H, NUIT) // (opaque : un voile tramé faisait du bruit derrière la fenêtre)
-    const montes = (nouveau.sorte === 'arme' ? hangar.armes : hangar.outils).map((id) => pieceDe(id)).filter((x): x is Piece => x !== undefined)
-    const hr = 26
-    const hp = 34 + montes.length * (hr + 3) + 22
-    const y0 = Math.floor((H - hp) / 2)
-    panel(p, 8, y0, W - 16, hp, ENCRE, { r: 3 })
-    p.text('PLACES PLEINES', W / 2, y0 + 5, PEPITE[3], { font: 'big', align: 'center' })
-    p.text(texteNu(`Remplacer quoi par : ${nouveau.nom} ?`), W / 2, y0 + 17, COQUE[5], { align: 'center' })
-    montes.forEach((m, i) => {
-      const y = y0 + 28 + i * (hr + 3)
-      panel(p, 14, y, W - 28, hr, { ...ENCRE, body: ENCRE.low }, { r: 2 })
-      dessinerLePictogramme(p, m, 30, y + hr / 2, 26, hr - 4)
-      p.text(texteNu(m.nom), 48, y + hr / 2 - 3, N.WHITE, { font: 'big' })
-      zones.push({ x: 14, y, w: W - 28, h: hr, action: () => {
-        hangar = remplacer(hangar, m.id, nouveau.id)
-        sauver()
-        aRemplacer = null
-      } })
-    })
-    const wa = p.measure('ANNULER', { font: 'big' })[0] + 16
-    bouton(p, W / 2 - wa / 2, y0 + hp - 18, wa, 13, 'Annuler', true, () => (aRemplacer = null), true)
   }
   /** Un point de l'écran en pixels du tampon. */
   const enTampon = (x: number, y: number): Vecteur => {
@@ -1834,10 +1807,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     N.clearFrame(frame)
     const p = N.painterFor(frame)
     const visible = ecranVisible()
-    if (visible && !ecranEtait) {
-      ouvrirLeHangar()
-      aRemplacer = null
-    }
+    if (visible && !ecranEtait) ouvrirLeHangar()
     ecranEtait = visible
     if (visible) {
       regler(0, false) // (au hangar, plus de souffle ni de foreuse)
