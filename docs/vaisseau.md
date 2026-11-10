@@ -640,8 +640,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - **CHAQUE PIÈCE A UN POIDS** (Keko : « un poids à chaque élément, pour être
   cohérent ; le poids total joue sur l'inertie et la conso du propulseur ») :
   coque 20 / 32 / 24, propulseur 6 / 8 / 10, réacteur 8 / 12 / 16, foreuses
-  4 / 6 / 8, radar 2, canon 4, mitrailleuse 5, missiles 8 — une jauge
-  « Poids » rouge sur toute pièce. LE POIDS TOTAL (`poidsTotal`, la somme des
+  4 / 6 / 8, radar 2, canon 4, mitrailleuse 5, missiles 8 — EN TONNES,
+  « 24 T », un nombre dans les stats de toute pièce plutôt qu'une jauge
+  (Keko). LE POIDS TOTAL (`poidsTotal`, la somme des
   pièces montées), rapporté à celui du vaisseau de série (`POIDS_SERIE`, 38),
   divise la poussée et le frein du vide (lourd : on accélère moins, on glisse
   plus), UN PEU ACCENTUÉ (exposant 1,3) pour qu'il se sente. Il s'affiche sous l'aire

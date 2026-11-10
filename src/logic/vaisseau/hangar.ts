@@ -208,7 +208,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
 
 
 /** Une jauge du panneau de description : son nom, la valeur de la pièce, le plus du catalogue (la barre pleine). */
-export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean; /** Un simple nombre (des places d'outils, d'armes), ni barre ni cellules (Keko). */ nombre?: boolean }
+export type Jauge = { nom: string; valeur: number; max: number; /** Une quantité entière (des points) : une CELLULE par unité plutôt qu'une barre (Keko). */ cellules?: boolean; /** Un simple nombre (des places d'outils, d'armes, le poids), ni barre ni cellules (Keko). */ nombre?: boolean; /** L'unité du nombre (le poids en tonnes, « T »). */ unite?: string }
 /**
  * LES JAUGES d'une pièce (Keko : « un vrai panneau de description : des jauges vitesse / accélération / maniabilité
  * pour le propulseur, le nombre d'armes portables par la coque, une jauge de blindage, de bouclier et de poids ») —
@@ -222,7 +222,7 @@ export function jaugesDe(p: Piece): Jauge[] {
       { nom: 'Acceleration', valeur: p.poussee ?? 1, max: max((q) => q.poussee ?? 1) },
       { nom: 'Vitesse', valeur: p.vitesseMax ?? 1, max: max((q) => q.vitesseMax ?? 1) },
       { nom: 'Maniabilite', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
-      { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
+      { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]
   }
   if (p.sorte === 'coque') {
@@ -230,14 +230,14 @@ export function jaugesDe(p: Piece): Jauge[] {
       // blindage et bouclier sur HUIT cellules, un plafond fixe pour l'instant (Keko) ; le poids en troisième ligne (Keko)
       { nom: 'Blindage', valeur: p.pv ?? 0, max: 8, cellules: true },
       { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: 8, cellules: true },
-      { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
+      { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
       { nom: 'Soute', valeur: p.capacite ?? 0, max: max((q) => q.capacite ?? 0), nombre: true },
       { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), nombre: true },
       { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), nombre: true },
     ]
   }
   if (p.sorte === 'outil') {
-    const poids = { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) }
+    const poids = { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' }
     if (p.radar !== undefined) return [{ nom: 'Detection', valeur: p.radar, max: max((q) => q.radar ?? 0) }, poids]
     const foreuses = memes.filter((q) => q.famille === 'foreuse')
     const maxF = (f: (q: Piece) => number): number => Math.max(...foreuses.map(f))
@@ -254,7 +254,7 @@ export function jaugesDe(p: Piece): Jauge[] {
     { nom: 'Degats', valeur: a.degats, max: max((q) => q.arme!.degats) },
     { nom: 'Cadence', valeur: 1 / a.cadence, max: max((q) => 1 / q.arme!.cadence) },
     { nom: 'Portee', valeur: a.portee, max: max((q) => q.arme!.portee) },
-    { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids) },
+    { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
   ]
 }
 

@@ -521,7 +521,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
       // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
       p.text('POIDS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
-      p.text(String(poidsTotal(hangar)), cx + 3, hautScene - 10, PEPITE[3], { font: 'big' })
+      p.text(`${poidsTotal(hangar)} T`, cx + 3, hautScene - 10, PEPITE[3], { font: 'big' })
     } else {
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
@@ -586,7 +586,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : PEPITE[3]
     if (j.nombre) {
       // un simple nombre (les places d'outils, d'armes — Keko : « numérique et pas en jauge », sans rappel de la pièce en place)
-      p.text(String(j.valeur), bx, y - 1, PEPITE[3], { font: 'big' })
+      p.text(j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`, bx, y - 1, PEPITE[3], { font: 'big' }) // (le poids en tonnes, « 24 T » — Keko)
       return
     }
     if (j.cellules) {
