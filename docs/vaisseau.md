@@ -654,6 +654,19 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Un niveau à la fois (Keko, 10/11 : « l'arrivée du joueur avec le menu hangar est un peu envahissante cognitivement… il faudrait des étapes intermédiaires avant d'afficher tout le menu du bas »)
+
+- **Au hangar et au labo, on ne voit qu'un niveau** (`etape`) : LE VAISSEAU
+  d'abord — toutes les cibles vertes sur le vaisseau posé, et sous la scène
+  une case par emplacement (au hangar : le graphisme de la pièce montée, son
+  nom, les places en cellules ; au labo : combien de pièces à débloquer) ; on
+  touche une zone du vaisseau ou une case. Puis LA LISTE de cet emplacement
+  (les puces si elle a des familles), puis LA FICHE de la pièce touchée (le
+  bouton, les stats). La flèche « < » de l'en-tête ramène au niveau d'avant ;
+  changer de vue ramène au vaisseau. *Les flèches qui faisaient défiler les
+  catégories sont parties : on choisit en touchant le vaisseau.* L'entrepôt
+  garde sa grille et sa fiche.
+
 ## Les vaisseaux se heurtent, et pas de bélier (Keko, 10/11 : « si un vaisseau collide avec un astéroïde ou un autre vaisseau alors que le bouclier est actif, on n'inflige pas de dégât de collision à l'autre partie, sinon les joueurs utilisent le bouclier comme bélier ; et fais en sorte que les vaisseaux collident entre eux »)
 
 - **Le joueur et le rival se heurtent** (`heurterLesVaisseaux`) : qui se
