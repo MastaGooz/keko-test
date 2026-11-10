@@ -657,8 +657,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 ## Un niveau à la fois (Keko, 10/11 : « l'arrivée du joueur avec le menu hangar est un peu envahissante cognitivement… il faudrait des étapes intermédiaires avant d'afficher tout le menu du bas »)
 
 - **Au hangar et au labo, on ne voit qu'un niveau** (`etape`) : LE VAISSEAU
-  d'abord — toutes les cibles vertes sur le vaisseau posé, et sous la scène
-  une case par emplacement (au hangar : le graphisme de la pièce montée, son
+  d'abord — le vaisseau posé, SANS CIBLE (Keko ; ses zones se touchent quand
+  même), et sous la scène une case par emplacement, le châssis en premier, (au hangar : le graphisme de la pièce montée, son
   nom, les places en cellules ; au labo : combien de pièces à débloquer) ; on
   touche une zone du vaisseau ou une case. Puis LA LISTE de cet emplacement
   (les puces si elle a des familles), puis LA FICHE de la pièce touchée (le

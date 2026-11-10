@@ -259,7 +259,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
-  const ONGLETS: Sorte[] = ['propulseur', 'coque', 'outil', 'arme']
+  const ONGLETS: Sorte[] = ['coque', 'propulseur', 'outil', 'arme'] // (le châssis d'abord — Keko)
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
   const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEURS', coque: 'CHASSIS', outil: 'OUTILS', arme: 'ARMES' }
   /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
@@ -701,7 +701,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // la longueur des branches : au plus le tiers du côté, qu'un coin ne touche jamais son voisin (Keko : sur les armes, les coins se touchaient)
         const L = Math.max(1, Math.min(4, Math.floor((sx1 - sx0) / 3), Math.floor((sy1 - sy0) / 3)))
         const c = vif ? RUNE[3] : RUNE[2] // (le temps sombre du battement reste lisible — Keko)
-        for (const [x, y, dx, dy] of [[sx0, sy0, 1, 1], [sx1, sy0, -1, 1], [sx0, sy1, 1, -1], [sx1, sy1, -1, -1]]) {
+        // (à l'étape du vaisseau, pas de cible dessinée — Keko : on touche quand même la zone)
+        if (etape !== 'vaisseau') for (const [x, y, dx, dy] of [[sx0, sy0, 1, 1], [sx1, sy0, -1, 1], [sx0, sy1, 1, -1], [sx1, sy1, -1, -1]]) {
           p.line(x, y, x + dx * L, y, c)
           p.line(x, y, x, y + dy * L, c)
         }
