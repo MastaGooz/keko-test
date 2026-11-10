@@ -6,6 +6,15 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Les jauges après leur nom, le prix dans un puits (Keko, 10/11 : « les jauges de stats des parties se superposent avec leur texte — réduis la largeur des barres » ; « le chiffre du prix du bouton acheter est peu lisible, le texte blanc sur fond jaune n'est pas idéal »)
+
+- **La colonne des barres se MESURE** (`colonneDesJauges`) : elle commence après le plus long des noms de jauge, toutes
+  pièces confondues, dans la police — elle était écrite à 52 px, et « Accélération » en fait davantage. Les barres
+  perdent ces quelques pixels ; la colonne est la même sur toutes les fiches, pour que les barres se comparent. *Une
+  largeur écrite à la main ne suit pas le mot qu'on ajoute.*
+- **Le prix du bouton « Acheter » est dans un PUITS SOMBRE** creusé dans le bouton (une plaque `creux`) : le nombre
+  crème et le crédit vert s'y lisent comme au compteur du haut, que le bouton soit d'or ou éteint.
+
 ## L'en-tête d'une place plus lisible, la pièce animée dans un cadre fixe (Keko, 10/11 : « les titres des onglets ouverts, à droite du bouton retour, un peu petits et peu lisibles » ; « le propulseur de la prévisualisation tremble : on dirait qu'il bouge de haut en bas alors qu'il devrait être fixe — le gonflement est sympa »)
 
 - **Le titre d'une place** (« Propulsion », « Outil 1 ») RESTE À LA TAILLE INTERMÉDIAIRE (la graisse, 1×) : la grande

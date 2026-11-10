@@ -1563,11 +1563,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }, 'equipe')
     } else {
       // ACHETER, le prix et l'icône des crédits ; éteint s'il manque des crédits (il tremble alors) ; acheté, la pièce
-      // s'envole vers l'onglet du hangar, qui prend une pastille
+      // s'envole vers l'onglet du hangar, qui prend une pastille. LE PRIX EST DANS UN PUITS SOMBRE creusé dans le bouton
+      // (Keko : « le texte blanc sur fond jaune n'est pas idéal ») : le nombre crème et le crédit vert s'y lisent comme
+      // au compteur du haut, que le bouton soit d'or ou éteint
       const vif = peutAcheter(hangar, credits, pc.id)
       const wa = largeurDe('Acheter', GRAS)
       const wn = largeurDe(String(pc.prix), GRAS)
-      const bw = wa + 6 + wn + 12 + 20
+      const wp = wn + 16
+      const bw = 8 + wa + 5 + wp + 3
       const bx = Math.round(W / 2 - bw / 2)
       boutonBase(p, bx, y, bw, 15, vif, () => {
         const r = acheter(hangar, credits, pc.id)
@@ -1580,10 +1583,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 })
         flottants.push({ texte: 'Débloqué !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
       }, (dx, dy) => {
-        if (vif) motEnRelief(p, 'Acheter', bx + 10 + wa / 2 + dx, y + 4 + dy, true)
-        else ecrire(p, 'Acheter', bx + 10 + dx, y + 4 + dy, COQUE[3], { police: GRAS })
-        ecrire(p, String(pc.prix), bx + 10 + wa + 6 + dx, y + 4 + dy, vif ? N.hex('#fff2c8') : COQUE[3], { police: GRAS })
-        dessinerUnCredit(p, bx + 10 + wa + 6 + wn + 7 + dx, y + 7 + dy)
+        if (vif) motEnRelief(p, 'Acheter', bx + 8 + wa / 2 + dx, y + 4 + dy, true)
+        else ecrire(p, 'Acheter', bx + 8 + dx, y + 4 + dy, COQUE[3], { police: GRAS })
+        const px = bx + 8 + wa + 5 + dx
+        plaque(p, px, y + 2 + dy, wp, 11, 'creux')
+        ecrire(p, String(pc.prix), px + 4, y + 4 + dy, vif ? N.hex('#fff2c8') : COQUE[4], { police: GRAS })
+        dessinerUnCredit(p, px + 4 + wn + 6, y + 7 + dy)
       }, 'achat')
     }
     y += 19
@@ -1611,13 +1616,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /**
+   * LA COLONNE DES BARRES commence après LE PLUS LONG DES NOMS de jauge, toutes pièces confondues (mesuré dans la
+   * police, pas écrit : à 52 px, « Accélération » passait sous sa barre — Keko : « les jauges se superposent avec leur
+   * texte, réduis la largeur des barres ») ; la même pour toutes les fiches, les barres se comparent d'une pièce à l'autre.
+   */
+  let colonneMesuree = 0
+  function colonneDesJauges(): number {
+    if (colonneMesuree === 0) {
+      const noms = (['propulseur', 'coque', 'outil', 'arme'] as const).flatMap((o) => piecesDe(o)).flatMap((pc) => jaugesDe(pc).map((j) => j.nom))
+      colonneMesuree = Math.max(...noms.map((n) => largeurDe(n))) + 4
+    }
+    return colonneMesuree
+  }
+  /**
    * UNE JAUGE : son nom, puis — un nombre (le poids, les places) ; des CELLULES pour ce qui se compte (blindage,
    * bouclier), qui s'allument une à une ; sinon une barre dans sa rainure, au dégradé lumineux, qu'un éclat parcourt
    * quand elle a fini de se remplir — et un repère blanc à la valeur de la pièce en place, pour comparer.
    */
   function dessinerUneJaugeDePiece(p: Peintre, y: number, j: Jauge, repere: number | null, rouge: boolean, x0 = 10, plein = 1): void {
     ecrire(p, j.nom, x0, y - 1, COQUE[4])
-    const bx = x0 + 52
+    const bx = x0 + colonneDesJauges()
     const bw = W - 12 - bx
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : rouge ? ROUGE[3] : PEPITE[2]
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : N.hex('#ffe68a')
