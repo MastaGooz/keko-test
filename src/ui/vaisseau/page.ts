@@ -899,7 +899,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else if (etape === 'vaisseau') {
       // LE TITRE DE LA VUE D'ENSEMBLE (Keko : « mettre un titre, équipement du vaisseau »), dans la plaque de l'en-tête
       // des emplacements, sur toute la largeur
-      titreEnTete(p, 4, y, W - 8, vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU')
+      titreEnTete(p, 4, y, W - 8, vue === 'labo' ? 'RECHERCHE' : 'VAISSEAU') // (Keko : « juste vaisseau / recherche / matériaux »)
       y += HT - 13
       // LE POIDS TOTAL, sous le titre (Keko : « plutôt que là où il est », sous la scène)
       if (vue === 'hangar' || vue === 'labo') {

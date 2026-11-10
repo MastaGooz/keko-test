@@ -679,7 +679,7 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   une plaque plus haute (`HT`) cerclée d'or, le mot d'or en relief, et le retour
   un carré d'or au chevron épais dessiné.
   L'entrepôt a le sien, « MATERIAUX », au-dessus de la fiche du minerai.
-  La vue d'ensemble porte un titre, « EQUIPEMENT DU VAISSEAU » (au labo,
+  La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
   Une seule flèche « < », à gauche de l'en-tête, ramène à la vue d'ensemble
   (Keko : la flèche de droite et le bouton RETOUR de la colonne, essayés, sont
