@@ -756,13 +756,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LES ONGLETS EN COLONNE, à gauche de la scène (Keko : « en colonne sur la gauche de l'écran, qui est inutilisé ») :
     // HANGAR, ENTREPOT, l'actif en or ; la scène montre l'un ou l'autre
     const vues = ['hangar', 'labo', 'entrepot'] as const
+    // LA COLONNE EN VALEUR (Keko : « les boutons onglet sont très petits et un peu moches ») : des onglets hauts, une
+    // icône dessinée au-dessus du nom — le vaisseau, la fiole, la caisse —, l'actif en or, sa pointe vers la scène
     vues.forEach((vv, i) => {
       const w = 44
-      const y = 4 + i * 14
+      const h = 32
+      const y = 4 + i * (h + 4)
       const actif = vue === vv
-      panel(p, 3, y, w, 12, actif ? ENCRE_OR : ENCRE, { r: 2 })
-      p.text(NOMS_VUE[vv], 3 + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
-      if (!actif) zones.push({ x: 3, y, w, h: 12, action: () => ((vue = vv), (etape = 'vaisseau')) })
+      panel(p, 3, y, w, h, actif ? ENCRE_OR : ENCRE, { r: 3, shine: actif && (t % 5) / 5 < 0.25 ? -10 + ((w + 30) * ((t % 5) / 5)) / 0.25 : null })
+      if (actif) p.poly([[3 + w, y + h / 2 - 4], [3 + w + 4, y + h / 2], [3 + w, y + h / 2 + 4]], PEPITE[2])
+      dessinerLIconeDeVue(p, vv, 3 + w / 2, y + 12, actif)
+      p.text(NOMS_VUE[vv], 3 + w / 2, y + h - 9, actif ? N.WHITE : COQUE[4], { align: 'center' })
+      if (!actif) zones.push({ x: 3, y, w, h, action: () => ((vue = vv), (etape = 'vaisseau')) })
     })
     // le bouton de test, tout en bas à gauche de l'écran (Keko) : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
     const demande = t - resetDemandeA < 2
@@ -829,6 +834,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * en crédits la pépite, ce qu'on en a en stock —, VENDRE TOUT, et les crédits qu'on a. Rend le y sous le panneau.
    */
   /** LA LIGNE SOUS UN TITRE (le poids total, les crédits) : le mot et le nombre en grande police, centrés, l'icône des crédits s'il le faut — la petite police, essayée, a été retirée (Keko). */
+  /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, la FIOLE du labo et son liquide vert, la CAISSE de l'entrepôt. */
+  function dessinerLIconeDeVue(p: Peintre, vv: 'hangar' | 'labo' | 'entrepot', x0: number, y0: number, actif: boolean): void {
+    const x = Math.round(x0)
+    const y = Math.round(y0)
+    const a = 1 // (opaques toujours : à demi transparentes, elles sortaient tramées — l'onglet éteint se lit à son nom et sa plaque)
+    const OMBRE = ENCRE.outline
+    if (vv === 'hangar') {
+      p.poly([[x, y - 7], [x + 5, y + 5], [x, y + 3], [x - 5, y + 5]], OMBRE, a)
+      p.poly([[x, y - 6], [x + 4, y + 4], [x, y + 2], [x - 4, y + 4]], COQUE[4], a)
+      p.poly([[x, y - 6], [x, y + 2], [x - 4, y + 4]], COQUE[5], a)
+      p.rect(x - 1, y - 2, 2, 2, RUNE[2], a)
+      p.rect(x - 1, y + 4, 2, 2, PEPITE[2], a)
+    } else if (vv === 'labo') {
+      p.rect(x - 2, y - 7, 5, 6, OMBRE, a)
+      p.poly([[x - 2, y - 2], [x + 3, y - 2], [x + 7, y + 6], [x - 6, y + 6]], OMBRE, a)
+      p.rect(x - 1, y - 6, 3, 5, COQUE[4], a)
+      p.poly([[x - 1, y - 2], [x + 2, y - 2], [x + 5, y + 5], [x - 4, y + 5]], COQUE[3], a)
+      p.poly([[x - 2.5, y + 1], [x + 3.5, y + 1], [x + 5, y + 5], [x - 4, y + 5]], RUNE[2], a)
+      p.rect(x - 2, y + 2, 1, 1, RUNE[3], a)
+      p.rect(x + 1, y - 4 - Math.round((t * 4) % 3), 1, 1, RUNE[3], actif ? 1 : 0)
+    } else {
+      const B = [N.hex('#3a2410'), N.hex('#7a4f24'), N.hex('#a8743a'), N.hex('#d8a865')]
+      p.rect(x - 6, y - 5, 13, 11, OMBRE, a)
+      p.rect(x - 5, y - 4, 11, 9, B[2], a)
+      p.rect(x - 5, y - 4, 11, 1, B[3], a)
+      p.rect(x - 5, y, 11, 1, B[1], a)
+      p.line(x - 4, y - 3, x + 4, y + 3, B[1], a)
+      p.rect(x - 5, y + 4, 11, 1, B[0], a)
+    }
+  }
   function ligneSousLeTitre(p: Peintre, y: number, mot: string, val: string, credit: boolean): void {
     const wm = p.measure(mot, { font: 'big' })[0]
     const wv = p.measure(val, { font: 'big' })[0]

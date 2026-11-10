@@ -680,6 +680,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   un carré d'or au chevron épais dessiné.
   L'entrepôt a le sien, « MATERIAUX », au-dessus de la fiche du minerai, et
   ses crédits totaux dessous, comme au labo (Keko) ; plus rien sous les scènes.
+  LA COLONNE DES ONGLETS (Keko : « très petits et un peu moches ») : des onglets
+  hauts, une icône dessinée au-dessus du nom (le vaisseau, la fiole, la caisse),
+  l'actif en or avec un reflet qui passe et une pointe vers la scène.
   La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
   Une seule flèche « < », à gauche de l'en-tête, ramène à la vue d'ensemble
