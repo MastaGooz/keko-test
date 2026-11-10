@@ -302,6 +302,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** LA FENÊTRE DE REMPLACEMENT : la pièce qu'on veut équiper alors que ses places sont pleines (null : fermée). */
   let aRemplacer: string | null = null
+  /**
+   * La ligne sous la scène (le poids au hangar, les crédits au labo et à l'entrepôt), CENTRÉE en entier sur la zone de la
+   * scène (Keko) : le mot, six pixels, la valeur, et l'icône des crédits s'il le faut.
+   */
+  function ligneSousLaScene(p: Peintre, cx: number, mot: string, valeur: string, credit: boolean): void {
+    const wm = p.measure(mot, { font: 'big' })[0]
+    const wv = p.measure(valeur, { font: 'big' })[0]
+    const total = wm + 6 + wv + (credit ? 12 : 0)
+    const x0 = Math.round(cx - total / 2)
+    const y = hautScene - 10
+    p.text(mot, x0, y, COQUE[4], { font: 'big' })
+    p.text(valeur, x0 + wm + 6, y, PEPITE[3], { font: 'big' })
+    if (credit) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 3)
+  }
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
   /**
@@ -551,8 +565,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
       // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
       // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
-      p.text('POIDS', cx - 3, hautScene - 10, COQUE[4], { font: 'big', align: 'right' }) // (le mot à la taille du nombre — Keko)
-      p.text(`${poidsTotal(hangar)} T`, cx + 3, hautScene - 10, PEPITE[3], { font: 'big' })
+      ligneSousLaScene(p, cx, 'POIDS', `${poidsTotal(hangar)} T`, false)
       // LA CIBLE (Keko : « une cible, un rectangle vert avec juste les angles, autour de la zone du vaisseau où la pièce
       // va ») : la catégorie ouverte dit la zone — l'arrière pour le propulseur, le fuselage pour la coque, le toit pour
       // les outils, chaque aile portée pour les armes ; en coordonnées du vaisseau (le nez en +x), tournées nez en haut
@@ -574,12 +587,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (vue === 'labo') {
       // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
       // les crédits qu'on a, là où le hangar met le poids (Keko)
-      p.text('CREDITS', cx - 3, hautScene - 10, COQUE[4], { font: 'big', align: 'right' }) // (le mot à la taille du nombre — Keko)
-      nombreDeCredits(p, credits, cx + 3 + p.measure(String(credits), { font: 'big' })[0] + 12, hautScene - 10, PEPITE[3])
+      ligneSousLaScene(p, cx, 'CREDITS', String(credits), true)
     } else {
       // les crédits qu'on a, là où le hangar met le poids (Keko)
-      p.text('CREDITS', cx - 3, hautScene - 10, COQUE[4], { font: 'big', align: 'right' }) // (le mot à la taille du nombre — Keko)
-      nombreDeCredits(p, credits, cx + 3 + p.measure(String(credits), { font: 'big' })[0] + 12, hautScene - 10, PEPITE[3])
+      ligneSousLaScene(p, cx, 'CREDITS', String(credits), true)
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
       // la grille remplit toute la zone à droite de la bande (Keko) : quatre colonnes, autant de rangées qu'il en tient
