@@ -939,6 +939,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
+    // `&latence`, au hangar aussi : à droite du bouton RESET
+    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 38, H - 12, N.WHITE, { font: 'big', outline: COQUE[0] })
     if (aRemplacer !== null) dessinerLeRemplacement(p)
   }
   /**
@@ -1782,7 +1784,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeRadar(p)
     dessinerLeScore(p)
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
-    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 4, H - 8, COQUE[4])
+    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, 40, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous la soute, bien lisible)
     for (const e of effets) e.fx.draw(frame)
     dessinerLeManche(p)
     N.composite(frame, img.data, FOND)
