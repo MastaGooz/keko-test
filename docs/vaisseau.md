@@ -678,7 +678,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   LES EN-TÊTES EN VALEUR (Keko : « les titres et le bouton retour trop petits ») :
   une plaque plus haute (`HT`) cerclée d'or, le mot d'or en relief, et le retour
   un carré d'or au chevron épais dessiné.
-  L'entrepôt a le sien, « MATERIAUX », au-dessus de la fiche du minerai.
+  L'entrepôt a le sien, « MATERIAUX », au-dessus de la fiche du minerai, et
+  ses crédits totaux dessous, comme au labo (Keko) ; plus rien sous les scènes.
   La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
   Une seule flèche « < », à gauche de l'en-tête, ramène à la vue d'ensemble

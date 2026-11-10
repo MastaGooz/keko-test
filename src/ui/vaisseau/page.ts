@@ -329,20 +329,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(String(n), x0, y, c, { font: 'big' })
     dessinerUnCredit(p, x0 + w + 7, y + 3)
   }
-  /**
-   * La ligne sous la scène (le poids au hangar, les crédits au labo et à l'entrepôt), CENTRÉE en entier sur la zone de la
-   * scène (Keko) : le mot, six pixels, la valeur, et l'icône des crédits s'il le faut.
-   */
-  function ligneSousLaScene(p: Peintre, cx: number, mot: string, valeur: string, credit: boolean, yLigne = hautScene - 10): void {
-    const wm = p.measure(mot, { font: 'big' })[0]
-    const wv = p.measure(valeur, { font: 'big' })[0]
-    const total = wm + 6 + wv + (credit ? 12 : 0)
-    const x0 = Math.round(cx - total / 2)
-    const y = yLigne
-    p.text(mot, x0, y, COQUE[4], { font: 'big' })
-    p.text(valeur, x0 + wm + 6, y, PEPITE[3], { font: 'big' })
-    if (credit) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 3)
-  }
   /** Annonce les sons qu'on sait venir, de la latence audio mesurée (voir `chocAnnonceA`). */
   function annoncerLesSons(): void {
     const avance = Math.min(0.25, Math.max(0, latenceMs() / 1000))
@@ -742,8 +728,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
       // (les crédits totaux sont passés sous le titre de la vue d'ensemble, là où le hangar met son poids — Keko)
     } else {
-      // les crédits qu'on a, là où le hangar met le poids (Keko)
-      ligneSousLaScene(p, cx, 'CREDITS', String(credits), true)
+      // (les crédits totaux sont sous le titre MATERIAUX, comme au labo — Keko)
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
       // la grille remplit toute la zone à droite de la bande (Keko) : quatre colonnes, autant de rangées qu'il en tient
@@ -843,10 +828,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sélectionné et son prix en crédits ») : la fiche du minerai choisi dans la grille — son nom, deux lignes, sa valeur
    * en crédits la pépite, ce qu'on en a en stock —, VENDRE TOUT, et les crédits qu'on a. Rend le y sous le panneau.
    */
+  /** LA LIGNE SOUS UN TITRE (le poids total, les crédits) : le mot et le nombre en grande police, centrés, l'icône des crédits s'il le faut — la petite police, essayée, a été retirée (Keko). */
+  function ligneSousLeTitre(p: Peintre, y: number, mot: string, val: string, credit: boolean): void {
+    const wm = p.measure(mot, { font: 'big' })[0]
+    const wv = p.measure(val, { font: 'big' })[0]
+    const x0 = Math.round(W / 2 - (wm + 6 + wv + (credit ? 12 : 0)) / 2)
+    p.text(mot, x0, y, COQUE[4], { font: 'big' })
+    p.text(val, x0 + wm + 6, y, PEPITE[3], { font: 'big' })
+    if (credit) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 3)
+  }
   function dessinerLEntrepot(p: Peintre, y0: number): number {
     // LE TITRE, dans le style des en-têtes du hangar et du labo (Keko : « un titre dans le même style, matériaux »)
     titreEnTete(p, 4, y0, W - 8, 'MATERIAUX')
-    const y = y0 + HT + 2
+    // les CRÉDITS TOTAUX sous le titre, comme au labo (Keko)
+    ligneSousLeTitre(p, y0 + HT + 4, 'CREDITS', String(credits), true)
+    const y = y0 + HT + 16
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
     // la description tient TROIS LIGNES, toujours (Keko : « fixe la hauteur à trois lignes pour éviter le changement de
@@ -906,15 +902,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // le mot et le nombre ensemble ; au LABO, les
         // CRÉDITS TOTAUX au même endroit (Keko), avec leur icône
         const labo = vue === 'labo'
-        const mot = labo ? 'CREDITS' : 'POIDS TOTAL'
-        const val = labo ? String(credits) : `${poidsTotal(hangar)} T`
-        // (dans la grande police : la petite, essayée, a été retirée — Keko)
-        const wm = p.measure(mot, { font: 'big' })[0]
-        const wv = p.measure(val, { font: 'big' })[0]
-        const x0 = Math.round(W / 2 - (wm + 6 + wv + (labo ? 12 : 0)) / 2)
-        p.text(mot, x0, y + 17, COQUE[4], { font: 'big' })
-        p.text(val, x0 + wm + 6, y + 17, PEPITE[3], { font: 'big' })
-        if (labo) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 20)
+        ligneSousLeTitre(p, y + 17, labo ? 'CREDITS' : 'POIDS TOTAL', labo ? String(credits) : `${poidsTotal(hangar)} T`, labo)
         y += 12
       }
       y = dessinerLesEmplacements(p, y + 15)
