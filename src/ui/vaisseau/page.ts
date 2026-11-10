@@ -284,7 +284,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * labo, on ne voit qu'un niveau à la fois — LE VAISSEAU (quelle partie ?), puis LA LISTE de l'emplacement choisi
    * (laquelle ?), puis LA FICHE de la pièce (je la prends ?) ; une flèche ramène au niveau d'avant.
    */
-  let etape: 'vaisseau' | 'liste' | 'fiche' = 'vaisseau'
+  let etape: 'vaisseau' | 'liste' = 'vaisseau'
   /** LA VUE : le hangar (les pièces) ou L'ENTREPÔT (l'inventaire des ressources — Keko : « on en aura beaucoup à l'avenir »). */
   let vue: 'hangar' | 'labo' | 'entrepot' = 'hangar'
   const NOMS_VUE = { hangar: 'HANGAR', labo: 'LABO', entrepot: 'ENTREPOT' } as const
@@ -883,7 +883,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         cx += 8
       }
     }
-    bouton(p, 4, y, 13, 13, '<', true, () => (etape = etape === 'fiche' ? 'liste' : 'vaisseau'))
+    bouton(p, 4, y, 13, 13, '<', true, () => (etape = 'vaisseau'))
     y += 15
     // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore (Keko : « on n'affiche plus dans le hangar les pièces non possédées »)
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))
@@ -930,7 +930,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const xd = W - (maxDefil > 0 ? 15 : 9)
       if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
       else if (!aLui) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, PEPITE[3])
-      zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => ((choix[onglet] = pc.id), (etape = 'fiche')) })
+      zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
     }
     if (maxDefil > 0) {
       // l'ascenseur : la glissière, et le curseur long comme la part visible
@@ -948,9 +948,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     y += hl + 3
     }
     // LA FICHE : le bouton (ACHETER, EQUIPER, RETIRER, ou EQUIPE sans bouton), puis les stats
-    const pc = liste.find((x) => x.id === choix[onglet])
-    if (etape === 'fiche' && pc === undefined) etape = 'liste'
-    if (etape === 'fiche' && pc !== undefined) {
+    // (la fiche s'affiche avec la liste, sur la pièce choisie ou la première — Keko : « pas besoin d'un autre clic »)
+    const pc = liste.find((x) => x.id === choix[onglet]) ?? liste[0]
+    if (pc !== undefined) {
     // le bouton à la largeur de son mot, plus huit pixels de chaque côté (Keko : trop large pour « Équiper »)
     const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 16
     if (estMontee(hangar, pc.id)) {

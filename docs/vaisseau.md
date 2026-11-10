@@ -661,8 +661,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   même), et sous la scène une case par emplacement, le châssis en premier, (au hangar : le graphisme de la pièce montée, son
   nom, les places en cellules ; au labo : combien de pièces à débloquer) ; on
   touche une zone du vaisseau ou une case. Puis LA LISTE de cet emplacement
-  (les puces si elle a des familles), puis LA FICHE de la pièce touchée (le
-  bouton, les stats). La flèche « < » de l'en-tête ramène au niveau d'avant ;
+  (les puces si elle a des familles) AVEC LA FICHE de la pièce choisie (le
+  bouton, les stats) — *une fiche à part, derrière une tape de plus, a vécu
+  une heure : « pas besoin d'un autre clic »*. La flèche « < » ramène au vaisseau ;
   changer de vue ramène au vaisseau. *Les flèches qui faisaient défiler les
   catégories sont parties : on choisit en touchant le vaisseau.* L'entrepôt
   garde sa grille et sa fiche.
