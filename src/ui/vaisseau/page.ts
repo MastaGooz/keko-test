@@ -551,7 +551,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, al.coque >= 2 ? BLINDEE : COQUE, VERRIERE, 0, false, al)
       // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
       // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
-      p.text('POIDS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
+      p.text('POIDS', cx - 3, hautScene - 10, COQUE[4], { font: 'big', align: 'right' }) // (le mot à la taille du nombre — Keko)
       p.text(`${poidsTotal(hangar)} T`, cx + 3, hautScene - 10, PEPITE[3], { font: 'big' })
       // LA CIBLE (Keko : « une cible, un rectangle vert avec juste les angles, autour de la zone du vaisseau où la pièce
       // va ») : la catégorie ouverte dit la zone — l'arrière pour le propulseur, le fuselage pour la coque, le toit pour
@@ -574,11 +574,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (vue === 'labo') {
       // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
       // les crédits qu'on a, là où le hangar met le poids (Keko)
-      p.text('CREDITS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
+      p.text('CREDITS', cx - 3, hautScene - 10, COQUE[4], { font: 'big', align: 'right' }) // (le mot à la taille du nombre — Keko)
       nombreDeCredits(p, credits, cx + 3 + p.measure(String(credits), { font: 'big' })[0] + 12, hautScene - 10, PEPITE[3])
     } else {
       // les crédits qu'on a, là où le hangar met le poids (Keko)
-      p.text('CREDITS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
+      p.text('CREDITS', cx - 3, hautScene - 10, COQUE[4], { font: 'big', align: 'right' }) // (le mot à la taille du nombre — Keko)
       nombreDeCredits(p, credits, cx + 3 + p.measure(String(credits), { font: 'big' })[0] + 12, hautScene - 10, PEPITE[3])
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
