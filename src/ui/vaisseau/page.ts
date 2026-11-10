@@ -333,12 +333,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * La ligne sous la scène (le poids au hangar, les crédits au labo et à l'entrepôt), CENTRÉE en entier sur la zone de la
    * scène (Keko) : le mot, six pixels, la valeur, et l'icône des crédits s'il le faut.
    */
-  function ligneSousLaScene(p: Peintre, cx: number, mot: string, valeur: string, credit: boolean): void {
+  function ligneSousLaScene(p: Peintre, cx: number, mot: string, valeur: string, credit: boolean, yLigne = hautScene - 10): void {
     const wm = p.measure(mot, { font: 'big' })[0]
     const wv = p.measure(valeur, { font: 'big' })[0]
     const total = wm + 6 + wv + (credit ? 12 : 0)
     const x0 = Math.round(cx - total / 2)
-    const y = hautScene - 10
+    const y = yLigne
     p.text(mot, x0, y, COQUE[4], { font: 'big' })
     p.text(valeur, x0 + wm + 6, y, PEPITE[3], { font: 'big' })
     if (credit) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 3)
@@ -692,7 +692,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, al)
       // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
       // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
-      ligneSousLaScene(p, cx, 'POIDS', `${poidsTotal(hangar)} T`, false)
+      // (le poids total est passé sous le titre de la vue d'ensemble — Keko)
       // LA CIBLE (Keko : « une cible, un rectangle vert avec juste les angles, autour de la zone du vaisseau où la pièce
       // va ») : la catégorie ouverte dit la zone — l'arrière pour le propulseur, le fuselage pour la coque, le toit pour
       // les outils, chaque aile portée pour les armes ; en coordonnées du vaisseau (le nez en +x), tournées nez en haut
@@ -881,6 +881,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // des emplacements, sur toute la largeur
       panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
       p.text(vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU', W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+      // LE POIDS TOTAL, sous le titre (Keko : « plutôt que là où il est », sous la scène)
+      if (vue === 'hangar') {
+        ligneSousLaScene(p, W / 2, 'POIDS', `${poidsTotal(hangar)} T`, false, y + 17)
+        y += 12
+      }
       y = dessinerLesEmplacements(p, y + 15)
     }
     else {
