@@ -235,6 +235,35 @@ for (let i = 0; i < 6 && chocsK === 0; i++) {
 }
 verifier('un choc à pleine vitesse coûte de la coque, en proportion', chocsK === 1 && k.coque < C.coque && k.coque > C.coque - 3 && touchesK === 1)
 verifier('et fait éclater une petite roche', k.detruits.has(petite.id) && eclatsK === 1)
+// SOUS BOUCLIER, PAS DE BÉLIER (Keko) : le même choc avec la coque à bouclier — le bouclier encaisse, la roche n'a rien
+const kb = nouveauMonde(armer('coque-3'))
+kb.prochainEnnemiA = 1e9
+kb.vaisseau = { ...nouveauVaisseau(), x: petite.x - petite.rayon - C.rayon - 2, y: petite.y, vx: C.vitesseMax, vy: 0 }
+let boucliersKb = 0
+let chocsKb = 0
+for (let i = 0; i < 6 && chocsKb === 0; i++) {
+  const rk = avancerLeMonde(armer('coque-3'), kb, 1 / 60, { x: 0, y: 0 })
+  chocsKb += rk.chocs.length
+  boucliersKb += compter(rk.evenements, 'bouclier')
+}
+verifier('sous bouclier, le choc lancé n’abîme pas la roche (le bouclier encaisse)', chocsKb === 1 && boucliersKb === 1 && !kb.detruits.has(petite.id) && (kb.creuse.get(petite.id) ?? 0) < 5) // (le foreur, lui, la creuse un peu : on regarde le choc, qui seul l'aurait fait éclater)
+// LES VAISSEAUX SE HEURTENT (Keko) : lancé sur le rival, le joueur rebondit, et les deux prennent des dégâts ; sous
+// bouclier, le rival n'a rien
+const heurt = (cfg: ConfigVaisseau) => {
+  const w = nouveauMonde(cfg)
+  w.prochainEnnemiA = 0
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  w.detruits = new Set(asteroidesAutour(cfg, 0, 0, 400).map((r) => r.id))
+  w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 30, y: 0, vx: 0, vy: 0 }
+  w.vaisseau = { ...nouveauVaisseau(), x: 0, y: 0, vx: C.vitesseMax, vy: 0 }
+  let touchesRival = 0
+  for (let i = 0; i < 30; i++) touchesRival += compter(avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements, 'ennemiTouche')
+  return { w, touchesRival }
+}
+const h1 = heurt(C)
+verifier('le joueur lancé sur le rival rebondit (sa vitesse vers lui s’inverse) et les deux prennent des dégâts', h1.w.vaisseau.vx < C.vitesseMax * 0.5 && h1.w.coque < C.coque && h1.touchesRival >= 1 && h1.w.ennemis[0].pv < C.ennemi.pv && Math.hypot(h1.w.ennemis[0].corps.x - h1.w.vaisseau.x, h1.w.ennemis[0].corps.y - h1.w.vaisseau.y) >= C.rayon + C.ennemi.rayon - 0.5)
+const h2 = heurt(armer('coque-3'))
+verifier('sous bouclier, le rival heurté n’a rien (pas de bélier)', h2.touchesRival === 0 && h2.w.ennemis[0].pv === C.ennemi.pv && h2.w.bouclier < 2)
 const doux = nouveauMonde()
 doux.prochainEnnemiA = 1e9
 doux.vaisseau = { ...nouveauVaisseau(), x: petite.x - petite.rayon - C.rayon + 0.5, y: petite.y, vx: 6, vy: 0 }

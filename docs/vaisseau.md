@@ -654,6 +654,17 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Les vaisseaux se heurtent, et pas de bélier (Keko, 10/11 : « si un vaisseau collide avec un astéroïde ou un autre vaisseau alors que le bouclier est actif, on n'inflige pas de dégât de collision à l'autre partie, sinon les joueurs utilisent le bouclier comme bélier ; et fais en sorte que les vaisseaux collident entre eux »)
+
+- **Le joueur et le rival se heurtent** (`heurterLesVaisseaux`) : qui se
+  recouvrent sont écartés à mi-chemin ; s'ils se rapprochaient, ils échangent
+  leur vitesse normale (même masse, amortie par le rebond) et, au-delà du
+  seuil de choc, chacun prend des dégâts comme contre une roche (le joueur
+  par la coque, ou le bouclier ; le rival en points, il blanchit).
+- **Sous bouclier, l'autre partie n'a rien** (`sousBouclier` : il reste au
+  moins un point) : ni la roche heurtée ni le rival. Le bouclier, lui,
+  encaisse le coup comme d'habitude.
+
 ## Les sons (Keko, 10/11 : « on peut essayer ZzFX ? »)
 
 - **ZzFX** (`zzfx` 1.4.0, MIT, Frank Force) est la seconde dépendance de code,

@@ -581,6 +581,57 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
  * ennemi, les ennemis qui minent ou chassent, leurs traits, les roches qui éclatent, les pépites aimantées et
  * ramassées. Modifie `m` en place ; rend les chocs du joueur et ce qui s'est passé.
  */
+/** Le bouclier du joueur est levé (il lui reste au moins un point) : ses chocs n'abîment pas ce qu'il heurte. */
+const sousBouclier = (c: ConfigVaisseau, m: Monde): boolean => c.bouclier.points > 0 && m.bouclier >= 1
+
+/**
+ * LES VAISSEAUX SE HEURTENT (Keko : « fais en sorte que les vaisseaux collident entre eux ») : le joueur et un rival qui
+ * se recouvrent sont écartés à mi-chemin, et s'ils se rapprochaient, ils échangent leur vitesse normale (même masse,
+ * amortie par le rebond) ; au-delà du seuil de choc, chacun prend des dégâts comme contre une roche — LE RIVAL N'EN
+ * PREND PAS si le bouclier du joueur est levé (Keko : pas de bélier). Rend faux si la partie est perdue.
+ */
+function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): boolean {
+  const v = m.vaisseau
+  for (const e of [...m.ennemis]) {
+    const b = e.corps
+    const dx = b.x - v.x
+    const dy = b.y - v.y
+    const d = Math.hypot(dx, dy) || 0.001
+    const minimum = c.rayon + c.ennemi.rayon
+    if (d >= minimum) continue
+    const nx = dx / d
+    const ny = dy / d
+    const recul = (minimum - d) / 2
+    v.x -= nx * recul
+    v.y -= ny * recul
+    const vn = (b.vx - v.vx) * nx + (b.vy - v.vy) * ny
+    let bx = b.x + nx * recul
+    let by = b.y + ny * recul
+    let bvx = b.vx
+    let bvy = b.vy
+    if (vn < 0) {
+      const j = (-(1 + c.rebond) * vn) / 2
+      v.vx -= j * nx
+      v.vy -= j * ny
+      bvx += j * nx
+      bvy += j * ny
+      const choc: Choc = { x: v.x + nx * c.rayon, y: v.y + ny * c.rayon, force: -vn, asteroide: -1 }
+      const protege = sousBouclier(c, m)
+      const contreJoueur = coutDuChoc(c, choc, c.collision.degatsCoque)
+      if (contreJoueur > 0) encaisser(c, m, choc.x, choc.y, contreJoueur, ev)
+      const contreRival = protege ? 0 : coutDuChoc(c, choc, c.collision.degatsEnnemi)
+      if (contreRival > 0) {
+        e.pv -= contreRival
+        ev.push({ type: 'ennemiTouche', id: e.id, x: choc.x, y: choc.y })
+      }
+    }
+    e.corps = { ...b, x: bx, y: by, vx: bvx, vy: bvy }
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    if (m.phase !== 'vol') return false
+  }
+  return true
+}
+
 /** Le joueur encaisse un coup : le bouclier le prend s'il en reste (un point par coup, quel qu'il soit), sinon la coque ; percée, la partie est perdue. */
 function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
   m.toucheA = m.t
@@ -608,10 +659,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const chocs = [...r.chocs]
-  // les chocs du joueur : la coque en souffre selon la vitesse, la roche aussi
+  // les chocs du joueur : la coque en souffre selon la vitesse, la roche aussi — SAUF SOUS BOUCLIER (Keko : sinon les
+  // joueurs s'en servent de bélier) : le bouclier prend le coup, la roche n'a rien
   for (const choc of r.chocs) {
     const degats = coutDuChoc(c, choc, c.collision.degatsCoque)
-    abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
+    if (!sousBouclier(c, m)) abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
     if (degats <= 0) continue
     encaisser(c, m, choc.x, choc.y, degats, ev)
     if (m.phase !== 'vol') return { chocs, evenements: ev }
@@ -623,6 +675,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
+  if (!heurterLesVaisseaux(c, m, ev)) return { chocs, evenements: ev }
 
   // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES
   // SEULES : il a creusé le rival un temps, Keko l'a réservé aux astéroïdes, ce sont les armes qui l'attaquent
