@@ -881,8 +881,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU', W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
       // LE POIDS TOTAL, sous le titre (Keko : « plutôt que là où il est », sous la scène)
       if (vue === 'hangar') {
-        ligneSousLaScene(p, W / 2, 'POIDS', `${poidsTotal(hangar)} T`, false, y + 17)
-        y += 12
+        // dans la petite police, plus petite que celle du titre (Keko) — le mot et le nombre ensemble
+        const mot = 'POIDS TOTAL'
+        const val = `${poidsTotal(hangar)} T`
+        const wm = p.measure(mot)[0]
+        const x0 = Math.round(W / 2 - (wm + 4 + p.measure(val)[0]) / 2)
+        p.text(mot, x0, y + 17, COQUE[4])
+        p.text(val, x0 + wm + 4, y + 17, PEPITE[3])
+        y += 9
       }
       y = dessinerLesEmplacements(p, y + 15)
     }
