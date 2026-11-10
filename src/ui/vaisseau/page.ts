@@ -760,8 +760,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(NOMS_VUE[vv], 3 + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
       if (!actif) zones.push({ x: 3, y, w, h: 12, action: () => ((vue = vv), (etape = 'vaisseau')) })
     })
-    // RETOUR AU VAISSEAU, en bas de la colonne des onglets (Keko), quand un emplacement est ouvert
-    if (vue !== 'entrepot' && etape === 'liste') bouton(p, 3, hautScene - 16, 44, 12, 'Retour', true, () => (etape = 'vaisseau'))
     // le bouton de test, tout en bas à gauche de l'écran (Keko) : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
     const demande = t - resetDemandeA < 2
     bouton(p, 3, H - 14, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
@@ -891,20 +889,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else {
     // L'EN-TÊTE : ‹ pour revenir au niveau d'avant (de la fiche à la liste, de la liste au vaisseau), le titre de
     // l'emplacement (les flèches qui faisaient défiler les catégories ont laissé la place au vaisseau, qu'on touche)
-    panel(p, 19, y, W - 38, 13, ENCRE, { r: 2 })
+    panel(p, 19, y, W - 23, 13, ENCRE, { r: 2 }) // (jusqu'au bord droit : la flèche de droite est partie)
     // le titre ; pour les outils et les armes, LES PLACES EN CELLULES à sa droite — une case par place portée par la
     // coque, pleine si elle est occupée (Keko : « plutôt que x/x, des cellules qui se remplissent »)
-    p.text(titreDe({ o: onglet, k: placeOuverte() }), W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
-    // les flèches font défiler les emplacements, comme avant (Keko) ; le retour au vaisseau est en bas de la colonne des onglets
-    // (elles parcourent les cases de la vue d'ensemble : arme 1, arme 2…)
-    const cs = casesDuVaisseau()
-    const io = Math.max(0, cs.findIndex((c) => c.o === onglet && c.k === placeOuverte()))
-    const vers = (d: number): void => {
-      const c = cs[(io + d + cs.length) % cs.length]
-      ouvrirLEmplacement(c.o, c.k)
-    }
-    bouton(p, 4, y, 13, 13, '<', true, () => vers(-1))
-    bouton(p, W - 17, y, 13, 13, '>', true, () => vers(1))
+    p.text(titreDe({ o: onglet, k: placeOuverte() }), 19 + (W - 23) / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+    // UNE SEULE FLÈCHE, à gauche : le retour à la vue d'ensemble (Keko ; la flèche de droite et le bouton Retour de la colonne sont retirés)
+    bouton(p, 4, y, 13, 13, '<', true, () => (etape = 'vaisseau'))
     y += 15
     // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore (Keko : « on n'affiche plus dans le hangar les pièces non possédées »)
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))

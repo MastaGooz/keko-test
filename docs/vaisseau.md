@@ -672,13 +672,13 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   qui y était est retirée, ou les deux s'échangent si la pièce était à l'autre
   place). La fenêtre « Places pleines » est partie, il n'y a plus de plein.
   Dans la liste, la pièce montée à l'autre place le dit (« ARME 1 ») ; sur le
-  vaisseau, la cible d'une place d'arme n'entoure que son aile. Les flèches
-  parcourent les cases dans cet ordre. Au labo, une case par catégorie.
+  vaisseau, la cible d'une place d'arme n'entoure que son aile. Au labo, une case par catégorie.
   Le POIDS TOTAL est sous ce titre (Keko), plus sous la scène.
   La vue d'ensemble porte un titre, « EQUIPEMENT DU VAISSEAU » (au labo,
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
-  Les flèches de l'en-tête font défiler les emplacements (Keko), et un bouton
-  RETOUR en bas de la colonne des onglets ramène au vaisseau ;
+  Une seule flèche « < », à gauche de l'en-tête, ramène à la vue d'ensemble
+  (Keko : la flèche de droite et le bouton RETOUR de la colonne, essayés, sont
+  retirés) ;
   changer de vue ramène au vaisseau. *Les flèches qui faisaient défiler les
   catégories sont parties : on choisit en touchant le vaisseau.* L'entrepôt
   garde sa grille et sa fiche.
