@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, montantCourt, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -115,6 +115,7 @@ verifier('vendre l’or : le trésor n’en a plus, les crédits montent du prix
 verifier('les crédits relus : un entier positif, zéro sinon', lireCredits(12.7) === 12 && lireCredits(-3) === 0 && lireCredits('x') === 0 && lireCredits(undefined) === 0)
 const tr = lireTresor({ fer: 7.9, or: -3, cristal: 'x', autre: 1 })
 verifier('le trésor relu : des entiers positifs, zéro sinon', tr.fer === 7 && tr.or === 0 && tr.cristal === 0 && lireTresor(undefined).fer === 0)
+verifier('les montants en court : exacts jusqu’à quatre chiffres, puis k, M, G, T, arrondis vers le bas', [0, 68, 9999, 10000, 12345, 99999, 123456, 999999, 1000000, 1234567, 9999999, 88888888, 999999999, 1000000000, 2560000000000, -5, 12.9].map(montantCourt).join(' ') === '0 68 9999 10k 12k 99k 123k 999k 1M 1,2M 9,9M 88M 999M 1G 2,5T 0 12')
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
@@ -1008,7 +1008,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       plaque(p, x, y + e.dy, cw, ch, choisi ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash || age < 0.06, reflet: choisi ? (((t * 0.5) % 1) < 0.3 ? x - 10 + (((t * 0.5) % 1) / 0.3) * (cw + 20) : null) : null })
       if (choisi) p.glow(x + cw / 2, y + 11, 14, PEPITE[2], 0.18 + 0.08 * Math.sin(t * 4))
       dessinerUneRessource(p, x + cw / 2, y + 11 + e.dy - (choisi ? Math.round(Math.abs(Math.sin(t * 3)) * 1) : 0), k)
-      ecrire(p, String(tresor[k]), x + cw / 2, y + ch - 10 + e.dy, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center', police: GRAS })
+      ecrire(p, montantCourt(tresor[k]), x + cw / 2, y + ch - 10 + e.dy, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center', police: GRAS })
       zone(x, y, cw, ch, () => (mineraiChoisi = k))
     }
   }
@@ -1030,8 +1030,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const w = largeurDe(nom, TITRE)
     const c = (t % 5) / 5
     motEnRelief(p, nom, 25 + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
-    // le compteur
-    const n = String(Math.round(creditsVus))
+    // le compteur (en court au-delà de quatre chiffres : sa plaque mordait le titre « Entrepôt » dès le cinquième)
+    const n = montantCourt(Math.round(creditsVus))
     const wn = largeurDe(n, GRAS)
     const wp = wn + 24
     const px = W - 5 - wp

@@ -6,6 +6,32 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Les grands montants s'écrivent en court (Keko, 11/11 : « le total de crédits en haut à droite et le montant du bouton vendre dans l'entrepôt : ils ne vont pas causer un souci si le montant est trop grand ? par ex. 7 ou 8 chiffres ? », puis « je pense qu'on va abréger partout »)
+
+Mesuré avant de répondre (captures à `&credits=N&tresor=N`, largeurs calculées par `textWidth` hors navigateur : un
+chiffre gras = 7 px, le tampon 180) :
+
+- **Le compteur de crédits** : sa plaque grandit vers la gauche sans borne, et le titre de la vue lui fait face. À
+  côté d'« Entrepôt » (96 px) il reste 28 px : QUATRE chiffres. Au cinquième la plaque mordait le « t », au septième
+  « ôt », au huitième il restait « Entrep ». Au hangar (72 px) le huitième chiffre touchait le « r ».
+- **La case de l'inventaire** (30 px) : quatre chiffres ; le cinquième débordait, le septième sortait de l'écran.
+- **Le bouton « Vendre : N »** et la ligne « En stock » tiennent jusqu'à douze chiffres (le bouton fait 47 + 7 par
+  chiffre + 34 px, centré).
+
+Keko a choisi d'abréger (contre : le titre qui passe en petite lettre quand la place manque, ou renommer la vue).
+`montantCourt` (dans `logic/vaisseau/hangar.ts`, vérifié) : **exact jusqu'à quatre chiffres** (`CHIFFRES_EXACTS`),
+puis « 12k », « 123k », « 1,2M », « 12M », « 1,2G » — l'écriture de la jauge des lieux du gacha (`nombreCourt`),
+arrondie vers le bas. Les lettres sont k, M, G, T (une seule lettre chacune : « 1,2Md » ne tenait pas à côté
+d'« Entrepôt », 32 px pour 28). Le compteur et les cases de l'inventaire l'écrivent ; **la fiche du minerai garde
+l'exact** (« En stock », « Vendre : N ») : c'est là qu'on lit le détail, et la place y est.
+
+*À rejuger par Keko* : « G » pour le milliard (« Md » demanderait de la place) ; le compteur qui dit « 12k » pour
+12 345 crédits (on ne lit plus l'exact de ses crédits nulle part) ; la fiche, si elle doit s'abréger aussi.
+
+Vérifié à la capture : 88 888 → « 88k », 8 888 888 → « 8,8M », 88 888 888 → « 88M », le titre « Entrepôt » entier,
+les nombres dans leurs cases.
+
+
 ## L'arrivée et la charge de l'extraction ont leur son (Keko, 10/11 : « tu as oublié le son pour le spawn du vaisseau ainsi que celui quand l'extracteur se charge (quand le joueur est dedans et que le cercle se remplit) »)
 
 Deux moments n'avaient JAMAIS eu de son, pas même du temps de ZzFX : la matérialisation du vaisseau au début d'une

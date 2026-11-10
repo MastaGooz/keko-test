@@ -325,6 +325,23 @@ export const FICHES_MINERAI: Record<Minerai, { nom: string; dit: string; credits
   cristal: { nom: 'Cristal', dit: 'Dans la roche bleutée, aux confins. Très rare : il scintille sur ses veines.', credits: 25 },
 }
 
+/**
+ * UN MONTANT EN COURT (Keko, 11/11 : « ils ne vont pas causer un souci si le montant est trop grand ? » puis « on va
+ * abréger partout ») : tel quel jusqu'à QUATRE chiffres — ce qui tient à côté du titre « Entrepôt » et dans une case
+ * de l'inventaire —, puis en milliers (k), millions (M), milliards (G), billions (T) : une décimale sous dix
+ * (« 1,2M »), aucune au-dessus (« 12k », « 123k »). La même écriture que la jauge des lieux du gacha (`nombreCourt`).
+ * *Arrondi vers le bas* : on n'affiche jamais plus qu'on n'a.
+ */
+export const CHIFFRES_EXACTS = 4
+export function montantCourt(n: number): string {
+  const entier = Math.max(0, Math.floor(n))
+  if (entier < 10 ** CHIFFRES_EXACTS) return String(entier)
+  const [unite, lettre] = ([[1e12, 'T'], [1e9, 'G'], [1e6, 'M'], [1e3, 'k']] as const).find(([u]) => entier >= u)!
+  // (en entiers : le dixième d'unité se compte par une division entière, pas par un flottant qu'on tronque)
+  const dixiemes = Math.floor(entier / (unite / 10))
+  return dixiemes < 100 ? `${Math.floor(dixiemes / 10)}${dixiemes % 10 === 0 ? '' : `,${dixiemes % 10}`}${lettre}` : `${Math.floor(dixiemes / 10)}${lettre}`
+}
+
 /** Vendre tout un minerai du trésor à l'entrepôt : rend le trésor et les crédits neufs (rien à vendre : les mêmes valeurs). */
 export function vendre(tresor: Cargaison, credits: number, k: Minerai): { tresor: Cargaison; credits: number } {
   const n = tresor[k]
