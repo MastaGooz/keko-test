@@ -16,7 +16,7 @@ import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, direc
 import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, remplacer, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { jouer, regler, reveiller, type Son } from './sons.ts'
+import { jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -1781,6 +1781,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLePointeur(p)
     dessinerLeRadar(p)
     dessinerLeScore(p)
+    // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
+    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 4, H - 8, COQUE[4])
     for (const e of effets) e.fx.draw(frame)
     dessinerLeManche(p)
     N.composite(frame, img.data, FOND)

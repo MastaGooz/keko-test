@@ -34,6 +34,30 @@ const SONS = {
 } satisfies Record<string, Parametres>
 
 export type Son = keyof typeof SONS
+
+/**
+ * LE CONTEXTE AU PLUS COURT (Keko : « encore un petit décalage, le son de collision arrive avec une petite latence ») :
+ * ZzFX crée son contexte avec la latence par défaut ; on le remplace par un contexte qui demande la plus petite latence
+ * que l'appareil accepte (`latencyHint: 0`, en secondes — le navigateur la borne à ce qu'il sait tenir).
+ */
+try {
+  const court = new AudioContext({ latencyHint: 0 })
+  const ancien = ZZFX.audioContext
+  ZZFX.audioContext = court
+  void ancien.close()
+} catch {
+  // on garde le contexte de ZzFX
+}
+
+/** La latence de sortie mesurée par le navigateur, en millisecondes (`&latence` l'affiche en vol). */
+export function latenceMs(): number {
+  try {
+    const ctx = ZZFX.audioContext
+    return Math.round(((ctx.baseLatency ?? 0) + ((ctx as AudioContext & { outputLatency?: number }).outputLatency ?? 0)) * 1000)
+  } catch {
+    return -1
+  }
+}
 /**
  * LES TAMPONS PRÊTS (Keko : « une légère latence sur les sons ») : chaque son est calculé et copié dans un AudioBuffer
  * UNE fois, dès le réveil du contexte, pas à sa première lecture ; jouer ne fait plus que brancher une source sur ce
