@@ -666,6 +666,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   explose, trait qui perce la coque, bouclier qui encaisse, extraction, coque
   percée. *Réglages de moi, à juger à l'oreille.* Pas encore : le laser qui
   creuse (un son continu), le hangar (les tapes).
+- **Le son dans l'espace** (Keko : « j'entends l'ennemi détruire des rochers
+  comme si j'étais à côté ») : une roche qui éclate, un obus qui touche le
+  rival, le rival qui explose sont joués à leur place — le volume tombe avec
+  la distance au vaisseau (au carré, muet à 320 unités) et le son glisse à
+  gauche ou à droite selon l'écart horizontal.
 
 ## Le vaisseau se détache du sol (Keko, 10/11 : « le sol de la plateforme est trop proche de la couleur de certains éléments comme les armes ; comment bien les différencier, sachant qu'on aura des pièces de différentes couleurs ? »)
 

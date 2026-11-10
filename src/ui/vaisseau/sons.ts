@@ -45,16 +45,31 @@ export function reveiller(): void {
   }
 }
 
-/** Joue un son (rien si le contexte dort encore). */
-export function jouer(son: Son): void {
+/** À cette distance du vaisseau, un son ne s'entend plus (unités du monde : un peu plus que la demi-hauteur de l'écran). */
+const PORTEE = 320
+
+/**
+ * Joue un son (rien si le contexte dort encore). LE SON DANS L'ESPACE (Keko : « j'entends l'ennemi détruire des
+ * rochers comme si j'étais à côté ») : passé `ou`, l'écart au vaisseau, le volume tombe avec la distance (au carré,
+ * muet à `PORTEE`) et le son glisse à gauche ou à droite selon l'écart horizontal.
+ */
+export function jouer(son: Son, ou?: { dx: number; dy: number }): void {
   try {
     if (ZZFX.audioContext.state !== 'running') return
+    let volume = 1
+    let pan = 0
+    if (ou !== undefined) {
+      const d = Math.hypot(ou.dx, ou.dy)
+      if (d >= PORTEE) return
+      volume = (1 - d / PORTEE) ** 2
+      pan = Math.max(-1, Math.min(1, ou.dx / 160))
+    }
     let s = cache.get(son)
     if (s === undefined) {
       s = ZZFX.buildSamples(...(SONS[son] as Parametres)) as number[]
       cache.set(son, s)
     }
-    ZZFX.playSamples([s])
+    ZZFX.playSamples([s], volume, 1, pan)
   } catch {
     // un son raté ne casse rien
   }

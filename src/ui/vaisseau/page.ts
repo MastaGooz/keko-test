@@ -1552,7 +1552,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           switch (ev.type) {
             case 'eclat': {
               // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
-              jouer('eclat')
+              jouer('eclat', { dx: ev.x - v.x, dy: ev.y - v.y })
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
               const roche = rocheDe(ev.minerai)
               const n = 6 + Math.round(ev.rayon)
@@ -1594,7 +1594,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             case 'ennemiTouche': {
               // un obus touche le rival : il blanchit, des étincelles cyan
-              jouer('ennemiTouche')
+              jouer('ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
               toucheEnnemiA.set(ev.id, t)
               for (let i = 0; i < 6; i++) {
                 const a = R.range(0, Math.PI * 2)
@@ -1618,7 +1618,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
-              jouer('ennemiDetruit')
+              jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
               effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, palette: EXPLOSION_RIVAL, debris: '#7a2a36', size: 0.35, seed: ev.id }), x: ev.x, y: ev.y })
               for (let i = 0; i < 14; i++) {
                 const a = R.range(0, Math.PI * 2)
