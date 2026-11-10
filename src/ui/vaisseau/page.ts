@@ -561,8 +561,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const R0 = 30
       // (le disque est SOMBRE et peu saturé — Keko : le sol se confondait avec des pièces comme les armes ; le vaisseau se
       // lit par la valeur, quelle que soit la couleur de ses pièces)
-      const SOL = N.hex('#0a0d15')
-      const REPERE = N.hex('#1a2030')
+      // (gris neutre, assez clair pour que le contour quasi noir du vaisseau s'en détache — Keko : « trop proche de l'outline »)
+      const SOL = N.hex('#2c2f38')
+      const REPERE = N.hex('#3c404c')
       p.circle(cx, cy, R0 + 3, NUIT)
       p.circle(cx, cy, R0, SOL)
       p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))

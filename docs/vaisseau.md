@@ -661,8 +661,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   pixel dans les huit directions, sous le vrai — ailes et armes comprises
   (*l'ancien liseré ne cernait que la coque, d'où son retrait*). Toute pièce,
   claire, sombre ou colorée, se lit sur n'importe quel fond.
-- **Un disque sombre et peu saturé** sous lui (`#0a0d15`, repères à peine
-  plus clairs) et un halo bleuté discret, comme un projecteur : le vaisseau
+- **Un disque gris neutre, peu saturé** sous lui (`#2c2f38`, repères à peine
+  plus clairs ; *`#0a0d15` d'abord, « trop proche de l'outline noir »*) et un halo bleuté discret, comme un projecteur : le vaisseau
   se lit par la valeur, pas par la couleur. En vol, rien ne change.
 
 ## Les outils par activité (Keko, 10/11 : « les outils, on peut plutôt les classer par activité : minage / combat »)
