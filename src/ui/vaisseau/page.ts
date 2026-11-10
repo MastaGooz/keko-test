@@ -620,7 +620,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : PEPITE[3]
     if (j.nombre) {
       // un simple nombre (les places d'outils, d'armes — Keko : « numérique et pas en jauge », sans rappel de la pièce en place)
-      p.text(j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`, bx, y - 1, PEPITE[3], { font: 'big' }) // (le poids en tonnes, « 24 T » — Keko)
+      p.text(j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`, bx, y + 1, PEPITE[3]) // (le poids en tonnes, « 24 T », en petite police comme le nom de la stat — Keko)
       return
     }
     if (j.cellules) {
