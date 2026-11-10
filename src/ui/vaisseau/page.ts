@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, remplacer, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -297,6 +297,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(String(n), x0, y, c, { font: 'big' })
     dessinerUnCredit(p, x0 + w + 7, y + 3)
   }
+  /** LA FENÊTRE DE REMPLACEMENT : la pièce qu'on veut équiper alors que ses places sont pleines (null : fermée). */
+  let aRemplacer: string | null = null
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
   /**
@@ -361,7 +363,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * largeur et hauteur une fois le nez en haut, pour remplir `bw` × `bh` à trois pixels du bord.
    */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 9.5 + 1.5 * pc.cran] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
+    const [ew, eh] = pc.sorte === 'propulseur' ? [9, 9.5 + 1.5 * pc.cran] : pc.sorte === 'coque' ? (pc.cran === 3 ? [18, 18] : [14, 14]) : pc.sorte === 'outil' && pc.famille === 'foreuse' ? [7, 10 + pc.cran] : pc.sorte === 'outil' && pc.famille === 'aimant' ? [2 * (2.6 + 0.6 * (pc.cran - 2)) + 2, 8.6 + 0.6 * (pc.cran - 2) + 1] : pc.sorte === 'outil' ? [9, 9] : [9, 10]
     const k = Math.max(1, Math.floor(Math.min((bw - 6) / ew, (bh - 6) / eh) * 2) / 2)
     const q = agrandi(p, k)
     // le propulseur s'étire vers l'arrière (sa flamme) : on recule l'origine pour centrer l'ensemble dans la case (la flamme ionique débordait en bas — Keko)
@@ -401,19 +403,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (pc.sorte === 'outil' && pc.famille === 'aimant') {
       // l'aimant : un fer à cheval rouge aux pointes d'acier, plus grand au second cran, qui attire des étincelles
       const r = 2.6 + 0.6 * (pc.cran - 2)
+      // centré sur son encombrement (du fond du fer à cheval, −r, aux étincelles, +6) : il débordait de sa case — Keko
+      const o = -(6 - r) / 2
       // (le peintre agrandi ne sait pas `arc` : le demi-cercle en segments)
       for (let i = 0; i < 8; i++) {
         const a0 = Math.PI / 2 + (i / 8) * Math.PI
         const a1 = Math.PI / 2 + ((i + 1) / 8) * Math.PI
-        q.line(Math.cos(a0) * r, Math.sin(a0) * r, Math.cos(a1) * r, Math.sin(a1) * r, ROUGE[3])
+        q.line(o + Math.cos(a0) * r, Math.sin(a0) * r, o + Math.cos(a1) * r, Math.sin(a1) * r, ROUGE[3])
       }
-      q.line(0, -r, 3, -r, ROUGE[3])
-      q.line(0, r, 3, r, ROUGE[3])
-      q.line(3, -r, 4.5, -r, COQUE[5])
-      q.line(3, r, 4.5, r, COQUE[5])
+      q.line(o, -r, o + 3, -r, ROUGE[3])
+      q.line(o, r, o + 3, r, ROUGE[3])
+      q.line(o + 3, -r, o + 4.5, -r, COQUE[5])
+      q.line(o + 3, r, o + 4.5, r, COQUE[5])
       const a = (t * 3) % 1
-      q.dot(6 - a * 2, -r + a * r, PEPITE[3], 1 - a)
-      q.dot(6 - a * 2, r - a * r, PEPITE[3], 1 - a)
+      q.dot(o + 6 - a * 2, -r + a * r, PEPITE[3], 1 - a)
+      q.dot(o + 6 - a * 2, r - a * r, PEPITE[3], 1 - a)
     } else if (pc.sorte === 'outil') {
       const ar = t * 4
       q.circle(0, 0, 1.6, COQUE[1])
@@ -821,11 +825,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }, true)
       } else motEnRelief(p, 'Equipe', W / 2, y + 3, 1, true)
     } else if (possede(hangar, pc.id)) {
-      const place = peutMonter(hangar, pc.id)
-      const bw = largeurDe(place ? 'Equiper' : 'Places pleines')
-      bouton(p, W / 2 - bw / 2, y, bw, 13, place ? 'Equiper' : 'Places pleines', place, () => {
-        hangar = monter(hangar, pc.id)
-        sauver()
+      // TOUJOURS « ÉQUIPER » (Keko) : s'il y a une place (ou une pièce de la même famille à remplacer), on monte ; sinon la
+      // fenêtre de remplacement demande laquelle des pièces montées céder la place
+      const bw = largeurDe('Equiper')
+      bouton(p, W / 2 - bw / 2, y, bw, 13, 'Equiper', true, () => {
+        if (peutMonter(hangar, pc.id)) {
+          hangar = monter(hangar, pc.id)
+          sauver()
+        } else aRemplacer = pc.id
       }, true)
     } else {
       // ACHETER en relief, puis le prix EN BEIGE (Keko) et l'icône des crédits
@@ -884,6 +891,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
     // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
     p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
+    if (aRemplacer !== null) dessinerLeRemplacement(p)
+  }
+  /**
+   * LA FENÊTRE DE REMPLACEMENT (Keko : « il faudrait toujours pouvoir équiper ; si on est plein, un popup le dit et
+   * demande quel équipement on veut remplacer ») : un voile sur tout l'écran, une plaque au milieu — « PLACES PLEINES »,
+   * la question, une rangée par pièce montée de la liste (son graphisme, son nom), une tape remplace, et « Annuler ».
+   * Tant qu'elle est ouverte, seules ses zones répondent.
+   */
+  function dessinerLeRemplacement(p: Peintre): void {
+    const nouveau = aRemplacer === null ? undefined : pieceDe(aRemplacer)
+    if (nouveau === undefined || (nouveau.sorte !== 'arme' && nouveau.sorte !== 'outil')) {
+      aRemplacer = null
+      return
+    }
+    zones = []
+    p.place(0, 0)
+    p.rect(0, 0, W, H, NUIT) // (opaque : un voile tramé faisait du bruit derrière la fenêtre)
+    const montes = (nouveau.sorte === 'arme' ? hangar.armes : hangar.outils).map((id) => pieceDe(id)).filter((x): x is Piece => x !== undefined)
+    const hr = 26
+    const hp = 34 + montes.length * (hr + 3) + 22
+    const y0 = Math.floor((H - hp) / 2)
+    panel(p, 8, y0, W - 16, hp, ENCRE, { r: 3 })
+    p.text('PLACES PLEINES', W / 2, y0 + 5, PEPITE[3], { font: 'big', align: 'center' })
+    p.text(texteNu(`Remplacer quoi par : ${nouveau.nom} ?`), W / 2, y0 + 17, COQUE[5], { align: 'center' })
+    montes.forEach((m, i) => {
+      const y = y0 + 28 + i * (hr + 3)
+      panel(p, 14, y, W - 28, hr, { ...ENCRE, body: ENCRE.low }, { r: 2 })
+      dessinerLePictogramme(p, m, 30, y + hr / 2, 26, hr - 4)
+      p.text(texteNu(m.nom), 48, y + hr / 2 - 3, N.WHITE, { font: 'big' })
+      zones.push({ x: 14, y, w: W - 28, h: hr, action: () => {
+        hangar = remplacer(hangar, m.id, nouveau.id)
+        sauver()
+        aRemplacer = null
+      } })
+    })
+    const wa = p.measure('ANNULER', { font: 'big' })[0] + 16
+    bouton(p, W / 2 - wa / 2, y0 + hp - 18, wa, 13, 'Annuler', true, () => (aRemplacer = null), true)
   }
   /** Un point de l'écran en pixels du tampon. */
   const enTampon = (x: number, y: number): Vecteur => {
@@ -1615,7 +1659,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     N.clearFrame(frame)
     const p = N.painterFor(frame)
     const visible = ecranVisible()
-    if (visible && !ecranEtait) ouvrirLeHangar()
+    if (visible && !ecranEtait) {
+      ouvrirLeHangar()
+      aRemplacer = null
+    }
     ecranEtait = visible
     if (visible) {
       // LE HANGAR à la place du monde (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière ») : la scène, puis l'interface

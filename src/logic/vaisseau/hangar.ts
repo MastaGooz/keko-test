@@ -162,6 +162,16 @@ export function monter(h: Hangar, id: string): Hangar {
 export const peutMonter = (h: Hangar, id: string): boolean => monter(h, id) !== h
 
 /** Démonter une pièce d'une liste (les emplacements à une pièce ne se vident pas : on y monte autre chose). */
+/** Remplacer une pièce montée d'une liste par une autre possédée de la même liste, À SA PLACE (Keko : « si on est plein, un popup demande quel équipement remplacer »). */
+export function remplacer(h: Hangar, ancien: string, nouveau: string): Hangar {
+  const a = pieceDe(ancien)
+  const n = pieceDe(nouveau)
+  if (a === undefined || n === undefined || a.sorte !== n.sorte || (n.sorte !== 'arme' && n.sorte !== 'outil') || !possede(h, nouveau)) return h
+  const ids = listeDe(h, n.sorte)
+  if (!ids.includes(ancien) || ids.includes(nouveau)) return h
+  return avecListe(h, n.sorte, ids.map((x) => (x === ancien ? nouveau : x)))
+}
+
 export function demonter(h: Hangar, id: string): Hangar {
   const p = pieceDe(id)
   if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil')) return h

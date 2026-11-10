@@ -654,6 +654,18 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Équiper toujours, remplacer si c'est plein (Keko, 10/11 : « ce n'est pas pratique : si les slots sont pleins, je dois aller retrouver les équipés pour les retirer ; il faudrait toujours pouvoir équiper, et si on est plein, un popup le dit et demande quel équipement remplacer »)
+
+- **Le bouton dit toujours « ÉQUIPER »** pour un outil ou une arme possédé non
+  monté (plus de « Places pleines » éteint). S'il reste une place, ou une
+  pièce de la même famille à chasser, la pièce se monte ; sinon s'ouvre LA
+  FENÊTRE DE REMPLACEMENT : un voile, « PLACES PLEINES », « Remplacer quoi
+  par : … ? », une rangée par pièce montée de la liste (son graphisme, son
+  nom) — une tape la remplace, à sa place (`remplacer`, dans la règle) —, et
+  « Annuler ». Tant qu'elle est ouverte, seules ses zones répondent.
+- Le graphisme de l'aimant se centre sur son encombrement : il débordait du
+  haut de sa case (« un cadre doit toujours contenir son image »).
+
 ## L'aimant devient un outil (Keko, 10/11 : « enlever l'aimant des stats des foreuses, car il faut toujours avoir un effet d'aimant ; plutôt un outil "aimant" qui augmente la puissance de l'aimant »)
 
 - **Les foreuses ne portent plus que le débit et la portée.** Le vaisseau
