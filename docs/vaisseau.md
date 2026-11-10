@@ -686,7 +686,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   QUAND LES ONGLETS SE MULTIPLIENT (Keko : « comment on fera quand il y aura plus
   d'onglets ? », puis « fais un test avec 10 ») : jusqu'à quatre, les grands
   onglets ; au-delà, UNE GRILLE D'ICÔNES de deux colonnes, sans nom (le titre de
-  la vue dit où l'on est), l'actif en or — une douzaine tiennent dans la bande.
+  la vue dit où l'on est), l'actif en or, et SON NOM EN HAUT DE LA BANDE, en or
+  souligné (Keko) — une douzaine tiennent.
   `&onglets=N` ajoute des onglets d'essai jusqu'à N (12 au plus) : une icône, un
   nom, une scène vide.
   La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et

@@ -767,10 +767,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // icône dessinée au-dessus du nom — le vaisseau, la fiole, la caisse —, l'actif en or, sa pointe vers la scène
     // AU-DELÀ DE QUATRE, UNE GRILLE D'ICÔNES (deux colonnes, sans nom : le titre de la vue dit où l'on est) — la
     // colonne tient ainsi une dizaine d'onglets et plus, sans défiler ni rapetisser les grands
+    // LE NOM DE L'ONGLET CHOISI en haut de la bande (Keko : « afficher le titre de l'onglet sélectionné en haut, à
+    // gauche »), en or, souligné — la grille d'icônes n'a pas de noms
+    if (vues.length > 4) {
+      p.text(NOMS_VUE[vue], BANDE / 2, 4, PEPITE[3], { font: 'big', align: 'center' })
+      p.line(4, 13, BANDE - 6, 13, PEPITE[1])
+    }
     if (vues.length > 4) vues.forEach((vv, i) => {
       const s = 22
       const x = 3 + (i % 2) * (s + 2)
-      const y = 4 + Math.floor(i / 2) * (s + 2)
+      const y = 17 + Math.floor(i / 2) * (s + 2)
       const actif = vue === vv
       panel(p, x, y, s, s, actif ? ENCRE_OR : ENCRE, { r: 2 })
       dessinerLIconeDeVue(p, vv, x + s / 2, y + s / 2, actif)
