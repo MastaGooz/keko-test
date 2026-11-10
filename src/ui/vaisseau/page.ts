@@ -147,7 +147,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plus un seul élément non pixel ») : un titre, un texte, puis le hangar et « Décoller » ; ses zones touchables sont
    * refaites à chaque image dessinée, en pixels du tampon.
    */
-  let zones: { x: number; y: number; w: number; h: number; action: () => void }[] = []
+  let zones: { x: number; y: number; w: number; h: number; action: () => void; son?: Son | null }[] = []
 
   // ---------------------------------------------------------------- l'état
   /** `&quai` : le compte de l'extraction court dès le départ, sans sortir du parvis — pour juger l'arc d'un lien. */
@@ -377,40 +377,54 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       jouer(arme.id as Son)
     })
   }
-  /** Ouvre la liste d'un emplacement (depuis le vaisseau ou sa rangée de cases). */
+  /** Ouvre la liste d'un emplacement (depuis le vaisseau ou sa case). */
   function ouvrirLEmplacement(o: Sorte, k = -1): void {
     onglet = o
     place = k
-    etape = 'liste'
+    changerDEtape('liste')
     defil[o] = 0
     // la fiche s'ouvre sur la pièce de cette place, s'il y en a une
     const occupant = k >= 0 ? listeMontee(o)[k] : undefined
     if (occupant !== undefined) choix[o] = occupant
   }
   /**
-   * L'ÉTAPE DU VAISSEAU, sous la scène : une case par emplacement, deux par rangée — au hangar, le graphisme de la pièce
-   * montée (la première pour les outils et les armes, ou VIDE), son nom, et les places en cellules ; au labo, le nombre
-   * de pièces à débloquer. Une tape ouvre la liste. Rend le y sous les cases.
+   * LA VUE D'ENSEMBLE, sous la scène : une case par place (au hangar) ou par catégorie (au labo), deux par rangée, qui
+   * s'allument UNE À UNE quand on arrive. Chaque case : un puits avec le graphisme de la pièce (ou un « + » si la place
+   * est vide), le nom de la place en or, la pièce en clair. Une tape ouvre sa liste. Rend le y sous les cases.
    */
   function dessinerLesEmplacements(p: Peintre, y: number): number {
     const cw = Math.floor((W - 12) / 2)
     const ch = 34
     const cases = casesDuVaisseau()
     cases.forEach((c, i) => {
+      const age = t - etapeA - i * 0.045
+      if (age < 0) return
       const o = c.o
       const x = 4 + (i % 2) * (cw + 4)
       const yy = y + Math.floor(i / 2) * (ch + 4)
-      panel(p, x, yy, cw, ch, ENCRE, { r: 2 })
-      p.text(titreDe(c), x + cw / 2 + 12, yy + 4, PEPITE[3], { align: 'center' })
       let montee: Piece | undefined
       if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
       else montee = piecesDe(o).find((pc) => !possede(hangar, pc.id))
-      panel(p, x + 3, yy + 3, 24, ch - 6, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
-      if (montee !== undefined) dessinerLePictogramme(p, montee, x + 15, yy + ch / 2, 24, ch - 6)
-      const ligne = vue === 'labo' ? `${piecesDe(o).filter((pc) => !possede(hangar, pc.id)).length} A DEBLOQUER` : montee === undefined ? 'VIDE' : texteNu(montee.nom)
+      const e = etatDuBouton(x, yy, cw, ch)
+      // en arrivant, la case monte de trois pixels et son bord flashe blanc
+      const monte = Math.round((1 - sortie(age / 0.18)) * 3)
+      const y2 = yy + e.dy + monte
+      const col = age < 0.06 ? { ...ENCRE, rim: N.WHITE } : e.survole ? { ...ENCRE, rim: COQUE[3] } : ENCRE
+      if (e.dy === 0) p.rect(x + 1, yy + ch + monte, cw - 2, 1, NUIT_OMBRE)
+      panel(p, x, y2, cw, ch, col, { r: 2 })
+      panel(p, x + 3, y2 + 3, 24, ch - 6, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
+      const vide = vue === 'hangar' && montee === undefined
+      if (vide) {
+        // une place vide : un « + » qui respire
+        const c2 = Math.sin(t * 3 + i) > 0 ? COQUE[3] : COQUE[2]
+        p.rect(x + 14, y2 + ch / 2 - 5, 2, 10, c2)
+        p.rect(x + 10, y2 + ch / 2 - 1, 10, 2, c2)
+      } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 15, y2 + ch / 2, 24, ch - 6)
+      p.text(titreDe(c), x + cw / 2 + 12, y2 + 5, PEPITE[2], { align: 'center' })
+      const ligne = vue === 'labo' ? `${piecesDe(o).filter((pc) => !possede(hangar, pc.id)).length} A DEBLOQUER` : vide ? 'VIDE' : texteNu(montee!.nom)
       const L = replier(p, ligne, cw - 34)
-      L.slice(0, 2).forEach((li, k) => p.text(li, x + cw / 2 + 12, yy + 13 + k * 7, vue === 'labo' || montee === undefined ? COQUE[3] : COQUE[5], { align: 'center' }))
-      zones.push({ x, y: yy, w: cw, h: ch, action: () => ouvrirLEmplacement(o, c.k) })
+      L.slice(0, 2).forEach((li, k) => p.text(li, x + cw / 2 + 12, y2 + 14 + k * 7, vue === 'labo' || vide ? COQUE[3] : COQUE[5], { align: 'center' }))
+      zone(x, yy, cw, ch, () => ouvrirLEmplacement(o, c.k))
     })
     return y + Math.ceil(cases.length / 2) * (ch + 4)
   }
@@ -450,6 +464,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const choix: Record<Sorte, string> = { propulseur: 'propulseur-1', coque: 'coque-1', outil: 'foreuse-1', arme: 'arme-canon' }
   function ouvrirLeHangar(): void {
     etape = 'vaisseau'
+    vueA = t
+    etapeA = t
+    feuille = false
+    decollageA = null
     for (const e of EMPLACEMENTS) choix[e] = hangar.montees[e]
     choix.outil = hangar.outils[0] ?? 'foreuse-1'
     choix.arme = hangar.armes[0] ?? 'arme-canon'
@@ -464,32 +482,72 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x - (mot.w * k) / 2 + L.x * k, y, sx: k, sy: k }))
     drawWord(p, items, or ? { fill: [PEPITE[1], PEPITE[2], PEPITE[3]], edge: PEPITE[4], under: N.hex('#6a4a08'), outline: ENCRE.outline, shadow: 0 } : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[6], under: COQUE[2], outline: ENCRE.outline, shadow: 0 })
   }
-  /** Un bouton : une plaque et son mot ; `vif` l'allume (or) et le rend touchable, éteint il est gris et ne fait rien. */
-  /** La hauteur des en-têtes (Keko : « les titres et le bouton retour trop petits, il faut les mettre en valeur »). */
+  // ================================================================ LE GESTE DE LA BASE : l'appui, le survol, le refus
+  /**
+   * LE RETOUR DU GESTE (Keko, 10/11 : « très juicy, avec un bon gamefeel ») : la zone qu'on vient d'enfoncer descend
+   * d'un pixel puis remonte, le point que survole la souris éclaire le bord de ce qu'il touche (PC), et un bouton
+   * éteint qu'on touche quand même TREMBLE et bourdonne — « pas assez » se sent avant de se lire.
+   */
+  let enfonce: { x: number; y: number; t0: number } | null = null
+  let survol: Vecteur | null = null
+  let refus: { x: number; y: number; t0: number } | null = null
+  const memeCoin = (a: { x: number; y: number } | null, x: number, y: number): boolean => a !== null && Math.abs(a.x - x) < 0.5 && Math.abs(a.y - y) < 0.5
+  /** L'état d'un bouton à dessiner : son décalage (enfoncé d'un pixel, ou qui tremble au refus), et s'il est survolé. */
+  function etatDuBouton(x: number, y: number, w: number, h: number): { dx: number; dy: number; survole: boolean } {
+    const appuye = enfonce !== null && memeCoin(enfonce, x, y) && t - enfonce.t0 < 0.12
+    const r = refus
+    const tremble = r !== null && memeCoin(r, x, y) && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const survole = survol !== null && survol.x >= x && survol.x < x + w && survol.y >= y && survol.y < y + h
+    return { dx: tremble, dy: appuye ? 1 : 0, survole }
+  }
+  /** Une zone touchable, avec le son qu'elle fait (null : aucun ; par défaut, le clic). */
+  function zone(x: number, y: number, w: number, h: number, action: () => void, son: Son | null = 'clic'): void {
+    zones.push({ x, y, w, h, action, son })
+  }
+  /** Le bouton éteint reste touchable : il tremble et bourdonne. */
+  function zoneDeRefus(x: number, y: number, w: number, h: number): void {
+    zones.push({ x, y, w, h, action: () => (refus = { x, y, t0: t }), son: 'refus' })
+  }
+  /**
+   * UN BOUTON DE LA BASE, le même partout : la plaque d'or s'il est vif, d'encre sinon, une ombre portée d'un pixel
+   * qui disparaît quand il s'enfonce, le bord éclairé au survol ; `dessin` peint son contenu au décalage donné.
+   */
+  function boutonBase(p: Peintre, x: number, y: number, w: number, h: number, vif: boolean, action: () => void, dessin: (dx: number, dy: number) => void, son: Son | null = 'clic', shine: number | null = null): void {
+    const e = etatDuBouton(x, y, w, h)
+    const base = vif ? ENCRE_OR : ENCRE
+    const col = e.survole ? { ...base, rim: vif ? PEPITE[4] : COQUE[3] } : base
+    if (e.dy === 0) p.rect(x + e.dx + 1, y + h, w - 2, 1, NUIT_OMBRE)
+    panel(p, x + e.dx, y + e.dy, w, h, col, { r: 2, shine })
+    dessin(e.dx, e.dy)
+    if (vif) zone(x, y, w, h + 1, action, son)
+    else zoneDeRefus(x, y, w, h)
+  }
+  /** Un bouton à un mot (en relief s'il est `grand`). */
+  function bouton(p: Peintre, x: number, y: number, w: number, h: number, mot: string, vif: boolean, action: () => void, grand = false, son: Son | null = 'clic'): void {
+    boutonBase(p, x, y, w, h, vif, action, (dx, dy) => {
+      if (grand) motEnRelief(p, mot, x + w / 2 + dx, y + dy + Math.floor((h - 7) / 2), 1, vif)
+      else p.text(texteNu(mot), x + w / 2 + dx, y + dy + Math.floor((h - 5) / 2), vif ? N.WHITE : COQUE[3], { align: 'center' })
+    }, son)
+  }
+  /** La hauteur des en-têtes. */
   const HT = 19
-  /** UN TITRE D'EN-TÊTE : une plaque plus haute cerclée d'or, le mot d'or EN RELIEF (la lettre des effets ui/ du dépôt). */
-  function titreEnTete(p: Peintre, x: number, y: number, w: number, mot: string): void {
-    panel(p, x, y, w, HT, { ...ENCRE, rim: PEPITE[1] }, { r: 2 })
-    motEnRelief(p, mot, x + w / 2, y + Math.floor((HT - 7) / 2), 1, true)
-  }
-  /** LE BOUTON RETOUR : un carré d'or à la hauteur du titre, un chevron épais dessiné, avec son ombre. */
-  function boutonRetour(p: Peintre, x: number, y: number, action: () => void): void {
-    panel(p, x, y, HT, HT, ENCRE_OR, { r: 2 })
-    const cx = x + HT / 2 - 1
-    const cy = y + Math.floor(HT / 2)
-    for (const [dy, c] of [[1, N.hex('#6a4a08')], [0, PEPITE[4]]] as const) {
-      for (let e = 0; e < 3; e++) {
-        p.line(cx + 3 + e, cy - 5 + dy, cx - 2 + e, cy + dy, c)
-        p.line(cx - 2 + e, cy + dy, cx + 3 + e, cy + 5 + dy, c)
+  /**
+   * L'EN-TÊTE D'UN NIVEAU (la liste d'une place) : le retour, un carré d'or au chevron épais, puis le titre du niveau
+   * en relief sur une plaque cerclée d'or (Keko : « mettre en valeur les titres et le bouton retour »).
+   */
+  function enTete(p: Peintre, y: number, mot: string, retour: () => void): void {
+    boutonBase(p, 4, y, HT, HT, true, retour, (dx, dy) => {
+      const cx = 4 + HT / 2 - 1 + dx
+      const cy = y + Math.floor(HT / 2) + dy
+      for (const [o, c] of [[1, N.hex('#6a4a08')], [0, PEPITE[4]]] as const) {
+        for (let e = 0; e < 3; e++) {
+          p.line(cx + 3 + e, cy - 5 + o, cx - 2 + e, cy + o, c)
+          p.line(cx - 2 + e, cy + o, cx + 3 + e, cy + 5 + o, c)
+        }
       }
-    }
-    zones.push({ x, y, w: HT, h: HT, action })
-  }
-  function bouton(p: Peintre, x: number, y: number, w: number, h: number, mot: string, vif: boolean, action: () => void, grand = false): void {
-    panel(p, x, y, w, h, vif ? ENCRE_OR : ENCRE, { r: 2 })
-    if (grand) motEnRelief(p, mot, x + w / 2, y + Math.floor((h - 7) / 2), 1, vif)
-    else p.text(texteNu(mot), x + w / 2, y + Math.floor((h - 5) / 2), vif ? N.WHITE : COQUE[3], { align: 'center' })
-    if (vif) zones.push({ x, y, w, h, action })
+    }, 'retour')
+    panel(p, 6 + HT, y, W - 10 - HT, HT, { ...ENCRE, rim: PEPITE[1] }, { r: 2 })
+    motEnRelief(p, mot, 6 + HT + (W - 10 - HT) / 2, y + 6, 1, true)
   }
   /**
    * LE GRAPHISME D'UNE PIÈCE, dans la case du panneau (Keko) : le propulseur, sa tuyère et sa flamme ; la coque, le fuselage
@@ -620,215 +678,442 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glow: (x, y, r, c, kk) => p.glow(x * k, y * k, r * k, c, kk),
     }
   }
-  /** La scène (le sol du hangar jusqu'au bas de l'aire) a UNE HAUTEUR FIXE, celle qu'elle avait au hangar avec trois jauges (Keko : « il ne faut pas que la hauteur de la zone supérieure change en fonction des éléments en dessous »). */
-  const hauteurDeScene = (): number => Math.max(96, Math.min(Math.floor((H - 10 - 290) / 2) + 120, H - 243))
-  /** La largeur de la bande des onglets, à gauche de la scène, où rien d'autre ne se dessine. */
-  const BANDE = 52
-  let hautScene = 178
+  // ================================================================ LA BASE, EN QUATRE ÉTAGES
   /**
-   * LE HANGAR, VU DE DESSUS (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière, ni les consignes en
-   * haut ; voir le vaisseau dans un hangar, posé ») : un sol de plaques rivetées, une aire d'atterrissage cerclée de
-   * chevrons jaune et noir et de feux qui courent, deux lampes chaudes aux coins, des caisses, et le vaisseau posé au
-   * milieu, moteur éteint, avec ses pièces — tout ce qu'on monte se voit. Une enseigne HANGAR ; le bilan de la
-   * dernière expédition en bandeau, s'il y en a un (plus aucune consigne sinon).
+   * L'INTERFACE DE LA BASE, REPENSÉE (Keko, 10/11 : « une organisation hiérarchique épurée, claire et ergonomique, PC
+   * et téléphone ; cohérente, élégante, et surtout très juicy ») — quatre étages, du plus général au plus précis :
+   * LA BARRE DU HAUT (où l'on est, ce qu'on a : la vue en grand, les crédits), LA SCÈNE (ce qu'on regarde : le
+   * vaisseau sur son aire, la planche du labo, l'inventaire), LE CONTENU (ce qu'on fait, un niveau à la fois) et LA
+   * BARRE DES ONGLETS EN BAS, sous le pouce : trois vues, et « PLUS » qui ouvre les autres, la remise à zéro et la
+   * date du build.
    */
-  function dessinerLeHangar(p: Peintre): void {
-    zones = [] // (la scène se dessine la première : le bouton RESET pose la première zone de l'image)
+  const HAUT_BARRE = 22
+  const HAUT_NAV = 32
+  const Y_SCENE = HAUT_BARRE
+  /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko : elle ne bouge pas avec ce qu'il y a dessous) : ce que laissent les deux barres et le plus haut des contenus. */
+  const hauteurDeScene = (): number => Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 218))
+  let hautScene = 150
+  /** Le pas de la dernière image de la base, pour les ressorts. */
+  let tBase = 0
+  let dtBase = 1 / 60
+  const ressort = (v: number, cible: number, raideur = 14): number => v + (cible - v) * Math.min(1, dtBase * raideur)
+  const sortie = (u: number): number => 1 - Math.pow(1 - Math.max(0, Math.min(1, u)), 3)
+  /** Les instants des gestes qui animent : le changement de vue, de niveau, une pièce équipée, « PLUS », le décollage. */
+  let vueA = -10
+  let etapeA = -10
+  let equipeA = -10
+  let feuille = false
+  let feuilleA = -10
+  let decollageA: number | null = null
+  /** LE COMPTEUR DE CRÉDITS ROULE jusqu'au vrai compte et s'allume quand il change ; chaque écart monte en nombre flottant. */
+  let creditsVus = credits
+  let creditsConnus = credits
+  let creditsA = -10
+  /** Le milieu du compteur, où volent les pièces d'une vente. */
+  let compteurX = W - 28
+  const flottants: { texte: string; x: number; y: number; t0: number; c: number }[] = []
+  /** Les étincelles de l'interface, en pixels d'écran, et les pièces qui volent jusqu'au compteur. */
+  const eclats: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; c: number }[] = []
+  const volantes: { x0: number; y0: number; t0: number }[] = []
+  /** Le repère d'or de la barre du bas glisse d'un onglet à l'autre ; l'onglet allumé se lève. */
+  let repereX = -1
+  const leve: Record<string, number> = {}
+  const NUIT_BARRE = N.hex('#100d18')
+  const NUIT_OMBRE = N.hex('#050409')
+  /** Une gerbe d'étincelles à (x, y). */
+  function gerbe(x: number, y: number, n: number, couleurs: number[], force = 60): void {
+    for (let i = 0; i < n; i++) {
+      const a = R.next() * Math.PI * 2
+      const v = force * (0.4 + 0.6 * R.next())
+      eclats.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 25, t0: t, vie: 0.3 + 0.35 * R.next(), c: couleurs[i % couleurs.length] })
+    }
+  }
+  /** Change de vue : la scène et le contenu se dévoilent, la feuille « PLUS » se ferme. */
+  function allerA(vv: string): void {
+    feuille = false
+    if (vv === vue) return
+    vue = vv
+    etape = 'vaisseau'
+    vueA = t
+    etapeA = t
+  }
+  /** Change de niveau (le vaisseau, la liste d'une place) : le contenu se dévoile. */
+  function changerDEtape(e: 'vaisseau' | 'liste'): void {
+    etape = e
+    etapeA = t
+  }
+  function basculerLaFeuille(): void {
+    feuille = !feuille
+    feuilleA = t
+    defilOnglets = 0
+  }
+
+  /** LA BASE ENTIÈRE, une image : la scène, le contenu, les deux barres, la feuille « PLUS », les éclats. */
+  function dessinerLaBase(p: Peintre): void {
+    zones = []
     p.place(0, 0)
+    dtBase = Math.min(0.05, Math.max(0, t - tBase))
+    tBase = t
     hautScene = hauteurDeScene()
-    // LA BANDE DES ONGLETS, à gauche, est CONDAMNÉE (Keko : « plus tard il y aura d'autres onglets, on ne veut pas le
-    // vaisseau ou l'inventaire dans cette zone ») : rien de la scène ne s'y dessine, la scène vit à sa droite
-    const cx = BANDE + Math.floor((W - BANDE) / 2)
-    const cy = hautScene - 58
     p.rect(0, 0, W, H, NUIT)
+    if (credits !== creditsConnus) {
+      const d = credits - creditsConnus
+      flottants.push({ texte: `${d > 0 ? '+' : ''}${d}`, x: compteurX, y: HAUT_BARRE + 2, t0: t, c: d > 0 ? RUNE[3] : PEPITE[3] })
+      creditsConnus = credits
+      creditsA = t
+    }
+    creditsVus = Math.abs(credits - creditsVus) < 0.5 ? credits : ressort(creditsVus, credits, 8)
+    dessinerLaScene(p)
+    dessinerLeContenu(p)
+    dessinerLaBarreDuHaut(p)
+    dessinerLaNav(p)
+    dessinerLaFeuille(p)
+    dessinerLesEclats(p)
+  }
+
+  /**
+   * LA SCÈNE, sur toute la largeur : le hangar vu de dessus (le vaisseau posé sur son aire, son poids en étiquette, les
+   * zones qu'on touche), la planche bleue du labo, l'inventaire de l'entrepôt ; elle se dévoile en fondu tramé quand
+   * on change de vue. Le vaisseau FLASHE quand on l'équipe, et DÉCOLLE pour de bon quand on part.
+   */
+  function dessinerLaScene(p: Peintre): void {
+    const y0 = Y_SCENE
+    const y1 = y0 + hautScene
+    const cx = W / 2
+    const cy = y1 - Math.min(58, Math.floor(hautScene / 2) + 8)
     if (vue === 'hangar') {
       // le sol du hangar : des plaques, leurs joints sombres, un rivet par plaque
-      p.rect(BANDE, 0, W - BANDE, hautScene, COQUE[0])
-      for (let x = BANDE + 6; x < W; x += 24) p.line(x, 0, x, hautScene - 1, NUIT)
-      for (let y = 4; y < hautScene; y += 24) p.line(BANDE, y, W - 1, y, NUIT)
-      for (let x = BANDE + 6; x < W; x += 24) for (let y = 4; y < hautScene; y += 24) p.dot(x + 2, y + 2, COQUE[1])
+      p.rect(0, y0, W, hautScene, COQUE[0])
+      for (let x = 6; x < W; x += 24) p.line(x, y0, x, y1 - 1, NUIT)
+      for (let y = y0 + 4; y < y1; y += 24) p.line(0, y, W - 1, y, NUIT)
+      for (let x = 6; x < W; x += 24) for (let y = y0 + 4; y < y1; y += 24) p.dot(x + 2, y + 2, COQUE[1])
     } else if (vue === 'labo') {
-      // LE FOND DU LABO (Keko : « un onglet labo où le joueur va débloquer les nouvelles pièces ») : un bleu de plan,
-      // un quadrillage à peine visible, et la pièce qu'on regarde dessinée en grand, comme sur une planche
       const PLAN = N.hex('#0b1726')
-      p.rect(BANDE, 0, W - BANDE, hautScene, PLAN)
-      for (let x = BANDE + 12; x < W; x += 12) p.line(x, 0, x, hautScene - 1, N.hex('#0f2034'))
-      for (let y = 12; y < hautScene; y += 12) p.line(BANDE, y, W - 1, y, N.hex('#0f2034'))
+      p.rect(0, y0, W, hautScene, PLAN)
+      for (let x = 6; x < W; x += 12) p.line(x, y0, x, y1 - 1, N.hex('#0f2034'))
+      for (let y = y0 + 6; y < y1; y += 12) p.line(0, y, W - 1, y, N.hex('#0f2034'))
+      // (l'espace attend L'ARBRE DES RECHERCHES — Keko)
+      p.text('ARBRE DES RECHERCHES : BIENTOT', cx, y0 + Math.floor(hautScene / 2) - 2, N.hex('#24456a'), { align: 'center' })
     } else if (vue === 'entrepot') {
-      // LE FOND DE L'ENTREPÔT (Keko : « un autre fond pour l'inventaire, pas le fond du hangar », puis « on dirait un
-      // autre grid derrière, très peu lisible ») : un mur uni d'acier verdâtre, quelques mouchetures, rien qui fasse
-      // des lignes sous la grille
       const MUR = N.hex('#121c18')
-      p.rect(BANDE, 0, W - BANDE, hautScene, MUR)
-      for (let i = 0; i < 70; i++) {
-        const mx = BANDE + Math.floor(tire(i, 1, 77) * (W - BANDE))
-        const my = Math.floor(tire(i, 2, 77) * hautScene)
+      p.rect(0, y0, W, hautScene, MUR)
+      for (let i = 0; i < 90; i++) {
+        const mx = Math.floor(tire(i, 1, 77) * W)
+        const my = y0 + Math.floor(tire(i, 2, 77) * hautScene)
         p.dot(mx, my, tire(i, 3, 77) < 0.5 ? N.hex('#0c1310') : N.hex('#1a2822'))
       }
+    } else {
+      p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))
+      p.text('BIENTOT', cx, y0 + Math.floor(hautScene / 2) - 3, COQUE[2], { font: 'big', align: 'center' })
     }
-    // la bande des onglets : une plaque sombre, un trait qui la sépare de la scène
-    p.rect(0, 0, BANDE, hautScene, NUIT)
-    p.line(BANDE - 1, 0, BANDE - 1, hautScene - 1, COQUE[1])
-    // les lampes : un boîtier, un halo chaud, hors de la bande
-    for (const lx of [BANDE + 8, W - 9]) {
-      p.glow(lx, 6, 50, N.hex('#ffd8a0'), 0.3)
-      p.rect(lx - 3, 0, 6, 3, COQUE[2])
-      p.rect(lx - 2, 3, 4, 1, PEPITE[3])
+    // les lampes : un boîtier, un halo chaud
+    for (const lx of [8, W - 9]) {
+      p.glow(lx, y0 + 6, 50, N.hex('#ffd8a0'), 0.3)
+      p.rect(lx - 3, y0, 6, 3, COQUE[2])
+      p.rect(lx - 2, y0 + 3, 4, 1, PEPITE[3])
     }
-    if (vue === 'hangar') {
-      // l'aire : un disque sombre, l'anneau de chevrons, un cercle et une croix de guidage, huit feux qui courent
-      const R0 = 30
-      // (le disque est SOMBRE et peu saturé — Keko : le sol se confondait avec des pièces comme les armes ; le vaisseau se
-      // lit par la valeur, quelle que soit la couleur de ses pièces)
-      // (gris neutre, assez clair pour que le contour quasi noir du vaisseau s'en détache — Keko : « trop proche de l'outline »)
-      const SOL = N.hex('#2c2f38')
-      const REPERE = N.hex('#3c404c')
-      p.circle(cx, cy, R0 + 3, NUIT)
-      p.circle(cx, cy, R0, SOL)
-      p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))
-      p.ring(cx, cy, R0 - 9, 1, REPERE)
-      p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, REPERE)
-      p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, REPERE)
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2
-        const allume = (Math.floor(t * 4) + i) % 8 < 3
-        const fx = cx + Math.cos(a) * (R0 + 6)
-        const fy = cy + Math.sin(a) * (R0 + 6)
-        p.dot(fx, fy, allume ? PEPITE[3] : PEPITE[0])
-        if (allume) p.glow(fx, fy, 5, PEPITE[2], 0.5)
+    if (vue === 'hangar') dessinerLeHangarEnScene(p, cx, cy, y0, y1)
+    else if (vue === 'entrepot') dessinerLInventaire(p, y0)
+    // le dévoilement : un voile tramé qui se lève
+    const u = (t - vueA) / 0.25
+    if (u < 1) p.rect(0, y0, W, hautScene, NUIT, 1 - sortie(u))
+    p.line(0, y1, W - 1, y1, ENCRE.rim)
+    p.line(0, y1 + 1, W - 1, y1 + 1, NUIT_OMBRE)
+  }
+
+  /** Le hangar dans la scène : l'aire, le vaisseau (et son décollage), son poids, les zones des pièces. */
+  function dessinerLeHangarEnScene(p: Peintre, cx: number, cy: number, y0: number, y1: number): void {
+    // LE DÉCOLLAGE : le moteur s'allume, le vaisseau tremble, puis file vers le haut et sort de la scène
+    let sy = cy
+    let flam = 0
+    let jit = 0
+    if (decollageA !== null) {
+      const u = Math.min(1, (t - decollageA) / 0.9)
+      flam = Math.min(1, u * 4)
+      jit = u < 0.35 ? Math.round((R.next() - 0.5) * 2) : 0
+      sy = cy - Math.round(Math.pow(Math.max(0, u - 0.25) / 0.75, 2.2) * (cy - y0 + 40))
+      if (R.next() < 0.8) eclats.push({ x: cx + (R.next() - 0.5) * 6, y: sy + 16, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: FEU[3 + Math.floor(R.next() * 4)] })
+      if (u >= 1) {
+        decollageA = null
+        demarrer()
       }
-      // l'ombre du vaisseau sur l'aire, puis le vaisseau posé, agrandi deux fois, moteur éteint
-      const K = 2
-      const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
-      const peau = al.coque >= 2 ? BLINDEE : COQUE
-      // un halo clair sous le vaisseau, comme un projecteur, puis LE CONTOUR DE LA SILHOUETTE ENTIÈRE (Keko) : le même
-      // vaisseau peint d'un seul noir, décalé d'un pixel dans les huit directions, sous le vrai — ailes et armes comprises
-      p.glow(cx, cy, 24, N.hex('#8aa0c8'), 0.22)
-      const contour = silhouette(p, N.hex('#04050a'))
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) dessinerVaisseauA(agrandi(contour, K), cx + dx, cy + dy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, { ...al, bouclier: 0 })
-      dessinerVaisseauA(agrandi(p, K), cx, cy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, al)
-      // LE POIDS TOTAL du vaisseau, sous l'aire : la somme de ses pièces (le budget d'énergie qui l'accompagnait a été
-      // retiré : Keko, « on le garde pour autre chose, par exemple des compétences actives »)
-      // (le poids total est passé sous le titre de la vue d'ensemble — Keko)
-      // LA CIBLE (Keko : « une cible, un rectangle vert avec juste les angles, autour de la zone du vaisseau où la pièce
-      // va ») : la catégorie ouverte dit la zone — l'arrière pour le propulseur, le fuselage pour la coque, le toit pour
-      // les outils, chaque aile portée pour les armes ; en coordonnées du vaisseau (le nez en +x), tournées nez en haut
-      const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -4.5, 3.2]] : o === 'coque' ? [[-7.5, -4.8, 9.8, 4.8]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8, (i === 0 ? -1 : 1) * 8.6, 2.5, (i === 0 ? -1 : 1) * 4.2]))
-      // à l'étape du VAISSEAU, toutes les zones, et une tape sur l'une ouvre sa liste (les petites d'abord : le châssis les contient) ; ensuite, celle de l'emplacement ouvert seulement
-      const cibles: Sorte[] = etape === 'vaisseau' ? ['propulseur', 'outil', 'arme', 'coque'] : [onglet]
-      const vif = Math.sin(t * 5) > -0.3
-      for (const o of cibles) for (const [i, [x0, y0, x1, y1]] of zonesDe(o).entries()) {
-        // une place d'arme ouverte : sa seule aile (Keko : arme 1, arme 2)
-        if (etape !== 'vaisseau' && o === 'arme' && i !== placeOuverte()) continue
-        // local (x, y) → écran (cx + y·K, cy − x·K)
-        const sx0 = Math.round(cx + Math.min(y0, y1) * K)
-        const sx1 = Math.round(cx + Math.max(y0, y1) * K)
-        const sy0 = Math.round(cy - Math.max(x0, x1) * K)
-        const sy1 = Math.round(cy - Math.min(x0, x1) * K)
-        // la longueur des branches : au plus le tiers du côté, qu'un coin ne touche jamais son voisin (Keko : sur les armes, les coins se touchaient)
-        const L = Math.max(1, Math.min(4, Math.floor((sx1 - sx0) / 3), Math.floor((sy1 - sy0) / 3)))
-        const c = vif ? RUNE[3] : RUNE[2] // (le temps sombre du battement reste lisible — Keko)
-        // (à l'étape du vaisseau, pas de cible dessinée — Keko : on touche quand même la zone)
-        if (etape !== 'vaisseau') for (const [x, y, dx, dy] of [[sx0, sy0, 1, 1], [sx1, sy0, -1, 1], [sx0, sy1, 1, -1], [sx1, sy1, -1, -1]]) {
+    }
+    // l'aire : un disque sombre, l'anneau de chevrons, un cercle et une croix de guidage, huit feux qui courent
+    const R0 = 30
+    const SOL = N.hex('#2c2f38')
+    const REPERE = N.hex('#3c404c')
+    p.circle(cx, cy, R0 + 3, NUIT)
+    p.circle(cx, cy, R0, SOL)
+    p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? PEPITE[1] : NUIT))
+    p.ring(cx, cy, R0 - 9, 1, REPERE)
+    p.line(cx - R0 + 11, cy, cx + R0 - 11, cy, REPERE)
+    p.line(cx, cy - R0 + 11, cx, cy + R0 - 11, REPERE)
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2
+      const allume = decollageA !== null || (Math.floor(t * 4) + i) % 8 < 3
+      const fx = cx + Math.cos(a) * (R0 + 6)
+      const fy = cy + Math.sin(a) * (R0 + 6)
+      p.dot(fx, fy, allume ? PEPITE[3] : PEPITE[0])
+      if (allume) p.glow(fx, fy, 5, PEPITE[2], 0.5)
+    }
+    // l'onde d'une pièce équipée, sur l'aire
+    const ue = (t - equipeA) / 0.45
+    if (ue < 1) p.ring(cx, cy, 12 + ue * 26, 2, ue < 0.3 ? N.WHITE : PEPITE[3], 1 - ue)
+    // le vaisseau posé, agrandi deux fois, cerné de sa silhouette noire ; blanc l'instant où on l'équipe
+    const K = 2
+    const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
+    const peau = al.coque >= 2 ? BLINDEE : COQUE
+    p.glow(cx, sy, 24, N.hex('#8aa0c8'), 0.22)
+    const contour = silhouette(p, N.hex('#04050a'))
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) dessinerVaisseauA(agrandi(contour, K), cx + dx + jit, sy + dy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, { ...al, bouclier: 0 })
+    dessinerVaisseauA(agrandi(p, K), cx + jit, sy, -Math.PI / 2, flam, peau, VERRIERE, 0, false, al)
+    if (t - equipeA < 0.09) dessinerVaisseauA(agrandi(silhouette(p, N.WHITE), K), cx, sy, -Math.PI / 2, 0, peau, VERRIERE, 0, false, { ...al, bouclier: 0 })
+    p.place(0, 0)
+    // LE POIDS en étiquette, en bas à gauche de la scène
+    const poids = `${poidsTotal(hangar)} T`
+    const wm = p.measure('POIDS')[0]
+    const wv = p.measure(poids, { font: 'big' })[0]
+    panel(p, 4, y1 - 16, wm + wv + 13, 13, ENCRE, { r: 2 })
+    p.text('POIDS', 9, y1 - 12, COQUE[4])
+    p.text(poids, 9 + wm + 4, y1 - 13, PEPITE[3], { font: 'big' })
+    // LES ZONES DU VAISSEAU (Keko : une cible verte, les angles seulement, autour de la zone où va la pièce) : à la vue
+    // d'ensemble, on les touche sans les voir ; dans une liste, la place ouverte se montre
+    const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -4.5, 3.2]] : o === 'coque' ? [[-7.5, -4.8, 9.8, 4.8]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8, (i === 0 ? -1 : 1) * 8.6, 2.5, (i === 0 ? -1 : 1) * 4.2]))
+    const cibles: Sorte[] = etape === 'vaisseau' ? ['propulseur', 'outil', 'arme', 'coque'] : [onglet]
+    const vif = Math.sin(t * 5) > -0.3
+    if (decollageA === null) for (const o of cibles) for (const [i, [x0, yy0, x1, yy1]] of zonesDe(o).entries()) {
+      if (etape !== 'vaisseau' && o === 'arme' && i !== placeOuverte()) continue
+      const sx0 = Math.round(cx + Math.min(yy0, yy1) * K)
+      const sx1 = Math.round(cx + Math.max(yy0, yy1) * K)
+      const sy0 = Math.round(cy - Math.max(x0, x1) * K)
+      const sy1 = Math.round(cy - Math.min(x0, x1) * K)
+      const L = Math.max(1, Math.min(4, Math.floor((sx1 - sx0) / 3), Math.floor((sy1 - sy0) / 3)))
+      const c = vif ? RUNE[3] : RUNE[2]
+      if (etape !== 'vaisseau') {
+        // la cible se resserre en arrivant
+        const s = Math.round((1 - sortie((t - etapeA) / 0.25)) * 6)
+        for (const [x, y, dx, dy] of [[sx0 - s, sy0 - s, 1, 1], [sx1 + s, sy0 - s, -1, 1], [sx0 - s, sy1 + s, 1, -1], [sx1 + s, sy1 + s, -1, -1]]) {
           p.line(x, y, x + dx * L, y, c)
           p.line(x, y, x, y + dy * L, c)
         }
-        if (etape === 'vaisseau') zones.push({ x: sx0 - 2, y: sy0 - 2, w: sx1 - sx0 + 4, h: sy1 - sy0 + 4, action: () => ouvrirLEmplacement(o, o === 'arme' ? i : o === 'outil' ? 0 : -1) })
-      }
-    } else if (vue === 'labo') {
-      // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
-      // (les crédits totaux sont passés sous le titre de la vue d'ensemble, là où le hangar met son poids — Keko)
-    } else if (vue === 'entrepot') {
-      // (les crédits totaux sont sous le titre MATERIAUX, comme au labo — Keko)
-      // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
-      // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
-      // la grille remplit toute la zone à droite de la bande (Keko) : quatre colonnes, autant de rangées qu'il en tient
-      const COL = 4
-      const cw = 28
-      const ch = 26
-      const HAUT_NOM = 16 // (la place du nom de l'onglet, en haut de la scène)
-      const RANG = Math.max(1, Math.floor((hautScene - 8 - HAUT_NOM) / (ch + 3)))
-      const gx = BANDE + Math.floor((W - BANDE - (COL * cw + (COL - 1) * 3)) / 2)
-      const gy = HAUT_NOM + Math.floor((hautScene - HAUT_NOM - (RANG * (ch + 3) - 3)) / 2)
-      for (let i = 0; i < COL * RANG; i++) {
-        const x = gx + (i % COL) * (cw + 3)
-        const y = gy + Math.floor(i / COL) * (ch + 3)
-        const k = MINERAIS[i]
-        if (k === undefined) {
-          panel(p, x, y, cw, ch, { ...ENCRE, rim: ENCRE.top, top: ENCRE.body, body: ENCRE.low }, { r: 2 })
-          continue
-        }
-        const choisi = k === mineraiChoisi
-        panel(p, x, y, cw, ch, choisi ? ENCRE_OR : ENCRE, { r: 2 })
-        dessinerUneRessource(p, x + cw / 2, y + 10, k)
-        p.text(String(tresor[k]), x + cw / 2, y + ch - 7, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center' })
-        zones.push({ x, y, w: cw, h: ch, action: () => (mineraiChoisi = k) })
-      }
+      } else zone(sx0 - 2, sy0 - 2, sx1 - sx0 + 4, sy1 - sy0 + 4, () => ouvrirLEmplacement(o, o === 'arme' ? i : o === 'outil' ? 0 : -1))
     }
-    // LE NOM DE L'ONGLET CHOISI EN HAUT DE LA SCÈNE (Keko : « la zone du haut, à droite, n'est pas utilisée ») : le mot
-    // d'or en relief, centré sur la scène, entre les deux lampes
-    motEnRelief(p, NOMS_VUE[vue], cx, 7, 1, true)
-    // LES ONGLETS EN COLONNE, à gauche de la scène (Keko : « en colonne sur la gauche de l'écran, qui est inutilisé ») :
-    // HANGAR, ENTREPOT, l'actif en or ; la scène montre l'un ou l'autre
-    const vues = VUES
-    // LA COLONNE EN VALEUR (Keko : « les boutons onglet sont très petits et un peu moches ») : des onglets hauts, une
-    // icône dessinée au-dessus du nom — le vaisseau, la fiole, la caisse —, l'actif en or, sa pointe vers la scène
-    // AU-DELÀ DE QUATRE, UNE GRILLE D'ICÔNES (deux colonnes, sans nom : le titre de la vue dit où l'on est) — la
-    // colonne tient ainsi une dizaine d'onglets et plus, sans défiler ni rapetisser les grands
-    // (si elle dépasse la scène, elle DÉFILE au doigt : les cases coupées au bord, un ascenseur à droite de la bande)
+  }
+
+  /** L'INVENTAIRE de l'entrepôt, dans la scène : cinq cases par rangée, autant de rangées qu'il en tient, qui s'allument une à une ; le minerai choisi en or. */
+  function dessinerLInventaire(p: Peintre, y0: number): void {
+    const COL = 5
+    const cw = 30
+    const ch = 26
+    const RANG = Math.max(1, Math.floor((hautScene - 8) / (ch + 3)))
+    const gx = Math.floor((W - (COL * cw + (COL - 1) * 3)) / 2)
+    const gy = y0 + Math.floor((hautScene - (RANG * (ch + 3) - 3)) / 2)
+    for (let i = 0; i < COL * RANG; i++) {
+      if (t - vueA < i * 0.012) continue
+      const x = gx + (i % COL) * (cw + 3)
+      const y = gy + Math.floor(i / COL) * (ch + 3)
+      const k = MINERAIS[i]
+      if (k === undefined) {
+        panel(p, x, y, cw, ch, { ...ENCRE, rim: ENCRE.top, top: ENCRE.body, body: ENCRE.low }, { r: 2 })
+        continue
+      }
+      const choisi = k === mineraiChoisi
+      const e = etatDuBouton(x, y, cw, ch)
+      panel(p, x, y + e.dy, cw, ch, choisi ? ENCRE_OR : e.survole ? { ...ENCRE, rim: COQUE[3] } : ENCRE, { r: 2 })
+      if (choisi) p.glow(x + cw / 2, y + 10, 12, PEPITE[2], 0.15 + 0.08 * Math.sin(t * 4))
+      dessinerUneRessource(p, x + cw / 2, y + 10 + e.dy, k)
+      p.text(String(tresor[k]), x + cw / 2, y + ch - 7 + e.dy, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center' })
+      zone(x, y, cw, ch, () => (mineraiChoisi = k))
+    }
+  }
+
+  /** LA BARRE DU HAUT : l'icône et LE NOM DE LA VUE en grand (le premier niveau de la hiérarchie), et LES CRÉDITS, qui roulent et s'allument. */
+  function dessinerLaBarreDuHaut(p: Peintre): void {
+    p.rect(0, 0, W, HAUT_BARRE, NUIT_BARRE)
+    p.line(0, HAUT_BARRE - 1, W - 1, HAUT_BARRE - 1, ENCRE.rim)
+    p.line(0, HAUT_BARRE, W - 1, HAUT_BARRE, NUIT_OMBRE)
+    // le titre tombe à sa place quand la vue change
+    const u = sortie((t - vueA) / 0.3)
+    const chute = Math.round((1 - u) * -8)
+    dessinerLIconeDeVue(p, vue, 11, 11 + chute, true)
+    const mot = spell(texteNu(NOMS_VUE[vue]), 'big') as { w: number }
+    motEnRelief(p, NOMS_VUE[vue], 22 + mot.w, 4 + chute, 2, true)
+    // le compteur
+    const n = String(Math.round(creditsVus))
+    const wn = p.measure(n, { font: 'big' })[0]
+    const wp = wn + 23
+    const px = W - 4 - wp
+    compteurX = px + wp / 2
+    const allume = t - creditsA < 0.45
+    const r = refus
+    const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    if (allume) p.glow(compteurX, 11, 22, RUNE[2], 0.25 * (1 - (t - creditsA) / 0.45))
+    panel(p, px + tremble, 4, wp, 14, allume ? { ...ENCRE, rim: RUNE[3] } : tremble !== 0 ? { ...ENCRE, rim: ROUGE[4] } : ENCRE, { r: 3 })
+    dessinerUnCredit(p, px + 9 + tremble, 10)
+    p.text(n, px + 16 + tremble, 8, allume ? N.WHITE : PEPITE[3], { font: 'big' })
+  }
+
+  /** Les vues de la barre du bas ; les autres vont dans « PLUS ». */
+  const PRINCIPALES = (): string[] => VUES.slice(0, 3)
+  /** L'icône de « PLUS » : quatre carrés. */
+  function dessinerLIconePlus(p: Peintre, x0: number, y0: number, actif: boolean): void {
+    const x = Math.round(x0)
+    const y = Math.round(y0)
+    for (const [dx, dy] of [[-5, -5], [1, -5], [-5, 1], [1, 1]]) {
+      p.rect(x + dx - 1, y + dy - 1, 6, 6, ENCRE.outline)
+      p.rect(x + dx, y + dy, 4, 4, actif ? PEPITE[2] : COQUE[3])
+      p.rect(x + dx, y + dy, 4, 1, actif ? PEPITE[3] : COQUE[4])
+    }
+  }
+  /**
+   * LA BARRE DES ONGLETS, EN BAS (sous le pouce, comme les applis — et sur PC, à la souris) : une case par vue, son icône
+   * et son nom ; l'allumée se lève, en or, et un repère d'or glisse jusqu'à elle. « PLUS » montre la vue des autres
+   * quand on y est.
+   */
+  function dessinerLaNav(p: Peintre): void {
+    const y0 = H - HAUT_NAV
+    p.rect(0, y0, W, HAUT_NAV, NUIT_BARRE)
+    p.line(0, y0, W - 1, y0, ENCRE.rim)
+    const slots = [...PRINCIPALES(), 'plus']
+    const sw = W / slots.length
+    const horsBarre = !PRINCIPALES().includes(vue)
+    slots.forEach((vv, i) => {
+      const actif = vv === 'plus' ? feuille || horsBarre : vv === vue && !feuille
+      leve[vv] = ressort(leve[vv] ?? 0, actif ? 1 : 0, 18)
+      const x0 = Math.round(i * sw)
+      const x1 = Math.round((i + 1) * sw)
+      const cxs = Math.round((x0 + x1) / 2)
+      const e = etatDuBouton(x0, y0, x1 - x0, HAUT_NAV)
+      const dy = -Math.round(leve[vv] * 3) + e.dy
+      if (e.survole && !actif) p.rect(x0 + 2, y0 + 3, x1 - x0 - 4, HAUT_NAV - 5, N.hex('#1a1626'))
+      if (actif) p.glow(cxs, y0 + 12, 18, PEPITE[2], 0.16)
+      const ic = vv === 'plus' && horsBarre && !feuille ? vue : vv
+      const nom = vv === 'plus' ? (horsBarre && !feuille ? NOMS_VUE[vue] : 'PLUS') : NOMS_VUE[vv]
+      if (ic === 'plus') dessinerLIconePlus(p, cxs, y0 + 13 + dy, actif)
+      else dessinerLIconeDeVue(p, ic, cxs, y0 + 13 + dy, actif)
+      p.text(nom, cxs, y0 + 23 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
+      const action = vv === 'plus' ? basculerLaFeuille : () => (vv === vue ? (feuille = false) : allerA(vv))
+      zone(x0, y0, x1 - x0, HAUT_NAV, action, vv === 'plus' ? (feuille ? 'retour' : 'ouvre') : actif ? null : 'onglet')
+    })
+    const ia = feuille || horsBarre ? slots.length - 1 : slots.indexOf(vue)
+    const cible = ia * sw + sw / 2
+    repereX = repereX < 0 ? cible : ressort(repereX, cible, 16)
+    p.rect(Math.round(repereX - 11), y0 + 1, 22, 2, PEPITE[2])
+    p.rect(Math.round(repereX - 7), y0 + 1, 14, 1, PEPITE[4])
+  }
+
+  /**
+   * LA FEUILLE « PLUS », qui monte de la barre du bas : les autres onglets en grille (quatre par rangée, une icône et
+   * un nom ; elle défile au doigt et à la molette quand ils sont nombreux), puis la remise à zéro et la date du build.
+   * Une tape à côté la referme.
+   */
+  function dessinerLaFeuille(p: Peintre): void {
     zoneDesOnglets = null
-    if (vues.length > 4) {
-      const s = 22
-      const haut = 4 + Math.ceil(vues.length / 2) * (s + 2) + 2
-      const maxD = Math.max(0, haut - hautScene)
-      defilOnglets = Math.max(0, Math.min(maxD, defilOnglets))
-      vues.forEach((vv, i) => {
-        const x = 3 + (i % 2) * (s + 2)
-        const y = Math.round(4 + Math.floor(i / 2) * (s + 2) - defilOnglets)
-        if (y + s <= 0 || y >= hautScene) return
-        const actif = vue === vv
-        panel(p, x, y, s, s, actif ? ENCRE_OR : ENCRE, { r: 2 })
-        dessinerLIconeDeVue(p, vv, x + s / 2, y + s / 2, actif)
-        const zy = Math.max(0, y)
-        const zh = Math.min(y + s, hautScene) - zy
-        if (!actif && zh > 0) zones.push({ x, y: zy, w: s, h: zh, action: () => ((vue = vv), (etape = 'vaisseau')) })
-      })
-      if (maxD > 0) {
-        // la coupe : ce qui dépasse sous la scène s'efface (l'interface du bas se peint par-dessus), et l'ascenseur
-        p.rect(0, hautScene, BANDE, H - hautScene, NUIT)
-        const hg = hautScene - 8
-        const hc = Math.max(8, Math.round((hg * hautScene) / haut))
-        const yc = 4 + Math.round(((hg - hc) * defilOnglets) / maxD)
-        p.rect(BANDE - 4, 4, 2, hg, ENCRE.outline)
-        p.rect(BANDE - 4, yc, 2, hc, COQUE[3])
-        zoneDesOnglets = { x: 0, y: 0, w: BANDE, h: hautScene }
-      }
+    const u = sortie((t - feuilleA) / 0.2)
+    const k = feuille ? u : 1 - u
+    if (k <= 0.01) return
+    const bas = H - HAUT_NAV
+    const autres = VUES.slice(3)
+    const COL = 4
+    const tw = 40
+    const th = 34
+    const pas = th + 3
+    const rangs = Math.ceil(autres.length / COL)
+    const hPied = 36
+    const hMax = bas - HAUT_BARRE - 10
+    const visibles = Math.max(1, Math.min(rangs, Math.floor((hMax - 18 - hPied) / pas)))
+    const hf = 18 + (autres.length > 0 ? visibles * pas : 14) + hPied
+    const yf = Math.round(bas - (hf + 4) * k)
+    p.rect(0, HAUT_BARRE + 1, W, bas - HAUT_BARRE - 1, NUIT, 0.7 * k)
+    if (feuille) zones = zones.filter((z) => z.y >= bas)
+    panel(p, 4, yf, W - 8, hf + 8, { ...ENCRE, rim: PEPITE[1] }, { r: 3 })
+    p.text('AUTRES ONGLETS', W / 2, yf + 6, PEPITE[3], { align: 'center' })
+    const yg = yf + 16
+    if (autres.length === 0) p.text('AUCUN POUR L\'INSTANT', W / 2, yg + 3, COQUE[3], { align: 'center' })
+    const maxD = Math.max(0, rangs - visibles)
+    defilOnglets = Math.max(0, Math.min(maxD, defilOnglets))
+    const d0 = Math.round(defilOnglets)
+    const gx = Math.floor((W - (COL * tw + (COL - 1) * 3)) / 2)
+    autres.forEach((vv, i) => {
+      const r = Math.floor(i / COL) - d0
+      if (r < 0 || r >= visibles) return
+      const x = gx + (i % COL) * (tw + 3)
+      const y = yg + r * pas
+      const actif = vv === vue
+      const e = etatDuBouton(x, y, tw, th)
+      panel(p, x, y + e.dy, tw, th, actif ? ENCRE_OR : e.survole ? { ...ENCRE, rim: COQUE[3] } : ENCRE, { r: 2 })
+      dessinerLIconeDeVue(p, vv, x + tw / 2, y + 13 + e.dy, actif)
+      p.text(NOMS_VUE[vv], x + tw / 2, y + th - 8 + e.dy, actif ? N.WHITE : COQUE[4], { align: 'center' })
+      if (feuille) zone(x, y, tw, th, () => allerA(vv), 'onglet')
+    })
+    if (maxD > 0) {
+      const hg = visibles * pas - 3
+      const hc = Math.max(8, Math.round((hg * visibles) / rangs))
+      const yc = yg + Math.round(((hg - hc) * defilOnglets) / maxD)
+      p.rect(W - 8, yg, 2, hg, ENCRE.outline)
+      p.rect(W - 8, yc, 2, hc, COQUE[3])
+      if (feuille) zoneDesOnglets = { x: 4, y: yg, w: W - 8, h: hg }
     }
-    else vues.forEach((vv, i) => {
-      const w = 44
-      const h = 32
-      const y = 4 + i * (h + 4)
-      const actif = vue === vv
-      panel(p, 3, y, w, h, actif ? ENCRE_OR : ENCRE, { r: 3, shine: actif && (t % 5) / 5 < 0.25 ? -10 + ((w + 30) * ((t % 5) / 5)) / 0.25 : null })
-      if (actif) p.poly([[3 + w, y + h / 2 - 4], [3 + w + 4, y + h / 2], [3 + w, y + h / 2 + 4]], PEPITE[2])
-      dessinerLIconeDeVue(p, vv, 3 + w / 2, y + 12, actif)
-      p.text(NOMS_VUE[vv], 3 + w / 2, y + h - 9, actif ? N.WHITE : COQUE[4], { align: 'center' })
-      if (!actif) zones.push({ x: 3, y, w, h, action: () => ((vue = vv), (etape = 'vaisseau')) })
-    })
-    // le bouton de test, tout en bas à gauche de l'écran (Keko) : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
+    // le pied : la remise à zéro (une seconde tape la confirme), la date du build
+    const yp = yf + hf + 8 - hPied
+    p.line(10, yp, W - 11, yp, ENCRE.top)
     const demande = t - resetDemandeA < 2
-    bouton(p, 3, H - 14, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
-      if (!demande) {
-        resetDemandeA = t
-        return
+    if (feuille) {
+      const wr = p.measure(demande ? 'SUR ?' : 'REMISE A ZERO')[0] + 14
+      bouton(p, Math.round(W / 2 - wr / 2), yp + 5, wr, 13, demande ? 'Sur ?' : 'Remise a zero', true, () => {
+        if (!demande) {
+          resetDemandeA = t
+          return
+        }
+        resetDemandeA = -10
+        hangar = hangarNeuf()
+        tresor = cargaisonVide()
+        credits = 0
+        creditsVus = 0
+        creditsConnus = 0
+        sauver()
+        ouvrirLeHangar()
+      }, false, demande ? 'refus' : 'clic')
+    }
+    p.text(texteNu(`build ${build}`), W / 2, yp + 24, COQUE[3], { align: 'center' })
+    if (feuille) zone(0, HAUT_BARRE, W, bas - HAUT_BARRE, basculerLaFeuille, 'retour')
+  }
+
+  /** Les éclats de l'interface : les étincelles, les pièces d'une vente qui volent au compteur, les nombres qui montent. */
+  function dessinerLesEclats(p: Peintre): void {
+    for (const e of eclats) {
+      e.x += e.vx * dtBase
+      e.y += e.vy * dtBase
+      e.vy += 140 * dtBase
+      e.vx *= 1 - 2 * dtBase
+      const u = (t - e.t0) / e.vie
+      p.rect(Math.round(e.x), Math.round(e.y), u < 0.4 ? 2 : 1, u < 0.4 ? 2 : 1, e.c)
+    }
+    for (let i = eclats.length - 1; i >= 0; i--) if (t - eclats[i].t0 > eclats[i].vie) eclats.splice(i, 1)
+    for (let i = volantes.length - 1; i >= 0; i--) {
+      const v = volantes[i]
+      const u = (t - v.t0) / 0.5
+      if (u < 0) continue
+      if (u >= 1) {
+        volantes.splice(i, 1)
+        N.sparkle(p, compteurX, 11, 4, RUNE[3], N.WHITE, 0.9)
+        jouer('ramasse')
+        continue
       }
-      resetDemandeA = -10
-      hangar = hangarNeuf()
-      tresor = cargaisonVide()
-      credits = 0
-      sauver()
-      ouvrirLeHangar()
-    })
+      const e = u * u * (3 - 2 * u)
+      const x = v.x0 + (compteurX - 8 - v.x0) * e
+      const y = v.y0 + (11 - v.y0) * e - Math.sin(u * Math.PI) * 26
+      dessinerUnCredit(p, x, y)
+    }
+    for (let i = flottants.length - 1; i >= 0; i--) {
+      const f = flottants[i]
+      const u = (t - f.t0) / 0.9
+      if (u >= 1) {
+        flottants.splice(i, 1)
+        continue
+      }
+      p.text(f.texte, f.x, Math.round(f.y + 2 - sortie(u) * 12), u > 0.7 && Math.floor(t * 30) % 2 === 0 ? N.WHITE : f.c, { font: 'big', align: 'center', outline: NUIT_OMBRE })
+    }
   }
   /**
    * Une jauge du panneau : son nom à gauche, puis — une quantité entière (points, armes) : DES CELLULES, une par unité,
@@ -874,11 +1159,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (repere !== null) p.rect(bx + 1 + Math.round((bw - 2) * Math.min(1, repere)) - 1, y - 1, 1, 7, N.WHITE)
   }
-  /**
-   * LE BAS DE L'ENTREPÔT (Keko : « la partie inférieure devient la zone avec une petite description du minerai
-   * sélectionné et son prix en crédits ») : la fiche du minerai choisi dans la grille — son nom, deux lignes, sa valeur
-   * en crédits la pépite, ce qu'on en a en stock —, VENDRE TOUT, et les crédits qu'on a. Rend le y sous le panneau.
-   */
   /** LA LIGNE SOUS UN TITRE (le poids total, les crédits) : le mot et le nombre en grande police, centrés, l'icône des crédits s'il le faut — la petite police, essayée, a été retirée (Keko). */
   /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, la FIOLE du labo et son liquide vert, la CAISSE de l'entrepôt. */
   function dessinerLIconeDeVue(p: Peintre, vv: string, x0: number, y0: number, actif: boolean): void {
@@ -965,149 +1245,171 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 1, y - 6, 2, 4, N.hex('#ff8a2a'))
     }
   }
-  function ligneSousLeTitre(p: Peintre, y: number, mot: string, val: string, credit: boolean): void {
-    const wm = p.measure(mot, { font: 'big' })[0]
-    const wv = p.measure(val, { font: 'big' })[0]
-    const x0 = Math.round(W / 2 - (wm + 6 + wv + (credit ? 12 : 0)) / 2)
-    p.text(mot, x0, y, COQUE[4], { font: 'big' })
-    p.text(val, x0 + wm + 6, y, PEPITE[3], { font: 'big' })
-    if (credit) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 3)
-  }
-  function dessinerLEntrepot(p: Peintre, y0: number): number {
-    // LE TITRE, dans le style des en-têtes du hangar et du labo (Keko : « un titre dans le même style, matériaux »)
-    titreEnTete(p, 4, y0, W - 8, 'MATERIAUX')
-    // les CRÉDITS TOTAUX sous le titre, comme au labo (Keko)
-    ligneSousLeTitre(p, y0 + HT + 4, 'CREDITS', String(credits), true)
-    const y = y0 + HT + 16
+  /**
+   * LA FICHE DU MINERAI, sous l'inventaire : son icône et son nom, sa description sur trois lignes fixes (Keko), sa
+   * valeur unitaire et le stock, et VENDRE — les pièces volent jusqu'au compteur, qui roule. Rend le y sous la fiche.
+   */
+  function dessinerLEntrepot(p: Peintre, y: number): number {
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
-    // la description tient TROIS LIGNES, toujours (Keko : « fixe la hauteur à trois lignes pour éviter le changement de
-    // taille quand on change de minerai »), et un peu d'air avant la valeur et le stock
     const LIGNES = 3
     const L = replier(p, fiche.dit, W - 20).slice(0, LIGNES)
     const hp = 19 + LIGNES * 7 + 10 + 24 + 18
     panel(p, 4, y, W - 8, hp, ENCRE, { r: 2 })
-    // l'icône juste à gauche du nom, le nom décalé d'autant ; la description centrée dans ses trois lignes (Keko)
     const ln = p.measure(texteNu(fiche.nom), { font: 'big' })[0]
-    dessinerUneRessource(p, W / 2 - ln / 2 - 4, y + 10, k) // (l'icône à deux pixels du nom, à cinq du bord haut ; le nom centré sur sa hauteur)
+    dessinerUneRessource(p, W / 2 - ln / 2 - 4, y + 10, k)
     p.text(texteNu(fiche.nom), W / 2 + 5, y + 7, PEPITE[3], { font: 'big', align: 'center' })
     const haut = y + 19 + Math.floor(((LIGNES - L.length) * 7) / 2)
     L.forEach((li, i) => p.text(li, W / 2, haut + i * 7, COQUE[5], { align: 'center' }))
-    const ly = y + 19 + LIGNES * 7 + 10 // (dix pixels d'air sous la description : à trois lignes, le texte touchait la zone sombre)
-    // la valeur en crédits de la pépite, ce qu'on en a, et les crédits qu'on a
+    const ly = y + 19 + LIGNES * 7 + 10
     p.text('VALEUR UNITAIRE', 10, ly + 1, COQUE[4])
     nombreDeCredits(p, fiche.credits, W - 9, ly, PEPITE[3])
     p.text('EN STOCK', 10, ly + 12, COQUE[4])
-    // le compte, puis l'icône du minerai à sa droite, comme le symbole des crédits au-dessus (Keko)
     p.text(String(tresor[k]), W - 21, ly + 11, tresor[k] > 0 ? N.WHITE : COQUE[3], { font: 'big', align: 'right' })
     dessinerUneRessource(p, W - 13, ly + 14, k)
     const by = ly + 24
-    // VENDRE TOUT : le stock du minerai contre ses crédits (de moi : une valeur sans vente n'aurait pas de sens ; à rejuger)
     const gain = tresor[k] * fiche.credits
-    bouton(p, W / 2 - 52, by, 104, 13, tresor[k] > 0 ? `Vendre : ${gain}` : 'Rien a vendre', tresor[k] > 0, () => {
+    const mot = tresor[k] > 0 ? `VENDRE : ${gain}` : 'RIEN A VENDRE'
+    const wmot = p.measure(mot, { font: 'big' })[0]
+    const bw = wmot + (tresor[k] > 0 ? 12 : 0) + 18
+    const bx = Math.round(W / 2 - bw / 2)
+    boutonBase(p, bx, by, bw, 13, tresor[k] > 0, () => {
+      const n = Math.min(10, tresor[k])
       const r = vendre(tresor, credits, k)
       tresor = r.tresor
       credits = r.credits
       sauver()
-    }, true)
-    if (tresor[k] > 0) dessinerUnCredit(p, W / 2 + p.measure(`VENDRE : ${gain}`, { font: 'big' })[0] / 2 + 8, by + 6)
+      // les pièces partent du bouton, l'une après l'autre
+      for (let i = 0; i < n; i++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 30, y0: by + 6, t0: t + i * 0.05 })
+      gerbe(W / 2, by + 6, 12, [RUNE[2], RUNE[3], N.WHITE])
+    }, (dx, dy) => {
+      motEnRelief(p, mot, bx + 9 + wmot / 2 + dx, by + 3 + dy, 1, tresor[k] > 0)
+      if (tresor[k] > 0) dessinerUnCredit(p, bx + 9 + wmot + 7 + dx, by + 6 + dy)
+    }, 'vente')
     return y + hp + 4
   }
   /**
-   * L'INTERFACE DU HANGAR, sous la scène, EN GRANDE POLICE (Keko : « les textes et l'interface sont un peu petits ») :
-   * le trésor ; quatre onglets (propulseur, coque, foreuse, armes) ; LA LISTE DE TOUTES LES PIÈCES de l'onglet, une
-   * ligne chacune — le nom, et à droite MONTEE, POSSEDEE ou le prix (doré si le trésor y suffit) —, la choisie
-   * surlignée d'un chevron ; puis LE PANNEAU DE DESCRIPTION : le nom, SES JAUGES (`jaugesDe` : accélération, vitesse,
-   * maniabilité ; blindage, bouclier, armes, poids ; forage, portée ; attraction ; dégâts par seconde, par coup, portée —
-   * la barre pleine au plus du catalogue, le poids en rouge, et un repère blanc à la valeur de la pièce montée, pour
-   * comparer), et le bouton qui va avec : ACHETER (une tape paie ET monte), MONTER, DEMONTER (une arme), COQUE PLEINE
-   * éteint, ou MONTEE sans bouton. « Décoller » en bas, la date du build tout en bas. Tout se sauve à chaque geste.
+   * LE CONTENU, sous la scène — UN NIVEAU À LA FOIS (Keko) : la vue d'ensemble (les cases, et DÉCOLLER au hangar), ou
+   * la liste d'une place avec sa fiche, ou la fiche du minerai ; il se dévoile en fondu tramé à chaque changement.
+   * La date du build, discrète, au-dessus de la barre du bas.
    */
-  function dessinerLEcran(p: Peintre): void {
+  function dessinerLeContenu(p: Peintre): void {
     p.place(0, 0)
-    let y = hautScene + 4
+    const y0 = Y_SCENE + hautScene + 2
+    let y = y0 + 4
     zoneGlissante = null
     if (estEssai(vue)) {
-      titreEnTete(p, 4, y, W - 8, NOMS_VUE[vue])
-      p.text("ONGLET D'ESSAI", W / 2, y + HT + 6, COQUE[3], { align: 'center' })
-      y += HT + 16
-    } else if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
+      p.text("UN ONGLET D'ESSAI", W / 2, y + 12, COQUE[4], { align: 'center' })
+      p.text('(&ONGLETS=N)', W / 2, y + 22, COQUE[2], { align: 'center' })
+    } else if (vue === 'entrepot') dessinerLEntrepot(p, y)
     else if (etape === 'vaisseau') {
-      // LE TITRE DE LA VUE D'ENSEMBLE (Keko : « mettre un titre, équipement du vaisseau »), dans la plaque de l'en-tête
-      // des emplacements, sur toute la largeur
-      titreEnTete(p, 4, y, W - 8, vue === 'labo' ? 'RECHERCHE' : 'VAISSEAU') // (Keko : « juste vaisseau / recherche / matériaux »)
-      y += HT - 13
-      // LE POIDS TOTAL, sous le titre (Keko : « plutôt que là où il est », sous la scène)
-      if (vue === 'hangar' || vue === 'labo') {
-        // le mot et le nombre ensemble ; au LABO, les
-        // CRÉDITS TOTAUX au même endroit (Keko), avec leur icône
-        const labo = vue === 'labo'
-        ligneSousLeTitre(p, y + 17, labo ? 'CREDITS' : 'POIDS TOTAL', labo ? String(credits) : `${poidsTotal(hangar)} T`, labo)
-        y += 12
+      dessinerLesEmplacements(p, y)
+      if (vue === 'hangar') dessinerDecoller(p)
+    } else dessinerLaListe(p, y)
+    const u = (t - etapeA) / 0.16
+    if (u < 1) p.rect(0, y0, W, H - HAUT_NAV - y0, NUIT, 1 - sortie(u))
+    if (!(vue === 'hangar' && etape === 'vaisseau')) p.text(texteNu(`build ${build}`), W - 3, H - HAUT_NAV - 7, COQUE[2], { align: 'right' })
+    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 4, H - HAUT_NAV - 10, N.WHITE, { font: 'big', outline: COQUE[0] })
+  }
+
+  /** DÉCOLLER, l'action principale, au bas de la vue d'ensemble du hangar : une grande plaque d'or qui respire, un reflet qui passe, le mot en grand. */
+  function dessinerDecoller(p: Peintre): void {
+    const bw = W - 24
+    const bh = 24
+    const bx = 12
+    const by = H - HAUT_NAV - 34
+    const respire = 0.6 + 0.4 * Math.sin(t * 4)
+    p.glow(W / 2, by + bh / 2, 50, PEPITE[2], 0.1 + 0.1 * respire)
+    const cycle = (t % 3.2) / 3.2
+    const pret = decollageA === null
+    boutonBase(p, bx, by, bw, bh, pret, () => {
+      decollageA = t
+      feuille = false
+      gerbe(W / 2, by + bh / 2, 18, [PEPITE[2], PEPITE[3], N.WHITE], 70)
+    }, (dx, dy) => {
+      motEnRelief(p, 'Decoller', W / 2 + dx, by + 5 + dy, 2, true)
+      // des chevrons qui courent vers le mot
+      const o = Math.floor(t * 8) % 3
+      for (let i = 0; i < 2; i++) {
+        p.text('>', bx + 6 + i * 4 + (i === o % 2 ? 1 : 0) + dx, by + 10 + dy, PEPITE[i === o % 2 ? 4 : 2])
+        p.text('<', bx + bw - 9 - i * 4 - (i === o % 2 ? 1 : 0) + dx, by + 10 + dy, PEPITE[i === o % 2 ? 4 : 2])
       }
-      y = dessinerLesEmplacements(p, y + 15)
-    }
-    else {
-    // L'EN-TÊTE : ‹ pour revenir au niveau d'avant (de la fiche à la liste, de la liste au vaisseau), le titre de
-    // l'emplacement (les flèches qui faisaient défiler les catégories ont laissé la place au vaisseau, qu'on touche)
-    titreEnTete(p, 6 + HT, y, W - 10 - HT, titreDe({ o: onglet, k: placeOuverte() })) // (jusqu'au bord droit : la flèche de droite est partie)
-    // le titre ; pour les outils et les armes, LES PLACES EN CELLULES à sa droite — une case par place portée par la
-    // coque, pleine si elle est occupée (Keko : « plutôt que x/x, des cellules qui se remplissent »)
-    // UNE SEULE FLÈCHE, à gauche : le retour à la vue d'ensemble (Keko ; la flèche de droite et le bouton Retour de la colonne sont retirés)
-    boutonRetour(p, 4, y, () => (etape = 'vaisseau'))
-    y += HT + 2
-    // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore (Keko : « on n'affiche plus dans le hangar les pièces non possédées »)
+    }, 'decolle', cycle < 0.4 ? bx - 12 + ((bw + 36) * cycle) / 0.4 : null)
+    p.text(texteNu(`build ${build}`), W - 3, H - HAUT_NAV - 7, COQUE[2], { align: 'right' })
+  }
+
+  /** La position du surlignage de la liste : il glisse jusqu'à la rangée choisie. */
+  let surligneY = -1
+  /** L'instant où l'on a choisi une autre pièce : ses jauges se remplissent de nouveau. */
+  let choixA = -10
+  /**
+   * LA LISTE D'UNE PLACE : l'en-tête (le retour, le titre de la place), les puces de sous-catégorie, la liste qui glisse
+   * au doigt (quatre rangées, le surlignage qui glisse), puis LA FICHE de la pièce choisie — son bouton (ACHETER,
+   * ÉQUIPER, RETIRER, ou ÉQUIPÉ) et ses stats.
+   */
+  function dessinerLaListe(p: Peintre, y0: number): void {
+    let y = y0
+    enTete(p, y, titreDe({ o: onglet, k: placeOuverte() }), () => changerDEtape('vaisseau'))
+    y += HT + 4
+    // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))
-    if (etape === 'liste') {
-    // LES PUCES DE SOUS-CATÉGORIE (Keko : « sélectionner des sous-catégories, comme les foreuses / radars dans outils »)
     const familles = famillesDe(onglet)
     if (familles.length > 0) {
       const puces: (string | null)[] = [null, ...familles]
       const noms = puces.map((f) => (f === null ? 'TOUT' : (NOMS_FAMILLE[f] ?? f.toUpperCase())))
-      const largeurs = noms.map((n) => p.measure(n)[0] + 8)
-      let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (puces.length - 1) * 2) / 2)
+      const largeurs = noms.map((n) => p.measure(n)[0] + 10)
+      let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (puces.length - 1) * 3) / 2)
       puces.forEach((f, i) => {
         const actif = sousCategorie[onglet] === f
-        panel(p, x, y, largeurs[i], 11, actif ? ENCRE_OR : ENCRE, { r: 2 })
-        p.text(noms[i], x + largeurs[i] / 2, y + 3, actif ? N.WHITE : COQUE[4], { align: 'center' })
-        if (!actif) {
-          zones.push({ x, y, w: largeurs[i], h: 11, action: () => ((sousCategorie[onglet] = f), (defil[onglet] = 0)) })
+        const xi = x
+        if (actif) {
+          panel(p, xi, y, largeurs[i], 11, ENCRE_OR, { r: 2 })
+          p.text(noms[i], xi + largeurs[i] / 2, y + 3, N.WHITE, { align: 'center' })
+        } else {
+          // une puce éteinte : d'encre, elle s'enfonce et s'éclaire comme les boutons
+          const e = etatDuBouton(xi, y, largeurs[i], 11)
+          panel(p, xi, y + e.dy, largeurs[i], 11, e.survole ? { ...ENCRE, rim: COQUE[3] } : ENCRE, { r: 2 })
+          p.text(noms[i], xi + largeurs[i] / 2, y + 3 + e.dy, COQUE[5], { align: 'center' })
+          zone(xi, y, largeurs[i], 11, () => ((sousCategorie[onglet] = f), (defil[onglet] = 0), (choixA = t)))
         }
-        x += largeurs[i] + 2
+        x += largeurs[i] + 3
       })
-      y += 13
+      y += 14
     }
-    // LA LISTE, quatre rangées visibles, qui se fait glisser ; en tête, les places occupées / portées (Keko : pas dans
-    // les boutons) ; un ascenseur à droite quand elle déborde
     const hl = RANGEES * 13 + 4
-    panel(p, 4, y, W - 8, hl, ENCRE, { r: 2 })
+    panel(p, 4, y, W - 8, hl, { ...ENCRE, top: ENCRE.body }, { r: 2 })
     const maxDefil = Math.max(0, liste.length - RANGEES)
     defil[onglet] = Math.max(0, Math.min(maxDefil, defil[onglet]))
     const depart = Math.round(defil[onglet])
     const yl = y + 2
     zoneGlissante = maxDefil > 0 ? { x: 4, y: yl, w: W - 8, h: RANGEES * 13 } : null
+    const larg = W - (maxDefil > 0 ? 18 : 12)
+    // le surlignage glisse jusqu'à la rangée choisie
+    const ic = liste.findIndex((x) => x.id === choix[onglet])
+    const iSel = ic < 0 ? 0 : ic
+    const cibleY = yl + (iSel - depart) * 13
+    surligneY = surligneY < 0 || Math.abs(surligneY - cibleY) > 60 ? cibleY : ressort(surligneY, cibleY, 22)
+    if (liste.length > 0 && iSel >= depart && iSel < depart + RANGEES) {
+      const sy = Math.round(surligneY)
+      p.rect(6, sy, larg, 13, COQUE[1])
+      p.rect(6, sy, 2, 13, PEPITE[2])
+    }
     for (let i = depart; i < Math.min(liste.length, depart + RANGEES); i++) {
       const pc = liste[i]
       const ly = yl + (i - depart) * 13
-      const choisie = choix[onglet] === pc.id
+      const choisie = i === iSel
       const montee = estMontee(hangar, pc.id)
-      const aLui = possede(hangar, pc.id)
-      if (choisie) {
-        p.rect(6, ly, W - (maxDefil > 0 ? 18 : 12), 13, COQUE[1], 0.9)
-        p.text('>', 9, ly + 3, PEPITE[3], { font: 'big' })
-      }
-      p.text(texteNu(pc.nom), 16, ly + 3, montee ? N.WHITE : aLui ? COQUE[5] : COQUE[3], { font: 'big' })
-      // l'état à droite : EQUIPE, POSSEDE, ou le prix en crédits avec son icône, en beige comme à l'entrepôt (Keko)
+      if (!choisie && survol !== null && survol.y >= ly && survol.y < ly + 13 && survol.x >= 4 && survol.x < W - 4) p.rect(6, ly, larg, 13, N.hex('#1c1828'))
+      p.text(texteNu(pc.nom), 12, ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { font: 'big' })
       const xd = W - (maxDefil > 0 ? 15 : 9)
       const ki = placeOuverte()
       const ailleurs = ki >= 0 ? listeMontee(onglet).indexOf(pc.id) : -1
       if (ki >= 0 && montee && ailleurs !== ki) p.text(titreDe({ o: onglet, k: ailleurs }), xd, ly + 4, COQUE[4], { align: 'right' })
       else if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
-      else if (!aLui) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, PEPITE[3])
-      zones.push({ x: 4, y: ly, w: W - 8, h: 13, action: () => (choix[onglet] = pc.id) })
+      else if (!possede(hangar, pc.id)) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id) ? PEPITE[3] : COQUE[3])
+      zone(4, ly, W - 8, 13, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
     }
     if (maxDefil > 0) {
-      // l'ascenseur : la glissière, et le curseur long comme la part visible
       const hg = RANGEES * 13 - 2
       p.rect(W - 10, yl + 1, 3, hg, ENCRE.outline)
       const hc = Math.max(6, Math.round((hg * RANGEES) / liste.length))
@@ -1115,114 +1417,107 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(W - 10, yc, 3, hc, COQUE[3])
       p.rect(W - 10, yc, 3, 1, COQUE[5])
     }
-    if (liste.length === 0) {
-      // rien dans cette catégorie ici : au hangar, tout est au labo ; au labo, tout est débloqué
-      p.text(vue === 'labo' ? 'TOUT EST DEBLOQUE' : 'RIEN ICI : PASSEZ AU LABO', W / 2, y + 24, COQUE[4], { align: 'center' })
-    }
-    y += hl + 3
-    }
-    // LA FICHE : le bouton (ACHETER, EQUIPER, RETIRER, ou EQUIPE sans bouton), puis les stats
-    // (la fiche s'affiche avec la liste, sur la pièce choisie ou la première — Keko : « pas besoin d'un autre clic »)
-    const pc = liste.find((x) => x.id === choix[onglet]) ?? liste[0]
-    if (pc !== undefined) {
-    // le bouton à la largeur de son mot, plus huit pixels de chaque côté (Keko : trop large pour « Équiper »)
-    const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 16
+    if (liste.length === 0) p.text(vue === 'labo' ? 'TOUT EST DEBLOQUE' : 'RIEN ICI : PASSEZ AU LABO', W / 2, y + 24, COQUE[4], { align: 'center' })
+    y += hl + 4
+    const pc = liste[iSel]
+    if (pc === undefined) return
+    dessinerLaFiche(p, y, pc)
+  }
+
+  /** Une pièce montée : l'onde sur l'aire, le flash du vaisseau, des étincelles sur lui. */
+  function feterLEquipement(): void {
+    equipeA = t
+    const cy = Y_SCENE + hautScene - Math.min(58, Math.floor(hautScene / 2) + 8)
+    gerbe(W / 2, cy, 16, [PEPITE[2], PEPITE[3], N.WHITE], 55)
+  }
+
+  /** LA FICHE d'une pièce : son bouton, puis ses stats (le graphisme à gauche, le nom, les jauges, la note). */
+  function dessinerLaFiche(p: Peintre, y0: number, pc: Piece): void {
+    let y = y0
+    const largeurDe = (mot: string): number => p.measure(texteNu(mot), { font: 'big' })[0] + 18
     const ko = placeOuverte()
     if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
-      // À UNE PLACE (Keko) : « Équiper » la met ici — la pièce qui y était est retirée, ou les deux s'échangent si
-      // celle-ci était montée à l'autre place ; plus de fenêtre « places pleines »
       const bw = largeurDe('Equiper')
-      bouton(p, W / 2 - bw / 2, y, bw, 13, 'Equiper', true, () => {
+      bouton(p, W / 2 - bw / 2, y, bw, 14, 'Equiper', true, () => {
         hangar = monterA(hangar, pc.id, ko)
         sauver()
-      }, true)
+        feterLEquipement()
+      }, true, 'equipe')
     } else if (estMontee(hangar, pc.id)) {
       if (pc.sorte === 'arme' || pc.sorte === 'outil') {
         const bw = largeurDe('Retirer')
-        bouton(p, W / 2 - bw / 2, y, bw, 13, 'Retirer', true, () => {
+        bouton(p, W / 2 - bw / 2, y, bw, 14, 'Retirer', true, () => {
           hangar = demonter(hangar, pc.id)
           sauver()
-        }, true)
-      } else motEnRelief(p, 'Equipe', W / 2, y + 3, 1, true)
+        }, true, 'retour')
+      } else {
+        motEnRelief(p, 'Equipe', W / 2, y + 3, 1, true)
+        N.sparkle(p, W / 2 + 26, y + 3, 1 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), PEPITE[3], N.WHITE, 0.8)
+      }
     } else if (possede(hangar, pc.id)) {
-      // TOUJOURS « ÉQUIPER » (Keko) : s'il y a une place (ou une pièce de la même famille à remplacer), on monte ; sinon la
-      // fenêtre de remplacement demande laquelle des pièces montées céder la place
       const bw = largeurDe('Equiper')
-      bouton(p, W / 2 - bw / 2, y, bw, 13, 'Equiper', true, () => {
-        if (peutMonter(hangar, pc.id)) {
-          hangar = monter(hangar, pc.id)
-          sauver()
-        }
-      }, true)
+      bouton(p, W / 2 - bw / 2, y, bw, 14, 'Equiper', peutMonter(hangar, pc.id), () => {
+        hangar = monter(hangar, pc.id)
+        sauver()
+        feterLEquipement()
+      }, true, 'equipe')
     } else {
-      // ACHETER en relief, puis le prix EN BEIGE (Keko) et l'icône des crédits
+      // ACHETER en relief, le prix en beige et l'icône des crédits ; éteint s'il manque des crédits — il tremble alors
       const vif = peutAcheter(hangar, credits, pc.id)
       const wa = p.measure('ACHETER', { font: 'big' })[0]
       const wn = p.measure(String(pc.prix), { font: 'big' })[0]
-      const bw = wa + 5 + wn + 12 + 16
-      const bx = W / 2 - bw / 2
-      bouton(p, bx, y, bw, 13, '', vif, () => {
+      const bw = wa + 5 + wn + 12 + 18
+      const bx = Math.round(W / 2 - bw / 2)
+      boutonBase(p, bx, y, bw, 14, vif, () => {
         const r = acheter(hangar, credits, pc.id)
         if (r === null) return
         hangar = r.hangar
         credits = r.credits
         sauver()
-        // la pièce quitte le labo : retour à la liste
-        etape = 'liste'
-      }, true)
-      motEnRelief(p, 'Acheter', bx + 8 + wa / 2, y + 3, 1, vif)
-      p.text(String(pc.prix), bx + 8 + wa + 5, y + 3, vif ? PEPITE[3] : COQUE[3], { font: 'big' })
-      dessinerUnCredit(p, bx + 8 + wa + 5 + wn + 6, y + 6)
+        gerbe(W / 2, y + 7, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
+      }, (dx, dy) => {
+        motEnRelief(p, 'Acheter', bx + 9 + wa / 2 + dx, y + 3 + dy, 1, vif)
+        p.text(String(pc.prix), bx + 9 + wa + 5 + dx, y + 3 + dy, vif ? PEPITE[3] : COQUE[3], { font: 'big' })
+        dessinerUnCredit(p, bx + 9 + wa + 5 + wn + 6 + dx, y + 6 + dy)
+      }, 'achat')
     }
-    y += 16
-    // LE PANNEAU DES STATS, à la hauteur de son contenu (Keko) : à gauche LE GRAPHISME DE LA PIÈCE dans sa case, à
-    // droite le nom, les jauges (plus courtes) et le prix avec le solde
+    y += 18
     const jauges = jaugesDe(pc)
     const enPlace = pc.sorte === 'arme' ? null : pc.sorte === 'outil' ? (pc.famille === 'foreuse' ? foreuseMontee(hangar) : null) : monteeA(hangar, pc.sorte)
     const reperes = enPlace !== null && enPlace.id !== pc.id ? jaugesDe(enPlace) : null
     const gx = 54
-    // en bas, SOUS LES STATS ET L'IMAGE, sur toute la largeur, en petit : ce que les jauges ne disent pas (Keko)
     const note = pc.note === undefined ? [] : replier(p, pc.note, W - 20)
     const hh = Math.max(50, 16 + jauges.length * 10 + 4)
-    const hd = hh + (note.length > 0 ? note.length * 7 + 7 : 0) // (quatre pixels d'air de plus avant la note — Keko)
+    const hd = hh + (note.length > 0 ? note.length * 7 + 7 : 0)
     panel(p, 4, y, W - 8, hd, ENCRE, { r: 2 })
     panel(p, 8, y + 4, 42, hh - 8, { ...ENCRE, rim: ENCRE.top, top: ENCRE.low, body: ENCRE.low }, { r: 2 })
     dessinerLePictogramme(p, pc, 29, y + hh / 2, 42, hh - 8)
     p.text(texteNu(pc.nom), gx + (W - 12 - gx) / 2, y + 4, PEPITE[3], { font: 'big', align: 'center' })
-    jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null || reperes[i] === undefined ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
+    // les jauges se remplissent en arrivant (de gauche à droite, l'une après l'autre)
+    jauges.forEach((j, i) => {
+      const k = sortie((t - Math.max(etapeA, choixA) - 0.05 - i * 0.04) / 0.3)
+      const jj = { ...j, valeur: j.nombre ? j.valeur : j.valeur * k }
+      dessinerUneJaugeDePiece(p, y + 16 + i * 10, jj, reperes === null || reperes[i] === undefined ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx)
+    })
     note.forEach((li, i) => p.text(li, W / 2, y + hh + 3 + i * 7, COQUE[4], { align: 'center' }))
-    y += hd + 4
-    }
-    }
-    // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet
-    // balaie toutes les quatre secondes, le mot en relief, des chevrons, une lueur qui respire
-    const bw = 110
-    const bh = 20
-    const bx = W / 2 - bw / 2
-    const byy = H - 33
-    const respire = 0.6 + 0.4 * Math.sin(t * 4)
-    p.glow(W / 2, byy + bh / 2, 44, PEPITE[2], 0.12 + 0.12 * respire)
-    panel(p, bx - 2, byy - 2, bw + 4, bh + 4, ENCRE, { r: 3 })
-    const cycle = (t % 4) / 4
-    panel(p, bx, byy, bw, bh, ENCRE_OR, { r: 2, shine: cycle < 0.45 ? bx - 12 + ((bw + 36) * cycle) / 0.45 : null })
-    motEnRelief(p, 'Decoller', W / 2, byy + 6, 1, true)
-    p.text('>>', bx + 8, byy + 8, PEPITE[3])
-    p.text('<<', bx + bw - 8, byy + 8, PEPITE[3], { align: 'right' })
-    zones.push({ x: bx - 2, y: byy - 2, w: bw + 4, h: bh + 4, action: () => demarrer() })
-    // la date du build, tout en bas (le garde-fou du cache : Keko vérifie qu'il voit la bonne version)
-    p.text(texteNu(`build ${build}`), W - 3, H - 7, COQUE[2], { align: 'right' })
-    // `&latence`, au hangar aussi : à droite du bouton RESET
-    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 38, H - 12, N.WHITE, { font: 'big', outline: COQUE[0] })
   }
   /** Un point de l'écran en pixels du tampon. */
   const enTampon = (x: number, y: number): Vecteur => {
     const r = canvas.getBoundingClientRect()
     return { x: (x - r.left) / zoom, y: (y - r.top) / zoom }
   }
+  /** Une zone touchée : elle s'enfonce, agit, et sonne. */
+  function appuyer(z: { x: number; y: number; action: () => void; son?: Son | null }): void {
+    enfonce = { x: z.x, y: z.y, t0: t }
+    z.action()
+    const son = z.son === undefined ? 'clic' : z.son
+    if (son !== null) jouer(son)
+  }
   racine.addEventListener('pointerdown', (ev) => {
     reveiller() // (le contexte audio ne naît que sur un geste)
     if (ecranVisible()) {
       // l'écran en pixels : sur la liste, un glisser commence (la tape se décide au relâchement) ; ailleurs, une tape sur une zone
+      if (decollageA !== null) return // (le vaisseau part : plus rien ne répond)
       const q = enTampon(ev.clientX, ev.clientY)
       const g = zoneGlissante
       if (g !== null && q.x >= g.x && q.x < g.x + g.w && q.y >= g.y && q.y < g.y + g.h) {
@@ -1237,7 +1532,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         return
       }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
-      if (z !== undefined) z.action()
+      if (z !== undefined) appuyer(z)
       return
     }
     if (manche !== null) return
@@ -1247,11 +1542,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     manche = { id: ev.pointerId, centre: p, doigt: p }
   })
   racine.addEventListener('pointermove', (ev) => {
+    // LE SURVOL, à la souris (PC) : ce qu'on survole s'éclaire, et le pointeur devient une main
+    if (ev.pointerType === 'mouse') {
+      if (ecranVisible()) {
+        const sv = enTampon(ev.clientX, ev.clientY)
+        survol = sv
+        canvas.style.cursor = zones.some((z) => sv.x >= z.x && sv.x < z.x + z.w && sv.y >= z.y && sv.y < z.y + z.h) ? 'pointer' : ''
+      } else if (survol !== null) {
+        survol = null
+        canvas.style.cursor = ''
+      }
+    }
     if (glisse !== null) {
       // la liste suit le doigt, une rangée par 13 pixels de tampon
       const q = enTampon(ev.clientX, ev.clientY)
       if (Math.abs(q.y - glisse.y) > 2) glisse.bouge = true
-      if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) // (la grille d'onglets suit le doigt au pixel)
+      if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       return
     }
@@ -1265,9 +1571,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (!glisse.bouge) {
         const q = glisse
         const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
-        if (z !== undefined) z.action()
+        if (z !== undefined) appuyer(z)
       }
       if (glisse.sorte === 'liste') defil[onglet] = Math.round(defil[onglet])
+      else defilOnglets = Math.round(defilOnglets)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -1281,12 +1588,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pas = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY
     if (dans(zoneDesOnglets)) {
       ev.preventDefault()
-      defilOnglets += pas * 0.4
+      defilOnglets = Math.round(defilOnglets) + Math.sign(pas)
     } else if (dans(zoneGlissante)) {
       ev.preventDefault()
       defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
     }
   }, { passive: false })
+  racine.addEventListener('pointerleave', () => {
+    survol = null
+  })
   racine.addEventListener('pointerup', lever)
   racine.addEventListener('pointercancel', lever)
   window.addEventListener('keydown', (ev) => {
@@ -1990,8 +2300,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (visible) {
       regler(0, false) // (au hangar, plus de souffle ni de foreuse)
       // LE HANGAR à la place du monde (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière ») : la scène, puis l'interface
-      dessinerLeHangar(p)
-      dessinerLEcran(p)
+      dessinerLaBase(p)
       N.composite(frame, img.data, FOND)
       g.putImageData(img, 0, 0)
       canvas.style.transform = ''

@@ -4,6 +4,46 @@ Keko (08/11) : « un nouveau proto où on conduit un petit vaisseau dans
 l'espace (le déplacement qu'on avait utilisé pour le vampire survivor) :
 juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
+
+## La base repensée (Keko, 10/11 : « repense entièrement le système d'interface de la base — une organisation hiérarchique épurée, claire et ergonomique, PC et téléphone ; cohérente, élégante et surtout très juicy »)
+
+- **QUATRE ÉTAGES, du plus général au plus précis** (`dessinerLaBase`) :
+  LA BARRE DU HAUT (l'icône et le nom de la vue en grand, en relief ×2 ; les
+  CRÉDITS à droite, toujours là), LA SCÈNE sur toute la largeur (hauteur fixe
+  pour un écran, `hauteurDeScene`), LE CONTENU (un niveau à la fois) et LA
+  BARRE DES ONGLETS EN BAS, sous le pouce (comme les applis ; trois à cinq
+  destinations, c'est la règle des barres du bas).
+- **La barre du bas** : HANGAR, LABO, ENTREPOT et « PLUS » ; l'allumé se lève
+  en or et un repère d'or glisse jusqu'à lui. « PLUS » ouvre UNE FEUILLE qui
+  monte : les autres onglets en grille (icône et nom, défile au doigt et à la
+  molette), la remise à zéro (deux tapes) et la date du build. Quand on est
+  dans un onglet de la feuille, « PLUS » prend son icône et son nom. La
+  colonne de gauche et sa grille d'icônes sont parties avec.
+- **La hiérarchie des textes** : trois tailles seulement — le nom de la vue
+  en relief ×2, les titres et les noms en grande police, le reste en petite.
+  L'or dit « ce qui compte, ce qu'on touche », le vert « les crédits ».
+- **Les crédits remontent en haut**, partout : plus de ligne « CREDITS » sous
+  les titres du labo et de l'entrepôt ; le POIDS est une étiquette dans la
+  scène du hangar ; DÉCOLLER, l'action principale, est en bas de la vue
+  d'ensemble du hangar, en grand.
+- **Un seul bouton, partout** (`boutonBase`) : il s'enfonce d'un pixel à
+  l'appui (son ombre disparaît), son bord s'éclaire au survol de la souris
+  (le pointeur devient une main), et ÉTEINT, il reste touchable : il TREMBLE
+  et bourdonne (« pas assez de crédits » se sent avant de se lire ; le
+  compteur tremble avec).
+- **Juicy** : chaque geste a SON SON (ZzFX : clic, onglet, retour, ouverture,
+  achat, équipement, vente, refus, décollage) ; la scène se dévoile en fondu
+  tramé, les cases s'allument une à une en montant, le titre tombe à sa place,
+  la cible se resserre sur la pièce, le surlignage de la liste glisse, les
+  jauges se remplissent ; LE COMPTEUR ROULE jusqu'au vrai compte, s'allume, et
+  chaque écart monte en nombre flottant ; à la VENTE les pièces volent du
+  bouton au compteur et tintent en arrivant ; ÉQUIPER fait flasher le vaisseau
+  et passer une onde sur l'aire ; DÉCOLLER allume le moteur, le vaisseau
+  tremble puis file hors de la scène dans une traînée de feu, et le vol part.
+- Références : la règle des barres du bas (trois à cinq destinations, les
+  plus fréquentes sous le pouce) ; l'appui d'un bouton se montre AU CONTACT,
+  pas au relâchement ; la constance (tous les boutons réagissent pareil).
+
 ## Les fichiers
 
 - `src/logic/vaisseau/jeu.ts` — pur : le vaisseau (poussée, frein du vide,

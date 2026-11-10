@@ -31,6 +31,25 @@ const SONS = {
   extrait: [0.5, 0, 300, 0.1, 0.3, 0.5, 0, 1, 5, , 400, 0.1, 0.1],
   /** la coque percée : un grondement long */
   perdu: [0.9, 0.1, 60, 0.02, 0.3, 1, 4, 0.5, -1, , , , , 2],
+  // LES SONS DE LA BASE (Keko, 10/11 : « très juicy, un bon gamefeel ») — un retour à chaque geste
+  /** un bouton : un tic sec et clair */
+  clic: [0.22, 0, 950, 0, 0.008, 0.03, 1, 2, , , , , , , , , , 0.5],
+  /** un onglet : un blip qui monte */
+  onglet: [0.28, 0, 520, 0.005, 0.03, 0.08, 0, 1.5, 9],
+  /** le retour, la fermeture : le même blip, qui descend */
+  retour: [0.26, 0, 640, 0.005, 0.03, 0.08, 0, 1.5, -9],
+  /** « PLUS » s'ouvre : un souffle court qui monte */
+  ouvre: [0.22, 0, 300, 0.02, 0.04, 0.1, 0, 1, 14],
+  /** un achat : la pièce qui saute, deux fois */
+  achat: [0.45, 0, 880, 0, 0.05, 0.28, 1, 1.5, , , 440, 0.06, 0.12],
+  /** une pièce équipée : un clac métallique et une montée */
+  equipe: [0.5, 0.05, 180, 0, 0.03, 0.22, 3, 1.4, 5, , 300, 0.05],
+  /** une vente : des pièces qui tintent */
+  vente: [0.4, 0, 1400, 0, 0.03, 0.16, 1, 2, , , 700, 0.05, 0.07],
+  /** un bouton éteint qu'on touche : un bourdon bas, battu */
+  refus: [0.35, 0, 130, 0, 0.06, 0.12, 2, 1, , , , , 0.04],
+  /** le décollage : un grondement qui monte */
+  decolle: [0.7, 0.1, 70, 0.05, 0.45, 0.5, 4, 1, 5, , , , , 1.2],
 } satisfies Record<string, Parametres>
 
 export type Son = keyof typeof SONS
