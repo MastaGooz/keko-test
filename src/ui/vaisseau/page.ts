@@ -866,7 +866,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = hautScene + 4
     zoneGlissante = null
     if (vue === 'entrepot') y = dessinerLEntrepot(p, y)
-    else if (etape === 'vaisseau') y = dessinerLesEmplacements(p, y)
+    else if (etape === 'vaisseau') {
+      // LE TITRE DE LA VUE D'ENSEMBLE (Keko : « mettre un titre, équipement du vaisseau »), dans la plaque de l'en-tête
+      // des emplacements, sur toute la largeur
+      panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
+      p.text(vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU', W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+      y = dessinerLesEmplacements(p, y + 15)
+    }
     else {
     // L'EN-TÊTE : ‹ pour revenir au niveau d'avant (de la fiche à la liste, de la liste au vaisseau), le titre de
     // l'emplacement (les flèches qui faisaient défiler les catégories ont laissé la place au vaisseau, qu'on touche)
