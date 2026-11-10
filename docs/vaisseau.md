@@ -6,6 +6,13 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## L'étiquette du poids, écrite comme une ligne de fiche (Keko, 10/11 : « la différence de police / taille entre le mot "poids" et le chiffre rend bizarre, ça casse la cohérence »)
+
+- Le mot était en petites capitales du dépôt (`mini`), le nombre dans notre gras : deux polices, deux hauteurs, deux
+  lignes de pied dans la même plaque. L'étiquette reprend l'écriture de la ligne « Poids » d'une fiche de pièce —
+  « Poids » dans la lettre courante, « 38 T » en gras crème, même hauteur. *Une même information s'écrit pareil aux
+  deux endroits où on la lit.*
+
 ## Le symbole des crédits, plus vif (Keko, 10/11 : « retravaille le symbole des crédits pour qu'il soit plus flashy — il est un poil sombre, sur les boutons vendre on ne le voit pas très bien »)
 
 - **Il est dessiné PIXEL PAR PIXEL** (`PIXELS_DU_CREDIT`, une grille de 7 × 7) au lieu de deux arcs d'un pixel : un C

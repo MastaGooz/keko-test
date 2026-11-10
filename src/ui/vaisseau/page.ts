@@ -946,13 +946,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (al.bouclier > 0) p.ring(cx + jit, sy, 11 * ECHELLE, 1, VERRIERE[2], 0.3 + 0.25 * Math.sin(t * 3))
     p.place(0, 0)
-    // LE POIDS, en étiquette dans le coin
+    // LE POIDS, en étiquette dans le coin — écrit COMME LA LIGNE « Poids » D'UNE FICHE (Keko : « la différence de
+    // police et de taille entre le mot et le chiffre casse la cohérence ») : le mot dans la lettre courante, le nombre
+    // en gras crème, la même hauteur, la même ligne de pied
     const poids = `${poidsTotal(hangar)} T`
-    const wm = textWidth('POIDS', 'mini')
+    const wm = largeurDe('Poids')
     const wv = largeurDe(poids, GRAS)
     plaque(p, 6, y1 - 20, wm + wv + 15, 15, 'encre')
-    p.text('POIDS', 11, y1 - 14, COQUE[4])
-    ecrire(p, poids, 11 + wm + 5, y1 - 16, PEPITE[3], { police: GRAS })
+    ecrire(p, 'Poids', 11, y1 - 16, COQUE[4])
+    ecrire(p, poids, 11 + wm + 5, y1 - 16, N.hex('#fff2c8'), { police: GRAS })
     // LES ZONES DU VAISSEAU (une cible verte, les angles seulement, autour de la place ouverte)
     const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -6, 3.2]] : o === 'coque' ? [[-7.6, -4.8, 9.8, 4.8]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8.2, (i === 0 ? -1 : 1) * 8.8, 2.4, (i === 0 ? -1 : 1) * 4.2]))
     const cibles: Sorte[] = etape === 'vaisseau' ? ['propulseur', 'outil', 'arme', 'coque'] : [onglet]
