@@ -252,7 +252,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
   const ONGLETS: Sorte[] = ['propulseur', 'coque', 'outil', 'arme']
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
-  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'CHASSIS', outil: 'OUTILS', arme: 'ARMES' }
+  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEURS', coque: 'CHASSIS', outil: 'OUTILS', arme: 'ARMES' }
   /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
   /** LES SOUS-CATÉGORIES, PAR ACTIVITÉ (Keko : « classer les outils par activité, minage / combat ») : la famille d'une pièce dit son activité. */
   const ACTIVITE: Record<string, string> = { foreuse: 'minage', aimant: 'minage', radar: 'combat' }
