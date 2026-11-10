@@ -189,6 +189,9 @@ const table = FONTS as unknown as Record<string, Police>
 table.keko = { h: HAUT, space: 3, gap: 1, glyphs: GLYPHES }
 const GRAS = engraisser(GLYPHES)
 table['keko-gras'] = { h: HAUT, space: 3, gap: 1, glyphs: GRAS }
+// l'en-tête d'un niveau : la graisse, ses lettres ÉCARTÉES d'un pixel de plus (la graisse mange l'espace entre deux
+// fûts, et c'est l'espace qui fait lire un mot en petite taille)
+table['keko-entete'] = { h: HAUT, space: 4, gap: 2, glyphs: GRAS }
 table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: scale2x(GRAS) }
 
 /** La hauteur de la boîte, et le décalage de la ligne des capitales sous son haut (les 2 rangées d'accent). */

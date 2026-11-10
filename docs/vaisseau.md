@@ -6,11 +6,15 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
-## L'en-tête d'une place en grande lettre, la pièce animée dans un cadre fixe (Keko, 10/11 : « les titres des onglets ouverts, à droite du bouton retour, un peu petits et peu lisibles » ; « le propulseur de la prévisualisation tremble : on dirait qu'il bouge de haut en bas alors qu'il devrait être fixe — le gonflement est sympa »)
+## L'en-tête d'une place plus lisible, la pièce animée dans un cadre fixe (Keko, 10/11 : « les titres des onglets ouverts, à droite du bouton retour, un peu petits et peu lisibles » ; « le propulseur de la prévisualisation tremble : on dirait qu'il bouge de haut en bas alors qu'il devrait être fixe — le gonflement est sympa »)
 
-- **Le titre d'une place** (« Propulsion », « Outil 1 ») passe de la graisse simple à LA GRANDE LETTRE (`keko-titre`,
-  celle du nom de la vue) ; l'en-tête monte de 19 à 25 pixels (`HT`), le bouton retour avec lui — 54 px à l'écran sur
-  téléphone, il était sous les 48. Le plus long, « Propulsion », fait 110 px sur les 146 de la plaque (mesuré).
+- **Le titre d'une place** (« Propulsion », « Outil 1 ») RESTE À LA TAILLE INTERMÉDIAIRE (la graisse, 1×) : la grande
+  lettre (`keko-titre`, celle du nom de la vue) a été essayée et refusée le jour même — Keko : « la même police que
+  celle tout en haut brise la hiérarchie, c'était bien l'intermédiaire, mais je voulais une version un peu plus
+  lisible ». *Ce qui le rendait peu lisible n'était pas sa taille mais son relief* : le dégradé d'or de `motEnRelief`
+  noie sept pixels de haut. Il est donc écrit À PLAT, crème, cerné de sombre, les lettres écartées d'un pixel de plus
+  (`keko-entete` dans `police.ts` : les glyphes du gras, `gap` 2), entre ses deux points d'or. L'en-tête fait 23 px
+  (`HT`) : le bouton retour tient les 48 px au doigt sur un téléphone de 390 (il en faisait 41 à 19).
 - **Le tremblement venait de la mise en case, pas du dessin** : `peindreDansUneCase` centrait la pièce sur LA BOÎTE DE
   SES FORMES, et la flamme qui gonfle change cette boîte à chaque image — c'est donc la tuyère, fixe, qui se recentrait.
   La boîte se prend maintenant sur un CADRE qui ne bouge pas (`Options.cadre`, `cadreDeLaPiece`) : la flamme à son plus

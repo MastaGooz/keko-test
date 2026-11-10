@@ -533,7 +533,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const TEXTE = 'keko'
   const GRAS = 'keko-gras'
   const TITRE = 'keko-titre'
-  type Police = typeof TEXTE | typeof GRAS | typeof TITRE
+  const ENTETE = 'keko-entete'
+  type Police = typeof TEXTE | typeof GRAS | typeof TITRE | typeof ENTETE
   const decalage = (f: Police): number => (f === TITRE ? HAUT_ACCENTS * 2 : HAUT_ACCENTS)
   function ecrire(p: Peintre, s: string, x: number, y: number, c: number, o: { police?: Police; align?: 'center' | 'right'; ombre?: number; contour?: number } = {}): void {
     const f = o.police ?? TEXTE
@@ -624,11 +625,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }, son, { matiere })
   }
   /** La hauteur des en-têtes. */
-  const HT = 25
+  const HT = 23
   /**
    * L'EN-TÊTE D'UN NIVEAU (la liste d'une place) : le RETOUR, un carré d'or au chevron épais et ombré, puis le titre
-   * du niveau sur une plaque d'acier, DANS LA GRANDE LETTRE (Keko : « un peu petit et peu lisible » dans la graisse
-   * simple) ; deux petites pointes d'or encadrent le titre.
+   * du niveau sur une plaque d'acier, dans la taille INTERMÉDIAIRE (la graisse : la grande lettre est au nom de la vue,
+   * Keko : « la même police que tout en haut brise la hiérarchie ») mais LISIBLE — un aplat crème cerné de sombre, les
+   * lettres écartées, au lieu du relief d'or dont le dégradé noyait sept pixels de haut ; deux petites pointes d'or
+   * encadrent le titre.
    */
   function enTete(p: Peintre, y: number, mot: string, retour: () => void): void {
     boutonBase(p, 4, y, HT, HT, true, retour, (dx, dy) => {
@@ -636,21 +639,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cy = y + Math.floor(HT / 2) + dy
       for (const [o, c] of [[1, N.hex('#6b3a0c')], [0, N.hex('#fff7d6')]] as const) {
         for (let e = 0; e < 3; e++) {
-          p.line(cx + 3 + e, cy - 6 + o, cx - 3 + e, cy + o, c)
-          p.line(cx - 3 + e, cy + o, cx + 3 + e, cy + 6 + o, c)
+          p.line(cx + 3 + e, cy - 5 + o, cx - 2 + e, cy + o, c)
+          p.line(cx - 2 + e, cy + o, cx + 3 + e, cy + 5 + o, c)
         }
       }
     }, 'retour')
     const x = 6 + HT
     const w = W - 10 - HT
     plaque(p, x, y, w, HT, 'acier')
-    const lm = largeurDe(mot, TITRE)
+    const lm = largeurDe(mot, ENTETE)
     const cx = x + w / 2
-    motEnRelief(p, mot, cx, y + 5, true, TITRE)
+    ecrire(p, mot, cx, y + 8, N.hex('#fff3cf'), { police: ENTETE, align: 'center', contour: MATIERES.acier.contour })
     for (const s of [-1, 1]) {
       const px = Math.round(cx + s * (lm / 2 + 7))
-      p.rect(px - 1, y + 12, 3, 1, PEPITE[1])
-      p.rect(px, y + 11, 1, 3, PEPITE[2])
+      p.rect(px - 1, y + 11, 3, 1, PEPITE[1])
+      p.rect(px, y + 10, 1, 3, PEPITE[2])
     }
   }
   // ================================================================ LA BASE, EN QUATRE ÉTAGES
