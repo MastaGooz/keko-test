@@ -577,7 +577,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sx1 = Math.round(cx + Math.max(y0, y1) * K)
         const sy0 = Math.round(cy - Math.max(x0, x1) * K)
         const sy1 = Math.round(cy - Math.min(x0, x1) * K)
-        const L = 4
+        // la longueur des branches : au plus le tiers du côté, qu'un coin ne touche jamais son voisin (Keko : sur les armes, les coins se touchaient)
+        const L = Math.max(1, Math.min(4, Math.floor((sx1 - sx0) / 3), Math.floor((sy1 - sy0) / 3)))
         const c = vif ? RUNE[3] : RUNE[2] // (le temps sombre du battement reste lisible — Keko)
         for (const [x, y, dx, dy] of [[sx0, sy0, 1, 1], [sx1, sy0, -1, 1], [sx0, sy1, 1, -1], [sx1, sy1, -1, -1]]) {
           p.line(x, y, x + dx * L, y, c)
