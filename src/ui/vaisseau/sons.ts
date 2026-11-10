@@ -186,7 +186,7 @@ export function regler(poussee: number, creuse: boolean): void {
     if (forage === null && creuse) forage = voixDeForage(ctx)
     const t = ctx.currentTime
     if (propulsion !== null) {
-      propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.35 * poussee, t, 0.05) // (0,55 avant : trop fort en vol — Keko)
+      propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.15 * poussee, t, 0.05) // (0,55 puis 0,35 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
       propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
     }
     if (forage !== null) forage.gain.gain.setTargetAtTime(creuse ? ZZFX.volume * 0.18 : 0, t, 0.04)
