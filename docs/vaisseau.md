@@ -654,6 +654,24 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Le labo et la cible (Keko, 10/11 : « on n'affiche plus dans le hangar les pièces non possédées : on ajoute un onglet labo où le joueur va débloquer les nouvelles pièces » ; « dessiner une cible, un rectangle vert avec juste les angles, autour de la zone du vaisseau où la pièce va »)
+
+- **Trois vues dans la colonne** : HANGAR, LABO, ENTREPOT. LE LABO a le même
+  sélecteur de catégories et la même liste que le hangar, mais ne montre
+  que les pièces qu'on n'a pas, avec leur prix, et le bouton ACHETER ; la
+  scène y est une planche bleue quadrillée où la pièce regardée est dessinée
+  en grand dans un cartouche ; les crédits qu'on a sont rappelés sous les
+  stats. `acheter` NE MONTE PLUS la pièce : on la débloque au labo, on
+  l'équipe au hangar (les vérifications achètent puis montent, `achete`).
+- **Le hangar ne montre que ce qu'on possède**, sans l'étiquette
+  « possédé » (Keko) : EQUIPE ou rien. Une catégorie vide dit « RIEN ICI :
+  PASSEZ AU LABO » ; au labo, « TOUT EST DEBLOQUE ».
+- **LA CIBLE** : au hangar, la catégorie ouverte dessine un rectangle vert
+  aux seuls angles autour de la zone du vaisseau qu'elle concerne —
+  l'arrière pour le propulseur, le fuselage pour la coque, le toit pour les
+  outils, chaque aile portée par la coque pour les armes —, en coordonnées
+  du vaisseau tournées nez en haut, et qui bat doucement.
+
 ## Tout en pixels (Keko, 09/11 : « je ne veux plus un seul élément non pixel »)
 
 - **Il n'y a plus qu'un canvas.** L'accueil, le bilan, le hangar, le manche

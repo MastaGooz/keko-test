@@ -2,7 +2,7 @@
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
 import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
-import { acheter, configDuHangar, hangarNeuf } from './hangar.ts'
+import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -139,7 +139,7 @@ for (let i = 0; i < 90; i++) {
 verifier('à portée de forage, en chasse, le rival ne pose pas son laser sur le joueur', !rayonSurLeJoueur && coqueEntiere && brule.ennemis[0].fait === 'chasse')
 // LA FOREUSE NE SERT QU'AUX ROCHES (Keko) : collé au rival sans arme, le laser ne l'entame pas ; AVEC UN CANON, il l'abat
 const RICHE = 99999
-const armer = (...ids: string[]): ConfigVaisseau => configDuHangar(C, ids.reduce((h, id) => acheter(h, RICHE, id)!.hangar, hangarNeuf()))
+const armer = (...ids: string[]): ConfigVaisseau => configDuHangar(C, ids.reduce((h, id) => monter(acheter(h, RICHE, id)!.hangar, id), hangarNeuf()))
 const poserPres = (cfg: ConfigVaisseau) => {
   const z = nouveauMonde(cfg)
   z.prochainEnnemiA = 0

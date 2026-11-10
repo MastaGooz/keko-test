@@ -127,11 +127,11 @@ export const estMontee = (h: Hangar, id: string): boolean => {
   return p.sorte === 'arme' || p.sorte === 'outil' ? listeDe(h, p.sorte).includes(id) : h.montees[p.sorte] === id
 }
 
-/** L'achat : la pièce passe aux possédées ET se monte si elle le peut ; les crédits paient. Rend les deux valeurs neuves, ou null si on ne peut pas. */
+/** L'achat — AU LABO (Keko : « un onglet labo où le joueur va débloquer les nouvelles pièces ») : la pièce passe aux possédées, SANS s'équiper (ça se fait au hangar) ; les crédits paient. Rend les deux valeurs neuves, ou null si on ne peut pas. */
 export function acheter(h: Hangar, credits: number, id: string): { hangar: Hangar; credits: number } | null {
   if (!peutAcheter(h, credits, id)) return null
   const p = pieceDe(id)!
-  return { hangar: monter({ ...h, possedees: [...h.possedees, id] }, id), credits: credits - p.prix }
+  return { hangar: { ...h, possedees: [...h.possedees, id] }, credits: credits - p.prix }
 }
 
 /** Les listes bornées à ce que la coque porte (une coque qui porte moins démonte les dernières pièces). */

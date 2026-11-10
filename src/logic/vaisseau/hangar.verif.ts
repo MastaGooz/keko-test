@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, capacite, POIDS_SERIE, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, armesMontees, capacite, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -18,8 +18,10 @@ const pauvre = 5
 verifier('sans assez de crédits, on n’achète pas', !peutAcheter(neuf, pauvre, 'propulseur-2') && acheter(neuf, pauvre, 'propulseur-2') === null)
 verifier('une pièce de série ne s’achète pas (on l’a)', !peutAcheter(neuf, 999, 'propulseur-1'))
 const riche = 50
-const a = acheter(neuf, riche, 'propulseur-2')!
-verifier('l’achat paie le prix en crédits, possède et monte la pièce ; le hangar d’avant ne bouge pas', a !== null && a.credits === 50 - 24 && a.hangar.possedees.includes('propulseur-2') && monteeA(a.hangar, 'propulseur').id === 'propulseur-2' && estMontee(a.hangar, 'propulseur-2') && !neuf.possedees.includes('propulseur-2'))
+const achat = acheter(neuf, riche, 'propulseur-2')!
+verifier('l’achat paie le prix en crédits et possède la pièce SANS l’équiper (ça se fait au hangar) ; le hangar d’avant ne bouge pas', achat !== null && achat.credits === 50 - 24 && achat.hangar.possedees.includes('propulseur-2') && !estMontee(achat.hangar, 'propulseur-2') && monteeA(achat.hangar, 'propulseur').cran === 1 && !neuf.possedees.includes('propulseur-2'))
+const a = { hangar: monter(achat.hangar, 'propulseur-2'), credits: achat.credits }
+verifier('équipée ensuite, elle est montée', monteeA(a.hangar, 'propulseur').id === 'propulseur-2' && estMontee(a.hangar, 'propulseur-2'))
 verifier('on ne rachète pas une pièce possédée', !peutAcheter(a.hangar, a.credits, 'propulseur-2'))
 const remis = monter(a.hangar, 'propulseur-1')
 verifier('on remonte la pièce de série, la renforcée reste possédée', monteeA(remis, 'propulseur').cran === 1 && remis.possedees.includes('propulseur-2'))
@@ -27,25 +29,27 @@ verifier('monter une pièce qu’on n’a pas ne change rien', monter(remis, 'fo
 
 // LES OUTILS : autant que la coque en porte ; une foreuse chasse la foreuse ; le radar prend une place
 const RICHE = 99999
-let h = acheter(neuf, RICHE, 'foreuse-2')!.hangar
+/** Acheter puis équiper, comme le joueur le fait au labo puis au hangar. */
+const achete = (h: Hangar, id: string): Hangar => monter(acheter(h, RICHE, id)!.hangar, id)
+let h = achete(neuf, 'foreuse-2')
 verifier('acheter la foreuse lourde la monte À LA PLACE de celle de série (une seule place, même famille)', h.outils.join(',') === 'foreuse-2' && h.possedees.includes('foreuse-1') && foreuseMontee(h)?.id === 'foreuse-2')
-h = acheter(h, RICHE, 'radar')!.hangar
+h = achete(h, 'radar')
 verifier('le radar acheté sur une coque à un outil reste possédé, pas monté : la place est prise par une autre famille', h.outils.join(',') === 'foreuse-2' && !estMontee(h, 'radar') && !peutMonter(h, 'radar') && radarMonte(h) === 0)
 const chasseur = monter(demonter(h, 'foreuse-2'), 'radar')
 verifier('démonter la foreuse libère la place au radar : plus de foreuse, un radar à 600', chasseur.outils.join(',') === 'radar' && foreuseMontee(chasseur) === null && radarMonte(chasseur) === 600)
 const cfgChasseur = configDuHangar(C, chasseur)
 verifier('sans foreuse, la configuration ne creuse pas (débit et portée nuls, l’aimant de série) et le radar porte', cfgChasseur.foreuse.debit === 0 && cfgChasseur.foreuse.portee === 0 && cfgChasseur.foreuse.aimant === 1 && cfgChasseur.radar.portee === 600)
-h = monter(acheter(h, RICHE, 'coque-3')!.hangar, 'radar')
+h = monter(achete(h, 'coque-3'), 'radar')
 verifier('la coque à bouclier porte deux outils : la foreuse ET le radar', capacite(h, 'outil') === 2 && h.outils.join(',') === 'foreuse-2,radar' && foreuseMontee(h)?.id === 'foreuse-2' && radarMonte(h) === 600)
 verifier('remonter la coque de série démonte le second outil', monter(h, 'coque-1').outils.join(',') === 'foreuse-2')
 
 // LES ARMES : autant que la coque en porte (une de série, deux blindée), qu'on monte et démonte
-let g = acheter(neuf, RICHE, 'arme-canon')!.hangar
-g = acheter(g, RICHE, 'arme-rafale')!.hangar
+let g = achete(neuf, 'arme-canon')
+g = achete(g, 'arme-rafale')
 verifier('la coque de série porte une arme : la seconde achetée reste possédée, pas montée', capacite(g, 'arme') === 1 && g.armes.join(',') === 'arme-canon' && g.possedees.includes('arme-rafale') && !peutMonter(g, 'arme-rafale'))
-g = acheter(g, RICHE, 'coque-2')!.hangar
+g = achete(g, 'coque-2')
 g = monter(g, 'arme-rafale')
-g = acheter(g, RICHE, 'arme-missiles')!.hangar
+g = achete(g, 'arme-missiles')
 verifier('la coque blindée en porte deux : la troisième reste possédée, pas montée', capacite(g, 'arme') === 2 && g.armes.length === 2 && estMontee(g, 'arme-canon') && estMontee(g, 'arme-rafale') && !estMontee(g, 'arme-missiles') && g.possedees.includes('arme-missiles'))
 verifier('remonter la coque de série démonte la seconde arme', monter(g, 'coque-1').armes.join(',') === 'arme-canon' && monter(monter(g, 'coque-1'), 'coque-2').armes.join(',') === 'arme-canon')
 const g2 = monter(demonter(g, 'arme-canon'), 'arme-missiles')
@@ -57,12 +61,12 @@ const cfg = configDuHangar(C, a.hangar)
 const fA = Math.pow(poidsTotal(a.hangar) / POIDS_SERIE, 1.3)
 verifier('la configuration suit les pièces montées (propulseur renforcé : poussée ×1,25 rapportée au poids, pointe ×1,15 ; le reste de série)', Math.abs(cfg.poussee - (C.poussee * 1.25) / fA) < 1e-9 && fA > 1 && Math.abs(cfg.vitesseMax - C.vitesseMax * 1.15) < 1e-9 && cfg.foreuse.debit === 1 && cfg.coque === C.coque && cfg.bouclier.points === 0 && cfg.armes.length === 0 && cfg.radar.portee === 0 && cfg.ennemi.vitesseMax === C.ennemi.vitesseMax)
 verifier('la configuration de série est inchangée par un hangar neuf', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify(C))
-const blindee = configDuHangar(C, acheter(neuf, RICHE, 'coque-2')!.hangar)
-const hB = acheter(neuf, RICHE, 'coque-2')!.hangar
+const blindee = configDuHangar(C, achete(neuf, 'coque-2'))
+const hB = achete(neuf, 'coque-2')
 const fB = Math.pow(poidsTotal(hB) / POIDS_SERIE, 1.3)
 verifier('la coque blindée : 8 points ; le poids total monte de 20 à 32 de coque (30 → 42), la poussée et le frein sont divisés par ce rapport accentué', blindee.coque === 8 && POIDS_SERIE === 30 && poidsTotal(hB) === 42 && Math.abs(blindee.poussee - C.poussee / fB) < 1e-9 && Math.abs(blindee.frein - C.frein / fB) < 1e-9 && blindee.vitesseMax === C.vitesseMax)
 verifier('chaque pièce a un poids, et le vaisseau de série pèse la somme des siens', PIECES.every((p) => p.poids > 0) && POIDS_SERIE === 6 + 20 + 4)
-const bouclier = configDuHangar(C, acheter(neuf, RICHE, 'coque-3')!.hangar)
+const bouclier = configDuHangar(C, achete(neuf, 'coque-3'))
 verifier('la coque à bouclier : 5 points et 2 de bouclier', bouclier.coque === 5 && bouclier.bouclier.points === 2 && bouclier.bouclier.delai === C.bouclier.delai)
 const serie = nouveauMonde(C)
 const renforce = nouveauMonde(cfg)
@@ -71,7 +75,7 @@ for (let i = 0; i < 120; i++) {
   avancerLeMonde(cfg, renforce, 1 / 60, { x: 1, y: 0 })
 }
 verifier('poussé deux secondes, le vaisseau renforcé est plus loin que celui de série', renforce.vaisseau.x > serie.vaisseau.x * 1.1)
-const longue = configDuHangar(C, acheter(neuf, RICHE, 'foreuse-3')!.hangar)
+const longue = configDuHangar(C, achete(neuf, 'foreuse-3'))
 verifier('la foreuse longue, montée à la place de celle de série : débit ×1,8, portée ×1,25, aimant ×1,6 ; le forage partagé reste de série', longue.foreuse.debit === 1.8 && longue.foreuse.portee === 1.25 && longue.foreuse.aimant === 1.6 && longue.forage.portee === C.forage.portee && longue.forage.aimant === C.forage.aimant)
 
 const relu = lireHangar({ possedees: ['foreuse-2', 'inconnue', 42, 'propulseur-3', 'arme-canon', 'arme-rafale', 'arme-missiles'], montees: { propulseur: 'propulseur-3', coque: 'coque-3' }, outils: ['foreuse-2', 'radar'], armes: ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-missiles', 'propulseur-3'] })
