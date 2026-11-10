@@ -16,7 +16,7 @@ import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, direc
 import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, remplacer, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { jouer, reveiller, type Son } from './sons.ts'
+import { jouer, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -1691,6 +1691,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       flamme += (v.poussee - flamme) * Math.min(1, dt * 14)
+      // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse
+      regler(m.phase === 'vol' ? flamme : 0, m.phase === 'vol' && m.forage !== null)
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0
         flammesEnnemies.set(e.id, f + (e.corps.poussee - f) * Math.min(1, dt * 14))
@@ -1726,6 +1728,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     ecranEtait = visible
     if (visible) {
+      regler(0, false) // (au hangar, plus de souffle ni de foreuse)
       // LE HANGAR à la place du monde (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière ») : la scène, puis l'interface
       dessinerLeHangar(p)
       dessinerLEcran(p)

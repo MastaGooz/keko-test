@@ -96,3 +96,77 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }): void {
     // un son raté ne casse rien
   }
 }
+
+/**
+ * LES SONS CONTINUS (Keko : « un son pour la foreuse, et un bruit de propulsion quand on avance ») : deux voix qui
+ * tournent en permanence, muettes, dont on règle le volume à chaque image — LE PROPULSEUR, un souffle (du bruit
+ * filtré bas, qui s'ouvre et monte avec la poussée), LA FOREUSE, un bourdonnement grinçant (deux oscillateurs graves,
+ * filtrés, battus par un trémolo rapide). Elles naissent au premier réglage après le réveil du contexte ; le volume
+ * glisse (`setTargetAtTime`) pour ne jamais claquer.
+ */
+type Voix = { gain: GainNode; filtre?: BiquadFilterNode }
+let propulsion: Voix | null = null
+let forage: Voix | null = null
+
+function voixDePropulsion(ctx: AudioContext): Voix {
+  // une seconde de bruit blanc, en boucle
+  const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
+  const d = b.getChannelData(0)
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+  const bruit = ctx.createBufferSource()
+  bruit.buffer = b
+  bruit.loop = true
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 300
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  bruit.connect(filtre).connect(gain).connect(ctx.destination)
+  bruit.start()
+  return { gain, filtre }
+}
+
+function voixDeForage(ctx: AudioContext): Voix {
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 900
+  const tremolo = ctx.createGain()
+  tremolo.gain.value = 0.6
+  const lfo = ctx.createOscillator()
+  lfo.frequency.value = 22
+  const profondeur = ctx.createGain()
+  profondeur.gain.value = 0.4
+  lfo.connect(profondeur).connect(tremolo.gain)
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  for (const [type, f, v] of [['sawtooth', 74, 0.5], ['square', 149, 0.25]] as const) {
+    const o = ctx.createOscillator()
+    o.type = type
+    o.frequency.value = f
+    const g = ctx.createGain()
+    g.gain.value = v
+    o.connect(g).connect(filtre)
+    o.start()
+  }
+  filtre.connect(tremolo).connect(gain).connect(ctx.destination)
+  lfo.start()
+  return { gain, filtre }
+}
+
+/** Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), et si la foreuse creuse. */
+export function regler(poussee: number, creuse: boolean): void {
+  try {
+    const ctx = ZZFX.audioContext
+    if (ctx.state !== 'running') return
+    if (propulsion === null && poussee > 0.02) propulsion = voixDePropulsion(ctx)
+    if (forage === null && creuse) forage = voixDeForage(ctx)
+    const t = ctx.currentTime
+    if (propulsion !== null) {
+      propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.55 * poussee, t, 0.05)
+      propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
+    }
+    if (forage !== null) forage.gain.gain.setTargetAtTime(creuse ? ZZFX.volume * 0.18 : 0, t, 0.04)
+  } catch {
+    // un son raté ne casse rien
+  }
+}

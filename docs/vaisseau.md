@@ -680,8 +680,16 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - **Les sons branchés** : roche qui éclate, pépite qui monte à bord, chaque
   arme (canon, mitrailleuse, missiles), obus qui touche le rival, rival qui
   explose, trait qui perce la coque, bouclier qui encaisse, extraction, coque
-  percée. *Réglages de moi, à juger à l'oreille.* Pas encore : le laser qui
-  creuse (un son continu), le hangar (les tapes).
+  percée. *Réglages de moi, à juger à l'oreille.* Pas encore : le hangar (les
+  tapes).
+- **Deux sons continus** (Keko : « un son pour la foreuse, et un bruit de
+  propulsion quand on avance » ; `regler`, à chaque image) : LE PROPULSEUR,
+  un souffle de bruit filtré bas qui s'ouvre et monte avec la poussée (il
+  suit la flamme) ; LA FOREUSE, un bourdonnement grinçant (deux oscillateurs
+  graves filtrés, un trémolo à 22 Hz) quand elle creuse. Deux voix qui
+  tournent muettes en permanence, le volume glisse pour ne jamais claquer ;
+  au hangar, silence. Des nœuds Web Audio, pas ZzFX (ZzFX fait des sons
+  brefs).
 - **Le son dans l'espace** (Keko : « j'entends l'ennemi détruire des rochers
   comme si j'étais à côté ») : une roche qui éclate, un obus qui touche le
   rival, le rival qui explose sont joués à leur place — le volume tombe avec
