@@ -16,6 +16,7 @@ import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, direc
 import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, peutAcheter, peutMonter, pieceDe, piecesDe, possede, remplacer, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, panel, spell } from 'pixelfx/fx/ui/_lib'
 import { chargerHangar, sauverHangar } from './hangar.ts'
+import { jouer, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -982,6 +983,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: (x - r.left) / zoom, y: (y - r.top) / zoom }
   }
   racine.addEventListener('pointerdown', (ev) => {
+    reveiller() // (le contexte audio ne naît que sur un geste)
     if (ecranVisible()) {
       // l'écran en pixels : sur la liste, un glisser commence (la tape se décide au relâchement) ; ailleurs, une tape sur une zone
       const q = enTampon(ev.clientX, ev.clientY)
@@ -1028,6 +1030,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   racine.addEventListener('pointerup', lever)
   racine.addEventListener('pointercancel', lever)
   window.addEventListener('keydown', (ev) => {
+    reveiller()
     touches.add(ev.key.toLowerCase())
     demarrer()
   })
@@ -1549,6 +1552,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           switch (ev.type) {
             case 'eclat': {
               // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
+              jouer('eclat')
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
               const roche = rocheDe(ev.minerai)
               const n = 6 + Math.round(ev.rayon)
@@ -1564,10 +1568,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'ramasse':
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
-              if (ev.par === 'joueur') envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai })
+              if (ev.par === 'joueur') {
+                envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai })
+                jouer('ramasse')
+              }
               break
             case 'touche': {
               // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
+              jouer('touche')
               toucheA = t
               secousse = Math.max(secousse, 0.7)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
@@ -1580,11 +1588,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'obus':
-              // une arme tire : deux étincelles à la bouche
+              // une arme tire : deux étincelles à la bouche, et son son
+              jouer(ev.arme as Son)
               for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-20, 20), R.range(-20, 20), 0.12, N.WHITE, 1, 1.5)
               break
             case 'ennemiTouche': {
               // un obus touche le rival : il blanchit, des étincelles cyan
+              jouer('ennemiTouche')
               toucheEnnemiA.set(ev.id, t)
               for (let i = 0; i < 6; i++) {
                 const a = R.range(0, Math.PI * 2)
@@ -1595,6 +1605,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'bouclier': {
               // le bouclier prend le coup : son anneau flashe, des étincelles cyan, une petite secousse
+              jouer('bouclier')
               bouclierA = t
               secousse = Math.max(secousse, 0.3)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(20)
@@ -1607,6 +1618,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
+              jouer('ennemiDetruit')
               effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + H / 2, palette: EXPLOSION_RIVAL, debris: '#7a2a36', size: 0.35, seed: ev.id }), x: ev.x, y: ev.y })
               for (let i = 0; i < 14; i++) {
                 const a = R.range(0, Math.PI * 2)
@@ -1619,6 +1631,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'extrait': {
+              jouer('extrait')
               // resté à quai jusqu'au bout : le vaisseau se TÉLÉPORTE (Keko) — dessiné blanchi jusqu'à l'éclair, puis
               // l'effet prend le relais et il n'est plus dessiné ; l'écran de fin vient quand l'effet est passé
               perduA = t
@@ -1635,6 +1648,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'perdu': {
               // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
+              jouer('perdu')
               perduA = t
               effets.push({ fx: N.createFx(EXPLOSION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + H / 2, debris: '#46587a', size: 0.45, seed: 5 }), x: v.x, y: v.y })
               for (let i = 0; i < 18; i++) {

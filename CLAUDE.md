@@ -652,9 +652,9 @@ ajuster après.
 **Ce que Keko doit juger doit être présentable** — « tester avec un truc un
 minimum visuellement agréable aide beaucoup ». Pas de dépendance, pas
 d'asset qui ne vienne pas de Keko ; ses images (WebP avec perte, 1024 × 1463
-pour une illustration) et ses sons sont servis depuis `public/`. *Une
-exception, décidée par Keko le 08/11 : `pixelfx` (du code MIT, pas un
-asset), installé pour le banc `?pixelfx` ; rien d'autre ne l'importe encore.*
+pour une illustration) et ses sons sont servis depuis `public/`. *Deux
+exceptions, décidées par Keko : `pixelfx` (08/11, du code MIT, pas un
+asset), et `zzfx` (10/11, MIT, les sons synthétisés du `?vaisseau`).*
 
 **On mesure, on ne devine pas** : une sonde dans la page, une capture, un
 balayage hors navigateur contre les mêmes modules. Un chiffre écrit dans une

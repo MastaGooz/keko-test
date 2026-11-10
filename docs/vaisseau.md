@@ -654,6 +654,19 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Les sons (Keko, 10/11 : « on peut essayer ZzFX ? »)
+
+- **ZzFX** (`zzfx` 1.4.0, MIT, Frank Force) est la seconde dépendance de code,
+  décidée par Keko après la recherche du 10/11. `src/ui/vaisseau/sons.ts` : chaque
+  son est une ligne de paramètres ZzFX (l'éditeur en ligne la relit telle
+  quelle), ses échantillons calculés une fois puis rejoués ; le contexte audio
+  se réveille au premier geste (`reveiller`), tout passe dans un try.
+- **Les sons branchés** : roche qui éclate, pépite qui monte à bord, chaque
+  arme (canon, mitrailleuse, missiles), obus qui touche le rival, rival qui
+  explose, trait qui perce la coque, bouclier qui encaisse, extraction, coque
+  percée. *Réglages de moi, à juger à l'oreille.* Pas encore : le laser qui
+  creuse (un son continu), le hangar (les tapes).
+
 ## Le vaisseau se détache du sol (Keko, 10/11 : « le sol de la plateforme est trop proche de la couleur de certains éléments comme les armes ; comment bien les différencier, sachant qu'on aura des pièces de différentes couleurs ? »)
 
 - **Un contour sombre autour de la SILHOUETTE ENTIÈRE** du vaisseau au hangar :
