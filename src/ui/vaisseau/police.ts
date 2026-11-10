@@ -146,12 +146,30 @@ function construire(): Record<string, Glyphe> {
   return g
 }
 
-/** La graisse : chaque pixel s'étend d'un pixel vers la droite. */
+/**
+ * LES GRASSES DESSINÉES À LA MAIN : les lettres à trois fûts. Épaissir d'un pixel y bouche les deux creux d'un pixel
+ * (Keko : « on ne voit pas les pieds de la lettre, c'est un seul bloc »). Elles prennent la place qu'il leur faut : des
+ * fûts de deux, des creux d'un — le m sur huit colonnes, M, W et w sur sept. Capitales sur 7 rangées, minuscules sur 9.
+ */
+const GRASSES_A_LA_MAIN: Record<string, string> = {
+  m: '........|........|#######.|##.##.##|##.##.##|##.##.##|##.##.##|........|........',
+  w: '.......|.......|##...##|##...##|##.#.##|#######|.##.##.|.......|.......',
+  M: '##...##|###.###|#######|##.#.##|##...##|##...##|##...##',
+  W: '##...##|##...##|##...##|##.#.##|##.#.##|#######|.##.##.',
+}
+
+/** La graisse : chaque pixel s'étend d'un pixel vers la droite — sauf les lettres dessinées à la main, ci-dessus. */
 function engraisser(glyphes: Record<string, Glyphe>): Record<string, Glyphe> {
   const g: Record<string, Glyphe> = {}
   for (const [ch, gl] of Object.entries(glyphes)) {
     const w = gl.w + 1
     g[ch] = { w, rows: gl.rows.map((r) => Array.from({ length: w }, (_, x) => (r[x] ?? false) || (r[x - 1] ?? false))) }
+  }
+  for (const [ch, src] of Object.entries(GRASSES_A_LA_MAIN)) {
+    const r = rangees(src)
+    const w = r[0].length
+    // les mêmes rangées que le glyphe maigre : 2 d'accent au-dessus, et 2 de jambage sous une capitale
+    g[ch] = { w, rows: r.length === 7 ? [vide(w), vide(w), ...r, vide(w), vide(w)] : [vide(w), vide(w), ...r] }
   }
   return g
 }

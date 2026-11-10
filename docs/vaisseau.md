@@ -6,6 +6,20 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Les m de la graisse ont leurs pieds (Keko, 10/11 : « sur les boutons des sous-onglets (tout, minage, combat) et sur "remise à zéro", la police dessine mal les m : on ne voit pas les pieds de la lettre, c'est un seul bloc »)
+
+La graisse (`keko-gras`) est la police maigre épaissie d'un pixel vers la droite (`engraisser`). Sur une lettre à trois
+fûts séparés d'UN pixel, l'épaississement bouche les deux creux : le m devenait un pavé de 6 × 5, le w, le M et le W
+perdaient leur milieu de la même façon.
+
+- **Quatre grasses dessinées à la main** (`GRASSES_A_LA_MAIN` dans `police.ts`) : m, w, M, W, avec des fûts de deux et
+  des creux d'un. Elles prennent la largeur qu'il leur faut — le m huit colonnes, les trois autres sept (les autres
+  grasses en font cinq ou six).
+- `keko-entete` et `keko-titre` lisent la même graisse : ils en héritent sans rien changer.
+- Les boutons se mesurent (`largeurDe`) : ils se sont élargis d'eux-mêmes d'un ou deux pixels.
+- *Restent bouchés, non touchés* : `#`, `«`, `»` en gras (non employés en gras à ce jour), et les diagonales de N, K, X,
+  Q, 0, qui s'épaississent sans devenir un bloc.
+
 ## Le châssis a ses ailes (Keko, 10/11 : « dommage que le châssis ne dessine pas les ailes : il doit inclure tout ce qui ne fait pas partie des autres pièces — les emplacements d'armes sont sur les ailes, donc bien une partie du châssis »)
 
 - **Le pictogramme d'un châssis est la coque ET les ailes** (`formesDuChassis` dans `rendu-vaisseau.ts`) : sa carte du
