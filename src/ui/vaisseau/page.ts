@@ -742,9 +742,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const COL = 4
       const cw = 28
       const ch = 26
-      const RANG = Math.max(1, Math.floor((hautScene - 8) / (ch + 3)))
+      const HAUT_NOM = 16 // (la place du nom de l'onglet, en haut de la scène)
+      const RANG = Math.max(1, Math.floor((hautScene - 8 - HAUT_NOM) / (ch + 3)))
       const gx = BANDE + Math.floor((W - BANDE - (COL * cw + (COL - 1) * 3)) / 2)
-      const gy = Math.floor((hautScene - (RANG * (ch + 3) - 3)) / 2)
+      const gy = HAUT_NOM + Math.floor((hautScene - HAUT_NOM - (RANG * (ch + 3) - 3)) / 2)
       for (let i = 0; i < COL * RANG; i++) {
         const x = gx + (i % COL) * (cw + 3)
         const y = gy + Math.floor(i / COL) * (ch + 3)
@@ -760,6 +761,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         zones.push({ x, y, w: cw, h: ch, action: () => (mineraiChoisi = k) })
       }
     }
+    // LE NOM DE L'ONGLET CHOISI EN HAUT DE LA SCÈNE (Keko : « la zone du haut, à droite, n'est pas utilisée ») : le mot
+    // d'or en relief, centré sur la scène, entre les deux lampes
+    motEnRelief(p, NOMS_VUE[vue], cx, 7, 1, true)
     // LES ONGLETS EN COLONNE, à gauche de la scène (Keko : « en colonne sur la gauche de l'écran, qui est inutilisé ») :
     // HANGAR, ENTREPOT, l'actif en or ; la scène montre l'un ou l'autre
     const vues = VUES
@@ -767,16 +771,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // icône dessinée au-dessus du nom — le vaisseau, la fiole, la caisse —, l'actif en or, sa pointe vers la scène
     // AU-DELÀ DE QUATRE, UNE GRILLE D'ICÔNES (deux colonnes, sans nom : le titre de la vue dit où l'on est) — la
     // colonne tient ainsi une dizaine d'onglets et plus, sans défiler ni rapetisser les grands
-    // LE NOM DE L'ONGLET CHOISI en haut de la bande (Keko : « afficher le titre de l'onglet sélectionné en haut, à
-    // gauche »), en or, souligné — la grille d'icônes n'a pas de noms
-    if (vues.length > 4) {
-      p.text(NOMS_VUE[vue], BANDE / 2, 4, PEPITE[3], { font: 'big', align: 'center' })
-      p.line(4, 13, BANDE - 6, 13, PEPITE[1])
-    }
     if (vues.length > 4) vues.forEach((vv, i) => {
       const s = 22
       const x = 3 + (i % 2) * (s + 2)
-      const y = 17 + Math.floor(i / 2) * (s + 2)
+      const y = 4 + Math.floor(i / 2) * (s + 2)
       const actif = vue === vv
       panel(p, x, y, s, s, actif ? ENCRE_OR : ENCRE, { r: 2 })
       dessinerLIconeDeVue(p, vv, x + s / 2, y + s / 2, actif)
