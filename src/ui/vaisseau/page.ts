@@ -624,10 +624,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }, son, { matiere })
   }
   /** La hauteur des en-têtes. */
-  const HT = 19
+  const HT = 25
   /**
    * L'EN-TÊTE D'UN NIVEAU (la liste d'une place) : le RETOUR, un carré d'or au chevron épais et ombré, puis le titre
-   * du niveau en relief sur une plaque d'acier ; deux petites pointes d'or encadrent le titre.
+   * du niveau sur une plaque d'acier, DANS LA GRANDE LETTRE (Keko : « un peu petit et peu lisible » dans la graisse
+   * simple) ; deux petites pointes d'or encadrent le titre.
    */
   function enTete(p: Peintre, y: number, mot: string, retour: () => void): void {
     boutonBase(p, 4, y, HT, HT, true, retour, (dx, dy) => {
@@ -635,21 +636,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cy = y + Math.floor(HT / 2) + dy
       for (const [o, c] of [[1, N.hex('#6b3a0c')], [0, N.hex('#fff7d6')]] as const) {
         for (let e = 0; e < 3; e++) {
-          p.line(cx + 3 + e, cy - 5 + o, cx - 2 + e, cy + o, c)
-          p.line(cx - 2 + e, cy + o, cx + 3 + e, cy + 5 + o, c)
+          p.line(cx + 3 + e, cy - 6 + o, cx - 3 + e, cy + o, c)
+          p.line(cx - 3 + e, cy + o, cx + 3 + e, cy + 6 + o, c)
         }
       }
     }, 'retour')
     const x = 6 + HT
     const w = W - 10 - HT
     plaque(p, x, y, w, HT, 'acier')
-    const lm = largeurDe(mot, GRAS)
+    const lm = largeurDe(mot, TITRE)
     const cx = x + w / 2
-    motEnRelief(p, mot, cx, y + 6, true)
+    motEnRelief(p, mot, cx, y + 5, true, TITRE)
     for (const s of [-1, 1]) {
       const px = Math.round(cx + s * (lm / 2 + 7))
-      p.rect(px - 1, y + 9, 3, 1, PEPITE[1])
-      p.rect(px, y + 8, 1, 3, PEPITE[2])
+      p.rect(px - 1, y + 12, 3, 1, PEPITE[1])
+      p.rect(px, y + 11, 1, 3, PEPITE[2])
     }
   }
   // ================================================================ LA BASE, EN QUATRE ÉTAGES
@@ -1215,7 +1216,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const tc = Math.round(26 - 10 * e)
       p.glow(x, y, tc, PEPITE[2], 0.35)
       plaque(p, x - tc / 2, y - tc / 2, tc, tc, 'or')
-      peindreDansUneCase(p, formesDeLaPiece(v.pc), x, y, tc, tc)
+      peindreDansUneCase(p, formesDeLaPiece(v.pc), x, y, tc, tc, { cadre: cadreDeLaPiece(v.pc) })
     }
     for (let i = flottants.length - 1; i >= 0; i--) {
       const f = flottants[i]
@@ -1320,9 +1321,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (pc.sorte === 'outil') return pc.famille === 'aimant' ? formesDeLAimant(pc.cran) : pc.famille === 'radar' ? formesDuRadar(t) : formesDeLaForeuse(pc.cran)
     return formesDeLArme(pc.arme?.id ?? 'canon', 1)
   }
+  /**
+   * LE CADRE d'une pièce qui s'anime : sa boîte LA PLUS GRANDE (la flamme à son plus long, le tour entier de l'antenne),
+   * pour que la mise en case ne bouge pas avec l'animation — la tuyère reste fixe, seule la flamme gonfle.
+   */
+  function cadreDeLaPiece(pc: Piece): ReturnType<typeof formesDuVaisseau> | undefined {
+    if (pc.sorte === 'propulseur') return formesDuPropulseur(pc.cran, 0.7, Math.PI / 120)
+    if (pc.sorte === 'outil' && pc.famille === 'radar') return [{ pts: ovale(-4.5, 0, 2.9, 2.9, 12), mat: 'acier', relief: 'plat' }]
+    return undefined
+  }
   /** LE PICTOGRAMME D'UNE PIÈCE, mis à l'échelle de sa case (Keko : « chaque visuel rescalé pour loger dans la zone »). */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    peindreDansUneCase(p, formesDeLaPiece(pc), x, y, bw, bh)
+    peindreDansUneCase(p, formesDeLaPiece(pc), x, y, bw, bh, { cadre: cadreDeLaPiece(pc) })
   }
   /** Ouvre la liste d'un emplacement (depuis le vaisseau ou sa case). */
   function ouvrirLEmplacement(o: Sorte, k = -1): void {
@@ -1439,7 +1449,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLaListe(p: Peintre, y0: number): void {
     let y = y0
     enTete(p, y, titreDe({ o: onglet, k: placeOuverte() }), () => changerDEtape('vaisseau'))
-    y += HT + 4
+    y += HT + 3
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))
     const familles = famillesDe(onglet)
     if (familles.length > 0) {

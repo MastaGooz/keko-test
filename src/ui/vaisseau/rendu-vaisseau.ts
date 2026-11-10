@@ -105,6 +105,12 @@ export type Options = {
   reflet?: number
   /** Le cap : −π/2, le nez en haut (le hangar). */
   cap?: number
+  /**
+   * Les formes qui donnent LA BOÎTE d'une mise en case, à la place des formes peintes : une pièce qui s'anime (la flamme
+   * qui gonfle, l'antenne qui tourne) change de boîte à chaque image, et recentrée sur elle, c'est la pièce FIXE qui
+   * tremblait (Keko : « on dirait que le propulseur bouge de haut en bas alors qu'il devrait être fixe »).
+   */
+  cadre?: Forme[]
 }
 
 /**
@@ -406,7 +412,7 @@ export function boiteDe(formes: Forme[]): [number, number, number, number] {
 
 /** Peint des formes, nez en haut, MISES À L'ÉCHELLE pour tenir dans une case bw × bh centrée sur (x, y). */
 export function peindreDansUneCase(p: Peintre, formes: Forme[], x: number, y: number, bw: number, bh: number, o: Options = {}): void {
-  const [xa, ya, xb, yb] = boiteDe(formes)
+  const [xa, ya, xb, yb] = boiteDe(o.cadre ?? formes)
   // nez en haut : la largeur à l'écran vient de y, la hauteur de x
   const s = Math.max(1, Math.min(4, (bw - 6) / Math.max(0.5, yb - ya), (bh - 6) / Math.max(0.5, xb - xa)))
   const cx = Math.round(x - ((ya + yb) / 2) * s)
