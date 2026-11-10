@@ -275,7 +275,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' } | null = null
+  /** LE DÉFILEMENT DE LA GRILLE D'ONGLETS, en pixels (Keko : « les deux du bas tombent sous la zone, ajoute un défilement »), et sa zone, refaite à chaque image (null : tout tient). */
+  let defilOnglets = 0
+  let zoneDesOnglets: { x: number; y: number; w: number; h: number } | null = null
   /** La zone qui se fait glisser, refaite à chaque image comme les autres. */
   let zoneGlissante: { x: number; y: number; w: number; h: number } | null = null
   let onglet: Sorte = 'propulseur'
@@ -771,15 +774,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // icône dessinée au-dessus du nom — le vaisseau, la fiole, la caisse —, l'actif en or, sa pointe vers la scène
     // AU-DELÀ DE QUATRE, UNE GRILLE D'ICÔNES (deux colonnes, sans nom : le titre de la vue dit où l'on est) — la
     // colonne tient ainsi une dizaine d'onglets et plus, sans défiler ni rapetisser les grands
-    if (vues.length > 4) vues.forEach((vv, i) => {
+    // (si elle dépasse la scène, elle DÉFILE au doigt : les cases coupées au bord, un ascenseur à droite de la bande)
+    zoneDesOnglets = null
+    if (vues.length > 4) {
       const s = 22
-      const x = 3 + (i % 2) * (s + 2)
-      const y = 4 + Math.floor(i / 2) * (s + 2)
-      const actif = vue === vv
-      panel(p, x, y, s, s, actif ? ENCRE_OR : ENCRE, { r: 2 })
-      dessinerLIconeDeVue(p, vv, x + s / 2, y + s / 2, actif)
-      if (!actif) zones.push({ x, y, w: s, h: s, action: () => ((vue = vv), (etape = 'vaisseau')) })
-    })
+      const haut = 4 + Math.ceil(vues.length / 2) * (s + 2) + 2
+      const maxD = Math.max(0, haut - hautScene)
+      defilOnglets = Math.max(0, Math.min(maxD, defilOnglets))
+      vues.forEach((vv, i) => {
+        const x = 3 + (i % 2) * (s + 2)
+        const y = Math.round(4 + Math.floor(i / 2) * (s + 2) - defilOnglets)
+        if (y + s <= 0 || y >= hautScene) return
+        const actif = vue === vv
+        panel(p, x, y, s, s, actif ? ENCRE_OR : ENCRE, { r: 2 })
+        dessinerLIconeDeVue(p, vv, x + s / 2, y + s / 2, actif)
+        const zy = Math.max(0, y)
+        const zh = Math.min(y + s, hautScene) - zy
+        if (!actif && zh > 0) zones.push({ x, y: zy, w: s, h: zh, action: () => ((vue = vv), (etape = 'vaisseau')) })
+      })
+      if (maxD > 0) {
+        // la coupe : ce qui dépasse sous la scène s'efface (l'interface du bas se peint par-dessus), et l'ascenseur
+        p.rect(0, hautScene, BANDE, H - hautScene, NUIT)
+        const hg = hautScene - 8
+        const hc = Math.max(8, Math.round((hg * hautScene) / haut))
+        const yc = 4 + Math.round(((hg - hc) * defilOnglets) / maxD)
+        p.rect(BANDE - 4, 4, 2, hg, ENCRE.outline)
+        p.rect(BANDE - 4, yc, 2, hc, COQUE[3])
+        zoneDesOnglets = { x: 0, y: 0, w: BANDE, h: hautScene }
+      }
+    }
     else vues.forEach((vv, i) => {
       const w = 44
       const h = 32
@@ -1193,7 +1216,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const q = enTampon(ev.clientX, ev.clientY)
       const g = zoneGlissante
       if (g !== null && q.x >= g.x && q.x < g.x + g.w && q.y >= g.y && q.y < g.y + g.h) {
-        glisse = { x: q.x, y: q.y, defil0: defil[onglet], bouge: false }
+        glisse = { x: q.x, y: q.y, defil0: defil[onglet], bouge: false, sorte: 'liste' }
+        return
+      }
+      const go = zoneDesOnglets
+      if (go !== null && q.x >= go.x && q.x < go.x + go.w && q.y >= go.y && q.y < go.y + go.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilOnglets, bouge: false, sorte: 'onglets' }
         return
       }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
@@ -1211,7 +1239,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // la liste suit le doigt, une rangée par 13 pixels de tampon
       const q = enTampon(ev.clientX, ev.clientY)
       if (Math.abs(q.y - glisse.y) > 2) glisse.bouge = true
-      defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
+      if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) // (la grille d'onglets suit le doigt au pixel)
+      else defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       return
     }
     if (manche === null || ev.pointerId !== manche.id) return
@@ -1226,7 +1255,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
         if (z !== undefined) z.action()
       }
-      defil[onglet] = Math.round(defil[onglet])
+      if (glisse.sorte === 'liste') defil[onglet] = Math.round(defil[onglet])
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null

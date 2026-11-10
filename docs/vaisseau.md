@@ -689,7 +689,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   la vue dit où l'on est), l'actif en or, — une douzaine tiennent. LE NOM DE
   L'ONGLET CHOISI est en haut de la scène, à droite, en or en relief (Keko :
   « la zone du haut n'est pas utilisée »), quel que soit le nombre d'onglets ;
-  l'entrepôt descend sa grille d'autant.
+  l'entrepôt descend sa grille d'autant. Quand la grille d'onglets dépasse la
+  scène (un écran court), ELLE DÉFILE au doigt (Keko) : les cases coupées au bord,
+  un ascenseur à droite de la bande (`defilOnglets`).
   `&onglets=N` ajoute des onglets d'essai jusqu'à N (12 au plus) : une icône, un
   nom, une scène vide.
   La vue d'ensemble porte un titre, « VAISSEAU » (au labo, « RECHERCHE » ; d'abord « EQUIPEMENT DU VAISSEAU » et
