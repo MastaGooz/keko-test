@@ -672,6 +672,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   son est une ligne de paramètres ZzFX (l'éditeur en ligne la relit telle
   quelle), ses échantillons calculés une fois puis rejoués ; le contexte audio
   se réveille au premier geste (`reveiller`), tout passe dans un try.
+  **Contre la latence** (Keko : « une légère latence sur les sons ») : tous les
+  sons sont calculés et copiés dans leur AudioBuffer dès ce premier geste ;
+  jouer ne fait plus que brancher une source sur le tampon prêt (ZzFX
+  recréait et recopiait le tampon à chaque coup, et le calculait à la
+  première lecture).
 - **Les sons branchés** : roche qui éclate, pépite qui monte à bord, chaque
   arme (canon, mitrailleuse, missiles), obus qui touche le rival, rival qui
   explose, trait qui perce la coque, bouclier qui encaisse, extraction, coque

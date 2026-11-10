@@ -4,6 +4,7 @@
 declare module 'zzfx' {
   export const ZZFX: {
     volume: number
+    sampleRate: number
     audioContext: AudioContext
     buildSamples(...parametres: (number | undefined)[]): number[]
     playSamples(canaux: number[][], volume?: number, vitesse?: number, pan?: number, boucle?: boolean): AudioBufferSourceNode

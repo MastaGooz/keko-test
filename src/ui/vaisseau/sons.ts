@@ -34,12 +34,33 @@ const SONS = {
 } satisfies Record<string, Parametres>
 
 export type Son = keyof typeof SONS
-const cache = new Map<Son, number[]>()
+/**
+ * LES TAMPONS PRÊTS (Keko : « une légère latence sur les sons ») : chaque son est calculé et copié dans un AudioBuffer
+ * UNE fois, dès le réveil du contexte, pas à sa première lecture ; jouer ne fait plus que brancher une source sur ce
+ * tampon (ZzFX recréait et recopiait le tampon à chaque coup).
+ */
+const tampons = new Map<Son, AudioBuffer>()
+function tampon(son: Son): AudioBuffer {
+  let b = tampons.get(son)
+  if (b === undefined) {
+    const echantillons = ZZFX.buildSamples(...(SONS[son] as Parametres)) as number[]
+    b = ZZFX.audioContext.createBuffer(1, echantillons.length, ZZFX.sampleRate)
+    b.getChannelData(0).set(echantillons)
+    tampons.set(son, b)
+  }
+  return b
+}
+let prepares = false
 
 /** Réveille le contexte audio : à appeler dans un geste (le navigateur n'en joue pas avant). */
 export function reveiller(): void {
   try {
     if (ZZFX.audioContext.state !== 'running') void ZZFX.audioContext.resume()
+    // tous les tampons d'un coup, au premier geste (quelques millisecondes) : aucun son ne se calcule plus en jeu
+    if (!prepares) {
+      prepares = true
+      for (const son of Object.keys(SONS) as Son[]) tampon(son)
+    }
   } catch {
     // sans audio, on joue en silence
   }
@@ -64,12 +85,13 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }): void {
       volume = (1 - d / PORTEE) ** 2
       pan = Math.max(-1, Math.min(1, ou.dx / 160))
     }
-    let s = cache.get(son)
-    if (s === undefined) {
-      s = ZZFX.buildSamples(...(SONS[son] as Parametres)) as number[]
-      cache.set(son, s)
-    }
-    ZZFX.playSamples([s], volume, 1, pan)
+    const ctx = ZZFX.audioContext
+    const source = ctx.createBufferSource()
+    source.buffer = tampon(son)
+    const gain = ctx.createGain()
+    gain.gain.value = ZZFX.volume * volume
+    source.connect(new StereoPannerNode(ctx, { pan })).connect(gain).connect(ctx.destination)
+    source.start()
   } catch {
     // un son raté ne casse rien
   }
