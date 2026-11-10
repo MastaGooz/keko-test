@@ -675,6 +675,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   vaisseau, la cible d'une place d'arme n'entoure que son aile. Au labo, une case par catégorie.
   Le POIDS TOTAL est sous ce titre (Keko), plus sous la scène.
   Au labo, les CRÉDITS TOTAUX sont au même endroit (Keko), plus sous la scène.
+  LES EN-TÊTES EN VALEUR (Keko : « les titres et le bouton retour trop petits ») :
+  une plaque plus haute (`HT`) cerclée d'or, le mot d'or en relief, et le retour
+  un carré d'or au chevron épais dessiné.
   La vue d'ensemble porte un titre, « EQUIPEMENT DU VAISSEAU » (au labo,
   « PIECES A DEBLOQUER »), dans la même plaque que l'en-tête des emplacements.
   Une seule flèche « < », à gauche de l'en-tête, ramène à la vue d'ensemble

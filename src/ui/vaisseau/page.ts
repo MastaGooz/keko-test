@@ -468,6 +468,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     drawWord(p, items, or ? { fill: [PEPITE[1], PEPITE[2], PEPITE[3]], edge: PEPITE[4], under: N.hex('#6a4a08'), outline: ENCRE.outline, shadow: 0 } : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[6], under: COQUE[2], outline: ENCRE.outline, shadow: 0 })
   }
   /** Un bouton : une plaque et son mot ; `vif` l'allume (or) et le rend touchable, éteint il est gris et ne fait rien. */
+  /** La hauteur des en-têtes (Keko : « les titres et le bouton retour trop petits, il faut les mettre en valeur »). */
+  const HT = 19
+  /** UN TITRE D'EN-TÊTE : une plaque plus haute cerclée d'or, le mot d'or EN RELIEF (la lettre des effets ui/ du dépôt). */
+  function titreEnTete(p: Peintre, x: number, y: number, w: number, mot: string): void {
+    panel(p, x, y, w, HT, { ...ENCRE, rim: PEPITE[1] }, { r: 2 })
+    motEnRelief(p, mot, x + w / 2, y + Math.floor((HT - 7) / 2), 1, true)
+  }
+  /** LE BOUTON RETOUR : un carré d'or à la hauteur du titre, un chevron épais dessiné, avec son ombre. */
+  function boutonRetour(p: Peintre, x: number, y: number, action: () => void): void {
+    panel(p, x, y, HT, HT, ENCRE_OR, { r: 2 })
+    const cx = x + HT / 2 - 1
+    const cy = y + Math.floor(HT / 2)
+    for (const [dy, c] of [[1, N.hex('#6a4a08')], [0, PEPITE[4]]] as const) {
+      for (let e = 0; e < 3; e++) {
+        p.line(cx + 3 + e, cy - 5 + dy, cx - 2 + e, cy + dy, c)
+        p.line(cx - 2 + e, cy + dy, cx + 3 + e, cy + 5 + dy, c)
+      }
+    }
+    zones.push({ x, y, w: HT, h: HT, action })
+  }
   function bouton(p: Peintre, x: number, y: number, w: number, h: number, mot: string, vif: boolean, action: () => void, grand = false): void {
     panel(p, x, y, w, h, vif ? ENCRE_OR : ENCRE, { r: 2 })
     if (grand) motEnRelief(p, mot, x + w / 2, y + Math.floor((h - 7) / 2), 1, vif)
@@ -876,8 +896,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else if (etape === 'vaisseau') {
       // LE TITRE DE LA VUE D'ENSEMBLE (Keko : « mettre un titre, équipement du vaisseau »), dans la plaque de l'en-tête
       // des emplacements, sur toute la largeur
-      panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
-      p.text(vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU', W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
+      titreEnTete(p, 4, y, W - 8, vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU')
+      y += HT - 13
       // LE POIDS TOTAL, sous le titre (Keko : « plutôt que là où il est », sous la scène)
       if (vue === 'hangar' || vue === 'labo') {
         // le mot et le nombre ensemble ; au LABO, les
@@ -899,13 +919,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else {
     // L'EN-TÊTE : ‹ pour revenir au niveau d'avant (de la fiche à la liste, de la liste au vaisseau), le titre de
     // l'emplacement (les flèches qui faisaient défiler les catégories ont laissé la place au vaisseau, qu'on touche)
-    panel(p, 19, y, W - 23, 13, ENCRE, { r: 2 }) // (jusqu'au bord droit : la flèche de droite est partie)
+    titreEnTete(p, 6 + HT, y, W - 10 - HT, titreDe({ o: onglet, k: placeOuverte() })) // (jusqu'au bord droit : la flèche de droite est partie)
     // le titre ; pour les outils et les armes, LES PLACES EN CELLULES à sa droite — une case par place portée par la
     // coque, pleine si elle est occupée (Keko : « plutôt que x/x, des cellules qui se remplissent »)
-    p.text(titreDe({ o: onglet, k: placeOuverte() }), 19 + (W - 23) / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
     // UNE SEULE FLÈCHE, à gauche : le retour à la vue d'ensemble (Keko ; la flèche de droite et le bouton Retour de la colonne sont retirés)
-    bouton(p, 4, y, 13, 13, '<', true, () => (etape = 'vaisseau'))
-    y += 15
+    boutonRetour(p, 4, y, () => (etape = 'vaisseau'))
+    y += HT + 2
     // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore (Keko : « on n'affiche plus dans le hangar les pièces non possédées »)
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))
     if (etape === 'liste') {
