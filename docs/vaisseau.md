@@ -654,6 +654,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Le châssis (Keko, 10/11 : « un meilleur nom que coque pour la structure principale ? » — « ok pour châssis, et les PV sont le blindage »)
+
+- L'emplacement et ses pièces s'appellent CHÂSSIS à l'écran (Châssis de
+  série, blindé, à bouclier) ; leurs points de vie, le BLINDAGE. Le code
+  garde `coque` (l'identifiant de l'emplacement, `m.coque` pour les points).
+
 ## Équiper toujours, remplacer si c'est plein (Keko, 10/11 : « ce n'est pas pratique : si les slots sont pleins, je dois aller retrouver les équipés pour les retirer ; il faudrait toujours pouvoir équiper, et si on est plein, un popup le dit et demande quel équipement remplacer »)
 
 - **Le bouton dit toujours « ÉQUIPER »** pour un outil ou une arme possédé non
