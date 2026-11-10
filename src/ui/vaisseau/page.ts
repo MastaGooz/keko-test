@@ -750,6 +750,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(NOMS_VUE[vv], 3 + w / 2, y + 4, actif ? N.WHITE : COQUE[4], { align: 'center' })
       if (!actif) zones.push({ x: 3, y, w, h: 12, action: () => ((vue = vv), (etape = 'vaisseau')) })
     })
+    // RETOUR AU VAISSEAU, en bas de la colonne des onglets (Keko), quand un emplacement est ouvert
+    if (vue !== 'entrepot' && etape === 'liste') bouton(p, 3, hautScene - 16, 44, 12, 'Retour', true, () => (etape = 'vaisseau'))
     // le bouton de test, tout en bas à gauche de l'écran (Keko) : RESET, puis SUR ? ; la seconde tape remet toute la progression à zéro
     const demande = t - resetDemandeA < 2
     bouton(p, 3, H - 14, 30, 11, demande ? 'Sur ?' : 'Reset', true, () => {
@@ -883,7 +885,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         cx += 8
       }
     }
-    bouton(p, 4, y, 13, 13, '<', true, () => (etape = 'vaisseau'))
+    // les flèches font défiler les emplacements, comme avant (Keko) ; le retour au vaisseau est en bas de la colonne des onglets
+    const io = ONGLETS.indexOf(onglet)
+    bouton(p, 4, y, 13, 13, '<', true, () => ouvrirLEmplacement(ONGLETS[(io + ONGLETS.length - 1) % ONGLETS.length]))
+    bouton(p, W - 17, y, 13, 13, '>', true, () => ouvrirLEmplacement(ONGLETS[(io + 1) % ONGLETS.length]))
     y += 15
     // au HANGAR, les pièces qu'on possède ; au LABO, celles qu'on n'a pas encore (Keko : « on n'affiche plus dans le hangar les pièces non possédées »)
     const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))

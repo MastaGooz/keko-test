@@ -663,7 +663,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   touche une zone du vaisseau ou une case. Puis LA LISTE de cet emplacement
   (les puces si elle a des familles) AVEC LA FICHE de la pièce choisie (le
   bouton, les stats) — *une fiche à part, derrière une tape de plus, a vécu
-  une heure : « pas besoin d'un autre clic »*. La flèche « < » ramène au vaisseau ;
+  une heure : « pas besoin d'un autre clic »*. Les flèches de l'en-tête font défiler les emplacements (Keko), et un bouton
+  RETOUR en bas de la colonne des onglets ramène au vaisseau ;
   changer de vue ramène au vaisseau. *Les flèches qui faisaient défiler les
   catégories sont parties : on choisit en touchant le vaisseau.* L'entrepôt
   garde sa grille et sa fiche.
