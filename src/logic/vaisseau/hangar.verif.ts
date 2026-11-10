@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, capacite, remplacer, monterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 let echecs = 0
@@ -53,12 +53,26 @@ g = achete(g, 'arme-missiles')
 verifier('la coque blindée en porte deux : la troisième reste possédée, pas montée', capacite(g, 'arme') === 2 && g.armes.length === 2 && estMontee(g, 'arme-canon') && estMontee(g, 'arme-rafale') && !estMontee(g, 'arme-missiles') && g.possedees.includes('arme-missiles'))
 verifier('remonter la coque de série démonte la seconde arme', monter(g, 'coque-1').armes.join(',') === 'arme-canon' && monter(monter(g, 'coque-1'), 'coque-2').armes.join(',') === 'arme-canon')
 const g2 = monter(demonter(g, 'arme-canon'), 'arme-missiles')
-verifier('démonter une arme libère la place ; l’ordre des armes est celui du montage', g2.armes.join(',') === 'arme-rafale,arme-missiles' && g2.possedees.includes('arme-canon'))
+verifier('démonter une arme libère SA place, les autres ne glissent pas : la suivante montée sans dire où prend la place libre', demonter(g, 'arme-canon').armes.join(',') === ',arme-rafale' && g2.armes.join(',') === 'arme-missiles,arme-rafale' && g2.possedees.includes('arme-canon'))
 const g3 = remplacer(g2, 'arme-rafale', 'arme-canon')
-verifier('remplacer une arme montée par une possédée la met à sa place ; remplacer par une pièce d’une autre liste ou déjà montée ne change rien', g3.armes.join(',') === 'arme-canon,arme-missiles' && remplacer(g2, 'arme-rafale', 'foreuse-1') === g2 && remplacer(g2, 'arme-rafale', 'arme-missiles') === g2)
-verifier('monter à une place : la place prise est remplacée, une pièce montée ailleurs s’échange, une place vide prend la suite, hors des places rien', monterA(g2, 'arme-canon', 1).armes.join(',') === 'arme-rafale,arme-canon' && monterA(g2, 'arme-missiles', 0).armes.join(',') === 'arme-missiles,arme-rafale' && monterA(g2, 'arme-rafale', 0) === g2 && monterA(demonter(g2, 'arme-missiles'), 'arme-canon', 1).armes.join(',') === 'arme-rafale,arme-canon' && monterA(g2, 'arme-canon', 2) === g2 && monterA(g2, 'foreuse-1', 5) === g2)
+verifier('remplacer une arme montée par une possédée la met à sa place ; remplacer par une pièce d’une autre liste ou déjà montée ne change rien', g3.armes.join(',') === 'arme-missiles,arme-canon' && remplacer(g2, 'arme-rafale', 'foreuse-1') === g2 && remplacer(g2, 'arme-rafale', 'arme-missiles') === g2)
+verifier('monter à une place : la place prise est remplacée, la même place ne change rien, hors des places rien', monterA(g2, 'arme-canon', 1).armes.join(',') === 'arme-missiles,arme-canon' && monterA(g2, 'arme-missiles', 0) === g2 && monterA(g2, 'arme-canon', 2) === g2 && monterA(g2, 'foreuse-1', 5) === g2)
+// LES PLACES SONT FIXES (Keko : « quand mon slot arme 1 est vide et que j'équipe une arme sur le slot 2, elle va dans le slot 1 »)
+const sansArme = demonter(demonter(g2, 'arme-missiles'), 'arme-rafale')
+const aDroite = monterA(sansArme, 'arme-canon', 1)
+verifier('une arme montée à la place 2 d’un vaisseau sans arme RESTE à la place 2 : la place 1 est libre', sansArme.armes.length === 0 && aDroite.armes.join(',') === ',arme-canon' && estMontee(aDroite, 'arme-canon') && armesMontees(aDroite).length === 1 && configDuHangar(C, aDroite).armes.map((x) => x.id).join(',') === 'canon')
+verifier('la place 1 se remplit ensuite sans toucher à la 2 ; vider la 1 laisse la 2 où elle est ; vider la dernière vide la liste', monterA(aDroite, 'arme-rafale', 0).armes.join(',') === 'arme-rafale,arme-canon' && demonterA(monterA(aDroite, 'arme-rafale', 0), 'arme', 0).armes.join(',') === ',arme-canon' && demonterA(aDroite, 'arme', 1).armes.length === 0 && demonterA(aDroite, 'arme', 0) === aDroite)
+verifier('sans dire où, une arme prend la première place libre — ici la 1, devant celle de la place 2', monter(aDroite, 'arme-rafale').armes.join(',') === 'arme-rafale,arme-canon')
+verifier('une coque qui porte moins démonte les dernières places : l’arme de la place 2 tombe, la liste est vide', monter(aDroite, 'coque-1').armes.length === 0)
+// LA MÊME PIÈCE À PLUSIEURS PLACES (Keko : « la même arme sur les deux slots du moment qu'il l'a débloquée ; pareil pour les outils »)
+const jumelles = monterA(g2, 'arme-rafale', 0)
+verifier('la même arme se monte aux deux places : elle tire deux fois, pèse deux fois, et l’autre place n’a pas bougé', jumelles.armes.join(',') === 'arme-rafale,arme-rafale' && configDuHangar(C, jumelles).armes.map((x) => x.id).join(',') === 'rafale,rafale' && poidsTotal(jumelles) === poidsTotal(g2) - 8 + 5 && jumelles.possedees.filter((x) => x === 'arme-rafale').length === 1)
+verifier('retirer l’une des deux laisse l’autre à sa place', demonterA(jumelles, 'arme', 0).armes.join(',') === ',arme-rafale' && demonterA(jumelles, 'arme', 1).armes.join(',') === 'arme-rafale' && demonter(jumelles, 'arme-rafale').armes.length === 0)
+const deuxRadars = monterA(h, 'radar', 0)
+verifier('deux radars sur la coque à deux outils : le joueur a le choix (un seul radar porte, plus de foreuse, les deux pèsent)', deuxRadars.outils.join(',') === 'radar,radar' && radarMonte(deuxRadars) === 600 && foreuseMontee(deuxRadars) === null && poidsTotal(deuxRadars) === poidsTotal(h) - PIECES.find((p) => p.id === 'foreuse-2')!.poids + PIECES.find((p) => p.id === 'radar')!.poids)
+verifier('une pièce qu’on n’a pas ne se monte à aucune place', monterA(neuf, 'arme-canon', 0) === neuf)
 verifier('démonter une arme qui n’est pas montée ne change rien', demonter(g2, 'arme-canon') === g2)
-verifier('la configuration porte les armes montées, dans l’ordre', configDuHangar(C, g2).armes.map((x) => x.id).join(',') === 'rafale,missiles' && armesMontees(g2).length === 2)
+verifier('la configuration porte les armes montées, dans l’ordre', configDuHangar(C, g2).armes.map((x) => x.id).join(',') === 'missiles,rafale' && armesMontees(g2).length === 2)
 
 const cfg = configDuHangar(C, a.hangar)
 const fA = Math.pow(poidsTotal(a.hangar) / POIDS_SERIE, 1.3)
@@ -84,8 +98,12 @@ verifier('l’aimant est un outil (Keko) : la foreuse ne touche plus à l’aima
 verifier('la foreuse longue, montée à la place de celle de série : débit ×1,8, portée ×1,25 ; le forage partagé reste de série', longue.foreuse.debit === 1.8 && longue.foreuse.portee === 1.25 && longue.forage.portee === C.forage.portee && longue.forage.aimant === C.forage.aimant)
 
 const relu = lireHangar({ possedees: ['foreuse-2', 'inconnue', 42, 'propulseur-3', 'arme-canon', 'arme-rafale', 'arme-missiles'], montees: { propulseur: 'propulseur-3', coque: 'coque-3' }, outils: ['foreuse-2', 'radar'], armes: ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-missiles', 'propulseur-3'] })
-verifier('relu : les inconnues tombent, les séries restent, la coque 3 non possédée redevient de série, les listes bornées à la coque de série, sans doublon ni pièce non possédée', relu.possedees.length === 8 && !relu.possedees.includes('inconnue') && monteeA(relu, 'propulseur').cran === 3 && monteeA(relu, 'coque').cran === 1 && relu.outils.join(',') === 'foreuse-2' && relu.armes.join(',') === 'arme-canon')
+verifier('relu : les inconnues tombent, les séries restent, la coque 3 non possédée redevient de série, les listes bornées à la coque de série', relu.possedees.length === 8 && !relu.possedees.includes('inconnue') && monteeA(relu, 'propulseur').cran === 3 && monteeA(relu, 'coque').cran === 1 && relu.outils.join(',') === 'foreuse-2' && relu.armes.join(',') === 'arme-canon')
 verifier('relu avec la coque à bouclier : deux outils, deux armes', (() => { const r = lireHangar({ possedees: ['coque-3', 'radar', 'arme-canon', 'arme-rafale'], montees: { coque: 'coque-3' }, outils: ['foreuse-1', 'radar'], armes: ['arme-canon', 'arme-rafale'] }); return r.outils.length === 2 && r.armes.length === 2 })())
+verifier('relu : les places sont gardées — un vide ou une pièce qu’on n’a pas laisse sa place libre, la même arme deux fois reste deux fois', (() => {
+  const base = { possedees: ['coque-2', 'arme-canon', 'arme-rafale'], montees: { coque: 'coque-2' } }
+  return lireHangar({ ...base, armes: ['', 'arme-rafale'] }).armes.join(',') === ',arme-rafale' && lireHangar({ ...base, armes: ['arme-missiles', 'arme-canon'] }).armes.join(',') === ',arme-canon' && lireHangar({ ...base, armes: ['arme-canon', 'arme-canon', 'arme-rafale'] }).armes.join(',') === 'arme-canon,arme-canon' && lireHangar({ ...base, armes: ['arme-canon', null] }).armes.join(',') === 'arme-canon' && JSON.stringify(lireHangar(JSON.parse(JSON.stringify(aDroite)))) === JSON.stringify(aDroite)
+})())
 verifier('relu : n’importe quoi donne un hangar neuf', JSON.stringify(lireHangar(null)) === JSON.stringify(hangarNeuf()) && JSON.stringify(lireHangar('x')) === JSON.stringify(hangarNeuf()))
 verifier('relu : une pièce montée au mauvais emplacement redevient de série ; une arme non possédée tombe', monteeA(lireHangar({ possedees: ['foreuse-2'], montees: { propulseur: 'foreuse-2' } }), 'propulseur').cran === 1 && lireHangar({ armes: ['arme-canon'] }).armes.length === 0)
 verifier('relu : un hangar d’avant les outils retrouve sa foreuse montée dans ses outils', lireHangar({ possedees: ['foreuse-3'], montees: { foreuse: 'foreuse-3' } }).outils.join(',') === 'foreuse-3' && lireHangar({ possedees: ['propulseur-2'], montees: { propulseur: 'propulseur-2' } }).outils.join(',') === 'foreuse-1')

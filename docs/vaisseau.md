@@ -6,6 +6,38 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Les places sont fixes, et la même pièce se monte à plusieurs (Keko, 10/11 : « quand mon slot arme 1 est vide et que j'équipe une arme sur le slot 2, elle va dans le slot 1. Je voudrais que le joueur puisse choisir où va quelle arme. Et qu'il puisse mettre la même arme sur les deux slots d'armes du moment qu'il l'a débloquée. Pareil pour les outils (même s'il serait stupide de mettre deux radars, le joueur a le choix) »)
+
+Les cases « Arme 1 / Arme 2 / Outil 1 / Outil 2 » existaient à l'écran, mais dessous la liste était DENSE et sans
+doublon : une pièce posée au-delà des places prises se rangeait « à la suite » (donc en place 1), et une pièce déjà
+montée ailleurs s'ÉCHANGEAIT au lieu de se monter une seconde fois. *L'écran promettait des places, la règle tenait
+une file.* Deux changements dans `logic/vaisseau/hangar.ts` :
+
+- **Une pièce reste à la place où on l'a mise.** Les listes `outils` et `armes` se lisent place par place ; `VIDE`
+  (`''`) marque une place libre devant une place prise, et une liste ne finit jamais par un vide (`rangee`) — une
+  sauvegarde d'avant, dense, se relit donc telle quelle. `monterA(h, id, k)` pose à la place k sans toucher aux
+  autres ; `demonterA(h, liste, k)` vide UNE place, les autres ne glissent pas. Le dessin suit la place : la place 1
+  est l'aile gauche, la 2 la droite (l'`Allure` porte ses armes place par place, `''` pour une aile nue).
+- **La même pièce occupe autant de places qu'on veut.** Débloquer une pièce, c'est pouvoir la monter partout :
+  `monterA` ne retire plus l'autre exemplaire. Chaque exemplaire monté PÈSE, et chaque arme TIRE (deux canons : deux
+  obus, deux recharges). Deux outils pareils ne s'ajoutent pas (le plus fort radar, la meilleure foreuse, le plus
+  fort aimant comptent, comme avant) : deux radars ne servent à rien, et c'est permis.
+
+À l'écran : dans la liste d'une place, une pièce montée AILLEURS garde le nom de l'autre place en gris (« ARME 2 »)
+et son bouton « Équiper » ; montée ICI, « EQUIPE » et « Retirer », qui ne vide que cette place.
+
+`monter(h, id)` (sans dire où : la première place libre, sinon la pièce de la même famille) reste pour les
+vérifications ; le hangar, lui, dit toujours la place. Une coque qui porte moins démonte les dernières PLACES. Relue,
+une pièce qu'on n'a pas laisse sa place libre au lieu de faire glisser les suivantes.
+
+*À savoir* : deux armes pareilles tirent au même instant sur la même cible (leurs obus ne se séparent que par la
+dispersion, 0,05 rad pour le canon) et ne font qu'un son. Un tir alterné n'a pas été demandé : à voir par Keko.
+
+Vérifié : `npm run verif` (une arme en place 2 d'un vaisseau sans arme y reste ; les jumelles tirent et pèsent deux
+fois ; deux radars ; la relecture garde les places), et à la capture — « Arme 1 : Vide, Arme 2 : Canon », le canon
+sur l'aile droite ; puis le même canon aux deux places, 50 T.
+
+
 ## Les sons sont composés, plus tirés d'une ligne (Keko, 10/11 : « retravailler les sons du jeu, pour les rendre plus ronds / doux et moins type arcade old school, avec une qualité la plus haute possible »)
 
 ZzFX fait un son d'UNE ligne : une forme d'onde (carré, dent de scie, bruit blanc), un glissé, un écrasement, en mono

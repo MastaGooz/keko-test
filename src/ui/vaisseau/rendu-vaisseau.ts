@@ -391,7 +391,7 @@ export function formesDeLArme(id: string, s: number): Forme[] {
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit). */
 export function formesDuVaisseau(a: Allure, flamme: number, t: number): Forme[] {
   const f: Forme[] = [...formesDesAiles()]
-  a.armes.forEach((id, i) => f.push(...formesDeLArme(id, i === 0 ? -1 : 1)))
+  a.armes.forEach((id, i) => id !== '' && f.push(...formesDeLArme(id, i === 0 ? -1 : 1)))
   f.push(...formesDuPropulseur(a.propulseur, flamme, t))
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')

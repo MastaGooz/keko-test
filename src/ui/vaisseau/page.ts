@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, armesMontees, capacite, poidsTotal, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
@@ -254,10 +254,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   // ---------------------------------------------------------------- le hangar, en pixels
-  /** L'allure du vaisseau : les crans des pièces montées et ses armes, lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
+  /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
   type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number }
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: armesMontees(hangar).map((pc) => pc.arme!.id), bouclier })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
@@ -428,8 +428,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     feuille = false
     decollageA = null
     for (const e of EMPLACEMENTS) choix[e] = hangar.montees[e]
-    choix.outil = hangar.outils[0] ?? 'foreuse-1'
-    choix.arme = hangar.armes[0] ?? 'arme-canon'
+    choix.outil = hangar.outils.find((id) => id !== '') ?? 'foreuse-1'
+    choix.arme = hangar.armes.find((id) => id !== '') ?? 'arme-canon'
   }
   const NUIT = N.hex('#0b0d14')
   // ================================================================ LA MATIÈRE ET LA LETTRE DE LA BASE
@@ -1360,7 +1360,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     changerDEtape('liste')
     defil[o] = 0
     const occupant = k >= 0 ? listeMontee(o)[k] : undefined
-    if (occupant !== undefined) choix[o] = occupant
+    if (occupant !== undefined && occupant !== '') choix[o] = occupant
   }
   /**
    * LA VUE D'ENSEMBLE, sous la scène : une case par place (au hangar) ou par catégorie (au labo), deux par rangée, qui
@@ -1517,8 +1517,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
+      // (la même pièce peut être à plusieurs places : « EQUIPE » si elle est à CELLE-CI, sinon le nom de la place où elle est)
       const ailleurs = ki >= 0 ? listeMontee(onglet).indexOf(pc.id) : -1
-      if (ki >= 0 && montee && ailleurs !== ki) p.text(texteNu(titreDe({ o: onglet, k: ailleurs })), xd, ly + 4, COQUE[4], { align: 'right' })
+      if (ki >= 0 && montee && listeMontee(onglet)[ki] !== pc.id) p.text(texteNu(titreDe({ o: onglet, k: ailleurs })), xd, ly + 4, COQUE[4], { align: 'right' })
       else if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
       else if (!possede(hangar, pc.id)) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id) ? PEPITE[3] : COQUE[3])
       zone(4, ly, W - 8, RANG_LISTE, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
@@ -1562,7 +1563,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (pc.sorte === 'arme' || pc.sorte === 'outil') {
         const bw = lb('Retirer')
         bouton(p, W / 2 - bw / 2, y, bw, 15, 'Retirer', true, () => {
-          hangar = demonter(hangar, pc.id)
+          hangar = ko >= 0 ? demonterA(hangar, pc.sorte as 'arme' | 'outil', ko) : demonter(hangar, pc.id)
           sauver()
         }, 'retour', 'acier')
       } else {
@@ -1949,6 +1950,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.line(-6.5, s * 7, -7.5, s * 7, N.hex('#d8403a'))
     }
     allure.armes.forEach((arme, i) => {
+      if (arme === '') return
       const s = i === 0 ? -1 : 1
       if (arme === 'canon') {
         p.line(-5, s * 6.2, 1, s * 6.2, coque[2])

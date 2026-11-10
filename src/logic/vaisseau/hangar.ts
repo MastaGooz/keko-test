@@ -98,14 +98,28 @@ export function ajouterLesPiecesDEssai(): void {
   for (let i = 1; i <= 10; i++) PIECES.push({ id: `essai-arme-${i}`, sorte: 'arme', cran: 2, nom: `Canon d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 3), poids: Math.round(n(i + 5, 2, 10)), arme: { id: 'canon', cadence: n(i, 0.4, 2), degats: n(i + 1, 2, 12), portee: n(i + 2, 80, 200), vitesse: 170, vie: 1, dispersion: 0.05, guide: false } })
 }
 
-/** Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les outils et les armes montés (dans l'ordre : la première arme à gauche). */
+/**
+ * Ce qu'on a : les pièces possédées, celle montée à chaque emplacement, les outils et les armes montés PLACE PAR PLACE
+ * (la première arme à gauche). UNE PIÈCE RESTE À LA PLACE OÙ ON L'A MISE (Keko, 10/11 : « quand mon slot arme 1 est
+ * vide et que j'équipe une arme sur le slot 2, elle va dans le slot 1 ») : `VIDE` marque une place libre devant une
+ * place prise. ET LA MÊME PIÈCE PEUT OCCUPER PLUSIEURS PLACES (« la même arme sur les deux slots du moment qu'il l'a
+ * débloquée ; pareil pour les outils ») : la débloquer, c'est pouvoir la monter autant de fois qu'il y a de places.
+ */
 export type Hangar = { possedees: string[]; montees: Record<Emplacement, string>; outils: string[]; armes: string[] }
+/** Une place libre dans une liste d'outils ou d'armes (celles de la fin ne s'écrivent pas : une liste ne finit jamais par un vide). */
+export const VIDE = ''
 
 export const pieceDe = (id: string): Piece | undefined => PIECES.find((p) => p.id === id)
 export const piecesDe = (s: Sorte): Piece[] => PIECES.filter((p) => p.sorte === s)
 const deSerie = (e: Emplacement): Piece => piecesDe(e)[0]
 const listeDe = (h: Hangar, l: Liste): string[] => (l === 'arme' ? h.armes : h.outils)
-const avecListe = (h: Hangar, l: Liste, ids: string[]): Hangar => (l === 'arme' ? { ...h, armes: ids } : { ...h, outils: ids })
+/** Une liste sans ses places libres de la fin. */
+function rangee(ids: string[]): string[] {
+  const r = [...ids]
+  while (r.length > 0 && r[r.length - 1] === VIDE) r.pop()
+  return r
+}
+const avecListe = (h: Hangar, l: Liste, ids: string[]): Hangar => (l === 'arme' ? { ...h, armes: rangee(ids) } : { ...h, outils: rangee(ids) })
 
 export function hangarNeuf(): Hangar {
   const montees = {} as Record<Emplacement, string>
@@ -117,7 +131,7 @@ export const possede = (h: Hangar, id: string): boolean => h.possedees.includes(
 export const monteeA = (h: Hangar, e: Emplacement): Piece => pieceDe(h.montees[e]) ?? deSerie(e)
 /** Combien de places la coque montée porte, pour les outils ou les armes. */
 export const capacite = (h: Hangar, l: Liste): number => Math.min(PLACES_MAX, (l === 'arme' ? monteeA(h, 'coque').armes : monteeA(h, 'coque').outils) ?? 1)
-/** Les pièces montées d'une liste, dans l'ordre. */
+/** Les pièces montées d'une liste, dans l'ordre des places (les places libres sautées ; une pièce montée deux fois y est deux fois). */
 export const montes = (h: Hangar, l: Liste): Piece[] => listeDe(h, l).map((id) => pieceDe(id)).filter((p): p is Piece => p !== undefined)
 export function peutAcheter(h: Hangar, credits: number, id: string): boolean {
   const p = pieceDe(id)
@@ -137,13 +151,13 @@ export function acheter(h: Hangar, credits: number, id: string): { hangar: Hanga
   return { hangar: { ...h, possedees: [...h.possedees, id] }, credits: credits - p.prix }
 }
 
-/** Les listes bornées à ce que la coque porte (une coque qui porte moins démonte les dernières pièces). */
-const bornees = (h: Hangar): Hangar => ({ ...h, outils: h.outils.slice(0, capacite(h, 'outil')), armes: h.armes.slice(0, capacite(h, 'arme')) })
+/** Les listes bornées à ce que la coque porte (une coque qui porte moins démonte les dernières places). */
+const bornees = (h: Hangar): Hangar => ({ ...h, outils: rangee(h.outils.slice(0, capacite(h, 'outil'))), armes: rangee(h.armes.slice(0, capacite(h, 'arme'))) })
 
 /**
- * Monter une pièce possédée : à son emplacement ; ou dans sa liste s'il reste une place — sinon, À LA PLACE d'une pièce
- * de la même famille (une foreuse chasse la foreuse). Une pièce qu'on n'a pas, ou une place qui manque sans
- * remplaçable, laisse le hangar tel quel.
+ * Monter une pièce possédée SANS DIRE OÙ : à son emplacement ; ou dans sa liste, à la première place libre — sinon, À
+ * LA PLACE d'une pièce de la même famille (une foreuse chasse la foreuse). Une pièce qu'on n'a pas, déjà montée, ou
+ * une place qui manque sans remplaçable, laisse le hangar tel quel. (Le hangar, lui, dit la place : `monterA`.)
  */
 export function monter(h: Hangar, id: string): Hangar {
   const p = pieceDe(id)
@@ -151,7 +165,8 @@ export function monter(h: Hangar, id: string): Hangar {
   if (p.sorte === 'arme' || p.sorte === 'outil') {
     const ids = listeDe(h, p.sorte)
     if (ids.includes(id)) return h
-    if (ids.length < capacite(h, p.sorte)) return avecListe(h, p.sorte, [...ids, id])
+    const libre = Array.from({ length: capacite(h, p.sorte) }, (_, k) => k).find((k) => (ids[k] ?? VIDE) === VIDE)
+    if (libre !== undefined) return avecListe(h, p.sorte, Object.assign([...ids], { [libre]: id }))
     const i = p.famille === undefined ? -1 : ids.findIndex((x) => pieceDe(x)?.famille === p.famille)
     if (i < 0) return h
     return avecListe(h, p.sorte, ids.map((x, j) => (j === i ? id : x)))
@@ -173,32 +188,36 @@ export function remplacer(h: Hangar, ancien: string, nouveau: string): Hangar {
 }
 
 /**
- * MONTER À UNE PLACE (Keko : « arme 1, arme 2, outil 1, outil 2 » plutôt qu'une liste qu'on remplit) : la pièce va à la
- * place k de sa liste ; celle qui l'occupait est retirée, et si la pièce était déjà montée ailleurs, les deux
- * s'échangent. Une place vide (au-delà des occupées) reçoit la pièce à la suite. Hors des places portées par le
+ * MONTER À UNE PLACE (Keko : « arme 1, arme 2, outil 1, outil 2 » plutôt qu'une liste qu'on remplit ; « que le joueur
+ * puisse choisir où va quelle arme ») : la pièce va à la place k de sa liste, ET Y RESTE — les places d'avant peuvent
+ * être libres. Celle qui l'occupait est retirée ; LES AUTRES PLACES NE BOUGENT PAS : une pièce déjà montée ailleurs y
+ * reste aussi (la même arme aux deux places, deux radars : le joueur a le choix). Hors des places portées par le
  * châssis, ou une pièce qu'on n'a pas : rien ne change.
  */
 export function monterA(h: Hangar, id: string, k: number): Hangar {
   const p = pieceDe(id)
   if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil') || !possede(h, id) || k < 0 || k >= capacite(h, p.sorte)) return h
   const ids = [...listeDe(h, p.sorte)]
-  const j = ids.indexOf(id)
-  if (j === k) return h
-  if (k >= ids.length) {
-    if (j >= 0) ids.splice(j, 1)
-    ids.push(id)
-  } else if (j >= 0) {
-    ids[j] = ids[k]
-    ids[k] = id
-  } else ids[k] = id
+  if (ids[k] === id) return h
+  while (ids.length < k) ids.push(VIDE)
+  ids[k] = id
   return avecListe(h, p.sorte, ids)
 }
 
+/** Vider UNE place d'une liste : les autres ne bougent pas (une place déjà libre : rien ne change). */
+export function demonterA(h: Hangar, l: Liste, k: number): Hangar {
+  const ids = [...listeDe(h, l)]
+  if ((ids[k] ?? VIDE) === VIDE) return h
+  ids[k] = VIDE
+  return avecListe(h, l, ids)
+}
+
+/** Démonter une pièce de TOUTES les places qu'elle occupe ; les autres places ne bougent pas. */
 export function demonter(h: Hangar, id: string): Hangar {
   const p = pieceDe(id)
   if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil')) return h
   const ids = listeDe(h, p.sorte)
-  return ids.includes(id) ? avecListe(h, p.sorte, ids.filter((x) => x !== id)) : h
+  return ids.includes(id) ? avecListe(h, p.sorte, ids.map((x) => (x === id ? VIDE : x))) : h
 }
 
 /** La meilleure foreuse montée (le plus fort débit), ou null : sans foreuse, on ne creuse pas — on chasse. */
@@ -319,7 +338,9 @@ export const lireCredits = (brut: unknown): number => (typeof brut === 'number' 
 /**
  * Relit un hangar gardé, sans confiance : les pièces inconnues tombent, celles de série sont toujours possédées, une
  * pièce montée qu'on n'a pas (ou au mauvais emplacement) redevient celle de série, les listes se bornent à ce que la
- * coque porte, sans doublon. Un hangar d'avant les outils (sa foreuse dans `montees.foreuse`) la retrouve dans ses outils.
+ * coque porte ; dans une liste, ce qui n'est pas une pièce possédée de cette liste LAISSE SA PLACE LIBRE (les suivantes
+ * ne glissent pas), et la même pièce peut y être plusieurs fois. Un hangar d'avant les outils (sa foreuse dans
+ * `montees.foreuse`) la retrouve dans ses outils.
  */
 export function lireHangar(brut: unknown): Hangar {
   const h = hangarNeuf()
@@ -333,9 +354,9 @@ export function lireHangar(brut: unknown): Hangar {
   }
   const lire = (l: Liste, brute: unknown): void => {
     const ids: string[] = []
-    if (Array.isArray(brute)) for (const id of brute) if (typeof id === 'string' && possede(h, id) && pieceDe(id)?.sorte === l && !ids.includes(id) && ids.length < capacite(h, l)) ids.push(id)
-    if (l === 'arme') h.armes = ids
-    else h.outils = ids
+    if (Array.isArray(brute)) for (const id of brute.slice(0, capacite(h, l))) ids.push(typeof id === 'string' && possede(h, id) && pieceDe(id)?.sorte === l ? id : VIDE)
+    if (l === 'arme') h.armes = rangee(ids)
+    else h.outils = rangee(ids)
   }
   lire('arme', b.armes)
   if (Array.isArray(b.outils)) lire('outil', b.outils)
