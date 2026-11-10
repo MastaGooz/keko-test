@@ -679,7 +679,15 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   première lecture). Puis (Keko : « encore un petit décalage ») le contexte
   de ZzFX est remplacé par un contexte qui demande la plus petite latence
   acceptée (`latencyHint: 0`) ; `&latence` affiche en vol la latence de
-  sortie mesurée par l'appareil — *ce reste-là est celui du téléphone*.
+  sortie mesurée par l'appareil — *ce reste-là est celui du téléphone* (123 ms
+  chez Keko). **Alors on joue en avance ce qu'on sait venir** (`annoncerLesSons`,
+  l'avance = la latence mesurée, 250 ms au plus) : le choc contre une roche
+  (la première roche que le vaisseau touchera en filant droit, si l'impact est
+  à moins de la latence et que le choc sera franc — le son du bouclier s'il
+  est levé, de la coque sinon), et le prochain coup de chaque arme quand un
+  rival est à portée. L'événement venu, le son n'est pas rejoué. Les traits
+  du rival et les pépites, imprévisibles, gardent le décalage ; la vibration,
+  elle, est immédiate.
 - **Les sons branchés** : roche qui éclate, pépite qui monte à bord, chaque
   arme (canon, mitrailleuse, missiles), obus qui touche le rival, rival qui
   explose, trait qui perce la coque, bouclier qui encaisse, extraction, coque

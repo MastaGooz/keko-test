@@ -164,6 +164,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant de l'arrivée par téléportation (chaque expédition commence par là : le vaisseau n'est dessiné qu'à `ARRIVE_A`, blanchi jusqu'à `REFROIDI_A`, et ne répond pas avant). */
   let arriveA = -10
   let toucheA = -10
+  /**
+   * LES SONS EN AVANCE (Keko : « une petite latence » — 123 ms mesurés sur son téléphone, celle de l'appareil) : ce
+   * qu'on sait arriver se joue AVANT, de la latence mesurée — le choc contre une roche (le vaisseau file droit sur
+   * elle, l'impact est à moins de la latence), le prochain coup d'une arme (sa cadence est connue). L'instant de
+   * l'annonce empêche de rejouer le son quand l'événement arrive.
+   */
+  let chocAnnonceA = -10
+  const armeAnnonceeA = new Map<string, number>()
   /** L'instant où chaque rival a pris un obus (il blanchit), et celui du dernier coup pris par le bouclier (son anneau flashe). */
   const toucheEnnemiA = new Map<number, number>()
   let bouclierA = -10
@@ -316,6 +324,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(mot, x0, y, COQUE[4], { font: 'big' })
     p.text(valeur, x0 + wm + 6, y, PEPITE[3], { font: 'big' })
     if (credit) dessinerUnCredit(p, x0 + wm + 6 + wv + 7, y + 3)
+  }
+  /** Annonce les sons qu'on sait venir, de la latence audio mesurée (voir `chocAnnonceA`). */
+  function annoncerLesSons(): void {
+    const avance = Math.min(0.25, Math.max(0, latenceMs() / 1000))
+    if (avance < 0.02) return
+    // LE CHOC : la première roche que le vaisseau touchera en filant droit, si c'est dans moins de la latence et que le
+    // choc sera franc (la vitesse normale passe le seuil) — le son du bouclier s'il est levé, sinon celui de la coque
+    if (t - chocAnnonceA > 0.4) {
+      const vit = Math.hypot(v.vx, v.vy)
+      if (vit > CONF.seuilChoc) {
+        for (const a of asteroidesVisibles(CONF, m, v.x, v.y, vit * avance + CONF.champ.rayonMax + CONF.rayon)) {
+          const ox = v.x - a.x
+          const oy = v.y - a.y
+          const rr = a.rayon + CONF.rayon
+          const b = (ox * v.vx + oy * v.vy) / (vit * vit)
+          const cc = (ox * ox + oy * oy - rr * rr) / (vit * vit)
+          const disc = b * b - cc
+          if (disc < 0 || cc <= 0) continue
+          const tc = -b - Math.sqrt(disc)
+          if (tc <= 0 || tc > avance) continue
+          const nx = (ox + v.vx * tc) / rr
+          const ny = (oy + v.vy * tc) / rr
+          if (-(v.vx * nx + v.vy * ny) < CONF.seuilChoc) continue
+          chocAnnonceA = t
+          jouer(CONF.bouclier.points > 0 && m.bouclier >= 1 ? 'bouclier' : 'touche')
+          break
+        }
+      }
+    }
+    // LES ARMES : le prochain coup part dans moins de la latence, et un rival est à portée
+    CONF.armes.forEach((arme, i) => {
+      const reste = (m.armesA[i] ?? 0) - m.t
+      if (reste <= 0 || reste > avance || t - (armeAnnonceeA.get(arme.id) ?? -10) < 0.4) return
+      if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
+      armeAnnonceeA.set(arme.id, t)
+      jouer(arme.id as Son)
+    })
   }
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
@@ -1577,7 +1622,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             case 'touche': {
               // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
-              jouer('touche')
+              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('touche') // (un choc annoncé en avance a déjà sonné)
               toucheA = t
               secousse = Math.max(secousse, 0.7)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
@@ -1591,7 +1636,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'obus':
               // une arme tire : deux étincelles à la bouche, et son son
-              jouer(ev.arme as Son)
+              // (un coup annoncé en avance a déjà sonné)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer(ev.arme as Son)
               for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-20, 20), R.range(-20, 20), 0.12, N.WHITE, 1, 1.5)
               break
             case 'ennemiTouche': {
@@ -1607,7 +1654,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'bouclier': {
               // le bouclier prend le coup : son anneau flashe, des étincelles cyan, une petite secousse
-              jouer('bouclier')
+              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('bouclier')
               bouclierA = t
               secousse = Math.max(secousse, 0.3)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(20)
@@ -1695,6 +1742,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       flamme += (v.poussee - flamme) * Math.min(1, dt * 14)
       // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse
       regler(m.phase === 'vol' ? flamme : 0, m.phase === 'vol' && m.forage !== null)
+      if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0
         flammesEnnemies.set(e.id, f + (e.corps.poussee - f) * Math.min(1, dt * 14))
