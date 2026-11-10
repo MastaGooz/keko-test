@@ -654,6 +654,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   Sous les compteurs du porté, « SOUTE 12/20 », rouge et clignotant quand
   elle est pleine. *Il faut rentrer extraire.*
 
+## Les outils par activité (Keko, 10/11 : « les outils, on peut plutôt les classer par activité : minage / combat »)
+
+- Les puces des outils sont TOUT · MINAGE (foreuses, aimants) · COMBAT
+  (radar) : la famille d'une pièce dit son activité (`ACTIVITE`). Les
+  familles restent dans la règle (une foreuse chasse la foreuse).
+
 ## Le châssis (Keko, 10/11 : « un meilleur nom que coque pour la structure principale ? » — « ok pour châssis, et les PV sont le blindage »)
 
 - L'emplacement et ses pièces s'appellent CHÂSSIS à l'écran (Châssis de

@@ -254,11 +254,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
   const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'PROPULSEUR', coque: 'CHASSIS', outil: 'OUTILS', arme: 'ARMES' }
   /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
-  const NOMS_FAMILLE: Record<string, string> = { foreuse: 'FOREUSES', aimant: 'AIMANTS', radar: 'RADARS' }
-  const famillesDe = (o: Sorte): string[] => [...new Set(piecesDe(o).map((pc) => pc.famille).filter((f): f is string => f !== undefined))]
+  /** LES SOUS-CATÉGORIES, PAR ACTIVITÉ (Keko : « classer les outils par activité, minage / combat ») : la famille d'une pièce dit son activité. */
+  const ACTIVITE: Record<string, string> = { foreuse: 'minage', aimant: 'minage', radar: 'combat' }
+  const NOMS_FAMILLE: Record<string, string> = { minage: 'MINAGE', combat: 'COMBAT' }
+  const sousDe = (pc: Piece): string | undefined => (pc.famille === undefined ? undefined : (ACTIVITE[pc.famille] ?? pc.famille))
+  const famillesDe = (o: Sorte): string[] => [...new Set(piecesDe(o).map(sousDe).filter((f): f is string => f !== undefined))]
   const sousCategorie: Record<Sorte, string | null> = { propulseur: null, coque: null, outil: null, arme: null }
   /** La liste visible d'une catégorie : ses pièces, ou celles de la sous-catégorie choisie. */
-  const listeVisible = (o: Sorte): Piece[] => piecesDe(o).filter((pc) => sousCategorie[o] === null || pc.famille === sousCategorie[o])
+  const listeVisible = (o: Sorte): Piece[] => piecesDe(o).filter((pc) => sousCategorie[o] === null || sousDe(pc) === sousCategorie[o])
   /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
   const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
