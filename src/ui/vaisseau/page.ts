@@ -549,15 +549,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
     } else if (vue === 'labo') {
-      // LA PLANCHE du labo : la pièce qu'on regarde, en grand, dans un cartouche
-      const piecesLabo = listeVisible(onglet).filter((pc) => !possede(hangar, pc.id))
-      const pc = piecesLabo.find((x) => x.id === choix[onglet]) ?? piecesLabo[0]
-      panel(p, cx - 46, cy - 46, 92, 92, { ...ENCRE, body: N.hex('#0e1c2e'), top: N.hex('#122236'), low: N.hex('#0a1420') }, { r: 3 })
-      if (pc !== undefined) {
-        dessinerLePictogramme(p, pc, cx, cy, 84, 84)
-        p.text(texteNu(pc.nom), cx, cy + 52, PEPITE[3], { align: 'center' })
-      } else p.text('TOUT EST DEBLOQUE', cx, cy - 2, COQUE[4], { align: 'center' })
+      // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
+      // les crédits qu'on a, là où le hangar met le poids (Keko)
+      p.text('CREDITS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
+      nombreDeCredits(p, credits, cx + 3 + p.measure(String(credits), { font: 'big' })[0] + 12, hautScene - 10, PEPITE[3])
     } else {
+      // les crédits qu'on a, là où le hangar met le poids (Keko)
+      p.text('CREDITS', cx - 3, hautScene - 9, COQUE[4], { align: 'right' })
+      nombreDeCredits(p, credits, cx + 3 + p.measure(String(credits), { font: 'big' })[0] + 12, hautScene - 10, PEPITE[3])
       // L'INVENTAIRE à la place du vaisseau (Keko) : une grille de cases, quatre par rangée, trois rangées — les minerais
       // dans les premières, les autres VIDES, pour la suite ; la case choisie est cerclée d'or
       // la grille remplit toute la zone à droite de la bande (Keko) : quatre colonnes, autant de rangées qu'il en tient
@@ -690,11 +689,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       sauver()
     }, true)
     if (tresor[k] > 0) dessinerUnCredit(p, W / 2 + p.measure(`VENDRE : ${gain}`, { font: 'big' })[0] / 2 + 8, by + 6)
-    y += hp + 4
-    // les crédits qu'on a, sous le panneau
-    p.text('CREDITS', W / 2 - 6, y + 2, COQUE[4], { align: 'right' })
-    nombreDeCredits(p, credits, W / 2 + 30, y, PEPITE[3]) // (la même couleur que la valeur unitaire — Keko)
-    return y + 12
+    return y + hp + 4
   }
   /**
    * L'INTERFACE DU HANGAR, sous la scène, EN GRANDE POLICE (Keko : « les textes et l'interface sont un peu petits ») :
@@ -719,7 +714,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le titre ; pour les outils et les armes, LES PLACES EN CELLULES à sa droite — une case par place portée par la
     // coque, pleine si elle est occupée (Keko : « plutôt que x/x, des cellules qui se remplissent »)
     p.text(NOMS_ONGLET[onglet], W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
-    if (onglet === 'outil' || onglet === 'arme') {
+    if (vue === 'hangar' && (onglet === 'outil' || onglet === 'arme')) { // (au labo, pas de places à montrer — Keko)
       const occupees = (onglet === 'outil' ? hangar.outils : hangar.armes).length
       const places = capacite(hangar, onglet)
       let cx = W / 2 + p.measure(NOMS_ONGLET[onglet], { font: 'big' })[0] / 2 + 6
@@ -854,12 +849,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     jauges.forEach((j, i) => dessinerUneJaugeDePiece(p, y + 16 + i * 10, j, reperes === null || reperes[i] === undefined ? null : reperes[i].valeur / reperes[i].max, j.nom === 'Poids', gx))
     note.forEach((li, i) => p.text(li, W / 2, y + hh + 3 + i * 7, COQUE[4], { align: 'center' }))
     y += hd + 4
-    }
-    // au labo, les crédits qu'on a, sous le panneau (c'est là qu'on les dépense)
-    if (vue === 'labo') {
-      p.text('CREDITS', W / 2 - 6, y + 2, COQUE[4], { align: 'right' })
-      nombreDeCredits(p, credits, W / 2 + 30, y, PEPITE[3])
-      y += 12
     }
     }
     // DÉCOLLER, TOUT EN BAS (Keko : « plus gros et plus travaillé ») : un double cadre, une plaque d'or qu'un reflet

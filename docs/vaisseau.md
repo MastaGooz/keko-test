@@ -659,9 +659,11 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - **Trois vues dans la colonne** : HANGAR, LABO, ENTREPOT. LE LABO a le même
   sélecteur de catégories et la même liste que le hangar, mais ne montre
   que les pièces qu'on n'a pas, avec leur prix, et le bouton ACHETER ; la
-  scène y est une planche bleue quadrillée où la pièce regardée est dessinée
-  en grand dans un cartouche ; les crédits qu'on a sont rappelés sous les
-  stats. `acheter` NE MONTE PLUS la pièce : on la débloque au labo, on
+  scène y est une planche bleue quadrillée, VIDE : l'espace attend l'ARBRE
+  TECHNOLOGIQUE (Keko ; une grande planche de la pièce y a vécu une heure,
+  « il est déjà en dessous ») ; pas de cellules de places à côté des titres
+  au labo ; les crédits qu'on a s'écrivent là où le hangar met le poids, au
+  labo comme à l'entrepôt (Keko). `acheter` NE MONTE PLUS la pièce : on la débloque au labo, on
   l'équipe au hangar (les vérifications achètent puis montent, `achete`).
 - **Le hangar ne montre que ce qu'on possède**, sans l'étiquette
   « possédé » (Keko) : EQUIPE ou rien. Une catégorie vide dit « RIEN ICI :
