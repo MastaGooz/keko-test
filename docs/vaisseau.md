@@ -6,6 +6,66 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Les sons sont composés, plus tirés d'une ligne (Keko, 10/11 : « retravailler les sons du jeu, pour les rendre plus ronds / doux et moins type arcade old school, avec une qualité la plus haute possible »)
+
+ZzFX fait un son d'UNE ligne : une forme d'onde (carré, dent de scie, bruit blanc), un glissé, un écrasement, en mono
+à 44,1 kHz. *C'est la borne d'arcade par construction* — on ne l'arrondit pas en tournant ses paramètres. Les vingt
+sons sont donc RECOMPOSÉS, couche par couche, par un petit synthé à nous (`src/ui/vaisseau/synthe.ts`, pur, seedé,
+aucune dépendance) :
+
+- **des notes en sinus** : un fondamental et quelques partiels qui s'éteignent avant lui (les timbres `MAILLET`,
+  `CLOCHE`, `VERRE`, `CORPS`), montées en demi-cosinus, éteintes en exponentielle — ni clic d'attaque, ni coupure ;
+- **du souffle** : du bruit passé dans un filtre à variable d'état dont la coupure glisse — jamais de bruit blanc nu ;
+- **une saturation douce** (tanh) sur les graves, et des corps posés assez haut (de 170 à 430 Hz au départ, le décollage seul part de plus bas) : *un
+  haut-parleur de téléphone ne rend rien sous 250 à 350 Hz*, un « poum » à 60 Hz y serait un silence ;
+- **une réverbération courte cuite dans le tampon** (la Freeverb : huit peignes amortis, quatre passe-tout, les deux
+  canaux décalés), dosée son par son — un son sec est un son de borne ;
+- **la stéréo**, à la fréquence du contexte (48 kHz le plus souvent), et une extinction en fondu sur 20 ms.
+
+**Les sons de la base sont accordés entre eux** (ré majeur pentatonique) : l'onglet est une quarte de maillet qui
+monte, le retour la même qui descend, l'achat deux clochettes à la quinte sur un appui grave, la vente cinq tintements
+de verre d'une oreille à l'autre, le refus deux notes basses et mates, l'extraction l'accord de ré en clochettes sur une
+nappe, la perte trois notes de ré mineur qui descendent sur un grondement.
+
+**Les sons très répétés ont des VARIANTES** (`variantes`, `varianteSuivante` dans `sons.ts`) : la pépite a quatre
+quintes qui montent d'un cran à chaque prise et repartent du bas après 1,2 s de silence ; la mitrailleuse trois « tup »
+voisins. Ce sont des tampons différents, *pas un `playbackRate`* (l'appareil de Keko ne pilote pas la vitesse de
+lecture).
+
+**La foreuse est un bourdon rond** (`voixDeForage`) : les huit premiers harmoniques de 74 Hz EN SINUS (une onde
+périodique, le deuxième harmonique devant), deux oscillateurs à quatre cents d'écart, passe-bas à 700 Hz, trémolo à
+14 Hz. Avant : une dent de scie et un carré battus à 22 Hz, qui grinçaient. **Le souffle du propulseur n'a pas bougé**
+(du bruit filtré bas, déjà rond, réglé trois fois par Keko).
+
+**Le calcul se fait dans un Worker** (`synthe.worker.ts`) : un son composé coûte de 3 à 80 ms sur le PC (560 ms les
+vingt-cinq tampons), trop pour le fil principal d'un téléphone. Lancé à l'ouverture de la page, la base d'abord ; tout
+est prêt 0,8 s après le chargement sur le PC (sonde). Un son demandé avant d'être prêt se calcule sur place ; sans
+Worker, ils se préparent un par un entre deux images (`preparerUnParUn`).
+
+**`&sons=arcade` rend les anciens sons** (la table ZzFX est gardée, avec l'ancienne foreuse) : *pour comparer à
+l'oreille, d'un lien.*
+
+### Réglé à la mesure, PAS à l'oreille
+
+Je n'entends pas. Chaque son a été rendu hors navigateur (Node contre le même module) et mesuré contre l'ancien :
+niveau pondéré A sur la fenêtre de 100 ms la plus forte, le même niveau derrière un passe-haut à 350 Hz (« ce qu'un
+téléphone rend »), part de l'énergie au-dessus de 250 Hz, plus grand saut entre deux échantillons, bords du tampon.
+
+- **Le gain de lecture passe de 0,3 à 0,5** pour les sons composés (`VOLUME`) : un son rond porte moins d'énergie
+  dans les médiums qu'un bruit blanc à crête égale. Les crêtes (`niveau`) sont réglées pour ce gain.
+- **Les petits sons sont au niveau des anciens** (écart de −1 à +2 dB : pépite, canon, onglet, retour, achat, vente,
+  bouclier, clic, obus qui touche) ; la mitrailleuse, les missiles, l'extraction, « Plus », le refus et le décollage
+  sont 1 à 3 dB dessous.
+- **Les gros sont 3,5 à 5,5 dB SOUS les anciens** (roche qui éclate, rival détruit, coque touchée, coque perdue, pièce
+  équipée) : les anciens étaient des rafales de bruit blanc, les plus fortes du jeu ; à niveau égal un son doux
+  devrait saturer. *C'est le premier chiffre à rejuger à l'oreille* (`niveau` dans la recette, ou `VOLUME` pour tous).
+- Aucun tampon ne commence ni ne finit ailleurs qu'à zéro ; le plus grand saut est celui du souffle (0,25), pas un clic.
+- La foreuse : au pondéré A +1,7 dB, au « téléphone » −1,2 dB contre l'ancienne (gain 0,38 contre 0,28).
+
+*À juger par Keko* : tout le timbre (je n'ai que des chiffres), le niveau des gros sons, la réverbération (trop
+de salle se règle par `salle`), la pépite qui monte, le bourdon de la foreuse.
+
+
 ## Les m de la graisse ont leurs pieds (Keko, 10/11 : « sur les boutons des sous-onglets (tout, minage, combat) et sur "remise à zéro", la police dessine mal les m : on ne voit pas les pieds de la lettre, c'est un seul bloc »)
 
 La graisse (`keko-gras`) est la police maigre épaissie d'un pixel vers la droite (`engraisser`). Sur une lettre à trois
