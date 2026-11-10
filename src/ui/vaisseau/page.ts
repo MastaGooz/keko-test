@@ -720,8 +720,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     } else if (vue === 'labo') {
       // (l'espace du haut reste vide : il attend l'ARBRE TECHNOLOGIQUE — Keko ; le dessin de la pièce est déjà dans les stats)
-      // les crédits qu'on a, là où le hangar met le poids (Keko)
-      ligneSousLaScene(p, cx, 'CREDITS', String(credits), true)
+      // (les crédits totaux sont passés sous le titre de la vue d'ensemble, là où le hangar met son poids — Keko)
     } else {
       // les crédits qu'on a, là où le hangar met le poids (Keko)
       ligneSousLaScene(p, cx, 'CREDITS', String(credits), true)
@@ -880,14 +879,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       panel(p, 4, y, W - 8, 13, ENCRE, { r: 2 })
       p.text(vue === 'labo' ? 'PIECES A DEBLOQUER' : 'EQUIPEMENT DU VAISSEAU', W / 2, y + 3, PEPITE[3], { font: 'big', align: 'center' })
       // LE POIDS TOTAL, sous le titre (Keko : « plutôt que là où il est », sous la scène)
-      if (vue === 'hangar') {
-        // dans la petite police, plus petite que celle du titre (Keko) — le mot et le nombre ensemble
-        const mot = 'POIDS TOTAL'
-        const val = `${poidsTotal(hangar)} T`
+      if (vue === 'hangar' || vue === 'labo') {
+        // dans la petite police, plus petite que celle du titre (Keko) — le mot et le nombre ensemble ; au LABO, les
+        // CRÉDITS TOTAUX au même endroit (Keko), avec leur icône
+        const labo = vue === 'labo'
+        const mot = labo ? 'CREDITS' : 'POIDS TOTAL'
+        const val = labo ? String(credits) : `${poidsTotal(hangar)} T`
         const wm = p.measure(mot)[0]
-        const x0 = Math.round(W / 2 - (wm + 4 + p.measure(val)[0]) / 2)
+        const wv = p.measure(val)[0]
+        const x0 = Math.round(W / 2 - (wm + 4 + wv + (labo ? 10 : 0)) / 2)
         p.text(mot, x0, y + 17, COQUE[4])
         p.text(val, x0 + wm + 4, y + 17, PEPITE[3])
+        if (labo) dessinerUnCredit(p, x0 + wm + 4 + wv + 6, y + 19)
         y += 9
       }
       y = dessinerLesEmplacements(p, y + 15)
