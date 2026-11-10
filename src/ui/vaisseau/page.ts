@@ -872,7 +872,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (peutMonter(hangar, pc.id)) {
           hangar = monter(hangar, pc.id)
           sauver()
-        } else aRemplacer = pc.id
+        } else {
+          // plein : une seule pièce montée, on la remplace sans demander ; plusieurs, la fenêtre demande laquelle (Keko)
+          const montees = pc.sorte === 'arme' ? hangar.armes : hangar.outils
+          if (montees.length === 1) {
+            hangar = remplacer(hangar, montees[0], pc.id)
+            sauver()
+          } else aRemplacer = pc.id
+        }
       }, true)
     } else {
       // ACHETER en relief, puis le prix EN BEIGE (Keko) et l'icône des crédits

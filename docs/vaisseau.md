@@ -685,7 +685,9 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   FENÊTRE DE REMPLACEMENT : un voile, « PLACES PLEINES », « Remplacer quoi
   par : … ? », une rangée par pièce montée de la liste (son graphisme, son
   nom) — une tape la remplace, à sa place (`remplacer`, dans la règle) —, et
-  « Annuler ». Tant qu'elle est ouverte, seules ses zones répondent.
+  « Annuler ». Tant qu'elle est ouverte, seules ses zones répondent. **Elle ne s'ouvre que s'il y a
+  le choix** : une seule pièce montée dans la liste, elle est remplacée sans
+  demander (Keko).
 - Le graphisme de l'aimant se centre sur son encombrement : il débordait du
   haut de sa case (« un cadre doit toujours contenir son image »).
 
