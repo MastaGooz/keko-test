@@ -65,21 +65,21 @@ export type Piece = {
  * rend deux à sept ; en fer d'abord, Keko les a passés en crédits le 09/11).
  */
 export const PIECES: Piece[] = [
-  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de serie', dit: 'Acceleration, pointe et maniabilite de serie.', prix: 0, poids: 6},
-  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforce', dit: 'Acceleration +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1},
-  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Acceleration +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25},
-  { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Chassis de serie', dit: '5 de blindage, 20 pepites en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
-  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Chassis blinde', dit: '8 de blindage, 30 pepites en soute, un outil, deux armes. Lourd.', note: 'Acier rivete.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30 },
-  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Chassis a bouclier', dit: '5 de blindage et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge apres 4 s sans coup.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
-  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de serie', dit: 'Creuse les roches. Debit et portee de serie.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
+  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Accélération, pointe et maniabilité de série.', prix: 0, poids: 6},
+  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Accélération +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1},
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Accélération +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25},
+  { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Châssis de série', dit: '5 de blindage, 20 pépites en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
+  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Châssis blindé', dit: '8 de blindage, 30 pépites en soute, un outil, deux armes. Lourd.', note: 'Acier riveté.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30 },
+  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Châssis à bouclier', dit: '5 de blindage et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge après 4 s sans coup.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
+  { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, poids: 8, debit: 1.8, portee: 1.25},
-  { id: 'aimant-1', sorte: 'outil', cran: 2, famille: 'aimant', nom: 'Aimant', dit: 'Attire les pepites de 60 % plus loin.', note: 'Le vaisseau attire toujours les pepites ; l’aimant en attire de plus loin.', prix: 24, poids: 3, aimant: 1.6 },
-  { id: 'aimant-2', sorte: 'outil', cran: 3, famille: 'aimant', nom: 'Grand aimant', dit: 'Attire les pepites deux fois plus loin.', note: 'Le vaisseau attire toujours les pepites ; l’aimant en attire de plus loin.', prix: 50, poids: 5, aimant: 2.2 },
-  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Designe le rival au bord de l’ecran jusqu’a 600 unites. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une fleche rouge au bord de l’ecran designe le rival.', prix: 32, poids: 2, radar: 600},
-  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte a 120. Tire seul sur le rival.', note: 'Tire seul sur le rival a portee.', prix: 24, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
-  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte a 90, disperse.', note: 'Disperse ses balles.', prix: 44, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
-  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guide toutes les 2,8 s, 14 points, porte a 190.', note: 'Guide : le missile tourne vers le rival.', prix: 68, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
+  { id: 'aimant-1', sorte: 'outil', cran: 2, famille: 'aimant', nom: 'Aimant', dit: 'Attire les pépites de 60 % plus loin.', note: 'Le vaisseau attire toujours les pépites ; l’aimant en attire de plus loin.', prix: 24, poids: 3, aimant: 1.6 },
+  { id: 'aimant-2', sorte: 'outil', cran: 3, famille: 'aimant', nom: 'Grand aimant', dit: 'Attire les pépites deux fois plus loin.', note: 'Le vaisseau attire toujours les pépites ; l’aimant en attire de plus loin.', prix: 50, poids: 5, aimant: 2.2 },
+  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Désigne le rival au bord de l’écran jusqu’à 600 unités. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une flèche rouge au bord de l’écran désigne le rival.', prix: 32, poids: 2, radar: 600},
+  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte à 120. Tire seul sur le rival.', note: 'Tire seul sur le rival à portée.', prix: 24, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
+  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte à 90, disperse.', note: 'Disperse ses balles.', prix: 44, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
+  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guidé toutes les 2,8 s, 14 points, porte à 190.', note: 'Guidé : le missile tourne vers le rival.', prix: 68, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
 ]
 
 /**
@@ -91,7 +91,7 @@ export function ajouterLesPiecesDEssai(): void {
   if (PIECES.some((p) => p.id.startsWith('essai-'))) return
   const n = (i: number, a: number, b: number): number => a + ((i * 7919) % 100) * (b - a) / 100
   for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 3), poids: Math.round(n(i + 9, 4, 14)), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3) })
-  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Chassis d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (8 + i * 4), pv: 3 + i, poids: 14 + i * 4, bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2), capacite: 10 + i * 5 })
+  for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Châssis d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (8 + i * 4), pv: 3 + i, poids: 14 + i * 4, bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2), capacite: 10 + i * 5 })
   for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (4 + i * 3), poids: Math.round(n(i + 1, 2, 10)), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4) })
   for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-aimant-${i}`, sorte: 'outil', cran: 2, famille: 'aimant', nom: `Aimant d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 4), poids: 2 + i, aimant: 1.2 + i * 0.3 })
   for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-radar-${i}`, sorte: 'outil', cran: 2, famille: 'radar', nom: `Radar d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (6 + i * 4), poids: 1 + i, radar: 200 + i * 150 })
@@ -256,9 +256,9 @@ export function jaugesDe(p: Piece): Jauge[] {
   const max = (f: (q: Piece) => number): number => Math.max(...memes.map(f))
   if (p.sorte === 'propulseur') {
     return [
-      { nom: 'Acceleration', valeur: p.poussee ?? 1, max: max((q) => q.poussee ?? 1) },
+      { nom: 'Accélération', valeur: p.poussee ?? 1, max: max((q) => q.poussee ?? 1) },
       { nom: 'Vitesse', valeur: p.vitesseMax ?? 1, max: max((q) => q.vitesseMax ?? 1) },
-      { nom: 'Maniabilite', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
+      { nom: 'Maniabilité', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]
   }
@@ -275,22 +275,22 @@ export function jaugesDe(p: Piece): Jauge[] {
   }
   if (p.sorte === 'outil') {
     const poids = { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' }
-    if (p.radar !== undefined) return [{ nom: 'Detection', valeur: p.radar, max: max((q) => q.radar ?? 0) }, poids]
+    if (p.radar !== undefined) return [{ nom: 'Détection', valeur: p.radar, max: max((q) => q.radar ?? 0) }, poids]
     if (p.famille === 'aimant') return [{ nom: 'Attraction', valeur: p.aimant ?? 1, max: max((q) => q.aimant ?? 1) }, poids]
     const foreuses = memes.filter((q) => q.famille === 'foreuse')
     const maxF = (f: (q: Piece) => number): number => Math.max(...foreuses.map(f))
     return [
       { nom: 'Forage', valeur: p.debit ?? 1, max: maxF((q) => q.debit ?? 1) },
-      { nom: 'Portee', valeur: p.portee ?? 1, max: maxF((q) => q.portee ?? 1) },
+      { nom: 'Portée', valeur: p.portee ?? 1, max: maxF((q) => q.portee ?? 1) },
       poids,
     ]
   }
   // une arme : cadence (coups par seconde), dégâts du coup, portée (Keko)
   const a = p.arme!
   return [
-    { nom: 'Degats', valeur: a.degats, max: max((q) => q.arme!.degats) },
+    { nom: 'Dégâts', valeur: a.degats, max: max((q) => q.arme!.degats) },
     { nom: 'Cadence', valeur: 1 / a.cadence, max: max((q) => 1 / q.arme!.cadence) },
-    { nom: 'Portee', valeur: a.portee, max: max((q) => q.arme!.portee) },
+    { nom: 'Portée', valeur: a.portee, max: max((q) => q.arme!.portee) },
     { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
   ]
 }
@@ -301,9 +301,9 @@ export function jaugesDe(p: Piece): Jauge[] {
  * en crédits. *Les prix sont de moi, à rejuger* : l'or vaut quatre fer, le cristal douze.
  */
 export const FICHES_MINERAI: Record<Minerai, { nom: string; dit: string; credits: number }> = {
-  fer: { nom: 'Fer', dit: 'Le metal des roches grises, partout autour des stations. Commun, mais tout commence par lui.', credits: 2 },
-  or: { nom: 'Or', dit: 'Dans la roche ocre, loin des stations. Rare, lourd, recherche.', credits: 8 },
-  cristal: { nom: 'Cristal', dit: 'Dans la roche bleutee, aux confins. Tres rare : il scintille sur ses veines.', credits: 25 },
+  fer: { nom: 'Fer', dit: 'Le métal des roches grises, partout autour des stations. Commun, mais tout commence par lui.', credits: 2 },
+  or: { nom: 'Or', dit: 'Dans la roche ocre, loin des stations. Rare, lourd, recherché.', credits: 8 },
+  cristal: { nom: 'Cristal', dit: 'Dans la roche bleutée, aux confins. Très rare : il scintille sur ses veines.', credits: 25 },
 }
 
 /** Vendre tout un minerai du trésor à l'entrepôt : rend le trésor et les crédits neufs (rien à vendre : les mêmes valeurs). */

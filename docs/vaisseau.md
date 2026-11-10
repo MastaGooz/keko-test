@@ -5,6 +5,52 @@ l'espace (le déplacement qu'on avait utilisé pour le vampire survivor) :
 juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
+
+## La base, sublimée (Keko, 10/11 : « recommence pour améliorer encore à fond la base : le gamefeel, le juice ; retravaille le pixel art du vaisseau et des parties pour un rendu optimal ; les polices, la texture des éléments d'UI, la lumière, les effets »)
+
+- **UNE POLICE À NOUS** (`ui/vaisseau/police.ts`, inscrite dans la table
+  `FONTS` de pixelfx : `p.text`, `p.measure` et les mots en relief la lisent
+  telle quelle) : les capitales 5 × 7 du dépôt, DE VRAIES MINUSCULES à grande
+  hauteur d'x (5 pixels, jambages de 2) et LES ACCENTS DU FRANÇAIS sur deux
+  rangées réservées. Trois voix : `keko-titre` (la graisse agrandie par
+  SCALE2X, l'agrandisseur du pixel art : des diagonales lissées, pas de gros
+  pixels carrés — le nom de la vue, « Décoller »), `keko-gras` (les titres,
+  les noms, les nombres) et `keko` (le texte) ; les étiquettes restent en
+  petites capitales. Les textes des pièces et des minerais ont retrouvé leurs
+  accents (« Châssis de série », « Portée », « Dégâts »).
+- **LE VAISSEAU ET LES PIÈCES, RENDUS PIXEL PAR PIXEL**
+  (`ui/vaisseau/rendu-vaisseau.ts`) : chaque pièce est une forme (contour,
+  matière, relief) et chaque pixel est éclairé — le fuselage en cylindre, la
+  verrière et la tourelle en dômes, les ailes en plaques penchées ; des rampes
+  de six tons qui GLISSENT EN TEINTE (ombres violettes, lumières chaudes), la
+  trame seulement à l'étroite frontière de deux tons et jamais sur une plaque,
+  un biseau aux bords, l'ombre de contact sous ce qui est posé, un REFLET
+  froid sur les bords à l'ombre, un CONTOUR SÉLECTIF (sombre à l'ombre, de la
+  couleur de la matière côté lumière), le spéculaire sur le métal et le verre,
+  les flammes émissives. Les pictogrammes de l'interface sont le même rendu,
+  une pièce seule, mise à l'échelle de sa case. Le vol garde son dessin.
+- **LES PLAQUES** (`plaque`) : du métal à biseau d'un pixel — lumière en haut à
+  gauche, ombre en bas à droite ; ENFONCÉE, le biseau s'inverse et le contenu
+  descend ; ÉTEINTE, plus de biseau, désaturée ; un grain de métal brossé,
+  l'or avec sa ligne spéculaire ; matières : encre, or, acier, creux (les
+  puits et rainures), vert (vendre), éteint.
+- **LA LUMIÈRE** : deux cônes de lumière chaude tombent des lampes sur
+  l'aire, des poussières y flottent, le sol de plaques a ses biseaux et ses
+  rivets, une bande de sécurité usée, une vignette tramée sur les bords ; le
+  labo a son trait de scanner qui descend la planche.
+- **LE VAISSEAU VIT** : en vol stationnaire (il respire d'un pixel, son ombre
+  le suit), feux de position qui battent, tuyère au ralenti ; au décollage,
+  la fumée roule sur l'aire avant la flamme.
+- **LE JUICE, en couches** : le bouton s'enfonce puis remonte avec un liseré
+  blanc d'un instant ; au survol (PC) son biseau s'éclaire et un reflet le
+  traverse ; les onglets se lèvent EN REBONDISSANT (un ressort qui dépasse) ;
+  le titre de la vue tombe et un éclat le traverse toutes les cinq secondes ;
+  le compteur saute et s'allume ; LA SECOUSSE de l'écran à l'achat, à
+  l'équipement, au décollage ; une pièce ACHETÉE S'ENVOLE jusqu'à l'onglet du
+  hangar, qui saute et prend une pastille rouge jusqu'à la visite ; les
+  jauges se remplissent et un éclat les parcourt ; les étincelles naissent
+  blanches.
+
 ## La base repensée (Keko, 10/11 : « repense entièrement le système d'interface de la base — une organisation hiérarchique épurée, claire et ergonomique, PC et téléphone ; cohérente, élégante et surtout très juicy »)
 
 - **QUATRE ÉTAGES, du plus général au plus précis** (`dessinerLaBase`) :
