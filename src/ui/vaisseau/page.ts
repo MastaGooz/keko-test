@@ -1227,11 +1227,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const g = zoneGlissante
       if (g !== null && q.x >= g.x && q.x < g.x + g.w && q.y >= g.y && q.y < g.y + g.h) {
         glisse = { x: q.x, y: q.y, defil0: defil[onglet], bouge: false, sorte: 'liste' }
+        racine.setPointerCapture(ev.pointerId) // (la souris qui sort du canvas garde le glisser)
         return
       }
       const go = zoneDesOnglets
       if (go !== null && q.x >= go.x && q.x < go.x + go.w && q.y >= go.y && q.y < go.y + go.h) {
         glisse = { x: q.x, y: q.y, defil0: defilOnglets, bouge: false, sorte: 'onglets' }
+        racine.setPointerCapture(ev.pointerId)
         return
       }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
@@ -1270,6 +1272,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
   }
+  // LA MOLETTE, sur PC (Keko : « sur PC je ne peux pas scroller la barre d'onglets ») : sur la grille d'onglets, elle la
+  // fait défiler au pixel ; sur la liste des pièces, d'une rangée par cran
+  racine.addEventListener('wheel', (ev) => {
+    if (!ecranVisible()) return
+    const q = enTampon(ev.clientX, ev.clientY)
+    const dans = (z: { x: number; y: number; w: number; h: number } | null): boolean => z !== null && q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h
+    const pas = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY
+    if (dans(zoneDesOnglets)) {
+      ev.preventDefault()
+      defilOnglets += pas * 0.4
+    } else if (dans(zoneGlissante)) {
+      ev.preventDefault()
+      defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
+    }
+  }, { passive: false })
   racine.addEventListener('pointerup', lever)
   racine.addEventListener('pointercancel', lever)
   window.addEventListener('keydown', (ev) => {

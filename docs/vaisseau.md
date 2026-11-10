@@ -691,7 +691,8 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
   « la zone du haut n'est pas utilisée »), quel que soit le nombre d'onglets ;
   l'entrepôt descend sa grille d'autant. Quand la grille d'onglets dépasse la
   scène (un écran court), ELLE DÉFILE au doigt (Keko) : les cases coupées au bord,
-  un ascenseur à droite de la bande (`defilOnglets`).
+  un ascenseur à droite de la bande (`defilOnglets`) ; SUR PC, LA MOLETTE la fait
+  défiler, et la liste des pièces aussi (Keko).
   `  `&onglets=N` ajoute des onglets d'essai jusqu'à N (12 au plus) : une icône, unonglets=N` ajoute des onglets d'essai jusqu'à N (22 au plus, dont dix réservés
   numérotés) : une icône, un
   nom, une scène vide.
