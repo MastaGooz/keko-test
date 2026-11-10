@@ -843,7 +843,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sélectionné et son prix en crédits ») : la fiche du minerai choisi dans la grille — son nom, deux lignes, sa valeur
    * en crédits la pépite, ce qu'on en a en stock —, VENDRE TOUT, et les crédits qu'on a. Rend le y sous le panneau.
    */
-  function dessinerLEntrepot(p: Peintre, y: number): number {
+  function dessinerLEntrepot(p: Peintre, y0: number): number {
+    // LE TITRE, dans le style des en-têtes du hangar et du labo (Keko : « un titre dans le même style, matériaux »)
+    titreEnTete(p, 4, y0, W - 8, 'MATERIAUX')
+    const y = y0 + HT + 2
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
     // la description tient TROIS LIGNES, toujours (Keko : « fixe la hauteur à trois lignes pour éviter le changement de
