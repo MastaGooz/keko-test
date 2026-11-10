@@ -319,22 +319,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
+   * LE DESSIN DU CRÉDIT, pixel par pixel (Keko, 10/11 : « plus flashy, il est un poil sombre, sur les boutons vendre on
+   * ne le voit pas très bien ») : un C ÉPAIS, menthe vive — clair en haut, ombré en bas —, barré d'un fût BLANC qui
+   * s'arrête à la hauteur du C (Keko), le tout CERNÉ de vert presque noir : c'est le cerne qui le détache de l'or et du
+   * vert des boutons, où l'ancien trait d'un pixel se perdait.
+   */
+  const ENCRE_DU_CREDIT = N.hex('#04200f')
+  const PIXELS_DU_CREDIT: [number, number, number][] = ['.33W33.', '33.W.33', '22.W...', '22.W...', '22.W...', '11.W.11', '.11W11.'].flatMap((ligne, j) =>
+    [...ligne].flatMap((c, i): [number, number, number][] => (c === '.' ? [] : [[i - 3, j - 3, c === 'W' ? N.WHITE : c === '3' ? RUNE[3] : c === '2' ? RUNE[2] : N.hex('#2fb86a')]])),
+  )
+  const CERNE_DU_CREDIT: [number, number][] = (() => {
+    const pris = new Set(PIXELS_DU_CREDIT.map(([dx, dy]) => `${dx},${dy}`))
+    const cerne = new Set<string>()
+    for (const [dx, dy] of PIXELS_DU_CREDIT) for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (!pris.has(`${dx + a},${dy + b}`)) cerne.add(`${dx + a},${dy + b}`)
+    return [...cerne].map((k) => k.split(',').map(Number) as [number, number])
+  })()
+  /**
    * LE SYMBOLE DES CRÉDITS (Keko : « un C avec une barre verticale au milieu ; les deux bouts du C à droite dépassent
-   * la barre, le côté gauche bien arrondi ») : un C de rayon 3,2 ouvert de ±52° à droite, un fût au centre qui dépasse
-   * en haut et en bas, vert, le fût plus clair, une ombre dessous. UNE SEULE TAILLE, partout (Keko).
+   * la barre, le côté gauche bien arrondi ») : le dessin ci-dessus dans son cerne, une lueur verte dessous, et un ÉCLAT
+   * blanc qui le traverse en diagonale de temps en temps. UNE SEULE TAILLE, partout (Keko).
    */
   function dessinerUnCredit(p: Peintre, x0: number, y0: number): void {
     // sur des pixels entiers : posé entre deux pixels, le même glyphe ne sortait pas pareil d'un endroit à l'autre (Keko l'a vu sur le bouton Vendre)
     const x = Math.round(x0)
     const y = Math.round(y0)
-    const r = 3.2
-    const ouverture = 0.9
-    p.arc(x, y + 1, r, 1, ouverture, Math.PI * 2 - ouverture, RUNE[0])
-    p.line(x, y - 2, x, y + 4, RUNE[0])
-    p.arc(x, y, r, 1, ouverture, Math.PI * 2 - ouverture, RUNE[1])
-    p.line(x, y - 3, x, y + 3, RUNE[2]) // (le fût s'arrête à la hauteur du C, ni plus haut ni plus bas — Keko)
-    p.rect(x, y - 3, 1, 1, RUNE[3])
-    p.glow(x, y, 5, RUNE[2], 0.3)
+    p.glow(x, y, 6, RUNE[2], 0.35)
+    for (const [dx, dy] of CERNE_DU_CREDIT) p.rect(x + dx, y + dy, 1, 1, ENCRE_DU_CREDIT)
+    // l'éclat : une diagonale blanche traverse le symbole de temps en temps, décalée d'un symbole à l'autre
+    const u = (t * 0.4 + x * 0.013 + y * 0.021) % 1
+    const eclat = u < 0.1 ? Math.round(-7 + (u / 0.1) * 14) : 99
+    for (const [dx, dy, c] of PIXELS_DU_CREDIT) p.rect(x + dx, y + dy, 1, 1, Math.abs(dx + dy - eclat) <= 1 ? N.WHITE : c)
   }
   /** Annonce les sons qu'on sait venir, de la latence audio mesurée (voir `chocAnnonceA`). */
   function annoncerLesSons(): void {
@@ -1569,7 +1583,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const vif = peutAcheter(hangar, credits, pc.id)
       const wa = largeurDe('Acheter', GRAS)
       const wn = largeurDe(String(pc.prix), GRAS)
-      const wp = wn + 16
+      const wp = wn + 18
       const bw = 8 + wa + 5 + wp + 3
       const bx = Math.round(W / 2 - bw / 2)
       boutonBase(p, bx, y, bw, 15, vif, () => {
@@ -1588,7 +1602,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const px = bx + 8 + wa + 5 + dx
         plaque(p, px, y + 2 + dy, wp, 11, 'creux')
         ecrire(p, String(pc.prix), px + 4, y + 4 + dy, vif ? N.hex('#fff2c8') : COQUE[4], { police: GRAS })
-        dessinerUnCredit(p, px + 4 + wn + 6, y + 7 + dy)
+        dessinerUnCredit(p, px + 4 + wn + 7, y + 7 + dy)
       }, 'achat')
     }
     y += 19

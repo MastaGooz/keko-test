@@ -6,6 +6,17 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Le symbole des crédits, plus vif (Keko, 10/11 : « retravaille le symbole des crédits pour qu'il soit plus flashy — il est un poil sombre, sur les boutons vendre on ne le voit pas très bien »)
+
+- **Il est dessiné PIXEL PAR PIXEL** (`PIXELS_DU_CREDIT`, une grille de 7 × 7) au lieu de deux arcs d'un pixel : un C
+  ÉPAIS menthe vive, clair en haut et ombré en bas, barré d'un fût BLANC (toujours à la hauteur du C, ses deux bouts
+  dépassant le fût — les deux règles de Keko tiennent), CERNÉ de vert presque noir (`CERNE_DU_CREDIT`, calculé du
+  dessin). *C'est le cerne qui fait la lisibilité* : sur le vert du bouton « Vendre » et l'or des autres, un trait vert
+  sombre d'un pixel n'avait rien pour se détacher.
+- **Un éclat blanc le traverse** en diagonale toutes les deux secondes et demie, décalé d'un symbole à l'autre (la
+  colonne des prix scintille en vague, pas d'un bloc) ; la lueur dessous est un peu plus forte.
+- Avec son cerne il fait 9 px : le puits du prix du bouton « Acheter » gagne 2 px.
+
 ## Les jauges après leur nom, le prix dans un puits (Keko, 10/11 : « les jauges de stats des parties se superposent avec leur texte — réduis la largeur des barres » ; « le chiffre du prix du bouton acheter est peu lisible, le texte blanc sur fond jaune n'est pas idéal »)
 
 - **La colonne des barres se MESURE** (`colonneDesJauges`) : elle commence après le plus long des noms de jauge, toutes
