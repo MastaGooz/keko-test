@@ -834,7 +834,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko) : ce que laissent les deux barres et le plus haut des contenus. */
   // (AU LABO, la scène est l'ARBRE — ses branches, ses rangs, la fiche du nœud — et prend tout l'écran entre les deux
   // barres : les pièces s'achètent au hangar, il n'y a plus rien dessous)
-  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)))
+  // (À L'ENTREPÔT, la scène montre DEUX RANGÉES DE PLUS que sa hauteur ordinaire n'en logerait — Keko, 11/11 : « on peut
+  // afficher en permanence deux lignes de plus, et scroller pour le reste » — tant que la fiche du minerai tient dessous)
+  const sceneOrdinaire = (): number => Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222))
+  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((sceneOrdinaire() - 10) / 31) + 2, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10) / 31)))
+  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 : sceneOrdinaire())
   let hautScene = 150
   let tBase = 0
   let dtBase = 1 / 60
@@ -1152,12 +1156,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'INVENTAIRE : cinq cases par rangée, qui s'allument une à une ; le minerai choisi en or et qui luit. */
   /**
    * LA GRILLE DÉFILE (Keko, 11/11 : « rajouter deux lignes de slots à l'entrepôt et donner la possibilité de scroller
-   * vers le bas ; rajoute vingt minerais placeholder pour tester ») : deux rangées de plus que ce que la scène montre
-   * (et autant qu'il en faut pour tout loger) ; on la fait glisser au doigt, d'une rangée à la fois (la molette sur PC),
+   * vers le bas ; rajoute vingt minerais placeholder pour tester », puis « afficher en permanence deux lignes de plus,
+   * et scroller pour le reste ») : la scène de l'entrepôt montre deux rangées de plus (`rangeesDeLEntrepot`), la grille a
+   * autant de rangées qu'il en faut pour tout loger ; on la fait glisser au doigt, d'une rangée à la fois (la molette sur PC),
    * une barre à droite dit où l'on en est. VINGT MINERAIS D'ESSAI la remplissent — de l'écran seulement : ils n'ont ni
    * cours ni vente, la règle ne les connaît pas.
    */
-  const MINERAIS_D_ESSAI = 20
+  const MINERAIS_D_ESSAI = 30 // (vingt demandés ; trente depuis que cinq rangées se voient d'emblée, pour qu'il reste de quoi défiler)
   const TEINTES_D_ESSAI = ['#c06ad0', '#4ec0a0', '#d08a3a', '#6a8ae0', '#d05a6a', '#a0c04a'].map((c) => N.hex(c))
   const stockDEssai = (e: number): number => (e * 37 + 11) % 90
   let essaiChoisi: number | null = null
@@ -1180,7 +1185,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ch = 28
     const RANG = Math.max(1, Math.floor((hautScene - 10) / (ch + 3)))
     const total = MINERAIS.length + MINERAIS_D_ESSAI
-    const rangees = Math.max(RANG + 2, Math.ceil(total / COL))
+    const rangees = Math.max(RANG, Math.ceil(total / COL))
     const maxD = Math.max(0, rangees - RANG)
     defilInventaire = Math.max(0, Math.min(maxD, defilInventaire))
     const d = Math.round(defilInventaire)

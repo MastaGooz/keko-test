@@ -111,7 +111,13 @@ la forme, pas le système* (`asteroide.ts`) :
   sur PC), une barre à droite. Vingt minerais d'essai la remplissent
   (`MINERAIS_D_ESSAI`, de l'écran seulement : un éclat teinté, un stock
   factice, une fiche « Bientôt », ni cours ni vente — la règle ne les
-  connaît pas). À RETIRER quand la grille sera jugée.
+  connaît pas). À RETIRER quand la grille sera jugée. *Puis (« afficher en
+  permanence deux lignes de plus, et scroller pour le reste ») : la scène
+  de l'entrepôt grandit de deux rangées (cinq visibles sur un téléphone
+  courant, tant que la fiche tient dessous), la grille n'a plus de rangées
+  vides en trop ; les minerais d'essai passent à trente pour qu'il reste
+  deux rangées à faire défiler. La liste des ordres, sous la fiche, a
+  d'autant moins de place (deux rangées visibles au lieu de cinq).*
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
