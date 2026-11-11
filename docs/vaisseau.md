@@ -38,6 +38,28 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## La base en deux plans : le pont devant, la structure derrière (Keko, 11/11 : « on pourrait donner un relief à la station d'extraction, avec la plateforme au premier plan et le reste de la structure en arrière ? J'aimerais que le joueur puisse comprendre qu'il peut voler au-dessus, et donner un effet de profondeur »)
+
+Quatre signes de profondeur, tous dans `dessinerBase` (et un dans la page) :
+
+- **LA PARALLAXE** : le pont est au plan du vol ; tout le reste (poutres,
+  panneaux, poste, silos, anneau, drones) est dessiné décalé de `recul`, que
+  la page calcule de la caméra — `(caméra − station) × RECUL_DE_LA_BASE`
+  (0,12) : l'arrière glisse moins vite que le pont quand on s'éloigne. *0,18
+  d'abord : à cent pixels du centre le pont sortait de son anneau.*
+- **LE TON** : l'arrière est UN TON PLUS SOMBRE (l'acier et les cellules des
+  panneaux décalés d'un cran), le pont garde ses vraies teintes — et ses
+  feux restent vifs.
+- **L'OMBRE DU PONT** sur la structure : un disque sombre posé sur le plan
+  arrière, décalé à l'opposé de la lampe ; et **sa tranche**, un croissant
+  sombre en bas à droite (un disque épais). Dessous, un moyeu arrière où
+  poutres et entretoises se rejoignent, qu'on découvre quand le pont glisse.
+- **L'OMBRE DU VAISSEAU SUR LE PONT** (dans la page) : une tache sombre
+  décalée de (4, 5) tant qu'elle tombe sur le pont — on vole au-dessus.
+- Vu hors navigateur (au centre, et décalée) puis en capture en vol : à
+  quai, puis en s'éloignant — le pont se détache de son anneau, l'ombre
+  reste sur la structure.
+
 ## L'icône de l'entrepôt : un conteneur (Keko, 11/11 : « changer le logo entrepôt pour une boîte plus SF, car le carton c'est pas fou »)
 
 Le carton brun barré d'un adhésif devient un CONTENEUR D'ACIER de 13 × 11

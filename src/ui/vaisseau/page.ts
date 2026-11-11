@@ -21,7 +21,7 @@ import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, 
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
-import { dessinerBase, dessinerStation, ENVERGURE_BASE } from './station.ts'
+import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
@@ -2376,7 +2376,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const a = (k / 36) * Math.PI * 2 + t * 0.25
           p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
         }
-        if (base) dessinerBase(p, sx, sy, t, aQuai, TEINTES_STATION)
+        if (base) {
+          // (l'arrière de la base est plus loin : il ne suit qu'une part de la caméra — la parallaxe qui dit la profondeur)
+          dessinerBase(p, sx, sy, t, aQuai, TEINTES_STATION, { x: (camera.x - st.x) * RECUL_DE_LA_BASE, y: (camera.y - st.y) * RECUL_DE_LA_BASE })
+          // L'OMBRE DU VAISSEAU SUR LE PONT : il vole AU-DESSUS (Keko : « que le joueur comprenne qu'il peut voler
+          // au-dessus ») — une tache sombre décalée à l'opposé de la lampe, tant qu'elle tombe sur le pont
+          const ox = v.x - camera.x + W / 2 + 4
+          const oy = v.y - camera.y + centreY() + 5
+          if (m.phase === 'vol' && t - arriveA >= ARRIVE_A && Math.hypot(ox - sx, oy - sy) < 22) p.poly(ovale(ox, oy, 5, 6, 12), TEINTES_STATION.acier[0], 0.6)
+        }
         else dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
         // LE COMPTE DE L'EXTRACTION (Keko) : à quai, un arc d'or CONTINU (Keko : « plutôt qu'en pointillé ») se referme
         // le long du parvis depuis le haut, la tête blanche, et le nombre de secondes qui restent au-dessus de la

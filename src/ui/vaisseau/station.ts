@@ -166,10 +166,21 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
  * `ENVERGURE_BASE` dit jusqu'où elle s'étend du centre (ce que la page écarte du bord pour la dessiner).
  */
 export const ENVERGURE_BASE = 92
-export function dessinerBase(p: PeintreStation, x: number, y: number, t: number, aQuai: boolean, T: TeintesStation): void {
-  const A = T.acier
-  const sx = Math.round(x)
-  const sy = Math.round(y)
+/** La part du déplacement de la caméra que l'arrière de la base NE suit PAS : il est plus loin, il glisse moins. */
+export const RECUL_DE_LA_BASE = 0.12 // (0,18 d'abord : à cent pixels du centre, le pont sortait de son anneau)
+export function dessinerBase(p: PeintreStation, x: number, y: number, t: number, aQuai: boolean, T: TeintesStation, recul: { x: number; y: number } = { x: 0, y: 0 }): void {
+  // DEUX PLANS (Keko, 11/11 : « donner un relief à la station, avec la plateforme au premier plan et le reste de la
+  // structure en arrière ; que le joueur comprenne qu'il peut voler au-dessus, et un effet de profondeur ») : LE PONT
+  // est au plan du vol, en (ax, ay), dans ses vraies teintes ; TOUT LE RESTE est plus bas, en (sx, sy) — décalé de
+  // `recul` (la page le calcule de la caméra : l'arrière glisse moins vite que le pont, une parallaxe), d'UN TON PLUS
+  // SOMBRE (acier et cellules), et le pont y pose son OMBRE, décalée à l'opposé de la lampe.
+  const AV = T.acier
+  const A = AV.map((_, i) => AV[Math.max(0, i - 1)])
+  const cellule = [T.cellule[0], T.cellule[0], T.cellule[1]]
+  const ax = Math.round(x)
+  const ay = Math.round(y)
+  const sx = Math.round(x + recul.x)
+  const sy = Math.round(y + recul.y)
   const lum = (nx: number, ny: number) => nx * LUMIERE.x + ny * LUMIERE.y
   const V = aQuai ? T.or : T.verre
   /** Un rectangle plein (coins relatifs au centre), cerné d'un pixel sombre ; la couleur reçoit des coordonnées RELATIVES au centre. */
@@ -195,7 +206,7 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
         if (lx === 0 || lx === 16 || ly === 0 || ly === 29) return A[4]
         if (lx % 4 === 0 || ly % 6 === 5) return A[2]
         // (le reflet en biais BALAIE le panneau, chacun à son heure)
-        return mod(lx + ly - t * 7 + (s + 2 * h) * 9, 46) < 5 ? T.cellule[2] : T.cellule[1]
+        return mod(lx + ly - t * 7 + (s + 2 * h) * 9, 46) < 5 ? cellule[2] : cellule[1]
       })
       // le pied du panneau sur la poutre, et le feu de position au bout (rouge à gauche, la verrière à droite)
       boite(cx - 2, h === -1 ? -6 : 4, cx + 2, h === -1 ? -4 : 6, A[3])
@@ -305,8 +316,8 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
     const a = rot + Math.PI / 4 + (i * Math.PI) / 2
     const cx = Math.cos(a)
     const cy = Math.sin(a)
-    p.line(sx + cx * 27 - cy, sy + cy * 27 + cx, sx + cx * (rayon - 2) - cy, sy + cy * (rayon - 2) + cx, A[1])
-    p.line(sx + cx * 27, sy + cy * 27, sx + cx * (rayon - 2), sy + cy * (rayon - 2), lum(-cy, cx) > 0 ? A[5] : A[3])
+    p.line(sx + cx * 9 - cy, sy + cy * 9 + cx, sx + cx * (rayon - 2) - cy, sy + cy * (rayon - 2) + cx, A[1])
+    p.line(sx + cx * 9, sy + cy * 9, sx + cx * (rayon - 2), sy + cy * (rayon - 2), lum(-cy, cx) > 0 ? A[5] : A[3])
   }
   p.ring(sx, sy, rayon + 0.5, 6.4, A[0])
   // (la couleur-fonction d'un `ring` reçoit (v : 0 au bord intérieur, 1 au bord extérieur ; l'angle), pas des pixels)
@@ -329,33 +340,41 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
     if (allume) p.glow(sx + cx * rayon, sy + cy * rayon, 4, V[1], 0.45)
   }
 
+  // SOUS LE PONT : le moyeu arrière où les poutres et les entretoises se rejoignent (on le découvre quand le pont
+  // glisse), puis L'OMBRE DU PONT sur la structure — un disque sombre décalé à l'opposé de la lampe, posé sur le
+  // plan arrière — et LA TRANCHE du pont, un croissant sombre en bas à droite : c'est un disque épais, en l'air
+  p.circle(sx, sy, 12, A[0])
+  p.circle(sx, sy, 10.5, (d, ang) => tonDe(A, lum(Math.cos(ang), Math.sin(ang)) * d * 0.7))
+  p.circle(sx + 6, sy + 8, 29, AV[0], 0.6)
+  p.circle(ax + 1.5, ay + 2.5, 28.6, AV[0])
+  p.circle(ax + 1, ay + 2, 27.4, AV[1])
   // LE PONT : un disque de tôles (huit secteurs, une gorge), son bord biseauté, le marquage d'or en tirets, la mire
   const RP = 27
-  p.circle(sx, sy, RP + 1.4, A[0])
-  p.circle(sx, sy, RP, (d, ang) => {
+  p.circle(ax, ay, RP + 1.4, AV[0])
+  p.circle(ax, ay, RP, (d, ang) => {
     const r = d * RP
-    if (r > RP - 1.6) return tonDe(A, lum(Math.cos(ang), Math.sin(ang)) * 0.9 + 0.1) // le biseau du bord
-    if (r > 17.4 && r < 19.6) return mod(ang / (Math.PI / 8) + 0.25, 1) < 0.5 ? (aQuai ? T.or[2] : T.or[1]) : A[2] // le marquage
+    if (r > RP - 1.6) return tonDe(AV, lum(Math.cos(ang), Math.sin(ang)) * 0.9 + 0.1) // le biseau du bord
+    if (r > 17.4 && r < 19.6) return mod(ang / (Math.PI / 8) + 0.25, 1) < 0.5 ? (aQuai ? T.or[2] : T.or[1]) : AV[2] // le marquage
     const secteur = mod(ang / (Math.PI / 4) + 0.5, 1)
-    if (r > 6 && Math.abs(secteur - 0.5) * r * (Math.PI / 4) < 0.55) return A[1] // les joints des secteurs
-    if (Math.abs(r - 11.5) < 0.6) return A[1] // la gorge
-    if (r < 5.2) return r > 3.8 ? A[5] : A[2] // la mire
-    return r > 11.5 ? A[3] : A[2]
+    if (r > 6 && Math.abs(secteur - 0.5) * r * (Math.PI / 4) < 0.55) return AV[1] // les joints des secteurs
+    if (Math.abs(r - 11.5) < 0.6) return AV[1] // la gorge
+    if (r < 5.2) return r > 3.8 ? AV[5] : AV[2] // la mire
+    return r > 11.5 ? AV[3] : AV[2]
   })
-  p.px(sx, sy, V[2])
+  p.px(ax, ay, V[2])
   // la BALISE du pont : une onde part de la mire et s'éteint en gagnant le marquage (plus pressée à quai)
   {
     const u = mod(t * (aQuai ? 0.9 : 0.42), 1)
-    p.ring(sx, sy, 5 + u * 12, 1, V[1], (1 - u) * 0.55)
+    p.ring(ax, ay, 5 + u * 12, 1, V[1], (1 - u) * 0.55)
   }
   // la rampe de feux : douze, sur le bord du pont, un feu qui court (deux à quai, plus vite)
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2 - Math.PI / 2
     const phase = mod(t * (aQuai ? 9 : 5) - i, aQuai ? 4 : 6)
     const allume = phase < 2
-    const fx = sx + Math.cos(a) * 22.5
-    const fy = sy + Math.sin(a) * 22.5
-    p.px(fx, fy, allume ? V[phase < 1 ? 3 : 2] : A[1])
+    const fx = ax + Math.cos(a) * 22.5
+    const fy = ay + Math.sin(a) * 22.5
+    p.px(fx, fy, allume ? V[phase < 1 ? 3 : 2] : AV[1])
     if (allume) p.glow(fx, fy, 4, V[1], 0.4)
   }
 
@@ -382,6 +401,6 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
   }
 
   // à quai, le pont entier luit d'or
-  if (aQuai) p.glow(sx, sy, 60, T.or[2], 0.28)
-  else p.glow(sx, sy, 12, T.verre[2], 0.12)
+  if (aQuai) p.glow(ax, ay, 60, T.or[2], 0.28)
+  else p.glow(ax, ay, 12, T.verre[2], 0.12)
 }
