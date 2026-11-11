@@ -575,7 +575,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * semés, toujours les mêmes) ; l'OR a sa ligne spéculaire et son reflet qui passe. Les teintes glissent : les ombres
    * vers le violet et le brun, les lumières vers le chaud. Aucun noir pur : le contour est l'encre la plus sombre.
    */
-  type Matiere = 'encre' | 'or' | 'creux' | 'eteint' | 'acier' | 'vert'
+  type Matiere = 'encre' | 'or' | 'creux' | 'eteint' | 'acier' | 'vert' | 'rouge'
   type Teintes = { contour: number; ombre: number; corps: number; haut: number; lumiere: number; lumiere2: number; grain: number; spec?: number }
   const MATIERES: Record<Matiere, Teintes> = {
     encre: { contour: N.hex('#07050d'), ombre: N.hex('#110d1a'), corps: N.hex('#1b1626'), haut: N.hex('#231d31'), lumiere: N.hex('#463b61'), lumiere2: N.hex('#342b4a'), grain: N.hex('#2a2339') },
@@ -584,6 +584,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     eteint: { contour: N.hex('#0b0a10'), ombre: N.hex('#15131b'), corps: N.hex('#1a1820'), haut: N.hex('#1d1b24'), lumiere: N.hex('#1d1b24'), lumiere2: N.hex('#1d1b24'), grain: N.hex('#1f1d27') },
     acier: { contour: N.hex('#07070d'), ombre: N.hex('#121624'), corps: N.hex('#1c2236'), haut: N.hex('#232b42'), lumiere: N.hex('#4a5a80'), lumiere2: N.hex('#36425f'), grain: N.hex('#283149') },
     vert: { contour: N.hex('#03110a'), ombre: N.hex('#0a2a1a'), corps: N.hex('#0f3a25'), haut: N.hex('#14492f'), lumiere: N.hex('#4ee08a'), lumiere2: N.hex('#2a9a5c'), grain: N.hex('#165236') },
+    // (le rouge de ce qui défait — « Annuler l'ordre » ; Keko, 11/11 : « tenter en rouge le bouton annuler l'ordre, comme on tente en vert le bouton vendre »)
+    rouge: { contour: N.hex('#12040a'), ombre: N.hex('#2c0a14'), corps: N.hex('#3e0f1c'), haut: N.hex('#4e1424'), lumiere: N.hex('#f0707a'), lumiere2: N.hex('#a8323e'), grain: N.hex('#5a1828') },
   }
   /** Un petit hachage de position, pour le grain (toujours le même au même pixel). */
   const grainA = (x: number, y: number): number => {
@@ -2579,7 +2581,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         tresor = r.tresor
         sauver()
         vente = null
-      }, 'retour', 'acier')
+      }, 'retour', 'rouge')
       ly += 19
     } else {
       // LA QUANTITÉ : de zéro au stock

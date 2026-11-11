@@ -120,6 +120,9 @@ la forme, pas le système* (`asteroide.ts`) :
   d'autant moins de place (deux rangées visibles au lieu de cinq).* *Puis
   (« trois lignes suffisent en fait, enlève une ligne visible de base ») :
   une rangée de plus que la scène ordinaire, pas deux.*
+- **« Annuler l'ordre » en rouge** (Keko, 11/11 : « tenter en rouge le
+  bouton annuler l'ordre, comme on tente en vert le bouton vendre ») : une
+  matière de plaque `rouge`, sombre comme la verte, au biseau clair.
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
