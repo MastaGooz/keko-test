@@ -100,6 +100,20 @@ la forme, pas le système* (`asteroide.ts`) :
   qu'il faut, vert ou rouge), « Débloquer », puis « Acheter » pour une pièce.
   La scène du labo est plus haute que celle du hangar (sa fiche est plus
   courte).
+- **Le menu d'achat revient en bas, les branches montent dans l'arbre**
+  (Keko, 11/11 : « garder le menu qu'on avait en bas avant pour les achats
+  de pièces, et mettre la sélection du type de l'arbre dans l'interface de
+  l'arbre lui-même ») : la scène porte TOUT l'arbre — les trois branches en
+  puces en haut, les rangs, et la fiche du nœud au pied (son nom, ce qu'il
+  donne, son coût et « Débloquer » ; pour une pièce débloquée, « En vente
+  ci-dessous » et « Voir », qui ouvre sa liste) ; dessous, le menu d'avant :
+  une case par catégorie (« N en vente »), sa liste (le prix, ou « VERROU »
+  tant que le nœud n'est pas débloqué), la fiche à jauges et « Acheter ».
+  La liste ouverte, la scène reprend sa hauteur ordinaire et l'arbre se
+  réduit au rang de la pièce regardée, son nœud encadré. *La hauteur de la
+  scène change donc entre les deux niveaux du labo* (à rejuger). Ce qui
+  est dit plus haut de la fiche sous l'arbre et des puces sous la scène
+  décrit la première version, remplacée le même jour.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
