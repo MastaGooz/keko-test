@@ -38,6 +38,15 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## L'icône de l'entrepôt : un conteneur (Keko, 11/11 : « changer le logo entrepôt pour une boîte plus SF, car le carton c'est pas fou »)
+
+Le carton brun barré d'un adhésif devient un CONTENEUR D'ACIER de 13 × 11
+(`dessinerLIconeDeVue`) : coins coupés, dessus clair et dessous sombre,
+quatre équerres, deux nervures, et en travers un bandeau sombre où court un
+filet d'énergie cyan ; son voyant bat et luit quand l'onglet est ouvert. La
+même icône sert dans la barre du bas et dans l'en-tête de la vue. Vu en
+capture, onglet éteint et ouvert.
+
 ## Le compte de l'extraction frappe, comme le « countdown » (Keko, 11/11 : « quand on est sur l'extracteur, on peut utiliser une animation du style countdown de pixelfx ? elle est plus punchy »)
 
 - **L'arc d'or reste** : c'est la charge, sur dix secondes (le countdown du

@@ -1363,7 +1363,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, f.texte, f.x, Math.round(f.y + 2 - sortie(u) * 12), u > 0.72 && Math.floor(t * 30) % 2 === 0 ? N.WHITE : f.c, { police: GRAS, align: 'center', contour: NUIT_OMBRE })
     }
   }
-  /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, la FIOLE du labo et son liquide vert, la CAISSE de l'entrepôt. */
+  /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, la FIOLE du labo et son liquide vert, le CONTENEUR de l'entrepôt. */
   function dessinerLIconeDeVue(p: Peintre, vv: string, x0: number, y0: number, actif: boolean): void {
     const x = Math.round(x0)
     const y = Math.round(y0)
@@ -1385,13 +1385,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x + 1, y - 4 - Math.round((t * 4) % 3), 1, 1, RUNE[3], actif ? 1 : 0)
     } else if (estEssai(vv)) dessinerUneIconeDEssai(p, vv, x, y, OMBRE)
     else {
-      const B = [N.hex('#3a2410'), N.hex('#7a4f24'), N.hex('#a8743a'), N.hex('#d8a865')]
-      p.rect(x - 6, y - 5, 13, 11, OMBRE, a)
-      p.rect(x - 5, y - 4, 11, 9, B[2], a)
-      p.rect(x - 5, y - 4, 11, 1, B[3], a)
-      p.rect(x - 5, y, 11, 1, B[1], a)
-      p.line(x - 4, y - 3, x + 4, y + 3, B[1], a)
-      p.rect(x - 5, y + 4, 11, 1, B[0], a)
+      // UN CONTENEUR, plus « SF » (Keko : « changer le logo entrepôt pour une boîte plus SF, le carton c'est pas fou ») :
+      // une caisse d'acier aux coins coupés — le dessus clair, le dessous sombre, quatre équerres aux coins, deux
+      // nervures —, barrée d'un bandeau sombre où court un filet d'énergie cyan ; son voyant bat quand l'onglet est ouvert
+      p.rect(x - 5, y - 5, 11, 11, OMBRE, a)
+      p.rect(x - 6, y - 4, 13, 9, OMBRE, a)
+      p.rect(x - 5, y - 4, 11, 9, COQUE[3], a)
+      p.rect(x - 4, y - 4, 9, 1, COQUE[5], a)
+      p.rect(x - 5, y - 3, 1, 7, COQUE[4], a)
+      p.rect(x + 5, y - 3, 1, 7, COQUE[2], a)
+      p.rect(x - 4, y + 4, 9, 1, COQUE[2], a)
+      for (const nx of [-2, 2]) p.rect(x + nx, y - 3, 1, 7, COQUE[2], a)
+      for (const [cx, cy] of [[-5, -4], [4, -4], [-5, 3], [4, 3]]) p.rect(x + cx, y + cy, 2, 2, cy < 0 ? COQUE[6] : COQUE[4], a)
+      p.rect(x - 5, y - 1, 11, 3, N.hex('#0c1420'), a)
+      p.rect(x - 4, y, 9, 1, VERRIERE[1], a)
+      const bat = actif ? Math.floor(t * 3) % 2 === 0 : false
+      p.rect(x - 1, y, 3, 1, bat ? N.WHITE : VERRIERE[2], a)
+      if (actif) p.glow(x, y, 7, VERRIERE[1], bat ? 0.5 : 0.3)
     }
   }
   /** Les icônes des onglets d'essai (`&onglets=N`), une douzaine de pixels chacune, centrées sur (x, y). */
