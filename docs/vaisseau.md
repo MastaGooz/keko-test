@@ -177,6 +177,17 @@ la forme, pas le système* (`asteroide.ts`) :
   bord du haut et de gauche éclairé, bord du bas et de droite ombré, un
   grain dans le corps, une ombre portée d'un pixel (`dessinerLeGlyphe`,
   trois tons).
+- **La pastille des onglets de branche est retirée ; ce qui se passe avec
+  plus de branches** (Keko, 11/11 : « enlever le petit marqueur jaune sur
+  les boutons des types d'arbre — c'est pas utile ; et on fera comment quand
+  on aura un ou deux types d'arbre en plus ? ») : la pastille d'or des NŒUDS
+  payables reste. Les cases sont égales tant que chaque nom tient dans la
+  sienne — MESURÉ dans la police : à trois, oui ; *j'avais écrit que quatre
+  noms tenaient, c'était faux, « Exploration » dépasse une case de 45 px* ;
+  sinon l'ouverte prend la largeur de son nom et les autres, réduites à
+  leur dessin, se partagent le reste (39 px à quatre, 29 à cinq, 23 à six).
+  Vu en capture avec cinq onglets (les branches doublées le temps de
+  l'essai). Au-delà de six, un défilement, pas écrit.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`

@@ -1890,38 +1890,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * « vraiment pas beau, pas très cohérent niveau style entre les boutons et la zone de texte, et inutile de mettre le
    * nombre de nœuds unlock / total »). Une seule pièce, donc, dans la langue de la barre de navigation : sur un fond de
    * barre, une case par branche — son dessin, son nom dessous —, l'ouverte en or qui se lève, un repère d'or qui glisse
-   * jusqu'à elle ; une pastille d'or sur une branche où un nœud est payable. Les cases se partagent la largeur : jusqu'à
-   * QUATRE branches, tous les noms tiennent ; à cinq ou six, seule l'ouverte garde le sien (les autres, leur dessin).
+   * jusqu'à elle (la pastille d'or d'une branche où un nœud est payable est retirée — Keko : « c'est pas utile »).
+   * QUAND ON AJOUTERA DES BRANCHES : les cases sont égales tant que chaque nom tient dans la sienne (à trois : oui ; dès
+   * quatre, « Exploration » ne tient plus) ; sinon l'ouverte prend la largeur de son nom et les autres, réduites à leur
+   * dessin, se partagent le reste — 39 px chacune à quatre, 29 à cinq, 23 à six.
    */
   function dessinerLesBranches(p: Peintre, y: number): void {
     const h = H_BRANCHES
-    const n = BRANCHES.length
-    const tousLesNoms = n <= 4
+    const liste: readonly Branche[] = BRANCHES
+    const n = liste.length
     p.rect(0, y, W, h, NUIT_BARRE)
     p.rect(0, y + h - 1, W, 1, MATIERES.encre.contour)
     p.rect(0, y + h, W, 1, NUIT_OMBRE)
-    const sw = W / n
-    BRANCHES.forEach((b, i) => {
-      const actif = branche === b
-      const xa = Math.round(i * sw)
-      const xb = Math.round((i + 1) * sw)
+    // LES LARGEURS : égales tant que CHAQUE NOM tient dans sa case (mesuré dans la police, pas supposé) ; sinon l'ouverte
+    // prend la place de son nom et les autres, réduites à leur dessin, se partagent le reste
+    const ia = liste.indexOf(branche)
+    const egale = W / n
+    const tousLesNoms = liste.every((b) => largeurDe(NOMS_BRANCHE[b]) + 6 <= egale)
+    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(NOMS_BRANCHE[branche]) + 12)
+    const etroite = tousLesNoms || n < 2 ? egale : (W - large) / (n - 1)
+    const debutDe = (i: number): number => (tousLesNoms ? i * egale : i <= ia ? i * etroite : (i - 1) * etroite + large)
+    liste.forEach((b, i) => {
+      const actif = i === ia
+      const xa = Math.round(debutDe(i))
+      const xb = Math.round(debutDe(i + 1))
       const cx = Math.round((xa + xb) / 2)
       const e = etatDuBouton(xa, y, xb - xa, h)
-      const dy = -Math.round(rebond(`branche-${b}`, actif ? 1 : 0) * 2) + e.dy
+      const dy = -Math.round(rebond(`branche-${i}`, actif ? 1 : 0) * 2) + e.dy
       if (e.survole && !actif) p.rect(xa + 2, y + 2, xb - xa - 4, h - 5, N.hex('#19152a'))
       if (actif) p.glow(cx, y + 10, 20, PEPITE[2], 0.2)
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
       dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#b8860b'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]])
       if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
-      if (!actif && noeudsDe(b).some((nd) => peutDebloquer(labo, tresor, nd.id))) {
-        const bat = 0.5 + 0.5 * Math.sin(t * 4 + i)
-        p.rect(cx + 8, y + 3 + dy, 5, 5, MATIERES.encre.contour)
-        p.rect(cx + 9, y + 4 + dy, 3, 3, bat > 0.5 ? N.hex('#fff2a8') : PEPITE[2])
-      }
       if (!actif) zone(xa, y, xb - xa, h, () => ((branche = b), (choixA = t)), 'onglet')
     })
-    const cible = BRANCHES.indexOf(branche) * sw + sw / 2
+    const cible = (debutDe(ia) + debutDe(ia + 1)) / 2
     repereDeBrancheX = repereDeBrancheX < 0 ? cible : ressort(repereDeBrancheX, cible, 18)
     p.rect(Math.round(repereDeBrancheX - 12), y + h - 2, 24, 2, PEPITE[2])
     p.rect(Math.round(repereDeBrancheX - 8), y + h - 2, 16, 1, N.hex('#fff2a8'))
