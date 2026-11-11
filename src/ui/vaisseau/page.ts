@@ -851,8 +851,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // la fiche du minerai tient dessous)
   // (LA SCÈNE PREND TOUT CE QUE QUATRE RANGÉES DE CASES ET « DÉCOLLER » LUI LAISSENT — Keko, 11/11 : « augmenter la
   // hauteur, de manière à laisser uniquement quatre lignes de pièces en dessous, donc huit pièces avant d'avoir besoin
-  // de scroller » : 6 de marge, 4 × 40 − 4 de cases, 4 d'air, 38 de bouton et son pied ; plus de plafond)
-  const sceneOrdinaire = (): number => Math.max(64, H - HAUT_BARRE - HAUT_NAV - 204)
+  // de scroller » : 6 de marge, des rangées de 40, 4 d'air, 38 de bouton et son pied ; plus de plafond — PUIS TROIS
+  // RANGÉES au lieu de quatre (« on peut essayer avec trois lignes de pièces fixes ») : quarante pixels de plus au vaisseau)
+  const sceneOrdinaire = (): number => Math.max(64, H - HAUT_BARRE - HAUT_NAV - 164)
   const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
   const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
