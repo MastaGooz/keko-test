@@ -1800,10 +1800,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   racine.addEventListener('pointerdown', (ev) => {
     reveiller() // (le contexte audio ne naît que sur un geste)
-    if (accueil) {
-      quitterLAccueil()
-      return
-    }
+    // (l'accueil se quitte AU RELÂCHEMENT : au doigt, c'est lui — pas l'appui — que le navigateur compte comme un geste)
+    if (accueil) return
     if (ecranVisible()) {
       // l'écran en pixels : sur la liste, un glisser commence (la tape se décide au relâchement) ; ailleurs, une tape sur une zone
       if (decollageA !== null) return // (le vaisseau part : plus rien ne répond)
@@ -1855,6 +1853,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     manche = { id: manche.id, centre: suivre ? manche.centre : centreQuiSuit(MANCHE, manche.centre, doigt), doigt }
   })
   const lever = (ev: PointerEvent) => {
+    reveiller() // (au doigt, c'est le relâchement qui rend le son à la page)
+    if (accueil) {
+      if (ev.type === 'pointerup') quitterLAccueil()
+      return
+    }
     if (glisse !== null) {
       // relâché sans avoir bougé : c'était une tape, sur la rangée touchée
       if (!glisse.bouge) {

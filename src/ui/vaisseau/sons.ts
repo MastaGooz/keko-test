@@ -189,7 +189,17 @@ const PORTEE = 320
  */
 export function jouer(son: Son, ou?: { dx: number; dy: number }, dans = 0): void {
   try {
-    if (ZZFX.audioContext.state !== 'running') return
+    // LE SON DU GESTE QUI RÉVEILLE (Keko : « je clique sur l'écran d'accueil, puis sur Décoller, et je n'ai aucun son
+    // au décollage ») : `resume()` ne rend le contexte que quelques millisecondes plus tard — le son demandé dans le
+    // même geste trouvait le contexte endormi et se taisait. Il ATTEND maintenant le réveil, et part s'il arrive dans
+    // les 400 ms (au-delà, le geste est passé : on ne lâche pas une salve de vieux sons au premier réveil venu).
+    if (ZZFX.audioContext.state !== 'running') {
+      const demande = performance.now()
+      void ZZFX.audioContext.resume().then(() => {
+        if (performance.now() - demande < 400 && ZZFX.audioContext.state === 'running') jouer(son, ou, dans)
+      }).catch(() => undefined)
+      return
+    }
     let volume = 1
     let pan = 0
     if (ou !== undefined) {

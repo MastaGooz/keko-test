@@ -57,6 +57,18 @@ la forme, pas le système* (`asteroide.ts`) :
 - **La sortie** (0,75 s) : le vaisseau s'arrache vers le haut, le ciel et
   les roches s'emballent, le titre remonte, la nuit de la base monte, puis
   `ouvrirLeHangar`.
+- **Le son du geste qui réveille** (Keko : « quand je clique sur l'écran
+  d'accueil et qu'ensuite j'appuie sur décollage je n'ai aucun son lors du
+  décollage ») — deux défauts qui s'ajoutaient, lus dans le code, pas
+  mesurés sur son appareil : (1) on ne réveillait le contexte qu'à l'APPUI
+  (`pointerdown`), que le navigateur ne compte pas comme un geste au doigt
+  (c'est le relâchement) : la tape de l'accueil ne réveillait donc rien ;
+  (2) `resume()` ne rend le contexte que quelques millisecondes plus tard,
+  et `jouer` se taisait si le contexte dormait encore — le son demandé DANS
+  le geste qui réveille (« Décoller », deuxième tape) était perdu. Corrigé :
+  `reveiller` aussi au relâchement, l'accueil se quitte au relâchement, et
+  `jouer` ATTEND le réveil (le son part s'il arrive dans les 400 ms ;
+  au-delà il est abandonné, pour ne pas lâcher une salve de vieux sons).
 - Vu en capture (412 × 915) : l'accueil, puis le hangar après la tape. Le
   son lui-même n'a pas été écouté (Chrome sans tête, muet) — à confirmer
   par Keko sur son appareil.
