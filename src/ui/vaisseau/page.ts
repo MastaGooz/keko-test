@@ -2447,7 +2447,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     const stock = tresor[k]
-    const hp = ordre !== undefined ? 158 : 232 // (de l'air sous « Fermer » — Keko : « la boîte s'arrête pile en bas du bouton »)
+    // (sous « Fermer », LE MÊME ÉCART qu'entre les deux boutons, quatre pixels — Keko : d'abord « la boîte s'arrête pile en
+    // bas du bouton », puis, pour la vente : « l'espace est un peu grand, il faudrait le même que sous le bouton vendre »)
+    const hp = ordre !== undefined ? 153 : 216
     const x = 6
     const w = W - 12
     const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
