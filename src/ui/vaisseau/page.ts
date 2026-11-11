@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, cargaisonVide, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
@@ -269,6 +269,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     coqueVue = Math.ceil(m.coque)
     soutePleineVue = false
     souteVue = 0
+    souteOuverte = false
     v = m.vaisseau
     camera.x = 0
     camera.y = 0
@@ -325,6 +326,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     accueilQuitteA = t
     jouer('accueil')
     if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
+  }
+  /**
+   * LA SOUTE S'OUVRE EN VOL (Keko, 11/11 : « permettre l'accès à la soute via un bouton, avec la possibilité de larguer
+   * des loots ; ils sont alors détruits ») : la plaque de soute, en haut à gauche, est un bouton. Ouverte, LE MONDE EST
+   * EN PAUSE (de moi, à rejuger : au doigt, on ne trie pas sa soute sous le feu).
+   */
+  let souteOuverte = false
+  let souteA = -10
+  function ouvrirLaSoute(): void {
+    souteOuverte = true
+    souteA = t
+    manche = null
+    touches.clear()
   }
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
@@ -1847,6 +1861,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (z !== undefined) appuyer(z)
       return
     }
+    // (en vol : la plaque de soute et, ouverte, ses boutons — sinon le manche)
+    {
+      const q = enTampon(ev.clientX, ev.clientY)
+      const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
+      if (z !== undefined) {
+        appuyer(z)
+        return
+      }
+      if (souteOuverte) return
+    }
     if (manche !== null) return
     ev.preventDefault()
     racine.setPointerCapture(ev.pointerId)
@@ -1920,6 +1944,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     reveiller()
     if (accueil) {
       quitterLAccueil()
+      return
+    }
+    if (souteOuverte) {
+      if (ev.key === 'Escape') souteOuverte = false
       return
     }
     touches.add(ev.key.toLowerCase())
@@ -2511,12 +2539,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     soutePleineVue = pleine
     const plafond = `${CONF.capacite}/${CONF.capacite}`
-    const ws = 5 + largeurDe('Soute') + 8 + largeurDe(plafond, GRAS) + 5
+    const ws = 5 + largeurDe('Soute') + 8 + largeurDe(plafond, GRAS) + 5 + 9 // (+ 9 : le chevron qui dit qu'elle s'ouvre)
     const ys = yHud + Math.round(rebond('soute', 0))
     const bat = Math.floor(t * 4) % 2 === 0
     plaque(p, 5, ys, ws, 18, 'encre', { bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
     ecrire(p, 'Soute', 10, ys + 4, COQUE[4])
-    ecrire(p, `${porte}/${CONF.capacite}`, 5 + ws - 5, ys + 4, pleine ? ROUGE[5] : IVOIRE, { police: GRAS, align: 'right' })
+    ecrire(p, `${porte}/${CONF.capacite}`, 5 + ws - 5 - 9, ys + 4, pleine ? ROUGE[5] : IVOIRE, { police: GRAS, align: 'right' })
+    // LA SOUTE EST UN BOUTON (Keko) : un chevron d'or à droite, et toute la plaque — avec la rangée du porté dessous,
+    // pour une cible assez haute au doigt — ouvre la soute
+    for (let k = 0; k < 3; k++) p.rect(5 + ws - 10 + k, ys + 6 + k, 5 - 2 * k, 1, pleine ? ROUGE[5] : PEPITE[2])
+    if (m.phase === 'vol' && !souteOuverte && t - arriveA >= ARRIVE_A) zone(5, ys, Math.max(ws, suivante - 5), 18 + 3 + 13, ouvrirLaSoute, 'ouvre')
     // sa jauge : un creux, un jonc d'or au dessus clair
     souteVue = ressort(souteVue, Math.min(1, porte / CONF.capacite))
     const gw = ws - 10
@@ -2598,6 +2630,56 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.dot(x, y - 1, T[3])
       p.glow(x, y, 6, T[2], 0.5)
     }
+  }
+
+  /**
+   * LA SOUTE OUVERTE : le vol s'assombrit derrière (il est en pause), et un panneau au milieu de la vue — son nom et
+   * ce qu'on porte sur ce qu'on peut ; une rangée par minerai (son icône, son nom, combien on en a) avec DEUX BOUTONS,
+   * « −1 » et « Tout », éteints quand il n'y en a pas ; une ligne qui dit que le minerai largué est perdu ; « Fermer ».
+   * Une tape hors du panneau ferme aussi. Larguer fait tomber le compte, voler un « −N » rouge, et vibrer.
+   */
+  function dessinerLaSoute(p: Peintre): void {
+    if (!souteOuverte) return
+    const IVOIRE = N.hex('#fff2c8')
+    const u = sortie((t - souteA) / 0.14)
+    // (les lueurs du monde passeraient à travers le voile et le panneau : la couche de lumière est éteinte)
+    frame.light.fill(0)
+    p.rect(0, bandeHaut(), W, H - bandeHaut() - bandeBas(), FOND, 0.62 * u)
+    const w = 160
+    const h = 20 + MINERAIS.length * 25 + 14 + 22
+    const x = Math.round((W - w) / 2)
+    const y = Math.round(centreY() - h / 2 + (1 - u) * 10)
+    ombrePortee(p, x, y, w, h)
+    plaque(p, x, y, w, h, 'encre')
+    motEnRelief(p, 'Soute', x + 8 + largeurDe('Soute', GRAS) / 2, y + 6, true)
+    const pleine = m.minerai >= CONF.capacite
+    ecrire(p, `${m.minerai}/${CONF.capacite}`, x + w - 8, y + 6, pleine ? ROUGE[5] : IVOIRE, { police: GRAS, align: 'right' })
+    const jeter = (k: Minerai, combien: number, bx: number, by: number): void => {
+      const n = larguer(m, k, combien)
+      if (n <= 0) return
+      affiche[k] = Math.max(0, affiche[k] - n)
+      flottants.push({ texte: `-${n}`, x: bx, y: by, t0: t, c: ROUGE[5] })
+      if (typeof navigator.vibrate === 'function') navigator.vibrate(12)
+    }
+    MINERAIS.forEach((k, i) => {
+      const ry = y + 20 + i * 25
+      const combien = m.cargaison[k]
+      plaque(p, x + 5, ry, w - 10, 22, 'creux')
+      dessinerUneRessource(p, x + 15, ry + 11, k)
+      ecrire(p, FICHES_MINERAI[k].nom, x + 25, ry + 3, combien > 0 ? COQUE[5] : COQUE[3])
+      ecrire(p, String(combien), x + 25, ry + 12, combien > 0 ? IVOIRE : COQUE[3], { police: GRAS })
+      const bt = x + w - 8 - 34
+      const b1 = bt - 3 - 24
+      bouton(p, b1, ry + 3, 24, 16, '-1', combien > 0, () => jeter(k, 1, b1 + 12, ry), 'retour', 'acier')
+      bouton(p, bt, ry + 3, 34, 16, 'Tout', combien > 0, () => jeter(k, combien, bt + 17, ry), 'retour', 'acier')
+    })
+    const yb = y + 20 + MINERAIS.length * 25
+    p.text(texteNu('Le minerai largué est perdu'), W / 2, yb + 3, COQUE[3], { align: 'center' })
+    const bw = 60
+    bouton(p, Math.round(W / 2 - bw / 2), yb + 13, bw, 17, 'Fermer', true, () => (souteOuverte = false), 'retour')
+    // (hors du panneau : une tape ferme ; dedans, elle ne fait rien — posées APRÈS les boutons, qui passent d'abord)
+    zone(x, y, w, h, () => undefined, null)
+    zone(0, 0, W, H, () => (souteOuverte = false), 'retour')
   }
 
   /** Les pépites libres, aux teintes de leur minerai. */
@@ -2930,7 +3012,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const dt = Math.min(0.25, (ms - avant) / 1000)
     avant = ms
     t += dt
-    if (enJeu) {
+    // (la soute ouverte : le monde est en pause, ses sons continus se taisent)
+    if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
+    if (enJeu && souteOuverte) regler(0, false, 0, false)
+    if (enJeu && !souteOuverte) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
       while (accumule >= PAS) {
@@ -3205,7 +3290,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesBandeaux(p)
     dessinerLePointeur(p)
     dessinerLeRadar(p)
+    zones = []
     dessinerLeScore(p)
+    dessinerLaSoute(p)
     dessinerLesEclats(p)
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, basDuHud() + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)

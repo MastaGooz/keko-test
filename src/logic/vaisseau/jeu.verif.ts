@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, larguer, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -418,6 +418,15 @@ loinDeTout.vaisseau = { ...nouveauVaisseau(), x: ancienne.x, y: ancienne.y }
 loinDeTout.detruits = new Set(asteroidesAutour(VAISSEAU, ancienne.x, ancienne.y, 60).map((a) => a.id))
 for (let i = 0; i < 60 * 2; i++) avancerLeMonde(VAISSEAU, loinDeTout, 1 / 60, { x: 0, y: 0 })
 verifier('là où était un extracteur, on ne s’extrait plus', loinDeTout.extraction === 0 && loinDeTout.phase === 'vol')
+
+// LARGUER : le minerai quitte la soute et n'existe plus ; jamais plus qu'on n'en porte
+const lg = nouveauMonde()
+lg.cargaison.fer = 7
+lg.cargaison.cristal = 2
+lg.minerai = 9
+const partis = larguer(lg, 'fer', 5)
+const trop = larguer(lg, 'cristal', 10)
+verifier('larguer : le minerai quitte la soute, sans pépite libre ni trésor ; pas plus qu’on n’en porte', partis === 5 && trop === 2 && lg.cargaison.fer === 2 && lg.cargaison.cristal === 0 && lg.minerai === 2 && lg.pepites.length === 0 && totalDe(lg.tresor) === 0)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

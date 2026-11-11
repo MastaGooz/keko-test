@@ -38,6 +38,32 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## La soute s'ouvre en vol, et on largue (Keko, 11/11 : « je remplis ma soute avec du fer involontairement (l'aimant) et quand j'arrive au cristal je n'ai pas la place, ce qui rend le farm du cristal frustrant » — « on ne peut pas permettre l'accès à la soute via un bouton, avec la possibilité de larguer des loots ? ils sont alors détruits »)
+
+- **La règle** (`larguer`, `logic/vaisseau/jeu.ts`) : tant de pépites d'un
+  minerai quittent la soute et N'EXISTENT PLUS (ni pépites libres, ni
+  trésor) ; jamais plus qu'on n'en porte. Vérifié.
+- **Le bouton, c'est la plaque de soute** (en haut à gauche) : un chevron
+  d'or à droite du compte dit qu'elle s'ouvre ; la zone couvre la plaque et
+  la rangée du porté (34 px de tampon de haut, pour le doigt). Elle ne
+  répond qu'en vol, le vaisseau arrivé.
+- **Ouverte, LE MONDE EST EN PAUSE** (de moi, à rejuger : au doigt, on ne
+  trie pas sa soute sous le feu ; les sons continus se taisent) et la vue
+  s'assombrit. Le panneau (`dessinerLaSoute`) : « Soute » et N / capacité ;
+  une rangée par minerai (icône, nom, compte) avec « −1 » et « Tout »,
+  éteints à zéro ; « Le minerai largué est perdu » ; « Fermer ». Une tape
+  hors du panneau, ou Échap, ferme aussi. Larguer fait tomber les comptes
+  (soute et porté), voler un « −N » rouge, vibrer.
+- **Le geste en vol passe d'abord par les zones** (`zones`, refaites à
+  chaque image du vol) : la plaque et les boutons avant le manche.
+- **La couche de lumière est éteinte sous le panneau** (les halos de la
+  station brillaient à travers : la même leçon que les bandeaux).
+- Vu en capture (412 × 915, `&minerai=12`) : la soute ouverte, « −1 »
+  (12 → 11), « Tout » (→ 0, boutons éteints), « Fermer ».
+- *Ce que ça ne règle pas* : l'aimant ramasse toujours tout ; du fer libre
+  à portée revient dans la soute aussitôt largué. Le remplacement
+  automatique et le filtre par minerai restent des pistes.
+
 ## L'accueil : NOVA DRIFTER (Keko, 11/11 : « un écran d'accueil du jeu avec une demande de tap pour lancer le hangar, afin de débloquer les sons car actuellement il faut que je tape avant que le jeu lance le son. Un bel écran d'accueil dans le thème graphique du jeu, et le titre : Nova Drifter »)
 
 - **Le jeu s'ouvre sur l'accueil** (`accueil`, `dessinerLAccueil`), et c'est

@@ -452,6 +452,19 @@ function abimerLaRoche(c: ConfigVaisseau, m: Monde, choc: Choc, points: number, 
 /** Les points qu'un choc coûte, par unité de vitesse au-delà du seuil. */
 const coutDuChoc = (c: ConfigVaisseau, choc: Choc, parUnite: number): number => Math.max(0, choc.force - c.seuilChoc) * parUnite
 
+/**
+ * LARGUER (Keko, 11/11 : « je remplis ma soute avec du fer involontairement (l'aimant) et quand j'arrive au cristal je
+ * n'ai pas la place » — « permettre l'accès à la soute via un bouton, avec la possibilité de larguer des loots ; ils sont
+ * alors détruits ») : tant de pépites de ce minerai quittent la soute et ne vont nulle part (ni pépites libres, ni
+ * trésor). Rend combien sont vraiment parties (pas plus qu'on n'en porte).
+ */
+export function larguer(m: Monde, minerai: Minerai, combien: number): number {
+  const n = Math.max(0, Math.min(Math.floor(combien), m.cargaison[minerai]))
+  m.cargaison[minerai] -= n
+  m.minerai -= n
+  return n
+}
+
 /** L'ennemi est abattu : il quitte le monde, le suivant est annoncé, il rend son butin et des pépites. */
 function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
   m.ennemis = m.ennemis.filter((x) => x !== e)
