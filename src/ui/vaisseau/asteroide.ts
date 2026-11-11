@@ -18,7 +18,7 @@
  * Tout est fonction de la graine et du temps : rien n'est stocké, et le même astéroïde se redessine pareil.
  */
 import * as noyau from 'pixelfx'
-import { tire, type Asteroide, type Minerai } from '../../logic/vaisseau/jeu.ts'
+import { tire, type Asteroide, type Minerai, type Pepite } from '../../logic/vaisseau/jeu.ts'
 
 export type PeintreRoche = {
   poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
@@ -26,6 +26,7 @@ export type PeintreRoche = {
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number, a?: number): void
   dot(x: number, y: number, c: number, a?: number): void
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
+  glow(x: number, y: number, r: number, c: number, a?: number): void
 }
 type Noyau = { fit(palette: string[], n: number): number[]; fbm(x: number, y: number, seed?: number, octaves?: number): number; PAL: Record<string, string[]> }
 const N = noyau as unknown as Noyau
@@ -238,5 +239,45 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
     const y = cy + lx * sinA + ly * cosA
     p.dot(x + 1, y + 1, T[0], 0.8)
     p.dot(x, y, a.minerai === 'cristal' && Math.sin(t * 4 + i * 1.9) > 0.5 ? T[4] : T[3])
+  }
+}
+
+/**
+ * UNE PÉPITE LIBRE (Keko, 11/11 : « les minerais drop par les astéroïdes sont trop proches des étoiles du décor,
+ * surtout le fer ») : elle était un losange de cinq pixels sous une lueur — exactement une grosse étoile. C'est
+ * maintenant un ÉCLAT DE ROCHE : un petit polygone plein qui CULBUTE (une étoile ne tourne pas), cerné de sombre,
+ * son pan éclairé et son pan à l'ombre, dans un HALO de la teinte du minerai qui bat, et un reflet blanc en croix qui
+ * passe de temps en temps. Le peintre est supposé placé sur la caméra (les coordonnées sont celles du monde).
+ */
+export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number): void {
+  const T = TEINTES_MINERAI[pe.minerai]
+  const x = Math.round(pe.x)
+  const y = Math.round(pe.y)
+  const angle = tire(pe.graine, 60) * 6.28 + t * (1.2 + 1.6 * tire(pe.graine, 61)) * (tire(pe.graine, 62) < 0.5 ? -1 : 1)
+  const bat = 0.5 + 0.5 * Math.sin(t * 5 + tire(pe.graine, 63) * 6.28)
+  const forme = (plus: number): number[][] => {
+    const pts: number[][] = []
+    for (let k = 0; k < 5; k++) {
+      const th = angle + ((k + (tire(pe.graine, 64, k) - 0.5) * 0.5) / 5) * Math.PI * 2
+      const r = 2.3 + 1.1 * tire(pe.graine, 65, k) + plus
+      pts.push([x + 0.5 + Math.cos(th) * r, y + 0.5 + Math.sin(th) * r])
+    }
+    return pts
+  }
+  p.glow(x, y, 8, T[2], 0.3 + 0.25 * bat)
+  p.poly(forme(1.1), T[0])
+  // le pan vers la lampe clair, le pan opposé sombre, le reste à la teinte
+  p.poly(forme(0), (px, py) => {
+    const k = (px - x) * LUMIERE.x + (py - y) * LUMIERE.y
+    return k > 0.9 ? T[3] : k < -1.2 ? T[1] : T[2]
+  })
+  // le reflet : une croix blanche brève, à contretemps d'une pépite à l'autre
+  const u = (t * 0.7 + tire(pe.graine, 66)) % 1
+  if (u < 0.16) {
+    const gx = x - 1
+    const gy = y - 1
+    p.dot(gx, gy, T[4])
+    if (u > 0.03 && u < 0.13) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(gx + ax, gy + ay, T[4], 0.8)
+    if (u > 0.06 && u < 0.1) for (const [ax, ay] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) p.dot(gx + ax, gy + ay, T[3], 0.6)
   }
 }

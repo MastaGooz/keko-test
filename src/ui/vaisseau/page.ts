@@ -20,7 +20,7 @@ import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
-import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
+import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerStation } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
@@ -2494,15 +2494,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** Les pépites libres, aux teintes de leur minerai. */
   function dessinerLesPepites(p: Peintre): void {
-    for (const pe of m.pepites) {
-      const T = TEINTES_MINERAI[pe.minerai]
-      const k = 0.6 + 0.4 * Math.sin(t * 6 + pe.graine)
-      p.poly([[pe.x, pe.y - 2], [pe.x + 2, pe.y], [pe.x, pe.y + 2], [pe.x - 2, pe.y]], T[2])
-      p.dot(pe.x, pe.y - 1, T[3])
-      p.dot(pe.x - 1, pe.y, T[4], k)
-      p.dot(pe.x + 1, pe.y + 1, T[1])
-      p.glow(pe.x, pe.y, 5, T[2], 0.35 * k)
-    }
+    for (const pe of m.pepites) dessinerPepite(p, pe, t)
   }
 
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */

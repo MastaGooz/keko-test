@@ -38,6 +38,19 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Les pépites ne sont plus des étoiles (Keko, 11/11 : « les minerais drop par les astéroïdes sont trop proches des étoiles du décor (surtout le fer) : il faudrait les différencier plus »)
+
+La pépite libre était un losange de cinq pixels sous une lueur — trait pour
+trait la grosse étoile du ciel (une croix de cinq pixels sous une lueur), et
+le fer en a la couleur. **On a changé la pépite, pas le ciel**
+(`dessinerPepite`, `asteroide.ts`) : un ÉCLAT DE ROCHE de 6 à 7 pixels, un
+polygone plein à cinq pans tiré de sa graine qui CULBUTE (une étoile ne
+tourne pas), cerné de sombre, un pan clair vers la lampe et un pan à
+l'ombre, dans un halo de sa teinte qui bat (rayon 8), avec un reflet blanc
+en croix qui passe à contretemps d'une pépite à l'autre. Jugé sur une
+planche à côté des étoiles. La pépite qui vole au compteur garde son losange
+(elle bouge, on ne la confond pas).
+
 ## Le vol parle la langue de la base (Keko, 11/11 : « Tu peux appliquer la même amélioration graphique, gamefeel juice, esthétique, lumineuse et tout le travail fait sur l'interface de la base sur la partie "en vol" ? Afin que le jeu entier ait une cohérence dans sa qualité et l'intelligence de son design ? »)
 
 Avant : le vol dessinait son vaisseau en polygones à lui, ses nébuleuses en lueurs lisses, et son interface en texte
