@@ -56,6 +56,10 @@ la forme, pas le système* (`asteroide.ts`) :
   place qu'on lui gardait dans le lointain ne valent plus que pour la
   graine zéro ; en vol, le ciel de la base est semé comme le reste (il
   peut donc n'y avoir aucun astre au départ).
+- **Les nuées du fond suivent la graine aussi** (Keko, 11/11 : « le
+  background des nuages colorés est toujours le même ») : la graine du vol
+  entre dans les quatre bruits de `cuireLeCiel` (densité et teinte) et
+  dans sa clé de cache.
 - **`&graine=N`** fixe la graine (pour retrouver un espace, ou comparer) ;
   `&graine=0` rend la carte d'avant.
 - Vérifié : une autre graine fait un autre champ, la même refait le même,

@@ -2083,8 +2083,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function cuireLeCiel(): Uint32Array {
     const px = Math.floor(camera.x * PARALLAXE_DES_NUEES) - (W >> 1)
     const py = Math.floor(camera.y * PARALLAXE_DES_NUEES) - (H >> 1)
-    const cle = `${px},${py},${H}`
+    const cle = `${px},${py},${H},${graineDuVol}`
     if (cle === cleDuCiel) return fondDuCiel
+    // (LES NUÉES SUIVENT LA GRAINE DU VOL — Keko, 11/11 : « le background des nuages colorés est toujours le même » ;
+    // à zéro, les nuées de toujours)
+    const gr = graineDuVol * 8
     cleDuCiel = cle
     if (fondDuCiel.length !== W * H) fondDuCiel = new Uint32Array(W * H)
     const PAS = 4
@@ -2100,8 +2103,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let gi = 0; gi < gw; gi++) {
         const wx = (gx0 + gi) * PAS
         const wy = (gy0 + gj) * PAS
-        grilleDensite[gj * gw + gi] = 0.55 * bruitDuCiel(wx / 92, wy / 92, 1) + 0.3 * bruitDuCiel(wx / 39, wy / 39, 2) + 0.15 * bruitDuCiel(wx / 17, wy / 17, 3)
-        grilleTeinte[gj * gw + gi] = bruitDuCiel(wx / 240, wy / 240, 4)
+        grilleDensite[gj * gw + gi] = 0.55 * bruitDuCiel(wx / 92, wy / 92, gr + 1) + 0.3 * bruitDuCiel(wx / 39, wy / 39, gr + 2) + 0.15 * bruitDuCiel(wx / 17, wy / 17, gr + 3)
+        grilleTeinte[gj * gw + gi] = bruitDuCiel(wx / 240, wy / 240, gr + 4)
       }
     const nTeintes = TONS_DES_NUEES.length
     for (let iy = 0; iy < H; iy++) {
