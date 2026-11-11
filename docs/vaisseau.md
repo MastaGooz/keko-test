@@ -125,6 +125,19 @@ la forme, pas le système* (`asteroide.ts`) :
   sauter l'onglet du hangar (pastille rouge) et propose « Voir », qui ouvre
   le hangar sur la pièce (à la place 1 pour un outil ou une arme). L'arbre
   réduit et les « VERROU » de la version d'avant sont partis avec le menu.
+- **Les branches en onglets à icône, le coût au-dessus du bouton** (Keko,
+  11/11 : « les boutons de sélection d'arbre sont un peu basiques par
+  rapport à leur rôle, et surtout : ça se passe comment quand on rajoute des
+  catégories plus tard (commerce, voire plus) ? » ; « une ligne avec les
+  coûts et en dessous la ligne avec le bouton, pour éviter la ligne trop
+  large ») : un onglet par branche, son dessin dedans (foret, viseur,
+  boussole), tous de la même largeur, qui se partagent l'écran — 56 px à
+  trois, 42 à quatre, 33 à cinq, 27 à SIX ; au-delà il faudra un
+  défilement, pas écrit. L'onglet ouvert, d'or, monte et se soude à un
+  bandeau qui dit le nom de la branche et son avancée (débloqués / nœuds,
+  une barre) ; une pastille d'or bat sur l'onglet d'une branche où un nœud
+  est payable. La fiche du nœud a deux lignes au pied : le coût, puis le
+  bouton centré dessous (« En vente au hangar » puis « Voir », pareil).
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`

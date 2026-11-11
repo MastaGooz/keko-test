@@ -1739,6 +1739,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     acceleration: ['...#...', '..#.#..', '.#...#.', '...#...', '..#.#..', '.#...#.', '.......'],
     aimant: ['##...##', '##...##', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..'],
     postcombustion: ['...#...', '..##...', '..###..', '.####.#', '.######', '.#####.', '..###..'],
+    combat: ['...#...', '..###..', '.#.#.#.', '###.###', '.#.#.#.', '..###..', '...#...'],
+    exploration: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
   }
   function dessinerLeGlyphe(p: Peintre, nom: string, x0: number, y0: number, c: number, k = 2): void {
     const lignes = ICONES_DU_LABO[nom]
@@ -1815,28 +1817,60 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * débloquée au labo, elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix ; on
    * débloque ainsi de la place au labo ») : le labo n'a plus de menu d'achat.
    */
-  const H_INFO = 67
+  const H_INFO = 86
+  /** La hauteur de l'en-tête de l'arbre : les onglets des branches, puis le bandeau au nom de la branche. */
+  const H_BRANCHES = 44
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
-    dessinerLesBranches(p, y0 + 5)
-    dessinerLesRangs(p, y0 + 21, y1 - H_INFO - 2, RANGS)
+    dessinerLesBranches(p, y0 + 4)
+    dessinerLesRangs(p, y0 + 4 + H_BRANCHES + 3, y1 - H_INFO - 2, RANGS)
     dessinerLInfoDuNoeud(p, y1 - H_INFO)
   }
-  /** Les trois branches, en puces, en haut de l'arbre. */
+  /** Le dessin de chaque branche, sur son onglet. */
+  const ICONE_DE_BRANCHE: Record<Branche, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration' }
+  /**
+   * LES BRANCHES, EN ONGLETS À ICÔNE, puis LE BANDEAU DE LA BRANCHE (Keko, 11/11 : « les boutons de sélection d'arbre
+   * sont un peu basiques par rapport à leur rôle — et ça se passe comment quand on rajoute des catégories plus tard ? ») :
+   * un onglet par branche, son dessin dedans, TOUS DE LA MÊME LARGEUR, qui se partagent la largeur de l'écran — trois
+   * aujourd'hui (56 px), SIX au plus sans rien changer (27 px, encore une cible de doigt) ; l'onglet ouvert, d'or, monte
+   * et se soude au bandeau, qui dit LE NOM de la branche en titre et son avancée (nœuds débloqués / nœuds, une barre).
+   * Une pastille d'or bat sur l'onglet d'une branche où un nœud est payable.
+   */
   function dessinerLesBranches(p: Peintre, y: number): void {
-    const noms = BRANCHES.map((b) => NOMS_BRANCHE[b])
-    const largeurs = noms.map((nm) => largeurDe(nm, GRAS) + 12)
-    let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (BRANCHES.length - 1) * 3) / 2)
+    const n = BRANCHES.length
+    const lw = Math.min(56, Math.floor((W - 8 - (n - 1) * 2) / n))
+    const x0 = Math.floor((W - (n * lw + (n - 1) * 2)) / 2)
+    const ho = 22
     BRANCHES.forEach((b, i) => {
       const actif = branche === b
-      const xi = x
-      const e = etatDuBouton(xi, y, largeurs[i], 13)
-      if (!e.enfonce) ombrePortee(p, xi, y, largeurs[i], 13)
-      plaque(p, xi, y + e.dy, largeurs[i], 13, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
-      ecrire(p, noms[i], xi + largeurs[i] / 2, y + 3 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center', police: GRAS })
-      if (!actif) zone(xi, y - 3, largeurs[i], 18, () => ((branche = b), (choixA = t)))
-      x += largeurs[i] + 3
+      const x = x0 + i * (lw + 2)
+      const e = etatDuBouton(x, y, lw, ho)
+      const leve = Math.round(rebond(`branche-${b}`, actif ? 1 : 0) * 2)
+      const yy = y + 2 - leve + e.dy
+      plaque(p, x, yy, lw, ho + (actif ? 3 : 0), actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole && !actif, flash: e.flash })
+      if (actif) p.glow(x + lw / 2, yy + 10, 18, PEPITE[2], 0.25)
+      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], x + lw / 2 + 1, yy + 12, actif ? N.hex('#6b3a0c') : N.hex('#04060c'))
+      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], x + lw / 2, yy + 11, actif ? N.WHITE : COQUE[4])
+      if (!actif && noeudsDe(b).some((nd) => peutDebloquer(labo, tresor, nd.id))) {
+        const bat = 0.5 + 0.5 * Math.sin(t * 4 + i)
+        p.rect(x + lw - 8, yy + 2, 5, 5, N.hex('#04060c'))
+        p.rect(x + lw - 7, yy + 3, 3, 3, bat > 0.5 ? N.hex('#fff2a8') : PEPITE[2])
+      }
+      if (!actif) zone(x, y, lw, ho + 2, () => ((branche = b), (choixA = t)), 'onglet')
     })
+    // le bandeau : le nom de la branche en titre, son avancée à droite
+    const yb = y + ho + 3
+    const hb = H_BRANCHES - ho - 3
+    plaque(p, 4, yb, W - 8, hb, 'acier')
+    const tous = noeudsDe(branche)
+    const faits = tous.filter((nd) => estDebloque(labo, nd.id)).length
+    ecrire(p, NOMS_BRANCHE[branche], 11, yb + 6, N.hex('#fff3cf'), { police: ENTETE, contour: MATIERES.acier.contour })
+    const compte = `${faits}/${tous.length}`
+    ecrire(p, compte, W - 10, yb + 4, faits > 0 ? RUNE[3] : COQUE[4], { police: GRAS, align: 'right' })
+    const lb = 34
+    const xb = W - 10 - lb
+    p.rect(xb, yb + hb - 6, lb, 3, MATIERES.creux.contour)
+    p.rect(xb, yb + hb - 6, Math.round((lb * faits) / tous.length), 3, RUNE[2])
   }
   /** Les rangs de la branche entre deux hauteurs : le tronc, un bus par rang, les nœuds. */
   function dessinerLesRangs(p: Peintre, ya: number, yb: number, lesRangs: Rang[]): void {
@@ -1890,24 +1924,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const L = replier(n.dit, W - 20).slice(0, 3)
     const hautDuTexte = y + 16 + Math.floor(((3 - L.length) * 9) / 2)
     L.forEach((li, i) => ecrire(p, li, W / 2, hautDuTexte + i * 9, COQUE[5], { align: 'center' }))
-    const ya = y + h - 18
+    // (deux lignes au pied : LE COÛT, puis LE BOUTON dessous — Keko : « une ligne avec les coûts et en dessous la ligne
+    // avec le bouton, pour éviter la ligne trop large »)
+    const ya = y + h - 33
+    const yb = y + h - 19
     const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
-    if (etat === 'ferme') ecrire(p, `Demande un nœud du rang ${n.rang - 1}`, W / 2, ya + 4, COQUE[4], { align: 'center' })
+    if (etat === 'ferme') ecrire(p, `Demande un nœud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
     else if (etat === 'ouvert') {
-      // LE COÛT, en minerai : ce qu'on a / ce qu'il faut, vert quand on l'a, rouge sinon — puis le bouton
+      // ce qu'on a / ce qu'il faut, par minerai : vert quand on l'a, rouge sinon
       const cout = coutDe(n)
       const ks = MINERAIS.filter((k) => cout[k] > 0)
       const textes = ks.map((k) => `${montantCourt(tresor[k])}/${cout[k]}`)
       const lw = textes.map((tx) => 12 + largeurDe(tx, GRAS))
-      const bw = largeurDe('Débloquer', GRAS) + 14
-      const total = lw.reduce((a, b) => a + b, 0) + ks.length * 6 + bw
-      let xc = Math.round((W - total) / 2)
+      const bw = largeurDe('Débloquer', GRAS) + 22
+      let xc = Math.round((W - lw.reduce((a, b) => a + b, 0) - (ks.length - 1) * 12) / 2)
       ks.forEach((k, i) => {
-        dessinerUneRessource(p, xc + 5, ya + 8, k)
-        ecrire(p, textes[i], xc + 12, ya + 4, tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5], { police: GRAS })
-        xc += lw[i] + 6
+        dessinerUneRessource(p, xc + 5, ya + 4, k)
+        ecrire(p, textes[i], xc + 12, ya, tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5], { police: GRAS })
+        xc += lw[i] + 12
       })
-      bouton(p, xc, ya, bw, 15, 'Débloquer', peutDebloquer(labo, tresor, n.id), () => {
+      bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Débloquer', peutDebloquer(labo, tresor, n.id), () => {
         const r = debloquer(labo, tresor, n.id)
         if (r === null) return
         labo = r.labo
@@ -1927,12 +1963,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }, 'achat')
     } else if (pc !== undefined && !possede(hangar, pc.id)) {
       // une pièce débloquée : elle est en vente au hangar — « Voir » y mène, sur elle
-      const mot = 'En vente au hangar'
-      const bw = largeurDe('Voir', GRAS) + 16
-      const total = largeurDe(mot) + 6 + bw
-      const x0 = Math.round((W - total) / 2)
-      ecrire(p, mot, x0, ya + 4, RUNE[2])
-      bouton(p, x0 + largeurDe(mot) + 6, ya, bw, 15, 'Voir', true, () => {
+      const bw = largeurDe('Voir', GRAS) + 22
+      ecrire(p, 'En vente au hangar', W / 2, ya, RUNE[2], { align: 'center' })
+      bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Voir', true, () => {
         allerA('hangar')
         sousCategorie[pc.sorte] = null
         ouvrirLEmplacement(pc.sorte, pc.sorte === 'arme' || pc.sorte === 'outil' ? 0 : -1)
@@ -1941,7 +1974,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
     } else {
       const mot = pc !== undefined ? 'Acheté : la pièce est au hangar' : n.sorte === 'passif' ? 'Acquis : actif sur tous vos vaisseaux' : 'Acquis : disponible en vol'
-      ecrire(p, mot, W / 2, ya + 4, RUNE[2], { align: 'center' })
+      ecrire(p, mot, W / 2, ya + 8, RUNE[2], { align: 'center' })
     }
   }
 
