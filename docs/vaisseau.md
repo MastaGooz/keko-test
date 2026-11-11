@@ -119,6 +119,20 @@ la forme, pas le système* (`asteroide.ts`) :
   éteint, la ligne, la frappe de NOVA, le titre posé, le hangar. Les sons
   n'ont pas été ÉCOUTÉS (Chrome sans tête) : leur timbre et leur calage sur
   l'image sont à juger par Keko.
+- **La frappe du titre : la vitesse et l'espace profond** (Keko, 11/11 :
+  « le son d'apparition du titre est un peu trop aigu, je voyais un truc
+  plus diffus et qui renvoie à la vitesse et à l'espace profond »). `frappe`
+  refaite : plus de cloches ni d'éclat clair (ils reviennent à la tape,
+  `accueil`) ; un PASSAGE — un souffle large qui monte pendant le vol du mot
+  puis s'éloigne en descendant 0,6 s, d'une oreille à l'autre —, un coup
+  SOURD qui tombe sur sa note, une NAPPE grave (l'octave et la quinte, en
+  sinus qui miroitent) qui s'enfle après lui, une grande salle (0,95 / 0,5),
+  3 s. NOVA sur ré (73 Hz), DRIFTER dessous sur la (55 Hz). Mesuré : la part
+  d'énergie au-dessus de 800 Hz passe de 7,3 % et 11,4 % à 2,4 % et 2,8 %
+  (au-dessus de 2 kHz : de 1,5–2,1 % à 0,6–0,8 %) ; niveau ramené à 0,4 pour
+  un efficace de 0,16 / 0,15, celui de l'arrivée. *Sur le haut-parleur d'un
+  téléphone, le grave sous 150 Hz ne sort pas : il restera le souffle et la
+  nappe (147 à 220 Hz et leurs partiels).* Pas écouté : à juger par Keko.
 - Vu en capture (412 × 915) : l'accueil, puis le hangar après la tape. Le
   son lui-même n'a pas été écouté (Chrome sans tête, muet) — à confirmer
   par Keko sur son appareil.

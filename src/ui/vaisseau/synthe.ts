@@ -416,20 +416,23 @@ const RECETTES = {
     },
   },
   /**
-   * un mot du titre arrive et frappe (le « combo counter ») : un souffle qui fuse pendant le vol (0,12 s), puis
-   * l'impact — un coup grave saturé, un éclat de souffle, une cloche qui reste. Deux variantes qui se suivent : NOVA
-   * sur ré, DRIFTER une quinte au-dessus, sur la ; la tape de l'accueil (`accueil`) referme l'accord de ré.
+   * un mot du titre arrive et frappe : LA VITESSE ET L'ESPACE PROFOND (Keko : « un peu trop aigu, je voyais un truc
+   * plus diffus et qui renvoie à la vitesse et à l'espace profond » — la première version était un coup, un éclat de
+   * souffle clair et deux cloches). Un PASSAGE : un souffle large qui monte pendant le vol du mot (0,12 s) puis s'éloigne
+   * en descendant longuement, d'une oreille à l'autre ; à la frappe, un coup SOURD qui tombe sur sa note, et une NAPPE
+   * grave — l'octave et la quinte, en sinus qui miroitent — qui s'enfle après lui ; le tout dans une grande salle.
+   * Deux variantes qui se suivent : NOVA sur ré, DRIFTER sur la, dessous ; la tape de l'accueil (`accueil`) referme
+   * l'accord de ré, et c'est elle qui apporte les clochettes.
    */
   frappe: {
-    duree: 1.5, niveau: 0.5, salle: [0.65, 0.26], variantes: 2,
+    duree: 3, niveau: 0.4, salle: [0.95, 0.5], variantes: 2,
     faire: (m, h, v) => {
-      const [grave, cloche, pan] = [[73.4, RE5, -0.25], [110, LA5, 0.25]][v]
-      souffle(m, h, 0, 0.5, -pan * 2, { f: 500, glisse: { vers: 3200, en: 0.12, droit: true }, q: 1.4, bande: true, a: 0.09, d: 0.06, large: true })
-      note(m, 0.12, 1, 0, { f: grave * 2.2, glisse: { vers: grave, en: 0.03 }, d: 0.3, partiels: CORPS, sature: 2.5 })
-      souffle(m, h, 0.12, 0.7, pan, { f: 4200, glisse: { vers: 900, en: 0.04 }, d: 0.12 })
-      note(m, 0.12, 0.55, pan, { f: cloche, d: 0.7, partiels: CLOCHE, battement: 6 })
-      note(m, 0.12, 0.3, -pan, { f: cloche * 2, d: 0.4, partiels: CLOCHE })
-      eclats(m, h, 6, 0.13, 0.3, 0.25)
+      const [grave, pan] = [[73.42, -0.3], [55, 0.3]][v]
+      souffle(m, h, 0, 0.55, -pan * 2, { f: 280, glisse: { vers: 1000, en: 0.12, droit: true }, q: 0.8, bande: true, a: 0.1, d: 0.1, large: true })
+      souffle(m, h, 0.12, 0.6, pan * 2, { f: 1000, glisse: { vers: 130, en: 0.6, droit: true }, q: 0.8, bande: true, a: 0.01, d: 1.3, large: true })
+      note(m, 0.12, 1, 0, { f: grave * 1.6, glisse: { vers: grave, en: 0.06 }, a: 0.008, d: 1, partiels: CORPS, sature: 2 })
+      note(m, 0.12, 0.38, -0.4, { f: grave * 2, a: 0.25, d: 1.8, battement: 8 })
+      note(m, 0.12, 0.26, 0.4, { f: grave * 3, a: 0.35, d: 1.7, battement: 8 })
     },
   },
   /**
