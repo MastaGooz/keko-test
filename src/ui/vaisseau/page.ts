@@ -22,7 +22,7 @@ import { chargerHangar, sauverHangar } from './hangar.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
-import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, type Astre, type PeintreCeleste } from './celeste.ts'
+import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
@@ -2140,6 +2140,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (sp === undefined) {
       const f = N.createFrame(d * 2 + 1, d * 2 + 1)
       peindreAstre(N.painterFor(f) as unknown as PeintreCeleste, a, d, d)
+      voilerLAstre(f.color, a) // (la distance : ses couleurs se fondent dans celle du ciel)
       sp = { w: f.w, h: f.h, color: f.color }
       if (tamponsDesAstres.size >= 40) tamponsDesAstres.delete(tamponsDesAstres.keys().next().value as string)
       tamponsDesAstres.set(a.cle, sp)

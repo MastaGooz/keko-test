@@ -5,11 +5,11 @@
  *
  * TROIS COUCHES, chacune à sa parallaxe (plus c'est loin, moins ça glisse) et semée par cases comme les étoiles — rien
  * n'est stocké, on retrouve le même ciel en revenant :
- * - LE LOINTAIN (0,06) : les géantes gazeuses à bandes, les planètes à anneaux, les mondes rocheux, les galaxies
+ * - LE LOINTAIN (0,1) : les géantes gazeuses à bandes, les planètes à anneaux, les mondes rocheux, les galaxies
  *   spirales, et de loin en loin un TROU NOIR dans son disque d'accrétion ;
- * - LE MILIEU (0,16) : des lunes cratérisées, de petits mondes, des soleils lointains à quatre rayons ;
- * - LE PROCHE (0,45) : des ASTÉROÏDES ÉNORMES, presque des silhouettes — quatre tons très sombres et un liseré de
- *   lumière : ils passent derrière le jeu sans jamais se prendre pour une roche qu'on mine.
+ * - LE MILIEU (0,24) : des lunes cratérisées, de petits mondes, des soleils lointains à quatre rayons ;
+ * - LE PROCHE (0,55) : des ASTÉROÏDES ÉNORMES, des masses bosselées en volume, à cratères — cinq tons très sombres :
+ *   ils passent derrière le jeu sans jamais se prendre pour une roche qu'on mine.
  * Et UNE PLANÈTE À ANNEAUX fixe derrière la base : la station tourne autour de quelque chose.
  *
  * TOUT RESTE DU DÉCOR : des rampes sombres et désaturées (le ton le plus clair d'une planète est sous le ton moyen
@@ -50,9 +50,7 @@ const RAMPES = [
   rampeDuFond(['#140809', '#2c1012', '#4a1a1c', '#6e2a28', '#96423a']), // rouge
 ]
 const GRISE = rampeDuFond(['#0c0d12', '#191b24', '#2a2d3a', '#414556', '#5d6276'])
-const ROCHE_GEANTE = rampe(['#0a0c13', '#0f121c', '#151926', '#1d2334'])
-const LISERE_GEANT = N.hex('#35425f')
-const ENCRE = N.hex('#05050b')
+const ROCHE_GEANTE = rampe(['#090b12', '#0f121c', '#171b2a', '#20273a', '#2c3550'])
 const FEU_DU_TROU = rampe(['#3a0e0c', '#8a2414', '#e0661e', '#ffb04a', '#fff0c8'])
 const TROU = N.hex('#020203')
 
@@ -63,9 +61,9 @@ export type Astre = { cle: string; sorte: SorteDAstre; x: number; y: number; r: 
 type Couche = { parallaxe: number; pas: number; proba: number; sortes: [SorteDAstre, number, number, number][] }
 /** Les trois couches : la parallaxe, le pas de la grille, la part des cases qui portent un astre, et les sortes (poids, rayon min, rayon max). */
 const COUCHES: Couche[] = [
-  { parallaxe: 0.06, pas: 300, proba: 0.55, sortes: [['gazeuse', 3, 26, 48], ['rocheuse', 3, 14, 28], ['annelee', 2, 20, 34], ['galaxie', 1.5, 14, 24], ['trouNoir', 0.6, 7, 10]] },
-  { parallaxe: 0.16, pas: 240, proba: 0.4, sortes: [['lune', 3, 5, 10], ['rocheuse', 2, 8, 13], ['soleil', 2, 2, 3]] },
-  { parallaxe: 0.45, pas: 380, proba: 0.4, sortes: [['geante', 1, 22, 42]] },
+  { parallaxe: 0.1, pas: 300, proba: 0.55, sortes: [['gazeuse', 3, 26, 48], ['rocheuse', 3, 14, 28], ['annelee', 2, 20, 34], ['galaxie', 1.5, 14, 24], ['trouNoir', 0.6, 7, 10]] },
+  { parallaxe: 0.24, pas: 240, proba: 0.4, sortes: [['lune', 3, 5, 10], ['rocheuse', 2, 8, 13], ['soleil', 2, 2, 3]] },
+  { parallaxe: 0.55, pas: 380, proba: 0.4, sortes: [['geante', 1, 22, 42]] },
 ]
 /** LA PLANÈTE DE LA BASE : une géante à anneaux, fixe dans le lointain, en haut à droite de la station au départ. */
 const MONDE_DE_LA_BASE = { x: 54, y: -108, r: 44 }
@@ -120,7 +118,7 @@ export function astresVisibles(cx: number, cy: number, W: number, H: number, mil
 /** Une sphère éclairée par la lumière du monde, sa texture (des bandes, des terres, des cratères), sa face à l'ombre presque noire, un limbe clair côté lampe. */
 function sphere(p: PeintreCeleste, cx: number, cy: number, r: number, R: number[], graine: number, texture: 'bandes' | 'terres' | 'crateres'): void {
   const g = (graine % 97) * 0.37
-  p.circle(cx, cy, r + 1, ENCRE)
+  // (pas de cerne : un contour net ramène l'astre au premier plan)
   p.circle(cx, cy, r, (d, ang) => {
     const ux = d * Math.cos(ang)
     const uy = d * Math.sin(ang)
@@ -212,26 +210,43 @@ export function peindreAstre(p: PeintreCeleste, a: Astre, cx: number, cy: number
     p.circle(cx, cy, a.r, TROU)
     disque(true)
   } else if (a.sorte === 'geante') {
-    // un rocher énorme, presque une silhouette : des pans très sombres tournés vers la lampe ou non, un liseré côté lumière
-    const n = 9 + (a.graine % 4)
+    // UN ROCHER ÉNORME, EN VOLUME (Keko : « certains astéroïdes ont des textures trop plates et des formes parfois
+    // trop droites, donnant l'impression d'une plaque plutôt qu'un astéroïde » — la première version était un polygone
+    // de dix pans au ton presque uni) : un contour BOSSELÉ (trente-deux sommets sur une somme de lobes : plus un seul
+    // bord droit), un DÔME éclairé par la lampe (clair en haut à gauche, il tombe dans l'ombre en bas à droite), un
+    // relief de bosses par-dessus, quelques CRATÈRES, un limbe clair côté lumière. Toujours très sombre : du décor.
+    const g = (a.graine % 89) * 0.41
+    const bord = (th: number): number => a.r * (0.8 + 0.1 * Math.sin(2 * th + g) + 0.06 * Math.sin(3 * th + g * 2.3) + 0.04 * Math.sin(5 * th + g * 0.7))
     const pts: number[][] = []
-    for (let k = 0; k < n; k++) {
-      const th = ((k + (tire(a.graine, 4, k) - 0.5) * 0.7) / n) * Math.PI * 2
-      const rr = a.r * (0.7 + 0.3 * tire(a.graine, 2, k))
-      pts.push([cx + Math.cos(th) * rr, cy + Math.sin(th) * rr * 0.85])
+    for (let k = 0; k < 32; k++) {
+      const th = (k / 32) * Math.PI * 2
+      pts.push([cx + Math.cos(th) * bord(th), cy + Math.sin(th) * bord(th) * 0.88])
     }
-    p.poly(pts, (x, y) => {
-      const lum = ((x - cx) * LUMIERE.x + (y - cy) * LUMIERE.y) / a.r
-      const ton = 1.2 + lum * 1.4 + N.fbm(((x - cx) / a.r) * 1.7, ((y - cy) / a.r) * 1.7, a.graine, 2) * 1.5 + (((Math.round(x) + Math.round(y)) & 1) - 0.5) * 0.4
-      return ROCHE_GEANTE[Math.max(0, Math.min(3, Math.floor(ton)))]
+    const crateres = Array.from({ length: 3 + (a.graine % 3) }, (_, k) => {
+      const th = tire(a.graine, 7, k) * Math.PI * 2
+      const d = a.r * (0.1 + 0.42 * tire(a.graine, 8, k))
+      return { x: cx + Math.cos(th) * d, y: cy + Math.sin(th) * d * 0.88, r: a.r * (0.09 + 0.1 * tire(a.graine, 9, k)) }
     })
-    for (let k = 0; k < n; k++) {
-      const [x0, y0] = pts[k]
-      const [x1, y1] = pts[(k + 1) % n]
-      const mx = (x0 + x1) / 2 - cx
-      const my = (y0 + y1) / 2 - cy
-      if ((mx * LUMIERE.x + my * LUMIERE.y) / (Math.hypot(mx, my) || 1) > 0.35) p.line(x0, y0, x1, y1, LISERE_GEANT)
-    }
+    p.poly(pts, (x, y) => {
+      const dx = x - cx
+      const dy = (y - cy) / 0.88
+      const dist = Math.hypot(dx, dy) || 1
+      const q = Math.min(1, dist / bord(Math.atan2(dy, dx)))
+      const z = Math.sqrt(1 - q * q)
+      const l = (dx / dist) * q * LUMIERE.x + (dy / dist) * q * LUMIERE.y + z * LUMIERE.z
+      let ton = 1.7 + l * 2.3 + N.fbm((dx / a.r) * 2.4 + g, (dy / a.r) * 2.4, a.graine, 3) * 1.4
+      for (const c of crateres) {
+        const ox = x - c.x
+        const oy = y - c.y
+        const dc = Math.hypot(ox, oy)
+        if (dc > c.r) continue
+        const cote = (ox * LUMIERE.x + oy * LUMIERE.y) / (dc || 1)
+        ton += dc > c.r * 0.55 && cote > 0.2 ? -1.3 : dc > c.r * 0.55 && cote < -0.3 ? 0.9 : -0.6
+      }
+      ton += (((Math.round(x) + Math.round(y)) & 1) - 0.5) * 0.45
+      if (q > 1 - 2.2 / a.r && l > 0.15) ton = Math.max(ton, 4)
+      return ROCHE_GEANTE[Math.max(0, Math.min(4, Math.floor(ton)))]
+    })
   }
 }
 
@@ -256,6 +271,28 @@ export function animerAstre(p: PeintreCeleste, a: Astre, t: number): void {
     p.circle(x, y, a.r, C)
     p.circle(x, y, Math.max(1, a.r - 1), N.hex('#ffffff'))
   } else if (a.sorte === 'galaxie') p.glow(x, y, a.r * 0.9, N.hex('#7a68b0'), 0.22 + 0.05 * Math.sin(t * 0.9 + a.graine))
+}
+
+/**
+ * LE VOILE DE LA DISTANCE (Keko : « les corps célestes du background semblent trop au premier plan, sûrement à cause de
+ * leur couleur / leur rendu ; il faudrait indiquer visuellement qu'ils sont loin ») : la perspective atmosphérique —
+ * plus un astre est loin, plus ses couleurs se FONDENT dans celle du ciel : moins de contraste, moins de saturation, la
+ * face à l'ombre qui se perd dans le fond (plus de cerne). Chaque pixel du tampon d'un astre est mêlé à la teinte du
+ * ciel, d'une part qui tient à sa couche ; ce qui vit par-dessus (les lueurs) ne l'est pas.
+ */
+const VOILE = [0.58, 0.44, 0.3]
+const TEINTE_DU_CIEL = [0x0e, 0x0c, 0x20]
+export function voilerLAstre(couleurs: Uint32Array, a: Astre): void {
+  // (le trou noir garde son feu : c'est une lumière, elle porte loin)
+  const k = a.sorte === 'trouNoir' ? 0.25 : VOILE[a.couche]
+  for (let i = 0; i < couleurs.length; i++) {
+    const c = couleurs[i]
+    if (c >>> 24 === 0) continue
+    const r = Math.round((c & 255) * (1 - k) + TEINTE_DU_CIEL[0] * k)
+    const v = Math.round(((c >>> 8) & 255) * (1 - k) + TEINTE_DU_CIEL[1] * k)
+    const b = Math.round(((c >>> 16) & 255) * (1 - k) + TEINTE_DU_CIEL[2] * k)
+    couleurs[i] = ((255 << 24) | (b << 16) | (v << 8) | r) >>> 0
+  }
 }
 
 /** Le rayon sous lequel un astre CACHE les étoiles (zéro : il ne cache rien — une galaxie, un soleil). */

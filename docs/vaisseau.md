@@ -67,6 +67,29 @@ la forme, pas le système* (`asteroide.ts`) :
   couches qui tombent sur son disque ne se dessinent pas — sinon des étoiles
   « plus proches » passaient devant une planète.
 - L'accueil, qui dessine le même ciel, les a aussi.
+- **Le voile de la distance, et des roches en volume** (Keko, 11/11 :
+  « deux choses me frappent : certains astéroïdes ont des textures trop
+  plates et des formes parfois trop droites, donnant l'impression d'une
+  plaque plutôt qu'un astéroïde ; les corps célestes du background semblent
+  trop au premier plan, sûrement à cause de leur couleur / leur rendu — on
+  dirait qu'ils se déplacent avec nous à notre plan ») :
+  - *la perspective atmosphérique* (`voilerLAstre`) : chaque pixel du tampon
+    d'un astre est mêlé à la teinte du ciel (`#0e0c20`), d'une part qui
+    tient à sa couche — 58 % au lointain, 44 % au milieu, 30 % au proche (le
+    trou noir 25 % : son feu porte) ; moins de contraste, moins de
+    saturation, la face à l'ombre se perd dans le fond. LE CERNE sombre des
+    sphères est parti (un contour net ramène au premier plan). Les lueurs
+    vivantes ne sont pas voilées ;
+  - *les parallaxes relevées* (0,06 / 0,16 / 0,45 → 0,1 / 0,24 / 0,55) : à
+    0,06 le lointain ne glissait presque pas, il semblait accroché à l'écran ;
+  - *les astéroïdes énormes* (j'ai compris que c'était d'eux qu'il parlait,
+    pas des roches qu'on mine — à confirmer) : un polygone de dix pans au ton
+    presque uni devient une masse BOSSELÉE (trente-deux sommets sur une
+    somme de lobes, plus un bord droit), un DÔME éclairé (clair en haut à
+    gauche, l'ombre en bas à droite), un relief de bosses, trois à cinq
+    cratères, un limbe clair, cinq tons au lieu de quatre.
+  - Jugé sur la planche (les astres passés par leur voile, des roches du
+    jeu à côté) ; pas recapturé en vol.
 - Vu sur une planche de toutes les sortes, puis en capture en vol (au
   départ, et après deux trajets) : la planète de la base, une lune, un
   soleil, une silhouette. *Pas mesuré : le coût par image sur téléphone —
