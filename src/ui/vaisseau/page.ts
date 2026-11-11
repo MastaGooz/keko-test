@@ -840,8 +840,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // en permanence deux lignes de plus, et scroller pour le reste », puis « enlève une ligne visible de base » — tant que
   // la fiche du minerai tient dessous)
   const sceneOrdinaire = (): number => Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222))
-  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((sceneOrdinaire() - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10) / 31)))
-  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 : sceneOrdinaire())
+  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((sceneOrdinaire() - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
+  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
   let tBase = 0
   let dtBase = 1 / 60
@@ -1041,7 +1041,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const a = 0.55 - k * 0.13
       // (pas en haut de la tech : la barre des branches y est, et l'icône de la branche ouverte, qui se lève de deux
       // pixels, entrait dans cette trame — Keko, 11/11 : « quand une icône est sélectionnée, son haut devient pixelisé »)
-      if (vue !== 'labo') p.rect(0, y0 + k, W, 1, NUIT, a)
+      if (vue !== 'labo' && vue !== 'entrepot') p.rect(0, y0 + k, W, 1, NUIT, a)
       p.rect(0, y1 - 1 - k, W, 1, NUIT, a)
       p.rect(k, y0, 1, hautScene, NUIT, a)
       p.rect(W - 1 - k, y0, 1, hautScene, NUIT, a)
@@ -1166,27 +1166,52 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * d'essai, retirés depuis).
    */
   const PAS_DE_L_INVENTAIRE = 31
+  /**
+   * LES CATÉGORIES DU COMMERCE (Keko, 11/11 : « rajouter en haut du commerce un truc pour trier les types de ressources
+   * (tout / minerai / cristal / biologique pour l'instant) ») : la même barre d'onglets que les branches de la tech, en
+   * haut de la scène ; la grille ne montre que les ressources de la catégorie ouverte. Le fer et l'or sont des
+   * minerais, le cristal un cristal ; rien de biologique encore. Un classement d'écran : la règle n'en sait rien.
+   */
+  const CATEGORIES = ['tout', 'minerai', 'cristal', 'biologique'] as const
+  type Categorie = (typeof CATEGORIES)[number]
+  const NOMS_DE_CATEGORIE: Record<Categorie, string> = { tout: 'Tout', minerai: 'Minerai', cristal: 'Cristal', biologique: 'Biologique' }
+  const CATEGORIE_DE: Record<Minerai, Categorie> = { fer: 'minerai', or: 'minerai', cristal: 'cristal' }
+  let categorie: Categorie = 'tout'
+  /** Les ressources de la catégorie ouverte, dans l'ordre de la grille. */
+  const ressourcesVues = (): Minerai[] => MINERAIS.filter((k) => categorie === 'tout' || CATEGORIE_DE[k] === categorie)
   let defilInventaire = 0
   let zoneDeLInventaire: { x: number; y: number; w: number; h: number } | null = null
   function dessinerLInventaire(p: Peintre, y0: number): void {
+    // la barre des catégories, en haut de la scène (la lumière des lampes éteinte dessous)
+    frame.light.fill(0, y0 * W, (y0 + H_BRANCHES + 1) * W)
+    dessinerUneBarreDOnglets(p, y0, 'categorie', CATEGORIES.map((c) => ({ nom: NOMS_DE_CATEGORIE[c], icone: c })), CATEGORIES.indexOf(categorie), (i) => {
+      categorie = CATEGORIES[i]
+      defilInventaire = 0
+      vueA = t - 0.12
+      // (la ressource choisie suit : la première de la catégorie, si celle d'avant n'y est pas)
+      const vues = ressourcesVues()
+      if (vues.length > 0 && !vues.includes(mineraiChoisi)) mineraiChoisi = vues[0]
+    })
+    const vues = ressourcesVues()
+    const haut = hautScene - H_BRANCHES
     const COL = 5
     const cw = 30
     const ch = 28
-    const RANG = Math.max(1, Math.floor((hautScene - 10) / (ch + 3)))
-    const total = MINERAIS.length
+    const RANG = Math.max(1, Math.floor((haut - 10) / (ch + 3)))
+    const total = vues.length
     const rangees = Math.max(RANG, Math.ceil(total / COL))
     const maxD = Math.max(0, rangees - RANG)
     defilInventaire = Math.max(0, Math.min(maxD, defilInventaire))
     const d = Math.round(defilInventaire)
     const gx = Math.floor((W - (COL * cw + (COL - 1) * 3)) / 2)
-    const gy = y0 + Math.floor((hautScene - (RANG * (ch + 3) - 3)) / 2)
+    const gy = y0 + H_BRANCHES + Math.floor((haut - (RANG * (ch + 3) - 3)) / 2)
     for (let c = 0; c < COL * RANG; c++) {
       const age = t - vueA - c * 0.012
       if (age < 0) continue
       const x = gx + (c % COL) * (cw + 3)
       const y = gy + Math.floor(c / COL) * (ch + 3)
       const i = c + d * COL
-      const k = MINERAIS[i]
+      const k = vues[i]
       if (k === undefined) {
         plaque(p, x, y, cw, ch, 'creux')
         continue
@@ -1835,6 +1860,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     postcombustion: ['...#...', '..##...', '..###..', '.####.#', '.######', '.#####.', '..###..'],
     combat: ['...#...', '..###..', '.#.#.#.', '###.###', '.#.#.#.', '..###..', '...#...'],
     exploration: ['.#####.', '.#####.', '.#####.', '.#.....', '.#.....', '.#.....', '###....'],
+    tout: ['###.###', '###.###', '###.###', '.......', '###.###', '###.###', '###.###'],
+    minerai: ['..###..', '.#####.', '#######', '#######', '#######', '.#####.', '.......'],
+    cristal: ['..##...', '..###..', '.####..', '.####.#', '.#####.', '.#####.', '..###..'],
+    biologique: ['....###', '..#####', '.######', '.#####.', '######.', '##.....', '#......'],
   }
   /**
    * UN SYMBOLE DU LABO, EN RELIEF (Keko, 11/11 : « donner un peu de texture aux symboles des arbres du labo » — c'étaient
@@ -1961,7 +1990,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** La hauteur de l'en-tête de l'arbre : les onglets des branches, puis le bandeau au nom de la branche. */
   const H_BRANCHES = 28
-  let repereDeBrancheX = -1
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
     dessinerLesBranches(p, y0)
@@ -1989,19 +2017,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dessin, se partagent le reste — 39 px chacune à quatre, 29 à cinq, 23 à six.
    */
   function dessinerLesBranches(p: Peintre, y: number): void {
+    dessinerUneBarreDOnglets(p, y, 'branche', BRANCHES.map((b) => ({ nom: NOMS_BRANCHE[b], icone: ICONE_DE_BRANCHE[b] })), BRANCHES.indexOf(branche), (i) => ((branche = BRANCHES[i]), (choixA = t)))
+  }
+  /**
+   * UNE BARRE D'ONGLETS dans une scène (les branches de la tech, les catégories du commerce) : chaque onglet a son
+   * dessin et son nom, l'ouvert en or se lève, un repère d'or glisse jusqu'à lui (gardé par barre, sous `cle`).
+   */
+  const reperesDeBarre: Record<string, number> = {}
+  function dessinerUneBarreDOnglets(p: Peintre, y: number, cle: string, liste: { nom: string; icone: string }[], ia: number, choisir: (i: number) => void): void {
     const h = H_BRANCHES
-    const liste: readonly Branche[] = BRANCHES
-    const ouvert = branche
     const n = liste.length
     p.rect(0, y, W, h, NUIT_BARRE)
     p.rect(0, y + h - 1, W, 1, MATIERES.encre.contour)
     p.rect(0, y + h, W, 1, NUIT_OMBRE)
     // LES LARGEURS : égales tant que CHAQUE NOM tient dans sa case (mesuré dans la police, pas supposé) ; sinon l'ouverte
     // prend la place de son nom et les autres, réduites à leur dessin, se partagent le reste
-    const ia = liste.indexOf(ouvert)
     const egale = W / n
-    const tousLesNoms = liste.every((b) => largeurDe(NOMS_BRANCHE[b]) + 6 <= egale)
-    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(NOMS_BRANCHE[ouvert]) + 12)
+    const tousLesNoms = liste.every((b) => largeurDe(b.nom) + 6 <= egale)
+    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(liste[ia].nom) + 12)
     const etroite = tousLesNoms || n < 2 ? egale : (W - large) / (n - 1)
     const debutDe = (i: number): number => (tousLesNoms ? i * egale : i <= ia ? i * etroite : (i - 1) * etroite + large)
     liste.forEach((b, i) => {
@@ -2010,20 +2043,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const xb = Math.round(debutDe(i + 1))
       const cx = Math.round((xa + xb) / 2)
       const e = etatDuBouton(xa, y, xb - xa, h)
-      const dy = -Math.round(rebond(`branche-${i}`, actif ? 1 : 0) * 2) + e.dy
+      const dy = -Math.round(rebond(`${cle}-${i}`, actif ? 1 : 0) * 2) + e.dy
       if (e.survole && !actif) p.rect(xa + 2, y + 2, xb - xa - 4, h - 5, N.hex('#19152a'))
       if (actif) p.glow(cx, y + 10, 20, PEPITE[2], 0.2)
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
-      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]]) // (le sombre de l'or tout près de l'or : un brun y semait des grains noirs — Keko : « son haut devient pixelisé bizarrement »)
-      if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
-      if (!actif) zone(xa, y, xb - xa, h, () => ((branche = b), (choixA = t)), 'onglet')
+      dessinerLeGlyphe(p, b.icone, cx, yi, actif ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]]) // (le sombre de l'or tout près de l'or : un brun y semait des grains noirs — Keko : « son haut devient pixelisé bizarrement »)
+      if (nomme) ecrire(p, b.nom, cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
+      if (!actif) zone(xa, y, xb - xa, h, () => choisir(i), 'onglet')
     })
     const cible = (debutDe(ia) + debutDe(ia + 1)) / 2
-    repereDeBrancheX = repereDeBrancheX < 0 ? cible : ressort(repereDeBrancheX, cible, 18)
-    p.rect(Math.round(repereDeBrancheX - 12), y + h - 2, 24, 2, PEPITE[2])
-    p.rect(Math.round(repereDeBrancheX - 8), y + h - 2, 16, 1, N.hex('#fff2a8'))
-    p.glow(Math.round(repereDeBrancheX), y + h - 2, 12, PEPITE[2], 0.35)
+    const rx = (reperesDeBarre[cle] = reperesDeBarre[cle] === undefined ? cible : ressort(reperesDeBarre[cle], cible, 18))
+    p.rect(Math.round(rx - 12), y + h - 2, 24, 2, PEPITE[2])
+    p.rect(Math.round(rx - 8), y + h - 2, 16, 1, N.hex('#fff2a8'))
+    p.glow(Math.round(rx), y + h - 2, 12, PEPITE[2], 0.35)
   }
   /**
    * LES RANGS DE LA BRANCHE, DANS UNE FENÊTRE QUI DÉFILE (Keko, 11/11 : « si on rajoute des tiers 4, 5, 6, on fait
@@ -2344,6 +2377,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * valeur unitaire et le stock, et VENDRE — les pièces volent jusqu'au compteur, qui roule.
    */
   function dessinerLEntrepot(p: Peintre, y: number): number {
+    if (ressourcesVues().length === 0) {
+      // (une catégorie vide — le biologique, pour l'instant)
+      plaque(p, 4, y, W - 8, 40, 'encre')
+      motEnRelief(p, NOMS_DE_CATEGORIE[categorie], W / 2, y + 8, false)
+      ecrire(p, 'Aucune ressource pour l’instant', W / 2, y + 23, COQUE[4], { align: 'center' })
+      return y + 44
+    }
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
     const LIGNES = 4 // (quatre lignes fixes : avec les minuscules, les descriptions en prennent une de plus)

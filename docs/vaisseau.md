@@ -147,6 +147,15 @@ la forme, pas le système* (`asteroide.ts`) :
 - **Les minerais d'essai sont retirés** (Keko, 11/11 : « tu peux enlever les
   matériaux placeholder du commerce ») : la grille garde son défilement,
   qui ne sert pas encore (trois minerais).
+- **Les catégories de ressources** (Keko, 11/11 : « rajouter en haut du
+  commerce un truc pour trier les types de ressources — tout / minerai /
+  cristal / biologique pour l'instant ») : la barre d'onglets de la tech,
+  devenue commune (`dessinerUneBarreDOnglets`), en haut de la scène du
+  commerce ; la grille ne montre que la catégorie ouverte (`CATEGORIE_DE` :
+  le fer et l'or sont des minerais, le cristal un cristal, rien de
+  biologique encore — sa fiche dit « Aucune ressource pour l'instant »). Un
+  classement d'écran, la règle n'en sait rien. À quatre, « Biologique » ne
+  tient pas dans sa case : seul l'onglet ouvert dit son nom.
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
