@@ -116,6 +116,13 @@ export const VAISSEAU = {
     rayonMax: 14,
     /** Autour du point de départ, rien : le joueur apprend le manche à vide. */
     vide: 70,
+    /**
+     * LA GRAINE DU CHAMP (Keko, 11/11 : « l'espace est randomisé ? j'ai l'impression de tomber sur la même map » —
+     * « je propose de randomiser à chaque vol pour l'instant, histoire de tester ») : zéro, c'est le champ de toujours ;
+     * une autre graine en fait un AUTRE champ, tout aussi déterministe (la page en tire une à chaque décollage — le
+     * hasard reste hors de `logic/`, il lui est injecté).
+     */
+    graine: 0,
   },
   /**
    * LE FORAGE : le laser vise seul ce qui est le plus proche à portée et le creuse à tant de points par seconde ;
@@ -274,8 +281,14 @@ export function hache(...ns: number[]): number {
 }
 export const tire = (...ns: number[]): number => hache(...ns) / 4294967296
 
-/** L'astéroïde de la case (i, j), ou `null` si elle est vide : le même à chaque appel. */
+/** (Le `tire` du module, sous un autre nom : `asteroideDeLaCase` le masque par sa version à graine.) */
+const tirer = (...v: number[]): number => tire(...v)
+
+/** L'astéroïde de la case (i, j), ou `null` si elle est vide : le même à chaque appel, pour une graine du champ donnée. */
 export function asteroideDeLaCase(c: ConfigVaisseau, i: number, j: number): Asteroide | null {
+  // (la graine du champ entre dans chaque tirage ; à zéro, les tirages de toujours)
+  const g = c.champ.graine
+  const tire = (a: number, b: number, k: number): number => (g === 0 ? tirer(a, b, k) : tirer(a, b, k, g))
   if (tire(i, j, 1) >= c.champ.densite) return null
   const taille = c.champ.case
   const rayon = c.champ.rayonMin + (c.champ.rayonMax - c.champ.rayonMin) * tire(i, j, 2) ** 1.6
@@ -291,7 +304,7 @@ export function asteroideDeLaCase(c: ConfigVaisseau, i: number, j: number): Aste
   const u = tire(i, j, 8)
   const minerai: Minerai = u < pc ? 'cristal' : u < pc + po ? 'or' : 'fer'
   const richesse = 0.25 + 0.75 * tire(i, j, 9) ** 1.4
-  return { id: hache(i, j), x, y, rayon, graine: hache(i, j, 5), angle0: tire(i, j, 6) * Math.PI * 2, vitesseAngulaire: (tire(i, j, 7) - 0.5) * 1.2, minerai, richesse }
+  return { id: hache(i, j), x, y, rayon, graine: g === 0 ? hache(i, j, 5) : hache(i, j, 5, g), angle0: tire(i, j, 6) * Math.PI * 2, vitesseAngulaire: (tire(i, j, 7) - 0.5) * 1.2, minerai, richesse }
 }
 
 /**

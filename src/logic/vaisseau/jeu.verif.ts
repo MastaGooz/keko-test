@@ -436,5 +436,10 @@ rf.pepites.push({ id: 98, x: 20, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer' }
 for (let i = 0; i < 120; i++) avancerLeMonde(C, rf, 1 / 60, { x: 0, y: 0 })
 verifier('le minerai refusé : sa pépite ne bouge pas et reste dehors, celle d’un autre minerai monte à bord', rf.pepites.length === 1 && rf.pepites[0].minerai === 'fer' && rf.pepites[0].x > 19 && rf.cargaison.fer === 0 && rf.cargaison.cristal === 1)
 
+// LA GRAINE DU CHAMP : une autre graine, un autre champ ; la même, le même ; la base garde son vide
+const champDe = (graine: number) => JSON.stringify(asteroidesAutour({ ...VAISSEAU, champ: { ...VAISSEAU.champ, graine } }, 0, 0, 600).map((a) => [Math.round(a.x), Math.round(a.y), a.minerai]))
+verifier('la graine du champ : zéro est le champ de toujours, une autre en fait un autre, la même refait le même', champDe(0) === JSON.stringify(asteroidesAutour(VAISSEAU, 0, 0, 600).map((a) => [Math.round(a.x), Math.round(a.y), a.minerai])) && champDe(7) !== champDe(0) && champDe(7) !== champDe(8) && champDe(7) === champDe(7))
+verifier('quelle que soit la graine, le champ est vide sur l’envergure de la base', [3, 99, 4242].every((graine) => asteroidesAutour({ ...VAISSEAU, champ: { ...VAISSEAU.champ, graine } }, 0, 0, 400).every((a) => Math.hypot(a.x, a.y) >= VAISSEAU.base.rayon + a.rayon)))
+
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

@@ -150,9 +150,14 @@ export function demiTailleDeLAstre(a: Astre): number {
 /** Le feu d'une étoile, tiré de sa graine : jaune (deux fois sur cinq), géante rouge, bleue, naine blanche. */
 const feuDeLEtoile = (graine: number): number => [0, 0, 1, 2, 3][graine % 5]
 
+/** (Le `tire` du module, sous un autre nom : `astresVisibles` le masque par sa version à graine.) */
+const tirer = (...v: number[]): number => tire(...v)
+
 /** Les astres qui touchent l'écran, du plus loin au plus proche, pour une caméra en (cx, cy) ; `milieuY` est le centre de la vue. */
-export function astresVisibles(cx: number, cy: number, W: number, H: number, milieuY: number, vitrine = false): Astre[] {
+export function astresVisibles(cx: number, cy: number, W: number, H: number, milieuY: number, vitrine = false, graineDuCiel = 0): Astre[] {
   const astres: Astre[] = []
+  // (LE CIEL SUIT LA GRAINE DU VOL : une autre graine sème d'autres astres ; à zéro, le ciel de toujours)
+  const tire = (a: number, b: number, k: number): number => (graineDuCiel === 0 ? tirer(a, b, k) : tirer(a, b, k, graineDuCiel))
   const MARGE = 116
   COUCHES.forEach((couche, n) => {
     const ox = cx * couche.parallaxe
@@ -194,7 +199,7 @@ export function astresVisibles(cx: number, cy: number, W: number, H: number, mil
         const y = my - oy + milieuY
         const d = r * debord(choix[0]) + 5
         if (x < -d || x > W + d || y < -d || y > H + d) continue
-        astres.push({ cle: `${n}:${i}:${j}`, sorte: choix[0], x, y, r, graine, couche: n })
+        astres.push({ cle: `${graineDuCiel}:${n}:${i}:${j}`, sorte: choix[0], x, y, r, graine, couche: n })
       }
   })
   return astres

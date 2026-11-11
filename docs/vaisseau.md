@@ -38,6 +38,30 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Un autre espace à chaque vol (Keko, 11/11 : « l'espace est randomisé ? J'ai l'impression de tomber sur la même map » — « je propose de randomiser à chaque vol pour l'instant, histoire de tester »)
+
+- **Le constat** : le champ d'astéroïdes et le ciel ne se tiraient que de
+  la position des cases — la même carte à chaque partie.
+- **La graine du vol** : la page en tire une à chaque décollage
+  (`graineDuVol`, de 1 à un million — le hasard reste hors de `logic/`, il
+  lui est injecté) ; elle entre dans le champ (`champ.graine`, lue par
+  `asteroideDeLaCase` : place, taille, minerai, richesse, forme de chaque
+  roche), dans le monde (`nouveauMonde(CONF, graine)` : d'où vient le
+  rival) et dans le ciel (`astresVisibles(…, graineDuCiel)`). À ZÉRO, les
+  tirages de toujours : les vérifications des règles n'ont pas bougé.
+- **Ce qui ne change pas** : la base au point de départ, son vide, sa
+  planète à anneaux ; l'accueil garde l'espace de toujours.
+- **`&graine=N`** fixe la graine (pour retrouver un espace, ou comparer) ;
+  `&graine=0` rend la carte d'avant.
+- Vérifié : une autre graine fait un autre champ, la même refait le même,
+  zéro est le champ de toujours ; le vide de la base tient quelle que soit
+  la graine. « Pour l'instant » : à rejuger (fixe, par jour, par vol).
+- *La page DESSINAIT les roches avec la configuration de base* (`C`, pas
+  `CONF`) : sans graine les deux champs étaient le même ; avec, on aurait
+  vu un champ et heurté un autre. Corrigé avant de pousser. Vu en capture :
+  la même graine deux fois rend la même image, une autre graine un autre
+  espace (roches et ciel).
+
 ## Les astres du fond (Keko, 11/11 : « on peut rajouter des objets célestes dans le background, comme des planètes, des nébuleuses, des étoiles, des trous noirs, des astéroïdes énormes ? On peut les mettre sur différents layers éventuellement, pour renforcer l'effet de profondeur »)
 
 - **Trois couches en parallaxe** (`celeste.ts`, `astresVisibles`), semées

@@ -167,8 +167,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- l'état
   /** `&quai` : le compte de l'extraction court dès le départ, sans sortir du parvis — pour juger l'arc d'un lien. */
+  /** La graine du vol en cours (zéro avant le premier décollage : l'espace de toujours, celui de l'accueil). */
+  let graineDuVol = 0
   const monterLeMonde = () => {
-    const monde = nouveauMonde(CONF)
+    const monde = nouveauMonde(CONF, graineDuVol || 1)
     if (parametres.has('quai')) monde.sorti = true
     return monde
   }
@@ -267,6 +269,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
     CONF = configDuHangar(BASE, hangar)
+    // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
+    // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
+    // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
+    graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
+    CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     m = monterLeMonde()
     m.minerai = minerai0
@@ -2158,7 +2165,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le ciel : les astres du fond, trois couches d'étoiles en parallaxe (un astre les cache), puis la poussière du premier plan ; les nuées sont dans le fond (`cuireLeCiel`). */
   function dessinerLeCiel(p: Peintre): void {
     // les astres d'abord, du plus loin au plus proche ; une étoile qui tombe sur l'un d'eux ne se dessine pas
-    const astres = astresVisibles(camera.x, camera.y, W, H, centreY(), parametres.has('astres')) // (`&astres` : la vitrine, un astre de chaque sorte autour de la base)
+    const astres = astresVisibles(camera.x, camera.y, W, H, centreY(), parametres.has('astres'), graineDuVol) // (`&astres` : la vitrine, un astre de chaque sorte autour de la base)
     for (const a of astres) poserLAstre(a)
     const caches = astres.map((a) => ({ x: a.x, y: a.y, r2: rayonQuiCache(a) ** 2 })).filter((c) => c.r2 > 0)
     const cachee = (x: number, y: number): boolean => caches.some((c) => (x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) < c.r2)
@@ -3510,7 +3517,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
     dessinerLeCiel(p)
-    for (const a of asteroidesVisibles(C, m, camera.x, camera.y, Math.max(W, H) / 2 + C.champ.rayonMax + 4)) {
+    for (const a of asteroidesVisibles(CONF, m, camera.x, camera.y, Math.max(W, H) / 2 + CONF.champ.rayonMax + 4)) {
       // la roche qu'on creuse tremble, d'autant plus qu'elle est près d'éclater
       const creusee = m.forage !== null && m.forage.cible === a.id
       const tremble = creusee ? (0.5 + m.forage!.part) * 1.2 : 0
