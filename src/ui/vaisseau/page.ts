@@ -218,6 +218,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LA BARRE DE BLINDAGE (voir `dessinerLeScore`) : ce qu'on a vu du blindage et du bouclier à l'image d'avant (un
    * coup, c'est une baisse), le FANTÔME — le morceau perdu, qui tient un instant avant de se vider — et l'instant du coup.
    */
+  /** La seconde du compte de l'extraction dont la frappe a déjà lancé ses étincelles (−1 : aucune ; 999 : l'extraction a éclaté). */
+  let battementVu = -1
   let coqueConnue = 0
   let coqueFantome = 0
   let coqueCoupA = -10
@@ -668,6 +670,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ? { fill: [N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: N.hex('#6b3a0c'), outline: N.hex('#1e0e03'), shadow: 0 }
       : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[6], under: COQUE[2], outline: N.hex('#07050d'), shadow: 0 }
     drawWord(p, items, reflet === null ? st : { ...st, shine: Math.round(x - (mot.w * e) / 2) + reflet })
+  }
+  /**
+   * UN MOT QUI FRAPPE (les chiffres du « countdown » du dépôt) : la lettre grasse à l'échelle `e` — qui peut ne pas
+   * être entière : le mot arrive énorme et retombe à sa taille sur un ressort raide —, centrée sur (cx, cy), en or,
+   * cernée de deux pixels ; `flash` la blanchit.
+   */
+  function motFrappe(p: Peintre, s: string, cx: number, cy: number, e: number, flash: number): void {
+    const mot = spell(s, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+    const x0 = cx - (mot.w * e) / 2
+    const y0 = cy - 5.5 * e // (les capitales tiennent sur les rangées 2 à 8 de la boîte de 11)
+    const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x * e, y: y0, sx: e, sy: e, flash }))
+    drawWord(p, items, { fill: [N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: N.hex('#6b3a0c'), outline: N.hex('#1e0e03'), ow: 2, shadow: N.hex('#0a0408') })
   }
   /** Un texte replié à `largeur`, ligne par ligne, dans sa police (les petites capitales passent sans accents). */
   function replier(s: string, largeur: number, f: Police | 'mini' = TEXTE): string[] {
@@ -2381,16 +2395,82 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
           }
           p.glow(sx, sy, CONF.station.portee * 1.3, PEPITE[2], 0.1 + 0.35 * u * bat)
-          if (m.phase === 'extrait') p.glow(sx, sy, CONF.station.portee * 1.6, PEPITE[2], 0.5 + 0.2 * Math.sin(t * 6))
-          else {
-            // le nombre de secondes, en RELIEF D'OR (le mot des titres de la base), AU-DESSUS de l'anneau (dedans, la
-            // tête de l'arc et sa lueur le couvraient) : à chaque seconde qui tombe il saute d'un pixel et un reflet
-            // le traverse
-            const reste = CONF.extraction.duree - m.extraction
-            const depuis = Math.ceil(reste) - reste
-            motEnRelief(p, String(Math.ceil(reste)), sx, sy - CONF.station.portee - 22 - (depuis < 0.1 ? 1 : 0), true, TITRE, depuis < 0.4 ? Math.round((depuis / 0.4) * 30) - 8 : null)
+          // LE COMPTE FRAPPE, COMME LE « COUNTDOWN » DU DÉPÔT (Keko, 11/11 : « quand on est sur l'extracteur, on peut
+          // utiliser une animation du style countdown de pixelfx ? elle est plus punchy ») : l'arc d'or reste (c'est la
+          // charge, sur dix secondes) ; chaque SECONDE qui tombe est une FRAPPE — le chiffre arrive énorme et blanc et
+          // retombe à sa taille sur un ressort raide, en tremblant ; l'arc blanchit, un cadre chauffé à blanc emplit
+          // l'anneau deux images, une onde de choc en part, quatorze étincelles giclent de son tour ; dix GRADUATIONS
+          // (une par seconde) s'allument au passage de la tête. Au bout, l'anneau ÉCLATE en onde de choc et « EXTRAIT »
+          // frappe dans une couronne de rayons. Hors du parvis, le compte redescend sans frapper.
+          const TAU = Math.PI * 2
+          const monte = compteMonte && m.phase === 'vol'
+          const battement = Math.floor(m.extraction + 1e-6)
+          const ub = monte ? m.extraction - battement : 1
+          const yMot = sy - CONF.station.portee - 20
+          const mondeX = (x: number): number => x - W / 2 + camera.x
+          const mondeY = (y: number): number => y - centreY() + camera.y
+          const nt = Math.round(CONF.extraction.duree)
+          for (let k = 0; k < nt; k++) {
+            const an = a0 + (k / nt) * TAU
+            const pres = u < 1 && Math.abs(an - a1) < 0.2
+            const ca = Math.cos(an)
+            const sa = Math.sin(an)
+            p.line(sx + ca * (r + 5), sy + sa * (r + 5), sx + ca * (r + 8), sy + sa * (r + 8), (monte && ub < 0.07) || pres ? N.WHITE : an <= a1 + 1e-6 ? PEPITE[3] : COQUE[2])
           }
-        }
+          if (monte && ub < 0.3) {
+            const rk = ub / 0.3
+            p.ring(sx, sy, r + 6 + 22 * sortie(rk), 1.5 * (1 - rk) + 1, rk < 0.3 ? N.WHITE : PEPITE[3], Math.min(1, 1.3 * (1 - rk)))
+          }
+          if (monte && ub < 0.07) {
+            p.arc(sx, sy, r, 3, a0, a1, N.WHITE)
+            p.ring(sx, sy, r - 5, ub < 0.035 ? 4 : 2, ub < 0.035 ? N.WHITE : PEPITE[4], ub < 0.035 ? 0.9 : 0.6)
+          }
+          if (monte && battement !== battementVu) {
+            battementVu = battement
+            for (let k = 0; k < 14; k++) {
+              const an = (k / 14) * TAU + R.range(-0.1, 0.1)
+              const vit = R.range(40, 110)
+              etincelles.ajouter('etincelle', mondeX(sx + Math.cos(an) * (r + 2)), mondeY(sy + Math.sin(an) * (r + 2)), Math.cos(an) * vit, Math.sin(an) * vit, R.range(0.15, 0.35), R.next() < 0.5 ? N.WHITE : PEPITE[3], 1, 2)
+            }
+          }
+          if (m.phase === 'extrait') {
+            p.glow(sx, sy, CONF.station.portee * 1.6, PEPITE[2], 0.5 + 0.2 * Math.sin(t * 6))
+            // l'anneau éclate : l'onde de choc, une seconde onde, les étincelles, puis le mot dans ses rayons
+            const ue = t - perduA
+            if (battementVu !== 999) {
+              battementVu = 999
+              for (let k = 0; k < 36; k++) {
+                const an = R.range(0, TAU)
+                const vit = R.range(60, 170)
+                etincelles.ajouter('etincelle', mondeX(sx + Math.cos(an) * r), mondeY(sy + Math.sin(an) * r), Math.cos(an) * vit, Math.sin(an) * vit, R.range(0.2, 0.5), R.next() < 0.4 ? N.WHITE : R.next() < 0.5 ? PEPITE[3] : PEPITE[2], 1, 2)
+              }
+            }
+            const bk = ue / 0.4
+            if (bk >= 0 && bk < 1) p.ring(sx, sy, r + 4 + 30 * sortie(bk), Math.max(1, 6 * (1 - bk)), bk < 0.2 ? N.WHITE : PEPITE[3], Math.min(1, 1.4 * (1 - bk)))
+            const ik = (ue - 0.05) / 0.3
+            if (ik > 0 && ik < 1) p.ring(sx, sy, r + 22 * sortie(ik), 1, PEPITE[3], Math.min(1, 1.2 * (1 - ik)))
+            if (ue >= 0 && ue < 1.35) {
+              const rk = Math.min(1, ue / 0.18) * (ue > 1.05 ? Math.max(0, 1 - (ue - 1.05) / 0.3) : 1)
+              for (let k = 0; k < 18; k++) {
+                const an = (k / 18) * TAU + ue * 0.35
+                const ca = Math.cos(an)
+                const sa = Math.sin(an)
+                const r0 = 1 / Math.sqrt((ca / 46) ** 2 + (sa / 14) ** 2) + 3 * rk
+                const r1 = r0 + (k % 2 === 0 ? 26 : 13) * 0.7 * rk
+                if (rk > 0.02) p.line(sx + ca * r0, yMot + sa * r0, sx + ca * r1, yMot + sa * r1, k % 2 === 0 ? PEPITE[3] : PEPITE[2], 0.9 * rk)
+              }
+              const tremble = ue < 0.3 ? 4 * (1 - ue / 0.3) : 0
+              p.glow(sx, yMot, 46, PEPITE[2], 0.25 + (ue < 0.12 ? 0.7 * (1 - ue / 0.12) : 0))
+              motFrappe(p, 'EXTRAIT', sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), (2 + 1.4 * Math.exp(-ue * 26) * Math.cos(ue * 38)) * rk ** 0.2, ue < 0.035 ? 1 : ue < 0.07 ? 0.4 : 0)
+            }
+          } else {
+            // le chiffre : énorme et blanc une image, puis le ressort ; il tremble 0,22 s
+            const reste = CONF.extraction.duree - m.extraction
+            const tremble = monte && ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
+            p.glow(sx, yMot, 26, PEPITE[2], 0.2 + (monte && ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
+            motFrappe(p, String(Math.ceil(reste)), sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), monte ? 3 + 1.6 * Math.exp(-ub * 26) * Math.cos(ub * 38) : 3, monte ? (ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0) : 0)
+          }
+        } else if (laProche) battementVu = -1
       }
   }
 

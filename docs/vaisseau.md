@@ -38,6 +38,27 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Le compte de l'extraction frappe, comme le « countdown » (Keko, 11/11 : « quand on est sur l'extracteur, on peut utiliser une animation du style countdown de pixelfx ? elle est plus punchy »)
+
+- **L'arc d'or reste** : c'est la charge, sur dix secondes (le countdown du
+  dépôt vide son anneau à chaque chiffre ; le nôtre se remplit une fois).
+- **Chaque seconde qui tombe est une FRAPPE** (les temps et les chiffres de
+  `ui/countdown`, écrits dans `dessinerLesStations`) : le chiffre arrive
+  énorme et blanc et retombe à sa taille sur un ressort raide
+  (`3 + 1,6·e^(−26u)·cos 38u` fois la lettre grasse, `motFrappe`), il
+  tremble 0,22 s ; l'arc blanchit et un cadre chauffé à blanc emplit
+  l'anneau deux images ; une onde de choc part du parvis ; quatorze
+  étincelles giclent de son tour ; dix GRADUATIONS autour du parvis, une par
+  seconde, s'allument au passage de la tête.
+- **Au bout, l'anneau ÉCLATE** (le « GO! » du dépôt) : deux ondes de choc,
+  trente-six étincelles, et « EXTRAIT » frappe en or dans une couronne de
+  dix-huit rayons qui tournent, puis se replie avant l'écran de fin.
+- **Hors du parvis**, le compte redescend sans frapper (`compteMonte`).
+- Vu sur deux planches de captures rapprochées (`&quai`, 360 × 640) : la
+  frappe du 7 (blanc, cadre, onde), et l'éclat final avec le mot et ses
+  rayons. Aucun son n'a été ajouté aux frappes (la voix de la charge et le
+  son de l'extraction restent seuls) — à voir avec Keko.
+
 ## La barre de blindage, comme le « health bar hit » (Keko, 11/11 : « dans pixelfx, j'aime beaucoup l'animation de health bar hit, on peut rework notre barre de blindage pour intégrer cette animation ? Je vois bien une barre jaune qui représente le blindage et une section bleue en dessous qui représente le bouclier (dans un design différent) avec une animation de damage aussi »)
 
 - **Le blindage est une BARRE D'OR À CASES** (une par point, 52 px), à la
