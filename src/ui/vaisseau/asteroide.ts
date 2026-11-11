@@ -249,7 +249,9 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
  * son pan éclairé et son pan à l'ombre, dans un HALO de la teinte du minerai qui bat, et un reflet blanc en croix qui
  * passe de temps en temps. Le peintre est supposé placé sur la caméra (les coordonnées sont celles du monde).
  */
-export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number): void {
+/** Les trois gris d'une pépite refusée (l'ombre, le corps, le pan éclairé). */
+const GRIS_REFUS = N.fit(['#2c2c38', '#4a4a58', '#6c6c7a'], 3)
+export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number, refusee = false): void {
   const T = TEINTES_MINERAI[pe.minerai]
   const x = Math.round(pe.x)
   const y = Math.round(pe.y)
@@ -263,6 +265,18 @@ export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number): void {
       pts.push([x + 0.5 + Math.cos(th) * r, y + 0.5 + Math.sin(th) * r])
     }
     return pts
+  }
+  // UNE PÉPITE REFUSÉE (Keko : « grise les pépites bloquées dans l'espace, mais il faudrait quand même qu'on puisse
+  // identifier quel matériau c'est ») : un éclat ÉTEINT — gris, sans halo ni reflet, il ne bat plus —, qui garde SON
+  // MINERAI en deux endroits : son cerne à la teinte sombre du minerai, et un cœur d'un pixel à sa teinte vive
+  if (refusee) {
+    p.poly(forme(1.1), T[1])
+    p.poly(forme(0), (px, py) => {
+      const k = (px - x) * LUMIERE.x + (py - y) * LUMIERE.y
+      return k > 0.9 ? GRIS_REFUS[2] : k < -1.2 ? GRIS_REFUS[0] : GRIS_REFUS[1]
+    })
+    p.dot(x, y, T[2])
+    return
   }
   p.glow(x, y, 8, T[2], 0.3 + 0.25 * bat)
   p.poly(forme(1.1), T[0])

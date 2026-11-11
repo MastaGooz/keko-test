@@ -2788,7 +2788,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** Les pépites libres, aux teintes de leur minerai. */
   function dessinerLesPepites(p: Peintre): void {
-    for (const pe of m.pepites) dessinerPepite(p, pe, t)
+    for (const pe of m.pepites) dessinerPepite(p, pe, t, m.refuses[pe.minerai])
   }
 
   /**

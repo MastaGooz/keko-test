@@ -99,6 +99,14 @@ la forme, pas le système* (`asteroide.ts`) :
   tient d'une expédition à l'autre le temps de la page (pas gardé sur
   l'appareil). Rien ne le rappelle hors du panneau — à rejuger. Vu en
   capture : « Oui » → « Non » sur le fer.
+- **Les pépites refusées sont grisées dans l'espace, et gardent leur
+  minerai** (Keko, 11/11 : « grise les pépites bloquées dans l'espace, mais
+  il faudrait quand même qu'on puisse identifier quel matériau c'est ») :
+  `dessinerPepite(…, refusee)` rend un éclat ÉTEINT — trois gris, plus de
+  halo, plus de reflet, il culbute toujours — qui dit son minerai en deux
+  endroits : son CERNE à la teinte sombre du minerai (acier, or, turquoise)
+  et un CŒUR d'un pixel à sa teinte vive. Jugé sur la planche des pépites,
+  les collectées à côté des refusées.
 
 ## L'accueil : NOVA DRIFTER (Keko, 11/11 : « un écran d'accueil du jeu avec une demande de tap pour lancer le hangar, afin de débloquer les sons car actuellement il faut que je tape avant que le jeu lance le son. Un bel écran d'accueil dans le thème graphique du jeu, et le titre : Nova Drifter »)
 
