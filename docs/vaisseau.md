@@ -52,6 +52,54 @@ la forme, pas le système* (`asteroide.ts`) :
 - (Et l'aire ronde plus grosse une fois installé : c'est la hauteur gagnée
   sur la barre du navigateur, que la scène du hangar prend toute.)
 
+## Les quêtes (Keko, 11/11 : « j'ai envie d'implanter un nouvel onglet quêtes en plus de hangar / tech / commerce »)
+
+- **Tranché par Keko** : (1) « au début les quêtes servent de tuto : premier
+  vol, unlock de l'onglet commerce, puis tech, etc., et une fois le tuto
+  terminé, au hasard dans un pool — mais avec toujours une quête de chaque
+  type (minage, exploration, combat, commerce…) active » ; (2) on ne les
+  choisit pas avant de décoller, « progression en parallèle » ; (3) des
+  crédits, principalement ; (4) une difficulté fixe pour l'instant.
+- **La règle** (`logic/vaisseau/quetes.ts`, pure, 17 vérifications) : une
+  quête compte un COMPTEUR jusqu'à une cible (`noter` ; la distance garde
+  la plus grande, le reste s'additionne), `reclamer` rend ses crédits et
+  l'onglet qu'elle ouvre.
+  - *Le tutoriel*, une quête à la fois : Premier vol (décoller, 10 c.) →
+    Extraction (extraire une pépite, 20 c., OUVRE LE COMMERCE) → Première
+    vente (30 c., OUVRE LA TECH) → Recherche (débloquer un nœud, 40 c.) →
+    Premier ordre (poser un ordre à prix fixé, 50 c.).
+  - *Ensuite*, quatre quêtes, une par activité, tirées d'un catalogue de
+    treize (tirage seedé, l'état porte son numéro) ; réclamée, une quête
+    est remplacée par une AUTRE de la même activité.
+  - *Les intitulés, cibles et récompenses sont de moi, à rejuger.*
+- **Ce que la page compte** (`compter`) : un décollage, la distance à la
+  base (tous les vingt pas d'éloignement), les pépites extraites par
+  minerai et en tout, l'extraction, le chemin parcouru (à la fin du vol),
+  un rival abattu, les crédits d'une vente (au cours ou d'un ordre réglé),
+  un ordre posé, un ordre réglé, un nœud débloqué. Une quête qui se termine
+  s'annonce (« Quête terminée ! »), en vol comme à la base.
+- **L'écran** : un quatrième onglet, « Quêtes » (une tablette à cocher) —
+  un bandeau (« Formation » et ses cinq étapes en pastilles, puis
+  « Contrats »), une carte par quête (le symbole de l'activité, le titre,
+  la récompense, deux lignes, la barre d'avancée) ; terminée, elle se borde
+  d'or et porte « Réclamer ». Une pastille rouge reste sur l'onglet tant
+  qu'il y a à réclamer.
+- **Les onglets fermés** : la tech et le commerce ne sont PAS dans la barre
+  tant que leur quête n'est pas réclamée ; ils y sautent à ce moment.
+  À cinq cases, « Commerce » ne tient plus dans la sienne : seul l'onglet
+  ouvert dit alors son nom (comme les branches de la tech).
+- **La sauvegarde** garde les quêtes. *Une sauvegarde d'avant, qui a déjà
+  de la progression (crédits, nœuds, pièces, minerai), passe le tutoriel* —
+  ses onglets ne se referment pas. « Remise à zéro » le recommence ;
+  `&tuto=0` le passe.
+- **Limite connue** : pendant le tutoriel, seule la quête en cours compte —
+  une extraction faite avant d'avoir réclamé « Premier vol » ne compte pas
+  pour « Extraction ».
+- Vérifié : les règles ; en capture, l'onglet au départ, un vol, la quête
+  réclamée et la suivante, le commerce qui s'ouvre dans la barre après la
+  deuxième, les quatre contrats (`&tuto=0`). Pas vu en capture : la suite
+  du tutoriel (la tech, la recherche, l'ordre).
+
 ## L'arbre de la tech, refait en grand (Keko, 11/11 : « je trouve l'organisation de l'écran tech pas terrible : nœuds tout petits, beaucoup d'espace vide, les connexions (chemins) entre les nœuds sont très très fines… tu peux le rework pour le rendre bien plus juicy, beau et rendu pro ? »)
 
 - **Les nœuds** passent de 22 à 34 px (40 pour le losange) et deviennent

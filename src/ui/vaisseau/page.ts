@@ -19,6 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
+import { estTerminee, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
@@ -146,8 +147,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ouvertA = Date.now()
   const hate = Math.max(1, Number(parametres.get('marche')) || 1)
   const heureDuMarche = (): number => ouvertA + (Date.now() - ouvertA) * hate
-  let { hangar, tresor, credits, labo, marche } = chargerHangar(heureDuMarche())
-  const sauver = (): void => sauverHangar(hangar, tresor, credits, labo, marche)
+  let { hangar, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
+  /** `&tuto=0` : le tutoriel des quêtes est passé d'emblée (tous les onglets ouverts), pour essayer la suite d'un lien. */
+  if (parametres.get('tuto') === '0' && !tutorielFini(quetes)) quetes = quetesSansTutoriel()
+  const sauver = (): void => sauverHangar(hangar, tresor, credits, labo, marche, quetes)
+  /**
+   * IL S'EST PASSÉ QUELQUE CHOSE qu'une quête peut compter (un décollage, du minerai extrait, une vente…) : la règle
+   * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
+   */
+  function compter(c: Compteur, valeur: number): void {
+    const avant = quetes.actives.filter(estTerminee).length
+    quetes = noter(quetes, c, valeur)
+    if (quetes.actives.filter(estTerminee).length > avant) {
+      flottants.push({ texte: 'Quête terminée !', x: W / 2, y: enJeu && m.phase === 'vol' ? basDuHud() + 22 : HAUT_BARRE + 16, t0: t, c: PEPITE[3] })
+      pulsations.quetes = t
+      jouer('ramasse')
+    }
+  }
+  /** La plus grande distance à la base déjà comptée dans ce vol (on ne recompte que vingt unités plus loin). */
+  let distanceComptee = 0
   /** Ce que la branche commerce du labo donne au marché : une prime sur les gains, un plafond d'ordre relevé. */
   const avantages = (): { prime: number; plafond: number } => {
     const pa = passifsDe(labo)
@@ -331,6 +349,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     camera.x = 0
     camera.y = 0
     enJeu = true
+    // (les quêtes : un décollage de plus ; la distance à la base repart de zéro)
+    distanceComptee = 0
+    compter('vols', 1)
+    sauver()
     // L'ARRIVÉE (Keko : « une animation de téléportation aussi au début, comme si le vaisseau était téléporté sur
     // l'extracteur ») : la matérialisation à la place du vaisseau, qui n'apparaît qu'à son ouverture
     arriveA = t
@@ -457,9 +479,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   // (et dix RÉSERVÉS de plus, numérotés — Keko : « rajoute dix placeholders pour tester »)
   const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
-  const VUES: string[] = ['hangar', 'labo', 'entrepot', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 3)))]
+  const VUES: string[] = ['hangar', 'labo', 'entrepot', 'quetes', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
-  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Tech', entrepot: 'Commerce', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
+  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Tech', entrepot: 'Commerce', quetes: 'Quêtes', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
@@ -855,7 +877,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // RANGÉES au lieu de quatre (« on peut essayer avec trois lignes de pièces fixes ») : quarante pixels de plus au vaisseau)
   const sceneOrdinaire = (): number => Math.max(64, H - HAUT_BARRE - HAUT_NAV - 164)
   const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
-  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : sceneOrdinaire()) // (28 : la barre des catégories)
+  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : vue === 'quetes' ? 36 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
   let tBase = 0
   let dtBase = 1 / 60
@@ -946,6 +968,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     {
       const r = reglerLeMarche(marche, credits, heureDuMarche(), avantages())
       if (r.vendus.length > 0) {
+        compter('ventes', r.credits - credits)
+        compter('ordresRegles', r.vendus.length)
         credits = r.credits
         flottants.push({ texte: 'Ordre vendu !', x: W / 2, y: HAUT_BARRE + 16, t0: t, c: RUNE[3] })
         jouer('vente')
@@ -1026,6 +1050,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const mx = Math.floor(tire(i, 1, 77) * W)
         const my = y0 + Math.floor(tire(i, 2, 77) * hautScene)
         p.rect(mx, my, tire(i, 4, 77) < 0.3 ? 2 : 1, 1, tire(i, 3, 77) < 0.5 ? N.hex('#0b120f') : N.hex('#18251f'))
+      }
+    } else if (vue === 'quetes') {
+      // LE BANDEAU DES QUÊTES : pendant le tutoriel, « Formation » et ses étapes en pastilles ; ensuite, « Contrats »
+      p.rect(0, y0, W, hautScene, N.hex('#14101e'))
+      for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
+      if (!tutorielFini(quetes)) {
+        motEnRelief(p, 'Formation', cx, y0 + 7, true)
+        const n = TUTORIEL.length
+        for (let i = 0; i < n; i++) {
+          const px = Math.round(cx + (i - (n - 1) / 2) * 12)
+          const fait = i < quetes.etape
+          const ici = i === quetes.etape
+          p.rect(px - 3, y0 + 21, 7, 7, MATIERES.encre.contour)
+          p.rect(px - 2, y0 + 22, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
+          if (i > 0) p.rect(px - 9, y0 + 24, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
+        }
+      } else {
+        motEnRelief(p, 'Contrats', cx, y0 + 7, true)
+        ecrire(p, 'Un par activité, toujours', cx, y0 + 21, COQUE[4], { align: 'center' })
       }
     } else {
       p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))
@@ -1293,7 +1336,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ecrire(p, n, px + 16 + tremble, 10 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS })
   }
 
-  const PRINCIPALES = (): string[] => VUES.slice(0, 3)
+  /**
+   * LES ONGLETS DE LA BARRE : le hangar, la tech, le commerce, les quêtes — MOINS CEUX QUE LE TUTORIEL N'A PAS ENCORE
+   * OUVERTS (Keko, 11/11 : « au début les quêtes servent de tuto : premier vol, unlock de l'onglet commerce, puis
+   * tech… ») : la tech et le commerce paraissent quand on réclame la quête qui les ouvre.
+   */
+  const PRINCIPALES = (): string[] => VUES.slice(0, 4).filter((vv) => (vv === 'labo' ? ongletOuvert(quetes, 'labo') : vv === 'entrepot' ? ongletOuvert(quetes, 'entrepot') : true))
   function dessinerLIconePlus(p: Peintre, x0: number, y0: number, actif: boolean): void {
     const x = Math.round(x0)
     const y = Math.round(y0)
@@ -1317,6 +1365,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const slots = [...PRINCIPALES(), 'plus']
     const sw = W / slots.length
     const horsBarre = !PRINCIPALES().includes(vue)
+    // (à cinq cases, « Commerce » ne tient plus dans la sienne : seul l'onglet ouvert dit alors son nom, comme les branches de la tech)
+    const tousLesNoms = slots.every((vv) => largeurDe(vv === 'plus' ? 'Plus' : NOMS_VUE[vv]) + 2 <= sw)
     slots.forEach((vv, i) => {
       const actif = vv === 'plus' ? feuille || horsBarre : vv === vue && !feuille
       const x0 = Math.round(i * sw)
@@ -1330,10 +1380,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (actif) p.glow(cxs, y0 + 13, 20, PEPITE[2], 0.2)
       const ic = vv === 'plus' && horsBarre && !feuille ? vue : vv
       const nom = vv === 'plus' ? (horsBarre && !feuille ? NOMS_VUE[vue] : 'Plus') : NOMS_VUE[vv]
-      if (ic === 'plus') dessinerLIconePlus(p, cxs, y0 + 13 + dy, actif)
-      else dessinerLIconeDeVue(p, ic, cxs, y0 + 13 + dy, actif)
-      ecrire(p, nom, cxs, y0 + 22 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center', police: actif ? GRAS : TEXTE })
-      if (nouveautes.has(vv)) {
+      const nomme = tousLesNoms || actif
+      const yi = y0 + (nomme ? 13 : 17) + dy
+      if (ic === 'plus') dessinerLIconePlus(p, cxs, yi, actif)
+      else dessinerLIconeDeVue(p, ic, cxs, yi, actif)
+      if (nomme) ecrire(p, nom, Math.max(largeurDe(nom, GRAS) / 2 + 1, Math.min(W - largeurDe(nom, GRAS) / 2 - 1, cxs)), y0 + 22 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center', police: actif ? GRAS : TEXTE })
+      // (une pastille : du nouveau dans l'onglet, ou une quête à réclamer)
+      if (nouveautes.has(vv) || (vv === 'quetes' && quetes.actives.some(estTerminee))) {
         const bx = cxs + 7
         const by = y0 + 5 + dy
         p.rect(bx - 1, by - 1, 5, 5, MATIERES.encre.contour)
@@ -1359,7 +1412,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const k = feuille ? u : 1 - u
     if (k <= 0.01) return
     const bas = H - HAUT_NAV
-    const autres = VUES.slice(3)
+    const autres = VUES.slice(4)
     const COL = 4
     const tw = 42
     const th = 36
@@ -1419,6 +1472,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         resetDemandeA = -10
         hangar = hangarNeuf()
         labo = laboNeuf()
+        quetes = quetesNeuves()
         marche = marcheNeuf(heureDuMarche())
         tresor = cargaisonVide()
         credits = 0
@@ -1473,7 +1527,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const v = envolsDePiece[i]
       const u = (t - v.t0) / 0.7
       if (u < 0) continue
-      const sw = W / 4
+      const sw = W / (PRINCIPALES().length + 1)
       const xa = sw / 2
       const ya = H - HAUT_NAV + 13
       if (u >= 1) {
@@ -1562,6 +1616,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 5, y + 4, 11, 3, OMBRE, a)
       p.rect(x - 4, y + 5, 9, 1, COQUE[4], a)
       p.rect(x + 2, y + 5, 1, 1, actif && Math.floor(t * 2) % 2 === 0 ? RUNE[3] : RUNE[1], a)
+    } else if (vv === 'quetes') {
+      // LES QUÊTES : une tablette à pince, trois lignes à cocher — la première cochée de vert
+      p.rect(x - 5, y - 6, 11, 13, OMBRE, a)
+      p.rect(x - 4, y - 5, 9, 11, COQUE[5], a)
+      p.rect(x - 4, y - 5, 9, 1, COQUE[6], a)
+      p.rect(x + 4, y - 4, 1, 10, COQUE[3], a)
+      p.rect(x - 2, y - 7, 5, 3, OMBRE, a)
+      p.rect(x - 1, y - 6, 3, 1, PEPITE[2], a)
+      for (let k = 0; k < 3; k++) {
+        p.rect(x - 3, y - 2 + k * 3, 2, 2, k === 0 ? RUNE[1] : COQUE[2], a)
+        p.rect(x, y - 2 + k * 3, 4, 1, COQUE[2], a)
+      }
+      if (actif) {
+        const k = Math.floor(t * 1.5) % 3
+        p.rect(x - 3, y - 2 + k * 3, 2, 2, RUNE[3])
+        p.glow(x, y, 8, PEPITE[2], 0.3)
+      }
     } else if (estEssai(vv)) dessinerUneIconeDEssai(p, vv, x, y, OMBRE)
     else {
       // (plus aucune vue ne le porte depuis que le commerce a pris le moniteur ; gardé pour un vrai entrepôt)
@@ -1745,6 +1816,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, 'Un onglet d’essai', W / 2, y + 12, COQUE[4], { align: 'center' })
       p.text('(&ONGLETS=N)', W / 2, y + 26, COQUE[2], { align: 'center' })
     } else if (vue === 'entrepot') dessinerLEntrepot(p, y)
+    else if (vue === 'quetes') dessinerLesQuetes(p, y)
     else if (vue === 'labo') {
       // (rien : l'arbre tient toute la scène)
     } else if (etape === 'vaisseau') {
@@ -1918,6 +1990,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     vente: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
     plafond: ['#######', '...#...', '..###..', '.#####.', '...#...', '...#...', '...#...'],
     prevision: ['......#', '.....#.', '#...#..', '.#.#...', '..#....', '.......', '#.#.#.#'],
+    tuto: ['...#...', '..###..', '#######', '.#####.', '.#####.', '.##.##.', '.#...#.'],
     tout: ['###.###', '###.###', '###.###', '.......', '###.###', '###.###', '###.###'],
     minerai: ['..###..', '.#####.', '#######', '#######', '#######', '.#####.', '.......'],
     cristal: ['..##...', '..###..', '.####..', '.####.#', '.#####.', '.#####.', '..###..'],
@@ -2339,6 +2412,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (r === null) return
         labo = r.labo
         tresor = r.tresor
+        compter('noeuds', 1)
         sauver()
         debloqueA = t
         debloqueId = n.id
@@ -2573,6 +2647,68 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesOrdres(p, y + hp + 5, k)
     return y + hp + 4
   }
+  // ================================================================ LES QUÊTES
+  /**
+   * L'ONGLET DES QUÊTES (Keko, 11/11 — la règle est dans `logic/vaisseau/quetes.ts`) : une carte par quête active —
+   * le symbole de son activité (une étoile pour le tutoriel), son titre, sa récompense en crédits, ce qu'elle demande,
+   * et sa barre d'avancée. Terminée, la carte se borde d'or et porte « Réclamer » : les crédits volent au compteur, la
+   * quête suivante prend sa place, et l'onglet qu'elle ouvre saute dans la barre du bas.
+   */
+  const ICONE_D_ACTIVITE: Record<Activite, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration', commerce: 'commerce' }
+  const H_QUETE = 50
+  function dessinerLesQuetes(p: Peintre, y0: number): void {
+    quetes.actives.forEach((q, i) => {
+      const mo = modeleDe(q.modele)
+      const age = t - vueA - i * 0.05
+      if (mo === undefined || age < 0) return
+      const y = y0 + i * (H_QUETE + 3) + Math.round((1 - sortie(age / 0.2)) * 4)
+      const fini = estTerminee(q)
+      if (fini) p.glow(W / 2, y + H_QUETE / 2, 70, PEPITE[2], 0.07 + 0.05 * Math.sin(t * 4))
+      plaque(p, 4, y, W - 8, H_QUETE, 'encre', { bord: fini ? PEPITE[2] : undefined, flash: age < 0.07 })
+      plaque(p, 8, y + 4, 20, 20, 'creux')
+      dessinerLeGlyphe(p, mo.activite === undefined ? 'tuto' : ICONE_D_ACTIVITE[mo.activite], 18, y + 14, fini ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[3], COQUE[5], COQUE[6]])
+      ecrire(p, mo.titre, 32, y + 4, fini ? PEPITE[3] : N.WHITE, { police: GRAS })
+      nombreDeCredits(p, `+${mo.credits}`, W - 9, y + 4, N.hex('#fff2c8'))
+      replier(mo.dit, W - 42).slice(0, 2).forEach((li, k) => ecrire(p, li, 32, y + 14 + k * 9, COQUE[4]))
+      if (fini) {
+        const bw = largeurDe('Réclamer', GRAS) + 22
+        bouton(p, Math.round(W / 2 - bw / 2), y + H_QUETE - 17, bw, 14, 'Réclamer', true, () => {
+          const r = reclamer(quetes, i, credits)
+          if (r === null) return
+          quetes = r.etat
+          credits = r.credits
+          sauver()
+          secouer(1)
+          for (let k = 0; k < 8; k++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 40, y0: y + H_QUETE - 10, t0: t + k * 0.05 })
+          gerbe(W / 2, y + H_QUETE - 10, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
+          vueA = t - 0.1
+          // l'onglet qu'elle ouvre : il saute dans la barre et prend sa pastille
+          if (r.ouvre !== undefined) {
+            pulsations[r.ouvre] = t
+            nouveautes.add(r.ouvre)
+            flottants.push({ texte: `${NOMS_VUE[r.ouvre]} débloqué !`, x: W / 2, y: y - 4, t0: t, c: RUNE[3] })
+          }
+        }, 'achat')
+      } else {
+        // sa barre d'avancée, et le compte à droite
+        const compte = `${montantCourt(Math.floor(q.progres))}/${montantCourt(mo.cible)}`
+        const wc = largeurDe(compte, GRAS)
+        const bx = 8
+        const by = y + H_QUETE - 11
+        const bw = W - 16 - wc - 5
+        p.rect(bx, by, bw, 6, MATIERES.creux.contour)
+        p.rect(bx + 1, by + 1, bw - 2, 4, MATIERES.creux.corps)
+        const lp = Math.round((bw - 2) * Math.min(1, q.progres / mo.cible))
+        if (lp > 0) {
+          p.rect(bx + 1, by + 1, lp, 4, RUNE[2])
+          p.rect(bx + 1, by + 1, lp, 1, RUNE[3])
+          p.rect(bx + 1, by + 4, lp, 1, RUNE[1])
+        }
+        ecrire(p, compte, W - 9, by - 1, COQUE[5], { police: GRAS, align: 'right' })
+      }
+    })
+  }
+
   // ================================================================ LA VENTE : LE PANNEAU DU MARCHÉ
   /**
    * LE PANNEAU DE VENTE (Keko, 11/11 — la règle est dans `logic/vaisseau/marche.ts`) : « Vendre » ne vend plus tout d'un
@@ -2828,9 +2964,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           marche = r.marche
           tresor = r.tresor
           flottants.push({ texte: 'Ordre posé', x: W / 2, y: HAUT_BARRE + 16, t0: t, c: PEPITE[3] })
+          compter('ordresPoses', 1)
         } else {
           const r = vendreAuCours(tresor, credits, k, q, heureDuMarche(), avantages())
           if (r === null) return
+          compter('ventes', r.credits - credits)
           tresor = r.tresor
           credits = r.credits
           secouer(0.8)
@@ -4353,6 +4491,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         accumule -= PAS
         const r = avancerLeMonde(CONF, m, PAS, direction)
         v = m.vaisseau
+        // (les quêtes : la plus grande distance à la base, comptée tous les vingt pas d'éloignement)
+        {
+          const loin = Math.hypot(v.x, v.y)
+          if (loin > distanceComptee + 20) {
+            distanceComptee = loin
+            compter('distance', loin)
+          }
+        }
         // la postcombustion : une traînée bleue derrière la tuyère
         if (partDeLaPostcombustion(CONF, m) > 0.3) {
           const ca = Math.cos(v.cap)
@@ -4451,6 +4597,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
               jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
+              compter('rivaux', 1)
               effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), palette: EXPLOSION_RIVAL, debris: '#7a2a36', size: 0.35, seed: ev.id }), x: ev.x, y: ev.y })
               for (let i = 0; i < 14; i++) {
                 const a = R.range(0, Math.PI * 2)
@@ -4474,6 +4621,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               for (const k of MINERAIS) affiche[k] = 0
               // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
               tresor = { ...m.tresor }
+              // (les quêtes : ce qui vient d'être extrait, l'extraction, le chemin parcouru)
+              for (const k of MINERAIS) compter(k, ev.cargaison[k])
+              compter('pepites', ev.pepites)
+              compter('extractions', 1)
+              compter('parcouru', v.parcouru)
               sauver()
               // (le bilan ne s'affiche plus au hangar : Keko l'a fait retirer ; les compteurs et le trésor disent tout)
               break
@@ -4482,6 +4634,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
               jouer('perdu')
               perduA = t
+              compter('parcouru', v.parcouru)
+              sauver()
               effets.push({ fx: N.createFx(EXPLOSION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), debris: '#46587a', size: 0.45, seed: 5 }), x: v.x, y: v.y })
               for (let i = 0; i < 18; i++) {
                 const a = R.range(0, Math.PI * 2)
