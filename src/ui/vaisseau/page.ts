@@ -2341,15 +2341,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LE COURS, écrit comme un nombre ordinaire, avec SA FLÈCHE à gauche (Keko, 11/11 : « plutôt qu'écrire le chiffre du
    * cours en rouge ou vert, écris-le normalement et mets une flèche verte qui monte ou une rouge qui descend à gauche
-   * du chiffre ») : verte vers le haut s'il vient de monter, rouge vers le bas s'il vient de descendre.
+   * du chiffre ») : verte vers le haut en hausse, rouge vers le bas en baisse, un tiret gris quand le cours est stable —
+   * la tendance sur dix minutes (`tendanceDe`), pas d'un pas à l'autre : elle changeait de sens sans arrêt.
    */
   function dessinerLeCours(p: Peintre, k: Minerai, xDroite: number, y: number): void {
     const maintenant = heureDuMarche()
     const texte = prixDit(coursA(k, maintenant))
     nombreDeCredits(p, texte, xDroite, y, N.hex('#fff2c8'))
     const sens = tendanceDe(k, maintenant)
-    if (sens === 0) return
     const xf = Math.round(xDroite - largeurDe(texte, GRAS) - 12 - 8)
+    // (stable : un tiret gris)
+    if (sens === 0) {
+      p.rect(xf - 3, y + 2, 7, 3, MATIERES.encre.contour)
+      p.rect(xf - 2, y + 3, 5, 1, COQUE[3])
+      return
+    }
     const c = sens > 0 ? RUNE[2] : ROUGE[4]
     const clair = sens > 0 ? RUNE[3] : ROUGE[5]
     const encre = MATIERES.encre.contour

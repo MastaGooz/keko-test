@@ -94,6 +94,14 @@ la forme, pas le système* (`asteroide.ts`) :
   au dernier cours différent, sur dix pas ; avant, la couleur disait autre
   chose (au-dessus ou au-dessous du prix de base). Le panneau d'un ordre
   gagne huit pixels sous « Fermer ».
+- **La flèche suit la tendance sur dix minutes** (Keko, 11/11 : « la flèche
+  change du vert au rouge quasiment tout le temps, c'est pas très utile ;
+  peut-être allonger la durée sur laquelle on réévalue si hausse ou
+  baisse ») : `tendanceDe` compare la moyenne des dix derniers pas à celle
+  des dix d'avant ; sous 3 % du prix de base d'écart, le cours est STABLE
+  (un tiret gris). Mesuré sur mille pas de l'or : 108 changements, contre
+  645 quand on comparait un pas au précédent — un toutes les neuf minutes
+  en moyenne (toutes les neuf secondes avec `&marche=60`).
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).

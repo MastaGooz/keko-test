@@ -31,6 +31,12 @@ export const MARCHE = {
   bruit: 0.04,
   /** Le plus haut prix qu'un ordre puisse fixer, en parts du prix de base (le cours ne monte jamais plus haut que 1 + les trois parts). */
   plafond: 1.45,
+  /**
+   * LA TENDANCE (la flèche du cours) : la moyenne des `fenetre` derniers pas comparée à celle des `fenetre` d'avant ; en
+   * deçà de `seuil` (une part du prix de base) d'écart, le cours est dit STABLE. Comparé au seul pas d'avant, il
+   * changeait de sens presque à chaque pas (Keko : « la flèche change du vert au rouge quasiment tout le temps »).
+   */
+  tendance: { fenetre: 10, seuil: 0.03 },
   /** Combien d'ordres peuvent attendre à la fois, tous minerais confondus. */
   ordres: 20,
 } as const
@@ -62,15 +68,18 @@ export function historiqueDe(k: Minerai, instant: number): number[] {
   const p = pasDe(instant)
   return Array.from({ length: MARCHE.historique }, (_, i) => coursAuPas(k, p - (MARCHE.historique - 1 - i)))
 }
-/** LA TENDANCE du cours : +1 s'il vient de monter, −1 de descendre — comparé au dernier cours DIFFÉRENT, sur dix pas au plus ; 0 s'il n'a pas bougé. */
+/** LA TENDANCE du cours : +1 en hausse, −1 en baisse, 0 stable — deux moyennes glissantes comparées (voir `MARCHE.tendance`). */
 export function tendanceDe(k: Minerai, instant: number): -1 | 0 | 1 {
   const p = pasDe(instant)
-  const c = coursAuPas(k, p)
-  for (let i = 1; i <= 10; i++) {
-    const avant = coursAuPas(k, p - i)
-    if (avant !== c) return c > avant ? 1 : -1
+  const n = MARCHE.tendance.fenetre
+  let recent = 0
+  let avant = 0
+  for (let i = 0; i < n; i++) {
+    recent += coursAuPas(k, p - i)
+    avant += coursAuPas(k, p - n - i)
   }
-  return 0
+  const ecart = (recent - avant) / n / FICHES_MINERAI[k].credits
+  return ecart > MARCHE.tendance.seuil ? 1 : ecart < -MARCHE.tendance.seuil ? -1 : 0
 }
 /** Le plus haut prix qu'un ordre puisse fixer. */
 export const prixPlafond = (k: Minerai): number => dixieme(FICHES_MINERAI[k].credits * MARCHE.plafond)

@@ -25,7 +25,11 @@ verifier('le cours bouge, reste au dixième, autour de son prix de base, et sous
 verifier('les trois minerais n’ont pas la même courbe', mille.some((p) => coursAuPas('fer', p) / 2 !== coursAuPas('or', p) / 8))
 const h = historiqueDe('or', T0)
 verifier('la courbe : tant de points, le dernier est le cours du moment, l’avant-dernier celui du pas d’avant', h.length === MARCHE.historique && h[h.length - 1] === coursA('or', T0) && h[h.length - 2] === coursA('or', T0 - PAS))
-verifier('la tendance : +1 quand le cours vient de monter, −1 de descendre (comparé au dernier cours différent)', mille.slice(20, 400).every((p) => { const c = coursAuPas('or', p); let i = 1; while (i <= 10 && coursAuPas('or', p - i) === c) i++; const attendu = i > 10 ? 0 : c > coursAuPas('or', p - i) ? 1 : -1; return tendanceDe('or', p * PAS) === attendu }) && mille.slice(20, 400).some((p) => tendanceDe('or', p * PAS) === 1) && mille.slice(20, 400).some((p) => tendanceDe('or', p * PAS) === -1))
+const sens = mille.slice(0, 1000).map((p) => tendanceDe('or', p * PAS))
+const changements = sens.filter((x, i) => i > 0 && x !== sens[i - 1]).length
+const brut = mille.slice(0, 1000).map((p) => Math.sign(coursAuPas('or', p) - coursAuPas('or', p - 1)))
+verifier('la tendance connaît la hausse, la baisse et le calme, et tient : bien moins de changements que le cours d’un pas à l’autre', sens.includes(1) && sens.includes(-1) && sens.includes(0) && changements < 1000 / 6 && changements * 3 < brut.filter((x, i) => i > 0 && x !== brut[i - 1]).length)
+console.log(`    (la tendance change ${changements} fois en 1000 pas ; le cours d’un pas à l’autre, ${brut.filter((x, i) => i > 0 && x !== brut[i - 1]).length} fois)`)
 verifier('un gain est entier, arrondi vers le bas', gainDe(3, 2.5) === 7 && gainDe(10, 2.4) === 24 && gainDe(1, 0.9) === 0)
 
 const tresor = { fer: 50, or: 10, cristal: 0 }
