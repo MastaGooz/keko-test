@@ -401,6 +401,19 @@ const RECETTES = {
       note(m, 0.11, 0.9, 0, { f: 261.63, a: 0.004, d: 0.14, partiels: CORPS })
     },
   },
+  /**
+   * l'accueil : la tape qui lance le jeu (Keko : « un autre son que celui du décollage quand on clique l'écran
+   * d'accueil ») — un appui rond, un souffle qui s'ouvre, et l'accord de ré qui monte en clochettes (ré, la, ré, fa#),
+   * de gauche à droite : on entre
+   */
+  accueil: {
+    duree: 1.9, niveau: 0.5, salle: [0.7, 0.3],
+    faire: (m, h) => {
+      note(m, 0, 0.5, 0, { f: 147, glisse: { vers: 110, en: 0.05 }, d: 0.25, partiels: CORPS, sature: 2 })
+      souffle(m, h, 0, 0.5, 0, { f: 600, glisse: { vers: 2600, en: 0.35, droit: true }, q: 1.1, bande: true, a: 0.08, d: 0.4, large: true })
+      for (const [i, f] of [RE5, LA5, RE6, FAD6].entries()) note(m, 0.07 * i, 0.75 - i * 0.08, -0.3 + i * 0.2, { f, d: 0.5 + i * 0.12, partiels: CLOCHE, battement: 5 })
+    },
+  },
   /** le décollage : un souffle qui s'ouvre, un grave qui monte d'une octave */
   decolle: {
     duree: 2.4, niveau: 0.75, salle: [0.7, 0.22],

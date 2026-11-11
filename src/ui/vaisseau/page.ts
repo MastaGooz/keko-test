@@ -45,6 +45,8 @@ type Peintre = {
   measure(texte: string, o?: { font?: string; scale?: number }): [number, number]
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
   glow(x: number, y: number, r: number, c: number, k?: number): void
+  /** Ajoute de la lumière à un pixel (la couche de lumière du tampon). */
+  light(x: number, y: number, c: number, k?: number): void
 }
 type Particules = { spawn(k: number, x: number, y: number, vx: number, vy: number, vie: number, c?: number, taille?: number): void; update(dt: number): void; draw(p: Peintre, couche?: string): void }
 type Morceaux = { add(b: Record<string, unknown>): void; update(dt: number): void; draw(p: Peintre): void }
@@ -295,10 +297,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let accueil = !parametres.has('direct')
   let accueilQuitteA: number | null = null
   const SORTIE_DE_L_ACCUEIL = 0.75
+  /** La secousse de l'écran quand un mot du titre frappe (en pixels du tampon ; `dessinerLAccueil` la pose). */
+  let secousseDeLAccueil = 0
   function quitterLAccueil(): void {
     if (accueilQuitteA !== null) return
     accueilQuitteA = t
-    jouer('decolle')
+    jouer('accueil')
     if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
   }
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
@@ -2580,6 +2584,82 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const pe of m.pepites) dessinerPepite(p, pe, t)
   }
 
+  /**
+   * L'ÉCRAN S'ALLUME COMME UN TUBE (Keko : « pour l'ouverture de l'écran titre, au lieu d'apparaître comme ça, une
+   * transition dans le style de CRT off ») — la moitié « on » de `transitions/crt-off` du dépôt, refaite à la taille
+   * de notre tampon : le noir, un éclat au cœur, une LIGNE blanche qui file vers les deux bords en crépitant, l'image
+   * qui s'ouvre de la ligne vers le haut et le bas (brûlée de lumière, ses lisières qui luisent), puis le tube chauffe :
+   * une lueur qui retombe, une bande de rafraîchissement qui descend une fois, des lignes de balayage. Posé PAR-DESSUS
+   * l'accueil dessiné ; le noir éteint aussi la couche de lumière (les halos passeraient à travers).
+   */
+  const TUBE = N.fit(['#060a14', '#0e1a33', '#1a3360', '#2a5a9a', '#4a8fd0', '#8cc4f0', '#d4ecff', '#ffffff'], 8)
+  const ALLUMAGE = { point: 0.14, ligne: 0.28, image: 0.58, chaud: 1.2 }
+  function allumerLEcran(p: Peintre): void {
+    const A = ALLUMAGE
+    if (t >= A.chaud) return
+    const XC = W / 2
+    const YC = Math.round(H / 2)
+    const fl = 0.85 + 0.15 * tire(Math.floor(t * 30), 7, 1)
+    if (t >= A.image) {
+      // le tube chauffe : la lueur retombe, la bande descend une fois, les lignes de balayage
+      const u = (t - A.image) / (A.chaud - A.image)
+      const bande = -20 + u * (H + 40)
+      for (let y = 0; y < H; y++) {
+        const k = 0.22 * (1 - u) ** 2 + 0.3 * Math.max(0, 1 - Math.abs(y - bande) / 10) ** 2 * (1 - u) + (y & 1 ? 0.05 * (1 - u) : 0)
+        if (k > 0.01) for (let x = 0; x < W; x++) p.light(x, y, TUBE[5], k)
+      }
+      return
+    }
+    const ouvert = t < A.ligne ? 0 : H * sortie((t - A.ligne) / (A.image - A.ligne))
+    if (ouvert > 2) {
+      // l'image s'ouvre : le noir recule en haut et en bas, la bande visible est brûlée, ses lisières luisent
+      const haut = Math.round(YC - ouvert / 2)
+      const bas = Math.round(YC + ouvert / 2)
+      frame.light.fill(0, 0, Math.max(0, haut) * W)
+      frame.light.fill(0, Math.min(H, bas) * W)
+      if (haut > 0) p.rect(0, 0, W, haut, FOND)
+      if (bas < H) p.rect(0, bas, W, H - bas, FOND)
+      const serre = 1 - ouvert / H
+      for (let y = Math.max(0, haut); y < Math.min(H, bas); y++) {
+        const e = Math.min(y - haut, bas - 1 - y)
+        const k = 0.55 * serre * serre + (y & 1 ? 0.08 * serre : 0) + 0.35 * Math.max(0, 1 - e / 6) ** 2
+        for (let x = 0; x < W; x++) p.light(x, y, TUBE[5], k * fl)
+      }
+      for (const y of [haut - 1, bas]) if (y >= 0 && y < H) p.rect(0, y, W, 1, serre > 0.6 ? TUBE[6] : TUBE[5])
+      return
+    }
+    // le noir, puis l'éclat et la ligne
+    frame.light.fill(0)
+    p.rect(0, 0, W, H, FOND)
+    if (t < A.point) return
+    const w = t < A.ligne ? XC * (1 - Math.pow(2, (-10 * (t - A.point)) / (A.ligne - A.point))) : XC
+    if (w >= 1) {
+      const f = Math.floor(t * 30)
+      for (let x = Math.max(0, Math.floor(XC - w)); x < Math.min(W, Math.ceil(XC + w)); x++) {
+        const u = Math.abs(x + 0.5 - XC) / w
+        const y = YC + (tire(x >> 3, f, 2) < 0.2 ? 1 : 0)
+        p.px(x, y, u < 0.85 ? N.WHITE : TUBE[6])
+        if (u < 0.92) {
+          p.px(x, y - 1, TUBE[6])
+          p.px(x, y + 1, u < 0.6 ? TUBE[6] : TUBE[5])
+        }
+        if (u < 0.8) {
+          p.dot(x, y - 2, TUBE[4], 0.5)
+          p.dot(x, y + 2, TUBE[4], 0.5)
+        }
+        if (tire(x, f, 3) < 0.06) p.px(x, y + (tire(x, f, 4) < 0.5 ? -1 : 1) * (2 + Math.floor(tire(x, f, 5) * 4)), tire(x, f, 6) < 0.5 ? N.WHITE : TUBE[5])
+        p.light(x, y, TUBE[6], 0.5 * fl * (1 - u * 0.6))
+      }
+      for (let x = Math.floor(XC - w); x <= XC + w; x += 9) p.glow(x, YC, 10, TUBE[5], 0.35 * fl)
+      p.glow(XC, YC, Math.min(70, 16 + w * 0.4), TUBE[5], 0.4 * fl)
+    }
+    const s0 = t - A.point
+    if (s0 < 0.14) {
+      N.sparkle(p, XC, YC, 12 * (1 - s0 / 0.14) + 2, N.WHITE, TUBE[5], 0.9)
+      p.glow(XC, YC, 40, N.WHITE, 0.5 * (1 - s0 / 0.14))
+    }
+  }
+
   /** Les roches qui passent sur l'accueil : leur place en travers (0 à 1), leur départ, leur vitesse, et de quoi les dessiner. */
   const ROCHES_DE_L_ACCUEIL: { x: number; y: number; vit: number; rayon: number; graine: number; tourne: number; minerai: Minerai; richesse: number }[] = [
     { x: 0.1, y: 0.05, vit: 13, rayon: 13, graine: 9173, tourne: 0.25, minerai: 'fer', richesse: 0.5 },
@@ -2592,7 +2672,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * L'ÉCRAN D'ACCUEIL, dans la langue du jeu : on DÉRIVE — le ciel du vol défile (ses étoiles, ses nuées), des roches
    * du champ passent, le vaisseau TEL QU'IL EST MONTÉ au hangar file vers le haut, tuyère allumée ; au-dessus, une NOVA
    * (une étoile qui éclate : son cœur, ses rayons qui tournent, ses halos) et le titre en relief, NOVA en or, DRIFTER
-   * en acier, qui tombent en place et qu'un reflet balaie ; en bas, « Toucher pour commencer » qui bat. À la tape, le
+   * en acier, qui fusent et frappent comme le « combo counter » du dépôt, puis qu'un reflet balaie ; l'écran entier
+   * s'ALLUME d'abord comme un tube (`allumerLEcran`) ; en bas, « Toucher pour commencer » qui bat. À la tape, le
    * vaisseau s'arrache vers le haut, tout file, et le hangar s'ouvre.
    */
   function dessinerLAccueil(p: Peintre): void {
@@ -2632,16 +2713,41 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(Math.round(cx + s * 8.4 * E), Math.round(sy + 7.8 * E), 7, c, 0.7)
       }
 
-    // LE TITRE tombe en place (NOVA, puis DRIFTER) ; derrière lui, la nova
+    // LE TITRE ARRIVE COMME LE « COMBO COUNTER » DU DÉPÔT (Keko : « un truc plus travaillé, dans le genre de
+    // l'apparition du texte dans ui/combo counter de pixelfx ») : chaque mot FUSE de son côté sur des traits de vitesse
+    // — étiré, penché, deux images rémanentes derrière lui —, puis FRAPPE et s'arrête net : les lettres blanchissent, une
+    // étoile à pointes éclate derrière, un anneau roule, des étincelles giclent, l'écran tremble, le mot dépasse et
+    // revient. NOVA par la gauche, DRIFTER par la droite ; la nova naît de la frappe de NOVA.
     const eN = largeurDe('NOVA', GRAS) * 4 <= W - 12 ? 4 : 3
     const eD = largeurDe('DRIFTER', GRAS) * 3 <= W - 8 ? 3 : 2
     const yT = Math.round(Math.max(26, H * 0.13))
-    const chuteN = Math.round((1 - sortie(t / 0.55)) * -(yT + 60)) - Math.round(elan * (yT + 120))
-    const chuteD = Math.round((1 - sortie((t - 0.18) / 0.55)) * -(yT + 110)) - Math.round(elan * (yT + 160))
+    const monte = -Math.round(elan * (yT + 160))
+    const VOL = 0.12
+    const TN = 0.78
+    const TD = 1.1
+    const xDe = (tau: number, sens: number): number => {
+      if (tau < 0) return sens * -(W + 60)
+      if (tau < VOL) return sens * -(W * 0.95) * Math.pow(1 - tau / VOL, 2)
+      return sens * 7 * Math.exp(-(tau - VOL) * 18) * Math.sin((tau - VOL) * 34)
+    }
+    const OR = { fill: [N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: N.hex('#6b3a0c'), outline: N.hex('#1e0e03'), ow: 2, shadow: N.hex('#0a0408') }
+    const ACIER = { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[6], under: COQUE[2], outline: N.hex('#07050d'), ow: 2, shadow: N.hex('#04040a') }
+    type Mot = { s: string; e: number; y: number; t0: number; sens: number; style: typeof OR; vif: number; clair: number; sombre: number }
+    const MOTS: Mot[] = [
+      { s: 'NOVA', e: eN, y: yT, t0: TN, sens: 1, style: OR, vif: PEPITE[2], clair: PEPITE[3], sombre: N.hex('#6b3a0c') },
+      { s: 'DRIFTER', e: eD, y: yT + 11 * eN - 2, t0: TD, sens: -1, style: ACIER, vif: COQUE[4], clair: COQUE[5], sombre: COQUE[2] },
+    ]
+    const lettres = (mot: Mot, dx: number, etire: number, penche: number, flash: number): { g: unknown; x: number; y: number; sx: number; sy: number; slant: number; flash: number }[] => {
+      const m = spell(mot.s, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+      const x0 = Math.round(W / 2 + dx - (m.w * mot.e * etire) / 2)
+      return m.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x * mot.e * etire, y: mot.y + monte - decalage(GRAS) * mot.e, sx: mot.e * etire, sy: mot.e, slant: penche, flash }))
+    }
+    secousseDeLAccueil = 0
+    // la nova, née de la frappe de NOVA, au coin du mot
     const nx = Math.round(W / 2 + (largeurDe('NOVA', GRAS) * eN) / 2 - 4)
-    const ny = yT - 6 + chuteN
+    const ny = yT - 6 + monte
     const bat = 0.5 + 0.5 * Math.sin(t * 2.3)
-    const eclos = sortie((t - 0.5) / 0.6)
+    const eclos = sortie((t - TN - VOL) / 0.5)
     if (eclos > 0) {
       p.glow(nx, ny, 70, VIOLET[2], 0.3 * eclos)
       p.glow(nx, ny, 34 + 6 * bat, PEPITE[2], (0.45 + 0.2 * bat) * eclos)
@@ -2654,14 +2760,66 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       N.sparkle(p, nx, ny, (7 + 2 * bat) * eclos, N.WHITE, PEPITE[3], 0.95)
       p.circle(nx, ny, 2, N.WHITE)
     }
-    const cycle = boucle(t - 1.2, 3.4)
-    const wN = largeurDe('NOVA', GRAS) * eN
-    const wD = largeurDe('DRIFTER', GRAS) * eD
-    motEnRelief(p, 'NOVA', W / 2, yT + chuteN, true, GRAS, t > 1.2 && cycle < 0.7 ? -20 + ((wN + 40) * cycle) / 0.7 : null, eN)
-    motEnRelief(p, 'DRIFTER', W / 2, yT + 11 * eN - 2 + chuteD, false, GRAS, t > 1.2 && cycle > 0.35 && cycle < 1.05 ? -20 + ((wD + 40) * (cycle - 0.35)) / 0.7 : null, eD)
+    const cycle = boucle(t - TD - 0.9, 3.4)
+    MOTS.forEach((mot, n) => {
+      const tau = t - mot.t0
+      if (tau < 0) return
+      const vole = tau < VOL
+      const frappe = tau - VOL
+      const cxm = W / 2
+      const cym = mot.y + monte + Math.round(3.5 * mot.e)
+      // les traits de vitesse : pleins pendant le vol, puis ils s'éteignent
+      const kTraits = vole ? 1 : Math.max(0, 1 - frappe / 0.35) * 0.9
+      if (kTraits > 0.02) {
+        const f = Math.floor(t * 30)
+        for (let i = 0; i < 16; i++) {
+          if (tire(f, i, 3 + n) > kTraits) continue
+          const y = cym + Math.round((tire(f, i, 1 + n) - 0.5) * 12 * mot.e)
+          const L = 16 + tire(f, i, 2) * 50
+          const x = W / 2 + (tire(f, i, 4) - 0.5) * (W + 20)
+          p.line(x - L / 2, y, x + L / 2, y, mot.clair, 0.75)
+          p.line(x + (mot.sens > 0 ? L / 4 : -L / 2), y, x + (mot.sens > 0 ? L / 2 : -L / 4), y, N.WHITE)
+        }
+      }
+      // la frappe : l'étoile à pointes deux images, l'anneau qui roule, les étincelles, la lumière, la secousse
+      if (frappe >= 0) {
+        if (frappe < 0.07) {
+          for (let i = 0; i < 10; i++) {
+            const an = (i / 10) * Math.PI * 2 + (tire(i, 7, n) - 0.5) * 0.3
+            const L = (18 + tire(i, 8, n) * 14) * (mot.e / 3)
+            const ca = Math.cos(an) * 1.5
+            const sa = Math.sin(an)
+            if (frappe < 0.035) {
+              p.line(cxm, cym, cxm + ca * L, cym + sa * L, N.WHITE)
+              p.line(cxm, cym + 1, cxm + ca * L, cym + sa * L + 1, mot.clair)
+            } else p.line(cxm + ca * L * 0.5, cym + sa * L * 0.5, cxm + ca * L * 1.3, cym + sa * L * 1.3, mot.vif)
+          }
+        }
+        const rk = frappe / 0.34
+        if (rk < 1) p.ring(cxm, cym, 18 + 46 * sortie(rk), 1, rk < 0.3 ? N.WHITE : mot.clair, 1.15 - rk)
+        for (let i = 0; i < 26; i++) {
+          const vie = 0.14 + 0.22 * tire(i, 11, n)
+          const u = frappe / vie
+          if (u >= 1) continue
+          const an = (tire(i, 12, n) - 0.5) * 2.4 + (tire(i, 13, n) < 0.5 ? Math.PI : 0)
+          const d = (120 + 180 * tire(i, 14, n)) * vie * (1 - (1 - u) * (1 - u)) * 0.6
+          p.dot(cxm + (tire(i, 15, n) - 0.5) * 40 + Math.cos(an) * d, cym + (tire(i, 16, n) - 0.5) * 10 + Math.sin(an) * d * 0.6, u < 0.3 ? N.WHITE : i % 2 === 0 ? mot.clair : mot.vif, 1 - u)
+        }
+        if (frappe < 0.2) p.glow(cxm, cym, 80, mot.vif, 0.55 * (1 - frappe / 0.2))
+        if (frappe < 0.1) p.glow(cxm, cym, 40, N.WHITE, 0.7 * (1 - frappe / 0.1))
+        if (frappe < 0.25) secousseDeLAccueil = Math.max(secousseDeLAccueil, 3 * (1 - frappe / 0.25))
+      }
+      // les images rémanentes, pendant le vol
+      if (vole) for (const [retard, c] of [[0.03, mot.sombre], [0.015, mot.vif]] as const) drawWord(p, lettres(mot, xDe(tau - retard, mot.sens), 1.22, mot.sens, 0), { fill: [c], edge: c, under: c, outline: 0, shadow: 0 })
+      // le mot : étiré et penché en vol, blanc à la frappe, puis son reflet
+      const larg = largeurDe(mot.s, GRAS) * mot.e
+      const quand = n === 0 ? cycle : cycle - 0.35
+      const reflet = t > TD + 0.9 && quand > 0 && quand < 0.7 ? Math.round(W / 2 - larg / 2) - 20 + ((larg + 40) * quand) / 0.7 : null
+      drawWord(p, lettres(mot, xDe(tau, mot.sens), vole ? 1.22 : 1, vole ? mot.sens : 0, frappe >= 0 && frappe < 0.07 ? 1 : 0), reflet === null ? mot.style : { ...mot.style, shine: reflet })
+    })
 
     // LA DEMANDE : « Toucher pour commencer », qui bat, entre deux chevrons qui se rapprochent
-    if (accueilQuitteA === null && t > 1.1) {
+    if (accueilQuitteA === null && t > TD + 0.7) {
       const texte = 'Toucher pour commencer'
       const f: Police = largeurDe(texte, GRAS) <= W - 30 ? GRAS : TEXTE
       const yp = H - Math.max(30, Math.round(H * 0.1))
@@ -2672,6 +2830,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text('>', W / 2 - w / 2 - 12 + dx, yp + 1, PEPITE[2])
       p.text('<', W / 2 + w / 2 + 8 - dx, yp + 1, PEPITE[2])
     }
+    allumerLEcran(p)
     // la sortie : la nuit de la base monte, puis le hangar s'ouvre
     if (us > 0.6) p.rect(0, 0, W, H, NUIT, (us - 0.6) / 0.4)
     if (us >= 1) {
@@ -2927,7 +3086,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLAccueil(p)
       N.composite(frame, img.data, cuireLeCiel())
       g.putImageData(img, 0, 0)
-      canvas.style.transform = ''
+      canvas.style.transform = secousseDeLAccueil > 0.2 ? `translate(${Math.round(Math.sin(t * 90) * secousseDeLAccueil * zoom)}px, ${Math.round(Math.cos(t * 77) * secousseDeLAccueil * zoom)}px)` : ''
       requestAnimationFrame(image)
       return
     }

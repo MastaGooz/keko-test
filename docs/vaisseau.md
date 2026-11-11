@@ -69,6 +69,33 @@ la forme, pas le système* (`asteroide.ts`) :
   `reveiller` aussi au relâchement, l'accueil se quitte au relâchement, et
   `jouer` ATTEND le réveil (le son part s'il arrive dans les 400 ms ;
   au-delà il est abandonné, pour ne pas lâcher une salve de vieux sons).
+- **Le titre frappe, l'écran s'allume, la tape a son son** (Keko, 11/11 :
+  « un autre son que celui du décollage quand on clique l'écran d'accueil ;
+  pour l'apparition du titre, un truc plus travaillé dans le genre de
+  l'apparition du texte dans ui/combo counter de pixelfx ; et pour
+  l'ouverture de l'écran titre, une transition dans le style de CRT off ») :
+  - *le son* : `accueil` (`synthe.ts`), un appui rond, un souffle qui
+    s'ouvre, l'accord de ré qui monte en clochettes (ré, la, ré, fa#) de
+    gauche à droite. Niveau posé à celui de l'achat (0,5), PAS mesuré ni
+    écouté : à rejuger.
+  - *le titre* reprend la mise en scène de `ui/combo-counter` : chaque mot
+    FUSE de son côté (NOVA par la gauche à 0,78 s, DRIFTER par la droite à
+    1,1 s) sur des traits de vitesse, étiré de 22 %, penché, deux images
+    rémanentes derrière lui ; à 0,12 s il FRAPPE : lettres blanches deux
+    images, étoile à dix pointes, anneau qui roule, vingt-six étincelles,
+    lumière, secousse de l'écran (3 px, 0,25 s), puis il dépasse et revient
+    (`7·e^(−18τ)·sin 34τ`, les chiffres du dépôt). La nova naît de la
+    frappe de NOVA. Écrit dans la page (les mots sont les nôtres, à notre
+    lettre et à nos teintes), pas l'effet du dépôt instancié.
+  - *l'allumage* (`allumerLEcran`) est la moitié « on » de
+    `transitions/crt-off`, à la taille du tampon : le noir, un éclat au
+    cœur (0,14 s), une ligne blanche qui file aux deux bords en crépitant
+    (0,28 s), l'image qui s'ouvre de la ligne (0,58 s), puis le tube
+    chauffe (lueur, bande de rafraîchissement, lignes de balayage, jusqu'à
+    1,2 s). Le noir éteint aussi la couche de lumière. *La sortie vers le
+    hangar n'a pas changé* (Keko parlait de l'ouverture).
+  - Vu sur une planche de 24 captures rapprochées (360 × 640) : la ligne,
+    l'ouverture, la bande, les deux frappes.
 - Vu en capture (412 × 915) : l'accueil, puis le hangar après la tape. Le
   son lui-même n'a pas été écouté (Chrome sans tête, muet) — à confirmer
   par Keko sur son appareil.
