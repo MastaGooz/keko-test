@@ -103,6 +103,41 @@ la forme, pas le système* (`asteroide.ts`) :
     recouvrait la moitié avant du disque. Les grains passés derrière ne se
     dessinent plus, le rond n'est plus reposé. Vu sur la planche, animation
     comprise.
+- **De la variété, des nébuleuses, des étoiles plus sombres** (Keko, 11/11 :
+  « assombris un peu les étoiles encore (au même niveau que les disques des
+  trous noirs). Et ajoute de la variété : taille et forme des gros
+  astéroïdes, couleur, taille et texture des planètes, taille des galaxies,
+  taille et couleurs des étoiles (étoiles à neutrons etc), taille des trous
+  noirs. Et ajoute des nébuleuses colorées aussi (gaz) dans les layers,
+  comme les planètes ») — tout se tire de la graine de l'astre :
+  - *une QUATRIÈME COUCHE, les gaz* (0,06, derrière tout) : des NÉBULEUSES
+    de 40 à 95 de rayon — une densité de bruit fractal qui s'éteint vers le
+    bord, quatre tons d'une teinte et une SECONDE teinte par endroits (six
+    gaz : magenta, sarcelle, bleu, orange, vert, violet), des bords défaits
+    en trame, étirées et tournées ; elles ne cachent pas les étoiles ;
+  - *les planètes* : neuf rampes (quatre de plus : sarcelle, sable, rose,
+    brune) ; SEPT TEXTURES — bandes plus ou moins serrées, bandes à TEMPÊTE
+    ovale, terres, OCÉAN à continents d'une autre teinte, GLACES à calottes,
+    croûte fendue de LAVE (sombre), cratères ; des anneaux plus ou moins
+    larges, ouverts et penchés ; gazeuses de 20 à 56, rocheuses de 6 à 32 ;
+  - *les étoiles* : voilées à 58 % comme les disques des trous noirs, le
+    ton le plus clair retiré ; QUATRE FEUX — jaune, GÉANTE ROUGE (× 1,3),
+    bleue, NAINE BLANCHE (× 0,4, sans tache) ; et les PULSARS (étoiles à
+    neutrons) : un point clair dans un anneau de grains, deux faisceaux
+    opposés qui battent et dont l'axe tourne ;
+  - *les galaxies* : de 16 à 60 de rayon, deux ou trois bras ou
+    ELLIPTIQUES, trois teintes, plus ou moins couchées ;
+  - *les trous noirs* : de 5 à 16 au lointain, 4 à 8 au milieu ;
+  - *les astéroïdes énormes* : de 14 à 58, plus ou moins ALLONGÉS et
+    tournés, des lobes plus ou moins creusés (jusqu'à la cacahuète), deux à
+    sept cratères, trois teintes de nuit ;
+  - les rayons sont tirés vers le petit (`tire ** 1,5`) : de loin en loin
+    un très gros.
+  - Jugé sur une planche de la variété (une rangée par sorte), puis en
+    capture au départ (la vitrine et le jeu normal). *La planète de la base
+    a changé de teinte (violette aux anneaux sarcelle) : sa graine tombe
+    sur d'autres rampes depuis qu'il y en a neuf.* Pas mesuré : le temps de
+    peinture d'une nébuleuse de 95 de rayon à sa première apparition.
 - **`&astres`, la vitrine** (Keko, 11/11 : « placer les différents corps
   célestes autour de l'extracteur, juste pour tester les visuels,
   temporairement ») : un astre de chaque sorte autour de la base, chacun
