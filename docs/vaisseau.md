@@ -38,6 +38,32 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## La base : une station spatiale au départ, et une zone calme (Keko, 11/11 : « modifier le premier extracteur (celui du spawn) pour qu'il n'y ait pas d'ennemi à proximité au début et surtout l'agrandir pour qu'il ressemble à une station spatiale ? on peut imaginer une station spatiale ? »)
+
+- **La station du point de départ est LA BASE** (`dessinerBase`,
+  `station.ts`) ; les autres restent de petits extracteurs. Vue de dessus,
+  plus haute que large (le tampon fait 180 de large : 140 × 180 environ) :
+  une croix de poutres en treillis ; quatre panneaux solaires aux bouts de la
+  poutre horizontale, un feu de position chacun ; en haut le poste de
+  commande (octogone à facettes, verrière, deux nacelles, mât et fanal
+  rouge) ; en bas deux silos cerclés avec leur jauge d'or ; un anneau
+  d'habitation de 45 de rayon qui tourne, hublots allumés tour à tour ; au
+  centre LE PONT, un disque de tôles de 27 de rayon avec son marquage d'or et
+  sa rampe de feux qui court. **Le parvis de l'extraction ne change pas**
+  (36, entre le pont et l'anneau) : on naît et on s'extrait sur le pont. À
+  quai, verrière, hublots, feux et marquage passent à l'or. Jugée sur une
+  planche hors navigateur, à côté d'un extracteur.
+- **On la survole** : pas plus de collision que les extracteurs.
+- **Le champ est vide sur son envergure** (`base.rayon` 100, au lieu des 70
+  du parvis des autres).
+- **C'EST UNE ZONE CALME** (`base.calme` 380) : aucun rival ne NAÎT tant que
+  le joueur est à moins de 380 de la base, et il naît au large — à 320 du
+  joueur, dans le demi-plan opposé à la base (±70°), jamais entre le joueur
+  et sa station. *Un rival déjà né peut y suivre le joueur : l'extraction au
+  retour reste une menace.* `&ennemi` lève la zone (il naît tout de suite).
+  Les vérifications des règles tournent sans la zone ; elle a les siennes.
+  Chiffres de moi, à rejuger.
+
 ## Les pépites ne sont plus des étoiles (Keko, 11/11 : « les minerais drop par les astéroïdes sont trop proches des étoiles du décor (surtout le fer) : il faudrait les différencier plus »)
 
 La pépite libre était un losange de cinq pixels sous une lueur — trait pour

@@ -147,3 +147,175 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
   if (aQuai) p.glow(sx, sy, rayon * 2, T.or[2], 0.3)
   else p.glow(sx, sy, 6, T.verre[2], 0.18)
 }
+
+/**
+ * LA BASE : LA STATION SPATIALE DU DÉPART (Keko, 11/11 : « modifier le premier extracteur, celui du spawn, et surtout
+ * l'agrandir pour qu'il ressemble à une station spatiale »). Les autres extracteurs restent de petites bouées ; celle-ci
+ * est un lieu, vu de dessus, plus haut que large (le tampon fait 180 de large) :
+ * - une CROIX DE POUTRES en treillis, fixe ;
+ * - aux deux bouts de la poutre horizontale, quatre PANNEAUX SOLAIRES (deux par bout, de part et d'autre de la poutre),
+ *   un feu de position au bout de chacun ;
+ * - en haut, le POSTE DE COMMANDE : un octogone à facettes sous sa verrière, deux nacelles, le mât et son fanal rouge ;
+ * - en bas, les SILOS : deux cuves le long de la poutre, cerclées, avec leur jauge d'or (là où va le minerai) ;
+ * - un ANNEAU d'habitation qui tourne lentement, ses hublots allumés tour à tour, tenu par quatre entretoises ;
+ * - au centre, LE PONT : un disque de tôles avec son marquage d'or et sa rampe de feux qui court — c'est le parvis de
+ *   l'extraction, on y naît et on s'y pose ; à quai, les feux, le marquage et les hublots passent à l'or.
+ * `ENVERGURE_BASE` dit jusqu'où elle s'étend du centre (ce que la page écarte du bord pour la dessiner).
+ */
+export const ENVERGURE_BASE = 92
+export function dessinerBase(p: PeintreStation, x: number, y: number, t: number, aQuai: boolean, T: TeintesStation): void {
+  const A = T.acier
+  const sx = Math.round(x)
+  const sy = Math.round(y)
+  const lum = (nx: number, ny: number) => nx * LUMIERE.x + ny * LUMIERE.y
+  const V = aQuai ? T.or : T.verre
+  /** Un rectangle plein (coins relatifs au centre), cerné d'un pixel sombre ; la couleur reçoit des coordonnées RELATIVES au centre. */
+  const boite = (x0: number, y0: number, x1: number, y1: number, c: number | ((u: number, v: number) => number)): void => {
+    p.poly([[sx + x0 - 1, sy + y0 - 1], [sx + x1 + 1, sy + y0 - 1], [sx + x1 + 1, sy + y1 + 1], [sx + x0 - 1, sy + y1 + 1]], A[0])
+    p.poly([[sx + x0, sy + y0], [sx + x1, sy + y0], [sx + x1, sy + y1], [sx + x0, sy + y1]], typeof c === 'number' ? c : (px, py) => c(Math.round(px - sx), Math.round(py - sy)))
+  }
+  const mod = (n: number, k: number): number => ((n % k) + k) % k
+
+  // LES POUTRES : deux treillis en croix — les deux longerons (le clair côté lampe), des croisillons entre eux
+  const treillis = (le: number, tr: number): number => (tr <= -3 ? A[5] : tr >= 3 ? A[2] : mod(le + tr, 6) === 0 || mod(le - tr, 6) === 0 ? A[3] : A[1])
+  boite(-70, -3, 70, 3, (u, v) => treillis(u, v))
+  boite(-3, -70, 3, 62, (u, v) => treillis(v, u))
+
+  // LES PANNEAUX SOLAIRES : deux par bout de la poutre horizontale, quadrillés de cellules, un reflet en biais
+  for (const s of [-1, 1])
+    for (const h of [-1, 1]) {
+      const cx = s * 60
+      const y0 = h === -1 ? -36 : 7
+      boite(cx - 8, y0, cx + 8, y0 + 29, (u, v) => {
+        const lx = u - (cx - 8)
+        const ly = v - y0
+        if (lx === 0 || lx === 16 || ly === 0 || ly === 29) return A[4]
+        if (lx % 4 === 0 || ly % 6 === 5) return A[2]
+        return mod(lx + ly, 22) < 5 ? T.cellule[2] : T.cellule[1]
+      })
+      // le pied du panneau sur la poutre, et le feu de position au bout (rouge à gauche, la verrière à droite)
+      boite(cx - 2, h === -1 ? -6 : 4, cx + 2, h === -1 ? -4 : 6, A[3])
+      const feu = Math.sin(t * 2.2 + (s + h) * 0.9) > 0.55
+      const fy = h === -1 ? -38 : 38
+      p.px(sx + cx, sy + fy, feu ? (s === -1 ? T.rouge : T.verre[2]) : A[3])
+      if (feu) p.glow(sx + cx, sy + fy, 5, s === -1 ? T.rouge : T.verre[1], 0.45)
+    }
+
+  // LES SILOS : deux cuves le long de la poutre du bas, rondes en travers (claires du côté de la lampe), cerclées, la
+  // jauge d'or sur chacune — là où va le minerai extrait
+  for (const s of [-1, 1]) {
+    const cx = s * 8
+    p.circle(sx + cx, sy + 54, 5.6, A[0])
+    p.circle(sx + cx, sy + 80, 5.6, A[0])
+    p.circle(sx + cx, sy + 54, 4.6, (d, ang) => tonDe(A, lum(Math.cos(ang), Math.sin(ang)) * d * 0.8 + 0.15))
+    p.circle(sx + cx, sy + 80, 4.6, (d, ang) => tonDe(A, lum(Math.cos(ang), Math.sin(ang)) * d * 0.8 - 0.05))
+    boite(cx - 4, 54, cx + 4, 80, (u, v) => {
+      if (mod(v - 54, 9) === 4) return A[2]
+      return tonDe(A, lum((u - cx) / 4.5, 0) * 0.9 + 0.12)
+    })
+    // la jauge : une fente où monte l'or, qui bat doucement
+    const plein = 8 + Math.round(5 * (0.5 + 0.5 * Math.sin(t * 0.6 + s)))
+    for (let k = 0; k < 16; k++) p.px(sx + cx + s * 2, sy + 75 - k, k < plein ? T.or[k === plein - 1 ? 3 : 2] : A[1])
+  }
+  boite(-3, 62, 3, 72, A[3])
+
+  // LE POSTE DE COMMANDE : un octogone à facettes, deux nacelles, la verrière, le mât et son fanal
+  const py = -70
+  for (const s of [-1, 1]) {
+    boite(s * 15 - 4, py - 5, s * 15 + 4, py + 5, (u, v) => (v === py - 5 ? A[6] : u === s * 15 - 4 ? A[5] : u === s * 15 + 4 || v === py + 5 ? A[2] : A[4]))
+    p.px(sx + s * 15, sy + py, Math.sin(t * 1.3 + s) > 0 ? T.verre[2] : T.verre[1])
+    boite(s * 9 - 2, py - 1, s * 9 + 2, py + 1, A[3])
+  }
+  const R1 = 11
+  const octo = Array.from({ length: 8 }, (_, k) => {
+    const a = (k / 8) * Math.PI * 2 + Math.PI / 8
+    return [sx + Math.cos(a) * R1, sy + py + Math.sin(a) * R1]
+  })
+  p.poly(octo.map(([ox, oy]) => [sx + (ox - sx) * 1.12, sy + py + (oy - sy - py) * 1.12]), A[0])
+  p.poly(octo, (ox, oy) => {
+    const dx = ox - sx
+    const dy = oy - sy - py
+    const a = mod(Math.atan2(dy, dx), Math.PI * 2)
+    const k = Math.floor((a / (Math.PI * 2)) * 8)
+    const u = (a / (Math.PI * 2)) * 8 - k
+    const am = ((k + 0.5) / 8) * Math.PI * 2
+    if (u < 0.06 || u > 0.94) return A[2]
+    // (un toit plat au milieu, les pans inclinés autour)
+    return Math.hypot(dx, dy) < 6.2 ? A[4] : tonDe(A, lum(Math.cos(am), Math.sin(am)) * 0.85 + 0.1)
+  })
+  p.circle(sx, sy + py, 5.2, A[0])
+  p.circle(sx, sy + py, 4.4, (d, ang) => {
+    const l = lum(Math.cos(ang), Math.sin(ang)) * d
+    return l > 0.45 ? V[3] : l > -0.1 ? V[2] : V[1]
+  })
+  p.dot(sx + LUMIERE.x * 2.4, sy + py + LUMIERE.y * 2.4, aQuai ? T.or[4] : T.verre[3])
+  p.glow(sx, sy + py, 9, V[2], 0.2)
+  p.line(sx, sy + py - 11, sx, sy + py - 19, A[4])
+  p.line(sx - 2, sy + py - 14, sx + 2, sy + py - 14, A[3])
+  const bat = Math.max(0, Math.sin(t * 3.5))
+  p.px(sx, sy + py - 20, bat > 0.3 ? T.rouge : A[2])
+  if (bat > 0.3) p.glow(sx, sy + py - 20, 6, T.rouge, 0.5 * bat)
+
+  // L'ANNEAU D'HABITATION : il tourne lentement — des tôles segmentées, ombrées, des hublots allumés tour à tour
+  const rayon = 45
+  const rot = t * 0.1
+  const nseg = 24
+  const pas = (Math.PI * 2) / nseg
+  // les entretoises, du pont à l'anneau
+  for (let i = 0; i < 4; i++) {
+    const a = rot + Math.PI / 4 + (i * Math.PI) / 2
+    const cx = Math.cos(a)
+    const cy = Math.sin(a)
+    p.line(sx + cx * 27 - cy, sy + cy * 27 + cx, sx + cx * (rayon - 2) - cy, sy + cy * (rayon - 2) + cx, A[1])
+    p.line(sx + cx * 27, sy + cy * 27, sx + cx * (rayon - 2), sy + cy * (rayon - 2), lum(-cy, cx) > 0 ? A[5] : A[3])
+  }
+  p.ring(sx, sy, rayon + 0.5, 6.4, A[0])
+  // (la couleur-fonction d'un `ring` reçoit (v : 0 au bord intérieur, 1 au bord extérieur ; l'angle), pas des pixels)
+  p.ring(sx, sy, rayon, 5, (v, ang) => {
+    const seg = mod((ang - rot) / pas, 1)
+    if (seg < 0.07) return A[2]
+    return tonDe(A, lum(Math.cos(ang), Math.sin(ang)) * 0.7 - 0.08 + (v > 0.8 ? 0.22 : v < 0.2 ? -0.25 : 0))
+  })
+  for (let i = 0; i < nseg; i++) {
+    const a = rot + (i + 0.5) * pas
+    const cx = Math.cos(a)
+    const cy = Math.sin(a)
+    if (i % 2 === 1) {
+      if (lum(cx, cy) > 0.25) p.dot(sx + cx * (rayon + 1.6), sy + cy * (rayon + 1.6), A[7], 0.9)
+      continue
+    }
+    const phase = mod(t * (aQuai ? 6 : 1.6) - i * 0.5, 6)
+    const allume = phase < 2.4
+    p.px(sx + cx * rayon, sy + cy * rayon, allume ? V[2] : A[3])
+    if (allume) p.glow(sx + cx * rayon, sy + cy * rayon, 4, V[1], 0.45)
+  }
+
+  // LE PONT : un disque de tôles (huit secteurs, une gorge), son bord biseauté, le marquage d'or en tirets, la mire
+  const RP = 27
+  p.circle(sx, sy, RP + 1.4, A[0])
+  p.circle(sx, sy, RP, (d, ang) => {
+    const r = d * RP
+    if (r > RP - 1.6) return tonDe(A, lum(Math.cos(ang), Math.sin(ang)) * 0.9 + 0.1) // le biseau du bord
+    if (r > 17.4 && r < 19.6) return mod(ang / (Math.PI / 8) + 0.25, 1) < 0.5 ? (aQuai ? T.or[2] : T.or[1]) : A[2] // le marquage
+    const secteur = mod(ang / (Math.PI / 4) + 0.5, 1)
+    if (r > 6 && Math.abs(secteur - 0.5) * r * (Math.PI / 4) < 0.55) return A[1] // les joints des secteurs
+    if (Math.abs(r - 11.5) < 0.6) return A[1] // la gorge
+    if (r < 5.2) return r > 3.8 ? A[5] : A[2] // la mire
+    return r > 11.5 ? A[3] : A[2]
+  })
+  p.px(sx, sy, V[2])
+  // la rampe de feux : douze, sur le bord du pont, un feu qui court (deux à quai, plus vite)
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2
+    const phase = mod(t * (aQuai ? 9 : 4) - i, aQuai ? 6 : 12)
+    const allume = phase < 2
+    const fx = sx + Math.cos(a) * 22.5
+    const fy = sy + Math.sin(a) * 22.5
+    p.px(fx, fy, allume ? V[phase < 1 ? 3 : 2] : A[1])
+    if (allume) p.glow(fx, fy, 4, V[1], 0.4)
+  }
+
+  // à quai, le pont entier luit d'or
+  if (aQuai) p.glow(sx, sy, 60, T.or[2], 0.28)
+  else p.glow(sx, sy, 12, T.verre[2], 0.12)
+}

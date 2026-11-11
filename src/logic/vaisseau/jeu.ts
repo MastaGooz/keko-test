@@ -86,6 +86,14 @@ export const VAISSEAU = {
   filons: { horizon: 3000, orPres: 0.16, orLoin: 0.38, cristalPres: 0.03, cristalLoin: 0.16 },
   station: { case: 4500, rayon: 11, portee: 36, cadence: 0.12 },
   /**
+   * LA BASE (Keko, 11/11 : « modifier le premier extracteur, celui du spawn, pour qu'il n'y ait pas d'ennemi à proximité
+   * au début, et surtout l'agrandir pour qu'il ressemble à une station spatiale ») : la station du point de départ est
+   * une vraie station — le champ est vide jusqu'à `rayon` d'elle (son envergure), et C'EST UNE ZONE CALME : aucun rival
+   * ne NAÎT tant que le joueur est à moins de `calme` d'elle, et il naît du côté opposé à elle. (Un rival déjà né peut
+   * y suivre le joueur : l'extraction reste une menace au retour.)
+   */
+  base: { rayon: 100, calme: 380 },
+  /**
    * L'EXTRACTION (Keko : « un timer quand le joueur est dans la zone de l'extracteur ; s'il reste jusqu'au bout, la
    * partie prend fin ») : à quai, un compte monte pendant tant de secondes ; on en sort, il REDESCEND à la même
    * vitesse (il retombait à zéro : un frôlement du bord punissait tout) ; au bout, la partie est EXTRAITE (finie,
@@ -264,7 +272,7 @@ export function asteroideDeLaCase(c: ConfigVaisseau, i: number, j: number): Aste
   const y = (j + 0.2 + 0.6 * tire(i, j, 4)) * taille
   // le vide autour de chaque station (le parvis)
   const st = stationLaPlusProche(c, x, y)
-  if (Math.hypot(x - st.x, y - st.y) < c.champ.vide + rayon) return null
+  if (Math.hypot(x - st.x, y - st.y) < (st.x === 0 && st.y === 0 ? c.base.rayon : c.champ.vide) + rayon) return null
   // le filon : l'or et le cristal plus fréquents loin du départ ; la richesse biaisée vers les pauvres
   const loin = Math.min(1, Math.hypot(x, y) / c.filons.horizon)
   const pc = c.filons.cristalPres + (c.filons.cristalLoin - c.filons.cristalPres) * loin
@@ -458,7 +466,8 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
 /** L'ennemi naît au loin, dans une direction tirée de la graine du monde, et regarde le joueur. */
 function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
-  let a = tire(m.graine, m.prochainId, 3) * Math.PI * 2
+  // (au large de la base : dans le demi-plan opposé à elle, à ±70° — jamais entre le joueur et sa station)
+  let a = c.base.calme > 0 ? Math.atan2(v.y, v.x) + (tire(m.graine, m.prochainId, 3) - 0.5) * 2.4 : tire(m.graine, m.prochainId, 3) * Math.PI * 2
   m.graine = hache(m.graine, 7)
   let x = v.x + Math.cos(a) * c.ennemi.distance
   let y = v.y + Math.sin(a) * c.ennemi.distance
@@ -670,7 +679,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
 
   // l'ennemi : il naît à l'heure dite, un à la fois ; ses chocs comptent aussi, et peuvent l'abattre
-  if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA) faireNaitreUnEnnemi(c, m, ev)
+  // (jamais tant que le joueur est dans la zone calme de la base)
+  if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
   for (const e of [...m.ennemis]) {
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)

@@ -1,8 +1,11 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU as C, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
+
+/** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) ; elle a ses propres vérifications, plus bas. */
+const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 } }
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -25,7 +28,7 @@ verifier('manche lâché, il glisse en freinant à peine', glisse.vx > 0.2 * v.v
 
 verifier('le champ est déterministe', JSON.stringify(asteroideDeLaCase(C, 3, -2)) === JSON.stringify(asteroideDeLaCase(C, 3, -2)))
 const autour = asteroidesAutour(C, 0, 0, 400)
-verifier('il y a des astéroïdes autour du départ, aucun dans le vide du départ', autour.length > 5 && autour.every((a) => Math.hypot(a.x, a.y) >= C.champ.vide))
+verifier('il y a des astéroïdes autour du départ, aucun dans le vide du départ', autour.length > 5 && autour.every((a) => Math.hypot(a.x, a.y) >= C.base.rayon))
 verifier('tous ont un rayon dans les bornes', autour.every((a) => a.rayon >= C.champ.rayonMin && a.rayon <= C.champ.rayonMax))
 
 // un choc : le vaisseau posé dans un astéroïde en sort, et le choc est rapporté
@@ -393,6 +396,17 @@ p.tirs.push({ id: 1, x: 0, y: 0, vx: 0, vy: 0, vie: 1 })
 p.prochainEnnemiA = 1e9
 const rp = avancerLeMonde(C, p, 1 / 60, { x: 0, y: 0 })
 verifier('la coque percée perd la partie', p.phase === 'perdu' && compter(rp.evenements, 'perdu') === 1)
+
+// LA BASE : le champ est vide sur son envergure, et aucun rival ne naît tant que le joueur est dans sa zone calme
+const calme = nouveauMonde()
+let neALaBase = false
+for (let i = 0; i < (VAISSEAU.ennemi.apparait + 5) * 60; i++) neALaBase ||= avancerLeMonde(VAISSEAU, calme, 1 / 60, { x: 0, y: 0 }).evenements.some((e) => e.type === 'ennemiApparait')
+verifier('à la base, aucun rival ne naît, même passé l’heure', !neALaBase && calme.ennemis.length === 0)
+calme.vaisseau = { ...calme.vaisseau, x: VAISSEAU.base.calme + 20, y: 0 }
+calme.sorti = true
+const neAuLarge = avancerLeMonde(VAISSEAU, calme, 1 / 60, { x: 0, y: 0 }).evenements.some((e) => e.type === 'ennemiApparait')
+verifier('sorti de la zone calme, il naît — au large, plus loin de la base que le joueur', neAuLarge && calme.ennemis.length === 1 && Math.hypot(calme.ennemis[0].corps.x, calme.ennemis[0].corps.y) > VAISSEAU.base.calme + 20)
+verifier('le champ est vide sur l’envergure de la base', asteroidesAutour(VAISSEAU, 0, 0, 400).every((a) => Math.hypot(a.x, a.y) >= VAISSEAU.base.rayon + a.rayon))
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

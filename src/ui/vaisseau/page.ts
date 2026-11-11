@@ -21,7 +21,7 @@ import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, 
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
-import { dessinerStation } from './station.ts'
+import { dessinerBase, dessinerStation, ENVERGURE_BASE } from './station.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
@@ -123,7 +123,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** `&coque=N` : part avec N points de coque au plus, pour juger le dernier point (tout passe au rouge) et la plaque touchée. */
   const coque0 = Math.max(0, Number(parametres.get('coque')) || 0)
   /** `&ennemi` : l'ennemi naît tout de suite (pour le voir sans attendre) — à la même distance qu'en jeu : né à 90, on le voyait apparaître à l'écran (Keko : « il devrait toujours apparaître hors champ »). */
-  const BASE: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0 } } : C
+  const BASE: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0 }, base: { ...C.base, calme: 0 } } : C
   /**
    * LE HANGAR (Keko, 09/11 : « un menu avant de lancer la game où le joueur choisit son vaisseau en sélectionnant les
    * différentes pièces qu'il possède ») : les pièces possédées et montées, et le TRÉSOR des expéditions achevées, gardés
@@ -2225,14 +2225,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const st = stationDeLaCase(CONF, i, j)
         const sx = st.x - camera.x + W / 2
         const sy = st.y - camera.y + H / 2
-        if (sx < -40 || sy < -40 || sx > W + 40 || sy > H + 40) continue
+        // la station du départ est LA BASE, une vraie station spatiale (`dessinerBase`) ; les autres, des extracteurs
+        const base = i === 0 && j === 0
+        const marge = base ? ENVERGURE_BASE : 40
+        if (sx < -marge || sy < -marge || sx > W + marge || sy > H + marge) continue
         const aQuai = m.phase !== 'perdu' && st.x === proche.x && st.y === proche.y && Math.hypot(v.x - st.x, v.y - st.y) <= CONF.station.portee
         // le parvis : un cercle pointillé qui dit la portée, plus net à quai
         for (let k = 0; k < 36; k++) {
           const a = (k / 36) * Math.PI * 2 + t * 0.25
           p.dot(sx + Math.cos(a) * CONF.station.portee, sy + Math.sin(a) * CONF.station.portee, aQuai ? PEPITE[2] : COQUE[2], aQuai ? 0.9 : 0.45)
         }
-        dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
+        if (base) dessinerBase(p, sx, sy, t, aQuai, TEINTES_STATION)
+        else dessinerStation(p, sx, sy, t, CONF.station.rayon, aQuai, TEINTES_STATION)
         // LE COMPTE DE L'EXTRACTION (Keko) : à quai, un arc d'or CONTINU (Keko : « plutôt qu'en pointillé ») se referme
         // le long du parvis depuis le haut, la tête blanche, et le nombre de secondes qui restent au-dessus de la
         // station ; au bout, l'arc est plein et la station flambe d'or
