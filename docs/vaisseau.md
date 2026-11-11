@@ -67,6 +67,12 @@ la forme, pas le système* (`asteroide.ts`) :
   couches qui tombent sur son disque ne se dessinent pas — sinon des étoiles
   « plus proches » passaient devant une planète.
 - L'accueil, qui dessine le même ciel, les a aussi.
+- **`&astres`, la vitrine** (Keko, 11/11 : « placer les différents corps
+  célestes autour de l'extracteur, juste pour tester les visuels,
+  temporairement ») : un astre de chaque sorte autour de la base, chacun
+  dans sa couche (géante gazeuse, planète à anneaux, monde rocheux, trou
+  noir, galaxie ; lune, soleil, petit monde ; astéroïde énorme). Derrière un
+  paramètre : le jeu normal ne change pas.
 - **Le voile de la distance, et des roches en volume** (Keko, 11/11 :
   « deux choses me frappent : certains astéroïdes ont des textures trop
   plates et des formes parfois trop droites, donnant l'impression d'une

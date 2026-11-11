@@ -68,19 +68,41 @@ const COUCHES: Couche[] = [
 /** LA PLANÈTE DE LA BASE : une géante à anneaux, fixe dans le lointain, en haut à droite de la station au départ. */
 const MONDE_DE_LA_BASE = { x: 54, y: -108, r: 44 }
 
+/**
+ * LA VITRINE (`&astres` — Keko, 11/11 : « placer les différents corps célestes autour de l'extracteur, juste pour tester
+ * les visuels, temporairement ») : un astre de chaque sorte, posé autour de la base dans SA couche (la place est celle
+ * qu'il a à l'écran au départ ; en volant, chacun glisse à sa parallaxe). La planète de la base et les astres semés à
+ * moins de 260 du départ leur cèdent la place.
+ */
+const VITRINE: { sorte: SorteDAstre; couche: number; x: number; y: number; r: number; graine: number }[] = [
+  { sorte: 'gazeuse', couche: 0, x: -56, y: -122, r: 30, graine: 11 },
+  { sorte: 'annelee', couche: 0, x: 52, y: -118, r: 22, graine: 4242 },
+  { sorte: 'rocheuse', couche: 0, x: -68, y: 66, r: 16, graine: 5 },
+  { sorte: 'trouNoir', couche: 0, x: -52, y: 128, r: 8, graine: 2 },
+  { sorte: 'galaxie', couche: 0, x: 58, y: 126, r: 20, graine: 6 },
+  { sorte: 'lune', couche: 1, x: -76, y: -58, r: 9, graine: 3 },
+  { sorte: 'soleil', couche: 1, x: 76, y: -52, r: 3, graine: 4 },
+  { sorte: 'rocheuse', couche: 1, x: 72, y: 66, r: 11, graine: 21 },
+  { sorte: 'geante', couche: 2, x: 2, y: 138, r: 26, graine: 12 },
+]
+
 /** Jusqu'où un astre déborde de son centre (ses anneaux, son disque), en pixels : la demi-taille de son tampon. */
 export function demiTailleDeLAstre(a: Astre): number {
   return Math.ceil(a.r * (a.sorte === 'annelee' ? 2.25 : a.sorte === 'trouNoir' ? 3.5 : 1) + 3)
 }
 
 /** Les astres qui touchent l'écran, du plus loin au plus proche, pour une caméra en (cx, cy) ; `milieuY` est le centre de la vue. */
-export function astresVisibles(cx: number, cy: number, W: number, H: number, milieuY: number): Astre[] {
+export function astresVisibles(cx: number, cy: number, W: number, H: number, milieuY: number, vitrine = false): Astre[] {
   const astres: Astre[] = []
   const MARGE = 112
   COUCHES.forEach((couche, n) => {
     const ox = cx * couche.parallaxe
     const oy = cy * couche.parallaxe
-    if (n === 0) {
+    if (vitrine) {
+      VITRINE.forEach((v, k) => {
+        if (v.couche === n) astres.push({ cle: `vitrine:${k}`, sorte: v.sorte, x: v.x - ox + W / 2, y: v.y - oy + milieuY, r: v.r, graine: v.graine, couche: n })
+      })
+    } else if (n === 0) {
       const x = MONDE_DE_LA_BASE.x - ox + W / 2
       const y = MONDE_DE_LA_BASE.y - oy + milieuY
       if (x > -MARGE && x < W + MARGE && y > -MARGE && y < H + MARGE) astres.push({ cle: 'base', sorte: 'annelee', x, y, r: MONDE_DE_LA_BASE.r, graine: 4242, couche: 0 })
@@ -96,6 +118,7 @@ export function astresVisibles(cx: number, cy: number, W: number, H: number, mil
         const my = (j + 0.15 + 0.7 * tire(i, j, 120 + n)) * couche.pas
         // (rien du lointain sur la planète de la base)
         if (n === 0 && Math.hypot(mx - MONDE_DE_LA_BASE.x, my - MONDE_DE_LA_BASE.y) < 190) continue
+        if (vitrine && Math.hypot(mx, my) < 260) continue
         const total = couche.sortes.reduce((s, [, poids]) => s + poids, 0)
         let tirage = tire(i, j, 130 + n) * total
         let choix = couche.sortes[0]

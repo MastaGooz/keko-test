@@ -2158,7 +2158,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le ciel : les astres du fond, trois couches d'étoiles en parallaxe (un astre les cache), puis la poussière du premier plan ; les nuées sont dans le fond (`cuireLeCiel`). */
   function dessinerLeCiel(p: Peintre): void {
     // les astres d'abord, du plus loin au plus proche ; une étoile qui tombe sur l'un d'eux ne se dessine pas
-    const astres = astresVisibles(camera.x, camera.y, W, H, centreY())
+    const astres = astresVisibles(camera.x, camera.y, W, H, centreY(), parametres.has('astres')) // (`&astres` : la vitrine, un astre de chaque sorte autour de la base)
     for (const a of astres) if (a.sorte !== 'soleil') poserLAstre(a)
     const caches = astres.map((a) => ({ x: a.x, y: a.y, r2: rayonQuiCache(a) ** 2 })).filter((c) => c.r2 > 0)
     const cachee = (x: number, y: number): boolean => caches.some((c) => (x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) < c.r2)
