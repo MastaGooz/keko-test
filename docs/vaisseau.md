@@ -38,6 +38,18 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Le labo s'appelle TECH, l'entrepôt COMMERCE (Keko, 11/11 : « on peut utiliser l'icône du labo pour l'entrepôt et le renommer commerce ? et on renomme le labo tech et on lui trouve une autre icône adaptée ? »)
+
+- **Les noms affichés seulement** : l'onglet « Labo » devient « Tech »,
+  « Entrepôt » devient « Commerce ». *Dans le code et dans ce document, les
+  vues gardent leurs identifiants `labo` et `entrepot`* (et `labo.ts`,
+  `marche.ts`) : les sections écrites avant ce jour disent labo et entrepôt.
+- **Les icônes** : le commerce prend le MONITEUR du labo (son tracé vert
+  est maintenant un cours) ; la tech a un petit ARBRE DE NŒUDS (un en haut,
+  deux dessous, un au bout d'une branche, reliés de vert ; ouvert, un grain
+  clair passe de nœud en nœud). Le conteneur de l'entrepôt reste écrit,
+  plus aucune vue ne le porte.
+
 ## Le marché : vendre une quantité, au cours ou à prix fixé (Keko, 11/11 : « dans l'entrepôt, changer le bouton vendre pour qu'il ouvre un panneau plutôt que tout vendre d'un coup ; le panneau propose de vendre une quantité (on bouge un cran sur une barre de 0 au max), on affiche une courbe de prix (ordonnée = prix, abscisse = temps) ; on propose de vendre au prix de marché ou de poser un prix personnalisé, qui sera déclenché potentiellement »)
 
 - **La règle** (`logic/vaisseau/marche.ts`, pure, 16 vérifications dans

@@ -449,7 +449,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
   const VUES: string[] = ['hangar', 'labo', 'entrepot', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 3)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
-  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Labo', entrepot: 'Entrepôt', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
+  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Tech', entrepot: 'Commerce', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
@@ -1488,6 +1488,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 1, y - 2, 2, 2, RUNE[2], a)
       p.rect(x - 1, y + 4, 2, 2, PEPITE[2], a)
     } else if (vv === 'labo') {
+      // LA TECH (Keko, 11/11 : « on renomme le labo tech et on lui trouve une autre icône adaptée » — le moniteur est
+      // passé au commerce) : UN PETIT ARBRE DE NŒUDS, celui que la vue montre — un nœud en haut, deux dessous, un
+      // dernier au bout d'une branche, reliés d'un trait vert ; l'onglet ouvert, un grain clair descend l'arbre
+      const trait = actif ? RUNE[2] : RUNE[1]
+      const noeuds: [number, number][] = [[0, -5], [-4, 0], [4, 0], [-4, 5]]
+      for (const [nx, ny] of noeuds) p.rect(x + nx - 2, y + ny - 2, 5, 5, OMBRE, a)
+      p.rect(x - 1, y - 4, 3, 3, OMBRE, a)
+      p.rect(x - 5, y - 3, 11, 3, OMBRE, a)
+      p.rect(x, y - 4, 1, 2, trait, a)
+      p.rect(x - 4, y - 2, 9, 1, trait, a)
+      p.rect(x - 4, y + 2, 1, 2, trait, a)
+      noeuds.forEach(([nx, ny], i) => {
+        p.rect(x + nx - 1, y + ny - 1, 3, 3, i === 0 ? RUNE[3] : i === 3 ? COQUE[3] : COQUE[5], a)
+        p.rect(x + nx - 1, y + ny - 1, 1, 1, i === 3 ? COQUE[4] : N.WHITE, a)
+      })
+      if (actif) {
+        const k = Math.floor(t * 4) % 4
+        const [nx, ny] = noeuds[k]
+        p.rect(x + nx - 1, y + ny - 1, 3, 3, N.WHITE)
+        p.glow(x + nx, y + ny, 6, RUNE[2], 0.5)
+      }
+    } else if (vv === 'entrepot') {
+      // LE COMMERCE (ex-entrepôt) prend LE MONITEUR du labo (Keko : « on peut utiliser l'icône du labo pour l'entrepôt
+      // et le renommer commerce ? ») : son tracé, c'est maintenant le cours
       // UN MONITEUR (Keko : « le labo, on peut mettre un genre de moniteur / ordi ? la fiole, ça ne fait pas trop
       // recherche spatiale ») : un écran d'acier sur son pied, sa dalle vert sombre où court un tracé de mesure — il
       // garde le vert du labo — ; l'onglet ouvert, le tracé défile, un point clair court dessus et l'écran luit
@@ -1513,6 +1537,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x + 2, y + 5, 1, 1, actif && Math.floor(t * 2) % 2 === 0 ? RUNE[3] : RUNE[1], a)
     } else if (estEssai(vv)) dessinerUneIconeDEssai(p, vv, x, y, OMBRE)
     else {
+      // (plus aucune vue ne le porte depuis que le commerce a pris le moniteur ; gardé pour un vrai entrepôt)
       // UN CONTENEUR, plus « SF » (Keko : « changer le logo entrepôt pour une boîte plus SF, le carton c'est pas fou ») :
       // une caisse d'acier aux coins coupés — le dessus clair, le dessous sombre, quatre équerres aux coins, deux
       // nervures —, barrée d'un bandeau sombre où court un filet d'énergie cyan ; son voyant bat quand l'onglet est ouvert
@@ -1787,7 +1812,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(W - 11, yc, 3, hc, COQUE[3])
       p.rect(W - 11, yc, 3, 1, COQUE[5])
     }
-    if (liste.length === 0) ecrire(p, 'Rien ici : passez au labo', W / 2, y + 22, COQUE[4], { align: 'center' })
+    if (liste.length === 0) ecrire(p, 'Rien ici : passez à la tech', W / 2, y + 22, COQUE[4], { align: 'center' })
     y += hl + 4
     const pc = liste[iSel]
     if (pc === undefined) return
@@ -2349,7 +2374,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nom = `Minerai d’essai ${essaiChoisi + 1}`
       dessinerUnMineraiDEssai(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, essaiChoisi)
       motEnRelief(p, nom, W / 2 + 5, y + 7, true)
-      replier('Un minerai d’essai, pour juger l’entrepôt quand il se remplit.', W - 20).forEach((li, i) => ecrire(p, li, W / 2, y + 29 + i * 9, COQUE[5], { align: 'center' }))
+      replier('Un minerai d’essai, pour juger la grille quand elle se remplit.', W - 20).forEach((li, i) => ecrire(p, li, W / 2, y + 29 + i * 9, COQUE[5], { align: 'center' }))
       ecrire(p, 'En stock', 10, y + 76, COQUE[4])
       ecrire(p, String(stockDEssai(essaiChoisi)), W - 10, y + 76, N.WHITE, { police: GRAS, align: 'right' })
       ecrire(p, 'Bientôt', W / 2, y + 94, COQUE[3], { align: 'center' })
