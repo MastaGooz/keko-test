@@ -1363,7 +1363,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, f.texte, f.x, Math.round(f.y + 2 - sortie(u) * 12), u > 0.72 && Math.floor(t * 30) % 2 === 0 ? N.WHITE : f.c, { police: GRAS, align: 'center', contour: NUIT_OMBRE })
     }
   }
-  /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, la FIOLE du labo et son liquide vert, le CONTENEUR de l'entrepôt. */
+  /** L'ICÔNE D'UN ONGLET, centrée sur (x, y), une douzaine de pixels : le VAISSEAU nez en haut, le MONITEUR du labo et son tracé vert, le CONTENEUR de l'entrepôt. */
   function dessinerLIconeDeVue(p: Peintre, vv: string, x0: number, y0: number, actif: boolean): void {
     const x = Math.round(x0)
     const y = Math.round(y0)
@@ -1376,13 +1376,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 1, y - 2, 2, 2, RUNE[2], a)
       p.rect(x - 1, y + 4, 2, 2, PEPITE[2], a)
     } else if (vv === 'labo') {
-      p.rect(x - 2, y - 7, 5, 6, OMBRE, a)
-      p.poly([[x - 2, y - 2], [x + 3, y - 2], [x + 7, y + 6], [x - 6, y + 6]], OMBRE, a)
-      p.rect(x - 1, y - 6, 3, 5, COQUE[4], a)
-      p.poly([[x - 1, y - 2], [x + 2, y - 2], [x + 5, y + 5], [x - 4, y + 5]], COQUE[3], a)
-      p.poly([[x - 2.5, y + 1], [x + 3.5, y + 1], [x + 5, y + 5], [x - 4, y + 5]], RUNE[2], a)
-      p.rect(x - 2, y + 2, 1, 1, RUNE[3], a)
-      p.rect(x + 1, y - 4 - Math.round((t * 4) % 3), 1, 1, RUNE[3], actif ? 1 : 0)
+      // UN MONITEUR (Keko : « le labo, on peut mettre un genre de moniteur / ordi ? la fiole, ça ne fait pas trop
+      // recherche spatiale ») : un écran d'acier sur son pied, sa dalle vert sombre où court un tracé de mesure — il
+      // garde le vert du labo — ; l'onglet ouvert, le tracé défile, un point clair court dessus et l'écran luit
+      p.rect(x - 6, y - 7, 13, 10, OMBRE, a)
+      p.rect(x - 5, y - 6, 11, 8, COQUE[3], a)
+      p.rect(x - 5, y - 6, 11, 1, COQUE[5], a)
+      p.rect(x + 5, y - 5, 1, 7, COQUE[2], a)
+      p.rect(x - 4, y - 5, 9, 6, N.hex('#06200f'), a)
+      for (let k = 0; k < 9; k++) {
+        const h = Math.round(2.5 + 1.6 * Math.sin(k * 1.25 + (actif ? t * 5 : 0.6)) + (k === 4 ? 1 : 0))
+        p.rect(x - 4 + k, y - Math.max(0, Math.min(5, h)), 1, 1, RUNE[2], a)
+      }
+      if (actif) {
+        const k = Math.floor(t * 9) % 9
+        const h = Math.round(2.5 + 1.6 * Math.sin(k * 1.25 + t * 5) + (k === 4 ? 1 : 0))
+        p.rect(x - 4 + k, y - Math.max(0, Math.min(5, h)), 1, 1, N.WHITE)
+        p.glow(x, y - 2, 8, RUNE[2], 0.35)
+      }
+      p.rect(x - 2, y + 3, 5, 2, OMBRE, a)
+      p.rect(x - 1, y + 3, 3, 1, COQUE[3], a)
+      p.rect(x - 5, y + 4, 11, 3, OMBRE, a)
+      p.rect(x - 4, y + 5, 9, 1, COQUE[4], a)
+      p.rect(x + 2, y + 5, 1, 1, actif && Math.floor(t * 2) % 2 === 0 ? RUNE[3] : RUNE[1], a)
     } else if (estEssai(vv)) dessinerUneIconeDEssai(p, vv, x, y, OMBRE)
     else {
       // UN CONTENEUR, plus « SF » (Keko : « changer le logo entrepôt pour une boîte plus SF, le carton c'est pas fou ») :

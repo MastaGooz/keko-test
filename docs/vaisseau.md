@@ -47,6 +47,13 @@ filet d'énergie cyan ; son voyant bat et luit quand l'onglet est ouvert. La
 même icône sert dans la barre du bas et dans l'en-tête de la vue. Vu en
 capture, onglet éteint et ouvert.
 
+**Et le labo, un moniteur** (Keko : « le labo, on peut mettre un genre de
+moniteur / ordi ? la fiole, ça ne fait pas trop recherche spatiale ») : la
+fiole et son liquide deviennent un ÉCRAN d'acier sur son pied, sa dalle vert
+sombre où court un tracé de mesure — il garde le vert du labo. L'onglet
+ouvert, le tracé défile, un point clair court dessus, l'écran luit et le
+voyant du pied clignote. Vu en capture, onglet éteint et ouvert.
+
 ## Le compte de l'extraction frappe, comme le « countdown » (Keko, 11/11 : « quand on est sur l'extracteur, on peut utiliser une animation du style countdown de pixelfx ? elle est plus punchy »)
 
 - **L'arc d'or reste** : c'est la charge, sur dix secondes (le countdown du
