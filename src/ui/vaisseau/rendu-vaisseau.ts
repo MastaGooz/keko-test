@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -47,6 +47,11 @@ const RAMPES: Record<Matiere, number[]> = {
   ion: ['#0a2a6a', '#1250b8', '#1a8ae8', '#40c0ff', '#a0ecff', '#ffffff'].map(hex),
   laser: ['#3a0a10', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0', '#ffffff'].map(hex),
   emeraude: ['#062a18', '#0c5a32', '#16935a', '#2ed08a', '#8affc6', '#ffffff'].map(hex),
+  // le RIVAL du vol : sa coque rouge sombre, ses ailes grenat, sa verrière d'ambre, son laser violet
+  carmin: ['#1c0810', '#481622', '#7a2a36', '#aa4450', '#d67278', '#f6b4ac'].map(hex),
+  grenat: ['#16070f', '#35101e', '#571c2e', '#7e3042', '#ad5360', '#de908e'].map(hex),
+  ambre: ['#2a1404', '#6a3608', '#c87214', '#ffb840', '#ffe49a', '#ffffff'].map(hex),
+  violet: ['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'].map(hex),
 }
 const CONTOUR = hex('#07050e')
 const BLANC = hex('#ffffff')
@@ -111,6 +116,14 @@ export type Options = {
    * tremblait (Keko : « on dirait que le propulseur bouge de haut en bas alors qu'il devrait être fixe »).
    */
   cadre?: Forme[]
+  /**
+   * LA LUMIÈRE DU MONDE, donnée dans le repère de L'ÉCRAN (x à droite, y en bas, z vers nous) : en vol, le vaisseau
+   * tourne et la lumière reste où elle est — celle des roches et de la station. Sans elle, la lumière du hangar, fixée
+   * au vaisseau (de l'avant et de la gauche).
+   */
+  lumiere?: { x: number; y: number; z: number }
+  /** Des matières à la place d'autres (le rival : la coque en carmin, la verrière en ambre). Un seul pas, pas de chaîne. */
+  matieres?: Partial<Record<Matiere, Matiere>>
 }
 
 /**
@@ -121,6 +134,18 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   const cap = o.cap ?? -Math.PI / 2
   const ca = Math.cos(cap)
   const sa = Math.sin(cap)
+  // la lumière dans le repère du vaisseau : celle du hangar, ou celle du monde ramenée de −cap
+  let L = LUM
+  let D = DEMI
+  if (o.lumiere) {
+    const v = [o.lumiere.x * ca + o.lumiere.y * sa, -o.lumiere.x * sa + o.lumiere.y * ca, o.lumiere.z]
+    const n = Math.hypot(v[0], v[1], v[2]) || 1
+    L = v.map((c) => c / n)
+    const d = [L[0], L[1], L[2] + 1]
+    const nd = Math.hypot(d[0], d[1], d[2])
+    D = d.map((c) => c / nd)
+  }
+  const rampeDe = (f: Forme): number[] => RAMPES[o.matieres?.[f.mat] ?? f.mat]
   // local → écran : on tourne de cap, puis on agrandit
   const versEcran = (x: number, y: number): [number, number] => [cx + (x * ca - y * sa) * s, cy + (x * sa + y * ca) * s]
   // écran → local
@@ -165,8 +190,8 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     }
   }
   // la direction de la lumière à l'écran (pour les biseaux et le reflet)
-  const lex = LUM[0] * ca - LUM[1] * sa
-  const ley = LUM[0] * sa + LUM[1] * ca
+  const lex = L[0] * ca - L[1] * sa
+  const ley = L[0] * sa + L[1] * ca
   const ln = Math.hypot(lex, ley) || 1
   // (le pas d'un pixel VERS la lumière : en haut à gauche pour le nez en haut)
   const versLum: [number, number] = [Math.abs(lex) / ln > 0.38 ? Math.sign(lex) : 0, Math.abs(ley) / ln > 0.38 ? Math.sign(ley) : 0]
@@ -194,7 +219,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       n = [0.08 + lx * 0.012, c * 0.3, 0.95]
     }
     const nl = Math.hypot(n[0], n[1], n[2])
-    const d = (n[0] * LUM[0] + n[1] * LUM[1] + n[2] * LUM[2]) / nl
+    const d = (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / nl
     // (la lumière ne pousse pas jusqu'au blanc : le blanc est réservé au spéculaire)
     let b = 0.14 + 0.66 * Math.max(0, d)
     if (f.relief === 'emis' && f.feu) {
@@ -216,7 +241,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       // à l'opposé : le bord s'assombrit
       if (kB !== k && kB < k) b -= 0.12
       if (f.relief === 'cyl' || f.relief === 'dome') {
-        const h = (n[0] * DEMI[0] + n[1] * DEMI[1] + n[2] * DEMI[2]) / nl
+        const h = (n[0] * D[0] + n[1] * D[1] + n[2] * D[2]) / nl
         spec[i] = Math.pow(Math.max(0, h), f.mat === 'verre' ? 18 : 30)
       }
     }
@@ -230,7 +255,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     const k = ids[i]
     if (k < 0) continue
     const f = formes[k]
-    const R = RAMPES[f.mat]
+    const R = rampeDe(f)
     if (blanc > 0.5) {
       p.rect(x0 + px, y0 + py, 1, 1, BLANC)
       continue
@@ -271,7 +296,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       }
     }
     if (meilleur < 0) continue
-    const c = blanc > 0.5 ? BLANC : bMax > 0.7 ? RAMPES[formes[meilleur].mat][1] : CONTOUR
+    const c = blanc > 0.5 ? BLANC : bMax > 0.7 ? rampeDe(formes[meilleur])[1] : CONTOUR
     p.rect(x0 + px, y0 + py, 1, 1, c)
   }
 }
@@ -333,19 +358,28 @@ export function formesDuPropulseur(cran: number, flamme: number, t: number): For
   f.push({ pts: [[fond + 1.1, -tu * 0.86], [fond, -tu * 0.8], [fond, tu * 0.8], [fond + 1.1, tu * 0.86]], mat: cran >= 3 ? 'ion' : 'acier', relief: 'plat' })
   return f
 }
-/** LE FOREUR sur le toit, d'un cran : un dôme et un canon (vers l'avant). */
-export function formesDeLaForeuse(cran: number): Forme[] {
-  // la tourelle derrière la verrière : un socle, un dôme d'acier (une bague rouge au cran 3), le canon vers l'avant
+/**
+ * LE CANON DU FOREUR d'un cran : son pivot sur le toit (x, en unités du vaisseau), le rayon de son dôme, et la distance
+ * du pivot à la BOUCHE. Le rayon du vol part de la bouche : il la lit ici, il ne la recopie pas.
+ */
+export function canonDeLaForeuse(cran: number): { pivot: number; dome: number; bouche: number } {
   const dome = 1.5 + 0.25 * (cran - 1)
-  const canon = 3.2 + 0.8 * (cran - 1)
-  const x = -2.2
+  return { pivot: -2.2, dome, bouche: 3.2 + 0.8 * (cran - 1) + dome }
+}
+/** LE FOREUR sur le toit, d'un cran : un dôme et un canon, vers l'avant ou tourné de `vise` (en vol, il suit sa cible). */
+export function formesDeLaForeuse(cran: number, vise = 0): Forme[] {
+  // la tourelle derrière la verrière : un socle, un dôme d'acier (une bague rouge au cran 3), le canon
+  const { pivot: x, dome, bouche } = canonDeLaForeuse(cran)
+  const bx = x + Math.cos(vise) * bouche
+  const by = Math.sin(vise) * bouche
   const f: Forme[] = [
-    { pts: barre(x, 0, x + canon + dome, 0, cran >= 2 ? 1.1 : 0.85), mat: 'acier', relief: 'cyl' },
+    // (le relief en cylindre suppose un fût le long de l'axe : tourné, le fût est une plaque)
+    { pts: barre(x, 0, bx, by, cran >= 2 ? 1.1 : 0.85), mat: 'acier', relief: vise === 0 ? 'cyl' : 'plat' },
     { pts: ovale(x, 0, dome + 0.5, dome + 0.5, 18), mat: 'metal', relief: 'dome', dome: { x, y: 0, rx: dome + 0.5, ry: dome + 0.5 } },
   ]
   if (cran >= 3) f.push({ pts: ovale(x, 0, dome + 0.15, dome + 0.15, 18), mat: 'rouge', relief: 'dome', dome: { x, y: 0, rx: dome + 0.15, ry: dome + 0.15 } })
   f.push({ pts: ovale(x, 0, dome - 0.2, dome - 0.2, 16), mat: 'acier', relief: 'dome', dome: { x, y: 0, rx: dome - 0.2, ry: dome - 0.2 } })
-  f.push({ pts: ovale(x + canon + dome, 0, 0.6, 0.6, 8), mat: 'laser', relief: 'dome', dome: { x: x + canon + dome, y: 0, rx: 0.6, ry: 0.6 } })
+  f.push({ pts: ovale(bx, by, 0.6, 0.6, 8), mat: 'laser', relief: 'dome', dome: { x: bx, y: by, rx: 0.6, ry: 0.6 } })
   return f
 }
 /** L'AIMANT : un fer à cheval rouge à l'arrière du toit, les pôles d'acier. */
@@ -388,8 +422,8 @@ export function formesDeLArme(id: string, s: number): Forme[] {
   ]
 }
 
-/** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit). */
-export function formesDuVaisseau(a: Allure, flamme: number, t: number): Forme[] {
+/** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
+export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0): Forme[] {
   const f: Forme[] = [...formesDesAiles()]
   a.armes.forEach((id, i) => id !== '' && f.push(...formesDeLArme(id, i === 0 ? -1 : 1)))
   f.push(...formesDuPropulseur(a.propulseur, flamme, t))
@@ -399,7 +433,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number): Forme[] 
   const tout = [...feux, ...reste, ...formesDeLaCoque(a.coque)]
   if (a.aimant) tout.push(...formesDeLAimant(2))
   if (a.radar) tout.push(...formesDuRadar(t))
-  if (a.foreuse > 0) tout.push(...formesDeLaForeuse(a.foreuse))
+  if (a.foreuse > 0) tout.push(...formesDeLaForeuse(a.foreuse, vise))
   return tout
 }
 

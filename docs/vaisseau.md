@@ -6,6 +6,71 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Le vol parle la langue de la base (Keko, 11/11 : « Tu peux appliquer la même amélioration graphique, gamefeel juice, esthétique, lumineuse et tout le travail fait sur l'interface de la base sur la partie "en vol" ? Afin que le jeu entier ait une cohérence dans sa qualité et l'intelligence de son design ? »)
+
+Avant : le vol dessinait son vaisseau en polygones à lui, ses nébuleuses en lueurs lisses, et son interface en texte
+cerné posé sur le ciel (la police du dépôt, des carrés pour la coque). Quatre chantiers, jugés à la capture
+(390 × 844, tampon 180 de large, zoom 2).
+
+**Le vaisseau et le rival** (`dessinerUnVaisseau`) : LE RENDU PIXEL PAR PIXEL DU HANGAR (`peindreFormes`, les mêmes
+formes — `formesDuVaisseau` —, les mêmes matières), tourné vers le cap, à UN pixel l'unité. Deux différences avec le
+hangar : la lumière est celle DU MONDE, elle ne tourne pas avec lui (`LUMIERE_DU_VOL` : la direction de `LUMIERE`,
+relevée à z 0,75 — rasante comme sur les roches, elle laissait les ailes dans le noir), et le canon du foreur suit
+sa cible (`vise`). Le reflet froid des bords à l'ombre est assourdi (`REFLET_DU_VOL`, `REFLET_DU_RIVAL`) : à cette
+échelle, celui du hangar cernait tout le bas du vaisseau d'un trait bleu. Le rival est le châssis de série dans SES
+matières (`MATIERES_DU_RIVAL` : carmin, grenat, verrière d'ambre, laser violet — quatre matières ajoutées au rendu).
+
+**Le ciel** : les nébuleuses étaient des `p.glow` du tampon de LUMIÈRE — le seul dégradé lisse du jeu, coupé net au
+bord du canevas. Ce sont des NUÉES EN PIXELS, cuites dans le FOND que `composite` met sous tout (il prend un fond par
+pixel) : trois tons sombres par teinte (`TONS_DES_NUEES`, le fond mêlé à 20 / 36 / 54 % de la couleur), frontières
+tramées, un bruit de valeur à trois octaves lu sur une grille de 4 px ACCROCHÉE AU MONDE et interpolé, la trame
+indexée sur le monde elle aussi (rien ne fourmille quand le ciel glisse). Recuit quand la caméra a bougé d'un pixel
+de ce plan (parallaxe 0,1 : tous les 10 d'unité de monde, onze fois par seconde à pleine vitesse). Elles s'éteignent
+sur 16 px vers les deux bords. Par-dessus les étoiles, LA POUSSIÈRE DU PREMIER PLAN : des grains fixes dans le monde
+(parallaxe 1), qui s'étirent en traits à contre-vitesse (3 px à la pointe) — la vitesse se lit loin de toute roche.
+Les deux côtés portent la vignette tramée de la scène de la base (`dessinerLesBords`).
+
+**L'interface, en plaques** (`dessinerLeScore`, avec `plaque`, `ecrire`, `motEnRelief`, `dessinerUneRessource`) :
+- EN HAUT À GAUCHE, LA SOUTE : « Soute », porté / capacité en gras ivoire, une jauge d'or qui glisse. Pleine : le
+  nombre, la jauge et le liseré passent au rouge (le liseré bat), la plaque bondit, « Soute pleine » monte une fois,
+  le téléphone vibre.
+- DESSOUS, LE PORTÉ : une pastille par minerai qu'on a, l'icône de l'entrepôt et son nombre. Les pépites y volent ;
+  à l'arrivée la pastille saute, son liseré prend la teinte du minerai, un éclat. Rien ne montre ce qui est déjà
+  extrait (règle de Keko, gardée).
+- EN HAUT À DROITE, LA COQUE : un jonc par point (4 × 10, le bouclier d'abord, en cyan), qui se vide par le haut
+  (les chocs coûtent des fractions). Touchée : la plaque flashe et tremble comme le compteur de crédits qui refuse,
+  le point perdu ÉCLATE à sa place (`gerbe`) ; au dernier point, jonc et liseré au rouge.
+- Le tout TOMBE en place à l'arrivée (0,4 s, après la spirale).
+- Le compte de l'extraction est un nombre en RELIEF D'OR (`motEnRelief`, la lettre des titres), AU-DESSUS de
+  l'anneau : dedans, la tête de l'arc et sa lueur le couvraient (vu à la capture). À chaque seconde il saute d'un
+  pixel et un reflet le traverse.
+- Les jauges des roches et du rival : deux pixels (le dessus clair), un creux, le contour d'encre.
+- Les flèches du bord (station : jaune, fixe ; radar : rouge, qui bat) : un même fer de flèche tracé PIXEL PAR PIXEL
+  (`dessinerUneFleche` — deux triangles fins au polygone donnaient une tache à cette taille), cerné d'encre, la
+  moitié tournée vers la lumière plus claire. Elles restent SOUS l'interface du haut (`auBord`, `BAS_DU_HUD`).
+- Le manche : l'anneau cerné d'encre, éclairé en haut à gauche et ombré en bas à droite, le pouce en bouton bombé.
+
+**Le retour** : un coup dans la coque rougit les quatre bords de l'écran un tiers de seconde (tramé), un coup dans
+le bouclier les bleuit ; au dernier point de coque le rouge reste et bat. Les ressorts, les gerbes et les mots
+flottants sont CEUX DE LA BASE (`rebond`, `gerbe`, `flottants`, `dessinerLesEclats`) : le vol tient maintenant leur
+pas (`dtBase`), que la base ne tenait que quand elle se dessinait.
+
+`&coque=N` : part avec N points de coque au plus (juger le dernier point d'un lien).
+
+Vérifié à la capture : l'arrivée (l'interface tombe), la poussée à plusieurs caps (poussière, flèches), `&minerai=20`
+(soute rouge), `&ennemi&quai` (le compte 5 → 1 au-dessus de l'anneau, la jauge du rival), `&coque=3` lancé contre une
+grosse roche (bords rouges, plaque qui flashe, deux joncs qui éclatent), `&coque=1`.
+
+*À rejuger par Keko* : l'échelle du vaisseau (un pixel l'unité, comme avant ; plus grand, il faudrait reculer la
+caméra) ; la lumière relevée ; les couleurs du rival ; la force des nuées (54 % au plus) et leur taille ; la densité
+de la poussière ; la place et la taille des plaques ; l'alerte du dernier point, qui reste à l'écran ; ni arrêt sur
+image au choc, ni « +1 » par pépite (la pépite qui vole le dit déjà).
+
+*Vu en passant, pas touché* : pendant la spirale de l'arrivée, le monde tourne déjà — le foreur creuse une roche à
+portée alors que le vaisseau n'est pas encore dessiné (un laser part du vide). C'est une règle, pas un dessin : à
+trancher par Keko.
+
+
 ## Les grands montants s'écrivent en court (Keko, 11/11 : « le total de crédits en haut à droite et le montant du bouton vendre dans l'entrepôt : ils ne vont pas causer un souci si le montant est trop grand ? par ex. 7 ou 8 chiffres ? », puis « je pense qu'on va abréger partout »)
 
 Mesuré avant de répondre (captures à `&credits=N&tresor=N`, largeurs calculées par `textWidth` hors navigateur : un
@@ -250,7 +315,8 @@ perdaient leur milieu de la même façon.
   froid sur les bords à l'ombre, un CONTOUR SÉLECTIF (sombre à l'ombre, de la
   couleur de la matière côté lumière), le spéculaire sur le métal et le verre,
   les flammes émissives. Les pictogrammes de l'interface sont le même rendu,
-  une pièce seule, mise à l'échelle de sa case. Le vol garde son dessin.
+  une pièce seule, mise à l'échelle de sa case. Le vol a rejoint ce rendu le
+  11/11 (« Le vol parle la langue de la base », en tête).
 - **LES PLAQUES** (`plaque`) : du métal à biseau d'un pixel — lumière en haut à
   gauche, ombre en bas à droite ; ENFONCÉE, le biseau s'inverse et le contenu
   descend ; ÉTEINTE, plus de biseau, désaturée ; un grain de métal brossé,

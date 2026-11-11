@@ -17,7 +17,7 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, 
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
+import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -75,8 +75,6 @@ const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 /** La rune des crédits : du vert. */
 const RUNE = N.fit(['#0a3a1e', '#1f8a4a', '#4ee08a', '#b8ffd0', '#ffffff'], 5)
-/** La coque blindée du hangar : un acier plus sombre. */
-const BLINDEE = N.fit(['#0e1216', '#20272e', '#36414a', '#54626c', '#7a8c98', '#adbdc6', '#ffffff'], 7)
 const FEU = N.fit(N.PAL.fire, 8)
 /** La flamme du propulseur ionique (cran 3 du hangar) : bleue. */
 const ION = N.fit(['#061a3a', '#0a3a7a', '#1a7ad0', '#3ab0ff', '#80e0ff', '#c8f4ff', '#ffffff', '#ffffff'], 8)
@@ -86,7 +84,6 @@ const PEPITE = N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5)
 const ROUGE = N.fit(['#1a0a0e', '#4a1a22', '#7a2a36', '#a8404c', '#d06a70', '#f0a0a0', '#ffffff'], 7)
 const VERRIERE_ENNEMIE = N.fit(['#4a2a06', '#d07a18', '#ffc860', '#ffffff'], 4)
 const VIOLET = N.fit(['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'], 6)
-const BLANC = N.fit(['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'], 7)
 /** Les teintes de la station : l'acier, la verrière, l'or du quai, le fanal, les cellules des panneaux. */
 const TEINTES_STATION = {
   acier: N.fit(['#0c0e14', '#1c2230', '#2e3648', '#4a5468', '#6e7a90', '#9aa6ba', '#d0d8e6', '#ffffff'], 8),
@@ -103,6 +100,17 @@ const FOND = N.hex('#07060f')
  * Un signe qu'elle n'a pas serait une espace.
  */
 const texteNu = (s: string): string => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'").replace(/[—–]/g, '-').replace(/[«»"]/g, '').toUpperCase()
+/**
+ * La lumière du vaisseau en vol : la DIRECTION de celle du monde (les roches, la station), relevée vers nous — rasante
+ * comme celle des roches, elle laissait les ailes, des plaques à plat, dans le noir.
+ */
+const LUMIERE_DU_VOL = { x: LUMIERE.x, y: LUMIERE.y, z: 0.75 }
+/**
+ * Le reflet des bords à l'ombre, en vol : à un pixel l'unité, celui du hangar (un bleu clair) cernait tout le bas du
+ * vaisseau d'un trait — ici un bleu sourd, un rouge sourd pour le rival.
+ */
+const REFLET_DU_VOL = N.hex('#2c4a78')
+const REFLET_DU_RIVAL = N.hex('#6a2440')
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
 export function monterVaisseau(racine: HTMLElement, build: string): void {
@@ -112,6 +120,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const suivre = parametres.get('controle') === 'suivre'
   /** `&minerai=N` : part avec N pepites a bord, pour voir le compteur sans miner (ce qui se teste doit s'ouvrir d'un lien). */
   const minerai0 = Math.max(0, Number(parametres.get('minerai')) || 0)
+  /** `&coque=N` : part avec N points de coque au plus, pour juger le dernier point (tout passe au rouge) et la plaque touchée. */
+  const coque0 = Math.max(0, Number(parametres.get('coque')) || 0)
   /** `&ennemi` : l'ennemi naît tout de suite (pour le voir sans attendre) — à la même distance qu'en jeu : né à 90, on le voyait apparaître à l'écran (Keko : « il devrait toujours apparaître hors champ »). */
   const BASE: ConfigVaisseau = parametres.has('ennemi') ? { ...C, ennemi: { ...C.ennemi, apparait: 0 } } : C
   /**
@@ -197,7 +207,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que les compteurs montrent, par minerai (les pépites en vol n'y sont pas encore). Rien ne montre ce qui est déjà extrait (Keko). */
   const affiche: Cargaison = { ...cargaisonVide(), fer: minerai0 }
   const allumeA: Cargaison = { fer: -10, or: -10, cristal: -10 }
-  const COMPTEUR = { x: 16, y: 10 }
+  /**
+   * L'INTERFACE DU VOL, DANS LA LANGUE DE LA BASE (Keko, 11/11) : ce qu'elle a vu à l'image d'avant, pour réagir au
+   * changement — les points de coque entiers (celui qui tombe éclate), la soute pleine (la plaque bondit, une fois),
+   * la part de la jauge de soute (elle glisse).
+   */
+  let coqueVue = 0
+  let soutePleineVue = false
+  let souteVue = 0
   let secousse = 0
   let flamme = 0
   /** Le compte de l'extraction à l'image d'avant, et s'il montait : la voix de la charge suit le compte, pas le parvis. */
@@ -237,6 +254,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     m = monterLeMonde()
     m.minerai = minerai0
     m.cargaison.fer = minerai0
+    if (coque0 > 0) m.coque = Math.min(m.coque, coque0)
     m.tresor = { ...tresor }
     m.banque = totalDe(tresor)
     effets = []
@@ -246,6 +264,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     affiche.fer = minerai0
     flammesEnnemies.clear()
     toucheEnnemiA.clear()
+    coqueVue = Math.ceil(m.coque)
+    soutePleineVue = false
+    souteVue = 0
     v = m.vaisseau
     camera.x = 0
     camera.y = 0
@@ -1872,7 +1893,104 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   // ---------------------------------------------------------------- dessiner
-  /** Le ciel : trois couches d'étoiles en parallaxe et des nébuleuses de lumière, tirées des cases du monde. */
+  /**
+   * LES NUÉES DU FOND, EN PIXELS (Keko, 11/11 : le vol au niveau de la base). Elles étaient des lueurs du tampon de
+   * LUMIÈRE : un dégradé lisse — le seul du jeu —, coupé net au bord du canevas. Ce sont maintenant des aplats sombres
+   * à trois tons, aux frontières TRAMÉES, cuits dans le FOND que la composition met sous tout le reste (`composite`
+   * prend un fond par pixel). Un bruit de valeur à trois octaves dit la densité, un bruit lent dit la teinte ; les
+   * deux sont lus sur une grille de quatre pixels ACCROCHÉE AU MONDE et interpolés (au pixel, c'était seize hachages
+   * par pixel et par image), et la trame est indexée sur le monde elle aussi : rien ne fourmille quand le ciel glisse.
+   * Recuit seulement quand la caméra a bougé d'un pixel de ce plan (parallaxe 0,1). Les nuées s'éteignent vers les
+   * deux bords : la coupe du canevas ne se voit plus.
+   */
+  const PARALLAXE_DES_NUEES = 0.1
+  const TRAME = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((n) => (n + 0.5) / 16)
+  const melange = (a: number, b: number, k: number): number => {
+    const r = (a & 255) + ((b & 255) - (a & 255)) * k
+    const g = ((a >>> 8) & 255) + (((b >>> 8) & 255) - ((a >>> 8) & 255)) * k
+    const bl = ((a >>> 16) & 255) + (((b >>> 16) & 255) - ((a >>> 16) & 255)) * k
+    return ((255 << 24) | (Math.round(bl) << 16) | (Math.round(g) << 8) | Math.round(r)) >>> 0
+  }
+  /** Les tons des nuées, par teinte : le fond, puis trois pas vers la couleur — sombres, le décor ne dispute rien aux roches. */
+  const TONS_DES_NUEES = COULEURS_NEBULEUSE.map((c) => [FOND, melange(FOND, c, 0.2), melange(FOND, c, 0.36), melange(FOND, c, 0.54)])
+  const hacheDuCiel = (x: number, y: number, g: number): number => {
+    let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(g, 1442695041)) | 0
+    h = Math.imul(h ^ (h >>> 13), 1274126177)
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+  }
+  const bruitDuCiel = (x: number, y: number, g: number): number => {
+    const i = Math.floor(x)
+    const j = Math.floor(y)
+    const fx = x - i
+    const fy = y - j
+    const ux = fx * fx * (3 - 2 * fx)
+    const uy = fy * fy * (3 - 2 * fy)
+    const a = hacheDuCiel(i, j, g)
+    const b = hacheDuCiel(i + 1, j, g)
+    const c = hacheDuCiel(i, j + 1, g)
+    const d = hacheDuCiel(i + 1, j + 1, g)
+    return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy
+  }
+  let fondDuCiel = new Uint32Array(0)
+  let cleDuCiel = ''
+  let grilleDensite = new Float32Array(0)
+  let grilleTeinte = new Float32Array(0)
+  function cuireLeCiel(): Uint32Array {
+    const px = Math.floor(camera.x * PARALLAXE_DES_NUEES) - (W >> 1)
+    const py = Math.floor(camera.y * PARALLAXE_DES_NUEES) - (H >> 1)
+    const cle = `${px},${py},${H}`
+    if (cle === cleDuCiel) return fondDuCiel
+    cleDuCiel = cle
+    if (fondDuCiel.length !== W * H) fondDuCiel = new Uint32Array(W * H)
+    const PAS = 4
+    const gx0 = Math.floor(px / PAS)
+    const gy0 = Math.floor(py / PAS)
+    const gw = Math.ceil(W / PAS) + 2
+    const gh = Math.ceil(H / PAS) + 2
+    if (grilleDensite.length < gw * gh) {
+      grilleDensite = new Float32Array(gw * gh)
+      grilleTeinte = new Float32Array(gw * gh)
+    }
+    for (let gj = 0; gj < gh; gj++)
+      for (let gi = 0; gi < gw; gi++) {
+        const wx = (gx0 + gi) * PAS
+        const wy = (gy0 + gj) * PAS
+        grilleDensite[gj * gw + gi] = 0.55 * bruitDuCiel(wx / 92, wy / 92, 1) + 0.3 * bruitDuCiel(wx / 39, wy / 39, 2) + 0.15 * bruitDuCiel(wx / 17, wy / 17, 3)
+        grilleTeinte[gj * gw + gi] = bruitDuCiel(wx / 240, wy / 240, 4)
+      }
+    const nTeintes = TONS_DES_NUEES.length
+    for (let iy = 0; iy < H; iy++) {
+      const wy = py + iy
+      const gy = wy / PAS - gy0
+      const j = Math.floor(gy)
+      const fy = gy - j
+      for (let ix = 0; ix < W; ix++) {
+        const wx = px + ix
+        const gx = wx / PAS - gx0
+        const i = Math.floor(gx)
+        const fx = gx - i
+        const k = j * gw + i
+        const lire = (G: Float32Array): number => {
+          const haut = G[k] + (G[k + 1] - G[k]) * fx
+          const bas = G[k + gw] + (G[k + gw + 1] - G[k + gw]) * fx
+          return haut + (bas - haut) * fy
+        }
+        const trame = TRAME[((wy & 3) << 2) | (wx & 3)]
+        // la densité : rien sous 0,5, pleine à 0,72 ; éteinte vers les deux bords du canevas
+        const bord = Math.min(1, Math.min(ix, W - 1 - ix) / 16)
+        const d = Math.max(0, Math.min(1, (lire(grilleDensite) - 0.5) / 0.22)) * bord
+        // trois tons, la frontière tramée sur la moitié du pas
+        const f = d * 3
+        const ton = Math.min(3, Math.floor(f) + (f - Math.floor(f) > 0.5 + (trame - 0.5) * 0.6 ? 1 : 0))
+        const tt = Math.max(0, Math.min(0.999, (lire(grilleTeinte) - 0.28) / 0.44)) * nTeintes
+        const teinte = Math.max(0, Math.min(nTeintes - 1, Math.floor(tt + (trame - 0.5) * 0.5)))
+        fondDuCiel[iy * W + ix] = TONS_DES_NUEES[teinte][ton]
+      }
+    }
+    return fondDuCiel
+  }
+
+  /** Le ciel : trois couches d'étoiles en parallaxe, puis la poussière du premier plan ; les nuées sont dans le fond (`cuireLeCiel`). */
   function dessinerLeCiel(p: Peintre): void {
     const couches = [
       { parallaxe: 0.15, pas: 40, teintes: [COQUE[2], COQUE[3]], proba: 0.7 },
@@ -1904,121 +2022,94 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
         }
     })
-    // les nébuleuses : une par grande case, une lueur large et faible, loin derrière
-    const pas = 220
-    const ox = camera.x * 0.1
-    const oy = camera.y * 0.1
-    for (let j = Math.floor((oy - H / 2) / pas) - 1; j <= Math.floor((oy + H / 2) / pas) + 1; j++)
-      for (let i = Math.floor((ox - W / 2) / pas) - 1; i <= Math.floor((ox + W / 2) / pas) + 1; i++) {
-        if (tire(i, j, 71) > 0.6) continue
-        const x = (i + tire(i, j, 72)) * pas - ox + W / 2
-        const y = (j + tire(i, j, 73)) * pas - oy + H / 2
-        p.glow(x, y, 50 + 40 * tire(i, j, 74), COULEURS_NEBULEUSE[Math.floor(tire(i, j, 75) * COULEURS_NEBULEUSE.length)], 0.5)
+    // LA POUSSIÈRE DU PREMIER PLAN : des grains sombres FIXES DANS LE MONDE (parallaxe 1, celle des roches), qui
+    // s'étirent en traits à contre-vitesse quand on file — la vitesse se lit même loin de toute roche
+    const vit = Math.hypot(v.vx, v.vy)
+    const trait = Math.min(3, (vit / CONF.vitesseMax) * 3)
+    const ux = vit > 1 ? v.vx / vit : 0
+    const uy = vit > 1 ? v.vy / vit : 0
+    const pas = 52
+    const i0 = Math.floor((camera.x - W / 2) / pas) - 1
+    const j0 = Math.floor((camera.y - H / 2) / pas) - 1
+    for (let j = j0; j <= j0 + Math.ceil(H / pas) + 2; j++)
+      for (let i = i0; i <= i0 + Math.ceil(W / pas) + 2; i++) {
+        if (tire(i, j, 81) > 0.55) continue
+        const x = (i + tire(i, j, 82)) * pas - camera.x + W / 2
+        const y = (j + tire(i, j, 83)) * pas - camera.y + H / 2
+        if (trait >= 1) p.line(x, y, x - ux * trait, y - uy * trait, COQUE[1])
+        p.dot(x, y, COQUE[2])
       }
   }
 
   /**
-   * UN vaisseau (le joueur ou un ennemi), dessiné le nez vers +x puis tourné vers son cap : la coque, les ailes, la
-   * verrière, le moteur et sa flamme, le foreur sur le toit. IL PREND LA LUMIÈRE DU MONDE (Keko : « on peut le faire
-   * pour le vaisseau aussi ? ») : la direction de la lumière est ramenée dans son repère (tournée de −cap), la coque est
-   * ombrée par une normale approchée (un fuseau bombé), les ailes par leur inclinaison, et le reflet de la verrière
-   * glisse du côté de la lumière. `vise` : l'angle du canon (local) ; `tire` : il creuse.
+   * LES BORDS DE L'ÉCRAN DU VOL : la même vignette tramée que la scène de la base, sur les deux côtés (le canevas
+   * s'arrête avant le bord du téléphone : le monde s'y fond au lieu d'être coupé) ; par-dessus, L'ALERTE — un coup
+   * dans la coque rougit les quatre bords un tiers de seconde, un coup dans le bouclier les bleuit, et au DERNIER
+   * point de coque le rouge reste et bat lentement.
    */
-  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, coque: number[], verre: number[], vise: number, tire: boolean, allure: Allure = ALLURE_SERIE): void {
-    dessinerVaisseauA(p, corps.x - camera.x + W / 2, corps.y - camera.y + H / 2, corps.cap, flam, coque, verre, vise, tire, allure)
+  function dessinerLesBords(p: Peintre): void {
+    for (let k = 0; k < 4; k++) {
+      const a = 0.55 - k * 0.13
+      p.rect(k, 0, 1, H, FOND, a)
+      p.rect(W - 1 - k, 0, 1, H, FOND, a)
+    }
+    const du = t - toucheA
+    const db = t - bouclierA
+    const dernier = m.phase === 'vol' && m.coque <= 1
+    const rouge = du < 0.3 ? 1 - du / 0.3 : dernier ? 0.3 + 0.18 * Math.sin(t * 5) : 0
+    const bleu = db < 0.3 ? 1 - db / 0.3 : 0
+    const force = Math.max(rouge, bleu)
+    if (force <= 0) return
+    const c = rouge >= bleu ? ROUGE[3] : VERRIERE[1]
+    for (let k = 0; k < 6; k++) {
+      const a = force * (0.7 - k * 0.12)
+      p.rect(0, k, W, 1, c, a)
+      p.rect(0, H - 1 - k, W, 1, c, a)
+      p.rect(k, 6, 1, H - 12, c, a)
+      p.rect(W - 1 - k, 6, 1, H - 12, c, a)
+    }
   }
+
   /**
-   * Le même vaisseau à un point du tampon (l'aperçu du hangar s'en sert). LES PIÈCES SE VOIENT (Keko : choisir son
-   * vaisseau pièce par pièce) : le propulseur élargit la tuyère et allonge la flamme à chaque cran, bleue au troisième
-   * (ionique) ; la foreuse grossit le dôme et le canon, le canon prend une arête claire au deuxième, un liseré rouge
-   * cerne le dôme au troisième (le long faisceau) ; la coque blindée est d'acier sombre et rivetée, la coque à bouclier
-   * porte un anneau cyan tant qu'il en reste ; les armes sont sous les ailes, la première à gauche, la seconde à droite
-   * — canon : un fût ; mitrailleuse : deux ; missiles : une nacelle à pointe rouge.
+   * UN VAISSEAU EN VOL (le joueur ou le rival) : LE MÊME RENDU PIXEL PAR PIXEL QUE CELUI DU HANGAR (Keko, 11/11 : « la
+   * même amélioration graphique sur la partie en vol, afin que le jeu entier ait une cohérence ») — les mêmes formes,
+   * les mêmes matières, tournées vers son cap, à UN pixel l'unité. Deux différences avec le hangar : la lumière est celle
+   * DU MONDE (elle ne tourne pas avec lui : c'est celle des roches et de la station), et le canon du foreur suit sa
+   * cible (`vise`, un angle dans le repère du vaisseau). Autour : la lueur de la tuyère et de la verrière, les feux de
+   * position qui clignotent au bout des ailes, l'anneau du bouclier. Le rival est le châssis de série dans SES matières.
    */
-  function dessinerVaisseauA(p: Peintre, sx: number, sy: number, cap: number, flam: number, coque: number[], verre: number[], vise: number, tire: boolean, allure: Allure): void {
-    p.place(sx, sy, false, cap)
-    const lx = Math.cos(cap) * LUMIERE.x + Math.sin(cap) * LUMIERE.y
-    const ly = -Math.sin(cap) * LUMIERE.x + Math.cos(cap) * LUMIERE.y
-    const tonDe = (lum: number) => (lum > 0.72 ? coque[6] : lum > 0.5 ? coque[5] : lum > 0.28 ? coque[4] : lum > 0.08 ? coque[3] : coque[2])
-    const forme = [[9, 0], [3, -3], [-5, -4], [-7, -2], [-7, 2], [-5, 4], [3, 3]]
+  const MATIERES_DU_RIVAL = { coque: 'carmin', aile: 'grenat', verre: 'ambre', rouge: 'or', laser: 'violet' } as const
+  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, vise: number, allure: Allure, blanchi: boolean, rival: boolean): void {
+    // (au pixel entier : entre deux pixels, la silhouette changerait à chaque image)
+    const sx = Math.round(corps.x - camera.x + W / 2)
+    const sy = Math.round(corps.y - camera.y + H / 2)
+    const ca = Math.cos(corps.cap)
+    const sa = Math.sin(corps.cap)
+    const ici = (x: number, y: number): [number, number] => [sx + x * ca - y * sa, sy + x * sa + y * ca]
     const cp = allure.propulseur
-    const tuyere = 1.8 + 0.5 * (cp - 1)
-    const feu = cp >= 3 ? ION : FEU
     if (flam > 0.02) {
-      const L = (3 + 7 * flam) * (1 + 0.25 * (cp - 1)) * (0.85 + 0.15 * Math.sin(t * 60))
-      p.poly([[-7, -tuyere], [-7 - L, 0], [-7, tuyere]], feu[4])
-      p.poly([[-7, -tuyere * 0.55], [-7 - L * 0.6, 0], [-7, tuyere * 0.55]], feu[6])
-      p.glow(-8 - L * 0.4, 0, 6 + 6 * flam + 2 * (cp - 1), feu[5], 0.5 + 0.4 * flam)
+      const [fx, fy] = ici(-8.4 - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
+      p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
-    for (const s of [-1, 1]) {
-      const lumAile = 0.3 + 0.45 * (s * 0.5 * ly + LUMIERE.z)
-      p.poly([[0, s * 2.5], [-6, s * 8], [-8, s * 8], [-6, s * 2.5]], (_x, y) => (s * y < 5 ? tonDe(lumAile) : tonDe(lumAile - 0.22)))
-      p.line(-6.5, s * 7, -7.5, s * 7, N.hex('#d8403a'))
-    }
-    allure.armes.forEach((arme, i) => {
-      if (arme === '') return
-      const s = i === 0 ? -1 : 1
-      if (arme === 'canon') {
-        p.line(-5, s * 6.2, 1, s * 6.2, coque[2])
-        p.dot(1, s * 6.2, coque[4])
-      } else if (arme === 'rafale') {
-        p.line(-5, s * 5.4, 0, s * 5.4, coque[2])
-        p.line(-5, s * 7, 0, s * 7, coque[2])
-      } else {
-        p.poly([[-6.5, s * 5.2], [-1.5, s * 5.2], [-1.5, s * 7.4], [-6.5, s * 7.4]], coque[1])
-        p.line(-6, s * 6.3, -2, s * 6.3, coque[3])
-        p.dot(-1, s * 6.3, N.hex('#ff5a5a'))
+    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
+    const [vx, vy] = ici(3.4, 0)
+    p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
+    // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
+    if (!blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
+      for (const s of [-1, 1]) {
+        const [ax, ay] = ici(-7.6, s * 8.2)
+        const c = rival ? VERRIERE_ENNEMIE[2] : N.hex(s < 0 ? '#ff4a4a' : '#4aff7a')
+        p.rect(Math.round(ax - 0.5), Math.round(ay - 0.5), 1, 1, N.WHITE)
+        p.glow(ax, ay, 3, c, 0.8)
       }
-    })
-    // (la coque portait un liseré sombre, un polygone un peu plus large dessous : agrandi au hangar il devenait un gros contour noir, que les ailes n'avaient pas — Keko l'a fait retirer)
-    p.poly(forme, (x, y) => tonDe((x / 10) * lx * 0.35 + (y / 3.5) * ly * 0.8 + LUMIERE.z * 0.9))
-    p.line(-5, 0, 6, 0, tonDe(LUMIERE.z * 0.9 - 0.1))
-    if (allure.coque === 2) for (const [rx, ry] of [[4, -1.6], [4, 1.6], [-2, -2.6], [-2, 2.6], [-5, -1.6], [-5, 1.6]]) p.dot(rx, ry, coque[1])
-    p.circle(3, 0, 1.8, verre[1])
-    p.dot(3 + lx * 0.9, ly * 0.9, verre[2])
-    p.dot(3 + lx * 1.4, ly * 1.4, verre[3])
-    // la tuyère : plus large à chaque cran de propulseur, un cœur bleu quand il est ionique
-    const fond = -8 - 0.5 * (cp - 1)
-    p.poly([[-7, -tuyere], [fond, -tuyere * 0.72], [fond, tuyere * 0.72], [-7, tuyere]], coque[1])
-    if (cp >= 3) p.dot(fond + 0.5, 0, ION[5])
-    p.dot(-6, -3.6, N.hex('#ff5a5a'))
-    p.dot(-6, 3.6, N.hex('#4aff7a'))
-    p.glow(3, 0, 5, verre[2], 0.25)
-    // le foreur sur le toit : un dôme au milieu de la coque, un canon qui vise — plus gros à chaque cran de foreuse
-    const cf = allure.foreuse // (0 : pas de foreuse, pas de foreur sur le toit)
-    if (cf > 0) {
-      const dome = 2.1 + 0.4 * (cf - 1)
-      const canon = 4.5 + (cf - 1)
-      p.circle(-1.5, 0, dome, coque[1])
-      p.circle(-1.8, -0.4, dome * 0.62, coque[3])
-      p.dot(-2.2, -0.8, coque[5])
-      if (cf >= 3) p.ring(-1.5, 0, dome, 1, LASER[2], 0.7)
-      p.line(-1.5, 0, -1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, coque[2])
-      if (cf >= 2) p.line(-1.5 + Math.cos(vise) * 1.5, Math.sin(vise) * 1.5, -1.5 + Math.cos(vise) * (canon - 1), Math.sin(vise) * (canon - 1), coque[4])
-      p.dot(-1.5 + Math.cos(vise) * canon, Math.sin(vise) * canon, tire ? LASER[5] : LASER[2])
-    }
-    // le radar : un mât à l'arrière du toit et une antenne qui tourne, un point vert qui bat
-    // l'aimant : un petit fer à cheval rouge à l'arrière du toit
-    if (allure.aimant) {
-      p.line(-4.5, -1.5, -3, -1.5, ROUGE[3])
-      p.line(-4.5, 1.5, -3, 1.5, ROUGE[3])
-      p.line(-4.5, -1.5, -4.5, 1.5, ROUGE[3])
-    }
-    if (allure.radar) {
-      const ar = t * 4
-      p.dot(-4.5, 0, coque[1])
-      p.line(-4.5 - Math.cos(ar) * 2, -Math.sin(ar) * 2, -4.5 + Math.cos(ar) * 2, Math.sin(ar) * 2, coque[4])
-      p.dot(-4.5, 0, Math.sin(t * 6) > 0 ? RUNE[2] : RUNE[1])
-    }
-    if (allure.bouclier > 0) p.ring(0, 0, 10, 1, verre[2], 0.25 + 0.35 * allure.bouclier * (0.75 + 0.25 * Math.sin(t * 6)))
-    p.place(0, 0)
+    if (allure.bouclier > 0) p.ring(sx, sy, 11, 1, VERRIERE[2], 0.25 + 0.35 * allure.bouclier * (0.75 + 0.25 * Math.sin(t * 6)))
   }
 
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
     const al = allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0)
-    dessinerUnVaisseau(p, v, flamme, blanchi ? BLANC : al.coque >= 2 ? BLINDEE : COQUE, blanchi ? BLANC : VERRIERE, vise, m.forage !== null, al)
+    dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false)
     // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
     if (t - bouclierA < 0.25) {
       const k = 1 - (t - bouclierA) / 0.25
@@ -2035,26 +2126,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cible = e.forage !== null ? e.forage : e.fait === 'chasse' ? { x: v.x, y: v.y } : null
       const vise = cible !== null ? Math.atan2(cible.y - b.y, cible.x - b.x) - b.cap : 0
       const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.1
-      dessinerUnVaisseau(p, b, flammesEnnemies.get(e.id) ?? 0, blanchi ? BLANC : ROUGE, blanchi ? BLANC : VERRIERE_ENNEMIE, vise, e.forage !== null)
+      dessinerUnVaisseau(p, b, flammesEnnemies.get(e.id) ?? 0, vise, ALLURE_SERIE, blanchi, true)
       // sa vie restante, sous lui (Keko : « afficher la vie restante des ennemis et astéroïdes »)
-      dessinerUneJauge(p, b.x - camera.x + W / 2, b.y - camera.y + H / 2 + CONF.ennemi.rayon + 4, 12, e.pv / CONF.ennemi.pv, ROUGE[4], blanchi)
+      dessinerUneJauge(p, b.x - camera.x + W / 2, b.y - camera.y + H / 2 + CONF.ennemi.rayon + 4, 12, e.pv / CONF.ennemi.pv, ROUGE[4], ROUGE[5], blanchi)
     }
   }
 
   /**
-   * Une jauge de vie en pixel : un pixel de haut, encadrée de sombre, large de `w`, pleine à `part` ; `chaud` la blanchit
-   * (on vient de frapper). Le peintre est supposé à l'origine, (x, y) en coordonnées du tampon, centrées.
+   * Une jauge de vie en pixels, dans la langue des plaques : DEUX pixels de haut (le dessus `clair`, le dessous
+   * `teinte` : un jonc éclairé d'en haut), un creux sombre, le contour d'encre aux coins coupés ; large de `w`, pleine
+   * à `part` ; `chaud` la blanchit (on vient de frapper). Le peintre est supposé à l'origine, (x, y) en coordonnées du
+   * tampon, centrées.
    */
-  function dessinerUneJauge(p: Peintre, x: number, y: number, w: number, part: number, teinte: number, chaud: boolean): void {
+  function dessinerUneJauge(p: Peintre, x: number, y: number, w: number, part: number, teinte: number, clair: number, chaud: boolean): void {
     const x0 = Math.round(x - w / 2)
     const yy = Math.round(y)
-    p.line(x0 - 1, yy - 1, x0 + w, yy - 1, COQUE[0])
-    p.line(x0 - 1, yy + 1, x0 + w, yy + 1, COQUE[0])
-    p.dot(x0 - 1, yy, COQUE[0])
-    p.dot(x0 + w, yy, COQUE[0])
-    p.line(x0, yy, x0 + w - 1, yy, COQUE[1])
+    const encre = MATIERES.encre.contour
+    p.rect(x0, yy - 1, w, 4, encre)
+    p.rect(x0 - 1, yy, w + 2, 2, encre)
+    p.rect(x0, yy, w, 2, COQUE[1])
     const plein = Math.max(part > 0 ? 1 : 0, Math.round(w * Math.min(1, part)))
-    if (plein > 0) p.line(x0, yy, x0 + plein - 1, yy, chaud ? N.WHITE : teinte)
+    if (plein > 0) {
+      p.rect(x0, yy, plein, 1, chaud ? N.WHITE : clair)
+      p.rect(x0, yy + 1, plein, 1, chaud ? N.WHITE : teinte)
+    }
   }
 
   /** Les traits de l'ennemi : un fuseau violet-blanc le long de sa vitesse, une lueur. */
@@ -2094,10 +2189,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /** Un rayon de foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords colorés, une lueur ; l'impact brûle. */
-  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[]): void {
+  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[], cran: number): void {
+    // (il part de la bouche du canon dessiné : le pivot et la longueur sont ceux du peintre, lus, pas recopiés)
+    const canon = canonDeLaForeuse(cran)
     const vise = Math.atan2(f.y - depuis.y, f.x - depuis.x)
-    const x0 = depuis.x + Math.cos(depuis.cap) * -1.5 + Math.cos(vise) * 4.5
-    const y0 = depuis.y + Math.sin(depuis.cap) * -1.5 + Math.sin(vise) * 4.5
+    const x0 = depuis.x + Math.cos(depuis.cap) * canon.pivot + Math.cos(vise) * canon.bouche
+    const y0 = depuis.y + Math.sin(depuis.cap) * canon.pivot + Math.sin(vise) * canon.bouche
     const px = -Math.sin(vise)
     const py = Math.cos(vise)
     const vacille = 0.75 + 0.25 * Math.sin(t * 70)
@@ -2113,8 +2210,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLesLasers(p: Peintre): void {
     p.place(W / 2 - camera.x, H / 2 - camera.y)
-    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER)
-    for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET)
+    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER, Math.max(1, foreuseMontee(hangar)?.cran ?? 1))
+    for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET, ALLURE_SERIE.foreuse)
     p.place(0, 0)
   }
 
@@ -2180,9 +2277,62 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           p.glow(sx, sy, CONF.station.portee * 1.3, PEPITE[2], 0.1 + 0.35 * u * bat)
           if (m.phase === 'extrait') p.glow(sx, sy, CONF.station.portee * 1.6, PEPITE[2], 0.5 + 0.2 * Math.sin(t * 6))
-          else p.text(String(Math.ceil(CONF.extraction.duree - m.extraction)), sx, sy - CONF.station.rayon - 16, PEPITE[3], { font: 'big', scale: 1, align: 'center', outline: COQUE[0] })
+          else {
+            // le nombre de secondes, en RELIEF D'OR (le mot des titres de la base), AU-DESSUS de l'anneau (dedans, la
+            // tête de l'arc et sa lueur le couvraient) : à chaque seconde qui tombe il saute d'un pixel et un reflet
+            // le traverse
+            const reste = CONF.extraction.duree - m.extraction
+            const depuis = Math.ceil(reste) - reste
+            motEnRelief(p, String(Math.ceil(reste)), sx, sy - CONF.station.portee - 22 - (depuis < 0.1 ? 1 : 0), true, TITRE, depuis < 0.4 ? Math.round((depuis / 0.4) * 30) - 8 : null)
+          }
         }
       }
+  }
+
+  /**
+   * LE BAS DE L'INTERFACE DU HAUT (la plaque de soute, puis les pastilles du porté) : les flèches du bord restent
+   * dessous, pour ne jamais passer sous une plaque.
+   */
+  const BAS_DU_HUD = 5 + 18 + 3 + 13
+  /** Le point du bord de l'écran dans la direction (dx, dy) depuis son centre ; `null` si la cible est à l'écran. */
+  function auBord(dx: number, dy: number): { x: number; y: number } | null {
+    const marge = 10
+    const cote = W / 2 - marge
+    const haut = H / 2 - BAS_DU_HUD - 9
+    const bas = H / 2 - marge
+    if (Math.abs(dx) < cote && dy > -haut && dy < bas) return null
+    const k = Math.min(cote / Math.max(1e-6, Math.abs(dx)), (dy < 0 ? haut : bas) / Math.max(1e-6, Math.abs(dy)))
+    return { x: W / 2 + dx * k, y: H / 2 + dy * k }
+  }
+  /**
+   * UNE FLÈCHE DU BORD, dans la langue des plaques : un fer de flèche (une pointe autour d'une encoche), cerné
+   * d'encre, la moitié tournée vers la lumière du monde (en haut à gauche) d'un ton plus clair, une lueur.
+   */
+  function dessinerUneFleche(p: Peintre, x: number, y: number, a: number, corps: number, clair: number, lueur: number): void {
+    const cx = Math.round(x)
+    const cy = Math.round(y)
+    const ca = Math.cos(a)
+    const sa = Math.sin(a)
+    // le fer, PIXEL PAR PIXEL dans son repère (u le long de la visée, w en travers) : deux triangles fins tracés au
+    // polygone donnaient une tache à cette taille ; 0 dehors, 1 et 2 ses deux moitiés
+    const fer = (i: number, j: number): number => {
+      const u = i * ca + j * sa
+      const w = j * ca - i * sa
+      const l = Math.abs(w)
+      if (u > 5.4 || u < -4.4 || l > (5.4 - u) * 0.6) return 0
+      if (u < -1.4 && l < (-1.4 - u) * 1.3) return 0
+      return w < 0 ? 1 : 2
+    }
+    // la moitié éclairée est celle qui regarde en haut à gauche (la lumière du monde)
+    const eclairee = 0.8 * ca - 0.6 * sa > 0 ? 1 : 2
+    const encre = MATIERES.encre.contour
+    for (let j = -8; j <= 8; j++)
+      for (let i = -8; i <= 8; i++) {
+        const moitie = fer(i, j)
+        if (moitie !== 0) p.px(cx + i, cy + j, moitie === eclairee ? clair : corps)
+        else if (fer(i - 1, j) + fer(i + 1, j) + fer(i, j - 1) + fer(i, j + 1) !== 0) p.px(cx + i, cy + j, encre)
+      }
+    p.glow(cx, cy, 7, corps, lueur)
   }
 
   /**
@@ -2194,19 +2344,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const st = stationLaPlusProche(CONF, v.x, v.y)
     const dx = st.x - camera.x
     const dy = st.y - camera.y
-    const marge = 10
-    if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) return
-    // le point du bord dans sa direction
-    const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
-    const x = W / 2 + dx * k
-    const y = H / 2 + dy * k
-    const a = Math.atan2(dy, dx)
-    const pointe = [x + Math.cos(a) * 4, y + Math.sin(a) * 4]
-    const g1 = [x + Math.cos(a + 2.5) * 4, y + Math.sin(a + 2.5) * 4]
-    const g2 = [x + Math.cos(a - 2.5) * 4, y + Math.sin(a - 2.5) * 4]
-    p.poly([pointe, g1, g2], PEPITE[2])
-    p.px(pointe[0], pointe[1], PEPITE[3])
-    p.glow(x, y, 6, PEPITE[2], 0.4)
+    const ou = auBord(dx, dy)
+    if (ou === null) return
+    dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), PEPITE[2], PEPITE[3], 0.4)
   }
 
   /** LE RADAR (un outil du hangar) : le rival le plus proche à sa portée, hors de l'écran, est désigné par une flèche rouge au bord, qui bat. */
@@ -2221,31 +2361,114 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (cible === null) return
     const dx = cible.x - camera.x
     const dy = cible.y - camera.y
-    const marge = 10
-    if (Math.abs(dx) < W / 2 - marge && Math.abs(dy) < H / 2 - marge) return
-    const k = Math.min((W / 2 - marge) / Math.max(1e-6, Math.abs(dx)), (H / 2 - marge) / Math.max(1e-6, Math.abs(dy)))
-    const x = W / 2 + dx * k
-    const y = H / 2 + dy * k
-    const a = Math.atan2(dy, dx)
+    const ou = auBord(dx, dy)
+    if (ou === null) return
     const bat = Math.sin(t * 8) > 0
-    const pointe = [x + Math.cos(a) * 4, y + Math.sin(a) * 4]
-    const g1 = [x + Math.cos(a + 2.5) * 4, y + Math.sin(a + 2.5) * 4]
-    const g2 = [x + Math.cos(a - 2.5) * 4, y + Math.sin(a - 2.5) * 4]
-    p.poly([pointe, g1, g2], bat ? ROUGE[4] : ROUGE[3])
-    p.px(pointe[0], pointe[1], ROUGE[5])
-    p.glow(x, y, 6, ROUGE[3], bat ? 0.5 : 0.3)
+    dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), bat ? ROUGE[4] : ROUGE[3], bat ? ROUGE[5] : ROUGE[4], bat ? 0.5 : 0.3)
   }
 
   /**
-   * LE PORTÉ, en haut à gauche : une ligne par minerai qu'on a (fer, or, cristal — Keko : « des tiers de
-   * ressources »), une pépite de sa couleur et son nombre ; les pépites ramassées y volent. RIEN NE MONTRE CE QUI EST
-   * DÉJÀ EXTRAIT (Keko : « ne pas afficher les ressources déjà extraites ») : le total ne se lit qu'aux écrans de fin.
-   * La coque en haut à droite.
+   * L'INTERFACE DU VOL, EN PLAQUES (Keko, 11/11 : « le travail fait sur l'interface de la base, sur la partie en
+   * vol ») — les plaques d'encre, la lettre et les icônes de la base, à la place du texte cerné posé sur le ciel.
+   * EN HAUT À GAUCHE, LA SOUTE : son nom, ce qu'on porte sur ce qu'on peut, et une jauge d'or qui glisse ; pleine, son
+   * liseré bat en rouge, la plaque bondit et le dit une fois. DESSOUS, LE PORTÉ : une pastille par minerai qu'on a
+   * (fer, or, cristal — Keko : « des tiers de ressources »), l'icône de l'entrepôt et son nombre ; les pépites
+   * ramassées y volent, la pastille saute à leur arrivée. RIEN NE MONTRE CE QUI EST DÉJÀ EXTRAIT (Keko : « ne pas
+   * afficher les ressources déjà extraites ») : le total ne se lit qu'aux écrans de fin. EN HAUT À DROITE, LA COQUE :
+   * un jonc par point (le bouclier d'abord, en cyan) ; touchée, la plaque tremble comme le compteur de crédits qui
+   * refuse, et le point perdu éclate ; au dernier point, tout passe au rouge. Le tout TOMBE en place à l'arrivée.
    */
   function dessinerLeScore(p: Peintre): void {
+    const yHud = 5 - Math.round((1 - sortie((t - arriveA - 0.25) / 0.4)) * (BAS_DU_HUD + 4))
+    const IVOIRE = N.hex('#fff2c8')
+    const encre = MATIERES.encre.contour
     const visibles = MINERAIS.filter((k) => affiche[k] > 0 || envols.some((e) => e.minerai === k))
-    const ligneDe = (k: Minerai) => COMPTEUR.y + visibles.indexOf(k) * 11
-    // les pépites en vol : de la place du vaisseau à l'écran vers le compteur de leur minerai, en accélérant
+    // les places des pastilles du porté, de gauche à droite, larges de leur nombre
+    const yPastilles = yHud + 18 + 3
+    const places = new Map<Minerai, { x: number; w: number }>()
+    let suivante = 5
+    for (const k of visibles) {
+      const w = 14 + largeurDe(String(affiche[k]), GRAS) + 5
+      places.set(k, { x: suivante, w })
+      suivante += w + 2
+    }
+
+    // ---- la soute
+    const porte = MINERAIS.reduce((n, k) => n + affiche[k], 0)
+    const pleine = porte >= CONF.capacite
+    if (pleine && !soutePleineVue && t - arriveA > 0.9) {
+      ;(ressorts.soute ??= { x: 0, v: 0 }).v = -110
+      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 28, t0: t, c: ROUGE[5] })
+      if (typeof navigator.vibrate === 'function') navigator.vibrate([20, 40, 20])
+    }
+    soutePleineVue = pleine
+    const plafond = `${CONF.capacite}/${CONF.capacite}`
+    const ws = 5 + largeurDe('Soute') + 8 + largeurDe(plafond, GRAS) + 5
+    const ys = yHud + Math.round(rebond('soute', 0))
+    const bat = Math.floor(t * 4) % 2 === 0
+    plaque(p, 5, ys, ws, 18, 'encre', { bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+    ecrire(p, 'Soute', 10, ys + 4, COQUE[4])
+    ecrire(p, `${porte}/${CONF.capacite}`, 5 + ws - 5, ys + 4, pleine ? ROUGE[5] : IVOIRE, { police: GRAS, align: 'right' })
+    // sa jauge : un creux, un jonc d'or au dessus clair
+    souteVue = ressort(souteVue, Math.min(1, porte / CONF.capacite))
+    const gw = ws - 10
+    p.rect(9, ys + 12, gw + 2, 4, encre)
+    p.rect(10, ys + 13, gw, 2, MATIERES.creux.lumiere2)
+    const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
+    if (plein > 0) {
+      p.rect(10, ys + 13, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
+      p.rect(10, ys + 14, plein, 1, pleine ? ROUGE[4] : PEPITE[2])
+    }
+
+    // ---- le porté : une pastille par minerai
+    for (const k of visibles) {
+      const { x, w } = places.get(k)!
+      const T = TEINTES_MINERAI[k]
+      const allume = t - allumeA[k] < 0.18
+      const dy = Math.round(rebond(`porte-${k}`, 0))
+      plaque(p, x, yPastilles + dy, w, 13, 'encre', { bord: allume ? T[2] : undefined })
+      dessinerUneRessource(p, x + 7, yPastilles + 6 + dy, k)
+      ecrire(p, String(affiche[k]), x + 14, yPastilles + 3 + dy, allume ? N.WHITE : IVOIRE, { police: GRAS })
+      if (allume) {
+        p.glow(x + 7, yPastilles + 6 + dy, 9, T[2], 0.7)
+        N.sparkle(p, x + 7, yPastilles + 6 + dy, 1 + 3 * Math.sin(((t - allumeA[k]) / 0.18) * Math.PI), T[4], T[2], 0.5)
+      }
+    }
+
+    // ---- la coque (et le bouclier, d'abord) : un jonc par point
+    const nb = CONF.bouclier.points
+    const wp = 5 + (nb + CONF.coque) * 5 - 1 + (nb > 0 ? 3 : 0) + 5
+    const du = t - toucheA
+    const tremble = du >= 0 && du < 0.3 ? Math.round(Math.sin(du * 70) * 2 * (1 - du / 0.3)) : 0
+    const dernier = m.phase === 'vol' && m.coque <= 1
+    const xp = W - 5 - wp
+    const xDuJonc = (i: number): number => xp + 5 + i * 5 + (nb > 0 && i >= nb ? 3 : 0)
+    // le point qui tombe éclate, à sa place
+    const entiers = Math.ceil(m.coque - 1e-9)
+    for (let i = entiers; i < coqueVue; i++) gerbe(xDuJonc(nb + i) + 2, yHud + 9, 9, [COQUE[5], COQUE[6], N.WHITE], 45)
+    coqueVue = entiers
+    plaque(p, xp + tremble, yHud, wp, 18, 'encre', { flash: du >= 0 && du < 0.08, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du < 0.3 ? ROUGE[4] : undefined })
+    const jonc = (i: number, part: number, vide: number, ombre: number, corps: number, haut: number, chaud: boolean): void => {
+      const x = xDuJonc(i) + tremble
+      p.rect(x, yHud + 4, 4, 10, vide)
+      if (part <= 0) return
+      // il se vide par le haut à mesure que le point s'entame (les chocs coûtent des fractions)
+      const h = Math.max(1, Math.round(10 * part))
+      const y = yHud + 14 - h
+      p.rect(x, y, 4, h, chaud ? N.WHITE : corps)
+      if (chaud) return
+      p.rect(x, y, 4, 1, haut)
+      p.rect(x + 3, y + 1, 1, h - 1, ombre)
+    }
+    const eclair = Math.floor(t * 16) % 2 === 0
+    for (let j = 0; j < nb; j++) jonc(j, Math.max(0, Math.min(1, m.bouclier - j)), VERRIERE[0], VERRIERE[1], VERRIERE[2], VERRIERE[3], t - bouclierA < 0.3 && eclair)
+    for (let i = 0; i < CONF.coque; i++) {
+      const part = Math.max(0, Math.min(1, m.coque - i))
+      if (dernier) jonc(nb + i, part, encre, ROUGE[3], ROUGE[4], ROUGE[5], du < 0.3 && eclair)
+      else jonc(nb + i, part, encre, COQUE[4], COQUE[5], COQUE[6], du < 0.3 && eclair)
+    }
+
+    // ---- les pépites en vol : de la place du vaisseau à l'écran vers la pastille de leur minerai, en accélérant
     for (let i = envols.length - 1; i >= 0; i--) {
       const e = envols[i]
       const u = (t - e.t0) / 0.45
@@ -2253,59 +2476,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         envols.splice(i, 1)
         affiche[e.minerai] += 1
         allumeA[e.minerai] = t
+        ;(ressorts[`porte-${e.minerai}`] ??= { x: 0, v: 0 }).v = -70
         continue
       }
       const T = TEINTES_MINERAI[e.minerai]
+      const place = places.get(e.minerai)
       const k = u * u * (3 - 2 * u)
       const x0 = e.x - camera.x + W / 2
       const y0 = e.y - camera.y + H / 2
-      const x = x0 + (COMPTEUR.x - x0) * k
-      const y = y0 + (ligneDe(e.minerai) + 4 - y0) * k
+      const x = x0 + ((place?.x ?? 5) + 7 - x0) * k
+      const y = y0 + (yPastilles + 6 - y0) * k
       p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], T[2])
       p.dot(x, y - 1, T[3])
       p.glow(x, y, 6, T[2], 0.5)
-    }
-    // le bouclier, à gauche des cases de coque : une case cyan par point, qui se vide et se remplit
-    for (let j = 0; j < CONF.bouclier.points; j++) {
-      const x = W - 8 - (CONF.coque + CONF.bouclier.points - 1 - j) * 6 - 3
-      const part = Math.max(0, Math.min(1, m.bouclier - j))
-      p.poly([[x - 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], VERRIERE[0])
-      if (part > 0) {
-        const haut = COMPTEUR.y + 6 - Math.max(1, Math.round(4 * part))
-        p.poly([[x - 2, haut], [x + 2, haut], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], t - bouclierA < 0.3 && Math.floor(t * 16) % 2 === 0 ? N.WHITE : VERRIERE[2])
-      }
-    }
-    // LA SOUTE (la capacité de la coque) : sous les compteurs du porté, ce qu'on porte sur ce qu'on peut ; pleine, en rouge
-    const soutePleine = m.minerai >= CONF.capacite
-    p.text(`SOUTE ${m.minerai}/${CONF.capacite}`, COMPTEUR.x, COMPTEUR.y + visibles.length * 11 + (visibles.length > 0 ? 2 : 0), soutePleine ? (Math.floor(t * 4) % 2 === 0 ? ROUGE[4] : ROUGE[3]) : COQUE[3])
-    // la coque, en haut à droite : une case par point, pleine ou vide ; elle clignote quand on vient d'être touché
-    for (let i = 0; i < CONF.coque; i++) {
-      const x = W - 8 - (CONF.coque - 1 - i) * 6
-      // la case se vide par le haut à mesure que le point s'entame (les chocs coûtent des fractions)
-      const part = Math.max(0, Math.min(1, m.coque - i))
-      const chaud = t - toucheA < 0.3 && Math.floor(t * 16) % 2 === 0
-      p.poly([[x - 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 2], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], COQUE[1])
-      if (part > 0) {
-        const haut = COMPTEUR.y + 6 - Math.max(1, Math.round(4 * part))
-        p.poly([[x - 2, haut], [x + 2, haut], [x + 2, COMPTEUR.y + 6], [x - 2, COMPTEUR.y + 6]], chaud ? N.WHITE : COQUE[5])
-        if (part >= 1) p.dot(x - 1, COMPTEUR.y + 3, COQUE[6])
-      }
-    }
-    // les compteurs du porté : l'icône (une pépite de la couleur du minerai) qui saute avec le nombre quand une arrive
-    for (const k of visibles) {
-      const T = TEINTES_MINERAI[k]
-      const allume = t - allumeA[k] < 0.18
-      const haut = allume ? -1 : 0
-      const ly = ligneDe(k)
-      const ix = COMPTEUR.x - 9
-      const iy = ly + 5 + haut
-      p.poly([[ix, iy - 3], [ix + 3, iy], [ix, iy + 3], [ix - 3, iy]], T[2])
-      p.dot(ix, iy - 1, T[3])
-      p.dot(ix - 1, iy, T[4])
-      p.dot(ix + 1, iy + 1, T[1])
-      p.glow(ix, iy, 6, T[2], allume ? 0.8 : 0.3)
-      p.text(String(affiche[k]), COMPTEUR.x, ly + haut, allume ? N.WHITE : T[3], { font: 'big', scale: 1, align: 'left', outline: COQUE[0] })
-      if (allume) N.sparkle(p, ix, iy, 1 + 3 * Math.sin(((t - allumeA[k]) / 0.18) * Math.PI), T[4], T[2], 0.5)
     }
   }
 
@@ -2333,13 +2516,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     const centre = enTampon(manche.centre.x, manche.centre.y)
+    // dans la langue des plaques : l'anneau cerné d'encre, éclairé d'en haut à gauche, ombré en bas à droite
+    const encre = MATIERES.encre.contour
     p.circle(centre.x, centre.y, r, COQUE[0], 0.25)
-    p.ring(centre.x, centre.y, r, 1, COQUE[4]) // (opaque : tramé, l'anneau faisait du bruit)
+    p.ring(centre.x, centre.y, r + 1, 3, encre)
+    p.ring(centre.x, centre.y, r, 1, COQUE[3]) // (opaque : tramé, l'anneau faisait du bruit)
+    p.arc(centre.x, centre.y, r, 1, Math.PI * 0.95, Math.PI * 1.55, COQUE[5])
+    p.arc(centre.x, centre.y, r, 1, -Math.PI * 0.05, Math.PI * 0.55, COQUE[2])
     const dx = manche.doigt.x - manche.centre.x
     const dy = manche.doigt.y - manche.centre.y
     const d = Math.hypot(dx, dy)
     const k = d > C.manche.rayon ? C.manche.rayon / d : 1
-    p.circle(centre.x + (dx * k) / zoom, centre.y + (dy * k) / zoom, r * 0.42, COQUE[6])
+    // le pouce : un bouton bombé (le cerne, le corps, le dessus plus clair décalé vers la lumière, un éclat)
+    const tx = Math.round(centre.x + (dx * k) / zoom)
+    const ty = Math.round(centre.y + (dy * k) / zoom)
+    const rp = Math.round(r * 0.42)
+    p.circle(tx, ty, rp + 1, encre)
+    p.circle(tx, ty, rp, COQUE[3])
+    p.circle(tx - 1, ty - 1, rp - 2, COQUE[4])
+    p.circle(tx - 2, ty - 2, rp - 5, COQUE[5])
+    p.rect(tx - Math.round(rp * 0.5), ty - Math.round(rp * 0.55), 2, 1, COQUE[6])
   }
 
   // ---------------------------------------------------------------- la boucle
@@ -2562,6 +2758,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       requestAnimationFrame(image)
       return
     }
+    // le pas des ressorts et des éclats de l'interface (ceux de la base : la base ne le tient que quand elle se dessine)
+    dtBase = Math.min(0.05, Math.max(0, t - tBase))
+    tBase = t
     dessinerLeCiel(p)
     for (const a of asteroidesVisibles(C, m, camera.x, camera.y, Math.max(W, H) / 2 + C.champ.rayonMax + 4)) {
       // la roche qu'on creuse tremble, d'autant plus qu'elle est près d'éclater
@@ -2570,7 +2769,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerAsteroide(p, a, t, a.x - camera.x + W / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0), a.y - camera.y + H / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0))
       // sa solidité restante, sous elle, dès qu'elle est entamée (Keko) — pas avant : le champ serait couvert de jauges
       const creuse = m.creuse.get(a.id) ?? 0
-      if (creuse > 0) dessinerUneJauge(p, a.x - camera.x + W / 2, a.y - camera.y + H / 2 + a.rayon + 4, Math.max(8, Math.round(a.rayon * 1.6)), 1 - creuse / solidite(CONF, a), COQUE[5], creusee && Math.floor(t * 20) % 2 === 0)
+      if (creuse > 0) dessinerUneJauge(p, a.x - camera.x + W / 2, a.y - camera.y + H / 2 + a.rayon + 4, Math.max(8, Math.round(a.rayon * 1.6)), 1 - creuse / solidite(CONF, a), COQUE[4], COQUE[6], creusee && Math.floor(t * 20) % 2 === 0)
     }
     // les braises, les morceaux, les pépites, les étincelles sont dans le monde : le peintre se place sur la caméra
     p.place(W / 2 - camera.x, H / 2 - camera.y)
@@ -2602,14 +2801,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
     dessinerLesLasers(p)
+    dessinerLesBords(p)
     dessinerLePointeur(p)
     dessinerLeRadar(p)
     dessinerLeScore(p)
+    dessinerLesEclats(p)
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
-    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, 40, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous la soute, bien lisible)
+    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, BAS_DU_HUD + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
     for (const e of effets) e.fx.draw(frame)
     dessinerLeManche(p)
-    N.composite(frame, img.data, FOND)
+    N.composite(frame, img.data, cuireLeCiel())
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
     canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
