@@ -1745,7 +1745,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     aimant: ['##...##', '##...##', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..'],
     postcombustion: ['...#...', '..##...', '..###..', '.####.#', '.######', '.#####.', '..###..'],
     combat: ['...#...', '..###..', '.#.#.#.', '###.###', '.#.#.#.', '..###..', '...#...'],
-    exploration: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
+    exploration: ['.#####.', '.#####.', '.#####.', '.#.....', '.#.....', '.#.....', '###....'],
+    commerce: ['..#....', '.######', '..#....', '.......', '....#..', '######.', '....#..'],
+    reserve: ['.#####.', '#.....#', '....##.', '...#...', '...#...', '.......', '...#...'],
   }
   /**
    * UN SYMBOLE DU LABO, EN RELIEF (Keko, 11/11 : « donner un peu de texture aux symboles des arbres du labo » — c'étaient
@@ -1777,7 +1779,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const etat = etatDuNoeud(n)
     const e = etatDuBouton(x - 12, y - 12, 24, 24)
     const yy = y + e.dy
-    const payable = etat === 'ouvert' && peutDebloquer(labo, tresor, n.id)
     const bat = 0.5 + 0.5 * Math.sin(t * 4 + x * 0.1)
     const corps = etat === 'acquis' ? RUNE[1] : etat === 'ouvert' ? N.hex('#1b2a4a') : N.hex('#111726')
     const clair = etat === 'acquis' ? RUNE[2] : etat === 'ouvert' ? N.hex('#2c4370') : N.hex('#1a2236')
@@ -1807,13 +1808,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       dessinerLeGlyphe(p, n.icone ?? '', x, yy, etat === 'acquis' ? [RUNE[2], RUNE[3], N.WHITE] : etat === 'ouvert' ? [COQUE[3], COQUE[5], COQUE[6]] : [COQUE[1], COQUE[2], COQUE[3]])
     }
-    // une pièce débloquée qu'on n'a pas encore achetée : le crédit dans son coin ; payable : une pastille d'or qui bat
+    // une pièce débloquée qu'on n'a pas encore achetée : le crédit dans son coin (la pastille d'or d'un nœud payable est
+    // retirée — Keko, 11/11 : « enlève les marqueurs jaunes sur les nœuds dispos »)
     if (etat === 'acquis' && n.sorte === 'piece' && !possede(hangar, n.piece ?? '')) dessinerUnCredit(p, x + 9, yy + 9)
-    if (payable) {
-      p.rect(x + 7, yy - 12, 5, 5, encre)
-      p.rect(x + 8, yy - 11, 3, 3, bat > 0.5 ? N.hex('#fff2a8') : PEPITE[2])
-      p.glow(x + 9, yy - 10, 5, PEPITE[2], 0.3 + 0.3 * bat)
-    }
     // le déblocage : une onde verte, un éclair
     const ud = n.id === debloqueId ? (t - debloqueA) / 0.5 : 1
     if (ud < 1) {
@@ -1878,12 +1875,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
     dessinerLesBranches(p, y0)
+    if (reservee !== null) {
+      // (une branche réservée : ses onglets, et rien dessous)
+      dessinerLesBranches(p, y0)
+      motEnRelief(p, NOMS_D_ONGLET[reservee], W / 2, y0 + Math.floor(hautScene / 2) - 10, false)
+      ecrire(p, 'Bientôt', W / 2, y0 + Math.floor(hautScene / 2) + 4, COQUE[3], { align: 'center' })
+      return
+    }
     const hi = H_INFO + surplusDeLInfo()
     dessinerLesRangs(p, y0 + H_BRANCHES + 6, y1 - hi - 2, RANGS)
     dessinerLInfoDuNoeud(p, y1 - hi)
   }
+  /**
+   * TROIS BRANCHES RÉSERVÉES (Keko, 11/11 : « rajoute trois placeholders en plus ») : des onglets sans arbre — le
+   * commerce, attendu, et deux réserves —, pour juger la barre à six. Elles ne sont que de l'écran : la règle
+   * (`labo.ts`) ne les connaît pas, on n'y débloque rien.
+   */
+  const RESERVEES = ['commerce', 'reserve-1', 'reserve-2'] as const
+  type Onglet = Branche | (typeof RESERVEES)[number]
+  const ONGLETS_DU_LABO: readonly Onglet[] = [...BRANCHES, ...RESERVEES]
+  const NOMS_D_ONGLET: Record<Onglet, string> = { ...NOMS_BRANCHE, commerce: 'Commerce', 'reserve-1': 'Réserve 1', 'reserve-2': 'Réserve 2' }
+  /** La branche réservée ouverte, ou null (une vraie branche l'est : `branche`). */
+  let reservee: (typeof RESERVEES)[number] | null = null
   /** Le dessin de chaque branche, sur son onglet. */
-  const ICONE_DE_BRANCHE: Record<Branche, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration' }
+  const ICONE_DE_BRANCHE: Record<Onglet, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration', commerce: 'commerce', 'reserve-1': 'reserve', 'reserve-2': 'reserve' }
   /**
    * LES BRANCHES : UNE BARRE D'ONGLETS, LA MÊME QUE CELLE DU BAS (Keko, 11/11 : d'abord « un peu basiques par rapport à
    * leur rôle, et ça se passe comment quand on rajoute des catégories ? », puis, des onglets soudés à un bandeau :
@@ -1897,17 +1912,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLesBranches(p: Peintre, y: number): void {
     const h = H_BRANCHES
-    const liste: readonly Branche[] = BRANCHES
+    const liste = ONGLETS_DU_LABO
+    const ouvert: Onglet = reservee ?? branche
     const n = liste.length
     p.rect(0, y, W, h, NUIT_BARRE)
     p.rect(0, y + h - 1, W, 1, MATIERES.encre.contour)
     p.rect(0, y + h, W, 1, NUIT_OMBRE)
     // LES LARGEURS : égales tant que CHAQUE NOM tient dans sa case (mesuré dans la police, pas supposé) ; sinon l'ouverte
     // prend la place de son nom et les autres, réduites à leur dessin, se partagent le reste
-    const ia = liste.indexOf(branche)
+    const ia = liste.indexOf(ouvert)
     const egale = W / n
-    const tousLesNoms = liste.every((b) => largeurDe(NOMS_BRANCHE[b]) + 6 <= egale)
-    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(NOMS_BRANCHE[branche]) + 12)
+    const tousLesNoms = liste.every((b) => largeurDe(NOMS_D_ONGLET[b]) + 6 <= egale)
+    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(NOMS_D_ONGLET[ouvert]) + 12)
     const etroite = tousLesNoms || n < 2 ? egale : (W - large) / (n - 1)
     const debutDe = (i: number): number => (tousLesNoms ? i * egale : i <= ia ? i * etroite : (i - 1) * etroite + large)
     liste.forEach((b, i) => {
@@ -1922,8 +1938,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
       dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#b8860b'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]])
-      if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
-      if (!actif) zone(xa, y, xb - xa, h, () => ((branche = b), (choixA = t)), 'onglet')
+      if (nomme) ecrire(p, NOMS_D_ONGLET[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
+      if (!actif) zone(xa, y, xb - xa, h, () => {
+        const r = RESERVEES.find((x) => x === b)
+        reservee = r ?? null
+        if (r === undefined) branche = b as Branche
+        choixA = t
+      }, 'onglet')
     })
     const cible = (debutDe(ia) + debutDe(ia + 1)) / 2
     repereDeBrancheX = repereDeBrancheX < 0 ? cible : ressort(repereDeBrancheX, cible, 18)

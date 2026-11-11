@@ -188,6 +188,16 @@ la forme, pas le système* (`asteroide.ts`) :
   leur dessin, se partagent le reste (39 px à quatre, 29 à cinq, 23 à six).
   Vu en capture avec cinq onglets (les branches doublées le temps de
   l'essai). Au-delà de six, un défilement, pas écrit.
+- **Trois branches réservées, plus de pastille sur les nœuds, un drapeau
+  pour l'exploration** (Keko, 11/11 : « rajoute trois placeholders en plus,
+  et enlève les marqueurs jaunes sur les nœuds dispos ; et change le symbole
+  exploration, trop proche de celui de combat ») : la barre a six onglets —
+  Commerce (deux flèches), Réserve 1 et 2 (un point d'interrogation) sont
+  des onglets SANS ARBRE (« Bientôt »), de l'écran seulement (`RESERVEES`
+  dans `page.ts` ; la règle ne les connaît pas) ; à six, seul l'onglet
+  ouvert dit son nom. La pastille d'or des nœuds payables est retirée (le
+  coût vert ou rouge de la fiche le dit). L'exploration prend un drapeau
+  planté à la place de la boussole ronde, qui ressemblait au viseur.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
