@@ -38,6 +38,29 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## L'accueil : NOVA DRIFTER (Keko, 11/11 : « un écran d'accueil du jeu avec une demande de tap pour lancer le hangar, afin de débloquer les sons car actuellement il faut que je tape avant que le jeu lance le son. Un bel écran d'accueil dans le thème graphique du jeu, et le titre : Nova Drifter »)
+
+- **Le jeu s'ouvre sur l'accueil** (`accueil`, `dessinerLAccueil`), et c'est
+  SA tape (ou une touche) qui fait naître le contexte audio (`reveiller`) :
+  le hangar arrive avec ses sons. La tape joue le son du décollage et vibre.
+  `&direct` saute l'accueil (les liens de test du hangar).
+- **Dans la langue du jeu, tout dans le tampon** : on DÉRIVE — le ciel du
+  vol défile (ses trois couches d'étoiles, ses nuées cuites : la caméra
+  file vers le haut), cinq roches du champ passent (`dessinerAsteroide`, les
+  trois minerais), le vaisseau TEL QU'IL EST MONTÉ au hangar (`allureMontee`,
+  ×3) respire au-dessus de sa traînée ; en haut, une NOVA (un cœur blanc, huit
+  rayons qui tournent, trois halos) éclot derrière le titre en relief —
+  **NOVA en or (×4), DRIFTER en acier (×3)**, la lettre grasse du jeu
+  agrandie (`motEnRelief` prend une échelle), qui tombent en place l'un
+  après l'autre et qu'un reflet balaie ; en bas, « Toucher pour commencer »
+  bat entre deux chevrons d'or.
+- **La sortie** (0,75 s) : le vaisseau s'arrache vers le haut, le ciel et
+  les roches s'emballent, le titre remonte, la nuit de la base monte, puis
+  `ouvrirLeHangar`.
+- Vu en capture (412 × 915) : l'accueil, puis le hangar après la tape. Le
+  son lui-même n'a pas été écouté (Chrome sans tête, muet) — à confirmer
+  par Keko sur son appareil.
+
 ## La vue du vol est fixe : 180 × 320 partout (Keko, 11/11 : « selon le portable ou l'écran de PC, la zone visible de l'espace en jeu est différente non ? » — « vue fixe 180 × 320, le surplus donné à l'interface » ; « et aussi enlève la ligne du BUILD en bas, on l'a déjà dans l'onglet plus »)
 
 - **Le constat** : la largeur du tampon est 180 partout, mais sa hauteur

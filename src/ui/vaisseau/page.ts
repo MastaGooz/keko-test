@@ -286,6 +286,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
+  /**
+   * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
+   * sons — actuellement il faut que je tape avant que le jeu lance le son ; un bel écran dans le thème graphique du
+   * jeu, et le titre : Nova Drifter ») : le jeu s'ouvre dessus, et c'est SA tape qui fait naître le contexte audio — le
+   * hangar arrive donc avec ses sons. `&direct` le saute (ce qui se teste doit s'ouvrir d'un lien).
+   */
+  let accueil = !parametres.has('direct')
+  let accueilQuitteA: number | null = null
+  const SORTIE_DE_L_ACCUEIL = 0.75
+  function quitterLAccueil(): void {
+    if (accueilQuitteA !== null) return
+    accueilQuitteA = t
+    jouer('decolle')
+    if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
+  }
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
@@ -586,13 +601,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * UN MOT EN RELIEF (la lettre des effets ui/ du dépôt, `drawWord` : un dégradé, un haut lit, un dessous ombré, un
    * contour), centré sur x ; en or ou en acier ; `reflet` fait passer l'éclat diagonal du dépôt sur le mot.
    */
-  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean, f: Police = GRAS, reflet: number | null = null): void {
+  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean, f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
     const mot = spell(s, f) as { letters: { g: unknown; x: number }[]; w: number }
-    const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - mot.w / 2) + L.x, y: Math.round(y) - decalage(f), sx: 1, sy: 1 }))
+    const e = echelle
+    const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - (mot.w * e) / 2) + L.x * e, y: Math.round(y) - decalage(f) * e, sx: e, sy: e }))
     const st = or
       ? { fill: [N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: N.hex('#6b3a0c'), outline: N.hex('#1e0e03'), shadow: 0 }
       : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[6], under: COQUE[2], outline: N.hex('#07050d'), shadow: 0 }
-    drawWord(p, items, reflet === null ? st : { ...st, shine: Math.round(x - mot.w / 2) + reflet })
+    drawWord(p, items, reflet === null ? st : { ...st, shine: Math.round(x - (mot.w * e) / 2) + reflet })
   }
   /** Un texte replié à `largeur`, ligne par ligne, dans sa police (les petites capitales passent sans accents). */
   function replier(s: string, largeur: number, f: Police | 'mini' = TEXTE): string[] {
@@ -1784,6 +1800,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   racine.addEventListener('pointerdown', (ev) => {
     reveiller() // (le contexte audio ne naît que sur un geste)
+    if (accueil) {
+      quitterLAccueil()
+      return
+    }
     if (ecranVisible()) {
       // l'écran en pixels : sur la liste, un glisser commence (la tape se décide au relâchement) ; ailleurs, une tape sur une zone
       if (decollageA !== null) return // (le vaisseau part : plus rien ne répond)
@@ -1870,6 +1890,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   racine.addEventListener('pointercancel', lever)
   window.addEventListener('keydown', (ev) => {
     reveiller()
+    if (accueil) {
+      quitterLAccueil()
+      return
+    }
     touches.add(ev.key.toLowerCase())
     demarrer()
   })
@@ -2553,6 +2577,108 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const pe of m.pepites) dessinerPepite(p, pe, t)
   }
 
+  /** Les roches qui passent sur l'accueil : leur place en travers (0 à 1), leur départ, leur vitesse, et de quoi les dessiner. */
+  const ROCHES_DE_L_ACCUEIL: { x: number; y: number; vit: number; rayon: number; graine: number; tourne: number; minerai: Minerai; richesse: number }[] = [
+    { x: 0.1, y: 0.05, vit: 13, rayon: 13, graine: 9173, tourne: 0.25, minerai: 'fer', richesse: 0.5 },
+    { x: 0.9, y: 0.4, vit: 17, rayon: 10, graine: 40311, tourne: -0.4, minerai: 'or', richesse: 0.9 },
+    { x: 0.22, y: 0.62, vit: 22, rayon: 7, graine: 7741, tourne: 0.6, minerai: 'cristal', richesse: 1 },
+    { x: 0.8, y: 0.85, vit: 11, rayon: 14, graine: 66102, tourne: -0.2, minerai: 'fer', richesse: 0.3 },
+    { x: 0.6, y: 0.22, vit: 27, rayon: 5.5, graine: 1289, tourne: 0.9, minerai: 'or', richesse: 0.6 },
+  ]
+  /**
+   * L'ÉCRAN D'ACCUEIL, dans la langue du jeu : on DÉRIVE — le ciel du vol défile (ses étoiles, ses nuées), des roches
+   * du champ passent, le vaisseau TEL QU'IL EST MONTÉ au hangar file vers le haut, tuyère allumée ; au-dessus, une NOVA
+   * (une étoile qui éclate : son cœur, ses rayons qui tournent, ses halos) et le titre en relief, NOVA en or, DRIFTER
+   * en acier, qui tombent en place et qu'un reflet balaie ; en bas, « Toucher pour commencer » qui bat. À la tape, le
+   * vaisseau s'arrache vers le haut, tout file, et le hangar s'ouvre.
+   */
+  function dessinerLAccueil(p: Peintre): void {
+    zones = []
+    p.place(0, 0)
+    const us = accueilQuitteA === null ? 0 : Math.min(1, (t - accueilQuitteA) / SORTIE_DE_L_ACCUEIL)
+    const elan = us * us
+    const boucle = (a: number, b: number): number => ((a % b) + b) % b
+    // on dérive : la caméra file vers le haut, un peu de travers ; à la sortie, tout s'emballe
+    camera.x = t * 7
+    camera.y = -t * 22 - elan * 500
+    dessinerLeCiel(p)
+    ROCHES_DE_L_ACCUEIL.forEach((r, i) => {
+      const course = H + 90
+      const y = boucle(r.y * course + t * r.vit + elan * 380, course) - 45
+      dessinerAsteroide(p, { id: i + 1, x: 0, y: 0, rayon: r.rayon, graine: r.graine, angle0: i * 1.3, vitesseAngulaire: r.tourne, minerai: r.minerai, richesse: r.richesse }, t, Math.round(r.x * W), Math.round(y))
+    })
+
+    // LE VAISSEAU, celui du hangar, en grand : il respire, sa tuyère souffle une traînée ; à la tape il s'arrache
+    const E = 3
+    const cx = W / 2
+    const sy = Math.round(H * 0.63 + Math.sin(t * 1.4) * 2.5 - Math.pow(Math.max(0, us - 0.15) / 0.85, 2.2) * (H * 0.63 + 70))
+    const flam = accueilQuitteA === null ? 0.55 + 0.12 * Math.sin(t * 11) : 1
+    const al = allureMontee(0)
+    const chaud = al.propulseur >= 3 ? ION : FEU
+    const ty = sy + 8.6 * E
+    for (let k = 0; k < 18; k++) {
+      const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
+      p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
+    }
+    p.glow(cx, ty, 12 + 16 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
+    peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, {})
+    p.glow(cx, sy - 3.4 * E, 9, VERRIERE[2], 0.25)
+    if (Math.floor(t * 1.5) % 2 === 0)
+      for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {
+        p.rect(Math.round(cx + s * 8.4 * E), Math.round(sy + 7.8 * E), 1, 1, N.WHITE)
+        p.glow(Math.round(cx + s * 8.4 * E), Math.round(sy + 7.8 * E), 7, c, 0.7)
+      }
+
+    // LE TITRE tombe en place (NOVA, puis DRIFTER) ; derrière lui, la nova
+    const eN = largeurDe('NOVA', GRAS) * 4 <= W - 12 ? 4 : 3
+    const eD = largeurDe('DRIFTER', GRAS) * 3 <= W - 8 ? 3 : 2
+    const yT = Math.round(Math.max(26, H * 0.13))
+    const chuteN = Math.round((1 - sortie(t / 0.55)) * -(yT + 60)) - Math.round(elan * (yT + 120))
+    const chuteD = Math.round((1 - sortie((t - 0.18) / 0.55)) * -(yT + 110)) - Math.round(elan * (yT + 160))
+    const nx = Math.round(W / 2 + (largeurDe('NOVA', GRAS) * eN) / 2 - 4)
+    const ny = yT - 6 + chuteN
+    const bat = 0.5 + 0.5 * Math.sin(t * 2.3)
+    const eclos = sortie((t - 0.5) / 0.6)
+    if (eclos > 0) {
+      p.glow(nx, ny, 70, VIOLET[2], 0.3 * eclos)
+      p.glow(nx, ny, 34 + 6 * bat, PEPITE[2], (0.45 + 0.2 * bat) * eclos)
+      p.glow(nx, ny, 12, N.WHITE, 0.8 * eclos)
+      for (let k = 0; k < 8; k++) {
+        const a = t * 0.12 + (k * Math.PI) / 4
+        const l = (k % 2 === 0 ? 30 : 17) * eclos * (0.85 + 0.15 * Math.sin(t * 3 + k))
+        p.line(nx + Math.cos(a) * 4, ny + Math.sin(a) * 4, nx + Math.cos(a) * l, ny + Math.sin(a) * l, k % 2 === 0 ? PEPITE[3] : PEPITE[2], k % 2 === 0 ? 0.55 : 0.35)
+      }
+      N.sparkle(p, nx, ny, (7 + 2 * bat) * eclos, N.WHITE, PEPITE[3], 0.95)
+      p.circle(nx, ny, 2, N.WHITE)
+    }
+    const cycle = boucle(t - 1.2, 3.4)
+    const wN = largeurDe('NOVA', GRAS) * eN
+    const wD = largeurDe('DRIFTER', GRAS) * eD
+    motEnRelief(p, 'NOVA', W / 2, yT + chuteN, true, GRAS, t > 1.2 && cycle < 0.7 ? -20 + ((wN + 40) * cycle) / 0.7 : null, eN)
+    motEnRelief(p, 'DRIFTER', W / 2, yT + 11 * eN - 2 + chuteD, false, GRAS, t > 1.2 && cycle > 0.35 && cycle < 1.05 ? -20 + ((wD + 40) * (cycle - 0.35)) / 0.7 : null, eD)
+
+    // LA DEMANDE : « Toucher pour commencer », qui bat, entre deux chevrons qui se rapprochent
+    if (accueilQuitteA === null && t > 1.1) {
+      const texte = 'Toucher pour commencer'
+      const f: Police = largeurDe(texte, GRAS) <= W - 30 ? GRAS : TEXTE
+      const yp = H - Math.max(30, Math.round(H * 0.1))
+      const k = 0.5 + 0.5 * Math.sin(t * 3.4)
+      const w = largeurDe(texte, f)
+      ecrire(p, texte, W / 2, yp, k > 0.35 ? N.hex('#fff2c8') : COQUE[4], { police: f, align: 'center', contour: MATIERES.encre.contour })
+      const dx = Math.round(k * 3)
+      p.text('>', W / 2 - w / 2 - 12 + dx, yp + 1, PEPITE[2])
+      p.text('<', W / 2 + w / 2 + 8 - dx, yp + 1, PEPITE[2])
+    }
+    // la sortie : la nuit de la base monte, puis le hangar s'ouvre
+    if (us > 0.6) p.rect(0, 0, W, H, NUIT, (us - 0.6) / 0.4)
+    if (us >= 1) {
+      accueil = false
+      camera.x = 0
+      camera.y = 0
+      ouvrirLeHangar()
+    }
+  }
+
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {
     if (manche === null) return
@@ -2793,6 +2919,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     N.clearFrame(frame)
     const p = N.painterFor(frame)
+    if (accueil) {
+      regler(0, false, 0, false)
+      dessinerLAccueil(p)
+      N.composite(frame, img.data, cuireLeCiel())
+      g.putImageData(img, 0, 0)
+      canvas.style.transform = ''
+      requestAnimationFrame(image)
+      return
+    }
     const visible = ecranVisible()
     if (visible && !ecranEtait) ouvrirLeHangar()
     ecranEtait = visible
