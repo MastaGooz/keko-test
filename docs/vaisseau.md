@@ -52,6 +52,37 @@ la forme, pas le système* (`asteroide.ts`) :
 - (Et l'aire ronde plus grosse une fois installé : c'est la hauteur gagnée
   sur la barre du navigateur, que la scène du hangar prend toute.)
 
+## L'arbre de la tech, refait en grand (Keko, 11/11 : « je trouve l'organisation de l'écran tech pas terrible : nœuds tout petits, beaucoup d'espace vide, les connexions (chemins) entre les nœuds sont très très fines… tu peux le rework pour le rendre bien plus juicy, beau et rendu pro ? »)
+
+- **Les nœuds** passent de 22 à 34 px (40 pour le losange) et deviennent
+  des pièces de métal : cernés d'encre, un bord, un corps biseauté ; la
+  PIÈCE est une plaque carrée à rivets avec un puits où elle est rendue en
+  22 px, le PASSIF un médaillon à jonc avec son symbole trois fois agrandi,
+  la MÉCANIQUE un losange. L'état se lit à la matière (éteint, acier bleu
+  qui respire, vert) ET à une pastille dans le coin : un cadenas, une
+  coche, ou le crédit d'une pièce à acheter. Choisi, le nœud se lève dans
+  quatre équerres d'or qui respirent ; acquis, il scintille de temps en
+  temps ; débloqué, il blanchit et lance son onde.
+- **Chaque rang a son bandeau** sur toute la largeur : « Rang N », un
+  cadenas tant qu'il est fermé, et à droite ce que coûte un nœud de ce
+  rang. Plus de numéro perdu dans la marge.
+- **Les conduits** font cinq pixels (cernés, un cœur clair), ont des
+  raccords, et DISENT LA RÈGLE : de la source au premier rang, puis de
+  chaque nœud au rang d'après — celui qui sort d'un nœud débloqué s'allume
+  (c'est lui qui ouvre le rang suivant), et des grains de lumière le
+  descendent. Avant, un tronc d'un pixel au milieu.
+- **Les rangs** font 64 px au moins (46 avant) et se partagent la fenêtre :
+  trois rangs la remplissent sur un écran de 780 px. Le défilement reste.
+- **Les symboles** : la lumière ne vient plus que d'en haut (éclairés aussi
+  par les côtés, les traits en biais agrandis sortaient en damier) ; les
+  chevrons de la vitesse et de l'accélération ont deux cases d'épaisseur ;
+  le symbole d'un nœud acquis est en trois tons proches.
+- Inspiré des effets ui/ du dépôt pour le vocabulaire (plaques à biseau,
+  éclat, onde, mot en relief) ; aucun n'est repris tel quel. Jugé sur des
+  captures agrandies (trois branches, un déblocage, un nœud choisi) ; les
+  animations (grains des conduits, respiration, scintillement) ne sont
+  jugées que sur des images fixes.
+
 ## Le hangar : la scène plus haute, les cases qui défilent (Keko, 11/11 : « dans le hangar, on peut augmenter un peu la hauteur de la zone avec le vaisseau ? et ajouter un système de scroll si les parties en bas ne logent pas — hypothétiquement, un vaisseau énorme avec beaucoup d'armes et d'outils »)
 
 - **La scène gagne vingt-deux pixels** (`sceneOrdinaire` : ce que laissent

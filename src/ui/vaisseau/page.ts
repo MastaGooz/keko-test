@@ -1904,9 +1904,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     cadence: ['.#.#.#.', '.#.#.#.', '.#.#.#.', '.#.#.#.', '.......', '#######', '#######'],
     critique: ['...#...', '...#...', '..###..', '#######', '..###..', '...#...', '...#...'],
     bouclier: ['..###..', '.#...#.', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..'],
-    vitesse: ['#..#...', '.#..#..', '..#..#.', '...#..#', '..#..#.', '.#..#..', '#..#...'],
+    // (les chevrons ont deux cases d'épaisseur : en biais d'une seule case, agrandis, ils sortaient en pointillé)
+    vitesse: ['##.##..', '.##.##.', '..##.##', '..##.##', '.##.##.', '##.##..', '.......'],
     maniabilite: ['.####..', '#....#.', '#.....#', '#...###', '#....#.', '.#.....', '..###..'],
-    acceleration: ['...#...', '..#.#..', '.#...#.', '...#...', '..#.#..', '.#...#.', '.......'],
+    acceleration: ['...#...', '..###..', '.##.##.', '##.#.##', '..###..', '.##.##.', '##...##'],
     aimant: ['##...##', '##...##', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..'],
     postcombustion: ['...#...', '..##...', '..###..', '.####.#', '.######', '.#####.', '..###..'],
     combat: ['...#...', '..###..', '.#.#.#.', '###.###', '.#.#.#.', '..###..', '...#...'],
@@ -1941,69 +1942,125 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let j = 0; j < n; j++)
       for (let i = 0; i < n; i++) {
         if (!plein(i, j)) continue
-        const lit = !plein(i, j - 1) || !plein(i - 1, j)
-        const sombre = !plein(i, j + 1) || !plein(i + 1, j)
+        // (la lumière vient d'en haut : seuls le dessus et le dessous prennent le clair et le sombre — éclairés aussi par
+        // les côtés, les traits en biais d'un grand symbole sortaient en damier)
+        const lit = !plein(i, j - 1)
+        const sombre = !plein(i, j + 1)
         p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.12 ? T[0] : T[1])
       }
   }
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
   const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
-  /** UN NŒUD, centré sur (x, y), vingt-deux pixels : sa forme dit sa sorte, sa matière son état. */
+  /**
+   * UN NŒUD, centré sur (x, y) — REFAIT EN GRAND (Keko, 11/11 : « nœuds tout petits, beaucoup d'espace vide, les
+   * connexions très très fines… le rework pour le rendre bien plus juicy, beau et rendu pro ») : trente-quatre pixels au
+   * lieu de vingt-deux, une vraie pièce de métal — cerné d'encre, son bord, son corps biseauté (clair en haut à gauche,
+   * sombre en bas à droite), et dedans un puits pour la pièce, ou le symbole en grand. La FORME dit la sorte (carré :
+   * une pièce ; rond : un passif ; losange : une mécanique), la MATIÈRE l'état : éteint et cadenassé (rang fermé), acier
+   * bleu qui respire (à débloquer), vert coché qui scintille (débloqué). Choisi, il se lève et quatre équerres d'or
+   * l'encadrent ; débloqué, il éclate en blanc.
+   */
   function dessinerUnNoeud(p: Peintre, n: Noeud, x: number, y: number, choisi: boolean): void {
     const etat = etatDuNoeud(n)
-    const e = etatDuBouton(x - 12, y - 12, 24, 24)
-    const yy = y + e.dy
-    const bat = 0.5 + 0.5 * Math.sin(t * 4 + x * 0.1)
-    const corps = etat === 'acquis' ? RUNE[1] : etat === 'ouvert' ? N.hex('#1b2a4a') : N.hex('#111726')
-    const clair = etat === 'acquis' ? RUNE[2] : etat === 'ouvert' ? N.hex('#2c4370') : N.hex('#1a2236')
-    const bord = etat === 'acquis' ? RUNE[3] : etat === 'ouvert' ? (bat > 0.5 ? COQUE[4] : COQUE[3]) : N.hex('#232c44')
-    const encre = N.hex('#04060c')
-    if (etat === 'acquis') p.glow(x, yy, 16, RUNE[2], 0.22)
-    if (n.sorte === 'piece') {
-      p.rect(x - 12, yy - 12, 24, 24, encre)
-      p.rect(x - 11, yy - 11, 22, 22, bord)
-      p.rect(x - 10, yy - 10, 20, 20, corps)
-      p.rect(x - 10, yy - 10, 20, 1, clair)
-      p.rect(x - 10, yy - 10, 1, 20, clair)
-      const pc = pieceDe(n.piece ?? '')
-      if (pc !== undefined) dessinerLePictogramme(p, pc, x, yy, 16, 16)
-      if (etat === 'ferme') p.rect(x - 10, yy - 10, 20, 20, N.hex('#0a0e18'), 0.6)
-    } else {
-      if (n.sorte === 'passif') {
-        p.circle(x, yy, 12, encre)
-        p.circle(x, yy, 11, bord)
-        p.circle(x, yy, 10, corps)
-        p.arc(x, yy, 9, 1, Math.PI * 0.95, Math.PI * 1.6, clair)
-      } else {
-        const lo = (r: number): [number, number][] => [[x, yy - r], [x + r, yy], [x, yy + r], [x - r, yy]]
-        p.poly(lo(14), encre)
-        p.poly(lo(13), bord)
-        p.poly(lo(11.5), corps)
-      }
-      dessinerLeGlyphe(p, n.icone ?? '', x, yy, etat === 'acquis' ? [RUNE[2], RUNE[3], N.WHITE] : etat === 'ouvert' ? [COQUE[3], COQUE[5], COQUE[6]] : [COQUE[1], COQUE[2], COQUE[3]])
-    }
-    // une pièce débloquée qu'on n'a pas encore achetée : le crédit dans son coin (la pastille d'or d'un nœud payable est
-    // retirée — Keko, 11/11 : « enlève les marqueurs jaunes sur les nœuds dispos »)
-    if (etat === 'acquis' && n.sorte === 'piece' && !possede(hangar, n.piece ?? '')) dessinerUnCredit(p, x + 9, yy + 9)
-    // le déblocage : une onde verte, un éclair
+    const e = etatDuBouton(x - 20, y - 20, 40, 40)
+    const yy = y + e.dy - Math.round(rebond(`noeud-${n.id}`, choisi ? 1 : 0) * 2)
+    const bat = 0.5 + 0.5 * Math.sin(t * 3.5 + x * 0.13)
     const ud = n.id === debloqueId ? (t - debloqueA) / 0.5 : 1
+    const encre = N.hex('#04060c')
+    const T =
+      etat === 'acquis'
+        ? { corps: RUNE[1], clair: RUNE[2], bord: RUNE[3], sombre: N.hex('#0a3a1e'), puits: N.hex('#06200f') }
+        : etat === 'ouvert'
+          ? { corps: N.hex('#22365c'), clair: N.hex('#3f62a0'), bord: bat > 0.5 ? N.hex('#a8caff') : N.hex('#6f97d8'), sombre: N.hex('#131e36'), puits: N.hex('#0b1322') }
+          : { corps: N.hex('#141a2a'), clair: N.hex('#1f2942'), bord: N.hex('#2a3450'), sombre: N.hex('#0b0f1a'), puits: N.hex('#090c15') }
+    const tons: [number, number, number] = etat === 'acquis' ? [N.hex('#9af0b8'), N.hex('#dcffe6'), N.WHITE] /* (trois tons proches : contrastés, un symbole en biais sortait en pointillé) */ : etat === 'ouvert' ? [COQUE[3], COQUE[5], COQUE[6]] : [COQUE[1], COQUE[2], COQUE[3]]
+    // sa lueur : verte et posée s'il est acquis, bleue et qui respire s'il attend
+    if (etat === 'acquis') p.glow(x, yy, 27, RUNE[2], 0.2 + 0.07 * bat)
+    else if (etat === 'ouvert') p.glow(x, yy, 25, N.hex('#3a8ad0'), 0.08 + 0.14 * bat)
+    if (n.sorte === 'piece') {
+      // UNE PIÈCE : une plaque carrée, quatre rivets, un puits où la pièce est rendue
+      p.rect(x - 18, yy - 18, 36, 37, encre)
+      p.rect(x - 17, yy - 17, 34, 34, T.bord)
+      p.rect(x - 16, yy - 16, 32, 32, T.corps)
+      p.rect(x - 16, yy - 16, 32, 1, T.clair)
+      p.rect(x - 16, yy - 16, 1, 32, T.clair)
+      p.rect(x - 16, yy + 15, 32, 1, T.sombre)
+      p.rect(x + 15, yy - 16, 1, 32, T.sombre)
+      for (const [rx, ry] of [[-14, -14], [13, -14], [-14, 13], [13, 13]]) p.rect(x + rx, yy + ry, 1, 1, T.clair)
+      p.rect(x - 13, yy - 13, 26, 26, encre)
+      p.rect(x - 12, yy - 12, 24, 24, T.puits)
+      p.rect(x - 12, yy + 11, 24, 1, T.clair)
+      const pc = pieceDe(n.piece ?? '')
+      if (pc !== undefined) dessinerLePictogramme(p, pc, x, yy, 22, 22)
+      if (etat === 'ferme') p.rect(x - 12, yy - 12, 24, 23, N.hex('#090c15'), 0.62)
+    } else if (n.sorte === 'passif') {
+      // UN PASSIF : un médaillon rond, son jonc, le symbole en grand
+      p.circle(x, yy + 1, 18, encre)
+      p.circle(x, yy, 18, encre)
+      p.circle(x, yy, 17, T.bord)
+      p.circle(x, yy, 15.5, T.corps)
+      p.arc(x, yy, 15, 1, Math.PI * 0.9, Math.PI * 1.65, T.clair)
+      p.arc(x, yy, 15, 1, -Math.PI * 0.1, Math.PI * 0.65, T.sombre)
+      p.ring(x, yy, 13, 1, T.sombre)
+      dessinerLeGlyphe(p, n.icone ?? '', x, yy, tons, 3)
+    } else {
+      // UNE MÉCANIQUE : un losange, son arête claire en haut, le symbole dedans
+      const lo = (r: number, dy = 0): [number, number][] => [[x, yy - r + dy], [x + r, yy + dy], [x, yy + r + dy], [x - r, yy + dy]]
+      p.poly(lo(21, 1), encre)
+      p.poly(lo(21), encre)
+      p.poly(lo(19.5), T.bord)
+      p.poly(lo(17.5), T.corps)
+      p.line(x - 16, yy - 1, x - 1, yy - 16, T.clair)
+      p.line(x + 1, yy + 16, x + 16, yy + 1, T.sombre)
+      dessinerLeGlyphe(p, n.icone ?? '', x, yy, tons, 2)
+    }
+    // SON ÉTAT, en pastille dans le coin : un cadenas (rang fermé), une coche (acquis), le crédit (une pièce débloquée
+    // qu'on n'a pas encore achetée)
+    const bx = x + 13
+    const by = yy + 13
+    if (etat === 'ferme') {
+      p.rect(bx - 4, by - 4, 9, 9, encre)
+      p.rect(bx - 3, by - 1, 7, 5, COQUE[3])
+      p.rect(bx - 3, by - 1, 7, 1, COQUE[4])
+      p.rect(bx - 2, by - 3, 1, 2, COQUE[3])
+      p.rect(bx + 2, by - 3, 1, 2, COQUE[3])
+      p.rect(bx - 1, by - 4, 3, 1, COQUE[3])
+      p.rect(bx, by + 1, 1, 2, encre)
+    } else if (etat === 'acquis' && n.sorte === 'piece' && !possede(hangar, n.piece ?? '')) dessinerUnCredit(p, bx, by)
+    else if (etat === 'acquis') {
+      p.circle(bx, by, 5, encre)
+      p.circle(bx, by, 4, RUNE[2])
+      for (const [dx, dy] of [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]]) p.rect(bx + dx, by + dy, 1, 2, N.WHITE)
+      // un éclat de temps en temps
+      const u = (t * 0.3 + x * 0.071 + y * 0.013) % 1
+      if (u < 0.1) N.sparkle(p, x + 12, yy - 13, 2 + Math.round(Math.sin((u / 0.1) * Math.PI) * 2), RUNE[3], N.WHITE, 0.9)
+    }
+    // le déblocage : le nœud blanchit, une onde verte en part
     if (ud < 1) {
-      p.ring(x, yy, 8 + ud * 22, 2, ud < 0.25 ? N.WHITE : RUNE[3], 1 - ud)
-      p.glow(x, yy, 30 * (1 - ud), RUNE[2], 0.5 * (1 - ud))
+      if (ud < 0.3) {
+        if (n.sorte === 'piece') p.rect(x - 17, yy - 17, 34, 34, N.WHITE, 1 - ud / 0.3)
+        else p.circle(x, yy, 17, N.WHITE, 1 - ud / 0.3)
+      }
+      p.ring(x, yy, 14 + ud * 30, 2, ud < 0.25 ? N.WHITE : RUNE[3], 1 - ud)
+      p.glow(x, yy, 40 * (1 - ud), RUNE[2], 0.6 * (1 - ud))
     }
     if (choisi) {
+      // quatre équerres d'or, qui respirent
       const c = Math.sin(t * 5) > -0.3 ? N.hex('#fff2a8') : PEPITE[2]
+      const r = 21 + Math.round(Math.abs(Math.sin(t * 2.5)) * 1.5)
       for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-        const ax = x + dx * 14
-        const ay = yy + dy * 14
-        p.line(ax, ay, ax - dx * 4, ay, c)
-        p.line(ax, ay, ax, ay - dy * 4, c)
+        const ax = x + dx * r
+        const ay = yy + dy * r
+        p.rect(Math.min(ax, ax - dx * 6), ay - (dy < 0 ? 0 : 1), 7, 2, encre)
+        p.rect(ax - (dx < 0 ? 0 : 1), Math.min(ay, ay - dy * 6), 2, 7, encre)
+        p.rect(Math.min(ax, ax - dx * 5), ay, 6, 1, c)
+        p.rect(ax, Math.min(ay, ay - dy * 5), 1, 6, c)
       }
     }
     // (sa zone est coupée à la fenêtre de l'arbre : un nœud à demi sorti ne prend pas les tapes de la barre ou de la fiche)
-    const za = Math.max(y - 12, coupeHaut)
-    const zb = Math.min(y + 12, coupeBas)
-    if (zb - za > 6) zone(x - 12, za, 24, zb - za, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
+    const za = Math.max(y - 20, coupeHaut)
+    const zb = Math.min(y + 20, coupeBas)
+    if (zb - za > 8) zone(x - 20, za, 40, zb - za, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
   }
   /**
    * L'ARBRE TIENT TOUTE LA SCÈNE DU LABO : les trois branches en puces en haut (Keko, 11/11 : « mettre la sélection du
@@ -2118,24 +2175,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /**
    * LES RANGS DE LA BRANCHE, DANS UNE FENÊTRE QUI DÉFILE (Keko, 11/11 : « si on rajoute des tiers 4, 5, 6, on fait
-   * comment pour avancer dans l'arbre ? ») : chaque rang a sa hauteur (46 px au moins ; s'il y a de la place, ils se la
-   * partagent comme avant) ; quand l'arbre dépasse la fenêtre, ON LE FAIT GLISSER au doigt (la molette sur PC) — la
-   * barre des branches et la fiche du nœud ne bougent pas. Un fondu en haut et en bas dit qu'il continue, une barre à
-   * droite où l'on en est. Le défilement est gardé par branche.
+   * comment pour avancer dans l'arbre ? ») — et REFAITS (« beaucoup d'espace vide, les connexions très très fines ») :
+   *
+   * - chaque rang a SON BANDEAU, sur toute la largeur : son nom, un cadenas tant qu'il est fermé, et à droite CE QUE
+   *   COÛTE un nœud de ce rang (le même pour tous) ;
+   * - LES CONDUITS sont épais (cinq pixels : cernés d'encre, un cœur clair) et DISENT LA RÈGLE : de la source au premier
+   *   rang, puis de CHAQUE nœud au rang d'après — le conduit qui sort d'un nœud débloqué s'allume, et c'est lui qui
+   *   ouvre le rang suivant ; allumé, des grains de lumière y descendent ;
+   * - les rangs se partagent la fenêtre (64 px au moins chacun) ; s'ils la dépassent, on fait glisser l'arbre au doigt
+   *   (la molette sur PC) — la barre des branches et la fiche du nœud ne bougent pas ; un fondu aux bords, une barre à
+   *   droite. Le défilement est gardé par branche.
    */
-  const PAS_DES_RANGS = 46
+  const PAS_DES_RANGS = 64
+  const H_BANDEAU = 13
   const defilDeLArbre: Record<Branche, number> = { minage: 0, combat: 0, exploration: 0, commerce: 0 }
   let zoneDeLArbre: { x: number; y: number; w: number; h: number } | null = null
   let coupeHaut = 0
   let coupeBas = 0
   function dessinerLesRangs(p: Peintre, ya: number, yb: number): void {
-    const ALLUME = N.hex('#3a8ad0')
-    const ETEINT = N.hex('#16304f')
     const PLAN = N.hex('#0a1626')
+    const ENCRE = N.hex('#04060c')
     const fenetre = yb - ya
     const n = RANGS.length
-    const pas = Math.max(PAS_DES_RANGS, (fenetre - 6) / n)
-    const total = n * pas + 6
+    const pas = Math.max(PAS_DES_RANGS, (fenetre - 8) / n)
+    const total = n * pas + 8
     const maxD = Math.max(0, Math.round(total - fenetre))
     defilDeLArbre[branche] = Math.max(0, Math.min(maxD, defilDeLArbre[branche]))
     const d = Math.round(defilDeLArbre[branche])
@@ -2146,44 +2209,87 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const coupe = (x: number, y: number, w: number, h: number, c: number): void => {
       const a = Math.max(y, ya)
       const b = Math.min(y + h, yb)
-      if (b > a) p.rect(x, a, w, b - a, c)
+      if (b > a && w > 0) p.rect(x, a, w, b - a, c)
     }
-    const cx = Math.round(W / 2) + 4
+    /** UN CONDUIT, vertical (x, de y0 à y1) ou horizontal (y, de x0 à x1) : cerné d'encre, un corps, un cœur ; allumé, des grains de lumière le parcourent. */
+    const corps = (lit: boolean): number => (lit ? N.hex('#1f62b0') : N.hex('#152238'))
+    const coeur = (lit: boolean): number => (lit ? N.hex('#7fc2ff') : N.hex('#1f3152'))
+    const GRAIN = N.hex('#e2f3ff')
+    const conduitV = (x: number, y0: number, y1: number, lit: boolean): void => {
+      if (y1 <= y0) return
+      coupe(x - 2, y0, 5, y1 - y0, ENCRE)
+      coupe(x - 1, y0, 3, y1 - y0, corps(lit))
+      coupe(x, y0, 1, y1 - y0, coeur(lit))
+      if (!lit) return
+      for (let yp = y0 + ((t * 34) % 11); yp < y1 - 2; yp += 11) coupe(x - 1, Math.round(yp), 3, 3, GRAIN)
+      const a = Math.max(y0, ya + 3)
+      const b = Math.min(y1, yb - 3)
+      if (b > a) p.glowLine(x, a, x, b, 4, N.hex('#3a8ad0'), 0.16)
+    }
+    const conduitH = (y: number, x0: number, x1: number, lit: boolean, cx: number): void => {
+      if (x1 <= x0) return
+      coupe(x0 - 2, y - 2, x1 - x0 + 5, 5, ENCRE)
+      coupe(x0 - 1, y - 1, x1 - x0 + 3, 3, corps(lit))
+      coupe(x0, y, x1 - x0 + 1, 1, coeur(lit))
+      if (!lit) return
+      // (les grains partent du milieu vers les deux bouts)
+      for (let o = (t * 34) % 11; o < Math.max(cx - x0, x1 - cx); o += 11) {
+        for (const xp of [cx - o, cx + o]) if (xp >= x0 && xp <= x1 - 1) coupe(Math.round(xp) - 1, y - 1, 3, 3, GRAIN)
+      }
+      if (y > ya + 3 && y < yb - 3) p.glowLine(x0, y, x1, y, 4, N.hex('#3a8ad0'), 0.16)
+    }
+    const cx = Math.round(W / 2)
     const rangs = RANGS.map((r, k) => {
       const noeuds = noeudsDe(branche, r)
-      const ecart = Math.min(36, (W - 40) / noeuds.length)
-      const y = Math.round(ya + 5 + pas * k + pas / 2 + 7 - d)
-      return { r, y, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
+      const ecart = Math.min(42, (W - 12) / noeuds.length)
+      const haut = Math.round(ya + 4 + pas * k - d)
+      return { r, haut, bus: haut + H_BANDEAU + 4, y: haut + H_BANDEAU + 29, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
     })
-    // le tronc, de la source au bus du dernier rang ; chaque tronçon s'allume avec le rang qu'il nourrit
-    const source = ya + 5 - d
-    let haut = source
+    // LES CONDUITS : la source nourrit le premier rang ; chaque nœud nourrit le rang d'après, et s'allume quand il est débloqué
+    rangs.forEach((rg, k) => {
+      const dessus = k === 0 ? [{ x: cx, y: ya - 2, lit: true }] : rangs[k - 1].places.map((pl) => ({ x: pl.x, y: rangs[k - 1].y, lit: estDebloque(labo, pl.n.id) }))
+      for (const a of dessus) conduitV(a.x, a.y, rg.bus, a.lit)
+      const xs = [...dessus.map((a) => a.x), ...rg.places.map((pl) => pl.x)]
+      conduitH(rg.bus, Math.min(...xs), Math.max(...xs), rg.ouvert, cx)
+      for (const pl of rg.places) conduitV(pl.x, rg.bus, rg.y, rg.ouvert)
+      // les raccords : une pastille à chaque rencontre
+      for (const x of new Set(xs)) {
+        coupe(x - 3, rg.bus - 3, 7, 7, ENCRE)
+        coupe(x - 2, rg.bus - 2, 5, 5, corps(rg.ouvert))
+        coupe(x - 1, rg.bus - 1, 3, 3, coeur(rg.ouvert))
+      }
+    })
+    // LES BANDEAUX des rangs, par-dessus les conduits (ils passent dessous)
     for (const rg of rangs) {
-      const yy = rg.y - 16
-      const c = rg.ouvert ? ALLUME : ETEINT
-      coupe(cx, haut, 1, yy - haut + 1, c)
-      const x0 = Math.min(cx, rg.places[0].x)
-      const x1 = Math.max(cx, rg.places[rg.places.length - 1].x)
-      coupe(x0, yy, x1 - x0 + 1, 1, c)
-      for (const pl of rg.places) coupe(pl.x, yy, 1, 5, c)
-      if (rg.ouvert && yy > ya + 2 && yy < yb - 2) p.glowLine(x0, yy, x1, yy, 3, ALLUME, 0.12)
-      // le numéro du rang, à gauche
-      if (rg.y - 5 >= ya && rg.y + 5 <= yb) ecrire(p, String(rg.r), 6, rg.y - 4, rg.ouvert ? COQUE[5] : COQUE[2], { police: GRAS })
-      haut = yy
-    }
-    coupe(cx - 1, source - 1, 3, 3, ALLUME)
-    // un grain de lumière descend le tronc allumé
-    const ouverts = rangs.filter((rg) => rg.ouvert)
-    if (ouverts.length > 0) {
-      const fond = Math.max(...ouverts.map((rg) => rg.y - 16))
-      const yg = source + ((t * 26) % Math.max(1, fond - source))
-      if (yg > ya + 2 && yg < yb - 3) {
-        p.rect(cx, Math.round(yg), 1, 2, N.WHITE)
-        p.glow(cx, yg, 4, ALLUME, 0.5)
+      coupe(3, rg.haut, W - 6, H_BANDEAU, ENCRE)
+      coupe(4, rg.haut + 1, W - 8, H_BANDEAU - 2, rg.ouvert ? N.hex('#13243f') : N.hex('#0e1320'))
+      coupe(4, rg.haut + 1, W - 8, 1, rg.ouvert ? N.hex('#2f5088') : N.hex('#1a2236'))
+      coupe(4, rg.haut + H_BANDEAU - 2, W - 8, 1, rg.ouvert ? N.hex('#0c1830') : N.hex('#090c15'))
+      if (rg.haut < ya || rg.haut + H_BANDEAU > yb) continue // (son texte : seulement quand il est entier dans la fenêtre)
+      let xt = 9
+      if (!rg.ouvert) {
+        // un cadenas
+        p.rect(xt, rg.haut + 6, 5, 4, COQUE[3])
+        p.rect(xt + 1, rg.haut + 3, 1, 3, COQUE[3])
+        p.rect(xt + 3, rg.haut + 3, 1, 3, COQUE[3])
+        p.rect(xt + 1, rg.haut + 3, 3, 1, COQUE[3])
+        xt += 8
+      }
+      ecrire(p, `Rang ${rg.r}`, xt, rg.haut + 3, rg.ouvert ? PEPITE[3] : COQUE[3], { police: GRAS })
+      // ce que coûte un nœud de ce rang, à droite
+      const cout = coutDe(rg.places[0].n)
+      let xr = W - 8
+      for (const k of [...MINERAIS].reverse()) {
+        if (cout[k] <= 0) continue
+        const tx = montantCourt(cout[k])
+        ecrire(p, tx, xr, rg.haut + 3, rg.ouvert ? N.hex('#fff2c8') : COQUE[3], { police: GRAS, align: 'right' })
+        xr -= largeurDe(tx, GRAS) + 7
+        dessinerUneRessource(p, xr, rg.haut + 6, k)
+        xr -= 9
       }
     }
     for (const rg of rangs) {
-      if (rg.y + 14 < ya || rg.y - 14 > yb) continue
+      if (rg.y + 24 < ya || rg.y - 24 > yb) continue
       for (const pl of rg.places) {
         placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
         dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
@@ -2196,9 +2302,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const hg = fenetre - 8
       const hc = Math.max(10, Math.round((hg * fenetre) / total))
       const yc = ya + 4 + Math.round(((hg - hc) * d) / maxD)
-      p.rect(W - 4, ya + 4, 2, hg, N.hex('#0e1f34'))
-      p.rect(W - 4, yc, 2, hc, COQUE[3])
-      p.rect(W - 4, yc, 2, 1, COQUE[5])
+      p.rect(W - 3, ya + 4, 2, hg, N.hex('#0e1f34'))
+      p.rect(W - 3, yc, 2, hc, COQUE[3])
+      p.rect(W - 3, yc, 2, 1, COQUE[5])
     }
   }
   /** LA FICHE DU NŒUD choisi, au pied de l'arbre : son nom, ce qu'il donne, puis son coût en minerai et « Débloquer » — ou ce qu'il est devenu. */
