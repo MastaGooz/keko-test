@@ -15,6 +15,7 @@ import * as magicienBestiole from './magicien-bestiole.js'
 import * as explosionEspace from './explosion-espace.js'
 import * as teleportation from './teleportation.js'
 import * as materialisation from './materialisation.js'
+import * as queteTerminee from './quete-terminee.js'
 
 export const NOS_EFFETS: Record<string, unknown> = {
   'keko/frappe-du-niveau': frappeDuNiveau,
@@ -28,4 +29,5 @@ export const NOS_EFFETS: Record<string, unknown> = {
   'keko/explosion-espace': explosionEspace,
   'keko/teleportation': teleportation,
   'keko/materialisation': materialisation,
+  'keko/quete-terminee': queteTerminee,
 }

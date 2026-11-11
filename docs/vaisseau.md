@@ -52,6 +52,31 @@ la forme, pas le système* (`asteroide.ts`) :
 - (Et l'aire ronde plus grosse une fois installé : c'est la hauteur gagnée
   sur la barre du navigateur, que la scène du hangar prend toute.)
 
+## Deux effets du dépôt en inspiration : le toast d'une quête, la pépite ramassée (Keko, 12/11 : « on peut utiliser achievement en inspiration dans pixelfx pour les validations de quêtes plutôt que juste un texte ? et s'inspirer de coin collect pour la récolte des minerais en vol »)
+
+- **La quête terminée** : un effet à nous, `keko/quete-terminee` (dans le
+  banc `?pixelfx`, catégorie keko) — c'est le `ui/achievement` du dépôt,
+  sa chorégraphie telle quelle (le toast glisse sur ses traits de vitesse,
+  dépasse, se pose ; la médaille d'or y saute dans une gerbe d'étoiles ; un
+  reflet balaie le tout ; il repart, 2,4 s), avec une plaque plus large
+  (164 au lieu de 130) et une seconde ligne à l'échelle 1 dans NOTRE
+  police grasse (le nom de la quête, accents compris). Le titre dit
+  « QUETE REUSSIE » dans la petite capitale du dépôt — pas « terminée » :
+  son M se lit comme un N. La page le joue par-dessus tout, en vol sous le
+  HUD comme à la base sous la barre (`toasts`, `dessinerLesToasts`),
+  empilés s'il y en a plusieurs. Il remplace le mot « Quête terminée ! ».
+- **La pépite ramassée**, à la manière du `ui/coin-collect` : au ramassage,
+  un POP (un disque blanc qui se referme, un anneau, cinq étoiles lancées
+  en rond, à la teinte du minerai) ; la pépite part en ARC par-dessus et
+  accélère vers la pastille de son minerai, elle TOURNE, laisse une
+  TRAÎNÉE et sème des étincelles ; arrivée, la pastille saute plus fort, un
+  anneau s'ouvre et un éclat y passe. Avant : une petite pépite en ligne
+  droite. Pas repris : la fontaine de pièces (elle n'a pas de sens pour
+  une pépite à la fois) ni le compteur qui se déplie (il est déjà là).
+- Vu en capture : le toast en vol au premier décollage ; trois pépites
+  ramassées de suite (les pops, les traînées, l'arrivée). L'animation
+  n'est jugée que sur des images fixes.
+
 ## Les quêtes (Keko, 11/11 : « j'ai envie d'implanter un nouvel onglet quêtes en plus de hangar / tech / commerce »)
 
 - **Tranché par Keko** : (1) « au début les quêtes servent de tuto : premier

@@ -30,6 +30,7 @@ import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
+import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -156,13 +157,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
    */
   function compter(c: Compteur, valeur: number): void {
-    const avant = quetes.actives.filter(estTerminee).length
+    const avant = new Set(quetes.actives.filter(estTerminee).map((q) => q.modele))
     quetes = noter(quetes, c, valeur)
-    if (quetes.actives.filter(estTerminee).length > avant) {
-      flottants.push({ texte: 'Quête terminée !', x: W / 2, y: enJeu && m.phase === 'vol' ? basDuHud() + 22 : HAUT_BARRE + 16, t0: t, c: PEPITE[3] })
+    for (const q of quetes.actives) {
+      if (!estTerminee(q) || avant.has(q.modele)) continue
+      // UN TOAST, celui de l'« achievement » du dépôt (`keko/quete-terminee`) : il glisse, sa médaille y saute
+      toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, text: modeleDe(q.modele)?.titre ?? '', font: GRAS, seed: 9 + toasts.length }))
       pulsations.quetes = t
-      jouer('ramasse')
+      jouer('achat')
     }
+  }
+  /** Les toasts en cours (une quête terminée), au-dessus de tout, en vol comme à la base ; empilés s'il y en a plusieurs. */
+  let toasts: Instance[] = []
+  function dessinerLesToasts(dt: number): void {
+    if (toasts.length === 0) return
+    const y0 = (enJeu && !ecranVisible() ? basDuHud() + 14 : HAUT_BARRE + 6) + 18
+    toasts.forEach((fx, i) => {
+      fx.update(dt)
+      fx.options.x = W / 2
+      fx.options.y = y0 + i * 38
+      fx.draw(frame)
+    })
+    toasts = toasts.filter((fx) => !fx.done())
+    N.painterFor(frame) // (un effet laisse le peintre placé sur lui)
   }
   /** La plus grande distance à la base déjà comptée dans ce vol (on ne recompte que vingt unités plus loin). */
   let distanceComptee = 0
@@ -248,8 +265,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const etincelles = new Grains(R)
   const morceaux = new N.Bits({ ground: () => Infinity })
   const flashs: { x: number; y: number; t0: number; r: number; c?: number[] }[] = []
+  const pops: { x: number; y: number; t0: number; c: number[] }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
-  const envols: { x: number; y: number; t0: number; minerai: Minerai }[] = []
+  const envols: { x: number; y: number; t0: number; minerai: Minerai; trace: [number, number][] }[] = []
+  /** Les pépites ARRIVÉES à leur compteur : un anneau, un éclat (« coin collect »). */
+  const arrivees: { x: number; y: number; t0: number; c: number[] }[] = []
   /** Ce que les compteurs montrent, par minerai (les pépites en vol n'y sont pas encore). Rien ne montre ce qui est déjà extrait (Keko). */
   const affiche: Cargaison = { ...cargaisonVide(), fer: minerai0 }
   const allumeA: Cargaison = { fer: -10, or: -10, cristal: -10 }
@@ -331,6 +351,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     m.refuses = refuses // (le même objet : le panneau de soute le règle en vol)
     effets = []
     flashs.length = 0
+    pops.length = 0
+    arrivees.length = 0
     envols.length = 0
     for (const k of MINERAIS) affiche[k] = 0
     affiche.fer = minerai0
@@ -4055,27 +4077,54 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (part >= 1) p.glow(x0 + cw / 2, oy + 13, 5, VERRIERE[1], 0.18 + 0.5 * onde)
     }
 
-    // ---- les pépites en vol : de la place du vaisseau à l'écran vers la pastille de leur minerai, en accélérant
+    // ---- LES PÉPITES EN VOL, à la manière du « coin collect » du dépôt (Keko, 12/11 : « on peut s'inspirer de coin
+    // collect pour la récolte des minerais en vol ») : la pépite part du vaisseau en ARC, par-dessus, et accélère vers la
+    // pastille de son minerai ; elle TOURNE, laisse une TRAÎNÉE et sème des étincelles ; arrivée, la pastille saute, un
+    // ANNEAU s'ouvre autour d'elle et un éclat y passe
     for (let i = envols.length - 1; i >= 0; i--) {
       const e = envols[i]
-      const u = (t - e.t0) / 0.45
+      const u = (t - e.t0) / 0.5
+      const T = TEINTES_MINERAI[e.minerai]
+      const place = places.get(e.minerai)
+      const xa = (place?.x ?? 5) + 7
+      const ya = yPastilles + 6
       if (u >= 1) {
         envols.splice(i, 1)
         affiche[e.minerai] += 1
         allumeA[e.minerai] = t
-        ;(ressorts[`porte-${e.minerai}`] ??= { x: 0, v: 0 }).v = -70
+        ;(ressorts[`porte-${e.minerai}`] ??= { x: 0, v: 0 }).v = -90
+        arrivees.push({ x: xa, y: ya, t0: t, c: T })
         continue
       }
-      const T = TEINTES_MINERAI[e.minerai]
-      const place = places.get(e.minerai)
-      const k = u * u * (3 - 2 * u)
       const x0 = e.x - camera.x + W / 2
       const y0 = e.y - camera.y + centreY()
-      const x = x0 + ((place?.x ?? 5) + 7 - x0) * k
-      const y = y0 + (yPastilles + 6 - y0) * k
-      p.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], T[2])
-      p.dot(x, y - 1, T[3])
-      p.glow(x, y, 6, T[2], 0.5)
+      const k = u * u
+      const mx = x0 + (xa - x0) * 0.35
+      const my = Math.min(y0, ya) - 24
+      const x = (1 - k) * (1 - k) * x0 + 2 * (1 - k) * k * mx + k * k * xa
+      const y = (1 - k) * (1 - k) * y0 + 2 * (1 - k) * k * my + k * k * ya
+      e.trace.unshift([x, y])
+      if (e.trace.length > 7) e.trace.pop()
+      e.trace.forEach(([tx, ty], j) => j > 0 && p.line(e.trace[j - 1][0], e.trace[j - 1][1], tx, ty, j < 3 ? T[3] : T[2], 1.15 - j / 7))
+      // (elle tourne : sa largeur bat)
+      const w = Math.max(0.35, Math.abs(Math.cos(t * 13 + e.t0 * 40)))
+      p.poly([[x, y - 4], [x + 3 * w + 1, y], [x, y + 4], [x - 3 * w - 1, y]], MATIERES.encre.contour)
+      p.poly([[x, y - 3], [x + 3 * w, y], [x, y + 3], [x - 3 * w, y]], T[2])
+      p.poly([[x, y - 3], [x + 3 * w, y], [x, y]], T[3])
+      p.dot(x - w, y - 1, T[4] ?? N.WHITE)
+      p.glow(x, y, 9, T[2], 0.55)
+      if (R.next() < 0.35) eclats.push({ x: x + R.range(-2, 2), y: y + R.range(-2, 2), vx: R.range(-10, 10), vy: R.range(-12, 6), t0: t, vie: R.range(0.15, 0.3), c: T[3] })
+    }
+    for (let i = arrivees.length - 1; i >= 0; i--) {
+      const a = arrivees[i]
+      const u = (t - a.t0) / 0.3
+      if (u >= 1) {
+        arrivees.splice(i, 1)
+        continue
+      }
+      // (sans lueur : avec celle de la pastille qui s'allume, elle noyait le nombre sous une boule blanche)
+      p.ring(a.x, a.y, 5 + 7 * sortie(u), 1, u < 0.3 ? N.WHITE : a.c[3], 1.25 - u)
+      N.sparkle(p, a.x - 3, a.y - 3, 3 * Math.sin(u * Math.PI), a.c[4] ?? N.WHITE, a.c[3], 0.5)
     }
   }
 
@@ -4540,8 +4589,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             case 'ramasse':
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
               if (ev.par === 'joueur') {
-                envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai })
+                envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai, trace: [] })
                 jouer('ramasse')
+                // (le « pop » du coin collect : un disque blanc qui se referme, un anneau, des étoiles lancées en rond)
+                pops.push({ x: ev.x, y: ev.y, t0: t, c: TEINTES_MINERAI[ev.minerai] })
+                for (let i = 0; i < 5; i++) {
+                  const a = (i / 5) * Math.PI * 2 + R.range(-0.3, 0.3)
+                  const vit = R.range(40, 80)
+                  etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 2, ev.y + Math.sin(a) * 2, Math.cos(a) * vit + v.vx * 0.5, Math.sin(a) * vit + v.vy * 0.5, R.range(0.2, 0.4), TEINTES_MINERAI[ev.minerai][i % 2 === 0 ? 3 : 4], 1, 3)
+                }
               }
               break
             case 'touche': {
@@ -4727,6 +4783,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       regler(0, false, 0, false) // (au hangar, plus de souffle, de foreuse ni de charge)
       // LE HANGAR à la place du monde (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière ») : la scène, puis l'interface
       dessinerLaBase(p)
+      dessinerLesToasts(dt)
       N.composite(frame, img.data, FOND)
       g.putImageData(img, 0, 0)
       canvas.style.transform = transformDeLaBase()
@@ -4752,6 +4809,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     morceaux.draw(p)
     dessinerLesPepites(p)
     etincelles.draw(p)
+    // les « pops » d'une pépite montée à bord : un disque blanc qui se referme, puis un anneau qui s'ouvre
+    for (let i = pops.length - 1; i >= 0; i--) {
+      const f = pops[i]
+      const u = (t - f.t0) / 0.32
+      if (u >= 1) {
+        pops.splice(i, 1)
+        continue
+      }
+      if (u < 0.3) p.circle(f.x, f.y, 4.5 * (1 - u / 0.3) + 1, u < 0.15 ? N.WHITE : f.c[4] ?? N.WHITE)
+      p.ring(f.x, f.y, 3 + 9 * sortie(u), Math.max(1, 2 * (1 - u)), u < 0.3 ? N.WHITE : f.c[3], 1.2 - u)
+      p.glow(f.x, f.y, 12, f.c[2], 0.7 * (1 - u))
+    }
     for (const f of flashs) {
       const u = (t - f.t0) / 0.4
       if (f.r === 0) {
@@ -4794,6 +4863,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, basDuHud() + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
     dessinerLeManche(p)
+    dessinerLesToasts(dt)
     N.composite(frame, img.data, cuireLeCiel())
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
