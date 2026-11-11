@@ -76,6 +76,22 @@ la forme, pas le système* (`asteroide.ts`) :
   grosses étoiles brillaient à travers les bandeaux. `dessinerLesBandeaux`
   éteint la couche de lumière sous eux (`frame.light.fill(0, …)`) avant de
   les poser ; les lueurs de l'interface viennent après.
+- **Les bandeaux sont discrets, et le haut passe d'abord** (Keko : « les
+  bandes devraient être un peu plus discrètes, la petite ligne de
+  délimitation tombe sur le conteneur de la soute » ; « des limites sur les
+  côtés de l'écran, comme deux bandes où le background n'est pas dessiné,
+  c'est normal ? ») : (1) *les marges des côtés sont normales* — le canevas
+  fait 180 × un grossissement ENTIER, la largeur qui reste (52 px sur un
+  412) est le fond de la page ; (2) les bandeaux ne sont plus des plaques à
+  filet mais un APLAT DE CE MÊME FOND (`#07060f`), le bord de la vue s'y
+  fondant par la trame de ses côtés : la vue est dans un seul cadre uni ;
+  (3) le surplus va AU HAUT D'ABORD, jusqu'à la hauteur de l'interface (43),
+  puis moitié-moitié (`bandeHaut`) — en 1080 plein écran (40 de surplus) la
+  soute et le porté tiennent dans leur bandeau au lieu d'être coupés par sa
+  limite à 20. Le centre de la vue n'est donc plus celui du tampon : les
+  vingt `H / 2` du vol sont devenus `centreY()`.
+- Revu en capture : 540 × 1080 (×3, bandeau de 40 en haut, aucun en bas, le
+  vaisseau au milieu de la vue) et 412 × 915 (69 / 69).
 - Vu en capture (Chrome sans tête, 412 × 915) : les deux bandeaux de 69, la
   soute et la coque dans celui du haut, la base entière dans la vue. Le cas
   sans bandeau (360 × 640) est l'ancien rendu.
