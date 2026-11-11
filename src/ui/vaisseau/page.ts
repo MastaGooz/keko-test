@@ -409,10 +409,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La liste visible d'une catégorie : ses pièces, ou celles de la sous-catégorie choisie. */
   const listeVisible = (o: Sorte): Piece[] => piecesDe(o).filter((pc) => sousCategorie[o] === null || sousDe(pc) === sousCategorie[o])
   /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
-  const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire'; curseur?: Curseur } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases'; curseur?: Curseur } | null = null
   /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
   type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
   let curseurs: Curseur[] = []
@@ -844,8 +843,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (À L'ENTREPÔT, la scène montre UNE RANGÉE DE PLUS que sa hauteur ordinaire n'en logerait — Keko, 11/11 : « afficher
   // en permanence deux lignes de plus, et scroller pour le reste », puis « enlève une ligne visible de base » — tant que
   // la fiche du minerai tient dessous)
-  const sceneOrdinaire = (): number => Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222))
-  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((sceneOrdinaire() - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
+  // (vingt-deux pixels de plus pour le vaisseau — Keko, 11/11 : « augmenter un peu la hauteur de la zone avec le
+  // vaisseau » ; la liste d'une place rend ce qu'il faut : elle montre moins de rangées quand la fiche est haute)
+  const sceneOrdinaire = (): number => Math.max(64, Math.min(190, H - HAUT_BARRE - HAUT_NAV - 200))
+  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
   const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
   let tBase = 0
@@ -932,6 +933,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zoneDeLArbre = null
     zoneDesOrdres = null
     zoneDeLInventaire = null
+    zoneDesCases = null
     // LE MARCHÉ SE RÈGLE à chaque pas du cours : un ordre dont le prix a été atteint est vendu (même posé hier)
     {
       const r = reglerLeMarche(marche, credits, heureDuMarche(), avantages())
@@ -1656,16 +1658,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * case : un puits creusé avec la pièce rendue dedans (un « + » qui respire si la place est vide), le nom de la place
    * en petites capitales d'or, la pièce en clair.
    */
+  /**
+   * LES CASES DÉFILENT quand elles ne tiennent pas au-dessus de « Décoller » (Keko, 11/11 : « ajouter un système de
+   * scroll si les parties en bas ne logent pas — hypothétiquement, un vaisseau énorme avec beaucoup d'armes et
+   * d'outils ») : on les fait glisser au doigt, d'une rangée à la fois (la molette sur PC), une barre à droite.
+   */
+  const PAS_DES_CASES = 40
+  let defilCases = 0
+  let zoneDesCases: { x: number; y: number; w: number; h: number } | null = null
   function dessinerLesEmplacements(p: Peintre, y: number): number {
     const cw = Math.floor((W - 12) / 2)
     const ch = 36
     const cases = casesDuVaisseau()
+    const bas = H - HAUT_NAV - (vue === 'hangar' ? 42 : 4)
+    const rangs = Math.ceil(cases.length / 2)
+    const visibles = Math.max(1, Math.floor((bas - y + 4) / PAS_DES_CASES))
+    const maxD = Math.max(0, rangs - visibles)
+    defilCases = Math.max(0, Math.min(maxD, defilCases))
+    const d = Math.round(defilCases)
+    if (maxD > 0) {
+      const hg = visibles * PAS_DES_CASES - 4
+      const hc = Math.max(8, Math.round((hg * visibles) / rangs))
+      p.rect(W - 3, y, 2, hg, MATIERES.creux.contour)
+      p.rect(W - 3, y + Math.round(((hg - hc) * defilCases) / maxD), 2, hc, COQUE[3])
+      zoneDesCases = { x: 0, y, w: W, h: hg }
+    }
     cases.forEach((c, i) => {
       const age = t - etapeA - i * 0.045
       if (age < 0) return
+      const rang = Math.floor(i / 2) - d
+      if (rang < 0 || rang >= visibles) return
       const o = c.o
       const x = 4 + (i % 2) * (cw + 4)
-      const yy = y + Math.floor(i / 2) * (ch + 4)
+      const yy = y + rang * (ch + 4)
       let montee: Piece | undefined
       if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
       else montee = piecesDe(o).find((pc) => !possede(hangar, pc.id))
@@ -1778,6 +1803,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
       y += 16
     }
+    // (de deux à quatre rangées : ce que la fiche de la pièce choisie laisse au-dessus de la barre du bas)
+    const pcVue = liste[Math.max(0, liste.findIndex((x) => x.id === choix[onglet]))]
+    const RANGEES = Math.max(2, Math.min(4, Math.floor((H - HAUT_NAV - 4 - y - 8 - hauteurDeLaFiche(pcVue)) / RANG_LISTE)))
     const hl = RANGEES * RANG_LISTE + 4
     plaque(p, 4, y, W - 8, hl, 'creux')
     const maxDefil = Math.max(0, liste.length - RANGEES)
@@ -2259,6 +2287,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }, 'achat')
   }
 
+  /** La hauteur que prendra la fiche d'une pièce (son bouton, sa plaque, sa note) : la liste s'y ajuste. */
+  function hauteurDeLaFiche(pc: Piece | undefined): number {
+    if (pc === undefined) return 0
+    const note = pc.note === undefined ? 0 : replier(pc.note, W - 22).length
+    return 19 + Math.max(52, 18 + jaugesDe(pc).length * 10 + 4) + (note > 0 ? note * 9 + 6 : 0)
+  }
   /** LA FICHE d'une pièce : son bouton, puis ses stats (la pièce rendue dans son puits, le nom, les jauges, la note). */
   function dessinerLaFiche(p: Peintre, y0: number, pc: Piece): void {
     let y = y0
@@ -2741,6 +2775,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         racine.setPointerCapture(ev.pointerId)
         return
       }
+      // les cases du hangar, quand le vaisseau a plus de places qu'il n'en tient au-dessus de « Décoller »
+      const zc = zoneDesCases
+      if (zc !== null && !feuille && q.x >= zc.x && q.x < zc.x + zc.w && q.y >= zc.y && q.y < zc.y + zc.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilCases, bouge: false, sorte: 'cases' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       // la grille de l'entrepôt, quand elle a plus de rangées qu'elle n'en montre : elle se fait glisser
       const zi = zoneDeLInventaire
       if (zi !== null && !feuille && q.x >= zi.x && q.x < zi.x + zi.w && q.y >= zi.y && q.y < zi.y + zi.h) {
@@ -2810,7 +2851,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         cu.regler(Math.max(0, Math.min(1, (q.x - cu.x) / cu.w)))
         return
       }
-      if (glisse.sorte === 'inventaire') defilInventaire = glisse.defil0 - (q.y - glisse.y) / PAS_DE_L_INVENTAIRE
+      if (glisse.sorte === 'cases') defilCases = glisse.defil0 - (q.y - glisse.y) / PAS_DES_CASES
+      else if (glisse.sorte === 'inventaire') defilInventaire = glisse.defil0 - (q.y - glisse.y) / PAS_DE_L_INVENTAIRE
       else if (glisse.sorte === 'ordres') defilOrdres = glisse.defil0 - (q.y - glisse.y) / RANG_ORDRE
       else if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
@@ -2838,6 +2880,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'onglets') defilOnglets = Math.round(defilOnglets)
       else if (glisse.sorte === 'ordres') defilOrdres = Math.round(defilOrdres)
       else if (glisse.sorte === 'inventaire') defilInventaire = Math.round(defilInventaire)
+      else if (glisse.sorte === 'cases') defilCases = Math.round(defilCases)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -2855,6 +2898,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (dans(zoneGlissante)) {
       ev.preventDefault()
       defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
+    } else if (dans(zoneDesCases)) {
+      ev.preventDefault()
+      defilCases = Math.round(defilCases) + Math.sign(pas)
     } else if (dans(zoneDeLInventaire)) {
       ev.preventDefault()
       defilInventaire = Math.round(defilInventaire) + Math.sign(pas)

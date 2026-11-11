@@ -38,6 +38,19 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Le hangar : la scène plus haute, les cases qui défilent (Keko, 11/11 : « dans le hangar, on peut augmenter un peu la hauteur de la zone avec le vaisseau ? et ajouter un système de scroll si les parties en bas ne logent pas — hypothétiquement, un vaisseau énorme avec beaucoup d'armes et d'outils »)
+
+- **La scène gagne vingt-deux pixels** (`sceneOrdinaire` : ce que laissent
+  les deux barres et 200 px de contenu, au lieu de 222 ; 190 au plus). Elle
+  reste la même au premier niveau et dans la liste d'une place — c'est la
+  LISTE qui rend la place : de deux à quatre rangées selon la hauteur de la
+  fiche de la pièce choisie (`hauteurDeLaFiche`). La scène du commerce garde
+  ses mesures d'avant.
+- **Les cases du vaisseau défilent** quand elles ne tiennent pas au-dessus
+  de « Décoller » : d'une rangée à la fois au doigt (la molette sur PC),
+  une barre à droite. Jugé avec un châssis d'essai (`&pieces`) qui porte
+  deux outils et trois armes : sept cases, quatre rangées.
+
 ## Le labo s'appelle TECH, l'entrepôt COMMERCE (Keko, 11/11 : « on peut utiliser l'icône du labo pour l'entrepôt et le renommer commerce ? et on renomme le labo tech et on lui trouve une autre icône adaptée ? »)
 
 - **Les noms affichés seulement** : l'onglet « Labo » devient « Tech »,
