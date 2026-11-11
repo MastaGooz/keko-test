@@ -2180,9 +2180,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * - LE PRIX D'UN NŒUD N'EST PAS DANS L'ARBRE : il est dans sa fiche, au pied (Keko, 11/11 — d'abord des bandeaux « Rang N »
    *   au coût commun : « pas sûr que marquer les paliers comme ça soit une bonne idée, je veux des prix individuels » ;
    *   puis une étiquette sous chaque nœud : « ne mets pas les coûts dans l'arbre, dans la description ça suffit ») ;
-   * - LES CONDUITS sont épais (cinq pixels : cernés d'encre, un cœur clair) et DISENT LA RÈGLE : de la source au premier
-   *   rang, puis de CHAQUE nœud au rang d'après — le conduit qui sort d'un nœud débloqué s'allume, et c'est lui qui
-   *   ouvre le rang suivant ; allumé, des grains de lumière y descendent ;
+   * - LES CONDUITS sont épais (cinq pixels : cernés d'encre, un cœur clair) : de la source au premier rang, puis de
+   *   CHAQUE nœud au rang d'après. Un rang ouvert est sous tension, immobile ; SEUL LE CHEMIN QUI MÈNE AUX NŒUDS
+   *   DÉBLOQUÉS brille et s'anime — des grains de lumière y descendent ;
    * - les rangs se partagent la fenêtre (64 px au moins chacun) ; s'ils la dépassent, on fait glisser l'arbre au doigt
    *   (la molette sur PC) — la barre des branches et la fiche du nœud ne bougent pas ; un fondu aux bords, une barre à
    *   droite. Le défilement est gardé par branche.
@@ -2211,30 +2211,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const b = Math.min(y + h, yb)
       if (b > a && w > 0) p.rect(x, a, w, b - a, c)
     }
-    /** UN CONDUIT, vertical (x, de y0 à y1) ou horizontal (y, de x0 à x1) : cerné d'encre, un corps, un cœur ; allumé, des grains de lumière le parcourent. */
-    const corps = (lit: boolean): number => (lit ? N.hex('#1f62b0') : N.hex('#152238'))
-    const coeur = (lit: boolean): number => (lit ? N.hex('#7fc2ff') : N.hex('#1f3152'))
+    /**
+     * UN CONDUIT, vertical (x, de y0 à y1) ou horizontal (y, de x0 à x1) : cerné d'encre, un corps, un cœur. TROIS ÉTATS
+     * (Keko, 11/11 : « on ne devrait animer le chemin que sur les portions débloquées, non ? ») : 0, éteint (le rang est
+     * fermé) ; 1, sous tension mais IMMOBILE (le rang est ouvert, le nœud au bout ne l'est pas) ; 2, ACTIF — le chemin
+     * qui relie la source aux nœuds débloqués : lui seul brille, et des grains de lumière le parcourent.
+     */
+    type Etat = 0 | 1 | 2
+    const corps = (e: Etat): number => (e === 2 ? N.hex('#1f62b0') : e === 1 ? N.hex('#1a3358') : N.hex('#131c2e'))
+    const coeur = (e: Etat): number => (e === 2 ? N.hex('#7fc2ff') : e === 1 ? N.hex('#34588e') : N.hex('#1c2840'))
     const GRAIN = N.hex('#e2f3ff')
-    const conduitV = (x: number, y0: number, y1: number, lit: boolean): void => {
+    const conduitV = (x: number, y0: number, y1: number, e: Etat): void => {
       if (y1 <= y0) return
       coupe(x - 2, y0, 5, y1 - y0, ENCRE)
-      coupe(x - 1, y0, 3, y1 - y0, corps(lit))
-      coupe(x, y0, 1, y1 - y0, coeur(lit))
-      if (!lit) return
+      coupe(x - 1, y0, 3, y1 - y0, corps(e))
+      coupe(x, y0, 1, y1 - y0, coeur(e))
+      if (e !== 2) return
       for (let yp = y0 + ((t * 34) % 11); yp < y1 - 2; yp += 11) coupe(x - 1, Math.round(yp), 3, 3, GRAIN)
       const a = Math.max(y0, ya + 3)
       const b = Math.min(y1, yb - 3)
       if (b > a) p.glowLine(x, a, x, b, 4, N.hex('#3a8ad0'), 0.16)
     }
-    const conduitH = (y: number, x0: number, x1: number, lit: boolean, cx: number): void => {
-      if (x1 <= x0) return
+    const conduitH = (y: number, x0: number, x1: number, e: Etat): void => {
+      if (x1 < x0) return
       coupe(x0 - 2, y - 2, x1 - x0 + 5, 5, ENCRE)
-      coupe(x0 - 1, y - 1, x1 - x0 + 3, 3, corps(lit))
-      coupe(x0, y, x1 - x0 + 1, 1, coeur(lit))
-      if (!lit) return
+      coupe(x0 - 1, y - 1, x1 - x0 + 3, 3, corps(e))
+      coupe(x0, y, x1 - x0 + 1, 1, coeur(e))
+      if (e !== 2 || x1 === x0) return
       // (les grains partent du milieu vers les deux bouts)
-      for (let o = (t * 34) % 11; o < Math.max(cx - x0, x1 - cx); o += 11) {
-        for (const xp of [cx - o, cx + o]) if (xp >= x0 && xp <= x1 - 1) coupe(Math.round(xp) - 1, y - 1, 3, 3, GRAIN)
+      const mx = (x0 + x1) / 2
+      for (let o = (t * 34) % 11; o < (x1 - x0) / 2; o += 11) {
+        for (const xp of [mx - o, mx + o]) if (xp >= x0 && xp <= x1 - 1) coupe(Math.round(xp) - 1, y - 1, 3, 3, GRAIN)
       }
       if (y > ya + 3 && y < yb - 3) p.glowLine(x0, y, x1, y, 4, N.hex('#3a8ad0'), 0.16)
     }
@@ -2245,18 +2252,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const haut = Math.round(ya + 4 + pas * k - d)
       return { r, haut, bus: haut + 5, y: haut + 29, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
     })
-    // LES CONDUITS : la source nourrit le premier rang ; chaque nœud nourrit le rang d'après, et s'allume quand il est débloqué
+    // LES CONDUITS : la source nourrit le premier rang, chaque nœud le rang d'après. Le rang ouvert, tout y est sous
+    // tension ; n'est ACTIF que ce qui mène à un nœud débloqué — sa descente, le bout de bus qui la relie à ce qui
+    // l'alimente, et la sortie du nœud d'au-dessus qui l'alimente
     rangs.forEach((rg, k) => {
-      const dessus = k === 0 ? [{ x: cx, y: ya - 2, lit: true }] : rangs[k - 1].places.map((pl) => ({ x: pl.x, y: rangs[k - 1].y, lit: estDebloque(labo, pl.n.id) }))
-      for (const a of dessus) conduitV(a.x, a.y, rg.bus, a.lit)
+      const base: Etat = rg.ouvert ? 1 : 0
+      const acquis = rg.places.filter((pl) => estDebloque(labo, pl.n.id))
+      const vivant = acquis.length > 0
+      const dessus = k === 0 ? [{ x: cx, y: ya - 2, source: true }] : rangs[k - 1].places.map((pl) => ({ x: pl.x, y: rangs[k - 1].y, source: estDebloque(labo, pl.n.id) }))
+      const etatDe = (a: { source: boolean }): Etat => (a.source ? (vivant ? 2 : 1) : 0)
+      for (const a of dessus) conduitV(a.x, a.y, rg.bus, etatDe(a))
       const xs = [...dessus.map((a) => a.x), ...rg.places.map((pl) => pl.x)]
-      conduitH(rg.bus, Math.min(...xs), Math.max(...xs), rg.ouvert, cx)
-      for (const pl of rg.places) conduitV(pl.x, rg.bus, rg.y, rg.ouvert)
+      conduitH(rg.bus, Math.min(...xs), Math.max(...xs), base)
+      const actifs = vivant ? [...dessus.filter((a) => a.source).map((a) => a.x), ...acquis.map((pl) => pl.x)] : []
+      if (actifs.length > 0) conduitH(rg.bus, Math.min(...actifs), Math.max(...actifs), 2)
+      for (const pl of rg.places) conduitV(pl.x, rg.bus, rg.y, estDebloque(labo, pl.n.id) ? 2 : base)
       // les raccords : une pastille à chaque rencontre
       for (const x of new Set(xs)) {
+        const e: Etat = actifs.includes(x) ? 2 : base
         coupe(x - 3, rg.bus - 3, 7, 7, ENCRE)
-        coupe(x - 2, rg.bus - 2, 5, 5, corps(rg.ouvert))
-        coupe(x - 1, rg.bus - 1, 3, 3, coeur(rg.ouvert))
+        coupe(x - 2, rg.bus - 2, 5, 5, corps(e))
+        coupe(x - 1, rg.bus - 1, 3, 3, coeur(e))
       }
     })
     for (const rg of rangs) {

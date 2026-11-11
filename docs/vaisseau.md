@@ -81,6 +81,12 @@ la forme, pas le système* (`asteroide.ts`) :
   chaque nœud au rang d'après — celui qui sort d'un nœud débloqué s'allume
   (c'est lui qui ouvre le rang suivant), et des grains de lumière le
   descendent. Avant, un tronc d'un pixel au milieu.
+  *Puis (Keko : « on ne devrait animer le chemin que sur les portions
+  débloquées, non ? ») : trois états — éteint (rang fermé), sous tension
+  mais immobile (rang ouvert, nœud pas encore débloqué), ACTIF : seul le
+  chemin qui relie la source aux nœuds débloqués brille et porte les
+  grains de lumière (la descente du nœud, le bout de bus jusqu'à ce qui
+  l'alimente, la sortie du nœud d'au-dessus).*
 - **Les rangs** font 64 px au moins (46 avant) et se partagent la fenêtre :
   trois rangs la remplissent sur un écran de 780 px. Le défilement reste.
 - **Les symboles** : la lumière ne vient plus que d'en haut (éclairés aussi
