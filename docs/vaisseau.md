@@ -102,6 +102,16 @@ la forme, pas le système* (`asteroide.ts`) :
   (un tiret gris). Mesuré sur mille pas de l'or : 108 changements, contre
   645 quand on comparait un pas au précédent — un toutes les neuf minutes
   en moyenne (toutes les neuf secondes avec `&marche=60`).
+- **La grille de l'entrepôt défile, vingt minerais d'essai** (Keko, 11/11 :
+  « rajouter deux lignes de slots à l'entrepôt et donner la possibilité de
+  scroller vers le bas ; rajoute vingt minerais placeholder pour test ») :
+  la grille a deux rangées de plus que ce que la scène montre (cinq pour
+  trois visibles sur un téléphone courant ; autant qu'il en faut pour tout
+  loger) ; on la fait glisser au doigt, une rangée à la fois (la molette
+  sur PC), une barre à droite. Vingt minerais d'essai la remplissent
+  (`MINERAIS_D_ESSAI`, de l'écran seulement : un éclat teinté, un stock
+  factice, une fiche « Bientôt », ni cours ni vente — la règle ne les
+  connaît pas). À RETIRER quand la grille sera jugée.
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).

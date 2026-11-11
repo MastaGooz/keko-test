@@ -407,7 +407,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres'; curseur?: Curseur } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire'; curseur?: Curseur } | null = null
   /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
   type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
   let curseurs: Curseur[] = []
@@ -919,6 +919,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     curseurs = []
     zoneDeLArbre = null
     zoneDesOrdres = null
+    zoneDeLInventaire = null
     // LE MARCHÉ SE RÈGLE à chaque pas du cours : un ordre dont le prix a été atteint est vendu (même posé hier)
     {
       const r = reglerLeMarche(marche, credits, heureDuMarche())
@@ -1149,31 +1150,78 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /** L'INVENTAIRE : cinq cases par rangée, qui s'allument une à une ; le minerai choisi en or et qui luit. */
+  /**
+   * LA GRILLE DÉFILE (Keko, 11/11 : « rajouter deux lignes de slots à l'entrepôt et donner la possibilité de scroller
+   * vers le bas ; rajoute vingt minerais placeholder pour tester ») : deux rangées de plus que ce que la scène montre
+   * (et autant qu'il en faut pour tout loger) ; on la fait glisser au doigt, d'une rangée à la fois (la molette sur PC),
+   * une barre à droite dit où l'on en est. VINGT MINERAIS D'ESSAI la remplissent — de l'écran seulement : ils n'ont ni
+   * cours ni vente, la règle ne les connaît pas.
+   */
+  const MINERAIS_D_ESSAI = 20
+  const TEINTES_D_ESSAI = ['#c06ad0', '#4ec0a0', '#d08a3a', '#6a8ae0', '#d05a6a', '#a0c04a'].map((c) => N.hex(c))
+  const stockDEssai = (e: number): number => (e * 37 + 11) % 90
+  let essaiChoisi: number | null = null
+  const PAS_DE_L_INVENTAIRE = 31
+  let defilInventaire = 0
+  let zoneDeLInventaire: { x: number; y: number; w: number; h: number } | null = null
+  /** Le dessin d'un minerai d'essai : un éclat à facettes, teinté par son numéro. */
+  function dessinerUnMineraiDEssai(p: Peintre, x0: number, y0: number, e: number): void {
+    const x = Math.round(x0)
+    const y = Math.round(y0)
+    const c = TEINTES_D_ESSAI[e % TEINTES_D_ESSAI.length]
+    p.poly([[x, y - 5], [x + 4, y - 1], [x + 2, y + 4], [x - 2, y + 4], [x - 4, y - 1]], MATIERES.encre.contour)
+    p.poly([[x, y - 4], [x + 3, y - 1], [x + 1.5, y + 3], [x - 1.5, y + 3], [x - 3, y - 1]], c)
+    p.rect(x - 1, y - 2, 1, 2, N.WHITE, 0.8)
+    p.rect(x + 1, y + 1, 1, 2, MATIERES.encre.contour, 0.5)
+  }
   function dessinerLInventaire(p: Peintre, y0: number): void {
     const COL = 5
     const cw = 30
     const ch = 28
     const RANG = Math.max(1, Math.floor((hautScene - 10) / (ch + 3)))
+    const total = MINERAIS.length + MINERAIS_D_ESSAI
+    const rangees = Math.max(RANG + 2, Math.ceil(total / COL))
+    const maxD = Math.max(0, rangees - RANG)
+    defilInventaire = Math.max(0, Math.min(maxD, defilInventaire))
+    const d = Math.round(defilInventaire)
     const gx = Math.floor((W - (COL * cw + (COL - 1) * 3)) / 2)
     const gy = y0 + Math.floor((hautScene - (RANG * (ch + 3) - 3)) / 2)
-    for (let i = 0; i < COL * RANG; i++) {
-      const age = t - vueA - i * 0.012
+    for (let c = 0; c < COL * RANG; c++) {
+      const age = t - vueA - c * 0.012
       if (age < 0) continue
-      const x = gx + (i % COL) * (cw + 3)
-      const y = gy + Math.floor(i / COL) * (ch + 3)
+      const x = gx + (c % COL) * (cw + 3)
+      const y = gy + Math.floor(c / COL) * (ch + 3)
+      const i = c + d * COL
       const k = MINERAIS[i]
-      if (k === undefined) {
+      const e = i - MINERAIS.length
+      if (k === undefined && (e < 0 || e >= MINERAIS_D_ESSAI)) {
         plaque(p, x, y, cw, ch, 'creux')
         continue
       }
-      const choisi = k === mineraiChoisi
-      const e = etatDuBouton(x, y, cw, ch)
-      if (!e.enfonce) ombrePortee(p, x, y, cw, ch)
-      plaque(p, x, y + e.dy, cw, ch, choisi ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash || age < 0.06, reflet: choisi ? (((t * 0.5) % 1) < 0.3 ? x - 10 + (((t * 0.5) % 1) / 0.3) * (cw + 20) : null) : null })
+      const choisi = k !== undefined ? essaiChoisi === null && k === mineraiChoisi : essaiChoisi === e
+      const stock = k !== undefined ? tresor[k] : stockDEssai(e)
+      const b = etatDuBouton(x, y, cw, ch)
+      if (!b.enfonce) ombrePortee(p, x, y, cw, ch)
+      plaque(p, x, y + b.dy, cw, ch, choisi ? 'or' : 'encre', { enfonce: b.enfonce, survole: b.survole, flash: b.flash || age < 0.06, reflet: choisi ? (((t * 0.5) % 1) < 0.3 ? x - 10 + (((t * 0.5) % 1) / 0.3) * (cw + 20) : null) : null })
       if (choisi) p.glow(x + cw / 2, y + 11, 14, PEPITE[2], 0.18 + 0.08 * Math.sin(t * 4))
-      dessinerUneRessource(p, x + cw / 2, y + 11 + e.dy - (choisi ? Math.round(Math.abs(Math.sin(t * 3)) * 1) : 0), k)
-      ecrire(p, montantCourt(tresor[k]), x + cw / 2, y + ch - 10 + e.dy, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center', police: GRAS })
-      zone(x, y, cw, ch, () => (mineraiChoisi = k))
+      const yi = y + 11 + b.dy - (choisi ? Math.round(Math.abs(Math.sin(t * 3)) * 1) : 0)
+      if (k !== undefined) dessinerUneRessource(p, x + cw / 2, yi, k)
+      else dessinerUnMineraiDEssai(p, x + cw / 2, yi, e)
+      ecrire(p, montantCourt(stock), x + cw / 2, y + ch - 10 + b.dy, stock > 0 ? N.WHITE : COQUE[3], { align: 'center', police: GRAS })
+      zone(x, y, cw, ch, () => {
+        if (k !== undefined) {
+          mineraiChoisi = k
+          essaiChoisi = null
+        } else essaiChoisi = e
+      })
+    }
+    if (maxD > 0) {
+      const hg = RANG * (ch + 3) - 3
+      const hc = Math.max(8, Math.round((hg * RANG) / rangees))
+      const xb = gx + COL * (cw + 3) - 1
+      p.rect(xb, gy, 2, hg, MATIERES.creux.contour)
+      p.rect(xb, gy + Math.round(((hg - hc) * defilInventaire) / maxD), 2, hc, COQUE[3])
+      zoneDeLInventaire = { x: 0, y: gy - 2, w: W, h: hg + 4 }
     }
   }
 
@@ -2286,6 +2334,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * valeur unitaire et le stock, et VENDRE — les pièces volent jusqu'au compteur, qui roule.
    */
   function dessinerLEntrepot(p: Peintre, y: number): number {
+    if (essaiChoisi !== null) {
+      // (un minerai d'essai : une fiche sans cours ni vente)
+      const hp = 20 + 4 * 9 + 8 + 26 + 20
+      plaque(p, 4, y, W - 8, hp, 'encre')
+      const nom = `Minerai d’essai ${essaiChoisi + 1}`
+      dessinerUnMineraiDEssai(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, essaiChoisi)
+      motEnRelief(p, nom, W / 2 + 5, y + 7, true)
+      replier('Un minerai d’essai, pour juger l’entrepôt quand il se remplit.', W - 20).forEach((li, i) => ecrire(p, li, W / 2, y + 29 + i * 9, COQUE[5], { align: 'center' }))
+      ecrire(p, 'En stock', 10, y + 76, COQUE[4])
+      ecrire(p, String(stockDEssai(essaiChoisi)), W - 10, y + 76, N.WHITE, { police: GRAS, align: 'right' })
+      ecrire(p, 'Bientôt', W / 2, y + 94, COQUE[3], { align: 'center' })
+      return y + hp + 4
+    }
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
     const LIGNES = 4 // (quatre lignes fixes : avec les minuscules, les descriptions en prennent une de plus)
@@ -2459,6 +2520,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     curseurs = []
     zoneDesOrdres = null
+    zoneDeLInventaire = null
     plaque(p, x, y, w, hp, 'encre')
     const nom = FICHES_MINERAI[k].nom
     dessinerUneRessource(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, k)
@@ -2621,6 +2683,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         racine.setPointerCapture(ev.pointerId)
         return
       }
+      // la grille de l'entrepôt, quand elle a plus de rangées qu'elle n'en montre : elle se fait glisser
+      const zi = zoneDeLInventaire
+      if (zi !== null && !feuille && q.x >= zi.x && q.x < zi.x + zi.w && q.y >= zi.y && q.y < zi.y + zi.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilInventaire, bouge: false, sorte: 'inventaire' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       // la liste des ordres de l'entrepôt, quand elle dépasse : elle se fait glisser (une tape sur un ordre se décide au relâchement)
       const zo = zoneDesOrdres
       if (zo !== null && !feuille && q.x >= zo.x && q.x < zo.x + zo.w && q.y >= zo.y && q.y < zo.y + zo.h) {
@@ -2683,7 +2752,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         cu.regler(Math.max(0, Math.min(1, (q.x - cu.x) / cu.w)))
         return
       }
-      if (glisse.sorte === 'ordres') defilOrdres = glisse.defil0 - (q.y - glisse.y) / RANG_ORDRE
+      if (glisse.sorte === 'inventaire') defilInventaire = glisse.defil0 - (q.y - glisse.y) / PAS_DE_L_INVENTAIRE
+      else if (glisse.sorte === 'ordres') defilOrdres = glisse.defil0 - (q.y - glisse.y) / RANG_ORDRE
       else if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
@@ -2709,6 +2779,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (glisse.sorte === 'liste') defil[onglet] = Math.round(defil[onglet])
       else if (glisse.sorte === 'onglets') defilOnglets = Math.round(defilOnglets)
       else if (glisse.sorte === 'ordres') defilOrdres = Math.round(defilOrdres)
+      else if (glisse.sorte === 'inventaire') defilInventaire = Math.round(defilInventaire)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -2726,6 +2797,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (dans(zoneGlissante)) {
       ev.preventDefault()
       defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
+    } else if (dans(zoneDeLInventaire)) {
+      ev.preventDefault()
+      defilInventaire = Math.round(defilInventaire) + Math.sign(pas)
     } else if (dans(zoneDesOrdres)) {
       ev.preventDefault()
       defilOrdres = Math.round(defilOrdres) + Math.sign(pas)
