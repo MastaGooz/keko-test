@@ -414,8 +414,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   type Case = { o: Sorte; k: number }
   const listeMontee = (o: Sorte): string[] => (o === 'arme' ? hangar.armes : o === 'outil' ? hangar.outils : [])
   /** Les cases de la vue d'ensemble, dans l'ordre : au hangar une par place (un nouveau châssis en ajoute), au labo une par catégorie. */
+  /** Une catégorie A DE QUOI MONTRER : une pièce possédée, ou débloquée au labo (Keko, 11/11 : « masquer le bouton arme ou outil dans le hangar si aucune pièce n'est dispo ») — sinon sa case et sa cible sur le vaisseau ne paraissent pas. */
+  const aDesPieces = (o: Sorte): boolean => piecesDe(o).some((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
   const casesDuVaisseau = (): Case[] =>
-    vue === 'hangar' ? ONGLETS.flatMap((o): Case[] => (o === 'outil' || o === 'arme' ? Array.from({ length: capacite(hangar, o) }, (_, k) => ({ o, k })) : [{ o, k: -1 }])) : ONGLETS.map((o) => ({ o, k: -1 }))
+    vue === 'hangar' ? ONGLETS.filter(aDesPieces).flatMap((o): Case[] => (o === 'outil' || o === 'arme' ? Array.from({ length: capacite(hangar, o) }, (_, k) => ({ o, k })) : [{ o, k: -1 }])) : ONGLETS.map((o) => ({ o, k: -1 }))
   /** La place ouverte, bornée à ce que porte le châssis monté (−1 hors des outils et des armes du hangar). */
   const placeOuverte = (): number => (vue === 'hangar' && (onglet === 'outil' || onglet === 'arme') ? Math.max(0, Math.min(place, capacite(hangar, onglet) - 1)) : -1)
   const titreDe = (c: Case): string => (c.k >= 0 ? `${c.o === 'arme' ? 'Arme' : 'Outil'} ${c.k + 1}` : NOMS_ONGLET[c.o])
@@ -1095,7 +1097,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ecrire(p, poids, 11 + wm + 5, y1 - 16, N.hex('#fff2c8'), { police: GRAS })
     // LES ZONES DU VAISSEAU (une cible verte, les angles seulement, autour de la place ouverte)
     const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -6, 3.2]] : o === 'coque' ? [[-8.2, -9, 9.8, 9]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8.2, (i === 0 ? -1 : 1) * 8.8, 2.4, (i === 0 ? -1 : 1) * 4.2]))
-    const cibles: Sorte[] = etape === 'vaisseau' ? ['propulseur', 'outil', 'arme', 'coque'] : [onglet]
+    const cibles: Sorte[] = etape === 'vaisseau' ? (['propulseur', 'outil', 'arme', 'coque'] as Sorte[]).filter(aDesPieces) : [onglet]
     const vif = Math.sin(t * 5) > -0.3
     if (decollageA === null) for (const o of cibles) for (const [i, [x0, yy0, x1, yy1]] of zonesDe(o).entries()) {
       if (etape !== 'vaisseau' && o === 'arme' && i !== placeOuverte()) continue

@@ -157,6 +157,11 @@ la forme, pas le système* (`asteroide.ts`) :
     dessous), l'ouverte en or qui se lève, un repère d'or qui glisse ; plus
     de bandeau ni de compte. Jusqu'à quatre branches tous les noms
     tiennent ; à cinq ou six, seule l'ouverte garde le sien.
+- **Une catégorie sans pièce ne se montre pas au hangar** (Keko, 11/11 :
+  « masquer le bouton arme ou outil dans le hangar si aucune pièce n'est
+  dispo ») : ni sa case, ni sa cible sur le vaisseau, tant qu'aucune pièce
+  n'y est possédée ou débloquée au labo (`aDesPieces`) — au départ, les
+  armes ; les outils ont la foreuse de série.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
