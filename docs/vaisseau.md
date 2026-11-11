@@ -89,6 +89,13 @@ la forme, pas le système* (`asteroide.ts`) :
   - *la galaxie* : de 14–24 à 26–44 de rayon, un corps de poussière, des
     bras fournis qui s'élargissent, un bulbe en trois tons ; voilée à 34 %.
   - Jugé sur la planche.
+  - *Retouches* (Keko : « les trous noirs ont un trait jaune à leur base ;
+    les étoiles ont des formes pas assez rondes ») : l'anneau de photons
+    n'est plus tracé que sur la moitié haute (en cercle entier, son bas
+    dépassait sous le disque de devant) ; l'étoile a une frange courte et
+    régulière (2 px au plus au lieu de 4), un limbe d'un orange franc (il
+    tombait presque au noir du fond et mangeait le rond), des taches tenues
+    loin du bord, des protubérances de 1 à 2,6 px.
 - **`&astres`, la vitrine** (Keko, 11/11 : « placer les différents corps
   célestes autour de l'extracteur, juste pour tester les visuels,
   temporairement ») : un astre de chaque sorte autour de la base, chacun

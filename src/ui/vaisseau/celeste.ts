@@ -245,7 +245,9 @@ export function peindreAstre(p: PeintreCeleste, a: Astre, cx: number, cy: number
     }
     disque(false)
     p.ring(cx, cy, a.r + 3, 2.4, (_v, ang) => (Math.sin(ang) < 0.1 ? FEU_DU_TROU[2] : TROU))
-    p.circle(cx, cy, a.r + 1.2, FEU_DU_TROU[3])
+    // (l'anneau de photons sur la moitié HAUTE seulement : en cercle entier, son bas dépassait sous le disque de devant
+    // — Keko : « un trait jaune à leur base, qui ne rend pas très beau »)
+    p.ring(cx, cy, a.r + 0.7, 1.4, (_v, ang) => (Math.sin(ang) < 0.15 ? FEU_DU_TROU[3] : TROU))
     p.circle(cx, cy, a.r, TROU)
     disque(true)
   } else if (a.sorte === 'etoile') {
@@ -256,17 +258,20 @@ export function peindreAstre(p: PeintreCeleste, a: Astre, cx: number, cy: number
     const g = (a.graine % 83) * 0.43
     for (let k = 0; k < Math.round(a.r * 5); k++) {
       const th = (k / Math.round(a.r * 5)) * Math.PI * 2
-      const l = 1 + 3.2 * Math.max(0, N.fbm(Math.cos(th) * 2.3 + g, Math.sin(th) * 2.3, a.graine, 2) + 0.35)
+      // (une frange COURTE et régulière — Keko : « les étoiles ont des formes pas assez rondes » : des flammes de quatre
+      // pixels et un limbe presque noir mangeaient le rond)
+      const l = 1 + 1.3 * Math.max(0, N.fbm(Math.cos(th) * 2.3 + g, Math.sin(th) * 2.3, a.graine, 2) + 0.35)
       for (let e = 0; e < l; e += 0.8) p.px(Math.round(cx + Math.cos(th) * (a.r + e)), Math.round(cy + Math.sin(th) * (a.r + e)), FEU_D_ETOILE[e < l * 0.4 ? 2 : e < l * 0.75 ? 1 : 0])
     }
     p.circle(cx, cy, a.r, (d, ang) => {
       const ux = d * Math.cos(ang)
       const uy = d * Math.sin(ang)
       const z = Math.sqrt(Math.max(0, 1 - d * d))
-      let ton = 1.1 + z * 3.9 + N.fbm(ux * 4.5 + g, uy * 4.5, a.graine, 3) * 1.3
-      if (N.fbm(ux * 1.8 - g, uy * 1.8 + g, a.graine + 7, 2) < -0.42) ton -= 1.6 // (une tache)
+      // (le limbe reste d'un orange franc : le bord du disque se lit net ; les taches ne viennent pas au bord)
+      let ton = 2.3 + z * 2.8 + N.fbm(ux * 4.5 + g, uy * 4.5, a.graine, 3) * 0.9
+      if (z > 0.55 && N.fbm(ux * 1.8 - g, uy * 1.8 + g, a.graine + 7, 2) < -0.45) ton -= 1.4 // (une tache)
       ton += (((Math.round(cx + ux * a.r) + Math.round(cy + uy * a.r)) & 1) - 0.5) * 0.45
-      return FEU_D_ETOILE[Math.max(0, Math.min(5, Math.floor(ton)))]
+      return FEU_D_ETOILE[Math.max(d > 0.9 ? 2 : 1, Math.min(5, Math.floor(ton)))]
     })
   } else if (a.sorte === 'geante') {
     // UN ROCHER ÉNORME, EN VOLUME (Keko : « certains astéroïdes ont des textures trop plates et des formes parfois
@@ -330,7 +335,7 @@ export function animerAstre(p: PeintreCeleste, a: Astre, t: number): void {
     p.glow(x, y, a.r * 2.1, FEU_D_ETOILE[2], 0.16 + 0.04 * Math.sin(t * 1.3 + a.graine))
     for (let k = 0; k < 7; k++) {
       const th = k * 0.9 + (a.graine % 7) + Math.sin(t * 0.2 + k) * 0.15
-      const l = 1.5 + 3 * (0.5 + 0.5 * Math.sin(t * (0.7 + 0.13 * k) + k * 2.1))
+      const l = 1 + 1.6 * (0.5 + 0.5 * Math.sin(t * (0.7 + 0.13 * k) + k * 2.1))
       for (let e = 0; e < l; e += 0.9) p.dot(Math.round(x + Math.cos(th) * (a.r + e)), Math.round(y + Math.sin(th) * (a.r + e)), ETOILE_VOILEE[e < l * 0.5 ? 1 : 0], 0.9)
     }
   } else if (a.sorte === 'galaxie') p.glow(x, y, a.r * 0.5, N.hex('#7a68b0'), 0.14 + 0.04 * Math.sin(t * 0.9 + a.graine))
