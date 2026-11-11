@@ -402,6 +402,37 @@ const RECETTES = {
     },
   },
   /**
+   * le tube s'allume (l'écran d'accueil, à la première tape) : le « toc » du relais, le sifflement du tube qui monte
+   * et s'éteint, un ronflement grave qui s'installe quand l'image s'ouvre (vers 0,3 s), un souffle qui s'ouvre avec elle
+   */
+  allume: {
+    duree: 1.6, niveau: 0.32, salle: [0.5, 0.2],
+    faire: (m, h) => {
+      note(m, 0, 0.8, 0, { f: 420, glisse: { vers: 180, en: 0.012 }, a: 0.002, d: 0.06, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
+      souffle(m, h, 0, 0.3, 0, { f: 2400, d: 0.03 })
+      note(m, 0.12, 0.22, 0, { f: 1800, glisse: { vers: 5200, en: 0.22, droit: true }, a: 0.06, d: 0.5 })
+      note(m, 0.28, 0.7, 0, { f: 55, glisse: { vers: 73.4, en: 0.3, droit: true }, a: 0.12, d: 1, partiels: CORPS, sature: 2 })
+      souffle(m, h, 0.28, 0.45, 0, { f: 300, glisse: { vers: 1400, en: 0.3, droit: true }, q: 0.9, bande: true, a: 0.1, d: 0.5, large: true })
+    },
+  },
+  /**
+   * un mot du titre arrive et frappe (le « combo counter ») : un souffle qui fuse pendant le vol (0,12 s), puis
+   * l'impact — un coup grave saturé, un éclat de souffle, une cloche qui reste. Deux variantes qui se suivent : NOVA
+   * sur ré, DRIFTER une quinte au-dessus, sur la ; la tape de l'accueil (`accueil`) referme l'accord de ré.
+   */
+  frappe: {
+    duree: 1.5, niveau: 0.5, salle: [0.65, 0.26], variantes: 2,
+    faire: (m, h, v) => {
+      const [grave, cloche, pan] = [[73.4, RE5, -0.25], [110, LA5, 0.25]][v]
+      souffle(m, h, 0, 0.5, -pan * 2, { f: 500, glisse: { vers: 3200, en: 0.12, droit: true }, q: 1.4, bande: true, a: 0.09, d: 0.06, large: true })
+      note(m, 0.12, 1, 0, { f: grave * 2.2, glisse: { vers: grave, en: 0.03 }, d: 0.3, partiels: CORPS, sature: 2.5 })
+      souffle(m, h, 0.12, 0.7, pan, { f: 4200, glisse: { vers: 900, en: 0.04 }, d: 0.12 })
+      note(m, 0.12, 0.55, pan, { f: cloche, d: 0.7, partiels: CLOCHE, battement: 6 })
+      note(m, 0.12, 0.3, -pan, { f: cloche * 2, d: 0.4, partiels: CLOCHE })
+      eclats(m, h, 6, 0.13, 0.3, 0.25)
+    },
+  },
+  /**
    * l'accueil : la tape qui lance le jeu (Keko : « un autre son que celui du décollage quand on clique l'écran
    * d'accueil ») — un appui rond, un souffle qui s'ouvre, et l'accord de ré qui monte en clochettes (ré, la, ré, fa#),
    * de gauche à droite : on entre

@@ -296,10 +296,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let accueil = !parametres.has('direct')
   let accueilQuitteA: number | null = null
+  /**
+   * L'ÉCRAN EST D'ABORD ÉTEINT (Keko, 11/11 : « c'est possible de mettre du son à l'apparition du titre avant le tap ? »
+   * — non : un navigateur ne joue rien avant un geste ; alors LE GESTE PASSE DEVANT) : « Toucher pour allumer », et
+   * c'est cette première tape qui allume le tube et fait frapper le titre, AVEC LEURS SONS ; la seconde, sur
+   * « Toucher pour commencer », ouvre le hangar. Les heures du titre (le départ de chaque mot, l'instant où la
+   * demande paraît) sont comptées depuis l'allumage ; les sons les lisent, ils ne les recopient pas.
+   */
+  let accueilAllumeA: number | null = null
+  const HEURES_DU_TITRE = { nova: 0.78, drifter: 1.1, pret: 1.8 }
+  function allumerLAccueil(): void {
+    if (accueilAllumeA !== null) return
+    accueilAllumeA = t
+    jouer('allume')
+    // (chaque mot a son souffle puis son impact : le son part avec le mot, l'impact y tombe à l'instant de la frappe)
+    jouer('frappe', undefined, HEURES_DU_TITRE.nova)
+    jouer('frappe', undefined, HEURES_DU_TITRE.drifter)
+    if (typeof navigator.vibrate === 'function') navigator.vibrate(10)
+  }
   const SORTIE_DE_L_ACCUEIL = 0.75
   /** La secousse de l'écran quand un mot du titre frappe (en pixels du tampon ; `dessinerLAccueil` la pose). */
   let secousseDeLAccueil = 0
   function quitterLAccueil(): void {
+    // (éteint : la tape allume ; pendant que le titre arrive : elle attend la demande)
+    if (accueilAllumeA === null) return allumerLAccueil()
+    if (t - accueilAllumeA < HEURES_DU_TITRE.pret) return
     if (accueilQuitteA !== null) return
     accueilQuitteA = t
     jouer('accueil')
@@ -2594,7 +2615,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const TUBE = N.fit(['#060a14', '#0e1a33', '#1a3360', '#2a5a9a', '#4a8fd0', '#8cc4f0', '#d4ecff', '#ffffff'], 8)
   const ALLUMAGE = { point: 0.14, ligne: 0.28, image: 0.58, chaud: 1.2 }
-  function allumerLEcran(p: Peintre): void {
+  function allumerLEcran(p: Peintre, t: number): void {
     const A = ALLUMAGE
     if (t >= A.chaud) return
     const XC = W / 2
@@ -2660,6 +2681,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
+  /**
+   * L'ÉCRAN ÉTEINT : le noir du tube, sa veilleuse rouge qui respire en bas, le pictogramme de mise en marche (un
+   * anneau ouvert et sa barre) et « Toucher pour allumer », qui battent doucement au bleu du tube — rien d'autre.
+   */
+  function dessinerLEcranEteint(p: Peintre): void {
+    p.rect(0, 0, W, H, FOND)
+    const k = 0.5 + 0.5 * Math.sin(t * 2.6)
+    const c = k > 0.45 ? TUBE[5] : TUBE[4]
+    const cx = W / 2
+    const cy = Math.round(H / 2) - 14
+    p.arc(cx, cy, 9, 2, -Math.PI / 2 + 0.7, Math.PI * 1.5 - 0.7, c)
+    p.rect(cx - 1, cy - 12, 2, 9, c)
+    p.glow(cx, cy, 22, TUBE[4], 0.18 + 0.14 * k)
+    const texte = 'Toucher pour allumer'
+    const f: Police = largeurDe(texte, GRAS) <= W - 16 ? GRAS : TEXTE
+    ecrire(p, texte, cx, cy + 22, c, { police: f, align: 'center' })
+    // la veilleuse
+    const v = 0.5 + 0.5 * Math.sin(t * 1.3)
+    p.rect(cx - 1, H - 14, 2, 2, v > 0.3 ? N.hex('#ff3a3a') : N.hex('#7a1a1a'))
+    p.glow(cx, H - 13, 6, N.hex('#ff3a3a'), 0.15 + 0.35 * v)
+  }
+
   /** Les roches qui passent sur l'accueil : leur place en travers (0 à 1), leur départ, leur vitesse, et de quoi les dessiner. */
   const ROCHES_DE_L_ACCUEIL: { x: number; y: number; vit: number; rayon: number; graine: number; tourne: number; minerai: Minerai; richesse: number }[] = [
     { x: 0.1, y: 0.05, vit: 13, rayon: 13, graine: 9173, tourne: 0.25, minerai: 'fer', richesse: 0.5 },
@@ -2679,6 +2722,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLAccueil(p: Peintre): void {
     zones = []
     p.place(0, 0)
+    if (accueilAllumeA === null) {
+      dessinerLEcranEteint(p)
+      return
+    }
+    /** Le temps écoulé depuis l'allumage : l'heure du tube et du titre. */
+    const ta = t - accueilAllumeA
     const us = accueilQuitteA === null ? 0 : Math.min(1, (t - accueilQuitteA) / SORTIE_DE_L_ACCUEIL)
     const elan = us * us
     const boucle = (a: number, b: number): number => ((a % b) + b) % b
@@ -2723,8 +2772,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const yT = Math.round(Math.max(26, H * 0.13))
     const monte = -Math.round(elan * (yT + 160))
     const VOL = 0.12
-    const TN = 0.78
-    const TD = 1.1
+    const TN = HEURES_DU_TITRE.nova
+    const TD = HEURES_DU_TITRE.drifter
     const xDe = (tau: number, sens: number): number => {
       if (tau < 0) return sens * -(W + 60)
       if (tau < VOL) return sens * -(W * 0.95) * Math.pow(1 - tau / VOL, 2)
@@ -2747,7 +2796,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nx = Math.round(W / 2 + (largeurDe('NOVA', GRAS) * eN) / 2 - 4)
     const ny = yT - 6 + monte
     const bat = 0.5 + 0.5 * Math.sin(t * 2.3)
-    const eclos = sortie((t - TN - VOL) / 0.5)
+    const eclos = sortie((ta - TN - VOL) / 0.5)
     if (eclos > 0) {
       p.glow(nx, ny, 70, VIOLET[2], 0.3 * eclos)
       p.glow(nx, ny, 34 + 6 * bat, PEPITE[2], (0.45 + 0.2 * bat) * eclos)
@@ -2760,9 +2809,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       N.sparkle(p, nx, ny, (7 + 2 * bat) * eclos, N.WHITE, PEPITE[3], 0.95)
       p.circle(nx, ny, 2, N.WHITE)
     }
-    const cycle = boucle(t - TD - 0.9, 3.4)
+    const cycle = boucle(ta - TD - 0.9, 3.4)
     MOTS.forEach((mot, n) => {
-      const tau = t - mot.t0
+      const tau = ta - mot.t0
       if (tau < 0) return
       const vole = tau < VOL
       const frappe = tau - VOL
@@ -2814,12 +2863,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // le mot : étiré et penché en vol, blanc à la frappe, puis son reflet
       const larg = largeurDe(mot.s, GRAS) * mot.e
       const quand = n === 0 ? cycle : cycle - 0.35
-      const reflet = t > TD + 0.9 && quand > 0 && quand < 0.7 ? Math.round(W / 2 - larg / 2) - 20 + ((larg + 40) * quand) / 0.7 : null
+      const reflet = ta > TD + 0.9 && quand > 0 && quand < 0.7 ? Math.round(W / 2 - larg / 2) - 20 + ((larg + 40) * quand) / 0.7 : null
       drawWord(p, lettres(mot, xDe(tau, mot.sens), vole ? 1.22 : 1, vole ? mot.sens : 0, frappe >= 0 && frappe < 0.07 ? 1 : 0), reflet === null ? mot.style : { ...mot.style, shine: reflet })
     })
 
     // LA DEMANDE : « Toucher pour commencer », qui bat, entre deux chevrons qui se rapprochent
-    if (accueilQuitteA === null && t > TD + 0.7) {
+    if (accueilQuitteA === null && ta > HEURES_DU_TITRE.pret) {
       const texte = 'Toucher pour commencer'
       const f: Police = largeurDe(texte, GRAS) <= W - 30 ? GRAS : TEXTE
       const yp = H - Math.max(30, Math.round(H * 0.1))
@@ -2830,7 +2879,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text('>', W / 2 - w / 2 - 12 + dx, yp + 1, PEPITE[2])
       p.text('<', W / 2 + w / 2 + 8 - dx, yp + 1, PEPITE[2])
     }
-    allumerLEcran(p)
+    allumerLEcran(p, ta)
     // la sortie : la nuit de la base monte, puis le hangar s'ouvre
     if (us > 0.6) p.rect(0, 0, W, H, NUIT, (us - 0.6) / 0.4)
     if (us >= 1) {

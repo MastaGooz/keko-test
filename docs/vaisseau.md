@@ -96,6 +96,29 @@ la forme, pas le système* (`asteroide.ts`) :
     hangar n'a pas changé* (Keko parlait de l'ouverture).
   - Vu sur une planche de 24 captures rapprochées (360 × 640) : la ligne,
     l'ouverture, la bande, les deux frappes.
+- **L'écran est d'abord ÉTEINT, et le titre a ses sons** (Keko, 11/11 :
+  « c'est possible de mettre du son à l'apparition du titre avant le tap,
+  ou c'est impossible ? » — impossible : un navigateur ne joue rien avant un
+  geste ; « ok fais ta recommandation ») : LE GESTE PASSE DEVANT. Le jeu
+  s'ouvre sur le noir du tube (`dessinerLEcranEteint` : le pictogramme de
+  mise en marche et « Toucher pour allumer » qui battent au bleu du tube,
+  une veilleuse rouge en bas). La PREMIÈRE tape (`allumerLAccueil`) allume
+  le tube et lance le titre, avec trois sons programmés sur l'horloge audio
+  (`jouer(…, dans)`) aux heures du titre (`HEURES_DU_TITRE`, lues par le
+  dessin ET par les sons) : `allume` (le toc du relais, le sifflement du
+  tube, un ronflement et un souffle quand l'image s'ouvre) et deux `frappe`
+  (le souffle du mot qui fuse 0,12 s, puis l'impact : un coup grave saturé,
+  un éclat, une cloche — deux variantes, NOVA sur ré, DRIFTER sur la ; la
+  tape suivante, `accueil`, referme l'accord de ré). La SECONDE tape, dès
+  que « Toucher pour commencer » est là (1,8 s ; avant, elle attend), ouvre
+  le hangar. Les heures du tube et du titre se comptent depuis l'allumage.
+  Niveaux MESURÉS hors navigateur (crête, et efficace maximal sur 100 ms) :
+  allume 0,32 / 0,136, frappe 0,50 / 0,129 et 0,124, accueil 0,50 / 0,153 —
+  dans la famille de l'achat (0,50 / 0,140) et de l'arrivée (0,50 / 0,155),
+  sous le décollage (0,75 / 0,208). Vu en capture (360 × 640) : l'écran
+  éteint, la ligne, la frappe de NOVA, le titre posé, le hangar. Les sons
+  n'ont pas été ÉCOUTÉS (Chrome sans tête) : leur timbre et leur calage sur
+  l'image sont à juger par Keko.
 - Vu en capture (412 × 915) : l'accueil, puis le hangar après la tape. Le
   son lui-même n'a pas été écouté (Chrome sans tête, muet) — à confirmer
   par Keko sur son appareil.
