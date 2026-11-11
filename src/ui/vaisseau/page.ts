@@ -1048,6 +1048,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (Math.sin(t * 2 + i) > -0.2) p.rect(px, py, 1, 1, i % 3 === 0 ? N.hex('#fff0c8') : N.hex('#8a7a60'), 0.8)
       }
       dessinerLeHangarEnScene(p, cx, cy, y0, y1)
+      // (l'aire dépasse la scène : ce qui en sort par le bas est recouvert, et sa lumière éteinte hors de la scène)
+      p.rect(0, y1, W, H - y1, NUIT)
+      frame.light.fill(0, 0, y0 * W)
+      frame.light.fill(0, y1 * W)
     } else if (vue === 'entrepot') dessinerLInventaire(p, y0)
     else if (vue === 'labo') dessinerLArbre(p, y0)
     // LA VIGNETTE : les bords s'assombrissent, en trame de plus en plus serrée
@@ -1090,10 +1094,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     // l'aire : un socle d'acier biseauté, l'anneau de chevrons, le disque, un cercle et une croix de guidage, huit feux
-    // L'AIRE EST AUSSI GRANDE QUE LA SCÈNE LE PERMET (Keko, 11/11 : « agrandir au max, sans sortir de la zone, l'espace
-    // rond où réside le vaisseau — il va y avoir des vaisseaux beaucoup plus gros, là ils vont recouvrir totalement le
-    // cercle ») : son rayon se tire de la hauteur de la scène (ses feux, à sept pixels au-dehors, y tiennent encore)
-    const R0 = Math.max(24, Math.min(Math.floor(hautScene / 2) - 11, Math.floor(W / 2) - 12))
+    // L'AIRE A UNE TAILLE FIXE, GRANDE (Keko, 11/11 : d'abord « agrandir au max, sans sortir de la zone — il va y avoir des
+    // vaisseaux beaucoup plus gros », puis, la hauteur d'un téléphone la rétrécissant : « dessiner le rond à une taille
+    // fixe (grand) même s'il dépasse de la zone, il ne sera pas entier, c'est pas grave ») : elle tient dans la largeur ;
+    // ce qui dépasse en haut et en bas est coupé par la scène (`dessinerLaScene` recouvre le dessous, les barres le dessus)
+    const R0 = 74
     p.circle(cx, cy, R0 + 4, N.hex('#07090f'))
     p.circle(cx, cy, R0 + 3, N.hex('#262c3c'))
     p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, N.hex('#3e4760'))

@@ -72,6 +72,11 @@ la forme, pas le système* (`asteroide.ts`) :
   haut elle grandit, là où elle plafonnait à 190). L'aire est au milieu de
   la scène et son rayon se tire de sa hauteur (51 px au lieu de 32 sur le
   même écran) ; le vaisseau garde son échelle.
+- **Puis : l'aire à taille fixe** (Keko, 11/11 : « dessiner le rond à une
+  taille fixe (grand) même s'il dépasse de la zone — il ne sera pas entier,
+  c'est pas grave ») : 74 px de rayon (elle tient dans la largeur), quelle
+  que soit la hauteur de la scène, qui la coupe en haut et en bas ; le
+  dessous de la scène est recouvert après elle, la lumière éteinte dehors.
 - **Les cases du vaisseau défilent** quand elles ne tiennent pas au-dessus
   de « Décoller » : d'une rangée à la fois au doigt (la molette sur PC),
   une barre à droite. Jugé avec un châssis d'essai (`&pieces`) qui porte
