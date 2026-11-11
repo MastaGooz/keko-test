@@ -843,9 +843,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (À L'ENTREPÔT, la scène montre UNE RANGÉE DE PLUS que sa hauteur ordinaire n'en logerait — Keko, 11/11 : « afficher
   // en permanence deux lignes de plus, et scroller pour le reste », puis « enlève une ligne visible de base » — tant que
   // la fiche du minerai tient dessous)
-  // (vingt-deux pixels de plus pour le vaisseau — Keko, 11/11 : « augmenter un peu la hauteur de la zone avec le
-  // vaisseau » ; la liste d'une place rend ce qu'il faut : elle montre moins de rangées quand la fiche est haute)
-  const sceneOrdinaire = (): number => Math.max(64, Math.min(190, H - HAUT_BARRE - HAUT_NAV - 200))
+  // (LA SCÈNE PREND TOUT CE QUE QUATRE RANGÉES DE CASES ET « DÉCOLLER » LUI LAISSENT — Keko, 11/11 : « augmenter la
+  // hauteur, de manière à laisser uniquement quatre lignes de pièces en dessous, donc huit pièces avant d'avoir besoin
+  // de scroller » : 6 de marge, 4 × 40 − 4 de cases, 4 d'air, 38 de bouton et son pied ; plus de plafond)
+  const sceneOrdinaire = (): number => Math.max(64, H - HAUT_BARRE - HAUT_NAV - 204)
   const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
   const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
@@ -977,7 +978,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y0 = Y_SCENE
     const y1 = y0 + hautScene
     const cx = W / 2
-    const cy = y1 - Math.min(62, Math.floor(hautScene / 2) + 10)
+    const cy = y0 + Math.round(hautScene / 2) // (l'aire est au milieu de la scène : elle en prend toute la hauteur)
     if (vue === 'hangar') {
       // le sol : des plaques d'acier, chacune son biseau (le haut et la gauche clairs, le bas et la droite sombres) et ses rivets
       p.rect(0, y0, W, hautScene, N.hex('#141a2b'))
@@ -994,7 +995,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       // les bandes de sécurité au pied de l'aire : des chevrons jaunes et noirs, usés
-      const yb = Math.min(y1 - 3, cy + 46)
+      const yb = y1 - 4
       for (let x = 0; x < W; x++) {
         const jaune = Math.floor((x + (yb % 2)) / 4) % 2 === 0
         if (grainA(x, 7) < 0.15) continue
@@ -1083,7 +1084,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     // l'aire : un socle d'acier biseauté, l'anneau de chevrons, le disque, un cercle et une croix de guidage, huit feux
-    const R0 = 32
+    // L'AIRE EST AUSSI GRANDE QUE LA SCÈNE LE PERMET (Keko, 11/11 : « agrandir au max, sans sortir de la zone, l'espace
+    // rond où réside le vaisseau — il va y avoir des vaisseaux beaucoup plus gros, là ils vont recouvrir totalement le
+    // cercle ») : son rayon se tire de la hauteur de la scène (ses feux, à sept pixels au-dehors, y tiennent encore)
+    const R0 = Math.max(24, Math.min(Math.floor(hautScene / 2) - 11, Math.floor(W / 2) - 12))
     p.circle(cx, cy, R0 + 4, N.hex('#07090f'))
     p.circle(cx, cy, R0 + 3, N.hex('#262c3c'))
     p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, N.hex('#3e4760'))
@@ -1860,7 +1864,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function feterLEquipement(): void {
     equipeA = t
     secouer(1)
-    const cy = Y_SCENE + hautScene - Math.min(62, Math.floor(hautScene / 2) + 10)
+    const cy = Y_SCENE + Math.round(hautScene / 2)
     gerbe(W / 2, cy, 18, [PEPITE[2], PEPITE[3], N.WHITE], 60)
   }
 

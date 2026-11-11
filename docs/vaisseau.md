@@ -46,6 +46,18 @@ la forme, pas le système* (`asteroide.ts`) :
   LISTE qui rend la place : de deux à quatre rangées selon la hauteur de la
   fiche de la pièce choisie (`hauteurDeLaFiche`). La scène du commerce garde
   ses mesures d'avant.
+- **Puis : quatre rangées de cases, et l'aire au plus grand** (Keko, 11/11 :
+  « il faut encore augmenter la hauteur, de manière à laisser uniquement
+  quatre lignes de pièces en dessous (donc huit pièces avant d'avoir besoin
+  de scroller) ; et agrandir au max, sans sortir de la zone, l'espace rond
+  où réside le vaisseau — il va y avoir des vaisseaux beaucoup plus gros,
+  là ils vont recouvrir totalement le cercle ») : la scène prend tout ce que
+  quatre rangées de cases et « Décoller » lui laissent (`H − 266`, sans
+  plafond : sur un écran de 780 px de haut elle fait 124 px, quatre de
+  moins qu'avant — quatre rangées ne laissent pas plus ; sur un écran plus
+  haut elle grandit, là où elle plafonnait à 190). L'aire est au milieu de
+  la scène et son rayon se tire de sa hauteur (51 px au lieu de 32 sur le
+  même écran) ; le vaisseau garde son échelle.
 - **Les cases du vaisseau défilent** quand elles ne tiennent pas au-dessus
   de « Décoller » : d'une rangée à la fois au doigt (la molette sur PC),
   une barre à droite. Jugé avec un châssis d'essai (`&pieces`) qui porte
