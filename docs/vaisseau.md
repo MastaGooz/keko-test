@@ -214,6 +214,11 @@ la forme, pas le système* (`asteroide.ts`) :
   4–6) a été écartée : elle coupe le tronc. *La police n'a pas le « œ » :
   « nœud » s'écrit « noeud » dans les textes affichés.* Non fait : caler
   l'arbre sur le rang le plus avancé à l'ouverture d'une branche.
+- **Les placeholders sont retirés** (Keko, 11/11 : « super, enlève tous les
+  placeholders ») : les trois branches réservées et les rangs 4 à 6 d'essai
+  sont partis ; RESTENT la barre qui s'adapte au nombre de branches et
+  l'arbre qui défile quand ses rangs dépassent la fenêtre — jugés bons, ils
+  serviront quand le contenu viendra.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`

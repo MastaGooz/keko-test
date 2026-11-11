@@ -19,7 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, type Branche, type Noeud, type Rang } from '../../logic/vaisseau/labo.ts'
+import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
@@ -1747,8 +1747,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     postcombustion: ['...#...', '..##...', '..###..', '.####.#', '.######', '.#####.', '..###..'],
     combat: ['...#...', '..###..', '.#.#.#.', '###.###', '.#.#.#.', '..###..', '...#...'],
     exploration: ['.#####.', '.#####.', '.#####.', '.#.....', '.#.....', '.#.....', '###....'],
-    commerce: ['..#....', '.######', '..#....', '.......', '....#..', '######.', '....#..'],
-    reserve: ['.#####.', '#.....#', '....##.', '...#...', '...#...', '.......', '...#...'],
   }
   /**
    * UN SYMBOLE DU LABO, EN RELIEF (Keko, 11/11 : « donner un peu de texture aux symboles des arbres du labo » — c'étaient
@@ -1773,21 +1771,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.22 ? T[0] : T[1])
       }
   }
-  /**
-   * DES RANGS D'ESSAI, 4 À 6 (Keko, 11/11 : « et si on rajoute des tiers 4, 5, 6 (placeholders), on fait comment pour
-   * avancer dans l'arbre ? » — « ok go, on verra les coûts plus tard ») : des nœuds vides, fermés, de l'écran seulement
-   * (la règle ne les connaît pas, ils n'ont ni coût ni effet), pour juger l'arbre QUI DÉFILE.
-   */
-  const RANGS_AFFICHES = [1, 2, 3, 4, 5, 6]
-  const SORTES_D_ESSAI = ['passif', 'piece', 'mecanique', 'passif'] as const
-  const NOEUDS_D_ESSAI: Noeud[] = BRANCHES.flatMap((b, ib) =>
-    [4, 5, 6].flatMap((r, k) => Array.from({ length: 2 + ((k + ib) % 3) }, (_, i): Noeud => ({ id: `essai-${b}-${r}-${i}`, branche: b, rang: r as Rang, sorte: SORTES_D_ESSAI[(i + k + ib) % 4], nom: `Rang ${r} : à venir`, dit: 'Un noeud d’essai, pour juger l’arbre quand il s’allonge.', icone: 'reserve' }))),
-  )
-  const estDEssai = (n: Noeud): boolean => n.id.startsWith('essai-')
-  const noeudsDuRang = (b: Branche, r: number): Noeud[] => (r <= 3 ? noeudsDe(b, r as Rang) : NOEUDS_D_ESSAI.filter((n) => n.branche === b && n.rang === r))
-  const noeudAffiche = (id: string): Noeud | undefined => noeudDe(id) ?? NOEUDS_D_ESSAI.find((n) => n.id === id)
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
-  const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDEssai(n) ? 'ferme' : estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
+  const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
   /** UN NŒUD, centré sur (x, y), vingt-deux pixels : sa forme dit sa sorte, sa matière son état. */
   function dessinerUnNoeud(p: Peintre, n: Noeud, x: number, y: number, choisi: boolean): void {
     const etat = etatDuNoeud(n)
@@ -1807,7 +1792,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 10, yy - 10, 1, 20, clair)
       const pc = pieceDe(n.piece ?? '')
       if (pc !== undefined) dessinerLePictogramme(p, pc, x, yy, 16, 16)
-      else dessinerLeGlyphe(p, n.icone ?? '', x, yy, [COQUE[1], COQUE[2], COQUE[3]])
       if (etat === 'ferme') p.rect(x - 10, yy - 10, 20, 20, N.hex('#0a0e18'), 0.6)
     } else {
       if (n.sorte === 'passif') {
@@ -1893,13 +1877,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
     dessinerLesBranches(p, y0)
-    if (reservee !== null) {
-      // (une branche réservée : ses onglets, et rien dessous)
-      dessinerLesBranches(p, y0)
-      motEnRelief(p, NOMS_D_ONGLET[reservee], W / 2, y0 + Math.floor(hautScene / 2) - 10, false)
-      ecrire(p, 'Bientôt', W / 2, y0 + Math.floor(hautScene / 2) + 4, COQUE[3], { align: 'center' })
-      return
-    }
     const hi = H_INFO + surplusDeLInfo()
     // L'ARBRE D'ABORD, dans sa fenêtre ; puis la barre des branches et la fiche du nœud PAR-DESSUS (un nœud à demi sorti
     // de la fenêtre passe dessous — la lumière aussi : on l'éteint sous elles, elle traverse les aplats)
@@ -1910,19 +1887,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, y1 - hi - 2, W, hi + 2, N.hex('#0a1626'))
     dessinerLInfoDuNoeud(p, y1 - hi)
   }
-  /**
-   * TROIS BRANCHES RÉSERVÉES (Keko, 11/11 : « rajoute trois placeholders en plus ») : des onglets sans arbre — le
-   * commerce, attendu, et deux réserves —, pour juger la barre à six. Elles ne sont que de l'écran : la règle
-   * (`labo.ts`) ne les connaît pas, on n'y débloque rien.
-   */
-  const RESERVEES = ['commerce', 'reserve-1', 'reserve-2'] as const
-  type Onglet = Branche | (typeof RESERVEES)[number]
-  const ONGLETS_DU_LABO: readonly Onglet[] = [...BRANCHES, ...RESERVEES]
-  const NOMS_D_ONGLET: Record<Onglet, string> = { ...NOMS_BRANCHE, commerce: 'Commerce', 'reserve-1': 'Réserve 1', 'reserve-2': 'Réserve 2' }
-  /** La branche réservée ouverte, ou null (une vraie branche l'est : `branche`). */
-  let reservee: (typeof RESERVEES)[number] | null = null
   /** Le dessin de chaque branche, sur son onglet. */
-  const ICONE_DE_BRANCHE: Record<Onglet, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration', commerce: 'commerce', 'reserve-1': 'reserve', 'reserve-2': 'reserve' }
+  const ICONE_DE_BRANCHE: Record<Branche, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration' }
   /**
    * LES BRANCHES : UNE BARRE D'ONGLETS, LA MÊME QUE CELLE DU BAS (Keko, 11/11 : d'abord « un peu basiques par rapport à
    * leur rôle, et ça se passe comment quand on rajoute des catégories ? », puis, des onglets soudés à un bandeau :
@@ -1936,8 +1902,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLesBranches(p: Peintre, y: number): void {
     const h = H_BRANCHES
-    const liste = ONGLETS_DU_LABO
-    const ouvert: Onglet = reservee ?? branche
+    const liste: readonly Branche[] = BRANCHES
+    const ouvert = branche
     const n = liste.length
     p.rect(0, y, W, h, NUIT_BARRE)
     p.rect(0, y + h - 1, W, 1, MATIERES.encre.contour)
@@ -1946,8 +1912,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // prend la place de son nom et les autres, réduites à leur dessin, se partagent le reste
     const ia = liste.indexOf(ouvert)
     const egale = W / n
-    const tousLesNoms = liste.every((b) => largeurDe(NOMS_D_ONGLET[b]) + 6 <= egale)
-    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(NOMS_D_ONGLET[ouvert]) + 12)
+    const tousLesNoms = liste.every((b) => largeurDe(NOMS_BRANCHE[b]) + 6 <= egale)
+    const large = tousLesNoms ? egale : Math.max(egale, largeurDe(NOMS_BRANCHE[ouvert]) + 12)
     const etroite = tousLesNoms || n < 2 ? egale : (W - large) / (n - 1)
     const debutDe = (i: number): number => (tousLesNoms ? i * egale : i <= ia ? i * etroite : (i - 1) * etroite + large)
     liste.forEach((b, i) => {
@@ -1962,13 +1928,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
       dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#b8860b'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]])
-      if (nomme) ecrire(p, NOMS_D_ONGLET[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
-      if (!actif) zone(xa, y, xb - xa, h, () => {
-        const r = RESERVEES.find((x) => x === b)
-        reservee = r ?? null
-        if (r === undefined) branche = b as Branche
-        choixA = t
-      }, 'onglet')
+      if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
+      if (!actif) zone(xa, y, xb - xa, h, () => ((branche = b), (choixA = t)), 'onglet')
     })
     const cible = (debutDe(ia) + debutDe(ia + 1)) / 2
     repereDeBrancheX = repereDeBrancheX < 0 ? cible : ressort(repereDeBrancheX, cible, 18)
@@ -1993,7 +1954,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ETEINT = N.hex('#16304f')
     const PLAN = N.hex('#0a1626')
     const fenetre = yb - ya
-    const n = RANGS_AFFICHES.length
+    const n = RANGS.length
     const pas = Math.max(PAS_DES_RANGS, (fenetre - 6) / n)
     const total = n * pas + 6
     const maxD = Math.max(0, Math.round(total - fenetre))
@@ -2009,11 +1970,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (b > a) p.rect(x, a, w, b - a, c)
     }
     const cx = Math.round(W / 2) + 4
-    const rangs = RANGS_AFFICHES.map((r, k) => {
-      const noeuds = noeudsDuRang(branche, r)
+    const rangs = RANGS.map((r, k) => {
+      const noeuds = noeudsDe(branche, r)
       const ecart = Math.min(36, (W - 40) / noeuds.length)
       const y = Math.round(ya + 5 + pas * k + pas / 2 + 7 - d)
-      return { r, y, ouvert: r <= 3 && rangOuvert(labo, branche, r as Rang), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
+      return { r, y, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
     })
     // le tronc, de la source au bus du dernier rang ; chaque tronçon s'allume avec le rang qu'il nourrit
     const source = ya + 5 - d
@@ -2063,7 +2024,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** LA FICHE DU NŒUD choisi, au pied de l'arbre : son nom, ce qu'il donne, puis son coût en minerai et « Débloquer » — ou ce qu'il est devenu. */
   function dessinerLInfoDuNoeud(p: Peintre, y: number): void {
-    const n = noeudAffiche(noeudChoisi[branche])
+    const n = noeudDe(noeudChoisi[branche])
     if (n === undefined) return
     const etat = etatDuNoeud(n)
     const surplus = surplusDeLInfo()
@@ -2078,7 +2039,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ya = y + h - 33 - surplus
     const yb = y + h - 19
     const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
-    if (etat === 'ferme') ecrire(p, estDEssai(n) ? 'Bientôt' : `Demande un noeud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
+    if (etat === 'ferme') ecrire(p, `Demande un noeud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
     else if (etat === 'ouvert') {
       // CE QU'IL FAUT, par minerai — vert quand on l'a, rouge sinon ; ce qu'on a ne s'écrit plus à côté (Keko : « en
       // format X/Y, si le joueur a beaucoup de la ressource, on va avoir un souci de place »)
