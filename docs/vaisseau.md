@@ -38,6 +38,77 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Le labo : l'arbre des recherches (Keko, 11/11 : « on peut commencer l'arbre tech du labo ? propose-moi une première version »)
+
+- **Ce que Keko a tranché**, en trois échanges :
+  - *l'arbre se découpe PAR ACTIVITÉ, pas par partie du vaisseau* (« minage /
+    combat / exploration / commerce — on va avoir un jeu d'extraction qui va
+    demander de partir en mission minage, exploration (découvrir de nouvelles
+    zones, trouver une épave), combat (vaincre des ennemis, protéger des
+    points) et commerce (un marché des minéraux, des livraisons) ») ; ma
+    première version, une branche par catégorie du hangar, est écartée ;
+  - *la branche commerce s'affichera plus tard*, avec le marché ;
+  - *aucun lien entre les branches* ;
+  - *les châssis et les propulseurs ne se rangent pas dans une branche* :
+    chaque branche aura LES SIENS, adaptés à son activité — « les pièces
+    actuelles sont temporaires : on va rework tout » ;
+  - *un nœud se débloque TOUJOURS en minerai* (« et autres ressources ») ;
+    *une pièce débloquée s'achète ensuite en crédits, dessous, comme avant* ;
+  - *le labo ne débloque pas que des pièces* : aussi des PASSIFS (« vitesse,
+    maniabilité, accélération, blindage, possibilité de critique… qui
+    s'appliquent globalement, indépendamment du vaisseau ») et des MÉCANIQUES
+    de jeu (« une tape sur un ennemi le verrouille… ») — acquis dès le nœud,
+    sans achat ; un passif vaut UN PALIER par nœud ;
+  - *on remet la sauvegarde à zéro à l'implantation* ;
+  - *on juge cette base avant d'aller plus loin* ; le contenu des branches,
+    « on verra plus tard ».
+- **La règle** (`logic/vaisseau/labo.ts`, pure, vérifiée par
+  `labo.verif.ts`) : `NOEUDS` (branche, rang 1 à 3, sorte, ce qu'il porte),
+  `COUTS` par rang — 20 fer ; 30 fer + 10 or ; 20 or + 15 cristal —, un rang
+  ouvert dès qu'un nœud du rang d'avant est débloqué (`rangOuvert`),
+  `debloquer` (le minerai quitte le trésor), `pieceOuverte`, `passifsDe`,
+  `configDuLabo` (les passifs et les mécaniques PAR-DESSUS `configDuHangar` ;
+  le rival n'en profite pas), `lireLabo`.
+- **Le contenu de cette base** (les noms, les effets, les coûts sont de moi,
+  à rejuger) :
+  - *minage* : Foreuse lourde, Forage rapide (+15 %) ; Aimant, Soute élargie
+    (+5) ; Foreuse longue, Grand aimant, Filon double (15 % de pépites
+    doubles, pour le laser du joueur) ;
+  - *combat* : Canon, Blindage renforcé (+1) ; Mitrailleuse, Châssis blindé,
+    Chargeurs rapides (+15 %) ; Missiles, Châssis à bouclier, Coup critique
+    (10 %, double dégât), Bouclier auxiliaire (+1) ;
+  - *exploration* : Propulseur renforcé, Carénage (pointe +8 %) ; Radar,
+    Gyroscopes (+12 %), Injecteurs (+12 %), POSTCOMBUSTION ; Propulseur
+    ionique, Champ étendu (aimant +25 %).
+  - Remis à plus tard, comme convenu : les châssis et propulseurs par
+    activité, le marquage d'une roche, le verrouillage d'un ennemi, la balise.
+- **La postcombustion**, première mécanique (`jeu.ts` : `postcombustion`,
+  `partDeLaPostcombustion`, `rechargeDeLaPostcombustion`) : 1,1 s de poussée
+  × 2,6 et de pointe × 1,8, la pointe retombe en 0,6 s (coupée net, la
+  vitesse butait), recharge 6 s ; sans manche, elle pousse droit devant. En
+  vol : une DOUBLE TAPE (deux appuis à moins de 320 ms et de 70 px), ou sa
+  plaque « BOOST » en bas à gauche (d'or quand elle est prête, sa recharge en
+  barre), ou Espace / Maj. *Risque connu : reposer vite le manche au même
+  endroit la déclenche.*
+- **L'écran** (`page.ts`, « LE LABO : L'ARBRE DES RECHERCHES ») : la scène
+  montre la branche choisie — trois puces sous elle —, ses trois rangs de
+  haut en bas reliés par un tronc qui s'allume avec les rangs ; un CARRÉ pour
+  une pièce, un ROND pour un passif, un LOSANGE pour une mécanique ; éteint
+  (rang fermé), encre (à débloquer, une pastille d'or s'il est payable), vert
+  (débloqué ; un crédit dans le coin tant que la pièce n'est pas achetée).
+  Dessous, la fiche du nœud : ce qu'il donne, son coût (ce qu'on a / ce
+  qu'il faut, vert ou rouge), « Débloquer », puis « Acheter » pour une pièce.
+  La scène du labo est plus haute que celle du hangar (sa fiche est plus
+  courte).
+- **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
+  effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
+- **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
+  DONNE maintenant les pièces d'essai (aucun nœud ne les porte).
+- Vérifié : les règles (21 vérifications), et en capture — l'arbre des trois
+  branches, un déblocage, l'achat ouvert dessous, la postcombustion lancée
+  d'une double tape en vol. Pas vérifié au doigt ni à l'oreille (elle reprend
+  le son du décollage) ; les passifs ne sont jugés que par leurs chiffres.
+
 ## Un autre espace à chaque vol (Keko, 11/11 : « l'espace est randomisé ? J'ai l'impression de tomber sur la même map » — « je propose de randomiser à chaque vol pour l'instant, histoire de tester »)
 
 - **Le constat** : le champ d'astéroïdes et le ciel ne se tiraient que de

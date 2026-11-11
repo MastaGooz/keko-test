@@ -12,13 +12,14 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
+import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
@@ -136,8 +137,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const credits0 = parametres.has('credits') ? Math.max(0, Number(parametres.get('credits')) || 0) : null
   /** `&pieces` : des dizaines de pièces d'essai dans le catalogue, pour voir le hangar quand il y en a beaucoup (Keko). */
   if (parametres.has('pieces')) ajouterLesPiecesDEssai()
-  let { hangar, tresor, credits } = chargerHangar()
-  const sauver = (): void => sauverHangar(hangar, tresor, credits)
+  let { hangar, tresor, credits, labo } = chargerHangar()
+  const sauver = (): void => sauverHangar(hangar, tresor, credits, labo)
+  // (les pièces d'essai ne sont portées par aucun nœud du labo : `&pieces` les donne, pour remplir les listes du hangar)
+  if (parametres.has('pieces')) hangar = { ...hangar, possedees: [...new Set([...hangar.possedees, ...(['propulseur', 'coque', 'outil', 'arme'] as const).flatMap((o) => piecesDe(o)).filter((pc) => pc.id.startsWith('essai-')).map((pc) => pc.id)])] }
+  /** `&stock=N` : pose N pépites DE CHAQUE MINERAI à l'entrepôt, pour essayer l'arbre du labo d'un lien. */
+  if (parametres.has('stock')) {
+    const n = Math.max(0, Math.floor(Number(parametres.get('stock')) || 0))
+    tresor = { fer: n, or: n, cristal: n }
+    sauver()
+  }
   if (parametres.has('tresor')) {
     tresor = { ...tresor, fer: Math.max(0, Number(parametres.get('tresor')) || 0) }
     sauver()
@@ -147,7 +156,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     sauver()
   }
   /** La configuration du vaisseau du joueur : celle de série passée par les pièces montées — refaite à chaque décollage. */
-  let CONF: ConfigVaisseau = configDuHangar(BASE, hangar)
+  let CONF: ConfigVaisseau = configDuLabo(configDuHangar(BASE, hangar), labo)
 
   const scene = document.createElement('div')
   scene.className = 'vaisseau-scene'
@@ -268,7 +277,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function demarrer(): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
-    CONF = configDuHangar(BASE, hangar)
+    CONF = configDuLabo(configDuHangar(BASE, hangar), labo) // (les passifs et les mécaniques du labo par-dessus les pièces montées)
     // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
     // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
     // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
@@ -805,7 +814,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const HAUT_NAV = 34
   const Y_SCENE = HAUT_BARRE
   /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko) : ce que laissent les deux barres et le plus haut des contenus. */
-  const hauteurDeScene = (): number => Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222))
+  // (AU LABO, la scène est l'ARBRE : elle prend tout ce que sa fiche, plus courte que celle d'une pièce, lui laisse)
+  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(100, Math.min(200, H - HAUT_BARRE - HAUT_NAV - 142)) : Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)))
   let hautScene = 150
   let tBase = 0
   let dtBase = 1 / 60
@@ -951,7 +961,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(0, ys, W, 1, N.hex('#1d4a7a'))
         p.glowLine(0, ys, W, ys, 3, N.hex('#3a8ad0'), 0.15)
       }
-      ecrire(p, 'Arbre des recherches : bientôt', cx, y0 + Math.floor(hautScene / 2) - 4, N.hex('#2c5a8a'), { align: 'center' })
     } else if (vue === 'entrepot') {
       p.rect(0, y0, W, hautScene, N.hex('#111b17'))
       for (let i = 0; i < 110; i++) {
@@ -982,6 +991,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       dessinerLeHangarEnScene(p, cx, cy, y0, y1)
     } else if (vue === 'entrepot') dessinerLInventaire(p, y0)
+    else if (vue === 'labo') dessinerLArbre(p, y0)
     // LA VIGNETTE : les bords s'assombrissent, en trame de plus en plus serrée
     for (let k = 0; k < 4; k++) {
       const a = 0.55 - k * 0.13
@@ -1289,6 +1299,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         resetDemandeA = -10
         hangar = hangarNeuf()
+        labo = laboNeuf()
         tresor = cargaisonVide()
         credits = 0
         creditsVus = 0
@@ -1566,6 +1577,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, 'Un onglet d’essai', W / 2, y + 12, COQUE[4], { align: 'center' })
       p.text('(&ONGLETS=N)', W / 2, y + 26, COQUE[2], { align: 'center' })
     } else if (vue === 'entrepot') dessinerLEntrepot(p, y)
+    else if (vue === 'labo') dessinerLeLabo(p, y)
     else if (etape === 'vaisseau') {
       dessinerLesEmplacements(p, y)
       if (vue === 'hangar') dessinerDecoller(p)
@@ -1694,6 +1706,254 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     gerbe(W / 2, cy, 18, [PEPITE[2], PEPITE[3], N.WHITE], 60)
   }
 
+  // ================================================================ LE LABO : L'ARBRE DES RECHERCHES
+  /**
+   * L'ARBRE DU LABO (Keko, 11/11 — la règle est dans `logic/vaisseau/labo.ts`) : la scène montre LA BRANCHE choisie
+   * (minage, combat, exploration : trois puces sous elle), ses trois rangs de haut en bas, reliés par un tronc qui
+   * s'allume à mesure que les rangs s'ouvrent. La FORME dit la sorte du nœud — un carré pour une PIÈCE, un rond pour un
+   * PASSIF, un losange pour une MÉCANIQUE —, la matière son état : éteint (rang fermé), encre (à débloquer ; une pastille
+   * d'or s'il est payable), vert (débloqué). Sous l'arbre, LA FICHE du nœud choisi : ce qu'il donne, son coût EN MINERAI
+   * (ce qu'on a / ce qu'il faut), « Débloquer » — puis, pour une pièce, « Acheter » en crédits, comme avant.
+   */
+  let branche: Branche = 'minage'
+  const noeudChoisi: Record<Branche, string> = { minage: noeudsDe('minage')[0].id, combat: noeudsDe('combat')[0].id, exploration: noeudsDe('exploration')[0].id }
+  let debloqueA = -10
+  let debloqueId = ''
+  /** Où chaque nœud de la branche est dessiné (refait à chaque image) : la gerbe d'un déblocage part de là. */
+  const placesDesNoeuds: Record<string, { x: number; y: number }> = {}
+  /** Les dessins des passifs et des mécaniques, sept pixels sur sept. */
+  const ICONES_DU_LABO: Record<string, string[]> = {
+    forage: ['#######', '.#####.', '.#####.', '..###..', '..###..', '...#...', '...#...'],
+    soute: ['#######', '#.....#', '#######', '#.....#', '#.###.#', '#.....#', '#######'],
+    pepite: ['...#...', '..###..', '.#####.', '#######', '.#####.', '..###..', '...#...'],
+    blindage: ['#######', '#######', '#######', '#######', '.#####.', '..###..', '...#...'],
+    cadence: ['.#.#.#.', '.#.#.#.', '.#.#.#.', '.#.#.#.', '.......', '#######', '#######'],
+    critique: ['...#...', '...#...', '..###..', '#######', '..###..', '...#...', '...#...'],
+    bouclier: ['..###..', '.#...#.', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..'],
+    vitesse: ['#..#...', '.#..#..', '..#..#.', '...#..#', '..#..#.', '.#..#..', '#..#...'],
+    maniabilite: ['.####..', '#....#.', '#.....#', '#...###', '#....#.', '.#.....', '..###..'],
+    acceleration: ['...#...', '..#.#..', '.#...#.', '...#...', '..#.#..', '.#...#.', '.......'],
+    aimant: ['##...##', '##...##', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..'],
+    postcombustion: ['...#...', '..##...', '..###..', '.####.#', '.######', '.#####.', '..###..'],
+  }
+  function dessinerLeGlyphe(p: Peintre, nom: string, x0: number, y0: number, c: number, k = 2): void {
+    const lignes = ICONES_DU_LABO[nom]
+    if (lignes === undefined) return
+    const x = Math.round(x0 - 3.5 * k)
+    const y = Math.round(y0 - 3.5 * k)
+    lignes.forEach((ligne, j) => [...ligne].forEach((ch, i) => ch === '#' && p.rect(x + i * k, y + j * k, k, k, c)))
+  }
+  type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
+  const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
+  /** UN NŒUD, centré sur (x, y), vingt-deux pixels : sa forme dit sa sorte, sa matière son état. */
+  function dessinerUnNoeud(p: Peintre, n: Noeud, x: number, y: number, choisi: boolean): void {
+    const etat = etatDuNoeud(n)
+    const e = etatDuBouton(x - 12, y - 12, 24, 24)
+    const yy = y + e.dy
+    const payable = etat === 'ouvert' && peutDebloquer(labo, tresor, n.id)
+    const bat = 0.5 + 0.5 * Math.sin(t * 4 + x * 0.1)
+    const corps = etat === 'acquis' ? RUNE[1] : etat === 'ouvert' ? N.hex('#1b2a4a') : N.hex('#111726')
+    const clair = etat === 'acquis' ? RUNE[2] : etat === 'ouvert' ? N.hex('#2c4370') : N.hex('#1a2236')
+    const bord = etat === 'acquis' ? RUNE[3] : etat === 'ouvert' ? (bat > 0.5 ? COQUE[4] : COQUE[3]) : N.hex('#232c44')
+    const encre = N.hex('#04060c')
+    if (etat === 'acquis') p.glow(x, yy, 16, RUNE[2], 0.22)
+    if (n.sorte === 'piece') {
+      p.rect(x - 12, yy - 12, 24, 24, encre)
+      p.rect(x - 11, yy - 11, 22, 22, bord)
+      p.rect(x - 10, yy - 10, 20, 20, corps)
+      p.rect(x - 10, yy - 10, 20, 1, clair)
+      p.rect(x - 10, yy - 10, 1, 20, clair)
+      const pc = pieceDe(n.piece ?? '')
+      if (pc !== undefined) dessinerLePictogramme(p, pc, x, yy, 16, 16)
+      if (etat === 'ferme') p.rect(x - 10, yy - 10, 20, 20, N.hex('#0a0e18'), 0.6)
+    } else {
+      if (n.sorte === 'passif') {
+        p.circle(x, yy, 12, encre)
+        p.circle(x, yy, 11, bord)
+        p.circle(x, yy, 10, corps)
+        p.arc(x, yy, 9, 1, Math.PI * 0.95, Math.PI * 1.6, clair)
+      } else {
+        const lo = (r: number): [number, number][] => [[x, yy - r], [x + r, yy], [x, yy + r], [x - r, yy]]
+        p.poly(lo(14), encre)
+        p.poly(lo(13), bord)
+        p.poly(lo(11.5), corps)
+      }
+      dessinerLeGlyphe(p, n.icone ?? '', x, yy, etat === 'acquis' ? N.WHITE : etat === 'ouvert' ? COQUE[5] : COQUE[2])
+    }
+    // une pièce débloquée qu'on n'a pas encore achetée : le crédit dans son coin ; payable : une pastille d'or qui bat
+    if (etat === 'acquis' && n.sorte === 'piece' && !possede(hangar, n.piece ?? '')) dessinerUnCredit(p, x + 9, yy + 9)
+    if (payable) {
+      p.rect(x + 7, yy - 12, 5, 5, encre)
+      p.rect(x + 8, yy - 11, 3, 3, bat > 0.5 ? N.hex('#fff2a8') : PEPITE[2])
+      p.glow(x + 9, yy - 10, 5, PEPITE[2], 0.3 + 0.3 * bat)
+    }
+    // le déblocage : une onde verte, un éclair
+    const ud = n.id === debloqueId ? (t - debloqueA) / 0.5 : 1
+    if (ud < 1) {
+      p.ring(x, yy, 8 + ud * 22, 2, ud < 0.25 ? N.WHITE : RUNE[3], 1 - ud)
+      p.glow(x, yy, 30 * (1 - ud), RUNE[2], 0.5 * (1 - ud))
+    }
+    if (choisi) {
+      const c = Math.sin(t * 5) > -0.3 ? N.hex('#fff2a8') : PEPITE[2]
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        const ax = x + dx * 14
+        const ay = yy + dy * 14
+        p.line(ax, ay, ax - dx * 4, ay, c)
+        p.line(ax, ay, ax, ay - dy * 4, c)
+      }
+    }
+    zone(x - 12, y - 12, 24, 24, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
+  }
+  /** L'ARBRE de la branche choisie, dans la scène : le tronc, un bus par rang, les nœuds. */
+  function dessinerLArbre(p: Peintre, y0: number): void {
+    const ALLUME = N.hex('#3a8ad0')
+    const ETEINT = N.hex('#16304f')
+    const pas = (hautScene - 10) / RANGS.length
+    const cx = Math.round(W / 2) + 4
+    const rangs = RANGS.map((r) => {
+      const noeuds = noeudsDe(branche, r)
+      const ecart = Math.min(36, (W - 40) / noeuds.length)
+      const y = Math.round(y0 + 12 + pas * (r - 1) + pas / 2)
+      return { r, y, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((n, i) => ({ n, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
+    })
+    // le tronc, de la source au bus du dernier rang ; chaque tronçon s'allume avec le rang qu'il nourrit
+    let haut = y0 + 3
+    for (const rg of rangs) {
+      const yb = rg.y - 17
+      const c = rg.ouvert ? ALLUME : ETEINT
+      p.rect(cx, haut, 1, yb - haut + 1, c)
+      const x0 = Math.min(cx, rg.places[0].x)
+      const x1 = Math.max(cx, rg.places[rg.places.length - 1].x)
+      p.rect(x0, yb, x1 - x0 + 1, 1, c)
+      for (const pl of rg.places) p.rect(pl.x, yb, 1, 6, c)
+      if (rg.ouvert) p.glowLine(x0, yb, x1, yb, 3, ALLUME, 0.12)
+      // le numéro du rang, à gauche
+      ecrire(p, String(rg.r), 6, rg.y - 4, rg.ouvert ? COQUE[5] : COQUE[2], { police: GRAS })
+      haut = yb
+    }
+    p.rect(cx - 1, y0 + 2, 3, 3, ALLUME)
+    // un grain de lumière descend le tronc allumé
+    const fond = Math.max(...rangs.filter((rg) => rg.ouvert).map((rg) => rg.y - 17))
+    const yg = y0 + 3 + ((t * 26) % Math.max(1, fond - y0 - 3))
+    p.rect(cx, Math.round(yg), 1, 2, N.WHITE)
+    p.glow(cx, yg, 4, ALLUME, 0.5)
+    for (const rg of rangs) for (const pl of rg.places) {
+      placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
+      dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
+    }
+  }
+  const NOMS_DE_SORTE: Record<Noeud['sorte'], string> = { piece: 'PIECE', passif: 'PASSIF', mecanique: 'MECANIQUE' }
+  /** LE CONTENU DU LABO, sous l'arbre : les trois branches en puces, la fiche du nœud choisi, puis ce qu'on peut en faire. */
+  function dessinerLeLabo(p: Peintre, y0: number): void {
+    let y = y0
+    const noms = BRANCHES.map((b) => NOMS_BRANCHE[b])
+    const largeurs = noms.map((nm) => largeurDe(nm, GRAS) + 12)
+    let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (BRANCHES.length - 1) * 3) / 2)
+    BRANCHES.forEach((b, i) => {
+      const actif = branche === b
+      const xi = x
+      const e = etatDuBouton(xi, y, largeurs[i], 13)
+      if (!e.enfonce) ombrePortee(p, xi, y, largeurs[i], 13)
+      plaque(p, xi, y + e.dy, largeurs[i], 13, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
+      ecrire(p, noms[i], xi + largeurs[i] / 2, y + 3 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center', police: GRAS })
+      if (!actif) zone(xi, y - 2, largeurs[i], 17, () => ((branche = b), (choixA = t), (vueA = t - 0.12)))
+      x += largeurs[i] + 3
+    })
+    y += 17
+    const n = noeudDe(noeudChoisi[branche])
+    if (n === undefined) return
+    const etat = etatDuNoeud(n)
+    const LIGNES = 4
+    const L = replier(n.dit, W - 22).slice(0, LIGNES)
+    const hf = 32 + LIGNES * 9 + 3
+    plaque(p, 4, y, W - 8, hf, 'encre')
+    plaque(p, 8, y + 4, 26, 26, 'creux')
+    const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
+    if (pc !== undefined) dessinerLePictogramme(p, pc, 21, y + 17, 26, 26)
+    else dessinerLeGlyphe(p, n.icone ?? '', 21, y + 17, etat === 'acquis' ? RUNE[3] : etat === 'ouvert' ? COQUE[5] : COQUE[3])
+    const cxn = 38 + (W - 12 - 38) / 2
+    motEnRelief(p, n.nom, cxn, y + 6, etat === 'acquis')
+    p.text(`${NOMS_DE_SORTE[n.sorte]} - RANG ${n.rang}`, cxn, y + 19, etat === 'acquis' ? RUNE[2] : PEPITE[2], { align: 'center' })
+    const hautDuTexte = y + 33 + Math.floor(((LIGNES - L.length) * 9) / 2)
+    L.forEach((li, i) => ecrire(p, li, W / 2, hautDuTexte + i * 9, COQUE[5], { align: 'center' }))
+    y += hf + 5
+    if (etat === 'ferme') {
+      ecrire(p, 'Débloquez d’abord un nœud', W / 2, y + 2, COQUE[4], { align: 'center' })
+      ecrire(p, `du rang ${n.rang - 1}`, W / 2, y + 12, COQUE[4], { align: 'center' })
+    } else if (etat === 'ouvert') {
+      // LE COÛT, en minerai : ce qu'on a / ce qu'il faut, vert quand on l'a, rouge sinon
+      const cout = coutDe(n)
+      const ks = MINERAIS.filter((k) => cout[k] > 0)
+      const textes = ks.map((k) => `${montantCourt(tresor[k])}/${cout[k]}`)
+      const lw = textes.map((tx) => 13 + largeurDe(tx, GRAS))
+      let xc = Math.round((W - lw.reduce((a, b) => a + b, 0) - (ks.length - 1) * 10) / 2)
+      ks.forEach((k, i) => {
+        dessinerUneRessource(p, xc + 5, y + 5, k)
+        ecrire(p, textes[i], xc + 13, y + 1, tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5], { police: GRAS })
+        xc += lw[i] + 10
+      })
+      y += 14
+      const bw = largeurDe('Débloquer', GRAS) + 22
+      bouton(p, Math.round(W / 2 - bw / 2), y, bw, 15, 'Débloquer', peutDebloquer(labo, tresor, n.id), () => {
+        const r = debloquer(labo, tresor, n.id)
+        if (r === null) return
+        labo = r.labo
+        tresor = r.tresor
+        sauver()
+        debloqueA = t
+        debloqueId = n.id
+        secouer(1.2)
+        const ou = placesDesNoeuds[n.id] ?? { x: W / 2, y: Y_SCENE + hautScene / 2 }
+        gerbe(ou.x, ou.y, 26, [RUNE[2], RUNE[3], PEPITE[3], N.WHITE], 80)
+        flottants.push({ texte: 'Débloqué !', x: ou.x, y: ou.y - 18, t0: t, c: RUNE[3] })
+      }, 'achat')
+    } else if (pc !== undefined) {
+      if (possede(hangar, pc.id)) {
+        motEnRelief(p, 'Acheté', W / 2, y + 4, true)
+        ecrire(p, 'La pièce est au hangar', W / 2, y + 17, COQUE[4], { align: 'center' })
+      } else {
+        ecrire(p, 'Débloqué : la pièce est en vente', W / 2, y, RUNE[2], { align: 'center' })
+        dessinerLAchat(p, y + 13, pc)
+      }
+    } else {
+      motEnRelief(p, 'Acquis', W / 2, y + 4, true)
+      N.sparkle(p, W / 2 + largeurDe('Acquis', GRAS) / 2 + 6, y + 4, 1 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), RUNE[3], N.WHITE, 0.8)
+      ecrire(p, n.sorte === 'passif' ? 'Actif sur tous vos vaisseaux' : 'Disponible en vol', W / 2, y + 17, COQUE[4], { align: 'center' })
+    }
+  }
+
+  /** ACHETER une pièce (au labo, sous son nœud débloqué) : le bouton, son prix et l'icône des crédits. */
+  function dessinerLAchat(p: Peintre, y: number, pc: Piece): void {
+    // ACHETER, le prix et l'icône des crédits ; éteint s'il manque des crédits (il tremble alors) ; acheté, la pièce
+    // s'envole vers l'onglet du hangar, qui prend une pastille. LE PRIX EST DANS UN PUITS SOMBRE creusé dans le bouton
+    // (Keko : « le texte blanc sur fond jaune n'est pas idéal ») : le nombre crème et le crédit vert s'y lisent comme
+    // au compteur du haut, que le bouton soit d'or ou éteint
+    const vif = peutAcheter(hangar, credits, pc.id)
+    const wa = largeurDe('Acheter', GRAS)
+    const wn = largeurDe(String(pc.prix), GRAS)
+    const wp = wn + 18
+    const bw = 8 + wa + 5 + wp + 3
+    const bx = Math.round(W / 2 - bw / 2)
+    boutonBase(p, bx, y, bw, 15, vif, () => {
+      const r = acheter(hangar, credits, pc.id)
+      if (r === null) return
+      hangar = r.hangar
+      credits = r.credits
+      sauver()
+      secouer(1.2)
+      gerbe(W / 2, y + 7, 24, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 80)
+      envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 })
+      flottants.push({ texte: 'Acheté !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
+    }, (dx, dy) => {
+      if (vif) motEnRelief(p, 'Acheter', bx + 8 + wa / 2 + dx, y + 4 + dy, true)
+      else ecrire(p, 'Acheter', bx + 8 + dx, y + 4 + dy, COQUE[3], { police: GRAS })
+      const px = bx + 8 + wa + 5 + dx
+      plaque(p, px, y + 2 + dy, wp, 11, 'creux')
+      ecrire(p, String(pc.prix), px + 4, y + 4 + dy, vif ? N.hex('#fff2c8') : COQUE[4], { police: GRAS })
+      dessinerUnCredit(p, px + 4 + wn + 7, y + 7 + dy)
+    }, 'achat')
+  }
+
   /** LA FICHE d'une pièce : son bouton, puis ses stats (la pièce rendue dans son puits, le nom, les jauges, la note). */
   function dessinerLaFiche(p: Peintre, y0: number, pc: Piece): void {
     let y = y0
@@ -1726,34 +1986,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         feterLEquipement()
       }, 'equipe')
     } else {
-      // ACHETER, le prix et l'icône des crédits ; éteint s'il manque des crédits (il tremble alors) ; acheté, la pièce
-      // s'envole vers l'onglet du hangar, qui prend une pastille. LE PRIX EST DANS UN PUITS SOMBRE creusé dans le bouton
-      // (Keko : « le texte blanc sur fond jaune n'est pas idéal ») : le nombre crème et le crédit vert s'y lisent comme
-      // au compteur du haut, que le bouton soit d'or ou éteint
-      const vif = peutAcheter(hangar, credits, pc.id)
-      const wa = largeurDe('Acheter', GRAS)
-      const wn = largeurDe(String(pc.prix), GRAS)
-      const wp = wn + 18
-      const bw = 8 + wa + 5 + wp + 3
-      const bx = Math.round(W / 2 - bw / 2)
-      boutonBase(p, bx, y, bw, 15, vif, () => {
-        const r = acheter(hangar, credits, pc.id)
-        if (r === null) return
-        hangar = r.hangar
-        credits = r.credits
-        sauver()
-        secouer(1.2)
-        gerbe(W / 2, y + 7, 24, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 80)
-        envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 })
-        flottants.push({ texte: 'Débloqué !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
-      }, (dx, dy) => {
-        if (vif) motEnRelief(p, 'Acheter', bx + 8 + wa / 2 + dx, y + 4 + dy, true)
-        else ecrire(p, 'Acheter', bx + 8 + dx, y + 4 + dy, COQUE[3], { police: GRAS })
-        const px = bx + 8 + wa + 5 + dx
-        plaque(p, px, y + 2 + dy, wp, 11, 'creux')
-        ecrire(p, String(pc.prix), px + 4, y + 4 + dy, vif ? N.hex('#fff2c8') : COQUE[4], { police: GRAS })
-        dessinerUnCredit(p, px + 4 + wn + 7, y + 7 + dy)
-      }, 'achat')
+      dessinerLAchat(p, y, pc)
     }
     y += 19
     const jauges = jaugesDe(pc)
@@ -1939,6 +2172,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (souteOuverte) return
     }
+    {
+      // (deux appuis rapprochés, dans le temps et sur l'écran : la postcombustion ; le second appui pose quand même le manche)
+      const maintenant = performance.now()
+      if (maintenant - appuiA < 320 && Math.hypot(ev.clientX - appuiOu.x, ev.clientY - appuiOu.y) < 70) lancerLaPostcombustion()
+      appuiA = maintenant
+      appuiOu = { x: ev.clientX, y: ev.clientY }
+    }
     if (manche !== null) return
     ev.preventDefault()
     racine.setPointerCapture(ev.pointerId)
@@ -2018,6 +2258,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (ev.key === 'Escape') souteOuverte = false
       return
     }
+    if (ev.key === ' ' || ev.key === 'Shift') lancerLaPostcombustion()
     touches.add(ev.key.toLowerCase())
     demarrer()
   })
@@ -2026,6 +2267,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     touches.clear()
     manche = null
   })
+  /**
+   * LA POSTCOMBUSTION (la première mécanique du labo) : une DOUBLE TAPE en vol — ou sa plaque, ou Espace / Maj au
+   * clavier — lance une pointe de vitesse ; la règle dit si elle part (débloquée, rechargée).
+   */
+  let appuiA = -1e9
+  let appuiOu = { x: 0, y: 0 }
+  function lancerLaPostcombustion(): void {
+    if (!enJeu || souteOuverte || t - arriveA < ARRIVE_A || !postcombustion(CONF, m)) return
+    jouer('decolle')
+    secousse = Math.max(secousse, 0.5)
+    flashs.push({ x: v.x, y: v.y, t0: t, r: 7 })
+    if (typeof navigator.vibrate === 'function') navigator.vibrate(25)
+  }
   function directionVoulue(): Vecteur {
     if (manche !== null) {
       if (!suivre) return directionDuManche(MANCHE, manche.doigt.x - manche.centre.x, manche.doigt.y - manche.centre.y)
@@ -2608,6 +2862,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(0, H - b, W, b, FOND)
       for (let k = 0; k < 4; k++) p.rect(0, H - b - 1 - k, W, 1, FOND, 0.55 - k * 0.13)
     }
+  }
+  /** LA PLAQUE DE LA POSTCOMBUSTION, en bas à gauche de la vue (si elle est débloquée) : d'or quand elle est prête, sa recharge en barre ; une tape la lance aussi. */
+  function dessinerLaPlaqueDeLaPostcombustion(p: Peintre): void {
+    if (!CONF.postcombustion.active || m.phase !== 'vol') return
+    const r = rechargeDeLaPostcombustion(CONF, m)
+    const pret = r >= 1
+    const w = 40
+    const h = 15
+    const x = 4
+    const y = H - bandeBas() - h - 5
+    plaque(p, x, y, w, h, pret ? 'or' : 'encre')
+    p.text('BOOST', x + w / 2, y + 3, pret ? N.WHITE : COQUE[3], { align: 'center' })
+    p.rect(x + 3, y + h - 5, w - 6, 2, MATIERES.creux.contour)
+    p.rect(x + 3, y + h - 5, Math.round((w - 6) * r), 2, pret ? N.hex('#fff2a8') : ION[3])
+    zone(x - 4, y - 6, w + 8, h + 11, lancerLaPostcombustion, null)
   }
   /** Le point du bord de l'écran dans la direction (dx, dy) depuis son centre ; `null` si la cible est à l'écran. */
   function auBord(dx: number, dy: number): { x: number; y: number } | null {
@@ -3301,6 +3570,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         accumule -= PAS
         const r = avancerLeMonde(CONF, m, PAS, direction)
         v = m.vaisseau
+        // la postcombustion : une traînée bleue derrière la tuyère
+        if (partDeLaPostcombustion(CONF, m) > 0.3) {
+          const ca = Math.cos(v.cap)
+          const sa = Math.sin(v.cap)
+          for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', v.x - ca * 5 + R.range(-1.5, 1.5), v.y - sa * 5 + R.range(-1.5, 1.5), -ca * R.range(30, 80) + v.vx * 0.3, -sa * R.range(30, 80) + v.vy * 0.3, R.range(0.2, 0.45), R.next() < 0.4 ? N.WHITE : ION[3 + Math.floor(R.next() * 3)], 1, 2)
+        }
         // les lasers creusent : des étincelles au point d'impact, le long de la normale (le joueur, et chaque ennemi qui mine)
         const forages: { f: Forage; depuis: Vaisseau }[] = []
         if (m.forage !== null) forages.push({ f: m.forage, depuis: v })
@@ -3365,6 +3640,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // un obus touche le rival : il blanchit, des étincelles cyan
               jouer('ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
               toucheEnnemiA.set(ev.id, t)
+              // (un coup critique : un éclair de plus, une petite secousse)
+              if (ev.critique) {
+                flashs.push({ x: ev.x, y: ev.y, t0: t, r: 6 })
+                secousse = Math.max(secousse, 0.35)
+              }
               for (let i = 0; i < 6; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 90)
@@ -3571,6 +3851,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeRadar(p)
     zones = []
     dessinerLeScore(p)
+    dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaSoute(p)
     dessinerLesEclats(p)
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)

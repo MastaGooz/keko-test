@@ -57,6 +57,17 @@ export const VAISSEAU = {
   armes: [] as Arme[],
   /** LE RADAR du joueur (un outil du hangar) : à tant d'unités, le rival est désigné au bord de l'écran ; zéro, pas de radar. La page le lit, la règle n'en fait rien. */
   radar: { portee: 0 },
+  /**
+   * LES PASSIFS DU LABO qui ne sont pas des facteurs sur le reste (`labo.ts`) : la chance qu'une pépite d'une roche
+   * creusée PAR LE JOUEUR naisse double ; la chance qu'un obus soit CRITIQUE, et ce qu'il fait alors. Zéro de série.
+   */
+  passifs: { pepiteDouble: 0, critique: 0, critiqueFacteur: 2 },
+  /**
+   * LA POSTCOMBUSTION, une mécanique du labo (`postcombustion`) : pendant `duree` secondes la poussée et la pointe sont
+   * multipliées, puis la pointe retombe en `retombee` secondes (coupée net, la vitesse butait d'un coup) ; elle se
+   * recharge en `recharge` secondes depuis son départ. Sans manche, elle pousse droit devant. Éteinte de série.
+   */
+  postcombustion: { active: false as boolean, duree: 1.1, retombee: 0.6, recharge: 6, poussee: 2.6, vitesse: 1.8 },
   /** LA CAPACITÉ de la soute (une caractéristique de la coque — Keko) : tant de pépites à bord au plus ; pleine, les pépites restent là où elles sont. */
   capacite: 20,
   /**
@@ -189,7 +200,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number }
 /** Un trait tiré par l'ennemi. */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean }
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
 export type Ennemi = {
   id: number
@@ -238,6 +249,8 @@ export type Monde = {
   /** Le compte de l'extraction (secondes passées à quai d'affilée), et si le vaisseau est déjà sorti d'un parvis. */
   extraction: number
   sorti: boolean
+  /** L'instant du dernier départ de la postcombustion (très ancien : jamais). */
+  boostA: number
   prochainId: number
   graine: number
 }
@@ -256,7 +269,7 @@ export type Evenement =
   | { type: 'obus'; x: number; y: number; arme: string }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Un obus touche le rival. */
-  | { type: 'ennemiTouche'; id: number; x: number; y: number }
+  | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
   | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number }
   | { type: 'perdu' }
 
@@ -265,7 +278,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -430,7 +443,7 @@ function rocheLaPlusProche(c: ConfigVaisseau, m: Monde, x: number, y: number, po
 }
 
 /** Un laser creuse une roche de `points` : elle éclate si elle n'en peut plus (ses pépites naissent), sinon le forage est rendu. */
-function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecteur, points: number, ev: Evenement[]): Forage | null {
+function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecteur, points: number, ev: Evenement[], double = 0): Forage | null {
   const dx = a.x - depuis.x
   const dy = a.y - depuis.y
   const d = Math.hypot(dx, dy) || 1
@@ -440,12 +453,12 @@ function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecte
     m.creuse.set(a.id, creuse)
     return { sorte: 'roche', cible: a.id, x: a.x - (dx / d) * a.rayon, y: a.y - (dy / d) * a.rayon, part: creuse / total }
   }
-  eclaterLaRoche(c, m, a, ev)
+  eclaterLaRoche(c, m, a, ev, double)
   return null
 }
 
-/** La roche éclate : elle quitte le monde et laisse ses pépites. */
-function eclaterLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, ev: Evenement[]): void {
+/** La roche éclate : elle quitte le monde et laisse ses pépites — chacune a `double` chances de naître deux fois (le filon double du labo, pour le laser du joueur seul). */
+function eclaterLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, ev: Evenement[], double = 0): void {
   m.creuse.delete(a.id)
   m.detruits.add(a.id)
   ev.push({ type: 'eclat', x: a.x, y: a.y, rayon: a.rayon, graine: a.graine, minerai: a.minerai })
@@ -455,6 +468,10 @@ function eclaterLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, ev: Evenement
     const an = (i / n) * Math.PI * 2 + tire(a.graine, 20, i) * 1.2
     const vit = 20 + 40 * tire(a.graine, 21, i)
     m.pepites.push({ id: m.prochainId++, x: a.x + Math.cos(an) * a.rayon * 0.5, y: a.y + Math.sin(an) * a.rayon * 0.5, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, graine: hache(a.graine, i), minerai: a.minerai })
+    if (double > 0 && tire(a.graine, 22, i) < double) {
+      const an2 = an + 0.5
+      m.pepites.push({ id: m.prochainId++, x: a.x + Math.cos(an2) * a.rayon * 0.5, y: a.y + Math.sin(an2) * a.rayon * 0.5, vx: Math.cos(an2) * vit * 0.8, vy: Math.sin(an2) * vit * 0.8, graine: hache(a.graine, i, 7), minerai: a.minerai })
+    }
   }
 }
 
@@ -669,7 +686,7 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
       const contreRival = protege ? 0 : coutDuChoc(c, choc, c.collision.degatsEnnemi)
       if (contreRival > 0) {
         e.pv -= contreRival
-        ev.push({ type: 'ennemiTouche', id: e.id, x: choc.x, y: choc.y })
+        ev.push({ type: 'ennemiTouche', id: e.id, x: choc.x, y: choc.y, critique: false })
       }
     }
     e.corps = { ...b, x: bx, y: by, vx: bvx, vy: bvy }
@@ -696,13 +713,38 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
   }
 }
 
+/**
+ * LA POSTCOMBUSTION (une mécanique du labo) : sa part en cours — 1 tant qu'elle pousse, puis de 1 à 0 pendant la
+ * retombée, 0 hors d'elle.
+ */
+export function partDeLaPostcombustion(c: ConfigVaisseau, m: Monde): number {
+  if (!c.postcombustion.active) return 0
+  const age = m.t - m.boostA
+  if (age < 0 || age >= c.postcombustion.duree + c.postcombustion.retombee) return 0
+  return age < c.postcombustion.duree ? 1 : 1 - (age - c.postcombustion.duree) / c.postcombustion.retombee
+}
+/** Sa recharge, de 0 (elle vient de partir) à 1 (prête). */
+export const rechargeDeLaPostcombustion = (c: ConfigVaisseau, m: Monde): number => Math.max(0, Math.min(1, (m.t - m.boostA) / c.postcombustion.recharge))
+/** La lancer : vrai si elle part (débloquée, en vol, rechargée). */
+export function postcombustion(c: ConfigVaisseau, m: Monde): boolean {
+  if (!c.postcombustion.active || m.phase !== 'vol' || m.t - m.boostA < c.postcombustion.recharge) return false
+  m.boostA = m.t
+  return true
+}
+
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
   if (m.phase !== 'vol') return { chocs: [], evenements: ev }
   m.t += dt
   // le bouclier se recharge, passé le délai sans coup
   if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
-  const r = voler(c, c, m.vaisseau, dt, direction, m.detruits)
+  // LA POSTCOMBUSTION : la poussée et la pointe multipliées le temps qu'elle dure, la pointe qui retombe ensuite ; sans
+  // manche, elle pousse droit devant
+  const boost = partDeLaPostcombustion(c, m)
+  const pousse = boost > 0 && m.t - m.boostA < c.postcombustion.duree
+  const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon } : c
+  const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
+  const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const chocs = [...r.chocs]
@@ -730,7 +772,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const portee = c.forage.portee * c.foreuse.portee
   const debit = c.forage.debit * c.foreuse.debit
   const roche = rocheLaPlusProche(c, m, v.x, v.y, portee)
-  m.forage = roche !== null ? creuserLaRoche(c, m, roche.roche, v, debit * dt, ev) : null
+  m.forage = roche !== null ? creuserLaRoche(c, m, roche.roche, v, debit * dt, ev, c.passifs.pepiteDouble) : null
 
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
   c.armes.forEach((arme, i) => {
@@ -749,7 +791,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const angle = Math.atan2(cy, cx) + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
     const x0 = v.x + Math.cos(angle) * (c.rayon + 3)
     const y0 = v.y + Math.sin(angle) * (c.rayon + 3)
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats, guide: arme.guide, arme: arme.id })
+    // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
+    const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique })
     ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
@@ -774,7 +818,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.ennemi.rayon + 1.5) continue
         fini = true
         e.pv -= o.degats
-        ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y })
+        ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
         break
       }
