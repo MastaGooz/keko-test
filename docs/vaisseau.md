@@ -38,6 +38,36 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## La barre de blindage, comme le « health bar hit » (Keko, 11/11 : « dans pixelfx, j'aime beaucoup l'animation de health bar hit, on peut rework notre barre de blindage pour intégrer cette animation ? Je vois bien une barre jaune qui représente le blindage et une section bleue en dessous qui représente le bouclier (dans un design différent) avec une animation de damage aussi »)
+
+- **Le blindage est une BARRE D'OR À CASES** (une par point, 52 px), à la
+  place des joncs : claire dessus, sombre dessous, dans un creux ; à sa
+  gauche un écusson d'or. La plaque fait 74 px (elle tient à droite de la
+  soute, qui en fait 90).
+- **Un coup se joue comme `ui/health-bar-hit`** (ses temps, ses étapes, nos
+  teintes ; écrit dans `dessinerLeScore`, pas l'effet instancié) : la plaque
+  SURSAUTE (3 px, 0,28 s) et plonge (`3·e^(−10τ)·cos 24τ`), son cadre
+  rougit ; le MORCEAU PERDU blanchit deux images, lâche onze éclats, TIENT
+  en fantôme pâle jusqu'à 0,42 s, puis SE VIDE jusqu'à 0,85 s derrière une
+  arête blanche qui crache des étincelles ; la nouvelle arête luit ;
+  l'écusson bondit et blanchit. Un second coup pendant que le fantôme tient
+  repart d'où il en est (`coqueFantome`, `coqueCoupA`, `coqueConnue`).
+- **Le bouclier, dessous, dans un autre dessin** : une rangée de CELLULES
+  D'ÉNERGIE penchées (des parallélogrammes de 3 px, une par point), bleues.
+  Un coup : la cellule perdue CRÉPITE (blanc / éteint, 0,32 s) puis
+  s'éteint, des étincelles froides en tombent, une onde claire court sur
+  les autres, le cadre bleuit ; en recharge, elle se remplit, plus pâle,
+  son bout qui bat. Sans bouclier monté, la barre d'or prend la hauteur.
+- **Au dernier point**, l'or passe au rouge et bat (comme avant).
+- **Le banc** : `&coup=N` donne un coup toutes les N secondes en vol (0,8
+  point, sans jamais percer : le blindage se refait au bout) ; `&bouclier=N`
+  ajoute N points de bouclier, que les coups entament d'abord.
+- Vu sur deux planches de captures rapprochées (360 × 640,
+  `&coup=2` puis `&coup=2&bouclier=3`) : le blanc, les éclats, le fantôme,
+  la vidange ; le crépitement, l'onde, la cellule éteinte. *L'écusson
+  sortait noir : son cerne, tracé rangée par rangée, recouvrait la rangée
+  du dessus — tracé d'abord, en entier.*
+
 ## La soute s'ouvre en vol, et on largue (Keko, 11/11 : « je remplis ma soute avec du fer involontairement (l'aimant) et quand j'arrive au cristal je n'ai pas la place, ce qui rend le farm du cristal frustrant » — « on ne peut pas permettre l'accès à la soute via un bouton, avec la possibilité de larguer des loots ? ils sont alors détruits »)
 
 - **La règle** (`larguer`, `logic/vaisseau/jeu.ts`) : tant de pépites d'un

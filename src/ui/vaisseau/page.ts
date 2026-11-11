@@ -214,7 +214,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * changement — les points de coque entiers (celui qui tombe éclate), la soute pleine (la plaque bondit, une fois),
    * la part de la jauge de soute (elle glisse).
    */
-  let coqueVue = 0
+  /**
+   * LA BARRE DE BLINDAGE (voir `dessinerLeScore`) : ce qu'on a vu du blindage et du bouclier à l'image d'avant (un
+   * coup, c'est une baisse), le FANTÔME — le morceau perdu, qui tient un instant avant de se vider — et l'instant du coup.
+   */
+  let coqueConnue = 0
+  let coqueFantome = 0
+  let coqueCoupA = -10
+  let bouclierConnu = 0
+  /** `&coup=N` : un coup toutes les N secondes en vol, sans jamais percer la coque — le banc de la barre de blindage ; `&bouclier=N` y ajoute N points de bouclier. */
+  const coupDEssai = Math.max(0, Number(parametres.get('coup')) || 0)
+  const bouclierDEssai = Math.max(0, Math.floor(Number(parametres.get('bouclier')) || 0))
+  let coupDEssaiA = 0
   let soutePleineVue = false
   let souteVue = 0
   let secousse = 0
@@ -253,6 +264,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
     CONF = configDuHangar(BASE, hangar)
+    if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     m = monterLeMonde()
     m.minerai = minerai0
     m.cargaison.fer = minerai0
@@ -267,7 +279,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     affiche.fer = minerai0
     flammesEnnemies.clear()
     toucheEnnemiA.clear()
-    coqueVue = Math.ceil(m.coque)
+    if (bouclierDEssai > 0) m.bouclier = bouclierDEssai
+    coqueConnue = m.coque
+    coqueFantome = m.coque
+    coqueCoupA = -10
+    bouclierConnu = m.bouclier
+    coupDEssaiA = t + 2.5
     soutePleineVue = false
     souteVue = 0
     souteOuverte = false
@@ -2513,9 +2530,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * liseré bat en rouge, la plaque bondit et le dit une fois. DESSOUS, LE PORTÉ : une pastille par minerai qu'on a
    * (fer, or, cristal — Keko : « des tiers de ressources »), l'icône de l'entrepôt et son nombre ; les pépites
    * ramassées y volent, la pastille saute à leur arrivée. RIEN NE MONTRE CE QUI EST DÉJÀ EXTRAIT (Keko : « ne pas
-   * afficher les ressources déjà extraites ») : le total ne se lit qu'aux écrans de fin. EN HAUT À DROITE, LA COQUE :
-   * un jonc par point (le bouclier d'abord, en cyan) ; touchée, la plaque tremble comme le compteur de crédits qui
-   * refuse, et le point perdu éclate ; au dernier point, tout passe au rouge. Le tout TOMBE en place à l'arrivée.
+   * afficher les ressources déjà extraites ») : le total ne se lit qu'aux écrans de fin. EN HAUT À DROITE, LE BLINDAGE :
+   * une barre d'or à cases et, dessous, les cellules bleues du bouclier — un coup s'y joue comme le « health bar hit »
+   * du dépôt (voir plus bas) ; au dernier point, tout passe au rouge. Le tout TOMBE en place à l'arrivée.
    */
   function dessinerLeScore(p: Peintre): void {
     const yHud = hautDuHud() - Math.round((1 - sortie((t - arriveA - 0.25) / 0.4)) * (basDuHud() + 4))
@@ -2578,37 +2595,114 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
 
-    // ---- la coque (et le bouclier, d'abord) : un jonc par point
+    // ---- LE BLINDAGE ET LE BOUCLIER (Keko, 11/11 : « dans pixelfx j'aime beaucoup l'animation de health bar hit, on
+    // peut rework notre barre de blindage pour intégrer cette animation ? une barre jaune qui représente le blindage et
+    // une section bleue en dessous qui représente le bouclier, dans un design différent, avec une animation de damage
+    // aussi ») — la mise en scène de `ui/health-bar-hit` du dépôt, à nos teintes : LE BLINDAGE est une barre d'or à
+    // cases (une par point) ; un coup, et la plaque SURSAUTE et plonge, son cadre rougit, le MORCEAU PERDU blanchit deux
+    // images, lâche des éclats, TIENT en fantôme pâle, puis SE VIDE derrière une arête blanche qui crache des étincelles ;
+    // l'écusson bondit et blanchit. LE BOUCLIER, dessous, est une rangée de CELLULES D'ÉNERGIE penchées, bleues : un coup
+    // et la cellule perdue CRÉPITE (blanc, éteint, blanc) puis s'éteint, une onde claire court sur les autres ; elle se
+    // recharge en se remplissant. Au dernier point de blindage, l'or passe au rouge et bat.
     const nb = CONF.bouclier.points
-    const wp = 5 + (nb + CONF.coque) * 5 - 1 + (nb > 0 ? 3 : 0) + 5
     const du = t - toucheA
-    const tremble = du >= 0 && du < 0.3 ? Math.round(Math.sin(du * 70) * 2 * (1 - du / 0.3)) : 0
+    const db = t - bouclierA
     const dernier = m.phase === 'vol' && m.coque <= 1
-    const xp = W - 5 - wp
-    const xDuJonc = (i: number): number => xp + 5 + i * 5 + (nb > 0 && i >= nb ? 3 : 0)
-    // le point qui tombe éclate, à sa place
-    const entiers = Math.ceil(m.coque - 1e-9)
-    for (let i = entiers; i < coqueVue; i++) gerbe(xDuJonc(nb + i) + 2, yHud + 9, 9, [COQUE[5], COQUE[6], N.WHITE], 45)
-    coqueVue = entiers
-    plaque(p, xp + tremble, yHud, wp, 18, 'encre', { flash: du >= 0 && du < 0.08, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du < 0.3 ? ROUGE[4] : undefined })
-    const jonc = (i: number, part: number, vide: number, ombre: number, corps: number, haut: number, chaud: boolean): void => {
-      const x = xDuJonc(i) + tremble
-      p.rect(x, yHud + 4, 4, 10, vide)
-      if (part <= 0) return
-      // il se vide par le haut à mesure que le point s'entame (les chocs coûtent des fractions)
-      const h = Math.max(1, Math.round(10 * part))
-      const y = yHud + 14 - h
-      p.rect(x, y, 4, h, chaud ? N.WHITE : corps)
-      if (chaud) return
-      p.rect(x, y, 4, 1, haut)
-      p.rect(x + 3, y + 1, 1, h - 1, ombre)
+    const TIENT = 0.42
+    const VIDE = 0.85
+    const fantomeA = (valeur: number): number => {
+      const dc = t - coqueCoupA
+      if (dc >= VIDE) return valeur
+      if (dc < TIENT) return Math.max(valeur, coqueFantome)
+      const u = (dc - TIENT) / (VIDE - TIENT)
+      const doux = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2
+      return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
     }
-    const eclair = Math.floor(t * 16) % 2 === 0
-    for (let j = 0; j < nb; j++) jonc(j, Math.max(0, Math.min(1, m.bouclier - j)), VERRIERE[0], VERRIERE[1], VERRIERE[2], VERRIERE[3], t - bouclierA < 0.3 && eclair)
-    for (let i = 0; i < CONF.coque; i++) {
-      const part = Math.max(0, Math.min(1, m.coque - i))
-      if (dernier) jonc(nb + i, part, encre, ROUGE[3], ROUGE[4], ROUGE[5], du < 0.3 && eclair)
-      else jonc(nb + i, part, encre, COQUE[4], COQUE[5], COQUE[6], du < 0.3 && eclair)
+    const BW = 52
+    const wp = 5 + 9 + 3 + BW + 5
+    const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
+    const ox = W - 5 - wp + Math.round(Math.sin(t * 90) * sursaut)
+    const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
+    const bx = ox + 5 + 9 + 3
+    const by = oy + (nb > 0 ? 4 : 5)
+    const bh = nb > 0 ? 6 : 8
+    const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
+    // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
+    if (m.coque < coqueConnue - 1e-6) {
+      const depuis = fantomeA(coqueConnue)
+      coqueFantome = depuis
+      coqueCoupA = t
+      for (let i = 0; i < 11; i++) gerbe(bx + (BW * (m.coque + (depuis - m.coque) * R.next())) / CONF.coque, by + 1 + R.next() * (bh - 2), 1, [N.WHITE, or[0], or[1], or[2]], 75)
+    }
+    coqueConnue = m.coque
+    // un coup dans le bouclier : des étincelles froides sur la cellule perdue
+    const esp = 2
+    const cw = nb > 0 ? Math.floor((BW - (nb - 1) * esp) / nb) : 0
+    const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
+    if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + perdue * (cw + esp) + cw / 2, oy + 13, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+    bouclierConnu = m.bouclier
+
+    plaque(p, ox, oy, wp, 18, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
+    // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
+    const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
+    const blanc = du >= 0 && du < 0.07
+    const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
+    // (le cerne d'abord, en entier : tracé rangée par rangée, il recouvrait la rangée du dessus)
+    ECUSSON.forEach((l, r) => p.rect(ox + 5 + Math.floor((7 - l) / 2) - 1, oy + 4 + r + bond, l + 2, 3, encre))
+    ECUSSON.forEach((l, r) => {
+      const x0 = ox + 5 + Math.floor((7 - l) / 2)
+      p.rect(x0, oy + 5 + r + bond, l, 1, blanc ? N.WHITE : r === 0 ? or[0] : or[1])
+      if (!blanc && l > 1) {
+        p.rect(x0, oy + 5 + r + bond, 1, 1, or[0])
+        p.rect(x0 + l - 1, oy + 5 + r + bond, 1, 1, or[2])
+      }
+    })
+    p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
+
+    // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
+    const val = Math.max(0, Math.min(1, m.coque / CONF.coque))
+    const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / CONF.coque))
+    const dc = t - coqueCoupA
+    p.rect(bx - 1, by - 1, BW + 2, bh + 2, encre)
+    for (let x = 0; x < BW; x++) {
+      const u = (x + 0.5) / BW
+      for (let v = 0; v < bh; v++) {
+        let c: number
+        if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
+        else if (u < fant) c = dc < 0.07 || v < 1 ? N.WHITE : v < bh - 2 ? N.hex('#ffe9a8') : or[1]
+        else c = v < 1 ? N.hex('#2a2338') : N.hex('#191424')
+        p.px(bx + x, by + v, c)
+      }
+    }
+    for (let i = 1; i < CONF.coque; i++) p.rect(bx + Math.round((BW * i) / CONF.coque), by, 1, bh, encre)
+    if (dc < VIDE && val > 0) p.rect(bx + Math.max(0, Math.round(BW * val) - 1), by, 1, bh, N.WHITE)
+    if (dc > TIENT && dc < VIDE) {
+      // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
+      const gx = bx + BW * fant
+      p.rect(Math.round(gx) - 1, by - 1, 2, bh + 2, N.WHITE)
+      p.glow(gx, by + bh / 2, 10, or[1], 0.6)
+      if (R.next() < 0.5) eclats.push({ x: gx, y: by + 1 + R.next() * (bh - 2), vx: R.range(-20, 60), vy: -R.range(20, 70), t0: t, vie: 0.1 + 0.12 * R.next(), c: R.next() < 0.5 ? N.WHITE : or[0] })
+    }
+    p.glow(bx + BW * val * 0.5, by + bh / 2, BW * 0.4, or[1], dernier ? 0.12 + 0.1 * Math.sin(t * 5) : 0.1)
+    if (dc < 0.3) p.glow(bx + (BW * (val + fant)) / 2, by + bh / 2, 26, dc < 0.08 ? N.WHITE : or[1], 0.6 * (1 - dc / 0.3))
+
+    // le bouclier : des cellules d'énergie penchées, sous la barre
+    for (let j = 0; j < nb; j++) {
+      const part = Math.max(0, Math.min(1, m.bouclier - j))
+      const x0 = bx + j * (cw + esp)
+      const crepite = db >= 0 && db < 0.32 && j === perdue && part < 1
+      // l'onde du coup court de la cellule perdue vers la gauche
+      const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
+      const plein = Math.round((cw - 2) * part)
+      for (let r = 0; r < 3; r++) {
+        const xs = x0 + (2 - r)
+        p.rect(xs, oy + 12 + r, cw - 2, 1, crepite && Math.floor(t * 30) % 2 === 0 ? N.WHITE : VERRIERE[0])
+        if (plein <= 0 || crepite) continue
+        const charge = part < 1 // (elle se recharge : plus pâle, et son bout bat)
+        p.rect(xs, oy + 12 + r, plein, 1, onde > 0.5 ? (r === 0 ? N.WHITE : VERRIERE[2]) : charge ? (r === 0 ? VERRIERE[1] : N.hex('#12708a')) : r === 0 ? VERRIERE[2] : VERRIERE[1])
+        if (charge && Math.floor(t * 6) % 2 === 0) p.rect(xs + plein - 1, oy + 12 + r, 1, 1, VERRIERE[2])
+      }
+      if (part >= 1) p.glow(x0 + cw / 2, oy + 13, 5, VERRIERE[1], 0.18 + 0.5 * onde)
     }
 
     // ---- les pépites en vol : de la place du vaisseau à l'écran vers la pastille de leur minerai, en accélérant
@@ -3022,6 +3116,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const dt = Math.min(0.25, (ms - avant) / 1000)
     avant = ms
     t += dt
+    if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
+      coupDEssaiA = t + coupDEssai
+      if (m.bouclier >= 1) {
+        m.bouclier -= 1
+        m.toucheA = m.t
+        bouclierA = t
+      } else {
+        m.coque = m.coque > 1.3 ? m.coque - 0.8 : CONF.coque
+        m.toucheA = m.t
+        if (m.coque < CONF.coque) toucheA = t
+      }
+    }
     // (la soute ouverte : le monde est en pause, ses sons continus se taisent)
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
     if (enJeu && souteOuverte) regler(0, false, 0, false)
