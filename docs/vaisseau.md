@@ -38,6 +38,33 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## La vue du vol est fixe : 180 × 320 partout (Keko, 11/11 : « selon le portable ou l'écran de PC, la zone visible de l'espace en jeu est différente non ? » — « vue fixe 180 × 320, le surplus donné à l'interface » ; « et aussi enlève la ligne du BUILD en bas, on l'a déjà dans l'onglet plus »)
+
+- **Le constat** : la largeur du tampon est 180 partout, mais sa hauteur
+  était celle de l'écran au grossissement entier, de 320 à 480 — 320 sur un
+  360 × 640, 422 sur un 390 × 844, 458 sur un 412 × 915, 475 sur un PC en
+  fenêtre, 360 en 1080 plein écran. Un grand téléphone voyait jusqu'à moitié
+  plus d'espace en haut et en bas.
+- **La règle** (`VUE`, `bandeHaut`, `bandeBas`, `dessinerLesBandeaux`) : le
+  monde se dessine toujours centré dans le tampon, et ce qui dépasse des 320
+  du milieu est couvert par DEUX BANDEAUX (des plaques en creux, un filet
+  clair au bord de la vue), moitié en haut, moitié en bas. *Aucune coordonnée
+  du monde n'a bougé* ; le grossissement reste entier, les pixels nets.
+- **Le bandeau du haut porte l'interface** : la soute, le porté et la coque
+  se posent juste au-dessus de la vue dès que le bandeau a leur hauteur (43) ;
+  plus bas que ça, ils restent en haut de l'écran, sur la vue, comme avant
+  (`hautDuHud`). Celui du bas est la place du pouce (le manche reste
+  flottant, où qu'on pose le doigt).
+- **Ce qui suit la vue** : les flèches du bord (la base, le radar) restent
+  dans la vue (`auBord`), l'alerte rougit les bords de la VUE, les effets du
+  monde (explosions, téléportation) passent SOUS les bandeaux et l'interface.
+- **La ligne du build de la base est partie** (les deux, celle du hangar et
+  celle des listes) : la date est dans la feuille « PLUS », sous « Remise à
+  zéro ».
+- Vu en capture (Chrome sans tête, 412 × 915) : les deux bandeaux de 69, la
+  soute et la coque dans celui du haut, la base entière dans la vue. Le cas
+  sans bandeau (360 × 640) est l'ancien rendu.
+
 ## Une seule station, et elle vit (Keko, 11/11 : « ce serait cool que la station extracteur de départ soit plus animée sur ses différentes parties. aussi tu peux supprimer les petits extracteurs du jeu pour l'instant ? je préfère un seul point d'entrée et de sortie »)
 
 - **UNE SEULE STATION : LA BASE** (`station.seule`, vrai) : `stationLaPlusProche`

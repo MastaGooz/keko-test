@@ -1449,7 +1449,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else dessinerLaListe(p, y)
     const u = (t - etapeA) / 0.16
     if (u < 1) p.rect(0, y0, W, H - HAUT_NAV - y0, NUIT, 1 - sortie(u))
-    if (!(vue === 'hangar' && etape === 'vaisseau')) p.text(texteNu(`build ${build}`), W - 4, H - HAUT_NAV - 7, COQUE[2], { align: 'right' })
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 4, H - HAUT_NAV - 10, N.WHITE, { font: 'big', outline: COQUE[0] })
   }
 
@@ -1481,7 +1480,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.text('<', bx + bw - 10 - i * 4 + dx, by + 12 + dy, c)
       }
     }, 'decolle', { reflet: cycle < 0.3 ? bx - 14 + ((bw + 40) * cycle) / 0.3 : refletDeSurvol(bx, bw, survol !== null && survol.x >= bx && survol.x < bx + bw && survol.y >= by && survol.y < by + bh) })
-    p.text(texteNu(`build ${build}`), W - 4, H - HAUT_NAV - 7, COQUE[2], { align: 'right' })
   }
 
   /** Le surlignage de la liste glisse jusqu'à la rangée choisie ; l'instant d'un nouveau choix (les jauges se remplissent à nouveau). */
@@ -2062,10 +2060,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const c = rouge >= bleu ? ROUGE[3] : VERRIERE[1]
     for (let k = 0; k < 6; k++) {
       const a = force * (0.7 - k * 0.12)
-      p.rect(0, k, W, 1, c, a)
-      p.rect(0, H - 1 - k, W, 1, c, a)
-      p.rect(k, 6, 1, H - 12, c, a)
-      p.rect(W - 1 - k, 6, 1, H - 12, c, a)
+      // (les bords de la VUE, pas ceux du tampon : les bandeaux ne rougissent pas)
+      const y0 = bandeHaut()
+      const y1 = H - bandeBas()
+      p.rect(0, y0 + k, W, 1, c, a)
+      p.rect(0, y1 - 1 - k, W, 1, c, a)
+      p.rect(k, y0 + 6, 1, y1 - y0 - 12, c, a)
+      p.rect(W - 1 - k, y0 + 6, 1, y1 - y0 - 12, c, a)
     }
   }
 
@@ -2298,12 +2299,40 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dessous, pour ne jamais passer sous une plaque.
    */
   const BAS_DU_HUD = 5 + 18 + 3 + 13
+  /**
+   * LA VUE DU VOL EST FIXE : 180 × 320, sur tous les écrans (Keko, 11/11 : « selon le portable ou l'écran de PC, la zone
+   * visible de l'espace en jeu est différente » — le tampon prenait la hauteur de l'écran, de 320 à 480 : un grand
+   * téléphone voyait moitié plus d'espace en haut et en bas qu'un petit). Le monde se dessine toujours centré dans le
+   * tampon ; ce qui dépasse des 320 du milieu est couvert par DEUX BANDEAUX, en haut et en bas, donnés à l'interface :
+   * celui du haut porte la soute, le porté et la coque (posés juste au-dessus de la vue dès qu'il est assez haut — sinon
+   * en haut de l'écran, sur la vue, comme avant), celui du bas est la place du pouce. Les pixels restent entiers.
+   */
+  const VUE = 320
+  const bandeHaut = (): number => Math.floor(Math.max(0, H - VUE) / 2)
+  const bandeBas = (): number => Math.max(0, H - VUE) - bandeHaut()
+  /** Le haut de l'interface du vol (la plaque de soute), et son bas (sous les pastilles du porté). */
+  const hautDuHud = (): number => Math.max(5, bandeHaut() - (BAS_DU_HUD - 5) - 4)
+  const basDuHud = (): number => hautDuHud() + BAS_DU_HUD - 5
+  /** Les deux bandeaux : des plaques en creux qui débordent de l'écran sur trois côtés, un filet clair au bord de la vue. */
+  function dessinerLesBandeaux(p: Peintre): void {
+    const h = bandeHaut()
+    const b = bandeBas()
+    if (h >= 4) {
+      plaque(p, -3, -3, W + 6, h + 3, 'creux')
+      p.rect(0, h - 1, W, 1, MATIERES.acier.lumiere2)
+    } else if (h > 0) p.rect(0, 0, W, h, MATIERES.creux.contour)
+    if (b >= 4) {
+      plaque(p, -3, H - b, W + 6, b + 3, 'creux')
+      p.rect(0, H - b, W, 1, MATIERES.acier.lumiere2)
+    } else if (b > 0) p.rect(0, H - b, W, b, MATIERES.creux.contour)
+  }
   /** Le point du bord de l'écran dans la direction (dx, dy) depuis son centre ; `null` si la cible est à l'écran. */
   function auBord(dx: number, dy: number): { x: number; y: number } | null {
     const marge = 10
     const cote = W / 2 - marge
-    const haut = H / 2 - BAS_DU_HUD - 9
-    const bas = H / 2 - marge
+    // (dans la vue : sous l'interface du haut ou le bandeau, au-dessus du bandeau du bas)
+    const haut = H / 2 - Math.max(bandeHaut(), basDuHud()) - 9
+    const bas = H / 2 - bandeBas() - marge
     if (Math.abs(dx) < cote && dy > -haut && dy < bas) return null
     const k = Math.min(cote / Math.max(1e-6, Math.abs(dx)), (dy < 0 ? haut : bas) / Math.max(1e-6, Math.abs(dy)))
     return { x: W / 2 + dx * k, y: H / 2 + dy * k }
@@ -2383,7 +2412,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * refuse, et le point perdu éclate ; au dernier point, tout passe au rouge. Le tout TOMBE en place à l'arrivée.
    */
   function dessinerLeScore(p: Peintre): void {
-    const yHud = 5 - Math.round((1 - sortie((t - arriveA - 0.25) / 0.4)) * (BAS_DU_HUD + 4))
+    const yHud = hautDuHud() - Math.round((1 - sortie((t - arriveA - 0.25) / 0.4)) * (basDuHud() + 4))
     const IVOIRE = N.hex('#fff2c8')
     const encre = MATIERES.encre.contour
     const visibles = MINERAIS.filter((k) => affiche[k] > 0 || envols.some((e) => e.minerai === k))
@@ -2797,14 +2826,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
     dessinerLesLasers(p)
+    // (les effets sont dans le monde : ils passent SOUS les bandeaux et l'interface)
+    for (const e of effets) e.fx.draw(frame)
     dessinerLesBords(p)
+    dessinerLesBandeaux(p)
     dessinerLePointeur(p)
     dessinerLeRadar(p)
     dessinerLeScore(p)
     dessinerLesEclats(p)
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
-    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, BAS_DU_HUD + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
-    for (const e of effets) e.fx.draw(frame)
+    if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, basDuHud() + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
     dessinerLeManche(p)
     N.composite(frame, img.data, cuireLeCiel())
     g.putImageData(img, 0, 0)
