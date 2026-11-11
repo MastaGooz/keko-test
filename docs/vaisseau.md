@@ -38,6 +38,14 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## La liste dit toutes les places d'une pièce (Keko, 11/11 : « si j'ai 4 emplacements d'armes avec la même arme je vois quoi ? » — « lister toutes les places (ARME 1, 3), et en plus le mettre en plus de équipé »)
+
+Dans la liste d'une place d'arme ou d'outil, la ligne d'une pièce montée
+disait la PREMIÈRE place où elle est, ou « EQUIPE » seul si c'est la place
+ouverte. Elle dit maintenant **toutes ses places** (« ARME 1, 3 », en gris),
+**et « EQUIPE » en or à droite, en plus**, quand la place ouverte en est. Si
+le nom de la pièce ne laisse pas la largeur, les numéros seuls (« 1, 3 »).
+
 ## La base : une station spatiale au départ, et une zone calme (Keko, 11/11 : « modifier le premier extracteur (celui du spawn) pour qu'il n'y ait pas d'ennemi à proximité au début et surtout l'agrandir pour qu'il ressemble à une station spatiale ? on peut imaginer une station spatiale ? »)
 
 - **La station du point de départ est LA BASE** (`dessinerBase`,

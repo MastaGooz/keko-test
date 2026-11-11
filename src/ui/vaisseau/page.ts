@@ -1544,10 +1544,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
-      // (la même pièce peut être à plusieurs places : « EQUIPE » si elle est à CELLE-CI, sinon le nom de la place où elle est)
-      const ailleurs = ki >= 0 ? listeMontee(onglet).indexOf(pc.id) : -1
-      if (ki >= 0 && montee && listeMontee(onglet)[ki] !== pc.id) p.text(texteNu(titreDe({ o: onglet, k: ailleurs })), xd, ly + 4, COQUE[4], { align: 'right' })
-      else if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
+      // (la même pièce peut être à plusieurs places : TOUTES ses places sont dites — « ARME 1, 3 » —, et « EQUIPE » EN
+      // PLUS si elle est à celle qu'on regarde — Keko ; la première place seule était dite, et rien à la place ouverte)
+      if (ki >= 0 && montee) {
+        const ici = listeMontee(onglet)[ki] === pc.id
+        const numeros = listeMontee(onglet).flatMap((id, k) => (id === pc.id ? [k + 1] : [])).join(', ')
+        const xe = ici ? xd - textWidth('EQUIPE', 'mini') - 4 : xd
+        // (si le nom de la pièce est trop long pour tout loger, les numéros seuls)
+        const long = `${onglet === 'arme' ? 'ARME' : 'OUTIL'} ${numeros}`
+        const places = 16 + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 4 + textWidth(long, 'mini') <= xe ? long : numeros
+        p.text(places, xe, ly + 4, COQUE[4], { align: 'right' })
+        if (ici) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
+      } else if (montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
       else if (!possede(hangar, pc.id)) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id) ? PEPITE[3] : COQUE[3])
       zone(4, ly, W - 8, RANG_LISTE, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
     }
