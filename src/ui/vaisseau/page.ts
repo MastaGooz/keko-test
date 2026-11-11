@@ -814,9 +814,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const HAUT_NAV = 34
   const Y_SCENE = HAUT_BARRE
   /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko) : ce que laissent les deux barres et le plus haut des contenus. */
-  // (AU LABO, la scène est l'ARBRE — ses branches, ses rangs, la fiche du nœud — : au premier niveau elle prend tout ce
-  // que les quatre cases du menu d'achat lui laissent ; la liste d'une catégorie ouverte, elle reprend la hauteur ordinaire)
-  const hauteurDeScene = (): number => (vue === 'labo' && etape === 'vaisseau' ? Math.max(150, Math.min(260, H - HAUT_BARRE - HAUT_NAV - 92)) : Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)))
+  // (AU LABO, la scène est l'ARBRE — ses branches, ses rangs, la fiche du nœud — et prend tout l'écran entre les deux
+  // barres : les pièces s'achètent au hangar, il n'y a plus rien dessous)
+  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)))
   let hautScene = 150
   let tBase = 0
   let dtBase = 1 / 60
@@ -1542,7 +1542,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const yy = y + Math.floor(i / 2) * (ch + 4)
       let montee: Piece | undefined
       if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
-      else montee = piecesDe(o).find((pc) => !possede(hangar, pc.id) && pieceOuverte(labo, pc.id)) ?? piecesDe(o).find((pc) => !possede(hangar, pc.id))
+      else montee = piecesDe(o).find((pc) => !possede(hangar, pc.id))
       const e = etatDuBouton(x, yy, cw, ch)
       const monte = Math.round((1 - sortie(age / 0.2)) * 4) - (e.survole && !e.enfonce ? 1 : 0)
       const y2 = yy + e.dy + monte
@@ -1557,8 +1557,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 17, y2 + ch / 2, 26, ch - 8)
       const xt = x + 34 + (cw - 36) / 2
       p.text(texteNu(titreDe(c)), xt, y2 + 5, PEPITE[2], { align: 'center' })
-      const enVente = piecesDe(o).filter((pc) => !possede(hangar, pc.id) && pieceOuverte(labo, pc.id)).length
-      const ligne = vue === 'labo' ? (enVente > 0 ? `${enVente} en vente` : 'Rien en vente') : vide ? 'Vide' : montee!.nom
+      const ligne = vide ? 'Vide' : montee!.nom
       const L = replier(ligne, cw - 38)
       L.slice(0, 2).forEach((li, k) => ecrire(p, li, xt, y2 + 14 + k * 10, vue === 'labo' || vide ? COQUE[3] : COQUE[6], { align: 'center' }))
       zone(x, yy, cw, ch, () => ouvrirLEmplacement(o, c.k))
@@ -1579,7 +1578,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, 'Un onglet d’essai', W / 2, y + 12, COQUE[4], { align: 'center' })
       p.text('(&ONGLETS=N)', W / 2, y + 26, COQUE[2], { align: 'center' })
     } else if (vue === 'entrepot') dessinerLEntrepot(p, y)
-    else if (etape === 'vaisseau') {
+    else if (vue === 'labo') {
+      // (rien : l'arbre tient toute la scène)
+    } else if (etape === 'vaisseau') {
       dessinerLesEmplacements(p, y)
       if (vue === 'hangar') dessinerDecoller(p)
     } else dessinerLaListe(p, y)
@@ -1630,7 +1631,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = y0
     enTete(p, y, titreDe({ o: onglet, k: placeOuverte() }), () => changerDEtape('vaisseau'))
     y += HT + 3
-    const liste = listeVisible(onglet).filter((pc) => (vue === 'labo') !== possede(hangar, pc.id))
+    // (LE HANGAR MONTRE CE QU'ON A, ET CE QUE LE LABO A DÉBLOQUÉ — Keko, 11/11 : « quand une pièce est débloquée au labo,
+    // elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix »)
+    const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
     const familles = famillesDe(onglet)
     if (familles.length > 0) {
       const puces: (string | null)[] = [null, ...familles]
@@ -1681,7 +1684,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
       // plus ; pour une arme ou un outil, « EQUIPE » veut dire à LA PLACE OUVERTE, la même pièce pouvant se monter à plusieurs)
       if (ki >= 0 ? listeMontee(onglet)[ki] === pc.id : montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
-      else if (!possede(hangar, pc.id) && !pieceOuverte(labo, pc.id)) p.text('VERROU', xd, ly + 4, COQUE[3], { align: 'right' }) // (son nœud de l'arbre n'est pas débloqué)
       else if (!possede(hangar, pc.id)) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id) ? PEPITE[3] : COQUE[3])
       zone(4, ly, W - 8, RANG_LISTE, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
     }
@@ -1693,10 +1695,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(W - 11, yc, 3, hc, COQUE[3])
       p.rect(W - 11, yc, 3, 1, COQUE[5])
     }
-    if (liste.length === 0) ecrire(p, vue === 'labo' ? 'Tout est débloqué' : 'Rien ici : passez au labo', W / 2, y + 22, COQUE[4], { align: 'center' })
+    if (liste.length === 0) ecrire(p, 'Rien ici : passez au labo', W / 2, y + 22, COQUE[4], { align: 'center' })
     y += hl + 4
     const pc = liste[iSel]
-    pieceVue = vue === 'labo' && pc !== undefined ? pc.id : null
     if (pc === undefined) return
     dessinerLaFiche(p, y, pc)
   }
@@ -1749,7 +1750,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
   const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
   /** UN NŒUD, centré sur (x, y), vingt-deux pixels : sa forme dit sa sorte, sa matière son état. */
-  function dessinerUnNoeud(p: Peintre, n: Noeud, x: number, y: number, choisi: boolean, touchable = true): void {
+  function dessinerUnNoeud(p: Peintre, n: Noeud, x: number, y: number, choisi: boolean): void {
     const etat = etatDuNoeud(n)
     const e = etatDuBouton(x - 12, y - 12, 24, 24)
     const yy = y + e.dy
@@ -1805,33 +1806,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(ax, ay, ax, ay - dy * 4, c)
       }
     }
-    if (touchable) zone(x - 12, y - 12, 24, 24, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
+    zone(x - 12, y - 12, 24, 24, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
   }
   /**
-   * L'ARBRE, DANS LA SCÈNE (Keko, 11/11 : « garder le menu qu'on avait en bas avant pour les achats de pièces, et mettre
-   * la sélection du type de l'arbre dans l'interface de l'arbre lui-même ») : au premier niveau, la scène porte TOUT
-   * l'arbre — les trois branches en puces en haut, les rangs, et LA FICHE DU NŒUD choisi en bas (ce qu'il donne, son
-   * coût, « Débloquer ») ; dessous, le menu d'achat d'avant (une case par catégorie, sa liste, la fiche d'une pièce et
-   * son « Acheter »). La liste d'une catégorie ouverte, l'arbre se RÉDUIT et se cale sur le nœud de la pièce regardée.
+   * L'ARBRE TIENT TOUTE LA SCÈNE DU LABO : les trois branches en puces en haut (Keko, 11/11 : « mettre la sélection du
+   * type de l'arbre dans l'interface de l'arbre lui-même »), les rangs, et LA FICHE DU NŒUD choisi au pied (ce qu'il
+   * donne, son coût, « Débloquer »). LES PIÈCES S'ACHÈTENT AU HANGAR (Keko, le même jour : « quand une pièce est
+   * débloquée au labo, elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix ; on
+   * débloque ainsi de la place au labo ») : le labo n'a plus de menu d'achat.
    */
-  let pieceVue: string | null = null
   const H_INFO = 67
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
-    if (etape === 'vaisseau') {
-      dessinerLesBranches(p, y0 + 5)
-      dessinerLesRangs(p, y0 + 21, y1 - H_INFO - 2, RANGS, true)
-      dessinerLInfoDuNoeud(p, y1 - H_INFO)
-      return
-    }
-    const deLaPiece = BRANCHES.flatMap((b) => noeudsDe(b)).find((n) => n.piece === pieceVue)
-    if (deLaPiece !== undefined) {
-      branche = deLaPiece.branche
-      noeudChoisi[branche] = deLaPiece.id
-    }
-    const nc = noeudDe(noeudChoisi[branche])
-    dessinerLesRangs(p, y0 + 4, y1 - 4, hautScene >= 112 || nc === undefined ? RANGS : [nc.rang], false)
-    p.text(texteNu(NOMS_BRANCHE[branche]), W - 6, y0 + 6, COQUE[3], { align: 'right' })
+    dessinerLesBranches(p, y0 + 5)
+    dessinerLesRangs(p, y0 + 21, y1 - H_INFO - 2, RANGS)
+    dessinerLInfoDuNoeud(p, y1 - H_INFO)
   }
   /** Les trois branches, en puces, en haut de l'arbre. */
   function dessinerLesBranches(p: Peintre, y: number): void {
@@ -1850,7 +1839,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
   }
   /** Les rangs de la branche entre deux hauteurs : le tronc, un bus par rang, les nœuds. */
-  function dessinerLesRangs(p: Peintre, ya: number, yb: number, lesRangs: Rang[], touchable: boolean): void {
+  function dessinerLesRangs(p: Peintre, ya: number, yb: number, lesRangs: Rang[]): void {
     const ALLUME = N.hex('#3a8ad0')
     const ETEINT = N.hex('#16304f')
     const pas = (yb - ya) / lesRangs.length
@@ -1887,7 +1876,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     for (const rg of rangs) for (const pl of rg.places) {
       placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
-      dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id, touchable)
+      dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
     }
   }
   /** LA FICHE DU NŒUD choisi, au pied de l'arbre : son nom, ce qu'il donne, puis son coût en minerai et « Débloquer » — ou ce qu'il est devenu. */
@@ -1930,17 +1919,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const ou = placesDesNoeuds[n.id] ?? { x: W / 2, y: Y_SCENE + hautScene / 2 }
         gerbe(ou.x, ou.y, 26, [RUNE[2], RUNE[3], PEPITE[3], N.WHITE], 80)
         flottants.push({ texte: 'Débloqué !', x: ou.x, y: ou.y - 18, t0: t, c: RUNE[3] })
+        // (une pièce : elle attend au hangar, dont l'onglet saute et prend sa pastille)
+        if (pc !== undefined) {
+          pulsations.hangar = t
+          nouveautes.add('hangar')
+        }
       }, 'achat')
     } else if (pc !== undefined && !possede(hangar, pc.id)) {
-      // une pièce débloquée : elle est en vente dans le menu du bas — « Voir » y mène
-      const mot = 'En vente ci-dessous'
+      // une pièce débloquée : elle est en vente au hangar — « Voir » y mène, sur elle
+      const mot = 'En vente au hangar'
       const bw = largeurDe('Voir', GRAS) + 16
       const total = largeurDe(mot) + 6 + bw
       const x0 = Math.round((W - total) / 2)
       ecrire(p, mot, x0, ya + 4, RUNE[2])
       bouton(p, x0 + largeurDe(mot) + 6, ya, bw, 15, 'Voir', true, () => {
+        allerA('hangar')
         sousCategorie[pc.sorte] = null
-        ouvrirLEmplacement(pc.sorte)
+        ouvrirLEmplacement(pc.sorte, pc.sorte === 'arme' || pc.sorte === 'outil' ? 0 : -1)
         choix[pc.sorte] = pc.id
         choixA = t
       })
@@ -1950,7 +1945,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
-  /** ACHETER une pièce (au labo, sous son nœud débloqué) : le bouton, son prix et l'icône des crédits. */
+  /** ACHETER une pièce débloquée au labo (au hangar, à la place d'« Équiper ») : le bouton, son prix et l'icône des crédits. */
   function dessinerLAchat(p: Peintre, y: number, pc: Piece): void {
     // ACHETER, le prix et l'icône des crédits ; éteint s'il manque des crédits (il tremble alors) ; acheté, la pièce
     // s'envole vers l'onglet du hangar, qui prend une pastille. LE PRIX EST DANS UN PUITS SOMBRE creusé dans le bouton
@@ -1970,7 +1965,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       sauver()
       secouer(1.2)
       gerbe(W / 2, y + 7, 24, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 80)
-      envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 })
+      if (vue !== 'hangar') envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 }) // (au hangar, elle y est déjà)
       flottants.push({ texte: 'Acheté !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
     }, (dx, dy) => {
       if (vif) motEnRelief(p, 'Acheter', bx + 8 + wa / 2 + dx, y + 4 + dy, true)
@@ -2013,10 +2008,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         sauver()
         feterLEquipement()
       }, 'equipe')
-    } else if (!pieceOuverte(labo, pc.id)) {
-      // (verrouillée : son nœud de l'arbre, au-dessus, est encadré)
-      ecrire(p, 'À débloquer dans l’arbre', W / 2, y + 4, COQUE[4], { align: 'center' })
     } else {
+      // (débloquée au labo, pas encore achetée : « Acheter » à la place d'« Équiper »)
       dessinerLAchat(p, y, pc)
     }
     y += 19

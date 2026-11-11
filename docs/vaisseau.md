@@ -114,6 +114,17 @@ la forme, pas le système* (`asteroide.ts`) :
   scène change donc entre les deux niveaux du labo* (à rejuger). Ce qui
   est dit plus haut de la fiche sous l'arbre et des puces sous la scène
   décrit la première version, remplacée le même jour.
+- **Les pièces s'achètent au hangar** (Keko, 11/11, juste après : « j'ai une
+  meilleure idée : quand une pièce est débloquée au labo, elle apparaît dans
+  le hangar et le bouton équiper est un bouton acheter avec le prix ; on
+  débloque ainsi de la place au labo ») : le menu d'achat du labo est
+  retiré, L'ARBRE TIENT TOUTE LA SCÈNE (branches en haut, rangs, fiche du
+  nœud au pied) ; la liste d'une place du hangar montre ce qu'on possède ET
+  ce que le labo a débloqué (son prix à droite), et sa fiche dit « Acheter »
+  tant qu'on ne l'a pas, « Équiper » ensuite. Un nœud de pièce débloqué fait
+  sauter l'onglet du hangar (pastille rouge) et propose « Voir », qui ouvre
+  le hangar sur la pièce (à la place 1 pour un outil ou une arme). L'arbre
+  réduit et les « VERROU » de la version d'avant sont partis avec le menu.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
