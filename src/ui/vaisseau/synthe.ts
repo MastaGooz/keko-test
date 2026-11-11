@@ -437,15 +437,19 @@ const RECETTES = {
   },
   /**
    * l'accueil : la tape qui lance le jeu (Keko : « un autre son que celui du décollage quand on clique l'écran
-   * d'accueil ») — un appui rond, un souffle qui s'ouvre, et l'accord de ré qui monte en clochettes (ré, la, ré, fa#),
-   * de gauche à droite : on entre
+   * d'accueil », puis « un peu trop aigu, on peut lui donner plus de rondeur et de profondeur ? » — la première
+   * version montait l'accord de ré en CLOCHETTES, de 587 à 1 480 Hz). Le même accord, DEUX OCTAVES PLUS BAS et en notes
+   * RONDES (ré, la, ré, fa# de 147 à 370 Hz : un sinus et deux partiels doux, une attaque lente, des jumelles qui
+   * miroitent), de gauche à droite, sur un appui grave qui tombe sur ré et un souffle sourd qui s'ouvre ; une grande
+   * salle. Il referme l'accord que les deux frappes du titre ont posé.
    */
   accueil: {
-    duree: 1.9, niveau: 0.5, salle: [0.7, 0.3],
+    duree: 2.6, niveau: 0.42, salle: [0.85, 0.4],
     faire: (m, h) => {
-      note(m, 0, 0.5, 0, { f: 147, glisse: { vers: 110, en: 0.05 }, d: 0.25, partiels: CORPS, sature: 2 })
-      souffle(m, h, 0, 0.5, 0, { f: 600, glisse: { vers: 2600, en: 0.35, droit: true }, q: 1.1, bande: true, a: 0.08, d: 0.4, large: true })
-      for (const [i, f] of [RE5, LA5, RE6, FAD6].entries()) note(m, 0.07 * i, 0.75 - i * 0.08, -0.3 + i * 0.2, { f, d: 0.5 + i * 0.12, partiels: CLOCHE, battement: 5 })
+      note(m, 0, 0.7, 0, { f: 110, glisse: { vers: 73.42, en: 0.06 }, a: 0.006, d: 0.7, partiels: CORPS, sature: 2 })
+      souffle(m, h, 0, 0.3, 0, { f: 260, glisse: { vers: 800, en: 0.4, droit: true }, q: 0.9, bande: true, a: 0.12, d: 0.6, large: true })
+      const rond: Partiel[] = [[1, 1, 1], [2, 0.3, 0.6], [3, 0.08, 0.4]]
+      for (const [i, f] of [146.83, 220, RE4, 369.99].entries()) note(m, 0.08 * i, 0.7 - i * 0.06, -0.3 + i * 0.2, { f, a: 0.02, d: 0.9 + i * 0.15, partiels: rond, battement: 6 })
     },
   },
   /** le décollage : un souffle qui s'ouvre, un grave qui monte d'une octave */

@@ -133,6 +133,15 @@ la forme, pas le système* (`asteroide.ts`) :
   un efficace de 0,16 / 0,15, celui de l'arrivée. *Sur le haut-parleur d'un
   téléphone, le grave sous 150 Hz ne sort pas : il restera le souffle et la
   nappe (147 à 220 Hz et leurs partiels).* Pas écouté : à juger par Keko.
+- **La tape de l'accueil, ronde et profonde** (Keko, 11/11 : « le son quand
+  je tape l'écran d'accueil est aussi un peu trop aigu, on peut lui donner
+  plus de rondeur et de profondeur ? »). `accueil` refait : le même accord de
+  ré qui monte, mais DEUX OCTAVES PLUS BAS (147, 220, 294, 370 Hz au lieu de
+  587 à 1 480) et en notes rondes (un sinus et deux partiels doux, attaque de
+  20 ms, jumelles qui miroitent) à la place des clochettes ; l'appui grave
+  tombe sur ré (73 Hz), le souffle est sourd, la salle plus grande (0,85 /
+  0,4), 2,6 s. Mesuré : la part d'énergie au-dessus de 800 Hz passe de 24,9 %
+  à 1,1 % ; niveau 0,42 pour un efficace de 0,163 (0,153 avant). Pas écouté.
 - Vu en capture (412 × 915) : l'accueil, puis le hangar après la tape. Le
   son lui-même n'a pas été écouté (Chrome sans tête, muet) — à confirmer
   par Keko sur son appareil.
