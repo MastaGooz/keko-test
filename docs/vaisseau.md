@@ -6,6 +6,38 @@ juste le vaisseau et un fond type espace avec quelques astéroïdes ».
 
 
 
+## Les astéroïdes, en volume (Keko, 11/11 : « on peut rework un peu les astéroïdes pour un meilleur rendu ? »)
+
+Jugé sur une planche (trois minerais × trois richesses × six tailles, rendue
+hors navigateur par le peintre de pixelfx, avant / après). Ce qui n'allait
+pas : des silhouettes de patate, des pans au ton tiré presque au hasard (le
+volume ne se lisait pas), des veines épaisses et vives qui recouvraient la
+roche — et en FLAQUE quand deux graines étaient proches —, des petites roches
+réduites à une bouillie de joints. Le principe ne change pas (des facettes,
+les veines sont des arêtes colorées, la couleur dit le minerai) ; *on change
+la forme, pas le système* (`asteroide.ts`) :
+
+- **La silhouette est un caillou** : six à neuf sommets à des angles INÉGAUX
+  (des pans longs, des pans courts), la roche aplatie de 0 à 24 % sur un axe
+  — toujours dans le cercle de `rayon`, celui que la règle heurte.
+- **Chaque facette est un pan d'un DÔME** : sa normale est celle du dôme en
+  son point (vers nous au centre, couchée au bord), un peu bousculée, et son
+  ton est la lumière reçue — la roche entière est claire en haut à gauche,
+  sombre en bas à droite, et les pans changent de ton un à un en tournant.
+- **Les graines s'écartent** (de quatre candidates, la plus loin des
+  précédentes), **et il y en a moins sur une petite roche** (2 sous 6,5 de
+  rayon, 3 sous 8, puis une par 2,2).
+- **L'arête est mesurée à la médiatrice** (`(d2² − d1²) / 2·|c2 − c1|`, des
+  pixels) et non plus par `d2 − d1` : un trait d'un pixel partout, plus de
+  flaque.
+- **La veine suit le volume** : vive sur un pan éclairé, éteinte dans
+  l'ombre, un pixel sombre du seul côté opposé à la lampe ; elle s'arrête à
+  1,4 du bord.
+- **Des cratères sur les grosses** (un dès 8,5 de rayon, deux dès 12) à la
+  place des piqûres ; le relief des blocs (bord éclairé + 1, bord opposé − 1)
+  et la lumière de bord gardés, la distance au bord prise au pan le plus
+  proche du polygone.
+
 ## Le vol parle la langue de la base (Keko, 11/11 : « Tu peux appliquer la même amélioration graphique, gamefeel juice, esthétique, lumineuse et tout le travail fait sur l'interface de la base sur la partie "en vol" ? Afin que le jeu entier ait une cohérence dans sa qualité et l'intelligence de son design ? »)
 
 Avant : le vol dessinait son vaisseau en polygones à lui, ses nébuleuses en lueurs lisses, et son interface en texte
