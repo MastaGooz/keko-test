@@ -358,6 +358,9 @@ la forme, pas le système* (`asteroide.ts`) :
   `Avantages` (prime, plafond) de la page ; un ordre gardé au-dessus du
   plafond de série se relit avec le plafond du labo. Quatre nœuds, de moi,
   à rejuger. À quatre branches, seul l'onglet ouvert dit son nom.
+  *Son icône : une courbe de prix en zigzag sur ses deux axes (Keko : « un
+  symbole de courbe, qui monte et descend en zigzag »), à la place des
+  deux flèches de l'échange.*
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
