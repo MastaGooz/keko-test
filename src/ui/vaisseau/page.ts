@@ -19,7 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from '../../logic/vaisseau/marche.ts'
+import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -407,7 +407,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur'; curseur?: Curseur } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres'; curseur?: Curseur } | null = null
   /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
   type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
   let curseurs: Curseur[] = []
@@ -918,6 +918,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     curseurs = []
     zoneDeLArbre = null
+    zoneDesOrdres = null
     // LE MARCHÉ SE RÈGLE à chaque pas du cours : un ordre dont le prix a été atteint est vendu (même posé hier)
     {
       const r = reglerLeMarche(marche, credits, heureDuMarche())
@@ -2289,7 +2290,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const fiche = FICHES_MINERAI[k]
     const LIGNES = 4 // (quatre lignes fixes : avec les minuscules, les descriptions en prennent une de plus)
     const L = replier(fiche.dit, W - 20).slice(0, LIGNES)
-    const hp = 20 + LIGNES * 9 + 8 + 38 + 20
+    const hp = 20 + LIGNES * 9 + 8 + 26 + 20
     plaque(p, 4, y, W - 8, hp, 'encre')
     const ln = largeurDe(fiche.nom, GRAS)
     dessinerUneRessource(p, W / 2 - ln / 2 - 5, y + 10, k)
@@ -2298,22 +2299,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     L.forEach((li, i) => ecrire(p, li, W / 2, haut + i * 9, COQUE[5], { align: 'center' }))
     const ly = y + 20 + LIGNES * 9 + 8
     p.rect(10, ly - 4, W - 20, 1, MATIERES.encre.ombre)
-    // LE COURS du moment (il bouge : le marché), le stock, l'ordre posé
+    // LE COURS du moment (il bouge : le marché) et le stock ; les ordres posés sont SOUS la fiche
     const cours = coursA(k, heureDuMarche())
     ecrire(p, 'Cours', 10, ly, COQUE[4])
     nombreDeCredits(p, prixDit(cours), W - 9, ly, cours >= fiche.credits ? RUNE[3] : ROUGE[5])
     ecrire(p, 'En stock', 10, ly + 12, COQUE[4])
     ecrire(p, montantCourt(tresor[k]), W - 21, ly + 12, tresor[k] > 0 ? N.WHITE : COQUE[3], { police: GRAS, align: 'right' })
     dessinerUneRessource(p, W - 13, ly + 15, k)
-    const ordre = ordreDe(marche, k)
-    ecrire(p, 'Ordre posé', 10, ly + 24, COQUE[4])
-    if (ordre === undefined) ecrire(p, 'Aucun', W - 10, ly + 24, COQUE[3], { align: 'right' })
-    else nombreDeCredits(p, `${montantCourt(ordre.quantite)} à ${prixDit(ordre.prix)}`, W - 9, ly + 24, PEPITE[3])
-    const by = ly + 38
-    const vif = tresor[k] > 0 || ordre !== undefined
+    const by = ly + 26
+    const vif = tresor[k] > 0
     const mot = vif ? 'Vendre' : 'Rien à vendre'
     const bw = largeurDe(mot, GRAS) + 22
     bouton(p, Math.round(W / 2 - bw / 2), by, bw, 15, mot, vif, () => ouvrirLaVente(k), 'ouvre', 'vert')
+    dessinerLesOrdres(p, y + hp + 5, k)
     return y + hp + 4
   }
   // ================================================================ LA VENTE : LE PANNEAU DU MARCHÉ
@@ -2322,20 +2320,76 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * coup, il ouvre ce panneau par-dessus l'entrepôt. LA COURBE du cours (le prix en ordonnée, le temps en abscisse, le
    * point clair est maintenant), LA QUANTITÉ sur un curseur de 0 au stock, puis le choix : AU COURS (vendu tout de
    * suite) ou À PRIX FIXÉ (un second curseur, du cours au plafond ; un trait d'or le pose sur la courbe) — l'ordre
-   * attend alors que le cours l'atteigne. Un ordre déjà posé pour ce minerai se voit là, et s'annule.
+   * attend alors que le cours l'atteigne. Le même panneau OUVRE UN ORDRE POSÉ (une tape sur sa rangée, sous la fiche) :
+   * sa courbe et son trait d'or, et « Annuler ».
    */
   let vente: Minerai | null = null
   let venteA = -10
   let venteQuantite = 0
   let venteFixe = false
   let ventePrix = 0
+  /** L'ordre ouvert dans le panneau (son numéro), ou null : une vente neuve. */
+  let ordreOuvert: number | null = null
   const prixDit = (x: number): string => x.toFixed(1).replace('.', ',')
   function ouvrirLaVente(k: Minerai): void {
     vente = k
+    ordreOuvert = null
     venteA = t
     venteQuantite = tresor[k]
     venteFixe = false
     ventePrix = Math.min(prixPlafond(k), Math.round(coursA(k, heureDuMarche()) * 11.5) / 10)
+  }
+  function ouvrirLOrdre(id: number): void {
+    const o = ordreNumero(marche, id)
+    if (o === undefined) return
+    vente = o.minerai
+    ordreOuvert = id
+    venteA = t
+  }
+  /**
+   * LES ORDRES EN ATTENTE du minerai choisi, SOUS SA FICHE (Keko, 11/11 : « plutôt qu'ouvrir l'ordre actif quand on
+   * clique sur vendre, on affiche les ordres actifs sous la description du matériau, sous le bouton vendre, avec la
+   * possibilité de scroller vers le bas s'il y en a trop et de les ouvrir en cliquant dessus ; le bouton vendre permet
+   * de passer d'autres ordres ou de vendre le reste ») : une rangée par ordre — sa quantité, son prix, ce qu'il
+   * rapportera — ; la liste glisse au doigt quand elle dépasse ; une tape ouvre l'ordre (sa courbe, « Annuler »).
+   */
+  const RANG_ORDRE = 17
+  let defilOrdres = 0
+  let zoneDesOrdres: { x: number; y: number; w: number; h: number } | null = null
+  function dessinerLesOrdres(p: Peintre, y0: number, k: Minerai): void {
+    const liste = ordresDe(marche, k)
+    if (liste.length === 0) return
+    p.text('ORDRES EN ATTENTE', 8, y0 + 1, PEPITE[2])
+    const y = y0 + 11
+    const visibles = Math.max(1, Math.floor((H - HAUT_NAV - 3 - y) / RANG_ORDRE))
+    const maxD = Math.max(0, liste.length - visibles)
+    defilOrdres = Math.max(0, Math.min(maxD, defilOrdres))
+    const d = Math.round(defilOrdres)
+    const larg = W - 8 - (maxD > 0 ? 6 : 0)
+    for (let i = d; i < Math.min(liste.length, d + visibles); i++) {
+      const o = liste[i]
+      const ly = y + (i - d) * RANG_ORDRE
+      const e = etatDuBouton(4, ly, larg, 15)
+      plaque(p, 4, ly + e.dy, larg, 15, 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
+      dessinerUneRessource(p, 13, ly + 7 + e.dy, k)
+      const q = montantCourt(o.quantite)
+      const wq = largeurDe(q, GRAS)
+      ecrire(p, q, 21, ly + 4 + e.dy, N.WHITE, { police: GRAS })
+      ecrire(p, 'à', 21 + wq + 4, ly + 4 + e.dy, COQUE[4])
+      const xp = 21 + wq + 4 + largeurDe('à') + 4
+      const prix = prixDit(o.prix)
+      ecrire(p, prix, xp, ly + 4 + e.dy, N.hex('#fff2c8'), { police: GRAS })
+      dessinerUnCredit(p, xp + largeurDe(prix, GRAS) + 7, ly + 7 + e.dy)
+      nombreDeCredits(p, `= ${montantCourt(gainDe(o.quantite, o.prix))}`, 4 + larg - 4, ly + 4 + e.dy, PEPITE[3])
+      zone(4, ly, larg, 16, () => ouvrirLOrdre(o.id), 'ouvre')
+    }
+    if (maxD > 0) {
+      const hg = visibles * RANG_ORDRE - 2
+      const hc = Math.max(8, Math.round((hg * visibles) / liste.length))
+      p.rect(W - 7, y, 3, hg, MATIERES.creux.contour)
+      p.rect(W - 7, y + Math.round(((hg - hc) * defilOrdres) / maxD), 3, hc, COQUE[3])
+      zoneDesOrdres = { x: 4, y, w: W - 8, h: visibles * RANG_ORDRE }
+    }
   }
   /** Un curseur : sa rainure, sa part pleine, son bouton ; `regler` reçoit sa place de 0 à 1. */
   function dessinerUnCurseur(p: Peintre, x: number, y: number, w: number, u: number, regler: (u: number) => void): void {
@@ -2357,7 +2411,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u0 = sortie((t - venteA) / 0.2)
     const maintenant = heureDuMarche()
     const cours = coursA(k, maintenant)
-    const ordre = ordreDe(marche, k)
+    const ordre = ordreOuvert === null ? undefined : ordreNumero(marche, ordreOuvert)
+    // (l'ordre ouvert vient de se régler, ou n'est plus : le panneau se ferme)
+    if (ordreOuvert !== null && ordre === undefined) {
+      vente = null
+      return
+    }
     const stock = tresor[k]
     const hp = ordre !== undefined ? 150 : 232
     const x = 6
@@ -2368,6 +2427,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     frame.light.fill(0)
     zones = []
     curseurs = []
+    zoneDesOrdres = null
     plaque(p, x, y, w, hp, 'encre')
     const nom = FICHES_MINERAI[k].nom
     dessinerUneRessource(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, k)
@@ -2415,11 +2475,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ly += 14
       const ba = lb('Annuler l’ordre')
       bouton(p, Math.round(W / 2 - ba / 2), ly, ba, 15, 'Annuler l’ordre', true, () => {
-        const r = annulerLOrdre(marche, tresor, k)
+        const r = annulerLOrdre(marche, tresor, ordre.id)
         marche = r.marche
         tresor = r.tresor
         sauver()
-        ouvrirLaVente(k)
+        vente = null
       }, 'retour', 'acier')
       ly += 19
     } else {
@@ -2530,6 +2590,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         racine.setPointerCapture(ev.pointerId)
         return
       }
+      // la liste des ordres de l'entrepôt, quand elle dépasse : elle se fait glisser (une tape sur un ordre se décide au relâchement)
+      const zo = zoneDesOrdres
+      if (zo !== null && !feuille && q.x >= zo.x && q.x < zo.x + zo.w && q.y >= zo.y && q.y < zo.y + zo.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilOrdres, bouge: false, sorte: 'ordres' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       // l'arbre du labo, quand il dépasse sa fenêtre : il se fait glisser (une tape sur un nœud se décide au relâchement)
       const za = zoneDeLArbre
       if (za !== null && !feuille && q.x >= za.x && q.x < za.x + za.w && q.y >= za.y && q.y < za.y + za.h) {
@@ -2585,7 +2652,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         cu.regler(Math.max(0, Math.min(1, (q.x - cu.x) / cu.w)))
         return
       }
-      if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
+      if (glisse.sorte === 'ordres') defilOrdres = glisse.defil0 - (q.y - glisse.y) / RANG_ORDRE
+      else if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       return
@@ -2609,6 +2677,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (glisse.sorte === 'liste') defil[onglet] = Math.round(defil[onglet])
       else if (glisse.sorte === 'onglets') defilOnglets = Math.round(defilOnglets)
+      else if (glisse.sorte === 'ordres') defilOrdres = Math.round(defilOrdres)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -2626,6 +2695,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (dans(zoneGlissante)) {
       ev.preventDefault()
       defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
+    } else if (dans(zoneDesOrdres)) {
+      ev.preventDefault()
+      defilOrdres = Math.round(defilOrdres) + Math.sign(pas)
     } else if (dans(zoneDeLArbre)) {
       ev.preventDefault()
       defilDeLArbre[branche] += Math.sign(pas) * 24

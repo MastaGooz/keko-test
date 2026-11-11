@@ -1,7 +1,7 @@
 /**
  * Vérifications du marché des minerais, sans navigateur.
  */
-import { annulerLOrdre, coursA, coursAuPas, gainDe, historiqueDe, lireMarche, MARCHE, marcheNeuf, ordreDe, pasDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from './marche.ts'
+import { annulerLOrdre, coursA, coursAuPas, gainDe, historiqueDe, lireMarche, MARCHE, marcheNeuf, ordresDe, pasDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from './marche.ts'
 import { FICHES_MINERAI } from './hangar.ts'
 import { MINERAIS } from './jeu.ts'
 
@@ -37,22 +37,28 @@ const m0 = marcheNeuf(T0)
 const haut = Math.max(...mille.slice(0, 600).map((p) => coursAuPas('fer', p)))
 const quand = mille.find((p) => coursAuPas('fer', p) >= haut)! // le premier pas où le cours touche ce prix
 const pose = poserUnOrdre(m0, tresor, 'fer', 20, haut, T0)!
-verifier('poser un ordre : le minerai quitte le trésor, l’ordre attend', pose !== null && pose.tresor.fer === 30 && ordreDe(pose.marche, 'fer')!.quantite === 20 && ordreDe(pose.marche, 'fer')!.prix === haut)
-verifier('un seul ordre par minerai ; un prix au-dessus du plafond est refusé', poserUnOrdre(pose.marche, pose.tresor, 'fer', 5, haut, T0) === null && poserUnOrdre(m0, tresor, 'fer', 5, prixPlafond('fer') + 0.1, T0) === null && poserUnOrdre(m0, tresor, 'or', 11, 8, T0) === null)
+verifier('poser un ordre : le minerai quitte le trésor, l’ordre attend', pose !== null && pose.tresor.fer === 30 && ordresDe(pose.marche, 'fer')[0].quantite === 20 && ordresDe(pose.marche, 'fer')[0].prix === haut)
+const second = poserUnOrdre(pose.marche, pose.tresor, 'fer', 5, 0.1, T0)!
+verifier('plusieurs ordres pour un même minerai, chacun son numéro ; un prix au-dessus du plafond, ou plus qu’on a, est refusé', second !== null && ordresDe(second.marche, 'fer').length === 2 && second.tresor.fer === 25 && new Set(second.marche.ordres.map((o) => o.id)).size === 2 && poserUnOrdre(m0, tresor, 'fer', 5, prixPlafond('fer') + 0.1, T0) === null && poserUnOrdre(m0, tresor, 'or', 11, 8, T0) === null)
+let plein = { marche: m0, tresor: { fer: 100, or: 0, cristal: 0 } }
+for (let i = 0; i < MARCHE.ordres; i++) plein = poserUnOrdre(plein.marche, plein.tresor, 'fer', 1, 2.5, T0)!
+verifier('au plus tant d’ordres à la fois', plein.marche.ordres.length === MARCHE.ordres && poserUnOrdre(plein.marche, plein.tresor, 'fer', 1, 2.5, T0) === null)
+const deux = reglerLeMarche(second.marche, 0, T0 + 1)
+verifier('de deux ordres, seul celui dont le prix est atteint se règle ; l’autre attend', deux.vendus.length === 1 && deux.vendus[0].quantite === 5 && deux.marche.ordres.length === 1 && deux.marche.ordres[0].quantite === 20)
 const avant = reglerLeMarche(pose.marche, 0, (quand - 1) * PAS + 5)
-verifier('tant que le cours n’a pas atteint le prix, l’ordre attend', quand > pasDe(T0) ? avant.vendus.length === 0 && avant.credits === 0 && ordreDe(avant.marche, 'fer') !== undefined : true)
+verifier('tant que le cours n’a pas atteint le prix, l’ordre attend', quand > pasDe(T0) ? avant.vendus.length === 0 && avant.credits === 0 && ordresDe(avant.marche, 'fer').length === 1 : true)
 const apres = reglerLeMarche(avant.marche, 0, quand * PAS + 5)
-verifier('au pas où le cours l’atteint, l’ordre se règle AU PRIX FIXÉ et s’en va', apres.vendus.length === 1 && apres.credits === gainDe(20, haut) && ordreDe(apres.marche, 'fer') === undefined)
+verifier('au pas où le cours l’atteint, l’ordre se règle AU PRIX FIXÉ et s’en va', apres.vendus.length === 1 && apres.credits === gainDe(20, haut) && ordresDe(apres.marche, 'fer').length === 0)
 const dUnCoup = reglerLeMarche(pose.marche, 0, (quand + 500) * PAS)
 verifier('appareil éteint : réglé pareil en un seul regard, bien plus tard', dUnCoup.vendus.length === 1 && dUnCoup.credits === gainDe(20, haut))
 verifier('régler deux fois ne paie pas deux fois', reglerLeMarche(apres.marche, apres.credits, (quand + 900) * PAS).credits === apres.credits)
 const bas = poserUnOrdre(m0, tresor, 'fer', 10, 0.1, T0)!
 verifier('un ordre posé sous le cours se règle au regard suivant, à son prix', reglerLeMarche(bas.marche, 0, T0 + 1).vendus.length === 1 && reglerLeMarche(bas.marche, 0, T0 + 1).credits === gainDe(10, 0.1))
-const annule = annulerLOrdre(pose.marche, pose.tresor, 'fer')
-verifier('annuler : les pépites reviennent, l’ordre s’en va ; sans ordre, rien ne change', annule.tresor.fer === 50 && ordreDe(annule.marche, 'fer') === undefined && annulerLOrdre(m0, tresor, 'or').tresor === tresor)
+const annule = annulerLOrdre(second.marche, second.tresor, second.marche.ordres[0].id)
+verifier('annuler un ordre par son numéro : ses pépites reviennent, l’autre reste ; un numéro inconnu ne change rien', annule.tresor.fer === 45 && annule.marche.ordres.length === 1 && annule.marche.ordres[0].quantite === 5 && annulerLOrdre(m0, tresor, 99).tresor === tresor)
 
 const relu = lireMarche({ vuA: T0 - 5, ordres: [{ minerai: 'fer', quantite: 4, prix: 2.26, poseA: T0 - 9 }, { minerai: 'fer', quantite: 1, prix: 2 }, { minerai: 'bois', quantite: 1, prix: 2 }, { minerai: 'or', quantite: -1, prix: 8 }, { minerai: 'cristal', quantite: 2, prix: 999 }, null] }, T0)
-verifier('un marché relu sans confiance : des ordres bien formés, un par minerai, le prix au dixième', relu.ordres.length === 1 && relu.ordres[0].prix === 2.3 && relu.vuA === T0 - 5 && lireMarche(null, T0).ordres.length === 0 && lireMarche({ vuA: T0 + 1e9 }, T0).vuA === T0)
+verifier('un marché relu sans confiance : des ordres bien formés, renumérotés, le prix au dixième', relu.ordres.length === 2 && relu.ordres[0].prix === 2.3 && relu.ordres[0].id === 1 && relu.ordres[1].id === 2 && relu.vuA === T0 - 5 && lireMarche(null, T0).ordres.length === 0 && lireMarche({ vuA: T0 + 1e9 }, T0).vuA === T0)
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

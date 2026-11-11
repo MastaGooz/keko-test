@@ -9,7 +9,8 @@
  *
  * VENDRE AU COURS : tout de suite, au prix du moment. POSER UN ORDRE : une quantité à un prix fixé — le minerai quitte
  * l'entrepôt (il est réservé), et l'ordre se règle AU PRIX FIXÉ dès qu'un pas du cours l'atteint, même pendant qu'on
- * ne joue pas ; on peut l'annuler, le minerai revient. Un ordre par minerai.
+ * ne joue pas ; on peut l'annuler, le minerai revient. PLUSIEURS ORDRES PAR MINERAI (Keko, 11/11 : « le bouton vendre
+ * permet de passer d'autres ordres ou de vendre le reste »), vingt au plus en tout.
  *
  * *Tous les chiffres sont de moi, à rejuger* : le pas, les amplitudes, le plafond d'un ordre. Les prix sont au dixième
  * de crédit ; un gain s'arrondit vers le bas.
@@ -30,6 +31,8 @@ export const MARCHE = {
   bruit: 0.04,
   /** Le plus haut prix qu'un ordre puisse fixer, en parts du prix de base (le cours ne monte jamais plus haut que 1 + les trois parts). */
   plafond: 1.45,
+  /** Combien d'ordres peuvent attendre à la fois, tous minerais confondus. */
+  ordres: 20,
 } as const
 
 /** Le pas où tombe un instant. */
@@ -65,11 +68,13 @@ export const prixPlafond = (k: Minerai): number => dixieme(FICHES_MINERAI[k].cre
 export const gainDe = (q: number, prix: number): number => Math.floor(q * prix + 1e-6)
 
 /** Un ordre de vente posé : tant de pépites (déjà sorties de l'entrepôt), à ce prix. */
-export type Ordre = { minerai: Minerai; quantite: number; prix: number; poseA: number }
+export type Ordre = { /** Son numéro, unique dans le marché. */ id: number; minerai: Minerai; quantite: number; prix: number; poseA: number }
 /** Les ordres en attente, et l'instant jusqu'où le marché a été réglé. */
 export type Marche = { ordres: Ordre[]; vuA: number }
 export const marcheNeuf = (instant: number): Marche => ({ ordres: [], vuA: instant })
-export const ordreDe = (m: Marche, k: Minerai): Ordre | undefined => m.ordres.find((o) => o.minerai === k)
+/** Les ordres en attente d'un minerai, du plus ancien au plus récent. */
+export const ordresDe = (m: Marche, k: Minerai): Ordre[] => m.ordres.filter((o) => o.minerai === k)
+export const ordreNumero = (m: Marche, id: number): Ordre | undefined => m.ordres.find((o) => o.id === id)
 
 const quantiteValable = (tresor: Cargaison, k: Minerai, q: number): boolean => Number.isInteger(q) && q >= 1 && q <= tresor[k]
 
@@ -79,18 +84,19 @@ export function vendreAuCours(tresor: Cargaison, credits: number, k: Minerai, q:
   return { tresor: { ...tresor, [k]: tresor[k] - q }, credits: credits + gainDe(q, coursA(k, instant)) }
 }
 
-/** Poser un ordre : `q` pépites à `prix` (au dixième, entre un dixième et le plafond). Le minerai quitte le trésor. Null si un ordre attend déjà pour ce minerai, ou si la demande ne tient pas. */
+/** Poser un ordre : `q` pépites à `prix` (au dixième, entre un dixième et le plafond). Le minerai quitte le trésor. Null si trop d'ordres attendent déjà, ou si la demande ne tient pas. */
 export function poserUnOrdre(m: Marche, tresor: Cargaison, k: Minerai, q: number, prix: number, instant: number): { marche: Marche; tresor: Cargaison } | null {
   const p = dixieme(prix)
-  if (ordreDe(m, k) !== undefined || !quantiteValable(tresor, k, q) || !(p >= 0.1) || p > prixPlafond(k)) return null
-  return { marche: { ...m, ordres: [...m.ordres, { minerai: k, quantite: q, prix: p, poseA: instant }] }, tresor: { ...tresor, [k]: tresor[k] - q } }
+  if (m.ordres.length >= MARCHE.ordres || !quantiteValable(tresor, k, q) || !(p >= 0.1) || p > prixPlafond(k)) return null
+  const id = 1 + Math.max(0, ...m.ordres.map((o) => o.id))
+  return { marche: { ...m, ordres: [...m.ordres, { id, minerai: k, quantite: q, prix: p, poseA: instant }] }, tresor: { ...tresor, [k]: tresor[k] - q } }
 }
 
-/** Annuler l'ordre d'un minerai : ses pépites reviennent au trésor (pas d'ordre : rien ne change). */
-export function annulerLOrdre(m: Marche, tresor: Cargaison, k: Minerai): { marche: Marche; tresor: Cargaison } {
-  const o = ordreDe(m, k)
+/** Annuler un ordre, par son numéro : ses pépites reviennent au trésor (pas d'ordre à ce numéro : rien ne change). */
+export function annulerLOrdre(m: Marche, tresor: Cargaison, id: number): { marche: Marche; tresor: Cargaison } {
+  const o = ordreNumero(m, id)
   if (o === undefined) return { marche: m, tresor }
-  return { marche: { ...m, ordres: m.ordres.filter((x) => x !== o) }, tresor: { ...tresor, [k]: tresor[k] + o.quantite } }
+  return { marche: { ...m, ordres: m.ordres.filter((x) => x !== o) }, tresor: { ...tresor, [o.minerai]: tresor[o.minerai] + o.quantite } }
 }
 
 /**
@@ -115,7 +121,7 @@ export function reglerLeMarche(m: Marche, credits: number, instant: number): { m
   return { marche: { ordres: m.ordres.filter((o) => !vendus.includes(o)), vuA: Math.max(m.vuA, instant) }, credits: c, vendus }
 }
 
-/** Relit un marché gardé, sans confiance : des ordres bien formés, un par minerai ; un instant de lecture qui n'est pas dans le futur. */
+/** Relit un marché gardé, sans confiance : des ordres bien formés, renumérotés, vingt au plus ; un instant de lecture qui n'est pas dans le futur. */
 export function lireMarche(brut: unknown, instant: number): Marche {
   const m = marcheNeuf(instant)
   if (typeof brut !== 'object' || brut === null) return m
@@ -128,10 +134,10 @@ export function lireMarche(brut: unknown, instant: number): Marche {
       const q = o.quantite
       const prix = o.prix
       const poseA = o.poseA
-      if (k === undefined || ordreDe(m, k) !== undefined) continue
+      if (k === undefined || m.ordres.length >= MARCHE.ordres) continue
       if (typeof q !== 'number' || !Number.isInteger(q) || q < 1) continue
       if (typeof prix !== 'number' || !(prix >= 0.1) || prix > prixPlafond(k)) continue
-      m.ordres.push({ minerai: k, quantite: q, prix: dixieme(prix), poseA: typeof poseA === 'number' && Number.isFinite(poseA) ? Math.min(poseA, instant) : instant })
+      m.ordres.push({ id: m.ordres.length + 1, minerai: k, quantite: q, prix: dixieme(prix), poseA: typeof poseA === 'number' && Number.isFinite(poseA) ? Math.min(poseA, instant) : instant })
     }
   }
   return m

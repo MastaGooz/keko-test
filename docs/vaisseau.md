@@ -68,6 +68,22 @@ la forme, pas le système* (`asteroide.ts`) :
   curseur, du cours au plafond), le gain, puis « Vendre » ou « Poser
   l'ordre ». Un ordre en attente s'y voit et s'annule. Les curseurs se font
   glisser (`curseurs`, refaits à chaque image comme les zones).
+- **Les ordres en attente, sous la fiche ; plusieurs par minerai** (Keko,
+  11/11 : « plutôt qu'ouvrir l'ordre actif quand on clique sur vendre, on
+  affiche les ordres actifs sous la description du matériau, sous le bouton
+  vendre, avec la possibilité de scroller vers le bas s'il y en a trop et
+  de les ouvrir en cliquant dessus ; le bouton vendre permet de passer
+  d'autres ordres ou de vendre le reste ; on supprime donc la ligne qui
+  indique l'ordre actif dans la description ») : la règle n'a plus « un
+  ordre par minerai » — chaque ordre a un NUMÉRO (`ordreNumero`,
+  `ordresDe`), `annulerLOrdre` le prend, vingt ordres au plus en tout (de
+  moi). Sous la fiche, « ORDRES EN ATTENTE » : une rangée par ordre du
+  minerai choisi (quantité, prix, ce qu'il rapportera), la liste glisse au
+  doigt quand elle dépasse (la molette sur PC), une tape ouvre l'ordre dans
+  le panneau (sa courbe, son trait d'or, « Annuler l'ordre »). « Vendre »
+  ouvre toujours une vente neuve, sur ce qui reste en stock. Ce qui est dit
+  plus haut d'un seul ordre par minerai et de la ligne « Ordre posé »
+  décrit la première version.
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
