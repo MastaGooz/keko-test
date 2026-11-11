@@ -51,8 +51,10 @@ la forme, pas le système* (`asteroide.ts`) :
   étincelles giclent de son tour ; dix GRADUATIONS autour du parvis, une par
   seconde, s'allument au passage de la tête.
 - **Au bout, l'anneau ÉCLATE** (le « GO! » du dépôt) : deux ondes de choc,
-  trente-six étincelles, et « EXTRAIT » frappe en or dans une couronne de
-  dix-huit rayons qui tournent, puis se replie avant l'écran de fin.
+  trente-six étincelles, et « EXTRACTION » (Keko : « marquer extraction
+  plutôt que extrait ») frappe en or dans une couronne de dix-huit rayons
+  qui tournent, puis se replie avant l'écran de fin. Le mot fait 10 lettres :
+  son ressort est retenu (0,45 au lieu de 1,4) pour ne pas sortir des 180.
 - **Hors du parvis**, le compte redescend sans frapper (`compteMonte`).
 - Vu sur deux planches de captures rapprochées (`&quai`, 360 × 640) : la
   frappe du 7 (blanc, cadre, onde), et l'éclat final avec le mot et ses

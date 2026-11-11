@@ -2400,7 +2400,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // charge, sur dix secondes) ; chaque SECONDE qui tombe est une FRAPPE — le chiffre arrive énorme et blanc et
           // retombe à sa taille sur un ressort raide, en tremblant ; l'arc blanchit, un cadre chauffé à blanc emplit
           // l'anneau deux images, une onde de choc en part, quatorze étincelles giclent de son tour ; dix GRADUATIONS
-          // (une par seconde) s'allument au passage de la tête. Au bout, l'anneau ÉCLATE en onde de choc et « EXTRAIT »
+          // (une par seconde) s'allument au passage de la tête. Au bout, l'anneau ÉCLATE en onde de choc et « EXTRACTION »
           // frappe dans une couronne de rayons. Hors du parvis, le compte redescend sans frapper.
           const TAU = Math.PI * 2
           const monte = compteMonte && m.phase === 'vol'
@@ -2455,13 +2455,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 const an = (k / 18) * TAU + ue * 0.35
                 const ca = Math.cos(an)
                 const sa = Math.sin(an)
-                const r0 = 1 / Math.sqrt((ca / 46) ** 2 + (sa / 14) ** 2) + 3 * rk
+                const r0 = 1 / Math.sqrt((ca / (largeurDe('EXTRACTION', GRAS) + 6)) ** 2 + (sa / 14) ** 2) + 3 * rk // (l'ovale du mot, à l'échelle 2)
                 const r1 = r0 + (k % 2 === 0 ? 26 : 13) * 0.7 * rk
                 if (rk > 0.02) p.line(sx + ca * r0, yMot + sa * r0, sx + ca * r1, yMot + sa * r1, k % 2 === 0 ? PEPITE[3] : PEPITE[2], 0.9 * rk)
               }
               const tremble = ue < 0.3 ? 4 * (1 - ue / 0.3) : 0
               p.glow(sx, yMot, 46, PEPITE[2], 0.25 + (ue < 0.12 ? 0.7 * (1 - ue / 0.12) : 0))
-              motFrappe(p, 'EXTRAIT', sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), (2 + 1.4 * Math.exp(-ue * 26) * Math.cos(ue * 38)) * rk ** 0.2, ue < 0.035 ? 1 : ue < 0.07 ? 0.4 : 0)
+              motFrappe(p, 'EXTRACTION', sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), (2 + 0.45 * Math.exp(-ue * 26) * Math.cos(ue * 38)) * rk ** 0.2, ue < 0.035 ? 1 : ue < 0.07 ? 0.4 : 0)
             }
           } else {
             // le chiffre : énorme et blanc une image, puis le ressort ; il tremble 0,22 s
