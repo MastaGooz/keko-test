@@ -87,6 +87,9 @@ la forme, pas le système* (`asteroide.ts`) :
   chemin qui relie la source aux nœuds débloqués brille et porte les
   grains de lumière (la descente du nœud, le bout de bus jusqu'à ce qui
   l'alimente, la sortie du nœud d'au-dessus).*
+  *Et (« les liens et nœuds inaccessibles se distinguent mal du fond,
+  couleurs trop proches ») : le nœud fermé et le conduit éteint passent du
+  presque noir à un gris acier, le conduit sous tension à un bleu franc.*
 - **Les rangs** font 64 px au moins (46 avant) et se partagent la fenêtre :
   trois rangs la remplissent sur un écran de 780 px. Le défilement reste.
 - **Les symboles** : la lumière ne vient plus que d'en haut (éclairés aussi

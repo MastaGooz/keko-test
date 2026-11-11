@@ -1972,8 +1972,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         ? { corps: RUNE[1], clair: RUNE[2], bord: RUNE[3], sombre: N.hex('#0a3a1e'), puits: N.hex('#06200f') }
         : etat === 'ouvert'
           ? { corps: N.hex('#22365c'), clair: N.hex('#3f62a0'), bord: bat > 0.5 ? N.hex('#a8caff') : N.hex('#6f97d8'), sombre: N.hex('#131e36'), puits: N.hex('#0b1322') }
-          : { corps: N.hex('#141a2a'), clair: N.hex('#1f2942'), bord: N.hex('#2a3450'), sombre: N.hex('#0b0f1a'), puits: N.hex('#090c15') }
-    const tons: [number, number, number] = etat === 'acquis' ? [N.hex('#9af0b8'), N.hex('#dcffe6'), N.WHITE] /* (trois tons proches : contrastés, un symbole en biais sortait en pointillé) */ : etat === 'ouvert' ? [COQUE[3], COQUE[5], COQUE[6]] : [COQUE[1], COQUE[2], COQUE[3]]
+          : // (un nœud fermé reste GRIS ACIER, pas noir : sur le bleu nuit de la planche il se confondait avec le fond — Keko, 11/11)
+            { corps: N.hex('#2a3348'), clair: N.hex('#3d4962'), bord: N.hex('#586682'), sombre: N.hex('#191f2e'), puits: N.hex('#12161f') }
+    const tons: [number, number, number] = etat === 'acquis' ? [N.hex('#9af0b8'), N.hex('#dcffe6'), N.WHITE] /* (trois tons proches : contrastés, un symbole en biais sortait en pointillé) */ : etat === 'ouvert' ? [COQUE[3], COQUE[5], COQUE[6]] : [COQUE[2], COQUE[3], COQUE[4]]
     // sa lueur : verte et posée s'il est acquis, bleue et qui respire s'il attend
     if (etat === 'acquis') p.glow(x, yy, 27, RUNE[2], 0.2 + 0.07 * bat)
     else if (etat === 'ouvert') p.glow(x, yy, 25, N.hex('#3a8ad0'), 0.08 + 0.14 * bat)
@@ -1992,7 +1993,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 12, yy + 11, 24, 1, T.clair)
       const pc = pieceDe(n.piece ?? '')
       if (pc !== undefined) dessinerLePictogramme(p, pc, x, yy, 22, 22)
-      if (etat === 'ferme') p.rect(x - 12, yy - 12, 24, 23, N.hex('#090c15'), 0.62)
+      if (etat === 'ferme') p.rect(x - 12, yy - 12, 24, 23, N.hex('#12161f'), 0.5)
     } else if (n.sorte === 'passif') {
       // UN PASSIF : un médaillon rond, son jonc, le symbole en grand
       p.circle(x, yy + 1, 18, encre)
@@ -2218,8 +2219,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
      * qui relie la source aux nœuds débloqués : lui seul brille, et des grains de lumière le parcourent.
      */
     type Etat = 0 | 1 | 2
-    const corps = (e: Etat): number => (e === 2 ? N.hex('#1f62b0') : e === 1 ? N.hex('#1a3358') : N.hex('#131c2e'))
-    const coeur = (e: Etat): number => (e === 2 ? N.hex('#7fc2ff') : e === 1 ? N.hex('#34588e') : N.hex('#1c2840'))
+    // (éteint : un gris acier, sous tension : un bleu franc — plus sombres, ils se perdaient dans la planche : Keko, 11/11)
+    const corps = (e: Etat): number => (e === 2 ? N.hex('#1f62b0') : e === 1 ? N.hex('#234c86') : N.hex('#2b3549'))
+    const coeur = (e: Etat): number => (e === 2 ? N.hex('#7fc2ff') : e === 1 ? N.hex('#4a7fc4') : N.hex('#46536e'))
     const GRAIN = N.hex('#e2f3ff')
     const conduitV = (x: number, y0: number, y1: number, e: Etat): void => {
       if (y1 <= y0) return
