@@ -2177,9 +2177,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LES RANGS DE LA BRANCHE, DANS UNE FENÊTRE QUI DÉFILE (Keko, 11/11 : « si on rajoute des tiers 4, 5, 6, on fait
    * comment pour avancer dans l'arbre ? ») — et REFAITS (« beaucoup d'espace vide, les connexions très très fines ») :
    *
-   * - CHAQUE NŒUD PORTE SON PRIX, sur une étiquette pendue dessous (Keko, 11/11 : « je ne suis pas sûr que marquer les
-   *   paliers comme ça soit une bonne idée — je veux des prix individuels sur les nœuds » : les bandeaux « Rang N » et
-   *   leur coût commun sont partis) : le minerai et le nombre, vert quand on l'a, rouge sinon, gris si le rang est fermé ;
+   * - LE PRIX D'UN NŒUD N'EST PAS DANS L'ARBRE : il est dans sa fiche, au pied (Keko, 11/11 — d'abord des bandeaux « Rang N »
+   *   au coût commun : « pas sûr que marquer les paliers comme ça soit une bonne idée, je veux des prix individuels » ;
+   *   puis une étiquette sous chaque nœud : « ne mets pas les coûts dans l'arbre, dans la description ça suffit ») ;
    * - LES CONDUITS sont épais (cinq pixels : cernés d'encre, un cœur clair) et DISENT LA RÈGLE : de la source au premier
    *   rang, puis de CHAQUE nœud au rang d'après — le conduit qui sort d'un nœud débloqué s'allume, et c'est lui qui
    *   ouvre le rang suivant ; allumé, des grains de lumière y descendent ;
@@ -2264,24 +2264,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const pl of rg.places) {
         placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
         dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
-        // SON PRIX, sur une étiquette pendue dessous (le conduit passe derrière) — tant qu'il n'est pas débloqué
-        const yt = rg.y + 21
-        if (estDebloque(labo, pl.n.id) || yt < ya || yt + 10 > yb) continue
-        const cout = coutDe(pl.n)
-        const ks = MINERAIS.filter((k) => cout[k] > 0)
-        const textes = ks.map((k) => montantCourt(cout[k]))
-        const lw = textes.map((tx) => 10 + textWidth(tx, 'mini'))
-        const w = lw.reduce((a, b) => a + b, 0) + (ks.length - 1) * 2 + 3
-        const x0 = Math.round(pl.x - w / 2)
-        p.rect(x0 - 1, yt, w + 2, 10, ENCRE)
-        p.rect(x0, yt + 1, w, 8, rg.ouvert ? N.hex('#0f1a30') : N.hex('#0b0f1a'))
-        p.rect(x0, yt + 1, w, 1, rg.ouvert ? N.hex('#243a66') : N.hex('#161d2e'))
-        let xc = x0 + 1
-        ks.forEach((k, i) => {
-          dessinerUneRessource(p, xc + 5, yt + 5, k)
-          p.text(textes[i], xc + 10, yt + 3, !rg.ouvert ? COQUE[3] : tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5])
-          xc += lw[i] + 2
-        })
       }
     }
     // l'arbre continue : un fondu au bord, et la barre de défilement

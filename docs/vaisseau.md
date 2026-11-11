@@ -72,7 +72,10 @@ la forme, pas le système* (`asteroide.ts`) :
   dans `labo.ts`, `COUTS` par rang supprimé ; des valeurs de moi autour de
   l'ancien barème, à rejuger) et le porte sur une étiquette pendue dessous
   — le minerai et le nombre, vert quand on l'a, rouge sinon, gris si le
-  rang est fermé ; elle disparaît quand le nœud est débloqué.
+  rang est fermé ; elle disparaît quand le nœud est débloqué. *L'ÉTIQUETTE
+  EST RETIRÉE À SON TOUR (« ne mets pas les coûts dans l'arbre, dans la
+  description ça suffit ») : le prix, individuel, ne se lit que dans la
+  fiche du nœud.*
 - **Les conduits** font cinq pixels (cernés, un cœur clair), ont des
   raccords, et DISENT LA RÈGLE : de la source au premier rang, puis de
   chaque nœud au rang d'après — celui qui sort d'un nœud débloqué s'allume
