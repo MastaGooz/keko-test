@@ -8,7 +8,7 @@
 // `ui/collection.ts` pour la collection. Tout passe dans un try : *sans stockage (navigation privée, quota), on joue
 // sans mémoire*, le hangar vit le temps de la page.
 import { hangarNeuf, lireCredits, lireHangar, lireTresor, type Hangar } from '../../logic/vaisseau/hangar.ts'
-import { laboNeuf, lireLabo, type Labo } from '../../logic/vaisseau/labo.ts'
+import { laboNeuf, lireLabo, passifsDe, type Labo } from '../../logic/vaisseau/labo.ts'
 import { lireMarche, marcheNeuf, type Marche } from '../../logic/vaisseau/marche.ts'
 import { cargaisonVide, type Cargaison } from '../../logic/vaisseau/jeu.ts'
 
@@ -25,7 +25,10 @@ export function chargerHangar(instant: number): Progression {
     const brut = localStorage.getItem(CLE)
     if (brut === null) return neuve(instant)
     const b = JSON.parse(brut) as { hangar?: unknown; tresor?: unknown; credits?: unknown; labo?: unknown; marche?: unknown } | null
-    return { hangar: lireHangar(b?.hangar), tresor: lireTresor(b?.tresor), credits: lireCredits(b?.credits), labo: lireLabo(b?.labo), marche: lireMarche(b?.marche, instant) }
+    // (le labo d'abord : son plafond relevé dit quels ordres gardés sont encore valables)
+    const labo = lireLabo(b?.labo)
+    const pa = passifsDe(labo)
+    return { hangar: lireHangar(b?.hangar), tresor: lireTresor(b?.tresor), credits: lireCredits(b?.credits), labo, marche: lireMarche(b?.marche, instant, { prime: pa.vente, plafond: pa.plafond }) }
   } catch {
     return neuve(instant)
   }

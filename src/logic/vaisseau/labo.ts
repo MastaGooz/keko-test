@@ -3,7 +3,7 @@
  *
  * L'arbre est découpé PAR ACTIVITÉ, pas par partie du vaisseau (« minage / combat / exploration / commerce — on va avoir
  * un jeu d'extraction qui demandera de partir en mission de minage, d'exploration, de combat, de commerce ») ; le
- * commerce viendra avec le marché. AUCUN LIEN ENTRE LES BRANCHES. Trois sortes de nœuds :
+ * commerce est venu avec le marché (sa branche agit sur les ventes, pas sur le vaisseau). AUCUN LIEN ENTRE LES BRANCHES. Trois sortes de nœuds :
  *
  * - une PIÈCE : le nœud donne le droit de l'acheter — EN CRÉDITS, sous le nœud, comme avant (« une fois débloqué, le
  *   joueur peut l'acheter en dessous avec de l'argent ») ;
@@ -20,9 +20,9 @@
  */
 import { MINERAIS, type Cargaison, type ConfigVaisseau } from './jeu.ts'
 
-export const BRANCHES = ['minage', 'combat', 'exploration'] as const
+export const BRANCHES = ['minage', 'combat', 'exploration', 'commerce'] as const
 export type Branche = (typeof BRANCHES)[number]
-export const NOMS_BRANCHE: Record<Branche, string> = { minage: 'Minage', combat: 'Combat', exploration: 'Exploration' }
+export const NOMS_BRANCHE: Record<Branche, string> = { minage: 'Minage', combat: 'Combat', exploration: 'Exploration', commerce: 'Commerce' }
 export type SorteDeNoeud = 'piece' | 'passif' | 'mecanique'
 export type Rang = 1 | 2 | 3
 export const RANGS: Rang[] = [1, 2, 3]
@@ -40,8 +40,11 @@ export type Passif = {
   maniabilite?: number
   acceleration?: number
   aimant?: number
+  /** Le commerce : une part ajoutée à chaque gain de vente ; une part ajoutée au plus haut prix d'un ordre. */
+  vente?: number
+  plafond?: number
 }
-export type Mecanique = 'postcombustion'
+export type Mecanique = 'postcombustion' | 'prevision'
 
 export type Noeud = {
   id: string
@@ -94,6 +97,11 @@ export const NOEUDS: Noeud[] = [
   { id: 'e-postcombustion', branche: 'exploration', rang: 2, sorte: 'mecanique', icone: 'postcombustion', mecanique: 'postcombustion', nom: 'Postcombustion', dit: 'En vol, une double tape lance une pointe de vitesse ; elle se recharge en 6 s.' },
   { id: 'e-propulseur-3', branche: 'exploration', rang: 3, sorte: 'piece', piece: 'propulseur-3', nom: 'Propulseur ionique', dit: 'Ouvre l’achat du propulseur ionique : accélération +60 %, pointe +35 %.' },
   { id: 'e-aimant', branche: 'exploration', rang: 3, sorte: 'passif', icone: 'aimant', passif: { aimant: 0.25 }, nom: 'Champ étendu', dit: 'Le vaisseau attire les pépites de 25 % plus loin.' },
+  // ---- COMMERCE (Keko, 11/11 : « tu peux rajouter commerce en arbre tech ? » — il agit sur le marché, `marche.ts`)
+  { id: 'k-negoce', branche: 'commerce', rang: 1, sorte: 'passif', icone: 'vente', passif: { vente: 0.05 }, nom: 'Négoce', dit: 'Chaque vente rapporte 5 % de plus, au cours comme par ordre.' },
+  { id: 'k-courtage', branche: 'commerce', rang: 2, sorte: 'passif', icone: 'plafond', passif: { plafond: 0.1 }, nom: 'Courtage', dit: 'Le prix le plus haut d’un ordre monte de 10 %.' },
+  { id: 'k-negoce-2', branche: 'commerce', rang: 2, sorte: 'passif', icone: 'vente', passif: { vente: 0.05 }, nom: 'Grand négoce', dit: 'Chaque vente rapporte encore 5 % de plus.' },
+  { id: 'k-prevision', branche: 'commerce', rang: 3, sorte: 'mecanique', icone: 'prevision', mecanique: 'prevision', nom: 'Prévision', dit: 'La courbe du cours montre aussi les dix minutes à venir.' },
 ]
 
 /** Ce qu'on a recherché : les nœuds débloqués. */
@@ -126,7 +134,7 @@ export const aLaMecanique = (l: Labo, m: Mecanique): boolean => NOEUDS.some((n) 
 
 /** La somme des passifs débloqués. */
 export function passifsDe(l: Labo): Required<Passif> {
-  const s: Required<Passif> = { debit: 0, soute: 0, pepiteDouble: 0, blindage: 0, cadence: 0, critique: 0, bouclier: 0, vitesse: 0, maniabilite: 0, acceleration: 0, aimant: 0 }
+  const s: Required<Passif> = { debit: 0, soute: 0, pepiteDouble: 0, blindage: 0, cadence: 0, critique: 0, bouclier: 0, vitesse: 0, maniabilite: 0, acceleration: 0, aimant: 0, vente: 0, plafond: 0 }
   for (const n of NOEUDS) {
     if (n.passif === undefined || !estDebloque(l, n.id)) continue
     for (const k of Object.keys(n.passif) as (keyof Passif)[]) s[k] += n.passif[k] ?? 0

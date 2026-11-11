@@ -348,6 +348,16 @@ la forme, pas le système* (`asteroide.ts`) :
   sont partis ; RESTENT la barre qui s'adapte au nombre de branches et
   l'arbre qui défile quand ses rangs dépassent la fenêtre — jugés bons, ils
   serviront quand le contenu viendra.
+- **La branche COMMERCE** (Keko, 11/11 : « tu peux rajouter commerce en
+  arbre tech ? ») : une quatrième branche, qui agit sur le marché et pas
+  sur le vaisseau (`configDuLabo` n'en change pas) — rang 1 : Négoce (+5 %
+  sur chaque vente) ; rang 2 : Courtage (le plafond d'un ordre +10 %),
+  Grand négoce (+5 % encore) ; rang 3 : PRÉVISION, une mécanique — la
+  courbe montre les dix minutes à venir, en pointillé (exacte : le cours
+  est une fonction du temps, `previsionDe`). Le marché reçoit ces
+  `Avantages` (prime, plafond) de la page ; un ordre gardé au-dessus du
+  plafond de série se relit avec le plafond du labo. Quatre nœuds, de moi,
+  à rejuger. À quatre branches, seul l'onglet ouvert dit son nom.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`

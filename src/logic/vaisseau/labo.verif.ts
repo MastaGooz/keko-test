@@ -12,7 +12,7 @@ function verifier(quoi: string, vrai: boolean): void {
 }
 
 console.log('labo')
-verifier('trois branches, trois rangs chacune, aucun rang vide ; des identifiants uniques', BRANCHES.every((b) => RANGS.every((r) => noeudsDe(b, r).length > 0)) && new Set(NOEUDS.map((n) => n.id)).size === NOEUDS.length)
+verifier('quatre branches, trois rangs chacune, aucun rang vide ; des identifiants uniques', BRANCHES.every((b) => RANGS.every((r) => noeudsDe(b, r).length > 0)) && new Set(NOEUDS.map((n) => n.id)).size === NOEUDS.length)
 verifier('chaque nœud est d’une seule sorte, et porte ce qu’elle demande (une pièce du catalogue, un passif, une mécanique)', NOEUDS.every((n) => (n.sorte === 'piece' ? n.piece !== undefined && pieceDe(n.piece) !== undefined && n.passif === undefined && n.mecanique === undefined : n.sorte === 'passif' ? n.passif !== undefined && n.piece === undefined && n.icone !== undefined : n.mecanique !== undefined && n.piece === undefined && n.icone !== undefined)))
 verifier('toute pièce payante du catalogue est portée par un nœud, et un seul', PIECES.filter((p) => p.prix > 0).every((p) => NOEUDS.filter((n) => n.piece === p.id).length === 1))
 const neuf = laboNeuf()
@@ -61,6 +61,11 @@ for (let i = 0; i < 60; i++) {
 verifier('sans manche, elle pousse droit devant et dépasse la pointe du vaisseau', pointe > passe.vitesseMax * 1.2 && mb.vaisseau.y < -20)
 for (let i = 0; i < 60 * 7; i++) avancerLeMonde(sansCalme, mb, 1 / 60, { x: 0, y: 0 })
 verifier('passée, la pointe est revenue sous le plafond, et elle est rechargée', Math.hypot(mb.vaisseau.vx, mb.vaisseau.vy) <= passe.vitesseMax + 1e-6 && rechargeDeLaPostcombustion(passe, mb) === 1 && postcombustion(passe, mb))
+
+// LE COMMERCE : ses passifs ne touchent pas le vaisseau, ils servent au marché
+const marchand: Labo = { debloques: ['k-negoce', 'k-negoce-2', 'k-courtage', 'k-prevision'] }
+const PM = passifsDe(marchand)
+verifier('la branche commerce : la prime de vente se cumule, le plafond monte ; la configuration du vaisseau n’en change pas', Math.abs(PM.vente - 0.1) < 1e-9 && PM.plafond === 0.1 && JSON.stringify(configDuLabo(serie, marchand)) === JSON.stringify(serie))
 
 // LA RELECTURE
 const relu = lireLabo({ debloques: ['m-debit', 'inconnu', 'm-debit', 7, 'c-canon'] })

@@ -1,7 +1,7 @@
 /**
  * Vérifications du marché des minerais, sans navigateur.
  */
-import { annulerLOrdre, coursA, coursAuPas, gainDe, historiqueDe, lireMarche, MARCHE, marcheNeuf, ordresDe, pasDe, poserUnOrdre, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from './marche.ts'
+import { annulerLOrdre, coursA, coursAuPas, gainDe, historiqueDe, lireMarche, MARCHE, marcheNeuf, ordresDe, pasDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from './marche.ts'
 import { FICHES_MINERAI } from './hangar.ts'
 import { MINERAIS } from './jeu.ts'
 
@@ -62,6 +62,12 @@ verifier('un ordre posé sous le cours se règle au regard suivant, à son prix'
 const annule = annulerLOrdre(second.marche, second.tresor, second.marche.ordres[0].id)
 verifier('annuler un ordre par son numéro : ses pépites reviennent, l’autre reste ; un numéro inconnu ne change rien', annule.tresor.fer === 45 && annule.marche.ordres.length === 1 && annule.marche.ordres[0].quantite === 5 && annulerLOrdre(m0, tresor, 99).tresor === tresor)
 
+// LES AVANTAGES DU LABO : une prime sur les gains, un plafond relevé ; la prévision
+const AV = { prime: 0.1, plafond: 0.1 }
+verifier('la prime s’ajoute à chaque gain, au cours comme au règlement d’un ordre', gainDe(100, 2, AV) === 220 && vendreAuCours(tresor, 0, 'fer', 20, T0, AV)!.credits === gainDe(20, coursA('fer', T0), AV) && reglerLeMarche(bas.marche, 0, T0 + 1, AV).credits === gainDe(10, 0.1, AV))
+verifier('le plafond relevé laisse poser un ordre plus haut, qu’une relecture garde — et refuse sans l’avantage', prixPlafond('fer', AV) > prixPlafond('fer') && poserUnOrdre(m0, tresor, 'fer', 5, prixPlafond('fer', AV), T0) === null && poserUnOrdre(m0, tresor, 'fer', 5, prixPlafond('fer', AV), T0, AV) !== null && lireMarche({ ordres: [{ minerai: 'fer', quantite: 5, prix: prixPlafond('fer', AV) }] }, T0, AV).ordres.length === 1 && lireMarche({ ordres: [{ minerai: 'fer', quantite: 5, prix: prixPlafond('fer', AV) }] }, T0).ordres.length === 0)
+const prev = previsionDe('or', T0, 10)
+verifier('la prévision dit vrai : les dix cours à venir sont ceux qu’on lira', prev.length === 10 && prev.every((x, i) => x === coursA('or', T0 + (i + 1) * PAS)))
 const relu = lireMarche({ vuA: T0 - 5, ordres: [{ minerai: 'fer', quantite: 4, prix: 2.26, poseA: T0 - 9 }, { minerai: 'fer', quantite: 1, prix: 2 }, { minerai: 'bois', quantite: 1, prix: 2 }, { minerai: 'or', quantite: -1, prix: 8 }, { minerai: 'cristal', quantite: 2, prix: 999 }, null] }, T0)
 verifier('un marché relu sans confiance : des ordres bien formés, renumérotés, le prix au dixième', relu.ordres.length === 2 && relu.ordres[0].prix === 2.3 && relu.ordres[0].id === 1 && relu.ordres[1].id === 2 && relu.vuA === T0 - 5 && lireMarche(null, T0).ordres.length === 0 && lireMarche({ vuA: T0 + 1e9 }, T0).vuA === T0)
 
