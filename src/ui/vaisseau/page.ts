@@ -678,14 +678,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * UN MOT EN RELIEF (la lettre des effets ui/ du dépôt, `drawWord` : un dégradé, un haut lit, un dessous ombré, un
    * contour), centré sur x ; en or ou en acier ; `reflet` fait passer l'éclat diagonal du dépôt sur le mot.
+   * ADOUCI (Keko, 11/11 : « de petites lignes blanches, comme dans le L de Labo, qui rendent moche ; et le contraste
+   * entre le jaune et le marron est trop fort, le marron est trop foncé ») : le haut lit n'est plus un filet presque
+   * blanc mais le ton clair du dégradé, et le bas du dégradé comme le dessous sont remontés d'un brun sombre à un ocre.
    */
   function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean, f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
     const mot = spell(s, f) as { letters: { g: unknown; x: number }[]; w: number }
     const e = echelle
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - (mot.w * e) / 2) + L.x * e, y: Math.round(y) - decalage(f) * e, sx: e, sy: e }))
     const st = or
-      ? { fill: [N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: N.hex('#6b3a0c'), outline: N.hex('#1e0e03'), shadow: 0 }
-      : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[6], under: COQUE[2], outline: N.hex('#07050d'), shadow: 0 }
+      ? { fill: [N.hex('#e0a020'), PEPITE[2], N.hex('#ffe068')], edge: N.hex('#ffe68a'), under: N.hex('#b87a14'), outline: N.hex('#1e0e03'), shadow: 0 }
+      : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[5], under: N.hex('#57698c'), outline: N.hex('#07050d'), shadow: 0 }
     drawWord(p, items, reflet === null ? st : { ...st, shine: Math.round(x - (mot.w * e) / 2) + reflet })
   }
   /**
@@ -1819,58 +1822,59 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const H_INFO = 86
   /** La hauteur de l'en-tête de l'arbre : les onglets des branches, puis le bandeau au nom de la branche. */
-  const H_BRANCHES = 44
+  const H_BRANCHES = 28
+  let repereDeBrancheX = -1
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
-    dessinerLesBranches(p, y0 + 4)
-    dessinerLesRangs(p, y0 + 4 + H_BRANCHES + 3, y1 - H_INFO - 2, RANGS)
+    dessinerLesBranches(p, y0)
+    dessinerLesRangs(p, y0 + H_BRANCHES + 6, y1 - H_INFO - 2, RANGS)
     dessinerLInfoDuNoeud(p, y1 - H_INFO)
   }
   /** Le dessin de chaque branche, sur son onglet. */
   const ICONE_DE_BRANCHE: Record<Branche, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration' }
   /**
-   * LES BRANCHES, EN ONGLETS À ICÔNE, puis LE BANDEAU DE LA BRANCHE (Keko, 11/11 : « les boutons de sélection d'arbre
-   * sont un peu basiques par rapport à leur rôle — et ça se passe comment quand on rajoute des catégories plus tard ? ») :
-   * un onglet par branche, son dessin dedans, TOUS DE LA MÊME LARGEUR, qui se partagent la largeur de l'écran — trois
-   * aujourd'hui (56 px), SIX au plus sans rien changer (27 px, encore une cible de doigt) ; l'onglet ouvert, d'or, monte
-   * et se soude au bandeau, qui dit LE NOM de la branche en titre et son avancée (nœuds débloqués / nœuds, une barre).
-   * Une pastille d'or bat sur l'onglet d'une branche où un nœud est payable.
+   * LES BRANCHES : UNE BARRE D'ONGLETS, LA MÊME QUE CELLE DU BAS (Keko, 11/11 : d'abord « un peu basiques par rapport à
+   * leur rôle, et ça se passe comment quand on rajoute des catégories ? », puis, des onglets soudés à un bandeau :
+   * « vraiment pas beau, pas très cohérent niveau style entre les boutons et la zone de texte, et inutile de mettre le
+   * nombre de nœuds unlock / total »). Une seule pièce, donc, dans la langue de la barre de navigation : sur un fond de
+   * barre, une case par branche — son dessin, son nom dessous —, l'ouverte en or qui se lève, un repère d'or qui glisse
+   * jusqu'à elle ; une pastille d'or sur une branche où un nœud est payable. Les cases se partagent la largeur : jusqu'à
+   * QUATRE branches, tous les noms tiennent ; à cinq ou six, seule l'ouverte garde le sien (les autres, leur dessin).
    */
   function dessinerLesBranches(p: Peintre, y: number): void {
+    const h = H_BRANCHES
     const n = BRANCHES.length
-    const lw = Math.min(56, Math.floor((W - 8 - (n - 1) * 2) / n))
-    const x0 = Math.floor((W - (n * lw + (n - 1) * 2)) / 2)
-    const ho = 22
+    const tousLesNoms = n <= 4
+    p.rect(0, y, W, h, NUIT_BARRE)
+    p.rect(0, y + h - 1, W, 1, MATIERES.encre.contour)
+    p.rect(0, y + h, W, 1, NUIT_OMBRE)
+    const sw = W / n
     BRANCHES.forEach((b, i) => {
       const actif = branche === b
-      const x = x0 + i * (lw + 2)
-      const e = etatDuBouton(x, y, lw, ho)
-      const leve = Math.round(rebond(`branche-${b}`, actif ? 1 : 0) * 2)
-      const yy = y + 2 - leve + e.dy
-      plaque(p, x, yy, lw, ho + (actif ? 3 : 0), actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole && !actif, flash: e.flash })
-      if (actif) p.glow(x + lw / 2, yy + 10, 18, PEPITE[2], 0.25)
-      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], x + lw / 2 + 1, yy + 12, actif ? N.hex('#6b3a0c') : N.hex('#04060c'))
-      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], x + lw / 2, yy + 11, actif ? N.WHITE : COQUE[4])
+      const xa = Math.round(i * sw)
+      const xb = Math.round((i + 1) * sw)
+      const cx = Math.round((xa + xb) / 2)
+      const e = etatDuBouton(xa, y, xb - xa, h)
+      const dy = -Math.round(rebond(`branche-${b}`, actif ? 1 : 0) * 2) + e.dy
+      if (e.survole && !actif) p.rect(xa + 2, y + 2, xb - xa - 4, h - 5, N.hex('#19152a'))
+      if (actif) p.glow(cx, y + 10, 20, PEPITE[2], 0.2)
+      const nomme = tousLesNoms || actif
+      const yi = y + (nomme ? 10 : 14) + dy
+      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx + 1, yi + 1, MATIERES.encre.contour)
+      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? PEPITE[2] : COQUE[4])
+      if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
       if (!actif && noeudsDe(b).some((nd) => peutDebloquer(labo, tresor, nd.id))) {
         const bat = 0.5 + 0.5 * Math.sin(t * 4 + i)
-        p.rect(x + lw - 8, yy + 2, 5, 5, N.hex('#04060c'))
-        p.rect(x + lw - 7, yy + 3, 3, 3, bat > 0.5 ? N.hex('#fff2a8') : PEPITE[2])
+        p.rect(cx + 8, y + 3 + dy, 5, 5, MATIERES.encre.contour)
+        p.rect(cx + 9, y + 4 + dy, 3, 3, bat > 0.5 ? N.hex('#fff2a8') : PEPITE[2])
       }
-      if (!actif) zone(x, y, lw, ho + 2, () => ((branche = b), (choixA = t)), 'onglet')
+      if (!actif) zone(xa, y, xb - xa, h, () => ((branche = b), (choixA = t)), 'onglet')
     })
-    // le bandeau : le nom de la branche en titre, son avancée à droite
-    const yb = y + ho + 3
-    const hb = H_BRANCHES - ho - 3
-    plaque(p, 4, yb, W - 8, hb, 'acier')
-    const tous = noeudsDe(branche)
-    const faits = tous.filter((nd) => estDebloque(labo, nd.id)).length
-    ecrire(p, NOMS_BRANCHE[branche], 11, yb + 6, N.hex('#fff3cf'), { police: ENTETE, contour: MATIERES.acier.contour })
-    const compte = `${faits}/${tous.length}`
-    ecrire(p, compte, W - 10, yb + 4, faits > 0 ? RUNE[3] : COQUE[4], { police: GRAS, align: 'right' })
-    const lb = 34
-    const xb = W - 10 - lb
-    p.rect(xb, yb + hb - 6, lb, 3, MATIERES.creux.contour)
-    p.rect(xb, yb + hb - 6, Math.round((lb * faits) / tous.length), 3, RUNE[2])
+    const cible = BRANCHES.indexOf(branche) * sw + sw / 2
+    repereDeBrancheX = repereDeBrancheX < 0 ? cible : ressort(repereDeBrancheX, cible, 18)
+    p.rect(Math.round(repereDeBrancheX - 12), y + h - 2, 24, 2, PEPITE[2])
+    p.rect(Math.round(repereDeBrancheX - 8), y + h - 2, 16, 1, N.hex('#fff2a8'))
+    p.glow(Math.round(repereDeBrancheX), y + h - 2, 12, PEPITE[2], 0.35)
   }
   /** Les rangs de la branche entre deux hauteurs : le tronc, un bus par rang, les nœuds. */
   function dessinerLesRangs(p: Peintre, ya: number, yb: number, lesRangs: Rang[]): void {
@@ -1931,10 +1935,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
     if (etat === 'ferme') ecrire(p, `Demande un nœud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
     else if (etat === 'ouvert') {
-      // ce qu'on a / ce qu'il faut, par minerai : vert quand on l'a, rouge sinon
+      // CE QU'IL FAUT, par minerai — vert quand on l'a, rouge sinon ; ce qu'on a ne s'écrit plus à côté (Keko : « en
+      // format X/Y, si le joueur a beaucoup de la ressource, on va avoir un souci de place »)
       const cout = coutDe(n)
       const ks = MINERAIS.filter((k) => cout[k] > 0)
-      const textes = ks.map((k) => `${montantCourt(tresor[k])}/${cout[k]}`)
+      const textes = ks.map((k) => montantCourt(cout[k]))
       const lw = textes.map((tx) => 12 + largeurDe(tx, GRAS))
       const bw = largeurDe('Débloquer', GRAS) + 22
       let xc = Math.round((W - lw.reduce((a, b) => a + b, 0) - (ks.length - 1) * 12) / 2)

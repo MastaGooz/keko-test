@@ -138,6 +138,25 @@ la forme, pas le système* (`asteroide.ts`) :
   une barre) ; une pastille d'or bat sur l'onglet d'une branche où un nœud
   est payable. La fiche du nœud a deux lignes au pied : le coût, puis le
   bouton centré dessous (« En vente au hangar » puis « Voir », pareil).
+- **Trois retouches** (Keko, 11/11 : « si on met le coût en format X/Y et
+  que le joueur a beaucoup de la ressource on va avoir un souci de place » ;
+  « le style de certains textes (titre Labo, titres des nœuds) présente des
+  petites lignes blanches (comme dans le L de Labo) qui rendent moche, et
+  le contraste entre le jaune et le marron est trop fort, le marron est
+  trop foncé » ; « le menu tout en haut du labo pour changer d'arbre est
+  vraiment pas beau — pas très cohérent niveau style entre les boutons et la
+  zone de texte, et inutile de mettre le nombre de nœuds unlock / total ») :
+  - *le coût ne dit plus que CE QU'IL FAUT*, vert quand on l'a, rouge
+    sinon (le stock se lit à l'entrepôt) ;
+  - *le mot en relief est adouci, partout* (`motEnRelief`) : le haut lit
+    n'est plus un filet presque blanc mais le ton clair du dégradé, le bas
+    du dégradé et le dessous passent du brun sombre à l'ocre ; le contour
+    sombre reste (c'est lui qui détache le mot d'un bouton d'or) ;
+  - *les branches sont une barre d'onglets comme celle du bas* : une seule
+    pièce — fond de barre, une case par branche (son dessin, son nom
+    dessous), l'ouverte en or qui se lève, un repère d'or qui glisse ; plus
+    de bandeau ni de compte. Jusqu'à quatre branches tous les noms
+    tiennent ; à cinq ou six, seule l'ouverte garde le sien.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
