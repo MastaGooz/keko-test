@@ -50,6 +50,15 @@ la forme, pas le système* (`asteroide.ts`) :
   clair passe de nœud en nœud). Le conteneur de l'entrepôt reste écrit,
   plus aucune vue ne le porte.
 
+- **Le haut de l'icône de la branche ouverte était tramé** (Keko, 11/11 :
+  « dans tech, quand une icône est sélectionnée, son haut devient pixelisé
+  bizarrement ») : la vignette de la scène assombrit ses quatre rangées du
+  haut en trame, par-dessus la barre des branches, et l'icône ouverte, qui
+  se lève de deux pixels, y entrait. La vignette ne pose plus ses rangées
+  du haut dans la tech. *Et le grain de l'icône ouverte* : son ton sombre
+  était un brun, semé en grains presque noirs dans l'or ; il est remonté
+  tout près de l'or, et le grain des symboles passe de 22 % à 12 %.
+
 ## Le marché : vendre une quantité, au cours ou à prix fixé (Keko, 11/11 : « dans l'entrepôt, changer le bouton vendre pour qu'il ouvre un panneau plutôt que tout vendre d'un coup ; le panneau propose de vendre une quantité (on bouge un cran sur une barre de 0 au max), on affiche une courbe de prix (ordonnée = prix, abscisse = temps) ; on propose de vendre au prix de marché ou de poser un prix personnalisé, qui sera déclenché potentiellement »)
 
 - **La règle** (`logic/vaisseau/marche.ts`, pure, 16 vérifications dans
@@ -135,6 +144,9 @@ la forme, pas le système* (`asteroide.ts`) :
 - **« Annuler l'ordre » en rouge** (Keko, 11/11 : « tenter en rouge le
   bouton annuler l'ordre, comme on tente en vert le bouton vendre ») : une
   matière de plaque `rouge`, sombre comme la verte, au biseau clair.
+- **Les minerais d'essai sont retirés** (Keko, 11/11 : « tu peux enlever les
+  matériaux placeholder du commerce ») : la grille garde son défilement,
+  qui ne sert pas encore (trois minerais).
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).

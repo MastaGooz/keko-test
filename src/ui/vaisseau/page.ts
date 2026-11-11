@@ -1039,7 +1039,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LA VIGNETTE : les bords s'assombrissent, en trame de plus en plus serrée
     for (let k = 0; k < 4; k++) {
       const a = 0.55 - k * 0.13
-      p.rect(0, y0 + k, W, 1, NUIT, a)
+      // (pas en haut de la tech : la barre des branches y est, et l'icône de la branche ouverte, qui se lève de deux
+      // pixels, entrait dans cette trame — Keko, 11/11 : « quand une icône est sélectionnée, son haut devient pixelisé »)
+      if (vue !== 'labo') p.rect(0, y0 + k, W, 1, NUIT, a)
       p.rect(0, y1 - 1 - k, W, 1, NUIT, a)
       p.rect(k, y0, 1, hautScene, NUIT, a)
       p.rect(W - 1 - k, y0, 1, hautScene, NUIT, a)
@@ -1158,36 +1160,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** L'INVENTAIRE : cinq cases par rangée, qui s'allument une à une ; le minerai choisi en or et qui luit. */
   /**
-   * LA GRILLE DÉFILE (Keko, 11/11 : « rajouter deux lignes de slots à l'entrepôt et donner la possibilité de scroller
-   * vers le bas ; rajoute vingt minerais placeholder pour tester », puis « afficher en permanence deux lignes de plus,
-   * et scroller pour le reste ») : la scène de l'entrepôt montre deux rangées de plus (`rangeesDeLEntrepot`), la grille a
-   * autant de rangées qu'il en faut pour tout loger ; on la fait glisser au doigt, d'une rangée à la fois (la molette sur PC),
-   * une barre à droite dit où l'on en est. VINGT MINERAIS D'ESSAI la remplissent — de l'écran seulement : ils n'ont ni
-   * cours ni vente, la règle ne les connaît pas.
+   * LA GRILLE DÉFILE quand elle a plus de rangées que la scène n'en montre (Keko, 11/11 : « donner la possibilité de
+   * scroller vers le bas ») : on la fait glisser au doigt, d'une rangée à la fois (la molette sur PC), une barre à
+   * droite dit où l'on en est. Avec trois minerais, tout tient : elle ne défile pas encore (jugée avec des minerais
+   * d'essai, retirés depuis).
    */
-  const MINERAIS_D_ESSAI = 30 // (vingt demandés ; trente depuis que cinq rangées se voient d'emblée, pour qu'il reste de quoi défiler)
-  const TEINTES_D_ESSAI = ['#c06ad0', '#4ec0a0', '#d08a3a', '#6a8ae0', '#d05a6a', '#a0c04a'].map((c) => N.hex(c))
-  const stockDEssai = (e: number): number => (e * 37 + 11) % 90
-  let essaiChoisi: number | null = null
   const PAS_DE_L_INVENTAIRE = 31
   let defilInventaire = 0
   let zoneDeLInventaire: { x: number; y: number; w: number; h: number } | null = null
-  /** Le dessin d'un minerai d'essai : un éclat à facettes, teinté par son numéro. */
-  function dessinerUnMineraiDEssai(p: Peintre, x0: number, y0: number, e: number): void {
-    const x = Math.round(x0)
-    const y = Math.round(y0)
-    const c = TEINTES_D_ESSAI[e % TEINTES_D_ESSAI.length]
-    p.poly([[x, y - 5], [x + 4, y - 1], [x + 2, y + 4], [x - 2, y + 4], [x - 4, y - 1]], MATIERES.encre.contour)
-    p.poly([[x, y - 4], [x + 3, y - 1], [x + 1.5, y + 3], [x - 1.5, y + 3], [x - 3, y - 1]], c)
-    p.rect(x - 1, y - 2, 1, 2, N.WHITE, 0.8)
-    p.rect(x + 1, y + 1, 1, 2, MATIERES.encre.contour, 0.5)
-  }
   function dessinerLInventaire(p: Peintre, y0: number): void {
     const COL = 5
     const cw = 30
     const ch = 28
     const RANG = Math.max(1, Math.floor((hautScene - 10) / (ch + 3)))
-    const total = MINERAIS.length + MINERAIS_D_ESSAI
+    const total = MINERAIS.length
     const rangees = Math.max(RANG, Math.ceil(total / COL))
     const maxD = Math.max(0, rangees - RANG)
     defilInventaire = Math.max(0, Math.min(maxD, defilInventaire))
@@ -1201,27 +1187,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y = gy + Math.floor(c / COL) * (ch + 3)
       const i = c + d * COL
       const k = MINERAIS[i]
-      const e = i - MINERAIS.length
-      if (k === undefined && (e < 0 || e >= MINERAIS_D_ESSAI)) {
+      if (k === undefined) {
         plaque(p, x, y, cw, ch, 'creux')
         continue
       }
-      const choisi = k !== undefined ? essaiChoisi === null && k === mineraiChoisi : essaiChoisi === e
-      const stock = k !== undefined ? tresor[k] : stockDEssai(e)
+      const choisi = k === mineraiChoisi
       const b = etatDuBouton(x, y, cw, ch)
       if (!b.enfonce) ombrePortee(p, x, y, cw, ch)
       plaque(p, x, y + b.dy, cw, ch, choisi ? 'or' : 'encre', { enfonce: b.enfonce, survole: b.survole, flash: b.flash || age < 0.06, reflet: choisi ? (((t * 0.5) % 1) < 0.3 ? x - 10 + (((t * 0.5) % 1) / 0.3) * (cw + 20) : null) : null })
       if (choisi) p.glow(x + cw / 2, y + 11, 14, PEPITE[2], 0.18 + 0.08 * Math.sin(t * 4))
-      const yi = y + 11 + b.dy - (choisi ? Math.round(Math.abs(Math.sin(t * 3)) * 1) : 0)
-      if (k !== undefined) dessinerUneRessource(p, x + cw / 2, yi, k)
-      else dessinerUnMineraiDEssai(p, x + cw / 2, yi, e)
-      ecrire(p, montantCourt(stock), x + cw / 2, y + ch - 10 + b.dy, stock > 0 ? N.WHITE : COQUE[3], { align: 'center', police: GRAS })
-      zone(x, y, cw, ch, () => {
-        if (k !== undefined) {
-          mineraiChoisi = k
-          essaiChoisi = null
-        } else essaiChoisi = e
-      })
+      dessinerUneRessource(p, x + cw / 2, y + 11 + b.dy - (choisi ? Math.round(Math.abs(Math.sin(t * 3)) * 1) : 0), k)
+      ecrire(p, montantCourt(tresor[k]), x + cw / 2, y + ch - 10 + b.dy, tresor[k] > 0 ? N.WHITE : COQUE[3], { align: 'center', police: GRAS })
+      zone(x, y, cw, ch, () => (mineraiChoisi = k))
     }
     if (maxD > 0) {
       const hg = RANG * (ch + 3) - 3
@@ -1879,7 +1856,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (!plein(i, j)) continue
         const lit = !plein(i, j - 1) || !plein(i - 1, j)
         const sombre = !plein(i, j + 1) || !plein(i + 1, j)
-        p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.22 ? T[0] : T[1])
+        p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.12 ? T[0] : T[1])
       }
   }
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
@@ -2038,7 +2015,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (actif) p.glow(cx, y + 10, 20, PEPITE[2], 0.2)
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
-      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#b8860b'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]])
+      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]]) // (le sombre de l'or tout près de l'or : un brun y semait des grains noirs — Keko : « son haut devient pixelisé bizarrement »)
       if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
       if (!actif) zone(xa, y, xb - xa, h, () => ((branche = b), (choixA = t)), 'onglet')
     })
@@ -2367,19 +2344,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * valeur unitaire et le stock, et VENDRE — les pièces volent jusqu'au compteur, qui roule.
    */
   function dessinerLEntrepot(p: Peintre, y: number): number {
-    if (essaiChoisi !== null) {
-      // (un minerai d'essai : une fiche sans cours ni vente)
-      const hp = 20 + 4 * 9 + 8 + 26 + 20
-      plaque(p, 4, y, W - 8, hp, 'encre')
-      const nom = `Minerai d’essai ${essaiChoisi + 1}`
-      dessinerUnMineraiDEssai(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, essaiChoisi)
-      motEnRelief(p, nom, W / 2 + 5, y + 7, true)
-      replier('Un minerai d’essai, pour juger la grille quand elle se remplit.', W - 20).forEach((li, i) => ecrire(p, li, W / 2, y + 29 + i * 9, COQUE[5], { align: 'center' }))
-      ecrire(p, 'En stock', 10, y + 76, COQUE[4])
-      ecrire(p, String(stockDEssai(essaiChoisi)), W - 10, y + 76, N.WHITE, { police: GRAS, align: 'right' })
-      ecrire(p, 'Bientôt', W / 2, y + 94, COQUE[3], { align: 'center' })
-      return y + hp + 4
-    }
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
     const LIGNES = 4 // (quatre lignes fixes : avec les minuscules, les descriptions en prennent une de plus)
