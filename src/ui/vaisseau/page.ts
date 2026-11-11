@@ -1747,12 +1747,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     combat: ['...#...', '..###..', '.#.#.#.', '###.###', '.#.#.#.', '..###..', '...#...'],
     exploration: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
   }
-  function dessinerLeGlyphe(p: Peintre, nom: string, x0: number, y0: number, c: number, k = 2): void {
+  /**
+   * UN SYMBOLE DU LABO, EN RELIEF (Keko, 11/11 : « donner un peu de texture aux symboles des arbres du labo » — c'étaient
+   * des aplats d'une seule teinte) : le dessin de sept sur sept, agrandi, devient un petit objet de métal — son bord du
+   * haut et de gauche pris par la lumière, celui du bas et de droite dans l'ombre, un grain semé dans le corps (toujours
+   * le même), et une ombre portée d'un pixel. `T` : ses trois tons, du sombre au clair.
+   */
+  function dessinerLeGlyphe(p: Peintre, nom: string, x0: number, y0: number, T: [number, number, number], k = 2): void {
     const lignes = ICONES_DU_LABO[nom]
     if (lignes === undefined) return
     const x = Math.round(x0 - 3.5 * k)
     const y = Math.round(y0 - 3.5 * k)
-    lignes.forEach((ligne, j) => [...ligne].forEach((ch, i) => ch === '#' && p.rect(x + i * k, y + j * k, k, k, c)))
+    const n = 7 * k
+    const plein = (i: number, j: number): boolean => i >= 0 && j >= 0 && i < n && j < n && lignes[Math.floor(j / k)][Math.floor(i / k)] === '#'
+    const OMBRE = N.hex('#04060c')
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) if (plein(i, j) && !plein(i + 1, j + 1)) p.rect(x + i + 1, y + j + 1, 1, 1, OMBRE)
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        if (!plein(i, j)) continue
+        const lit = !plein(i, j - 1) || !plein(i - 1, j)
+        const sombre = !plein(i, j + 1) || !plein(i + 1, j)
+        p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.22 ? T[0] : T[1])
+      }
   }
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
   const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
@@ -1789,7 +1805,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.poly(lo(13), bord)
         p.poly(lo(11.5), corps)
       }
-      dessinerLeGlyphe(p, n.icone ?? '', x, yy, etat === 'acquis' ? N.WHITE : etat === 'ouvert' ? COQUE[5] : COQUE[2])
+      dessinerLeGlyphe(p, n.icone ?? '', x, yy, etat === 'acquis' ? [RUNE[2], RUNE[3], N.WHITE] : etat === 'ouvert' ? [COQUE[3], COQUE[5], COQUE[6]] : [COQUE[1], COQUE[2], COQUE[3]])
     }
     // une pièce débloquée qu'on n'a pas encore achetée : le crédit dans son coin ; payable : une pastille d'or qui bat
     if (etat === 'acquis' && n.sorte === 'piece' && !possede(hangar, n.piece ?? '')) dessinerUnCredit(p, x + 9, yy + 9)
@@ -1823,14 +1839,48 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * débloque ainsi de la place au labo ») : le labo n'a plus de menu d'achat.
    */
   const H_INFO = 86
+  /**
+   * LE COÛT D'UN NŒUD, EN PUCES : le dessin du minerai, le nombre, ET SON NOM (Keko, 11/11 : « marquer la ressource en
+   * texte — j'ai peur que ce soit compliqué sans cette indication ») ; rangées en LIGNES — une puce qui dépasse la
+   * largeur passe à la ligne d'en dessous (« on crée une autre ligne »), et la fiche du nœud grandit d'autant.
+   */
+  type PuceDeCout = { k: Minerai; nombre: string; nom: string; w: number }
+  function lignesDuCout(n: Noeud): PuceDeCout[][] {
+    const cout = coutDe(n)
+    const puces = MINERAIS.filter((k) => cout[k] > 0).map((k): PuceDeCout => {
+      const nombre = montantCourt(cout[k])
+      const nom = FICHES_MINERAI[k].nom
+      return { k, nombre, nom, w: 12 + largeurDe(nombre, GRAS) + 3 + largeurDe(nom) }
+    })
+    const lignes: PuceDeCout[][] = [[]]
+    let large = 0
+    for (const pu of puces) {
+      const ligne = lignes[lignes.length - 1]
+      if (ligne.length > 0 && large + ECART_DES_PUCES + pu.w > W - 24) {
+        lignes.push([pu])
+        large = pu.w
+      } else {
+        large += (ligne.length > 0 ? ECART_DES_PUCES : 0) + pu.w
+        ligne.push(pu)
+      }
+    }
+    return lignes
+  }
+  const ECART_DES_PUCES = 10
+  /** Ce que la fiche du nœud choisi prend EN PLUS quand son coût tient sur plusieurs lignes. */
+  function surplusDeLInfo(): number {
+    const n = noeudDe(noeudChoisi[branche])
+    return n !== undefined && etatDuNoeud(n) === 'ouvert' ? (lignesDuCout(n).length - 1) * 12 : 0
+  }
   /** La hauteur de l'en-tête de l'arbre : les onglets des branches, puis le bandeau au nom de la branche. */
   const H_BRANCHES = 28
   let repereDeBrancheX = -1
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
     dessinerLesBranches(p, y0)
-    dessinerLesRangs(p, y0 + H_BRANCHES + 6, y1 - H_INFO - 2, RANGS)
-    dessinerLInfoDuNoeud(p, y1 - H_INFO)
+    const hi = H_INFO + surplusDeLInfo()
+    dessinerLesRangs(p, y0 + H_BRANCHES + 6, y1 - hi - 2, RANGS)
+    dessinerLInfoDuNoeud(p, y1 - hi)
   }
   /** Le dessin de chaque branche, sur son onglet. */
   const ICONE_DE_BRANCHE: Record<Branche, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration' }
@@ -1862,8 +1912,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (actif) p.glow(cx, y + 10, 20, PEPITE[2], 0.2)
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
-      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx + 1, yi + 1, MATIERES.encre.contour)
-      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? PEPITE[2] : COQUE[4])
+      dessinerLeGlyphe(p, ICONE_DE_BRANCHE[b], cx, yi, actif ? [N.hex('#b8860b'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]])
       if (nomme) ecrire(p, NOMS_BRANCHE[b], cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
       if (!actif && noeudsDe(b).some((nd) => peutDebloquer(labo, tresor, nd.id))) {
         const bat = 0.5 + 0.5 * Math.sin(t * 4 + i)
@@ -1924,7 +1973,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const n = noeudDe(noeudChoisi[branche])
     if (n === undefined) return
     const etat = etatDuNoeud(n)
-    const h = H_INFO - 4
+    const surplus = surplusDeLInfo()
+    const h = H_INFO - 4 + surplus
     plaque(p, 4, y, W - 8, h, 'encre')
     motEnRelief(p, n.nom, W / 2, y + 5, etat === 'acquis')
     const L = replier(n.dit, W - 20).slice(0, 3)
@@ -1932,7 +1982,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     L.forEach((li, i) => ecrire(p, li, W / 2, hautDuTexte + i * 9, COQUE[5], { align: 'center' }))
     // (deux lignes au pied : LE COÛT, puis LE BOUTON dessous — Keko : « une ligne avec les coûts et en dessous la ligne
     // avec le bouton, pour éviter la ligne trop large »)
-    const ya = y + h - 33
+    const ya = y + h - 33 - surplus
     const yb = y + h - 19
     const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
     if (etat === 'ferme') ecrire(p, `Demande un nœud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
@@ -1940,15 +1990,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // CE QU'IL FAUT, par minerai — vert quand on l'a, rouge sinon ; ce qu'on a ne s'écrit plus à côté (Keko : « en
       // format X/Y, si le joueur a beaucoup de la ressource, on va avoir un souci de place »)
       const cout = coutDe(n)
-      const ks = MINERAIS.filter((k) => cout[k] > 0)
-      const textes = ks.map((k) => montantCourt(cout[k]))
-      const lw = textes.map((tx) => 12 + largeurDe(tx, GRAS))
       const bw = largeurDe('Débloquer', GRAS) + 22
-      let xc = Math.round((W - lw.reduce((a, b) => a + b, 0) - (ks.length - 1) * 12) / 2)
-      ks.forEach((k, i) => {
-        dessinerUneRessource(p, xc + 5, ya + 4, k)
-        ecrire(p, textes[i], xc + 12, ya, tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5], { police: GRAS })
-        xc += lw[i] + 12
+      lignesDuCout(n).forEach((ligne, li) => {
+        let xc = Math.round((W - ligne.reduce((a, pu) => a + pu.w, 0) - (ligne.length - 1) * ECART_DES_PUCES) / 2)
+        const yl = ya + li * 12
+        for (const pu of ligne) {
+          const a = tresor[pu.k] >= cout[pu.k]
+          const wn = largeurDe(pu.nombre, GRAS)
+          dessinerUneRessource(p, xc + 5, yl + 4, pu.k)
+          ecrire(p, pu.nombre, xc + 12, yl, a ? RUNE[3] : ROUGE[5], { police: GRAS })
+          ecrire(p, pu.nom, xc + 12 + wn + 3, yl, a ? RUNE[2] : ROUGE[4])
+          xc += pu.w + ECART_DES_PUCES
+        }
       })
       bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Débloquer', peutDebloquer(labo, tresor, n.id), () => {
         const r = debloquer(labo, tresor, n.id)

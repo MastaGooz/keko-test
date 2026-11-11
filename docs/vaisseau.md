@@ -162,6 +162,21 @@ la forme, pas le système* (`asteroide.ts`) :
   dispo ») : ni sa case, ni sa cible sur le vaisseau, tant qu'aucune pièce
   n'y est possédée ou débloquée au labo (`aDesPieces`) — au départ, les
   armes ; les outils ont la foreuse de série.
+- **Le coût nomme la ressource, et passe à la ligne ; les symboles ont du
+  relief** (Keko, 11/11 : « marquer la ressource en texte dans les coûts du
+  labo — j'ai peur que ce soit compliqué sans cette indication ; et si la
+  place des coûts prend plus d'une ligne, on passe la ressource qui dépasse
+  en dessous en créant une autre ligne ; et donner un peu de texture aux
+  symboles des arbres ») : chaque coût est une puce — le dessin du minerai,
+  le nombre, son NOM (« 30 Fer ») — ; les puces se rangent en lignes
+  (`lignesDuCout`), une puce qui dépasse la largeur ouvre une ligne, et la
+  fiche du nœud grandit de douze pixels par ligne (l'arbre lui cède la
+  place). *Avec deux minerais tout tient sur une ligne : le passage à la
+  ligne a été vu en forçant une largeur étroite le temps d'une capture.*
+  Les symboles (passifs, mécaniques, branches) ne sont plus des aplats :
+  bord du haut et de gauche éclairé, bord du bas et de droite ombré, un
+  grain dans le corps, une ombre portée d'un pixel (`dessinerLeGlyphe`,
+  trois tons).
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`
