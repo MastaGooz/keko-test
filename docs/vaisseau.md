@@ -90,6 +90,10 @@ la forme, pas le système* (`asteroide.ts`) :
   *Et (« les liens et nœuds inaccessibles se distinguent mal du fond,
   couleurs trop proches ») : le nœud fermé et le conduit éteint passent du
   presque noir à un gris acier, le conduit sous tension à un bleu franc.*
+  *Et (« diminuer un peu la hauteur des liens entre les étages ») : les
+  rangs font 56 px, fixes — ils ne s'étirent plus pour remplir la fenêtre,
+  l'arbre s'y centre ; les liens entre deux rangs raccourcissent d'une
+  dizaine de pixels.*
 - **Les rangs** font 64 px au moins (46 avant) et se partagent la fenêtre :
   trois rangs la remplissent sur un écran de 780 px. Le défilement reste.
 - **Les symboles** : la lumière ne vient plus que d'en haut (éclairés aussi

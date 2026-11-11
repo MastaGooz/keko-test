@@ -2184,11 +2184,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * - LES CONDUITS sont épais (cinq pixels : cernés d'encre, un cœur clair) : de la source au premier rang, puis de
    *   CHAQUE nœud au rang d'après. Un rang ouvert est sous tension, immobile ; SEUL LE CHEMIN QUI MÈNE AUX NŒUDS
    *   DÉBLOQUÉS brille et s'anime — des grains de lumière y descendent ;
-   * - les rangs se partagent la fenêtre (64 px au moins chacun) ; s'ils la dépassent, on fait glisser l'arbre au doigt
+   * - les rangs font 56 px, l'arbre se centre dans la fenêtre ; s'ils la dépassent, on fait glisser l'arbre au doigt
    *   (la molette sur PC) — la barre des branches et la fiche du nœud ne bougent pas ; un fondu aux bords, une barre à
    *   droite. Le défilement est gardé par branche.
    */
-  const PAS_DES_RANGS = 64
+  const PAS_DES_RANGS = 56
   const defilDeLArbre: Record<Branche, number> = { minage: 0, combat: 0, exploration: 0, commerce: 0 }
   let zoneDeLArbre: { x: number; y: number; w: number; h: number } | null = null
   let coupeHaut = 0
@@ -2198,8 +2198,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ENCRE = N.hex('#04060c')
     const fenetre = yb - ya
     const n = RANGS.length
-    const pas = Math.max(PAS_DES_RANGS, (fenetre - 8) / n)
+    // (les rangs ont UNE hauteur, ils ne s'étirent plus pour remplir la fenêtre — Keko, 11/11 : « diminuer un peu la
+    // hauteur des liens entre les étages » ; l'arbre, plus court qu'elle, s'y centre)
+    const pas = PAS_DES_RANGS
     const total = n * pas + 8
+    const marge = Math.max(0, Math.floor((fenetre - total) / 2))
     const maxD = Math.max(0, Math.round(total - fenetre))
     defilDeLArbre[branche] = Math.max(0, Math.min(maxD, defilDeLArbre[branche]))
     const d = Math.round(defilDeLArbre[branche])
@@ -2251,7 +2254,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const rangs = RANGS.map((r, k) => {
       const noeuds = noeudsDe(branche, r)
       const ecart = Math.min(42, (W - 12) / noeuds.length)
-      const haut = Math.round(ya + 4 + pas * k - d)
+      const haut = Math.round(ya + 4 + marge + pas * k - d)
       return { r, haut, bus: haut + 5, y: haut + 29, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
     })
     // LES CONDUITS : la source nourrit le premier rang, chaque nœud le rang d'après. Le rang ouvert, tout y est sous
