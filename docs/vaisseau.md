@@ -46,6 +46,12 @@ ouverte. Elle dit maintenant **toutes ses places** (« ARME 1, 3 », en gris),
 **et « EQUIPE » en or à droite, en plus**, quand la place ouverte en est. Si
 le nom de la pièce ne laisse pas la largeur, les numéros seuls (« 1, 3 »).
 
+**Retiré le jour même** (Keko : « finalement enlève l'info qui indique dans
+quels slots est équipée l'arme, mets juste équipé ou rien comme dans les
+autres parties de vaisseau ») : la ligne dit « EQUIPE » ou rien. Pour une
+arme ou un outil, « EQUIPE » veut dire *à la place ouverte* — une pièce
+montée ailleurs ne porte rien, on peut la monter ici aussi.
+
 ## La base : une station spatiale au départ, et une zone calme (Keko, 11/11 : « modifier le premier extracteur (celui du spawn) pour qu'il n'y ait pas d'ennemi à proximité au début et surtout l'agrandir pour qu'il ressemble à une station spatiale ? on peut imaginer une station spatiale ? »)
 
 - **La station du point de départ est LA BASE** (`dessinerBase`,
