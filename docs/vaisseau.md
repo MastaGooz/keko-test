@@ -60,9 +60,15 @@ la forme, pas le système* (`asteroide.ts`) :
   station brillaient à travers : la même leçon que les bandeaux).
 - Vu en capture (412 × 915, `&minerai=12`) : la soute ouverte, « −1 »
   (12 → 11), « Tout » (→ 0, boutons éteints), « Fermer ».
-- *Ce que ça ne règle pas* : l'aimant ramasse toujours tout ; du fer libre
-  à portée revient dans la soute aussitôt largué. Le remplacement
-  automatique et le filtre par minerai restent des pistes.
+- **On REFUSE la collecte d'un minerai** (Keko, 11/11 : « ajouter une option
+  dans le panneau soute pour bloquer la collecte d'un élément ») : une
+  colonne COLLECTE dans le panneau, un bouton par minerai, « Oui » en vert
+  ou « Non » en sombre. La règle (`Monde.refuses`, vérifiée) : la pépite
+  d'un minerai refusé n'est ni aimantée ni ramassée par le joueur, comme si
+  la soute était pleine pour elle ; le rival, lui, la prend. Le réglage
+  tient d'une expédition à l'autre le temps de la page (pas gardé sur
+  l'appareil). Rien ne le rappelle hors du panneau — à rejuger. Vu en
+  capture : « Oui » → « Non » sur le fer.
 
 ## L'accueil : NOVA DRIFTER (Keko, 11/11 : « un écran d'accueil du jeu avec une demande de tap pour lancer le hangar, afin de débloquer les sons car actuellement il faut que je tape avant que le jeu lance le son. Un bel écran d'accueil dans le thème graphique du jeu, et le titre : Nova Drifter »)
 

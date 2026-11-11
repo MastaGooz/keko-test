@@ -259,6 +259,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (coque0 > 0) m.coque = Math.min(m.coque, coque0)
     m.tresor = { ...tresor }
     m.banque = totalDe(tresor)
+    m.refuses = refuses // (le même objet : le panneau de soute le règle en vol)
     effets = []
     flashs.length = 0
     envols.length = 0
@@ -334,6 +335,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let souteOuverte = false
   let souteA = -10
+  /** Les minerais dont on REFUSE la collecte (Keko : « bloquer la collecte d'un élément ») : gardés d'une expédition à l'autre, le temps de la page. */
+  const refuses: Record<Minerai, boolean> = { fer: false, or: false, cristal: false }
   function ouvrirLaSoute(): void {
     souteOuverte = true
     souteA = t
@@ -2646,7 +2649,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     frame.light.fill(0)
     p.rect(0, bandeHaut(), W, H - bandeHaut() - bandeBas(), FOND, 0.62 * u)
     const w = 160
-    const h = 20 + MINERAIS.length * 25 + 14 + 22
+    const EN_TETES = 9
+    const h = 20 + EN_TETES + MINERAIS.length * 25 + 14 + 22
     const x = Math.round((W - w) / 2)
     const y = Math.round(centreY() - h / 2 + (1 - u) * 10)
     ombrePortee(p, x, y, w, h)
@@ -2661,19 +2665,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       flottants.push({ texte: `-${n}`, x: bx, y: by, t0: t, c: ROUGE[5] })
       if (typeof navigator.vibrate === 'function') navigator.vibrate(12)
     }
+    // les deux colonnes : COLLECTE (on prend ce minerai, ou on le refuse) et LARGUER
+    const bt = x + w - 8 - 30
+    const b1 = bt - 3 - 22
+    const bc = b1 - 6 - 28
+    p.text('COLLECTE', bc + 14, y + 21, COQUE[3], { align: 'center' })
+    p.text('LARGUER', b1 + 27, y + 21, COQUE[3], { align: 'center' })
     MINERAIS.forEach((k, i) => {
-      const ry = y + 20 + i * 25
+      const ry = y + 20 + EN_TETES + i * 25
       const combien = m.cargaison[k]
       plaque(p, x + 5, ry, w - 10, 22, 'creux')
       dessinerUneRessource(p, x + 15, ry + 11, k)
       ecrire(p, FICHES_MINERAI[k].nom, x + 25, ry + 3, combien > 0 ? COQUE[5] : COQUE[3])
       ecrire(p, String(combien), x + 25, ry + 12, combien > 0 ? IVOIRE : COQUE[3], { police: GRAS })
-      const bt = x + w - 8 - 34
-      const b1 = bt - 3 - 24
-      bouton(p, b1, ry + 3, 24, 16, '-1', combien > 0, () => jeter(k, 1, b1 + 12, ry), 'retour', 'acier')
-      bouton(p, bt, ry + 3, 34, 16, 'Tout', combien > 0, () => jeter(k, combien, bt + 17, ry), 'retour', 'acier')
+      // (« Oui » en vert : l'aimant le prend ; « Non » : refusé, ses pépites restent dehors)
+      bouton(p, bc, ry + 3, 28, 16, refuses[k] ? 'Non' : 'Oui', true, () => (refuses[k] = !refuses[k]), 'onglet', refuses[k] ? 'encre' : 'vert')
+      bouton(p, b1, ry + 3, 22, 16, '-1', combien > 0, () => jeter(k, 1, b1 + 11, ry), 'retour', 'acier')
+      bouton(p, bt, ry + 3, 30, 16, 'Tout', combien > 0, () => jeter(k, combien, bt + 15, ry), 'retour', 'acier')
     })
-    const yb = y + 20 + MINERAIS.length * 25
+    const yb = y + 20 + EN_TETES + MINERAIS.length * 25
     p.text(texteNu('Le minerai largué est perdu'), W / 2, yb + 3, COQUE[3], { align: 'center' })
     const bw = 60
     bouton(p, Math.round(W / 2 - bw / 2), yb + 13, bw, 17, 'Fermer', true, () => (souteOuverte = false), 'retour')

@@ -428,5 +428,13 @@ const partis = larguer(lg, 'fer', 5)
 const trop = larguer(lg, 'cristal', 10)
 verifier('larguer : le minerai quitte la soute, sans pépite libre ni trésor ; pas plus qu’on n’en porte', partis === 5 && trop === 2 && lg.cargaison.fer === 2 && lg.cargaison.cristal === 0 && lg.minerai === 2 && lg.pepites.length === 0 && totalDe(lg.tresor) === 0)
 
+// LE MINERAI REFUSÉ : sa pépite n'est ni aimantée ni ramassée ; une autre, à côté, l'est
+const rf = nouveauMonde()
+rf.prochainEnnemiA = 1e9
+rf.refuses.fer = true
+rf.pepites.push({ id: 98, x: 20, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer' }, { id: 99, x: -20, y: 0, vx: 0, vy: 0, graine: 2, minerai: 'cristal' })
+for (let i = 0; i < 120; i++) avancerLeMonde(C, rf, 1 / 60, { x: 0, y: 0 })
+verifier('le minerai refusé : sa pépite ne bouge pas et reste dehors, celle d’un autre minerai monte à bord', rf.pepites.length === 1 && rf.pepites[0].minerai === 'fer' && rf.pepites[0].x > 19 && rf.cargaison.fer === 0 && rf.cargaison.cristal === 1)
+
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

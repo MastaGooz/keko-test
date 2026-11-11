@@ -221,6 +221,12 @@ export type Monde = {
   minerai: number
   banque: number
   cargaison: Cargaison
+  /**
+   * LES MINERAIS REFUSÉS (Keko, 11/11 : « une option dans le panneau soute pour bloquer la collecte d'un élément ») :
+   * une pépite d'un minerai refusé n'est ni aimantée ni ramassée par le joueur — comme si la soute était pleine pour
+   * elle. Le rival, lui, la prend.
+   */
+  refuses: Record<Minerai, boolean>
   tresor: Cargaison
   /** Le compte de l'extraction (secondes passées à quai d'affilée), et si le vaisseau est déjà sorti d'un parvis. */
   extraction: number
@@ -252,7 +258,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -817,8 +823,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const dx = plusProche.x - p.x
     const dy = plusProche.y - p.y
     const d = dmin || 1
-    // LA SOUTE PLEINE (la capacité de la coque — Keko) : la pépite reste là, ni ramassée ni aimantée
-    const soutePleine = plusProche.e === null && m.minerai >= c.capacite
+    // LA SOUTE PLEINE (la capacité de la coque — Keko), ou LE MINERAI REFUSÉ : la pépite reste là, ni ramassée ni aimantée
+    const soutePleine = plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])
     if (d <= c.forage.ramassage && !soutePleine) {
       m.pepites.splice(i, 1)
       if (plusProche.e === null) {
