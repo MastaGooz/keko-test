@@ -268,8 +268,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
     // tampon — sur un PC en 1080 de haut, 3 plutôt que 6 ; la hauteur du tampon est celle de l'écran à ce zoom, bornée à 480
-    zoom = Math.max(1, Math.min(6, Math.floor(racine.clientWidth / W), Math.floor(racine.clientHeight / 320)))
-    const h = Math.max(120, Math.min(480, Math.ceil(racine.clientHeight / zoom)))
+    // (la place UTILE : celle de la page moins les marges de sécurité de l'appareil — l'encoche, la caméra, la barre de
+    // gestes ; installée, l'app va jusqu'aux bords et la barre du haut passait sous la caméra — Keko, 11/11)
+    const st = getComputedStyle(racine)
+    const marge = (v: string): number => parseFloat(v) || 0
+    const large = racine.clientWidth - marge(st.paddingLeft) - marge(st.paddingRight)
+    const haut = racine.clientHeight - marge(st.paddingTop) - marge(st.paddingBottom)
+    zoom = Math.max(1, Math.min(6, Math.floor(large / W), Math.floor(haut / 320)))
+    const h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))
     if (h !== H || canvas.height !== h) {
       H = h
       canvas.height = H

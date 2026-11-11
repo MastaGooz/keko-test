@@ -38,6 +38,20 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## L'app installée : rien sous la caméra (Keko, 11/11 : « quand j'installe l'app pour supprimer la barre internet en haut, le rond devient bien plus gros ; par contre l'interface en haut monte et se dessine sous le petit rond noir du téléphone (la caméra) »)
+
+- **Le constat** : installée, la page va jusqu'aux bords de l'écran
+  (`viewport-fit=cover`) et le canevas prenait toute sa hauteur — la barre
+  du haut passait sous la caméra.
+- **La marge de sécurité** : `.vaisseau` prend en marges intérieures les
+  `env(safe-area-inset-*)` de l'appareil (haut, bas, côtés) ; `cadrer`
+  mesure la place qui reste et y loge le canevas (arrondi vers le bas, pour
+  ne pas déborder dans la marge). Dans un navigateur ces marges sont
+  nulles : rien n'y change. *Pas vérifiable d'ici* : la capture sans tête
+  n'a pas d'encoche ; à juger sur le téléphone de Keko.
+- (Et l'aire ronde plus grosse une fois installé : c'est la hauteur gagnée
+  sur la barre du navigateur, que la scène du hangar prend toute.)
+
 ## Le hangar : la scène plus haute, les cases qui défilent (Keko, 11/11 : « dans le hangar, on peut augmenter un peu la hauteur de la zone avec le vaisseau ? et ajouter un système de scroll si les parties en bas ne logent pas — hypothétiquement, un vaisseau énorme avec beaucoup d'armes et d'outils »)
 
 - **La scène gagne vingt-deux pixels** (`sceneOrdinaire` : ce que laissent

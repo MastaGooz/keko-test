@@ -13,6 +13,10 @@ html.vaisseau-page body {
 .vaisseau {
   position: fixed;
   inset: 0;
+  /* L'APP INSTALLÉE va jusqu'aux bords de l'écran (`viewport-fit=cover`) : sans ces marges, la barre du haut se
+     dessinait SOUS LA CAMÉRA du téléphone (Keko, 11/11). Le canevas se loge dans ce qui reste ; `cadrer` le mesure. */
+  box-sizing: border-box;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   display: grid;
   place-items: center;
   background: #07060f;
