@@ -2769,7 +2769,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ry = y + 20 + EN_TETES + i * 25
       const combien = m.cargaison[k]
       plaque(p, x + 5, ry, w - 10, 22, 'creux')
-      dessinerUneRessource(p, x + 15, ry + 11, k)
+      // (LA PÉPITE TELLE QU'ELLE EST DANS L'ESPACE — Keko : « changer l'image du minerai dans le panneau pour qu'il
+      // matche l'image du minerai verrouillé sur la map » : vive et dans son halo si on la collecte, éteinte au cerne
+      // teinté si on la refuse ; le même dessin, qui culbute pareil)
+      dessinerPepite(p, { id: 0, x: x + 15, y: ry + 11, vx: 0, vy: 0, graine: 7919 * (i + 1), minerai: k }, t, refuses[k])
       ecrire(p, FICHES_MINERAI[k].nom, x + 25, ry + 3, combien > 0 ? COQUE[5] : COQUE[3])
       ecrire(p, String(combien), x + 25, ry + 12, combien > 0 ? IVOIRE : COQUE[3], { police: GRAS })
       // (« Oui » en vert : l'aimant le prend ; « Non » : refusé, ses pépites restent dehors)

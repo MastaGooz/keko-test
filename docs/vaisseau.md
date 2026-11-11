@@ -107,6 +107,12 @@ la forme, pas le système* (`asteroide.ts`) :
   endroits : son CERNE à la teinte sombre du minerai (acier, or, turquoise)
   et un CŒUR d'un pixel à sa teinte vive. Jugé sur la planche des pépites,
   les collectées à côté des refusées.
+- **Le panneau montre la pépite telle qu'elle est dans l'espace** (Keko,
+  11/11 : « changer l'image du minerai dans le panneau pour qu'il matche
+  l'image du minerai verrouillé sur la map ») : l'icône de chaque rangée
+  n'est plus celle de l'entrepôt mais `dessinerPepite` — vive dans son halo
+  quand on la collecte, éteinte au cerne teinté quand on la refuse, et elle
+  culbute comme dehors. Vu en capture, le fer refusé.
 
 ## L'accueil : NOVA DRIFTER (Keko, 11/11 : « un écran d'accueil du jeu avec une demande de tap pour lancer le hangar, afin de débloquer les sons car actuellement il faut que je tape avant que le jeu lance le son. Un bel écran d'accueil dans le thème graphique du jeu, et le titre : Nova Drifter »)
 
