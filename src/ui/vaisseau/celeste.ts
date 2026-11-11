@@ -59,10 +59,15 @@ export type SorteDAstre = 'gazeuse' | 'rocheuse' | 'annelee' | 'lune' | 'galaxie
 export type Astre = { cle: string; sorte: SorteDAstre; x: number; y: number; r: number; graine: number; couche: number }
 
 type Couche = { parallaxe: number; pas: number; proba: number; sortes: [SorteDAstre, number, number, number][] }
+/**
+ * (LES TROUS NOIRS étaient introuvables — Keko : « je trouve pas de trous noirs » : 6 % des astres du seul lointain,
+ * dont une case vaut 3 000 unités de monde, soit un tous les 16 000 environ. Leur part passe à 14 % au lointain, et ils
+ * entrent aussi, plus petits, dans la couche du milieu : un tous les 4 500 à peu près, quarante secondes de vol.)
+ */
 /** Les trois couches : la parallaxe, le pas de la grille, la part des cases qui portent un astre, et les sortes (poids, rayon min, rayon max). */
 const COUCHES: Couche[] = [
-  { parallaxe: 0.1, pas: 300, proba: 0.55, sortes: [['gazeuse', 3, 26, 48], ['rocheuse', 3, 14, 28], ['annelee', 2, 20, 34], ['galaxie', 1.5, 14, 24], ['trouNoir', 0.6, 7, 10]] },
-  { parallaxe: 0.24, pas: 240, proba: 0.4, sortes: [['lune', 3, 5, 10], ['rocheuse', 2, 8, 13], ['soleil', 2, 2, 3]] },
+  { parallaxe: 0.1, pas: 300, proba: 0.55, sortes: [['gazeuse', 3, 26, 48], ['rocheuse', 3, 14, 28], ['annelee', 2, 20, 34], ['galaxie', 1.5, 14, 24], ['trouNoir', 1.5, 8, 12]] },
+  { parallaxe: 0.24, pas: 240, proba: 0.4, sortes: [['lune', 3, 5, 10], ['rocheuse', 2, 8, 13], ['soleil', 2, 2, 3], ['trouNoir', 1, 5, 7]] },
   { parallaxe: 0.55, pas: 380, proba: 0.4, sortes: [['geante', 1, 22, 42]] },
 ]
 /** LA PLANÈTE DE LA BASE : une géante à anneaux, fixe dans le lointain, en haut à droite de la station au départ. */
@@ -78,7 +83,7 @@ const VITRINE: { sorte: SorteDAstre; couche: number; x: number; y: number; r: nu
   { sorte: 'gazeuse', couche: 0, x: -56, y: -122, r: 30, graine: 11 },
   { sorte: 'annelee', couche: 0, x: 52, y: -118, r: 22, graine: 4242 },
   { sorte: 'rocheuse', couche: 0, x: -68, y: 66, r: 16, graine: 5 },
-  { sorte: 'trouNoir', couche: 0, x: -52, y: 128, r: 8, graine: 2 },
+  { sorte: 'trouNoir', couche: 0, x: -52, y: 124, r: 11, graine: 2 },
   { sorte: 'galaxie', couche: 0, x: 58, y: 126, r: 20, graine: 6 },
   { sorte: 'lune', couche: 1, x: -76, y: -58, r: 9, graine: 3 },
   { sorte: 'soleil', couche: 1, x: 76, y: -52, r: 3, graine: 4 },

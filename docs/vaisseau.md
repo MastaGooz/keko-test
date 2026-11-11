@@ -67,6 +67,11 @@ la forme, pas le système* (`asteroide.ts`) :
   couches qui tombent sur son disque ne se dessinent pas — sinon des étoiles
   « plus proches » passaient devant une planète.
 - L'accueil, qui dessine le même ciel, les a aussi.
+- **Des trous noirs qu'on trouve** (Keko : « je trouve pas de trous
+  noirs ») : ils faisaient 6 % des astres du seul lointain (une case y vaut
+  3 000 unités de monde : un tous les 16 000 environ). Leur part passe à
+  14 %, ils entrent aussi, plus petits, dans la couche du milieu (un tous
+  les 4 500 à peu près), et celui de la vitrine grossit (rayon 11).
 - **`&astres`, la vitrine** (Keko, 11/11 : « placer les différents corps
   célestes autour de l'extracteur, juste pour tester les visuels,
   temporairement ») : un astre de chaque sorte autour de la base, chacun
