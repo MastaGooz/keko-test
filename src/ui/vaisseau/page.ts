@@ -22,6 +22,7 @@ import { chargerHangar, sauverHangar } from './hangar.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
+import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
@@ -2127,8 +2128,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return fondDuCiel
   }
 
-  /** Le ciel : trois couches d'étoiles en parallaxe, puis la poussière du premier plan ; les nuées sont dans le fond (`cuireLeCiel`). */
+  /**
+   * LES ASTRES DU FOND (`celeste.ts`) : chacun est peint UNE FOIS dans un petit tampon, gardé ici par sa clé (quarante
+   * au plus), puis POSÉ à chaque image — ses pixels recopiés tels quels dans la couleur du tampon du jeu. Une sphère de
+   * cinquante pixels de rayon repeinte à chaque image (un bruit fractal par pixel) aurait coûté le vol.
+   */
+  const tamponsDesAstres = new Map<string, { w: number; h: number; color: Uint32Array }>()
+  function poserLAstre(a: Astre): void {
+    const d = demiTailleDeLAstre(a)
+    let sp = tamponsDesAstres.get(a.cle)
+    if (sp === undefined) {
+      const f = N.createFrame(d * 2 + 1, d * 2 + 1)
+      peindreAstre(N.painterFor(f) as unknown as PeintreCeleste, a, d, d)
+      sp = { w: f.w, h: f.h, color: f.color }
+      if (tamponsDesAstres.size >= 40) tamponsDesAstres.delete(tamponsDesAstres.keys().next().value as string)
+      tamponsDesAstres.set(a.cle, sp)
+    }
+    const x0 = Math.round(a.x) - d
+    const y0 = Math.round(a.y) - d
+    for (let j = Math.max(0, -y0); j < Math.min(sp.h, H - y0); j++) {
+      const ligne = (y0 + j) * W
+      for (let i = Math.max(0, -x0); i < Math.min(sp.w, W - x0); i++) {
+        const c = sp.color[j * sp.w + i]
+        if (c >>> 24 !== 0) frame.color[ligne + x0 + i] = c
+      }
+    }
+  }
+  /** Le ciel : les astres du fond, trois couches d'étoiles en parallaxe (un astre les cache), puis la poussière du premier plan ; les nuées sont dans le fond (`cuireLeCiel`). */
   function dessinerLeCiel(p: Peintre): void {
+    // les astres d'abord, du plus loin au plus proche ; une étoile qui tombe sur l'un d'eux ne se dessine pas
+    const astres = astresVisibles(camera.x, camera.y, W, H, centreY())
+    for (const a of astres) if (a.sorte !== 'soleil') poserLAstre(a)
+    const caches = astres.map((a) => ({ x: a.x, y: a.y, r2: rayonQuiCache(a) ** 2 })).filter((c) => c.r2 > 0)
+    const cachee = (x: number, y: number): boolean => caches.some((c) => (x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) < c.r2)
     const couches = [
       { parallaxe: 0.15, pas: 40, teintes: [COQUE[2], COQUE[3]], proba: 0.7 },
       { parallaxe: 0.35, pas: 34, teintes: [COQUE[3], COQUE[4]], proba: 0.6 },
@@ -2147,6 +2179,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (tire(i, j, 11 + n) > couche.proba) continue
           const x = (i + tire(i, j, 21 + n)) * couche.pas - ox + W / 2
           const y = (j + tire(i, j, 31 + n)) * couche.pas - oy + centreY()
+          if (cachee(x, y)) continue
           const scintille = 0.6 + 0.4 * Math.sin(t * (1.5 + tire(i, j, 41 + n) * 3) + tire(i, j, 51 + n) * 6.28)
           const grosse = n === 2 && tire(i, j, 61) > 0.7
           p.dot(x, y, scintille > 0.85 ? couche.teintes[1] : couche.teintes[0], n === 0 ? 0.55 : 1)
@@ -2159,6 +2192,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
         }
     })
+    // ce qui vit sur les astres : la lueur et les grains du trou noir, les soleils qui scintillent
+    for (const a of astres) animerAstre(p as unknown as PeintreCeleste, a, t)
     // LA POUSSIÈRE DU PREMIER PLAN : des grains sombres FIXES DANS LE MONDE (parallaxe 1, celle des roches), qui
     // s'étirent en traits à contre-vitesse quand on file — la vitesse se lit même loin de toute roche
     const vit = Math.hypot(v.vx, v.vy)

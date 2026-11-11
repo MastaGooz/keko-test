@@ -38,6 +38,40 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Les astres du fond (Keko, 11/11 : « on peut rajouter des objets célestes dans le background, comme des planètes, des nébuleuses, des étoiles, des trous noirs, des astéroïdes énormes ? On peut les mettre sur différents layers éventuellement, pour renforcer l'effet de profondeur »)
+
+- **Trois couches en parallaxe** (`celeste.ts`, `astresVisibles`), semées
+  par cases comme les étoiles (rien n'est stocké, on retrouve le même ciel) :
+  LE LOINTAIN (0,06, une case de 300, 55 % de pleines) — géantes gazeuses à
+  bandes (26 à 48 de rayon), planètes à anneaux, mondes rocheux, galaxies
+  spirales, et un TROU NOIR de loin en loin ; LE MILIEU (0,16) — lunes
+  cratérisées, petits mondes, soleils à quatre rayons ; LE PROCHE (0,45) —
+  des ASTÉROÏDES ÉNORMES (22 à 42).
+- **Une planète à anneaux fixe derrière la base** (rayon 44, en haut à
+  droite de la station au départ) : la station tourne autour de quelque
+  chose, et c'est un repère pour rentrer.
+- **Tout reste du décor** : des rampes de cinq tons assombries d'un quart
+  (le plus clair d'une planète reste sous les roches et les pépites qui
+  passent devant — jugé sur une planche, des roches du jeu à côté), la
+  lumière du monde, la face à l'ombre presque au noir du fond, une trame en
+  damier aux frontières. Les astéroïdes énormes sont des SILHOUETTES : quatre
+  tons très sombres et un liseré côté lampe — jamais une roche qu'on mine.
+- **Peints une fois, posés à chaque image** : un astre se peint dans un
+  petit tampon (`peindreAstre`), gardé par sa clé dans la page (quarante au
+  plus), et ses pixels sont recopiés tels quels dans la couleur du tampon du
+  jeu (`poserLAstre`). Repeinte à chaque image, une sphère de 48 de rayon
+  coûtait un bruit fractal par pixel. Ce qui VIT se dessine par-dessus
+  (`animerAstre`) : la lueur et les grains qui tournent du trou noir, les
+  soleils qui scintillent, le cœur des galaxies.
+- **Un astre cache les étoiles** (`rayonQuiCache`) : celles des trois
+  couches qui tombent sur son disque ne se dessinent pas — sinon des étoiles
+  « plus proches » passaient devant une planète.
+- L'accueil, qui dessine le même ciel, les a aussi.
+- Vu sur une planche de toutes les sortes, puis en capture en vol (au
+  départ, et après deux trajets) : la planète de la base, une lune, un
+  soleil, une silhouette. *Pas mesuré : le coût par image sur téléphone —
+  le plus gros tampon posé fait 205 × 205.*
+
 ## La base en deux plans : le pont devant, la structure derrière (Keko, 11/11 : « on pourrait donner un relief à la station d'extraction, avec la plateforme au premier plan et le reste de la structure en arrière ? J'aimerais que le joueur puisse comprendre qu'il peut voler au-dessus, et donner un effet de profondeur »)
 
 Quatre signes de profondeur, tous dans `dessinerBase` (et un dans la page) :
