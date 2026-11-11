@@ -1172,9 +1172,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * haut de la scène ; la grille ne montre que les ressources de la catégorie ouverte. Le fer et l'or sont des
    * minerais, le cristal un cristal ; rien de biologique encore. Un classement d'écran : la règle n'en sait rien.
    */
-  const CATEGORIES = ['tout', 'minerai', 'cristal', 'biologique'] as const
+  // (puis : « mets plutôt minerais / cristaux / méca / bio, et un symbole ADN à la biologie » — un engrenage pour la méca,
+  // deux brins croisés et leurs barreaux pour le bio ; « Tout » reste en tête)
+  const CATEGORIES = ['tout', 'minerai', 'cristal', 'meca', 'bio'] as const
   type Categorie = (typeof CATEGORIES)[number]
-  const NOMS_DE_CATEGORIE: Record<Categorie, string> = { tout: 'Tout', minerai: 'Minerai', cristal: 'Cristal', biologique: 'Biologique' }
+  const NOMS_DE_CATEGORIE: Record<Categorie, string> = { tout: 'Tout', minerai: 'Minerais', cristal: 'Cristaux', meca: 'Méca', bio: 'Bio' }
   const CATEGORIE_DE: Record<Minerai, Categorie> = { fer: 'minerai', or: 'minerai', cristal: 'cristal' }
   let categorie: Categorie = 'tout'
   /** Les ressources de la catégorie ouverte, dans l'ordre de la grille. */
@@ -1863,7 +1865,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     tout: ['###.###', '###.###', '###.###', '.......', '###.###', '###.###', '###.###'],
     minerai: ['..###..', '.#####.', '#######', '#######', '#######', '.#####.', '.......'],
     cristal: ['..##...', '..###..', '.####..', '.####.#', '.#####.', '.#####.', '..###..'],
-    biologique: ['....###', '..#####', '.######', '.#####.', '######.', '##.....', '#......'],
+    meca: ['.#.#.#.', '#######', '.#####.', '###.###', '.#####.', '#######', '.#.#.#.'],
+    bio: ['.#...#.', '.#####.', '..#.#..', '...#...', '..#.#..', '.#####.', '.#...#.'],
   }
   /**
    * UN SYMBOLE DU LABO, EN RELIEF (Keko, 11/11 : « donner un peu de texture aux symboles des arbres du labo » — c'étaient
@@ -2378,7 +2381,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLEntrepot(p: Peintre, y: number): number {
     if (ressourcesVues().length === 0) {
-      // (une catégorie vide — le biologique, pour l'instant)
+      // (une catégorie vide — la méca et le bio, pour l'instant)
       plaque(p, 4, y, W - 8, 40, 'encre')
       motEnRelief(p, NOMS_DE_CATEGORIE[categorie], W / 2, y + 8, false)
       ecrire(p, 'Aucune ressource pour l’instant', W / 2, y + 23, COQUE[4], { align: 'center' })

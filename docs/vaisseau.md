@@ -154,8 +154,11 @@ la forme, pas le système* (`asteroide.ts`) :
   commerce ; la grille ne montre que la catégorie ouverte (`CATEGORIE_DE` :
   le fer et l'or sont des minerais, le cristal un cristal, rien de
   biologique encore — sa fiche dit « Aucune ressource pour l'instant »). Un
-  classement d'écran, la règle n'en sait rien. À quatre, « Biologique » ne
-  tient pas dans sa case : seul l'onglet ouvert dit son nom.
+  classement d'écran, la règle n'en sait rien. *Puis (« mets plutôt
+  minerais / cristaux / méca / bio, et un symbole ADN à la biologie ») :
+  cinq onglets — Tout (gardé en tête, de moi), Minerais, Cristaux, Méca (un
+  engrenage), Bio (deux brins croisés et leurs barreaux) ; la méca et le bio
+  sont vides. À cinq, seul l'onglet ouvert dit son nom.*
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
