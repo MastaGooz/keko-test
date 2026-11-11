@@ -13,12 +13,13 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, vendre, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
+import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -137,8 +138,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const credits0 = parametres.has('credits') ? Math.max(0, Number(parametres.get('credits')) || 0) : null
   /** `&pieces` : des dizaines de pièces d'essai dans le catalogue, pour voir le hangar quand il y en a beaucoup (Keko). */
   if (parametres.has('pieces')) ajouterLesPiecesDEssai()
-  let { hangar, tresor, credits, labo } = chargerHangar()
-  const sauver = (): void => sauverHangar(hangar, tresor, credits, labo)
+  /**
+   * L'HEURE DU MARCHÉ : celle de l'appareil — injectée d'ici, la règle n'a pas d'horloge. `&marche=N` la fait courir N
+   * fois plus vite depuis l'ouverture de la page, pour voir la courbe bouger et un ordre se régler sans attendre (un
+   * essai : l'heure accélérée part dans la sauvegarde, un ordre posé ainsi attendra que la vraie la rattrape).
+   */
+  const ouvertA = Date.now()
+  const hate = Math.max(1, Number(parametres.get('marche')) || 1)
+  const heureDuMarche = (): number => ouvertA + (Date.now() - ouvertA) * hate
+  let { hangar, tresor, credits, labo, marche } = chargerHangar(heureDuMarche())
+  const sauver = (): void => sauverHangar(hangar, tresor, credits, labo, marche)
   // (les pièces d'essai ne sont portées par aucun nœud du labo : `&pieces` les donne, pour remplir les listes du hangar)
   if (parametres.has('pieces')) hangar = { ...hangar, possedees: [...new Set([...hangar.possedees, ...(['propulseur', 'coque', 'outil', 'arme'] as const).flatMap((o) => piecesDe(o)).filter((pc) => pc.id.startsWith('essai-')).map((pc) => pc.id)])] }
   /** `&stock=N` : pose N pépites DE CHAQUE MINERAI à l'entrepôt, pour essayer l'arbre du labo d'un lien. */
@@ -398,7 +407,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur'; curseur?: Curseur } | null = null
+  /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
+  type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
+  let curseurs: Curseur[] = []
   /** LE DÉFILEMENT DE LA GRILLE D'ONGLETS, en pixels (Keko : « les deux du bas tombent sous la zone, ajoute un défilement »), et sa zone, refaite à chaque image (null : tout tient). */
   let defilOnglets = 0
   let zoneDesOnglets: { x: number; y: number; w: number; h: number } | null = null
@@ -722,10 +734,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return lignes
   }
   /** Le symbole des crédits suivi d'un nombre, en gras, calé à droite sur x (ou centré). */
-  function nombreDeCredits(p: Peintre, n: number, x: number, y: number, c: number, centre = false): void {
-    const w = largeurDe(String(n), GRAS)
+  function nombreDeCredits(p: Peintre, n: number | string, x: number, y: number, c: number, centre = false): void {
+    const s = typeof n === 'string' ? n : String(n)
+    const w = largeurDe(s, GRAS)
     const x0 = centre ? x - (w + 12) / 2 : x - w - 12
-    ecrire(p, String(n), x0, y, c, { police: GRAS })
+    ecrire(p, s, x0, y, c, { police: GRAS })
     dessinerUnCredit(p, x0 + w + 7, y + 3)
   }
   // ================================================================ LE GESTE : l'appui, le relâché, le survol, le refus
@@ -903,7 +916,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LA BASE ENTIÈRE, une image. */
   function dessinerLaBase(p: Peintre): void {
     zones = []
+    curseurs = []
     zoneDeLArbre = null
+    // LE MARCHÉ SE RÈGLE à chaque pas du cours : un ordre dont le prix a été atteint est vendu (même posé hier)
+    {
+      const r = reglerLeMarche(marche, credits, heureDuMarche())
+      if (r.vendus.length > 0) {
+        credits = r.credits
+        flottants.push({ texte: 'Ordre vendu !', x: W / 2, y: HAUT_BARRE + 16, t0: t, c: RUNE[3] })
+        jouer('vente')
+      }
+      if (r.vendus.length > 0 || r.marche.vuA - marche.vuA > 30_000) {
+        marche = r.marche
+        sauver()
+      } else marche = { ...marche, ordres: r.marche.ordres }
+    }
     p.place(0, 0)
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
@@ -921,6 +948,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLaBarreDuHaut(p)
     dessinerLaNav(p)
     dessinerLaFeuille(p)
+    dessinerLaVente(p)
     dessinerLesEclats(p)
   }
 
@@ -1307,6 +1335,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         resetDemandeA = -10
         hangar = hangarNeuf()
         labo = laboNeuf()
+        marche = marcheNeuf(heureDuMarche())
         tresor = cargaisonVide()
         credits = 0
         creditsVus = 0
@@ -2260,7 +2289,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const fiche = FICHES_MINERAI[k]
     const LIGNES = 4 // (quatre lignes fixes : avec les minuscules, les descriptions en prennent une de plus)
     const L = replier(fiche.dit, W - 20).slice(0, LIGNES)
-    const hp = 20 + LIGNES * 9 + 8 + 26 + 20
+    const hp = 20 + LIGNES * 9 + 8 + 38 + 20
     plaque(p, 4, y, W - 8, hp, 'encre')
     const ln = largeurDe(fiche.nom, GRAS)
     dessinerUneRessource(p, W / 2 - ln / 2 - 5, y + 10, k)
@@ -2269,34 +2298,198 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     L.forEach((li, i) => ecrire(p, li, W / 2, haut + i * 9, COQUE[5], { align: 'center' }))
     const ly = y + 20 + LIGNES * 9 + 8
     p.rect(10, ly - 4, W - 20, 1, MATIERES.encre.ombre)
-    ecrire(p, 'Valeur unitaire', 10, ly, COQUE[4])
-    nombreDeCredits(p, fiche.credits, W - 9, ly, N.hex('#fff2c8'))
+    // LE COURS du moment (il bouge : le marché), le stock, l'ordre posé
+    const cours = coursA(k, heureDuMarche())
+    ecrire(p, 'Cours', 10, ly, COQUE[4])
+    nombreDeCredits(p, prixDit(cours), W - 9, ly, cours >= fiche.credits ? RUNE[3] : ROUGE[5])
     ecrire(p, 'En stock', 10, ly + 12, COQUE[4])
-    ecrire(p, String(tresor[k]), W - 21, ly + 12, tresor[k] > 0 ? N.WHITE : COQUE[3], { police: GRAS, align: 'right' })
+    ecrire(p, montantCourt(tresor[k]), W - 21, ly + 12, tresor[k] > 0 ? N.WHITE : COQUE[3], { police: GRAS, align: 'right' })
     dessinerUneRessource(p, W - 13, ly + 15, k)
-    const by = ly + 26
-    const gain = tresor[k] * fiche.credits
-    const vif = tresor[k] > 0
-    const mot = vif ? `Vendre : ${gain}` : 'Rien à vendre'
-    const wmot = largeurDe(mot, GRAS)
-    const bw = wmot + (vif ? 12 : 0) + 22
-    const bx = Math.round(W / 2 - bw / 2)
-    boutonBase(p, bx, by, bw, 15, vif, () => {
-      const n = Math.min(10, tresor[k])
-      const r = vendre(tresor, credits, k)
-      tresor = r.tresor
-      credits = r.credits
-      sauver()
-      secouer(0.8)
-      for (let i = 0; i < n; i++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 30, y0: by + 6, t0: t + i * 0.05 })
-      gerbe(W / 2, by + 6, 14, [RUNE[2], RUNE[3], N.WHITE])
-    }, (dx, dy) => {
-      if (vif) motEnRelief(p, mot, bx + 11 + wmot / 2 + dx, by + 4 + dy, true)
-      else ecrire(p, mot, bx + 11 + dx, by + 4 + dy, COQUE[3], { police: GRAS })
-      if (vif) dessinerUnCredit(p, bx + 11 + wmot + 7 + dx, by + 7 + dy)
-    }, 'vente', { matiere: 'vert' })
+    const ordre = ordreDe(marche, k)
+    ecrire(p, 'Ordre posé', 10, ly + 24, COQUE[4])
+    if (ordre === undefined) ecrire(p, 'Aucun', W - 10, ly + 24, COQUE[3], { align: 'right' })
+    else nombreDeCredits(p, `${montantCourt(ordre.quantite)} à ${prixDit(ordre.prix)}`, W - 9, ly + 24, PEPITE[3])
+    const by = ly + 38
+    const vif = tresor[k] > 0 || ordre !== undefined
+    const mot = vif ? 'Vendre' : 'Rien à vendre'
+    const bw = largeurDe(mot, GRAS) + 22
+    bouton(p, Math.round(W / 2 - bw / 2), by, bw, 15, mot, vif, () => ouvrirLaVente(k), 'ouvre', 'vert')
     return y + hp + 4
   }
+  // ================================================================ LA VENTE : LE PANNEAU DU MARCHÉ
+  /**
+   * LE PANNEAU DE VENTE (Keko, 11/11 — la règle est dans `logic/vaisseau/marche.ts`) : « Vendre » ne vend plus tout d'un
+   * coup, il ouvre ce panneau par-dessus l'entrepôt. LA COURBE du cours (le prix en ordonnée, le temps en abscisse, le
+   * point clair est maintenant), LA QUANTITÉ sur un curseur de 0 au stock, puis le choix : AU COURS (vendu tout de
+   * suite) ou À PRIX FIXÉ (un second curseur, du cours au plafond ; un trait d'or le pose sur la courbe) — l'ordre
+   * attend alors que le cours l'atteigne. Un ordre déjà posé pour ce minerai se voit là, et s'annule.
+   */
+  let vente: Minerai | null = null
+  let venteA = -10
+  let venteQuantite = 0
+  let venteFixe = false
+  let ventePrix = 0
+  const prixDit = (x: number): string => x.toFixed(1).replace('.', ',')
+  function ouvrirLaVente(k: Minerai): void {
+    vente = k
+    venteA = t
+    venteQuantite = tresor[k]
+    venteFixe = false
+    ventePrix = Math.min(prixPlafond(k), Math.round(coursA(k, heureDuMarche()) * 11.5) / 10)
+  }
+  /** Un curseur : sa rainure, sa part pleine, son bouton ; `regler` reçoit sa place de 0 à 1. */
+  function dessinerUnCurseur(p: Peintre, x: number, y: number, w: number, u: number, regler: (u: number) => void): void {
+    p.rect(x, y + 3, w, 6, MATIERES.creux.contour)
+    p.rect(x + 1, y + 4, w - 2, 4, MATIERES.creux.corps)
+    const lp = Math.round((w - 2) * Math.max(0, Math.min(1, u)))
+    if (lp > 0) {
+      p.rect(x + 1, y + 4, lp, 4, PEPITE[2])
+      p.rect(x + 1, y + 4, lp, 1, N.hex('#ffe68a'))
+      p.rect(x + 1, y + 7, lp, 1, N.hex('#b87a14'))
+    }
+    const bx = x + 1 + lp - 3
+    plaque(p, bx, y, 7, 12, 'or')
+    curseurs.push({ x: x + 1, y: y - 4, w: w - 2, h: 20, regler })
+  }
+  function dessinerLaVente(p: Peintre): void {
+    if (vente === null) return
+    const k = vente
+    const u0 = sortie((t - venteA) / 0.2)
+    const maintenant = heureDuMarche()
+    const cours = coursA(k, maintenant)
+    const ordre = ordreDe(marche, k)
+    const stock = tresor[k]
+    const hp = ordre !== undefined ? 150 : 232
+    const x = 6
+    const w = W - 12
+    const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
+    // le voile : tout ce qui est dessous s'éteint et ne répond plus
+    p.rect(0, 0, W, H, NUIT, 0.72 * u0)
+    frame.light.fill(0)
+    zones = []
+    curseurs = []
+    plaque(p, x, y, w, hp, 'encre')
+    const nom = FICHES_MINERAI[k].nom
+    dessinerUneRessource(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, k)
+    motEnRelief(p, nom, W / 2 + 5, y + 7, true)
+    // LA COURBE : les derniers cours, à l'échelle de leur creux et de leur crête (et du prix fixé, s'il y en a un)
+    const gx = x + 6
+    const gy = y + 21
+    const gw = w - 12
+    const gh = 50
+    plaque(p, gx, gy, gw, gh, 'creux')
+    const h = historiqueDe(k, maintenant)
+    const fixe = ordre !== undefined ? ordre.prix : venteFixe ? ventePrix : null
+    const bas = Math.min(...h, fixe ?? Infinity)
+    const haut = Math.max(...h, fixe ?? -Infinity)
+    const marge = Math.max(0.1, (haut - bas) * 0.12)
+    const yDe = (prix: number): number => Math.round(gy + gh - 5 - ((prix - (bas - marge)) / (haut - bas + 2 * marge)) * (gh - 10))
+    const xDe = (i: number): number => Math.round(gx + 4 + (i / (h.length - 1)) * (gw - 9))
+    const monte = h[h.length - 1] >= h[0]
+    const teinte = monte ? RUNE[2] : ROUGE[4]
+    // (le prix de base, en pointillé discret : au-dessus, c'est un bon moment pour vendre)
+    const yb0 = yDe(FICHES_MINERAI[k].credits)
+    if (yb0 > gy + 2 && yb0 < gy + gh - 2) for (let xx = gx + 3; xx < gx + gw - 3; xx += 4) p.rect(xx, yb0, 2, 1, COQUE[2])
+    for (let i = 1; i < h.length; i++) p.line(xDe(i - 1), yDe(h[i - 1]), xDe(i), yDe(h[i]), teinte)
+    if (fixe !== null) {
+      const yf = yDe(fixe)
+      for (let xx = gx + 3; xx < gx + gw - 3; xx += 3) p.rect(xx, yf, 2, 1, PEPITE[2])
+    }
+    const xn = xDe(h.length - 1)
+    const yn = yDe(cours)
+    p.glow(xn, yn, 5, teinte, 0.5 + 0.3 * Math.sin(t * 5))
+    p.rect(xn - 1, yn - 1, 3, 3, N.WHITE)
+    p.text(prixDit(haut), gx + 3, gy + 3, COQUE[3])
+    p.text(prixDit(bas), gx + 3, gy + gh - 9, COQUE[3])
+    let ly = gy + gh + 5
+    ecrire(p, 'Cours', x + 6, ly, COQUE[4])
+    nombreDeCredits(p, prixDit(cours), x + w - 5, ly, cours >= FICHES_MINERAI[k].credits ? RUNE[3] : ROUGE[5])
+    ly += 13
+    const lb = (mot: string): number => largeurDe(mot, GRAS) + 22
+    if (ordre !== undefined) {
+      // UN ORDRE ATTEND : ce qu'il vend, à quel prix, et l'annuler (les pépites reviennent)
+      ecrire(p, 'Ordre posé', x + 6, ly, COQUE[4])
+      nombreDeCredits(p, `${montantCourt(ordre.quantite)} à ${prixDit(ordre.prix)}`, x + w - 5, ly, PEPITE[3])
+      ly += 12
+      ecrire(p, 'Vendu dès que le cours l’atteint', W / 2, ly, COQUE[3], { align: 'center' })
+      ly += 14
+      const ba = lb('Annuler l’ordre')
+      bouton(p, Math.round(W / 2 - ba / 2), ly, ba, 15, 'Annuler l’ordre', true, () => {
+        const r = annulerLOrdre(marche, tresor, k)
+        marche = r.marche
+        tresor = r.tresor
+        sauver()
+        ouvrirLaVente(k)
+      }, 'retour', 'acier')
+      ly += 19
+    } else {
+      // LA QUANTITÉ : de zéro au stock
+      const q = Math.max(0, Math.min(stock, venteQuantite))
+      ecrire(p, 'Quantité', x + 6, ly, COQUE[4])
+      ecrire(p, `${montantCourt(q)} / ${montantCourt(stock)}`, x + w - 6, ly, q > 0 ? N.WHITE : COQUE[3], { police: GRAS, align: 'right' })
+      ly += 11
+      dessinerUnCurseur(p, x + 8, ly, w - 16, stock > 0 ? q / stock : 0, (u) => (venteQuantite = Math.round(u * stock)))
+      ly += 18
+      // LE CHOIX : au cours, ou à prix fixé
+      const choix: [string, boolean][] = [['Au cours', false], ['Prix fixé', true]]
+      const lws = choix.map(([mot]) => largeurDe(mot, GRAS) + 14)
+      let xc = Math.round((W - lws[0] - lws[1] - 4) / 2)
+      choix.forEach(([mot, f], i) => {
+        const actif = venteFixe === f
+        const e = etatDuBouton(xc, ly, lws[i], 13)
+        plaque(p, xc, ly + e.dy, lws[i], 13, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
+        ecrire(p, mot, xc + lws[i] / 2, ly + 3 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center', police: GRAS })
+        if (!actif) zone(xc, ly - 2, lws[i], 17, () => (venteFixe = f))
+        xc += lws[i] + 4
+      })
+      ly += 18
+      const plafond = prixPlafond(k)
+      if (venteFixe) {
+        ventePrix = Math.max(cours, Math.min(plafond, ventePrix))
+        ecrire(p, 'Prix', x + 6, ly, COQUE[4])
+        nombreDeCredits(p, prixDit(ventePrix), x + w - 5, ly, PEPITE[3])
+        ly += 11
+        dessinerUnCurseur(p, x + 8, ly, w - 16, plafond > cours ? (ventePrix - cours) / (plafond - cours) : 1, (u) => (ventePrix = Math.round((cours + u * (plafond - cours)) * 10) / 10))
+        ly += 17
+      } else {
+        ecrire(p, 'Vendu tout de suite,', W / 2, ly + 3, COQUE[3], { align: 'center' })
+        ecrire(p, 'au cours du moment', W / 2, ly + 13, COQUE[3], { align: 'center' })
+        ly += 28
+      }
+      const prix = venteFixe ? ventePrix : cours
+      ecrire(p, 'Gain', x + 6, ly, COQUE[4])
+      nombreDeCredits(p, montantCourt(gainDe(q, prix)), x + w - 5, ly, q > 0 ? N.hex('#fff2c8') : COQUE[3])
+      ly += 14
+      const mot = venteFixe ? 'Poser l’ordre' : 'Vendre'
+      const bw = lb(mot)
+      bouton(p, Math.round(W / 2 - bw / 2), ly, bw, 15, mot, q > 0, () => {
+        if (venteFixe) {
+          const r = poserUnOrdre(marche, tresor, k, q, ventePrix, heureDuMarche())
+          if (r === null) return
+          marche = r.marche
+          tresor = r.tresor
+          flottants.push({ texte: 'Ordre posé', x: W / 2, y: HAUT_BARRE + 16, t0: t, c: PEPITE[3] })
+        } else {
+          const r = vendreAuCours(tresor, credits, k, q, heureDuMarche())
+          if (r === null) return
+          tresor = r.tresor
+          credits = r.credits
+          secouer(0.8)
+          for (let i = 0; i < Math.min(10, q); i++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 30, y0: ly + 6, t0: t + i * 0.05 })
+          gerbe(W / 2, ly + 6, 14, [RUNE[2], RUNE[3], N.WHITE])
+        }
+        sauver()
+        vente = null
+      }, venteFixe ? 'equipe' : 'vente', 'vert')
+      ly += 19
+    }
+    const bf = lb('Fermer')
+    bouton(p, Math.round(W / 2 - bf / 2), ly, bf, 15, 'Fermer', true, () => (vente = null), 'retour', 'acier')
+    // (les zones se cherchent dans l'ordre : le panneau, qui ne fait rien, puis le voile, qui ferme, passent après ses boutons)
+    zone(x, y, w, hp, () => {}, null)
+    zone(0, 0, W, H, () => (vente = null), 'retour')
+  }
+
   /** Un point de l'écran en pixels du tampon. */
   const enTampon = (x: number, y: number): Vecteur => {
     const r = canvas.getBoundingClientRect()
@@ -2326,6 +2519,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const go = zoneDesOnglets
       if (go !== null && q.x >= go.x && q.x < go.x + go.w && q.y >= go.y && q.y < go.y + go.h) {
         glisse = { x: q.x, y: q.y, defil0: defilOnglets, bouge: false, sorte: 'onglets' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
+      // un curseur : il suit le doigt dès l'appui
+      const cu = curseurs.find((c) => q.x >= c.x - 4 && q.x < c.x + c.w + 4 && q.y >= c.y && q.y < c.y + c.h)
+      if (cu !== undefined) {
+        glisse = { x: q.x, y: q.y, defil0: 0, bouge: true, sorte: 'curseur', curseur: cu }
+        cu.regler(Math.max(0, Math.min(1, (q.x - cu.x) / cu.w)))
         racine.setPointerCapture(ev.pointerId)
         return
       }
@@ -2379,9 +2580,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // la liste suit le doigt, une rangée par 13 pixels de tampon
       const q = enTampon(ev.clientX, ev.clientY)
       if (Math.abs(q.y - glisse.y) > 2) glisse.bouge = true
+      if (glisse.sorte === 'curseur') {
+        const cu = glisse.curseur!
+        cu.regler(Math.max(0, Math.min(1, (q.x - cu.x) / cu.w)))
+        return
+      }
       if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
-      else defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
+      else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       return
     }
     if (manche === null || ev.pointerId !== manche.id) return

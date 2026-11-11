@@ -38,6 +38,44 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Le marché : vendre une quantité, au cours ou à prix fixé (Keko, 11/11 : « dans l'entrepôt, changer le bouton vendre pour qu'il ouvre un panneau plutôt que tout vendre d'un coup ; le panneau propose de vendre une quantité (on bouge un cran sur une barre de 0 au max), on affiche une courbe de prix (ordonnée = prix, abscisse = temps) ; on propose de vendre au prix de marché ou de poser un prix personnalisé, qui sera déclenché potentiellement »)
+
+- **La règle** (`logic/vaisseau/marche.ts`, pure, 16 vérifications dans
+  `marche.verif.ts`) :
+  - *le COURS est une fonction du temps, rien n'est gardé* : le prix de
+    base du minerai (2 / 8 / 25) porté par une houle lente (24 pas, ±25 %),
+    une vague courte (6 pas, ±12 %) et un bruit (±4 %), par PAS d'une
+    minute, au dixième de crédit ; chaque minerai a sa courbe. Le temps est
+    injecté : l'appareil éteint, le marché a bougé quand même, et la courbe
+    d'hier se recalcule telle qu'elle était ;
+  - *vendre au cours* (`vendreAuCours`) : la quantité, tout de suite, au
+    prix du moment ; un gain est entier, arrondi vers le bas ;
+  - *poser un ordre* (`poserUnOrdre`) : une quantité à un prix fixé (au plus
+    1,45 × le prix de base) ; le minerai QUITTE l'entrepôt (réservé) ;
+    l'ordre se règle AU PRIX FIXÉ dès qu'un pas du cours l'atteint
+    (`reglerLeMarche`, relu jusqu'à une semaine en arrière — donc aussi
+    pendant qu'on ne joue pas) ; `annulerLOrdre` rend les pépites. UN ordre
+    par minerai.
+  - *Tous ces chiffres sont de moi, à rejuger* : le pas d'une minute, les
+    amplitudes, le plafond, un seul ordre par minerai, la vente sans effet
+    sur le cours.
+- **L'écran** (`page.ts`, « LA VENTE : LE PANNEAU DU MARCHÉ ») : la fiche du
+  minerai dit le COURS (vert au-dessus du prix de base, rouge dessous), le
+  stock, l'ordre posé ; « Vendre » ouvre un panneau par-dessus l'entrepôt —
+  la courbe des quarante derniers pas (le point clair est maintenant, un
+  pointillé gris le prix de base, un trait d'or le prix fixé), la quantité
+  sur un curseur de 0 au stock, « Au cours » ou « Prix fixé » (un second
+  curseur, du cours au plafond), le gain, puis « Vendre » ou « Poser
+  l'ordre ». Un ordre en attente s'y voit et s'annule. Les curseurs se font
+  glisser (`curseurs`, refaits à chaque image comme les zones).
+- **La sauvegarde** garde les ordres et l'instant du dernier règlement.
+  `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
+  ordre posé ainsi attendra que la vraie heure la rattrape).
+- Vérifié : les règles ; en capture, le panneau, les deux curseurs, un ordre
+  posé puis relu. *Pas vu en capture : un ordre qui se règle à l'écran* (le
+  cours n'a pas atteint le prix pendant l'essai ; le règlement est couvert
+  par les vérifications).
+
 ## Le labo : l'arbre des recherches (Keko, 11/11 : « on peut commencer l'arbre tech du labo ? propose-moi une première version »)
 
 - **Ce que Keko a tranché**, en trois échanges :
