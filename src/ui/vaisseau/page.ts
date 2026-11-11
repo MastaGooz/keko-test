@@ -2828,6 +2828,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesLasers(p)
     // (les effets sont dans le monde : ils passent SOUS les bandeaux et l'interface)
     for (const e of effets) e.fx.draw(frame)
+    // (un effet laisse le peintre du tampon PLACÉ sur lui, avec son fondu et sa lumière : sans cette remise à neuf — le
+    // peintre d'un tampon est unique, `painterFor` le rend remis à zéro —, tant qu'un effet vivait (la matérialisation
+    // du départ), les bandeaux et l'interface se dessinaient ancrés au milieu de l'écran : Keko)
+    N.painterFor(frame)
     dessinerLesBords(p)
     dessinerLesBandeaux(p)
     dessinerLePointeur(p)

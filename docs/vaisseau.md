@@ -61,6 +61,14 @@ la forme, pas le système* (`asteroide.ts`) :
 - **La ligne du build de la base est partie** (les deux, celle du hangar et
   celle des listes) : la date est dans la feuille « PLUS », sous « Remise à
   zéro ».
+- **Un effet laisse le peintre placé sur lui** (Keko : « je vois les bandes
+  d'interface avec leur ancre au milieu de l'écran un instant avant qu'elles
+  se placent ») : `fx.draw(frame)` prend le peintre unique du tampon, le
+  place sur l'effet et règle son fondu et sa lumière, sans rien rendre. Les
+  effets passés AVANT l'interface, les bandeaux héritaient de cette place
+  tant que la matérialisation du départ vivait (ma capture, prise cinq
+  secondes après, ne le montrait pas). `N.painterFor(frame)` après les
+  effets le remet à neuf. *Après un `fx.draw`, on redemande le peintre.*
 - Vu en capture (Chrome sans tête, 412 × 915) : les deux bandeaux de 69, la
   soute et la coque dans celui du haut, la base entière dans la vue. Le cas
   sans bandeau (360 × 640) est l'ancien rendu.
