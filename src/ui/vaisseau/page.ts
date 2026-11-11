@@ -2221,6 +2221,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const j0 = Math.round(camera.y / CONF.station.case)
     for (let j = j0 - 1; j <= j0 + 1; j++)
       for (let i = i0 - 1; i <= i0 + 1; i++) {
+        if (CONF.station.seule && (i !== 0 || j !== 0)) continue // (une seule station pour l'instant : la base)
         const st = stationDeLaCase(CONF, i, j)
         const sx = st.x - camera.x + W / 2
         const sy = st.y - camera.y + H / 2

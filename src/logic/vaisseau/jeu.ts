@@ -84,7 +84,12 @@ export const VAISSEAU = {
    * part monte de `…Pres` à `…Loin` sur `horizon` unités) : s'éloigner des stations paie, et c'est là qu'est le risque.
    */
   filons: { horizon: 3000, orPres: 0.16, orLoin: 0.38, cristalPres: 0.03, cristalLoin: 0.16 },
-  station: { case: 4500, rayon: 11, portee: 36, cadence: 0.12 },
+  /**
+   * UNE SEULE STATION POUR L'INSTANT (Keko, 11/11 : « supprimer les petits extracteurs du jeu pour l'instant, je préfère
+   * un seul point d'entrée et de sortie ») : `seule` ne garde que la base, au point de départ — `stationLaPlusProche`
+   * la rend toujours. Les extracteurs par case restent écrits (`stationDeLaCase`), éteints.
+   */
+  station: { case: 4500, rayon: 11, portee: 36, cadence: 0.12, seule: true as boolean },
   /**
    * LA BASE (Keko, 11/11 : « modifier le premier extracteur, celui du spawn, pour qu'il n'y ait pas d'ennemi à proximité
    * au début, et surtout l'agrandir pour qu'il ressemble à une station spatiale ») : la station du point de départ est
@@ -296,6 +301,7 @@ export function stationDeLaCase(c: ConfigVaisseau, i: number, j: number): Vecteu
 
 /** La station la plus proche de (x, y), parmi celles des neuf cases autour (une station ne sort jamais de sa case). */
 export function stationLaPlusProche(c: ConfigVaisseau, x: number, y: number): Vecteur {
+  if (c.station.seule) return { x: 0, y: 0 }
   const i0 = Math.round(x / c.station.case)
   const j0 = Math.round(y / c.station.case)
   let meilleure: Vecteur = { x: 0, y: 0 }

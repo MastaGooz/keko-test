@@ -158,8 +158,11 @@ export function dessinerStation(p: PeintreStation, sx: number, sy: number, t: nu
  * - en haut, le POSTE DE COMMANDE : un octogone à facettes sous sa verrière, deux nacelles, le mât et son fanal rouge ;
  * - en bas, les SILOS : deux cuves le long de la poutre, cerclées, avec leur jauge d'or (là où va le minerai) ;
  * - un ANNEAU d'habitation qui tourne lentement, ses hublots allumés tour à tour, tenu par quatre entretoises ;
- * - au centre, LE PONT : un disque de tôles avec son marquage d'or et sa rampe de feux qui court — c'est le parvis de
+ * - au centre, LE PONT (et tout vit, voir plus bas) : un disque de tôles avec son marquage d'or et sa rampe de feux qui court — c'est le parvis de
  *   l'extraction, on y naît et on s'y pose ; à quai, les feux, le marquage et les hublots passent à l'or.
+ * ET TOUT VIT (Keko : « plus animée sur ses différentes parties ») : le reflet balaie les panneaux, des impulsions
+ * courent sur les poutres (le courant vers le pont, l'or vers les silos), une soudure crépite, le radar du poste tourne,
+ * les silos purgent leur vapeur, une balise bat sur le pont, deux drones de service font le tour de la station.
  * `ENVERGURE_BASE` dit jusqu'où elle s'étend du centre (ce que la page écarte du bord pour la dessiner).
  */
 export const ENVERGURE_BASE = 92
@@ -191,7 +194,8 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
         const ly = v - y0
         if (lx === 0 || lx === 16 || ly === 0 || ly === 29) return A[4]
         if (lx % 4 === 0 || ly % 6 === 5) return A[2]
-        return mod(lx + ly, 22) < 5 ? T.cellule[2] : T.cellule[1]
+        // (le reflet en biais BALAIE le panneau, chacun à son heure)
+        return mod(lx + ly - t * 7 + (s + 2 * h) * 9, 46) < 5 ? T.cellule[2] : T.cellule[1]
       })
       // le pied du panneau sur la poutre, et le feu de position au bout (rouge à gauche, la verrière à droite)
       boite(cx - 2, h === -1 ? -6 : 4, cx + 2, h === -1 ? -4 : 6, A[3])
@@ -200,6 +204,26 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
       p.px(sx + cx, sy + fy, feu ? (s === -1 ? T.rouge : T.verre[2]) : A[3])
       if (feu) p.glow(sx + cx, sy + fy, 5, s === -1 ? T.rouge : T.verre[1], 0.45)
     }
+
+  // LE COURANT ET LE MINERAI : des impulsions courent sur les poutres — le courant des panneaux vers le pont (deux par
+  // côté), les ordres entre le poste et le pont, l'or du pont vers les silos
+  const impulsion = (ix: number, iy: number, c: number, lueur: number): void => {
+    p.px(sx + ix, sy + iy, c)
+    p.glow(sx + ix, sy + iy, 4, lueur, 0.45)
+  }
+  for (const s of [-1, 1]) for (let k = 0; k < 2; k++) impulsion(s * Math.round(70 - mod(t * 16 + k * 11 + (s + 1) * 4, 22)), 0, T.verre[2], T.verre[1])
+  impulsion(0, -Math.round(48 + mod(t * 11, 11)), T.verre[3], T.verre[1])
+  impulsion(0, Math.round(48 + mod(t * 9, 12)), aQuai ? T.or[4] : T.or[3], T.or[2])
+  // une SOUDURE sur la poutre de droite : deux secondes toutes les sept, un point blanc qui crépite et ses étincelles
+  const soudure = mod(t, 7)
+  if (soudure < 2 && Math.sin(t * 47) > -0.2) {
+    p.px(sx + 52, sy - 3, A[7])
+    p.glow(sx + 52, sy - 3, 6, T.or[3], 0.5 + 0.3 * Math.sin(t * 61))
+    for (let k = 0; k < 3; k++) {
+      const u = mod(t * 2.6 + k * 0.37, 1)
+      p.dot(sx + 52 + Math.sin(k * 2.4 + Math.floor(t * 2.6 + k * 0.37) * 1.7) * 5 * u, sy - 3 - 6 * u + 5 * u * u, T.or[3], 1 - u)
+    }
+  }
 
   // LES SILOS : deux cuves le long de la poutre du bas, rondes en travers (claires du côté de la lampe), cerclées, la
   // jauge d'or sur chacune — là où va le minerai extrait
@@ -218,6 +242,12 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
     for (let k = 0; k < 16; k++) p.px(sx + cx + s * 2, sy + 75 - k, k < plein ? T.or[k === plein - 1 ? 3 : 2] : A[1])
   }
   boite(-3, 62, 3, 72, A[3])
+  // chaque silo PURGE de temps en temps : une bouffée de vapeur part de sa calotte du bas et se dissipe
+  for (const s of [-1, 1]) {
+    const u = mod(t + (s + 1) * 2.6, 5.2) / 1.4
+    if (u >= 1) continue
+    for (let k = 0; k < 4; k++) p.dot(sx + s * (9 + u * (5 + k * 2.5)) + Math.sin(k * 1.9) * 1.5, sy + 86 + u * (3 + k) + Math.cos(k * 2.3) * 1.5, A[k < 2 ? 6 : 5], (1 - u) * 0.8)
+  }
 
   // LE POSTE DE COMMANDE : un octogone à facettes, deux nacelles, la verrière, le mât et son fanal
   const py = -70
@@ -225,6 +255,15 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
     boite(s * 15 - 4, py - 5, s * 15 + 4, py + 5, (u, v) => (v === py - 5 ? A[6] : u === s * 15 - 4 ? A[5] : u === s * 15 + 4 || v === py + 5 ? A[2] : A[4]))
     p.px(sx + s * 15, sy + py, Math.sin(t * 1.3 + s) > 0 ? T.verre[2] : T.verre[1])
     boite(s * 9 - 2, py - 1, s * 9 + 2, py + 1, A[3])
+  }
+  // le RADAR sur la nacelle de gauche : un bras qui tourne, son bout qui luit en passant vers nous
+  {
+    const a = t * 1.7
+    const rx = sx - 15 + Math.cos(a) * 4.5
+    const ry = sy + py + Math.sin(a) * 2.6
+    p.line(sx - 15, sy + py, rx, ry, A[6])
+    p.px(rx, ry, Math.sin(a) > 0 ? T.verre[3] : A[5])
+    if (Math.sin(a) > 0.6) p.glow(rx, ry, 4, T.verre[2], 0.35)
   }
   const R1 = 11
   const octo = Array.from({ length: 8 }, (_, k) => {
@@ -304,15 +343,42 @@ export function dessinerBase(p: PeintreStation, x: number, y: number, t: number,
     return r > 11.5 ? A[3] : A[2]
   })
   p.px(sx, sy, V[2])
+  // la BALISE du pont : une onde part de la mire et s'éteint en gagnant le marquage (plus pressée à quai)
+  {
+    const u = mod(t * (aQuai ? 0.9 : 0.42), 1)
+    p.ring(sx, sy, 5 + u * 12, 1, V[1], (1 - u) * 0.55)
+  }
   // la rampe de feux : douze, sur le bord du pont, un feu qui court (deux à quai, plus vite)
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2 - Math.PI / 2
-    const phase = mod(t * (aQuai ? 9 : 4) - i, aQuai ? 6 : 12)
+    const phase = mod(t * (aQuai ? 9 : 5) - i, aQuai ? 4 : 6)
     const allume = phase < 2
     const fx = sx + Math.cos(a) * 22.5
     const fy = sy + Math.sin(a) * 22.5
     p.px(fx, fy, allume ? V[phase < 1 ? 3 : 2] : A[1])
     if (allume) p.glow(fx, fy, 4, V[1], 0.4)
+  }
+
+  // LES DRONES DE SERVICE : deux petits engins font le tour de la station, chacun sur son ovale et dans son sens — un
+  // corps de trois pixels en travers de sa route, un feu qui clignote, une traînée derrière
+  for (const [rx, ry, periode, phase, sens] of [[66, 88, 46, 0.2, 1], [80, 52, 34, 2.9, -1]]) {
+    const a = phase + (sens * t * Math.PI * 2) / periode
+    const dx = Math.cos(a) * rx
+    const dy = Math.sin(a) * ry
+    // (la tangente de l'ovale, dans le sens de la marche)
+    const tx = -Math.sin(a) * rx * sens
+    const ty = Math.cos(a) * ry * sens
+    const l = Math.hypot(tx, ty) || 1
+    const ux = tx / l
+    const uy = ty / l
+    for (let k = 1; k <= 3; k++) p.dot(sx + dx - ux * (k + 1), sy + dy - uy * (k + 1), T.verre[1], 0.6 - k * 0.15)
+    p.px(sx + dx - uy, sy + dy + ux, A[4])
+    p.px(sx + dx + uy, sy + dy - ux, A[4])
+    p.px(sx + dx, sy + dy, A[6])
+    if (Math.sin(t * 5 + phase) > 0.3) {
+      p.px(sx + dx + ux, sy + dy + uy, T.or[3])
+      p.glow(sx + dx + ux, sy + dy + uy, 3, T.or[2], 0.4)
+    }
   }
 
   // à quai, le pont entier luit d'or

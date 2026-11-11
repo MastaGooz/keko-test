@@ -38,6 +38,28 @@ la forme, pas le système* (`asteroide.ts`) :
   et la lumière de bord gardés, la distance au bord prise au pan le plus
   proche du polygone.
 
+## Une seule station, et elle vit (Keko, 11/11 : « ce serait cool que la station extracteur de départ soit plus animée sur ses différentes parties. aussi tu peux supprimer les petits extracteurs du jeu pour l'instant ? je préfère un seul point d'entrée et de sortie »)
+
+- **UNE SEULE STATION : LA BASE** (`station.seule`, vrai) : `stationLaPlusProche`
+  rend toujours le point de départ, la page ne dessine qu'elle, la flèche
+  jaune y ramène d'où qu'on soit, et le champ n'a plus de parvis vide au
+  loin. *Les extracteurs par case restent écrits* (`stationDeLaCase`,
+  `dessinerStation`) et vérifiés (les vérifications des règles tournent avec
+  `seule` à faux) : « pour l'instant ». Vérifié : la plus proche est la base
+  où qu'on soit ; là où était un extracteur, on ne s'extrait plus.
+- **La base vit, partie par partie** (`dessinerBase`) : le reflet BALAIE les
+  panneaux, chacun à son heure ; des IMPULSIONS courent sur les poutres (le
+  courant des panneaux vers le pont, les ordres vers le poste, l'or vers les
+  silos) ; une SOUDURE crépite deux secondes toutes les sept sur la poutre de
+  droite ; le RADAR du poste tourne sur sa nacelle ; les SILOS purgent une
+  bouffée de vapeur tour à tour ; une BALISE bat sur le pont (une onde de la
+  mire au marquage, plus pressée à quai) et la rampe a deux feux qui
+  courent ; deux DRONES de service font le tour de la station, chacun sur
+  son ovale et dans son sens. S'ajoutent à l'anneau qui tourne, aux hublots,
+  aux feux de position, aux jauges et au fanal. Tout est fonction du temps,
+  rien n'est stocké. Jugé sur deux images fixes hors navigateur : le
+  mouvement est à regarder en jeu.
+
 ## La liste dit toutes les places d'une pièce (Keko, 11/11 : « si j'ai 4 emplacements d'armes avec la même arme je vois quoi ? » — « lister toutes les places (ARME 1, 3), et en plus le mettre en plus de équipé »)
 
 Dans la liste d'une place d'arme ou d'outil, la ligne d'une pièce montée

@@ -4,8 +4,8 @@
 import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
 
-/** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) ; elle a ses propres vérifications, plus bas. */
-const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 } }
+/** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
+const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 }, station: { ...VAISSEAU.station, seule: false } }
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -407,6 +407,17 @@ calme.sorti = true
 const neAuLarge = avancerLeMonde(VAISSEAU, calme, 1 / 60, { x: 0, y: 0 }).evenements.some((e) => e.type === 'ennemiApparait')
 verifier('sorti de la zone calme, il naît — au large, plus loin de la base que le joueur', neAuLarge && calme.ennemis.length === 1 && Math.hypot(calme.ennemis[0].corps.x, calme.ennemis[0].corps.y) > VAISSEAU.base.calme + 20)
 verifier('le champ est vide sur l’envergure de la base', asteroidesAutour(VAISSEAU, 0, 0, 400).every((a) => Math.hypot(a.x, a.y) >= VAISSEAU.base.rayon + a.rayon))
+
+// UNE SEULE STATION (Keko : « un seul point d'entrée et de sortie ») : la plus proche est toujours la base, et on ne s'extrait plus au loin
+verifier('une seule station : la plus proche est la base, où qu’on soit', [[2000, -1300], [-9000, 4200], [13500, -9000]].every(([x, y]) => { const st = stationLaPlusProche(VAISSEAU, x, y); return st.x === 0 && st.y === 0 }))
+const ancienne = stationDeLaCase(VAISSEAU, 3, -2)
+const loinDeTout = nouveauMonde()
+loinDeTout.prochainEnnemiA = 1e9
+loinDeTout.sorti = true
+loinDeTout.vaisseau = { ...nouveauVaisseau(), x: ancienne.x, y: ancienne.y }
+loinDeTout.detruits = new Set(asteroidesAutour(VAISSEAU, ancienne.x, ancienne.y, 60).map((a) => a.id))
+for (let i = 0; i < 60 * 2; i++) avancerLeMonde(VAISSEAU, loinDeTout, 1 / 60, { x: 0, y: 0 })
+verifier('là où était un extracteur, on ne s’extrait plus', loinDeTout.extraction === 0 && loinDeTout.phase === 'vol')
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
