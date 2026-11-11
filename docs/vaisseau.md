@@ -66,6 +66,13 @@ la forme, pas le système* (`asteroide.ts`) :
 - **Chaque rang a son bandeau** sur toute la largeur : « Rang N », un
   cadenas tant qu'il est fermé, et à droite ce que coûte un nœud de ce
   rang. Plus de numéro perdu dans la marge.
+  *RETIRÉS LE MÊME JOUR* (Keko : « je ne suis pas sûr que marquer les
+  paliers comme ça soit une bonne idée — je veux des prix individuels sur
+  les nœuds ») : plus de bandeaux ; CHAQUE NŒUD A SON COÛT (`Noeud.cout`
+  dans `labo.ts`, `COUTS` par rang supprimé ; des valeurs de moi autour de
+  l'ancien barème, à rejuger) et le porte sur une étiquette pendue dessous
+  — le minerai et le nombre, vert quand on l'a, rouge sinon, gris si le
+  rang est fermé ; elle disparaît quand le nœud est débloqué.
 - **Les conduits** font cinq pixels (cernés, un cœur clair), ont des
   raccords, et DISENT LA RÈGLE : de la source au premier rang, puis de
   chaque nœud au rang d'après — celui qui sort d'un nœud débloqué s'allume

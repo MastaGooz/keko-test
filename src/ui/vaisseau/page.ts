@@ -2177,8 +2177,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LES RANGS DE LA BRANCHE, DANS UNE FENÊTRE QUI DÉFILE (Keko, 11/11 : « si on rajoute des tiers 4, 5, 6, on fait
    * comment pour avancer dans l'arbre ? ») — et REFAITS (« beaucoup d'espace vide, les connexions très très fines ») :
    *
-   * - chaque rang a SON BANDEAU, sur toute la largeur : son nom, un cadenas tant qu'il est fermé, et à droite CE QUE
-   *   COÛTE un nœud de ce rang (le même pour tous) ;
+   * - CHAQUE NŒUD PORTE SON PRIX, sur une étiquette pendue dessous (Keko, 11/11 : « je ne suis pas sûr que marquer les
+   *   paliers comme ça soit une bonne idée — je veux des prix individuels sur les nœuds » : les bandeaux « Rang N » et
+   *   leur coût commun sont partis) : le minerai et le nombre, vert quand on l'a, rouge sinon, gris si le rang est fermé ;
    * - LES CONDUITS sont épais (cinq pixels : cernés d'encre, un cœur clair) et DISENT LA RÈGLE : de la source au premier
    *   rang, puis de CHAQUE nœud au rang d'après — le conduit qui sort d'un nœud débloqué s'allume, et c'est lui qui
    *   ouvre le rang suivant ; allumé, des grains de lumière y descendent ;
@@ -2187,7 +2188,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    *   droite. Le défilement est gardé par branche.
    */
   const PAS_DES_RANGS = 64
-  const H_BANDEAU = 13
   const defilDeLArbre: Record<Branche, number> = { minage: 0, combat: 0, exploration: 0, commerce: 0 }
   let zoneDeLArbre: { x: number; y: number; w: number; h: number } | null = null
   let coupeHaut = 0
@@ -2243,7 +2243,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const noeuds = noeudsDe(branche, r)
       const ecart = Math.min(42, (W - 12) / noeuds.length)
       const haut = Math.round(ya + 4 + pas * k - d)
-      return { r, haut, bus: haut + H_BANDEAU + 4, y: haut + H_BANDEAU + 29, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
+      return { r, haut, bus: haut + 5, y: haut + 29, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
     })
     // LES CONDUITS : la source nourrit le premier rang ; chaque nœud nourrit le rang d'après, et s'allume quand il est débloqué
     rangs.forEach((rg, k) => {
@@ -2259,40 +2259,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         coupe(x - 1, rg.bus - 1, 3, 3, coeur(rg.ouvert))
       }
     })
-    // LES BANDEAUX des rangs, par-dessus les conduits (ils passent dessous)
-    for (const rg of rangs) {
-      coupe(3, rg.haut, W - 6, H_BANDEAU, ENCRE)
-      coupe(4, rg.haut + 1, W - 8, H_BANDEAU - 2, rg.ouvert ? N.hex('#13243f') : N.hex('#0e1320'))
-      coupe(4, rg.haut + 1, W - 8, 1, rg.ouvert ? N.hex('#2f5088') : N.hex('#1a2236'))
-      coupe(4, rg.haut + H_BANDEAU - 2, W - 8, 1, rg.ouvert ? N.hex('#0c1830') : N.hex('#090c15'))
-      if (rg.haut < ya || rg.haut + H_BANDEAU > yb) continue // (son texte : seulement quand il est entier dans la fenêtre)
-      let xt = 9
-      if (!rg.ouvert) {
-        // un cadenas
-        p.rect(xt, rg.haut + 6, 5, 4, COQUE[3])
-        p.rect(xt + 1, rg.haut + 3, 1, 3, COQUE[3])
-        p.rect(xt + 3, rg.haut + 3, 1, 3, COQUE[3])
-        p.rect(xt + 1, rg.haut + 3, 3, 1, COQUE[3])
-        xt += 8
-      }
-      ecrire(p, `Rang ${rg.r}`, xt, rg.haut + 3, rg.ouvert ? PEPITE[3] : COQUE[3], { police: GRAS })
-      // ce que coûte un nœud de ce rang, à droite
-      const cout = coutDe(rg.places[0].n)
-      let xr = W - 8
-      for (const k of [...MINERAIS].reverse()) {
-        if (cout[k] <= 0) continue
-        const tx = montantCourt(cout[k])
-        ecrire(p, tx, xr, rg.haut + 3, rg.ouvert ? N.hex('#fff2c8') : COQUE[3], { police: GRAS, align: 'right' })
-        xr -= largeurDe(tx, GRAS) + 7
-        dessinerUneRessource(p, xr, rg.haut + 6, k)
-        xr -= 9
-      }
-    }
     for (const rg of rangs) {
       if (rg.y + 24 < ya || rg.y - 24 > yb) continue
       for (const pl of rg.places) {
         placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
         dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
+        // SON PRIX, sur une étiquette pendue dessous (le conduit passe derrière) — tant qu'il n'est pas débloqué
+        const yt = rg.y + 21
+        if (estDebloque(labo, pl.n.id) || yt < ya || yt + 10 > yb) continue
+        const cout = coutDe(pl.n)
+        const ks = MINERAIS.filter((k) => cout[k] > 0)
+        const textes = ks.map((k) => montantCourt(cout[k]))
+        const lw = textes.map((tx) => 10 + textWidth(tx, 'mini'))
+        const w = lw.reduce((a, b) => a + b, 0) + (ks.length - 1) * 2 + 3
+        const x0 = Math.round(pl.x - w / 2)
+        p.rect(x0 - 1, yt, w + 2, 10, ENCRE)
+        p.rect(x0, yt + 1, w, 8, rg.ouvert ? N.hex('#0f1a30') : N.hex('#0b0f1a'))
+        p.rect(x0, yt + 1, w, 1, rg.ouvert ? N.hex('#243a66') : N.hex('#161d2e'))
+        let xc = x0 + 1
+        ks.forEach((k, i) => {
+          dessinerUneRessource(p, xc + 5, yt + 5, k)
+          p.text(textes[i], xc + 10, yt + 3, !rg.ouvert ? COQUE[3] : tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5])
+          xc += lw[i] + 2
+        })
       }
     }
     // l'arbre continue : un fondu au bord, et la barre de défilement
