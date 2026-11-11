@@ -19,7 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from '../../logic/vaisseau/marche.ts'
+import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
@@ -2300,9 +2300,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ly = y + 20 + LIGNES * 9 + 8
     p.rect(10, ly - 4, W - 20, 1, MATIERES.encre.ombre)
     // LE COURS du moment (il bouge : le marché) et le stock ; les ordres posés sont SOUS la fiche
-    const cours = coursA(k, heureDuMarche())
     ecrire(p, 'Cours', 10, ly, COQUE[4])
-    nombreDeCredits(p, prixDit(cours), W - 9, ly, cours >= fiche.credits ? RUNE[3] : ROUGE[5])
+    dessinerLeCours(p, k, W - 9, ly)
     ecrire(p, 'En stock', 10, ly + 12, COQUE[4])
     ecrire(p, montantCourt(tresor[k]), W - 21, ly + 12, tresor[k] > 0 ? N.WHITE : COQUE[3], { police: GRAS, align: 'right' })
     dessinerUneRessource(p, W - 13, ly + 15, k)
@@ -2338,6 +2337,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     venteQuantite = tresor[k]
     venteFixe = false
     ventePrix = Math.min(prixPlafond(k), Math.round(coursA(k, heureDuMarche()) * 11.5) / 10)
+  }
+  /**
+   * LE COURS, écrit comme un nombre ordinaire, avec SA FLÈCHE à gauche (Keko, 11/11 : « plutôt qu'écrire le chiffre du
+   * cours en rouge ou vert, écris-le normalement et mets une flèche verte qui monte ou une rouge qui descend à gauche
+   * du chiffre ») : verte vers le haut s'il vient de monter, rouge vers le bas s'il vient de descendre.
+   */
+  function dessinerLeCours(p: Peintre, k: Minerai, xDroite: number, y: number): void {
+    const maintenant = heureDuMarche()
+    const texte = prixDit(coursA(k, maintenant))
+    nombreDeCredits(p, texte, xDroite, y, N.hex('#fff2c8'))
+    const sens = tendanceDe(k, maintenant)
+    if (sens === 0) return
+    const xf = Math.round(xDroite - largeurDe(texte, GRAS) - 12 - 8)
+    const c = sens > 0 ? RUNE[2] : ROUGE[4]
+    const clair = sens > 0 ? RUNE[3] : ROUGE[5]
+    const encre = MATIERES.encre.contour
+    // une pointe de cinq pixels de large sur trois de haut, sa tige dessous (ou dessus)
+    for (let j = 0; j < 3; j++) {
+      const yy = sens > 0 ? y + j : y + 6 - j
+      p.rect(xf - j - 1, yy, 2 * j + 3, 1, encre)
+      p.rect(xf - j, yy, 2 * j + 1, 1, j === 0 ? clair : c)
+    }
+    p.rect(xf - 1, sens > 0 ? y + 3 : y, 3, 4, encre)
+    p.rect(xf, sens > 0 ? y + 3 : y, 1, 4, c)
   }
   function ouvrirLOrdre(id: number): void {
     const o = ordreNumero(marche, id)
@@ -2418,7 +2441,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     const stock = tresor[k]
-    const hp = ordre !== undefined ? 150 : 232
+    const hp = ordre !== undefined ? 158 : 232 // (de l'air sous « Fermer » — Keko : « la boîte s'arrête pile en bas du bouton »)
     const x = 6
     const w = W - 12
     const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
@@ -2463,7 +2486,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.text(prixDit(bas), gx + 3, gy + gh - 9, COQUE[3])
     let ly = gy + gh + 5
     ecrire(p, 'Cours', x + 6, ly, COQUE[4])
-    nombreDeCredits(p, prixDit(cours), x + w - 5, ly, cours >= FICHES_MINERAI[k].credits ? RUNE[3] : ROUGE[5])
+    dessinerLeCours(p, k, x + w - 5, ly)
     ly += 13
     const lb = (mot: string): number => largeurDe(mot, GRAS) + 22
     if (ordre !== undefined) {

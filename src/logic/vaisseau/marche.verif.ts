@@ -1,7 +1,7 @@
 /**
  * Vérifications du marché des minerais, sans navigateur.
  */
-import { annulerLOrdre, coursA, coursAuPas, gainDe, historiqueDe, lireMarche, MARCHE, marcheNeuf, ordresDe, pasDe, poserUnOrdre, prixPlafond, reglerLeMarche, vendreAuCours } from './marche.ts'
+import { annulerLOrdre, coursA, coursAuPas, gainDe, historiqueDe, lireMarche, MARCHE, marcheNeuf, ordresDe, pasDe, poserUnOrdre, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from './marche.ts'
 import { FICHES_MINERAI } from './hangar.ts'
 import { MINERAIS } from './jeu.ts'
 
@@ -25,6 +25,7 @@ verifier('le cours bouge, reste au dixième, autour de son prix de base, et sous
 verifier('les trois minerais n’ont pas la même courbe', mille.some((p) => coursAuPas('fer', p) / 2 !== coursAuPas('or', p) / 8))
 const h = historiqueDe('or', T0)
 verifier('la courbe : tant de points, le dernier est le cours du moment, l’avant-dernier celui du pas d’avant', h.length === MARCHE.historique && h[h.length - 1] === coursA('or', T0) && h[h.length - 2] === coursA('or', T0 - PAS))
+verifier('la tendance : +1 quand le cours vient de monter, −1 de descendre (comparé au dernier cours différent)', mille.slice(20, 400).every((p) => { const c = coursAuPas('or', p); let i = 1; while (i <= 10 && coursAuPas('or', p - i) === c) i++; const attendu = i > 10 ? 0 : c > coursAuPas('or', p - i) ? 1 : -1; return tendanceDe('or', p * PAS) === attendu }) && mille.slice(20, 400).some((p) => tendanceDe('or', p * PAS) === 1) && mille.slice(20, 400).some((p) => tendanceDe('or', p * PAS) === -1))
 verifier('un gain est entier, arrondi vers le bas', gainDe(3, 2.5) === 7 && gainDe(10, 2.4) === 24 && gainDe(1, 0.9) === 0)
 
 const tresor = { fer: 50, or: 10, cristal: 0 }

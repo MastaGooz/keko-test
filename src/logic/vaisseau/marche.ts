@@ -62,6 +62,16 @@ export function historiqueDe(k: Minerai, instant: number): number[] {
   const p = pasDe(instant)
   return Array.from({ length: MARCHE.historique }, (_, i) => coursAuPas(k, p - (MARCHE.historique - 1 - i)))
 }
+/** LA TENDANCE du cours : +1 s'il vient de monter, −1 de descendre — comparé au dernier cours DIFFÉRENT, sur dix pas au plus ; 0 s'il n'a pas bougé. */
+export function tendanceDe(k: Minerai, instant: number): -1 | 0 | 1 {
+  const p = pasDe(instant)
+  const c = coursAuPas(k, p)
+  for (let i = 1; i <= 10; i++) {
+    const avant = coursAuPas(k, p - i)
+    if (avant !== c) return c > avant ? 1 : -1
+  }
+  return 0
+}
 /** Le plus haut prix qu'un ordre puisse fixer. */
 export const prixPlafond = (k: Minerai): number => dixieme(FICHES_MINERAI[k].credits * MARCHE.plafond)
 /** Ce que rapportent `q` pépites à ce prix : des crédits entiers, arrondis vers le bas. */

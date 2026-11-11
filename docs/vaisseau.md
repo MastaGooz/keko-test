@@ -84,6 +84,16 @@ la forme, pas le système* (`asteroide.ts`) :
   ouvre toujours une vente neuve, sur ce qui reste en stock. Ce qui est dit
   plus haut d'un seul ordre par minerai et de la ligne « Ordre posé »
   décrit la première version.
+- **Le cours a sa flèche, le panneau d'un ordre a de l'air** (Keko, 11/11 :
+  « un petit espace sous le bouton fermer d'un ordre, la boîte s'arrête pile
+  en bas du bouton ; plutôt qu'écrire le chiffre du cours en rouge ou vert,
+  écris-le normalement et mets une flèche verte qui monte ou une rouge qui
+  descend à gauche du chiffre, pareil dans l'écran de trade ») : le cours
+  s'écrit en crème, à la fiche comme au panneau (`dessinerLeCours`), avec
+  une flèche à sa gauche — LA TENDANCE (`tendanceDe`) : le cours comparé
+  au dernier cours différent, sur dix pas ; avant, la couleur disait autre
+  chose (au-dessus ou au-dessous du prix de base). Le panneau d'un ordre
+  gagne huit pixels sous « Fermer ».
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
