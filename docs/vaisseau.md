@@ -198,6 +198,22 @@ la forme, pas le système* (`asteroide.ts`) :
   ouvert dit son nom. La pastille d'or des nœuds payables est retirée (le
   coût vert ou rouge de la fiche le dit). L'exploration prend un drapeau
   planté à la place de la boussole ronde, qui ressemblait au viseur.
+- **L'arbre défile, des rangs 4 à 6 d'essai** (Keko, 11/11 : « et si on
+  rajoute des tiers 4, 5, 6 (placeholders), on fait comment pour avancer
+  dans l'arbre ? » — « ok go, on verra les coûts plus tard ») : chaque rang
+  a 46 px au moins (s'il y a de la place, ils se la partagent comme
+  avant) ; quand l'arbre dépasse sa fenêtre, on le fait GLISSER au doigt
+  (la molette sur PC), la barre des branches et la fiche du nœud ne bougent
+  pas ; un fondu en haut et en bas, une barre de défilement à droite ; le
+  défilement est gardé par branche. L'arbre est dessiné d'abord, la barre
+  et la fiche par-dessus (la lumière éteinte sous elles), les traits et les
+  zones des nœuds coupés à la fenêtre ; une tape sur un nœud se décide au
+  relâchement (un glisser n'en est pas une). Les rangs 4 à 6 sont des
+  nœuds vides et fermés, de l'écran seulement (`NOEUDS_D_ESSAI` ; ni coût
+  ni effet, la règle ne les connaît pas). La pagination (rangs 1–3 puis
+  4–6) a été écartée : elle coupe le tronc. *La police n'a pas le « œ » :
+  « nœud » s'écrit « noeud » dans les textes affichés.* Non fait : caler
+  l'arbre sur le rang le plus avancé à l'ouverture d'une branche.
 - **La sauvegarde** : nouvelle clé `keko-vaisseau-hangar-2` (l'ancienne est
   effacée), le labo dedans ; « Remise à zéro » l'oublie aussi.
 - **`&stock=N`** pose N pépites de chaque minerai à l'entrepôt. `&pieces`

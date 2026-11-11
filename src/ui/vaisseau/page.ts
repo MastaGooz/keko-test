@@ -19,7 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud, type Rang } from '../../logic/vaisseau/labo.ts'
+import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, peutDebloquer, pieceOuverte, rangOuvert, type Branche, type Noeud, type Rang } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
@@ -398,7 +398,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const RANGEES = 4
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' } | null = null
   /** LE DÉFILEMENT DE LA GRILLE D'ONGLETS, en pixels (Keko : « les deux du bas tombent sous la zone, ajoute un défilement »), et sa zone, refaite à chaque image (null : tout tient). */
   let defilOnglets = 0
   let zoneDesOnglets: { x: number; y: number; w: number; h: number } | null = null
@@ -903,6 +903,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LA BASE ENTIÈRE, une image. */
   function dessinerLaBase(p: Peintre): void {
     zones = []
+    zoneDeLArbre = null
     p.place(0, 0)
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
@@ -1772,8 +1773,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.22 ? T[0] : T[1])
       }
   }
+  /**
+   * DES RANGS D'ESSAI, 4 À 6 (Keko, 11/11 : « et si on rajoute des tiers 4, 5, 6 (placeholders), on fait comment pour
+   * avancer dans l'arbre ? » — « ok go, on verra les coûts plus tard ») : des nœuds vides, fermés, de l'écran seulement
+   * (la règle ne les connaît pas, ils n'ont ni coût ni effet), pour juger l'arbre QUI DÉFILE.
+   */
+  const RANGS_AFFICHES = [1, 2, 3, 4, 5, 6]
+  const SORTES_D_ESSAI = ['passif', 'piece', 'mecanique', 'passif'] as const
+  const NOEUDS_D_ESSAI: Noeud[] = BRANCHES.flatMap((b, ib) =>
+    [4, 5, 6].flatMap((r, k) => Array.from({ length: 2 + ((k + ib) % 3) }, (_, i): Noeud => ({ id: `essai-${b}-${r}-${i}`, branche: b, rang: r as Rang, sorte: SORTES_D_ESSAI[(i + k + ib) % 4], nom: `Rang ${r} : à venir`, dit: 'Un noeud d’essai, pour juger l’arbre quand il s’allonge.', icone: 'reserve' }))),
+  )
+  const estDEssai = (n: Noeud): boolean => n.id.startsWith('essai-')
+  const noeudsDuRang = (b: Branche, r: number): Noeud[] => (r <= 3 ? noeudsDe(b, r as Rang) : NOEUDS_D_ESSAI.filter((n) => n.branche === b && n.rang === r))
+  const noeudAffiche = (id: string): Noeud | undefined => noeudDe(id) ?? NOEUDS_D_ESSAI.find((n) => n.id === id)
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
-  const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
+  const etatDuNoeud = (n: Noeud): EtatDuNoeud => (estDEssai(n) ? 'ferme' : estDebloque(labo, n.id) ? 'acquis' : rangOuvert(labo, n.branche, n.rang) ? 'ouvert' : 'ferme')
   /** UN NŒUD, centré sur (x, y), vingt-deux pixels : sa forme dit sa sorte, sa matière son état. */
   function dessinerUnNoeud(p: Peintre, n: Noeud, x: number, y: number, choisi: boolean): void {
     const etat = etatDuNoeud(n)
@@ -1793,6 +1807,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(x - 10, yy - 10, 1, 20, clair)
       const pc = pieceDe(n.piece ?? '')
       if (pc !== undefined) dessinerLePictogramme(p, pc, x, yy, 16, 16)
+      else dessinerLeGlyphe(p, n.icone ?? '', x, yy, [COQUE[1], COQUE[2], COQUE[3]])
       if (etat === 'ferme') p.rect(x - 10, yy - 10, 20, 20, N.hex('#0a0e18'), 0.6)
     } else {
       if (n.sorte === 'passif') {
@@ -1826,7 +1841,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(ax, ay, ax, ay - dy * 4, c)
       }
     }
-    zone(x - 12, y - 12, 24, 24, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
+    // (sa zone est coupée à la fenêtre de l'arbre : un nœud à demi sorti ne prend pas les tapes de la barre ou de la fiche)
+    const za = Math.max(y - 12, coupeHaut)
+    const zb = Math.min(y + 12, coupeBas)
+    if (zb - za > 6) zone(x - 12, za, 24, zb - za, () => ((noeudChoisi[n.branche] = n.id), (choixA = t)), choisi ? null : 'clic')
   }
   /**
    * L'ARBRE TIENT TOUTE LA SCÈNE DU LABO : les trois branches en puces en haut (Keko, 11/11 : « mettre la sélection du
@@ -1883,7 +1901,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     const hi = H_INFO + surplusDeLInfo()
-    dessinerLesRangs(p, y0 + H_BRANCHES + 6, y1 - hi - 2, RANGS)
+    // L'ARBRE D'ABORD, dans sa fenêtre ; puis la barre des branches et la fiche du nœud PAR-DESSUS (un nœud à demi sorti
+    // de la fenêtre passe dessous — la lumière aussi : on l'éteint sous elles, elle traverse les aplats)
+    dessinerLesRangs(p, y0 + H_BRANCHES + 1, y1 - hi - 2)
+    frame.light.fill(0, y0 * W, (y0 + H_BRANCHES + 1) * W)
+    dessinerLesBranches(p, y0)
+    frame.light.fill(0, (y1 - hi - 2) * W, y1 * W)
+    p.rect(0, y1 - hi - 2, W, hi + 2, N.hex('#0a1626'))
     dessinerLInfoDuNoeud(p, y1 - hi)
   }
   /**
@@ -1952,50 +1976,94 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(Math.round(repereDeBrancheX - 8), y + h - 2, 16, 1, N.hex('#fff2a8'))
     p.glow(Math.round(repereDeBrancheX), y + h - 2, 12, PEPITE[2], 0.35)
   }
-  /** Les rangs de la branche entre deux hauteurs : le tronc, un bus par rang, les nœuds. */
-  function dessinerLesRangs(p: Peintre, ya: number, yb: number, lesRangs: Rang[]): void {
+  /**
+   * LES RANGS DE LA BRANCHE, DANS UNE FENÊTRE QUI DÉFILE (Keko, 11/11 : « si on rajoute des tiers 4, 5, 6, on fait
+   * comment pour avancer dans l'arbre ? ») : chaque rang a sa hauteur (46 px au moins ; s'il y a de la place, ils se la
+   * partagent comme avant) ; quand l'arbre dépasse la fenêtre, ON LE FAIT GLISSER au doigt (la molette sur PC) — la
+   * barre des branches et la fiche du nœud ne bougent pas. Un fondu en haut et en bas dit qu'il continue, une barre à
+   * droite où l'on en est. Le défilement est gardé par branche.
+   */
+  const PAS_DES_RANGS = 46
+  const defilDeLArbre: Record<Branche, number> = { minage: 0, combat: 0, exploration: 0 }
+  let zoneDeLArbre: { x: number; y: number; w: number; h: number } | null = null
+  let coupeHaut = 0
+  let coupeBas = 0
+  function dessinerLesRangs(p: Peintre, ya: number, yb: number): void {
     const ALLUME = N.hex('#3a8ad0')
     const ETEINT = N.hex('#16304f')
-    const pas = (yb - ya) / lesRangs.length
+    const PLAN = N.hex('#0a1626')
+    const fenetre = yb - ya
+    const n = RANGS_AFFICHES.length
+    const pas = Math.max(PAS_DES_RANGS, (fenetre - 6) / n)
+    const total = n * pas + 6
+    const maxD = Math.max(0, Math.round(total - fenetre))
+    defilDeLArbre[branche] = Math.max(0, Math.min(maxD, defilDeLArbre[branche]))
+    const d = Math.round(defilDeLArbre[branche])
+    zoneDeLArbre = maxD > 0 ? { x: 0, y: ya, w: W, h: fenetre } : null
+    coupeHaut = ya
+    coupeBas = yb
+    /** Un rectangle, coupé à la fenêtre. */
+    const coupe = (x: number, y: number, w: number, h: number, c: number): void => {
+      const a = Math.max(y, ya)
+      const b = Math.min(y + h, yb)
+      if (b > a) p.rect(x, a, w, b - a, c)
+    }
     const cx = Math.round(W / 2) + 4
-    const rangs = lesRangs.map((r, k) => {
-      const noeuds = noeudsDe(branche, r)
+    const rangs = RANGS_AFFICHES.map((r, k) => {
+      const noeuds = noeudsDuRang(branche, r)
       const ecart = Math.min(36, (W - 40) / noeuds.length)
-      const y = Math.round(ya + pas * k + pas / 2 + 7)
-      return { r, y, ouvert: rangOuvert(labo, branche, r), places: noeuds.map((n, i) => ({ n, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
+      const y = Math.round(ya + 5 + pas * k + pas / 2 + 7 - d)
+      return { r, y, ouvert: r <= 3 && rangOuvert(labo, branche, r as Rang), places: noeuds.map((nd, i) => ({ n: nd, x: Math.round(cx + (i - (noeuds.length - 1) / 2) * ecart) })) }
     })
     // le tronc, de la source au bus du dernier rang ; chaque tronçon s'allume avec le rang qu'il nourrit
-    let haut = ya
+    const source = ya + 5 - d
+    let haut = source
     for (const rg of rangs) {
       const yy = rg.y - 16
       const c = rg.ouvert ? ALLUME : ETEINT
-      p.rect(cx, haut, 1, yy - haut + 1, c)
+      coupe(cx, haut, 1, yy - haut + 1, c)
       const x0 = Math.min(cx, rg.places[0].x)
       const x1 = Math.max(cx, rg.places[rg.places.length - 1].x)
-      p.rect(x0, yy, x1 - x0 + 1, 1, c)
-      for (const pl of rg.places) p.rect(pl.x, yy, 1, 5, c)
-      if (rg.ouvert) p.glowLine(x0, yy, x1, yy, 3, ALLUME, 0.12)
+      coupe(x0, yy, x1 - x0 + 1, 1, c)
+      for (const pl of rg.places) coupe(pl.x, yy, 1, 5, c)
+      if (rg.ouvert && yy > ya + 2 && yy < yb - 2) p.glowLine(x0, yy, x1, yy, 3, ALLUME, 0.12)
       // le numéro du rang, à gauche
-      ecrire(p, String(rg.r), 6, rg.y - 4, rg.ouvert ? COQUE[5] : COQUE[2], { police: GRAS })
+      if (rg.y - 5 >= ya && rg.y + 5 <= yb) ecrire(p, String(rg.r), 6, rg.y - 4, rg.ouvert ? COQUE[5] : COQUE[2], { police: GRAS })
       haut = yy
     }
-    p.rect(cx - 1, ya - 1, 3, 3, ALLUME)
+    coupe(cx - 1, source - 1, 3, 3, ALLUME)
     // un grain de lumière descend le tronc allumé
     const ouverts = rangs.filter((rg) => rg.ouvert)
     if (ouverts.length > 0) {
       const fond = Math.max(...ouverts.map((rg) => rg.y - 16))
-      const yg = ya + ((t * 26) % Math.max(1, fond - ya))
-      p.rect(cx, Math.round(yg), 1, 2, N.WHITE)
-      p.glow(cx, yg, 4, ALLUME, 0.5)
+      const yg = source + ((t * 26) % Math.max(1, fond - source))
+      if (yg > ya + 2 && yg < yb - 3) {
+        p.rect(cx, Math.round(yg), 1, 2, N.WHITE)
+        p.glow(cx, yg, 4, ALLUME, 0.5)
+      }
     }
-    for (const rg of rangs) for (const pl of rg.places) {
-      placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
-      dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
+    for (const rg of rangs) {
+      if (rg.y + 14 < ya || rg.y - 14 > yb) continue
+      for (const pl of rg.places) {
+        placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
+        dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
+      }
+    }
+    // l'arbre continue : un fondu au bord, et la barre de défilement
+    if (d > 0) for (let k = 0; k < 6; k++) p.rect(0, ya + k, W, 1, PLAN, 0.85 - k * 0.14)
+    if (d < maxD) for (let k = 0; k < 6; k++) p.rect(0, yb - 1 - k, W, 1, PLAN, 0.85 - k * 0.14)
+    if (maxD > 0) {
+      const hg = fenetre - 8
+      const hc = Math.max(10, Math.round((hg * fenetre) / total))
+      const yc = ya + 4 + Math.round(((hg - hc) * d) / maxD)
+      p.rect(W - 4, ya + 4, 2, hg, N.hex('#0e1f34'))
+      p.rect(W - 4, yc, 2, hc, COQUE[3])
+      p.rect(W - 4, yc, 2, 1, COQUE[5])
     }
   }
   /** LA FICHE DU NŒUD choisi, au pied de l'arbre : son nom, ce qu'il donne, puis son coût en minerai et « Débloquer » — ou ce qu'il est devenu. */
   function dessinerLInfoDuNoeud(p: Peintre, y: number): void {
-    const n = noeudDe(noeudChoisi[branche])
+    const n = noeudAffiche(noeudChoisi[branche])
     if (n === undefined) return
     const etat = etatDuNoeud(n)
     const surplus = surplusDeLInfo()
@@ -2010,7 +2078,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ya = y + h - 33 - surplus
     const yb = y + h - 19
     const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
-    if (etat === 'ferme') ecrire(p, `Demande un nœud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
+    if (etat === 'ferme') ecrire(p, estDEssai(n) ? 'Bientôt' : `Demande un noeud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
     else if (etat === 'ouvert') {
       // CE QU'IL FAUT, par minerai — vert quand on l'a, rouge sinon ; ce qu'on a ne s'écrit plus à côté (Keko : « en
       // format X/Y, si le joueur a beaucoup de la ressource, on va avoir un souci de place »)
@@ -2300,6 +2368,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         racine.setPointerCapture(ev.pointerId)
         return
       }
+      // l'arbre du labo, quand il dépasse sa fenêtre : il se fait glisser (une tape sur un nœud se décide au relâchement)
+      const za = zoneDeLArbre
+      if (za !== null && !feuille && q.x >= za.x && q.x < za.x + za.w && q.y >= za.y && q.y < za.y + za.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilDeLArbre[branche], bouge: false, sorte: 'arbre' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
       if (z !== undefined) appuyer(z)
       return
@@ -2343,7 +2418,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // la liste suit le doigt, une rangée par 13 pixels de tampon
       const q = enTampon(ev.clientX, ev.clientY)
       if (Math.abs(q.y - glisse.y) > 2) glisse.bouge = true
-      if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
+      if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
+      else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       return
     }
@@ -2365,7 +2441,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (z !== undefined) appuyer(z)
       }
       if (glisse.sorte === 'liste') defil[onglet] = Math.round(defil[onglet])
-      else defilOnglets = Math.round(defilOnglets)
+      else if (glisse.sorte === 'onglets') defilOnglets = Math.round(defilOnglets)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -2383,6 +2459,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (dans(zoneGlissante)) {
       ev.preventDefault()
       defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
+    } else if (dans(zoneDeLArbre)) {
+      ev.preventDefault()
+      defilDeLArbre[branche] += Math.sign(pas) * 24
     }
   }, { passive: false })
   racine.addEventListener('pointerleave', () => {
