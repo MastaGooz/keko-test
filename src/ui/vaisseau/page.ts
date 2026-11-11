@@ -834,10 +834,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko) : ce que laissent les deux barres et le plus haut des contenus. */
   // (AU LABO, la scène est l'ARBRE — ses branches, ses rangs, la fiche du nœud — et prend tout l'écran entre les deux
   // barres : les pièces s'achètent au hangar, il n'y a plus rien dessous)
-  // (À L'ENTREPÔT, la scène montre DEUX RANGÉES DE PLUS que sa hauteur ordinaire n'en logerait — Keko, 11/11 : « on peut
-  // afficher en permanence deux lignes de plus, et scroller pour le reste » — tant que la fiche du minerai tient dessous)
+  // (À L'ENTREPÔT, la scène montre UNE RANGÉE DE PLUS que sa hauteur ordinaire n'en logerait — Keko, 11/11 : « afficher
+  // en permanence deux lignes de plus, et scroller pour le reste », puis « enlève une ligne visible de base » — tant que
+  // la fiche du minerai tient dessous)
   const sceneOrdinaire = (): number => Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222))
-  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((sceneOrdinaire() - 10) / 31) + 2, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10) / 31)))
+  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((sceneOrdinaire() - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10) / 31)))
   const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 : sceneOrdinaire())
   let hautScene = 150
   let tBase = 0

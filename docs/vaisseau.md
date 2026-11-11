@@ -117,7 +117,9 @@ la forme, pas le système* (`asteroide.ts`) :
   courant, tant que la fiche tient dessous), la grille n'a plus de rangées
   vides en trop ; les minerais d'essai passent à trente pour qu'il reste
   deux rangées à faire défiler. La liste des ordres, sous la fiche, a
-  d'autant moins de place (deux rangées visibles au lieu de cinq).*
+  d'autant moins de place (deux rangées visibles au lieu de cinq).* *Puis
+  (« trois lignes suffisent en fait, enlève une ligne visible de base ») :
+  une rangée de plus que la scène ordinaire, pas deux.*
 - **La sauvegarde** garde les ordres et l'instant du dernier règlement.
   `&marche=N` fait courir l'heure du marché N fois plus vite (un essai : un
   ordre posé ainsi attendra que la vraie heure la rattrape).
