@@ -96,6 +96,13 @@ la forme, pas le système* (`asteroide.ts`) :
     régulière (2 px au plus au lieu de 4), un limbe d'un orange franc (il
     tombait presque au noir du fond et mangeait le rond), des taches tenues
     loin du bord, des protubérances de 1 à 2,6 px.
+  - *Le disque passe devant le trou* (Keko : « le rond noir du trou noir
+    est dessiné devant l'anneau qui est censé passer devant ») : la planche
+    ne le montrait pas, c'était dans l'animation — `animerAstre` reposait le
+    rond noir à chaque image pour cacher les grains passés derrière, et
+    recouvrait la moitié avant du disque. Les grains passés derrière ne se
+    dessinent plus, le rond n'est plus reposé. Vu sur la planche, animation
+    comprise.
 - **`&astres`, la vitrine** (Keko, 11/11 : « placer les différents corps
   célestes autour de l'extracteur, juste pour tester les visuels,
   temporairement ») : un astre de chaque sorte autour de la base, chacun

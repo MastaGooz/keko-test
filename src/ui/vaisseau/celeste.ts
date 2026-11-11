@@ -325,10 +325,14 @@ export function animerAstre(p: PeintreCeleste, a: Astre, t: number): void {
     for (let k = 0; k < 4; k++) {
       const phi = t * (0.5 + 0.12 * k) + k * 1.9
       const rr = a.r * (1.7 + 0.3 * k)
-      p.dot(Math.round(x + Math.cos(phi) * rr), Math.round(y + Math.sin(phi) * rr * 0.26 - Math.cos(phi) * rr * 0.12), FEU_DU_TROU[2], 0.8)
+      const gx = Math.cos(phi) * rr
+      const gy = Math.sin(phi) * rr * 0.26 - Math.cos(phi) * rr * 0.12
+      // (un grain passé DERRIÈRE le trou ne se dessine pas. On reposait le rond noir par-dessus pour le cacher : il
+      // recouvrait aussi la moitié du disque qui passe DEVANT le trou — Keko : « le rond noir est dessiné devant
+      // l'anneau qui est censé passer devant »)
+      if (Math.sin(phi) < 0 && Math.hypot(gx, gy) < a.r + 1.5) continue
+      p.dot(Math.round(x + gx), Math.round(y + gy), FEU_DU_TROU[2], 0.8)
     }
-    // (les grains passés derrière le trou restent cachés : on le repose)
-    p.circle(x, y, a.r, TROU)
   } else if (a.sorte === 'etoile') {
     // la couronne (une lueur chaude, retenue : l'étoile est loin) et des PROTUBÉRANCES qui s'allongent et se rétractent
     // autour du limbe, chacune à son rythme
