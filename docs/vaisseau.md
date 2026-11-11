@@ -49,8 +49,13 @@ la forme, pas le système* (`asteroide.ts`) :
   roche), dans le monde (`nouveauMonde(CONF, graine)` : d'où vient le
   rival) et dans le ciel (`astresVisibles(…, graineDuCiel)`). À ZÉRO, les
   tirages de toujours : les vérifications des règles n'ont pas bougé.
-- **Ce qui ne change pas** : la base au point de départ, son vide, sa
-  planète à anneaux ; l'accueil garde l'espace de toujours.
+- **Ce qui ne change pas** : la base au point de départ, son vide ;
+  l'accueil garde l'espace de toujours.
+- **La planète à anneaux de la base ne reste plus fixe** (Keko, 11/11 :
+  « je voudrais pas que la planète à anneaux reste fixe ») : elle et la
+  place qu'on lui gardait dans le lointain ne valent plus que pour la
+  graine zéro ; en vol, le ciel de la base est semé comme le reste (il
+  peut donc n'y avoir aucun astre au départ).
 - **`&graine=N`** fixe la graine (pour retrouver un espace, ou comparer) ;
   `&graine=0` rend la carte d'avant.
 - Vérifié : une autre graine fait un autre champ, la même refait le même,

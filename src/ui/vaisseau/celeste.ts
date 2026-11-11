@@ -116,7 +116,11 @@ const COUCHES: Couche[] = [
   { parallaxe: 0.55, pas: 380, proba: 0.4, sortes: [['geante', 1, 14, 58]] },
 ]
 const LOINTAIN = 1
-/** LA PLANÈTE DE LA BASE : une géante à anneaux, fixe dans le lointain, en haut à droite de la station au départ. */
+/**
+ * LA PLANÈTE DE LA BASE : une géante à anneaux, fixe dans le lointain, en haut à droite de la station au départ — DANS LE
+ * CIEL DE TOUJOURS SEULEMENT (graine zéro : l'accueil, `&graine=0`). Keko, 11/11 : « je voudrais pas que la planète à
+ * anneaux reste fixe » — dès qu'un vol a sa graine, le ciel de la base est semé comme le reste.
+ */
 const MONDE_DE_LA_BASE = { x: 54, y: -108, r: 44 }
 
 /**
@@ -166,7 +170,7 @@ export function astresVisibles(cx: number, cy: number, W: number, H: number, mil
       VITRINE.forEach((v, k) => {
         if (v.couche === n) astres.push({ cle: `vitrine:${k}`, sorte: v.sorte, x: v.x - ox + W / 2, y: v.y - oy + milieuY, r: v.r, graine: v.graine, couche: n })
       })
-    } else if (n === LOINTAIN) {
+    } else if (n === LOINTAIN && graineDuCiel === 0) {
       const x = MONDE_DE_LA_BASE.x - ox + W / 2
       const y = MONDE_DE_LA_BASE.y - oy + milieuY
       if (x > -MARGE && x < W + MARGE && y > -MARGE && y < H + MARGE) astres.push({ cle: 'base', sorte: 'annelee', x, y, r: MONDE_DE_LA_BASE.r, graine: 4242, couche: n })
@@ -181,7 +185,7 @@ export function astresVisibles(cx: number, cy: number, W: number, H: number, mil
         const mx = (i + 0.15 + 0.7 * tire(i, j, 110 + n)) * couche.pas
         const my = (j + 0.15 + 0.7 * tire(i, j, 120 + n)) * couche.pas
         // (rien du lointain sur la planète de la base)
-        if (n === LOINTAIN && Math.hypot(mx - MONDE_DE_LA_BASE.x, my - MONDE_DE_LA_BASE.y) < 190) continue
+        if (n === LOINTAIN && graineDuCiel === 0 && Math.hypot(mx - MONDE_DE_LA_BASE.x, my - MONDE_DE_LA_BASE.y) < 190) continue
         if (vitrine && Math.hypot(mx, my) < 260) continue
         const total = couche.sortes.reduce((s, [, poids]) => s + poids, 0)
         let tirage = tire(i, j, 130 + n) * total
