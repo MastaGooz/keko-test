@@ -69,6 +69,13 @@ la forme, pas le système* (`asteroide.ts`) :
   tant que la matérialisation du départ vivait (ma capture, prise cinq
   secondes après, ne le montrait pas). `N.painterFor(frame)` après les
   effets le remet à neuf. *Après un `fx.draw`, on redemande le peintre.*
+- **Une plaque opaque ne couvre pas les lueurs** (Keko : « les bandes ne
+  sont pas opaques, donc l'avantage visuel persiste ») : le tampon de pixelfx
+  a deux couches, la couleur et la LUMIÈRE (`glow`), ajoutée par-dessus à la
+  composition. Les halos des pépites, des tirs, des tuyères du rival, des
+  grosses étoiles brillaient à travers les bandeaux. `dessinerLesBandeaux`
+  éteint la couche de lumière sous eux (`frame.light.fill(0, …)`) avant de
+  les poser ; les lueurs de l'interface viennent après.
 - Vu en capture (Chrome sans tête, 412 × 915) : les deux bandeaux de 69, la
   soute et la coque dans celui du haut, la base entière dans la vue. Le cas
   sans bandeau (360 × 640) est l'ancien rendu.

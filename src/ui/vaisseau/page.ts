@@ -2317,6 +2317,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesBandeaux(p: Peintre): void {
     const h = bandeHaut()
     const b = bandeBas()
+    // (LES LUEURS aussi : le tampon a deux couches, la couleur et la LUMIÈRE, ajoutée par-dessus — une plaque opaque
+    // couvre la première, pas la seconde ; les halos des pépites, des tirs, des tuyères du rival et des grosses étoiles
+    // brillaient donc à travers les bandeaux — Keko : « pas opaques, l'avantage visuel persiste » ; on éteint la lumière
+    // sous eux avant de les poser, celle de l'interface vient après)
+    frame.light.fill(0, 0, h * W)
+    frame.light.fill(0, (H - b) * W)
     if (h >= 4) {
       plaque(p, -3, -3, W + 6, h + 3, 'creux')
       p.rect(0, h - 1, W, 1, MATIERES.acier.lumiere2)
