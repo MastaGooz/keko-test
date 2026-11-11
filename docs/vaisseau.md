@@ -72,6 +72,23 @@ la forme, pas le système* (`asteroide.ts`) :
   3 000 unités de monde : un tous les 16 000 environ). Leur part passe à
   14 %, ils entrent aussi, plus petits, dans la couche du milieu (un tous
   les 4 500 à peu près), et celui de la vitrine grossit (rayon 11).
+- **Trous noirs foncés, vraies étoiles, galaxies plus grandes** (Keko,
+  11/11 : « il faut également foncer le rendu des trous noirs (trop
+  visibles). Les étoiles sont à revoir totalement : je ne voulais pas une
+  petite étincelle mais comme une planète, mais en feu (une vraie étoile).
+  Et les galaxies sont un peu trop petites ») :
+  - *le trou noir* : son tampon est voilé comme les autres (58 % au lieu de
+    25), son disque descend d'un ton, son anneau de photons aussi, sa lueur
+    vivante tombe de 0,2 à 0,07 et ses grains passent du blanc à l'orange ;
+  - *l'étoile* (`etoile`, à la place du `soleil` à quatre rayons) : une
+    SPHÈRE DE FEU de 14 à 24 de rayon au lointain, 6 à 10 au milieu — pas de
+    face à l'ombre, le cœur clair, le limbe qui rougit, des granules et des
+    taches, une frange de flammes en pixels ; par-dessus, une couronne
+    retenue et sept protubérances qui s'allongent et se rétractent. Voilée à
+    40 %. Elle cache les étoiles du fond comme une planète ;
+  - *la galaxie* : de 14–24 à 26–44 de rayon, un corps de poussière, des
+    bras fournis qui s'élargissent, un bulbe en trois tons ; voilée à 34 %.
+  - Jugé sur la planche.
 - **`&astres`, la vitrine** (Keko, 11/11 : « placer les différents corps
   célestes autour de l'extracteur, juste pour tester les visuels,
   temporairement ») : un astre de chaque sorte autour de la base, chacun

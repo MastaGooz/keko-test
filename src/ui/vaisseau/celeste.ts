@@ -7,7 +7,7 @@
  * n'est stocké, on retrouve le même ciel en revenant :
  * - LE LOINTAIN (0,1) : les géantes gazeuses à bandes, les planètes à anneaux, les mondes rocheux, les galaxies
  *   spirales, et de loin en loin un TROU NOIR dans son disque d'accrétion ;
- * - LE MILIEU (0,24) : des lunes cratérisées, de petits mondes, des soleils lointains à quatre rayons ;
+ * - LE MILIEU (0,24) : des lunes cratérisées, de petits mondes, des ÉTOILES, sphères de feu aux protubérances qui battent ;
  * - LE PROCHE (0,55) : des ASTÉROÏDES ÉNORMES, des masses bosselées en volume, à cratères — cinq tons très sombres :
  *   ils passent derrière le jeu sans jamais se prendre pour une roche qu'on mine.
  * Et UNE PLANÈTE À ANNEAUX fixe derrière la base : la station tourne autour de quelque chose.
@@ -53,8 +53,10 @@ const GRISE = rampeDuFond(['#0c0d12', '#191b24', '#2a2d3a', '#414556', '#5d6276'
 const ROCHE_GEANTE = rampe(['#090b12', '#0f121c', '#171b2a', '#20273a', '#2c3550'])
 const FEU_DU_TROU = rampe(['#3a0e0c', '#8a2414', '#e0661e', '#ffb04a', '#fff0c8'])
 const TROU = N.hex('#020203')
+/** Le feu d'une étoile, du rouge sombre du limbe au blanc chaud du cœur, six tons. */
+const FEU_D_ETOILE = rampe(['#4a1206', '#8a2408', '#c8480c', '#f07a1a', '#ffb23c', '#ffe28a'])
 
-export type SorteDAstre = 'gazeuse' | 'rocheuse' | 'annelee' | 'lune' | 'galaxie' | 'trouNoir' | 'soleil' | 'geante'
+export type SorteDAstre = 'gazeuse' | 'rocheuse' | 'annelee' | 'lune' | 'galaxie' | 'trouNoir' | 'etoile' | 'geante'
 /** Un astre à l'écran : sa clé (la même tant qu'il existe), sa sorte, sa place (pixels du tampon), son rayon, sa graine, sa couche. */
 export type Astre = { cle: string; sorte: SorteDAstre; x: number; y: number; r: number; graine: number; couche: number }
 
@@ -66,8 +68,8 @@ type Couche = { parallaxe: number; pas: number; proba: number; sortes: [SorteDAs
  */
 /** Les trois couches : la parallaxe, le pas de la grille, la part des cases qui portent un astre, et les sortes (poids, rayon min, rayon max). */
 const COUCHES: Couche[] = [
-  { parallaxe: 0.1, pas: 300, proba: 0.55, sortes: [['gazeuse', 3, 26, 48], ['rocheuse', 3, 14, 28], ['annelee', 2, 20, 34], ['galaxie', 1.5, 14, 24], ['trouNoir', 1.5, 8, 12]] },
-  { parallaxe: 0.24, pas: 240, proba: 0.4, sortes: [['lune', 3, 5, 10], ['rocheuse', 2, 8, 13], ['soleil', 2, 2, 3], ['trouNoir', 1, 5, 7]] },
+  { parallaxe: 0.1, pas: 300, proba: 0.55, sortes: [['gazeuse', 3, 26, 48], ['rocheuse', 3, 14, 28], ['annelee', 2, 20, 34], ['galaxie', 1.5, 26, 44], ['trouNoir', 1.5, 8, 12], ['etoile', 1.5, 14, 24]] },
+  { parallaxe: 0.24, pas: 240, proba: 0.4, sortes: [['lune', 3, 5, 10], ['rocheuse', 2, 8, 13], ['etoile', 2, 6, 10], ['trouNoir', 1, 5, 7]] },
   { parallaxe: 0.55, pas: 380, proba: 0.4, sortes: [['geante', 1, 22, 42]] },
 ]
 /** LA PLANÈTE DE LA BASE : une géante à anneaux, fixe dans le lointain, en haut à droite de la station au départ. */
@@ -84,16 +86,16 @@ const VITRINE: { sorte: SorteDAstre; couche: number; x: number; y: number; r: nu
   { sorte: 'annelee', couche: 0, x: 52, y: -118, r: 22, graine: 4242 },
   { sorte: 'rocheuse', couche: 0, x: -68, y: 66, r: 16, graine: 5 },
   { sorte: 'trouNoir', couche: 0, x: -52, y: 124, r: 11, graine: 2 },
-  { sorte: 'galaxie', couche: 0, x: 58, y: 126, r: 20, graine: 6 },
+  { sorte: 'galaxie', couche: 0, x: 52, y: 122, r: 34, graine: 6 },
   { sorte: 'lune', couche: 1, x: -76, y: -58, r: 9, graine: 3 },
-  { sorte: 'soleil', couche: 1, x: 76, y: -52, r: 3, graine: 4 },
+  { sorte: 'etoile', couche: 1, x: 70, y: -50, r: 10, graine: 4 },
   { sorte: 'rocheuse', couche: 1, x: 72, y: 66, r: 11, graine: 21 },
   { sorte: 'geante', couche: 2, x: 2, y: 138, r: 26, graine: 12 },
 ]
 
 /** Jusqu'où un astre déborde de son centre (ses anneaux, son disque), en pixels : la demi-taille de son tampon. */
 export function demiTailleDeLAstre(a: Astre): number {
-  return Math.ceil(a.r * (a.sorte === 'annelee' ? 2.25 : a.sorte === 'trouNoir' ? 3.5 : 1) + 3)
+  return Math.ceil(a.r * (a.sorte === 'annelee' ? 2.25 : a.sorte === 'trouNoir' ? 3.5 : 1) + (a.sorte === 'etoile' ? 7 : 3))
 }
 
 /** Les astres qui touchent l'écran, du plus loin au plus proche, pour une caméra en (cx, cy) ; `milieuY` est le centre de la vue. */
@@ -190,7 +192,7 @@ function anneaux(p: PeintreCeleste, cx: number, cy: number, r: number, R: number
   }
 }
 
-/** Peint l'astre dans le peintre, centré en (cx, cy) : ce qui ne bouge pas. (Un soleil n'a rien de fixe.) */
+/** Peint l'astre dans le peintre, centré en (cx, cy) : ce qui ne bouge pas. */
 export function peindreAstre(p: PeintreCeleste, a: Astre, cx: number, cy: number): void {
   const R = RAMPES[a.graine % RAMPES.length]
   if (a.sorte === 'gazeuse') sphere(p, cx, cy, a.r, R, a.graine, 'bandes')
@@ -202,29 +204,38 @@ export function peindreAstre(p: PeintreCeleste, a: Astre, cx: number, cy: number
     sphere(p, cx, cy, a.r, R, a.graine, 'bandes')
     anneaux(p, cx, cy, a.r, A, true, a.graine)
   } else if (a.sorte === 'galaxie') {
-    // deux bras en spirale, des grains de plus en plus sombres vers le bord, un cœur clair ; vue de biais
+    // UNE GALAXIE SPIRALE, vue de biais (Keko : « un peu trop petites » — de 14–24 à 26–44 de rayon) : un corps de
+    // poussière (des grains très sombres, de plus en plus rares vers le bord), deux bras fournis qui s'élargissent en
+    // s'enroulant, un bulbe clair
     const V = rampe(['#2a2648', '#4a3f7a', '#7a68b0', '#b8a8e0', '#ece4ff'])
     const penche = (a.graine % 31) * 0.2
     const cp = Math.cos(penche)
     const sp = Math.sin(penche)
-    const n = Math.round(a.r * 9)
+    const grain = (ex: number, ey: number, c: number): void => p.px(Math.round(cx + ex * cp - ey * sp), Math.round(cy + ex * sp + ey * cp), c)
+    for (let i = 0; i < a.r * a.r * 0.9; i++) {
+      const u = Math.sqrt(tire(a.graine, i, 5))
+      const ang = tire(a.graine, i, 6) * Math.PI * 2
+      if (tire(a.graine, i, 7) < u * 0.9) continue
+      grain(Math.cos(ang) * u * a.r, Math.sin(ang) * u * a.r * 0.5, V[0])
+    }
+    const n = Math.round(a.r * a.r * 0.75)
     for (let i = 0; i < n; i++) {
       const u = i / n
-      const ang = (i % 2) * Math.PI + u * 5.6 + a.graine
-      const rad = 1.5 + u * a.r + (tire(a.graine, i, 1) - 0.5) * 3
-      const ex = Math.cos(ang) * rad
-      const ey = Math.sin(ang) * rad * 0.5
-      if (tire(a.graine, i, 2) < 0.25 + 0.5 * u) continue
-      p.px(Math.round(cx + ex * cp - ey * sp), Math.round(cy + ex * sp + ey * cp), V[u < 0.15 ? 3 : u < 0.4 ? 2 : u < 0.7 ? 1 : 0])
+      const ang = (i % 2) * Math.PI + u * 6.4 + a.graine
+      const large = 1 + u * a.r * 0.16
+      const rad = a.r * 0.1 + u * a.r * 0.9 + (tire(a.graine, i, 1) - 0.5) * 2 * large
+      if (tire(a.graine, i, 2) < 0.15 + 0.5 * u) continue
+      grain(Math.cos(ang) * rad + (tire(a.graine, i, 3) - 0.5) * large, Math.sin(ang) * rad * 0.5 + (tire(a.graine, i, 4) - 0.5) * large * 0.5, V[u < 0.12 ? 3 : u < 0.35 ? 2 : u < 0.7 ? 1 : 0])
     }
-    p.circle(cx, cy, 2.2, V[3])
-    p.circle(cx, cy, 1.2, V[4])
+    p.circle(cx, cy, a.r * 0.13 + 1.2, V[2])
+    p.circle(cx, cy, a.r * 0.09 + 0.8, V[3])
+    p.circle(cx, cy, a.r * 0.05 + 0.4, V[4])
   } else if (a.sorte === 'trouNoir') {
     // le disque d'accrétion (derrière, puis devant), le trou, son anneau de photons, et l'arc du disque courbé au-dessus
     const disque = (devant: boolean): void => {
       for (let k = 1.5; k < 3.3; k += 0.5 / a.r) {
         const u = (k - 1.5) / 1.8
-        const c = FEU_DU_TROU[u < 0.12 ? 4 : u < 0.3 ? 3 : u < 0.55 ? 2 : u < 0.8 ? 1 : 0]
+        const c = FEU_DU_TROU[u < 0.12 ? 3 : u < 0.4 ? 2 : u < 0.75 ? 1 : 0] // (un ton plus bas partout : il était trop visible)
         const rr = k * a.r
         for (let phi = 0; phi < Math.PI; phi += 0.7 / rr) {
           if (tire(a.graine, Math.round(k * 40), Math.round(phi * 60)) < u * 0.7) continue
@@ -234,9 +245,29 @@ export function peindreAstre(p: PeintreCeleste, a: Astre, cx: number, cy: number
     }
     disque(false)
     p.ring(cx, cy, a.r + 3, 2.4, (_v, ang) => (Math.sin(ang) < 0.1 ? FEU_DU_TROU[2] : TROU))
-    p.circle(cx, cy, a.r + 1.2, FEU_DU_TROU[4])
+    p.circle(cx, cy, a.r + 1.2, FEU_DU_TROU[3])
     p.circle(cx, cy, a.r, TROU)
     disque(true)
+  } else if (a.sorte === 'etoile') {
+    // UNE VRAIE ÉTOILE (Keko : « je ne voulais pas une petite étincelle, mais comme une planète, mais en feu ») : une
+    // SPHÈRE DE FEU — pas de face à l'ombre, elle est sa propre lampe : le cœur clair, le LIMBE qui s'assombrit vers le
+    // rouge, une surface de granules (un bruit fin) et des TACHES sombres ; autour, une frange de flammes en pixels, de
+    // longueur inégale. Ses protubérances et sa couronne vivent par-dessus (`animerAstre`).
+    const g = (a.graine % 83) * 0.43
+    for (let k = 0; k < Math.round(a.r * 5); k++) {
+      const th = (k / Math.round(a.r * 5)) * Math.PI * 2
+      const l = 1 + 3.2 * Math.max(0, N.fbm(Math.cos(th) * 2.3 + g, Math.sin(th) * 2.3, a.graine, 2) + 0.35)
+      for (let e = 0; e < l; e += 0.8) p.px(Math.round(cx + Math.cos(th) * (a.r + e)), Math.round(cy + Math.sin(th) * (a.r + e)), FEU_D_ETOILE[e < l * 0.4 ? 2 : e < l * 0.75 ? 1 : 0])
+    }
+    p.circle(cx, cy, a.r, (d, ang) => {
+      const ux = d * Math.cos(ang)
+      const uy = d * Math.sin(ang)
+      const z = Math.sqrt(Math.max(0, 1 - d * d))
+      let ton = 1.1 + z * 3.9 + N.fbm(ux * 4.5 + g, uy * 4.5, a.graine, 3) * 1.3
+      if (N.fbm(ux * 1.8 - g, uy * 1.8 + g, a.graine + 7, 2) < -0.42) ton -= 1.6 // (une tache)
+      ton += (((Math.round(cx + ux * a.r) + Math.round(cy + uy * a.r)) & 1) - 0.5) * 0.45
+      return FEU_D_ETOILE[Math.max(0, Math.min(5, Math.floor(ton)))]
+    })
   } else if (a.sorte === 'geante') {
     // UN ROCHER ÉNORME, EN VOLUME (Keko : « certains astéroïdes ont des textures trop plates et des formes parfois
     // trop droites, donnant l'impression d'une plaque plutôt qu'un astéroïde » — la première version était un polygone
@@ -283,22 +314,26 @@ export function animerAstre(p: PeintreCeleste, a: Astre, t: number): void {
   const x = Math.round(a.x)
   const y = Math.round(a.y)
   if (a.sorte === 'trouNoir') {
-    p.glow(x, y, a.r * 4.2, FEU_DU_TROU[2], 0.2 + 0.05 * Math.sin(t * 1.7))
-    for (let k = 0; k < 5; k++) {
+    // (FONCÉ — Keko : « il faut également foncer le rendu des trous noirs, trop visibles » : la lueur tombe de 0,2 à
+    // 0,07, les grains qui tournent passent du blanc chaud à l'orange sombre, et son tampon est voilé comme les autres)
+    p.glow(x, y, a.r * 3.6, FEU_DU_TROU[1], 0.07 + 0.02 * Math.sin(t * 1.7))
+    for (let k = 0; k < 4; k++) {
       const phi = t * (0.5 + 0.12 * k) + k * 1.9
       const rr = a.r * (1.7 + 0.3 * k)
-      p.px(Math.round(x + Math.cos(phi) * rr), Math.round(y + Math.sin(phi) * rr * 0.26 - Math.cos(phi) * rr * 0.12), FEU_DU_TROU[4])
+      p.dot(Math.round(x + Math.cos(phi) * rr), Math.round(y + Math.sin(phi) * rr * 0.26 - Math.cos(phi) * rr * 0.12), FEU_DU_TROU[2], 0.8)
     }
     // (les grains passés derrière le trou restent cachés : on le repose)
     p.circle(x, y, a.r, TROU)
-  } else if (a.sorte === 'soleil') {
-    const bat = 0.75 + 0.25 * Math.sin(t * 2.1 + a.graine)
-    const C = a.graine % 3 === 0 ? N.hex('#ffd9a0') : a.graine % 3 === 1 ? N.hex('#cfe4ff') : N.hex('#fff2c8')
-    p.glow(x, y, a.r * 7, C, 0.3 * bat)
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.line(x + dx * (a.r + 1), y + dy * (a.r + 1), x + dx * (a.r + 3 + 4 * bat), y + dy * (a.r + 3 + 4 * bat), C, 0.55)
-    p.circle(x, y, a.r, C)
-    p.circle(x, y, Math.max(1, a.r - 1), N.hex('#ffffff'))
-  } else if (a.sorte === 'galaxie') p.glow(x, y, a.r * 0.9, N.hex('#7a68b0'), 0.22 + 0.05 * Math.sin(t * 0.9 + a.graine))
+  } else if (a.sorte === 'etoile') {
+    // la couronne (une lueur chaude, retenue : l'étoile est loin) et des PROTUBÉRANCES qui s'allongent et se rétractent
+    // autour du limbe, chacune à son rythme
+    p.glow(x, y, a.r * 2.1, FEU_D_ETOILE[2], 0.16 + 0.04 * Math.sin(t * 1.3 + a.graine))
+    for (let k = 0; k < 7; k++) {
+      const th = k * 0.9 + (a.graine % 7) + Math.sin(t * 0.2 + k) * 0.15
+      const l = 1.5 + 3 * (0.5 + 0.5 * Math.sin(t * (0.7 + 0.13 * k) + k * 2.1))
+      for (let e = 0; e < l; e += 0.9) p.dot(Math.round(x + Math.cos(th) * (a.r + e)), Math.round(y + Math.sin(th) * (a.r + e)), ETOILE_VOILEE[e < l * 0.5 ? 1 : 0], 0.9)
+    }
+  } else if (a.sorte === 'galaxie') p.glow(x, y, a.r * 0.5, N.hex('#7a68b0'), 0.14 + 0.04 * Math.sin(t * 0.9 + a.graine))
 }
 
 /**
@@ -310,9 +345,13 @@ export function animerAstre(p: PeintreCeleste, a: Astre, t: number): void {
  */
 const VOILE = [0.58, 0.44, 0.3]
 const TEINTE_DU_CIEL = [0x0e, 0x0c, 0x20]
+/** Le voile d'une étoile, et ses deux tons de flamme déjà voilés (pour les protubérances, dessinées hors de son tampon). */
+const ETOILE_VOILE = 0.4
+const ETOILE_VOILEE = [N.hex('#5a1e12'), N.hex('#7e3214')]
 export function voilerLAstre(couleurs: Uint32Array, a: Astre): void {
-  // (le trou noir garde son feu : c'est une lumière, elle porte loin)
-  const k = a.sorte === 'trouNoir' ? 0.25 : VOILE[a.couche]
+  // (le trou noir est voilé comme les autres — il était trop visible ; l'étoile et la galaxie, qui sont des lumières,
+  // un peu moins)
+  const k = a.sorte === 'etoile' ? ETOILE_VOILE : a.sorte === 'galaxie' ? 0.34 : VOILE[a.couche]
   for (let i = 0; i < couleurs.length; i++) {
     const c = couleurs[i]
     if (c >>> 24 === 0) continue
@@ -325,5 +364,5 @@ export function voilerLAstre(couleurs: Uint32Array, a: Astre): void {
 
 /** Le rayon sous lequel un astre CACHE les étoiles (zéro : il ne cache rien — une galaxie, un soleil). */
 export function rayonQuiCache(a: Astre): number {
-  return a.sorte === 'galaxie' || a.sorte === 'soleil' ? 0 : a.sorte === 'geante' ? a.r * 0.72 : a.r + 1
+  return a.sorte === 'galaxie' ? 0 : a.sorte === 'geante' ? a.r * 0.72 : a.r + 1
 }
