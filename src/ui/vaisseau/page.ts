@@ -907,6 +907,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(px, y + 10, 1, 3, PEPITE[2])
     }
   }
+  /** L'en-tête d'un bandeau de scène (les missions) : la plaque d'acier de `enTete`, sans son retour, centrée. */
+  function dessinerLEnTeteDuBandeau(p: Peintre, mot: string, y: number): void {
+    const lm = largeurDe(mot, ENTETE)
+    const w = lm + 44
+    const x = Math.round(W / 2 - w / 2)
+    plaque(p, x, y, w, 19, 'acier')
+    ecrire(p, mot, W / 2, y + 6, N.hex('#fff3cf'), { police: ENTETE, align: 'center', contour: MATIERES.acier.contour })
+    for (const s of [-1, 1]) {
+      const px = Math.round(W / 2 + s * (lm / 2 + 7))
+      p.rect(px - 1, y + 9, 3, 1, PEPITE[1])
+      p.rect(px, y + 8, 1, 3, PEPITE[2])
+    }
+  }
   // ================================================================ LA BASE, EN QUATRE ÉTAGES
   /**
    * L'INTERFACE DE LA BASE (Keko, 10/11 : « une organisation hiérarchique épurée, claire et ergonomique », puis
@@ -1110,7 +1123,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
       for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
       if (!tutorielFini(quetes)) {
-        motEnRelief(p, 'Formation', cx, y0 + 3, true, TITRE)
+        dessinerLEnTeteDuBandeau(p, 'Formation', y0 + 3)
         const n = TUTORIEL.length
         for (let i = 0; i < n; i++) {
           const px = Math.round(cx + (i - (n - 1) / 2) * 12)
@@ -1122,8 +1135,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       } else {
         // (seul, au milieu du bandeau : « Un par activité, toujours » est retiré — Keko, 12/11)
-        // (EN GRANDE LETTRE — Keko : « le mot contrat est plus petit que les contrats eux-mêmes, ce qui brise la hiérarchie »)
-        motEnRelief(p, 'Contrats', cx, y0 + 10, true, TITRE)
+        // (LE NIVEAU ENTRE LE TITRE DE LA VUE ET LES CONTRATS — Keko : d'abord « plus petit que les contrats eux-mêmes, ce
+        // qui brise la hiérarchie », puis, en grande lettre : « ne doit pas être aussi gros que le titre mission, ça brise
+        // la hiérarchie dans l'autre sens ». Il n'y a pas de lettre entre la grasse et la grande (la grande est la
+        // grasse doublée) : le mot prend donc LA PLAQUE D'EN-TÊTE du hangar — l'acier, la lettre écartée, les deux
+        // pointes d'or —, qui pèse plus qu'un titre de carte sans égaler le titre de la vue)
+        dessinerLEnTeteDuBandeau(p, 'Contrats', y0 + 9)
       }
     } else {
       p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))

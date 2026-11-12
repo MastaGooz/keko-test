@@ -2568,3 +2568,4 @@ lettre ; sinon sans icône ; sinon dans la lettre d'en-tête ; sinon en grasse.
 Le bandeau des missions écrit « Contrats » et « Formation » EN GRANDE LETTRE (Keko, 12/11 : le mot était plus petit que les titres des contrats, « ce qui brise la hiérarchie »).
 
 La pastille du porté dit CE QU'ON VIENT DE RAMASSER (« +3 », `recents`), pas le total porté de ce minerai (Keko, 12/11) ; le compte repart de zéro quand elle s'en va.
+Puis (Keko) : pas aussi gros que le titre de la vue non plus. Il n'existe pas de lettre entre la grasse et la grande (`keko-titre` est la grasse doublée) : « Contrats » et « Formation » prennent LA PLAQUE D'EN-TÊTE du hangar (`dessinerLEnTeteDuBandeau` : acier, lettre écartée, deux pointes d'or).
