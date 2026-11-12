@@ -2346,5 +2346,5 @@ ouvre LE PANNEAU (`dessinerLeChangement`) : sous la barre du haut — gardée,
 on y lit ses crédits —, sur toute la hauteur, scène et onglets couverts ; le
 titre, les puces de famille, la liste (autant de rangées que la plus haute
 des fiches en laisse : dix à 360 × 640, contre deux avant), la fiche de la
-pièce choisie avec « Équiper », « Acheter » ou « Retirer », et « Fermer ».
+pièce choisie avec « Équiper », « Acheter » ou « Retirer ». On en sort par LA FLÈCHE DE RETOUR de l'en-tête, comme au hangar (Keko, le jour même, à la place d'un bouton « Fermer »).
 Équiper ou retirer referme le panneau (de moi) ; acheter le laisse ouvert.

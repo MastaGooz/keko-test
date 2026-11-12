@@ -1925,7 +1925,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE PANNEAU « CHANGER » : toutes les pièces de la place, sur TOUTE LA HAUTEUR sous la barre du haut (la scène et la
    * barre des onglets sont couvertes : la liste a enfin de la place) — le titre, les puces de sous-catégorie, la liste
    * qui glisse au doigt (le surlignage qui glisse, une encoche d'or), LA FICHE de la pièce choisie avec « Équiper »,
-   * « Acheter » ou « Retirer », et « Fermer ». Équiper ou retirer referme le panneau ; acheter le laisse ouvert.
+   * « Acheter » ou « Retirer » ; on en sort par la flèche de retour de l'en-tête. Équiper ou retirer referme le panneau ; acheter le laisse ouvert.
    */
   function dessinerLeChangement(p: Peintre): void {
     if (!changement) return
@@ -1946,12 +1946,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
     const titre = titreDe({ o: onglet, k: placeOuverte() })
-    plaque(p, 4, y, W - 8, 17, 'acier')
-    ecrire(p, titre, W / 2, y + 5, N.hex('#fff3cf'), { police: ENTETE, align: 'center', contour: MATIERES.acier.contour })
-    y += 20
-    const yFermer = H - 4 - 15
-    const bf = largeurDe('Fermer', GRAS) + 22
-    bouton(p, W / 2 - bf / 2, yFermer, bf, 15, 'Fermer', true, fermer, 'retour', 'acier')
+    // (LA FLÈCHE DE RETOUR du hangar, pas un bouton « Fermer » — Keko, 12/11)
+    enTete(p, y, titre, fermer)
+    y += HT + 3
+    const yFermer = H
     // (LE HANGAR MONTRE CE QU'ON A, ET CE QUE LE LABO A DÉBLOQUÉ — Keko, 11/11 : « quand une pièce est débloquée au labo,
     // elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix »)
     const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
@@ -1973,7 +1971,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
       y += 16
     }
-    // (autant de rangées que la plus haute des fiches en laisse au-dessus de « Fermer » : la liste ne change pas de
+    // (autant de rangées que la plus haute des fiches en laisse jusqu'en bas : la liste ne change pas de
     // taille d'une pièce à l'autre ; pas plus que la liste n'en a)
     const hf = Math.max(0, ...liste.map(hauteurDeLaFiche))
     const RANGEES = Math.max(2, Math.min(Math.max(2, liste.length), Math.floor((yFermer - 4 - y - 8 - hf) / RANG_LISTE)))
