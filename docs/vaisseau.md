@@ -2695,3 +2695,4 @@ d'avance (38 px au plus) ; `AVANCE_DE_LA_CAMERA` la porte, à pleine vitesse,
 le sens de la vitesse, rejoints en douceur (`suivi` 3). À l'arrêt le
 vaisseau est au centre. Chiffres de moi, à rejuger au doigt.
 Sur les côtés, l'avance passe de 52 à 74 px (Keko : « le même décalage en haut et sur les côtés en absolu, quitte à ce que le bord soit plus près de l'arrière du vaisseau ») : pas 95, la demi-largeur de la vue n'en fait que 90 ; à 74, le vaisseau reste à seize pixels du bord.
+Puis (Keko : « que le joueur ait une portée égale dans toutes les directions ») : PLUS D'AVANCE EN HAUTEUR (`y: 0`) — la vue y montre déjà 160 px devant le vaisseau — et 74 sur les côtés, où elle n'en montre que 90 : 164 devant soi de côté, 160 en hauteur. La caméra rejoint son point plus vite (`suivi` 4,5).

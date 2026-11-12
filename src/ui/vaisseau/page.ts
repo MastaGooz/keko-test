@@ -336,7 +336,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (SUR LES CÔTÉS, 74 : Keko, 12/11, voulait le même décalage qu'en hauteur — l'écran est plus haut que large, on voit peu
   // sur les côtés ; mais la demi-largeur de la vue fait 90 : à 95 le vaisseau sortirait de l'écran ; à 74 il reste à
   // seize pixels du bord arrière)
-  const AVANCE_DE_LA_CAMERA = { x: 74, y: 95, suivi: 3 }
+  // (PUIS — Keko : « que le joueur ait une portée égale dans toutes les directions » : la vue fait 160 de demi-hauteur et
+  // 90 de demi-largeur ; avec 74 d'avance sur les côtés et AUCUNE en hauteur, on voit 164 devant soi de côté, 160 en
+  // montant ou en descendant. Et la caméra rejoint son point plus vite, 4,5 au lieu de 3.)
+  const AVANCE_DE_LA_CAMERA = { x: 74, y: 0, suivi: 4.5 }
 
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
