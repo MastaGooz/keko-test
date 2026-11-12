@@ -2444,3 +2444,11 @@ rangées (`piedDeLaMission`) : LA JAUGE sur toute la largeur et son compte —
 RÉCOMPENSES de gauche à droite : les crédits dans leur puits, l'onglet
 débloqué (icône, nom en or) ; les ressources s'y ajouteront. La ligne
 « Débloque : … » sous la consigne et le prix dans le bouton sont retirés.
+
+### « Zone d'extraction » sur le parvis (12/11)
+
+Keko : « ajouter zone d'extraction sur l'extracteur, gris / bleuté, et quand
+le joueur entre dedans on change le texte pour le chiffre du compteur (afin
+d'aider le joueur à comprendre) ». Le mot est écrit au-dessus du cercle du
+parvis tant que le compte ne court pas ; dès qu'il court (et tant qu'il
+redescend), le chiffre qui frappe est à sa place.

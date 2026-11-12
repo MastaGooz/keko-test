@@ -3928,7 +3928,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             p.glow(sx, yMot, 26, PEPITE[2], 0.2 + (monte && ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
             motFrappe(p, String(Math.ceil(reste)), sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), monte ? 3 + 1.6 * Math.exp(-ub * 26) * Math.cos(ub * 38) : 3, monte ? (ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0) : 0)
           }
-        } else if (laProche) battementVu = -1
+        } else if (laProche) {
+          battementVu = -1
+          // « ZONE D'EXTRACTION », au-dessus du parvis, gris bleuté (Keko, 12/11 : « afin d'aider le joueur à
+          // comprendre ») : tant que le compte ne court pas ; dès qu'il court, le chiffre prend sa place
+          // (sur un bandeau sombre : le mât de la base passe juste derrière, il coupait le mot en deux)
+          if (m.phase === 'vol') {
+            const mot = "Zone d'extraction"
+            const wm = largeurDe(mot) + 8
+            const ym = sy - CONF.station.portee - 13
+            p.rect(Math.round(sx - wm / 2), ym - 2, wm, 11, NUIT_OMBRE, 0.78)
+            p.rect(Math.round(sx - wm / 2), ym - 2, wm, 1, N.hex('#8fa6c8'), 0.35)
+            ecrire(p, mot, sx, ym, N.hex('#8fa6c8'), { align: 'center' })
+          }
+        }
       }
   }
 
