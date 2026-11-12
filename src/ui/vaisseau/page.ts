@@ -1442,7 +1442,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nom = NOMS_VUE[vue].toUpperCase()
     const w = largeurDe(nom, TITRE)
     const c = (t % 5) / 5
-    motEnRelief(p, nom, 28 + w / 2, 5 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    motEnRelief(p, nom, 28 + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
     // (deux rivets au bout de l'étage)
     for (const ry of [6, 17]) {
       p.rect(W - 7, ry, 2, 2, N.hex('#3a3350'))
@@ -1999,7 +1999,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       secouer(1.5)
       gerbe(W / 2, by + bh / 2, 22, [PEPITE[2], PEPITE[3], N.WHITE], 80)
     }, (dx, dy) => {
-      motEnRelief(p, 'DÉCOLLER', W / 2 + dx, by + 7 + dy, true, TITRE)
+      motEnRelief(p, 'DÉCOLLER', W / 2 + dx, by + 9 + dy, true, TITRE)
       const o = Math.floor(t * 8) % 3
       for (let i = 0; i < 3; i++) {
         const c = i === o ? N.hex('#fff2a8') : i === (o + 2) % 3 ? PEPITE[2] : N.hex('#a8650f')

@@ -216,6 +216,116 @@ function doubler(glyphes: Record<string, Glyphe>): Record<string, Glyphe> {
   return g
 }
 
+/**
+ * LES LETTRES DU TITRE, PAR SEGMENTS : chaque lettre relie des nœuds d'une grille — trois colonnes (0 la gauche, 1 le
+ * milieu, 2 la droite), cinq rangées (0 le haut, 2 le milieu, 4 le bas) — par des traits épais ; `c` dit quels coins de
+ * sa boîte sont coupés (T/B, L/R), `gros` les coupe deux fois plus (le D, le V), `large` l'élargit d'un trait (M, W),
+ * `etroit` la réduit à un fût (I). Une diagonale est tracée un pixel plus fine, pour ne pas boucher.
+ */
+type Trace = { s: [number, number, number, number][]; c?: string; gros?: boolean; large?: boolean; etroit?: boolean }
+const RECT: [number, number, number, number][] = [[0, 0, 0, 4], [0, 0, 2, 0], [2, 0, 2, 4], [0, 4, 2, 4]]
+const TRACES: Record<string, Trace> = {
+  A: { s: [[0, 4, 0, 0], [0, 0, 2, 0], [2, 0, 2, 4], [0, 2, 2, 2]], c: 'TL TR' },
+  B: { s: [...RECT, [0, 2, 2, 2]], c: 'TR BR' },
+  C: { s: [[2, 0, 0, 0], [0, 0, 0, 4], [0, 4, 2, 4]], c: 'TL BL' },
+  D: { s: RECT, c: 'TR BR', gros: true },
+  E: { s: [[0, 0, 0, 4], [0, 0, 2, 0], [0, 2, 1.5, 2], [0, 4, 2, 4]] },
+  F: { s: [[0, 0, 0, 4], [0, 0, 2, 0], [0, 2, 1.5, 2]] },
+  G: { s: [[2, 0, 0, 0], [0, 0, 0, 4], [0, 4, 2, 4], [2, 4, 2, 2], [2, 2, 1, 2]], c: 'TL BL BR' },
+  H: { s: [[0, 0, 0, 4], [2, 0, 2, 4], [0, 2, 2, 2]] },
+  I: { s: [[0, 0, 0, 4]], etroit: true },
+  J: { s: [[2, 0, 2, 4], [2, 4, 0, 4], [0, 4, 0, 3]], c: 'BL BR' },
+  K: { s: [[0, 0, 0, 4], [0, 2, 1, 2], [1, 2, 2, 0], [1, 2, 2, 4]] },
+  L: { s: [[0, 0, 0, 4], [0, 4, 2, 4]] },
+  M: { s: [[0, 0, 0, 4], [2, 0, 2, 4], [0, 0, 2, 0], [1, 0, 1, 2]], c: 'TL TR', large: true },
+  N: { s: [[0, 0, 0, 4], [2, 0, 2, 4], [0, 0, 2, 4]] },
+  O: { s: RECT, c: 'TL TR BL BR' },
+  P: { s: [[0, 0, 0, 4], [0, 0, 2, 0], [2, 0, 2, 2], [0, 2, 2, 2]], c: 'TR' },
+  Q: { s: [...RECT, [1, 3, 2, 4]], c: 'TL TR BL' },
+  R: { s: [[0, 0, 0, 4], [0, 0, 2, 0], [2, 0, 2, 2], [0, 2, 2, 2], [1, 2, 2, 4]], c: 'TR' },
+  S: { s: [[2, 0, 0, 0], [0, 0, 0, 2], [0, 2, 2, 2], [2, 2, 2, 4], [2, 4, 0, 4]], c: 'TL BR' },
+  T: { s: [[0, 0, 2, 0], [1, 0, 1, 4]] },
+  U: { s: [[0, 0, 0, 4], [0, 4, 2, 4], [2, 0, 2, 4]], c: 'BL BR' },
+  V: { s: [[0, 0, 0, 4], [0, 4, 2, 4], [2, 0, 2, 4]], c: 'BL BR', gros: true },
+  W: { s: [[0, 0, 0, 4], [2, 0, 2, 4], [0, 4, 2, 4], [1, 2, 1, 4]], c: 'BL BR', large: true },
+  X: { s: [[0, 0, 2, 4], [2, 0, 0, 4]] },
+  Y: { s: [[0, 0, 0, 2], [2, 0, 2, 2], [0, 2, 2, 2], [1, 2, 1, 4]] },
+  Z: { s: [[0, 0, 2, 0], [2, 0, 0, 4], [0, 4, 2, 4]] },
+  0: { s: [...RECT, [1, 1.5, 1, 2.5]], c: 'TL TR BL BR' },
+  1: { s: [[1, 0, 1, 4], [0, 0, 1, 0], [0, 4, 2, 4]] },
+  2: { s: [[0, 0, 2, 0], [2, 0, 2, 2], [2, 2, 0, 2], [0, 2, 0, 4], [0, 4, 2, 4]], c: 'TR' },
+  3: { s: [[0, 0, 2, 0], [2, 0, 2, 4], [0, 4, 2, 4], [0.7, 2, 2, 2]], c: 'TR BR' },
+  4: { s: [[0, 0, 0, 2], [0, 2, 2, 2], [2, 0, 2, 4]] },
+  5: { s: [[2, 0, 0, 0], [0, 0, 0, 2], [0, 2, 2, 2], [2, 2, 2, 4], [2, 4, 0, 4]], c: 'BR' },
+  6: { s: [[2, 0, 0, 0], [0, 0, 0, 4], [0, 4, 2, 4], [2, 4, 2, 2], [2, 2, 0, 2]], c: 'TL BL BR' },
+  7: { s: [[0, 0, 2, 0], [2, 0, 2, 4]], c: 'TR' },
+  8: { s: [...RECT, [0, 2, 2, 2]], c: 'TL TR BL BR' },
+  9: { s: [[0, 0, 2, 0], [0, 0, 0, 2], [0, 2, 2, 2], [2, 0, 2, 4], [2, 4, 0, 4]], c: 'TL TR BR' },
+  '-': { s: [[0.3, 2, 1.7, 2]] },
+  '.': { s: [[0, 4, 0, 4]], etroit: true },
+  '!': { s: [[0, 0, 0, 2.5], [0, 4, 0, 4]], etroit: true },
+  "'": { s: [[0, 0, 0, 1]], etroit: true },
+  '’': { s: [[0, 0, 0, 1]], etroit: true },
+}
+/** Les capitales accentuées : la lettre, et son accent posé au-dessus (la cédille dessous). */
+const ACCENTUEES: Record<string, [string, 'aigu' | 'grave' | 'circ' | 'trema' | 'cedille']> = {
+  É: ['E', 'aigu'], È: ['E', 'grave'], Ê: ['E', 'circ'], Ë: ['E', 'trema'], À: ['A', 'grave'], Â: ['A', 'circ'],
+  Ô: ['O', 'circ'], Û: ['U', 'circ'], Ù: ['U', 'grave'], Î: ['I', 'circ'], Ï: ['I', 'trema'], Ç: ['C', 'cedille'],
+}
+function tracerLeTitre(): Record<string, Glyphe> {
+  const W = 11
+  const H = 11
+  const T = 3
+  const COUPE = 2
+  const HAUT_DU_TITRE = HAUT * 2
+  const Y0 = 4 // (les capitales commencent sous les quatre rangées d'accent, comme dans la graisse doublée)
+  const tracer = (tr: Trace): Glyphe => {
+    const w = tr.etroit ? T : W + (tr.large ? T : 0)
+    const rows: boolean[][] = Array.from({ length: HAUT_DU_TITRE }, () => new Array(w).fill(false))
+    const nx = (i: number): number => Math.round((i * (w - T)) / 2)
+    const ny = (j: number): number => Math.round((j * (H - T)) / 4)
+    for (const [x0, y0, x1, y1] of tr.s) {
+      const ax = nx(x0)
+      const ay = ny(y0)
+      const bx = nx(x1)
+      const by = ny(y1)
+      const biais = ax !== bx && ay !== by
+      const e = biais ? T - 1 : T
+      const n = Math.max(Math.abs(bx - ax), Math.abs(by - ay), 1)
+      for (let k = 0; k <= n; k++) {
+        const x = Math.round(ax + ((bx - ax) * k) / n)
+        const y = Math.round(ay + ((by - ay) * k) / n)
+        for (let dy = 0; dy < T; dy++) for (let dx = 0; dx < e; dx++) if (y + dy < H && x + dx < w) rows[Y0 + y + dy][x + dx] = true
+      }
+    }
+    const c = COUPE * (tr.gros ? 2 : 1)
+    for (const coin of (tr.c ?? '').split(' ').filter((x) => x !== '')) {
+      for (let i = 0; i < c; i++) for (let j = 0; j < c - i; j++) rows[Y0 + (coin.includes('T') ? i : H - 1 - i)][coin.includes('L') ? j : w - 1 - j] = false
+    }
+    return { w, rows }
+  }
+  const g: Record<string, Glyphe> = {}
+  for (const [ch, tr] of Object.entries(TRACES)) {
+    g[ch] = tracer(tr)
+    if (ch.toLowerCase() !== ch) g[ch.toLowerCase()] = g[ch]
+  }
+  for (const [ch, [base, accent]] of Object.entries(ACCENTUEES)) {
+    const gl = tracer(TRACES[base])
+    const m = Math.floor(gl.w / 2)
+    const poser = (x: number, y: number): void => {
+      if (x >= 0 && x < gl.w) gl.rows[y][x] = true
+    }
+    if (accent === 'aigu') for (const [x, y] of [[m + 1, 0], [m + 2, 0], [m, 1], [m + 1, 1], [m - 1, 2], [m, 2]]) poser(x, y)
+    else if (accent === 'grave') for (const [x, y] of [[m - 2, 0], [m - 1, 0], [m - 1, 1], [m, 1], [m, 2], [m + 1, 2]]) poser(x, y)
+    else if (accent === 'circ') for (const [x, y] of [[m, 0], [m - 1, 1], [m, 1], [m + 1, 1], [m - 2, 2], [m - 1, 2], [m + 1, 2], [m + 2, 2]]) poser(x, y)
+    else if (accent === 'trema') for (const [x, y] of [[m - 2, 1], [m - 1, 1], [m + 1, 1], [m + 2, 1], [m - 2, 2], [m - 1, 2], [m + 1, 2], [m + 2, 2]]) poser(x, y)
+    else for (const [x, y] of [[m, Y0 + H], [m + 1, Y0 + H + 1], [m - 1, Y0 + H + 2], [m, Y0 + H + 2]]) poser(x, y)
+    g[ch] = gl
+    g[ch.toLowerCase()] = gl
+  }
+  return g
+}
+
 const GLYPHES = construire()
 const table = FONTS as unknown as Record<string, Police>
 table.keko = { h: HAUT, space: 3, gap: 1, glyphs: GLYPHES }
@@ -224,11 +334,13 @@ table['keko-gras'] = { h: HAUT, space: 3, gap: 1, glyphs: GRAS }
 // l'en-tête d'un niveau : la graisse, ses lettres ÉCARTÉES d'un pixel de plus (la graisse mange l'espace entre deux
 // fûts, et c'est l'espace qui fait lire un mot en petite taille)
 table['keko-entete'] = { h: HAUT, space: 4, gap: 2, glyphs: GRAS }
-// LE TITRE EST ANGULEUX (Keko, 12/11 : « les titres sont écrits dans un style un peu trop rond, qui ne colle pas super bien
-// au thème SF ») : la graisse DOUBLÉE TELLE QUELLE — chaque pixel en fait quatre, sans l'adoucissement de scale2x —, les
-// coins des lettres en pans coupés nets, les diagonales en marches franches. L'ancienne, lissée, reste sous
-// `keko-titre-rond`.
-table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: doubler(GRAS) }
+// LE TITRE (Keko, 12/11 : d'abord « un style un peu trop rond, qui ne colle pas super bien au thème SF », puis, sur une
+// planche de quatre pistes : « j'aime bien la B ») : UNE LETTRE À NOUS, TRACÉE PAR SEGMENTS — large et basse (onze sur
+// onze, des traits de trois pixels), les coins en pans coupés, façon marquage de vaisseau ; des capitales seulement (une
+// minuscule rend sa capitale). Ce qu'elle ne sait pas tracer retombe sur la graisse doublée. Les anciennes restent sous
+// `keko-titre-double` (doublée telle quelle) et `keko-titre-rond` (lissée par scale2x).
+table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: { ...doubler(GRAS), ...tracerLeTitre() } }
+table['keko-titre-double'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: doubler(GRAS) }
 table['keko-titre-rond'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: scale2x(GRAS) }
 
 /** La hauteur de la boîte, et le décalage de la ligne des capitales sous son haut (les 2 rangées d'accent). */

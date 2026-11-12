@@ -2628,3 +2628,15 @@ graisse lissée par scale2x (gardée sous `keko-titre-rond`) mais la graisse
 DOUBLÉE TELLE QUELLE (`doubler`, `police.ts`) : pans coupés nets, marches
 franches. Et les titres de vue comme « DÉCOLLER » sont EN CAPITALES (les
 minuscules ont des panses rondes).
+
+### La police de titre à nous : large, basse, à pans coupés (12/11)
+
+Keko, sur une planche de quatre pistes dessinées pour lui (A haute et
+carrée, B large et basse, C en pochoir, D penchée) : « j'aime bien la B ».
+`keko-titre` est maintenant TRACÉE PAR SEGMENTS (`tracerLeTitre`, `TRACES`
+dans `police.ts`) : chaque capitale relie les nœuds d'une grille 3 × 5 par
+des traits de trois pixels, dans une boîte de onze sur onze ; des coins
+coupés par lettre (le D et le V deux fois plus, pour ne pas se lire O et U) ;
+M et W plus larges ; les diagonales un pixel plus fines. L'alphabet, les
+chiffres, les capitales accentuées du français ; une minuscule rend sa
+capitale ; le reste retombe sur la graisse doublée (`keko-titre-double`).
