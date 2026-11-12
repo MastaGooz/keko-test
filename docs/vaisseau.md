@@ -2583,3 +2583,15 @@ Puis (Keko) : le mot « Crédits » est retiré de la ligne (le montant et sa pi
 Puis (Keko) : plus de bande sur toute la largeur — une plaque creusée calée à droite, large de son montant ; la ligne lui reste réservée.
 
 Les deux lampes du haut de la scène (boîtier, halo, cône) ne sont plus qu'AU HANGAR (Keko, 12/11) : la recherche, le commerce et les missions n'en ont plus.
+
+### L'en-tête refait : un pupitre à deux étages (12/11)
+
+Keko : « je trouve l'espace du titre en haut (cadre, titre, crédits) peu
+harmonieux et pas pensé comme un ensemble cohérent (agencement, style,
+rectangle des crédits de la même couleur que le fond donc peu visible) ».
+`dessinerLaBarreDuHaut` : en haut L'ÉTAGE DU TITRE, un acier sombre éclairé
+d'en haut — l'icône de la vue dans un logement creusé, le titre en grande
+lettre, deux rivets au bout ; dessous LE RAIL, plus sombre, sous l'ombre de
+l'étage — un pointillé y mène au CARTOUCHE DES CRÉDITS, vert sombre liseré de
+vert, coins coupés, le montant entier en crème et sa pièce ; un liseré d'or
+sombre ferme l'ensemble. Mêmes hauteurs qu'avant (40 px).

@@ -1393,37 +1393,65 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * temps en temps ; il tombe à sa place quand la vue change), et LES CRÉDITS, qui roulent, sautent et s'allument.
    */
   function dessinerLaBarreDuHaut(p: Peintre): void {
-    p.rect(0, 0, W, HAUT_BARRE, NUIT_BARRE)
-    p.rect(0, 0, W, 1, MATIERES.encre.grain)
-    p.rect(0, HAUT_BARRE - 2, W, 1, MATIERES.encre.lumiere2)
+    // L'EN-TÊTE, PENSÉ COMME UN ENSEMBLE (Keko, 12/11 : « peu harmonieux et pas pensé comme un ensemble cohérent —
+    // agencement, style, rectangle des crédits de la même couleur que le fond donc peu visible ; rework cette zone pour
+    // un rendu plus travaillé et pro ») : UN PUPITRE À DEUX ÉTAGES. En haut, L'ÉTAGE DU TITRE, un acier sombre éclairé
+    // d'en haut : l'icône de la vue dans son logement creusé, le titre en grande lettre, deux rivets au bout. Dessous,
+    // LE RAIL, plus sombre, en retrait sous l'ombre de l'étage : un pointillé y court jusqu'au CARTOUCHE DES CRÉDITS —
+    // vert sombre liseré de vert, aux coins coupés, le montant entier en crème et sa pièce —, qui se détache du fond au
+    // lieu de s'y fondre. Un liseré d'or sombre ferme le tout.
+    const YT = HAUT_DU_TITRE - 2
+    const RAIL = N.hex('#08070d')
+    p.rect(0, 0, W, YT, N.hex('#17131f'))
+    p.rect(0, 0, W, 1, N.hex('#322b47'))
+    p.rect(0, 1, W, 1, N.hex('#1f1a2b'))
+    p.rect(0, YT - 1, W, 1, N.hex('#100d17'))
+    p.rect(0, YT, W, HAUT_BARRE - YT, RAIL)
+    p.rect(0, YT, W, 1, MATIERES.encre.contour)
+    p.rect(0, YT + 1, W, 1, N.hex('#040308'))
+    p.rect(0, HAUT_BARRE - 2, W, 1, N.hex('#6b3a0c'))
     p.rect(0, HAUT_BARRE - 1, W, 1, MATIERES.encre.contour)
     p.rect(0, HAUT_BARRE, W, 1, NUIT_OMBRE)
+    // l'icône de la vue, dans son logement
+    plaque(p, 4, 3, 19, 19, 'creux')
+    p.glow(13, 12, 10, PEPITE[2], 0.14)
+    dessinerLIconeDeVue(p, vue, 13, 12, true)
+    // le titre : il tombe à sa place quand la vue change, un éclat le traverse de temps en temps
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
     const nom = NOMS_VUE[vue]
     const w = largeurDe(nom, TITRE)
-    dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
     const c = (t % 5) / 5
-    motEnRelief(p, nom, 25 + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
-    // LA LIGNE DES CRÉDITS : un creux sur toute la largeur — à droite, le montant ENTIER (Keko :
-    // « le joueur devrait avoir le montant complet pour les crédits, pas d'abréviation comme les ressources ») et sa pièce
+    motEnRelief(p, nom, 28 + w / 2, 6 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    // (deux rivets au bout de l'étage)
+    for (const ry of [6, 18]) {
+      p.rect(W - 7, ry, 2, 2, N.hex('#3a3350'))
+      p.rect(W - 7, ry, 1, 1, N.hex('#5a4f74'))
+    }
+    // LE CARTOUCHE DES CRÉDITS, calé à droite du rail, large de son montant ENTIER (Keko : « le joueur devrait avoir le
+    // montant complet pour les crédits, pas d'abréviation comme les ressources »)
     const n = String(Math.max(0, Math.round(creditsVus)))
     const wn = largeurDe(n, GRAS)
     const allume = t - creditsA < 0.45
     const r = refus
     const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
-    // (PAS UNE BANDE SUR TOUTE LA LARGEUR — Keko : « juste un rectangle qui prend la longueur requise à partir de la
-    // droite, même si la ligne est réservée pour l'agrandir si besoin ; ça donnerait un aspect moins basique » : une
-    // plaque creusée, calée à droite, large de son montant)
-    const yl = HAUT_DU_TITRE - 2
-    const wp = wn + 20
+    const yc = YT + 2
+    const wp = wn + 21
     const px = W - 4 - wp + tremble
-    compteurX = px + wp - 8
+    compteurX = px + wp - 9
+    // le pointillé du rail, qui mène au cartouche
+    for (let x = 6; x < px - 7; x += 4) p.rect(x, Y_CREDITS, 2, 1, N.hex('#241f33'))
+    p.rect(px - 5, Y_CREDITS - 1, 2, 3, PEPITE[1])
+    p.rect(px - 4, Y_CREDITS, 2, 1, PEPITE[2])
     if (allume) p.glow(px + wp / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
-    plaque(p, px, yl, wp, 12, 'creux', { bord: allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : undefined })
-    dessinerUnCredit(p, px + wp - 8, Y_CREDITS - 1 + saut)
-    ecrire(p, n, px + wp - 15, yl + 2 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS, align: 'right' })
+    const bord = allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b')
+    p.rect(px, yc, wp, 10, bord)
+    p.rect(px + 1, yc + 1, wp - 2, 8, N.hex('#0c241d'))
+    p.rect(px + 1, yc + 1, wp - 2, 1, N.hex('#16382d'))
+    for (const [cx, cy] of [[px, yc], [px + wp - 1, yc], [px, yc + 9], [px + wp - 1, yc + 9]]) p.rect(cx, cy, 1, 1, RAIL)
+    dessinerUnCredit(p, px + wp - 9, Y_CREDITS + saut)
+    ecrire(p, n, px + wp - 16, yc + 2 + saut, allume ? N.WHITE : N.hex('#fff2c8'), { police: GRAS, align: 'right' })
   }
 
   /**
