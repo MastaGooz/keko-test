@@ -2581,3 +2581,5 @@ droite. Le repli du titre (sans icône, puis en petite lettre) est retiré. Le
 contenu de chaque vue perd douze pixels de hauteur.
 Puis (Keko) : le mot « Crédits » est retiré de la ligne (le montant et sa pièce suffisent), et la grille du commerce garde le nombre de rangées qu'elle avait avant (comptées comme si la barre faisait encore 28 px) : c'est la fiche du minerai qui descend.
 Puis (Keko) : plus de bande sur toute la largeur — une plaque creusée calée à droite, large de son montant ; la ligne lui reste réservée.
+
+Les deux lampes du haut de la scène (boîtier, halo, cône) ne sont plus qu'AU HANGAR (Keko, 12/11) : la recherche, le commerce et les missions n'en ont plus.

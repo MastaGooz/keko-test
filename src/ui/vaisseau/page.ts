@@ -1159,8 +1159,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, 'Bientôt', cx, y0 + Math.floor(hautScene / 2) - 4, COQUE[2], { align: 'center', police: GRAS })
     }
     // LES LAMPES : un boîtier, son halo, et son cône de lumière qui tombe vers le milieu
-    for (const lx of [10, W - 11]) {
-      p.glowLine(lx, y0 + 3, lx + (cx - lx) * 0.55, cy + 10, 12, CHAUD, vue === 'hangar' ? 0.07 : 0.035)
+    // (AU HANGAR SEULEMENT — Keko, 12/11 : « enlever les spotlights des autres onglets »)
+    for (const lx of vue === 'hangar' ? [10, W - 11] : []) {
+      p.glowLine(lx, y0 + 3, lx + (cx - lx) * 0.55, cy + 10, 12, CHAUD, 0.07)
       p.glow(lx, y0 + 5, 30, CHAUD, 0.35)
       p.rect(lx - 4, y0, 8, 3, COQUE[1])
       p.rect(lx - 4, y0, 8, 1, COQUE[2])
