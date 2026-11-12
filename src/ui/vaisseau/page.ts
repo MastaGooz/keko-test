@@ -1412,16 +1412,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const r = refus
     const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
-    const yl = HAUT_DU_TITRE - 1
-    p.rect(0, yl, W, HAUT_DES_CREDITS - 1, MATIERES.creux.corps)
-    p.rect(0, yl, W, 1, MATIERES.encre.contour)
-    p.rect(0, yl + 1, W, 1, MATIERES.creux.ombre)
-    if (allume || tremble !== 0) p.rect(0, yl + HAUT_DES_CREDITS - 2, W, 1, allume ? RUNE[3] : ROUGE[4])
-    const xd = W - 6 + tremble
-    compteurX = xd - 5
-    if (allume) p.glow(xd - 12 - wn / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
-    dessinerUnCredit(p, xd - 4, Y_CREDITS + saut)
-    ecrire(p, n, xd - 11, yl + 3 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS, align: 'right' })
+    // (PAS UNE BANDE SUR TOUTE LA LARGEUR — Keko : « juste un rectangle qui prend la longueur requise à partir de la
+    // droite, même si la ligne est réservée pour l'agrandir si besoin ; ça donnerait un aspect moins basique » : une
+    // plaque creusée, calée à droite, large de son montant)
+    const yl = HAUT_DU_TITRE - 2
+    const wp = wn + 20
+    const px = W - 4 - wp + tremble
+    compteurX = px + wp - 8
+    if (allume) p.glow(px + wp / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
+    plaque(p, px, yl, wp, 12, 'creux', { bord: allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : undefined })
+    dessinerUnCredit(p, px + wp - 8, Y_CREDITS - 1 + saut)
+    ecrire(p, n, px + wp - 15, yl + 2 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS, align: 'right' })
   }
 
   /**
