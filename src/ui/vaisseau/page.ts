@@ -4197,7 +4197,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE BAS DE L'INTERFACE DU HAUT (la plaque de soute, puis les pastilles du porté) : les flèches du bord restent
    * dessous, pour ne jamais passer sous une plaque.
    */
-  const BAS_DU_HUD = 5 + 18 + 3 + 13
+  const BAS_DU_HUD = 5 + 18 + 7 + 13 // (7 : le pied du pupitre — son filet, son cerne — entre les plaques et le porté)
   /**
    * LA VUE DU VOL EST FIXE : 180 × 320, sur tous les écrans (Keko, 11/11 : « selon le portable ou l'écran de PC, la zone
    * visible de l'espace en jeu est différente » — le tampon prenait la hauteur de l'écran, de 320 à 480 : un grand
@@ -4366,7 +4366,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // il repart de zéro quand la pastille s'en va ; le total est sur la plaque de soute, le détail dans la soute)
     const ditRecent = (k: Minerai): string => (recents[k] > 0 ? `+${recents[k]}` : '')
     // les places des pastilles du porté, de gauche à droite, larges de leur nombre
-    const yPastilles = yHud + 18 + 3
+    const yPastilles = yHud + 18 + 7
+    // LE PUPITRE DU VOL (Keko, 12/11 : « retravailler l'interface en vol, en particulier la zone du haut, avec le
+    // blindage, le bouclier et la soute — un rendu plus travaillé, plus professionnel, avec de la texture, en gardant
+    // l'animation de dégâts du blindage ; un panneau supérieur cohérent dans le style du jeu et entre ses éléments ; et
+    // que l'on comprenne bien que la soute est un bouton cliquable ») : LE MÊME PUPITRE QUE L'EN-TÊTE DE LA BASE — un
+    // étage d'acier sombre, grenu, éclairé d'en haut, fermé d'un filet gris ; il monte jusqu'en haut de l'écran. Dedans,
+    // à gauche LA SOUTE, un vrai bouton (voir plus bas) ; à droite LE BLINDAGE ET LE BOUCLIER dans un logement creusé.
+    {
+      const yb = yHud + 22
+      if (yb > 0) frame.light.fill(0, 0, Math.min(H, yb + 1) * W)
+      p.rect(0, 0, W, yb, N.hex('#17131f'))
+      for (let y = Math.max(2, yb - 26); y < yb - 2; y++) for (let x = 0; x < W; x++) {
+        const g = grainA(x, y)
+        if (g > 0.9) p.rect(x, y, 1, 1, N.hex('#201a2c'))
+        else if (g < 0.06) p.rect(x, y, 1, 1, N.hex('#120f19'))
+      }
+      p.rect(0, 0, W, 1, N.hex('#322b47'))
+      p.rect(0, 1, W, 1, N.hex('#1f1a2b'))
+      p.rect(0, yb - 1, W, 1, N.hex('#4c4468'))
+      p.rect(0, yb, W, 1, MATIERES.encre.contour)
+      p.rect(0, yb + 1, W, 1, NUIT_OMBRE, 0.6)
+      p.rect(0, yb + 2, W, 1, NUIT_OMBRE, 0.3)
+    }
     const places = new Map<Minerai, { x: number; w: number }>()
     let suivante = 5
     for (const k of visibles) {
@@ -4400,26 +4422,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LE MOT NE MONTE PAS — Keko : « mets juste le texte à son emplacement direct » : posé sous la plaque de soute, à
     // la place des pastilles, une seconde et quelque)
     if (t - soutePleineDiteA < 1.3) ecrire(p, 'Soute pleine', suivante + 2, yPastilles + 3, ROUGE[5], { police: GRAS, contour: NUIT_OMBRE })
+    // LA SOUTE EST UN BOUTON, ET ÇA SE VOIT : une plaque d'acier EN RELIEF sur le pupitre — elle s'enfonce sous le doigt —
+    // avec, soudée à son bout droit, UNE TOUCHE D'OR au chevron sombre : la même touche que le retour des pages du
+    // hangar, la langue de ce qui se tape. Dessus : « Soute », ce qu'on porte sur ce qu'on peut (en relief ivoire, rouge
+    // quand elle est pleine), et sa jauge d'or dans une rainure. Toute la plaque — avec la rangée du porté dessous, pour
+    // une cible assez haute au doigt — ouvre la soute.
     const plafond = `${CONF.capacite}/${CONF.capacite}`
-    const ws = 5 + largeurDe('Soute') + 8 + largeurDe(plafond, GRAS) + 5 + 9 // (+ 9 : le chevron qui dit qu'elle s'ouvre)
-    const ys = yHud + Math.round(rebond('soute', 0))
+    const TOUCHE = 14
+    const ws = 6 + largeurDe('Soute') + 6 + largeurDe(plafond, GRAS) + 5 + TOUCHE
+    const xs = 4
+    const actif = m.phase === 'vol' && !souteOuverte && t - arriveA >= ARRIVE_A
+    const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
+    const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
     const bat = Math.floor(t * 4) % 2 === 0
-    plaque(p, 5, ys, ws, 18, 'encre', { bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
-    ecrire(p, 'Soute', 10, ys + 4, COQUE[4])
-    ecrire(p, `${porte}/${CONF.capacite}`, 5 + ws - 5 - 9, ys + 4, pleine ? ROUGE[5] : IVOIRE, { police: GRAS, align: 'right' })
-    // LA SOUTE EST UN BOUTON (Keko) : un chevron d'or à droite, et toute la plaque — avec la rangée du porté dessous,
-    // pour une cible assez haute au doigt — ouvre la soute
-    for (let k = 0; k < 3; k++) p.rect(5 + ws - 10 + k, ys + 6 + k, 5 - 2 * k, 1, pleine ? ROUGE[5] : PEPITE[2])
-    if (m.phase === 'vol' && !souteOuverte && t - arriveA >= ARRIVE_A) zone(5, ys, Math.max(ws, suivante - 5), 18 + 3 + 13, ouvrirLaSoute, 'ouvre')
-    // sa jauge : un creux, un jonc d'or au dessus clair
+    if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
+    plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+    ecrire(p, 'Soute', xs + 6, ys + 3, COQUE[5])
+    const compte = `${porte}/${CONF.capacite}`
+    const xc = xs + ws - TOUCHE - 5
+    if (pleine) ecrire(p, compte, xc, ys + 3, ROUGE[5], { police: GRAS, align: 'right' })
+    else motEnRelief(p, compte, xc - largeurDe(compte, GRAS) / 2, ys + 3, 'ivoire', GRAS)
+    // la touche d'or et son chevron
+    const xt = xs + ws - TOUCHE - 1
+    plaque(p, xt, ys + 1, TOUCHE, 16, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
+    for (let k = 0; k < 3; k++) {
+      p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
+      p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+    }
+    if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
+    // sa jauge : une rainure, un jonc d'or au dessus clair
     souteVue = ressort(souteVue, Math.min(1, porte / CONF.capacite))
-    const gw = ws - 10
-    p.rect(9, ys + 12, gw + 2, 4, encre)
-    p.rect(10, ys + 13, gw, 2, MATIERES.creux.lumiere2)
+    const gw = ws - TOUCHE - 11
+    p.rect(xs + 5, ys + 12, gw + 2, 4, encre)
+    p.rect(xs + 6, ys + 13, gw, 2, MATIERES.creux.lumiere2)
     const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
     if (plein > 0) {
-      p.rect(10, ys + 13, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
-      p.rect(10, ys + 14, plein, 1, pleine ? ROUGE[4] : PEPITE[2])
+      p.rect(xs + 6, ys + 13, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
+      p.rect(xs + 6, ys + 14, plein, 1, pleine ? ROUGE[4] : PEPITE[2])
     }
 
     // ---- le porté : une pastille par minerai
@@ -4491,7 +4530,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + perdue * (cw + esp) + cw / 2, oy + 13, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
-    plaque(p, ox, oy, wp, 18, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
+    plaque(p, ox, oy, wp, 18, 'creux', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
     // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
     const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
     const blanc = du >= 0 && du < 0.07

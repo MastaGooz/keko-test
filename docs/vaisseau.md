@@ -2660,3 +2660,22 @@ Retiré le jour même (Keko : « il faudrait que la police soit de la même tail
 Une mission terminée GARDE LA COULEUR de son activité (Keko, 12/11) : elle ne passe plus à l'or ; sa bordure et sa lueur prennent cette teinte, et « Réclamer » la signale.
 
 Le chiffre du compte de l'extraction est à l'échelle 2 au lieu de 3 (Keko, 12/11 : trop gros à côté du mot « Extraction » qu'il remplace) ; sa frappe dépasse d'autant moins.
+
+### Le pupitre du vol (12/11)
+
+Keko : « retravailler l'interface en vol, en particulier la zone du haut,
+avec le blindage, le bouclier et la soute — un rendu plus travaillé, plus
+professionnel, avec de la texture, en gardant l'animation de dégâts du
+blindage ; un panneau supérieur cohérent dans le style du jeu ; et que l'on
+comprenne bien que la soute est un bouton cliquable ». `dessinerLeScore` :
+- LE PUPITRE : le même étage que l'en-tête de la base — acier sombre, grenu
+  (`grainA`), éclairé d'en haut, fermé d'un filet gris et d'une ombre ; il
+  monte jusqu'en haut de l'écran. Les plaques n'y flottent plus sur le ciel.
+- LA SOUTE, UN BOUTON : une plaque d'acier en relief qui s'enfonce sous le
+  doigt, et à son bout droit UNE TOUCHE D'OR au chevron — la touche du retour
+  des pages du hangar. « Soute », le compte en relief ivoire (rouge, pleine ;
+  la touche rougit aussi), la jauge dans sa rainure.
+- LE BLINDAGE ET LE BOUCLIER : dans un logement creusé du pupitre ; toute
+  l'animation de coup est gardée telle quelle.
+- Le porté descend de quatre pixels, sous le pied du pupitre
+  (`BAS_DU_HUD` 43).
