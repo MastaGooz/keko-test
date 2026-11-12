@@ -2747,3 +2747,15 @@ Puis (Keko) : LE MANCHE DU REGARD est dessiné dans la langue du premier (l'anne
 Puis (Keko : « faire partir la flèche du vaisseau dans le sens de visée et envoyer la bombe plus ou moins loin en fonction du niveau dans lequel le joueur pousse ») : LA FLÈCHE PART DU VAISSEAU, longue comme la bombe ira loin, le cercle de l'explosion au bout ; plus rien sous le pouce. LA PORTÉE SUIT LA FORCE DU GESTE (`porteeDeLaBombe` : du quart à la totalité de 102 unités ; la moitié sur une tape sans glissement) ; la bombe ne garde plus l'élan du vaisseau, elle éclate où la flèche l'a dit.
 `&bombes` : des charges sans fin, pour essayer le geste (Keko, 12/11).
 Puis (Keko : la bombe armée, le doigt du manche levé puis reposé visait au lieu de reprendre le vol — « bloqué sur place tant que je n'ai pas tiré ») : LE PREMIER DOIGT POSÉ EST TOUJOURS LE MANCHE ; la visée d'une capacité armée est le doigt D'APRÈS, posé pendant que le manche est tenu, comme le regard.
+
+### L'écran a deux moitiés : à gauche on vole, à droite on regarde et on vise (12/11)
+
+Keko, après deux règles qui se gênaient (« le prochain appui vise » prenait
+le doigt du vol ; « le premier doigt est le manche, le suivant vise »
+empêchait de lancer une bombe à l'arrêt) : « et si on disait moitié gauche du
+téléphone = déplacement, et moitié droite = orientation / visée de
+compétence ? ». Un doigt posé À GAUCHE du milieu de la vue est LE MANCHE ; un
+doigt posé À DROITE est LE REGARD, ou la VISÉE d'une capacité armée. Un seul
+de chaque, indépendants : on regarde ou on vise sans voler. À la souris (un
+seul pointeur) : le manche partout, la visée quand une capacité est armée.
+Les manches restent flottants : ils naissent sous le doigt, dans leur moitié.

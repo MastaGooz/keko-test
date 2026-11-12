@@ -3555,34 +3555,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       appuiA = maintenant
       appuiOu = { x: ev.clientX, y: ev.clientY }
     }
+    // L'ÉCRAN A DEUX MOITIÉS (Keko, 12/11 : « et si on disait moitié gauche du téléphone = déplacement, et moitié droite
+    // = orientation / visée de compétence ? » — « le premier doigt est le manche, le suivant vise » empêchait de lancer
+    // une bombe à l'arrêt, et « le prochain appui vise » prenait le doigt du vol) : un doigt posé À GAUCHE est LE MANCHE ;
+    // un doigt posé À DROITE est LE REGARD — ou, une capacité armée, SA VISÉE. Un seul de chaque ; l'un ne dépend plus de
+    // l'autre. (À la souris, qui n'a qu'un pointeur : le manche partout, la visée quand une capacité est armée.)
+    const cadre = canvas.getBoundingClientRect()
+    const aGauche = ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2
     // (un manche « tenu » par un doigt qui n'est plus posé — voir le filet, plus bas : il y a moins de doigts sur l'écran
-    // que de manches pris ; le doigt qui arrive reprend alors le manche)
-    const fantome = ev.pointerType === 'touch' && manche !== null && doigtsPoses < (regard === null ? 1 : 2)
-    // LA CAPACITÉ ARMÉE : cet appui la vise et la lancera (il n'est ni le manche, ni un simple regard) — MAIS SEULEMENT
-    // SI LE MANCHE EST DÉJÀ TENU (Keko, 12/11 : « quand je clique sur la bombe, que je lâche le stick 1 et que je repose
-    // le doigt, c'est la visée de la bombe qui s'active au lieu de reprendre le vol ; je suis bloqué sur place tant que
-    // je n'ai pas tiré ») : le premier doigt posé est TOUJOURS le manche ; la visée est le doigt d'après, comme le regard
-    if (capaciteArmee && regard === null && manche !== null && ev.pointerId !== manche.id && !fantome) {
+    // que de manches pris ; le doigt qui arrive de son côté le reprend alors)
+    const fantome = ev.pointerType === 'touch' && doigtsPoses < (manche === null ? 0 : 1) + (regard === null ? 0 : 1)
+    const q = { x: ev.clientX, y: ev.clientY }
+    if (aGauche) {
+      if (manche !== null && !fantome) return
       ev.preventDefault()
       racine.setPointerCapture(ev.pointerId)
-      const q = { x: ev.clientX, y: ev.clientY }
-      regard = { id: ev.pointerId, centre: q, doigt: q, tir: true }
-      return
+      manche = { id: ev.pointerId, centre: q, doigt: q }
+    } else {
+      if (regard !== null && !fantome) return
+      ev.preventDefault()
+      racine.setPointerCapture(ev.pointerId)
+      regard = { id: ev.pointerId, centre: q, doigt: q, tir: capaciteArmee }
     }
-    if (manche !== null && !fantome) {
-      // (le second doigt : le manche du regard)
-      if (regard === null && ev.pointerId !== manche.id) {
-        ev.preventDefault()
-        racine.setPointerCapture(ev.pointerId)
-        const q = { x: ev.clientX, y: ev.clientY }
-        regard = { id: ev.pointerId, centre: q, doigt: q }
-      }
-      return
-    }
-    ev.preventDefault()
-    racine.setPointerCapture(ev.pointerId)
-    const p = { x: ev.clientX, y: ev.clientY }
-    manche = { id: ev.pointerId, centre: p, doigt: p }
   })
   racine.addEventListener('pointermove', (ev) => {
     // LE SURVOL, à la souris (PC) : ce qu'on survole s'éclaire, et le pointeur devient une main
@@ -4411,7 +4405,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(cx, y + 6, 5, 6, MATIERES.encre.contour)
       p.rect(cx + 1, y + 7, 3, 4, i < reste ? (armee ? N.hex('#3a1c04') : PEPITE[3]) : MATIERES.creux.corps)
     }
-    if (armee) ecrire(p, 'Visez au second doigt', W - 4, y - 11, N.hex('#fff2a8'), { police: GRAS, align: 'right', contour: NUIT_OMBRE })
+    if (armee) ecrire(p, 'Visez à droite', W - 4, y - 11, N.hex('#fff2a8'), { police: GRAS, align: 'right', contour: NUIT_OMBRE })
     if (reste > 0 && !souteOuverte && t - arriveA >= ARRIVE_A) zone(x - 4, y - 6, w + 8, h + 11, () => ((capaciteArmee = !capaciteArmee), (armeeA = t)), 'onglet')
     // LA VISÉE : UNE FLÈCHE D'OR QUI PART DU VAISSEAU (Keko, 12/11 : « on ne devrait pas faire partir la flèche de
     // l'endroit où se trouve le pouce, mais du vaisseau, dans le sens de visée, et envoyer la bombe plus ou moins loin en
