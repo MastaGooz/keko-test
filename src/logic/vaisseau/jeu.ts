@@ -381,7 +381,7 @@ type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: nu
  * le nez qui se tourne, puis les chocs contre les astéroïdes — sauf ceux de `detruits`, qui ne sont plus là (Keko :
  * « quand je détruis un astéroïde je collisionne toujours avec son ancienne position »). Rend le corps neuf et les chocs.
  */
-export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number, direction: Vecteur, detruits: ReadonlySet<number> = new Set()): { vaisseau: Vaisseau; chocs: Choc[] } {
+export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number, direction: Vecteur, detruits: ReadonlySet<number> = new Set(), regard?: Vecteur): { vaisseau: Vaisseau; chocs: Choc[] } {
   const n = Math.hypot(direction.x, direction.y)
   const force = Math.min(1, n)
   let vx = v.vx + (n > 0 ? (direction.x / n) * force * moteur.poussee * dt : 0)
@@ -394,9 +394,12 @@ export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number
     vx *= moteur.vitesseMax / vitesse
     vy *= moteur.vitesseMax / vitesse
   }
-  // le nez : vers le manche quand on pousse, sinon vers où l'on glisse (s'il y a une vitesse à suivre)
+  // le nez : vers le manche quand on pousse, sinon vers où l'on glisse (s'il y a une vitesse à suivre) — SAUF SI ON
+  // REGARDE AILLEURS (Keko, 12/11 : un second doigt « prend le pas sur l'orientation » : on avance d'un côté, on
+  // regarde de l'autre) : `regard`, s'il est donné et franc, dit où va le nez ; la poussée, elle, suit toujours le manche
   let cap = v.cap
-  const voulu = n > 0.05 ? Math.atan2(direction.y, direction.x) : vitesse > 6 ? Math.atan2(vy, vx) : cap
+  const regarde = regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
+  const voulu = regarde ? Math.atan2(regard.y, regard.x) : n > 0.05 ? Math.atan2(direction.y, direction.x) : vitesse > 6 ? Math.atan2(vy, vx) : cap
   const ecart = ecartDAngle(cap, voulu)
   cap += Math.sign(ecart) * Math.min(Math.abs(ecart), moteur.rotation * dt)
   let x = v.x + vx * dt
@@ -732,7 +735,7 @@ export function postcombustion(c: ConfigVaisseau, m: Monde): boolean {
   return true
 }
 
-export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur): { chocs: Choc[]; evenements: Evenement[] } {
+export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
   if (m.phase !== 'vol') return { chocs: [], evenements: ev }
   m.t += dt
@@ -744,7 +747,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const pousse = boost > 0 && m.t - m.boostA < c.postcombustion.duree
   const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon } : c
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
-  const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits)
+  const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits, regard)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const chocs = [...r.chocs]

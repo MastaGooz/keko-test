@@ -442,4 +442,13 @@ verifier('la graine du champ : zéro est le champ de toujours, une autre en fait
 verifier('quelle que soit la graine, le champ est vide sur l’envergure de la base', [3, 99, 4242].every((graine) => asteroidesAutour({ ...VAISSEAU, champ: { ...VAISSEAU.champ, graine } }, 0, 0, 400).every((a) => Math.hypot(a.x, a.y) >= VAISSEAU.base.rayon + a.rayon)))
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
+// le regard : le nez va où l'on regarde, la poussée où l'on pousse
+{
+  const m = nouveauMonde()
+  for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 1, y: 0 }, { x: -1, y: 0 })
+  const sansRegard = nouveauMonde()
+  for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, sansRegard, 1 / 60, { x: 1, y: 0 })
+  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && Math.abs(m.vaisseau.vx - sansRegard.vaisseau.vx) < 1e-9)
+}
+
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

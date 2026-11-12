@@ -364,6 +364,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le manche (celui du survivor)
   let manche: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
+  /**
+   * LE REGARD (Keko, 12/11 : « une fois le joystick enfoncé, si le joueur maintient un deuxième doigt et fait des
+   * mouvements, on déplace l'orientation du vaisseau — maintien 1 = direction et orientation, maintien 2 = prend le pas
+   * sur l'orientation ; et c'est toujours l'orientation qui détermine où va la caméra : le joueur peut avancer mais
+   * regarder en arrière ») : un SECOND MANCHE flottant, posé par le second doigt ; il ne pousse pas, il tourne le nez.
+   */
+  let regard: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
   const touches = new Set<string>()
   /**
    * Le décollage, depuis le hangar (le bouton) ou au clavier : l'expédition part à neuf avec le vaisseau tel que monté
@@ -3526,7 +3533,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       appuiA = maintenant
       appuiOu = { x: ev.clientX, y: ev.clientY }
     }
-    if (manche !== null) return
+    if (manche !== null) {
+      // (le second doigt : le manche du regard)
+      if (regard === null && ev.pointerId !== manche.id) {
+        ev.preventDefault()
+        racine.setPointerCapture(ev.pointerId)
+        const q = { x: ev.clientX, y: ev.clientY }
+        regard = { id: ev.pointerId, centre: q, doigt: q }
+      }
+      return
+    }
     ev.preventDefault()
     racine.setPointerCapture(ev.pointerId)
     const p = { x: ev.clientX, y: ev.clientY }
@@ -3562,6 +3578,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       return
     }
+    if (regard !== null && ev.pointerId === regard.id) {
+      const d = { x: ev.clientX, y: ev.clientY }
+      regard = { id: regard.id, centre: centreQuiSuit(MANCHE, regard.centre, d), doigt: d }
+      return
+    }
     if (manche === null || ev.pointerId !== manche.id) return
     const doigt = { x: ev.clientX, y: ev.clientY }
     manche = { id: manche.id, centre: suivre ? manche.centre : centreQuiSuit(MANCHE, manche.centre, doigt), doigt }
@@ -3588,6 +3609,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
+    if (regard !== null && ev.pointerId === regard.id) regard = null
   }
   // LA MOLETTE, sur PC (Keko : « sur PC je ne peux pas scroller la barre d'onglets ») : sur la grille d'onglets, elle la
   // fait défiler au pixel ; sur la liste des pièces, d'une rangée par cran
@@ -3655,6 +3677,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     secousse = Math.max(secousse, 0.5)
     flashs.push({ x: v.x, y: v.y, t0: t, r: 7 })
     if (typeof navigator.vibrate === 'function') navigator.vibrate(25)
+  }
+  /** Où le second doigt regarde (longueur 0 à 1), ou rien s'il n'est pas posé. */
+  function regardVoulu(): Vecteur | undefined {
+    return regard === null ? undefined : directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y)
   }
   function directionVoulue(): Vecteur {
     if (manche !== null) {
@@ -5014,6 +5040,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {
+    // LE MANCHE DU REGARD, plus petit, bleu : un anneau et son pouce
+    if (regard !== null) {
+      p.place(0, 0)
+      const rr = (C.manche.rayon * 0.7) / zoom
+      const c0 = enTampon(regard.centre.x, regard.centre.y)
+      const ddx = regard.doigt.x - regard.centre.x
+      const ddy = regard.doigt.y - regard.centre.y
+      const dd = Math.hypot(ddx, ddy)
+      const kk = dd > C.manche.rayon * 0.7 ? (C.manche.rayon * 0.7) / dd : 1
+      p.ring(c0.x, c0.y, rr + 1, 3, MATIERES.encre.contour)
+      p.ring(c0.x, c0.y, rr, 1, VERRIERE[1])
+      const px = Math.round(c0.x + (ddx * kk) / zoom)
+      const py = Math.round(c0.y + (ddy * kk) / zoom)
+      p.circle(px, py, Math.round(rr * 0.42) + 1, MATIERES.encre.contour)
+      p.circle(px, py, Math.round(rr * 0.42), VERRIERE[2])
+      p.rect(px - 1, py - 2, 2, 1, N.WHITE)
+    }
     if (manche === null) return
     p.place(0, 0)
     const r = C.manche.rayon / zoom
@@ -5070,9 +5113,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (enJeu && !souteOuverte) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
+      const ouRegarder = t - arriveA < ARRIVE_A ? undefined : regardVoulu()
       while (accumule >= PAS) {
         accumule -= PAS
-        const r = avancerLeMonde(CONF, m, PAS, direction)
+        const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder)
         v = m.vaisseau
         // (les quêtes : la plus grande distance à la base, comptée tous les vingt pas d'éloignement)
         {
@@ -5290,10 +5334,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // de sa vitesse — à pleine vitesse, plus de la moitié de la demi-vue : 52 px de côté, 95 en hauteur (la vue est plus
     // haute que large), un peu plus sous la postcombustion — et le rejoint en douceur. À l'arrêt, le vaisseau est au
     // centre. (Avant : 0,35 s de vitesse, 38 px au plus.)
-    const part = Math.min(1.2, Math.hypot(v.vx, v.vy) / CONF.vitesseMax)
-    const vit = Math.hypot(v.vx, v.vy) || 1
-    const viseX = v.x + (v.vx / vit) * part * AVANCE_DE_LA_CAMERA.x
-    const viseY = v.y + (v.vy / vit) * part * AVANCE_DE_LA_CAMERA.y
+    // (ELLE SUIT LE NEZ — Keko : « c'est toujours l'orientation qui détermine où va la caméra » : d'autant plus loin
+    // qu'on va vite, ou que le second doigt pousse son manche — on peut alors regarder devant soi à l'arrêt, ou derrière
+    // soi en avançant)
+    const rg = regardVoulu()
+    const part = Math.max(Math.min(1.2, Math.hypot(v.vx, v.vy) / CONF.vitesseMax), rg === undefined ? 0 : Math.min(1, Math.hypot(rg.x, rg.y)))
+    const viseX = v.x + Math.cos(v.cap) * part * AVANCE_DE_LA_CAMERA.x
+    const viseY = v.y + Math.sin(v.cap) * part * AVANCE_DE_LA_CAMERA.y
     camera.x += (viseX - camera.x) * Math.min(1, dt * AVANCE_DE_LA_CAMERA.suivi)
     camera.y += (viseY - camera.y) * Math.min(1, dt * AVANCE_DE_LA_CAMERA.suivi)
     braises.update(dt)

@@ -2696,3 +2696,23 @@ le sens de la vitesse, rejoints en douceur (`suivi` 3). À l'arrêt le
 vaisseau est au centre. Chiffres de moi, à rejuger au doigt.
 Sur les côtés, l'avance passe de 52 à 74 px (Keko : « le même décalage en haut et sur les côtés en absolu, quitte à ce que le bord soit plus près de l'arrière du vaisseau ») : pas 95, la demi-largeur de la vue n'en fait que 90 ; à 74, le vaisseau reste à seize pixels du bord.
 Puis (Keko : « que le joueur ait une portée égale dans toutes les directions ») : PLUS D'AVANCE EN HAUTEUR (`y: 0`) — la vue y montre déjà 160 px devant le vaisseau — et 74 sur les côtés, où elle n'en montre que 90 : 164 devant soi de côté, 160 en hauteur. La caméra rejoint son point plus vite (`suivi` 4,5).
+
+### Le regard : un second doigt tourne le nez (12/11)
+
+Keko : « une fois le joystick enfoncé, si le joueur maintient un deuxième
+doigt et fait des mouvements, on déplace l'orientation du vaisseau ? maintien
+1 = direction et orientation, maintien 2 = prend le pas sur l'orientation ;
+et c'est toujours l'orientation qui détermine où va la caméra — le joueur
+peut avancer mais regarder en arrière ».
+- LA RÈGLE (`jeu.ts`) : `voler` et `avancerLeMonde` prennent un `regard`
+  facultatif ; franc, c'est lui que le nez rejoint (à la vitesse de rotation
+  du vaisseau), la poussée suivant toujours le manche.
+- LA PAGE : le second doigt posé pendant que le manche est tenu pose UN
+  SECOND MANCHE flottant, plus petit et bleu ; relâché, le nez reprend la
+  direction du manche.
+- LA CAMÉRA SUIT LE NEZ, plus la vitesse : d'autant plus loin qu'on va vite
+  ou que le manche du regard est poussé — on regarde devant soi à l'arrêt,
+  derrière soi en avançant. (Sur les côtés seulement : pas d'avance en
+  hauteur, voir plus haut.)
+- Le foreur et les armes visent toujours seuls ; la tuyère reste à l'arrière
+  du vaisseau, même quand il glisse de côté.
