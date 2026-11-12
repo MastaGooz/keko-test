@@ -2645,3 +2645,4 @@ formation / contrats ») : `keko-entete`, la lettre des plaques d'en-tête, est
 LA MÊME EN PETIT — `tracerLeTitre(7, 8, 2, 1, …)` : sept de large sur huit de haut (à sept de haut, le S se lisait G), des traits
 de deux pixels, des pans coupés d'un pixel, des accents sur deux rangées ; en
 capitales, donc (« CHÂSSIS », « CONTRATS »).
+Puis (Keko : « ça manque de texture, les titres inférieurs et supérieurs sont texturés, eux ») : la lettre des plaques est EN RELIEF (`motEnRelief(…, 'ivoire', ENTETE)`) — un ivoire éclairé d'en haut, ombré de bronze dessous, cerné —, plus un aplat crème.

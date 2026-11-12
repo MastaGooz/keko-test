@@ -782,11 +782,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * entre le jaune et le marron est trop fort, le marron est trop foncé ») : le haut lit n'est plus un filet presque
    * blanc mais le ton clair du dégradé, et le bas du dégradé comme le dessous sont remontés d'un brun sombre à un ocre.
    */
-  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean, f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
+  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
     const mot = spell(s, f) as { letters: { g: unknown; x: number }[]; w: number }
     const e = echelle
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - (mot.w * e) / 2) + L.x * e, y: Math.round(y) - decalage(f) * e, sx: e, sy: e }))
-    const st = or
+    // (« ivoire » : la lettre des plaques d'en-tête — un ivoire éclairé d'en haut, ombré de bronze dessous)
+    const st = or === 'ivoire'
+      ? { fill: [N.hex('#c9b98c'), N.hex('#efe2b8'), N.hex('#fff7d6')], edge: N.WHITE, under: N.hex('#8f7d54'), outline: N.hex('#0b0d16'), shadow: 0 }
+      : or
       ? { fill: [N.hex('#e0a020'), PEPITE[2], N.hex('#ffe068')], edge: N.hex('#ffe68a'), under: N.hex('#b87a14'), outline: N.hex('#1e0e03'), shadow: 0 }
       : { fill: [COQUE[3], COQUE[4], COQUE[5]], edge: COQUE[5], under: N.hex('#57698c'), outline: N.hex('#07050d'), shadow: 0 }
     drawWord(p, items, reflet === null ? st : { ...st, shine: Math.round(x - (mot.w * e) / 2) + reflet })
@@ -900,7 +903,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, x, y, w, HT, 'acier')
     const lm = largeurDe(mot, ENTETE)
     const cx = x + w / 2
-    ecrire(p, mot, cx, y + 8, N.hex('#fff3cf'), { police: ENTETE, align: 'center', contour: MATIERES.acier.contour })
+    // (EN RELIEF, comme les titres au-dessus et en dessous — Keko, 12/11 : « ça manque de texture »)
+    motEnRelief(p, mot, cx, y + 8, 'ivoire', ENTETE)
     for (const s of [-1, 1]) {
       const px = Math.round(cx + s * (lm / 2 + 7))
       p.rect(px - 1, y + 11, 3, 1, PEPITE[1])
@@ -913,7 +917,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const w = lm + 44
     const x = Math.round(W / 2 - w / 2)
     plaque(p, x, y, w, 19, 'acier')
-    ecrire(p, mot, W / 2, y + 6, N.hex('#fff3cf'), { police: ENTETE, align: 'center', contour: MATIERES.acier.contour })
+    motEnRelief(p, mot, W / 2, y + 6, 'ivoire', ENTETE)
     for (const s of [-1, 1]) {
       const px = Math.round(W / 2 + s * (lm / 2 + 7))
       p.rect(px - 1, y + 9, 3, 1, PEPITE[1])
