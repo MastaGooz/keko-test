@@ -2716,3 +2716,4 @@ peut avancer mais regarder en arrière ».
   hauteur, voir plus haut.)
 - Le foreur et les armes visent toujours seuls ; la tuyère reste à l'arrière
   du vaisseau, même quand il glisse de côté.
+Puis (Keko : « la caméra est trop réactive au deuxième stick ») : la part du regard dans l'avance est LISSÉE (`partDuRegard`, 1,6 par seconde) et, tant qu'on regarde, la caméra rejoint son point à moins de la moitié de son allure.
