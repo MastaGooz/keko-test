@@ -272,13 +272,12 @@ const ACCENTUEES: Record<string, [string, 'aigu' | 'grave' | 'circ' | 'trema' | 
   É: ['E', 'aigu'], È: ['E', 'grave'], Ê: ['E', 'circ'], Ë: ['E', 'trema'], À: ['A', 'grave'], Â: ['A', 'circ'],
   Ô: ['O', 'circ'], Û: ['U', 'circ'], Ù: ['U', 'grave'], Î: ['I', 'circ'], Ï: ['I', 'trema'], Ç: ['C', 'cedille'],
 }
-function tracerLeTitre(): Record<string, Glyphe> {
-  const W = 11
-  const H = 11
-  const T = 3
-  const COUPE = 2
-  const HAUT_DU_TITRE = HAUT * 2
-  const Y0 = 4 // (les capitales commencent sous les quatre rangées d'accent, comme dans la graisse doublée)
+/**
+ * Trace l'alphabet à une taille : `W` × `H` la boîte d'une capitale, `T` l'épaisseur du trait, `COUPE` le pan coupé,
+ * `HAUT_DU_TITRE` la hauteur de la boîte de la police, `Y0` la rangée où commencent les capitales (les accents au-dessus).
+ */
+function tracerLeTitre(W = 11, H = 11, T = 3, COUPE = 2, HAUT_DU_TITRE = HAUT * 2, Y0 = 4): Record<string, Glyphe> {
+  const petit = Y0 < 3 // (deux rangées d'accent seulement : des accents d'une rangée de moins)
   const tracer = (tr: Trace): Glyphe => {
     const w = tr.etroit ? T : W + (tr.large ? T : 0)
     const rows: boolean[][] = Array.from({ length: HAUT_DU_TITRE }, () => new Array(w).fill(false))
@@ -313,13 +312,28 @@ function tracerLeTitre(): Record<string, Glyphe> {
     const gl = tracer(TRACES[base])
     const m = Math.floor(gl.w / 2)
     const poser = (x: number, y: number): void => {
-      if (x >= 0 && x < gl.w) gl.rows[y][x] = true
+      if (x >= 0 && x < gl.w && y >= 0 && y < gl.rows.length) gl.rows[y][x] = true
     }
-    if (accent === 'aigu') for (const [x, y] of [[m + 1, 0], [m + 2, 0], [m, 1], [m + 1, 1], [m - 1, 2], [m, 2]]) poser(x, y)
-    else if (accent === 'grave') for (const [x, y] of [[m - 2, 0], [m - 1, 0], [m - 1, 1], [m, 1], [m, 2], [m + 1, 2]]) poser(x, y)
-    else if (accent === 'circ') for (const [x, y] of [[m, 0], [m - 1, 1], [m, 1], [m + 1, 1], [m - 2, 2], [m - 1, 2], [m + 1, 2], [m + 2, 2]]) poser(x, y)
-    else if (accent === 'trema') for (const [x, y] of [[m - 2, 1], [m - 1, 1], [m + 1, 1], [m + 2, 1], [m - 2, 2], [m - 1, 2], [m + 1, 2], [m + 2, 2]]) poser(x, y)
-    else for (const [x, y] of [[m, Y0 + H], [m + 1, Y0 + H + 1], [m - 1, Y0 + H + 2], [m, Y0 + H + 2]]) poser(x, y)
+    const marques: [number, number][] = petit
+      ? accent === 'aigu'
+        ? [[m + 1, 0], [m + 2, 0], [m, 1], [m + 1, 1]]
+        : accent === 'grave'
+          ? [[m - 1, 0], [m, 0], [m, 1], [m + 1, 1]]
+          : accent === 'circ'
+            ? [[m, 0], [m + 1, 0], [m - 1, 1], [m + 2, 1]]
+            : accent === 'trema'
+              ? [[m - 1, 0], [m + 2, 0]]
+              : [[m, Y0 + H], [m + 1, Y0 + H], [m - 1, Y0 + H + 1], [m, Y0 + H + 1]]
+      : accent === 'aigu'
+        ? [[m + 1, 0], [m + 2, 0], [m, 1], [m + 1, 1], [m - 1, 2], [m, 2]]
+        : accent === 'grave'
+          ? [[m - 2, 0], [m - 1, 0], [m - 1, 1], [m, 1], [m, 2], [m + 1, 2]]
+          : accent === 'circ'
+            ? [[m, 0], [m - 1, 1], [m, 1], [m + 1, 1], [m - 2, 2], [m - 1, 2], [m + 1, 2], [m + 2, 2]]
+            : accent === 'trema'
+              ? [[m - 2, 1], [m - 1, 1], [m + 1, 1], [m + 2, 1], [m - 2, 2], [m - 1, 2], [m + 1, 2], [m + 2, 2]]
+              : [[m, Y0 + H], [m + 1, Y0 + H + 1], [m - 1, Y0 + H + 2], [m, Y0 + H + 2]]
+    for (const [x, y] of marques) poser(x, y)
     g[ch] = gl
     g[ch.toLowerCase()] = gl
   }
@@ -333,7 +347,10 @@ const GRAS = engraisser(GLYPHES)
 table['keko-gras'] = { h: HAUT, space: 3, gap: 1, glyphs: GRAS }
 // l'en-tête d'un niveau : la graisse, ses lettres ÉCARTÉES d'un pixel de plus (la graisse mange l'espace entre deux
 // fûts, et c'est l'espace qui fait lire un mot en petite taille)
-table['keko-entete'] = { h: HAUT, space: 4, gap: 2, glyphs: GRAS }
+// (PUIS — Keko, 12/11 : « rework aussi la police des titres châssis / propulsion / formation / contrats » — LA MÊME
+// LETTRE QUE LE TITRE, EN PETIT : tracée par segments, HUIT de haut (à sept, la barre du milieu du S touchait celle du bas : il se lisait G) sur sept de large, des traits de deux pixels, les
+// pans coupés d'un ; des capitales seulement. Ce qu'elle ne trace pas retombe sur la graisse.)
+table['keko-entete'] = { h: HAUT, space: 4, gap: 1, glyphs: { ...GRAS, ...tracerLeTitre(7, 8, 2, 1, HAUT, 2) } }
 // LE TITRE (Keko, 12/11 : d'abord « un style un peu trop rond, qui ne colle pas super bien au thème SF », puis, sur une
 // planche de quatre pistes : « j'aime bien la B ») : UNE LETTRE À NOUS, TRACÉE PAR SEGMENTS — large et basse (onze sur
 // onze, des traits de trois pixels), les coins en pans coupés, façon marquage de vaisseau ; des capitales seulement (une

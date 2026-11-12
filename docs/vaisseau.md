@@ -2640,3 +2640,8 @@ coupés par lettre (le D et le V deux fois plus, pour ne pas se lire O et U) ;
 M et W plus larges ; les diagonales un pixel plus fines. L'alphabet, les
 chiffres, les capitales accentuées du français ; une minuscule rend sa
 capitale ; le reste retombe sur la graisse doublée (`keko-titre-double`).
+Puis (Keko : « rework aussi la police des titres châssis / propulsion /
+formation / contrats ») : `keko-entete`, la lettre des plaques d'en-tête, est
+LA MÊME EN PETIT — `tracerLeTitre(7, 8, 2, 1, …)` : sept de large sur huit de haut (à sept de haut, le S se lisait G), des traits
+de deux pixels, des pans coupés d'un pixel, des accents sur deux rangées ; en
+capitales, donc (« CHÂSSIS », « CONTRATS »).
