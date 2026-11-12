@@ -75,7 +75,9 @@ type Noyau = {
 const N = noyau as unknown as Noyau
 
 /** La scène fait 180 px de large ; SA HAUTEUR SUIT L'ÉCRAN (Keko : « le score est trop bas, il n'est plus en haut » — à 320 px fixes, centrée, elle laissait cent pixels de noir au-dessus d'elle). */
-const W = 180
+// (… ET, TÉLÉPHONE COUCHÉ, LE VOL EST EN PAYSAGE — 13/11, voir `cadrer` : le tampon du vol fait alors de 320 à 480 de
+// large sur 180 à 240 de haut ; la base, elle, reste dessinée sur 180 de large)
+let W = 180
 let H = 320
 const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
@@ -347,7 +349,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // de l'écran alors qu'il avance ; pas très grave si elle est un peu plus avancée sur le haut et le bas, ça fait partie
   // du design d'un jeu conçu pour un écran de téléphone » : 200 devant soi en hauteur, 164 de côté)
   const AVANCE_DE_LA_CAMERA = { x: 74, y: 40, suivi: 4.5 }
+  /** … et en paysage, où la vue montre 160 de côté et 90 en hauteur : l'inverse — peu de côté, davantage en hauteur. */
+  const AVANCE_EN_PAYSAGE = { x: 40, y: 60 }
 
+  /**
+   * LE VOL EN PAYSAGE (Keko, 13/11 — le jeu va vers les deux manches, la coop, le PvP : « adapter le jeu au format
+   * paysage du téléphone », une étape à la fois, LE VOL D'ABORD) : quand la page est plus large que haute ET qu'on
+   * vole, le tampon se couche. La vue du vol y est fixe elle aussi, 320 × 180 (le portrait tourné) ; la largeur en trop
+   * va à DEUX BANDEAUX DE CÔTÉ — la place des pouces —, la hauteur en trop au bandeau du haut. La base, l'accueil et les
+   * écrans de fin restent en portrait, au milieu de l'écran couché, en attendant leur tour.
+   */
+  let paysage = false
+  const veutLePaysage = (): boolean => {
+    const st = getComputedStyle(racine)
+    const marge = (v: string): number => parseFloat(v) || 0
+    const large = racine.clientWidth - marge(st.paddingLeft) - marge(st.paddingRight)
+    const haut = racine.clientHeight - marge(st.paddingTop) - marge(st.paddingBottom)
+    return large > haut && !accueil && !ecranVisible()
+  }
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
     // tampon — sur un PC en 1080 de haut, 3 plutôt que 6 ; la hauteur du tampon est celle de l'écran à ce zoom, bornée à 480
@@ -357,10 +376,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const marge = (v: string): number => parseFloat(v) || 0
     const large = racine.clientWidth - marge(st.paddingLeft) - marge(st.paddingRight)
     const haut = racine.clientHeight - marge(st.paddingTop) - marge(st.paddingBottom)
-    zoom = Math.max(1, Math.min(6, Math.floor(large / W), Math.floor(haut / 320)))
-    const h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))
-    if (h !== H || canvas.height !== h) {
+    paysage = veutLePaysage()
+    let w = 180
+    let h: number
+    if (paysage) {
+      zoom = Math.max(1, Math.min(6, Math.floor(large / 320), Math.floor(haut / 180)))
+      w = Math.max(320, Math.min(480, Math.floor(large / zoom)))
+      h = Math.max(180, Math.min(240, Math.floor(haut / zoom)))
+    } else {
+      zoom = Math.max(1, Math.min(6, Math.floor(large / 180), Math.floor(haut / 320)))
+      h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))
+    }
+    if (h !== H || w !== W || canvas.height !== h || canvas.width !== w) {
+      W = w
       H = h
+      canvas.width = W
       canvas.height = H
       frame = N.createFrame(W, H)
       img = g.createImageData(W, H)
@@ -3915,7 +3945,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function cuireLeCiel(): Uint32Array {
     const px = Math.floor(camera.x * PARALLAXE_DES_NUEES) - (W >> 1)
     const py = Math.floor(camera.y * PARALLAXE_DES_NUEES) - (H >> 1)
-    const cle = `${px},${py},${H},${graineDuVol}`
+    const cle = `${px},${py},${W},${H},${graineDuVol}`
     if (cle === cleDuCiel) return fondDuCiel
     // (LES NUÉES SUIVENT LA GRAINE DU VOL — Keko, 11/11 : « le background des nuages colorés est toujours le même » ;
     // à zéro, les nuées de toujours)
@@ -4083,8 +4113,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y1 = H - bandeBas()
       p.rect(0, y0 + k, W, 1, c, a)
       p.rect(0, y1 - 1 - k, W, 1, c, a)
-      p.rect(k, y0 + 6, 1, y1 - y0 - 12, c, a)
-      p.rect(W - 1 - k, y0 + 6, 1, y1 - y0 - 12, c, a)
+      p.rect(bandeCote() + k, y0 + 6, 1, y1 - y0 - 12, c, a)
+      p.rect(W - bandeCote() - 1 - k, y0 + 6, 1, y1 - y0 - 12, c, a)
     }
   }
 
@@ -4421,20 +4451,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * celui du haut porte la soute, le porté et la coque (posés juste au-dessus de la vue dès qu'il est assez haut — sinon
    * en haut de l'écran, sur la vue, comme avant), celui du bas est la place du pouce. Les pixels restent entiers.
    */
-  const VUE = 320
+  const VUE_PORTRAIT = 320
+  /** La hauteur de la vue du vol (320 debout, 180 couché), et sa largeur couchée ; les bandeaux de côté en paysage. */
+  const vueH = (): number => (paysage ? 180 : VUE_PORTRAIT)
+  const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - 320) / 2)) : 0)
   /**
    * Le partage du surplus : LE HAUT D'ABORD, jusqu'à la hauteur de l'interface (la soute et le porté tiennent alors
    * entiers dans leur bandeau, la limite de la vue ne les coupe pas — Keko : « la ligne tombe sur le conteneur de la
    * soute ») ; au-delà, moitié-moitié. Le centre de la vue n'est donc plus toujours celui du tampon : `centreY`.
    */
   const bandeHaut = (): number => {
-    const surplus = Math.max(0, H - VUE)
+    const surplus = Math.max(0, H - vueH())
     return Math.max(Math.min(surplus, BAS_DU_HUD + 4), Math.floor(surplus / 2))
   }
-  const bandeBas = (): number => Math.max(0, H - VUE) - bandeHaut()
+  const bandeBas = (): number => Math.max(0, H - vueH()) - bandeHaut()
   /** Le centre de la vue dans le tampon (là où se dessine le point que vise la caméra). */
   function centreY(): number {
-    return bandeHaut() + Math.min(H, VUE) / 2
+    return bandeHaut() + Math.min(H, vueH()) / 2
   }
   /** Le haut de l'interface du vol (la plaque de soute), et son bas (sous les pastilles du porté). */
   const hautDuHud = (): number => Math.max(5, bandeHaut() - (BAS_DU_HUD - 5) - 4)
@@ -4461,6 +4494,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (b > 0) {
       p.rect(0, H - b, W, b, FOND)
       for (let k = 0; k < 4; k++) p.rect(0, H - b - 1 - k, W, 1, FOND, 0.55 - k * 0.13)
+    }
+    // (en paysage : les deux bandeaux de côté, la place des pouces)
+    const cote = bandeCote()
+    if (cote > 0) {
+      for (let y = 0; y < H; y++) {
+        frame.light.fill(0, y * W, y * W + cote)
+        frame.light.fill(0, y * W + W - cote, (y + 1) * W)
+      }
+      p.rect(0, 0, cote, H, FOND)
+      p.rect(W - cote, 0, cote, H, FOND)
+      for (let k = 0; k < 4; k++) {
+        p.rect(cote + k, 0, 1, H, FOND, 0.55 - k * 0.13)
+        p.rect(W - cote - 1 - k, 0, 1, H, FOND, 0.55 - k * 0.13)
+      }
     }
   }
   /** LA PLAQUE DE LA POSTCOMBUSTION, en bas à gauche de la vue (si elle est débloquée) : d'or quand elle est prête, sa recharge en barre ; une tape la lance aussi. */
@@ -4561,7 +4608,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le point du bord de l'écran dans la direction (dx, dy) depuis son centre ; `null` si la cible est à l'écran. */
   function auBord(dx: number, dy: number): { x: number; y: number } | null {
     const marge = 10
-    const cote = W / 2 - marge
+    const cote = W / 2 - bandeCote() - marge
     // (dans la vue : sous l'interface du haut ou le bandeau, au-dessus du bandeau du bas)
     const haut = centreY() - Math.max(bandeHaut(), basDuHud()) - 9
     const bas = H - bandeBas() - centreY() - marge
@@ -5371,6 +5418,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const dt = Math.min(0.25, (ms - avant) / 1000)
     avant = ms
     t += dt
+    // (le tampon se couche ou se relève quand on décolle ou qu'on rentre, téléphone couché)
+    if (veutLePaysage() !== paysage) cadrer()
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
       if (m.bouclier >= 1) {
@@ -5647,8 +5696,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const my = v.vy / CONF.vitesseMax
     const cx = Math.max(-1.2, Math.min(1.2, mx + 0.5 * pousse * (dv.x - mx)))
     const cy = Math.max(-1.2, Math.min(1.2, my + 0.5 * pousse * (dv.y - my)))
-    const cibleX = (cx * (1 - partDuRegard) + Math.cos(v.cap) * partDuRegard) * AVANCE_DE_LA_CAMERA.x
-    const cibleY = (cy * (1 - partDuRegard) + Math.sin(v.cap) * partDuRegard) * AVANCE_DE_LA_CAMERA.y
+    const avance = paysage ? AVANCE_EN_PAYSAGE : AVANCE_DE_LA_CAMERA
+    const cibleX = (cx * (1 - partDuRegard) + Math.cos(v.cap) * partDuRegard) * avance.x
+    const cibleY = (cy * (1 - partDuRegard) + Math.sin(v.cap) * partDuRegard) * avance.y
     decalageDeLaCamera.x += (cibleX - decalageDeLaCamera.x) * Math.min(1, dt * suivi)
     decalageDeLaCamera.y += (cibleY - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
     camera.x = v.x + decalageDeLaCamera.x

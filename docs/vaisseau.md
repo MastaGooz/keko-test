@@ -2829,3 +2829,21 @@ assez léger : il faut plus de 50 t pour passer les plus petites (les chiffres
 sont de moi, à rejuger avec les gros châssis à venir).
 
 Le manche du regard ne se dessine pas sur une simple tape (Keko, 13/11 : il clignotait à chaque double tape de la postcombustion) : il paraît quand le doigt est resté posé 0,16 s ou a glissé de six pixels.
+
+### Le paysage, étape 1 : le vol (13/11)
+
+Le cap, tranché avec Keko le 13/11 : le jeu va vers la COOP et le PvP entre
+amis, les boss, l'exploration, le commerce — donc vers LES DEUX MANCHES EN
+PAYSAGE, en gardant la règle « un pouce suffit, le second est un
+supplément » (le tir automatique par défaut, la main sur le regard et le tir
+quand on pose le second pouce). Le passage au paysage se fait par étapes ;
+le portrait reste intact à chacune.
+- ÉTAPE 1, LE VOL : `cadrer` couche le tampon quand la page est plus large que
+  haute ET qu'on vole (`veutLePaysage`, relu à chaque image) : `W` (devenu
+  variable) de 320 à 480, `H` de 180 à 240. LA VUE Y EST FIXE, 320 × 180 ; la
+  largeur en trop va à deux bandeaux de côté (`bandeCote`, la place des
+  pouces), la hauteur en trop au bandeau du haut (`vueH`). L'avance de la
+  caméra s'inverse (`AVANCE_EN_PAYSAGE` : 40 de côté, 60 en hauteur). Le
+  pupitre du haut, la soute, les manches, les deux moitiés d'écran suivent `W`.
+- La base, l'accueil et les écrans de fin restent en portrait au milieu de
+  l'écran couché : étapes suivantes (le hangar, puis le reste).
