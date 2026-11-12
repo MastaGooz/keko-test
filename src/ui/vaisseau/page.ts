@@ -273,6 +273,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que les compteurs montrent, par minerai (les pépites en vol n'y sont pas encore). Rien ne montre ce qui est déjà extrait (Keko). */
   const affiche: Cargaison = { ...cargaisonVide(), fer: minerai0 }
   const allumeA: Cargaison = { fer: -10, or: -10, cristal: -10 }
+  /** Combien de secondes la pastille d'un minerai reste affichée après la dernière pépite ramassée (elle clignote sur la fin). */
+  const TENUE_DU_PORTE = 3
+  /** Où chaque pastille du porté est dessinée (elle GLISSE vers sa place quand une voisine s'en va). */
+  const xDuPorte: Partial<Record<Minerai, number>> = {}
   /**
    * L'INTERFACE DU VOL, DANS LA LANGUE DE LA BASE (Keko, 11/11) : ce qu'elle a vu à l'image d'avant, pour réagir au
    * changement — les points de coque entiers (celui qui tombe éclate), la soute pleine (la plaque bondit, une fois),
@@ -3910,14 +3914,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const yHud = hautDuHud() - Math.round((1 - sortie((t - arriveA - 0.25) / 0.4)) * (basDuHud() + 4))
     const IVOIRE = N.hex('#fff2c8')
     const encre = MATIERES.encre.contour
-    const visibles = MINERAIS.filter((k) => affiche[k] > 0 || envols.some((e) => e.minerai === k))
+    // LE PORTÉ NE MONTRE QUE CE QU'ON VIENT DE RAMASSER (Keko, 12/11 : « affiche les minerais ramassés récemment et
+    // après quelques secondes on les fait disparaître » — à dix minerais, la rangée ne tiendrait pas) : une pastille
+    // paraît quand une pépite de son minerai vole vers elle, reste TENUE_DU_PORTE secondes après la dernière, clignote
+    // et s'en va ; le détail entier reste dans la soute
+    const visibles = MINERAIS.filter((k) => envols.some((e) => e.minerai === k) || (affiche[k] > 0 && t - allumeA[k] < TENUE_DU_PORTE))
+    for (const k of MINERAIS) if (!visibles.includes(k)) delete xDuPorte[k]
     // les places des pastilles du porté, de gauche à droite, larges de leur nombre
     const yPastilles = yHud + 18 + 3
     const places = new Map<Minerai, { x: number; w: number }>()
     let suivante = 5
     for (const k of visibles) {
       const w = 14 + largeurDe(String(affiche[k]), GRAS) + 5
-      places.set(k, { x: suivante, w })
+      // (elle glisse vers sa place ; neuve, elle y naît)
+      const vu = xDuPorte[k] ?? suivante
+      const x = Math.abs(suivante - vu) < 0.5 ? suivante : vu + (suivante - vu) * 0.25
+      xDuPorte[k] = x
+      places.set(k, { x: Math.round(x), w })
       suivante += w + 2
     }
 
@@ -3957,6 +3970,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const { x, w } = places.get(k)!
       const T = TEINTES_MINERAI[k]
       const allume = t - allumeA[k] < 0.18
+      // (sur sa fin, elle clignote)
+      const reste = TENUE_DU_PORTE - (t - allumeA[k])
+      if (reste < 0.5 && !envols.some((e) => e.minerai === k) && Math.floor(t * 12) % 2 === 0) continue
       const dy = Math.round(rebond(`porte-${k}`, 0))
       plaque(p, x, yPastilles + dy, w, 13, 'encre', { bord: allume ? T[2] : undefined })
       dessinerUneRessource(p, x + 7, yPastilles + 6 + dy, k)

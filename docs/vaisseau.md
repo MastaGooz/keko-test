@@ -2326,3 +2326,12 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 - Un indice visuel sur le rival chargé (sa fuite le dit seulement).
 
 - Un vaisseau bestiole plus détaillé si le style plaît.
+
+### Le porté ne montre que ce qu'on vient de ramasser (12/11)
+
+Keko, à la question « dix minerais, on les met où ? » : « affiche les minerais
+ramassés récemment et après quelques secondes on les fait disparaître ». La
+pastille d'un minerai paraît quand une pépite vole vers elle, reste
+`TENUE_DU_PORTE` (3 s, de moi, à rejuger) après la dernière, clignote une
+demi-seconde et s'en va ; les voisines glissent à sa place (`xDuPorte`). Le
+total reste sur la plaque « Soute », le détail dans la soute ouverte.
