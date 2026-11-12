@@ -932,11 +932,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * les crédits » — sur 180 pixels, un grand titre et un montant entier ne tiennent pas côte à côte) : le titre de la
    * vue en haut, toujours en grande lettre avec son icône ; LES CRÉDITS DESSOUS, sur leur ligne, en entier.
    */
-  const HAUT_DU_TITRE = 27
-  const HAUT_DES_CREDITS = 13
+  // (le filet sous le titre arrive À LA HAUTEUR DU HAUT DU CARTOUCHE des crédits — Keko, 12/11 : « descendre un poil la
+  // ligne sous le titre » ; l'étage du titre fait trente pixels, la languette en dépasse de dix)
+  const HAUT_DU_TITRE = 30
+  const HAUT_DES_CREDITS = 10
   const HAUT_BARRE = HAUT_DU_TITRE + HAUT_DES_CREDITS
   /** Le milieu de la ligne des crédits (les pièces y volent). */
-  const Y_CREDITS = HAUT_DU_TITRE + 5
+  const Y_CREDITS = HAUT_BARRE - 8
+  /** Le bord gauche de la languette des crédits (refait à chaque image) : ce qui passe derrière l'en-tête s'y arrête. */
+  let xDeLaLanguette = W
   const HAUT_NAV = 34
   /**
    * OÙ COMMENCE LA SCÈNE (Keko, 12/11 : l'en-tête n'est plus un rectangle — il s'arrête sous le titre, et seule la
@@ -1427,18 +1431,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!sceneSousLeTitre()) p.rect(0, YT, W, HAUT_BARRE - YT, NUIT_BARRE)
     // l'icône de la vue, dans son logement
     // (deux pixels plus haut qu'avant : le filet touchait le bas du titre — Keko : « il faudrait au moins un petit espace »)
-    plaque(p, 4, 2, 19, 19, 'creux')
-    p.glow(13, 11, 10, PEPITE[2], 0.14)
-    dessinerLIconeDeVue(p, vue, 13, 11, true)
+    plaque(p, 4, 3, 19, 19, 'creux')
+    p.glow(13, 12, 10, PEPITE[2], 0.14)
+    dessinerLIconeDeVue(p, vue, 13, 12, true)
     // le titre : il tombe à sa place quand la vue change, un éclat le traverse de temps en temps
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
     const nom = NOMS_VUE[vue]
     const w = largeurDe(nom, TITRE)
     const c = (t % 5) / 5
-    motEnRelief(p, nom, 28 + w / 2, 4 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    motEnRelief(p, nom, 28 + w / 2, 5 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
     // (deux rivets au bout de l'étage)
-    for (const ry of [5, 16]) {
+    for (const ry of [6, 17]) {
       p.rect(W - 7, ry, 2, 2, N.hex('#3a3350'))
       p.rect(W - 7, ry, 1, 1, N.hex('#5a4f74'))
     }
@@ -1453,13 +1457,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LA LANGUETTE (Keko, 12/11 : « vide cet espace en donnant une forme non rectangulaire à la zone » — le pointillé
     // et sa flèche, à gauche des crédits, ne plaisaient pas) : l'en-tête s'arrête sous le titre, et seul ce pan d'acier
     // descend, à droite, le bord gauche droit, cerné d'un filet ; le cartouche des crédits est dedans
-    const yc = YT + 1
+    const yc = HAUT_BARRE - 14
     const wp = wn + 21
     const px = W - 4 - wp + tremble
     compteurX = px + wp - 9
     // (À ANGLE DROIT — Keko : « évite la diagonale, tente un angle droit » ; le filet tourne au coin, descend le long du
     // bord gauche et passe sous le cartouche, à deux pixels de lui)
     const x0 = px - 5
+    xDeLaLanguette = x0 - 1
     const yb = HAUT_BARRE - 1
     for (let y = YT - 2; y <= yb; y++) frame.light.fill(0, y * W + Math.max(0, x0 - 1), (y + 1) * W)
     p.rect(x0 - 1, YT - 1, W - x0 + 1, yb - YT + 2, MATIERES.encre.contour)
@@ -1627,9 +1632,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** LES ÉCLATS : étincelles et fumées, les pièces d'une vente vers le compteur, les pièces achetées vers le hangar, les nombres qui montent. */
   function dessinerLesEclats(p: Peintre): void {
+    // (AU DÉCOLLAGE, le feu du réacteur passe DERRIÈRE l'en-tête, comme le vaisseau — Keko, 12/11 : « les particules de
+    // feu du réacteur sont au-dessus de la zone du titre au lieu d'être en dessous » : les éclats sont peints en dernier,
+    // par-dessus tout ; pendant le décollage, ceux qui sont sous l'en-tête ou sa languette ne se peignent pas)
+    const cache = (x: number, y: number): boolean => decollageA !== null && (y < HAUT_DU_TITRE || (y < HAUT_BARRE + 1 && x >= xDeLaLanguette - 2))
     for (const e of eclats) {
       e.x += e.vx * dtBase
       e.y += e.vy * dtBase
+      if (cache(e.x, e.y + (e.fumee ? 6 : 0))) continue
       if (e.fumee) {
         e.vx *= 1 - 3 * dtBase
         e.vy -= 6 * dtBase

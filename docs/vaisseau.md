@@ -2613,3 +2613,7 @@ Retouché (Keko) : la languette est À ANGLE DROIT (plus de biais) ; le filet
 n'est plus marron mais gris d'acier clair (`FILET`) ; il ne touche plus ni le
 titre (remonté de deux pixels avec son icône) ni le cartouche (deux pixels
 d'air dessous).
+Puis (Keko) : le filet sous le titre descend à la hauteur du haut du
+cartouche (`HAUT_DU_TITRE` 30, la languette en dépasse de dix pixels) ; et AU
+DÉCOLLAGE les éclats du réacteur, peints en dernier, ne se peignent plus sur
+l'en-tête ni sur sa languette : le feu passe derrière, comme le vaisseau.
