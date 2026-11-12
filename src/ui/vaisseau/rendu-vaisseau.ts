@@ -57,6 +57,51 @@ const CONTOUR = hex('#07050e')
 const BLANC = hex('#ffffff')
 const BAYER = [0, 2, 3, 1]
 
+/**
+ * LES LIVRÉES (Keko, 12/11 : « un système de changement de couleur du châssis ») : la couleur de la coque et des ailes
+ * du joueur. Chacune est UNE TEINTE (en degrés), une saturation et une clarté ; ses rampes en sont tirées comme celles
+ * de la série — six tons du sombre au clair, la teinte qui glisse (plus froide dans l'ombre), les ailes un cran plus
+ * sombres et décalées. La première, « Série », garde les rampes d'origine.
+ */
+export type Livree = { id: string; nom: string; teinte: number; saturation: number; clarte: number }
+export const LIVREES: Livree[] = [
+  { id: 'serie', nom: 'Série', teinte: 215, saturation: 0.4, clarte: 1 },
+  { id: 'braise', nom: 'Braise', teinte: 22, saturation: 0.7, clarte: 1 },
+  { id: 'or', nom: 'Or', teinte: 44, saturation: 0.75, clarte: 1 },
+  { id: 'jade', nom: 'Jade', teinte: 135, saturation: 0.45, clarte: 1 },
+  { id: 'lagon', nom: 'Lagon', teinte: 178, saturation: 0.55, clarte: 1 },
+  { id: 'iris', nom: 'Iris', teinte: 272, saturation: 0.5, clarte: 1 },
+  { id: 'rose', nom: 'Rose', teinte: 328, saturation: 0.55, clarte: 1 },
+  { id: 'ivoire', nom: 'Ivoire', teinte: 40, saturation: 0.1, clarte: 1.18 },
+  { id: 'nuit', nom: 'Nuit', teinte: 235, saturation: 0.18, clarte: 0.55 },
+]
+function tsl(h: number, s: number, l: number): number {
+  const a = s * Math.min(l, 1 - l)
+  const f = (n: number): number => {
+    const k = (n + (((h % 360) + 360) % 360) / 30) % 12
+    return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))))
+  }
+  return hex('#' + [f(0), f(8), f(4)].map((v) => v.toString(16).padStart(2, '0')).join(''))
+}
+const CLARTES = [0.13, 0.23, 0.35, 0.5, 0.69, 0.9]
+function rampeDeLaTeinte(h: number, s: number, clarte: number, sombre: number): number[] {
+  return CLARTES.map((l, i) => tsl(h + 14 - (i / 5) * 22, Math.min(1, s * (i === 5 ? 1.5 : 1)), Math.max(0.04, Math.min(0.95, (l - sombre) * clarte))))
+}
+const rampesGardees = new Map<string, Partial<Record<Matiere, number[]>> | undefined>()
+/** Les rampes d'une livrée, pour `Options.rampes` : la coque, la coque blindée (plus terne), les ailes. Rien pour la série. */
+export function rampesDeLaLivree(id: string): Partial<Record<Matiere, number[]>> | undefined {
+  if (!rampesGardees.has(id)) {
+    const l = LIVREES.find((x) => x.id === id)
+    rampesGardees.set(id, l === undefined || l.id === 'serie' ? undefined : { coque: rampeDeLaTeinte(l.teinte, l.saturation, l.clarte, 0), blinde: rampeDeLaTeinte(l.teinte, l.saturation * 0.6, l.clarte * 0.92, 0.02), aile: rampeDeLaTeinte(l.teinte + 16, l.saturation * 0.9, l.clarte, 0.03) })
+  }
+  return rampesGardees.get(id)
+}
+/** Trois tons d'une livrée (sombre, moyen, clair), pour sa pastille. */
+export function tonsDeLaLivree(id: string): [number, number, number] {
+  const r = rampesDeLaLivree(id)?.coque ?? RAMPES.coque
+  return [r[2], r[3], r[4]]
+}
+
 /** La lumière, en unités du vaisseau (le nez vers +x) : de l'avant et de la gauche, et d'en haut. */
 const LUM = (() => {
   const v = [0.55, -0.55, 0.63]
@@ -124,6 +169,8 @@ export type Options = {
   lumiere?: { x: number; y: number; z: number }
   /** Des matières à la place d'autres (le rival : la coque en carmin, la verrière en ambre). Un seul pas, pas de chaîne. */
   matieres?: Partial<Record<Matiere, Matiere>>
+  /** Des RAMPES à la place de celles d'une matière (la livrée du joueur : sa coque, ses ailes). Elles passent avant `matieres`. */
+  rampes?: Partial<Record<Matiere, number[]>>
 }
 
 /**
@@ -145,7 +192,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     const nd = Math.hypot(d[0], d[1], d[2])
     D = d.map((c) => c / nd)
   }
-  const rampeDe = (f: Forme): number[] => RAMPES[o.matieres?.[f.mat] ?? f.mat]
+  const rampeDe = (f: Forme): number[] => o.rampes?.[f.mat] ?? RAMPES[o.matieres?.[f.mat] ?? f.mat]
   // local → écran : on tourne de cap, puis on agrandit
   const versEcran = (x: number, y: number): [number, number] => [cx + (x * ca - y * sa) * s, cy + (x * sa + y * ca) * s]
   // écran → local

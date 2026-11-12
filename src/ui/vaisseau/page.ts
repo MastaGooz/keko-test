@@ -17,8 +17,8 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, 
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
-import { chargerHangar, sauverHangar } from './hangar.ts'
+import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { chargerHangar, chargerLivree, sauverHangar, sauverLivree } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
@@ -152,6 +152,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** `&tuto=0` : le tutoriel des quêtes est passé d'emblée (tous les onglets ouverts), pour essayer la suite d'un lien. */
   if (parametres.get('tuto') === '0' && !tutorielFini(quetes)) quetes = quetesSansTutoriel(1, (x) => aLaMecanique(labo, x as Mecanique))
   const sauver = (): void => sauverHangar(hangar, tresor, credits, labo, marche, quetes)
+  /** LA LIVRÉE du vaisseau du joueur (Keko, 12/11) : la couleur de sa coque et de ses ailes, choisie au hangar. */
+  let livree = LIVREES.some((l) => l.id === chargerLivree()) ? chargerLivree() : 'serie'
+  const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => rampesDeLaLivree(livree)
   /**
    * IL S'EST PASSÉ QUELQUE CHOSE qu'une quête peut compter (un décollage, du minerai extrait, une vente…) : la règle
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
@@ -1227,7 +1230,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nozzle: [number, number] = [cx + jit, sy + 8.6 * ECHELLE]
     p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
-    peindreFormes(p, formes, cx + jit, sy, ECHELLE, { blanc: t - equipeA < 0.08 ? 1 : 0 })
+    peindreFormes(p, formes, cx + jit, sy, ECHELLE, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
     // la verrière qui luit, les feux de position qui battent
     p.glow(cx + jit, sy - 3.4 * ECHELLE, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
@@ -1593,7 +1596,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const tc = Math.round(26 - 10 * e)
       p.glow(x, y, tc, PEPITE[2], 0.35)
       plaque(p, x - tc / 2, y - tc / 2, tc, tc, 'or')
-      peindreDansUneCase(p, formesDeLaPiece(v.pc), x, y, tc, tc, { cadre: cadreDeLaPiece(v.pc) })
+      peindreDansUneCase(p, formesDeLaPiece(v.pc), x, y, tc, tc, { cadre: cadreDeLaPiece(v.pc), rampes: rampesDuJoueur() })
     }
     for (let i = flottants.length - 1; i >= 0; i--) {
       const f = flottants[i]
@@ -1777,7 +1780,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** LE PICTOGRAMME D'UNE PIÈCE, mis à l'échelle de sa case (Keko : « chaque visuel rescalé pour loger dans la zone »). */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    peindreDansUneCase(p, formesDeLaPiece(pc), x, y, bw, bh, { cadre: cadreDeLaPiece(pc) })
+    peindreDansUneCase(p, formesDeLaPiece(pc), x, y, bw, bh, { cadre: cadreDeLaPiece(pc), rampes: rampesDuJoueur() })
   }
   /** Ouvre la liste d'un emplacement (depuis le vaisseau ou sa case). */
   function ouvrirLEmplacement(o: Sorte, k = -1): void {
@@ -1922,6 +1925,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     enTete(p, y, titreDe({ o: onglet, k: placeOuverte() }), () => changerDEtape('vaisseau'))
     y += HT + 3
     const ko = placeOuverte()
+    // LA COULEUR DU CHÂSSIS (Keko, 12/11 : « un système de changement de couleur du châssis ») : sur la page du châssis,
+    // une rangée de pastilles — une par livrée, la choisie cerclée d'or ; une tape repeint la coque et les ailes, au
+    // hangar comme en vol
+    if (onglet === 'coque') {
+      const pas = 17
+      const x0 = Math.round((W - LIVREES.length * pas + 2) / 2)
+      LIVREES.forEach((l, i) => {
+        const x = x0 + i * pas
+        const choisie = l.id === livree
+        const [sombre, moyen, clair] = tonsDeLaLivree(l.id)
+        const e = etatDuBouton(x, y, 15, 15)
+        p.rect(x - 1, y - 1 + e.dy, 17, 17, choisie ? PEPITE[3] : MATIERES.encre.contour)
+        p.rect(x, y + e.dy, 15, 15, MATIERES.encre.contour)
+        p.rect(x + 1, y + 1 + e.dy, 13, 13, moyen)
+        p.rect(x + 1, y + 1 + e.dy, 13, 3, clair)
+        p.rect(x + 1, y + 10 + e.dy, 13, 4, sombre)
+        if (!choisie) zone(x - 1, y - 2, 17, 21, () => {
+          livree = l.id
+          sauverLivree(l.id)
+          feterLEquipement()
+        }, 'equipe')
+      })
+      y += 20
+      ecrire(p, LIVREES.find((l) => l.id === livree)?.nom ?? '', W / 2, y, COQUE[4], { align: 'center' })
+      y += 11
+    }
     const pc = onglet === 'propulseur' || onglet === 'coque' ? monteeA(hangar, onglet) : pieceDe(listeMontee(onglet)[ko] ?? '')
     if (pc !== undefined) {
       dessinerLaFiche(p, y, pc, true)
@@ -3706,7 +3735,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const [fx, fy] = ici(-8.4 - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
       p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
-    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
+    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
     const [vx, vy] = ici(3.4, 0)
     p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
@@ -4620,7 +4649,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
     }
     p.glow(cx, ty, 12 + 16 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
-    peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, {})
+    peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     p.glow(cx, sy - 3.4 * E, 9, VERRIERE[2], 0.25)
     if (Math.floor(t * 1.5) % 2 === 0)
       for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {

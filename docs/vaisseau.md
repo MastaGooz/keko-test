@@ -2514,3 +2514,18 @@ la base » (`pepites`). LA VALIDATION : en vol, le toast des missions avec
 « Étape 2/3 » et la consigne de l'étape (la dernière laisse la place à
 « Mission réussie ») ; sur la carte, une case par étape, verte et cochée une
 fois faite, et la jauge compte les étapes (1/3).
+
+### La couleur du châssis : les livrées (12/11)
+
+Keko : « tu peux implanter un système de changement de couleur du
+châssis ». Sur la page du châssis, au hangar, une rangée de PASTILLES : neuf
+livrées (`LIVREES`, `rendu-vaisseau.ts` — Série, Braise, Or, Jade, Lagon,
+Iris, Rose, Ivoire, Nuit), toutes libres, sans prix ; une tape repeint la
+coque et les ailes, au hangar, dans les pictogrammes, sur l'écran-titre et en
+vol. Une livrée est une teinte, une saturation et une clarté ; ses rampes en
+sont tirées (`rampesDeLaLivree`) et passent au peintre par `Options.rampes`
+— la coque, la coque blindée (plus terne), les ailes (décalées, un cran plus
+sombres). La verrière, le bout des ailes et les pièces ne changent pas. Le
+rival garde son carmin (pas de rouge franc dans les livrées, pour ne pas le
+confondre). Gardée à part (`keko-vaisseau-livree`). De moi, à rejuger : les
+neuf teintes, leurs noms, la gratuité, leur place sur la page du châssis.

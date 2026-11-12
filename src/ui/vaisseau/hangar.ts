@@ -47,3 +47,20 @@ export function sauverHangar(hangar: Hangar, tresor: Cargaison, credits: number,
     // Sans stockage, le hangar vit le temps de la page.
   }
 }
+
+/** LA LIVRÉE du vaisseau (sa couleur), gardée à part : elle ne tient à aucune règle. */
+const CLE_LIVREE = 'keko-vaisseau-livree'
+export function chargerLivree(): string {
+  try {
+    return localStorage.getItem(CLE_LIVREE) ?? 'serie'
+  } catch {
+    return 'serie'
+  }
+}
+export function sauverLivree(id: string): void {
+  try {
+    localStorage.setItem(CLE_LIVREE, id)
+  } catch {
+    // Sans stockage, la couleur vit le temps de la page.
+  }
+}
