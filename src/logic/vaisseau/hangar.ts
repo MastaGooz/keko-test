@@ -249,6 +249,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   const poids = Math.pow(poidsTotal(h) / POIDS_SERIE, 1.3)
   return {
     ...c,
+    masse: poidsTotal(h),
     capacite: co.capacite ?? c.capacite,
     poussee: (c.poussee * (pr.poussee ?? 1)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),

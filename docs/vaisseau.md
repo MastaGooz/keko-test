@@ -2811,3 +2811,19 @@ tir manuel devrait aussi tirer les missiles ».
 - Un obus qui s'écrase sur une roche l'abîme de ses dégâts (`abimerLaRoche`).
 - Au manche du regard, les missiles tirent à la main aussi : droit dans la
   direction visée, puis ils virent vers le rival s'il y en a un.
+
+### Le poids dans un choc : un vaisseau lourd traverse les petites roches (12/11)
+
+Keko voulait « qu'un gros vaisseau n'ait pas l'air de se faire arrêter net
+par un petit astéroïde » ; l'idée de roches qu'on pousse a été écartée (sans
+collisions entre roches, la roche poussée s'arrêterait net sur une plus
+petite qu'elle ; avec, un gros chantier). À LA PLACE, LE RAPPORT DE POIDS :
+`ConfigVaisseau.masse` (le poids total des pièces, posé par le hangar ; 30 t
+de série) contre la masse de la roche (`collision.masseRoche` × rayon² : 25 t
+à 5 de rayon, 196 à 14). Une roche qui pèse moins de `collision.perce` (0,5)
+fois le vaisseau, heurtée franchement, ÉCLATE : il la traverse (`Choc.perce`)
+en ne perdant que la part de vitesse qu'elle pèse, et sa coque ne prend que
+cette part du coup. Elle ne rend que sa part forée. Les autres roches
+rebondissent comme avant ; le rival ne traverse rien. De série rien n'est
+assez léger : il faut plus de 50 t pour passer les plus petites (les chiffres
+sont de moi, à rejuger avec les gros châssis à venir).

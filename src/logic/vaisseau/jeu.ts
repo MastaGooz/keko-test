@@ -40,6 +40,8 @@ export const VAISSEAU = {
   rotation: 7,
   /** Le rayon du vaisseau. */
   rayon: 4,
+  /** LA MASSE du vaisseau, en tonnes : le poids total de ses pièces (le hangar la pose ; 30 de série). Elle se mesure à celle des roches, dans un choc. */
+  masse: 30,
   /** La part de vitesse rendue par un rebond sur un astéroïde. */
   rebond: 0.45,
   /** En dessous de cette vitesse normale, toucher une roche n'est pas un choc (on s'y appuie, on glisse le long). */
@@ -77,7 +79,14 @@ export const VAISSEAU = {
    * prend 29 : une roche de 6 de rayon éclate d'un coup, une de 14 (118 points) en demande quatre. Le rival ÉVITE les
    * roches à moins de `evite` unités (il est poussé à l'écart) : sondé, une seule collision lui coûtait 72 % de sa vie.
    */
-  collision: { degatsCoque: 0.02, degatsEnnemi: 0.12, degatsRoche: 0.3, evite: 24 },
+  /**
+   * … ET LE POIDS COMPTE (Keko, 12/11 : « qu'un gros vaisseau n'ait pas l'air de se faire arrêter net par un petit
+   * astéroïde ») : une roche pèse `masseRoche` tonnes par unité de rayon au carré (25 t à 5 de rayon, 196 à 14). Quand
+   * elle pèse moins de `perce` fois le vaisseau, un choc franc LA BRISE au lieu de le faire rebondir : il la traverse en
+   * ne perdant que la part de sa vitesse que pèse la roche (roche ÷ vaisseau), et sa coque ne prend que cette part du
+   * coup. De série (30 t) rien n'est assez léger ; il faut plus de 50 t pour traverser les plus petites.
+   */
+  collision: { degatsCoque: 0.02, degatsEnnemi: 0.12, degatsRoche: 0.3, evite: 24, masseRoche: 1, perce: 0.5 },
   /**
    * LES STATIONS D'EXTRACTION (Keko : « un point d'extraction où déposer les ressources qu'on porte » ; puis « on
    * devrait mettre des extracteurs régulièrement, si le joueur se balade pendant vingt minutes ça va être compliqué ») :
@@ -223,7 +232,7 @@ export type Asteroide = { id: number; x: number; y: number; rayon: number; grain
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
 export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
-export type Choc = { x: number; y: number; force: number; asteroide: number }
+export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
@@ -415,7 +424,7 @@ export const solidite = (c: ConfigVaisseau, a: Asteroide): number => c.forage.du
 /** L'écart d'angle le plus court de `de` vers `vers`, dans [−π, π]. */
 const ecartDAngle = (de: number, vers: number): number => Math.atan2(Math.sin(vers - de), Math.cos(vers - de))
 
-type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: number }
+type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: number; /** Sa masse, s'il peut traverser les roches légères (le joueur ; le rival n'en a pas). */ masse?: number }
 
 /**
  * Fait voler un corps de `dt` secondes sous une direction (longueur 0 à 1) : la poussée, le frein du vide, le plafond,
@@ -458,9 +467,18 @@ export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number
     if (d >= minimum) continue
     const nx = dx / d
     const ny = dy / d
+    const vn = vx * nx + vy * ny
+    // (UNE ROCHE TROP LÉGÈRE pour ce vaisseau, heurtée franchement : il la traverse — ni repoussé, ni renvoyé —, ralenti
+    // de la part qu'elle pèse ; c'est l'appelant qui la brise)
+    const q = moteur.masse === undefined ? Infinity : (c.collision.masseRoche * a.rayon * a.rayon) / moteur.masse
+    if (q < c.collision.perce && -vn >= c.seuilChoc) {
+      vx *= 1 - q
+      vy *= 1 - q
+      chocs.push({ x: a.x + nx * a.rayon, y: a.y + ny * a.rayon, force: -vn, asteroide: a.id, perce: q })
+      continue
+    }
     x = a.x + nx * minimum
     y = a.y + ny * minimum
-    const vn = vx * nx + vy * ny
     if (vn < 0) {
       vx -= (1 + c.rebond) * vn * nx
       vy -= (1 + c.rebond) * vn * ny
@@ -817,7 +835,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // manche, elle pousse droit devant
   const boost = partDeLaPostcombustion(c, m)
   const pousse = boost > 0 && m.t - m.boostA < c.postcombustion.duree
-  const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon } : c
+  const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon, masse: c.masse } : c
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
   const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits, regard)
   m.vaisseau = r.vaisseau
@@ -826,8 +844,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // les chocs du joueur : la coque en souffre selon la vitesse, la roche aussi — SAUF SOUS BOUCLIER (Keko : sinon les
   // joueurs s'en servent de bélier) : le bouclier prend le coup, la roche n'a rien
   for (const choc of r.chocs) {
-    const degats = coutDuChoc(c, choc, c.collision.degatsCoque)
-    if (!sousBouclier(c, m)) abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
+    // (la roche traversée éclate, bouclier ou pas ; la coque ne prend que la part du coup que pèse la roche)
+    const degats = coutDuChoc(c, choc, c.collision.degatsCoque) * (choc.perce ?? 1)
+    if (choc.perce !== undefined) {
+      const a = asteroidesVisibles(c, m, choc.x, choc.y, c.champ.rayonMax + 2).find((x) => x.id === choc.asteroide)
+      if (a !== undefined) eclaterLaRoche(c, m, a, ev)
+    } else if (!sousBouclier(c, m)) abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
     if (degats <= 0) continue
     encaisser(c, m, choc.x, choc.y, degats, ev)
     if (m.phase !== 'vol') return { chocs, evenements: ev }

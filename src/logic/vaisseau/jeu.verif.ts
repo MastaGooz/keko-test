@@ -531,4 +531,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('une roche à moitié forée puis brisée au canon rend la moitié de ses pépites', nEntiere >= 2 && moitie.detruits.has(roche.id) && nMoitie === Math.round(nEntiere / 2))
 }
 
+// le poids dans un choc : un vaisseau lourd traverse une petite roche, un léger rebondit
+{
+  const petite = asteroidesAutour(C, 0, 0, 900).sort((a, b) => a.rayon - b.rayon)[0]
+  const lancer = (cfg: ConfigVaisseau) => {
+    const w3 = nouveauMonde(cfg)
+    w3.vaisseau = { ...w3.vaisseau, x: petite.x - petite.rayon - cfg.rayon - 6, y: petite.y, vx: 100, vy: 0, cap: 0 }
+    w3.detruits = new Set(asteroidesAutour(cfg, w3.vaisseau.x, w3.vaisseau.y, 400).filter((r) => r.id !== petite.id).map((r) => r.id))
+    w3.coque = 1000
+    let perce = 0
+    for (let k = 0; k < 30; k++) perce += avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 }).chocs.filter((ch) => ch.perce !== undefined).length
+    return { w3, perce }
+  }
+  const lourd = lancer({ ...C, masse: 400, forage: { ...C.forage, portee: 0 } })
+  const leger = lancer({ ...C, forage: { ...C.forage, portee: 0 } })
+  verifier('un vaisseau lourd traverse une petite roche : elle éclate sans rien rendre, il garde son cap, à peine ralenti et à peine abîmé', lourd.perce === 1 && lourd.w3.detruits.has(petite.id) && lourd.w3.pepites.length === 0 && lourd.w3.vaisseau.vx > 60 && lourd.w3.vaisseau.x > petite.x && lourd.w3.coque > 999.8)
+  verifier('le vaisseau de série, lui, rebondit dessus comme avant', leger.perce === 0 && leger.w3.vaisseau.vx < 0 && C.masse === 30)
+}
+
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
