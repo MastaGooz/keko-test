@@ -1108,19 +1108,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
       for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
       if (!tutorielFini(quetes)) {
-        motEnRelief(p, 'Formation', cx, y0 + 7, true)
+        motEnRelief(p, 'Formation', cx, y0 + 3, true, TITRE)
         const n = TUTORIEL.length
         for (let i = 0; i < n; i++) {
           const px = Math.round(cx + (i - (n - 1) / 2) * 12)
           const fait = i < quetes.etape
           const ici = i === quetes.etape
-          p.rect(px - 3, y0 + 21, 7, 7, MATIERES.encre.contour)
-          p.rect(px - 2, y0 + 22, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
-          if (i > 0) p.rect(px - 9, y0 + 24, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
+          p.rect(px - 3, y0 + 25, 7, 7, MATIERES.encre.contour)
+          p.rect(px - 2, y0 + 26, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
+          if (i > 0) p.rect(px - 9, y0 + 28, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
         }
       } else {
         // (seul, au milieu du bandeau : « Un par activité, toujours » est retiré — Keko, 12/11)
-        motEnRelief(p, 'Contrats', cx, y0 + 13, true)
+        // (EN GRANDE LETTRE — Keko : « le mot contrat est plus petit que les contrats eux-mêmes, ce qui brise la hiérarchie »)
+        motEnRelief(p, 'Contrats', cx, y0 + 10, true, TITRE)
       }
     } else {
       p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))
@@ -1368,26 +1369,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
     const nom = NOMS_VUE[vue]
-    const w = largeurDe(nom, TITRE)
-    // le compteur (en court au-delà de quatre chiffres : sa plaque mordait le titre « Entrepôt » dès le cinquième)
-    // LE COMPTEUR NE PASSE JAMAIS SUR LE TITRE (Keko, 12/11 : « le montant de crédits en haut se superpose avec le titre
-    // commerce » — « Commerce » et « Recherche » sont plus longs que les noms d'avant) : mesuré, pas supposé — si la
-    // plaque mord le titre, le montant passe en court dès mille (« 1,2k ») ; s'il mord encore, l'icône de la vue cède sa
-    // place et le titre se cale à gauche
-    const v = Math.round(creditsVus)
-    let n = montantCourt(v)
-    let px = W - 5 - (largeurDe(n, GRAS) + 22)
-    if (25 + w + 3 > px && v >= 1000 && v < 10000) {
-      n = `${Math.floor(v / 1000)}${Math.floor((v % 1000) / 100) === 0 ? '' : `,${Math.floor((v % 1000) / 100)}`}k`
-      px = W - 5 - (largeurDe(n, GRAS) + 22)
-    }
-    const sansIcone = 25 + w + 3 > px
+    // LE COMPTEUR DIT LE MONTANT ENTIER, ET LE MÊME SUR TOUS LES ONGLETS (Keko, 12/11 : « dommage d'avoir 1k sur un
+    // onglet et 1000 dans l'autre — et dans tous les cas le joueur devrait avoir le montant complet pour les crédits,
+    // pas d'abréviation comme les ressources »). C'EST LE TITRE QUI S'ADAPTE, et pareil pour tous les onglets : on mesure
+    // LE PLUS LONG des noms d'onglet — s'il ne tient pas à côté de la plaque avec son icône, les icônes cèdent leur
+    // place ; s'il ne tient toujours pas, les titres passent dans la lettre d'en-tête, puis dans la grasse.
+    const n = String(Math.max(0, Math.round(creditsVus)))
     const wn = largeurDe(n, GRAS)
     const wp = wn + 22
-    if (!sansIcone) dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
-    const xt = sansIcone ? 6 : 25
+    const px = W - 5 - wp
+    const plusLong = (f: Police): number => Math.max(...PRINCIPALES().map((vv) => largeurDe(NOMS_VUE[vv], f)))
+    const avecIcone = 25 + plusLong(TITRE) + 3 <= px
+    const police: Police = avecIcone || 6 + plusLong(TITRE) + 3 <= px ? TITRE : 6 + plusLong(ENTETE) + 3 <= px ? ENTETE : GRAS
+    const w = largeurDe(nom, police)
+    if (avecIcone) dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
+    const xt = avecIcone ? 25 : 6
     const c = (t % 5) / 5
-    motEnRelief(p, nom, xt + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    if (police === ENTETE) ecrire(p, nom, xt, 10 + chute, N.hex('#ffe068'), { police: ENTETE, contour: N.hex('#1e0e03') })
+    else motEnRelief(p, nom, xt + w / 2, (police === TITRE ? 7 : 10) + chute, true, police, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
     compteurX = px + wp / 2
     const allume = t - creditsA < 0.45
     const r = refus
@@ -3129,7 +3128,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const prix = prixDit(o.prix)
       ecrire(p, prix, xp, ly + 4 + e.dy, N.hex('#fff2c8'), { police: GRAS })
       dessinerUnCredit(p, xp + largeurDe(prix, GRAS) + 7, ly + 7 + e.dy)
-      nombreDeCredits(p, `= ${montantCourt(gainDe(o.quantite, o.prix, avantages()))}`, 4 + larg - 4, ly + 4 + e.dy, PEPITE[3])
+      nombreDeCredits(p, `= ${gainDe(o.quantite, o.prix, avantages())}`, 4 + larg - 4, ly + 4 + e.dy, PEPITE[3])
       zone(4, ly, larg, 16, () => ouvrirLOrdre(o.id), 'ouvre')
     }
     if (maxD > 0) {
@@ -3284,7 +3283,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       const prix = venteFixe ? ventePrix : cours
       ecrire(p, 'Gain', x + 6, ly, COQUE[4])
-      nombreDeCredits(p, montantCourt(gainDe(q, prix, avantages())), x + w - 5, ly, q > 0 ? N.hex('#fff2c8') : COQUE[3])
+      nombreDeCredits(p, String(gainDe(q, prix, avantages())), x + w - 5, ly, q > 0 ? N.hex('#fff2c8') : COQUE[3])
       ly += 14
       const mot = venteFixe ? 'Poser l’ordre' : 'Vendre'
       const bw = lb(mot)

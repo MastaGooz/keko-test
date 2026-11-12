@@ -2553,3 +2553,16 @@ et « Tech ». La barre du haut MESURE : si la plaque du compteur mord le
 titre, le montant passe en court dès mille (« 1,2k » au lieu de « 1234 ») ;
 s'il mord encore, l'icône de la vue disparaît et le titre se cale à gauche.
 La plaque perd deux pixels de marge.
+
+### Les crédits s'écrivent en entier ; c'est le titre qui s'adapte (12/11)
+
+Keko, sur le repli de la veille : « c'est dommage d'avoir 1k sur un onglet
+et 1000 dans l'autre… et dans tous les cas le joueur devrait avoir le montant
+complet pour les crédits (pas d'abréviation comme les ressources) ». Le
+compteur du haut écrit le montant EXACT, toujours (les gains du panneau de
+vente et des ordres aussi) ; `montantCourt` ne sert plus qu'aux ressources.
+Pour lui faire de la place, LE TITRE s'adapte, et DE LA MÊME FAÇON SUR TOUS
+LES ONGLETS : on mesure le plus long des noms d'onglet — avec icône en grande
+lettre ; sinon sans icône ; sinon dans la lettre d'en-tête ; sinon en grasse.
+
+Le bandeau des missions écrit « Contrats » et « Formation » EN GRANDE LETTRE (Keko, 12/11 : le mot était plus petit que les titres des contrats, « ce qui brise la hiérarchie »).
