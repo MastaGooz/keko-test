@@ -2236,7 +2236,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function lignesDuCout(n: Noeud): PuceDeCout[][] {
     const cout = coutDe(n)
     const puces = MINERAIS.filter((k) => cout[k] > 0).map((k): PuceDeCout => {
-      const nombre = montantCourt(cout[k])
+      // (CE QUI MANQUE SE LIT : « ce qu'on a / ce qu'il faut » tant qu'on n'a pas assez — Keko, 12/11 : « je vois que
+      // j'ai pas assez dans tech mais je sais pas combien il me manque » ; le souci de place du format X/Y ne se pose
+      // pas ici, ce qu'on a étant alors plus petit que le coût ; quand on a assez, le coût seul)
+      const nombre = tresor[k] < cout[k] ? `${montantCourt(tresor[k])}/${montantCourt(cout[k])}` : montantCourt(cout[k])
       const nom = FICHES_MINERAI[k].nom
       return { k, nombre, nom, w: 12 + largeurDe(nombre, GRAS) + 3 + largeurDe(nom) }
     })
@@ -2474,8 +2477,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pc = n.sorte === 'piece' ? pieceDe(n.piece ?? '') : undefined
     if (etat === 'ferme') ecrire(p, `Demande un noeud du rang ${n.rang - 1}`, W / 2, ya + 8, COQUE[4], { align: 'center' })
     else if (etat === 'ouvert') {
-      // CE QU'IL FAUT, par minerai — vert quand on l'a, rouge sinon ; ce qu'on a ne s'écrit plus à côté (Keko : « en
-      // format X/Y, si le joueur a beaucoup de la ressource, on va avoir un souci de place »)
+      // CE QU'IL FAUT, par minerai — vert quand on l'a, rouge sinon ; ce qu'on a ne s'écrit à côté QUE S'IL EN MANQUE
+      // (Keko : « en format X/Y, si le joueur a beaucoup de la ressource, on va avoir un souci de place »)
       const cout = coutDe(n)
       const bw = largeurDe('Débloquer', GRAS) + 22
       lignesDuCout(n).forEach((ligne, li) => {

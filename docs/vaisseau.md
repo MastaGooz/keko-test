@@ -2348,3 +2348,12 @@ titre, les puces de famille, la liste (autant de rangées que la plus haute
 des fiches en laisse : dix à 360 × 640, contre deux avant), la fiche de la
 pièce choisie avec « Équiper », « Acheter » ou « Retirer ». On en sort par LA FLÈCHE DE RETOUR de l'en-tête, comme au hangar (Keko, le jour même, à la place d'un bouton « Fermer »).
 Équiper ou retirer referme le panneau (de moi) ; acheter le laisse ouvert.
+
+### La tech dit ce qui manque (12/11)
+
+Keko : « je vois que j'ai pas assez dans tech mais je sais pas combien il me
+manque » (sans passer par le commerce). Dans la fiche d'un nœud, un minerai
+qu'on n'a pas en quantité suffisante s'écrit « ce qu'on a / ce qu'il faut »,
+en rouge (« 12/20 Fer ») ; quand on a assez, le coût seul, en vert, comme
+avant. Le format X/Y avait été retiré pour sa largeur quand on a beaucoup
+d'un minerai : ici ce qu'on a est toujours plus petit que le coût.
