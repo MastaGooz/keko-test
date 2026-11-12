@@ -2416,3 +2416,12 @@ ou à la molette (`defilMissions`), une barre à droite ; le bouton
 
 Les deux consignes du tutoriel disent « extraction / extraire » (Keko, 12/11,
 plutôt que « revenez sur le pont de la base »).
+
+### Les cartes de mission prennent la couleur de leur activité (12/11)
+
+Keko : le filet noir sous la consigne « se voit très mal », et « les boîtes
+manquent de couleur ». `TEINTES_D_ACTIVITE` : minage cuivre, combat rouge,
+exploration bleue, commerce vert, tutoriel violet (de moi, à rejuger). La
+teinte prend un liseré à gauche, le symbole et la lueur de son puits, le
+titre, le filet (un pointillé clair) et la barre d'avancée ; terminée, la
+carte passe à l'or.

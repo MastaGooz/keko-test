@@ -2761,6 +2761,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * place qu'elle prenait au titre lui est rendue. Terminée, le pied devient « Réclamer », la récompense dans le bouton.
    */
   const LARGEUR_DU_TEXTE_DE_MISSION = W - 32 - 10
+  /**
+   * LA COULEUR D'UNE MISSION (Keko, 12/11 : « les boîtes de quête manquent de couleur », et le filet sombre sous le
+   * texte « se voit très mal, foncé sur fond foncé ») : chaque activité a SA TEINTE — le minage cuivre, le combat rouge,
+   * l'exploration bleue, le commerce vert, le tutoriel violet — du sombre au clair ; elle prend le liseré de gauche, le
+   * symbole et la lueur de son puits, le titre, le filet et la barre d'avancée. Terminée, la carte passe à l'or.
+   */
+  const TEINTES_D_ACTIVITE: Record<Activite | 'tuto', [number, number, number]> = {
+    minage: [N.hex('#8a4a12'), N.hex('#d9822b'), N.hex('#ffbe6e')],
+    combat: [ROUGE[2], ROUGE[4], N.hex('#ff9c8a')],
+    exploration: [N.hex('#1f5fa8'), N.hex('#3f9be8'), N.hex('#a6d8ff')],
+    commerce: [RUNE[1], RUNE[2], N.hex('#b4f5c0')],
+    tuto: [N.hex('#5a3fa0'), N.hex('#9a78ee'), N.hex('#d6c6ff')],
+  }
   function hauteurDeLaMission(mo: { titre: string; dit: string }): number {
     const nt = Math.min(2, replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).length)
     const nd = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).length
@@ -2806,14 +2819,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const fini = estTerminee(q)
       if (fini && y + h <= bas) p.glow(W / 2, y + h / 2, 70, PEPITE[2], 0.07 + 0.05 * Math.sin(t * 4))
       plaque(p, 4, y, W - (maxD > 0 ? 10 : 8), h, 'encre', { bord: fini ? PEPITE[2] : undefined, flash: age < 0.07 })
-      plaque(p, 8, y + 5, 20, 20, 'creux')
-      dessinerLeGlyphe(p, mo.activite === undefined ? 'tuto' : ICONE_D_ACTIVITE[mo.activite], 18, y + 15, fini ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[3], COQUE[5], COQUE[6]])
+      const T: [number, number, number] = fini ? [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')] : TEINTES_D_ACTIVITE[mo.activite ?? 'tuto']
+      // (le liseré de gauche, à la teinte de l'activité)
+      p.rect(5, y + 2, 2, h - 4, T[1])
+      p.rect(5, y + 2, 1, h - 4, T[2])
+      plaque(p, 9, y + 5, 20, 20, 'creux')
+      p.glow(19, y + 15, 13, T[1], 0.3)
+      dessinerLeGlyphe(p, mo.activite === undefined ? 'tuto' : ICONE_D_ACTIVITE[mo.activite], 19, y + 15, T)
       const titre = replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).slice(0, 2)
-      titre.forEach((li, k) => ecrire(p, li, 32, y + 5 + k * 10, fini ? PEPITE[3] : N.WHITE, { police: GRAS }))
+      titre.forEach((li, k) => ecrire(p, li, 32, y + 5 + k * 10, T[2], { police: GRAS }))
       replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).forEach((li, k) => ecrire(p, li, 32, y + 5 + titre.length * 10 + 1 + k * 9, COQUE[5]))
       // LE PIED, sous un filet
       const yf = y + h - 4 - 15
-      p.rect(8, yf - 3, W - 16, 1, MATIERES.encre.ombre)
+      // (le filet : à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
+      for (let x = 9; x < W - 9 - (maxD > 0 ? 2 : 0); x += 2) p.rect(x, yf - 3, 1, 1, T[1])
       const prix = `+${mo.credits}`
       const wn = largeurDe(prix, GRAS)
       const wp = wn + 18
@@ -2861,9 +2880,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(bx + 1, by + 1, bw - 2, 4, MATIERES.creux.corps)
         const lp = Math.round((bw - 2) * Math.min(1, q.progres / mo.cible))
         if (lp > 0) {
-          p.rect(bx + 1, by + 1, lp, 4, RUNE[2])
-          p.rect(bx + 1, by + 1, lp, 1, RUNE[3])
-          p.rect(bx + 1, by + 4, lp, 1, RUNE[1])
+          p.rect(bx + 1, by + 1, lp, 4, T[1])
+          p.rect(bx + 1, by + 1, lp, 1, T[2])
+          p.rect(bx + 1, by + 4, lp, 1, T[0])
         }
         ecrire(p, compte, px - 6, by - 1, COQUE[5], { police: GRAS, align: 'right' })
       }
