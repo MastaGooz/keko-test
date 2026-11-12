@@ -1413,30 +1413,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // lieu de s'y fondre. Un liseré d'or sombre ferme le tout.
     const YT = HAUT_DU_TITRE - 2
     const ACIER = N.hex('#17131f')
-    const OR_SOMBRE = N.hex('#6b3a0c')
+    // (LE FILET DE L'EN-TÊTE : un gris d'acier clair — Keko : « la couleur marron ne va pas »)
+    const FILET = N.hex('#4c4468')
     // (la lumière de la scène ne traverse pas l'en-tête)
     frame.light.fill(0, 0, (YT + 1) * W)
     p.rect(0, 0, W, YT, ACIER)
     p.rect(0, 0, W, 1, N.hex('#322b47'))
     p.rect(0, 1, W, 1, N.hex('#1f1a2b'))
-    p.rect(0, YT - 2, W, 1, OR_SOMBRE)
+    p.rect(0, YT - 2, W, 1, FILET)
     p.rect(0, YT - 1, W, 1, MATIERES.encre.contour)
     p.rect(0, YT, W, 1, NUIT_OMBRE)
     // (dans la recherche et le commerce, la bande à gauche de la languette prolonge leur rangée d'onglets)
     if (!sceneSousLeTitre()) p.rect(0, YT, W, HAUT_BARRE - YT, NUIT_BARRE)
     // l'icône de la vue, dans son logement
-    plaque(p, 4, 3, 19, 19, 'creux')
-    p.glow(13, 12, 10, PEPITE[2], 0.14)
-    dessinerLIconeDeVue(p, vue, 13, 12, true)
+    // (deux pixels plus haut qu'avant : le filet touchait le bas du titre — Keko : « il faudrait au moins un petit espace »)
+    plaque(p, 4, 2, 19, 19, 'creux')
+    p.glow(13, 11, 10, PEPITE[2], 0.14)
+    dessinerLIconeDeVue(p, vue, 13, 11, true)
     // le titre : il tombe à sa place quand la vue change, un éclat le traverse de temps en temps
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
     const nom = NOMS_VUE[vue]
     const w = largeurDe(nom, TITRE)
     const c = (t % 5) / 5
-    motEnRelief(p, nom, 28 + w / 2, 6 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    motEnRelief(p, nom, 28 + w / 2, 4 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
     // (deux rivets au bout de l'étage)
-    for (const ry of [6, 18]) {
+    for (const ry of [5, 16]) {
       p.rect(W - 7, ry, 2, 2, N.hex('#3a3350'))
       p.rect(W - 7, ry, 1, 1, N.hex('#5a4f74'))
     }
@@ -1450,23 +1452,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const saut = t - creditsA < 0.12 ? -1 : 0
     // LA LANGUETTE (Keko, 12/11 : « vide cet espace en donnant une forme non rectangulaire à la zone » — le pointillé
     // et sa flèche, à gauche des crédits, ne plaisaient pas) : l'en-tête s'arrête sous le titre, et seul ce pan d'acier
-    // descend, à droite, le bord gauche en biais, liseré d'or ; le cartouche des crédits est dedans
+    // descend, à droite, le bord gauche droit, cerné d'un filet ; le cartouche des crédits est dedans
     const yc = YT + 1
     const wp = wn + 21
     const px = W - 4 - wp + tremble
     compteurX = px + wp - 9
-    const hl = HAUT_BARRE - YT
-    const x0 = px - 5 - hl
-    for (let i = 0; i < hl; i++) {
-      const y = YT - 2 + i
-      const xg = x0 + i
-      frame.light.fill(0, Math.max(0, y) * W + Math.max(0, xg - 1), (y + 1) * W)
-      p.rect(xg, y, W - xg, 1, i >= hl - 2 ? (i === hl - 2 ? OR_SOMBRE : MATIERES.encre.contour) : ACIER)
-      if (i < hl - 1) {
-        p.rect(xg - 1, y, 1, 1, MATIERES.encre.contour)
-        p.rect(xg, y, 1, 1, OR_SOMBRE)
-      }
-    }
+    // (À ANGLE DROIT — Keko : « évite la diagonale, tente un angle droit » ; le filet tourne au coin, descend le long du
+    // bord gauche et passe sous le cartouche, à deux pixels de lui)
+    const x0 = px - 5
+    const yb = HAUT_BARRE - 1
+    for (let y = YT - 2; y <= yb; y++) frame.light.fill(0, y * W + Math.max(0, x0 - 1), (y + 1) * W)
+    p.rect(x0 - 1, YT - 1, W - x0 + 1, yb - YT + 2, MATIERES.encre.contour)
+    p.rect(x0, YT - 2, W - x0, yb - YT + 2, FILET)
+    p.rect(x0 + 1, YT - 2, W - x0 - 1, yb - YT + 1, ACIER)
     if (allume) p.glow(px + wp / 2, Y_CREDITS - 1, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
     const bord = allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b')
     p.rect(px, yc, wp, 10, bord)

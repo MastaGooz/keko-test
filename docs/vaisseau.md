@@ -2609,3 +2609,7 @@ pixels, la languette passant devant son coin ; les lampes du hangar pendent
 au bout d'une tige. Dans la recherche et le commerce, dont la scène s'ouvre
 sur une rangée d'onglets, rien ne monte : la bande à gauche de la languette
 prolonge le fond de la rangée.
+Retouché (Keko) : la languette est À ANGLE DROIT (plus de biais) ; le filet
+n'est plus marron mais gris d'acier clair (`FILET`) ; il ne touche plus ni le
+titre (remonté de deux pixels avec son icône) ni le cartouche (deux pixels
+d'air dessous).
