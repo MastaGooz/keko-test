@@ -2684,3 +2684,13 @@ Dans le panneau de la soute (Keko, 12/11) : « Fermer » est le bouton d'acier d
 ### Les cases du hangar : le titre de la place coiffe la case (12/11)
 
 Keko : « c'est un peu bizarre que dans le hangar le titre des différentes pièces soit plus petit que le nom de la pièce qui est en dessous ». Le titre (« Châssis », « Propulsion », « Outil 1 ») n'est plus en petites capitales au-dessus du nom : il est EN GRAS D'OR, en relief, sur toute la largeur de la case ; dessous, le puits de la pièce (plus bas) et son nom dans la lettre courante, à gauche.
+
+### La caméra regarde devant (12/11)
+
+Keko : « un système de caméra un peu plus dynamique : quand le vaisseau
+avance dans une direction, avancer la caméra vers l'avant pour voir plus loin
+devant — souvent je me prends des astéroïdes ». Elle avait déjà 0,35 s
+d'avance (38 px au plus) ; `AVANCE_DE_LA_CAMERA` la porte, à pleine vitesse,
+à 52 px de côté et 95 en hauteur (un peu plus sous la postcombustion), dans
+le sens de la vitesse, rejoints en douceur (`suivi` 3). À l'arrêt le
+vaisseau est au centre. Chiffres de moi, à rejuger au doigt.

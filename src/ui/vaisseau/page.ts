@@ -332,6 +332,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let t = 0
   /** La caméra : le vaisseau au centre, avec un peu d'avance dans le sens de la vitesse, amortie. */
   const camera = { x: 0, y: 0 }
+  /** Jusqu'où la caméra passe devant le vaisseau à pleine vitesse (en pixels de la vue), et à quelle allure elle rejoint son point. */
+  const AVANCE_DE_LA_CAMERA = { x: 52, y: 95, suivi: 3 }
 
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
@@ -5276,11 +5278,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
     }
-    // la caméra suit, avec un peu d'avance dans le sens de la vitesse
-    const viseX = v.x + v.vx * 0.35
-    const viseY = v.y + v.vy * 0.35
-    camera.x += (viseX - camera.x) * Math.min(1, dt * 4)
-    camera.y += (viseY - camera.y) * Math.min(1, dt * 4)
+    // LA CAMÉRA REGARDE DEVANT (Keko, 12/11 : « quand le vaisseau avance dans une direction, avancer la caméra vers
+    // l'avant pour voir plus loin devant — souvent je me prends des astéroïdes parce que je n'ai pas une portée de vue
+    // assez loin ; comme dans Enter the Gungeon quand on vise ») : elle vise un point EN AVANT du vaisseau, dans le sens
+    // de sa vitesse — à pleine vitesse, plus de la moitié de la demi-vue : 52 px de côté, 95 en hauteur (la vue est plus
+    // haute que large), un peu plus sous la postcombustion — et le rejoint en douceur. À l'arrêt, le vaisseau est au
+    // centre. (Avant : 0,35 s de vitesse, 38 px au plus.)
+    const part = Math.min(1.2, Math.hypot(v.vx, v.vy) / CONF.vitesseMax)
+    const vit = Math.hypot(v.vx, v.vy) || 1
+    const viseX = v.x + (v.vx / vit) * part * AVANCE_DE_LA_CAMERA.x
+    const viseY = v.y + (v.vy / vit) * part * AVANCE_DE_LA_CAMERA.y
+    camera.x += (viseX - camera.x) * Math.min(1, dt * AVANCE_DE_LA_CAMERA.suivi)
+    camera.y += (viseY - camera.y) * Math.min(1, dt * AVANCE_DE_LA_CAMERA.suivi)
     braises.update(dt)
     etincelles.update(dt)
     morceaux.update(dt)
