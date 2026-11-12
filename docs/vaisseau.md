@@ -2764,3 +2764,14 @@ LA BARRE DES CAPACITÉS (Keko, 12/11 : « des carrés avec une icône et le nomb
 Les cases libres ne se montrent plus (Keko) : les capacités montées se rangent contre le bord droit ; la bombe y est seule.
 
 LA BOMBE D'ESSAI EST RETIRÉE (Keko, 12/11 : « tu peux enlever la capacité bombe et ses charges infinies ») : plus de case en vol (`MONTEES` à 0), plus de `&bombes`. Le geste est jugé ; la barre, l'armement, la visée à droite, la flèche et la règle (`lancerLaBombe`, `porteeDeLaBombe`, leurs vérifications) restent, pour la première vraie capacité.
+
+### L'onglet « Paramètres » : de quel côté on vole (12/11)
+
+Keko : « ajouter un onglet paramètres dans autres onglets, et permettre de
+régler si le joueur veut le déplacement à gauche ou à droite (et
+l'orientation / les capacités de l'autre côté) ». `reglages` est une VUE de
+plus, la première de la feuille « Autres onglets » (toujours présente) : son
+icône (trois réglettes), un bandeau « Commandes », et une carte
+« Déplacement » — deux touches, « Gauche » / « Droite », et un petit écran
+dessiné qui montre les deux moitiés. Le choix (`Reglages.vol`, gardé à part
+sous `keko-vaisseau-reglages`) inverse les deux moitiés de l'écran en vol.

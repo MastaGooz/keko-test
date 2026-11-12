@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
-import { chargerHangar, chargerLivree, sauverHangar, sauverLivree } from './hangar.ts'
+import { chargerHangar, chargerLivree, chargerReglages, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
@@ -155,6 +155,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LA LIVRÉE du vaisseau du joueur (Keko, 12/11) : la couleur de sa coque et de ses ailes, choisie au hangar. */
   let livree = LIVREES.some((l) => l.id === chargerLivree()) ? chargerLivree() : 'serie'
   const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => rampesDeLaLivree(livree)
+  /** LES RÉGLAGES du joueur (l'onglet « Paramètres ») : de quel côté de l'écran il vole. */
+  let reglages = chargerReglages()
   /**
    * IL S'EST PASSÉ QUELQUE CHOSE qu'une quête peut compter (un décollage, du minerai extrait, une vente…) : la règle
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
@@ -568,9 +570,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   // (et dix RÉSERVÉS de plus, numérotés — Keko : « rajoute dix placeholders pour tester »)
   const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
-  const VUES: string[] = ['hangar', 'labo', 'entrepot', 'quetes', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
+  // (« PARAMÈTRES », toujours là, le premier des autres onglets — Keko, 12/11 : « ajouter un onglet paramètres dans autres
+  // onglets »)
+  const VUES: string[] = ['hangar', 'labo', 'entrepot', 'quetes', 'reglages', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
-  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Missions', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
+  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Missions', reglages: 'Paramètres', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
@@ -1008,7 +1012,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // perdue dans le grid des ressources et décaler le reste vers le bas » : comptées comme si la barre du haut faisait
   // encore 28 px ; c'est la fiche du minerai, dessous, qui descend)
   const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - 28 - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - 28 - HAUT_NAV - 120 - 10 - 28) / 31)))
-  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : vue === 'quetes' ? 36 : sceneOrdinaire()) // (28 : la barre des catégories)
+  const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : vue === 'quetes' || vue === 'reglages' ? 36 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
   let tBase = 0
   let dtBase = 1 / 60
@@ -1185,6 +1189,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const my = y0 + Math.floor(tire(i, 2, 77) * hautScene)
         p.rect(mx, my, tire(i, 4, 77) < 0.3 ? 2 : 1, 1, tire(i, 3, 77) < 0.5 ? N.hex('#0b120f') : N.hex('#18251f'))
       }
+    } else if (vue === 'reglages') {
+      p.rect(0, y0, W, hautScene, N.hex('#14101e'))
+      for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
+      dessinerLEnTeteDuBandeau(p, 'Commandes', y1 - 27)
     } else if (vue === 'quetes') {
       // LE BANDEAU DES QUÊTES : pendant le tutoriel, « Formation » et ses étapes en pastilles ; ensuite, « Contrats »
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
@@ -1570,7 +1578,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (e.survole && !actif) p.rect(x0 + 2, y0 + 4, x1 - x0 - 4, HAUT_NAV - 6, N.hex('#19152a'))
       if (actif) p.glow(cxs, y0 + 13, 20, PEPITE[2], 0.2)
       const ic = vv === 'plus' && horsBarre && !feuille ? vue : vv
-      const nom = vv === 'plus' ? (horsBarre && !feuille ? NOMS_VUE[vue] : 'Plus') : NOMS_VUE[vv]
+      // (la case « Plus » garde son nom : celui de la vue ouverte — « Paramètres » — débordait sur sa voisine ; son icône
+      // et le titre du haut disent où l'on est)
+      const nom = vv === 'plus' ? 'Plus' : NOMS_VUE[vv]
       const nomme = tousLesNoms || actif
       const yi = y0 + (nomme ? 13 : 17) + dy
       if (ic === 'plus') dessinerLIconePlus(p, cxs, yi, actif)
@@ -1637,7 +1647,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (!e.enfonce) ombrePortee(p, x, y, tw, th)
       plaque(p, x, y + e.dy, tw, th, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
       dessinerLIconeDeVue(p, vv, x + tw / 2, y + 13 + e.dy, actif)
-      ecrire(p, NOMS_VUE[vv], x + tw / 2, y + th - 12 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
+      // (un nom plus large que la tuile — « Paramètres » — passe en petites capitales)
+      if (largeurDe(NOMS_VUE[vv]) <= tw - 2) ecrire(p, NOMS_VUE[vv], x + tw / 2, y + th - 12 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
+      else p.text(texteNu(NOMS_VUE[vv]), x + tw / 2, y + th - 10 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
       if (feuille) zone(x, y, tw, th, () => allerA(vv), 'onglet')
     })
     if (maxD > 0) {
@@ -1829,6 +1841,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(x - 3, y - 2 + k * 3, 2, 2, RUNE[3])
         p.glow(x, y, 8, PEPITE[2], 0.3)
       }
+    } else if (vv === 'reglages') {
+      // LES PARAMÈTRES : trois réglettes, leur curseur à des places différentes
+      for (const [dy, cx] of [[-5, 2], [0, -3], [5, 1]] as const) {
+        p.rect(x - 6, y + dy - 1, 13, 3, OMBRE, a)
+        p.rect(x - 5, y + dy, 11, 1, actif ? COQUE[5] : COQUE[3], a)
+        p.rect(x + cx - 2, y + dy - 2, 4, 5, OMBRE, a)
+        p.rect(x + cx - 1, y + dy - 1, 2, 3, actif ? PEPITE[3] : COQUE[5], a)
+      }
     } else if (estEssai(vv)) dessinerUneIconeDEssai(p, vv, x, y, OMBRE)
     else {
       // (plus aucune vue ne le porte depuis que le commerce a pris le moniteur ; gardé pour un vrai entrepôt)
@@ -2018,6 +2038,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text('(&ONGLETS=N)', W / 2, y + 26, COQUE[2], { align: 'center' })
     } else if (vue === 'entrepot') dessinerLEntrepot(p, y)
     else if (vue === 'quetes') dessinerLesQuetes(p, y)
+    else if (vue === 'reglages') dessinerLesReglages(p, y)
     else if (vue === 'labo') {
       // (rien : l'arbre tient toute la scène)
     } else if (etape === 'vaisseau') {
@@ -2994,6 +3015,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesOrdres(p, y + hp + 5, k)
     return y + hp + 4
   }
+  // ================================================================ LES PARAMÈTRES
+  /**
+   * L'ONGLET DES PARAMÈTRES (Keko, 12/11 : « ajouter un onglet paramètres dans autres onglets, et permettre de régler si
+   * le joueur veut le déplacement à gauche ou à droite — et l'orientation / les capacités de l'autre côté ») : une carte
+   * par réglage. LE CÔTÉ DU VOL : deux touches, « Gauche » et « Droite » (la choisie en or), et un petit écran dessiné
+   * qui montre les deux moitiés — le manche d'un côté, le regard et les capacités de l'autre.
+   */
+  function dessinerLesReglages(p: Peintre, y0: number): void {
+    const h = 96
+    plaque(p, 4, y0, W - 8, h, 'encre')
+    motEnRelief(p, 'Déplacement', 10 + largeurDe('Déplacement', GRAS) / 2, y0 + 5, true)
+    replier('Le côté de l’écran où vous posez le pouce qui vole. L’orientation et les capacités sont de l’autre côté.', W - 20 - 46).forEach((li, i) => ecrire(p, li, 10, y0 + 17 + i * 9, COQUE[5]))
+    // le petit écran : ses deux moitiés
+    const ex = W - 8 - 40
+    const ey = y0 + 6
+    plaque(p, ex, ey, 36, 56, 'creux')
+    p.rect(ex + 18, ey + 3, 1, 50, MATIERES.encre.lumiere2)
+    const aGauche = reglages.vol === 'gauche'
+    const xv = ex + (aGauche ? 9 : 27)
+    const xr = ex + (aGauche ? 27 : 9)
+    // (le manche du vol : un anneau gris et son pouce ; le regard : un anneau bleu plus petit)
+    p.ring(xv, ey + 40, 6, 1, COQUE[4])
+    p.circle(xv + 1, ey + 38, 2, COQUE[6])
+    p.ring(xr, ey + 40, 4, 1, VERRIERE[1])
+    p.circle(xr - 1, ey + 39, 1, VERRIERE[3])
+    p.text('VOL', xv, ey + 8, COQUE[5], { align: 'center' })
+    p.text('VISE', xr, ey + 8, VERRIERE[2], { align: 'center' })
+    // les deux touches
+    const bw = 52
+    const yb = y0 + h - 22
+    for (const [i, cote] of (['gauche', 'droite'] as const).entries()) {
+      const x = Math.round(W / 2 - bw - 2 + i * (bw + 4))
+      const choisi = reglages.vol === cote
+      bouton(p, x, yb, bw, 16, cote === 'gauche' ? 'Gauche' : 'Droite', true, () => {
+        if (choisi) return
+        reglages = { vol: cote }
+        sauverReglages(reglages)
+      }, choisi ? null : 'equipe', choisi ? 'or' : 'acier')
+    }
+  }
+
   // ================================================================ LES QUÊTES
   /**
    * L'ONGLET DES QUÊTES (Keko, 11/11 — la règle est dans `logic/vaisseau/quetes.ts`) : une carte par quête active —
@@ -3561,7 +3623,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // un doigt posé À DROITE est LE REGARD — ou, une capacité armée, SA VISÉE. Un seul de chaque ; l'un ne dépend plus de
     // l'autre. (À la souris, qui n'a qu'un pointeur : le manche partout, la visée quand une capacité est armée.)
     const cadre = canvas.getBoundingClientRect()
-    const aGauche = ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2
+    // (le côté du vol se choisit dans les paramètres : `aGauche` veut dire « du côté du vol »)
+    const aGauche = ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2 === (reglages.vol === 'gauche')
     // (un manche « tenu » par un doigt qui n'est plus posé — voir le filet, plus bas : il y a moins de doigts sur l'écran
     // que de manches pris ; le doigt qui arrive de son côté le reprend alors)
     const fantome = ev.pointerType === 'touch' && doigtsPoses < (manche === null ? 0 : 1) + (regard === null ? 0 : 1)

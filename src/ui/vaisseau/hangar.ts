@@ -64,3 +64,25 @@ export function sauverLivree(id: string): void {
     // Sans stockage, la couleur vit le temps de la page.
   }
 }
+
+/**
+ * LES RÉGLAGES du joueur (l'onglet « Paramètres »), gardés à part : le côté de l'écran où se pose le manche du vol
+ * — l'orientation et les capacités sont de l'autre.
+ */
+export type Reglages = { vol: 'gauche' | 'droite' }
+const CLE_REGLAGES = 'keko-vaisseau-reglages'
+export function chargerReglages(): Reglages {
+  try {
+    const b = JSON.parse(localStorage.getItem(CLE_REGLAGES) ?? 'null') as { vol?: unknown } | null
+    return { vol: b?.vol === 'droite' ? 'droite' : 'gauche' }
+  } catch {
+    return { vol: 'gauche' }
+  }
+}
+export function sauverReglages(r: Reglages): void {
+  try {
+    localStorage.setItem(CLE_REGLAGES, JSON.stringify(r))
+  } catch {
+    // Sans stockage, les réglages vivent le temps de la page.
+  }
+}
