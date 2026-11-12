@@ -1192,7 +1192,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (vue === 'reglages') {
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
       for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
-      dessinerLEnTeteDuBandeau(p, 'Commandes', y1 - 27)
+      // (UNE FLÈCHE DE RETOUR, vers le panneau « Autres onglets » d'où l'on vient — Keko, 12/11 : rien ne disait qu'on sort
+      // d'ici par la barre du bas ; c'est l'en-tête des pages du hangar, sa touche d'or et son titre)
+      enTete(p, y1 - 30, 'Commandes', () => {
+        if (!feuille) basculerLaFeuille()
+      })
     } else if (vue === 'quetes') {
       // LE BANDEAU DES QUÊTES : pendant le tutoriel, « Formation » et ses étapes en pastilles ; ensuite, « Contrats »
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
