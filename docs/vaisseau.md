@@ -2426,3 +2426,11 @@ le jour même, à la place du violet : « différent des quêtes du pool »). La
 teinte prend un liseré à gauche, le symbole et la lueur de son puits, le
 titre, le filet (un pointillé clair) et la barre d'avancée ; terminée, la
 carte passe à l'or.
+
+### Une mission dit ce qu'elle débloque (12/11)
+
+Keko : « quid d'une récompense non monétaire comme le déblocage du commerce
+ou de la recherche ? ». Une mission qui ouvre un onglet (`Modele.ouvre`)
+porte, sous sa consigne, une ligne « Débloque : Commerce » — l'icône de
+l'onglet, son nom en or ; la carte grandit d'une ligne. Le pied (jauge,
+compte, crédits) ne change pas. La ligne servira à d'autres récompenses.

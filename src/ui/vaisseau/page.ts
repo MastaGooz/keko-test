@@ -2775,10 +2775,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le tutoriel en OR — Keko, 12/11 : « jaune / doré, différent des quêtes du pool » ; le violet d'abord essayé)
     tuto: [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')],
   }
-  function hauteurDeLaMission(mo: { titre: string; dit: string }): number {
+  /** La ligne « Débloque : … » d'une mission qui ouvre un onglet : sa hauteur. */
+  const H_DEBLOQUE = 17
+  function hauteurDeLaMission(mo: { titre: string; dit: string; ouvre?: string }): number {
     const nt = Math.min(2, replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).length)
     const nd = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).length
-    return 5 + Math.max(20, nt * 10 + 1 + nd * 9) + 5 + 15 + 4
+    return 5 + Math.max(20, nt * 10 + 1 + nd * 9 + (mo.ouvre === undefined ? 0 : H_DEBLOQUE)) + 5 + 15 + 4
   }
   /**
    * LES CARTES DÉFILENT quand elles ne tiennent pas toutes (leur hauteur suit leur texte) : au doigt ou à la molette,
@@ -2829,7 +2831,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLeGlyphe(p, mo.activite === undefined ? 'tuto' : ICONE_D_ACTIVITE[mo.activite], 19, y + 15, T)
       const titre = replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).slice(0, 2)
       titre.forEach((li, k) => ecrire(p, li, 32, y + 5 + k * 10, T[2], { police: GRAS }))
-      replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).forEach((li, k) => ecrire(p, li, 32, y + 5 + titre.length * 10 + 1 + k * 9, COQUE[5]))
+      const dit = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION)
+      dit.forEach((li, k) => ecrire(p, li, 32, y + 5 + titre.length * 10 + 1 + k * 9, COQUE[5]))
+      // CE QU'ELLE DÉBLOQUE, quand ce n'est pas que des crédits (Keko, 12/11 : « quid d'une récompense non monétaire
+      // comme le déblocage du commerce ou de la recherche ? ») : l'icône de l'onglet et son nom, en or, sous la consigne
+      if (mo.ouvre !== undefined) {
+        const yd = y + 5 + titre.length * 10 + 1 + dit.length * 9 + 1
+        dessinerLIconeDeVue(p, mo.ouvre, 38, yd + 7, true)
+        ecrire(p, 'Débloque :', 48, yd + 3, COQUE[5])
+        ecrire(p, NOMS_VUE[mo.ouvre], 48 + largeurDe('Débloque :') + 4, yd + 3, PEPITE[3], { police: GRAS })
+      }
       // LE PIED, sous un filet
       const yf = y + h - 4 - 15
       // (le filet : à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
