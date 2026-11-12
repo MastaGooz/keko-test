@@ -2366,3 +2366,11 @@ commerce ». « Comptoir » dit les deux : où l'on dépose et où l'on vend
 les deux quêtes du tutoriel et la mention de la prévision suivent ; LA
 BRANCHE « Commerce » de la tech et l'activité des quêtes gardent leur nom
 (c'est l'activité) ; l'identifiant du code reste `entrepot`.
+
+### « Tech » devient « Recherche », « Comptoir » redevient « Commerce » (12/11)
+
+Keko, à l'essai, le jour même : « on peut essayer recherche à la place de
+tech ? et remettre commerce ? ». Les noms d'onglet, les quêtes du tutoriel
+et les mentions suivent ; les identifiants du code (`labo`, `entrepot`) ne
+changent pas. « Recherche » (9 lettres) ne s'affiche dans la barre du bas
+que quand l'onglet est ouvert, comme les autres noms longs.

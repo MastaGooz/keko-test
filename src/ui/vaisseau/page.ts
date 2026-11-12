@@ -507,7 +507,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
   const VUES: string[] = ['hangar', 'labo', 'entrepot', 'quetes', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
-  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Tech', entrepot: 'Comptoir', quetes: 'Quêtes', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
+  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Quêtes', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**
@@ -2018,7 +2018,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(W - 11, yc, 3, hc, COQUE[3])
       p.rect(W - 11, yc, 3, 1, COQUE[5])
     }
-    if (liste.length === 0) ecrire(p, 'Rien ici : passez à la tech', W / 2, y + 22, COQUE[4], { align: 'center' })
+    if (liste.length === 0) ecrire(p, 'Rien ici : passez à la recherche', W / 2, y + 22, COQUE[4], { align: 'center' })
     y += hl + 4
     const pc = liste[iSel]
     if (pc !== undefined) dessinerLaFiche(p, y, pc)
@@ -2524,7 +2524,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         choixA = t
       })
     } else {
-      const mot = pc !== undefined ? 'Acheté : la pièce est au hangar' : n.sorte === 'passif' ? 'Acquis : actif sur tous vos vaisseaux' : n.mecanique === 'prevision' ? 'Acquis : visible au comptoir' : 'Acquis : disponible en vol'
+      const mot = pc !== undefined ? 'Acheté : la pièce est au hangar' : n.sorte === 'passif' ? 'Acquis : actif sur tous vos vaisseaux' : n.mecanique === 'prevision' ? 'Acquis : visible au commerce' : 'Acquis : disponible en vol'
       ecrire(p, mot, W / 2, ya + 8, RUNE[2], { align: 'center' })
     }
   }
