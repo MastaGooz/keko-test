@@ -2781,3 +2781,4 @@ L'onglet « Paramètres » a UNE FLÈCHE DE RETOUR (Keko : rien ne disait qu'on 
 ### Les panneaux d'un seul ton (12/11)
 
 Keko : « dans les rectangles du menu, tu dessines la texture en deux parties, plus claire en haut et plus foncée en bas ; ça sépare en deux à des endroits pas très cohérents — dans autres onglets, au-dessus du séparateur ». `plaque` : la coupure tramée à mi-hauteur ne reste que sur les plaques de trente pixels de haut au plus (boutons, touches, en-têtes, « Décoller »), où elle fait le bombé ; un panneau plus haut a tout son corps dans le ton clair.
+La flèche de retour des paramètres les REFERME (Keko) : on retrouve l'onglet d'avant (`vueDAvant`), le panneau « Autres onglets » ouvert dessus, la tuile éteinte.

@@ -1077,10 +1077,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       eclats.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 25, t0: t, vie: 0.3 + 0.35 * R.next(), c: couleurs[i % couleurs.length] })
     }
   }
+  /** La vue de la barre d'où l'on est parti vers un « autre onglet » (la flèche de retour y ramène). */
+  let vueDAvant = 'hangar'
   function allerA(vv: string): void {
     feuille = false
     nouveautes.delete(vv)
     if (vv === vue) return
+    if (PRINCIPALES().includes(vue)) vueDAvant = vue
     vue = vv
     etape = 'vaisseau'
     vueA = t
@@ -1199,8 +1202,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
       // (UNE FLÈCHE DE RETOUR, vers le panneau « Autres onglets » d'où l'on vient — Keko, 12/11 : rien ne disait qu'on sort
       // d'ici par la barre du bas ; c'est l'en-tête des pages du hangar, sa touche d'or et son titre)
+      // (ELLE REFERME LES PARAMÈTRES : on retrouve l'onglet qu'on avait avant, le panneau « Autres onglets » ouvert
+      // dessus, la tuile « Paramètres » éteinte — Keko, 12/11)
       enTete(p, y1 - 30, 'Commandes', () => {
-        if (!feuille) basculerLaFeuille()
+        allerA(PRINCIPALES().includes(vueDAvant) ? vueDAvant : 'hangar')
+        basculerLaFeuille()
       })
     } else if (vue === 'quetes') {
       // LE BANDEAU DES QUÊTES : pendant le tutoriel, « Formation » et ses étapes en pastilles ; ensuite, « Contrats »
