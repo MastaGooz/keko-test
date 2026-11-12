@@ -202,6 +202,20 @@ function scale2x(glyphes: Record<string, Glyphe>): Record<string, Glyphe> {
   return g
 }
 
+/** La graisse doublée sans lissage : chaque pixel devient un carré de quatre. */
+function doubler(glyphes: Record<string, Glyphe>): Record<string, Glyphe> {
+  const g: Record<string, Glyphe> = {}
+  for (const [ch, gl] of Object.entries(glyphes)) {
+    const rows: boolean[][] = []
+    for (const r of gl.rows) {
+      const large = Array.from({ length: gl.w * 2 }, (_, x) => r[x >> 1] ?? false)
+      rows.push(large, [...large])
+    }
+    g[ch] = { w: gl.w * 2, rows }
+  }
+  return g
+}
+
 const GLYPHES = construire()
 const table = FONTS as unknown as Record<string, Police>
 table.keko = { h: HAUT, space: 3, gap: 1, glyphs: GLYPHES }
@@ -210,7 +224,12 @@ table['keko-gras'] = { h: HAUT, space: 3, gap: 1, glyphs: GRAS }
 // l'en-tête d'un niveau : la graisse, ses lettres ÉCARTÉES d'un pixel de plus (la graisse mange l'espace entre deux
 // fûts, et c'est l'espace qui fait lire un mot en petite taille)
 table['keko-entete'] = { h: HAUT, space: 4, gap: 2, glyphs: GRAS }
-table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: scale2x(GRAS) }
+// LE TITRE EST ANGULEUX (Keko, 12/11 : « les titres sont écrits dans un style un peu trop rond, qui ne colle pas super bien
+// au thème SF ») : la graisse DOUBLÉE TELLE QUELLE — chaque pixel en fait quatre, sans l'adoucissement de scale2x —, les
+// coins des lettres en pans coupés nets, les diagonales en marches franches. L'ancienne, lissée, reste sous
+// `keko-titre-rond`.
+table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: doubler(GRAS) }
+table['keko-titre-rond'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: scale2x(GRAS) }
 
 /** La hauteur de la boîte, et le décalage de la ligne des capitales sous son haut (les 2 rangées d'accent). */
 export const HAUT_POLICE = HAUT

@@ -2619,3 +2619,12 @@ DÉCOLLAGE les éclats du réacteur, peints en dernier, ne se peignent plus sur
 l'en-tête ni sur sa languette : le feu passe derrière, comme le vaisseau.
 
 « Extraction », au-dessus du pont, est EN RELIEF (Keko, 12/11 : « manque de texture ») : la lettre grasse en acier bleuté — éclairée dessus, ombrée dessous, cernée —, un éclat qui la traverse ; la flèche a les mêmes tons. Le fond sombre sous le mot est retiré (le cerne suffit).
+
+### Les titres anguleux, en capitales (12/11)
+
+Keko : « les titres (hangar, commerce) sont écrits dans un style un peu trop
+rond, qui ne colle pas super bien au thème SF ». `keko-titre` n'est plus la
+graisse lissée par scale2x (gardée sous `keko-titre-rond`) mais la graisse
+DOUBLÉE TELLE QUELLE (`doubler`, `police.ts`) : pans coupés nets, marches
+franches. Et les titres de vue comme « DÉCOLLER » sont EN CAPITALES (les
+minuscules ont des panses rondes).

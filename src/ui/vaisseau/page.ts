@@ -1437,7 +1437,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le titre : il tombe à sa place quand la vue change, un éclat le traverse de temps en temps
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
-    const nom = NOMS_VUE[vue]
+    // (EN CAPITALES : avec la lettre anguleuse, c'est ce qui fait le titre d'un pupitre de vaisseau — les minuscules ont des
+    // panses rondes)
+    const nom = NOMS_VUE[vue].toUpperCase()
     const w = largeurDe(nom, TITRE)
     const c = (t % 5) / 5
     motEnRelief(p, nom, 28 + w / 2, 5 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
@@ -1997,7 +1999,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       secouer(1.5)
       gerbe(W / 2, by + bh / 2, 22, [PEPITE[2], PEPITE[3], N.WHITE], 80)
     }, (dx, dy) => {
-      motEnRelief(p, 'Décoller', W / 2 + dx, by + 7 + dy, true, TITRE)
+      motEnRelief(p, 'DÉCOLLER', W / 2 + dx, by + 7 + dy, true, TITRE)
       const o = Math.floor(t * 8) % 3
       for (let i = 0; i < 3; i++) {
         const c = i === o ? N.hex('#fff2a8') : i === (o + 2) % 3 ? PEPITE[2] : N.hex('#a8650f')
