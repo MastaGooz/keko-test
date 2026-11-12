@@ -2529,3 +2529,9 @@ sombres). La verrière, le bout des ailes et les pièces ne changent pas. Le
 rival garde son carmin (pas de rouge franc dans les livrées, pour ne pas le
 confondre). Gardée à part (`keko-vaisseau-livree`). De moi, à rejuger : les
 neuf teintes, leurs noms, la gratuité, leur place sur la page du châssis.
+Retouché le jour même (Keko) : les pastilles posées sur la page du châssis y
+prenaient la place de la fiche. Elles sont DANS LE PANNEAU « Changer » du
+châssis, derrière un bouton « Couleur » au pied du panneau (il porte la
+pastille de la couleur choisie ; ouvert, il dit son nom et déplie la rangée
+au-dessus de lui). « Changer » est donc toujours présent sur la page du
+châssis. Et le ROUGE est ajouté (dix livrées) : le rival est un placeholder.

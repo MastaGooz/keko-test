@@ -66,6 +66,8 @@ const BAYER = [0, 2, 3, 1]
 export type Livree = { id: string; nom: string; teinte: number; saturation: number; clarte: number }
 export const LIVREES: Livree[] = [
   { id: 'serie', nom: 'Série', teinte: 215, saturation: 0.4, clarte: 1 },
+  // (le rouge : celui du rival, et ce n'est pas grave — Keko : « l'ennemi est un placeholder »)
+  { id: 'rouge', nom: 'Rouge', teinte: 356, saturation: 0.7, clarte: 1 },
   { id: 'braise', nom: 'Braise', teinte: 22, saturation: 0.7, clarte: 1 },
   { id: 'or', nom: 'Or', teinte: 44, saturation: 0.75, clarte: 1 },
   { id: 'jade', nom: 'Jade', teinte: 135, saturation: 0.45, clarte: 1 },

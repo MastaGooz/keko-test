@@ -1925,32 +1925,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     enTete(p, y, titreDe({ o: onglet, k: placeOuverte() }), () => changerDEtape('vaisseau'))
     y += HT + 3
     const ko = placeOuverte()
-    // LA COULEUR DU CHÂSSIS (Keko, 12/11 : « un système de changement de couleur du châssis ») : sur la page du châssis,
-    // une rangée de pastilles — une par livrée, la choisie cerclée d'or ; une tape repeint la coque et les ailes, au
-    // hangar comme en vol
-    if (onglet === 'coque') {
-      const pas = 17
-      const x0 = Math.round((W - LIVREES.length * pas + 2) / 2)
-      LIVREES.forEach((l, i) => {
-        const x = x0 + i * pas
-        const choisie = l.id === livree
-        const [sombre, moyen, clair] = tonsDeLaLivree(l.id)
-        const e = etatDuBouton(x, y, 15, 15)
-        p.rect(x - 1, y - 1 + e.dy, 17, 17, choisie ? PEPITE[3] : MATIERES.encre.contour)
-        p.rect(x, y + e.dy, 15, 15, MATIERES.encre.contour)
-        p.rect(x + 1, y + 1 + e.dy, 13, 13, moyen)
-        p.rect(x + 1, y + 1 + e.dy, 13, 3, clair)
-        p.rect(x + 1, y + 10 + e.dy, 13, 4, sombre)
-        if (!choisie) zone(x - 1, y - 2, 17, 21, () => {
-          livree = l.id
-          sauverLivree(l.id)
-          feterLEquipement()
-        }, 'equipe')
-      })
-      y += 20
-      ecrire(p, LIVREES.find((l) => l.id === livree)?.nom ?? '', W / 2, y, COQUE[4], { align: 'center' })
-      y += 11
-    }
     const pc = onglet === 'propulseur' || onglet === 'coque' ? monteeA(hangar, onglet) : pieceDe(listeMontee(onglet)[ko] ?? '')
     if (pc !== undefined) {
       dessinerLaFiche(p, y, pc, true)
@@ -1966,9 +1940,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE PANNEAU « CHANGER » est ouvert ; depuis quand. */
   let changement = false
   let changementA = -10
+  /** Dans le panneau du châssis : les pastilles de couleur sont dépliées (le bouton « Couleur »). */
+  let couleursOuvertes = false
   function ouvrirLeChangement(): void {
     changement = true
     changementA = t
+    couleursOuvertes = false
     choixA = t
     surligneY = -1
   }
@@ -2000,7 +1977,49 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LA FLÈCHE DE RETOUR du hangar, pas un bouton « Fermer » — Keko, 12/11)
     enTete(p, y, titre, fermer)
     y += HT + 3
-    const yFermer = H
+    // LA COULEUR DU CHÂSSIS (Keko, 12/11 : « un système de changement de couleur du châssis », puis : « dans le panneau
+    // changer, et un bouton couleur plutôt qu'afficher direct les couleurs ») : au pied du panneau du châssis, le bouton
+    // « Couleur » ; il déplie au-dessus de lui une rangée de pastilles — une par livrée, la choisie cerclée d'or ; une
+    // tape repeint la coque et les ailes, au hangar comme en vol
+    let yFermer = H
+    if (onglet === 'coque') {
+      const nom = LIVREES.find((l) => l.id === livree)?.nom ?? ''
+      const mot = couleursOuvertes ? nom : 'Couleur'
+      const bc = largeurDe(mot, GRAS) + 22 + 14
+      const yb = H - 4 - 15
+      const bx = Math.round(W / 2 - bc / 2)
+      boutonBase(p, bx, yb, bc, 15, true, () => (couleursOuvertes = !couleursOuvertes), (dx, dy) => {
+        // (la pastille de la couleur portée, puis le mot)
+        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+        p.rect(bx + 6 + dx, yb + 3 + dy, 9, 9, MATIERES.encre.contour)
+        p.rect(bx + 7 + dx, yb + 4 + dy, 7, 7, moyen)
+        p.rect(bx + 7 + dx, yb + 4 + dy, 7, 2, clair)
+        p.rect(bx + 7 + dx, yb + 9 + dy, 7, 2, sombre)
+        ecrire(p, mot, bx + 19 + dx, yb + 4 + dy, N.hex('#fff3cf'), { police: GRAS })
+      }, 'ouvre', { matiere: 'acier' })
+      yFermer = yb - 4
+      if (couleursOuvertes) {
+        const pas = 17
+        const x0 = Math.round((W - LIVREES.length * pas + 2) / 2)
+        const yp = yb - 4 - 17
+        LIVREES.forEach((l, i) => {
+          const x = x0 + i * pas
+          const choisie = l.id === livree
+          const [sombre, moyen, clair] = tonsDeLaLivree(l.id)
+          const e = etatDuBouton(x, yp, 15, 15)
+          p.rect(x - 1, yp - 1 + e.dy, 17, 17, choisie ? PEPITE[3] : MATIERES.encre.contour)
+          p.rect(x, yp + e.dy, 15, 15, MATIERES.encre.contour)
+          p.rect(x + 1, yp + 1 + e.dy, 13, 13, moyen)
+          p.rect(x + 1, yp + 1 + e.dy, 13, 3, clair)
+          p.rect(x + 1, yp + 10 + e.dy, 13, 4, sombre)
+          if (!choisie) zone(x - 1, yp - 2, 17, 20, () => {
+            livree = l.id
+            sauverLivree(l.id)
+          }, 'equipe')
+        })
+        yFermer = yp - 4
+      }
+    }
     // (LE HANGAR MONTRE CE QU'ON A, ET CE QUE LE LABO A DÉBLOQUÉ — Keko, 11/11 : « quand une pièce est débloquée au labo,
     // elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix »)
     const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
@@ -2627,7 +2646,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (resume) {
       // (sur la page de la place : la pièce équipée, et « Changer », qui ouvre le panneau de toutes les pièces)
       // (PAS DE BOUTON tant qu'il n'y a RIEN D'AUTRE à équiper ou à acheter — Keko, 12/11 ; la fiche remonte à sa place)
-      if (piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))) {
+      // (le châssis l'a toujours : sa couleur se choisit dans le panneau)
+      if (onglet === 'coque' || piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))) {
         const bw = lb('Changer')
         bouton(p, W / 2 - bw / 2, y, bw, 15, 'Changer', true, ouvrirLeChangement, 'ouvre')
       } else y -= 19
