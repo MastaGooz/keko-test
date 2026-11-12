@@ -2655,3 +2655,4 @@ pour le poids total est trop grosse et pas assez travaillée ». `keko-chiffres`
 ceux du titre tracés au trait d'UN pixel, cinq sur sept, coins coupés — des
 chiffres d'afficheur. Elle remplace la grasse sur les valeurs des fiches
 (« 20 T », « 20 », « 1 ») et sur l'étiquette du poids.
+Retiré le jour même (Keko : « il faudrait que la police soit de la même taille que les noms des stats et que le mot poids, sinon ça dénote ; juste lui rajouter un style propre, un poil de texture ») : les valeurs sont dans LA LETTRE COURANTE, celle des noms, EN RELIEF ivoire (`motEnRelief(…, 'ivoire', TEXTE)`). `keko-chiffres` reste inscrite, inutilisée.

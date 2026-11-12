@@ -1303,10 +1303,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // en gras crème, la même hauteur, la même ligne de pied
     const poids = `${poidsTotal(hangar)} T`
     const wm = largeurDe('Poids')
-    const wv = largeurDe(poids, CHIFFRES)
+    const wv = largeurDe(poids, TEXTE)
     plaque(p, 6, y1 - 20, wm + wv + 15, 15, 'encre')
     ecrire(p, 'Poids', 11, y1 - 16, COQUE[4])
-    ecrire(p, poids, 11 + wm + 5, y1 - 16, N.hex('#fff2c8'), { police: CHIFFRES })
+    // (LA MÊME LETTRE QUE LE MOT, la même taille — Keko, 12/11 : des chiffres d'une autre police « dénotent » — mais EN
+    // RELIEF : l'ivoire éclairé d'en haut, ombré dessous, cerné ; « juste lui rajouter un style propre, un poil de texture »)
+    motEnRelief(p, poids, 11 + wm + 5 + wv / 2, y1 - 16, 'ivoire', TEXTE)
     // LES ZONES DU VAISSEAU (une cible verte, les angles seulement, autour de la place ouverte)
     const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -6, 3.2]] : o === 'coque' ? [[-8.2, -9, 9.8, 9]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8.2, (i === 0 ? -1 : 1) * 8.8, 2.4, (i === 0 ? -1 : 1) * 4.2]))
     const cibles: Sorte[] = etape === 'vaisseau' ? (['propulseur', 'outil', 'arme', 'coque'] as Sorte[]).filter(aDesPieces) : [onglet]
@@ -2868,7 +2870,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : N.hex('#ffe68a')
     const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : rouge ? ROUGE[2] : N.hex('#a8650f')
     if (j.nombre) {
-      ecrire(p, j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`, bx, y - 1, N.hex('#fff2c8'), { police: CHIFFRES })
+      const dit = j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`
+      motEnRelief(p, dit, bx + largeurDe(dit, TEXTE) / 2, y - 1, 'ivoire', TEXTE)
       return
     }
     if (j.cellules) {
