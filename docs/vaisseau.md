@@ -2465,3 +2465,11 @@ PÉPITE EXTRAITE, et ouvre le commerce ; « Premier minerai » (`t-extraction`),
 qui demandait la même chose en second, est retirée : le tutoriel a quatre
 étapes. Une sauvegarde en plein tutoriel garde son numéro d'étape, donc
 avance d'une mission.
+
+### « Soute pleine » à chaque pépite touchée (12/11)
+
+Keko : le message ne paraissait qu'une fois, à l'instant où la soute se
+remplit. Il reparaît, au même endroit, chaque fois que le vaisseau TOUCHE
+une pépite la soute pleine (à portée de ramassage : la règle la laisse là),
+puis une fois par seconde tant qu'il reste dessus ; la plaque de soute
+sursaute. Calculé dans la page (`refusVu`), la règle n'émet rien.
