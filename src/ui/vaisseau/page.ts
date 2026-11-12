@@ -333,7 +333,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La caméra : le vaisseau au centre, avec un peu d'avance dans le sens de la vitesse, amortie. */
   const camera = { x: 0, y: 0 }
   /** Jusqu'où la caméra passe devant le vaisseau à pleine vitesse (en pixels de la vue), et à quelle allure elle rejoint son point. */
-  const AVANCE_DE_LA_CAMERA = { x: 52, y: 95, suivi: 3 }
+  // (SUR LES CÔTÉS, 74 : Keko, 12/11, voulait le même décalage qu'en hauteur — l'écran est plus haut que large, on voit peu
+  // sur les côtés ; mais la demi-largeur de la vue fait 90 : à 95 le vaisseau sortirait de l'écran ; à 74 il reste à
+  // seize pixels du bord arrière)
+  const AVANCE_DE_LA_CAMERA = { x: 74, y: 95, suivi: 3 }
 
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
