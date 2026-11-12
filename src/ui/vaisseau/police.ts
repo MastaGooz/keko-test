@@ -289,7 +289,7 @@ function tracerLeTitre(W = 11, H = 11, T = 3, COUPE = 2, HAUT_DU_TITRE = HAUT * 
       const bx = nx(x1)
       const by = ny(y1)
       const biais = ax !== bx && ay !== by
-      const e = biais ? T - 1 : T
+      const e = biais ? Math.max(1, T - 1) : T
       const n = Math.max(Math.abs(bx - ax), Math.abs(by - ay), 1)
       for (let k = 0; k <= n; k++) {
         const x = Math.round(ax + ((bx - ax) * k) / n)
@@ -357,6 +357,10 @@ table['keko-entete'] = { h: HAUT, space: 4, gap: 1, glyphs: { ...GRAS, ...tracer
 // minuscule rend sa capitale). Ce qu'elle ne sait pas tracer retombe sur la graisse doublée. Les anciennes restent sous
 // `keko-titre-double` (doublée telle quelle) et `keko-titre-rond` (lissée par scale2x).
 table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: { ...doubler(GRAS), ...tracerLeTitre() } }
+// LES CHIFFRES DES FICHES (Keko, 12/11 : « la police utilisée pour les chiffres dans les stats des pièces et pour le
+// poids total est trop grosse et pas assez travaillée ») : la lettre courante, où LES CHIFFRES ET LES CAPITALES sont
+// ceux du titre tracés AU TRAIT D'UN PIXEL — cinq sur sept, les coins coupés : des chiffres d'afficheur, fins.
+table['keko-chiffres'] = { h: HAUT, space: 3, gap: 1, glyphs: { ...GLYPHES, ...Object.fromEntries(Object.entries(tracerLeTitre(5, 7, 1, 1, HAUT, 2)).filter(([ch]) => /^[0-9A-Z]$/.test(ch))) } }
 table['keko-titre-double'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: doubler(GRAS) }
 table['keko-titre-rond'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: scale2x(GRAS) }
 

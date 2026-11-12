@@ -768,7 +768,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const GRAS = 'keko-gras'
   const TITRE = 'keko-titre'
   const ENTETE = 'keko-entete'
-  type Police = typeof TEXTE | typeof GRAS | typeof TITRE | typeof ENTETE
+  /** Les chiffres des fiches : fins, à pans coupés (`police.ts`). */
+  const CHIFFRES = 'keko-chiffres'
+  type Police = typeof TEXTE | typeof GRAS | typeof TITRE | typeof ENTETE | typeof CHIFFRES
   const decalage = (f: Police): number => (f === TITRE ? HAUT_ACCENTS * 2 : HAUT_ACCENTS)
   function ecrire(p: Peintre, s: string, x: number, y: number, c: number, o: { police?: Police; align?: 'center' | 'right'; ombre?: number; contour?: number } = {}): void {
     const f = o.police ?? TEXTE
@@ -1301,10 +1303,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // en gras crème, la même hauteur, la même ligne de pied
     const poids = `${poidsTotal(hangar)} T`
     const wm = largeurDe('Poids')
-    const wv = largeurDe(poids, GRAS)
+    const wv = largeurDe(poids, CHIFFRES)
     plaque(p, 6, y1 - 20, wm + wv + 15, 15, 'encre')
     ecrire(p, 'Poids', 11, y1 - 16, COQUE[4])
-    ecrire(p, poids, 11 + wm + 5, y1 - 16, N.hex('#fff2c8'), { police: GRAS })
+    ecrire(p, poids, 11 + wm + 5, y1 - 16, N.hex('#fff2c8'), { police: CHIFFRES })
     // LES ZONES DU VAISSEAU (une cible verte, les angles seulement, autour de la place ouverte)
     const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -6, 3.2]] : o === 'coque' ? [[-8.2, -9, 9.8, 9]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8.2, (i === 0 ? -1 : 1) * 8.8, 2.4, (i === 0 ? -1 : 1) * 4.2]))
     const cibles: Sorte[] = etape === 'vaisseau' ? (['propulseur', 'outil', 'arme', 'coque'] as Sorte[]).filter(aDesPieces) : [onglet]
@@ -2866,7 +2868,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : N.hex('#ffe68a')
     const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : rouge ? ROUGE[2] : N.hex('#a8650f')
     if (j.nombre) {
-      ecrire(p, j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`, bx, y - 1, N.hex('#fff2c8'), { police: GRAS })
+      ecrire(p, j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`, bx, y - 1, N.hex('#fff2c8'), { police: CHIFFRES })
       return
     }
     if (j.cellules) {

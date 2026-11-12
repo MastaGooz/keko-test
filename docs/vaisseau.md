@@ -2646,3 +2646,12 @@ LA MÊME EN PETIT — `tracerLeTitre(7, 8, 2, 1, …)` : sept de large sur huit 
 de deux pixels, des pans coupés d'un pixel, des accents sur deux rangées ; en
 capitales, donc (« CHÂSSIS », « CONTRATS »).
 Puis (Keko : « ça manque de texture, les titres inférieurs et supérieurs sont texturés, eux ») : la lettre des plaques est EN RELIEF (`motEnRelief(…, 'ivoire', ENTETE)`) — un ivoire éclairé d'en haut, ombré de bronze dessous, cerné —, plus un aplat crème.
+
+### Les chiffres des fiches : fins, à pans coupés (12/11)
+
+Keko : « la police utilisée pour les chiffres dans les stats des pièces et
+pour le poids total est trop grosse et pas assez travaillée ». `keko-chiffres`
+(`police.ts`) : la lettre courante dont les chiffres et les capitales sont
+ceux du titre tracés au trait d'UN pixel, cinq sur sept, coins coupés — des
+chiffres d'afficheur. Elle remplace la grasse sur les valeurs des fiches
+(« 20 T », « 20 », « 1 ») et sur l'étiquette du poids.
