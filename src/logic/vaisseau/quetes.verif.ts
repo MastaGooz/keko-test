@@ -13,12 +13,12 @@ console.log('quetes')
 verifier('des identifiants uniques ; chaque quête a une cible et une récompense ; le catalogue a au moins deux quêtes par activité', new Set([...TUTORIEL, ...CATALOGUE].map((q) => q.id)).size === TUTORIEL.length + CATALOGUE.length && [...TUTORIEL, ...CATALOGUE].every((q) => q.cible > 0 && q.credits > 0) && ACTIVITES.every((a) => CATALOGUE.filter((q) => q.activite === a).length >= 2) && TUTORIEL.every((q) => q.activite === undefined))
 const neuf = quetesNeuves()
 verifier('au départ : la première quête du tutoriel, seule ; ni le commerce ni la tech ne sont ouverts', neuf.etape === 0 && neuf.actives.length === 1 && neuf.actives[0].modele === TUTORIEL[0].id && !ongletOuvert(neuf, 'entrepot') && !ongletOuvert(neuf, 'labo') && !tutorielFini(neuf))
-verifier('ce qui ne concerne pas la quête ne la fait pas avancer (le même état est rendu)', noter(neuf, 'fer', 5) === neuf && noter(neuf, 'extractions', 0) === neuf)
-const vole = noter(neuf, 'extractions', 1)
-verifier('ce qu’elle compte la fait avancer, jamais au-delà de sa cible ; l’état d’avant ne bouge pas', estTerminee(vole.actives[0]) && noter(vole, 'extractions', 3).actives[0].progres === 1 && !estTerminee(neuf.actives[0]))
+verifier('ce qui ne concerne pas la quête ne la fait pas avancer (le même état est rendu)', noter(neuf, 'rivaux', 5) === neuf && noter(neuf, 'pepites', 0) === neuf)
+const vole = noter(neuf, 'pepites', 1)
+verifier('ce qu’elle compte la fait avancer, jamais au-delà de sa cible ; l’état d’avant ne bouge pas', estTerminee(vole.actives[0]) && noter(vole, 'pepites', 3).actives[0].progres === 1 && !estTerminee(neuf.actives[0]))
 verifier('on ne réclame pas une quête qui n’est pas terminée', reclamer(neuf, 0, 0) === null && reclamer(vole, 5, 0) === null)
 const r1 = reclamer(vole, 0, 100)!
-verifier('réclamer : les crédits de la quête, et la suivante du tutoriel prend sa place', r1 !== null && r1.credits === 100 + TUTORIEL[0].credits && r1.etat.etape === 1 && r1.etat.actives.length === 1 && r1.etat.actives[0].modele === TUTORIEL[1].id && r1.etat.actives[0].progres === 0 && r1.ouvre === undefined)
+verifier('réclamer : les crédits de la quête, et la suivante du tutoriel prend sa place', r1 !== null && r1.credits === 100 + TUTORIEL[0].credits && r1.etat.etape === 1 && r1.etat.actives.length === 1 && r1.etat.actives[0].modele === TUTORIEL[1].id && r1.etat.actives[0].progres === 0 && r1.ouvre === 'entrepot')
 
 // le tutoriel jusqu'au bout : il ouvre le commerce, puis la tech
 let e: EtatQuetes = neuf
@@ -32,8 +32,7 @@ for (const etape of TUTORIEL) {
   if (r.ouvre !== undefined) ouverts.push(r.ouvre)
 }
 verifier('le tutoriel ouvre le commerce puis la tech, dans cet ordre, et paie chaque étape', ouverts.join(',') === 'entrepot,labo' && credits === TUTORIEL.reduce((a, q) => a + q.credits, 0))
-const apres2 = reclamer(noter(r1.etat, 'pepites', 1), 0, 0)!
-verifier('le commerce s’ouvre en réclamant la première extraction, pas avant ; la tech reste fermée', !ongletOuvert(r1.etat, 'entrepot') && apres2.ouvre === 'entrepot' && ongletOuvert(apres2.etat, 'entrepot') && !ongletOuvert(apres2.etat, 'labo'))
+verifier('le commerce s’ouvre en réclamant la première expédition, pas avant ; la tech reste fermée', !ongletOuvert(vole, 'entrepot') && ongletOuvert(r1.etat, 'entrepot') && !ongletOuvert(r1.etat, 'labo'))
 verifier('le tutoriel fini : une quête active PAR ACTIVITÉ, tous les onglets ouverts', tutorielFini(e) && e.actives.length === ACTIVITES.length && ACTIVITES.every((a, i) => modeleDe(e.actives[i].modele)?.activite === a) && ongletOuvert(e, 'entrepot') && ongletOuvert(e, 'labo'))
 
 // le catalogue : en parallèle, remplacée par une autre de la même activité

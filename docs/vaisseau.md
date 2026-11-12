@@ -2456,3 +2456,12 @@ Retouché le jour même (Keko) : le seul mot « Extraction », sans barre, et
 une petite flèche dessous qui pointe vers le pont.
 Le mot ne paraît qu'une fois le parvis quitté une première fois (`m.sorti`) :
 on y naît, et le compte n'y court pas encore (Keko).
+
+### La première mission : s'extraire avec du minerai (12/11)
+
+Keko : « la première quête devrait être de sortir et s'extraire avec des
+ressources (au moins une) ». « Première expédition » compte maintenant une
+PÉPITE EXTRAITE, et ouvre le commerce ; « Premier minerai » (`t-extraction`),
+qui demandait la même chose en second, est retirée : le tutoriel a quatre
+étapes. Une sauvegarde en plein tutoriel garde son numéro d'étape, donc
+avance d'une mission.

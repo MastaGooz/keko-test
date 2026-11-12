@@ -67,9 +67,9 @@ export type Modele = {
 
 /** LE TUTORIEL : une quête à la fois, dans cet ordre. */
 export const TUTORIEL: Modele[] = [
-  // (LA PREMIÈRE : PARTIR ET REVENIR — Keko, 12/11 ; décoller seul la terminait, sans rien apprendre du retour à quai)
-  { id: 't-vol', titre: 'Première expédition', dit: 'Partez en expédition, puis réussissez une extraction.', compteur: 'extractions', cible: 1, credits: 10 },
-  { id: 't-extraction', titre: 'Premier minerai', dit: 'Minez une roche, puis extrayez son minerai.', compteur: 'pepites', cible: 1, credits: 20, ouvre: 'entrepot' },
+  // (LA PREMIÈRE : SORTIR ET S'EXTRAIRE AVEC DU MINERAI, au moins une pépite — Keko, 12/11 ; d'abord un décollage, puis
+  // un aller-retour à vide suivi d'une seconde mission pour le minerai : les deux n'en font plus qu'une, qui ouvre le commerce)
+  { id: 't-vol', titre: 'Première expédition', dit: 'Minez une roche, puis réussissez une extraction avec son minerai.', compteur: 'pepites', cible: 1, credits: 20, ouvre: 'entrepot' },
   { id: 't-vente', titre: 'Première vente', dit: 'Vendez du minerai au Commerce.', compteur: 'ventes', cible: 1, credits: 30, ouvre: 'labo' },
   { id: 't-recherche', titre: 'Recherche', dit: 'Débloquez un noeud à la Recherche.', compteur: 'noeuds', cible: 1, credits: 40 },
   { id: 't-ordre', titre: 'Premier ordre', dit: 'Au Commerce, posez un ordre à prix fixé.', compteur: 'ordresPoses', cible: 1, credits: 50 },
