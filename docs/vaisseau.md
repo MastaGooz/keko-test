@@ -2454,3 +2454,5 @@ parvis tant que le compte ne court pas ; dès qu'il court (et tant qu'il
 redescend), le chiffre qui frappe est à sa place.
 Retouché le jour même (Keko) : le seul mot « Extraction », sans barre, et
 une petite flèche dessous qui pointe vers le pont.
+Le mot ne paraît qu'une fois le parvis quitté une première fois (`m.sorti`) :
+on y naît, et le compte n'y court pas encore (Keko).

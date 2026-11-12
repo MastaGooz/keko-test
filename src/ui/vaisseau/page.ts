@@ -3934,7 +3934,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // comprendre ») : tant que le compte ne court pas ; dès qu'il court, le chiffre prend sa place
           // (Keko, ensuite : « juste le mot extraction avec une flèche qui pointe vers en dessous », sans barre ; un
           // fond sombre reste sous le mot : le mât de la base passe juste derrière)
-          if (m.phase === 'vol') {
+          if (m.phase === 'vol' && m.sorti) { // (pas avant d'avoir quitté le parvis une première fois — Keko : on y naît, le compte n'y court pas encore)
             const mot = 'Extraction'
             const TON = N.hex('#8fa6c8')
             const wm = largeurDe(mot) + 6
