@@ -2434,3 +2434,13 @@ ou de la recherche ? ». Une mission qui ouvre un onglet (`Modele.ouvre`)
 porte, sous sa consigne, une ligne « Débloque : Commerce » — l'icône de
 l'onglet, son nom en or ; la carte grandit d'une ligne. Le pied (jauge,
 compte, crédits) ne change pas. La ligne servira à d'autres récompenses.
+
+### Les récompenses d'une mission, toutes sous la jauge (12/11)
+
+Keko : « on devrait mettre toutes les récompenses (crédits, ressources,
+déblocage) sous la jauge de progression ». Le pied de la carte a deux
+rangées (`piedDeLaMission`) : LA JAUGE sur toute la largeur et son compte —
+« Réclamer » à sa place quand la mission est terminée —, puis LES
+RÉCOMPENSES de gauche à droite : les crédits dans leur puits, l'onglet
+débloqué (icône, nom en or) ; les ressources s'y ajouteront. La ligne
+« Débloque : … » sous la consigne et le prix dans le bouton sont retirés.

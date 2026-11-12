@@ -2775,12 +2775,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le tutoriel en OR — Keko, 12/11 : « jaune / doré, différent des quêtes du pool » ; le violet d'abord essayé)
     tuto: [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')],
   }
-  /** La ligne « Débloque : … » d'une mission qui ouvre un onglet : sa hauteur. */
-  const H_DEBLOQUE = 17
-  function hauteurDeLaMission(mo: { titre: string; dit: string; ouvre?: string }): number {
+  /**
+   * LE PIED D'UNE CARTE, en deux rangées sous le filet (Keko, 12/11 : « on devrait mettre toutes les récompenses —
+   * crédits, ressources, déblocage — sous la jauge de progression ») : LA JAUGE sur toute la largeur avec son compte
+   * (terminée : « Réclamer » à sa place), puis LES RÉCOMPENSES, toutes ensemble, de gauche à droite — les crédits dans
+   * leur puits, puis l'onglet débloqué (son icône, son nom en or). Leurs hauteurs :
+   */
+  const piedDeLaMission = (mo: { ouvre?: string }, fini: boolean): { jauge: number; lots: number } => ({ jauge: fini ? 15 : 9, lots: mo.ouvre === undefined ? 11 : 15 })
+  function hauteurDeLaMission(mo: { titre: string; dit: string; ouvre?: string }, fini: boolean): number {
     const nt = Math.min(2, replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).length)
     const nd = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).length
-    return 5 + Math.max(20, nt * 10 + 1 + nd * 9 + (mo.ouvre === undefined ? 0 : H_DEBLOQUE)) + 5 + 15 + 4
+    const pied = piedDeLaMission(mo, fini)
+    return 5 + Math.max(20, nt * 10 + 1 + nd * 9) + 6 + pied.jauge + 3 + pied.lots + 4
   }
   /**
    * LES CARTES DÉFILENT quand elles ne tiennent pas toutes (leur hauteur suit leur texte) : au doigt ou à la molette,
@@ -2794,7 +2800,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bas = H - HAUT_NAV - 2
     const hauteurs = quetes.actives.map((q) => {
       const mo = modeleDe(q.modele)
-      return mo === undefined ? 0 : hauteurDeLaMission(mo) + 3
+      return mo === undefined ? 0 : hauteurDeLaMission(mo, estTerminee(q)) + 3
     })
     // (jusqu'où défiler : la première carte à partir de laquelle tout le reste tient)
     let maxD = 0
@@ -2812,14 +2818,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     quetes.actives.forEach((q, i) => {
       const mo = modeleDe(q.modele)
       if (mo === undefined || i < d) return
-      const h = hauteurDeLaMission(mo)
+      const fini = estTerminee(q)
+      const h = hauteurDeLaMission(mo, fini)
       const haut = suivante
       suivante += h + 3
       if (haut >= bas) return
       const age = t - vueA - i * 0.05
       if (age < 0) return
       const y = haut + Math.round((1 - sortie(age / 0.2)) * 4)
-      const fini = estTerminee(q)
       if (fini && y + h <= bas) p.glow(W / 2, y + h / 2, 70, PEPITE[2], 0.07 + 0.05 * Math.sin(t * 4))
       plaque(p, 4, y, W - (maxD > 0 ? 10 : 8), h, 'encre', { bord: fini ? PEPITE[2] : undefined, flash: age < 0.07 })
       const T: [number, number, number] = fini ? [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')] : TEINTES_D_ACTIVITE[mo.activite ?? 'tuto']
@@ -2833,36 +2839,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       titre.forEach((li, k) => ecrire(p, li, 32, y + 5 + k * 10, T[2], { police: GRAS }))
       const dit = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION)
       dit.forEach((li, k) => ecrire(p, li, 32, y + 5 + titre.length * 10 + 1 + k * 9, COQUE[5]))
-      // CE QU'ELLE DÉBLOQUE, quand ce n'est pas que des crédits (Keko, 12/11 : « quid d'une récompense non monétaire
-      // comme le déblocage du commerce ou de la recherche ? ») : l'icône de l'onglet et son nom, en or, sous la consigne
-      if (mo.ouvre !== undefined) {
-        const yd = y + 5 + titre.length * 10 + 1 + dit.length * 9 + 1
-        dessinerLIconeDeVue(p, mo.ouvre, 38, yd + 7, true)
-        ecrire(p, 'Débloque :', 48, yd + 3, COQUE[5])
-        ecrire(p, NOMS_VUE[mo.ouvre], 48 + largeurDe('Débloque :') + 4, yd + 3, PEPITE[3], { police: GRAS })
+      // LE PIED, sous un filet (à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
+      const pied = piedDeLaMission(mo, fini)
+      const xd = W - (maxD > 0 ? 12 : 10)
+      const yj = y + h - 4 - pied.lots - 3 - pied.jauge
+      const yl = y + h - 4 - pied.lots
+      for (let x = 10; x < xd + 1; x += 2) p.rect(x, yj - 3, 1, 1, T[1])
+      // LES RÉCOMPENSES, toutes sur une rangée : les crédits dans leur puits, puis l'onglet qu'elle débloque
+      {
+        const prix = `+${mo.credits}`
+        const wn = largeurDe(prix, GRAS)
+        const wp = wn + 18
+        const yc = yl + Math.floor((pied.lots - 11) / 2)
+        plaque(p, 10, yc, wp, 11, 'creux')
+        ecrire(p, prix, 14, yc + 2, N.hex('#fff2c8'), { police: GRAS })
+        dessinerUnCredit(p, 14 + wn + 7, yc + 5)
+        if (mo.ouvre !== undefined) {
+          const xo = 10 + wp + 6
+          dessinerLIconeDeVue(p, mo.ouvre, xo + 6, yl + 7, true)
+          ecrire(p, NOMS_VUE[mo.ouvre], xo + 15, yl + 4, PEPITE[3], { police: GRAS })
+        }
       }
-      // LE PIED, sous un filet
-      const yf = y + h - 4 - 15
-      // (le filet : à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
-      for (let x = 10; x < W - 9 - (maxD > 0 ? 2 : 0); x += 2) p.rect(x, yf - 3, 1, 1, T[1])
-      const prix = `+${mo.credits}`
-      const wn = largeurDe(prix, GRAS)
-      const wp = wn + 18
-      if (fini && yf + 15 > bas) return // (son bouton passe sous la barre des onglets : il ne répond pas de là)
       if (fini) {
-        // « RÉCLAMER », la récompense dans un puits creusé dans le bouton (comme « Acheter » au hangar)
-        const wa = largeurDe('Réclamer', GRAS)
-        const bw = 8 + wa + 5 + wp + 3
-        const bx = Math.round(W / 2 - bw / 2)
-        boutonBase(p, bx, yf, bw, 15, true, () => {
+        if (yj + 15 > bas) return // (son bouton passe sous la barre des onglets : il ne répond pas de là)
+        const bw = largeurDe('Réclamer', GRAS) + 22
+        bouton(p, Math.round(W / 2 - bw / 2), yj, bw, 15, 'Réclamer', true, () => {
           const r = reclamer(quetes, i, credits)
           if (r === null) return
           quetes = r.etat
           credits = r.credits
           sauver()
           secouer(1)
-          for (let k = 0; k < 8; k++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 40, y0: yf + 7, t0: t + k * 0.05 })
-          gerbe(W / 2, yf + 7, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
+          for (let k = 0; k < 8; k++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 40, y0: yj + 7, t0: t + k * 0.05 })
+          gerbe(W / 2, yj + 7, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
           vueA = t - 0.1
           // l'onglet qu'elle ouvre : il saute dans la barre et prend sa pastille
           if (r.ouvre !== undefined) {
@@ -2870,24 +2879,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             nouveautes.add(r.ouvre)
             flottants.push({ texte: `${NOMS_VUE[r.ouvre]} débloqué !`, x: W / 2, y: y - 4, t0: t, c: RUNE[3] })
           }
-        }, (dx, dy) => {
-          motEnRelief(p, 'Réclamer', bx + 8 + wa / 2 + dx, yf + 4 + dy, true)
-          const px = bx + 8 + wa + 5 + dx
-          plaque(p, px, yf + 2 + dy, wp, 11, 'creux')
-          ecrire(p, prix, px + 4, yf + 4 + dy, N.hex('#fff2c8'), { police: GRAS })
-          dessinerUnCredit(p, px + 4 + wn + 7, yf + 7 + dy)
         }, 'achat')
       } else {
-        // LA RÉCOMPENSE, dans son puits à droite ; à gauche la barre d'avancée et son compte
-        const px = W - 8 - wp
-        plaque(p, px, yf + 2, wp, 11, 'creux')
-        ecrire(p, prix, px + 4, yf + 4, N.hex('#fff2c8'), { police: GRAS })
-        dessinerUnCredit(p, px + 4 + wn + 7, yf + 7)
+        // LA JAUGE, sur toute la largeur, et son compte à droite
         const compte = `${montantCourt(Math.floor(q.progres))}/${montantCourt(mo.cible)}`
         const wc = largeurDe(compte, GRAS)
         const bx = 10 // (deux pixels d'air après le liseré de gauche)
-        const by = yf + 5
-        const bw = px - 6 - wc - 4 - bx
+        const by = yj + 2
+        const bw = xd - wc - 4 - bx
         p.rect(bx, by, bw, 6, MATIERES.creux.contour)
         p.rect(bx + 1, by + 1, bw - 2, 4, MATIERES.creux.corps)
         const lp = Math.round((bw - 2) * Math.min(1, q.progres / mo.cible))
@@ -2896,7 +2895,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.rect(bx + 1, by + 1, lp, 1, T[2])
           p.rect(bx + 1, by + 4, lp, 1, T[0])
         }
-        ecrire(p, compte, px - 6, by - 1, COQUE[5], { police: GRAS, align: 'right' })
+        ecrire(p, compte, xd, by - 1, COQUE[5], { police: GRAS, align: 'right' })
       }
     })
   }
