@@ -388,6 +388,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let armeeA = -10
   /** La part du regard dans l'avance de la caméra, lissée (elle ne saute pas avec le pouce). */
   let partDuRegard = 0
+  /** Où est la souris sur la vue du vol (en pixels du tampon), depuis qu'elle a bougé ; rien si elle est sortie. */
+  let souris: Vecteur | null = null
   /** `&doigts` : la ligne de diagnostic des manches (le dernier événement tactile, les doigts posés, qui tient quoi). */
   let journalDesDoigts = ''
   /** Le décalage de la caméra par rapport au vaisseau (lissé ; la caméra elle-même ne traîne pas). */
@@ -401,6 +403,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function demarrer(): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
+    souris = null // (la souris ne vise qu'une fois bougée pendant ce vol)
     CONF = configDuLabo(configDuHangar(BASE, hangar), labo) // (les passifs et les mécaniques du labo par-dessus les pièces montées)
     // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
     // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
@@ -3669,9 +3672,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sv = enTampon(ev.clientX, ev.clientY)
         survol = sv
         canvas.style.cursor = zones.some((z) => sv.x >= z.x && sv.x < z.x + z.w && sv.y >= z.y && sv.y < z.y + z.h) ? 'pointer' : ''
-      } else if (survol !== null) {
-        survol = null
-        canvas.style.cursor = ''
+      } else {
+        if (survol !== null) {
+          survol = null
+          canvas.style.cursor = ''
+        }
+        // (en vol : la souris vise — voir `regardVoulu`)
+        souris = enTampon(ev.clientX, ev.clientY)
       }
     }
     if (glisse !== null) {
@@ -3767,6 +3774,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }, { passive: false })
   racine.addEventListener('pointerleave', () => {
     survol = null
+    souris = null
   })
   racine.addEventListener('pointerup', lever)
   racine.addEventListener('pointercancel', lever)
@@ -3833,7 +3841,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Où le second doigt regarde (longueur 0 à 1), ou rien s'il n'est pas posé. */
   function regardVoulu(): Vecteur | undefined {
-    return regard === null ? undefined : directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y)
+    if (regard !== null) return directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y)
+    // SUR PC, LA SOURIS VISE (Keko, 12/11 : « mouvement sur ZQSD et vise via souris ») : le nez se tourne vers le
+    // pointeur, d'autant plus franchement — et la caméra avance d'autant plus — qu'il est loin du vaisseau (à fond à
+    // soixante pixels) ; tout près de lui, rien. Dès que la souris a bougé pendant le vol, tant qu'elle est sur le jeu
+    // et qu'elle ne tient pas le manche.
+    if (souris === null || manche !== null || !enJeu) return undefined
+    const dx = souris.x - (v.x - camera.x + W / 2)
+    const dy = souris.y - (v.y - camera.y + centreY())
+    const d = Math.hypot(dx, dy)
+    if (d < 8) return undefined
+    const force = Math.min(1, (d - 8) / 52)
+    return { x: (dx / d) * force, y: (dy / d) * force }
   }
   function directionVoulue(): Vecteur {
     if (manche !== null) {

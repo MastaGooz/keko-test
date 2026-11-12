@@ -2782,3 +2782,7 @@ L'onglet « Paramètres » a UNE FLÈCHE DE RETOUR (Keko : rien ne disait qu'on 
 
 Keko : « dans les rectangles du menu, tu dessines la texture en deux parties, plus claire en haut et plus foncée en bas ; ça sépare en deux à des endroits pas très cohérents — dans autres onglets, au-dessus du séparateur ». `plaque` : la coupure tramée à mi-hauteur ne reste que sur les plaques de trente pixels de haut au plus (boutons, touches, en-têtes, « Décoller »), où elle fait le bombé ; un panneau plus haut a tout son corps dans le ton clair.
 La flèche de retour des paramètres les REFERME (Keko) : on retrouve l'onglet d'avant (`vueDAvant`), le panneau « Autres onglets » ouvert dessus, la tuile éteinte.
+
+### Sur PC : ZQSD vole, la souris vise (12/11)
+
+Keko : « et les commandes sur PC, on fait mouvement sur ZQSD (azerty) et vise via souris ? ». Le clavier volait déjà (ZQSD, WASD, les flèches). LA SOURIS VISE : en vol, dès qu'elle a bougé, le nez se tourne vers le pointeur et la caméra avance vers lui, d'autant plus qu'il est loin du vaisseau (`regardVoulu` : à fond à soixante pixels, rien à moins de huit) ; sortie du jeu, elle ne vise plus. Le clic maintenu reste le manche flottant (on peut encore tout faire à la souris) — il suspend la visée.
