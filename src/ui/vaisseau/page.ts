@@ -927,7 +927,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * HAUT (la vue, en titre ; les crédits), LA SCÈNE (le vaisseau sur son aire, sous les lampes ; la planche du labo ;
    * l'inventaire), LE CONTENU (un niveau à la fois) et LA BARRE DES ONGLETS EN BAS, sous le pouce.
    */
-  const HAUT_BARRE = 28
+  /**
+   * LA BARRE DU HAUT A DEUX LIGNES (Keko, 12/11 : « c'est vraiment dommage de diminuer la taille des titres pour afficher
+   * les crédits » — sur 180 pixels, un grand titre et un montant entier ne tiennent pas côte à côte) : le titre de la
+   * vue en haut, toujours en grande lettre avec son icône ; LES CRÉDITS DESSOUS, sur leur ligne, en entier.
+   */
+  const HAUT_DU_TITRE = 27
+  const HAUT_DES_CREDITS = 13
+  const HAUT_BARRE = HAUT_DU_TITRE + HAUT_DES_CREDITS
+  /** Le milieu de la ligne des crédits (les pièces y volent). */
+  const Y_CREDITS = HAUT_DU_TITRE + 5
   const HAUT_NAV = 34
   const Y_SCENE = HAUT_BARRE
   /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko) : ce que laissent les deux barres et le plus haut des contenus. */
@@ -1052,7 +1061,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, 0, W, H, NUIT)
     if (credits !== creditsConnus) {
       const d = credits - creditsConnus
-      flottants.push({ texte: `${d > 0 ? '+' : ''}${d}`, x: compteurX, y: HAUT_BARRE + 3, t0: t, c: d > 0 ? RUNE[3] : PEPITE[3] })
+      flottants.push({ texte: `${d > 0 ? '+' : ''}${d}`, x: Math.min(compteurX, W - 22), y: HAUT_BARRE + 3, t0: t, c: d > 0 ? RUNE[3] : PEPITE[3] })
       creditsConnus = credits
       creditsA = t
     }
@@ -1388,33 +1397,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
     const nom = NOMS_VUE[vue]
-    // LE COMPTEUR DIT LE MONTANT ENTIER, ET LE MÊME SUR TOUS LES ONGLETS (Keko, 12/11 : « dommage d'avoir 1k sur un
-    // onglet et 1000 dans l'autre — et dans tous les cas le joueur devrait avoir le montant complet pour les crédits,
-    // pas d'abréviation comme les ressources »). C'EST LE TITRE QUI S'ADAPTE, et pareil pour tous les onglets : on mesure
-    // LE PLUS LONG des noms d'onglet — s'il ne tient pas à côté de la plaque avec son icône, les icônes cèdent leur
-    // place ; s'il ne tient toujours pas, les titres passent dans la lettre d'en-tête, puis dans la grasse.
+    const w = largeurDe(nom, TITRE)
+    dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
+    const c = (t % 5) / 5
+    motEnRelief(p, nom, 25 + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    // LA LIGNE DES CRÉDITS : un creux sur toute la largeur — « Crédits » à gauche, à droite le montant ENTIER (Keko :
+    // « le joueur devrait avoir le montant complet pour les crédits, pas d'abréviation comme les ressources ») et sa pièce
     const n = String(Math.max(0, Math.round(creditsVus)))
     const wn = largeurDe(n, GRAS)
-    const wp = wn + 22
-    const px = W - 5 - wp
-    const plusLong = (f: Police): number => Math.max(...PRINCIPALES().map((vv) => largeurDe(NOMS_VUE[vv], f)))
-    const avecIcone = 25 + plusLong(TITRE) + 3 <= px
-    const police: Police = avecIcone || 6 + plusLong(TITRE) + 3 <= px ? TITRE : 6 + plusLong(ENTETE) + 3 <= px ? ENTETE : GRAS
-    const w = largeurDe(nom, police)
-    if (avecIcone) dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
-    const xt = avecIcone ? 25 : 6
-    const c = (t % 5) / 5
-    if (police === ENTETE) ecrire(p, nom, xt, 10 + chute, N.hex('#ffe068'), { police: ENTETE, contour: N.hex('#1e0e03') })
-    else motEnRelief(p, nom, xt + w / 2, (police === TITRE ? 7 : 10) + chute, true, police, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
-    compteurX = px + wp / 2
     const allume = t - creditsA < 0.45
     const r = refus
     const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
-    if (allume) p.glow(compteurX, 14, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
     const saut = t - creditsA < 0.12 ? -1 : 0
-    plaque(p, px + tremble, 5, wp, 17, 'encre', { bord: allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : undefined })
-    dessinerUnCredit(p, px + 8 + tremble, 13 + saut)
-    ecrire(p, n, px + 15 + tremble, 10 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS })
+    const yl = HAUT_DU_TITRE - 1
+    p.rect(0, yl, W, HAUT_DES_CREDITS - 1, MATIERES.creux.corps)
+    p.rect(0, yl, W, 1, MATIERES.encre.contour)
+    p.rect(0, yl + 1, W, 1, MATIERES.creux.ombre)
+    if (allume || tremble !== 0) p.rect(0, yl + HAUT_DES_CREDITS - 2, W, 1, allume ? RUNE[3] : ROUGE[4])
+    ecrire(p, 'Crédits', 6, yl + 3, COQUE[4])
+    const xd = W - 6 + tremble
+    compteurX = xd - 5
+    if (allume) p.glow(xd - 12 - wn / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
+    dessinerUnCredit(p, xd - 4, Y_CREDITS + saut)
+    ecrire(p, n, xd - 11, yl + 3 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS, align: 'right' })
   }
 
   /**
@@ -1593,13 +1598,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (u < 0) continue
       if (u >= 1) {
         volantes.splice(i, 1)
-        N.sparkle(p, compteurX - 8, 13, 4, RUNE[3], N.WHITE, 0.9)
+        N.sparkle(p, compteurX, Y_CREDITS, 4, RUNE[3], N.WHITE, 0.9)
         jouer('ramasse')
         continue
       }
       const e = u * u * (3 - 2 * u)
-      const x = v.x0 + (compteurX - 8 - v.x0) * e
-      const y = v.y0 + (13 - v.y0) * e - Math.sin(u * Math.PI) * 26
+      const x = v.x0 + (compteurX - v.x0) * e
+      const y = v.y0 + (Y_CREDITS - v.y0) * e - Math.sin(u * Math.PI) * 26
       p.glow(x, y, 5, RUNE[2], 0.4)
       dessinerUnCredit(p, x, y)
     }

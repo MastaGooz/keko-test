@@ -2569,3 +2569,13 @@ Le bandeau des missions écrit « Contrats » et « Formation » EN GRANDE LETTR
 
 La pastille du porté dit CE QU'ON VIENT DE RAMASSER (« +3 », `recents`), pas le total porté de ce minerai (Keko, 12/11) ; le compte repart de zéro quand elle s'en va.
 Puis (Keko) : pas aussi gros que le titre de la vue non plus. Il n'existe pas de lettre entre la grasse et la grande (`keko-titre` est la grasse doublée) : « Contrats » et « Formation » prennent LA PLAQUE D'EN-TÊTE du hangar (`dessinerLEnTeteDuBandeau` : acier, lettre écartée, deux pointes d'or).
+
+### Les crédits sur leur propre ligne (12/11)
+
+Keko, devant le titre rétréci : « c'est vraiment dommage de diminuer la
+taille des titres pour afficher les crédits ». La barre du haut a DEUX LIGNES
+(`HAUT_DU_TITRE` 27 + `HAUT_DES_CREDITS` 13 = 40 px, contre 28) : le titre de
+la vue, toujours en grande lettre avec son icône ; dessous, un creux sur
+toute la largeur — « Crédits » à gauche, le montant ENTIER et sa pièce à
+droite. Le repli du titre (sans icône, puis en petite lettre) est retiré. Le
+contenu de chaque vue perd douze pixels de hauteur.
