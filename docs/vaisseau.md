@@ -2717,3 +2717,4 @@ peut avancer mais regarder en arrière ».
 - Le foreur et les armes visent toujours seuls ; la tuyère reste à l'arrière
   du vaisseau, même quand il glisse de côté.
 Puis (Keko : « la caméra est trop réactive au deuxième stick ») : la part du regard dans l'avance est LISSÉE (`partDuRegard`, 1,6 par seconde) et, tant qu'on regarde, la caméra rejoint son point à moins de la moitié de son allure.
+Puis (Keko : le vaisseau sortait de l'écran en allant à droite le regard à gauche ; en montant, « plus de caméra derrière que devant ») : la caméra RATTRAPAIT son point, donc traînait derrière un vaisseau rapide (vitesse ÷ allure : 25 à 50 px), et ce retard s'ajoutait au décalage. Elle est maintenant posée SUR le vaisseau, plus un `decalageDeLaCamera` qui seul est lissé : aucun retard.

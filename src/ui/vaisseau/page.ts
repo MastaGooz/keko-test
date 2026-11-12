@@ -373,6 +373,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let regard: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
   /** La part du regard dans l'avance de la caméra, lissée (elle ne saute pas avec le pouce). */
   let partDuRegard = 0
+  /** Le décalage de la caméra par rapport au vaisseau (lissé ; la caméra elle-même ne traîne pas). */
+  const decalageDeLaCamera = { x: 0, y: 0 }
   const touches = new Set<string>()
   /**
    * Le décollage, depuis le hangar (le bouton) ou au clavier : l'expédition part à neuf avec le vaisseau tel que monté
@@ -415,6 +417,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     souteVue = 0
     souteOuverte = false
     v = m.vaisseau
+    decalageDeLaCamera.x = 0
+    decalageDeLaCamera.y = 0
+    partDuRegard = 0
     camera.x = 0
     camera.y = 0
     enJeu = true
@@ -5346,10 +5351,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     partDuRegard += ((rg === undefined ? 0 : Math.min(1, Math.hypot(rg.x, rg.y))) - partDuRegard) * Math.min(1, dt * 1.6)
     const part = Math.max(Math.min(1.2, Math.hypot(v.vx, v.vy) / CONF.vitesseMax), partDuRegard)
     const suivi = AVANCE_DE_LA_CAMERA.suivi * (1 - 0.55 * Math.min(1, partDuRegard * 3))
-    const viseX = v.x + Math.cos(v.cap) * part * AVANCE_DE_LA_CAMERA.x
-    const viseY = v.y + Math.sin(v.cap) * part * AVANCE_DE_LA_CAMERA.y
-    camera.x += (viseX - camera.x) * Math.min(1, dt * suivi)
-    camera.y += (viseY - camera.y) * Math.min(1, dt * suivi)
+    // (C'EST LE DÉCALAGE QU'ON LISSE, PAS LA CAMÉRA — Keko, 12/11 : « quand je vais à droite et pointe le deuxième stick
+    // à gauche, je ne vois plus le vaisseau ; et quand je vais en haut ou en bas, avec la vitesse j'ai plus de caméra
+    // derrière que devant » : une caméra qui RATTRAPE son point traîne derrière un vaisseau rapide — d'autant de pixels
+    // que sa vitesse divisée par l'allure du rattrapage, vingt-cinq à cinquante — et ce retard s'ajoutait au décalage.
+    // La caméra est maintenant posée SUR le vaisseau, plus un décalage qui, lui, glisse vers sa cible : plus de retard,
+    // le vaisseau ne s'éloigne jamais du centre de plus que le décalage.)
+    decalageDeLaCamera.x += (Math.cos(v.cap) * part * AVANCE_DE_LA_CAMERA.x - decalageDeLaCamera.x) * Math.min(1, dt * suivi)
+    decalageDeLaCamera.y += (Math.sin(v.cap) * part * AVANCE_DE_LA_CAMERA.y - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
+    camera.x = v.x + decalageDeLaCamera.x
+    camera.y = v.y + decalageDeLaCamera.y
     braises.update(dt)
     etincelles.update(dt)
     morceaux.update(dt)
