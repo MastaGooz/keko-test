@@ -2775,3 +2775,4 @@ icône (trois réglettes), un bandeau « Commandes », et une carte
 « Déplacement » — deux touches, « Gauche » / « Droite », et un petit écran
 dessiné qui montre les deux moitiés. Le choix (`Reglages.vol`, gardé à part
 sous `keko-vaisseau-reglages`) inverse les deux moitiés de l'écran en vol.
+Retouches (Keko) : la tuile « Paramètres » ne sort plus du panneau des autres onglets (la grille est bornée à ses bords) ; le petit écran est plus large (52 px : « VISE » touchait ses bords) ; les lignes du texte sont à 11 px au lieu de 9 (le p de « posez » touchait le L du dessous).

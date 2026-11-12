@@ -1636,11 +1636,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     defilOnglets = Math.max(0, Math.min(maxD, defilOnglets))
     const d0 = Math.round(defilOnglets)
     const gx = Math.floor((W - (COL * tw + (COL - 1) * 2)) / 2)
+    // (la grille fait 174 px, plus que l'intérieur du panneau : elle est bornée à ses bords, sinon la première tuile en sort)
+    const xDeLaTuile = (col: number): number => Math.max(8, Math.min(W - 8 - tw, gx + col * (tw + 2)))
     autres.forEach((vv, i) => {
       const r = Math.floor(i / COL) - d0
       if (r < 0 || r >= visibles) return
       if (feuille && t - feuilleA < 0.08 + i * 0.015) return
-      const x = gx + (i % COL) * (tw + 2)
+      const x = xDeLaTuile(i % COL)
       const y = yg + r * pas
       const actif = vv === vue
       const e = etatDuBouton(x, y, tw, th)
@@ -3023,25 +3025,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * qui montre les deux moitiés — le manche d'un côté, le regard et les capacités de l'autre.
    */
   function dessinerLesReglages(p: Peintre, y0: number): void {
-    const h = 96
+    // (le petit écran est PLUS LARGE — « VISE » touchait ses bords — et les lignes du texte ont un pixel d'air de plus :
+    // le p de « posez » touchait le L de « L'orientation » — Keko, 12/11)
+    const EW = 52
+    const lignes = replier('Le côté de l’écran où vous posez le pouce qui vole. L’orientation et les capacités sont de l’autre côté.', W - 20 - EW - 6)
+    const h = Math.max(96, 17 + lignes.length * 11 + 6 + 22)
     plaque(p, 4, y0, W - 8, h, 'encre')
     motEnRelief(p, 'Déplacement', 10 + largeurDe('Déplacement', GRAS) / 2, y0 + 5, true)
-    replier('Le côté de l’écran où vous posez le pouce qui vole. L’orientation et les capacités sont de l’autre côté.', W - 20 - 46).forEach((li, i) => ecrire(p, li, 10, y0 + 17 + i * 9, COQUE[5]))
+    lignes.forEach((li, i) => ecrire(p, li, 10, y0 + 17 + i * 11, COQUE[5]))
     // le petit écran : ses deux moitiés
-    const ex = W - 8 - 40
+    const ex = W - 8 - EW - 2
     const ey = y0 + 6
-    plaque(p, ex, ey, 36, 56, 'creux')
-    p.rect(ex + 18, ey + 3, 1, 50, MATIERES.encre.lumiere2)
+    plaque(p, ex, ey, EW, 56, 'creux')
+    p.rect(ex + EW / 2, ey + 3, 1, 50, MATIERES.encre.lumiere2)
     const aGauche = reglages.vol === 'gauche'
-    const xv = ex + (aGauche ? 9 : 27)
-    const xr = ex + (aGauche ? 27 : 9)
+    const xv = ex + Math.round(aGauche ? EW / 4 : (EW * 3) / 4)
+    const xr = ex + Math.round(aGauche ? (EW * 3) / 4 : EW / 4)
     // (le manche du vol : un anneau gris et son pouce ; le regard : un anneau bleu plus petit)
-    p.ring(xv, ey + 40, 6, 1, COQUE[4])
-    p.circle(xv + 1, ey + 38, 2, COQUE[6])
-    p.ring(xr, ey + 40, 4, 1, VERRIERE[1])
-    p.circle(xr - 1, ey + 39, 1, VERRIERE[3])
-    p.text('VOL', xv, ey + 8, COQUE[5], { align: 'center' })
-    p.text('VISE', xr, ey + 8, VERRIERE[2], { align: 'center' })
+    p.ring(xv, ey + 38, 7, 1, COQUE[4])
+    p.circle(xv + 1, ey + 36, 2, COQUE[6])
+    p.ring(xr, ey + 38, 5, 1, VERRIERE[1])
+    p.circle(xr - 1, ey + 37, 1, VERRIERE[3])
+    p.text('VOL', xv, ey + 9, COQUE[5], { align: 'center' })
+    p.text('VISE', xr, ey + 9, VERRIERE[2], { align: 'center' })
     // les deux touches
     const bw = 52
     const yb = y0 + h - 22
