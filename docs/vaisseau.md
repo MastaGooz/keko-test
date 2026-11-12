@@ -2382,3 +2382,12 @@ Keko : « remplacer le mot quête par mission (partout) ». L'onglet devient
 (`titleFont` de `keko/quete-terminee`) : la petite capitale du dépôt rend le
 M comme un N ; le nom de la mission passe dessous dans la police de texte.
 Le code garde « quetes » (fichiers, identifiants, sauvegarde).
+
+### « Changer » ne paraît que s'il y a autre chose (12/11)
+
+Keko : « on ne devrait pas afficher le bouton changer tant qu'il n'y a pas
+d'autres pièces à équiper ou acheter ». Sur la page d'une place, le bouton
+n'est là que si une AUTRE pièce de la catégorie est possédée ou débloquée à
+la recherche ; sinon la fiche remonte à sa place. Conséquence : un outil ou
+une arme seuls de leur sorte ne se retirent plus (« Retirer » est dans le
+panneau).

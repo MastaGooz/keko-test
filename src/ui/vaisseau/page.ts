@@ -2574,8 +2574,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ko = placeOuverte()
     if (resume) {
       // (sur la page de la place : la pièce équipée, et « Changer », qui ouvre le panneau de toutes les pièces)
-      const bw = lb('Changer')
-      bouton(p, W / 2 - bw / 2, y, bw, 15, 'Changer', true, ouvrirLeChangement, 'ouvre')
+      // (PAS DE BOUTON tant qu'il n'y a RIEN D'AUTRE à équiper ou à acheter — Keko, 12/11 ; la fiche remonte à sa place)
+      if (piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))) {
+        const bw = lb('Changer')
+        bouton(p, W / 2 - bw / 2, y, bw, 15, 'Changer', true, ouvrirLeChangement, 'ouvre')
+      } else y -= 19
     } else if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
       const bw = lb('Équiper')
       bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', true, () => {
