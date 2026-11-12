@@ -2679,3 +2679,4 @@ comprenne bien que la soute est un bouton cliquable ». `dessinerLeScore` :
   l'animation de coup est gardée telle quelle.
 - Le porté descend de quatre pixels, sous le pied du pupitre
   (`BAS_DU_HUD` 43).
+Dans le panneau de la soute (Keko, 12/11) : « Fermer » est le bouton d'acier de la vente du commerce, et le total est en relief ivoire comme sur le pupitre du vol.

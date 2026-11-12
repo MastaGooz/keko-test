@@ -4667,7 +4667,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, x, y, w, h, 'encre')
     motEnRelief(p, 'Soute', x + 8 + largeurDe('Soute', GRAS) / 2, y + 6, true)
     const pleine = m.minerai >= CONF.capacite
-    ecrire(p, `${m.minerai}/${CONF.capacite}`, x + w - 8, y + 6, pleine ? ROUGE[5] : IVOIRE, { police: GRAS, align: 'right' })
+    // (LE TOTAL, COMME SUR LE PUPITRE DU VOL — Keko, 12/11 : en relief ivoire ; rouge, la soute pleine)
+    const total = `${m.minerai}/${CONF.capacite}`
+    if (pleine) ecrire(p, total, x + w - 8, y + 6, ROUGE[5], { police: GRAS, align: 'right' })
+    else motEnRelief(p, total, x + w - 8 - largeurDe(total, GRAS) / 2, y + 6, 'ivoire', GRAS)
     const jeter = (k: Minerai, combien: number, bx: number, by: number): void => {
       const n = larguer(m, k, combien)
       if (n <= 0) return
@@ -4698,8 +4701,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
     const yb = y + 20 + EN_TETES + MINERAIS.length * 25
     p.text(texteNu('Le minerai largué est perdu'), W / 2, yb + 3, COQUE[3], { align: 'center' })
-    const bw = 60
-    bouton(p, Math.round(W / 2 - bw / 2), yb + 13, bw, 17, 'Fermer', true, () => (souteOuverte = false), 'retour')
+    // (« FERMER » COMME DANS LA VENTE DU COMMERCE — Keko, 12/11 : la même plaque d'acier, la même taille)
+    const bw = largeurDe('Fermer', GRAS) + 22
+    bouton(p, Math.round(W / 2 - bw / 2), yb + 14, bw, 15, 'Fermer', true, () => (souteOuverte = false), 'retour', 'acier')
     // (hors du panneau : une tape ferme ; dedans, elle ne fait rien — posées APRÈS les boutons, qui passent d'abord)
     zone(x, y, w, h, () => undefined, null)
     zone(0, 0, W, H, () => (souteOuverte = false), 'retour')
