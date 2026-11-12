@@ -2357,3 +2357,12 @@ qu'on n'a pas en quantité suffisante s'écrit « ce qu'on a / ce qu'il faut »,
 en rouge (« 12/20 Fer ») ; quand on a assez, le coût seul, en vert, comme
 avant. Le format X/Y avait été retiré pour sa largeur quand on a beaucoup
 d'un minerai : ici ce qu'on a est toujours plus petit que le coût.
+
+### L'onglet « Commerce » devient « Comptoir » (12/11)
+
+Keko : « c'est pas clair, le mot commerce — c'est à la fois l'entrepôt et le
+commerce ». « Comptoir » dit les deux : où l'on dépose et où l'on vend
+(« Soute » écarté : c'est déjà ce qu'on porte en vol). Le nom de l'onglet,
+les deux quêtes du tutoriel et la mention de la prévision suivent ; LA
+BRANCHE « Commerce » de la tech et l'activité des quêtes gardent leur nom
+(c'est l'activité) ; l'identifiant du code reste `entrepot`.

@@ -69,9 +69,9 @@ export type Modele = {
 export const TUTORIEL: Modele[] = [
   { id: 't-vol', titre: 'Premier vol', dit: 'Décollez pour une première expédition.', compteur: 'vols', cible: 1, credits: 10 },
   { id: 't-extraction', titre: 'Extraction', dit: 'Minez, puis revenez sur le pont de la base.', compteur: 'pepites', cible: 1, credits: 20, ouvre: 'entrepot' },
-  { id: 't-vente', titre: 'Première vente', dit: 'Vendez du minerai au Commerce.', compteur: 'ventes', cible: 1, credits: 30, ouvre: 'labo' },
+  { id: 't-vente', titre: 'Première vente', dit: 'Vendez du minerai au Comptoir.', compteur: 'ventes', cible: 1, credits: 30, ouvre: 'labo' },
   { id: 't-recherche', titre: 'Recherche', dit: 'Débloquez un noeud dans la Tech.', compteur: 'noeuds', cible: 1, credits: 40 },
-  { id: 't-ordre', titre: 'Premier ordre', dit: 'Au Commerce, posez un ordre à prix fixé.', compteur: 'ordresPoses', cible: 1, credits: 50 },
+  { id: 't-ordre', titre: 'Premier ordre', dit: 'Au Comptoir, posez un ordre à prix fixé.', compteur: 'ordresPoses', cible: 1, credits: 50 },
 ]
 
 /** LE CATALOGUE d'après le tutoriel : une de chaque activité est toujours active. */
