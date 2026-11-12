@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
@@ -4408,7 +4408,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (armee) ecrire(p, 'Touchez l’écran', W - 4, y - 11, N.hex('#fff2a8'), { police: GRAS, align: 'right', contour: NUIT_OMBRE })
     if (reste > 0 && !souteOuverte && t - arriveA >= ARRIVE_A) zone(x - 4, y - 6, w + 8, h + 11, () => ((capaciteArmee = !capaciteArmee), (armeeA = t)), 'onglet')
-    // le trait de visée : du vaisseau, dans le sens du glissement (ou du nez, tant que le doigt n'a pas glissé)
+    // LA VISÉE : UNE FLÈCHE D'OR QUI PART DU VAISSEAU (Keko, 12/11 : « on ne devrait pas faire partir la flèche de
+    // l'endroit où se trouve le pouce, mais du vaisseau, dans le sens de visée, et envoyer la bombe plus ou moins loin en
+    // fonction du niveau dans lequel le joueur pousse ») : dans le sens du glissement, LONGUE COMME LA BOMBE IRA LOIN ;
+    // au bout, le cercle où elle éclatera. Sans glissement : droit devant le nez, à mi-portée.
     if (regard !== null && regard.tir) {
       const d = regardVoulu()
       const n = d === undefined ? 0 : Math.hypot(d.x, d.y)
@@ -4416,9 +4419,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const uy = n > 0.05 ? d!.y / n : Math.sin(v.cap)
       const sx = v.x - camera.x + W / 2
       const sy = v.y - camera.y + centreY()
-      const portee = CONF.bombe.vitesse * CONF.bombe.vie
-      for (let k = 10; k < portee; k += 5) p.rect(Math.round(sx + ux * k), Math.round(sy + uy * k), 1, 1, k % 10 === 0 ? N.hex('#fff2a8') : PEPITE[2])
-      p.ring(sx + ux * portee, sy + uy * portee, CONF.bombe.rayon, 1, PEPITE[2], 0.35 + 0.2 * Math.sin(t * 9))
+      const portee = porteeDeLaBombe(CONF, d)
+      const cerne = N.hex('#2a1404')
+      const x0 = sx + ux * 10
+      const y0 = sy + uy * 10
+      const bx = sx + ux * portee
+      const by = sy + uy * portee
+      for (const [e, c] of [[5, cerne], [3, PEPITE[2]], [1, N.hex('#fff2a8')]] as const) {
+        for (let k = -(e - 1) / 2; k <= (e - 1) / 2; k++) p.line(x0 - uy * k, y0 + ux * k, bx - ux * 5 - uy * k, by - uy * 5 + ux * k, c)
+      }
+      const aile = (k: number, recul: number): [number, number] => [bx - ux * recul - uy * k, by - uy * recul + ux * k]
+      p.poly([[bx + ux * 3, by + uy * 3], aile(7, 8), aile(-7, 8)], cerne)
+      p.poly([[bx + ux * 1, by + uy * 1], aile(5, 7), aile(-5, 7)], PEPITE[2])
+      p.poly([[bx + ux * 1, by + uy * 1], aile(5, 7), [bx - ux * 7, by - uy * 7]], PEPITE[3])
+      p.glow(bx, by, 10, PEPITE[2], 0.5)
+      p.ring(bx, by, CONF.bombe.rayon, 1, PEPITE[2], 0.35 + 0.2 * Math.sin(t * 9))
     }
   }
   /** Les bombes en vol : un rond sombre qui tourne sur lui-même, sa mèche qui crache. */
@@ -5176,37 +5191,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(`M${manche === null ? '-' : manche.id} R${regard === null ? '-' : regard.id} ${journalDesDoigts}`.toUpperCase(), 4, H - 12, N.WHITE, { outline: COQUE[0] })
     }
     if (regard !== null && regard.tir) {
-      // LA VISÉE D'UNE CAPACITÉ N'EST PAS UN MANCHE (Keko, 12/11 : « quand une capacité est active on n'affiche pas le
-      // deuxième stick, il est associé à l'orientation ; on dessine plutôt un élément d'UI propre aux capacités — si
-      // c'est directionnel comme la bombe, on peut tracer une flèche qui part du tap ») : UNE FLÈCHE D'OR, de l'endroit
-      // de l'appui vers le doigt — un point d'ancrage, une hampe qui s'allonge avec le glissement, une pointe ; sans
-      // glissement, le seul point d'ancrage, qui bat (elle partira droit devant le nez)
-      p.place(0, 0)
-      const o = enTampon(regard.centre.x, regard.centre.y)
-      const ddx = (regard.doigt.x - regard.centre.x) / zoom
-      const ddy = (regard.doigt.y - regard.centre.y) / zoom
-      const dd = Math.hypot(ddx, ddy)
-      const cerne = N.hex('#2a1404')
-      p.circle(o.x, o.y, 4, cerne)
-      p.circle(o.x, o.y, 3, PEPITE[2])
-      p.circle(o.x - 1, o.y - 1, 1, N.hex('#fff2a8'))
-      if (dd < 4) p.ring(o.x, o.y, 6 + 2 * Math.sin(t * 9), 1, PEPITE[3], 0.7)
-      else {
-        const ux = ddx / dd
-        const uy = ddy / dd
-        const L = Math.max(12, Math.min(dd, C.manche.rayon / zoom))
-        const bx = o.x + ux * L
-        const by = o.y + uy * L
-        // (la hampe : un trait épais cerné ; la pointe : un triangle)
-        for (const [e, c] of [[5, cerne], [3, PEPITE[2]], [1, N.hex('#fff2a8')]] as const) {
-          for (let k = -(e - 1) / 2; k <= (e - 1) / 2; k++) p.line(o.x - uy * k, o.y + ux * k, bx - ux * 4 - uy * k, by - uy * 4 + ux * k, c)
-        }
-        const aile = (k: number, recul: number): [number, number] => [bx - ux * recul - uy * k, by - uy * recul + ux * k]
-        p.poly([[bx + ux * 4, by + uy * 4], aile(7, 6), aile(-7, 6)], cerne)
-        p.poly([[bx + ux * 2, by + uy * 2], aile(5, 5), aile(-5, 5)], PEPITE[2])
-        p.poly([[bx + ux * 2, by + uy * 2], aile(5, 5), [bx - ux * 5, by - uy * 5]], PEPITE[3])
-        p.glow(bx, by, 8, PEPITE[2], 0.5)
-      }
+      // (LA VISÉE D'UNE CAPACITÉ N'EST PAS UN MANCHE — Keko : « il est associé à l'orientation » : rien sous le pouce ;
+      // la flèche part du vaisseau, voir `dessinerLaCapacite`)
     } else if (regard !== null) {
       // LE MANCHE DU REGARD, plus petit, BLEU, DANS LA LANGUE DU PREMIER (Keko, 12/11 : « donner une texture au deuxième
       // stick, comme le premier ») : l'anneau cerné d'encre, éclairé d'en haut à gauche, ombré en bas à droite, sur un

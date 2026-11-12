@@ -148,7 +148,9 @@ export const VAISSEAU = {
    * d'une roche ou d'un rival : toute roche à tant d'unités de sa surface éclate (ses pépites restent), tout rival dans
    * ce rayon prend tant de dégâts. Elle ne blesse pas le joueur.
    */
-  bombe: { charges: 3, vitesse: 170, vie: 0.6, rayon: 44, degats: 80 },
+  // (ELLE VA PLUS OU MOINS LOIN selon la force du geste — Keko : « envoyer la bombe plus ou moins loin en fonction du
+  // niveau dans lequel le joueur pousse le joystick » : de `pres` à 1 fois sa portée, `tape` sans glissement)
+  bombe: { charges: 3, vitesse: 170, vie: 0.6, rayon: 44, degats: 80, pres: 0.25, tape: 0.5 },
   /**
    * L'ENNEMI : il apparaît à tant de secondes puis tant après sa mort, à tant d'unités (hors de l'écran le plus haut, 180
    * sur 480, avance de caméra comprise : à 200, Keko le voyait « apparaître de nulle part ») ; il a tant de points (le laser
@@ -751,9 +753,15 @@ export function postcombustion(c: ConfigVaisseau, m: Monde): boolean {
   return true
 }
 
+/** La part de sa portée qu'une bombe parcourt, selon la force du geste (0 à 1) : sans geste franc, celle d'une tape. */
+export function porteeDeLaBombe(c: ConfigVaisseau, direction?: Vecteur): number {
+  const n = direction === undefined ? 0 : Math.min(1, Math.hypot(direction.x, direction.y))
+  return c.bombe.vitesse * c.bombe.vie * (n > 0.05 ? c.bombe.pres + (1 - c.bombe.pres) * n : c.bombe.tape)
+}
 /**
- * LANCE UNE BOMBE, s'il reste une charge : vers `direction` si elle est donnée et franche, sinon droit devant le nez.
- * Rend vrai si elle est partie.
+ * LANCE UNE BOMBE, s'il reste une charge : vers `direction` si elle est donnée et franche — d'autant plus loin qu'elle
+ * est longue —, sinon droit devant le nez, à la portée d'une tape. Elle ne garde rien de l'élan du vaisseau : elle
+ * éclate là où la visée l'a montré. Rend vrai si elle est partie.
  */
 export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur): boolean {
   if (m.phase !== 'vol' || m.charges <= 0) return false
@@ -762,7 +770,7 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
   const ux = n > 0.05 ? direction!.x / n : Math.cos(v.cap)
   const uy = n > 0.05 ? direction!.y / n : Math.sin(v.cap)
   m.charges -= 1
-  m.bombes.push({ id: m.prochainId++, x: v.x + ux * (c.rayon + 2), y: v.y + uy * (c.rayon + 2), vx: ux * c.bombe.vitesse + v.vx * 0.5, vy: uy * c.bombe.vitesse + v.vy * 0.5, vie: c.bombe.vie })
+  m.bombes.push({ id: m.prochainId++, x: v.x, y: v.y, vx: ux * c.bombe.vitesse, vy: uy * c.bombe.vitesse, vie: porteeDeLaBombe(c, direction) / c.bombe.vitesse })
   return true
 }
 

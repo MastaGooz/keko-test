@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -461,6 +461,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   let explosions = 0
   for (let i = 0; i < 120; i++) explosions += avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 0, y: 0 }).evenements.filter((e) => e.type === 'explosion').length
   verifier('une bombe part droit devant, coûte une charge, éclate une fois au contact de la roche, qui éclate et laisse ses pépites', partie && m.charges === VAISSEAU.bombe.charges - 1 && explosions === 1 && m.bombes.length === 0 && m.detruits.has(roche.id) && m.pepites.length + m.minerai > 0)
+  verifier('la bombe va plus ou moins loin selon la force du geste : au plus près, à mi-chemin sur une tape, à pleine portée', porteeDeLaBombe(VAISSEAU, { x: 0.1, y: 0 }) < porteeDeLaBombe(VAISSEAU) && porteeDeLaBombe(VAISSEAU) < porteeDeLaBombe(VAISSEAU, { x: 0, y: -1 }) && Math.abs(porteeDeLaBombe(VAISSEAU, { x: 3, y: 0 }) - VAISSEAU.bombe.vitesse * VAISSEAU.bombe.vie) < 1e-9)
   for (let i = 0; i < 5; i++) lancerLaBombe(VAISSEAU, m, { x: 0, y: -1 })
   verifier('pas plus de bombes que de charges : la quatrième ne part pas', m.charges === 0 && !lancerLaBombe(VAISSEAU, m) && m.bombes.length === VAISSEAU.bombe.charges - 1 && m.bombes.every((b) => b.vy < 0 && Math.abs(b.vx) < 1e-9))
 }
