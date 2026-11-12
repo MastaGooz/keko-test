@@ -2566,3 +2566,5 @@ LES ONGLETS : on mesure le plus long des noms d'onglet — avec icône en grande
 lettre ; sinon sans icône ; sinon dans la lettre d'en-tête ; sinon en grasse.
 
 Le bandeau des missions écrit « Contrats » et « Formation » EN GRANDE LETTRE (Keko, 12/11 : le mot était plus petit que les titres des contrats, « ce qui brise la hiérarchie »).
+
+La pastille du porté dit CE QU'ON VIENT DE RAMASSER (« +3 », `recents`), pas le total porté de ce minerai (Keko, 12/11) ; le compte repart de zéro quand elle s'en va.
