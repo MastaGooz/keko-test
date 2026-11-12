@@ -1022,6 +1022,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLaBarreDuHaut(p)
     dessinerLaNav(p)
     dessinerLaFeuille(p)
+    dessinerLeChangement(p)
     dessinerLaVente(p)
     dessinerLesEclats(p)
   }
@@ -1889,13 +1890,68 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let choixA = -10
   const RANG_LISTE = 13
   /**
-   * LA LISTE D'UNE PLACE : l'en-tête (le retour, le titre), les puces de sous-catégorie, la liste qui glisse au doigt
-   * (quatre rangées, le surlignage qui glisse, une encoche d'or), puis LA FICHE de la pièce choisie.
+   * LA PAGE D'UNE PLACE : l'en-tête (le retour, le titre), puis LA SEULE PIÈCE ÉQUIPÉE, sa fiche entière, et « Changer »
+   * (Keko, 12/11 : « la hauteur ne laisse voir que deux pièces, ce qui rend le scrolling pénible — on n'affiche plus la
+   * liste mais uniquement la pièce équipée, et un bouton changer qui ouvre un panneau avec toutes les pièces dispo, où
+   * on peut équiper / acheter »). Une place vide le dit, et propose « Choisir ».
    */
   function dessinerLaListe(p: Peintre, y0: number): void {
     let y = y0
     enTete(p, y, titreDe({ o: onglet, k: placeOuverte() }), () => changerDEtape('vaisseau'))
     y += HT + 3
+    const ko = placeOuverte()
+    const pc = onglet === 'propulseur' || onglet === 'coque' ? monteeA(hangar, onglet) : pieceDe(listeMontee(onglet)[ko] ?? '')
+    if (pc !== undefined) {
+      dessinerLaFiche(p, y, pc, true)
+      return
+    }
+    const bw = largeurDe('Choisir', GRAS) + 22
+    bouton(p, W / 2 - bw / 2, y, bw, 15, 'Choisir', true, ouvrirLeChangement, 'ouvre')
+    y += 19
+    plaque(p, 4, y, W - 8, 30, 'encre')
+    ecrire(p, 'Emplacement vide', W / 2, y + 11, COQUE[4], { align: 'center' })
+  }
+
+  /** LE PANNEAU « CHANGER » est ouvert ; depuis quand. */
+  let changement = false
+  let changementA = -10
+  function ouvrirLeChangement(): void {
+    changement = true
+    changementA = t
+    choixA = t
+    surligneY = -1
+  }
+  /**
+   * LE PANNEAU « CHANGER » : toutes les pièces de la place, sur TOUTE LA HAUTEUR sous la barre du haut (la scène et la
+   * barre des onglets sont couvertes : la liste a enfin de la place) — le titre, les puces de sous-catégorie, la liste
+   * qui glisse au doigt (le surlignage qui glisse, une encoche d'or), LA FICHE de la pièce choisie avec « Équiper »,
+   * « Acheter » ou « Retirer », et « Fermer ». Équiper ou retirer referme le panneau ; acheter le laisse ouvert.
+   */
+  function dessinerLeChangement(p: Peintre): void {
+    if (!changement) return
+    if (vue !== 'hangar' || etape !== 'liste') {
+      changement = false
+      return
+    }
+    const u0 = sortie((t - changementA) / 0.18)
+    // tout ce qui est dessous disparaît et ne répond plus (la barre du haut reste : on y lit ses crédits)
+    p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT)
+    frame.light.fill(0, HAUT_BARRE * W)
+    zones = []
+    curseurs = []
+    zoneDesCases = null
+    const fermer = (): void => {
+      changement = false
+      etapeA = t
+    }
+    let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
+    const titre = titreDe({ o: onglet, k: placeOuverte() })
+    plaque(p, 4, y, W - 8, 17, 'acier')
+    ecrire(p, titre, W / 2, y + 5, N.hex('#fff3cf'), { police: ENTETE, align: 'center', contour: MATIERES.acier.contour })
+    y += 20
+    const yFermer = H - 4 - 15
+    const bf = largeurDe('Fermer', GRAS) + 22
+    bouton(p, W / 2 - bf / 2, yFermer, bf, 15, 'Fermer', true, fermer, 'retour', 'acier')
     // (LE HANGAR MONTRE CE QU'ON A, ET CE QUE LE LABO A DÉBLOQUÉ — Keko, 11/11 : « quand une pièce est débloquée au labo,
     // elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix »)
     const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
@@ -1917,9 +1973,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
       y += 16
     }
-    // (de deux à quatre rangées : ce que la fiche de la pièce choisie laisse au-dessus de la barre du bas)
-    const pcVue = liste[Math.max(0, liste.findIndex((x) => x.id === choix[onglet]))]
-    const RANGEES = Math.max(2, Math.min(4, Math.floor((H - HAUT_NAV - 4 - y - 8 - hauteurDeLaFiche(pcVue)) / RANG_LISTE)))
+    // (autant de rangées que la plus haute des fiches en laisse au-dessus de « Fermer » : la liste ne change pas de
+    // taille d'une pièce à l'autre ; pas plus que la liste n'en a)
+    const hf = Math.max(0, ...liste.map(hauteurDeLaFiche))
+    const RANGEES = Math.max(2, Math.min(Math.max(2, liste.length), Math.floor((yFermer - 4 - y - 8 - hf) / RANG_LISTE)))
     const hl = RANGEES * RANG_LISTE + 4
     plaque(p, 4, y, W - 8, hl, 'creux')
     const maxDefil = Math.max(0, liste.length - RANGEES)
@@ -1966,8 +2023,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (liste.length === 0) ecrire(p, 'Rien ici : passez à la tech', W / 2, y + 22, COQUE[4], { align: 'center' })
     y += hl + 4
     const pc = liste[iSel]
-    if (pc === undefined) return
-    dessinerLaFiche(p, y, pc)
+    if (pc !== undefined) dessinerLaFiche(p, y, pc)
+    if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+    // (le reste du panneau ne fait rien : ce qui est dessous ne répond pas)
+    zone(0, 0, W, H, () => {}, null)
   }
 
   /** Une pièce montée : l'onde sur l'aire, le flash du vaisseau, des étincelles, une petite secousse. */
@@ -2508,15 +2567,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return 19 + Math.max(52, 18 + jaugesDe(pc).length * 10 + 4) + (note > 0 ? note * 9 + 6 : 0)
   }
   /** LA FICHE d'une pièce : son bouton, puis ses stats (la pièce rendue dans son puits, le nom, les jauges, la note). */
-  function dessinerLaFiche(p: Peintre, y0: number, pc: Piece): void {
+  function dessinerLaFiche(p: Peintre, y0: number, pc: Piece, resume = false): void {
     let y = y0
     const lb = (mot: string): number => largeurDe(mot, GRAS) + 22
     const ko = placeOuverte()
-    if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
+    if (resume) {
+      // (sur la page de la place : la pièce équipée, et « Changer », qui ouvre le panneau de toutes les pièces)
+      const bw = lb('Changer')
+      bouton(p, W / 2 - bw / 2, y, bw, 15, 'Changer', true, ouvrirLeChangement, 'ouvre')
+    } else if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
       const bw = lb('Équiper')
       bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', true, () => {
         hangar = monterA(hangar, pc.id, ko)
         sauver()
+        changement = false
         feterLEquipement()
       }, 'equipe')
     } else if (estMontee(hangar, pc.id)) {
@@ -2525,6 +2589,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         bouton(p, W / 2 - bw / 2, y, bw, 15, 'Retirer', true, () => {
           hangar = ko >= 0 ? demonterA(hangar, pc.sorte as 'arme' | 'outil', ko) : demonter(hangar, pc.id)
           sauver()
+          changement = false
         }, 'retour', 'acier')
       } else {
         motEnRelief(p, 'Équipé', W / 2, y + 4, true)
@@ -2536,6 +2601,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', peutMonter(hangar, pc.id), () => {
         hangar = monter(hangar, pc.id)
         sauver()
+        changement = false
         feterLEquipement()
       }, 'equipe')
     } else {

@@ -2336,3 +2336,15 @@ pastille d'un minerai paraît quand une pépite vole vers elle, reste
 referme en un instant, sans clignoter (essayé et retiré le jour même —
 Keko : « ça laisse entendre qu'on le perd ») ; les voisines glissent à sa place (`xDuPorte`). Le
 total reste sur la plaque « Soute », le détail dans la soute ouverte.
+
+### Le hangar : la pièce équipée, et « Changer » (12/11)
+
+Keko : « la hauteur ne laisse voir que deux pièces, ce qui rend le scrolling
+pénible ». La page d'une place n'a plus de liste : l'en-tête, la fiche de LA
+PIÈCE ÉQUIPÉE, et « Changer » (« Choisir » sur une place vide). Ce bouton
+ouvre LE PANNEAU (`dessinerLeChangement`) : sous la barre du haut — gardée,
+on y lit ses crédits —, sur toute la hauteur, scène et onglets couverts ; le
+titre, les puces de famille, la liste (autant de rangées que la plus haute
+des fiches en laisse : dix à 360 × 640, contre deux avant), la fiche de la
+pièce choisie avec « Équiper », « Acheter » ou « Retirer », et « Fermer ».
+Équiper ou retirer referme le panneau (de moi) ; acheter le laisse ouvert.
