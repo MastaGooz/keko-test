@@ -162,7 +162,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const q of quetes.actives) {
       if (!estTerminee(q) || avant.has(q.modele)) continue
       // UN TOAST, celui de l'« achievement » du dépôt (`keko/quete-terminee`) : il glisse, sa médaille y saute
-      toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, text: modeleDe(q.modele)?.titre ?? '', font: GRAS, seed: 9 + toasts.length }))
+      toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: 'Mission réussie', titleFont: GRAS, text: modeleDe(q.modele)?.titre ?? '', font: TEXTE, seed: 9 + toasts.length }))
       pulsations.quetes = t
       jouer('achat')
     }
@@ -507,7 +507,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
   const VUES: string[] = ['hangar', 'labo', 'entrepot', 'quetes', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
-  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Quêtes', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
+  const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Missions', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
   let resetDemandeA = -10
   /**

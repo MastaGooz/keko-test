@@ -8,8 +8,8 @@ import { Particles, Lights, P, Rng, fit, sparkle, star, seg, ease, rand, TAU, WH
 import { spell, drawWord, panel } from "pixelfx/fx/ui/_lib";
 
 export const meta = {
-  name: "Quête terminée",
-  desc: "Le toast d'une quête terminée : il glisse, se pose, une médaille d'or y saute dans une gerbe d'étoiles, un reflet le balaie, il repart.",
+  name: "Mission réussie",
+  desc: "Le toast d'une mission réussie : il glisse, se pose, une médaille d'or y saute dans une gerbe d'étoiles, un reflet le balaie, il repart.",
   tags: ["ui", "quete", "toast", "medaille", "recompense", "texte", "one-shot"],
   size: [240, 72],
   origin: [120, 36],
@@ -20,7 +20,10 @@ export const meta = {
   options: {
     palette: ["#2a1405", "#5c3008", "#9a5a0e", "#d48e18", "#f5b92c", "#ffde5e", "#fff4bc", "#ffffff"],
     ribbon: ["#0c1430", "#1f3a7a", "#2f66c4", "#5aa0f0", "#a6d4ff"],
-    title: "QUETE REUSSIE",
+    title: "MISSION REUSSIE",
+    // la police du titre : la petite capitale du dépôt, doublée — ou une police de la page, à l'échelle 1 (« MISSION »
+    // a un M, que la petite capitale rend comme un N : la page passe la sienne)
+    titleFont: "mini",
     text: "CARGAISON DE FER",
     // la police de la seconde ligne : la petite capitale du dépôt, ou une police enregistrée par la page (la nôtre,
     // grasse, à accents — le M de la petite capitale se lit comme un N)
@@ -68,7 +71,7 @@ function medal(p, G, B, x, y, s, white, shine) {
 export function create(o) {
   const G = fit(o.palette, 8), B = fit(o.ribbon, 5), R = new Rng(o.seed);
   const ps = new Particles({ rng: R, sparks: [G[7], G[6], G[5], G[3]] }), lights = new Lights();
-  const title = spell(o.title, "mini"), sub = spell(o.text, o.font), TX = PX + 34, SY = o.font === "mini" ? PY + 22 : PY + 18;
+  const TS = o.titleFont === "mini" ? 2 : 1, title = spell(o.title, o.titleFont), sub = spell(o.text, o.font), TX = PX + 34, SY = o.font === "mini" ? PY + 22 : PY + 18;
   let t = 0, popped = false;
   const end = meta.duration - 0.05;
   // the toast slides in from the right, overshoots and settles; at the end it eases back and slides off
@@ -105,7 +108,7 @@ export function create(o) {
       p.line(PX + x + 4, PY + 1, PX + x + PW - 5, PY + 1, G[4], a);
       p.px(PX + x + 3, PY + 1, G[2]);
       // the words: a gold title, a white line under it
-      const ti = title.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: TX + x + L.x * 2, y: PY + 5, sx: 2, sy: 2, a }));
+      const ti = title.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: TX + x + L.x * TS, y: PY + (TS === 2 ? 5 : 4), sx: TS, sy: TS, a }));
       drawWord(p, ti, { fill: [G[4], G[5], G[6]], edge: G[7], under: G[3], outline: INK.outline, shadow: 0, shine: shine === null ? null : shine + x, shineY: PY, glint: G[7] });
       const si = sub.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: TX + x + L.x, y: SY, sx: 1, sy: 1, a }));
       drawWord(p, si, { fill: [hex("#9a94b0"), hex("#d8d4e6"), WHITE], edge: WHITE, under: hex("#6e6886"), outline: INK.outline, shadow: 0, shine: shine === null ? null : shine + x, shineY: PY });

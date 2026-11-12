@@ -2374,3 +2374,11 @@ tech ? et remettre commerce ? ». Les noms d'onglet, les quêtes du tutoriel
 et les mentions suivent ; les identifiants du code (`labo`, `entrepot`) ne
 changent pas. « Recherche » (9 lettres) ne s'affiche dans la barre du bas
 que quand l'onglet est ouvert, comme les autres noms longs.
+
+### Les quêtes s'appellent « Missions » (12/11)
+
+Keko : « remplacer le mot quête par mission (partout) ». L'onglet devient
+« Missions », le toast dit « Mission réussie » — dans NOTRE police grasse
+(`titleFont` de `keko/quete-terminee`) : la petite capitale du dépôt rend le
+M comme un N ; le nom de la mission passe dessous dans la police de texte.
+Le code garde « quetes » (fichiers, identifiants, sauvegarde).
