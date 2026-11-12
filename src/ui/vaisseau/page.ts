@@ -465,7 +465,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases'; curseur?: Curseur } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases' | 'missions'; curseur?: Curseur } | null = null
   /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
   type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
   let curseurs: Curseur[] = []
@@ -990,6 +990,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zoneDesOrdres = null
     zoneDeLInventaire = null
     zoneDesCases = null
+    zoneDesMissions = null
     // LE MARCHÉ SE RÈGLE à chaque pas du cours : un ordre dont le prix a été atteint est vendu (même posé hier)
     {
       const r = reglerLeMarche(marche, credits, heureDuMarche(), avantages())
@@ -2751,32 +2752,86 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * quête suivante prend sa place, et l'onglet qu'elle ouvre saute dans la barre du bas.
    */
   const ICONE_D_ACTIVITE: Record<Activite, string> = { minage: 'forage', combat: 'combat', exploration: 'exploration', commerce: 'commerce' }
-  const H_QUETE = 50
+  /**
+   * LA CARTE D'UNE MISSION, REFAITE (Keko, 12/11 : « la récompense à droite du titre va poser un souci quand le titre
+   * est trop long — il faudrait que le titre puisse prendre deux lignes ; de plus le texte en dessous s'arrête d'un
+   * coup, plus de place ; rework tout ça pour un rendu bien lisible et beau »). LA CARTE A LA HAUTEUR DE SON TEXTE :
+   * en haut, le symbole dans son puits, LE TITRE sur toute la largeur (deux lignes au besoin) et CE QU'ELLE DEMANDE en
+   * entier, replié ; un filet ; AU PIED, la barre d'avancée, son compte, et LA RÉCOMPENSE dans un puits à droite — la
+   * place qu'elle prenait au titre lui est rendue. Terminée, le pied devient « Réclamer », la récompense dans le bouton.
+   */
+  const LARGEUR_DU_TEXTE_DE_MISSION = W - 32 - 10
+  function hauteurDeLaMission(mo: { titre: string; dit: string }): number {
+    const nt = Math.min(2, replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).length)
+    const nd = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).length
+    return 5 + Math.max(20, nt * 10 + 1 + nd * 9) + 5 + 15 + 4
+  }
+  /**
+   * LES CARTES DÉFILENT quand elles ne tiennent pas toutes (leur hauteur suit leur texte) : au doigt ou à la molette,
+   * UNE CARTE À LA FOIS — celle du haut est toujours entière, celle du bas passe sous la barre des onglets ; une barre
+   * à droite dit où l'on est.
+   */
+  const PAS_DES_MISSIONS = 55
+  let defilMissions = 0
+  let zoneDesMissions: { x: number; y: number; w: number; h: number } | null = null
   function dessinerLesQuetes(p: Peintre, y0: number): void {
+    const bas = H - HAUT_NAV - 2
+    const hauteurs = quetes.actives.map((q) => {
+      const mo = modeleDe(q.modele)
+      return mo === undefined ? 0 : hauteurDeLaMission(mo) + 3
+    })
+    // (jusqu'où défiler : la première carte à partir de laquelle tout le reste tient)
+    let maxD = 0
+    while (maxD < hauteurs.length - 1 && hauteurs.slice(maxD).reduce((a, b) => a + b, 0) - 3 > bas - y0) maxD += 1
+    defilMissions = Math.max(0, Math.min(maxD, defilMissions))
+    const d = Math.round(defilMissions)
+    if (maxD > 0) {
+      const hg = bas - y0
+      const hc = Math.max(8, Math.round((hg * (hauteurs.length - maxD)) / hauteurs.length))
+      p.rect(W - 3, y0, 2, hg, MATIERES.creux.contour)
+      p.rect(W - 3, y0 + Math.round(((hg - hc) * defilMissions) / maxD), 2, hc, COQUE[3])
+      zoneDesMissions = { x: 0, y: y0, w: W, h: hg }
+    }
+    let suivante = y0
     quetes.actives.forEach((q, i) => {
       const mo = modeleDe(q.modele)
+      if (mo === undefined || i < d) return
+      const h = hauteurDeLaMission(mo)
+      const haut = suivante
+      suivante += h + 3
+      if (haut >= bas) return
       const age = t - vueA - i * 0.05
-      if (mo === undefined || age < 0) return
-      const y = y0 + i * (H_QUETE + 3) + Math.round((1 - sortie(age / 0.2)) * 4)
+      if (age < 0) return
+      const y = haut + Math.round((1 - sortie(age / 0.2)) * 4)
       const fini = estTerminee(q)
-      if (fini) p.glow(W / 2, y + H_QUETE / 2, 70, PEPITE[2], 0.07 + 0.05 * Math.sin(t * 4))
-      plaque(p, 4, y, W - 8, H_QUETE, 'encre', { bord: fini ? PEPITE[2] : undefined, flash: age < 0.07 })
-      plaque(p, 8, y + 4, 20, 20, 'creux')
-      dessinerLeGlyphe(p, mo.activite === undefined ? 'tuto' : ICONE_D_ACTIVITE[mo.activite], 18, y + 14, fini ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[3], COQUE[5], COQUE[6]])
-      ecrire(p, mo.titre, 32, y + 4, fini ? PEPITE[3] : N.WHITE, { police: GRAS })
-      nombreDeCredits(p, `+${mo.credits}`, W - 9, y + 4, N.hex('#fff2c8'))
-      replier(mo.dit, W - 42).slice(0, 2).forEach((li, k) => ecrire(p, li, 32, y + 14 + k * 9, COQUE[4]))
+      if (fini && y + h <= bas) p.glow(W / 2, y + h / 2, 70, PEPITE[2], 0.07 + 0.05 * Math.sin(t * 4))
+      plaque(p, 4, y, W - (maxD > 0 ? 10 : 8), h, 'encre', { bord: fini ? PEPITE[2] : undefined, flash: age < 0.07 })
+      plaque(p, 8, y + 5, 20, 20, 'creux')
+      dessinerLeGlyphe(p, mo.activite === undefined ? 'tuto' : ICONE_D_ACTIVITE[mo.activite], 18, y + 15, fini ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[3], COQUE[5], COQUE[6]])
+      const titre = replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).slice(0, 2)
+      titre.forEach((li, k) => ecrire(p, li, 32, y + 5 + k * 10, fini ? PEPITE[3] : N.WHITE, { police: GRAS }))
+      replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).forEach((li, k) => ecrire(p, li, 32, y + 5 + titre.length * 10 + 1 + k * 9, COQUE[5]))
+      // LE PIED, sous un filet
+      const yf = y + h - 4 - 15
+      p.rect(8, yf - 3, W - 16, 1, MATIERES.encre.ombre)
+      const prix = `+${mo.credits}`
+      const wn = largeurDe(prix, GRAS)
+      const wp = wn + 18
+      if (fini && yf + 15 > bas) return // (son bouton passe sous la barre des onglets : il ne répond pas de là)
       if (fini) {
-        const bw = largeurDe('Réclamer', GRAS) + 22
-        bouton(p, Math.round(W / 2 - bw / 2), y + H_QUETE - 17, bw, 14, 'Réclamer', true, () => {
+        // « RÉCLAMER », la récompense dans un puits creusé dans le bouton (comme « Acheter » au hangar)
+        const wa = largeurDe('Réclamer', GRAS)
+        const bw = 8 + wa + 5 + wp + 3
+        const bx = Math.round(W / 2 - bw / 2)
+        boutonBase(p, bx, yf, bw, 15, true, () => {
           const r = reclamer(quetes, i, credits)
           if (r === null) return
           quetes = r.etat
           credits = r.credits
           sauver()
           secouer(1)
-          for (let k = 0; k < 8; k++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 40, y0: y + H_QUETE - 10, t0: t + k * 0.05 })
-          gerbe(W / 2, y + H_QUETE - 10, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
+          for (let k = 0; k < 8; k++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 40, y0: yf + 7, t0: t + k * 0.05 })
+          gerbe(W / 2, yf + 7, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
           vueA = t - 0.1
           // l'onglet qu'elle ouvre : il saute dans la barre et prend sa pastille
           if (r.ouvre !== undefined) {
@@ -2784,14 +2839,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             nouveautes.add(r.ouvre)
             flottants.push({ texte: `${NOMS_VUE[r.ouvre]} débloqué !`, x: W / 2, y: y - 4, t0: t, c: RUNE[3] })
           }
+        }, (dx, dy) => {
+          motEnRelief(p, 'Réclamer', bx + 8 + wa / 2 + dx, yf + 4 + dy, true)
+          const px = bx + 8 + wa + 5 + dx
+          plaque(p, px, yf + 2 + dy, wp, 11, 'creux')
+          ecrire(p, prix, px + 4, yf + 4 + dy, N.hex('#fff2c8'), { police: GRAS })
+          dessinerUnCredit(p, px + 4 + wn + 7, yf + 7 + dy)
         }, 'achat')
       } else {
-        // sa barre d'avancée, et le compte à droite
+        // LA RÉCOMPENSE, dans son puits à droite ; à gauche la barre d'avancée et son compte
+        const px = W - 8 - wp
+        plaque(p, px, yf + 2, wp, 11, 'creux')
+        ecrire(p, prix, px + 4, yf + 4, N.hex('#fff2c8'), { police: GRAS })
+        dessinerUnCredit(p, px + 4 + wn + 7, yf + 7)
         const compte = `${montantCourt(Math.floor(q.progres))}/${montantCourt(mo.cible)}`
         const wc = largeurDe(compte, GRAS)
         const bx = 8
-        const by = y + H_QUETE - 11
-        const bw = W - 16 - wc - 5
+        const by = yf + 5
+        const bw = px - 6 - wc - 4 - bx
         p.rect(bx, by, bw, 6, MATIERES.creux.contour)
         p.rect(bx + 1, by + 1, bw - 2, 4, MATIERES.creux.corps)
         const lp = Math.round((bw - 2) * Math.min(1, q.progres / mo.cible))
@@ -2800,7 +2865,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.rect(bx + 1, by + 1, lp, 1, RUNE[3])
           p.rect(bx + 1, by + 4, lp, 1, RUNE[1])
         }
-        ecrire(p, compte, W - 9, by - 1, COQUE[5], { police: GRAS, align: 'right' })
+        ecrire(p, compte, px - 6, by - 1, COQUE[5], { police: GRAS, align: 'right' })
       }
     })
   }
@@ -3130,6 +3195,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         racine.setPointerCapture(ev.pointerId)
         return
       }
+      // les cartes des missions, quand elles ne tiennent pas toutes
+      const zm = zoneDesMissions
+      if (zm !== null && !feuille && q.x >= zm.x && q.x < zm.x + zm.w && q.y >= zm.y && q.y < zm.y + zm.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilMissions, bouge: false, sorte: 'missions' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       // la grille de l'entrepôt, quand elle a plus de rangées qu'elle n'en montre : elle se fait glisser
       const zi = zoneDeLInventaire
       if (zi !== null && !feuille && q.x >= zi.x && q.x < zi.x + zi.w && q.y >= zi.y && q.y < zi.y + zi.h) {
@@ -3200,6 +3272,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         return
       }
       if (glisse.sorte === 'cases') defilCases = glisse.defil0 - (q.y - glisse.y) / PAS_DES_CASES
+      else if (glisse.sorte === 'missions') defilMissions = glisse.defil0 - (q.y - glisse.y) / PAS_DES_MISSIONS
       else if (glisse.sorte === 'inventaire') defilInventaire = glisse.defil0 - (q.y - glisse.y) / PAS_DE_L_INVENTAIRE
       else if (glisse.sorte === 'ordres') defilOrdres = glisse.defil0 - (q.y - glisse.y) / RANG_ORDRE
       else if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
@@ -3229,6 +3302,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'ordres') defilOrdres = Math.round(defilOrdres)
       else if (glisse.sorte === 'inventaire') defilInventaire = Math.round(defilInventaire)
       else if (glisse.sorte === 'cases') defilCases = Math.round(defilCases)
+      else if (glisse.sorte === 'missions') defilMissions = Math.round(defilMissions)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -3249,6 +3323,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (dans(zoneDesCases)) {
       ev.preventDefault()
       defilCases = Math.round(defilCases) + Math.sign(pas)
+    } else if (dans(zoneDesMissions)) {
+      ev.preventDefault()
+      defilMissions = Math.round(defilMissions) + Math.sign(pas)
     } else if (dans(zoneDeLInventaire)) {
       ev.preventDefault()
       defilInventaire = Math.round(defilInventaire) + Math.sign(pas)

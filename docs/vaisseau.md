@@ -2400,3 +2400,16 @@ revenir ». `t-vol` devient « Première expédition » et compte une EXTRACTION
 s'appelle « Premier minerai » (une pépite rapportée). Une avancée ne compte
 que pour la mission active : le minerai rapporté au premier voyage ne vaut
 pas pour la deuxième.
+
+### La carte d'une mission, refaite (12/11)
+
+Keko : la récompense à droite du titre gênait un titre long, et la consigne
+était coupée à deux lignes (la première mission). La carte a maintenant LA
+HAUTEUR DE SON TEXTE (`hauteurDeLaMission`) : le titre sur toute la largeur,
+deux lignes au besoin ; la consigne entière, repliée, un ton plus clair ; un
+filet ; au pied, la barre d'avancée, son compte et LA RÉCOMPENSE dans un
+puits à droite. Terminée, le pied devient « Réclamer » avec la récompense
+dans le bouton (comme « Acheter »). Quand elles ne tiennent pas toutes (quatre missions à consigne de deux
+lignes débordent à 360 × 640), LES CARTES DÉFILENT, une à la fois, au doigt
+ou à la molette (`defilMissions`), une barre à droite ; le bouton
+« Réclamer » d'une carte qui passe sous la barre des onglets ne répond pas.
