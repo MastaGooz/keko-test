@@ -2762,3 +2762,5 @@ Les manches restent flottants : ils naissent sous le doigt, dans leur moitié.
 
 LA BARRE DES CAPACITÉS (Keko, 12/11 : « des carrés avec une icône et le nombre de charges en chiffre ; ainsi on peut en loger quatre en bas à droite ») : quatre cases carrées de vingt pixels ; la bombe dans la première — son icône, ses charges en chiffre dans le coin, d'or quand elle est armée —, les trois autres vides, pour la place. Le texte d'aide au-dessus (« Visez à droite ») est retiré.
 Les cases libres ne se montrent plus (Keko) : les capacités montées se rangent contre le bord droit ; la bombe y est seule.
+
+LA BOMBE D'ESSAI EST RETIRÉE (Keko, 12/11 : « tu peux enlever la capacité bombe et ses charges infinies ») : plus de case en vol (`MONTEES` à 0), plus de `&bombes`. Le geste est jugé ; la barre, l'armement, la visée à droite, la flèche et la règle (`lancerLaBombe`, `porteeDeLaBombe`, leurs vérifications) restent, pour la première vraie capacité.

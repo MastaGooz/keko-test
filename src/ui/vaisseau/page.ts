@@ -4384,13 +4384,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const COTE = 20
     const CASES = 4
     const y = H - bandeBas() - COTE - 5
-    // (`&bombes` : des charges sans fin, pour essayer le geste)
-    if (parametres.has('bombes')) m.charges = CONF.bombe.charges
     const reste = m.charges
     if (reste <= 0) capaciteArmee = false
     // (LES CASES LIBRES NE SE MONTRENT PAS — Keko, 12/11 : « masquer les slots de capacité vides » ; les capacités montées
     // se rangent contre le bord droit, la première tout à droite ; il y a place pour `CASES`)
-    const MONTEES = 1
+    // (AUCUNE POUR L'INSTANT : la bombe d'essai est retirée — Keko, 12/11 : « tu peux enlever la capacité bombe et ses
+    // charges infinies » ; le geste est jugé. Tout le reste est gardé pour la première vraie capacité : la barre, l'armement,
+    // la visée à droite, la flèche, et la règle de la bombe dans `jeu.ts`.)
+    const MONTEES: number = 0
+    if (MONTEES === 0) capaciteArmee = false
     for (let i = 0; i < Math.min(CASES, MONTEES); i++) {
       const x = W - 4 - (i + 1) * COTE - i * 2
       const armee = capaciteArmee
