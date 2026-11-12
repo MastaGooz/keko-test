@@ -2339,7 +2339,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // pas ici, ce qu'on a étant alors plus petit que le coût ; quand on a assez, le coût seul)
       const nombre = tresor[k] < cout[k] ? `${montantCourt(tresor[k])}/${montantCourt(cout[k])}` : montantCourt(cout[k])
       const nom = FICHES_MINERAI[k].nom
-      return { k, nombre, nom, w: 12 + largeurDe(nombre, GRAS) + 3 + largeurDe(nom) }
+      return { k, nombre, nom, w: largeurDe(nombre, GRAS) + 14 + largeurDe(nom) }
     })
     const lignes: PuceDeCout[][] = [[]]
     let large = 0
@@ -2585,9 +2585,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (const pu of ligne) {
           const a = tresor[pu.k] >= cout[pu.k]
           const wn = largeurDe(pu.nombre, GRAS)
-          dessinerUneRessource(p, xc + 5, yl + 4, pu.k)
-          ecrire(p, pu.nombre, xc + 12, yl, a ? RUNE[3] : ROUGE[5], { police: GRAS })
-          ecrire(p, pu.nom, xc + 12 + wn + 3, yl, a ? RUNE[2] : ROUGE[4])
+          // (LE NOMBRE, PUIS L'ICÔNE, PUIS LE NOM — Keko, 12/11 : « X/Y icône nom plutôt qu'icône X/Y nom »)
+          ecrire(p, pu.nombre, xc, yl, a ? RUNE[3] : ROUGE[5], { police: GRAS })
+          dessinerUneRessource(p, xc + wn + 7, yl + 4, pu.k)
+          ecrire(p, pu.nom, xc + wn + 14, yl, a ? RUNE[2] : ROUGE[4])
           xc += pu.w + ECART_DES_PUCES
         }
       })
@@ -2673,8 +2674,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (resume) {
       // (sur la page de la place : la pièce équipée, et « Changer », qui ouvre le panneau de toutes les pièces)
       // (PAS DE BOUTON tant qu'il n'y a RIEN D'AUTRE à équiper ou à acheter — Keko, 12/11 ; la fiche remonte à sa place)
-      // (le châssis l'a toujours : sa couleur se choisit dans le panneau)
-      if (onglet === 'coque' || piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))) {
+      // (le châssis l'a toujours : sa couleur se choisit dans le panneau ; un outil ou une arme aussi, même seuls de
+      // leur sorte : c'est dans le panneau qu'on les RETIRE — Keko, 12/11)
+      if (onglet === 'coque' || onglet === 'outil' || onglet === 'arme' || piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))) {
         const bw = lb('Changer')
         bouton(p, W / 2 - bw / 2, y, bw, 15, 'Changer', true, ouvrirLeChangement, 'ouvre')
       } else y -= 19

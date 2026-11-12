@@ -2540,3 +2540,7 @@ panneau du châssis, sur la même ligne (la pastille de la couleur choisie, et
 le mot s'il tient avant « Équiper »), et il ouvre UN PANNEAU par-dessus
 (`dessinerLesCouleurs`) : le châssis peint, le nom de la couleur, une grille
 de dix grandes pastilles (5 × 2), « Fermer ».
+
+Dans le coût d'un nœud, l'ordre est LE NOMBRE, L'ICÔNE, LE NOM (« 12/20 ◆ Fer » ; Keko, 12/11), plus l'icône en tête.
+
+« Changer » reste présent pour un OUTIL ou une ARME montés, même seuls de leur sorte (Keko, 12/11) : c'est dans le panneau qu'on les retire. Seul le propulseur sans alternative n'a pas le bouton.
