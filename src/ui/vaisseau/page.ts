@@ -4375,8 +4375,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LA BARRE DES CAPACITÉS, en bas à droite de la vue (Keko, 12/11 : « je voyais plutôt la capacité comme des carrés
    * avec une icône et le nombre de charges en chiffre ; ainsi on peut en loger quatre en bas à droite de l'écran ») :
    * QUATRE CASES CARRÉES. Une capacité montée : son icône, et ses charges EN CHIFFRE dans le coin ; ARMÉE, la case passe
-   * à l'or et bat ; sans charge, elle s'éteint. Une case libre est un creux vide. (Une seule capacité existe : la bombe
-   * d'essai ; les trois autres cases montrent la place.) Et, pendant qu'on vise, la flèche qui part du vaisseau.
+   * à l'or et bat ; sans charge, elle s'éteint. Une case libre ne se montre pas. (Une seule capacité existe : la bombe
+   * d'essai, tout à droite.) Et, pendant qu'on vise, la flèche qui part du vaisseau.
    */
   function dessinerLaCapacite(p: Peintre): void {
     if (m.phase !== 'vol') return
@@ -4388,13 +4388,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('bombes')) m.charges = CONF.bombe.charges
     const reste = m.charges
     if (reste <= 0) capaciteArmee = false
-    for (let i = 0; i < CASES; i++) {
-      const x = W - 4 - (CASES - i) * COTE - (CASES - 1 - i) * 2
-      if (i > 0) {
-        // (une case libre)
-        plaque(p, x, y, COTE, COTE, 'creux')
-        continue
-      }
+    // (LES CASES LIBRES NE SE MONTRENT PAS — Keko, 12/11 : « masquer les slots de capacité vides » ; les capacités montées
+    // se rangent contre le bord droit, la première tout à droite ; il y a place pour `CASES`)
+    const MONTEES = 1
+    for (let i = 0; i < Math.min(CASES, MONTEES); i++) {
+      const x = W - 4 - (i + 1) * COTE - i * 2
       const armee = capaciteArmee
       const bat = armee && Math.floor((t - armeeA) * 5) % 2 === 0
       if (armee) p.glow(x + COTE / 2, y + COTE / 2, 22, PEPITE[2], 0.25 + 0.15 * Math.sin(t * 8))
