@@ -1119,8 +1119,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (i > 0) p.rect(px - 9, y0 + 24, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
         }
       } else {
-        motEnRelief(p, 'Contrats', cx, y0 + 7, true)
-        ecrire(p, 'Un par activité, toujours', cx, y0 + 21, COQUE[4], { align: 'center' })
+        // (seul, au milieu du bandeau : « Un par activité, toujours » est retiré — Keko, 12/11)
+        motEnRelief(p, 'Contrats', cx, y0 + 13, true)
       }
     } else {
       p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))
