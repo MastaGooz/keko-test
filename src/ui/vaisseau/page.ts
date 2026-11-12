@@ -4161,16 +4161,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (Keko, ensuite : « juste le mot extraction avec une flèche qui pointe vers en dessous », sans barre ; un
           // fond sombre reste sous le mot : le mât de la base passe juste derrière)
           if (m.phase === 'vol' && m.sorti) { // (pas avant d'avoir quitté le parvis une première fois — Keko : on y naît, le compte n'y court pas encore)
+            // (EN RELIEF — Keko, 12/11 : « le mot extraction manque de texture » : la lettre grasse des titres de fiche, un
+            // acier bleuté éclairé d'en haut, ombré dessous, cerné de sombre, qu'un éclat traverse de temps en temps ; la
+            // flèche a les trois mêmes tons)
             const mot = 'Extraction'
-            const TON = N.hex('#8fa6c8')
-            const wm = largeurDe(mot) + 6
-            const ym = sy - CONF.station.portee - 17
-            p.rect(Math.round(sx - wm / 2), ym - 1, wm, 9, NUIT_OMBRE, 0.78)
-            ecrire(p, mot, sx, ym, TON, { align: 'center' })
+            const wm = largeurDe(mot, GRAS)
+            const ym = sy - CONF.station.portee - 18
+            const c = (t % 4) / 4
+            motEnRelief(p, mot, sx, ym, false, GRAS, c < 0.16 ? -8 + (c / 0.16) * (wm + 20) : null)
             // la flèche, sous le mot, qui descend et remonte d'un pixel
-            const yf = ym + 10 + (Math.floor(t * 3) % 2)
-            for (let k = 0; k < 6; k++) p.rect(Math.round(sx) - 5 + k, yf - 1 + k, 11 - 2 * k, 1, NUIT_OMBRE)
-            for (let k = 0; k < 4; k++) p.rect(Math.round(sx) - 3 + k, yf + k, 7 - 2 * k, 1, k === 0 ? N.hex('#d6e4ff') : TON)
+            const yf = ym + 11 + (Math.floor(t * 3) % 2)
+            for (let k = 0; k < 6; k++) p.rect(Math.round(sx) - 5 + k, yf - 1 + k, 11 - 2 * k, 1, N.hex('#07050d'))
+            for (let k = 0; k < 4; k++) p.rect(Math.round(sx) - 3 + k, yf + k, 7 - 2 * k, 1, k === 0 ? COQUE[5] : k === 1 ? COQUE[4] : N.hex('#57698c'))
           }
         }
       }

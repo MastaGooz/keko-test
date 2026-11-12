@@ -2617,3 +2617,5 @@ Puis (Keko) : le filet sous le titre descend à la hauteur du haut du
 cartouche (`HAUT_DU_TITRE` 30, la languette en dépasse de dix pixels) ; et AU
 DÉCOLLAGE les éclats du réacteur, peints en dernier, ne se peignent plus sur
 l'en-tête ni sur sa languette : le feu passe derrière, comme le vaisseau.
+
+« Extraction », au-dessus du pont, est EN RELIEF (Keko, 12/11 : « manque de texture ») : la lettre grasse en acier bleuté — éclairée dessus, ombrée dessous, cernée —, un éclat qui la traverse ; la flèche a les mêmes tons. Le fond sombre sous le mot est retiré (le cerne suffit).
