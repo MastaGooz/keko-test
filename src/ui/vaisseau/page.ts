@@ -2764,7 +2764,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LA COULEUR D'UNE MISSION (Keko, 12/11 : « les boîtes de quête manquent de couleur », et le filet sombre sous le
    * texte « se voit très mal, foncé sur fond foncé ») : chaque activité a SA TEINTE — le minage cuivre, le combat rouge,
-   * l'exploration bleue, le commerce vert, le tutoriel violet — du sombre au clair ; elle prend le liseré de gauche, le
+   * l'exploration bleue, le commerce vert, le tutoriel doré — du sombre au clair ; elle prend le liseré de gauche, le
    * symbole et la lueur de son puits, le titre, le filet et la barre d'avancée. Terminée, la carte passe à l'or.
    */
   const TEINTES_D_ACTIVITE: Record<Activite | 'tuto', [number, number, number]> = {
@@ -2772,7 +2772,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     combat: [ROUGE[2], ROUGE[4], N.hex('#ff9c8a')],
     exploration: [N.hex('#1f5fa8'), N.hex('#3f9be8'), N.hex('#a6d8ff')],
     commerce: [RUNE[1], RUNE[2], N.hex('#b4f5c0')],
-    tuto: [N.hex('#5a3fa0'), N.hex('#9a78ee'), N.hex('#d6c6ff')],
+    // (le tutoriel en OR — Keko, 12/11 : « jaune / doré, différent des quêtes du pool » ; le violet d'abord essayé)
+    tuto: [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')],
   }
   function hauteurDeLaMission(mo: { titre: string; dit: string }): number {
     const nt = Math.min(2, replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).length)
@@ -2832,7 +2833,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // LE PIED, sous un filet
       const yf = y + h - 4 - 15
       // (le filet : à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
-      for (let x = 9; x < W - 9 - (maxD > 0 ? 2 : 0); x += 2) p.rect(x, yf - 3, 1, 1, T[1])
+      for (let x = 10; x < W - 9 - (maxD > 0 ? 2 : 0); x += 2) p.rect(x, yf - 3, 1, 1, T[1])
       const prix = `+${mo.credits}`
       const wn = largeurDe(prix, GRAS)
       const wp = wn + 18
@@ -2873,7 +2874,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         dessinerUnCredit(p, px + 4 + wn + 7, yf + 7)
         const compte = `${montantCourt(Math.floor(q.progres))}/${montantCourt(mo.cible)}`
         const wc = largeurDe(compte, GRAS)
-        const bx = 8
+        const bx = 10 // (deux pixels d'air après le liseré de gauche)
         const by = yf + 5
         const bw = px - 6 - wc - 4 - bx
         p.rect(bx, by, bw, 6, MATIERES.creux.contour)

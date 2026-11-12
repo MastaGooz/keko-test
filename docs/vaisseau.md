@@ -2421,7 +2421,8 @@ plutôt que « revenez sur le pont de la base »).
 
 Keko : le filet noir sous la consigne « se voit très mal », et « les boîtes
 manquent de couleur ». `TEINTES_D_ACTIVITE` : minage cuivre, combat rouge,
-exploration bleue, commerce vert, tutoriel violet (de moi, à rejuger). La
+exploration bleue, commerce vert (de moi, à rejuger), tutoriel DORÉ (Keko,
+le jour même, à la place du violet : « différent des quêtes du pool »). La
 teinte prend un liseré à gauche, le symbole et la lueur de son puits, le
 titre, le filet (un pointillé clair) et la barre d'avancée ; terminée, la
 carte passe à l'or.
