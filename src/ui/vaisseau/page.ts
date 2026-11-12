@@ -277,6 +277,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const TENUE_DU_PORTE = 3
   /** Le vaisseau touche une pépite la soute pleine (à l'image d'avant) ; quand « Soute pleine » a été redit. */
   let refusVu = false
+  /** … « touche » avec UNE MARGE (Keko : « non pas quand on touche un minerai mais laisser une petite marge de plus ») : à seize unités de plus que le ramassage. */
+  const MARGE_DU_REFUS = 16
   let refusA = -10
   /** Où chaque pastille du porté est dessinée (elle GLISSE vers sa place quand une voisine s'en va). */
   const xDuPorte: Partial<Record<Minerai, number>> = {}
@@ -4137,17 +4139,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pleine = porte >= CONF.capacite
     if (pleine && !soutePleineVue && t - arriveA > 0.9) {
       ;(ressorts.soute ??= { x: 0, v: 0 }).v = -110
-      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 28, t0: t, c: ROUGE[5] })
+      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 14, t0: t, c: ROUGE[5] })
       if (typeof navigator.vibrate === 'function') navigator.vibrate([20, 40, 20])
     }
     soutePleineVue = pleine
     // … ET LE REDIT CHAQUE FOIS QU'ON TOUCHE UNE PÉPITE LA SOUTE PLEINE (Keko, 12/11), au même endroit : au contact
     // (la pépite reste là, la règle ne la ramasse pas), puis une fois par seconde tant qu'on reste dessus
-    const refus = pleine && m.phase === 'vol' && m.pepites.some((q) => Math.hypot(q.x - m.vaisseau.x, q.y - m.vaisseau.y) <= CONF.forage.ramassage)
+    const refus = pleine && m.phase === 'vol' && m.pepites.some((q) => Math.hypot(q.x - m.vaisseau.x, q.y - m.vaisseau.y) <= CONF.forage.ramassage + MARGE_DU_REFUS)
     if (refus && (!refusVu || t - refusA > 1)) {
       refusA = t
       ;(ressorts.soute ??= { x: 0, v: 0 }).v = -70
-      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 28, t0: t, c: ROUGE[5] })
+      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 14, t0: t, c: ROUGE[5] })
     }
     refusVu = refus
     const plafond = `${CONF.capacite}/${CONF.capacite}`

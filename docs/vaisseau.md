@@ -2473,3 +2473,7 @@ remplit. Il reparaît, au même endroit, chaque fois que le vaisseau TOUCHE
 une pépite la soute pleine (à portée de ramassage : la règle la laisse là),
 puis une fois par seconde tant qu'il reste dessus ; la plaque de soute
 sursaute. Calculé dans la page (`refusVu`), la règle n'émet rien.
+Retouché le jour même (Keko) : le message s'écrit JUSTE SOUS LA SOUTE, à la
+place des pastilles du porté (il montait depuis 28 px plus bas), et se
+déclenche avec une MARGE autour de la pépite (`MARGE_DU_REFUS`, 16 unités de
+plus que le ramassage, de moi) au lieu du contact.
