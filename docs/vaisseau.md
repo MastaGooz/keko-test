@@ -2656,3 +2656,5 @@ ceux du titre tracés au trait d'UN pixel, cinq sur sept, coins coupés — des
 chiffres d'afficheur. Elle remplace la grasse sur les valeurs des fiches
 (« 20 T », « 20 », « 1 ») et sur l'étiquette du poids.
 Retiré le jour même (Keko : « il faudrait que la police soit de la même taille que les noms des stats et que le mot poids, sinon ça dénote ; juste lui rajouter un style propre, un poil de texture ») : les valeurs sont dans LA LETTRE COURANTE, celle des noms, EN RELIEF ivoire (`motEnRelief(…, 'ivoire', TEXTE)`). `keko-chiffres` reste inscrite, inutilisée.
+
+Une mission terminée GARDE LA COULEUR de son activité (Keko, 12/11) : elle ne passe plus à l'or ; sa bordure et sa lueur prennent cette teinte, et « Réclamer » la signale.

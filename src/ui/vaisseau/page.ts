@@ -3034,9 +3034,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = t - vueA - i * 0.05
       if (age < 0) return
       const y = haut + Math.round((1 - sortie(age / 0.2)) * 4)
-      if (fini && y + h <= bas) p.glow(W / 2, y + h / 2, 70, PEPITE[2], 0.07 + 0.05 * Math.sin(t * 4))
-      plaque(p, 4, y, W - (maxD > 0 ? 10 : 8), h, 'encre', { bord: fini ? PEPITE[2] : undefined, flash: age < 0.07 })
-      const T: [number, number, number] = fini ? [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')] : TEINTES_D_ACTIVITE[mo.activite ?? 'tuto']
+      // (UNE MISSION TERMINÉE GARDE SA COULEUR — Keko, 12/11 : « ne change pas la couleur d'une mission quand elle est
+      // terminée » ; elle passait à l'or : son liseré et sa lueur sont à la teinte de son activité)
+      const T: [number, number, number] = TEINTES_D_ACTIVITE[mo.activite ?? 'tuto']
+      if (fini && y + h <= bas) p.glow(W / 2, y + h / 2, 70, T[1], 0.07 + 0.05 * Math.sin(t * 4))
+      plaque(p, 4, y, W - (maxD > 0 ? 10 : 8), h, 'encre', { bord: fini ? T[1] : undefined, flash: age < 0.07 })
       // (le liseré de gauche, à la teinte de l'activité)
       p.rect(5, y + 2, 2, h - 4, T[1])
       p.rect(5, y + 2, 1, h - 4, T[2])
