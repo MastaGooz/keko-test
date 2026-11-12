@@ -2413,3 +2413,6 @@ dans le bouton (comme « Acheter »). Quand elles ne tiennent pas toutes (quatre
 lignes débordent à 360 × 640), LES CARTES DÉFILENT, une à la fois, au doigt
 ou à la molette (`defilMissions`), une barre à droite ; le bouton
 « Réclamer » d'une carte qui passe sous la barre des onglets ne répond pas.
+
+Les deux consignes du tutoriel disent « extraction / extraire » (Keko, 12/11,
+plutôt que « revenez sur le pont de la base »).
