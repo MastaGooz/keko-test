@@ -2777,3 +2777,7 @@ dessiné qui montre les deux moitiés. Le choix (`Reglages.vol`, gardé à part
 sous `keko-vaisseau-reglages`) inverse les deux moitiés de l'écran en vol.
 Retouches (Keko) : la tuile « Paramètres » ne sort plus du panneau des autres onglets (la grille est bornée à ses bords) ; le petit écran est plus large (52 px : « VISE » touchait ses bords) ; les lignes du texte sont à 11 px au lieu de 9 (le p de « posez » touchait le L du dessous).
 L'onglet « Paramètres » a UNE FLÈCHE DE RETOUR (Keko : rien ne disait qu'on en sort par la barre du bas) : l'en-tête des pages du hangar (`enTete`), dont la touche rouvre le panneau « Autres onglets ».
+
+### Les panneaux d'un seul ton (12/11)
+
+Keko : « dans les rectangles du menu, tu dessines la texture en deux parties, plus claire en haut et plus foncée en bas ; ça sépare en deux à des endroits pas très cohérents — dans autres onglets, au-dessus du séparateur ». `plaque` : la coupure tramée à mi-hauteur ne reste que sur les plaques de trente pixels de haut au plus (boutons, touches, en-têtes, « Décoller »), où elle fait le bombé ; un panneau plus haut a tout son corps dans le ton clair.

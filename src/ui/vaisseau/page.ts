@@ -740,8 +740,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(x + 1, y + h - 2, 1, 1, T.contour)
     p.rect(x + w - 2, y + h - 2, 1, 1, T.contour)
     // le corps : le haut plus clair, la frontière tramée ; enfoncée, tout descend d'un ton
+    // (UN PANNEAU EST D'UN SEUL TON — Keko, 12/11 : « tu dessines la texture en deux parties, plus claire en haut et plus
+    // foncée en bas ; ça sépare en deux à des endroits pas très cohérents » : la coupure à mi-hauteur tombait n'importe
+    // où dans un grand panneau. Elle ne reste que sur les petites plaques — boutons, touches, en-têtes —, où elle fait
+    // le bombé ; au-dessus de trente pixels de haut (« Décoller » en fait vingt-huit), tout le corps a le ton clair.)
+    const uni = h > 30
     const haut = enf ? T.corps : T.haut
-    const corps = enf ? T.ombre : T.corps
+    const corps = uni ? haut : enf ? T.ombre : T.corps
     const mi = y + 1 + Math.floor((h - 2) * 0.48)
     p.rect(x + 2, y + 1, w - 4, 1, haut)
     p.rect(x + 1, y + 2, w - 2, mi - y - 2, haut)
