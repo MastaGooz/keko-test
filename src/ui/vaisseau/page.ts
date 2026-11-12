@@ -19,7 +19,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, ovale, peindreDansUneCase, peindreFormes } from './rendu-vaisseau.ts'
 import { chargerHangar, sauverHangar } from './hangar.ts'
-import { estTerminee, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
+import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
@@ -158,8 +158,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function compter(c: Compteur, valeur: number): void {
     const avant = new Set(quetes.actives.filter(estTerminee).map((q) => q.modele))
+    const etapesAvant = new Map(quetes.actives.map((q) => [q.modele, etapesFaites(q)]))
     quetes = noter(quetes, c, valeur)
     for (const q of quetes.actives) {
+      // UNE ÉTAPE FAITE (une mission à étapes) : son toast à elle — « Étape 2/3 » et ce qu'elle demandait ; la dernière
+      // laisse la place au toast de la mission
+      const mo = modeleDe(q.modele)
+      const faites = etapesFaites(q)
+      faites.forEach((faite, j) => {
+        if (!faite || etapesAvant.get(q.modele)?.[j] === true) return
+        etapeFaiteA[`${q.modele}-${j}`] = t
+        if (estTerminee(q)) return
+        toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: `Étape ${j + 1}/${faites.length}`, titleFont: GRAS, text: mo?.etapes?.[j].dit ?? '', font: TEXTE, seed: 9 + toasts.length }))
+        jouer('equipe')
+      })
       if (!estTerminee(q) || avant.has(q.modele)) continue
       // UN TOAST, celui de l'« achievement » du dépôt (`keko/quete-terminee`) : il glisse, sa médaille y saute
       toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: 'Mission réussie', titleFont: GRAS, text: modeleDe(q.modele)?.titre ?? '', font: TEXTE, seed: 9 + toasts.length }))
@@ -167,6 +179,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       jouer('achat')
     }
   }
+  /** Quand chaque étape d'une mission à étapes a été faite (sa case s'allume un instant sur la carte). */
+  const etapeFaiteA: Record<string, number> = {}
   /** Les toasts en cours (une quête terminée), au-dessus de tout, en vol comme à la base ; empilés s'il y en a plusieurs. */
   let toasts: Instance[] = []
   function dessinerLesToasts(dt: number): void {
@@ -2790,11 +2804,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * leur puits, puis l'onglet débloqué (son icône, son nom en or). Leurs hauteurs :
    */
   const piedDeLaMission = (mo: { ouvre?: string }, fini: boolean): { jauge: number; lots: number } => ({ jauge: fini ? 15 : 9, lots: mo.ouvre === undefined ? 11 : 15 })
-  function hauteurDeLaMission(mo: { titre: string; dit: string; ouvre?: string }, fini: boolean): number {
+  function hauteurDeLaMission(mo: { titre: string; dit: string; ouvre?: string; etapes?: unknown[] }, fini: boolean): number {
     const nt = Math.min(2, replier(mo.titre, LARGEUR_DU_TEXTE_DE_MISSION, GRAS).length)
     const nd = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION).length
     const pied = piedDeLaMission(mo, fini)
-    return 5 + Math.max(20, nt * 10 + 1 + nd * 9) + 6 + pied.jauge + 3 + pied.lots + 4
+    return 5 + Math.max(20, nt * 10 + 1 + nd * 9 + (mo.etapes === undefined ? 0 : 3 + mo.etapes.length * 10)) + 6 + pied.jauge + 3 + pied.lots + 4
   }
   /**
    * LES CARTES DÉFILENT quand elles ne tiennent pas toutes (leur hauteur suit leur texte) : au doigt ou à la molette,
@@ -2847,6 +2861,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       titre.forEach((li, k) => ecrire(p, li, 32, y + 5 + k * 10, T[2], { police: GRAS }))
       const dit = replier(mo.dit, LARGEUR_DU_TEXTE_DE_MISSION)
       dit.forEach((li, k) => ecrire(p, li, 32, y + 5 + titre.length * 10 + 1 + k * 9, COQUE[5]))
+      // SES ÉTAPES, s'il y en a : une case par étape — vide, ou verte et cochée ; celle qu'on vient de faire s'allume
+      if (mo.etapes !== undefined) {
+        const faites = etapesFaites(q)
+        mo.etapes.forEach((et, j) => {
+          const ye = y + 5 + titre.length * 10 + 1 + dit.length * 9 + 3 + j * 10
+          const faite = faites[j]
+          p.rect(32, ye, 7, 7, MATIERES.encre.contour)
+          p.rect(33, ye + 1, 5, 5, faite ? RUNE[2] : MATIERES.creux.corps)
+          if (faite) {
+            // (la coche : deux traits clairs)
+            p.rect(34, ye + 3, 1, 2, N.WHITE)
+            p.rect(35, ye + 4, 1, 1, N.WHITE)
+            p.rect(36, ye + 2, 1, 2, N.WHITE)
+            const da = t - (etapeFaiteA[`${q.modele}-${j}`] ?? -10)
+            if (da < 0.6) {
+              p.glow(35, ye + 3, 9, RUNE[3], 0.8 * (1 - da / 0.6))
+              N.sparkle(p, 35, ye + 3, 1 + 3 * Math.sin((da / 0.6) * Math.PI), N.WHITE, RUNE[3], 0.6)
+            }
+          }
+          ecrire(p, et.dit, 43, ye - 1, faite ? N.hex('#b4f5c0') : COQUE[5])
+        })
+      }
       // LE PIED, sous un filet (à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
       const pied = piedDeLaMission(mo, fini)
       const xd = W - (maxD > 0 ? 12 : 10)
@@ -4831,6 +4867,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             case 'ramasse':
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
               if (ev.par === 'joueur') {
+                compter('ramassees', 1)
                 envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai, trace: [] })
                 jouer('ramasse')
                 // (le « pop » du coin collect : un disque blanc qui se referme, un anneau, des étoiles lancées en rond)

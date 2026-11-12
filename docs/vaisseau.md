@@ -2500,3 +2500,17 @@ Ce qui suit de là :
   la page dans `tirer`, `reclamer`, `quetesSansTutoriel`, `lireQuetes`).
 - Une sauvegarde qui avait déjà posé des ordres les garde (ils se règlent,
   on peut les annuler) mais ne peut plus en poser sans le nœud.
+
+### Une mission à étapes : la première, en trois temps (12/11)
+
+Keko : « diviser la première quête en 3 étapes avec validation animée à
+chaque étape faite : partir en explo / miner du minerai / extraire ».
+`Modele.etapes` (`quetes.ts`) : chaque étape a sa consigne, son compteur, sa
+cible, et compte de son côté (`Quete.pas`) ; l'avancée de la mission est le
+nombre d'étapes faites, elle est terminée avec la dernière. « Première
+expédition » : « Partez en expédition » (`vols`), « Minez du minerai »
+(`ramassees`, un compteur neuf : une pépite ramassée en vol), « Extrayez-le à
+la base » (`pepites`). LA VALIDATION : en vol, le toast des missions avec
+« Étape 2/3 » et la consigne de l'étape (la dernière laisse la place à
+« Mission réussie ») ; sur la carte, une case par étape, verte et cochée une
+fois faite, et la jauge compte les étapes (1/3).

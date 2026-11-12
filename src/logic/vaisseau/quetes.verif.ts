@@ -1,7 +1,7 @@
 /**
  * Vérifications des quêtes, sans navigateur.
  */
-import { ACTIVITES, CATALOGUE, estTerminee, lireQuetes, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type EtatQuetes } from './quetes.ts'
+import { ACTIVITES, CATALOGUE, estTerminee, etapesFaites, lireQuetes, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type EtatQuetes, type Modele } from './quetes.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -10,12 +10,14 @@ function verifier(quoi: string, vrai: boolean): void {
 }
 
 console.log('quetes')
+/** Fait tout ce qu'une quête demande (chacune de ses étapes, si elle en a). */
+const finir = (e: EtatQuetes, mo: Modele): EtatQuetes => (mo.etapes === undefined ? noter(e, mo.compteur, mo.cible) : mo.etapes.reduce((x, et) => noter(x, et.compteur, et.cible), e))
 verifier('des identifiants uniques ; chaque quête a une cible et une récompense ; le catalogue a au moins deux quêtes par activité', new Set([...TUTORIEL, ...CATALOGUE].map((q) => q.id)).size === TUTORIEL.length + CATALOGUE.length && [...TUTORIEL, ...CATALOGUE].every((q) => q.cible > 0 && q.credits > 0) && ACTIVITES.every((a) => CATALOGUE.filter((q) => q.activite === a).length >= 2) && TUTORIEL.every((q) => q.activite === undefined))
 const neuf = quetesNeuves()
 verifier('au départ : la première quête du tutoriel, seule ; ni le commerce ni la tech ne sont ouverts', neuf.etape === 0 && neuf.actives.length === 1 && neuf.actives[0].modele === TUTORIEL[0].id && !ongletOuvert(neuf, 'entrepot') && !ongletOuvert(neuf, 'labo') && !tutorielFini(neuf))
 verifier('ce qui ne concerne pas la quête ne la fait pas avancer (le même état est rendu)', noter(neuf, 'rivaux', 5) === neuf && noter(neuf, 'pepites', 0) === neuf)
-const vole = noter(neuf, 'pepites', 1)
-verifier('ce qu’elle compte la fait avancer, jamais au-delà de sa cible ; l’état d’avant ne bouge pas', estTerminee(vole.actives[0]) && noter(vole, 'pepites', 3).actives[0].progres === 1 && !estTerminee(neuf.actives[0]))
+const vole = finir(neuf, TUTORIEL[0])
+verifier('ce qu’elle compte la fait avancer, jamais au-delà de sa cible ; l’état d’avant ne bouge pas', estTerminee(vole.actives[0]) && noter(vole, 'pepites', 3).actives[0].progres === TUTORIEL[0].cible && !estTerminee(neuf.actives[0]))
 verifier('on ne réclame pas une quête qui n’est pas terminée', reclamer(neuf, 0, 0) === null && reclamer(vole, 5, 0) === null)
 const r1 = reclamer(vole, 0, 100)!
 verifier('réclamer : les crédits de la quête, et la suivante du tutoriel prend sa place', r1 !== null && r1.credits === 100 + TUTORIEL[0].credits && r1.etat.etape === 1 && r1.etat.actives.length === 1 && r1.etat.actives[0].modele === TUTORIEL[1].id && r1.etat.actives[0].progres === 0 && r1.ouvre === 'entrepot')
@@ -25,7 +27,7 @@ let e: EtatQuetes = neuf
 let credits = 0
 const ouverts: string[] = []
 for (const etape of TUTORIEL) {
-  e = noter(e, etape.compteur, etape.cible)
+  e = finir(e, etape)
   const r = reclamer(e, 0, credits)!
   e = r.etat
   credits = r.credits
@@ -52,6 +54,13 @@ for (let i = 0; i < 40; i++) {
   boucle = reclamer(noter(boucle, mo.compteur, mo.cible), 0, 0)!.etat
 }
 verifier('à force de réclamer, tout le catalogue d’une activité passe', vues.size === CATALOGUE.filter((q) => q.activite === 'minage').length)
+
+// la mission à étapes : chacune compte de son côté, la mission finit avec la dernière
+const parti = noter(neuf, 'vols', 1)
+const mine = noter(parti, 'ramassees', 2)
+verifier('une mission à étapes : chaque étape se valide seule, l’avancée est le nombre d’étapes faites ; elle n’est terminée qu’avec toutes', TUTORIEL[0].etapes !== undefined && TUTORIEL[0].cible === TUTORIEL[0].etapes.length && etapesFaites(neuf.actives[0]).join() === 'false,false,false' && etapesFaites(parti.actives[0]).join() === 'true,false,false' && parti.actives[0].progres === 1 && etapesFaites(mine.actives[0]).join() === 'true,true,false' && !estTerminee(mine.actives[0]) && estTerminee(noter(mine, 'pepites', 1).actives[0]) && noter(parti, 'vols', 1) === parti)
+const reluePas = lireQuetes({ etape: 0, actives: [{ modele: TUTORIEL[0].id, progres: 99, pas: [1, 7, 'x'] }], tirage: 1 }, false)
+verifier('relue sans confiance : ses étapes bornées, son avancée recomptée', etapesFaites(reluePas.actives[0]).join() === 'true,true,false' && reluePas.actives[0].progres === 2 && etapesFaites(lireQuetes({ etape: 0, actives: [{ modele: TUTORIEL[0].id, progres: 1 }], tirage: 1 }, false).actives[0]).join() === 'false,false,false')
 
 // une quête qui exige une mécanique n'est pas tirée sans elle
 let sansOrdres = quetesSansTutoriel(1, () => false)

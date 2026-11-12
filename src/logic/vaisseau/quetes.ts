@@ -27,6 +27,8 @@ export type Compteur =
   | 'vols'
   /** Les extractions réussies (revenu à quai jusqu'au bout du compte). */
   | 'extractions'
+  /** Les pépites ramassées en vol (pas encore extraites). */
+  | 'ramassees'
   /** Les pépites extraites, toutes ensemble ou par minerai. */
   | 'pepites'
   | 'fer'
@@ -51,6 +53,9 @@ const AU_PLUS_GRAND: Compteur[] = ['distance']
 /** Un onglet qu'une quête du tutoriel ouvre (les identifiants des vues de la page). */
 export type OngletOuvert = 'entrepot' | 'labo'
 
+/** UNE ÉTAPE d'une mission à étapes : ce qu'elle demande, ce qu'elle compte, combien. */
+export type Etape = { dit: string; compteur: Compteur; cible: number }
+
 export type Modele = {
   id: string
   /** Son activité (une quête du catalogue) ; le tutoriel n'en a pas. */
@@ -63,6 +68,12 @@ export type Modele = {
   credits: number
   /** L'onglet que sa récompense ouvre (le tutoriel). */
   ouvre?: OngletOuvert
+  /**
+   * SES ÉTAPES, s'il y en a (Keko, 12/11 : « diviser la première quête en 3 étapes avec validation animée à chaque
+   * étape faite ») : chacune compte de son côté ; la mission est terminée quand toutes le sont. `compteur` ne sert
+   * alors pas, `cible` vaut leur nombre et l'avancée de la mission est le nombre d'étapes faites.
+   */
+  etapes?: Etape[]
   /** La mécanique de la recherche sans laquelle elle est infaisable : elle n'est pas tirée tant qu'on ne l'a pas. */
   exige?: string
 }
@@ -71,7 +82,14 @@ export type Modele = {
 export const TUTORIEL: Modele[] = [
   // (LA PREMIÈRE : SORTIR ET S'EXTRAIRE AVEC DU MINERAI, au moins une pépite — Keko, 12/11 ; d'abord un décollage, puis
   // un aller-retour à vide suivi d'une seconde mission pour le minerai : les deux n'en font plus qu'une, qui ouvre le commerce)
-  { id: 't-vol', titre: 'Première expédition', dit: 'Minez une roche, puis réussissez une extraction avec son minerai.', compteur: 'pepites', cible: 1, credits: 20, ouvre: 'entrepot' },
+  {
+    id: 't-vol', titre: 'Première expédition', dit: 'Votre première sortie, en trois temps.', compteur: 'pepites', cible: 3, credits: 20, ouvre: 'entrepot',
+    etapes: [
+      { dit: 'Partez en expédition', compteur: 'vols', cible: 1 },
+      { dit: 'Minez du minerai', compteur: 'ramassees', cible: 1 },
+      { dit: 'Extrayez-le à la base', compteur: 'pepites', cible: 1 },
+    ],
+  },
   { id: 't-vente', titre: 'Première vente', dit: 'Vendez du minerai au Commerce.', compteur: 'ventes', cible: 1, credits: 30, ouvre: 'labo' },
   { id: 't-recherche', titre: 'Recherche', dit: 'Débloquez un noeud à la Recherche.', compteur: 'noeuds', cible: 1, credits: 40 },
   // (« Premier ordre » est sorti du tutoriel le 12/11 : les ordres à prix fixé se débloquent à la recherche)
@@ -97,7 +115,7 @@ export const CATALOGUE: Modele[] = [
 export const modeleDe = (id: string): Modele | undefined => TUTORIEL.find((q) => q.id === id) ?? CATALOGUE.find((q) => q.id === id)
 
 /** Une quête en cours : son modèle, et où elle en est (jamais plus que sa cible). */
-export type Quete = { modele: string; progres: number }
+export type Quete = { modele: string; progres: number; /** L'avancée de chaque étape, pour une mission à étapes. */ pas?: number[] }
 /**
  * L'état : l'ÉTAPE du tutoriel (son rang ; au-delà de la dernière, il est fini), les quêtes actives (une pendant le
  * tutoriel, une par activité ensuite), et le numéro du prochain tirage.
@@ -125,6 +143,11 @@ export function quetesSansTutoriel(tirage = 1, acquis: Acquis = TOUT_ACQUIS): Et
   return { etape: TUTORIEL.length, actives: ACTIVITES.map((a, i) => tirer(a, tirage + i, undefined, acquis)), tirage: tirage + ACTIVITES.length }
 }
 
+/** Les étapes d'une mission à étapes : faite ou non, dans l'ordre (vide pour une mission ordinaire). */
+export function etapesFaites(q: Quete): boolean[] {
+  const mo = modeleDe(q.modele)
+  return mo?.etapes === undefined ? [] : mo.etapes.map((et, j) => (q.pas?.[j] ?? 0) >= et.cible)
+}
 export const estTerminee = (q: Quete): boolean => q.progres >= (modeleDe(q.modele)?.cible ?? Infinity)
 /** Les onglets que le tutoriel a déjà ouverts (tous, une fois fini). */
 export function ongletOuvert(e: EtatQuetes, o: OngletOuvert): boolean {
@@ -141,6 +164,22 @@ export function noter(e: EtatQuetes, compteur: Compteur, valeur: number): EtatQu
   let change = false
   const actives = e.actives.map((q) => {
     const mo = modeleDe(q.modele)
+    if (mo !== undefined && mo.etapes !== undefined) {
+      // (une mission à étapes : chaque étape compte de son côté ; l'avancée de la mission est le nombre d'étapes faites)
+      const pas = mo.etapes.map((_, j) => q.pas?.[j] ?? 0)
+      let bouge = false
+      mo.etapes.forEach((et, j) => {
+        if (et.compteur !== compteur || pas[j] >= et.cible) return
+        const v = Math.min(et.cible, AU_PLUS_GRAND.includes(compteur) ? Math.max(pas[j], valeur) : pas[j] + valeur)
+        if (v !== pas[j]) {
+          pas[j] = v
+          bouge = true
+        }
+      })
+      if (!bouge) return q
+      change = true
+      return { ...q, pas, progres: mo.etapes.filter((et, j) => pas[j] >= et.cible).length }
+    }
     if (mo === undefined || mo.compteur !== compteur || q.progres >= mo.cible) return q
     const progres = Math.min(mo.cible, AU_PLUS_GRAND.includes(compteur) ? Math.max(q.progres, valeur) : q.progres + valeur)
     if (progres === q.progres) return q
@@ -185,6 +224,15 @@ export function lireQuetes(brut: unknown, dejaJoue: boolean, acquis: Acquis = TO
       if (typeof x !== 'object' || x === null || typeof x.modele !== 'string') continue
       const mo = modeleDe(x.modele)
       if (mo === undefined) continue
+      if (mo.etapes !== undefined) {
+        const brutes = Array.isArray(x.pas) ? (x.pas as unknown[]) : []
+        const pas = mo.etapes.map((et, j) => {
+          const v = brutes[j]
+          return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.min(et.cible, v) : 0
+        })
+        lues.push({ modele: mo.id, pas, progres: mo.etapes.filter((et, j) => pas[j] >= et.cible).length })
+        continue
+      }
       const pr = typeof x.progres === 'number' && Number.isFinite(x.progres) && x.progres > 0 ? Math.min(mo.cible, x.progres) : 0
       lues.push({ modele: mo.id, progres: pr })
     }
