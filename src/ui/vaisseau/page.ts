@@ -4162,10 +4162,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
           } else {
             // le chiffre : énorme et blanc une image, puis le ressort ; il tremble 0,22 s
+            // (À L'ÉCHELLE 2, plus 3 — Keko, 12/11 : « une grosse différence entre le mot extraction et les chiffres du
+            // countdown, ils sont trop gros » ; le mot qu'il remplace est à l'échelle 1)
             const reste = CONF.extraction.duree - m.extraction
             const tremble = monte && ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
             p.glow(sx, yMot, 26, PEPITE[2], 0.2 + (monte && ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
-            motFrappe(p, String(Math.ceil(reste)), sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), monte ? 3 + 1.6 * Math.exp(-ub * 26) * Math.cos(ub * 38) : 3, monte ? (ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0) : 0)
+            motFrappe(p, String(Math.ceil(reste)), sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), monte ? 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38) : 2, monte ? (ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0) : 0)
           }
         } else if (laProche) {
           battementVu = -1

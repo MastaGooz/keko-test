@@ -2658,3 +2658,5 @@ chiffres d'afficheur. Elle remplace la grasse sur les valeurs des fiches
 Retiré le jour même (Keko : « il faudrait que la police soit de la même taille que les noms des stats et que le mot poids, sinon ça dénote ; juste lui rajouter un style propre, un poil de texture ») : les valeurs sont dans LA LETTRE COURANTE, celle des noms, EN RELIEF ivoire (`motEnRelief(…, 'ivoire', TEXTE)`). `keko-chiffres` reste inscrite, inutilisée.
 
 Une mission terminée GARDE LA COULEUR de son activité (Keko, 12/11) : elle ne passe plus à l'or ; sa bordure et sa lueur prennent cette teinte, et « Réclamer » la signale.
+
+Le chiffre du compte de l'extraction est à l'échelle 2 au lieu de 3 (Keko, 12/11 : trop gros à côté du mot « Extraction » qu'il remplace) ; sa frappe dépasse d'autant moins.
