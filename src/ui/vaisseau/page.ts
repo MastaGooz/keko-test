@@ -377,7 +377,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sur l'orientation ; et c'est toujours l'orientation qui détermine où va la caméra : le joueur peut avancer mais
    * regarder en arrière ») : un SECOND MANCHE flottant, posé par le second doigt ; il ne pousse pas, il tourne le nez.
    */
-  let regard: { id: number; centre: Vecteur; doigt: Vecteur; tir?: boolean } | null = null
+  let regard: { id: number; centre: Vecteur; doigt: Vecteur; tir?: boolean; t0?: number } | null = null
   /**
    * LA CAPACITÉ ACTIVE (Keko, 12/11 : « que la barre de capacité en bas soit cliquable et qu'une fois le clic activé, il
    * faille un deuxième clic sur l'écran pour déclencher la capacité ; et lors de ce deuxième clic, on peut également
@@ -3666,7 +3666,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (regard !== null && !fantome) return
       ev.preventDefault()
       racine.setPointerCapture(ev.pointerId)
-      regard = { id: ev.pointerId, centre: q, doigt: q, tir: capaciteArmee }
+      regard = { id: ev.pointerId, centre: q, doigt: q, tir: capaciteArmee, t0: t }
     }
   })
   racine.addEventListener('pointermove', (ev) => {
@@ -3705,7 +3705,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (regard !== null && ev.pointerId === regard.id) {
       const d = { x: ev.clientX, y: ev.clientY }
-      regard = { id: regard.id, centre: centreQuiSuit(MANCHE, regard.centre, d), doigt: d, tir: regard.tir }
+      regard = { id: regard.id, centre: centreQuiSuit(MANCHE, regard.centre, d), doigt: d, tir: regard.tir, t0: regard.t0 }
       return
     }
     if (manche === null || ev.pointerId !== manche.id) return
@@ -5303,7 +5303,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (regard !== null && regard.tir) {
       // (LA VISÉE D'UNE CAPACITÉ N'EST PAS UN MANCHE — Keko : « il est associé à l'orientation » : rien sous le pouce ;
       // la flèche part du vaisseau, voir `dessinerLaCapacite`)
-    } else if (regard !== null) {
+    } else if (regard !== null && (t - (regard.t0 ?? -1) > 0.16 || Math.hypot(regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y) > 6)) {
+      // (IL NE PARAÎT PAS SUR UNE SIMPLE TAPE — Keko, 13/11 : « il apparaît quand je fais le double tap pour l'accélération,
+      // c'est pas beau » : seulement si le doigt reste posé un instant, ou glisse)
       // LE MANCHE DU REGARD, plus petit, BLEU, DANS LA LANGUE DU PREMIER (Keko, 12/11 : « donner une texture au deuxième
       // stick, comme le premier ») : l'anneau cerné d'encre, éclairé d'en haut à gauche, ombré en bas à droite, sur un
       // fond à peine teinté ; le pouce bombé — le cerne, le corps, le dessus plus clair décalé vers la lumière, un éclat

@@ -2827,3 +2827,5 @@ cette part du coup. Elle ne rend que sa part forée. Les autres roches
 rebondissent comme avant ; le rival ne traverse rien. De série rien n'est
 assez léger : il faut plus de 50 t pour passer les plus petites (les chiffres
 sont de moi, à rejuger avec les gros châssis à venir).
+
+Le manche du regard ne se dessine pas sur une simple tape (Keko, 13/11 : il clignotait à chaque double tape de la postcombustion) : il paraît quand le doigt est resté posé 0,16 s ou a glissé de six pixels.
