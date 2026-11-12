@@ -1942,6 +1942,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let changementA = -10
   /** Dans le panneau du châssis : les pastilles de couleur sont dépliées (le bouton « Couleur »). */
   let couleursOuvertes = false
+  let couleursA = -10
   function ouvrirLeChangement(): void {
     changement = true
     changementA = t
@@ -1949,6 +1950,57 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     choixA = t
     surligneY = -1
   }
+  /**
+   * LA GRILLE DES COULEURS, par-dessus le panneau du châssis : le châssis peint dans la couleur choisie, son nom, dix
+   * grandes pastilles sur deux rangées (la choisie cerclée d'or — une tape repeint la coque et les ailes, au hangar
+   * comme en vol), et « Fermer » ; une tape hors du panneau le ferme aussi.
+   */
+  function dessinerLesCouleurs(p: Peintre): void {
+    if (!couleursOuvertes) return
+    const u0 = sortie((t - couleursA) / 0.18)
+    const COLONNES = 5
+    const cote = 26
+    const pas = cote + 4
+    const rangs = Math.ceil(LIVREES.length / COLONNES)
+    const hp = 78 + rangs * pas + 15 + 4
+    const x = 6
+    const w = W - 12
+    const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
+    p.rect(0, 0, W, H, NUIT, 0.72 * u0)
+    frame.light.fill(0)
+    zones = []
+    zoneGlissante = null
+    plaque(p, x, y, w, hp, 'encre')
+    motEnRelief(p, 'Couleur', W / 2, y + 7, true)
+    // le châssis monté, dans la couleur choisie
+    plaque(p, W / 2 - 24, y + 20, 48, 40, 'creux')
+    const monte = monteeA(hangar, 'coque')
+    if (monte !== undefined) dessinerLePictogramme(p, monte, W / 2, y + 40, 48, 40)
+    ecrire(p, LIVREES.find((l) => l.id === livree)?.nom ?? '', W / 2, y + 64, N.hex('#fff3cf'), { align: 'center', police: GRAS })
+    const x0 = Math.round((W - COLONNES * pas + 4) / 2)
+    LIVREES.forEach((l, i) => {
+      const cx = x0 + (i % COLONNES) * pas
+      const cy = y + 78 + Math.floor(i / COLONNES) * pas
+      const choisie = l.id === livree
+      const [sombre, moyen, clair] = tonsDeLaLivree(l.id)
+      const e = etatDuBouton(cx, cy, cote, cote)
+      p.rect(cx - 1, cy - 1 + e.dy, cote + 2, cote + 2, choisie ? PEPITE[3] : MATIERES.encre.contour)
+      p.rect(cx, cy + e.dy, cote, cote, MATIERES.encre.contour)
+      p.rect(cx + 1, cy + 1 + e.dy, cote - 2, cote - 2, moyen)
+      p.rect(cx + 1, cy + 1 + e.dy, cote - 2, 5, clair)
+      p.rect(cx + 1, cy + cote - 8 + e.dy, cote - 2, 7, sombre)
+      if (choisie) N.sparkle(p, cx + cote - 5, cy + 5, 2 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), N.WHITE, PEPITE[3], 0.8)
+      else zone(cx - 2, cy - 2, pas, pas, () => {
+        livree = l.id
+        sauverLivree(l.id)
+      }, 'equipe')
+    })
+    const bf = largeurDe('Fermer', GRAS) + 22
+    bouton(p, Math.round(W / 2 - bf / 2), y + 78 + rangs * pas, bf, 15, 'Fermer', true, () => (couleursOuvertes = false), 'retour', 'acier')
+    zone(x, y, w, hp, () => {}, null)
+    zone(0, 0, W, H, () => (couleursOuvertes = false), 'retour')
+  }
+
   /**
    * LE PANNEAU « CHANGER » : toutes les pièces de la place, sur TOUTE LA HAUTEUR sous la barre du haut (la scène et la
    * barre des onglets sont couvertes : la liste a enfin de la place) — le titre, les puces de sous-catégorie, la liste
@@ -1977,49 +2029,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LA FLÈCHE DE RETOUR du hangar, pas un bouton « Fermer » — Keko, 12/11)
     enTete(p, y, titre, fermer)
     y += HT + 3
-    // LA COULEUR DU CHÂSSIS (Keko, 12/11 : « un système de changement de couleur du châssis », puis : « dans le panneau
-    // changer, et un bouton couleur plutôt qu'afficher direct les couleurs ») : au pied du panneau du châssis, le bouton
-    // « Couleur » ; il déplie au-dessus de lui une rangée de pastilles — une par livrée, la choisie cerclée d'or ; une
-    // tape repeint la coque et les ailes, au hangar comme en vol
-    let yFermer = H
-    if (onglet === 'coque') {
-      const nom = LIVREES.find((l) => l.id === livree)?.nom ?? ''
-      const mot = couleursOuvertes ? nom : 'Couleur'
-      const bc = largeurDe(mot, GRAS) + 22 + 14
-      const yb = H - 4 - 15
-      const bx = Math.round(W / 2 - bc / 2)
-      boutonBase(p, bx, yb, bc, 15, true, () => (couleursOuvertes = !couleursOuvertes), (dx, dy) => {
-        // (la pastille de la couleur portée, puis le mot)
-        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
-        p.rect(bx + 6 + dx, yb + 3 + dy, 9, 9, MATIERES.encre.contour)
-        p.rect(bx + 7 + dx, yb + 4 + dy, 7, 7, moyen)
-        p.rect(bx + 7 + dx, yb + 4 + dy, 7, 2, clair)
-        p.rect(bx + 7 + dx, yb + 9 + dy, 7, 2, sombre)
-        ecrire(p, mot, bx + 19 + dx, yb + 4 + dy, N.hex('#fff3cf'), { police: GRAS })
-      }, 'ouvre', { matiere: 'acier' })
-      yFermer = yb - 4
-      if (couleursOuvertes) {
-        const pas = 17
-        const x0 = Math.round((W - LIVREES.length * pas + 2) / 2)
-        const yp = yb - 4 - 17
-        LIVREES.forEach((l, i) => {
-          const x = x0 + i * pas
-          const choisie = l.id === livree
-          const [sombre, moyen, clair] = tonsDeLaLivree(l.id)
-          const e = etatDuBouton(x, yp, 15, 15)
-          p.rect(x - 1, yp - 1 + e.dy, 17, 17, choisie ? PEPITE[3] : MATIERES.encre.contour)
-          p.rect(x, yp + e.dy, 15, 15, MATIERES.encre.contour)
-          p.rect(x + 1, yp + 1 + e.dy, 13, 13, moyen)
-          p.rect(x + 1, yp + 1 + e.dy, 13, 3, clair)
-          p.rect(x + 1, yp + 10 + e.dy, 13, 4, sombre)
-          if (!choisie) zone(x - 1, yp - 2, 17, 20, () => {
-            livree = l.id
-            sauverLivree(l.id)
-          }, 'equipe')
-        })
-        yFermer = yp - 4
-      }
-    }
+    const yFermer = H
     // (LE HANGAR MONTRE CE QU'ON A, ET CE QUE LE LABO A DÉBLOQUÉ — Keko, 11/11 : « quand une pièce est débloquée au labo,
     // elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix »)
     const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
@@ -2092,7 +2102,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     y += hl + 4
     const pc = liste[iSel]
     if (pc !== undefined) dessinerLaFiche(p, y, pc)
+    // LA COULEUR DU CHÂSSIS (Keko, 12/11 : « un système de changement de couleur du châssis » ; puis « dans le panneau
+    // changer, un bouton couleur plutôt qu'afficher direct les couleurs » ; puis « le bouton couleur tout à gauche sur
+    // la même ligne qu'équiper, et ouvrir un panneau avec un grid des couleurs ») : dans le panneau du châssis, à
+    // gauche du bouton d'action, un bouton qui porte la pastille de la couleur choisie ; il ouvre LA GRILLE
+    if (onglet === 'coque') {
+      // (le mot en petites capitales : dans la police du texte, le bouton mordait sur « Équiper »)
+      const bc = 5 + 9 + 4 + textWidth('COULEUR', 'mini') + 5
+      boutonBase(p, 4, y, bc, 15, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
+        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+        p.rect(4 + 5 + dx, y + 3 + dy, 9, 9, MATIERES.encre.contour)
+        p.rect(4 + 6 + dx, y + 4 + dy, 7, 7, moyen)
+        p.rect(4 + 6 + dx, y + 4 + dy, 7, 2, clair)
+        p.rect(4 + 6 + dx, y + 9 + dy, 7, 2, sombre)
+        p.text('COULEUR', 4 + 18 + dx, y + 5 + dy, N.hex('#fff3cf'))
+      }, 'ouvre', { matiere: 'acier' })
+    }
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+    dessinerLesCouleurs(p)
     // (le reste du panneau ne fait rien : ce qui est dessous ne répond pas)
     zone(0, 0, W, H, () => {}, null)
   }

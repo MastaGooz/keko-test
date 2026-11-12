@@ -2535,3 +2535,8 @@ châssis, derrière un bouton « Couleur » au pied du panneau (il porte la
 pastille de la couleur choisie ; ouvert, il dit son nom et déplie la rangée
 au-dessus de lui). « Changer » est donc toujours présent sur la page du
 châssis. Et le ROUGE est ajouté (dix livrées) : le rival est un placeholder.
+Puis (Keko) : le bouton « Couleur » est À GAUCHE DU BOUTON D'ACTION du
+panneau du châssis, sur la même ligne (la pastille de la couleur choisie, et
+le mot s'il tient avant « Équiper »), et il ouvre UN PANNEAU par-dessus
+(`dessinerLesCouleurs`) : le châssis peint, le nom de la couleur, une grille
+de dix grandes pastilles (5 × 2), « Fermer ».
