@@ -2847,3 +2847,4 @@ le portrait reste intact à chacune.
   pupitre du haut, la soute, les manches, les deux moitiés d'écran suivent `W`.
 - La base, l'accueil et les écrans de fin restent en portrait au milieu de
   l'écran couché : étapes suivantes (le hangar, puis le reste).
+Puis (Keko : « la barre en haut est vide au milieu ») : en paysage le pupitre est EN DEUX MORCEAUX, un sous la soute, un sous le blindage ; entre les deux, le ciel. Et la vue monte jusqu'au bord du haut (`bandeHaut` à zéro) : la hauteur en trop va en bas.

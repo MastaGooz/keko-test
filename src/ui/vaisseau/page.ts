@@ -4461,6 +4461,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * soute ») ; au-delà, moitié-moitié. Le centre de la vue n'est donc plus toujours celui du tampon : `centreY`.
    */
   const bandeHaut = (): number => {
+    // (en paysage, pas de bandeau en haut : la vue monte jusqu'au bord, la hauteur en trop va en bas, sous les pouces)
+    if (paysage) return 0
     const surplus = Math.max(0, H - vueH())
     return Math.max(Math.min(surplus, BAS_DU_HUD + 4), Math.floor(surplus / 2))
   }
@@ -4715,21 +4717,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // que l'on comprenne bien que la soute est un bouton cliquable ») : LE MÊME PUPITRE QUE L'EN-TÊTE DE LA BASE — un
     // étage d'acier sombre, grenu, éclairé d'en haut, fermé d'un filet gris ; il monte jusqu'en haut de l'écran. Dedans,
     // à gauche LA SOUTE, un vrai bouton (voir plus bas) ; à droite LE BLINDAGE ET LE BOUCLIER dans un logement creusé.
+    // EN PAYSAGE, LE PUPITRE N'A PAS DE MILIEU (Keko, 13/11 : « la barre en haut est vide au milieu, on devrait retirer
+    // la partie centrale pour libérer de la visibilité ») : deux morceaux, un sous la soute, un sous le blindage, fermés
+    // d'un filet sur leur bord intérieur ; entre les deux, le ciel.
     {
       const yb = yHud + 22
-      if (yb > 0) frame.light.fill(0, 0, Math.min(H, yb + 1) * W)
-      p.rect(0, 0, W, yb, N.hex('#17131f'))
-      for (let y = Math.max(2, yb - 26); y < yb - 2; y++) for (let x = 0; x < W; x++) {
-        const g = grainA(x, y)
-        if (g > 0.9) p.rect(x, y, 1, 1, N.hex('#201a2c'))
-        else if (g < 0.06) p.rect(x, y, 1, 1, N.hex('#120f19'))
+      const morceau = (x0: number, x1: number): void => {
+        for (let y = 0; y <= Math.min(H - 1, yb); y++) frame.light.fill(0, y * W + x0, y * W + x1)
+        p.rect(x0, 0, x1 - x0, yb, N.hex('#17131f'))
+        for (let y = Math.max(2, yb - 26); y < yb - 2; y++) for (let x = x0; x < x1; x++) {
+          const g = grainA(x, y)
+          if (g > 0.9) p.rect(x, y, 1, 1, N.hex('#201a2c'))
+          else if (g < 0.06) p.rect(x, y, 1, 1, N.hex('#120f19'))
+        }
+        p.rect(x0, 0, x1 - x0, 1, N.hex('#322b47'))
+        p.rect(x0, 1, x1 - x0, 1, N.hex('#1f1a2b'))
+        p.rect(x0, yb - 1, x1 - x0, 1, N.hex('#4c4468'))
+        p.rect(x0, yb, x1 - x0, 1, MATIERES.encre.contour)
+        p.rect(x0, yb + 1, x1 - x0, 1, NUIT_OMBRE, 0.6)
+        p.rect(x0, yb + 2, x1 - x0, 1, NUIT_OMBRE, 0.3)
+        // (le bord intérieur d'un morceau : le filet tourne, cerné)
+        for (const [xe, dedans] of [[x0, 1], [x1 - 1, -1]] as const) {
+          if (xe <= 0 || xe >= W - 1) continue
+          p.rect(xe, 0, 1, yb, N.hex('#4c4468'))
+          p.rect(xe - dedans, 0, 1, yb + 1, MATIERES.encre.contour)
+        }
       }
-      p.rect(0, 0, W, 1, N.hex('#322b47'))
-      p.rect(0, 1, W, 1, N.hex('#1f1a2b'))
-      p.rect(0, yb - 1, W, 1, N.hex('#4c4468'))
-      p.rect(0, yb, W, 1, MATIERES.encre.contour)
-      p.rect(0, yb + 1, W, 1, NUIT_OMBRE, 0.6)
-      p.rect(0, yb + 2, W, 1, NUIT_OMBRE, 0.3)
+      if (paysage) {
+        const largeurSoute = 6 + largeurDe('Soute') + 6 + largeurDe(`${CONF.capacite}/${CONF.capacite}`, GRAS) + 5 + 14
+        morceau(0, 4 + largeurSoute + 5)
+        morceau(W - 5 - (5 + 9 + 3 + 52 + 5) - 5, W)
+      } else morceau(0, W)
     }
     const places = new Map<Minerai, { x: number; w: number }>()
     let suivante = 5
