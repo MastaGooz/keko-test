@@ -1367,16 +1367,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, HAUT_BARRE, W, 1, NUIT_OMBRE)
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
-    dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
     const nom = NOMS_VUE[vue]
     const w = largeurDe(nom, TITRE)
-    const c = (t % 5) / 5
-    motEnRelief(p, nom, 25 + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
     // le compteur (en court au-delà de quatre chiffres : sa plaque mordait le titre « Entrepôt » dès le cinquième)
-    const n = montantCourt(Math.round(creditsVus))
+    // LE COMPTEUR NE PASSE JAMAIS SUR LE TITRE (Keko, 12/11 : « le montant de crédits en haut se superpose avec le titre
+    // commerce » — « Commerce » et « Recherche » sont plus longs que les noms d'avant) : mesuré, pas supposé — si la
+    // plaque mord le titre, le montant passe en court dès mille (« 1,2k ») ; s'il mord encore, l'icône de la vue cède sa
+    // place et le titre se cale à gauche
+    const v = Math.round(creditsVus)
+    let n = montantCourt(v)
+    let px = W - 5 - (largeurDe(n, GRAS) + 22)
+    if (25 + w + 3 > px && v >= 1000 && v < 10000) {
+      n = `${Math.floor(v / 1000)}${Math.floor((v % 1000) / 100) === 0 ? '' : `,${Math.floor((v % 1000) / 100)}`}k`
+      px = W - 5 - (largeurDe(n, GRAS) + 22)
+    }
+    const sansIcone = 25 + w + 3 > px
     const wn = largeurDe(n, GRAS)
-    const wp = wn + 24
-    const px = W - 5 - wp
+    const wp = wn + 22
+    if (!sansIcone) dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
+    const xt = sansIcone ? 6 : 25
+    const c = (t % 5) / 5
+    motEnRelief(p, nom, xt + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
     compteurX = px + wp / 2
     const allume = t - creditsA < 0.45
     const r = refus
@@ -1384,8 +1395,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (allume) p.glow(compteurX, 14, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
     const saut = t - creditsA < 0.12 ? -1 : 0
     plaque(p, px + tremble, 5, wp, 17, 'encre', { bord: allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : undefined })
-    dessinerUnCredit(p, px + 9 + tremble, 13 + saut)
-    ecrire(p, n, px + 16 + tremble, 10 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS })
+    dessinerUnCredit(p, px + 8 + tremble, 13 + saut)
+    ecrire(p, n, px + 15 + tremble, 10 + saut, allume ? N.WHITE : PEPITE[3], { police: GRAS })
   }
 
   /**

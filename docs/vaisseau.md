@@ -2544,3 +2544,12 @@ de dix grandes pastilles (5 × 2), « Fermer ».
 Dans le coût d'un nœud, l'ordre est LE NOMBRE, L'ICÔNE, LE NOM (« 12/20 ◆ Fer » ; Keko, 12/11), plus l'icône en tête.
 
 « Changer » reste présent pour un OUTIL ou une ARME montés, même seuls de leur sorte (Keko, 12/11) : c'est dans le panneau qu'on les retire. Seul le propulseur sans alternative n'a pas le bouton.
+
+### Le compteur de crédits ne passe plus sur le titre (12/11)
+
+Keko : « le montant de crédits en haut se superpose avec le titre
+commerce ». « Commerce » et « Recherche » sont plus longs que « Entrepôt »
+et « Tech ». La barre du haut MESURE : si la plaque du compteur mord le
+titre, le montant passe en court dès mille (« 1,2k » au lieu de « 1234 ») ;
+s'il mord encore, l'icône de la vue disparaît et le titre se cale à gauche.
+La plaque perd deux pixels de marge.
