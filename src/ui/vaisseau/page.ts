@@ -1945,18 +1945,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y2 = yy + e.dy + monte
       if (!e.enfonce) ombrePortee(p, x, yy + Math.max(0, monte), cw, ch)
       plaque(p, x, y2, cw, ch, 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash || age < 0.07 })
-      plaque(p, x + 4, y2 + 4, 26, ch - 8, 'creux')
+      // (LE TITRE DE LA PLACE COIFFE LA CASE, plus fort que le nom de la pièce — Keko, 12/11 : « bizarre que le titre des
+      // différentes pièces soit plus petit que le nom de la pièce qui est en dessous » ; il était en petites capitales
+      // au-dessus du nom : il est en gras d'or, en relief, sur toute la largeur de la case ; dessous, le puits et le nom)
+      const titre = titreDe(c)
+      motEnRelief(p, titre, x + 5 + largeurDe(titre, GRAS) / 2, y2 + 3, true)
+      const yp = y2 + 12
+      const hp = ch - 15
+      plaque(p, x + 4, yp, 26, hp, 'creux')
       const vide = vue === 'hangar' && montee === undefined
       if (vide) {
         const c2 = Math.sin(t * 3 + i) > 0 ? COQUE[3] : COQUE[2]
-        p.rect(x + 16, y2 + ch / 2 - 5, 2, 10, c2)
-        p.rect(x + 12, y2 + ch / 2 - 1, 10, 2, c2)
-      } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 17, y2 + ch / 2, 26, ch - 8)
-      const xt = x + 34 + (cw - 36) / 2
-      p.text(texteNu(titreDe(c)), xt, y2 + 5, PEPITE[2], { align: 'center' })
+        p.rect(x + 16, yp + hp / 2 - 4, 2, 8, c2)
+        p.rect(x + 13, yp + hp / 2 - 1, 8, 2, c2)
+      } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 17, yp + hp / 2, 26, hp)
       const ligne = vide ? 'Vide' : montee!.nom
-      const L = replier(ligne, cw - 38)
-      L.slice(0, 2).forEach((li, k) => ecrire(p, li, xt, y2 + 14 + k * 10, vue === 'labo' || vide ? COQUE[3] : COQUE[6], { align: 'center' }))
+      const L = replier(ligne, cw - 38).slice(0, 2)
+      L.forEach((li, k) => ecrire(p, li, x + 34, yp + (L.length === 1 ? 7 : 2) + k * 9, vue === 'labo' || vide ? COQUE[3] : COQUE[6]))
       zone(x, yy, cw, ch, () => ouvrirLEmplacement(o, c.k))
     })
     return y + Math.ceil(cases.length / 2) * (ch + 4)

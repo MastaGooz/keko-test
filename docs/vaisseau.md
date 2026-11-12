@@ -2680,3 +2680,7 @@ comprenne bien que la soute est un bouton cliquable ». `dessinerLeScore` :
 - Le porté descend de quatre pixels, sous le pied du pupitre
   (`BAS_DU_HUD` 43).
 Dans le panneau de la soute (Keko, 12/11) : « Fermer » est le bouton d'acier de la vente du commerce, et le total est en relief ivoire comme sur le pupitre du vol.
+
+### Les cases du hangar : le titre de la place coiffe la case (12/11)
+
+Keko : « c'est un peu bizarre que dans le hangar le titre des différentes pièces soit plus petit que le nom de la pièce qui est en dessous ». Le titre (« Châssis », « Propulsion », « Outil 1 ») n'est plus en petites capitales au-dessus du nom : il est EN GRAS D'OR, en relief, sur toute la largeur de la case ; dessous, le puits de la pièce (plus bas) et son nom dans la lettre courante, à gauche.
