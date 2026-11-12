@@ -3932,14 +3932,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           battementVu = -1
           // « ZONE D'EXTRACTION », au-dessus du parvis, gris bleuté (Keko, 12/11 : « afin d'aider le joueur à
           // comprendre ») : tant que le compte ne court pas ; dès qu'il court, le chiffre prend sa place
-          // (sur un bandeau sombre : le mât de la base passe juste derrière, il coupait le mot en deux)
+          // (Keko, ensuite : « juste le mot extraction avec une flèche qui pointe vers en dessous », sans barre ; un
+          // fond sombre reste sous le mot : le mât de la base passe juste derrière)
           if (m.phase === 'vol') {
-            const mot = "Zone d'extraction"
-            const wm = largeurDe(mot) + 8
-            const ym = sy - CONF.station.portee - 13
-            p.rect(Math.round(sx - wm / 2), ym - 2, wm, 11, NUIT_OMBRE, 0.78)
-            p.rect(Math.round(sx - wm / 2), ym - 2, wm, 1, N.hex('#8fa6c8'), 0.35)
-            ecrire(p, mot, sx, ym, N.hex('#8fa6c8'), { align: 'center' })
+            const mot = 'Extraction'
+            const TON = N.hex('#8fa6c8')
+            const wm = largeurDe(mot) + 6
+            const ym = sy - CONF.station.portee - 17
+            p.rect(Math.round(sx - wm / 2), ym - 1, wm, 9, NUIT_OMBRE, 0.78)
+            ecrire(p, mot, sx, ym, TON, { align: 'center' })
+            // la flèche, sous le mot, qui descend et remonte d'un pixel
+            const yf = ym + 10 + (Math.floor(t * 3) % 2)
+            for (let k = 0; k < 6; k++) p.rect(Math.round(sx) - 5 + k, yf - 1 + k, 11 - 2 * k, 1, NUIT_OMBRE)
+            for (let k = 0; k < 4; k++) p.rect(Math.round(sx) - 3 + k, yf + k, 7 - 2 * k, 1, k === 0 ? N.hex('#d6e4ff') : TON)
           }
         }
       }

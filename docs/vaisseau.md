@@ -2452,3 +2452,5 @@ le joueur entre dedans on change le texte pour le chiffre du compteur (afin
 d'aider le joueur à comprendre) ». Le mot est écrit au-dessus du cercle du
 parvis tant que le compte ne court pas ; dès qu'il court (et tant qu'il
 redescend), le chiffre qui frappe est à sa place.
+Retouché le jour même (Keko) : le seul mot « Extraction », sans barre, et
+une petite flèche dessous qui pointe vers le pont.
