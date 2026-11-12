@@ -277,6 +277,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const TENUE_DU_PORTE = 3
   /** Le vaisseau touche une pépite la soute pleine (à l'image d'avant) ; quand « Soute pleine » a été redit. */
   let refusVu = false
+  /** Quand « Soute pleine » a été dit pour la dernière fois (le mot reste posé sous la soute un instant). */
+  let soutePleineDiteA = -10
   /** … « touche » avec UNE MARGE (Keko : « non pas quand on touche un minerai mais laisser une petite marge de plus ») : à seize unités de plus que le ramassage. */
   const MARGE_DU_REFUS = 16
   let refusA = -10
@@ -4139,7 +4141,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pleine = porte >= CONF.capacite
     if (pleine && !soutePleineVue && t - arriveA > 0.9) {
       ;(ressorts.soute ??= { x: 0, v: 0 }).v = -110
-      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 14, t0: t, c: ROUGE[5] })
+      soutePleineDiteA = t
       if (typeof navigator.vibrate === 'function') navigator.vibrate([20, 40, 20])
     }
     soutePleineVue = pleine
@@ -4149,9 +4151,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (refus && (!refusVu || t - refusA > 1)) {
       refusA = t
       ;(ressorts.soute ??= { x: 0, v: 0 }).v = -70
-      flottants.push({ texte: 'Soute pleine', x: 46, y: yPastilles + 14, t0: t, c: ROUGE[5] })
+      soutePleineDiteA = t
     }
     refusVu = refus
+    // (LE MOT NE MONTE PAS — Keko : « mets juste le texte à son emplacement direct » : posé sous la plaque de soute, à
+    // la place des pastilles, une seconde et quelque)
+    if (t - soutePleineDiteA < 1.3) ecrire(p, 'Soute pleine', suivante + 2, yPastilles + 3, ROUGE[5], { police: GRAS, contour: NUIT_OMBRE })
     const plafond = `${CONF.capacite}/${CONF.capacite}`
     const ws = 5 + largeurDe('Soute') + 8 + largeurDe(plafond, GRAS) + 5 + 9 // (+ 9 : le chevron qui dit qu'elle s'ouvre)
     const ys = yHud + Math.round(rebond('soute', 0))

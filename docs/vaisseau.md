@@ -2477,3 +2477,7 @@ Retouché le jour même (Keko) : le message s'écrit JUSTE SOUS LA SOUTE, à la
 place des pastilles du porté (il montait depuis 28 px plus bas), et se
 déclenche avec une MARGE autour de la pépite (`MARGE_DU_REFUS`, 16 unités de
 plus que le ramassage, de moi) au lieu du contact.
+Puis (Keko) : le mot ne monte plus, il est POSÉ sous la plaque de soute, à
+la place des pastilles, 1,3 s (`soutePleineDiteA`).
+Il s'écrit À LA SUITE des pastilles encore affichées (celle de la pépite qui
+vient de remplir la soute), pas par-dessus.
