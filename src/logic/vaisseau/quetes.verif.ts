@@ -53,6 +53,16 @@ for (let i = 0; i < 40; i++) {
 }
 verifier('à force de réclamer, tout le catalogue d’une activité passe', vues.size === CATALOGUE.filter((q) => q.activite === 'minage').length)
 
+// une quête qui exige une mécanique n'est pas tirée sans elle
+let sansOrdres = quetesSansTutoriel(1, () => false)
+let vueSansOrdres = false
+for (let i = 0; i < 40; i++) {
+  const mo = modeleDe(sansOrdres.actives[3].modele)!
+  if (mo.exige !== undefined) vueSansOrdres = true
+  sansOrdres = reclamer(noter(sansOrdres, mo.compteur, mo.cible), 3, 0, () => false)!.etat
+}
+verifier('une quête qui exige une mécanique non acquise n’est jamais tirée', !vueSansOrdres && CATALOGUE.some((q) => q.exige !== undefined) && TUTORIEL.every((q) => q.exige === undefined))
+
 // la distance : on garde la plus grande
 const loin: EtatQuetes = { etape: TUTORIEL.length, actives: [{ modele: 'e-loin', progres: 0 }], tirage: 1 }
 verifier('une distance garde la plus grande atteinte, elle ne s’additionne pas', noter(noter(loin, 'distance', 300), 'distance', 250).actives[0].progres === 300 && estTerminee(noter(loin, 'distance', 900).actives[0]))

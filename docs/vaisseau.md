@@ -2481,3 +2481,22 @@ Puis (Keko) : le mot ne monte plus, il est POSÉ sous la plaque de soute, à
 la place des pastilles, 1,3 s (`soutePleineDiteA`).
 Il s'écrit À LA SUITE des pastilles encore affichées (celle de la pépite qui
 vient de remplir la soute), pas par-dessus.
+
+### Le commerce commence nu (12/11)
+
+Keko : « au début, dans commerce on n'affiche pas la courbe, ni le prix
+fixé, on permet juste de vendre au cours. Tout cela sera débloqué en
+recherche commerce ». Deux MÉCANIQUES de plus dans `labo.ts` : `courbe`
+(nœud « Cours du marché », rang 1, 15 fer) et `ordres` (« Ordres de vente »,
+rang 2, 30 fer + 8 or) — noms, rangs et coûts de moi, à rejuger. Le panneau
+de vente a la hauteur de ce qu'il montre : sans rien, le cours et sa flèche,
+la quantité, le gain, « Vendre ». La prévision ne se voit que sur la courbe.
+
+Ce qui suit de là :
+- « Premier ordre » sort du TUTORIEL (trois étapes : expédition, vente,
+  recherche) : poser un ordre demanderait un nœud de rang 2, payé en or.
+- Une mission peut EXIGER une mécanique (`Modele.exige`) : « Ordre honoré »
+  n'est pas tirée tant que `ordres` n'est pas acquis (`Acquis`, injecté par
+  la page dans `tirer`, `reclamer`, `quetesSansTutoriel`, `lireQuetes`).
+- Une sauvegarde qui avait déjà posé des ordres les garde (ils se règlent,
+  on peut les annuler) mais ne peut plus en poser sans le nœud.

@@ -8,7 +8,7 @@
 // `ui/collection.ts` pour la collection. Tout passe dans un try : *sans stockage (navigation privée, quota), on joue
 // sans mémoire*, le hangar vit le temps de la page.
 import { hangarNeuf, lireCredits, lireHangar, lireTresor, type Hangar } from '../../logic/vaisseau/hangar.ts'
-import { laboNeuf, lireLabo, passifsDe, type Labo } from '../../logic/vaisseau/labo.ts'
+import { aLaMecanique, laboNeuf, lireLabo, passifsDe, type Labo, type Mecanique } from '../../logic/vaisseau/labo.ts'
 import { lireMarche, marcheNeuf, type Marche } from '../../logic/vaisseau/marche.ts'
 import { lireQuetes, quetesNeuves, type EtatQuetes } from '../../logic/vaisseau/quetes.ts'
 import { cargaisonVide, type Cargaison } from '../../logic/vaisseau/jeu.ts'
@@ -34,7 +34,7 @@ export function chargerHangar(instant: number): Progression {
     const credits = lireCredits(b?.credits)
     // (une sauvegarde d'avant les quêtes, qui a déjà joué, ne refait pas le tutoriel — ses onglets ne se referment pas)
     const dejaJoue = credits > 0 || labo.debloques.length > 0 || hangar.possedees.length > 3 || tresor.fer + tresor.or + tresor.cristal > 0
-    return { hangar, tresor, credits, labo, marche: lireMarche(b?.marche, instant, { prime: pa.vente, plafond: pa.plafond }), quetes: lireQuetes(b?.quetes, dejaJoue) }
+    return { hangar, tresor, credits, labo, marche: lireMarche(b?.marche, instant, { prime: pa.vente, plafond: pa.plafond }), quetes: lireQuetes(b?.quetes, dejaJoue, (x) => aLaMecanique(labo, x as Mecanique)) }
   } catch {
     return neuve(instant)
   }

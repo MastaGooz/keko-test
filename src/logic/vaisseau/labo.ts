@@ -44,7 +44,8 @@ export type Passif = {
   vente?: number
   plafond?: number
 }
-export type Mecanique = 'postcombustion' | 'prevision'
+/** (`courbe` et `ordres` : le commerce commence NU — Keko, 12/11 : « au début on n'affiche pas la courbe, ni le prix fixé, on permet juste de vendre au cours ; tout cela sera débloqué en recherche commerce ») */
+export type Mecanique = 'postcombustion' | 'prevision' | 'courbe' | 'ordres'
 
 export type Noeud = {
   id: string
@@ -94,6 +95,8 @@ export const NOEUDS: Noeud[] = [
   { id: 'e-aimant', cout: { fer: 0, or: 15, cristal: 10 }, branche: 'exploration', rang: 3, sorte: 'passif', icone: 'aimant', passif: { aimant: 0.25 }, nom: 'Champ étendu', dit: 'Le vaisseau attire les pépites de 25 % plus loin.' },
   // ---- COMMERCE (Keko, 11/11 : « tu peux rajouter commerce en arbre tech ? » — il agit sur le marché, `marche.ts`)
   { id: 'k-negoce', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'commerce', rang: 1, sorte: 'passif', icone: 'vente', passif: { vente: 0.05 }, nom: 'Négoce', dit: 'Chaque vente rapporte 5 % de plus, au cours comme par ordre.' },
+  { id: 'k-courbe', cout: { fer: 15, or: 0, cristal: 0 }, branche: 'commerce', rang: 1, sorte: 'mecanique', icone: 'commerce', mecanique: 'courbe', nom: 'Cours du marché', dit: 'Le panneau de vente montre la courbe du cours.' },
+  { id: 'k-ordres', cout: { fer: 30, or: 8, cristal: 0 }, branche: 'commerce', rang: 2, sorte: 'mecanique', icone: 'ordre', mecanique: 'ordres', nom: 'Ordres de vente', dit: 'Vendez à prix fixé : l’ordre se règle quand le cours l’atteint.' },
   { id: 'k-courtage', cout: { fer: 30, or: 10, cristal: 0 }, branche: 'commerce', rang: 2, sorte: 'passif', icone: 'plafond', passif: { plafond: 0.1 }, nom: 'Courtage', dit: 'Le prix le plus haut d’un ordre monte de 10 %.' },
   { id: 'k-negoce-2', cout: { fer: 25, or: 15, cristal: 0 }, branche: 'commerce', rang: 2, sorte: 'passif', icone: 'vente', passif: { vente: 0.05 }, nom: 'Grand négoce', dit: 'Chaque vente rapporte encore 5 % de plus.' },
   { id: 'k-prevision', cout: { fer: 0, or: 25, cristal: 20 }, branche: 'commerce', rang: 3, sorte: 'mecanique', icone: 'prevision', mecanique: 'prevision', nom: 'Prévision', dit: 'La courbe du cours montre aussi les dix minutes à venir.' },

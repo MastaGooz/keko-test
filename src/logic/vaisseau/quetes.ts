@@ -63,6 +63,8 @@ export type Modele = {
   credits: number
   /** L'onglet que sa récompense ouvre (le tutoriel). */
   ouvre?: OngletOuvert
+  /** La mécanique de la recherche sans laquelle elle est infaisable : elle n'est pas tirée tant qu'on ne l'a pas. */
+  exige?: string
 }
 
 /** LE TUTORIEL : une quête à la fois, dans cet ordre. */
@@ -72,7 +74,7 @@ export const TUTORIEL: Modele[] = [
   { id: 't-vol', titre: 'Première expédition', dit: 'Minez une roche, puis réussissez une extraction avec son minerai.', compteur: 'pepites', cible: 1, credits: 20, ouvre: 'entrepot' },
   { id: 't-vente', titre: 'Première vente', dit: 'Vendez du minerai au Commerce.', compteur: 'ventes', cible: 1, credits: 30, ouvre: 'labo' },
   { id: 't-recherche', titre: 'Recherche', dit: 'Débloquez un noeud à la Recherche.', compteur: 'noeuds', cible: 1, credits: 40 },
-  { id: 't-ordre', titre: 'Premier ordre', dit: 'Au Commerce, posez un ordre à prix fixé.', compteur: 'ordresPoses', cible: 1, credits: 50 },
+  // (« Premier ordre » est sorti du tutoriel le 12/11 : les ordres à prix fixé se débloquent à la recherche)
 ]
 
 /** LE CATALOGUE d'après le tutoriel : une de chaque activité est toujours active. */
@@ -89,7 +91,7 @@ export const CATALOGUE: Modele[] = [
   { id: 'e-retours', activite: 'exploration', titre: 'Allers-retours', dit: 'Réussissez 3 extractions.', compteur: 'extractions', cible: 3, credits: 70 },
   { id: 'k-ventes', activite: 'commerce', titre: 'Petit négoce', dit: 'Vendez pour 150 crédits.', compteur: 'ventes', cible: 150, credits: 40 },
   { id: 'k-grosses', activite: 'commerce', titre: 'Gros négoce', dit: 'Vendez pour 400 crédits.', compteur: 'ventes', cible: 400, credits: 100 },
-  { id: 'k-ordre', activite: 'commerce', titre: 'Ordre honoré', dit: 'Faites aboutir un ordre à prix fixé.', compteur: 'ordresRegles', cible: 1, credits: 60 },
+  { id: 'k-ordre', activite: 'commerce', titre: 'Ordre honoré', dit: 'Faites aboutir un ordre à prix fixé.', compteur: 'ordresRegles', cible: 1, credits: 60, exige: 'ordres' },
 ]
 
 export const modeleDe = (id: string): Modele | undefined => TUTORIEL.find((q) => q.id === id) ?? CATALOGUE.find((q) => q.id === id)
@@ -104,9 +106,13 @@ export type EtatQuetes = { etape: number; actives: Quete[]; tirage: number }
 
 export const tutorielFini = (e: EtatQuetes): boolean => e.etape >= TUTORIEL.length
 
-/** Tire une quête du catalogue pour une activité, autre que `sauf` s'il y a le choix. */
-function tirer(a: Activite, tirage: number, sauf?: string): Quete {
-  const toutes = CATALOGUE.filter((q) => q.activite === a)
+/** Dit si une mécanique de la recherche est acquise (injecté par la page ; par défaut, tout l'est). */
+export type Acquis = (mecanique: string) => boolean
+const TOUT_ACQUIS: Acquis = () => true
+
+/** Tire une quête du catalogue pour une activité, autre que `sauf` s'il y a le choix — jamais une quête qui EXIGE une mécanique qu'on n'a pas. */
+function tirer(a: Activite, tirage: number, sauf?: string, acquis: Acquis = TOUT_ACQUIS): Quete {
+  const toutes = CATALOGUE.filter((q) => q.activite === a && (q.exige === undefined || acquis(q.exige)))
   const choix = toutes.filter((q) => q.id !== sauf)
   const liste = choix.length > 0 ? choix : toutes
   return { modele: liste[hache(tirage, ACTIVITES.indexOf(a), 31) % liste.length].id, progres: 0 }
@@ -115,8 +121,8 @@ function tirer(a: Activite, tirage: number, sauf?: string): Quete {
 /** Des quêtes neuves : la première du tutoriel. */
 export const quetesNeuves = (): EtatQuetes => ({ etape: 0, actives: [{ modele: TUTORIEL[0].id, progres: 0 }], tirage: 1 })
 /** Le tutoriel passé (une sauvegarde d'avant les quêtes, qui a déjà joué) : une quête par activité. */
-export function quetesSansTutoriel(tirage = 1): EtatQuetes {
-  return { etape: TUTORIEL.length, actives: ACTIVITES.map((a, i) => tirer(a, tirage + i)), tirage: tirage + ACTIVITES.length }
+export function quetesSansTutoriel(tirage = 1, acquis: Acquis = TOUT_ACQUIS): EtatQuetes {
+  return { etape: TUTORIEL.length, actives: ACTIVITES.map((a, i) => tirer(a, tirage + i, undefined, acquis)), tirage: tirage + ACTIVITES.length }
 }
 
 export const estTerminee = (q: Quete): boolean => q.progres >= (modeleDe(q.modele)?.cible ?? Infinity)
@@ -149,17 +155,17 @@ export function noter(e: EtatQuetes, compteur: Compteur, valeur: number): EtatQu
  * Pendant le tutoriel, la quête suivante prend sa place — la dernière réclamée, une quête par activité arrive ;
  * ensuite, une autre quête de la même activité la remplace. Null si elle n'est pas terminée.
  */
-export function reclamer(e: EtatQuetes, i: number, credits: number): { etat: EtatQuetes; credits: number; ouvre?: OngletOuvert } | null {
+export function reclamer(e: EtatQuetes, i: number, credits: number, acquis: Acquis = TOUT_ACQUIS): { etat: EtatQuetes; credits: number; ouvre?: OngletOuvert } | null {
   const q = e.actives[i]
   const mo = q === undefined ? undefined : modeleDe(q.modele)
   if (q === undefined || mo === undefined || !estTerminee(q)) return null
   const gain = credits + mo.credits
   if (!tutorielFini(e)) {
     const etape = e.etape + 1
-    if (etape >= TUTORIEL.length) return { etat: quetesSansTutoriel(e.tirage), credits: gain, ouvre: mo.ouvre }
+    if (etape >= TUTORIEL.length) return { etat: quetesSansTutoriel(e.tirage, acquis), credits: gain, ouvre: mo.ouvre }
     return { etat: { ...e, etape, actives: [{ modele: TUTORIEL[etape].id, progres: 0 }] }, credits: gain, ouvre: mo.ouvre }
   }
-  const actives = e.actives.map((x, k) => (k === i && mo.activite !== undefined ? tirer(mo.activite, e.tirage, mo.id) : x))
+  const actives = e.actives.map((x, k) => (k === i && mo.activite !== undefined ? tirer(mo.activite, e.tirage, mo.id, acquis) : x))
   return { etat: { ...e, actives, tirage: e.tirage + 1 }, credits: gain }
 }
 
@@ -168,8 +174,8 @@ export function reclamer(e: EtatQuetes, i: number, credits: number): { etat: Eta
  * d'avant les quêtes qui a déjà de la progression), le tutoriel passé. Pendant le tutoriel, la quête active est celle
  * de l'étape ; ensuite, il en faut une par activité (celles qui manquent sont tirées).
  */
-export function lireQuetes(brut: unknown, dejaJoue: boolean): EtatQuetes {
-  if (typeof brut !== 'object' || brut === null) return dejaJoue ? quetesSansTutoriel() : quetesNeuves()
+export function lireQuetes(brut: unknown, dejaJoue: boolean, acquis: Acquis = TOUT_ACQUIS): EtatQuetes {
+  if (typeof brut !== 'object' || brut === null) return dejaJoue ? quetesSansTutoriel(1, acquis) : quetesNeuves()
   const b = brut as { etape?: unknown; actives?: unknown; tirage?: unknown }
   const etape = typeof b.etape === 'number' && Number.isInteger(b.etape) && b.etape >= 0 ? Math.min(b.etape, TUTORIEL.length) : 0
   const tirage = typeof b.tirage === 'number' && Number.isInteger(b.tirage) && b.tirage >= 1 ? b.tirage : 1
@@ -188,6 +194,6 @@ export function lireQuetes(brut: unknown, dejaJoue: boolean): EtatQuetes {
     return { etape, actives: [q ?? { modele: TUTORIEL[etape].id, progres: 0 }], tirage }
   }
   let t = tirage
-  const actives = ACTIVITES.map((a) => lues.find((x) => modeleDe(x.modele)?.activite === a) ?? tirer(a, t++))
+  const actives = ACTIVITES.map((a) => lues.find((x) => modeleDe(x.modele)?.activite === a) ?? tirer(a, t++, undefined, acquis))
   return { etape, actives, tirage: t }
 }

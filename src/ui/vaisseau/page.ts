@@ -21,7 +21,7 @@ import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, 
 import { chargerHangar, sauverHangar } from './hangar.ts'
 import { estTerminee, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
-import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Noeud } from '../../logic/vaisseau/labo.ts'
+import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
@@ -150,7 +150,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const heureDuMarche = (): number => ouvertA + (Date.now() - ouvertA) * hate
   let { hangar, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   /** `&tuto=0` : le tutoriel des quêtes est passé d'emblée (tous les onglets ouverts), pour essayer la suite d'un lien. */
-  if (parametres.get('tuto') === '0' && !tutorielFini(quetes)) quetes = quetesSansTutoriel()
+  if (parametres.get('tuto') === '0' && !tutorielFini(quetes)) quetes = quetesSansTutoriel(1, (x) => aLaMecanique(labo, x as Mecanique))
   const sauver = (): void => sauverHangar(hangar, tresor, credits, labo, marche, quetes)
   /**
    * IL S'EST PASSÉ QUELQUE CHOSE qu'une quête peut compter (un décollage, du minerai extrait, une vente…) : la règle
@@ -2080,6 +2080,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     commerce: ['#.....#', '#....#.', '#.#..#.', '##.#.#.', '#...#..', '#......', '#######'],
     vente: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
     plafond: ['#######', '...#...', '..###..', '.#####.', '...#...', '...#...', '...#...'],
+    ordre: ['.......', '#.#.#.#', '.......', '..###..', '.#####.', '..###..', '.......'],
     prevision: ['......#', '.....#.', '#...#..', '.#.#...', '..#....', '.......', '#.#.#.#'],
     tuto: ['...#...', '..###..', '#######', '.#####.', '.#####.', '.##.##.', '.#...#.'],
     tout: ['###.###', '###.###', '###.###', '.......', '###.###', '###.###', '###.###'],
@@ -2532,7 +2533,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         choixA = t
       })
     } else {
-      const mot = pc !== undefined ? 'Acheté : la pièce est au hangar' : n.sorte === 'passif' ? 'Acquis : actif sur tous vos vaisseaux' : n.mecanique === 'prevision' ? 'Acquis : visible au commerce' : 'Acquis : disponible en vol'
+      const mot = pc !== undefined ? 'Acheté : la pièce est au hangar' : n.sorte === 'passif' ? 'Acquis : actif sur tous vos vaisseaux' : n.mecanique === 'postcombustion' ? 'Acquis : disponible en vol' : 'Acquis : visible au commerce'
       ecrire(p, mot, W / 2, ya + 8, RUNE[2], { align: 'center' })
     }
   }
@@ -2871,7 +2872,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (yj + 15 > bas) return // (son bouton passe sous la barre des onglets : il ne répond pas de là)
         const bw = largeurDe('Réclamer', GRAS) + 22
         bouton(p, Math.round(W / 2 - bw / 2), yj, bw, 15, 'Réclamer', true, () => {
-          const r = reclamer(quetes, i, credits)
+          const r = reclamer(quetes, i, credits, (x) => aLaMecanique(labo, x as Mecanique))
           if (r === null) return
           quetes = r.etat
           credits = r.credits
@@ -3043,7 +3044,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const stock = tresor[k]
     // (sous « Fermer », LE MÊME ÉCART qu'entre les deux boutons, quatre pixels — Keko : d'abord « la boîte s'arrête pile en
     // bas du bouton », puis, pour la vente : « l'espace est un peu grand, il faudrait le même que sous le bouton vendre »)
-    const hp = ordre !== undefined ? 153 : 216
+    // LE COMMERCE COMMENCE NU (Keko, 12/11) : ni courbe, ni prix fixé — vendre au cours, c'est tout ; la recherche,
+    // branche commerce, les débloque (`courbe`, `ordres`). Le panneau a la hauteur de ce qu'il montre.
+    const aCourbe = aLaMecanique(labo, 'courbe')
+    const aOrdres = aLaMecanique(labo, 'ordres')
+    if (!aOrdres) venteFixe = false
+    const hp = (ordre !== undefined ? 153 : 216) - (aCourbe ? 0 : 55) - (ordre === undefined && !aOrdres ? 18 : 0)
     const x = 6
     const w = W - 12
     const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
@@ -3058,43 +3064,45 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nom = FICHES_MINERAI[k].nom
     dessinerUneRessource(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, k)
     motEnRelief(p, nom, W / 2 + 5, y + 7, true)
-    // LA COURBE : les derniers cours, à l'échelle de leur creux et de leur crête (et du prix fixé, s'il y en a un)
-    const gx = x + 6
-    const gy = y + 21
-    const gw = w - 12
-    const gh = 50
-    plaque(p, gx, gy, gw, gh, 'creux')
-    const h = historiqueDe(k, maintenant)
-    const fixe = ordre !== undefined ? ordre.prix : venteFixe ? ventePrix : null
-    // LA PRÉVISION (une mécanique de la branche commerce) : les dix pas à venir, à la suite de la courbe, en pointillé
-    const avenir = aLaMecanique(labo, 'prevision') ? previsionDe(k, maintenant, 10) : []
-    const bas = Math.min(...h, ...avenir, fixe ?? Infinity)
-    const haut = Math.max(...h, ...avenir, fixe ?? -Infinity)
-    const marge = Math.max(0.1, (haut - bas) * 0.12)
-    const yDe = (prix: number): number => Math.round(gy + gh - 5 - ((prix - (bas - marge)) / (haut - bas + 2 * marge)) * (gh - 10))
-    const xDe = (i: number): number => Math.round(gx + 4 + (i / (h.length + avenir.length - 1)) * (gw - 9))
-    const monte = h[h.length - 1] >= h[0]
-    const teinte = monte ? RUNE[2] : ROUGE[4]
-    // (le prix de base, en pointillé discret : au-dessus, c'est un bon moment pour vendre)
-    const yb0 = yDe(FICHES_MINERAI[k].credits)
-    if (yb0 > gy + 2 && yb0 < gy + gh - 2) for (let xx = gx + 3; xx < gx + gw - 3; xx += 4) p.rect(xx, yb0, 2, 1, COQUE[2])
-    for (let i = 1; i < h.length; i++) p.line(xDe(i - 1), yDe(h[i - 1]), xDe(i), yDe(h[i]), teinte)
-    if (fixe !== null) {
-      const yf = yDe(fixe)
-      for (let xx = gx + 3; xx < gx + gw - 3; xx += 3) p.rect(xx, yf, 2, 1, PEPITE[2])
+    if (aCourbe) {
+      // LA COURBE : les derniers cours, à l'échelle de leur creux et de leur crête (et du prix fixé, s'il y en a un)
+      const gx = x + 6
+      const gy = y + 21
+      const gw = w - 12
+      const gh = 50
+      plaque(p, gx, gy, gw, gh, 'creux')
+      const h = historiqueDe(k, maintenant)
+      const fixe = ordre !== undefined ? ordre.prix : venteFixe ? ventePrix : null
+      // LA PRÉVISION (une mécanique de la branche commerce) : les dix pas à venir, à la suite de la courbe, en pointillé
+      const avenir = aLaMecanique(labo, 'prevision') ? previsionDe(k, maintenant, 10) : []
+      const bas = Math.min(...h, ...avenir, fixe ?? Infinity)
+      const haut = Math.max(...h, ...avenir, fixe ?? -Infinity)
+      const marge = Math.max(0.1, (haut - bas) * 0.12)
+      const yDe = (prix: number): number => Math.round(gy + gh - 5 - ((prix - (bas - marge)) / (haut - bas + 2 * marge)) * (gh - 10))
+      const xDe = (i: number): number => Math.round(gx + 4 + (i / (h.length + avenir.length - 1)) * (gw - 9))
+      const monte = h[h.length - 1] >= h[0]
+      const teinte = monte ? RUNE[2] : ROUGE[4]
+      // (le prix de base, en pointillé discret : au-dessus, c'est un bon moment pour vendre)
+      const yb0 = yDe(FICHES_MINERAI[k].credits)
+      if (yb0 > gy + 2 && yb0 < gy + gh - 2) for (let xx = gx + 3; xx < gx + gw - 3; xx += 4) p.rect(xx, yb0, 2, 1, COQUE[2])
+      for (let i = 1; i < h.length; i++) p.line(xDe(i - 1), yDe(h[i - 1]), xDe(i), yDe(h[i]), teinte)
+      if (fixe !== null) {
+        const yf = yDe(fixe)
+        for (let xx = gx + 3; xx < gx + gw - 3; xx += 3) p.rect(xx, yf, 2, 1, PEPITE[2])
+      }
+      avenir.forEach((prix, i) => {
+        const xa = xDe(h.length + i)
+        p.rect(xa, yDe(prix), 1, 1, COQUE[5])
+        if (i % 2 === 0) p.rect(Math.round((xa + xDe(h.length + i - 1)) / 2), Math.round((yDe(prix) + yDe(i === 0 ? cours : avenir[i - 1])) / 2), 1, 1, COQUE[3])
+      })
+      const xn = xDe(h.length - 1)
+      const yn = yDe(cours)
+      p.glow(xn, yn, 5, teinte, 0.5 + 0.3 * Math.sin(t * 5))
+      p.rect(xn - 1, yn - 1, 3, 3, N.WHITE)
+      p.text(prixDit(haut), gx + 3, gy + 3, COQUE[3])
+      p.text(prixDit(bas), gx + 3, gy + gh - 9, COQUE[3])
     }
-    avenir.forEach((prix, i) => {
-      const xa = xDe(h.length + i)
-      p.rect(xa, yDe(prix), 1, 1, COQUE[5])
-      if (i % 2 === 0) p.rect(Math.round((xa + xDe(h.length + i - 1)) / 2), Math.round((yDe(prix) + yDe(i === 0 ? cours : avenir[i - 1])) / 2), 1, 1, COQUE[3])
-    })
-    const xn = xDe(h.length - 1)
-    const yn = yDe(cours)
-    p.glow(xn, yn, 5, teinte, 0.5 + 0.3 * Math.sin(t * 5))
-    p.rect(xn - 1, yn - 1, 3, 3, N.WHITE)
-    p.text(prixDit(haut), gx + 3, gy + 3, COQUE[3])
-    p.text(prixDit(bas), gx + 3, gy + gh - 9, COQUE[3])
-    let ly = gy + gh + 5
+    let ly = y + 21 + (aCourbe ? 55 : 0)
     ecrire(p, 'Cours', x + 6, ly, COQUE[4])
     dessinerLeCours(p, k, x + w - 5, ly)
     ly += 13
@@ -3123,10 +3131,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ly += 11
       dessinerUnCurseur(p, x + 8, ly, w - 16, stock > 0 ? q / stock : 0, (u) => (venteQuantite = Math.round(u * stock)))
       ly += 18
-      // LE CHOIX : au cours, ou à prix fixé
-      const choix: [string, boolean][] = [['Au cours', false], ['Prix fixé', true]]
+      // LE CHOIX : au cours, ou à prix fixé (une fois les ordres débloqués à la recherche)
+      const choix: [string, boolean][] = aOrdres ? [['Au cours', false], ['Prix fixé', true]] : []
       const lws = choix.map(([mot]) => largeurDe(mot, GRAS) + 14)
-      let xc = Math.round((W - lws[0] - lws[1] - 4) / 2)
+      let xc = Math.round((W - (lws[0] ?? 0) - (lws[1] ?? 0) - 4) / 2)
       choix.forEach(([mot, f], i) => {
         const actif = venteFixe === f
         const e = etatDuBouton(xc, ly, lws[i], 13)
@@ -3135,7 +3143,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (!actif) zone(xc, ly - 2, lws[i], 17, () => (venteFixe = f))
         xc += lws[i] + 4
       })
-      ly += 18
+      if (aOrdres) ly += 18
       const plafond = prixPlafond(k, avantages())
       if (venteFixe) {
         ventePrix = Math.max(cours, Math.min(plafond, ventePrix))
