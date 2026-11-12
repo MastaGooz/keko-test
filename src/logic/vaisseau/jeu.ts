@@ -142,6 +142,14 @@ export const VAISSEAU = {
    */
   forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5 },
   /**
+   * LA BOMBE, la première CAPACITÉ ACTIVE (Keko, 12/11 : « une action un peu puissante, soumise à un nombre de charges
+   * par vol ») — une capacité d'ESSAI, pour juger le geste : tant de charges par vol ; lancée, elle file à tant d'unités
+   * par seconde (plus la moitié de l'élan du vaisseau), vit tant de secondes, et ÉCLATE au bout ou au premier contact
+   * d'une roche ou d'un rival : toute roche à tant d'unités de sa surface éclate (ses pépites restent), tout rival dans
+   * ce rayon prend tant de dégâts. Elle ne blesse pas le joueur.
+   */
+  bombe: { charges: 3, vitesse: 170, vie: 0.6, rayon: 44, degats: 80 },
+  /**
    * L'ENNEMI : il apparaît à tant de secondes puis tant après sa mort, à tant d'unités (hors de l'écran le plus haut, 180
    * sur 480, avance de caméra comprise : à 200, Keko le voyait « apparaître de nulle part ») ; il a tant de points (le laser
    * du joueur les creuse comme une roche), pousse et va moins vite que le joueur ; il cherche une roche à tant de LUI, parmi celles à tant du joueur (il RÔDE : il mine là où il est, mais
@@ -201,6 +209,8 @@ export type Choc = { x: number; y: number; force: number; asteroide: number }
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
 export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean }
+/** Une bombe en vol (la capacité active d'essai). */
+export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
 export type Ennemi = {
   id: number
@@ -251,6 +261,9 @@ export type Monde = {
   sorti: boolean
   /** L'instant du dernier départ de la postcombustion (très ancien : jamais). */
   boostA: number
+  /** Les bombes en vol, et les charges qui restent pour ce vol. */
+  bombes: Bombe[]
+  charges: number
   prochainId: number
   graine: number
 }
@@ -271,6 +284,9 @@ export type Evenement =
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
   | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number }
+  /** Une bombe part ; une bombe éclate. */
+  | { type: 'bombe'; x: number; y: number }
+  | { type: 'explosion'; x: number; y: number; rayon: number }
   | { type: 'perdu' }
 
 export function nouveauVaisseau(): Vaisseau {
@@ -278,7 +294,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -735,6 +751,21 @@ export function postcombustion(c: ConfigVaisseau, m: Monde): boolean {
   return true
 }
 
+/**
+ * LANCE UNE BOMBE, s'il reste une charge : vers `direction` si elle est donnée et franche, sinon droit devant le nez.
+ * Rend vrai si elle est partie.
+ */
+export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur): boolean {
+  if (m.phase !== 'vol' || m.charges <= 0) return false
+  const v = m.vaisseau
+  const n = direction === undefined ? 0 : Math.hypot(direction.x, direction.y)
+  const ux = n > 0.05 ? direction!.x / n : Math.cos(v.cap)
+  const uy = n > 0.05 ? direction!.y / n : Math.sin(v.cap)
+  m.charges -= 1
+  m.bombes.push({ id: m.prochainId++, x: v.x + ux * (c.rayon + 2), y: v.y + uy * (c.rayon + 2), vx: ux * c.bombe.vitesse + v.vx * 0.5, vy: uy * c.bombe.vitesse + v.vy * 0.5, vie: c.bombe.vie })
+  return true
+}
+
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
   if (m.phase !== 'vol') return { chocs: [], evenements: ev }
@@ -828,6 +859,27 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     if (!fini) for (const a of asteroidesVisibles(c, m, o.x, o.y, c.champ.rayonMax + 2)) if (Math.hypot(o.x - a.x, o.y - a.y) <= a.rayon) fini = true
     if (fini) m.obus.splice(i, 1)
+  }
+
+  // LES BOMBES volent, puis éclatent — au bout de leur vie, ou au contact d'une roche ou d'un rival
+  for (let i = m.bombes.length - 1; i >= 0; i--) {
+    const b = m.bombes[i]
+    b.vie -= dt
+    b.x += b.vx * dt
+    b.y += b.vy * dt
+    let eclate = b.vie <= 0
+    if (!eclate) eclate = m.ennemis.some((e) => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= c.ennemi.rayon + 3)
+    if (!eclate) eclate = asteroidesVisibles(c, m, b.x, b.y, c.champ.rayonMax + 3).some((a) => Math.hypot(b.x - a.x, b.y - a.y) <= a.rayon + 1)
+    if (!eclate) continue
+    m.bombes.splice(i, 1)
+    ev.push({ type: 'explosion', x: b.x, y: b.y, rayon: c.bombe.rayon })
+    for (const a of asteroidesVisibles(c, m, b.x, b.y, c.bombe.rayon + c.champ.rayonMax)) if (Math.hypot(b.x - a.x, b.y - a.y) - a.rayon <= c.bombe.rayon) eclaterLaRoche(c, m, a, ev)
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > c.bombe.rayon + c.ennemi.rayon) continue
+      e.pv -= c.bombe.degats
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
   }
 
   // L'EXTRACTION, à la station la plus proche : à quai (après être sorti une fois d'un parvis), le compte monte ; hors

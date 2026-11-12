@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
 import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
@@ -373,7 +373,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sur l'orientation ; et c'est toujours l'orientation qui détermine où va la caméra : le joueur peut avancer mais
    * regarder en arrière ») : un SECOND MANCHE flottant, posé par le second doigt ; il ne pousse pas, il tourne le nez.
    */
-  let regard: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
+  let regard: { id: number; centre: Vecteur; doigt: Vecteur; tir?: boolean } | null = null
+  /**
+   * LA CAPACITÉ ACTIVE (Keko, 12/11 : « que la barre de capacité en bas soit cliquable et qu'une fois le clic activé, il
+   * faille un deuxième clic sur l'écran pour déclencher la capacité ; et lors de ce deuxième clic, on peut également
+   * insérer une direction en fonction du glissement ») : UNE TAPE SUR SON BOUTON L'ARME (une seconde la désarme) ;
+   * armée, LE PROCHAIN APPUI SUR L'ÉCRAN LA LANCE — au relâchement : droit devant le nez si le doigt n'a pas glissé,
+   * dans le sens du glissement sinon. Pendant qu'il glisse, ce doigt est le manche du regard : le nez tourne, la caméra
+   * avance, un trait dit où elle partira. L'essai : une bombe, trois charges par vol.
+   */
+  let capaciteArmee = false
+  let armeeA = -10
   /** La part du regard dans l'avance de la caméra, lissée (elle ne saute pas avec le pouce). */
   let partDuRegard = 0
   /** `&doigts` : la ligne de diagnostic des manches (le dernier événement tactile, les doigts posés, qui tient quoi). */
@@ -3545,6 +3555,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       appuiA = maintenant
       appuiOu = { x: ev.clientX, y: ev.clientY }
     }
+    // LA CAPACITÉ ARMÉE : cet appui la vise et la lancera (il n'est ni le manche, ni un simple regard)
+    if (capaciteArmee && regard === null && (manche === null || ev.pointerId !== manche.id)) {
+      ev.preventDefault()
+      racine.setPointerCapture(ev.pointerId)
+      const q = { x: ev.clientX, y: ev.clientY }
+      regard = { id: ev.pointerId, centre: q, doigt: q, tir: true }
+      return
+    }
     // (un manche « tenu » par un doigt qui n'est plus posé — voir le filet, plus bas : il y a moins de doigts sur l'écran
     // que de manches pris ; le doigt qui arrive reprend alors le manche)
     const fantome = ev.pointerType === 'touch' && manche !== null && doigtsPoses < (regard === null ? 1 : 2)
@@ -3595,7 +3613,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (regard !== null && ev.pointerId === regard.id) {
       const d = { x: ev.clientX, y: ev.clientY }
-      regard = { id: regard.id, centre: centreQuiSuit(MANCHE, regard.centre, d), doigt: d }
+      regard = { id: regard.id, centre: centreQuiSuit(MANCHE, regard.centre, d), doigt: d, tir: regard.tir }
       return
     }
     if (manche === null || ev.pointerId !== manche.id) return
@@ -3624,7 +3642,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
-    if (regard !== null && ev.pointerId === regard.id) regard = null
+    if (regard !== null && ev.pointerId === regard.id) {
+      // (le doigt qui visait se lève : la capacité part — sauf si l'appui a été annulé par le système)
+      if (regard.tir && ev.type === 'pointerup') {
+        capaciteArmee = false
+        if (lancerLaBombe(CONF, m, regardVoulu())) {
+          jouer('canon')
+          if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
+        }
+      }
+      regard = null
+    }
   }
   // LA MOLETTE, sur PC (Keko : « sur PC je ne peux pas scroller la barre d'onglets ») : sur la grille d'onglets, elle la
   // fait défiler au pixel ; sur la liste des pièces, d'une rangée par cran
@@ -4345,6 +4373,65 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(x + 3, y + h - 5, w - 6, 2, MATIERES.creux.contour)
     p.rect(x + 3, y + h - 5, Math.round((w - 6) * r), 2, pret ? N.hex('#fff2a8') : ION[3])
     zone(x - 4, y - 6, w + 8, h + 11, lancerLaPostcombustion, null)
+  }
+  /**
+   * LE BOUTON DE LA CAPACITÉ, en bas à droite de la vue : une plaque d'acier — la bombe, ses charges en pastilles ;
+   * ARMÉE, elle passe à l'or, bat, et dit « Touchez l'écran » ; sans charge, elle s'éteint. Et, pendant qu'on vise, le
+   * trait qui part du vaisseau.
+   */
+  function dessinerLaCapacite(p: Peintre): void {
+    if (m.phase !== 'vol') return
+    p.place(0, 0)
+    const w = 42
+    const h = 18
+    const x = W - 4 - w
+    const y = H - bandeBas() - h - 5
+    const reste = m.charges
+    if (reste <= 0) capaciteArmee = false
+    const armee = capaciteArmee
+    const bat = armee && Math.floor((t - armeeA) * 5) % 2 === 0
+    if (armee) p.glow(x + w / 2, y + h / 2, 30, PEPITE[2], 0.25 + 0.15 * Math.sin(t * 8))
+    plaque(p, x, y, w, h, reste <= 0 ? 'eteint' : armee ? 'or' : 'acier', { bord: bat ? N.WHITE : undefined })
+    // la bombe : un rond sombre, sa mèche, une étincelle
+    const bx = x + 9
+    const by = y + 10
+    p.circle(bx, by, 4, MATIERES.encre.contour)
+    p.circle(bx, by, 3, reste <= 0 ? COQUE[2] : N.hex('#3a3350'))
+    p.rect(bx - 2, by - 2, 2, 1, reste <= 0 ? COQUE[3] : N.hex('#8a80a8'))
+    p.rect(bx + 1, by - 5, 1, 2, MATIERES.encre.contour)
+    if (reste > 0) p.rect(bx + 2, by - 6, 1, 1, Math.floor(t * 8) % 2 === 0 ? N.hex('#fff2a8') : FEU[3])
+    // ses charges : une pastille par charge du vol, pleine tant qu'elle reste
+    for (let i = 0; i < CONF.bombe.charges; i++) {
+      const cx = x + 18 + i * 7
+      p.rect(cx, y + 6, 5, 6, MATIERES.encre.contour)
+      p.rect(cx + 1, y + 7, 3, 4, i < reste ? (armee ? N.hex('#3a1c04') : PEPITE[3]) : MATIERES.creux.corps)
+    }
+    if (armee) ecrire(p, 'Touchez l’écran', W - 4, y - 11, N.hex('#fff2a8'), { police: GRAS, align: 'right', contour: NUIT_OMBRE })
+    if (reste > 0 && !souteOuverte && t - arriveA >= ARRIVE_A) zone(x - 4, y - 6, w + 8, h + 11, () => ((capaciteArmee = !capaciteArmee), (armeeA = t)), 'onglet')
+    // le trait de visée : du vaisseau, dans le sens du glissement (ou du nez, tant que le doigt n'a pas glissé)
+    if (regard !== null && regard.tir) {
+      const d = regardVoulu()
+      const n = d === undefined ? 0 : Math.hypot(d.x, d.y)
+      const ux = n > 0.05 ? d!.x / n : Math.cos(v.cap)
+      const uy = n > 0.05 ? d!.y / n : Math.sin(v.cap)
+      const sx = v.x - camera.x + W / 2
+      const sy = v.y - camera.y + centreY()
+      const portee = CONF.bombe.vitesse * CONF.bombe.vie
+      for (let k = 10; k < portee; k += 5) p.rect(Math.round(sx + ux * k), Math.round(sy + uy * k), 1, 1, k % 10 === 0 ? N.hex('#fff2a8') : PEPITE[2])
+      p.ring(sx + ux * portee, sy + uy * portee, CONF.bombe.rayon, 1, PEPITE[2], 0.35 + 0.2 * Math.sin(t * 9))
+    }
+  }
+  /** Les bombes en vol : un rond sombre qui tourne sur lui-même, sa mèche qui crache. */
+  function dessinerLesBombes(p: Peintre): void {
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const b of m.bombes) {
+      p.circle(b.x, b.y, 3, MATIERES.encre.contour)
+      p.circle(b.x, b.y, 2, N.hex('#3a3350'))
+      p.px(b.x - 1, b.y - 1, N.hex('#8a80a8'))
+      p.glow(b.x, b.y, 8, FEU[3], 0.7)
+      if (R.next() < 0.7) etincelles.ajouter('etincelle', b.x, b.y, -b.vx * 0.2 + R.range(-20, 20), -b.vy * 0.2 + R.range(-20, 20), R.range(0.15, 0.35), R.next() < 0.5 ? FEU[4] : N.hex('#fff2a8'), 1, 2)
+    }
+    p.place(0, 0)
   }
   /** Le point du bord de l'écran dans la direction (dx, dy) depuis son centre ; `null` si la cible est à l'écran. */
   function auBord(dx: number, dy: number): { x: number; y: number } | null {
@@ -5277,6 +5364,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               break
             }
+            case 'explosion': {
+              // la bombe éclate : l'explosion du dépôt, une secousse, un éclair, des morceaux
+              jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
+              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: 0.6, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+              secousse = Math.max(secousse, 1)
+              if (typeof navigator.vibrate === 'function') navigator.vibrate(50)
+              break
+            }
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
               jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -5505,6 +5601,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
+    dessinerLesBombes(p)
     dessinerLesLasers(p)
     // (les effets sont dans le monde : ils passent SOUS les bandeaux et l'interface)
     for (const e of effets) e.fx.draw(frame)
@@ -5519,6 +5616,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     dessinerLeScore(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
+    dessinerLaCapacite(p)
     dessinerLaSoute(p)
     dessinerLesEclats(p)
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)

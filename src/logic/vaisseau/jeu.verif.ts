@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, larguer, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -449,6 +449,20 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const sansRegard = nouveauMonde()
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, sansRegard, 1 / 60, { x: 1, y: 0 })
   verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && Math.abs(m.vaisseau.vx - sansRegard.vaisseau.vx) < 1e-9)
+}
+
+// la bombe : des charges comptées, une explosion qui éclate les roches autour
+{
+  const m = nouveauMonde()
+  const roche = asteroidesAutour(VAISSEAU, 0, 0, 600).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]
+  // (posé à côté d'elle, face à elle)
+  m.vaisseau = { ...m.vaisseau, x: roche.x - roche.rayon - 30, y: roche.y, vx: 0, vy: 0, cap: 0 }
+  const partie = lancerLaBombe(VAISSEAU, m)
+  let explosions = 0
+  for (let i = 0; i < 120; i++) explosions += avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 0, y: 0 }).evenements.filter((e) => e.type === 'explosion').length
+  verifier('une bombe part droit devant, coûte une charge, éclate une fois au contact de la roche, qui éclate et laisse ses pépites', partie && m.charges === VAISSEAU.bombe.charges - 1 && explosions === 1 && m.bombes.length === 0 && m.detruits.has(roche.id) && m.pepites.length + m.minerai > 0)
+  for (let i = 0; i < 5; i++) lancerLaBombe(VAISSEAU, m, { x: 0, y: -1 })
+  verifier('pas plus de bombes que de charges : la quatrième ne part pas', m.charges === 0 && !lancerLaBombe(VAISSEAU, m) && m.bombes.length === VAISSEAU.bombe.charges - 1 && m.bombes.every((b) => b.vy < 0 && Math.abs(b.vx) < 1e-9))
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

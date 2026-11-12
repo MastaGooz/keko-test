@@ -2722,3 +2722,24 @@ Puis (Keko : au demi-tour, la caméra bougeait « en deux temps ») : la cible v
 Puis (Keko) : 40 px d'avance en hauteur quand même — un vaisseau qui avance ne doit pas rester planté au centre ; la portée n'est plus tout à fait égale (200 en hauteur, 164 de côté), assumé pour un écran de téléphone.
 
 UN FILET POUR LES DEUX MANCHES (12/11). Keko : « si je lâche le premier joystick et que je le réenclenche, je ne peux plus bouger ». Pas reproduit en émulation (deux doigts simulés, mode mobile compris : le doigt reposé reprend le manche). Sur l'appareil, tout se passe comme si un relâchement s'était perdu ; la page écoute donc AUSSI `touchend` / `touchcancel`, dont `touches` dit quels doigts sont vraiment posés : aucun, les deux manches tombent ; un seul pour deux manches, le plus éloigné de ce doigt tombe. `&doigts` écrit en bas de l'écran qui tient quoi et le dernier événement tactile — *l'appareil dit ce qu'il voit*.
+
+### Les capacités actives : armer, puis toucher l'écran (12/11)
+
+Le dilemme de Keko : garder le second manche du regard ET avoir des capacités
+« un peu puissantes, soumises à un nombre de charges par vol », qu'on
+déclenche soi-même. Après un essai de boutons qu'on glisse (« pas terrible
+niveau ergonomie »), SON GESTE : « que la barre de capacité en bas soit
+cliquable et qu'une fois le clic activé, il faille un deuxième clic sur
+l'écran pour déclencher la capacité ; et lors de ce deuxième clic, on peut
+insérer une direction en fonction du glissement ».
+- LE GESTE (`page.ts`) : une tape sur le bouton, en bas à droite, ARME la
+  capacité (`capaciteArmee` ; une seconde la désarme) ; armée, le prochain
+  appui sur l'écran — n'importe où, manche tenu ou non — la VISE (c'est un
+  manche du regard marqué `tir` : le nez tourne, la caméra avance, un
+  pointillé et un cercle disent où elle éclatera) et la LANCE AU RELÂCHEMENT :
+  droit devant le nez sans glissement, dans le sens du glissement sinon.
+- L'ESSAI : UNE BOMBE (`VAISSEAU.bombe`, `lancerLaBombe`, `Monde.bombes` /
+  `charges`) — trois charges par vol ; elle file 0,6 s puis éclate, ou au
+  contact d'une roche ou d'un rival : les roches à 44 de sa surface éclatent
+  (leurs pépites restent), les rivaux prennent 80. Tout est de moi, pour juger
+  le geste : la bombe, ses chiffres, sa place.
