@@ -2796,3 +2796,18 @@ Keko : « faire en sorte que les projectiles des armes et le laser de foreuse pa
 ### Le tir à la main, au manche du regard (12/11)
 
 Keko : « quand le joueur utilise le stick d'orientation, le tir des armes passe en manuel (sauf les missiles, à tête chercheuse) et tire dans la direction de la visée ». `avancerLeMonde(…, regard, manuel)` : tant que le manche du regard est tenu et franc, les armes NON GUIDÉES tirent à leur cadence dans sa direction, qu'il y ait un rival ou non ; relâché, elles reprennent leur tir automatique sur le rival à portée. Les missiles restent automatiques. Pas à la souris (elle vise en permanence : les armes tireraient sans arrêt), ni pendant la visée d'une capacité.
+
+### Les pépites d'une roche suivent la foreuse ; les armes entament les roches (12/11)
+
+Keko : « si un astéroïde est cassé autrement que par les foreuses il ne donne
+pas de minerai : son drop est proportionnel au % de sa vie enlevé via
+foreuse. Et aussi les armes doivent endommager les astéroïdes ». Et : « le
+tir manuel devrait aussi tirer les missiles ».
+- `Monde.fore` compte, par roche, les points creusés AU LASER (celui du
+  joueur comme celui du rival) ; `eclaterLaRoche` rend la part
+  `fore / solidité` de ses pépites — toutes si le laser a tout fait, aucune
+  s'il n'y a pas touché. Un choc, un obus, une bombe brisent sans rien rendre
+  de plus : ÉPERONNER UNE ROCHE NE RAPPORTE PLUS RIEN.
+- Un obus qui s'écrase sur une roche l'abîme de ses dégâts (`abimerLaRoche`).
+- Au manche du regard, les missiles tirent à la main aussi : droit dans la
+  direction visée, puis ils virent vers le rival s'il y en a un.

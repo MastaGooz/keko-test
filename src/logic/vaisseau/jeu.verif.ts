@@ -456,11 +456,12 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const m = nouveauMonde()
   const roche = asteroidesAutour(VAISSEAU, 0, 0, 600).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]
   // (posé à côté d'elle, face à elle)
-  m.vaisseau = { ...m.vaisseau, x: roche.x - roche.rayon - 30, y: roche.y, vx: 0, vy: 0, cap: 0 }
-  const partie = lancerLaBombe(VAISSEAU, m)
+  // (hors de portée du laser, qui la creuserait : la bombe seule)
+  m.vaisseau = { ...m.vaisseau, x: roche.x - roche.rayon - 80, y: roche.y, vx: 0, vy: 0, cap: 0 }
+  const partie = lancerLaBombe(VAISSEAU, m, { x: 1, y: 0 })
   let explosions = 0
   for (let i = 0; i < 120; i++) explosions += avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 0, y: 0 }).evenements.filter((e) => e.type === 'explosion').length
-  verifier('une bombe part droit devant, coûte une charge, éclate une fois au contact de la roche, qui éclate et laisse ses pépites', partie && m.charges === VAISSEAU.bombe.charges - 1 && explosions === 1 && m.bombes.length === 0 && m.detruits.has(roche.id) && m.pepites.length + m.minerai > 0)
+  verifier('une bombe part droit devant, coûte une charge, éclate une fois au contact de la roche, qui éclate sans rien rendre (aucun laser ne l’a creusée)', partie && m.charges === VAISSEAU.bombe.charges - 1 && explosions === 1 && m.bombes.length === 0 && m.detruits.has(roche.id) && m.pepites.length + m.minerai === 0)
   verifier('la bombe va plus ou moins loin selon la force du geste : au plus près, à mi-chemin sur une tape, à pleine portée', porteeDeLaBombe(VAISSEAU, { x: 0.1, y: 0 }) < porteeDeLaBombe(VAISSEAU) && porteeDeLaBombe(VAISSEAU) < porteeDeLaBombe(VAISSEAU, { x: 0, y: -1 }) && Math.abs(porteeDeLaBombe(VAISSEAU, { x: 3, y: 0 }) - VAISSEAU.bombe.vitesse * VAISSEAU.bombe.vie) < 1e-9)
   for (let i = 0; i < 5; i++) lancerLaBombe(VAISSEAU, m, { x: 0, y: -1 })
   verifier('pas plus de bombes que de charges : la quatrième ne part pas', m.charges === 0 && !lancerLaBombe(VAISSEAU, m) && m.bombes.length === VAISSEAU.bombe.charges - 1 && m.bombes.every((b) => b.vy < 0 && Math.abs(b.vx) < 1e-9))
@@ -497,7 +498,37 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const mm = nouveauMonde(missiles)
   let tirsGuides = 0
   for (let i = 0; i < 60 * 3; i++) tirsGuides += compter(avancerLeMonde(missiles, mm, 1 / 60, { x: 0, y: 0 }, { x: 0, y: -1 }, true).evenements, 'obus')
-  verifier('le tir à la main : sans rival, le canon tire à sa cadence dans la direction du regard ; sans « manuel » il se tait ; les missiles, guidés, restent automatiques', tirs >= 2 && seul.obus.length > 0 && vers && tirsAuto === 0 && tirsGuides === 0)
+  verifier('le tir à la main : sans rival, le canon tire à sa cadence dans la direction du regard ; sans « manuel » il se tait ; les missiles partent à la main aussi', tirs >= 2 && seul.obus.length > 0 && vers && tirsAuto === 0 && tirsGuides >= 1)
+}
+
+// les pépites d'une roche : la part que la foreuse a creusée
+{
+  const cfg = armer('arme-canon')
+  const w2 = nouveauMonde(cfg)
+  const roche = asteroidesAutour(cfg, 0, 0, 900).sort((a, b) => b.rayon - a.rayon)[0]
+  // (posé hors de portée du laser, le nez vers elle : on tire à la main dessus)
+  w2.vaisseau = { ...w2.vaisseau, x: roche.x - roche.rayon - 100, y: roche.y, vx: 0, vy: 0, cap: 0 }
+  w2.detruits = new Set(asteroidesAutour(cfg, w2.vaisseau.x, w2.vaisseau.y, 400).filter((r) => r.id !== roche.id).map((r) => r.id))
+  let i = 0
+  while (!w2.detruits.has(roche.id) && i++ < 60 * 60) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }, { x: 1, y: 0 }, true)
+  verifier('les obus entament la roche et la brisent ; brisée sans foreuse, elle ne rend aucune pépite', w2.detruits.has(roche.id) && w2.pepites.length === 0 && w2.minerai === 0)
+  // la même, à moitié forée puis achevée au canon : la moitié des pépites d'une roche toute forée
+  const entiere = nouveauMonde(C)
+  entiere.vaisseau = { ...entiere.vaisseau, x: roche.x - roche.rayon - 20, y: roche.y, vx: 0, vy: 0 }
+  entiere.detruits = new Set(asteroidesAutour(C, entiere.vaisseau.x, entiere.vaisseau.y, 400).filter((r) => r.id !== roche.id).map((r) => r.id))
+  let nEntiere = 0
+  for (let k = 0; k < 60 * 60 && !entiere.detruits.has(roche.id); k++) nEntiere += compter(avancerLeMonde(C, entiere, 1 / 60, { x: 0, y: 0 }).evenements, 'eclat') * 0
+  nEntiere = entiere.pepites.length + entiere.minerai
+  const moitie = nouveauMonde(cfg)
+  moitie.vaisseau = { ...moitie.vaisseau, x: roche.x - roche.rayon - 100, y: roche.y, vx: 0, vy: 0, cap: 0 }
+  moitie.detruits = new Set(entiere.detruits)
+  moitie.detruits.delete(roche.id)
+  moitie.creuse.set(roche.id, solidite(cfg, roche) / 2)
+  moitie.fore.set(roche.id, solidite(cfg, roche) / 2)
+  let j = 0
+  while (!moitie.detruits.has(roche.id) && j++ < 60 * 60) avancerLeMonde(cfg, moitie, 1 / 60, { x: 0, y: 0 }, { x: 1, y: 0 }, true)
+  const nMoitie = moitie.pepites.length + moitie.minerai
+  verifier('une roche à moitié forée puis brisée au canon rend la moitié de ses pépites', nEntiere >= 2 && moitie.detruits.has(roche.id) && nMoitie === Math.round(nEntiere / 2))
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

@@ -262,6 +262,12 @@ export type Monde = {
   armesA: number[]
   /** Les points creusés par roche (son id), tant qu'elle tient. */
   creuse: Map<number, number>
+  /**
+   * … et, parmi eux, LES POINTS CREUSÉS À LA FOREUSE (Keko, 12/11 : « si un astéroïde est cassé autrement que par les
+   * foreuses il ne donne pas de minerai : son drop est proportionnel au % de sa vie enlevé via foreuse ») : une roche
+   * brisée par un choc, un obus ou une bombe ne rend que la part de ses pépites qu'un laser a creusée.
+   */
+  fore: Map<number, number>
   detruits: Set<number>
   pepites: Pepite[]
   /** Le minerai PORTÉ (à bord, perdu avec la coque), et la BANQUE : le total extrait, qui ne bouge qu'à une extraction — en nombre de pépites, et par minerai (`cargaison`, `tresor`). */
@@ -313,7 +319,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -487,6 +493,7 @@ function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecte
   const d = Math.hypot(dx, dy) || 1
   const creuse = (m.creuse.get(a.id) ?? 0) + points
   const total = solidite(c, a)
+  m.fore.set(a.id, (m.fore.get(a.id) ?? 0) + points)
   if (creuse < total) {
     m.creuse.set(a.id, creuse)
     return { sorte: 'roche', cible: a.id, x: a.x - (dx / d) * a.rayon, y: a.y - (dy / d) * a.rayon, part: creuse / total }
@@ -497,11 +504,14 @@ function creuserLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, depuis: Vecte
 
 /** La roche éclate : elle quitte le monde et laisse ses pépites — chacune a `double` chances de naître deux fois (le filon double du labo, pour le laser du joueur seul). */
 function eclaterLaRoche(c: ConfigVaisseau, m: Monde, a: Asteroide, ev: Evenement[], double = 0): void {
+  // (LA PART CREUSÉE À LA FOREUSE : c'est elle qui rend des pépites — entière si le laser a tout fait, nulle s'il n'y a pas touché)
+  const part = Math.min(1, (m.fore.get(a.id) ?? 0) / solidite(c, a))
   m.creuse.delete(a.id)
+  m.fore.delete(a.id)
   m.detruits.add(a.id)
   ev.push({ type: 'eclat', x: a.x, y: a.y, rayon: a.rayon, graine: a.graine, minerai: a.minerai })
-  // tant de pépites de son minerai : selon sa taille ET sa richesse (une pauvre en rend le tiers d'une riche)
-  const n = Math.max(1, Math.round(a.rayon * c.forage.pepitesParRayon * (0.4 + 1.2 * a.richesse)))
+  // tant de pépites de son minerai : selon sa taille ET sa richesse (une pauvre en rend le tiers d'une riche), fois la part forée
+  const n = part >= 1 ? Math.max(1, Math.round(a.rayon * c.forage.pepitesParRayon * (0.4 + 1.2 * a.richesse))) : Math.round(Math.max(1, a.rayon * c.forage.pepitesParRayon * (0.4 + 1.2 * a.richesse)) * part)
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(a.graine, 20, i) * 1.2
     const vit = 20 + 40 * tire(a.graine, 21, i)
@@ -794,8 +804,8 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
 /**
  * `regard` : où le nez se tourne (voir `voler`). `manuel` : LE TIR EST À LA MAIN (Keko, 12/11 : « quand le joueur utilise
  * le stick d'orientation, le tir des armes passe en manuel — sauf les missiles, à tête chercheuse — et tire dans la
- * direction de la visée ») : tant que le regard est franc, les armes non guidées tirent à leur cadence DANS SA DIRECTION,
- * rival ou pas ; les guidées gardent leur tir automatique.
+ * direction de la visée ») : tant que le regard est franc, les armes tirent à leur cadence DANS SA DIRECTION, rival ou
+ * pas — les missiles aussi, qui virent ensuite vers le rival s'il y en a un.
  */
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
@@ -842,7 +852,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
   c.armes.forEach((arme, i) => {
     if (m.t < (m.armesA[i] ?? 0)) return
-    const aLaMain = manuel && !arme.guide && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
+    // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
+    const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
     let vise: number
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
     else {
@@ -893,7 +904,15 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         break
       }
     }
-    if (!fini) for (const a of asteroidesVisibles(c, m, o.x, o.y, c.champ.rayonMax + 2)) if (Math.hypot(o.x - a.x, o.y - a.y) <= a.rayon) fini = true
+    // (LES ARMES ENTAMENT LES ROCHES — Keko, 12/11 : l'obus qui s'écrase sur une roche l'abîme de ses dégâts ; brisée
+    // ainsi, elle ne rend que sa part forée)
+    if (!fini) {
+      const a = asteroidesVisibles(c, m, o.x, o.y, c.champ.rayonMax + 2).find((r) => Math.hypot(o.x - r.x, o.y - r.y) <= r.rayon)
+      if (a !== undefined) {
+        fini = true
+        abimerLaRoche(c, m, { x: o.x, y: o.y, force: 0, asteroide: a.id }, o.degats, ev)
+      }
+    }
     if (fini) m.obus.splice(i, 1)
   }
 
