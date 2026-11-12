@@ -2595,3 +2595,17 @@ lettre, deux rivets au bout ; dessous LE RAIL, plus sombre, sous l'ombre de
 l'étage — un pointillé y mène au CARTOUCHE DES CRÉDITS, vert sombre liseré de
 vert, coins coupés, le montant entier en crème et sa pièce ; un liseré d'or
 sombre ferme l'ensemble. Mêmes hauteurs qu'avant (40 px).
+
+### L'en-tête n'est plus un rectangle : la languette des crédits (12/11)
+
+Keko, sur le pupitre : « pas fan de la flèche en pointillé à gauche des
+crédits ; propose autre chose pour utiliser cet espace, ou vide cet espace en
+donnant une forme non rectangulaire à la zone » — la seconde est choisie.
+L'en-tête S'ARRÊTE SOUS LE TITRE (25 px, liseré d'or) ; seule une LANGUETTE
+d'acier descend à droite jusqu'à 40 px, le bord gauche en biais, avec le
+cartouche des crédits. LA SCÈNE COMMENCE SOUS LE TITRE (`Y_SCENE` devient une
+variable, `sceneSousLeTitre`) au hangar et aux missions — elle y gagne quinze
+pixels, la languette passant devant son coin ; les lampes du hangar pendent
+au bout d'une tige. Dans la recherche et le commerce, dont la scène s'ouvre
+sur une rangée d'onglets, rien ne monte : la bande à gauche de la languette
+prolonge le fond de la rangée.

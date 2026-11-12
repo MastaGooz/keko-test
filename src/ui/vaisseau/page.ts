@@ -938,7 +938,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le milieu de la ligne des crédits (les pièces y volent). */
   const Y_CREDITS = HAUT_DU_TITRE + 5
   const HAUT_NAV = 34
-  const Y_SCENE = HAUT_BARRE
+  /**
+   * OÙ COMMENCE LA SCÈNE (Keko, 12/11 : l'en-tête n'est plus un rectangle — il s'arrête sous le titre, et seule la
+   * LANGUETTE des crédits descend, à droite) : juste sous le titre, la languette passant devant son coin — sauf dans la
+   * recherche et le commerce, dont la scène s'ouvre sur une rangée d'onglets que la languette cacherait : là, elle
+   * commence sous la languette, comme avant.
+   */
+  const sceneSousLeTitre = (): boolean => vue !== 'labo' && vue !== 'entrepot'
+  let Y_SCENE = HAUT_BARRE
   /** La scène a UNE HAUTEUR FIXE pour un écran donné (Keko) : ce que laissent les deux barres et le plus haut des contenus. */
   // (AU LABO, la scène est l'ARBRE — ses branches, ses rangs, la fiche du nœud — et prend tout l'écran entre les deux
   // barres : les pièces s'achètent au hangar, il n'y a plus rien dessous)
@@ -1060,7 +1067,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
-    hautScene = hauteurDeScene()
+    Y_SCENE = sceneSousLeTitre() ? HAUT_DU_TITRE - 1 : HAUT_BARRE
+    hautScene = hauteurDeScene() + (HAUT_BARRE - Y_SCENE) // (le contenu, dessous, ne bouge pas : la scène gagne la hauteur)
     p.rect(0, 0, W, H, NUIT)
     if (credits !== creditsConnus) {
       const d = credits - creditsConnus
@@ -1135,15 +1143,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
       for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
       if (!tutorielFini(quetes)) {
-        dessinerLEnTeteDuBandeau(p, 'Formation', y0 + 3)
+        dessinerLEnTeteDuBandeau(p, 'Formation', y1 - 33)
         const n = TUTORIEL.length
         for (let i = 0; i < n; i++) {
           const px = Math.round(cx + (i - (n - 1) / 2) * 12)
           const fait = i < quetes.etape
           const ici = i === quetes.etape
-          p.rect(px - 3, y0 + 25, 7, 7, MATIERES.encre.contour)
-          p.rect(px - 2, y0 + 26, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
-          if (i > 0) p.rect(px - 9, y0 + 28, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
+          p.rect(px - 3, y1 - 11, 7, 7, MATIERES.encre.contour)
+          p.rect(px - 2, y1 - 10, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
+          if (i > 0) p.rect(px - 9, y1 - 8, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
         }
       } else {
         // (seul, au milieu du bandeau : « Un par activité, toujours » est retiré — Keko, 12/11)
@@ -1152,7 +1160,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // la hiérarchie dans l'autre sens ». Il n'y a pas de lettre entre la grasse et la grande (la grande est la
         // grasse doublée) : le mot prend donc LA PLAQUE D'EN-TÊTE du hangar — l'acier, la lettre écartée, les deux
         // pointes d'or —, qui pèse plus qu'un titre de carte sans égaler le titre de la vue)
-        dessinerLEnTeteDuBandeau(p, 'Contrats', y0 + 9)
+        dessinerLEnTeteDuBandeau(p, 'Contrats', y1 - 27)
       }
     } else {
       p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))
@@ -1161,11 +1169,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LES LAMPES : un boîtier, son halo, et son cône de lumière qui tombe vers le milieu
     // (AU HANGAR SEULEMENT — Keko, 12/11 : « enlever les spotlights des autres onglets »)
     for (const lx of vue === 'hangar' ? [10, W - 11] : []) {
-      p.glowLine(lx, y0 + 3, lx + (cx - lx) * 0.55, cy + 10, 12, CHAUD, 0.07)
-      p.glow(lx, y0 + 5, 30, CHAUD, 0.35)
-      p.rect(lx - 4, y0, 8, 3, COQUE[1])
-      p.rect(lx - 4, y0, 8, 1, COQUE[2])
-      p.rect(lx - 3, y0 + 3, 6, 1, N.hex('#fff2c8'))
+      // (elles pendent au bout d'une tige, sous la languette des crédits qui passe devant le coin de la scène)
+      const yl = y0 + (HAUT_BARRE - Y_SCENE)
+      p.rect(lx - 1, y0, 2, yl - y0, COQUE[1])
+      p.glowLine(lx, yl + 3, lx + (cx - lx) * 0.55, cy + 10, 12, CHAUD, 0.07)
+      p.glow(lx, yl + 5, 30, CHAUD, 0.35)
+      p.rect(lx - 4, yl, 8, 3, COQUE[1])
+      p.rect(lx - 4, yl, 8, 1, COQUE[2])
+      p.rect(lx - 3, yl + 3, 6, 1, N.hex('#fff2c8'))
     }
     if (vue === 'hangar') {
       // la flaque de lumière sur l'aire, et les poussières qui flottent dans les cônes
@@ -1401,17 +1412,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // vert sombre liseré de vert, aux coins coupés, le montant entier en crème et sa pièce —, qui se détache du fond au
     // lieu de s'y fondre. Un liseré d'or sombre ferme le tout.
     const YT = HAUT_DU_TITRE - 2
-    const RAIL = N.hex('#08070d')
-    p.rect(0, 0, W, YT, N.hex('#17131f'))
+    const ACIER = N.hex('#17131f')
+    const OR_SOMBRE = N.hex('#6b3a0c')
+    // (la lumière de la scène ne traverse pas l'en-tête)
+    frame.light.fill(0, 0, (YT + 1) * W)
+    p.rect(0, 0, W, YT, ACIER)
     p.rect(0, 0, W, 1, N.hex('#322b47'))
     p.rect(0, 1, W, 1, N.hex('#1f1a2b'))
-    p.rect(0, YT - 1, W, 1, N.hex('#100d17'))
-    p.rect(0, YT, W, HAUT_BARRE - YT, RAIL)
-    p.rect(0, YT, W, 1, MATIERES.encre.contour)
-    p.rect(0, YT + 1, W, 1, N.hex('#040308'))
-    p.rect(0, HAUT_BARRE - 2, W, 1, N.hex('#6b3a0c'))
-    p.rect(0, HAUT_BARRE - 1, W, 1, MATIERES.encre.contour)
-    p.rect(0, HAUT_BARRE, W, 1, NUIT_OMBRE)
+    p.rect(0, YT - 2, W, 1, OR_SOMBRE)
+    p.rect(0, YT - 1, W, 1, MATIERES.encre.contour)
+    p.rect(0, YT, W, 1, NUIT_OMBRE)
+    // (dans la recherche et le commerce, la bande à gauche de la languette prolonge leur rangée d'onglets)
+    if (!sceneSousLeTitre()) p.rect(0, YT, W, HAUT_BARRE - YT, NUIT_BARRE)
     // l'icône de la vue, dans son logement
     plaque(p, 4, 3, 19, 19, 'creux')
     p.glow(13, 12, 10, PEPITE[2], 0.14)
@@ -1436,21 +1448,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const r = refus
     const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
-    const yc = YT + 2
+    // LA LANGUETTE (Keko, 12/11 : « vide cet espace en donnant une forme non rectangulaire à la zone » — le pointillé
+    // et sa flèche, à gauche des crédits, ne plaisaient pas) : l'en-tête s'arrête sous le titre, et seul ce pan d'acier
+    // descend, à droite, le bord gauche en biais, liseré d'or ; le cartouche des crédits est dedans
+    const yc = YT + 1
     const wp = wn + 21
     const px = W - 4 - wp + tremble
     compteurX = px + wp - 9
-    // le pointillé du rail, qui mène au cartouche
-    for (let x = 6; x < px - 7; x += 4) p.rect(x, Y_CREDITS, 2, 1, N.hex('#241f33'))
-    p.rect(px - 5, Y_CREDITS - 1, 2, 3, PEPITE[1])
-    p.rect(px - 4, Y_CREDITS, 2, 1, PEPITE[2])
-    if (allume) p.glow(px + wp / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
+    const hl = HAUT_BARRE - YT
+    const x0 = px - 5 - hl
+    for (let i = 0; i < hl; i++) {
+      const y = YT - 2 + i
+      const xg = x0 + i
+      frame.light.fill(0, Math.max(0, y) * W + Math.max(0, xg - 1), (y + 1) * W)
+      p.rect(xg, y, W - xg, 1, i >= hl - 2 ? (i === hl - 2 ? OR_SOMBRE : MATIERES.encre.contour) : ACIER)
+      if (i < hl - 1) {
+        p.rect(xg - 1, y, 1, 1, MATIERES.encre.contour)
+        p.rect(xg, y, 1, 1, OR_SOMBRE)
+      }
+    }
+    if (allume) p.glow(px + wp / 2, Y_CREDITS - 1, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
     const bord = allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b')
     p.rect(px, yc, wp, 10, bord)
     p.rect(px + 1, yc + 1, wp - 2, 8, N.hex('#0c241d'))
     p.rect(px + 1, yc + 1, wp - 2, 1, N.hex('#16382d'))
-    for (const [cx, cy] of [[px, yc], [px + wp - 1, yc], [px, yc + 9], [px + wp - 1, yc + 9]]) p.rect(cx, cy, 1, 1, RAIL)
-    dessinerUnCredit(p, px + wp - 9, Y_CREDITS + saut)
+    for (const [cx, cy] of [[px, yc], [px + wp - 1, yc], [px, yc + 9], [px + wp - 1, yc + 9]]) p.rect(cx, cy, 1, 1, ACIER)
+    dessinerUnCredit(p, px + wp - 9, Y_CREDITS - 1 + saut)
     ecrire(p, n, px + wp - 16, yc + 2 + saut, allume ? N.WHITE : N.hex('#fff2c8'), { police: GRAS, align: 'right' })
   }
 
