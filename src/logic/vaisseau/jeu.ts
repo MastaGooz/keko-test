@@ -175,7 +175,24 @@ export type ConfigVaisseau = Large<typeof VAISSEAU>
 export const MANCHE: ConfigSurvivor = { vitesse: 0, reponse: 0, manche: VAISSEAU.manche }
 
 /** Une arme du joueur : sa cadence, ce que fait un coup, sa portée, la vitesse et la vie de ses obus, leur dispersion ; guidée, l'obus tourne vers le rival. */
-export type Arme = { id: string; cadence: number; degats: number; portee: number; vitesse: number; vie: number; dispersion: number; guide: boolean }
+export type Arme = {
+  id: string
+  cadence: number
+  degats: number
+  portee: number
+  vitesse: number
+  vie: number
+  dispersion: number
+  guide: boolean
+  /** La place où elle est montée (0 : l'aile gauche, 1 : la droite), posée par le hangar. */
+  place?: number
+  /**
+   * SA BOUCHE, en unités du vaisseau (x vers le nez, y vers la droite), posée par le rendu qui la dessine : ses obus
+   * en partent (Keko, 12/11 : « que les projectiles des armes partent de l'endroit réel où se trouve la pièce »). Sans
+   * elle, ils partent du bord du vaisseau, vers la cible.
+   */
+  bouche?: Vecteur
+}
 
 export type Vaisseau = {
   x: number
@@ -831,8 +848,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const cx = cible.corps.x + cible.corps.vx * temps - v.x
     const cy = cible.corps.y + cible.corps.vy * temps - v.y
     const angle = Math.atan2(cy, cx) + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
-    const x0 = v.x + Math.cos(angle) * (c.rayon + 3)
-    const y0 = v.y + Math.sin(angle) * (c.rayon + 3)
+    const bo = arme.bouche
+    const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
+    const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
     m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique })

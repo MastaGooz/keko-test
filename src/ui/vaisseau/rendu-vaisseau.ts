@@ -450,6 +450,14 @@ export function formesDuRadar(t: number): Forme[] {
     { pts: ovale(-4.5, 0, 1, 1, 10), mat: 'metal', relief: 'dome', dome: { x: -4.5, y: 0, rx: 1, ry: 1 } },
   ]
 }
+/**
+ * LA BOUCHE D'UNE ARME sous l'aile `s`, en unités du vaisseau : le bout de son fût, tel que `formesDeLArme` le dessine
+ * juste dessous (le canon finit à x = 2, les deux fûts de la mitrailleuse à 0,6 — entre eux —, le missile sort du nez de
+ * sa nacelle, à −0,6). Les obus du vol en partent.
+ */
+export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
+  return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
+}
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   if (id === 'canon') {

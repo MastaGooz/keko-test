@@ -17,7 +17,7 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, 
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheDeLArme, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { chargerHangar, chargerLivree, chargerReglages, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
@@ -207,6 +207,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pa = passifsDe(labo)
     return { prime: pa.vente, plafond: pa.plafond }
   }
+  /** `&armes` : donne les trois armes (canon, mitrailleuse, missiles) au hangar de cet appareil, pour les essayer. */
+  if (parametres.has('armes')) hangar = { ...hangar, possedees: [...new Set([...hangar.possedees, 'arme-canon', 'arme-rafale', 'arme-missiles'])] }
   // (les pièces d'essai ne sont portées par aucun nœud du labo : `&pieces` les donne, pour remplir les listes du hangar)
   if (parametres.has('pieces')) hangar = { ...hangar, possedees: [...new Set([...hangar.possedees, ...(['propulseur', 'coque', 'outil', 'arme'] as const).flatMap((o) => piecesDe(o)).filter((pc) => pc.id.startsWith('essai-')).map((pc) => pc.id)])] }
   /** `&stock=N` : pose N pépites DE CHAQUE MINERAI à l'entrepôt, pour essayer l'arbre du labo d'un lien. */
@@ -408,6 +410,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
     // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
     // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
+    // (LES OBUS PARTENT DE LA BOUCHE DE LEUR ARME, là où elle est dessinée sous son aile — c'est le rendu qui la connaît)
+    CONF = { ...CONF, armes: CONF.armes.map((a) => ({ ...a, bouche: boucheDeLArme(a.id, (a.place ?? 0) === 0 ? -1 : 1) })) }
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }

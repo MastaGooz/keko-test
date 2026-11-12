@@ -466,4 +466,20 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('pas plus de bombes que de charges : la quatrième ne part pas', m.charges === 0 && !lancerLaBombe(VAISSEAU, m) && m.bombes.length === VAISSEAU.bombe.charges - 1 && m.bombes.every((b) => b.vy < 0 && Math.abs(b.vx) < 1e-9))
 }
 
+// la bouche d'une arme : ses obus en partent, tournée du cap du vaisseau
+{
+  const avecBouche = { ...canon, armes: canon.armes.map((a) => ({ ...a, bouche: { x: 2, y: 6 } })) }
+  const zb = poserPres(avecBouche)
+  zb.vaisseau = { ...zb.vaisseau, cap: Math.PI / 2 } // (le nez vers le bas de l'écran : « devant » est +y, « à droite » est −x)
+  let depart: { x: number; y: number } | null = null
+  for (let i = 0; i < 60 * 3 && depart === null; i++) {
+    const avant = { x: zb.vaisseau.x, y: zb.vaisseau.y, cap: zb.vaisseau.cap }
+    const r = avancerLeMonde(avecBouche, zb, 1 / 60, { x: 0, y: 0 })
+    for (const e of r.evenements) if (e.type === 'obus') depart = { x: e.x - zb.vaisseau.x, y: e.y - zb.vaisseau.y }
+    void avant
+  }
+  const cap = zb.vaisseau.cap
+  verifier('avec une bouche, l’obus part d’elle — à sa place sous l’aile, tournée du cap —, plus du bord du vaisseau', canon.armes[0].place === 0 && depart !== null && Math.abs(depart.x - (Math.cos(cap) * 2 - Math.sin(cap) * 6)) < 0.01 && Math.abs(depart.y - (Math.sin(cap) * 2 + Math.cos(cap) * 6)) < 0.01)
+}
+
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

@@ -2788,3 +2788,7 @@ La flèche de retour des paramètres les REFERME (Keko) : on retrouve l'onglet d
 Keko : « et les commandes sur PC, on fait mouvement sur ZQSD (azerty) et vise via souris ? ». Le clavier volait déjà (ZQSD, WASD, les flèches). LA SOURIS VISE : en vol, dès qu'elle a bougé, le nez se tourne vers le pointeur et la caméra avance vers lui, d'autant plus qu'il est loin du vaisseau (`regardVoulu` : à fond à soixante pixels, rien à moins de huit) ; sortie du jeu, elle ne vise plus. Le clic maintenu reste le manche flottant (on peut encore tout faire à la souris) — il suspend la visée.
 
 LE BOUTON « COULEUR » EST SUR LA PAGE DU CHÂSSIS, à gauche de « Changer » (Keko, 12/11 : dans le panneau il se superposait à « Acheter »). La grille des couleurs s'ouvre par-dessus la page ; « Changer » n'est donc plus toujours là pour le châssis, seulement s'il y en a un autre.
+
+### Les obus partent de leur arme (12/11)
+
+Keko : « faire en sorte que les projectiles des armes et le laser de foreuse partent de l'endroit réel où se trouve la pièce ». LE LASER partait déjà de la bouche du canon dessiné (`canonDeLaForeuse`). LES OBUS partaient du bord du vaisseau, face à la cible : ils partent maintenant de LA BOUCHE de leur arme, sous son aile — `Arme.place` (posée par `configDuHangar` : la place du hangar, une place vide ne décale plus les suivantes) et `Arme.bouche` (posée par la page au décollage, lue dans `boucheDeLArme` du rendu, à côté des formes), tournée du cap du vaisseau. `&armes` donne les trois armes au hangar de l'appareil, pour les essayer.
