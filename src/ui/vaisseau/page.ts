@@ -273,7 +273,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que les compteurs montrent, par minerai (les pépites en vol n'y sont pas encore). Rien ne montre ce qui est déjà extrait (Keko). */
   const affiche: Cargaison = { ...cargaisonVide(), fer: minerai0 }
   const allumeA: Cargaison = { fer: -10, or: -10, cristal: -10 }
-  /** Combien de secondes la pastille d'un minerai reste affichée après la dernière pépite ramassée (elle clignote sur la fin). */
+  /** Combien de secondes la pastille d'un minerai reste affichée après la dernière pépite ramassée (elle se referme sur la fin). */
   const TENUE_DU_PORTE = 3
   /** Où chaque pastille du porté est dessinée (elle GLISSE vers sa place quand une voisine s'en va). */
   const xDuPorte: Partial<Record<Minerai, number>> = {}
@@ -3916,8 +3916,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const encre = MATIERES.encre.contour
     // LE PORTÉ NE MONTRE QUE CE QU'ON VIENT DE RAMASSER (Keko, 12/11 : « affiche les minerais ramassés récemment et
     // après quelques secondes on les fait disparaître » — à dix minerais, la rangée ne tiendrait pas) : une pastille
-    // paraît quand une pépite de son minerai vole vers elle, reste TENUE_DU_PORTE secondes après la dernière, clignote
-    // et s'en va ; le détail entier reste dans la soute
+    // paraît quand une pépite de son minerai vole vers elle, reste TENUE_DU_PORTE secondes après la dernière, se
+    // referme et s'en va ; le détail entier reste dans la soute
     const visibles = MINERAIS.filter((k) => envols.some((e) => e.minerai === k) || (affiche[k] > 0 && t - allumeA[k] < TENUE_DU_PORTE))
     for (const k of MINERAIS) if (!visibles.includes(k)) delete xDuPorte[k]
     // les places des pastilles du porté, de gauche à droite, larges de leur nombre
@@ -3970,9 +3970,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const { x, w } = places.get(k)!
       const T = TEINTES_MINERAI[k]
       const allume = t - allumeA[k] < 0.18
-      // (sur sa fin, elle clignote)
+      // (sur sa fin, elle SE REFERME, sans clignoter — Keko, 12/11 : le clignotement « laisse entendre qu'on le perd »)
       const reste = TENUE_DU_PORTE - (t - allumeA[k])
-      if (reste < 0.5 && !envols.some((e) => e.minerai === k) && Math.floor(t * 12) % 2 === 0) continue
+      if (reste < 0.18 && !envols.some((e) => e.minerai === k)) {
+        const h = Math.max(1, Math.round((13 * reste) / 0.18))
+        p.rect(x, yPastilles + Math.floor((13 - h) / 2), w, h, encre)
+        continue
+      }
       const dy = Math.round(rebond(`porte-${k}`, 0))
       plaque(p, x, yPastilles + dy, w, 13, 'encre', { bord: allume ? T[2] : undefined })
       dessinerUneRessource(p, x + 7, yPastilles + 6 + dy, k)

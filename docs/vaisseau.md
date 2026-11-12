@@ -2332,6 +2332,7 @@ utilisent ; l'impact du dépôt (`impacts/hit-spark`) ne sert plus : ses
 Keko, à la question « dix minerais, on les met où ? » : « affiche les minerais
 ramassés récemment et après quelques secondes on les fait disparaître ». La
 pastille d'un minerai paraît quand une pépite vole vers elle, reste
-`TENUE_DU_PORTE` (3 s, de moi, à rejuger) après la dernière, clignote une
-demi-seconde et s'en va ; les voisines glissent à sa place (`xDuPorte`). Le
+`TENUE_DU_PORTE` (3 s, de moi, à rejuger) après la dernière, puis se
+referme en un instant, sans clignoter (essayé et retiré le jour même —
+Keko : « ça laisse entendre qu'on le perd ») ; les voisines glissent à sa place (`xDuPorte`). Le
 total reste sur la plaque « Soute », le détail dans la soute ouverte.
