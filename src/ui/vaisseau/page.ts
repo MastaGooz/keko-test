@@ -4372,41 +4372,45 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zone(x - 4, y - 6, w + 8, h + 11, lancerLaPostcombustion, null)
   }
   /**
-   * LE BOUTON DE LA CAPACITÉ, en bas à droite de la vue : une plaque d'acier — la bombe, ses charges en pastilles ;
-   * ARMÉE, elle passe à l'or, bat, et dit « Touchez l'écran » ; sans charge, elle s'éteint. Et, pendant qu'on vise, le
-   * trait qui part du vaisseau.
+   * LA BARRE DES CAPACITÉS, en bas à droite de la vue (Keko, 12/11 : « je voyais plutôt la capacité comme des carrés
+   * avec une icône et le nombre de charges en chiffre ; ainsi on peut en loger quatre en bas à droite de l'écran ») :
+   * QUATRE CASES CARRÉES. Une capacité montée : son icône, et ses charges EN CHIFFRE dans le coin ; ARMÉE, la case passe
+   * à l'or et bat ; sans charge, elle s'éteint. Une case libre est un creux vide. (Une seule capacité existe : la bombe
+   * d'essai ; les trois autres cases montrent la place.) Et, pendant qu'on vise, la flèche qui part du vaisseau.
    */
   function dessinerLaCapacite(p: Peintre): void {
     if (m.phase !== 'vol') return
     p.place(0, 0)
-    const w = 42
-    const h = 18
-    const x = W - 4 - w
-    const y = H - bandeBas() - h - 5
+    const COTE = 20
+    const CASES = 4
+    const y = H - bandeBas() - COTE - 5
     // (`&bombes` : des charges sans fin, pour essayer le geste)
     if (parametres.has('bombes')) m.charges = CONF.bombe.charges
     const reste = m.charges
     if (reste <= 0) capaciteArmee = false
-    const armee = capaciteArmee
-    const bat = armee && Math.floor((t - armeeA) * 5) % 2 === 0
-    if (armee) p.glow(x + w / 2, y + h / 2, 30, PEPITE[2], 0.25 + 0.15 * Math.sin(t * 8))
-    plaque(p, x, y, w, h, reste <= 0 ? 'eteint' : armee ? 'or' : 'acier', { bord: bat ? N.WHITE : undefined })
-    // la bombe : un rond sombre, sa mèche, une étincelle
-    const bx = x + 9
-    const by = y + 10
-    p.circle(bx, by, 4, MATIERES.encre.contour)
-    p.circle(bx, by, 3, reste <= 0 ? COQUE[2] : N.hex('#3a3350'))
-    p.rect(bx - 2, by - 2, 2, 1, reste <= 0 ? COQUE[3] : N.hex('#8a80a8'))
-    p.rect(bx + 1, by - 5, 1, 2, MATIERES.encre.contour)
-    if (reste > 0) p.rect(bx + 2, by - 6, 1, 1, Math.floor(t * 8) % 2 === 0 ? N.hex('#fff2a8') : FEU[3])
-    // ses charges : une pastille par charge du vol, pleine tant qu'elle reste
-    for (let i = 0; i < CONF.bombe.charges; i++) {
-      const cx = x + 18 + i * 7
-      p.rect(cx, y + 6, 5, 6, MATIERES.encre.contour)
-      p.rect(cx + 1, y + 7, 3, 4, i < reste ? (armee ? N.hex('#3a1c04') : PEPITE[3]) : MATIERES.creux.corps)
+    for (let i = 0; i < CASES; i++) {
+      const x = W - 4 - (CASES - i) * COTE - (CASES - 1 - i) * 2
+      if (i > 0) {
+        // (une case libre)
+        plaque(p, x, y, COTE, COTE, 'creux')
+        continue
+      }
+      const armee = capaciteArmee
+      const bat = armee && Math.floor((t - armeeA) * 5) % 2 === 0
+      if (armee) p.glow(x + COTE / 2, y + COTE / 2, 22, PEPITE[2], 0.25 + 0.15 * Math.sin(t * 8))
+      plaque(p, x, y, COTE, COTE, reste <= 0 ? 'eteint' : armee ? 'or' : 'acier', { bord: bat ? N.WHITE : undefined })
+      // la bombe : un rond sombre, sa mèche, une étincelle
+      const bx = x + 8
+      const by = y + 10
+      p.circle(bx, by, 5, MATIERES.encre.contour)
+      p.circle(bx, by, 4, reste <= 0 ? COQUE[2] : N.hex('#3a3350'))
+      p.rect(bx - 2, by - 3, 2, 1, reste <= 0 ? COQUE[3] : N.hex('#8a80a8'))
+      p.rect(bx + 2, by - 6, 1, 2, MATIERES.encre.contour)
+      if (reste > 0) p.rect(bx + 3, by - 7, 1, 1, Math.floor(t * 8) % 2 === 0 ? N.hex('#fff2a8') : FEU[3])
+      // ses charges, en chiffre, dans le coin
+      ecrire(p, String(reste), x + COTE - 2, y + COTE - 9, reste <= 0 ? COQUE[3] : N.hex('#fff2c8'), { police: GRAS, align: 'right', contour: MATIERES.encre.contour })
+      if (reste > 0 && !souteOuverte && t - arriveA >= ARRIVE_A) zone(x - 1, y - 6, COTE + 2, COTE + 11, () => ((capaciteArmee = !capaciteArmee), (armeeA = t)), 'onglet')
     }
-    if (armee) ecrire(p, 'Visez à droite', W - 4, y - 11, N.hex('#fff2a8'), { police: GRAS, align: 'right', contour: NUIT_OMBRE })
-    if (reste > 0 && !souteOuverte && t - arriveA >= ARRIVE_A) zone(x - 4, y - 6, w + 8, h + 11, () => ((capaciteArmee = !capaciteArmee), (armeeA = t)), 'onglet')
     // LA VISÉE : UNE FLÈCHE D'OR QUI PART DU VAISSEAU (Keko, 12/11 : « on ne devrait pas faire partir la flèche de
     // l'endroit où se trouve le pouce, mais du vaisseau, dans le sens de visée, et envoyer la bombe plus ou moins loin en
     // fonction du niveau dans lequel le joueur pousse ») : dans le sens du glissement, LONGUE COMME LA BOMBE IRA LOIN ;

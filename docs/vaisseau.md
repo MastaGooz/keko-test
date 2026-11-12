@@ -2759,3 +2759,5 @@ doigt posé À DROITE est LE REGARD, ou la VISÉE d'une capacité armée. Un seu
 de chaque, indépendants : on regarde ou on vise sans voler. À la souris (un
 seul pointeur) : le manche partout, la visée quand une capacité est armée.
 Les manches restent flottants : ils naissent sous le doigt, dans leur moitié.
+
+LA BARRE DES CAPACITÉS (Keko, 12/11 : « des carrés avec une icône et le nombre de charges en chiffre ; ainsi on peut en loger quatre en bas à droite ») : quatre cases carrées de vingt pixels ; la bombe dans la première — son icône, ses charges en chiffre dans le coin, d'or quand elle est armée —, les trois autres vides, pour la place. Le texte d'aide au-dessus (« Visez à droite ») est retiré.
