@@ -791,7 +791,13 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
   return true
 }
 
-export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur): { chocs: Choc[]; evenements: Evenement[] } {
+/**
+ * `regard` : où le nez se tourne (voir `voler`). `manuel` : LE TIR EST À LA MAIN (Keko, 12/11 : « quand le joueur utilise
+ * le stick d'orientation, le tir des armes passe en manuel — sauf les missiles, à tête chercheuse — et tire dans la
+ * direction de la visée ») : tant que le regard est franc, les armes non guidées tirent à leur cadence DANS SA DIRECTION,
+ * rival ou pas ; les guidées gardent leur tir automatique.
+ */
+export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
   if (m.phase !== 'vol') return { chocs: [], evenements: ev }
   m.t += dt
@@ -836,18 +842,22 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
   c.armes.forEach((arme, i) => {
     if (m.t < (m.armesA[i] ?? 0)) return
-    let cible: Ennemi | null = null
-    let dc = Infinity
-    for (const e of m.ennemis) {
-      const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-      if (d <= arme.portee && d < dc) (dc = d), (cible = e)
+    const aLaMain = manuel && !arme.guide && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
+    let vise: number
+    if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
+    else {
+      let cible: Ennemi | null = null
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (d <= arme.portee && d < dc) (dc = d), (cible = e)
+      }
+      if (cible === null) return
+      const temps = dc / arme.vitesse
+      vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - v.y, cible.corps.x + cible.corps.vx * temps - v.x)
     }
-    if (cible === null) return
     m.armesA[i] = m.t + arme.cadence
-    const temps = dc / arme.vitesse
-    const cx = cible.corps.x + cible.corps.vx * temps - v.x
-    const cy = cible.corps.y + cible.corps.vy * temps - v.y
-    const angle = Math.atan2(cy, cx) + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
+    const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
     const bo = arme.bouche
     const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
     const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y

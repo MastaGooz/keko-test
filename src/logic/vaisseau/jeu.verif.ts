@@ -482,4 +482,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('avec une bouche, l’obus part d’elle — à sa place sous l’aile, tournée du cap —, plus du bord du vaisseau', canon.armes[0].place === 0 && depart !== null && Math.abs(depart.x - (Math.cos(cap) * 2 - Math.sin(cap) * 6)) < 0.01 && Math.abs(depart.y - (Math.sin(cap) * 2 + Math.cos(cap) * 6)) < 0.01)
 }
 
+// le tir à la main : le regard franc fait tirer les armes non guidées dans sa direction, sans rival
+{
+  const deux = armer('arme-canon')
+  const seul = nouveauMonde(deux)
+  seul.detruits = new Set(asteroidesAutour(deux, 0, 0, 400).map((r) => r.id))
+  let tirs = 0
+  for (let i = 0; i < 60 * 3; i++) tirs += compter(avancerLeMonde(deux, seul, 1 / 60, { x: 0, y: 0 }, { x: 0, y: -1 }, true).evenements, 'obus')
+  const vers = seul.obus.every((o) => o.vy < 0 && Math.abs(Math.atan2(o.vy, o.vx) + Math.PI / 2) <= deux.armes[0].dispersion + 1e-9)
+  const auto = nouveauMonde(deux)
+  let tirsAuto = 0
+  for (let i = 0; i < 60 * 3; i++) tirsAuto += compter(avancerLeMonde(deux, auto, 1 / 60, { x: 0, y: 0 }, { x: 0, y: -1 }).evenements, 'obus')
+  const missiles = armer('arme-missiles')
+  const mm = nouveauMonde(missiles)
+  let tirsGuides = 0
+  for (let i = 0; i < 60 * 3; i++) tirsGuides += compter(avancerLeMonde(missiles, mm, 1 / 60, { x: 0, y: 0 }, { x: 0, y: -1 }, true).evenements, 'obus')
+  verifier('le tir à la main : sans rival, le canon tire à sa cadence dans la direction du regard ; sans « manuel » il se tait ; les missiles, guidés, restent automatiques', tirs >= 2 && seul.obus.length > 0 && vers && tirsAuto === 0 && tirsGuides === 0)
+}
+
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

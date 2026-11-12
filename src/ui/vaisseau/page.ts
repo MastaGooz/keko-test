@@ -5390,7 +5390,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ouRegarder = t - arriveA < ARRIVE_A ? undefined : regardVoulu()
       while (accumule >= PAS) {
         accumule -= PAS
-        const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder)
+        // (LE TIR PASSE À LA MAIN quand le manche du regard est tenu — pas pour la visée d'une capacité, ni à la souris)
+        const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, regard !== null && !regard.tir)
         v = m.vaisseau
         // (les quêtes : la plus grande distance à la base, comptée tous les vingt pas d'éloignement)
         {

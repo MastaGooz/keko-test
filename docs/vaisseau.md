@@ -2792,3 +2792,7 @@ LE BOUTON « COULEUR » EST SUR LA PAGE DU CHÂSSIS, à gauche de « Changer » 
 ### Les obus partent de leur arme (12/11)
 
 Keko : « faire en sorte que les projectiles des armes et le laser de foreuse partent de l'endroit réel où se trouve la pièce ». LE LASER partait déjà de la bouche du canon dessiné (`canonDeLaForeuse`). LES OBUS partaient du bord du vaisseau, face à la cible : ils partent maintenant de LA BOUCHE de leur arme, sous son aile — `Arme.place` (posée par `configDuHangar` : la place du hangar, une place vide ne décale plus les suivantes) et `Arme.bouche` (posée par la page au décollage, lue dans `boucheDeLArme` du rendu, à côté des formes), tournée du cap du vaisseau. `&armes` donne les trois armes au hangar de l'appareil, pour les essayer.
+
+### Le tir à la main, au manche du regard (12/11)
+
+Keko : « quand le joueur utilise le stick d'orientation, le tir des armes passe en manuel (sauf les missiles, à tête chercheuse) et tire dans la direction de la visée ». `avancerLeMonde(…, regard, manuel)` : tant que le manche du regard est tenu et franc, les armes NON GUIDÉES tirent à leur cadence dans sa direction, qu'il y ait un rival ou non ; relâché, elles reprennent leur tir automatique sur le rival à portée. Les missiles restent automatiques. Pas à la souris (elle vise en permanence : les armes tireraient sans arrêt), ni pendant la visée d'une capacité.
