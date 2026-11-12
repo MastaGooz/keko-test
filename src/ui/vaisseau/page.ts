@@ -4386,6 +4386,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const h = 18
     const x = W - 4 - w
     const y = H - bandeBas() - h - 5
+    // (`&bombes` : des charges sans fin, pour essayer le geste)
+    if (parametres.has('bombes')) m.charges = CONF.bombe.charges
     const reste = m.charges
     if (reste <= 0) capaciteArmee = false
     const armee = capaciteArmee
