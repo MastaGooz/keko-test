@@ -2743,3 +2743,4 @@ insérer une direction en fonction du glissement ».
   contact d'une roche ou d'un rival : les roches à 44 de sa surface éclatent
   (leurs pépites restent), les rivaux prennent 80. Tout est de moi, pour juger
   le geste : la bombe, ses chiffres, sa place.
+Puis (Keko) : LE MANCHE DU REGARD est dessiné dans la langue du premier (l'anneau cerné, éclairé d'un côté, ombré de l'autre, le pouce bombé), en bleu ; et LA VISÉE D'UNE CAPACITÉ n'est plus un manche — « il est associé à l'orientation » — mais UNE FLÈCHE D'OR qui part de l'endroit de l'appui vers le doigt (un point qui bat tant que le doigt n'a pas glissé).

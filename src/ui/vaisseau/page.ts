@@ -5175,22 +5175,65 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.place(0, 0)
       p.text(`M${manche === null ? '-' : manche.id} R${regard === null ? '-' : regard.id} ${journalDesDoigts}`.toUpperCase(), 4, H - 12, N.WHITE, { outline: COQUE[0] })
     }
-    // LE MANCHE DU REGARD, plus petit, bleu : un anneau et son pouce
-    if (regard !== null) {
+    if (regard !== null && regard.tir) {
+      // LA VISÉE D'UNE CAPACITÉ N'EST PAS UN MANCHE (Keko, 12/11 : « quand une capacité est active on n'affiche pas le
+      // deuxième stick, il est associé à l'orientation ; on dessine plutôt un élément d'UI propre aux capacités — si
+      // c'est directionnel comme la bombe, on peut tracer une flèche qui part du tap ») : UNE FLÈCHE D'OR, de l'endroit
+      // de l'appui vers le doigt — un point d'ancrage, une hampe qui s'allonge avec le glissement, une pointe ; sans
+      // glissement, le seul point d'ancrage, qui bat (elle partira droit devant le nez)
       p.place(0, 0)
-      const rr = (C.manche.rayon * 0.7) / zoom
+      const o = enTampon(regard.centre.x, regard.centre.y)
+      const ddx = (regard.doigt.x - regard.centre.x) / zoom
+      const ddy = (regard.doigt.y - regard.centre.y) / zoom
+      const dd = Math.hypot(ddx, ddy)
+      const cerne = N.hex('#2a1404')
+      p.circle(o.x, o.y, 4, cerne)
+      p.circle(o.x, o.y, 3, PEPITE[2])
+      p.circle(o.x - 1, o.y - 1, 1, N.hex('#fff2a8'))
+      if (dd < 4) p.ring(o.x, o.y, 6 + 2 * Math.sin(t * 9), 1, PEPITE[3], 0.7)
+      else {
+        const ux = ddx / dd
+        const uy = ddy / dd
+        const L = Math.max(12, Math.min(dd, C.manche.rayon / zoom))
+        const bx = o.x + ux * L
+        const by = o.y + uy * L
+        // (la hampe : un trait épais cerné ; la pointe : un triangle)
+        for (const [e, c] of [[5, cerne], [3, PEPITE[2]], [1, N.hex('#fff2a8')]] as const) {
+          for (let k = -(e - 1) / 2; k <= (e - 1) / 2; k++) p.line(o.x - uy * k, o.y + ux * k, bx - ux * 4 - uy * k, by - uy * 4 + ux * k, c)
+        }
+        const aile = (k: number, recul: number): [number, number] => [bx - ux * recul - uy * k, by - uy * recul + ux * k]
+        p.poly([[bx + ux * 4, by + uy * 4], aile(7, 6), aile(-7, 6)], cerne)
+        p.poly([[bx + ux * 2, by + uy * 2], aile(5, 5), aile(-5, 5)], PEPITE[2])
+        p.poly([[bx + ux * 2, by + uy * 2], aile(5, 5), [bx - ux * 5, by - uy * 5]], PEPITE[3])
+        p.glow(bx, by, 8, PEPITE[2], 0.5)
+      }
+    } else if (regard !== null) {
+      // LE MANCHE DU REGARD, plus petit, BLEU, DANS LA LANGUE DU PREMIER (Keko, 12/11 : « donner une texture au deuxième
+      // stick, comme le premier ») : l'anneau cerné d'encre, éclairé d'en haut à gauche, ombré en bas à droite, sur un
+      // fond à peine teinté ; le pouce bombé — le cerne, le corps, le dessus plus clair décalé vers la lumière, un éclat
+      p.place(0, 0)
+      const RG = [N.hex('#0c3a52'), N.hex('#12708a'), VERRIERE[1], VERRIERE[2], VERRIERE[3]]
+      const rayon = C.manche.rayon * 0.7
+      const rr = rayon / zoom
       const c0 = enTampon(regard.centre.x, regard.centre.y)
       const ddx = regard.doigt.x - regard.centre.x
       const ddy = regard.doigt.y - regard.centre.y
       const dd = Math.hypot(ddx, ddy)
-      const kk = dd > C.manche.rayon * 0.7 ? (C.manche.rayon * 0.7) / dd : 1
-      p.ring(c0.x, c0.y, rr + 1, 3, MATIERES.encre.contour)
-      p.ring(c0.x, c0.y, rr, 1, VERRIERE[1])
+      const kk = dd > rayon ? rayon / dd : 1
+      const encre = MATIERES.encre.contour
+      p.circle(c0.x, c0.y, rr, RG[0], 0.25)
+      p.ring(c0.x, c0.y, rr + 1, 3, encre)
+      p.ring(c0.x, c0.y, rr, 1, RG[2])
+      p.arc(c0.x, c0.y, rr, 1, Math.PI * 0.95, Math.PI * 1.55, RG[4])
+      p.arc(c0.x, c0.y, rr, 1, -Math.PI * 0.05, Math.PI * 0.55, RG[1])
       const px = Math.round(c0.x + (ddx * kk) / zoom)
       const py = Math.round(c0.y + (ddy * kk) / zoom)
-      p.circle(px, py, Math.round(rr * 0.42) + 1, MATIERES.encre.contour)
-      p.circle(px, py, Math.round(rr * 0.42), VERRIERE[2])
-      p.rect(px - 1, py - 2, 2, 1, N.WHITE)
+      const rp = Math.round(rr * 0.42)
+      p.circle(px, py, rp + 1, encre)
+      p.circle(px, py, rp, RG[1])
+      p.circle(px - 1, py - 1, Math.max(1, rp - 2), RG[2])
+      p.circle(px - 2, py - 2, Math.max(1, rp - 4), RG[3])
+      p.rect(px - Math.round(rp * 0.5), py - Math.round(rp * 0.55), 2, 1, N.WHITE)
     }
     if (manche === null) return
     p.place(0, 0)
