@@ -376,6 +376,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let regard: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
   /** La part du regard dans l'avance de la caméra, lissée (elle ne saute pas avec le pouce). */
   let partDuRegard = 0
+  /** `&doigts` : la ligne de diagnostic des manches (le dernier événement tactile, les doigts posés, qui tient quoi). */
+  let journalDesDoigts = ''
   /** Le décalage de la caméra par rapport au vaisseau (lissé ; la caméra elle-même ne traîne pas). */
   const decalageDeLaCamera = { x: 0, y: 0 }
   const touches = new Set<string>()
@@ -3543,7 +3545,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       appuiA = maintenant
       appuiOu = { x: ev.clientX, y: ev.clientY }
     }
-    if (manche !== null) {
+    // (un manche « tenu » par un doigt qui n'est plus posé — voir le filet, plus bas : il y a moins de doigts sur l'écran
+    // que de manches pris ; le doigt qui arrive reprend alors le manche)
+    const fantome = ev.pointerType === 'touch' && manche !== null && doigtsPoses < (regard === null ? 1 : 2)
+    if (manche !== null && !fantome) {
       // (le second doigt : le manche du regard)
       if (regard === null && ev.pointerId !== manche.id) {
         ev.preventDefault()
@@ -3656,6 +3661,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   })
   racine.addEventListener('pointerup', lever)
   racine.addEventListener('pointercancel', lever)
+  /**
+   * LE FILET DES DEUX MANCHES (Keko, 12/11 : « quand je lance le premier joystick et que j'active le deuxième, si je
+   * lâche le premier et que je le réenclenche, je ne peux plus bouger » — pas reproduit en émulation, où le relâchement
+   * arrive bien ; sur l'appareil, tout se passe comme si le relâchement du premier doigt s'était perdu : le manche reste
+   * « tenu » par un doigt qui n'est plus là, et le doigt reposé n'a plus de place). On demande donc AUX ÉVÉNEMENTS
+   * TACTILES, qui disent à chaque instant quels doigts sont VRAIMENT posés : plus aucun — les deux manches tombent ; un
+   * seul alors qu'on en tient deux — celui des deux qui est le plus loin de ce doigt tombe. Et un appui qui arrive alors
+   * que les deux manches sont pris, avec moins de deux doigts posés avant lui, prend la place du manche.
+   */
+  let doigtsPoses = 0
+  const recompter = (ev: TouchEvent): void => {
+    doigtsPoses = ev.touches.length
+    journalDesDoigts = `${ev.type.slice(5)} ${doigtsPoses}`
+    if (doigtsPoses === 0) {
+      manche = null
+      regard = null
+    } else if (doigtsPoses === 1 && manche !== null && regard !== null) {
+      const d = ev.touches[0]
+      const loin = (q: Vecteur): number => Math.hypot(q.x - d.clientX, q.y - d.clientY)
+      if (loin(manche.doigt) <= loin(regard.doigt)) regard = null
+      else manche = null
+    }
+  }
+  racine.addEventListener('touchstart', (ev) => {
+    doigtsPoses = ev.touches.length
+    journalDesDoigts = `start ${doigtsPoses}`
+  }, { passive: true })
+  racine.addEventListener('touchend', recompter, { passive: true })
+  racine.addEventListener('touchcancel', recompter, { passive: true })
   window.addEventListener('keydown', (ev) => {
     reveiller()
     if (accueil) {
@@ -5050,6 +5084,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {
+    if (parametres.has('doigts')) {
+      p.place(0, 0)
+      p.text(`M${manche === null ? '-' : manche.id} R${regard === null ? '-' : regard.id} ${journalDesDoigts}`.toUpperCase(), 4, H - 12, N.WHITE, { outline: COQUE[0] })
+    }
     // LE MANCHE DU REGARD, plus petit, bleu : un anneau et son pouce
     if (regard !== null) {
       p.place(0, 0)
