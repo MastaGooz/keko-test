@@ -2391,3 +2391,12 @@ n'est là que si une AUTRE pièce de la catégorie est possédée ou débloquée
 la recherche ; sinon la fiche remonte à sa place. Conséquence : un outil ou
 une arme seuls de leur sorte ne se retirent plus (« Retirer » est dans le
 panneau).
+
+### La première mission : partir et revenir (12/11)
+
+Keko : « la première quête devrait plutôt être de partir en expédition et
+revenir ». `t-vol` devient « Première expédition » et compte une EXTRACTION
+(le retour à quai jusqu'au bout du compte), plus un décollage ; la deuxième
+s'appelle « Premier minerai » (une pépite rapportée). Une avancée ne compte
+que pour la mission active : le minerai rapporté au premier voyage ne vaut
+pas pour la deuxième.
