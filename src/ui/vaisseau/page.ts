@@ -1392,15 +1392,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * temps en temps ; il tombe à sa place quand la vue change), et LES CRÉDITS, qui roulent, sautent et s'allument.
    */
   function dessinerLaBarreDuHaut(p: Peintre): void {
-    // (LE FOND DE LA BARRE S'ARRÊTE SOUS LE TITRE — Keko, 12/11 : « diminuer la hauteur du rectangle / fond du titre en
-    // haut et laisser les crédits en dessous » : la ligne des crédits est sur le fond de la page, sa plaque seule dessus)
-    const HB = HAUT_DU_TITRE - 4
-    p.rect(0, 0, W, HAUT_BARRE, NUIT)
-    p.rect(0, 0, W, HB, NUIT_BARRE)
+    p.rect(0, 0, W, HAUT_BARRE, NUIT_BARRE)
     p.rect(0, 0, W, 1, MATIERES.encre.grain)
-    p.rect(0, HB - 2, W, 1, MATIERES.encre.lumiere2)
-    p.rect(0, HB - 1, W, 1, MATIERES.encre.contour)
-    p.rect(0, HB, W, 1, NUIT_OMBRE)
+    p.rect(0, HAUT_BARRE - 2, W, 1, MATIERES.encre.lumiere2)
+    p.rect(0, HAUT_BARRE - 1, W, 1, MATIERES.encre.contour)
+    p.rect(0, HAUT_BARRE, W, 1, NUIT_OMBRE)
     const u = sortie((t - vueA) / 0.35)
     const chute = Math.round((1 - u) * -10)
     const nom = NOMS_VUE[vue]
