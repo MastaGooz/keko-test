@@ -5349,7 +5349,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // point deux fois moins vite)
     const rg = regardVoulu()
     partDuRegard += ((rg === undefined ? 0 : Math.min(1, Math.hypot(rg.x, rg.y))) - partDuRegard) * Math.min(1, dt * 1.6)
-    const part = Math.max(Math.min(1.2, Math.hypot(v.vx, v.vy) / CONF.vitesseMax), partDuRegard)
     const suivi = AVANCE_DE_LA_CAMERA.suivi * (1 - 0.55 * Math.min(1, partDuRegard * 3))
     // (C'EST LE DÉCALAGE QU'ON LISSE, PAS LA CAMÉRA — Keko, 12/11 : « quand je vais à droite et pointe le deuxième stick
     // à gauche, je ne vois plus le vaisseau ; et quand je vais en haut ou en bas, avec la vitesse j'ai plus de caméra
@@ -5357,8 +5356,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // que sa vitesse divisée par l'allure du rattrapage, vingt-cinq à cinquante — et ce retard s'ajoutait au décalage.
     // La caméra est maintenant posée SUR le vaisseau, plus un décalage qui, lui, glisse vers sa cible : plus de retard,
     // le vaisseau ne s'éloigne jamais du centre de plus que le décalage.)
-    decalageDeLaCamera.x += (Math.cos(v.cap) * part * AVANCE_DE_LA_CAMERA.x - decalageDeLaCamera.x) * Math.min(1, dt * suivi)
-    decalageDeLaCamera.y += (Math.sin(v.cap) * part * AVANCE_DE_LA_CAMERA.y - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
+    // (LA CIBLE DU DÉCALAGE NE PASSE PLUS PAR ZÉRO DEUX FOIS — Keko : « quand je change de direction avec uniquement le
+    // premier stick, la caméra bouge, puis s'arrête et reprend, un peu en deux temps » : elle valait « nez × vitesse » ;
+    // à un demi-tour le nez se retourne d'un coup alors que la vitesse retombe à zéro puis remonte — la caméra partait,
+    // revenait au centre, repartait. SANS REGARD, la cible suit maintenant LE VECTEUR VITESSE, tiré à mi-chemin vers le
+    // manche quand on pousse (l'intention précède la vitesse) : il glisse d'un bord à l'autre d'un seul mouvement. AVEC
+    // LE REGARD, elle passe au nez, à mesure que sa part monte.)
+    const dv = directionVoulue()
+    const pousse = Math.min(1, Math.hypot(dv.x, dv.y))
+    const mx = v.vx / CONF.vitesseMax
+    const my = v.vy / CONF.vitesseMax
+    const cx = Math.max(-1.2, Math.min(1.2, mx + 0.5 * pousse * (dv.x - mx)))
+    const cy = Math.max(-1.2, Math.min(1.2, my + 0.5 * pousse * (dv.y - my)))
+    const cibleX = (cx * (1 - partDuRegard) + Math.cos(v.cap) * partDuRegard) * AVANCE_DE_LA_CAMERA.x
+    const cibleY = (cy * (1 - partDuRegard) + Math.sin(v.cap) * partDuRegard) * AVANCE_DE_LA_CAMERA.y
+    decalageDeLaCamera.x += (cibleX - decalageDeLaCamera.x) * Math.min(1, dt * suivi)
+    decalageDeLaCamera.y += (cibleY - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
     camera.x = v.x + decalageDeLaCamera.x
     camera.y = v.y + decalageDeLaCamera.y
     braises.update(dt)
