@@ -950,7 +950,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // de scroller » : 6 de marge, des rangées de 40, 4 d'air, 38 de bouton et son pied ; plus de plafond — PUIS TROIS
   // RANGÉES au lieu de quatre (« on peut essayer avec trois lignes de pièces fixes ») : quarante pixels de plus au vaisseau)
   const sceneOrdinaire = (): number => Math.max(64, H - HAUT_BARRE - HAUT_NAV - 164)
-  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - HAUT_BARRE - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - HAUT_BARRE - HAUT_NAV - 120 - 10 - 28) / 31)))
+  // (LA GRILLE DU COMMERCE GARDE SES RANGÉES d'avant la ligne des crédits — Keko, 12/11 : « rajouter la ligne qu'on a
+  // perdue dans le grid des ressources et décaler le reste vers le bas » : comptées comme si la barre du haut faisait
+  // encore 28 px ; c'est la fiche du minerai, dessous, qui descend)
+  const rangeesDeLEntrepot = (): number => Math.max(1, Math.min(Math.floor((Math.max(64, Math.min(168, H - 28 - HAUT_NAV - 222)) - 10) / 31) + 1, Math.floor((H - 28 - HAUT_NAV - 120 - 10 - 28) / 31)))
   const hauteurDeScene = (): number => (vue === 'labo' ? Math.max(150, H - HAUT_BARRE - HAUT_NAV - 4) : vue === 'entrepot' ? rangeesDeLEntrepot() * 31 + 10 + 28 : vue === 'quetes' ? 36 : sceneOrdinaire()) // (28 : la barre des catégories)
   let hautScene = 150
   let tBase = 0
@@ -1401,7 +1404,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLIconeDeVue(p, vue, 12, 14 + chute, true)
     const c = (t % 5) / 5
     motEnRelief(p, nom, 25 + w / 2, 7 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
-    // LA LIGNE DES CRÉDITS : un creux sur toute la largeur — « Crédits » à gauche, à droite le montant ENTIER (Keko :
+    // LA LIGNE DES CRÉDITS : un creux sur toute la largeur — à droite, le montant ENTIER (Keko :
     // « le joueur devrait avoir le montant complet pour les crédits, pas d'abréviation comme les ressources ») et sa pièce
     const n = String(Math.max(0, Math.round(creditsVus)))
     const wn = largeurDe(n, GRAS)
@@ -1414,7 +1417,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, yl, W, 1, MATIERES.encre.contour)
     p.rect(0, yl + 1, W, 1, MATIERES.creux.ombre)
     if (allume || tremble !== 0) p.rect(0, yl + HAUT_DES_CREDITS - 2, W, 1, allume ? RUNE[3] : ROUGE[4])
-    ecrire(p, 'Crédits', 6, yl + 3, COQUE[4])
     const xd = W - 6 + tremble
     compteurX = xd - 5
     if (allume) p.glow(xd - 12 - wn / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))

@@ -2579,3 +2579,4 @@ la vue, toujours en grande lettre avec son icône ; dessous, un creux sur
 toute la largeur — « Crédits » à gauche, le montant ENTIER et sa pièce à
 droite. Le repli du titre (sans icône, puis en petite lettre) est retiré. Le
 contenu de chaque vue perd douze pixels de hauteur.
+Puis (Keko) : le mot « Crédits » est retiré de la ligne (le montant et sa pièce suffisent), et la grille du commerce garde le nombre de rangées qu'elle avait avant (comptées comme si la barre faisait encore 28 px) : c'est la fiche du minerai qui descend.
