@@ -1145,6 +1145,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLaNav(p)
     dessinerLaFeuille(p)
     dessinerLeChangement(p)
+    dessinerLesCouleurs(p)
     dessinerLaVente(p)
     dessinerLesEclats(p)
   }
@@ -2146,6 +2147,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * comme en vol), et « Fermer » ; une tape hors du panneau le ferme aussi.
    */
   function dessinerLesCouleurs(p: Peintre): void {
+    if (vue !== 'hangar' || etape !== 'liste' || onglet !== 'coque') couleursOuvertes = false
     if (!couleursOuvertes) return
     const u0 = sortie((t - couleursA) / 0.18)
     const COLONNES = 5
@@ -2292,24 +2294,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     y += hl + 4
     const pc = liste[iSel]
     if (pc !== undefined) dessinerLaFiche(p, y, pc)
-    // LA COULEUR DU CHÂSSIS (Keko, 12/11 : « un système de changement de couleur du châssis » ; puis « dans le panneau
-    // changer, un bouton couleur plutôt qu'afficher direct les couleurs » ; puis « le bouton couleur tout à gauche sur
-    // la même ligne qu'équiper, et ouvrir un panneau avec un grid des couleurs ») : dans le panneau du châssis, à
-    // gauche du bouton d'action, un bouton qui porte la pastille de la couleur choisie ; il ouvre LA GRILLE
-    if (onglet === 'coque') {
-      // (le mot en petites capitales : dans la police du texte, le bouton mordait sur « Équiper »)
-      const bc = 5 + 9 + 4 + textWidth('COULEUR', 'mini') + 5
-      boutonBase(p, 4, y, bc, 15, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
-        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
-        p.rect(4 + 5 + dx, y + 3 + dy, 9, 9, MATIERES.encre.contour)
-        p.rect(4 + 6 + dx, y + 4 + dy, 7, 7, moyen)
-        p.rect(4 + 6 + dx, y + 4 + dy, 7, 2, clair)
-        p.rect(4 + 6 + dx, y + 9 + dy, 7, 2, sombre)
-        p.text('COULEUR', 4 + 18 + dx, y + 5 + dy, N.hex('#fff3cf'))
-      }, 'ouvre', { matiere: 'acier' })
-    }
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
-    dessinerLesCouleurs(p)
     // (le reste du panneau ne fait rien : ce qui est dessous ne répond pas)
     zone(0, 0, W, H, () => {}, null)
   }
@@ -2866,10 +2851,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (PAS DE BOUTON tant qu'il n'y a RIEN D'AUTRE à équiper ou à acheter — Keko, 12/11 ; la fiche remonte à sa place)
       // (le châssis l'a toujours : sa couleur se choisit dans le panneau ; un outil ou une arme aussi, même seuls de
       // leur sorte : c'est dans le panneau qu'on les RETIRE — Keko, 12/11)
-      if (onglet === 'coque' || onglet === 'outil' || onglet === 'arme' || piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))) {
+      const aChanger = onglet === 'outil' || onglet === 'arme' || piecesDe(onglet).some((x) => x.id !== pc.id && (possede(hangar, x.id) || pieceOuverte(labo, x.id)))
+      if (aChanger) {
         const bw = lb('Changer')
         bouton(p, W / 2 - bw / 2, y, bw, 15, 'Changer', true, ouvrirLeChangement, 'ouvre')
-      } else y -= 19
+      }
+      // LA COULEUR DU CHÂSSIS : son bouton est ICI, sur la page du châssis, à gauche de « Changer » (Keko, 12/11 : dans le
+      // panneau, il se superposait à « Acheter », plus large qu'« Équiper ») ; il porte la pastille de la couleur choisie
+      // et ouvre la grille des couleurs
+      if (onglet === 'coque') {
+        const bc = 5 + 9 + 4 + textWidth('COULEUR', 'mini') + 5
+        boutonBase(p, 4, y, bc, 15, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
+          const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+          p.rect(4 + 5 + dx, y + 3 + dy, 9, 9, MATIERES.encre.contour)
+          p.rect(4 + 6 + dx, y + 4 + dy, 7, 7, moyen)
+          p.rect(4 + 6 + dx, y + 4 + dy, 7, 2, clair)
+          p.rect(4 + 6 + dx, y + 9 + dy, 7, 2, sombre)
+          p.text('COULEUR', 4 + 18 + dx, y + 5 + dy, N.hex('#fff3cf'))
+        }, 'ouvre', { matiere: 'acier' })
+      } else if (!aChanger) y -= 19
     } else if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
       const bw = lb('Équiper')
       bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', true, () => {

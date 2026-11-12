@@ -2786,3 +2786,5 @@ La flèche de retour des paramètres les REFERME (Keko) : on retrouve l'onglet d
 ### Sur PC : ZQSD vole, la souris vise (12/11)
 
 Keko : « et les commandes sur PC, on fait mouvement sur ZQSD (azerty) et vise via souris ? ». Le clavier volait déjà (ZQSD, WASD, les flèches). LA SOURIS VISE : en vol, dès qu'elle a bougé, le nez se tourne vers le pointeur et la caméra avance vers lui, d'autant plus qu'il est loin du vaisseau (`regardVoulu` : à fond à soixante pixels, rien à moins de huit) ; sortie du jeu, elle ne vise plus. Le clic maintenu reste le manche flottant (on peut encore tout faire à la souris) — il suspend la visée.
+
+LE BOUTON « COULEUR » EST SUR LA PAGE DU CHÂSSIS, à gauche de « Changer » (Keko, 12/11 : dans le panneau il se superposait à « Acheter »). La grille des couleurs s'ouvre par-dessus la page ; « Changer » n'est donc plus toujours là pour le châssis, seulement s'il y en a un autre.
