@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheDeLArme, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
-import { chargerHangar, chargerLivree, chargerReglages, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
+import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
@@ -159,6 +159,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => rampesDeLaLivree(livree)
   /** LES RÉGLAGES du joueur (l'onglet « Paramètres ») : de quel côté de l'écran il vole. */
   let reglages = chargerReglages()
+  /**
+   * LES RESSOURCES CONNUES (Keko, 13/11 : « une ressource ne devrait apparaître dans l'onglet commerce que si le joueur
+   * en a déjà ramassé et extrait au moins un exemplaire ») : celles qui sont passées par l'entrepôt au moins une fois —
+   * la base les note dès qu'elle en voit en stock ; tout vendre ne les fait pas oublier.
+   */
+  const connues = new Set<string>(chargerConnues())
+  function noterLesConnues(): void {
+    let neuve = false
+    for (const k of MINERAIS) {
+      if (tresor[k] > 0 && !connues.has(k)) {
+        connues.add(k)
+        neuve = true
+      }
+    }
+    if (neuve) sauverConnues([...connues])
+  }
   /**
    * IL S'EST PASSÉ QUELQUE CHOSE qu'une quête peut compter (un décollage, du minerai extrait, une vente…) : la règle
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
@@ -1219,6 +1235,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         sauver()
       } else marche = { ...marche, ordres: r.marche.ordres }
     }
+    noterLesConnues()
     p.place(0, 0)
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
@@ -1704,7 +1721,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const CATEGORIE_DE: Record<Minerai, Categorie> = { fer: 'minerai', or: 'minerai', cristal: 'cristal' }
   let categorie: Categorie = 'tout'
   /** Les ressources de la catégorie ouverte, dans l'ordre de la grille. */
-  const ressourcesVues = (): Minerai[] => MINERAIS.filter((k) => categorie === 'tout' || CATEGORIE_DE[k] === categorie)
+  const ressourcesVues = (): Minerai[] => MINERAIS.filter((k) => connues.has(k) && (categorie === 'tout' || CATEGORIE_DE[k] === categorie))
   let defilInventaire = 0
   let zoneDeLInventaire: { x: number; y: number; w: number; h: number } | null = null
   function dessinerLInventaire(p: Peintre, y0: number): void {
@@ -1992,6 +2009,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         quetes = quetesNeuves()
         marche = marcheNeuf(heureDuMarche())
         tresor = cargaisonVide()
+        connues.clear()
+        sauverConnues([])
         credits = 0
         creditsVus = 0
         creditsConnus = 0
@@ -3323,6 +3342,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ecrire(p, 'Aucune ressource pour l’instant', W / 2, y + 23, COQUE[4], { align: 'center' })
       return y + 44
     }
+    // (la ressource choisie est toujours une ressource montrée)
+    if (!ressourcesVues().includes(mineraiChoisi)) mineraiChoisi = ressourcesVues()[0]
     const k = mineraiChoisi
     const fiche = FICHES_MINERAI[k]
     const LIGNES = 4 // (quatre lignes fixes : avec les minuscules, les descriptions en prennent une de plus)

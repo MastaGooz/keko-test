@@ -86,3 +86,24 @@ export function sauverReglages(r: Reglages): void {
     // Sans stockage, les réglages vivent le temps de la page.
   }
 }
+
+/**
+ * LES RESSOURCES CONNUES : celles dont le joueur a déjà extrait au moins un exemplaire (l'onglet « Commerce » ne montre
+ * qu'elles) — gardées à part : les vendre toutes ne les fait pas oublier.
+ */
+const CLE_CONNUES = 'keko-vaisseau-connues'
+export function chargerConnues(): string[] {
+  try {
+    const b = JSON.parse(localStorage.getItem(CLE_CONNUES) ?? '[]') as unknown
+    return Array.isArray(b) ? b.filter((x): x is string => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
+export function sauverConnues(ids: string[]): void {
+  try {
+    localStorage.setItem(CLE_CONNUES, JSON.stringify(ids))
+  } catch {
+    // Sans stockage, elles vivent le temps de la page.
+  }
+}

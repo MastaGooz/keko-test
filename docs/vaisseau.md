@@ -3101,3 +3101,14 @@ Le cartouche des crédits fait onze de haut (13/11), debout comme couché :
 le nombre touchait son contour du bas ; il a un pixel d'air dessous comme
 dessus, et le symbole du crédit est au milieu de la hauteur.
 
+### Le commerce ne montre que les ressources connues (13/11)
+
+Keko : « une ressource ne devrait apparaître dans l'onglet commerce que si
+le joueur en a déjà ramassé et extrait au moins un exemplaire ». `connues`
+(`page.ts`, gardé à part sous `keko-vaisseau-connues`) : la base y note toute
+ressource qu'elle voit en stock (`noterLesConnues`) ; la grille, ses
+catégories et la fiche ne montrent qu'elles (`ressourcesVues`). Tout vendre
+ne les fait pas oublier ; « Remise à zéro » les oublie. *Une sauvegarde
+d'avant, qui avait tout vendu d'un minerai, ne le revoit qu'à la prochaine
+extraction.* Sans aucune ressource : « Aucune ressource pour l'instant ».
+
