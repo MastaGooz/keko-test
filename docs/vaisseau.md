@@ -2913,3 +2913,24 @@ n'est plus tourné — « dans le sens normal, mais les uns en dessous des
 autres » : les chiffres du porté empilés, un trait de fraction, ceux de la
 capacité, à droite de la jauge ; la caisse est aussi à gauche du mot
 « Soute » dans le panneau de la soute ouverte (`dessinerLaCaisseDeSoute`).
+
+### La soute sans chiffres, le bouclier au bout de la barre (13/11)
+
+Keko : « on va supprimer l'affichage des chiffres de la soute dans la barre
+(on l'a déjà quand on l'ouvre) ; on garde le symbole, la barre et la petite
+flèche, on condense et on repense l'agencement pour un truc stylisé et
+harmonieux, en portrait comme en paysage. Pour la barre de vie : le bouclier
+au bout de la barre plutôt qu'une ligne de plus ; la barre a toujours la
+même taille et chaque séparateur vaut 1 (League of Legends) ; le bouclier
+est toujours au bout et encaisse les premiers dégâts. »
+- LA SOUTE EST LE MIROIR DU BLINDAGE (`dessinerLeScore`) : même plaque (74 ×
+  18 couchée, 22 × 86 debout), la caisse à la place de l'écusson, une jauge
+  au gabarit de la barre de blindage (8 px, creux cerné, clair / sombre), la
+  touche d'or au bout (au pied, debout). Plus aucun chiffre : le compte est
+  dans la soute ouverte.
+- LE BLINDAGE : une seule barre de longueur fixe (52 couchée, 64 debout)
+  qui porte `coque + bouclier` points ; l'or, puis LE BOUCLIER EN BLEU à son
+  bout (`teinteDuBouclier` : il crépite, s'éteint, se recharge) ; un trait
+  par point, réduit à un cran quand un point fait moins de 3 px. La rangée
+  et la colonne de cellules sont retirées. La règle n'a pas changé : le
+  bouclier encaissait déjà en premier.

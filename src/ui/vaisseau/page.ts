@@ -4940,7 +4940,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // étroits (voir `interfaceEnBande`), l'interface reste sur la vue, en plaques, comme avant.
     const enBande = interfaceEnBande()
     const H_BARRE = 64
-    const yPastilles = enBande ? yHud + H_BARRE + 38 : yHud + 18 + 7
+    const yPastilles = enBande ? yHud + H_BARRE + 26 : yHud + 18 + 7
+    /** La largeur de la plaque de soute couchée sur le pupitre : celle du logement du blindage, en face. */
+    const L_SOUTE = 5 + 9 + 3 + 52 + 5
     // LE PUPITRE DU VOL (Keko, 12/11 : « retravailler l'interface en vol, en particulier la zone du haut, avec le
     // blindage, le bouclier et la soute — un rendu plus travaillé, plus professionnel, avec de la texture, en gardant
     // l'animation de dégâts du blindage ; un panneau supérieur cohérent dans le style du jeu et entre ses éléments ; et
@@ -4976,8 +4978,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (enBande) {
         // (rien : les bandeaux portent l'interface)
       } else if (paysage) {
-        const largeurSoute = 6 + 9 + 6 + largeurDe(`${CONF.capacite}/${CONF.capacite}`, GRAS) + 5 + 14
-        morceau(0, 4 + largeurSoute + 5)
+        morceau(0, 4 + L_SOUTE + 5)
         morceau(W - 5 - (5 + 9 + 3 + 52 + 5) - 5, W)
       } else morceau(0, W)
     }
@@ -5031,93 +5032,74 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // en portrait et on l'ajoute en paysage ») : UNE CAISSE d'or — son couvercle clair, son corps, un fermoir sombre au
     // milieu —, cernée ; rouge quand la soute est pleine.
     const dessinerLaCaisse = (x: number, y: number): void => dessinerLaCaisseDeSoute(p, x, y, pleine)
+    // PLUS DE CHIFFRES SUR LA SOUTE (Keko, 13/11 : « on va supprimer l'affichage des chiffres de la soute dans la barre —
+    // on l'a déjà quand on l'ouvre, ça suffit ; on garde le symbole, la barre et la petite flèche qui indique qu'on peut
+    // cliquer, on condense et on repense l'agencement pour un truc stylisé et harmonieux, en portrait comme en
+    // paysage ») : LA SOUTE EST LE MIROIR DU BLINDAGE — la même plaque (mêmes dimensions), son symbole au même endroit
+    // que l'écusson, une jauge du même gabarit que la barre de blindage (un creux cerné, l'or clair d'un côté, sombre de
+    // l'autre), et au bout SA TOUCHE D'OR au chevron.
     if (enBande) {
-      // LA SOUTE DEBOUT : une plaque d'acier qui s'enfonce — en tête SON SYMBOLE, puis la jauge dans sa rainure, qui se
-      // remplit par le bas, LE COMPTE EN COLONNE à côté d'elle (Keko : « écris le chiffre verticalement, car avec de
-      // grandes soutes ça va déborder »), et au pied SA TOUCHE
-      // D'OR au chevron — c'est un bouton
-      const pw = 26
-      const x0 = Math.round(bandeCote() / 2) - 13
-      const hp = H_BARRE + 34
+      // DEBOUT : la plaque du blindage d'en face — le symbole en tête, la jauge qui se remplit par le bas, la touche au pied
+      const pw = 22
+      const x0 = Math.round(bandeCote() / 2) - 11
+      const hp = H_BARRE + 22
+      const HG = H_BARRE - 13
       const eb = actif ? etatDuBouton(x0, yHud, pw, hp) : { enfonce: false, survole: false, flash: false, dy: 0 }
       const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
       plaque(p, x0, ys, pw, hp, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
-      dessinerLaCaisse(x0 + Math.round(pw / 2) - 4, ys + 4)
-      const gx = x0 + 5
+      dessinerLaCaisse(x0 + 7, ys + 5)
+      const gx = x0 + 7
       const gy = ys + 17
-      p.rect(gx - 1, gy - 1, 10, H_BARRE + 2, encre)
-      p.rect(gx, gy, 8, H_BARRE, MATIERES.creux.lumiere2)
-      const plein = Math.max(porte > 0 ? 1 : 0, Math.round(H_BARRE * souteVue))
+      p.rect(gx - 1, gy - 1, 10, HG + 2, encre)
+      p.rect(gx, gy, 8, HG, N.hex('#191424'))
+      p.rect(gx, gy, 1, HG, N.hex('#2a2338'))
+      const plein = Math.max(porte > 0 ? 1 : 0, Math.round(HG * souteVue))
       if (plein > 0) {
-        p.rect(gx, gy + H_BARRE - plein, 8, plein, pleine ? ROUGE[4] : PEPITE[2])
-        p.rect(gx, gy + H_BARRE - plein, 2, plein, pleine ? ROUGE[5] : PEPITE[3])
-        p.rect(gx, gy + H_BARRE - plein, 8, 1, N.hex('#fff7d6'))
-      }
-      // LE COMPTE EN COLONNE (Keko, 13/11 : « les mettre dans le sens normal, mais les uns en dessous des autres ») : les
-      // chiffres du porté, droits, empilés ; un trait de fraction ; ceux de la capacité. Au milieu de la jauge ; le pas
-      // se serre d'un pixel quand la colonne ne tiendrait pas
-      {
-        const haut = String(porte)
-        const bas = String(CONF.capacite)
-        const n = haut.length + bas.length
-        const pas = n * 8 + 5 <= H_BARRE ? 8 : 7
-        const xc = x0 + 20
-        let yc = gy + Math.max(0, Math.floor((H_BARRE - (n * pas + 5)) / 2))
-        const c = pleine ? ROUGE[5] : IVOIRE
-        for (const ch of haut) {
-          p.text(ch, xc, yc, c, { font: GRAS, outline: encre, align: 'center' })
-          yc += pas
-        }
-        p.rect(xc - 4, yc, 7, 3, encre)
-        p.rect(xc - 3, yc + 1, 5, 1, c)
-        yc += 5
-        for (const ch of bas) {
-          p.text(ch, xc, yc, c, { font: GRAS, outline: encre, align: 'center' })
-          yc += pas
-        }
+        p.rect(gx, gy + HG - plein, 8, plein, pleine ? ROUGE[4] : PEPITE[2])
+        p.rect(gx, gy + HG - plein, 1, plein, pleine ? ROUGE[5] : PEPITE[3])
+        p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? ROUGE[3] : PEPITE[1])
+        p.rect(gx, gy + HG - plein, 8, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
       }
       // la touche d'or, au pied
-      const yt = gy + H_BARRE + 3
+      const yt = gy + HG + 3
       plaque(p, x0 + 3, yt, pw - 6, 11, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
       for (let k = 0; k < 3; k++) {
-        p.rect(x0 + 10 + k, yt + 5 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
-        p.rect(x0 + 10 + k, yt + 4 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+        p.rect(x0 + 8 + k, yt + 5 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
+        p.rect(x0 + 8 + k, yt + 4 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
       }
       if (actif) zone(0, yHud, bandeCote(), hp + 2, ouvrirLaSoute, 'ouvre')
     } else {
-    const plafond = `${CONF.capacite}/${CONF.capacite}`
-    const TOUCHE = 14
-    // (le symbole à la place du mot « Soute »)
-    const ws = 6 + 9 + 6 + largeurDe(plafond, GRAS) + 5 + TOUCHE
-    const xs = 4
-    const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
-    const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
-    if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
-    plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
-    // (au milieu de la hauteur de la plaque — Keko, 13/11 : il touchait son bord du haut)
-    dessinerLaCaisse(xs + 6, ys + 5)
-    const compte = `${porte}/${CONF.capacite}`
-    const xc = xs + ws - TOUCHE - 5
-    if (pleine) ecrire(p, compte, xc, ys + 3, ROUGE[5], { police: GRAS, align: 'right' })
-    else motEnRelief(p, compte, xc - largeurDe(compte, GRAS) / 2, ys + 3, 'ivoire', GRAS)
-    // la touche d'or et son chevron
-    const xt = xs + ws - TOUCHE - 1
-    plaque(p, xt, ys + 1, TOUCHE, 16, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
-    for (let k = 0; k < 3; k++) {
-      p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
-      p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
-    }
-    if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
-    // sa jauge : une rainure, un jonc d'or au dessus clair
-    const gw = ws - TOUCHE - 11 - 12
-    const gx = xs + 6 + 12
-    p.rect(gx - 1, ys + 12, gw + 2, 4, encre)
-    p.rect(gx, ys + 13, gw, 2, MATIERES.creux.lumiere2)
-    const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
-    if (plein > 0) {
-      p.rect(gx, ys + 13, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
-      p.rect(gx, ys + 14, plein, 1, pleine ? ROUGE[4] : PEPITE[2])
-    }
+      // COUCHÉE sur le pupitre : le symbole, la jauge, la touche — aussi large que le logement du blindage
+      const TOUCHE = 14
+      const ws = L_SOUTE
+      const xs = 4
+      const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
+      const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
+      if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
+      plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+      dessinerLaCaisse(xs + 5, ys + 5)
+      // la touche d'or et son chevron
+      const xt = xs + ws - TOUCHE - 1
+      plaque(p, xt, ys + 1, TOUCHE, 16, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
+      for (let k = 0; k < 3; k++) {
+        p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
+        p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+      }
+      if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
+      // sa jauge, au gabarit de la barre de blindage : un creux cerné, l'or clair dessus, sombre dessous
+      const gx = xs + 5 + 9 + 3
+      const gw = xt - 3 - gx
+      const gy = ys + 5
+      p.rect(gx - 1, gy - 1, gw + 2, 10, encre)
+      p.rect(gx, gy, gw, 8, N.hex('#191424'))
+      p.rect(gx, gy, gw, 1, N.hex('#2a2338'))
+      const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
+      if (plein > 0) {
+        p.rect(gx, gy, plein, 8, pleine ? ROUGE[4] : PEPITE[2])
+        p.rect(gx, gy, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
+        p.rect(gx, gy + 6, plein, 2, pleine ? ROUGE[3] : PEPITE[1])
+        p.rect(gx + plein - 1, gy, 1, 8, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+      }
     }
 
     // ---- le porté : une pastille par minerai
@@ -5151,12 +5133,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'écusson bondit et blanchit. LE BOUCLIER, dessous, est une rangée de CELLULES D'ÉNERGIE penchées, bleues : un coup
     // et la cellule perdue CRÉPITE (blanc, éteint, blanc) puis s'éteint, une onde claire court sur les autres ; elle se
     // recharge en se remplissant. Au dernier point de blindage, l'or passe au rouge et bat.
+    // LE BOUCLIER EST AU BOUT DE LA MÊME BARRE (Keko, 13/11 : « on met le bouclier au bout de la barre plutôt que de
+    // rajouter une ligne ; la barre de vie a toujours la même taille, et chaque séparateur vaut 1 — plus le vaisseau a
+    // de vie, plus il y a de séparateurs, comme dans League of Legends ; le bouclier est toujours au bout de la barre et
+    // encaisse les premiers dégâts ») : la barre, de longueur fixe, porte `coque + bouclier` points ; l'or d'abord, les
+    // points du bouclier EN BLEU à son bout, un trait de séparation par point. Un point de bouclier perdu CRÉPITE puis
+    // s'éteint, une onde claire court sur les autres ; il se recharge en se remplissant.
+    const teinteDuBouclier = (pts: number, k: 0 | 1 | 2): number => {
+      const nb = CONF.bouclier.points
+      const db = t - bouclierA
+      const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
+      const j = Math.min(nb - 1, Math.floor(pts - CONF.coque))
+      const part = Math.max(0, Math.min(1, m.bouclier - j))
+      if (db >= 0 && db < 0.32 && j === perdue && part < 1) return Math.floor(t * 30) % 2 === 0 ? N.WHITE : VERRIERE[0]
+      if (pts - CONF.coque - j >= part) return k === 0 ? N.hex('#16303c') : N.hex('#0c1c26')
+      const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
+      if (onde > 0.5) return k === 0 ? N.WHITE : VERRIERE[2]
+      if (part < 1) return k === 0 ? VERRIERE[1] : N.hex('#12708a')
+      return k === 0 ? VERRIERE[2] : k === 1 ? VERRIERE[1] : N.hex('#12708a')
+    }
     if (enBande) {
       // LE BLINDAGE DEBOUT — la même mise en scène que la barre couchée (le « health bar hit » du dépôt), tournée : la
       // barre d'or à cases se vide PAR LE HAUT ; un coup, et la plaque sursaute, son cadre rougit, le morceau perdu
       // blanchit, tient en fantôme pâle puis se vide sous une arête blanche qui crache des étincelles ; l'écusson, en
       // tête, bondit. LE BOUCLIER : une colonne de cellules bleues à côté, qui crépitent et s'éteignent une à une.
       const nb = CONF.bouclier.points
+      const TOT = CONF.coque + nb
       const du = t - toucheA
       const db = t - bouclierA
       const dernier = m.phase === 'vol' && m.coque <= 1
@@ -5173,7 +5175,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const BH = H_BARRE
       const lw = 8
       const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
-      const pw = nb > 0 ? 28 : 22
+      const pw = 22
       const px0 = W - Math.round(bandeCote() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
       const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
       const bx = px0 + 7
@@ -5184,15 +5186,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const depuis = fantomeA(coqueConnue)
         coqueFantome = depuis
         coqueCoupA = t
-        for (let i = 0; i < 11; i++) gerbe(bx + 1 + R.next() * (lw - 2), yDe((m.coque + (depuis - m.coque) * R.next()) / CONF.coque), 1, [N.WHITE, or[0], or[1], or[2]], 75)
+        for (let i = 0; i < 11; i++) gerbe(bx + 1 + R.next() * (lw - 2), yDe((m.coque + (depuis - m.coque) * R.next()) / TOT), 1, [N.WHITE, or[0], or[1], or[2]], 75)
       }
       coqueConnue = m.coque
-      const esp = 2
-      const ch = nb > 0 ? Math.floor((BH - (nb - 1) * esp) / nb) : 0
       const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-      const sx = bx + lw + 4
-      const yCellule = (j: number): number => by + BH - (j + 1) * ch - j * esp
-      if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(sx + 2, yCellule(perdue) + ch / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+      if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + lw / 2, yDe((CONF.coque + perdue + 0.5) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
       bouclierConnu = m.bouclier
       plaque(p, px0, oy, pw, BH + 22, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
       // l'écusson, en tête : il bondit et blanchit au coup
@@ -5210,21 +5208,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       })
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
-      const val = Math.max(0, Math.min(1, m.coque / CONF.coque))
-      const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / CONF.coque))
+      const val = Math.max(0, Math.min(1, m.coque / TOT))
+      const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
       const dc = t - coqueCoupA
       p.rect(bx - 1, by - 1, lw + 2, BH + 2, encre)
       for (let y = 0; y < BH; y++) {
         const u = 1 - (y + 0.5) / BH
         for (let x = 0; x < lw; x++) {
           let c: number
-          if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
+          if (u * TOT >= CONF.coque) c = teinteDuBouclier(u * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2)
+          else if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
           else if (u < fant) c = dc < 0.07 || x < 1 ? N.WHITE : x < lw - 2 ? N.hex('#ffe9a8') : or[1]
           else c = x < 1 ? N.hex('#2a2338') : N.hex('#191424')
           p.px(bx + x, by + y, c)
         }
       }
-      for (let i = 1; i < CONF.coque; i++) p.rect(bx, Math.round(yDe(i / CONF.coque)), lw, 1, encre)
+      // (UN TRAIT PAR POINT, sur toute la barre, bouclier compris ; serrés, ils ne sont plus que des crans)
+      for (let i = 1; i < TOT; i++) p.rect(bx, Math.round(yDe(i / TOT)), BH / TOT < 3 ? 3 : lw, 1, encre)
       if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
@@ -5234,25 +5234,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       p.glow(bx + lw / 2, yDe(val * 0.5), BH * 0.4, or[1], dernier ? 0.12 + 0.1 * Math.sin(t * 5) : 0.1)
       if (dc < 0.3) p.glow(bx + lw / 2, yDe((val + fant) / 2), 26, dc < 0.08 ? N.WHITE : or[1], 0.6 * (1 - dc / 0.3))
-      // le bouclier : une colonne de cellules, qui se rechargent par le bas
-      for (let j = 0; j < nb; j++) {
-        const part = Math.max(0, Math.min(1, m.bouclier - j))
-        const y0 = yCellule(j)
-        const crepite = db >= 0 && db < 0.32 && j === perdue && part < 1
-        const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
-        p.rect(sx - 1, y0 - 1, 7, ch + 2, encre)
-        p.rect(sx, y0, 5, ch, crepite && Math.floor(t * 30) % 2 === 0 ? N.WHITE : VERRIERE[0])
-        const plein = Math.round(ch * part)
-        if (plein > 0 && !crepite) {
-          const charge = part < 1
-          p.rect(sx, y0 + ch - plein, 5, plein, onde > 0.5 ? VERRIERE[2] : charge ? N.hex('#12708a') : VERRIERE[1])
-          p.rect(sx, y0 + ch - plein, 1, plein, onde > 0.5 ? N.WHITE : charge ? VERRIERE[1] : VERRIERE[2])
-          if (charge && Math.floor(t * 6) % 2 === 0) p.rect(sx, y0 + ch - plein, 5, 1, VERRIERE[2])
-        }
-        if (part >= 1) p.glow(sx + 2, y0 + ch / 2, 5, VERRIERE[1], 0.18 + 0.5 * onde)
-      }
     } else {
     const nb = CONF.bouclier.points
+    const TOT = CONF.coque + nb
     const du = t - toucheA
     const db = t - bouclierA
     const dernier = m.phase === 'vol' && m.coque <= 1
@@ -5272,22 +5256,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ox = W - 5 - wp + Math.round(Math.sin(t * 90) * sursaut)
     const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
     const bx = ox + 5 + 9 + 3
-    const by = oy + (nb > 0 ? 4 : 5)
-    const bh = nb > 0 ? 6 : 8
+    const by = oy + 5
+    const bh = 8
     const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
     // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
     if (m.coque < coqueConnue - 1e-6) {
       const depuis = fantomeA(coqueConnue)
       coqueFantome = depuis
       coqueCoupA = t
-      for (let i = 0; i < 11; i++) gerbe(bx + (BW * (m.coque + (depuis - m.coque) * R.next())) / CONF.coque, by + 1 + R.next() * (bh - 2), 1, [N.WHITE, or[0], or[1], or[2]], 75)
+      for (let i = 0; i < 11; i++) gerbe(bx + (BW * (m.coque + (depuis - m.coque) * R.next())) / TOT, by + 1 + R.next() * (bh - 2), 1, [N.WHITE, or[0], or[1], or[2]], 75)
     }
     coqueConnue = m.coque
     // un coup dans le bouclier : des étincelles froides sur la cellule perdue
-    const esp = 2
-    const cw = nb > 0 ? Math.floor((BW - (nb - 1) * esp) / nb) : 0
     const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-    if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + perdue * (cw + esp) + cw / 2, oy + 13, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+    if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + (BW * (CONF.coque + perdue + 0.5)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
     plaque(p, ox, oy, wp, 18, 'creux', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
@@ -5308,21 +5290,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
-    const val = Math.max(0, Math.min(1, m.coque / CONF.coque))
-    const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / CONF.coque))
+    const val = Math.max(0, Math.min(1, m.coque / TOT))
+    const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
     const dc = t - coqueCoupA
     p.rect(bx - 1, by - 1, BW + 2, bh + 2, encre)
     for (let x = 0; x < BW; x++) {
       const u = (x + 0.5) / BW
       for (let v = 0; v < bh; v++) {
         let c: number
-        if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
+        if (u * TOT >= CONF.coque) c = teinteDuBouclier(u * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2)
+        else if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
         else if (u < fant) c = dc < 0.07 || v < 1 ? N.WHITE : v < bh - 2 ? N.hex('#ffe9a8') : or[1]
         else c = v < 1 ? N.hex('#2a2338') : N.hex('#191424')
         p.px(bx + x, by + v, c)
       }
     }
-    for (let i = 1; i < CONF.coque; i++) p.rect(bx + Math.round((BW * i) / CONF.coque), by, 1, bh, encre)
+    // (UN TRAIT PAR POINT, sur toute la barre, bouclier compris ; serrés, ils ne sont plus que des crans)
+    for (let i = 1; i < TOT; i++) p.rect(bx + Math.round((BW * i) / TOT), by, 1, BW / TOT < 3 ? 3 : bh, encre)
     if (dc < VIDE && val > 0) p.rect(bx + Math.max(0, Math.round(BW * val) - 1), by, 1, bh, N.WHITE)
     if (dc > TIENT && dc < VIDE) {
       // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
@@ -5334,24 +5318,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.glow(bx + BW * val * 0.5, by + bh / 2, BW * 0.4, or[1], dernier ? 0.12 + 0.1 * Math.sin(t * 5) : 0.1)
     if (dc < 0.3) p.glow(bx + (BW * (val + fant)) / 2, by + bh / 2, 26, dc < 0.08 ? N.WHITE : or[1], 0.6 * (1 - dc / 0.3))
 
-    // le bouclier : des cellules d'énergie penchées, sous la barre
-    for (let j = 0; j < nb; j++) {
-      const part = Math.max(0, Math.min(1, m.bouclier - j))
-      const x0 = bx + j * (cw + esp)
-      const crepite = db >= 0 && db < 0.32 && j === perdue && part < 1
-      // l'onde du coup court de la cellule perdue vers la gauche
-      const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
-      const plein = Math.round((cw - 2) * part)
-      for (let r = 0; r < 3; r++) {
-        const xs = x0 + (2 - r)
-        p.rect(xs, oy + 12 + r, cw - 2, 1, crepite && Math.floor(t * 30) % 2 === 0 ? N.WHITE : VERRIERE[0])
-        if (plein <= 0 || crepite) continue
-        const charge = part < 1 // (elle se recharge : plus pâle, et son bout bat)
-        p.rect(xs, oy + 12 + r, plein, 1, onde > 0.5 ? (r === 0 ? N.WHITE : VERRIERE[2]) : charge ? (r === 0 ? VERRIERE[1] : N.hex('#12708a')) : r === 0 ? VERRIERE[2] : VERRIERE[1])
-        if (charge && Math.floor(t * 6) % 2 === 0) p.rect(xs + plein - 1, oy + 12 + r, 1, 1, VERRIERE[2])
-      }
-      if (part >= 1) p.glow(x0 + cw / 2, oy + 13, 5, VERRIERE[1], 0.18 + 0.5 * onde)
-    }
     }
 
     // ---- LES PÉPITES EN VOL, à la manière du « coin collect » du dépôt (Keko, 12/11 : « on peut s'inspirer de coin
