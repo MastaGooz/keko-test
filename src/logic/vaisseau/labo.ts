@@ -69,11 +69,11 @@ export const NOEUDS: Noeud[] = [
   // ---- MINAGE
   { id: 'm-foreuse-2', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'minage', rang: 1, sorte: 'piece', piece: 'foreuse-2', nom: 'Foreuse lourde', dit: 'Ouvre l’achat de la foreuse lourde : elle creuse 40 % plus vite.' },
   { id: 'm-debit', cout: { fer: 15, or: 0, cristal: 0 }, branche: 'minage', rang: 1, sorte: 'passif', icone: 'forage', passif: { debit: 0.15 }, nom: 'Forage rapide', dit: 'Toutes les foreuses creusent 15 % plus vite.' },
-  { id: 'm-aimant-1', cout: { fer: 30, or: 8, cristal: 0 }, branche: 'minage', rang: 2, sorte: 'piece', piece: 'aimant-1', nom: 'Aimant', dit: 'Ouvre l’achat de l’aimant : il attire les pépites de 60 % plus loin.' },
-  { id: 'm-soute', cout: { fer: 25, or: 10, cristal: 0 }, branche: 'minage', rang: 2, sorte: 'passif', icone: 'soute', passif: { soute: 5 }, nom: 'Soute élargie', dit: 'Cinq pépites de plus en soute, quel que soit le châssis.' },
+  { id: 'm-aimant-1', cout: { fer: 30, or: 8, cristal: 0 }, branche: 'minage', rang: 2, sorte: 'piece', piece: 'aimant-1', nom: 'Aimant', dit: 'Ouvre l’achat de l’aimant : il attire le minerai de 60 % plus loin.' },
+  { id: 'm-soute', cout: { fer: 25, or: 10, cristal: 0 }, branche: 'minage', rang: 2, sorte: 'passif', icone: 'soute', passif: { soute: 5 }, nom: 'Soute élargie', dit: 'Cinq unités de plus en soute, quel que soit le châssis.' },
   { id: 'm-foreuse-3', cout: { fer: 0, or: 20, cristal: 12 }, branche: 'minage', rang: 3, sorte: 'piece', piece: 'foreuse-3', nom: 'Foreuse longue', dit: 'Ouvre l’achat de la foreuse longue : 80 % plus vite, 25 % plus loin.' },
   { id: 'm-aimant-2', cout: { fer: 0, or: 18, cristal: 10 }, branche: 'minage', rang: 3, sorte: 'piece', piece: 'aimant-2', nom: 'Grand aimant', dit: 'Ouvre l’achat du grand aimant : il attire deux fois plus loin.' },
-  { id: 'm-double', cout: { fer: 0, or: 25, cristal: 18 }, branche: 'minage', rang: 3, sorte: 'passif', icone: 'pepite', passif: { pepiteDouble: 0.15 }, nom: 'Filon double', dit: 'Chaque pépite d’une roche que vous creusez a 15 % de chances d’être double.' },
+  { id: 'm-double', cout: { fer: 0, or: 25, cristal: 18 }, branche: 'minage', rang: 3, sorte: 'passif', icone: 'pepite', passif: { pepiteDouble: 0.15 }, nom: 'Filon double', dit: 'Chaque unité tirée d’une roche que vous creusez a 15 % de chances d’être double.' },
   // ---- COMBAT
   { id: 'c-canon', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'combat', rang: 1, sorte: 'piece', piece: 'arme-canon', nom: 'Canon', dit: 'Ouvre l’achat du canon : un obus toutes les 1,1 s, il tire seul sur le rival.' },
   { id: 'c-blindage', cout: { fer: 25, or: 0, cristal: 0 }, branche: 'combat', rang: 1, sorte: 'passif', icone: 'blindage', passif: { blindage: 1 }, nom: 'Blindage renforcé', dit: 'Un point de blindage de plus, quel que soit le châssis.' },
@@ -92,7 +92,7 @@ export const NOEUDS: Noeud[] = [
   { id: 'e-acceleration', cout: { fer: 20, or: 8, cristal: 0 }, branche: 'exploration', rang: 2, sorte: 'passif', icone: 'acceleration', passif: { acceleration: 0.12 }, nom: 'Injecteurs', dit: 'L’accélération monte de 12 %.' },
   { id: 'e-postcombustion', cout: { fer: 35, or: 15, cristal: 0 }, branche: 'exploration', rang: 2, sorte: 'mecanique', icone: 'postcombustion', mecanique: 'postcombustion', nom: 'Postcombustion', dit: 'En vol, une double tape lance une pointe de vitesse ; elle se recharge en 6 s.' },
   { id: 'e-propulseur-3', cout: { fer: 0, or: 22, cristal: 15 }, branche: 'exploration', rang: 3, sorte: 'piece', piece: 'propulseur-3', nom: 'Propulseur ionique', dit: 'Ouvre l’achat du propulseur ionique : accélération +60 %, pointe +35 %.' },
-  { id: 'e-aimant', cout: { fer: 0, or: 15, cristal: 10 }, branche: 'exploration', rang: 3, sorte: 'passif', icone: 'aimant', passif: { aimant: 0.25 }, nom: 'Champ étendu', dit: 'Le vaisseau attire les pépites de 25 % plus loin.' },
+  { id: 'e-aimant', cout: { fer: 0, or: 15, cristal: 10 }, branche: 'exploration', rang: 3, sorte: 'passif', icone: 'aimant', passif: { aimant: 0.25 }, nom: 'Champ étendu', dit: 'Le vaisseau attire le minerai de 25 % plus loin.' },
   // ---- COMMERCE (Keko, 11/11 : « tu peux rajouter commerce en arbre tech ? » — il agit sur le marché, `marche.ts`)
   { id: 'k-negoce', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'commerce', rang: 1, sorte: 'passif', icone: 'vente', passif: { vente: 0.05 }, nom: 'Négoce', dit: 'Chaque vente rapporte 5 % de plus, au cours comme par ordre.' },
   { id: 'k-courbe', cout: { fer: 15, or: 0, cristal: 0 }, branche: 'commerce', rang: 1, sorte: 'mecanique', icone: 'commerce', mecanique: 'courbe', nom: 'Cours du marché', dit: 'Le panneau de vente montre la courbe du cours.' },

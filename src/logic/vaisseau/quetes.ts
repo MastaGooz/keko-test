@@ -97,10 +97,10 @@ export const TUTORIEL: Modele[] = [
 
 /** LE CATALOGUE d'après le tutoriel : une de chaque activité est toujours active. */
 export const CATALOGUE: Modele[] = [
-  { id: 'm-fer', activite: 'minage', titre: 'Cargaison de fer', dit: 'Extrayez 30 pépites de fer.', compteur: 'fer', cible: 30, credits: 40 },
-  { id: 'm-or', activite: 'minage', titre: 'Filon d’or', dit: 'Extrayez 10 pépites d’or.', compteur: 'or', cible: 10, credits: 80 },
+  { id: 'm-fer', activite: 'minage', titre: 'Cargaison de fer', dit: 'Extrayez 30 unités de fer.', compteur: 'fer', cible: 30, credits: 40 },
+  { id: 'm-or', activite: 'minage', titre: 'Filon d’or', dit: 'Extrayez 10 unités d’or.', compteur: 'or', cible: 10, credits: 80 },
   { id: 'm-cristal', activite: 'minage', titre: 'Éclats de cristal', dit: 'Extrayez 4 cristaux.', compteur: 'cristal', cible: 4, credits: 100 },
-  { id: 'm-gros', activite: 'minage', titre: 'Grosse campagne', dit: 'Extrayez 60 pépites, tous minerais confondus.', compteur: 'pepites', cible: 60, credits: 90 },
+  { id: 'm-gros', activite: 'minage', titre: 'Grosse campagne', dit: 'Extrayez 60 unités, tous minerais confondus.', compteur: 'pepites', cible: 60, credits: 90 },
   { id: 'c-rival', activite: 'combat', titre: 'Chasse au rival', dit: 'Abattez un rival.', compteur: 'rivaux', cible: 1, credits: 60 },
   { id: 'c-rivaux', activite: 'combat', titre: 'Nettoyage', dit: 'Abattez 3 rivaux.', compteur: 'rivaux', cible: 3, credits: 150 },
   { id: 'e-loin', activite: 'exploration', titre: 'Reconnaissance', dit: 'Éloignez-vous à 700 de la base.', compteur: 'distance', cible: 700, credits: 50 },

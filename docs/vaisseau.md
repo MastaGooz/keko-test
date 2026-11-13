@@ -3201,3 +3201,9 @@ de ressources, il faut pouvoir scroller ».
   la tape se décide au relâchement) ou à la molette, avec une barre à
   droite. `&rangsoute=N` borne les rangées montrées, pour l'essayer.
 
+« UNITÉS », PAS « PÉPITES » (Keko, 13/11, « partout dans le jeu ») : les
+textes montrés au joueur disent « 20 unités en soute », « Extrayez 30 unités
+de fer », « 7 unités perdues » ; là où le mot désignait ce qui flotte dans
+l'espace, « le minerai » (« attire le minerai de 60 % plus loin »). Le code
+garde `pepites`.
+

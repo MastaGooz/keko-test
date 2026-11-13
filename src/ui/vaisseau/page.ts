@@ -5794,7 +5794,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       plaque(p, cx, cy, cw, ch, 'encre', { bord: ROUGE[4] })
       const question = `Larguer tout le ${FICHES_MINERAI[kd].nom} ?`
       motEnRelief(p, largeurDe(question, GRAS) <= cw - 12 ? question : 'Tout larguer ?', W / 2, cy + 7, true)
-      const perdu = `${combien} ${combien > 1 ? 'pépites perdues' : 'pépite perdue'}`
+      const perdu = `${combien} ${combien > 1 ? 'unités perdues' : 'unité perdue'}`
       const lp = largeurDe(perdu) + 14
       dessinerPepite(p, { id: 0, x: Math.round(W / 2 - lp / 2) + 4, y: cy + 27, vx: 0, vy: 0, graine: 7919, minerai: kd }, t, false)
       ecrire(p, perdu, Math.round(W / 2 - lp / 2) + 14, cy + 23, COQUE[5])
