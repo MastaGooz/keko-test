@@ -2698,7 +2698,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * haut et de gauche pris par la lumière, celui du bas et de droite dans l'ombre, un grain semé dans le corps (toujours
    * le même), et une ombre portée d'un pixel. `T` : ses trois tons, du sombre au clair.
    */
-  function dessinerLeGlyphe(p: Peintre, nom: string, x0: number, y0: number, T: [number, number, number], k = 2): void {
+  function dessinerLeGlyphe(p: Peintre, nom: string, x0: number, y0: number, T: [number, number, number], k = 2, riche = false): void {
     const lignes = ICONES_DU_LABO[nom]
     if (lignes === undefined) return
     const x = Math.round(x0 - 3.5 * k)
@@ -2714,7 +2714,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // les côtés, les traits en biais d'un grand symbole sortaient en damier)
         const lit = !plein(i, j - 1)
         const sombre = !plein(i, j + 1)
-        p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && grainA(i * 7 + nom.length, j * 13) < 0.12 ? T[0] : T[1])
+        // (`riche` — les onglets du commerce et de la recherche : un grain sombre plus dense, et des paillettes claires)
+        const g = grainA(i * 7 + nom.length, j * 13)
+        p.rect(x + i, y + j, 1, 1, lit && !sombre ? T[2] : sombre && !lit ? T[0] : !lit && g < (riche ? 0.24 : 0.12) ? T[0] : riche && g > 0.9 ? T[2] : T[1])
       }
   }
   type EtatDuNoeud = 'ferme' | 'ouvert' | 'acquis'
@@ -2913,6 +2915,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dessin et son nom, l'ouvert en or se lève, un repère d'or glisse jusqu'à lui (gardé par barre, sous `cle`).
    */
   const reperesDeBarre: Record<string, number> = {}
+  /**
+   * CHAQUE ONGLET A SA TEINTE (Keko, 13/11 : « des icônes qui sont surtout des formes — leur donner un peu plus de
+   * texture et une couleur propre à chacun, en gardant le basculement dans le jaune quand ils sont sélectionnés ») :
+   * les branches de la recherche aux couleurs de leurs missions (le minage cuivre, le combat rouge, l'exploration
+   * bleue, le commerce vert), les catégories du commerce à celle de leur matière (la roche brune, le cristal cyan,
+   * l'acier de la méca, le vert du bio). Du sombre au clair ; l'onglet ouvert passe à l'or.
+   */
+  const TEINTES_D_ONGLET: Record<string, [number, number, number]> = {
+    forage: [N.hex('#8a4a12'), N.hex('#d9822b'), N.hex('#ffbe6e')],
+    combat: [N.hex('#7a2a36'), N.hex('#d0525e'), N.hex('#ff9c8a')],
+    exploration: [N.hex('#1f5fa8'), N.hex('#3f9be8'), N.hex('#a6d8ff')],
+    commerce: [N.hex('#1c7a48'), N.hex('#35c878'), N.hex('#b4f5c0')],
+    tout: [N.hex('#46587a'), N.hex('#9fb4d2'), N.hex('#ffffff')],
+    minerai: [N.hex('#5a4632'), N.hex('#a88662'), N.hex('#e6cfa8')],
+    cristal: [N.hex('#0a5a6a'), N.hex('#19a0c0'), N.hex('#8ff0ff')],
+    meca: [N.hex('#4a3a6a'), N.hex('#8a78c0'), N.hex('#d4c8ff')],
+    bio: [N.hex('#2a6a1e'), N.hex('#5ab83a'), N.hex('#c0f590')],
+  }
   function dessinerUneBarreDOnglets(p: Peintre, y: number, cle: string, liste: { nom: string; icone: string }[], ia: number, choisir: (i: number) => void): void {
     const h = H_BRANCHES
     const n = liste.length
@@ -2937,8 +2957,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (actif) p.glow(cx, y + 10, 20, PEPITE[2], 0.2)
       const nomme = tousLesNoms || actif
       const yi = y + (nomme ? 10 : 14) + dy
-      dessinerLeGlyphe(p, b.icone, cx, yi, actif ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : [COQUE[2], COQUE[4], COQUE[5]]) // (le sombre de l'or tout près de l'or : un brun y semait des grains noirs — Keko : « son haut devient pixelisé bizarrement »)
-      if (nomme) ecrire(p, b.nom, cx, y + 18 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center' })
+      dessinerLeGlyphe(p, b.icone, cx, yi, actif ? [N.hex('#dea01e'), PEPITE[2], N.hex('#fff2a8')] : (TEINTES_D_ONGLET[b.icone] ?? [COQUE[2], COQUE[4], COQUE[5]]), 2, true) // (le sombre de l'or tout près de l'or : un brun y semait des grains noirs — Keko : « son haut devient pixelisé bizarrement »)
+      if (nomme) ecrire(p, b.nom, cx, y + 18 + dy, actif ? PEPITE[3] : (TEINTES_D_ONGLET[b.icone]?.[2] ?? COQUE[4]), { align: 'center' })
       if (!actif) zone(xa, y, xb - xa, h, () => choisir(i), 'onglet')
     })
     const cible = (debutDe(ia) + debutDe(ia + 1)) / 2
@@ -5363,12 +5383,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE SYMBOLE DE LA BARRE DE VIE EST UN PETIT VAISSEAU (Keko, 13/11 : « à la place d'un bouclier, un petit vaisseau :
     // ce serait plus clair pour les joueurs » — la barre dit l'état DU VAISSEAU) : nez en haut, en acier clair à gauche
     // et sombre à droite, sa verrière bleue, sa flamme d'or ; cerné ; blanc au coup. Sa couleur ne suit pas la vie.
+    // (… PUIS AGRANDI ET PLUS TRAVAILLÉ — Keko, 13/11 : « un tout petit peu plus gros et plus travaillé, pour matcher le
+    // niveau de l'icône de la soute » : onze pixels de large au lieu de sept, dans la place du conteneur d'en face — le
+    // fuselage éclairé à gauche, les ailes à nervure, la verrière en deux bleus, les feux rouge et vert au bout des
+    // ailes, deux tuyères et leurs flammes. (x, y) reste le coin de l'ancien 7 × 8 : le dessin déborde de deux de chaque côté.)
     const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
-      const T: Record<string, number> = { L: COQUE[5], M: COQUE[4], S: COQUE[2], c: VERRIERE[2], O: PEPITE[2] }
-      const DESSIN = ['...L...', '..LLM..', '..LcM..', '.LLcMS.', '.LMMMS.', 'LLMMMSS', 'LM.M.SS', '...O...']
+      const T: Record<string, number> = { L: COQUE[5], M: COQUE[4], D: COQUE[3], S: COQUE[2], c: VERRIERE[2], C: VERRIERE[1], O: PEPITE[3], o: PEPITE[2], r: N.hex('#ff4a4a'), g: N.hex('#4aff7a') }
+      const DESSIN = ['.....L.....', '....LLM....', '....LcM....', '...LLcMS...', '...LMCMS...', '..LLMMMSS..', '.LLDMMMDSS.', 'LLD.MMM.DSS', 'r...OMO...g', '....o.o....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
-        if (ch !== '.') points.push([x + k, y + r, ch])
+        if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])
       }))
       for (const [px, py] of points) p.rect(px - 1, py - 1, 3, 3, encre)
       for (const [px, py, ch] of points) p.px(px, py, blanc ? N.WHITE : T[ch])

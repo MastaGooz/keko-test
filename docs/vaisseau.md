@@ -3126,3 +3126,11 @@ vol et dans le panneau de la soute (`dessinerLaCaisseDeSoute`) ; LA BARRE DE
 VIE porte UN PETIT VAISSEAU à la place de l'écusson (`dessinerLEcusson`) :
 « plus clair pour les joueurs ».
 
+Puis (Keko, 13/11) : le vaisseau de la barre de vie passe à ONZE pixels de
+large (fuselage, ailes à nervure, verrière en deux bleus, feux rouge et
+vert, deux flammes) ; LES ICÔNES DES BARRES D'ONGLETS (branches de la
+recherche, catégories du commerce) ont CHACUNE SA TEINTE
+(`TEINTES_D_ONGLET` : cuivre, rouge, bleu, vert ; acier, brun, cyan, violet,
+vert) et plus de matière (`dessinerLeGlyphe(…, riche)` : grain plus dense,
+paillettes) ; l'onglet ouvert reste en or.
+
