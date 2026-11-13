@@ -5395,8 +5395,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // différentes »), puis une fusée détaillée : « essaie de faire une forme plutôt que le vaisseau lui-même, la forme
       // d'une navette » : LA SILHOUETTE D'UNE NAVETTE vue de dessus — un nez, un fuselage, une aile delta — d'un seul
       // métal clair, à peine ombré à droite et au bord de fuite : un pictogramme)
-      const T: Record<string, number> = { L: COQUE[6], M: COQUE[5], S: COQUE[4] }
-      const DESSIN = ['.....L.....', '....LLM....', '....LLM....', '....LLM....', '...LLLMM...', '..LLLLMMM..', '.LLLLLMMMM.', 'LLLLLLMMMMM', 'SSS.SSS.SSS']
+      // (… PUIS MOINS « EN PYRAMIDE », ET EN MÉTAL — Keko, 13/11 : « une texture un peu métallique, et une forme un peu
+      // moins en pyramide, qu'on voie vraiment que c'est un vaisseau » : un fuselage étroit, des ailes en flèche dont
+      // les bouts reculent, une dérive et trois tuyères ; l'acier va du blanc à gauche au sombre à droite, une arête
+      // de lumière le long du bord d'attaque, la verrière en creux sombre)
+      const T: Record<string, number> = { H: COQUE[6], L: COQUE[5], M: COQUE[4], S: COQUE[3], D: COQUE[1] }
+      const DESSIN = ['.....H.....', '....HLM....', '....LDM....', '....LDM....', '...HLLMS...', '..HLLMMSS..', '.HLLLMMSSS.', 'HLM.LMS.MSS', 'L...LMS...S', '...HLMSS...', '...M.M.S...']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])

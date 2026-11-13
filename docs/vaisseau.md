@@ -3141,3 +3141,6 @@ paillettes) ; l'onglet ouvert reste en or.
   retirée) ; LA JAUGE DE LA SOUTE EST VIOLETTE (`SOUTE`), l'or étant au
   blindage ; pleine, elle reste grisée.
 
+- Puis : la navette est redessinée MOINS EN PYRAMIDE et EN MÉTAL — fuselage
+  étroit, ailes en flèche, dérive, tuyères ; l'acier du blanc au sombre, la
+  verrière en creux.
