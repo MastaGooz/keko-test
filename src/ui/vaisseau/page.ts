@@ -4603,6 +4603,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La déviation de la flamme du joueur (voir `dessinerLeVaisseau`), et son cap à l'image d'avant. */
   let devieDeLaFlamme = 0
   let capVu = 0
+  let virageVu = 0
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
@@ -4619,6 +4620,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const deCote = -v.vx * Math.sin(v.cap) + v.vy * Math.cos(v.cap)
       const cible = Math.max(-5, Math.min(5, -deCote * 0.035 + omega * 1.1)) + Math.sin(t * 23) * 0.3
       devieDeLaFlamme = ressort(devieDeLaFlamme, cible, 9)
+      // (le virage, de −1 à 1 : il allume les jets du nez — voir plus bas)
+      virageVu = ressort(virageVu, Math.max(-1, Math.min(1, omega / 4)), 14)
     }
     dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false, devieDeLaFlamme)
     // LES JETS DE MANŒUVRE : de courtes flammes froides, blanches au cœur et bleues au bout — DEUX AU NEZ, qui soufflent
@@ -4644,6 +4647,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
       jet(-1, -5.2, -0.15, -1, Math.max(0, pousseeVue.cote))
       jet(-1, 5.2, -0.15, 1, Math.max(0, -pousseeVue.cote))
+      // À CHAQUE VIRAGE, même d'un seul manche (Keko, 13/11 : « animer le petit propulseur latéral à chaque virage, ce
+      // serait plus réaliste ») : un jet au flanc du nez, du côté EXTÉRIEUR au virage — c'est lui qui fait tourner le nez
+      jet(5, -2.6, 0.1, -1, Math.max(0, virageVu))
+      jet(5, 2.6, 0.1, 1, Math.max(0, -virageVu))
     }
     // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
     if (t - bouclierA < 0.25) {
