@@ -5360,15 +5360,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const k = 0.66
       return ((255 << 24) | (Math.round(((c >>> 16) & 255) * k) << 16) | (Math.round(((c >>> 8) & 255) * k) << 8) | Math.round((c & 255) * k)) >>> 0
     }
-    // L'ÉCUSSON DU BLINDAGE (Keko, 13/11 : « plus SF et texturé, et pas juste en jaune ») : une plaque d'ACIER — clair à
-    // gauche, sombre à droite — qui porte en son cœur un insigne d'or ; blanc au coup. SA COULEUR NE SUIT PAS LA VIE (Keko, 13/11) : au dernier
-    // point, c'est la barre et le cadre qui rougissent.
+    // LE SYMBOLE DE LA BARRE DE VIE EST UN PETIT VAISSEAU (Keko, 13/11 : « à la place d'un bouclier, un petit vaisseau :
+    // ce serait plus clair pour les joueurs » — la barre dit l'état DU VAISSEAU) : nez en haut, en acier clair à gauche
+    // et sombre à droite, sa verrière bleue, sa flamme d'or ; cerné ; blanc au coup. Sa couleur ne suit pas la vie.
     const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
-      const T: Record<string, number> = { L: COQUE[5], M: COQUE[3], S: COQUE[2], o: PEPITE[2], O: PEPITE[3] }
-      const DESSIN = ['LLLLLLL', 'LMOooMS', 'LMoooMS', 'LMMoMMS', '.LMoMS.', '.LMMSS.', '..LMS..', '...S...']
+      const T: Record<string, number> = { L: COQUE[5], M: COQUE[4], S: COQUE[2], c: VERRIERE[2], O: PEPITE[2] }
+      const DESSIN = ['...L...', '..LLM..', '..LcM..', '.LLcMS.', '.LMMMS.', 'LLMMMSS', 'LM.M.SS', '...O...']
+      const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
-        if (ch !== '.') p.px(x + k, y + r, blanc ? N.WHITE : T[ch])
+        if (ch !== '.') points.push([x + k, y + r, ch])
       }))
+      for (const [px, py] of points) p.rect(px - 1, py - 1, 3, 3, encre)
+      for (const [px, py, ch] of points) p.px(px, py, blanc ? N.WHITE : T[ch])
     }
     if (enBande) {
       // LE BLINDAGE DEBOUT — la même mise en scène que la barre couchée (le « health bar hit » du dépôt), tournée : la
@@ -5414,9 +5417,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // l'écusson, en tête : il bondit et blanchit au coup
       const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
       const blanc = du >= 0 && du < 0.07
-      const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
       const ex = px0 + Math.round(pw / 2) - 4
-      ECUSSON.forEach((l, r) => p.rect(ex + Math.floor((7 - l) / 2) - 1, oy + 3 + r + bond, l + 2, 3, encre))
       dessinerLEcusson(ex, oy + 4 + bond, blanc)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
@@ -5486,9 +5487,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
     const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
     const blanc = du >= 0 && du < 0.07
-    const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
-    // (le cerne d'abord, en entier : tracé rangée par rangée, il recouvrait la rangée du dessus)
-    ECUSSON.forEach((l, r) => p.rect(ox + 5 + Math.floor((7 - l) / 2) - 1, oy + 4 + r + bond, l + 2, 3, encre))
     dessinerLEcusson(ox + 5, oy + 5 + bond, blanc)
     p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
 
@@ -5576,15 +5574,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /**
-   * LE SYMBOLE DE LA SOUTE (9 × 8 sans son cerne ; Keko, 13/11 : « plus SF et texturé, et pas juste en jaune ; ne
-   * change pas la couleur du symbole de soute quand il est plein ») : UN CONTENEUR D'ACIER — un couvercle clair aux
-   * coins d'or, un joint sombre, un corps nervuré, un verrou d'or au milieu et un liseré d'énergie bleue au pied.
+   * LE SYMBOLE DE LA SOUTE, posé dans la place d'un 9 × 8 dont (x, y) est le coin : LE CONTENEUR DE L'ANCIEN ENTREPÔT
+   * (Keko, 13/11 : la caisse à verrou « ressemble à un coffre, ça ne fait pas très science-fiction ; on avait une
+   * icône pour l'entrepôt, elle était pas mal ») — une caisse d'acier aux coins coupés, le dessus clair, le dessous
+   * sombre, quatre équerres, deux nervures, barrée d'un bandeau sombre où court un filet d'énergie cyan dont le voyant
+   * bat. Elle ne change pas de couleur quand la soute est pleine.
    */
-  function dessinerLaCaisseDeSoute(p: Peintre, x: number, y: number): void {
-    const T: Record<string, number> = { g: PEPITE[2], o: PEPITE[2], O: PEPITE[3], L: COQUE[5], M: COQUE[3], D: COQUE[2], S: COQUE[1], E: MATIERES.encre.contour, c: VERRIERE[1] }
-    const DESSIN = ['gLLLLLLLg', 'MMMMMMMMS', 'EEEEEEEEE', 'MDMOooMDS', 'MDMoEoMDS', 'MDMMMMMDS', 'MDcccccDS', 'SSSSSSSSS']
-    p.rect(x - 1, y - 1, 11, 10, MATIERES.encre.contour)
-    DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => p.px(x + k, y + r, T[ch])))
+  function dessinerLaCaisseDeSoute(p: Peintre, x0: number, y0: number): void {
+    const x = x0 + 4
+    const y = y0 + 4
+    const OMBRE = MATIERES.encre.contour
+    p.rect(x - 5, y - 5, 11, 11, OMBRE)
+    p.rect(x - 6, y - 4, 13, 9, OMBRE)
+    p.rect(x - 5, y - 4, 11, 9, COQUE[3])
+    p.rect(x - 4, y - 4, 9, 1, COQUE[5])
+    p.rect(x - 5, y - 3, 1, 7, COQUE[4])
+    p.rect(x + 5, y - 3, 1, 7, COQUE[2])
+    p.rect(x - 4, y + 4, 9, 1, COQUE[2])
+    for (const nx of [-2, 2]) p.rect(x + nx, y - 3, 1, 7, COQUE[2])
+    for (const [cx, cy] of [[-5, -4], [4, -4], [-5, 3], [4, 3]]) p.rect(x + cx, y + cy, 2, 2, cy < 0 ? COQUE[6] : COQUE[4])
+    p.rect(x - 5, y - 1, 11, 3, N.hex('#0c1420'))
+    p.rect(x - 4, y, 9, 1, VERRIERE[1])
+    p.rect(x - 1, y, 3, 1, Math.floor(t * 2) % 2 === 0 ? N.WHITE : VERRIERE[2])
   }
 
   /**

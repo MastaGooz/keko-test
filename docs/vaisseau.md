@@ -3120,3 +3120,9 @@ PAS DE CATÉGORIE VIDE (Keko, 13/11, « pour ne pas rendre les joueurs confus »
   combat) : seules les familles qui ont une pièce possédée ou débloquée ;
   « Tout » à partir de deux ; une seule famille, sa puce seule, allumée.
 
+Deux symboles changés (Keko, 13/11) : LA SOUTE reprend LE CONTENEUR DE
+L'ANCIEN ENTREPÔT (la caisse à verrou « ressemble à un coffre ») — sur le
+vol et dans le panneau de la soute (`dessinerLaCaisseDeSoute`) ; LA BARRE DE
+VIE porte UN PETIT VAISSEAU à la place de l'écusson (`dessinerLEcusson`) :
+« plus clair pour les joueurs ».
+
