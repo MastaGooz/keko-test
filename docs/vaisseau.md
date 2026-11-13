@@ -3162,3 +3162,4 @@ paillettes) ; l'onglet ouvert reste en or.
   bleue entre deux traits bleu nuit) : les deux icônes ont le même motif.
 - Puis : la navette élargie à TREIZE pixels, la largeur du conteneur.
 - Puis : les ailes de la navette s'attachent un rang plus haut sur la coque.
+- Puis : du blanc à l'avant de la navette (la lumière vient d'en haut, comme sur le conteneur).
