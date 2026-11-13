@@ -670,7 +670,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const ny = (oy + v.vy * tc) / rr
           if (-(v.vx * nx + v.vy * ny) < CONF.seuilChoc) continue
           chocAnnonceA = t
-          jouer(CONF.bouclier.points > 0 && m.bouclier >= 1 ? 'bouclier' : 'touche')
+          jouer(CONF.bouclier.points > 0 && m.bouclier > 0 ? 'bouclier' : 'touche')
           break
         }
       }
@@ -5038,6 +5038,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // paysage ») : LA SOUTE EST LE MIROIR DU BLINDAGE — la même plaque (mêmes dimensions), son symbole au même endroit
     // que l'écusson, une jauge du même gabarit que la barre de blindage (un creux cerné, l'or clair d'un côté, sombre de
     // l'autre), et au bout SA TOUCHE D'OR au chevron.
+    // (LA TOUCHE ET SA FLÈCHE RESTENT D'OR, soute pleine ou pas — Keko, 13/11 ; la plaque et la jauge, elles, rougissent)
     if (enBande) {
       // DEBOUT : la plaque du blindage d'en face — le symbole en tête, la jauge qui se remplit par le bas, la touche au pied
       const pw = 22
@@ -5062,10 +5063,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // la touche d'or, au pied
       const yt = gy + HG + 3
-      plaque(p, x0 + 3, yt, pw - 6, 11, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
+      plaque(p, x0 + 3, yt, pw - 6, 11, 'or', { enfonce: eb.enfonce })
       for (let k = 0; k < 3; k++) {
-        p.rect(x0 + 8 + k, yt + 5 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
-        p.rect(x0 + 8 + k, yt + 4 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+        p.rect(x0 + 8 + k, yt + 5 + k, 6 - 2 * k, 1, N.hex('#3a1c04'))
+        p.rect(x0 + 8 + k, yt + 4 + k, 6 - 2 * k, 1, N.hex('#fff7d6'))
       }
       if (actif) zone(0, yHud, bandeCote(), hp + 2, ouvrirLaSoute, 'ouvre')
     } else {
@@ -5080,10 +5081,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLaCaisse(xs + 5, ys + 5)
       // la touche d'or et son chevron
       const xt = xs + ws - TOUCHE - 1
-      plaque(p, xt, ys + 1, TOUCHE, 16, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
+      plaque(p, xt, ys + 1, TOUCHE, 16, 'or', { enfonce: eb.enfonce })
       for (let k = 0; k < 3; k++) {
-        p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
-        p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+        p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, N.hex('#3a1c04'))
+        p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, N.hex('#fff7d6'))
       }
       if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
       // sa jauge, au gabarit de la barre de blindage : un creux cerné, l'or clair dessus, sombre dessous
@@ -5142,18 +5143,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LE BOUCLIER EST COLLÉ À LA VIE — Keko, 13/11 : « si je perds de la vie, le bouclier reste au bout de la jauge au
     // lieu d'être au bout du blindage » : ses points suivent le dernier point de coque, où qu'il soit ; `rel` compte
     // depuis la fin de la coque. Rend `null` là où il n'y a pas de bouclier : le creux de la barre.)
+    // (IL A SA TEINTE TOUT LE TEMPS, recharge comprise — Keko, 13/11 : « il ne devrait pas être foncé durant sa
+    // régénération et devenir normal dès qu'il atteint un nombre entier » ; c'est de la vie en plus, à la fraction près.
+    // Un coup : le morceau perdu clignote blanc, une onde claire court sur ce qui reste.)
     const teinteDuBouclier = (rel: number, k: 0 | 1 | 2): number | null => {
       const nb = CONF.bouclier.points
       if (nb <= 0 || rel < 0 || rel >= nb) return null
       const db = t - bouclierA
-      const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-      const j = Math.floor(rel)
-      const part = Math.max(0, Math.min(1, m.bouclier - j))
-      if (db >= 0 && db < 0.32 && j === perdue && part < 1) return Math.floor(t * 30) % 2 === 0 ? N.WHITE : null
-      if (rel - j >= part) return null
-      const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
+      if (rel >= m.bouclier) return db >= 0 && db < 0.32 && rel < m.bouclier + 1 && Math.floor(t * 30) % 2 === 0 ? N.WHITE : null
+      const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((m.bouclier - rel) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
       if (onde > 0.5) return k === 0 ? N.WHITE : VERRIERE[2]
-      if (part < 1) return k === 0 ? VERRIERE[1] : N.hex('#12708a')
       return k === 0 ? VERRIERE[2] : k === 1 ? VERRIERE[1] : N.hex('#12708a')
     }
     // (LES TRAITS DES POINTS SONT FONDUS DANS LA BARRE — Keko, 13/11 : « trop prononcés : plus fins, et dans une couleur
@@ -5163,9 +5162,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return ((255 << 24) | (Math.round(((c >>> 16) & 255) * k) << 16) | (Math.round(((c >>> 8) & 255) * k) << 8) | Math.round((c & 255) * k)) >>> 0
     }
     // L'ÉCUSSON DU BLINDAGE (Keko, 13/11 : « plus SF et texturé, et pas juste en jaune ») : une plaque d'ACIER — clair à
-    // gauche, sombre à droite — qui porte en son cœur un insigne d'or (rouge au dernier point) ; blanc au coup.
-    const dessinerLEcusson = (x: number, y: number, blanc: boolean, or: number[]): void => {
-      const T: Record<string, number> = { L: COQUE[5], M: COQUE[3], S: COQUE[2], o: or[1], O: or[0] }
+    // gauche, sombre à droite — qui porte en son cœur un insigne d'or ; blanc au coup. SA COULEUR NE SUIT PAS LA VIE (Keko, 13/11) : au dernier
+    // point, c'est la barre et le cadre qui rougissent.
+    const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
+      const T: Record<string, number> = { L: COQUE[5], M: COQUE[3], S: COQUE[2], o: PEPITE[2], O: PEPITE[3] }
       const DESSIN = ['LLLLLLL', 'LMOooMS', 'LMoooMS', 'LMMoMMS', '.LMoMS.', '.LMMSS.', '..LMS..', '...S...']
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') p.px(x + k, y + r, blanc ? N.WHITE : T[ch])
@@ -5208,8 +5208,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (let i = 0; i < 11; i++) gerbe(bx + 1 + R.next() * (lw - 2), yDe((m.coque + (depuis - m.coque) * R.next()) / TOT), 1, [N.WHITE, or[0], or[1], or[2]], 75)
       }
       coqueConnue = m.coque
-      const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-      if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + lw / 2, yDe((m.coque + perdue + 0.5) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+      if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + lw / 2, yDe((m.coque + m.bouclier) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
       bouclierConnu = m.bouclier
       plaque(p, px0, oy, pw, BH + 22, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
       // l'écusson, en tête : il bondit et blanchit au coup
@@ -5218,7 +5217,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
       const ex = px0 + Math.round(pw / 2) - 4
       ECUSSON.forEach((l, r) => p.rect(ex + Math.floor((7 - l) / 2) - 1, oy + 3 + r + bond, l + 2, 3, encre))
-      dessinerLEcusson(ex, oy + 4 + bond, blanc, or)
+      dessinerLEcusson(ex, oy + 4 + bond, blanc)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
@@ -5279,8 +5278,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     coqueConnue = m.coque
     // un coup dans le bouclier : des étincelles froides sur la cellule perdue
-    const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-    if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + (BW * (m.coque + perdue + 0.5)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+    if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + (BW * (m.coque + m.bouclier)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
     plaque(p, ox, oy, wp, 18, 'creux', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
@@ -5290,7 +5288,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
     // (le cerne d'abord, en entier : tracé rangée par rangée, il recouvrait la rangée du dessus)
     ECUSSON.forEach((l, r) => p.rect(ox + 5 + Math.floor((7 - l) / 2) - 1, oy + 4 + r + bond, l + 2, 3, encre))
-    dessinerLEcusson(ox + 5, oy + 5 + bond, blanc, or)
+    dessinerLEcusson(ox + 5, oy + 5 + bond, blanc)
     p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
@@ -5824,8 +5822,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (veutLePaysage() !== paysage) cadrer()
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
-      if (m.bouclier >= 1) {
-        m.bouclier -= 1
+      if (m.bouclier > 0) {
+        m.bouclier = Math.max(0, m.bouclier - 1)
         m.toucheA = m.t
         bouclierA = t
       } else {

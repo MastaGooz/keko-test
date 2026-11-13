@@ -762,15 +762,23 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
   return true
 }
 
-/** Le joueur encaisse un coup : le bouclier le prend s'il en reste (un point par coup, quel qu'il soit), sinon la coque ; percée, la partie est perdue. */
+/**
+ * Le joueur encaisse un coup. LE BOUCLIER EST DE LA VIE EN PLUS, DEVANT LA COQUE (Keko, 13/11 : « il peut être consommé
+ * par des dégâts directement : si tu as 1 PV + 0,3 de bouclier et que tu prends 1 dégât, il te reste 0,3 PV ») : les
+ * dégâts vident d'abord ce qu'il en reste, même une fraction en pleine recharge, et LE RESTE passe à la coque ; percée,
+ * la partie est perdue. (Avant : un point entier de bouclier par coup, quel que soit le coup, et rien sous un point.)
+ */
 function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
   m.toucheA = m.t
-  if (c.bouclier.points > 0 && m.bouclier >= 1) {
-    m.bouclier -= 1
+  let reste = degats
+  if (c.bouclier.points > 0 && m.bouclier > 0) {
+    const pris = Math.min(m.bouclier, reste)
+    m.bouclier -= pris
+    reste -= pris
     ev.push({ type: 'bouclier', x, y })
-    return
+    if (reste <= 1e-9) return
   }
-  m.coque -= degats
+  m.coque -= reste
   ev.push({ type: 'touche', x, y })
   if (m.coque <= 0) {
     m.coque = 0

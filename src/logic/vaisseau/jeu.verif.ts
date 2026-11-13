@@ -201,6 +201,13 @@ for (let n = 0; n < 3; n++) {
 verifier('le bouclier prend les deux premiers traits, la coque le troisième', absorbes === 2 && touchesCoque === 1 && zb.coque === bouclier.coque - 1 && zb.bouclier < 1)
 for (let i = 0; i < 60 * (bouclier.bouclier.delai + 2 / bouclier.bouclier.regain + 1); i++) avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
 verifier('sans coup, le bouclier se recharge en entier', zb.bouclier === bouclier.bouclier.points)
+// … ET UNE FRACTION DE BOUCLIER COMPTE (Keko, 13/11) : 0,3 de bouclier et un trait d'un point — la coque perd 0,7
+zb.bouclier = 0.3
+zb.toucheA = zb.t // (un coup tout juste reçu : il ne se recharge pas pendant le vol du trait)
+const coqueAvantLaFraction = zb.coque
+zb.tirs.push({ id: 950, x: -12, y: 0, vx: 120, vy: 0, vie: 1 })
+for (let i = 0; i < 30 && zb.tirs.length > 0; i++) avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
+verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb.bouclier === 0 && Math.abs(zb.coque - (coqueAvantLaFraction - 0.7)) < 1e-9)
 // LE POIDS : la coque blindée accélère moins et glisse plus que celle de série
 const lourde = armer('coque-2')
 let vs = nouveauVaisseau()

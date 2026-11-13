@@ -2945,3 +2945,13 @@ CONTENEUR D'ACIER (coins et verrou d'or, liseré bleu), qui NE CHANGE PLUS DE
 COULEUR quand la soute est pleine (la plaque, la jauge et la touche
 rougissent toujours) ; l'écusson du blindage est une plaque d'acier à
 l'insigne d'or (`dessinerLEcusson`), rouge au dernier point.
+
+Puis (Keko, 13/11) : l'insigne de l'écusson reste d'or quelle que soit la
+vie ; la touche de la soute et sa flèche restent d'or, pleine ou pas ; et LE
+BOUCLIER EST DE LA VIE EN PLUS, À LA FRACTION PRÈS — « si tu as 1 PV + 0,3 de
+bouclier et que tu prends 1 dégât, il te reste 0,3 PV ». RÈGLE CHANGÉE
+(`encaisser`, `jeu.ts`) : les dégâts vident d'abord ce qui reste de
+bouclier, même en pleine recharge, le reste passe à la coque (avant : un
+point entier par coup quel que soit le coup, rien sous un point). À
+l'écran il garde sa teinte pendant la recharge. « Pas de bélier »
+(`sousBouclier`) demande toujours un point entier.
