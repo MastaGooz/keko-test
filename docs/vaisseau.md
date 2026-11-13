@@ -3313,3 +3313,19 @@ visite à l'autre. Un curseur se prend au doigt en vol comme à la base
 (`glisse.sorte === 'curseur'`).
 
 La lecture du banc (croisière, temps) est calculée PAS À PAS comme le jeu avance : la formule continue annonçait « 0,1 s » pour un vaisseau très léger qui n'atteint jamais sa pointe. *À poids très bas, le frein par pas est si fort que la vitesse atteignable baisse (201 au lieu de 302 px/s à 1 T pour 166 de poussée) : un effet du pas de 1/60 s, réel en jeu.*
+
+### Le frein du vide ne s'oppose plus à la poussée (13/11)
+
+Le banc `&banc` a montré le vrai modèle : le frein étant proportionnel à la
+vitesse, une poussée faible s'équilibrait avec lui sous la pointe (croisière
+= poussée / frein), et le temps de mise en vitesse dépendait du POIDS, pas
+de l'accélération. Keko : « très chiant que l'accélération basse entraîne
+une incapacité d'atteindre la vitesse max — il ne faudrait jamais que ça
+arrive ». RÈGLE CHANGÉE (`voler`, `jeu.ts`) : le frein ne retire plus que ce
+qui n'est PAS poussé — la part de la vitesse dans le sens du manche lui
+échappe (à proportion de la force du manche) ; la dérive de côté et l'élan
+contraire freinent comme avant ; manche lâché, tout freine.
+- LA POINTE est toujours atteinte : c'est la vitesse de croisière.
+- L'ACCÉLÉRATION dit en combien de temps : pointe ÷ (poussée ÷ poids).
+- LE POIDS allonge ce temps et la glisse, plus la vitesse atteignable.
+

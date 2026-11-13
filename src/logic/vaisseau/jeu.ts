@@ -448,9 +448,24 @@ export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number
   const part = 1 - (1 - c.marcheArriere) * derriere
   let vx = v.vx + (n > 0 ? (direction.x / n) * force * part * moteur.poussee * dt : 0)
   let vy = v.vy + (n > 0 ? (direction.y / n) * force * part * moteur.poussee * dt : 0)
+  // LE FREIN DU VIDE NE S'OPPOSE PLUS À LA POUSSÉE (Keko, 13/11 : « très chiant que l'accélération basse entraîne une
+  // incapacité d'atteindre la vitesse max — il ne faudrait jamais que ça arrive »). Le frein étant proportionnel à la
+  // vitesse, une petite poussée s'équilibrait avec lui bien avant la pointe : la pointe n'était qu'un plafond rarement
+  // atteint. Désormais il ne freine que CE QUI N'EST PAS POUSSÉ : la part de la vitesse qui va dans le sens du manche
+  // lui échappe (à proportion de la force du manche), le reste — la dérive de côté, l'élan contraire — freine comme
+  // avant. Manche lâché, tout freine. Ainsi LA POINTE EST TOUJOURS ATTEINTE, et l'accélération dit en combien de temps.
   const frein = Math.exp(-c.frein * dt)
-  vx *= frein
-  vy *= frein
+  if (n > 0) {
+    const ux = direction.x / n
+    const uy = direction.y / n
+    const pousse = Math.max(0, vx * ux + vy * uy)
+    const garde = pousse * (force + (1 - force) * frein)
+    vx = (vx - pousse * ux) * frein + garde * ux
+    vy = (vy - pousse * uy) * frein + garde * uy
+  } else {
+    vx *= frein
+    vy *= frein
+  }
   const vitesse = Math.hypot(vx, vy)
   if (vitesse > moteur.vitesseMax) {
     vx *= moteur.vitesseMax / vitesse

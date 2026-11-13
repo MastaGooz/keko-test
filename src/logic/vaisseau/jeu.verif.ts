@@ -477,7 +477,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 1, y: 0 }, { x: -1, y: 0 })
   const sansRegard = nouveauMonde()
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, sansRegard, 1 / 60, { x: 1, y: 0 })
-  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && m.vaisseau.vx < sansRegard.vaisseau.vx && m.vaisseau.vx > 0.4 * sansRegard.vaisseau.vx) // (regarder à gauche en poussant à droite, c'est reculer : moins de poussée depuis le 13/11)
+  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && m.vaisseau.vx <= sansRegard.vaisseau.vx + 1e-9 && m.vaisseau.vx > 0.4 * sansRegard.vaisseau.vx) // (regarder à gauche en poussant à droite, c'est reculer : moins de poussée depuis le 13/11)
 }
 
 // la bombe : des charges comptées, une explosion qui éclate les roches autour

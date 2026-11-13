@@ -363,16 +363,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
     // CE QUE ÇA DONNE : la vitesse de croisière (le frein du vide la borne à poussée / frein, quel que soit le poids),
     // le temps pour l'atteindre depuis l'arrêt, et la vitesse du moment
-    // (CALCULÉ COMME LE JEU AVANCE, PAS À PAS — à chaque pas de 1/60 s : la vitesse gagne la poussée, puis le frein en
-    // retire sa part. La formule continue (poussée / frein) se trompait pour un vaisseau très léger, dont le frein par
-    // pas est énorme : elle annonçait « 0,1 s » là où le vaisseau n'atteint jamais sa pointe — Keko, 13/11)
-    const f = allegeParLePoids(b.poids)
-    const q = Math.exp((-BASE.frein / f) * PAS)
-    const palier = q < 1 ? ((b.poussee / f) * PAS * q) / (1 - q) : Infinity
-    const croisiere = Math.min(b.pointe, palier)
-    const temps = palier > b.pointe * 1.0005 && b.pointe > 0 ? (Math.log(1 - b.pointe / palier) / Math.log(q)) * PAS : null
+    // (LE FREIN NE S'OPPOSE PLUS À LA POUSSÉE : la pointe est toujours atteinte, en pointe ÷ (poussée ÷ poids) secondes
+    // — sauf sans poussée du tout)
+    const acceleration = b.poussee / allegeParLePoids(b.poids)
+    const croisiere = acceleration > 0 ? b.pointe : 0
+    const temps = acceleration > 0 ? Math.ceil(b.pointe / (acceleration * PAS)) * PAS : null
     const yl = y + 6 + lignes * pas + 1
-    ecrire(p, `Croisière ${Math.round(croisiere)}${temps === null ? ' : le frein l’emporte' : ` en ${temps.toFixed(1).replace('.', ',')} s`}`, x + 6, yl, COQUE[4])
+    ecrire(p, `Croisière ${Math.round(croisiere)}${temps === null ? ' : aucune poussée' : ` en ${temps.toFixed(1).replace('.', ',')} s`}`, x + 6, yl, COQUE[4])
     ecrire(p, `${cols === 1 ? '' : 'Vitesse '}${Math.round(Math.hypot(v.vx, v.vy))}`, x + w - 6, yl, PEPITE[3], { align: 'right', police: GRAS })
     zone(x, y, w, h, () => undefined, null)
   }
