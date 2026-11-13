@@ -3043,3 +3043,17 @@ contenu) dans la colonne de 180.
 - Changer d'onglet referme la vente (`allerA`) : couchée, le rail reste
   touchable sous son voile.
 
+Retouches du même jour (Keko) :
+- MISSIONS ET PARAMÈTRES COUCHÉS n'ont plus de fenêtre de gauche (« l'espace
+  de gauche est occupé par "contrats" alors que c'est juste censé être un
+  intitulé de catégorie ») : leur bandeau reste EN HAUT sur toute la
+  largeur (36 de haut, comme debout), le contenu dessous sur toute la
+  largeur — les missions SUR DEUX COLONNES quand l'écran en loge deux
+  (`partDesMissions`, une carte sur deux ; les cartes suivent la largeur,
+  `largeurDuTexteDeMission()`), les paramètres dans une colonne de 240 au
+  milieu.
+- PARAMÈTRES : le texte du réglage commence par « Sur téléphone : ».
+- RECHERCHE : LES NŒUDS RAMENÉS À 26 px (34 étaient « trop gros », en
+  paysage comme en portrait ; 22, avant, trop petits) ; les rangs à 46 px,
+  l'écart entre nœuds à 36 ; le symbole d'un passif à l'échelle 2.
+
