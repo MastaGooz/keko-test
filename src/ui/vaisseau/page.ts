@@ -1727,8 +1727,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLInventaire(p: Peintre, y0: number): void {
     // la barre des catégories, en haut de la scène (la lumière des lampes éteinte dessous)
     eteindre(0, y0, W, y0 + H_BRANCHES + 1)
-    dessinerUneBarreDOnglets(p, y0, 'categorie', CATEGORIES.map((c) => ({ nom: NOMS_DE_CATEGORIE[c], icone: c })), CATEGORIES.indexOf(categorie), (i) => {
-      categorie = CATEGORIES[i]
+    // (PAS DE CATÉGORIE VIDE — Keko, 13/11 : « masquer les onglets du commerce qui sont vides ; une fois qu'on ramasse
+    // notre première ressource méca ou bio, on débloque l'onglet » : seules les catégories qui ont une ressource connue
+    // ont leur onglet ; « Tout » ne vient qu'à partir de deux — avant, la seule catégorie ; sans rien, « Tout » seul)
+    const pleines = CATEGORIES.filter((c) => c !== 'tout' && MINERAIS.some((k) => connues.has(k) && CATEGORIE_DE[k] === c))
+    const montrees: Categorie[] = pleines.length > 1 ? ['tout', ...pleines] : pleines.length === 1 ? pleines : ['tout']
+    if (!montrees.includes(categorie)) categorie = montrees[0]
+    dessinerUneBarreDOnglets(p, y0, 'categorie', montrees.map((c) => ({ nom: NOMS_DE_CATEGORIE[c], icone: c })), montrees.indexOf(categorie), (i) => {
+      categorie = montrees[i]
       defilInventaire = 0
       vueA = t - 0.12
       // (la ressource choisie suit : la première de la catégorie, si celle d'avant n'y est pas)
@@ -2553,14 +2559,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LE HANGAR MONTRE CE QU'ON A, ET CE QUE LE LABO A DÉBLOQUÉ — Keko, 11/11 : « quand une pièce est débloquée au labo,
     // elle apparaît dans le hangar et le bouton équiper est un bouton acheter avec le prix »)
     const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
-    const familles = famillesDe(onglet)
+    // (PAS DE CATÉGORIE VIDE — Keko, 13/11 : « au début on n'a que le minage : on n'affiche que minage ; quand on
+    // débloquera un autre outil, on affichera tous, minage et la catégorie de l'autre outil » : seules les familles qui
+    // ont une pièce à montrer ont leur puce ; « Tout » ne vient qu'à partir de deux)
+    const familles = famillesDe(onglet).filter((f) => piecesDe(onglet).some((pc) => sousDe(pc) === f && (possede(hangar, pc.id) || pieceOuverte(labo, pc.id))))
+    if (sousCategorie[onglet] !== null && !familles.includes(sousCategorie[onglet] as string)) sousCategorie[onglet] = null
     if (familles.length > 0) {
-      const puces: (string | null)[] = [null, ...familles]
+      const puces: (string | null)[] = familles.length > 1 ? [null, ...familles] : familles
       const noms = puces.map((f) => (f === null ? 'Tout' : (NOMS_FAMILLE[f] ?? f)))
       const largeurs = noms.map((n) => largeurDe(n, GRAS) + 12)
       let x = Math.floor((W - largeurs.reduce((a, b) => a + b, 0) - (puces.length - 1) * 3) / 2)
       puces.forEach((f, i) => {
-        const actif = sousCategorie[onglet] === f
+        const actif = sousCategorie[onglet] === f || puces.length === 1
         const xi = x
         const e = etatDuBouton(xi, y, largeurs[i], 13)
         if (!e.enfonce) ombrePortee(p, xi, y, largeurs[i], 13)

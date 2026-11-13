@@ -3112,3 +3112,11 @@ ne les fait pas oublier ; « Remise à zéro » les oublie. *Une sauvegarde
 d'avant, qui avait tout vendu d'un minerai, ne le revoit qu'à la prochaine
 extraction.* Sans aucune ressource : « Aucune ressource pour l'instant ».
 
+PAS DE CATÉGORIE VIDE (Keko, 13/11, « pour ne pas rendre les joueurs confus ») :
+- COMMERCE : seules les catégories qui ont une ressource connue ont leur
+  onglet (`montrees`, `dessinerLInventaire`) ; « Tout » ne vient qu'à partir
+  de deux catégories — avec une seule, son onglet seul ; sans rien, « Tout ».
+- HANGAR, les puces de famille du panneau « Changer » (outils : minage,
+  combat) : seules les familles qui ont une pièce possédée ou débloquée ;
+  « Tout » à partir de deux ; une seule famille, sa puce seule, allumée.
+
