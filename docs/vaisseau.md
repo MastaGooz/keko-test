@@ -3081,4 +3081,8 @@ voulais un truc plus stylisé et original ») : plus de capture —
 LE NOM EN IMAGE, une nova d'or (huit rayons, halo violet tramé) et la dérive
 d'un vaisseau autour d'elle (un sillage bleu en arc qui s'épaissit jusqu'à
 une pointe d'acier). La version « maskable » est le même dessin à 72 %.
+- Puis (Keko, à l'essai) : couchée, l'étiquette du POIDS est en haut à
+  droite de la scène du hangar (debout : en bas à gauche) ; LES MISSIONS
+  COUCHÉES : UNE PAR LIGNE, sur toute la largeur (`cols = 1` dans
+  `dessinerLaBaseCouchee` ; la grille de deux colonnes reste écrite).
 

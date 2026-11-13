@@ -1285,7 +1285,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       eteindre(0, 0, RAIL, H)
       eteindre(0, 0, W, HAUT_COUCHE)
       if (vue === 'quetes') {
-        const cols = W - RAIL >= 360 ? 2 : 1
+        // (UNE MISSION PAR LIGNE, sur toute la largeur — Keko, 13/11, à l'essai, après la grille de deux colonnes ;
+        // remettre `W - RAIL >= 360 ? 2 : 1` rend la grille)
+        const cols: number = 1
         const lw = Math.floor((W - RAIL) / cols)
         for (let c = 0; c < cols; c++) {
           partDesMissions = { col: c, cols }
@@ -1642,11 +1644,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const poids = `${poidsTotal(hangar)} T`
     const wm = largeurDe('Poids')
     const wv = largeurDe(poids, TEXTE)
-    plaque(p, 6, y1 - 20, wm + wv + 15, 15, 'encre')
-    ecrire(p, 'Poids', 11, y1 - 16, COQUE[4])
+    // (COUCHÉE, EN HAUT À DROITE de la scène, à côté de la lampe — Keko, 13/11, à l'essai ; debout, en bas à gauche)
+    const xp = paysage ? W - 20 - (wm + wv + 15) : 6
+    const yp = paysage ? y0 + 6 : y1 - 20
+    plaque(p, xp, yp, wm + wv + 15, 15, 'encre')
+    ecrire(p, 'Poids', xp + 5, yp + 4, COQUE[4])
     // (LA MÊME LETTRE QUE LE MOT, la même taille — Keko, 12/11 : des chiffres d'une autre police « dénotent » — mais EN
     // RELIEF : l'ivoire éclairé d'en haut, ombré dessous, cerné ; « juste lui rajouter un style propre, un poil de texture »)
-    motEnRelief(p, poids, 11 + wm + 5 + wv / 2, y1 - 16, 'ivoire', TEXTE)
+    motEnRelief(p, poids, xp + 5 + wm + 5 + wv / 2, yp + 4, 'ivoire', TEXTE)
     // LES ZONES DU VAISSEAU (une cible verte, les angles seulement, autour de la place ouverte)
     const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -6, 3.2]] : o === 'coque' ? [[-8.2, -9, 9.8, 9]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8.2, (i === 0 ? -1 : 1) * 8.8, 2.4, (i === 0 ? -1 : 1) * 4.2]))
     const cibles: Sorte[] = etape === 'vaisseau' ? (['propulseur', 'outil', 'arme', 'coque'] as Sorte[]).filter(aDesPieces) : [onglet]
