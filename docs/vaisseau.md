@@ -2873,3 +2873,20 @@ le choix au joueur » — c'est l'orientation du téléphone qui choisit.
   — encore en portrait au milieu de l'écran couché. À 180 de haut (les plus
   petits téléphones), le panneau « Changer » du châssis déborde de quelques
   pixels.
+
+### Les bandeaux habillés, et l'interface dedans (13/11)
+
+Keko, devant les bandes sombres du vol couché : « habiller les bandes
+(portrait et paysage) », puis : « pourquoi on ne met pas l'UI (soute à
+gauche et vie à droite) dans les bandes ? quand c'est possible, sinon on le
+met sur l'écran ». La vue reste FIXE (la même pour tous : le PvP).
+- `dessinerLesBandeaux` : les bandeaux du haut et du bas (portrait) et des
+  côtés (paysage) sont en ACIER du pupitre — sombre, grenu —, fermés d'un
+  filet et d'un cerne du côté de la vue.
+- En paysage, quand les bandeaux de côté font au moins 46 px (`enBande`,
+  `dessinerLeScore`) : LA SOUTE est dans celui de gauche, sur deux lignes
+  (« Soute » et sa touche d'or, le compte, la jauge), les pastilles du porté
+  empilées dessous ; LE BLINDAGE dans celui de droite, sa barre raccourcie à
+  ce que le bandeau laisse. Plus rien sur la vue (« Soute pleine » s'écrit au
+  bord gauche de la vue). Plus étroits, l'interface reste sur la vue, dans
+  ses deux morceaux de pupitre.
