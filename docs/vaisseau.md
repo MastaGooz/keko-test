@@ -3219,5 +3219,9 @@ l'image qui l'explique (`pousseeVue`, la poussée vue du vaisseau, lissée) :
   vers l'avant quand on recule ; un par flanc, qui souffle à l'opposé du
   côté où l'on glisse. Courts, blancs au cœur, bleus au bout.
 - Le souffle sonore reste audible quand ce sont les jets qui poussent.
-- Proposé, pas fait : une marche arrière plus lente (70 %).
+- LA MARCHE ARRIÈRE POUSSE MOINS (règle, `VAISSEAU.marcheArriere` 0,7, dans
+  `voler`) : nez TENU par un regard, pousser droit derrière lui ne donne que
+  70 % de la poussée ; de côté, tout ; au prorata entre les deux. D'un seul
+  manche (pas de regard), rien ne change.
+- Le bourdon de la foreuse est baissé d'un tiers (0,38 → 0,27).
 

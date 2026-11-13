@@ -354,7 +354,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
       propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
       propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
     }
-    if (forage !== null) forage.gain.gain.setTargetAtTime(creuse ? ZZFX.volume * (ARCADE ? 0.28 : 0.38) : 0, t, 0.04) // (0,18 avant : Keko la veut plus forte ; 0,38 : le bourdon rond, au même niveau mesuré que l'ancien à 0,28)
+    if (forage !== null) forage.gain.gain.setTargetAtTime(creuse ? ZZFX.volume * (ARCADE ? 0.2 : 0.27) : 0, t, 0.04) // (baissée d'un tiers, environ 3 dB — Keko, 13/11 : « diminuer un peu le volume de la foreuse ») // (0,18 avant : Keko la veut plus forte ; 0,38 : le bourdon rond, au même niveau mesuré que l'ancien à 0,28)
     if (charge !== null) {
       const u = Math.max(0, Math.min(1, compte))
       charge.gain.gain.setTargetAtTime(u > 0 ? ZZFX.volume * 0.16 * (0.5 + 0.5 * u) * (monte ? 1 : 0.5) : 0, t, 0.06)

@@ -32,6 +32,12 @@ export type { Vecteur }
 export const VAISSEAU = {
   /** La poussée du manche à fond, en unités par seconde carrée. */
   poussee: 150,
+  /**
+   * LA PART DE LA POUSSÉE EN MARCHE ARRIÈRE (Keko, 13/11 : « que le vaisseau ait moins de propulsion en marche
+   * arrière ») : quand le nez est TENU ailleurs (le second manche, la souris) et qu'on pousse droit derrière lui, ce
+   * ne sont que les jets de manœuvre — 70 % de la poussée. De côté, tout ; entre les deux, au prorata.
+   */
+  marcheArriere: 0.7,
   /** La vitesse de pointe. */
   vitesseMax: 110,
   /** Le frein du vide, par seconde : `v *= exp(−frein·dt)`. Faible : on glisse. */
@@ -434,8 +440,12 @@ type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: nu
 export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number, direction: Vecteur, detruits: ReadonlySet<number> = new Set(), regard?: Vecteur): { vaisseau: Vaisseau; chocs: Choc[] } {
   const n = Math.hypot(direction.x, direction.y)
   const force = Math.min(1, n)
-  let vx = v.vx + (n > 0 ? (direction.x / n) * force * moteur.poussee * dt : 0)
-  let vy = v.vy + (n > 0 ? (direction.y / n) * force * moteur.poussee * dt : 0)
+  // (la marche arrière : seulement quand un regard tient le nez — d'un seul manche, le nez suit la poussée, et un
+  // demi-tour ne doit pas mollir le temps qu'il tourne)
+  const derriere = regard !== undefined && n > 0 ? Math.max(0, -((direction.x / n) * Math.cos(v.cap) + (direction.y / n) * Math.sin(v.cap))) : 0
+  const part = 1 - (1 - c.marcheArriere) * derriere
+  let vx = v.vx + (n > 0 ? (direction.x / n) * force * part * moteur.poussee * dt : 0)
+  let vy = v.vy + (n > 0 ? (direction.y / n) * force * part * moteur.poussee * dt : 0)
   const frein = Math.exp(-c.frein * dt)
   vx *= frein
   vy *= frein

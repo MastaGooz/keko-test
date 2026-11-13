@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -208,6 +208,19 @@ const coqueAvantLaFraction = zb.coque
 zb.tirs.push({ id: 950, x: -12, y: 0, vx: 120, vy: 0, vie: 1 })
 for (let i = 0; i < 30 && zb.tirs.length > 0; i++) avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
 verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb.bouclier === 0 && Math.abs(zb.coque - (coqueAvantLaFraction - 0.7)) < 1e-9)
+// LA MARCHE ARRIÈRE (Keko, 13/11) : le nez tenu vers le haut par un regard, pousser derrière lui donne 70 % de la poussée
+// d'une marche avant ; de côté, toute la poussée ; sans regard, rien ne change
+{
+  const haut = { x: 0, y: -1 }
+  const pas = (dir: { x: number; y: number }, regard?: { x: number; y: number }): number => {
+    const r = voler(C, C, nouveauVaisseau(), 1 / 60, dir, new Set(), regard).vaisseau
+    return Math.hypot(r.vx, r.vy)
+  }
+  const avant = pas({ x: 0, y: -1 }, haut)
+  verifier('nez tenu, la marche arrière pousse à 70 %', Math.abs(pas({ x: 0, y: 1 }, haut) / avant - C.marcheArriere) < 1e-6)
+  verifier('nez tenu, glisser de côté pousse à fond', Math.abs(pas({ x: 1, y: 0 }, haut) / avant - 1) < 1e-6)
+  verifier('sans regard, pousser derrière le nez pousse à fond', Math.abs(pas({ x: 0, y: 1 }) / avant - 1) < 1e-6)
+}
 // LE POIDS : la coque blindée accélère moins et glisse plus que celle de série
 const lourde = armer('coque-2')
 let vs = nouveauVaisseau()
@@ -455,7 +468,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 1, y: 0 }, { x: -1, y: 0 })
   const sansRegard = nouveauMonde()
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, sansRegard, 1 / 60, { x: 1, y: 0 })
-  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && Math.abs(m.vaisseau.vx - sansRegard.vaisseau.vx) < 1e-9)
+  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && m.vaisseau.vx < sansRegard.vaisseau.vx && m.vaisseau.vx > 0.6 * sansRegard.vaisseau.vx) // (regarder à gauche en poussant à droite, c'est reculer : moins de poussée depuis le 13/11)
 }
 
 // la bombe : des charges comptées, une explosion qui éclate les roches autour
