@@ -3188,3 +3188,16 @@ en vol (`dessinerLeVaisseau`), elle traîne à l'opposé du glissement de côté
 et reste en arrière dans un virage, amenée par un ressort
 (`devieDeLaFlamme`), avec un léger frémissement.
 
+### La soute ouverte : « Tout » se confirme, la liste défile (13/11)
+
+Keko : « un petit message de confirmation quand un joueur décide de larguer
+la totalité d'une ressource (pas pour −1) ; et plus tard on aura des dizaines
+de ressources, il faut pouvoir scroller ».
+- « TOUT » pose `largageDemande` : un petit panneau bordé de rouge par-dessus
+  la soute — « Larguer tout le Fer ? », le nombre de pépites perdues,
+  « Annuler » et « Larguer » (rouge) ; une tape à côté annule.
+- LA LISTE montre autant de rangées que la vue en loge (`VIS` : 9 debout, 4
+  couchée) ; au-delà elle DÉFILE, au doigt (`glisse.sorte === 'soute'`,
+  la tape se décide au relâchement) ou à la molette, avec une barre à
+  droite. `&rangsoute=N` borne les rangées montrées, pour l'essayer.
+

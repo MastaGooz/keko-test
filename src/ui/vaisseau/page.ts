@@ -568,12 +568,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * EN PAUSE (de moi, à rejuger : au doigt, on ne trie pas sa soute sous le feu).
    */
   let souteOuverte = false
+  /**
+   * LA SOUTE DÉFILE (Keko, 13/11 : « plus tard on aura des dizaines de ressources : il faut pouvoir scroller ») : la
+   * première rangée montrée, la zone qui se fait glisser (null : tout tient), et `&rangsoute=N`, qui borne les rangées
+   * montrées pour l'essayer. ET « TOUT » SE CONFIRME (« un petit message de confirmation quand un joueur décide de
+   * larguer la totalité d'une ressource ; pas besoin pour −1 ») : le minerai dont on demande le largage, ou null.
+   */
+  let defilSoute = 0
+  let zoneDeLaSoute: { x: number; y: number; w: number; h: number } | null = null
+  const RANGS_DE_SOUTE_MAX = parametres.has('rangsoute') ? Math.max(1, Math.floor(Number(parametres.get('rangsoute')) || 1)) : 99
+  let largageDemande: Minerai | null = null
   let souteA = -10
   /** Les minerais dont on REFUSE la collecte (Keko : « bloquer la collecte d'un élément ») : gardés d'une expédition à l'autre, le temps de la page. */
   const refuses: Record<Minerai, boolean> = { fer: false, or: false, cristal: false }
   function ouvrirLaSoute(): void {
     souteOuverte = true
     souteA = t
+    defilSoute = 0
+    largageDemande = null
     manche = null
     touches.clear()
   }
@@ -595,7 +607,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases' | 'missions'; curseur?: Curseur } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases' | 'missions' | 'soute'; curseur?: Curseur } | null = null
   /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
   type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
   let curseurs: Curseur[] = []
@@ -4044,6 +4056,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (en vol : la plaque de soute et, ouverte, ses boutons — sinon le manche)
     {
       const q = enTampon(ev.clientX, ev.clientY)
+      // (la liste de la soute, quand elle dépasse : elle se fait glisser, la tape se décide au relâchement)
+      const zs = souteOuverte ? zoneDeLaSoute : null
+      if (zs !== null && q.x >= zs.x && q.x < zs.x + zs.w && q.y >= zs.y && q.y < zs.y + zs.h) {
+        glisse = { x: q.x, y: q.y, defil0: defilSoute, bouge: false, sorte: 'soute' }
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
       if (z !== undefined) {
         appuyer(z)
@@ -4109,6 +4128,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (glisse.sorte === 'cases') defilCases = glisse.defil0 - (q.y - glisse.y) / PAS_DES_CASES
       else if (glisse.sorte === 'missions') defilMissions = glisse.defil0 - (q.y - glisse.y) / PAS_DES_MISSIONS
+      else if (glisse.sorte === 'soute') defilSoute = glisse.defil0 - (q.y - glisse.y) / 25
       else if (glisse.sorte === 'inventaire') defilInventaire = glisse.defil0 - (q.y - glisse.y) / PAS_DE_L_INVENTAIRE
       else if (glisse.sorte === 'ordres') defilOrdres = glisse.defil0 - (q.y - glisse.y) / RANG_ORDRE
       else if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
@@ -4144,6 +4164,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'inventaire') defilInventaire = Math.round(defilInventaire)
       else if (glisse.sorte === 'cases') defilCases = Math.round(defilCases)
       else if (glisse.sorte === 'missions') defilMissions = Math.round(defilMissions)
+      else if (glisse.sorte === 'soute') defilSoute = Math.round(defilSoute)
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
@@ -4162,7 +4183,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // LA MOLETTE, sur PC (Keko : « sur PC je ne peux pas scroller la barre d'onglets ») : sur la grille d'onglets, elle la
   // fait défiler au pixel ; sur la liste des pièces, d'une rangée par cran
   racine.addEventListener('wheel', (ev) => {
-    if (!ecranVisible()) return
+    if (!ecranVisible()) {
+      // (en vol : la molette fait défiler la soute ouverte)
+      const zs = souteOuverte ? zoneDeLaSoute : null
+      const qs = enTampon(ev.clientX, ev.clientY)
+      if (zs !== null && qs.x >= zs.x && qs.x < zs.x + zs.w && qs.y >= zs.y && qs.y < zs.y + zs.h) {
+        ev.preventDefault()
+        defilSoute = Math.round(defilSoute) + Math.sign(ev.deltaY)
+      }
+      return
+    }
     const q = enTampon(ev.clientX, ev.clientY)
     const dans = (z: { x: number; y: number; w: number; h: number } | null): boolean => z !== null && q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h
     const pas = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY
@@ -5681,7 +5711,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, bandeHaut(), W, H - bandeHaut() - bandeBas(), FOND, 0.62 * u)
     const w = 160
     const EN_TETES = 9
-    const h = 20 + EN_TETES + MINERAIS.length * 25 + 14 + 22
+    // (autant de rangées que la vue en loge ; au-delà, la liste défile, une rangée à la fois)
+    const hautDeVue = H - bandeHaut() - bandeBas()
+    const VIS = Math.max(1, Math.min(MINERAIS.length, RANGS_DE_SOUTE_MAX, Math.floor((hautDeVue - 12 - (20 + EN_TETES + 14 + 22)) / 25)))
+    const maxD = MINERAIS.length - VIS
+    defilSoute = Math.max(0, Math.min(maxD, defilSoute))
+    const d0 = Math.round(defilSoute)
+    const h = 20 + EN_TETES + VIS * 25 + 14 + 22
     const x = Math.round((W - w) / 2)
     const y = Math.round(centreY() - h / 2 + (1 - u) * 10)
     ombrePortee(p, x, y, w, h)
@@ -5706,8 +5742,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bc = b1 - 6 - 28
     p.text('COLLECTE', bc + 14, y + 21, COQUE[3], { align: 'center' })
     p.text('LARGUER', b1 + 27, y + 21, COQUE[3], { align: 'center' })
+    zoneDeLaSoute = maxD > 0 && largageDemande === null ? { x, y: y + 20 + EN_TETES, w, h: VIS * 25 } : null
+    if (maxD > 0) {
+      const hg = VIS * 25 - 3
+      const hc = Math.max(8, Math.round((hg * VIS) / MINERAIS.length))
+      p.rect(x + w - 4, y + 20 + EN_TETES, 2, hg, MATIERES.creux.contour)
+      p.rect(x + w - 4, y + 20 + EN_TETES + Math.round(((hg - hc) * defilSoute) / maxD), 2, hc, COQUE[3])
+    }
     MINERAIS.forEach((k, i) => {
-      const ry = y + 20 + EN_TETES + i * 25
+      if (i < d0 || i >= d0 + VIS) return
+      const ry = y + 20 + EN_TETES + (i - d0) * 25
       const combien = m.cargaison[k]
       plaque(p, x + 5, ry, w - 10, 22, 'creux')
       // (LA PÉPITE TELLE QU'ELLE EST DANS L'ESPACE — Keko : « changer l'image du minerai dans le panneau pour qu'il
@@ -5719,9 +5763,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (« Oui » en vert : l'aimant le prend ; « Non » EN ROUGE — Keko, 13/11 : refusé, ses pépites restent dehors)
       bouton(p, bc, ry + 3, 28, 16, refuses[k] ? 'Non' : 'Oui', true, () => (refuses[k] = !refuses[k]), 'onglet', refuses[k] ? 'rouge' : 'vert')
       bouton(p, b1, ry + 3, 22, 16, '-1', combien > 0, () => jeter(k, 1, b1 + 11, ry), 'retour', 'acier')
-      bouton(p, bt, ry + 3, 30, 16, 'Tout', combien > 0, () => jeter(k, combien, bt + 15, ry), 'retour', 'acier')
+      // (« Tout » ne largue pas : il DEMANDE — voir la confirmation plus bas)
+      bouton(p, bt, ry + 3, 30, 16, 'Tout', combien > 0, () => (largageDemande = k), 'ouvre', 'acier')
     })
-    const yb = y + 20 + EN_TETES + MINERAIS.length * 25
+    const yb = y + 20 + EN_TETES + VIS * 25
     p.text(texteNu('Le minerai largué est perdu'), W / 2, yb + 3, COQUE[3], { align: 'center' })
     // (« FERMER » COMME DANS LA VENTE DU COMMERCE — Keko, 12/11 : la même plaque d'acier, la même taille)
     const bw = largeurDe('Fermer', GRAS) + 22
@@ -5729,6 +5774,41 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (hors du panneau : une tape ferme ; dedans, elle ne fait rien — posées APRÈS les boutons, qui passent d'abord)
     zone(x, y, w, h, () => undefined, null)
     zone(0, 0, W, H, () => (souteOuverte = false), 'retour')
+    // LA CONFIRMATION D'UN LARGAGE ENTIER, par-dessus : ce qui est dessous s'assombrit et ne répond plus ; « Larguer »
+    // en rouge le fait, « Annuler » ou une tape à côté y renonce
+    const kd = largageDemande
+    if (kd !== null) {
+      const combien = m.cargaison[kd]
+      if (combien <= 0) {
+        largageDemande = null
+        return
+      }
+      zones = []
+      frame.light.fill(0) // (les halos des pépites de la liste passeraient à travers le voile)
+      p.rect(x, y, w, h, FOND, 0.7)
+      const cw = 140
+      const ch = 62
+      const cx = Math.round((W - cw) / 2)
+      const cy = Math.round(y + h / 2 - ch / 2)
+      ombrePortee(p, cx, cy, cw, ch)
+      plaque(p, cx, cy, cw, ch, 'encre', { bord: ROUGE[4] })
+      const question = `Larguer tout le ${FICHES_MINERAI[kd].nom} ?`
+      motEnRelief(p, largeurDe(question, GRAS) <= cw - 12 ? question : 'Tout larguer ?', W / 2, cy + 7, true)
+      const perdu = `${combien} ${combien > 1 ? 'pépites perdues' : 'pépite perdue'}`
+      const lp = largeurDe(perdu) + 14
+      dessinerPepite(p, { id: 0, x: Math.round(W / 2 - lp / 2) + 4, y: cy + 27, vx: 0, vy: 0, graine: 7919, minerai: kd }, t, false)
+      ecrire(p, perdu, Math.round(W / 2 - lp / 2) + 14, cy + 23, COQUE[5])
+      const bl = largeurDe('Larguer', GRAS) + 18
+      const ba = largeurDe('Annuler', GRAS) + 18
+      const xb0 = Math.round(W / 2 - (bl + 4 + ba) / 2)
+      bouton(p, xb0, cy + ch - 21, ba, 15, 'Annuler', true, () => (largageDemande = null), 'retour', 'acier')
+      bouton(p, xb0 + ba + 4, cy + ch - 21, bl, 15, 'Larguer', true, () => {
+        jeter(kd, combien, W / 2, cy)
+        largageDemande = null
+      }, 'retour', 'rouge')
+      zone(cx, cy, cw, ch, () => undefined, null)
+      zone(0, 0, W, H, () => (largageDemande = null), 'retour')
+    }
   }
 
   /** Les pépites libres, aux teintes de leur minerai. */
