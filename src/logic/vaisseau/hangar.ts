@@ -278,13 +278,18 @@ export type Jauge = { nom: string; valeur: number; max: number; /** Une quantit�
  * pour le propulseur, le nombre d'armes portables par la coque, une jauge de blindage, de bouclier et de poids ») —
  * chaque barre est pleine au maximum du catalogue, pour comparer d'un coup d'œil.
  */
+/** L'étalon le plus bas d'un propulseur (la part de la configuration que donne celui de série), et sa place sur une jauge. */
+export const ETALON_BAS = 0.3
+const surLaJauge = (v: number, meilleur: number): number => (meilleur <= ETALON_BAS ? 0.05 : Math.max(0.05, 0.05 + (0.95 * (v - ETALON_BAS)) / (meilleur - ETALON_BAS)))
 export function jaugesDe(p: Piece): Jauge[] {
   const memes = piecesDe(p.sorte)
   const max = (f: (q: Piece) => number): number => Math.max(...memes.map(f))
   if (p.sorte === 'propulseur') {
     return [
-      { nom: 'Accélération', valeur: p.poussee ?? 1, max: max((q) => q.poussee ?? 1) },
-      { nom: 'Vitesse', valeur: p.vitesseMax ?? 1, max: max((q) => q.vitesseMax ?? 1) },
+      // (L'ÉTALON LE PLUS BAS REMPLIT 5 % DE LA JAUGE — Keko, 13/11 : « on devrait remplir à 5 % de la jauge pour la
+      // vitesse la plus basse » : la barre va de l'étalon, à 5 %, au meilleur du catalogue, à 100 %)
+      { nom: 'Accélération', valeur: surLaJauge(p.poussee ?? 1, max((q) => q.poussee ?? 1)), max: 1 },
+      { nom: 'Vitesse', valeur: surLaJauge(p.vitesseMax ?? 1, max((q) => q.vitesseMax ?? 1)), max: 1 },
       { nom: 'Maniabilité', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]

@@ -3277,4 +3277,7 @@ série ». `propulseur-1` porte maintenant `poussee: 0.3` et
 n'a pas été touchée. *Les autres propulseurs gardent leurs facteurs (1,25,
 1,6…), donc l'écart avec la série est devenu énorme, et leurs descriptions
 « +25 % » ne sont plus justes : toute l'échelle est à reposer.*
+Ses jauges d'accélération et de vitesse vont de l'étalon (`ETALON_BAS`),
+posé à 5 % de la barre, au meilleur du catalogue, à 100 % (`surLaJauge`) —
+elles partaient de zéro, l'étalon y remplissait un cinquième.
 
