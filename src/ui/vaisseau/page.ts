@@ -1314,6 +1314,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (« Changer » : la liste à gauche, par-dessus le vaisseau, la fiche à droite — si la fenêtre de gauche est assez
     // large pour une liste ; sinon tout dans la colonne, comme en portrait)
     const deux = xc - RAIL >= 150
+    // (« AUTRES ONGLETS » ASSOMBRIT TOUT L'ÉCRAN, pas seulement sa colonne — Keko, 13/11 : « ça ne noircit que la moitié
+    // droite » : le même voile sur la partie gauche, qui ferme la feuille d'une tape, comme lui)
+    if (feuille) {
+      p.rect(RAIL, HAUT_COUCHE + 1, xc - RAIL, H - HAUT_COUCHE - 1, NUIT, 0.72 * Math.min(1, (t - feuilleA) / 0.15))
+      eteindre(RAIL, HAUT_COUCHE + 1, xc, H)
+    }
     fenetre(p, xc, COLONNE, () => {
       dessinerLaFeuille(p)
       if (!deux) dessinerLeChangement(p)
@@ -1322,6 +1328,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       fenetre(p, RAIL, xc - RAIL, () => dessinerLeChangement(p, 'liste'))
       fenetre(p, xc, COLONNE, () => dessinerLeChangement(p, 'fiche'))
     }
+    if (feuille) zone(RAIL, HAUT_COUCHE + 1, xc - RAIL, H - HAUT_COUCHE - 1, basculerLaFeuille, 'retour')
     fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
     // (LA VENTE, en deux fenêtres elle aussi : sa courbe à gauche, par-dessus la grille, le reste dans la colonne — en
     // une seule pièce, elle fait jusqu'à 216 de haut, plus que l'écran couché)

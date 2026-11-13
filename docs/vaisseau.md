@@ -3061,4 +3061,7 @@ Retouches du même jour (Keko) :
   rangées de deux, une rangée à la hauteur de sa plus haute carte ; c'est la
   grille qui défile, une rangée à la fois, une seule barre à droite, une
   seule zone de glisser sur toute la largeur.
+- Puis : couchée, « Autres onglets » assombrit TOUT l'écran (son voile ne
+  couvrait que la colonne de droite) ; une tape sur la partie gauche la
+  referme.
 
