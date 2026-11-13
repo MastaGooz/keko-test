@@ -1905,7 +1905,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const k = feuille ? u : 1 - u
     if (k <= 0.01) return
     // (couchée, il n'y a pas de barre du bas derrière laquelle finir : la feuille s'arrête au-dessus du bord)
-    const bas = H - HAUT_NAV - (paysage ? 10 : 0)
+    const bas = H - HAUT_NAV - (paysage ? 4 : 0)
     const autres = VUES.slice(4)
     const tw = 42
     // (couchée, elle est au milieu de l'écran et plus large : autant de tuiles par rangée que sa fenêtre en loge)
@@ -1919,9 +1919,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const hf = 22 + (autres.length > 0 ? visibles * pas : 16) + hPied
     // la feuille dépasse un peu sa place puis s'y pose
     const sur = feuille ? Math.round(Math.sin(Math.min(1, (t - feuilleA) / 0.3) * Math.PI) * 3) : 0
-    // (debout elle monte de la barre du bas ; couchée elle se pose au milieu de la hauteur — et le voile est celui de la
-    // base couchée, sur tout l'écran)
-    const yf = paysage ? Math.round((HAUT_BARRE + H - hf - 10) / 2 + (1 - k) * 14) : Math.round(bas - (hf + 4) * k) - sur
+    // (ELLE MONTE DU BAS DE L'ÉCRAN, debout comme couchée — Keko, 13/11 : flottant au milieu, « c'est bizarre ; j'aimais
+    // bien l'animation où il montait depuis le bas » ; couchée, le voile est celui de la base, sur tout l'écran)
+    const yf = Math.round(bas - (hf + 4) * k) - sur
     if (!paysage) p.rect(0, HAUT_BARRE + 1, W, bas - HAUT_BARRE - 1, NUIT, 0.72 * k)
     if (feuille) zones = zones.filter((z) => z.y >= bas)
     plaque(p, 4, yf, W - 8, hf + 10, 'encre')

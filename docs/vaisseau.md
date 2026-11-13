@@ -3068,4 +3068,7 @@ Retouches du même jour (Keko) :
   MILIEU DE L'ÉCRAN, dans une fenêtre de 280 au plus (six tuiles par rangée
   au lieu de quatre), au milieu de la hauteur ; une tape hors de ses tuiles
   et de son bouton la referme, comme debout.
+- Puis (Keko : flottante au milieu, « c'est bizarre ») : elle reste au
+  milieu EN LARGEUR, mais COLLÉE AU BAS de l'écran, d'où elle monte comme
+  debout.
 
