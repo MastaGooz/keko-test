@@ -5422,7 +5422,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // les flancs commencent plus haut, l'aile gagne un pixel de chaque côté)
       // (le corps reste étroit en haut et l'aile s'évase TARD, en creux : élargie d'un trait régulier, elle refaisait
       // une pyramide)
-      const DESSIN = ['......L......', '.....mMm.....', '.....mMm.....', '....LmMmL....', '....LKKKL....', '....LvVvL....', '...HLKKKLL...', '..HLLmdmLLL..', 'BHLLLmMmLLLLL', 'SSSSSmdmSSSSS', '.....SSS.....']
+      // (les ailes s'attachent UN RANG PLUS HAUT sur la coque — Keko, 13/11 : « remonter un tout petit peu »)
+      const DESSIN = ['......L......', '.....mMm.....', '....LmMmL....', '....LmMmL....', '....LKKKL....', '...HLvVvLL...', '...LLKKKLL...', '..HLLmdmLLL..', 'BHLLLmMmLLLLL', 'SSSSSmdmSSSSS', '.....SSS.....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 3 + k, y - 1 + r, ch])
