@@ -5418,10 +5418,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // comme celui du conteneur, entre deux traits du même bleu nuit)
       // (le bandeau est AU MILIEU DU CORPS, entre les ailes, comme celui du conteneur est au milieu de la caisse : sur
       // le nez, large de trois, il se fondait dans le noir et détachait la pointe)
-      const DESSIN = ['.....L.....', '....mMm....', '....mMm....', '....mMm....', '...LKKKL...', '...LvVvL...', '..HLKKKLL..', '.HLLmdmLLL.', 'BHLLmMmLLLL', 'SSSSmdmSSSS', '....SSS....']
+      // (TREIZE DE LARGE, la largeur du conteneur — Keko, 13/11 : à onze, à côté de lui, « elle est un peu petite » ;
+      // les flancs commencent plus haut, l'aile gagne un pixel de chaque côté)
+      // (le corps reste étroit en haut et l'aile s'évase TARD, en creux : élargie d'un trait régulier, elle refaisait
+      // une pyramide)
+      const DESSIN = ['......L......', '.....mMm.....', '.....mMm.....', '....LmMmL....', '....LKKKL....', '....LvVvL....', '...HLKKKLL...', '..HLLmdmLLL..', 'BHLLLmMmLLLLL', 'SSSSSmdmSSSSS', '.....SSS.....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
-        if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])
+        if (ch !== '.') points.push([x - 3 + k, y - 1 + r, ch])
       }))
       for (const [px, py] of points) p.rect(px - 1, py - 1, 3, 3, encre)
       for (const [px, py, ch] of points) p.px(px, py, blanc ? N.WHITE : T[ch])
