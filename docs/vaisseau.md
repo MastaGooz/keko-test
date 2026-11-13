@@ -3170,3 +3170,7 @@ L'ICÔNE DE LA BARRE DE VIE EST LE VAISSEAU DU JOUEUR EN MINIATURE (Keko,
 rendu du hangar (`peindreFormes`, les formes du vaisseau monté, sa livrée),
 mis à l'échelle pour que SA BOÎTE (`boiteDe`) tienne dans quinze pixels —
 un gros vaisseau y tient comme un petit (`dessinerLEcusson`).
+
+LA TOUCHE DE LA SOUTE n'est plus d'or (13/11 : l'or « rappelle trop la barre
+de blindage ») : une matière `clair`, l'acier clair du conteneur, et un
+chevron bleu sur bleu nuit.

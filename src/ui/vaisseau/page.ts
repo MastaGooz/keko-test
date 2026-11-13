@@ -765,7 +765,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * semés, toujours les mêmes) ; l'OR a sa ligne spéculaire et son reflet qui passe. Les teintes glissent : les ombres
    * vers le violet et le brun, les lumières vers le chaud. Aucun noir pur : le contour est l'encre la plus sombre.
    */
-  type Matiere = 'encre' | 'or' | 'creux' | 'eteint' | 'acier' | 'vert' | 'rouge'
+  type Matiere = 'encre' | 'or' | 'creux' | 'eteint' | 'acier' | 'vert' | 'rouge' | 'clair'
   type Teintes = { contour: number; ombre: number; corps: number; haut: number; lumiere: number; lumiere2: number; grain: number; spec?: number }
   const MATIERES: Record<Matiere, Teintes> = {
     encre: { contour: N.hex('#07050d'), ombre: N.hex('#110d1a'), corps: N.hex('#1b1626'), haut: N.hex('#231d31'), lumiere: N.hex('#463b61'), lumiere2: N.hex('#342b4a'), grain: N.hex('#2a2339') },
@@ -775,6 +775,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     acier: { contour: N.hex('#07070d'), ombre: N.hex('#121624'), corps: N.hex('#1c2236'), haut: N.hex('#232b42'), lumiere: N.hex('#4a5a80'), lumiere2: N.hex('#36425f'), grain: N.hex('#283149') },
     vert: { contour: N.hex('#03110a'), ombre: N.hex('#0a2a1a'), corps: N.hex('#0f3a25'), haut: N.hex('#14492f'), lumiere: N.hex('#4ee08a'), lumiere2: N.hex('#2a9a5c'), grain: N.hex('#165236') },
     // (le rouge de ce qui défait — « Annuler l'ordre » ; Keko, 11/11 : « tenter en rouge le bouton annuler l'ordre, comme on tente en vert le bouton vendre »)
+    // (L'ACIER CLAIR du conteneur de la soute : la touche qui l'ouvre — Keko, 13/11 : l'or « rappelle trop la barre de
+    // blindage » ; « assez clair pour être mis en avant, dans les tons des éléments graphiques de la soute »)
+    clair: { contour: N.hex('#07070d'), ombre: N.hex('#46587a'), corps: N.hex('#8399bd'), haut: N.hex('#9fb4d2'), lumiere: N.hex('#ffffff'), lumiere2: N.hex('#d6e4f5'), grain: N.hex('#8ea4c6'), spec: N.hex('#ffffff') },
     rouge: { contour: N.hex('#12040a'), ombre: N.hex('#2c0a14'), corps: N.hex('#3e0f1c'), haut: N.hex('#4e1424'), lumiere: N.hex('#f0707a'), lumiere2: N.hex('#a8323e'), grain: N.hex('#5a1828') },
   }
   /** Un petit hachage de position, pour le grain (toujours le même au même pixel). */
@@ -5233,7 +5236,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // paysage ») : LA SOUTE EST LE MIROIR DU BLINDAGE — la même plaque (mêmes dimensions), son symbole au même endroit
     // que l'écusson, une jauge du même gabarit que la barre de blindage (un creux cerné, l'or clair d'un côté, sombre de
     // l'autre), et au bout SA TOUCHE D'OR au chevron.
-    // (LA TOUCHE ET SA FLÈCHE RESTENT D'OR, soute pleine ou pas — Keko, 13/11 ; la plaque et la jauge, elles, rougissent)
+    // (LA TOUCHE EST EN ACIER CLAIR, sa flèche bleue sur bleu nuit — les tons du conteneur ; elle ne change pas, soute
+    // pleine ou pas)
     // (PLUS DE PLAQUE DE FOND, ni ici ni sous le blindage — Keko, 13/11 : « essaie de supprimer les rectangles qui
     // contiennent les PV et la soute » : le symbole, la barre cernée et la touche sont posés tels quels)
     // (… ET PLEINE, ELLE LE SIGNALE SANS ROUGE — Keko, 13/11 : « un petit effet, mais pas rouge, sur la barre de soute
@@ -5275,10 +5279,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // la touche d'or, au pied
       const yt = gy + HG + 3
-      plaque(p, x0 + 3, yt, pw - 6, 11, 'or', { enfonce: eb.enfonce })
+      plaque(p, x0 + 3, yt, pw - 6, 11, 'clair', { enfonce: eb.enfonce })
       for (let k = 0; k < 3; k++) {
-        p.rect(x0 + 8 + k, yt + 5 + k, 6 - 2 * k, 1, N.hex('#3a1c04'))
-        p.rect(x0 + 8 + k, yt + 4 + k, 6 - 2 * k, 1, N.hex('#fff7d6'))
+        p.rect(x0 + 8 + k, yt + 5 + k, 6 - 2 * k, 1, N.hex('#0c1420'))
+        p.rect(x0 + 8 + k, yt + 4 + k, 6 - 2 * k, 1, VERRIERE[1])
       }
       if (actif) zone(0, yHud, bandeCote(), hp + 2, ouvrirLaSoute, 'ouvre')
     } else {
@@ -5292,10 +5296,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLaCaisse(xs + 5, ys + 5)
       // la touche d'or et son chevron
       const xt = xs + ws - TOUCHE - 1
-      plaque(p, xt, ys + 1, TOUCHE, 16, 'or', { enfonce: eb.enfonce })
+      plaque(p, xt, ys + 1, TOUCHE, 16, 'clair', { enfonce: eb.enfonce })
       for (let k = 0; k < 3; k++) {
-        p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, N.hex('#3a1c04'))
-        p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, N.hex('#fff7d6'))
+        p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, N.hex('#0c1420'))
+        p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, VERRIERE[1])
       }
       if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
       // sa jauge, au gabarit de la barre de blindage : un creux cerné, l'or clair dessus, sombre dessous
