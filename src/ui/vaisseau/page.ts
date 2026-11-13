@@ -5425,7 +5425,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (les ailes s'attachent UN RANG PLUS HAUT sur la coque — Keko, 13/11 : « remonter un tout petit peu »)
       // (du blanc à l'avant — Keko, 13/11 : « comme pour l'icône de la soute, pour donner l'impression que la lumière
       // vient d'en haut » : la pointe du nez blanche, son rang d'après clair)
-      const DESSIN = ['......B......', '.....HBH.....', '....LmHmL....', '....LmMmL....', '....LKKKL....', '...HLvVvLL...', '...LLKKKLL...', '..HLLmdmLLL..', 'BHLLLmMmLLLLL', 'SSSSSmdmSSSSS', '.....SSS.....']
+      // (PLUS DE HUBLOT : DEUX TRAITS SOMBRES LE LONG DE LA COQUE — Keko, 13/11 : « plutôt que la couleur bleue et les
+      // traits noirs pour faire un hublot, deux traits noirs le long de la coque pour séparer la coque des ailes » : le
+      // bleu nuit du bandeau du conteneur, en deux joints droits de part et d'autre de l'échine)
+      const DESSIN = ['......B......', '.....HBH.....', '....LmHmL....', '....LmMmL....', '....LmMmL....', '...HKmMmKL...', '...LKmdmKL...', '..HLKmMmKLL..', 'BHLLKmdmKLLLL', 'SSSSKmMmKSSSS', '.....SSS.....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 3 + k, y - 1 + r, ch])
