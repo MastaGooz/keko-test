@@ -5076,6 +5076,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LA TOUCHE ET SA FLÈCHE RESTENT D'OR, soute pleine ou pas — Keko, 13/11 ; la plaque et la jauge, elles, rougissent)
     // (PLUS DE PLAQUE DE FOND, ni ici ni sous le blindage — Keko, 13/11 : « essaie de supprimer les rectangles qui
     // contiennent les PV et la soute » : le symbole, la barre cernée et la touche sont posés tels quels)
+    // (… ET PLEINE, ELLE LE SIGNALE SANS ROUGE — Keko, 13/11 : « un petit effet, mais pas rouge, sur la barre de soute
+    // pleine » : son cerne devient clair et respire, et un reflet blanc la parcourt toutes les deux secondes)
+    const cerneDeLaSoute = pleine ? (Math.sin(t * 4) > 0 ? COQUE[6] : COQUE[5]) : encre
+    const reflet = pleine ? (t % 1.8) / 0.5 : 2
     // (PLEINE, LA JAUGE EST GRISÉE — Keko, 13/11 : « en grisé plutôt que rouge », et plus de bord qui rougit sur la plaque ;
     // le mot « Soute pleine » reste rouge)
     if (enBande) {
@@ -5089,7 +5093,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLaCaisse(x0 + 7, ys + 5)
       const gx = x0 + 7
       const gy = ys + 17
-      p.rect(gx - 1, gy - 1, 10, HG + 2, encre)
+      p.rect(gx - 1, gy - 1, 10, HG + 2, cerneDeLaSoute)
       p.rect(gx, gy, 8, HG, CREUX_DES_BARRES[1])
       p.rect(gx, gy, 1, HG, CREUX_DES_BARRES[0])
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(HG * souteVue))
@@ -5098,6 +5102,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(gx, gy + HG - plein, 1, plein, pleine ? COQUE[5] : PEPITE[3])
         p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? COQUE[3] : PEPITE[1])
         p.rect(gx, gy + HG - plein, 8, 1, pleine ? COQUE[5] : N.hex('#fff7d6'))
+      }
+      if (reflet < 1) {
+        const yr = gy + HG - 2 - Math.round(reflet * (HG - 2))
+        p.rect(gx, yr, 8, 2, N.WHITE)
+        p.glow(gx + 4, yr + 1, 7, COQUE[5], 0.5)
       }
       // la touche d'or, au pied
       const yt = gy + HG + 3
@@ -5128,7 +5137,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const gx = xs + 5 + 9 + 3
       const gw = xt - 3 - gx
       const gy = ys + 5
-      p.rect(gx - 1, gy - 1, gw + 2, 10, encre)
+      p.rect(gx - 1, gy - 1, gw + 2, 10, cerneDeLaSoute)
       p.rect(gx, gy, gw, 8, CREUX_DES_BARRES[1])
       p.rect(gx, gy, gw, 1, CREUX_DES_BARRES[0])
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
@@ -5137,6 +5146,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(gx, gy, plein, 1, pleine ? COQUE[5] : PEPITE[3])
         p.rect(gx, gy + 6, plein, 2, pleine ? COQUE[3] : PEPITE[1])
         p.rect(gx + plein - 1, gy, 1, 8, pleine ? COQUE[5] : N.hex('#fff7d6'))
+      }
+      if (reflet < 1) {
+        const xr = gx + Math.round(reflet * (gw - 2))
+        p.rect(xr, gy, 2, 8, N.WHITE)
+        p.glow(xr + 1, gy + 4, 7, COQUE[5], 0.5)
       }
     }
 
@@ -5191,6 +5205,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((m.bouclier - rel) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
       if (onde > 0.5) return k === 0 ? N.WHITE : VERRIERE[2]
       return k === 0 ? VERRIERE[2] : k === 1 ? VERRIERE[1] : N.hex('#12708a')
+    }
+    // (UN CERNE ROUGE SUR LA BARRE DE VIE — Keko, 13/11 : « un petit effet visuel rouge sur la barre de vie » : au coup,
+    // son cerne rougit un tiers de seconde ; au dernier point il reste rouge et bat, avec une lueur)
+    const cerneDuBlindage = (): number => {
+      const du = t - toucheA
+      if (du >= 0 && du < 0.3) return du < 0.08 ? ROUGE[5] : ROUGE[4]
+      if (m.phase === 'vol' && m.coque <= 1) return Math.sin(t * 5) > 0 ? ROUGE[5] : ROUGE[3]
+      return encre
     }
     // (LES TRAITS DES POINTS SONT FONDUS DANS LA BARRE — Keko, 13/11 : « trop prononcés : plus fins, et dans une couleur
     // proche de la barre mais plus sombre » : un pixel, la teinte de ce qu'il traverse, assombrie)
@@ -5260,7 +5282,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const val = Math.max(0, Math.min(1, m.coque / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
       const dc = t - coqueCoupA
-      p.rect(bx - 1, by - 1, lw + 2, BH + 2, encre)
+      p.rect(bx - 1, by - 1, lw + 2, BH + 2, cerneDuBlindage())
+      if (dernier) p.glow(bx + lw / 2, by + BH / 2, BH * 0.6, ROUGE[4], 0.22 + 0.14 * Math.sin(t * 5))
       const traits = new Set<number>()
       for (let i = 1; i < TOT; i++) traits.add(Math.round(yDe(i / TOT)))
       for (let y = 0; y < BH; y++) {
@@ -5333,7 +5356,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const val = Math.max(0, Math.min(1, m.coque / TOT))
     const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
     const dc = t - coqueCoupA
-    p.rect(bx - 1, by - 1, BW + 2, bh + 2, encre)
+    p.rect(bx - 1, by - 1, BW + 2, bh + 2, cerneDuBlindage())
+    if (dernier) p.glow(bx + BW / 2, by + bh / 2, BW * 0.6, ROUGE[4], 0.22 + 0.14 * Math.sin(t * 5))
     const traits = new Set<number>()
     for (let i = 1; i < TOT; i++) traits.add(Math.round((BW * i) / TOT))
     for (let x = 0; x < BW; x++) {

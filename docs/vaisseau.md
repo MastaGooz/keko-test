@@ -2983,3 +2983,8 @@ Puis (Keko : supprimer les rectangles « n'a pas résolu la visibilité de la
 barre vide ») : LE CREUX DES BARRES (soute et blindage) est un acier bleuté
 (`CREUX_DES_BARRES`), plus du quasi-noir.
 
+Puis (Keko, 13/11) : LA BARRE DE VIE A UN CERNE ROUGE (`cerneDuBlindage`) —
+un tiers de seconde à chaque coup dans la coque, permanent et battant, avec
+une lueur, au dernier point ; LA SOUTE PLEINE a un cerne clair qui respire
+et un reflet blanc qui parcourt la jauge toutes les 1,8 s (pas de rouge).
+
