@@ -669,7 +669,8 @@ export function boiteDe(formes: Forme[]): [number, number, number, number] {
 export function peindreDansUneCase(p: Peintre, formes: Forme[], x: number, y: number, bw: number, bh: number, o: Options = {}): void {
   const [xa, ya, xb, yb] = boiteDe(o.cadre ?? formes)
   // nez en haut : la largeur à l'écran vient de y, la hauteur de x
-  const s = Math.max(1, Math.min(4, (bw - 6) / Math.max(0.5, yb - ya), (bh - 6) / Math.max(0.5, xb - xa)))
+  // (jusqu'à un quart de pixel l'unité : un cuirassé de 72 unités tient dans une case de vingt pixels)
+  const s = Math.max(0.25, Math.min(4, (bw - 6) / Math.max(0.5, yb - ya), (bh - 6) / Math.max(0.5, xb - xa)))
   const cx = Math.round(x - ((ya + yb) / 2) * s)
   const cy = Math.round(y + ((xa + xb) / 2) * s)
   peindreFormes(p, formes, cx, cy, s, o)

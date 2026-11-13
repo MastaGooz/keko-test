@@ -2426,7 +2426,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les formes d'une pièce seule, pour son pictogramme (le même rendu que le vaisseau). */
   function formesDeLaPiece(pc: Piece): ReturnType<typeof formesDuVaisseau> {
     if (pc.sorte === 'propulseur') return formesDuPropulseur(pc.cran, 0.55 + 0.15 * Math.sin(t * 7), t)
-    if (pc.sorte === 'coque') return formesDuChassis(Math.min(3, pc.cran))
+    if (pc.sorte === 'coque') return formesDuChassis(pc.cran) // (le cuirassé, cran 4, a son propre dessin)
     if (pc.sorte === 'outil') return pc.famille === 'aimant' ? formesDeLAimant(pc.cran) : pc.famille === 'radar' ? formesDuRadar(t) : formesDeLaForeuse(pc.cran)
     return formesDeLArme(pc.arme?.id ?? 'canon', 1)
   }

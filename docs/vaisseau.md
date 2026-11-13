@@ -3427,3 +3427,11 @@ pilotage ».
 - LIMITE : les tourelles ne pivotent pas à l'image ; les obus partent de
   leur bouche, dans la direction visée.
 
+LA MANIABILITÉ EST AU CHÂSSIS, PLUS AU PROPULSEUR (Keko, 13/11 : « ça ne
+fait pas vraiment sens que ce soit sur le propulseur, le cuirassé nous en a
+fait la preuve »). `Piece.virage` (une coque) est LE facteur de rotation
+(`configDuHangar` : `c.rotation × virage`) ; `Piece.rotation` des
+propulseurs est supprimé. Série et bouclier : 1 (7 rad/s) ; blindé : 0,8 ;
+cuirassé : 0,07 (0,49 rad/s). La jauge « Maniabilité » quitte la fiche du
+propulseur pour celle du châssis.
+

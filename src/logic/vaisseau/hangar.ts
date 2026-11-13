@@ -43,7 +43,6 @@ export type Piece = {
   /** Les facteurs sur la configuration de série (absent = 1). */
   poussee?: number
   vitesseMax?: number
-  rotation?: number
   /** LE POIDS de la pièce (Keko : « un poids à chaque élément, pour être cohérent ») : la somme fait l'inertie du vaisseau. */
   poids: number
   /** La coque : ses points (absolus), son bouclier (des points qui se rechargent), les armes et les outils qu'elle porte. */
@@ -61,8 +60,9 @@ export type Piece = {
   /** La coque : son rayon dans les chocs, s'il n'est pas celui de la configuration (un gros vaisseau). */
   rayon?: number
   /**
-   * La coque : SA MANIABILITÉ, un facteur sur celle du propulseur (un cuirassé vire lentement quel que soit son
-   * propulseur), et SON PILOTAGE — `tourelles` : le regard ne tourne pas la coque, il ne dirige que le tir (voir
+   * La coque : SA MANIABILITÉ — LA MANIABILITÉ EST AU CHÂSSIS, PLUS AU PROPULSEUR (Keko, 13/11 : « ça ne fait pas
+   * vraiment sens que ce soit sur le propulseur, le cuirassé nous en a fait la preuve ») : un facteur sur la rotation
+   * de la configuration (absent : 1), et SON PILOTAGE — `tourelles` : le regard ne tourne pas la coque, il ne dirige que le tir (voir
    * `VAISSEAU.tourelles`).
    */
   virage?: number
@@ -95,16 +95,16 @@ export const PIECES: Piece[] = [
   // 0,55 × 220 = 121 à la pointe —, il faut donc 126 de poussée, 0,84 de la configuration : ce n'est plus une
   // accélération basse). PUIS LA POINTE AU MILIEU DES DEUX ÉTALONS — 33 (0,3) et 220 (2) : 126,5 px/s, 1,15)
   { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Le strict minimum : il pousse peu et plafonne bas.', prix: 0, poids: 6, poussee: 0.84, vitesseMax: 1.15},
-  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Accélération +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1},
-  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Accélération +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25},
+  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Pousse plus fort et va plus vite que celui de série.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15},
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Le plus puissant et le plus rapide. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35},
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Châssis de série', dit: '5 de blindage, 20 unités en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
-  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Châssis blindé', dit: '8 de blindage, 30 unités en soute, un outil, deux armes. Lourd.', note: 'Acier riveté.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30 },
+  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Châssis blindé', dit: '8 de blindage, 30 unités en soute, un outil, deux armes. Lourd.', note: 'Acier riveté.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30, virage: 0.8 },
   { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Châssis à bouclier', dit: '5 de blindage et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge après 4 s sans coup.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
   // LE CUIRASSÉ (Keko, 13/11 : « un vaisseau de 200 T de type cuirassé, avec le nombre de propulseurs adapté, très armé
   // et outillé ») : 97 T de coque — 200 T tout monté par `&cuirasse` —, QUATRE propulseurs, huit armes, quatre outils, une grande soute,
   // le blindage et le bouclier au plus haut de ce que la fiche sait montrer. Il n'est à vendre nulle part encore :
   // `&cuirasse` le donne, tout armé.
-  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre propulseurs, quatre outils, huit armes. Vire lentement ; ses tourelles tirent dans toutes les directions.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 4, rayon: 18, virage: 0.055, tourelles: true },
+  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre propulseurs, quatre outils, huit armes. Vire lentement ; ses tourelles tirent dans toutes les directions.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 4, rayon: 18, virage: 0.07, tourelles: true },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, poids: 8, debit: 1.8, portee: 1.25},
@@ -124,7 +124,7 @@ export const PIECES: Piece[] = [
 export function ajouterLesPiecesDEssai(): void {
   if (PIECES.some((p) => p.id.startsWith('essai-'))) return
   const n = (i: number, a: number, b: number): number => a + ((i * 7919) % 100) * (b - a) / 100
-  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 3), poids: Math.round(n(i + 9, 4, 14)), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4), rotation: n(i + 5, 0.8, 1.3) })
+  for (let i = 1; i <= 12; i++) PIECES.push({ id: `essai-propulseur-${i}`, sorte: 'propulseur', cran: 2, nom: `Propulseur d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 3), poids: Math.round(n(i + 9, 4, 14)), poussee: n(i, 0.9, 1.7), vitesseMax: n(i + 3, 0.9, 1.4) })
   for (let i = 1; i <= 6; i++) PIECES.push({ id: `essai-coque-${i}`, sorte: 'coque', cran: 2, nom: `Châssis d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (8 + i * 4), pv: 3 + i, poids: 14 + i * 4, bouclier: i % 3 === 0 ? 1 : 0, armes: 1 + (i % 3), outils: 1 + (i % 2), capacite: 10 + i * 5 })
   for (let i = 1; i <= 8; i++) PIECES.push({ id: `essai-foreuse-${i}`, sorte: 'outil', cran: 2, famille: 'foreuse', nom: `Foreuse d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (4 + i * 3), poids: Math.round(n(i + 1, 2, 10)), debit: n(i, 0.8, 2), portee: n(i + 2, 0.9, 1.4) })
   for (let i = 1; i <= 4; i++) PIECES.push({ id: `essai-aimant-${i}`, sorte: 'outil', cran: 2, famille: 'aimant', nom: `Aimant d'essai ${i}`, dit: 'Une pièce d’essai, pour remplir la liste.', prix: 2 * (5 + i * 4), poids: 2 + i, aimant: 1.2 + i * 0.3 })
@@ -293,7 +293,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
     capacite: co.capacite ?? c.capacite,
     poussee: (c.poussee * (pr.poussee ?? 1) * nombreDePropulseurs(h)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
-    rotation: c.rotation * (pr.rotation ?? 1) * (co.virage ?? 1),
+    rotation: c.rotation * (co.virage ?? 1),
     tourelles: co.tourelles ?? false,
     frein: c.frein / poids,
     coque: co.pv ?? c.coque,
@@ -340,7 +340,6 @@ export function jaugesDe(p: Piece): Jauge[] {
       // vitesse la plus basse » : la barre va de l'étalon, à 5 %, au meilleur du catalogue, à 100 %)
       { nom: 'Accélération', valeur: surLaJauge(VAISSEAU.poussee * (p.poussee ?? 1), ETALONS.acceleration), max: 1 },
       { nom: 'Vitesse', valeur: surLaJauge(VAISSEAU.vitesseMax * (p.vitesseMax ?? 1), ETALONS.vitesse), max: 1 },
-      { nom: 'Maniabilité', valeur: surLaJauge(VAISSEAU.rotation * (p.rotation ?? 1), ETALONS.maniabilite), max: 1 },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]
   }
@@ -349,6 +348,7 @@ export function jaugesDe(p: Piece): Jauge[] {
       // blindage et bouclier sur HUIT cellules, un plafond fixe pour l'instant (Keko) ; le poids en troisième ligne (Keko)
       { nom: 'Blindage', valeur: p.pv ?? 0, max: 8, cellules: true },
       { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: 8, cellules: true },
+      { nom: 'Maniabilité', valeur: surLaJauge(VAISSEAU.rotation * (p.virage ?? 1), ETALONS.maniabilite), max: 1 },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
       { nom: 'Soute', valeur: p.capacite ?? 0, max: max((q) => q.capacite ?? 0), nombre: true },
       { nom: 'Propulseurs', valeur: p.propulseurs ?? 1, max: max((q) => q.propulseurs ?? 1), nombre: true },
