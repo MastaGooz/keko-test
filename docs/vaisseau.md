@@ -3003,3 +3003,17 @@ l'allumage du tube étaient déjà écrits en `W` / `H`. L'accueil couché
 debout, rien ne change. Restent en portrait : Commerce, Missions,
 Recherche, Paramètres, les écrans de fin.
 
+### Son icône et son nom d'app (13/11)
+
+Keko : « l'icône de l'app est encore celle d'un ancien projet, et le nom est
+encore keko test ». Le manifeste du dépôt est celui de la collection ; le
+vaisseau a LE SIEN, `public/manifest-vaisseau.webmanifest` (« Nova
+Drifter », `start_url` et `id` `./?vaisseau`, fond `#04040c`), que
+`index.html` substitue par un script en ligne quand l'adresse porte
+`?vaisseau` — avec l'icône de l'onglet, l'icône iOS, le titre et la couleur
+de barre. LES ICÔNES (`nova-*.png`) sont tirées d'une capture de l'accueil
+couché par `scripts/generate-icone-vaisseau.py` : le vaisseau du jeu sur son
+ciel. *Une app déjà installée garde son ancien manifeste : il faut la
+désinstaller et la réinstaller depuis l'adresse `?vaisseau`.* La collection
+(la racine) garde son nom et son icône.
+

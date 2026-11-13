@@ -26,6 +26,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Keko" />
     <title>Keko test</title>
+    <!-- NOVA DRIFTER (`?vaisseau`) EST SA PROPRE APP (Keko, 13/11 : l'icone et le nom installes etaient ceux du gacha) :
+         ouverte par son adresse, la page prend SON manifeste, SON icone, SON nom — avant que le navigateur ne lise
+         ceux de la collection. Installee depuis cette adresse, elle s'appelle Nova Drifter et s'ouvre sur le jeu. -->
+    <script>
+      if (new URLSearchParams(location.search).has('vaisseau')) {
+        var m = document.querySelector('link[rel="manifest"]')
+        var v = m.getAttribute('href').split('?')[1]
+        m.setAttribute('href', './manifest-vaisseau.webmanifest' + (v ? '?' + v : ''))
+        var q = v ? '?' + v : ''
+        var i = document.querySelector('link[rel="icon"]')
+        i.setAttribute('type', 'image/png')
+        i.setAttribute('href', './nova-192.png' + q)
+        document.querySelector('link[rel="apple-touch-icon"]').setAttribute('href', './nova-180.png' + q)
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#04040c')
+        document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', 'Nova Drifter')
+        document.title = 'Nova Drifter'
+      }
+    </script>
   </head>
   <body>
     <!-- L'ARCHIVE est en paysage uniquement, et elle seule : `entree.ts` pose

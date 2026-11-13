@@ -522,7 +522,7 @@ plein écran, sons synthétisés, arches) est dans `docs/mobile-et-sons.md`.
   (`paysage-requis`). Le manifeste dit `any` et **porte la date du build** (`manifesteVersionne`) ; une app
   installée fige l'orientation de son manifeste, il faut la réinstaller.
   **L'icône est le symbole de Keko** (le poing d'or sur l'écu, `icone-emoji*`,
-  engendrées par `scripts/generate-icone.py` depuis `Symbole.png`).
+  engendrées par `scripts/generate-icone.py` depuis `Symbole.png`). **`?vaisseau` est sa propre app, « Nova Drifter »** (13/11) : `index.html` lui substitue `manifest-vaisseau.webmanifest` et ses icônes `nova-*.png` (`scripts/generate-icone-vaisseau.py`, depuis une capture de son accueil).
 - Toute ressource de `public/` est servie sans empreinte : **son URL porte la
   date du build**, sinon la remplacer ne change rien. La casse et les accents
   du nom comptent (GitHub Pages est sous Linux) : on recopie depuis `ls`.
