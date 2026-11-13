@@ -81,7 +81,7 @@ verifier('la configuration suit les pièces montées (propulseur renforcé : pou
 // configuration ; tout le reste d'un hangar neuf est celui de la configuration)
 const SERIE = 1.15
 const SERIE_POUSSEE = 0.84
-verifier('un hangar neuf : la configuration, à la poussée et à la pointe de l’étalon le plus bas', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify({ ...C, poussee: C.poussee * SERIE_POUSSEE, vitesseMax: C.vitesseMax * SERIE }))
+verifier('un hangar neuf : la configuration, à la poussée et à la pointe de l’étalon le plus bas', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify({ ...C, poussee: C.poussee * SERIE_POUSSEE, vitesseMax: C.vitesseMax * SERIE, foreuses: [{ debit: 1, portee: 1, outil: 0, cran: 1 }] }))
 const blindee = configDuHangar(C, achete(neuf, 'coque-2'))
 const hB = achete(neuf, 'coque-2')
 const fB = poidsTotal(hB) / POIDS_SERIE

@@ -156,6 +156,7 @@ export function configDuLabo(c: ConfigVaisseau, l: Labo): ConfigVaisseau {
     coque: c.coque + p.blindage,
     bouclier: { ...c.bouclier, points: c.bouclier.points + p.bouclier },
     foreuse: { ...c.foreuse, debit: c.foreuse.debit * (1 + p.debit), aimant: c.foreuse.aimant * (1 + p.aimant) },
+    foreuses: c.foreuses.map((f) => ({ ...f, debit: f.debit * (1 + p.debit) })),
     armes: c.armes.map((a) => ({ ...a, cadence: a.cadence / (1 + p.cadence) })),
     passifs: { ...c.passifs, pepiteDouble: p.pepiteDouble, critique: p.critique },
     postcombustion: { ...c.postcombustion, active: aLaMecanique(l, 'postcombustion') },

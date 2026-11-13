@@ -566,6 +566,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
     // (LES OBUS PARTENT DE LA BOUCHE DE LEUR ARME, là où elle est dessinée sous son aile — c'est le rendu qui la connaît)
     CONF = { ...CONF, armes: CONF.armes.map((a) => ({ ...a, bouche: boucheMontee(monteeA(hangar, 'coque').cran, a.id, a.place ?? 0) })) }
+    // (… ET CHAQUE FOREUSE CREUSE DE LÀ OÙ ELLE EST MONTÉE : le pivot de son canon, à sa place d'outil)
+    CONF = { ...CONF, foreuses: CONF.foreuses.map((f) => ({ ...f, place: ouEstLaForeuse(f.outil, f.cran) })) }
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
@@ -646,7 +648,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number }
+  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[] }
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   /** Les outils montés, PLACE PAR PLACE (pour une coque qui les dessine chacun à sa place), et la place de la foreuse qui creuse. */
   const outilsParPlace = (): ({ famille: string; cran: number } | null)[] =>
@@ -654,6 +656,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const pc = pieceDe(hangar.outils[k] ?? '')
       return pc === undefined ? null : { famille: pc.famille ?? 'foreuse', cran: pc.cran }
     })
+  /** Où le pivot de la foreuse montée à la place d'outil `k` se trouve sur le vaisseau (en unités, depuis son centre). */
+  const ouEstLaForeuse = (k: number, cran: number): { x: number; y: number } => {
+    const pl = placeDOutil(monteeA(hangar, 'coque').cran, k)
+    return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
+  }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
   const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
@@ -4743,8 +4750,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let virageVu = 0
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
+    // (CHAQUE FOREUSE VISE SA ROCHE : son angle, depuis son pivot, par place d'outil)
+    const vises: number[] = []
+    CONF.foreuses.forEach((fo, j) => {
+      const f = m.forages[j]
+      if (f === null || f === undefined || fo.place === undefined) return
+      const ox = v.x + fo.place.x * Math.cos(v.cap) - fo.place.y * Math.sin(v.cap)
+      const oy = v.y + fo.place.x * Math.sin(v.cap) + fo.place.y * Math.cos(v.cap)
+      vises[fo.outil] = Math.atan2(f.y - oy, f.x - ox) - v.cap
+    })
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
-    const al = allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0)
+    const al = { ...allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0), vises }
     // LA FLAMME TRAÎNE (Keko, 13/11 : « que la flamme du réacteur se déplace un petit peu comme les particules sur les
     // côtés, au lieu d'être rigide ») : sa pointe se déporte à l'opposé du glissement de côté du vaisseau, et reste en
     // arrière quand il vire ; un ressort l'y amène et l'en ramène, un frémissement la fait vivre
@@ -4895,7 +4911,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLesLasers(p: Peintre): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER, Math.max(1, foreuseMontee(hangar)?.cran ?? 1), placeDOutil(monteeA(hangar, 'coque').cran, placeDeLaForeuse()))
+    // (UN RAYON PAR FOREUSE, de sa place à sa roche)
+    if (m.phase === 'vol') {
+      if (CONF.foreuses.length === 0) {
+        if (m.forage !== null) dessinerUnLaser(p, v, m.forage, LASER, Math.max(1, foreuseMontee(hangar)?.cran ?? 1), placeDOutil(monteeA(hangar, 'coque').cran, placeDeLaForeuse()))
+      } else
+        CONF.foreuses.forEach((fo, j) => {
+          const f = m.forages[j]
+          if (f !== null && f !== undefined) dessinerUnLaser(p, v, f, LASER, fo.cran, placeDOutil(monteeA(hangar, 'coque').cran, fo.outil))
+        })
+    }
     for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET, ALLURE_SERIE.foreuse)
     p.place(0, 0)
   }
@@ -6422,7 +6447,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // les lasers creusent : des étincelles au point d'impact, le long de la normale (le joueur, et chaque ennemi qui mine)
         const forages: { f: Forage; depuis: Vaisseau }[] = []
-        if (m.forage !== null) forages.push({ f: m.forage, depuis: v })
+        for (const f of m.forages) if (f !== null) forages.push({ f, depuis: v })
         for (const e of m.ennemis) if (e.forage !== null) forages.push({ f: e.forage, depuis: e.corps })
         for (const { f, depuis } of forages) {
           if (R.next() >= 0.6) continue
@@ -6733,8 +6758,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeCiel(p)
     for (const a of asteroidesVisibles(CONF, m, camera.x, camera.y, Math.max(W, H) / 2 + CONF.champ.rayonMax + 4)) {
       // la roche qu'on creuse tremble, d'autant plus qu'elle est près d'éclater
-      const creusee = m.forage !== null && m.forage.cible === a.id
-      const tremble = creusee ? (0.5 + m.forage!.part) * 1.2 : 0
+      const laser = m.forages.find((f) => f !== null && f.cible === a.id) ?? null
+      const creusee = laser !== null
+      const tremble = laser !== null ? (0.5 + laser.part) * 1.2 : 0
       dessinerAsteroide(p, a, t, a.x - camera.x + W / 2 + (tremble > 0 ? (R.next() - 0.5) * tremble : 0), a.y - camera.y + centreY() + (tremble > 0 ? (R.next() - 0.5) * tremble : 0))
       // sa solidité restante, sous elle, dès qu'elle est entamée (Keko) — pas avant : le champ serait couvert de jauges
       const creuse = m.creuse.get(a.id) ?? 0

@@ -228,6 +228,31 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   }
   verifier('d’un seul manche, un demi-tour va plus vite avec un nez plus maniable', demiTour(C.rotation * 2) > demiTour(C.rotation) * 1.02 && demiTour(C.rotation) > demiTour(C.rotation / 2) * 1.02)
 }
+// DEUX FOREUSES (Keko, 13/11) : chacune creuse la roche la plus proche DE SA PLACE — posées de part et d'autre du
+// vaisseau, entre deux roches, elles en creusent deux à la fois
+{
+  const cfg = { ...VAISSEAU, foreuses: [{ debit: 1, portee: 1, outil: 0, cran: 1, place: { x: 0, y: -30 } }, { debit: 1, portee: 1, outil: 1, cran: 1, place: { x: 0, y: 30 } }] }
+  const w = nouveauMonde(cfg)
+  w.prochainEnnemiA = 1e9
+  const roches = asteroidesAutour(cfg, 0, 0, 900).filter((r) => Math.hypot(r.x, r.y) > 150)
+  const [r1] = roches
+  // (le vaisseau est posé à côté d'une roche, le nez vers +x : sa foreuse de gauche est à −y… on vérifie surtout que
+  // chaque laser part de sa place et prend la roche la plus proche d'elle)
+  w.vaisseau = { ...nouveauVaisseau(), x: r1.x - r1.rayon - 20, y: r1.y, cap: 0 }
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const cibles = w.forages.map((f) => f?.cible ?? -1)
+  verifier('deux foreuses : deux lasers, un par foreuse, chacun sur une roche à sa portée (ou aucun)', w.forages.length === 2 && cibles.some((id) => id === r1.id) && w.forage !== null)
+  const seule = { ...VAISSEAU, foreuses: [{ debit: 1, portee: 1, outil: 0, cran: 1 }] }
+  const w2 = nouveauMonde(seule)
+  w2.prochainEnnemiA = 1e9
+  w2.vaisseau = { ...nouveauVaisseau(), x: r1.x - r1.rayon - 20, y: r1.y, cap: 0 }
+  avancerLeMonde(seule, w2, 1 / 60, { x: 0, y: 0 })
+  const w3 = nouveauMonde(VAISSEAU)
+  w3.prochainEnnemiA = 1e9
+  w3.vaisseau = { ...nouveauVaisseau(), x: r1.x - r1.rayon - 20, y: r1.y, cap: 0 }
+  avancerLeMonde(VAISSEAU, w3, 1 / 60, { x: 0, y: 0 })
+  verifier('une seule foreuse au centre creuse comme le foreur unique d’avant', JSON.stringify(w2.forage) === JSON.stringify(w3.forage) && w2.forage !== null)
+}
 // LE PILOTAGE À TOURELLES (Keko, 13/11) : le regard ne tourne pas la coque — seul le manche du vol la fait virer
 {
   const cfg = { ...VAISSEAU, tourelles: true }

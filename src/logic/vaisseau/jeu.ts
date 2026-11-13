@@ -72,6 +72,14 @@ export const VAISSEAU = {
   bouclier: { points: 0, delai: 4, regain: 0.5 },
   /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
   foreuse: { debit: 1, portee: 1, aimant: 1 },
+  /**
+   * CHAQUE FOREUSE MONTÉE CREUSE (Keko, 13/11 — le cuirassé en porte deux, une seule travaillait : « chaque foreuse
+   * attaque la roche la plus près de sa propre position, et à portée ») : la liste des foreuses du vaisseau — leurs
+   * facteurs de débit et de portée, la place d'outil où chacune est montée, son cran, et OÙ ELLE EST sur le vaisseau
+   * (en unités, depuis son centre : c'est le rendu qui le sait, la page le pose au décollage). Vide : le foreur
+   * unique de `foreuse`, comme avant (la configuration nue, le rival).
+   */
+  foreuses: [] as { debit: number; portee: number; outil: number; cran: number; place?: Vecteur }[],
   /** LES ARMES du joueur, montées au hangar (deux au plus) : chacune tire seule sur le rival le plus proche à sa portée. Aucune de série. */
   armes: [] as Arme[],
   /** LE RADAR du joueur (un outil du hangar) : à tant d'unités, le rival est désigné au bord de l'écran ; zéro, pas de radar. La page le lit, la règle n'en fait rien. */
@@ -280,6 +288,8 @@ export type Monde = {
   bouclier: number
   toucheA: number
   forage: Forage | null
+  /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
+  forages: (Forage | null)[]
   ennemis: Ennemi[]
   prochainEnnemiA: number
   tirs: Tir[]
@@ -345,7 +355,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -910,10 +920,24 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
 
   // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES
   // SEULES : il a creusé le rival un temps, Keko l'a réservé aux astéroïdes, ce sont les armes qui l'attaquent
-  const portee = c.forage.portee * c.foreuse.portee
-  const debit = c.forage.debit * c.foreuse.debit
-  const roche = rocheLaPlusProche(c, m, v.x, v.y, portee)
-  m.forage = roche !== null ? creuserLaRoche(c, m, roche.roche, v, debit * dt, ev, c.passifs.pepiteDouble) : null
+  if (c.foreuses.length > 0) {
+    // (CHAQUE FOREUSE, depuis SA place sur le vaisseau, sur la roche la plus proche D'ELLE, à sa portée et à son débit ;
+    // une roche éclatée par la première n'est plus là pour la suivante)
+    const ca = Math.cos(v.cap)
+    const sa = Math.sin(v.cap)
+    m.forages = c.foreuses.map((f) => {
+      const ou = { x: v.x + (f.place === undefined ? 0 : f.place.x * ca - f.place.y * sa), y: v.y + (f.place === undefined ? 0 : f.place.x * sa + f.place.y * ca) }
+      const roche = rocheLaPlusProche(c, m, ou.x, ou.y, c.forage.portee * f.portee)
+      return roche !== null ? creuserLaRoche(c, m, roche.roche, ou, c.forage.debit * f.debit * dt, ev, c.passifs.pepiteDouble) : null
+    })
+    m.forage = m.forages.find((f) => f !== null) ?? null
+  } else {
+    const portee = c.forage.portee * c.foreuse.portee
+    const debit = c.forage.debit * c.foreuse.debit
+    const roche = rocheLaPlusProche(c, m, v.x, v.y, portee)
+    m.forage = roche !== null ? creuserLaRoche(c, m, roche.roche, v, debit * dt, ev, c.passifs.pepiteDouble) : null
+    m.forages = [m.forage]
+  }
 
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
   c.armes.forEach((arme, i) => {

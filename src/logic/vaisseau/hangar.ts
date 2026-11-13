@@ -300,6 +300,12 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
     bouclier: { ...c.bouclier, points: co.bouclier ?? 0 },
     foreuse: { debit: fo === null ? 0 : c.foreuse.debit * (fo.debit ?? 1), portee: fo === null ? 0 : c.foreuse.portee * (fo.portee ?? 1), aimant: c.foreuse.aimant * aimantMonte(h) },
     radar: { portee: radarMonte(h) },
+    // (CHAQUE FOREUSE MONTÉE, à sa place d'outil : elles creusent toutes — voir `VAISSEAU.foreuses`)
+    foreuses: h.outils
+      .slice(0, capacite(h, 'outil'))
+      .map((id, k) => ({ pc: pieceDe(id), k }))
+      .filter((o): o is { pc: Piece; k: number } => o.pc !== undefined && o.pc.famille === 'foreuse')
+      .map(({ pc, k }) => ({ debit: c.foreuse.debit * (pc.debit ?? 1), portee: c.foreuse.portee * (pc.portee ?? 1), outil: k, cran: pc.cran })),
     // (chaque arme sait à quelle place elle est montée : une place vide ne décale pas les suivantes)
     armes: h.armes.flatMap((id, place) => {
       const a = pieceDe(id)?.arme

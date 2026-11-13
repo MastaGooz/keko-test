@@ -3435,3 +3435,16 @@ propulseurs est supprimé. Série et bouclier : 1 (7 rad/s) ; blindé : 0,8 ;
 cuirassé : 0,07 (0,49 rad/s). La jauge « Maniabilité » quitte la fiche du
 propulseur pour celle du châssis.
 
+### Chaque foreuse creuse (13/11)
+
+Keko, deux foreuses sur le cuirassé, une seule au travail : « chaque
+foreuse attaque la roche la plus près de sa propre position (et à
+portée) ». `VAISSEAU.foreuses` (rempli par `configDuHangar`, une entrée par
+foreuse montée ; sa `place` sur le vaisseau posée par la page au
+décollage) ; `Monde.forages`, un laser par foreuse. Dans `avancerLeMonde`,
+chacune prend la roche la plus proche D'ELLE, à SA portée et à SON débit.
+`Monde.forage` reste le premier qui creuse (le son, les repères). À l'écran,
+un rayon par foreuse, de sa place ; chaque canon vise sa roche
+(`Allure.vises`). Sans liste (configuration nue, rival), le foreur unique
+d'avant. *Les aimants et les radars restent « le meilleur seul ».*
+

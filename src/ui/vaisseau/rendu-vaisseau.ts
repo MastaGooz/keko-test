@@ -384,6 +384,8 @@ export type Allure = {
   outils?: ({ famille: string; cran: number } | null)[]
   /** La place de la foreuse qui creuse (celle qui suit sa cible). */
   foreusePlace?: number
+  /** L'angle de visée de la foreuse de chaque place d'outil (absent : vers l'avant) — chacune suit SA roche. */
+  vises?: number[]
 }
 
 /**
@@ -638,7 +640,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
     a.outils.forEach((o, k) => {
       if (o === null) return
       const pl = g.outils![Math.max(0, Math.min(g.outils!.length - 1, k))]
-      if (o.famille === 'foreuse') tout.push(...decaler(formesDeLaForeuse(o.cran, k === a.foreusePlace ? vise : 0), pl.x + 2.2, pl.y))
+      if (o.famille === 'foreuse') tout.push(...decaler(formesDeLaForeuse(o.cran, a.vises !== undefined ? (a.vises[k] ?? 0) : k === a.foreusePlace ? vise : 0), pl.x + 2.2, pl.y))
       else if (o.famille === 'aimant') tout.push(...decaler(formesDeLAimant(o.cran), pl.x + 3.8, pl.y))
       else tout.push(...decaler(formesDuRadar(t), pl.x + 4.5, pl.y))
     })
