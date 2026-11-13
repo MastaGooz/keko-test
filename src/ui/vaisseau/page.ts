@@ -4330,18 +4330,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const force = Math.max(rouge, bleu)
     if (force <= 0) return
     const c = rouge >= bleu ? ROUGE[3] : VERRIERE[1]
-    for (let k = 0; k < 6; k++) {
+    // (LE CADRE EST TRAMÉ À LA MAIN, EN MIROIR — Keko, 13/11 : « toujours plus épais à gauche et en haut » : la trame
+    // d'un aplat translucide est calée sur le coin haut-gauche du tampon, ses points ne tombaient pas pareil sur les
+    // bords opposés. Ici chaque point est décidé par sa profondeur depuis SON bord et sa place depuis SON coin : les
+    // quatre bords sont le reflet l'un de l'autre.)
+    const TRAME = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
+    const x0 = bandeCote()
+    const x1 = W - bandeCote()
+    const y0 = bandeHaut()
+    const y1 = H - bandeBas()
+    const point = (x: number, y: number): void => {
+      const dx = Math.min(x - x0, x1 - 1 - x)
+      const dy = Math.min(y - y0, y1 - 1 - y)
+      const k = Math.min(dx, dy)
       const a = force * (0.7 - k * 0.12)
-      // (les bords de la VUE, pas ceux du tampon : les bandeaux ne rougissent pas)
-      const y0 = bandeHaut()
-      const y1 = H - bandeBas()
-      const x0 = bandeCote()
-      const x1 = W - bandeCote()
-      // (un anneau par pas : les coins ne se doublent pas)
-      p.rect(x0 + k, y0 + k, x1 - x0 - 2 * k, 1, c, a)
-      p.rect(x0 + k, y1 - 1 - k, x1 - x0 - 2 * k, 1, c, a)
-      p.rect(x0 + k, y0 + k + 1, 1, y1 - y0 - 2 * k - 2, c, a)
-      p.rect(x1 - 1 - k, y0 + k + 1, 1, y1 - y0 - 2 * k - 2, c, a)
+      if (a > (TRAME[(k & 3) * 4 + (Math.max(dx, dy) & 3)] + 0.5) / 16) p.px(x, y, c)
+    }
+    for (let k = 0; k < 6; k++) {
+      for (let x = x0 + k; x < x1 - k; x++) {
+        point(x, y0 + k)
+        point(x, y1 - 1 - k)
+      }
+      for (let y = y0 + k + 1; y < y1 - 1 - k; y++) {
+        point(x0 + k, y)
+        point(x1 - 1 - k, y)
+      }
     }
   }
 
@@ -5431,14 +5444,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y = Math.round(centreY() - h / 2 + (1 - u) * 10)
     ombrePortee(p, x, y, w, h)
     plaque(p, x, y, w, h, 'encre')
-    const pleine = m.minerai >= CONF.capacite
     // (le symbole de la soute à gauche de son nom — Keko, 13/11)
     dessinerLaCaisseDeSoute(p, x + 8, y + 6)
     motEnRelief(p, 'Soute', x + 8 + 13 + largeurDe('Soute', GRAS) / 2, y + 6, true)
     // (LE TOTAL, COMME SUR LE PUPITRE DU VOL — Keko, 12/11 : en relief ivoire ; rouge, la soute pleine)
     const total = `${m.minerai}/${CONF.capacite}`
-    if (pleine) ecrire(p, total, x + w - 8, y + 6, ROUGE[5], { police: GRAS, align: 'right' })
-    else motEnRelief(p, total, x + w - 8 - largeurDe(total, GRAS) / 2, y + 6, 'ivoire', GRAS)
+    // (… ET IL NE ROUGIT PAS, soute pleine — Keko, 13/11)
+    motEnRelief(p, total, x + w - 8 - largeurDe(total, GRAS) / 2, y + 6, 'ivoire', GRAS)
     const jeter = (k: Minerai, combien: number, bx: number, by: number): void => {
       const n = larguer(m, k, combien)
       if (n <= 0) return

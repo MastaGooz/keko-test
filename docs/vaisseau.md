@@ -2969,3 +2969,9 @@ dans `dessinerLAlerte`, dessinée APRÈS les bandeaux : un même cadre de six
 pixels sur les quatre bords de la vue (avant, les bandeaux et leur fondu en
 recouvraient certains, et les barres débordaient dans les bandeaux de côté).
 
+Puis (Keko : « toujours plus épais à gauche et en haut ») : le cadre de
+l'alerte est TRAMÉ À LA MAIN, EN MIROIR (`dessinerLAlerte`) — la trame d'un
+aplat translucide de pixelfx est calée sur le coin haut-gauche du tampon ;
+chaque point est maintenant décidé par sa profondeur depuis son bord et sa
+place depuis son coin. Et le total du panneau de soute ne rougit plus.
+
