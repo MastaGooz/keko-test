@@ -53,36 +53,44 @@ def dessiner(echelle):
         if 0 <= x < G and 0 <= y < G:
             px[x, y] = coul
 
-    # ---- LA DÉRIVE : un arc autour de la nova, qui part fin et sombre et finit épais et clair sous la pointe
+    # ---- LA DÉRIVE : un arc autour de la nova, qui naît tramé de la nuit et finit épais et clair sous le vaisseau
     R = 21 * echelle
-    pas = 260
+    A0, A1 = 262, -24  # (du haut à gauche, par le bas, jusqu'à la droite : l'angle décroît — y vers le bas)
+    def sur_l_arc(a):
+        return nx + math.cos(a) * R * 1.14, ny + math.sin(a) * R * 0.88
+    pas = 320
     for i in range(pas + 1):
         u = i / pas
-        # (on tourne par le BAS : l'angle décroît de 255° à -28° en passant par 90° — y vers le bas)
-        a = math.radians(255 - (255 + 28) * u)
-        ex = nx + math.cos(a) * R * 1.12
-        ey = ny + math.sin(a) * R * 0.86
-        epais = 0.6 + 2.6 * u * u
-        ton = BLEU[min(4, int(u * 4.2))] if u > 0.12 else BLEU[0]
+        a = math.radians(A0 - (A0 - A1) * u)
+        ex, ey = sur_l_arc(a)
+        epais = (0.5 + 2.9 * u ** 1.7) * max(0.75, echelle)
         r = int(math.ceil(epais))
         for dy in range(-r, r + 1):
             for dx in range(-r, r + 1):
-                if math.hypot(dx, dy) <= epais:
-                    xx, yy = int(round(ex + dx)), int(round(ey + dy))
-                    # (le début de l'arc est tramé : il naît de la nuit)
-                    if u < 0.3 and u * 3.3 < (BAYER[yy & 3][xx & 3] + 0.5) / 16:
-                        continue
-                    point(xx, yy, ton)
-    # la pointe : le vaisseau, un chevron d'acier cerné, au bout de l'arc, le nez dans le sens de la marche
-    a = math.radians(-28)
-    tx = nx + math.cos(a) * R * 1.12
-    ty = ny + math.sin(a) * R * 0.86
-    cap = math.radians(-28 - 78)  # (la tangente de l'arc, à peu près : vers le haut)
-    L = 7.5 * echelle
+                dd = math.hypot(dx, dy)
+                if dd > epais:
+                    continue
+                xx, yy = int(round(ex + dx)), int(round(ey + dy))
+                if u < 0.34 and u * 2.9 < (BAYER[yy & 3][xx & 3] + 0.5) / 16:
+                    continue
+                # (le cœur du sillage est plus clair que ses bords ; la tête blanchit)
+                k = u * 3.4 + (0.8 if dd < epais * 0.45 else 0)
+                point(xx, yy, BLEU[max(0, min(4, int(k)))])
+    # des étincelles lâchées par le sillage, vers l'extérieur
+    for u, ecart, ton in ((0.55, 4.5, 2), (0.68, 5.5, 3), (0.8, 4.2, 3), (0.9, 6.0, 4), (0.74, 8.0, 2)):
+        a = math.radians(A0 - (A0 - A1) * u)
+        ex, ey = sur_l_arc(a)
+        point(int(round(ex + math.cos(a) * ecart * echelle)), int(round(ey + math.sin(a) * ecart * echelle)), BLEU[ton])
+
+    # LE VAISSEAU : une pointe d'acier à deux ailes, cernée, le nez DANS LE SENS DE LA MARCHE (la tangente de l'arc)
+    a = math.radians(A1)
+    qx, qy = sur_l_arc(a)
+    cap = math.atan2(-math.cos(a) * 0.88, math.sin(a) * 1.14)
+    L = 8.2 * echelle
+    tx, ty = qx + math.cos(cap) * L * 0.3, qy + math.sin(cap) * L * 0.3
     def coin(av, cote):
         return (tx + math.cos(cap) * av * L + math.cos(cap + math.pi / 2) * cote * L,
                 ty + math.sin(cap) * av * L + math.sin(cap + math.pi / 2) * cote * L)
-    forme = [coin(1.25, 0), coin(-0.75, 0.85), coin(-0.25, 0), coin(-0.75, -0.85)]
     def dedans(x, y, poly):
         n, ok = len(poly), False
         for i in range(n):
@@ -91,35 +99,52 @@ def dessiner(echelle):
             if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
                 ok = not ok
         return ok
+    forme = [coin(1.3, 0), coin(-0.85, 0.95), coin(-0.35, 0), coin(-0.85, -0.95)]
+    gauche = [coin(1.3, 0), coin(-0.35, 0), coin(-0.85, -0.95)]  # (l'aile du côté de la nova)
+    verriere = [coin(0.55, 0), coin(0.05, 0.22), coin(-0.1, 0), coin(0.05, -0.22)]
     corps = [(x, y) for y in range(G) for x in range(G) if dedans(x + 0.5, y + 0.5, forme)]
     for x, y in corps:
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
             point(x + dx, y + dy, ENCRE)
     for x, y in corps:
-        # (éclairé du côté de la nova)
-        vers_nova = (x - tx) * (nx - tx) + (y - ty) * (ny - ty)
-        point(x, y, ACIER[3] if vers_nova > 2 else ACIER[2] if vers_nova > -3 else ACIER[1])
+        clair = dedans(x + 0.5, y + 0.5, gauche)
+        point(x, y, ACIER[3] if clair else ACIER[2])
+    for x, y in corps:
+        if dedans(x + 0.5, y + 0.5, verriere):
+            point(x, y, BLEU[2])
 
     # ---- LA NOVA : huit rayons effilés, le halo d'or, le cœur blanc
     for k in range(8):
         a = k * math.pi / 4
-        long = (19 if k % 2 == 0 else 10) * echelle
+        long = (21 if k % 2 == 0 else 10.5) * echelle
         for i in range(int(long * 3)):
             d = i / 3
-            larg = max(0.0, (2.2 if k % 2 == 0 else 1.4) * echelle * (1 - d / long))
-            ton = OR[4] if d < long * 0.3 else OR[3] if d < long * 0.6 else OR[2]
-            for j in range(-3, 4):
+            larg = max(0.0, (2.3 if k % 2 == 0 else 1.5) * echelle * (1 - d / long))
+            for j in range(-4, 5):
                 if abs(j) * 0.5 <= larg:
+                    ton = OR[4] if d < long * 0.34 and abs(j) * 0.5 <= larg * 0.5 else OR[3] if d < long * 0.62 else OR[2]
                     point(int(round(nx + math.cos(a) * d - math.sin(a) * j * 0.5)), int(round(ny + math.sin(a) * d + math.cos(a) * j * 0.5)), ton)
     for y in range(G):
         for x in range(G):
-            d = math.hypot(x + 0.5 - nx - 0.5, y + 0.5 - ny - 0.5) / echelle
-            if d < 3.2:
+            d = math.hypot(x - nx, y - ny) / echelle
+            seuil = (BAYER[y & 3][x & 3] + 0.5) / 16
+            if d < 3.4:
                 px[x, y] = OR[4]
-            elif d < 5.2:
+            elif d < 4.6:
+                px[x, y] = OR[4] if (d - 3.4) / 1.2 < seuil else OR[3]
+            elif d < 5.8:
                 px[x, y] = OR[3]
-            elif d < 7.2 and (d - 5.2) / 2 < (BAYER[y & 3][x & 3] + 0.5) / 16 + 0.35:
-                px[x, y] = OR[2]
+            elif d < 7.6:
+                px[x, y] = OR[2] if (d - 5.8) / 1.8 < seuil + 0.3 else px[x, y]
+            elif d < 9.2 and (d - 7.6) / 1.6 < seuil - 0.35:
+                px[x, y] = OR[1]
+    # deux étoiles en croix, pour le relief du ciel
+    for sx, sy in ((-24, -20), (23, 22)):
+        x, y = vers(sx, sy)
+        x, y = int(x), int(y)
+        point(x, y, ACIER[3])
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            point(x + dx, y + dy, ACIER[1])
     return im
 
 plein = dessiner(1.0).resize((512, 512), Image.NEAREST)
