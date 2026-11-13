@@ -3295,3 +3295,4 @@ pointe (0,84 : 126 contre 121 de frein à 220 px/s) : la pointe est atteinte
 en 6 s, mais ce n'est plus une accélération basse (96 px/s au bout d'une
 seconde) — le frein étant proportionnel à la vitesse, atteindre une pointe
 haute EXIGE une poussée haute.
+Puis la pointe au MILIEU des deux étalons (33 et 220) : 126,5 px/s (`vitesseMax: 1.15`), la poussée inchangée.

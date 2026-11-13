@@ -79,7 +79,7 @@ const fA = Math.pow(poidsTotal(a.hangar) / POIDS_SERIE, 1.3)
 verifier('la configuration suit les pièces montées (propulseur renforcé : poussée ×1,25 rapportée au poids, pointe ×1,15 ; le reste de série)', Math.abs(cfg.poussee - (C.poussee * 1.25) / fA) < 1e-9 && fA > 1 && Math.abs(cfg.vitesseMax - C.vitesseMax * 1.15) < 1e-9 && cfg.foreuse.debit === 1 && cfg.coque === C.coque && cfg.bouclier.points === 0 && cfg.armes.length === 0 && cfg.radar.portee === 0 && cfg.ennemi.vitesseMax === C.ennemi.vitesseMax)
 // (le propulseur de série est L'ÉTALON LE PLUS BAS depuis le 13/11 : trois dixièmes de la poussée et de la pointe de la
 // configuration ; tout le reste d'un hangar neuf est celui de la configuration)
-const SERIE = 2
+const SERIE = 1.15
 const SERIE_POUSSEE = 0.84
 verifier('un hangar neuf : la configuration, à la poussée et à la pointe de l’étalon le plus bas', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify({ ...C, poussee: C.poussee * SERIE_POUSSEE, vitesseMax: C.vitesseMax * SERIE }))
 const blindee = configDuHangar(C, achete(neuf, 'coque-2'))
