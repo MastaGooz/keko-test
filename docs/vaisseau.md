@@ -3398,3 +3398,5 @@ mais je n'en ai que 3 ») :
   `capacite` — la fiche annonçait huit armes, le hangar en offrait trois.
   Il vaut 8.
 
+
+LE RENDU DU VAISSEAU, DIX À VINGT FOIS PLUS VITE (13/11 : le cuirassé « rame à mort ») : `peindreFormes` essayait chaque forme sur chaque pixel — 80 formes × 10 000 pixels, 105 ms par image. Chaque forme a maintenant SA BOÎTE, essayée d'abord : 4,3 ms (le vaisseau de série : 3,3 → 0,4 ms ; l'icône du cuirassé : 30 → 2,2 ms). Vérifié au pixel près : 348 174 pixels peints, zéro écart avec l'ancien rendu.

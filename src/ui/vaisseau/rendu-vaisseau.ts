@@ -56,6 +56,8 @@ const RAMPES: Record<Matiere, number[]> = {
 const CONTOUR = hex('#07050e')
 const BLANC = hex('#ffffff')
 const BAYER = [0, 2, 3, 1]
+/** Les quatre voisins d'un pixel (dx, dy), à plat : pas de tableau fabriqué à chaque pixel. */
+const VOISINS = [1, 0, -1, 0, 0, 1, 0, -1]
 
 /**
  * LES LIVRÉES (Keko, 12/11 : « un système de changement de couleur du châssis ») : la couleur de la coque et des ailes
@@ -198,11 +200,6 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   // local → écran : on tourne de cap, puis on agrandit
   const versEcran = (x: number, y: number): [number, number] => [cx + (x * ca - y * sa) * s, cy + (x * sa + y * ca) * s]
   // écran → local
-  const versLocal = (px: number, py: number): [number, number] => {
-    const dx = (px - cx) / s
-    const dy = (py - cy) / s
-    return [dx * ca + dy * sa, -dx * sa + dy * ca]
-  }
   let x0 = Infinity
   let y0 = Infinity
   let x1 = -Infinity
@@ -226,12 +223,36 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   const spec = new Float32Array(W * H)
   const loc = new Float32Array(W * H * 2)
   // 1. quelle forme couvre chaque pixel (la dernière posée est dessus)
+  // (LA BOÎTE DE CHAQUE FORME D'ABORD — le cuirassé, 13/11 : quatre-vingts formes sur dix mille pixels, chacune essayée
+  // point par point, coûtaient 105 ms par image, « ça rame à mort » ; un pixel n'est dans la boîte que de deux ou trois)
+  const nf = formes.length
+  const boites = new Float32Array(nf * 4)
+  for (let k = 0; k < nf; k++) {
+    let a = Infinity
+    let b = Infinity
+    let c = -Infinity
+    let d = -Infinity
+    for (const pt of formes[k].pts) {
+      if (pt[0] < a) a = pt[0]
+      if (pt[0] > c) c = pt[0]
+      if (pt[1] < b) b = pt[1]
+      if (pt[1] > d) d = pt[1]
+    }
+    boites[k * 4] = a
+    boites[k * 4 + 1] = b
+    boites[k * 4 + 2] = c
+    boites[k * 4 + 3] = d
+  }
   for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
-    const [lx, ly] = versLocal(x0 + px + 0.5, y0 + py + 0.5)
+    const dx = (x0 + px + 0.5 - cx) / s
+    const dy = (y0 + py + 0.5 - cy) / s
+    const lx = dx * ca + dy * sa
+    const ly = -dx * sa + dy * ca
     const i = py * W + px
     loc[i * 2] = lx
     loc[i * 2 + 1] = ly
-    for (let k = formes.length - 1; k >= 0; k--) {
+    for (let k = nf - 1; k >= 0; k--) {
+      if (lx < boites[k * 4] || lx > boites[k * 4 + 2] || ly < boites[k * 4 + 1] || ly > boites[k * 4 + 3]) continue
       if (dedans(formes[k].pts, lx, ly)) {
         ids[i] = k
         break
@@ -333,9 +354,9 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     if (ids[i] >= 0) continue
     let meilleur = -1
     let bMax = -1
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const qx = px + dx
-      const qy = py + dy
+    for (let v4 = 0; v4 < 4; v4++) {
+      const qx = px + VOISINS[v4 * 2]
+      const qy = py + VOISINS[v4 * 2 + 1]
       if (qx < 0 || qy < 0 || qx >= W || qy >= H) continue
       const kq = ids[qy * W + qx]
       if (kq < 0 || formes[kq].relief === 'emis') continue
