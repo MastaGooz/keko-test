@@ -5031,7 +5031,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE SYMBOLE DE LA SOUTE (Keko, 13/11 : « créer un symbole comme pour le blindage — on remplace le mot soute par ça
     // en portrait et on l'ajoute en paysage ») : UNE CAISSE d'or — son couvercle clair, son corps, un fermoir sombre au
     // milieu —, cernée ; rouge quand la soute est pleine.
-    const dessinerLaCaisse = (x: number, y: number): void => dessinerLaCaisseDeSoute(p, x, y, pleine)
+    const dessinerLaCaisse = (x: number, y: number): void => dessinerLaCaisseDeSoute(p, x, y)
     // PLUS DE CHIFFRES SUR LA SOUTE (Keko, 13/11 : « on va supprimer l'affichage des chiffres de la soute dans la barre —
     // on l'a déjà quand on l'ouvre, ça suffit ; on garde le symbole, la barre et la petite flèche qui indique qu'on peut
     // cliquer, on condense et on repense l'agencement pour un truc stylisé et harmonieux, en portrait comme en
@@ -5139,18 +5139,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // encaisse les premiers dégâts ») : la barre, de longueur fixe, porte `coque + bouclier` points ; l'or d'abord, les
     // points du bouclier EN BLEU à son bout, un trait de séparation par point. Un point de bouclier perdu CRÉPITE puis
     // s'éteint, une onde claire court sur les autres ; il se recharge en se remplissant.
-    const teinteDuBouclier = (pts: number, k: 0 | 1 | 2): number => {
+    // (LE BOUCLIER EST COLLÉ À LA VIE — Keko, 13/11 : « si je perds de la vie, le bouclier reste au bout de la jauge au
+    // lieu d'être au bout du blindage » : ses points suivent le dernier point de coque, où qu'il soit ; `rel` compte
+    // depuis la fin de la coque. Rend `null` là où il n'y a pas de bouclier : le creux de la barre.)
+    const teinteDuBouclier = (rel: number, k: 0 | 1 | 2): number | null => {
       const nb = CONF.bouclier.points
+      if (nb <= 0 || rel < 0 || rel >= nb) return null
       const db = t - bouclierA
       const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-      const j = Math.min(nb - 1, Math.floor(pts - CONF.coque))
+      const j = Math.floor(rel)
       const part = Math.max(0, Math.min(1, m.bouclier - j))
-      if (db >= 0 && db < 0.32 && j === perdue && part < 1) return Math.floor(t * 30) % 2 === 0 ? N.WHITE : VERRIERE[0]
-      if (pts - CONF.coque - j >= part) return k === 0 ? N.hex('#16303c') : N.hex('#0c1c26')
+      if (db >= 0 && db < 0.32 && j === perdue && part < 1) return Math.floor(t * 30) % 2 === 0 ? N.WHITE : null
+      if (rel - j >= part) return null
       const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
       if (onde > 0.5) return k === 0 ? N.WHITE : VERRIERE[2]
       if (part < 1) return k === 0 ? VERRIERE[1] : N.hex('#12708a')
       return k === 0 ? VERRIERE[2] : k === 1 ? VERRIERE[1] : N.hex('#12708a')
+    }
+    // (LES TRAITS DES POINTS SONT FONDUS DANS LA BARRE — Keko, 13/11 : « trop prononcés : plus fins, et dans une couleur
+    // proche de la barre mais plus sombre » : un pixel, la teinte de ce qu'il traverse, assombrie)
+    const assombrie = (c: number): number => {
+      const k = 0.66
+      return ((255 << 24) | (Math.round(((c >>> 16) & 255) * k) << 16) | (Math.round(((c >>> 8) & 255) * k) << 8) | Math.round((c & 255) * k)) >>> 0
+    }
+    // L'ÉCUSSON DU BLINDAGE (Keko, 13/11 : « plus SF et texturé, et pas juste en jaune ») : une plaque d'ACIER — clair à
+    // gauche, sombre à droite — qui porte en son cœur un insigne d'or (rouge au dernier point) ; blanc au coup.
+    const dessinerLEcusson = (x: number, y: number, blanc: boolean, or: number[]): void => {
+      const T: Record<string, number> = { L: COQUE[5], M: COQUE[3], S: COQUE[2], o: or[1], O: or[0] }
+      const DESSIN = ['LLLLLLL', 'LMOooMS', 'LMoooMS', 'LMMoMMS', '.LMoMS.', '.LMMSS.', '..LMS..', '...S...']
+      DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
+        if (ch !== '.') p.px(x + k, y + r, blanc ? N.WHITE : T[ch])
+      }))
     }
     if (enBande) {
       // LE BLINDAGE DEBOUT — la même mise en scène que la barre couchée (le « health bar hit » du dépôt), tournée : la
@@ -5190,7 +5209,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       coqueConnue = m.coque
       const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-      if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + lw / 2, yDe((CONF.coque + perdue + 0.5) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+      if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + lw / 2, yDe((m.coque + perdue + 0.5) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
       bouclierConnu = m.bouclier
       plaque(p, px0, oy, pw, BH + 22, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
       // l'écusson, en tête : il bondit et blanchit au coup
@@ -5199,32 +5218,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
       const ex = px0 + Math.round(pw / 2) - 4
       ECUSSON.forEach((l, r) => p.rect(ex + Math.floor((7 - l) / 2) - 1, oy + 3 + r + bond, l + 2, 3, encre))
-      ECUSSON.forEach((l, r) => {
-        const x0 = ex + Math.floor((7 - l) / 2)
-        p.rect(x0, oy + 4 + r + bond, l, 1, blanc ? N.WHITE : r === 0 ? or[0] : or[1])
-        if (!blanc && l > 1) {
-          p.rect(x0, oy + 4 + r + bond, 1, 1, or[0])
-          p.rect(x0 + l - 1, oy + 4 + r + bond, 1, 1, or[2])
-        }
-      })
+      dessinerLEcusson(ex, oy + 4 + bond, blanc, or)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
       const dc = t - coqueCoupA
       p.rect(bx - 1, by - 1, lw + 2, BH + 2, encre)
+      const traits = new Set<number>()
+      for (let i = 1; i < TOT; i++) traits.add(Math.round(yDe(i / TOT)))
       for (let y = 0; y < BH; y++) {
         const u = 1 - (y + 0.5) / BH
         for (let x = 0; x < lw; x++) {
           let c: number
-          if (u * TOT >= CONF.coque) c = teinteDuBouclier(u * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2)
-          else if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
+          if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
           else if (u < fant) c = dc < 0.07 || x < 1 ? N.WHITE : x < lw - 2 ? N.hex('#ffe9a8') : or[1]
-          else c = x < 1 ? N.hex('#2a2338') : N.hex('#191424')
-          p.px(bx + x, by + y, c)
+          else c = teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2) ?? (x < 1 ? N.hex('#2a2338') : N.hex('#191424'))
+          p.px(bx + x, by + y, traits.has(by + y) ? assombrie(c) : c)
         }
       }
-      // (UN TRAIT PAR POINT, sur toute la barre, bouclier compris ; serrés, ils ne sont plus que des crans)
-      for (let i = 1; i < TOT; i++) p.rect(bx, Math.round(yDe(i / TOT)), BH / TOT < 3 ? 3 : lw, 1, encre)
       if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
@@ -5269,7 +5280,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     coqueConnue = m.coque
     // un coup dans le bouclier : des étincelles froides sur la cellule perdue
     const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
-    if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + (BW * (CONF.coque + perdue + 0.5)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+    if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(bx + (BW * (m.coque + perdue + 0.5)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
     plaque(p, ox, oy, wp, 18, 'creux', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
@@ -5279,14 +5290,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
     // (le cerne d'abord, en entier : tracé rangée par rangée, il recouvrait la rangée du dessus)
     ECUSSON.forEach((l, r) => p.rect(ox + 5 + Math.floor((7 - l) / 2) - 1, oy + 4 + r + bond, l + 2, 3, encre))
-    ECUSSON.forEach((l, r) => {
-      const x0 = ox + 5 + Math.floor((7 - l) / 2)
-      p.rect(x0, oy + 5 + r + bond, l, 1, blanc ? N.WHITE : r === 0 ? or[0] : or[1])
-      if (!blanc && l > 1) {
-        p.rect(x0, oy + 5 + r + bond, 1, 1, or[0])
-        p.rect(x0 + l - 1, oy + 5 + r + bond, 1, 1, or[2])
-      }
-    })
+    dessinerLEcusson(ox + 5, oy + 5 + bond, blanc, or)
     p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
@@ -5294,19 +5298,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
     const dc = t - coqueCoupA
     p.rect(bx - 1, by - 1, BW + 2, bh + 2, encre)
+    const traits = new Set<number>()
+    for (let i = 1; i < TOT; i++) traits.add(Math.round((BW * i) / TOT))
     for (let x = 0; x < BW; x++) {
       const u = (x + 0.5) / BW
       for (let v = 0; v < bh; v++) {
         let c: number
-        if (u * TOT >= CONF.coque) c = teinteDuBouclier(u * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2)
-        else if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
+        if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
         else if (u < fant) c = dc < 0.07 || v < 1 ? N.WHITE : v < bh - 2 ? N.hex('#ffe9a8') : or[1]
-        else c = v < 1 ? N.hex('#2a2338') : N.hex('#191424')
-        p.px(bx + x, by + v, c)
+        else c = teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2) ?? (v < 1 ? N.hex('#2a2338') : N.hex('#191424'))
+        p.px(bx + x, by + v, traits.has(x) ? assombrie(c) : c)
       }
     }
-    // (UN TRAIT PAR POINT, sur toute la barre, bouclier compris ; serrés, ils ne sont plus que des crans)
-    for (let i = 1; i < TOT; i++) p.rect(bx + Math.round((BW * i) / TOT), by, 1, BW / TOT < 3 ? 3 : bh, encre)
     if (dc < VIDE && val > 0) p.rect(bx + Math.max(0, Math.round(BW * val) - 1), by, 1, bh, N.WHITE)
     if (dc > TIENT && dc < VIDE) {
       // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
@@ -5372,18 +5375,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
-  /** LE SYMBOLE DE LA SOUTE : une caisse d'or cernée (9 × 8 sans son cerne), rouge quand la soute est pleine. */
-  function dessinerLaCaisseDeSoute(p: Peintre, x: number, y: number, pleine: boolean): void {
-    const encre = MATIERES.encre.contour
-    const c = pleine ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
-    p.rect(x - 1, y - 1, 11, 10, encre)
-    p.rect(x, y, 9, 8, c[1])
-    p.rect(x, y, 9, 2, c[0])
-    p.rect(x, y + 7, 9, 1, c[2])
-    p.rect(x + 8, y + 3, 1, 4, c[2])
-    p.rect(x, y + 2, 9, 1, encre)
-    p.rect(x + 3, y + 3, 3, 2, encre)
-    p.rect(x + 4, y + 3, 1, 1, c[0])
+  /**
+   * LE SYMBOLE DE LA SOUTE (9 × 8 sans son cerne ; Keko, 13/11 : « plus SF et texturé, et pas juste en jaune ; ne
+   * change pas la couleur du symbole de soute quand il est plein ») : UN CONTENEUR D'ACIER — un couvercle clair aux
+   * coins d'or, un joint sombre, un corps nervuré, un verrou d'or au milieu et un liseré d'énergie bleue au pied.
+   */
+  function dessinerLaCaisseDeSoute(p: Peintre, x: number, y: number): void {
+    const T: Record<string, number> = { g: PEPITE[2], o: PEPITE[2], O: PEPITE[3], L: COQUE[5], M: COQUE[3], D: COQUE[2], S: COQUE[1], E: MATIERES.encre.contour, c: VERRIERE[1] }
+    const DESSIN = ['gLLLLLLLg', 'MMMMMMMMS', 'EEEEEEEEE', 'MDMOooMDS', 'MDMoEoMDS', 'MDMMMMMDS', 'MDcccccDS', 'SSSSSSSSS']
+    p.rect(x - 1, y - 1, 11, 10, MATIERES.encre.contour)
+    DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => p.px(x + k, y + r, T[ch])))
   }
 
   /**
@@ -5408,7 +5409,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, x, y, w, h, 'encre')
     const pleine = m.minerai >= CONF.capacite
     // (le symbole de la soute à gauche de son nom — Keko, 13/11)
-    dessinerLaCaisseDeSoute(p, x + 8, y + 6, pleine)
+    dessinerLaCaisseDeSoute(p, x + 8, y + 6)
     motEnRelief(p, 'Soute', x + 8 + 13 + largeurDe('Soute', GRAS) / 2, y + 6, true)
     // (LE TOTAL, COMME SUR LE PUPITRE DU VOL — Keko, 12/11 : en relief ivoire ; rouge, la soute pleine)
     const total = `${m.minerai}/${CONF.capacite}`

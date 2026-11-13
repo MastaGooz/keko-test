@@ -2934,3 +2934,14 @@ est toujours au bout et encaisse les premiers dégâts. »
   par point, réduit à un cran quand un point fait moins de 3 px. La rangée
   et la colonne de cellules sont retirées. La règle n'a pas changé : le
   bouclier encaissait déjà en premier.
+
+Retouches du même jour (Keko) : les traits des points étaient « trop
+prononcés » — ils sont maintenant un pixel de la teinte de ce qu'ils
+traversent, assombrie (`assombrie`), plus de noir ni de crans ; LE BOUCLIER
+EST COLLÉ À LA VIE (ses points bleus suivent le dernier point de coque, pas
+la fin de la barre ; `teinteDuBouclier(rel)`) ; les deux symboles sont
+refaits « plus SF et texturés, pas juste en jaune » : la soute est un
+CONTENEUR D'ACIER (coins et verrou d'or, liseré bleu), qui NE CHANGE PLUS DE
+COULEUR quand la soute est pleine (la plaque, la jauge et la touche
+rougissent toujours) ; l'écusson du blindage est une plaque d'acier à
+l'insigne d'or (`dessinerLEcusson`), rouge au dernier point.
