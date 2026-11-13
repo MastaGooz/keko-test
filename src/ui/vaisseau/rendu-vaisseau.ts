@@ -394,13 +394,17 @@ export function formesDuChassis(cran: number): Forme[] {
   return [...formesDesAiles(), ...formesDeLaCoque(cran)]
 }
 /** LA TUYÈRE d'un cran de propulseur, et sa flamme (longue de 0 à 1). */
-export function formesDuPropulseur(cran: number, flamme: number, t: number): Forme[] {
+/**
+ * `devie` : LA FLAMME N'EST PAS RIGIDE (Keko, 13/11) — sa pointe se déporte de côté (en unités du vaisseau), son ventre
+ * à moitié moins : elle traîne derrière un vaisseau qui vire ou qui glisse, comme ses braises.
+ */
+export function formesDuPropulseur(cran: number, flamme: number, t: number, devie = 0): Forme[] {
   const tu = 1.8 + 0.5 * (cran - 1)
   const fond = -8.4 - 0.5 * (cran - 1)
   const f: Forme[] = []
   if (flamme > 0.02) {
     const L = (2.5 + 8 * flamme) * (1 + 0.25 * (cran - 1)) * (0.85 + 0.15 * Math.sin(t * 60))
-    f.push({ pts: [[fond + 0.4, -tu * 0.8], [fond - L * 0.55, -tu * 0.55], [fond - L, 0], [fond - L * 0.55, tu * 0.55], [fond + 0.4, tu * 0.8]], mat: cran >= 3 ? 'ion' : 'feu', relief: 'emis', feu: { base: fond, pointe: fond - L } })
+    f.push({ pts: [[fond + 0.4, -tu * 0.8], [fond - L * 0.55, -tu * 0.55 + devie * 0.4], [fond - L, devie], [fond - L * 0.55, tu * 0.55 + devie * 0.4], [fond + 0.4, tu * 0.8]], mat: cran >= 3 ? 'ion' : 'feu', relief: 'emis', feu: { base: fond, pointe: fond - L } })
   }
   f.push({ pts: [[-6.6, -tu], [fond, -tu * 0.8], [fond, tu * 0.8], [-6.6, tu]], mat: 'metal', relief: 'cyl' })
   // la bague de la tuyère : un anneau d'acier, bleu au cœur pour l'ionique
@@ -480,10 +484,10 @@ export function formesDeLArme(id: string, s: number): Forme[] {
 }
 
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
-export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0): Forme[] {
+export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
   const f: Forme[] = [...formesDesAiles()]
   a.armes.forEach((id, i) => id !== '' && f.push(...formesDeLArme(id, i === 0 ? -1 : 1)))
-  f.push(...formesDuPropulseur(a.propulseur, flamme, t))
+  f.push(...formesDuPropulseur(a.propulseur, flamme, t, devie))
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')

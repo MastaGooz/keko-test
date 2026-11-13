@@ -3182,3 +3182,9 @@ LA COULEUR DE LA FLAMME : `Grains.ajouter('braise', …, c)` accepte une
 rampe, du chaud au froid (`BRAISES_D_ION` pour un propulseur de cran 3 et
 plus) ; pareil pour les éclats du décollage au hangar. Couchée, la
 miniature de la barre de vie est décalée d'un pixel, dans l'axe de sa barre.
+Puis (Keko, 13/11) : les braises repartent DE LA TUYÈRE, et c'est LA FLAMME
+QUI N'EST PLUS RIGIDE — `formesDuPropulseur(…, devie)` déporte sa pointe ;
+en vol (`dessinerLeVaisseau`), elle traîne à l'opposé du glissement de côté
+et reste en arrière dans un virage, amenée par un ressort
+(`devieDeLaFlamme`), avec un léger frémissement.
+
