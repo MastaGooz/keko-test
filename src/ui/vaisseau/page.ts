@@ -5404,7 +5404,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (… PUIS LA NAVETTE DE L'IMAGE DE KEKO, 13/11 — « essaie quelque chose comme ça » : un nez rond, un fuselage
       // sombre barré d'un bandeau de verrière lavande, deux flancs clairs qui s'évasent en courbe jusqu'à une aile
       // large à bord de fuite droit, trois barrettes sur le dos, une tuyère ; le chasseur à nacelles est retiré)
-      const T: Record<string, number> = { M: COQUE[3], L: COQUE[5], H: COQUE[6], d: COQUE[4], S: COQUE[2], v: N.hex('#9aa4ea') }
+      // (UN SEUL MÉTAL — Keko, 13/11 : « plus homogène au niveau des couleurs : éviter le blanc, juste des variations de
+      // teinte sur une couleur métal » : cinq tons voisins d'un même acier bleuté, la verrière dans le plus sombre)
+      const T: Record<string, number> = { M: N.hex('#6f87ab'), L: N.hex('#8a9fc0'), H: N.hex('#a3b5d0'), d: N.hex('#7f95b8'), S: N.hex('#52668a'), v: N.hex('#3f5074') }
       const DESSIN = ['.....M.....', '....MMM....', '....vvv....', '....MMM....', '...HMMML...', '...LMdML...', '..HLMMMLL..', '.HLLMdMLLL.', 'HLLLMMMLLLL', 'MMMMMdMMMMM', '....SSS....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {

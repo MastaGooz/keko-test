@@ -3152,3 +3152,5 @@ paillettes) ; l'onglet ouvert reste en or.
 - Puis : le pictogramme suit UNE IMAGE DONNÉE PAR KEKO — une navette au nez
   rond, fuselage sombre à bandeau de verrière lavande, flancs clairs évasés
   jusqu'à une aile large, barrettes sur le dos, une tuyère.
+- Puis : la navette d'UN SEUL MÉTAL (cinq tons voisins d'un acier bleuté,
+  plus de blanc ni de lavande).
