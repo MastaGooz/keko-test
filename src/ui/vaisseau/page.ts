@@ -1280,11 +1280,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     fenetre(p, xc, COLONNE, () => dessinerLeContenu(p))
     // les panneaux, dans la colonne ; puis la ligne du haut (leur voile ne l'éteint pas) et le rail, dont les onglets
     // restent touchables par-dessus
+    // (« Changer » : la liste à gauche, par-dessus le vaisseau, la fiche à droite — si la fenêtre de gauche est assez
+    // large pour une liste ; sinon tout dans la colonne, comme en portrait)
+    const deux = xc - RAIL >= 150
     fenetre(p, xc, COLONNE, () => {
       dessinerLaFeuille(p)
-      dessinerLeChangement(p)
-      dessinerLesCouleurs(p)
+      if (!deux) dessinerLeChangement(p)
     })
+    if (deux) {
+      fenetre(p, RAIL, xc - RAIL, () => dessinerLeChangement(p, 'liste'))
+      fenetre(p, xc, COLONNE, () => dessinerLeChangement(p, 'fiche'))
+    }
+    fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
     dessinerLaLigneDuHaut(p)
     dessinerLeRail(p)
     dessinerLesEclats(p)
@@ -2416,7 +2423,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * qui glisse au doigt (le surlignage qui glisse, une encoche d'or), LA FICHE de la pièce choisie avec « Équiper »,
    * « Acheter » ou « Retirer » ; on en sort par la flèche de retour de l'en-tête. Équiper ou retirer referme le panneau ; acheter le laisse ouvert.
    */
-  function dessinerLeChangement(p: Peintre): void {
+  /**
+   * `partie` : COUCHÉ, LE PANNEAU EST EN DEUX FENÊTRES (Keko, 13/11 : « on devrait ouvrir la liste des pièces dans un
+   * panneau à gauche, par-dessus l'image du vaisseau, car à droite il n'y a que deux lignes dans le menu déroulant ») :
+   * LA LISTE à gauche, sur toute la hauteur de la scène ; LA FICHE de la pièce choisie et son bouton à droite, dans la
+   * colonne. `tout` : le panneau du portrait, d'un seul tenant.
+   */
+  function dessinerLeChangement(p: Peintre, partie: 'tout' | 'liste' | 'fiche' = 'tout'): void {
     if (!changement) return
     if (vue !== 'hangar' || etape !== 'liste') {
       changement = false
@@ -2426,6 +2439,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // tout ce qui est dessous disparaît et ne répond plus (la barre du haut reste : on y lit ses crédits)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT)
     eteindre(0, HAUT_BARRE, W, H)
+    if (partie === 'fiche') {
+      // (la fiche seule, dans la colonne : la pièce choisie dans la liste d'à côté)
+      const liste = listeVisible(onglet).filter((pc) => possede(hangar, pc.id) || pieceOuverte(labo, pc.id))
+      const pc = liste[Math.max(0, liste.findIndex((x) => x.id === choix[onglet]))]
+      if (pc !== undefined) dessinerLaFiche(p, HAUT_BARRE + 6 + Math.round((1 - u0) * 10), pc)
+      if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+      zone(0, 0, W, H, () => {}, null)
+      return
+    }
     zones = []
     curseurs = []
     zoneDesCases = null
@@ -2462,7 +2484,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (autant de rangées que la plus haute des fiches en laisse jusqu'en bas : la liste ne change pas de
     // taille d'une pièce à l'autre ; pas plus que la liste n'en a)
-    const hf = Math.max(0, ...liste.map(hauteurDeLaFiche))
+    // (la liste seule : elle prend toute la hauteur)
+    const hf = partie === 'liste' ? -8 : Math.max(0, ...liste.map(hauteurDeLaFiche))
     const RANGEES = Math.max(2, Math.min(Math.max(2, liste.length), Math.floor((yFermer - 4 - y - 8 - hf) / RANG_LISTE)))
     const hl = RANGEES * RANG_LISTE + 4
     plaque(p, 4, y, W - 8, hl, 'creux')
@@ -2510,7 +2533,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (liste.length === 0) ecrire(p, 'Rien ici : passez à la recherche', W / 2, y + 22, COQUE[4], { align: 'center' })
     y += hl + 4
     const pc = liste[iSel]
-    if (pc !== undefined) dessinerLaFiche(p, y, pc)
+    if (pc !== undefined && partie === 'tout') dessinerLaFiche(p, y, pc)
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     // (le reste du panneau ne fait rien : ce qui est dessous ne répond pas)
     zone(0, 0, W, H, () => {}, null)
@@ -4647,6 +4670,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La hauteur de la vue du vol (320 debout, 180 couché), et sa largeur couchée ; les bandeaux de côté en paysage. */
   const vueH = (): number => (paysage ? 180 : VUE_PORTRAIT)
   const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - 320) / 2)) : 0)
+  /** L'interface du vol est dans les bandeaux de côté (couché, et s'ils sont assez larges) : la vue est alors libre. */
+  const interfaceEnBande = (): boolean => paysage && bandeCote() >= 30
   /**
    * Le partage du surplus : LE HAUT D'ABORD, jusqu'à la hauteur de l'interface (la soute et le porté tiennent alors
    * entiers dans leur bandeau, la limite de la vue ne les coupe pas — Keko : « la ligne tombe sur le conteneur de la
@@ -4804,9 +4829,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le point du bord de l'écran dans la direction (dx, dy) depuis son centre ; `null` si la cible est à l'écran. */
   function auBord(dx: number, dy: number): { x: number; y: number } | null {
     const marge = 10
-    const cote = W / 2 - bandeCote() - marge
+    // (COUCHÉ, LES FLÈCHES VONT AUX BORDS DE L'ÉCRAN — Keko, 13/11 : elles restaient au bord de la vue, à cinquante pixels
+    // du bord de l'écran, et sous la place de l'interface du haut, qui n'y est plus : sur les côtés elles sont dans les
+    // bandeaux, contre le bord — si le bandeau est assez large pour qu'elles ne mordent pas la soute et le blindage ; en
+    // haut, au bord de la vue)
+    const cote = interfaceEnBande() && bandeCote() >= 44 ? W / 2 - 7 : W / 2 - bandeCote() - marge
     // (dans la vue : sous l'interface du haut ou le bandeau, au-dessus du bandeau du bas)
-    const haut = centreY() - Math.max(bandeHaut(), basDuHud()) - 9
+    const haut = centreY() - (interfaceEnBande() ? bandeHaut() : Math.max(bandeHaut(), basDuHud())) - 9
     const bas = H - bandeBas() - centreY() - marge
     if (Math.abs(dx) < cote && dy > -haut && dy < bas) return null
     const k = Math.min(cote / Math.max(1e-6, Math.abs(dx)), (dy < 0 ? haut : bas) / Math.max(1e-6, Math.abs(dy)))
@@ -4908,9 +4937,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // et la vie à droite — dans les bandes ? quand c'est possible, sinon on le met sur l'écran », puis, sur des plaques
     // horizontales réarrangées : « je pensais à des barres verticales ») : à gauche LA SOUTE, une jauge debout sur son
     // bouton ; à droite LE BLINDAGE, une barre debout à cases, le bouclier en colonne à côté. Plus rien sur la vue. Trop
-    // étroits (moins de `BANDE_MIN`), l'interface reste sur la vue, en plaques, comme avant.
-    const BANDE_MIN = 30
-    const enBande = paysage && bandeCote() >= BANDE_MIN
+    // étroits (voir `interfaceEnBande`), l'interface reste sur la vue, en plaques, comme avant.
+    const enBande = interfaceEnBande()
     const H_BARRE = 64
     const yPastilles = enBande ? yHud + H_BARRE + 40 : yHud + 18 + 7
     // LE PUPITRE DU VOL (Keko, 12/11 : « retravailler l'interface en vol, en particulier la zone du haut, avec le

@@ -2893,3 +2893,14 @@ font au moins 30 px (`enBande`, `dessinerLeScore`) :
   bouclier en colonne de cellules à côté.
 Plus étroits, l'interface reste sur la vue, en plaques, dans ses deux
 morceaux de pupitre. En portrait rien ne change.
+
+Retouches du paysage (Keko, 13/11) :
+- LES FLÈCHES DU BORD (la base, le rival) restaient au bord de la vue et sous
+  la place de l'ancienne interface du haut : couché, elles vont en haut au
+  bord de la vue et, sur les côtés, contre le bord de l'écran, dans les
+  bandeaux (s'ils font au moins 44 px ; `auBord`, `interfaceEnBande`).
+- LE PANNEAU « CHANGER » COUCHÉ EST EN DEUX FENÊTRES (« à droite il n'y a que
+  deux lignes dans le menu déroulant ») : la liste à gauche, par-dessus le
+  vaisseau, sur toute la hauteur ; la fiche de la pièce choisie et son bouton
+  à droite (`dessinerLeChangement(p, 'liste' | 'fiche')`). Si la fenêtre de
+  gauche fait moins de 150 px, tout reste dans la colonne.
