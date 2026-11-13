@@ -3242,3 +3242,17 @@ pas.
 
 Les pastilles aux rencontres sont retirées le même jour (« enlève les ronds dans les angles ») : les pistes se croisent nues.
 Puis une seule piste par lien au lieu d'une paire (à l'essai).
+
+### La maniabilité se sent d'un seul manche (13/11)
+
+Keko : « c'est dommage que la maniabilité ne se sente pas quand on utilise
+un seul stick ». La poussée partait dans la direction du pouce quel que soit
+le nez (« le manche pousse, le nez suit ») : la rotation n'était qu'une
+image. LA RÈGLE DE MARCHE ARRIÈRE EST ÉTENDUE AU MANCHE SEUL, ET CREUSÉE À
+50 % (`VAISSEAU.marcheArriere`, `voler`) : tant que le nez n'a pas tourné
+vers la direction demandée, la poussée est réduite (la moitié droit
+derrière, tout de côté). Un propulseur maniable retrouve vite sa pleine
+poussée. Vérifié : un demi-tour est plus vif avec une rotation doublée.
+Aussi : les éclats du hangar (fumées du décollage) sont vidés au départ du
+vol — deux points de fumée restaient à l'écran à l'arrivée.
+

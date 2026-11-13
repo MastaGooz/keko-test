@@ -482,6 +482,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     m = monterLeMonde()
+    // (ce que le hangar a semé ne suit pas le vaisseau dans l'espace : les fumées et les étincelles du décollage, les
+    // nombres qui montent — Keko, 13/11 : deux points de fumée du décollage restaient à l'écran à l'arrivée en vol)
+    eclats.length = 0
+    flottants.length = 0
+    volantes.length = 0
     m.minerai = minerai0
     m.cargaison.fer = minerai0
     if (coque0 > 0) m.coque = Math.min(m.coque, coque0)

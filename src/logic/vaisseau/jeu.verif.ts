@@ -208,8 +208,8 @@ const coqueAvantLaFraction = zb.coque
 zb.tirs.push({ id: 950, x: -12, y: 0, vx: 120, vy: 0, vie: 1 })
 for (let i = 0; i < 30 && zb.tirs.length > 0; i++) avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
 verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb.bouclier === 0 && Math.abs(zb.coque - (coqueAvantLaFraction - 0.7)) < 1e-9)
-// LA MARCHE ARRIÈRE (Keko, 13/11) : le nez tenu vers le haut par un regard, pousser derrière lui donne 70 % de la poussée
-// d'une marche avant ; de côté, toute la poussée ; sans regard, rien ne change
+// LA MARCHE ARRIÈRE (Keko, 13/11) : pousser droit derrière le nez ne donne qu'une part de la poussée d'une marche avant
+// (`marcheArriere`) ; de côté, toute la poussée ; avec ou sans regard — sans lui, le temps que le nez tourne
 {
   const haut = { x: 0, y: -1 }
   const pas = (dir: { x: number; y: number }, regard?: { x: number; y: number }): number => {
@@ -217,9 +217,16 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
     return Math.hypot(r.vx, r.vy)
   }
   const avant = pas({ x: 0, y: -1 }, haut)
-  verifier('nez tenu, la marche arrière pousse à 70 %', Math.abs(pas({ x: 0, y: 1 }, haut) / avant - C.marcheArriere) < 1e-6)
+  verifier('nez tenu, la marche arrière pousse à la part voulue', Math.abs(pas({ x: 0, y: 1 }, haut) / avant - C.marcheArriere) < 1e-6)
   verifier('nez tenu, glisser de côté pousse à fond', Math.abs(pas({ x: 1, y: 0 }, haut) / avant - 1) < 1e-6)
-  verifier('sans regard, pousser derrière le nez pousse à fond', Math.abs(pas({ x: 0, y: 1 }) / avant - 1) < 1e-6)
+  verifier('sans regard aussi, pousser derrière le nez pousse à la part voulue', Math.abs(pas({ x: 0, y: 1 }) / avant - C.marcheArriere) < 1e-6)
+  // (… et LA MANIABILITÉ SE SENT : un demi-tour d'un seul manche est plus vif avec un nez qui tourne vite)
+  const demiTour = (rotation: number): number => {
+    let w = nouveauVaisseau()
+    for (let i = 0; i < 30; i++) w = voler({ ...C, rotation }, { ...C, rotation }, w, 1 / 60, { x: 0, y: 1 }, new Set()).vaisseau
+    return w.vy
+  }
+  verifier('d’un seul manche, un demi-tour va plus vite avec un nez plus maniable', demiTour(C.rotation * 2) > demiTour(C.rotation) * 1.02 && demiTour(C.rotation) > demiTour(C.rotation / 2) * 1.02)
 }
 // LE POIDS : la coque blindée accélère moins et glisse plus que celle de série
 const lourde = armer('coque-2')
@@ -468,7 +475,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, m, 1 / 60, { x: 1, y: 0 }, { x: -1, y: 0 })
   const sansRegard = nouveauMonde()
   for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, sansRegard, 1 / 60, { x: 1, y: 0 })
-  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && m.vaisseau.vx < sansRegard.vaisseau.vx && m.vaisseau.vx > 0.6 * sansRegard.vaisseau.vx) // (regarder à gauche en poussant à droite, c'est reculer : moins de poussée depuis le 13/11)
+  verifier('avec un regard, le vaisseau avance vers le manche et son nez pointe vers le regard ; sans, le nez suit le manche', m.vaisseau.vx > 20 && Math.cos(m.vaisseau.cap) < -0.9 && Math.cos(sansRegard.vaisseau.cap) > 0.9 && m.vaisseau.vx < sansRegard.vaisseau.vx && m.vaisseau.vx > 0.4 * sansRegard.vaisseau.vx) // (regarder à gauche en poussant à droite, c'est reculer : moins de poussée depuis le 13/11)
 }
 
 // la bombe : des charges comptées, une explosion qui éclate les roches autour

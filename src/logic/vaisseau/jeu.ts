@@ -33,11 +33,14 @@ export const VAISSEAU = {
   /** La poussée du manche à fond, en unités par seconde carrée. */
   poussee: 150,
   /**
-   * LA PART DE LA POUSSÉE EN MARCHE ARRIÈRE (Keko, 13/11 : « que le vaisseau ait moins de propulsion en marche
-   * arrière ») : quand le nez est TENU ailleurs (le second manche, la souris) et qu'on pousse droit derrière lui, ce
-   * ne sont que les jets de manœuvre — 70 % de la poussée. De côté, tout ; entre les deux, au prorata.
+   * LA PART DE LA POUSSÉE QUAND ON POUSSE À L'OPPOSÉ DU NEZ (Keko, 13/11) — d'abord la marche arrière du pilotage à
+   * deux manches (70 %), puis ÉTENDUE AU MANCHE SEUL ET CREUSÉE À 50 % : « c'est dommage que la maniabilité ne se
+   * sente pas quand on utilise un seul stick ». Le propulseur pousse dans l'axe du nez : tant que le nez n'a pas
+   * tourné vers la direction demandée, la poussée est réduite — la moitié droit derrière lui, tout de côté et devant,
+   * au prorata entre les deux. UN PROPULSEUR MANIABLE aligne son nez vite et retrouve vite sa pleine poussée : la
+   * maniabilité se sent à chaque demi-tour.
    */
-  marcheArriere: 0.7,
+  marcheArriere: 0.5,
   /** La vitesse de pointe. */
   vitesseMax: 110,
   /** Le frein du vide, par seconde : `v *= exp(−frein·dt)`. Faible : on glisse. */
@@ -440,9 +443,8 @@ type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: nu
 export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number, direction: Vecteur, detruits: ReadonlySet<number> = new Set(), regard?: Vecteur): { vaisseau: Vaisseau; chocs: Choc[] } {
   const n = Math.hypot(direction.x, direction.y)
   const force = Math.min(1, n)
-  // (la marche arrière : seulement quand un regard tient le nez — d'un seul manche, le nez suit la poussée, et un
-  // demi-tour ne doit pas mollir le temps qu'il tourne)
-  const derriere = regard !== undefined && n > 0 ? Math.max(0, -((direction.x / n) * Math.cos(v.cap) + (direction.y / n) * Math.sin(v.cap))) : 0
+  // (pousser à l'opposé du nez pousse moins — que le nez soit tenu par un regard ou qu'il n'ait pas encore tourné)
+  const derriere = n > 0 ? Math.max(0, -((direction.x / n) * Math.cos(v.cap) + (direction.y / n) * Math.sin(v.cap))) : 0
   const part = 1 - (1 - c.marcheArriere) * derriere
   let vx = v.vx + (n > 0 ? (direction.x / n) * force * part * moteur.poussee * dt : 0)
   let vy = v.vy + (n > 0 ? (direction.y / n) * force * part * moteur.poussee * dt : 0)
