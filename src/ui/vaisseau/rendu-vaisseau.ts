@@ -351,7 +351,19 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
 }
 
 /** Ce que porte le vaisseau : les crans et les pièces montées. */
-export type Allure = { propulseur: number; coque: number; foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number }
+export type Allure = {
+  propulseur: number
+  coque: number
+  foreuse: number
+  radar: boolean
+  aimant: boolean
+  armes: string[]
+  bouclier: number
+  /** Les outils PLACE PAR PLACE (null : une place libre) — pour une coque qui a des places d'outils à des endroits à elle. */
+  outils?: ({ famille: string; cran: number } | null)[]
+  /** La place de la foreuse qui creuse (celle qui suit sa cible). */
+  foreusePlace?: number
+}
 
 /**
  * LE GABARIT D'UNE COQUE (Keko, 13/11 : « fabrique-moi un vaisseau de 200 T de type cuirassé, avec le nombre de
@@ -362,22 +374,51 @@ export type Allure = { propulseur: number; coque: number; foreuse: number; radar
  * de toujours ; la 4, LE CUIRASSÉ, est deux fois et demie plus long : quatre tuyères, huit places d'armes sur ses
  * deux bords.
  */
-export type Gabarit = { tuyeres: { x: number; y: number }[]; armes: { x: number; y: number; s: number }[]; feux: { x: number; y: number }; verriere: number; nez: number; flanc: number; anneau: number; echelle: number }
+export type Gabarit = {
+  tuyeres: { x: number; y: number }[]
+  armes: { x: number; y: number; s: number }[]
+  feux: { x: number; y: number }
+  verriere: number
+  nez: number
+  flanc: number
+  anneau: number
+  echelle: number
+  /** Les places d'OUTILS, là où chacun est dessiné (absent : tous au milieu du toit, comme toujours). */
+  outils?: { x: number; y: number }[]
+  /** Les armes sont SUR le pont (dessinées par-dessus la coque) au lieu de dessous les ailes. */
+  surLePont?: boolean
+}
 const GABARIT_DE_SERIE: Gabarit = { tuyeres: [{ x: 0, y: 0 }], armes: [{ x: 0, y: 0, s: -1 }, { x: 0, y: 0, s: 1 }], feux: { x: -7.6, y: 8.2 }, verriere: 3.4, nez: 6.4, flanc: 5.2, anneau: 11, echelle: 1 }
+// LE CUIRASSÉ, REFAIT PLUS GRAND (Keko, 13/11 : « plus gros encore, deux fois plus imposant ; une structure plus sympa,
+// avec de vrais emplacements d'armes et d'outils matérialisés à des endroits différents ») : 72 unités de long sur 34
+// de large (le vaisseau de série : 18 sur 17). Ses HUIT TOURELLES sont sur deux ponts latéraux, quatre par bord, chacune
+// sur son socle ; ses QUATRE OUTILS sur l'échine, de la proue à la poupe ; quatre tuyères à la poupe.
+/** Les centres des socles d'armes (x le long du vaisseau, de la proue à la poupe) et leur écart à l'axe. */
+const TOURELLES_DU_CUIRASSE = { xs: [16, 5, -6, -17], y: 13.6 }
+const OUTILS_DU_CUIRASSE = [{ x: 11, y: 0 }, { x: 2, y: 0 }, { x: -7, y: 0 }, { x: -16, y: 0 }]
 const GABARIT_DU_CUIRASSE: Gabarit = {
-  tuyeres: [-5.4, -1.8, 1.8, 5.4].map((y) => ({ x: -13, y })),
-  // (quatre places par bord, de la proue à la poupe ; les formes d'une arme sont dessinées autour de y = ±6,2)
-  armes: [13, 6, -1, -8].flatMap((x) => [{ x, y: -3.4, s: -1 }, { x, y: 3.4, s: 1 }]),
-  feux: { x: -18, y: 11.2 },
-  verriere: 14,
-  nez: 21,
-  flanc: 11.5,
-  anneau: 27,
-  echelle: 0.55,
+  tuyeres: [-8.1, -2.7, 2.7, 8.1].map((y) => ({ x: -26.1, y })),
+  // (les formes d'une arme sont dessinées autour de (−2, ±6,2) : le décalage l'amène sur son socle)
+  armes: TOURELLES_DU_CUIRASSE.xs.flatMap((x) => [-1, 1].map((sg) => ({ x: x + 2, y: sg * (TOURELLES_DU_CUIRASSE.y - 6.2), s: sg }))),
+  outils: OUTILS_DU_CUIRASSE,
+  surLePont: true,
+  feux: { x: -29, y: 16.6 },
+  verriere: 24,
+  nez: 35,
+  flanc: 17,
+  anneau: 40,
+  echelle: 0.5,
 }
 export const gabaritDe = (coque: number): Gabarit => (coque >= 4 ? GABARIT_DU_CUIRASSE : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + gabaritDe(coque).tuyeres[0].x
+/** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
+export const placeDOutil = (coque: number, k: number): { x: number; y: number } => {
+  const places = gabaritDe(coque).outils
+  if (places === undefined) return { x: 0, y: 0 }
+  const pl = places[Math.max(0, Math.min(places.length - 1, k))]
+  return { x: pl.x + 2.2, y: pl.y }
+}
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
 function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
   if (dx === 0 && dy === 0) return formes
@@ -388,14 +429,20 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 export function formesDeLaCoque(cran: number): Forme[] {
   if (cran >= 4) {
     // LE CUIRASSÉ : une longue coque d'acier riveté — la proue en coin, les flancs droits, la poupe carrée —, deux
-    // plaques de blindage le long des flancs, une superstructure sur le dos, la passerelle vitrée vers l'avant, deux
-    // émetteurs de bouclier à l'arrière
-    const f: Forme[] = [{ pts: [[24, 0], [19, -3.4], [12, -6.4], [2, -8], [-12, -8], [-19, -6.6], [-21, -4.5], [-21, 4.5], [-19, 6.6], [-12, 8], [2, 8], [12, 6.4], [19, 3.4]], mat: 'blinde', relief: 'cyl' }]
-    for (const s of [-1, 1]) f.push({ pts: [[11, s * 4.2], [-15, s * 5], [-15, s * 7.5], [11, s * 6]], mat: 'blinde', relief: 'plat', penche: s })
-    f.push({ pts: [[9, -2.6], [-11, -3.3], [-13, -2], [-13, 2], [-11, 3.3], [9, 2.6]], mat: 'acier', relief: 'cyl' })
-    for (const x of [4, -3, -9]) f.push({ pts: [[x, -2.9], [x - 1, -2.9], [x - 1, 2.9], [x, 2.9]], mat: 'metal', relief: 'plat' })
-    for (const s of [-1, 1]) f.push({ pts: ovale(-16.5, s * 3.6, 1.3, 1.3, 12), mat: 'emeraude', relief: 'dome', dome: { x: -16.5, y: s * 3.6, rx: 1.3, ry: 1.3 } })
-    f.push({ pts: ovale(14, 0, 3.4, 2.2, 18), mat: 'verre', relief: 'dome', dome: { x: 14, y: 0, rx: 3.4, ry: 2.2 } })
+    // plaques de blindage le long des flancs, une échine de superstructure à membrures, la tour de la passerelle
+    // vitrée vers l'avant, deux émetteurs de bouclier à la poupe ; et SES EMPLACEMENTS, vides ou non : huit socles de
+    // tourelle sur les ponts latéraux, quatre socles d'outil sur l'échine
+    const f: Forme[] = [{ pts: [[38, 0], [31, -5], [20, -9.5], [4, -11.5], [-20, -11.5], [-30, -9.5], [-33, -6.5], [-33, 6.5], [-30, 9.5], [-20, 11.5], [4, 11.5], [20, 9.5], [31, 5]], mat: 'blinde', relief: 'cyl' }]
+    for (const sg of [-1, 1]) f.push({ pts: [[18, sg * 6.4], [-24, sg * 7.4], [-24, sg * 10.6], [18, sg * 8.6]], mat: 'blinde', relief: 'plat', penche: sg })
+    f.push({ pts: [[15, -3.8], [-19, -4.6], [-22, -3], [-22, 3], [-19, 4.6], [15, 3.8]], mat: 'acier', relief: 'cyl' })
+    for (const x of [6.5, -2.5, -11.5, -20]) f.push({ pts: [[x, -4.2], [x - 1, -4.2], [x - 1, 4.2], [x, 4.2]], mat: 'metal', relief: 'plat' })
+    for (const pl of OUTILS_DU_CUIRASSE) {
+      f.push({ pts: ovale(pl.x, pl.y, 3.3, 3.3, 16), mat: 'metal', relief: 'dome', dome: { x: pl.x, y: pl.y, rx: 3.3, ry: 3.3 } })
+      f.push({ pts: ovale(pl.x, pl.y, 2.3, 2.3, 14), mat: 'blinde', relief: 'dome', dome: { x: pl.x, y: pl.y, rx: 2.3, ry: 2.3 } })
+    }
+    for (const sg of [-1, 1]) f.push({ pts: ovale(-27, sg * 5, 1.6, 1.6, 12), mat: 'emeraude', relief: 'dome', dome: { x: -27, y: sg * 5, rx: 1.6, ry: 1.6 } })
+    f.push({ pts: ovale(24, 0, 5.8, 4, 18), mat: 'acier', relief: 'dome', dome: { x: 24, y: 0, rx: 5.8, ry: 4 } })
+    f.push({ pts: ovale(25, 0, 4.2, 2.6, 18), mat: 'verre', relief: 'dome', dome: { x: 25, y: 0, rx: 4.2, ry: 2.6 } })
     return f
   }
   const mat: Matiere = cran === 2 ? 'blinde' : 'coque'
@@ -421,10 +468,12 @@ export function formesDeLaCoque(cran: number): Forme[] {
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
   if (coque >= 4) {
-    for (const s of [-1, 1]) {
-      f.push({ pts: [[17, s * 6.4], [15, s * 10.2], [-16, s * 11.6], [-19, s * 11.6], [-19, s * 7]], mat: 'aile', relief: 'plat', penche: s })
-      f.push({ pts: [[17, s * 6.4], [15, s * 10.2], [13.8, s * 10.2], [15.6, s * 6.5]], mat: 'acier', relief: 'plat', penche: s })
-      f.push({ pts: [[-17, s * 10.2], [-19, s * 10.2], [-19, s * 11.6], [-17.4, s * 11.6]], mat: 'rouge', relief: 'plat', penche: s })
+    // (les deux ponts latéraux du cuirassé, et sur chacun ses quatre socles de tourelle)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[27, sg * 8.6], [22, sg * 15.2], [-26, sg * 17], [-31, sg * 17], [-31, sg * 10]], mat: 'aile', relief: 'plat', penche: sg })
+      f.push({ pts: [[27, sg * 8.6], [22, sg * 15.2], [20.4, sg * 15.2], [25.2, sg * 8.8]], mat: 'acier', relief: 'plat', penche: sg })
+      f.push({ pts: [[-28.4, sg * 15.2], [-31, sg * 15.2], [-31, sg * 17], [-28.8, sg * 17]], mat: 'rouge', relief: 'plat', penche: sg })
+      for (const x of TOURELLES_DU_CUIRASSE.xs) f.push({ pts: ovale(x, sg * TOURELLES_DU_CUIRASSE.y, 3, 2.7, 14), mat: 'metal', relief: 'dome', dome: { x, y: sg * TOURELLES_DU_CUIRASSE.y, rx: 3, ry: 2.7 } })
     }
     return f
   }
@@ -548,17 +597,32 @@ export function formesDeLArme(id: string, s: number): Forme[] {
 export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
   const g = gabaritDe(a.coque)
   const f: Forme[] = [...formesDesAiles(a.coque)]
+  const armes: Forme[] = []
   a.armes.forEach((id, i) => {
     if (id === '') return
     const pl = placeDArme(a.coque, i)
-    f.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y))
+    armes.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y))
   })
+  // (sous les ailes pour un chasseur ; sur le pont, par-dessus tout, pour un cuirassé)
+  if (!g.surLePont) f.push(...armes)
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie), tu.x, tu.y))
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   const tout = [...feux, ...reste, ...formesDeLaCoque(a.coque)]
+  if (g.surLePont) tout.push(...armes)
+  if (g.outils !== undefined && a.outils !== undefined) {
+    // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant
+    a.outils.forEach((o, k) => {
+      if (o === null) return
+      const pl = g.outils![Math.max(0, Math.min(g.outils!.length - 1, k))]
+      if (o.famille === 'foreuse') tout.push(...decaler(formesDeLaForeuse(o.cran, k === a.foreusePlace ? vise : 0), pl.x + 2.2, pl.y))
+      else if (o.famille === 'aimant') tout.push(...decaler(formesDeLAimant(o.cran), pl.x + 3.8, pl.y))
+      else tout.push(...decaler(formesDuRadar(t), pl.x + 4.5, pl.y))
+    })
+    return tout
+  }
   if (a.aimant) tout.push(...formesDeLAimant(2))
   if (a.radar) tout.push(...formesDuRadar(t))
   if (a.foreuse > 0) tout.push(...formesDeLaForeuse(a.foreuse, vise))

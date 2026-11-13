@@ -3383,3 +3383,18 @@ lourde), le temps de la page.
   centre ; les cibles vertes du hangar sont approchées (agrandies) ; les
   armes, sombres sur les bords sombres, se voient peu.
 
+Le cuirassé REFAIT le même jour (Keko : « plus gros encore, deux fois plus
+imposant ; une structure plus sympa, avec de vrais emplacements d'armes et
+d'outils matérialisés à des endroits différents ; et il y a marqué 8 armes
+mais je n'en ai que 3 ») :
+- 72 unités de long sur 34 de large (45 × 23 avant), rayon de choc 18.
+- HUIT SOCLES DE TOURELLE sur deux ponts latéraux (`TOURELLES_DU_CUIRASSE`),
+  dessinés même vides ; les armes sont SUR le pont (`Gabarit.surLePont`).
+- QUATRE SOCLES D'OUTIL sur l'échine (`Gabarit.outils`) : chaque outil monté
+  est dessiné à SA place (`Allure.outils`, place par place ;
+  `Allure.foreusePlace` : la foreuse qui creuse suit sa cible) ; le rayon du
+  foreur part de là (`placeDOutil`, `dessinerUnLaser(…, place)`).
+- LE BOGUE DES TROIS PLACES : `PLACES_MAX` valait 3 (`hangar.ts`) et bornait
+  `capacite` — la fiche annonçait huit armes, le hangar en offrait trois.
+  Il vaut 8.
+

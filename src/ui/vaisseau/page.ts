@@ -17,7 +17,7 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, con
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boiteDe, boucheMontee, gabaritDe, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boiteDe, boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
@@ -632,9 +632,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number }
+  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number }
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier })
+  /** Les outils montés, PLACE PAR PLACE (pour une coque qui les dessine chacun à sa place), et la place de la foreuse qui creuse. */
+  const outilsParPlace = (): ({ famille: string; cran: number } | null)[] =>
+    Array.from({ length: capacite(hangar, 'outil') }, (_, k) => {
+      const pc = pieceDe(hangar.outils[k] ?? '')
+      return pc === undefined ? null : { famille: pc.famille ?? 'foreuse', cran: pc.cran }
+    })
+  const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -4852,12 +4859,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /** Un rayon de foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords colorés, une lueur ; l'impact brûle. */
-  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[], cran: number): void {
+  function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[], cran: number, place: { x: number; y: number } = { x: 0, y: 0 }): void {
     // (il part de la bouche du canon dessiné : le pivot et la longueur sont ceux du peintre, lus, pas recopiés)
     const canon = canonDeLaForeuse(cran)
     const vise = Math.atan2(f.y - depuis.y, f.x - depuis.x)
-    const x0 = depuis.x + Math.cos(depuis.cap) * canon.pivot + Math.cos(vise) * canon.bouche
-    const y0 = depuis.y + Math.sin(depuis.cap) * canon.pivot + Math.sin(vise) * canon.bouche
+    // (`place` : où la foreuse est montée sur cette coque, en décalage du milieu du toit)
+    const x0 = depuis.x + Math.cos(depuis.cap) * (canon.pivot + place.x) - Math.sin(depuis.cap) * place.y + Math.cos(vise) * canon.bouche
+    const y0 = depuis.y + Math.sin(depuis.cap) * (canon.pivot + place.x) + Math.cos(depuis.cap) * place.y + Math.sin(vise) * canon.bouche
     const px = -Math.sin(vise)
     const py = Math.cos(vise)
     const vacille = 0.75 + 0.25 * Math.sin(t * 70)
@@ -4873,7 +4881,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   function dessinerLesLasers(p: Peintre): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER, Math.max(1, foreuseMontee(hangar)?.cran ?? 1))
+    if (m.forage !== null && m.phase === 'vol') dessinerUnLaser(p, v, m.forage, LASER, Math.max(1, foreuseMontee(hangar)?.cran ?? 1), placeDOutil(monteeA(hangar, 'coque').cran, placeDeLaForeuse()))
     for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET, ALLURE_SERIE.foreuse)
     p.place(0, 0)
   }
