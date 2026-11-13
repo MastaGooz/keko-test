@@ -2988,3 +2988,8 @@ un tiers de seconde à chaque coup dans la coque, permanent et battant, avec
 une lueur, au dernier point ; LA SOUTE PLEINE a un cerne clair qui respire
 et un reflet blanc qui parcourt la jauge toutes les 1,8 s (pas de rouge).
 
+Puis (Keko, 13/11) : LE SON DU BLINDAGE A LA PRIORITÉ — un coup qui vide le
+bouclier et entame la coque joue le son de la coque seul (le son du bouclier
+se tait quand la même image porte un « touche ») ; le choc annoncé en avance
+(latence audio) n'annonce le bouclier qu'avec un point entier.
+

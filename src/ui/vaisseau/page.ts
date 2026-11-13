@@ -670,7 +670,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const ny = (oy + v.vy * tc) / rr
           if (-(v.vx * nx + v.vy * ny) < CONF.seuilChoc) continue
           chocAnnonceA = t
-          jouer(CONF.bouclier.points > 0 && m.bouclier > 0 ? 'bouclier' : 'touche')
+          // (annoncé en avance, on ne sait pas encore ce que coûtera le choc : sous un point entier de bouclier, on
+          // annonce le blindage — c'est lui qui a la priorité)
+          jouer(CONF.bouclier.points > 0 && m.bouclier >= 1 ? 'bouclier' : 'touche')
           break
         }
       }
@@ -6005,7 +6007,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'bouclier': {
               // le bouclier prend le coup : son anneau flashe, des étincelles cyan, une petite secousse
-              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('bouclier')
+              // (LE BLINDAGE A LA PRIORITÉ — Keko, 13/11 : un coup qui vide le bouclier ET entame la coque sonne comme un
+              // coup dans le blindage, « le joueur doit avoir l'info prioritaire » : le son du bouclier se tait alors)
+              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4) && !r.evenements.some((e) => e.type === 'touche')) jouer('bouclier')
               bouclierA = t
               secousse = Math.max(secousse, 0.3)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(20)
