@@ -3071,4 +3071,7 @@ Retouches du même jour (Keko) :
 - Puis (Keko : flottante au milieu, « c'est bizarre ») : elle reste au
   milieu EN LARGEUR, mais COLLÉE AU BAS de l'écran, d'où elle monte comme
   debout.
+- Puis : en vol couché, le toast « Mission réussie » est TOUT EN HAUT de
+  l'écran (il se rangeait sous la hauteur de l'interface du portrait,
+  presque au milieu).
 

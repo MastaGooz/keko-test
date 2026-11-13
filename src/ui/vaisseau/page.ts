@@ -192,7 +192,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let toasts: Instance[] = []
   function dessinerLesToasts(dt: number): void {
     if (toasts.length === 0) return
-    const y0 = (enJeu && !ecranVisible() ? basDuHud() + 14 : HAUT_BARRE + 6) + 18
+    // (EN VOL COUCHÉ, TOUT EN HAUT — Keko, 13/11 : « presque au milieu de l'écran, ça cache l'écran » : il se rangeait
+    // sous l'interface du haut, qui, couchée, est dans les bandeaux de côté ou dans les coins — le milieu du haut est libre)
+    const y0 = (enJeu && !ecranVisible() ? (paysage ? 3 : basDuHud() + 14) : HAUT_BARRE + 6) + 18
     toasts.forEach((fx, i) => {
       fx.update(dt)
       fx.options.x = W / 2
