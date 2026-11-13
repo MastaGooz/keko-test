@@ -3158,3 +3158,5 @@ paillettes) ; l'onglet ouvert reste en or.
   VERRIÈRE EN BLEU — la touche de couleur, le bleu du filet du conteneur.
 - Puis : un ton de passage entre l'échine et les ailes de la navette (la
   cassure était trop franche).
+- Puis : le bandeau sombre du conteneur sur la navette aussi (la verrière
+  bleue entre deux traits bleu nuit) : les deux icônes ont le même motif.

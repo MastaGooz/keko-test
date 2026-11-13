@@ -5412,8 +5412,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // VERRIÈRE EN BLEU, le bleu du filet du conteneur, son milieu plus clair)
       // (un ton de passage, `m`, entre l'échine et les ailes — Keko, 13/11 : « dégrader un peu entre le centre et les
       // ailes, pour ne pas avoir une cassure aussi franche » ; la colonne d'ombre à droite de l'échine est retirée)
-      const T: Record<string, number> = { M: COQUE[3], m: N.hex('#879dbe'), L: COQUE[4], H: COQUE[5], d: COQUE[4], S: COQUE[2], v: VERRIERE[1], V: VERRIERE[2], B: COQUE[6] }
-      const DESSIN = ['.....L.....', '....mMm....', '....vVv....', '....mMm....', '...LmMmL...', '...LmdmL...', '..HLmMmLL..', '.HLLmdmLLL.', 'BHLLmMmLLLL', 'SSSSmdmSSSS', '....SSS....']
+      const T: Record<string, number> = { M: COQUE[3], m: N.hex('#879dbe'), L: COQUE[4], H: COQUE[5], d: COQUE[4], S: COQUE[2], v: VERRIERE[1], V: VERRIERE[2], B: COQUE[6], K: N.hex('#0c1420') }
+      // (LE BANDEAU SOMBRE DU CONTENEUR, sur la navette aussi — Keko, 13/11 : la soute « a des traits noirs foncés au
+      // milieu, la navette n'en a pas : elles n'ont pas l'air cohérentes » : le filet bleu de la verrière est pris,
+      // comme celui du conteneur, entre deux traits du même bleu nuit)
+      // (le bandeau est AU MILIEU DU CORPS, entre les ailes, comme celui du conteneur est au milieu de la caisse : sur
+      // le nez, large de trois, il se fondait dans le noir et détachait la pointe)
+      const DESSIN = ['.....L.....', '....mMm....', '....mMm....', '....mMm....', '...LKKKL...', '...LvVvL...', '..HLKKKLL..', '.HLLmdmLLL.', 'BHLLmMmLLLL', 'SSSSmdmSSSS', '....SSS....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])
