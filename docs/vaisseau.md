@@ -2904,3 +2904,5 @@ Retouches du paysage (Keko, 13/11) :
   vaisseau, sur toute la hauteur ; la fiche de la pièce choisie et son bouton
   à droite (`dessinerLeChangement(p, 'liste' | 'fiche')`). Si la fenêtre de
   gauche fait moins de 150 px, tout reste dans la colonne.
+
+LE SYMBOLE DE LA SOUTE (Keko, 13/11 : « un symbole comme pour le blindage ») : une caisse d'or cernée (`dessinerLaCaisse`), rouge quand la soute est pleine. En portrait elle REMPLACE le mot « Soute » sur la plaque (la jauge commence à sa droite) ; couché, elle coiffe la jauge debout, LE COMPTE EST ÉCRIT DEBOUT le long de la jauge (le peintre tourné d'un quart : « avec de grandes soutes ça va déborder »), et la touche d'or au chevron passe au pied.
