@@ -2979,3 +2979,7 @@ Puis (Keko, 13/11, à l'essai) : l'alerte des bords passe de six à quatre
 pixels ; LES PLAQUES DE FOND de la soute et du blindage sont retirées dans
 les deux orientations — restent le symbole, la barre cernée, la touche d'or.
 
+Puis (Keko : supprimer les rectangles « n'a pas résolu la visibilité de la
+barre vide ») : LE CREUX DES BARRES (soute et blindage) est un acier bleuté
+(`CREUX_DES_BARRES`), plus du quasi-noir.
+

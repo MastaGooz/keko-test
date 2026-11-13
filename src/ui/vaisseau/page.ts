@@ -4965,6 +4965,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // bouton ; à droite LE BLINDAGE, une barre debout à cases, le bouclier en colonne à côté. Plus rien sur la vue. Trop
     // étroits (voir `interfaceEnBande`), l'interface reste sur la vue, en plaques, comme avant.
     const enBande = interfaceEnBande()
+    // (LE CREUX DES BARRES EST UN ACIER BLEUTÉ, PAS DU NOIR — Keko, 13/11 : vide, une barre se perdait sur le fond sombre,
+    // avec ou sans plaque derrière : la partie vide se lit maintenant sur le noir des bandeaux comme sur le ciel)
+    const CREUX_DES_BARRES = [N.hex('#465679'), N.hex('#2f3b58')]
     const H_BARRE = 64
     // (sans pupitre derrière elles, les plaques éteignent elles-mêmes la lumière du monde sous elles : les feux de la
     // base passaient à travers)
@@ -5087,8 +5090,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const gx = x0 + 7
       const gy = ys + 17
       p.rect(gx - 1, gy - 1, 10, HG + 2, encre)
-      p.rect(gx, gy, 8, HG, N.hex('#191424'))
-      p.rect(gx, gy, 1, HG, N.hex('#2a2338'))
+      p.rect(gx, gy, 8, HG, CREUX_DES_BARRES[1])
+      p.rect(gx, gy, 1, HG, CREUX_DES_BARRES[0])
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(HG * souteVue))
       if (plein > 0) {
         p.rect(gx, gy + HG - plein, 8, plein, pleine ? COQUE[4] : PEPITE[2])
@@ -5126,8 +5129,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const gw = xt - 3 - gx
       const gy = ys + 5
       p.rect(gx - 1, gy - 1, gw + 2, 10, encre)
-      p.rect(gx, gy, gw, 8, N.hex('#191424'))
-      p.rect(gx, gy, gw, 1, N.hex('#2a2338'))
+      p.rect(gx, gy, gw, 8, CREUX_DES_BARRES[1])
+      p.rect(gx, gy, gw, 1, CREUX_DES_BARRES[0])
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
       if (plein > 0) {
         p.rect(gx, gy, plein, 8, pleine ? COQUE[4] : PEPITE[2])
@@ -5266,7 +5269,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           let c: number
           if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
           else if (u < fant) c = dc < 0.07 || x < 1 ? N.WHITE : x < lw - 2 ? N.hex('#ffe9a8') : or[1]
-          else c = teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2) ?? (x < 1 ? N.hex('#2a2338') : N.hex('#191424'))
+          else c = teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2) ?? (x < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
           p.px(bx + x, by + y, traits.has(by + y) ? assombrie(c) : c)
         }
       }
@@ -5339,7 +5342,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         let c: number
         if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
         else if (u < fant) c = dc < 0.07 || v < 1 ? N.WHITE : v < bh - 2 ? N.hex('#ffe9a8') : or[1]
-        else c = teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2) ?? (v < 1 ? N.hex('#2a2338') : N.hex('#191424'))
+        else c = teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2) ?? (v < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
         p.px(bx + x, by + v, traits.has(x) ? assombrie(c) : c)
       }
     }
