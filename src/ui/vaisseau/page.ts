@@ -5287,7 +5287,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (actif) zone(0, yHud, bandeCote(), hp + 2, ouvrirLaSoute, 'ouvre')
     } else {
       // COUCHÉE sur le pupitre : le symbole, la jauge, la touche — aussi large que le logement du blindage
-      const TOUCHE = 14
+      // (la touche est plus large et moins haute, comme celle du vol couché — Keko, 13/11)
+      const TOUCHE = 18
       const ws = L_SOUTE
       const xs = 4
       const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
@@ -5296,10 +5297,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLaCaisse(xs + 5, ys + 5)
       // la touche d'or et son chevron
       const xt = xs + ws - TOUCHE - 1
-      plaque(p, xt, ys + 1, TOUCHE, 16, 'clair', { enfonce: eb.enfonce })
+      plaque(p, xt, ys + 3, TOUCHE, 12, 'clair', { enfonce: eb.enfonce })
       for (let k = 0; k < 3; k++) {
-        p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, N.hex('#0c1420'))
-        p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, VERRIERE[1])
+        p.rect(xt + 6 + k, ys + 8 + k, 6 - 2 * k, 1, N.hex('#0c1420'))
+        p.rect(xt + 6 + k, ys + 7 + k, 6 - 2 * k, 1, VERRIERE[1])
       }
       if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
       // sa jauge, au gabarit de la barre de blindage : un creux cerné, l'or clair dessus, sombre dessous

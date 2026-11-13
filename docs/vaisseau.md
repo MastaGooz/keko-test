@@ -3174,3 +3174,4 @@ un gros vaisseau y tient comme un petit (`dessinerLEcusson`).
 LA TOUCHE DE LA SOUTE n'est plus d'or (13/11 : l'or « rappelle trop la barre
 de blindage ») : une matière `clair`, l'acier clair du conteneur, et un
 chevron bleu sur bleu nuit.
+Debout, cette touche fait 18 × 12 (elle faisait 14 × 16) : plus large, moins haute, comme couchée.
