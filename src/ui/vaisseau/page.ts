@@ -366,7 +366,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const large = racine.clientWidth - marge(st.paddingLeft) - marge(st.paddingRight)
     const haut = racine.clientHeight - marge(st.paddingTop) - marge(st.paddingBottom)
     // (étape 2 : LE HANGAR aussi ; les autres onglets restent debout en attendant leur tour)
-    return large > haut && !accueil && (!ecranVisible() || vue === 'hangar')
+    // (l'écran éteint et l'accueil se couchent aussi — Keko, 13/11)
+    return large > haut && (accueil || !ecranVisible() || vue === 'hangar')
   }
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
@@ -5645,6 +5646,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const us = accueilQuitteA === null ? 0 : Math.min(1, (t - accueilQuitteA) / SORTIE_DE_L_ACCUEIL)
     const elan = us * us
     const boucle = (a: number, b: number): number => ((a % b) + b) % b
+    // TÉLÉPHONE COUCHÉ (Keko, 13/11 : « passe l'écran toucher pour allumer et l'écran d'accueil en compatible paysage ») :
+    // le titre et la demande À GAUCHE, le vaisseau À DROITE, au milieu de la hauteur — debout, tout est sur l'axe
+    const cxT = paysage ? Math.round(W * 0.33) : W / 2
+    const cxV = paysage ? Math.round(W * 0.74) : W / 2
+    const hV = paysage ? 0.56 : 0.63
+    const largeT = paysage ? 2 * cxT : W
     // on dérive : la caméra file vers le haut, un peu de travers ; à la sortie, tout s'emballe
     camera.x = t * 7
     camera.y = -t * 22 - elan * 500
@@ -5657,8 +5664,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     // LE VAISSEAU, celui du hangar, en grand : il respire, sa tuyère souffle une traînée ; à la tape il s'arrache
     const E = 3
-    const cx = W / 2
-    const sy = Math.round(H * 0.63 + Math.sin(t * 1.4) * 2.5 - Math.pow(Math.max(0, us - 0.15) / 0.85, 2.2) * (H * 0.63 + 70))
+    const cx = cxV
+    const sy = Math.round(H * hV + Math.sin(t * 1.4) * 2.5 - Math.pow(Math.max(0, us - 0.15) / 0.85, 2.2) * (H * hV + 70))
     const flam = accueilQuitteA === null ? 0.55 + 0.12 * Math.sin(t * 11) : 1
     const al = allureMontee(0)
     const chaud = al.propulseur >= 3 ? ION : FEU
@@ -5681,9 +5688,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // — étiré, penché, deux images rémanentes derrière lui —, puis FRAPPE et s'arrête net : les lettres blanchissent, une
     // étoile à pointes éclate derrière, un anneau roule, des étincelles giclent, l'écran tremble, le mot dépasse et
     // revient. NOVA par la gauche, DRIFTER par la droite ; la nova naît de la frappe de NOVA.
-    const eN = largeurDe('NOVA', GRAS) * 4 <= W - 12 ? 4 : 3
-    const eD = largeurDe('DRIFTER', GRAS) * 3 <= W - 8 ? 3 : 2
-    const yT = Math.round(Math.max(26, H * 0.13))
+    const eN = largeurDe('NOVA', GRAS) * 4 <= largeT - 12 ? 4 : 3
+    const eD = largeurDe('DRIFTER', GRAS) * 3 <= largeT - 8 ? 3 : 2
+    const yT = paysage ? Math.round(H / 2 - 48) : Math.round(Math.max(26, H * 0.13))
     const monte = -Math.round(elan * (yT + 160))
     const VOL = 0.12
     const TN = HEURES_DU_TITRE.nova
@@ -5702,12 +5709,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ]
     const lettres = (mot: Mot, dx: number, etire: number, penche: number, flash: number): { g: unknown; x: number; y: number; sx: number; sy: number; slant: number; flash: number }[] => {
       const m = spell(mot.s, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
-      const x0 = Math.round(W / 2 + dx - (m.w * mot.e * etire) / 2)
+      const x0 = Math.round(cxT + dx - (m.w * mot.e * etire) / 2)
       return m.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x * mot.e * etire, y: mot.y + monte - decalage(GRAS) * mot.e, sx: mot.e * etire, sy: mot.e, slant: penche, flash }))
     }
     secousseDeLAccueil = 0
     // la nova, née de la frappe de NOVA, au coin du mot
-    const nx = Math.round(W / 2 + (largeurDe('NOVA', GRAS) * eN) / 2 - 4)
+    const nx = Math.round(cxT + (largeurDe('NOVA', GRAS) * eN) / 2 - 4)
     const ny = yT - 6 + monte
     const bat = 0.5 + 0.5 * Math.sin(t * 2.3)
     const eclos = sortie((ta - TN - VOL) / 0.5)
@@ -5729,7 +5736,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (tau < 0) return
       const vole = tau < VOL
       const frappe = tau - VOL
-      const cxm = W / 2
+      const cxm = cxT
       const cym = mot.y + monte + Math.round(3.5 * mot.e)
       // les traits de vitesse : pleins pendant le vol, puis ils s'éteignent
       const kTraits = vole ? 1 : Math.max(0, 1 - frappe / 0.35) * 0.9
@@ -5777,21 +5784,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // le mot : étiré et penché en vol, blanc à la frappe, puis son reflet
       const larg = largeurDe(mot.s, GRAS) * mot.e
       const quand = n === 0 ? cycle : cycle - 0.35
-      const reflet = ta > TD + 0.9 && quand > 0 && quand < 0.7 ? Math.round(W / 2 - larg / 2) - 20 + ((larg + 40) * quand) / 0.7 : null
+      const reflet = ta > TD + 0.9 && quand > 0 && quand < 0.7 ? Math.round(cxT - larg / 2) - 20 + ((larg + 40) * quand) / 0.7 : null
       drawWord(p, lettres(mot, xDe(tau, mot.sens), vole ? 1.22 : 1, vole ? mot.sens : 0, frappe >= 0 && frappe < 0.07 ? 1 : 0), reflet === null ? mot.style : { ...mot.style, shine: reflet })
     })
 
     // LA DEMANDE : « Toucher pour commencer », qui bat, entre deux chevrons qui se rapprochent
     if (accueilQuitteA === null && ta > HEURES_DU_TITRE.pret) {
       const texte = 'Toucher pour commencer'
-      const f: Police = largeurDe(texte, GRAS) <= W - 30 ? GRAS : TEXTE
-      const yp = H - Math.max(30, Math.round(H * 0.1))
+      const f: Police = largeurDe(texte, GRAS) <= largeT - 30 ? GRAS : TEXTE
+      const yp = H - Math.max(paysage ? 24 : 30, Math.round(H * 0.1))
       const k = 0.5 + 0.5 * Math.sin(t * 3.4)
       const w = largeurDe(texte, f)
-      ecrire(p, texte, W / 2, yp, k > 0.35 ? N.hex('#fff2c8') : COQUE[4], { police: f, align: 'center', contour: MATIERES.encre.contour })
+      ecrire(p, texte, cxT, yp, k > 0.35 ? N.hex('#fff2c8') : COQUE[4], { police: f, align: 'center', contour: MATIERES.encre.contour })
       const dx = Math.round(k * 3)
-      p.text('>', W / 2 - w / 2 - 12 + dx, yp + 1, PEPITE[2])
-      p.text('<', W / 2 + w / 2 + 8 - dx, yp + 1, PEPITE[2])
+      p.text('>', cxT - w / 2 - 12 + dx, yp + 1, PEPITE[2])
+      p.text('<', cxT + w / 2 + 8 - dx, yp + 1, PEPITE[2])
     }
     allumerLEcran(p, ta)
     // la sortie : la nuit de la base monte, puis le hangar s'ouvre

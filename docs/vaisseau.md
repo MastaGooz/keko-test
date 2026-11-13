@@ -2993,3 +2993,13 @@ bouclier et entame la coque joue le son de la coque seul (le son du bouclier
 se tait quand la même image porte un « touche ») ; le choc annoncé en avance
 (latence audio) n'annonce le bouclier qu'avec un point entier.
 
+### Le paysage : l'écran éteint et l'accueil (13/11)
+
+Keko : « passe l'écran toucher pour allumer et l'écran d'accueil en
+compatible paysage ». `veutLePaysage` ne les exclut plus. L'écran éteint et
+l'allumage du tube étaient déjà écrits en `W` / `H`. L'accueil couché
+(`dessinerLAccueil`) : le titre et « Toucher pour commencer » À GAUCHE
+(`cxT`, au tiers), le vaisseau À DROITE (`cxV`), au milieu de la hauteur ;
+debout, rien ne change. Restent en portrait : Commerce, Missions,
+Recherche, Paramètres, les écrans de fin.
+
