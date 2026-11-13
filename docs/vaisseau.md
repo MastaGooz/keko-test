@@ -2906,3 +2906,10 @@ Retouches du paysage (Keko, 13/11) :
   gauche fait moins de 150 px, tout reste dans la colonne.
 
 LE SYMBOLE DE LA SOUTE (Keko, 13/11 : « un symbole comme pour le blindage ») : une caisse d'or cernée (`dessinerLaCaisse`), rouge quand la soute est pleine. En portrait elle REMPLACE le mot « Soute » sur la plaque (la jauge commence à sa droite) ; couché, elle coiffe la jauge debout, LE COMPTE EST ÉCRIT DEBOUT le long de la jauge (le peintre tourné d'un quart : « avec de grandes soutes ça va déborder »), et la touche d'or au chevron passe au pied.
+
+Retouches du même jour (Keko) : en portrait la caisse est au milieu de la
+hauteur de la plaque (elle touchait son bord du haut) ; couché, le compte
+n'est plus tourné — « dans le sens normal, mais les uns en dessous des
+autres » : les chiffres du porté empilés, un trait de fraction, ceux de la
+capacité, à droite de la jauge ; la caisse est aussi à gauche du mot
+« Soute » dans le panneau de la soute ouverte (`dessinerLaCaisseDeSoute`).

@@ -5030,21 +5030,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE SYMBOLE DE LA SOUTE (Keko, 13/11 : « créer un symbole comme pour le blindage — on remplace le mot soute par ça
     // en portrait et on l'ajoute en paysage ») : UNE CAISSE d'or — son couvercle clair, son corps, un fermoir sombre au
     // milieu —, cernée ; rouge quand la soute est pleine.
-    const dessinerLaCaisse = (x: number, y: number): void => {
-      const c = pleine ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
-      p.rect(x - 1, y - 1, 11, 10, encre)
-      p.rect(x, y, 9, 8, c[1])
-      p.rect(x, y, 9, 2, c[0])
-      p.rect(x, y + 7, 9, 1, c[2])
-      p.rect(x + 8, y + 3, 1, 4, c[2])
-      p.rect(x, y + 2, 9, 1, encre)
-      p.rect(x + 3, y + 3, 3, 2, encre)
-      p.rect(x + 4, y + 3, 1, 1, c[0])
-    }
+    const dessinerLaCaisse = (x: number, y: number): void => dessinerLaCaisseDeSoute(p, x, y, pleine)
     if (enBande) {
       // LA SOUTE DEBOUT : une plaque d'acier qui s'enfonce — en tête SON SYMBOLE, puis la jauge dans sa rainure, qui se
-      // remplit par le bas, LE COMPTE ÉCRIT DEBOUT le long d'elle (Keko : « écris le chiffre verticalement, car avec de
-      // grandes soutes ça va déborder » : couché sur le côté, il a toute la hauteur de la jauge), et au pied SA TOUCHE
+      // remplit par le bas, LE COMPTE EN COLONNE à côté d'elle (Keko : « écris le chiffre verticalement, car avec de
+      // grandes soutes ça va déborder »), et au pied SA TOUCHE
       // D'OR au chevron — c'est un bouton
       const pw = 26
       const x0 = Math.round(bandeCote() / 2) - 13
@@ -5063,10 +5053,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(gx, gy + H_BARRE - plein, 2, plein, pleine ? ROUGE[5] : PEPITE[3])
         p.rect(gx, gy + H_BARRE - plein, 8, 1, N.hex('#fff7d6'))
       }
-      // le compte, debout : il se lit de bas en haut, le long de la jauge
-      p.place(gx + 9, gy + H_BARRE - 1, false, -Math.PI / 2)
-      p.text(`${porte}/${CONF.capacite}`, 0, 0, pleine ? ROUGE[5] : IVOIRE, { font: GRAS, outline: encre })
-      p.place(0, 0)
+      // LE COMPTE EN COLONNE (Keko, 13/11 : « les mettre dans le sens normal, mais les uns en dessous des autres ») : les
+      // chiffres du porté, droits, empilés ; un trait de fraction ; ceux de la capacité. Au milieu de la jauge ; le pas
+      // se serre d'un pixel quand la colonne ne tiendrait pas
+      {
+        const haut = String(porte)
+        const bas = String(CONF.capacite)
+        const n = haut.length + bas.length
+        const pas = n * 8 + 5 <= H_BARRE ? 8 : 7
+        const xc = x0 + 20
+        let yc = gy + Math.max(0, Math.floor((H_BARRE - (n * pas + 5)) / 2))
+        const c = pleine ? ROUGE[5] : IVOIRE
+        for (const ch of haut) {
+          p.text(ch, xc, yc, c, { font: GRAS, outline: encre, align: 'center' })
+          yc += pas
+        }
+        p.rect(xc - 4, yc, 7, 3, encre)
+        p.rect(xc - 3, yc + 1, 5, 1, c)
+        yc += 5
+        for (const ch of bas) {
+          p.text(ch, xc, yc, c, { font: GRAS, outline: encre, align: 'center' })
+          yc += pas
+        }
+      }
       // la touche d'or, au pied
       const yt = gy + H_BARRE + 3
       plaque(p, x0 + 3, yt, pw - 6, 11, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
@@ -5085,7 +5094,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
     if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
     plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
-    dessinerLaCaisse(xs + 6, ys + 2)
+    // (au milieu de la hauteur de la plaque — Keko, 13/11 : il touchait son bord du haut)
+    dessinerLaCaisse(xs + 6, ys + 5)
     const compte = `${porte}/${CONF.capacite}`
     const xc = xs + ws - TOUCHE - 5
     if (pleine) ecrire(p, compte, xc, ys + 3, ROUGE[5], { police: GRAS, align: 'right' })
@@ -5396,6 +5406,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
+  /** LE SYMBOLE DE LA SOUTE : une caisse d'or cernée (9 × 8 sans son cerne), rouge quand la soute est pleine. */
+  function dessinerLaCaisseDeSoute(p: Peintre, x: number, y: number, pleine: boolean): void {
+    const encre = MATIERES.encre.contour
+    const c = pleine ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
+    p.rect(x - 1, y - 1, 11, 10, encre)
+    p.rect(x, y, 9, 8, c[1])
+    p.rect(x, y, 9, 2, c[0])
+    p.rect(x, y + 7, 9, 1, c[2])
+    p.rect(x + 8, y + 3, 1, 4, c[2])
+    p.rect(x, y + 2, 9, 1, encre)
+    p.rect(x + 3, y + 3, 3, 2, encre)
+    p.rect(x + 4, y + 3, 1, 1, c[0])
+  }
+
   /**
    * LA SOUTE OUVERTE : le vol s'assombrit derrière (il est en pause), et un panneau au milieu de la vue — son nom et
    * ce qu'on porte sur ce qu'on peut ; une rangée par minerai (son icône, son nom, combien on en a) avec DEUX BOUTONS,
@@ -5416,8 +5440,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y = Math.round(centreY() - h / 2 + (1 - u) * 10)
     ombrePortee(p, x, y, w, h)
     plaque(p, x, y, w, h, 'encre')
-    motEnRelief(p, 'Soute', x + 8 + largeurDe('Soute', GRAS) / 2, y + 6, true)
     const pleine = m.minerai >= CONF.capacite
+    // (le symbole de la soute à gauche de son nom — Keko, 13/11)
+    dessinerLaCaisseDeSoute(p, x + 8, y + 6, pleine)
+    motEnRelief(p, 'Soute', x + 8 + 13 + largeurDe('Soute', GRAS) / 2, y + 6, true)
     // (LE TOTAL, COMME SUR LE PUPITRE DU VOL — Keko, 12/11 : en relief ivoire ; rouge, la soute pleine)
     const total = `${m.minerai}/${CONF.capacite}`
     if (pleine) ecrire(p, total, x + w - 8, y + 6, ROUGE[5], { police: GRAS, align: 'right' })
