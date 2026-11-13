@@ -2975,3 +2975,7 @@ aplat translucide de pixelfx est calée sur le coin haut-gauche du tampon ;
 chaque point est maintenant décidé par sa profondeur depuis son bord et sa
 place depuis son coin. Et le total du panneau de soute ne rougit plus.
 
+Puis (Keko, 13/11, à l'essai) : l'alerte des bords passe de six à quatre
+pixels ; LES PLAQUES DE FOND de la soute et du blindage sont retirées dans
+les deux orientations — restent le symbole, la barre cernée, la touche d'or.
+

@@ -4343,10 +4343,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const dx = Math.min(x - x0, x1 - 1 - x)
       const dy = Math.min(y - y0, y1 - 1 - y)
       const k = Math.min(dx, dy)
-      const a = force * (0.7 - k * 0.12)
+      const a = force * (0.7 - k * 0.18)
       if (a > (TRAME[(k & 3) * 4 + (Math.max(dx, dy) & 3)] + 0.5) / 16) p.px(x, y, c)
     }
-    for (let k = 0; k < 6; k++) {
+    // (quatre pixels d'épaisseur — six étaient trop, Keko, 13/11)
+    for (let k = 0; k < 4; k++) {
       for (let x = x0 + k; x < x1 - k; x++) {
         point(x, y0 + k)
         point(x, y1 - 1 - k)
@@ -5057,7 +5058,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // hangar, la langue de ce qui se tape. Dessus : « Soute », ce qu'on porte sur ce qu'on peut (en relief ivoire, rouge
     // quand elle est pleine), et sa jauge d'or dans une rainure. Toute la plaque — avec la rangée du porté dessous, pour
     // une cible assez haute au doigt — ouvre la soute.
-    const bat = Math.floor(t * 4) % 2 === 0
     const actif = m.phase === 'vol' && !souteOuverte && t - arriveA >= ARRIVE_A
     souteVue = ressort(souteVue, Math.min(1, porte / CONF.capacite))
     // LE SYMBOLE DE LA SOUTE (Keko, 13/11 : « créer un symbole comme pour le blindage — on remplace le mot soute par ça
@@ -5071,6 +5071,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // que l'écusson, une jauge du même gabarit que la barre de blindage (un creux cerné, l'or clair d'un côté, sombre de
     // l'autre), et au bout SA TOUCHE D'OR au chevron.
     // (LA TOUCHE ET SA FLÈCHE RESTENT D'OR, soute pleine ou pas — Keko, 13/11 ; la plaque et la jauge, elles, rougissent)
+    // (PLUS DE PLAQUE DE FOND, ni ici ni sous le blindage — Keko, 13/11 : « essaie de supprimer les rectangles qui
+    // contiennent les PV et la soute » : le symbole, la barre cernée et la touche sont posés tels quels)
     // (PLEINE, LA JAUGE EST GRISÉE — Keko, 13/11 : « en grisé plutôt que rouge », et plus de bord qui rougit sur la plaque ;
     // le mot « Soute pleine » reste rouge)
     if (enBande) {
@@ -5081,7 +5083,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const HG = H_BARRE - 13
       const eb = actif ? etatDuBouton(x0, yHud, pw, hp) : { enfonce: false, survole: false, flash: false, dy: 0 }
       const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
-      plaque(p, x0, ys, pw, hp, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash })
       dessinerLaCaisse(x0 + 7, ys + 5)
       const gx = x0 + 7
       const gy = ys + 17
@@ -5110,9 +5111,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const xs = 4
       const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
       const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
-      if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
       eteindreSous(xs, ys, ws, 19)
-      plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash })
       dessinerLaCaisse(xs + 5, ys + 5)
       // la touche d'or et son chevron
       const xt = xs + ws - TOUCHE - 1
@@ -5247,7 +5246,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       bouclierConnu = m.bouclier
       // (LA MÊME PLAQUE D'ACIER QUE LA SOUTE — Keko, 13/11 : deux contenants différents « cassent la cohérence de l'UI », et
       // sombres, on y distinguait mal une barre vide : l'acier est plus clair que le creux des barres)
-      plaque(p, px0, oy, pw, BH + 22, 'acier', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
       // l'écusson, en tête : il bondit et blanchit au coup
       const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
       const blanc = du >= 0 && du < 0.07
@@ -5319,8 +5317,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     bouclierConnu = m.bouclier
 
     eteindreSous(ox, oy, wp, 19)
-    p.rect(ox + 1, oy + 18, wp - 2, 1, NUIT_OMBRE, 0.7)
-    plaque(p, ox, oy, wp, 18, 'acier', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
     // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
     const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
     const blanc = du >= 0 && du < 0.07
