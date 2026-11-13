@@ -13,7 +13,7 @@
  * rendent un hangar neuf, et `configDuHangar` traduit les pièces en configuration du vaisseau — CELLE DU JOUEUR SEUL :
  * le rival garde la configuration de série.
  */
-import { cargaisonVide, MINERAIS, type Arme, type Cargaison, type ConfigVaisseau, type Minerai } from './jeu.ts'
+import { cargaisonVide, MINERAIS, VAISSEAU, type Arme, type Cargaison, type ConfigVaisseau, type Minerai } from './jeu.ts'
 
 /** Les emplacements à une pièce ; les outils et les armes sont des LISTES, bornées par la coque. */
 export const EMPLACEMENTS = ['propulseur', 'coque'] as const
@@ -285,9 +285,19 @@ export type Jauge = { nom: string; valeur: number; max: number; /** Une quantit�
  * pour le propulseur, le nombre d'armes portables par la coque, une jauge de blindage, de bouclier et de poids ») —
  * chaque barre est pleine au maximum du catalogue, pour comparer d'un coup d'œil.
  */
-/** L'étalon le plus bas d'un propulseur (la part de la configuration que donne celui de série), et sa place sur une jauge. */
-export const ETALON_BAS = { poussee: 0.1295, vitesseMax: 0.3 }
-const surLaJauge = (v: number, meilleur: number, bas: number): number => (meilleur <= bas ? 0.05 : Math.max(0.05, 0.05 + (0.95 * (v - bas)) / (meilleur - bas)))
+/**
+ * LES ÉTALONS DES TROIS STATISTIQUES DE VOL (Keko, 13/11, après avoir joué avec le banc `&banc` : « ça me va comme
+ * standard : on fixe le minimum à 5 % des jauges en vitesse, accélération et maniabilité, et 100 % des jauges
+ * actuelles au max du jeu ») : l'échelle est ABSOLUE — celle des curseurs du banc — et non plus relative au meilleur
+ * propulseur du catalogue. `max` remplit la jauge ; `min` (5 % de `max`) est le plancher qu'un vaisseau peut avoir.
+ * La pointe en px/s, la poussée en px/s² (avant le poids), la rotation en rad/s.
+ */
+export const ETALONS = {
+  vitesse: { min: 15, max: 300 },
+  acceleration: { min: 15, max: 300 },
+  maniabilite: { min: 0.75, max: 15 },
+} as const
+const surLaJauge = (valeur: number, e: { min: number; max: number }): number => Math.max(0.05, Math.min(1, valeur / e.max))
 export function jaugesDe(p: Piece): Jauge[] {
   const memes = piecesDe(p.sorte)
   const max = (f: (q: Piece) => number): number => Math.max(...memes.map(f))
@@ -295,9 +305,9 @@ export function jaugesDe(p: Piece): Jauge[] {
     return [
       // (L'ÉTALON LE PLUS BAS REMPLIT 5 % DE LA JAUGE — Keko, 13/11 : « on devrait remplir à 5 % de la jauge pour la
       // vitesse la plus basse » : la barre va de l'étalon, à 5 %, au meilleur du catalogue, à 100 %)
-      { nom: 'Accélération', valeur: surLaJauge(p.poussee ?? 1, max((q) => q.poussee ?? 1), ETALON_BAS.poussee), max: 1 },
-      { nom: 'Vitesse', valeur: surLaJauge(p.vitesseMax ?? 1, max((q) => q.vitesseMax ?? 1), ETALON_BAS.vitesseMax), max: 1 },
-      { nom: 'Maniabilité', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
+      { nom: 'Accélération', valeur: surLaJauge(VAISSEAU.poussee * (p.poussee ?? 1), ETALONS.acceleration), max: 1 },
+      { nom: 'Vitesse', valeur: surLaJauge(VAISSEAU.vitesseMax * (p.vitesseMax ?? 1), ETALONS.vitesse), max: 1 },
+      { nom: 'Maniabilité', valeur: surLaJauge(VAISSEAU.rotation * (p.rotation ?? 1), ETALONS.maniabilite), max: 1 },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]
   }

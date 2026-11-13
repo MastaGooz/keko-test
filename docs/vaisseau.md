@@ -3329,3 +3329,14 @@ contraire freinent comme avant ; manche lâché, tout freine.
 - L'ACCÉLÉRATION dit en combien de temps : pointe ÷ (poussée ÷ poids).
 - LE POIDS allonge ce temps et la glisse, plus la vitesse atteignable.
 
+### Les étalons des statistiques de vol (13/11)
+
+Keko, après le banc : « ça me va comme standard — on fixe le minimum à 5 %
+des jauges en vitesse, accélération et maniabilité, et 100 % des jauges
+actuelles au max du jeu ». `ETALONS` (`hangar.ts`) : vitesse 15–300 px/s,
+accélération 15–300 px/s² (avant le poids), maniabilité 0,75–15 rad/s. Les
+jauges du hangar sont ABSOLUES sur cette échelle (plus relatives au
+meilleur propulseur). Le propulseur de série d'aujourd'hui (126 / 126 / 7)
+y est vers 42 % / 42 % / 47 %. *Les pièces ne sont pas encore reposées sur
+cette échelle ; le poids est le prochain sujet.*
+
