@@ -5401,11 +5401,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // moins en pyramide, qu'on voie vraiment que c'est un vaisseau » : un fuselage étroit, des ailes en flèche dont
       // les bouts reculent, une dérive et trois tuyères ; l'acier va du blanc à gauche au sombre à droite, une arête
       // de lumière le long du bord d'attaque, la verrière en creux sombre)
-      // (… PUIS UN CHASSEUR À NACELLES — Keko, 13/11 : la navette à ailes en flèche, « on dirait un avion de ligne » :
-      // un fuselage en pointe, et DEUX NACELLES de moteur droites, au bout de deux bras, de part et d'autre — une forme
-      // qu'aucun avion n'a ; trois tuyères qui luisent bleu)
-      const T: Record<string, number> = { H: COQUE[6], L: COQUE[5], M: COQUE[4], S: COQUE[3], D: COQUE[1], c: VERRIERE[2] }
-      const DESSIN = ['.....H.....', '....HLM....', '....LDM....', '....LDM....', 'H...LLM...M', 'L..HLLMS..S', 'LHLLLLMMMSS', 'L..LLLMS..S', 'L...LMS...S', 'c...c.c...c']
+      // (… PUIS LA NAVETTE DE L'IMAGE DE KEKO, 13/11 — « essaie quelque chose comme ça » : un nez rond, un fuselage
+      // sombre barré d'un bandeau de verrière lavande, deux flancs clairs qui s'évasent en courbe jusqu'à une aile
+      // large à bord de fuite droit, trois barrettes sur le dos, une tuyère ; le chasseur à nacelles est retiré)
+      const T: Record<string, number> = { M: COQUE[3], L: COQUE[5], H: COQUE[6], d: COQUE[4], S: COQUE[2], v: N.hex('#9aa4ea') }
+      const DESSIN = ['.....M.....', '....MMM....', '....vvv....', '....MMM....', '...HMMML...', '...LMdML...', '..HLMMMLL..', '.HLLMdMLLL.', 'HLLLMMMLLLL', 'MMMMMdMMMMM', '....SSS....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])

@@ -3149,3 +3149,6 @@ paillettes) ; l'onglet ouvert reste en or.
   CHASSEUR À NACELLES — un fuselage en pointe, deux nacelles droites au bout
   de deux bras (la navette « on dirait un avion de ligne » ; deux proues,
   essayées, faisaient une tête de chat).
+- Puis : le pictogramme suit UNE IMAGE DONNÉE PAR KEKO — une navette au nez
+  rond, fuselage sombre à bandeau de verrière lavande, flancs clairs évasés
+  jusqu'à une aile large, barrettes sur le dos, une tuyère.
