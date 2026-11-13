@@ -244,7 +244,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plus un seul élément non pixel ») : un titre, un texte, puis le hangar et « Décoller » ; ses zones touchables sont
    * refaites à chaque image dessinée, en pixels du tampon.
    */
-  let zones: { x: number; y: number; w: number; h: number; action: () => void; son?: Son | null }[] = []
+  let zones: { x: number; y: number; w: number; h: number; action: () => void; son?: Son | null; dx?: number; dy?: number }[] = []
 
   // ---------------------------------------------------------------- l'état
   /** `&quai` : le compte de l'extraction court dès le départ, sans sortir du parvis — pour juger l'arc d'un lien. */
@@ -365,7 +365,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const marge = (v: string): number => parseFloat(v) || 0
     const large = racine.clientWidth - marge(st.paddingLeft) - marge(st.paddingRight)
     const haut = racine.clientHeight - marge(st.paddingTop) - marge(st.paddingBottom)
-    return large > haut && !accueil && !ecranVisible()
+    // (étape 2 : LE HANGAR aussi ; les autres onglets restent debout en attendant leur tour)
+    return large > haut && !accueil && (!ecranVisible() || vue === 'hangar')
   }
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
@@ -927,8 +928,54 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let refus: { x: number; y: number; t0: number } | null = null
   const memeCoin = (a: { x: number; y: number } | null, x: number, y: number): boolean => a !== null && Math.abs(a.x - x) < 0.5 && Math.abs(a.y - y) < 0.5
   type EtatDuBouton = { dx: number; dy: number; enfonce: boolean; flash: boolean; survole: boolean }
+  /**
+   * L'ORIGINE DE LA FENÊTRE EN COURS (le paysage, étape 2) : couchée, la base se dessine par FENÊTRES — la scène dans
+   * l'une, le contenu dans une autre —, chacune avec SON origine et SA largeur, pour que les fonctions du portrait
+   * (qui comptent depuis 0 et jusqu'à `W`) s'y dessinent telles quelles. Le peintre, les zones touchables, l'état des
+   * boutons et la couche de lumière passent par elle ; hors d'une fenêtre, elle est nulle.
+   */
+  const ORIGINE = { x: 0, y: 0 }
+  /** Éteint la couche de lumière sur un rectangle de la fenêtre en cours (les aplats opaques ne la couvrent pas). */
+  function eteindre(x0: number, y0: number, x1: number, y1: number): void {
+    const fw = (frame as unknown as { w: number }).w
+    const fh = (frame as unknown as { h: number }).h
+    const a = Math.max(0, Math.min(fw, Math.round(x0 + ORIGINE.x)))
+    const b = Math.max(0, Math.min(fw, Math.round(x1 + ORIGINE.x)))
+    if (b <= a) return
+    for (let y = Math.max(0, Math.round(y0 + ORIGINE.y)); y < Math.min(fh, Math.round(y1 + ORIGINE.y)); y++) frame.light.fill(0, y * fw + a, y * fw + b)
+  }
+  /**
+   * Dessine `dessin` DANS UNE FENÊTRE : à partir de `x`, sur `w` de large. Le temps du dessin, `W` vaut `w`, le peintre
+   * et les zones sont décalés, la souris est ramenée dans la fenêtre ; après lui, ce qu'il a semé en coordonnées de la
+   * fenêtre (éclats, nombres qui montent, zones qui glissent, curseurs) est remis dans celles de l'écran.
+   */
+  function fenetre(p: Peintre, x: number, w: number, dessin: () => void): void {
+    const largeur = W
+    const souris0 = survol
+    const n = [eclats.length, flottants.length, volantes.length, envolsDePiece.length, curseurs.length]
+    ORIGINE.x = x
+    W = w
+    survol = souris0 === null ? null : { x: souris0.x - x, y: souris0.y }
+    p.place(0, 0)
+    dessin()
+    W = largeur
+    survol = souris0
+    ORIGINE.x = 0
+    p.place(0, 0)
+    for (let i = n[0]; i < eclats.length; i++) eclats[i].x += x
+    for (let i = n[1]; i < flottants.length; i++) flottants[i].x += x
+    for (let i = n[2]; i < volantes.length; i++) volantes[i].x0 += x
+    for (let i = n[3]; i < envolsDePiece.length; i++) envolsDePiece[i].x0 += x
+    for (let i = n[4]; i < curseurs.length; i++) curseurs[i].x += x
+    for (const z of [zoneGlissante, zoneDesOnglets, zoneDesCases, zoneDesMissions, zoneDeLInventaire, zoneDesOrdres, zoneDeLArbre]) {
+      if (z === null || zonesDecalees.has(z)) continue
+      z.x += x
+      zonesDecalees.add(z)
+    }
+  }
+  const zonesDecalees = new WeakSet<object>()
   function etatDuBouton(x: number, y: number, w: number, h: number): EtatDuBouton {
-    const age = enfonce !== null && memeCoin(enfonce, x, y) ? t - enfonce.t0 : 99
+    const age = enfonce !== null && memeCoin(enfonce, x + ORIGINE.x, y + ORIGINE.y) ? t - enfonce.t0 : 99
     const r = refus
     const tremble = r !== null && memeCoin(r, x, y) && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
     const survole = survol !== null && survol.x >= x && survol.x < x + w && survol.y >= y && survol.y < y + h
@@ -936,10 +983,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Une zone touchable, avec le son qu'elle fait (null : aucun ; par défaut, le clic). */
   function zone(x: number, y: number, w: number, h: number, action: () => void, son: Son | null = 'clic'): void {
-    zones.push({ x, y, w, h, action, son })
+    zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action, son, dx: ORIGINE.x, dy: ORIGINE.y })
   }
   function zoneDeRefus(x: number, y: number, w: number, h: number): void {
-    zones.push({ x, y, w, h, action: () => (refus = { x, y, t0: t }), son: 'refus' })
+    zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action: () => (refus = { x, y, t0: t }), son: 'refus' })
   }
   /** Le reflet d'une plaque survolée : il la traverse en boucle, vite. */
   const refletDeSurvol = (x: number, w: number, survole: boolean): number | null => (survole ? x - 10 + ((t * 1.6) % 1.2) * (w + 30) : null)
@@ -1025,12 +1072,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ligne sous le titre » ; l'étage du titre fait trente pixels, la languette en dépasse de dix)
   const HAUT_DU_TITRE = 30
   const HAUT_DES_CREDITS = 10
-  const HAUT_BARRE = HAUT_DU_TITRE + HAUT_DES_CREDITS
+  let HAUT_BARRE = HAUT_DU_TITRE + HAUT_DES_CREDITS
   /** Le milieu de la ligne des crédits (les pièces y volent). */
-  const Y_CREDITS = HAUT_BARRE - 8
+  let Y_CREDITS = HAUT_BARRE - 8
   /** Le bord gauche de la languette des crédits (refait à chaque image) : ce qui passe derrière l'en-tête s'y arrête. */
   let xDeLaLanguette = W
-  const HAUT_NAV = 34
+  let HAUT_NAV = 34
   /**
    * OÙ COMMENCE LA SCÈNE (Keko, 12/11 : l'en-tête n'est plus un rectangle — il s'arrête sous le titre, et seule la
    * LANGUETTE des crédits descend, à droite) : juste sous le titre, la languette passant devant son coin — sauf dans la
@@ -1163,6 +1210,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
+    if (paysage) {
+      dessinerLaBaseCouchee(p)
+      return
+    }
+    HAUT_BARRE = HAUT_DU_TITRE + HAUT_DES_CREDITS
+    HAUT_NAV = 34
+    Y_CREDITS = HAUT_BARRE - 8
     Y_SCENE = sceneSousLeTitre() ? HAUT_DU_TITRE - 1 : HAUT_BARRE
     hautScene = hauteurDeScene() + (HAUT_BARRE - Y_SCENE) // (le contenu, dessous, ne bouge pas : la scène gagne la hauteur)
     p.rect(0, 0, W, H, NUIT)
@@ -1182,6 +1236,134 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesCouleurs(p)
     dessinerLaVente(p)
     dessinerLesEclats(p)
+  }
+
+  /**
+   * LA BASE COUCHÉE (le paysage, étape 2 — Keko, 13/11 : « rail gauche ok ; le portrait doit rester dans tous les cas,
+   * laisse le choix au joueur ») : téléphone couché, l'écran fait de 320 à 480 de large sur 180 à 240 de haut.
+   * - À GAUCHE, LE RAIL des onglets, vertical, à la place de la barre du bas ;
+   * - EN HAUT, UNE LIGNE FINE : le titre de la vue, les crédits à droite ;
+   * - puis DEUX COLONNES : LA SCÈNE (le vaisseau sur son aire) prend ce qui reste, LE CONTENU (les cases et « Décoller »,
+   *   la page d'une place) une colonne de 180 — la largeur du portrait : ses fonctions s'y dessinent telles quelles, par
+   *   `fenetre` ; les panneaux (changer, couleurs, autres onglets) s'ouvrent dans cette colonne, le vaisseau reste visible.
+   * Seul le hangar est couché pour l'instant.
+   */
+  const RAIL = 28
+  const HAUT_COUCHE = 22
+  const COLONNE = 180
+  function dessinerLaBaseCouchee(p: Peintre): void {
+    HAUT_BARRE = HAUT_COUCHE
+    HAUT_NAV = 0
+    Y_CREDITS = 11
+    Y_SCENE = HAUT_COUCHE
+    p.rect(0, 0, W, H, NUIT)
+    if (credits !== creditsConnus) {
+      const d = credits - creditsConnus
+      flottants.push({ texte: `${d > 0 ? '+' : ''}${d}`, x: Math.min(compteurX, W - 22), y: HAUT_BARRE + 3, t0: t, c: d > 0 ? RUNE[3] : PEPITE[3] })
+      creditsConnus = credits
+      creditsA = t
+    }
+    creditsVus = Math.abs(credits - creditsVus) < 0.5 ? credits : ressort(creditsVus, credits, 8)
+    const xc = W - COLONNE
+    // la scène, dans sa fenêtre : toute la hauteur sous la ligne du haut
+    hautScene = H - HAUT_COUCHE
+    fenetre(p, RAIL, xc - RAIL, () => dessinerLaScene(p))
+    // (l'aire est plus large que sa fenêtre : ce qui en dépasse est recouvert, et sa lumière éteinte)
+    p.rect(xc, 0, COLONNE, H, NUIT)
+    p.rect(xc, HAUT_COUCHE, 1, H - HAUT_COUCHE, MATIERES.encre.contour)
+    p.rect(xc + 1, HAUT_COUCHE, 1, H - HAUT_COUCHE, N.hex('#1f1a2b'))
+    eteindre(xc, 0, W, H)
+    eteindre(0, 0, RAIL, H)
+    eteindre(0, 0, W, HAUT_COUCHE)
+    // le contenu, dans la colonne : il commence sous la ligne du haut
+    hautScene = 0
+    fenetre(p, xc, COLONNE, () => dessinerLeContenu(p))
+    // les panneaux, dans la colonne ; puis la ligne du haut (leur voile ne l'éteint pas) et le rail, dont les onglets
+    // restent touchables par-dessus
+    fenetre(p, xc, COLONNE, () => {
+      dessinerLaFeuille(p)
+      dessinerLeChangement(p)
+      dessinerLesCouleurs(p)
+    })
+    dessinerLaLigneDuHaut(p)
+    dessinerLeRail(p)
+    dessinerLesEclats(p)
+  }
+  /** LA LIGNE DU HAUT de la base couchée : le pupitre en une ligne — l'icône et le titre de la vue, le cartouche des crédits. */
+  function dessinerLaLigneDuHaut(p: Peintre): void {
+    const yb = HAUT_COUCHE
+    p.rect(RAIL, 0, W - RAIL, yb, N.hex('#17131f'))
+    p.rect(RAIL, 0, W - RAIL, 1, N.hex('#322b47'))
+    p.rect(RAIL, 1, W - RAIL, 1, N.hex('#1f1a2b'))
+    p.rect(RAIL, yb - 2, W - RAIL, 1, N.hex('#4c4468'))
+    p.rect(RAIL, yb - 1, W - RAIL, 1, MATIERES.encre.contour)
+    const u = sortie((t - vueA) / 0.35)
+    const chute = Math.round((1 - u) * -8)
+    const nom = NOMS_VUE[vue].toUpperCase()
+    const w = largeurDe(nom, TITRE)
+    const c = (t % 5) / 5
+    motEnRelief(p, nom, RAIL + 8 + w / 2, 4 + chute, true, TITRE, c < 0.14 ? -10 + (c / 0.14) * (w + 30) : null)
+    // le cartouche des crédits, calé à droite
+    const n = String(Math.max(0, Math.round(creditsVus)))
+    const wn = largeurDe(n, GRAS)
+    const allume = t - creditsA < 0.45
+    const r = refus
+    const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const saut = t - creditsA < 0.12 ? -1 : 0
+    const wp = wn + 21
+    const px = W - 4 - wp + tremble
+    const yc = 5
+    compteurX = px + wp - 9
+    if (allume) p.glow(px + wp / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
+    p.rect(px, yc, wp, 10, allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b'))
+    p.rect(px + 1, yc + 1, wp - 2, 8, N.hex('#0c241d'))
+    p.rect(px + 1, yc + 1, wp - 2, 1, N.hex('#16382d'))
+    dessinerUnCredit(p, px + wp - 9, yc + 5 + saut)
+    ecrire(p, n, px + wp - 16, yc + 2 + saut, allume ? N.WHITE : N.hex('#fff2c8'), { police: GRAS, align: 'right' })
+  }
+  /**
+   * LE RAIL des onglets, à gauche de la base couchée : la barre du bas tournée — une case par onglet (son icône), celle
+   * de la vue ouverte éclairée, un repère d'or qui glisse le long du bord ; la dernière ouvre « Autres onglets ».
+   */
+  let repereY = -1
+  function dessinerLeRail(p: Peintre): void {
+    p.rect(0, 0, RAIL, H, NUIT_BARRE)
+    p.rect(RAIL - 1, 0, 1, H, MATIERES.encre.contour)
+    p.rect(RAIL - 2, 0, 1, H, MATIERES.encre.lumiere2)
+    const slots = [...PRINCIPALES(), 'plus']
+    const sh = H / slots.length
+    const horsBarre = !PRINCIPALES().includes(vue)
+    slots.forEach((vv, i) => {
+      const actif = vv === 'plus' ? feuille || horsBarre : vv === vue && !feuille
+      const y0 = Math.round(i * sh)
+      const y1 = Math.round((i + 1) * sh)
+      const cy = Math.round((y0 + y1) / 2)
+      const e = etatDuBouton(0, y0, RAIL, y1 - y0)
+      const leve = rebond(`nav-${vv}`, actif ? 1 : 0)
+      const pulse = t - (pulsations[vv] ?? -10) < 0.3 ? Math.round(Math.sin(((t - (pulsations[vv] ?? 0)) / 0.3) * Math.PI) * 3) : 0
+      const dx = Math.round(leve * 2) + pulse
+      if (e.survole && !actif) p.rect(2, y0 + 2, RAIL - 5, y1 - y0 - 4, N.hex('#19152a'))
+      if (actif) p.glow(RAIL / 2, cy, 18, PEPITE[2], 0.2)
+      const ic = vv === 'plus' && horsBarre && !feuille ? vue : vv
+      if (ic === 'plus') dessinerLIconePlus(p, RAIL / 2 - 1 + dx, cy + e.dy, actif)
+      else dessinerLIconeDeVue(p, ic, RAIL / 2 - 1 + dx, cy + e.dy, actif)
+      if (nouveautes.has(vv) || (vv === 'quetes' && quetes.actives.some(estTerminee))) {
+        const bx = RAIL - 9
+        const by = cy - 9
+        p.rect(bx - 1, by - 1, 5, 5, MATIERES.encre.contour)
+        p.rect(bx, by, 3, 3, N.hex('#ff3a4a'))
+        p.rect(bx, by, 1, 1, N.hex('#ffb0b0'))
+        p.glow(bx + 1, by + 1, 5, N.hex('#ff3a4a'), 0.4 + 0.3 * Math.sin(t * 6))
+      }
+      const action = vv === 'plus' ? basculerLaFeuille : () => (vv === vue ? (feuille = false) : allerA(vv))
+      zone(0, y0, RAIL, y1 - y0, action, vv === 'plus' ? (feuille ? 'retour' : 'ouvre') : actif ? null : 'onglet')
+    })
+    const ia = feuille || horsBarre ? slots.length - 1 : slots.indexOf(vue)
+    const cible = ia * sh + sh / 2
+    repereY = repereY < 0 ? cible : ressort(repereY, cible, 18)
+    p.rect(0, Math.round(repereY - 10), 2, 20, PEPITE[2])
+    p.rect(0, Math.round(repereY - 7), 1, 14, N.hex('#fff2a8'))
+    p.glow(1, Math.round(repereY), 10, PEPITE[2], 0.35)
   }
 
   /**
@@ -1298,8 +1480,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLeHangarEnScene(p, cx, cy, y0, y1)
       // (l'aire dépasse la scène : ce qui en sort par le bas est recouvert, et sa lumière éteinte hors de la scène)
       p.rect(0, y1, W, H - y1, NUIT)
-      frame.light.fill(0, 0, y0 * W)
-      frame.light.fill(0, y1 * W)
+      eteindre(-1000, -1000, 2000, y0)
+      eteindre(-1000, y1, 2000, 2000)
     } else if (vue === 'entrepot') dessinerLInventaire(p, y0)
     else if (vue === 'labo') dessinerLArbre(p, y0)
     // LA VIGNETTE : les bords s'assombrissent, en trame de plus en plus serrée
@@ -1665,7 +1847,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u = sortie((t - feuilleA) / 0.22)
     const k = feuille ? u : 1 - u
     if (k <= 0.01) return
-    const bas = H - HAUT_NAV
+    // (couchée, il n'y a pas de barre du bas derrière laquelle finir : la feuille s'arrête au-dessus du bord)
+    const bas = H - HAUT_NAV - (paysage ? 10 : 0)
     const autres = VUES.slice(4)
     const COL = 4
     const tw = 42
@@ -1749,7 +1932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (AU DÉCOLLAGE, le feu du réacteur passe DERRIÈRE l'en-tête, comme le vaisseau — Keko, 12/11 : « les particules de
     // feu du réacteur sont au-dessus de la zone du titre au lieu d'être en dessous » : les éclats sont peints en dernier,
     // par-dessus tout ; pendant le décollage, ceux qui sont sous l'en-tête ou sa languette ne se peignent pas)
-    const cache = (x: number, y: number): boolean => decollageA !== null && (y < HAUT_DU_TITRE || (y < HAUT_BARRE + 1 && x >= xDeLaLanguette - 2))
+    const cache = (x: number, y: number): boolean => decollageA !== null && (paysage ? y < HAUT_COUCHE : y < HAUT_DU_TITRE || (y < HAUT_BARRE + 1 && x >= xDeLaLanguette - 2))
     for (const e of eclats) {
       e.x += e.vx * dtBase
       e.y += e.vy * dtBase
@@ -2242,7 +2425,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u0 = sortie((t - changementA) / 0.18)
     // tout ce qui est dessous disparaît et ne répond plus (la barre du haut reste : on y lit ses crédits)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT)
-    frame.light.fill(0, HAUT_BARRE * W)
+    eteindre(0, HAUT_BARRE, W, H)
     zones = []
     curseurs = []
     zoneDesCases = null
@@ -3587,7 +3770,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Une zone touchée : elle s'enfonce, agit, et sonne. */
   function appuyer(z: { x: number; y: number; action: () => void; son?: Son | null }): void {
     enfonce = { x: z.x, y: z.y, t0: t }
+    const n = [eclats.length, flottants.length, volantes.length, envolsDePiece.length]
     z.action()
+    // (ce que l'action a semé — une gerbe, un nombre qui monte, des pièces qui volent — l'était dans la fenêtre de sa zone)
+    const dx = (z as { dx?: number }).dx ?? 0
+    if (dx !== 0) {
+      for (let i = n[0]; i < eclats.length; i++) eclats[i].x += dx
+      for (let i = n[1]; i < flottants.length; i++) flottants[i].x += dx
+      for (let i = n[2]; i < volantes.length; i++) volantes[i].x0 += dx
+      for (let i = n[3]; i < envolsDePiece.length; i++) envolsDePiece[i].x0 += dx
+    }
     const son = z.son === undefined ? 'clic' : z.son
     if (son !== null) jouer(son)
   }
@@ -5734,6 +5926,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     N.clearFrame(frame)
     const p = N.painterFor(frame)
+    // (le peintre se place À PARTIR DE L'ORIGINE DE LA FENÊTRE en cours — nulle hors de la base couchée)
+    {
+      const q = p as unknown as { placeBrute?: (x: number, y: number, f?: boolean, a?: number) => unknown; place: (x: number, y: number, f?: boolean, a?: number) => unknown }
+      if (q.placeBrute === undefined) {
+        const brute = q.place
+        q.placeBrute = brute
+        q.place = function (this: unknown, x: number, y: number, f?: boolean, a?: number) {
+          return brute.call(this, x + ORIGINE.x, y + ORIGINE.y, f, a)
+        }
+      }
+    }
     if (accueil) {
       regler(0, false, 0, false)
       dessinerLAccueil(p)

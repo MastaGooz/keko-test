@@ -2848,3 +2848,28 @@ le portrait reste intact à chacune.
 - La base, l'accueil et les écrans de fin restent en portrait au milieu de
   l'écran couché : étapes suivantes (le hangar, puis le reste).
 Puis (Keko : « la barre en haut est vide au milieu ») : en paysage le pupitre est EN DEUX MORCEAUX, un sous la soute, un sous le blindage ; entre les deux, le ciel. Et la vue monte jusqu'au bord du haut (`bandeHaut` à zéro) : la hauteur en trop va en bas.
+
+### Le paysage, étape 2 : le hangar couché (13/11)
+
+Keko : « rail gauche ok ; le portrait doit rester dans tous les cas, laisse
+le choix au joueur » — c'est l'orientation du téléphone qui choisit.
+`dessinerLaBaseCouchee` (`veutLePaysage` : couché ET au hangar) :
+- LE RAIL des onglets à gauche (28 px, `dessinerLeRail` : la barre du bas
+  tournée), LA LIGNE DU HAUT (22 px, `dessinerLaLigneDuHaut` : le titre, le
+  cartouche des crédits), puis deux colonnes : LA SCÈNE (le vaisseau) prend
+  ce qui reste, LE CONTENU une colonne de 180 — la largeur du portrait.
+- LES FENÊTRES (`fenetre`, `ORIGINE`) : la scène et le contenu sont dessinés
+  par LES FONCTIONS DU PORTRAIT, inchangées — le temps de leur dessin `W` vaut
+  la largeur de leur fenêtre, le peintre (`place` décalé), les zones
+  (`zone`, `etatDuBouton`), la souris et l'extinction de la lumière
+  (`eteindre`, à la place des `light.fill` comptés en lignes) passent par
+  l'origine de la fenêtre ; ce qu'un dessin ou une action sème en coordonnées
+  locales (éclats, nombres, pièces qui volent, zones qui glissent) est remis
+  dans celles de l'écran après coup. `HAUT_BARRE`, `HAUT_NAV`, `Y_CREDITS`
+  sont devenus des variables, reposées à chaque image.
+- Les panneaux (changer, couleurs, autres onglets) s'ouvrent dans la colonne :
+  le vaisseau reste visible à gauche.
+- À FAIRE : la recherche, le commerce, les missions, les paramètres, l'accueil
+  — encore en portrait au milieu de l'écran couché. À 180 de haut (les plus
+  petits téléphones), le panneau « Changer » du châssis déborde de quelques
+  pixels.
