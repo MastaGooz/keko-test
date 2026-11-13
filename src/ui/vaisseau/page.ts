@@ -487,8 +487,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('zero')) {
       const reste = Math.max(0.5, poidsTotal(hangar) - monteeA(hangar, 'coque').poids - monteeA(hangar, 'propulseur').poids)
       const leger = Math.pow(reste / (monteeA(hangarNeuf(), 'coque').poids + monteeA(hangarNeuf(), 'propulseur').poids + reste), 1.3)
-      // (une pointe infime plutôt que nulle : la page divise par elle — la traînée, la caméra — et zéro la figeait)
-      CONF = { ...CONF, poussee: 0, vitesseMax: 0.01, rotation: 0, frein: BASE.frein / leger, masse: reste }
+      // (… PUIS, à zéro partout, le vaisseau ne bougeait pas du tout : « mets l'accélération et la vitesse au minimum pour
+      // que le vaisseau bouge ». `&zero` : un cinquième de l'accélération et de la pointe de série, aucune rotation ;
+      // `&zero=a,v,r` : les trois parts, de 0 à 1 — accélération, pointe, maniabilité. Une pointe infime plutôt que
+      // nulle : la page divise par elle, et zéro la figeait.)
+      const parts = (parametres.get('zero') ?? '').split(',').map(Number)
+      const part = (i: number, defaut: number): number => (Number.isFinite(parts[i]) && (parametres.get('zero') ?? '') !== '' ? Math.max(0, parts[i]) : defaut)
+      CONF = { ...CONF, poussee: BASE.poussee * part(0, 0.2), vitesseMax: Math.max(0.01, BASE.vitesseMax * part(1, 0.2)), rotation: BASE.rotation * part(2, 0), frein: BASE.frein / leger, masse: reste }
     }
     m = monterLeMonde()
     // (ce que le hangar a semé ne suit pas le vaisseau dans l'espace : les fumées et les étincelles du décollage, les

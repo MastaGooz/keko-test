@@ -3260,4 +3260,7 @@ vol — deux points de fumée restaient à l'écran à l'arrivée.
 propulseur montés ne pèsent rien et le propulseur ne donne ni poussée, ni
 pointe, ni rotation — « voir, avec aucune statistique, comment se déplace
 le vaisseau ». Le hangar, lui, affiche toujours les vraies pièces.
+Puis : `&zero` donne un cinquième de l'accélération et de la pointe de série
+(à zéro, le vaisseau ne bougeait pas), toujours sans rotation ;
+`&zero=a,v,r` choisit les trois parts (accélération, pointe, maniabilité).
 
