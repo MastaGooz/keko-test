@@ -3051,7 +3051,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const BIT = N.hex('#f2fdff')
     const conduitV = (x: number, y0: number, y1: number, e: Etat): void => {
       if (y1 <= y0) return
-      for (const [dx, phase] of [[-1, 0], [1, 7]]) {
+      // (UNE SEULE PISTE — Keko, 13/11, à l'essai : « la même, mais juste une ligne au lieu de deux »)
+      for (const [dx, phase] of [[0, 0]]) {
         coupe(x + dx, y0, 1, y1 - y0, piste(e))
         if (e === 2) for (let yp = y0 + ((t * 40 + phase) % 14); yp < y1 - 1; yp += 14) coupe(x + dx, Math.round(yp), 1, 2, BIT)
       }
@@ -3062,7 +3063,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     const conduitH = (y: number, x0: number, x1: number, e: Etat): void => {
       if (x1 < x0) return
-      for (const [dy, phase] of [[-1, 0], [1, 7]]) {
+      for (const [dy, phase] of [[0, 0]]) {
         coupe(x0, y + dy, x1 - x0 + 1, 1, piste(e))
         if (e !== 2 || x1 === x0) continue
         // (les bits partent du milieu vers les deux bouts)

@@ -3241,3 +3241,4 @@ de soudure percées. Le tracé (bus par rang) et les trois états ne changent
 pas.
 
 Les pastilles aux rencontres sont retirées le même jour (« enlève les ronds dans les angles ») : les pistes se croisent nues.
+Puis une seule piste par lien au lieu d'une paire (à l'essai).
