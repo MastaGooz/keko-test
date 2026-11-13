@@ -3340,3 +3340,21 @@ meilleur propulseur). Le propulseur de série d'aujourd'hui (126 / 126 / 7)
 y est vers 42 % / 42 % / 47 %. *Les pièces ne sont pas encore reposées sur
 cette échelle ; le poids est le prochain sujet.*
 
+### Le poids en proportion simple, et le nombre de propulseurs (13/11)
+
+Keko, en vue de gros vaisseaux (jusqu'à ~200 T, 4 outils, 6 à 8 armes) :
+« ramène le poids à une proportion simple. On garde un seul slot de
+propulseur par vaisseau, mais la taille du vaisseau modifie leur nombre
+(comme ça on évite les trucs bizarres avec différents propulseurs) ; on
+indique juste le nombre de propulseurs dans une nouvelle ligne de stat du
+châssis ».
+- LE POIDS divise la poussée et le frein EN PROPORTION SIMPLE (`poidsTotal /
+  POIDS_SERIE`, l'exposant 1,3 est retiré — `configDuHangar`, et le banc).
+- `Piece.propulseurs` (une coque) : le propulseur monté y est en autant
+  d'exemplaires — leurs poussées s'additionnent, leurs poids aussi
+  (`poidsTotal`, `nombreDePropulseurs`) ; la pointe et la maniabilité
+  restent celles du propulseur. La fiche d'un châssis a une ligne
+  « Propulseurs ». Tous les châssis d'aujourd'hui en ont un.
+- À faire quand un châssis en portera plusieurs : les dessiner (plusieurs
+  tuyères, plusieurs flammes).
+

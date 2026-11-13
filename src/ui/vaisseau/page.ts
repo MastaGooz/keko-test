@@ -317,7 +317,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const BANC = parametres.has('banc')
   let bancOuvert = false
   let banc: { pointe: number; poussee: number; rotation: number; poids: number } | null = null
-  const allegeParLePoids = (poids: number): number => Math.pow(Math.max(0.5, poids) / POIDS_SERIE, 1.3)
+  const allegeParLePoids = (poids: number): number => Math.max(0.5, poids) / POIDS_SERIE // (en proportion simple, comme `configDuHangar`)
   function appliquerLeBanc(): void {
     if (banc === null) return
     const f = allegeParLePoids(banc.poids)
@@ -553,7 +553,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // pèsent plus rien, et le propulseur ne donne ni poussée, ni pointe, ni rotation. Le reste (outils, armes) ne change pas.
     if (parametres.has('zero')) {
       const reste = Math.max(0.5, poidsTotal(hangar) - monteeA(hangar, 'coque').poids - monteeA(hangar, 'propulseur').poids)
-      const leger = Math.pow(reste / (monteeA(hangarNeuf(), 'coque').poids + monteeA(hangarNeuf(), 'propulseur').poids + reste), 1.3)
+      const leger = reste / (monteeA(hangarNeuf(), 'coque').poids + monteeA(hangarNeuf(), 'propulseur').poids + reste)
       // (… PUIS, à zéro partout, le vaisseau ne bougeait pas du tout : « mets l'accélération et la vitesse au minimum pour
       // que le vaisseau bouge ». `&zero` : trois dixièmes de l'accélération et de la pointe de série, aucune rotation ;
       // `&zero=a,v,r` : les trois parts, de 0 à 1 — accélération, pointe, maniabilité. Une pointe infime plutôt que

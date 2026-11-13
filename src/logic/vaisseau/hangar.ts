@@ -48,6 +48,13 @@ export type Piece = {
   bouclier?: number
   armes?: number
   outils?: number
+  /**
+   * La coque : COMBIEN DE PROPULSEURS elle porte (Keko, 13/11 : « on garde un seul slot de propulseur par vaisseau, mais
+   * la taille du vaisseau modifie leur nombre — comme ça on évite les trucs bizarres avec différents propulseurs ») :
+   * le propulseur monté y est en autant d'exemplaires. Leurs poussées S'ADDITIONNENT, leurs poids aussi ; la pointe et
+   * la maniabilité restent celles du propulseur. Absent : un seul.
+   */
+  propulseurs?: number
   /** Une foreuse : le débit et la portée du forage — des facteurs. Un AIMANT (un outil à part, Keko) : la portée de l'aimant, un facteur. */
   debit?: number
   portee?: number
@@ -240,7 +247,10 @@ export const armesMontees = (h: Hangar): Piece[] => montes(h, 'arme').filter((p)
 /** Toutes les pièces montées : les emplacements, puis les outils et les armes. */
 export const piecesMontees = (h: Hangar): Piece[] => [...EMPLACEMENTS.map((e) => monteeA(h, e)), ...montes(h, 'outil'), ...montes(h, 'arme')]
 /** LE POIDS TOTAL du vaisseau : la somme de ses pièces. */
-export const poidsTotal = (h: Hangar): number => piecesMontees(h).reduce((a, p) => a + p.poids, 0)
+/** Combien de propulseurs le vaisseau porte : ce que dit sa coque (un seul, si elle ne dit rien). */
+export const nombreDePropulseurs = (h: Hangar): number => Math.max(1, monteeA(h, 'coque').propulseurs ?? 1)
+/** (le propulseur monté pèse autant de fois qu'il y en a) */
+export const poidsTotal = (h: Hangar): number => piecesMontees(h).reduce((a, p) => a + p.poids, 0) + (nombreDePropulseurs(h) - 1) * monteeA(h, 'propulseur').poids
 /** Le poids du vaisseau de série (propulseur, coque, foreuse de série) : à ce poids, l'inertie est celle de la configuration. */
 export const POIDS_SERIE = poidsTotal(hangarNeuf())
 
@@ -254,14 +264,16 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   const pr = monteeA(h, 'propulseur')
   const co = monteeA(h, 'coque')
   const fo = foreuseMontee(h)
-  // LE POIDS TOTAL, rapporté à celui de série, un peu ACCENTUÉ (exposant 1,3 — Keko voulait qu'il se sente) : il divise
-  // la poussée et le frein du vide — lourd, on accélère moins et on glisse plus
-  const poids = Math.pow(poidsTotal(h) / POIDS_SERIE, 1.3)
+  // LE POIDS TOTAL, rapporté à celui de série, EN PROPORTION SIMPLE (Keko, 13/11 : « ramène le poids à une proportion
+  // simple » — il était accentué, exposant 1,3 : avec des propulseurs qui s'additionnent, deux fois plus lourd et deux
+  // fois plus de propulseurs doit donner la même accélération) : il divise la poussée et le frein du vide — lourd, on
+  // accélère moins et on glisse plus
+  const poids = poidsTotal(h) / POIDS_SERIE
   return {
     ...c,
     masse: poidsTotal(h),
     capacite: co.capacite ?? c.capacite,
-    poussee: (c.poussee * (pr.poussee ?? 1)) / poids,
+    poussee: (c.poussee * (pr.poussee ?? 1) * nombreDePropulseurs(h)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
     rotation: c.rotation * (pr.rotation ?? 1),
     frein: c.frein / poids,
@@ -318,6 +330,7 @@ export function jaugesDe(p: Piece): Jauge[] {
       { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: 8, cellules: true },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
       { nom: 'Soute', valeur: p.capacite ?? 0, max: max((q) => q.capacite ?? 0), nombre: true },
+      { nom: 'Propulseurs', valeur: p.propulseurs ?? 1, max: max((q) => q.propulseurs ?? 1), nombre: true },
       { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), nombre: true },
       { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), nombre: true },
     ]
