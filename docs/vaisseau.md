@@ -3154,3 +3154,5 @@ paillettes) ; l'onglet ouvert reste en or.
   jusqu'à une aile large, barrettes sur le dos, une tuyère.
 - Puis : la navette d'UN SEUL MÉTAL (cinq tons voisins d'un acier bleuté,
   plus de blanc ni de lavande).
+- Puis : la navette aux GRIS DU CONTENEUR DE LA SOUTE (le même acier), sa
+  VERRIÈRE EN BLEU — la touche de couleur, le bleu du filet du conteneur.
