@@ -41,6 +41,14 @@ export const VAISSEAU = {
    * maniabilité se sent à chaque demi-tour.
    */
   marcheArriere: 0.5,
+  /**
+   * LE PILOTAGE À TOURELLES (Keko, 13/11 — le cuirassé : « ses armes sont des armes embarquées, il peut tirer dans
+   * toutes les directions en continuant d'avancer ; le deuxième stick ne devrait pas le faire tourner sur lui-même ») :
+   * DEUX SYSTÈMES. Faux — LE CHASSEUR : le regard (le second manche, la souris) tourne le nez, les armes tirent où il
+   * pointe. Vrai — LE VAISSEAU À TOURELLES : le regard ne tourne PAS la coque, il ne dirige que le tir des armes (et
+   * la caméra) ; seul le manche du vol la fait virer, à la vitesse de sa maniabilité.
+   */
+  tourelles: false as boolean,
   /** La vitesse de pointe. */
   vitesseMax: 110,
   /** Le frein du vide, par seconde : `v *= exp(−frein·dt)`. Faible : on glisse. */
@@ -872,7 +880,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const pousse = boost > 0 && m.t - m.boostA < c.postcombustion.duree
   const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon, masse: c.masse } : c
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
-  const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits, regard)
+  // (un vaisseau à tourelles ne tourne pas vers son regard : il ne sert plus bas qu'à viser)
+  const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const chocs = [...r.chocs]

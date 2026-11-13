@@ -60,6 +60,13 @@ export type Piece = {
   propulseurs?: number
   /** La coque : son rayon dans les chocs, s'il n'est pas celui de la configuration (un gros vaisseau). */
   rayon?: number
+  /**
+   * La coque : SA MANIABILITÉ, un facteur sur celle du propulseur (un cuirassé vire lentement quel que soit son
+   * propulseur), et SON PILOTAGE — `tourelles` : le regard ne tourne pas la coque, il ne dirige que le tir (voir
+   * `VAISSEAU.tourelles`).
+   */
+  virage?: number
+  tourelles?: boolean
   /** Une foreuse : le débit et la portée du forage — des facteurs. Un AIMANT (un outil à part, Keko) : la portée de l'aimant, un facteur. */
   debit?: number
   portee?: number
@@ -97,7 +104,7 @@ export const PIECES: Piece[] = [
   // et outillé ») : 97 T de coque — 200 T tout monté par `&cuirasse` —, QUATRE propulseurs, huit armes, quatre outils, une grande soute,
   // le blindage et le bouclier au plus haut de ce que la fiche sait montrer. Il n'est à vendre nulle part encore :
   // `&cuirasse` le donne, tout armé.
-  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre propulseurs, quatre outils, huit armes. Un mastodonte.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 4, rayon: 18 },
+  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre propulseurs, quatre outils, huit armes. Vire lentement ; ses tourelles tirent dans toutes les directions.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 4, rayon: 18, virage: 0.055, tourelles: true },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, poids: 8, debit: 1.8, portee: 1.25},
@@ -286,7 +293,8 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
     capacite: co.capacite ?? c.capacite,
     poussee: (c.poussee * (pr.poussee ?? 1) * nombreDePropulseurs(h)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
-    rotation: c.rotation * (pr.rotation ?? 1),
+    rotation: c.rotation * (pr.rotation ?? 1) * (co.virage ?? 1),
+    tourelles: co.tourelles ?? false,
     frein: c.frein / poids,
     coque: co.pv ?? c.coque,
     bouclier: { ...c.bouclier, points: co.bouclier ?? 0 },
@@ -318,7 +326,9 @@ export type Jauge = { nom: string; valeur: number; max: number; /** Une quantit�
 export const ETALONS = {
   vitesse: { min: 15, max: 300 },
   acceleration: { min: 15, max: 300 },
-  maniabilite: { min: 0.75, max: 15 },
+  // (le minimum ABAISSÉ — Keko, 13/11 : à 0,75 rad/s le cuirassé virait encore « très très vite par rapport à sa
+  // taille » ; 0,3 rad/s, un demi-tour en dix secondes)
+  maniabilite: { min: 0.3, max: 15 },
 } as const
 const surLaJauge = (valeur: number, e: { min: number; max: number }): number => Math.max(0.05, Math.min(1, valeur / e.max))
 export function jaugesDe(p: Piece): Jauge[] {

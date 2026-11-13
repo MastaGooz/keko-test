@@ -6671,8 +6671,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cx = Math.max(-1.2, Math.min(1.2, mx + 0.5 * pousse * (dv.x - mx)))
     const cy = Math.max(-1.2, Math.min(1.2, my + 0.5 * pousse * (dv.y - my)))
     const avance = paysage ? AVANCE_EN_PAYSAGE : AVANCE_DE_LA_CAMERA
-    const cibleX = (cx * (1 - partDuRegard) + Math.cos(v.cap) * partDuRegard) * avance.x
-    const cibleY = (cy * (1 - partDuRegard) + Math.sin(v.cap) * partDuRegard) * avance.y
+    // (UN VAISSEAU À TOURELLES ne tourne pas vers son regard : la caméra avance vers LE REGARD lui-même, pas vers le nez)
+    const nr = rg === undefined ? 0 : Math.hypot(rg.x, rg.y)
+    const versOu = CONF.tourelles && rg !== undefined && nr > 0.05 ? { x: rg.x / nr, y: rg.y / nr } : { x: Math.cos(v.cap), y: Math.sin(v.cap) }
+    const cibleX = (cx * (1 - partDuRegard) + versOu.x * partDuRegard) * avance.x
+    const cibleY = (cy * (1 - partDuRegard) + versOu.y * partDuRegard) * avance.y
     decalageDeLaCamera.x += (cibleX - decalageDeLaCamera.x) * Math.min(1, dt * suivi)
     decalageDeLaCamera.y += (cibleY - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
     camera.x = v.x + decalageDeLaCamera.x

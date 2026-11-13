@@ -3406,3 +3406,24 @@ prendre (il gardait ceux du vol d'avant), et a un bouton « RESET » (rouge,
 à côté de « Fermer », éteint tant que rien n'a bougé) qui rend au vaisseau
 ses réglages du décollage (`bancDeDepart`).
 
+### Deux pilotages : le chasseur et le vaisseau à tourelles (13/11)
+
+Keko, le cuirassé en main : « même avec le minimum de maniabilité il tourne
+très très vite par rapport à sa taille. Et il ne devrait pas changer
+d'orientation pour tirer : ses armes sont embarquées, il peut tirer dans
+toutes les directions en continuant d'avancer. Le deuxième stick ne devrait
+orienter que la caméra et le tir. On a besoin de deux systèmes de
+pilotage ».
+- `VAISSEAU.tourelles` / `Piece.tourelles` (une coque) : LE CHASSEUR (faux)
+  — le regard tourne le nez, les armes tirent où il pointe ; LE VAISSEAU À
+  TOURELLES (vrai) — le regard ne tourne PAS la coque (`avancerLeMonde` ne
+  le passe plus à `voler`), il dirige le tir à la main et la caméra (qui
+  avance vers le regard, plus vers le nez) ; seul le manche du vol fait
+  virer la coque.
+- `Piece.virage` (une coque) : un facteur sur la maniabilité du propulseur.
+  Le cuirassé : 0,055 → 0,48 rad/s avec le propulseur ionique, un demi-tour
+  en 6,5 s (il en mettait 0,4).
+- L'étalon bas de la maniabilité : 0,3 rad/s (0,75 avant).
+- LIMITE : les tourelles ne pivotent pas à l'image ; les obus partent de
+  leur bouche, dans la direction visée.
+

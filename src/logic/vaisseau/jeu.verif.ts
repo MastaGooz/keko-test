@@ -228,6 +228,18 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   }
   verifier('d’un seul manche, un demi-tour va plus vite avec un nez plus maniable', demiTour(C.rotation * 2) > demiTour(C.rotation) * 1.02 && demiTour(C.rotation) > demiTour(C.rotation / 2) * 1.02)
 }
+// LE PILOTAGE À TOURELLES (Keko, 13/11) : le regard ne tourne pas la coque — seul le manche du vol la fait virer
+{
+  const cfg = { ...VAISSEAU, tourelles: true }
+  const w = nouveauMonde(cfg)
+  w.prochainEnnemiA = 1e9
+  for (let i = 0; i < 90; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: -1 }, { x: 1, y: 0 }, true)
+  verifier('à tourelles, le regard ne tourne pas le nez (il reste dans l’axe du manche)', Math.abs(Math.sin(w.vaisseau.cap) + 1) < 1e-6)
+  const ch = nouveauMonde(VAISSEAU)
+  ch.prochainEnnemiA = 1e9
+  for (let i = 0; i < 90; i++) avancerLeMonde(VAISSEAU, ch, 1 / 60, { x: 0, y: -1 }, { x: 1, y: 0 }, true)
+  verifier('en chasseur, le regard tourne le nez', Math.cos(ch.vaisseau.cap) > 0.9)
+}
 // LE POIDS : la coque blindée accélère moins et glisse plus que celle de série
 const lourde = armer('coque-2')
 let vs = nouveauVaisseau()
