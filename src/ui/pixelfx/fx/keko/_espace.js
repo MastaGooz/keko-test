@@ -64,10 +64,12 @@ export class Grains {
         p.light(g.x, g.y, g.c, 0.6 * (1 - u));
       } else {
         // la braise : du jaune au rouge sombre, qui clignote en mourant
-        const c = FIRE_RAMP[Math.min(8, 2 + Math.floor(u * 6))];
+        // (… ou PAR SA RAMPE À ELLE, du chaud au froid, si `c` en est une : la braise bleue d'un propulseur ionique)
+        const rampe = Array.isArray(g.c) ? g.c : null;
+        const c = rampe ? rampe[Math.min(rampe.length - 1, Math.floor(u * rampe.length))] : FIRE_RAMP[Math.min(8, 2 + Math.floor(u * 6))];
         if (u > 0.7 && Math.floor(g.vie * 30) % 2 === 0) continue;
         p.dot(g.x, g.y, c, 1 - u * 0.5);
-        p.light(g.x, g.y, FIRE_RAMP[4], 0.35 * (1 - u));
+        p.light(g.x, g.y, rampe ? rampe[Math.floor(rampe.length / 2)] : FIRE_RAMP[4], 0.35 * (1 - u));
       }
     }
   }

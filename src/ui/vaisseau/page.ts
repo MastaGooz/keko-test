@@ -306,6 +306,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const R = new N.Rng(7)
   /** Les grains de l'espace : sans pesanteur ni montée (Keko : « des débris tombent vers le bas comme s'il y avait de la gravité »). */
   const braises = new Grains(R)
+  /** Les braises d'un propulseur ionique : du blanc bleuté au bleu sombre (la rampe de sa flamme, du chaud au froid). */
+  const BRAISES_D_ION = [ION[6], ION[5], ION[4], ION[3], ION[3], ION[2], ION[2], ION[1]]
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
   let effets: { fx: Instance; x: number; y: number }[] = []
   /** Le forage : les étincelles du point d'impact, les morceaux des roches éclatées (sans pesanteur : l'espace), les flashs. */
@@ -1603,7 +1605,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       flam = Math.min(1, 0.2 + u * 4)
       jit = u < 0.35 ? Math.round((R.next() - 0.5) * 2) : 0
       sy = cy - 2 - Math.round(Math.pow(Math.max(0, u - 0.28) / 0.72, 2.2) * (cy - y0 + 50))
-      if (R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + 26, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: FEU[3 + Math.floor(R.next() * 4)] })
+      // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
+      const cranP = monteeA(hangar, 'propulseur').cran
+      const bout = Math.round((8.4 + 0.5 * (cranP - 1) + (2.5 + 8 * flam) * (1 + 0.25 * (cranP - 1)) * 0.85) * ECHELLE)
+      if (R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
       if (u >= 1) {
         decollageA = null
@@ -5463,7 +5468,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
       const blanc = du >= 0 && du < 0.07
       const ex = px0 + Math.round(pw / 2) - 4
-      dessinerLEcusson(ex, oy + 4 + bond, blanc)
+      // (un pixel à droite : la miniature est dans l'axe de la barre qu'elle coiffe — Keko, 13/11 : la barre semblait
+      // « un petit peu décalée »)
+      dessinerLEcusson(ex + 1, oy + 4 + bond, blanc)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
@@ -6304,10 +6311,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (v.poussee > 0.05) {
           const n = v.poussee > 0.6 ? 2 : 1
           for (let i = 0; i < n; i++) {
-            const bx = v.x - Math.cos(v.cap) * 8
-            const by = v.y - Math.sin(v.cap) * 8
+            // (ELLES NAISSENT AU BOUT DE LA FLAMME, pas à la queue du vaisseau — Keko, 13/11 : « on dirait que les
+            // particules naissent trop tôt » — la longueur de la flamme est celle de `formesDuPropulseur` ; et À LA
+            // COULEUR DE LA FLAMME : bleues derrière un propulseur ionique, elles restaient couleur feu)
+            const cran = monteeA(hangar, 'propulseur').cran
+            const flamme = (2.5 + 8 * v.poussee) * (1 + 0.25 * (cran - 1))
+            const recul = 8.4 + 0.5 * (cran - 1) + flamme * 0.85
+            const bx = v.x - Math.cos(v.cap) * recul
+            const by = v.y - Math.sin(v.cap) * recul
             const vitesse = 30 + 40 * v.poussee
-            braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), 0, 1, 2)
+            braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
           }
         }
       }

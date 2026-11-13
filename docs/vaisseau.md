@@ -3175,3 +3175,10 @@ LA TOUCHE DE LA SOUTE n'est plus d'or (13/11 : l'or « rappelle trop la barre
 de blindage ») : une matière `clair`, l'acier clair du conteneur, et un
 chevron bleu sur bleu nuit.
 Debout, cette touche fait 18 × 12 (elle faisait 14 × 16) : plus large, moins haute, comme couchée.
+
+LES BRAISES DU PROPULSEUR (13/11) naissent AU BOUT DE LA FLAMME (sa longueur
+est celle de `formesDuPropulseur`), plus à la queue du vaisseau, et sont À
+LA COULEUR DE LA FLAMME : `Grains.ajouter('braise', …, c)` accepte une
+rampe, du chaud au froid (`BRAISES_D_ION` pour un propulseur de cran 3 et
+plus) ; pareil pour les éclats du décollage au hangar. Couchée, la
+miniature de la barre de vie est décalée d'un pixel, dans l'axe de sa barre.
