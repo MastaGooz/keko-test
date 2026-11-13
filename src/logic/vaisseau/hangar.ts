@@ -27,7 +27,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3
+  cran: 1 | 2 | 3 | 4
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -55,6 +55,8 @@ export type Piece = {
    * la maniabilité restent celles du propulseur. Absent : un seul.
    */
   propulseurs?: number
+  /** La coque : son rayon dans les chocs, s'il n'est pas celui de la configuration (un gros vaisseau). */
+  rayon?: number
   /** Une foreuse : le débit et la portée du forage — des facteurs. Un AIMANT (un outil à part, Keko) : la portée de l'aimant, un facteur. */
   debit?: number
   portee?: number
@@ -88,6 +90,11 @@ export const PIECES: Piece[] = [
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Châssis de série', dit: '5 de blindage, 20 unités en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
   { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Châssis blindé', dit: '8 de blindage, 30 unités en soute, un outil, deux armes. Lourd.', note: 'Acier riveté.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30 },
   { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Châssis à bouclier', dit: '5 de blindage et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge après 4 s sans coup.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
+  // LE CUIRASSÉ (Keko, 13/11 : « un vaisseau de 200 T de type cuirassé, avec le nombre de propulseurs adapté, très armé
+  // et outillé ») : 97 T de coque — 200 T tout monté par `&cuirasse` —, QUATRE propulseurs, huit armes, quatre outils, une grande soute,
+  // le blindage et le bouclier au plus haut de ce que la fiche sait montrer. Il n'est à vendre nulle part encore :
+  // `&cuirasse` le donne, tout armé.
+  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre propulseurs, quatre outils, huit armes. Un mastodonte.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 4, rayon: 12 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, poids: 8, debit: 1.8, portee: 1.25},
@@ -272,6 +279,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
   return {
     ...c,
     masse: poidsTotal(h),
+    rayon: co.rayon ?? c.rayon,
     capacite: co.capacite ?? c.capacite,
     poussee: (c.poussee * (pr.poussee ?? 1) * nombreDePropulseurs(h)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),

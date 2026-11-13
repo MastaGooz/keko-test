@@ -17,7 +17,7 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, con
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boiteDe, boucheDeLArme, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boiteDe, boucheMontee, gabaritDe, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
@@ -237,6 +237,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('armes')) hangar = { ...hangar, possedees: [...new Set([...hangar.possedees, 'arme-canon', 'arme-rafale', 'arme-missiles'])] }
   // (les pièces d'essai ne sont portées par aucun nœud du labo : `&pieces` les donne, pour remplir les listes du hangar)
   if (parametres.has('pieces')) hangar = { ...hangar, possedees: [...new Set([...hangar.possedees, ...(['propulseur', 'coque', 'outil', 'arme'] as const).flatMap((o) => piecesDe(o)).filter((pc) => pc.id.startsWith('essai-')).map((pc) => pc.id)])] }
+  /**
+   * `&cuirasse` : LE CUIRASSÉ, tout monté, pour l'essayer d'un lien — sa coque, le propulseur ionique (en quatre
+   * exemplaires), ses huit armes (canons, mitrailleuses, missiles) et ses quatre outils (la foreuse longue, le grand
+   * aimant, le radar, une seconde foreuse). Le temps de la page : rien n'est écrit sur l'appareil.
+   */
+  if (parametres.has('cuirasse')) {
+    const armes = ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-rafale', 'arme-missiles', 'arme-missiles', 'arme-canon', 'arme-canon']
+    const outils = ['foreuse-3', 'aimant-2', 'radar', 'foreuse-2']
+    hangar = { possedees: [...new Set([...hangar.possedees, 'coque-4', 'propulseur-3', ...armes, ...outils])], montees: { ...hangar.montees, coque: 'coque-4', propulseur: 'propulseur-3' }, outils, armes }
+  }
   /** `&stock=N` : pose N pépites DE CHAQUE MINERAI à l'entrepôt, pour essayer l'arbre du labo d'un lien. */
   if (parametres.has('stock')) {
     const n = Math.max(0, Math.floor(Number(parametres.get('stock')) || 0))
@@ -544,7 +554,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
     // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
     // (LES OBUS PARTENT DE LA BOUCHE DE LEUR ARME, là où elle est dessinée sous son aile — c'est le rendu qui la connaît)
-    CONF = { ...CONF, armes: CONF.armes.map((a) => ({ ...a, bouche: boucheDeLArme(a.id, (a.place ?? 0) === 0 ? -1 : 1) })) }
+    CONF = { ...CONF, armes: CONF.armes.map((a) => ({ ...a, bouche: boucheMontee(monteeA(hangar, 'coque').cran, a.id, a.place ?? 0) })) }
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
@@ -1711,6 +1721,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * la lueur de sa tuyère au ralenti ; son décollage ; son poids en étiquette ; les zones de ses pièces.
    */
   function dessinerLeHangarEnScene(p: Peintre, cx: number, cy: number, y0: number, y1: number): void {
+    // (le gabarit de la coque montée : un cuirassé est montré plus petit, ses repères sont ailleurs)
+    const coqueMontee = monteeA(hangar, 'coque').cran
+    const g = gabaritDe(coqueMontee)
+    const ECH = ECHELLE * g.echelle
+    const kG = g.anneau / 11
     let sy = cy - 2 + Math.round(Math.sin(t * 1.7) * 1.2)
     let flam = 0
     let jit = 0
@@ -1721,7 +1736,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       sy = cy - 2 - Math.round(Math.pow(Math.max(0, u - 0.28) / 0.72, 2.2) * (cy - y0 + 50))
       // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
       const cranP = monteeA(hangar, 'propulseur').cran
-      const bout = Math.round((8.4 + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECHELLE)
+      const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
       if (R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
       if (u >= 1) {
@@ -1764,25 +1779,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const haut = cy - sy
     if (haut < 60) {
       const k = Math.max(0.4, 1 - haut / 60)
-      p.poly(ovale(cx + 3, cy + 5, 13 * k, 19 * k, 18).map(([x, y]) => [x, y]), N.hex('#15161d'), 0.85 * k)
+      p.poly(ovale(cx + 3, cy + 5, 13 * k * kG * g.echelle, 19 * k * kG * g.echelle, 18).map(([x, y]) => [x, y]), N.hex('#15161d'), 0.85 * k)
     }
     // la tuyère au ralenti, puis le vaisseau
-    const nozzle: [number, number] = [cx + jit, sy + 8.6 * ECHELLE]
+    const nozzle: [number, number] = [cx + jit, sy + (0.2 - queueDe(coqueMontee)) * ECH]
     p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
-    peindreFormes(p, formes, cx + jit, sy, ECHELLE, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
+    peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
     // la verrière qui luit, les feux de position qui battent
-    p.glow(cx + jit, sy - 3.4 * ECHELLE, 7, VERRIERE[2], 0.25)
+    p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
     for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {
-      const fx = Math.round(cx + jit + s * 8.4 * ECHELLE)
-      const fy = Math.round(sy + 7.8 * ECHELLE)
+      const fx = Math.round(cx + jit + s * (g.feux.y + 0.2) * ECH)
+      const fy = Math.round(sy + (0.2 - g.feux.x) * ECH)
       if (bat) {
         p.rect(fx, fy, 1, 1, N.WHITE)
         p.glow(fx, fy, 6, c, 0.7)
       }
     }
-    if (al.bouclier > 0) p.ring(cx + jit, sy, 11 * ECHELLE, 1, VERRIERE[2], 0.3 + 0.25 * Math.sin(t * 3))
+    if (al.bouclier > 0) p.ring(cx + jit, sy, g.anneau * ECH, 1, VERRIERE[2], 0.3 + 0.25 * Math.sin(t * 3))
     p.place(0, 0)
     // LE POIDS, en étiquette dans le coin — écrit COMME LA LIGNE « Poids » D'UNE FICHE (Keko : « la différence de
     // police et de taille entre le mot et le chiffre casse la cohérence ») : le mot dans la lettre courante, le nombre
@@ -1804,10 +1819,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const vif = Math.sin(t * 5) > -0.3
     if (decollageA === null) for (const o of cibles) for (const [i, [x0, yy0, x1, yy1]] of zonesDe(o).entries()) {
       if (etape !== 'vaisseau' && o === 'arme' && i !== placeOuverte()) continue
-      const sx0 = Math.round(cx + Math.min(yy0, yy1) * ECHELLE)
-      const sx1 = Math.round(cx + Math.max(yy0, yy1) * ECHELLE)
-      const sy0 = Math.round(sy - Math.max(x0, x1) * ECHELLE)
-      const sy1 = Math.round(sy - Math.min(x0, x1) * ECHELLE)
+      const sx0 = Math.round(cx + Math.min(yy0, yy1) * kG * ECH)
+      const sx1 = Math.round(cx + Math.max(yy0, yy1) * kG * ECH)
+      const sy0 = Math.round(sy - Math.max(x0, x1) * kG * ECH)
+      const sy1 = Math.round(sy - Math.min(x0, x1) * kG * ECH)
       if (etape !== 'vaisseau') {
         const L = Math.max(2, Math.min(5, Math.floor((sx1 - sx0) / 3), Math.floor((sy1 - sy0) / 3)))
         const c = vif ? RUNE[3] : RUNE[2]
@@ -4682,22 +4697,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const sa = Math.sin(corps.cap)
     const ici = (x: number, y: number): [number, number] => [sx + x * ca - y * sa, sy + x * sa + y * ca]
     const cp = allure.propulseur
+    const g = gabaritDe(allure.coque)
     if (flam > 0.02) {
-      const [fx, fy] = ici(-8.4 - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
+      const [fx, fy] = ici(queueDe(allure.coque) - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
       p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
     peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
-    const [vx, vy] = ici(3.4, 0)
+    const [vx, vy] = ici(g.verriere, 0)
     p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
     if (!blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
       for (const s of [-1, 1]) {
-        const [ax, ay] = ici(-7.6, s * 8.2)
+        const [ax, ay] = ici(g.feux.x, s * g.feux.y)
         const c = rival ? VERRIERE_ENNEMIE[2] : N.hex(s < 0 ? '#ff4a4a' : '#4aff7a')
         p.rect(Math.round(ax - 0.5), Math.round(ay - 0.5), 1, 1, N.WHITE)
         p.glow(ax, ay, 3, c, 0.8)
       }
-    if (allure.bouclier > 0) p.ring(sx, sy, 11, 1, VERRIERE[2], 0.25 + 0.35 * allure.bouclier * (0.75 + 0.25 * Math.sin(t * 6)))
+    if (allure.bouclier > 0) p.ring(sx, sy, g.anneau, 1, VERRIERE[2], 0.25 + 0.35 * allure.bouclier * (0.75 + 0.25 * Math.sin(t * 6)))
   }
 
   /** La déviation de la flamme du joueur (voir `dessinerLeVaisseau`), et son cap à l'image d'avant. */
@@ -4743,17 +4759,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(x0, y0, x0 + ux * L * 0.5, y0 + uy * L * 0.5, N.WHITE)
         p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 2 * force, VERRIERE[1], 0.5 * force)
       }
-      for (const cote of [-1, 1]) jet(6.4, cote * 2.2, 1, cote * 0.25, pousseeVue.retro)
+      const gj = gabaritDe(al.coque)
+      for (const cote of [-1, 1]) jet(gj.nez, cote * 2.2, 1, cote * 0.25, pousseeVue.retro)
       // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
-      jet(-1, -5.2, -0.15, -1, Math.max(0, pousseeVue.cote))
-      jet(-1, 5.2, -0.15, 1, Math.max(0, -pousseeVue.cote))
+      jet(-1, -gj.flanc, -0.15, -1, Math.max(0, pousseeVue.cote))
+      jet(-1, gj.flanc, -0.15, 1, Math.max(0, -pousseeVue.cote))
       // AU VIRAGE, un jet au flanc du nez, du côté EXTÉRIEUR — MAIS SEULEMENT QUAND LE REGARD TIENT LE NEZ (le second
       // manche, la souris). Keko, 13/11 : d'abord « à chaque virage, même sans le deuxième stick », puis, à l'essai :
       // « ça fait un peu bizarre » — d'un seul manche le nez tourne sans cesse, les jets clignotaient à chaque
       // correction de cap ; les jets de manœuvre sont réservés au pilotage à deux manches
       if (regardVoulu() !== undefined) {
-        jet(5, -2.6, 0.1, -1, Math.max(0, virageVu))
-        jet(5, 2.6, 0.1, 1, Math.max(0, -virageVu))
+        jet(gj.nez - 1.4, -2.6, 0.1, -1, Math.max(0, virageVu))
+        jet(gj.nez - 1.4, 2.6, 0.1, 1, Math.max(0, -virageVu))
       }
     }
     // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
@@ -6102,24 +6119,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
 
     // LE VAISSEAU, celui du hangar, en grand : il respire, sa tuyère souffle une traînée ; à la tape il s'arrache
-    const E = 3
+    const gA = gabaritDe(monteeA(hangar, 'coque').cran)
+    const E = 3 * gA.echelle
     const cx = cxV
     const sy = Math.round(H * hV + Math.sin(t * 1.4) * 2.5 - Math.pow(Math.max(0, us - 0.15) / 0.85, 2.2) * (H * hV + 70))
     const flam = accueilQuitteA === null ? 0.55 + 0.12 * Math.sin(t * 11) : 1
     const al = allureMontee(0)
     const chaud = al.propulseur >= 3 ? ION : FEU
-    const ty = sy + 8.6 * E
+    const ty = sy + (0.2 - queueDe(monteeA(hangar, 'coque').cran)) * E
     for (let k = 0; k < 18; k++) {
       const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
       p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
     }
     p.glow(cx, ty, 12 + 16 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
-    p.glow(cx, sy - 3.4 * E, 9, VERRIERE[2], 0.25)
+    p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
     if (Math.floor(t * 1.5) % 2 === 0)
       for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {
-        p.rect(Math.round(cx + s * 8.4 * E), Math.round(sy + 7.8 * E), 1, 1, N.WHITE)
-        p.glow(Math.round(cx + s * 8.4 * E), Math.round(sy + 7.8 * E), 7, c, 0.7)
+        p.rect(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 1, 1, N.WHITE)
+        p.glow(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 7, c, 0.7)
       }
 
     // LE TITRE ARRIVE COMME LE « COMBO COUNTER » DU DÉPÔT (Keko : « un truc plus travaillé, dans le genre de
@@ -6569,9 +6587,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const cran = monteeA(hangar, 'propulseur').cran
             const flamme = (2.5 + 8 * pousseeVue.avant) * (1 + 0.25 * (cran - 1))
             // (… PUIS DE NOUVEAU À LA TUYÈRE, au début de la flamme — c'est la flamme qui n'est plus rigide)
-            const recul = 8.4 + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)
-            const bx = v.x - Math.cos(v.cap) * recul
-            const by = v.y - Math.sin(v.cap) * recul
+            const coque = monteeA(hangar, 'coque').cran
+            const tuyeres = gabaritDe(coque).tuyeres
+            const deCote = tuyeres[Math.floor(R.next() * tuyeres.length)].y
+            const recul = -queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)
+            const bx = v.x - Math.cos(v.cap) * recul - Math.sin(v.cap) * deCote
+            const by = v.y - Math.sin(v.cap) * recul + Math.cos(v.cap) * deCote
             const vitesse = 30 + 40 * pousseeVue.avant
             braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
           }

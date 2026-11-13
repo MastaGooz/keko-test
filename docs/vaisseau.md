@@ -3358,3 +3358,28 @@ châssis ».
 - À faire quand un châssis en portera plusieurs : les dessiner (plusieurs
   tuyères, plusieurs flammes).
 
+### Le cuirassé, et le gabarit d'une coque (13/11)
+
+Keko : « fabrique-moi un vaisseau de 200 T de type cuirassé, avec le nombre
+de propulseurs adapté, très armé et outillé ». `coque-4` (`hangar.ts`) :
+97 T de coque — 200 T tout monté —, QUATRE propulseurs, huit armes, quatre
+outils, 120 de soute, 8 de blindage et 6 de bouclier (le plafond de ce que
+la fiche montre), rayon de choc 12 (`Piece.rayon`). Il n'est à vendre nulle
+part : `&cuirasse` le donne tout monté (propulseur ionique, 4 canons, 2
+mitrailleuses, 2 missiles, foreuse longue, grand aimant, radar, foreuse
+lourde), le temps de la page.
+- LE GABARIT (`gabaritDe(coque)`, `rendu-vaisseau.ts`) porte ce que le rendu
+  supposait d'un seul vaisseau : les tuyères (décalages de la tuyère de
+  série), les places d'armes (décalage + flanc), les feux, la verrière, le
+  nez et les flancs (jets), l'anneau du bouclier, l'échelle du hangar et de
+  l'accueil. `formesDuVaisseau` dessine une tuyère par exemplaire et chaque
+  arme à sa place (`decaler`) ; `boucheMontee` donne la bouche d'une arme
+  montée ; `queueDe` l'abscisse du fond des tuyères.
+- Le cuirassé : 45 unités de long (le vaisseau de série : 18), une coque
+  d'acier riveté, deux bords d'armement, une superstructure, la passerelle
+  vers l'avant. En vol : poussée ×4, soit 148 px/s atteints en une seconde
+  malgré ses 200 T.
+- LIMITES : les outils sont dessinés un seul exemplaire de chaque, au
+  centre ; les cibles vertes du hangar sont approchées (agrandies) ; les
+  armes, sombres sur les bords sombres, se voient peu.
+

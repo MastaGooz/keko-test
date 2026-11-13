@@ -353,8 +353,51 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
 /** Ce que porte le vaisseau : les crans et les pièces montées. */
 export type Allure = { propulseur: number; coque: number; foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number }
 
+/**
+ * LE GABARIT D'UNE COQUE (Keko, 13/11 : « fabrique-moi un vaisseau de 200 T de type cuirassé, avec le nombre de
+ * propulseurs adapté, très armé et outillé ») : tout ce que le reste du rendu supposait d'UN SEUL vaisseau — où sont
+ * ses tuyères (des décalages, en unités du vaisseau, de la tuyère de série), ses places d'armes (un décalage et un
+ * flanc), ses feux de position, sa verrière, son nez et ses flancs (les jets de manœuvre), le rayon de l'anneau de
+ * son bouclier, et l'échelle à laquelle le montrer en grand (le hangar, l'accueil). Les coques 1 à 3 ont le gabarit
+ * de toujours ; la 4, LE CUIRASSÉ, est deux fois et demie plus long : quatre tuyères, huit places d'armes sur ses
+ * deux bords.
+ */
+export type Gabarit = { tuyeres: { x: number; y: number }[]; armes: { x: number; y: number; s: number }[]; feux: { x: number; y: number }; verriere: number; nez: number; flanc: number; anneau: number; echelle: number }
+const GABARIT_DE_SERIE: Gabarit = { tuyeres: [{ x: 0, y: 0 }], armes: [{ x: 0, y: 0, s: -1 }, { x: 0, y: 0, s: 1 }], feux: { x: -7.6, y: 8.2 }, verriere: 3.4, nez: 6.4, flanc: 5.2, anneau: 11, echelle: 1 }
+const GABARIT_DU_CUIRASSE: Gabarit = {
+  tuyeres: [-5.4, -1.8, 1.8, 5.4].map((y) => ({ x: -13, y })),
+  // (quatre places par bord, de la proue à la poupe ; les formes d'une arme sont dessinées autour de y = ±6,2)
+  armes: [13, 6, -1, -8].flatMap((x) => [{ x, y: -3.4, s: -1 }, { x, y: 3.4, s: 1 }]),
+  feux: { x: -18, y: 11.2 },
+  verriere: 14,
+  nez: 21,
+  flanc: 11.5,
+  anneau: 27,
+  echelle: 0.55,
+}
+export const gabaritDe = (coque: number): Gabarit => (coque >= 4 ? GABARIT_DU_CUIRASSE : GABARIT_DE_SERIE)
+/** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
+export const queueDe = (coque: number): number => -8.4 + gabaritDe(coque).tuyeres[0].x
+/** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
+function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
+  if (dx === 0 && dy === 0) return formes
+  return formes.map((f) => ({ ...f, pts: f.pts.map(([x, y]): [number, number] => [x + dx, y + dy]), dome: f.dome === undefined ? undefined : { ...f.dome, x: f.dome.x + dx, y: f.dome.y + dy }, feu: f.feu === undefined ? undefined : { base: f.feu.base + dx, pointe: f.feu.pointe + dx } }))
+}
+
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran >= 4) {
+    // LE CUIRASSÉ : une longue coque d'acier riveté — la proue en coin, les flancs droits, la poupe carrée —, deux
+    // plaques de blindage le long des flancs, une superstructure sur le dos, la passerelle vitrée vers l'avant, deux
+    // émetteurs de bouclier à l'arrière
+    const f: Forme[] = [{ pts: [[24, 0], [19, -3.4], [12, -6.4], [2, -8], [-12, -8], [-19, -6.6], [-21, -4.5], [-21, 4.5], [-19, 6.6], [-12, 8], [2, 8], [12, 6.4], [19, 3.4]], mat: 'blinde', relief: 'cyl' }]
+    for (const s of [-1, 1]) f.push({ pts: [[11, s * 4.2], [-15, s * 5], [-15, s * 7.5], [11, s * 6]], mat: 'blinde', relief: 'plat', penche: s })
+    f.push({ pts: [[9, -2.6], [-11, -3.3], [-13, -2], [-13, 2], [-11, 3.3], [9, 2.6]], mat: 'acier', relief: 'cyl' })
+    for (const x of [4, -3, -9]) f.push({ pts: [[x, -2.9], [x - 1, -2.9], [x - 1, 2.9], [x, 2.9]], mat: 'metal', relief: 'plat' })
+    for (const s of [-1, 1]) f.push({ pts: ovale(-16.5, s * 3.6, 1.3, 1.3, 12), mat: 'emeraude', relief: 'dome', dome: { x: -16.5, y: s * 3.6, rx: 1.3, ry: 1.3 } })
+    f.push({ pts: ovale(14, 0, 3.4, 2.2, 18), mat: 'verre', relief: 'dome', dome: { x: 14, y: 0, rx: 3.4, ry: 2.2 } })
+    return f
+  }
   const mat: Matiere = cran === 2 ? 'blinde' : 'coque'
   const fuseau: [number, number][] =
     cran === 2
@@ -374,9 +417,17 @@ export function formesDeLaCoque(cran: number): Forme[] {
   f.push({ pts: ovale(3.4, 0, 2.5, 1.55, 18), mat: 'verre', relief: 'dome', dome: { x: 3.4, y: 0, rx: 2.5, ry: 1.55 } })
   return f
 }
-/** LES AILES, deux plaques penchées, le bout rouge. */
-export function formesDesAiles(): Forme[] {
+/** LES AILES, deux plaques penchées, le bout rouge — le cuirassé, lui, a deux longs bords d'armement. */
+export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque >= 4) {
+    for (const s of [-1, 1]) {
+      f.push({ pts: [[17, s * 6.4], [15, s * 10.2], [-16, s * 11.6], [-19, s * 11.6], [-19, s * 7]], mat: 'aile', relief: 'plat', penche: s })
+      f.push({ pts: [[17, s * 6.4], [15, s * 10.2], [13.8, s * 10.2], [15.6, s * 6.5]], mat: 'acier', relief: 'plat', penche: s })
+      f.push({ pts: [[-17, s * 10.2], [-19, s * 10.2], [-19, s * 11.6], [-17.4, s * 11.6]], mat: 'rouge', relief: 'plat', penche: s })
+    }
+    return f
+  }
   for (const s of [-1, 1]) {
     f.push({ pts: [[1.2, s * 2.4], [-4.8, s * 8.2], [-8, s * 8.7], [-8, s * 7], [-6.2, s * 2.6]], mat: 'aile', relief: 'plat', penche: s })
     // le bord d'attaque, une bande d'acier qui accroche la lumière
@@ -391,7 +442,7 @@ export function formesDesAiles(): Forme[] {
  * du châssis »). Sur le vaisseau, les deux restent séparées : les armes et la tuyère passent entre l'aile et la coque.
  */
 export function formesDuChassis(cran: number): Forme[] {
-  return [...formesDesAiles(), ...formesDeLaCoque(cran)]
+  return [...formesDesAiles(cran), ...formesDeLaCoque(cran)]
 }
 /** LA TUYÈRE d'un cran de propulseur, et sa flamme (longue de 0 à 1). */
 /**
@@ -462,6 +513,16 @@ export function formesDuRadar(t: number): Forme[] {
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
+/** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
+export const placeDArme = (coque: number, k: number): { x: number; y: number; s: number } => {
+  const places = gabaritDe(coque).armes
+  return places[Math.max(0, Math.min(places.length - 1, k))]
+}
+export function boucheMontee(coque: number, id: string, k: number): { x: number; y: number } {
+  const pl = placeDArme(coque, k)
+  const b = boucheDeLArme(id, pl.s)
+  return { x: b.x + pl.x, y: b.y + pl.y }
+}
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   if (id === 'canon') {
@@ -485,9 +546,15 @@ export function formesDeLArme(id: string, s: number): Forme[] {
 
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
 export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
-  const f: Forme[] = [...formesDesAiles()]
-  a.armes.forEach((id, i) => id !== '' && f.push(...formesDeLArme(id, i === 0 ? -1 : 1)))
-  f.push(...formesDuPropulseur(a.propulseur, flamme, t, devie))
+  const g = gabaritDe(a.coque)
+  const f: Forme[] = [...formesDesAiles(a.coque)]
+  a.armes.forEach((id, i) => {
+    if (id === '') return
+    const pl = placeDArme(a.coque, i)
+    f.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y))
+  })
+  // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
+  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie), tu.x, tu.y))
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
