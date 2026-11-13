@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
@@ -306,6 +306,71 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const R = new N.Rng(7)
   /** Les grains de l'espace : sans pesanteur ni montée (Keko : « des débris tombent vers le bas comme s'il y avait de la gravité »). */
   const braises = new Grains(R)
+  /**
+   * `&banc` : LE BANC DE RÉGLAGE EN VOL (Keko, 13/11 : « une mini-interface, via un bouton en vol, pour jouer
+   * manuellement sur la vitesse, l'accélération, la maniabilité et le poids total — des jauges que je peux remplir et
+   * vider en direct, avec le chiffre associé »). Un bouton « Réglages » en haut de la vue ouvre quatre curseurs ; le
+   * vol continue dessous, et la configuration du vaisseau suit le doigt. Les valeurs sont BRUTES — la pointe en px/s,
+   * la poussée en px/s² AVANT le poids, la rotation en rad/s, le poids en tonnes — et le poids divise la poussée et le
+   * frein comme dans `configDuHangar`. Elles tiennent d'un vol à l'autre, le temps de la page.
+   */
+  const BANC = parametres.has('banc')
+  let bancOuvert = false
+  let banc: { pointe: number; poussee: number; rotation: number; poids: number } | null = null
+  const allegeParLePoids = (poids: number): number => Math.pow(Math.max(0.5, poids) / POIDS_SERIE, 1.3)
+  function appliquerLeBanc(): void {
+    if (banc === null) return
+    const f = allegeParLePoids(banc.poids)
+    CONF = { ...CONF, vitesseMax: Math.max(0.01, banc.pointe), poussee: banc.poussee / f, frein: BASE.frein / f, rotation: banc.rotation, masse: banc.poids }
+  }
+  function dessinerLeBanc(p: Peintre): void {
+    if (!BANC || banc === null || m.phase !== 'vol' || souteOuverte) return
+    const b = banc
+    curseurs = []
+    const IVOIRE = N.hex('#fff2c8')
+    const y0 = paysage ? 2 : basDuHud() + 4
+    const mot = bancOuvert ? 'Fermer' : 'Réglages'
+    const bw = largeurDe('Réglages', GRAS) + 14
+    bouton(p, Math.round(W / 2 - bw / 2), y0, bw, 13, mot, true, () => (bancOuvert = !bancOuvert), 'onglet', 'acier')
+    if (!bancOuvert) return
+    const RANGS: { nom: string; v: number; min: number; max: number; pas: number; dit: string; regler: (x: number) => void }[] = [
+      { nom: 'Vitesse', v: b.pointe, min: 0, max: 300, pas: 1, dit: `${Math.round(b.pointe)}`, regler: (x) => (b.pointe = x) },
+      { nom: 'Accél.', v: b.poussee, min: 0, max: 300, pas: 1, dit: `${Math.round(b.poussee)}`, regler: (x) => (b.poussee = x) },
+      { nom: 'Maniab.', v: b.rotation, min: 0, max: 15, pas: 0.1, dit: b.rotation.toFixed(1).replace('.', ','), regler: (x) => (b.rotation = x) },
+      { nom: 'Poids', v: b.poids, min: 1, max: 100, pas: 1, dit: `${Math.round(b.poids)} T`, regler: (x) => (b.poids = x) },
+    ]
+    // (couché : deux colonnes, pour laisser voir le vaisseau ; debout : une)
+    const cols = paysage ? 2 : 1
+    const lc = 150
+    const w = cols * lc + 6
+    const lignes = Math.ceil(RANGS.length / cols)
+    // (debout, les rangées sont serrées et la lecture tient sur une ligne : le panneau s'arrête au-dessus du vaisseau)
+    const pas = paysage ? 18 : 15
+    const h = 6 + lignes * pas + 13
+    const x = Math.round((W - w) / 2)
+    const y = y0 + 16
+    for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) frame.light.fill(0, yy * W + Math.max(0, x), yy * W + Math.min(W, x + w))
+    plaque(p, x, y, w, h, 'encre')
+    RANGS.forEach((r, i) => {
+      const cx = x + 3 + (i % cols) * lc
+      const ry = y + 6 + Math.floor(i / cols) * pas
+      ecrire(p, r.nom, cx + 3, ry + 2, COQUE[5])
+      dessinerUnCurseur(p, cx + 46, ry, 64, (r.v - r.min) / (r.max - r.min), (u) => {
+        r.regler(Math.round((r.min + u * (r.max - r.min)) / r.pas) * r.pas)
+        appliquerLeBanc()
+      })
+      ecrire(p, r.dit, cx + lc - 4, ry + 2, IVOIRE, { police: GRAS, align: 'right' })
+    })
+    // CE QUE ÇA DONNE : la vitesse de croisière (le frein du vide la borne à poussée / frein, quel que soit le poids),
+    // le temps pour l'atteindre depuis l'arrêt, et la vitesse du moment
+    const k = BASE.frein
+    const croisiere = Math.min(b.pointe, b.poussee / k)
+    const temps = b.poussee / k > b.pointe * 1.0005 && b.pointe > 0 ? -Math.log(1 - (b.pointe * k) / b.poussee) / (k / allegeParLePoids(b.poids)) : null
+    const yl = y + 6 + lignes * pas + 1
+    ecrire(p, `Croisière ${Math.round(croisiere)}${temps === null ? ' : le frein l’emporte' : ` en ${temps.toFixed(1).replace('.', ',')} s`}`, x + 6, yl, COQUE[4])
+    ecrire(p, `${cols === 1 ? '' : 'Vitesse '}${Math.round(Math.hypot(v.vx, v.vy))}`, x + w - 6, yl, PEPITE[3], { align: 'right', police: GRAS })
+    zone(x, y, w, h, () => undefined, null)
+  }
   /** Les braises d'un propulseur ionique : du blanc bleuté au bleu sombre (la rampe de sa flamme, du chaud au froid). */
   const BRAISES_D_ION = [ION[6], ION[5], ION[4], ION[3], ION[3], ION[2], ION[2], ION[1]]
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
@@ -496,6 +561,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LE POIDS DIVISE LA POUSSÉE COMME LE FREIN — voir `configDuHangar` : n'alléger que le frein, comme d'abord, donnait
       // un vaisseau qui freinait quatorze fois plus fort sans pousser plus, et plafonnait à 4 px/s : « ça ne bouge pas »)
       CONF = { ...CONF, poussee: (BASE.poussee * part(0, 0.3)) / leger, vitesseMax: Math.max(0.01, BASE.vitesseMax * part(1, 0.3)), rotation: BASE.rotation * part(2, 0), frein: BASE.frein / leger, masse: reste }
+    }
+    // (`&banc` : les curseurs partent de ce vaisseau ; déjà réglés, ils gardent leurs valeurs)
+    if (BANC) {
+      const poids = CONF.masse ?? POIDS_SERIE
+      if (banc === null) banc = { pointe: CONF.vitesseMax, poussee: CONF.poussee * allegeParLePoids(poids), rotation: CONF.rotation, poids }
+      appliquerLeBanc()
     }
     m = monterLeMonde()
     // (ce que le hangar a semé ne suit pas le vaisseau dans l'espace : les fumées et les étincelles du décollage, les
@@ -4082,6 +4153,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (en vol : la plaque de soute et, ouverte, ses boutons — sinon le manche)
     {
       const q = enTampon(ev.clientX, ev.clientY)
+      // (`&banc` ouvert : un curseur suit le doigt dès l'appui, comme à la base)
+      // (les zones de deux rangées voisines se recouvrent : c'est le curseur le plus proche du doigt qui répond)
+      const cuBanc = BANC && bancOuvert ? curseurs.filter((c) => q.x >= c.x - 4 && q.x < c.x + c.w + 4 && q.y >= c.y && q.y < c.y + c.h).sort((a, b) => Math.abs(q.y - a.y - a.h / 2) - Math.abs(q.y - b.y - b.h / 2))[0] : undefined
+      if (cuBanc !== undefined) {
+        glisse = { x: q.x, y: q.y, defil0: 0, bouge: true, sorte: 'curseur', curseur: cuBanc }
+        cuBanc.regler(Math.max(0, Math.min(1, (q.x - cuBanc.x) / cuBanc.w)))
+        racine.setPointerCapture(ev.pointerId)
+        return
+      }
       // (la liste de la soute, quand elle dépasse : elle se fait glisser, la tape se décide au relâchement)
       const zs = souteOuverte ? zoneDeLaSoute : null
       if (zs !== null && q.x >= zs.x && q.x < zs.x + zs.w && q.y >= zs.y && q.y < zs.y + zs.h) {
@@ -6668,6 +6748,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeRadar(p)
     zones = []
     dessinerLeScore(p)
+    dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaCapacite(p)
     dessinerLaSoute(p)

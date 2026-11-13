@@ -3296,3 +3296,19 @@ en 6 s, mais ce n'est plus une accélération basse (96 px/s au bout d'une
 seconde) — le frein étant proportionnel à la vitesse, atteindre une pointe
 haute EXIGE une poussée haute.
 Puis la pointe au MILIEU des deux étalons (33 et 220) : 126,5 px/s (`vitesseMax: 1.15`), la poussée inchangée.
+
+### `&banc` : le banc de réglage en vol (13/11)
+
+Keko : « une mini-interface via un bouton en vol pour jouer manuellement
+sur vitesse / accélération / maniabilité / poids total, avec des jauges que
+je peux remplir et vider en live, avec le chiffre associé ». Avec `&banc`,
+un bouton « Réglages » en haut de la vue ouvre quatre curseurs
+(`dessinerLeBanc`) : la pointe (0–300 px/s), la poussée brute (0–300 px/s²,
+avant le poids), la rotation (0–15 rad/s), le poids total (1–100 T). Le vol
+continue ; `appliquerLeBanc` réécrit `CONF` à chaque geste (le poids divise
+la poussée et le frein comme `configDuHangar`). Une ligne dit la VITESSE DE
+CROISIÈRE (bornée par poussée / frein), le temps pour l'atteindre, et la
+vitesse du moment. Les valeurs tiennent d'un vol à l'autre, pas d'une
+visite à l'autre. Un curseur se prend au doigt en vol comme à la base
+(`glisse.sorte === 'curseur'`).
+
