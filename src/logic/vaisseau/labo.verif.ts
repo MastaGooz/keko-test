@@ -55,13 +55,15 @@ verifier('le filon double fait naître plus de pépites (à 100 %, deux fois plu
 const mb = nouveauMonde(passe, 3)
 verifier('éteinte de série : elle ne part pas', !postcombustion(serie, nouveauMonde(serie, 3)) && partDeLaPostcombustion(serie, nouveauMonde(serie, 3)) === 0)
 verifier('débloquée : elle part, puis attend sa recharge', postcombustion(passe, mb) && !postcombustion(passe, mb) && partDeLaPostcombustion(passe, mb) === 1 && rechargeDeLaPostcombustion(passe, mb) === 0)
-const sansCalme = { ...passe, base: { ...passe.base, calme: 1e9 } }
+// (la poussée et la pointe de la CONFIGURATION, pas celles du propulseur de série : il sert d'étalon d'essai depuis le
+// 13/11 — accélération au plus bas, pointe très haute —, et c'est la mécanique qu'on vérifie ici)
+const sansCalme = { ...passe, poussee: C.poussee, vitesseMax: C.vitesseMax, base: { ...passe.base, calme: 1e9 } }
 let pointe = 0
 for (let i = 0; i < 60; i++) {
   avancerLeMonde(sansCalme, mb, 1 / 60, { x: 0, y: 0 })
   pointe = Math.max(pointe, Math.hypot(mb.vaisseau.vx, mb.vaisseau.vy))
 }
-verifier('sans manche, elle pousse droit devant et dépasse la pointe du vaisseau', pointe > passe.vitesseMax * 1.2 && mb.vaisseau.y < -20)
+verifier('sans manche, elle pousse droit devant et dépasse la pointe du vaisseau', pointe > C.vitesseMax * 1.2 && mb.vaisseau.y < -20)
 for (let i = 0; i < 60 * 7; i++) avancerLeMonde(sansCalme, mb, 1 / 60, { x: 0, y: 0 })
 verifier('passée, la pointe est revenue sous le plafond, et elle est rechargée', Math.hypot(mb.vaisseau.vx, mb.vaisseau.vy) <= passe.vitesseMax + 1e-6 && rechargeDeLaPostcombustion(passe, mb) === 1 && postcombustion(passe, mb))
 

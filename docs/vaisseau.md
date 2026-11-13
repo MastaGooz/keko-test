@@ -3281,3 +3281,12 @@ Ses jauges d'accélération et de vitesse vont de l'étalon (`ETALON_BAS`),
 posé à 5 % de la barre, au meilleur du catalogue, à 100 % (`surLaJauge`) —
 elles partaient de zéro, l'étalon y remplissait un cinquième.
 
+À L'ESSAI (13/11, Keko cherche l'échelle des propulseurs) : `propulseur-1`
+a l'ACCÉLÉRATION AU PLUS BAS (`poussee: 0.1295` — réglée pour 5 s jusqu'à
+l'ancienne pointe de 33) et LA POINTE TRÈS HAUTE (`vitesseMax: 2`, 220
+px/s). MESURÉ : le vaisseau plafonne à 35 px/s — LE FREIN DU VIDE borne la
+vitesse à poussée / frein (19,4 / 0,55), bien sous la pointe : *une pointe
+haute ne sert à rien sans la poussée pour l'atteindre*. L'accélération est
+une poussée ABSOLUE (pas « un temps pour atteindre la pointe », écarté :
+vitesse haute et accélération haute se seraient renforcées).
+

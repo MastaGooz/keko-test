@@ -67,8 +67,12 @@ export type Piece = {
 export const PIECES: Piece[] = [
   // (L'ÉTALON LE PLUS BAS DU JEU — Keko, 13/11, après le banc `&zero` : « la vitesse que tu as réglée là va nous servir :
   // c'est le minimum qu'un vaisseau peut avoir, un tout petit cran de la jauge » : trois dixièmes de l'accélération
-  // et de la pointe de la configuration ; la maniabilité n'a pas été touchée)
-  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Le strict minimum : il pousse peu et plafonne bas.', prix: 0, poids: 6, poussee: 0.3, vitesseMax: 0.3},
+  // et de la pointe de la configuration ; la maniabilité n'a pas été touchée. PUIS L'ACCÉLÉRATION RÉGLÉE PAR UN TEMPS :
+  // à 0,3 comme la pointe, le vaisseau atteignait sa vitesse en une seconde, comme avant — c'est le RAPPORT des deux
+  // qui fait ce temps ; « essayons avec 5 s » : 0,1295, mesuré à 5,0 s vaisseau de série, foreuse montée.
+  // PUIS, À L'ESSAI : LA POINTE TRÈS HAUTE (×2), l'accélération gardée basse — « on va s'intéresser à la vitesse max » ;
+  // le frein du vide plafonne alors la vitesse à poussée / frein, bien sous cette pointe)
+  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Le strict minimum : il pousse peu et plafonne bas.', prix: 0, poids: 6, poussee: 0.1295, vitesseMax: 2},
   { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Accélération +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1},
   { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Accélération +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25},
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Châssis de série', dit: '5 de blindage, 20 unités en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
@@ -279,8 +283,8 @@ export type Jauge = { nom: string; valeur: number; max: number; /** Une quantit�
  * chaque barre est pleine au maximum du catalogue, pour comparer d'un coup d'œil.
  */
 /** L'étalon le plus bas d'un propulseur (la part de la configuration que donne celui de série), et sa place sur une jauge. */
-export const ETALON_BAS = 0.3
-const surLaJauge = (v: number, meilleur: number): number => (meilleur <= ETALON_BAS ? 0.05 : Math.max(0.05, 0.05 + (0.95 * (v - ETALON_BAS)) / (meilleur - ETALON_BAS)))
+export const ETALON_BAS = { poussee: 0.1295, vitesseMax: 0.3 }
+const surLaJauge = (v: number, meilleur: number, bas: number): number => (meilleur <= bas ? 0.05 : Math.max(0.05, 0.05 + (0.95 * (v - bas)) / (meilleur - bas)))
 export function jaugesDe(p: Piece): Jauge[] {
   const memes = piecesDe(p.sorte)
   const max = (f: (q: Piece) => number): number => Math.max(...memes.map(f))
@@ -288,8 +292,8 @@ export function jaugesDe(p: Piece): Jauge[] {
     return [
       // (L'ÉTALON LE PLUS BAS REMPLIT 5 % DE LA JAUGE — Keko, 13/11 : « on devrait remplir à 5 % de la jauge pour la
       // vitesse la plus basse » : la barre va de l'étalon, à 5 %, au meilleur du catalogue, à 100 %)
-      { nom: 'Accélération', valeur: surLaJauge(p.poussee ?? 1, max((q) => q.poussee ?? 1)), max: 1 },
-      { nom: 'Vitesse', valeur: surLaJauge(p.vitesseMax ?? 1, max((q) => q.vitesseMax ?? 1)), max: 1 },
+      { nom: 'Accélération', valeur: surLaJauge(p.poussee ?? 1, max((q) => q.poussee ?? 1), ETALON_BAS.poussee), max: 1 },
+      { nom: 'Vitesse', valeur: surLaJauge(p.vitesseMax ?? 1, max((q) => q.vitesseMax ?? 1), ETALON_BAS.vitesseMax), max: 1 },
       { nom: 'Maniabilité', valeur: p.rotation ?? 1, max: max((q) => q.rotation ?? 1) },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]
