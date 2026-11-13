@@ -77,11 +77,14 @@ verifier('la configuration porte les armes montées, dans l’ordre', configDuHa
 const cfg = configDuHangar(C, a.hangar)
 const fA = Math.pow(poidsTotal(a.hangar) / POIDS_SERIE, 1.3)
 verifier('la configuration suit les pièces montées (propulseur renforcé : poussée ×1,25 rapportée au poids, pointe ×1,15 ; le reste de série)', Math.abs(cfg.poussee - (C.poussee * 1.25) / fA) < 1e-9 && fA > 1 && Math.abs(cfg.vitesseMax - C.vitesseMax * 1.15) < 1e-9 && cfg.foreuse.debit === 1 && cfg.coque === C.coque && cfg.bouclier.points === 0 && cfg.armes.length === 0 && cfg.radar.portee === 0 && cfg.ennemi.vitesseMax === C.ennemi.vitesseMax)
-verifier('la configuration de série est inchangée par un hangar neuf', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify(C))
+// (le propulseur de série est L'ÉTALON LE PLUS BAS depuis le 13/11 : trois dixièmes de la poussée et de la pointe de la
+// configuration ; tout le reste d'un hangar neuf est celui de la configuration)
+const SERIE = 0.3
+verifier('un hangar neuf : la configuration, à la poussée et à la pointe de l’étalon le plus bas', JSON.stringify(configDuHangar(C, neuf)) === JSON.stringify({ ...C, poussee: C.poussee * SERIE, vitesseMax: C.vitesseMax * SERIE }))
 const blindee = configDuHangar(C, achete(neuf, 'coque-2'))
 const hB = achete(neuf, 'coque-2')
 const fB = Math.pow(poidsTotal(hB) / POIDS_SERIE, 1.3)
-verifier('la coque blindée : 8 points ; le poids total monte de 20 à 32 de coque (30 → 42), la poussée et le frein sont divisés par ce rapport accentué', blindee.coque === 8 && POIDS_SERIE === 30 && poidsTotal(hB) === 42 && Math.abs(blindee.poussee - C.poussee / fB) < 1e-9 && Math.abs(blindee.frein - C.frein / fB) < 1e-9 && blindee.vitesseMax === C.vitesseMax)
+verifier('la coque blindée : 8 points ; le poids total monte de 20 à 32 de coque (30 → 42), la poussée et le frein sont divisés par ce rapport accentué', blindee.coque === 8 && POIDS_SERIE === 30 && poidsTotal(hB) === 42 && Math.abs(blindee.poussee - (C.poussee * SERIE) / fB) < 1e-9 && Math.abs(blindee.frein - C.frein / fB) < 1e-9 && Math.abs(blindee.vitesseMax - C.vitesseMax * SERIE) < 1e-9)
 verifier('chaque pièce a un poids, et le vaisseau de série pèse la somme des siens', PIECES.every((p) => p.poids > 0) && POIDS_SERIE === 6 + 20 + 4)
 const bouclier = configDuHangar(C, achete(neuf, 'coque-3'))
 verifier('la coque à bouclier : 5 points et 2 de bouclier', bouclier.coque === 5 && bouclier.bouclier.points === 2 && bouclier.bouclier.delai === C.bouclier.delai)

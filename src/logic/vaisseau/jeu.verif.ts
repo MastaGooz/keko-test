@@ -292,7 +292,9 @@ const heurt = (cfg: ConfigVaisseau) => {
 }
 const h1 = heurt(C)
 verifier('le joueur lancé sur le rival rebondit (sa vitesse vers lui s’inverse) et les deux prennent des dégâts', h1.w.vaisseau.vx < C.vitesseMax * 0.5 && h1.w.coque < C.coque && h1.touchesRival >= 1 && h1.w.ennemis[0].pv < C.ennemi.pv && Math.hypot(h1.w.ennemis[0].corps.x - h1.w.vaisseau.x, h1.w.ennemis[0].corps.y - h1.w.vaisseau.y) >= C.rayon + C.ennemi.rayon - 0.5)
-const h2 = heurt(armer('coque-3'))
+// (la pointe de la configuration de base : le propulseur de série, l'étalon le plus bas depuis le 13/11, plafonnait
+// l'élan sous le seuil d'un choc)
+const h2 = heurt({ ...armer('coque-3'), vitesseMax: C.vitesseMax })
 verifier('sous bouclier, le rival heurté n’a rien (pas de bélier)', h2.touchesRival === 0 && h2.w.ennemis[0].pv === C.ennemi.pv && h2.w.bouclier < 2)
 const doux = nouveauMonde()
 doux.prochainEnnemiA = 1e9

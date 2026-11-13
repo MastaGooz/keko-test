@@ -3267,3 +3267,14 @@ Corrigé : `&zero` n'allégeait que le frein (pas la poussée) — le vaisseau
 plafonnait à 4 px/s. Le poids divise maintenant les deux, comme dans
 `configDuHangar` ; les parts par défaut passent à 0,3.
 
+### L'étalon le plus bas : le propulseur de série (13/11)
+
+Keko, après le banc `&zero` : « la vitesse que tu as réglée là va nous
+servir : c'est l'étalon le plus bas du jeu, le minimum qu'un vaisseau peut
+avoir (un tout petit cran de la jauge) ; affiche ça dans le propulseur de
+série ». `propulseur-1` porte maintenant `poussee: 0.3` et
+`vitesseMax: 0.3` (parts de la configuration `VAISSEAU`) ; sa maniabilité
+n'a pas été touchée. *Les autres propulseurs gardent leurs facteurs (1,25,
+1,6…), donc l'écart avec la série est devenu énorme, et leurs descriptions
+« +25 % » ne sont plus justes : toute l'échelle est à reposer.*
+
