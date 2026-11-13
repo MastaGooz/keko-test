@@ -3043,33 +3043,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
      * qui relie la source aux nœuds débloqués : lui seul brille, et des grains de lumière le parcourent.
      */
     type Etat = 0 | 1 | 2
-    // (éteint : un gris acier, sous tension : un bleu franc — plus sombres, ils se perdaient dans la planche : Keko, 11/11)
-    const corps = (e: Etat): number => (e === 2 ? N.hex('#1f62b0') : e === 1 ? N.hex('#234c86') : N.hex('#2b3549'))
-    const coeur = (e: Etat): number => (e === 2 ? N.hex('#7fc2ff') : e === 1 ? N.hex('#4a7fc4') : N.hex('#46536e'))
-    const GRAIN = N.hex('#e2f3ff')
+    // DES PISTES DE CIRCUIT IMPRIMÉ, PLUS DE LA TUYAUTERIE (Keko, 13/11 : les liens épais, cernés, à raccords, « font
+    // un peu tuyauterie, plomberie ; j'aurais préféré quelque chose qui rappelle un circuit imprimé, quelque chose
+    // d'informatique ou de digital ») : chaque lien est UNE PAIRE DE PISTES FINES, d'un pixel, côte à côte — un bus de
+    // données ; éteintes, elles sont du cuivre terne ; sous tension, bleues ; actives, cyan vif, et DES BITS y
+    // courent (des tirets clairs, espacés, décalés d'une piste à l'autre). Les rencontres sont des PASTILLES percées.
+    const piste = (e: Etat): number => (e === 2 ? N.hex('#6fe6ff') : e === 1 ? N.hex('#2f6f9c') : N.hex('#33415a'))
+    const BIT = N.hex('#f2fdff')
     const conduitV = (x: number, y0: number, y1: number, e: Etat): void => {
       if (y1 <= y0) return
-      coupe(x - 2, y0, 5, y1 - y0, ENCRE)
-      coupe(x - 1, y0, 3, y1 - y0, corps(e))
-      coupe(x, y0, 1, y1 - y0, coeur(e))
+      for (const [dx, phase] of [[-1, 0], [1, 7]]) {
+        coupe(x + dx, y0, 1, y1 - y0, piste(e))
+        if (e === 2) for (let yp = y0 + ((t * 40 + phase) % 14); yp < y1 - 1; yp += 14) coupe(x + dx, Math.round(yp), 1, 2, BIT)
+      }
       if (e !== 2) return
-      for (let yp = y0 + ((t * 34) % 11); yp < y1 - 2; yp += 11) coupe(x - 1, Math.round(yp), 3, 3, GRAIN)
       const a = Math.max(y0, ya + 3)
       const b = Math.min(y1, yb - 3)
-      if (b > a) p.glowLine(x, a, x, b, 4, N.hex('#3a8ad0'), 0.16)
+      if (b > a) p.glowLine(x, a, x, b, 3, N.hex('#3ab0e0'), 0.14)
     }
     const conduitH = (y: number, x0: number, x1: number, e: Etat): void => {
       if (x1 < x0) return
-      coupe(x0 - 2, y - 2, x1 - x0 + 5, 5, ENCRE)
-      coupe(x0 - 1, y - 1, x1 - x0 + 3, 3, corps(e))
-      coupe(x0, y, x1 - x0 + 1, 1, coeur(e))
-      if (e !== 2 || x1 === x0) return
-      // (les grains partent du milieu vers les deux bouts)
-      const mx = (x0 + x1) / 2
-      for (let o = (t * 34) % 11; o < (x1 - x0) / 2; o += 11) {
-        for (const xp of [mx - o, mx + o]) if (xp >= x0 && xp <= x1 - 1) coupe(Math.round(xp) - 1, y - 1, 3, 3, GRAIN)
+      for (const [dy, phase] of [[-1, 0], [1, 7]]) {
+        coupe(x0, y + dy, x1 - x0 + 1, 1, piste(e))
+        if (e !== 2 || x1 === x0) continue
+        // (les bits partent du milieu vers les deux bouts)
+        const mx = (x0 + x1) / 2
+        for (let o = (t * 40 + phase) % 14; o < (x1 - x0) / 2; o += 14) {
+          for (const xp of [mx - o, mx + o]) if (xp >= x0 && xp <= x1 - 1) coupe(Math.round(xp), y + dy, 2, 1, BIT)
+        }
       }
-      if (y > ya + 3 && y < yb - 3) p.glowLine(x0, y, x1, y, 4, N.hex('#3a8ad0'), 0.16)
+      if (e === 2 && x1 > x0 && y > ya + 3 && y < yb - 3) p.glowLine(x0, y, x1, y, 3, N.hex('#3ab0e0'), 0.14)
     }
     const cx = Math.round(W / 2)
     const rangs = RANGS.map((r, k) => {
@@ -3096,9 +3099,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // les raccords : une pastille à chaque rencontre
       for (const x of new Set(xs)) {
         const e: Etat = actifs.includes(x) ? 2 : base
-        coupe(x - 3, rg.bus - 3, 7, 7, ENCRE)
-        coupe(x - 2, rg.bus - 2, 5, 5, corps(e))
-        coupe(x - 1, rg.bus - 1, 3, 3, coeur(e))
+        // (une pastille de soudure : un carré aux coins coupés, percé d'un trou)
+        coupe(x - 2, rg.bus - 3, 5, 7, ENCRE)
+        coupe(x - 3, rg.bus - 2, 7, 5, ENCRE)
+        coupe(x - 1, rg.bus - 2, 3, 5, piste(e))
+        coupe(x - 2, rg.bus - 1, 5, 3, piste(e))
+        coupe(x, rg.bus, 1, 1, ENCRE)
       }
     })
     for (const rg of rangs) {

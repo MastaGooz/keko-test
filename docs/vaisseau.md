@@ -3229,3 +3229,14 @@ l'image qui l'explique (`pousseeVue`, la poussée vue du vaisseau, lissée) :
   MANCHES (« ça fait un peu bizarre » d'un seul : le nez tourne sans cesse,
   les jets clignotaient).
 
+### La recherche : des pistes de circuit, plus de la tuyauterie (13/11)
+
+Keko : les liens entre les nœuds « font un peu tuyauterie, plomberie ;
+quelque chose qui rappelle un circuit imprimé, informatique, digital ».
+Dans `dessinerLesRangs`, chaque lien est UNE PAIRE DE PISTES d'un pixel
+(un bus), au lieu d'un conduit de cinq pixels cerné : ternes éteintes,
+bleues sous tension, cyan actives, avec des BITS qui y courent (tirets
+clairs décalés d'une piste à l'autre) ; les rencontres sont des pastilles
+de soudure percées. Le tracé (bus par rang) et les trois états ne changent
+pas.
+
