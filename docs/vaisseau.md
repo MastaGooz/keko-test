@@ -2874,19 +2874,22 @@ le choix au joueur » — c'est l'orientation du téléphone qui choisit.
   petits téléphones), le panneau « Changer » du châssis déborde de quelques
   pixels.
 
-### Les bandeaux habillés, et l'interface dedans (13/11)
+### Les bandeaux restent noirs ; l'interface y est en barres verticales (13/11)
 
-Keko, devant les bandes sombres du vol couché : « habiller les bandes
-(portrait et paysage) », puis : « pourquoi on ne met pas l'UI (soute à
-gauche et vie à droite) dans les bandes ? quand c'est possible, sinon on le
-met sur l'écran ». La vue reste FIXE (la même pour tous : le PvP).
-- `dessinerLesBandeaux` : les bandeaux du haut et du bas (portrait) et des
-  côtés (paysage) sont en ACIER du pupitre — sombre, grenu —, fermés d'un
-  filet et d'un cerne du côté de la vue.
-- En paysage, quand les bandeaux de côté font au moins 46 px (`enBande`,
-  `dessinerLeScore`) : LA SOUTE est dans celui de gauche, sur deux lignes
-  (« Soute » et sa touche d'or, le compte, la jauge), les pastilles du porté
-  empilées dessous ; LE BLINDAGE dans celui de droite, sa barre raccourcie à
-  ce que le bandeau laisse. Plus rien sur la vue (« Soute pleine » s'écrit au
-  bord gauche de la vue). Plus étroits, l'interface reste sur la vue, dans
-  ses deux morceaux de pupitre.
+Essayé le 13/11 puis retiré le jour même : les bandeaux HABILLÉS (acier
+grenu, filet) — Keko : « c'était mieux en noir, là ça attire l'œil et donne
+l'impression d'être encore plus petit ». Ils sont de nouveau des aplats de la
+couleur du fond, fondus dans la vue.
+Gardé, et redessiné : L'INTERFACE DANS LES BANDEAUX DE CÔTÉ, en paysage
+(Keko : « pourquoi on ne met pas l'UI dans les bandes ? quand c'est possible,
+sinon sur l'écran », puis « je pensais à des barres verticales »). Quand ils
+font au moins 30 px (`enBande`, `dessinerLeScore`) :
+- À GAUCHE, LA SOUTE DEBOUT : une plaque d'acier qui s'enfonce — sa touche
+  d'or au chevron en tête, la jauge dans sa rainure qui se remplit par le
+  bas, le compte dessous ; les pastilles du porté empilées plus bas.
+- À DROITE, LE BLINDAGE DEBOUT : l'écusson, la barre d'or à cases qui se vide
+  par le haut — la mise en scène du coup est la même, tournée (le morceau
+  perdu blanchit, tient en fantôme, se vide sous une arête blanche) —, et le
+  bouclier en colonne de cellules à côté.
+Plus étroits, l'interface reste sur la vue, en plaques, dans ses deux
+morceaux de pupitre. En portrait rien ne change.

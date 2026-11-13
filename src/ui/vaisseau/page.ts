@@ -4681,42 +4681,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // sous eux avant de les poser, celle de l'interface vient après)
     frame.light.fill(0, 0, h * W)
     frame.light.fill(0, (H - b) * W)
-    // LES BANDEAUX SONT HABILLÉS (Keko, 13/11 : « habiller les bandes, portrait et paysage » — c'étaient des aplats de
-    // la couleur du fond, qui se lisaient comme du vide) : L'ACIER DU PUPITRE — sombre, grenu —, fermé d'un filet et
-    // d'un cerne du côté de la vue : la vue est une fenêtre dans un tableau de bord.
-    const acier = (x0: number, y0: number, w: number, hh: number): void => {
-      p.rect(x0, y0, w, hh, N.hex('#17131f'))
-      for (let y = y0; y < y0 + hh; y++) for (let x = x0; x < x0 + w; x++) {
-        const g = grainA(x, y)
-        if (g > 0.9) p.rect(x, y, 1, 1, N.hex('#201a2c'))
-        else if (g < 0.06) p.rect(x, y, 1, 1, N.hex('#120f19'))
-      }
-    }
-    const FILET = N.hex('#4c4468')
-    const CERNE = MATIERES.encre.contour
-    const cote = bandeCote()
+    // (DISCRETS, DE NOUVEAU : habillés d'acier grenu et d'un filet le 13/11, ils « attiraient l'œil et donnaient
+    // l'impression d'un jeu encore plus petit » — Keko, le jour même : « c'était mieux en noir »)
     if (h > 0) {
-      acier(0, 0, W, h)
-      p.rect(0, h - 2, W, 1, FILET)
-      p.rect(0, h - 1, W, 1, CERNE)
+      p.rect(0, 0, W, h, FOND)
+      for (let k = 0; k < 4; k++) p.rect(0, h + k, W, 1, FOND, 0.55 - k * 0.13)
     }
     if (b > 0) {
-      acier(0, H - b, W, b)
-      p.rect(0, H - b, W, 1, CERNE)
-      p.rect(0, H - b + 1, W, 1, FILET)
+      p.rect(0, H - b, W, b, FOND)
+      for (let k = 0; k < 4; k++) p.rect(0, H - b - 1 - k, W, 1, FOND, 0.55 - k * 0.13)
     }
     // (en paysage : les deux bandeaux de côté, la place des pouces)
+    const cote = bandeCote()
     if (cote > 0) {
       for (let y = 0; y < H; y++) {
         frame.light.fill(0, y * W, y * W + cote)
         frame.light.fill(0, y * W + W - cote, (y + 1) * W)
       }
-      acier(0, 0, cote, H - b)
-      acier(W - cote, 0, cote, H - b)
-      p.rect(cote - 2, 0, 1, H - b, FILET)
-      p.rect(cote - 1, 0, 1, H - b, CERNE)
-      p.rect(W - cote + 1, 0, 1, H - b, FILET)
-      p.rect(W - cote, 0, 1, H - b, CERNE)
+      p.rect(0, 0, cote, H, FOND)
+      p.rect(W - cote, 0, cote, H, FOND)
+      for (let k = 0; k < 4; k++) {
+        p.rect(cote + k, 0, 1, H, FOND, 0.55 - k * 0.13)
+        p.rect(W - cote - 1 - k, 0, 1, H, FOND, 0.55 - k * 0.13)
+      }
     }
   }
   /** LA PLAQUE DE LA POSTCOMBUSTION, en bas à gauche de la vue (si elle est débloquée) : d'or quand elle est prête, sa recharge en barre ; une tape la lance aussi. */
@@ -4917,13 +4904,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // il repart de zéro quand la pastille s'en va ; le total est sur la plaque de soute, le détail dans la soute)
     const ditRecent = (k: Minerai): string => (recents[k] > 0 ? `+${recents[k]}` : '')
     // les places des pastilles du porté, de gauche à droite, larges de leur nombre
-    // DANS LES BANDEAUX DE CÔTÉ, quand ils sont assez larges (Keko, 13/11 : « pourquoi on ne met pas l'UI — la soute à
-    // gauche et la vie à droite — dans les bandes ? quand c'est possible, sinon on le met sur l'écran ») : la soute en
-    // deux lignes dans celui de gauche, les pastilles du porté empilées dessous ; le blindage, plus court, dans celui de
-    // droite. Plus rien sur la vue. Trop étroits (moins de `BANDE_MIN`), l'interface reste sur la vue, comme avant.
-    const BANDE_MIN = 46
+    // DANS LES BANDEAUX DE CÔTÉ, EN BARRES VERTICALES (Keko, 13/11 : « pourquoi on ne met pas l'UI — la soute à gauche
+    // et la vie à droite — dans les bandes ? quand c'est possible, sinon on le met sur l'écran », puis, sur des plaques
+    // horizontales réarrangées : « je pensais à des barres verticales ») : à gauche LA SOUTE, une jauge debout sur son
+    // bouton ; à droite LE BLINDAGE, une barre debout à cases, le bouclier en colonne à côté. Plus rien sur la vue. Trop
+    // étroits (moins de `BANDE_MIN`), l'interface reste sur la vue, en plaques, comme avant.
+    const BANDE_MIN = 30
     const enBande = paysage && bandeCote() >= BANDE_MIN
-    const yPastilles = enBande ? yHud + 30 + 5 : yHud + 18 + 7
+    const H_BARRE = 64
+    const yPastilles = enBande ? yHud + H_BARRE + 40 : yHud + 18 + 7
     // LE PUPITRE DU VOL (Keko, 12/11 : « retravailler l'interface en vol, en particulier la zone du haut, avec le
     // blindage, le bouclier et la soute — un rendu plus travaillé, plus professionnel, avec de la texture, en gardant
     // l'animation de dégâts du blindage ; un panneau supérieur cohérent dans le style du jeu et entre ses éléments ; et
@@ -5007,43 +4996,69 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // hangar, la langue de ce qui se tape. Dessus : « Soute », ce qu'on porte sur ce qu'on peut (en relief ivoire, rouge
     // quand elle est pleine), et sa jauge d'or dans une rainure. Toute la plaque — avec la rangée du porté dessous, pour
     // une cible assez haute au doigt — ouvre la soute.
-    const plafond = `${CONF.capacite}/${CONF.capacite}`
-    const TOUCHE = enBande ? 12 : 14
-    const HS = enBande ? 30 : 18
-    const ws = enBande ? bandeCote() - 5 : 6 + largeurDe('Soute') + 6 + largeurDe(plafond, GRAS) + 5 + TOUCHE
-    const xs = enBande ? 2 : 4
-    const actif = m.phase === 'vol' && !souteOuverte && t - arriveA >= ARRIVE_A
-    const eb = actif ? etatDuBouton(xs, yHud, ws, HS) : { enfonce: false, survole: false, flash: false, dy: 0 }
-    const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
     const bat = Math.floor(t * 4) % 2 === 0
-    if (!eb.enfonce) p.rect(xs + 1, ys + HS, ws - 2, 1, NUIT_OMBRE, 0.7)
-    plaque(p, xs, ys, ws, HS, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
-    ecrire(p, 'Soute', xs + (enBande ? 4 : 6), ys + 3, COQUE[5])
+    const actif = m.phase === 'vol' && !souteOuverte && t - arriveA >= ARRIVE_A
+    souteVue = ressort(souteVue, Math.min(1, porte / CONF.capacite))
+    if (enBande) {
+      // LA SOUTE DEBOUT : une plaque d'acier qui s'enfonce — en tête SA TOUCHE D'OR au chevron (c'est un bouton), puis
+      // la jauge dans sa rainure, qui se remplit par le bas, et dessous ce qu'on porte sur ce qu'on peut
+      const pw = 22
+      const x0 = Math.round(bandeCote() / 2) - 11
+      const hp = H_BARRE + 36
+      const eb = actif ? etatDuBouton(x0, yHud, pw, hp) : { enfonce: false, survole: false, flash: false, dy: 0 }
+      const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
+      plaque(p, x0, ys, pw, hp, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+      plaque(p, x0 + 3, ys + 3, pw - 6, 11, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
+      for (let k = 0; k < 3; k++) {
+        p.rect(x0 + 8 + k, ys + 8 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
+        p.rect(x0 + 8 + k, ys + 7 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+      }
+      const gx = x0 + 7
+      const gy = ys + 17
+      p.rect(gx - 1, gy - 1, 10, H_BARRE + 2, encre)
+      p.rect(gx, gy, 8, H_BARRE, MATIERES.creux.lumiere2)
+      const plein = Math.max(porte > 0 ? 1 : 0, Math.round(H_BARRE * souteVue))
+      if (plein > 0) {
+        p.rect(gx, gy + H_BARRE - plein, 8, plein, pleine ? ROUGE[4] : PEPITE[2])
+        p.rect(gx, gy + H_BARRE - plein, 2, plein, pleine ? ROUGE[5] : PEPITE[3])
+        p.rect(gx, gy + H_BARRE - plein, 8, 1, N.hex('#fff7d6'))
+      }
+      const dit = String(porte)
+      if (pleine) ecrire(p, dit, x0 + pw / 2, gy + H_BARRE + 3, ROUGE[5], { police: GRAS, align: 'center' })
+      else motEnRelief(p, dit, x0 + pw / 2, gy + H_BARRE + 3, 'ivoire', GRAS)
+      p.text(`/${CONF.capacite}`, x0 + pw / 2, gy + H_BARRE + 12, COQUE[4], { align: 'center' })
+      if (actif) zone(0, yHud, bandeCote(), hp + 2, ouvrirLaSoute, 'ouvre')
+    } else {
+    const plafond = `${CONF.capacite}/${CONF.capacite}`
+    const TOUCHE = 14
+    const ws = 6 + largeurDe('Soute') + 6 + largeurDe(plafond, GRAS) + 5 + TOUCHE
+    const xs = 4
+    const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
+    const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
+    if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
+    plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+    ecrire(p, 'Soute', xs + 6, ys + 3, COQUE[5])
     const compte = `${porte}/${CONF.capacite}`
-    // (en bandeau : le compte sur une seconde ligne, à gauche ; sinon à droite du mot)
-    const xc = enBande ? xs + 4 + largeurDe(compte, GRAS) : xs + ws - TOUCHE - 5
-    const yc = enBande ? ys + 13 : ys + 3
-    if (pleine) ecrire(p, compte, xc, yc, ROUGE[5], { police: GRAS, align: 'right' })
-    else motEnRelief(p, compte, xc - largeurDe(compte, GRAS) / 2, yc, 'ivoire', GRAS)
+    const xc = xs + ws - TOUCHE - 5
+    if (pleine) ecrire(p, compte, xc, ys + 3, ROUGE[5], { police: GRAS, align: 'right' })
+    else motEnRelief(p, compte, xc - largeurDe(compte, GRAS) / 2, ys + 3, 'ivoire', GRAS)
     // la touche d'or et son chevron
     const xt = xs + ws - TOUCHE - 1
-    const ht = enBande ? 12 : 16
-    plaque(p, xt, ys + 1, TOUCHE, ht, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
+    plaque(p, xt, ys + 1, TOUCHE, 16, pleine ? 'rouge' : 'or', { enfonce: eb.enfonce })
     for (let k = 0; k < 3; k++) {
-      p.rect(xt + Math.floor(TOUCHE / 2) - 3 + k, ys + Math.floor(ht / 2) + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
-      p.rect(xt + Math.floor(TOUCHE / 2) - 3 + k, ys + Math.floor(ht / 2) - 1 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+      p.rect(xt + 4 + k, ys + 8 + k, 6 - 2 * k, 1, pleine ? N.hex('#12040a') : N.hex('#3a1c04'))
+      p.rect(xt + 4 + k, ys + 7 + k, 6 - 2 * k, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
     }
-    if (actif) zone(xs, yHud, enBande ? ws : Math.max(ws, suivante - 5), enBande ? HS + 4 : 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
+    if (actif) zone(xs, yHud, Math.max(ws, suivante - 5), 18 + 7 + 13, ouvrirLaSoute, 'ouvre')
     // sa jauge : une rainure, un jonc d'or au dessus clair
-    souteVue = ressort(souteVue, Math.min(1, porte / CONF.capacite))
-    const gw = enBande ? ws - 10 : ws - TOUCHE - 11
-    const yg = enBande ? ys + 24 : ys + 12
-    p.rect(xs + (enBande ? 4 : 5), yg, gw + 2, 4, encre)
-    p.rect(xs + (enBande ? 5 : 6), yg + 1, gw, 2, MATIERES.creux.lumiere2)
+    const gw = ws - TOUCHE - 11
+    p.rect(xs + 5, ys + 12, gw + 2, 4, encre)
+    p.rect(xs + 6, ys + 13, gw, 2, MATIERES.creux.lumiere2)
     const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
     if (plein > 0) {
-      p.rect(xs + (enBande ? 5 : 6), yg + 1, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
-      p.rect(xs + (enBande ? 5 : 6), yg + 2, plein, 1, pleine ? ROUGE[4] : PEPITE[2])
+      p.rect(xs + 6, ys + 13, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
+      p.rect(xs + 6, ys + 14, plein, 1, pleine ? ROUGE[4] : PEPITE[2])
+    }
     }
 
     // ---- le porté : une pastille par minerai
@@ -5077,6 +5092,107 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'écusson bondit et blanchit. LE BOUCLIER, dessous, est une rangée de CELLULES D'ÉNERGIE penchées, bleues : un coup
     // et la cellule perdue CRÉPITE (blanc, éteint, blanc) puis s'éteint, une onde claire court sur les autres ; elle se
     // recharge en se remplissant. Au dernier point de blindage, l'or passe au rouge et bat.
+    if (enBande) {
+      // LE BLINDAGE DEBOUT — la même mise en scène que la barre couchée (le « health bar hit » du dépôt), tournée : la
+      // barre d'or à cases se vide PAR LE HAUT ; un coup, et la plaque sursaute, son cadre rougit, le morceau perdu
+      // blanchit, tient en fantôme pâle puis se vide sous une arête blanche qui crache des étincelles ; l'écusson, en
+      // tête, bondit. LE BOUCLIER : une colonne de cellules bleues à côté, qui crépitent et s'éteignent une à une.
+      const nb = CONF.bouclier.points
+      const du = t - toucheA
+      const db = t - bouclierA
+      const dernier = m.phase === 'vol' && m.coque <= 1
+      const TIENT = 0.42
+      const VIDE = 0.85
+      const fantomeA = (valeur: number): number => {
+        const dc = t - coqueCoupA
+        if (dc >= VIDE) return valeur
+        if (dc < TIENT) return Math.max(valeur, coqueFantome)
+        const u = (dc - TIENT) / (VIDE - TIENT)
+        const doux = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2
+        return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
+      }
+      const BH = H_BARRE
+      const lw = 8
+      const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
+      const pw = nb > 0 ? 28 : 22
+      const px0 = W - Math.round(bandeCote() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
+      const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
+      const bx = px0 + 7
+      const by = oy + 17
+      const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
+      const yDe = (part: number): number => by + BH * (1 - part)
+      if (m.coque < coqueConnue - 1e-6) {
+        const depuis = fantomeA(coqueConnue)
+        coqueFantome = depuis
+        coqueCoupA = t
+        for (let i = 0; i < 11; i++) gerbe(bx + 1 + R.next() * (lw - 2), yDe((m.coque + (depuis - m.coque) * R.next()) / CONF.coque), 1, [N.WHITE, or[0], or[1], or[2]], 75)
+      }
+      coqueConnue = m.coque
+      const esp = 2
+      const ch = nb > 0 ? Math.floor((BH - (nb - 1) * esp) / nb) : 0
+      const perdue = Math.min(nb - 1, Math.ceil(m.bouclier - 1e-6))
+      const sx = bx + lw + 4
+      const yCellule = (j: number): number => by + BH - (j + 1) * ch - j * esp
+      if (nb > 0 && m.bouclier < bouclierConnu - 0.5) gerbe(sx + 2, yCellule(perdue) + ch / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+      bouclierConnu = m.bouclier
+      plaque(p, px0, oy, pw, BH + 22, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
+      // l'écusson, en tête : il bondit et blanchit au coup
+      const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
+      const blanc = du >= 0 && du < 0.07
+      const ECUSSON = [7, 7, 7, 7, 5, 5, 3, 1]
+      const ex = px0 + Math.round(pw / 2) - 4
+      ECUSSON.forEach((l, r) => p.rect(ex + Math.floor((7 - l) / 2) - 1, oy + 3 + r + bond, l + 2, 3, encre))
+      ECUSSON.forEach((l, r) => {
+        const x0 = ex + Math.floor((7 - l) / 2)
+        p.rect(x0, oy + 4 + r + bond, l, 1, blanc ? N.WHITE : r === 0 ? or[0] : or[1])
+        if (!blanc && l > 1) {
+          p.rect(x0, oy + 4 + r + bond, 1, 1, or[0])
+          p.rect(x0 + l - 1, oy + 4 + r + bond, 1, 1, or[2])
+        }
+      })
+      // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
+      const val = Math.max(0, Math.min(1, m.coque / CONF.coque))
+      const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / CONF.coque))
+      const dc = t - coqueCoupA
+      p.rect(bx - 1, by - 1, lw + 2, BH + 2, encre)
+      for (let y = 0; y < BH; y++) {
+        const u = 1 - (y + 0.5) / BH
+        for (let x = 0; x < lw; x++) {
+          let c: number
+          if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
+          else if (u < fant) c = dc < 0.07 || x < 1 ? N.WHITE : x < lw - 2 ? N.hex('#ffe9a8') : or[1]
+          else c = x < 1 ? N.hex('#2a2338') : N.hex('#191424')
+          p.px(bx + x, by + y, c)
+        }
+      }
+      for (let i = 1; i < CONF.coque; i++) p.rect(bx, Math.round(yDe(i / CONF.coque)), lw, 1, encre)
+      if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
+      if (dc > TIENT && dc < VIDE) {
+        const gy = yDe(fant)
+        p.rect(bx - 1, Math.round(gy) - 1, lw + 2, 2, N.WHITE)
+        p.glow(bx + lw / 2, gy, 10, or[1], 0.6)
+        if (R.next() < 0.5) eclats.push({ x: bx + 1 + R.next() * (lw - 2), y: gy, vx: R.range(-40, 40), vy: -R.range(20, 70), t0: t, vie: 0.1 + 0.12 * R.next(), c: R.next() < 0.5 ? N.WHITE : or[0] })
+      }
+      p.glow(bx + lw / 2, yDe(val * 0.5), BH * 0.4, or[1], dernier ? 0.12 + 0.1 * Math.sin(t * 5) : 0.1)
+      if (dc < 0.3) p.glow(bx + lw / 2, yDe((val + fant) / 2), 26, dc < 0.08 ? N.WHITE : or[1], 0.6 * (1 - dc / 0.3))
+      // le bouclier : une colonne de cellules, qui se rechargent par le bas
+      for (let j = 0; j < nb; j++) {
+        const part = Math.max(0, Math.min(1, m.bouclier - j))
+        const y0 = yCellule(j)
+        const crepite = db >= 0 && db < 0.32 && j === perdue && part < 1
+        const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((perdue - j) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
+        p.rect(sx - 1, y0 - 1, 7, ch + 2, encre)
+        p.rect(sx, y0, 5, ch, crepite && Math.floor(t * 30) % 2 === 0 ? N.WHITE : VERRIERE[0])
+        const plein = Math.round(ch * part)
+        if (plein > 0 && !crepite) {
+          const charge = part < 1
+          p.rect(sx, y0 + ch - plein, 5, plein, onde > 0.5 ? VERRIERE[2] : charge ? N.hex('#12708a') : VERRIERE[1])
+          p.rect(sx, y0 + ch - plein, 1, plein, onde > 0.5 ? N.WHITE : charge ? VERRIERE[1] : VERRIERE[2])
+          if (charge && Math.floor(t * 6) % 2 === 0) p.rect(sx, y0 + ch - plein, 5, 1, VERRIERE[2])
+        }
+        if (part >= 1) p.glow(sx + 2, y0 + ch / 2, 5, VERRIERE[1], 0.18 + 0.5 * onde)
+      }
+    } else {
     const nb = CONF.bouclier.points
     const du = t - toucheA
     const db = t - bouclierA
@@ -5091,11 +5207,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const doux = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2
       return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
     }
-    // (dans le bandeau de droite : la barre prend ce que le bandeau laisse à côté de l'écusson)
-    const BW = enBande ? Math.min(52, bandeCote() - 5 - 22) : 52
+    const BW = 52
     const wp = 5 + 9 + 3 + BW + 5
     const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
-    const ox = W - (enBande ? 2 : 5) - wp + Math.round(Math.sin(t * 90) * sursaut)
+    const ox = W - 5 - wp + Math.round(Math.sin(t * 90) * sursaut)
     const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
     const bx = ox + 5 + 9 + 3
     const by = oy + (nb > 0 ? 4 : 5)
@@ -5177,6 +5292,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (charge && Math.floor(t * 6) % 2 === 0) p.rect(xs + plein - 1, oy + 12 + r, 1, 1, VERRIERE[2])
       }
       if (part >= 1) p.glow(x0 + cw / 2, oy + 13, 5, VERRIERE[1], 0.18 + 0.5 * onde)
+    }
     }
 
     // ---- LES PÉPITES EN VOL, à la manière du « coin collect » du dépôt (Keko, 12/11 : « on peut s'inspirer de coin
