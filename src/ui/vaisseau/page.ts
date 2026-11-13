@@ -1316,19 +1316,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const deux = xc - RAIL >= 150
     // (« AUTRES ONGLETS » ASSOMBRIT TOUT L'ÉCRAN, pas seulement sa colonne — Keko, 13/11 : « ça ne noircit que la moitié
     // droite » : le même voile sur la partie gauche, qui ferme la feuille d'une tape, comme lui)
+    // (… ET ELLE S'OUVRE AU MILIEU DE L'ÉCRAN, plus large — Keko, 13/11 : « ça n'a pas vraiment de sens de la mettre
+    // tout en bas à droite, on a la place »)
     if (feuille) {
-      p.rect(RAIL, HAUT_COUCHE + 1, xc - RAIL, H - HAUT_COUCHE - 1, NUIT, 0.72 * Math.min(1, (t - feuilleA) / 0.15))
-      eteindre(RAIL, HAUT_COUCHE + 1, xc, H)
+      p.rect(RAIL, HAUT_COUCHE + 1, W - RAIL, H - HAUT_COUCHE - 1, NUIT, 0.72 * Math.min(1, (t - feuilleA) / 0.15))
+      eteindre(RAIL, HAUT_COUCHE + 1, W, H)
+    }
+    const lf = Math.min(W - RAIL - 24, 280)
+    const xf = RAIL + Math.floor((W - RAIL - lf) / 2)
+    fenetre(p, xf, lf, () => dessinerLaFeuille(p))
+    if (feuille) {
+      zone(RAIL, HAUT_COUCHE + 1, W - RAIL, H - HAUT_COUCHE - 1, basculerLaFeuille, 'retour')
     }
     fenetre(p, xc, COLONNE, () => {
-      dessinerLaFeuille(p)
       if (!deux) dessinerLeChangement(p)
     })
     if (deux) {
       fenetre(p, RAIL, xc - RAIL, () => dessinerLeChangement(p, 'liste'))
       fenetre(p, xc, COLONNE, () => dessinerLeChangement(p, 'fiche'))
     }
-    if (feuille) zone(RAIL, HAUT_COUCHE + 1, xc - RAIL, H - HAUT_COUCHE - 1, basculerLaFeuille, 'retour')
     fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
     // (LA VENTE, en deux fenêtres elle aussi : sa courbe à gauche, par-dessus la grille, le reste dans la colonne — en
     // une seule pièce, elle fait jusqu'à 216 de haut, plus que l'écran couché)
@@ -1901,8 +1907,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (couchée, il n'y a pas de barre du bas derrière laquelle finir : la feuille s'arrête au-dessus du bord)
     const bas = H - HAUT_NAV - (paysage ? 10 : 0)
     const autres = VUES.slice(4)
-    const COL = 4
     const tw = 42
+    // (couchée, elle est au milieu de l'écran et plus large : autant de tuiles par rangée que sa fenêtre en loge)
+    const COL = paysage ? Math.max(4, Math.floor((W - 14) / (tw + 2))) : 4
     const th = 36
     const pas = th + 3
     const rangs = Math.ceil(autres.length / COL)
@@ -1912,8 +1919,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const hf = 22 + (autres.length > 0 ? visibles * pas : 16) + hPied
     // la feuille dépasse un peu sa place puis s'y pose
     const sur = feuille ? Math.round(Math.sin(Math.min(1, (t - feuilleA) / 0.3) * Math.PI) * 3) : 0
-    const yf = Math.round(bas - (hf + 4) * k) - sur
-    p.rect(0, HAUT_BARRE + 1, W, bas - HAUT_BARRE - 1, NUIT, 0.72 * k)
+    // (debout elle monte de la barre du bas ; couchée elle se pose au milieu de la hauteur — et le voile est celui de la
+    // base couchée, sur tout l'écran)
+    const yf = paysage ? Math.round((HAUT_BARRE + H - hf - 10) / 2 + (1 - k) * 14) : Math.round(bas - (hf + 4) * k) - sur
+    if (!paysage) p.rect(0, HAUT_BARRE + 1, W, bas - HAUT_BARRE - 1, NUIT, 0.72 * k)
     if (feuille) zones = zones.filter((z) => z.y >= bas)
     plaque(p, 4, yf, W - 8, hf + 10, 'encre')
     motEnRelief(p, 'Autres onglets', W / 2, yf + 7, true)

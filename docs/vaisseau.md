@@ -3064,4 +3064,8 @@ Retouches du même jour (Keko) :
 - Puis : couchée, « Autres onglets » assombrit TOUT l'écran (son voile ne
   couvrait que la colonne de droite) ; une tape sur la partie gauche la
   referme.
+- Puis (Keko : « on a la place ») : couchée, « Autres onglets » s'ouvre AU
+  MILIEU DE L'ÉCRAN, dans une fenêtre de 280 au plus (six tuiles par rangée
+  au lieu de quatre), au milieu de la hauteur ; une tape hors de ses tuiles
+  et de son bouton la referme, comme debout.
 
