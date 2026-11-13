@@ -3164,3 +3164,9 @@ paillettes) ; l'onglet ouvert reste en or.
 - Puis : les ailes de la navette s'attachent un rang plus haut sur la coque.
 - Puis : du blanc à l'avant de la navette (la lumière vient d'en haut, comme sur le conteneur).
 - Puis : plus de hublot bleu sur la navette — deux traits bleu nuit le long de la coque, qui la séparent des ailes.
+
+L'ICÔNE DE LA BARRE DE VIE EST LE VAISSEAU DU JOUEUR EN MINIATURE (Keko,
+13/11, après une dizaine d'icônes à la main : « on tourne en rond ») : le
+rendu du hangar (`peindreFormes`, les formes du vaisseau monté, sa livrée),
+mis à l'échelle pour que SA BOÎTE (`boiteDe`) tienne dans quinze pixels —
+un gros vaisseau y tient comme un petit (`dessinerLEcusson`).

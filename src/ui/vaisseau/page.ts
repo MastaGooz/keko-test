@@ -17,7 +17,7 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, configDuHangar, 
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheDeLArme, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boiteDe, boucheDeLArme, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur } from '../../logic/vaisseau/quetes.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
@@ -5392,49 +5392,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // niveau de l'icône de la soute » : onze pixels de large au lieu de sept, dans la place du conteneur d'en face — le
     // fuselage éclairé à gauche, les ailes à nervure, la verrière en deux bleus, les feux rouge et vert au bout des
     // ailes, deux tuyères et leurs flammes. (x, y) reste le coin de l'ancien 7 × 8 : le dessin déborde de deux de chaque côté.)
+    // (… ET FINALEMENT, LE VAISSEAU DU JOUEUR EN MINIATURE — Keko, 13/11, après une dizaine d'icônes dessinées à la main :
+    // « on tourne en rond ; une icône miniature qui correspond à la forme et à la couleur choisie par le joueur du
+    // vaisseau actuel — certains vaisseaux seront beaucoup plus gros que d'autres, il faudra les réduire à la même
+    // taille » : LE RENDU DU HANGAR (`peindreFormes`, les formes du vaisseau monté, sa livrée), mis à l'échelle pour
+    // que SA BOÎTE tienne dans quinze pixels — un gros vaisseau y tient comme un petit. (x, y) reste le coin de
+    // l'ancien 7 × 8 : la miniature est centrée sur sa place.)
     const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
-      // (UNE FORME, PAS UN VAISSEAU — Keko, 13/11 : d'abord le vaisseau du moment (« plus tard on aura plein de formes
-      // différentes »), puis une fusée détaillée : « essaie de faire une forme plutôt que le vaisseau lui-même, la forme
-      // d'une navette » : LA SILHOUETTE D'UNE NAVETTE vue de dessus — un nez, un fuselage, une aile delta — d'un seul
-      // métal clair, à peine ombré à droite et au bord de fuite : un pictogramme)
-      // (… PUIS MOINS « EN PYRAMIDE », ET EN MÉTAL — Keko, 13/11 : « une texture un peu métallique, et une forme un peu
-      // moins en pyramide, qu'on voie vraiment que c'est un vaisseau » : un fuselage étroit, des ailes en flèche dont
-      // les bouts reculent, une dérive et trois tuyères ; l'acier va du blanc à gauche au sombre à droite, une arête
-      // de lumière le long du bord d'attaque, la verrière en creux sombre)
-      // (… PUIS LA NAVETTE DE L'IMAGE DE KEKO, 13/11 — « essaie quelque chose comme ça » : un nez rond, un fuselage
-      // sombre barré d'un bandeau de verrière lavande, deux flancs clairs qui s'évasent en courbe jusqu'à une aile
-      // large à bord de fuite droit, trois barrettes sur le dos, une tuyère ; le chasseur à nacelles est retiré)
-      // (UN SEUL MÉTAL — Keko, 13/11 : « plus homogène au niveau des couleurs : éviter le blanc, juste des variations de
-      // teinte sur une couleur métal » : cinq tons voisins d'un même acier bleuté, la verrière dans le plus sombre)
-      // (… PUIS LES GRIS DU CONTENEUR DE LA SOUTE, et sa touche de couleur — Keko, 13/11 : « reprends les couleurs de
-      // l'icône de la soute, comme ça on aura une vraie cohérence visuelle entre les deux ; et une petite touche de
-      // couleur quelque part, comme son petit trait » : le même acier (corps, clair, ombre, arête blanche), et LA
-      // VERRIÈRE EN BLEU, le bleu du filet du conteneur, son milieu plus clair)
-      // (un ton de passage, `m`, entre l'échine et les ailes — Keko, 13/11 : « dégrader un peu entre le centre et les
-      // ailes, pour ne pas avoir une cassure aussi franche » ; la colonne d'ombre à droite de l'échine est retirée)
-      const T: Record<string, number> = { M: COQUE[3], m: N.hex('#879dbe'), L: COQUE[4], H: COQUE[5], d: COQUE[4], S: COQUE[2], v: VERRIERE[1], V: VERRIERE[2], B: COQUE[6], K: N.hex('#0c1420') }
-      // (LE BANDEAU SOMBRE DU CONTENEUR, sur la navette aussi — Keko, 13/11 : la soute « a des traits noirs foncés au
-      // milieu, la navette n'en a pas : elles n'ont pas l'air cohérentes » : le filet bleu de la verrière est pris,
-      // comme celui du conteneur, entre deux traits du même bleu nuit)
-      // (le bandeau est AU MILIEU DU CORPS, entre les ailes, comme celui du conteneur est au milieu de la caisse : sur
-      // le nez, large de trois, il se fondait dans le noir et détachait la pointe)
-      // (TREIZE DE LARGE, la largeur du conteneur — Keko, 13/11 : à onze, à côté de lui, « elle est un peu petite » ;
-      // les flancs commencent plus haut, l'aile gagne un pixel de chaque côté)
-      // (le corps reste étroit en haut et l'aile s'évase TARD, en creux : élargie d'un trait régulier, elle refaisait
-      // une pyramide)
-      // (les ailes s'attachent UN RANG PLUS HAUT sur la coque — Keko, 13/11 : « remonter un tout petit peu »)
-      // (du blanc à l'avant — Keko, 13/11 : « comme pour l'icône de la soute, pour donner l'impression que la lumière
-      // vient d'en haut » : la pointe du nez blanche, son rang d'après clair)
-      // (PLUS DE HUBLOT : DEUX TRAITS SOMBRES LE LONG DE LA COQUE — Keko, 13/11 : « plutôt que la couleur bleue et les
-      // traits noirs pour faire un hublot, deux traits noirs le long de la coque pour séparer la coque des ailes » : le
-      // bleu nuit du bandeau du conteneur, en deux joints droits de part et d'autre de l'échine)
-      const DESSIN = ['......B......', '.....HBH.....', '....LmHmL....', '....LmMmL....', '....LmMmL....', '...HKmMmKL...', '...LKmdmKL...', '..HLKmMmKLL..', 'BHLLKmdmKLLLL', 'SSSSKmMmKSSSS', '.....SSS.....']
-      const points: [number, number, string][] = []
-      DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
-        if (ch !== '.') points.push([x - 3 + k, y - 1 + r, ch])
-      }))
-      for (const [px, py] of points) p.rect(px - 1, py - 1, 3, 3, encre)
-      for (const [px, py, ch] of points) p.px(px, py, blanc ? N.WHITE : T[ch])
+      const formes = formesDuVaisseau(allureMontee(0), 0, 0)
+      const [xa, ya, xb, yb] = boiteDe(formes)
+      const COTE = 15
+      // (nez en haut : la largeur à l'écran vient de y, la hauteur de x)
+      const s = Math.min(COTE / Math.max(0.5, yb - ya), COTE / Math.max(0.5, xb - xa))
+      const cx = Math.round(x + 3 - ((ya + yb) / 2) * s)
+      const cy = Math.round(y + 4 + ((xa + xb) / 2) * s)
+      // (SON CERNE : la même silhouette, toute d'encre, posée d'un pixel de chaque côté — sans lui, la miniature se
+      // perdait sur le décor)
+      const D_ENCRE = Object.fromEntries((['coque', 'blinde', 'aile', 'verre', 'metal', 'acier', 'rouge', 'or', 'feu', 'ion', 'laser', 'emeraude', 'carmin', 'grenat', 'ambre', 'violet'] as const).map((mat) => [mat, new Array<number>(8).fill(encre)]))
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) peindreFormes(p, formes, cx + dx, cy + dy, s, { rampes: D_ENCRE, reflet: encre })
+      peindreFormes(p, formes, cx, cy, s, { rampes: rampesDuJoueur(), blanc: blanc ? 1 : 0 })
+      p.place(0, 0)
     }
     if (enBande) {
       // LE BLINDAGE DEBOUT — la même mise en scène que la barre couchée (le « health bar hit » du dépôt), tournée : la
