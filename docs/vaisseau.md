@@ -3144,3 +3144,8 @@ paillettes) ; l'onglet ouvert reste en or.
 - Puis : la navette est redessinée MOINS EN PYRAMIDE et EN MÉTAL — fuselage
   étroit, ailes en flèche, dérive, tuyères ; l'acier du blanc au sombre, la
   verrière en creux.
+- Puis : la jauge de la soute est GRISE (le gris de la soute pleine, sans
+  l'effet ; le violet est retiré) ; le pictogramme de la barre de vie est UN
+  CHASSEUR À NACELLES — un fuselage en pointe, deux nacelles droites au bout
+  de deux bras (la navette « on dirait un avion de ligne » ; deux proues,
+  essayées, faisaient une tête de chat).

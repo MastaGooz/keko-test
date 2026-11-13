@@ -5242,7 +5242,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const reflet = pleine ? (t % 1.8) / 0.5 : 2
     // (LA JAUGE EST VIOLETTE — Keko, 13/11 : « une autre couleur pour la barre de la soute quand elle se remplit, le jaune
     // est déjà utilisé pour le blindage » ; ni l'or du blindage, ni le bleu du bouclier, ni le rouge de l'alerte)
-    const SOUTE = [N.hex('#5a3fa8'), N.hex('#8f6fe0'), N.hex('#c9b8ff')]
+    // (… PUIS GRISE, le gris de la soute pleine, sans son effet — Keko, 13/11, après le violet : pleine, c'est le cerne
+    // clair et le reflet qui le disent)
+    const SOUTE = [COQUE[3], COQUE[4], COQUE[5]]
     // (PLEINE, LA JAUGE EST GRISÉE — Keko, 13/11 : « en grisé plutôt que rouge », et plus de bord qui rougit sur la plaque ;
     // le mot « Soute pleine » reste rouge)
     if (enBande) {
@@ -5264,7 +5266,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(gx, gy + HG - plein, 8, plein, pleine ? COQUE[4] : SOUTE[1])
         p.rect(gx, gy + HG - plein, 1, plein, pleine ? COQUE[5] : SOUTE[2])
         p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? COQUE[3] : SOUTE[0])
-        p.rect(gx, gy + HG - plein, 8, 1, pleine ? COQUE[5] : N.hex('#efe6ff'))
+        p.rect(gx, gy + HG - plein, 8, 1, COQUE[5])
       }
       if (reflet < 1) {
         const yr = gy + HG - 2 - Math.round(reflet * (HG - 2))
@@ -5308,7 +5310,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(gx, gy, plein, 8, pleine ? COQUE[4] : SOUTE[1])
         p.rect(gx, gy, plein, 1, pleine ? COQUE[5] : SOUTE[2])
         p.rect(gx, gy + 6, plein, 2, pleine ? COQUE[3] : SOUTE[0])
-        p.rect(gx + plein - 1, gy, 1, 8, pleine ? COQUE[5] : N.hex('#efe6ff'))
+        p.rect(gx + plein - 1, gy, 1, 8, COQUE[5])
       }
       if (reflet < 1) {
         const xr = gx + Math.round(reflet * (gw - 2))
@@ -5399,8 +5401,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // moins en pyramide, qu'on voie vraiment que c'est un vaisseau » : un fuselage étroit, des ailes en flèche dont
       // les bouts reculent, une dérive et trois tuyères ; l'acier va du blanc à gauche au sombre à droite, une arête
       // de lumière le long du bord d'attaque, la verrière en creux sombre)
-      const T: Record<string, number> = { H: COQUE[6], L: COQUE[5], M: COQUE[4], S: COQUE[3], D: COQUE[1] }
-      const DESSIN = ['.....H.....', '....HLM....', '....LDM....', '....LDM....', '...HLLMS...', '..HLLMMSS..', '.HLLLMMSSS.', 'HLM.LMS.MSS', 'L...LMS...S', '...HLMSS...', '...M.M.S...']
+      // (… PUIS UN CHASSEUR À NACELLES — Keko, 13/11 : la navette à ailes en flèche, « on dirait un avion de ligne » :
+      // un fuselage en pointe, et DEUX NACELLES de moteur droites, au bout de deux bras, de part et d'autre — une forme
+      // qu'aucun avion n'a ; trois tuyères qui luisent bleu)
+      const T: Record<string, number> = { H: COQUE[6], L: COQUE[5], M: COQUE[4], S: COQUE[3], D: COQUE[1], c: VERRIERE[2] }
+      const DESSIN = ['.....H.....', '....HLM....', '....LDM....', '....LDM....', 'H...LLM...M', 'L..HLLMS..S', 'LHLLLLMMMSS', 'L..LLLMS..S', 'L...LMS...S', 'c...c.c...c']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])
