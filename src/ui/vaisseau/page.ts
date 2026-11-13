@@ -1607,7 +1607,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       sy = cy - 2 - Math.round(Math.pow(Math.max(0, u - 0.28) / 0.72, 2.2) * (cy - y0 + 50))
       // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
       const cranP = monteeA(hangar, 'propulseur').cran
-      const bout = Math.round((8.4 + 0.5 * (cranP - 1) + (2.5 + 8 * flam) * (1 + 0.25 * (cranP - 1)) * 0.85) * ECHELLE)
+      const bout = Math.round((8.4 + 0.5 * (cranP - 1) + (2.5 + 8 * flam) * (1 + 0.25 * (cranP - 1)) * 0.5) * ECHELLE)
       if (R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
       if (u >= 1) {
@@ -6316,7 +6316,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // COULEUR DE LA FLAMME : bleues derrière un propulseur ionique, elles restaient couleur feu)
             const cran = monteeA(hangar, 'propulseur').cran
             const flamme = (2.5 + 8 * v.poussee) * (1 + 0.25 * (cran - 1))
-            const recul = 8.4 + 0.5 * (cran - 1) + flamme * 0.85
+            // (AU MILIEU de la flamme — au bout, elles paraissaient « trop loin »)
+            const recul = 8.4 + 0.5 * (cran - 1) + flamme * 0.5
             const bx = v.x - Math.cos(v.cap) * recul
             const by = v.y - Math.sin(v.cap) * recul
             const vitesse = 30 + 40 * v.poussee
