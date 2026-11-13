@@ -3400,3 +3400,9 @@ mais je n'en ai que 3 ») :
 
 
 LE RENDU DU VAISSEAU, DIX À VINGT FOIS PLUS VITE (13/11 : le cuirassé « rame à mort ») : `peindreFormes` essayait chaque forme sur chaque pixel — 80 formes × 10 000 pixels, 105 ms par image. Chaque forme a maintenant SA BOÎTE, essayée d'abord : 4,3 ms (le vaisseau de série : 3,3 → 0,4 ms ; l'icône du cuirassé : 30 → 2,2 ms). Vérifié au pixel près : 348 174 pixels peints, zéro écart avec l'ancien rendu.
+
+Le banc `&banc` REPART À CHAQUE VOL des réglages du vaisseau qu'on vient de
+prendre (il gardait ceux du vol d'avant), et a un bouton « RESET » (rouge,
+à côté de « Fermer », éteint tant que rien n'a bougé) qui rend au vaisseau
+ses réglages du décollage (`bancDeDepart`).
+

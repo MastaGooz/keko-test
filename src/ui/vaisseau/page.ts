@@ -322,11 +322,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * vider en direct, avec le chiffre associé »). Un bouton « Réglages » en haut de la vue ouvre quatre curseurs ; le
    * vol continue dessous, et la configuration du vaisseau suit le doigt. Les valeurs sont BRUTES — la pointe en px/s,
    * la poussée en px/s² AVANT le poids, la rotation en rad/s, le poids en tonnes — et le poids divise la poussée et le
-   * frein comme dans `configDuHangar`. Elles tiennent d'un vol à l'autre, le temps de la page.
+   * frein comme dans `configDuHangar`. Chaque vol repart des réglages du vaisseau monté ; « Reset » y revient.
    */
   const BANC = parametres.has('banc')
   let bancOuvert = false
   let banc: { pointe: number; poussee: number; rotation: number; poids: number } | null = null
+  /** Les réglages du vaisseau au décollage : ce que « Reset » rend. */
+  let bancDeDepart: { pointe: number; poussee: number; rotation: number; poids: number } | null = null
   const allegeParLePoids = (poids: number): number => Math.max(0.5, poids) / POIDS_SERIE // (en proportion simple, comme `configDuHangar`)
   function appliquerLeBanc(): void {
     if (banc === null) return
@@ -341,8 +343,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y0 = paysage ? 2 : basDuHud() + 4
     const mot = bancOuvert ? 'Fermer' : 'Réglages'
     const bw = largeurDe('Réglages', GRAS) + 14
-    bouton(p, Math.round(W / 2 - bw / 2), y0, bw, 13, mot, true, () => (bancOuvert = !bancOuvert), 'onglet', 'acier')
+    // (ouvert : « Reset » à côté de « Fermer » — il rend au vaisseau ses réglages du décollage)
+    const br = largeurDe('Reset', GRAS) + 14
+    const xb = bancOuvert ? Math.round(W / 2 - (bw + 4 + br) / 2) : Math.round(W / 2 - bw / 2)
+    bouton(p, xb, y0, bw, 13, mot, true, () => (bancOuvert = !bancOuvert), 'onglet', 'acier')
     if (!bancOuvert) return
+    const change = bancDeDepart !== null && (b.pointe !== bancDeDepart.pointe || b.poussee !== bancDeDepart.poussee || b.rotation !== bancDeDepart.rotation || b.poids !== bancDeDepart.poids)
+    bouton(p, xb + bw + 4, y0, br, 13, 'Reset', change, () => {
+      if (bancDeDepart === null) return
+      banc = { ...bancDeDepart }
+      appliquerLeBanc()
+    }, 'retour', 'rouge')
     const RANGS: { nom: string; v: number; min: number; max: number; pas: number; dit: string; regler: (x: number) => void }[] = [
       { nom: 'Vitesse', v: b.pointe, min: 0, max: 300, pas: 1, dit: `${Math.round(b.pointe)}`, regler: (x) => (b.pointe = x) },
       { nom: 'Accél.', v: b.poussee, min: 0, max: 300, pas: 1, dit: `${Math.round(b.poussee)}`, regler: (x) => (b.poussee = x) },
@@ -574,10 +585,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // un vaisseau qui freinait quatorze fois plus fort sans pousser plus, et plafonnait à 4 px/s : « ça ne bouge pas »)
       CONF = { ...CONF, poussee: (BASE.poussee * part(0, 0.3)) / leger, vitesseMax: Math.max(0.01, BASE.vitesseMax * part(1, 0.3)), rotation: BASE.rotation * part(2, 0), frein: BASE.frein / leger, masse: reste }
     }
-    // (`&banc` : les curseurs partent de ce vaisseau ; déjà réglés, ils gardent leurs valeurs)
+    // (`&banc` : les curseurs partent de ce vaisseau)
     if (BANC) {
       const poids = CONF.masse ?? POIDS_SERIE
-      if (banc === null) banc = { pointe: CONF.vitesseMax, poussee: CONF.poussee * allegeParLePoids(poids), rotation: CONF.rotation, poids }
+      // (CHAQUE VOL REPART DES RÉGLAGES DU VAISSEAU QU'ON VIENT DE PRENDRE — Keko, 13/11 ; ils sont gardés pour le bouton
+      // « Reset », qui annule les essais du vol)
+      bancDeDepart = { pointe: CONF.vitesseMax, poussee: CONF.poussee * allegeParLePoids(poids), rotation: CONF.rotation, poids }
+      banc = { ...bancDeDepart }
       appliquerLeBanc()
     }
     m = monterLeMonde()
