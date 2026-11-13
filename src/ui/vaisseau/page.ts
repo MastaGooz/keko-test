@@ -4647,10 +4647,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
       jet(-1, -5.2, -0.15, -1, Math.max(0, pousseeVue.cote))
       jet(-1, 5.2, -0.15, 1, Math.max(0, -pousseeVue.cote))
-      // À CHAQUE VIRAGE, même d'un seul manche (Keko, 13/11 : « animer le petit propulseur latéral à chaque virage, ce
-      // serait plus réaliste ») : un jet au flanc du nez, du côté EXTÉRIEUR au virage — c'est lui qui fait tourner le nez
-      jet(5, -2.6, 0.1, -1, Math.max(0, virageVu))
-      jet(5, 2.6, 0.1, 1, Math.max(0, -virageVu))
+      // AU VIRAGE, un jet au flanc du nez, du côté EXTÉRIEUR — MAIS SEULEMENT QUAND LE REGARD TIENT LE NEZ (le second
+      // manche, la souris). Keko, 13/11 : d'abord « à chaque virage, même sans le deuxième stick », puis, à l'essai :
+      // « ça fait un peu bizarre » — d'un seul manche le nez tourne sans cesse, les jets clignotaient à chaque
+      // correction de cap ; les jets de manœuvre sont réservés au pilotage à deux manches
+      if (regardVoulu() !== undefined) {
+        jet(5, -2.6, 0.1, -1, Math.max(0, virageVu))
+        jet(5, 2.6, 0.1, 1, Math.max(0, -virageVu))
+      }
     }
     // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
     if (t - bouclierA < 0.25) {

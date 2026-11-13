@@ -3224,7 +3224,8 @@ l'image qui l'explique (`pousseeVue`, la poussée vue du vaisseau, lissée) :
   70 % de la poussée ; de côté, tout ; au prorata entre les deux. D'un seul
   manche (pas de regard), rien ne change.
 - Le bourdon de la foreuse est baissé d'un tiers (0,38 → 0,27).
-- Puis (Keko) : UN JET AU FLANC DU NEZ À CHAQUE VIRAGE, même d'un seul
-  manche (`virageVu`, la vitesse de rotation lissée) : du côté extérieur au
-  virage.
+- Puis (Keko) : un jet au flanc du nez au virage (`virageVu`), du côté
+  extérieur — d'abord à chaque virage, puis RÉSERVÉ AU PILOTAGE À DEUX
+  MANCHES (« ça fait un peu bizarre » d'un seul : le nez tourne sans cesse,
+  les jets clignotaient).
 
