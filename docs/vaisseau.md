@@ -3017,3 +3017,29 @@ ciel. *Une app déjà installée garde son ancien manifeste : il faut la
 désinstaller et la réinstaller depuis l'adresse `?vaisseau`.* La collection
 (la racine) garde son nom et son icône.
 
+### Le paysage : toute la base (13/11)
+
+Keko : « on convertit le reste de l'interface de la base en compatible
+paysage ». `veutLePaysage` ne dépend plus de la vue. LE MÊME PARTAGE QUE LE
+HANGAR pour chaque onglet (`dessinerLaBaseCouchee`) : ce que le portrait met
+en haut (la scène) est dans la fenêtre de gauche, ce qu'il met dessous (le
+contenu) dans la colonne de 180.
+- COMMERCE : la grille à gauche, sur toute la hauteur — ses colonnes suivent
+  la largeur de la fenêtre (de 2 à 5, `COL`) ; la fiche du minerai,
+  « Vendre » et les ordres dans la colonne. LA VENTE s'ouvre EN DEUX
+  FENÊTRES (`dessinerLaVente(p, 'courbe' | 'reste')`) : la courbe à gauche,
+  plus haute, le reste dans la colonne — en une pièce elle fait jusqu'à 216
+  de haut. Sans la mécanique `courbe`, la gauche n'est qu'un voile.
+- RECHERCHE : la barre des branches et l'arbre à gauche sur toute la
+  hauteur ; LA FICHE DU NŒUD dans la colonne (`dessinerLeContenu`).
+  `placesDesNoeuds` est gardé en coordonnées d'écran (la gerbe du déblocage
+  part d'une autre fenêtre que le bouton).
+- MISSIONS, PARAMÈTRES : l'en-tête (et les pastilles du tutoriel, la flèche
+  de retour) à gauche, les cartes dans la colonne.
+- Deux pièges payés : `frame.light.fill(0, y * W, …)` dans une fenêtre (où
+  `W` est la largeur de la fenêtre, pas le pas du tampon) — passer par
+  `eteindre` ; et une action qui sème depuis `W / 2` (à l'heure de l'action,
+  `W` est celui de l'écran) — retenir le milieu au dessin (`milieu`).
+- Changer d'onglet referme la vente (`allerA`) : couchée, le rail reste
+  touchable sous son voile.
+

@@ -366,8 +366,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const large = racine.clientWidth - marge(st.paddingLeft) - marge(st.paddingRight)
     const haut = racine.clientHeight - marge(st.paddingTop) - marge(st.paddingBottom)
     // (étape 2 : LE HANGAR aussi ; les autres onglets restent debout en attendant leur tour)
-    // (l'écran éteint et l'accueil se couchent aussi — Keko, 13/11)
-    return large > haut && (accueil || !ecranVisible() || vue === 'hangar')
+    // (TOUT SE COUCHE — Keko, 13/11 : l'accueil, le vol, le hangar, puis « le reste de l'interface de la base »)
+    return large > haut
   }
   function cadrer(): void {
     // le zoom vient de la largeur, et de la hauteur aussi : l'écran en pixels (l'accueil et le hangar) veut 320 px de
@@ -1172,6 +1172,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (vv === vue) return
     if (PRINCIPALES().includes(vue)) vueDAvant = vue
     vue = vv
+    vente = null // (couchée, le rail reste touchable sous le panneau de vente : changer d'onglet le referme)
     etape = 'vaisseau'
     vueA = t
     etapeA = t
@@ -1249,7 +1250,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * - puis DEUX COLONNES : LA SCÈNE (le vaisseau sur son aire) prend ce qui reste, LE CONTENU (les cases et « Décoller »,
    *   la page d'une place) une colonne de 180 — la largeur du portrait : ses fonctions s'y dessinent telles quelles, par
    *   `fenetre` ; les panneaux (changer, couleurs, autres onglets) s'ouvrent dans cette colonne, le vaisseau reste visible.
-   * Seul le hangar est couché pour l'instant.
+   * TOUTES LES VUES SONT COUCHÉES (13/11) sur le même partage — ce que le portrait met en haut (la scène) est à gauche,
+   * ce qu'il met dessous (le contenu) est dans la colonne : COMMERCE, la grille à gauche (ses colonnes suivent la
+   * largeur), la fiche et les ordres à droite ; RECHERCHE, l'arbre à gauche sur toute la hauteur, la fiche du nœud à
+   * droite ; MISSIONS et PARAMÈTRES, leur en-tête à gauche, les cartes à droite.
    */
   const RAIL = 28
   const HAUT_COUCHE = 22
@@ -1295,6 +1299,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       fenetre(p, xc, COLONNE, () => dessinerLeChangement(p, 'fiche'))
     }
     fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
+    // (LA VENTE, en deux fenêtres elle aussi : sa courbe à gauche, par-dessus la grille, le reste dans la colonne — en
+    // une seule pièce, elle fait jusqu'à 216 de haut, plus que l'écran couché)
+    fenetre(p, RAIL, xc - RAIL, () => dessinerLaVente(p, 'courbe'))
+    fenetre(p, xc, COLONNE, () => dessinerLaVente(p, 'reste'))
     dessinerLaLigneDuHaut(p)
     dessinerLeRail(p)
     dessinerLesEclats(p)
@@ -1434,7 +1442,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // d'ici par la barre du bas ; c'est l'en-tête des pages du hangar, sa touche d'or et son titre)
       // (ELLE REFERME LES PARAMÈTRES : on retrouve l'onglet qu'on avait avant, le panneau « Autres onglets » ouvert
       // dessus, la tuile « Paramètres » éteinte — Keko, 12/11)
-      enTete(p, y1 - 30, 'Commandes', () => {
+      enTete(p, paysage ? y0 + 6 : y1 - 30, 'Commandes', () => {
         allerA(PRINCIPALES().includes(vueDAvant) ? vueDAvant : 'hangar')
         basculerLaFeuille()
       })
@@ -1442,16 +1450,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // LE BANDEAU DES QUÊTES : pendant le tutoriel, « Formation » et ses étapes en pastilles ; ensuite, « Contrats »
       p.rect(0, y0, W, hautScene, N.hex('#14101e'))
       for (let x = 0; x < W; x += 6) p.rect(x, y0, 1, hautScene, N.hex('#181326'))
+      // (couchée, le bandeau a toute la hauteur : son en-tête est au milieu)
+      const yt = paysage ? y0 + Math.round(hautScene / 2) + 16 : y1
       if (!tutorielFini(quetes)) {
-        dessinerLEnTeteDuBandeau(p, 'Formation', y1 - 33)
+        dessinerLEnTeteDuBandeau(p, 'Formation', yt - 33)
         const n = TUTORIEL.length
         for (let i = 0; i < n; i++) {
           const px = Math.round(cx + (i - (n - 1) / 2) * 12)
           const fait = i < quetes.etape
           const ici = i === quetes.etape
-          p.rect(px - 3, y1 - 11, 7, 7, MATIERES.encre.contour)
-          p.rect(px - 2, y1 - 10, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
-          if (i > 0) p.rect(px - 9, y1 - 8, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
+          p.rect(px - 3, yt - 11, 7, 7, MATIERES.encre.contour)
+          p.rect(px - 2, yt - 10, 5, 5, fait ? RUNE[2] : ici ? (Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2]) : COQUE[1])
+          if (i > 0) p.rect(px - 9, yt - 8, 5, 1, fait || ici ? RUNE[1] : COQUE[1])
         }
       } else {
         // (seul, au milieu du bandeau : « Un par activité, toujours » est retiré — Keko, 12/11)
@@ -1460,7 +1470,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // la hiérarchie dans l'autre sens ». Il n'y a pas de lettre entre la grasse et la grande (la grande est la
         // grasse doublée) : le mot prend donc LA PLAQUE D'EN-TÊTE du hangar — l'acier, la lettre écartée, les deux
         // pointes d'or —, qui pèse plus qu'un titre de carte sans égaler le titre de la vue)
-        dessinerLEnTeteDuBandeau(p, 'Contrats', y1 - 27)
+        dessinerLEnTeteDuBandeau(p, 'Contrats', yt - 27)
       }
     } else {
       p.rect(0, y0, W, hautScene, N.hex('#0e0c16'))
@@ -1649,7 +1659,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let zoneDeLInventaire: { x: number; y: number; w: number; h: number } | null = null
   function dessinerLInventaire(p: Peintre, y0: number): void {
     // la barre des catégories, en haut de la scène (la lumière des lampes éteinte dessous)
-    frame.light.fill(0, y0 * W, (y0 + H_BRANCHES + 1) * W)
+    eteindre(0, y0, W, y0 + H_BRANCHES + 1)
     dessinerUneBarreDOnglets(p, y0, 'categorie', CATEGORIES.map((c) => ({ nom: NOMS_DE_CATEGORIE[c], icone: c })), CATEGORIES.indexOf(categorie), (i) => {
       categorie = CATEGORIES[i]
       defilInventaire = 0
@@ -1660,9 +1670,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
     const vues = ressourcesVues()
     const haut = hautScene - H_BRANCHES
-    const COL = 5
     const cw = 30
     const ch = 28
+    // (cinq colonnes debout ; couchée, autant que la fenêtre en loge, de deux à cinq)
+    const COL = Math.max(2, Math.min(5, Math.floor((W - 5) / (cw + 3))))
     const RANG = Math.max(1, Math.floor((haut - 10) / (ch + 3)))
     const total = vues.length
     const rangees = Math.max(RANG, Math.ceil(total / COL))
@@ -2288,7 +2299,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else if (vue === 'quetes') dessinerLesQuetes(p, y)
     else if (vue === 'reglages') dessinerLesReglages(p, y)
     else if (vue === 'labo') {
-      // (rien : l'arbre tient toute la scène)
+      // (debout, rien : l'arbre et sa fiche tiennent toute la scène ; couchée, la fiche du nœud est ici)
+      if (paysage) dessinerLInfoDuNoeud(p, y)
     } else if (etape === 'vaisseau') {
       dessinerLesEmplacements(p, y)
       if (vue === 'hangar') dessinerDecoller(p)
@@ -2784,13 +2796,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLArbre(p: Peintre, y0: number): void {
     const y1 = y0 + hautScene
     dessinerLesBranches(p, y0)
-    const hi = H_INFO + surplusDeLInfo()
+    // (couchée, la fiche du nœud est dans la colonne de droite : l'arbre a toute la hauteur)
+    const hi = paysage ? -2 : H_INFO + surplusDeLInfo()
     // L'ARBRE D'ABORD, dans sa fenêtre ; puis la barre des branches et la fiche du nœud PAR-DESSUS (un nœud à demi sorti
     // de la fenêtre passe dessous — la lumière aussi : on l'éteint sous elles, elle traverse les aplats)
     dessinerLesRangs(p, y0 + H_BRANCHES + 1, y1 - hi - 2)
-    frame.light.fill(0, y0 * W, (y0 + H_BRANCHES + 1) * W)
+    eteindre(0, y0, W, y0 + H_BRANCHES + 1)
     dessinerLesBranches(p, y0)
-    frame.light.fill(0, (y1 - hi - 2) * W, y1 * W)
+    if (paysage) return
+    eteindre(0, y1 - hi - 2, W, y1)
     p.rect(0, y1 - hi - 2, W, hi + 2, N.hex('#0a1626'))
     dessinerLInfoDuNoeud(p, y1 - hi)
   }
@@ -2958,7 +2972,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const rg of rangs) {
       if (rg.y + 24 < ya || rg.y - 24 > yb) continue
       for (const pl of rg.places) {
-        placesDesNoeuds[pl.n.id] = { x: pl.x, y: rg.y }
+        placesDesNoeuds[pl.n.id] = { x: pl.x + ORIGINE.x, y: rg.y } // (à l'écran : la fiche, couchée, est dans une autre fenêtre)
         dessinerUnNoeud(p, pl.n, pl.x, rg.y, noeudChoisi[branche] === pl.n.id)
       }
     }
@@ -2980,6 +2994,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (n === undefined) return
     const etat = etatDuNoeud(n)
     const surplus = surplusDeLInfo()
+    const ox = ORIGINE.x
+    const milieu = W / 2
     const h = H_INFO - 4 + surplus
     plaque(p, 4, y, W - 8, h, 'encre')
     motEnRelief(p, n.nom, W / 2, y + 5, etat === 'acquis')
@@ -3020,7 +3036,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         debloqueA = t
         debloqueId = n.id
         secouer(1.2)
-        const ou = placesDesNoeuds[n.id] ?? { x: W / 2, y: Y_SCENE + hautScene / 2 }
+        const vu = placesDesNoeuds[n.id]
+        const ou = vu === undefined ? { x: milieu, y: Y_SCENE + 60 } : { x: vu.x - ox, y: vu.y }
         gerbe(ou.x, ou.y, 26, [RUNE[2], RUNE[3], PEPITE[3], N.WHITE], 80)
         flottants.push({ texte: 'Débloqué !', x: ou.x, y: ou.y - 18, t0: t, c: RUNE[3] })
         // (une pièce : elle attend au hangar, dont l'onglet saute et prend sa pastille)
@@ -3377,6 +3394,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let zoneDesMissions: { x: number; y: number; w: number; h: number } | null = null
   function dessinerLesQuetes(p: Peintre, y0: number): void {
     const bas = H - HAUT_NAV - 2
+    // (le milieu DE LA FENÊTRE, retenu au dessin : à l'heure d'une action, `W` est celui de l'écran)
+    const milieu = W / 2
     const hauteurs = quetes.actives.map((q) => {
       const mo = modeleDe(q.modele)
       return mo === undefined ? 0 : hauteurDeLaMission(mo, estTerminee(q)) + 3
@@ -3473,14 +3492,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           credits = r.credits
           sauver()
           secouer(1)
-          for (let k = 0; k < 8; k++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 40, y0: yj + 7, t0: t + k * 0.05 })
-          gerbe(W / 2, yj + 7, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
+          for (let k = 0; k < 8; k++) volantes.push({ x0: milieu + (R.next() - 0.5) * 40, y0: yj + 7, t0: t + k * 0.05 })
+          gerbe(milieu, yj + 7, 20, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 70)
           vueA = t - 0.1
           // l'onglet qu'elle ouvre : il saute dans la barre et prend sa pastille
           if (r.ouvre !== undefined) {
             pulsations[r.ouvre] = t
             nouveautes.add(r.ouvre)
-            flottants.push({ texte: `${NOMS_VUE[r.ouvre]} débloqué !`, x: W / 2, y: y - 4, t0: t, c: RUNE[3] })
+            flottants.push({ texte: `${NOMS_VUE[r.ouvre]} débloqué !`, x: milieu, y: y - 4, t0: t, c: RUNE[3] })
           }
         }, 'achat')
       } else {
@@ -3624,8 +3643,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, bx, y, 7, 12, 'or')
     curseurs.push({ x: x + 1, y: y - 4, w: w - 2, h: 20, regler })
   }
-  function dessinerLaVente(p: Peintre): void {
+  function dessinerLaVente(p: Peintre, partie: 'tout' | 'courbe' | 'reste' = 'tout'): void {
     if (vente === null) return
+    const milieu = W / 2
     const k = vente
     const u0 = sortie((t - venteA) / 0.2)
     const maintenant = heureDuMarche()
@@ -3644,27 +3664,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const aCourbe = aLaMecanique(labo, 'courbe')
     const aOrdres = aLaMecanique(labo, 'ordres')
     if (!aOrdres) venteFixe = false
-    const hp = (ordre !== undefined ? 153 : 216) - (aCourbe ? 0 : 55) - (ordre === undefined && !aOrdres ? 18 : 0)
+    // (COUCHÉE, DEUX PARTIES — `courbe` : la courbe seule, dans la fenêtre de gauche, plus haute ; `reste` : tout le reste,
+    // dans la colonne)
+    const gh = partie === 'courbe' ? Math.max(50, Math.min(96, H - HAUT_BARRE - 52)) : 50
+    const hp = partie === 'courbe' ? 27 + gh : (ordre !== undefined ? 153 : 216) - (aCourbe && partie === 'tout' ? 0 : 55) - (ordre === undefined && !aOrdres ? 18 : 0)
     const x = 6
     const w = W - 12
     const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
     // le voile : tout ce qui est dessous s'éteint et ne répond plus
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
-    frame.light.fill(0)
-    zones = []
-    curseurs = []
-    zoneDesOrdres = null
-    zoneDeLInventaire = null
+    if (partie !== 'reste') {
+      frame.light.fill(0)
+      zones = []
+      curseurs = []
+      zoneDesOrdres = null
+      zoneDeLInventaire = null
+    }
+    if (partie === 'courbe' && !aCourbe) {
+      // (pas encore de courbe : la fenêtre de gauche n'est qu'un voile, qui ferme)
+      zone(0, 0, W, H, () => (vente = null), 'retour')
+      return
+    }
     plaque(p, x, y, w, hp, 'encre')
     const nom = FICHES_MINERAI[k].nom
-    dessinerUneRessource(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, k)
-    motEnRelief(p, nom, W / 2 + 5, y + 7, true)
-    if (aCourbe) {
+    if (partie === 'courbe') motEnRelief(p, 'Cours', W / 2, y + 7, 'ivoire')
+    else {
+      dessinerUneRessource(p, W / 2 - largeurDe(nom, GRAS) / 2 - 5, y + 10, k)
+      motEnRelief(p, nom, W / 2 + 5, y + 7, true)
+    }
+    if (aCourbe && partie !== 'reste') {
       // LA COURBE : les derniers cours, à l'échelle de leur creux et de leur crête (et du prix fixé, s'il y en a un)
       const gx = x + 6
       const gy = y + 21
       const gw = w - 12
-      const gh = 50
       plaque(p, gx, gy, gw, gh, 'creux')
       const h = historiqueDe(k, maintenant)
       const fixe = ordre !== undefined ? ordre.prix : venteFixe ? ventePrix : null
@@ -3697,7 +3729,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.text(prixDit(haut), gx + 3, gy + 3, COQUE[3])
       p.text(prixDit(bas), gx + 3, gy + gh - 9, COQUE[3])
     }
-    let ly = y + 21 + (aCourbe ? 55 : 0)
+    if (partie === 'courbe') {
+      zone(x, y, w, hp, () => {}, null)
+      zone(0, 0, W, H, () => (vente = null), 'retour')
+      return
+    }
+    let ly = y + 21 + (aCourbe && partie === 'tout' ? 55 : 0)
     ecrire(p, 'Cours', x + 6, ly, COQUE[4])
     dessinerLeCours(p, k, x + w - 5, ly)
     ly += 13
@@ -3764,7 +3801,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (r === null) return
           marche = r.marche
           tresor = r.tresor
-          flottants.push({ texte: 'Ordre posé', x: W / 2, y: HAUT_BARRE + 16, t0: t, c: PEPITE[3] })
+          flottants.push({ texte: 'Ordre posé', x: milieu, y: HAUT_BARRE + 16, t0: t, c: PEPITE[3] })
           compter('ordresPoses', 1)
         } else {
           const r = vendreAuCours(tresor, credits, k, q, heureDuMarche(), avantages())
@@ -3773,8 +3810,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           tresor = r.tresor
           credits = r.credits
           secouer(0.8)
-          for (let i = 0; i < Math.min(10, q); i++) volantes.push({ x0: W / 2 + (R.next() - 0.5) * 30, y0: ly + 6, t0: t + i * 0.05 })
-          gerbe(W / 2, ly + 6, 14, [RUNE[2], RUNE[3], N.WHITE])
+          for (let i = 0; i < Math.min(10, q); i++) volantes.push({ x0: milieu + (R.next() - 0.5) * 30, y0: ly + 6, t0: t + i * 0.05 })
+          gerbe(milieu, ly + 6, 14, [RUNE[2], RUNE[3], N.WHITE])
         }
         sauver()
         vente = null
