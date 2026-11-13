@@ -4980,7 +4980,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       } else if (paysage) {
         morceau(0, 4 + L_SOUTE + 5)
         morceau(W - 5 - (5 + 9 + 3 + 52 + 5) - 5, W)
-      } else morceau(0, W)
+      }
+      // (DEBOUT, PLUS DE PUPITRE — Keko, 13/11 : « enlève le fond en haut, le noir est plus discret qu'un rectangle » :
+      // la soute et le blindage sont posés sur le noir du bandeau)
     }
     const places = new Map<Minerai, { x: number; w: number; y: number }>()
     let suivante = 5
@@ -5210,7 +5212,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       coqueConnue = m.coque
       if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + lw / 2, yDe((m.coque + m.bouclier) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
       bouclierConnu = m.bouclier
-      plaque(p, px0, oy, pw, BH + 22, 'encre', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
+      // (LA MÊME PLAQUE D'ACIER QUE LA SOUTE — Keko, 13/11 : deux contenants différents « cassent la cohérence de l'UI », et
+      // sombres, on y distinguait mal une barre vide : l'acier est plus clair que le creux des barres)
+      plaque(p, px0, oy, pw, BH + 22, 'acier', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
       // l'écusson, en tête : il bondit et blanchit au coup
       const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
       const blanc = du >= 0 && du < 0.07
@@ -5281,7 +5285,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + (BW * (m.coque + m.bouclier)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
-    plaque(p, ox, oy, wp, 18, 'creux', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
+    p.rect(ox + 1, oy + 18, wp - 2, 1, NUIT_OMBRE, 0.7)
+    plaque(p, ox, oy, wp, 18, 'acier', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
     // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
     const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
     const blanc = du >= 0 && du < 0.07

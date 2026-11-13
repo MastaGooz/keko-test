@@ -2955,3 +2955,10 @@ bouclier, même en pleine recharge, le reste passe à la coque (avant : un
 point entier par coup quel que soit le coup, rien sous un point). À
 l'écran il garde sa teinte pendant la recharge. « Pas de bélier »
 (`sousBouclier`) demande toujours un point entier.
+
+Puis (Keko, 13/11) : DEBOUT, LE PUPITRE DU HAUT EST RETIRÉ (« le noir est
+plus discret qu'un rectangle ») — la soute et le blindage sont posés sur le
+noir du bandeau ; et LES DEUX ONT LA MÊME PLAQUE D'ACIER, dans les deux
+orientations (le blindage était dans un logement « creux » / « encre »,
+sombre : incohérent avec la soute, et une barre vide s'y perdait).
+
