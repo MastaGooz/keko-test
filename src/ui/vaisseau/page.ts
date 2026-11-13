@@ -1380,8 +1380,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const yc = 5
     compteurX = px + wp - 9
     if (allume) p.glow(px + wp / 2, Y_CREDITS, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
-    p.rect(px, yc, wp, 10, allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b'))
-    p.rect(px + 1, yc + 1, wp - 2, 8, N.hex('#0c241d'))
+    // (onze de haut : un pixel d'air SOUS le nombre comme au-dessus — Keko, 13/11 : il touchait le contour du bas)
+    p.rect(px, yc, wp, 11, allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b'))
+    p.rect(px + 1, yc + 1, wp - 2, 9, N.hex('#0c241d'))
     p.rect(px + 1, yc + 1, wp - 2, 1, N.hex('#16382d'))
     dessinerUnCredit(p, px + wp - 9, yc + 5 + saut)
     ecrire(p, n, px + wp - 16, yc + 2 + saut, allume ? N.WHITE : N.hex('#fff2c8'), { police: GRAS, align: 'right' })
@@ -1817,7 +1818,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LA LANGUETTE (Keko, 12/11 : « vide cet espace en donnant une forme non rectangulaire à la zone » — le pointillé
     // et sa flèche, à gauche des crédits, ne plaisaient pas) : l'en-tête s'arrête sous le titre, et seul ce pan d'acier
     // descend, à droite, le bord gauche droit, cerné d'un filet ; le cartouche des crédits est dedans
-    const yc = HAUT_BARRE - 14
+    // (le cartouche fait onze de haut, un pixel de plus vers le haut : un pixel d'air sous le nombre comme au-dessus —
+    // Keko, 13/11 : il touchait le contour du bas)
+    const yc = HAUT_BARRE - 15
     const wp = wn + 21
     const px = W - 4 - wp + tremble
     compteurX = px + wp - 9
@@ -1832,11 +1835,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(x0 + 1, YT - 2, W - x0 - 1, yb - YT + 1, ACIER)
     if (allume) p.glow(px + wp / 2, Y_CREDITS - 1, 24, RUNE[2], 0.3 * (1 - (t - creditsA) / 0.45))
     const bord = allume ? RUNE[3] : tremble !== 0 ? ROUGE[4] : N.hex('#23785b')
-    p.rect(px, yc, wp, 10, bord)
-    p.rect(px + 1, yc + 1, wp - 2, 8, N.hex('#0c241d'))
+    p.rect(px, yc, wp, 11, bord)
+    p.rect(px + 1, yc + 1, wp - 2, 9, N.hex('#0c241d'))
     p.rect(px + 1, yc + 1, wp - 2, 1, N.hex('#16382d'))
-    for (const [cx, cy] of [[px, yc], [px + wp - 1, yc], [px, yc + 9], [px + wp - 1, yc + 9]]) p.rect(cx, cy, 1, 1, ACIER)
-    dessinerUnCredit(p, px + wp - 9, Y_CREDITS - 1 + saut)
+    for (const [cx, cy] of [[px, yc], [px + wp - 1, yc], [px, yc + 10], [px + wp - 1, yc + 10]]) p.rect(cx, cy, 1, 1, ACIER)
+    dessinerUnCredit(p, px + wp - 9, yc + 5 + saut)
     ecrire(p, n, px + wp - 16, yc + 2 + saut, allume ? N.WHITE : N.hex('#fff2c8'), { police: GRAS, align: 'right' })
   }
 

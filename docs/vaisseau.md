@@ -3097,3 +3097,7 @@ termine un sous-objectif ; une animation similaire mais sans la médaille ».
 réussie, en or) ou `"check"` — une CASE COCHÉE ; la page passe alors une
 palette VERTE (`PALETTE_D_ETAPE`) : le même toast, vert, moins d'étoiles.
 
+Le cartouche des crédits fait onze de haut (13/11), debout comme couché :
+le nombre touchait son contour du bas ; il a un pixel d'air dessous comme
+dessus, et le symbole du crédit est au milieu de la hauteur.
+
