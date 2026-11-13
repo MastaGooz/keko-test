@@ -71,8 +71,11 @@ export const PIECES: Piece[] = [
   // à 0,3 comme la pointe, le vaisseau atteignait sa vitesse en une seconde, comme avant — c'est le RAPPORT des deux
   // qui fait ce temps ; « essayons avec 5 s » : 0,1295, mesuré à 5,0 s vaisseau de série, foreuse montée.
   // PUIS, À L'ESSAI : LA POINTE TRÈS HAUTE (×2), l'accélération gardée basse — « on va s'intéresser à la vitesse max » ;
-  // le frein du vide plafonne alors la vitesse à poussée / frein, bien sous cette pointe)
-  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Le strict minimum : il pousse peu et plafonne bas.', prix: 0, poids: 6, poussee: 0.1295, vitesseMax: 2},
+  // le frein du vide plafonne alors la vitesse à poussée / frein, bien sous cette pointe. PUIS LA POUSSÉE « UN TOUT
+  // PETIT PEU AU-DESSUS DU RALENTISSEMENT DU VIDE » À LA POINTE (Keko) : le frein est proportionnel à la vitesse —
+  // 0,55 × 220 = 121 à la pointe —, il faut donc 126 de poussée, 0,84 de la configuration : ce n'est plus une
+  // accélération basse)
+  { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Le strict minimum : il pousse peu et plafonne bas.', prix: 0, poids: 6, poussee: 0.84, vitesseMax: 2},
   { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Accélération +25 %, pointe +15 %, nez +10 %.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1},
   { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Accélération +60 %, pointe +35 %, nez +25 %. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25},
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Châssis de série', dit: '5 de blindage, 20 unités en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },

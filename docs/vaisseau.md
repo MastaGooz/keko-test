@@ -3290,3 +3290,8 @@ haute ne sert à rien sans la poussée pour l'atteindre*. L'accélération est
 une poussée ABSOLUE (pas « un temps pour atteindre la pointe », écarté :
 vitesse haute et accélération haute se seraient renforcées).
 
+Puis la poussée « un tout petit peu au-dessus du ralentissement du vide » à la
+pointe (0,84 : 126 contre 121 de frein à 220 px/s) : la pointe est atteinte
+en 6 s, mais ce n'est plus une accélération basse (96 px/s au bout d'une
+seconde) — le frein étant proportionnel à la vitesse, atteindre une pointe
+haute EXIGE une poussée haute.
