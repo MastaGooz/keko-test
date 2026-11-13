@@ -176,7 +176,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (!faite || etapesAvant.get(q.modele)?.[j] === true) return
         etapeFaiteA[`${q.modele}-${j}`] = t
         if (estTerminee(q)) return
-        toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: `Étape ${j + 1}/${faites.length}`, titleFont: GRAS, text: mo?.etapes?.[j].dit ?? '', font: TEXTE, seed: 9 + toasts.length }))
+        toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: `Étape ${j + 1}/${faites.length}`, titleFont: GRAS, text: mo?.etapes?.[j].dit ?? '', font: TEXTE, seed: 9 + toasts.length, emblem: 'check', palette: PALETTE_D_ETAPE }))
         jouer('equipe')
       })
       if (!estTerminee(q) || avant.has(q.modele)) continue
@@ -186,6 +186,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       jouer('achat')
     }
   }
+  /**
+   * LE TOAST D'UNE ÉTAPE N'A PAS LA MÉDAILLE (Keko, 13/11 : « une animation similaire mais sans la médaille, qui indique
+   * qu'il vient de valider une étape et non de finir une mission ») : le même toast, EN VERT, une case cochée à la
+   * place de la médaille, moins d'étoiles ; l'or et la médaille restent à la mission réussie.
+   */
+  const PALETTE_D_ETAPE = ['#06200f', '#0a3a1e', '#14663a', '#1f9a58', '#35c878', '#7ef0a8', '#d8ffe6', '#ffffff']
   /** Quand chaque étape d'une mission à étapes a été faite (sa case s'allume un instant sur la carte). */
   const etapeFaiteA: Record<string, number> = {}
   /** Les toasts en cours (une quête terminée), au-dessus de tout, en vol comme à la base ; empilés s'il y en a plusieurs. */

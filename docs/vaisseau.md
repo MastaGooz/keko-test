@@ -3089,3 +3089,11 @@ une pointe d'acier). La version « maskable » est le même dessin à 72 %.
   colonnes » — la grille est revenue) ; le poids est poussé dans le coin en
   haut à droite de la scène, sous la lampe.
 
+### Le toast d'une étape, sans médaille (13/11)
+
+Keko : « l'animation avec la médaille ne devrait pas s'afficher quand on
+termine un sous-objectif ; une animation similaire mais sans la médaille ».
+`keko/quete-terminee` a une option `emblem` : `"medal"` (la mission
+réussie, en or) ou `"check"` — une CASE COCHÉE ; la page passe alors une
+palette VERTE (`PALETTE_D_ETAPE`) : le même toast, vert, moins d'étoiles.
+

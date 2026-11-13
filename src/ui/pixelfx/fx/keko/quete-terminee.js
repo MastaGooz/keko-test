@@ -28,6 +28,9 @@ export const meta = {
     // la police de la seconde ligne : la petite capitale du dépôt, ou une police enregistrée par la page (la nôtre,
     // grasse, à accents — le M de la petite capitale se lit comme un N)
     font: "mini",
+    // l'emblème qui saute sur le toast : la médaille d'une mission réussie, ou "check" — une case cochée, pour UNE ÉTAPE
+    // d'une mission (Keko, 13/11 : la médaille ne doit pas saluer un sous-objectif ; la page passe alors une palette verte)
+    emblem: "medal",
     seed: 9,
   },
 };
@@ -68,6 +71,24 @@ function medal(p, G, B, x, y, s, white, shine) {
   });
 }
 
+// the step's emblem: a ticked box — a dark rim, a lit face, a white check with its shadow
+function check(p, G, x, y, s, white) {
+  const r = Math.round(8 * s);
+  p.rect(x - r - 1, y - r - 1, 2 * r + 2, 2 * r + 3, G[0]);
+  p.rect(x - r, y - r, 2 * r, 2 * r, white ? WHITE : G[3]);
+  if (white) return;
+  p.rect(x - r, y - r, 2 * r, 1, G[5]);
+  p.rect(x - r, y - r, 1, 2 * r, G[4]);
+  p.rect(x - r, y + r - 1, 2 * r, 1, G[2]);
+  p.rect(x + r - 1, y - r, 1, 2 * r, G[2]);
+  const k = s * 1.6;
+  for (const [o, c] of [[1, G[1]], [0, WHITE]])
+    for (let e = 0; e < 3; e++) {
+      p.line(x - 3.5 * k, y + 0.2 * k + e + o, x - 1 * k, y + 2.6 * k + e + o, c);
+      p.line(x - 1 * k, y + 2.6 * k + e + o, x + 3.6 * k, y - 2.8 * k + e + o, c);
+    }
+}
+
 export function create(o) {
   const G = fit(o.palette, 8), B = fit(o.ribbon, 5), R = new Rng(o.seed);
   const ps = new Particles({ rng: R, sparks: [G[7], G[6], G[5], G[3]] }), lights = new Lights();
@@ -82,12 +103,13 @@ export function create(o) {
       if (!popped && t >= MEDAL + 0.06) {
         popped = true;
         lights.add(MX, MY, 36, G[5], 0.7, 0.4);
-        for (let i = 0; i < 12; i++) {
-          const an = (i / 12) * TAU + R.range(-0.2, 0.2), sp = R.range(40, 90);
+        const n = o.emblem === "check" ? 7 : 12;
+        for (let i = 0; i < n; i++) {
+          const an = (i / n) * TAU + R.range(-0.2, 0.2), sp = R.range(40, 90);
           ps.spawn(P.STAR, MX + Math.cos(an) * 9, MY + Math.sin(an) * 9, Math.cos(an) * sp, Math.sin(an) * sp * 0.6, R.range(0.25, 0.45), R.pick([G[7], G[6], G[5]]), i % 3 ? 0.6 : R.range(1.2, 1.8));
         }
       }
-      if (t > 0.5 && t < OUT && R.chance(0.05)) ps.spawn(P.STAR, MX + R.range(-11, 11), MY + R.range(-11, 9), 0, -R.range(4, 10), Math.min(R.range(0.3, 0.5), end - t), G[6], R.chance(0.3) ? 1.4 : 0.6);
+      if (o.emblem !== "check" && t > 0.5 && t < OUT && R.chance(0.05)) ps.spawn(P.STAR, MX + R.range(-11, 11), MY + R.range(-11, 9), 0, -R.range(4, 10), Math.min(R.range(0.3, 0.5), end - t), G[6], R.chance(0.3) ? 1.4 : 0.6);
       ps.update(dt);
       lights.update(dt);
     },
@@ -116,10 +138,11 @@ export function create(o) {
       const mk = t - MEDAL;
       if (mk > 0) {
         const s = mk < 0.035 ? 1.5 : 1 + 0.35 * Math.exp(-mk * 16) * Math.cos(mk * 28);
-        medal(p, G, B, MX + x, MY, s, mk < 0.07, shine === null ? null : shine - MX + 4);
+        if (o.emblem === "check") check(p, G, Math.round(MX + x), MY, s, mk < 0.07);
+        else medal(p, G, B, MX + x, MY, s, mk < 0.07, shine === null ? null : shine - MX + 4);
         p.glow(MX + x, MY, 20, G[5], 0.3 * a + (mk < 0.15 ? 0.5 * (1 - mk / 0.15) : 0));
         const g = ((t - 1.5) % 0.9) / 0.9;
-        if (t > 1.5 && g < 0.25) sparkle(p, MX + x - 4, MY - 4, 4 * Math.sin((g / 0.25) * Math.PI), G[7], G[6], 0.5);
+        if (o.emblem !== "check" && t > 1.5 && g < 0.25) sparkle(p, MX + x - 4, MY - 4, 4 * Math.sin((g / 0.25) * Math.PI), G[7], G[6], 0.5);
       }
       ps.draw(p);
       lights.draw(p);
