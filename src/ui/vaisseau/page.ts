@@ -5388,8 +5388,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // fuselage éclairé à gauche, les ailes à nervure, la verrière en deux bleus, les feux rouge et vert au bout des
     // ailes, deux tuyères et leurs flammes. (x, y) reste le coin de l'ancien 7 × 8 : le dessin déborde de deux de chaque côté.)
     const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
-      const T: Record<string, number> = { L: COQUE[5], M: COQUE[4], D: COQUE[3], S: COQUE[2], c: VERRIERE[2], C: VERRIERE[1], O: PEPITE[3], o: PEPITE[2], r: N.hex('#ff4a4a'), g: N.hex('#4aff7a') }
-      const DESSIN = ['.....L.....', '....LLM....', '....LcM....', '...LLcMS...', '...LMCMS...', '..LLMMMSS..', '.LLDMMMDSS.', 'LLD.MMM.DSS', 'r...OMO...g', '....o.o....']
+      // (UN VAISSEAU GÉNÉRIQUE — Keko, 13/11 : l'icône d'avant « représente vraiment le vaisseau qu'on a en ce moment ;
+      // plus tard on aura plein de formes différentes : une icône qui renvoie à l'idée d'un vaisseau, pas à ce
+      // vaisseau-là » : LA FUSÉE, le signe de tous les vaisseaux — une ogive d'acier, un hublot rond, deux ailerons
+      // rouges, une tuyère et sa flamme)
+      const T: Record<string, number> = { L: COQUE[5], M: COQUE[4], D: COQUE[2], S: COQUE[3], c: VERRIERE[2], C: VERRIERE[1], O: PEPITE[3], o: PEPITE[2], r: N.hex('#e8606a'), R: N.hex('#a8303c') }
+      const DESSIN = ['.....L.....', '....LLM....', '...LLMMS...', '...LcCMS...', '...LCCMS...', '...LLMMS...', '..rLLMMSR..', '.rrLLMMSRR.', '.rR.DDD.RR.', '....oOo....', '.....o.....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])

@@ -3133,4 +3133,7 @@ recherche, catégories du commerce) ont CHACUNE SA TEINTE
 (`TEINTES_D_ONGLET` : cuivre, rouge, bleu, vert ; acier, brun, cyan, violet,
 vert) et plus de matière (`dessinerLeGlyphe(…, riche)` : grain plus dense,
 paillettes) ; l'onglet ouvert reste en or.
+- Puis : le symbole de la barre de vie est UNE FUSÉE GÉNÉRIQUE (ogive,
+  hublot, ailerons rouges, flamme) — Keko : l'icône ne doit pas représenter
+  le vaisseau du moment, il y en aura de toutes formes.
 
