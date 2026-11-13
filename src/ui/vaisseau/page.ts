@@ -3016,7 +3016,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let coupeBas = 0
   function dessinerLesRangs(p: Peintre, ya: number, yb: number): void {
     const PLAN = N.hex('#0a1626')
-    const ENCRE = N.hex('#04060c')
     const fenetre = yb - ya
     const n = RANGS.length
     // (les rangs ont UNE hauteur, ils ne s'étirent plus pour remplir la fenêtre — Keko, 11/11 : « diminuer un peu la
@@ -3096,16 +3095,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const actifs = vivant ? [...dessus.filter((a) => a.source).map((a) => a.x), ...acquis.map((pl) => pl.x)] : []
       if (actifs.length > 0) conduitH(rg.bus, Math.min(...actifs), Math.max(...actifs), 2)
       for (const pl of rg.places) conduitV(pl.x, rg.bus, rg.y, estDebloque(labo, pl.n.id) ? 2 : base)
-      // les raccords : une pastille à chaque rencontre
-      for (const x of new Set(xs)) {
-        const e: Etat = actifs.includes(x) ? 2 : base
-        // (une pastille de soudure : un carré aux coins coupés, percé d'un trou)
-        coupe(x - 2, rg.bus - 3, 5, 7, ENCRE)
-        coupe(x - 3, rg.bus - 2, 7, 5, ENCRE)
-        coupe(x - 1, rg.bus - 2, 3, 5, piste(e))
-        coupe(x - 2, rg.bus - 1, 5, 3, piste(e))
-        coupe(x, rg.bus, 1, 1, ENCRE)
-      }
+      // (plus de pastilles aux rencontres — Keko, 13/11 : « enlève les ronds dans les angles » ; les pistes se croisent nues)
     })
     for (const rg of rangs) {
       if (rg.y + 20 < ya || rg.y - 20 > yb) continue
