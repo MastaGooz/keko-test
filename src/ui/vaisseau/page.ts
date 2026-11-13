@@ -1285,9 +1285,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       eteindre(0, 0, RAIL, H)
       eteindre(0, 0, W, HAUT_COUCHE)
       if (vue === 'quetes') {
-        // (UNE MISSION PAR LIGNE, sur toute la largeur — Keko, 13/11, à l'essai, après la grille de deux colonnes ;
-        // remettre `W - RAIL >= 360 ? 2 : 1` rend la grille)
-        const cols: number = 1
+        // (une mission par ligne sur toute la largeur a été essayée et retirée le 13/11 — Keko : « c'était mieux quand il
+        // y avait deux colonnes »)
+        const cols = W - RAIL >= 360 ? 2 : 1
         const lw = Math.floor((W - RAIL) / cols)
         for (let c = 0; c < cols; c++) {
           partDesMissions = { col: c, cols }
@@ -1644,9 +1644,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const poids = `${poidsTotal(hangar)} T`
     const wm = largeurDe('Poids')
     const wv = largeurDe(poids, TEXTE)
-    // (COUCHÉE, EN HAUT À DROITE de la scène, à côté de la lampe — Keko, 13/11, à l'essai ; debout, en bas à gauche)
-    const xp = paysage ? W - 20 - (wm + wv + 15) : 6
-    const yp = paysage ? y0 + 6 : y1 - 20
+    // (COUCHÉE, DANS LE COIN EN HAUT À DROITE de la scène, sous la lampe — Keko, 13/11 ; debout, en bas à gauche)
+    const xp = paysage ? W - 5 - (wm + wv + 15) : 6
+    const yp = paysage ? y0 + 7 : y1 - 20
     plaque(p, xp, yp, wm + wv + 15, 15, 'encre')
     ecrire(p, 'Poids', xp + 5, yp + 4, COQUE[4])
     // (LA MÊME LETTRE QUE LE MOT, la même taille — Keko, 12/11 : des chiffres d'une autre police « dénotent » — mais EN

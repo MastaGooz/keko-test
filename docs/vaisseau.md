@@ -3085,4 +3085,7 @@ une pointe d'acier). La version « maskable » est le même dessin à 72 %.
   droite de la scène du hangar (debout : en bas à gauche) ; LES MISSIONS
   COUCHÉES : UNE PAR LIGNE, sur toute la largeur (`cols = 1` dans
   `dessinerLaBaseCouchee` ; la grille de deux colonnes reste écrite).
+- Puis : la mission par ligne est RETIRÉE (« c'était mieux avec deux
+  colonnes » — la grille est revenue) ; le poids est poussé dans le coin en
+  haut à droite de la scène, sous la lampe.
 
