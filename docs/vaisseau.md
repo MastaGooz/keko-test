@@ -3263,4 +3263,7 @@ le vaisseau ». Le hangar, lui, affiche toujours les vraies pièces.
 Puis : `&zero` donne un cinquième de l'accélération et de la pointe de série
 (à zéro, le vaisseau ne bougeait pas), toujours sans rotation ;
 `&zero=a,v,r` choisit les trois parts (accélération, pointe, maniabilité).
+Corrigé : `&zero` n'allégeait que le frein (pas la poussée) — le vaisseau
+plafonnait à 4 px/s. Le poids divise maintenant les deux, comme dans
+`configDuHangar` ; les parts par défaut passent à 0,3.
 

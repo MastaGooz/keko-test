@@ -488,12 +488,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const reste = Math.max(0.5, poidsTotal(hangar) - monteeA(hangar, 'coque').poids - monteeA(hangar, 'propulseur').poids)
       const leger = Math.pow(reste / (monteeA(hangarNeuf(), 'coque').poids + monteeA(hangarNeuf(), 'propulseur').poids + reste), 1.3)
       // (… PUIS, à zéro partout, le vaisseau ne bougeait pas du tout : « mets l'accélération et la vitesse au minimum pour
-      // que le vaisseau bouge ». `&zero` : un cinquième de l'accélération et de la pointe de série, aucune rotation ;
+      // que le vaisseau bouge ». `&zero` : trois dixièmes de l'accélération et de la pointe de série, aucune rotation ;
       // `&zero=a,v,r` : les trois parts, de 0 à 1 — accélération, pointe, maniabilité. Une pointe infime plutôt que
       // nulle : la page divise par elle, et zéro la figeait.)
       const parts = (parametres.get('zero') ?? '').split(',').map(Number)
       const part = (i: number, defaut: number): number => (Number.isFinite(parts[i]) && (parametres.get('zero') ?? '') !== '' ? Math.max(0, parts[i]) : defaut)
-      CONF = { ...CONF, poussee: BASE.poussee * part(0, 0.2), vitesseMax: Math.max(0.01, BASE.vitesseMax * part(1, 0.2)), rotation: BASE.rotation * part(2, 0), frein: BASE.frein / leger, masse: reste }
+      // (LE POIDS DIVISE LA POUSSÉE COMME LE FREIN — voir `configDuHangar` : n'alléger que le frein, comme d'abord, donnait
+      // un vaisseau qui freinait quatorze fois plus fort sans pousser plus, et plafonnait à 4 px/s : « ça ne bouge pas »)
+      CONF = { ...CONF, poussee: (BASE.poussee * part(0, 0.3)) / leger, vitesseMax: Math.max(0.01, BASE.vitesseMax * part(1, 0.3)), rotation: BASE.rotation * part(2, 0), frein: BASE.frein / leger, masse: reste }
     }
     m = monterLeMonde()
     // (ce que le hangar a semé ne suit pas le vaisseau dans l'espace : les fumées et les étincelles du décollage, les
