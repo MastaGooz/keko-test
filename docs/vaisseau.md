@@ -2962,3 +2962,10 @@ noir du bandeau ; et LES DEUX ONT LA MÊME PLAQUE D'ACIER, dans les deux
 orientations (le blindage était dans un logement « creux » / « encre »,
 sombre : incohérent avec la soute, et une barre vide s'y perdait).
 
+Puis (Keko, 13/11) : SOUTE PLEINE, LA JAUGE EST GRISÉE (plus de rouge, plus
+de bord de plaque qui rougit ; « Soute pleine » reste écrit en rouge) ; et
+L'ALERTE DES BORDS (coup, dernier point) est sortie de `dessinerLesBords`
+dans `dessinerLAlerte`, dessinée APRÈS les bandeaux : un même cadre de six
+pixels sur les quatre bords de la vue (avant, les bandeaux et leur fondu en
+recouvraient certains, et les barres débordaient dans les bandeaux de côté).
+

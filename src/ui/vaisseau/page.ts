@@ -4313,6 +4313,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(k, 0, 1, H, FOND, a)
       p.rect(W - 1 - k, 0, 1, H, FOND, a)
     }
+  }
+
+  /**
+   * L'ALERTE DES BORDS, dessinée APRÈS les bandeaux (Keko, 13/11 : les effets qui colorent les bords « ne sont pas de la
+   * même taille en fonction du bord » — les bandeaux et leur fondu repassaient sur certains bords et pas sur d'autres,
+   * et les barres du haut et du bas couraient jusque dans les bandeaux de côté) : le même cadre de six pixels sur les
+   * quatre bords DE LA VUE.
+   */
+  function dessinerLAlerte(p: Peintre): void {
     const du = t - toucheA
     const db = t - bouclierA
     const dernier = m.phase === 'vol' && m.coque <= 1
@@ -4326,10 +4335,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (les bords de la VUE, pas ceux du tampon : les bandeaux ne rougissent pas)
       const y0 = bandeHaut()
       const y1 = H - bandeBas()
-      p.rect(0, y0 + k, W, 1, c, a)
-      p.rect(0, y1 - 1 - k, W, 1, c, a)
-      p.rect(bandeCote() + k, y0 + 6, 1, y1 - y0 - 12, c, a)
-      p.rect(W - bandeCote() - 1 - k, y0 + 6, 1, y1 - y0 - 12, c, a)
+      const x0 = bandeCote()
+      const x1 = W - bandeCote()
+      // (un anneau par pas : les coins ne se doublent pas)
+      p.rect(x0 + k, y0 + k, x1 - x0 - 2 * k, 1, c, a)
+      p.rect(x0 + k, y1 - 1 - k, x1 - x0 - 2 * k, 1, c, a)
+      p.rect(x0 + k, y0 + k + 1, 1, y1 - y0 - 2 * k - 2, c, a)
+      p.rect(x1 - 1 - k, y0 + k + 1, 1, y1 - y0 - 2 * k - 2, c, a)
     }
   }
 
@@ -4940,6 +4952,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // étroits (voir `interfaceEnBande`), l'interface reste sur la vue, en plaques, comme avant.
     const enBande = interfaceEnBande()
     const H_BARRE = 64
+    // (sans pupitre derrière elles, les plaques éteignent elles-mêmes la lumière du monde sous elles : les feux de la
+    // base passaient à travers)
+    const eteindreSous = (x: number, y: number, w: number, h: number): void => {
+      for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) frame.light.fill(0, yy * W + Math.max(0, x), yy * W + Math.min(W, x + w))
+    }
     const yPastilles = enBande ? yHud + H_BARRE + 26 : yHud + 18 + 7
     /** La largeur de la plaque de soute couchée sur le pupitre : celle du logement du blindage, en face. */
     const L_SOUTE = 5 + 9 + 3 + 52 + 5
@@ -5041,6 +5058,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // que l'écusson, une jauge du même gabarit que la barre de blindage (un creux cerné, l'or clair d'un côté, sombre de
     // l'autre), et au bout SA TOUCHE D'OR au chevron.
     // (LA TOUCHE ET SA FLÈCHE RESTENT D'OR, soute pleine ou pas — Keko, 13/11 ; la plaque et la jauge, elles, rougissent)
+    // (PLEINE, LA JAUGE EST GRISÉE — Keko, 13/11 : « en grisé plutôt que rouge », et plus de bord qui rougit sur la plaque ;
+    // le mot « Soute pleine » reste rouge)
     if (enBande) {
       // DEBOUT : la plaque du blindage d'en face — le symbole en tête, la jauge qui se remplit par le bas, la touche au pied
       const pw = 22
@@ -5049,7 +5068,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const HG = H_BARRE - 13
       const eb = actif ? etatDuBouton(x0, yHud, pw, hp) : { enfonce: false, survole: false, flash: false, dy: 0 }
       const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
-      plaque(p, x0, ys, pw, hp, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+      plaque(p, x0, ys, pw, hp, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash })
       dessinerLaCaisse(x0 + 7, ys + 5)
       const gx = x0 + 7
       const gy = ys + 17
@@ -5058,10 +5077,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(gx, gy, 1, HG, N.hex('#2a2338'))
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(HG * souteVue))
       if (plein > 0) {
-        p.rect(gx, gy + HG - plein, 8, plein, pleine ? ROUGE[4] : PEPITE[2])
-        p.rect(gx, gy + HG - plein, 1, plein, pleine ? ROUGE[5] : PEPITE[3])
-        p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? ROUGE[3] : PEPITE[1])
-        p.rect(gx, gy + HG - plein, 8, 1, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+        p.rect(gx, gy + HG - plein, 8, plein, pleine ? COQUE[4] : PEPITE[2])
+        p.rect(gx, gy + HG - plein, 1, plein, pleine ? COQUE[5] : PEPITE[3])
+        p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? COQUE[3] : PEPITE[1])
+        p.rect(gx, gy + HG - plein, 8, 1, pleine ? COQUE[5] : N.hex('#fff7d6'))
       }
       // la touche d'or, au pied
       const yt = gy + HG + 3
@@ -5079,7 +5098,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const eb = actif ? etatDuBouton(xs, yHud, ws, 18) : { enfonce: false, survole: false, flash: false, dy: 0 }
       const ys = yHud + Math.round(rebond('soute', 0)) + eb.dy
       if (!eb.enfonce) p.rect(xs + 1, ys + 18, ws - 2, 1, NUIT_OMBRE, 0.7)
-      plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash, bord: pleine ? (bat ? ROUGE[4] : ROUGE[3]) : undefined })
+      eteindreSous(xs, ys, ws, 19)
+      plaque(p, xs, ys, ws, 18, 'acier', { enfonce: eb.enfonce, survole: eb.survole, flash: eb.flash })
       dessinerLaCaisse(xs + 5, ys + 5)
       // la touche d'or et son chevron
       const xt = xs + ws - TOUCHE - 1
@@ -5098,10 +5118,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(gx, gy, gw, 1, N.hex('#2a2338'))
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
       if (plein > 0) {
-        p.rect(gx, gy, plein, 8, pleine ? ROUGE[4] : PEPITE[2])
-        p.rect(gx, gy, plein, 1, pleine ? ROUGE[5] : PEPITE[3])
-        p.rect(gx, gy + 6, plein, 2, pleine ? ROUGE[3] : PEPITE[1])
-        p.rect(gx + plein - 1, gy, 1, 8, pleine ? N.hex('#ffd0d0') : N.hex('#fff7d6'))
+        p.rect(gx, gy, plein, 8, pleine ? COQUE[4] : PEPITE[2])
+        p.rect(gx, gy, plein, 1, pleine ? COQUE[5] : PEPITE[3])
+        p.rect(gx, gy + 6, plein, 2, pleine ? COQUE[3] : PEPITE[1])
+        p.rect(gx + plein - 1, gy, 1, 8, pleine ? COQUE[5] : N.hex('#fff7d6'))
       }
     }
 
@@ -5285,6 +5305,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + (BW * (m.coque + m.bouclier)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
+    eteindreSous(ox, oy, wp, 19)
     p.rect(ox + 1, oy + 18, wp - 2, 1, NUIT_OMBRE, 0.7)
     plaque(p, ox, oy, wp, 18, 'acier', { flash: du >= 0 && du < 0.07, bord: dernier ? (bat ? ROUGE[4] : ROUGE[3]) : du >= 0 && du < 0.3 ? ROUGE[4] : db >= 0 && db < 0.2 ? VERRIERE[1] : undefined })
     // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
@@ -6219,6 +6240,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     N.painterFor(frame)
     dessinerLesBords(p)
     dessinerLesBandeaux(p)
+    dessinerLAlerte(p)
     dessinerLePointeur(p)
     dessinerLeRadar(p)
     zones = []
