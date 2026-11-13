@@ -420,7 +420,7 @@ const GABARIT_DE_SERIE: Gabarit = { tuyeres: [{ x: 0, y: 0 }], armes: [{ x: 0, y
 const TOURELLES_DU_CUIRASSE = { xs: [16, 5, -6, -17], y: 13.6 }
 const OUTILS_DU_CUIRASSE = [{ x: 11, y: 0 }, { x: 2, y: 0 }, { x: -7, y: 0 }, { x: -16, y: 0 }]
 const GABARIT_DU_CUIRASSE: Gabarit = {
-  tuyeres: [-8.1, -2.7, 2.7, 8.1].map((y) => ({ x: -26.1, y })),
+  tuyeres: [-6.6, 0, 6.6].map((y) => ({ x: -26.1, y })),
   // (les formes d'une arme sont dessinées autour de (−2, ±6,2) : le décalage l'amène sur son socle)
   armes: TOURELLES_DU_CUIRASSE.xs.flatMap((x) => [-1, 1].map((sg) => ({ x: x + 2, y: sg * (TOURELLES_DU_CUIRASSE.y - 6.2), s: sg }))),
   outils: OUTILS_DU_CUIRASSE,

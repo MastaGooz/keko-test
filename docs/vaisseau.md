@@ -3448,3 +3448,4 @@ un rayon par foreuse, de sa place ; chaque canon vise sa roche
 (`Allure.vises`). Sans liste (configuration nue, rival), le foreur unique
 d'avant. *Les aimants et les radars restent « le meilleur seul ».*
 
+Le cuirassé passe à TROIS propulseurs (Keko, 13/11, « pour voir » : il allait trop vite) : trois tuyères, 190 T tout équipé au lieu de 200. La pointe ne change pas (elle vient du propulseur), seule l'accélération baisse.
