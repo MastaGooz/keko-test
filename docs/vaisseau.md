@@ -3256,3 +3256,8 @@ poussée. Vérifié : un demi-tour est plus vif avec une rotation doublée.
 Aussi : les éclats du hangar (fumées du décollage) sont vidés au départ du
 vol — deux points de fumée restaient à l'écran à l'arrivée.
 
+`&zero` (13/11, un banc d'essai demandé par Keko) : en vol, le châssis et le
+propulseur montés ne pèsent rien et le propulseur ne donne ni poussée, ni
+pointe, ni rotation — « voir, avec aucune statistique, comment se déplace
+le vaisseau ». Le hangar, lui, affiche toujours les vraies pièces.
+
