@@ -3075,3 +3075,10 @@ Retouches du même jour (Keko) :
   l'écran (il se rangeait sous la hauteur de l'interface du portrait,
   presque au milieu).
 
+L'ICÔNE REFAITE le même jour (Keko : « là c'est juste un vaisseau, je
+voulais un truc plus stylisé et original ») : plus de capture —
+`scripts/generate-icone-vaisseau.py` DESSINE l'icône sur une grille de 64 :
+LE NOM EN IMAGE, une nova d'or (huit rayons, halo violet tramé) et la dérive
+d'un vaisseau autour d'elle (un sillage bleu en arc qui s'épaissit jusqu'à
+une pointe d'acier). La version « maskable » est le même dessin à 72 %.
+
