@@ -3312,3 +3312,4 @@ vitesse du moment. Les valeurs tiennent d'un vol à l'autre, pas d'une
 visite à l'autre. Un curseur se prend au doigt en vol comme à la base
 (`glisse.sorte === 'curseur'`).
 
+La lecture du banc (croisière, temps) est calculée PAS À PAS comme le jeu avance : la formule continue annonçait « 0,1 s » pour un vaisseau très léger qui n'atteint jamais sa pointe. *À poids très bas, le frein par pas est si fort que la vitesse atteignable baisse (201 au lieu de 302 px/s à 1 T pour 166 de poussée) : un effet du pas de 1/60 s, réel en jeu.*
