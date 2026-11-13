@@ -3056,4 +3056,9 @@ Retouches du même jour (Keko) :
 - RECHERCHE : LES NŒUDS RAMENÉS À 26 px (34 étaient « trop gros », en
   paysage comme en portrait ; 22, avant, trop petits) ; les rangs à 46 px,
   l'écart entre nœuds à 36 ; le symbole d'un passif à l'échelle 2.
+- Puis (Keko : « un seul grid, et le scroll de l'ensemble plutôt que chaque
+  colonne indépendamment ») : LES MISSIONS COUCHÉES SONT UNE GRILLE — par
+  rangées de deux, une rangée à la hauteur de sa plus haute carte ; c'est la
+  grille qui défile, une rangée à la fois, une seule barre à droite, une
+  seule zone de glisser sur toute la largeur.
 

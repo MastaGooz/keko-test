@@ -3416,43 +3416,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const PAS_DES_MISSIONS = 55
   let defilMissions = 0
   let zoneDesMissions: { x: number; y: number; w: number; h: number } | null = null
-  /** LA COLONNE EN COURS (couchées, les missions se rangent sur deux colonnes : une carte sur deux dans chacune). */
+  /** LA COLONNE EN COURS (couchées, les missions se rangent en grille de deux colonnes : une carte sur deux dans chacune). */
   let partDesMissions = { col: 0, cols: 1 }
-  let defilMaxDesMissions = 0
   function dessinerLesQuetes(p: Peintre, y0: number): void {
     const bas = H - HAUT_NAV - 2
     // (le milieu DE LA FENÊTRE, retenu au dessin : à l'heure d'une action, `W` est celui de l'écran)
     const milieu = W / 2
+    // UNE SEULE GRILLE (Keko, 13/11 : « pourquoi ne pas les mettre dans un seul grid — deux colonnes — et permettre le
+    // scroll vers le bas de l'ensemble, plutôt que chaque colonne indépendamment ? ») : les cartes se rangent PAR
+    // RANGÉES de `cols`, une rangée a la hauteur de sa plus haute carte, et c'est la grille entière qui défile, une
+    // rangée à la fois — une seule barre, à droite de la dernière colonne. Chaque colonne est dessinée dans sa fenêtre.
     const { col, cols } = partDesMissions
-    const miennes = quetes.actives.map((_, i) => i).filter((i) => i % cols === col)
-    const hauteurs = miennes.map((i) => {
-      const q = quetes.actives[i]
-      const mo = modeleDe(q.modele)
-      return mo === undefined ? 0 : hauteurDeLaMission(mo, estTerminee(q)) + 3
-    })
-    // (jusqu'où défiler : la première carte à partir de laquelle tout le reste tient)
-    let maxD = 0
-    while (maxD < hauteurs.length - 1 && hauteurs.slice(maxD).reduce((a, b) => a + b, 0) - 3 > bas - y0) maxD += 1
-    // (le défilement est commun aux colonnes : borné à la plus longue, une fois la dernière vue)
-    defilMaxDesMissions = col === 0 ? maxD : Math.max(defilMaxDesMissions, maxD)
-    if (col === cols - 1) defilMissions = Math.max(0, Math.min(defilMaxDesMissions, defilMissions))
-    const d = Math.min(maxD, Math.round(defilMissions))
-    if (maxD > 0) {
-      const hg = bas - y0
-      const hc = Math.max(8, Math.round((hg * (hauteurs.length - maxD)) / hauteurs.length))
-      p.rect(W - 3, y0, 2, hg, MATIERES.creux.contour)
-      p.rect(W - 3, y0 + Math.round(((hg - hc) * d) / maxD), 2, hc, COQUE[3])
-      zoneDesMissions = { x: 0, y: y0, w: W, h: hg }
-    }
-    let suivante = y0
+    const barreIci = col === cols - 1
+    const hauteurs: number[] = []
     quetes.actives.forEach((q, i) => {
       const mo = modeleDe(q.modele)
-      const rang = miennes.indexOf(i)
-      if (mo === undefined || rang < d) return
+      const h = mo === undefined ? 0 : hauteurDeLaMission(mo, estTerminee(q)) + 3
+      const r = Math.floor(i / cols)
+      hauteurs[r] = Math.max(hauteurs[r] ?? 0, h)
+    })
+    // (jusqu'où défiler : la première rangée à partir de laquelle tout le reste tient)
+    let maxD = 0
+    while (maxD < hauteurs.length - 1 && hauteurs.slice(maxD).reduce((a, b) => a + b, 0) - 3 > bas - y0) maxD += 1
+    defilMissions = Math.max(0, Math.min(maxD, defilMissions))
+    const d = Math.round(defilMissions)
+    if (maxD > 0) {
+      const hg = bas - y0
+      if (barreIci) {
+        const hc = Math.max(8, Math.round((hg * (hauteurs.length - maxD)) / hauteurs.length))
+        p.rect(W - 3, y0, 2, hg, MATIERES.creux.contour)
+        p.rect(W - 3, y0 + Math.round(((hg - hc) * defilMissions) / maxD), 2, hc, COQUE[3])
+      }
+      // (la zone qui défile couvre toute la grille : posée par la première colonne, large de toutes)
+      if (col === 0) zoneDesMissions = { x: 0, y: y0, w: W * cols, h: hg }
+    }
+    quetes.actives.forEach((q, i) => {
+      const mo = modeleDe(q.modele)
+      const rang = Math.floor(i / cols)
+      if (mo === undefined || i % cols !== col || rang < d) return
       const fini = estTerminee(q)
       const h = hauteurDeLaMission(mo, fini)
-      const haut = suivante
-      suivante += h + 3
+      const haut = y0 + hauteurs.slice(d, rang).reduce((x, y) => x + y, 0)
       if (haut >= bas) return
       const age = t - vueA - i * 0.05
       if (age < 0) return
@@ -3461,7 +3465,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // terminée » ; elle passait à l'or : son liseré et sa lueur sont à la teinte de son activité)
       const T: [number, number, number] = TEINTES_D_ACTIVITE[mo.activite ?? 'tuto']
       if (fini && y + h <= bas) p.glow(W / 2, y + h / 2, 70, T[1], 0.07 + 0.05 * Math.sin(t * 4))
-      plaque(p, 4, y, W - (maxD > 0 ? 10 : 8), h, 'encre', { bord: fini ? T[1] : undefined, flash: age < 0.07 })
+      plaque(p, 4, y, W - (maxD > 0 && barreIci ? 10 : 8), h, 'encre', { bord: fini ? T[1] : undefined, flash: age < 0.07 })
       // (le liseré de gauche, à la teinte de l'activité)
       p.rect(5, y + 2, 2, h - 4, T[1])
       p.rect(5, y + 2, 1, h - 4, T[2])
@@ -3496,7 +3500,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // LE PIED, sous un filet (à la teinte de l'activité, clair sur le sombre de la carte — un pointillé)
       const pied = piedDeLaMission(mo, fini)
-      const xd = W - (maxD > 0 ? 12 : 10)
+      const xd = W - (maxD > 0 && barreIci ? 12 : 10)
       const yj = y + h - 4 - pied.lots - 3 - pied.jauge
       const yl = y + h - 4 - pied.lots
       for (let x = 10; x < xd + 1; x += 2) p.rect(x, yj - 3, 1, 1, T[1])
