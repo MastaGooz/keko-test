@@ -5240,6 +5240,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // pleine » : son cerne devient clair et respire, et un reflet blanc la parcourt toutes les deux secondes)
     const cerneDeLaSoute = pleine ? (Math.sin(t * 4) > 0 ? COQUE[6] : COQUE[5]) : encre
     const reflet = pleine ? (t % 1.8) / 0.5 : 2
+    // (LA JAUGE EST VIOLETTE — Keko, 13/11 : « une autre couleur pour la barre de la soute quand elle se remplit, le jaune
+    // est déjà utilisé pour le blindage » ; ni l'or du blindage, ni le bleu du bouclier, ni le rouge de l'alerte)
+    const SOUTE = [N.hex('#5a3fa8'), N.hex('#8f6fe0'), N.hex('#c9b8ff')]
     // (PLEINE, LA JAUGE EST GRISÉE — Keko, 13/11 : « en grisé plutôt que rouge », et plus de bord qui rougit sur la plaque ;
     // le mot « Soute pleine » reste rouge)
     if (enBande) {
@@ -5258,10 +5261,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(gx, gy, 1, HG, CREUX_DES_BARRES[0])
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(HG * souteVue))
       if (plein > 0) {
-        p.rect(gx, gy + HG - plein, 8, plein, pleine ? COQUE[4] : PEPITE[2])
-        p.rect(gx, gy + HG - plein, 1, plein, pleine ? COQUE[5] : PEPITE[3])
-        p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? COQUE[3] : PEPITE[1])
-        p.rect(gx, gy + HG - plein, 8, 1, pleine ? COQUE[5] : N.hex('#fff7d6'))
+        p.rect(gx, gy + HG - plein, 8, plein, pleine ? COQUE[4] : SOUTE[1])
+        p.rect(gx, gy + HG - plein, 1, plein, pleine ? COQUE[5] : SOUTE[2])
+        p.rect(gx + 6, gy + HG - plein, 2, plein, pleine ? COQUE[3] : SOUTE[0])
+        p.rect(gx, gy + HG - plein, 8, 1, pleine ? COQUE[5] : N.hex('#efe6ff'))
       }
       if (reflet < 1) {
         const yr = gy + HG - 2 - Math.round(reflet * (HG - 2))
@@ -5302,10 +5305,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(gx, gy, gw, 1, CREUX_DES_BARRES[0])
       const plein = Math.max(porte > 0 ? 1 : 0, Math.round(gw * souteVue))
       if (plein > 0) {
-        p.rect(gx, gy, plein, 8, pleine ? COQUE[4] : PEPITE[2])
-        p.rect(gx, gy, plein, 1, pleine ? COQUE[5] : PEPITE[3])
-        p.rect(gx, gy + 6, plein, 2, pleine ? COQUE[3] : PEPITE[1])
-        p.rect(gx + plein - 1, gy, 1, 8, pleine ? COQUE[5] : N.hex('#fff7d6'))
+        p.rect(gx, gy, plein, 8, pleine ? COQUE[4] : SOUTE[1])
+        p.rect(gx, gy, plein, 1, pleine ? COQUE[5] : SOUTE[2])
+        p.rect(gx, gy + 6, plein, 2, pleine ? COQUE[3] : SOUTE[0])
+        p.rect(gx + plein - 1, gy, 1, 8, pleine ? COQUE[5] : N.hex('#efe6ff'))
       }
       if (reflet < 1) {
         const xr = gx + Math.round(reflet * (gw - 2))
@@ -5388,12 +5391,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // fuselage éclairé à gauche, les ailes à nervure, la verrière en deux bleus, les feux rouge et vert au bout des
     // ailes, deux tuyères et leurs flammes. (x, y) reste le coin de l'ancien 7 × 8 : le dessin déborde de deux de chaque côté.)
     const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
-      // (UN VAISSEAU GÉNÉRIQUE — Keko, 13/11 : l'icône d'avant « représente vraiment le vaisseau qu'on a en ce moment ;
-      // plus tard on aura plein de formes différentes : une icône qui renvoie à l'idée d'un vaisseau, pas à ce
-      // vaisseau-là » : LA FUSÉE, le signe de tous les vaisseaux — une ogive d'acier, un hublot rond, deux ailerons
-      // rouges, une tuyère et sa flamme)
-      const T: Record<string, number> = { L: COQUE[5], M: COQUE[4], D: COQUE[2], S: COQUE[3], c: VERRIERE[2], C: VERRIERE[1], O: PEPITE[3], o: PEPITE[2], r: N.hex('#e8606a'), R: N.hex('#a8303c') }
-      const DESSIN = ['.....L.....', '....LLM....', '...LLMMS...', '...LcCMS...', '...LCCMS...', '...LLMMS...', '..rLLMMSR..', '.rrLLMMSRR.', '.rR.DDD.RR.', '....oOo....', '.....o.....']
+      // (UNE FORME, PAS UN VAISSEAU — Keko, 13/11 : d'abord le vaisseau du moment (« plus tard on aura plein de formes
+      // différentes »), puis une fusée détaillée : « essaie de faire une forme plutôt que le vaisseau lui-même, la forme
+      // d'une navette » : LA SILHOUETTE D'UNE NAVETTE vue de dessus — un nez, un fuselage, une aile delta — d'un seul
+      // métal clair, à peine ombré à droite et au bord de fuite : un pictogramme)
+      const T: Record<string, number> = { L: COQUE[6], M: COQUE[5], S: COQUE[4] }
+      const DESSIN = ['.....L.....', '....LLM....', '....LLM....', '....LLM....', '...LLLMM...', '..LLLLMMM..', '.LLLLLMMMM.', 'LLLLLLMMMMM', 'SSS.SSS.SSS']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])

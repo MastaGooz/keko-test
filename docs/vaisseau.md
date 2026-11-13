@@ -3136,4 +3136,8 @@ paillettes) ; l'onglet ouvert reste en or.
 - Puis : le symbole de la barre de vie est UNE FUSÉE GÉNÉRIQUE (ogive,
   hublot, ailerons rouges, flamme) — Keko : l'icône ne doit pas représenter
   le vaisseau du moment, il y en aura de toutes formes.
+- Puis : le symbole de la barre de vie est LA SILHOUETTE D'UNE NAVETTE (une
+  forme d'un seul métal clair, un pictogramme — la fusée détaillée est
+  retirée) ; LA JAUGE DE LA SOUTE EST VIOLETTE (`SOUTE`), l'or étant au
+  blindage ; pleine, elle reste grisée.
 
