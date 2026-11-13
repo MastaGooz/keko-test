@@ -3156,3 +3156,5 @@ paillettes) ; l'onglet ouvert reste en or.
   plus de blanc ni de lavande).
 - Puis : la navette aux GRIS DU CONTENEUR DE LA SOUTE (le même acier), sa
   VERRIÈRE EN BLEU — la touche de couleur, le bleu du filet du conteneur.
+- Puis : un ton de passage entre l'échine et les ailes de la navette (la
+  cassure était trop franche).

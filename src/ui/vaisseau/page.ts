@@ -5410,8 +5410,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // l'icône de la soute, comme ça on aura une vraie cohérence visuelle entre les deux ; et une petite touche de
       // couleur quelque part, comme son petit trait » : le même acier (corps, clair, ombre, arête blanche), et LA
       // VERRIÈRE EN BLEU, le bleu du filet du conteneur, son milieu plus clair)
-      const T: Record<string, number> = { M: COQUE[3], L: COQUE[4], H: COQUE[5], d: COQUE[4], S: COQUE[2], v: VERRIERE[1], V: VERRIERE[2], B: COQUE[6] }
-      const DESSIN = ['.....H.....', '....HMS....', '....vVv....', '....MMS....', '...HMMSL...', '...LMdSL...', '..HLMMSLL..', '.HLLMdSLLL.', 'BLLLMMSLLLL', 'SSSSMdSSSSS', '....SSS....']
+      // (un ton de passage, `m`, entre l'échine et les ailes — Keko, 13/11 : « dégrader un peu entre le centre et les
+      // ailes, pour ne pas avoir une cassure aussi franche » ; la colonne d'ombre à droite de l'échine est retirée)
+      const T: Record<string, number> = { M: COQUE[3], m: N.hex('#879dbe'), L: COQUE[4], H: COQUE[5], d: COQUE[4], S: COQUE[2], v: VERRIERE[1], V: VERRIERE[2], B: COQUE[6] }
+      const DESSIN = ['.....L.....', '....mMm....', '....vVv....', '....mMm....', '...LmMmL...', '...LmdmL...', '..HLmMmLL..', '.HLLmdmLLL.', 'BHLLmMmLLLL', 'SSSSmdmSSSS', '....SSS....']
       const points: [number, number, string][] = []
       DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, k) => {
         if (ch !== '.') points.push([x - 2 + k, y - 1 + r, ch])
