@@ -358,6 +358,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let souteVue = 0
   let secousse = 0
   let flamme = 0
+  /**
+   * LA POUSSÉE, DANS LE REPÈRE DU VAISSEAU (Keko, 13/11 : avec les deux manches, « c'est pas un peu bizarre qu'une
+   * navette puisse reculer, alors que le propulseur est à l'arrière ? ») — la règle ne change pas, on bouge dans tous
+   * les sens ; c'est l'image qui dit comment : LE PROPULSEUR ne souffle que pour la part de la poussée qui va VERS
+   * L'AVANT, et DES JETS DE MANŒUVRE font le reste — ceux du nez pour reculer, ceux d'un flanc pour glisser vers
+   * l'autre. `avant` : de 0 à 1 ; `retro` : de 0 à 1 ; `cote` : de −1 (vers bâbord) à 1 (vers tribord). Lissées.
+   */
+  const pousseeVue = { avant: 0, retro: 0, cote: 0 }
   /** Le compte de l'extraction à l'image d'avant, et s'il montait : la voix de la charge suit le compte, pas le parvis. */
   let compteVu = 0
   let compteMonte = false
@@ -4613,6 +4621,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       devieDeLaFlamme = ressort(devieDeLaFlamme, cible, 9)
     }
     dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false, devieDeLaFlamme)
+    // LES JETS DE MANŒUVRE : de courtes flammes froides, blanches au cœur et bleues au bout — DEUX AU NEZ, qui soufflent
+    // vers l'avant quand on recule ; UNE PAR FLANC, qui souffle à l'opposé du côté où l'on glisse. Elles frémissent.
+    {
+      const sx = Math.round(v.x - camera.x + W / 2)
+      const sy = Math.round(v.y - camera.y + centreY())
+      const ca = Math.cos(v.cap)
+      const sa = Math.sin(v.cap)
+      /** Un jet : d'où il sort (repère du vaisseau), vers où il souffle, et sa force (0 à 1). */
+      const jet = (x: number, y: number, dx: number, dy: number, force: number): void => {
+        if (force < 0.12) return
+        const L = (2 + 4 * force) * (0.8 + 0.2 * Math.sin(t * 55 + x * 3 + y))
+        const x0 = sx + x * ca - y * sa
+        const y0 = sy + x * sa + y * ca
+        const ux = dx * ca - dy * sa
+        const uy = dx * sa + dy * ca
+        p.line(x0, y0, x0 + ux * L, y0 + uy * L, VERRIERE[1], 0.9)
+        p.line(x0, y0, x0 + ux * L * 0.5, y0 + uy * L * 0.5, N.WHITE)
+        p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 2 * force, VERRIERE[1], 0.5 * force)
+      }
+      for (const cote of [-1, 1]) jet(6.4, cote * 2.2, 1, cote * 0.25, pousseeVue.retro)
+      // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
+      jet(-1, -5.2, -0.15, -1, Math.max(0, pousseeVue.cote))
+      jet(-1, 5.2, -0.15, 1, Math.max(0, -pousseeVue.cote))
+    }
     // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
     if (t - bouclierA < 0.25) {
       const k = 1 - (t - bouclierA) / 0.25
@@ -6204,6 +6236,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (enJeu && !souteOuverte) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
+      {
+        // (où l'on pousse, vu du vaisseau : devant / derrière, d'un flanc / de l'autre)
+        const n = Math.hypot(direction.x, direction.y)
+        const f = Math.min(1, n)
+        const ux = n > 0 ? direction.x / n : 0
+        const uy = n > 0 ? direction.y / n : 0
+        const devant = ux * Math.cos(v.cap) + uy * Math.sin(v.cap)
+        const deCote = -ux * Math.sin(v.cap) + uy * Math.cos(v.cap)
+        const k = Math.min(1, dt * 14)
+        pousseeVue.avant += (f * Math.max(0, devant) - pousseeVue.avant) * k
+        pousseeVue.retro += (f * Math.max(0, -devant) - pousseeVue.retro) * k
+        pousseeVue.cote += (f * deCote - pousseeVue.cote) * k
+      }
       const ouRegarder = t - arriveA < ARRIVE_A ? undefined : regardVoulu()
       while (accumule >= PAS) {
         accumule -= PAS
@@ -6404,29 +6449,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           flashs.push({ x: choc.x, y: choc.y, t0: t, r: -1 })
         }
         // les braises du moteur, en coordonnées du monde, derrière la tuyère
-        if (v.poussee > 0.05) {
-          const n = v.poussee > 0.6 ? 2 : 1
+        if (pousseeVue.avant > 0.05) {
+          const n = pousseeVue.avant > 0.6 ? 2 : 1
           for (let i = 0; i < n; i++) {
             // (ELLES NAISSENT AU BOUT DE LA FLAMME, pas à la queue du vaisseau — Keko, 13/11 : « on dirait que les
             // particules naissent trop tôt » — la longueur de la flamme est celle de `formesDuPropulseur` ; et À LA
             // COULEUR DE LA FLAMME : bleues derrière un propulseur ionique, elles restaient couleur feu)
             const cran = monteeA(hangar, 'propulseur').cran
-            const flamme = (2.5 + 8 * v.poussee) * (1 + 0.25 * (cran - 1))
+            const flamme = (2.5 + 8 * pousseeVue.avant) * (1 + 0.25 * (cran - 1))
             // (… PUIS DE NOUVEAU À LA TUYÈRE, au début de la flamme — c'est la flamme qui n'est plus rigide)
             const recul = 8.4 + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)
             const bx = v.x - Math.cos(v.cap) * recul
             const by = v.y - Math.sin(v.cap) * recul
-            const vitesse = 30 + 40 * v.poussee
+            const vitesse = 30 + 40 * pousseeVue.avant
             braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
           }
         }
       }
-      flamme += (v.poussee - flamme) * Math.min(1, dt * 14)
+      flamme += (pousseeVue.avant - flamme) * Math.min(1, dt * 14)
       // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse, la charge
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? flamme : 0, m.phase === 'vol' && m.forage !== null, m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte)
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && m.forage !== null, m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0

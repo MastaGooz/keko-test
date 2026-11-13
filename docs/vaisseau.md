@@ -3207,3 +3207,17 @@ de fer », « 7 unités perdues » ; là où le mot désignait ce qui flotte dan
 l'espace, « le minerai » (« attire le minerai de 60 % plus loin »). Le code
 garde `pepites`.
 
+### Reculer sans flamme arrière : les jets de manœuvre (13/11)
+
+Keko : avec les deux manches, « c'est pas un peu bizarre qu'une navette
+puisse reculer, alors que le propulseur est à l'arrière ? ». LA RÈGLE NE
+CHANGE PAS (on bouge dans tous les sens, c'est le deux-manches) ; c'est
+l'image qui l'explique (`pousseeVue`, la poussée vue du vaisseau, lissée) :
+- LE PROPULSEUR ne souffle (flamme, braises) que pour la part de la poussée
+  qui va vers l'avant ; en marche arrière, il s'éteint.
+- DES JETS DE MANŒUVRE (`dessinerLeVaisseau`) : deux au nez, qui soufflent
+  vers l'avant quand on recule ; un par flanc, qui souffle à l'opposé du
+  côté où l'on glisse. Courts, blancs au cœur, bleus au bout.
+- Le souffle sonore reste audible quand ce sont les jets qui poussent.
+- Proposé, pas fait : une marche arrière plus lente (70 %).
+
