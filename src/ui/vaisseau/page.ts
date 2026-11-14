@@ -619,8 +619,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
     // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
     // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
-    // (ARMÉ AU MAXIMUM — Keko, 14/11 : la cadence de ses huit armes ensemble, près de sept tirs par seconde)
-    if (RIVAL_CUIRASSE) CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 150, tient: 75, lache: 300, cadence: 0.15, vitesseTir: 160, fuit: 99999 } }
+    // (SES VRAIES ARMES — Keko, 14/11 : « deux canons, le reste en mitraillette, tous ses slots d'armes légères
+    // remplis, et deux missiles dans ses slots lourds » : celles du catalogue, chacune à sa bouche sur la coque)
+    if (RIVAL_CUIRASSE) {
+      const armes = ARMES_DU_RIVAL.flatMap((id, place) => {
+        const a = pieceDe(id)?.arme
+        return a === undefined ? [] : [{ ...a, place, bouche: boucheMontee(4, a.id, place) }]
+      })
+      CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 150, tient: 75, lache: 300, fuit: 99999, armes } }
+    }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
@@ -703,7 +710,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   /** Le rival en cuirassé (à l'essai, 14/11 ; `&rival=serie` : le petit rival d'avant) : son allure, tout armé. */
   const RIVAL_CUIRASSE = parametres.get('rival') !== 'serie'
-  const ALLURE_DU_RIVAL: Allure = RIVAL_CUIRASSE ? { propulseur: 3, coque: 4, foreuse: 3, radar: true, aimant: false, armes: ['canon', 'canon', 'rafale', 'rafale', 'canon', 'canon', 'missiles', 'missiles'], bouclier: 0, outils: [{ famille: 'foreuse', cran: 3 }, { famille: 'radar', cran: 2 }, { famille: 'foreuse', cran: 2 }, null], foreusePlace: 0 } : ALLURE_SERIE
+  /** Ses armes, place par place : six légères (deux canons, quatre mitrailleuses), deux lourdes (les missiles). */
+  const ARMES_DU_RIVAL = ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-rafale', 'arme-rafale', 'arme-rafale', 'arme-missiles', 'arme-missiles']
+  const ALLURE_DU_RIVAL: Allure = RIVAL_CUIRASSE ? { propulseur: 3, coque: 4, foreuse: 3, radar: true, aimant: false, armes: ARMES_DU_RIVAL.map((id) => pieceDe(id)?.arme?.id ?? ''), bouclier: 0, outils: [{ famille: 'foreuse', cran: 3 }, { famille: 'radar', cran: 2 }, { famille: 'foreuse', cran: 2 }, null], foreusePlace: 0 } : ALLURE_SERIE
   /** Les outils montés, PLACE PAR PLACE (pour une coque qui les dessine chacun à sa place), et la place de la foreuse qui creuse. */
   const outilsParPlace = (): ({ famille: string; cran: number } | null)[] =>
     Array.from({ length: capacite(hangar, 'outil') }, (_, k) => {
@@ -5252,6 +5261,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const l = Math.hypot(tr.vx, tr.vy) || 1
       const ux = tr.vx / l
       const uy = tr.vy / l
+      if (tr.arme === 'missiles') {
+        // (un missile du rival : un corps clair à pointe violette, sa flamme)
+        p.line(tr.x - ux * 4, tr.y - uy * 4, tr.x, tr.y, COQUE[5])
+        p.px(tr.x, tr.y, VIOLET[4])
+        p.line(tr.x - ux * 7, tr.y - uy * 7, tr.x - ux * 4, tr.y - uy * 4, FEU[5])
+        p.glow(tr.x - ux * 6, tr.y - uy * 6, 6, FEU[4], 0.6)
+        continue
+      }
+      if (tr.arme === 'rafale') {
+        // (une balle de mitrailleuse : un tiret court)
+        p.line(tr.x - ux * 2, tr.y - uy * 2, tr.x, tr.y, VIOLET[3])
+        p.px(tr.x, tr.y, N.WHITE)
+        p.glow(tr.x, tr.y, 3, VIOLET[3], 0.4)
+        continue
+      }
       p.line(tr.x - ux * 5, tr.y - uy * 5, tr.x - ux * 2, tr.y - uy * 2, VIOLET[2])
       p.line(tr.x - ux * 2, tr.y - uy * 2, tr.x, tr.y, VIOLET[4])
       p.px(tr.x, tr.y, N.WHITE)

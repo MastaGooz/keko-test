@@ -256,6 +256,30 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   avancerLeMonde(VAISSEAU, w3, 1 / 60, { x: 0, y: 0 })
   verifier('une seule foreuse au centre creuse comme le foreur unique d’avant', JSON.stringify(w2.forage) === JSON.stringify(w3.forage) && w2.forage !== null)
 }
+// LE RIVAL ARMÉ (Keko, 14/11) : de vraies armes, chacune à sa cadence ; un missile tourne vers le joueur
+{
+  const canon = { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
+  const missile = { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0, guide: true }
+  const socle = armer('arme-canon')
+  const cfg = { ...socle, ennemi: { ...socle.ennemi, armes: [canon, missile], voit: 200 } }
+  const w = poserPres(cfg)
+  w.coque = 1000
+  let traits = 0
+  let guides = 0
+  for (let i = 0; i < 60 * 4; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    traits = Math.max(traits, w.tirs.length)
+    if (w.tirs.some((x) => x.guide === true)) guides += 1
+  }
+  verifier('le rival armé tire ses armes, un missile guidé parmi elles, et blesse selon l’arme (un obus de canon : un point)', traits >= 1 && guides > 0 && w.coque < 1000 && Math.abs(canon.degats * cfg.ennemi.partDesDegats - 1) < 1e-9)
+  const sans = poserPres(socle)
+  let vus = 0
+  for (let i = 0; i < 60 * 4; i++) {
+    avancerLeMonde(socle, sans, 1 / 60, { x: 0, y: 0 })
+    vus += sans.tirs.length
+  }
+  verifier('sans armes, le rival garde son trait unique, un point', vus > 0 && sans.tirs.every((x) => x.degats === undefined))
+}
 // LE PILOTAGE À TOURELLES (Keko, 13/11) : le regard ne tourne pas la coque — seul le manche du vol la fait virer
 {
   const cfg = { ...VAISSEAU, tourelles: true }

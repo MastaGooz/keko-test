@@ -200,7 +200,19 @@ export const VAISSEAU = {
    * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
-  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3 },
+  ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
+    /**
+     * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
+     * ses slots lourds ») : celles du joueur — chacune tire à SA cadence, à sa portée (bornée par ce que le rival voit),
+     * avec ses obus ; les missiles tournent vers le joueur. Vide : le tir unique d'avant (`cadence`, `vitesseTir`).
+     * `partDesDegats` : ce qu'un point de dégât d'arme enlève au blindage du joueur — les armes sont réglées contre les
+     * 36 points du rival, le joueur en a cinq : un obus de canon (6) lui enlève un point.
+     */
+    armes: [] as Arme[],
+    partDesDegats: 1 / 6,
+    /** Un missile du rival tourne vers le joueur à tant de rad/s (moins que ceux du joueur : il s'esquive). */
+    guidage: 2.2,
+  },
 } as const
 /** La configuration, les nombres élargis : une page peut en passer une variante (`&ennemi` fait naître l'ennemi tout de suite). */
 type Large<T> = { [K in keyof T]: T[K] extends number ? number : T[K] extends object ? Large<T[K]> : T[K] }
@@ -259,7 +271,8 @@ export type Pepite = { id: number; x: number; y: number; vx: number; vy: number;
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
-export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number }
+/** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
+export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
 export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean }
 /** Une bombe en vol (la capacité active d'essai). */
@@ -273,6 +286,8 @@ export type Ennemi = {
   roche: number | null
   forage: Forage | null
   tirA: number
+  /** Le prochain tir de CHACUNE de ses armes, quand il en porte (`ennemi.armes`). */
+  tirsA?: number[]
   butin: number
   cargaison: Cargaison
 }
@@ -674,7 +689,23 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
     const ecart = dj - c.ennemi.tient
     const k = Math.max(-1, Math.min(1, ecart / 25))
     direction = { x: (dxj / dj) * k, y: (dyj / dj) * k }
-    if (m.t >= e.tirA && dj <= c.ennemi.voit) {
+    if (c.ennemi.armes.length > 0) {
+      // SES ARMES, chacune à sa cadence et à sa portée — leurs premiers tirs décalés, pour qu'elles ne partent pas ensemble
+      if (e.tirsA === undefined) e.tirsA = c.ennemi.armes.map((a, k) => m.t + 0.3 + (a.cadence * k) / c.ennemi.armes.length)
+      const ca = Math.cos(b.cap)
+      const sa = Math.sin(b.cap)
+      c.ennemi.armes.forEach((a, k) => {
+        if (m.t < e.tirsA![k] || dj > Math.min(a.portee, c.ennemi.voit)) return
+        e.tirsA![k] = m.t + a.cadence
+        // (sa bouche, sur le vaisseau, si le rendu l'a posée ; sinon le bord, vers la cible)
+        const x0 = a.bouche === undefined ? b.x : b.x + a.bouche.x * ca - a.bouche.y * sa
+        const y0 = a.bouche === undefined ? b.y : b.y + a.bouche.x * sa + a.bouche.y * ca
+        const temps = dj / a.vitesse
+        const angle = Math.atan2(v.y + v.vy * temps - y0, v.x + v.vx * temps - x0) + (tire(m.graine, m.prochainId, 9) - 0.5) * 2 * a.dispersion
+        m.tirs.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * c.ennemi.partDesDegats, guide: a.guide, arme: a.id })
+        ev.push({ type: 'tir', x: x0, y: y0 })
+      })
+    } else if (m.t >= e.tirA && dj <= c.ennemi.voit) {
       e.tirA = m.t + c.ennemi.cadence
       const temps = dj / c.ennemi.vitesseTir
       const cx = v.x + v.vx * temps - b.x
@@ -1056,12 +1087,20 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   for (let i = m.tirs.length - 1; i >= 0; i--) {
     const tr = m.tirs[i]
     tr.vie -= dt
+    if (tr.guide && m.phase === 'vol') {
+      // (un missile du rival tourne vers le joueur)
+      const vit = Math.hypot(tr.vx, tr.vy)
+      const ecart = ecartDAngle(Math.atan2(tr.vy, tr.vx), Math.atan2(v.y - tr.y, v.x - tr.x))
+      const cap = Math.atan2(tr.vy, tr.vx) + Math.sign(ecart) * Math.min(Math.abs(ecart), c.ennemi.guidage * dt)
+      tr.vx = Math.cos(cap) * vit
+      tr.vy = Math.sin(cap) * vit
+    }
     tr.x += tr.vx * dt
     tr.y += tr.vy * dt
     let fini = tr.vie <= 0
     if (!fini && m.phase === 'vol' && Math.hypot(tr.x - v.x, tr.y - v.y) <= c.rayon + 1) {
       fini = true
-      encaisser(c, m, tr.x, tr.y, 1, ev)
+      encaisser(c, m, tr.x, tr.y, tr.degats ?? 1, ev)
     }
     if (!fini) for (const a of asteroidesVisibles(c, m, tr.x, tr.y, c.champ.rayonMax + 2)) if (Math.hypot(tr.x - a.x, tr.y - a.y) <= a.rayon) fini = true
     if (fini) m.tirs.splice(i, 1)
