@@ -5584,16 +5584,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * six pattes qui marchent ; EN CHASSE, il rougit, ses yeux passent du jaune au rouge, ses mandibules claquent et
    * ses pattes s'affolent ; blanc un instant sous un coup.
    */
-  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, echelle = 1): void {
-    const ca = Math.cos(cap) * echelle
-    const sa = Math.sin(cap) * echelle
-    const P = (ux: number, uy: number): [number, number] => [x + ux * ca - uy * sa, y + ux * sa + uy * ca]
+  /**
+   * (`deforme` : SON CORPS EST DÉFORMÉ ET PRIS DE LUMIÈRE VIOLETTE — le portail l'avale : étiré de `long` le long de
+   * l'axe `axe` (vers le centre du vortex), resserré de `large` en travers, ses teintes passées au violet, `part` de 0 à 1.)
+   */
+  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }): void {
+    const ca = Math.cos(cap)
+    const sa = Math.sin(cap)
+    const da = deforme === undefined ? 0 : deforme.axe
+    const dc = Math.cos(da)
+    const ds = Math.sin(da)
+    const P = (ux: number, uy: number): [number, number] => {
+      const rx = ux * ca - uy * sa
+      const ry = ux * sa + uy * ca
+      if (deforme === undefined) return [x + rx, y + ry]
+      // (dans le repère de l'axe : on étire le long, on resserre en travers, avec une ondulation qui court le long du corps)
+      const le = (rx * dc + ry * ds) * deforme.long
+      const tr = (-rx * ds + ry * dc) * deforme.large + Math.sin(le * 0.9 + t * 40) * 1.2 * deforme.part
+      return [x + le * dc - tr * ds, y + le * ds + tr * dc]
+    }
     const ovaleTourne = (cx: number, cy: number, rx: number, ry: number): [number, number][] => Array.from({ length: 12 }, (_, i) => P(cx + Math.cos((i / 12) * Math.PI * 2) * rx, cy + Math.sin((i / 12) * Math.PI * 2) * ry))
     const ENCRE = N.hex('#0a0610')
     // (des teintes CLAIRES : sur le noir de l'espace, un violet sombre et des pattes d'encre ne se voyaient pas)
-    const CORPS = blanchi ? N.WHITE : aggro ? N.hex('#b02a4a') : N.hex('#7446b0')
-    const CLAIR = blanchi ? N.WHITE : aggro ? N.hex('#ff7a8c') : N.hex('#c39bf5')
-    const PATTE = blanchi ? N.WHITE : aggro ? N.hex('#d05a70') : N.hex('#9a78cc')
+    const pris = deforme !== undefined
+    const CORPS = blanchi ? N.WHITE : pris ? N.hex('#a35cff') : aggro ? N.hex('#b02a4a') : N.hex('#7446b0')
+    const CLAIR = blanchi ? N.WHITE : pris ? N.hex('#f1dcff') : aggro ? N.hex('#ff7a8c') : N.hex('#c39bf5')
+    const PATTE = blanchi ? N.WHITE : pris ? N.hex('#cf9bff') : aggro ? N.hex('#d05a70') : N.hex('#9a78cc')
     // les pattes : trois par flanc, qui vont et viennent en opposition
     for (const s of [-1, 1])
       for (let k = 0; k < 3; k++) {
@@ -5629,23 +5645,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
   }
   /**
-   * LES INSECTES ASPIRÉS PAR LE PORTAIL (Keko, 14/11 : « quand un ennemi entre dans le vortex, une petite animation
-   * d'aspiration de son image dans le vortex, plutôt qu'une explosion jaune ») : son image tourne autour du centre en
-   * s'en rapprochant, de plus en plus vite, et rapetisse jusqu'à disparaître ; elle blanchit sur la fin.
+   * LES INSECTES PRIS PAR LE PORTAIL (Keko, 14/11 : « quand un ennemi entre dans le vortex, une petite animation
+   * d'aspiration de son image dans le vortex, plutôt qu'une explosion jaune ») — d'abord un tourbillon de siphon, puis :
+   * voir `dessinerLesAspires`.
    */
   /** Le cap et l'état de chaque insecte à la dernière image où on l'a dessiné (pour celui que le portail vient de prendre). */
   const dernierVu = new Map<number, { cap: number; aggro: boolean }>()
   let aspires: { x: number; y: number; cap: number; id: number; t0: number; aggro: boolean }[] = []
-  const DUREE_DE_L_ASPIRATION = 0.6
+  const DUREE_DE_L_ASPIRATION = 0.55
   function dessinerLesAspires(p: Peintre): void {
     aspires = aspires.filter((a) => t - a.t0 < DUREE_DE_L_ASPIRATION)
     for (const a of aspires) {
+      // UNE DISTORSION ET UNE LUMIÈRE VIOLETTE SUR SON CORPS (Keko, 14/11 : « pas une aspiration comme dans un siphon : une
+      // distorsion et un effet de lumière violet sur le corps de l'objet aspiré ») : il ne tourne pas — il glisse droit
+      // vers le centre, son corps S'ÉTIRE vers lui et se resserre, ondule, vire au violet puis au blanc, baigné d'une
+      // lueur violette, et se réduit à un trait de lumière qui s'éteint
       const u = (t - a.t0) / DUREE_DE_L_ASPIRATION
-      const r = Math.hypot(a.x, a.y) * Math.pow(1 - u, 1.6)
-      const an = Math.atan2(a.y, a.x) + 5.5 * u * u
-      const wx = Math.cos(an) * r
-      const wy = Math.sin(an) * r
-      dessinerUnInsecte(p, wx - camera.x + W / 2, wy - camera.y + centreY(), a.cap + 9 * u * u, a.id * 1.7, u > 0.7, a.aggro, Math.max(0.12, 1 - u))
+      const axe = Math.atan2(-a.y, -a.x)
+      const k = 1 - u * u * 0.85
+      const wx = a.x * k
+      const wy = a.y * k
+      const sx = wx - camera.x + W / 2
+      const sy = wy - camera.y + centreY()
+      const long = 1 + 2.6 * u * u
+      const large = Math.max(0.08, 1 - 1.05 * u)
+      p.glow(sx, sy, 10 + 10 * u, N.hex('#a35cff'), 0.55 * (1 - u * 0.5))
+      if (u < 0.85) dessinerUnInsecte(p, sx, sy, a.cap, a.id * 1.7, u > 0.6, a.aggro, { axe, long, large, part: u })
+      // (le trait de lumière : de lui vers le centre, de plus en plus net à mesure qu'il s'efface)
+      const l = (6 + 16 * u) * (u < 0.85 ? 1 : 1 - (u - 0.85) / 0.15)
+      p.glowLine(sx, sy, sx + Math.cos(axe) * l, sy + Math.sin(axe) * l, 3, N.hex('#cf9bff'), 0.25 + 0.6 * u)
+      if (u > 0.5) p.line(sx - Math.cos(axe) * l * 0.4, sy - Math.sin(axe) * l * 0.4, sx + Math.cos(axe) * l, sy + Math.sin(axe) * l, u > 0.8 ? N.WHITE : N.hex('#f1dcff'), Math.min(1, (u - 0.5) * 3) * (u < 0.85 ? 1 : 1 - (u - 0.85) / 0.15))
     }
   }
   function dessinerLesEnnemis(p: Peintre): void {
