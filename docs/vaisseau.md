@@ -3539,8 +3539,9 @@ perdu. Comme un vrai jeu d'extraction. »
   qui est resté au hangar reste. Le hangar le dit dix secondes (« Perdu
   avec le vaisseau : … »). Une pièce perdue jusqu'au dernier exemplaire
   reste à construire (elle reste dans `ouvertes`).
-- À l'écran : « Construire » ; « ×N » après le nom dans la liste et dans le
-  puits de la fiche ; la fiche montre d'abord « Équiper » / « Retirer » /
+- À l'écran : « Construire » ; « ×N » après le nom, SUR LA LIGNE de la liste du
+  panneau « Changer » seulement, dans le style du nom (ni sur la page de la
+  place, ni sur le dessin de la pièce — Keko) ; la fiche montre d'abord « Équiper » / « Retirer » /
   « Équipé », puis « Construire » dessous.
 - Une sauvegarde d'avant : un exemplaire par pièce achetée (autant que de
   places prises).

@@ -2889,8 +2889,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const montee = estMontee(hangar, pc.id)
       if (!choisie && survol !== null && survol.y >= ly && survol.y < ly + RANG_LISTE && survol.x >= 4 && survol.x < W - 4) p.rect(7, ly, larg, RANG_LISTE, N.hex('#1a1626'))
       ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
-      // (LE NOMBRE D'EXEMPLAIRES CONSTRUITS, après le nom — rien pour une pièce de base)
-      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `×${exemplaires(hangar, pc.id)}`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 5, ly + 3, PEPITE[2], { police: GRAS })
+      // (LE NOMBRE D'EXEMPLAIRES CONSTRUITS, après le nom, DANS LE MÊME STYLE QUE LUI — Keko, 14/11 : il était en gras et en
+      // or même sur une ligne non choisie ; et il n'est QUE sur cette ligne : ni sur la page de la place, ni sur le dessin
+      // de la pièce ; rien pour une pièce de base)
+      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `×${exemplaires(hangar, pc.id)}`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 5, ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
@@ -3582,8 +3584,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, 8, y + 4, 44, hh - 8, 'creux')
     p.glow(30, y + hh / 2, 16, VERRIERE[1], 0.12)
     dessinerLePictogramme(p, pc, 30, y + hh / 2, 44, hh - 8)
-    // (combien d'exemplaires on en a, dans le coin du puits ; rien pour une pièce de base)
-    if (exemplaires(hangar, pc.id) > 0) ecrire(p, `×${exemplaires(hangar, pc.id)}`, 49, y + hh - 14, PEPITE[3], { police: GRAS, align: 'right' })
     motEnRelief(p, pc.nom, gx + (W - 12 - gx) / 2, y + 5, false)
     jauges.forEach((j, i) => {
       const k = sortie((t - Math.max(etapeA, choixA) - 0.05 - i * 0.045) / 0.32)
