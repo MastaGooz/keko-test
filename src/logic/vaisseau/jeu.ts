@@ -773,7 +773,13 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
   const r = voler(c, c.ennemi, b, dt, direction, m.detruits)
   e.corps = r.vaisseau
   // en chasse, le nez reste sur le joueur
-  if (e.fait === 'chasse') e.corps = { ...e.corps, cap: Math.atan2(dyj, dxj) }
+  // EN CHASSE, SON NEZ TOURNE VERS LE JOUEUR À SA MANIABILITÉ, PLUS D'UN COUP (Keko, 14/11 : le cuirassé rival « se
+  // retourne instantanément vers moi, et la pointe de son vaisseau suit mon chasseur à toute vitesse » — le cap était
+  // posé droit sur le joueur à chaque pas, quelle que soit sa rotation)
+  if (e.fait === 'chasse') {
+    const ecart = ecartDAngle(b.cap, Math.atan2(dyj, dxj))
+    e.corps = { ...e.corps, cap: b.cap + Math.sign(ecart) * Math.min(Math.abs(ecart), c.ennemi.rotation * dt) }
+  }
   // ses chocs lui coûtent des points, et abîment la roche
   for (const choc of r.chocs) {
     e.pv -= coutDuChoc(c, choc, c.collision.degatsEnnemi)
