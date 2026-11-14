@@ -23,7 +23,8 @@ import { MINERAIS, type Cargaison, type ConfigVaisseau } from './jeu.ts'
 export const BRANCHES = ['minage', 'combat', 'exploration', 'commerce'] as const
 export type Branche = (typeof BRANCHES)[number]
 export const NOMS_BRANCHE: Record<Branche, string> = { minage: 'Minage', combat: 'Combat', exploration: 'Exploration', commerce: 'Commerce' }
-export type SorteDeNoeud = 'piece' | 'passif' | 'mecanique'
+/** (LA RECHERCHE NE DÉBLOQUE PLUS DE PIÈCES — Keko, 14/11 : elle débloque des VAISSEAUX, les carrés ; des passifs, les ronds ; des déblocages clés, les losanges. Les pièces s'ouvrent par les missions de chaque vaisseau : `flotte.ts`.) */
+export type SorteDeNoeud = 'vaisseau' | 'passif' | 'mecanique'
 export type Rang = 1 | 2 | 3
 export const RANGS: Rang[] = [1, 2, 3]
 
@@ -57,8 +58,8 @@ export type Noeud = {
   dit: string
   /** SON COÛT, en minerai du trésor — à lui, pas à son rang (Keko, 11/11 : « je veux des prix individuels sur les nœuds »). */
   cout: Cargaison
-  /** Une pièce : son identifiant au catalogue du hangar. */
-  piece?: string
+  /** Un vaisseau : son modèle (`flotte.ts`). */
+  vaisseau?: string
   passif?: Passif
   mecanique?: Mecanique
   /** Le dessin d'un passif ou d'une mécanique (la page le connaît par ce nom). */
@@ -67,31 +68,20 @@ export type Noeud = {
 
 export const NOEUDS: Noeud[] = [
   // ---- MINAGE
-  { id: 'm-foreuse-2', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'minage', rang: 1, sorte: 'piece', piece: 'foreuse-2', nom: 'Foreuse lourde', dit: 'Ouvre l’achat de la foreuse lourde : elle creuse 40 % plus vite.' },
   { id: 'm-debit', cout: { fer: 15, or: 0, cristal: 0 }, branche: 'minage', rang: 1, sorte: 'passif', icone: 'forage', passif: { debit: 0.15 }, nom: 'Forage rapide', dit: 'Toutes les foreuses creusent 15 % plus vite.' },
-  { id: 'm-aimant-1', cout: { fer: 30, or: 8, cristal: 0 }, branche: 'minage', rang: 2, sorte: 'piece', piece: 'aimant-1', nom: 'Aimant', dit: 'Ouvre l’achat de l’aimant : il attire le minerai de 60 % plus loin.' },
   { id: 'm-soute', cout: { fer: 25, or: 10, cristal: 0 }, branche: 'minage', rang: 2, sorte: 'passif', icone: 'soute', passif: { soute: 5 }, nom: 'Soute élargie', dit: 'Cinq unités de plus en soute, quel que soit le châssis.' },
-  { id: 'm-foreuse-3', cout: { fer: 0, or: 20, cristal: 12 }, branche: 'minage', rang: 3, sorte: 'piece', piece: 'foreuse-3', nom: 'Foreuse longue', dit: 'Ouvre l’achat de la foreuse longue : 80 % plus vite, 25 % plus loin.' },
-  { id: 'm-aimant-2', cout: { fer: 0, or: 18, cristal: 10 }, branche: 'minage', rang: 3, sorte: 'piece', piece: 'aimant-2', nom: 'Grand aimant', dit: 'Ouvre l’achat du grand aimant : il attire deux fois plus loin.' },
   { id: 'm-double', cout: { fer: 0, or: 25, cristal: 18 }, branche: 'minage', rang: 3, sorte: 'passif', icone: 'pepite', passif: { pepiteDouble: 0.15 }, nom: 'Filon double', dit: 'Chaque unité tirée d’une roche que vous creusez a 15 % de chances d’être double.' },
   // ---- COMBAT
-  { id: 'c-canon', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'combat', rang: 1, sorte: 'piece', piece: 'arme-canon', nom: 'Canon', dit: 'Ouvre l’achat du canon : un obus toutes les 1,1 s, il tire seul sur le rival.' },
   { id: 'c-blindage', cout: { fer: 25, or: 0, cristal: 0 }, branche: 'combat', rang: 1, sorte: 'passif', icone: 'blindage', passif: { blindage: 1 }, nom: 'Blindage renforcé', dit: 'Un point de blindage de plus, quel que soit le châssis.' },
-  { id: 'c-rafale', cout: { fer: 30, or: 10, cristal: 0 }, branche: 'combat', rang: 2, sorte: 'piece', piece: 'arme-rafale', nom: 'Mitrailleuse', dit: 'Ouvre l’achat de la mitrailleuse : quatre balles par seconde, dispersées.' },
-  { id: 'c-coque-2', cout: { fer: 40, or: 8, cristal: 0 }, branche: 'combat', rang: 2, sorte: 'piece', piece: 'coque-2', nom: 'Châssis blindé', dit: 'Ouvre l’achat du châssis blindé : 8 de blindage, deux armes. Lourd.' },
   { id: 'c-cadence', cout: { fer: 25, or: 12, cristal: 0 }, branche: 'combat', rang: 2, sorte: 'passif', icone: 'cadence', passif: { cadence: 0.15 }, nom: 'Chargeurs rapides', dit: 'Toutes les armes tirent 15 % plus souvent.' },
-  { id: 'c-missiles', cout: { fer: 0, or: 22, cristal: 15 }, branche: 'combat', rang: 3, sorte: 'piece', piece: 'arme-missiles', nom: 'Missiles', dit: 'Ouvre l’achat des missiles : guidés, 14 points, portent à 190.' },
-  { id: 'c-coque-3', cout: { fer: 0, or: 25, cristal: 20 }, branche: 'combat', rang: 3, sorte: 'piece', piece: 'coque-3', nom: 'Châssis à bouclier', dit: 'Ouvre l’achat du châssis à bouclier : 2 points qui se rechargent, deux outils, deux armes.' },
+  { id: 'c-cuirasse', cout: { fer: 60, or: 30, cristal: 20 }, branche: 'combat', rang: 3, sorte: 'vaisseau', vaisseau: 'cuirasse', nom: 'Cuirassé', dit: 'Un nouveau vaisseau : lent, à tourelles, six armes légères et deux lourdes, quatre outils.' },
   { id: 'c-critique', cout: { fer: 0, or: 20, cristal: 15 }, branche: 'combat', rang: 3, sorte: 'passif', icone: 'critique', passif: { critique: 0.1 }, nom: 'Coup critique', dit: 'Chaque tir a 10 % de chances de faire double dégât.' },
   { id: 'c-bouclier', cout: { fer: 0, or: 15, cristal: 12 }, branche: 'combat', rang: 3, sorte: 'passif', icone: 'bouclier', passif: { bouclier: 1 }, nom: 'Bouclier auxiliaire', dit: 'Un point de bouclier de plus, qui se recharge hors des coups, quel que soit le châssis.' },
   // ---- EXPLORATION
-  { id: 'e-propulseur-2', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'exploration', rang: 1, sorte: 'piece', piece: 'propulseur-2', nom: 'Propulseur renforcé', dit: 'Ouvre l’achat du propulseur renforcé : accélération +25 %, pointe +15 %.' },
   { id: 'e-vitesse', cout: { fer: 15, or: 0, cristal: 0 }, branche: 'exploration', rang: 1, sorte: 'passif', icone: 'vitesse', passif: { vitesse: 0.08 }, nom: 'Carénage', dit: 'La vitesse de pointe monte de 8 %.' },
-  { id: 'e-radar', cout: { fer: 25, or: 10, cristal: 0 }, branche: 'exploration', rang: 2, sorte: 'piece', piece: 'radar', nom: 'Radar', dit: 'Ouvre l’achat du radar : il désigne le rival au bord de l’écran.' },
   { id: 'e-maniabilite', cout: { fer: 20, or: 8, cristal: 0 }, branche: 'exploration', rang: 2, sorte: 'passif', icone: 'maniabilite', passif: { maniabilite: 0.12 }, nom: 'Gyroscopes', dit: 'Le nez tourne 12 % plus vite.' },
   { id: 'e-acceleration', cout: { fer: 20, or: 8, cristal: 0 }, branche: 'exploration', rang: 2, sorte: 'passif', icone: 'acceleration', passif: { acceleration: 0.12 }, nom: 'Injecteurs', dit: 'L’accélération monte de 12 %.' },
   { id: 'e-postcombustion', cout: { fer: 35, or: 15, cristal: 0 }, branche: 'exploration', rang: 2, sorte: 'mecanique', icone: 'postcombustion', mecanique: 'postcombustion', nom: 'Postcombustion', dit: 'En vol, une double tape lance une pointe de vitesse ; elle se recharge en 6 s.' },
-  { id: 'e-propulseur-3', cout: { fer: 0, or: 22, cristal: 15 }, branche: 'exploration', rang: 3, sorte: 'piece', piece: 'propulseur-3', nom: 'Propulseur ionique', dit: 'Ouvre l’achat du propulseur ionique : accélération +60 %, pointe +35 %.' },
   { id: 'e-aimant', cout: { fer: 0, or: 15, cristal: 10 }, branche: 'exploration', rang: 3, sorte: 'passif', icone: 'aimant', passif: { aimant: 0.25 }, nom: 'Champ étendu', dit: 'Le vaisseau attire le minerai de 25 % plus loin.' },
   // ---- COMMERCE (Keko, 11/11 : « tu peux rajouter commerce en arbre tech ? » — il agit sur le marché, `marche.ts`)
   { id: 'k-negoce', cout: { fer: 20, or: 0, cristal: 0 }, branche: 'commerce', rang: 1, sorte: 'passif', icone: 'vente', passif: { vente: 0.05 }, nom: 'Négoce', dit: 'Chaque vente rapporte 5 % de plus, au cours comme par ordre.' },
@@ -126,8 +116,8 @@ export function debloquer(l: Labo, tresor: Cargaison, id: string): { labo: Labo;
   for (const k of MINERAIS) reste[k] -= cout[k]
   return { labo: { debloques: [...l.debloques, id] }, tresor: reste }
 }
-/** Une pièce est OUVERTE À L'ACHAT : un nœud débloqué la porte (une pièce qu'aucun nœud ne porte ne s'achète pas). */
-export const pieceOuverte = (l: Labo, piece: string): boolean => NOEUDS.some((n) => n.piece === piece && estDebloque(l, n.id))
+/** Les vaisseaux que la recherche a débloqués. */
+export const vaisseauxDebloques = (l: Labo): string[] => NOEUDS.filter((n) => n.vaisseau !== undefined && estDebloque(l, n.id)).map((n) => n.vaisseau as string)
 export const aLaMecanique = (l: Labo, m: Mecanique): boolean => NOEUDS.some((n) => n.mecanique === m && estDebloque(l, n.id))
 
 /** La somme des passifs débloqués. */
@@ -164,6 +154,11 @@ export function configDuLabo(c: ConfigVaisseau, l: Labo): ConfigVaisseau {
 }
 
 /** Relit un labo gardé, sans confiance : les nœuds inconnus tombent, chacun une seule fois. */
+/** Les identifiants gardés tels quels (une sauvegarde d'avant la flotte : ses anciens nœuds « pièce » disent quoi rouvrir). */
+export const noeudsBruts = (brut: unknown): string[] => {
+  const d = typeof brut === 'object' && brut !== null ? (brut as { debloques?: unknown }).debloques : undefined
+  return Array.isArray(d) ? d.filter((x): x is string => typeof x === 'string') : []
+}
 export function lireLabo(brut: unknown): Labo {
   const l = laboNeuf()
   if (typeof brut !== 'object' || brut === null) return l

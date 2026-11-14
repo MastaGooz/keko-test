@@ -3451,3 +3451,58 @@ d'avant. *Les aimants et les radars restent « le meilleur seul ».*
 Le cuirassé passe à TROIS propulseurs (Keko, 13/11, « pour voir » : il allait trop vite) : trois tuyères, 190 T tout équipé au lieu de 200. La pointe ne change pas (elle vient du propulseur), seule l'accélération baisse.
 
 Puis à UN SEUL propulseur (Keko, 14/11, « pour voir ») : une tuyère, 170 T tout équipé. L'accélération tombe à peu près au tiers de celle à trois ; la pointe ne change toujours pas.
+
+### La flotte : le vaisseau est l'unité du jeu (14/11)
+
+Le cuirassé à un propulseur allait toujours aussi vite qu'un chasseur :
+la pointe ne vient que du propulseur. Keko : « notre problème vient de la
+séparation châssis / propulsion », puis, pas à pas :
+
+- **Un vaisseau est un MODÈLE avec SES pièces** (`logic/vaisseau/flotte.ts`,
+  `MODELES`) : ses châssis (« on peut débloquer différents châssis pour un
+  même vaisseau »), ses deux ou trois propulseurs, ses armes, ses outils.
+  Une même arme peut figurer sur plusieurs vaisseaux, mais elle se
+  débloque sur chacun. Deux modèles : le **Chasseur** (les trois petits
+  châssis, les trois propulseurs d'avant, canon et mitrailleuse) et le
+  **Cuirassé** (sa coque, trois moteurs à lui — de ligne, de remorqueur,
+  de croisière : des PROFILS, pas des rangs —, les missiles en plus).
+- **La maniabilité revient au propulseur** (`Piece.rotation`, « plus
+  logique dans l'espace ») : chaque vaisseau ayant ses propulseurs, le
+  défaut de la veille n'existe plus. `Piece.virage` est supprimé ; une
+  coque ne multiplie plus ses propulseurs (une tuyère au cuirassé).
+- **Les places d'arme ont un CALIBRE** : `Piece.lourdes` (une coque : ses
+  dernières places sont lourdes), `Piece.lourde` (une arme). Une lourde ne
+  va qu'à une place lourde (`placeLourde`, `monterA`). Les missiles sont
+  lourds ; le chasseur n'a pas de place lourde. Les cases disent
+  « Lourde 1 ».
+- **La recherche débloque des VAISSEAUX** (les carrés), des passifs (les
+  ronds), des déblocages clés (les losanges) — plus aucune pièce. Un seul
+  nœud de vaisseau : le cuirassé, combat rang 3. À venir : des passifs
+  propres à une CLASSE de vaisseau (`Classe`).
+- **Chaque vaisseau a sa SUITE DE MISSIONS** (`chaine`), une active, qui
+  n'avance qu'EN LE PILOTANT (`noterEnVol`, appelé par `compter`). Écartés
+  avant : un niveau de vaisseau (« un système d'XP est bizarre pour des
+  vaisseaux »), toute la liste visible d'emblée (« ça va surcharger
+  l'interface pour les noobs »). Réclamée, une mission **ouvre une pièce à
+  l'achat sur ce vaisseau** — « la mission donne le droit d'acheter la
+  pièce (crédits + ressources, comme la recherche) » : `Piece.cout`, payé
+  par `acheter(h, credits, id, tresor)`. À venir en récompense : une
+  couleur spéciale, une capacité signature (« chaque vaisseau aurait ses
+  capacités signatures » ; la postcombustion est encore à la recherche).
+- **À l'écran** : au hangar, le nom du vaisseau entre deux flèches dès
+  qu'on en a deux ; la liste d'une place ne montre que les pièces du
+  modèle, possédées ou ouvertes ; sous « Acheter », le coût en minerai
+  (vert / rouge, « ce qu'on a / ce qu'il faut »). Aux missions, deux
+  onglets : « Contrats » et « Vaisseaux » (une carte par vaisseau, la
+  pièce en récompense).
+- **Sauvegarde** : `flotte` remplace `hangar`. Une sauvegarde d'avant
+  devient le chasseur ; ses pièces achetées restent, celles que sa
+  recherche avait ouvertes restent ouvertes (`ANCIENS_NOEUDS`), et sa
+  suite de missions saute ce qu'elle a déjà. Le minerai dépensé dans les
+  anciens nœuds « pièce » n'est pas rendu.
+- **Essais** : `&ouvertes` ouvre toutes les pièces à l'achat ; `&cuirasse`
+  donne le cuirassé tout monté.
+
+*Les missions, leurs cibles, les prix et les chiffres des moteurs du
+cuirassé sont de moi, au jugé.*
+

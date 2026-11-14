@@ -40,9 +40,20 @@ export type Piece = {
   prix: number
   /** Les outils d'une même famille se remplacent l'un l'autre quand les places manquent (une foreuse chasse la foreuse). */
   famille?: string
-  /** Les facteurs sur la configuration de série (absent = 1). */
+  /**
+   * CE QU'ELLE COÛTE EN MINERAI, en plus des crédits (Keko, 14/11 : « chaque nouvelle pièce du vaisseau s'achète avec du
+   * crédit et certaines ressources — comme ça on garantit que les pièces puissantes soient débloquées plus tard dans le
+   * jeu, quand les ressources de haut niveau sont disponibles »). Absent : rien.
+   */
+  cout?: Partial<Cargaison>
+  /**
+   * Le propulseur : les facteurs sur la configuration de série (absent = 1) — la poussée, la pointe, ET LA MANIABILITÉ,
+   * revenue au propulseur le 14/11 (« ce qui est plus logique dans l'espace » — elle était passée au châssis la veille,
+   * quand un propulseur de chasseur se montait sur le cuirassé : chaque vaisseau a maintenant SES propulseurs).
+   */
   poussee?: number
   vitesseMax?: number
+  rotation?: number
   /** LE POIDS de la pièce (Keko : « un poids à chaque élément, pour être cohérent ») : la somme fait l'inertie du vaisseau. */
   poids: number
   /** La coque : ses points (absolus), son bouclier (des points qui se rechargent), les armes et les outils qu'elle porte. */
@@ -59,14 +70,15 @@ export type Piece = {
   propulseurs?: number
   /** La coque : son rayon dans les chocs, s'il n'est pas celui de la configuration (un gros vaisseau). */
   rayon?: number
-  /**
-   * La coque : SA MANIABILITÉ — LA MANIABILITÉ EST AU CHÂSSIS, PLUS AU PROPULSEUR (Keko, 13/11 : « ça ne fait pas
-   * vraiment sens que ce soit sur le propulseur, le cuirassé nous en a fait la preuve ») : un facteur sur la rotation
-   * de la configuration (absent : 1), et SON PILOTAGE — `tourelles` : le regard ne tourne pas la coque, il ne dirige que le tir (voir
-   * `VAISSEAU.tourelles`).
-   */
-  virage?: number
+  /** La coque : SON PILOTAGE — `tourelles` : le regard ne tourne pas la coque, il ne dirige que le tir (voir `VAISSEAU.tourelles`). */
   tourelles?: boolean
+  /**
+   * LES EMPLACEMENTS D'ARME ONT UN CALIBRE (Keko, 14/11 : « un vaisseau qui a deux emplacements d'armes légères et un
+   * emplacement d'armes lourdes ») : la coque dit combien de ses places d'arme sont LOURDES (les dernières) ; une arme
+   * dit si elle l'est. Une arme lourde ne va qu'à une place lourde, une légère qu'à une place légère.
+   */
+  lourdes?: number
+  lourde?: boolean
   /** Une foreuse : le débit et la portée du forage — des facteurs. Un AIMANT (un outil à part, Keko) : la portée de l'aimant, un facteur. */
   debit?: number
   portee?: number
@@ -95,25 +107,31 @@ export const PIECES: Piece[] = [
   // 0,55 × 220 = 121 à la pointe —, il faut donc 126 de poussée, 0,84 de la configuration : ce n'est plus une
   // accélération basse). PUIS LA POINTE AU MILIEU DES DEUX ÉTALONS — 33 (0,3) et 220 (2) : 126,5 px/s, 1,15)
   { id: 'propulseur-1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de série', dit: 'Le strict minimum : il pousse peu et plafonne bas.', prix: 0, poids: 6, poussee: 0.84, vitesseMax: 1.15},
-  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Pousse plus fort et va plus vite que celui de série.', prix: 24, poids: 8, poussee: 1.25, vitesseMax: 1.15},
-  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Le plus puissant et le plus rapide. Flamme bleue.', note: 'Flamme bleue.', prix: 60, poids: 10, poussee: 1.6, vitesseMax: 1.35},
+  { id: 'propulseur-2', sorte: 'propulseur', cran: 2, nom: 'Propulseur renforcé', dit: 'Pousse plus fort et va plus vite que celui de série.', prix: 24, cout: { fer: 15 }, poids: 8, poussee: 1.25, vitesseMax: 1.15, rotation: 1.1 },
+  { id: 'propulseur-3', sorte: 'propulseur', cran: 3, nom: 'Propulseur ionique', dit: 'Le plus puissant et le plus rapide. Flamme bleue.', note: 'Flamme bleue.', prix: 60, cout: { or: 15, cristal: 8 }, poids: 10, poussee: 1.6, vitesseMax: 1.35, rotation: 1.25 },
+  // LES PROPULSEURS DU CUIRASSÉ (14/11) : à lui seul, lents — trois PROFILS plutôt que trois rangs. De série : 44 px/s
+  // de pointe (0,4), un demi-tour en 6,5 s ; le remorqueur se lance deux fois plus fort et vire mieux,
+  // mais plafonne plus bas ; la croisière file plus vite, très longue à lancer. *Au jugé, à régler au banc.*
+  { id: 'propulseur-l1', sorte: 'propulseur', cran: 1, nom: 'Moteur de ligne', dit: 'Le moteur de série du cuirassé : lent, régulier.', prix: 0, poids: 20, poussee: 0.6, vitesseMax: 0.4, rotation: 0.07 },
+  { id: 'propulseur-l2', sorte: 'propulseur', cran: 2, nom: 'Moteur de remorqueur', dit: 'Se lance deux fois plus fort et vire mieux, mais plafonne plus bas.', prix: 80, cout: { fer: 40, or: 10 }, poids: 26, poussee: 1.2, vitesseMax: 0.32, rotation: 0.1 },
+  { id: 'propulseur-l3', sorte: 'propulseur', cran: 3, nom: 'Moteur de croisière', dit: 'Une pointe bien plus haute, très longue à atteindre. Flamme bleue.', note: 'Flamme bleue.', prix: 120, cout: { or: 25, cristal: 12 }, poids: 24, poussee: 0.5, vitesseMax: 0.65, rotation: 0.055 },
   { id: 'coque-1', sorte: 'coque', cran: 1, nom: 'Châssis de série', dit: '5 de blindage, 20 unités en soute, un outil, une arme.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 1, capacite: 20 },
-  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Châssis blindé', dit: '8 de blindage, 30 unités en soute, un outil, deux armes. Lourd.', note: 'Acier riveté.', prix: 28, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30, virage: 0.8 },
-  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Châssis à bouclier', dit: '5 de blindage et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge après 4 s sans coup.', prix: 64, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
+  { id: 'coque-2', sorte: 'coque', cran: 2, nom: 'Châssis blindé', dit: '8 de blindage, 30 unités en soute, un outil, deux armes. Lourd.', note: 'Acier riveté.', prix: 28, cout: { fer: 30, or: 5 }, poids: 32, pv: 8, armes: 2, outils: 1, capacite: 30 },
+  { id: 'coque-3', sorte: 'coque', cran: 3, nom: 'Châssis à bouclier', dit: '5 de blindage et 2 de bouclier qui se rechargent hors des coups, deux outils, deux armes.', note: 'Le bouclier se recharge après 4 s sans coup.', prix: 64, cout: { or: 20, cristal: 12 }, poids: 24, pv: 5, bouclier: 2, armes: 2, outils: 2, capacite: 24},
   // LE CUIRASSÉ (Keko, 13/11 : « un vaisseau de 200 T de type cuirassé, avec le nombre de propulseurs adapté, très armé
   // et outillé ») : 97 T de coque — 200 T tout monté par `&cuirasse` —, QUATRE propulseurs, huit armes, quatre outils, une grande soute,
   // le blindage et le bouclier au plus haut de ce que la fiche sait montrer. Il n'est à vendre nulle part encore :
   // `&cuirasse` le donne, tout armé.
-  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, un seul propulseur, quatre outils, huit armes. Vire lentement ; ses tourelles tirent dans toutes les directions.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 1, rayon: 18, virage: 0.07, tourelles: true },
+  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Coque de cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre outils, six armes légères et deux lourdes. Ses tourelles tirent dans toutes les directions.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, lourdes: 2, outils: 4, capacite: 120, rayon: 18, tourelles: true },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
-  { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, poids: 6, debit: 1.4, portee: 1},
-  { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, poids: 8, debit: 1.8, portee: 1.25},
-  { id: 'aimant-1', sorte: 'outil', cran: 2, famille: 'aimant', nom: 'Aimant', dit: 'Attire le minerai de 60 % plus loin.', note: 'Le vaisseau attire toujours le minerai ; l’aimant l’attire de plus loin.', prix: 24, poids: 3, aimant: 1.6 },
-  { id: 'aimant-2', sorte: 'outil', cran: 3, famille: 'aimant', nom: 'Grand aimant', dit: 'Attire le minerai deux fois plus loin.', note: 'Le vaisseau attire toujours le minerai ; l’aimant l’attire de plus loin.', prix: 50, poids: 5, aimant: 2.2 },
-  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Désigne le rival au bord de l’écran jusqu’à 600 unités. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une flèche rouge au bord de l’écran désigne le rival.', prix: 32, poids: 2, radar: 600},
-  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte à 120. Tire seul sur le rival.', note: 'Tire seul sur le rival à portée.', prix: 24, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
-  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte à 90, disperse.', note: 'Disperse ses balles.', prix: 44, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
-  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Un missile guidé toutes les 2,8 s, 14 points, porte à 190.', note: 'Guidé : le missile tourne vers le rival.', prix: 68, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
+  { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
+  { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, cout: { or: 15, cristal: 8 }, poids: 8, debit: 1.8, portee: 1.25},
+  { id: 'aimant-1', sorte: 'outil', cran: 2, famille: 'aimant', nom: 'Aimant', dit: 'Attire le minerai de 60 % plus loin.', note: 'Le vaisseau attire toujours le minerai ; l’aimant l’attire de plus loin.', prix: 24, cout: { fer: 20, or: 6 }, poids: 3, aimant: 1.6 },
+  { id: 'aimant-2', sorte: 'outil', cran: 3, famille: 'aimant', nom: 'Grand aimant', dit: 'Attire le minerai deux fois plus loin.', note: 'Le vaisseau attire toujours le minerai ; l’aimant l’attire de plus loin.', prix: 50, cout: { or: 12, cristal: 8 }, poids: 5, aimant: 2.2 },
+  { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Désigne le rival au bord de l’écran jusqu’à 600 unités. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une flèche rouge au bord de l’écran désigne le rival.', prix: 32, cout: { fer: 15, or: 8 }, poids: 2, radar: 600},
+  { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte à 120. Tire seul sur le rival.', note: 'Tire seul sur le rival à portée.', prix: 24, cout: { fer: 20 }, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
+  { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte à 90, disperse.', note: 'Disperse ses balles.', prix: 44, cout: { fer: 20, or: 8 }, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
+  { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Une arme LOURDE : un missile guidé toutes les 2,8 s, 14 points, porte à 190.', note: 'Arme lourde. Guidé : le missile tourne vers le rival.', prix: 68, cout: { or: 18, cristal: 10 }, lourde: true, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
 ]
 
 /**
@@ -167,10 +185,15 @@ export const monteeA = (h: Hangar, e: Emplacement): Piece => pieceDe(h.montees[e
 export const capacite = (h: Hangar, l: Liste): number => Math.min(PLACES_MAX, (l === 'arme' ? monteeA(h, 'coque').armes : monteeA(h, 'coque').outils) ?? 1)
 /** Les pièces montées d'une liste, dans l'ordre des places (les places libres sautées ; une pièce montée deux fois y est deux fois). */
 export const montes = (h: Hangar, l: Liste): Piece[] => listeDe(h, l).map((id) => pieceDe(id)).filter((p): p is Piece => p !== undefined)
-export function peutAcheter(h: Hangar, credits: number, id: string): boolean {
+/** (`tresor` donné : il doit aussi payer le coût en minerai de la pièce) */
+export function peutAcheter(h: Hangar, credits: number, id: string, tresor?: Cargaison): boolean {
   const p = pieceDe(id)
-  return p !== undefined && !possede(h, id) && credits >= p.prix
+  return p !== undefined && !possede(h, id) && credits >= p.prix && (tresor === undefined || MINERAIS.every((k) => tresor[k] >= (p.cout?.[k] ?? 0)))
 }
+/** LE CALIBRE D'UNE PLACE D'ARME : les dernières places de la coque sont les lourdes. */
+export const placeLourde = (h: Hangar, k: number): boolean => k >= capacite(h, 'arme') - (monteeA(h, 'coque').lourdes ?? 0)
+/** Une pièce va à cette place de sa liste : un outil partout, une arme à une place de son calibre. */
+const vaALaPlace = (h: Hangar, p: Piece, k: number): boolean => p.sorte !== 'arme' || (p.lourde ?? false) === placeLourde(h, k)
 /** Une pièce est montée : à son emplacement, ou dans sa liste. */
 export const estMontee = (h: Hangar, id: string): boolean => {
   const p = pieceDe(id)
@@ -179,10 +202,12 @@ export const estMontee = (h: Hangar, id: string): boolean => {
 }
 
 /** L'achat — AU LABO (Keko : « un onglet labo où le joueur va débloquer les nouvelles pièces ») : la pièce passe aux possédées, SANS s'équiper (ça se fait au hangar) ; les crédits paient. Rend les deux valeurs neuves, ou null si on ne peut pas. */
-export function acheter(h: Hangar, credits: number, id: string): { hangar: Hangar; credits: number } | null {
-  if (!peutAcheter(h, credits, id)) return null
+export function acheter(h: Hangar, credits: number, id: string, tresor?: Cargaison): { hangar: Hangar; credits: number; tresor: Cargaison } | null {
+  if (!peutAcheter(h, credits, id, tresor)) return null
   const p = pieceDe(id)!
-  return { hangar: { ...h, possedees: [...h.possedees, id] }, credits: credits - p.prix }
+  const reste = { ...(tresor ?? cargaisonVide()) }
+  if (tresor !== undefined) for (const k of MINERAIS) reste[k] -= p.cout?.[k] ?? 0
+  return { hangar: { ...h, possedees: [...h.possedees, id] }, credits: credits - p.prix, tresor: reste }
 }
 
 /** Les listes bornées à ce que la coque porte (une coque qui porte moins démonte les dernières places). */
@@ -199,7 +224,7 @@ export function monter(h: Hangar, id: string): Hangar {
   if (p.sorte === 'arme' || p.sorte === 'outil') {
     const ids = listeDe(h, p.sorte)
     if (ids.includes(id)) return h
-    const libre = Array.from({ length: capacite(h, p.sorte) }, (_, k) => k).find((k) => (ids[k] ?? VIDE) === VIDE)
+    const libre = Array.from({ length: capacite(h, p.sorte) }, (_, k) => k).find((k) => (ids[k] ?? VIDE) === VIDE && vaALaPlace(h, p, k))
     if (libre !== undefined) return avecListe(h, p.sorte, Object.assign([...ids], { [libre]: id }))
     const i = p.famille === undefined ? -1 : ids.findIndex((x) => pieceDe(x)?.famille === p.famille)
     if (i < 0) return h
@@ -230,7 +255,7 @@ export function remplacer(h: Hangar, ancien: string, nouveau: string): Hangar {
  */
 export function monterA(h: Hangar, id: string, k: number): Hangar {
   const p = pieceDe(id)
-  if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil') || !possede(h, id) || k < 0 || k >= capacite(h, p.sorte)) return h
+  if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil') || !possede(h, id) || k < 0 || k >= capacite(h, p.sorte) || !vaALaPlace(h, p, k)) return h
   const ids = [...listeDe(h, p.sorte)]
   if (ids[k] === id) return h
   while (ids.length < k) ids.push(VIDE)
@@ -293,7 +318,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
     capacite: co.capacite ?? c.capacite,
     poussee: (c.poussee * (pr.poussee ?? 1) * nombreDePropulseurs(h)) / poids,
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
-    rotation: c.rotation * (co.virage ?? 1),
+    rotation: c.rotation * (pr.rotation ?? 1),
     tourelles: co.tourelles ?? false,
     frein: c.frein / poids,
     coque: co.pv ?? c.coque,
@@ -346,6 +371,7 @@ export function jaugesDe(p: Piece): Jauge[] {
       // vitesse la plus basse » : la barre va de l'étalon, à 5 %, au meilleur du catalogue, à 100 %)
       { nom: 'Accélération', valeur: surLaJauge(VAISSEAU.poussee * (p.poussee ?? 1), ETALONS.acceleration), max: 1 },
       { nom: 'Vitesse', valeur: surLaJauge(VAISSEAU.vitesseMax * (p.vitesseMax ?? 1), ETALONS.vitesse), max: 1 },
+      { nom: 'Maniabilité', valeur: surLaJauge(VAISSEAU.rotation * (p.rotation ?? 1), ETALONS.maniabilite), max: 1 },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
     ]
   }
@@ -354,12 +380,11 @@ export function jaugesDe(p: Piece): Jauge[] {
       // blindage et bouclier sur HUIT cellules, un plafond fixe pour l'instant (Keko) ; le poids en troisième ligne (Keko)
       { nom: 'Blindage', valeur: p.pv ?? 0, max: 8, cellules: true },
       { nom: 'Bouclier', valeur: p.bouclier ?? 0, max: 8, cellules: true },
-      { nom: 'Maniabilité', valeur: surLaJauge(VAISSEAU.rotation * (p.virage ?? 1), ETALONS.maniabilite), max: 1 },
       { nom: 'Poids', valeur: p.poids, max: max((q) => q.poids), nombre: true, unite: 'T' },
       { nom: 'Soute', valeur: p.capacite ?? 0, max: max((q) => q.capacite ?? 0), nombre: true },
-      { nom: 'Propulseurs', valeur: p.propulseurs ?? 1, max: max((q) => q.propulseurs ?? 1), nombre: true },
       { nom: 'Outils', valeur: p.outils ?? 1, max: max((q) => q.outils ?? 1), nombre: true },
       { nom: 'Armes', valeur: p.armes ?? 1, max: max((q) => q.armes ?? 1), nombre: true },
+      { nom: 'Lourdes', valeur: p.lourdes ?? 0, max: Math.max(1, max((q) => q.lourdes ?? 0)), nombre: true },
     ]
   }
   if (p.sorte === 'outil') {
@@ -429,8 +454,9 @@ export const lireCredits = (brut: unknown): number => (typeof brut === 'number' 
  * ne glissent pas), et la même pièce peut y être plusieurs fois. Un hangar d'avant les outils (sa foreuse dans
  * `montees.foreuse`) la retrouve dans ses outils.
  */
-export function lireHangar(brut: unknown): Hangar {
-  const h = hangarNeuf()
+/** (`base` : le hangar de série du vaisseau relu — celui du chasseur par défaut) */
+export function lireHangar(brut: unknown, base?: Hangar): Hangar {
+  const h = base ?? hangarNeuf()
   if (typeof brut !== 'object' || brut === null) return h
   const b = brut as { possedees?: unknown; montees?: unknown; outils?: unknown; armes?: unknown }
   if (Array.isArray(b.possedees)) for (const id of b.possedees) if (typeof id === 'string' && pieceDe(id) !== undefined && !possede(h, id)) h.possedees.push(id)
@@ -441,7 +467,7 @@ export function lireHangar(brut: unknown): Hangar {
   }
   const lire = (l: Liste, brute: unknown): void => {
     const ids: string[] = []
-    if (Array.isArray(brute)) for (const id of brute.slice(0, capacite(h, l))) ids.push(typeof id === 'string' && possede(h, id) && pieceDe(id)?.sorte === l ? id : VIDE)
+    if (Array.isArray(brute)) brute.slice(0, capacite(h, l)).forEach((id, k) => ids.push(typeof id === 'string' && possede(h, id) && pieceDe(id)?.sorte === l && vaALaPlace(h, pieceDe(id)!, k) ? id : VIDE))
     if (l === 'arme') h.armes = rangee(ids)
     else h.outils = rangee(ids)
   }

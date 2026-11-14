@@ -2,7 +2,7 @@
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
 import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
-import { acheter, configDuHangar, hangarNeuf, monter } from './hangar.ts'
+import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
 const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 }, station: { ...VAISSEAU.station, seule: false } }
@@ -142,6 +142,9 @@ for (let i = 0; i < 90; i++) {
 verifier('à portée de forage, en chasse, le rival ne pose pas son laser sur le joueur', !rayonSurLeJoueur && coqueEntiere && brule.ennemis[0].fait === 'chasse')
 // LA FOREUSE NE SERT QU'AUX ROCHES (Keko) : collé au rival sans arme, le laser ne l'entame pas ; AVEC UN CANON, il l'abat
 const RICHE = 99999
+// (LES MISSILES SONT UNE ARME LOURDE depuis le 14/11, que seul le cuirassé porte : ces vérifications-ci, qui s'en servent
+// comme d'une arme quelconque sur les petits châssis, les prennent pour légers — le calibre est vérifié dans `flotte.verif.ts`)
+pieceDe('arme-missiles')!.lourde = false
 const armer = (...ids: string[]): ConfigVaisseau => configDuHangar(C, ids.reduce((h, id) => monter(acheter(h, RICHE, id)!.hangar, id), hangarNeuf()))
 const poserPres = (cfg: ConfigVaisseau) => {
   const z = nouveauMonde(cfg)

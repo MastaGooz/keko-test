@@ -1,8 +1,12 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, montantCourt, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, pieceDe, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, montantCourt, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
+
+// (LES MISSILES SONT UNE ARME LOURDE depuis le 14/11, que seul le cuirassé porte : ces vérifications-ci, qui s'en servent
+// comme d'une arme quelconque sur les petits châssis, les prennent pour légers — le calibre est vérifié dans `flotte.verif.ts`)
+pieceDe('arme-missiles')!.lourde = false
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -11,7 +15,7 @@ function verifier(quoi: string, vrai: boolean): void {
 }
 
 console.log('hangar')
-verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses, deux aimants et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === (e === 'coque' ? 4 : 3) /* (le cuirassé, quatrième coque) */ && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix === 0) && piecesDe('outil').length === 6 && piecesDe('outil').filter((p) => p.famille === 'aimant').length === 2 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}`))
+verifier('chaque emplacement a trois crans, le premier gratuit ; trois foreuses, deux aimants et un radar en outils ; trois armes, aucune gratuite', EMPLACEMENTS.every((e) => piecesDe(e).length === (e === 'coque' ? 4 : 6) /* (le cuirassé : une quatrième coque, trois propulseurs à lui) */ && piecesDe(e)[0].cran === 1 && piecesDe(e)[0].prix === 0) && piecesDe('outil').length === 6 && piecesDe('outil').filter((p) => p.famille === 'aimant').length === 2 && piecesDe('outil').filter((p) => p.famille === 'foreuse').length === 3 && piecesDe('arme').length === 3 && piecesDe('arme').every((p) => p.arme !== undefined && p.prix > 0) && PIECES.every((p) => p.sorte !== 'propulseur' && p.sorte !== 'coque' ? true : p.id === `${p.sorte}-${p.cran}` || p.id === `${p.sorte}-l${p.cran}`))
 const neuf = hangarNeuf()
 verifier('un hangar neuf : les pièces de série montées, la foreuse de série en outil, pas d’arme ; la coque de série porte un outil et une arme', neuf.possedees.length === 3 && EMPLACEMENTS.every((e) => monteeA(neuf, e).cran === 1) && neuf.outils.join(',') === 'foreuse-1' && neuf.armes.length === 0 && capacite(neuf, 'outil') === 1 && capacite(neuf, 'arme') === 1)
 const pauvre = 5
@@ -125,7 +129,7 @@ verifier('relu : une pièce montée au mauvais emplacement redevient de série ;
 verifier('relu : un hangar d’avant les outils retrouve sa foreuse montée dans ses outils', lireHangar({ possedees: ['foreuse-3'], montees: { foreuse: 'foreuse-3' } }).outils.join(',') === 'foreuse-3' && lireHangar({ possedees: ['propulseur-2'], montees: { propulseur: 'propulseur-2' } }).outils.join(',') === 'foreuse-1')
 verifier('relu : des outils vides restent vides (le chasseur sans foreuse)', lireHangar({ possedees: ['radar'], outils: [] }).outils.length === 0)
 const jc = jaugesDe(PIECES.find((p) => p.id === 'coque-3')!)
-verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/8, poids 24/32, soute, outils 2/2, armes 2/2 ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}${j.cellules ? '#' : j.nombre ? 'n' : ''}`).join(';') === 'Blindage 5/8#;Bouclier 2/8#;Maniabilité 0.4666666666666667/1;Poids 24/97n;Soute 24/120n;Propulseurs 1/1n;Outils 2/4n;Armes 2/8n' && PIECES.every((p) => jaugesDe(p).length >= 1 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
+verifier('les jauges : la coque à bouclier dit blindage 5/8, bouclier 2/8, poids 24/32, soute, outils 2/2, armes 2/2 ; chaque sorte a ses jauges', jc.map((j) => `${j.nom} ${j.valeur}/${j.max}${j.cellules ? '#' : j.nombre ? 'n' : ''}`).join(';') === 'Blindage 5/8#;Bouclier 2/8#;Poids 24/97n;Soute 24/120n;Outils 2/4n;Armes 2/8n;Lourdes 0/2n' && PIECES.every((p) => jaugesDe(p).length >= 1 && jaugesDe(p).every((j) => j.valeur <= j.max && j.max > 0)))
 const v1 = vendre({ fer: 7, or: 2, cristal: 0 }, 5, 'or')
 verifier('vendre l’or : le trésor n’en a plus, les crédits montent du prix de la fiche ; rien à vendre ne change rien', v1.tresor.or === 0 && v1.tresor.fer === 7 && v1.credits === 5 + 2 * FICHES_MINERAI.or.credits && vendre(v1.tresor, v1.credits, 'cristal').credits === v1.credits)
 verifier('les crédits relus : un entier positif, zéro sinon', lireCredits(12.7) === 12 && lireCredits(-3) === 0 && lireCredits('x') === 0 && lireCredits(undefined) === 0)

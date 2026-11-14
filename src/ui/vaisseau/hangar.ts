@@ -7,8 +7,9 @@
 // La règle est dans `logic/vaisseau/hangar.ts`, qui relit sans confiance ; ce module ne fait qu'écrire et lire, comme
 // `ui/collection.ts` pour la collection. Tout passe dans un try : *sans stockage (navigation privée, quota), on joue
 // sans mémoire*, le hangar vit le temps de la page.
-import { hangarNeuf, lireCredits, lireHangar, lireTresor, type Hangar } from '../../logic/vaisseau/hangar.ts'
-import { aLaMecanique, laboNeuf, lireLabo, passifsDe, type Labo, type Mecanique } from '../../logic/vaisseau/labo.ts'
+import { lireCredits, lireTresor } from '../../logic/vaisseau/hangar.ts'
+import { flotteNeuve, hangarActif, lireFlotte, type Flotte } from '../../logic/vaisseau/flotte.ts'
+import { aLaMecanique, laboNeuf, lireLabo, noeudsBruts, passifsDe, vaisseauxDebloques, type Labo, type Mecanique } from '../../logic/vaisseau/labo.ts'
 import { lireMarche, marcheNeuf, type Marche } from '../../logic/vaisseau/marche.ts'
 import { lireQuetes, quetesNeuves, type EtatQuetes } from '../../logic/vaisseau/quetes.ts'
 import { cargaisonVide, type Cargaison } from '../../logic/vaisseau/jeu.ts'
@@ -16,8 +17,8 @@ import { cargaisonVide, type Cargaison } from '../../logic/vaisseau/jeu.ts'
 const CLE = 'keko-vaisseau-hangar-2'
 const CLE_D_AVANT = 'keko-vaisseau-hangar'
 
-export type Progression = { hangar: Hangar; tresor: Cargaison; credits: number; labo: Labo; marche: Marche; quetes: EtatQuetes }
-const neuve = (instant: number): Progression => ({ hangar: hangarNeuf(), tresor: cargaisonVide(), credits: 0, labo: laboNeuf(), marche: marcheNeuf(instant), quetes: quetesNeuves() })
+export type Progression = { flotte: Flotte; tresor: Cargaison; credits: number; labo: Labo; marche: Marche; quetes: EtatQuetes }
+const neuve = (instant: number): Progression => ({ flotte: flotteNeuve(), tresor: cargaisonVide(), credits: 0, labo: laboNeuf(), marche: marcheNeuf(instant), quetes: quetesNeuves() })
 
 /** `instant` : l'heure du marché (la page la donne — elle peut l'accélérer pour un essai). */
 export function chargerHangar(instant: number): Progression {
@@ -25,24 +26,26 @@ export function chargerHangar(instant: number): Progression {
     localStorage.removeItem(CLE_D_AVANT)
     const brut = localStorage.getItem(CLE)
     if (brut === null) return neuve(instant)
-    const b = JSON.parse(brut) as { hangar?: unknown; tresor?: unknown; credits?: unknown; labo?: unknown; marche?: unknown; quetes?: unknown } | null
+    const b = JSON.parse(brut) as { hangar?: unknown; flotte?: unknown; tresor?: unknown; credits?: unknown; labo?: unknown; marche?: unknown; quetes?: unknown } | null
     // (le labo d'abord : son plafond relevé dit quels ordres gardés sont encore valables)
     const labo = lireLabo(b?.labo)
     const pa = passifsDe(labo)
-    const hangar = lireHangar(b?.hangar)
+    // (LA FLOTTE — 14/11 : une sauvegarde d'avant n'a qu'un `hangar`, qui devient celui du chasseur)
+    const flotte = lireFlotte(b?.flotte, vaisseauxDebloques(labo), b?.hangar, noeudsBruts(b?.labo))
+    const hangar = hangarActif(flotte)
     const tresor = lireTresor(b?.tresor)
     const credits = lireCredits(b?.credits)
     // (une sauvegarde d'avant les quêtes, qui a déjà joué, ne refait pas le tutoriel — ses onglets ne se referment pas)
     const dejaJoue = credits > 0 || labo.debloques.length > 0 || hangar.possedees.length > 3 || tresor.fer + tresor.or + tresor.cristal > 0
-    return { hangar, tresor, credits, labo, marche: lireMarche(b?.marche, instant, { prime: pa.vente, plafond: pa.plafond }), quetes: lireQuetes(b?.quetes, dejaJoue, (x) => aLaMecanique(labo, x as Mecanique)) }
+    return { flotte, tresor, credits, labo, marche: lireMarche(b?.marche, instant, { prime: pa.vente, plafond: pa.plafond }), quetes: lireQuetes(b?.quetes, dejaJoue, (x) => aLaMecanique(labo, x as Mecanique)) }
   } catch {
     return neuve(instant)
   }
 }
 
-export function sauverHangar(hangar: Hangar, tresor: Cargaison, credits: number, labo: Labo, marche: Marche, quetes: EtatQuetes): void {
+export function sauverHangar(flotte: Flotte, tresor: Cargaison, credits: number, labo: Labo, marche: Marche, quetes: EtatQuetes): void {
   try {
-    localStorage.setItem(CLE, JSON.stringify({ hangar, tresor, credits, labo, marche, quetes }))
+    localStorage.setItem(CLE, JSON.stringify({ flotte, tresor, credits, labo, marche, quetes }))
   } catch {
     // Sans stockage, le hangar vit le temps de la page.
   }

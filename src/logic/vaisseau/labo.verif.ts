@@ -1,8 +1,9 @@
 /**
  * Vérifications du labo (l'arbre des recherches), sans navigateur.
  */
-import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, lireLabo, noeudDe, NOEUDS, noeudsDe, passifsDe, peutDebloquer, pieceOuverte, rangOuvert, RANGS, type Labo } from './labo.ts'
-import { configDuHangar, hangarNeuf, monter, pieceDe, PIECES } from './hangar.ts'
+import { BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, lireLabo, noeudDe, NOEUDS, noeudsDe, passifsDe, peutDebloquer, rangOuvert, RANGS, vaisseauxDebloques, type Labo } from './labo.ts'
+import { configDuHangar, hangarNeuf, monter } from './hangar.ts'
+import { MODELES } from './flotte.ts'
 import { avancerLeMonde, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, VAISSEAU as C, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -13,14 +14,14 @@ function verifier(quoi: string, vrai: boolean): void {
 
 console.log('labo')
 verifier('quatre branches, trois rangs chacune, aucun rang vide ; des identifiants uniques', BRANCHES.every((b) => RANGS.every((r) => noeudsDe(b, r).length > 0)) && new Set(NOEUDS.map((n) => n.id)).size === NOEUDS.length)
-verifier('chaque nœud est d’une seule sorte, et porte ce qu’elle demande (une pièce du catalogue, un passif, une mécanique)', NOEUDS.every((n) => (n.sorte === 'piece' ? n.piece !== undefined && pieceDe(n.piece) !== undefined && n.passif === undefined && n.mecanique === undefined : n.sorte === 'passif' ? n.passif !== undefined && n.piece === undefined && n.icone !== undefined : n.mecanique !== undefined && n.piece === undefined && n.icone !== undefined)))
-verifier('toute pièce payante du catalogue est portée par un nœud, et un seul', PIECES.filter((p) => p.prix > 0).every((p) => NOEUDS.filter((n) => n.piece === p.id).length === 1))
+verifier('chaque nœud est d’une seule sorte, et porte ce qu’elle demande (un vaisseau du catalogue, un passif, une mécanique)', NOEUDS.every((n) => (n.sorte === 'vaisseau' ? n.vaisseau !== undefined && MODELES.some((mo) => mo.id === n.vaisseau) && n.passif === undefined && n.mecanique === undefined : n.sorte === 'passif' ? n.passif !== undefined && n.vaisseau === undefined && n.icone !== undefined : n.mecanique !== undefined && n.vaisseau === undefined && n.icone !== undefined)))
+verifier('tout vaisseau qui n’est pas celui du départ est porté par un nœud, et un seul', MODELES.slice(1).every((mo) => NOEUDS.filter((n) => n.vaisseau === mo.id).length === 1) && NOEUDS.every((n) => n.vaisseau !== MODELES[0].id))
 const neuf = laboNeuf()
 const riche = { fer: 500, or: 500, cristal: 500 }
 verifier('un labo neuf : rien de débloqué, le rang 1 ouvert partout, les autres fermés', neuf.debloques.length === 0 && BRANCHES.every((b) => rangOuvert(neuf, b, 1) && !rangOuvert(neuf, b, 2) && !rangOuvert(neuf, b, 3)))
 const prixDuDebit = coutDe(noeudDe('m-debit')!).fer
 const prixDeLaSoute = coutDe(noeudDe('m-soute')!)
-verifier('chaque nœud a son coût, jamais nul ; deux nœuds d’un même rang peuvent coûter différemment', NOEUDS.every((n) => n.cout.fer + n.cout.or + n.cout.cristal > 0 && Object.values(n.cout).every((x) => Number.isInteger(x) && x >= 0)) && coutDe(noeudDe('m-debit')!).fer !== coutDe(noeudDe('m-foreuse-2')!).fer)
+verifier('chaque nœud a son coût, jamais nul ; deux nœuds d’un même rang peuvent coûter différemment', NOEUDS.every((n) => n.cout.fer + n.cout.or + n.cout.cristal > 0 && Object.values(n.cout).every((x) => Number.isInteger(x) && x >= 0)) && coutDe(noeudDe('m-debit')!).fer !== coutDe(noeudDe('c-blindage')!).fer)
 verifier('sans le minerai, on ne débloque pas ; avec, si', !peutDebloquer(neuf, { fer: prixDuDebit - 1, or: 0, cristal: 0 }, 'm-debit') && debloquer(neuf, { fer: prixDuDebit - 1, or: 0, cristal: 0 }, 'm-debit') === null && peutDebloquer(neuf, { fer: prixDuDebit, or: 0, cristal: 0 }, 'm-debit'))
 verifier('un nœud d’un rang fermé ne se débloque pas, même riche', !peutDebloquer(neuf, riche, 'm-soute') && !peutDebloquer(neuf, riche, 'm-double'))
 const d1 = debloquer(neuf, riche, 'm-debit')!
@@ -29,7 +30,7 @@ verifier('un nœud débloqué ne se redébloque pas', !peutDebloquer(d1.labo, d1
 verifier('un nœud du rang 1 ouvre le rang 2 DE SA BRANCHE, pas des autres, ni le rang 3', rangOuvert(d1.labo, 'minage', 2) && !rangOuvert(d1.labo, 'minage', 3) && !rangOuvert(d1.labo, 'combat', 2) && !rangOuvert(d1.labo, 'exploration', 2))
 const d2 = debloquer(d1.labo, d1.tresor, 'm-soute')!
 verifier('un nœud du rang 2 coûte du fer et de l’or, et ouvre le rang 3', d2.tresor.fer === 500 - prixDuDebit - prixDeLaSoute.fer && d2.tresor.or === 500 - prixDeLaSoute.or && prixDeLaSoute.or > 0 && rangOuvert(d2.labo, 'minage', 3))
-verifier('une pièce n’est ouverte à l’achat que par son nœud', !pieceOuverte(neuf, 'foreuse-2') && pieceOuverte(debloquer(neuf, riche, 'm-foreuse-2')!.labo, 'foreuse-2') && !pieceOuverte(d2.labo, 'foreuse-2'))
+verifier('un vaisseau n’est débloqué que par son nœud', vaisseauxDebloques(neuf).length === 0 && vaisseauxDebloques(d2.labo).length === 0 && vaisseauxDebloques({ debloques: ['c-cuirasse'] }).join() === 'cuirasse')
 
 // LES PASSIFS : sur la configuration, quel que soit le vaisseau
 const tout: Labo = { debloques: NOEUDS.map((n) => n.id) }
@@ -73,8 +74,8 @@ const PM = passifsDe(marchand)
 verifier('la branche commerce : la prime de vente se cumule, le plafond monte ; la configuration du vaisseau n’en change pas', Math.abs(PM.vente - 0.1) < 1e-9 && PM.plafond === 0.1 && JSON.stringify(configDuLabo(serie, marchand)) === JSON.stringify(serie))
 
 // LA RELECTURE
-const relu = lireLabo({ debloques: ['m-debit', 'inconnu', 'm-debit', 7, 'c-canon'] })
-verifier('un labo relu sans confiance : les inconnus tombent, chacun une fois', relu.debloques.join(',') === 'm-debit,c-canon' && lireLabo(null).debloques.length === 0 && lireLabo({ debloques: 'x' }).debloques.length === 0)
+const relu = lireLabo({ debloques: ['m-debit', 'inconnu', 'm-debit', 7, 'c-canon', 'c-blindage'] })
+verifier('un labo relu sans confiance : les inconnus tombent, chacun une fois', relu.debloques.join(',') === 'm-debit,c-blindage' && lireLabo(null).debloques.length === 0 && lireLabo({ debloques: 'x' }).debloques.length === 0)
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')
