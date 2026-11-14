@@ -2693,8 +2693,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE HANGAR NE MONTRE PLUS LES PIÈCES D'EMBLÉE (Keko, 14/11 : « on ne va pas afficher les pièces directement dans le
    * hangar : le nom du vaisseau et un bouton changer ; dessous, un résumé de l'équipement, une vision d'ensemble ; et
    * pour ouvrir le panneau des pièces, on clique sur un bouton Équipement ») : le nom, LE RÉSUMÉ — le châssis, la
-   * propulsion, puis les places d'outil et d'arme en pastilles (pleine : une pièce y est montée ; les lourdes cerclées
-   * de rouge) —, le bouton « Équipement », et DÉCOLLER. `equipementOuvert` : les cases des pièces sont à l'écran.
+   * propulsion, puis les places d'outil et d'arme en pastilles (pleine : une pièce y est montée ; les lourdes en
+   * orange) —, le bouton « Équipement », et DÉCOLLER. `equipementOuvert` : les cases des pièces sont à l'écran.
    */
   let equipementOuvert = false
   function dessinerLApercu(p: Peintre, y0: number): void {
@@ -2716,9 +2716,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (l.places.length === 0) ecrire(p, 'Aucune place', W - 10, yl, COQUE[3], { align: 'right' })
         l.places.forEach((pl, k) => {
           const px = W - 10 - (l.places!.length - k) * 9 + 2
-          p.rect(px, yl, 7, 7, pl.lourde ? ROUGE[4] : MATIERES.encre.contour)
-          p.rect(px + 1, yl + 1, 5, 5, pl.pleine ? PEPITE[2] : MATIERES.creux.corps)
-          if (pl.pleine) p.rect(px + 1, yl + 1, 5, 1, N.hex('#fff2a8'))
+          // (UNE PLACE LOURDE EST ORANGE, plus cerclée de rouge — Keko, 14/11 ; vide, un orange sourd la dit encore)
+          p.rect(px, yl, 7, 7, MATIERES.encre.contour)
+          p.rect(px + 1, yl + 1, 5, 5, pl.pleine ? (pl.lourde ? N.hex('#f07a1c') : PEPITE[2]) : pl.lourde ? N.hex('#4a2a12') : MATIERES.creux.corps)
+          if (pl.pleine) p.rect(px + 1, yl + 1, 5, 1, pl.lourde ? N.hex('#ffb066') : N.hex('#fff2a8'))
         })
       }
       if (i > 0) p.rect(10, yl - 3, W - 20, 1, MATIERES.encre.ombre)
