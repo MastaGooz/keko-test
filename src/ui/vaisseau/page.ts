@@ -1436,6 +1436,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     vue = vv
     vente = null // (couchée, le rail reste touchable sous le panneau de vente : changer d'onglet le referme)
     etape = 'vaisseau'
+    // (LE HANGAR SE ROUVRE SUR SA VUE D'ENSEMBLE — Keko, 14/11 : pas sur l'équipement où on l'avait laissé)
+    equipementOuvert = false
+    categorieOuverte = null
+    changement = false
     vueA = t
     etapeA = t
   }
