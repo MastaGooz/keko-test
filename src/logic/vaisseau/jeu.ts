@@ -151,6 +151,20 @@ export const VAISSEAU = {
    * sorti une fois du parvis : on naît à quai.
    */
   extraction: { duree: 10 },
+  /**
+   * L'INVASION (le jeu du vortex — Keko, 14/11 : « des ennemis, forme insectoïde, qui se rendent au portail pour le
+   * traverser ; arrivés dans la zone du portail, ils y disparaissent. Si le joueur est dans la zone de l'unité, elle
+   * l'aggro et le suit ; elle arrête de le suivre s'il l'éloigne trop de sa zone ou du portail. Idée : on défend le
+   * portail des vagues d'ennemis »). Éteinte dans le Nova Drifter. Le portail est au centre du monde ; les insectes
+   * naissent sur un cercle autour (`naissance`), PAR VAGUES (`vague` insectes, `renfort` de plus à chaque vague, un
+   * toutes les `cadence` secondes ; `repos` entre deux vagues, une fois la précédente finie), et MARCHENT vers lui ; à
+   * `portail` de son centre, ils le TRAVERSENT. L'AGGRO : le joueur à moins de `aggro` d'un insecte, il le prend en
+   * chasse — son ANCRE est l'endroit où il a mordu à l'hameçon ; il LÂCHE s'il s'est éloigné de plus de `laisse` de
+   * cette ancre, ou s'il se retrouve plus loin du portail qu'elle de plus de `recul` ; il reprend alors sa marche, et ne
+   * se laisse plus distraire pendant `calme` secondes. Au contact, il MORD (`morsure` points, toutes les
+   * `cadenceMorsure` secondes). *Tous les chiffres sont de moi, à rejuger.*
+   */
+  invasion: { active: false as boolean, portail: 24, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 70, laisse: 120, recul: 60, calme: 2.5, morsure: 1, cadenceMorsure: 0.9 },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -282,7 +296,13 @@ export type Ennemi = {
   id: number
   corps: Vaisseau
   pv: number
-  fait: 'mine' | 'chasse' | 'fuit'
+  /** (`marche` et `aggro` : un insecte de l'invasion — il marche vers le portail, ou il chasse le joueur) */
+  fait: 'mine' | 'chasse' | 'fuit' | 'marche' | 'aggro'
+  /** Un insecte : où il a pris le joueur en chasse ; jusqu'à quand il ne se laisse plus distraire ; sa prochaine morsure ; il a traversé le portail. */
+  ancre?: Vecteur
+  calmeA?: number
+  mordA?: number
+  parti?: boolean
   roche: number | null
   forage: Forage | null
   tirA: number
@@ -307,6 +327,8 @@ export type Monde = {
   forages: (Forage | null)[]
   ennemis: Ennemi[]
   prochainEnnemiA: number
+  /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
+  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number }
   tirs: Tir[]
   /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
   obus: Obus[]
@@ -364,13 +386,16 @@ export type Evenement =
   | { type: 'bombe'; x: number; y: number }
   | { type: 'explosion'; x: number; y: number; rayon: number }
   | { type: 'perdu' }
+  /** L'invasion : une vague commence ; un insecte traverse le portail. */
+  | { type: 'vague'; numero: number; nombre: number }
+  | { type: 'traverse'; id: number; x: number; y: number }
 
 export function nouveauVaisseau(): Vaisseau {
   return { x: 0, y: 0, vx: 0, vy: 0, cap: -Math.PI / 2, poussee: 0, parcouru: 0, contact: null }
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -631,6 +656,7 @@ export function larguer(m: Monde, minerai: Minerai, combien: number): number {
 function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
+  if (c.invasion.active) m.invasion.abattus += 1
   ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy })
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
@@ -665,8 +691,73 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
 
+/** Un insecte de l'invasion naît sur le cercle de naissance, dans une direction tirée de la graine du monde, tourné vers le portail. */
+function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const a = tire(m.graine, m.prochainId, 3) * Math.PI * 2
+  m.graine = hache(m.graine, 7)
+  const x = Math.cos(a) * c.invasion.naissance
+  const y = Math.sin(a) * c.invasion.naissance
+  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(-y, -x) }, pv: c.ennemi.pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide() }
+  m.ennemis.push(e)
+  ev.push({ type: 'ennemiApparait', id: e.id, x, y })
+}
+
+/** LES VAGUES de l'invasion : une vague commence quand la précédente est finie (plus un insecte) et le repos passé ; ses insectes naissent un à un. */
+function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const inv = m.invasion
+  if (m.t < inv.prochainA) return
+  if (inv.aNaitre === 0) {
+    if (m.ennemis.length > 0) return
+    inv.vague += 1
+    inv.aNaitre = c.invasion.vague + (inv.vague - 1) * c.invasion.renfort
+    ev.push({ type: 'vague', numero: inv.vague, nombre: inv.aNaitre })
+  }
+  faireNaitreUnInsecte(c, m, ev)
+  inv.aNaitre -= 1
+  inv.prochainA = m.t + (inv.aNaitre > 0 ? c.invasion.cadence : c.invasion.repos)
+}
+
+/** Ce que fait UN INSECTE pendant `dt` : il marche vers le portail et le traverse ; ou il chasse le joueur qui l'a approché, le mord, et le lâche s'il est entraîné trop loin. */
+function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
+  const I = c.invasion
+  const v = m.vaisseau
+  const b = e.corps
+  const dj = Math.hypot(v.x - b.x, v.y - b.y) || 1
+  const dp = Math.hypot(b.x, b.y) || 1
+  if (e.fait === 'aggro') {
+    const a = e.ancre ?? { x: b.x, y: b.y }
+    if (m.phase !== 'vol' || Math.hypot(b.x - a.x, b.y - a.y) > I.laisse || dp > Math.hypot(a.x, a.y) + I.recul) {
+      e.fait = 'marche'
+      e.calmeA = m.t + I.calme
+    }
+  } else if (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0)) {
+    e.fait = 'aggro'
+    e.ancre = { x: b.x, y: b.y }
+  } else e.fait = 'marche'
+  let direction: Vecteur
+  if (e.fait === 'aggro') {
+    direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
+    if (dj <= c.rayon + c.ennemi.rayon + 2 && m.t >= (e.mordA ?? 0)) {
+      e.mordA = m.t + I.cadenceMorsure
+      encaisser(c, m, v.x, v.y, I.morsure, ev)
+    }
+  } else {
+    if (dp <= I.portail) {
+      // IL TRAVERSE LE PORTAIL : il quitte le monde (la page joue sa disparition)
+      e.parti = true
+      m.invasion.passes += 1
+      ev.push({ type: 'traverse', id: e.id, x: b.x, y: b.y })
+      return []
+    }
+    direction = { x: -b.x / dp, y: -b.y / dp }
+  }
+  e.corps = voler(c, c.ennemi, b, dt, direction, m.detruits).vaisseau
+  return []
+}
+
 /** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. Rend ses chocs. */
 function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
+  if (c.invasion.active) return conduireLInsecte(c, m, e, dt, ev)
   const v = m.vaisseau
   const b = e.corps
   const dxj = v.x - b.x
@@ -948,11 +1039,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
 
   // l'ennemi : il naît à l'heure dite, un à la fois ; ses chocs comptent aussi, et peuvent l'abattre
   // (jamais tant que le joueur est dans la zone calme de la base)
-  if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
+  if (c.invasion.active) menerLInvasion(c, m, ev)
+  else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
   for (const e of [...m.ennemis]) {
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
+  // (les insectes passés par le portail ont quitté le monde)
+  if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
   if (!heurterLesVaisseaux(c, m, ev)) return { chocs, evenements: ev }
 
   // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES

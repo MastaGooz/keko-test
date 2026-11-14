@@ -692,13 +692,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     // (LE JEU DU VORTEX : l'espace vide — ni roche, ni rival, ni quai)
-    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, ennemi: { ...CONF.ennemi, apparait: 1e9, revient: 1e9 }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
+    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
     // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
     // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
     // (SES VRAIES ARMES — Keko, 14/11 : « deux canons, le reste en mitraillette, tous ses slots d'armes légères
     // remplis, et deux missiles dans ses slots lourds » : celles du catalogue, chacune à sa bouche sur la coque)
-    if (RIVAL_CUIRASSE) {
+    if (RIVAL_CUIRASSE && !VORTEX) {
       const armes = ARMES_DU_RIVAL.flatMap((id, place) => {
         const a = pieceDe(id)?.arme
         return a === undefined ? [] : [{ ...a, place, bouche: boucheMontee(4, a.id, place) }]
@@ -820,7 +820,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VORTEX = parametres.has('vortex')
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
+  /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il ne rend rien et ne tire pas — il mord. */
+  const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 0, armes: [] as never[] }
   let vortexFx: Instance | null = null
+  /** Quand la dernière vague a commencé, quand le dernier insecte a traversé (l'interface le marque). */
+  let vagueA = -10
+  let passeA = -10
+  /** L'INTERFACE DE L'INVASION, en haut à gauche : la vague, les insectes abattus, ceux qui ont traversé le portail. */
+  function dessinerLInvasion(p: Peintre): void {
+    const inv = m.invasion
+    const x = paysage ? Math.max(6, bandeCote() + 6) : 6
+    const y = hautDuHud() + 4
+    const neuve = t - vagueA < 1.2
+    motEnRelief(p, `Vague ${Math.max(1, inv.vague)}`, x + largeurDe(`Vague ${Math.max(1, inv.vague)}`, GRAS) / 2, y + (neuve ? Math.round(Math.sin((t - vagueA) * 20) * 2 * (1 - (t - vagueA) / 1.2)) : 0), true)
+    ecrire(p, `Abattus ${inv.abattus}`, x, y + 11, COQUE[5])
+    ecrire(p, `Passés ${inv.passes}`, x, y + 21, t - passeA < 0.5 ? N.WHITE : inv.passes > 0 ? ROUGE[5] : COQUE[4], { police: t - passeA < 0.5 ? GRAS : TEXTE })
+  }
   let accueil = !parametres.has('direct') && !VORTEX
   let accueilQuitteA: number | null = null
   /**
@@ -5314,7 +5329,67 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
+  /**
+   * UN INSECTE de l'invasion, vu de dessus, la tête vers son cap : un abdomen rayé, un thorax, une tête à mandibules,
+   * six pattes qui marchent ; EN CHASSE, il rougit, ses yeux passent du jaune au rouge, ses mandibules claquent et
+   * ses pattes s'affolent ; blanc un instant sous un coup.
+   */
+  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean): void {
+    const ca = Math.cos(cap)
+    const sa = Math.sin(cap)
+    const P = (ux: number, uy: number): [number, number] => [x + ux * ca - uy * sa, y + ux * sa + uy * ca]
+    const ovaleTourne = (cx: number, cy: number, rx: number, ry: number): [number, number][] => Array.from({ length: 12 }, (_, i) => P(cx + Math.cos((i / 12) * Math.PI * 2) * rx, cy + Math.sin((i / 12) * Math.PI * 2) * ry))
+    const ENCRE = N.hex('#0a0610')
+    // (des teintes CLAIRES : sur le noir de l'espace, un violet sombre et des pattes d'encre ne se voyaient pas)
+    const CORPS = blanchi ? N.WHITE : aggro ? N.hex('#b02a4a') : N.hex('#7446b0')
+    const CLAIR = blanchi ? N.WHITE : aggro ? N.hex('#ff7a8c') : N.hex('#c39bf5')
+    const PATTE = blanchi ? N.WHITE : aggro ? N.hex('#d05a70') : N.hex('#9a78cc')
+    // les pattes : trois par flanc, qui vont et viennent en opposition
+    for (const s of [-1, 1])
+      for (let k = 0; k < 3; k++) {
+        const pas = Math.sin(t * (aggro ? 22 : 13) + phase + k * 2.1 + (s > 0 ? Math.PI : 0)) * 1.3
+        const [ax, ay] = P(-1.2 + k * 1.5, s * 1.4)
+        const [gx, gy] = P(-1.8 + k * 2 + pas * 0.5, s * 4.6)
+        const [fx, fy] = P(-2.6 + k * 2.6 + pas, s * 7.2)
+        p.line(ax, ay, gx, gy, PATTE)
+        p.line(gx, gy, fx, fy, PATTE)
+      }
+    p.poly(ovaleTourne(-4.6, 0, 4.7, 3.5), ENCRE)
+    p.poly(ovaleTourne(-4.6, 0, 3.8, 2.6), CORPS)
+    for (const ux of [-6.4, -4.6, -2.9]) {
+      const [x0, y0] = P(ux, -2)
+      const [x1, y1] = P(ux, 2)
+      p.line(x0, y0, x1, y1, CLAIR)
+    }
+    p.poly(ovaleTourne(0, 0, 3, 2.6), ENCRE)
+    p.poly(ovaleTourne(0, 0, 2.1, 1.7), CLAIR)
+    p.poly(ovaleTourne(3.7, 0, 2.5, 2.3), ENCRE)
+    p.poly(ovaleTourne(3.7, 0, 1.7, 1.5), CORPS)
+    // les mandibules, qui claquent en chasse
+    const ouvre = aggro ? 0.9 + 0.7 * Math.sin(t * 18 + phase) : 0.5
+    for (const s of [-1, 1]) {
+      const [x0, y0] = P(5.2, s * 0.9)
+      const [x1, y1] = P(7.6, s * (0.6 + ouvre))
+      p.line(x0, y0, x1, y1, blanchi ? N.WHITE : N.hex('#e6d8b0'))
+    }
+    for (const s of [-1, 1]) {
+      const [ex, ey] = P(4.4, s * 0.9)
+      p.px(ex, ey, blanchi ? N.WHITE : aggro ? N.hex('#ff4a4a') : N.hex('#ffd24a'))
+    }
+    if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
+  }
   function dessinerLesEnnemis(p: Peintre): void {
+    if (VORTEX) {
+      for (const e of m.ennemis) {
+        const b = e.corps
+        const sx = b.x - camera.x + W / 2
+        const sy = b.y - camera.y + centreY()
+        const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.1
+        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro')
+        if (e.pv < CONF.ennemi.pv) dessinerUneJauge(p, sx, sy + CONF.ennemi.rayon + 5, 10, e.pv / CONF.ennemi.pv, ROUGE[4], ROUGE[5], blanchi)
+      }
+      return
+    }
     for (const e of m.ennemis) {
       const b = e.corps
       const cible = e.forage !== null ? e.forage : e.fait === 'chasse' ? { x: v.x, y: v.y } : null
@@ -7161,6 +7236,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (typeof navigator.vibrate === 'function') navigator.vibrate(50)
               break
             }
+            case 'traverse': {
+              // UN INSECTE TRAVERSE LE PORTAIL : il s'y défait (la téléportation du départ, à sa taille), et le portail le dit
+              jouer('extrait', { dx: ev.x - v.x, dy: ev.y - v.y })
+              effets.push({ fx: N.createFx(TELEPORTATION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), rayon: 5, seed: ev.id }), x: ev.x, y: ev.y })
+              for (let i = 0; i < 10; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, -Math.cos(a) * R.range(10, 40), -Math.sin(a) * R.range(10, 40), R.range(0.2, 0.5), R.next() < 0.5 ? N.hex('#cf9bff') : N.WHITE, 1, 2)
+              }
+              passeA = t
+              break
+            }
+            case 'vague': {
+              vagueA = t
+              jouer('equipe')
+              break
+            }
             case 'ennemiDetruit': {
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
               jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -7475,6 +7566,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeRadar(p)
     zones = []
     dessinerLeScore(p)
+    if (VORTEX) dessinerLInvasion(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaCapacite(p)

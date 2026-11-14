@@ -256,6 +256,52 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   avancerLeMonde(VAISSEAU, w3, 1 / 60, { x: 0, y: 0 })
   verifier('une seule foreuse au centre creuse comme le foreur unique d’avant', JSON.stringify(w2.forage) === JSON.stringify(w3.forage) && w2.forage !== null)
 }
+// L'INVASION (le jeu du vortex) : des vagues d'insectes marchent vers le portail, au centre, et le traversent ;
+// approchés, ils chassent le joueur, le mordent, et le lâchent s'ils sont entraînés trop loin
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true }, ennemi: { ...VAISSEAU.ennemi, pv: 6, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+  const loin = (w: ReturnType<typeof nouveauMonde>): void => {
+    w.vaisseau = { ...nouveauVaisseau(), x: 5000, y: 5000 }
+  }
+  const w = nouveauMonde(cfg, 7)
+  loin(w)
+  let vagues = 0
+  let traverses = 0
+  let nes = 0
+  for (let i = 0; i < 60 * 40; i++) {
+    const r = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    loin(w)
+    vagues += compter(r.evenements, 'vague')
+    traverses += compter(r.evenements, 'traverse')
+    nes += compter(r.evenements, 'ennemiApparait')
+  }
+  verifier('l’invasion : une vague naît sur le cercle, ses insectes marchent au portail et le traversent ; la suivante vient après, plus nombreuse', vagues >= 2 && nes >= cfg.invasion.vague + 1 && traverses >= cfg.invasion.vague && w.invasion.passes === traverses && w.invasion.vague === vagues)
+  // l'aggro : le joueur posé près d'un insecte en marche
+  const z = nouveauMonde(cfg, 7)
+  loin(z)
+  for (let i = 0; i < 60 * 6 && z.ennemis.length === 0; i++) {
+    avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+    loin(z)
+  }
+  const ins = z.ennemis[0]
+  z.coque = 1000
+  z.vaisseau = { ...nouveauVaisseau(), x: ins.corps.x + 30, y: ins.corps.y }
+  avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+  const pris = ins.fait === 'aggro'
+  for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+  verifier('approché, l’insecte prend le joueur en chasse, le rejoint et le mord', pris && Math.hypot(ins.corps.x - z.vaisseau.x, ins.corps.y - z.vaisseau.y) < 20 && z.coque < 1000)
+  // le joueur s'en va au loin : l'insecte le suit un temps, puis le lâche et reprend sa marche
+  z.vaisseau = { ...z.vaisseau, x: z.vaisseau.x * 3, y: z.vaisseau.y * 3 }
+  let lache = false
+  for (let i = 0; i < 60 * 12 && !lache; i++) {
+    avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+    z.vaisseau = { ...z.vaisseau, x: ins.corps.x * 1.25, y: ins.corps.y * 1.25, vx: 0, vy: 0 } // (toujours devant lui, plus loin du portail)
+    lache = ins.fait === 'marche'
+  }
+  verifier('entraîné trop loin de son ancre ou du portail, il lâche et reprend sa marche', lache)
+  const paisible = nouveauMonde(VAISSEAU, 7)
+  verifier('le Nova Drifter n’a pas d’invasion', !VAISSEAU.invasion.active && paisible.invasion.vague === 0)
+}
 // LE RIVAL ARMÉ (Keko, 14/11) : de vraies armes, chacune à sa cadence ; un missile tourne vers le joueur
 {
   const canon = { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
