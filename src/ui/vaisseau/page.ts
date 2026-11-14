@@ -913,7 +913,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const lw = 8
     const bx = axe - lw / 2
     const by = y + 12
-    const bh = Math.max(20, Math.min(96, H - by - 70))
+    // (elle s'arrête AU MILIEU DE L'ÉCRAN — Keko, 14/11 : « qu'elle ne descende pas plus loin que la moitié »)
+    const bh = Math.max(20, Math.round(H / 2) - by)
     const part = Math.max(0, Math.min(1, inv.xp / xpDuNiveau(CONF, inv.niveau)))
     const allume = t - xpA < 0.15
     p.rect(bx - 1, by - 1, lw + 2, bh + 2, neuf ? N.WHITE : MATIERES.encre.contour)
@@ -6583,13 +6584,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const doux = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2
         return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
       }
-      const BH = H_BARRE
-      const lw = 8
+      // (DANS LE JEU DU VORTEX, ELLE DESCEND JUSQU'AU MILIEU DE L'ÉCRAN, et elle est plus fine — Keko, 14/11 : six de large au lieu de huit)
+      const BH = DEUX_BARRES ? Math.max(30, Math.round(H / 2) - yHud) : H_BARRE
+      const lw = DEUX_BARRES ? 6 : 8
       const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
       const pw = 22
       const px0 = W - Math.round(bandeCote() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
       const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
-      const bx = px0 + 7
+      const bx = px0 + 7 + Math.floor((8 - lw) / 2)
       // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
       // (… PUIS JUSQU'EN HAUT : son sommet est celui de la barre d'expérience — Keko, 14/11)
       const by = oy + (DEUX_BARRES ? 0 : 17)
