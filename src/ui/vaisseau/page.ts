@@ -358,18 +358,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let enJeu = false
   let zoom = 2
   /**
-   * LE CHAMP DE VISION SE RÈGLE AU SECOND MANCHE (Keko, 14/11, à l'essai : « plutôt que le deuxième stick change
-   * l'orientation du vaisseau, en le montant vers le haut et en le descendant vers le bas, on puisse zoomer ou dézoomer
-   * la vue, afin d'augmenter le champ de vision du joueur ») : `champ` — 1, la vue de toujours ; 2, on voit deux fois
+   * LE CHAMP DE VISION SE RÈGLE PAR DEUX BOUTONS, « + » ET « − », SOUS LA BARRE DE VIE (Keko, 14/11 — d'abord essayé au
+   * second manche, « en le montant et en le descendant, zoomer ou dézoomer la vue, afin d'augmenter le champ de vision
+   * du joueur » ; puis : « reviens à la rotation du vaisseau sur le second stick et ajoute plutôt un bouton plus ou
+   * moins pour le zoom sous la barre de vie ») : `champ` — 1, la vue de toujours ; 2, on voit deux fois
    * plus loin. LE TAMPON GRANDIT D'AUTANT et s'affiche à la même taille d'écran : chaque pixel du jeu est plus petit
    * (l'interface du vol aussi). Par pas de deux pixels de tampon (un quart de champ d'abord : « par à-coups ») ; `champVoulu`
    * glisse entre eux. En vol seulement : la base garde son tampon.
    */
   let champ = 1
   let champVoulu = 1
+  /** Ce que les boutons ont demandé : le champ y glisse. */
+  let champCible = 1
   let champApplique = 1
   const CHAMP_MAX = 2
   const champDuMoment = (): number => (enJeu && !ecranVisible() ? champ : 1)
+  /** « + » zoome (le champ se resserre), « − » dézoome ; côte à côte, ou l'un sur l'autre (`empiles`, dans le bandeau couché). */
+  function dessinerLeZoom(p: Peintre, x: number, y: number, empiles: boolean): void {
+    const B = 13
+    const HB = 11
+    const un = (bx: number, by: number, plus: boolean): void => {
+      const possible = plus ? champCible > 1 + 1e-6 : champCible < CHAMP_MAX - 1e-6
+      const e = etatDuBouton(bx, by, B, HB)
+      plaque(p, bx, by + e.dy, B, HB, possible ? 'clair' : 'eteint', { enfonce: e.enfonce, flash: e.flash })
+      const c = possible ? N.hex('#10182a') : COQUE[3]
+      p.rect(bx + 4, by + 5 + e.dy, 5, 1, c)
+      if (plus) p.rect(bx + 6, by + 3 + e.dy, 1, 5, c)
+      // (la zone déborde du dessin : c'est un petit bouton sous un pouce)
+      if (possible) zone(bx - 2, by - 2, B + 4, HB + 4, () => (champCible = Math.max(1, Math.min(CHAMP_MAX, champCible + (plus ? -0.25 : 0.25)))), 'clic')
+    }
+    un(x, y, empiles)
+    if (empiles) un(x, y + HB + 4, false)
+    else un(x + B + 4, y, true)
+  }
   let frame = N.createFrame(W, H)
   let img = g.createImageData(W, H)
   const R = new N.Rng(7)
@@ -4862,8 +4883,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Où le second doigt regarde (longueur 0 à 1), ou rien s'il n'est pas posé. */
   function regardVoulu(): Vecteur | undefined {
-    // (LE SECOND MANCHE NE TOURNE PLUS LE NEZ, à l'essai : il règle le champ de vision — sauf pour viser une capacité armée)
-    if (regard !== null) return regard.tir ? directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y) : undefined
+    // (le second manche TOURNE LE NEZ, de nouveau — Keko, 14/11 : le zoom, essayé sur lui, est passé à deux boutons)
+    if (regard !== null) return directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y)
     // SUR PC, LA SOURIS VISE (Keko, 12/11 : « mouvement sur ZQSD et vise via souris ») : le nez se tourne vers le
     // pointeur, d'autant plus franchement — et la caméra avance d'autant plus — qu'il est loin du vaisseau (à fond à
     // soixante pixels) ; tout près de lui, rien. Dès que la souris a bougé pendant le vol, tant qu'elle est sur le jeu
@@ -6195,6 +6216,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
+      // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
+      dessinerLeZoom(p, W - Math.round(bandeCote() / 2) - 7, by + BH + 6, true)
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
         p.rect(bx - 1, Math.round(gy) - 1, lw + 2, 2, N.WHITE)
@@ -6267,6 +6290,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     if (dc < VIDE && val > 0) p.rect(bx + Math.max(0, Math.round(BW * val) - 1), by, 1, bh, N.WHITE)
+    // (LE ZOOM, sous la barre, calé à sa droite : « − » puis « + »)
+    dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
     if (dc > TIENT && dc < VIDE) {
       // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
       const gx = bx + BW * fant
@@ -6846,14 +6871,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     avant = ms
     t += dt
     // (le tampon se couche ou se relève quand on décolle ou qu'on rentre, téléphone couché)
-    // LE CHAMP DE VISION : le second manche tenu, vers le bas on dézoome, vers le haut on zoome — à fond, d'un bout à
-    // l'autre en une seconde et demie ; au changement de cran, le tampon est refait et les manches gardent leur place à l'écran
-    if (enJeu && !ecranVisible() && regard !== null && !regard.tir) {
-      const r = MANCHE.manche.rayon / zoom
-      const dy = Math.max(-1, Math.min(1, (regard.doigt.y - regard.centre.y) / r))
-      if (Math.abs(dy) > 0.2) champVoulu = Math.max(1, Math.min(CHAMP_MAX, champVoulu + dy * dt * 0.7))
-      // (PROGRESSIF — Keko, 14/11 : « ça zoome par à-coups, j'aurais voulu un zoom progressif » : il allait par crans
-      // d'un quart ; le tampon grandit maintenant de deux pixels de large à la fois)
+    // LE CHAMP DE VISION glisse vers ce que les boutons « + » et « − » ont demandé (un quart par tape, en un sixième de
+    // seconde) ; à chaque pas, le tampon est refait et les manches gardent leur place à l'écran
+    if (champVoulu !== champCible) {
+      const pas = dt * 1.5
+      champVoulu = Math.abs(champCible - champVoulu) <= pas ? champCible : champVoulu + Math.sign(champCible - champVoulu) * pas
       champ = Math.round(champVoulu * 90) / 90
     }
     if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) {

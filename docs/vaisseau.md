@@ -3576,3 +3576,5 @@ LE CANON EST L'ARME DE BASE DU CHASSEUR (Keko, 14/11 : ne jamais repartir sans a
 ### À l'essai : le second manche règle le champ de vision (14/11)
 
 Keko : « plutôt que le deuxième stick change l'orientation du vaisseau, en le montant et en le descendant, zoomer ou dézoomer la vue, pour augmenter le champ de vision ». `champ` (1 à 2, par crans d'un quart) : LE TAMPON GRANDIT d'autant (`cadrer`) et couvre le même écran, `zoom` devient fractionnaire ; la vue fixe (`vueH`, `bandeCote`) suit. Manche vers le bas : on dézoome ; vers le haut : on zoome. Le second manche ne tourne plus le nez (`regardVoulu` ne rend sa direction que pour viser une capacité) ; la souris vise toujours sur PC. LIMITES : l'interface du vol rapetisse avec le reste (elle est dessinée dans le même tampon) ; à 2, quatre fois plus de pixels à peindre.
+
+PUIS (14/11) : le second manche RETROUVE LA ROTATION, et le champ de vision passe à DEUX BOUTONS, « + » et « − », sous la barre de vie (`dessinerLeZoom` : côte à côte debout, l'un sur l'autre dans le bandeau couché) ; une tape vaut un quart, le champ y glisse (`champCible`).
