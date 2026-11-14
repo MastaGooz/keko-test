@@ -2689,7 +2689,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // « COULEUR » À CÔTÉ D'« ÉQUIPEMENT » (Keko, 14/11 : « la couleur va concerner la totalité de l'appareil » — son
     // bouton était sur la page du châssis) : il porte la pastille de la couleur choisie et ouvre la grille des couleurs
     const bw = largeurDe('Équipement', GRAS) + 24
-    const bc = 5 + 9 + 5 + largeurDe('Couleur', GRAS) + 7
+    // (« STYLE », plus « Couleur » — Keko, 14/11)
+    const bc = 5 + 9 + 5 + largeurDe('Style', GRAS) + 7
     const bx = Math.round((W - bc - 4 - bw) / 2)
     boutonBase(p, bx, y, bc, 17, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
       const [sombre, moyen, clair] = tonsDeLaLivree(livree)
@@ -2697,7 +2698,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
       p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
       p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
-      ecrire(p, 'Couleur', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
+      ecrire(p, 'Style', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
     }, 'ouvre', { matiere: 'acier' })
     bouton(p, bx + bc + 4, y, bw, 17, 'Équipement', true, () => ((equipementOuvert = true), (categorieOuverte = null), (etapeA = t), (defilCases = 0)), 'ouvre', 'acier')
   }
@@ -2892,7 +2893,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     zoneGlissante = null
     plaque(p, x, y, w, hp, 'encre')
-    motEnRelief(p, 'Couleur', W / 2, y + 7, true)
+    motEnRelief(p, 'Style', W / 2, y + 7, true)
     // le châssis monté, dans la couleur choisie
     plaque(p, W / 2 - 24, y + 20, 48, 40, 'creux')
     const monte = monteeA(hangar, 'coque')
