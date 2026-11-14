@@ -888,6 +888,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (neuf) p.glow(bx + bw / 2, y + 3, bw * 0.6, RUNE[2], 0.5 * (1 - (t - niveauA) / 0.8))
   }
+  /** LA MÊME, DEBOUT, dans le bandeau de gauche : le niveau en haut, centré sur `axe`, puis la barre qui descend — elle se remplit par le bas, comme le blindage d'en face. */
+  function dessinerLExperienceDebout(p: Peintre, axe: number, y: number): void {
+    const inv = m.invasion
+    const neuf = t - niveauA < 0.8
+    motEnRelief(p, String(inv.niveau), axe, y + (neuf ? Math.round(-2 * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true)
+    const lw = 8
+    const bx = axe - lw / 2
+    const by = y + 12
+    const bh = Math.max(20, Math.min(96, H - by - 70))
+    const part = Math.max(0, Math.min(1, inv.xp / xpDuNiveau(CONF, inv.niveau)))
+    const allume = t - xpA < 0.15
+    p.rect(bx - 1, by - 1, lw + 2, bh + 2, neuf ? N.WHITE : MATIERES.encre.contour)
+    p.rect(bx, by, lw, bh, N.hex('#2f3b58'))
+    p.rect(bx, by, 1, bh, N.hex('#465679'))
+    const plein = Math.round(bh * part)
+    if (plein > 0) {
+      p.rect(bx, by + bh - plein, lw, plein, allume || neuf ? N.WHITE : RUNE[2])
+      if (!allume && !neuf) {
+        p.rect(bx, by + bh - plein, 1, plein, RUNE[3])
+        p.rect(bx + lw - 2, by + bh - plein, 2, plein, RUNE[1])
+      }
+      p.glow(axe, by + bh - plein, 6, RUNE[2], allume ? 0.8 : 0.3)
+    }
+    if (neuf) p.glow(axe, by + bh / 2, bh * 0.6, RUNE[2], 0.5 * (1 - (t - niveauA) / 0.8))
+  }
   /**
    * LE COMPTE DU RETOUR (Keko, 14/11 : « quand je meurs, à la place de mettre fin à la partie, utilise le compte à
    * rebours qu'on avait dans la zone d'extraction et mets-le au milieu du portail, visible uniquement par le joueur qui
@@ -982,9 +1007,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const x0 = paysage ? Math.max(MARGE, bandeCote() + MARGE) : MARGE
     const droite = paysage ? W - Math.max(MARGE, bandeCote() + MARGE) : W - MARGE
     const y = paysage ? 4 : hautDuHud() - RANG_DE_L_EXPERIENCE + 1
+    // DANS LE BANDEAU NOIR DE GAUCHE, quand il y en a un (Keko, 14/11 : « tout bien réfléchi, le portail avec son
+    // pourcentage tout en haut à gauche de l'écran, si possible dans la bande noire comme la vie ; et en dessous,
+    // verticalement, la barre d'expérience avec le niveau en haut et la barre qui descend ») : le miroir du blindage
+    // d'en face — l'icône, son pour cent dessous, le niveau, puis la barre debout, qui se remplit par le bas.
+    const enBande = interfaceEnBande()
     // l'icône : un petit vortex — un anneau violet, son puits sombre, deux bras clairs qui tournent
-    const cx = x0 + 5
-    const cy = y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
+    const axe = Math.round(bandeCote() / 2)
+    const cx = enBande ? axe : x0 + 5
+    const cy = enBande ? 10 : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
     p.circle(cx, cy, 5.6, N.hex('#12081f'))
     p.circle(cx, cy, 4.6, touche ? N.WHITE : N.hex('#a35cff'))
@@ -996,6 +1027,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.glow(cx, cy, 8, N.hex('#a35cff'), touche ? 0.8 : 0.3)
     // sa vie : dans la place de « 100 % », pour que la barre d'expérience ne bouge pas
+    if (enBande) {
+      const dit = `${Math.max(0, Math.ceil(inv.vie))}%` // (sans espace : le bandeau est étroit)
+      motEnRelief(p, dit, axe + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * (1 - (t - passeA) / 0.5)) : 0), 19, 'violet')
+      dessinerLExperienceDebout(p, axe, 32)
+      dessinerLeRetour(p)
+      return
+    }
     const vie = `${Math.max(0, Math.ceil(inv.vie))} %`
     const wv = largeurDe('100 %', GRAS)
     const xv = x0 + 13
