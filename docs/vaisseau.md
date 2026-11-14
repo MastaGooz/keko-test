@@ -3507,3 +3507,5 @@ séparation châssis / propulsion », puis, pas à pas :
 cuirassé sont de moi, au jugé.*
 
 L'arbre de la recherche : plus de conduit entre le haut de la planche et le premier rang (Keko, 14/11 : « le chemin commence au premier nœud »).
+
+Les missions de vaisseau ne comptent rien PENDANT LA FORMATION (Keko, 14/11 : la première était complète dès son apparition) : `compter` n'appelle `noterEnVol` qu'une fois le tutoriel fini, quand l'onglet « Vaisseaux » existe.

@@ -197,7 +197,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     quetes = noter(quetes, c, valeur)
     // (LA MISSION DU VAISSEAU PILOTÉ compte les mêmes choses ; terminée, elle s'annonce comme un contrat)
     const avantV = missionDe(flotte, flotte.actif)
-    flotte = noterEnVol(flotte, c, valeur)
+    // (PAS AVANT QU'ELLE SOIT AFFICHÉE — Keko, 14/11 : « quand je finis la formation, la première quête du vaisseau est
+    // complète dès son apparition » : l'onglet « Vaisseaux » ne vient qu'après la formation, rien ne compte avant)
+    if (tutorielFini(quetes)) flotte = noterEnVol(flotte, c, valeur)
     const apresV = missionDe(flotte, flotte.actif)
     if (apresV !== null && apresV.finie && avantV !== null && !avantV.finie) {
       toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: 'Mission réussie', titleFont: GRAS, text: `${modeleDeVaisseau(flotte.actif).nom} : ${apresV.mission.titre}`, font: TEXTE, seed: 9 + toasts.length }))
