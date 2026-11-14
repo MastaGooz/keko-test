@@ -73,6 +73,13 @@ export const VAISSEAU = {
   /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
   foreuse: { debit: 1, portee: 1, aimant: 1 },
   /**
+   * LES ARMES TIRENT À TOUR DE RÔLE (le jeu du vortex — Keko, 14/11 : « je voudrais vraiment que les deux tirent un par
+   * un, pas en même temps : d'abord gauche, puis droite, dans un rythme équilibré ») : quand une arme tire, les autres
+   * attendent au moins sa cadence divisée par le nombre d'armes. Sans cela, des armes rechargées en même temps — tout
+   * le temps passé sans cible — partaient ensemble à la première cible, et restaient ensemble.
+   */
+  alternance: false as boolean,
+  /**
    * CHAQUE FOREUSE MONTÉE CREUSE (Keko, 13/11 — le cuirassé en porte deux, une seule travaillait : « chaque foreuse
    * attaque la roche la plus près de sa propre position, et à portée ») : la liste des foreuses du vaisseau — leurs
    * facteurs de débit et de portée, la place d'outil où chacune est montée, son cran, et OÙ ELLE EST sur le vaisseau
@@ -1174,6 +1181,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
     }
     m.armesA[i] = m.t + arme.cadence
+    if (c.alternance) c.armes.forEach((_, j) => {
+      if (j !== i) m.armesA[j] = Math.max(m.armesA[j] ?? 0, m.t + arme.cadence / c.armes.length)
+    })
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
     const bo = arme.bouche
     const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y

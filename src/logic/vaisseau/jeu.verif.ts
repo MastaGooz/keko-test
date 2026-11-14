@@ -393,6 +393,21 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   }
   verifier('un canon sur l’aile touche une petite cible de face, à 20 comme à 100 (la visée part de sa bouche)', touchesA(20) >= 5 && touchesA(100) >= 5)
 }
+// L'ALTERNANCE (Keko, 14/11) : deux canons rechargés depuis longtemps ne partent pas ensemble — gauche, puis droite, à intervalles égaux
+{
+  const canon = { id: 'canon', cadence: 2, degats: 1, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, alternance: true, armes: [{ ...canon, place: 0, bouche: { x: 2, y: -7 } }, { ...canon, place: 1, bouche: { x: 2, y: 7 } }], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  w.t = 50 // (les deux canons sont prêts depuis longtemps)
+  w.ennemis.push({ id: 77, corps: { ...nouveauVaisseau(), x: 0, y: -60 }, pv: 1000, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const tirs: { t: number; y: number }[] = []
+  for (let i = 0; i < 60 * 5; i++) {
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: -60, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'obus') tirs.push({ t: w.t, y: e.x })
+  }
+  const ecarts = tirs.slice(1).map((x, i) => x.t - tirs[i].t)
+  verifier('deux canons tirent un par un, un côté puis l’autre, à intervalles égaux (la moitié de la cadence)', tirs.length >= 4 && ecarts.every((d) => Math.abs(d - 1) < 0.05) && tirs.slice(1).every((x, i) => Math.sign(x.y) !== Math.sign(tirs[i].y)))
+}
 // LE RIVAL ARMÉ (Keko, 14/11) : de vraies armes, chacune à sa cadence ; un missile tourne vers le joueur
 {
   const canon = { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
