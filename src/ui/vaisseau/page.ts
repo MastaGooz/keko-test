@@ -803,7 +803,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let categorieOuverte: { o: 'arme' | 'outil'; lourde: boolean } | null = null
   /** Les places d'une sorte et d'un calibre, dans l'ordre (les outils sont tous légers). */
   const placesDuCalibre = (o: 'arme' | 'outil', lourde: boolean): number[] => Array.from({ length: capacite(hangar, o) }, (_, k) => k).filter((k) => (o === 'arme' ? placeLourde(hangar, k) : false) === lourde)
-  const nomDuCalibre = (o: 'arme' | 'outil', lourde: boolean): string => (o === 'arme' ? (lourde ? 'Armes lourdes' : 'Armes légères') : lourde ? 'Outils lourds' : 'Outils légers')
+  const nomDuCalibre = (o: 'arme' | 'outil', lourde: boolean): string => (o === 'arme' ? (lourde ? 'Armes lourdes' : 'Armes légères') : 'Outils') // (LES OUTILS N'ONT PAS DE CLASSES — Keko, 14/11 : « on va pas commencer à faire des classes différentes d'outils »)
   type Case = { o: Sorte; k: number; /** Une catégorie de places : son calibre. */ lourde?: boolean }
   const listeMontee = (o: Sorte): string[] => (o === 'arme' ? hangar.armes : o === 'outil' ? hangar.outils : [])
   /** Les cases de la vue d'ensemble, dans l'ordre : au hangar une par place (un nouveau châssis en ajoute), au labo une par catégorie. */
@@ -2769,7 +2769,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // différentes pièces soit plus petit que le nom de la pièce qui est en dessous » ; il était en petites capitales
       // au-dessus du nom : il est en gras d'or, en relief, sur toute la largeur de la case ; dessous, le puits et le nom)
       const titre = titreDe(c)
-      motEnRelief(p, titre, x + 5 + largeurDe(titre, GRAS) / 2, y2 + 3, true)
+      // (UN TITRE TROP LONG POUR LA CASE passe dans la lettre courante — Keko, 14/11 : « armes lourdes et armes légères
+      // sont presque en train de déborder du rectangle »)
+      const policeDuTitre = largeurDe(titre, GRAS) > cw - 14 ? TEXTE : GRAS
+      motEnRelief(p, titre, x + 5 + largeurDe(titre, policeDuTitre) / 2, y2 + 3, true, policeDuTitre)
       const yp = y2 + 12
       const hp = ch - 15
       plaque(p, x + 4, yp, 26, hp, 'creux')
