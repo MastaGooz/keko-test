@@ -354,6 +354,26 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   const tFin = f.t
   avancerLeMonde(fragile, f, 1, { x: 0, y: 0 })
   verifier('le portail commence à 100 %, perd un pour cent par insecte passé ; à zéro, la partie est finie et le monde s’arrête', nouveauMonde(cfg, 7).invasion.vie === 100 && vieApresUn === 1 && fins === 1 && f.invasion.vie === 0 && f.invasion.finie && f.t === tFin)
+  // UNE VAGUE VIENT D'UN SEUL CADRAN (un par joueur) : tous ses insectes naissent dans le même quart du monde
+  const cadranDe = (x: number, y: number): number => Math.floor((((Math.atan2(y, x) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 2)))
+  const parVague = (joueurs: number): Set<number>[] => {
+    const cf = { ...cfg, invasion: { ...cfg.invasion, joueurs } }
+    const q = nouveauMonde(cf, 7)
+    loin(q)
+    const vus: Set<number>[] = []
+    for (let i = 0; i < 60 * 70; i++) {
+      const r = avancerLeMonde(cf, q, 1 / 60, { x: 0, y: 0 })
+      loin(q)
+      for (const e of r.evenements) {
+        if (e.type === 'vague') vus.push(new Set())
+        if (e.type === 'ennemiApparait') vus[vus.length - 1].add(cadranDe(e.x, e.y))
+      }
+    }
+    return vus
+  }
+  const seul = parVague(1)
+  const aDeux = parVague(2)
+  verifier('seul, chaque vague vient d’un seul cadran, pas le même deux fois de suite ; à deux joueurs, de deux cadrans', seul.length >= 3 && seul.every((v) => v.size === 1) && seul.slice(1).every((v, i) => [...v][0] !== [...seul[i]][0]) && aDeux.length >= 2 && aDeux.every((v) => v.size === 2))
   const paisible = nouveauMonde(VAISSEAU, 7)
   verifier('le Nova Drifter n’a pas d’invasion', !VAISSEAU.invasion.active && paisible.invasion.vague === 0)
 }

@@ -181,6 +181,15 @@ export const VAISSEAU = {
      * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
      */
     viePortail: 100, degatsAuPortail: 1,
+    /**
+     * UNE VAGUE VIENT D'UN SEUL CADRAN (Keko, 14/11 : « les ennemis attaquent parfois de deux côtés en même temps ; tout
+     * seul, protéger les deux côtés, c'est quasiment impossible. Tu prends le vortex, tu t'en sers de centre pour
+     * diviser la carte, ça te donne 4 cadrans : il faudrait que les ennemis arrivent d'un cadran à la fois au sein
+     * d'une même vague. Lorsqu'il y a 2, 3 ou 4 joueurs — 4 au maximum —, on rajoute un cadran supplémentaire ») :
+     * `joueurs` dit combien de cadrans une vague occupe (un par joueur, quatre au plus) ; ils sont tirés au début de
+     * la vague, jamais le même que le premier de la vague d'avant quand il y a le choix.
+     */
+    joueurs: 1,
   },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
@@ -344,7 +353,7 @@ export type Monde = {
   ennemis: Ennemi[]
   prochainEnnemiA: number
   /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
-  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; finie: boolean }
+  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; finie: boolean; /** Les cadrans d'où vient la vague en cours (0 : est-sud, puis en tournant), et combien de ses insectes sont nés. */ cadrans: number[]; nes: number }
   tirs: Tir[]
   /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
   obus: Obus[]
@@ -403,7 +412,7 @@ export type Evenement =
   | { type: 'explosion'; x: number; y: number; rayon: number }
   | { type: 'perdu' }
   /** L'invasion : une vague commence ; un insecte traverse le portail. */
-  | { type: 'vague'; numero: number; nombre: number }
+  | { type: 'vague'; numero: number; nombre: number; cadrans: number[] }
   | { type: 'traverse'; id: number; x: number; y: number }
   /** L'invasion : un niveau gagné ; le joueur abattu revient au portail. */
   | { type: 'niveau'; niveau: number }
@@ -416,7 +425,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -714,7 +723,11 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
 
 /** Un insecte de l'invasion naît sur le cercle de naissance, dans une direction tirée de la graine du monde, tourné vers le portail. */
 function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
-  const a = tire(m.graine, m.prochainId, 3) * Math.PI * 2
+  // (dans UN DES CADRANS DE LA VAGUE, à tour de rôle ; pas sur ses bords : un dixième de marge de chaque côté)
+  const cadrans = m.invasion.cadrans.length > 0 ? m.invasion.cadrans : [0]
+  const q = cadrans[m.invasion.nes % cadrans.length]
+  m.invasion.nes += 1
+  const a = (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
   m.graine = hache(m.graine, 7)
   const x = Math.cos(a) * c.invasion.naissance
   const y = Math.sin(a) * c.invasion.naissance
@@ -731,7 +744,20 @@ function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (m.ennemis.length > 0) return
     inv.vague += 1
     inv.aNaitre = c.invasion.vague + (inv.vague - 1) * c.invasion.renfort
-    ev.push({ type: 'vague', numero: inv.vague, nombre: inv.aNaitre })
+    // SES CADRANS : un par joueur, tirés de la graine — le premier n'est pas celui de la vague d'avant
+    const combien = Math.max(1, Math.min(4, Math.round(c.invasion.joueurs)))
+    const avant = inv.cadrans[0]
+    const reste = [0, 1, 2, 3]
+    const tires: number[] = []
+    for (let k = 0; k < combien; k++) {
+      const choix = k === 0 && combien < 4 && avant !== undefined ? reste.filter((x) => x !== avant) : reste
+      const pris = choix[hache(m.graine, inv.vague, k) % choix.length]
+      tires.push(pris)
+      reste.splice(reste.indexOf(pris), 1)
+    }
+    inv.cadrans = tires
+    inv.nes = 0
+    ev.push({ type: 'vague', numero: inv.vague, nombre: inv.aNaitre, cadrans: tires })
   }
   faireNaitreUnInsecte(c, m, ev)
   inv.aNaitre -= 1

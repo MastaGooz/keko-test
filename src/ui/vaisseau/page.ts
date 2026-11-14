@@ -849,6 +849,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vortexFx: Instance | null = null
   /** Quand la dernière vague a commencé, quand le dernier insecte a traversé (l'interface le marque). */
   let passeA = -10
+  /** Quand la vague en cours a commencé, et de quels cadrans elle vient : l'interface le montre par des flèches au bord. */
+  let vagueA = -10
+  let cadransDeLaVague: number[] = []
+  /** L'ANNONCE D'UNE VAGUE : une flèche rouge au bord de l'écran, vers le milieu de chaque cadran d'où elle arrive, six secondes. */
+  function dessinerLAnnonceDeLaVague(p: Peintre): void {
+    const age = t - vagueA
+    if (age < 0 || age > 6) return
+    const bat = Math.sin(t * 9) > 0
+    for (const q of cadransDeLaVague) {
+      const a = (q + 0.5) * (Math.PI / 2)
+      const dx = Math.cos(a) * CONF.invasion.naissance - camera.x
+      const dy = Math.sin(a) * CONF.invasion.naissance - camera.y
+      const ou = auBord(dx / champApplique, dy / champApplique)
+      if (ou === null) continue
+      dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), bat ? ROUGE[4] : ROUGE[3], bat ? ROUGE[5] : ROUGE[4], bat ? 0.5 : 0.3)
+    }
+  }
   /** Quand la dernière pépite d'expérience est montée à bord ; quand le dernier niveau a été gagné. */
   let xpA = -10
   let niveauA = -10
@@ -7525,6 +7542,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'vague': {
+              // (d'où elle vient : des flèches rouges au bord, quelques secondes)
+              vagueA = t
+              cadransDeLaVague = ev.cadrans
               jouer('equipe')
               break
             }
@@ -7871,6 +7891,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     dessinerLeScore(p)
     if (VORTEX) dessinerLInvasion(p)
+    if (VORTEX) dessinerLAnnonceDeLaVague(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaCapacite(p)

@@ -318,13 +318,18 @@ const RECETTES = {
       note(m, 0, 0.6, 0, { f: 415, d: 0.14, partiels: [[1, 1, 1], [1.48, 0.6, 0.7]] })
     },
   },
-  /** le bouclier prend le coup : une quinte de verre, qui miroite */
+  /**
+   * le bouclier prend le coup : UN CHOC D'ÉNERGIE (Keko, 14/11 : la quinte de verre d'avant « ressemble plus à une
+   * validation dans un menu qu'à de vrais dégâts ») — un coup sourd et saturé, un bourdonnement électrique dissonant
+   * qui tombe, un crépitement
+   */
   bouclier: {
-    duree: 1, niveau: 0.4, salle: [0.6, 0.25],
-    faire: (m) => {
-      note(m, 0, 1, -0.2, { f: MI5, a: 0.004, d: 0.38, partiels: VERRE, battement: 8 })
-      note(m, 0, 0.7, 0.2, { f: SI5, a: 0.004, d: 0.32, partiels: VERRE, battement: 6 })
-      note(m, 0, 0.2, 0, { f: SI6, a: 0.004, d: 0.2 })
+    duree: 0.8, niveau: 0.6, salle: [0.4, 0.15],
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 190, glisse: { vers: 85, en: 0.05 }, a: 0.003, d: 0.2, partiels: CORPS, sature: 2.2 })
+      note(m, 0, 0.6, -0.2, { f: 880, glisse: { vers: 300, en: 0.07 }, a: 0.003, d: 0.22, partiels: [[1, 1, 1], [1.41, 0.7, 0.8], [2.1, 0.4, 0.5]], battement: 38 })
+      souffle(m, h, 0, 0.8, 0.1, { f: 3400, glisse: { vers: 900, en: 0.08 }, q: 1.2, bande: true, a: 0.002, d: 0.16, large: true })
+      souffle(m, h, 0.05, 0.35, -0.2, { f: 5200, glisse: { vers: 2400, en: 0.05 }, q: 3, bande: true, a: 0.002, d: 0.08 })
     },
   },
   /** l'extraction : l'accord de ré qui monte, en clochettes, sur une nappe */
