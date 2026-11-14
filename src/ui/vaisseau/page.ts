@@ -3298,6 +3298,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // tension ; n'est ACTIF que ce qui mène à un nœud débloqué — sa descente, le bout de bus qui la relie à ce qui
     // l'alimente, et la sortie du nœud d'au-dessus qui l'alimente
     rangs.forEach((rg, k) => {
+      // (RIEN AU-DESSUS DU PREMIER RANG — Keko, 14/11 : « pas de chemin entre le haut de l'écran et le premier nœud : le
+      // chemin commence au premier nœud » ; la source qui descendait du bord est retirée, avec son bus)
+      if (k === 0) return
       const base: Etat = rg.ouvert ? 1 : 0
       const acquis = rg.places.filter((pl) => estDebloque(labo, pl.n.id))
       const vivant = acquis.length > 0

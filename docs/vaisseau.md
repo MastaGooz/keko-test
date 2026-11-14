@@ -3506,3 +3506,4 @@ séparation châssis / propulsion », puis, pas à pas :
 *Les missions, leurs cibles, les prix et les chiffres des moteurs du
 cuirassé sont de moi, au jugé.*
 
+L'arbre de la recherche : plus de conduit entre le haut de la planche et le premier rang (Keko, 14/11 : « le chemin commence au premier nœud »).
