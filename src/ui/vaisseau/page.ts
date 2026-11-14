@@ -3053,12 +3053,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de la pièce ; rien pour une pièce de base)
       // (ENTRE PARENTHÈSES, un ton sous le nom — Keko, 14/11 : « plutôt que x1, x2, mets le nombre entre parenthèses et
       // change légèrement sa couleur par rapport au texte »)
-      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `(${exemplaires(hangar, pc.id)})`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom) + 5, ly + 3, choisie ? N.hex('#b9ad8e') : COQUE[4])
+      // (CE QUI RESTE LIBRE SUR CE QU'ON A, dès qu'un exemplaire est monté quelque part — Keko, 14/11 : « un moyen de voir
+      // que tu possèdes une pièce mais qu'elle est déjà attribuée à un autre emplacement » : « (1/2) », un libre sur deux)
+      const total = exemplaires(hangar, pc.id)
+      const restants = Math.max(0, libres(hangar, pc.id))
+      if (total > 0) ecrire(p, restants < total ? `(${restants}/${total})` : `(${total})`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom) + 5, ly + 3, choisie ? N.hex('#b9ad8e') : COQUE[4])
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
       // plus ; pour une arme ou un outil, « EQUIPE » veut dire à LA PLACE OUVERTE, la même pièce pouvant se monter à plusieurs)
       if (ki >= 0 ? listeMontee(onglet)[ki] === pc.id : montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
+      // (… ET « AILLEURS », en bleu, quand tous ses exemplaires sont montés à d'autres places : on l'a, mais plus de libre)
+      else if (total > 0 && restants === 0) p.text('AILLEURS', xd, ly + 4, N.hex('#7fa8d8'), { align: 'right' })
       // (PLUS DE PRIX SUR LA LIGNE — Keko, 14/11 : il ne disait que les crédits ; le prix entier est sur « Construire »)
       zone(4, ly, W - 8, RANG_LISTE, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
     }
