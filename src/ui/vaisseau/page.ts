@@ -317,6 +317,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   canvas.width = W
   canvas.height = H
   const g = canvas.getContext('2d')!
+  /**
+   * LE MONDE A SON CANEVAS, SOUS CELUI DE L'INTERFACE (Keko, 14/11 : « on peut empêcher les éléments d'UI — les flèches,
+   * les validations d'objectifs, la vie, la soute, les joysticks, le mot extraction et le countdown — de bouger avec le
+   * zoom ? ») : quand le champ de vision s'élargit, LE MONDE se peint dans un tampon plus grand, montré à la même
+   * taille d'écran sur ce canevas-ci ; L'INTERFACE reste dans le tampon de toujours, à sa taille, sur le canevas du
+   * dessus, transparent là où elle ne dessine rien. Les deux occupent la même case de la grille. Au champ normal, ce
+   * canevas est caché et tout se peint dans le premier, comme avant.
+   */
+  const canvasMonde = document.createElement('canvas')
+  canvasMonde.className = 'vaisseau-canvas'
+  canvasMonde.style.gridArea = '1 / 1'
+  canvasMonde.style.display = 'none'
+  canvas.style.gridArea = '1 / 1'
+  const gMonde = canvasMonde.getContext('2d')!
+  scene.append(canvasMonde)
   scene.append(canvas)
   racine.append(scene)
   /**
@@ -371,6 +386,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que les boutons ont demandé : le champ y glisse. */
   let champCible = 1
   let champApplique = 1
+  /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
+  let champDeLaVue = 1
   const CHAMP_MAX = 2
   const champDuMoment = (): number => (enJeu && !ecranVisible() ? champ : 1)
   /** « + » zoome (le champ se resserre), « − » dézoome ; côte à côte, ou l'un sur l'autre (`empiles`, dans le bandeau couché). */
@@ -393,6 +410,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   let frame = N.createFrame(W, H)
   let img = g.createImageData(W, H)
+  let frameMonde = N.createFrame(W, H)
+  let imgMonde = gMonde.createImageData(W, H)
   const R = new N.Rng(7)
   /** Les grains de l'espace : sans pesanteur ni montée (Keko : « des débris tombent vers le bas comme s'il y avait de la gravité »). */
   const braises = new Grains(R)
@@ -591,11 +610,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       zoom = Math.max(1, Math.min(6, Math.floor(large / 180), Math.floor(haut / 320)))
       h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))
     }
-    // (le champ de vision : le tampon grandit, l'écran qu'il couvre ne change pas — un pixel du jeu vaut `zoom` pixels d'écran, moins qu'avant)
-    champApplique = champDuMoment()
-    zoom = zoom / champApplique
-    w = Math.round(w * champApplique)
-    h = Math.round(h * champApplique)
     if (h !== H || w !== W || canvas.height !== h || canvas.width !== w) {
       W = w
       H = h
@@ -606,6 +620,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     canvas.style.width = `${W * zoom}px`
     canvas.style.height = `${H * zoom}px`
+    // (le champ de vision : LE TAMPON DU MONDE grandit, l'écran qu'il couvre ne change pas ; celui de l'interface ne bouge pas)
+    champApplique = champDuMoment()
+    const wm = Math.round(W * champApplique)
+    const hm = Math.round(H * champApplique)
+    if (frameMonde.w !== wm || frameMonde.h !== hm) {
+      frameMonde = N.createFrame(wm, hm)
+      canvasMonde.width = wm
+      canvasMonde.height = hm
+      imgMonde = gMonde.createImageData(wm, hm)
+    }
+    canvasMonde.style.width = canvas.style.width
+    canvasMonde.style.height = canvas.style.height
+    canvasMonde.style.display = champApplique !== 1 ? '' : 'none'
   }
 
   // ---------------------------------------------------------------- le manche (celui du survivor)
@@ -4890,8 +4917,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // soixante pixels) ; tout près de lui, rien. Dès que la souris a bougé pendant le vol, tant qu'elle est sur le jeu
     // et qu'elle ne tient pas le manche.
     if (souris === null || manche !== null || !enJeu) return undefined
-    const dx = souris.x - (v.x - camera.x + W / 2)
-    const dy = souris.y - (v.y - camera.y + centreY())
+    const dx = souris.x - ((v.x - camera.x) / champApplique + W / 2)
+    const dy = souris.y - ((v.y - camera.y) / champApplique + centreY())
     const d = Math.hypot(dx, dy)
     if (d < 8) return undefined
     const force = Math.min(1, (d - 8) / 52)
@@ -5386,7 +5413,65 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /** Les stations d'extraction en vue (leur dessin est dans `station.ts`), leur parvis, et les pépites déposées qui y volent. */
-  function dessinerLesStations(p: Peintre): void {
+  /**
+   * LE TEXTE DE L'EXTRACTION — le chiffre du compte, « EXTRACTION » dans ses rayons, le mot « Extraction » et sa flèche —,
+   * au-dessus du parvis d'une station dessinée en (sx, sy), de portée `portee` À L'ÉCRAN. À part : il est de l'interface,
+   * il ne rapetisse pas avec le champ de vision.
+   */
+  function dessinerLeTexteDeLExtraction(p: Peintre, sx: number, sy: number, portee: number): void {
+    const TAU = Math.PI * 2
+    const yMot = sy - portee - 20
+    if (m.extraction > 0) {
+      const monte = compteMonte && m.phase === 'vol'
+      const battement = Math.floor(m.extraction + 1e-6)
+      const ub = monte ? m.extraction - battement : 1
+      if (m.phase === 'extrait') {
+        const ue = t - perduA
+        if (ue >= 0 && ue < 1.35) {
+          const rk = Math.min(1, ue / 0.18) * (ue > 1.05 ? Math.max(0, 1 - (ue - 1.05) / 0.3) : 1)
+          for (let k = 0; k < 18; k++) {
+            const an = (k / 18) * TAU + ue * 0.35
+            const ca = Math.cos(an)
+            const sa = Math.sin(an)
+            const r0 = 1 / Math.sqrt((ca / (largeurDe('EXTRACTION', GRAS) + 6)) ** 2 + (sa / 14) ** 2) + 3 * rk // (l'ovale du mot, à l'échelle 2)
+            const r1 = r0 + (k % 2 === 0 ? 26 : 13) * 0.7 * rk
+            if (rk > 0.02) p.line(sx + ca * r0, yMot + sa * r0, sx + ca * r1, yMot + sa * r1, k % 2 === 0 ? PEPITE[3] : PEPITE[2], 0.9 * rk)
+          }
+          const tremble = ue < 0.3 ? 4 * (1 - ue / 0.3) : 0
+          p.glow(sx, yMot, 46, PEPITE[2], 0.25 + (ue < 0.12 ? 0.7 * (1 - ue / 0.12) : 0))
+          motFrappe(p, 'EXTRACTION', sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), (2 + 0.45 * Math.exp(-ue * 26) * Math.cos(ue * 38)) * rk ** 0.2, ue < 0.035 ? 1 : ue < 0.07 ? 0.4 : 0)
+        }
+        return
+      }
+      // le chiffre : énorme et blanc une image, puis le ressort ; il tremble 0,22 s
+      // (À L'ÉCHELLE 2, plus 3 — Keko, 12/11 : « une grosse différence entre le mot extraction et les chiffres du
+      // countdown, ils sont trop gros » ; le mot qu'il remplace est à l'échelle 1)
+      const reste = CONF.extraction.duree - m.extraction
+      const tremble = monte && ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
+      p.glow(sx, yMot, 26, PEPITE[2], 0.2 + (monte && ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
+      motFrappe(p, String(Math.ceil(reste)), sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), monte ? 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38) : 2, monte ? (ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0) : 0)
+      return
+    }
+    // « ZONE D'EXTRACTION », au-dessus du parvis, gris bleuté (Keko, 12/11 : « afin d'aider le joueur à
+    // comprendre ») : tant que le compte ne court pas ; dès qu'il court, le chiffre prend sa place
+    // (Keko, ensuite : « juste le mot extraction avec une flèche qui pointe vers en dessous », sans barre)
+    if (m.phase === 'vol' && m.sorti) { // (pas avant d'avoir quitté le parvis une première fois — Keko : on y naît, le compte n'y court pas encore)
+      // (EN RELIEF — Keko, 12/11 : « le mot extraction manque de texture » : la lettre grasse des titres de fiche, un
+      // acier bleuté éclairé d'en haut, ombré dessous, cerné de sombre, qu'un éclat traverse de temps en temps ; la
+      // flèche a les trois mêmes tons)
+      const mot = 'Extraction'
+      const wm = largeurDe(mot, GRAS)
+      const ym = sy - portee - 18
+      const c = (t % 4) / 4
+      motEnRelief(p, mot, sx, ym, false, GRAS, c < 0.16 ? -8 + (c / 0.16) * (wm + 20) : null)
+      // la flèche, sous le mot, qui descend et remonte d'un pixel
+      const yf = ym + 11 + (Math.floor(t * 3) % 2)
+      for (let k = 0; k < 6; k++) p.rect(Math.round(sx) - 5 + k, yf - 1 + k, 11 - 2 * k, 1, N.hex('#07050d'))
+      for (let k = 0; k < 4; k++) p.rect(Math.round(sx) - 3 + k, yf + k, 7 - 2 * k, 1, k === 0 ? COQUE[5] : k === 1 ? COQUE[4] : N.hex('#57698c'))
+    }
+  }
+  /** (`passe` : « tout », comme avant ; « monde », sans le texte de l'extraction ; « texte », lui seul, à l'écran de l'interface) */
+  function dessinerLesStations(p: Peintre, passe: 'tout' | 'monde' | 'texte' = 'tout'): void {
     const proche = stationLaPlusProche(CONF, v.x, v.y)
     const i0 = Math.round(camera.x / CONF.station.case)
     const j0 = Math.round(camera.y / CONF.station.case)
@@ -5394,12 +5479,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let i = i0 - 1; i <= i0 + 1; i++) {
         if (CONF.station.seule && (i !== 0 || j !== 0)) continue // (une seule station pour l'instant : la base)
         const st = stationDeLaCase(CONF, i, j)
-        const sx = st.x - camera.x + W / 2
-        const sy = st.y - camera.y + centreY()
+        // (le texte seul se pose à l'écran de l'interface : le monde y est réduit du champ)
+        const reduit = passe === 'texte' ? champApplique : 1
+        const sx = (st.x - camera.x) / reduit + W / 2
+        const sy = (st.y - camera.y) / reduit + centreY()
         // la station du départ est LA BASE, une vraie station spatiale (`dessinerBase`) ; les autres, des extracteurs
         const base = i === 0 && j === 0
         const marge = base ? ENVERGURE_BASE : 40
         if (sx < -marge || sy < -marge || sx > W + marge || sy > H + marge) continue
+        if (passe === 'texte') {
+          if (st.x === proche.x && st.y === proche.y) dessinerLeTexteDeLExtraction(p, sx, sy, CONF.station.portee / reduit)
+          continue
+        }
         const aQuai = m.phase !== 'perdu' && st.x === proche.x && st.y === proche.y && Math.hypot(v.x - st.x, v.y - st.y) <= CONF.station.portee
         // le parvis : un cercle pointillé qui dit la portée, plus net à quai
         for (let k = 0; k < 36; k++) {
@@ -5470,7 +5561,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const monte = compteMonte && m.phase === 'vol'
           const battement = Math.floor(m.extraction + 1e-6)
           const ub = monte ? m.extraction - battement : 1
-          const yMot = sy - CONF.station.portee - 20
           const mondeX = (x: number): number => x - W / 2 + camera.x
           const mondeY = (y: number): number => y - centreY() + camera.y
           const nt = Math.round(CONF.extraction.duree)
@@ -5513,50 +5603,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             if (bk >= 0 && bk < 1) p.ring(sx, sy, r + 4 + 30 * sortie(bk), Math.max(1, 6 * (1 - bk)), bk < 0.2 ? N.WHITE : PEPITE[3], Math.min(1, 1.4 * (1 - bk)))
             const ik = (ue - 0.05) / 0.3
             if (ik > 0 && ik < 1) p.ring(sx, sy, r + 22 * sortie(ik), 1, PEPITE[3], Math.min(1, 1.2 * (1 - ik)))
-            if (ue >= 0 && ue < 1.35) {
-              const rk = Math.min(1, ue / 0.18) * (ue > 1.05 ? Math.max(0, 1 - (ue - 1.05) / 0.3) : 1)
-              for (let k = 0; k < 18; k++) {
-                const an = (k / 18) * TAU + ue * 0.35
-                const ca = Math.cos(an)
-                const sa = Math.sin(an)
-                const r0 = 1 / Math.sqrt((ca / (largeurDe('EXTRACTION', GRAS) + 6)) ** 2 + (sa / 14) ** 2) + 3 * rk // (l'ovale du mot, à l'échelle 2)
-                const r1 = r0 + (k % 2 === 0 ? 26 : 13) * 0.7 * rk
-                if (rk > 0.02) p.line(sx + ca * r0, yMot + sa * r0, sx + ca * r1, yMot + sa * r1, k % 2 === 0 ? PEPITE[3] : PEPITE[2], 0.9 * rk)
-              }
-              const tremble = ue < 0.3 ? 4 * (1 - ue / 0.3) : 0
-              p.glow(sx, yMot, 46, PEPITE[2], 0.25 + (ue < 0.12 ? 0.7 * (1 - ue / 0.12) : 0))
-              motFrappe(p, 'EXTRACTION', sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), (2 + 0.45 * Math.exp(-ue * 26) * Math.cos(ue * 38)) * rk ** 0.2, ue < 0.035 ? 1 : ue < 0.07 ? 0.4 : 0)
-            }
-          } else {
-            // le chiffre : énorme et blanc une image, puis le ressort ; il tremble 0,22 s
-            // (À L'ÉCHELLE 2, plus 3 — Keko, 12/11 : « une grosse différence entre le mot extraction et les chiffres du
-            // countdown, ils sont trop gros » ; le mot qu'il remplace est à l'échelle 1)
-            const reste = CONF.extraction.duree - m.extraction
-            const tremble = monte && ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
-            p.glow(sx, yMot, 26, PEPITE[2], 0.2 + (monte && ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
-            motFrappe(p, String(Math.ceil(reste)), sx + Math.round(Math.sin(t * 90) * tremble), yMot + Math.round(Math.cos(t * 77) * tremble), monte ? 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38) : 2, monte ? (ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0) : 0)
           }
-        } else if (laProche) {
-          battementVu = -1
-          // « ZONE D'EXTRACTION », au-dessus du parvis, gris bleuté (Keko, 12/11 : « afin d'aider le joueur à
-          // comprendre ») : tant que le compte ne court pas ; dès qu'il court, le chiffre prend sa place
-          // (Keko, ensuite : « juste le mot extraction avec une flèche qui pointe vers en dessous », sans barre ; un
-          // fond sombre reste sous le mot : le mât de la base passe juste derrière)
-          if (m.phase === 'vol' && m.sorti) { // (pas avant d'avoir quitté le parvis une première fois — Keko : on y naît, le compte n'y court pas encore)
-            // (EN RELIEF — Keko, 12/11 : « le mot extraction manque de texture » : la lettre grasse des titres de fiche, un
-            // acier bleuté éclairé d'en haut, ombré dessous, cerné de sombre, qu'un éclat traverse de temps en temps ; la
-            // flèche a les trois mêmes tons)
-            const mot = 'Extraction'
-            const wm = largeurDe(mot, GRAS)
-            const ym = sy - CONF.station.portee - 18
-            const c = (t % 4) / 4
-            motEnRelief(p, mot, sx, ym, false, GRAS, c < 0.16 ? -8 + (c / 0.16) * (wm + 20) : null)
-            // la flèche, sous le mot, qui descend et remonte d'un pixel
-            const yf = ym + 11 + (Math.floor(t * 3) % 2)
-            for (let k = 0; k < 6; k++) p.rect(Math.round(sx) - 5 + k, yf - 1 + k, 11 - 2 * k, 1, N.hex('#07050d'))
-            for (let k = 0; k < 4; k++) p.rect(Math.round(sx) - 3 + k, yf + k, 7 - 2 * k, 1, k === 0 ? COQUE[5] : k === 1 ? COQUE[4] : N.hex('#57698c'))
-          }
-        }
+        } else if (laProche) battementVu = -1
+        // (le texte de l'extraction : ici quand tout se peint d'un tenant ; sinon l'interface le peindra, à sa taille)
+        if (laProche && passe === 'tout') dessinerLeTexteDeLExtraction(p, sx, sy, CONF.station.portee)
       }
   }
 
@@ -5575,8 +5625,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const VUE_PORTRAIT = 320
   /** La hauteur de la vue du vol (320 debout, 180 couché), et sa largeur couchée ; les bandeaux de côté en paysage. */
-  const vueH = (): number => Math.round((paysage ? 180 : VUE_PORTRAIT) * champApplique)
-  const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - Math.round(320 * champApplique)) / 2)) : 0)
+  const vueH = (): number => Math.round((paysage ? 180 : VUE_PORTRAIT) * champDeLaVue)
+  const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - Math.round(320 * champDeLaVue)) / 2)) : 0)
   /** L'interface du vol est dans les bandeaux de côté (couché, et s'ils sont assez larges) : la vue est alors libre. */
   const interfaceEnBande = (): boolean => paysage && bandeCote() >= 30
   /**
@@ -5788,7 +5838,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const st = stationLaPlusProche(CONF, v.x, v.y)
     const dx = st.x - camera.x
     const dy = st.y - camera.y
-    const ou = auBord(dx, dy)
+    const ou = auBord(dx / champApplique, dy / champApplique) // (à l'écran : le monde y est réduit du champ)
     if (ou === null) return
     dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), PEPITE[2], PEPITE[3], 0.4)
   }
@@ -5805,7 +5855,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (cible === null) return
     const dx = cible.x - camera.x
     const dy = cible.y - camera.y
-    const ou = auBord(dx, dy)
+    const ou = auBord(dx / champApplique, dy / champApplique) // (à l'écran : le monde y est réduit du champ)
     if (ou === null) return
     const bat = Math.sin(t * 8) > 0
     dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), bat ? ROUGE[4] : ROUGE[3], bat ? ROUGE[5] : ROUGE[4], bat ? 0.5 : 0.3)
@@ -6878,15 +6928,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       champVoulu = Math.abs(champCible - champVoulu) <= pas ? champCible : champVoulu + Math.sign(champCible - champVoulu) * pas
       champ = Math.round(champVoulu * 90) / 90
     }
-    if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) {
-      const avantCadre = zoom
-      cadrer()
-      const k = avantCadre / zoom
-      if (k !== 1) {
-        if (manche !== null) manche = { ...manche, centre: { x: manche.centre.x * k, y: manche.centre.y * k }, doigt: { x: manche.doigt.x * k, y: manche.doigt.y * k } }
-        if (regard !== null) regard = { ...regard, centre: { x: regard.centre.x * k, y: regard.centre.y * k }, doigt: { x: regard.doigt.x * k, y: regard.doigt.y * k } }
-      }
-    }
+    if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) cadrer()
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
       if (m.bouclier > 0) {
@@ -7225,10 +7267,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     effets = effets.filter((e) => !e.fx.done())
 
     N.clearFrame(frame)
-    const p = N.painterFor(frame)
+    let p = N.painterFor(frame)
     // (le peintre se place À PARTIR DE L'ORIGINE DE LA FENÊTRE en cours — nulle hors de la base couchée)
-    {
-      const q = p as unknown as { placeBrute?: (x: number, y: number, f?: boolean, a?: number) => unknown; place: (x: number, y: number, f?: boolean, a?: number) => unknown }
+    const ancrer = (pe: Peintre): void => {
+      const q = pe as unknown as { placeBrute?: (x: number, y: number, f?: boolean, a?: number) => unknown; place: (x: number, y: number, f?: boolean, a?: number) => unknown }
       if (q.placeBrute === undefined) {
         const brute = q.place
         q.placeBrute = brute
@@ -7237,6 +7279,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
     }
+    ancrer(p)
     if (accueil) {
       regler(0, false, 0, false)
       dessinerLAccueil(p)
@@ -7263,6 +7306,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le pas des ressorts et des éclats de l'interface (ceux de la base : la base ne le tient que quand elle se dessine)
     dtBase = Math.min(0.05, Math.max(0, t - tBase))
     tBase = t
+    // LE CHAMP ÉLARGI : LE MONDE SE PEINT DANS SON TAMPON, plus grand — `W`, `H`, `frame` et le champ de la vue sont les
+    // siens le temps de le peindre ; l'interface retrouvera les siens ensuite
+    const separe = champApplique !== 1
+    const interface_ = { frame, W, H }
+    if (separe) {
+      frame = frameMonde
+      W = frame.w
+      H = frame.h
+      champDeLaVue = champApplique
+      N.clearFrame(frame)
+      p = N.painterFor(frame)
+      ancrer(p)
+      for (const e of effets) {
+        e.fx.options.x = e.x - camera.x + W / 2
+        e.fx.options.y = e.y - camera.y + centreY()
+      }
+    }
     dessinerLeCiel(p)
     for (const a of asteroidesVisibles(CONF, m, camera.x, camera.y, Math.max(W, H) / 2 + CONF.champ.rayonMax + 4)) {
       // la roche qu'on creuse tremble, d'autant plus qu'elle est près d'éclater
@@ -7311,7 +7371,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
     }
     p.place(0, 0)
-    dessinerLesStations(p)
+    dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
@@ -7323,6 +7383,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // peintre d'un tampon est unique, `painterFor` le rend remis à zéro —, tant qu'un effet vivait (la matérialisation
     // du départ), les bandeaux et l'interface se dessinaient ancrés au milieu de l'écran : Keko)
     N.painterFor(frame)
+    if (separe) {
+      // le monde est fini : on le montre, et L'INTERFACE reprend son tampon, à sa taille
+      N.composite(frame, imgMonde.data, cuireLeCiel())
+      gMonde.putImageData(imgMonde, 0, 0)
+      frame = interface_.frame
+      W = interface_.W
+      H = interface_.H
+      champDeLaVue = 1
+      p = N.painterFor(frame)
+      ancrer(p)
+      dessinerLesStations(p, 'texte')
+    }
     dessinerLesBords(p)
     dessinerLesBandeaux(p)
     dessinerLAlerte(p)
@@ -7339,10 +7411,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, basDuHud() + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
     dessinerLeManche(p)
     dessinerLesToasts(dt)
-    N.composite(frame, img.data, cuireLeCiel())
+    // (séparée du monde, l'interface est transparente là où elle ne peint rien : le monde est dessous)
+    if (separe) N.composite(frame, img.data, null)
+    else N.composite(frame, img.data, cuireLeCiel())
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
     canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
+    canvasMonde.style.transform = canvas.style.transform
     requestAnimationFrame(image)
   }
   ouvrirLeHangar()
