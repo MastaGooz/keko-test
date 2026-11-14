@@ -2893,13 +2893,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (!choisie && survol !== null && survol.y >= ly && survol.y < ly + RANG_LISTE && survol.x >= 4 && survol.x < W - 4) p.rect(7, ly, larg, RANG_LISTE, N.hex('#1a1626'))
       // (UNE PIÈCE DONT ON N'A AUCUN EXEMPLAIRE EST GRISÉE — Keko, 14/11 : débloquée, mais à construire avant de l'équiper)
       const aucune = !possede(hangar, pc.id)
-      ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, aucune ? (choisie ? COQUE[4] : COQUE[3]) : choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
+      ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, aucune ? (choisie ? COQUE[4] : COQUE[3]) : choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5])
+      // (LA LIGNE CHOISIE N'EST PLUS EN GRAS — Keko, 14/11, à l'essai : le surlignage et le blanc la disent)
       // (LE NOMBRE D'EXEMPLAIRES CONSTRUITS, après le nom, DANS LE MÊME STYLE QUE LUI — Keko, 14/11 : il était en gras et en
       // or même sur une ligne non choisie ; et il n'est QUE sur cette ligne : ni sur la page de la place, ni sur le dessin
       // de la pièce ; rien pour une pièce de base)
       // (ENTRE PARENTHÈSES, un ton sous le nom — Keko, 14/11 : « plutôt que x1, x2, mets le nombre entre parenthèses et
       // change légèrement sa couleur par rapport au texte »)
-      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `(${exemplaires(hangar, pc.id)})`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 5, ly + 3, choisie ? COQUE[5] : COQUE[4], { police: choisie ? GRAS : TEXTE })
+      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `(${exemplaires(hangar, pc.id)})`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom) + 5, ly + 3, choisie ? COQUE[5] : COQUE[4])
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
