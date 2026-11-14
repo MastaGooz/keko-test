@@ -619,7 +619,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
     // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
     // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
-    if (RIVAL_CUIRASSE) CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 140, tient: 75, lache: 300, cadence: 0.55, vitesseTir: 150, fuit: 99999 } }
+    // (ARMÉ AU MAXIMUM — Keko, 14/11 : la cadence de ses huit armes ensemble, près de sept tirs par seconde)
+    if (RIVAL_CUIRASSE) CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 150, tient: 75, lache: 300, cadence: 0.15, vitesseTir: 160, fuit: 99999 } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
