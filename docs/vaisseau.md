@@ -3518,3 +3518,31 @@ sont les prix manquants qui tremblent — dans le bouton, et à la recherche
 les minerais du coût — ; le compteur de crédits du haut ne tremble plus que
 si ce sont les crédits qui manquent.
 
+### Construire, en exemplaires, et perdre (14/11)
+
+Keko : « à la place d'un bouton acheter, un bouton construire ; à part les
+pièces de base de chaque vaisseau, on affiche le nombre de pièces qu'on a
+construites d'un même élément ; et quand on meurt avec cet élément, il est
+perdu. Comme un vrai jeu d'extraction. »
+
+- `Hangar.construites` : le nombre d'exemplaires de chaque pièce
+  construite. **Une pièce possédée qui n'y est pas est DE BASE**
+  (`estDeBase`) : elle vient avec le vaisseau, se monte sans limite, ne se
+  perd pas, ne se construit pas.
+- **Un exemplaire occupe une place** (`libres`) : la même arme à deux
+  places demande deux exemplaires (avant : débloquée une fois, montée
+  partout).
+- `acheter` construit un exemplaire de plus, autant qu'on veut.
+- **Détruit en vol** (`perdreLesMontees`, à l'événement `perdu`) : chaque
+  exemplaire construit qui était MONTÉ est perdu ; le châssis et le
+  propulseur redeviennent ceux de base du modèle, les places se vident. Ce
+  qui est resté au hangar reste. Le hangar le dit dix secondes (« Perdu
+  avec le vaisseau : … »). Une pièce perdue jusqu'au dernier exemplaire
+  reste à construire (elle reste dans `ouvertes`).
+- À l'écran : « Construire » ; « ×N » après le nom dans la liste et dans le
+  puits de la fiche ; la fiche montre d'abord « Équiper » / « Retirer » /
+  « Équipé », puis « Construire » dessous.
+- Une sauvegarde d'avant : un exemplaire par pièce achetée (autant que de
+  places prises).
+- `&crash=N` détruit le vaisseau N secondes après le décollage.
+

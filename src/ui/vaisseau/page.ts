@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
@@ -2564,8 +2564,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     motEnRelief(p, liste[i].nom, W / 2, y + 4, true)
     return y + 19
   }
+  /** Ce que la dernière destruction a coûté : les pièces perdues, dites au hangar une dizaine de secondes (depuis qu'on le voit). */
+  let pertes: { noms: string[]; t0: number | null } | null = null
+  function dessinerLesPertes(p: Peintre, y: number): number {
+    if (pertes === null) return y
+    if (pertes.t0 === null) pertes.t0 = t
+    const age = t - pertes.t0
+    if (age > 10) {
+      pertes = null
+      return y
+    }
+    // (une pièce perdue deux fois se dit « ×2 »)
+    const comptes = new Map<string, number>()
+    for (const n of pertes.noms) comptes.set(n, (comptes.get(n) ?? 0) + 1)
+    const lignes = replier(`Perdu avec le vaisseau : ${[...comptes].map(([n, k]) => (k > 1 ? `${n} ×${k}` : n)).join(', ')}.`, W - 20)
+    const h = lignes.length * 9 + 7
+    plaque(p, 4, y, W - 8, h, 'encre', { bord: ROUGE[4], flash: age < 0.08 })
+    lignes.forEach((li, k) => ecrire(p, li, W / 2, y + 4 + k * 9, ROUGE[5], { align: 'center' }))
+    return y + h + 3
+  }
   function dessinerLesEmplacements(p: Peintre, y: number): number {
-    if (vue === 'hangar') y = dessinerLeChoixDuVaisseau(p, y)
+    if (vue === 'hangar') y = dessinerLesPertes(p, dessinerLeChoixDuVaisseau(p, y))
     const cw = Math.floor((W - 12) / 2)
     const ch = 36
     const cases = casesDuVaisseau()
@@ -2870,12 +2889,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const montee = estMontee(hangar, pc.id)
       if (!choisie && survol !== null && survol.y >= ly && survol.y < ly + RANG_LISTE && survol.x >= 4 && survol.x < W - 4) p.rect(7, ly, larg, RANG_LISTE, N.hex('#1a1626'))
       ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
+      // (LE NOMBRE D'EXEMPLAIRES CONSTRUITS, après le nom — rien pour une pièce de base)
+      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `×${exemplaires(hangar, pc.id)}`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 5, ly + 3, PEPITE[2], { police: GRAS })
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
       // plus ; pour une arme ou un outil, « EQUIPE » veut dire à LA PLACE OUVERTE, la même pièce pouvant se monter à plusieurs)
       if (ki >= 0 ? listeMontee(onglet)[ki] === pc.id : montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
-      else if (!possede(hangar, pc.id)) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id, tresor) ? PEPITE[3] : COQUE[3])
+      else if (libres(hangar, pc.id) <= 0) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id, tresor) ? PEPITE[3] : COQUE[3])
       zone(4, ly, W - 8, RANG_LISTE, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
     }
     if (maxDefil > 0) {
@@ -3417,7 +3438,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** ACHETER une pièce débloquée au labo (au hangar, à la place d'« Équiper ») : le bouton, son prix et l'icône des crédits. */
   function dessinerLAchat(p: Peintre, y: number, pc: Piece): void {
-    // ACHETER : UN SEUL BOUTON QUI PORTE TOUT SON PRIX (Keko, 14/11 : « le bouton acheter englobe les crédits mais pas
+    // CONSTRUIRE (« Acheter », avant le 14/11 : on construit un EXEMPLAIRE, autant qu'on veut) : UN SEUL BOUTON QUI PORTE TOUT SON PRIX (Keko, 14/11 : « le bouton acheter englobe les crédits mais pas
     // les minerais, c'est dommage » — le coût en minerai pendait sous lui). Le mot en haut ; dessous, UN PUITS SOMBRE
     // (« le texte blanc sur fond jaune n'est pas idéal ») où se suivent les crédits puis chaque minerai : crème quand on
     // l'a, ROUGE quand il manque (« ce qu'on a / ce qu'il faut »). Sans coût en minerai, il tient sur une rangée, le
@@ -3432,7 +3453,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ECART = 7
     const ws = lots.map((l) => largeurDe(l.texte, GRAS) + 11)
     const wp = 4 + ws.reduce((a, b) => a + b, 0) + (lots.length - 1) * ECART + 3
-    const wa = largeurDe('Acheter', GRAS)
+    const wa = largeurDe('Construire', GRAS)
     const deux = lots.length > 1
     const bw = deux ? Math.max(wa + 20, wp + 6) : 8 + wa + 5 + wp + 3
     const bh = deux ? 27 : 15
@@ -3447,11 +3468,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       secouer(1.2)
       gerbe(W / 2, y + 7, 24, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 80)
       if (vue !== 'hangar') envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 }) // (au hangar, elle y est déjà)
-      flottants.push({ texte: 'Acheté !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
+      flottants.push({ texte: 'Construit !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
+      choixA = t - 1
     }, (_dx, dy) => {
       const xm = deux ? Math.round(W / 2 - wa / 2) : bx + 8
-      if (vif) motEnRelief(p, 'Acheter', xm + wa / 2, y + 4 + dy, true)
-      else ecrire(p, 'Acheter', xm, y + 4 + dy, COQUE[3], { police: GRAS })
+      if (vif) motEnRelief(p, 'Construire', xm + wa / 2, y + 4 + dy, true)
+      else ecrire(p, 'Construire', xm, y + 4 + dy, COQUE[3], { police: GRAS })
       const px = deux ? Math.round(W / 2 - wp / 2) : bx + 8 + wa + 5
       const py = y + (deux ? 14 : 2) + dy
       plaque(p, px, py, wp, 11, 'creux')
@@ -3466,13 +3488,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }, 'achat', { manque: lots.filter((l) => l.manque).map((l) => l.cle), fixe: true })
   }
   /** Ce que le bouton « Acheter » prend EN PLUS quand la pièce coûte aussi du minerai (sa seconde rangée) — rien, si elle est déjà à soi ou ne coûte que des crédits. */
-  const ligneDuCout = (pc: Piece): number => (!possede(hangar, pc.id) && MINERAIS.some((k) => coutEnMinerai(pc.id)[k] > 0) ? 12 : 0)
+  const ligneDuCout = (pc: Piece): number => (!estDeBase(hangar, pc.id) && MINERAIS.some((k) => coutEnMinerai(pc.id)[k] > 0) ? 12 : 0)
+  /**
+   * LES BOUTONS D'UNE FICHE, dans le panneau « Changer » : d'abord ce qu'on fait de la pièce À CETTE PLACE (« Équiper »
+   * s'il reste un exemplaire, « Retirer » ou « Équipé » si elle y est), puis « CONSTRUIRE » un exemplaire de plus — pour
+   * tout ce qui n'est pas de base. `premiere` : la première rangée existe (sinon « Construire » prend sa place).
+   */
+  function boutonsDeLaFiche(pc: Piece): { ici: boolean; premiere: boolean; construire: boolean } {
+    const ko = placeOuverte()
+    const ici = ko >= 0 ? listeMontee(onglet)[ko] === pc.id : estMontee(hangar, pc.id)
+    const premiere = ici || libres(hangar, pc.id) > 0
+    // (ce qu'on n'a pas, que les missions n'ont pas ouvert et qui n'est pas de base ne se construit pas — une pièce d'essai)
+    const construire = !estDeBase(hangar, pc.id) && (possede(hangar, pc.id) || pieceOuverteIci(pc.id))
+    return { ici, premiere, construire }
+  }
 
   /** La hauteur que prendra la fiche d'une pièce (son bouton, sa plaque, sa note) : la liste s'y ajuste. */
   function hauteurDeLaFiche(pc: Piece | undefined): number {
     if (pc === undefined) return 0
     const note = pc.note === undefined ? 0 : replier(pc.note, W - 22).length
-    return 19 + ligneDuCout(pc) + Math.max(52, 18 + jaugesDe(pc).length * 10 + 4) + (note > 0 ? note * 9 + 6 : 0)
+    const bo = boutonsDeLaFiche(pc)
+    return 19 + (bo.construire ? ligneDuCout(pc) + (bo.premiere ? 19 : 0) : 0) + Math.max(52, 18 + jaugesDe(pc).length * 10 + 4) + (note > 0 ? note * 9 + 6 : 0)
   }
   /** LA FICHE d'une pièce : son bouton, puis ses stats (la pièce rendue dans son puits, le nom, les jauges, la note). */
   function dessinerLaFiche(p: Peintre, y0: number, pc: Piece, resume = false): void {
@@ -3503,39 +3539,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.text('COULEUR', 4 + 18 + dx, y + 5 + dy, N.hex('#fff3cf'))
         }, 'ouvre', { matiere: 'acier' })
       } else if (!aChanger) y -= 19
-    } else if (ko >= 0 && possede(hangar, pc.id) && listeMontee(onglet)[ko] !== pc.id) {
-      const bw = lb('Équiper')
-      bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', true, () => {
-        hangar = monterA(hangar, pc.id, ko)
-        sauver()
-        changement = false
-        feterLEquipement()
-      }, 'equipe')
-    } else if (estMontee(hangar, pc.id)) {
-      if (pc.sorte === 'arme' || pc.sorte === 'outil') {
-        const bw = lb('Retirer')
-        bouton(p, W / 2 - bw / 2, y, bw, 15, 'Retirer', true, () => {
-          hangar = ko >= 0 ? demonterA(hangar, pc.sorte as 'arme' | 'outil', ko) : demonter(hangar, pc.id)
+    } else {
+      const bo = boutonsDeLaFiche(pc)
+      if (bo.ici) {
+        if (pc.sorte === 'arme' || pc.sorte === 'outil') {
+          const bw = lb('Retirer')
+          bouton(p, W / 2 - bw / 2, y, bw, 15, 'Retirer', true, () => {
+            hangar = ko >= 0 ? demonterA(hangar, pc.sorte as 'arme' | 'outil', ko) : demonter(hangar, pc.id)
+            sauver()
+            changement = false
+          }, 'retour', 'acier')
+        } else {
+          motEnRelief(p, 'Équipé', W / 2, y + 4, true)
+          const s = 1 + Math.round(1.5 + 1.5 * Math.sin(t * 5))
+          N.sparkle(p, W / 2 + largeurDe('Équipé', GRAS) / 2 + 6, y + 4, s, PEPITE[3], N.WHITE, 0.8)
+        }
+      } else if (bo.premiere) {
+        const bw = lb('Équiper')
+        bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', ko >= 0 || peutMonter(hangar, pc.id), () => {
+          hangar = ko >= 0 ? monterA(hangar, pc.id, ko) : monter(hangar, pc.id)
           sauver()
           changement = false
-        }, 'retour', 'acier')
-      } else {
-        motEnRelief(p, 'Équipé', W / 2, y + 4, true)
-        const s = 1 + Math.round(1.5 + 1.5 * Math.sin(t * 5))
-        N.sparkle(p, W / 2 + largeurDe('Équipé', GRAS) / 2 + 6, y + 4, s, PEPITE[3], N.WHITE, 0.8)
+          feterLEquipement()
+        }, 'equipe')
       }
-    } else if (possede(hangar, pc.id)) {
-      const bw = lb('Équiper')
-      bouton(p, W / 2 - bw / 2, y, bw, 15, 'Équiper', peutMonter(hangar, pc.id), () => {
-        hangar = monter(hangar, pc.id)
-        sauver()
-        changement = false
-        feterLEquipement()
-      }, 'equipe')
-    } else {
-      // (débloquée au labo, pas encore achetée : « Acheter » à la place d'« Équiper »)
-      dessinerLAchat(p, y, pc)
-      y += ligneDuCout(pc)
+      // (CONSTRUIRE un exemplaire — le premier, ou un de plus : sous le premier bouton, ou à sa place s'il n'y en a pas)
+      if (bo.construire) {
+        if (bo.premiere) y += 19
+        dessinerLAchat(p, y, pc)
+        y += ligneDuCout(pc)
+      }
     }
     y += 19
     const jauges = jaugesDe(pc)
@@ -3549,6 +3582,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, 8, y + 4, 44, hh - 8, 'creux')
     p.glow(30, y + hh / 2, 16, VERRIERE[1], 0.12)
     dessinerLePictogramme(p, pc, 30, y + hh / 2, 44, hh - 8)
+    // (combien d'exemplaires on en a, dans le coin du puits ; rien pour une pièce de base)
+    if (exemplaires(hangar, pc.id) > 0) ecrire(p, `×${exemplaires(hangar, pc.id)}`, 49, y + hh - 14, PEPITE[3], { police: GRAS, align: 'right' })
     motEnRelief(p, pc.nom, gx + (W - 12 - gx) / 2, y + 5, false)
     jauges.forEach((j, i) => {
       const k = sortie((t - Math.max(etapeA, choixA) - 0.05 - i * 0.045) / 0.32)
@@ -3907,7 +3942,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             vueA = t - 0.1
             pulsations.hangar = t
             nouveautes.add('hangar')
-            flottants.push({ texte: `${pieceDe(rv.ouvre)?.nom ?? 'Pièce'} : en vente au hangar`, x: milieu, y: y - 4, t0: t, c: RUNE[3] })
+            flottants.push({ texte: `${pieceDe(rv.ouvre)?.nom ?? 'Pièce'} : à construire au hangar`, x: milieu, y: y - 4, t0: t, c: RUNE[3] })
             return
           }
           const r = reclamer(quetes, i, credits, (x) => aLaMecanique(labo, x as Mecanique))
@@ -6572,6 +6607,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         accumule -= PAS
         // (LE TIR PASSE À LA MAIN quand le manche du regard est tenu — pas pour la visée d'une capacité, ni à la souris)
         const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, regard !== null && !regard.tir)
+        // (`&crash=N` : le vaisseau est détruit N secondes après le décollage, pour essayer la perte des pièces d'un lien)
+        if (parametres.has('crash') && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
+          m.coque = 0
+          m.phase = 'perdu'
+          r.evenements.push({ type: 'perdu' })
+        }
         v = m.vaisseau
         // (les quêtes : la plus grande distance à la base, comptée tous les vingt pas d'éloignement)
         {
@@ -6735,6 +6776,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
               jouer('perdu')
               perduA = t
+              // LES PIÈCES CONSTRUITES QUI ÉTAIENT MONTÉES SONT PERDUES AVEC LE VAISSEAU (Keko, 14/11 : « comme un vrai jeu
+              // d'extraction ») : le hangar le dira au retour
+              {
+                const pr = perdreLesMontees(hangar, modeleDeVaisseau(flotte.actif).serie)
+                hangar = pr.hangar
+                if (pr.perdues.length > 0) pertes = { noms: pr.perdues.map((id) => pieceDe(id)?.nom ?? id), t0: null }
+              }
               compter('parcouru', v.parcouru)
               sauver()
               effets.push({ fx: N.createFx(EXPLOSION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), debris: '#46587a', size: 0.45, seed: 5 }), x: v.x, y: v.y })

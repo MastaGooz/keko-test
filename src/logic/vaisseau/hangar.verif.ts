@@ -1,7 +1,7 @@
 /**
  * Vérifications du hangar, sans navigateur.
  */
-import { acheter, pieceDe, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, montantCourt, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
+import { acheter, pieceDe, estDeBase, exemplaires, libres, perdreLesMontees, possede, armesMontees, capacite, remplacer, monterA, demonterA, POIDS_SERIE, poidsTotal, type Hangar, configDuHangar, demonter, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, lireCredits, lireHangar, lireTresor, montantCourt, monteeA, monter, peutAcheter, peutMonter, PIECES, piecesDe, radarMonte, vendre } from './hangar.ts'
 import { avancerLeMonde, nouveauMonde, VAISSEAU as C } from './jeu.ts'
 
 // (LES MISSILES SONT UNE ARME LOURDE depuis le 14/11, que seul le cuirassé porte : ces vérifications-ci, qui s'en servent
@@ -26,7 +26,7 @@ const achat = acheter(neuf, riche, 'propulseur-2')!
 verifier('l’achat paie le prix en crédits et possède la pièce SANS l’équiper (ça se fait au hangar) ; le hangar d’avant ne bouge pas', achat !== null && achat.credits === 50 - 24 && achat.hangar.possedees.includes('propulseur-2') && !estMontee(achat.hangar, 'propulseur-2') && monteeA(achat.hangar, 'propulseur').cran === 1 && !neuf.possedees.includes('propulseur-2'))
 const a = { hangar: monter(achat.hangar, 'propulseur-2'), credits: achat.credits }
 verifier('équipée ensuite, elle est montée', monteeA(a.hangar, 'propulseur').id === 'propulseur-2' && estMontee(a.hangar, 'propulseur-2'))
-verifier('on ne rachète pas une pièce possédée', !peutAcheter(a.hangar, a.credits, 'propulseur-2'))
+verifier('on construit un second exemplaire d’une pièce construite ; jamais d’une pièce de base', peutAcheter(a.hangar, 24, 'propulseur-2') && exemplaires(acheter(a.hangar, 24, 'propulseur-2')!.hangar, 'propulseur-2') === 2 && !peutAcheter(a.hangar, 999, 'propulseur-1') && estDeBase(a.hangar, 'propulseur-1') && !estDeBase(a.hangar, 'propulseur-2'))
 const remis = monter(a.hangar, 'propulseur-1')
 verifier('on remonte la pièce de série, la renforcée reste possédée', monteeA(remis, 'propulseur').cran === 1 && remis.possedees.includes('propulseur-2'))
 verifier('monter une pièce qu’on n’a pas ne change rien', monter(remis, 'foreuse-3') === remis)
@@ -69,10 +69,12 @@ verifier('la place 1 se remplit ensuite sans toucher à la 2 ; vider la 1 laisse
 verifier('sans dire où, une arme prend la première place libre — ici la 1, devant celle de la place 2', monter(aDroite, 'arme-rafale').armes.join(',') === 'arme-rafale,arme-canon')
 verifier('une coque qui porte moins démonte les dernières places : l’arme de la place 2 tombe, la liste est vide', monter(aDroite, 'coque-1').armes.length === 0)
 // LA MÊME PIÈCE À PLUSIEURS PLACES (Keko : « la même arme sur les deux slots du moment qu'il l'a débloquée ; pareil pour les outils »)
-const jumelles = monterA(g2, 'arme-rafale', 0)
+// (UN EXEMPLAIRE PAR PLACE depuis le 14/11 : il en faut deux)
+verifier('un seul exemplaire ne se monte pas à deux places', monterA(g2, 'arme-rafale', 0) === g2 && libres(g2, 'arme-rafale') === 0)
+const jumelles = monterA(acheter(g2, RICHE, 'arme-rafale')!.hangar, 'arme-rafale', 0)
 verifier('la même arme se monte aux deux places : elle tire deux fois, pèse deux fois, et l’autre place n’a pas bougé', jumelles.armes.join(',') === 'arme-rafale,arme-rafale' && configDuHangar(C, jumelles).armes.map((x) => x.id).join(',') === 'rafale,rafale' && poidsTotal(jumelles) === poidsTotal(g2) - 8 + 5 && jumelles.possedees.filter((x) => x === 'arme-rafale').length === 1)
 verifier('retirer l’une des deux laisse l’autre à sa place', demonterA(jumelles, 'arme', 0).armes.join(',') === ',arme-rafale' && demonterA(jumelles, 'arme', 1).armes.join(',') === 'arme-rafale' && demonter(jumelles, 'arme-rafale').armes.length === 0)
-const deuxRadars = monterA(h, 'radar', 0)
+const deuxRadars = monterA(acheter(h, RICHE, 'radar')!.hangar, 'radar', 0)
 verifier('deux radars sur la coque à deux outils : le joueur a le choix (un seul radar porte, plus de foreuse, les deux pèsent)', deuxRadars.outils.join(',') === 'radar,radar' && radarMonte(deuxRadars) === 600 && foreuseMontee(deuxRadars) === null && poidsTotal(deuxRadars) === poidsTotal(h) - PIECES.find((p) => p.id === 'foreuse-2')!.poids + PIECES.find((p) => p.id === 'radar')!.poids)
 verifier('une pièce qu’on n’a pas ne se monte à aucune place', monterA(neuf, 'arme-canon', 0) === neuf)
 verifier('démonter une arme qui n’est pas montée ne change rien', demonter(g2, 'arme-canon') === g2)
@@ -136,6 +138,18 @@ verifier('les crédits relus : un entier positif, zéro sinon', lireCredits(12.7
 const tr = lireTresor({ fer: 7.9, or: -3, cristal: 'x', autre: 1 })
 verifier('le trésor relu : des entiers positifs, zéro sinon', tr.fer === 7 && tr.or === 0 && tr.cristal === 0 && lireTresor(undefined).fer === 0)
 verifier('les montants en court : exacts jusqu’à quatre chiffres, puis k, M, G, T, arrondis vers le bas', [0, 68, 9999, 10000, 12345, 99999, 123456, 999999, 1000000, 1234567, 9999999, 88888888, 999999999, 1000000000, 2560000000000, -5, 12.9].map(montantCourt).join(' ') === '0 68 9999 10k 12k 99k 123k 999k 1M 1,2M 9,9M 88M 999M 1G 2,5T 0 12')
+
+// LA PERTE DU VAISSEAU : les exemplaires construits qui étaient montés sont perdus, pas ceux restés au hangar, pas la base
+{
+  let v = acheter(acheter(acheter(acheter(hangarNeuf(), RICHE, 'coque-2')!.hangar, RICHE, 'arme-canon')!.hangar, RICHE, 'arme-canon')!.hangar, RICHE, 'propulseur-2')!.hangar
+  v = monterA(monter(monter(v, 'coque-2'), 'propulseur-2'), 'arme-canon', 0)
+  const pr = perdreLesMontees(v, hangarNeuf())
+  verifier('perdu : le châssis et le propulseur construits redeviennent ceux de base, l’arme montée part, celle du hangar reste', pr.perdues.slice().sort().join(',') === 'arme-canon,coque-2,propulseur-2' && pr.hangar.montees.coque === 'coque-1' && pr.hangar.montees.propulseur === 'propulseur-1' && pr.hangar.armes.length === 0 && exemplaires(pr.hangar, 'arme-canon') === 1 && possede(pr.hangar, 'arme-canon'))
+  verifier('… le dernier exemplaire perdu, la pièce n’est plus possédée ; la base reste montée ; le hangar d’avant ne bouge pas', !possede(pr.hangar, 'coque-2') && exemplaires(pr.hangar, 'coque-2') === 0 && pr.hangar.outils.join(',') === 'foreuse-1' && exemplaires(v, 'coque-2') === 1 && v.montees.coque === 'coque-2')
+  verifier('un vaisseau de base ne perd rien', perdreLesMontees(hangarNeuf(), hangarNeuf()).perdues.length === 0)
+  const relu2 = lireHangar(JSON.parse(JSON.stringify(v)))
+  verifier('les exemplaires se relisent ; une sauvegarde d’avant en compte un par pièce, autant que de places prises', exemplaires(relu2, 'arme-canon') === 2 && exemplaires(lireHangar({ possedees: ['coque-2', 'arme-canon'], montees: { coque: 'coque-2' }, armes: ['arme-canon', 'arme-canon'] }), 'arme-canon') === 2 && exemplaires(lireHangar({ possedees: ['radar'] }), 'radar') === 1)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

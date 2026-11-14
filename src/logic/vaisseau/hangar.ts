@@ -157,7 +157,21 @@ export function ajouterLesPiecesDEssai(): void {
  * place prise. ET LA MÊME PIÈCE PEUT OCCUPER PLUSIEURS PLACES (« la même arme sur les deux slots du moment qu'il l'a
  * débloquée ; pareil pour les outils ») : la débloquer, c'est pouvoir la monter autant de fois qu'il y a de places.
  */
-export type Hangar = { possedees: string[]; montees: Record<Emplacement, string>; outils: string[]; armes: string[] }
+export type Hangar = {
+  possedees: string[]
+  montees: Record<Emplacement, string>
+  outils: string[]
+  armes: string[]
+  /**
+   * LES PIÈCES SE CONSTRUISENT, EN EXEMPLAIRES, ET SE PERDENT (Keko, 14/11 : « plutôt qu'un bouton acheter, un bouton
+   * construire ; à part les pièces de base de chaque vaisseau, on affiche le nombre de pièces qu'on a construites d'un
+   * même élément ; et quand on meurt avec cet élément, il est perdu — comme un vrai jeu d'extraction ») : combien
+   * d'exemplaires on a de chaque pièce construite, montés ou non. UNE PIÈCE POSSÉDÉE QUI N'Y EST PAS EST « DE BASE » :
+   * elle vient avec le vaisseau, se monte autant de fois qu'on veut et ne se perd jamais. Un exemplaire occupe UNE
+   * place : la même arme à deux places, c'est deux exemplaires.
+   */
+  construites?: Record<string, number>
+}
 /** Une place libre dans une liste d'outils ou d'armes (celles de la fin ne s'écrivent pas : une liste ne finit jamais par un vide). */
 export const VIDE = ''
 
@@ -180,6 +194,14 @@ export function hangarNeuf(): Hangar {
 }
 
 export const possede = (h: Hangar, id: string): boolean => h.possedees.includes(id)
+/** Une pièce DE BASE : possédée sans avoir été construite (elle ne se compte pas, ne se perd pas). */
+export const estDeBase = (h: Hangar, id: string): boolean => possede(h, id) && h.construites?.[id] === undefined
+/** Combien d'exemplaires construits on a d'une pièce (0 pour une pièce de base). */
+export const exemplaires = (h: Hangar, id: string): number => h.construites?.[id] ?? 0
+/** À combien de places la pièce est montée. */
+const placesPrises = (h: Hangar, id: string): number => EMPLACEMENTS.filter((e) => h.montees[e] === id).length + h.outils.filter((x) => x === id).length + h.armes.filter((x) => x === id).length
+/** Combien d'exemplaires restent à monter (une pièce de base : sans limite). */
+export const libres = (h: Hangar, id: string): number => (estDeBase(h, id) ? Infinity : exemplaires(h, id) - placesPrises(h, id))
 export const monteeA = (h: Hangar, e: Emplacement): Piece => pieceDe(h.montees[e]) ?? deSerie(e)
 /** Combien de places la coque montée porte, pour les outils ou les armes. */
 export const capacite = (h: Hangar, l: Liste): number => Math.min(PLACES_MAX, (l === 'arme' ? monteeA(h, 'coque').armes : monteeA(h, 'coque').outils) ?? 1)
@@ -188,7 +210,7 @@ export const montes = (h: Hangar, l: Liste): Piece[] => listeDe(h, l).map((id) =
 /** (`tresor` donné : il doit aussi payer le coût en minerai de la pièce) */
 export function peutAcheter(h: Hangar, credits: number, id: string, tresor?: Cargaison): boolean {
   const p = pieceDe(id)
-  return p !== undefined && !possede(h, id) && credits >= p.prix && (tresor === undefined || MINERAIS.every((k) => tresor[k] >= (p.cout?.[k] ?? 0)))
+  return p !== undefined && !estDeBase(h, id) && credits >= p.prix && (tresor === undefined || MINERAIS.every((k) => tresor[k] >= (p.cout?.[k] ?? 0)))
 }
 /** LE CALIBRE D'UNE PLACE D'ARME : les dernières places de la coque sont les lourdes. */
 export const placeLourde = (h: Hangar, k: number): boolean => k >= capacite(h, 'arme') - (monteeA(h, 'coque').lourdes ?? 0)
@@ -201,13 +223,13 @@ export const estMontee = (h: Hangar, id: string): boolean => {
   return p.sorte === 'arme' || p.sorte === 'outil' ? listeDe(h, p.sorte).includes(id) : h.montees[p.sorte] === id
 }
 
-/** L'achat — AU LABO (Keko : « un onglet labo où le joueur va débloquer les nouvelles pièces ») : la pièce passe aux possédées, SANS s'équiper (ça se fait au hangar) ; les crédits paient. Rend les deux valeurs neuves, ou null si on ne peut pas. */
+/** CONSTRUIRE un exemplaire (« acheter », avant le 14/11) : il s'ajoute aux exemplaires de la pièce, SANS s'équiper ; les crédits et le minerai paient. On peut en construire autant qu'on veut, sauf d'une pièce de base. Rend les valeurs neuves, ou null si on ne peut pas. */
 export function acheter(h: Hangar, credits: number, id: string, tresor?: Cargaison): { hangar: Hangar; credits: number; tresor: Cargaison } | null {
   if (!peutAcheter(h, credits, id, tresor)) return null
   const p = pieceDe(id)!
   const reste = { ...(tresor ?? cargaisonVide()) }
   if (tresor !== undefined) for (const k of MINERAIS) reste[k] -= p.cout?.[k] ?? 0
-  return { hangar: { ...h, possedees: [...h.possedees, id] }, credits: credits - p.prix, tresor: reste }
+  return { hangar: { ...h, possedees: possede(h, id) ? h.possedees : [...h.possedees, id], construites: { ...(h.construites ?? {}), [id]: exemplaires(h, id) + 1 } }, credits: credits - p.prix, tresor: reste }
 }
 
 /** Les listes bornées à ce que la coque porte (une coque qui porte moins démonte les dernières places). */
@@ -223,7 +245,7 @@ export function monter(h: Hangar, id: string): Hangar {
   if (p === undefined || !possede(h, id)) return h
   if (p.sorte === 'arme' || p.sorte === 'outil') {
     const ids = listeDe(h, p.sorte)
-    if (ids.includes(id)) return h
+    if (ids.includes(id) || libres(h, id) <= 0) return h
     const libre = Array.from({ length: capacite(h, p.sorte) }, (_, k) => k).find((k) => (ids[k] ?? VIDE) === VIDE && vaALaPlace(h, p, k))
     if (libre !== undefined) return avecListe(h, p.sorte, Object.assign([...ids], { [libre]: id }))
     const i = p.famille === undefined ? -1 : ids.findIndex((x) => pieceDe(x)?.famille === p.famille)
@@ -257,7 +279,8 @@ export function monterA(h: Hangar, id: string, k: number): Hangar {
   const p = pieceDe(id)
   if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil') || !possede(h, id) || k < 0 || k >= capacite(h, p.sorte) || !vaALaPlace(h, p, k)) return h
   const ids = [...listeDe(h, p.sorte)]
-  if (ids[k] === id) return h
+  // (il faut un exemplaire qui ne soit pas déjà monté ailleurs)
+  if (ids[k] === id || libres(h, id) <= 0) return h
   while (ids.length < k) ids.push(VIDE)
   ids[k] = id
   return avecListe(h, p.sorte, ids)
@@ -277,6 +300,33 @@ export function demonter(h: Hangar, id: string): Hangar {
   if (p === undefined || (p.sorte !== 'arme' && p.sorte !== 'outil')) return h
   const ids = listeDe(h, p.sorte)
   return ids.includes(id) ? avecListe(h, p.sorte, ids.map((x) => (x === id ? VIDE : x))) : h
+}
+
+/**
+ * LE VAISSEAU EST PERDU : chaque exemplaire construit qui était MONTÉ est perdu avec lui — le châssis et le propulseur
+ * redeviennent ceux de base du vaisseau (`serie`), les places d'outil et d'arme se vident. Les pièces de base restent
+ * montées, les exemplaires restés au hangar aussi. Rend le hangar neuf et ce qui a été perdu (une fois par exemplaire).
+ */
+export function perdreLesMontees(h: Hangar, serie: Hangar): { hangar: Hangar; perdues: string[] } {
+  const construites = { ...(h.construites ?? {}) }
+  const perdues: string[] = []
+  const perd = (id: string): boolean => {
+    if (id === VIDE || construites[id] === undefined) return false
+    perdues.push(id)
+    construites[id] -= 1
+    return true
+  }
+  const montees = { ...h.montees }
+  for (const e of EMPLACEMENTS) if (perd(montees[e])) montees[e] = serie.montees[e]
+  const outils = h.outils.map((id) => (perd(id) ? VIDE : id))
+  const armes = h.armes.map((id) => (perd(id) ? VIDE : id))
+  let possedees = [...h.possedees]
+  for (const id of Object.keys(construites)) {
+    if (construites[id] > 0) continue
+    delete construites[id]
+    possedees = possedees.filter((x) => x !== id)
+  }
+  return { hangar: bornees({ possedees, montees, outils: rangee(outils), armes: rangee(armes), construites }), perdues }
 }
 
 /** La meilleure foreuse montée (le plus fort débit), ou null : sans foreuse, on ne creuse pas — on chasse. */
@@ -457,6 +507,7 @@ export const lireCredits = (brut: unknown): number => (typeof brut === 'number' 
 /** (`base` : le hangar de série du vaisseau relu — celui du chasseur par défaut) */
 export function lireHangar(brut: unknown, base?: Hangar): Hangar {
   const h = base ?? hangarNeuf()
+  const deBase = new Set(h.possedees)
   if (typeof brut !== 'object' || brut === null) return h
   const b = brut as { possedees?: unknown; montees?: unknown; outils?: unknown; armes?: unknown }
   if (Array.isArray(b.possedees)) for (const id of b.possedees) if (typeof id === 'string' && pieceDe(id) !== undefined && !possede(h, id)) h.possedees.push(id)
@@ -474,6 +525,16 @@ export function lireHangar(brut: unknown, base?: Hangar): Hangar {
   lire('arme', b.armes)
   if (Array.isArray(b.outils)) lire('outil', b.outils)
   else if (typeof mo.foreuse === 'string' && possede(h, mo.foreuse) && pieceDe(mo.foreuse)?.sorte === 'outil') h.outils = [mo.foreuse]
+  // LES EXEMPLAIRES : tout ce qui n'est pas de base est construit — au moins un (une sauvegarde d'avant les exemplaires
+  // n'en dit rien), au moins autant qu'il y en a de montés
+  const gardes = (typeof (brut as { construites?: unknown }).construites === 'object' && (brut as { construites?: unknown }).construites !== null ? (brut as { construites: Record<string, unknown> }).construites : {})
+  const construites: Record<string, number> = {}
+  for (const id of h.possedees) {
+    if (deBase.has(id)) continue
+    const n = gardes[id]
+    construites[id] = Math.max(1, typeof n === 'number' && Number.isInteger(n) && n > 0 ? n : 1, placesPrises(h, id))
+  }
+  if (Object.keys(construites).length > 0) h.construites = construites
   return h
 }
 

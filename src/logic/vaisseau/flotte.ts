@@ -97,7 +97,7 @@ export type EtatVaisseau = { hangar: Hangar; ouvertes: string[]; rang: number; p
 /** La flotte : les vaisseaux qu'on a (par modèle), et celui qu'on pilote. */
 export type Flotte = { actif: string; vaisseaux: Record<string, EtatVaisseau> }
 
-const copie = (h: Hangar): Hangar => ({ possedees: [...h.possedees], montees: { ...h.montees }, outils: [...h.outils], armes: [...h.armes] })
+const copie = (h: Hangar): Hangar => ({ possedees: [...h.possedees], montees: { ...h.montees }, outils: [...h.outils], armes: [...h.armes], ...(h.construites === undefined ? {} : { construites: { ...h.construites } }) })
 const vaisseauNeuf = (mo: ModeleDeVaisseau): EtatVaisseau => ({ hangar: copie(mo.serie), ouvertes: [], rang: 0, progres: 0 })
 export const flotteNeuve = (): Flotte => ({ actif: MODELES[0].id, vaisseaux: { [MODELES[0].id]: vaisseauNeuf(MODELES[0]) } })
 
@@ -176,12 +176,15 @@ function lireVaisseau(mo: ModeleDeVaisseau, brut: unknown): EtatVaisseau {
       montees: { coque: ok(h.montees.coque) ? h.montees.coque : mo.serie.montees.coque, propulseur: ok(h.montees.propulseur) ? h.montees.propulseur : mo.serie.montees.propulseur },
       outils: h.outils.map((id) => (ok(id) ? id : '')),
       armes: h.armes.map((id) => (ok(id) ? id : '')),
+      construites: Object.fromEntries(Object.entries(h.construites ?? {}).filter(([id]) => ok(id))),
     }
   }
   // (deux passes : la première borne aux pièces du modèle, la seconde reborne les listes au châssis resté monté)
   const hangar = lireHangar(duModele(lireHangar(b.hangar, copie(mo.serie))), copie(mo.serie))
   const ouvertes: string[] = []
   if (Array.isArray(b.ouvertes)) for (const id of b.ouvertes) if (typeof id === 'string' && mo.pieces.includes(id) && pieceDe(id) !== undefined && !ouvertes.includes(id)) ouvertes.push(id)
+  // (une pièce qu'on a construite reste à construire : perdue jusqu'au dernier exemplaire, elle ne quitte pas la liste)
+  for (const id of Object.keys(hangar.construites ?? {})) if (!ouvertes.includes(id)) ouvertes.push(id)
   const rang = typeof b.rang === 'number' && Number.isInteger(b.rang) && b.rang >= 0 ? Math.min(b.rang, mo.chaine.length) : 0
   const cible = mo.chaine[rang]?.cible ?? 0
   const progres = typeof b.progres === 'number' && Number.isFinite(b.progres) && b.progres > 0 ? Math.min(cible, b.progres) : 0
