@@ -32,6 +32,7 @@ import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
+import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -163,6 +164,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** `&tuto=0` : le tutoriel des quêtes est passé d'emblée (tous les onglets ouverts), pour essayer la suite d'un lien. */
   if (parametres.get('tuto') === '0' && !tutorielFini(quetes)) quetes = quetesSansTutoriel(1, (x) => aLaMecanique(labo, x as Mecanique))
   const sauver = (): void => {
+    if (parametres.has('vortex')) return // (le jeu du vortex ne touche pas la sauvegarde)
     flotte = avecLeHangar(flotte, hangar)
     sauverHangar(flotte, tresor, credits, labo, marche, quetes)
   }
@@ -197,6 +199,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
    */
   function compter(c: Compteur, valeur: number): void {
+    if (parametres.has('vortex')) return // (ni missions ni contrats dans le jeu du vortex)
     const avant = new Set(quetes.actives.filter(estTerminee).map((q) => q.modele))
     const etapesAvant = new Map(quetes.actives.map((q) => [q.modele, etapesFaites(q)]))
     quetes = noter(quetes, c, valeur)
@@ -688,6 +691,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     CONF = { ...CONF, foreuses: CONF.foreuses.map((f) => ({ ...f, place: ouEstLaForeuse(f.outil, f.cran) })) }
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
+    // (LE JEU DU VORTEX : l'espace vide — ni roche, ni rival, ni quai)
+    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, ennemi: { ...CONF.ennemi, apparait: 1e9, revient: 1e9 } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
     // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
     // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -805,7 +810,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * jeu, et le titre : Nova Drifter ») : le jeu s'ouvre dessus, et c'est SA tape qui fait naître le contexte audio — le
    * hangar arrive donc avec ses sons. `&direct` le saute (ce qui se teste doit s'ouvrir d'un lien).
    */
-  let accueil = !parametres.has('direct')
+  /**
+   * `?vortex` : UN AUTRE JEU SUR LE MÊME MOTEUR (Keko, 14/11 : « on peut essayer un nouveau jeu basé sur notre moteur ?
+   * Lance directement le jeu sans passer via la base : on garde la map de l'espace mais sans astéroïde ni ennemis ni
+   * point d'extraction ; on dessine un vortex au milieu de la map ») : pas d'accueil, pas de base — on vole tout de
+   * suite ; le champ est vide, aucun rival ne naît, la station n'existe pas ; au centre du monde, LE VORTEX
+   * (`keko/vortex`, le « Portal » du dépôt sans son sol). Rien n'y touche la sauvegarde du Nova Drifter.
+   */
+  const VORTEX = parametres.has('vortex')
+  let vortexFx: Instance | null = null
+  let accueil = !parametres.has('direct') && !VORTEX
   let accueilQuitteA: number | null = null
   /**
    * L'ÉCRAN EST D'ABORD ÉTEINT (Keko, 11/11 : « c'est possible de mettre du son à l'apparition du titre avant le tap ? »
@@ -7388,7 +7402,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
     }
     p.place(0, 0)
-    dessinerLesStations(p, separe ? 'monde' : 'tout')
+    if (VORTEX) {
+      // LE VORTEX, au centre du monde, sous le vaisseau : il tourne sans fin
+      if (vortexFx === null) vortexFx = N.createFx(VORTEX_FX as Module, { x: 0, y: 0, seed: 4 })
+      vortexFx.update(dt)
+      vortexFx.options.x = -camera.x + W / 2
+      vortexFx.options.y = -camera.y + centreY()
+      vortexFx.draw(frame)
+      N.painterFor(frame)
+    } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
@@ -7410,7 +7432,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       champDeLaVue = 1
       p = N.painterFor(frame)
       ancrer(p)
-      dessinerLesStations(p, 'texte')
+      if (!VORTEX) dessinerLesStations(p, 'texte')
     }
     dessinerLesBords(p)
     dessinerLesBandeaux(p)
@@ -7439,6 +7461,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   ouvrirLeHangar()
   cadrer()
+  // (le jeu du vortex : on vole tout de suite)
+  if (VORTEX) demarrer()
   new ResizeObserver(cadrer).observe(racine)
   requestAnimationFrame(image)
 }

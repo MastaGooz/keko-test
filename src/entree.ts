@@ -70,7 +70,8 @@ if (archive) {
     const racine = document.getElementById('app')
     if (racine !== null) monterNeon(racine, __BUILD_TIME__)
   })
-} else if (parametres.has('vaisseau')) {
+} else if (parametres.has('vaisseau') || parametres.has('vortex')) {
+  // (`?vortex` : un autre jeu sur le même moteur — l'espace vide et un vortex au milieu ; la page le lit)
   // LE VAISSEAU, un side project : un petit vaisseau en pixel art au manche flottant, l'espace et des astéroïdes.
   void import('./ui/vaisseau/page.ts').then(({ monterVaisseau }) => {
     const racine = document.getElementById('app')
