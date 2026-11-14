@@ -6112,8 +6112,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const du = t - toucheA
       const db = t - bouclierA
       const dernier = m.phase === 'vol' && m.coque <= 1
-      const TIENT = 0.42
-      const VIDE = 0.85
+      const TIENT = 0.15 // (0,42 avant — Keko, 14/11 : la trace du coup restait trop longtemps avant de se vider)
+      const VIDE = 0.5
       const fantomeA = (valeur: number): number => {
         const dc = t - coqueCoupA
         if (dc >= VIDE) return valeur
@@ -6163,7 +6163,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (let x = 0; x < lw; x++) {
           let c: number
           if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
-          else if (u < fant) c = dc < 0.07 || x < 1 ? N.WHITE : x < lw - 2 ? N.hex('#ffe9a8') : or[1]
+          else if (u < fant) c = dc < 0.07 ? N.WHITE : x < 1 ? N.hex('#ff6a5a') : x < lw - 2 ? N.hex('#e02a2a') : N.hex('#9a1a1a') // (LA ZONE PERDUE EN ROUGE, plus en jaune très clair — Keko, 14/11)
           else c = teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2) ?? (x < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
           p.px(bx + x, by + y, traits.has(by + y) ? assombrie(c) : c)
         }
@@ -6183,8 +6183,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const du = t - toucheA
     const db = t - bouclierA
     const dernier = m.phase === 'vol' && m.coque <= 1
-    const TIENT = 0.42
-    const VIDE = 0.85
+    const TIENT = 0.15 // (0,42 avant — Keko, 14/11 : la trace du coup restait trop longtemps avant de se vider)
+    const VIDE = 0.5
     const fantomeA = (valeur: number): number => {
       const dc = t - coqueCoupA
       if (dc >= VIDE) return valeur
@@ -6234,7 +6234,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let v = 0; v < bh; v++) {
         let c: number
         if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
-        else if (u < fant) c = dc < 0.07 || v < 1 ? N.WHITE : v < bh - 2 ? N.hex('#ffe9a8') : or[1]
+        else if (u < fant) c = dc < 0.07 ? N.WHITE : v < 1 ? N.hex('#ff6a5a') : v < bh - 2 ? N.hex('#e02a2a') : N.hex('#9a1a1a') // (la zone perdue en rouge)
         else c = teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2) ?? (v < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
         p.px(bx + x, by + v, traits.has(x) ? assombrie(c) : c)
       }
