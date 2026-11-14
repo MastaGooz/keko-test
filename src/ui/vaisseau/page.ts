@@ -357,6 +357,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const flammesEnnemies = new Map<number, number>()
   let enJeu = false
   let zoom = 2
+  /**
+   * LE CHAMP DE VISION SE RÈGLE AU SECOND MANCHE (Keko, 14/11, à l'essai : « plutôt que le deuxième stick change
+   * l'orientation du vaisseau, en le montant vers le haut et en le descendant vers le bas, on puisse zoomer ou dézoomer
+   * la vue, afin d'augmenter le champ de vision du joueur ») : `champ` — 1, la vue de toujours ; 2, on voit deux fois
+   * plus loin. LE TAMPON GRANDIT D'AUTANT et s'affiche à la même taille d'écran : chaque pixel du jeu est plus petit
+   * (l'interface du vol aussi). Par crans d'un quart (le tampon n'est refait qu'au changement de cran) ; `champVoulu`
+   * glisse entre eux. En vol seulement : la base garde son tampon.
+   */
+  let champ = 1
+  let champVoulu = 1
+  let champApplique = 1
+  const CHAMP_MAX = 2
+  const champDuMoment = (): number => (enJeu && !ecranVisible() ? champ : 1)
   let frame = N.createFrame(W, H)
   let img = g.createImageData(W, H)
   const R = new N.Rng(7)
@@ -557,6 +570,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       zoom = Math.max(1, Math.min(6, Math.floor(large / 180), Math.floor(haut / 320)))
       h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))
     }
+    // (le champ de vision : le tampon grandit, l'écran qu'il couvre ne change pas — un pixel du jeu vaut `zoom` pixels d'écran, moins qu'avant)
+    champApplique = champDuMoment()
+    zoom = zoom / champApplique
+    w = Math.round(w * champApplique)
+    h = Math.round(h * champApplique)
     if (h !== H || w !== W || canvas.height !== h || canvas.width !== w) {
       W = w
       H = h
@@ -4844,7 +4862,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Où le second doigt regarde (longueur 0 à 1), ou rien s'il n'est pas posé. */
   function regardVoulu(): Vecteur | undefined {
-    if (regard !== null) return directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y)
+    // (LE SECOND MANCHE NE TOURNE PLUS LE NEZ, à l'essai : il règle le champ de vision — sauf pour viser une capacité armée)
+    if (regard !== null) return regard.tir ? directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y) : undefined
     // SUR PC, LA SOURIS VISE (Keko, 12/11 : « mouvement sur ZQSD et vise via souris ») : le nez se tourne vers le
     // pointeur, d'autant plus franchement — et la caméra avance d'autant plus — qu'il est loin du vaisseau (à fond à
     // soixante pixels) ; tout près de lui, rien. Dès que la souris a bougé pendant le vol, tant qu'elle est sur le jeu
@@ -5535,8 +5554,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const VUE_PORTRAIT = 320
   /** La hauteur de la vue du vol (320 debout, 180 couché), et sa largeur couchée ; les bandeaux de côté en paysage. */
-  const vueH = (): number => (paysage ? 180 : VUE_PORTRAIT)
-  const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - 320) / 2)) : 0)
+  const vueH = (): number => Math.round((paysage ? 180 : VUE_PORTRAIT) * champApplique)
+  const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - Math.round(320 * champApplique)) / 2)) : 0)
   /** L'interface du vol est dans les bandeaux de côté (couché, et s'ils sont assez larges) : la vue est alors libre. */
   const interfaceEnBande = (): boolean => paysage && bandeCote() >= 30
   /**
@@ -6827,7 +6846,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     avant = ms
     t += dt
     // (le tampon se couche ou se relève quand on décolle ou qu'on rentre, téléphone couché)
-    if (veutLePaysage() !== paysage) cadrer()
+    // LE CHAMP DE VISION : le second manche tenu, vers le bas on dézoome, vers le haut on zoome — à fond, d'un bout à
+    // l'autre en une seconde et demie ; au changement de cran, le tampon est refait et les manches gardent leur place à l'écran
+    if (enJeu && !ecranVisible() && regard !== null && !regard.tir) {
+      const r = MANCHE.manche.rayon / zoom
+      const dy = Math.max(-1, Math.min(1, (regard.doigt.y - regard.centre.y) / r))
+      if (Math.abs(dy) > 0.2) champVoulu = Math.max(1, Math.min(CHAMP_MAX, champVoulu + dy * dt * 0.7))
+      champ = Math.round(champVoulu * 4) / 4
+    }
+    if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) {
+      const avantCadre = zoom
+      cadrer()
+      const k = avantCadre / zoom
+      if (k !== 1) {
+        if (manche !== null) manche = { ...manche, centre: { x: manche.centre.x * k, y: manche.centre.y * k }, doigt: { x: manche.doigt.x * k, y: manche.doigt.y * k } }
+        if (regard !== null) regard = { ...regard, centre: { x: regard.centre.x * k, y: regard.centre.y * k }, doigt: { x: regard.doigt.x * k, y: regard.doigt.y * k } }
+      }
+    }
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
       if (m.bouclier > 0) {
