@@ -17,7 +17,7 @@ import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, con
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boiteDe, boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, modeleDeVaisseau, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -616,6 +616,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     CONF = { ...CONF, foreuses: CONF.foreuses.map((f) => ({ ...f, place: ouEstLaForeuse(f.outil, f.cran) })) }
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
+    // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
+    // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
+    // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
+    if (RIVAL_CUIRASSE) CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 140, tient: 75, lache: 300, cadence: 0.55, vitesseTir: 150, fuit: 99999 } }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
@@ -696,6 +700,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
   type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[] }
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
+  /** Le rival en cuirassé (à l'essai, 14/11 ; `&rival=serie` : le petit rival d'avant) : son allure, tout armé. */
+  const RIVAL_CUIRASSE = parametres.get('rival') !== 'serie'
+  const ALLURE_DU_RIVAL: Allure = RIVAL_CUIRASSE ? { propulseur: 3, coque: 4, foreuse: 3, radar: true, aimant: false, armes: ['canon', 'canon', 'rafale', 'rafale', 'canon', 'canon', 'missiles', 'missiles'], bouclier: 0, outils: [{ famille: 'foreuse', cran: 3 }, { famille: 'radar', cran: 2 }, { famille: 'foreuse', cran: 2 }, null], foreusePlace: 0 } : ALLURE_SERIE
   /** Les outils montés, PLACE PAR PLACE (pour une coque qui les dessine chacun à sa place), et la place de la foreuse qui creuse. */
   const outilsParPlace = (): ({ famille: string; cran: number } | null)[] =>
     Array.from({ length: capacite(hangar, 'outil') }, (_, k) => {
@@ -5211,9 +5218,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cible = e.forage !== null ? e.forage : e.fait === 'chasse' ? { x: v.x, y: v.y } : null
       const vise = cible !== null ? Math.atan2(cible.y - b.y, cible.x - b.x) - b.cap : 0
       const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.1
-      dessinerUnVaisseau(p, b, flammesEnnemies.get(e.id) ?? 0, vise, ALLURE_SERIE, blanchi, true)
+      dessinerUnVaisseau(p, b, flammesEnnemies.get(e.id) ?? 0, vise, ALLURE_DU_RIVAL, blanchi, true)
       // sa vie restante, sous lui (Keko : « afficher la vie restante des ennemis et astéroïdes »)
-      dessinerUneJauge(p, b.x - camera.x + W / 2, b.y - camera.y + centreY() + CONF.ennemi.rayon + 4, 12, e.pv / CONF.ennemi.pv, ROUGE[4], ROUGE[5], blanchi)
+      dessinerUneJauge(p, b.x - camera.x + W / 2, b.y - camera.y + centreY() + CONF.ennemi.rayon + 4, RIVAL_CUIRASSE ? 28 : 12, e.pv / CONF.ennemi.pv, ROUGE[4], ROUGE[5], blanchi)
     }
   }
 
@@ -6047,19 +6054,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // que SA BOÎTE tienne dans quinze pixels — un gros vaisseau y tient comme un petit. (x, y) reste le coin de
     // l'ancien 7 × 8 : la miniature est centrée sur sa place.)
     const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
-      const formes = formesDuVaisseau(allureMontee(0), 0, 0)
-      const [xa, ya, xb, yb] = boiteDe(formes)
-      const COTE = 15
-      // (nez en haut : la largeur à l'écran vient de y, la hauteur de x)
-      const s = Math.min(COTE / Math.max(0.5, yb - ya), COTE / Math.max(0.5, xb - xa))
-      const cx = Math.round(x + 3 - ((ya + yb) / 2) * s)
-      const cy = Math.round(y + 4 + ((xa + xb) / 2) * s)
-      // (SON CERNE : la même silhouette, toute d'encre, posée d'un pixel de chaque côté — sans lui, la miniature se
-      // perdait sur le décor)
-      const D_ENCRE = Object.fromEntries((['coque', 'blinde', 'aile', 'verre', 'metal', 'acier', 'rouge', 'or', 'feu', 'ion', 'laser', 'emeraude', 'carmin', 'grenat', 'ambre', 'violet'] as const).map((mat) => [mat, new Array<number>(8).fill(encre)]))
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) peindreFormes(p, formes, cx + dx, cy + dy, s, { rampes: D_ENCRE, reflet: encre })
-      peindreFormes(p, formes, cx, cy, s, { rampes: rampesDuJoueur(), blanc: blanc ? 1 : 0 })
-      p.place(0, 0)
+      // UN BOUCLIER, finalement (Keko, 14/11 : « à la place de l'icône du vaisseau au-dessus de la barre de vie, tu peux
+      // mettre finalement un symbole de bouclier » — la miniature du vaisseau piloté l'avait remplacé le 13/11) : un écu
+      // d'acier, cerné d'encre, la moitié gauche prise par la lumière, un reflet en haut ; blanc un instant sous un coup
+      const cx = x + 3
+      const y0 = y - 3
+      // (ses rangées, de haut en bas : la demi-largeur de chacune)
+      const DEMI = [4, 5, 5, 5, 5, 5, 4, 4, 3, 2, 1, 0]
+      const CLAIR = blanc ? N.WHITE : COQUE[6]
+      const MOYEN = blanc ? N.WHITE : COQUE[4]
+      DEMI.forEach((d, i) => p.rect(cx - d - 1, y0 + i, 2 * d + 3, 1, encre))
+      p.rect(cx - 4, y0 - 1, 9, 1, encre)
+      p.rect(cx, y0 + DEMI.length, 1, 1, encre)
+      DEMI.forEach((d, i) => {
+        if (d < 1) return p.rect(cx, y0 + i, 1, 1, MOYEN)
+        p.rect(cx - d, y0 + i, d, 1, CLAIR)
+        p.rect(cx, y0 + i, d + 1, 1, MOYEN)
+      })
+      if (!blanc) {
+        p.rect(cx - 3, y0 + 1, 3, 1, N.WHITE)
+        p.rect(cx - 4, y0 + 2, 1, 3, N.WHITE)
+        p.rect(cx, y0 + 1, 1, 9, COQUE[3])
+      }
     }
     if (enBande) {
       // LE BLINDAGE DEBOUT — la même mise en scène que la barre couchée (le « health bar hit » du dépôt), tournée : la

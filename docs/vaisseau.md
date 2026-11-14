@@ -3566,3 +3566,5 @@ Les catégories d'« Équipement » sont PAR CALIBRE (Keko, 14/11) : Châssis, P
 Le STYLE (la livrée) est PAR VAISSEAU (Keko, 14/11) : une clé de stockage par modèle (`chargerLivree(vaisseau)`), relue à chaque changement de vaisseau ; le chasseur garde la couleur déjà choisie.
 
 La page d'une place (la pièce équipée et « Changer ») est SAUTÉE (Keko, 14/11 : « redondante ») : une tape sur une case ouvre directement le panneau des pièces (la liste et la fiche) ; le refermer — la flèche, « Équiper », « Retirer » — ramène aux cases.
+
+À L'ESSAI (Keko, 14/11) : LE RIVAL EST UN CUIRASSÉ lourdement armé, « pour voir si je peux arriver à le tuer avec mon chasseur » — la page surcharge `CONF.ennemi` au décollage (160 points, rayon 18, lent, vire mal, tire toutes les 0,55 s, ne fuit plus) et le dessine en cuirassé tout armé (`ALLURE_DU_RIVAL`) ; `&rival=serie` rend le petit rival. La règle (`VAISSEAU.ennemi`) n'est pas touchée. Et l'icône au-dessus de la barre de blindage redevient UN BOUCLIER (un écu d'acier), à la place de la miniature du vaisseau.
