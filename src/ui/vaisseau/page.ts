@@ -2554,22 +2554,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLeChoixDuVaisseau(p: Peintre, y: number): number {
     const liste = vaisseauxDe(flotte)
-    if (liste.length < 2) return y
+    // (PLUS DE DESSIN : le vaisseau est juste au-dessus, dans la scène — Keko, 14/11 : « juste le nom et un bouton
+    // changer » ; le nom est toujours là, le bouton dès qu'on a deux vaisseaux)
     // LE VAISSEAU PILOTÉ, EN TÊTE DU HANGAR, ET UN VRAI BOUTON « CHANGER » (Keko, 14/11 : « pas très mis en avant, et il
     // faudrait autre chose que des flèches pour changer, un vrai bouton » — c'était son nom entre deux flèches) : une
     // plaque à liseré d'or, son châssis dans un puits, son nom en or, sa classe dessous ; le bouton ouvre LE PANNEAU DES
     // VAISSEAUX (`dessinerLesVaisseaux`), où on choisit lequel piloter.
     const mo = modeleDeVaisseau(flotte.actif)
-    const h = 26
+    const h = 20
     plaque(p, 4, y, W - 8, h, 'encre', { bord: PEPITE[1] })
-    plaque(p, 7, y + 3, 26, h - 6, 'creux')
-    const co = pieceDe(mo.serie.montees.coque)
-    if (co !== undefined) dessinerLePictogramme(p, co, 20, y + h / 2, 26, h - 6)
-    motEnRelief(p, mo.nom, 37 + largeurDe(mo.nom, GRAS) / 2, y + 4, true)
-    ecrire(p, NOMS_CLASSE[mo.classe], 37, y + 14, COQUE[4])
-    const bw = largeurDe('Changer', GRAS) + 16
-    bouton(p, W - 8 - bw, y + 5, bw, 16, 'Changer', true, () => ((vaisseauxOuverts = true), (vaisseauxA = t)), 'ouvre')
-    return y + h + 4
+    motEnRelief(p, mo.nom, 11 + largeurDe(mo.nom, GRAS) / 2, y + 6, true)
+    if (liste.length > 1) {
+      const bw = largeurDe('Changer', GRAS) + 16
+      bouton(p, W - 7 - bw, y + 2, bw, 16, 'Changer', true, () => ((vaisseauxOuverts = true), (vaisseauxA = t)), 'ouvre')
+    }
+    return y + h + 3
   }
   /**
    * LE PANNEAU DES VAISSEAUX, par-dessus le hangar : une carte par vaisseau qu'on a — son châssis, son nom, sa classe,
@@ -2578,7 +2577,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vaisseauxOuverts = false
   let vaisseauxA = -10
   function dessinerLesVaisseaux(p: Peintre, voile = true): void {
-    if (vue !== 'hangar' || etape !== 'vaisseau') vaisseauxOuverts = false
+    if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) vaisseauxOuverts = false
     if (!vaisseauxOuverts) return
     const u0 = sortie((t - vaisseauxA) / 0.18)
     const liste = vaisseauxDe(flotte)
@@ -2643,12 +2642,53 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     lignes.forEach((li, k) => ecrire(p, li, W / 2, y + 4 + k * 9, ROUGE[5], { align: 'center' }))
     return y + h + 3
   }
+  /**
+   * LE HANGAR NE MONTRE PLUS LES PIÈCES D'EMBLÉE (Keko, 14/11 : « on ne va pas afficher les pièces directement dans le
+   * hangar : le nom du vaisseau et un bouton changer ; dessous, un résumé de l'équipement, une vision d'ensemble ; et
+   * pour ouvrir le panneau des pièces, on clique sur un bouton Équipement ») : le nom, LE RÉSUMÉ — le châssis, la
+   * propulsion, puis les places d'outil et d'arme en pastilles (pleine : une pièce y est montée ; les lourdes cerclées
+   * de rouge) —, le bouton « Équipement », et DÉCOLLER. `equipementOuvert` : les cases des pièces sont à l'écran.
+   */
+  let equipementOuvert = false
+  function dessinerLApercu(p: Peintre, y0: number): void {
+    let y = dessinerLesPertes(p, dessinerLeChoixDuVaisseau(p, y0))
+    const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [
+      { nom: 'Châssis', valeur: monteeA(hangar, 'coque').nom },
+      { nom: 'Propulsion', valeur: monteeA(hangar, 'propulseur').nom },
+      { nom: 'Outils', places: Array.from({ length: capacite(hangar, 'outil') }, (_, k) => ({ pleine: pieceDe(hangar.outils[k] ?? '') !== undefined, lourde: false })) },
+      { nom: 'Armes', places: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => ({ pleine: pieceDe(hangar.armes[k] ?? '') !== undefined, lourde: placeLourde(hangar, k) })) },
+    ]
+    const h = lignes.length * 11 + 6
+    plaque(p, 4, y, W - 8, h, 'encre')
+    lignes.forEach((l, i) => {
+      const yl = y + 5 + i * 11
+      ecrire(p, l.nom, 10, yl, COQUE[4])
+      if (l.valeur !== undefined) ecrire(p, l.valeur, W - 10, yl, COQUE[6], { align: 'right' })
+      if (l.places !== undefined) {
+        if (l.places.length === 0) ecrire(p, 'Aucune place', W - 10, yl, COQUE[3], { align: 'right' })
+        l.places.forEach((pl, k) => {
+          const px = W - 10 - (l.places!.length - k) * 9 + 2
+          p.rect(px, yl, 7, 7, pl.lourde ? ROUGE[4] : MATIERES.encre.contour)
+          p.rect(px + 1, yl + 1, 5, 5, pl.pleine ? PEPITE[2] : MATIERES.creux.corps)
+          if (pl.pleine) p.rect(px + 1, yl + 1, 5, 1, N.hex('#fff2a8'))
+        })
+      }
+      if (i > 0) p.rect(10, yl - 3, W - 20, 1, MATIERES.encre.ombre)
+    })
+    y += h + 4
+    const bw = largeurDe('Équipement', GRAS) + 30
+    bouton(p, Math.round(W / 2 - bw / 2), y, bw, 17, 'Équipement', true, () => ((equipementOuvert = true), (etapeA = t), (defilCases = 0)), 'ouvre', 'acier')
+  }
   function dessinerLesEmplacements(p: Peintre, y: number): number {
-    if (vue === 'hangar') y = dessinerLesPertes(p, dessinerLeChoixDuVaisseau(p, y))
+    if (vue === 'hangar') {
+      // (les cases des pièces : on y vient par « Équipement », on en repart par la flèche)
+      enTete(p, y, 'Équipement', () => ((equipementOuvert = false), (etapeA = t)))
+      y += HT + 3
+    }
     const cw = Math.floor((W - 12) / 2)
     const ch = 36
     const cases = casesDuVaisseau()
-    const bas = H - HAUT_NAV - (vue === 'hangar' ? 42 : 4)
+    const bas = H - HAUT_NAV - 4
     const rangs = Math.ceil(cases.length / 2)
     const visibles = Math.max(1, Math.floor((bas - y + 4) / PAS_DES_CASES))
     const maxD = Math.max(0, rangs - visibles)
@@ -2718,8 +2758,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (debout, rien : l'arbre et sa fiche tiennent toute la scène ; couchée, la fiche du nœud est ici)
       if (paysage) dessinerLInfoDuNoeud(p, y)
     } else if (etape === 'vaisseau') {
-      dessinerLesEmplacements(p, y)
-      if (vue === 'hangar') dessinerDecoller(p)
+      if (vue === 'hangar' && !equipementOuvert) {
+        dessinerLApercu(p, y)
+        dessinerDecoller(p)
+      } else dessinerLesEmplacements(p, y)
     } else dessinerLaListe(p, y)
     const u = (t - etapeA) / 0.16
     if (u < 1) p.rect(0, y0, W, H - HAUT_NAV - y0, NUIT, 1 - sortie(u))
