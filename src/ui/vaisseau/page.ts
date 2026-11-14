@@ -2891,7 +2891,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const choisie = i === iSel
       const montee = estMontee(hangar, pc.id)
       if (!choisie && survol !== null && survol.y >= ly && survol.y < ly + RANG_LISTE && survol.x >= 4 && survol.x < W - 4) p.rect(7, ly, larg, RANG_LISTE, N.hex('#1a1626'))
-      ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
+      // (UNE PIÈCE DONT ON N'A AUCUN EXEMPLAIRE EST GRISÉE — Keko, 14/11 : débloquée, mais à construire avant de l'équiper)
+      const aucune = !possede(hangar, pc.id)
+      ecrire(p, pc.nom, 14 + (choisie ? 1 : 0), ly + 3, aucune ? (choisie ? COQUE[4] : COQUE[3]) : choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
       // (LE NOMBRE D'EXEMPLAIRES CONSTRUITS, après le nom, DANS LE MÊME STYLE QUE LUI — Keko, 14/11 : il était en gras et en
       // or même sur une ligne non choisie ; et il n'est QUE sur cette ligne : ni sur la page de la place, ni sur le dessin
       // de la pièce ; rien pour une pièce de base)
