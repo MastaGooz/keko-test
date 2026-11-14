@@ -3564,3 +3564,5 @@ Dans la liste d'une place, une pièce construite dont un exemplaire est monté d
 Les catégories d'« Équipement » sont PAR CALIBRE (Keko, 14/11) : Châssis, Propulsion, puis une catégorie par sorte et par calibre que le châssis porte — « Armes légères », « Armes lourdes », et « Outils » tout court (pas de classes d'outils — Keko) (`placesDuCalibre`, `nomDuCalibre`) ; dedans, les places sont numérotées dans leur catégorie (« Arme 1 »). Le calibre moyen et les outils lourds n'existent pas encore dans la règle.
 
 Le STYLE (la livrée) est PAR VAISSEAU (Keko, 14/11) : une clé de stockage par modèle (`chargerLivree(vaisseau)`), relue à chaque changement de vaisseau ; le chasseur garde la couleur déjà choisie.
+
+La page d'une place (la pièce équipée et « Changer ») est SAUTÉE (Keko, 14/11 : « redondante ») : une tape sur une case ouvre directement le panneau des pièces (la liste et la fiche) ; le refermer — la flèche, « Équiper », « Retirer » — ramène aux cases.

@@ -2568,6 +2568,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     defil[o] = 0
     const occupant = k >= 0 ? listeMontee(o)[k] : undefined
     if (occupant !== undefined && occupant !== '') choix[o] = occupant
+    // (LE PANNEAU DES PIÈCES S'OUVRE DIRECTEMENT — Keko, 14/11 : la page d'avant, la pièce équipée et « Changer », « ne
+    // sert à rien, elle est redondante » : la liste et la fiche tout de suite ; en sortir ramène aux cases)
+    if (vue === 'hangar') ouvrirLeChangement()
   }
   /**
    * LA VUE D'ENSEMBLE, sous la scène : une case par place (au hangar) ou par catégorie (au labo), deux par rangée, qui
@@ -2839,6 +2842,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         dessinerLApercu(p, y)
         dessinerDecoller(p)
       } else dessinerLesEmplacements(p, y)
+    } else if (vue === 'hangar' && !changement) {
+      // (le panneau refermé — la flèche, « Équiper », « Retirer » : on revient aux cases, sans passer par la page de la place)
+      changerDEtape('vaisseau')
+      dessinerLesEmplacements(p, y)
     } else dessinerLaListe(p, y)
     const u = (t - etapeA) / 0.16
     if (u < 1) p.rect(0, y0, W, H - HAUT_NAV - y0, NUIT, 1 - sortie(u))
