@@ -6222,7 +6222,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'écusson : une plaque de blindage, qui bondit et blanchit au coup
     const bond = du >= 0 && du < 0.5 ? Math.round(-3 * Math.exp(-du * 12) * Math.abs(Math.cos(du * 22))) : 0
     const blanc = du >= 0 && du < 0.07
-    dessinerLEcusson(ox + 5, oy + 5 + bond, blanc)
+    // (un pixel plus bas : MESURÉ, le bouclier rétréci était un demi-pixel au-dessus de l'axe de la barre — Keko, 14/11 : « centrer le bouclier par rapport à la barre de vie »)
+    dessinerLEcusson(ox + 5, oy + 6 + bond, blanc)
     p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
