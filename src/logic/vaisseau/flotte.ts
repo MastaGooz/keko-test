@@ -49,11 +49,13 @@ export const MODELES: ModeleDeVaisseau[] = [
     classe: 'chasseur',
     dit: 'Léger et vif : son nez suit le regard. Deux armes légères au plus.',
     pieces: ['coque-1', 'coque-2', 'coque-3', 'propulseur-1', 'propulseur-2', 'propulseur-3', 'foreuse-1', 'foreuse-2', 'foreuse-3', 'aimant-1', 'aimant-2', 'radar', 'arme-canon', 'arme-rafale'],
-    serie: hangarNeuf(),
+    // (LE CANON EST SON ARME DE BASE — Keko, 14/11 : « je ne veux pas me retrouver sans argent, à repartir avec le
+    // vaisseau de base sans armes : comme la foreuse de série, un canon de base que le chasseur puisse embarquer en
+    // toutes circonstances » : possédé sans être construit, il ne se perd pas ; monté d'emblée)
+    serie: { ...hangarNeuf(), possedees: [...hangarNeuf().possedees, 'arme-canon'], armes: ['arme-canon'] },
     chaine: [
       { titre: 'Rodage', dit: 'Réussissez 2 extractions.', compteur: 'extractions', cible: 2, ouvre: 'propulseur-2' },
       { titre: 'Premier filon', dit: 'Extrayez 30 unités de fer.', compteur: 'fer', cible: 30, ouvre: 'foreuse-2' },
-      { titre: 'Éclaireur', dit: 'Éloignez-vous à 700 de la base.', compteur: 'distance', cible: 700, ouvre: 'arme-canon' },
       { titre: 'Baptême du feu', dit: 'Abattez un rival.', compteur: 'rivaux', cible: 1, ouvre: 'coque-2' },
       { titre: 'Pleine soute', dit: 'Extrayez 60 unités.', compteur: 'pepites', cible: 60, ouvre: 'aimant-1' },
       { titre: 'Chasseur de primes', dit: 'Abattez 3 rivaux.', compteur: 'rivaux', cible: 3, ouvre: 'arme-rafale' },

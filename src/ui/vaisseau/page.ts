@@ -6081,7 +6081,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // taille » : LE RENDU DU HANGAR (`peindreFormes`, les formes du vaisseau monté, sa livrée), mis à l'échelle pour
     // que SA BOÎTE tienne dans quinze pixels — un gros vaisseau y tient comme un petit. (x, y) reste le coin de
     // l'ancien 7 × 8 : la miniature est centrée sur sa place.)
-    const dessinerLEcusson = (x: number, y: number, blanc: boolean): void => {
+    const dessinerLEcusson = (x: number, y: number, blanc: boolean, pair = false): void => {
       // UN BOUCLIER, finalement (Keko, 14/11 : « à la place de l'icône du vaisseau au-dessus de la barre de vie, tu peux
       // mettre finalement un symbole de bouclier » — la miniature du vaisseau piloté l'avait remplacé le 13/11) : un écu
       // d'acier, cerné d'encre, la moitié gauche prise par la lumière, un reflet en haut ; blanc un instant sous un coup
@@ -6089,16 +6089,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (PLUS PETIT — Keko, 14/11 : « il est trop gros » : neuf sur dix, onze sur douze avant)
       const y0 = y - 1
       // (ses rangées, de haut en bas : la demi-largeur de chacune)
-      const DEMI = [3, 4, 4, 4, 4, 3, 3, 2, 1, 0]
+      // (`pair` : LARGE D'UN NOMBRE PAIR DE PIXELS, huit — couché, il coiffe une barre de huit : large de neuf, il ne
+      // pouvait être qu'à un demi-pixel de son axe ; Keko, 14/11 : « pas tout à fait au milieu de la barre de PV »)
+      const DEMI = pair ? [3, 4, 4, 4, 4, 3, 3, 2, 1] : [3, 4, 4, 4, 4, 3, 3, 2, 1, 0]
+      const droite = (d: number): number => (pair ? d : d + 1)
       const CLAIR = blanc ? N.WHITE : COQUE[6]
       const MOYEN = blanc ? N.WHITE : COQUE[4]
-      DEMI.forEach((d, i) => p.rect(cx - d - 1, y0 + i, 2 * d + 3, 1, encre))
-      p.rect(cx - 3, y0 - 1, 7, 1, encre)
-      p.rect(cx, y0 + DEMI.length, 1, 1, encre)
+      DEMI.forEach((d, i) => p.rect(cx - d - 1, y0 + i, d + droite(d) + 2, 1, encre))
+      p.rect(cx - 3, y0 - 1, 3 + droite(3), 1, encre)
+      p.rect(cx - (pair ? 1 : 0), y0 + DEMI.length, pair ? 2 : 1, 1, encre)
       DEMI.forEach((d, i) => {
         if (d < 1) return p.rect(cx, y0 + i, 1, 1, MOYEN)
         p.rect(cx - d, y0 + i, d, 1, CLAIR)
-        p.rect(cx, y0 + i, d + 1, 1, MOYEN)
+        p.rect(cx, y0 + i, droite(d), 1, MOYEN)
       })
       if (!blanc) {
         p.rect(cx - 2, y0 + 1, 2, 1, N.WHITE)
@@ -6153,7 +6156,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ex = px0 + Math.round(pw / 2) - 4
       // (un pixel à droite : la miniature est dans l'axe de la barre qu'elle coiffe — Keko, 13/11 : la barre semblait
       // « un petit peu décalée »)
-      dessinerLEcusson(ex + 1, oy + 4 + bond, blanc)
+      dessinerLEcusson(ex + 1, oy + 4 + bond, blanc, true)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
