@@ -6614,8 +6614,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ouRegarder = t - arriveA < ARRIVE_A ? undefined : regardVoulu()
       while (accumule >= PAS) {
         accumule -= PAS
-        // (LE TIR PASSE À LA MAIN quand le manche du regard est tenu — pas pour la visée d'une capacité, ni à la souris)
-        const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, regard !== null && !regard.tir)
+        // (LE TIR RESTE AUTOMATIQUE, manche du regard tenu ou non — Keko, 14/11 : « pas hyper pratique » ; il passait à
+        // la main quand on le tenait. Le second manche ne fait plus que tourner le nez et avancer la caméra — la caméra
+        // seule pour un vaisseau à tourelles. La règle du tir à la main reste dans `jeu.ts`, plus appelée.)
+        const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
         // (`&crash=N` : le vaisseau est détruit N secondes après le décollage, pour essayer la perte des pièces d'un lien)
         if (parametres.has('crash') && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
           m.coque = 0

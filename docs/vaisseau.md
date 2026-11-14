@@ -3548,3 +3548,7 @@ perdu. Comme un vrai jeu d'extraction. »
 - `&crash=N` détruit le vaisseau N secondes après le décollage.
 
 Le son de l'allumage (`allume`) perd son sifflement (Keko, 14/11 : « pas très joli ») : restent le toc du relais, le ronflement grave et le souffle qui s'ouvre.
+
+### Le tir reste automatique (14/11)
+
+Keko : tenir le second manche faisait tirer à la main, « pas hyper pratique ». Les armes tirent toujours seules sur ce qui est à portée ; le second manche ne fait que tourner le nez et avancer la caméra (la caméra seule pour le cuirassé, à tourelles — une priorité de cible a été proposée et écartée pour l'instant). La règle du tir à la main (`manuel` d'`avancerLeMonde`) reste écrite et vérifiée, la page ne l'appelle plus. À revoir pour le PvP.
