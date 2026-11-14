@@ -290,15 +290,32 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   const pris = ins.fait === 'aggro'
   for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
   verifier('approché, l’insecte prend le joueur en chasse, le rejoint et le mord', pris && Math.hypot(ins.corps.x - z.vaisseau.x, ins.corps.y - z.vaisseau.y) < 20 && z.coque < 1000)
-  // le joueur s'en va au loin : l'insecte le suit un temps, puis le lâche et reprend sa marche
-  z.vaisseau = { ...z.vaisseau, x: z.vaisseau.x * 3, y: z.vaisseau.y * 3 }
-  let lache = false
-  for (let i = 0; i < 60 * 12 && !lache; i++) {
-    avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
-    z.vaisseau = { ...z.vaisseau, x: ins.corps.x * 1.25, y: ins.corps.y * 1.25, vx: 0, vy: 0 } // (toujours devant lui, plus loin du portail)
-    lache = ins.fait === 'marche'
+  // il ne lâche que si LE JOUEUR part vraiment loin du portail
+  z.vaisseau = { ...z.vaisseau, x: ins.corps.x * 0.8, y: ins.corps.y * 0.8 } // (plus près du portail que lui)
+  avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+  const tient = ins.fait === 'aggro'
+  const k = (cfg.invasion.lache + 30) / Math.hypot(ins.corps.x, ins.corps.y)
+  z.vaisseau = { ...z.vaisseau, x: ins.corps.x * k, y: ins.corps.y * k, vx: 0, vy: 0 }
+  avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+  verifier('une grande zone d’aggro ; il tient tant que le joueur reste près du portail, et ne lâche que s’il part vraiment loin', cfg.invasion.aggro >= 150 && tient && ins.fait === 'marche')
+  // le contour du portail téléporte, même un insecte en chasse
+  const c2 = nouveauMonde(cfg, 7)
+  loin(c2)
+  for (let i = 0; i < 60 * 6 && c2.ennemis.length === 0; i++) {
+    avancerLeMonde(cfg, c2, 1 / 60, { x: 0, y: 0 })
+    loin(c2)
   }
-  verifier('entraîné trop loin de son ancre ou du portail, il lâche et reprend sa marche', lache)
+  const chasseur = c2.ennemis[0]
+  c2.coque = 1000
+  chasseur.corps = { ...chasseur.corps, x: cfg.invasion.portail + 20, y: 0, vx: 0, vy: 0 }
+  c2.vaisseau = { ...nouveauVaisseau(), x: -40, y: 0 } // (de l'autre côté du portail : il le traverse pour venir)
+  let pasChasse = 0
+  let franchis = 0
+  for (let i = 0; i < 60 * 4 && franchis === 0; i++) {
+    franchis += compter(avancerLeMonde(cfg, c2, 1 / 60, { x: 0, y: 0 }).evenements, 'traverse')
+    if (i === 0) pasChasse = chasseur.fait === 'aggro' ? 1 : 0
+  }
+  verifier('un insecte EN CHASSE qui touche le contour du portail est téléporté : il compte comme passé', pasChasse === 1 && franchis === 1 && c2.invasion.passes === 1 && c2.ennemis.length === 0)
   // LA MORT N'EST PAS LA FIN : abattu, le joueur revient au portail après la pénalité ; le monde a continué
   const mort = nouveauMonde(cfg, 7)
   mort.coque = 0.5

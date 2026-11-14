@@ -506,6 +506,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les braises d'un propulseur ionique : du blanc bleuté au bleu sombre (la rampe de sa flamme, du chaud au froid). */
   /** (LES INSECTES SONT BIOLOGIQUES — Keko, 14/11 : leurs grains de propulsion « en vert plutôt qu'en feu ») */
   const BRAISES_VERTES = ['#f0ffd8', '#c8f77a', '#96e04a', '#62bd34', '#3f9428', '#2a6c20', '#1a4818', '#0e2a10'].map((h) => N.hex(h))
+  const SANG_VERT = [N.hex('#d8ff8a'), N.hex('#8ee03c'), N.hex('#4aa82a'), N.hex('#2a6c20')]
+  /** Les taches que laissent les insectes écrasés (dans le monde) : elles pâlissent et s'en vont en quelques secondes. */
+  let taches: { x: number; y: number; t0: number; graine: number }[] = []
+  const VIE_D_UNE_TACHE = 5
+  function dessinerLesTaches(p: Peintre): void {
+    taches = taches.filter((ta) => t - ta.t0 < VIE_D_UNE_TACHE)
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const ta of taches) {
+      const age = t - ta.t0
+      const k = Math.min(1, age / 0.12)
+      const fondu = age > VIE_D_UNE_TACHE - 1.5 ? (VIE_D_UNE_TACHE - age) / 1.5 : 1
+      for (let i = 0; i < 7; i++) {
+        const a = ((ta.graine * 37 + i * 131) % 360) * (Math.PI / 180)
+        const d = i === 0 ? 0 : (2 + ((ta.graine * 13 + i * 7) % 6)) * k
+        const r = i === 0 ? 3.2 * k : 0.8 + ((ta.graine + i * 5) % 3) * 0.6
+        p.circle(ta.x + Math.cos(a) * d, ta.y + Math.sin(a) * d, r, i % 3 === 0 ? SANG_VERT[2] : SANG_VERT[3], 0.85 * fondu)
+      }
+      if (age < 0.25) p.circle(ta.x, ta.y, 2.2, SANG_VERT[0], 1 - age / 0.25)
+    }
+    p.place(0, 0)
+  }
   const BRAISES_D_ION = [ION[6], ION[5], ION[4], ION[3], ION[3], ION[2], ION[2], ION[1]]
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
   let effets: { fx: Instance; x: number; y: number }[] = []
@@ -7416,6 +7437,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'ennemiDetruit': {
+              if (VORTEX) {
+                // UN INSECTE S'ÉCRASE (Keko, 14/11 : « pas une animation d'explosion : une destruction d'insecte, avec du sang
+                // vert et un bruit de splash ») : une giclée de gouttes vertes, des éclaboussures qui retombent, une
+                // tache qui reste quelques secondes
+                jouer('splash', { dx: ev.x - v.x, dy: ev.y - v.y })
+                for (let i = 0; i < 22; i++) {
+                  const a = R.range(0, Math.PI * 2)
+                  const vit = R.range(25, 120)
+                  etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit + ev.vx * 0.3, Math.sin(a) * vit + ev.vy * 0.3, R.range(0.2, 0.55), SANG_VERT[Math.floor(R.next() * 3)], 1, 4)
+                }
+                for (let i = 0; i < 10; i++) {
+                  const a = R.range(0, Math.PI * 2)
+                  const vit = R.range(8, 40)
+                  braises.ajouter('braise', ev.x + R.range(-2, 2), ev.y + R.range(-2, 2), Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.5, 1), BRAISES_VERTES, 1, 3)
+                }
+                taches.push({ x: ev.x, y: ev.y, t0: t, graine: ev.id })
+                flammesEnnemies.delete(ev.id)
+                if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
+                break
+              }
               // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
               jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
               compter('rivaux', 1)
@@ -7705,6 +7746,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       vortexFx.options.y = -camera.y + centreY()
       vortexFx.draw(frame)
       N.painterFor(frame)
+      dessinerLesTaches(p)
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)

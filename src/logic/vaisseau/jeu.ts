@@ -158,13 +158,16 @@ export const VAISSEAU = {
    * portail des vagues d'ennemis »). Éteinte dans le Nova Drifter. Le portail est au centre du monde ; les insectes
    * naissent sur un cercle autour (`naissance`), PAR VAGUES (`vague` insectes, `renfort` de plus à chaque vague, un
    * toutes les `cadence` secondes ; `repos` entre deux vagues, une fois la précédente finie), et MARCHENT vers lui ; à
-   * `portail` de son centre, ils le TRAVERSENT. L'AGGRO : le joueur à moins de `aggro` d'un insecte, il le prend en
-   * chasse — son ANCRE est l'endroit où il a mordu à l'hameçon ; il LÂCHE s'il s'est éloigné de plus de `laisse` de
-   * cette ancre, ou s'il se retrouve plus loin du portail qu'elle de plus de `recul` ; il reprend alors sa marche, et ne
-   * se laisse plus distraire pendant `calme` secondes. Au contact, il MORD (`morsure` points, toutes les
+   * `portail` de son centre — LE CONTOUR DU PORTAIL —, ils le TRAVERSENT, EN CHASSE OU NON (Keko : « quand un ennemi
+   * rentre en contact avec le contour du portail, il doit obligatoirement être téléporté, même s'il a aggro le
+   * joueur »). L'AGGRO : le joueur à moins de `aggro` d'un insecte — une GRANDE zone (« beaucoup plus importante ») —,
+   * il le prend en chasse ; il ne LÂCHE que si LE JOUEUR part vraiment loin du portail, à plus de `lache` (d'abord une
+   * laisse de 120 autour de l'endroit où il avait été pris : « l'ennemi ne doit quitter son aggro que si le joueur
+   * part vraiment loin du portail ») ; il reprend alors sa marche, et ne se laisse plus distraire pendant `calme`
+   * secondes. Au contact, il MORD (`morsure` points, toutes les
    * `cadenceMorsure` secondes). *Tous les chiffres sont de moi, à rejuger.*
    */
-  invasion: { active: false as boolean, portail: 24, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 70, laisse: 120, recul: 60, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
+  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 170, lache: 430, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
     /**
      * (Keko, 14/11, la suite.) LA MORT N'EST PAS LA FIN : abattu, le joueur revient AU PORTAIL après `penalite` secondes
      * (le monde continue sans lui). LES PÉPITES que les insectes lâchent NE VONT PAS EN SOUTE : chacune vaut un point
@@ -306,8 +309,7 @@ export type Ennemi = {
   pv: number
   /** (`marche` et `aggro` : un insecte de l'invasion — il marche vers le portail, ou il chasse le joueur) */
   fait: 'mine' | 'chasse' | 'fuit' | 'marche' | 'aggro'
-  /** Un insecte : où il a pris le joueur en chasse ; jusqu'à quand il ne se laisse plus distraire ; sa prochaine morsure ; il a traversé le portail. */
-  ancre?: Vecteur
+  /** Un insecte : jusqu'à quand il ne se laisse plus distraire ; sa prochaine morsure ; il a traversé le portail. */
   calmeA?: number
   mordA?: number
   parti?: boolean
@@ -735,16 +737,21 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   const b = e.corps
   const dj = Math.hypot(v.x - b.x, v.y - b.y) || 1
   const dp = Math.hypot(b.x, b.y) || 1
+  // LE CONTOUR DU PORTAIL : qui le touche est téléporté, en chasse ou non — il quitte le monde (la page joue sa disparition)
+  if (dp <= I.portail) {
+    e.parti = true
+    m.invasion.passes += 1
+    ev.push({ type: 'traverse', id: e.id, x: b.x, y: b.y })
+    return []
+  }
   if (e.fait === 'aggro') {
-    const a = e.ancre ?? { x: b.x, y: b.y }
-    if (m.phase !== 'vol' || Math.hypot(b.x - a.x, b.y - a.y) > I.laisse || dp > Math.hypot(a.x, a.y) + I.recul) {
+    // (il ne lâche que si le joueur est vraiment loin du portail — ou abattu)
+    if (m.phase !== 'vol' || Math.hypot(v.x, v.y) > I.lache) {
       e.fait = 'marche'
       e.calmeA = m.t + I.calme
     }
-  } else if (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0)) {
-    e.fait = 'aggro'
-    e.ancre = { x: b.x, y: b.y }
-  } else e.fait = 'marche'
+  } else if (m.phase === 'vol' && dj <= I.aggro && Math.hypot(v.x, v.y) <= I.lache && m.t >= (e.calmeA ?? 0)) e.fait = 'aggro'
+  else e.fait = 'marche'
   let direction: Vecteur
   if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
@@ -752,16 +759,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
       e.mordA = m.t + I.cadenceMorsure
       encaisser(c, m, v.x, v.y, I.morsure, ev)
     }
-  } else {
-    if (dp <= I.portail) {
-      // IL TRAVERSE LE PORTAIL : il quitte le monde (la page joue sa disparition)
-      e.parti = true
-      m.invasion.passes += 1
-      ev.push({ type: 'traverse', id: e.id, x: b.x, y: b.y })
-      return []
-    }
-    direction = { x: -b.x / dp, y: -b.y / dp }
-  }
+  } else direction = { x: -b.x / dp, y: -b.y / dp }
   e.corps = voler(c, c.ennemi, b, dt, direction, m.detruits).vaisseau
   return []
 }

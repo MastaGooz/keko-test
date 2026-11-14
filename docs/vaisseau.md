@@ -3634,3 +3634,4 @@ la prochaine fois ».
 
 *Les talents, leurs chiffres et la courbe d'expérience sont de moi.*
 
+Réglages de l'invasion (Keko, 14/11) : LA ZONE D'AGGRO est bien plus grande (170, c'était 70) ; l'insecte ne LÂCHE que si LE JOUEUR part vraiment loin du portail (`lache`, 430 — plus de laisse autour de l'endroit où il avait été pris) ; LE CONTOUR DU PORTAIL (`portail`, 32) TÉLÉPORTE qui le touche, en chasse ou non, et il compte comme passé. UN INSECTE ABATTU S'ÉCRASE, il n'explose plus : une giclée de gouttes vertes, une tache qui pâlit en cinq secondes (`taches`), le son `splash` (un choc mou, un souffle mouillé, deux gouttes).

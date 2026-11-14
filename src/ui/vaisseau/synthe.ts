@@ -295,6 +295,20 @@ const RECETTES = {
       eclats(m, h, 9, 0.05, 0.55, 0.45)
     },
   },
+  /**
+   * un insecte s'écrase (le jeu du vortex — Keko, 14/11 : « pas une explosion : une destruction d'insecte, avec du sang
+   * vert et un bruit de splash ») : un choc mou et court, un souffle mouillé qui retombe, deux gouttes qui claquent
+   */
+  splash: {
+    duree: 0.7, niveau: 0.75, salle: [0.35, 0.12],
+    faire: (m, h) => {
+      note(m, 0, 0.7, 0, { f: 150, glisse: { vers: 70, en: 0.05 }, a: 0.003, d: 0.16, partiels: CORPS, sature: 1.6 })
+      souffle(m, h, 0, 0.9, 0, { f: 1100, glisse: { vers: 260, en: 0.09 }, q: 1.4, bande: true, a: 0.004, d: 0.22, large: true })
+      souffle(m, h, 0.03, 0.5, 0.2, { f: 2600, glisse: { vers: 900, en: 0.06 }, q: 2, bande: true, a: 0.003, d: 0.1 })
+      note(m, 0.09, 0.25, -0.3, { f: 520, glisse: { vers: 880, en: 0.04, droit: true }, a: 0.004, d: 0.07 })
+      note(m, 0.15, 0.2, 0.3, { f: 640, glisse: { vers: 1040, en: 0.04, droit: true }, a: 0.004, d: 0.06 })
+    },
+  },
   /** un trait du rival perce la coque : un choc mat, la tôle qui répond */
   touche: {
     duree: 0.7, niveau: 0.75, salle: [0.4, 0.15],
