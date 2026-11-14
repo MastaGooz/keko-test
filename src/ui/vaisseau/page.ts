@@ -362,7 +362,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * l'orientation du vaisseau, en le montant vers le haut et en le descendant vers le bas, on puisse zoomer ou dézoomer
    * la vue, afin d'augmenter le champ de vision du joueur ») : `champ` — 1, la vue de toujours ; 2, on voit deux fois
    * plus loin. LE TAMPON GRANDIT D'AUTANT et s'affiche à la même taille d'écran : chaque pixel du jeu est plus petit
-   * (l'interface du vol aussi). Par crans d'un quart (le tampon n'est refait qu'au changement de cran) ; `champVoulu`
+   * (l'interface du vol aussi). Par pas de deux pixels de tampon (un quart de champ d'abord : « par à-coups ») ; `champVoulu`
    * glisse entre eux. En vol seulement : la base garde son tampon.
    */
   let champ = 1
@@ -6852,7 +6852,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const r = MANCHE.manche.rayon / zoom
       const dy = Math.max(-1, Math.min(1, (regard.doigt.y - regard.centre.y) / r))
       if (Math.abs(dy) > 0.2) champVoulu = Math.max(1, Math.min(CHAMP_MAX, champVoulu + dy * dt * 0.7))
-      champ = Math.round(champVoulu * 4) / 4
+      // (PROGRESSIF — Keko, 14/11 : « ça zoome par à-coups, j'aurais voulu un zoom progressif » : il allait par crans
+      // d'un quart ; le tampon grandit maintenant de deux pixels de large à la fois)
+      champ = Math.round(champVoulu * 90) / 90
     }
     if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) {
       const avantCadre = zoom
