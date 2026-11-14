@@ -716,7 +716,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     // (LE JEU DU VORTEX : l'espace vide — ni roche, ni rival, ni quai)
-    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
+    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || CONF.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
     // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
     // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -869,9 +869,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLExperience(p: Peintre): void {
     const inv = m.invasion
     const wn = largeurDe('000', GRAS)
+    // (EN HAUT, AU CENTRE DE L'ÉCRAN — Keko, 14/11 ; debout, elle prend la première rangée, la vague et la vie passent dessous : voir `hautDuHud`)
     const large = paysage ? Math.min(180, W - 2 * bandeCote() - 150) : W - 12
-    const x = paysage ? Math.round(W / 2 - large / 2) : 6
-    const y = paysage ? 4 : hautDuHud() + 34
+    const x = Math.round(W / 2 - large / 2)
+    const y = paysage ? 4 : hautDuHud() - RANG_DE_L_EXPERIENCE + 1
     const neuf = t - niveauA < 0.8
     motEnRelief(p, String(inv.niveau), x + wn - largeurDe(String(inv.niveau), GRAS) / 2, y + (neuf ? Math.round(-2 * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true)
     const bx = x + wn + 4
@@ -976,14 +977,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'INTERFACE DE L'INVASION, en haut à gauche : la vague, les insectes abattus, ceux qui ont traversé le portail. */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
+    // (EN HAUT À GAUCHE : la vague, et LA VIE DU PORTAIL en pour cent — Keko, 14/11 : « n'affiche pas le nombre de kills
+    // ni le nombre d'ennemis qui sont passés ; uniquement la vague, et le pourcentage de vie du portail »)
     const x = paysage ? Math.max(6, bandeCote() + 6) : 6
     const y = hautDuHud() + 4
     const neuve = t - vagueA < 1.2
     motEnRelief(p, `Vague ${Math.max(1, inv.vague)}`, x + largeurDe(`Vague ${Math.max(1, inv.vague)}`, GRAS) / 2, y + (neuve ? Math.round(Math.sin((t - vagueA) * 20) * 2 * (1 - (t - vagueA) / 1.2)) : 0), true)
-    ecrire(p, `Abattus ${inv.abattus}`, x, y + 11, COQUE[5])
-    ecrire(p, `Passés ${inv.passes}`, x, y + 21, t - passeA < 0.5 ? N.WHITE : inv.passes > 0 ? ROUGE[5] : COQUE[4], { police: t - passeA < 0.5 ? GRAS : TEXTE })
+    const touche = t - passeA < 0.5
+    const vie = Math.max(0, Math.ceil(inv.vie))
+    ecrire(p, `Portail ${vie} %`, x + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * (1 - (t - passeA) / 0.5)) : 0), y + 11, touche ? N.WHITE : vie <= 25 ? ROUGE[5] : vie <= 50 ? PEPITE[3] : N.hex('#cf9bff'), { police: GRAS })
     dessinerLExperience(p)
     dessinerLeRetour(p)
+  }
+  /** LA FIN DE LA PARTIE : le portail est tombé — un voile, la vague atteinte, « Rejouer ». */
+  let finA = -10
+  function dessinerLaFin(p: Peintre): void {
+    if (!m.invasion.finie) return
+    const u0 = sortie((t - finA) / 0.4)
+    p.rect(0, 0, W, H, NUIT, 0.78 * u0)
+    zones = []
+    const cy = Math.round(H / 2)
+    motEnRelief(p, 'Portail perdu', W / 2, cy - 30 + Math.round((1 - u0) * 8), true, TITRE)
+    ecrire(p, `Vague ${Math.max(1, m.invasion.vague)} / Niveau ${m.invasion.niveau}`, W / 2, cy - 8, COQUE[6], { align: 'center', police: GRAS })
+    if (t - finA > 0.8) {
+      const bw = largeurDe('Rejouer', GRAS) + 30
+      bouton(p, Math.round(W / 2 - bw / 2), cy + 10, bw, 17, 'Rejouer', true, () => {
+        choixDeTalent = null
+        reserveDeTalents = 0
+        taches = []
+        enJeu = false
+        demarrer()
+      }, 'achat')
+    }
+    zone(0, 0, W, H, () => {}, null)
   }
   let accueil = !parametres.has('direct') && !VORTEX
   let accueilQuitteA: number | null = null
@@ -5893,7 +5919,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return bandeHaut() + Math.min(H, vueH()) / 2
   }
   /** Le haut de l'interface du vol (la plaque de soute), et son bas (sous les pastilles du porté). */
-  const hautDuHud = (): number => Math.max(5, bandeHaut() - (BAS_DU_HUD - 5) - 4)
+  /** (debout, dans le jeu du vortex, la barre d'expérience prend la première rangée de l'écran : le reste de l'interface descend d'autant) */
+  const RANG_DE_L_EXPERIENCE = 11
+  const hautDuHud = (): number => Math.max(5, bandeHaut() - (BAS_DU_HUD - 5) - 4) + (VORTEX && !paysage ? RANG_DE_L_EXPERIENCE : 0)
   const basDuHud = (): number => hautDuHud() + BAS_DU_HUD - 5
   /**
    * Les deux bandeaux, DISCRETS (Keko : « un peu plus discrètes ») : un aplat de la couleur du fond de la page — la
@@ -7420,6 +7448,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               } else choixDeTalent = { aFaire: enCours.aFaire + 1, rang: enCours.rang }
               break
             }
+            case 'fin': {
+              // LE PORTAIL EST TOMBÉ : la partie s'arrête sur son écran de fin
+              finA = t
+              jouer('perdu')
+              secousse = 1
+              break
+            }
             case 'traverse': {
               // UN INSECTE TRAVERSE LE PORTAIL : il s'y défait (la téléportation du départ, à sa taille), et le portail le dit
               jouer('extrait', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -7789,6 +7824,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeManche(p)
     dessinerLesToasts(dt)
     if (VORTEX) dessinerLeChoixDeTalent(p)
+    if (VORTEX) dessinerLaFin(p)
     // (séparée du monde, l'interface est transparente là où elle ne peint rien : le monde est dessous)
     if (separe) N.composite(frame, img.data, null)
     else N.composite(frame, img.data, cuireLeCiel())

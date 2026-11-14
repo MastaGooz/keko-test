@@ -339,6 +339,21 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   let niveaux = 0
   for (let i = 0; i < 60; i++) niveaux += compter(avancerLeMonde(cfg, xp, 1 / 60, { x: 0, y: 0 }).evenements, 'niveau')
   verifier('l’expérience : la barre pleine fait un niveau, le surplus reste ; la soute ne reçoit rien', niveaux === 1 && xp.invasion.niveau === 2 && xp.invasion.xp === 1 && xp.minerai === 0 && xpDuNiveau(cfg, 2) > xpDuNiveau(cfg, 1))
+  // LA VIE DU PORTAIL : chaque insecte passé lui enlève un pour cent ; à zéro, la partie est finie et plus rien n'avance
+  const fragile = { ...cfg, invasion: { ...cfg.invasion, viePortail: 2 } }
+  const f = nouveauMonde(fragile, 7)
+  loin(f)
+  let fins = 0
+  let vieApresUn = -1
+  for (let i = 0; i < 60 * 60 && fins === 0; i++) {
+    const r = avancerLeMonde(fragile, f, 1 / 60, { x: 0, y: 0 })
+    loin(f)
+    if (f.invasion.passes === 1 && vieApresUn < 0) vieApresUn = f.invasion.vie
+    fins += compter(r.evenements, 'fin')
+  }
+  const tFin = f.t
+  avancerLeMonde(fragile, f, 1, { x: 0, y: 0 })
+  verifier('le portail commence à 100 %, perd un pour cent par insecte passé ; à zéro, la partie est finie et le monde s’arrête', nouveauMonde(cfg, 7).invasion.vie === 100 && vieApresUn === 1 && fins === 1 && f.invasion.vie === 0 && f.invasion.finie && f.t === tFin)
   const paisible = nouveauMonde(VAISSEAU, 7)
   verifier('le Nova Drifter n’a pas d’invasion', !VAISSEAU.invasion.active && paisible.invasion.vague === 0)
 }

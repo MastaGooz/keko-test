@@ -175,6 +175,12 @@ export const VAISSEAU = {
      * (`niveau`) — la page met alors le jeu en pause pour le choix d'un talent.
      */
     penalite: 10, xpBase: 5, xpPas: 3,
+    /**
+     * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
+     * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
+     * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
+     */
+    viePortail: 100, degatsAuPortail: 1,
   },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
@@ -338,7 +344,7 @@ export type Monde = {
   ennemis: Ennemi[]
   prochainEnnemiA: number
   /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
-  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number }
+  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; finie: boolean }
   tirs: Tir[]
   /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
   obus: Obus[]
@@ -402,13 +408,15 @@ export type Evenement =
   /** L'invasion : un niveau gagné ; le joueur abattu revient au portail. */
   | { type: 'niveau'; niveau: number }
   | { type: 'retour' }
+  /** L'invasion : le portail est tombé, la partie est finie. */
+  | { type: 'fin'; vague: number }
 
 export function nouveauVaisseau(): Vaisseau {
   return { x: 0, y: 0, vx: 0, vy: 0, cap: -Math.PI / 2, poussee: 0, parcouru: 0, contact: null }
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -742,6 +750,14 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     e.parti = true
     m.invasion.passes += 1
     ev.push({ type: 'traverse', id: e.id, x: b.x, y: b.y })
+    // (chaque insecte passé entame le portail ; à zéro, c'est la fin de la partie)
+    if (!m.invasion.finie) {
+      m.invasion.vie = Math.max(0, m.invasion.vie - I.degatsAuPortail)
+      if (m.invasion.vie <= 0) {
+        m.invasion.finie = true
+        ev.push({ type: 'fin', vague: m.invasion.vague })
+      }
+    }
     return []
   }
   if (e.fait === 'aggro') {
@@ -1039,6 +1055,8 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
  */
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
+  // (le portail tombé, la partie est finie : plus rien n'avance)
+  if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.phase !== 'vol') {
     if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev)
     return { chocs: [], evenements: ev }
