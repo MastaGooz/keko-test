@@ -390,6 +390,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que les boutons ont demandé : le champ y glisse. */
   let champCible = 1
   let champApplique = 1
+  /** Sur PC (un pointeur fin), en vol : le jeu couvre toute la page (voir `cadrer`). `&couvre=0` rend les marges. */
+  const PC = typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches && parametres.get('couvre') !== '0'
+  const doitCouvrir = (): boolean => PC && enJeu && !ecranVisible()
+  let couvreApplique = false
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
@@ -643,6 +647,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else {
       zoom = Math.max(1, Math.min(6, Math.floor(large / 180), Math.floor(haut / 320)))
       h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))
+    }
+    // SUR PC, EN VOL, LE JEU COUVRE TOUTE LA PAGE (Keko, 14/11 : « adapter l'écran à celui d'un PC pour que l'écran de jeu
+    // recouvre toute la page Internet, quitte à ce que le vaisseau soit plus zoomé ») : le tampon prend LA FORME DE LA
+    // PAGE, taillé DANS la vue fixe (320 × 180, ou 180 × 320 debout) — on ne voit jamais plus loin qu'un autre joueur,
+    // on voit un peu moins sur le côté qui dépasse — et il est agrandi d'un facteur QUELCONQUE, plus forcément entier,
+    // jusqu'aux bords : plus de marges autour, plus de bandeaux noirs. Au doigt et à la base, rien ne change.
+    couvreApplique = doitCouvrir()
+    if (couvreApplique && large > 0 && haut > 0) {
+      const VW = paysage ? 320 : 180
+      const VH = paysage ? 180 : 320
+      const r = large / haut
+      if (r > VW / VH) {
+        w = VW
+        h = Math.max(60, Math.round(VW / r))
+      } else {
+        h = VH
+        w = Math.max(60, Math.round(VH * r))
+      }
+      zoom = large / w
     }
     if (h !== H || w !== W || canvas.height !== h || canvas.width !== w) {
       W = w
@@ -6318,7 +6341,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // EN PAYSAGE, LE PUPITRE N'A PAS DE MILIEU (Keko, 13/11 : « la barre en haut est vide au milieu, on devrait retirer
     // la partie centrale pour libérer de la visibilité ») : deux morceaux, un sous la soute, un sous le blindage, fermés
     // d'un filet sur leur bord intérieur ; entre les deux, le ciel.
-    {
+    // (PAS DE PUPITRE dans le jeu du vortex : ses barres sont posées à même le ciel)
+    if (!VORTEX) {
       const yb = yHud + 22
       const morceau = (x0: number, x1: number): void => {
         for (let y = 0; y <= Math.min(H - 1, yb); y++) frame.light.fill(0, y * W + x0, y * W + x1)
@@ -7383,7 +7407,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       champVoulu += (champCible - champVoulu) * Math.min(1, dt / 1.1)
     }
     champ = Math.round(champVoulu * 90) / 90
-    if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) cadrer()
+    if (veutLePaysage() !== paysage || champDuMoment() !== champApplique || doitCouvrir() !== couvreApplique) cadrer()
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
       if (m.bouclier > 0) {
