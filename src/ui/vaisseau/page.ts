@@ -2604,7 +2604,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     motEnRelief(p, mo.nom, 11 + largeurDe(mo.nom, GRAS) / 2, y + 6, true)
     if (liste.length > 1) {
       const bw = largeurDe('Changer', GRAS) + 16
-      bouton(p, W - 7 - bw, y + 2, bw, 16, 'Changer', true, () => ((vaisseauxOuverts = true), (vaisseauxA = t)), 'ouvre')
+      // (EN ACIER CLAIR, le mot sombre — Keko, 14/11 : jaune, il « renvoie trop au bouton décollage en dessous » ; « un
+      // petit peu plus visible que le bouton équipement, mais pas jaune »)
+      const bxc = W - 7 - bw
+      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t)), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
     }
     return y + h + 3
   }
