@@ -977,12 +977,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
-    const x0 = paysage ? Math.max(4, bandeCote() + 4) : 4
-    const droite = paysage ? W - Math.max(4, bandeCote() + 4) : W - 4
+    // (À NEUF PIXELS DES BORDS, les deux blocs rapprochés l'un de l'autre — Keko, 14/11 : « qu'ils s'éloignent des bords »)
+    const MARGE = 9
+    const x0 = paysage ? Math.max(MARGE, bandeCote() + MARGE) : MARGE
+    const droite = paysage ? W - Math.max(MARGE, bandeCote() + MARGE) : W - MARGE
     const y = paysage ? 4 : hautDuHud() - RANG_DE_L_EXPERIENCE + 1
     // l'icône : un petit vortex — un anneau violet, son puits sombre, deux bras clairs qui tournent
     const cx = x0 + 5
-    const cy = y + 3
+    const cy = y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
     p.circle(cx, cy, 5.6, N.hex('#12081f'))
     p.circle(cx, cy, 4.6, touche ? N.WHITE : N.hex('#a35cff'))
@@ -998,7 +1000,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const wv = largeurDe('100 %', GRAS)
     const xv = x0 + 13
     motEnRelief(p, vie, xv + largeurDe(vie, GRAS) / 2 + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * (1 - (t - passeA) / 0.5)) : 0), y, 'violet')
-    const xe = xv + wv + 5
+    const xe = xv + wv + 2
     dessinerLExperience(p, xe, y, droite - xe)
     dessinerLeRetour(p)
   }
