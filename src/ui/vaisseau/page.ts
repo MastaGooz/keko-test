@@ -1739,7 +1739,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (!e.enfonce) ombrePortee(p, xi, yt - 26, ls[i], 17)
           plaque(p, xi, yt - 26 + e.dy, ls[i], 17, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
           ecrire(p, nm, xi + ls[i] / 2, yt - 21 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center', police: GRAS })
-          if (i === 1 && !actif && vaisseauxDe(flotte).some((nav) => missionDe(flotte, nav.id)?.finie === true)) {
+          // (sur LES DEUX onglets — Keko, 14/11 : « je ne la vois pas dans les contrats »)
+          if (!actif && (i === 1 ? vaisseauxDe(flotte).some((nav) => missionDe(flotte, nav.id)?.finie === true) : quetes.actives.some(estTerminee))) {
             p.rect(xi + ls[i] - 5, yt - 28, 5, 5, MATIERES.encre.contour)
             p.rect(xi + ls[i] - 4, yt - 27, 3, 3, Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2])
           }
