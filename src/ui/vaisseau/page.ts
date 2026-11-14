@@ -6642,7 +6642,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const pw = 22
       const px0 = W - Math.round(bandeCote() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
       const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
-      const bx = px0 + 7 + Math.floor((8 - lw) / 2)
+      // (dans le jeu du vortex, LE BOUCLIER EST À GAUCHE du blindage — Keko, 14/11 : la barre d'or se décale à droite)
+      const bx = px0 + 7 + Math.floor((8 - lw) / 2) + (DEUX_BARRES ? 2 : 0)
       // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
       // (… PUIS JUSQU'EN HAUT : son sommet est celui de la barre d'expérience — Keko, 14/11)
       const by = oy + (DEUX_BARRES ? 0 : 17)
@@ -6686,12 +6687,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
       if (DEUX_BARRES && CONF.bouclier.points > 0) {
-        // LE BOUCLIER : une barre fine, bleue, contre le flanc droit du blindage, qui se vide par le haut
+        // LE BOUCLIER : une barre fine, bleue, contre le flanc GAUCHE du blindage, qui se vide par le haut
         const fin = 3
-        p.rect(bx + lw, by - 1, fin + 2, BH + 2, encre)
+        const xf = bx - fin - 1
+        p.rect(xf - 1, by - 1, fin + 2, BH + 2, encre)
         const plein = Math.round(BH * partDuBouclier())
-        for (let y = 0; y < BH; y++) p.rect(bx + lw + 1, by + y, fin, 1, teinteDeLaBarreFine(BH - y <= plein, 1))
-        if (plein > 0) p.rect(bx + lw + 1, by + BH - plein, 1, plein, teinteDeLaBarreFine(true, 0))
+        for (let y = 0; y < BH; y++) p.rect(xf, by + y, fin, 1, teinteDeLaBarreFine(BH - y <= plein, 1))
+        if (plein > 0) p.rect(xf, by + BH - plein, 1, plein, teinteDeLaBarreFine(true, 0))
       }
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(bandeCote() / 2) - 7, by + BH + 6, true)
@@ -7585,7 +7587,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'traverse': {
               // UN INSECTE TRAVERSE LE PORTAIL : il y est ASPIRÉ, et le portail le dit
-              jouer('breche', { dx: ev.x - v.x, dy: ev.y - v.y })
+              // (SANS POSITION, AU MÊME VOLUME OÙ QU'ON SOIT — Keko, 14/11 : « pour que les joueurs aient bien l'information »)
+              jouer('breche')
               {
                 // (son image est aspirée : la règle l'a déjà retiré du monde, on garde où il était et vers où il regardait)
                 const parti = dernierVu.get(ev.id)
