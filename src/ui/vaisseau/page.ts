@@ -2690,6 +2690,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que la dernière destruction a coûté : les pièces perdues, dites au hangar une dizaine de secondes (depuis qu'on le voit). */
   let pertes: { noms: string[]; t0: number | null } | null = null
   function dessinerLesPertes(p: Peintre, y: number): number {
+    // (LE MESSAGE EST RETIRÉ — Keko, 14/11 : « quand on perd une partie, n'affiche pas en rouge un message pour dire ce
+    // qu'on a perdu » ; les pièces sont perdues quand même, le hangar le montre par ses places vides. `&pertes` le rend.)
+    if (!parametres.has('pertes')) pertes = null
     if (pertes === null) return y
     if (pertes.t0 === null) pertes.t0 = t
     const age = t - pertes.t0
@@ -6083,13 +6086,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // mettre finalement un symbole de bouclier » — la miniature du vaisseau piloté l'avait remplacé le 13/11) : un écu
       // d'acier, cerné d'encre, la moitié gauche prise par la lumière, un reflet en haut ; blanc un instant sous un coup
       const cx = x + 3
-      const y0 = y - 3
+      // (PLUS PETIT — Keko, 14/11 : « il est trop gros » : neuf sur dix, onze sur douze avant)
+      const y0 = y - 1
       // (ses rangées, de haut en bas : la demi-largeur de chacune)
-      const DEMI = [4, 5, 5, 5, 5, 5, 4, 4, 3, 2, 1, 0]
+      const DEMI = [3, 4, 4, 4, 4, 3, 3, 2, 1, 0]
       const CLAIR = blanc ? N.WHITE : COQUE[6]
       const MOYEN = blanc ? N.WHITE : COQUE[4]
       DEMI.forEach((d, i) => p.rect(cx - d - 1, y0 + i, 2 * d + 3, 1, encre))
-      p.rect(cx - 4, y0 - 1, 9, 1, encre)
+      p.rect(cx - 3, y0 - 1, 7, 1, encre)
       p.rect(cx, y0 + DEMI.length, 1, 1, encre)
       DEMI.forEach((d, i) => {
         if (d < 1) return p.rect(cx, y0 + i, 1, 1, MOYEN)
@@ -6097,9 +6101,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(cx, y0 + i, d + 1, 1, MOYEN)
       })
       if (!blanc) {
-        p.rect(cx - 3, y0 + 1, 3, 1, N.WHITE)
-        p.rect(cx - 4, y0 + 2, 1, 3, N.WHITE)
-        p.rect(cx, y0 + 1, 1, 9, COQUE[3])
+        p.rect(cx - 2, y0 + 1, 2, 1, N.WHITE)
+        p.rect(cx - 3, y0 + 2, 1, 2, N.WHITE)
+        p.rect(cx, y0 + 1, 1, 7, COQUE[3])
       }
     }
     if (enBande) {
