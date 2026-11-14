@@ -848,7 +848,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
   let vortexFx: Instance | null = null
   /** Quand la dernière vague a commencé, quand le dernier insecte a traversé (l'interface le marque). */
-  let vagueA = -10
   let passeA = -10
   /** Quand la dernière pépite d'expérience est montée à bord ; quand le dernier niveau a été gagné. */
   let xpA = -10
@@ -866,13 +865,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * symbole : juste le chiffre du niveau, en prévoyant qu'il peut aller jusqu'à trois chiffres ») : le niveau à
    * gauche, dans la place de trois chiffres, puis la barre ; elle s'allume à chaque pépite, flambe au niveau gagné.
    */
-  function dessinerLExperience(p: Peintre): void {
+  function dessinerLExperience(p: Peintre, x: number, y: number, large: number): void {
     const inv = m.invasion
     const wn = largeurDe('000', GRAS)
-    // (EN HAUT, AU CENTRE DE L'ÉCRAN — Keko, 14/11 ; debout, elle prend la première rangée, la vague et la vie passent dessous : voir `hautDuHud`)
-    const large = paysage ? Math.min(180, W - 2 * bandeCote() - 150) : W - 12
-    const x = Math.round(W / 2 - large / 2)
-    const y = paysage ? 4 : hautDuHud() - RANG_DE_L_EXPERIENCE + 1
     const neuf = t - niveauA < 0.8
     motEnRelief(p, String(inv.niveau), x + wn - largeurDe(String(inv.niveau), GRAS) / 2, y + (neuf ? Math.round(-2 * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true)
     const bx = x + wn + 4
@@ -974,19 +969,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (rien d'autre ne répond pendant le choix)
     zone(0, 0, W, H, () => {}, null)
   }
-  /** L'INTERFACE DE L'INVASION, en haut à gauche : la vague, les insectes abattus, ceux qui ont traversé le portail. */
+  /**
+   * L'INTERFACE DE L'INVASION : UNE RANGÉE EN HAUT DE L'ÉCRAN, de gauche à droite (Keko, 14/11 : « commence par une
+   * petite icône de portail plutôt que le nom portail ; à droite de cette icône, le pourcentage — la même police et la
+   * même texture que la vague, mais en violet ; n'affiche plus du tout les vagues ; ensuite, dans toute la longueur de
+   * l'écran jusqu'à la droite, la barre d'expérience ») : le portail en petit, sa vie en pour cent, puis l'expérience.
+   */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
-    // (EN HAUT À GAUCHE : la vague, et LA VIE DU PORTAIL en pour cent — Keko, 14/11 : « n'affiche pas le nombre de kills
-    // ni le nombre d'ennemis qui sont passés ; uniquement la vague, et le pourcentage de vie du portail »)
-    const x = paysage ? Math.max(6, bandeCote() + 6) : 6
-    const y = hautDuHud() + 4
-    const neuve = t - vagueA < 1.2
-    motEnRelief(p, `Vague ${Math.max(1, inv.vague)}`, x + largeurDe(`Vague ${Math.max(1, inv.vague)}`, GRAS) / 2, y + (neuve ? Math.round(Math.sin((t - vagueA) * 20) * 2 * (1 - (t - vagueA) / 1.2)) : 0), true)
+    const x0 = paysage ? Math.max(4, bandeCote() + 4) : 4
+    const droite = paysage ? W - Math.max(4, bandeCote() + 4) : W - 4
+    const y = paysage ? 4 : hautDuHud() - RANG_DE_L_EXPERIENCE + 1
+    // l'icône : un petit vortex — un anneau violet, son puits sombre, deux bras clairs qui tournent
+    const cx = x0 + 5
+    const cy = y + 3
     const touche = t - passeA < 0.5
-    const vie = Math.max(0, Math.ceil(inv.vie))
-    ecrire(p, `Portail ${vie} %`, x + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * (1 - (t - passeA) / 0.5)) : 0), y + 11, touche ? N.WHITE : vie <= 25 ? ROUGE[5] : vie <= 50 ? PEPITE[3] : N.hex('#cf9bff'), { police: GRAS })
-    dessinerLExperience(p)
+    p.circle(cx, cy, 5.6, N.hex('#12081f'))
+    p.circle(cx, cy, 4.6, touche ? N.WHITE : N.hex('#a35cff'))
+    p.circle(cx, cy, 3, N.hex('#2a0f4d'))
+    for (const k of [0, 1]) {
+      const a = t * 3 + k * Math.PI
+      p.px(Math.round(cx + Math.cos(a) * 2), Math.round(cy + Math.sin(a) * 2), N.hex('#f1dcff'))
+      p.px(Math.round(cx + Math.cos(a + 0.7) * 1), Math.round(cy + Math.sin(a + 0.7) * 1), N.hex('#cf9bff'))
+    }
+    p.glow(cx, cy, 8, N.hex('#a35cff'), touche ? 0.8 : 0.3)
+    // sa vie : dans la place de « 100 % », pour que la barre d'expérience ne bouge pas
+    const vie = `${Math.max(0, Math.ceil(inv.vie))} %`
+    const wv = largeurDe('100 %', GRAS)
+    const xv = x0 + 13
+    motEnRelief(p, vie, xv + largeurDe(vie, GRAS) / 2 + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * (1 - (t - passeA) / 0.5)) : 0), y, 'violet')
+    const xe = xv + wv + 5
+    dessinerLExperience(p, xe, y, droite - xe)
     dessinerLeRetour(p)
   }
   /** LA FIN DE LA PARTIE : le portail est tombé — un voile, la vague atteinte, « Rejouer ». */
@@ -1418,12 +1431,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * entre le jaune et le marron est trop fort, le marron est trop foncé ») : le haut lit n'est plus un filet presque
    * blanc mais le ton clair du dégradé, et le bas du dégradé comme le dessous sont remontés d'un brun sombre à un ocre.
    */
-  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
+  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire' | 'violet', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
     const mot = spell(s, f) as { letters: { g: unknown; x: number }[]; w: number }
     const e = echelle
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - (mot.w * e) / 2) + L.x * e, y: Math.round(y) - decalage(f) * e, sx: e, sy: e }))
     // (« ivoire » : la lettre des plaques d'en-tête — un ivoire éclairé d'en haut, ombré de bronze dessous)
-    const st = or === 'ivoire'
+    // (« violet » : la vie du portail, dans la lettre et le relief des titres d'or, aux teintes du vortex)
+    const st = or === 'violet'
+      ? { fill: [N.hex('#7330d0'), N.hex('#a35cff'), N.hex('#cf9bff')], edge: N.hex('#f1dcff'), under: N.hex('#481b8c'), outline: N.hex('#12081f'), shadow: 0 }
+      : or === 'ivoire'
       ? { fill: [N.hex('#c9b98c'), N.hex('#efe2b8'), N.hex('#fff7d6')], edge: N.WHITE, under: N.hex('#8f7d54'), outline: N.hex('#0b0d16'), shadow: 0 }
       : or
       ? { fill: [N.hex('#e0a020'), PEPITE[2], N.hex('#ffe068')], edge: N.hex('#ffe68a'), under: N.hex('#b87a14'), outline: N.hex('#1e0e03'), shadow: 0 }
@@ -6517,7 +6533,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const px0 = W - Math.round(bandeCote() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
       const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
       const bx = px0 + 7
-      const by = oy + 17
+      // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
+      const by = oy + (DEUX_BARRES ? 5 : 17)
       const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
       if (m.coque < coqueConnue - 1e-6) {
@@ -6597,7 +6614,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ox = W - 5 - wp + Math.round(Math.sin(t * 90) * sursaut)
     const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
     const bx = ox + 5 + 9 + 3
-    const by = oy + 5
+    const by = oy + (DEUX_BARRES ? 1 : 5) // (dans le jeu du vortex, la barre remonte sous la rangée du haut)
     const bh = 8
     const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
     // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
@@ -7467,7 +7484,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'vague': {
-              vagueA = t
               jouer('equipe')
               break
             }
