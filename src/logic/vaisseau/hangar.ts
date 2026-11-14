@@ -104,7 +104,7 @@ export const PIECES: Piece[] = [
   // et outillé ») : 97 T de coque — 200 T tout monté par `&cuirasse` —, QUATRE propulseurs, huit armes, quatre outils, une grande soute,
   // le blindage et le bouclier au plus haut de ce que la fiche sait montrer. Il n'est à vendre nulle part encore :
   // `&cuirasse` le donne, tout armé.
-  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, trois propulseurs, quatre outils, huit armes. Vire lentement ; ses tourelles tirent dans toutes les directions.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 3, rayon: 18, virage: 0.07, tourelles: true },
+  { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, un seul propulseur, quatre outils, huit armes. Vire lentement ; ses tourelles tirent dans toutes les directions.', note: 'Quatre propulseurs.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, outils: 4, capacite: 120, propulseurs: 1, rayon: 18, virage: 0.07, tourelles: true },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, poids: 8, debit: 1.8, portee: 1.25},

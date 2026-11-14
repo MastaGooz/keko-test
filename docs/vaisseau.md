@@ -3449,3 +3449,5 @@ un rayon par foreuse, de sa place ; chaque canon vise sa roche
 d'avant. *Les aimants et les radars restent « le meilleur seul ».*
 
 Le cuirassé passe à TROIS propulseurs (Keko, 13/11, « pour voir » : il allait trop vite) : trois tuyères, 190 T tout équipé au lieu de 200. La pointe ne change pas (elle vient du propulseur), seule l'accélération baisse.
+
+Puis à UN SEUL propulseur (Keko, 14/11, « pour voir ») : une tuyère, 170 T tout équipé. L'accélération tombe à peu près au tiers de celle à trois ; la pointe ne change toujours pas.
