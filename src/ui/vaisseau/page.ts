@@ -6536,7 +6536,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
       const bx = px0 + 7
       // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
-      const by = oy + (DEUX_BARRES ? 5 : 17)
+      // (… PUIS JUSQU'EN HAUT : son sommet est celui de la barre d'expérience — Keko, 14/11)
+      const by = oy + (DEUX_BARRES ? 0 : 17)
       const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
       if (m.coque < coqueConnue - 1e-6) {
