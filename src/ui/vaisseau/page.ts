@@ -7052,7 +7052,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le tampon se couche ou se relève quand on décolle ou qu'on rentre, téléphone couché)
     // LE CHAMP DE VISION glisse vers ce que les boutons « + » et « − » ont demandé (un quart par tape, en un sixième de
     // seconde) ; à chaque pas, le tampon est refait et les manches gardent leur place à l'écran
-    if (ZOOM_A_LA_MAIN) {
+    if (VORTEX) {
+      // (LE JEU DU VORTEX EST DÉZOOMÉ AU MAXIMUM, EN PERMANENCE — Keko, 14/11 : « il n'y a pas vraiment d'intérêt à zoomer là » ;
+      // `&champ=N` l'essaie à une autre valeur)
+      champCible = parametres.has('champ') ? CHAMP_AUTO : CHAMP_MAX
+      champVoulu = champCible
+    } else if (ZOOM_A_LA_MAIN) {
       if (champVoulu !== champCible) {
         const pas = dt * 1.5
         champVoulu = Math.abs(champCible - champVoulu) <= pas ? champCible : champVoulu + Math.sign(champCible - champVoulu) * pas
