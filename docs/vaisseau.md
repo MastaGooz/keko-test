@@ -3552,3 +3552,5 @@ Le son de l'allumage (`allume`) perd son sifflement (Keko, 14/11 : « pas très 
 ### Le tir reste automatique (14/11)
 
 Keko : tenir le second manche faisait tirer à la main, « pas hyper pratique ». Les armes tirent toujours seules sur ce qui est à portée ; le second manche ne fait que tourner le nez et avancer la caméra (la caméra seule pour le cuirassé, à tourelles — une priorité de cible a été proposée et écartée pour l'instant). La règle du tir à la main (`manuel` d'`avancerLeMonde`) reste écrite et vérifiée, la page ne l'appelle plus. À revoir pour le PvP.
+
+Le choix du vaisseau (Keko, 14/11 : « pas très mis en avant, il faudrait autre chose que des flèches, un vrai bouton ») : en tête des cases du hangar, une plaque à liseré d'or — le châssis, le nom en or, la classe — et un bouton « Changer » qui ouvre le PANNEAU DES VAISSEAUX (`dessinerLesVaisseaux`) : une carte par vaisseau (châssis, nom, classe, mission en cours), celui qu'on pilote cerclé d'or ; une tape sur un autre le prend.

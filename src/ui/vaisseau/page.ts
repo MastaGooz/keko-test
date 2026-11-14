@@ -20,7 +20,7 @@ import { HAUT_ACCENTS } from './police.ts'
 import { boiteDe, boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, modeleDeVaisseau, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, modeleDeVaisseau, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
@@ -1470,6 +1470,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLaFeuille(p)
     dessinerLeChangement(p)
     dessinerLesCouleurs(p)
+    dessinerLesVaisseaux(p)
     dessinerLaVente(p)
     dessinerLesEclats(p)
   }
@@ -1570,6 +1571,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       fenetre(p, xc, COLONNE, () => dessinerLeChangement(p, 'fiche'))
     }
     fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
+    // (couché, le voile couvre TOUT l'écran, pas la seule colonne où le panneau est dessiné)
+    if (vaisseauxOuverts && vue === 'hangar' && etape === 'vaisseau') p.rect(0, 0, W, H, NUIT, 0.72 * sortie((t - vaisseauxA) / 0.18))
+    fenetre(p, xc, COLONNE, () => dessinerLesVaisseaux(p, false))
     // (LA VENTE, en deux fenêtres elle aussi : sa courbe à gauche, par-dessus la grille, le reste dans la colonne — en
     // une seule pièce, elle fait jusqu'à 216 de haut, plus que l'écran couché)
     fenetre(p, RAIL, xc - RAIL, () => dessinerLaVente(p, 'courbe'))
@@ -2551,21 +2555,74 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLeChoixDuVaisseau(p: Peintre, y: number): number {
     const liste = vaisseauxDe(flotte)
     if (liste.length < 2) return y
-    const i = Math.max(0, liste.findIndex((mo) => mo.id === flotte.actif))
-    const aller = (d: number) => (): void => {
-      sauver()
-      flotte = choisirLeVaisseau(flotte, liste[(i + d + liste.length) % liste.length].id)
-      hangar = hangarActif(flotte)
-      sauver()
-      etapeA = t
-      defilCases = 0
-      feterLEquipement()
-    }
-    plaque(p, 4, y, W - 8, 15, 'creux')
-    bouton(p, 4, y, 24, 15, '<', true, aller(-1), 'clic', 'acier')
-    bouton(p, W - 28, y, 24, 15, '>', true, aller(1), 'clic', 'acier')
-    motEnRelief(p, liste[i].nom, W / 2, y + 4, true)
-    return y + 19
+    // LE VAISSEAU PILOTÉ, EN TÊTE DU HANGAR, ET UN VRAI BOUTON « CHANGER » (Keko, 14/11 : « pas très mis en avant, et il
+    // faudrait autre chose que des flèches pour changer, un vrai bouton » — c'était son nom entre deux flèches) : une
+    // plaque à liseré d'or, son châssis dans un puits, son nom en or, sa classe dessous ; le bouton ouvre LE PANNEAU DES
+    // VAISSEAUX (`dessinerLesVaisseaux`), où on choisit lequel piloter.
+    const mo = modeleDeVaisseau(flotte.actif)
+    const h = 26
+    plaque(p, 4, y, W - 8, h, 'encre', { bord: PEPITE[1] })
+    plaque(p, 7, y + 3, 26, h - 6, 'creux')
+    const co = pieceDe(mo.serie.montees.coque)
+    if (co !== undefined) dessinerLePictogramme(p, co, 20, y + h / 2, 26, h - 6)
+    motEnRelief(p, mo.nom, 37 + largeurDe(mo.nom, GRAS) / 2, y + 4, true)
+    ecrire(p, NOMS_CLASSE[mo.classe], 37, y + 14, COQUE[4])
+    const bw = largeurDe('Changer', GRAS) + 16
+    bouton(p, W - 8 - bw, y + 5, bw, 16, 'Changer', true, () => ((vaisseauxOuverts = true), (vaisseauxA = t)), 'ouvre')
+    return y + h + 4
+  }
+  /**
+   * LE PANNEAU DES VAISSEAUX, par-dessus le hangar : une carte par vaisseau qu'on a — son châssis, son nom, sa classe,
+   * sa mission en cours ; celui qu'on pilote est cerclé d'or (« Piloté »), une tape sur un autre le prend et referme.
+   */
+  let vaisseauxOuverts = false
+  let vaisseauxA = -10
+  function dessinerLesVaisseaux(p: Peintre, voile = true): void {
+    if (vue !== 'hangar' || etape !== 'vaisseau') vaisseauxOuverts = false
+    if (!vaisseauxOuverts) return
+    const u0 = sortie((t - vaisseauxA) / 0.18)
+    const liste = vaisseauxDe(flotte)
+    const hc = 40
+    const hp = 22 + liste.length * (hc + 4) + 19 + 4
+    const x = 6
+    const w = W - 12
+    const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
+    if (voile) p.rect(0, 0, W, H, NUIT, 0.72 * u0)
+    frame.light.fill(0)
+    zones = []
+    zoneGlissante = null
+    zoneDesCases = null
+    plaque(p, x, y, w, hp, 'encre')
+    motEnRelief(p, 'Vos vaisseaux', W / 2, y + 7, true)
+    liste.forEach((mo, i) => {
+      const cy = y + 22 + i * (hc + 4)
+      const pilote = mo.id === flotte.actif
+      const e = etatDuBouton(x + 4, cy, w - 8, hc)
+      plaque(p, x + 4, cy + e.dy, w - 8, hc, pilote ? 'acier' : 'encre', { bord: pilote ? PEPITE[2] : undefined, enfonce: e.enfonce, survole: e.survole && !pilote, flash: e.flash })
+      plaque(p, x + 8, cy + 4 + e.dy, 36, hc - 8, 'creux')
+      const co = pieceDe(mo.serie.montees.coque)
+      if (co !== undefined) dessinerLePictogramme(p, co, x + 26, cy + hc / 2 + e.dy, 36, hc - 8)
+      motEnRelief(p, mo.nom, x + 49 + largeurDe(mo.nom, GRAS) / 2, cy + 5 + e.dy, pilote)
+      ecrire(p, NOMS_CLASSE[mo.classe], x + 49, cy + 16 + e.dy, COQUE[4])
+      const mi = missionDe(flotte, mo.id)
+      ecrire(p, mi === null ? 'Missions finies' : mi.finie ? 'Mission à réclamer' : mi.mission.titre, x + 49, cy + 26 + e.dy, mi !== null && mi.finie ? PEPITE[3] : COQUE[5])
+      if (pilote) ecrire(p, 'PILOTÉ', x + w - 10, cy + 5, PEPITE[2], { align: 'right', police: GRAS })
+      else
+        zone(x + 4, cy, w - 8, hc, () => {
+          sauver()
+          flotte = choisirLeVaisseau(flotte, mo.id)
+          hangar = hangarActif(flotte)
+          sauver()
+          etapeA = t
+          defilCases = 0
+          vaisseauxOuverts = false
+          feterLEquipement()
+        }, 'equipe')
+    })
+    const bf = largeurDe('Fermer', GRAS) + 22
+    bouton(p, Math.round(W / 2 - bf / 2), y + 22 + liste.length * (hc + 4), bf, 15, 'Fermer', true, () => (vaisseauxOuverts = false), 'retour', 'acier')
+    zone(x, y, w, hp, () => {}, null)
+    zone(0, 0, W, H, () => (vaisseauxOuverts = false), 'retour')
   }
   /** Ce que la dernière destruction a coûté : les pièces perdues, dites au hangar une dizaine de secondes (depuis qu'on le voit). */
   let pertes: { noms: string[]; t0: number | null } | null = null

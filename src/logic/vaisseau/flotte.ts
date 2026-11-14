@@ -24,7 +24,7 @@ import type { Compteur } from './quetes.ts'
 
 /** LA CLASSE d'un vaisseau : la recherche pourra donner des bonus à une classe seulement. */
 export type Classe = 'chasseur' | 'lourd'
-export const NOMS_CLASSE: Record<Classe, string> = { chasseur: 'Chasseur', lourd: 'Lourd' }
+export const NOMS_CLASSE: Record<Classe, string> = { chasseur: 'Classe légère', lourd: 'Classe lourde' }
 
 /** Une mission d'un vaisseau : ce qu'elle compte, jusqu'où, et LA PIÈCE qu'elle ouvre à l'achat sur ce vaisseau. */
 export type MissionDeVaisseau = { titre: string; dit: string; compteur: Compteur; cible: number; ouvre: string }
