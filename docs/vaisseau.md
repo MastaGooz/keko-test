@@ -3647,3 +3647,5 @@ UNE VAGUE VIENT D'UN SEUL CADRAN (Keko, 14/11 : seul, on ne peut pas tenir deux 
 Un insecte qui entre dans le vortex y est ASPIRÉ (Keko, 14/11 : « plutôt qu'une explosion jaune ») : son image tourne autour du centre en s'en rapprochant, rapetisse et blanchit, en 0,6 s (`aspires`, `dessinerLesAspires` ; `dessinerUnInsecte` a une échelle). La téléportation jaune n'y sert plus.
 
 PUIS (Keko : « pas une aspiration comme dans un siphon : une distorsion et un effet de lumière violet sur le corps de l'objet aspiré ») : l'insecte pris par le portail ne tourne plus — il glisse droit vers le centre, son corps s'ÉTIRE vers lui, se resserre et ondule (`dessinerUnInsecte(…, deforme)`), vire au violet puis au blanc dans une lueur violette, et se réduit à un trait de lumière qui s'éteint (0,55 s).
+
+Le son d'un insecte qui passe le portail est `breche` (Keko, 14/11 : celui de l'extraction, joué là, sonnait comme « une validation d'un menu alors que c'est un événement négatif ») : un grave qui s'effondre, deux notes dissonantes qui descendent, un souffle avalé.

@@ -7585,7 +7585,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'traverse': {
               // UN INSECTE TRAVERSE LE PORTAIL : il y est ASPIRÉ, et le portail le dit
-              jouer('extrait', { dx: ev.x - v.x, dy: ev.y - v.y })
+              jouer('breche', { dx: ev.x - v.x, dy: ev.y - v.y })
               {
                 // (son image est aspirée : la règle l'a déjà retiré du monde, on garde où il était et vers où il regardait)
                 const parti = dernierVu.get(ev.id)

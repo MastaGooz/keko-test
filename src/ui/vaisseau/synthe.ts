@@ -309,6 +309,20 @@ const RECETTES = {
       note(m, 0.15, 0.2, 0.3, { f: 640, glisse: { vers: 1040, en: 0.04, droit: true }, a: 0.004, d: 0.06 })
     },
   },
+  /**
+   * un insecte passe le portail (le jeu du vortex — Keko, 14/11 : le son de l'extraction, joué là, « on dirait une
+   * validation d'un menu alors que c'est un événement négatif ») : UNE PERTE — un grave qui s'effondre, deux notes
+   * dissonantes qui DESCENDENT, un souffle avalé
+   */
+  breche: {
+    duree: 1, niveau: 0.6, salle: [0.55, 0.22],
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 160, glisse: { vers: 55, en: 0.22, droit: true }, a: 0.006, d: 0.5, partiels: CORPS, sature: 2 })
+      note(m, 0, 0.5, -0.25, { f: 466, glisse: { vers: 330, en: 0.25, droit: true }, a: 0.01, d: 0.4, partiels: [[1, 1, 1], [1.06, 0.7, 0.9]], battement: 14 })
+      note(m, 0.12, 0.4, 0.25, { f: 330, glisse: { vers: 220, en: 0.25, droit: true }, a: 0.01, d: 0.4, partiels: [[1, 1, 1], [1.06, 0.6, 0.9]], battement: 11 })
+      souffle(m, h, 0, 0.6, 0, { f: 1800, glisse: { vers: 240, en: 0.3, droit: true }, q: 1.1, bande: true, a: 0.02, d: 0.4, large: true })
+    },
+  },
   /** un trait du rival perce la coque : un choc mat, la tôle qui répond */
   touche: {
     duree: 0.7, niveau: 0.75, salle: [0.4, 0.15],
