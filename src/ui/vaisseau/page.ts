@@ -389,6 +389,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
+  /** `&zoom=boutons` : les boutons « + » et « − » d'avant, à la place du zoom automatique. */
+  const ZOOM_A_LA_MAIN = parametres.get('zoom') === 'boutons'
+  /** Le zoom automatique : sous cette vitesse (px/s) la vue de près, à celle-là et au-delà le champ le plus large, `CHAMP_AUTO`. `&champ=N` l'essaie (1 à 2). */
+  const VITESSE_DE_PRES = 35
+  const VITESSE_DU_LARGE = 125
+  const CHAMP_AUTO = Math.max(1, Math.min(CHAMP_MAX, Number(parametres.get('champ')) || 1.7))
   const champDuMoment = (): number => (enJeu && !ecranVisible() ? champ : 1)
   /** « + » zoome (le champ se resserre), « − » dézoome ; côte à côte, ou l'un sur l'autre (`empiles`, dans le bandeau couché). */
   function dessinerLeZoom(p: Peintre, x: number, y: number, empiles: boolean): void {
@@ -6267,7 +6273,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
-      dessinerLeZoom(p, W - Math.round(bandeCote() / 2) - 7, by + BH + 6, true)
+      if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(bandeCote() / 2) - 7, by + BH + 6, true)
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
         p.rect(bx - 1, Math.round(gy) - 1, lw + 2, 2, N.WHITE)
@@ -6341,7 +6347,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (dc < VIDE && val > 0) p.rect(bx + Math.max(0, Math.round(BW * val) - 1), by, 1, bh, N.WHITE)
     // (LE ZOOM, sous la barre, calé à sa droite : « − » puis « + »)
-    dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
+    if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
     if (dc > TIENT && dc < VIDE) {
       // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
       const gx = bx + BW * fant
@@ -6923,11 +6929,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le tampon se couche ou se relève quand on décolle ou qu'on rentre, téléphone couché)
     // LE CHAMP DE VISION glisse vers ce que les boutons « + » et « − » ont demandé (un quart par tape, en un sixième de
     // seconde) ; à chaque pas, le tampon est refait et les manches gardent leur place à l'écran
-    if (champVoulu !== champCible) {
-      const pas = dt * 1.5
-      champVoulu = Math.abs(champCible - champVoulu) <= pas ? champCible : champVoulu + Math.sign(champCible - champVoulu) * pas
-      champ = Math.round(champVoulu * 90) / 90
+    if (ZOOM_A_LA_MAIN) {
+      if (champVoulu !== champCible) {
+        const pas = dt * 1.5
+        champVoulu = Math.abs(champCible - champVoulu) <= pas ? champCible : champVoulu + Math.sign(champCible - champVoulu) * pas
+      }
+    } else {
+      // LE ZOOM AUTOMATIQUE, PAR LA VITESSE (Keko, 14/11, à l'essai — les boutons « + » et « − » étaient « pas
+      // pratiques ») : à l'arrêt et à petite allure, la vue de près ; elle s'élargit à mesure qu'on va vite, jusqu'à
+      // `CHAMP_AUTO` à la pointe d'un chasseur. Elle SUIT EN DOUCEUR (une seconde et quelque), pour ne pas « respirer »
+      // à chaque coup de manche.
+      const vit = enJeu && m.phase === 'vol' ? Math.hypot(v.vx, v.vy) : 0
+      const u = Math.max(0, Math.min(1, (vit - VITESSE_DE_PRES) / (VITESSE_DU_LARGE - VITESSE_DE_PRES)))
+      champCible = 1 + (CHAMP_AUTO - 1) * u * u * (3 - 2 * u)
+      champVoulu += (champCible - champVoulu) * Math.min(1, dt / 1.1)
     }
+    champ = Math.round(champVoulu * 90) / 90
     if (veutLePaysage() !== paysage || champDuMoment() !== champApplique) cadrer()
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
