@@ -955,7 +955,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * semés, toujours les mêmes) ; l'OR a sa ligne spéculaire et son reflet qui passe. Les teintes glissent : les ombres
    * vers le violet et le brun, les lumières vers le chaud. Aucun noir pur : le contour est l'encre la plus sombre.
    */
-  type Matiere = 'encre' | 'or' | 'creux' | 'eteint' | 'acier' | 'vert' | 'rouge' | 'clair'
+  type Matiere = 'encre' | 'or' | 'creux' | 'eteint' | 'acier' | 'vert' | 'rouge' | 'clair' | 'metal'
   type Teintes = { contour: number; ombre: number; corps: number; haut: number; lumiere: number; lumiere2: number; grain: number; spec?: number }
   const MATIERES: Record<Matiere, Teintes> = {
     encre: { contour: N.hex('#07050d'), ombre: N.hex('#110d1a'), corps: N.hex('#1b1626'), haut: N.hex('#231d31'), lumiere: N.hex('#463b61'), lumiere2: N.hex('#342b4a'), grain: N.hex('#2a2339') },
@@ -968,6 +968,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (L'ACIER CLAIR du conteneur de la soute : la touche qui l'ouvre — Keko, 13/11 : l'or « rappelle trop la barre de
     // blindage » ; « assez clair pour être mis en avant, dans les tons des éléments graphiques de la soute »)
     clair: { contour: N.hex('#07070d'), ombre: N.hex('#46587a'), corps: N.hex('#8399bd'), haut: N.hex('#9fb4d2'), lumiere: N.hex('#ffffff'), lumiere2: N.hex('#d6e4f5'), grain: N.hex('#8ea4c6'), spec: N.hex('#ffffff') },
+    // (LE MÉTAL CLAIR de « Construire » — Keko, 14/11 : « plutôt qu'en jaune comme Équiper, une couleur métal clair, un
+    // genre de gris clair, avec des reflets, pour bien le distinguer » : un gris neutre, sans le bleu de l'acier clair)
+    metal: { contour: N.hex('#08080c'), ombre: N.hex('#4c505c'), corps: N.hex('#9ba1ad'), haut: N.hex('#b8bdc8'), lumiere: N.hex('#ffffff'), lumiere2: N.hex('#e4e7ee'), grain: N.hex('#a7adb8'), spec: N.hex('#ffffff') },
     rouge: { contour: N.hex('#12040a'), ombre: N.hex('#2c0a14'), corps: N.hex('#3e0f1c'), haut: N.hex('#4e1424'), lumiere: N.hex('#f0707a'), lumiere2: N.hex('#a8323e'), grain: N.hex('#5a1828') },
   }
   /** Un petit hachage de position, pour le grain (toujours le même au même pixel). */
@@ -2892,7 +2895,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LE NOMBRE D'EXEMPLAIRES CONSTRUITS, après le nom, DANS LE MÊME STYLE QUE LUI — Keko, 14/11 : il était en gras et en
       // or même sur une ligne non choisie ; et il n'est QUE sur cette ligne : ni sur la page de la place, ni sur le dessin
       // de la pièce ; rien pour une pièce de base)
-      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `×${exemplaires(hangar, pc.id)}`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 5, ly + 3, choisie ? N.WHITE : montee ? COQUE[6] : COQUE[5], { police: choisie ? GRAS : TEXTE })
+      // (ENTRE PARENTHÈSES, un ton sous le nom — Keko, 14/11 : « plutôt que x1, x2, mets le nombre entre parenthèses et
+      // change légèrement sa couleur par rapport au texte »)
+      if (exemplaires(hangar, pc.id) > 0) ecrire(p, `(${exemplaires(hangar, pc.id)})`, 14 + (choisie ? 1 : 0) + largeurDe(pc.nom, choisie ? GRAS : TEXTE) + 5, ly + 3, choisie ? COQUE[5] : COQUE[4], { police: choisie ? GRAS : TEXTE })
       const xd = W - (maxDefil > 0 ? 16 : 10)
       const ki = placeOuverte()
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
@@ -3474,8 +3479,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       choixA = t - 1
     }, (_dx, dy) => {
       const xm = deux ? Math.round(W / 2 - wa / 2) : bx + 8
-      if (vif) motEnRelief(p, 'Construire', xm + wa / 2, y + 4 + dy, true)
-      else ecrire(p, 'Construire', xm, y + 4 + dy, COQUE[3], { police: GRAS })
+      // (sur le métal clair, le mot est SOMBRE)
+      ecrire(p, 'Construire', xm, y + 4 + dy, vif ? N.hex('#14161f') : COQUE[3], { police: GRAS })
       const px = deux ? Math.round(W / 2 - wp / 2) : bx + 8 + wa + 5
       const py = y + (deux ? 14 : 2) + dy
       plaque(p, px, py, wp, 11, 'creux')
@@ -3487,7 +3492,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         else dessinerUneRessource(p, tx + ws[i] - 5, py + 5, l.k)
         xl += ws[i] + ECART
       })
-    }, 'achat', { manque: lots.filter((l) => l.manque).map((l) => l.cle), fixe: true })
+    }, 'achat', { manque: lots.filter((l) => l.manque).map((l) => l.cle), fixe: true, matiere: 'metal', reflet: vif && (t % 2.6) / 2.6 < 0.3 ? bx - 14 + ((bw + 40) * ((t % 2.6) / 2.6)) / 0.3 : undefined })
   }
   /** Ce que le bouton « Acheter » prend EN PLUS quand la pièce coûte aussi du minerai (sa seconde rangée) — rien, si elle est déjà à soi ou ne coûte que des crédits. */
   const ligneDuCout = (pc: Piece): number => (!estDeBase(hangar, pc.id) && MINERAIS.some((k) => coutEnMinerai(pc.id)[k] > 0) ? 12 : 0)
