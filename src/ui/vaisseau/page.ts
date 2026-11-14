@@ -276,7 +276,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const outils = ['foreuse-3', 'aimant-2', 'radar', 'foreuse-2']
     flotte = choisirLeVaisseau(ajouterLeVaisseau(avecLeHangar(flotte, hangar), 'cuirasse'), 'cuirasse')
     livree = livreeDuVaisseau()
-    hangar = { possedees: [...new Set([...hangarActif(flotte).possedees, 'propulseur-l3', ...armes, ...outils])], montees: { coque: 'coque-4', propulseur: 'propulseur-l3' }, outils, armes }
+    // (DE VRAIS EXEMPLAIRES — Keko, 14/11 : « j'ai un moteur de remorqueur construit mais pas de chiffre » : ce lien
+    // refaisait le hangar SANS ses exemplaires, et tout y redevenait « de base ». Ce qu'il donne est construit, un
+    // exemplaire par place prise ; ce qu'on a construit en plus est gardé.)
+    const avant = hangarActif(flotte)
+    const deBase = modeleDeVaisseau('cuirasse').serie.possedees
+    const construites: Record<string, number> = { ...(avant.construites ?? {}) }
+    for (const id of new Set(['propulseur-l3', ...armes, ...outils])) {
+      if (deBase.includes(id)) continue
+      construites[id] = Math.max(construites[id] ?? 0, (id === 'propulseur-l3' ? 1 : 0) + armes.filter((x) => x === id).length + outils.filter((x) => x === id).length)
+    }
+    hangar = { possedees: [...new Set([...avant.possedees, 'propulseur-l3', ...armes, ...outils])], montees: { coque: 'coque-4', propulseur: 'propulseur-l3' }, outils, armes, construites }
   }
   /** `&ouvertes` : toutes les pièces de chaque vaisseau qu'on a sont OUVERTES à l'achat, sans faire leurs missions — pour essayer les achats d'un lien (le temps de la page, tant qu'on ne sauve rien). */
   if (parametres.has('ouvertes')) {
