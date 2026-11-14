@@ -53,16 +53,21 @@ export function sauverHangar(flotte: Flotte, tresor: Cargaison, credits: number,
 
 /** LA LIVRÉE du vaisseau (sa couleur), gardée à part : elle ne tient à aucune règle. */
 const CLE_LIVREE = 'keko-vaisseau-livree'
-export function chargerLivree(): string {
+/**
+ * (PAR VAISSEAU — Keko, 14/11 : « le style devrait être propre au vaisseau, pas général » : une clé par modèle ; le
+ * premier vaisseau garde la clé d'avant, pour retrouver la couleur déjà choisie.)
+ */
+const cleDeLivree = (vaisseau: string): string => (vaisseau === 'chasseur' ? CLE_LIVREE : `${CLE_LIVREE}-${vaisseau}`)
+export function chargerLivree(vaisseau: string): string {
   try {
-    return localStorage.getItem(CLE_LIVREE) ?? 'serie'
+    return localStorage.getItem(cleDeLivree(vaisseau)) ?? 'serie'
   } catch {
     return 'serie'
   }
 }
-export function sauverLivree(id: string): void {
+export function sauverLivree(vaisseau: string, id: string): void {
   try {
-    localStorage.setItem(CLE_LIVREE, id)
+    localStorage.setItem(cleDeLivree(vaisseau), id)
   } catch {
     // Sans stockage, la couleur vit le temps de la page.
   }

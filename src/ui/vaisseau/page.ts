@@ -167,7 +167,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     sauverHangar(flotte, tresor, credits, labo, marche, quetes)
   }
   /** LA LIVRÉE du vaisseau du joueur (Keko, 12/11) : la couleur de sa coque et de ses ailes, choisie au hangar. */
-  let livree = LIVREES.some((l) => l.id === chargerLivree()) ? chargerLivree() : 'serie'
+  /** (CHAQUE VAISSEAU A LA SIENNE — Keko, 14/11 : relue à chaque changement de vaisseau) */
+  const livreeDuVaisseau = (): string => {
+    const l = chargerLivree(flotte.actif)
+    return LIVREES.some((x) => x.id === l) ? l : 'serie'
+  }
+  let livree = livreeDuVaisseau()
   const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => rampesDeLaLivree(livree)
   /** LES RÉGLAGES du joueur (l'onglet « Paramètres ») : de quel côté de l'écran il vole. */
   let reglages = chargerReglages()
@@ -270,6 +275,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const armes = ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-rafale', 'arme-canon', 'arme-canon', 'arme-missiles', 'arme-missiles']
     const outils = ['foreuse-3', 'aimant-2', 'radar', 'foreuse-2']
     flotte = choisirLeVaisseau(ajouterLeVaisseau(avecLeHangar(flotte, hangar), 'cuirasse'), 'cuirasse')
+    livree = livreeDuVaisseau()
     hangar = { possedees: [...new Set([...hangarActif(flotte).possedees, 'propulseur-l3', ...armes, ...outils])], montees: { coque: 'coque-4', propulseur: 'propulseur-l3' }, outils, armes }
   }
   /** `&ouvertes` : toutes les pièces de chaque vaisseau qu'on a sont OUVERTES à l'achat, sans faire leurs missions — pour essayer les achats d'un lien (le temps de la page, tant qu'on ne sauve rien). */
@@ -2268,6 +2274,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         resetDemandeA = -10
         flotte = flotteNeuve()
+        livree = livreeDuVaisseau()
         hangar = hangarActif(flotte)
         labo = laboNeuf()
         quetes = quetesNeuves()
@@ -2628,6 +2635,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         zone(x + 4, cy, w - 8, hc, () => {
           sauver()
           flotte = choisirLeVaisseau(flotte, mo.id)
+          livree = livreeDuVaisseau()
           hangar = hangarActif(flotte)
           sauver()
           etapeA = t
@@ -2948,7 +2956,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (choisie) N.sparkle(p, cx + cote - 5, cy + 5, 2 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), N.WHITE, PEPITE[3], 0.8)
       else zone(cx - 2, cy - 2, pas, pas, () => {
         livree = l.id
-        sauverLivree(l.id)
+        sauverLivree(flotte.actif, l.id)
       }, 'equipe')
     })
     const bf = largeurDe('Fermer', GRAS) + 22
