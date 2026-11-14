@@ -402,15 +402,16 @@ const RECETTES = {
     },
   },
   /**
-   * le tube s'allume (l'écran d'accueil, à la première tape) : le « toc » du relais, le sifflement du tube qui monte
-   * et s'éteint, un ronflement grave qui s'installe quand l'image s'ouvre (vers 0,3 s), un souffle qui s'ouvre avec elle
+   * le tube s'allume (l'écran d'accueil, à la première tape) : le « toc » du relais,
+   * un ronflement grave qui s'installe quand l'image s'ouvre (vers 0,3 s), un souffle qui s'ouvre avec elle
    */
   allume: {
     duree: 1.6, niveau: 0.32, salle: [0.5, 0.2],
     faire: (m, h) => {
       note(m, 0, 0.8, 0, { f: 420, glisse: { vers: 180, en: 0.012 }, a: 0.002, d: 0.06, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
       souffle(m, h, 0, 0.3, 0, { f: 2400, d: 0.03 })
-      note(m, 0.12, 0.22, 0, { f: 1800, glisse: { vers: 5200, en: 0.22, droit: true }, a: 0.06, d: 0.5 })
+      // (LE SIFFLEMENT DU TUBE EST RETIRÉ — Keko, 14/11 : « un petit bruit de sifflement, c'est pas très joli » : un sinus
+      // nu qui montait de 1 800 à 5 200 Hz)
       note(m, 0.28, 0.7, 0, { f: 55, glisse: { vers: 73.4, en: 0.3, droit: true }, a: 0.12, d: 1, partiels: CORPS, sature: 2 })
       souffle(m, h, 0.28, 0.45, 0, { f: 300, glisse: { vers: 1400, en: 0.3, droit: true }, q: 0.9, bande: true, a: 0.1, d: 0.5, large: true })
     },

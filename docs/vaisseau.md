@@ -3547,3 +3547,4 @@ perdu. Comme un vrai jeu d'extraction. »
   places prises).
 - `&crash=N` détruit le vaisseau N secondes après le décollage.
 
+Le son de l'allumage (`allume`) perd son sifflement (Keko, 14/11 : « pas très joli ») : restent le toc du relais, le ronflement grave et le souffle qui s'ouvre.
