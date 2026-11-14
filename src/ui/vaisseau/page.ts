@@ -811,8 +811,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const titreDe = (c: Case): string => {
     if (c.k < 0) return NOMS_ONGLET[c.o]
     if (c.o !== 'arme') return `Outil ${c.k + 1}`
-    const legeres = capacite(hangar, 'arme') - (monteeA(hangar, 'coque').lourdes ?? 0)
-    return c.k >= legeres ? `Lourde ${c.k - legeres + 1}` : `Arme ${c.k + 1}`
+    // (UNE PLACE D'ARME DIT SON TYPE, plus son numéro — Keko, 14/11 : « plutôt que dire arme 1, 2…, dis juste le type
+    // d'arme : léger, moyen, lourd » ; il n'y a que deux calibres aujourd'hui, le moyen n'existe pas encore)
+    return placeLourde(hangar, c.k) ? 'Lourd' : 'Léger'
   }
   /**
    * L'ÉTAPE DU PARCOURS (Keko : « des étapes intermédiaires avant d'afficher tout le menu du bas ») : au hangar et au
