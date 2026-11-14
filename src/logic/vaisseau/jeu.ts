@@ -164,7 +164,15 @@ export const VAISSEAU = {
    * se laisse plus distraire pendant `calme` secondes. Au contact, il MORD (`morsure` points, toutes les
    * `cadenceMorsure` secondes). *Tous les chiffres sont de moi, à rejuger.*
    */
-  invasion: { active: false as boolean, portail: 24, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 70, laisse: 120, recul: 60, calme: 2.5, morsure: 1, cadenceMorsure: 0.9 },
+  invasion: { active: false as boolean, portail: 24, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 70, laisse: 120, recul: 60, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
+    /**
+     * (Keko, 14/11, la suite.) LA MORT N'EST PAS LA FIN : abattu, le joueur revient AU PORTAIL après `penalite` secondes
+     * (le monde continue sans lui). LES PÉPITES que les insectes lâchent NE VONT PAS EN SOUTE : chacune vaut un point
+     * d'expérience ; `xpBase` points pour le niveau 2, `xpPas` de plus à chaque niveau ; un niveau gagné s'annonce
+     * (`niveau`) — la page met alors le jeu en pause pour le choix d'un talent.
+     */
+    penalite: 10, xpBase: 5, xpPas: 3,
+  },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
   champ: {
@@ -328,7 +336,7 @@ export type Monde = {
   ennemis: Ennemi[]
   prochainEnnemiA: number
   /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
-  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number }
+  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number }
   tirs: Tir[]
   /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
   obus: Obus[]
@@ -389,13 +397,16 @@ export type Evenement =
   /** L'invasion : une vague commence ; un insecte traverse le portail. */
   | { type: 'vague'; numero: number; nombre: number }
   | { type: 'traverse'; id: number; x: number; y: number }
+  /** L'invasion : un niveau gagné ; le joueur abattu revient au portail. */
+  | { type: 'niveau'; niveau: number }
+  | { type: 'retour' }
 
 export function nouveauVaisseau(): Vaisseau {
   return { x: 0, y: 0, vx: 0, vy: 0, cap: -Math.PI / 2, poussee: 0, parcouru: 0, contact: null }
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -956,8 +967,30 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
   if (m.coque <= 0) {
     m.coque = 0
     m.phase = 'perdu'
+    if (c.invasion.active) m.invasion.retourA = m.t + c.invasion.penalite
     ev.push({ type: 'perdu' })
   }
+}
+
+/** Ce qu'il faut d'expérience pour passer du niveau `n` au suivant. */
+export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.xpBase + (Math.max(1, n) - 1) * c.invasion.xpPas
+
+/**
+ * L'INVASION CONTINUE SANS LE JOUEUR ABATTU : les vagues naissent, les insectes marchent et traversent le portail ; sa
+ * pénalité passée, il REVIENT au portail, blindage et bouclier pleins.
+ */
+function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  m.t += dt
+  menerLInvasion(c, m, ev)
+  for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
+  m.ennemis = m.ennemis.filter((e) => !e.parti)
+  if (m.t < m.invasion.retourA) return
+  m.vaisseau = nouveauVaisseau()
+  m.coque = c.coque
+  m.bouclier = c.bouclier.points
+  m.toucheA = -100
+  m.phase = 'vol'
+  ev.push({ type: 'retour' })
 }
 
 /**
@@ -1008,7 +1041,10 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
  */
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
-  if (m.phase !== 'vol') return { chocs: [], evenements: ev }
+  if (m.phase !== 'vol') {
+    if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev)
+    return { chocs: [], evenements: ev }
+  }
   m.t += dt
   // le bouclier se recharge, passé le délai sans coup
   if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
@@ -1207,7 +1243,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
 
   // les pépites : elles dérivent en freinant, viennent au vaisseau le plus proche à portée d'aimant, montent à bord au contact
-  const corps: { x: number; y: number; par: 'joueur' | 'ennemi'; e: Ennemi | null }[] = [{ x: v.x, y: v.y, par: 'joueur', e: null }, ...m.ennemis.map((e) => ({ x: e.corps.x, y: e.corps.y, par: 'ennemi' as const, e }))]
+  // (dans l'invasion, les insectes ne ramassent rien : les pépites sont au joueur)
+  const corps: { x: number; y: number; par: 'joueur' | 'ennemi'; e: Ennemi | null }[] = [{ x: v.x, y: v.y, par: 'joueur', e: null }, ...(c.invasion.active ? [] : m.ennemis.map((e) => ({ x: e.corps.x, y: e.corps.y, par: 'ennemi' as const, e })))]
   for (let i = m.pepites.length - 1; i >= 0; i--) {
     const p = m.pepites[i]
     let plusProche = corps[0]
@@ -1220,10 +1257,18 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const dy = plusProche.y - p.y
     const d = dmin || 1
     // LA SOUTE PLEINE (la capacité de la coque — Keko), ou LE MINERAI REFUSÉ : la pépite reste là, ni ramassée ni aimantée
-    const soutePleine = plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])
+    const soutePleine = !c.invasion.active && plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])
     if (d <= c.forage.ramassage && !soutePleine) {
       m.pepites.splice(i, 1)
-      if (plusProche.e === null) {
+      if (c.invasion.active) {
+        // (L'EXPÉRIENCE : une pépite, un point ; la barre pleine, un niveau)
+        m.invasion.xp += 1
+        if (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {
+          m.invasion.xp -= xpDuNiveau(c, m.invasion.niveau)
+          m.invasion.niveau += 1
+          ev.push({ type: 'niveau', niveau: m.invasion.niveau })
+        }
+      } else if (plusProche.e === null) {
         m.minerai += 1
         m.cargaison[p.minerai] += 1
       } else {

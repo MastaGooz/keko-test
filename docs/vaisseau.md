@@ -3596,3 +3596,41 @@ L'interface du jeu du vortex (Keko, 14/11) : PAS DE SOUTE (ni sa jauge, ni le po
 Keko : « des ennemis (forme insectoïde) qui se rendent au portail pour le traverser ; arrivés dans la zone du portail, une animation de disparition dans le portail. Si le joueur est dans la zone de l'unité, elle l'aggro et le suit ; elle arrête de le suivre s'il l'éloigne trop de sa zone ou du portail. Idée : on défend le portail des vagues d'ennemis. » LA RÈGLE est dans `jeu.ts` (`VAISSEAU.invasion`, éteinte dans le Nova Drifter ; `menerLInvasion`, `conduireLInsecte`) : les insectes sont des `Ennemi` — les armes du joueur les visent comme le rival — qui naissent PAR VAGUES sur un cercle (360) autour du portail, marchent vers lui et le TRAVERSENT à 24 de son centre (`traverse`, `invasion.passes`). L'AGGRO : le joueur à moins de 70, l'insecte le chasse et le MORD au contact (1 point, toutes les 0,9 s) ; son ANCRE est l'endroit où il a été pris ; il LÂCHE à plus de 120 de l'ancre, ou plus loin du portail qu'elle de plus de 60, puis ne se laisse plus distraire 2,5 s. LA PAGE les dessine (`dessinerUnInsecte` : abdomen rayé, six pattes qui marchent, mandibules ; rouge, yeux rouges et mandibules qui claquent en chasse), joue leur disparition (la téléportation, à leur taille) et écrit en haut à gauche la vague, les abattus, les passés. Pas encore de défaite : le portail compte ceux qui passent. *Tous les chiffres (vagues, vitesse, vie, distances) sont de moi.*
 
 Le jeu du vortex est DÉZOOMÉ AU MAXIMUM EN PERMANENCE (×2 ; Keko, 14/11 : « pas vraiment d'intérêt à zoomer là ») ; `&champ=N` l'essaie à une autre valeur. Le zoom automatique par la vitesse reste celui du Nova Drifter.
+
+### Le jeu du vortex : le retour, l'expérience, les talents (14/11)
+
+Keko, d'un trait : les grains de propulsion des insectes EN VERT (« des
+ennemis biologiques ») ; LA MORT N'EST PAS LA FIN — « utilise le compte à
+rebours de la zone d'extraction, mets-le au milieu du portail, visible
+uniquement par le joueur qui est mort ; à la fin, tu fais respawn le joueur ;
+une pénalité de 10 secondes » ; les insectes lâchent de PETITES PÉPITES ;
+« une barre d'XP qui se remplit avec les pépites — pas le mot XP ni aucun
+symbole, juste le chiffre du niveau, jusqu'à trois chiffres » ; la barre
+pleine, « on met le jeu en pause pour tout le monde, on choisit un talent
+parmi 3 propositions ; une fois que tout le monde a choisi, la partie
+reprend ; un compte à rebours de 30 secondes, et si personne n'a choisi, le
+choix est mis en réserve pour le joueur qui n'a pas choisi : il aura 2 choix
+la prochaine fois ».
+
+- RÈGLE (`jeu.ts`) : abattu dans l'invasion, `invasion.retourA` est posé
+  (`penalite`, 10 s) ; `avancerSansLeJoueur` fait continuer les vagues et
+  les insectes, puis rend le joueur au portail, blindage et bouclier pleins
+  (`retour`). Les pépites ne vont pas en soute et les insectes n'en
+  ramassent pas : chacune vaut un point (`invasion.xp`) ; `xpDuNiveau` (5,
+  puis 3 de plus par niveau) ; la barre pleine, `niveau`.
+- TALENTS (`logic/vaisseau/talents.ts`) : huit améliorations qui
+  transforment la configuration et se cumulent ; `proposer` en tire trois,
+  de la graine de la partie ; `ouvrirLeChoix(reserve)`, `apresUnChoix`,
+  `reserveApresLeDelai`, `DUREE_DU_CHOIX` (30 s).
+- PAGE : `dessinerLExperience` (le niveau dans la place de trois chiffres,
+  la barre verte), `dessinerLeRetour` (le chiffre qui frappe au centre du
+  portail ; la caméra y glisse), `dessinerLeChoixDeTalent` (un voile, le
+  niveau, le temps, trois cartes — côte à côte couché, empilées debout) ;
+  le monde est en pause tant qu'un choix est ouvert. `&talent=N` ouvre le
+  choix d'emblée (N à faire), `&crash=N` abat le vaisseau après N s.
+- Un seul joueur pour l'instant : « tout le monde a choisi » et « visible
+  par le seul joueur mort » sont vrais par construction ; l'état du choix
+  est par joueur (`Choix`, la réserve), prêt à être multiplié.
+
+*Les talents, leurs chiffres et la courbe d'expérience sont de moi.*
+

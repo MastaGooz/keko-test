@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -299,6 +299,29 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
     lache = ins.fait === 'marche'
   }
   verifier('entraîné trop loin de son ancre ou du portail, il lâche et reprend sa marche', lache)
+  // LA MORT N'EST PAS LA FIN : abattu, le joueur revient au portail après la pénalité ; le monde a continué
+  const mort = nouveauMonde(cfg, 7)
+  mort.coque = 0.5
+  loin(mort)
+  for (let i = 0; i < 60 * 6 && mort.ennemis.length === 0; i++) {
+    avancerLeMonde(cfg, mort, 1 / 60, { x: 0, y: 0 })
+    loin(mort)
+  }
+  const tueur = mort.ennemis[0]
+  mort.vaisseau = { ...nouveauVaisseau(), x: tueur.corps.x + 8, y: tueur.corps.y }
+  let perdus = 0
+  for (let i = 0; i < 60 * 3 && mort.phase === 'vol'; i++) perdus += compter(avancerLeMonde(cfg, mort, 1 / 60, { x: 0, y: 0 }).evenements, 'perdu')
+  const tMort = mort.t
+  let retours = 0
+  for (let i = 0; i < 60 * (cfg.invasion.penalite + 1); i++) retours += compter(avancerLeMonde(cfg, mort, 1 / 60, { x: 0, y: 0 }).evenements, 'retour')
+  verifier('abattu, le joueur revient au portail après la pénalité, blindage et bouclier pleins ; le temps a continué', perdus === 1 && retours === 1 && mort.phase === 'vol' && mort.coque === cfg.coque && Math.hypot(mort.vaisseau.x, mort.vaisseau.y) < 60 && mort.t > tMort + cfg.invasion.penalite - 0.1)
+  // L'EXPÉRIENCE : une pépite ramassée, un point ; la barre pleine, un niveau — et rien ne va en soute
+  const xp = nouveauMonde(cfg, 7)
+  xp.vaisseau = { ...nouveauVaisseau(), x: 2000, y: 0 }
+  for (let k = 0; k < xpDuNiveau(cfg, 1) + 1; k++) xp.pepites.push({ id: 900 + k, x: 2000 + k, y: 1, vx: 0, vy: 0, graine: k, minerai: 'fer' })
+  let niveaux = 0
+  for (let i = 0; i < 60; i++) niveaux += compter(avancerLeMonde(cfg, xp, 1 / 60, { x: 0, y: 0 }).evenements, 'niveau')
+  verifier('l’expérience : la barre pleine fait un niveau, le surplus reste ; la soute ne reçoit rien', niveaux === 1 && xp.invasion.niveau === 2 && xp.invasion.xp === 1 && xp.minerai === 0 && xpDuNiveau(cfg, 2) > xpDuNiveau(cfg, 1))
   const paisible = nouveauMonde(VAISSEAU, 7)
   verifier('le Nova Drifter n’a pas d’invasion', !VAISSEAU.invasion.active && paisible.invasion.vague === 0)
 }

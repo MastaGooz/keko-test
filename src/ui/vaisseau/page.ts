@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau } from '../../logic/vaisseau/jeu.ts'
 import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
@@ -33,6 +33,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
+import { apresUnChoix, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, reserveApresLeDelai, type Choix, type Talent } from '../../logic/vaisseau/talents.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -503,6 +504,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zone(x, y, w, h, () => undefined, null)
   }
   /** Les braises d'un propulseur ionique : du blanc bleuté au bleu sombre (la rampe de sa flamme, du chaud au froid). */
+  /** (LES INSECTES SONT BIOLOGIQUES — Keko, 14/11 : leurs grains de propulsion « en vert plutôt qu'en feu ») */
+  const BRAISES_VERTES = ['#f0ffd8', '#c8f77a', '#96e04a', '#62bd34', '#3f9428', '#2a6c20', '#1a4818', '#0e2a10'].map((h) => N.hex(h))
   const BRAISES_D_ION = [ION[6], ION[5], ION[4], ION[3], ION[3], ION[2], ION[2], ION[1]]
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
   let effets: { fx: Instance; x: number; y: number }[] = []
@@ -820,12 +823,135 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VORTEX = parametres.has('vortex')
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
-  /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il ne rend rien et ne tire pas — il mord. */
-  const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 0, armes: [] as never[] }
+  /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
+  const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
   let vortexFx: Instance | null = null
   /** Quand la dernière vague a commencé, quand le dernier insecte a traversé (l'interface le marque). */
   let vagueA = -10
   let passeA = -10
+  /** Quand la dernière pépite d'expérience est montée à bord ; quand le dernier niveau a été gagné. */
+  let xpA = -10
+  let niveauA = -10
+  /** Abattu, la caméra glisse du vaisseau vers le portail (0 : sur le vaisseau, 1 : sur le portail). */
+  let versLePortail = 0
+  let crashFait = false
+  /** LE CHOIX D'UN TALENT en cours (null : on joue), ceux gardés en réserve, la fin du délai, l'instant de l'ouverture. */
+  let choixDeTalent: Choix | null = null
+  let reserveDeTalents = 0
+  let talentFinA = 0
+  let talentA = -10
+  /**
+   * LA BARRE D'EXPÉRIENCE (Keko, 14/11 : « une barre qui se remplit avec les pépites ; ne mets pas le mot XP ni aucun
+   * symbole : juste le chiffre du niveau, en prévoyant qu'il peut aller jusqu'à trois chiffres ») : le niveau à
+   * gauche, dans la place de trois chiffres, puis la barre ; elle s'allume à chaque pépite, flambe au niveau gagné.
+   */
+  function dessinerLExperience(p: Peintre): void {
+    const inv = m.invasion
+    const wn = largeurDe('000', GRAS)
+    const large = paysage ? Math.min(180, W - 2 * bandeCote() - 150) : W - 12
+    const x = paysage ? Math.round(W / 2 - large / 2) : 6
+    const y = paysage ? 4 : hautDuHud() + 34
+    const neuf = t - niveauA < 0.8
+    motEnRelief(p, String(inv.niveau), x + wn - largeurDe(String(inv.niveau), GRAS) / 2, y + (neuf ? Math.round(-2 * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true)
+    const bx = x + wn + 4
+    const bw = large - wn - 4
+    const part = Math.max(0, Math.min(1, inv.xp / xpDuNiveau(CONF, inv.niveau)))
+    const allume = t - xpA < 0.15
+    p.rect(bx - 1, y, bw + 2, 7, neuf ? N.WHITE : MATIERES.encre.contour)
+    p.rect(bx, y + 1, bw, 5, N.hex('#2f3b58'))
+    p.rect(bx, y + 1, bw, 1, N.hex('#465679'))
+    const plein = Math.round(bw * part)
+    if (plein > 0) {
+      p.rect(bx, y + 1, plein, 5, allume || neuf ? N.WHITE : RUNE[2])
+      if (!allume && !neuf) {
+        p.rect(bx, y + 1, plein, 1, RUNE[3])
+        p.rect(bx, y + 5, plein, 1, RUNE[1])
+      }
+      p.glow(bx + plein, y + 3, 6, RUNE[2], allume ? 0.8 : 0.3)
+    }
+    if (neuf) p.glow(bx + bw / 2, y + 3, bw * 0.6, RUNE[2], 0.5 * (1 - (t - niveauA) / 0.8))
+  }
+  /**
+   * LE COMPTE DU RETOUR (Keko, 14/11 : « quand je meurs, à la place de mettre fin à la partie, utilise le compte à
+   * rebours qu'on avait dans la zone d'extraction et mets-le au milieu du portail, visible uniquement par le joueur qui
+   * est mort ; à la fin, tu fais respawn le joueur — une pénalité de 10 secondes ») : le chiffre qui frappe à chaque
+   * seconde, au centre du portail, là où il est à l'écran.
+   */
+  function dessinerLeRetour(p: Peintre): void {
+    if (m.phase !== 'perdu') return
+    const reste = Math.max(0, m.invasion.retourA - m.t)
+    const sx = -camera.x / champApplique + W / 2
+    const sy = -camera.y / champApplique + centreY()
+    const ub = Math.ceil(reste) - reste
+    const tremble = ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
+    p.glow(sx, sy, 30, PEPITE[2], 0.25 + (ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
+    motFrappe(p, String(Math.max(1, Math.ceil(reste))), sx + Math.round(Math.sin(t * 90) * tremble), sy - 6 + Math.round(Math.cos(t * 77) * tremble), 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38), ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0)
+  }
+  /**
+   * LE CHOIX D'UN TALENT (Keko, 14/11 : « à chaque fois que la barre est remplie à 100 %, on met le jeu en pause pour
+   * tout le monde ; on choisit un talent parmi 3 propositions ; une fois que tout le monde a choisi, la partie reprend.
+   * Il y a un compte à rebours de 30 secondes ; si personne n'a choisi au bout de 30 secondes, le choix est mis en
+   * réserve pour le joueur qui n'a pas choisi, et il aura 2 choix la prochaine fois ») : un voile, le niveau, le temps
+   * qui reste, et trois cartes — une tape en prend une.
+   */
+  function dessinerLeChoixDeTalent(p: Peintre): void {
+    const ch = choixDeTalent
+    if (ch === null) return
+    const u0 = sortie((t - talentA) / 0.2)
+    p.rect(0, 0, W, H, NUIT, 0.72 * u0)
+    zones = []
+    const cartes = proposer(graineDuVol, m.invasion.niveau, ch.rang)
+    const cote = W >= 300
+    const cw = cote ? Math.min(100, Math.floor((W - 16 - 8) / 3)) : W - 24
+    const hc = cote ? 78 : 44
+    const hautTotal = 40 + (cote ? hc : cartes.length * (hc + 4))
+    const y0 = Math.max(4, Math.round((H - hautTotal) / 2)) + Math.round((1 - u0) * 8)
+    motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
+    const reste = Math.max(0, talentFinA - t)
+    const consigne = ch.aFaire > 1 ? `Choisissez un talent (${ch.aFaire} à choisir)` : 'Choisissez un talent'
+    ecrire(p, consigne, W / 2, y0 + 16, COQUE[5], { align: 'center' })
+    // le temps qui reste : une barre qui se vide, et les secondes
+    const lb = Math.min(140, W - 60)
+    const xb = Math.round(W / 2 - lb / 2)
+    p.rect(xb - 1, y0 + 30, lb + 2, 4, MATIERES.encre.contour)
+    p.rect(xb, y0 + 31, Math.round(lb * (reste / DUREE_DU_CHOIX)), 2, reste < 5 ? ROUGE[4] : PEPITE[2])
+    ecrire(p, String(Math.ceil(reste)), xb + lb + 4, y0 + 28, reste < 5 ? ROUGE[5] : COQUE[5], { police: GRAS })
+    const prendre = (ta: Talent) => (): void => {
+      CONF = ta.appliquer(CONF)
+      // (un point de blindage ou de bouclier gagné est donné tout de suite)
+      if (ta.id === 'blindage') m.coque = Math.min(CONF.coque, m.coque + 1)
+      if (ta.id === 'bouclier') m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + 1)
+      jouer('equipe')
+      secouer(1)
+      choixDeTalent = apresUnChoix(ch)
+      talentFinA = t + DUREE_DU_CHOIX
+      talentA = t
+    }
+    cartes.forEach((ta, i) => {
+      const age = t - talentA - 0.06 * i
+      if (age < 0) return
+      const x = cote ? Math.round(W / 2 - (3 * cw + 8) / 2) + i * (cw + 4) : 12
+      const y = y0 + 40 + (cote ? 0 : i * (hc + 4)) + Math.round((1 - sortie(age / 0.2)) * 6)
+      const e = etatDuBouton(x, y, cw, hc)
+      if (!e.enfonce) ombrePortee(p, x, y, cw, hc)
+      plaque(p, x, y + e.dy, cw, hc, 'encre', { bord: e.survole ? PEPITE[2] : PEPITE[1], enfonce: e.enfonce, flash: e.flash || age < 0.07 })
+      const T: [number, number, number] = [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')]
+      if (cote) {
+        plaque(p, x + cw / 2 - 11, y + 5 + e.dy, 22, 20, 'creux')
+        dessinerLeGlyphe(p, ta.icone, Math.round(x + cw / 2), y + 15 + e.dy, T)
+        replier(ta.nom, cw - 8, GRAS).slice(0, 2).forEach((li, k) => ecrire(p, li, x + cw / 2, y + 28 + k * 9 + e.dy, PEPITE[3], { align: 'center', police: GRAS }))
+        replier(ta.dit, cw - 8).slice(0, 4).forEach((li, k) => ecrire(p, li, x + cw / 2, y + 48 + k * 8 + e.dy, COQUE[5], { align: 'center' }))
+      } else {
+        plaque(p, x + 4, y + 4 + e.dy, 22, hc - 8, 'creux')
+        dessinerLeGlyphe(p, ta.icone, x + 15, y + Math.round(hc / 2) + e.dy, T)
+        ecrire(p, ta.nom, x + 31, y + 5 + e.dy, PEPITE[3], { police: GRAS })
+        replier(ta.dit, cw - 36).slice(0, 3).forEach((li, k) => ecrire(p, li, x + 31, y + 16 + k * 9 + e.dy, COQUE[5]))
+      }
+      zone(x, y, cw, hc, prendre(ta), 'achat')
+    })
+    // (rien d'autre ne répond pendant le choix)
+    zone(0, 0, W, H, () => {}, null)
+  }
   /** L'INTERFACE DE L'INVASION, en haut à gauche : la vague, les insectes abattus, ceux qui ont traversé le portail. */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
@@ -835,6 +961,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     motEnRelief(p, `Vague ${Math.max(1, inv.vague)}`, x + largeurDe(`Vague ${Math.max(1, inv.vague)}`, GRAS) / 2, y + (neuve ? Math.round(Math.sin((t - vagueA) * 20) * 2 * (1 - (t - vagueA) / 1.2)) : 0), true)
     ecrire(p, `Abattus ${inv.abattus}`, x, y + 11, COQUE[5])
     ecrire(p, `Passés ${inv.passes}`, x, y + 21, t - passeA < 0.5 ? N.WHITE : inv.passes > 0 ? ROUGE[5] : COQUE[4], { police: t - passeA < 0.5 ? GRAS : TEXTE })
+    dessinerLExperience(p)
+    dessinerLeRetour(p)
   }
   let accueil = !parametres.has('direct') && !VORTEX
   let accueilQuitteA: number | null = null
@@ -895,7 +1023,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     manche = null
     touches.clear()
   }
-  const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
+  // (dans le jeu du vortex, la mort n'est pas la fin : on reste en vol, le temps de revenir au portail)
+  const ecranVisible = (): boolean => !enJeu || (!VORTEX && m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
   const ONGLETS: Sorte[] = ['coque', 'propulseur', 'arme', 'outil'] // (le châssis d'abord — Keko ; puis propulsion, armement, outils — 14/11)
@@ -7088,8 +7217,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (la soute ouverte : le monde est en pause, ses sons continus se taisent)
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
-    if (enJeu && souteOuverte) regler(0, false, 0, false)
-    if (enJeu && !souteOuverte) {
+    // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
+    if (choixDeTalent !== null && t >= talentFinA) {
+      reserveDeTalents += reserveApresLeDelai(choixDeTalent)
+      choixDeTalent = null
+    }
+    if (enJeu && (souteOuverte || choixDeTalent !== null)) regler(0, false, 0, false)
+    if (enJeu && !souteOuverte && choixDeTalent === null) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
       {
@@ -7113,9 +7247,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // seule pour un vaisseau à tourelles. La règle du tir à la main reste dans `jeu.ts`, plus appelée.)
         const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
         // (`&crash=N` : le vaisseau est détruit N secondes après le décollage, pour essayer la perte des pièces d'un lien)
-        if (parametres.has('crash') && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
+        if (parametres.has('crash') && !crashFait && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
+          crashFait = true // (une fois : dans le jeu du vortex on revient, et on ne remeurt pas aussitôt)
           m.coque = 0
           m.phase = 'perdu'
+          m.invasion.retourA = m.t + CONF.invasion.penalite
           r.evenements.push({ type: 'perdu' })
         }
         v = m.vaisseau
@@ -7169,7 +7305,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
               if (ev.par === 'joueur') {
                 compter('ramassees', 1)
-                envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai, trace: [] })
+                // (dans le jeu du vortex, la pépite est de l'expérience : pas d'envol vers la soute, la barre s'allume)
+                if (VORTEX) xpA = t
+                else envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai, trace: [] })
                 jouer('ramasse')
                 // (le « pop » du coin collect : un disque blanc qui se referme, un anneau, des étoiles lancées en rond)
                 pops.push({ x: ev.x, y: ev.y, t0: t, c: TEINTES_MINERAI[ev.minerai] })
@@ -7241,6 +7379,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (typeof navigator.vibrate === 'function') navigator.vibrate(50)
               break
             }
+            case 'retour': {
+              // LE JOUEUR REVIENT AU PORTAIL : la matérialisation du départ, et son son
+              arriveA = t
+              jouer('arrive', undefined, Math.max(0, ARRIVE_A - ECLOSION_DE_L_ARRIVEE))
+              effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: -camera.x + W / 2, y: -camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: 0, y: 0 })
+              break
+            }
+            case 'niveau': {
+              // UN NIVEAU : le jeu se met en pause, on choisit un talent (un de plus s'il y en avait déjà un à choisir)
+              niveauA = t
+              jouer('achat')
+              const enCours = choixDeTalent as Choix | null
+              if (enCours === null) {
+                choixDeTalent = ouvrirLeChoix(reserveDeTalents)
+                reserveDeTalents = 0
+                talentFinA = t + DUREE_DU_CHOIX
+                talentA = t
+              } else choixDeTalent = { aFaire: enCours.aFaire + 1, rang: enCours.rang }
+              break
+            }
             case 'traverse': {
               // UN INSECTE TRAVERSE LE PORTAIL : il s'y défait (la téléportation du départ, à sa taille), et le portail le dit
               jouer('extrait', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -7299,7 +7457,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               perduA = t
               // LES PIÈCES CONSTRUITES QUI ÉTAIENT MONTÉES SONT PERDUES AVEC LE VAISSEAU (Keko, 14/11 : « comme un vrai jeu
               // d'extraction ») : le hangar le dira au retour
-              {
+              // (pas dans le jeu du vortex : on y revient au portail dix secondes plus tard, avec tout son équipement)
+              if (!VORTEX) {
                 const pr = perdreLesMontees(hangar, modeleDeVaisseau(flotte.actif).serie)
                 hangar = pr.hangar
                 if (pr.perdues.length > 0) pertes = { noms: pr.perdues.map((id) => pieceDe(id)?.nom ?? id), t0: null }
@@ -7369,7 +7528,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (e.corps.poussee > 0.05 && R.next() < 0.5) {
           const b = e.corps
           const vitesse = 30 + 40 * b.poussee
-          braises.ajouter('braise', b.x - Math.cos(b.cap) * 8 + R.range(-1, 1), b.y - Math.sin(b.cap) * 8 + R.range(-1, 1), b.vx * 0.3 - Math.cos(b.cap) * vitesse + R.range(-8, 8), b.vy * 0.3 - Math.sin(b.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), 0, 1, 2)
+          braises.ajouter('braise', b.x - Math.cos(b.cap) * 8 + R.range(-1, 1), b.y - Math.sin(b.cap) * 8 + R.range(-1, 1), b.vx * 0.3 - Math.cos(b.cap) * vitesse + R.range(-8, 8), b.vy * 0.3 - Math.sin(b.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), VORTEX ? BRAISES_VERTES : 0, 1, 2)
         }
       }
     }
@@ -7416,6 +7575,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     decalageDeLaCamera.y += (cibleY - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
     camera.x = v.x + decalageDeLaCamera.x
     camera.y = v.y + decalageDeLaCamera.y
+    // (abattu dans le jeu du vortex : la caméra glisse vers le portail, où le compte du retour s'affiche)
+    if (VORTEX) {
+      versLePortail = m.phase === 'perdu' ? versLePortail + (1 - versLePortail) * Math.min(1, dt * 2.5) : 0
+      camera.x *= 1 - versLePortail
+      camera.y *= 1 - versLePortail
+    }
     braises.update(dt)
     etincelles.update(dt)
     morceaux.update(dt)
@@ -7581,6 +7746,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, basDuHud() + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
     dessinerLeManche(p)
     dessinerLesToasts(dt)
+    if (VORTEX) dessinerLeChoixDeTalent(p)
     // (séparée du monde, l'interface est transparente là où elle ne peint rien : le monde est dessous)
     if (separe) N.composite(frame, img.data, null)
     else N.composite(frame, img.data, cuireLeCiel())
@@ -7594,6 +7760,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   cadrer()
   // (le jeu du vortex : on vole tout de suite)
   if (VORTEX) demarrer()
+  // (`&talent=N` : le choix d'un talent s'ouvre d'emblée, avec N choix à faire — pour le voir d'un lien)
+  if (VORTEX && parametres.has('talent')) {
+    choixDeTalent = ouvrirLeChoix(Math.max(0, (Number(parametres.get('talent')) || 1) - 1))
+    talentFinA = 4 + DUREE_DU_CHOIX
+    talentA = 4
+  }
   new ResizeObserver(cadrer).observe(racine)
   requestAnimationFrame(image)
 }
