@@ -2898,7 +2898,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (« EQUIPE » ou rien, comme les autres parties — Keko : les places où la pièce est montée ailleurs ne se disent
       // plus ; pour une arme ou un outil, « EQUIPE » veut dire à LA PLACE OUVERTE, la même pièce pouvant se monter à plusieurs)
       if (ki >= 0 ? listeMontee(onglet)[ki] === pc.id : montee) p.text('EQUIPE', xd, ly + 4, PEPITE[2], { align: 'right' })
-      else if (libres(hangar, pc.id) <= 0) nombreDeCredits(p, pc.prix, xd + 2, ly + 3, peutAcheter(hangar, credits, pc.id, tresor) ? PEPITE[3] : COQUE[3])
+      // (PLUS DE PRIX SUR LA LIGNE — Keko, 14/11 : il ne disait que les crédits ; le prix entier est sur « Construire »)
       zone(4, ly, W - 8, RANG_LISTE, () => ((choix[onglet] = pc.id), (choixA = t)), choisie ? null : 'clic')
     }
     if (maxDefil > 0) {
