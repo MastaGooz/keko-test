@@ -2779,20 +2779,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const titre = titreDe(c)
       // (UN TITRE TROP LONG POUR LA CASE passe dans la lettre courante — Keko, 14/11 : « armes lourdes et armes légères
       // sont presque en train de déborder du rectangle »)
-      const policeDuTitre = largeurDe(titre, GRAS) > cw - 14 ? TEXTE : GRAS
+      // (… PUIS TOUS LES TITRES DE CASE DANS CETTE LETTRE : « des éléments en gras et d'autres non, c'est moche »)
+      const policeDuTitre = TEXTE
       motEnRelief(p, titre, x + 5 + largeurDe(titre, policeDuTitre) / 2, y2 + 3, true, policeDuTitre)
       const yp = y2 + 12
       const hp = ch - 15
-      plaque(p, x + 4, yp, 26, hp, 'creux')
+      // (LE PUITS RÉTRÉCI, 20 au lieu de 26 : « le nom des pièces dépasse de leur rectangle » — Keko, 14/11 ;
+      // « Mitrailleuse », d'un seul mot, ne se replie pas : il lui fallait six pixels de plus)
+      plaque(p, x + 4, yp, 20, hp, 'creux')
       const vide = vue === 'hangar' && montee === undefined
       if (vide) {
         const c2 = Math.sin(t * 3 + i) > 0 ? COQUE[3] : COQUE[2]
-        p.rect(x + 16, yp + hp / 2 - 4, 2, 8, c2)
-        p.rect(x + 13, yp + hp / 2 - 1, 8, 2, c2)
-      } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 17, yp + hp / 2, 26, hp)
+        p.rect(x + 13, yp + hp / 2 - 4, 2, 8, c2)
+        p.rect(x + 10, yp + hp / 2 - 1, 8, 2, c2)
+      } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 14, yp + hp / 2, 20, hp)
       const ligne = groupe ? `${prises.length} / ${duGroupe.length}` : vide ? 'Vide' : montee!.nom
-      const L = replier(ligne, cw - 38).slice(0, 2)
-      L.forEach((li, k) => ecrire(p, li, x + 34, yp + (L.length === 1 ? 7 : 2) + k * 9, vue === 'labo' || vide ? COQUE[3] : COQUE[6]))
+      const L = replier(ligne, cw - 31).slice(0, 2)
+      L.forEach((li, k) => ecrire(p, li, x + 28, yp + (L.length === 1 ? 7 : 2) + k * 9, vue === 'labo' || vide ? COQUE[3] : COQUE[6]))
       zone(x, yy, cw, ch, () => {
         if (!groupe) return ouvrirLEmplacement(o, c.k)
         categorieOuverte = { o: o as 'arme' | 'outil', lourde: c.lourde ?? false }
