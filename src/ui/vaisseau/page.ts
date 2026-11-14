@@ -2695,9 +2695,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     boutonBase(p, bx, y, bc, 17, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
       const [sombre, moyen, clair] = tonsDeLaLivree(livree)
       p.rect(bx + 5 + dx, y + 4 + dy, 9, 9, MATIERES.encre.contour)
-      p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
-      p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
-      p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
+      if (livree === 'serie') {
+        // (le style de base : gris, barré de rouge, comme dans le panneau)
+        p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, N.hex('#6b7280'))
+        for (let k = 1; k < 6; k++) {
+          p.rect(bx + 6 + k + dx, y + 5 + k + dy, 1, 1, N.hex('#e02a2a'))
+          p.rect(bx + 12 - k + dx, y + 5 + k + dy, 1, 1, N.hex('#e02a2a'))
+        }
+      } else {
+        p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
+        p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
+        p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
+      }
       ecrire(p, 'Style', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
     }, 'ouvre', { matiere: 'acier' })
     bouton(p, bx + bc + 4, y, bw, 17, 'Équipement', true, () => ((equipementOuvert = true), (categorieOuverte = null), (etapeA = t), (defilCases = 0)), 'ouvre', 'acier')
@@ -2908,9 +2917,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const e = etatDuBouton(cx, cy, cote, cote)
       p.rect(cx - 1, cy - 1 + e.dy, cote + 2, cote + 2, choisie ? PEPITE[3] : MATIERES.encre.contour)
       p.rect(cx, cy + e.dy, cote, cote, MATIERES.encre.contour)
-      p.rect(cx + 1, cy + 1 + e.dy, cote - 2, cote - 2, moyen)
-      p.rect(cx + 1, cy + 1 + e.dy, cote - 2, 5, clair)
-      p.rect(cx + 1, cy + cote - 8 + e.dy, cote - 2, 7, sombre)
+      if (l.id === 'serie') {
+        // LE STYLE DE BASE : un rectangle GRIS barré d'une CROIX ROUGE (Keko, 14/11 : « pour signifier que c'est le
+        // standard, sans couleur ajoutée »)
+        p.rect(cx + 1, cy + 1 + e.dy, cote - 2, cote - 2, N.hex('#6b7280'))
+        p.rect(cx + 1, cy + 1 + e.dy, cote - 2, 2, N.hex('#8b93a1'))
+        for (let k = 4; k < cote - 4; k++) {
+          p.rect(cx + k - 1, cy + k + e.dy, 3, 2, N.hex('#e02a2a'))
+          p.rect(cx + cote - 2 - k, cy + k + e.dy, 3, 2, N.hex('#e02a2a'))
+        }
+      } else {
+        p.rect(cx + 1, cy + 1 + e.dy, cote - 2, cote - 2, moyen)
+        p.rect(cx + 1, cy + 1 + e.dy, cote - 2, 5, clair)
+        p.rect(cx + 1, cy + cote - 8 + e.dy, cote - 2, 7, sombre)
+      }
       if (choisie) N.sparkle(p, cx + cote - 5, cy + 5, 2 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), N.WHITE, PEPITE[3], 0.8)
       else zone(cx - 2, cy - 2, pas, pas, () => {
         livree = l.id
