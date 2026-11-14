@@ -794,8 +794,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let place = -1
   /** Au hangar, sous « Équipement » : la liste de places ouverte (l'armement ou les outils), ou null : les quatre catégories. */
-  let categorieOuverte: 'arme' | 'outil' | null = null
-  type Case = { o: Sorte; k: number }
+  /**
+   * (PAR CALIBRE — Keko, 14/11 : « plutôt que plusieurs slots légers ou lourds, une catégorie armes légères avec ses
+   * slots, une catégorie armes moyennes, armes lourdes, etc. ; pour les outils c'est pareil : outils légers, outils
+   * lourds » : une catégorie par sorte ET par calibre que le châssis porte. Aujourd'hui : armes légères, armes lourdes,
+   * outils légers — le calibre moyen et les outils lourds n'existent pas encore.)
+   */
+  let categorieOuverte: { o: 'arme' | 'outil'; lourde: boolean } | null = null
+  /** Les places d'une sorte et d'un calibre, dans l'ordre (les outils sont tous légers). */
+  const placesDuCalibre = (o: 'arme' | 'outil', lourde: boolean): number[] => Array.from({ length: capacite(hangar, o) }, (_, k) => k).filter((k) => (o === 'arme' ? placeLourde(hangar, k) : false) === lourde)
+  const nomDuCalibre = (o: 'arme' | 'outil', lourde: boolean): string => (o === 'arme' ? (lourde ? 'Armes lourdes' : 'Armes légères') : lourde ? 'Outils lourds' : 'Outils légers')
+  type Case = { o: Sorte; k: number; /** Une catégorie de places : son calibre. */ lourde?: boolean }
   const listeMontee = (o: Sorte): string[] => (o === 'arme' ? hangar.armes : o === 'outil' ? hangar.outils : [])
   /** Les cases de la vue d'ensemble, dans l'ordre : au hangar une par place (un nouveau châssis en ajoute), au labo une par catégorie. */
   /** Une catégorie A DE QUOI MONTRER : une pièce possédée, ou débloquée au labo (Keko, 11/11 : « masquer le bouton arme ou outil dans le hangar si aucune pièce n'est dispo ») — sinon sa case et sa cible sur le vaisseau ne paraissent pas. */
@@ -804,16 +813,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (AU HANGAR, QUATRE CATÉGORIES — Keko, 14/11 : « plutôt que d'afficher toutes les pièces une par une, afficher
     // châssis, propulsion, armement, outils ; pour l'armement et les outils, qui sont en plusieurs exemplaires, on ouvre
     // leur liste à ce moment-là » : `categorieOuverte` dit laquelle des deux listes de places est à l'écran)
-    vue === 'hangar' ? (categorieOuverte !== null ? Array.from({ length: capacite(hangar, categorieOuverte) }, (_, k): Case => ({ o: categorieOuverte as Sorte, k })) : ONGLETS.filter((o) => aDesPieces(o) && ((o !== 'outil' && o !== 'arme') || capacite(hangar, o) > 0)).map((o): Case => ({ o, k: -1 }))) : ONGLETS.map((o) => ({ o, k: -1 }))
+    vue === 'hangar' ? (categorieOuverte !== null ? placesDuCalibre(categorieOuverte.o, categorieOuverte.lourde).map((k): Case => ({ o: categorieOuverte!.o, k })) : ONGLETS.filter(aDesPieces).flatMap((o): Case[] => (o === 'arme' || o === 'outil' ? [false, true].filter((lourde) => placesDuCalibre(o, lourde).length > 0).map((lourde) => ({ o, k: -1, lourde })) : [{ o, k: -1 }]))) : ONGLETS.map((o) => ({ o, k: -1 }))
   /** La place ouverte, bornée à ce que porte le châssis monté (−1 hors des outils et des armes du hangar). */
   const placeOuverte = (): number => (vue === 'hangar' && (onglet === 'outil' || onglet === 'arme') ? Math.max(0, Math.min(place, capacite(hangar, onglet) - 1)) : -1)
   /** (les places LOURDES d'un châssis sont ses dernières places d'arme : « Lourde 1 », « Lourde 2 ») */
   const titreDe = (c: Case): string => {
-    if (c.k < 0) return NOMS_ONGLET[c.o]
-    if (c.o !== 'arme') return `Outil ${c.k + 1}`
-    // (UNE PLACE D'ARME DIT SON TYPE, plus son numéro — Keko, 14/11 : « plutôt que dire arme 1, 2…, dis juste le type
-    // d'arme : léger, moyen, lourd » ; il n'y a que deux calibres aujourd'hui, le moyen n'existe pas encore)
-    return placeLourde(hangar, c.k) ? 'Lourd' : 'Léger'
+    if (c.o !== 'arme' && c.o !== 'outil') return NOMS_ONGLET[c.o]
+    // (une catégorie : « Armes légères » ; une place : son numéro DANS sa catégorie, « Arme 2 »)
+    if (c.k < 0) return nomDuCalibre(c.o, c.lourde ?? false)
+    const lourde = c.o === 'arme' && placeLourde(hangar, c.k)
+    return `${c.o === 'arme' ? 'Arme' : 'Outil'} ${placesDuCalibre(c.o, lourde).indexOf(c.k) + 1}`
   }
   /**
    * L'ÉTAPE DU PARCOURS (Keko : « des étapes intermédiaires avant d'afficher tout le menu du bas ») : au hangar et au
@@ -2715,7 +2724,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesEmplacements(p: Peintre, y: number): number {
     if (vue === 'hangar') {
       // (les cases des pièces : on y vient par « Équipement », on en repart par la flèche)
-      if (categorieOuverte !== null) enTete(p, y, NOMS_ONGLET[categorieOuverte], () => ((categorieOuverte = null), (etapeA = t), (defilCases = 0)))
+      if (categorieOuverte !== null) enTete(p, y, nomDuCalibre(categorieOuverte.o, categorieOuverte.lourde), () => ((categorieOuverte = null), (etapeA = t), (defilCases = 0)))
       else enTete(p, y, 'Équipement', () => ((equipementOuvert = false), (etapeA = t)))
       y += HT + 3
     }
@@ -2746,7 +2755,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       let montee: Piece | undefined
       // (une CATÉGORIE de places — l'armement, les outils : la première pièce montée pour le dessin, et son compte)
       const groupe = vue === 'hangar' && (o === 'arme' || o === 'outil') && c.k < 0
-      const prises = groupe ? listeMontee(o).slice(0, capacite(hangar, o as 'arme' | 'outil')).filter((id) => pieceDe(id) !== undefined) : []
+      const duGroupe = groupe ? placesDuCalibre(o as 'arme' | 'outil', c.lourde ?? false) : []
+      const prises = duGroupe.map((k) => listeMontee(o)[k] ?? '').filter((id) => pieceDe(id) !== undefined)
       if (groupe) montee = pieceDe(prises[0] ?? '')
       else if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
       else montee = piecesIci(o).find((pc) => !possede(hangar, pc.id))
@@ -2769,12 +2779,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(x + 16, yp + hp / 2 - 4, 2, 8, c2)
         p.rect(x + 13, yp + hp / 2 - 1, 8, 2, c2)
       } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 17, yp + hp / 2, 26, hp)
-      const ligne = groupe ? `${prises.length} / ${capacite(hangar, o as 'arme' | 'outil')}` : vide ? 'Vide' : montee!.nom
+      const ligne = groupe ? `${prises.length} / ${duGroupe.length}` : vide ? 'Vide' : montee!.nom
       const L = replier(ligne, cw - 38).slice(0, 2)
       L.forEach((li, k) => ecrire(p, li, x + 34, yp + (L.length === 1 ? 7 : 2) + k * 9, vue === 'labo' || vide ? COQUE[3] : COQUE[6]))
       zone(x, yy, cw, ch, () => {
         if (!groupe) return ouvrirLEmplacement(o, c.k)
-        categorieOuverte = o as 'arme' | 'outil'
+        categorieOuverte = { o: o as 'arme' | 'outil', lourde: c.lourde ?? false }
         etapeA = t
         defilCases = 0
       })
