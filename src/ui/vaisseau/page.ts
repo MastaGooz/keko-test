@@ -5584,9 +5584,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * six pattes qui marchent ; EN CHASSE, il rougit, ses yeux passent du jaune au rouge, ses mandibules claquent et
    * ses pattes s'affolent ; blanc un instant sous un coup.
    */
-  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean): void {
-    const ca = Math.cos(cap)
-    const sa = Math.sin(cap)
+  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, echelle = 1): void {
+    const ca = Math.cos(cap) * echelle
+    const sa = Math.sin(cap) * echelle
     const P = (ux: number, uy: number): [number, number] => [x + ux * ca - uy * sa, y + ux * sa + uy * ca]
     const ovaleTourne = (cx: number, cy: number, rx: number, ry: number): [number, number][] => Array.from({ length: 12 }, (_, i) => P(cx + Math.cos((i / 12) * Math.PI * 2) * rx, cy + Math.sin((i / 12) * Math.PI * 2) * ry))
     const ENCRE = N.hex('#0a0610')
@@ -5628,14 +5628,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
   }
+  /**
+   * LES INSECTES ASPIRÉS PAR LE PORTAIL (Keko, 14/11 : « quand un ennemi entre dans le vortex, une petite animation
+   * d'aspiration de son image dans le vortex, plutôt qu'une explosion jaune ») : son image tourne autour du centre en
+   * s'en rapprochant, de plus en plus vite, et rapetisse jusqu'à disparaître ; elle blanchit sur la fin.
+   */
+  /** Le cap et l'état de chaque insecte à la dernière image où on l'a dessiné (pour celui que le portail vient de prendre). */
+  const dernierVu = new Map<number, { cap: number; aggro: boolean }>()
+  let aspires: { x: number; y: number; cap: number; id: number; t0: number; aggro: boolean }[] = []
+  const DUREE_DE_L_ASPIRATION = 0.6
+  function dessinerLesAspires(p: Peintre): void {
+    aspires = aspires.filter((a) => t - a.t0 < DUREE_DE_L_ASPIRATION)
+    for (const a of aspires) {
+      const u = (t - a.t0) / DUREE_DE_L_ASPIRATION
+      const r = Math.hypot(a.x, a.y) * Math.pow(1 - u, 1.6)
+      const an = Math.atan2(a.y, a.x) + 5.5 * u * u
+      const wx = Math.cos(an) * r
+      const wy = Math.sin(an) * r
+      dessinerUnInsecte(p, wx - camera.x + W / 2, wy - camera.y + centreY(), a.cap + 9 * u * u, a.id * 1.7, u > 0.7, a.aggro, Math.max(0.12, 1 - u))
+    }
+  }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {
+      dessinerLesAspires(p)
       for (const e of m.ennemis) {
         const b = e.corps
         const sx = b.x - camera.x + W / 2
         const sy = b.y - camera.y + centreY()
         const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.1
         dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro')
+        dernierVu.set(e.id, { cap: b.cap, aggro: e.fait === 'aggro' })
         if (e.pv < CONF.ennemi.pv) dessinerUneJauge(p, sx, sy + CONF.ennemi.rayon + 5, 10, e.pv / CONF.ennemi.pv, ROUGE[4], ROUGE[5], blanchi)
       }
       return
@@ -7533,9 +7555,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'traverse': {
-              // UN INSECTE TRAVERSE LE PORTAIL : il s'y défait (la téléportation du départ, à sa taille), et le portail le dit
+              // UN INSECTE TRAVERSE LE PORTAIL : il y est ASPIRÉ, et le portail le dit
               jouer('extrait', { dx: ev.x - v.x, dy: ev.y - v.y })
-              effets.push({ fx: N.createFx(TELEPORTATION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), rayon: 5, seed: ev.id }), x: ev.x, y: ev.y })
+              {
+                // (son image est aspirée : la règle l'a déjà retiré du monde, on garde où il était et vers où il regardait)
+                const parti = dernierVu.get(ev.id)
+                aspires.push({ x: ev.x, y: ev.y, cap: parti?.cap ?? Math.atan2(-ev.y, -ev.x), id: ev.id, t0: t, aggro: parti?.aggro ?? false })
+                dernierVu.delete(ev.id)
+              }
               for (let i = 0; i < 10; i++) {
                 const a = R.range(0, Math.PI * 2)
                 etincelles.ajouter('etincelle', ev.x, ev.y, -Math.cos(a) * R.range(10, 40), -Math.sin(a) * R.range(10, 40), R.range(0.2, 0.5), R.next() < 0.5 ? N.hex('#cf9bff') : N.WHITE, 1, 2)
