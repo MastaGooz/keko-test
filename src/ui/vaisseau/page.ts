@@ -506,6 +506,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les braises d'un propulseur ionique : du blanc bleuté au bleu sombre (la rampe de sa flamme, du chaud au froid). */
   /** (LES INSECTES SONT BIOLOGIQUES — Keko, 14/11 : leurs grains de propulsion « en vert plutôt qu'en feu ») */
   const BRAISES_VERTES = ['#f0ffd8', '#c8f77a', '#96e04a', '#62bd34', '#3f9428', '#2a6c20', '#1a4818', '#0e2a10'].map((h) => N.hex(h))
+  const PEPITES_VIOLETTES = N.fit(['#2a0f4d', '#7330d0', '#b56cff', '#e6c8ff', '#ffffff'], 5)
   const SANG_VERT = [N.hex('#d8ff8a'), N.hex('#8ee03c'), N.hex('#4aa82a'), N.hex('#2a6c20')]
   /** Les taches que laissent les insectes écrasés (dans le monde) : elles pâlissent et s'en vont en quelques secondes. */
   let taches: { x: number; y: number; t0: number; graine: number }[] = []
@@ -6985,7 +6986,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** Les pépites libres, aux teintes de leur minerai. */
   function dessinerLesPepites(p: Peintre): void {
-    for (const pe of m.pepites) dessinerPepite(p, pe, t, m.refuses[pe.minerai])
+    // (VIOLETTES dans le jeu du vortex — Keko, 14/11 : en gris-blanc, « on les voit mal parmi les étoiles »)
+    for (const pe of m.pepites) dessinerPepite(p, pe, t, m.refuses[pe.minerai], VORTEX ? PEPITES_VIOLETTES : undefined)
   }
 
   /**

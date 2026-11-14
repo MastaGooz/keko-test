@@ -377,6 +377,22 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   const paisible = nouveauMonde(VAISSEAU, 7)
   verifier('le Nova Drifter n’a pas d’invasion', !VAISSEAU.invasion.active && paisible.invasion.vague === 0)
 }
+// LA VISÉE PART DE LA BOUCHE (Keko, 14/11) : un canon monté sur l'aile touche une petite cible immobile, de près comme de loin
+{
+  const canon = { id: 'canon', cadence: 0.4, degats: 1, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false, bouche: { x: 2, y: 7 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [canon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, rayon: 3, pv: 1000 } }
+  const touchesA = (distance: number): number => {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push({ id: 77, corps: { ...nouveauVaisseau(), x: 0, y: -distance }, pv: 1000, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+    let n = 0
+    for (let i = 0; i < 60 * 3; i++) {
+      w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: -distance, vx: 0, vy: 0 }
+      n += compter(avancerLeMonde({ ...cfg, invasion: { ...cfg.invasion, active: false } }, w, 1 / 60, { x: 0, y: 0 }).evenements, 'ennemiTouche')
+    }
+    return n
+  }
+  verifier('un canon sur l’aile touche une petite cible de face, à 20 comme à 100 (la visée part de sa bouche)', touchesA(20) >= 5 && touchesA(100) >= 5)
+}
 // LE RIVAL ARMÉ (Keko, 14/11) : de vraies armes, chacune à sa cadence ; un missile tourne vers le joueur
 {
   const canon = { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }

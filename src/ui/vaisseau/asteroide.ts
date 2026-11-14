@@ -251,8 +251,9 @@ export function dessinerAsteroide(p: PeintreRoche, a: Asteroide, t: number, cx: 
  */
 /** Les trois gris d'une pépite refusée (l'ombre, le corps, le pan éclairé). */
 const GRIS_REFUS = N.fit(['#2c2c38', '#4a4a58', '#6c6c7a'], 3)
-export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number, refusee = false): void {
-  const T = TEINTES_MINERAI[pe.minerai]
+/** (`teintes` : une autre rampe que celle du minerai — le jeu du vortex les veut violettes) */
+export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number, refusee = false, teintes?: number[]): void {
+  const T = teintes ?? TEINTES_MINERAI[pe.minerai]
   const x = Math.round(pe.x)
   const y = Math.round(pe.y)
   const angle = tire(pe.graine, 60) * 6.28 + t * (1.2 + 1.6 * tire(pe.graine, 61)) * (tire(pe.graine, 62) < 0.5 ? -1 : 1)

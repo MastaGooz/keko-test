@@ -1153,6 +1153,13 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
+    // (LA BOUCHE DE L'ARME, sur le vaisseau : c'est D'ELLE qu'on vise, pas du centre — Keko, 14/11 : « les projectiles
+    // manquent parfois les ennemis alors que je suis de face ; le canon est sur l'aile, donc sur le côté » : visé du
+    // centre et tiré de l'aile, l'obus partait PARALLÈLE à la bonne ligne, décalé de l'écart de l'aile — de près, il
+    // passait à côté d'une petite cible)
+    const bo0 = arme.bouche
+    const bx = bo0 === undefined ? v.x : v.x + Math.cos(v.cap) * bo0.x - Math.sin(v.cap) * bo0.y
+    const by = bo0 === undefined ? v.y : v.y + Math.sin(v.cap) * bo0.x + Math.cos(v.cap) * bo0.y
     let vise: number
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
     else {
@@ -1163,8 +1170,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (d <= arme.portee && d < dc) (dc = d), (cible = e)
       }
       if (cible === null) return
-      const temps = dc / arme.vitesse
-      vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - v.y, cible.corps.x + cible.corps.vx * temps - v.x)
+      const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
+      vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
     }
     m.armesA[i] = m.t + arme.cadence
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
