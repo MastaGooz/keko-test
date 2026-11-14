@@ -692,7 +692,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
     // (LE JEU DU VORTEX : l'espace vide — ni roche, ni rival, ni quai)
-    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, ennemi: { ...CONF.ennemi, apparait: 1e9, revient: 1e9 } }
+    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, ennemi: { ...CONF.ennemi, apparait: 1e9, revient: 1e9 }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
     // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
     // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -818,6 +818,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * (`keko/vortex`, le « Portal » du dépôt sans son sol). Rien n'y touche la sauvegarde du Nova Drifter.
    */
   const VORTEX = parametres.has('vortex')
+  /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
+  const BOUCLIER_DU_VORTEX = 3
   let vortexFx: Instance | null = null
   let accueil = !parametres.has('direct') && !VORTEX
   let accueilQuitteA: number | null = null
@@ -5969,7 +5971,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (DEBOUT, PLUS DE PUPITRE — Keko, 13/11 : « enlève le fond en haut, le noir est plus discret qu'un rectangle » :
       // la soute et le blindage sont posés sur le noir du bandeau)
     }
+    // (LE JEU DU VORTEX N'A PAS DE SOUTE — Keko, 14/11 : « enlève la soute de l'interface, on n'en aura pas besoin »)
     const places = new Map<Minerai, { x: number; w: number; y: number }>()
+    if (!VORTEX) {
     let suivante = 5
     for (const [rang, k] of visibles.entries()) {
       const w = 14 + largeurDe(ditRecent(k), GRAS) + 5
@@ -6134,6 +6138,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
 
+    }
+
     // ---- LE BLINDAGE ET LE BOUCLIER (Keko, 11/11 : « dans pixelfx j'aime beaucoup l'animation de health bar hit, on
     // peut rework notre barre de blindage pour intégrer cette animation ? une barre jaune qui représente le blindage et
     // une section bleue en dessous qui représente le bouclier, dans un design différent, avec une animation de damage
@@ -6191,7 +6197,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // taille » : LE RENDU DU HANGAR (`peindreFormes`, les formes du vaisseau monté, sa livrée), mis à l'échelle pour
     // que SA BOÎTE tienne dans quinze pixels — un gros vaisseau y tient comme un petit. (x, y) reste le coin de
     // l'ancien 7 × 8 : la miniature est centrée sur sa place.)
+    // LE JEU DU VORTEX A DEUX BARRES (Keko, 14/11 : « enlève l'icône de bouclier et mets un bouclier bleu de base ; à la
+    // place d'être au bout de la barre de vie, le bouclier bleu devient une deuxième barre collée à la barre jaune du
+    // blindage, mais plus fine ») : la barre d'or ne porte que le blindage ; le bouclier a la sienne, fine, contre elle.
+    const DEUX_BARRES = VORTEX
+    const partDuBouclier = (): number => (CONF.bouclier.points > 0 ? Math.max(0, Math.min(1, m.bouclier / CONF.bouclier.points)) : 0)
+    const teinteDeLaBarreFine = (plein: boolean, k: 0 | 1): number => {
+      const db = t - bouclierA
+      if (!plein) return CREUX_DES_BARRES[1]
+      if (db >= 0 && db < 0.12) return N.WHITE
+      return k === 0 ? VERRIERE[2] : VERRIERE[1]
+    }
     const dessinerLEcusson = (x: number, y: number, blanc: boolean, pair = false): void => {
+      if (DEUX_BARRES) return
       // UN BOUCLIER, finalement (Keko, 14/11 : « à la place de l'icône du vaisseau au-dessus de la barre de vie, tu peux
       // mettre finalement un symbole de bouclier » — la miniature du vaisseau piloté l'avait remplacé le 13/11) : un écu
       // d'acier, cerné d'encre, la moitié gauche prise par la lumière, un reflet en haut ; blanc un instant sous un coup
@@ -6224,7 +6242,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // barre d'or à cases se vide PAR LE HAUT ; un coup, et la plaque sursaute, son cadre rougit, le morceau perdu
       // blanchit, tient en fantôme pâle puis se vide sous une arête blanche qui crache des étincelles ; l'écusson, en
       // tête, bondit. LE BOUCLIER : une colonne de cellules bleues à côté, qui crépitent et s'éteignent une à une.
-      const nb = CONF.bouclier.points
+      const nb = DEUX_BARRES ? 0 : CONF.bouclier.points
       const TOT = CONF.coque + nb
       const du = t - toucheA
       const db = t - bouclierA
@@ -6281,11 +6299,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           let c: number
           if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
           else if (u < fant) c = dc < 0.07 ? N.WHITE : x < 1 ? N.hex('#ff6a5a') : x < lw - 2 ? N.hex('#e02a2a') : N.hex('#9a1a1a') // (LA ZONE PERDUE EN ROUGE, plus en jaune très clair — Keko, 14/11)
-          else c = teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2) ?? (x < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
+          else c = (DEUX_BARRES ? null : teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2)) ?? (x < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
           p.px(bx + x, by + y, traits.has(by + y) ? assombrie(c) : c)
         }
       }
       if (dc < VIDE && val > 0) p.rect(bx, Math.min(by + BH - 1, Math.round(yDe(val))), lw, 1, N.WHITE)
+      if (DEUX_BARRES && CONF.bouclier.points > 0) {
+        // LE BOUCLIER : une barre fine, bleue, contre le flanc droit du blindage, qui se vide par le haut
+        const fin = 3
+        p.rect(bx + lw, by - 1, fin + 2, BH + 2, encre)
+        const plein = Math.round(BH * partDuBouclier())
+        for (let y = 0; y < BH; y++) p.rect(bx + lw + 1, by + y, fin, 1, teinteDeLaBarreFine(BH - y <= plein, 1))
+        if (plein > 0) p.rect(bx + lw + 1, by + BH - plein, 1, plein, teinteDeLaBarreFine(true, 0))
+      }
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(bandeCote() / 2) - 7, by + BH + 6, true)
       if (dc > TIENT && dc < VIDE) {
@@ -6297,7 +6323,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(bx + lw / 2, yDe(val * 0.5), BH * 0.4, or[1], dernier ? 0.12 + 0.1 * Math.sin(t * 5) : 0.1)
       if (dc < 0.3) p.glow(bx + lw / 2, yDe((val + fant) / 2), 26, dc < 0.08 ? N.WHITE : or[1], 0.6 * (1 - dc / 0.3))
     } else {
-    const nb = CONF.bouclier.points
+    const nb = DEUX_BARRES ? 0 : CONF.bouclier.points
     const TOT = CONF.coque + nb
     const du = t - toucheA
     const db = t - bouclierA
@@ -6339,7 +6365,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const blanc = du >= 0 && du < 0.07
     // (un pixel plus bas : MESURÉ, le bouclier rétréci était un demi-pixel au-dessus de l'axe de la barre — Keko, 14/11 : « centrer le bouclier par rapport à la barre de vie »)
     dessinerLEcusson(ox + 5, oy + 6 + bond, blanc)
-    p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
+    if (!DEUX_BARRES) p.glow(ox + 8, oy + 9, 9, or[1], 0.2 + (du >= 0 && du < 0.2 ? 0.4 : 0))
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
     const val = Math.max(0, Math.min(1, m.coque / TOT))
@@ -6355,11 +6381,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         let c: number
         if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
         else if (u < fant) c = dc < 0.07 ? N.WHITE : v < 1 ? N.hex('#ff6a5a') : v < bh - 2 ? N.hex('#e02a2a') : N.hex('#9a1a1a') // (la zone perdue en rouge)
-        else c = teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2) ?? (v < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
+        else c = (DEUX_BARRES ? null : teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2)) ?? (v < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
         p.px(bx + x, by + v, traits.has(x) ? assombrie(c) : c)
       }
     }
     if (dc < VIDE && val > 0) p.rect(bx + Math.max(0, Math.round(BW * val) - 1), by, 1, bh, N.WHITE)
+    if (DEUX_BARRES && CONF.bouclier.points > 0) {
+      // LE BOUCLIER : une barre fine, bleue, collée sous le blindage
+      const fin = 3
+      p.rect(bx - 1, by + bh, BW + 2, fin + 2, encre)
+      const plein = Math.round(BW * partDuBouclier())
+      for (let x = 0; x < BW; x++) p.rect(bx + x, by + bh + 1, 1, fin, teinteDeLaBarreFine(x < plein, 1))
+      if (plein > 0) p.rect(bx, by + bh + 1, plein, 1, teinteDeLaBarreFine(true, 0))
+    }
     // (LE ZOOM, sous la barre, calé à sa droite : « − » puis « + »)
     if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
     if (dc > TIENT && dc < VIDE) {
