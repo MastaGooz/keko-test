@@ -1145,7 +1145,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let enfonce: { x: number; y: number; t0: number } | null = null
   let survol: Vecteur | null = null
-  let refus: { x: number; y: number; t0: number } | null = null
+  /**
+   * (`manque` : CE QUI MANQUE pour que le bouton réponde — 'credits', un minerai… Keko, 14/11 : « il me manque des
+   * minerais alors que j'ai l'argent, et l'animation d'erreur fait trembler les crédits : il faudrait faire trembler
+   * les minerais manquants ». Absent : un refus d'avant, qui secoue le compteur de crédits comme toujours.)
+   */
+  let refus: { x: number; y: number; t0: number; manque?: string[] } | null = null
+  /** Le tremblement d'une chose qui manque, pendant un refus qui la nomme. */
+  const trembleDe = (quoi: string): number => {
+    const r = refus
+    return r !== null && t - r.t0 < 0.3 && r.manque !== undefined && r.manque.includes(quoi) ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+  }
   const memeCoin = (a: { x: number; y: number } | null, x: number, y: number): boolean => a !== null && Math.abs(a.x - x) < 0.5 && Math.abs(a.y - y) < 0.5
   type EtatDuBouton = { dx: number; dy: number; enfonce: boolean; flash: boolean; survole: boolean }
   /**
@@ -1205,8 +1215,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function zone(x: number, y: number, w: number, h: number, action: () => void, son: Son | null = 'clic'): void {
     zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action, son, dx: ORIGINE.x, dy: ORIGINE.y })
   }
-  function zoneDeRefus(x: number, y: number, w: number, h: number): void {
-    zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action: () => (refus = { x, y, t0: t }), son: 'refus' })
+  function zoneDeRefus(x: number, y: number, w: number, h: number, manque?: string[]): void {
+    zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action: () => (refus = { x, y, t0: t, manque }), son: 'refus' })
   }
   /** Le reflet d'une plaque survolée : il la traverse en boucle, vite. */
   const refletDeSurvol = (x: number, w: number, survole: boolean): number | null => (survole ? x - 10 + ((t * 1.6) % 1.2) * (w + 30) : null)
@@ -1214,21 +1224,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * UN BOUTON DE LA BASE, le même partout : sa plaque (l'or s'il est vif, éteinte sinon — ou une autre matière), son
    * ombre portée, son état ; `dessin` peint son contenu au décalage donné.
    */
-  function boutonBase(p: Peintre, x: number, y: number, w: number, h: number, vif: boolean, action: () => void, dessin: (dx: number, dy: number) => void, son: Son | null = 'clic', o: { matiere?: Matiere; reflet?: number | null } = {}): void {
-    const e = etatDuBouton(x, y, w, h)
+  function boutonBase(p: Peintre, x: number, y: number, w: number, h: number, vif: boolean, action: () => void, dessin: (dx: number, dy: number) => void, son: Son | null = 'clic', o: { matiere?: Matiere; reflet?: number | null; /** Ce qui manque, s'il est éteint (voir `refus`). */ manque?: string[]; /** Refusé, le bouton ne tremble pas lui-même : c'est ce qui manque, dedans, qui tremble. */ fixe?: boolean } = {}): void {
+    const e0 = etatDuBouton(x, y, w, h)
+    const e = o.fixe ? { ...e0, dx: 0 } : e0
     const m: Matiere = vif ? (o.matiere ?? 'or') : 'eteint'
     if (!e.enfonce) ombrePortee(p, x + e.dx, y, w, h)
     plaque(p, x + e.dx, y + e.dy, w, h, m, { enfonce: e.enfonce, survole: e.survole && vif, flash: e.flash, reflet: o.reflet ?? (vif ? refletDeSurvol(x, w, e.survole) : null) })
     dessin(e.dx, e.dy)
     if (vif) zone(x, y, w, h + 1, action, son)
-    else zoneDeRefus(x, y, w, h)
+    else zoneDeRefus(x, y, w, h, o.manque)
   }
   /** Un bouton à un mot, en relief. */
-  function bouton(p: Peintre, x: number, y: number, w: number, h: number, mot: string, vif: boolean, action: () => void, son: Son | null = 'clic', matiere: Matiere = 'or'): void {
+  function bouton(p: Peintre, x: number, y: number, w: number, h: number, mot: string, vif: boolean, action: () => void, son: Son | null = 'clic', matiere: Matiere = 'or', manque?: string[]): void {
     boutonBase(p, x, y, w, h, vif, action, (dx, dy) => {
       if (vif && matiere === 'or') motEnRelief(p, mot, x + w / 2 + dx, y + dy + Math.floor((h - 7) / 2), true)
       else ecrire(p, mot, x + w / 2 + dx, y + dy + Math.floor((h - 7) / 2), vif ? COQUE[6] : COQUE[3], { align: 'center', police: GRAS })
-    }, son, { matiere })
+    }, son, { matiere, manque })
   }
   /** La hauteur des en-têtes. */
   const HT = 23
@@ -1583,7 +1594,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const wn = largeurDe(n, GRAS)
     const allume = t - creditsA < 0.45
     const r = refus
-    const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const tremble = r !== null && t - r.t0 < 0.3 && (r.manque === undefined || r.manque.includes('credits')) ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
     const wp = wn + 21
     const px = W - 4 - wp + tremble
@@ -2057,7 +2068,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const wn = largeurDe(n, GRAS)
     const allume = t - creditsA < 0.45
     const r = refus
-    const tremble = r !== null && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const tremble = r !== null && t - r.t0 < 0.3 && (r.manque === undefined || r.manque.includes('credits')) ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
     // LA LANGUETTE (Keko, 12/11 : « vide cet espace en donnant une forme non rectangulaire à la zone » — le pointillé
     // et sa flèche, à gauche des crédits, ne plaisaient pas) : l'en-tête s'arrête sous le titre, et seul ce pan d'acier
@@ -3369,9 +3380,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const a = tresor[pu.k] >= cout[pu.k]
           const wn = largeurDe(pu.nombre, GRAS)
           // (LE NOMBRE, PUIS L'ICÔNE, PUIS LE NOM — Keko, 12/11 : « X/Y icône nom plutôt qu'icône X/Y nom »)
-          ecrire(p, pu.nombre, xc, yl, a ? RUNE[3] : ROUGE[5], { police: GRAS })
-          dessinerUneRessource(p, xc + wn + 7, yl + 4, pu.k)
-          ecrire(p, pu.nom, xc + wn + 14, yl, a ? RUNE[2] : ROUGE[4])
+          const tx = xc + trembleDe(pu.k)
+          ecrire(p, pu.nombre, tx, yl, a ? RUNE[3] : ROUGE[5], { police: GRAS })
+          dessinerUneRessource(p, tx + wn + 7, yl + 4, pu.k)
+          ecrire(p, pu.nom, tx + wn + 14, yl, a ? RUNE[2] : ROUGE[4])
           xc += pu.w + ECART_DES_PUCES
         }
       })
@@ -3396,7 +3408,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           pulsations.hangar = t
           nouveautes.add('hangar')
         }
-      }, 'achat')
+      }, 'achat', 'or', MINERAIS.filter((k) => tresor[k] < cout[k]))
     } else {
       const mot = navire !== undefined ? 'Acquis : il vous attend au hangar' : n.sorte === 'passif' ? 'Acquis : actif sur tous vos vaisseaux' : n.mecanique === 'postcombustion' ? 'Acquis : disponible en vol' : 'Acquis : visible au commerce'
       ecrire(p, mot, W / 2, ya + 8, RUNE[2], { align: 'center' })
@@ -3405,17 +3417,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** ACHETER une pièce débloquée au labo (au hangar, à la place d'« Équiper ») : le bouton, son prix et l'icône des crédits. */
   function dessinerLAchat(p: Peintre, y: number, pc: Piece): void {
-    // ACHETER, le prix et l'icône des crédits ; éteint s'il manque des crédits (il tremble alors) ; acheté, la pièce
-    // s'envole vers l'onglet du hangar, qui prend une pastille. LE PRIX EST DANS UN PUITS SOMBRE creusé dans le bouton
-    // (Keko : « le texte blanc sur fond jaune n'est pas idéal ») : le nombre crème et le crédit vert s'y lisent comme
-    // au compteur du haut, que le bouton soit d'or ou éteint
+    // ACHETER : UN SEUL BOUTON QUI PORTE TOUT SON PRIX (Keko, 14/11 : « le bouton acheter englobe les crédits mais pas
+    // les minerais, c'est dommage » — le coût en minerai pendait sous lui). Le mot en haut ; dessous, UN PUITS SOMBRE
+    // (« le texte blanc sur fond jaune n'est pas idéal ») où se suivent les crédits puis chaque minerai : crème quand on
+    // l'a, ROUGE quand il manque (« ce qu'on a / ce qu'il faut »). Sans coût en minerai, il tient sur une rangée, le
+    // puits à droite du mot. REFUSÉ, CE SONT LES PRIX QUI MANQUENT QUI TREMBLENT, pas le bouton ni le compteur du haut
+    // quand on a les crédits. Acheté, la pièce s'envole vers l'onglet du hangar, qui prend une pastille.
     const vif = peutAcheter(hangar, credits, pc.id, tresor)
+    const cout = coutEnMinerai(pc.id)
+    const lots: { cle: string; texte: string; manque: boolean; k?: Minerai }[] = [
+      { cle: 'credits', texte: String(pc.prix), manque: credits < pc.prix },
+      ...MINERAIS.filter((k) => cout[k] > 0).map((k) => ({ cle: k as string, texte: tresor[k] < cout[k] ? `${montantCourt(tresor[k])}/${montantCourt(cout[k])}` : montantCourt(cout[k]), manque: tresor[k] < cout[k], k })),
+    ]
+    const ECART = 7
+    const ws = lots.map((l) => largeurDe(l.texte, GRAS) + 11)
+    const wp = 4 + ws.reduce((a, b) => a + b, 0) + (lots.length - 1) * ECART + 3
     const wa = largeurDe('Acheter', GRAS)
-    const wn = largeurDe(String(pc.prix), GRAS)
-    const wp = wn + 18
-    const bw = 8 + wa + 5 + wp + 3
+    const deux = lots.length > 1
+    const bw = deux ? Math.max(wa + 20, wp + 6) : 8 + wa + 5 + wp + 3
+    const bh = deux ? 27 : 15
     const bx = Math.round(W / 2 - bw / 2)
-    boutonBase(p, bx, y, bw, 15, vif, () => {
+    boutonBase(p, bx, y, bw, bh, vif, () => {
       const r = acheter(hangar, credits, pc.id, tresor)
       if (r === null) return
       hangar = r.hangar
@@ -3426,28 +3448,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       gerbe(W / 2, y + 7, 24, [PEPITE[2], PEPITE[3], RUNE[3], N.WHITE], 80)
       if (vue !== 'hangar') envolsDePiece.push({ pc, x0: W / 2, y0: y + 40, t0: t + 0.1 }) // (au hangar, elle y est déjà)
       flottants.push({ texte: 'Acheté !', x: W / 2, y: y - 14, t0: t, c: PEPITE[3] })
-    }, (dx, dy) => {
-      if (vif) motEnRelief(p, 'Acheter', bx + 8 + wa / 2 + dx, y + 4 + dy, true)
-      else ecrire(p, 'Acheter', bx + 8 + dx, y + 4 + dy, COQUE[3], { police: GRAS })
-      const px = bx + 8 + wa + 5 + dx
-      plaque(p, px, y + 2 + dy, wp, 11, 'creux')
-      ecrire(p, String(pc.prix), px + 4, y + 4 + dy, vif ? N.hex('#fff2c8') : COQUE[4], { police: GRAS })
-      dessinerUnCredit(p, px + 4 + wn + 7, y + 7 + dy)
-    }, 'achat')
-    // SON COÛT EN MINERAI, sous le bouton (14/11 : une pièce s'achète en crédits ET en ressources) — vert quand on l'a,
-    // rouge sinon, « ce qu'on a / ce qu'il faut » tant qu'il en manque, comme à la recherche
-    const cout = coutEnMinerai(pc.id)
-    const puces = MINERAIS.filter((k) => cout[k] > 0)
-    const textes = puces.map((k) => (tresor[k] < cout[k] ? `${montantCourt(tresor[k])}/${montantCourt(cout[k])}` : montantCourt(cout[k])))
-    const ws = textes.map((x) => largeurDe(x, GRAS) + 12)
-    let xc = Math.round((W - ws.reduce((a, b) => a + b, 0) - Math.max(0, puces.length - 1) * 8) / 2)
-    puces.forEach((k, i) => {
-      ecrire(p, textes[i], xc, y + 18, tresor[k] >= cout[k] ? RUNE[3] : ROUGE[5], { police: GRAS })
-      dessinerUneRessource(p, xc + ws[i] - 5, y + 22, k)
-      xc += ws[i] + 8
-    })
+    }, (_dx, dy) => {
+      const xm = deux ? Math.round(W / 2 - wa / 2) : bx + 8
+      if (vif) motEnRelief(p, 'Acheter', xm + wa / 2, y + 4 + dy, true)
+      else ecrire(p, 'Acheter', xm, y + 4 + dy, COQUE[3], { police: GRAS })
+      const px = deux ? Math.round(W / 2 - wp / 2) : bx + 8 + wa + 5
+      const py = y + (deux ? 14 : 2) + dy
+      plaque(p, px, py, wp, 11, 'creux')
+      let xl = px + 4
+      lots.forEach((l, i) => {
+        const tx = xl + trembleDe(l.cle)
+        ecrire(p, l.texte, tx, py + 2, l.manque ? ROUGE[5] : N.hex('#fff2c8'), { police: GRAS })
+        if (l.k === undefined) dessinerUnCredit(p, tx + ws[i] - 4, py + 5)
+        else dessinerUneRessource(p, tx + ws[i] - 5, py + 5, l.k)
+        xl += ws[i] + ECART
+      })
+    }, 'achat', { manque: lots.filter((l) => l.manque).map((l) => l.cle), fixe: true })
   }
-  /** La ligne du coût en minerai sous « Acheter » : sa hauteur (rien, si la pièce est déjà à soi ou ne coûte que des crédits). */
+  /** Ce que le bouton « Acheter » prend EN PLUS quand la pièce coûte aussi du minerai (sa seconde rangée) — rien, si elle est déjà à soi ou ne coûte que des crédits. */
   const ligneDuCout = (pc: Piece): number => (!possede(hangar, pc.id) && MINERAIS.some((k) => coutEnMinerai(pc.id)[k] > 0) ? 12 : 0)
 
   /** La hauteur que prendra la fiche d'une pièce (son bouton, sa plaque, sa note) : la liste s'y ajuste. */

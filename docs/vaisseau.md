@@ -3509,3 +3509,12 @@ cuirassé sont de moi, au jugé.*
 L'arbre de la recherche : plus de conduit entre le haut de la planche et le premier rang (Keko, 14/11 : « le chemin commence au premier nœud »).
 
 Les missions de vaisseau ne comptent rien PENDANT LA FORMATION (Keko, 14/11 : la première était complète dès son apparition) : `compter` n'appelle `noterEnVol` qu'une fois le tutoriel fini, quand l'onglet « Vaisseaux » existe.
+
+Le bouton « Acheter » porte TOUT son prix (Keko, 14/11) : le mot en haut,
+dessous un puits où se suivent les crédits puis chaque minerai (crème quand
+on l'a, rouge « ce qu'on a / ce qu'il faut » sinon) ; sans minerai, une
+seule rangée. Un REFUS dit ce qui manque (`refus.manque`, `trembleDe`) : ce
+sont les prix manquants qui tremblent — dans le bouton, et à la recherche
+les minerais du coût — ; le compteur de crédits du haut ne tremble plus que
+si ce sont les crédits qui manquent.
+
