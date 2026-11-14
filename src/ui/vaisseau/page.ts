@@ -1910,11 +1910,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (COUCHÉE, DANS LE COIN EN HAUT À DROITE de la scène, sous la lampe — Keko, 13/11 ; debout, en bas à gauche)
     const xp = paysage ? W - 5 - (wm + wv + 15) : 6
     const yp = paysage ? y0 + 7 : y1 - 20
-    plaque(p, xp, yp, wm + wv + 15, 15, 'encre')
-    ecrire(p, 'Poids', xp + 5, yp + 4, COQUE[4])
+    // (SUR LA VUE D'ENSEMBLE, LE POIDS EST DANS LE RÉSUMÉ, plus dans la scène — Keko, 14/11 ; l'étiquette reste quand on
+    // change les pièces, où on le regarde bouger)
+    const dansLeResume = etape === 'vaisseau' && !equipementOuvert
+    if (!dansLeResume) plaque(p, xp, yp, wm + wv + 15, 15, 'encre')
+    if (!dansLeResume) ecrire(p, 'Poids', xp + 5, yp + 4, COQUE[4])
     // (LA MÊME LETTRE QUE LE MOT, la même taille — Keko, 12/11 : des chiffres d'une autre police « dénotent » — mais EN
     // RELIEF : l'ivoire éclairé d'en haut, ombré dessous, cerné ; « juste lui rajouter un style propre, un poil de texture »)
-    motEnRelief(p, poids, xp + 5 + wm + 5 + wv / 2, yp + 4, 'ivoire', TEXTE)
+    if (!dansLeResume) motEnRelief(p, poids, xp + 5 + wm + 5 + wv / 2, yp + 4, 'ivoire', TEXTE)
     // LES ZONES DU VAISSEAU (une cible verte, les angles seulement, autour de la place ouverte)
     const zonesDe = (o: Sorte): [number, number, number, number][] => (o === 'propulseur' ? [[-10.5, -3.2, -6, 3.2]] : o === 'coque' ? [[-8.2, -9, 9.8, 9]] : o === 'outil' ? [[-6.5, -3.5, 4, 3.5]] : Array.from({ length: capacite(hangar, 'arme') }, (_, i): [number, number, number, number] => [-8.2, (i === 0 ? -1 : 1) * 8.8, 2.4, (i === 0 ? -1 : 1) * 4.2]))
     const cibles: Sorte[] = etape === 'vaisseau' ? (['propulseur', 'outil', 'arme', 'coque'] as Sorte[]).filter(aDesPieces) : [onglet]
@@ -2657,6 +2660,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       { nom: 'Propulsion', valeur: monteeA(hangar, 'propulseur').nom },
       { nom: 'Outils', places: Array.from({ length: capacite(hangar, 'outil') }, (_, k) => ({ pleine: pieceDe(hangar.outils[k] ?? '') !== undefined, lourde: false })) },
       { nom: 'Armes', places: Array.from({ length: capacite(hangar, 'arme') }, (_, k) => ({ pleine: pieceDe(hangar.armes[k] ?? '') !== undefined, lourde: placeLourde(hangar, k) })) },
+      { nom: 'Poids total', valeur: `${poidsTotal(hangar)} T` },
     ]
     const h = lignes.length * 11 + 6
     plaque(p, 4, y, W - 8, h, 'encre')
