@@ -710,8 +710,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   /** Le rival en cuirassé (à l'essai, 14/11 ; `&rival=serie` : le petit rival d'avant) : son allure, tout armé. */
   const RIVAL_CUIRASSE = parametres.get('rival') !== 'serie'
-  /** Ses armes, place par place : six légères (deux canons, quatre mitrailleuses), deux lourdes (les missiles). */
-  const ARMES_DU_RIVAL = ['arme-canon', 'arme-canon', 'arme-rafale', 'arme-rafale', 'arme-rafale', 'arme-rafale', 'arme-missiles', 'arme-missiles']
+  /** Ses armes, place par place : six légères — SIX CANONS (Keko, 14/11 : les quatre mitrailleuses remplacées) —, deux lourdes (les missiles). */
+  const ARMES_DU_RIVAL = ['arme-canon', 'arme-canon', 'arme-canon', 'arme-canon', 'arme-canon', 'arme-canon', 'arme-missiles', 'arme-missiles']
   const ALLURE_DU_RIVAL: Allure = RIVAL_CUIRASSE ? { propulseur: 3, coque: 4, foreuse: 3, radar: true, aimant: false, armes: ARMES_DU_RIVAL.map((id) => pieceDe(id)?.arme?.id ?? ''), bouclier: 0, outils: [{ famille: 'foreuse', cran: 3 }, { famille: 'radar', cran: 2 }, { famille: 'foreuse', cran: 2 }, null], foreusePlace: 0 } : ALLURE_SERIE
   /** Les outils montés, PLACE PAR PLACE (pour une coque qui les dessine chacun à sa place), et la place de la foreuse qui creuse. */
   const outilsParPlace = (): ({ famille: string; cran: number } | null)[] =>
