@@ -762,9 +762,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ecranVisible = (): boolean => !enJeu || (m.phase !== 'vol' && t - perduA > (m.phase === 'extrait' ? 1.7 : 1))
   let ecranEtait = false
   /** L'onglet ouvert, et la pièce choisie dans chacun (le hangar s'ouvre sur les pièces montées). */
-  const ONGLETS: Sorte[] = ['coque', 'propulseur', 'outil', 'arme'] // (le châssis d'abord — Keko)
+  const ONGLETS: Sorte[] = ['coque', 'propulseur', 'arme', 'outil'] // (le châssis d'abord — Keko ; puis propulsion, armement, outils — 14/11)
   /** Le nom d'un onglet ; les listes disent LEURS PLACES, occupées / portées par la coque (Keko : « ce n'est pas lisible »). */
-  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'Propulsion', coque: 'Châssis', outil: 'Outils', arme: 'Armes' }
+  const NOMS_ONGLET: Record<Sorte, string> = { propulseur: 'Propulsion', coque: 'Châssis', outil: 'Outils', arme: 'Armement' }
   /** Les sous-catégories d'une catégorie : les familles de ses pièces (outils : foreuses, radars) ; `null` = toutes. */
   /** LES SOUS-CATÉGORIES, PAR ACTIVITÉ (Keko : « classer les outils par activité, minage / combat ») : la famille d'une pièce dit son activité. */
   const ACTIVITE: Record<string, string> = { foreuse: 'minage', aimant: 'minage', radar: 'combat' }
@@ -793,13 +793,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * (le châssis, les propulseurs, et tout au labo).
    */
   let place = -1
+  /** Au hangar, sous « Équipement » : la liste de places ouverte (l'armement ou les outils), ou null : les quatre catégories. */
+  let categorieOuverte: 'arme' | 'outil' | null = null
   type Case = { o: Sorte; k: number }
   const listeMontee = (o: Sorte): string[] => (o === 'arme' ? hangar.armes : o === 'outil' ? hangar.outils : [])
   /** Les cases de la vue d'ensemble, dans l'ordre : au hangar une par place (un nouveau châssis en ajoute), au labo une par catégorie. */
   /** Une catégorie A DE QUOI MONTRER : une pièce possédée, ou débloquée au labo (Keko, 11/11 : « masquer le bouton arme ou outil dans le hangar si aucune pièce n'est dispo ») — sinon sa case et sa cible sur le vaisseau ne paraissent pas. */
   const aDesPieces = (o: Sorte): boolean => piecesIci(o).some((pc) => possede(hangar, pc.id) || pieceOuverteIci(pc.id))
   const casesDuVaisseau = (): Case[] =>
-    vue === 'hangar' ? ONGLETS.filter(aDesPieces).flatMap((o): Case[] => (o === 'outil' || o === 'arme' ? Array.from({ length: capacite(hangar, o) }, (_, k) => ({ o, k })) : [{ o, k: -1 }])) : ONGLETS.map((o) => ({ o, k: -1 }))
+    // (AU HANGAR, QUATRE CATÉGORIES — Keko, 14/11 : « plutôt que d'afficher toutes les pièces une par une, afficher
+    // châssis, propulsion, armement, outils ; pour l'armement et les outils, qui sont en plusieurs exemplaires, on ouvre
+    // leur liste à ce moment-là » : `categorieOuverte` dit laquelle des deux listes de places est à l'écran)
+    vue === 'hangar' ? (categorieOuverte !== null ? Array.from({ length: capacite(hangar, categorieOuverte) }, (_, k): Case => ({ o: categorieOuverte as Sorte, k })) : ONGLETS.filter((o) => aDesPieces(o) && ((o !== 'outil' && o !== 'arme') || capacite(hangar, o) > 0)).map((o): Case => ({ o, k: -1 }))) : ONGLETS.map((o) => ({ o, k: -1 }))
   /** La place ouverte, bornée à ce que porte le châssis monté (−1 hors des outils et des armes du hangar). */
   const placeOuverte = (): number => (vue === 'hangar' && (onglet === 'outil' || onglet === 'arme') ? Math.max(0, Math.min(place, capacite(hangar, onglet) - 1)) : -1)
   /** (les places LOURDES d'un châssis sont ses dernières places d'arme : « Lourde 1 », « Lourde 2 ») */
@@ -2617,6 +2622,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           sauver()
           etapeA = t
           defilCases = 0
+          categorieOuverte = null
           vaisseauxOuverts = false
           feterLEquipement()
         }, 'equipe')
@@ -2680,13 +2686,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (i > 0) p.rect(10, yl - 3, W - 20, 1, MATIERES.encre.ombre)
     })
     y += h + 4
-    const bw = largeurDe('Équipement', GRAS) + 30
-    bouton(p, Math.round(W / 2 - bw / 2), y, bw, 17, 'Équipement', true, () => ((equipementOuvert = true), (etapeA = t), (defilCases = 0)), 'ouvre', 'acier')
+    // « COULEUR » À CÔTÉ D'« ÉQUIPEMENT » (Keko, 14/11 : « la couleur va concerner la totalité de l'appareil » — son
+    // bouton était sur la page du châssis) : il porte la pastille de la couleur choisie et ouvre la grille des couleurs
+    const bw = largeurDe('Équipement', GRAS) + 24
+    const bc = 5 + 9 + 5 + largeurDe('Couleur', GRAS) + 7
+    const bx = Math.round((W - bc - 4 - bw) / 2)
+    boutonBase(p, bx, y, bc, 17, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
+      const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+      p.rect(bx + 5 + dx, y + 4 + dy, 9, 9, MATIERES.encre.contour)
+      p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
+      p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
+      p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
+      ecrire(p, 'Couleur', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
+    }, 'ouvre', { matiere: 'acier' })
+    bouton(p, bx + bc + 4, y, bw, 17, 'Équipement', true, () => ((equipementOuvert = true), (categorieOuverte = null), (etapeA = t), (defilCases = 0)), 'ouvre', 'acier')
   }
   function dessinerLesEmplacements(p: Peintre, y: number): number {
     if (vue === 'hangar') {
       // (les cases des pièces : on y vient par « Équipement », on en repart par la flèche)
-      enTete(p, y, 'Équipement', () => ((equipementOuvert = false), (etapeA = t)))
+      if (categorieOuverte !== null) enTete(p, y, NOMS_ONGLET[categorieOuverte], () => ((categorieOuverte = null), (etapeA = t), (defilCases = 0)))
+      else enTete(p, y, 'Équipement', () => ((equipementOuvert = false), (etapeA = t)))
       y += HT + 3
     }
     const cw = Math.floor((W - 12) / 2)
@@ -2714,7 +2733,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const x = 4 + (i % 2) * (cw + 4)
       const yy = y + rang * (ch + 4)
       let montee: Piece | undefined
-      if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
+      // (une CATÉGORIE de places — l'armement, les outils : la première pièce montée pour le dessin, et son compte)
+      const groupe = vue === 'hangar' && (o === 'arme' || o === 'outil') && c.k < 0
+      const prises = groupe ? listeMontee(o).slice(0, capacite(hangar, o as 'arme' | 'outil')).filter((id) => pieceDe(id) !== undefined) : []
+      if (groupe) montee = pieceDe(prises[0] ?? '')
+      else if (vue === 'hangar') montee = o === 'propulseur' || o === 'coque' ? monteeA(hangar, o) : pieceDe(listeMontee(o)[c.k] ?? '')
       else montee = piecesIci(o).find((pc) => !possede(hangar, pc.id))
       const e = etatDuBouton(x, yy, cw, ch)
       const monte = Math.round((1 - sortie(age / 0.2)) * 4) - (e.survole && !e.enfonce ? 1 : 0)
@@ -2735,10 +2758,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(x + 16, yp + hp / 2 - 4, 2, 8, c2)
         p.rect(x + 13, yp + hp / 2 - 1, 8, 2, c2)
       } else if (montee !== undefined) dessinerLePictogramme(p, montee, x + 17, yp + hp / 2, 26, hp)
-      const ligne = vide ? 'Vide' : montee!.nom
+      const ligne = groupe ? `${prises.length} / ${capacite(hangar, o as 'arme' | 'outil')}` : vide ? 'Vide' : montee!.nom
       const L = replier(ligne, cw - 38).slice(0, 2)
       L.forEach((li, k) => ecrire(p, li, x + 34, yp + (L.length === 1 ? 7 : 2) + k * 9, vue === 'labo' || vide ? COQUE[3] : COQUE[6]))
-      zone(x, yy, cw, ch, () => ouvrirLEmplacement(o, c.k))
+      zone(x, yy, cw, ch, () => {
+        if (!groupe) return ouvrirLEmplacement(o, c.k)
+        categorieOuverte = o as 'arme' | 'outil'
+        etapeA = t
+        defilCases = 0
+      })
     })
     return y + Math.ceil(cases.length / 2) * (ch + 4)
   }
@@ -2848,7 +2876,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * comme en vol), et « Fermer » ; une tape hors du panneau le ferme aussi.
    */
   function dessinerLesCouleurs(p: Peintre): void {
-    if (vue !== 'hangar' || etape !== 'liste' || onglet !== 'coque') couleursOuvertes = false
+    if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) couleursOuvertes = false
     if (!couleursOuvertes) return
     const u0 = sortie((t - couleursA) / 0.18)
     const COLONNES = 5
@@ -3642,17 +3670,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // LA COULEUR DU CHÂSSIS : son bouton est ICI, sur la page du châssis, à gauche de « Changer » (Keko, 12/11 : dans le
       // panneau, il se superposait à « Acheter », plus large qu'« Équiper ») ; il porte la pastille de la couleur choisie
       // et ouvre la grille des couleurs
-      if (onglet === 'coque') {
-        const bc = 5 + 9 + 4 + textWidth('COULEUR', 'mini') + 5
-        boutonBase(p, 4, y, bc, 15, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
-          const [sombre, moyen, clair] = tonsDeLaLivree(livree)
-          p.rect(4 + 5 + dx, y + 3 + dy, 9, 9, MATIERES.encre.contour)
-          p.rect(4 + 6 + dx, y + 4 + dy, 7, 7, moyen)
-          p.rect(4 + 6 + dx, y + 4 + dy, 7, 2, clair)
-          p.rect(4 + 6 + dx, y + 9 + dy, 7, 2, sombre)
-          p.text('COULEUR', 4 + 18 + dx, y + 5 + dy, N.hex('#fff3cf'))
-        }, 'ouvre', { matiere: 'acier' })
-      } else if (!aChanger) y -= 19
+      // (LA COULEUR N'EST PLUS ICI : elle est sur la vue d'ensemble du hangar, à côté d'« Équipement » — Keko, 14/11)
+      if (!aChanger) y -= 19
     } else {
       const bo = boutonsDeLaFiche(pc)
       if (bo.ici) {
