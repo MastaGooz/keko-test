@@ -334,6 +334,14 @@ export type Arme = {
    * `duree` secondes : tout insecte dedans perd `dps` par seconde, et brûle encore `brulure` s à `dpsBrulure` en sortant.
    */
   napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }
+  /**
+   * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
+   * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
+   * un ennemi est à portée, un rayon de `longueur` part du vaisseau vers le haut (`depart`, un angle du monde) et en
+   * FAIT LE TOUR en `duree` secondes ; chaque ennemi qu'il balaie prend `degats` — une fois par tour — et s'enflamme
+   * (`brulure` s à `dpsBrulure`). L'état du tour en cours est `Monde.balayage`.
+   */
+  balayage?: { tous: number; duree: number; longueur: number; degats: number; brulure: number; dpsBrulure: number; depart: number }
 }
 
 export type Vaisseau = {
@@ -463,6 +471,8 @@ export type Monde = {
   tourelles: Tourelle[]
   /** LES FLAQUES DE NAPALM (voir `Arme.napalm`). */
   flaques: Flaque[]
+  /** LE TOUR DU RAYON en cours (voir `Arme.balayage`) : l'arme, son début, l'angle atteint, les ennemis déjà touchés ; ou null. */
+  balayage: { arme: number; debut: number; angle: number; touches: number[] } | null
 }
 
 /** Une flaque de feu au sol (voir `Arme.napalm`). */
@@ -489,6 +499,8 @@ export type Evenement =
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
   | { type: 'tourellePosee'; x: number; y: number }
+  /** Le rayon commence son tour (voir `Arme.balayage`). */
+  | { type: 'balayage'; duree: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
@@ -515,7 +527,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1130,6 +1142,57 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   }
 }
 
+/** L'ANGLE DU RAYON (voir `Arme.balayage`), à l'instant du monde, pendant son tour ; null hors d'un tour. */
+export function angleDuBalayage(c: ConfigVaisseau, m: Monde): { angle: number; part: number; longueur: number } | null {
+  const b = m.balayage
+  const a = b === null ? undefined : c.armes[b.arme]?.balayage
+  if (b === null || a === undefined) return null
+  const part = Math.min(1, (m.t - b.debut) / a.duree)
+  return { angle: a.depart + part * 2 * Math.PI, part, longueur: a.longueur }
+}
+
+/** LE RAYON (voir `Arme.balayage`) : il part à l'heure, si un ennemi est à portée ; il tourne ; ce qu'il balaie brûle. */
+function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const bl = a.balayage
+    if (bl === undefined || m.balayage !== null || m.t < (m.armesA[i] ?? 0)) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + c.ennemi.rayon)) return
+    m.balayage = { arme: i, debut: m.t, angle: bl.depart, touches: [] }
+    ev.push({ type: 'balayage', duree: bl.duree })
+  })
+  const b = m.balayage
+  const bl = b === null ? undefined : c.armes[b.arme]?.balayage
+  if (b === null || bl === undefined) return
+  const part = Math.min(1, (m.t - b.debut) / bl.duree)
+  const avant = b.angle
+  const apres = bl.depart + part * 2 * Math.PI
+  b.angle = apres
+  for (const e of [...m.ennemis]) {
+    if (b.touches.includes(e.id)) continue
+    const dx = e.corps.x - v.x
+    const dy = e.corps.y - v.y
+    const d = Math.hypot(dx, dy)
+    if (d > bl.longueur + c.ennemi.rayon) continue
+    // (balayé : son angle est entre l'angle d'avant et celui d'après, à sa largeur près)
+    const marge = Math.atan2(c.ennemi.rayon, Math.max(1, d))
+    let ecart = (Math.atan2(dy, dx) - avant) % (2 * Math.PI)
+    if (ecart < -marge) ecart += 2 * Math.PI
+    if (ecart > apres - avant + marge) continue
+    b.touches.push(e.id)
+    e.pv -= bl.degats
+    e.bruleA = m.t + bl.brulure
+    e.dpsBrulure = bl.dpsBrulure
+    e.dureeBrulure = bl.brulure
+    ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+  if (part >= 1) {
+    m.armesA[b.arme] = m.t + bl.tous
+    m.balayage = null
+  }
+}
+
 /** LES FLAQUES DE NAPALM brûlent ce qui est dedans (voir `Arme.napalm`) ; elles s'éteignent au bout de leur durée. */
 function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   m.flaques = m.flaques.filter((f) => m.t - f.nee < f.duree)
@@ -1401,7 +1464,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') m.drones = []
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null)
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -1477,9 +1540,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesDrones(c, m, dt, ev)
   menerLesTourelles(c, m, dt, ev)
   brulerLesFlaques(c, m, dt, ev)
+  menerLeRayon(c, m, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

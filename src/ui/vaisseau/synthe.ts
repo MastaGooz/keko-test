@@ -444,6 +444,19 @@ const RECETTES = {
       eclats(m, h, 4, 0.05, 0.35, 0.22)
     },
   },
+  /**
+   * LE RAYON THERMIQUE FAIT SON TOUR : une montée d'énergie — un bourdon riche qui glisse vers l'aigu pendant le tour —,
+   * un souffle qui balaie d'une oreille à l'autre, des crépitements ; il dure le temps du tour
+   */
+  rayon: {
+    duree: 1.3, niveau: 0.3, salle: [0.35, 0.14], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 150, glisse: { vers: 260, en: 0.9, droit: true }, a: 0.04, d: 0.95, battement: 9, partiels: [[1, 1, 1], [2, 0.6, 1], [3, 0.4, 1], [4, 0.25, 1], [5, 0.15, 1]], sature: 1.3 })
+      souffle(m, h, 0, 0.6, -0.6, { f: 1200, glisse: { vers: 2400, en: 0.45, droit: true }, q: 1.1, bande: true, a: 0.05, d: 0.45 })
+      souffle(m, h, 0.45, 0.6, 0.6, { f: 2400, glisse: { vers: 900, en: 0.45 }, q: 1.1, bande: true, a: 0.02, d: 0.5 })
+      eclats(m, h, 8, 0.05, 0.9, 0.3)
+    },
+  },
   /** UNE BOULE DE NAPALM PART : un « thoump » de mortier, sourd, et un glouglou de gel */
   napalm: {
     duree: 0.5, niveau: 0.24, salle: [0.3, 0.12], variantes: 3,

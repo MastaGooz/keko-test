@@ -1065,5 +1065,31 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 60 * 5; i++) avancerLeMonde(cfg2, w2, 1 / 60, { x: 0, y: 0 })
   verifier('la flaque s’éteint au bout de sa durée', w2.flaques.length === 0)
 }
+// LE RAYON THERMIQUE DE LA SALAMANDRE (Keko, 15/11) : il fait le tour du vaisseau, et ce qu'il balaie prend un gros coup
+// et brûle — une fois par tour ; hors de portée, il ne part pas
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rayon = { id: 'rayon', cadence: 3, degats: 0, portee: 70, vitesse: 0, vie: 0, dispersion: 0, guide: false, balayage: { tous: 3, duree: 0.9, longueur: 70, degats: 10, brulure: 2, dpsBrulure: 4, depart: -Math.PI / 2 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rayon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  // (quatre insectes tout autour, à portée ; un cinquième trop loin)
+  const places: [number, number][] = [[0, -40], [40, 0], [0, 40], [-40, 0], [0, -150]]
+  const w = nouveauMonde(cfg, 3)
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  let tours = 0
+  for (let i = 0; i < 60; i++) {
+    w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'balayage') tours++
+  }
+  const coups = w.ennemis.map((e) => 1000 - e.pv)
+  verifier('le rayon fait un tour : les quatre insectes autour prennent chacun un coup et brûlent, une seule fois ; le lointain, rien', tours === 1 && coups.slice(0, 4).every((d) => d >= 10 && d < 10 + 4 * 1.2) && coups[4] === 0 && w.ennemis[0].bruleA !== undefined)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.ennemis.push(insecte(1, 0, -150))
+  let tours2 = 0
+  for (let i = 0; i < 60 * 4; i++) {
+    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 0, y: -150, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'balayage') tours2++
+  }
+  verifier('personne à portée : le rayon ne part pas', tours2 === 0)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

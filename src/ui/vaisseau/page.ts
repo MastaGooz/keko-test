@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -810,7 +810,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
-      if (canon?.napalm !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.balayage !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       else if (canon?.pose !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -915,7 +915,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-chalumeau', 'arme-napalm'], sentinelle: ['arme-drones'], ingenieur: ['arme-tourelles'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones'], ingenieur: ['arme-tourelles'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -947,7 +947,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -5552,7 +5552,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // naît blanche et petite, gonfle en refroidissant vers l'orange et le rouge (`firePuff`), et un peu plus de la moitié
   // s'éteignent en FUMÉE (`smokePuff`) ; `fl` sa vie de flamme, `sm` si elle fume, `sl` combien, `s` sa taille, `f` sa
   // place dans le jet (plus loin, un peu plus froide))
-  let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; fl: number; sm: boolean; sl: number; s: number; f: number; bleu?: boolean }[] = []
+  let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; fl: number; sm: boolean; sl: number; s: number; f: number }[] = []
   let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
   /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas. */
   let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number } | null = null
@@ -6275,8 +6275,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fumée (les particules du dépôt) ; au bout, une bouffée de braises et de fumée.
    */
   const RAMPE_DU_FEU = N.fit(['#4a1712', '#8a1f17', '#c9281f', '#f2561d', '#ff8a2a', '#ffc23d', '#ffe26b', '#fff3a6', '#ffffff'], 9)
-  /** La flamme bleue du chalumeau. */
-  const RAMPE_DU_FEU_BLEU = N.fit(['#0a1438', '#122e78', '#1a52b8', '#2a7ae8', '#4aa0ff', '#8acaff', '#c4e6ff', '#eef8ff', '#ffffff'], 9)
+  /** Le rouge du rayon thermique : la rampe de « Laser grid » du dépôt. */
+  const RAMPE_DU_LASER = N.fit(['#1a0408', '#4a0a12', '#8a1020', '#d01c2a', '#ff4a4a', '#ff9a90', '#ffe4e0', '#ffffff'], 8)
   const ROUSSI = N.hex('#3a2216')
   const CHARBON = N.hex('#2a1a16')
   const FUMEE_DU_FEU = N.hex('#6a5a60')
@@ -6610,9 +6610,48 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(d.x, d.y, 6, VERRIERE[2], d.cible === null ? 0.35 : 0.55)
       }
     }
+    // LE RAYON THERMIQUE, À LA MANIÈRE DE « LASER GRID » DU DÉPÔT (Keko, 15/11 : « tu peux utiliser laser grid pour
+    // t'inspirer ») : un CŒUR BLANC où des impulsions défilent vers la pointe, un CORPS ROUGE de part et d'autre (clair
+    // d'un côté, sombre de l'autre), une LUEUR INÉGALE qui ondule le long de lui ; derrière sa pointe, LA BRÛLURE qu'il
+    // laisse en tournant, qui refroidit du blanc au rouge sombre ; à sa pointe, un point chauffé à blanc qui crache des
+    // étincelles. Il s'allonge en naissant ; juste avant de partir, l'émetteur se charge.
+    {
+      const C = RAMPE_DU_LASER
+      const r = angleDuBalayage(CONF, m)
+      if (r !== null && m.phase === 'vol') {
+        const depart = CONF.armes[m.balayage?.arme ?? 0]?.balayage?.depart ?? r.angle
+        const L = r.longueur * Math.min(1, r.part / 0.08)
+        // la brûlure de la pointe, qui refroidit derrière elle
+        for (let k = 13; k >= 0; k--) {
+          const a = r.angle - k * 0.055
+          if (a < depart) continue
+          const c = k < 2 ? N.WHITE : k < 5 ? C[6] : k < 9 ? C[4] : C[3]
+          p.dot(v.x + Math.cos(a) * L, v.y + Math.sin(a) * L, c, 1 - k / 14)
+          p.dot(v.x + Math.cos(a) * (L - 1), v.y + Math.sin(a) * (L - 1), C[3], 0.6 - k / 24)
+        }
+        const ex = v.x + Math.cos(r.angle) * L
+        const ey = v.y + Math.sin(r.angle) * L
+        const nx = -Math.sin(r.angle)
+        const ny = Math.cos(r.angle)
+        p.line(v.x + nx, v.y + ny, ex + nx, ey + ny, C[4])
+        p.line(v.x - nx, v.y - ny, ex - nx, ey - ny, C[3])
+        ;(p.line as unknown as (x0: number, y0: number, x1: number, y1: number, c: (u: number) => number) => void)(v.x, v.y, ex, ey, (u: number) => ((((u * 5 - t * 3) % 1) + 1) % 1 < 0.12 ? C[6] : N.WHITE))
+        for (let d = 0; d <= L; d += 5) {
+          const h = 0.5 + 0.5 * Math.sin(d * 0.37 + t * 9) * Math.sin(d * 0.13 - t * 5)
+          p.glow(v.x + Math.cos(r.angle) * d, v.y + Math.sin(r.angle) * d, 6 + 4 * h, C[3], 0.14 + 0.3 * h * h)
+        }
+        p.px(Math.round(ex), Math.round(ey), N.WHITE)
+        p.glow(ex, ey, 10, C[4], 0.55)
+        p.glow(ex, ey, 4, N.WHITE, 0.4)
+        p.glow(v.x, v.y, 8, C[4], 0.55)
+      } else if (m.phase === 'vol') {
+        const i = CONF.armes.findIndex((a) => a.balayage !== undefined)
+        const reste = i < 0 ? 99 : (m.armesA[i] ?? 0) - m.t
+        if (reste > 0 && reste < 0.5) p.glow(v.x, v.y, 4 + 10 * (1 - reste / 0.5), C[4], 0.6 * (1 - reste / 0.5))
+      }
+    }
     // les flammes du lance-flammes, en bouffées de la Fireball : la fumée d'abord, puis le feu, le plus vieux dessous
     const H_FEU = hotFirst(RAMPE_DU_FEU)
-    const H_BLEU = hotFirst(RAMPE_DU_FEU_BLEU)
     flammesDuNez = flammesDuNez.filter((f) => t - f.t0 < f.fl + (f.sm ? f.sl : 0))
     const auFeu: [number, number, number, (typeof flammesDuNez)[number]][] = []
     for (const f of flammesDuNez) {
@@ -6634,7 +6673,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = age / f.fl
       const l = Math.hypot(f.vx, f.vy) || 1
       // (sa pointe traîne en arrière de sa course)
-      firePuff(p, x, y, 1 - u, f.s * (1 + 1.3 * u), f.f, f.bleu === true ? H_BLEU : H_FEU, 0.07, -f.vx / l, -f.vy / l)
+      firePuff(p, x, y, 1 - u, f.s * (1 + 1.3 * u), f.f, H_FEU, 0.07, -f.vx / l, -f.vy / l)
     }
     // les petites flammes des insectes qui brûlent : des bouffées qui montent en rapetissant
     flammesDesBrules = flammesDesBrules.filter((f) => t - f.t0 < f.vie)
@@ -8351,9 +8390,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // (la flamme freine d'un tiers en volant : elle a couru 0,7 × vitesse × vie de flamme quand elle s'éteint)
             const fl = R.range(0.2, 0.3)
             const vit = ((a0.portee + CONF.ennemi.rayon) / (0.7 * fl)) * R.range(0.9, 1.05)
-            // (LE CHALUMEAU : une flamme bleue, fine, sans fumée)
-            const bleu = a0.id === 'chalumeau'
-            flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), fl, sm: !bleu && R.next() < 0.55, sl: R.range(0.25, 0.45), s: bleu ? R.range(0.7, 1.2) : R.range(1.2, 2.4), f: R.next(), bleu })
+            flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), fl, sm: R.next() < 0.55, sl: R.range(0.25, 0.45), s: R.range(1.2, 2.4), f: R.next() })
+          }
+        }
+        // le rayon sème des flammes à sa pointe et le long de lui
+        {
+          const r = angleDuBalayage(CONF, m)
+          if (r !== null && m.phase === 'vol') {
+            const ex = v.x + Math.cos(r.angle) * r.longueur
+            const ey = v.y + Math.sin(r.angle) * r.longueur
+            // (des étincelles à la pointe, qui partent à l'opposé du sens du tour, comme les balayeurs de « Laser grid »)
+            for (let n = 0; n < 2; n++) {
+              const a = r.angle - Math.PI / 2 + R.range(-0.9, 0.9)
+              const vit = R.range(50, 130)
+              etincelles.ajouter('etincelle', ex, ey, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), R.next() < 0.4 ? N.WHITE : RAMPE_DU_LASER[R.next() < 0.5 ? 6 : 4], 1, 1.5)
+            }
+            if (R.next() < 0.5) flammesDesBrules.push({ x: ex, y: ey, vx: R.range(-6, 6), vy: R.range(-14, -4), t0: t, vie: R.range(0.18, 0.3) })
           }
         }
         // les boules de napalm sèment de petites flammes (à leur hauteur, en cloche)
@@ -8446,6 +8498,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
               break
             }
+            case 'balayage':
+              // (le rayon part : son son, qui dure le tour)
+              jouer('rayon')
+              secousse = Math.max(secousse, 0.15)
+              break
             case 'flaque': {
               // UNE BOULE S'ÉCRASE EN FLAQUE : son « splotch » et l'embrasement, une gerbe de flammes et de gouttes
               jouer('flaque', { dx: ev.x - v.x, dy: ev.y - v.y })

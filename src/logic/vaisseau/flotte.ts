@@ -74,9 +74,9 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Salamandre',
     classe: 'chasseur',
     dit: 'Trapue, un lance-flammes au nez : elle arrose de près et ce qu’elle touche brûle encore. Il faut aller au contact.',
-    pieces: ['coque-5', 'propulseur-s1', 'arme-flammes', 'arme-chalumeau', 'arme-napalm'],
+    pieces: ['coque-5', 'propulseur-s1', 'arme-flammes', 'arme-rayon', 'arme-napalm'],
     // (ses trois armes possédées d'emblée : pour l'essai, pas de missions encore)
-    serie: { possedees: ['coque-5', 'propulseur-s1', 'arme-flammes', 'arme-chalumeau', 'arme-napalm'], montees: { coque: 'coque-5', propulseur: 'propulseur-s1' }, outils: [], armes: ['arme-flammes'] },
+    serie: { possedees: ['coque-5', 'propulseur-s1', 'arme-flammes', 'arme-rayon', 'arme-napalm'], montees: { coque: 'coque-5', propulseur: 'propulseur-s1' }, outils: [], armes: ['arme-flammes'] },
     chaine: [],
     horsRecherche: true,
   },

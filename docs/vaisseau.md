@@ -3983,3 +3983,20 @@ implante-moi les deux ».
 - Les insectes qu'ils tuent SE CONSUMENT, comme ceux du lance-flammes.
   *Chiffres de moi, à rejuger en jouant.*
 
+PUIS LE CHALUMEAU EST REMPLACÉ PAR LE RAYON THERMIQUE (Keko, 15/11 : le chalumeau
+« fait trop redondant avec le lance-flammes, il faudrait quelque chose de
+fondamentalement différent » ; puis : « un rayon à haute énergie qui part
+au-dessus du vaisseau et descend en décrivant un cercle autour de lui : il
+enflamme et fait de gros dégâts ») : `arme-rayon`, `Arme.balayage`,
+`Monde.balayage`, `menerLeRayon`, `angleDuBalayage` (vérifié). Toutes les 3 s,
+un ennemi à portée, un rayon de 70 part du vaisseau vers le haut et en fait le
+tour en 0,9 s ; tout ce qu'il balaie prend 10 points — une fois par tour — et
+brûle 2 s. Lu comme un BALAYAGE CIRCULAIRE (à rejuger : « au-dessus » pouvait
+dire autre chose). À l'écran : une tige d'émetteur au nez, un cristal ; le
+rayon s'allonge en naissant, un cœur blanc, un corps jaune et orange, une
+traînée qui s'éteint derrière lui, des flammes à sa pointe ; l'émetteur se
+charge juste avant. Son `rayon` : une montée d'énergie pendant le tour, un
+souffle qui balaie d'une oreille à l'autre, des crépitements. Le chalumeau
+(pièce, buse, flamme bleue) est retiré ; `Arme.flamme.seul` reste dans la règle.
+
+Puis LE RAYON À LA MANIÈRE DE « LASER GRID » (Keko : « tu peux utiliser laser grid pour t'inspirer ») : sa rampe rouge ; un cœur blanc où des impulsions défilent vers la pointe, un corps rouge de part et d'autre, une lueur inégale qui ondule le long de lui ; derrière sa pointe, la brûlure qu'il laisse en tournant, qui refroidit du blanc au rouge sombre ; à la pointe, un point chauffé à blanc qui crache des étincelles.

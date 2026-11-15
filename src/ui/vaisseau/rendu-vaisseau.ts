@@ -726,7 +726,8 @@ export function formesDuRadar(t: number): Forme[] {
  * sa nacelle, à −0,6). Les obus du vol en partent.
  */
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
-  if (id === 'flammes' || id === 'chalumeau' || id === 'napalm') return { x: 11.8, y: 0 }
+  if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
+  if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
 /** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
@@ -743,12 +744,12 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
   if (id === 'drone' || id === 'tourelle') return []
-  // (le chalumeau : une buse fine, la pointe bleue ; le napalm : un tube large, un mortier)
-  if (id === 'chalumeau') {
+  // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
+  if (id === 'rayon') {
     return [
-      { pts: barre(4, 0, 11, 0, 0.9), mat: 'metal', relief: 'cyl' },
-      { pts: barre(9.6, 0, 11.4, 0, 1.3), mat: 'acier', relief: 'cyl' },
-      { pts: ovale(11.7, 0, 0.55, 0.55, 10), mat: 'ion', relief: 'dome', dome: { x: 11.7, y: 0, rx: 0.55, ry: 0.55 } },
+      { pts: barre(4, 0, 9.6, 0, 1.1), mat: 'metal', relief: 'cyl' },
+      { pts: barre(7.6, 0, 9, 0, 1.6), mat: 'acier', relief: 'cyl' },
+      { pts: ovale(10.2, 0, 1.2, 1.2, 12), mat: 'ion', relief: 'dome', dome: { x: 10.2, y: 0, rx: 1.2, ry: 1.2 } },
     ]
   }
   if (id === 'napalm') {
