@@ -4039,4 +4039,4 @@ une chaîne d'éclairs qui rebondit d'ennemi en ennemi ; en troisième, une aura
   grésillant) et `chaine` (un grand craquement en cascade, un grondement).
   *Chiffres de moi, à rejuger en jouant.*
 
-Puis LES ÉCLAIRS SUIVENT CE QU'ILS RELIENT (Keko, 15/11 : la chaîne « reste à sa position de départ et d'arrivée pendant toute l'animation ») : chaque bout d'un arc ou d'un maillon est accroché — au vaisseau, à un drone, à un ennemi (`Ancre`) — et relu à chaque image ; un ennemi mort entre-temps garde sa dernière place. Les événements `arc` et `chaine` disent qui ils touchent (`drone`, `id`, `ids`).
+Puis LES ÉCLAIRS SUIVENT CE QU'ILS RELIENT (Keko, 15/11 : la chaîne « reste à sa position de départ et d'arrivée pendant toute l'animation ») : chaque bout d'un arc ou d'un maillon est accroché — au vaisseau, à un drone, à un ennemi (`Ancre`) — et relu à chaque image ; un ennemi mort entre-temps garde sa dernière place. Les événements `arc` et `chaine` disent qui ils touchent (`drone`, `id`, `ids`). Et la chaîne un peu moins épaisse (Keko : « un tout petit peu moins épais ») : son trait à 0,75 de l'encre du dépôt.

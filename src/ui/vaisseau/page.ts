@@ -6356,7 +6356,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const [x1, y1] = ecran(a.x1, a.y1)
       const R = new N.Rng((a.g * 7919 + image * 31) | 0)
       const L = Math.hypot(x1 - x0, y1 - y0)
-      if (a.fort) stroke(p, bowed(R, x0, y0, x1, y1, -L * R.range(0.05, 0.15), 0.2, 0.1), k, C, 1, { light: 0.5 })
+      // (un peu moins épais que l'encre du dépôt — Keko, 15/11)
+      if (a.fort) stroke(p, bowed(R, x0, y0, x1, y1, -L * R.range(0.05, 0.15), 0.2, 0.1), k, C, 0.75, { light: 0.45 })
       else crackle(p, zigzag(R, x0, y0, x1, y1, 0.3, 0.12), k, C, 0.5)
       p.glow(x1, y1, a.fort ? 9 : 5, C[5], 0.6 * k)
     }
