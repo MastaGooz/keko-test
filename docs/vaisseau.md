@@ -3671,3 +3671,32 @@ Keko : « laisser complètement tomber le stick droit : le vaisseau s'oriente lu
 À COMPARER (Keko, 15/11) : un bouton en vol passe de « Tir face » (le nez se tourne seul vers l'insecte, les canons ne tirent que dans l'arc avant) à « Tir 360 » (le nez suit le manche, les canons tirent tout autour : `arcDeTir` à zéro, plus d'orientation automatique) — `tirA360`, `&tir=360`.
 
 Sur PC (Keko, 15/11) : le clic droit n'ouvre plus le menu du navigateur (`contextmenu` annulé sur la page du jeu), et le curseur est une flèche EN PIXELS, dessinée dans un canevas et passée en image (`curseurEnPixels`) — acier clair d'ordinaire, or sur ce qui se clique. Vaut pour le Nova Drifter et le jeu du vortex.
+
+### Le jeu du vortex a son accueil et sa base (15/11)
+
+Keko : « recréer l'écran d'accueil où il fallait cliquer, ensuite l'écran
+secondaire avec le nom du jeu et l'accès au hangar ; un clone du hangar
+qu'on avait déjà, un peu différent : toujours hangar, recherche et les
+quêtes ; pas l'onglet commerce pour l'instant ; le bouton paramètres, on
+l'enlève (plus de second manche, plus rien dedans) ; à la recherche, les
+améliorations d'avant en placeholder ; au hangar, choisir son vaisseau et sa
+couleur, rien sur les pièces ».
+
+- `?vortex` s'ouvre sur l'écran éteint, puis le titre, puis LA BASE
+  (`&direct` vole tout de suite). TROIS ONGLETS : Hangar, Recherche,
+  Missions (`VUES`, `PRINCIPALES`) ; la feuille « Plus » n'a plus de tuile.
+- HANGAR : le nom du vaisseau (« Changer » dès qu'on en a deux), « Style »,
+  « Décoller » — ni résumé des pièces, ni « Équipement ».
+- RECHERCHE et MISSIONS : celles du Nova Drifter, telles quelles (des
+  placeholders : la recherche se paie en minerai, que ce jeu ne donne pas ;
+  les contrats de minage et de commerce n'y avancent pas ; les insectes
+  abattus comptent comme des « rivaux »). Pas de tutoriel.
+- SA SAUVEGARDE À LUI (`sauvegardeDe('vortex')` : les mêmes clés, suffixées).
+- La fin de partie propose « Rejouer » et « Hangar ».
+- « Tir face » est gardé ; le bouton de comparaison est retiré (`&tir=360`).
+- Le titre affiché est encore « Nova Drifter ».
+
+Et l'ombre des anneaux des planètes annelées est retirée (`celeste.ts`) : la
+moitié arrière de l'anneau était assombrie à droite jusqu'à 1,9 rayon, un
+arc sombre bien au-delà de la planète.
+

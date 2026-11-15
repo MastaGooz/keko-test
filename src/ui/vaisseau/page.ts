@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
-import { chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
+import { sauvegardeDe, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, modeleDeVaisseau, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
@@ -153,6 +153,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ouvertA = Date.now()
   const hate = Math.max(1, Number(parametres.get('marche')) || 1)
   const heureDuMarche = (): number => ouvertA + (Date.now() - ouvertA) * hate
+  // (le jeu du vortex a sa sauvegarde à lui)
+  if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   /**
    * LE HANGAR est celui DU VAISSEAU PILOTÉ (la flotte, 14/11 — `logic/vaisseau/flotte.ts`) : la page le travaille à
@@ -163,9 +165,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const piecesIci = (o: Sorte): Piece[] => piecesDe(o).filter((pc) => estDuModele(flotte, pc.id) || pc.id.startsWith('essai-'))
   const pieceOuverteIci = (id: string): boolean => pieceOuverteSur(flotte, id)
   /** `&tuto=0` : le tutoriel des quêtes est passé d'emblée (tous les onglets ouverts), pour essayer la suite d'un lien. */
-  if (parametres.get('tuto') === '0' && !tutorielFini(quetes)) quetes = quetesSansTutoriel(1, (x) => aLaMecanique(labo, x as Mecanique))
+  // (… et pas de tutoriel : ses trois onglets sont là d'emblée)
+  if ((parametres.get('tuto') === '0' || parametres.has('vortex')) && !tutorielFini(quetes)) quetes = quetesSansTutoriel(1, (x) => aLaMecanique(labo, x as Mecanique))
   const sauver = (): void => {
-    if (parametres.has('vortex')) return // (le jeu du vortex ne touche pas la sauvegarde)
     flotte = avecLeHangar(flotte, hangar)
     sauverHangar(flotte, tresor, credits, labo, marche, quetes)
   }
@@ -200,7 +202,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
    */
   function compter(c: Compteur, valeur: number): void {
-    if (parametres.has('vortex')) return // (ni missions ni contrats dans le jeu du vortex)
     const avant = new Set(quetes.actives.filter(estTerminee).map((q) => q.modele))
     const etapesAvant = new Map(quetes.actives.map((q) => [q.modele, etapesFaites(q)]))
     quetes = noter(quetes, c, valeur)
@@ -924,24 +925,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
   const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
   let vortexFx: Instance | null = null
-  /**
-   * DEUX SYSTÈMES DE TIR À COMPARER (Keko, 15/11 : « un essai sans le vaisseau qui fait automatiquement face aux ennemis
-   * et avec des tirs à 360 degrés, VS le système actuel, avec un bouton qui switch de l'un à l'autre ») : « Face » — le
-   * nez se tourne seul vers l'insecte le plus proche, les canons ne tirent que devant — ou « 360 » — le nez suit le
-   * manche, les canons tirent tout autour. Un bouton en vol passe de l'un à l'autre ; `&tir=360` part sur le second.
-   */
-  let tirA360 = parametres.get('tir') === '360'
+  /** (« Tir face » est gardé, le bouton qui le comparait à un tir à 360° est retiré — Keko, 15/11 ; `&tir=360` l'essaie encore.) */
+  const tirA360 = parametres.get('tir') === '360'
   const ARC_DU_VORTEX = ((Number(parametres.get('arc')) || 50) * Math.PI) / 180
-  function dessinerLeChoixDuTir(p: Peintre): void {
-    const mot = tirA360 ? 'Tir 360' : 'Tir face'
-    const bw = largeurDe(mot, GRAS) + 14
-    const x = paysage ? Math.round(W / 2 - bw / 2) : 6
-    const y = paysage ? 4 : hautDuHud() + 3
-    bouton(p, x, y, bw, 14, mot, true, () => {
-      tirA360 = !tirA360
-      CONF = { ...CONF, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX }
-    }, 'clic', 'acier')
-  }
   /** Quand la dernière vague a commencé, quand le dernier insecte a traversé (l'interface le marque). */
   let passeA = -10
   /** Quand la vague en cours a commencé, et de quels cadrans elle vient : l'interface le montre par des flèches au bord. */
@@ -1174,10 +1160,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         enJeu = false
         demarrer()
       }, 'achat')
+      // (… ou retour au hangar)
+      const bh = largeurDe('Hangar', GRAS) + 30
+      bouton(p, Math.round(W / 2 - bh / 2), cy + 32, bh, 17, 'Hangar', true, () => {
+        choixDeTalent = null
+        reserveDeTalents = 0
+        taches = []
+        enJeu = false
+      }, 'retour', 'acier')
     }
     zone(0, 0, W, H, () => {}, null)
   }
-  let accueil = !parametres.has('direct') && !VORTEX
+  let accueil = !parametres.has('direct')
   let accueilQuitteA: number | null = null
   /**
    * L'ÉCRAN EST D'ABORD ÉTEINT (Keko, 11/11 : « c'est possible de mettre du son à l'apparition du titre avant le tap ? »
@@ -1318,7 +1312,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ESSAIS = ['carte', 'atelier', 'marche', 'equipage', 'missions', 'journal', 'trophees', 'radio', 'forge', ...Array.from({ length: 10 }, (_, i) => `essai-${i + 1}`)]
   // (« PARAMÈTRES », toujours là, le premier des autres onglets — Keko, 12/11 : « ajouter un onglet paramètres dans autres
   // onglets »)
-  const VUES: string[] = ['hangar', 'labo', 'entrepot', 'quetes', 'reglages', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
+  /**
+   * LA BASE DU JEU DU VORTEX (Keko, 15/11 : « un clone du hangar qu'on avait déjà, mais un peu différent : toujours
+   * hangar, recherche et les quêtes ; pour l'instant on ne met pas l'onglet commerce ; et le bouton paramètres, on
+   * peut l'enlever carrément, il n'y a plus rien dedans ») : trois onglets, pas de commerce, pas de paramètres.
+   */
+  const VUES: string[] = parametres.has('vortex') ? ['hangar', 'labo', 'quetes'] : ['hangar', 'labo', 'entrepot', 'quetes', 'reglages', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
   const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Missions', reglages: 'Paramètres', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
@@ -2613,7 +2612,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * OUVERTS (Keko, 11/11 : « au début les quêtes servent de tuto : premier vol, unlock de l'onglet commerce, puis
    * tech… ») : la tech et le commerce paraissent quand on réclame la quête qui les ouvre.
    */
-  const PRINCIPALES = (): string[] => VUES.slice(0, 4).filter((vv) => (vv === 'labo' ? ongletOuvert(quetes, 'labo') : vv === 'entrepot' ? ongletOuvert(quetes, 'entrepot') : true))
+  const PRINCIPALES = (): string[] => VUES.slice(0, VORTEX ? 3 : 4).filter((vv) => (vv === 'labo' ? ongletOuvert(quetes, 'labo') : vv === 'entrepot' ? ongletOuvert(quetes, 'entrepot') : true))
   function dessinerLIconePlus(p: Peintre, x0: number, y0: number, actif: boolean): void {
     const x = Math.round(x0)
     const y = Math.round(y0)
@@ -2687,7 +2686,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (k <= 0.01) return
     // (couchée, il n'y a pas de barre du bas derrière laquelle finir : la feuille s'arrête au-dessus du bord)
     const bas = H - HAUT_NAV - (paysage ? 4 : 0)
-    const autres = VUES.slice(4)
+    const autres = VORTEX ? [] : VUES.slice(4)
     const tw = 42
     // (couchée, elle est au milieu de l'écran et plus large : autant de tuiles par rangée que sa fenêtre en loge)
     const COL = paysage ? Math.max(4, Math.floor((W - 14) / (tw + 2))) : 4
@@ -3167,6 +3166,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let equipementOuvert = false
   function dessinerLApercu(p: Peintre, y0: number): void {
     let y = dessinerLesPertes(p, dessinerLeChoixDuVaisseau(p, y0))
+    if (VORTEX) {
+      // (LE HANGAR DU JEU DU VORTEX : on y choisit son vaisseau et son style — « pour l'instant, rien sur les pièces »)
+      const bc = 5 + 9 + 5 + largeurDe('Style', GRAS) + 7
+      const bx = Math.round((W - bc) / 2)
+      boutonBase(p, bx, y, bc, 17, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
+        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+        p.rect(bx + 5 + dx, y + 4 + dy, 9, 9, MATIERES.encre.contour)
+        if (livree === 'serie') {
+          p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, N.hex('#6b7280'))
+          for (let k = 1; k < 6; k++) {
+            p.rect(bx + 6 + k + dx, y + 5 + k + dy, 1, 1, N.hex('#e02a2a'))
+            p.rect(bx + 12 - k + dx, y + 5 + k + dy, 1, 1, N.hex('#e02a2a'))
+          }
+        } else {
+          p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
+          p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
+          p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
+        }
+        ecrire(p, 'Style', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
+      }, 'ouvre', { matiere: 'acier' })
+      return
+    }
     const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [
       { nom: 'Châssis', valeur: monteeA(hangar, 'coque').nom },
       { nom: 'Propulsion', valeur: monteeA(hangar, 'propulseur').nom },
@@ -7733,6 +7754,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 // vert et un bruit de splash ») : une giclée de gouttes vertes, des éclaboussures qui retombent, une
                 // tache qui reste quelques secondes
                 jouer('splash', { dx: ev.x - v.x, dy: ev.y - v.y })
+                compter('rivaux', 1)
                 for (let i = 0; i < 22; i++) {
                   const a = R.range(0, Math.PI * 2)
                   const vit = R.range(25, 120)
@@ -8072,7 +8094,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeScore(p)
     if (VORTEX) dessinerLInvasion(p)
     if (VORTEX) dessinerLAnnonceDeLaVague(p)
-    if (VORTEX && m.phase === 'vol' && !m.invasion.finie) dessinerLeChoixDuTir(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaCapacite(p)
@@ -8095,8 +8116,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   ouvrirLeHangar()
   cadrer()
-  // (le jeu du vortex : on vole tout de suite)
-  if (VORTEX) demarrer()
+  // (`&direct`, dans le jeu du vortex : on vole tout de suite, sans accueil ni hangar)
+  if (VORTEX && parametres.has('direct')) demarrer()
   // (`&talent=N` : le choix d'un talent s'ouvre d'emblée, avec N choix à faire — pour le voir d'un lien)
   if (VORTEX && parametres.has('talent')) {
     choixDeTalent = ouvrirLeChoix(Math.max(0, (Number(parametres.get('talent')) || 1) - 1))

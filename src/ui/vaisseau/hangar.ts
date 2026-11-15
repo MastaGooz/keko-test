@@ -14,6 +14,15 @@ import { lireMarche, marcheNeuf, type Marche } from '../../logic/vaisseau/marche
 import { lireQuetes, quetesNeuves, type EtatQuetes } from '../../logic/vaisseau/quetes.ts'
 import { cargaisonVide, type Cargaison } from '../../logic/vaisseau/jeu.ts'
 
+/**
+ * UNE SAUVEGARDE PAR JEU (15/11) : le jeu du vortex a son hangar, sa recherche et ses missions à lui — ses clés portent
+ * son nom ; celles du Nova Drifter ne changent pas. À dire AVANT de charger quoi que ce soit.
+ */
+let JEU = ''
+export function sauvegardeDe(jeu: string): void {
+  JEU = jeu
+}
+const cle = (base: string): string => (JEU === '' ? base : `${base}-${JEU}`)
 const CLE = 'keko-vaisseau-hangar-2'
 const CLE_D_AVANT = 'keko-vaisseau-hangar'
 
@@ -24,7 +33,7 @@ const neuve = (instant: number): Progression => ({ flotte: flotteNeuve(), tresor
 export function chargerHangar(instant: number): Progression {
   try {
     localStorage.removeItem(CLE_D_AVANT)
-    const brut = localStorage.getItem(CLE)
+    const brut = localStorage.getItem(cle(CLE))
     if (brut === null) return neuve(instant)
     const b = JSON.parse(brut) as { hangar?: unknown; flotte?: unknown; tresor?: unknown; credits?: unknown; labo?: unknown; marche?: unknown; quetes?: unknown } | null
     // (le labo d'abord : son plafond relevé dit quels ordres gardés sont encore valables)
@@ -45,7 +54,7 @@ export function chargerHangar(instant: number): Progression {
 
 export function sauverHangar(flotte: Flotte, tresor: Cargaison, credits: number, labo: Labo, marche: Marche, quetes: EtatQuetes): void {
   try {
-    localStorage.setItem(CLE, JSON.stringify({ flotte, tresor, credits, labo, marche, quetes }))
+    localStorage.setItem(cle(CLE), JSON.stringify({ flotte, tresor, credits, labo, marche, quetes }))
   } catch {
     // Sans stockage, le hangar vit le temps de la page.
   }
@@ -57,7 +66,7 @@ const CLE_LIVREE = 'keko-vaisseau-livree'
  * (PAR VAISSEAU — Keko, 14/11 : « le style devrait être propre au vaisseau, pas général » : une clé par modèle ; le
  * premier vaisseau garde la clé d'avant, pour retrouver la couleur déjà choisie.)
  */
-const cleDeLivree = (vaisseau: string): string => (vaisseau === 'chasseur' ? CLE_LIVREE : `${CLE_LIVREE}-${vaisseau}`)
+const cleDeLivree = (vaisseau: string): string => cle(vaisseau === 'chasseur' ? CLE_LIVREE : `${CLE_LIVREE}-${vaisseau}`)
 export function chargerLivree(vaisseau: string): string {
   try {
     return localStorage.getItem(cleDeLivree(vaisseau)) ?? 'serie'
@@ -81,7 +90,7 @@ export type Reglages = { vol: 'gauche' | 'droite' }
 const CLE_REGLAGES = 'keko-vaisseau-reglages'
 export function chargerReglages(): Reglages {
   try {
-    const b = JSON.parse(localStorage.getItem(CLE_REGLAGES) ?? 'null') as { vol?: unknown } | null
+    const b = JSON.parse(localStorage.getItem(cle(CLE_REGLAGES)) ?? 'null') as { vol?: unknown } | null
     return { vol: b?.vol === 'droite' ? 'droite' : 'gauche' }
   } catch {
     return { vol: 'gauche' }
@@ -89,7 +98,7 @@ export function chargerReglages(): Reglages {
 }
 export function sauverReglages(r: Reglages): void {
   try {
-    localStorage.setItem(CLE_REGLAGES, JSON.stringify(r))
+    localStorage.setItem(cle(CLE_REGLAGES), JSON.stringify(r))
   } catch {
     // Sans stockage, les réglages vivent le temps de la page.
   }
@@ -102,7 +111,7 @@ export function sauverReglages(r: Reglages): void {
 const CLE_CONNUES = 'keko-vaisseau-connues'
 export function chargerConnues(): string[] {
   try {
-    const b = JSON.parse(localStorage.getItem(CLE_CONNUES) ?? '[]') as unknown
+    const b = JSON.parse(localStorage.getItem(cle(CLE_CONNUES)) ?? '[]') as unknown
     return Array.isArray(b) ? b.filter((x): x is string => typeof x === 'string') : []
   } catch {
     return []
@@ -110,7 +119,7 @@ export function chargerConnues(): string[] {
 }
 export function sauverConnues(ids: string[]): void {
   try {
-    localStorage.setItem(CLE_CONNUES, JSON.stringify(ids))
+    localStorage.setItem(cle(CLE_CONNUES), JSON.stringify(ids))
   } catch {
     // Sans stockage, elles vivent le temps de la page.
   }

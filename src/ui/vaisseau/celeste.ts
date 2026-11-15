@@ -275,11 +275,12 @@ function anneaux(p: PeintreCeleste, cx: number, cy: number, r: number, R: number
     for (let phi = 0; phi < Math.PI; phi += 0.7 / a) {
       const ex = Math.cos(phi) * a
       const ey = Math.sin(phi) * a * ouvert * (devant ? 1 : -1)
-      // (derrière la planète, côté opposé à la lampe : l'anneau passe dans son ombre)
+      // (L'OMBRE DE LA PLANÈTE SUR L'ANNEAU EST RETIRÉE — Keko, 15/11 : « une légère ombre bizarre à la droite des anneaux » :
+      // la moitié arrière de l'anneau était assombrie à droite jusqu'à 1,9 rayon, bien au-delà de la planète — un arc
+      // sombre qui ne ressemblait à rien)
       const x = ex * ca - ey * sa
       const y = ex * sa + ey * ca
-      const ombre = !devant && x > 0 && Math.hypot(x, y) < r * 1.9
-      p.px(Math.round(cx + x), Math.round(cy + y), ombre ? R[0] : c)
+      p.px(Math.round(cx + x), Math.round(cy + y), c)
     }
   }
 }
