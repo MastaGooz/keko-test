@@ -2785,6 +2785,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   /** LES ÉCLATS : étincelles et fumées, les pièces d'une vente vers le compteur, les pièces achetées vers le hangar, les nombres qui montent. */
   function dessinerLesEclats(p: Peintre): void {
+    // (UN PANNEAU OUVERT PAR-DESSUS LE HANGAR — les vaisseaux, les couleurs — cache les étincelles de « Décoller », qui
+    // continuaient de jaillir à travers : Keko, 15/11)
+    if ((vaisseauxOuverts || couleursOuverts()) && vue === 'hangar') {
+      eclats.length = 0
+      return
+    }
     // (AU DÉCOLLAGE, le feu du réacteur passe DERRIÈRE l'en-tête, comme le vaisseau — Keko, 12/11 : « les particules de
     // feu du réacteur sont au-dessus de la zone du titre au lieu d'être en dessous » : les éclats sont peints en dernier,
     // par-dessus tout ; pendant le décollage, ceux qui sont sous l'en-tête ou sa languette ne se peignent pas)
@@ -3113,6 +3119,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vaisseauxA = -10
   /** Le vaisseau choisi dans la liste du panneau (jeu du vortex), et où son surlignage en est. */
   let vaisseauChoisi = ''
+  const couleursOuverts = (): boolean => couleursOuvertes
   let surligneVaisseau = -1
   /**
    * LE PANNEAU DES VAISSEAUX DU JEU DU VORTEX, comme celui des pièces (Keko, 15/11) : la liste de TOUS les modèles — ceux
@@ -3298,18 +3305,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // SOUS LE NOM : « COULEUR » ET « CHANGER » (Keko, 15/11 : « on reprend le système d'avant, un bouton couleur et un
       // bouton changer, en dessous du nom ; couleur ouvre le panneau des couleurs, changer un panneau comme pour les
       // pièces, sauf que ce sont des vaisseaux »)
-      const wc = 5 + 9 + 5 + largeurDe('Couleur', GRAS) + 7
+      // (le bouton « Couleur » est retiré : la pastille à gauche du nom suffit — Keko, 15/11)
       const wch = largeurDe('Changer', GRAS) + 24
-      const bx = Math.round((W - wc - 4 - wch) / 2)
-      boutonBase(p, bx, y, wc, 17, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
-        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
-        p.rect(bx + 5 + dx, y + 4 + dy, 9, 9, MATIERES.encre.contour)
-        p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
-        p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
-        p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
-        ecrire(p, 'Couleur', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
-      }, 'ouvre', { matiere: 'acier' })
-      bouton(p, bx + wc + 4, y, wch, 17, 'Changer', true, () => {
+      bouton(p, Math.round((W - wch) / 2), y, wch, 17, 'Changer', true, () => {
         vaisseauxOuverts = true
         vaisseauxA = t
         vaisseauChoisi = flotte.actif
