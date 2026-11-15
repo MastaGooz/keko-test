@@ -490,8 +490,8 @@ function formesDeLaTuyereOmni(o: { n: number; rayon: number; depart: number }, k
 export function formesDuSocleDeTourelle(): Forme[] {
   const f: Forme[] = []
   for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-    f.push({ pts: barre(0, 0, dx * 4.8, dy * 4.8, 1.5), mat: 'metal', relief: 'plat' })
-    f.push({ pts: ovale(dx * 4.8, dy * 4.8, 1.3, 1.3, 10), mat: 'acier', relief: 'dome', dome: { x: dx * 4.8, y: dy * 4.8, rx: 1.3, ry: 1.3 } })
+    f.push({ pts: barre(0, 0, dx * 4.1, dy * 4.1, 1.4), mat: 'metal', relief: 'plat' })
+    f.push({ pts: ovale(dx * 4.1, dy * 4.1, 1.2, 1.2, 10), mat: 'acier', relief: 'dome', dome: { x: dx * 4.1, y: dy * 4.1, rx: 1.2, ry: 1.2 } })
   }
   const octo = (r: number): [number, number][] => Array.from({ length: 8 }, (_, k) => [Math.cos(Math.PI / 8 + (k * Math.PI) / 4) * r, Math.sin(Math.PI / 8 + (k * Math.PI) / 4) * r])
   f.push({ pts: octo(4.4), mat: 'aile', relief: 'plat' })
@@ -506,8 +506,8 @@ export function formesDeLaTeteDeTourelle(): Forme[] {
   // (un carter anguleux, pas un dôme — rond et gros, il cachait le socle —, le canon épais et long)
   return [
     { pts: ovale(0, 0, 2.6, 2.6, 16), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 2.6, ry: 2.6 } },
-    { pts: barre(1.5, 0, 7.4, 0, 1), mat: 'acier', relief: 'cyl' },
-    { pts: barre(6.4, 0, 7.9, 0, 1.45), mat: 'metal', relief: 'cyl' },
+    { pts: barre(1.5, 0, 6.4, 0, 1), mat: 'acier', relief: 'cyl' },
+    { pts: barre(5.5, 0, 6.8, 0, 1.45), mat: 'metal', relief: 'cyl' },
     { pts: [[2.6, -1.7], [1, -2.3], [-2.2, -2.3], [-2.8, -1.2], [-2.8, 1.2], [-2.2, 2.3], [1, 2.3], [2.6, 1.7]], mat: 'coque', relief: 'cyl' },
     { pts: [[0.6, -2.3], [-0.2, -2.3], [-0.2, 2.3], [0.6, 2.3]], mat: 'acier', relief: 'plat' },
     { pts: ovale(-1.7, 0, 0.55, 0.55, 8), mat: 'emeraude', relief: 'dome', dome: { x: -1.7, y: 0, rx: 0.55, ry: 0.55 } },

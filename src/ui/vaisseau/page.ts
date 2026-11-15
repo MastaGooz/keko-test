@@ -6395,8 +6395,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = m.t - tu.nee
       const reste = po.duree - age
       if (reste < 3 && Math.floor(reste * 6) % 2 === 0) continue
-      // (une fois et demie la taille du dessin : à l'échelle du vol, on n'en lisait rien)
-      const k = 1.5 * (0.35 + 0.65 * sortie(Math.min(1, age / 0.25)))
+      // (un peu plus grande que le dessin, pour qu'on la lise — MAIS PLUS PETITE QUE LE VAISSEAU, Keko, 15/11 : à 1,5
+      // elle le dépassait)
+      const k = 1.1 * (0.35 + 0.65 * sortie(Math.min(1, age / 0.25)))
       const sx = Math.round(tu.x - camera.x + W / 2)
       const sy = Math.round(tu.y - camera.y + centreY())
       if (age < 0.4) p.ring(sx, sy, 5 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.4)
@@ -6405,8 +6406,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // sa vie, une jauge fine sous le socle
       const lw = 11
       const lv = Math.round(lw * Math.max(0, reste / po.duree))
-      p.rect(sx - 5, sy + 11, lw, 1, MATIERES.encre.contour)
-      if (lv > 0) p.rect(sx - 5, sy + 11, lv, 1, reste < 3 ? ROUGE[4] : PEPITE[2])
+      p.rect(sx - 5, sy + 8, lw, 1, MATIERES.encre.contour)
+      if (lv > 0) p.rect(sx - 5, sy + 8, lv, 1, reste < 3 ? ROUGE[4] : PEPITE[2])
     }
   }
   function dessinerLesEnnemis(p: Peintre): void {

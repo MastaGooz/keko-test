@@ -3926,5 +3926,4 @@ pas forcément un carré ») : par le même rendu (`peindreFormes`, la lumière 
 vol, la couleur du joueur) — LE SOCLE, fixe, une plaque octogonale sur quatre
 pieds en croix à patins, quatre boulons jaunes (`formesDuSocleDeTourelle`) ;
 LA TÊTE, qui pivote, une couronne d'acier, un dôme à la couleur du joueur, un
-fût et son frein de bouche, une veilleuse verte (`formesDeLaTeteDeTourelle`).
-
+fût et son frein de bouche, une veilleuse verte (`formesDeLaTeteDeTourelle`). Puis PLUS PETITES QUE LE VAISSEAU (Keko : « il ne faut pas que la tourelle soit plus grosse que le vaisseau ») : des pieds plus courts, un canon raccourci, dessinées à 1,1 au lieu de 1,5.
