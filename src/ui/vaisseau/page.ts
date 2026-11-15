@@ -762,7 +762,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const canon = pieceDe('arme-canon')?.arme
       // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
       // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
-      if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: ((Number(parametres.get('arc')) || 50) * Math.PI) / 180, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
+      if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
     }
     if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || CONF.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
@@ -895,6 +895,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
   const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
   let vortexFx: Instance | null = null
+  /**
+   * DEUX SYSTÈMES DE TIR À COMPARER (Keko, 15/11 : « un essai sans le vaisseau qui fait automatiquement face aux ennemis
+   * et avec des tirs à 360 degrés, VS le système actuel, avec un bouton qui switch de l'un à l'autre ») : « Face » — le
+   * nez se tourne seul vers l'insecte le plus proche, les canons ne tirent que devant — ou « 360 » — le nez suit le
+   * manche, les canons tirent tout autour. Un bouton en vol passe de l'un à l'autre ; `&tir=360` part sur le second.
+   */
+  let tirA360 = parametres.get('tir') === '360'
+  const ARC_DU_VORTEX = ((Number(parametres.get('arc')) || 50) * Math.PI) / 180
+  function dessinerLeChoixDuTir(p: Peintre): void {
+    const mot = tirA360 ? 'Tir 360' : 'Tir face'
+    const bw = largeurDe(mot, GRAS) + 14
+    const x = paysage ? Math.round(W / 2 - bw / 2) : 6
+    const y = paysage ? 4 : hautDuHud() + 3
+    bouton(p, x, y, bw, 14, mot, true, () => {
+      tirA360 = !tirA360
+      CONF = { ...CONF, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX }
+    }, 'clic', 'acier')
+  }
   /** Quand la dernière vague a commencé, quand le dernier insecte a traversé (l'interface le marque). */
   let passeA = -10
   /** Quand la vague en cours a commencé, et de quels cadrans elle vient : l'interface le montre par des flèches au bord. */
@@ -5252,6 +5270,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // joystick, et sur PC uniquement les touches de déplacement — on laisse tomber la souris et le suivi du curseur ») :
     // le nez se tourne SEUL vers l'insecte le plus proche à portée des canons (un peu au-delà, pour être prêt) ;
     // personne en vue, il suit le manche.
+    if (VORTEX && tirA360) return undefined
     if (VORTEX) {
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35) : null
       if (cible === null) return undefined
@@ -8024,6 +8043,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeScore(p)
     if (VORTEX) dessinerLInvasion(p)
     if (VORTEX) dessinerLAnnonceDeLaVague(p)
+    if (VORTEX && m.phase === 'vol' && !m.invasion.finie) dessinerLeChoixDuTir(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaCapacite(p)
