@@ -386,16 +386,18 @@ const RECETTES = {
     },
   },
   /**
-   * UN DRONE TIRE : UN « PIOU » DE LASER (Keko, 15/11 : « un truc plus laser ») — une chute de hauteur rapide et longue
-   * (3 200 → 420 Hz), en harmoniques impairs (le grain d'un carré) et deux voix à peine désaccordées, un zip aigu au
-   * départ ; pas trop fort, ils tirent souvent
+   * UN DRONE TIRE : un « piou » de laser, GRAVE ET ROND (Keko, 15/11 : d'abord « un truc plus laser », puis, le premier
+   * — 3 200 → 420 Hz, des harmoniques impairs, un zip — « on dirait des petits oiseaux qui chantent » : plus bas, plus
+   * rond) : une chute de 1 100 à 280 Hz presque en sinus, une voix à l'octave du dessous qui lui donne du corps, deux
+   * voix à peine désaccordées ; pas trop fort, ils tirent souvent
    */
   drone: {
-    duree: 0.3, niveau: 0.11, salle: [0.25, 0.1], variantes: 3,
+    duree: 0.32, niveau: 0.13, salle: [0.25, 0.1], variantes: 3,
     faire: (m, h) => {
       const pan = (h.next() - 0.5) * 0.6
-      note(m, 0, 1, pan, { f: 3200 * (0.94 + 0.12 * h.next()), glisse: { vers: 420, en: 0.11 }, a: 0.002, d: 0.13, battement: 14, partiels: [[1, 1, 1], [3, 0.45, 0.8], [5, 0.22, 0.6]] })
-      note(m, 0, 0.25, pan, { f: 6400, glisse: { vers: 2400, en: 0.02 }, a: 0.001, d: 0.025 })
+      const f = 1100 * (0.95 + 0.1 * h.next())
+      note(m, 0, 1, pan, { f, glisse: { vers: 280, en: 0.12 }, a: 0.003, d: 0.15, battement: 10, partiels: [[1, 1, 1], [2, 0.16, 0.6]] })
+      note(m, 0, 0.45, pan, { f: f / 2, glisse: { vers: 140, en: 0.12 }, a: 0.003, d: 0.13 })
     },
   },
   /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */

@@ -3892,3 +3892,5 @@ propulsion ») : au garage, au repos, toutes ses tuyères soufflent un peu ; au
 décollage, et à l'accueil, celles du dessous soufflent fort. Puis, au garage à l'arrêt, plus aucun jet (Keko : « n'allume pas les propulseurs à l'arrêt dans le hangar ») : seulement au décollage.
 
 Puis (Keko, 15/11 : « un peu trop proches, ce ne sont pas des drones de mêlée ») : les drones tournent autour de leur cible à 26 au lieu de 13 (plus lentement, 2 rad/s), toujours sous leur portée de 40 ; et leur son devient UN « PIOU » DE LASER — une longue chute de hauteur, au grain d'un carré, deux voix, un zip aigu au départ.
+
+Puis le « piou » des drones, GRAVE ET ROND (Keko : « on dirait des petits oiseaux qui chantent ») : de 1 100 à 280 Hz presque en sinus, une voix à l'octave du dessous, plus de zip aigu.
