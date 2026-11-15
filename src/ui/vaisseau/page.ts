@@ -57,7 +57,7 @@ type Peintre = {
   /** Ajoute de la lumière à un pixel (la couche de lumière du tampon). */
   light(x: number, y: number, c: number, k?: number): void
 }
-type Particules = { spawn(k: number, x: number, y: number, vx: number, vy: number, vie: number, c?: number, taille?: number): void; update(dt: number): void; draw(p: Peintre, couche?: string): void }
+type Particules = { spawn(k: number, x: number, y: number, vx: number, vy: number, vie: number, c?: number, taille?: number, delai?: number, drapeau?: number): void; update(dt: number): void; draw(p: Peintre, couche?: string): void }
 type Morceaux = { add(b: Record<string, unknown>): void; update(dt: number): void; draw(p: Peintre): void }
 type Noyau = {
   createFrame(w: number, h: number): { w: number; h: number; color: Uint32Array; light: Uint32Array }
@@ -6319,7 +6319,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
       const u = (t - o.t0) / 0.25
-      p.ring(o.x - camera.x + W / 2, o.y - camera.y + centreY(), 3 + (o.r - 3) * Math.sqrt(u), 1, u < 0.3 ? N.hex('#fff2a8') : FEU[4], 1 - u)
+      const ox = o.x - camera.x + W / 2
+      const oy = o.y - camera.y + centreY()
+      p.ring(ox, oy, 3 + (o.r - 3) * Math.sqrt(u), 1, u < 0.3 ? N.hex('#fff2a8') : FEU[4], 1 - u)
+      // (le cœur de l'explosion : une lueur chaude qui s'éteint — à la place de l'éclair des chocs, dont l'anneau s'ouvrait
+      // jusqu'à presque trois fois son rayon : c'était lui, le grand cercle)
+      p.glow(ox, oy, 12 * (1 - u) + 4, FEU[5], 0.8 * (1 - u))
     }
     if (parametres.has('consume') && enJeu && m.phase === 'vol' && t - bancConsumeA > 1.6) {
       bancConsumeA = t
@@ -8390,12 +8395,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
               // feu (les flammes, braises et fumées du dépôt), son « boum »
               jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.6 })
-              ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-              for (let i = 0; i < 9; i++) {
+              // (L'ONDE PLUS PETITE — Keko, 15/11 : « un petit peu trop grande » : elle s'ouvre aux deux tiers du rayon de
+              // la zone, plus jusqu'à son bord ; et PLUS DE FEU À L'IMPACT : des flammes plus nombreuses et plus grosses,
+              // qui ROULENT — décalées de quelques centièmes — et fument en s'éteignant)
+              ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.65 })
+              for (let i = 0; i < 16; i++) {
                 const a = R.range(0, Math.PI * 2)
-                const d = R.range(0, ev.rayon * 0.45)
-                feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * R.range(10, 35), Math.sin(a) * R.range(10, 35), R.range(0.2, 0.4), 0, R.range(1.2, 2.2))
+                const d = R.range(0, ev.rayon * 0.35)
+                const vit = R.range(8, 32)
+                feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.25, 0.5), 0, R.range(1.6, 3), R.range(0, 0.09), R.next() < 0.5 ? 1 : 0)
               }
               for (let i = 0; i < 6; i++) {
                 const a = R.range(0, Math.PI * 2)

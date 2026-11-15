@@ -3949,3 +3949,5 @@ mono-cible, mais plus efficace sur un groupe d'ennemis proches ».
   rayon, une boule de feu de flammes, braises et fumée (les particules du
   dépôt), une petite secousse. Sons : `minimissile` (un « fssht ») et
   `explosionMini` (un « boum » court). *Chiffres de moi, à rejuger.*- Le panneau des armes ne montre plus que celles du vaisseau piloté (et les missiles, verrouillés, à venir) — pas le lance-flammes, les drones ni les tourelles des autres. `&arme=arme-minimissiles` décolle avec elles (sans les garder).
+
+Puis (Keko, 15/11) : l'onde de l'explosion est plus petite (aux deux tiers du rayon de la zone — la zone de dégâts, elle, reste à 18) ; et plus de feu à l'impact : seize flammes plus grosses qui roulent, décalées de quelques centièmes, la moitié fumant en s'éteignant. (Le grand cercle venait de l'« éclair » des chocs, réutilisé, dont l'anneau s'ouvre jusqu'à presque trois fois son rayon : retiré, remplacé par une lueur chaude au cœur.)
