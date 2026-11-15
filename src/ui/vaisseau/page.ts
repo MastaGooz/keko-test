@@ -660,12 +660,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const VW = paysage ? 320 : 180
       const VH = paysage ? 180 : 320
       const r = large / haut
+      // (LA VUE DE RÉFÉRENCE Y TIENT TOUJOURS ENTIÈRE — Keko, 15/11 : « sur PC je suis beaucoup trop zoomé, je ne vois pas
+      // loin, alors que sur téléphone je vois beaucoup plus loin » : le tampon était d'abord taillé DANS la vue de
+      // référence — une fenêtre moins allongée qu'elle perdait ses côtés, une fenêtre à peu près carrée n'en gardait
+      // que la moitié. Il la CONTIENT maintenant : on voit au moins autant qu'au téléphone, et davantage du côté qui dépasse.)
       if (r > VW / VH) {
-        w = VW
-        h = Math.max(60, Math.round(VW / r))
-      } else {
         h = VH
-        w = Math.max(60, Math.round(VH * r))
+        w = Math.min(640, Math.round(VH * r))
+      } else {
+        w = VW
+        h = Math.min(640, Math.round(VW / r))
       }
       zoom = large / w
     }
@@ -6056,8 +6060,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const VUE_PORTRAIT = 320
   /** La hauteur de la vue du vol (320 debout, 180 couché), et sa largeur couchée ; les bandeaux de côté en paysage. */
-  const vueH = (): number => Math.round((paysage ? 180 : VUE_PORTRAIT) * champDeLaVue)
-  const bandeCote = (): number => (paysage ? Math.max(0, Math.floor((W - Math.round(320 * champDeLaVue)) / 2)) : 0)
+  // (quand le jeu couvre la page — sur PC —, la vue est TOUT le tampon : ni bandeau ni marge)
+  const vueH = (): number => (couvreApplique ? H : Math.round((paysage ? 180 : VUE_PORTRAIT) * champDeLaVue))
+  const bandeCote = (): number => (paysage && !couvreApplique ? Math.max(0, Math.floor((W - Math.round(320 * champDeLaVue)) / 2)) : 0)
   /** L'interface du vol est dans les bandeaux de côté (couché, et s'ils sont assez larges) : la vue est alors libre. */
   const interfaceEnBande = (): boolean => paysage && bandeCote() >= 30
   /**
