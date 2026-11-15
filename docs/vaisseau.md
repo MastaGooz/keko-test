@@ -3731,3 +3731,7 @@ SUR PC (Keko, 15/11) : le curseur passe à TROIS pixels d'écran par pixel du de
 Puis, SUR PC (Keko, 15/11) : l'icône du portail À GAUCHE de son pour cent, tout en haut à gauche de l'écran, le niveau et sa barre dessous, sous l'icône — la colonne revient à 36.
 
 LES MONTANTS DU BOUCLIER ET DU BLINDAGE (jeu du vortex, Keko, 15/11) : en chiffres, le bouclier en bleu puis le blindage en or (`dessinerLesMontants`) — DEBOUT, juste au-dessus de la paire de barres, qui commence d'autant plus bas (en double sur PC, comme le niveau d'en face) ; EN PORTRAIT, à gauche de la barre. Et en portrait la barre d'or passe de 8 à 6 pixels d'épaisseur, la largeur qu'elle a debout.
+
+Puis L'UN AU-DESSUS DE L'AUTRE (Keko, 15/11 : « côte à côte, on dirait que les deux chiffres forment un seul nombre ; juste la couleur, c'est un peu léger ») : le blindage en or, le bouclier en bleu dessous, dans l'ordre des barres couchées — en portrait, chacun en face de sa barre ; debout, les deux lignes au-dessus de la paire.
+
+PUIS RETIRÉS (Keko, 15/11 : « laisse tomber, on ne va pas afficher les chiffres du blindage et du bouclier ») : plus de montants ; la barre d'or du portrait reste à six pixels.
