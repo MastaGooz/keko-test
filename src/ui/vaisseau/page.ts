@@ -5628,6 +5628,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (ev.key === ' ' || ev.key === 'Shift') lancerLaPostcombustion()
     touches.add(ev.key.toLowerCase())
+    // (PAS DANS LE JEU DU VORTEX EN COURS DE PARTIE — Keko, 15/11 : abattu, une touche de déplacement relançait tout de
+    // suite une partie neuve ; le retour au portail attend sa pénalité, la fin attend « Rejouer »)
+    if (VORTEX && enJeu) return
     demarrer()
   })
   window.addEventListener('keyup', (ev) => touches.delete(ev.key.toLowerCase()))
@@ -5682,7 +5685,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const r = canvas.getBoundingClientRect()
       return directionDuManche(MANCHE, (manche.doigt.x - (r.left + r.width / 2)) * 0.5, (manche.doigt.y - (r.top + r.height / 2)) * 0.5)
     }
-    const x = (touches.has('arrowright') || touches.has('d') ? 1 : 0) - (touches.has('arrowleft') || touches.has('q') || touches.has('a') ? 1 : 0)
+    // (A et Q à gauche, pour les deux claviers — et donc E et D à droite, Keko, 15/11)
+    const x = (touches.has('arrowright') || touches.has('d') || touches.has('e') ? 1 : 0) - (touches.has('arrowleft') || touches.has('q') || touches.has('a') ? 1 : 0)
     const y = (touches.has('arrowdown') || touches.has('s') ? 1 : 0) - (touches.has('arrowup') || touches.has('z') || touches.has('w') ? 1 : 0)
     return { x, y }
   }
