@@ -6574,8 +6574,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const PLOT = formesDeLaBalise()
     const BEC = formesDuBecDeBalise()
     const ecran = (x: number, y: number): [number, number] => [Math.round(x - camera.x + W / 2), Math.round(y - camera.y + centreY())]
-    for (const b of m.balises) {
-      const o = b.lien === null ? undefined : m.balises.find((x) => x.id === b.lien)
+    for (const b of m.balises) for (const li of b.liens) {
+      const o = m.balises.find((x) => x.id === li.vers)
       if (o === undefined) continue
       const [x0, y0] = ecran(b.x, b.y)
       const [x1, y1] = ecran(o.x, o.y)
@@ -6600,7 +6600,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       peindreFormes(p, PLOT, sx, sy, k, { cap: -Math.PI / 2, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
       // (un bec vers chaque balise reliée, dans un sens ou dans l'autre)
       for (const o of m.balises)
-        if (o.id === b.lien || o.lien === b.id) peindreFormes(p, BEC, sx, sy, k, { cap: Math.atan2(o.y - b.y, o.x - b.x), lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
+        if (b.liens.some((li) => li.vers === o.id) || o.liens.some((li) => li.vers === b.id)) peindreFormes(p, BEC, sx, sy, k, { cap: Math.atan2(o.y - b.y, o.x - b.x), lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
       p.glow(sx, sy, 4, PEPITE[2], 0.25 + 0.2 * Math.sin(m.t * 5 + b.id))
     }
   }
@@ -6723,13 +6723,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(qx - ux, qy - uy, qx - ux * 2.5, qy - uy * 2.5, N.hex('#fff2a8'))
         p.glow(qx - ux * 2.5, qy - uy * 2.5, 6, FEU[4], 0.6)
       } else if (o.arme === 'balise') {
-        // (UN RIVET : une tige d'acier claire, la tête plus large et brillante, un reflet blanc)
+        // (UN RIVET — Keko, 15/11 : « on ne voit pas vraiment les projectiles », plus visible : une traînée d'or qui
+        // s'efface derrière lui, une tige d'acier claire de cinq pixels sur deux, la tête large, la pointe blanche, une
+        // lueur chaude)
         const nx = -uy
         const ny = ux
-        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, N.hex('#b8bcc8'))
-        p.line(o.x - ux * 3 - nx, o.y - uy * 3 - ny, o.x - ux * 3 + nx, o.y - uy * 3 + ny, N.hex('#d8dce6'))
+        p.glowLine(o.x - ux * 12, o.y - uy * 12, o.x - ux * 4, o.y - uy * 4, 2, PEPITE[2], 0.35)
+        p.line(o.x - ux * 9, o.y - uy * 9, o.x - ux * 5, o.y - uy * 5, PEPITE[2], 0.6)
+        p.line(o.x - ux * 5, o.y - uy * 5, o.x, o.y, N.hex('#d8dce6'))
+        p.line(o.x - ux * 5 + nx, o.y - uy * 5 + ny, o.x - ux + nx, o.y - uy + ny, N.hex('#9aa0ae'))
+        p.line(o.x - ux * 5 - nx * 1.5, o.y - uy * 5 - ny * 1.5, o.x - ux * 5 + nx * 2.5, o.y - uy * 5 + ny * 2.5, N.hex('#eef0f6'))
         p.px(o.x, o.y, N.WHITE)
-        p.glow(o.x, o.y, 3, PEPITE[2], 0.35)
+        p.px(o.x + ux, o.y + uy, N.WHITE)
+        p.glow(o.x, o.y, 6, PEPITE[2], 0.6)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])

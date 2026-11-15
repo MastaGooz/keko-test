@@ -1203,7 +1203,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // reliées prend un rivet de chaque côté
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const balise = { id: 'balise', cadence: 0.7, degats: 4, portee: 90, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, balise: { tous: 0.6, ecart: 40, max: 4, duree: 20, lien: 100, garde: 3, recharge: 0.7 } }
+  const balise = { id: 'balise', cadence: 0.7, degats: 4, portee: 90, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, lien: 200, garde: 3, recharge: 0.7 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [balise], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   // (immobile : une seule balise)
   const w = nouveauMonde(cfg, 3)
@@ -1212,16 +1212,19 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (en volant : des balises espacées sur son passage, reliées à la précédente, quatre au plus)
   const w2 = nouveauMonde(cfg, 3)
   let auPlus = 0
-  for (let i = 0; i < 60 * 8; i++) {
-    avancerLeMonde(cfg, w2, 1 / 60, { x: 1, y: 0 })
+  let premieres: typeof w2.balises = []
+  for (let i = 0; i < 60 * 12; i++) {
+    avancerLeMonde(cfg, w2, 1 / 60, { x: i < 200 ? 1 : 0, y: i < 200 ? 0 : 1 })
     auPlus = Math.max(auPlus, w2.balises.length)
+    if (premieres.length === 0 && w2.balises.length === 3) premieres = w2.balises.map((b) => ({ ...b, liens: [...b.liens] }))
   }
   const espacees = w2.balises.every((b, k) => k === 0 || Math.hypot(b.x - w2.balises[k - 1].x, b.y - w2.balises[k - 1].y) >= 40)
-  verifier('en volant, il pose des balises espacées sur son passage, reliées à la précédente, quatre au plus', auPlus === 4 && w2.balises.length === 4 && espacees && w2.balises.slice(1).every((b, k) => b.lien === w2.balises[k].id))
+  verifier('en volant, il pose des balises espacées sur son passage, reliées à la précédente, six au plus', auPlus === 6 && w2.balises.length === 6 && espacees && w2.balises.slice(1).every((b, k) => b.liens.some((li) => li.vers === w2.balises[k].id)))
+  verifier('toutes les trois, la troisième est reliée aussi à la première : un triangle', premieres.length === 3 && premieres[2].liens.map((li) => li.vers).sort().join() === [premieres[0].id, premieres[1].id].sort().join() && premieres[1].liens.length === 1)
   // (deux balises à 60 l'une de l'autre, un insecte au milieu : un rivet de chaque côté)
   const w3 = nouveauMonde(cfg, 3)
   w3.vaisseau = { ...w3.vaisseau, x: 0, y: 200 }
-  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, lien: null, tirA: 0 }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, lien: 900, tirA: 0 })
+  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, liens: [{ vers: 900, tirA: 0 }] })
   w3.armesA[0] = 1e9
   w3.ennemis.push(insecte(1, 0, 1), insecte(2, 0, 40))
   const ev3: Evenement[] = []
@@ -1233,7 +1236,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (personne entre elles : elles ne tirent pas)
   const w4 = nouveauMonde(cfg, 3)
   w4.vaisseau = { ...w4.vaisseau, x: 0, y: 200 }
-  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, lien: null, tirA: 0 }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, lien: 900, tirA: 0 })
+  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, liens: [{ vers: 900, tirA: 0 }] })
   w4.armesA[0] = 1e9
   w4.ennemis.push(insecte(1, 60, 0))
   const ev4: Evenement[] = []

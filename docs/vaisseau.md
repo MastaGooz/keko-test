@@ -4089,3 +4089,15 @@ Sons : `balisePosee` (un tchok et un bip), `balise` (un coup de cloueuse, les
 deux becs). Les balises ne sont pas annoncées par la latence (leur heure est
 celle de la pose). *Chiffres de moi, à rejuger.*
 
+PUIS LES BALISES EN TRIANGLE (Keko, 15/11 : « ralentir le rythme de pose,
+augmenter leur durée de vie ; toutes les 3 balises posées, on connecte la 3e
+à la première afin de former un triangle ; on ne voit pas vraiment les
+projectiles ») : une balise toutes les 1,5 s au plus (0,6), 35 s de vie (20),
+six à la fois (quatre : deux triangles), le lien jusqu'à 200 (100 : posées plus
+espacées, elles ne se reliaient plus) ; chaque balise a son RANG dans son trio
+(`Balise.rang`) et SES LIENS (`Balise.liens`, chaque paire sa recharge) ; la
+troisième d'un trio est reliée à la précédente ET à la première, à toute
+distance — la chaîne continue d'un triangle au suivant. Le rivet est plus
+visible : une traînée d'or, une tige claire plus longue et plus large, une tête
+blanche, une lueur plus grande.
+

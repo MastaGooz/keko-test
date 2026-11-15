@@ -376,7 +376,8 @@ export type Arme = {
    * deux balises, chaque balise tire vers celle d'en face — des espèces de clous, de rivets —, l'ennemi en reçoit un de
    * chaque côté ; les balises servent de piège ») : il en POSE une là où il est, toutes les `tous` secondes au plus, à
    * `ecart` au moins de la dernière (immobile, il n'en pose pas) ; `max` à la fois (la plus vieille saute), chacune vit
-   * `duree` secondes. Chaque balise est RELIÉE à celle posée avant elle, si elle est à moins de `lien`. Un insecte entre
+   * `duree` secondes. Chaque balise est RELIÉE à celle posée avant elle, si elle est à moins de `lien` ; ET TOUTES LES
+   * TROIS, LA TROISIÈME EST RELIÉE À LA PREMIÈRE (Keko, 15/11 : « afin de former un triangle »), à toute distance. Un insecte entre
    * deux balises reliées — à moins de `garde` de la ligne qui les joint, entre elles — : les deux tirent, l'une vers
    * l'autre, un rivet de `degats` à la vitesse de l'arme ; la paire recharge `recharge` secondes. Les rivets sont des
    * obus (`arme.id`), qui s'arrêtent au premier insecte touché.
@@ -522,7 +523,7 @@ export type Monde = {
 }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
-export type Balise = { id: number; x: number; y: number; nee: number; arme: number; lien: number | null; tirA: number }
+export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle). */ rang: number; /** Les balises auxquelles elle est reliée (posées avant elle), et le prochain tir de chaque paire. */ liens: { vers: number; tirA: number }[] }
 
 /** Une scie lancée (voir `Arme.scie`) : son arme, où, sa vitesse, sa direction de départ, quand, si elle revient, ceux qu'elle a touchés dans ce sens. */
 export type Scie = { id: number; arme: number; x: number; y: number; vx: number; vy: number; cap0: number; lancee: number; revient: boolean; touches: number[] }
@@ -1342,8 +1343,13 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const derniere = miennes[miennes.length - 1]
     if (derniere !== undefined && Math.hypot(derniere.x - v.x, derniere.y - v.y) < ba.ecart) return
     m.armesA[i] = m.t + ba.tous
-    const lien = derniere !== undefined && Math.hypot(derniere.x - v.x, derniere.y - v.y) <= ba.lien ? derniere.id : null
-    m.balises.push({ id: m.prochainId++, x: v.x, y: v.y, nee: m.t, arme: i, lien, tirA: m.t + 0.3 })
+    const rang = derniere === undefined ? 0 : (derniere.rang + 1) % 3
+    const liens: Balise['liens'] = []
+    if (derniere !== undefined && Math.hypot(derniere.x - v.x, derniere.y - v.y) <= ba.lien) liens.push({ vers: derniere.id, tirA: m.t + 0.3 })
+    // (LE TRIANGLE : la troisième d'un trio est reliée aussi à la première, si elle est encore là)
+    const premiere = miennes[miennes.length - 2]
+    if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, tirA: m.t + 0.3 })
+    m.balises.push({ id: m.prochainId++, x: v.x, y: v.y, nee: m.t, arme: i, rang, liens })
     ev.push({ type: 'balisePosee', x: v.x, y: v.y })
     if (miennes.length + 1 > ba.max) {
       const vieille = miennes[0]
@@ -1352,11 +1358,11 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     }
   })
   // LE PIÈGE : un insecte entre deux balises reliées, les deux tirent l'une vers l'autre
-  for (const b of m.balises) {
+  for (const b of m.balises) for (const li of b.liens) {
     const a = c.armes[b.arme]
     const ba = a?.balise
-    const autre = b.lien === null ? undefined : m.balises.find((o) => o.id === b.lien)
-    if (a === undefined || ba === undefined || autre === undefined || m.t < b.tirA) continue
+    const autre = m.balises.find((o) => o.id === li.vers)
+    if (a === undefined || ba === undefined || autre === undefined || m.t < li.tirA) continue
     const dx = autre.x - b.x
     const dy = autre.y - b.y
     const l2 = dx * dx + dy * dy || 1
@@ -1365,7 +1371,7 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       return u > 0.05 && u < 0.95 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + c.ennemi.rayon
     })
     if (!entre) continue
-    b.tirA = m.t + ba.recharge
+    li.tirA = m.t + ba.recharge
     const l = Math.sqrt(l2)
     const ux = dx / l
     const uy = dy / l
