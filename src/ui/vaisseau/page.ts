@@ -3102,12 +3102,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       zone(6, y + 1, 18, h - 2, () => ((couleursOuvertes = true), (couleursA = t)), 'ouvre')
     }
     motEnRelief(p, mo.nom, xn + largeurDe(mo.nom, GRAS) / 2, y + 6, true)
-    if (liste.length > 1 && !VORTEX) {
+    if (liste.length > 1 || VORTEX) {
       const bw = largeurDe('Changer', GRAS) + 16
       // (EN ACIER CLAIR, le mot sombre — Keko, 14/11 : jaune, il « renvoie trop au bouton décollage en dessous » ; « un
       // petit peu plus visible que le bouton équipement, mais pas jaune »)
       const bxc = W - 7 - bw
-      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t)), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
+      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t), (vaisseauChoisi = flotte.actif), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
     }
     return y + h + 3
   }
@@ -3127,6 +3127,46 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * classe, ce qu'il est, ses jauges de vol (vitesse, accélération, maniabilité, sur les étalons du jeu), son blindage
    * et son bouclier ; puis « Piloter », « Piloté », ou ce qu'il faut pour l'avoir.
    */
+  /**
+   * LA FICHE D'UN VAISSEAU : son châssis dans un puits (assombri s'il n'est pas à soi), son nom, sa classe, ses jauges
+   * de vol sur les étalons du jeu, son blindage et son bouclier — celui de base du jeu du vortex compris —, et, `avecDit`,
+   * ce qu'il est. Au panneau des vaisseaux, et sous le nom au hangar (Keko, 15/11). Rend sa hauteur.
+   */
+  function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true): number {
+    const cf = configDuHangar(BASE, mo.serie)
+    const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
+    const jauges: Jauge[] = [
+      { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
+      { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
+      { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
+      { nom: 'Blindage', valeur: cf.coque, max: 8, cellules: true },
+      { nom: 'Bouclier', valeur: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX), max: 8, cellules: true },
+    ]
+    const dit = avecDit ? replier(mo.dit, W - 22) : []
+    // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
+    const yj = avecNom ? 28 : 6
+    const hh = Math.max(avecNom ? 52 : 40, yj + jauges.length * 10 + 2)
+    const hd = hh + (dit.length > 0 ? dit.length * 9 + 6 : 0)
+    const gx = 56
+    plaque(p, 4, y, W - 8, hd, 'encre')
+    plaque(p, 8, y + 4, 44, hh - 8, 'creux')
+    const co = pieceDe(mo.serie.montees.coque)
+    if (co !== undefined) dessinerLePictogramme(p, co, 30, y + hh / 2, 44, hh - 8)
+    if (!aSoi) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
+    if (avecNom) {
+      motEnRelief(p, mo.nom, gx + (W - 12 - gx) / 2, y + 5, aSoi)
+      ecrire(p, NOMS_CLASSE[mo.classe], gx + (W - 12 - gx) / 2, y + 16, COQUE[4], { align: 'center' })
+    }
+    jauges.forEach((j, i) => {
+      const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
+      dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, null, false, gx, k)
+    })
+    if (dit.length > 0) {
+      p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
+      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * 9, COQUE[4], { align: 'center' }))
+    }
+    return hd
+  }
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
@@ -3187,34 +3227,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       zone(0, 0, W, H, () => {}, null)
       return
     }
-    // la fiche
-    const cf = configDuHangar(BASE, choisi.serie)
-    const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
-    const jauges: Jauge[] = [
-      { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
-      { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
-      { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
-      { nom: 'Blindage', valeur: cf.coque, max: 8, cellules: true },
-      // (le bouclier de base du jeu du vortex compte : c'est celui qu'il aura en vol)
-      { nom: 'Bouclier', valeur: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX), max: 8, cellules: true },
-    ]
-    const dit = replier(choisi.dit, W - 22)
-    const hh = Math.max(52, 30 + jauges.length * 10 + 4)
-    const hd = hh + dit.length * 9 + 6
-    const gx = 56
-    plaque(p, 4, y, W - 8, hd, 'encre')
-    plaque(p, 8, y + 4, 44, hh - 8, 'creux')
-    const co = pieceDe(choisi.serie.montees.coque)
-    if (co !== undefined) dessinerLePictogramme(p, co, 30, y + hh / 2, 44, hh - 8)
-    if (!a) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
-    motEnRelief(p, choisi.nom, gx + (W - 12 - gx) / 2, y + 5, a)
-    ecrire(p, NOMS_CLASSE[choisi.classe], gx + (W - 12 - gx) / 2, y + 16, COQUE[4], { align: 'center' })
-    jauges.forEach((j, i) => {
-      const k = sortie((t - vaisseauxA - 0.05 - i * 0.045) / 0.32)
-      dessinerUneJaugeDePiece(p, y + 28 + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, null, false, gx, k)
-    })
-    p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
-    dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * 9, COQUE[4], { align: 'center' }))
+    dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true)
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }
@@ -3305,14 +3318,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // SOUS LE NOM : « COULEUR » ET « CHANGER » (Keko, 15/11 : « on reprend le système d'avant, un bouton couleur et un
       // bouton changer, en dessous du nom ; couleur ouvre le panneau des couleurs, changer un panneau comme pour les
       // pièces, sauf que ce sont des vaisseaux »)
-      // (le bouton « Couleur » est retiré : la pastille à gauche du nom suffit — Keko, 15/11)
-      const wch = largeurDe('Changer', GRAS) + 24
-      bouton(p, Math.round((W - wch) / 2), y, wch, 17, 'Changer', true, () => {
-        vaisseauxOuverts = true
-        vaisseauxA = t
-        vaisseauChoisi = flotte.actif
-        surligneVaisseau = -1
-      }, 'ouvre', 'acier')
+      // (LA FICHE DU VAISSEAU PILOTÉ SOUS SON NOM — Keko, 15/11 : « afficher le panneau de statistiques du chasseur sous le nom »)
+      // (sans son nom, déjà sur la plaque ; « Changer » est remonté sur la plaque, à droite : sous la fiche, il passait
+      // sous « Décoller »)
+      dessinerLaFicheDuVaisseau(p, y, modeleDeVaisseau(flotte.actif), true, etapeA, false, false)
       return
     }
     const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [

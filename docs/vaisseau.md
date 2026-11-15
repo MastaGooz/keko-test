@@ -3707,3 +3707,5 @@ LA COULEUR DU JOUEUR (jeu du vortex, Keko, 15/11 : « chaque joueur aura une cou
 LE HANGAR DU JEU DU VORTEX, ensuite (Keko, 15/11) : seule la pastille ouvre la couleur (plus le nom) ; sous le nom, « Couleur » et « Changer ». « Changer » ouvre LE PANNEAU DES VAISSEAUX, comme celui des pièces (`dessinerLesVaisseauxEnListe`) : tous les modèles en liste (ceux qu'on n'a pas, grisés, « VERROUILLE »), la fiche du choisi — son châssis, sa classe, ses jauges de vol sur les étalons, son blindage et son bouclier, ce qu'il est — et « Piloter » / « Piloté » / « À débloquer à la recherche ».
 
 Puis le bouton « Couleur » est retiré (la pastille suffit), « Changer » reste seul sous le nom ; un panneau ouvert sur le hangar (vaisseaux, couleurs) éteint les étincelles de « Décoller », qui jaillissaient à travers.
+
+Au hangar du jeu du vortex, LA FICHE DU VAISSEAU PILOTÉ est sous son nom (Keko, 15/11) — la même que celle du panneau (`dessinerLaFicheDuVaisseau`), sans la description —, puis « Changer ». Puis : sans le nom ni la classe (déjà sur la plaque) et « Changer » remonté sur la plaque, à droite — sous la fiche, il passait sous « Décoller ».
