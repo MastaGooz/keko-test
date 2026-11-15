@@ -6522,11 +6522,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(o.x - ux * 7, o.y - uy * 7, o.x - ux * 4, o.y - uy * 4, FEU[5])
         p.glow(o.x - ux * 6, o.y - uy * 6, 6, FEU[4], 0.6)
       } else if (o.arme === 'minimissile') {
-        // (un mini-missile : un petit corps clair, la pointe rouge, sa flamme)
-        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, COQUE[5])
-        p.px(o.x, o.y, N.hex('#ff5a5a'))
-        p.line(o.x - ux * 5, o.y - uy * 5, o.x - ux * 3, o.y - uy * 3, FEU[5])
-        p.glow(o.x - ux * 4, o.y - uy * 4, 4, FEU[4], 0.5)
+        // UN MISSILE (Keko, 15/11 : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair d'un côté,
+        // ombré de l'autre, l'ogive rouge, deux ailerons à la queue, une flamme longue et sa lueur
+        const nx = -uy
+        const ny = ux
+        const qx = o.x - ux * 6
+        const qy = o.y - uy * 6
+        p.line(qx, qy, o.x - ux, o.y - uy, COQUE[5])
+        p.line(qx + nx, qy + ny, o.x - ux + nx, o.y - uy + ny, COQUE[3])
+        p.line(o.x - ux * 1.5, o.y - uy * 1.5, o.x + nx * 0.5, o.y + ny * 0.5, N.hex('#ff5a5a'))
+        p.line(qx - nx * 1.6, qy - ny * 1.6, qx + nx * 2.6, qy + ny * 2.6, COQUE[4])
+        const fl = 4 + Math.sin(t * 60 + o.id) * 1.2
+        p.line(qx - ux, qy - uy, qx - ux * (1 + fl), qy - uy * (1 + fl), FEU[4])
+        p.line(qx - ux, qy - uy, qx - ux * 2.5, qy - uy * 2.5, N.hex('#fff2a8'))
+        p.glow(qx - ux * 2.5, qy - uy * 2.5, 6, FEU[4], 0.6)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])

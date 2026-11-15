@@ -3955,3 +3955,5 @@ Puis (Keko, 15/11) : l'onde de l'explosion est plus petite (aux deux tiers du ra
 Puis (Keko, 15/11) : l'onde revient À LA TAILLE DE LA ZONE (« trop réduite » aux deux tiers) ; et les mini-missiles s'appellent « MISSILES » — les gros missiles verrouillés du Nova Drifter ne paraissent plus dans le panneau des armes du vortex.
 
 Puis LEURS SONS (Keko, 15/11) : le départ évoque UN MOTEUR QUI S'ALLUME ET SE LANCE — un claquement d'allumage, puis une poussée grave et rugueuse qui enfle, gronde et s'éloigne en glissant vers le bas, un grondement dessous ; l'explosion est PLUS GRAVE — un coup sourd de 80 à 32 Hz, une sous-basse, un souffle bas.
+
+Puis LE MISSILE PLUS GROS EN VOL (Keko : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair et ombré, l'ogive rouge, deux ailerons, une flamme longue et sa lueur.
