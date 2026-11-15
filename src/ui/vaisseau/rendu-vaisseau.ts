@@ -78,7 +78,14 @@ export const LIVREES: Livree[] = [
   { id: 'rose', nom: 'Rose', teinte: 328, saturation: 0.55, clarte: 1 },
   { id: 'ivoire', nom: 'Ivoire', teinte: 40, saturation: 0.1, clarte: 1.18 },
   { id: 'nuit', nom: 'Nuit', teinte: 235, saturation: 0.18, clarte: 0.55 },
+  // LES COULEURS DES JOUEURS du jeu du vortex (Keko, 15/11 : « une couleur au choix entre rouge, bleu, vert et jaune —
+  // chaque joueur aura une couleur pour bien s'identifier ») : franches, bien distinctes ; le rouge est celui d'au-dessus
+  { id: 'bleu', nom: 'Bleu', teinte: 214, saturation: 0.78, clarte: 1 },
+  { id: 'vert', nom: 'Vert', teinte: 122, saturation: 0.6, clarte: 1 },
+  { id: 'jaune', nom: 'Jaune', teinte: 50, saturation: 0.85, clarte: 1.08 },
 ]
+/** Les couleurs qu'un joueur du jeu du vortex peut prendre, dans l'ordre ; les autres livrées sont celles du Nova Drifter. */
+export const COULEURS_DE_JOUEUR = ['rouge', 'bleu', 'vert', 'jaune']
 function tsl(h: number, s: number, l: number): number {
   const a = s * Math.min(l, 1 - l)
   const f = (n: number): number => {

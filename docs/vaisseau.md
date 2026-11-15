@@ -3701,3 +3701,5 @@ moitié arrière de l'anneau était assombrie à droite jusqu'à 1,9 rayon, un
 arc sombre bien au-delà de la planète.
 
 SUR PC, LA BASE EST DESSINÉE PLUS FIN (Keko, 15/11 : « vraiment énorme » ; le téléphone ne change pas) : dans `cadrer`, un pixel du tampon vaut trois pixels d'écran au plus (six avant) et le tampon peut aller jusqu'à 640 × 360 ; en vol, un pixel d'interface vaut 2,5 pixels d'écran au plus (`PIXEL_D_INTERFACE_SUR_PC`).
+
+LA COULEUR DU JOUEUR (jeu du vortex, Keko, 15/11 : « chaque joueur aura une couleur pour bien s'identifier ») : rouge, bleu, vert ou jaune (`COULEURS_DE_JOUEUR`, trois livrées ajoutées), une par JOUEUR — la même quel que soit le vaisseau, gardée sous `joueur` —, rouge au départ ; plus de gris barré. Elle se choisit par UNE PASTILLE À GAUCHE DU NOM du vaisseau, au hangar (le bouton « Style » est retiré). Le Nova Drifter garde ses dix livrées.
