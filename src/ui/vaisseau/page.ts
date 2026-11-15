@@ -346,13 +346,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LE CLIC DROIT N'OUVRE PAS LE MENU DU NAVIGATEUR (« Enregistrer l'image… »), ET LE CURSEUR EST DANS LA LANGUE DU JEU
    * (Keko, 15/11) : une flèche en pixels — acier clair, cernée d'encre —, dessinée ici dans un petit canevas et donnée
-   * au navigateur en image ; sur ce qui se clique, la même en or. Deux pixels d'écran par pixel du dessin.
+   * au navigateur en image ; sur ce qui se clique, la même en or. TROIS pixels d'écran par pixel du dessin, à peu près
+   * ceux de l'interface sur PC (Keko, 15/11 : à deux, « c'est trop fin »).
    */
   racine.addEventListener('contextmenu', (ev) => ev.preventDefault())
   const curseurEnPixels = (corps: string, clair: string): string => {
     // (une flèche : `#` le cerne, `o` le corps, `+` son arête claire)
     const DESSIN = ['#..........', '##.........', '#+#........', '#+o#.......', '#+oo#......', '#+ooo#.....', '#+oooo#....', '#+ooooo#...', '#+oooooo#..', '#+ooooooo#.', '#+oooo#####', '#+o#oo#....', '#+#.#oo#...', '##..#oo#...', '#....#oo#..', '.....###...']
-    const K = 2
+    const K = 3
     const c = document.createElement('canvas')
     c.width = 11 * K
     c.height = DESSIN.length * K
@@ -366,7 +367,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         g2.fillRect(x * K, y * K, K, K)
       }
     })
-    return `url(${c.toDataURL('image/png')}) 1 1, auto`
+    return `url(${c.toDataURL('image/png')}) ${K - 1} ${K - 1}, auto`
   }
   const CURSEUR = curseurEnPixels('#9fb4d2', '#ffffff')
   const CURSEUR_QUI_CLIQUE = curseurEnPixels('#f6c94a', '#fff2a8')
@@ -1003,13 +1004,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (neuf) p.glow(bx + bw / 2, y + 3, bw * 0.6, XP[2], 0.5 * (1 - (t - niveauA) / 0.8))
   }
   /** LA MÊME, DEBOUT, dans le bandeau de gauche : le niveau en haut, centré sur `axe`, puis la barre qui descend — elle se remplit par le bas, comme le blindage d'en face. */
-  function dessinerLExperienceDebout(p: Peintre, axe: number, y: number): void {
+  function dessinerLExperienceDebout(p: Peintre, axe: number, y: number, G = 1): void {
     const inv = m.invasion
     const neuf = t - niveauA < 0.8
-    motEnRelief(p, String(inv.niveau), axe, y + (neuf ? Math.round(-2 * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true)
+    motEnRelief(p, String(inv.niveau), axe, y + (neuf ? Math.round(-2 * G * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true, GRAS, null, G)
     const lw = 8
     const bx = axe - lw / 2
-    const by = y + 12
+    const by = y + 12 * G
     // (elle s'arrête AU MILIEU DE L'ÉCRAN — Keko, 14/11 : « qu'elle ne descende pas plus loin que la moitié »)
     const bh = Math.max(20, Math.round(H / 2) - by)
     const part = Math.max(0, Math.min(1, inv.xp / xpDuNiveau(CONF, inv.niveau)))
@@ -1129,23 +1130,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const enBande = interfaceEnBande()
     // l'icône : un petit vortex — un anneau violet, son puits sombre, deux bras clairs qui tournent
     const axe = Math.round(largeurDeBande() / 2)
+    // (EN DOUBLE SUR PC, l'icône, le pour cent et le niveau — Keko, 15/11 : « un peu trop petits » ; le double, pas une
+    // taille entre deux, pour que tous les pixels restent de la même taille)
+    const G = enBande && couvreApplique ? 2 : 1
     const cx = enBande ? axe : x0 + 5
-    const cy = enBande ? 10 : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
+    const cy = enBande ? 10 * G : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
-    p.circle(cx, cy, 5.6, N.hex('#12081f'))
-    p.circle(cx, cy, 4.6, touche ? N.WHITE : N.hex('#a35cff'))
-    p.circle(cx, cy, 3, N.hex('#2a0f4d'))
+    p.circle(cx, cy, 5.6 * G, N.hex('#12081f'))
+    p.circle(cx, cy, 4.6 * G, touche ? N.WHITE : N.hex('#a35cff'))
+    p.circle(cx, cy, 3 * G, N.hex('#2a0f4d'))
     for (const k of [0, 1]) {
       const a = t * 3 + k * Math.PI
-      p.px(Math.round(cx + Math.cos(a) * 2), Math.round(cy + Math.sin(a) * 2), N.hex('#f1dcff'))
-      p.px(Math.round(cx + Math.cos(a + 0.7) * 1), Math.round(cy + Math.sin(a + 0.7) * 1), N.hex('#cf9bff'))
+      p.rect(Math.round(cx + Math.cos(a) * 2 * G), Math.round(cy + Math.sin(a) * 2 * G), G, G, N.hex('#f1dcff'))
+      p.rect(Math.round(cx + Math.cos(a + 0.7) * G), Math.round(cy + Math.sin(a + 0.7) * G), G, G, N.hex('#cf9bff'))
     }
-    p.glow(cx, cy, 8, N.hex('#a35cff'), touche ? 0.8 : 0.3)
+    p.glow(cx, cy, 8 * G, N.hex('#a35cff'), touche ? 0.8 : 0.3)
     // sa vie : dans la place de « 100 % », pour que la barre d'expérience ne bouge pas
     if (enBande) {
       const dit = `${Math.max(0, Math.ceil(inv.vie))}%` // (sans espace : le bandeau est étroit)
-      motEnRelief(p, dit, axe + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * (1 - (t - passeA) / 0.5)) : 0), 19, 'violet')
-      dessinerLExperienceDebout(p, axe, 32)
+      motEnRelief(p, dit, axe + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * G * (1 - (t - passeA) / 0.5)) : 0), 19 * G + (G - 1) * 2, 'violet', GRAS, null, G)
+      dessinerLExperienceDebout(p, axe, 32 * G + (G - 1) * 4, G)
       dessinerLeRetour(p)
       return
     }
@@ -6395,7 +6399,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * couvre la page, une colonne de même largeur posée SUR le jeu (Keko, 15/11 : « il faudrait que l'interface sur PC
    * suive la même disposition que sur téléphone en paysage : les barres sur le côté »).
    */
-  const largeurDeBande = (): number => (couvreApplique && paysage ? 36 : bandeCote())
+  // (58 DANS LE JEU DU VORTEX : son portail, son pour cent et son niveau y sont en double sur PC — « 100% » y fait 50 pixels)
+  const largeurDeBande = (): number => (couvreApplique && paysage ? (VORTEX ? 58 : 36) : bandeCote())
   const interfaceEnBande = (): boolean => paysage && largeurDeBande() >= 30
   /**
    * Le partage du surplus : LE HAUT D'ABORD, jusqu'à la hauteur de l'interface (la soute et le porté tiennent alors
