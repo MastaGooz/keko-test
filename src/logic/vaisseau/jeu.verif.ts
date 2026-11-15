@@ -1199,5 +1199,49 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const re = ev3.find((e) => e.type === 'scieRattrapee')
   verifier('il se déplace : elle revient vers lui, là où il est, en arc', re !== undefined && re.type === 'scieRattrapee' && Math.hypot(re.x - w3.vaisseau.x, re.y - w3.vaisseau.y) < 12 && w3.vaisseau.x > 30)
 }
+// LES BALISES DE L'INGÉNIEUR (Keko, 15/11) : posées sur son passage, reliées deux à deux ; un insecte entre deux balises
+// reliées prend un rivet de chaque côté
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const balise = { id: 'balise', cadence: 0.7, degats: 4, portee: 90, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, balise: { tous: 0.6, ecart: 40, max: 4, duree: 20, lien: 100, garde: 3, recharge: 0.7 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [balise], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  // (immobile : une seule balise)
+  const w = nouveauMonde(cfg, 3)
+  for (let i = 0; i < 180; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier('immobile, il ne pose qu’une balise', w.balises.length === 1)
+  // (en volant : des balises espacées sur son passage, reliées à la précédente, quatre au plus)
+  const w2 = nouveauMonde(cfg, 3)
+  let auPlus = 0
+  for (let i = 0; i < 60 * 8; i++) {
+    avancerLeMonde(cfg, w2, 1 / 60, { x: 1, y: 0 })
+    auPlus = Math.max(auPlus, w2.balises.length)
+  }
+  const espacees = w2.balises.every((b, k) => k === 0 || Math.hypot(b.x - w2.balises[k - 1].x, b.y - w2.balises[k - 1].y) >= 40)
+  verifier('en volant, il pose des balises espacées sur son passage, reliées à la précédente, quatre au plus', auPlus === 4 && w2.balises.length === 4 && espacees && w2.balises.slice(1).every((b, k) => b.lien === w2.balises[k].id))
+  // (deux balises à 60 l'une de l'autre, un insecte au milieu : un rivet de chaque côté)
+  const w3 = nouveauMonde(cfg, 3)
+  w3.vaisseau = { ...w3.vaisseau, x: 0, y: 200 }
+  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, lien: null, tirA: 0 }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, lien: 900, tirA: 0 })
+  w3.armesA[0] = 1e9
+  w3.ennemis.push(insecte(1, 0, 1), insecte(2, 0, 40))
+  const ev3: Evenement[] = []
+  for (let i = 0; i < 12; i++) {
+    w3.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: 0, y: [1, 40][k], vx: 0, vy: 0 }))
+    ev3.push(...avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  verifier('un insecte entre deux balises reliées : elles tirent l’une vers l’autre, il prend un rivet de chaque côté ; à l’écart, rien', ev3.filter((e) => e.type === 'rivets').length === 1 && Math.abs(1000 - w3.ennemis[0].pv - 8) < 1e-9 && w3.ennemis[1].pv === 1000)
+  // (personne entre elles : elles ne tirent pas)
+  const w4 = nouveauMonde(cfg, 3)
+  w4.vaisseau = { ...w4.vaisseau, x: 0, y: 200 }
+  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, lien: null, tirA: 0 }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, lien: 900, tirA: 0 })
+  w4.armesA[0] = 1e9
+  w4.ennemis.push(insecte(1, 60, 0))
+  const ev4: Evenement[] = []
+  for (let i = 0; i < 30; i++) {
+    w4.ennemis[0].corps = { ...w4.ennemis[0].corps, x: 60, y: 0, vx: 0, vy: 0 }
+    ev4.push(...avancerLeMonde(cfg, w4, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  verifier('personne entre elles (un insecte dans l’axe, mais au-delà) : elles ne tirent pas', !ev4.some((e) => e.type === 'rivets'))
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

@@ -4070,3 +4070,22 @@ d'acier, un moyeu jaune), elle tourne, deux ombres pâles derrière elle ; ses
 sons, `scie` (une lame qui siffle) et `rattrape` (un clac). Le nez de
 l'Ingénieur suit toujours le manche. *Chiffres de moi, à rejuger.*
 
+LES BALISES DE L'INGÉNIEUR, SA TROISIÈME ARME (Keko, 15/11 : « plutôt
+qu'un laser : il pose des balises sur son passage ; quand un ennemi passe entre
+deux balises, chaque balise tire vers la balise en face — des espèces de clous,
+de rivets — et l'ennemi en reçoit un de chaque côté ; les balises servent de
+piège ») : `Arme.balise`, `Monde.balises`, `menerLesBalises` (vérifié). Il
+pose une balise LÀ OÙ IL EST, toutes les 0,6 s au plus et à 40 au moins de la
+dernière (immobile, il n'en pose pas) ; quatre à la fois, 20 s chacune ; chaque
+balise est reliée à la précédente si elle est à moins de 100. Un insecte entre
+deux balises reliées (à moins de 3 de leur ligne, plus son rayon) : elles se
+tirent un rivet l'une vers l'autre, 4 points chacun, à 320 de vitesse — des
+obus, qui s'arrêtent au premier insecte ; la paire recharge 0,7 s. À l'écran
+(`formesDeLaBalise`, `formesDuBecDeBalise`) : un plot hexagonal d'acier sur
+trois pattes, un fanal jaune, un bec tourné vers chaque balise reliée ; un fin
+pointillé jaune qui défile entre deux balises reliées (on voit le piège — ce
+n'est pas un laser, il ne fait rien) ; le rivet, une tige claire à tête large.
+Sons : `balisePosee` (un tchok et un bip), `balise` (un coup de cloueuse, les
+deux becs). Les balises ne sont pas annoncées par la latence (leur heure est
+celle de la pose). *Chiffres de moi, à rejuger.*
+

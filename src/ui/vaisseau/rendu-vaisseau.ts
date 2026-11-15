@@ -543,6 +543,30 @@ export function formesDeLaScie(): Forme[] {
   f.push({ pts: ovale(0, 0, 0.45, 0.45, 6), mat: 'acier', relief: 'plat' })
   return f
 }
+/**
+ * UNE BALISE DE L'INGÉNIEUR (Keko, 15/11 : des balises-pièges qui se tirent des rivets) : un plot hexagonal d'acier sur
+ * trois pattes, un collier plus clair, un fanal jaune au sommet ; son BEC — un petit canon à rivets — se dessine à part,
+ * tourné vers la balise d'en face (`formesDuBecDeBalise`).
+ */
+export function formesDeLaBalise(): Forme[] {
+  const hexa = (r: number): [number, number][] => Array.from({ length: 6 }, (_, k) => [Math.cos((k * Math.PI) / 3) * r, Math.sin((k * Math.PI) / 3) * r])
+  const f: Forme[] = []
+  for (let k = 0; k < 3; k++) {
+    const a = Math.PI / 6 + (k * 2 * Math.PI) / 3
+    f.push({ pts: barre(0, 0, Math.cos(a) * 3.6, Math.sin(a) * 3.6, 1), mat: 'metal', relief: 'plat' })
+  }
+  f.push({ pts: hexa(2.7), mat: 'aile', relief: 'plat' })
+  f.push({ pts: hexa(2), mat: 'acier', relief: 'plat' })
+  f.push({ pts: ovale(0, 0, 1, 1, 10), mat: 'or', relief: 'dome', dome: { x: 0, y: 0, rx: 1, ry: 1 } })
+  return f
+}
+/** Le bec d'une balise : un court canon à rivets, vers l'avant (le cap le tourne vers la balise d'en face). */
+export function formesDuBecDeBalise(): Forme[] {
+  return [
+    { pts: barre(1.6, 0, 4.2, 0, 0.9), mat: 'acier', relief: 'cyl' },
+    { pts: barre(3.6, 0, 4.4, 0, 1.3), mat: 'metal', relief: 'cyl' },
+  ]
+}
 export function formesDeLaTeteDeTourelle(): Forme[] {
   // (un carter anguleux, pas un dôme — rond et gros, il cachait le socle —, le canon épais et long)
   return [
@@ -784,7 +808,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [

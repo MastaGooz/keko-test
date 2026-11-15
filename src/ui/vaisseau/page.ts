@@ -19,7 +19,7 @@ import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDeLaScie, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -813,7 +813,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
       if (canon?.napalm !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
-      else if (canon?.pose !== undefined || canon?.scie !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+      else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       else if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
@@ -917,7 +917,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -949,7 +949,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -1518,6 +1518,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LES ARMES : le prochain coup part dans moins de la latence, et un rival est à portée
     CONF.armes.forEach((arme, i) => {
       const reste = (m.armesA[i] ?? 0) - m.t
+      // (les balises : leur heure est celle de la pose, pas d'un tir — rien à annoncer)
+      if (arme.balise !== undefined) return
       if (reste <= 0 || reste > avance || t - (armeAnnonceeA.get(arme.id) ?? -10) < 0.4) return
       if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
       armeAnnonceeA.set(arme.id, t)
@@ -5744,7 +5746,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -6561,6 +6563,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       peindreFormes(p, SCIE, Math.round(sx), Math.round(sy), 1.1, { cap: m.t * 26, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL })
     }
   }
+  /**
+   * LES BALISES DE L'INGÉNIEUR (voir `Arme.balise`), sous les vaisseaux et les insectes : un fin pointillé jaune entre
+   * deux balises reliées — on voit le piège, ce n'est pas un laser —, puis chaque balise, peinte comme les vaisseaux, son
+   * bec tourné vers chacune de celles d'en face, son fanal qui palpite ; elle se plante en naissant (elle grandit, une
+   * onde de poussière), clignote ses trois dernières secondes.
+   */
+  function dessinerLesBalises(p: Peintre): void {
+    if (m.balises.length === 0) return
+    const PLOT = formesDeLaBalise()
+    const BEC = formesDuBecDeBalise()
+    const ecran = (x: number, y: number): [number, number] => [Math.round(x - camera.x + W / 2), Math.round(y - camera.y + centreY())]
+    for (const b of m.balises) {
+      const o = b.lien === null ? undefined : m.balises.find((x) => x.id === b.lien)
+      if (o === undefined) continue
+      const [x0, y0] = ecran(b.x, b.y)
+      const [x1, y1] = ecran(o.x, o.y)
+      const l = Math.hypot(x1 - x0, y1 - y0)
+      const n = Math.floor(l / 3)
+      const pas = (m.t * 6) % 1
+      for (let k = 1; k < n; k++) {
+        const u = (k + pas) / n
+        if (u > 0.08 && u < 0.92) p.rect(Math.round(x0 + (x1 - x0) * u), Math.round(y0 + (y1 - y0) * u), 1, 1, PEPITE[2], 0.55)
+      }
+    }
+    for (const b of m.balises) {
+      const ba = CONF.armes[b.arme]?.balise
+      if (ba === undefined) continue
+      const age = m.t - b.nee
+      const reste = ba.duree - age
+      if (reste < 3 && Math.floor(reste * 6) % 2 === 0) continue
+      // (un peu plus grande que le dessin, pour qu'on la lise, plus petite qu'une tourelle)
+      const k = 1.3 * (0.4 + 0.6 * sortie(Math.min(1, age / 0.2)))
+      const [sx, sy] = ecran(b.x, b.y)
+      if (age < 0.35) p.ring(sx, sy, 4 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.35)
+      peindreFormes(p, PLOT, sx, sy, k, { cap: -Math.PI / 2, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
+      // (un bec vers chaque balise reliée, dans un sens ou dans l'autre)
+      for (const o of m.balises)
+        if (o.id === b.lien || o.lien === b.id) peindreFormes(p, BEC, sx, sy, k, { cap: Math.atan2(o.y - b.y, o.x - b.x), lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
+      p.glow(sx, sy, 4, PEPITE[2], 0.25 + 0.2 * Math.sin(m.t * 5 + b.id))
+    }
+  }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {
       dessinerLesAspires(p)
@@ -6679,6 +6722,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(qx - ux, qy - uy, qx - ux * (1 + fl), qy - uy * (1 + fl), FEU[4])
         p.line(qx - ux, qy - uy, qx - ux * 2.5, qy - uy * 2.5, N.hex('#fff2a8'))
         p.glow(qx - ux * 2.5, qy - uy * 2.5, 6, FEU[4], 0.6)
+      } else if (o.arme === 'balise') {
+        // (UN RIVET : une tige d'acier claire, la tête plus large et brillante, un reflet blanc)
+        const nx = -uy
+        const ny = ux
+        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, N.hex('#b8bcc8'))
+        p.line(o.x - ux * 3 - nx, o.y - uy * 3 - ny, o.x - ux * 3 + nx, o.y - uy * 3 + ny, N.hex('#d8dce6'))
+        p.px(o.x, o.y, N.WHITE)
+        p.glow(o.x, o.y, 3, PEPITE[2], 0.35)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])
@@ -8682,6 +8733,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
               else jouer('scie')
               break
+            case 'balisePosee':
+              // (une balise plantée : son clic, un peu de poussière)
+              jouer('balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })
+              for (let i = 0; i < 5; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), N.hex('#8a8a96'), 1, 2)
+              }
+              break
+            case 'baliseFinie':
+              for (let i = 0; i < 4; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 2)
+              }
+              break
+            case 'rivets': {
+              // (le piège se referme : un coup de cloueuse, un éclair à chaque bec)
+              jouer('balise', { dx: (ev.x0 + ev.x1) / 2 - v.x, dy: (ev.y0 + ev.y1) / 2 - v.y })
+              const l = Math.hypot(ev.x1 - ev.x0, ev.y1 - ev.y0) || 1
+              for (const [x, y, s] of [[ev.x0, ev.y0, 1], [ev.x1, ev.y1, -1]])
+                for (let i = 0; i < 3; i++) etincelles.ajouter('etincelle', x + ((ev.x1 - ev.x0) / l) * s * 4, y + ((ev.y1 - ev.y0) / l) * s * 4, ((ev.x1 - ev.x0) / l) * s * R.range(20, 50) + R.range(-15, 15), ((ev.y1 - ev.y0) / l) * s * R.range(20, 50) + R.range(-15, 15), 0.12, R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 1.5)
+              break
+            }
             case 'scieRattrapee':
               // (le vaisseau rattrape sa scie : un clac, deux étincelles)
               jouer('rattrape')
@@ -9131,6 +9204,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLesFlaques(p)
     dessinerLesTourelles(p)
+    dessinerLesBalises(p)
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)

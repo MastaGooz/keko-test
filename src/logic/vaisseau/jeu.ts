@@ -371,6 +371,17 @@ export type Arme = {
    * L'état est `Monde.scies`.
    */
   scie?: { aller: number; retour: number; virage: number; rayon: number }
+  /**
+   * DES BALISES-PIÈGES (l'Ingénieur, Keko, 15/11 : « il pose des balises sur son passage ; quand un ennemi passe entre
+   * deux balises, chaque balise tire vers celle d'en face — des espèces de clous, de rivets —, l'ennemi en reçoit un de
+   * chaque côté ; les balises servent de piège ») : il en POSE une là où il est, toutes les `tous` secondes au plus, à
+   * `ecart` au moins de la dernière (immobile, il n'en pose pas) ; `max` à la fois (la plus vieille saute), chacune vit
+   * `duree` secondes. Chaque balise est RELIÉE à celle posée avant elle, si elle est à moins de `lien`. Un insecte entre
+   * deux balises reliées — à moins de `garde` de la ligne qui les joint, entre elles — : les deux tirent, l'une vers
+   * l'autre, un rivet de `degats` à la vitesse de l'arme ; la paire recharge `recharge` secondes. Les rivets sont des
+   * obus (`arme.id`), qui s'arrêtent au premier insecte touché.
+   */
+  balise?: { tous: number; ecart: number; max: number; duree: number; lien: number; garde: number; recharge: number }
 }
 
 export type Vaisseau = {
@@ -506,7 +517,12 @@ export type Monde = {
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
+  /** LES BALISES POSÉES (voir `Arme.balise`). */
+  balises: Balise[]
 }
+
+/** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
+export type Balise = { id: number; x: number; y: number; nee: number; arme: number; lien: number | null; tirA: number }
 
 /** Une scie lancée (voir `Arme.scie`) : son arme, où, sa vitesse, sa direction de départ, quand, si elle revient, ceux qu'elle a touchés dans ce sens. */
 export type Scie = { id: number; arme: number; x: number; y: number; vx: number; vy: number; cap0: number; lancee: number; revient: boolean; touches: number[] }
@@ -545,6 +561,10 @@ export type Evenement =
   /** Une scie part ; le vaisseau la rattrape (voir `Arme.scie`). */
   | { type: 'scieLancee'; x: number; y: number; arme: string }
   | { type: 'scieRattrapee'; x: number; y: number }
+  /** Une balise est posée ; une balise s'éteint ; deux balises reliées tirent leurs rivets l'une vers l'autre (voir `Arme.balise`). */
+  | { type: 'balisePosee'; x: number; y: number }
+  | { type: 'baliseFinie'; x: number; y: number }
+  | { type: 'rivets'; x0: number; y0: number; x1: number; y1: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
@@ -571,7 +591,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1305,6 +1325,58 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   }
 }
 
+/** LES BALISES (voir `Arme.balise`) : la pose sur le passage, l'extinction, le piège qui tire ses rivets. */
+function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  // les vieilles s'éteignent
+  m.balises = m.balises.filter((b) => {
+    const ba = c.armes[b.arme]?.balise
+    if (ba !== undefined && m.t - b.nee < ba.duree) return true
+    ev.push({ type: 'baliseFinie', x: b.x, y: b.y })
+    return false
+  })
+  c.armes.forEach((a, i) => {
+    const ba = a.balise
+    if (ba === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const miennes = m.balises.filter((b) => b.arme === i)
+    const derniere = miennes[miennes.length - 1]
+    if (derniere !== undefined && Math.hypot(derniere.x - v.x, derniere.y - v.y) < ba.ecart) return
+    m.armesA[i] = m.t + ba.tous
+    const lien = derniere !== undefined && Math.hypot(derniere.x - v.x, derniere.y - v.y) <= ba.lien ? derniere.id : null
+    m.balises.push({ id: m.prochainId++, x: v.x, y: v.y, nee: m.t, arme: i, lien, tirA: m.t + 0.3 })
+    ev.push({ type: 'balisePosee', x: v.x, y: v.y })
+    if (miennes.length + 1 > ba.max) {
+      const vieille = miennes[0]
+      m.balises = m.balises.filter((b) => b !== vieille)
+      ev.push({ type: 'baliseFinie', x: vieille.x, y: vieille.y })
+    }
+  })
+  // LE PIÈGE : un insecte entre deux balises reliées, les deux tirent l'une vers l'autre
+  for (const b of m.balises) {
+    const a = c.armes[b.arme]
+    const ba = a?.balise
+    const autre = b.lien === null ? undefined : m.balises.find((o) => o.id === b.lien)
+    if (a === undefined || ba === undefined || autre === undefined || m.t < b.tirA) continue
+    const dx = autre.x - b.x
+    const dy = autre.y - b.y
+    const l2 = dx * dx + dy * dy || 1
+    const entre = m.ennemis.some((e) => {
+      const u = ((e.corps.x - b.x) * dx + (e.corps.y - b.y) * dy) / l2
+      return u > 0.05 && u < 0.95 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + c.ennemi.rayon
+    })
+    if (!entre) continue
+    b.tirA = m.t + ba.recharge
+    const l = Math.sqrt(l2)
+    const ux = dx / l
+    const uy = dy / l
+    for (const [de, sens] of [[b, 1], [autre, -1]] as const) {
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
+      m.obus.push({ id: m.prochainId++, x: de.x + ux * sens * 3, y: de.y + uy * sens * 3, vx: ux * sens * a.vitesse, vy: uy * sens * a.vitesse, vie: Math.max(0, l - 6) / a.vitesse, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique })
+    }
+    ev.push({ type: 'rivets', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y })
+  }
+}
+
 /** LE RAYON CANALISÉ (voir `Arme.canalise`) : il choisit sa cible, chauffe sur elle, la brûle. */
 function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const i = c.armes.findIndex((a) => a.canalise !== undefined)
@@ -1778,9 +1850,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   canaliserLeRayon(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
+  menerLesBalises(c, m, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
