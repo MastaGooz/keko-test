@@ -1394,27 +1394,27 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // et s'éteint au bout de sa durée
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const tornade = { id: 'tornade', cadence: 6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, tornade: { vitesse: 50, virage: 3, duree: 4.5, rayon: 14, dps: 8, ralenti: 0.4 } }
+  const tornade = { id: 'tornade', cadence: 6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, tornade: { vitesse: 18, virage: 3, duree: 4.5, rayon: 14, dps: 8, ralenti: 0.4 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [tornade], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const w = nouveauMonde(cfg, 3)
-  w.ennemis.push(insecte(1, 60, 50))
+  w.ennemis.push(insecte(1, 24, 20))
   const ev: Evenement[] = []
   let surLui = false
   for (let i = 0; i < 60 * 5; i++) {
-    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 60, y: 50, vx: 0, vy: 0 }
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 24, y: 20, vx: 0, vy: 0 }
     ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
-    if (w.tornades.length > 0 && Math.hypot(w.tornades[0].x - 60, w.tornades[0].y - 50) < 8) surLui = true
+    if (w.tornades.length > 0 && Math.hypot(w.tornades[0].x - 24, w.tornades[0].y - 20) < 8) surLui = true
   }
   verifier('une tornade part du vaisseau, rejoint l’insecte, le gèle et le ronge, puis s’éteint au bout de sa durée', ev.filter((e) => e.type === 'tornade').length === 1 && surLui && w.ennemis[0].pv < 1000 - 8 * 2 && ev.some((e) => e.type === 'gele') && ev.some((e) => e.type === 'tornadeFinie') && w.tornades.length === 0)
   // (elle SUIT : l'insecte bouge, elle le rattrape là où il est)
   const w2 = nouveauMonde(cfg, 3)
-  w2.ennemis.push(insecte(1, 50, 0))
+  w2.ennemis.push(insecte(1, 20, 0))
   let pres = Infinity
   for (let i = 0; i < 60 * 4; i++) {
-    const ey = Math.min(80, (i / 60) * 30)
-    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 50, y: ey, vx: 0, vy: 30 }
+    const ey = (i / 60) * 8
+    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 20, y: ey, vx: 0, vy: 8 }
     avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
-    if (i > 150 && w2.tornades.length > 0) pres = Math.min(pres, Math.hypot(w2.tornades[0].x - 50, w2.tornades[0].y - ey))
+    if (i > 150 && w2.tornades.length > 0) pres = Math.min(pres, Math.hypot(w2.tornades[0].x - 20, w2.tornades[0].y - ey))
   }
   verifier('elle suit l’insecte qui bouge', pres < 10)
   const w3 = nouveauMonde(cfg, 3)

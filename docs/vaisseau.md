@@ -4208,3 +4208,7 @@ qui tournent en spirale vers un œil blanc, des flocons qui gravitent ; elle
 s'ouvre en naissant, se resserre en s'éteignant (une gerbe de flocons). Son son,
 `tornade` (le vent qui se lève). *Chiffres de moi, à rejuger.*
 
+PUIS LA TORNADE LENTE (Keko, 15/11 : « il faudrait que la tornade se déplace
+beaucoup plus lentement ») : 18 au lieu de 50 — moins de la moitié d'un insecte
+(40) ; elle ne rattrape plus un insecte qui file, elle avance sur la nuée.
+
