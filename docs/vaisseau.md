@@ -3927,3 +3927,5 @@ vol, la couleur du joueur) — LE SOCLE, fixe, une plaque octogonale sur quatre
 pieds en croix à patins, quatre boulons jaunes (`formesDuSocleDeTourelle`) ;
 LA TÊTE, qui pivote, une couronne d'acier, un dôme à la couleur du joueur, un
 fût et son frein de bouche, une veilleuse verte (`formesDeLaTeteDeTourelle`). Puis PLUS PETITES QUE LE VAISSEAU (Keko : « il ne faut pas que la tourelle soit plus grosse que le vaisseau ») : des pieds plus courts, un canon raccourci, dessinées à 1,1 au lieu de 1,5.
+
+LE COUP SUR UN INSECTE A SON SON (Keko, 15/11 : le « tonk » de métal « fait un peu trop tape sur un bout de bois ; un son plus organique ») : `insecteTouche` — un petit coup sourd et charnu, un écrasement mouillé qui retombe vite, un infime craquement de carapace, trois variantes ; le rival du Nova Drifter garde son « tonk ».

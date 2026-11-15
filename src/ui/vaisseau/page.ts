@@ -8390,7 +8390,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             case 'ennemiTouche': {
               // un obus touche le rival : il blanchit, des étincelles cyan
-              jouer('ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
+              // (un insecte, dans le jeu du vortex : un son organique — Keko, 15/11)
+              jouer(VORTEX ? 'insecteTouche' : 'ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
               toucheEnnemiA.set(ev.id, t)
               // (un coup critique : un éclair de plus, une petite secousse)
               if (ev.critique) {

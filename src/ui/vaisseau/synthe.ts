@@ -286,6 +286,20 @@ const RECETTES = {
       souffle(m, h, 0, 0.25, 0, { f: 2500, d: 0.015 })
     },
   },
+  /**
+   * UN TIR TOUCHE UN INSECTE (le jeu du vortex — Keko, 15/11 : le « tonk » de métal « fait un peu trop tape sur un bout
+   * de bois, il faudrait un son plus organique ») : un petit coup sourd et charnu, un ÉCRASEMENT MOUILLÉ (un souffle en
+   * bande qui retombe vite), un infime craquement de carapace ; trois variantes, il revient souvent
+   */
+  insecteTouche: {
+    duree: 0.35, niveau: 0.22, salle: [0.25, 0.08], variantes: 3,
+    faire: (m, h) => {
+      const g = 0.9 + 0.2 * h.next()
+      note(m, 0, 0.8, 0, { f: 170 * g, glisse: { vers: 85 * g, en: 0.04 }, a: 0.002, d: 0.07, partiels: CORPS, sature: 1.4 })
+      souffle(m, h, 0, 0.75, (h.next() - 0.5) * 0.3, { f: 1300 * g, glisse: { vers: 380, en: 0.06 }, q: 1.6, bande: true, a: 0.002, d: 0.09 })
+      souffle(m, h, 0.005, 0.2, 0, { f: 3400, q: 2.2, bande: true, a: 0.001, d: 0.012 })
+    },
+  },
   /** le rival explose : un grand coup sourd, un souffle long, des débris */
   ennemiDetruit: {
     duree: 2, niveau: 0.95, salle: [0.8, 0.3],
