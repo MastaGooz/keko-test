@@ -2517,9 +2517,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (g.omni === undefined) p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
-    // (UNE SOUCOUPE : au repos, toutes ses tuyères soufflent un peu — elle tient en l'air ; au décollage, celles du dessous
-    // soufflent fort — Keko, 15/11 : « au garage, quand le vaisseau décolle, on ne voit pas de propulsion »)
-    if (g.omni !== undefined) dessinerLesJetsOmni(p, coqueMontee, cx + jit, sy, -Math.PI / 2, ECH, decollageA === null ? 0 : flam, 0, decollageA === null ? 0.25 : 0, ECH * 0.6)
+    // (UNE SOUCOUPE : au décollage, celles du dessous soufflent fort — Keko, 15/11 : « au garage, quand le vaisseau décolle,
+    // on ne voit pas de propulsion » ; À L'ARRÊT, RIEN — « n'allume pas les propulseurs à l'arrêt dans le hangar »)
+    if (g.omni !== undefined && decollageA !== null) dessinerLesJetsOmni(p, coqueMontee, cx + jit, sy, -Math.PI / 2, ECH, flam, 0, 0, ECH * 0.6)
     // la verrière qui luit, les feux de position qui battent
     p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0

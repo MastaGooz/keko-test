@@ -3889,5 +3889,4 @@ buses de manœuvre, leurs jets sont froids (blancs au cœur, bleus au bout),
 sans braises (`dessinerLesJetsOmni`). Et la soucoupe a sa propulsion À
 L'ACCUEIL ET AU GARAGE (« quand le vaisseau décolle, on ne voit pas de
 propulsion ») : au garage, au repos, toutes ses tuyères soufflent un peu ; au
-décollage, et à l'accueil, celles du dessous soufflent fort.
-
+décollage, et à l'accueil, celles du dessous soufflent fort. Puis, au garage à l'arrêt, plus aucun jet (Keko : « n'allume pas les propulseurs à l'arrêt dans le hangar ») : seulement au décollage.
