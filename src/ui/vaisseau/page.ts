@@ -6327,7 +6327,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * Leur forme change toutes les deux images (elles grésillent) ; dessinés à l'écran.
    */
   const COULEURS_VOLT = N.fit(VOLT, 8)
-  let arcsElectriques: { x0: number; y0: number; x1: number; y1: number; t0: number; vie: number; g: number; fort: boolean }[] = []
+  /**
+   * (LES BOUTS D'UN ÉCLAIR SUIVENT CE QU'ILS RELIENT — Keko, 15/11 : « ils restent à leur position de départ et d'arrivée
+   * pendant toute l'animation ; quand le vaisseau ou l'ennemi se déplace, il faudrait qu'ils continuent à évoluer » :
+   * chaque bout est ACCROCHÉ — au vaisseau, à un drone, à un ennemi —, sa place relue à chaque image ; un ennemi mort
+   * entre-temps garde la dernière)
+   */
+  type Ancre = { sorte: 'vaisseau' } | { sorte: 'drone'; k: number } | { sorte: 'ennemi'; id: number }
+  let arcsElectriques: { x0: number; y0: number; x1: number; y1: number; de: Ancre; vers: Ancre; t0: number; vie: number; g: number; fort: boolean }[] = []
+  const ouEst = (a: Ancre): { x: number; y: number } | undefined => (a.sorte === 'vaisseau' ? (m.phase === 'vol' ? { x: v.x, y: v.y } : undefined) : a.sorte === 'drone' ? m.drones[a.k] : m.ennemis.find((e) => e.id === a.id)?.corps)
   let zapA = -10
   function dessinerLElectricite(p: Peintre): void {
     const C = COULEURS_VOLT
@@ -6335,6 +6343,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const image = Math.floor(t * 15)
     arcsElectriques = arcsElectriques.filter((a) => t - a.t0 < a.vie)
     for (const a of arcsElectriques) {
+      const ici = ouEst(a.de)
+      if (ici !== undefined) (a.x0 = ici.x), (a.y0 = ici.y)
+      const la = ouEst(a.vers)
+      if (la !== undefined) (a.x1 = la.x), (a.y1 = la.y)
       const age = t - a.t0
       if (age < 0) continue
       const u = age / a.vie
@@ -8576,7 +8588,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'arc':
               // (un drone frappe d'un arc électrique)
-              arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
+              arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, de: { sorte: 'drone', k: ev.drone }, vers: { sorte: 'ennemi', id: ev.id }, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
               if (t - zapA > 0.06) {
                 zapA = t
                 jouer('zap', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
@@ -8584,7 +8596,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             case 'chaine':
               // (la chaîne d'éclairs : maillon après maillon, de quelques centièmes)
-              for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
+              for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, de: k === 0 ? { sorte: 'vaisseau' } : { sorte: 'ennemi', id: ev.ids[k - 1] }, vers: { sorte: 'ennemi', id: ev.ids[k] }, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
               jouer('chaine')
               secousse = Math.max(secousse, 0.2)
               break

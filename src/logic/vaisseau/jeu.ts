@@ -519,10 +519,10 @@ export type Evenement =
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
   | { type: 'tourellePosee'; x: number; y: number }
-  /** Un arc électrique d'un drone, d'un point à sa cible (voir `Arme.eclair`). */
-  | { type: 'arc'; x0: number; y0: number; x1: number; y1: number }
-  /** Une chaîne d'éclairs : du vaisseau, puis de cible en cible (voir `Arme.chaine`). */
-  | { type: 'chaine'; points: Vecteur[] }
+  /** Un arc électrique d'un drone (son rang, `drone`) à sa cible (`id`), d'un point à l'autre (voir `Arme.eclair`). */
+  | { type: 'arc'; x0: number; y0: number; x1: number; y1: number; drone: number; id: number }
+  /** Une chaîne d'éclairs : du vaisseau, puis de cible en cible — `ids`, les ennemis touchés, dans l'ordre (voir `Arme.chaine`). */
+  | { type: 'chaine'; points: Vecteur[]; ids: number[] }
   /** Le rayon commence son tour (voir `Arme.balayage`). */
   | { type: 'balayage'; duree: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
@@ -1205,7 +1205,7 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
       if (suiv === undefined) break
       touches.push(suiv)
     }
-    ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))] })
+    ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))], ids: touches.map((e) => e.id) })
     touches.forEach((e, k) => {
       e.pv -= a.degats * Math.pow(ch.attenuation, k)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
@@ -1469,7 +1469,7 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
     if (a.eclair === true) {
       cible.pv -= a.degats
-      ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y })
+      ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
       ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique: false })
       if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
       return
