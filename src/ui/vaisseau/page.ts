@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
-import { sauvegardeDe, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
+import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
@@ -797,7 +797,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE VAISSEAU DU JEU DU VORTEX A UN CANON DANS CHAQUE AILE, QUI TIRENT À TOUR DE ROLE (Keko, 14/11) : deux canons,
     // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
     if (VORTEX) {
-      const canon = pieceDe(ARME_DU_VORTEX)?.arme
+      const canon = pieceDe(armeDuVortex)?.arme
       // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
       // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
       if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
@@ -898,7 +898,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
    */
-  const ARME_DU_VORTEX = 'arme-canon'
+  // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
+  // l'arme équipée est gardée sur l'appareil)
+  const ARMES_DU_VORTEX = ['arme-canon', 'arme-rafale']
+  let armeDuVortex = ARMES_DU_VORTEX.includes(chargerArme()) ? chargerArme() : 'arme-canon'
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   /** Le rival en cuirassé (à l'essai, 14/11 ; `&rival=serie` : le petit rival d'avant) : son allure, tout armé. */
   const RIVAL_CUIRASSE = parametres.get('rival') !== 'serie'
@@ -917,7 +920,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? [0, 1].map(() => pieceDe(ARME_DU_VORTEX)?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? [0, 1].map(() => pieceDe(armeDuVortex)?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -3129,7 +3132,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * aile ; son panneau liste les armes du catalogue — les autres, verrouillées pour l'instant.
    */
   let armesOuvertes = false
-  let armeChoisie = ARME_DU_VORTEX
+  let armeChoisie = armeDuVortex
   function dessinerLesArmesEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
@@ -3140,7 +3143,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
     const toutes = piecesDe('arme')
     const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
-    const aSoi = choisie.id === ARME_DU_VORTEX
+    const aSoi = ARMES_DU_VORTEX.includes(choisie.id)
     if (partie !== 'fiche') {
       enTete(p, y, 'Armes', () => ((armesOuvertes = false), (etapeA = t)))
       y += HT + 3
@@ -3154,15 +3157,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(7, Math.round(surligneVaisseau) + 1, 2, RANG_LISTE - 2, PEPITE[2])
       toutes.forEach((pc, i) => {
         const ly = yl + i * RANG_LISTE
-        const a = pc.id === ARME_DU_VORTEX
+        const equipee = pc.id === armeDuVortex
+        const a = ARMES_DU_VORTEX.includes(pc.id)
         const ici = i === iSel
         ecrire(p, pc.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
-        p.text(a ? 'EQUIPE' : 'VERROUILLE', W - 10, ly + 4, a ? PEPITE[2] : COQUE[3], { align: 'right' })
+        if (equipee) p.text('EQUIPE', W - 10, ly + 4, PEPITE[2], { align: 'right' })
+        else if (!a) p.text('VERROUILLE', W - 10, ly + 4, COQUE[3], { align: 'right' })
         zone(4, ly, W - 8, RANG_LISTE, () => (armeChoisie = pc.id), ici ? null : 'clic')
       })
       y += hl + 4
-      if (aSoi) motEnRelief(p, 'Équipé', W / 2, y + 4, true)
-      else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' })
+      if (choisie.id === armeDuVortex) motEnRelief(p, 'Équipé', W / 2, y + 4, true)
+      else if (aSoi) {
+        const bw = largeurDe('Équiper', GRAS) + 22
+        bouton(p, Math.round(W / 2 - bw / 2), y, bw, 15, 'Équiper', true, () => {
+          armeDuVortex = choisie.id
+          sauverArme(armeDuVortex)
+          feterLEquipement()
+        }, 'equipe')
+      } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' })
       y += 19
       if (partie === 'liste') {
         if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
@@ -3196,7 +3208,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /**
    * LA FICHE D'UN VAISSEAU : son châssis dans un puits (assombri s'il n'est pas à soi), son nom, sa classe, ses jauges
-   * de vol sur les étalons du jeu, son blindage et son bouclier — celui de base du jeu du vortex compris —, et, `avecDit`,
+   * de vol sur les étalons du jeu (sans sa classe), son blindage et son bouclier — celui de base du jeu du vortex compris —, et, `avecDit`,
    * ce qu'il est. Au panneau des vaisseaux, et sous le nom au hangar (Keko, 15/11). Rend sa hauteur.
    */
   function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true): number {
@@ -3211,7 +3223,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ]
     const dit = avecDit ? replier(mo.dit, W - 22) : []
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
-    const yj = avecNom ? 28 : 6
+    // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
+    const yj = avecNom ? 18 : 6
     const hh = avecNom ? Math.max(52, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
     const hd = hh + (dit.length > 0 ? dit.length * 9 + 6 : 0)
     // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
@@ -3225,7 +3238,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (avecNom) {
       motEnRelief(p, mo.nom, gx + (W - 12 - gx) / 2, y + 5, aSoi)
-      ecrire(p, NOMS_CLASSE[mo.classe], gx + (W - 12 - gx) / 2, y + 16, COQUE[4], { align: 'center' })
     }
     jauges.forEach((j, i) => {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
@@ -3396,14 +3408,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // SON ARME DE BASE, dessous (Keko, 15/11 : « un canon sur chaque aile ; pas d'image : juste le nom, canon, et les
       // statistiques ») : les jauges du canon au catalogue, sans le poids
       // (UNE LIGNE : « Arme », le nom de l'arme, et « Changer » — Keko, 15/11 : ni « un sur chaque aile », ni les chiffres)
-      const nomArme = pieceDe(ARME_DU_VORTEX)?.nom ?? ''
+      const nomArme = pieceDe(armeDuVortex)?.nom ?? ''
       const ha = 20
       plaque(p, 4, y, W - 8, ha, 'encre')
       // (le nom seul, sans « Arme » devant — Keko, 15/11)
       motEnRelief(p, nomArme, 10 + largeurDe(nomArme, GRAS) / 2, y + 6, true)
       const bwa = largeurDe('Changer', GRAS) + 16
       const bxa = W - 7 - bwa
-      boutonBase(p, bxa, y + 2, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = ARME_DU_VORTEX), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, y + 2 + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
+      boutonBase(p, bxa, y + 2, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = armeDuVortex), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, y + 2 + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
       // (UN BOUTON SECONDAIRE — Keko, 15/11 : « pas le même graphisme que changer de vaisseau, un peu moins visible » :
       // l'acier sombre, la lettre courante en gris clair, au lieu de l'acier clair et du gras)
       return

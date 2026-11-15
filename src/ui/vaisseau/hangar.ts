@@ -74,6 +74,22 @@ export function chargerLivree(vaisseau: string): string {
     return 'serie'
   }
 }
+/** L'ARME ÉQUIPÉE du jeu du vortex (une pour les deux ailes), gardée sur l'appareil ; vide s'il n'y en a pas. */
+const CLE_ARME = 'keko-vaisseau-arme'
+export function chargerArme(): string {
+  try {
+    return localStorage.getItem(cle(CLE_ARME)) ?? ''
+  } catch {
+    return ''
+  }
+}
+export function sauverArme(id: string): void {
+  try {
+    localStorage.setItem(cle(CLE_ARME), id)
+  } catch {
+    // Sans stockage, l'arme vit le temps de la page.
+  }
+}
 export function sauverLivree(vaisseau: string, id: string): void {
   try {
     localStorage.setItem(cleDeLivree(vaisseau), id)
