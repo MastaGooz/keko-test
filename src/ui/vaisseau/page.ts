@@ -3145,14 +3145,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const dit = avecDit ? replier(mo.dit, W - 22) : []
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     const yj = avecNom ? 28 : 6
-    const hh = Math.max(avecNom ? 52 : 40, yj + jauges.length * 10 + 2)
+    const hh = avecNom ? Math.max(52, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
     const hd = hh + (dit.length > 0 ? dit.length * 9 + 6 : 0)
-    const gx = 56
+    // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
+    const gx = avecNom ? 56 : 10
     plaque(p, 4, y, W - 8, hd, 'encre')
-    plaque(p, 8, y + 4, 44, hh - 8, 'creux')
-    const co = pieceDe(mo.serie.montees.coque)
-    if (co !== undefined) dessinerLePictogramme(p, co, 30, y + hh / 2, 44, hh - 8)
-    if (!aSoi) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
+    if (avecNom) {
+      plaque(p, 8, y + 4, 44, hh - 8, 'creux')
+      const co = pieceDe(mo.serie.montees.coque)
+      if (co !== undefined) dessinerLePictogramme(p, co, 30, y + hh / 2, 44, hh - 8)
+      if (!aSoi) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
+    }
     if (avecNom) {
       motEnRelief(p, mo.nom, gx + (W - 12 - gx) / 2, y + 5, aSoi)
       ecrire(p, NOMS_CLASSE[mo.classe], gx + (W - 12 - gx) / 2, y + 16, COQUE[4], { align: 'center' })
@@ -3321,7 +3324,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LA FICHE DU VAISSEAU PILOTÉ SOUS SON NOM — Keko, 15/11 : « afficher le panneau de statistiques du chasseur sous le nom »)
       // (sans son nom, déjà sur la plaque ; « Changer » est remonté sur la plaque, à droite : sous la fiche, il passait
       // sous « Décoller »)
-      dessinerLaFicheDuVaisseau(p, y, modeleDeVaisseau(flotte.actif), true, etapeA, false, false)
+      y += dessinerLaFicheDuVaisseau(p, y, modeleDeVaisseau(flotte.actif), true, etapeA, false, false) + 4
+      // SON ARME DE BASE, dessous (Keko, 15/11 : « un canon sur chaque aile ; pas d'image : juste le nom, canon, et les
+      // statistiques ») : les jauges du canon au catalogue, sans le poids
+      // (EN DEUX LIGNES, des chiffres plutôt que des jauges : en jauges, la carte passait sous « Décoller »)
+      const arme = pieceDe('arme-canon')?.arme
+      if (arme !== undefined) {
+        const ha = 27
+        plaque(p, 4, y, W - 8, ha, 'encre')
+        motEnRelief(p, 'Canon', 10 + largeurDe('Canon', GRAS) / 2, y + 5, true)
+        ecrire(p, 'un sur chaque aile', W - 10, y + 5, COQUE[4], { align: 'right' })
+        // (la cadence est celle des deux canons ensemble : ils alternent)
+        const chiffres: [string, string][] = [['Dégâts', String(arme.degats)], ['Tirs', `${(1 / arme.cadence).toFixed(1).replace('.', ',')}/s`], ['Portée', String(arme.portee)]]
+        const larg = chiffres.map(([n, v]) => largeurDe(n) + 4 + largeurDe(v, GRAS))
+        const ecart = (W - 20 - larg.reduce((a, b) => a + b, 0)) / (chiffres.length - 1)
+        let xc = 10
+        chiffres.forEach(([n, v], i) => {
+          ecrire(p, n, xc, y + 16, COQUE[4])
+          ecrire(p, v, xc + largeurDe(n) + 4, y + 16, COQUE[6], { police: GRAS })
+          xc += larg[i] + ecart
+        })
+      }
       return
     }
     const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [
