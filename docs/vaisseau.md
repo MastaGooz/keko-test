@@ -4108,3 +4108,9 @@ revenu au portail après une mort, la balise suivante était plus loin. Chaque
 balise est maintenant reliée à la précédente À TOUTE DISTANCE, comme la
 fermeture du triangle ; `lien` est retiré (vérifié).
 
+PUIS DES TRIANGLES SÉPARÉS (Keko, 15/11 : « tu as mal compris : il ne faut pas
+de connexion entre deux triangles ; 1, 2 et 3 forment un triangle, ensuite 4,
+5, 6 ; les deux triangles ne doivent pas être reliés ») : la première balise
+d'un trio n'est plus reliée à rien ; la deuxième l'est à la première, la
+troisième aux deux autres (vérifié). Le lien reste sans borne de distance.
+

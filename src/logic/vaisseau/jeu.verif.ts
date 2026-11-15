@@ -1219,16 +1219,16 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     if (premieres.length === 0 && w2.balises.length === 3) premieres = w2.balises.map((b) => ({ ...b, liens: [...b.liens] }))
   }
   const espacees = w2.balises.every((b, k) => k === 0 || Math.hypot(b.x - w2.balises[k - 1].x, b.y - w2.balises[k - 1].y) >= 40)
-  verifier('en volant, il pose des balises espacées sur son passage, reliées à la précédente, six au plus', auPlus === 6 && w2.balises.length === 6 && espacees && w2.balises.slice(1).every((b, k) => b.liens.some((li) => li.vers === w2.balises[k].id)))
+  verifier('en volant, il pose des balises espacées sur son passage, six au plus, par trios : chacune reliée à la précédente de son trio, la première d’un trio à rien', auPlus === 6 && w2.balises.length === 6 && espacees && w2.balises.every((b, k) => (b.rang === 0 ? b.liens.length === 0 : k === 0 /* (la plus vieille a sauté : la liste peut commencer au milieu d'un trio) */ || b.liens.some((li) => li.vers === w2.balises[k - 1].id))))
   verifier('toutes les trois, la troisième est reliée aussi à la première : un triangle', premieres.length === 3 && premieres[2].liens.map((li) => li.vers).sort().join() === [premieres[0].id, premieres[1].id].sort().join() && premieres[1].liens.length === 1)
-  // (après un triangle, la balise suivante, posée LOIN — la postcombustion, un retour au portail —, y est reliée quand même)
+  // (après un triangle, la balise suivante commence un autre triangle : elle n'est pas reliée au premier)
   const w5 = nouveauMonde(cfg, 3)
   for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w5, 1 / 60, { x: i < 100 ? 1 : 0, y: i < 100 ? 0 : 1 })
   const trois = w5.balises.length
   w5.vaisseau = { ...w5.vaisseau, x: w5.vaisseau.x + 500, y: w5.vaisseau.y + 300 }
   for (let i = 0; i < 60 * 2 && w5.balises.length === trois; i++) avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
   const quatrieme = w5.balises[3]
-  verifier('après un triangle, la balise suivante est reliée à la dernière du triangle, même posée loin', trois === 3 && quatrieme !== undefined && quatrieme.rang === 0 && quatrieme.liens.length === 1 && quatrieme.liens[0].vers === w5.balises[2].id)
+  verifier('après un triangle, la balise suivante commence un autre triangle, sans lien avec le premier', trois === 3 && quatrieme !== undefined && quatrieme.rang === 0 && quatrieme.liens.length === 0 && !w5.balises.slice(0, 3).some((b) => b.liens.some((li) => li.vers === quatrieme.id)))
   // (deux balises à 60 l'une de l'autre, un insecte au milieu : un rivet de chaque côté)
   const w3 = nouveauMonde(cfg, 3)
   w3.vaisseau = { ...w3.vaisseau, x: 0, y: 200 }

@@ -376,9 +376,10 @@ export type Arme = {
    * deux balises, chaque balise tire vers celle d'en face — des espèces de clous, de rivets —, l'ennemi en reçoit un de
    * chaque côté ; les balises servent de piège ») : il en POSE une là où il est, toutes les `tous` secondes au plus, à
    * `ecart` au moins de la dernière (immobile, il n'en pose pas) ; `max` à la fois (la plus vieille saute), chacune vit
-   * `duree` secondes. Chaque balise est RELIÉE à celle posée avant elle, à toute distance (Keko, 15/11 : la balise posée
-   * après un triangle n'y était pas reliée — un lien borné à `lien` sautait à pleine vitesse ou après la postcombustion) ; ET TOUTES LES
-   * TROIS, LA TROISIÈME EST RELIÉE À LA PREMIÈRE (Keko, 15/11 : « afin de former un triangle »), à toute distance. Un insecte entre
+   * `duree` secondes. LES BALISES VONT PAR TROIS, CHAQUE TRIO UN TRIANGLE (Keko, 15/11 : « 1, 2 et 3 forment un
+   * triangle, ensuite 4, 5, 6 forment un triangle ; mais les deux triangles ne doivent pas être reliés ») : la deuxième
+   * d'un trio est reliée à la première, la troisième à la deuxième ET à la première, à toute distance ; la première d'un
+   * trio n'est reliée à rien. Un insecte entre
    * deux balises reliées — à moins de `garde` de la ligne qui les joint, entre elles — : les deux tirent, l'une vers
    * l'autre, un rivet de `degats` à la vitesse de l'arme ; la paire recharge `recharge` secondes. Les rivets sont des
    * obus (`arme.id`), qui s'arrêtent au premier insecte touché.
@@ -1346,7 +1347,7 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     m.armesA[i] = m.t + ba.tous
     const rang = derniere === undefined ? 0 : (derniere.rang + 1) % 3
     const liens: Balise['liens'] = []
-    if (derniere !== undefined) liens.push({ vers: derniere.id, tirA: m.t + 0.3 })
+    if (derniere !== undefined && rang > 0) liens.push({ vers: derniere.id, tirA: m.t + 0.3 })
     // (LE TRIANGLE : la troisième d'un trio est reliée aussi à la première, si elle est encore là)
     const premiere = miennes[miennes.length - 2]
     if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, tirA: m.t + 0.3 })
