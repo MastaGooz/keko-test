@@ -84,7 +84,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'sentinelle',
     nom: 'Sentinelle',
     classe: 'chasseur',
-    dit: 'Ronde, cerclée d’un anneau : trois drones tournent autour d’elle et tirent chacun de leur côté, dans toutes les directions.',
+    dit: 'Une soucoupe, sans avant ni arrière : elle file où l’on veut sans tourner, et ses trois drones partent attaquer tout seuls.',
     pieces: ['coque-6', 'propulseur-g1', 'arme-drones'],
     serie: { possedees: ['coque-6', 'propulseur-g1', 'arme-drones'], montees: { coque: 'coque-6', propulseur: 'propulseur-g1' }, outils: [], armes: ['arme-drones'] },
     chaine: [],

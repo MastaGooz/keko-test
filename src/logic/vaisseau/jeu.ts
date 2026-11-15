@@ -49,6 +49,11 @@ export const VAISSEAU = {
    * la caméra) ; seul le manche du vol la fait virer, à la vitesse de sa maniabilité.
    */
   tourelles: false as boolean,
+  /**
+   * OMNIDIRECTIONNEL (la Sentinelle, Keko, 15/11 : « une soucoupe sans devant ni derrière, des propulseurs tout autour,
+   * qui se déplace sans changer d'orientation ») : la coque NE TOURNE JAMAIS ; la poussée suit le manche, comme toujours.
+   */
+  omni: false as boolean,
   /** La vitesse de pointe. */
   vitesseMax: 110,
   /** Le frein du vide, par seconde : `v *= exp(−frein·dt)`. Faible : on glisse. */
@@ -614,7 +619,7 @@ export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number
   const regarde = regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
   const voulu = regarde ? Math.atan2(regard.y, regard.x) : n > 0.05 ? Math.atan2(direction.y, direction.x) : vitesse > 6 ? Math.atan2(vy, vx) : cap
   const ecart = ecartDAngle(cap, voulu)
-  cap += Math.sign(ecart) * Math.min(Math.abs(ecart), moteur.rotation * dt)
+  if (!c.omni) cap += Math.sign(ecart) * Math.min(Math.abs(ecart), moteur.rotation * dt)
   let x = v.x + vx * dt
   let y = v.y + vy * dt
   // les chocs : repoussé hors de l'astéroïde, la vitesse normale rendue en partie ; un choc n'est rapporté que s'il

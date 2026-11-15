@@ -3871,3 +3871,15 @@ autre n'attaque — ils se répartissent les cibles. L'ennemi mort ou sorti de l
 laisse : un autre, ou retour à sa place. Abattu, les drones disparaissent ; ils
 renaissent à leur place au retour.
 
+PUIS LA SENTINELLE DEVIENT UNE SOUCOUPE (Keko, 15/11 : « pas d'avant ni
+d'arrière, une soucoupe volante ; des propulseurs plus petits mais de tous les
+côtés, huit autour ; elle se déplace avec ses propulseurs sans changer
+d'orientation ») : sa coque est OMNIDIRECTIONNELLE (`Piece.omni`,
+`VAISSEAU.omni` : la coque ne tourne jamais, la poussée suit le manche —
+vérifié) ; son dessin est un disque symétrique — un dôme vitré au centre, une
+couronne de rivets, les trois berceaux répartis sur le dessus, des feux verts,
+un anneau tout autour — et HUIT PETITES TUYÈRES sur l'anneau (`Gabarit.omni`,
+`tuyeresOmni`), plus de tuyère à la poupe ; celles qui font face à l'opposé de
+la direction crachent du feu (d'autant plus qu'elles lui font face) et sèment
+leurs braises vers l'extérieur.
+

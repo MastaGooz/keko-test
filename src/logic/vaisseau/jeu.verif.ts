@@ -952,5 +952,14 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
   verifier('deux ennemis : les drones se les partagent', new Set(w3.drones.map((d) => d.cible)).size === 2)
 }
+// L'OMNIDIRECTIONNEL (la Sentinelle, Keko, 15/11) : il file où va le manche sans jamais tourner
+{
+  const cfg = { ...VAISSEAU, omni: true }
+  let w = nouveauVaisseau()
+  for (let i = 0; i < 120; i++) w = voler(cfg, cfg, w, 1 / 60, { x: 1, y: 0 }).vaisseau
+  let w2 = nouveauVaisseau()
+  for (let i = 0; i < 120; i++) w2 = voler(VAISSEAU, VAISSEAU, w2, 1 / 60, { x: 1, y: 0 }).vaisseau
+  verifier('omnidirectionnel : il va à droite sans tourner son nez (qui reste en haut) ; un vaisseau ordinaire, lui, tourne', w.vx > 20 && w.cap === nouveauVaisseau().cap && Math.abs(w2.cap) < 0.2)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

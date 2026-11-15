@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -6027,7 +6027,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ici = (x: number, y: number): [number, number] => [sx + x * ca - y * sa, sy + x * sa + y * ca]
     const cp = allure.propulseur
     const g = gabaritDe(allure.coque)
-    if (flam > 0.02) {
+    if (flam > 0.02 && g.omni === undefined) {
       const [fx, fy] = ici(queueDe(allure.coque) - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
       p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
@@ -6098,6 +6098,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 2 * force, VERRIERE[1], 0.5 * force)
       }
       const gj = gabaritDe(al.coque)
+      // UNE SOUCOUPE : ses huit tuyères crachent du FEU, celles qui sont à l'opposé de la direction — d'autant plus
+      // qu'elles lui font face ; pas de jets de manœuvre (elle ne tourne pas)
+      if (gj.omni !== undefined) {
+        const dx = pousseeVue.avant - pousseeVue.retro
+        const dy = pousseeVue.cote
+        for (const tu of tuyeresOmni(al.coque)) {
+          const f = Math.max(0, -(tu.ux * dx + tu.uy * dy))
+          if (f < 0.12) continue
+          const L = (2.5 + 6 * f) * (0.8 + 0.2 * Math.sin(t * 55 + tu.x * 3 + tu.y))
+          const x0 = sx + tu.x * ca - tu.y * sa
+          const y0 = sy + tu.x * sa + tu.y * ca
+          const ux = tu.ux * ca - tu.uy * sa
+          const uy = tu.ux * sa + tu.uy * ca
+          p.line(x0, y0, x0 + ux * L, y0 + uy * L, FEU[4], 0.9)
+          p.line(x0, y0, x0 + ux * L * 0.55, y0 + uy * L * 0.55, FEU[6])
+          p.px(Math.round(x0), Math.round(y0), N.WHITE)
+          p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 3 * f, FEU[5], 0.55 * f)
+        }
+      } else {
       for (const cote of [-1, 1]) jet(gj.nez, cote * 2.2, 1, cote * 0.25, pousseeVue.retro)
       // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
       jet(-1, -gj.flanc, -0.15, -1, Math.max(0, pousseeVue.cote))
@@ -6109,6 +6128,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (regardVoulu() !== undefined) {
         jet(gj.nez - 1.4, -2.6, 0.1, -1, Math.max(0, virageVu))
         jet(gj.nez - 1.4, 2.6, 0.1, 1, Math.max(0, -virageVu))
+      }
       }
     }
     // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
@@ -8497,7 +8517,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // les braises du moteur, en coordonnées du monde, derrière la tuyère — EN VOL SEULEMENT (Keko, 15/11 : abattu, le
         // manche tenu en faisait encore naître, figées là où le vaisseau était mort)
-        if (pousseeVue.avant > 0.05 && m.phase === 'vol') {
+        // (une soucoupe : ses braises naissent au bout des tuyères qui crachent, et partent vers l'extérieur)
+        if (m.phase === 'vol' && gabaritDe(monteeA(hangar, 'coque').cran).omni !== undefined) {
+          const dx = pousseeVue.avant - pousseeVue.retro
+          const dy = pousseeVue.cote
+          const ca = Math.cos(v.cap)
+          const sa = Math.sin(v.cap)
+          for (const tu of tuyeresOmni(monteeA(hangar, 'coque').cran)) {
+            const f = Math.max(0, -(tu.ux * dx + tu.uy * dy))
+            if (f < 0.3 || R.next() > f * 0.6) continue
+            const bx = v.x + (tu.x + tu.ux * 1.5) * ca - (tu.y + tu.uy * 1.5) * sa
+            const by = v.y + (tu.x + tu.ux * 1.5) * sa + (tu.y + tu.uy * 1.5) * ca
+            const ux = tu.ux * ca - tu.uy * sa
+            const uy = tu.ux * sa + tu.uy * ca
+            const vitesse = 25 + 30 * f
+            braises.ajouter('braise', bx, by, v.vx * 0.3 + ux * vitesse + R.range(-6, 6), v.vy * 0.3 + uy * vitesse + R.range(-6, 6), R.range(0.2, 0.4), 0, 1, 2)
+          }
+        } else if (pousseeVue.avant > 0.05 && m.phase === 'vol') {
           const n = pousseeVue.avant > 0.6 ? 2 : 1
           for (let i = 0; i < n; i++) {
             // (ELLES NAISSENT AU BOUT DE LA FLAMME, pas à la queue du vaisseau — Keko, 13/11 : « on dirait que les

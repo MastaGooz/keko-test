@@ -417,6 +417,8 @@ export type Gabarit = {
   outils?: { x: number; y: number }[]
   /** Les armes sont SUR le pont (dessinées par-dessus la coque) au lieu de dessous les ailes. */
   surLePont?: boolean
+  /** UNE SOUCOUPE : pas de tuyère à la poupe, mais `n` petites tuyères tout autour, à `rayon`, la première à `depart`. */
+  omni?: { n: number; rayon: number; depart: number }
 }
 const GABARIT_DE_SERIE: Gabarit = { tuyeres: [{ x: 0, y: 0 }], armes: [{ x: 0, y: 0, s: -1 }, { x: 0, y: 0, s: 1 }], feux: { x: -7.6, y: 8.2 }, verriere: 3.4, nez: 6.4, flanc: 5.2, anneau: 11, echelle: 1 }
 // LE CUIRASSÉ, REFAIT PLUS GRAND (Keko, 13/11 : « plus gros encore, deux fois plus imposant ; une structure plus sympa,
@@ -443,16 +445,38 @@ const GABARIT_DU_CUIRASSE: Gabarit = {
 // lance-flammes, dans l'axe, sa buse dépassant du nez
 const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.5, y: -2.4 }, { x: -0.5, y: 2.4 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -7.2, y: 9.2 }, verriere: 2.4, nez: 6.5, flanc: 7, anneau: 13, echelle: 1 }
 // LA SENTINELLE (Keko, 15/11) : ronde, cerclée d'un anneau ; deux tuyères ; ses armes sont des drones, hors de la coque
-const GABARIT_DE_LA_SENTINELLE: Gabarit = { tuyeres: [{ x: 0.6, y: -2.2 }, { x: 0.6, y: 2.2 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6, y: 8.4 }, verriere: 2.6, nez: 7.4, flanc: 7, anneau: 13, echelle: 1 }
+// (… PUIS UNE SOUCOUPE — Keko, 15/11 : « sans devant ni derrière, des propulseurs plus petits mais de tous les côtés,
+// huit autour » : plus de tuyère à la poupe)
+const GABARIT_DE_LA_SENTINELLE: Gabarit = { tuyeres: [], omni: { n: 8, rayon: 9.4, depart: Math.PI / 8 }, armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6, y: 8.4 }, verriere: 0, nez: 7.4, flanc: 7, anneau: 13, echelle: 1 }
 export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
-export const queueDe = (coque: number): number => -8.4 + gabaritDe(coque).tuyeres[0].x
+export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
 export const placeDOutil = (coque: number, k: number): { x: number; y: number } => {
   const places = gabaritDe(coque).outils
   if (places === undefined) return { x: 0, y: 0 }
   const pl = places[Math.max(0, Math.min(places.length - 1, k))]
   return { x: pl.x + 2.2, y: pl.y }
+}
+/** LES TUYÈRES D'UNE SOUCOUPE (`Gabarit.omni`) : pour chacune, le bout (repère du vaisseau) et la direction où elle souffle. */
+export function tuyeresOmni(coque: number): { x: number; y: number; ux: number; uy: number }[] {
+  const o = gabaritDe(coque).omni
+  if (o === undefined) return []
+  return Array.from({ length: o.n }, (_, k) => {
+    const a = o.depart + (k * 2 * Math.PI) / o.n
+    return { x: Math.cos(a) * (o.rayon + 1.4), y: Math.sin(a) * (o.rayon + 1.4), ux: Math.cos(a), uy: Math.sin(a) }
+  })
+}
+/** Une petite tuyère de soucoupe, tournée vers l'extérieur, d'acier au bout. */
+function formesDeLaTuyereOmni(o: { n: number; rayon: number; depart: number }, k: number): Forme[] {
+  const a = o.depart + (k * 2 * Math.PI) / o.n
+  const P = (r: number, w: number): [number, number] => [Math.cos(a) * r - Math.sin(a) * w, Math.sin(a) * r + Math.cos(a) * w]
+  const r0 = o.rayon - 0.8
+  const r1 = o.rayon + 1.4
+  return [
+    { pts: [P(r0, -1.3), P(r1, -0.95), P(r1, 0.95), P(r0, 1.3)], mat: 'metal', relief: 'plat' },
+    { pts: [P(r1 - 0.6, -1.05), P(r1, -0.95), P(r1, 0.95), P(r1 - 0.6, 1.05)], mat: 'acier', relief: 'plat' },
+  ]
 }
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
 function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
@@ -463,12 +487,23 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
   if (cran === 6) {
-    // LA SENTINELLE : un corps rond, un peu plus long vers le nez, la verrière en avant ; sur l'anneau, à l'arrière et
-    // sur les flancs, trois BERCEAUX vides — les drones sont dehors, en orbite — et deux feux verts
-    const f: Forme[] = [{ pts: ovale(0.4, 0, 7, 5.8, 24), mat: 'coque', relief: 'cyl' }]
-    f.push({ pts: [[3, -1], [-6, -1.2], [-6, 1.2], [3, 1]], mat: 'acier', relief: 'plat' })
-    f.push({ pts: ovale(2.6, 0, 2.4, 1.7, 18), mat: 'verre', relief: 'dome', dome: { x: 2.6, y: 0, rx: 2.4, ry: 1.7 } })
-    for (const sg of [-1, 1]) f.push({ pts: ovale(-3.2, sg * 3.3, 0.8, 0.8, 10), mat: 'emeraude', relief: 'dome', dome: { x: -3.2, y: sg * 3.3, rx: 0.8, ry: 0.8 } })
+    // LA SENTINELLE, UNE SOUCOUPE (Keko, 15/11) : un disque, SANS AVANT NI ARRIÈRE — un dôme vitré au centre, huit
+    // rivets en couronne, trois BERCEAUX de drone (vides : les drones sont dehors) répartis sur le dessus, des feux
+    // verts entre eux ; les huit tuyères sont tout autour (voir `formesDeLaTuyereOmni`)
+    const f: Forme[] = [{ pts: ovale(0, 0, 6.8, 6.8, 28), mat: 'coque', relief: 'cyl' }]
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4
+      f.push({ pts: ovale(Math.cos(a) * 5.6, Math.sin(a) * 5.6, 0.45, 0.45, 8), mat: 'metal', relief: 'dome', dome: { x: Math.cos(a) * 5.6, y: Math.sin(a) * 5.6, rx: 0.45, ry: 0.45 } })
+    }
+    for (let k = 0; k < 3; k++) {
+      const a = -Math.PI / 2 + (k * 2 * Math.PI) / 3
+      const x = Math.cos(a) * 3.9
+      const y = Math.sin(a) * 3.9
+      f.push({ pts: ovale(x, y, 1.4, 1.4, 12), mat: 'metal', relief: 'dome', dome: { x, y, rx: 1.4, ry: 1.4 } })
+      const b = a + Math.PI / 3
+      f.push({ pts: ovale(Math.cos(b) * 3.9, Math.sin(b) * 3.9, 0.6, 0.6, 8), mat: 'emeraude', relief: 'dome', dome: { x: Math.cos(b) * 3.9, y: Math.sin(b) * 3.9, rx: 0.6, ry: 0.6 } })
+    }
+    f.push({ pts: ovale(0, 0, 2.3, 2.3, 18), mat: 'verre', relief: 'dome', dome: { x: 0, y: 0, rx: 2.3, ry: 2.3 } })
     return f
   }
   if (cran === 5) {
@@ -522,14 +557,9 @@ export function formesDeLaCoque(cran: number): Forme[] {
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
   if (coque === 6) {
-    // (la sentinelle : PAS D'AILES — un ANNEAU d'amarrage autour d'elle, et trois berceaux de drone posés dessus)
-    f.push({ pts: ovale(0, 0, 9.4, 9.4, 28), mat: 'aile', relief: 'plat' })
-    f.push({ pts: ovale(0, 0, 8.2, 8.2, 28), mat: 'acier', relief: 'plat' })
-    for (const a of [Math.PI, Math.PI / 3, -Math.PI / 3]) {
-      const x = Math.cos(a) * 8.6
-      const y = Math.sin(a) * 8.6
-      f.push({ pts: ovale(x, y, 1.6, 1.6, 12), mat: 'metal', relief: 'dome', dome: { x, y, rx: 1.6, ry: 1.6 } })
-    }
+    // (la soucoupe : PAS D'AILES — un ANNEAU tout autour d'elle, où sont fixées ses huit tuyères)
+    f.push({ pts: ovale(0, 0, 9.6, 9.6, 32), mat: 'aile', relief: 'plat' })
+    f.push({ pts: ovale(0, 0, 8.3, 8.3, 32), mat: 'acier', relief: 'plat' })
     return f
   }
   if (coque === 5) {
@@ -694,6 +724,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   if (!g.surLePont) f.push(...armes)
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie), tu.x, tu.y))
+  // (une soucoupe : ses petites tuyères tout autour, sous l'anneau ; leurs jets sont dessinés par la page)
+  if (g.omni !== undefined) for (let k = 0; k < g.omni.n; k++) f.unshift(...formesDeLaTuyereOmni(g.omni, k))
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')

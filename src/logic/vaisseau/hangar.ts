@@ -72,6 +72,8 @@ export type Piece = {
   rayon?: number
   /** La coque : SON PILOTAGE — `tourelles` : le regard ne tourne pas la coque, il ne dirige que le tir (voir `VAISSEAU.tourelles`). */
   tourelles?: boolean
+  /** La coque : OMNIDIRECTIONNELLE — elle ne tourne jamais (voir `VAISSEAU.omni`). */
+  omni?: boolean
   /**
    * LES EMPLACEMENTS D'ARME ONT UN CALIBRE (Keko, 14/11 : « un vaisseau qui a deux emplacements d'armes légères et un
    * emplacement d'armes lourdes ») : la coque dit combien de ses places d'arme sont LOURDES (les dernières) ; une arme
@@ -131,7 +133,7 @@ export const PIECES: Piece[] = [
   // LA SENTINELLE (Keko, 15/11 : « entourée de petits drones qui attaquent indépendamment ») : une coque ronde à
   // anneau, trois drones en orbite, un point de blindage de plus que le chasseur, pas d'outil ; un moteur un peu plus
   // lent que celui de série. *Chiffres de moi, à rejuger en jouant.*
-  { id: 'coque-6', sorte: 'coque', cran: 6, nom: 'Coque de sentinelle', dit: '6 de blindage, un anneau d’amarrage pour trois drones.', prix: 0, poids: 24, pv: 6, armes: 3, outils: 0, capacite: 20 },
+  { id: 'coque-6', sorte: 'coque', cran: 6, nom: 'Coque de sentinelle', dit: '6 de blindage, une soucoupe sans avant ni arrière : huit propulseurs tout autour, elle file où l’on veut sans tourner ; trois berceaux de drone.', prix: 0, poids: 24, pv: 6, armes: 3, outils: 0, capacite: 20, omni: true },
   { id: 'propulseur-g1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de sentinelle', dit: 'Un peu plus lent que celui du chasseur, mais il vire bien.', prix: 0, poids: 7, poussee: 0.74, vitesseMax: 0.95, rotation: 1.1 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
@@ -382,6 +384,7 @@ export function configDuHangar(c: ConfigVaisseau, h: Hangar): ConfigVaisseau {
     vitesseMax: c.vitesseMax * (pr.vitesseMax ?? 1),
     rotation: c.rotation * (pr.rotation ?? 1),
     tourelles: co.tourelles ?? false,
+    omni: co.omni ?? false,
     frein: c.frein / poids,
     coque: co.pv ?? c.coque,
     bouclier: { ...c.bouclier, points: co.bouclier ?? 0 },
