@@ -4122,3 +4122,15 @@ trois balises ensemble, et clignote ensemble ses trois dernières secondes ; à
 la septième balise posée, c'est le plus vieux triangle ENTIER qui saute
 (vérifié).
 
+PUIS LA LIGNE QUI S'ÉCLAIRE, À LA PLACE DES RIVETS (Keko, 15/11 : « éclairer
+la ligne à chaque fois qu'elle est franchie par un ennemi, et qu'ils reçoivent
+des dégâts une fois ; si deux ennemis traversent quasiment en même temps, ils
+sont touchés tous les deux, voire deux fois s'ils sont encore sur la ligne ; pas
+de temps de recharge ») : chaque ligne garde les insectes qui sont dessus
+(`liens[].sur`) ; chaque fois qu'un insecte Y ENTRE, la ligne s'éclaire
+(l'événement `ligne`) et TOUT insecte dessus perd 8 points (deux fois 4 avant) —
+sans recharge (vérifié : deux qui entrent l'un après l'autre, le premier encore
+dessus prend deux coups). Plus d'obus ni de rivet ; l'éclair est un trait blanc
+dans une lueur d'or qui s'éteint en 0,25 s ; son son, un « zing » électrique
+(`balise`). Les becs des balises restent dessinés.
+

@@ -382,12 +382,14 @@ export type Arme = {
    * trio n'est reliée à rien. UN TRIANGLE S'ÉTEINT D'UN BLOC (Keko, 15/11 : « les trois balises d'un triangle
    * disparaissent simultanément, à la fin du temps de vie de la dernière balise du triangle ») : `duree` secondes après
    * la pose de sa dernière balise (`finDuTrio`) ; et quand il y en a plus de `max`, c'est le plus vieux triangle entier
-   * qui saute. Un insecte entre
-   * deux balises reliées — à moins de `garde` de la ligne qui les joint, entre elles — : les deux tirent, l'une vers
-   * l'autre, un rivet de `degats` à la vitesse de l'arme ; la paire recharge `recharge` secondes. Les rivets sont des
-   * obus (`arme.id`), qui s'arrêtent au premier insecte touché.
+   * qui saute. LA LIGNE S'ÉCLAIRE QUAND ON LA FRANCHIT (Keko, 15/11 : « à la place des deux projectiles, éclairer la
+   * ligne à chaque fois qu'elle est franchie par un ennemi, et ils reçoivent des dégâts une fois ; si deux ennemis la
+   * traversent quasiment en même temps, ils sont touchés tous les deux — voire deux fois s'ils sont encore sur la
+   * ligne ; pas de temps de recharge ») : un insecte est SUR une ligne à moins de `garde` d'elle (plus son rayon),
+   * entre ses deux balises ; chaque fois qu'un insecte y ENTRE, la ligne s'éclaire et TOUT INSECTE SUR ELLE prend
+   * `degats` — sans recharge : deux qui entrent ensemble, chacun prend deux coups.
    */
-  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; recharge: number }
+  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number }
 }
 
 export type Vaisseau = {
@@ -528,7 +530,7 @@ export type Monde = {
 }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
-export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et le prochain tir de chaque paire. */ liens: { vers: number; tirA: number }[] }
+export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et pour chaque ligne les insectes qui sont dessus. */ liens: { vers: number; sur: number[] }[] }
 
 /** Une scie lancée (voir `Arme.scie`) : son arme, où, sa vitesse, sa direction de départ, quand, si elle revient, ceux qu'elle a touchés dans ce sens. */
 export type Scie = { id: number; arme: number; x: number; y: number; vx: number; vy: number; cap0: number; lancee: number; revient: boolean; touches: number[] }
@@ -567,10 +569,10 @@ export type Evenement =
   /** Une scie part ; le vaisseau la rattrape (voir `Arme.scie`). */
   | { type: 'scieLancee'; x: number; y: number; arme: string }
   | { type: 'scieRattrapee'; x: number; y: number }
-  /** Une balise est posée ; une balise s'éteint ; deux balises reliées tirent leurs rivets l'une vers l'autre (voir `Arme.balise`). */
+  /** Une balise est posée ; une balise s'éteint ; une ligne entre deux balises, franchie, s'éclaire (voir `Arme.balise`). */
   | { type: 'balisePosee'; x: number; y: number }
   | { type: 'baliseFinie'; x: number; y: number }
-  | { type: 'rivets'; x0: number; y0: number; x1: number; y1: number }
+  | { type: 'ligne'; x0: number; y0: number; x1: number; y1: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
@@ -1338,7 +1340,7 @@ export function finDuTrio(m: Monde, b: Balise, duree: number): number {
   return derniere + duree
 }
 
-/** LES BALISES (voir `Arme.balise`) : la pose sur le passage, l'extinction, le piège qui tire ses rivets. */
+/** LES BALISES (voir `Arme.balise`) : la pose sur le passage, l'extinction, les lignes qui s'éclairent quand on les franchit. */
 function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
   // les triangles finis s'éteignent, d'un bloc
@@ -1360,10 +1362,10 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     m.armesA[i] = m.t + ba.tous
     const rang = derniere === undefined ? 0 : (derniere.rang + 1) % 3
     const liens: Balise['liens'] = []
-    if (derniere !== undefined && rang > 0) liens.push({ vers: derniere.id, tirA: m.t + 0.3 })
+    if (derniere !== undefined && rang > 0) liens.push({ vers: derniere.id, sur: [] })
     // (LE TRIANGLE : la troisième d'un trio est reliée aussi à la première, si elle est encore là)
     const premiere = miennes[miennes.length - 2]
-    if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, tirA: m.t + 0.3 })
+    if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, sur: [] })
     const id = m.prochainId++
     m.balises.push({ id, x: v.x, y: v.y, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
     ev.push({ type: 'balisePosee', x: v.x, y: v.y })
@@ -1374,29 +1376,31 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       m.balises = m.balises.filter((b) => b.trio !== vieux)
     }
   })
-  // LE PIÈGE : un insecte entre deux balises reliées, les deux tirent l'une vers l'autre
+  // LE PIÈGE : chaque insecte qui ENTRE sur une ligne l'éclaire, et tous ceux qui sont dessus prennent un coup
   for (const b of m.balises) for (const li of b.liens) {
     const a = c.armes[b.arme]
     const ba = a?.balise
     const autre = m.balises.find((o) => o.id === li.vers)
-    if (a === undefined || ba === undefined || autre === undefined || m.t < li.tirA) continue
+    if (a === undefined || ba === undefined || autre === undefined) continue
     const dx = autre.x - b.x
     const dy = autre.y - b.y
     const l2 = dx * dx + dy * dy || 1
-    const entre = m.ennemis.some((e) => {
+    const dessus = m.ennemis.filter((e) => {
       const u = ((e.corps.x - b.x) * dx + (e.corps.y - b.y) * dy) / l2
-      return u > 0.05 && u < 0.95 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + c.ennemi.rayon
+      return u > 0 && u < 1 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + c.ennemi.rayon
     })
-    if (!entre) continue
-    li.tirA = m.t + ba.recharge
-    const l = Math.sqrt(l2)
-    const ux = dx / l
-    const uy = dy / l
-    for (const [de, sens] of [[b, 1], [autre, -1]] as const) {
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-      m.obus.push({ id: m.prochainId++, x: de.x + ux * sens * 3, y: de.y + uy * sens * 3, vx: ux * sens * a.vitesse, vy: uy * sens * a.vitesse, vie: Math.max(0, l - 6) / a.vitesse, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique })
+    const entres = dessus.filter((e) => !li.sur.includes(e.id)).length
+    li.sur = dessus.map((e) => e.id)
+    for (let k = 0; k < entres; k++) {
+      ev.push({ type: 'ligne', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y })
+      for (const e of dessus) {
+        if (!m.ennemis.includes(e)) continue
+        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
     }
-    ev.push({ type: 'rivets', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y })
   }
 }
 

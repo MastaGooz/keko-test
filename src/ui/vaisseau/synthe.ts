@@ -522,17 +522,15 @@ const RECETTES = {
     },
   },
   /**
-   * LES BALISES SE TIRENT LEURS RIVETS : un coup de cloueuse pneumatique — un « pschh » d'air très court, le claquement
-   * sec de la tige, un petit coup sourd —, doublé à quelques millisecondes (les deux becs)
+   * UNE LIGNE DE BALISES S'ÉCLAIRE (Keko, 15/11 : la ligne franchie s'éclaire, à la place des rivets) : un « zing »
+   * électrique et clair — un ton qui monte d'un coup puis retombe, battu, un grésillement court
    */
   balise: {
-    duree: 0.3, niveau: 0.18, salle: [0.22, 0.09], variantes: 3,
+    duree: 0.35, niveau: 0.16, salle: [0.25, 0.1], variantes: 3,
     faire: (m, h) => {
-      for (const [d, pan] of [[0, -0.35], [0.012, 0.35]]) {
-        souffle(m, h, d, 0.7, pan, { f: 2600, glisse: { vers: 1200, en: 0.03 }, q: 1.3, bande: true, a: 0.001, d: 0.035 })
-        note(m, d, 0.6, pan, { f: 1250, a: 0.001, d: 0.03, partiels: [[1, 1, 1], [2.4, 0.5, 0.5]] })
-      }
-      note(m, 0, 0.5, 0, { f: 160, glisse: { vers: 100, en: 0.04 }, a: 0.002, d: 0.05 })
+      const f = 1300 * (0.94 + 0.12 * h.next())
+      note(m, 0, 0.8, 0, { f: f * 0.7, glisse: { vers: f, en: 0.02, droit: true }, a: 0.001, d: 0.16, battement: 24, partiels: [[1, 1, 1], [2, 0.35, 0.7], [3, 0.2, 0.5]] })
+      souffle(m, h, 0, 0.5, 0, { f: 3800, q: 1.6, bande: true, a: 0.001, d: 0.05 })
     },
   },
   /** UNE BALISE EST PLANTÉE : un « tchok » métallique bref, puis un bip court qui l'arme */

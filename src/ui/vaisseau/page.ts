@@ -6504,6 +6504,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /** Les lignes de balises qui viennent de s'éclairer (voir `dessinerLesBalises`). */
+  const lignesEclairees: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
   /** (SOUS LES VAISSEAUX ET LES INSECTES : dessinées avec les tirs, elles cachaient le vaisseau posé dessus.) */
   function dessinerLesTourelles(p: Peintre): void {
     // LES TOURELLES DE L'INGÉNIEUR, PEINTES COMME LES VAISSEAUX (`formesDuSocleDeTourelle`, `formesDeLaTeteDeTourelle` —
@@ -6570,6 +6572,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * onde de poussière), clignote ses trois dernières secondes.
    */
   function dessinerLesBalises(p: Peintre): void {
+    // LES LIGNES QUI S'ÉCLAIRENT (Keko, 15/11 : « éclairer la ligne à chaque fois qu'elle est franchie ») : un trait
+    // blanc au cœur, dans une large lueur d'or, qui s'éteint en un quart de seconde
+    for (let i = lignesEclairees.length - 1; i >= 0; i--) {
+      const l = lignesEclairees[i]
+      const u = (t - l.t0) / 0.25
+      if (u >= 1) {
+        lignesEclairees.splice(i, 1)
+        continue
+      }
+      const x0 = l.x0 - camera.x + W / 2
+      const y0 = l.y0 - camera.y + centreY()
+      const x1 = l.x1 - camera.x + W / 2
+      const y1 = l.y1 - camera.y + centreY()
+      p.glowLine(x0, y0, x1, y1, 6, PEPITE[2], 0.55 * (1 - u))
+      p.line(x0, y0, x1, y1, u < 0.4 ? N.WHITE : PEPITE[3], 1 - u)
+    }
     if (m.balises.length === 0) return
     const PLOT = formesDeLaBalise()
     const BEC = formesDuBecDeBalise()
@@ -6723,20 +6741,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(qx - ux, qy - uy, qx - ux * (1 + fl), qy - uy * (1 + fl), FEU[4])
         p.line(qx - ux, qy - uy, qx - ux * 2.5, qy - uy * 2.5, N.hex('#fff2a8'))
         p.glow(qx - ux * 2.5, qy - uy * 2.5, 6, FEU[4], 0.6)
-      } else if (o.arme === 'balise') {
-        // (UN RIVET — Keko, 15/11 : « on ne voit pas vraiment les projectiles », plus visible : une traînée d'or qui
-        // s'efface derrière lui, une tige d'acier claire de cinq pixels sur deux, la tête large, la pointe blanche, une
-        // lueur chaude)
-        const nx = -uy
-        const ny = ux
-        p.glowLine(o.x - ux * 12, o.y - uy * 12, o.x - ux * 4, o.y - uy * 4, 2, PEPITE[2], 0.35)
-        p.line(o.x - ux * 9, o.y - uy * 9, o.x - ux * 5, o.y - uy * 5, PEPITE[2], 0.6)
-        p.line(o.x - ux * 5, o.y - uy * 5, o.x, o.y, N.hex('#d8dce6'))
-        p.line(o.x - ux * 5 + nx, o.y - uy * 5 + ny, o.x - ux + nx, o.y - uy + ny, N.hex('#9aa0ae'))
-        p.line(o.x - ux * 5 - nx * 1.5, o.y - uy * 5 - ny * 1.5, o.x - ux * 5 + nx * 2.5, o.y - uy * 5 + ny * 2.5, N.hex('#eef0f6'))
-        p.px(o.x, o.y, N.WHITE)
-        p.px(o.x + ux, o.y + uy, N.WHITE)
-        p.glow(o.x, o.y, 6, PEPITE[2], 0.6)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])
@@ -8754,14 +8758,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 2)
               }
               break
-            case 'rivets': {
-              // (le piège se referme : un coup de cloueuse, un éclair à chaque bec)
+            case 'ligne':
+              // (une ligne franchie s'éclaire : son « zing », l'éclair dessiné avec les balises)
               jouer('balise', { dx: (ev.x0 + ev.x1) / 2 - v.x, dy: (ev.y0 + ev.y1) / 2 - v.y })
-              const l = Math.hypot(ev.x1 - ev.x0, ev.y1 - ev.y0) || 1
-              for (const [x, y, s] of [[ev.x0, ev.y0, 1], [ev.x1, ev.y1, -1]])
-                for (let i = 0; i < 3; i++) etincelles.ajouter('etincelle', x + ((ev.x1 - ev.x0) / l) * s * 4, y + ((ev.y1 - ev.y0) / l) * s * 4, ((ev.x1 - ev.x0) / l) * s * R.range(20, 50) + R.range(-15, 15), ((ev.y1 - ev.y0) / l) * s * R.range(20, 50) + R.range(-15, 15), 0.12, R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 1.5)
+              lignesEclairees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
               break
-            }
             case 'scieRattrapee':
               // (le vaisseau rattrape sa scie : un clac, deux étincelles)
               jouer('rattrape')
