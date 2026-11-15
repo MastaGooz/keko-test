@@ -543,7 +543,7 @@ export type Evenement =
   /** Le rayon commence son tour (voir `Arme.balayage`). */
   | { type: 'balayage'; duree: number }
   /** Une scie part ; le vaisseau la rattrape (voir `Arme.scie`). */
-  | { type: 'scieLancee'; x: number; y: number }
+  | { type: 'scieLancee'; x: number; y: number; arme: string }
   | { type: 'scieRattrapee'; x: number; y: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
@@ -1258,7 +1258,7 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     const y0 = v.y + Math.sin(cap0) * (c.rayon + 2)
     const v0 = (2 * (a.portee - c.rayon - 2)) / sc.aller
     m.scies.push({ id: m.prochainId++, arme: i, x: x0, y: y0, vx: Math.cos(cap0) * v0, vy: Math.sin(cap0) * v0, cap0, lancee: m.t, revient: false, touches: [] })
-    ev.push({ type: 'scieLancee', x: x0, y: y0 })
+    ev.push({ type: 'scieLancee', x: x0, y: y0, arme: a.id })
   })
   for (let k = m.scies.length - 1; k >= 0; k--) {
     const s = m.scies[k]

@@ -8677,7 +8677,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               jouer('lance')
               break
             case 'scieLancee':
-              jouer('scie')
+              // (UN LANCER ANNONCÉ EN AVANCE A DÉJÀ SONNÉ, comme un obus — Keko, 15/11 : relancée aussitôt rattrapée,
+              // l'annonce de la latence jouait le son, puis le lancer le rejouait : « le son du tir se fait deux fois »)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer('scie')
               break
             case 'scieRattrapee':
               // (le vaisseau rattrape sa scie : un clac, deux étincelles)
