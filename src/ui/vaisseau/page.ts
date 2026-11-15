@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
@@ -1035,6 +1035,51 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * est mort ; à la fin, tu fais respawn le joueur — une pénalité de 10 secondes ») : le chiffre qui frappe à chaque
    * seconde, au centre du portail, là où il est à l'écran.
    */
+  /**
+   * LE VERROU (Keko, 15/11 : « quand on clique ou qu'on tape sur un ennemi, un petit verrouillage s'affiche dessus ; il
+   * devient l'ennemi prioritaire, s'il est à portée de tir ; une seconde tape le déverrouille ») : quatre coins de visée
+   * autour de lui — ils se referment sur lui en arrivant, blanchis un instant, puis respirent d'un pixel ; rouges quand il
+   * est à portée des armes, gris au-delà (le plus proche tire alors à sa place). Déverrouillé, ils s'ouvrent et s'effacent.
+   */
+  let verrouA = -10
+  let deverrou: { x: number; y: number; t0: number } | null = null
+  function dessinerLesCoins(p: Peintre, sx: number, sy: number, demi: number, c: number, alpha = 1): void {
+    const L = 4
+    for (const [kx, ky] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+      const x = Math.round(sx + kx * demi)
+      const y = Math.round(sy + ky * demi)
+      // (le coin : un trait de L pixels de chaque côté, vers l'intérieur, cerné d'encre)
+      const hx = kx < 0 ? x : x - L + 1
+      const vy = ky < 0 ? y : y - L + 1
+      p.rect(hx - 1, y - 1, L + 2, 3, MATIERES.encre.contour, alpha)
+      p.rect(x - 1, vy - 1, 3, L + 2, MATIERES.encre.contour, alpha)
+      p.rect(hx, y, L, 1, c, alpha)
+      p.rect(x, vy, 1, L, c, alpha)
+    }
+  }
+  function dessinerLeVerrou(p: Peintre): void {
+    const versEcran = (x: number, y: number): [number, number] => [(x - camera.x) / champApplique + W / 2, (y - camera.y) / champApplique + centreY()]
+    const rs = CONF.ennemi.rayon / champApplique
+    if (deverrou !== null) {
+      const u = (t - deverrou.t0) / 0.2
+      if (u >= 1) deverrou = null
+      else {
+        const [sx, sy] = versEcran(deverrou.x, deverrou.y)
+        dessinerLesCoins(p, sx, sy, rs + 5 + 7 * u, COQUE[4], 1 - u)
+      }
+    }
+    const e = ennemiVerrouille(m)
+    if (e === null || m.phase !== 'vol') return
+    const [sx, sy] = versEcran(e.corps.x, e.corps.y)
+    const portee = Math.max(0, ...CONF.armes.map((a) => a.portee))
+    const aPortee = Math.hypot(e.corps.x - m.vaisseau.x, e.corps.y - m.vaisseau.y) <= portee
+    const du = t - verrouA
+    const ferme = du < 0.18 ? 8 * Math.pow(1 - du / 0.18, 2) : 0
+    const respire = du >= 0.18 && Math.sin(t * 6) > 0.6 ? 1 : 0
+    const c = du < 0.1 ? N.WHITE : aPortee ? N.hex('#ff4a4a') : COQUE[3]
+    dessinerLesCoins(p, sx, sy, rs + 5 + ferme + respire, c)
+    if (aPortee) p.glow(sx, sy, rs + 8, N.hex('#ff4a4a'), du < 0.18 ? 0.5 : 0.12)
+  }
   function dessinerLeRetour(p: Peintre): void {
     if (m.phase !== 'perdu') return
     const reste = Math.max(0, m.invasion.retourA - m.t)
@@ -1118,6 +1163,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
+    dessinerLeVerrou(p)
     // (À NEUF PIXELS DES BORDS, les deux blocs rapprochés l'un de l'autre — Keko, 14/11 : « qu'ils s'éloignent des bords »)
     const MARGE = 9
     const x0 = paysage ? Math.max(MARGE, largeurDeBande() + MARGE) : MARGE
@@ -5340,6 +5386,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (souteOuverte) return
     }
+    // LE VERROU, dans le jeu du vortex : la souris verrouille au clic ; le doigt, par une tape brève sur l'ennemi — décidée
+    // au relâchement, pour qu'un pouce posé sur un insecte pour piloter ne verrouille rien
+    if (VORTEX && m.phase === 'vol') {
+      const vise = ennemiSous(ev.clientX, ev.clientY)
+      if (ev.pointerType === 'mouse') {
+        if (vise !== null) basculerLeVerrou(vise)
+        return
+      }
+      tapeVerrou = vise === null ? null : { id: ev.pointerId, x: ev.clientX, y: ev.clientY, a: performance.now(), cible: vise }
+    }
     {
       // (deux appuis rapprochés, dans le temps et sur l'écran : la postcombustion ; le second appui pose quand même le manche)
       const maintenant = performance.now()
@@ -5417,8 +5473,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const doigt = { x: ev.clientX, y: ev.clientY }
     manche = { id: manche.id, centre: suivre ? manche.centre : centreQuiSuit(MANCHE, manche.centre, doigt), doigt }
   })
+  /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas. */
+  let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number } | null = null
+  /** L'ennemi sous ce point de l'écran (le plus proche, à une marge près, pour qu'une petite cible se touche), ou null. */
+  function ennemiSous(clientX: number, clientY: number): number | null {
+    const q = enTampon(clientX, clientY)
+    const wx = camera.x + (q.x - W / 2) * champApplique
+    const wy = camera.y + (q.y - centreY()) * champApplique
+    const marge = Math.max(CONF.ennemi.rayon + 6, 12 * champApplique)
+    let meilleur: number | null = null
+    let dm = marge
+    for (const e of m.ennemis) {
+      const d = Math.hypot(e.corps.x - wx, e.corps.y - wy)
+      if (d <= dm) (dm = d), (meilleur = e.id)
+    }
+    return meilleur
+  }
+  function basculerLeVerrou(id: number): void {
+    const avant = ennemiVerrouille(m)
+    verrouiller(m, id)
+    if (m.verrou === id) {
+      verrouA = t
+      deverrou = null
+      jouer('verrou')
+    } else if (avant !== null) {
+      deverrou = { x: avant.corps.x, y: avant.corps.y, t0: t }
+      jouer('deverrou')
+    }
+    if (typeof navigator.vibrate === 'function') navigator.vibrate(8)
+  }
   const lever = (ev: PointerEvent) => {
     reveiller() // (au doigt, c'est le relâchement qui rend le son à la page)
+    if (tapeVerrou !== null && ev.pointerId === tapeVerrou.id) {
+      const tv = tapeVerrou
+      tapeVerrou = null
+      if (ev.type === 'pointerup' && performance.now() - tv.a < 350 && Math.hypot(ev.clientX - tv.x, ev.clientY - tv.y) < 14 && m.ennemis.some((e) => e.id === tv.cible)) basculerLeVerrou(tv.cible)
+    }
     if (accueil) {
       if (ev.type === 'pointerup') quitterLAccueil()
       return

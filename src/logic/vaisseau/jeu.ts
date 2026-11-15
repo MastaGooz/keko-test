@@ -403,6 +403,12 @@ export type Monde = {
   charges: number
   prochainId: number
   graine: number
+  /**
+   * L'ENNEMI VERROUILLÉ (Keko, 15/11 : « quand on tape sur un ennemi, un petit verrouillage s'affiche dessus ; il devient
+   * l'ennemi prioritaire, s'il est à portée de tir ; une seconde tape le déverrouille ») : son id, ou null. Il tombe
+   * avec l'ennemi.
+   */
+  verrou: number | null
 }
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
@@ -439,7 +445,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1 }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1026,9 +1032,25 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
   }
 }
 
-/** Où est l'ennemi le plus proche du joueur, à `portee` au plus — ou null. (Le jeu du vortex y tourne son nez tout seul.) */
+/** Verrouille l'ennemi `id` — ou le déverrouille, s'il l'était déjà. Un id qui n'est pas un ennemi ne change rien. */
+export function verrouiller(m: Monde, id: number): void {
+  if (m.verrou === id) m.verrou = null
+  else if (m.ennemis.some((e) => e.id === id)) m.verrou = id
+}
+
+/** L'ennemi verrouillé, s'il est encore là. */
+export function ennemiVerrouille(m: Monde): Ennemi | null {
+  return m.verrou === null ? null : (m.ennemis.find((e) => e.id === m.verrou) ?? null)
+}
+
+/**
+ * Où est l'ennemi le plus proche du joueur, à `portee` au plus — ou null. (Le jeu du vortex y tourne son nez tout seul.)
+ * L'ENNEMI VERROUILLÉ PASSE DEVANT, s'il est à `portee` ; plus loin, c'est le plus proche.
+ */
 export function ennemiLePlusProche(m: Monde, portee: number): Vecteur | null {
   const v = m.vaisseau
+  const ve = ennemiVerrouille(m)
+  if (ve !== null && Math.hypot(ve.corps.x - v.x, ve.corps.y - v.y) <= portee) return { x: ve.corps.x, y: ve.corps.y }
   let cible: Vecteur | null = null
   let dc = portee
   for (const e of m.ennemis) {
@@ -1109,6 +1131,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const ev: Evenement[] = []
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
+  if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
   if (m.phase !== 'vol') {
     if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev)
     return { chocs: [], evenements: ev }
@@ -1191,11 +1214,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     else {
       let cible: Ennemi | null = null
       let dc = Infinity
-      for (const e of m.ennemis) {
+      // (hors de portée, ou hors de l'arc de tir, devant le nez : pas une cible)
+      const enVue = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee && !(c.arcDeTir > 0 && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) > c.arcDeTir)
+      // (L'ENNEMI VERROUILLÉ D'ABORD, s'il est en vue ; sinon le plus proche)
+      const ve = ennemiVerrouille(m)
+      if (ve !== null && enVue(ve)) cible = ve
+      else for (const e of m.ennemis) {
         const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-        // (hors de l'arc de tir, devant le nez : pas une cible)
-        if (c.arcDeTir > 0 && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) > c.arcDeTir) continue
-        if (d <= arme.portee && d < dc) (dc = d), (cible = e)
+        if (enVue(e) && d < dc) (dc = d), (cible = e)
       }
       if (cible === null) return
       const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
@@ -1221,8 +1247,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const o = m.obus[i]
     o.vie -= dt
     if (o.guide && m.ennemis.length > 0) {
-      let cible = m.ennemis[0]
-      for (const e of m.ennemis) if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) < Math.hypot(cible.corps.x - o.x, cible.corps.y - o.y)) cible = e
+      let cible = ennemiVerrouille(m) ?? m.ennemis[0]
+      if (m.verrou === null || cible.id !== m.verrou) for (const e of m.ennemis) if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) < Math.hypot(cible.corps.x - o.x, cible.corps.y - o.y)) cible = e
       const vit = Math.hypot(o.vx, o.vy)
       const voulu = Math.atan2(cible.corps.y - o.y, cible.corps.x - o.x)
       const ecart = ecartDAngle(Math.atan2(o.vy, o.vx), voulu)

@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -808,6 +808,37 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const leger = lancer({ ...C, forage: { ...C.forage, portee: 0 } })
   verifier('un vaisseau lourd traverse une petite roche : elle éclate sans rien rendre, il garde son cap, à peine ralenti et à peine abîmé', lourd.perce === 1 && lourd.w3.detruits.has(petite.id) && lourd.w3.pepites.length === 0 && lourd.w3.vaisseau.vx > 60 && lourd.w3.vaisseau.x > petite.x && lourd.w3.coque > 999.8)
   verifier('le vaisseau de série, lui, rebondit dessus comme avant', leger.perce === 0 && leger.w3.vaisseau.vx < 0 && C.masse === 30)
+}
+// LE VERROU (Keko, 15/11) : l'ennemi verrouillé passe devant le plus proche, s'il est à portée ; une seconde tape le rend
+{
+  const canon = { id: 'canon', cadence: 0.5, degats: 1, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [canon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  // (le premier obus tiré : vers quel x part-il ?)
+  const premierTir = (verrou: number | null, loinX: number): number => {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(insecte(1, -30, -40), insecte(2, loinX, -60))
+    if (verrou !== null) verrouiller(w, verrou)
+    for (let i = 0; i < 60; i++) {
+      w.ennemis[0].corps = { ...w.ennemis[0].corps, x: -30, y: -40, vx: 0, vy: 0 }
+      w.ennemis[1].corps = { ...w.ennemis[1].corps, x: loinX, y: -60, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      if (w.obus.length > 0) return Math.sign(w.obus[0].vx)
+    }
+    return 0
+  }
+  verifier('sans verrou, le canon tire sur le plus proche ; verrouillé, sur l’autre, à portée', premierTir(null, 40) === -1 && premierTir(2, 40) === 1)
+  verifier('verrouillé mais hors de portée : le plus proche reprend', premierTir(2, 400) === -1)
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, -30, -40), insecte(2, 40, -60))
+  verrouiller(w, 2)
+  const verrouille = w.verrou === 2 && ennemiLePlusProche(w, 200)?.x === 40
+  verrouiller(w, 2)
+  verifier('une seconde tape déverrouille : le nez revient au plus proche ; un id inconnu ne verrouille rien', verrouille && w.verrou === null && ennemiLePlusProche(w, 200)?.x === -30 && (verrouiller(w, 99), w.verrou === null))
+  verrouiller(w, 2)
+  w.ennemis = w.ennemis.filter((e) => e.id !== 2)
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier('le verrou tombe avec l’ennemi', w.verrou === null)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

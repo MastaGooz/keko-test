@@ -373,6 +373,22 @@ const RECETTES = {
       souffle(m, h, 0, 0.15, 0, { f: 3000, d: 0.02 })
     },
   },
+  /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */
+  verrou: {
+    duree: 0.35, niveau: 0.16, salle: [0.25, 0.1],
+    faire: (m, h) => {
+      note(m, 0, 0.8, 0.05, { f: MI6, a: 0.002, d: 0.035, partiels: [[1, 1, 1], [2, 0.18, 0.6]] })
+      note(m, 0.06, 1, 0.05, { f: LA6, a: 0.002, d: 0.06, partiels: [[1, 1, 1], [2, 0.18, 0.6]] })
+      souffle(m, h, 0.06, 0.12, 0, { f: 4200, d: 0.02 })
+    },
+  },
+  /** … déverrouillé : un seul bip, qui glisse vers le bas */
+  deverrou: {
+    duree: 0.3, niveau: 0.12, salle: [0.25, 0.1],
+    faire: (m) => {
+      note(m, 0, 1, 0.05, { f: LA6, glisse: { vers: MI6, en: 0.05 }, a: 0.002, d: 0.06, partiels: [[1, 1, 1], [2, 0.18, 0.6]] })
+    },
+  },
   /** un onglet : deux notes de maillet, une quarte qui monte */
   onglet: {
     duree: 0.6, niveau: 0.25, salle: [0.4, 0.18],

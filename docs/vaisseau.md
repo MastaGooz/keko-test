@@ -3737,3 +3737,25 @@ Puis L'UN AU-DESSUS DE L'AUTRE (Keko, 15/11 : « côte à côte, on dirait que l
 PUIS RETIRÉS (Keko, 15/11 : « laisse tomber, on ne va pas afficher les chiffres du blindage et du bouclier ») : plus de montants ; la barre d'or du portrait reste à six pixels.
 
 SUR PC, MESURÉ (Keko, 15/11) : l'icône du portail remonte de trois pixels (son centre était sous celui du pour cent), et la barre de vie commence sept pixels plus bas, à la hauteur du pour cent — elle finit toujours au milieu de l'écran.
+
+### Le verrou (15/11)
+
+Keko : « quand on clique sur PC ou qu'on tape sur téléphone sur un ennemi, un
+petit verrouillage s'affiche dessus ; il devient l'ennemi prioritaire, si
+évidemment il est à portée de tir ; si on tape à nouveau sur lui, il est
+déverrouillé et on reprend la cible de l'ennemi le plus proche ».
+
+- LA RÈGLE (`logic/vaisseau/jeu.ts`, vérifiée) : `Monde.verrou`, `verrouiller`
+  (une seconde fois le rend), `ennemiVerrouille` ; le nez se tourne vers lui
+  s'il est à portée (`ennemiLePlusProche`), les armes tirent sur lui s'il est
+  en vue — à portée et dans l'arc —, les missiles le suivent ; sinon, le plus
+  proche, comme avant. Le verrou tombe avec l'ennemi.
+- LE GESTE : la souris verrouille au clic ; le doigt, par une TAPE BRÈVE
+  (moins de 0,35 s, sans glisser) sur l'ennemi, décidée au relâchement — un
+  pouce posé sur un insecte pour piloter ne verrouille rien, et le manche
+  part quand même. La cible se touche à une marge près (douze pixels).
+- LE DESSIN : quatre coins de visée qui se referment sur lui en arrivant,
+  blanchis un instant, puis respirent ; ROUGES à portée des armes, GRIS
+  au-delà (le plus proche tire alors à sa place) ; déverrouillé, ils s'ouvrent
+  et s'effacent. Deux sons, `verrou` (deux bips qui montent) et `deverrou`.
+
