@@ -158,7 +158,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   // (LA SALAMANDRE EST DONNÉE D'OFFICE dans le jeu du vortex, pour l'essai — Keko, 15/11)
-  if (parametres.has('vortex')) flotte = ajouterLeVaisseau(ajouterLeVaisseau(flotte, 'salamandre'), 'sentinelle') // (et la Sentinelle, dès le début — Keko, 15/11)
+  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, dès le début — Keko, 15/11)
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
@@ -808,7 +808,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
       // (LE LANCE-FLAMMES DE LA SALAMANDRE : un seul, au nez — Keko, 15/11)
       // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
-      if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
+      // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
+      if (canon?.pose !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+      else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       else if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
     }
@@ -911,7 +913,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale'], salamandre: ['arme-flammes'], sentinelle: ['arme-drones'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale'], salamandre: ['arme-flammes'], sentinelle: ['arme-drones'], ingenieur: ['arme-tourelles'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -941,7 +943,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -5733,7 +5735,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // personne en vue, il suit le manche.
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined)) return undefined
+    // (… NI L'INGÉNIEUR : ses tourelles visent seules)
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -6378,6 +6381,52 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     feuDesConsumes.draw(p, 'front')
     p.place(0, 0)
   }
+  /** (SOUS LES VAISSEAUX ET LES INSECTES : dessinées avec les tirs, elles cachaient le vaisseau posé dessus.) */
+  function dessinerLesTourelles(p: Peintre): void {
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    // LES TOURELLES DE L'INGÉNIEUR : un socle carré boulonné, à la couleur du joueur, des bandes jaunes et noires ; une
+    // tête qui pivote vers sa cible, un canon ; un voyant vert. Elles se DÉPLIENT en naissant (le socle grandit, une onde
+    // de poussière), et CLIGNOTENT leurs trois dernières secondes ; une jauge de vie sous elles.
+    {
+      const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+      for (const tu of m.tourelles) {
+        const po = CONF.armes[tu.arme]?.pose
+        if (po === undefined) continue
+        const age = m.t - tu.nee
+        const reste = po.duree - age
+        if (reste < 3 && Math.floor(reste * 6) % 2 === 0) continue
+        const k = Math.min(1, age / 0.25)
+        const d = Math.round(3 + 2 * k)
+        const x = Math.round(tu.x)
+        const y = Math.round(tu.y)
+        if (age < 0.4) p.ring(x, y, 5 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.4)
+        // (LE SOCLE EN ACIER GRIS, aux coins jaunes — à la couleur du joueur, il se fondait dans le vaisseau ; la couleur
+        // reste à la tête qui pivote)
+        p.rect(x - d - 1, y - d - 1, 2 * d + 3, 2 * d + 3, MATIERES.encre.contour)
+        p.rect(x - d, y - d, 2 * d + 1, 2 * d + 1, COQUE[3])
+        p.rect(x - d, y - d, 2 * d + 1, 1, COQUE[5])
+        p.rect(x - d, y - d, 1, 2 * d + 1, COQUE[4])
+        p.rect(x - d, y + d, 2 * d + 1, 1, COQUE[1])
+        for (const [cx, cy] of [[-d, -d], [d - 1, -d], [-d, d - 1], [d - 1, d - 1]]) p.rect(x + cx, y + cy, 2, 2, PEPITE[2])
+        if (k < 1) continue
+        // la tête, à la couleur du joueur, et le canon
+        const bx = x + Math.round(Math.cos(tu.cap) * 6)
+        const by = y + Math.round(Math.sin(tu.cap) * 6)
+        p.line(x, y, bx, by, MATIERES.encre.contour)
+        p.line(x + Math.round(Math.cos(tu.cap) * 2), y + Math.round(Math.sin(tu.cap) * 2), bx, by, COQUE[5])
+        p.circle(x, y, 3, MATIERES.encre.contour)
+        p.circle(x, y, 2.3, moyen)
+        p.rect(x - 1, y - 2, 2, 1, clair)
+        p.rect(x - 1, y + 1, 3, 1, sombre)
+        p.px(x, y, Math.floor(t * 3 + tu.id) % 3 === 0 ? N.hex('#4aff7a') : N.hex('#1a7a3a'))
+        // sa vie, une jauge fine sous le socle
+        const lv = Math.round((2 * d + 1) * Math.max(0, reste / po.duree))
+        p.rect(x - d, y + d + 3, 2 * d + 1, 1, MATIERES.encre.contour)
+        if (lv > 0) p.rect(x - d, y + d + 3, lv, 1, reste < 3 ? ROUGE[4] : PEPITE[2])
+      }
+    }
+    p.place(0, 0)
+  }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {
       dessinerLesAspires(p)
@@ -6471,6 +6520,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.px(o.x, o.y, N.hex('#ff5a5a'))
         p.line(o.x - ux * 7, o.y - uy * 7, o.x - ux * 4, o.y - uy * 4, FEU[5])
         p.glow(o.x - ux * 6, o.y - uy * 6, 6, FEU[4], 0.6)
+      } else if (o.arme === 'tourelle') {
+        // (une balle de tourelle : un traceur d'or, court)
+        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])
+        p.px(o.x, o.y, N.hex('#fff2a8'))
+        p.glow(o.x, o.y, 3, PEPITE[2], 0.4)
       } else if (o.arme === 'drone') {
         // (un trait de drone : court, cyan, la tête blanche)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, VERRIERE[1])
@@ -8329,6 +8383,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
               break
             }
+            case 'tourellePosee':
+              // (une tourelle posée : son clac, un peu de poussière)
+              jouer('pose', { dx: ev.x - v.x, dy: ev.y - v.y })
+              for (let i = 0; i < 8; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.2, 0.4), R.next() < 0.5 ? N.hex('#8a8a96') : PEPITE[2], 1, 2)
+              }
+              break
+            case 'tourelleFinie':
+              // (une tourelle s'éteint : quelques étincelles)
+              for (let i = 0; i < 6; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.35), R.next() < 0.5 ? N.WHITE : N.hex('#8a8a96'), 1, 2)
+              }
+              break
             case 'obus':
               // une arme tire : deux étincelles à la bouche, et son son
               // (un coup annoncé en avance a déjà sonné)
@@ -8752,6 +8821,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       N.painterFor(frame)
       dessinerLesTaches(p)
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
+    dessinerLesTourelles(p)
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)

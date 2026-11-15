@@ -400,6 +400,23 @@ const RECETTES = {
       note(m, 0, 0.45, pan, { f: f / 2, glisse: { vers: 140, en: 0.12 }, a: 0.003, d: 0.13 })
     },
   },
+  /** UNE TOURELLE TIRE : un « tac » mécanique, sec, un petit coup sourd dessous — pas un laser */
+  tourelle: {
+    duree: 0.25, niveau: 0.13, salle: [0.2, 0.08], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, (h.next() - 0.5) * 0.5, { f: 1700, q: 1.6, bande: true, a: 0.001, d: 0.035 })
+      note(m, 0, 0.6, 0, { f: 190, glisse: { vers: 110, en: 0.05 }, a: 0.002, d: 0.06 })
+    },
+  },
+  /** UNE TOURELLE EST POSÉE : un clac métallique (des partiels inharmoniques), puis un servo qui monte */
+  pose: {
+    duree: 0.55, niveau: 0.24, salle: [0.3, 0.12], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 520, a: 0.001, d: 0.18, partiels: [[1, 1, 1], [2.71, 0.5, 0.6], [5.13, 0.3, 0.4]] })
+      souffle(m, h, 0, 0.5, 0, { f: 900, q: 1.2, bande: true, a: 0.001, d: 0.04 })
+      note(m, 0.08, 0.3, 0, { f: 260, glisse: { vers: 620, en: 0.18 }, a: 0.02, d: 0.2, partiels: [[1, 1, 1], [3, 0.3, 0.7]] })
+    },
+  },
   /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */
   verrou: {
     duree: 0.35, niveau: 0.16, salle: [0.25, 0.1],

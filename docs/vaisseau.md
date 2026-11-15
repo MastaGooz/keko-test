@@ -3894,3 +3894,29 @@ décollage, et à l'accueil, celles du dessous soufflent fort. Puis, au garage �
 Puis (Keko, 15/11 : « un peu trop proches, ce ne sont pas des drones de mêlée ») : les drones tournent autour de leur cible à 26 au lieu de 13 (plus lentement, 2 rad/s), toujours sous leur portée de 40 ; et leur son devient UN « PIOU » DE LASER — une longue chute de hauteur, au grain d'un carré, deux voix, un zip aigu au départ.
 
 Puis le « piou » des drones, GRAVE ET ROND (Keko : « on dirait des petits oiseaux qui chantent ») : de 1 100 à 280 Hz presque en sinus, une voix à l'octave du dessous, plus de zip aigu.
+
+### L'Ingénieur, le vaisseau qui pose des tourelles (15/11)
+
+Keko : « on part sur l'ingénieur, avec des formes assez carrées — il faut
+dénoter avec les autres : quelque chose de mécanique, carré, qui pose des
+petites tours sur son passage ».
+
+- LES TOURELLES (`Arme.pose`, `Monde.tourelles`, `menerLesTourelles` dans
+  `jeu.ts`, vérifié) : il en POSE une sur son passage toutes les 2,5 s au plus,
+  à 28 au moins de la plus proche (immobile, il n'en pose pas d'autre), cinq à
+  la fois (la plus vieille saute), chacune vit 18 s. Chacune pivote (8 rad/s)
+  vers l'insecte le plus proche à 75 — le verrouillé d'abord — et tire aligné,
+  3 points toutes les 0,8 s. Il n'a pas d'arme à lui ; son nez suit le manche.
+  *Limite connue : abattu, ses tourelles se figent jusqu'à son retour.*
+- LE VAISSEAU (`ingenieur`, `coque-7`, `propulseur-i1`, `arme-tourelles`) : UN
+  CAISSON — une coque rectangulaire aux coins coupés, une cabine carrée vitrée à
+  la proue, la soute à tourelles sur le dos (trois modules carrés), des coins
+  boulonnés, deux caissons latéraux rayés de jaune et de noir comme un engin de
+  chantier, deux tuyères à la poupe ; 7 de blindage, lent (0,85). Donné dès le
+  début (`horsRecherche`).
+- À L'ÉCRAN : une tourelle est un socle carré boulonné à la couleur du joueur,
+  une tête qui pivote, un canon, un voyant vert, une jauge de vie dessous ; elle
+  se déplie en naissant (onde de poussière), clignote ses trois dernières
+  secondes ; ses balles, des traceurs d'or. Sons : `pose` (un clac métallique,
+  un servo qui monte) et `tourelle` (un « tac » sec). `&vaisseau=ingenieur`.
+

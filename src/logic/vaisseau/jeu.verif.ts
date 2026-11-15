@@ -961,5 +961,50 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 120; i++) w2 = voler(VAISSEAU, VAISSEAU, w2, 1 / 60, { x: 1, y: 0 }).vaisseau
   verifier('omnidirectionnel : il va à droite sans tourner son nez (qui reste en haut) ; un vaisseau ordinaire, lui, tourne', w.vx > 20 && w.cap === nouveauVaisseau().cap && Math.abs(w2.cap) < 0.2)
 }
+// LES TOURELLES DE L'INGÉNIEUR (Keko, 15/11) : posées sur son passage, espacées, cinq au plus, elles tirent seules et
+// s'éteignent au bout de leur durée
+{
+  const tourelle = { id: 'tourelle', cadence: 0.8, degats: 3, portee: 75, vitesse: 220, vie: 0.5, dispersion: 0, guide: false, pose: { tous: 2.5, ecart: 28, max: 5, duree: 18, pivot: 8 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [tourelle], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  // (immobile : une seule)
+  const w = nouveauMonde(cfg, 3)
+  for (let i = 0; i < 60 * 8; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier('immobile, il ne pose qu’une tourelle', w.tourelles.length === 1)
+  // (en volant : plusieurs, espacées, jamais plus de cinq)
+  const w2 = nouveauMonde(cfg, 3)
+  let auPlus = 0
+  for (let i = 0; i < 60 * 16; i++) {
+    avancerLeMonde(cfg, w2, 1 / 60, { x: 1, y: 0 })
+    auPlus = Math.max(auPlus, w2.tourelles.length)
+  }
+  const espacees = w2.tourelles.every((a, i) => w2.tourelles.every((b, j) => i === j || Math.hypot(a.x - b.x, a.y - b.y) >= 28))
+  verifier('en volant, il en pose sur son passage, espacées, cinq au plus (la plus vieille saute)', auPlus === 5 && w2.tourelles.length === 5 && espacees)
+  // (une tourelle tire sur un insecte à sa portée, pas au-delà)
+  const w3 = nouveauMonde(cfg, 3)
+  w3.ennemis.push(insecte(1, 50, 0))
+  let tirs = 0
+  for (let i = 0; i < 60 * 3; i++) {
+    w3.ennemis[0].corps = { ...w3.ennemis[0].corps, x: 50, y: 0, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'obus') tirs++
+  }
+  verifier('une tourelle pivote vers l’insecte à sa portée et le touche', tirs >= 2 && w3.ennemis[0].pv < 1000)
+  const w4 = nouveauMonde(cfg, 3)
+  w4.ennemis.push(insecte(1, 200, 0))
+  let tirs4 = 0
+  for (let i = 0; i < 60 * 3; i++) {
+    w4.ennemis[0].corps = { ...w4.ennemis[0].corps, x: 200, y: 0, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfg, w4, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'obus') tirs4++
+  }
+  verifier('au-delà de sa portée, elle ne tire pas', tirs4 === 0)
+  // (au bout de sa durée, elle s'éteint)
+  const w5 = nouveauMonde(cfg, 3)
+  avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
+  const posee = w5.tourelles.length === 1
+  w5.armesA[0] = 1e9
+  let finie = false
+  for (let i = 0; i < 60 * 19; i++) for (const e of avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'tourelleFinie') finie = true
+  verifier('au bout de sa durée, la tourelle s’éteint', posee && finie && w5.tourelles.length === 0)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

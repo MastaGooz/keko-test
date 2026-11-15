@@ -448,7 +448,10 @@ const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.5, y: -2.4 }, { x:
 // (… PUIS UNE SOUCOUPE — Keko, 15/11 : « sans devant ni derrière, des propulseurs plus petits mais de tous les côtés,
 // huit autour » : plus de tuyère à la poupe)
 const GABARIT_DE_LA_SENTINELLE: Gabarit = { tuyeres: [], omni: { n: 8, rayon: 9.4, depart: Math.PI / 8 }, armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6, y: 8.4 }, verriere: 0, nez: 7.4, flanc: 7, anneau: 13, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : GABARIT_DE_SERIE)
+// L'INGÉNIEUR (Keko, 15/11 : « des formes assez carrées, qui dénotent avec les autres ») : un caisson, deux tuyères
+// carrées côte à côte à la poupe ; son arme est posée dans le monde
+const GABARIT_DE_L_INGENIEUR: Gabarit = { tuyeres: [{ x: 0.2, y: -2.8 }, { x: 0.2, y: 2.8 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.4, y: 7.6 }, verriere: 4.6, nez: 7.4, flanc: 7.6, anneau: 13, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -486,6 +489,18 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran === 7) {
+    // L'INGÉNIEUR, UN CAISSON (Keko, 15/11 : « mécanique, carré ») : une coque rectangulaire aux coins coupés ; une cabine
+    // carrée vitrée à la proue ; la SOUTE À TOURELLES sur le dos, trois modules carrés rangés ; des plaques boulonnées
+    const f: Forme[] = [{ pts: [[7.4, -3.4], [6.4, -4.4], [-6.4, -4.4], [-7.4, -3.4], [-7.4, 3.4], [-6.4, 4.4], [6.4, 4.4], [7.4, 3.4]], mat: 'coque', relief: 'cyl' }]
+    f.push({ pts: [[6.6, -2], [4, -2], [4, 2], [6.6, 2]], mat: 'acier', relief: 'plat' })
+    f.push({ pts: [[6.2, -1.5], [4.4, -1.5], [4.4, 1.5], [6.2, 1.5]], mat: 'verre', relief: 'plat' })
+    f.push({ pts: [[2.6, -3], [-6, -3], [-6, 3], [2.6, 3]], mat: 'metal', relief: 'plat' })
+    for (const x of [1.6, -1.2, -4]) f.push({ pts: [[x, -2.2], [x - 2.2, -2.2], [x - 2.2, 2.2], [x, 2.2]], mat: 'acier', relief: 'plat' })
+    for (const x of [0.5, -2.3, -5.1]) f.push({ pts: [[x + 0.5, -0.5], [x - 0.5, -0.5], [x - 0.5, 0.5], [x + 0.5, 0.5]], mat: 'or', relief: 'plat' })
+    for (const [x, y] of [[6.6, -3.6], [6.6, 3.6], [-6.6, -3.6], [-6.6, 3.6]]) f.push({ pts: [[x + 0.4, y - 0.4], [x - 0.4, y - 0.4], [x - 0.4, y + 0.4], [x + 0.4, y + 0.4]], mat: 'metal', relief: 'plat' })
+    return f
+  }
   if (cran === 6) {
     // LA SENTINELLE, UNE SOUCOUPE (Keko, 15/11) : un disque, SANS AVANT NI ARRIÈRE — un dôme vitré au centre, huit
     // rivets en couronne, trois BERCEAUX de drone (vides : les drones sont dehors) répartis sur le dessus, des feux
@@ -556,6 +571,19 @@ export function formesDeLaCoque(cran: number): Forme[] {
 /** LES AILES, deux plaques penchées, le bout rouge — le cuirassé, lui, a deux longs bords d'armement. */
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque === 7) {
+    // (l'ingénieur : PAS D'AILES — deux CAISSONS latéraux, plaques d'acier rayées de jaune et de noir, comme un engin de
+    // chantier)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[4.4, sg * 4], [-6, sg * 4], [-6, sg * 7.4], [4.4, sg * 7.4]], mat: 'aile', relief: 'plat', penche: sg })
+      for (let k = 0; k < 4; k++) {
+        const x = 3.6 - k * 2.6
+        f.push({ pts: [[x, sg * 6.4], [x - 1.3, sg * 6.4], [x - 1.3, sg * 7.4], [x, sg * 7.4]], mat: 'or', relief: 'plat' })
+      }
+      f.push({ pts: [[4.4, sg * 4], [3.4, sg * 4], [3.4, sg * 6.4], [4.4, sg * 6.4]], mat: 'acier', relief: 'plat' })
+    }
+    return f
+  }
   if (coque === 6) {
     // (la soucoupe : PAS D'AILES — un ANNEAU tout autour d'elle, où sont fixées ses huit tuyères)
     f.push({ pts: ovale(0, 0, 9.6, 9.6, 32), mat: 'aile', relief: 'plat' })
@@ -681,8 +709,8 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 }
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
-  // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page)
-  if (id === 'drone') return []
+  // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
+  if (id === 'drone' || id === 'tourelle') return []
   if (id === 'flammes') {
     // LE LANCE-FLAMMES : une buse dans l'axe, qui dépasse du nez — le fût, la bague, la veilleuse au bout
     return [

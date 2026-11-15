@@ -314,6 +314,14 @@ export type Arme = {
    * l'ennemi mort ou trop loin, il en prend un autre, ou il revient à sa place.
    */
   orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number }
+  /**
+   * DES TOURELLES POSÉES (l'Ingénieur, Keko, 15/11 : « quelque chose de mécanique, carré, qui pose des petites tours sur
+   * son passage ») : l'arme n'est pas sur le vaisseau, il la POSE dans le monde (`Monde.tourelles`, `menerLesTourelles`)
+   * — une tourelle toutes les `tous` secondes au plus, là où il passe, à `ecart` au moins de la plus proche (immobile, il
+   * n'en pose pas d'autre) ; `max` à la fois (la plus vieille saute), chacune vit `duree` secondes. Une tourelle pivote
+   * (`pivot` rad/s) vers l'ennemi le plus proche à sa portée — le verrouillé d'abord — et tire à la cadence de l'arme.
+   */
+  pose?: { tous: number; ecart: number; max: number; duree: number; pivot: number }
 }
 
 export type Vaisseau = {
@@ -439,7 +447,12 @@ export type Monde = {
   crache: boolean
   /** LES DRONES, un par arme à orbite (dans leur ordre) : où ils sont, leur vitesse, l'ennemi qu'ils attaquent. */
   drones: Drone[]
+  /** LES TOURELLES POSÉES (voir `Arme.pose`) : où, depuis quand, leur canon, leur prochain tir, l'arme qui les a posées. */
+  tourelles: Tourelle[]
 }
+
+/** Une tourelle posée dans le monde (voir `Arme.pose`). */
+export type Tourelle = { id: number; x: number; y: number; nee: number; cap: number; tirA: number; arme: number }
 
 /** Un drone en vol (voir `Arme.orbite`). */
 export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null }
@@ -457,6 +470,9 @@ export type Evenement =
   /** Une arme du joueur tire. */
   | { type: 'obus'; x: number; y: number; arme: string }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
+  /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
+  | { type: 'tourellePosee'; x: number; y: number }
+  | { type: 'tourelleFinie'; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
   | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number; /** Il est mort EN BRÛLANT (le lance-flammes) : il se consume au lieu d'éclater. */ brule?: boolean }
@@ -478,7 +494,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1105,6 +1121,63 @@ export function placeDuDrone(m: Monde, arme: Arme): Vecteur {
  * pris) —, vole vers elle et lui tourne autour, tire de là ; sans cible, il rejoint sa place sur l'orbite, en suivant
  * le vaisseau. *Chiffres de moi, à rejuger.*
  */
+function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  // les vieilles s'éteignent
+  m.tourelles = m.tourelles.filter((tu) => {
+    const po = c.armes[tu.arme]?.pose
+    if (po !== undefined && m.t - tu.nee < po.duree) return true
+    ev.push({ type: 'tourelleFinie', x: tu.x, y: tu.y })
+    return false
+  })
+  c.armes.forEach((a, i) => {
+    const po = a.pose
+    if (po === undefined) return
+    // LA POSE : à l'heure, en vol, assez loin de toute autre
+    if (m.phase === 'vol' && m.t >= (m.armesA[i] ?? 0) && m.tourelles.every((tu) => Math.hypot(tu.x - v.x, tu.y - v.y) >= po.ecart)) {
+      m.armesA[i] = m.t + po.tous
+      m.tourelles.push({ id: m.prochainId++, x: v.x, y: v.y, nee: m.t, cap: v.cap, tirA: m.t + 0.4, arme: i })
+      ev.push({ type: 'tourellePosee', x: v.x, y: v.y })
+      const miennes = m.tourelles.filter((tu) => tu.arme === i)
+      if (miennes.length > po.max) {
+        const vieille = miennes[0]
+        m.tourelles = m.tourelles.filter((tu) => tu !== vieille)
+        ev.push({ type: 'tourelleFinie', x: vieille.x, y: vieille.y })
+      }
+    }
+  })
+  // LE TIR : chacune pivote vers sa cible et tire, alignée
+  for (const tu of m.tourelles) {
+    const a = c.armes[tu.arme]
+    if (a === undefined || a.pose === undefined) continue
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - tu.x, e.corps.y - tu.y) <= a.portee
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - tu.x, e.corps.y - tu.y)
+        if (d <= a.portee && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible === undefined) continue
+    const dist = Math.hypot(cible.corps.x - tu.x, cible.corps.y - tu.y)
+    const temps = dist / a.vitesse
+    const voulu = Math.atan2(cible.corps.y + cible.corps.vy * temps - tu.y, cible.corps.x + cible.corps.vx * temps - tu.x)
+    const ecart = ecartDAngle(tu.cap, voulu)
+    tu.cap += Math.sign(ecart) * Math.min(Math.abs(ecart), a.pose.pivot * dt)
+    if (m.t < tu.tirA || Math.abs(ecartDAngle(tu.cap, voulu)) > 0.25) continue
+    tu.tirA = m.t + a.cadence
+    const angle = tu.cap + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
+    const x0 = tu.x + Math.cos(tu.cap) * 4
+    const y0 = tu.y + Math.sin(tu.cap) * 4
+    const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique })
+    ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
+  }
+}
+
 function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const armes = c.armes.map((a, i) => ({ a, i })).filter((x) => x.a.orbite !== undefined)
   if (armes.length === 0) {
@@ -1351,9 +1424,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
   m.crache = false
   menerLesDrones(c, m, dt, ev)
+  menerLesTourelles(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

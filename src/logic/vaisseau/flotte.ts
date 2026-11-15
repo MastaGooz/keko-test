@@ -91,6 +91,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // L'INGÉNIEUR (Keko, 15/11) : carré, mécanique, il pose des tourelles sur son passage
+    id: 'ingenieur',
+    nom: 'Ingénieur',
+    classe: 'chasseur',
+    dit: 'Carré et mécanique, sans arme à lui : il pose sur son passage de petites tourelles qui tirent seules.',
+    pieces: ['coque-7', 'propulseur-i1', 'arme-tourelles'],
+    serie: { possedees: ['coque-7', 'propulseur-i1', 'arme-tourelles'], montees: { coque: 'coque-7', propulseur: 'propulseur-i1' }, outils: [], armes: ['arme-tourelles'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',
