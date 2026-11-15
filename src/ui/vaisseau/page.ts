@@ -1044,17 +1044,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let verrouA = -10
   let deverrou: { x: number; y: number; t0: number } | null = null
   function dessinerLesCoins(p: Peintre, sx: number, sy: number, demi: number, c: number, alpha = 1): void {
-    const L = 4
+    // (PLUS ÉPAIS SUR PC — Keko, 15/11 : des traits de deux pixels, des branches de six)
+    const ep = couvreApplique ? 2 : 1
+    const L = couvreApplique ? 6 : 4
     for (const [kx, ky] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
       const x = Math.round(sx + kx * demi)
       const y = Math.round(sy + ky * demi)
-      // (le coin : un trait de L pixels de chaque côté, vers l'intérieur, cerné d'encre)
+      // (le coin : un trait de L pixels de chaque côté, vers l'intérieur, épais de `ep` vers l'intérieur, cerné d'encre)
       const hx = kx < 0 ? x : x - L + 1
+      const hy = ky < 0 ? y : y - ep + 1
+      const vx = kx < 0 ? x : x - ep + 1
       const vy = ky < 0 ? y : y - L + 1
-      p.rect(hx - 1, y - 1, L + 2, 3, MATIERES.encre.contour, alpha)
-      p.rect(x - 1, vy - 1, 3, L + 2, MATIERES.encre.contour, alpha)
-      p.rect(hx, y, L, 1, c, alpha)
-      p.rect(x, vy, 1, L, c, alpha)
+      p.rect(hx - 1, hy - 1, L + 2, ep + 2, MATIERES.encre.contour, alpha)
+      p.rect(vx - 1, vy - 1, ep + 2, L + 2, MATIERES.encre.contour, alpha)
+      p.rect(hx, hy, L, ep, c, alpha)
+      p.rect(vx, vy, ep, L, c, alpha)
     }
   }
   function dessinerLeVerrou(p: Peintre): void {
@@ -6666,7 +6670,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // du bord de l'écran, et sous la place de l'interface du haut, qui n'y est plus : sur les côtés elles sont dans les
     // bandeaux, contre le bord — si le bandeau est assez large pour qu'elles ne mordent pas la soute et le blindage ; en
     // haut, au bord de la vue)
-    const cote = interfaceEnBande() && bandeCote() >= 44 ? W / 2 - 7 : W / 2 - bandeCote() - marge
+    // (SUR PC, EN DEÇÀ DES COLONNES D'INTERFACE posées sur le jeu — 15/11 : grossie, la flèche mordait la barre de vie)
+    const cote = couvreApplique && paysage ? W / 2 - largeurDeBande() - marge : interfaceEnBande() && bandeCote() >= 44 ? W / 2 - 7 : W / 2 - bandeCote() - marge
     // (dans la vue : sous l'interface du haut ou le bandeau, au-dessus du bandeau du bas)
     const haut = centreY() - (interfaceEnBande() ? bandeHaut() : Math.max(bandeHaut(), basDuHud())) - 9
     const bas = H - bandeBas() - centreY() - marge
@@ -6679,10 +6684,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * d'encre, la moitié tournée vers la lumière du monde (en haut à gauche) d'un ton plus clair, une lueur.
    */
   function dessinerUneFleche(p: Peintre, x: number, y: number, a: number, corps: number, clair: number, lueur: number): void {
-    const cx = Math.round(x)
-    const cy = Math.round(y)
-    const ca = Math.cos(a)
-    const sa = Math.sin(a)
+    // (PLUS GROSSE SUR PC — Keko, 15/11 : une fois et demie ; le fer est tracé pixel par pixel, ses pixels restent entiers)
+    const e = couvreApplique ? 1.5 : 1
+    const R = Math.ceil(8 * e)
+    // (… et rentrée d'autant vers l'écran, pour ne pas mordre le bord)
+    const cx = Math.round(x - Math.cos(a) * (e - 1) * 6)
+    const cy = Math.round(y - Math.sin(a) * (e - 1) * 6)
+    const ca = Math.cos(a) / e
+    const sa = Math.sin(a) / e
     // le fer, PIXEL PAR PIXEL dans son repère (u le long de la visée, w en travers) : deux triangles fins tracés au
     // polygone donnaient une tache à cette taille ; 0 dehors, 1 et 2 ses deux moitiés
     const fer = (i: number, j: number): number => {
@@ -6696,13 +6705,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // la moitié éclairée est celle qui regarde en haut à gauche (la lumière du monde)
     const eclairee = 0.8 * ca - 0.6 * sa > 0 ? 1 : 2
     const encre = MATIERES.encre.contour
-    for (let j = -8; j <= 8; j++)
-      for (let i = -8; i <= 8; i++) {
+    for (let j = -R; j <= R; j++)
+      for (let i = -R; i <= R; i++) {
         const moitie = fer(i, j)
         if (moitie !== 0) p.px(cx + i, cy + j, moitie === eclairee ? clair : corps)
         else if (fer(i - 1, j) + fer(i + 1, j) + fer(i, j - 1) + fer(i, j + 1) !== 0) p.px(cx + i, cy + j, encre)
       }
-    p.glow(cx, cy, 7, corps, lueur)
+    p.glow(cx, cy, 7 * e, corps, lueur)
   }
 
   /**

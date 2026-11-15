@@ -3760,3 +3760,5 @@ déverrouillé et on reprend la cible de l'ennemi le plus proche ».
   et s'effacent. Deux sons, `verrou` (deux bips qui montent) et `deverrou`.
 
 SUR PC (Keko, 15/11) : abattu dans le jeu du vortex, une touche de déplacement ne relance plus une partie neuve (le clavier ne démarre plus rien tant qu'une partie est en cours : le retour attend sa pénalité, la fin attend « Rejouer ») ; et E va à droite comme D, puisque A va à gauche comme Q.
+
+SUR PC (Keko, 15/11) : les coins du verrou plus épais (deux pixels, des branches de six) et les flèches du bord (le portail, les vagues) une fois et demie plus grosses — le fer est tracé pixel par pixel, ses pixels restent entiers. Grossies, elles restent EN DEÇÀ des colonnes d'interface (elles mordaient la barre de vie).
