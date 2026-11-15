@@ -3859,3 +3859,15 @@ ET LES JAUGES DU PANNEAU DES VAISSEAUX ont un REPÈRE BLANC à la valeur du
 vaisseau piloté, quand on en regarde un autre (Keko : « pour comparer celui
 qui est équipé à celui qu'on regarde »), comme les jauges des pièces.
 
+PUIS LES DRONES PARTENT À L'ATTAQUE (Keko, 15/11 : « qu'ils partent eux-mêmes de
+leur position pour voler autour de l'ennemi et l'attaquer ; une fois l'ennemi
+mort, ils reviennent sur le vaisseau ») : ce sont maintenant de petits engins
+(`Monde.drones`, `menerLesDrones`, vérifié). Au repos, chacun tient SA PLACE sur
+l'orbite (`placeDuDrone`) en suivant le vaisseau ; un ennemi à moins de 120 du
+vaisseau (la LAISSE), il part : il vole jusqu'à lui (170 au plus, il vire vite),
+lui tourne autour à 13 et tire de là (portée 40, une seconde, 2,5 points) ;
+le verrouillé d'abord, sinon sa cible, sinon le plus proche de lui qu'aucun
+autre n'attaque — ils se répartissent les cibles. L'ennemi mort ou sorti de la
+laisse : un autre, ou retour à sa place. Abattu, les drones disparaissent ; ils
+renaissent à leur place au retour.
+

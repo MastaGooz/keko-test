@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, positionDuDrone } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -6450,18 +6450,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(o.x, o.y, 5, VERRIERE[2], 0.6)
       }
     }
-    // LES DRONES DE LA SENTINELLE : à leur place sur l'orbite (la règle la dit), une petite traînée derrière eux ; un corps
-    // à la couleur du joueur, un œil cyan, une lueur — et un éclair quand ils tirent
+    // LES DRONES DE LA SENTINELLE : là où la règle les a menés — à leur place sur l'orbite, ou autour de leur cible —, une
+    // petite traînée derrière eux (le long de leur vitesse) ; un corps à la couleur du joueur, un œil cyan, une lueur
     if (m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
       const [sombre, moyen, clair] = tonsDeLaLivree(livree)
-      for (const a of CONF.armes) {
-        const o = a.orbite
-        if (o === undefined) continue
-        for (let k = 5; k >= 1; k--) {
-          const an = o.phase + o.vitesse * (m.t - k * 0.035)
-          p.circle(v.x + Math.cos(an) * o.rayon, v.y + Math.sin(an) * o.rayon, 1.6 * (1 - k / 6), moyen, 0.45 * (1 - k / 6))
-        }
-        const d = positionDuDrone(m, a)
+      for (const d of m.drones) {
+        for (let k = 4; k >= 1; k--) p.circle(d.x - d.vx * k * 0.014, d.y - d.vy * k * 0.014, 1.8 * (1 - k / 5), moyen, 0.45 * (1 - k / 5))
         // (un peu plus gros qu'un point : sur le portail, on les perdait)
         p.circle(d.x, d.y, 3.3, MATIERES.encre.contour)
         p.circle(d.x, d.y, 2.6, moyen)
@@ -6470,7 +6464,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(Math.round(d.x), Math.round(d.y), 1, 1, N.WHITE)
         p.rect(Math.round(d.x) - 1, Math.round(d.y), 1, 1, VERRIERE[2])
         p.rect(Math.round(d.x) + 1, Math.round(d.y), 1, 1, VERRIERE[2])
-        p.glow(d.x, d.y, 6, VERRIERE[2], 0.4)
+        p.glow(d.x, d.y, 6, VERRIERE[2], d.cible === null ? 0.35 : 0.55)
       }
     }
     // les flammes du lance-flammes, en bouffées de la Fireball : la fumée d'abord, puis le feu, le plus vieux dessous

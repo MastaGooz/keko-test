@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, positionDuDrone, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -908,27 +908,49 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
   verifier('abattu, le lance-flammes ne crache plus', crachait && !w5.crache)
 }
-// LES DRONES DE LA SENTINELLE (Keko, 15/11) : ils tournent autour du vaisseau et tirent chacun de là où il est, sur
-// l'ennemi le plus proche d'eux, sans arc de tir
+// LES DRONES DE LA SENTINELLE (Keko, 15/11) : au repos, à leur place sur l'orbite ; un ennemi à la laisse, ils partent
+// l'attaquer — ils volent jusqu'à lui, lui tournent autour et tirent de là ; mort, ils reviennent sur le vaisseau
 {
-  const drone = { id: 'drone', cadence: 0.5, degats: 1, portee: 50, vitesse: 200, vie: 1, dispersion: 0, guide: false }
-  const armes = [0, 1, 2].map((k) => ({ ...drone, place: k, orbite: { rayon: 20, vitesse: 1.7, phase: (k * 2 * Math.PI) / 3 } }))
-  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, arcDeTir: (50 * Math.PI) / 180, armes, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
-  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const w = nouveauMonde(cfg, 3)
-  const p0 = positionDuDrone(w, armes[0])
-  w.t = 1
-  const p1 = positionDuDrone(w, armes[0])
-  verifier('un drone tourne autour du vaisseau, à son rayon', Math.abs(Math.hypot(p0.x, p0.y) - 20) < 1e-9 && Math.abs(Math.hypot(p1.x, p1.y) - 20) < 1e-9 && Math.hypot(p1.x - p0.x, p1.y - p0.y) > 10)
-  // (un insecte DERRIÈRE le vaisseau — hors de l'arc d'un canon — : les drones tirent quand même ; les obus partent d'un drone)
-  const w2 = nouveauMonde(cfg, 3)
-  w2.ennemis.push(insecte(1, 0, 40))
-  const departs: number[] = []
-  for (let i = 0; i < 90; i++) {
-    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 0, y: 40, vx: 0, vy: 0 }
-    for (const e of avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'obus') departs.push(Math.hypot(e.x - w2.vaisseau.x, e.y - w2.vaisseau.y))
+  const drone = { id: 'drone', cadence: 0.5, degats: 2, portee: 40, vitesse: 200, vie: 0.5, dispersion: 0, guide: false }
+  const armes = [0, 1, 2].map((k) => ({ ...drone, place: k, orbite: { rayon: 20, vitesse: 1.7, phase: (k * 2 * Math.PI) / 3, laisse: 120 } }))
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const insecte = (id: number, x: number, y: number, pv = 1000) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const pas = (w: ReturnType<typeof nouveauMonde>, n: number, tenir?: { x: number; y: number }): number => {
+    let tirs = 0
+    for (let i = 0; i < n; i++) {
+      if (tenir !== undefined) for (const e of w.ennemis) e.corps = { ...e.corps, x: tenir.x, y: tenir.y, vx: 0, vy: 0 }
+      tirs += compter(avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements, 'obus')
+    }
+    return tirs
   }
-  verifier('les drones tirent derrière le vaisseau, sans arc ; chaque obus part d’un drone, sur son orbite', departs.length >= 3 && departs.every((d) => Math.abs(d - 20) < 0.5))
+  const aLeurPlace = (w: ReturnType<typeof nouveauMonde>): boolean => w.drones.length === 3 && w.drones.every((d) => Math.abs(Math.hypot(d.x - w.vaisseau.x, d.y - w.vaisseau.y) - 20) < 3)
+  const w = nouveauMonde(cfg, 3)
+  pas(w, 120)
+  verifier('sans ennemi, les trois drones tiennent leur place sur l’orbite, autour du vaisseau', aLeurPlace(w))
+  // (un insecte derrière le vaisseau, à 70 : ils partent, lui tournent autour et tirent de près)
+  w.ennemis.push(insecte(1, 0, 70))
+  const tirs = pas(w, 120, { x: 0, y: 70 })
+  verifier('un ennemi à la laisse : ils volent jusqu’à lui, lui tournent autour et tirent', tirs >= 4 && w.drones.every((d) => Math.hypot(d.x, d.y - 70) < 20) && w.ennemis[0].pv < 1000)
+  // (il meurt : ils reviennent à leur place)
+  w.ennemis[0].pv = 0.5
+  pas(w, 30, { x: 0, y: 70 })
+  const mort = w.ennemis.length === 0
+  pas(w, 150)
+  verifier('l’ennemi mort, ils reviennent sur le vaisseau, à leur place', mort && aLeurPlace(w))
+  // (trop loin du vaisseau : ils ne partent pas)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.ennemis.push(insecte(1, 0, 300))
+  const tirs2 = pas(w2, 120, { x: 0, y: 300 })
+  verifier('un ennemi au-delà de la laisse : ils restent à leur place, sans tirer', tirs2 === 0 && aLeurPlace(w2))
+  // (deux ennemis : ils se partagent les cibles)
+  const w3 = nouveauMonde(cfg, 3)
+  w3.ennemis.push(insecte(1, -50, 0), insecte(2, 50, 0))
+  for (let i = 0; i < 30; i++) {
+    w3.ennemis[0].corps = { ...w3.ennemis[0].corps, x: -50, y: 0, vx: 0, vy: 0 }
+    w3.ennemis[1].corps = { ...w3.ennemis[1].corps, x: 50, y: 0, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
+  }
+  verifier('deux ennemis : les drones se les partagent', new Set(w3.drones.map((d) => d.cible)).size === 2)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
