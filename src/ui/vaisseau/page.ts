@@ -1133,8 +1133,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (EN DOUBLE SUR PC, l'icône, le pour cent et le niveau — Keko, 15/11 : « un peu trop petits » ; le double, pas une
     // taille entre deux, pour que tous les pixels restent de la même taille)
     const G = enBande && couvreApplique ? 2 : 1
-    const cx = enBande ? axe : x0 + 5
-    const cy = enBande ? 10 * G : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
+    // (ET SUR PC, L'ICÔNE À GAUCHE DU POUR CENT, TOUT EN HAUT À GAUCHE — Keko, 15/11 —, le niveau et sa barre dessous, sous l'icône)
+    const enLigne = G > 1
+    const cx = enLigne ? 8 + 12 : enBande ? axe : x0 + 5
+    const cy = enLigne ? 8 + 12 : enBande ? 10 * G : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
     p.circle(cx, cy, 5.6 * G, N.hex('#12081f'))
     p.circle(cx, cy, 4.6 * G, touche ? N.WHITE : N.hex('#a35cff'))
@@ -1148,8 +1150,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // sa vie : dans la place de « 100 % », pour que la barre d'expérience ne bouge pas
     if (enBande) {
       const dit = `${Math.max(0, Math.ceil(inv.vie))}%` // (sans espace : le bandeau est étroit)
-      motEnRelief(p, dit, axe + (touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * G * (1 - (t - passeA) / 0.5)) : 0), 19 * G + (G - 1) * 2, 'violet', GRAS, null, G)
-      dessinerLExperienceDebout(p, axe, 32 * G + (G - 1) * 4, G)
+      const secoue = touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * G * (1 - (t - passeA) / 0.5)) : 0
+      if (enLigne) {
+        motEnRelief(p, dit, cx + 16 + (largeurDe(dit, GRAS) * G) / 2 + secoue, cy - 11, 'violet', GRAS, null, G)
+        dessinerLExperienceDebout(p, cx, cy + 22, G)
+      } else {
+        motEnRelief(p, dit, axe + secoue, 19, 'violet')
+        dessinerLExperienceDebout(p, axe, 32)
+      }
       dessinerLeRetour(p)
       return
     }
@@ -6399,8 +6407,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * couvre la page, une colonne de même largeur posée SUR le jeu (Keko, 15/11 : « il faudrait que l'interface sur PC
    * suive la même disposition que sur téléphone en paysage : les barres sur le côté »).
    */
-  // (58 DANS LE JEU DU VORTEX : son portail, son pour cent et son niveau y sont en double sur PC — « 100% » y fait 50 pixels)
-  const largeurDeBande = (): number => (couvreApplique && paysage ? (VORTEX ? 58 : 36) : bandeCote())
+  const largeurDeBande = (): number => (couvreApplique && paysage ? 36 : bandeCote())
   const interfaceEnBande = (): boolean => paysage && largeurDeBande() >= 30
   /**
    * Le partage du surplus : LE HAUT D'ABORD, jusqu'à la hauteur de l'interface (la soute et le porté tiennent alors

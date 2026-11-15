@@ -3727,3 +3727,5 @@ Et la fiche d'un vaisseau, au panneau des vaisseaux, ne dit plus « Classe lég�
 LA MITRAILLEUSE EST OUVERTE, pour l'essayer (Keko, 15/11 : « débloque-moi la mitrailleuse pour tester ») : `ARMES_DU_VORTEX` = canon et mitrailleuse ; au panneau des armes, « Équiper » la monte — sur les deux ailes, et c'est elle qui tire en vol, une aile puis l'autre, chacune à la moitié de sa cadence. L'arme équipée est gardée sur l'appareil (`chargerArme`, `sauverArme`).
 
 SUR PC (Keko, 15/11) : le curseur passe à TROIS pixels d'écran par pixel du dessin (à deux, « trop fin » ; l'interface en a 2,5) ; et dans le jeu du vortex, l'icône du portail, son pour cent et le niveau sont dessinés EN DOUBLE (« un peu trop petits » — le double plutôt qu'une taille entre deux, pour garder des pixels égaux) ; la colonne d'interface y passe de 36 à 58 pixels pour que « 100% » y tienne.
+
+Puis, SUR PC (Keko, 15/11) : l'icône du portail À GAUCHE de son pour cent, tout en haut à gauche de l'écran, le niveau et sa barre dessous, sous l'icône — la colonne revient à 36.
