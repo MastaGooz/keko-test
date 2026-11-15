@@ -4052,5 +4052,4 @@ l'insecte le plus proche s'il y en a un à 150, sinon devant lui — et y lance
 une capsule ; elle vole 0,4 s EN CLOCHE (son ombre au sol, un petit caisson qui
 tourne, un voyant jaune), se déploie à l'arrivée et ne tire qu'une fois posée.
 Immobile, il garnit ainsi les places autour de lui. Son `lance` : un déclic de
-ressort, un petit souffle.
-
+ressort, un petit souffle. Puis LA CAPSULE PLUS GROSSE ET MÉTALLIQUE (Keko : « trop petite par rapport à la tourelle ; un aspect métallisé ») : peinte comme les vaisseaux (`formesDeLaCapsule`) — un caisson octogonal d'acier, un couvercle plus clair, quatre boulons jaunes, un voyant vert —, presque de la taille du socle.

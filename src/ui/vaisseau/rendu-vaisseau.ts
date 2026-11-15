@@ -502,6 +502,24 @@ export function formesDuSocleDeTourelle(): Forme[] {
   }
   return f
 }
+/**
+ * LA CAPSULE D'UNE TOURELLE LANCÉE (Keko, 15/11 : « trop petite par rapport à la tourelle ; un aspect métallisé ») : la
+ * tourelle repliée — un caisson octogonal d'acier, un couvercle plus clair, quatre boulons jaunes, un voyant vert.
+ */
+export function formesDeLaCapsule(): Forme[] {
+  const octo = (r: number): [number, number][] => Array.from({ length: 8 }, (_, k) => [Math.cos(Math.PI / 8 + (k * Math.PI) / 4) * r, Math.sin(Math.PI / 8 + (k * Math.PI) / 4) * r])
+  const f: Forme[] = [
+    { pts: octo(4.2), mat: 'metal', relief: 'plat' },
+    { pts: octo(3.1), mat: 'acier', relief: 'plat' },
+  ]
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + (k * Math.PI) / 2
+    f.push({ pts: ovale(Math.cos(a) * 3.4, Math.sin(a) * 3.4, 0.55, 0.55, 8), mat: 'or', relief: 'dome', dome: { x: Math.cos(a) * 3.4, y: Math.sin(a) * 3.4, rx: 0.55, ry: 0.55 } })
+  }
+  f.push({ pts: ovale(0, 0, 1.6, 1.6, 12), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 1.6, ry: 1.6 } })
+  f.push({ pts: ovale(0, 0, 0.6, 0.6, 8), mat: 'emeraude', relief: 'dome', dome: { x: 0, y: 0, rx: 0.6, ry: 0.6 } })
+  return f
+}
 export function formesDeLaTeteDeTourelle(): Forme[] {
   // (un carter anguleux, pas un dôme — rond et gros, il cachait le socle —, le canon épais et long)
   return [

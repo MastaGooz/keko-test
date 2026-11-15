@@ -19,7 +19,7 @@ import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -6509,6 +6509,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // poussière), CLIGNOTENT leurs trois dernières secondes ; une jauge de vie sous elles.
     const SOCLE = formesDuSocleDeTourelle()
     const TETE = formesDeLaTeteDeTourelle()
+    const CAPSULE = formesDeLaCapsule()
     for (const tu of m.tourelles) {
       const po = CONF.armes[tu.arme]?.pose
       if (po === undefined) continue
@@ -6519,13 +6520,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const gx = tu.x0 + (tu.x - tu.x0) * u - camera.x + W / 2
         const gy = tu.y0 + (tu.y - tu.y0) * u - camera.y + centreY()
         const h = Math.sin(Math.PI * u) * 14
-        p.circle(gx, gy, 2.2, N.hex('#0a0608'), 0.45)
-        const a = u * Math.PI * 3
-        const coin = (k: number): [number, number] => [gx + Math.cos(a + (k * Math.PI) / 2) * 2.8, gy - h + Math.sin(a + (k * Math.PI) / 2) * 2.8]
-        p.poly([coin(0), coin(1), coin(2), coin(3)], MATIERES.encre.contour)
-        p.poly([0, 1, 2, 3].map((k) => [gx + Math.cos(a + (k * Math.PI) / 2) * 2, gy - h + Math.sin(a + (k * Math.PI) / 2) * 2]), COQUE[4])
-        p.px(Math.round(gx), Math.round(gy - h), PEPITE[2])
-        p.glow(gx, gy - h, 4, PEPITE[2], 0.4)
+        p.circle(gx, gy, 3, N.hex('#0a0608'), 0.45)
+        // (la capsule PEINTE COMME LES VAISSEAUX, en métal, un peu plus grande — Keko, 15/11 — ; elle tourne sur elle-même)
+        peindreFormes(p, CAPSULE, Math.round(gx), Math.round(gy - h), 1.1, { cap: u * Math.PI * 3, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL })
+        p.glow(gx, gy - h, 5, PEPITE[2], 0.25)
         continue
       }
       const age = m.t - tu.nee
