@@ -3951,3 +3951,5 @@ mono-cible, mais plus efficace sur un groupe d'ennemis proches ».
   `explosionMini` (un « boum » court). *Chiffres de moi, à rejuger.*- Le panneau des armes ne montre plus que celles du vaisseau piloté (et les missiles, verrouillés, à venir) — pas le lance-flammes, les drones ni les tourelles des autres. `&arme=arme-minimissiles` décolle avec elles (sans les garder).
 
 Puis (Keko, 15/11) : l'onde de l'explosion est plus petite (aux deux tiers du rayon de la zone — la zone de dégâts, elle, reste à 18) ; et plus de feu à l'impact : seize flammes plus grosses qui roulent, décalées de quelques centièmes, la moitié fumant en s'éteignant. (Le grand cercle venait de l'« éclair » des chocs, réutilisé, dont l'anneau s'ouvre jusqu'à presque trois fois son rayon : retiré, remplacé par une lueur chaude au cœur.)
+
+Puis (Keko, 15/11) : l'onde revient À LA TAILLE DE LA ZONE (« trop réduite » aux deux tiers) ; et les mini-missiles s'appellent « MISSILES » — les gros missiles verrouillés du Nova Drifter ne paraissent plus dans le panneau des armes du vortex.

@@ -3260,8 +3260,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zoneGlissante = null
     zoneDesCases = null
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
-    // (les armes de ce vaisseau, et celles qui viendront ; pas celles d'un autre vaisseau)
-    const toutes = piecesDe('arme').filter((pc) => !armesDesAutres().includes(pc.id))
+    // (les armes de ce vaisseau ; pas celles d'un autre vaisseau — ni les gros missiles du Nova Drifter : les
+    // mini-missiles s'appellent « Missiles » ici, Keko, 15/11)
+    const toutes = piecesDe('arme').filter((pc) => !armesDesAutres().includes(pc.id) && pc.id !== 'arme-missiles')
     const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
     const aSoi = armesDuVortex().includes(choisie.id)
     if (partie !== 'fiche') {
@@ -8395,10 +8396,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
               // feu (les flammes, braises et fumées du dépôt), son « boum »
               jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
-              // (L'ONDE PLUS PETITE — Keko, 15/11 : « un petit peu trop grande » : elle s'ouvre aux deux tiers du rayon de
-              // la zone, plus jusqu'à son bord ; et PLUS DE FEU À L'IMPACT : des flammes plus nombreuses et plus grosses,
+              // (L'ONDE À LA TAILLE DE LA ZONE — Keko, 15/11 : le grand cercle était l'éclair des chocs ; réduite aux deux
+              // tiers, « trop réduite » : elle s'ouvre jusqu'au bord de la zone de dégâts ; et PLUS DE FEU À L'IMPACT : des flammes plus nombreuses et plus grosses,
               // qui ROULENT — décalées de quelques centièmes — et fument en s'éteignant)
-              ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.65 })
+              ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
               for (let i = 0; i < 16; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const d = R.range(0, ev.rayon * 0.35)
