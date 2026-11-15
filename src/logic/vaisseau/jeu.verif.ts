@@ -1118,5 +1118,42 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
   verifier('personne à portée : pas de rayon', w2.canal === null && w2.ennemis[0].pv === 1000)
 }
+// L'ÉLECTRICITÉ DE LA SENTINELLE (Keko, 15/11) : les drones frappent d'arcs, la chaîne rebondit, l'aura brûle autour
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const base = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const tenir = (w: ReturnType<typeof nouveauMonde>, cfg: ConfigVaisseau, places: [number, number][], n: number): Evenement[] => {
+    const evs: Evenement[] = []
+    for (let i = 0; i < n; i++) {
+      w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+      evs.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    return evs
+  }
+  // (les drones : des arcs, pas d'obus)
+  const drone = { id: 'drone', cadence: 0.5, degats: 2, portee: 40, vitesse: 200, vie: 0.5, dispersion: 0, guide: false, eclair: true }
+  const cfgD = { ...base, armes: [0, 1, 2].map((k) => ({ ...drone, place: k, orbite: { rayon: 20, vitesse: 1.7, phase: (k * 2 * Math.PI) / 3, laisse: 120 } })) }
+  const wD = nouveauMonde(cfgD, 3)
+  wD.ennemis.push(insecte(1, 0, 60))
+  const evD = tenir(wD, cfgD, [[0, 60]], 120)
+  verifier('les drones électriques frappent d’arcs, sans obus', evD.some((e) => e.type === 'arc') && !evD.some((e) => e.type === 'obus') && wD.obus.length === 0 && wD.ennemis[0].pv < 1000)
+  // (la chaîne : quatre insectes en ligne, espacés de 30 ; un cinquième trop loin du dernier)
+  const chaine = { id: 'chaine', cadence: 1.5, degats: 10, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, chaine: { rebonds: 4, saut: 45, attenuation: 0.8 } }
+  const cfgC = { ...base, armes: [chaine] }
+  const pl: [number, number][] = [[0, -40], [30, -40], [60, -40], [90, -40], [200, -40]]
+  const wC = nouveauMonde(cfgC, 3)
+  pl.forEach(([x, y], k) => wC.ennemis.push(insecte(k + 1, x, y)))
+  const evC = tenir(wC, cfgC, pl, 1)
+  const ch = evC.find((e) => e.type === 'chaine')
+  const pertes = wC.ennemis.map((e) => 1000 - e.pv)
+  verifier('la chaîne part sur le plus proche et rebondit de proche en proche, en s’affaiblissant ; trop loin, elle s’arrête', ch !== undefined && ch.type === 'chaine' && ch.points.length === 5 && Math.abs(pertes[0] - 10) < 1e-9 && Math.abs(pertes[1] - 8) < 1e-9 && Math.abs(pertes[3] - 5.12) < 1e-9 && pertes[4] === 0)
+  // (l'aura : ce qui est dans son rayon perd ses points par seconde ; au-delà, rien)
+  const aura = { id: 'aura', cadence: 0.1, degats: 0, portee: 32, vitesse: 0, vie: 0, dispersion: 0, guide: false, aura: { rayon: 32, dps: 4 } }
+  const cfgA = { ...base, armes: [aura] }
+  const wA = nouveauMonde(cfgA, 3)
+  wA.ennemis.push(insecte(1, 20, 0), insecte(2, 80, 0))
+  tenir(wA, cfgA, [[20, 0], [80, 0]], 60)
+  verifier('l’aura brûle ce qui est autour du vaisseau, sans cesse ; au-delà, rien', Math.abs(1000 - wA.ennemis[0].pv - 4) < 0.1 && wA.ennemis[1].pv === 1000)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

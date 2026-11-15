@@ -476,6 +476,22 @@ const RECETTES = {
       eclats(m, h, 6, 0.08, 0.5, 0.35)
     },
   },
+  /** UN ARC ÉLECTRIQUE (un drone, l'aura) : un claquement sec et grésillant, un petit bourdon d'électricité */
+  zap: {
+    duree: 0.25, niveau: 0.13, salle: [0.2, 0.08], variantes: 4,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, (h.next() - 0.5) * 0.6, { f: 3600, q: 1.8, bande: true, a: 0.001, d: 0.035 })
+      note(m, 0, 0.35, 0, { f: 95 + 30 * h.next(), a: 0.001, d: 0.06, partiels: [[1, 1, 1], [3, 0.5, 1], [5, 0.3, 1], [7, 0.2, 1]] })
+    },
+  },
+  /** LA CHAÎNE D'ÉCLAIRS : un grand craquement, ses rebonds en cascade, un grondement d'électricité */
+  chaine: {
+    duree: 0.8, niveau: 0.3, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      for (let k = 0; k < 5; k++) souffle(m, h, k * 0.035, 1 - k * 0.15, (h.next() - 0.5) * 0.8, { f: 4200 - k * 400, glisse: { vers: 1500, en: 0.08 }, q: 1.4, bande: true, a: 0.001, d: 0.07 })
+      note(m, 0, 0.6, 0, { f: 75, glisse: { vers: 50, en: 0.2 }, a: 0.002, d: 0.25, partiels: [[1, 1, 1], [3, 0.5, 1], [5, 0.3, 1]], sature: 1.4 })
+    },
+  },
   /** UNE TOURELLE TIRE : un « tac » mécanique, sec, un petit coup sourd dessous — pas un laser */
   tourelle: {
     duree: 0.25, niveau: 0.13, salle: [0.2, 0.08], variantes: 3,

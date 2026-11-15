@@ -8,3 +8,5 @@ declare module 'pixelfx/fx/index'
 declare module 'pixelfx/fx/ui/_lib'
 /** Les aides des effets de feu du dépôt (les bouffées de flamme et de fumée de la Fireball) : le lance-flammes s'en sert. */
 declare module 'pixelfx/fx/fire/_lib'
+/** Les aides des effets d'éclairs du dépôt (la forme des éclairs, leur encre) : la Sentinelle s'en sert. */
+declare module 'pixelfx/fx/lightning/_lib'

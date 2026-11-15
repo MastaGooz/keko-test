@@ -4015,3 +4015,27 @@ flammes y naissent ; son son, le bourdon de la foreuse. LE TOUR (`Arme.balayage`
 `menerLeRayon`, son dessin, son son `rayon`) RESTE ÉCRIT, sans arme pour
 l'instant.
 
+### La Sentinelle, le vaisseau de l'électricité (15/11)
+
+Keko : « fouiner dans les effets électriques de pixelfx pour changer la
+sentinelle : les drones, à la place de tirer, font de petits arcs électriques ;
+on fait d'elle le vaisseau spécialisé dans l'électricité ; en deuxième arme,
+une chaîne d'éclairs qui rebondit d'ennemi en ennemi ; en troisième, une aura
+électrique qui fait des dégâts permanents tout autour — vu sa forme circulaire ».
+
+- LA RÈGLE (`jeu.ts`, vérifiée) : `Arme.eclair` — un drone frappe d'un ARC, à
+  l'instant, sans obus ; `Arme.chaine` — toutes les 1,5 s, un éclair sur une
+  cible à 90 (la verrouillée d'abord), 9 points, puis QUATRE REBONDS sur
+  l'ennemi le plus proche du dernier (à 45 au plus, jamais deux fois le même),
+  ×0,8 à chaque bond ; `Arme.aura` — tout ennemi à moins de 32 du vaisseau perd
+  4 points par seconde, sans cesse (`mener_L_Electricite`).
+- LES PIÈCES : `arme-drones` (électriques), `arme-chaine` (Chaîne d'éclairs),
+  `arme-aura` (Aura électrique), toutes trois à la Sentinelle.
+- LE DESSIN, PAR LES ÉCLAIRS DU DÉPÔT (`pixelfx/fx/lightning/_lib` : `zigzag`,
+  `bowed`, `stroke`, `crackle`, la palette `VOLT`) : les arcs des drones, brefs
+  et fins ; la chaîne, maillon après maillon, qui frappe, bourdonne et s'éteint
+  en bégayant ; l'aura, un anneau qui crépite et des arcs vers ce qui est
+  dedans ; leur forme change toutes les deux images. Sons : `zap` (un claquement
+  grésillant) et `chaine` (un grand craquement en cascade, un grondement).
+  *Chiffres de moi, à rejuger en jouant.*
+

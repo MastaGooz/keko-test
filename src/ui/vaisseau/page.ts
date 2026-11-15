@@ -16,6 +16,7 @@ import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, car
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
+import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
@@ -810,7 +811,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
-      if (canon?.napalm !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       else if (canon?.pose !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -915,7 +916,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones'], ingenieur: ['arme-tourelles'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -947,7 +948,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -5742,7 +5743,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -6317,6 +6318,67 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (`&consume` : LE BANC — un insecte se consume à côté du vaisseau toutes les 1,6 s, hors de toute flamme, pour le juger seul)
   let bancConsumeA = -10
   let bancConsumeN = 0
+  /**
+   * L'ÉLECTRICITÉ DE LA SENTINELLE, PEINTE PAR LES ÉCLAIRS DU DÉPÔT (`pixelfx/fx/lightning/_lib` — Keko, 15/11 :
+   * « fouiner dans les effets électriques de pixelfx ») : leur forme (`zigzag`, `bowed` — des fourches qui
+   * s'amincissent) et leur encre (`stroke`, `crackle` — un halo violet profond, un corps pâle, un cœur blanc, une lueur
+   * le long), leur palette `VOLT`. LES ARCS DES DRONES, brefs ; LA CHAÎNE, maillon après maillon, qui frappe, bourdonne
+   * puis s'éteint en bégayant ; L'AURA, un anneau qui crépite autour du vaisseau et des arcs vers ce qui est dedans.
+   * Leur forme change toutes les deux images (elles grésillent) ; dessinés à l'écran.
+   */
+  const COULEURS_VOLT = N.fit(VOLT, 8)
+  let arcsElectriques: { x0: number; y0: number; x1: number; y1: number; t0: number; vie: number; g: number; fort: boolean }[] = []
+  let zapA = -10
+  function dessinerLElectricite(p: Peintre): void {
+    const C = COULEURS_VOLT
+    const ecran = (x: number, y: number): [number, number] => [x - camera.x + W / 2, y - camera.y + centreY()]
+    const image = Math.floor(t * 15)
+    arcsElectriques = arcsElectriques.filter((a) => t - a.t0 < a.vie)
+    for (const a of arcsElectriques) {
+      const age = t - a.t0
+      if (age < 0) continue
+      const u = age / a.vie
+      // (un maillon de chaîne : il frappe, bourdonne, puis s'éteint en bégayant ; un arc de drone : un éclair qui retombe)
+      const k = a.fort ? (u < 0.15 ? 1 : u < 0.7 ? 0.78 + 0.22 * Math.sin(t * 61 + a.g) : (1 - (u - 0.7) / 0.3) * (Math.floor(age * 60) % 3 === 1 ? 0.5 : 1)) : 1 - u
+      const [x0, y0] = ecran(a.x0, a.y0)
+      const [x1, y1] = ecran(a.x1, a.y1)
+      const R = new N.Rng((a.g * 7919 + image * 31) | 0)
+      const L = Math.hypot(x1 - x0, y1 - y0)
+      if (a.fort) stroke(p, bowed(R, x0, y0, x1, y1, -L * R.range(0.05, 0.15), 0.2, 0.1), k, C, 1, { light: 0.5 })
+      else crackle(p, zigzag(R, x0, y0, x1, y1, 0.3, 0.12), k, C, 0.5)
+      p.glow(x1, y1, a.fort ? 9 : 5, C[5], 0.6 * k)
+    }
+    // L'AURA
+    const au = CONF.armes.find((a) => a.aura !== undefined)?.aura
+    if (au !== undefined && m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
+      const [sx, sy] = ecran(v.x, v.y)
+      const r = au.rayon
+      p.ring(sx, sy, r, 1, C[4], 0.25 + 0.1 * Math.sin(t * 9))
+      p.glow(sx, sy, r, C[3], 0.12)
+      const R = new N.Rng((image * 131 + 7) | 0)
+      for (let k = 0; k < 7; k++) {
+        const a0 = R.range(0, Math.PI * 2)
+        const a1 = a0 + R.range(0.25, 0.6)
+        const rr = r + R.range(-2, 2)
+        crackle(p, zigzag(R, sx + Math.cos(a0) * rr, sy + Math.sin(a0) * rr, sx + Math.cos(a1) * rr, sy + Math.sin(a1) * rr, 0.35, 0.1), 0.55, C, 0.35)
+      }
+      // (des arcs vers ce qui est dedans, qui sautent d'une image à l'autre)
+      let zappe = false
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (d > au.rayon + CONF.ennemi.rayon || (image + e.id) % 3 !== 0) continue
+        const [ex, ey] = ecran(e.corps.x, e.corps.y)
+        const an = Math.atan2(ey - sy, ex - sx)
+        crackle(p, zigzag(R, sx + Math.cos(an) * 8, sy + Math.sin(an) * 8, ex, ey, 0.3, 0.1), 0.85, C, 0.5)
+        p.glow(ex, ey, 5, C[5], 0.5)
+        zappe = true
+      }
+      if (zappe && t - zapA > 0.12) {
+        zapA = t
+        jouer('zap')
+      }
+    }
+  }
   /** L'ONDE D'UNE EXPLOSION DE MINI-MISSILE : un anneau orange qui s'ouvre jusqu'à son rayon, en 0,25 s. */
   let ondesDeZone: { x: number; y: number; t0: number; r: number }[] = []
   function dessinerLesConsumes(p: Peintre): void {
@@ -8512,6 +8574,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
               break
             }
+            case 'arc':
+              // (un drone frappe d'un arc électrique)
+              arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
+              if (t - zapA > 0.06) {
+                zapA = t
+                jouer('zap', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
+              }
+              break
+            case 'chaine':
+              // (la chaîne d'éclairs : maillon après maillon, de quelques centièmes)
+              for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
+              jouer('chaine')
+              secousse = Math.max(secousse, 0.2)
+              break
             case 'balayage':
               // (le rayon part : son son, qui dure le tour)
               jouer('rayon')
@@ -8997,6 +9073,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesEnnemis(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
+    dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)
     // (les effets sont dans le monde : ils passent SOUS les bandeaux et l'interface)

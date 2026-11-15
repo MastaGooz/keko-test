@@ -350,6 +350,16 @@ export type Arme = {
    * `Monde.canal`.
    */
   canalise?: { dpsMin: number; dpsMax: number; montee: number; brulure: number; dpsBrulure: number }
+  /**
+   * L'ÉLECTRICITÉ (la Sentinelle, Keko, 15/11 : « le vaisseau spécialisé dans l'électricité ») — `eclair` : un drone
+   * ne tire plus d'obus, il frappe sa cible D'UN ARC ÉLECTRIQUE, à l'instant ; `chaine` : un éclair part du vaisseau sur
+   * une cible à portée — la verrouillée d'abord, sinon la plus proche — et REBONDIT `rebonds` fois, sur l'ennemi le plus
+   * proche du dernier touché à moins de `saut`, sans revenir sur un déjà touché, perdant `attenuation` à chaque bond ;
+   * `aura` : tout ennemi à moins de `rayon` du vaisseau perd `dps` par seconde, sans cesse.
+   */
+  eclair?: boolean
+  chaine?: { rebonds: number; saut: number; attenuation: number }
+  aura?: { rayon: number; dps: number }
 }
 
 export type Vaisseau = {
@@ -509,6 +519,10 @@ export type Evenement =
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
   | { type: 'tourellePosee'; x: number; y: number }
+  /** Un arc électrique d'un drone, d'un point à sa cible (voir `Arme.eclair`). */
+  | { type: 'arc'; x0: number; y0: number; x1: number; y1: number }
+  /** Une chaîne d'éclairs : du vaisseau, puis de cible en cible (voir `Arme.chaine`). */
+  | { type: 'chaine'; points: Vecteur[] }
   /** Le rayon commence son tour (voir `Arme.balayage`). */
   | { type: 'balayage'; duree: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
@@ -1152,6 +1166,54 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   }
 }
 
+/** LA CHAÎNE D'ÉCLAIRS ET L'AURA (voir `Arme.chaine`, `Arme.aura`). */
+function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const au = a.aura
+    if (au !== undefined)
+      for (const e of [...m.ennemis]) {
+        if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > au.rayon + c.ennemi.rayon) continue
+        e.pv -= au.dps * dt
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
+    const ch = a.chaine
+    if (ch === undefined || m.t < (m.armesA[i] ?? 0)) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    let premiere: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) premiere = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (aPortee(e) && d < dc) (dc = d), (premiere = e)
+      }
+    }
+    if (premiere === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    const touches: Ennemi[] = [premiere]
+    while (touches.length <= ch.rebonds) {
+      const der = touches[touches.length - 1]
+      let suiv: Ennemi | undefined
+      let dc = ch.saut + c.ennemi.rayon
+      for (const e of m.ennemis) {
+        if (touches.includes(e)) continue
+        const d = Math.hypot(e.corps.x - der.corps.x, e.corps.y - der.corps.y)
+        if (d <= dc) (dc = d), (suiv = e)
+      }
+      if (suiv === undefined) break
+      touches.push(suiv)
+    }
+    ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))] })
+    touches.forEach((e, k) => {
+      e.pv -= a.degats * Math.pow(ch.attenuation, k)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    })
+  })
+}
+
 /** LE RAYON CANALISÉ (voir `Arme.canalise`) : il choisit sa cible, chauffe sur elle, la brûle. */
 function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const i = c.armes.findIndex((a) => a.canalise !== undefined)
@@ -1404,6 +1466,14 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const dist = Math.hypot(cible.corps.x - d.x, cible.corps.y - d.y)
     if (dist > a.portee) return
     m.armesA[i] = m.t + a.cadence
+    // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
+    if (a.eclair === true) {
+      cible.pv -= a.degats
+      ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y })
+      ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique: false })
+      if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
+      return
+    }
     const temps = dist / a.vitesse
     const vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - d.y, cible.corps.x + cible.corps.vx * temps - d.x)
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
@@ -1591,9 +1661,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   brulerLesFlaques(c, m, dt, ev)
   menerLeRayon(c, m, ev)
   canaliserLeRayon(c, m, dt, ev)
+  mener_L_Electricite(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
