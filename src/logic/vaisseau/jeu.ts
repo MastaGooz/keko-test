@@ -1026,6 +1026,18 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
   }
 }
 
+/** Où est l'ennemi le plus proche du joueur, à `portee` au plus — ou null. (Le jeu du vortex y tourne son nez tout seul.) */
+export function ennemiLePlusProche(m: Monde, portee: number): Vecteur | null {
+  const v = m.vaisseau
+  let cible: Vecteur | null = null
+  let dc = portee
+  for (const e of m.ennemis) {
+    const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    if (d <= dc) (dc = d), (cible = { x: e.corps.x, y: e.corps.y })
+  }
+  return cible
+}
+
 /** Ce qu'il faut d'expérience pour passer du niveau `n` au suivant. */
 export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.xpBase + (Math.max(1, n) - 1) * c.invasion.xpPas
 

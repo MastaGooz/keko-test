@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau } from '../../logic/vaisseau/jeu.ts'
+import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche } from '../../logic/vaisseau/jeu.ts'
 import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
@@ -761,7 +761,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX) {
       const canon = pieceDe('arme-canon')?.arme
       // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
-      if (canon !== undefined) CONF = { ...CONF, alternance: true, arcDeTir: ((Number(parametres.get('arc')) || 50) * Math.PI) / 180, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
+      // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
+      if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: ((Number(parametres.get('arc')) || 50) * Math.PI) / 180, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
     }
     if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || CONF.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
@@ -5040,7 +5041,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'autre. (À la souris, qui n'a qu'un pointeur : le manche partout, la visée quand une capacité est armée.)
     const cadre = canvas.getBoundingClientRect()
     // (le côté du vol se choisit dans les paramètres : `aGauche` veut dire « du côté du vol »)
-    const aGauche = ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2 === (reglages.vol === 'gauche')
+    // (dans le jeu du vortex, UN SEUL MANCHE : tout doigt posé, où que ce soit, est celui du vol ; la souris ne pilote pas)
+    if (VORTEX && ev.pointerType === 'mouse') return
+    const aGauche = VORTEX || (ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2 === (reglages.vol === 'gauche'))
     // (un manche « tenu » par un doigt qui n'est plus posé — voir le filet, plus bas : il y a moins de doigts sur l'écran
     // que de manches pris ; le doigt qui arrive de son côté le reprend alors)
     const fantome = ev.pointerType === 'touch' && doigtsPoses < (manche === null ? 0 : 1) + (regard === null ? 0 : 1)
@@ -5244,6 +5247,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Où le second doigt regarde (longueur 0 à 1), ou rien s'il n'est pas posé. */
   function regardVoulu(): Vecteur | undefined {
+    // LE JEU DU VORTEX SE JOUE À UN SEUL MANCHE (Keko, 15/11 : « et si on laissait complètement tomber le stick droit, et
+    // que le vaisseau s'orientait lui-même vers l'ennemi proche qu'il cible ? un gameplay Vampire Survivors : un seul
+    // joystick, et sur PC uniquement les touches de déplacement — on laisse tomber la souris et le suivi du curseur ») :
+    // le nez se tourne SEUL vers l'insecte le plus proche à portée des canons (un peu au-delà, pour être prêt) ;
+    // personne en vue, il suit le manche.
+    if (VORTEX) {
+      const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35) : null
+      if (cible === null) return undefined
+      const d = Math.hypot(cible.x - v.x, cible.y - v.y) || 1
+      return { x: (cible.x - v.x) / d, y: (cible.y - v.y) / d }
+    }
     // (le second manche TOURNE LE NEZ, de nouveau — Keko, 14/11 : le zoom, essayé sur lui, est passé à deux boutons)
     if (regard !== null) return directionDuManche(MANCHE, regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y)
     // SUR PC, LA SOURIS VISE (Keko, 12/11 : « mouvement sur ZQSD et vise via souris ») : le nez se tourne vers le
@@ -7814,7 +7828,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LE REGARD S'INSTALLE EN DOUCEUR — Keko : « la caméra est trop réactive au deuxième stick » : sa part monte et
     // retombe sur près d'une seconde au lieu de suivre le pouce à l'instant, et tant qu'on regarde la caméra rejoint son
     // point deux fois moins vite)
-    const rg = regardVoulu()
+    // (dans le jeu du vortex, la caméra ne suit pas le nez qui se tourne seul vers les insectes : elle regarde devant la course)
+    const rg = VORTEX ? undefined : regardVoulu()
     partDuRegard += ((rg === undefined ? 0 : Math.min(1, Math.hypot(rg.x, rg.y))) - partDuRegard) * Math.min(1, dt * 1.6)
     const suivi = AVANCE_DE_LA_CAMERA.suivi * (1 - 0.55 * Math.min(1, partDuRegard * 3))
     // (C'EST LE DÉCALAGE QU'ON LISSE, PAS LA CAMÉRA — Keko, 12/11 : « quand je vais à droite et pointe le deuxième stick
