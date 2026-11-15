@@ -4040,3 +4040,17 @@ une chaîne d'éclairs qui rebondit d'ennemi en ennemi ; en troisième, une aura
   *Chiffres de moi, à rejuger en jouant.*
 
 Puis LES ÉCLAIRS SUIVENT CE QU'ILS RELIENT (Keko, 15/11 : la chaîne « reste à sa position de départ et d'arrivée pendant toute l'animation ») : chaque bout d'un arc ou d'un maillon est accroché — au vaisseau, à un drone, à un ennemi (`Ancre`) — et relu à chaque image ; un ennemi mort entre-temps garde sa dernière place. Les événements `arc` et `chaine` disent qui ils touchent (`drone`, `id`, `ids`). Et la chaîne un peu moins épaisse (Keko : « un tout petit peu moins épais ») : son trait à 0,75 de l'encre du dépôt.
+
+PUIS L'INGÉNIEUR LANCE SES TOURELLES (Keko, 15/11 : « à la place de poser la
+tourelle sur lui, il la lance à très courte portée, un petit objet qui se
+déploie en tourelle ; ça éviterait que, immobile, rien ne se passe ; il cible
+une zone qui n'a pas déjà une tourelle » ; puis « en cloche, comme le
+napalm ») : `Arme.pose.jet`, `vol` ; `Tourelle.x0`, `y0`, `lancee`, `deployee`
+(vérifié). Toutes les 2,5 s au plus, il cherche autour de lui, à 34, une place
+libre (à 28 au moins de toute tourelle, en vol comprise) — la plus proche de
+l'insecte le plus proche s'il y en a un à 150, sinon devant lui — et y lance
+une capsule ; elle vole 0,4 s EN CLOCHE (son ombre au sol, un petit caisson qui
+tourne, un voyant jaune), se déploie à l'arrivée et ne tire qu'une fois posée.
+Immobile, il garnit ainsi les places autour de lui. Son `lance` : un déclic de
+ressort, un petit souffle.
+

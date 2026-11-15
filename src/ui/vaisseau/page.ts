@@ -6512,6 +6512,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const tu of m.tourelles) {
       const po = CONF.armes[tu.arme]?.pose
       if (po === undefined) continue
+      // (EN VOL : UNE CAPSULE LANCÉE EN CLOCHE, comme le napalm — Keko, 15/11 : son ombre au sol, elle plus haut au
+      // milieu de sa course, un petit caisson qui tourne sur lui-même, un voyant jaune)
+      if (!tu.deployee) {
+        const u = Math.max(0, Math.min(1, (m.t - tu.lancee) / Math.max(0.01, tu.nee - tu.lancee)))
+        const gx = tu.x0 + (tu.x - tu.x0) * u - camera.x + W / 2
+        const gy = tu.y0 + (tu.y - tu.y0) * u - camera.y + centreY()
+        const h = Math.sin(Math.PI * u) * 14
+        p.circle(gx, gy, 2.2, N.hex('#0a0608'), 0.45)
+        const a = u * Math.PI * 3
+        const coin = (k: number): [number, number] => [gx + Math.cos(a + (k * Math.PI) / 2) * 2.8, gy - h + Math.sin(a + (k * Math.PI) / 2) * 2.8]
+        p.poly([coin(0), coin(1), coin(2), coin(3)], MATIERES.encre.contour)
+        p.poly([0, 1, 2, 3].map((k) => [gx + Math.cos(a + (k * Math.PI) / 2) * 2, gy - h + Math.sin(a + (k * Math.PI) / 2) * 2]), COQUE[4])
+        p.px(Math.round(gx), Math.round(gy - h), PEPITE[2])
+        p.glow(gx, gy - h, 4, PEPITE[2], 0.4)
+        continue
+      }
       const age = m.t - tu.nee
       const reste = po.duree - age
       if (reste < 3 && Math.floor(reste * 6) % 2 === 0) continue
@@ -8642,6 +8658,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               secousse = Math.max(secousse, 0.2)
               break
             }
+            case 'tourelleLancee':
+              jouer('lance')
+              break
             case 'tourellePosee':
               // (une tourelle posée : son clac, un peu de poussière)
               jouer('pose', { dx: ev.x - v.x, dy: ev.y - v.y })

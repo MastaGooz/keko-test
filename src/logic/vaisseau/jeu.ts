@@ -321,7 +321,7 @@ export type Arme = {
    * n'en pose pas d'autre) ; `max` à la fois (la plus vieille saute), chacune vit `duree` secondes. Une tourelle pivote
    * (`pivot` rad/s) vers l'ennemi le plus proche à sa portée — le verrouillé d'abord — et tire à la cadence de l'arme.
    */
-  pose?: { tous: number; ecart: number; max: number; duree: number; pivot: number }
+  pose?: { tous: number; ecart: number; max: number; duree: number; pivot: number; /** (LANCÉE — Keko, 15/11) : à quelle distance, et en combien de temps de vol. */ jet: number; vol: number }
   /**
    * UNE EXPLOSION (les mini-missiles du chasseur, Keko, 15/11 : « quand le missile touche l'ennemi, il explose et peut
    * toucher les ennemis aux alentours — un côté zone d'effet qu'aucun autre projectile n'a ») : à l'impact — ou au bout
@@ -499,7 +499,7 @@ export type Monde = {
 export type Flaque = { id: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }
 
 /** Une tourelle posée dans le monde (voir `Arme.pose`). */
-export type Tourelle = { id: number; x: number; y: number; nee: number; cap: number; tirA: number; arme: number }
+export type Tourelle = { id: number; x: number; y: number; nee: number; cap: number; tirA: number; arme: number; /** LANCÉE : d'où, quand ; elle se déploie à `nee` (avant, elle vole). */ x0: number; y0: number; lancee: number; deployee: boolean }
 
 /** Un drone en vol (voir `Arme.orbite`). */
 export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null }
@@ -517,7 +517,8 @@ export type Evenement =
   /** Une arme du joueur tire. */
   | { type: 'obus'; x: number; y: number; arme: string }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
-  /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
+  /** Une tourelle est lancée ; elle se déploie (posée) ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
+  | { type: 'tourelleLancee'; x: number; y: number }
   | { type: 'tourellePosee'; x: number; y: number }
   /** Un arc électrique d'un drone (son rang, `drone`) à sa cible (`id`), d'un point à l'autre (voir `Arme.eclair`). */
   | { type: 'arc'; x0: number; y0: number; x1: number; y1: number; drone: number; id: number }
@@ -1358,11 +1359,29 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
   c.armes.forEach((a, i) => {
     const po = a.pose
     if (po === undefined) return
-    // LA POSE : à l'heure, en vol, assez loin de toute autre
-    if (m.phase === 'vol' && m.t >= (m.armesA[i] ?? 0) && m.tourelles.every((tu) => Math.hypot(tu.x - v.x, tu.y - v.y) >= po.ecart)) {
+    // LE LANCER (Keko, 15/11 : « à la place de poser la tourelle sur lui, il la lance à très courte portée — un petit
+    // objet qui se déploie en tourelle ; ça éviterait que, s'il est immobile, rien ne se passe ; il cible une zone qui
+    // n'a pas déjà une tourelle ») : à l'heure, en vol, il cherche autour de lui, à `jet`, une PLACE LIBRE — à `ecart`
+    // au moins de toute tourelle, en vol comprise — : la plus proche de l'insecte le plus proche, s'il y en a un pas
+    // trop loin ; sinon celle qui est devant lui. Aucune place : il ne lance rien.
+    if (m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const libres: Vecteur[] = []
+    for (let k = 0; k < 12; k++) {
+      const an = v.cap + (k * Math.PI) / 6
+      const pl = { x: v.x + Math.cos(an) * po.jet, y: v.y + Math.sin(an) * po.jet }
+      if (m.tourelles.every((tu) => Math.hypot(tu.x - pl.x, tu.y - pl.y) >= po.ecart)) libres.push(pl)
+    }
+    if (libres.length > 0) {
+      let proche: Ennemi | undefined
+      let dp = 150
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (d < dp) (dp = d), (proche = e)
+      }
+      const ou = proche === undefined ? libres[0] : libres.reduce((b, pl) => (Math.hypot(pl.x - proche!.corps.x, pl.y - proche!.corps.y) < Math.hypot(b.x - proche!.corps.x, b.y - proche!.corps.y) ? pl : b))
       m.armesA[i] = m.t + po.tous
-      m.tourelles.push({ id: m.prochainId++, x: v.x, y: v.y, nee: m.t, cap: v.cap, tirA: m.t + 0.4, arme: i })
-      ev.push({ type: 'tourellePosee', x: v.x, y: v.y })
+      m.tourelles.push({ id: m.prochainId++, x: ou.x, y: ou.y, nee: m.t + po.vol, cap: v.cap, tirA: m.t + po.vol + 0.4, arme: i, x0: v.x, y0: v.y, lancee: m.t, deployee: false })
+      ev.push({ type: 'tourelleLancee', x: v.x, y: v.y })
       const miennes = m.tourelles.filter((tu) => tu.arme === i)
       if (miennes.length > po.max) {
         const vieille = miennes[0]
@@ -1371,10 +1390,16 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
       }
     }
   })
+  // LE DÉPLOIEMENT : une tourelle qui a fini son vol se pose
+  for (const tu of m.tourelles)
+    if (!tu.deployee && m.t >= tu.nee) {
+      tu.deployee = true
+      ev.push({ type: 'tourellePosee', x: tu.x, y: tu.y })
+    }
   // LE TIR : chacune pivote vers sa cible et tire, alignée
   for (const tu of m.tourelles) {
     const a = c.armes[tu.arme]
-    if (a === undefined || a.pose === undefined) continue
+    if (a === undefined || a.pose === undefined || !tu.deployee) continue
     const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - tu.x, e.corps.y - tu.y) <= a.portee
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)

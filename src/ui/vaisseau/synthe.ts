@@ -500,6 +500,14 @@ const RECETTES = {
       note(m, 0, 0.6, 0, { f: 190, glisse: { vers: 110, en: 0.05 }, a: 0.002, d: 0.06 })
     },
   },
+  /** UNE CAPSULE DE TOURELLE EST LANCÉE : un déclic de ressort et un petit souffle qui monte */
+  lance: {
+    duree: 0.35, niveau: 0.16, salle: [0.25, 0.1], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 0.6, 0, { f: 700, a: 0.001, d: 0.04, partiels: [[1, 1, 1], [2.6, 0.4, 0.5]] })
+      souffle(m, h, 0.01, 0.7, 0, { f: 500, glisse: { vers: 1400, en: 0.14, droit: true }, q: 1.2, bande: true, a: 0.01, d: 0.14 })
+    },
+  },
   /** UNE TOURELLE EST POSÉE : un clac métallique (des partiels inharmoniques), puis un servo qui monte */
   pose: {
     duree: 0.55, niveau: 0.24, salle: [0.3, 0.12], variantes: 2,

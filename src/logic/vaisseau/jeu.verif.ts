@@ -964,13 +964,18 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // LES TOURELLES DE L'INGÉNIEUR (Keko, 15/11) : posées sur son passage, espacées, cinq au plus, elles tirent seules et
 // s'éteignent au bout de leur durée
 {
-  const tourelle = { id: 'tourelle', cadence: 0.8, degats: 3, portee: 75, vitesse: 220, vie: 0.5, dispersion: 0, guide: false, pose: { tous: 2.5, ecart: 28, max: 5, duree: 18, pivot: 8 } }
+  const tourelle = { id: 'tourelle', cadence: 0.8, degats: 3, portee: 75, vitesse: 220, vie: 0.5, dispersion: 0, guide: false, pose: { tous: 2.5, ecart: 28, max: 5, duree: 18, pivot: 8, jet: 34, vol: 0.4 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [tourelle], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  // (immobile : une seule)
+  // (immobile : il en LANCE autour de lui, à courte portée, chacune sur une place libre)
   const w = nouveauMonde(cfg, 3)
   for (let i = 0; i < 60 * 8; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-  verifier('immobile, il ne pose qu’une tourelle', w.tourelles.length === 1)
+  const espaceesW = w.tourelles.every((a, i) => w.tourelles.every((b, j) => i === j || Math.hypot(a.x - b.x, a.y - b.y) >= 28))
+  verifier('immobile, il lance ses tourelles autour de lui, à courte portée, chacune sur une place libre', w.tourelles.length >= 3 && espaceesW && w.tourelles.every((tu) => Math.abs(Math.hypot(tu.x, tu.y) - 34) < 0.5))
+  // (lancée, elle vole avant de se déployer : elle ne tire qu'une fois posée)
+  const wv = nouveauMonde(cfg, 3)
+  const evv = avancerLeMonde(cfg, wv, 1 / 60, { x: 0, y: 0 }).evenements
+  verifier('lancée, elle vole d’abord, puis se déploie', evv.some((e) => e.type === 'tourelleLancee') && !wv.tourelles[0].deployee && (() => { for (let i = 0; i < 30; i++) avancerLeMonde(cfg, wv, 1 / 60, { x: 0, y: 0 }); return wv.tourelles[0].deployee })())
   // (en volant : plusieurs, espacées, jamais plus de cinq)
   const w2 = nouveauMonde(cfg, 3)
   let auPlus = 0
