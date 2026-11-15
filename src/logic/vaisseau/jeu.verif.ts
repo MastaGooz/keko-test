@@ -1023,5 +1023,47 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const pv = w.ennemis.map((e) => 1000 - e.pv)
   verifier('un mini-missile explose à l’impact : la cible et sa voisine perdent 5, la lointaine rien', explose && pv[0] === 5 && pv[1] === 5 && pv[2] === 0)
 }
+// LE CHALUMEAU ET LE NAPALM DE LA SALAMANDRE (Keko, 15/11)
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const chalumeau = { id: 'chalumeau', cadence: 0.1, degats: 22, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, flamme: { cone: 0.12, brulure: 1, dpsBrulure: 2, seul: true } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [chalumeau], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  const places: [number, number][] = [[0, -30], [0, -55]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  for (let i = 0; i < 60; i++) {
+    w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  verifier('le chalumeau ne brûle que la plus proche dans son faisceau, fort', Math.abs(1000 - w.ennemis[0].pv - 22) < 1 && w.ennemis[1].pv === 1000)
+  const napalm = { id: 'napalm', cadence: 1.5, degats: 0, portee: 75, vitesse: 120, vie: 1.2, dispersion: 0, guide: false, napalm: { rayon: 14, duree: 4, dps: 6, brulure: 1.5, dpsBrulure: 3 } }
+  const cfg2 = { ...cfg, armes: [napalm] }
+  const w2 = nouveauMonde(cfg2, 3)
+  // (la cible derrière une autre, sur le chemin : la boule passe au-dessus)
+  const pl2: [number, number][] = [[0, -60], [0, -30]]
+  w2.ennemis.push(insecte(1, 0, -60))
+  let flaque = false
+  for (let i = 0; i < 60 * 3; i++) {
+    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 0, y: -60, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfg2, w2, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'flaque') flaque = true
+  }
+  verifier('le napalm retombe sur la cible en flaque de feu, qui la brûle', flaque && w2.flaques.some((f) => Math.hypot(f.x, f.y + 60) < 4) && 1000 - w2.ennemis[0].pv > 6)
+  const w3 = nouveauMonde(cfg2, 3)
+  pl2.forEach(([x, y], k) => w3.ennemis.push(insecte(k + 1, x, y)))
+  w3.ennemis[1].pv = 1000
+  // (on vise la plus lointaine : verrouillée)
+  verrouiller(w3, 1)
+  let touchee = false
+  for (let i = 0; i < 50; i++) {
+    w3.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: pl2[k][0], y: pl2[k][1], vx: 0, vy: 0 }))
+    for (const e of avancerLeMonde(cfg2, w3, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiTouche' && e.id === 2) touchee = true
+  }
+  verifier('une boule de napalm passe au-dessus d’un insecte sur son chemin sans le toucher', !touchee && w3.ennemis[1].pv === 1000)
+  // (la flaque s'éteint)
+  for (let i = 0; i < 60 * 6; i++) avancerLeMonde(cfg2, w2, 1 / 60, { x: 0, y: 0 })
+  w2.armesA[0] = 1e9
+  for (let i = 0; i < 60 * 5; i++) avancerLeMonde(cfg2, w2, 1 / 60, { x: 0, y: 0 })
+  verifier('la flaque s’éteint au bout de sa durée', w2.flaques.length === 0)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

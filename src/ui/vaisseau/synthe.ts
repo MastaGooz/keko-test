@@ -444,6 +444,25 @@ const RECETTES = {
       eclats(m, h, 4, 0.05, 0.35, 0.22)
     },
   },
+  /** UNE BOULE DE NAPALM PART : un « thoump » de mortier, sourd, et un glouglou de gel */
+  napalm: {
+    duree: 0.5, niveau: 0.24, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 110, glisse: { vers: 62, en: 0.08 }, a: 0.002, d: 0.14, partiels: CORPS, sature: 1.4 })
+      souffle(m, h, 0, 0.5, 0, { f: 700, glisse: { vers: 300, en: 0.08 }, q: 1.4, bande: true, a: 0.003, d: 0.1 })
+      note(m, 0.03, 0.25, 0, { f: 320, glisse: { vers: 520, en: 0.05, droit: true }, a: 0.004, d: 0.06 })
+    },
+  },
+  /** LA BOULE S'ÉCRASE EN FLAQUE DE FEU : un « splotch » mouillé, puis l'embrasement — un souffle qui s'ouvre et crépite */
+  flaque: {
+    duree: 0.8, niveau: 0.28, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.8, 0, { f: 1100, glisse: { vers: 280, en: 0.07 }, q: 1.5, bande: true, a: 0.002, d: 0.1 })
+      note(m, 0, 0.5, 0, { f: 130, glisse: { vers: 70, en: 0.05 }, a: 0.002, d: 0.09, partiels: CORPS })
+      souffle(m, h, 0.04, 0.9, 0, { f: 350, glisse: { vers: 1500, en: 0.2, droit: true }, q: 0.9, bande: true, a: 0.05, d: 0.35, large: true })
+      eclats(m, h, 6, 0.08, 0.5, 0.35)
+    },
+  },
   /** UNE TOURELLE TIRE : un « tac » mécanique, sec, un petit coup sourd dessous — pas un laser */
   tourelle: {
     duree: 0.25, niveau: 0.13, salle: [0.2, 0.08], variantes: 3,

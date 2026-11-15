@@ -3959,3 +3959,27 @@ Puis LEURS SONS (Keko, 15/11) : le départ évoque UN MOTEUR QUI S'ALLUME ET SE 
 Puis LE MISSILE PLUS GROS EN VOL (Keko : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair et ombré, l'ogive rouge, deux ailerons, une flamme longue et sa lueur.
 
 LE PANNEAU DES ARMES NE MONTRE QUE CELLES DU VAISSEAU (Keko, 15/11 : « le chasseur montre le canon, la mitraillette et les missiles, et c'est tout ; la salamandre, le lance-flammes ») : la liste est `ARMES_PAR_VAISSEAU` du vaisseau piloté.
+
+### Le chalumeau et le napalm, les deux autres armes de la Salamandre (15/11)
+
+Keko : « tu proposes quoi pour les deux autres armes de la salamandre ? » —
+puis, sur la proposition (un mono-cible et un contrôle de zone) : « vas-y,
+implante-moi les deux ».
+
+- LE CHALUMEAU (`arme-chalumeau`, `Arme.flamme.seul`, vérifié) : un faisceau de
+  flamme BLEUE, étroit (demi-angle 0,12) et long (80) ; 22 points par seconde à
+  UNE seule cible, la plus proche dans le faisceau ; 1 s de brûlure. Une buse
+  fine à la pointe bleue ; son jet, les bouffées de la Fireball en bleu, sans
+  fumée. Le souffle est celui du lance-flammes.
+- LE NAPALM (`arme-napalm`, `Arme.napalm`, `Monde.flaques`, vérifié) : une boule
+  de gel toutes les 1,5 s, LANCÉE EN CLOCHE vers la cible (portée 75) — elle
+  passe au-dessus des insectes et retombe là où la cible sera — et y laisse UNE
+  FLAQUE DE FEU de rayon 14, 4 s : tout insecte dedans perd 6 points par
+  seconde et brûle encore 1,5 s en sortant. Un tube de mortier au nez ; la
+  boule vole en cloche (son ombre au sol, elle plus haut), sème des flammes ;
+  la flaque, une tache roussie, des langues de feu qui montent sans cesse, une
+  lueur. Sons : `napalm` (un « thoump » de mortier) et `flaque` (un splotch
+  mouillé, puis l'embrasement).
+- Les insectes qu'ils tuent SE CONSUMENT, comme ceux du lance-flammes.
+  *Chiffres de moi, à rejuger en jouant.*
+

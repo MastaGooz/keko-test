@@ -303,7 +303,7 @@ export type Arme = {
    * tout ce qui s'y trouve perd `degats` PAR SECONDE, et BRÛLE ENCORE `brulure` secondes à `dpsBrulure` par seconde.
    * Il crache dès qu'un ennemi est dans le cône.
    */
-  flamme?: { cone: number; brulure: number; dpsBrulure: number }
+  flamme?: { cone: number; brulure: number; dpsBrulure: number; /** UNE SEULE CIBLE : la plus proche dans le cône (le chalumeau). */ seul?: boolean }
   /**
    * UN DRONE (la Sentinelle, Keko, 15/11 : « entourée de petits drones qui attaquent indépendamment » ; puis « qu'ils
    * partent eux-mêmes de leur position pour voler autour de l'ennemi et l'attaquer, et qu'ils reviennent sur le
@@ -328,6 +328,12 @@ export type Arme = {
    * de sa course —, tout autre ennemi à moins de `rayon` perd `degats`.
    */
   zone?: { rayon: number; degats: number }
+  /**
+   * DU NAPALM (la Salamandre, Keko, 15/11) : le tir est une boule de gel LANCÉE EN CLOCHE vers la cible — elle passe
+   * au-dessus des insectes et retombe là où la cible sera — et y laisse UNE FLAQUE DE FEU (`Monde.flaques`) de `rayon`,
+   * `duree` secondes : tout insecte dedans perd `dps` par seconde, et brûle encore `brulure` s à `dpsBrulure` en sortant.
+   */
+  napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }
 }
 
 export type Vaisseau = {
@@ -364,7 +370,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number } }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -455,7 +461,12 @@ export type Monde = {
   drones: Drone[]
   /** LES TOURELLES POSÉES (voir `Arme.pose`) : où, depuis quand, leur canon, leur prochain tir, l'arme qui les a posées. */
   tourelles: Tourelle[]
+  /** LES FLAQUES DE NAPALM (voir `Arme.napalm`). */
+  flaques: Flaque[]
 }
+
+/** Une flaque de feu au sol (voir `Arme.napalm`). */
+export type Flaque = { id: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }
 
 /** Une tourelle posée dans le monde (voir `Arme.pose`). */
 export type Tourelle = { id: number; x: number; y: number; nee: number; cap: number; tirA: number; arme: number }
@@ -478,6 +489,8 @@ export type Evenement =
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
   | { type: 'tourellePosee'; x: number; y: number }
+  /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
+  | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
   | { type: 'explosionDeZone'; x: number; y: number; rayon: number }
   | { type: 'tourelleFinie'; x: number; y: number }
@@ -502,7 +515,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1093,7 +1106,7 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
  * LE LANCE-FLAMMES crache : tout ennemi dans le cône, devant la bouche, jusqu'à la portée (plus son rayon), perd les
  * dégâts de l'arme par seconde et se met à brûler. Le cône suit le nez — c'est le nez qui se tourne vers la cible.
  */
-function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: number; brulure: number; dpsBrulure: number }, dt: number, ev: Evenement[]): void {
+function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: number; brulure: number; dpsBrulure: number; seul?: boolean }, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   const bo = arme.bouche
   const bx = bo === undefined ? v.x : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
@@ -1106,11 +1119,30 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   })
   if (dans.length === 0) return
   m.crache = true
+  // (LE CHALUMEAU ne brûle que la plus proche dans son faisceau)
+  if (fl.seul === true) dans.splice(0, dans.length, dans.reduce((a, e) => (Math.hypot(e.corps.x - bx, e.corps.y - by) < Math.hypot(a.corps.x - bx, a.corps.y - by) ? e : a)))
   for (const e of dans) {
     e.pv -= arme.degats * dt
     e.bruleA = m.t + fl.brulure
     e.dpsBrulure = fl.dpsBrulure
     e.dureeBrulure = fl.brulure
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+}
+
+/** LES FLAQUES DE NAPALM brûlent ce qui est dedans (voir `Arme.napalm`) ; elles s'éteignent au bout de leur durée. */
+function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  m.flaques = m.flaques.filter((f) => m.t - f.nee < f.duree)
+  if (m.flaques.length === 0) return
+  for (const e of [...m.ennemis]) {
+    // (plusieurs flaques ne s'additionnent pas : la plus forte)
+    let f: Flaque | undefined
+    for (const g of m.flaques) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + c.ennemi.rayon * 0.5 && (f === undefined || g.dps > f.dps)) f = g
+    if (f === undefined) continue
+    e.pv -= f.dps * dt
+    e.bruleA = m.t + f.brulure
+    e.dpsBrulure = f.dpsBrulure
+    e.dureeBrulure = f.brulure
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 }
@@ -1444,6 +1476,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   m.crache = false
   menerLesDrones(c, m, dt, ev)
   menerLesTourelles(c, m, dt, ev)
+  brulerLesFlaques(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
     if (arme.orbite !== undefined || arme.pose !== undefined) return
@@ -1458,6 +1491,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const bx = bo0 === undefined ? v.x : v.x + Math.cos(v.cap) * bo0.x - Math.sin(v.cap) * bo0.y
     const by = bo0 === undefined ? v.y : v.y + Math.sin(v.cap) * bo0.x + Math.cos(v.cap) * bo0.y
     let vise: number
+    // (une boule de napalm vole juste le temps d'atteindre la cible — là où elle sera)
+    let vieDuTir = arme.vie
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
     else {
       let cible: Ennemi | null = null
@@ -1476,6 +1511,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
       // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
       if (c.arcDeTir > 0) vise = v.cap + Math.max(-c.arcDeTir, Math.min(c.arcDeTir, ecartDAngle(v.cap, vise)))
+      // (sans bouche, le tir part du bord du vaisseau : d'autant moins à voler)
+      if (arme.napalm !== undefined) vieDuTir = Math.min(arme.vie, Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / arme.vitesse)
     }
     m.armesA[i] = m.t + arme.cadence
     if (c.alternance) c.armes.forEach((_, j) => {
@@ -1487,7 +1524,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.zone === undefined ? {} : { zone: arme.zone }) })
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.zone === undefined ? {} : { zone: arme.zone }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }) })
     ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
@@ -1507,7 +1544,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     o.x += o.vx * dt
     o.y += o.vy * dt
     let fini = o.vie <= 0
-    if (!fini) {
+    // (une boule de napalm ne touche rien en vol : elle passe au-dessus ; à terre, elle devient une flaque)
+    if (fini && o.napalm !== undefined) {
+      m.flaques.push({ id: m.prochainId++, x: o.x, y: o.y, nee: m.t, ...o.napalm })
+      ev.push({ type: 'flaque', x: o.x, y: o.y, rayon: o.napalm.rayon })
+    }
+    if (!fini && o.napalm === undefined) {
       for (const e of m.ennemis) {
         if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.ennemi.rayon + 1.5) continue
         fini = true

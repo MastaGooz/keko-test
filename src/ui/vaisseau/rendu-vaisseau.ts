@@ -726,7 +726,7 @@ export function formesDuRadar(t: number): Forme[] {
  * sa nacelle, à −0,6). Les obus du vol en partent.
  */
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
-  if (id === 'flammes') return { x: 11.8, y: 0 }
+  if (id === 'flammes' || id === 'chalumeau' || id === 'napalm') return { x: 11.8, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
 /** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
@@ -743,6 +743,21 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
   if (id === 'drone' || id === 'tourelle') return []
+  // (le chalumeau : une buse fine, la pointe bleue ; le napalm : un tube large, un mortier)
+  if (id === 'chalumeau') {
+    return [
+      { pts: barre(4, 0, 11, 0, 0.9), mat: 'metal', relief: 'cyl' },
+      { pts: barre(9.6, 0, 11.4, 0, 1.3), mat: 'acier', relief: 'cyl' },
+      { pts: ovale(11.7, 0, 0.55, 0.55, 10), mat: 'ion', relief: 'dome', dome: { x: 11.7, y: 0, rx: 0.55, ry: 0.55 } },
+    ]
+  }
+  if (id === 'napalm') {
+    return [
+      { pts: barre(4, 0, 10.4, 0, 1.9), mat: 'metal', relief: 'cyl' },
+      { pts: barre(9.4, 0, 11.2, 0, 2.3), mat: 'acier', relief: 'cyl' },
+      { pts: ovale(11.3, 0, 0.8, 1.4, 10), mat: 'feu', relief: 'dome', dome: { x: 11.3, y: 0, rx: 0.8, ry: 1.4 } },
+    ]
+  }
   if (id === 'flammes') {
     // LE LANCE-FLAMMES : une buse dans l'axe, qui dépasse du nez — le fût, la bague, la veilleuse au bout
     return [
