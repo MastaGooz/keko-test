@@ -481,6 +481,38 @@ function formesDeLaTuyereOmni(o: { n: number; rayon: number; depart: number }, k
     { pts: [P(r1 - 0.45, -0.68), P(r1, -0.6), P(r1, 0.6), P(r1 - 0.45, 0.68)], mat: 'acier', relief: 'plat' },
   ]
 }
+/**
+ * UNE TOURELLE DE L'INGÉNIEUR, PEINTE COMME LES VAISSEAUX (Keko, 15/11 : « les tours, c'est juste des carrés avec un
+ * trait ; un truc un peu plus texturé, plus proche des textures des vaisseaux — pas forcément un carré ») : LE SOCLE,
+ * fixe — une plaque octogonale sur quatre pieds en croix, chacun son patin, quatre boulons jaunes —, et LA TÊTE, qui
+ * pivote — une couronne d'acier, un dôme à la couleur du joueur, un fût et son frein de bouche, une veilleuse verte.
+ */
+export function formesDuSocleDeTourelle(): Forme[] {
+  const f: Forme[] = []
+  for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    f.push({ pts: barre(0, 0, dx * 4.8, dy * 4.8, 1.5), mat: 'metal', relief: 'plat' })
+    f.push({ pts: ovale(dx * 4.8, dy * 4.8, 1.3, 1.3, 10), mat: 'acier', relief: 'dome', dome: { x: dx * 4.8, y: dy * 4.8, rx: 1.3, ry: 1.3 } })
+  }
+  const octo = (r: number): [number, number][] => Array.from({ length: 8 }, (_, k) => [Math.cos(Math.PI / 8 + (k * Math.PI) / 4) * r, Math.sin(Math.PI / 8 + (k * Math.PI) / 4) * r])
+  f.push({ pts: octo(4.4), mat: 'aile', relief: 'plat' })
+  f.push({ pts: octo(3.6), mat: 'acier', relief: 'plat' })
+  for (let k = 0; k < 4; k++) {
+    const a = (k * Math.PI) / 2
+    f.push({ pts: ovale(Math.cos(a) * 3.9, Math.sin(a) * 3.9, 0.5, 0.5, 8), mat: 'or', relief: 'dome', dome: { x: Math.cos(a) * 3.9, y: Math.sin(a) * 3.9, rx: 0.5, ry: 0.5 } })
+  }
+  return f
+}
+export function formesDeLaTeteDeTourelle(): Forme[] {
+  // (un carter anguleux, pas un dôme — rond et gros, il cachait le socle —, le canon épais et long)
+  return [
+    { pts: ovale(0, 0, 2.6, 2.6, 16), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 2.6, ry: 2.6 } },
+    { pts: barre(1.5, 0, 7.4, 0, 1), mat: 'acier', relief: 'cyl' },
+    { pts: barre(6.4, 0, 7.9, 0, 1.45), mat: 'metal', relief: 'cyl' },
+    { pts: [[2.6, -1.7], [1, -2.3], [-2.2, -2.3], [-2.8, -1.2], [-2.8, 1.2], [-2.2, 2.3], [1, 2.3], [2.6, 1.7]], mat: 'coque', relief: 'cyl' },
+    { pts: [[0.6, -2.3], [-0.2, -2.3], [-0.2, 2.3], [0.6, 2.3]], mat: 'acier', relief: 'plat' },
+    { pts: ovale(-1.7, 0, 0.55, 0.55, 8), mat: 'emeraude', relief: 'dome', dome: { x: -1.7, y: 0, rx: 0.55, ry: 0.55 } },
+  ]
+}
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
 function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
   if (dx === 0 && dy === 0) return formes

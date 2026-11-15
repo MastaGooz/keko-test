@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -6383,49 +6383,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** (SOUS LES VAISSEAUX ET LES INSECTES : dessinées avec les tirs, elles cachaient le vaisseau posé dessus.) */
   function dessinerLesTourelles(p: Peintre): void {
-    p.place(W / 2 - camera.x, centreY() - camera.y)
-    // LES TOURELLES DE L'INGÉNIEUR : un socle carré boulonné, à la couleur du joueur, des bandes jaunes et noires ; une
-    // tête qui pivote vers sa cible, un canon ; un voyant vert. Elles se DÉPLIENT en naissant (le socle grandit, une onde
-    // de poussière), et CLIGNOTENT leurs trois dernières secondes ; une jauge de vie sous elles.
-    {
-      const [sombre, moyen, clair] = tonsDeLaLivree(livree)
-      for (const tu of m.tourelles) {
-        const po = CONF.armes[tu.arme]?.pose
-        if (po === undefined) continue
-        const age = m.t - tu.nee
-        const reste = po.duree - age
-        if (reste < 3 && Math.floor(reste * 6) % 2 === 0) continue
-        const k = Math.min(1, age / 0.25)
-        const d = Math.round(3 + 2 * k)
-        const x = Math.round(tu.x)
-        const y = Math.round(tu.y)
-        if (age < 0.4) p.ring(x, y, 5 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.4)
-        // (LE SOCLE EN ACIER GRIS, aux coins jaunes — à la couleur du joueur, il se fondait dans le vaisseau ; la couleur
-        // reste à la tête qui pivote)
-        p.rect(x - d - 1, y - d - 1, 2 * d + 3, 2 * d + 3, MATIERES.encre.contour)
-        p.rect(x - d, y - d, 2 * d + 1, 2 * d + 1, COQUE[3])
-        p.rect(x - d, y - d, 2 * d + 1, 1, COQUE[5])
-        p.rect(x - d, y - d, 1, 2 * d + 1, COQUE[4])
-        p.rect(x - d, y + d, 2 * d + 1, 1, COQUE[1])
-        for (const [cx, cy] of [[-d, -d], [d - 1, -d], [-d, d - 1], [d - 1, d - 1]]) p.rect(x + cx, y + cy, 2, 2, PEPITE[2])
-        if (k < 1) continue
-        // la tête, à la couleur du joueur, et le canon
-        const bx = x + Math.round(Math.cos(tu.cap) * 6)
-        const by = y + Math.round(Math.sin(tu.cap) * 6)
-        p.line(x, y, bx, by, MATIERES.encre.contour)
-        p.line(x + Math.round(Math.cos(tu.cap) * 2), y + Math.round(Math.sin(tu.cap) * 2), bx, by, COQUE[5])
-        p.circle(x, y, 3, MATIERES.encre.contour)
-        p.circle(x, y, 2.3, moyen)
-        p.rect(x - 1, y - 2, 2, 1, clair)
-        p.rect(x - 1, y + 1, 3, 1, sombre)
-        p.px(x, y, Math.floor(t * 3 + tu.id) % 3 === 0 ? N.hex('#4aff7a') : N.hex('#1a7a3a'))
-        // sa vie, une jauge fine sous le socle
-        const lv = Math.round((2 * d + 1) * Math.max(0, reste / po.duree))
-        p.rect(x - d, y + d + 3, 2 * d + 1, 1, MATIERES.encre.contour)
-        if (lv > 0) p.rect(x - d, y + d + 3, lv, 1, reste < 3 ? ROUGE[4] : PEPITE[2])
-      }
+    // LES TOURELLES DE L'INGÉNIEUR, PEINTES COMME LES VAISSEAUX (`formesDuSocleDeTourelle`, `formesDeLaTeteDeTourelle` —
+    // Keko, 15/11 : les carrés à un trait n'étaient « pas très jolis ») : le socle fixe, la tête qui pivote vers sa cible,
+    // à la lumière du vol et à la couleur du joueur. Elles se DÉPLIENT en naissant (elles grandissent, une onde de
+    // poussière), CLIGNOTENT leurs trois dernières secondes ; une jauge de vie sous elles.
+    const SOCLE = formesDuSocleDeTourelle()
+    const TETE = formesDeLaTeteDeTourelle()
+    for (const tu of m.tourelles) {
+      const po = CONF.armes[tu.arme]?.pose
+      if (po === undefined) continue
+      const age = m.t - tu.nee
+      const reste = po.duree - age
+      if (reste < 3 && Math.floor(reste * 6) % 2 === 0) continue
+      // (une fois et demie la taille du dessin : à l'échelle du vol, on n'en lisait rien)
+      const k = 1.5 * (0.35 + 0.65 * sortie(Math.min(1, age / 0.25)))
+      const sx = Math.round(tu.x - camera.x + W / 2)
+      const sy = Math.round(tu.y - camera.y + centreY())
+      if (age < 0.4) p.ring(sx, sy, 5 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.4)
+      peindreFormes(p, SOCLE, sx, sy, k, { cap: -Math.PI / 2, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
+      peindreFormes(p, TETE, sx, sy, k, { cap: tu.cap, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
+      // sa vie, une jauge fine sous le socle
+      const lw = 11
+      const lv = Math.round(lw * Math.max(0, reste / po.duree))
+      p.rect(sx - 5, sy + 11, lw, 1, MATIERES.encre.contour)
+      if (lv > 0) p.rect(sx - 5, sy + 11, lv, 1, reste < 3 ? ROUGE[4] : PEPITE[2])
     }
-    p.place(0, 0)
   }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {

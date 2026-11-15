@@ -3920,3 +3920,11 @@ petites tours sur son passage ».
   secondes ; ses balles, des traceurs d'or. Sons : `pose` (un clac métallique,
   un servo qui monte) et `tourelle` (un « tac » sec). `&vaisseau=ingenieur`.
 
+Puis LES TOURELLES PEINTES COMME LES VAISSEAUX (Keko, 15/11 : « juste des carrés
+avec un trait ; un truc plus texturé, plus proche des textures des vaisseaux,
+pas forcément un carré ») : par le même rendu (`peindreFormes`, la lumière du
+vol, la couleur du joueur) — LE SOCLE, fixe, une plaque octogonale sur quatre
+pieds en croix à patins, quatre boulons jaunes (`formesDuSocleDeTourelle`) ;
+LA TÊTE, qui pivote, une couronne d'acier, un dôme à la couleur du joueur, un
+fût et son frein de bouche, une veilleuse verte (`formesDeLaTeteDeTourelle`).
+
