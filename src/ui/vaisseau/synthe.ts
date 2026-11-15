@@ -385,12 +385,17 @@ const RECETTES = {
       eclats(m, h, 10, 0.05, 0.65, 0.55)
     },
   },
-  /** UN DRONE TIRE : un petit trait de laser, clair, qui glisse vers le bas — doux, ils tirent souvent */
+  /**
+   * UN DRONE TIRE : UN « PIOU » DE LASER (Keko, 15/11 : « un truc plus laser ») — une chute de hauteur rapide et longue
+   * (3 200 → 420 Hz), en harmoniques impairs (le grain d'un carré) et deux voix à peine désaccordées, un zip aigu au
+   * départ ; pas trop fort, ils tirent souvent
+   */
   drone: {
-    duree: 0.25, niveau: 0.1, salle: [0.2, 0.08], variantes: 3,
+    duree: 0.3, niveau: 0.11, salle: [0.25, 0.1], variantes: 3,
     faire: (m, h) => {
-      note(m, 0, 1, (h.next() - 0.5) * 0.6, { f: 1900, glisse: { vers: 900, en: 0.06 }, a: 0.002, d: 0.05, partiels: [[1, 1, 1], [2, 0.2, 0.6]] })
-      souffle(m, h, 0, 0.1, 0, { f: 5000, d: 0.015 })
+      const pan = (h.next() - 0.5) * 0.6
+      note(m, 0, 1, pan, { f: 3200 * (0.94 + 0.12 * h.next()), glisse: { vers: 420, en: 0.11 }, a: 0.002, d: 0.13, battement: 14, partiels: [[1, 1, 1], [3, 0.45, 0.8], [5, 0.22, 0.6]] })
+      note(m, 0, 0.25, pan, { f: 6400, glisse: { vers: 2400, en: 0.02 }, a: 0.001, d: 0.025 })
     },
   },
   /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */
