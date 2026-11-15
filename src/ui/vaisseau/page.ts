@@ -543,7 +543,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les braises d'un propulseur ionique : du blanc bleuté au bleu sombre (la rampe de sa flamme, du chaud au froid). */
   /** (LES INSECTES SONT BIOLOGIQUES — Keko, 14/11 : leurs grains de propulsion « en vert plutôt qu'en feu ») */
   const BRAISES_VERTES = ['#f0ffd8', '#c8f77a', '#96e04a', '#62bd34', '#3f9428', '#2a6c20', '#1a4818', '#0e2a10'].map((h) => N.hex(h))
-  const PEPITES_VIOLETTES = N.fit(['#2a0f4d', '#7330d0', '#b56cff', '#e6c8ff', '#ffffff'], 5)
+  // (L'EXPÉRIENCE EST AUX COULEURS DU CRISTAL, la barre comme les pépites — Keko, 15/11 ; elles ont été violettes un jour)
+  const XP = TEINTES_MINERAI.cristal
   const SANG_VERT = [N.hex('#d8ff8a'), N.hex('#8ee03c'), N.hex('#4aa82a'), N.hex('#2a6c20')]
   /** Les taches que laissent les insectes écrasés (dans le monde) : elles pâlissent et s'en vont en quelques secondes. */
   let taches: { x: number; y: number; t0: number; graine: number }[] = []
@@ -990,14 +991,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(bx, y + 1, bw, 1, N.hex('#465679'))
     const plein = Math.round(bw * part)
     if (plein > 0) {
-      p.rect(bx, y + 1, plein, 5, allume || neuf ? N.WHITE : RUNE[2])
+      p.rect(bx, y + 1, plein, 5, allume || neuf ? N.WHITE : XP[2])
       if (!allume && !neuf) {
-        p.rect(bx, y + 1, plein, 1, RUNE[3])
-        p.rect(bx, y + 5, plein, 1, RUNE[1])
+        p.rect(bx, y + 1, plein, 1, XP[3])
+        p.rect(bx, y + 5, plein, 1, XP[1])
       }
-      p.glow(bx + plein, y + 3, 6, RUNE[2], allume ? 0.8 : 0.3)
+      p.glow(bx + plein, y + 3, 6, XP[2], allume ? 0.8 : 0.3)
     }
-    if (neuf) p.glow(bx + bw / 2, y + 3, bw * 0.6, RUNE[2], 0.5 * (1 - (t - niveauA) / 0.8))
+    if (neuf) p.glow(bx + bw / 2, y + 3, bw * 0.6, XP[2], 0.5 * (1 - (t - niveauA) / 0.8))
   }
   /** LA MÊME, DEBOUT, dans le bandeau de gauche : le niveau en haut, centré sur `axe`, puis la barre qui descend — elle se remplit par le bas, comme le blindage d'en face. */
   function dessinerLExperienceDebout(p: Peintre, axe: number, y: number): void {
@@ -1016,14 +1017,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(bx, by, 1, bh, N.hex('#465679'))
     const plein = Math.round(bh * part)
     if (plein > 0) {
-      p.rect(bx, by + bh - plein, lw, plein, allume || neuf ? N.WHITE : RUNE[2])
+      p.rect(bx, by + bh - plein, lw, plein, allume || neuf ? N.WHITE : XP[2])
       if (!allume && !neuf) {
-        p.rect(bx, by + bh - plein, 1, plein, RUNE[3])
-        p.rect(bx + lw - 2, by + bh - plein, 2, plein, RUNE[1])
+        p.rect(bx, by + bh - plein, 1, plein, XP[3])
+        p.rect(bx + lw - 2, by + bh - plein, 2, plein, XP[1])
       }
-      p.glow(axe, by + bh - plein, 6, RUNE[2], allume ? 0.8 : 0.3)
+      p.glow(axe, by + bh - plein, 6, XP[2], allume ? 0.8 : 0.3)
     }
-    if (neuf) p.glow(axe, by + bh / 2, bh * 0.6, RUNE[2], 0.5 * (1 - (t - niveauA) / 0.8))
+    if (neuf) p.glow(axe, by + bh / 2, bh * 0.6, XP[2], 0.5 * (1 - (t - niveauA) / 0.8))
   }
   /**
    * LE COMPTE DU RETOUR (Keko, 14/11 : « quand je meurs, à la place de mettre fin à la partie, utilise le compte à
@@ -7102,7 +7103,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les pépites libres, aux teintes de leur minerai. */
   function dessinerLesPepites(p: Peintre): void {
     // (VIOLETTES dans le jeu du vortex — Keko, 14/11 : en gris-blanc, « on les voit mal parmi les étoiles »)
-    for (const pe of m.pepites) dessinerPepite(p, pe, t, m.refuses[pe.minerai], VORTEX ? PEPITES_VIOLETTES : undefined)
+    for (const pe of m.pepites) dessinerPepite(p, pe, t, m.refuses[pe.minerai], VORTEX ? XP : undefined)
   }
 
   /**
