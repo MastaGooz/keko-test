@@ -3719,3 +3719,5 @@ Puis (Keko, 15/11) : le nom de l'arme seul, sans « Arme » devant ; et son « C
 Et un vaisseau qu'on n'a pas dit « Pas encore disponible », comme les armes (Keko, 15/11), plus « À débloquer à la recherche ».
 
 LA MÊME ARME SUR LES DEUX AILES (Keko, 15/11 : « visuellement le chasseur doit avoir la même arme sur ses deux ailes, et elle doit correspondre à l'arme sélectionnée ») : c'était déjà deux canons, mais la lampe du hangar (en haut à gauche) laissait celui de droite dans l'ombre — sombre, cerné, il passait pour une autre arme. Une forme peut maintenant être ÉCLAIRÉE EN MIROIR (`Forme.miroir` : la lumière retournée de part et d'autre de l'axe), et l'arme de l'aile droite l'est : elle est le reflet exact de celle de gauche, au hangar comme en vol. Et le dessin comme le tir lisent l'arme équipée (`ARME_DU_VORTEX`), plus un « canon » écrit à part.
+
+PUIS RETIRÉ (Keko, 15/11 : « c'était mieux avant en fait ») : l'éclairage en miroir est défait, le canon de droite reprend son ombre. Reste que le dessin et le tir lisent l'arme équipée (`ARME_DU_VORTEX`).

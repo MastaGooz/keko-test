@@ -31,11 +31,6 @@ export type Forme = {
   penche?: number
   /** Pour une flamme : la base (x de la tuyère) et la pointe, pour son dégradé. */
   feu?: { base: number; pointe: number }
-  /**
-   * ÉCLAIRÉE EN MIROIR de l'autre côté du vaisseau (la lumière retournée de part et d'autre de l'axe) : l'arme de l'aile à
-   * l'ombre se peint comme le reflet exact de celle de l'aile éclairée — Keko, 15/11 : « la même arme sur ses deux ailes ».
-   */
-  miroir?: boolean
 }
 
 /** Les rampes, du plus sombre au plus clair, en teinte glissante. */
@@ -277,12 +272,6 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   const ln = Math.hypot(lex, ley) || 1
   // (le pas d'un pixel VERS la lumière : en haut à gauche pour le nez en haut)
   const versLum: [number, number] = [Math.abs(lex) / ln > 0.38 ? Math.sign(lex) : 0, Math.abs(ley) / ln > 0.38 ? Math.sign(ley) : 0]
-  // (la même chose pour une forme éclairée en miroir : la lumière retournée de part et d'autre de l'axe du vaisseau)
-  const LM = [L[0], -L[1], L[2]]
-  const DM = [D[0], -D[1], D[2]]
-  const lexM = LM[0] * ca - LM[1] * sa
-  const leyM = LM[0] * sa + LM[1] * ca
-  const versLumM: [number, number] = [Math.abs(lexM) / ln > 0.38 ? Math.sign(lexM) : 0, Math.abs(leyM) / ln > 0.38 ? Math.sign(leyM) : 0]
   // 2. l'éclairage de chaque pixel
   for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
     const i = py * W + px
@@ -307,10 +296,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       n = [0.08 + lx * 0.012, c * 0.3, 0.95]
     }
     const nl = Math.hypot(n[0], n[1], n[2])
-    const Lf = f.miroir ? LM : L
-    const Df = f.miroir ? DM : D
-    const vL = f.miroir ? versLumM : versLum
-    const d = (n[0] * Lf[0] + n[1] * Lf[1] + n[2] * Lf[2]) / nl
+    const d = (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / nl
     // (la lumière ne pousse pas jusqu'au blanc : le blanc est réservé au spéculaire)
     let b = 0.14 + 0.66 * Math.max(0, d)
     if (f.relief === 'emis' && f.feu) {
@@ -321,10 +307,10 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       b = 0.15 + 0.6 * u + 0.35 * coeur
     } else {
       // le biseau : regarder vers la lumière et à l'opposé
-      const ax = px + vL[0]
-      const ay = py + vL[1]
-      const bx = px - vL[0]
-      const by = py - vL[1]
+      const ax = px + versLum[0]
+      const ay = py + versLum[1]
+      const bx = px - versLum[0]
+      const by = py - versLum[1]
       const kA = ax >= 0 && ay >= 0 && ax < W && ay < H ? ids[ay * W + ax] : -1
       const kB = bx >= 0 && by >= 0 && bx < W && by < H ? ids[by * W + bx] : -1
       // vers la lumière : le bord s'éclaire ; si c'est une pièce posée dessus, c'est son ombre de contact
@@ -332,7 +318,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       // à l'opposé : le bord s'assombrit
       if (kB !== k && kB < k) b -= 0.12
       if (f.relief === 'cyl' || f.relief === 'dome') {
-        const h = (n[0] * Df[0] + n[1] * Df[1] + n[2] * Df[2]) / nl
+        const h = (n[0] * D[0] + n[1] * D[1] + n[2] * D[2]) / nl
         spec[i] = Math.pow(Math.max(0, h), f.mat === 'verre' ? 18 : 30)
       }
     }
@@ -362,9 +348,8 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     else if (spec[i] > 0.3 && idx < R.length - 1) c = R[Math.min(R.length - 1, idx + 1)]
     // le reflet froid : un bord tourné à l'opposé de la lumière, s'il donne sur le vide
     if (f.relief !== 'emis') {
-      const vL = f.miroir ? versLumM : versLum
-      const bx = px - vL[0]
-      const by = py - vL[1]
+      const bx = px - versLum[0]
+      const by = py - versLum[1]
       const vide = bx < 0 || by < 0 || bx >= W || by >= H || ids[by * W + bx] < 0
       if (vide && lum[i] < 0.62) c = reflet
     }
@@ -646,9 +631,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   a.armes.forEach((id, i) => {
     if (id === '') return
     const pl = placeDArme(a.coque, i)
-    // (L'ARME DE L'AILE DROITE EST LE MIROIR DE CELLE DE GAUCHE, lumière comprise — Keko, 15/11 : « la même arme sur
-    // ses deux ailes » ; éclairée comme elle, celle de droite restait dans l'ombre et passait pour une autre arme)
-    armes.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y).map((fo) => (pl.s > 0 ? { ...fo, miroir: true } : fo)))
+    armes.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y))
   })
   // (sous les ailes pour un chasseur ; sur le pont, par-dessus tout, pour un cuirassé)
   if (!g.surLePont) f.push(...armes)
