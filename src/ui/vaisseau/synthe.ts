@@ -533,6 +533,28 @@ const RECETTES = {
       souffle(m, h, 0, 0.5, 0, { f: 3800, q: 1.6, bande: true, a: 0.001, d: 0.05 })
     },
   },
+  /**
+   * UN INSECTE ENTRE DANS LE GIVRE : la glace qui le saisit — un craquement sec et aigu, trois tintements de cristal
+   * inharmoniques qui s'égrènent, un souffle froid très bref
+   */
+  gel: {
+    duree: 0.45, niveau: 0.12, salle: [0.3, 0.12], variantes: 4,
+    faire: (m, h) => {
+      const pan = (h.next() - 0.5) * 0.6
+      souffle(m, h, 0, 0.7, pan, { f: 5200, q: 2, bande: true, a: 0.001, d: 0.03 })
+      for (let k = 0; k < 3; k++) note(m, 0.012 + k * 0.03 + 0.01 * h.next(), 0.4 - k * 0.08, pan, { f: 2600 + 1400 * h.next(), a: 0.001, d: 0.12 + 0.05 * k, partiels: [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.2, 0.3]] })
+      souffle(m, h, 0, 0.25, pan, { f: 2400, glisse: { vers: 1200, en: 0.15 }, q: 0.8, bande: true, a: 0.01, d: 0.15 })
+    },
+  },
+  /** UN INSECTE GELÉ VOLE EN ÉCLATS : du verre qui se brise — un claquement, une pluie de tintements, un coup sourd */
+  brise: {
+    duree: 0.8, niveau: 0.24, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, 0, { f: 4200, glisse: { vers: 2400, en: 0.06 }, q: 1.2, bande: true, a: 0.001, d: 0.08 })
+      note(m, 0, 0.45, 0, { f: 140, glisse: { vers: 80, en: 0.06 }, a: 0.002, d: 0.08 })
+      for (let k = 0; k < 7; k++) note(m, 0.01 + 0.07 * h.next() * k * 0.6, 0.35 * (1 - k / 9), (h.next() - 0.5) * 0.9, { f: 2200 + 3200 * h.next(), a: 0.001, d: 0.1 + 0.15 * h.next(), partiels: [[1, 1, 1], [2.76, 0.35, 0.5]] })
+    },
+  },
   /** UNE BALISE EST PLANTÉE : un « tchok » métallique bref, puis un bip court qui l'arme */
   balisePosee: {
     duree: 0.3, niveau: 0.14, salle: [0.22, 0.09], variantes: 2,

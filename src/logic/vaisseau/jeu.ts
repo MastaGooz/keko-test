@@ -393,6 +393,14 @@ export type Arme = {
    * depuis sa dernière décharge.
    */
   balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number }
+  /**
+   * UNE TRAÎNÉE DE GIVRE (le Frimas, Keko, 15/11 : « une attaque qui laisse une traînée de givre derrière le vaisseau,
+   * qui ralentit et inflige des dégâts aux ennemis tant qu'ils restent dedans ») : en vol, il sème DERRIÈRE LUI (à
+   * l'opposé de sa vitesse) une plaque de givre chaque fois qu'il s'est éloigné de `ecart` de la dernière ; chacune, de
+   * `rayon`, dure `duree` secondes. Un insecte dans une plaque perd `dps` par seconde et avance à `ralenti` de sa vitesse
+   * (il le reste un instant après en être sorti). L'état est `Monde.givres`.
+   */
+  givre?: { ecart: number; rayon: number; duree: number; dps: number; ralenti: number }
 }
 
 export type Vaisseau = {
@@ -452,6 +460,9 @@ export type Ennemi = {
   bruleA?: number
   dpsBrulure?: number
   dureeBrulure?: number
+  /** IL EST GELÉ (le givre) jusqu'à cet instant, et avance à cette part de sa vitesse. */
+  geleA?: number
+  ralenti?: number
   butin: number
   cargaison: Cargaison
 }
@@ -530,7 +541,12 @@ export type Monde = {
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
   balises: Balise[]
+  /** LES PLAQUES DE GIVRE (voir `Arme.givre`). */
+  givres: Givre[]
 }
+
+/** Une plaque de givre semée par le vaisseau (voir `Arme.givre`). */
+export type Givre = { id: number; arme: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; ralenti: number }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
 export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et pour chaque ligne les insectes qui sont dessus et l'instant de sa prochaine décharge s'ils y restent. */ liens: { vers: number; sur: number[]; dechargeA: number }[] }
@@ -583,7 +599,9 @@ export type Evenement =
   | { type: 'tourelleFinie'; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
-  | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number; /** Il est mort EN BRÛLANT (le lance-flammes) : il se consume au lieu d'éclater. */ brule?: boolean }
+  | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number; /** Il est mort EN BRÛLANT (le lance-flammes) : il se consume au lieu d'éclater. */ brule?: boolean; /** Il est mort GELÉ (le givre) : il vole en éclats de glace. */ gele?: boolean }
+  /** Un insecte entre dans le givre (il n'y était pas). */
+  | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
   | { type: 'bombe'; x: number; y: number }
   | { type: 'explosion'; x: number; y: number; rayon: number }
@@ -602,7 +620,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -864,7 +882,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
   if (c.invasion.active) m.invasion.abattus += 1
-  ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy, brule: (e.bruleA ?? -1) > m.t })
+  ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy, brule: (e.bruleA ?? -1) > m.t, gele: (e.bruleA ?? -1) <= m.t && (e.geleA ?? -1) > m.t })
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
@@ -979,7 +997,12 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
       encaisser(c, m, v.x, v.y, I.morsure, ev)
     }
   } else direction = { x: -b.x / dp, y: -b.y / dp }
-  e.corps = voler(c, c.ennemi, b, dt, direction, m.detruits).vaisseau
+  // (GELÉ, il avance à une part de sa vitesse : son moteur et sa pointe baissent d'autant, et il est freiné tout de suite)
+  const gele = (e.geleA ?? -1) > m.t
+  const k = gele ? (e.ralenti ?? 1) : 1
+  e.corps = voler(c, gele ? { ...c.ennemi, poussee: c.ennemi.poussee * k, vitesseMax: c.ennemi.vitesseMax * k } : c.ennemi, b, dt, direction, m.detruits).vaisseau
+  const vit = Math.hypot(e.corps.vx, e.corps.vy)
+  if (gele && vit > c.ennemi.vitesseMax * k) e.corps = { ...e.corps, vx: (e.corps.vx * c.ennemi.vitesseMax * k) / vit, vy: (e.corps.vy * c.ennemi.vitesseMax * k) / vit }
   return []
 }
 
@@ -1333,6 +1356,36 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
       m.armesA[s.arme] = m.t + a.cadence
       ev.push({ type: 'scieRattrapee', x: s.x, y: s.y })
     }
+  }
+}
+
+/** LE GIVRE (voir `Arme.givre`) : la traînée semée derrière le vaisseau, les insectes qu'elle ralentit et ronge. */
+function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  m.givres = m.givres.filter((g) => m.t - g.nee < g.duree)
+  c.armes.forEach((a, i) => {
+    const gi = a.givre
+    if (gi === undefined || m.phase !== 'vol') return
+    // (DERRIÈRE LUI : à l'opposé de sa vitesse, au bord de la coque ; à l'arrêt, sous lui)
+    const vit = Math.hypot(v.vx, v.vy)
+    const x = vit > 5 ? v.x - (v.vx / vit) * c.rayon : v.x
+    const y = vit > 5 ? v.y - (v.vy / vit) * c.rayon : v.y
+    let derniere: Givre | undefined
+    for (const g of m.givres) if (g.arme === i) derniere = g
+    if (derniere !== undefined && Math.hypot(derniere.x - x, derniere.y - y) < gi.ecart) return
+    m.givres.push({ id: m.prochainId++, arme: i, x, y, nee: m.t, rayon: gi.rayon, duree: gi.duree, dps: gi.dps, ralenti: gi.ralenti })
+  })
+  if (m.givres.length === 0) return
+  for (const e of [...m.ennemis]) {
+    // (la plaque qui ralentit le plus, s'il y en a plusieurs ; ses dégâts une fois, pas une fois par plaque)
+    let pire: Givre | undefined
+    for (const g of m.givres) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + c.ennemi.rayon * 0.5 && (pire === undefined || g.ralenti < pire.ralenti)) pire = g
+    if (pire === undefined) continue
+    if ((e.geleA ?? -1) <= m.t) ev.push({ type: 'gele', id: e.id, x: e.corps.x, y: e.corps.y })
+    e.geleA = m.t + 0.25
+    e.ralenti = pire.ralenti
+    e.pv -= pire.dps * dt
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 }
 
@@ -1884,9 +1937,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, ev)
+  menerLeGivre(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

@@ -4143,3 +4143,32 @@ dernière décharge (`balise.periode`, `liens[].dechargeA`) — tous ceux qui so
 dessus perdent 8 points, elle s'éclaire, elle sonne (vérifié : 1,1 s dessus,
 trois coups).
 
+LE FRIMAS, CINQUIÈME VAISSEAU DU VORTEX (Keko, 15/11 : « un nouveau vaisseau
+dont la spécialité sera le givre, la glace, la congélation ; un style un peu
+différent, genre alien, une autre race extraterrestre, un peu exotique ; on
+commence avec une attaque qui laisse une traînée de givre derrière le vaisseau,
+qui ralentit et inflige des dégâts aux ennemis tant qu'ils restent dedans ») :
+`flotte.ts` (`frimas`, hors de la recherche, donné d'office au vortex comme les
+trois autres), `coque-8` (6 de blindage, 22 de poids), `propulseur-c3` (vif :
+poussée 0,8, pointe 1, nez 1,15 ; cran 3 pour son souffle ionique, bleu),
+`arme-givre`. LA SILHOUETTE (`formesDeLaCoque(8)`, `formesDuCroissant`,
+`GABARIT_DU_FRIMAS`) : un corps en goutte, pointe en avant, entre DEUX
+CROISSANTS de carapace qui partent de la queue et se referment devant le nez
+comme des pinces, trois épines de cristal sur chacun, une goutte de glace au
+bout ; trois chevrons de carapace sur le dos, un cœur de glace, un œil fendu de
+glace à la proue ; pas de tuyère de métal — le souffle froid sort de la pointe
+de la queue. Une matière nouvelle, `glace`. LA RÈGLE (`Arme.givre`,
+`Monde.givres`, `menerLeGivre`, `Ennemi.geleA`/`ralenti`, vérifiée) : en vol, il
+sème DERRIÈRE LUI (à l'opposé de sa vitesse) une plaque de givre de rayon 7 dès
+qu'il s'est éloigné de 5 de la dernière ; elle dure 3,5 s ; un insecte dedans
+avance à 35 % de sa vitesse (son moteur et sa pointe, et il est freiné tout de
+suite) et perd 6 points par seconde — une fois, pas une fois par plaque —, et le
+reste gelé 0,25 s après en être sorti ; mort gelé, il vole en éclats
+(`ennemiDetruit.gele`). LE DESSIN : chaque plaque une tache de glace bleue
+translucide, des petits flocons de la glace du dépôt (`snowflake` de
+`pixelfx/fx/ice/_lib`) qui scintillent, du givre blanc ; l'insecte gelé dans une
+gangue bleue ; l'éclatement, des morceaux de glace qui tournent. LES SONS :
+`gel` (un craquement et des tintements de cristal, un tous les dixièmes au plus)
+et `brise` (du verre qui se brise). Le nez suit le manche (on se fait suivre).
+*Chiffres de moi, à rejuger.*
+

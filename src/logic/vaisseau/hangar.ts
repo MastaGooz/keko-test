@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -138,6 +138,11 @@ export const PIECES: Piece[] = [
   // L'INGÉNIEUR (Keko, 15/11 : « quelque chose de mécanique, carré, qui pose des petites tours sur son passage ») : une
   // coque carrée, sans arme à elle ; elle pose des tourelles. Lent, solide. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-7', sorte: 'coque', cran: 7, nom: 'Coque d’ingénieur', dit: '7 de blindage, une soute à tourelles.', prix: 0, poids: 30, pv: 7, armes: 1, outils: 0, capacite: 20 },
+  // LE FRIMAS (Keko, 15/11 : « un vaisseau dont la spécialité sera le givre, la glace ; un style un peu différent,
+  // alien, d'une autre race extraterrestre, un peu exotique ») : une carapace en croissant, des cristaux ; sa poussée est
+  // un souffle froid (cran 3 : la flamme ionique). Vif, fragile. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'coque-8', sorte: 'coque', cran: 8, nom: 'Carapace du Frimas', dit: '6 de blindage, une carapace venue d’ailleurs, cerclée de deux croissants de cristal.', prix: 0, poids: 22, pv: 6, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-c3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Frimas', dit: 'Un souffle froid : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.15 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
@@ -157,6 +162,9 @@ export const PIECES: Piece[] = [
   // balises reliées, la ligne s'éclaire et tout ce qui est dessus prend un coup — un piège (les rivets d'abord, remplacés
   // le 15/11). *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-balises', sorte: 'arme', cran: 3, nom: 'Balises', dit: 'Il pose une balise sur son passage, toutes les 1,5 s au plus, six à la fois, qui vivent 35 s ; elles vont par trois, chaque trio un triangle, séparé des autres. Chaque fois qu’un insecte franchit la ligne entre deux balises reliées, elle s’éclaire : tout insecte dessus perd 8 points ; tant qu’il en reste dessus, elle redécharge toutes les 0,5 s.', note: 'Un piège : tracez-le sur le chemin des insectes.', prix: 30, poids: 6, arme: { id: 'balise', cadence: 0.7, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5 } } },
+  // LE GIVRE DU FRIMAS (Keko, 15/11) : une traînée de givre derrière le vaisseau, qui ralentit et ronge les insectes
+  // qui y restent. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'arme-givre', sorte: 'arme', cran: 1, nom: 'Traînée de givre', dit: 'Il sème derrière lui une traînée de givre qui dure 3,5 s : tout insecte dedans avance à un tiers de sa vitesse et perd 6 points par seconde.', note: 'Faites-vous suivre : ils s’engluent dans votre sillage.', prix: 30, poids: 5, arme: { id: 'givre', cadence: 0.1, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, givre: { ecart: 5, rayon: 7, duree: 3.5, dps: 6, ralenti: 0.35 } } },
   // LES MINI-MISSILES DU CHASSEUR, AFFICHÉS « MISSILES » (Keko, 15/11) : guidés, plus lents et moins forts que le canon sur une cible seule,
   // mais ils EXPLOSENT : tout insecte autour de l'impact y perd aussi. *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-minimissiles', sorte: 'arme', cran: 2, nom: 'Missiles', dit: 'Un missile guidé toutes les 1,6 s, 5 points, porte à 120 : il explose à l’impact et touche aussi, de 5 points, tout ce qui est à 18 autour.', note: 'Moins bon que le canon sur une cible seule, meilleur sur un groupe.', prix: 40, poids: 6, arme: { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18, degats: 5 } } },

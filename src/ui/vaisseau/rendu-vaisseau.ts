@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -52,6 +52,8 @@ const RAMPES: Record<Matiere, number[]> = {
   grenat: ['#16070f', '#35101e', '#571c2e', '#7e3042', '#ad5360', '#de908e'].map(hex),
   ambre: ['#2a1404', '#6a3608', '#c87214', '#ffb840', '#ffe49a', '#ffffff'].map(hex),
   violet: ['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'].map(hex),
+  // les CRISTAUX du Frimas : une glace bleue, presque blanche dans la lumière
+  glace: ['#151a3d', '#212f6b', '#2c58aa', '#3a8bd8', '#7ed4f8', '#e6fbff'].map(hex),
 }
 const CONTOUR = hex('#07050e')
 const BLANC = hex('#ffffff')
@@ -451,7 +453,10 @@ const GABARIT_DE_LA_SENTINELLE: Gabarit = { tuyeres: [], omni: { n: 8, rayon: 9.
 // L'INGÉNIEUR (Keko, 15/11 : « des formes assez carrées, qui dénotent avec les autres ») : un caisson, deux tuyères
 // carrées côte à côte à la poupe ; son arme est posée dans le monde
 const GABARIT_DE_L_INGENIEUR: Gabarit = { tuyeres: [{ x: 0.2, y: -2.8 }, { x: 0.2, y: 2.8 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.4, y: 7.6 }, verriere: 4.6, nez: 7.4, flanc: 7.6, anneau: 13, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : GABARIT_DE_SERIE)
+// LE FRIMAS (Keko, 15/11 : « alien, une autre race, un peu exotique ») : un corps en goutte entre deux croissants de
+// cristal qui se referment devant lui comme des pinces ; une seule tuyère, à la pointe de la queue, qui souffle froid
+const GABARIT_DU_FRIMAS: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: 7.1, y: 3.9 }, verriere: 4.2, nez: 7.6, flanc: 6.5, anneau: 12.5, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -586,6 +591,15 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran === 8) {
+    // LE FRIMAS, UNE CARAPACE D'AILLEURS : un corps en goutte, la pointe en avant ; trois chevrons de carapace sur le dos,
+    // comme les anneaux d'un insecte ; un CŒUR de glace au milieu ; un ŒIL fendu à la proue, de glace aussi
+    const f: Forme[] = [{ pts: [[7.6, 0], [5.6, -1.5], [2.6, -2.7], [-1, -3.3], [-4, -3.1], [-6.2, -2], [-7.1, 0], [-6.2, 2], [-4, 3.1], [-1, 3.3], [2.6, 2.7], [5.6, 1.5]], mat: 'coque', relief: 'cyl' }]
+    for (const x of [-2.4, -4.2, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.3, -2.1 + (x + 6) * 0.15], [x - 1.1, -2 + (x + 6) * 0.15], [x - 0.1, 0], [x - 1.1, 2 - (x + 6) * 0.15], [x - 0.3, 2.1 - (x + 6) * 0.15]], mat: 'blinde', relief: 'plat' })
+    f.push({ pts: ovale(0.2, 0, 1.6, 1.6, 14), mat: 'glace', relief: 'dome', dome: { x: 0.2, y: 0, rx: 1.6, ry: 1.6 } })
+    f.push({ pts: [[5.8, 0], [4.6, -0.8], [3, -0.6], [2.6, 0], [3, 0.6], [4.6, 0.8]], mat: 'glace', relief: 'dome', dome: { x: 4.2, y: 0, rx: 1.7, ry: 0.8 } })
+    return f
+  }
   if (cran === 7) {
     // L'INGÉNIEUR, UN CAISSON (Keko, 15/11 : « mécanique, carré ») : une coque rectangulaire aux coins coupés ; une cabine
     // carrée vitrée à la proue ; la SOUTE À TOURELLES sur le dos, trois modules carrés rangés ; des plaques boulonnées
@@ -666,8 +680,48 @@ export function formesDeLaCoque(cran: number): Forme[] {
   return f
 }
 /** LES AILES, deux plaques penchées, le bout rouge — le cuirassé, lui, a deux longs bords d'armement. */
+/**
+ * UN CROISSANT DU FRIMAS (côté `sg`) : une corne courbe qui part de la queue, s'écarte du corps et se referme devant le
+ * nez, épaisse au milieu, effilée aux deux bouts — et trois épines de cristal sur son bord extérieur.
+ */
+function formesDuCroissant(sg: number): Forme[] {
+  const R = 8.6
+  const cx = -0.5
+  const d0 = 25
+  const d1 = 160
+  const ext: [number, number][] = []
+  const int: [number, number][] = []
+  for (let d = d0; d <= d1; d += 9) {
+    const a = (d * Math.PI) / 180
+    const w = 0.2 + 2.3 * Math.sin((Math.PI * (d - d0)) / (d1 - d0))
+    ext.push([cx + Math.cos(a) * R, sg * Math.sin(a) * R])
+    int.unshift([cx + Math.cos(a) * (R - w), sg * Math.sin(a) * (R - w)])
+  }
+  const f: Forme[] = [{ pts: [...ext, ...int], mat: 'aile', relief: 'plat', penche: sg }]
+  // (DEUX NERVURES FINES ET COURBES le tiennent au corps — une barre droite faisait trop « humain »)
+  f.push({ pts: [[1.4, sg * 2.6], [0.9, sg * 4.4], [-0.2, sg * 6.9], [-1.3, sg * 6.9], [-0.3, sg * 4.4], [0.2, sg * 2.8]], mat: 'blinde', relief: 'plat', penche: sg })
+  f.push({ pts: [[-3.6, sg * 3], [-4.6, sg * 4.2], [-5.8, sg * 5.6], [-6.7, sg * 5.3], [-5.4, sg * 3.9], [-4.6, sg * 2.8]], mat: 'blinde', relief: 'plat', penche: sg })
+  for (const d of [62, 95, 128]) {
+    const a = (d * Math.PI) / 180
+    const ux = Math.cos(a)
+    const uy = Math.sin(a)
+    const b0 = [cx + Math.cos(a - 0.09) * (R - 0.3), sg * Math.sin(a - 0.09) * (R - 0.3)] as [number, number]
+    const b1 = [cx + Math.cos(a + 0.09) * (R - 0.3), sg * Math.sin(a + 0.09) * (R - 0.3)] as [number, number]
+    const pointe = [cx + ux * (R + 1.9), sg * uy * (R + 1.9)] as [number, number]
+    f.push({ pts: [b0, pointe, b1], mat: 'glace', relief: 'plat', penche: sg })
+  }
+  // (le bout de la corne, devant : une goutte de glace)
+  const at = (d0 * Math.PI) / 180
+  f.push({ pts: ovale(cx + Math.cos(at) * (R - 0.4), sg * Math.sin(at) * (R - 0.4), 0.7, 0.7, 8), mat: 'glace', relief: 'dome', dome: { x: cx + Math.cos(at) * (R - 0.4), y: sg * Math.sin(at) * (R - 0.4), rx: 0.7, ry: 0.7 } })
+  return f
+}
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque === 8) {
+    // (le frimas : PAS D'AILES — deux CROISSANTS de carapace qui se referment devant lui)
+    for (const sg of [-1, 1]) f.push(...formesDuCroissant(sg))
+    return f
+  }
   if (coque === 7) {
     // (l'ingénieur : PAS D'AILES — deux CAISSONS latéraux, plaques d'acier rayées de jaune et de noir, comme un engin de
     // chantier)
@@ -808,7 +862,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [
@@ -864,7 +918,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (sous les ailes pour un chasseur ; sur le pont, par-dessus tout, pour un cuirassé)
   if (!g.surLePont) f.push(...armes)
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
-  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie), tu.x, tu.y))
+  // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
+  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => a.coque !== 8 || x.relief === 'emis'), tu.x, tu.y))
   // (une soucoupe : ses petites tuyères tout autour, sous l'anneau ; leurs jets sont dessinés par la page)
   if (g.omni !== undefined) for (let k = 0; k < g.omni.n; k++) f.unshift(...formesDeLaTuyereOmni(g.omni, k))
   // (la flamme doit passer SOUS la coque : on la met en tête)

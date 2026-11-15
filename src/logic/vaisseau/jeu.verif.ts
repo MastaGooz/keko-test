@@ -1315,5 +1315,41 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
   verifier('personne entre elles (un insecte dans l’axe, mais au-delà) : la ligne ne s’éclaire pas', !ev4.some((e) => e.type === 'ligne') && w4.ennemis[0].pv === 1000)
 }
+// LE GIVRE DU FRIMAS (Keko, 15/11) : une traînée derrière le vaisseau, qui ralentit et ronge les insectes dedans
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const givre = { id: 'givre', cadence: 0.1, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, givre: { ecart: 5, rayon: 7, duree: 3, dps: 6, ralenti: 0.35 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [givre], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  // (en volant vers la droite : des plaques espacées, toutes DERRIÈRE lui ; elles s'éteignent au bout de leur durée)
+  const w = nouveauMonde(cfg, 3)
+  for (let i = 0; i < 90; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 1, y: 0 })
+  const derriere = w.givres.every((g) => g.x < w.vaisseau.x)
+  const espacees = w.givres.every((g, k) => k === 0 || Math.hypot(g.x - w.givres[k - 1].x, g.y - w.givres[k - 1].y) >= 5)
+  verifier('en vol, il sème une traînée de givre derrière lui, des plaques espacées', w.givres.length > 5 && derriere && espacees)
+  w.vaisseau = { ...w.vaisseau, vx: 0, vy: 0 } // (le vide freine à peine : on l'arrête net)
+  for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier('arrêté, il ne sème plus ; les plaques s’éteignent au bout de leur durée', w.givres.length <= 1)
+  // (un insecte tenu dans une plaque : il perd ses points par seconde et il est gelé ; un autre, à côté, rien)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.armesA[0] = 0
+  w2.givres.push({ id: 900, arme: 0, x: 100, y: 0, nee: 0, rayon: 7, duree: 1e9, dps: 6, ralenti: 0.35 })
+  w2.ennemis.push(insecte(1, 100, 0), insecte(2, 100, 40))
+  const ev2: Evenement[] = []
+  for (let i = 0; i < 60; i++) {
+    w2.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: 100, y: [0, 40][k], vx: 0, vy: 0 }))
+    ev2.push(...avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  verifier('un insecte dans le givre perd ses points par seconde et il est gelé (une fois annoncé) ; à côté, rien', Math.abs(1000 - w2.ennemis[0].pv - 6) < 0.2 && (w2.ennemis[0].geleA ?? 0) > w2.t && ev2.filter((e) => e.type === 'gele').length === 1 && w2.ennemis[1].pv === 1000 && (w2.ennemis[1].geleA ?? 0) < w2.t)
+  // (L'INVASION : deux insectes marchent vers le portail, l'un dans le givre — il avance bien moins vite)
+  const cfgI = { ...cfg, invasion: { ...VAISSEAU.invasion, active: true } }
+  const w3 = nouveauMonde(cfgI, 3)
+  w3.invasion.prochainA = 1e9
+  w3.vaisseau = { ...w3.vaisseau, x: -2000, y: 0 }
+  w3.givres.push({ id: 900, arme: 0, x: 300, y: 0, nee: 0, rayon: 40, duree: 1e9, dps: 0, ralenti: 0.35 })
+  w3.ennemis.push(insecte(1, 300, 0), insecte(2, 0, 300))
+  for (let i = 0; i < 90; i++) avancerLeMonde(cfgI, w3, 1 / 60, { x: 0, y: 0 })
+  const fait = [300 - Math.hypot(w3.ennemis[0].corps.x, w3.ennemis[0].corps.y), 300 - Math.hypot(w3.ennemis[1].corps.x, w3.ennemis[1].corps.y)]
+  verifier('gelé, un insecte avance bien moins vite vers le portail', fait[1] > 10 && fait[0] < fait[1] * 0.5)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

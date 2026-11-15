@@ -103,6 +103,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LE FRIMAS (Keko, 15/11) : le vaisseau du givre, d'une autre race — une carapace en croissant, des cristaux
+    id: 'frimas',
+    nom: 'Frimas',
+    classe: 'chasseur',
+    dit: 'Venu d’ailleurs, le vaisseau du givre : il sème derrière lui une traînée de glace où les insectes s’engluent et gèlent.',
+    pieces: ['coque-8', 'propulseur-c3', 'arme-givre'],
+    serie: { possedees: ['coque-8', 'propulseur-c3', 'arme-givre'], montees: { coque: 'coque-8', propulseur: 'propulseur-c3' }, outils: [], armes: ['arme-givre'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',
