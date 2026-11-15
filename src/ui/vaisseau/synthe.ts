@@ -558,6 +558,19 @@ const RECETTES = {
       souffle(m, h, 0.02, 0.35, 0, { f: 5000, glisse: { vers: 2600, en: 0.35 }, q: 2, bande: true, a: 0.01, d: 0.35 })
     },
   },
+  /**
+   * UNE TORNADE DE GIVRE SE LÈVE : le vent qui monte — un souffle filtré qui enfle et tourne d'une oreille à l'autre,
+   * son sifflement qui monte, quelques tintements de glace emportés
+   */
+  tornade: {
+    duree: 1.4, niveau: 0.22, salle: [0.4, 0.16], variantes: 2,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.8, -0.6, { f: 500, glisse: { vers: 1400, en: 0.7, droit: true }, q: 1.2, bande: true, a: 0.25, d: 0.9, large: true })
+      souffle(m, h, 0.15, 0.6, 0.6, { f: 900, glisse: { vers: 2200, en: 0.7, droit: true }, q: 2.2, bande: true, a: 0.2, d: 0.8 })
+      note(m, 0.1, 0.18, 0, { f: 700, glisse: { vers: 1300, en: 0.8, droit: true }, a: 0.2, d: 0.8, battement: 6 })
+      for (let k = 0; k < 4; k++) note(m, 0.3 + k * 0.15 + 0.05 * h.next(), 0.18, (h.next() - 0.5) * 0.9, { f: 2600 + 1500 * h.next(), a: 0.001, d: 0.12, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
   /** UN INSECTE GELÉ VOLE EN ÉCLATS : du verre qui se brise — un claquement, une pluie de tintements, un coup sourd */
   brise: {
     duree: 0.8, niveau: 0.24, salle: [0.35, 0.14], variantes: 3,

@@ -1355,7 +1355,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // à portée ; ce qu'ils touchent est gelé
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const eclats = { id: 'eclats', cadence: 1.6, degats: 4, portee: 70, vitesse: 160, vie: 0.45, dispersion: 0, guide: false, salve: { nombre: 8 }, gel: { duree: 1.5, ralenti: 0.5 } }
+  const eclats = { id: 'eclats', cadence: 1.6, degats: 4, portee: 70, vitesse: 160, vie: 0.45, dispersion: 0, guide: false, salve: { nombre: 8, perce: true }, gel: { duree: 1.5, ralenti: 0.5 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [eclats], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const w = nouveauMonde(cfg, 3)
   w.ennemis.push(insecte(1, 0, -40))
@@ -1378,6 +1378,49 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     ev2.push(...avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements)
   }
   verifier('personne à portée : pas de salve', !ev2.some((e) => e.type === 'salve') && w2.obus.length === 0)
+  // (LA COURONNE S'ORIENTE, LES ÉCLATS TRAVERSENT : deux insectes en ligne, hors des huit directions du nez — le premier
+  // éclat part vers le plus proche, les touche tous les deux)
+  const w3 = nouveauMonde(cfg, 3)
+  const pl: [number, number][] = [[22, -14], [44, -28]]
+  pl.forEach(([x, y], k) => w3.ennemis.push(insecte(k + 1, x, y)))
+  for (let i = 0; i < 40; i++) {
+    w3.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: pl[k][0], y: pl[k][1], vx: 0, vy: 0 }))
+    avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
+  }
+  verifier('la couronne s’oriente sur le plus proche, et l’éclat traverse : les deux insectes en ligne sont touchés et gelés, une fois chacun', w3.ennemis.every((e) => 1000 - e.pv === 4 && (e.geleA ?? 0) > w3.t))
+}
+
+// LA TORNADE DE GIVRE DU FRIMAS (Keko, 15/11) : elle part du vaisseau, suit les insectes, gèle et ronge ce qui est dedans,
+// et s'éteint au bout de sa durée
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const tornade = { id: 'tornade', cadence: 6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, tornade: { vitesse: 50, virage: 3, duree: 4.5, rayon: 14, dps: 8, ralenti: 0.4 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [tornade], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 60, 50))
+  const ev: Evenement[] = []
+  let surLui = false
+  for (let i = 0; i < 60 * 5; i++) {
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 60, y: 50, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    if (w.tornades.length > 0 && Math.hypot(w.tornades[0].x - 60, w.tornades[0].y - 50) < 8) surLui = true
+  }
+  verifier('une tornade part du vaisseau, rejoint l’insecte, le gèle et le ronge, puis s’éteint au bout de sa durée', ev.filter((e) => e.type === 'tornade').length === 1 && surLui && w.ennemis[0].pv < 1000 - 8 * 2 && ev.some((e) => e.type === 'gele') && ev.some((e) => e.type === 'tornadeFinie') && w.tornades.length === 0)
+  // (elle SUIT : l'insecte bouge, elle le rattrape là où il est)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.ennemis.push(insecte(1, 50, 0))
+  let pres = Infinity
+  for (let i = 0; i < 60 * 4; i++) {
+    const ey = Math.min(80, (i / 60) * 30)
+    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 50, y: ey, vx: 0, vy: 30 }
+    avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+    if (i > 150 && w2.tornades.length > 0) pres = Math.min(pres, Math.hypot(w2.tornades[0].x - 50, w2.tornades[0].y - ey))
+  }
+  verifier('elle suit l’insecte qui bouge', pres < 10)
+  const w3 = nouveauMonde(cfg, 3)
+  w3.ennemis.push(insecte(1, 0, -300))
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
+  verifier('personne à portée : pas de tornade', w3.tornades.length === 0)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

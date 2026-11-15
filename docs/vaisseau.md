@@ -4186,3 +4186,25 @@ couronne d'étincelles froides au départ ; le son `eclats` (un claquement, une
 gerbe de tintements d'une oreille à l'autre), annoncé en avance comme un tir.
 *Chiffres de moi, à rejuger.*
 
+PUIS LES ÉCLATS ORIENTÉS ET QUI TRAVERSENT (Keko, 15/11 : « c'est super
+faible : j'ai de la chance si un seul éclat de glace touche l'ennemi » — à 40,
+deux éclats voisins sont à 31 l'un de l'autre, un insecte en fait 10 ; on essaie
+« la couronne s'oriente » et « les éclats traversent ») : le premier éclat part
+vers la cible (la verrouillée à portée, sinon la plus proche) — un coup sûr par
+salve — et chaque éclat touche tout ce qu'il croise, une fois chacun
+(`salve.perce`, `Obus.perce`, vérifié).
+
+LA TORNADE DE GIVRE, TROISIÈME ARME DU FRIMAS (Keko, 15/11 : « une tornade de
+givre qui part du vaisseau et qui suit automatiquement les ennemis, et disparaît
+au bout d'un certain temps ; elle crée une petite zone dans laquelle les ennemis
+sont ralentis et prennent des dégâts tant qu'ils sont dedans ») :
+`Arme.tornade`, `Monde.tornades`, `menerLesTornades` (vérifié). Toutes les 6 s,
+un insecte à moins de 120, elle part du vaisseau vers lui, file à 50 vers
+l'insecte le plus proche d'ELLE (le verrouillé d'abord) en virant de 3 par
+seconde, ralentit sur lui pour ne pas le dépasser ; elle vit 4,5 s. Tout insecte
+dans son tourbillon (14) avance à 40 % et perd 8 points par seconde (le même
+`geler` que le givre). Vue de dessus : une tache de givre, trois bras de neige
+qui tournent en spirale vers un œil blanc, des flocons qui gravitent ; elle
+s'ouvre en naissant, se resserre en s'éteignant (une gerbe de flocons). Son son,
+`tornade` (le vent qui se lève). *Chiffres de moi, à rejuger.*
+
