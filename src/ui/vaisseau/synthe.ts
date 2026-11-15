@@ -414,21 +414,34 @@ const RECETTES = {
       note(m, 0, 0.45, pan, { f: f / 2, glisse: { vers: 140, en: 0.12 }, a: 0.003, d: 0.13 })
     },
   },
-  /** UN MINI-MISSILE PART : un « fssht » — un souffle qui monte vite —, un petit coup sourd au lancement */
+  /**
+   * UN MISSILE PART, SON MOTEUR S'ALLUME (Keko, 15/11 : « un truc qui évoque la propulsion d'un missile, qui s'allume et
+   * qui se lance » — le « fssht » d'avant était trop court et trop aigu) : l'ALLUMAGE — un claquement sec et un petit
+   * coup sourd —, puis LA POUSSÉE — un souffle grave et rugueux qui enfle en 40 ms, gronde, et s'éloigne en glissant
+   * vers le bas —, et un grondement sous lui
+   */
   minimissile: {
-    duree: 0.4, niveau: 0.16, salle: [0.25, 0.1], variantes: 3,
+    duree: 0.7, niveau: 0.2, salle: [0.3, 0.12], variantes: 3,
     faire: (m, h) => {
-      souffle(m, h, 0, 1, (h.next() - 0.5) * 0.5, { f: 600, glisse: { vers: 2600, en: 0.16, droit: true }, q: 1.3, bande: true, a: 0.01, d: 0.16 })
-      note(m, 0, 0.4, 0, { f: 140, glisse: { vers: 90, en: 0.04 }, a: 0.002, d: 0.05 })
+      const pan = (h.next() - 0.5) * 0.5
+      souffle(m, h, 0, 0.6, pan, { f: 3000, q: 1.5, bande: true, a: 0.001, d: 0.02 })
+      note(m, 0, 0.5, 0, { f: 160, glisse: { vers: 90, en: 0.03 }, a: 0.001, d: 0.05 })
+      souffle(m, h, 0.015, 1, pan, { f: 900, glisse: { vers: 420, en: 0.4 }, q: 0.9, bande: true, a: 0.04, d: 0.42, large: true })
+      souffle(m, h, 0.015, 0.45, pan, { f: 2200, glisse: { vers: 1100, en: 0.3 }, q: 1.2, bande: true, a: 0.03, d: 0.2 })
+      note(m, 0.015, 0.35, 0, { f: 70, glisse: { vers: 52, en: 0.35 }, a: 0.04, d: 0.35, partiels: CORPS, sature: 1.3 })
     },
   },
-  /** UN MINI-MISSILE EXPLOSE : un « boum » court et rond, un souffle qui retombe, quelques crépitements */
+  /**
+   * UN MISSILE EXPLOSE : un « boum » GRAVE (Keko, 15/11 : « un petit peu plus grave ») — un coup sourd qui tombe de 80 à
+   * 32 Hz, un souffle bas qui retombe, quelques crépitements
+   */
   explosionMini: {
-    duree: 0.8, niveau: 0.3, salle: [0.35, 0.14], variantes: 3,
+    duree: 0.9, niveau: 0.34, salle: [0.4, 0.16], variantes: 3,
     faire: (m, h) => {
-      note(m, 0, 1, 0, { f: 120, glisse: { vers: 48, en: 0.12 }, a: 0.002, d: 0.2, partiels: CORPS, sature: 1.5 })
-      souffle(m, h, 0, 0.8, 0, { f: 1600, glisse: { vers: 280, en: 0.18 }, q: 1.1, bande: true, a: 0.002, d: 0.26, large: true })
-      eclats(m, h, 5, 0.04, 0.3, 0.3)
+      note(m, 0, 1, 0, { f: 80, glisse: { vers: 32, en: 0.16 }, a: 0.002, d: 0.26, partiels: CORPS, sature: 1.7 })
+      note(m, 0, 0.5, 0, { f: 48, glisse: { vers: 28, en: 0.2 }, a: 0.003, d: 0.3 })
+      souffle(m, h, 0, 0.75, 0, { f: 900, glisse: { vers: 150, en: 0.22 }, q: 1, bande: true, a: 0.002, d: 0.32, large: true })
+      eclats(m, h, 4, 0.05, 0.35, 0.22)
     },
   },
   /** UNE TOURELLE TIRE : un « tac » mécanique, sec, un petit coup sourd dessous — pas un laser */

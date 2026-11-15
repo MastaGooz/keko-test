@@ -3953,3 +3953,5 @@ mono-cible, mais plus efficace sur un groupe d'ennemis proches ».
 Puis (Keko, 15/11) : l'onde de l'explosion est plus petite (aux deux tiers du rayon de la zone — la zone de dégâts, elle, reste à 18) ; et plus de feu à l'impact : seize flammes plus grosses qui roulent, décalées de quelques centièmes, la moitié fumant en s'éteignant. (Le grand cercle venait de l'« éclair » des chocs, réutilisé, dont l'anneau s'ouvre jusqu'à presque trois fois son rayon : retiré, remplacé par une lueur chaude au cœur.)
 
 Puis (Keko, 15/11) : l'onde revient À LA TAILLE DE LA ZONE (« trop réduite » aux deux tiers) ; et les mini-missiles s'appellent « MISSILES » — les gros missiles verrouillés du Nova Drifter ne paraissent plus dans le panneau des armes du vortex.
+
+Puis LEURS SONS (Keko, 15/11) : le départ évoque UN MOTEUR QUI S'ALLUME ET SE LANCE — un claquement d'allumage, puis une poussée grave et rugueuse qui enfle, gronde et s'éloigne en glissant vers le bas, un grondement dessous ; l'explosion est PLUS GRAVE — un coup sourd de 80 à 32 Hz, une sous-basse, un souffle bas.
