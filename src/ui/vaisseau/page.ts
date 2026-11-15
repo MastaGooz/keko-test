@@ -980,13 +980,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * symbole : juste le chiffre du niveau, en prévoyant qu'il peut aller jusqu'à trois chiffres ») : le niveau à
    * gauche, dans la place de trois chiffres, puis la barre ; elle s'allume à chaque pépite, flambe au niveau gagné.
    */
+  /**
+   * LE MÉDAILLON DU NIVEAU (Keko, 15/11 : « intégrer un peu mieux le chiffre dans la barre d'XP, pour donner une
+   * cohérence à l'ensemble ; là, on dirait deux choses séparées ») : une plaque cernée d'encre comme la barre, liserée de
+   * cristal, SOUDÉE à son bout — la barre en sort ; le chiffre dedans, dans la teinte de la barre (plus l'or du blindage).
+   * Il bondit et blanchit au passage d'un niveau, avec elle.
+   */
+  function dessinerLeMedaillon(p: Peintre, x: number, y: number, w: number, h: number, niveau: number, G: number): void {
+    const neuf = t - niveauA < 0.8
+    const encre = neuf ? N.WHITE : MATIERES.encre.contour
+    // (les coins coupés d'un pixel)
+    p.rect(x + 1, y, w - 2, h, encre)
+    p.rect(x, y + 1, w, h - 2, encre)
+    p.rect(x + 1, y + 1, w - 2, h - 2, TEINTES_MINERAI.cristal[1])
+    p.rect(x + 2, y + 2, w - 4, h - 4, N.hex('#16202f'))
+    p.rect(x + 2, y + 2, w - 4, 1, N.hex('#2f3b58'))
+    const dit = String(niveau)
+    const saut = neuf ? Math.round(-2 * G * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0
+    motEnRelief(p, dit, x + w / 2, y + Math.round((h - 7 * G) / 2) + saut, 'cristal', GRAS, null, G) // (centré sur ses capitales : sept rangées)
+    if (neuf) p.glow(x + w / 2, y + h / 2, w, XP[2], 0.6 * (1 - (t - niveauA) / 0.8))
+  }
   function dessinerLExperience(p: Peintre, x: number, y: number, large: number): void {
     const inv = m.invasion
     const wn = largeurDe('000', GRAS)
     const neuf = t - niveauA < 0.8
-    motEnRelief(p, String(inv.niveau), x + wn - largeurDe(String(inv.niveau), GRAS) / 2, y + (neuf ? Math.round(-2 * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true)
-    const bx = x + wn + 4
-    const bw = large - wn - 4
+    // (le médaillon, à gauche, plus haut que la barre de trois pixels de chaque côté ; la barre sort de son flanc droit)
+    const wm = Math.max(15, largeurDe(String(inv.niveau), GRAS) + 8)
+    dessinerLeMedaillon(p, x + wn + 3 - wm, y - 3, wm, 13, inv.niveau, 1)
+    const bx = x + wn + 3
+    const bw = large - wn - 3
     const part = Math.max(0, Math.min(1, inv.xp / xpDuNiveau(CONF, inv.niveau)))
     const allume = t - xpA < 0.15
     p.rect(bx - 1, y, bw + 2, 7, neuf ? N.WHITE : MATIERES.encre.contour)
@@ -1007,10 +1029,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLExperienceDebout(p: Peintre, axe: number, y: number, G = 1): void {
     const inv = m.invasion
     const neuf = t - niveauA < 0.8
-    motEnRelief(p, String(inv.niveau), axe, y + (neuf ? Math.round(-2 * G * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0), true, GRAS, null, G)
     const lw = 8
     const bx = axe - lw / 2
-    const by = y + 12 * G
+    // (le médaillon en tête ; la barre sort de son pied)
+    const wm = Math.max(lw + 8, (largeurDe(String(inv.niveau), GRAS) + 6) * G + 2)
+    const hm = 11 * G + 4
+    dessinerLeMedaillon(p, Math.round(axe - wm / 2), y - 2, wm, hm, inv.niveau, G)
+    const by = y - 2 + hm
     // (elle s'arrête AU MILIEU DE L'ÉCRAN — Keko, 14/11 : « qu'elle ne descende pas plus loin que la moitié »)
     const bh = Math.max(20, Math.round(H / 2) - by)
     const part = Math.max(0, Math.min(1, inv.xp / xpDuNiveau(CONF, inv.niveau)))
@@ -1661,13 +1686,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * entre le jaune et le marron est trop fort, le marron est trop foncé ») : le haut lit n'est plus un filet presque
    * blanc mais le ton clair du dégradé, et le bas du dégradé comme le dessous sont remontés d'un brun sombre à un ocre.
    */
-  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire' | 'violet', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
+  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire' | 'violet' | 'cristal', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
     const mot = spell(s, f) as { letters: { g: unknown; x: number }[]; w: number }
     const e = echelle
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - (mot.w * e) / 2) + L.x * e, y: Math.round(y) - decalage(f) * e, sx: e, sy: e }))
     // (« ivoire » : la lettre des plaques d'en-tête — un ivoire éclairé d'en haut, ombré de bronze dessous)
     // (« violet » : la vie du portail, dans la lettre et le relief des titres d'or, aux teintes du vortex)
-    const st = or === 'violet'
+    // (« cristal » : le niveau, aux teintes de la barre d'expérience)
+    const st = or === 'cristal'
+      ? { fill: [TEINTES_MINERAI.cristal[1], TEINTES_MINERAI.cristal[2], TEINTES_MINERAI.cristal[3]], edge: TEINTES_MINERAI.cristal[3], under: TEINTES_MINERAI.cristal[0], outline: N.hex('#04120e'), shadow: 0 }
+      : or === 'violet'
       ? { fill: [N.hex('#7330d0'), N.hex('#a35cff'), N.hex('#cf9bff')], edge: N.hex('#f1dcff'), under: N.hex('#481b8c'), outline: N.hex('#12081f'), shadow: 0 }
       : or === 'ivoire'
       ? { fill: [N.hex('#c9b98c'), N.hex('#efe2b8'), N.hex('#fff7d6')], edge: N.WHITE, under: N.hex('#8f7d54'), outline: N.hex('#0b0d16'), shadow: 0 }

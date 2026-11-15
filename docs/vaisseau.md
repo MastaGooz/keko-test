@@ -3762,3 +3762,5 @@ déverrouillé et on reprend la cible de l'ennemi le plus proche ».
 SUR PC (Keko, 15/11) : abattu dans le jeu du vortex, une touche de déplacement ne relance plus une partie neuve (le clavier ne démarre plus rien tant qu'une partie est en cours : le retour attend sa pénalité, la fin attend « Rejouer ») ; et E va à droite comme D, puisque A va à gauche comme Q.
 
 SUR PC (Keko, 15/11) : les coins du verrou plus épais (deux pixels, des branches de six) et les flèches du bord (le portail, les vagues) une fois et demie plus grosses — le fer est tracé pixel par pixel, ses pixels restent entiers. Grossies, elles restent EN DEÇÀ des colonnes d'interface (elles mordaient la barre de vie).
+
+LE MÉDAILLON DU NIVEAU (Keko, 15/11 : « intégrer un peu mieux le chiffre dans la barre d'XP ; là, on dirait deux choses séparées ») : le chiffre est dans une plaque cernée d'encre comme la barre, liserée de cristal, SOUDÉE à son bout — debout, en tête, la barre sort de son pied ; couché, à gauche, elle sort de son flanc —, dans la teinte de la barre (`motEnRelief(…, 'cristal')`) au lieu de l'or du blindage (`dessinerLeMedaillon`).
