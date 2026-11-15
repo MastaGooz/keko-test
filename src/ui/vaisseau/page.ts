@@ -396,6 +396,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const PC = typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches && parametres.get('couvre') !== '0'
   const doitCouvrir = (): boolean => PC && enJeu && !ecranVisible()
   let couvreApplique = false
+  /** De combien le tampon de l'interface dépasse la vue de référence (sur PC : elle est dessinée plus fin) ; et ce qu'un de ses pixels vaut à l'écran, au plus. */
+  let echelleUI = 1
+  const PIXEL_D_INTERFACE_SUR_PC = 3
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
@@ -671,8 +674,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         w = VW
         h = Math.min(640, Math.round(VW / r))
       }
+      // L'INTERFACE EST DESSINÉE PLUS FIN SUR PC (Keko, 15/11 : « sur téléphone c'est la bonne échelle, mais sur PC
+      // l'interface est dessinée beaucoup trop gros ») : son tampon est plus grand que la vue de référence — un pixel
+      // d'interface vaut TROIS pixels d'écran au plus, au lieu de cinq ou six — ; le monde, lui, garde son tampon à
+      // lui, à l'échelle du jeu (`champApplique` en tient compte).
+      echelleUI = Math.max(1, large / w / PIXEL_D_INTERFACE_SUR_PC)
+      w = Math.round(w * echelleUI)
+      h = Math.round(h * echelleUI)
       zoom = large / w
-    }
+    } else echelleUI = 1
     if (h !== H || w !== W || canvas.height !== h || canvas.width !== w) {
       W = w
       H = h
@@ -684,7 +694,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     canvas.style.width = `${W * zoom}px`
     canvas.style.height = `${H * zoom}px`
     // (le champ de vision : LE TAMPON DU MONDE grandit, l'écran qu'il couvre ne change pas ; celui de l'interface ne bouge pas)
-    champApplique = champDuMoment()
+    champApplique = champDuMoment() / echelleUI
     const wm = Math.round(W * champApplique)
     const hm = Math.round(H * champApplique)
     if (frameMonde.w !== wm || frameMonde.h !== hm) {
@@ -1059,8 +1069,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const inv = m.invasion
     // (À NEUF PIXELS DES BORDS, les deux blocs rapprochés l'un de l'autre — Keko, 14/11 : « qu'ils s'éloignent des bords »)
     const MARGE = 9
-    const x0 = paysage ? Math.max(MARGE, bandeCote() + MARGE) : MARGE
-    const droite = paysage ? W - Math.max(MARGE, bandeCote() + MARGE) : W - MARGE
+    const x0 = paysage ? Math.max(MARGE, largeurDeBande() + MARGE) : MARGE
+    const droite = paysage ? W - Math.max(MARGE, largeurDeBande() + MARGE) : W - MARGE
     const y = paysage ? 4 : hautDuHud() - RANG_DE_L_EXPERIENCE + 1
     // DANS LE BANDEAU NOIR DE GAUCHE, quand il y en a un (Keko, 14/11 : « tout bien réfléchi, le portail avec son
     // pourcentage tout en haut à gauche de l'écran, si possible dans la bande noire comme la vie ; et en dessous,
@@ -1068,7 +1078,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // d'en face — l'icône, son pour cent dessous, le niveau, puis la barre debout, qui se remplit par le bas.
     const enBande = interfaceEnBande()
     // l'icône : un petit vortex — un anneau violet, son puits sombre, deux bras clairs qui tournent
-    const axe = Math.round(bandeCote() / 2)
+    const axe = Math.round(largeurDeBande() / 2)
     const cx = enBande ? axe : x0 + 5
     const cy = enBande ? 10 : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
@@ -6064,7 +6074,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const vueH = (): number => (couvreApplique ? H : Math.round((paysage ? 180 : VUE_PORTRAIT) * champDeLaVue))
   const bandeCote = (): number => (paysage && !couvreApplique ? Math.max(0, Math.floor((W - Math.round(320 * champDeLaVue)) / 2)) : 0)
   /** L'interface du vol est dans les bandeaux de côté (couché, et s'ils sont assez larges) : la vue est alors libre. */
-  const interfaceEnBande = (): boolean => paysage && bandeCote() >= 30
+  /**
+   * LA LARGEUR DE LA COLONNE D'INTERFACE, de chaque côté : le bandeau noir du téléphone couché — ou, SUR PC, où le jeu
+   * couvre la page, une colonne de même largeur posée SUR le jeu (Keko, 15/11 : « il faudrait que l'interface sur PC
+   * suive la même disposition que sur téléphone en paysage : les barres sur le côté »).
+   */
+  const largeurDeBande = (): number => (couvreApplique && paysage ? 36 : bandeCote())
+  const interfaceEnBande = (): boolean => paysage && largeurDeBande() >= 30
   /**
    * Le partage du surplus : LE HAUT D'ABORD, jusqu'à la hauteur de l'interface (la soute et le porté tiennent alors
    * entiers dans leur bandeau, la limite de la vue ne les coupe pas — Keko : « la ligne tombe sur le conteneur de la
@@ -6427,7 +6443,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     refusVu = refus
     // (LE MOT NE MONTE PAS — Keko : « mets juste le texte à son emplacement direct » : posé sous la plaque de soute, à
     // la place des pastilles, une seconde et quelque)
-    if (t - soutePleineDiteA < 1.3) ecrire(p, 'Soute pleine', enBande ? bandeCote() + 4 : suivante + 2, enBande ? yHud + 2 : yPastilles + 3, ROUGE[5], { police: GRAS, contour: NUIT_OMBRE })
+    if (t - soutePleineDiteA < 1.3) ecrire(p, 'Soute pleine', enBande ? largeurDeBande() + 4 : suivante + 2, enBande ? yHud + 2 : yPastilles + 3, ROUGE[5], { police: GRAS, contour: NUIT_OMBRE })
     // LA SOUTE EST UN BOUTON, ET ÇA SE VOIT : une plaque d'acier EN RELIEF sur le pupitre — elle s'enfonce sous le doigt —
     // avec, soudée à son bout droit, UNE TOUCHE D'OR au chevron sombre : la même touche que le retour des pages du
     // hangar, la langue de ce qui se tape. Dessus : « Soute », ce qu'on porte sur ce qu'on peut (en relief ivoire, rouge
@@ -6463,7 +6479,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (enBande) {
       // DEBOUT : la plaque du blindage d'en face — le symbole en tête, la jauge qui se remplit par le bas, la touche au pied
       const pw = 22
-      const x0 = Math.round(bandeCote() / 2) - 11
+      const x0 = Math.round(largeurDeBande() / 2) - 11
       const hp = H_BARRE + 22
       const HG = H_BARRE - 13
       const eb = actif ? etatDuBouton(x0, yHud, pw, hp) : { enfonce: false, survole: false, flash: false, dy: 0 }
@@ -6493,7 +6509,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(x0 + 8 + k, yt + 5 + k, 6 - 2 * k, 1, N.hex('#0c1420'))
         p.rect(x0 + 8 + k, yt + 4 + k, 6 - 2 * k, 1, VERRIERE[1])
       }
-      if (actif) zone(0, yHud, bandeCote(), hp + 2, ouvrirLaSoute, 'ouvre')
+      if (actif) zone(0, yHud, largeurDeBande(), hp + 2, ouvrirLaSoute, 'ouvre')
     } else {
       // COUCHÉE sur le pupitre : le symbole, la jauge, la touche — aussi large que le logement du blindage
       // (la touche est plus large et moins haute, comme celle du vol couché — Keko, 13/11)
@@ -6679,7 +6695,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const lw = DEUX_BARRES ? 6 : 8
       const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
       const pw = 22
-      const px0 = W - Math.round(bandeCote() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
+      const px0 = W - Math.round(largeurDeBande() / 2) - Math.round(pw / 2) + Math.round(Math.sin(t * 90) * sursaut)
       const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
       // (dans le jeu du vortex, LE BOUCLIER EST À GAUCHE du blindage — Keko, 14/11 : la barre d'or se décale à droite)
       const bx = px0 + 7 + Math.floor((8 - lw) / 2) + (DEUX_BARRES ? 2 : 0)
@@ -6735,7 +6751,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (plein > 0) p.rect(xf, by + BH - plein, 1, plein, teinteDeLaBarreFine(true, 0))
       }
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
-      if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(bandeCote() / 2) - 7, by + BH + 6, true)
+      if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(largeurDeBande() / 2) - 7, by + BH + 6, true)
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
         p.rect(bx - 1, Math.round(gy) - 1, lw + 2, 2, N.WHITE)
@@ -7421,7 +7437,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       champVoulu += (champCible - champVoulu) * Math.min(1, dt / 1.1)
     }
     champ = Math.round(champVoulu * 90) / 90
-    if (veutLePaysage() !== paysage || champDuMoment() !== champApplique || doitCouvrir() !== couvreApplique) cadrer()
+    if (veutLePaysage() !== paysage || champDuMoment() / echelleUI !== champApplique || doitCouvrir() !== couvreApplique) cadrer()
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
       if (m.bouclier > 0) {
