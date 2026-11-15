@@ -80,6 +80,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LA SENTINELLE (Keko, 15/11) : trois drones en orbite, qui tirent chacun de leur côté
+    id: 'sentinelle',
+    nom: 'Sentinelle',
+    classe: 'chasseur',
+    dit: 'Ronde, cerclée d’un anneau : trois drones tournent autour d’elle et tirent chacun de leur côté, dans toutes les directions.',
+    pieces: ['coque-6', 'propulseur-g1', 'arme-drones'],
+    serie: { possedees: ['coque-6', 'propulseur-g1', 'arme-drones'], montees: { coque: 'coque-6', propulseur: 'propulseur-g1' }, outils: [], armes: ['arme-drones'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',

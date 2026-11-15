@@ -3835,3 +3835,27 @@ naître, figées, là où le vaisseau était mort) ; le cône s'élargit un peu 
 angle 0,5 au lieu de 0,42) et la portée raccourcit (40 au lieu de 45) ; le
 souffle baisse (0,38 au lieu de 0,5).
 
+### La Sentinelle, le vaisseau à drones (15/11)
+
+Keko : « un troisième vaisseau disponible dès le début ; on part sur ton idée
+de sentinelle, entourée de petits drones qui attaquent indépendamment ;
+implante-le maintenant, fonce et on teste ».
+
+- LES DRONES (`Arme.orbite`, `positionDuDrone` dans `jeu.ts`, vérifié) : trois,
+  répartis sur une orbite de rayon 20, à 1,7 rad/s ; chacun tire DE LÀ OÙ IL
+  EST, sur l'ennemi le plus proche de lui à 70 (le verrouillé d'abord), SANS
+  ARC DE TIR : une seconde par tir, 2,5 points (les trois : 7,5 par seconde ;
+  le chasseur, 5,5 en face). Invulnérables, pour l'essai.
+- LE VAISSEAU (`sentinelle`, `coque-6`, `propulseur-g1`, `arme-drones`) : rond,
+  cerclé d'un anneau d'amarrage à trois berceaux vides, deux feux verts, deux
+  tuyères ; 6 de blindage ; un peu plus lent que le chasseur, il vire bien. SON
+  NEZ NE SE TOURNE PAS VERS LA CIBLE : il suit le manche (ses drones tirent
+  partout). Donné dès le début dans le jeu du vortex (`horsRecherche`).
+- À L'ÉCRAN : chaque drone, un petit corps à la couleur du joueur, un œil cyan,
+  une lueur et une traînée ; ses traits, courts et cyan ; son son `drone`, un
+  petit laser doux. `&vaisseau=sentinelle` pour décoller avec elle.
+
+ET LES JAUGES DU PANNEAU DES VAISSEAUX ont un REPÈRE BLANC à la valeur du
+vaisseau piloté, quand on en regarde un autre (Keko : « pour comparer celui
+qui est équipé à celui qu'on regarde »), comme les jauges des pièces.
+

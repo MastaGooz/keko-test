@@ -385,6 +385,14 @@ const RECETTES = {
       eclats(m, h, 10, 0.05, 0.65, 0.55)
     },
   },
+  /** UN DRONE TIRE : un petit trait de laser, clair, qui glisse vers le bas — doux, ils tirent souvent */
+  drone: {
+    duree: 0.25, niveau: 0.1, salle: [0.2, 0.08], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, (h.next() - 0.5) * 0.6, { f: 1900, glisse: { vers: 900, en: 0.06 }, a: 0.002, d: 0.05, partiels: [[1, 1, 1], [2, 0.2, 0.6]] })
+      souffle(m, h, 0, 0.1, 0, { f: 5000, d: 0.015 })
+    },
+  },
   /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */
   verrou: {
     duree: 0.35, niveau: 0.16, salle: [0.25, 0.1],

@@ -442,7 +442,9 @@ const GABARIT_DU_CUIRASSE: Gabarit = {
 // LA SALAMANDRE (Keko, 15/11) : un peu plus trapue que le chasseur, deux tuyères côte à côte, UNE place d'arme — le
 // lance-flammes, dans l'axe, sa buse dépassant du nez
 const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.5, y: -2.4 }, { x: -0.5, y: 2.4 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -7.2, y: 9.2 }, verriere: 2.4, nez: 6.5, flanc: 7, anneau: 13, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : GABARIT_DE_SERIE)
+// LA SENTINELLE (Keko, 15/11) : ronde, cerclée d'un anneau ; deux tuyères ; ses armes sont des drones, hors de la coque
+const GABARIT_DE_LA_SENTINELLE: Gabarit = { tuyeres: [{ x: 0.6, y: -2.2 }, { x: 0.6, y: 2.2 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6, y: 8.4 }, verriere: 2.6, nez: 7.4, flanc: 7, anneau: 13, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + gabaritDe(coque).tuyeres[0].x
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -460,6 +462,15 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran === 6) {
+    // LA SENTINELLE : un corps rond, un peu plus long vers le nez, la verrière en avant ; sur l'anneau, à l'arrière et
+    // sur les flancs, trois BERCEAUX vides — les drones sont dehors, en orbite — et deux feux verts
+    const f: Forme[] = [{ pts: ovale(0.4, 0, 7, 5.8, 24), mat: 'coque', relief: 'cyl' }]
+    f.push({ pts: [[3, -1], [-6, -1.2], [-6, 1.2], [3, 1]], mat: 'acier', relief: 'plat' })
+    f.push({ pts: ovale(2.6, 0, 2.4, 1.7, 18), mat: 'verre', relief: 'dome', dome: { x: 2.6, y: 0, rx: 2.4, ry: 1.7 } })
+    for (const sg of [-1, 1]) f.push({ pts: ovale(-3.2, sg * 3.3, 0.8, 0.8, 10), mat: 'emeraude', relief: 'dome', dome: { x: -3.2, y: sg * 3.3, rx: 0.8, ry: 0.8 } })
+    return f
+  }
   if (cran === 5) {
     // LA SALAMANDRE, UNE AUTRE SILHOUETTE (Keko, 15/11 : « changer légèrement la forme, la rendre plus distinguable du
     // chasseur ») : pas une fléchette — un corps rond et trapu, le nez court et camus, une échine d'acier ; ses
@@ -510,6 +521,17 @@ export function formesDeLaCoque(cran: number): Forme[] {
 /** LES AILES, deux plaques penchées, le bout rouge — le cuirassé, lui, a deux longs bords d'armement. */
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque === 6) {
+    // (la sentinelle : PAS D'AILES — un ANNEAU d'amarrage autour d'elle, et trois berceaux de drone posés dessus)
+    f.push({ pts: ovale(0, 0, 9.4, 9.4, 28), mat: 'aile', relief: 'plat' })
+    f.push({ pts: ovale(0, 0, 8.2, 8.2, 28), mat: 'acier', relief: 'plat' })
+    for (const a of [Math.PI, Math.PI / 3, -Math.PI / 3]) {
+      const x = Math.cos(a) * 8.6
+      const y = Math.sin(a) * 8.6
+      f.push({ pts: ovale(x, y, 1.6, 1.6, 12), mat: 'metal', relief: 'dome', dome: { x, y, rx: 1.6, ry: 1.6 } })
+    }
+    return f
+  }
   if (coque === 5) {
     // (la salamandre : PAS D'AILES — deux GROS RÉSERVOIRS DE LAITON en nacelles, portés par de courts pylônes, le bout
     // rouge, une bague d'acier à l'arrière)
@@ -629,6 +651,8 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 }
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
+  // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page)
+  if (id === 'drone') return []
   if (id === 'flammes') {
     // LE LANCE-FLAMMES : une buse dans l'axe, qui dépasse du nez — le fût, la bague, la veilleuse au bout
     return [

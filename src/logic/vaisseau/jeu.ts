@@ -299,6 +299,12 @@ export type Arme = {
    * Il crache dès qu'un ennemi est dans le cône.
    */
   flamme?: { cone: number; brulure: number; dpsBrulure: number }
+  /**
+   * UN DRONE (la Sentinelle, Keko, 15/11 : « entourée de petits drones qui attaquent indépendamment ») : l'arme n'est
+   * pas sur le vaisseau, elle TOURNE AUTOUR — à `rayon`, à `vitesse` rad/s, partie de `phase` (voir `positionDuDrone`).
+   * Elle tire DE LÀ, sur l'ennemi le plus proche D'ELLE à sa portée (le verrouillé d'abord), sans arc de tir.
+   */
+  orbite?: { rayon: number; vitesse: number; phase: number }
 }
 
 export type Vaisseau = {
@@ -1071,6 +1077,14 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   }
 }
 
+/** Où est un drone, à l'instant du monde : sur son orbite autour du vaisseau. */
+export function positionDuDrone(m: Monde, arme: Arme): Vecteur {
+  const o = arme.orbite
+  if (o === undefined) return { x: m.vaisseau.x, y: m.vaisseau.y }
+  const a = o.phase + o.vitesse * m.t
+  return { x: m.vaisseau.x + Math.cos(a) * o.rayon, y: m.vaisseau.y + Math.sin(a) * o.rayon }
+}
+
 /** Verrouille l'ennemi `id` — ou le déverrouille, s'il l'était déjà. Un id qui n'est pas un ennemi ne change rien. */
 export function verrouiller(m: Monde, id: number): void {
   if (m.verrou === id) m.verrou = null
@@ -1253,27 +1267,31 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // centre et tiré de l'aile, l'obus partait PARALLÈLE à la bonne ligne, décalé de l'écart de l'aile — de près, il
     // passait à côté d'une petite cible)
     const bo0 = arme.bouche
-    const bx = bo0 === undefined ? v.x : v.x + Math.cos(v.cap) * bo0.x - Math.sin(v.cap) * bo0.y
-    const by = bo0 === undefined ? v.y : v.y + Math.sin(v.cap) * bo0.x + Math.cos(v.cap) * bo0.y
+    // (UN DRONE tire de là où il est, sur son orbite, et compte ses distances de là)
+    const drone = arme.orbite === undefined ? null : positionDuDrone(m, arme)
+    const bx = drone !== null ? drone.x : bo0 === undefined ? v.x : v.x + Math.cos(v.cap) * bo0.x - Math.sin(v.cap) * bo0.y
+    const by = drone !== null ? drone.y : bo0 === undefined ? v.y : v.y + Math.sin(v.cap) * bo0.x + Math.cos(v.cap) * bo0.y
+    const ox = drone !== null ? drone.x : v.x
+    const oy = drone !== null ? drone.y : v.y
     let vise: number
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
     else {
       let cible: Ennemi | null = null
       let dc = Infinity
       // (hors de portée, ou hors de l'arc de tir, devant le nez : pas une cible)
-      const enVue = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee && !(c.arcDeTir > 0 && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) > c.arcDeTir)
+      const enVue = (e: Ennemi): boolean => Math.hypot(e.corps.x - ox, e.corps.y - oy) <= arme.portee && (drone !== null || !(c.arcDeTir > 0 && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) > c.arcDeTir))
       // (L'ENNEMI VERROUILLÉ D'ABORD, s'il est en vue ; sinon le plus proche)
       const ve = ennemiVerrouille(m)
       if (ve !== null && enVue(ve)) cible = ve
       else for (const e of m.ennemis) {
-        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        const d = Math.hypot(e.corps.x - ox, e.corps.y - oy)
         if (enVue(e) && d < dc) (dc = d), (cible = e)
       }
       if (cible === null) return
       const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
       // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
-      if (c.arcDeTir > 0) vise = v.cap + Math.max(-c.arcDeTir, Math.min(c.arcDeTir, ecartDAngle(v.cap, vise)))
+      if (c.arcDeTir > 0 && drone === null) vise = v.cap + Math.max(-c.arcDeTir, Math.min(c.arcDeTir, ecartDAngle(v.cap, vise)))
     }
     m.armesA[i] = m.t + arme.cadence
     if (c.alternance) c.armes.forEach((_, j) => {
@@ -1281,8 +1299,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     })
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * arme.dispersion
     const bo = arme.bouche
-    const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
-    const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
+    const x0 = drone !== null ? drone.x : bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
+    const y0 = drone !== null ? drone.y : bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
     m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique })

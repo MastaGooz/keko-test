@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5
+  cran: 1 | 2 | 3 | 4 | 5 | 6
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -128,6 +128,11 @@ export const PIECES: Piece[] = [
   // un moteur un peu plus lent que celui de série ; le lance-flammes au nez. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-5', sorte: 'coque', cran: 5, nom: 'Coque de salamandre', dit: '7 de blindage, deux réservoirs, un lance-flammes au nez.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-s1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de salamandre', dit: 'Plus lent que celui du chasseur : la salamandre encaisse plus qu’elle ne fuit.', prix: 0, poids: 8, poussee: 0.62, vitesseMax: 0.8, rotation: 0.95 }, // (0,78 et 1 d'abord — Keko, 15/11 : « il va trop vite »)
+  // LA SENTINELLE (Keko, 15/11 : « entourée de petits drones qui attaquent indépendamment ») : une coque ronde à
+  // anneau, trois drones en orbite, un point de blindage de plus que le chasseur, pas d'outil ; un moteur un peu plus
+  // lent que celui de série. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'coque-6', sorte: 'coque', cran: 6, nom: 'Coque de sentinelle', dit: '6 de blindage, un anneau d’amarrage pour trois drones.', prix: 0, poids: 24, pv: 6, armes: 3, outils: 0, capacite: 20 },
+  { id: 'propulseur-g1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de sentinelle', dit: 'Un peu plus lent que celui du chasseur, mais il vire bien.', prix: 0, poids: 7, poussee: 0.74, vitesseMax: 0.95, rotation: 1.1 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, cout: { or: 15, cristal: 8 }, poids: 8, debit: 1.8, portee: 1.25},
@@ -137,6 +142,7 @@ export const PIECES: Piece[] = [
   { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte à 120. Tire seul sur le rival.', note: 'Tire seul sur le rival à portée.', prix: 24, cout: { fer: 20 }, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
   { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte à 90, disperse.', note: 'Disperse ses balles.', prix: 44, cout: { fer: 20, or: 8 }, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
   { id: 'arme-flammes', sorte: 'arme', cran: 1, nom: 'Lance-flammes', dit: 'Un cône de feu à courte portée : 10 points par seconde à tout ce qui s’y trouve, qui brûle encore 2 s après.', note: 'Crache dès qu’un ennemi est dans le cône.', prix: 30, poids: 6, arme: { id: 'flammes', cadence: 0.1, degats: 10, portee: 40, vitesse: 0, vie: 0, dispersion: 0, guide: false, flamme: { cone: 0.5, brulure: 2, dpsBrulure: 3 } } }, // (portée 45 et demi-cône 0,42 d'abord — Keko, 15/11 : « un tout petit peu plus large, un peu moins loin »)
+  { id: 'arme-drones', sorte: 'arme', cran: 1, nom: 'Drones', dit: 'Trois drones en orbite : chacun tire seul, toutes les secondes, 2,5 points, sur l’ennemi le plus proche de lui, à 70.', note: 'Ils tirent dans toutes les directions.', prix: 30, poids: 6, arme: { id: 'drone', cadence: 1, degats: 2.5, portee: 70, vitesse: 210, vie: 0.45, dispersion: 0.04, guide: false, orbite: { rayon: 20, vitesse: 1.7, phase: 0 } } },
   { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Une arme LOURDE : un missile guidé toutes les 2,8 s, 14 points, porte à 190.', note: 'Arme lourde. Guidé : le missile tourne vers le rival.', prix: 68, cout: { or: 18, cristal: 10 }, lourde: true, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
 ]
 
