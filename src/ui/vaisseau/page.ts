@@ -2079,7 +2079,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
     // (couché, le voile couvre TOUT l'écran, pas la seule colonne où le panneau est dessiné)
-    if (vaisseauxOuverts && vue === 'hangar' && etape === 'vaisseau') p.rect(0, 0, W, H, NUIT, 0.72 * sortie((t - vaisseauxA) / 0.18))
+    if ((vaisseauxOuverts || armesOuvertes) && vue === 'hangar' && etape === 'vaisseau') p.rect(0, 0, W, H, NUIT, 0.72 * sortie((t - vaisseauxA) / 0.18))
     if (VORTEX) {
       // (COUCHÉ, LE PANNEAU DES VAISSEAUX EST EN DEUX, comme celui des pièces : la liste à gauche, par-dessus la scène, la fiche dans la colonne)
       fenetre(p, RAIL, xc - RAIL, () => dessinerLesVaisseaux(p, false, 'liste'))
@@ -2787,7 +2787,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesEclats(p: Peintre): void {
     // (UN PANNEAU OUVERT PAR-DESSUS LE HANGAR — les vaisseaux, les couleurs — cache les étincelles de « Décoller », qui
     // continuaient de jaillir à travers : Keko, 15/11)
-    if ((vaisseauxOuverts || couleursOuverts()) && vue === 'hangar') {
+    if ((vaisseauxOuverts || armesOuvertes || couleursOuverts()) && vue === 'hangar') {
       eclats.length = 0
       return
     }
@@ -3119,6 +3119,69 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let vaisseauxA = -10
   /** Le vaisseau choisi dans la liste du panneau (jeu du vortex), et où son surlignage en est. */
   let vaisseauChoisi = ''
+  /**
+   * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
+   * aile ; son panneau liste les armes du catalogue — les autres, verrouillées pour l'instant.
+   */
+  const ARME_DU_VORTEX = 'arme-canon'
+  let armesOuvertes = false
+  let armeChoisie = ARME_DU_VORTEX
+  function dessinerLesArmesEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
+    const u0 = sortie((t - vaisseauxA) / 0.18)
+    p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
+    eteindre(0, HAUT_BARRE, W, H)
+    if (partie !== 'fiche') zones = []
+    zoneGlissante = null
+    zoneDesCases = null
+    let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
+    const toutes = piecesDe('arme')
+    const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
+    const aSoi = choisie.id === ARME_DU_VORTEX
+    if (partie !== 'fiche') {
+      enTete(p, y, 'Armes', () => ((armesOuvertes = false), (etapeA = t)))
+      y += HT + 3
+      const iSel = toutes.indexOf(choisie)
+      const hl = toutes.length * RANG_LISTE + 4
+      plaque(p, 4, y, W - 8, hl, 'creux')
+      const yl = y + 2
+      const cibleY = yl + iSel * RANG_LISTE
+      surligneVaisseau = surligneVaisseau < 0 ? cibleY : ressort(surligneVaisseau, cibleY, 24)
+      p.rect(7, Math.round(surligneVaisseau), W - 14, RANG_LISTE, N.hex('#2a2440'))
+      p.rect(7, Math.round(surligneVaisseau) + 1, 2, RANG_LISTE - 2, PEPITE[2])
+      toutes.forEach((pc, i) => {
+        const ly = yl + i * RANG_LISTE
+        const a = pc.id === ARME_DU_VORTEX
+        const ici = i === iSel
+        ecrire(p, pc.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
+        p.text(a ? 'EQUIPE' : 'VERROUILLE', W - 10, ly + 4, a ? PEPITE[2] : COQUE[3], { align: 'right' })
+        zone(4, ly, W - 8, RANG_LISTE, () => (armeChoisie = pc.id), ici ? null : 'clic')
+      })
+      y += hl + 4
+      if (aSoi) motEnRelief(p, 'Équipé', W / 2, y + 4, true)
+      else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' })
+      y += 19
+      if (partie === 'liste') {
+        if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+        zone(0, 0, W, H, () => {}, null)
+        return
+      }
+    }
+    // la fiche : son nom, ses jauges (sans le poids), ce qu'elle fait
+    const jauges = jaugesDe(choisie).filter((j) => j.nom !== 'Poids')
+    const dit = replier(choisie.dit, W - 22)
+    const hh = 18 + jauges.length * 10 + 2
+    const hd = hh + dit.length * 9 + 6
+    plaque(p, 4, y, W - 8, hd, 'encre')
+    motEnRelief(p, choisie.nom, W / 2, y + 5, aSoi)
+    jauges.forEach((j, i) => {
+      const k = sortie((t - vaisseauxA - 0.05 - i * 0.045) / 0.32)
+      dessinerUneJaugeDePiece(p, y + 18 + i * 10, { ...j, valeur: j.valeur * k }, null, false, 10, k)
+    })
+    p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
+    dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * 9, COQUE[4], { align: 'center' }))
+    if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+    zone(0, 0, W, H, () => {}, null)
+  }
   const couleursOuverts = (): boolean => couleursOuvertes
   let surligneVaisseau = -1
   /**
@@ -3235,7 +3298,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zone(0, 0, W, H, () => {}, null)
   }
   function dessinerLesVaisseaux(p: Peintre, voile = true, partie: 'tout' | 'liste' | 'fiche' = 'tout'): void {
-    if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) vaisseauxOuverts = false
+    if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) (vaisseauxOuverts = false), (armesOuvertes = false)
+    if (VORTEX && armesOuvertes) return dessinerLesArmesEnListe(p, voile, partie)
     if (!vaisseauxOuverts) return
     if (VORTEX) return dessinerLesVaisseauxEnListe(p, voile, partie)
     const u0 = sortie((t - vaisseauxA) / 0.18)
@@ -3327,24 +3391,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       y += dessinerLaFicheDuVaisseau(p, y, modeleDeVaisseau(flotte.actif), true, etapeA, false, false) + 4
       // SON ARME DE BASE, dessous (Keko, 15/11 : « un canon sur chaque aile ; pas d'image : juste le nom, canon, et les
       // statistiques ») : les jauges du canon au catalogue, sans le poids
-      // (EN DEUX LIGNES, des chiffres plutôt que des jauges : en jauges, la carte passait sous « Décoller »)
-      const arme = pieceDe('arme-canon')?.arme
-      if (arme !== undefined) {
-        const ha = 27
-        plaque(p, 4, y, W - 8, ha, 'encre')
-        motEnRelief(p, 'Canon', 10 + largeurDe('Canon', GRAS) / 2, y + 5, true)
-        ecrire(p, 'un sur chaque aile', W - 10, y + 5, COQUE[4], { align: 'right' })
-        // (la cadence est celle des deux canons ensemble : ils alternent)
-        const chiffres: [string, string][] = [['Dégâts', String(arme.degats)], ['Tirs', `${(1 / arme.cadence).toFixed(1).replace('.', ',')}/s`], ['Portée', String(arme.portee)]]
-        const larg = chiffres.map(([n, v]) => largeurDe(n) + 4 + largeurDe(v, GRAS))
-        const ecart = (W - 20 - larg.reduce((a, b) => a + b, 0)) / (chiffres.length - 1)
-        let xc = 10
-        chiffres.forEach(([n, v], i) => {
-          ecrire(p, n, xc, y + 16, COQUE[4])
-          ecrire(p, v, xc + largeurDe(n) + 4, y + 16, COQUE[6], { police: GRAS })
-          xc += larg[i] + ecart
-        })
-      }
+      // (UNE LIGNE : « Arme », le nom de l'arme, et « Changer » — Keko, 15/11 : ni « un sur chaque aile », ni les chiffres)
+      const nomArme = pieceDe(ARME_DU_VORTEX)?.nom ?? ''
+      const ha = 20
+      plaque(p, 4, y, W - 8, ha, 'encre')
+      ecrire(p, 'Arme', 10, y + 6, COQUE[4])
+      motEnRelief(p, nomArme, 10 + largeurDe('Arme') + 6 + largeurDe(nomArme, GRAS) / 2, y + 6, true)
+      const bwa = largeurDe('Changer', GRAS) + 16
+      const bxa = W - 7 - bwa
+      boutonBase(p, bxa, y + 2, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = ARME_DU_VORTEX), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
       return
     }
     const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [
