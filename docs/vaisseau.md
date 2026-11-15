@@ -3791,3 +3791,13 @@ lance-flammes qui arrose à courte portée avec des dégâts importants ».
   des braises ; un souffle grave et crépitant (`flamme`), rejoué tant qu'il
   crache. *Tous les chiffres sont de moi, à rejuger en jouant.*
 - `&vaisseau=salamandre` : la piloter d'emblée (avec `&direct`, décoller avec elle).
+
+Puis (Keko, 15/11) : LA FLAMME VA JUSQU'OÙ ELLE TOUCHE (la vitesse des particules
+se calcule pour que le feu s'éteigne en fumée à la portée, rayon de la cible
+compris — elle n'allait qu'à un peu plus de la moitié) ; DE PETITES FLAMMES
+NAISSENT SUR LES INSECTES QUI BRÛLENT et montent en rapetissant ; et LE SON EST
+UNE VOIX CONTINUE (`voixDeFlamme` dans `sons.ts`, réglée par `regler` comme le
+propulseur et la foreuse) — un souffle grave en boucle qui flotte, un
+crépitement dessus, le volume qui monte quand il crache — au lieu d'un son
+court rejoué, qui s'entendait par à-coups.
+

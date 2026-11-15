@@ -373,15 +373,6 @@ const RECETTES = {
       souffle(m, h, 0, 0.15, 0, { f: 3000, d: 0.02 })
     },
   },
-  /** LE LANCE-FLAMMES : un souffle grave et rond, des crépitements dessus — rejoué tant qu'il crache, en se chevauchant */
-  flamme: {
-    duree: 0.5, niveau: 0.2, salle: [0.2, 0.08], variantes: 4,
-    faire: (m, h) => {
-      souffle(m, h, 0, 1, 0, { f: 420, glisse: { vers: 300, en: 0.3 }, q: 0.9, bande: true, a: 0.03, d: 0.3, large: true })
-      souffle(m, h, 0, 0.45, 0, { f: 1500, q: 1.4, bande: true, a: 0.02, d: 0.18 })
-      eclats(m, h, 5, 0.02, 0.3, 0.35)
-    },
-  },
   /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */
   verrou: {
     duree: 0.35, niveau: 0.16, salle: [0.25, 0.1],

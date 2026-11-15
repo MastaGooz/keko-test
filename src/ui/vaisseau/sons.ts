@@ -224,13 +224,64 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }, dans = 0): void
  * LES SONS CONTINUS (Keko : « un son pour la foreuse, et un bruit de propulsion quand on avance ») : deux voix qui
  * tournent en permanence, muettes, dont on règle le volume à chaque image — LE PROPULSEUR, un souffle (du bruit
  * filtré bas, qui s'ouvre et monte avec la poussée), LA FOREUSE, un bourdon (voir `voixDeForage`). Elles naissent au premier réglage après le réveil du contexte ; le volume
- * glisse (`setTargetAtTime`) pour ne jamais claquer. Et LA CHARGE de l'extraction (voir `voixDeCharge`).
+ * glisse (`setTargetAtTime`) pour ne jamais claquer. Et LA CHARGE de l'extraction (voir `voixDeCharge`), et LE LANCE-FLAMMES (voir `voixDeFlamme`).
  */
 type Voix = { gain: GainNode; filtre?: BiquadFilterNode }
 let propulsion: Voix | null = null
 let forage: Voix | null = null
 let charge: (Voix & { notes: OscillatorNode[]; lfo: OscillatorNode }) | null = null
 let chargeMuette = true
+let flamme: Voix | null = null
+
+/**
+ * LE LANCE-FLAMMES, UNE VOIX CONTINUE (Keko, 15/11 : « le bruit est un peu bizarre, il faudrait un bruit continu, là on
+ * dirait un bruit par à-coups » — c'était un son court, rejoué) : un SOUFFLE grave (du bruit en boucle, passe-bas
+ * ~700 Hz, qui flotte un peu) et, dessus, un CRÉPITEMENT (une seconde de petits claquements semés au hasard, en
+ * boucle, passe-haut) ; le volume monte vite quand il crache, retombe un peu moins vite.
+ */
+function voixDeFlamme(ctx: AudioContext): Voix {
+  const n = ctx.sampleRate
+  const b = ctx.createBuffer(1, n, n)
+  const d = b.getChannelData(0)
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+  const souffle = ctx.createBufferSource()
+  souffle.buffer = b
+  souffle.loop = true
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 700
+  filtre.Q.value = 0.8
+  // (il flotte : une ondulation lente du passe-bas)
+  const lfo = ctx.createOscillator()
+  lfo.frequency.value = 7
+  const profondeur = ctx.createGain()
+  profondeur.gain.value = 160
+  lfo.connect(profondeur).connect(filtre.frequency)
+  const cb = ctx.createBuffer(1, n, n)
+  const c = cb.getChannelData(0)
+  for (let k = 0; k < 90; k++) {
+    const at = Math.floor(Math.random() * (n - 400))
+    const fort = 0.3 + 0.7 * Math.random()
+    for (let i = 0; i < 300; i++) c[at + i] += (Math.random() * 2 - 1) * fort * Math.exp(-i / 50)
+  }
+  const crepite = ctx.createBufferSource()
+  crepite.buffer = cb
+  crepite.loop = true
+  const aigu = ctx.createBiquadFilter()
+  aigu.type = 'highpass'
+  aigu.frequency.value = 1800
+  const gCrepite = ctx.createGain()
+  gCrepite.gain.value = 0.5
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  souffle.connect(filtre).connect(gain)
+  crepite.connect(aigu).connect(gCrepite).connect(gain)
+  gain.connect(ctx.destination)
+  souffle.start()
+  crepite.start()
+  lfo.start()
+  return { gain, filtre }
+}
 
 function voixDePropulsion(ctx: AudioContext): Voix {
   // une seconde de bruit blanc, en boucle
@@ -342,14 +393,16 @@ function voixDeCharge(ctx: AudioContext): NonNullable<typeof charge> {
  * Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), si la foreuse creuse, où en est le compte
  * de l'extraction (`compte`, de 0 à 1) et s'il monte (à quai) ou redescend (hors du parvis).
  */
-export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean): void {
+export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false): void {
   try {
     const ctx = ZZFX.audioContext
     if (ctx.state !== 'running') return
     if (propulsion === null && poussee > 0.02) propulsion = voixDePropulsion(ctx)
     if (forage === null && creuse) forage = voixDeForage(ctx)
     if (charge === null && compte > 0) charge = voixDeCharge(ctx)
+    if (flamme === null && crache) flamme = voixDeFlamme(ctx)
     const t = ctx.currentTime
+    if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.5 : 0, t, crache ? 0.03 : 0.07)
     if (propulsion !== null) {
       propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
       propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)

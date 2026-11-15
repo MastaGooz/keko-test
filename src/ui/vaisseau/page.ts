@@ -5525,10 +5525,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LES FLAMMES DU LANCE-FLAMMES (la Salamandre, Keko, 15/11) : des particules crachées par la buse dans le cône, tant
    * qu'il crache — blanc-jaune à la bouche, puis orange, rouge, une fumée qui s'éteint ; elles grossissent en volant.
-   * Et son souffle, rejoué tant qu'il crache.
+   * (Son souffle est une voix continue : `regler`.) Et LES FLAMMES SUR LES INSECTES QUI BRÛLENT (Keko, 15/11 : « des
+   * petites particules de flamme qui spawnent sur lui ») : petites, elles montent en rapetissant.
    */
   let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
-  let flammeSonA = -10
+  let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
   /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas. */
   let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number } | null = null
   /** L'ennemi sous ce point de l'écran (le plus proche, à une marge près, pour qu'une petite cible se touche), ou null. */
@@ -6313,7 +6314,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = age / f.vie
       const x = f.x + f.vx * age * (1 - 0.3 * u)
       const y = f.y + f.vy * age * (1 - 0.3 * u)
-      const r = 0.8 + 3.2 * u
+      const r = 1.3 + 2.7 * u
       if (u > 0.78) {
         p.circle(x, y, r, N.hex('#3a3038'), 0.5 * (1 - (u - 0.78) / 0.22))
         continue
@@ -6321,6 +6322,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const c = u < 0.16 ? N.hex('#fff6c8') : u < 0.4 ? N.hex('#ffd04a') : u < 0.62 ? N.hex('#ff7a1a') : N.hex('#c8361a')
       p.circle(x, y, r, c)
       p.glow(x, y, r * 2.4, N.hex('#ff8a2a'), 0.22 * (1 - u))
+    }
+    // les petites flammes des insectes qui brûlent : elles montent en rapetissant
+    flammesDesBrules = flammesDesBrules.filter((f) => t - f.t0 < f.vie)
+    for (const f of flammesDesBrules) {
+      const age = t - f.t0
+      const u = age / f.vie
+      const x = f.x + f.vx * age
+      const y = f.y + f.vy * age
+      const r = 0.5 + 1.5 * (1 - u)
+      const c = u < 0.25 ? N.hex('#ffe08a') : u < 0.55 ? N.hex('#ff9a2a') : N.hex('#d8401a')
+      p.circle(x, y, r, c, u < 0.7 ? 1 : 1 - (u - 0.7) / 0.3)
+      p.glow(x, y, 4, N.hex('#ff7a1a'), 0.25 * (1 - u))
     }
     if (m.crache && m.phase === 'vol') {
       const bo = CONF.armes[0]?.bouche ?? { x: 0, y: 0 }
@@ -8017,15 +8030,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const bx = v.x + ca * bo.x - sa * bo.y
           const by = v.y + sa * bo.x + ca * bo.y
           const cone = a0.flamme?.cone ?? 0.4
-          for (let i = 0; i < 4; i++) {
+          // (six par pas, et plus gros au départ : rapides, quatre petites laissaient des trous près de la buse)
+          for (let i = 0; i < 6; i++) {
             const an = v.cap + R.range(-cone * 0.8, cone * 0.8)
-            const vit = (a0.portee / 0.3) * R.range(0.7, 1.05)
-            flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), vie: R.range(0.22, 0.32) })
+            // (LA FLAMME VA JUSQU'OÙ ELLE TOUCHE — Keko, 15/11 : « un ennemi tout au bout, je le touche alors que la flamme
+            // n'arrive pas jusqu'à lui » : le feu s'éteint, en fumée, aux 78 % de sa vie, après 0,6 × vitesse × vie de
+            // course (le frein compris) — la vitesse en sort, pour que ce point tombe sur la portée, rayon de la cible compris)
+            const vie = R.range(0.22, 0.32)
+            const vit = ((a0.portee + CONF.ennemi.rayon) / (0.6 * vie)) * R.range(0.9, 1.05)
+            flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), vie })
           }
-          if (t - flammeSonA > 0.16) {
-            flammeSonA = t
-            jouer('flamme')
-          }
+        }
+        // les insectes qui brûlent : de petites flammes naissent sur eux et montent
+        for (const e of m.ennemis) {
+          if ((e.bruleA ?? -1) <= m.t || R.next() > 0.5) continue
+          flammesDesBrules.push({ x: e.corps.x + R.range(-3, 3), y: e.corps.y + R.range(-3, 3), vx: e.corps.vx * 0.7 + R.range(-6, 6), vy: e.corps.vy * 0.7 - R.range(12, 26), t0: t - R.range(0, PAS), vie: R.range(0.25, 0.45) })
         }
         // (les quêtes : la plus grande distance à la base, comptée tous les vingt pas d'éloignement)
         {
@@ -8328,7 +8347,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && m.forage !== null, m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte)
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && m.forage !== null, m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0
