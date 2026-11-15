@@ -3729,3 +3729,5 @@ LA MITRAILLEUSE EST OUVERTE, pour l'essayer (Keko, 15/11 : « débloque-moi la m
 SUR PC (Keko, 15/11) : le curseur passe à TROIS pixels d'écran par pixel du dessin (à deux, « trop fin » ; l'interface en a 2,5) ; et dans le jeu du vortex, l'icône du portail, son pour cent et le niveau sont dessinés EN DOUBLE (« un peu trop petits » — le double plutôt qu'une taille entre deux, pour garder des pixels égaux) ; la colonne d'interface y passe de 36 à 58 pixels pour que « 100% » y tienne.
 
 Puis, SUR PC (Keko, 15/11) : l'icône du portail À GAUCHE de son pour cent, tout en haut à gauche de l'écran, le niveau et sa barre dessous, sous l'icône — la colonne revient à 36.
+
+LES MONTANTS DU BOUCLIER ET DU BLINDAGE (jeu du vortex, Keko, 15/11) : en chiffres, le bouclier en bleu puis le blindage en or (`dessinerLesMontants`) — DEBOUT, juste au-dessus de la paire de barres, qui commence d'autant plus bas (en double sur PC, comme le niveau d'en face) ; EN PORTRAIT, à gauche de la barre. Et en portrait la barre d'or passe de 8 à 6 pixels d'épaisseur, la largeur qu'elle a debout.

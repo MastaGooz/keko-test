@@ -1611,13 +1611,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * entre le jaune et le marron est trop fort, le marron est trop foncé ») : le haut lit n'est plus un filet presque
    * blanc mais le ton clair du dégradé, et le bas du dégradé comme le dessous sont remontés d'un brun sombre à un ocre.
    */
-  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire' | 'violet', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
+  function motEnRelief(p: Peintre, s: string, x: number, y: number, or: boolean | 'ivoire' | 'violet' | 'bleu', f: Police = GRAS, reflet: number | null = null, echelle = 1): void {
     const mot = spell(s, f) as { letters: { g: unknown; x: number }[]; w: number }
     const e = echelle
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: Math.round(x - (mot.w * e) / 2) + L.x * e, y: Math.round(y) - decalage(f) * e, sx: e, sy: e }))
     // (« ivoire » : la lettre des plaques d'en-tête — un ivoire éclairé d'en haut, ombré de bronze dessous)
     // (« violet » : la vie du portail, dans la lettre et le relief des titres d'or, aux teintes du vortex)
-    const st = or === 'violet'
+    // (« bleu » : le bouclier, aux teintes de sa barre)
+    const st = or === 'bleu'
+      ? { fill: [N.hex('#1278a0'), VERRIERE[1], N.hex('#5fd8f0')], edge: VERRIERE[2], under: N.hex('#0b4a66'), outline: N.hex('#04121a'), shadow: 0 }
+      : or === 'violet'
       ? { fill: [N.hex('#7330d0'), N.hex('#a35cff'), N.hex('#cf9bff')], edge: N.hex('#f1dcff'), under: N.hex('#481b8c'), outline: N.hex('#12081f'), shadow: 0 }
       : or === 'ivoire'
       ? { fill: [N.hex('#c9b98c'), N.hex('#efe2b8'), N.hex('#fff7d6')], edge: N.WHITE, under: N.hex('#8f7d54'), outline: N.hex('#0b0d16'), shadow: 0 }
@@ -6962,6 +6965,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // place d'être au bout de la barre de vie, le bouclier bleu devient une deuxième barre collée à la barre jaune du
     // blindage, mais plus fine ») : la barre d'or ne porte que le blindage ; le bouclier a la sienne, fine, contre elle.
     const DEUX_BARRES = VORTEX
+    /**
+     * LES MONTANTS DU BOUCLIER ET DU BLINDAGE (Keko, 15/11 : « afficher le montant de blindage et de bouclier juste
+     * au-dessus de la barre ; en portrait, à gauche de la barre ») : le bouclier en bleu puis le blindage en or, comme
+     * leurs barres (le bouclier est à gauche du blindage debout) ; `xd` est le bord droit de la paire. Rend sa largeur.
+     */
+    const dessinerLesMontants = (xd: number, y: number, G: number): number => {
+      const sb = String(Math.max(0, Math.floor(m.bouclier + 1e-6)))
+      const sc = String(Math.max(0, Math.ceil(m.coque - 1e-6)))
+      const wb = largeurDe(sb, GRAS) * G
+      const wc = largeurDe(sc, GRAS) * G
+      const ecart = 3 * G
+      const avecBouclier = CONF.bouclier.points > 0
+      motEnRelief(p, sc, xd - wc / 2, y, true, GRAS, null, G)
+      if (avecBouclier) motEnRelief(p, sb, xd - wc - ecart - wb / 2, y, 'bleu', GRAS, null, G)
+      return avecBouclier ? wb + ecart + wc : wc
+    }
     const partDuBouclier = (): number => (CONF.bouclier.points > 0 ? Math.max(0, Math.min(1, m.bouclier / CONF.bouclier.points)) : 0)
     const teinteDeLaBarreFine = (plein: boolean, k: 0 | 1): number => {
       const db = t - bouclierA
@@ -7019,7 +7038,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
       }
       // (DANS LE JEU DU VORTEX, ELLE DESCEND JUSQU'AU MILIEU DE L'ÉCRAN, et elle est plus fine — Keko, 14/11 : six de large au lieu de huit)
-      const BH = DEUX_BARRES ? Math.max(30, Math.round(H / 2) - yHud) : H_BARRE
+      // (… SOUS LES MONTANTS, dans le jeu du vortex : la barre commence plus bas — en double sur PC, comme le niveau d'en face)
+      const GM = couvreApplique ? 2 : 1
+      const HM = DEUX_BARRES ? 11 * GM : 0
+      const BH = DEUX_BARRES ? Math.max(30, Math.round(H / 2) - yHud - HM) : H_BARRE
       const lw = DEUX_BARRES ? 6 : 8
       const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
       const pw = 22
@@ -7029,7 +7051,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const bx = px0 + 7 + Math.floor((8 - lw) / 2) + (DEUX_BARRES ? 2 : 0)
       // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
       // (… PUIS JUSQU'EN HAUT : son sommet est celui de la barre d'expérience — Keko, 14/11)
-      const by = oy + (DEUX_BARRES ? 0 : 17)
+      const by = oy + (DEUX_BARRES ? HM : 17)
       const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
       if (m.coque < coqueConnue - 1e-6) {
@@ -7078,6 +7100,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (let y = 0; y < BH; y++) p.rect(xf, by + y, fin, 1, teinteDeLaBarreFine(BH - y <= plein, 1))
         if (plein > 0) p.rect(xf, by + BH - plein, 1, plein, teinteDeLaBarreFine(true, 0))
       }
+      if (DEUX_BARRES) {
+        // les montants, au-dessus des barres : l'or sur la barre d'or, le bleu à sa gauche
+        const wc = largeurDe(String(Math.max(0, Math.ceil(m.coque - 1e-6))), GRAS) * GM
+        dessinerLesMontants(Math.round(bx + lw / 2 + wc / 2), oy, GM)
+      }
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(largeurDeBande() / 2) - 7, by + BH + 6, true)
       if (dc > TIENT && dc < VIDE) {
@@ -7111,7 +7138,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
     const bx = ox + 5 + 9 + 3
     const by = oy + (DEUX_BARRES ? 1 : 5) // (dans le jeu du vortex, la barre remonte sous la rangée du haut)
-    const bh = 8
+    // (PLUS FINE DANS LE JEU DU VORTEX — Keko, 15/11 : six, la largeur qu'elle a debout, au lieu de huit)
+    const bh = DEUX_BARRES ? 6 : 8
     const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
     // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
     if (m.coque < coqueConnue - 1e-6) {
@@ -7160,6 +7188,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let x = 0; x < BW; x++) p.rect(bx + x, by + bh + 1, 1, fin, teinteDeLaBarreFine(x < plein, 1))
       if (plein > 0) p.rect(bx, by + bh + 1, plein, 1, teinteDeLaBarreFine(true, 0))
     }
+    // les montants, à gauche de la paire de barres, centrés sur sa hauteur
+    if (DEUX_BARRES) dessinerLesMontants(bx - 4, by + Math.round((bh + (CONF.bouclier.points > 0 ? 4 : 0)) / 2) - 6, 1)
     // (LE ZOOM, sous la barre, calé à sa droite : « − » puis « + »)
     if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
     if (dc > TIENT && dc < VIDE) {
