@@ -3929,3 +3929,23 @@ LA TÊTE, qui pivote, une couronne d'acier, un dôme à la couleur du joueur, un
 fût et son frein de bouche, une veilleuse verte (`formesDeLaTeteDeTourelle`). Puis PLUS PETITES QUE LE VAISSEAU (Keko : « il ne faut pas que la tourelle soit plus grosse que le vaisseau ») : des pieds plus courts, un canon raccourci, dessinées à 1,1 au lieu de 1,5.
 
 LE COUP SUR UN INSECTE A SON SON (Keko, 15/11 : le « tonk » de métal « fait un peu trop tape sur un bout de bois ; un son plus organique ») : `insecteTouche` — un petit coup sourd et charnu, un écrasement mouillé qui retombe vite, un infime craquement de carapace, trois variantes ; le rival du Nova Drifter garde son « tonk ».
+
+### Les mini-missiles, la troisième arme du chasseur (15/11)
+
+Keko : « l'intérêt des missiles pour le chasseur, ce serait les explosions qui
+toucheraient une zone plus large — un côté zone d'effet qu'il n'a dans aucun
+autre projectile ; un peu plus lent, un peu moins bon que le canon en
+mono-cible, mais plus efficace sur un groupe d'ennemis proches ».
+
+- LA RÈGLE (`Arme.zone`, `exploser` dans `jeu.ts`, vérifié) : à l'impact — ou
+  au bout de sa course —, le missile explose ; tout autre insecte à moins de 18
+  perd 5 points (la cible, ses 5 du coup).
+- L'ARME (`arme-minimissiles`, au chasseur seul) : guidée, un missile toutes
+  les 1,6 s (une aile puis l'autre), 5 points, portée 120, lente (110 ; le
+  canon, 170), en léger éventail. Sur une cible seule, environ 3 points par
+  seconde (le canon, 5,5) ; sur trois insectes groupés, environ 9.
+- À L'ÉCRAN : un petit missile (corps clair, pointe rouge, flamme), une
+  traînée de fumée ; l'explosion — un éclair, un anneau qui s'ouvre jusqu'au
+  rayon, une boule de feu de flammes, braises et fumée (les particules du
+  dépôt), une petite secousse. Sons : `minimissile` (un « fssht ») et
+  `explosionMini` (un « boum » court). *Chiffres de moi, à rejuger.*- Le panneau des armes ne montre plus que celles du vaisseau piloté (et les missiles, verrouillés, à venir) — pas le lance-flammes, les drones ni les tourelles des autres. `&arme=arme-minimissiles` décolle avec elles (sans les garder).

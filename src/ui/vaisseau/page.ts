@@ -913,7 +913,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale'], salamandre: ['arme-flammes'], sentinelle: ['arme-drones'], ingenieur: ['arme-tourelles'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes'], sentinelle: ['arme-drones'], ingenieur: ['arme-tourelles'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -925,6 +925,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     armesChoisies[flotte.actif] = id
     sauverArme(flotte.actif, id)
   }
+  /** Les armes propres à un AUTRE vaisseau que le piloté : le panneau des armes ne les montre pas. */
+  const armesDesAutres = (): string[] => Object.entries(ARMES_PAR_VAISSEAU).flatMap(([id, l]) => (id === flotte.actif ? [] : l)).filter((a) => !armesDuVortex().includes(a))
+  // (`&arme=ID` : décoller avec cette arme du vaisseau piloté, sans la garder — pour l'essayer d'un lien)
+  if (parametres.has('arme') && armesDuVortex().includes(parametres.get('arme') ?? '')) armesChoisies[flotte.actif] = parametres.get('arme') ?? ''
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   /** Le rival en cuirassé (à l'essai, 14/11 ; `&rival=serie` : le petit rival d'avant) : son allure, tout armé. */
   const RIVAL_CUIRASSE = parametres.get('rival') !== 'serie'
@@ -3256,7 +3260,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zoneGlissante = null
     zoneDesCases = null
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
-    const toutes = piecesDe('arme')
+    // (les armes de ce vaisseau, et celles qui viendront ; pas celles d'un autre vaisseau)
+    const toutes = piecesDe('arme').filter((pc) => !armesDesAutres().includes(pc.id))
     const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
     const aSoi = armesDuVortex().includes(choisie.id)
     if (partie !== 'fiche') {
@@ -6308,7 +6313,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (`&consume` : LE BANC — un insecte se consume à côté du vaisseau toutes les 1,6 s, hors de toute flamme, pour le juger seul)
   let bancConsumeA = -10
   let bancConsumeN = 0
+  /** L'ONDE D'UNE EXPLOSION DE MINI-MISSILE : un anneau orange qui s'ouvre jusqu'à son rayon, en 0,25 s. */
+  let ondesDeZone: { x: number; y: number; t0: number; r: number }[] = []
   function dessinerLesConsumes(p: Peintre): void {
+    ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
+    for (const o of ondesDeZone) {
+      const u = (t - o.t0) / 0.25
+      p.ring(o.x - camera.x + W / 2, o.y - camera.y + centreY(), 3 + (o.r - 3) * Math.sqrt(u), 1, u < 0.3 ? N.hex('#fff2a8') : FEU[4], 1 - u)
+    }
     if (parametres.has('consume') && enJeu && m.phase === 'vol' && t - bancConsumeA > 1.6) {
       bancConsumeA = t
       bancConsumeN += 1
@@ -6503,6 +6515,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.px(o.x, o.y, N.hex('#ff5a5a'))
         p.line(o.x - ux * 7, o.y - uy * 7, o.x - ux * 4, o.y - uy * 4, FEU[5])
         p.glow(o.x - ux * 6, o.y - uy * 6, 6, FEU[4], 0.6)
+      } else if (o.arme === 'minimissile') {
+        // (un mini-missile : un petit corps clair, la pointe rouge, sa flamme)
+        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, COQUE[5])
+        p.px(o.x, o.y, N.hex('#ff5a5a'))
+        p.line(o.x - ux * 5, o.y - uy * 5, o.x - ux * 3, o.y - uy * 3, FEU[5])
+        p.glow(o.x - ux * 4, o.y - uy * 4, 4, FEU[4], 0.5)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])
@@ -8284,6 +8302,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), fl, sm: R.next() < 0.55, sl: R.range(0.25, 0.45), s: R.range(1.2, 2.4), f: R.next() })
           }
         }
+        // les mini-missiles laissent une traînée de fumée
+        for (const o of m.obus) if (o.arme === 'minimissile' && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
         for (const e of m.ennemis) {
           if ((e.bruleA ?? -1) <= m.t || R.next() > 0.5) continue
@@ -8364,6 +8384,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), R.next() < 0.5 ? N.WHITE : ROUGE[4], 1, 2.5)
               }
               flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
+              break
+            }
+            case 'explosionDeZone': {
+              // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
+              // feu (les flammes, braises et fumées du dépôt), son « boum »
+              jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.6 })
+              ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+              for (let i = 0; i < 9; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const d = R.range(0, ev.rayon * 0.45)
+                feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * R.range(10, 35), Math.sin(a) * R.range(10, 35), R.range(0.2, 0.4), 0, R.range(1.2, 2.2))
+              }
+              for (let i = 0; i < 6; i++) {
+                const a = R.range(0, Math.PI * 2)
+                feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90), Math.sin(a) * R.range(40, 90), R.range(0.3, 0.6), 0, 1)
+              }
+              for (let i = 0; i < 2; i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3), ev.y + R.range(-3, 3), R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5))
+              secousse = Math.max(secousse, 0.2)
               break
             }
             case 'tourellePosee':

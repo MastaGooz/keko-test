@@ -322,6 +322,12 @@ export type Arme = {
    * (`pivot` rad/s) vers l'ennemi le plus proche à sa portée — le verrouillé d'abord — et tire à la cadence de l'arme.
    */
   pose?: { tous: number; ecart: number; max: number; duree: number; pivot: number }
+  /**
+   * UNE EXPLOSION (les mini-missiles du chasseur, Keko, 15/11 : « quand le missile touche l'ennemi, il explose et peut
+   * toucher les ennemis aux alentours — un côté zone d'effet qu'aucun autre projectile n'a ») : à l'impact — ou au bout
+   * de sa course —, tout autre ennemi à moins de `rayon` perd `degats`.
+   */
+  zone?: { rayon: number; degats: number }
 }
 
 export type Vaisseau = {
@@ -358,7 +364,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number } }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -472,6 +478,8 @@ export type Evenement =
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Une tourelle est posée ; une tourelle s'éteint (sa durée est passée, ou une plus jeune l'a remplacée). */
   | { type: 'tourellePosee'; x: number; y: number }
+  /** Un mini-missile explose (voir `Arme.zone`). */
+  | { type: 'explosionDeZone'; x: number; y: number; rayon: number }
   | { type: 'tourelleFinie'; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
@@ -1107,6 +1115,17 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   }
 }
 
+/** UNE EXPLOSION DE ZONE (voir `Arme.zone`) : tout ennemi à moins du rayon — sauf celui qu'on vient de toucher — en perd. */
+function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[]): void {
+  ev.push({ type: 'explosionDeZone', x, y, rayon: zone.rayon })
+  for (const e of [...m.ennemis]) {
+    if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + c.ennemi.rayon) continue
+    e.pv -= zone.degats
+    ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+}
+
 /** LA PLACE D'UN DRONE au repos, à l'instant du monde : sur son orbite autour du vaisseau. */
 export function placeDuDrone(m: Monde, arme: Arme): Vecteur {
   const o = arme.orbite
@@ -1468,7 +1487,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique })
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: arme.vie, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.zone === undefined ? {} : { zone: arme.zone }) })
     ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
@@ -1495,6 +1514,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         e.pv -= o.degats
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        if (o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, e, ev)
         break
       }
     }
@@ -1507,6 +1527,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         abimerLaRoche(c, m, { x: o.x, y: o.y, force: 0, asteroide: a.id }, o.degats, ev)
       }
     }
+    // (un mini-missile au bout de sa course explose aussi, là où il est)
+    if (!fini && o.vie <= 0 && o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, null, ev)
     if (fini) m.obus.splice(i, 1)
   }
 

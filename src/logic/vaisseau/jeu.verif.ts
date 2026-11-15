@@ -1006,5 +1006,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 60 * 19; i++) for (const e of avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'tourelleFinie') finie = true
   verifier('au bout de sa durée, la tourelle s’éteint', posee && finie && w5.tourelles.length === 0)
 }
+// LES MINI-MISSILES (Keko, 15/11) : à l'impact, ils explosent et touchent aussi les ennemis aux alentours
+{
+  const mini = { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0, guide: true, zone: { rayon: 18, degats: 5 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [mini], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const w = nouveauMonde(cfg, 3)
+  // (la cible devant, une voisine à côté d'elle, une troisième loin d'elles)
+  const places: [number, number][] = [[0, -60], [10, -66], [70, -60]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  let explose = false
+  for (let i = 0; i < 60 * 2 && !explose; i++) {
+    w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'explosionDeZone') explose = true
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier('un mini-missile explose à l’impact : la cible et sa voisine perdent 5, la lointaine rien', explose && pv[0] === 5 && pv[1] === 5 && pv[2] === 0)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

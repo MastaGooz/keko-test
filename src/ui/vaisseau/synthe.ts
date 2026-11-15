@@ -414,6 +414,23 @@ const RECETTES = {
       note(m, 0, 0.45, pan, { f: f / 2, glisse: { vers: 140, en: 0.12 }, a: 0.003, d: 0.13 })
     },
   },
+  /** UN MINI-MISSILE PART : un « fssht » — un souffle qui monte vite —, un petit coup sourd au lancement */
+  minimissile: {
+    duree: 0.4, niveau: 0.16, salle: [0.25, 0.1], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, (h.next() - 0.5) * 0.5, { f: 600, glisse: { vers: 2600, en: 0.16, droit: true }, q: 1.3, bande: true, a: 0.01, d: 0.16 })
+      note(m, 0, 0.4, 0, { f: 140, glisse: { vers: 90, en: 0.04 }, a: 0.002, d: 0.05 })
+    },
+  },
+  /** UN MINI-MISSILE EXPLOSE : un « boum » court et rond, un souffle qui retombe, quelques crépitements */
+  explosionMini: {
+    duree: 0.8, niveau: 0.3, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 120, glisse: { vers: 48, en: 0.12 }, a: 0.002, d: 0.2, partiels: CORPS, sature: 1.5 })
+      souffle(m, h, 0, 0.8, 0, { f: 1600, glisse: { vers: 280, en: 0.18 }, q: 1.1, bande: true, a: 0.002, d: 0.26, large: true })
+      eclats(m, h, 5, 0.04, 0.3, 0.3)
+    },
+  },
   /** UNE TOURELLE TIRE : un « tac » mécanique, sec, un petit coup sourd dessous — pas un laser */
   tourelle: {
     duree: 0.25, niveau: 0.13, salle: [0.2, 0.08], variantes: 3,
