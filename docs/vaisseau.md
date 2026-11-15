@@ -3713,3 +3713,5 @@ Au hangar du jeu du vortex, LA FICHE DU VAISSEAU PILOTÉ est sous son nom (Keko,
 Sous la fiche du vaisseau, au hangar du jeu du vortex : SON ARME DE BASE (Keko, 15/11) — « Canon », « un sur chaque aile », ses jauges du catalogue (dégâts, cadence, portée), sans image ; la fiche du vaisseau perd son image (le vaisseau est juste à côté), ses jauges prennent la largeur. Le vaisseau du jeu porte bien deux canons, un par aile, qui alternent (voir plus haut). Puis l'arme en deux lignes et en chiffres (« Dégâts 6 · Tirs 0,9/s · Portée 120 », la cadence des deux canons ensemble) : en jauges, la carte passait sous « Décoller ».
 
 Puis l'arme tient en UNE LIGNE (Keko, 15/11) : « Arme », son nom, et « Changer », qui ouvre LE PANNEAU DES ARMES comme celui des vaisseaux (`dessinerLesArmesEnListe` : les armes du catalogue, le canon « EQUIPE », les autres « VERROUILLE » pour l'instant ; la fiche — jauges, ce qu'elle fait).
+
+Puis (Keko, 15/11) : le nom de l'arme seul, sans « Arme » devant ; et son « Changer » est UN BOUTON SECONDAIRE, moins visible que celui du vaisseau — l'acier sombre et la lettre courante grise, au lieu de l'acier clair et du gras.

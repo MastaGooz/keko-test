@@ -3395,11 +3395,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nomArme = pieceDe(ARME_DU_VORTEX)?.nom ?? ''
       const ha = 20
       plaque(p, 4, y, W - 8, ha, 'encre')
-      ecrire(p, 'Arme', 10, y + 6, COQUE[4])
-      motEnRelief(p, nomArme, 10 + largeurDe('Arme') + 6 + largeurDe(nomArme, GRAS) / 2, y + 6, true)
+      // (le nom seul, sans « Arme » devant — Keko, 15/11)
+      motEnRelief(p, nomArme, 10 + largeurDe(nomArme, GRAS) / 2, y + 6, true)
       const bwa = largeurDe('Changer', GRAS) + 16
       const bxa = W - 7 - bwa
-      boutonBase(p, bxa, y + 2, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = ARME_DU_VORTEX), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
+      boutonBase(p, bxa, y + 2, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = ARME_DU_VORTEX), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, y + 2 + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
+      // (UN BOUTON SECONDAIRE — Keko, 15/11 : « pas le même graphisme que changer de vaisseau, un peu moins visible » :
+      // l'acier sombre, la lettre courante en gris clair, au lieu de l'acier clair et du gras)
       return
     }
     const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [
