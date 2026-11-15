@@ -337,6 +337,34 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const gMonde = canvasMonde.getContext('2d')!
   scene.append(canvasMonde)
   scene.append(canvas)
+  /**
+   * LE CLIC DROIT N'OUVRE PAS LE MENU DU NAVIGATEUR (« Enregistrer l'image… »), ET LE CURSEUR EST DANS LA LANGUE DU JEU
+   * (Keko, 15/11) : une flèche en pixels — acier clair, cernée d'encre —, dessinée ici dans un petit canevas et donnée
+   * au navigateur en image ; sur ce qui se clique, la même en or. Deux pixels d'écran par pixel du dessin.
+   */
+  racine.addEventListener('contextmenu', (ev) => ev.preventDefault())
+  const curseurEnPixels = (corps: string, clair: string): string => {
+    // (une flèche : `#` le cerne, `o` le corps, `+` son arête claire)
+    const DESSIN = ['#..........', '##.........', '#+#........', '#+o#.......', '#+oo#......', '#+ooo#.....', '#+oooo#....', '#+ooooo#...', '#+oooooo#..', '#+ooooooo#.', '#+oooo#####', '#+o#oo#....', '#+#.#oo#...', '##..#oo#...', '#....#oo#..', '.....###...']
+    const K = 2
+    const c = document.createElement('canvas')
+    c.width = 11 * K
+    c.height = DESSIN.length * K
+    const g2 = c.getContext('2d')
+    if (g2 === null) return 'auto'
+    DESSIN.forEach((ligne, y) => {
+      for (let x = 0; x < ligne.length; x++) {
+        const ch = ligne[x]
+        if (ch === '.') continue
+        g2.fillStyle = ch === '#' ? '#07050d' : ch === '+' ? clair : corps
+        g2.fillRect(x * K, y * K, K, K)
+      }
+    })
+    return `url(${c.toDataURL('image/png')}) 1 1, auto`
+  }
+  const CURSEUR = curseurEnPixels('#9fb4d2', '#ffffff')
+  const CURSEUR_QUI_CLIQUE = curseurEnPixels('#f6c94a', '#fff2a8')
+  racine.style.cursor = CURSEUR
   racine.append(scene)
   /**
    * L'ÉCRAN (l'accueil, le bilan, le hangar) EST EN PIXELS, dans le même tampon que le jeu (Keko, 09/11 : « je ne veux
@@ -5084,7 +5112,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (ecranVisible()) {
         const sv = enTampon(ev.clientX, ev.clientY)
         survol = sv
-        canvas.style.cursor = zones.some((z) => sv.x >= z.x && sv.x < z.x + z.w && sv.y >= z.y && sv.y < z.y + z.h) ? 'pointer' : ''
+        canvas.style.cursor = zones.some((z) => sv.x >= z.x && sv.x < z.x + z.w && sv.y >= z.y && sv.y < z.y + z.h) ? CURSEUR_QUI_CLIQUE : ''
       } else {
         if (survol !== null) {
           survol = null
