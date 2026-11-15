@@ -3735,3 +3735,5 @@ LES MONTANTS DU BOUCLIER ET DU BLINDAGE (jeu du vortex, Keko, 15/11) : en chiffr
 Puis L'UN AU-DESSUS DE L'AUTRE (Keko, 15/11 : « côte à côte, on dirait que les deux chiffres forment un seul nombre ; juste la couleur, c'est un peu léger ») : le blindage en or, le bouclier en bleu dessous, dans l'ordre des barres couchées — en portrait, chacun en face de sa barre ; debout, les deux lignes au-dessus de la paire.
 
 PUIS RETIRÉS (Keko, 15/11 : « laisse tomber, on ne va pas afficher les chiffres du blindage et du bouclier ») : plus de montants ; la barre d'or du portrait reste à six pixels.
+
+SUR PC, MESURÉ (Keko, 15/11) : l'icône du portail remonte de trois pixels (son centre était sous celui du pour cent), et la barre de vie commence sept pixels plus bas, à la hauteur du pour cent — elle finit toujours au milieu de l'écran.

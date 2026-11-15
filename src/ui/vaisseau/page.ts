@@ -1136,7 +1136,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (ET SUR PC, L'ICÔNE À GAUCHE DU POUR CENT, TOUT EN HAUT À GAUCHE — Keko, 15/11 —, le niveau et sa barre dessous, sous l'icône)
     const enLigne = G > 1
     const cx = enLigne ? 8 + 12 : enBande ? axe : x0 + 5
-    const cy = enLigne ? 8 + 12 : enBande ? 10 * G : y + 4 // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
+    const cy = enLigne ? 8 + 9 : enBande ? 10 * G : y + 4 // (sur PC, trois plus haut : MESURÉ, son centre était sous celui du pour cent — Keko, 15/11) // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
     p.circle(cx, cy, 5.6 * G, N.hex('#12081f'))
     p.circle(cx, cy, 4.6 * G, touche ? N.WHITE : N.hex('#a35cff'))
@@ -1152,7 +1152,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const dit = `${Math.max(0, Math.ceil(inv.vie))}%` // (sans espace : le bandeau est étroit)
       const secoue = touche ? Math.round(Math.sin((t - passeA) * 60) * 2 * G * (1 - (t - passeA) / 0.5)) : 0
       if (enLigne) {
-        motEnRelief(p, dit, cx + 16 + (largeurDe(dit, GRAS) * G) / 2 + secoue, cy - 11, 'violet', GRAS, null, G)
+        motEnRelief(p, dit, cx + 16 + (largeurDe(dit, GRAS) * G) / 2 + secoue, cy - 8, 'violet', GRAS, null, G)
         dessinerLExperienceDebout(p, cx, cy + 22, G)
       } else {
         motEnRelief(p, dit, axe + secoue, 19, 'violet')
@@ -7019,7 +7019,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
       }
       // (DANS LE JEU DU VORTEX, ELLE DESCEND JUSQU'AU MILIEU DE L'ÉCRAN, et elle est plus fine — Keko, 14/11 : six de large au lieu de huit)
-      const BH = DEUX_BARRES ? Math.max(30, Math.round(H / 2) - yHud) : H_BARRE
+      // (SUR PC, ELLE COMMENCE À LA HAUTEUR DU POUR CENT DU PORTAIL, d'en face — Keko, 15/11 : « elle commence un peu haut » ;
+      // MESURÉ, sept pixels plus bas ; elle finit toujours au milieu de l'écran, avec la barre d'expérience)
+      const BAISSE = DEUX_BARRES && couvreApplique ? 7 : 0
+      const BH = DEUX_BARRES ? Math.max(30, Math.round(H / 2) - yHud - BAISSE) : H_BARRE
       const lw = DEUX_BARRES ? 6 : 8
       const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
       const pw = 22
@@ -7029,7 +7032,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const bx = px0 + 7 + Math.floor((8 - lw) / 2) + (DEUX_BARRES ? 2 : 0)
       // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
       // (… PUIS JUSQU'EN HAUT : son sommet est celui de la barre d'expérience — Keko, 14/11)
-      const by = oy + (DEUX_BARRES ? 0 : 17)
+      const by = oy + (DEUX_BARRES ? BAISSE : 17)
       const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
       if (m.coque < coqueConnue - 1e-6) {
