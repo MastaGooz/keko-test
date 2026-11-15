@@ -427,7 +427,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let couvreApplique = false
   /** De combien le tampon de l'interface dépasse la vue de référence (sur PC : elle est dessinée plus fin) ; et ce qu'un de ses pixels vaut à l'écran, au plus. */
   let echelleUI = 1
-  const PIXEL_D_INTERFACE_SUR_PC = 3
+  const PIXEL_D_INTERFACE_SUR_PC = 2.5 // (3 d'abord : encore trop gros)
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
@@ -676,9 +676,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let w = 180
     let h: number
     if (paysage) {
-      zoom = Math.max(1, Math.min(6, Math.floor(large / 320), Math.floor(haut / 180)))
-      w = Math.max(320, Math.min(480, Math.floor(large / zoom)))
-      h = Math.max(180, Math.min(240, Math.floor(haut / zoom)))
+      // (SUR PC, LA BASE EST DESSINÉE PLUS FIN — Keko, 15/11 : « l'interface est trop grosse sur PC, c'est vraiment énorme ;
+      // sur téléphone c'est bon » : un pixel du tampon y vaut trois pixels d'écran au plus, au lieu de six, et le
+      // tampon peut être plus grand — la scène et les listes y gagnent de la place)
+      zoom = Math.max(1, Math.min(PC ? 3 : 6, Math.floor(large / 320), Math.floor(haut / 180)))
+      w = Math.max(320, Math.min(PC ? 640 : 480, Math.floor(large / zoom)))
+      h = Math.max(180, Math.min(PC ? 360 : 240, Math.floor(haut / zoom)))
     } else {
       zoom = Math.max(1, Math.min(6, Math.floor(large / 180), Math.floor(haut / 320)))
       h = Math.max(120, Math.min(480, Math.floor(haut / zoom)))

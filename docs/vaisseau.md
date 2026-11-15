@@ -3700,3 +3700,4 @@ Et l'ombre des anneaux des planètes annelées est retirée (`celeste.ts`) : la
 moitié arrière de l'anneau était assombrie à droite jusqu'à 1,9 rayon, un
 arc sombre bien au-delà de la planète.
 
+SUR PC, LA BASE EST DESSINÉE PLUS FIN (Keko, 15/11 : « vraiment énorme » ; le téléphone ne change pas) : dans `cadrer`, un pixel du tampon vaut trois pixels d'écran au plus (six avant) et le tampon peut aller jusqu'à 640 × 360 ; en vol, un pixel d'interface vaut 2,5 pixels d'écran au plus (`PIXEL_D_INTERFACE_SUR_PC`).
