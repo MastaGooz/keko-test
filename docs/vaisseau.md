@@ -4101,3 +4101,10 @@ distance — la chaîne continue d'un triangle au suivant. Le rivet est plus
 visible : une traînée d'or, une tige claire plus longue et plus large, une tête
 blanche, une lueur plus grande.
 
+PUIS LE LIEN SANS BORNE (Keko, 15/11 : « une fois qu'un triangle est terminé,
+la prochaine balise posée n'est pas connectée à ce triangle ») : la règle la
+reliait bien (mesuré), mais seulement à moins de 200 ; à la postcombustion, ou
+revenu au portail après une mort, la balise suivante était plus loin. Chaque
+balise est maintenant reliée à la précédente À TOUTE DISTANCE, comme la
+fermeture du triangle ; `lien` est retiré (vérifié).
+

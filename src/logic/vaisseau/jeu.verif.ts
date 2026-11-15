@@ -1203,7 +1203,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // reliées prend un rivet de chaque côté
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const balise = { id: 'balise', cadence: 0.7, degats: 4, portee: 90, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, lien: 200, garde: 3, recharge: 0.7 } }
+  const balise = { id: 'balise', cadence: 0.7, degats: 4, portee: 90, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3, recharge: 0.7 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [balise], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   // (immobile : une seule balise)
   const w = nouveauMonde(cfg, 3)
@@ -1221,6 +1221,14 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const espacees = w2.balises.every((b, k) => k === 0 || Math.hypot(b.x - w2.balises[k - 1].x, b.y - w2.balises[k - 1].y) >= 40)
   verifier('en volant, il pose des balises espacées sur son passage, reliées à la précédente, six au plus', auPlus === 6 && w2.balises.length === 6 && espacees && w2.balises.slice(1).every((b, k) => b.liens.some((li) => li.vers === w2.balises[k].id)))
   verifier('toutes les trois, la troisième est reliée aussi à la première : un triangle', premieres.length === 3 && premieres[2].liens.map((li) => li.vers).sort().join() === [premieres[0].id, premieres[1].id].sort().join() && premieres[1].liens.length === 1)
+  // (après un triangle, la balise suivante, posée LOIN — la postcombustion, un retour au portail —, y est reliée quand même)
+  const w5 = nouveauMonde(cfg, 3)
+  for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w5, 1 / 60, { x: i < 100 ? 1 : 0, y: i < 100 ? 0 : 1 })
+  const trois = w5.balises.length
+  w5.vaisseau = { ...w5.vaisseau, x: w5.vaisseau.x + 500, y: w5.vaisseau.y + 300 }
+  for (let i = 0; i < 60 * 2 && w5.balises.length === trois; i++) avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
+  const quatrieme = w5.balises[3]
+  verifier('après un triangle, la balise suivante est reliée à la dernière du triangle, même posée loin', trois === 3 && quatrieme !== undefined && quatrieme.rang === 0 && quatrieme.liens.length === 1 && quatrieme.liens[0].vers === w5.balises[2].id)
   // (deux balises à 60 l'une de l'autre, un insecte au milieu : un rivet de chaque côté)
   const w3 = nouveauMonde(cfg, 3)
   w3.vaisseau = { ...w3.vaisseau, x: 0, y: 200 }
