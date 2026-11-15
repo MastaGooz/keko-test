@@ -408,6 +408,22 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   const ecarts = tirs.slice(1).map((x, i) => x.t - tirs[i].t)
   verifier('deux canons tirent un par un, un côté puis l’autre, à intervalles égaux (la moitié de la cadence)', tirs.length >= 4 && ecarts.every((d) => Math.abs(d - 1) < 0.05) && tirs.slice(1).every((x, i) => Math.sign(x.y) !== Math.sign(tirs[i].y)))
 }
+// L'ARC DE TIR (Keko, 15/11) : le canon tire sur ce qui est devant le nez, pas sur le côté ni derrière
+{
+  const canon = { id: 'canon', cadence: 0.5, degats: 1, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, arcDeTir: (50 * Math.PI) / 180, armes: [canon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const tirsVers = (x: number, y: number): number => {
+    const w = nouveauMonde(cfg, 3) // (le nez vers le haut : −y)
+    w.ennemis.push({ id: 77, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+    let n = 0
+    for (let i = 0; i < 120; i++) {
+      w.ennemis[0].corps = { ...w.ennemis[0].corps, x, y, vx: 0, vy: 0 }
+      n += compter(avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements, 'obus')
+    }
+    return n
+  }
+  verifier('dans l’arc de tir : devant et de biais, il tire ; sur le côté et derrière, non', tirsVers(0, -60) > 0 && tirsVers(35, -50) > 0 && tirsVers(60, 0) === 0 && tirsVers(0, 60) === 0)
+}
 // LE RIVAL ARMÉ (Keko, 14/11) : de vraies armes, chacune à sa cadence ; un missile tourne vers le joueur
 {
   const canon = { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }

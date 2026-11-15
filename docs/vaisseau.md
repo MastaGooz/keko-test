@@ -3657,3 +3657,5 @@ SUR PC, EN VOL, LE JEU COUVRE TOUTE LA PAGE (Keko, 14/11 : « quitte à ce que l
 Le vaisseau du jeu du vortex porte UN CANON DANS CHAQUE AILE, qui tirent À TOUR DE RÔLE (Keko, 14/11) : deux canons à demi-cadence, le second décalé d'une demi-période (`monterLeMonde`) — la cadence totale est celle d'un seul canon (de moi : à doubler si Keko voulait plus de feu). Quel que soit le hangar gardé.
 
 L'ALTERNANCE EST DANS LA RÈGLE (`VAISSEAU.alternance`, 14/11) : les deux canons partaient ENSEMBLE — rechargés tous deux pendant qu'il n'y avait pas de cible, ils tiraient au même instant à la première, et restaient synchrones ; le décalage posé au départ ne servait à rien. Quand une arme tire, les autres attendent maintenant sa cadence ÷ le nombre d'armes : gauche, puis droite, à intervalles égaux.
+
+L'ARC DE TIR (Keko, 15/11 : « forcer le joueur à se positionner face aux ennemis ») : `VAISSEAU.arcDeTir`, le demi-angle devant le nez — 50° dans le jeu du vortex (`&arc=N`), zéro (aucune limite) dans le Nova Drifter. Une arme ne prend pour cible qu'un ennemi dans l'arc, et l'avance prise sur lui n'en fait pas sortir le tir.

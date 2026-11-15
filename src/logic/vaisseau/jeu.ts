@@ -80,6 +80,13 @@ export const VAISSEAU = {
    */
   alternance: false as boolean,
   /**
+   * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
+   * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
+   * joueur à se positionner face aux ennemis ») : le demi-angle, en radians, de part et d'autre du nez ; une arme ne
+   * prend pour cible qu'un ennemi dans cet arc, et son tir n'en sort pas. Zéro : aucune limite (le Nova Drifter).
+   */
+  arcDeTir: 0,
+  /**
    * CHAQUE FOREUSE MONTÉE CREUSE (Keko, 13/11 — le cuirassé en porte deux, une seule travaillait : « chaque foreuse
    * attaque la roche la plus près de sa propre position, et à portée ») : la liste des foreuses du vaisseau — leurs
    * facteurs de débit et de portée, la place d'outil où chacune est montée, son cran, et OÙ ELLE EST sur le vaisseau
@@ -1174,11 +1181,15 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       let dc = Infinity
       for (const e of m.ennemis) {
         const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        // (hors de l'arc de tir, devant le nez : pas une cible)
+        if (c.arcDeTir > 0 && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) > c.arcDeTir) continue
         if (d <= arme.portee && d < dc) (dc = d), (cible = e)
       }
       if (cible === null) return
       const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
+      // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
+      if (c.arcDeTir > 0) vise = v.cap + Math.max(-c.arcDeTir, Math.min(c.arcDeTir, ecartDAngle(v.cap, vise)))
     }
     m.armesA[i] = m.t + arme.cadence
     if (c.alternance) c.armes.forEach((_, j) => {

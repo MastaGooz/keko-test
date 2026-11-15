@@ -746,7 +746,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
     if (VORTEX) {
       const canon = pieceDe('arme-canon')?.arme
-      if (canon !== undefined) CONF = { ...CONF, alternance: true, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
+      // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
+      if (canon !== undefined) CONF = { ...CONF, alternance: true, arcDeTir: ((Number(parametres.get('arc')) || 50) * Math.PI) / 180, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
     }
     if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || CONF.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
     // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
