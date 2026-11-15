@@ -1203,7 +1203,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // reliées prend un rivet de chaque côté
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const balise = { id: 'balise', cadence: 0.7, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3 } }
+  const balise = { id: 'balise', cadence: 0.7, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [balise], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   // (immobile : une seule balise)
   const w = nouveauMonde(cfg, 3)
@@ -1260,7 +1260,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (deux balises à 60 l'une de l'autre, un insecte qui reste sur la ligne : elle s'éclaire une fois, il prend un coup)
   const w3 = nouveauMonde(cfg, 3)
   w3.vaisseau = { ...w3.vaisseau, x: 0, y: 200 }
-  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [] }] })
+  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [], dechargeA: 0 }] })
   w3.armesA[0] = 1e9
   w3.ennemis.push(insecte(1, 0, 1), insecte(2, 0, 40))
   const ev3: Evenement[] = []
@@ -1268,12 +1268,12 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     w3.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: 0, y: [1, 40][k], vx: 0, vy: 0 }))
     ev3.push(...avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 }).evenements)
   }
-  verifier('un insecte franchit la ligne entre deux balises : elle s’éclaire, il prend un coup, une fois tant qu’il reste dessus ; à l’écart, rien', ev3.filter((e) => e.type === 'ligne').length === 1 && Math.abs(1000 - w3.ennemis[0].pv - 8) < 1e-9 && w3.ennemis[1].pv === 1000 && !ev3.some((e) => e.type === 'obus'))
+  verifier('un insecte franchit la ligne entre deux balises : elle s’éclaire, il prend un coup tout de suite ; à l’écart, rien', ev3.filter((e) => e.type === 'ligne').length === 1 && Math.abs(1000 - w3.ennemis[0].pv - 8) < 1e-9 && w3.ennemis[1].pv === 1000 && !ev3.some((e) => e.type === 'obus'))
   // (deux insectes : l'un entre, l'autre entre deux pas après, le premier encore dessus — sans recharge : deux éclairs,
   // le premier prend deux coups, le second un ; puis l'un sort et rentre : un coup de plus à chacun)
   const w8 = nouveauMonde(cfg, 3)
   w8.vaisseau = { ...w8.vaisseau, x: 0, y: 200 }
-  w8.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [] }] })
+  w8.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [], dechargeA: 0 }] })
   w8.armesA[0] = 1e9
   w8.ennemis.push(insecte(1, -10, 0), insecte(2, 10, 30))
   const ev8: Evenement[] = []
@@ -1290,10 +1290,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   pas8(30)
   pas8(1)
   verifier('sans recharge : deux insectes qui franchissent l’un après l’autre — deux éclairs, celui encore dessus prend deux coups ; il ressort et rentre, un coup de plus à chacun', ev8.filter((e) => e.type === 'ligne').length === 3 && a8[0] === 16 && a8[1] === 8 && 1000 - w8.ennemis[0].pv === 24 && 1000 - w8.ennemis[1].pv === 16)
+  // (LA CLÔTURE ÉLECTRIQUE : il reste dessus 1,1 s — à l'entrée, puis toutes les 0,5 s : trois coups ; sorti, plus rien)
+  const w9 = nouveauMonde(cfg, 3)
+  w9.vaisseau = { ...w9.vaisseau, x: 0, y: 200 }
+  w9.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [], dechargeA: 0 }] })
+  w9.armesA[0] = 1e9
+  w9.ennemis.push(insecte(1, 0, 1))
+  const ev9: Evenement[] = []
+  for (let i = 0; i < 60 * 2; i++) {
+    w9.ennemis[0].corps = { ...w9.ennemis[0].corps, x: 0, y: i < 66 ? 1 : 40, vx: 0, vy: 0 }
+    ev9.push(...avancerLeMonde(cfg, w9, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  verifier('tant qu’il reste sur la ligne, elle continue de décharger (à l’entrée, puis toutes les 0,5 s) ; sorti, plus rien', ev9.filter((e) => e.type === 'ligne').length === 3 && 1000 - w9.ennemis[0].pv === 24)
   // (personne entre elles : elles ne tirent pas)
   const w4 = nouveauMonde(cfg, 3)
   w4.vaisseau = { ...w4.vaisseau, x: 0, y: 200 }
-  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [] }] })
+  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, sur: [], dechargeA: 0 }] })
   w4.armesA[0] = 1e9
   w4.ennemis.push(insecte(1, 60, 0))
   const ev4: Evenement[] = []

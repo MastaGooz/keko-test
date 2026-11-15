@@ -4134,3 +4134,12 @@ dessus prend deux coups). Plus d'obus ni de rivet ; l'éclair est un trait blanc
 dans une lueur d'or qui s'éteint en 0,25 s ; son son, un « zing » électrique
 (`balise`). Les becs des balises restent dessinés.
 
+PUIS LA CLÔTURE ÉLECTRIQUE (Keko, 15/11 : « que la ligne continue de décharger
+tant que l'ennemi est dedans, quitte à le toucher plusieurs fois, comme une
+clôture électrique qu'on continuerait de toucher ») : en plus de la décharge à
+chaque entrée, tant qu'un insecte est sur la ligne (à moins de 3 + son rayon du
+segment, entre les balises), elle redécharge toutes les 0,5 s depuis sa
+dernière décharge (`balise.periode`, `liens[].dechargeA`) — tous ceux qui sont
+dessus perdent 8 points, elle s'éclaire, elle sonne (vérifié : 1,1 s dessus,
+trois coups).
+

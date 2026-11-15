@@ -387,9 +387,12 @@ export type Arme = {
    * traversent quasiment en même temps, ils sont touchés tous les deux — voire deux fois s'ils sont encore sur la
    * ligne ; pas de temps de recharge ») : un insecte est SUR une ligne à moins de `garde` d'elle (plus son rayon),
    * entre ses deux balises ; chaque fois qu'un insecte y ENTRE, la ligne s'éclaire et TOUT INSECTE SUR ELLE prend
-   * `degats` — sans recharge : deux qui entrent ensemble, chacun prend deux coups.
+   * `degats` — sans recharge : deux qui entrent ensemble, chacun prend deux coups. ET ELLE CONTINUE DE DÉCHARGER (Keko,
+   * 15/11 : « tant que l'ennemi est dedans, quitte à le toucher plusieurs fois — comme une clôture électrique qu'on
+   * continuerait de toucher ») : tant qu'un insecte est dessus, elle se décharge encore toutes les `periode` secondes
+   * depuis sa dernière décharge.
    */
-  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number }
+  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number }
 }
 
 export type Vaisseau = {
@@ -530,7 +533,7 @@ export type Monde = {
 }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
-export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et pour chaque ligne les insectes qui sont dessus. */ liens: { vers: number; sur: number[] }[] }
+export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et pour chaque ligne les insectes qui sont dessus et l'instant de sa prochaine décharge s'ils y restent. */ liens: { vers: number; sur: number[]; dechargeA: number }[] }
 
 /** Une scie lancée (voir `Arme.scie`) : son arme, où, sa vitesse, sa direction de départ, quand, si elle revient, ceux qu'elle a touchés dans ce sens. */
 export type Scie = { id: number; arme: number; x: number; y: number; vx: number; vy: number; cap0: number; lancee: number; revient: boolean; touches: number[] }
@@ -1362,10 +1365,10 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     m.armesA[i] = m.t + ba.tous
     const rang = derniere === undefined ? 0 : (derniere.rang + 1) % 3
     const liens: Balise['liens'] = []
-    if (derniere !== undefined && rang > 0) liens.push({ vers: derniere.id, sur: [] })
+    if (derniere !== undefined && rang > 0) liens.push({ vers: derniere.id, sur: [], dechargeA: 0 })
     // (LE TRIANGLE : la troisième d'un trio est reliée aussi à la première, si elle est encore là)
     const premiere = miennes[miennes.length - 2]
-    if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, sur: [] })
+    if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, sur: [], dechargeA: 0 })
     const id = m.prochainId++
     m.balises.push({ id, x: v.x, y: v.y, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
     ev.push({ type: 'balisePosee', x: v.x, y: v.y })
@@ -1376,7 +1379,8 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       m.balises = m.balises.filter((b) => b.trio !== vieux)
     }
   })
-  // LE PIÈGE : chaque insecte qui ENTRE sur une ligne l'éclaire, et tous ceux qui sont dessus prennent un coup
+  // LE PIÈGE : chaque insecte qui ENTRE sur une ligne l'éclaire, et tous ceux qui sont dessus prennent un coup ; tant
+  // qu'il en reste dessus, elle redécharge toutes les `periode` secondes
   for (const b of m.balises) for (const li of b.liens) {
     const a = c.armes[b.arme]
     const ba = a?.balise
@@ -1389,9 +1393,11 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const u = ((e.corps.x - b.x) * dx + (e.corps.y - b.y) * dy) / l2
       return u > 0 && u < 1 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + c.ennemi.rayon
     })
-    const entres = dessus.filter((e) => !li.sur.includes(e.id)).length
+    let decharges = dessus.filter((e) => !li.sur.includes(e.id)).length
+    if (decharges === 0 && dessus.length > 0 && m.t >= li.dechargeA) decharges = 1
     li.sur = dessus.map((e) => e.id)
-    for (let k = 0; k < entres; k++) {
+    if (decharges > 0) li.dechargeA = m.t + ba.periode
+    for (let k = 0; k < decharges; k++) {
       ev.push({ type: 'ligne', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y })
       for (const e of dessus) {
         if (!m.ennemis.includes(e)) continue
