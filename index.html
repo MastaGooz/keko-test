@@ -30,7 +30,8 @@
          ouverte par son adresse, la page prend SON manifeste, SON icone, SON nom — avant que le navigateur ne lise
          ceux de la collection. Installee depuis cette adresse, elle s'appelle Nova Drifter et s'ouvre sur le jeu. -->
     <script>
-      if (new URLSearchParams(location.search).has('vaisseau')) {
+      // (… et `?vortex`, le jeu bati sur le meme moteur : la meme icone, en attendant la sienne — Keko, 15/11)
+      if (new URLSearchParams(location.search).has('vaisseau') || new URLSearchParams(location.search).has('vortex')) {
         var m = document.querySelector('link[rel="manifest"]')
         var v = m.getAttribute('href').split('?')[1]
         m.setAttribute('href', './manifest-vaisseau.webmanifest' + (v ? '?' + v : ''))
