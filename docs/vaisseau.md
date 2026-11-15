@@ -4114,3 +4114,11 @@ de connexion entre deux triangles ; 1, 2 et 3 forment un triangle, ensuite 4,
 d'un trio n'est plus reliée à rien ; la deuxième l'est à la première, la
 troisième aux deux autres (vérifié). Le lien reste sans borne de distance.
 
+PUIS LE TRIANGLE S'ÉTEINT D'UN BLOC (Keko, 15/11 : « les trois balises d'un
+triangle disparaissent simultanément, à la fin du temps de vie de la dernière
+balise du triangle ») : chaque balise sait son trio (`Balise.trio`) ; un
+triangle s'éteint 35 s après la pose de sa DERNIÈRE balise (`finDuTrio`), ses
+trois balises ensemble, et clignote ensemble ses trois dernières secondes ; à
+la septième balise posée, c'est le plus vieux triangle ENTIER qui saute
+(vérifié).
+

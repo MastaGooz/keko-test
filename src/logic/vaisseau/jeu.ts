@@ -379,7 +379,10 @@ export type Arme = {
    * `duree` secondes. LES BALISES VONT PAR TROIS, CHAQUE TRIO UN TRIANGLE (Keko, 15/11 : « 1, 2 et 3 forment un
    * triangle, ensuite 4, 5, 6 forment un triangle ; mais les deux triangles ne doivent pas être reliés ») : la deuxième
    * d'un trio est reliée à la première, la troisième à la deuxième ET à la première, à toute distance ; la première d'un
-   * trio n'est reliée à rien. Un insecte entre
+   * trio n'est reliée à rien. UN TRIANGLE S'ÉTEINT D'UN BLOC (Keko, 15/11 : « les trois balises d'un triangle
+   * disparaissent simultanément, à la fin du temps de vie de la dernière balise du triangle ») : `duree` secondes après
+   * la pose de sa dernière balise (`finDuTrio`) ; et quand il y en a plus de `max`, c'est le plus vieux triangle entier
+   * qui saute. Un insecte entre
    * deux balises reliées — à moins de `garde` de la ligne qui les joint, entre elles — : les deux tirent, l'une vers
    * l'autre, un rivet de `degats` à la vitesse de l'arme ; la paire recharge `recharge` secondes. Les rivets sont des
    * obus (`arme.id`), qui s'arrêtent au premier insecte touché.
@@ -525,7 +528,7 @@ export type Monde = {
 }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
-export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle). */ rang: number; /** Les balises auxquelles elle est reliée (posées avant elle), et le prochain tir de chaque paire. */ liens: { vers: number; tirA: number }[] }
+export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et le prochain tir de chaque paire. */ liens: { vers: number; tirA: number }[] }
 
 /** Une scie lancée (voir `Arme.scie`) : son arme, où, sa vitesse, sa direction de départ, quand, si elle revient, ceux qu'elle a touchés dans ce sens. */
 export type Scie = { id: number; arme: number; x: number; y: number; vx: number; vy: number; cap0: number; lancee: number; revient: boolean; touches: number[] }
@@ -1328,13 +1331,23 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   }
 }
 
+/** L'instant où le triangle d'une balise s'éteint : `duree` après la pose de sa dernière balise (voir `Arme.balise`). */
+export function finDuTrio(m: Monde, b: Balise, duree: number): number {
+  let derniere = b.nee
+  for (const o of m.balises) if (o.trio === b.trio && o.nee > derniere) derniere = o.nee
+  return derniere + duree
+}
+
 /** LES BALISES (voir `Arme.balise`) : la pose sur le passage, l'extinction, le piège qui tire ses rivets. */
 function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
-  // les vieilles s'éteignent
-  m.balises = m.balises.filter((b) => {
+  // les triangles finis s'éteignent, d'un bloc
+  const finis = new Set(m.balises.filter((b) => {
     const ba = c.armes[b.arme]?.balise
-    if (ba !== undefined && m.t - b.nee < ba.duree) return true
+    return ba === undefined || m.t >= finDuTrio(m, b, ba.duree)
+  }).map((b) => b.trio))
+  m.balises = m.balises.filter((b) => {
+    if (!finis.has(b.trio)) return true
     ev.push({ type: 'baliseFinie', x: b.x, y: b.y })
     return false
   })
@@ -1351,12 +1364,14 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     // (LE TRIANGLE : la troisième d'un trio est reliée aussi à la première, si elle est encore là)
     const premiere = miennes[miennes.length - 2]
     if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, tirA: m.t + 0.3 })
-    m.balises.push({ id: m.prochainId++, x: v.x, y: v.y, nee: m.t, arme: i, rang, liens })
+    const id = m.prochainId++
+    m.balises.push({ id, x: v.x, y: v.y, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
     ev.push({ type: 'balisePosee', x: v.x, y: v.y })
+    // (trop de balises : le plus vieux triangle saute, entier)
     if (miennes.length + 1 > ba.max) {
-      const vieille = miennes[0]
-      m.balises = m.balises.filter((b) => b !== vieille)
-      ev.push({ type: 'baliseFinie', x: vieille.x, y: vieille.y })
+      const vieux = miennes[0].trio
+      for (const b of m.balises) if (b.trio === vieux) ev.push({ type: 'baliseFinie', x: b.x, y: b.y })
+      m.balises = m.balises.filter((b) => b.trio !== vieux)
     }
   })
   // LE PIÈGE : un insecte entre deux balises reliées, les deux tirent l'une vers l'autre

@@ -1219,7 +1219,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     if (premieres.length === 0 && w2.balises.length === 3) premieres = w2.balises.map((b) => ({ ...b, liens: [...b.liens] }))
   }
   const espacees = w2.balises.every((b, k) => k === 0 || Math.hypot(b.x - w2.balises[k - 1].x, b.y - w2.balises[k - 1].y) >= 40)
-  verifier('en volant, il pose des balises espacées sur son passage, six au plus, par trios : chacune reliée à la précédente de son trio, la première d’un trio à rien', auPlus === 6 && w2.balises.length === 6 && espacees && w2.balises.every((b, k) => (b.rang === 0 ? b.liens.length === 0 : k === 0 /* (la plus vieille a sauté : la liste peut commencer au milieu d'un trio) */ || b.liens.some((li) => li.vers === w2.balises[k - 1].id))))
+  verifier('en volant, il pose des balises espacées sur son passage, six au plus, par trios : chacune reliée à la précédente de son trio, la première d’un trio à rien', auPlus === 6 && w2.balises.length <= 6 && espacees && w2.balises.every((b, k) => (b.rang === 0 ? b.liens.length === 0 : k === 0 /* (la plus vieille a sauté : la liste peut commencer au milieu d'un trio) */ || b.liens.some((li) => li.vers === w2.balises[k - 1].id))))
   verifier('toutes les trois, la troisième est reliée aussi à la première : un triangle', premieres.length === 3 && premieres[2].liens.map((li) => li.vers).sort().join() === [premieres[0].id, premieres[1].id].sort().join() && premieres[1].liens.length === 1)
   // (après un triangle, la balise suivante commence un autre triangle : elle n'est pas reliée au premier)
   const w5 = nouveauMonde(cfg, 3)
@@ -1229,10 +1229,38 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   for (let i = 0; i < 60 * 2 && w5.balises.length === trois; i++) avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
   const quatrieme = w5.balises[3]
   verifier('après un triangle, la balise suivante commence un autre triangle, sans lien avec le premier', trois === 3 && quatrieme !== undefined && quatrieme.rang === 0 && quatrieme.liens.length === 0 && !w5.balises.slice(0, 3).some((b) => b.liens.some((li) => li.vers === quatrieme.id)))
+  // (UN TRIANGLE S'ÉTEINT D'UN BLOC, à la fin de vie de sa dernière balise ; le septième pose fait sauter le plus vieux triangle entier)
+  const w6 = nouveauMonde(cfg, 3)
+  let n6 = 0
+  const tenirJusqua = (t: number, dir: { x: number; y: number }): void => {
+    while (w6.t < t) {
+      avancerLeMonde(cfg, w6, 1 / 60, dir)
+      n6 = Math.max(n6, w6.balises.length)
+    }
+  }
+  tenirJusqua(1.6, { x: 1, y: 0 })
+  tenirJusqua(3.3, { x: 0, y: 1 })
+  tenirJusqua(3.6, { x: 0, y: 0 })
+  const trio = w6.balises.map((b) => b.id)
+  w6.armesA[0] = 1e9 // (il dérive encore : plus de pose, on regarde ce triangle seul)
+  const derniereNee = Math.max(...w6.balises.map((b) => b.nee))
+  tenirJusqua(36, { x: 0, y: 0 })
+  const encore = w6.balises.length
+  tenirJusqua(derniereNee + 35.1, { x: 0, y: 0 })
+  verifier('un triangle s’éteint d’un bloc, à la fin de vie de sa dernière balise (la première, plus vieille, l’attend)', trio.length === 3 && encore === 3 && w6.balises.length === 0)
+  const w7 = nouveauMonde(cfg, 3)
+  const poses: number[] = []
+  let apres7 = -1
+  for (let i = 0; i < 60 * 12 && apres7 < 0; i++) {
+    const r = avancerLeMonde(cfg, w7, 1 / 60, { x: Math.cos(i / 90), y: Math.sin(i / 90) })
+    if (r.evenements.some((e) => e.type === 'balisePosee')) poses.push(w7.balises.length)
+    if (poses.length === 7) apres7 = w7.balises.length
+  }
+  verifier('la septième balise fait sauter le plus vieux triangle, entier', apres7 === 4 && new Set(w7.balises.map((b) => b.trio)).size === 2)
   // (deux balises à 60 l'une de l'autre, un insecte au milieu : un rivet de chaque côté)
   const w3 = nouveauMonde(cfg, 3)
   w3.vaisseau = { ...w3.vaisseau, x: 0, y: 200 }
-  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, liens: [{ vers: 900, tirA: 0 }] })
+  w3.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, tirA: 0 }] })
   w3.armesA[0] = 1e9
   w3.ennemis.push(insecte(1, 0, 1), insecte(2, 0, 40))
   const ev3: Evenement[] = []
@@ -1244,7 +1272,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (personne entre elles : elles ne tirent pas)
   const w4 = nouveauMonde(cfg, 3)
   w4.vaisseau = { ...w4.vaisseau, x: 0, y: 200 }
-  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, liens: [{ vers: 900, tirA: 0 }] })
+  w4.balises.push({ id: 900, x: -30, y: 0, nee: 0, arme: 0, rang: 0, trio: 900, liens: [] }, { id: 901, x: 30, y: 0, nee: 0, arme: 0, rang: 1, trio: 900, liens: [{ vers: 900, tirA: 0 }] })
   w4.armesA[0] = 1e9
   w4.ennemis.push(insecte(1, 60, 0))
   const ev4: Evenement[] = []
