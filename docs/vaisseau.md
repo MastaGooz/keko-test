@@ -4053,3 +4053,20 @@ une capsule ; elle vole 0,4 s EN CLOCHE (son ombre au sol, un petit caisson qui
 tourne, un voyant jaune), se déploie à l'arrivée et ne tire qu'une fois posée.
 Immobile, il garnit ainsi les places autour de lui. Son `lance` : un déclic de
 ressort, un petit souffle. Puis LA CAPSULE PLUS GROSSE ET MÉTALLIQUE (Keko : « trop petite par rapport à la tourelle ; un aspect métallisé ») : peinte comme les vaisseaux (`formesDeLaCapsule`) — un caisson octogonal d'acier, un couvercle plus clair, quatre boulons jaunes, un voyant vert —, presque de la taille du socle.
+
+LA SCIE DE L'INGÉNIEUR, SA DEUXIÈME ARME (Keko, 15/11 : « une scie circulaire
+qui tourne, on la lance et au bout de sa trajectoire elle revient vers le
+vaisseau, comme un boomerang ; en fonction de notre position au lancement et à
+la réception, ça décrit un arc différent et le placement du joueur devient très
+stratégique ») : `Arme.scie`, `Monde.scies`, `menerLesScies` (vérifié). Une
+cible à 80 (la verrouillée d'abord, sinon la plus proche), il LANCE la scie
+vers elle : elle file droit en ralentissant et s'arrête au bout de sa portée en
+0,7 s, puis REVIENT vers le vaisseau, LÀ OÙ IL EST, en virant vers lui (6 par
+seconde, jusqu'à 200 de vitesse) : immobile, elle repasse par le même chemin ;
+en se déplaçant, on courbe son retour. Elle traverse tout : 7 points à chaque
+insecte coupé, une fois à l'aller, une fois au retour. Rattrapée, elle repart
+0,3 s après. Peinte comme les vaisseaux (`formesDeLaScie` : douze dents
+d'acier, un moyeu jaune), elle tourne, deux ombres pâles derrière elle ; ses
+sons, `scie` (une lame qui siffle) et `rattrape` (un clac). Le nez de
+l'Ingénieur suit toujours le manche. *Chiffres de moi, à rejuger.*
+

@@ -508,6 +508,27 @@ const RECETTES = {
       souffle(m, h, 0.01, 0.7, 0, { f: 500, glisse: { vers: 1400, en: 0.14, droit: true }, q: 1.2, bande: true, a: 0.01, d: 0.14 })
     },
   },
+  /**
+   * LA SCIE EST LANCÉE : le sifflement d'une lame qui tourne — un ton métallique, des partiels inharmoniques, battu vite
+   * (les dents), qui glisse vers le bas en s'éloignant —, et le souffle du lancer
+   */
+  scie: {
+    duree: 0.9, niveau: 0.2, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      const f = 1500 * (0.95 + 0.1 * h.next())
+      note(m, 0, 0.7, 0, { f, glisse: { vers: f * 0.7, en: 0.7 }, a: 0.01, d: 0.75, battement: 38, partiels: [[1, 1, 1], [1.51, 0.45, 0.8], [2.73, 0.25, 0.6]] })
+      souffle(m, h, 0, 0.6, 0, { f: 700, glisse: { vers: 1800, en: 0.12, droit: true }, q: 1.2, bande: true, a: 0.005, d: 0.16 })
+      souffle(m, h, 0.05, 0.3, 0, { f: 4200, glisse: { vers: 2600, en: 0.6 }, q: 2, bande: true, a: 0.02, d: 0.6 })
+    },
+  },
+  /** LE VAISSEAU RATTRAPE SA SCIE : un clac métallique court, un tintement */
+  rattrape: {
+    duree: 0.35, niveau: 0.16, salle: [0.25, 0.1], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 880, a: 0.001, d: 0.09, partiels: [[1, 1, 1], [2.71, 0.45, 0.6], [4.1, 0.25, 0.4]] })
+      souffle(m, h, 0, 0.4, 0, { f: 2400, q: 1.5, bande: true, a: 0.001, d: 0.025 })
+    },
+  },
   /** UNE TOURELLE EST POSÉE : un clac métallique (des partiels inharmoniques), puis un servo qui monte */
   pose: {
     duree: 0.55, niveau: 0.24, salle: [0.3, 0.12], variantes: 2,

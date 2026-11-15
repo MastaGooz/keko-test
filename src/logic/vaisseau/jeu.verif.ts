@@ -1160,5 +1160,44 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   tenir(wA, cfgA, [[20, 0], [80, 0]], 60)
   verifier('l’aura brûle ce qui est autour du vaisseau, sans cesse ; au-delà, rien', Math.abs(1000 - wA.ennemis[0].pv - 4) < 0.1 && wA.ennemis[1].pv === 1000)
 }
+// LA SCIE DE L'INGÉNIEUR (Keko, 15/11) : lancée vers l'ennemi, elle s'arrête à sa portée, revient au vaisseau là où il
+// est, coupe à l'aller et au retour
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const scie = { id: 'scie', cadence: 0.3, degats: 7, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, scie: { aller: 0.7, retour: 200, virage: 6, rayon: 5 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [scie], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const tenir = (w: ReturnType<typeof nouveauMonde>, places: [number, number][], n: number, dir: { x: number; y: number }): Evenement[] => {
+    const evs: Evenement[] = []
+    for (let i = 0; i < n; i++) {
+      w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+      evs.push(...avancerLeMonde(cfg, w, 1 / 60, dir).evenements)
+    }
+    return evs
+  }
+  // (immobile : un insecte à 50 sur son chemin — coupé à l'aller, puis au retour ; la scie va jusqu'à ~80 et revient)
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 50, 0))
+  let loin = 0
+  const evs: Evenement[] = []
+  for (let i = 0; i < 90; i++) {
+    evs.push(...tenir(w, [[50, 0]], 1, { x: 0, y: 0 }))
+    for (const s of w.scies) loin = Math.max(loin, Math.hypot(s.x, s.y))
+    if (evs.some((e) => e.type === 'scieRattrapee')) break
+  }
+  verifier('la scie part vers l’insecte, s’arrête au bout de sa portée et revient au vaisseau', evs.some((e) => e.type === 'scieLancee') && evs.some((e) => e.type === 'scieRattrapee') && Math.abs(loin - 80) < 6 && w.scies.length === 0)
+  verifier('elle coupe à l’aller ET au retour, une fois dans chaque sens', Math.abs(1000 - w.ennemis[0].pv - 14) < 1e-9)
+  // (personne à portée : il la garde)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.ennemis.push(insecte(1, 200, 0))
+  const ev2 = tenir(w2, [[200, 0]], 60, { x: 0, y: 0 })
+  verifier('personne à portée : il garde sa scie', !ev2.some((e) => e.type === 'scieLancee') && w2.scies.length === 0)
+  // (il se déplace pendant le vol : elle le rejoint là où il est — ce n'est plus le point du lancer)
+  const w3 = nouveauMonde(cfg, 3)
+  w3.ennemis.push(insecte(1, 0, -60))
+  const ev3: Evenement[] = []
+  for (let i = 0; i < 240 && !ev3.some((e) => e.type === 'scieRattrapee'); i++) ev3.push(...tenir(w3, [[0, -60]], 1, { x: 1, y: 0 }))
+  const re = ev3.find((e) => e.type === 'scieRattrapee')
+  verifier('il se déplace : elle revient vers lui, là où il est, en arc', re !== undefined && re.type === 'scieRattrapee' && Math.hypot(re.x - w3.vaisseau.x, re.y - w3.vaisseau.y) < 12 && w3.vaisseau.x > 30)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

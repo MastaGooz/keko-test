@@ -360,6 +360,17 @@ export type Arme = {
   eclair?: boolean
   chaine?: { rebonds: number; saut: number; attenuation: number }
   aura?: { rayon: number; dps: number }
+  /**
+   * UNE SCIE CIRCULAIRE QUI REVIENT (l'Ingénieur, Keko, 15/11 : « une scie circulaire qui tourne ; on la lance et au bout
+   * de sa trajectoire elle revient vers le vaisseau, comme un boomerang — en fonction de notre position au lancement et à
+   * la réception, elle décrit un arc différent, et le placement du joueur devient stratégique ») : une cible à portée —
+   * la verrouillée d'abord, sinon la plus proche —, il la LANCE vers elle ; elle file droit en ralentissant et s'arrête à
+   * `portee` au bout de `aller` secondes, puis REVIENT vers le vaisseau, là où il est, en virant de `virage` (par
+   * seconde) vers lui, jusqu'à `retour` de vitesse ; il la RATTRAPE au contact et la relance `cadence` secondes après.
+   * Elle traverse tout : chaque insecte à moins de `rayon` d'elle prend `degats` une fois à l'aller, une fois au retour.
+   * L'état est `Monde.scies`.
+   */
+  scie?: { aller: number; retour: number; virage: number; rayon: number }
 }
 
 export type Vaisseau = {
@@ -493,7 +504,12 @@ export type Monde = {
   balayage: { arme: number; debut: number; angle: number; touches: number[] } | null
   /** LE RAYON CANALISÉ (voir `Arme.canalise`) : sa cible, depuis quand il est dessus, où elle est, sa chauffe (0 à 1) ; ou null. */
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
+  /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
+  scies: Scie[]
 }
+
+/** Une scie lancée (voir `Arme.scie`) : son arme, où, sa vitesse, sa direction de départ, quand, si elle revient, ceux qu'elle a touchés dans ce sens. */
+export type Scie = { id: number; arme: number; x: number; y: number; vx: number; vy: number; cap0: number; lancee: number; revient: boolean; touches: number[] }
 
 /** Une flaque de feu au sol (voir `Arme.napalm`). */
 export type Flaque = { id: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }
@@ -526,6 +542,9 @@ export type Evenement =
   | { type: 'chaine'; points: Vecteur[]; ids: number[] }
   /** Le rayon commence son tour (voir `Arme.balayage`). */
   | { type: 'balayage'; duree: number }
+  /** Une scie part ; le vaisseau la rattrape (voir `Arme.scie`). */
+  | { type: 'scieLancee'; x: number; y: number }
+  | { type: 'scieRattrapee'; x: number; y: number }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
@@ -552,7 +571,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1215,6 +1234,77 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   })
 }
 
+/** LES SCIES (voir `Arme.scie`) : le lancer, l'aller qui ralentit, le retour qui vire vers le vaisseau, les coupes. */
+function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const sc = a.scie
+    if (sc === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0) || m.scies.some((s) => s.arme === i)) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (aPortee(e) && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    const cap0 = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+    // (elle part du bord du vaisseau, à la vitesse qui la fait s'arrêter pile à `portee` : 2 × portée ÷ aller)
+    const x0 = v.x + Math.cos(cap0) * (c.rayon + 2)
+    const y0 = v.y + Math.sin(cap0) * (c.rayon + 2)
+    const v0 = (2 * (a.portee - c.rayon - 2)) / sc.aller
+    m.scies.push({ id: m.prochainId++, arme: i, x: x0, y: y0, vx: Math.cos(cap0) * v0, vy: Math.sin(cap0) * v0, cap0, lancee: m.t, revient: false, touches: [] })
+    ev.push({ type: 'scieLancee', x: x0, y: y0 })
+  })
+  for (let k = m.scies.length - 1; k >= 0; k--) {
+    const s = m.scies[k]
+    const a = c.armes[s.arme]
+    const sc = a?.scie
+    if (a === undefined || sc === undefined) {
+      m.scies.splice(k, 1)
+      continue
+    }
+    const age = m.t - s.lancee
+    if (!s.revient) {
+      // L'ALLER : droit, de plus en plus lent ; arrêtée, elle revient — et peut retoucher ceux de l'aller
+      const vit = ((2 * (a.portee - c.rayon - 2)) / sc.aller) * Math.max(0, 1 - age / sc.aller)
+      s.vx = Math.cos(s.cap0) * vit
+      s.vy = Math.sin(s.cap0) * vit
+      if (age >= sc.aller) (s.revient = true), (s.touches = [])
+    } else {
+      // LE RETOUR : elle vire vers le vaisseau, là où il est maintenant, et accélère jusqu'à `retour`
+      const dx = v.x - s.x
+      const dy = v.y - s.y
+      const d = Math.hypot(dx, dy) || 1
+      const voulue = sc.retour * Math.min(1, (age - sc.aller) / 0.25)
+      const k2 = Math.min(1, sc.virage * dt)
+      s.vx += ((dx / d) * voulue - s.vx) * k2
+      s.vy += ((dy / d) * voulue - s.vy) * k2
+    }
+    s.x += s.vx * dt
+    s.y += s.vy * dt
+    // LES COUPES : une fois par insecte et par sens
+    for (const e of [...m.ennemis]) {
+      if (s.touches.includes(e.id) || Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sc.rayon + c.ennemi.rayon) continue
+      s.touches.push(e.id)
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    // LA RÉCEPTION : au contact du vaisseau, au retour (ou, perdue trop longtemps, elle rentre d'elle-même)
+    if ((s.revient && Math.hypot(v.x - s.x, v.y - s.y) <= c.rayon + 3) || age > sc.aller + 6) {
+      m.scies.splice(k, 1)
+      m.armesA[s.arme] = m.t + a.cadence
+      ev.push({ type: 'scieRattrapee', x: s.x, y: s.y })
+    }
+  }
+}
+
 /** LE RAYON CANALISÉ (voir `Arme.canalise`) : il choisit sa cible, chauffe sur elle, la brûle. */
 function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const i = c.armes.findIndex((a) => a.canalise !== undefined)
@@ -1608,7 +1698,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null)
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -1687,9 +1777,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLeRayon(c, m, ev)
   canaliserLeRayon(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
+  menerLesScies(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

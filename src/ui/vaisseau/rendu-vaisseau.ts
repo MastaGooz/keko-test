@@ -520,6 +520,29 @@ export function formesDeLaCapsule(): Forme[] {
   f.push({ pts: ovale(0, 0, 0.6, 0.6, 8), mat: 'emeraude', relief: 'dome', dome: { x: 0, y: 0, rx: 0.6, ry: 0.6 } })
   return f
 }
+/**
+ * LA SCIE CIRCULAIRE DE L'INGÉNIEUR (Keko, 15/11 : « une scie circulaire qui tourne, qu'on lance et qui revient ») : un
+ * disque d'acier à douze dents en biais, un plateau plus sombre percé de trois lumières, un moyeu jaune.
+ */
+export function formesDeLaScie(): Forme[] {
+  const n = 12
+  const dents: [number, number][] = []
+  for (let k = 0; k < n; k++) {
+    const a = (k * 2 * Math.PI) / n
+    dents.push([Math.cos(a) * 3.7, Math.sin(a) * 3.7], [Math.cos(a + (2 * Math.PI) / n * 0.8) * 4.9, Math.sin(a + (2 * Math.PI) / n * 0.8) * 4.9])
+  }
+  const f: Forme[] = [
+    { pts: dents, mat: 'acier', relief: 'plat' },
+    { pts: ovale(0, 0, 3.2, 3.2, 16), mat: 'metal', relief: 'plat' },
+  ]
+  for (let k = 0; k < 3; k++) {
+    const a = (k * 2 * Math.PI) / 3
+    f.push({ pts: ovale(Math.cos(a) * 2, Math.sin(a) * 2, 0.6, 0.6, 8), mat: 'aile', relief: 'plat' })
+  }
+  f.push({ pts: ovale(0, 0, 1.2, 1.2, 10), mat: 'or', relief: 'dome', dome: { x: 0, y: 0, rx: 1.2, ry: 1.2 } })
+  f.push({ pts: ovale(0, 0, 0.45, 0.45, 6), mat: 'acier', relief: 'plat' })
+  return f
+}
 export function formesDeLaTeteDeTourelle(): Forme[] {
   // (un carter anguleux, pas un dôme — rond et gros, il cachait le socle —, le canon épais et long)
   return [
@@ -761,7 +784,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [
