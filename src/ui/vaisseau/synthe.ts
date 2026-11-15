@@ -546,6 +546,18 @@ const RECETTES = {
       souffle(m, h, 0, 0.25, pan, { f: 2400, glisse: { vers: 1200, en: 0.15 }, q: 0.8, bande: true, a: 0.01, d: 0.15 })
     },
   },
+  /**
+   * UNE SALVE D'ÉCLATS DE GLACE PART : la glace qui éclate en couronne — un claquement sec et clair, une gerbe de
+   * tintements aigus jetés d'une oreille à l'autre, un sifflement froid qui s'éloigne
+   */
+  eclats: {
+    duree: 0.6, niveau: 0.2, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.9, 0, { f: 3600, glisse: { vers: 2000, en: 0.04 }, q: 1.4, bande: true, a: 0.001, d: 0.05 })
+      for (let k = 0; k < 8; k++) note(m, 0.005 + k * 0.012, 0.32, Math.cos((k * Math.PI) / 4) * 0.8, { f: 2400 + 1600 * h.next(), a: 0.001, d: 0.09 + 0.06 * h.next(), partiels: [[1, 1, 1], [2.76, 0.35, 0.5]] })
+      souffle(m, h, 0.02, 0.35, 0, { f: 5000, glisse: { vers: 2600, en: 0.35 }, q: 2, bande: true, a: 0.01, d: 0.35 })
+    },
+  },
   /** UN INSECTE GELÉ VOLE EN ÉCLATS : du verre qui se brise — un claquement, une pluie de tintements, un coup sourd */
   brise: {
     duree: 0.8, niveau: 0.24, salle: [0.35, 0.14], variantes: 3,

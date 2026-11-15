@@ -4172,3 +4172,17 @@ gangue bleue ; l'éclatement, des morceaux de glace qui tournent. LES SONS :
 et `brise` (du verre qui se brise). Le nez suit le manche (on se fait suivre).
 *Chiffres de moi, à rejuger.*
 
+LES ÉCLATS DE GLACE, DEUXIÈME ARME DU FRIMAS (Keko, 15/11 : « périodiquement,
+des éclats de glace dans toutes les directions autour de lui, portée assez
+courte, mid-range ; un total de 8 éclats, répartis uniformément ; évidemment,
+les éclats ralentissent ») : `Arme.salve`, `Arme.gel`, `Obus.gel`,
+`tirerLesSalves`, `geler` (vérifié). Toutes les 1,6 s, s'il y a un insecte à
+moins de 70, huit éclats partent à angles égaux autour de lui (le premier vers
+son nez), à 160 de vitesse, 0,45 s de vol (≈ 70) ; chacun s'arrête au premier
+insecte : 4 points, et il le GÈLE 1,5 s à la moitié de sa vitesse (le gel le
+plus fort l'emporte, le givre et les éclats passent par la même règle) ; mort
+gelé, il vole en éclats. Une aiguille de cristal bleue à pointe blanche, une
+couronne d'étincelles froides au départ ; le son `eclats` (un claquement, une
+gerbe de tintements d'une oreille à l'autre), annoncé en avance comme un tir.
+*Chiffres de moi, à rejuger.*
+

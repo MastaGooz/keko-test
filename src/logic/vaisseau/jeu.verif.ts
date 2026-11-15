@@ -1351,5 +1351,33 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const fait = [300 - Math.hypot(w3.ennemis[0].corps.x, w3.ennemis[0].corps.y), 300 - Math.hypot(w3.ennemis[1].corps.x, w3.ennemis[1].corps.y)]
   verifier('gelé, un insecte avance bien moins vite vers le portail', fait[1] > 10 && fait[0] < fait[1] * 0.5)
 }
+// LES ÉCLATS DE GLACE DU FRIMAS (Keko, 15/11) : huit éclats à angles égaux tout autour, à sa cadence, s'il y a un insecte
+// à portée ; ce qu'ils touchent est gelé
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const eclats = { id: 'eclats', cadence: 1.6, degats: 4, portee: 70, vitesse: 160, vie: 0.45, dispersion: 0, guide: false, salve: { nombre: 8 }, gel: { duree: 1.5, ralenti: 0.5 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [eclats], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 0, -40))
+  const ev: Evenement[] = []
+  let angles: number[] = []
+  for (let i = 0; i < 30; i++) {
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: -40, vx: 0, vy: 0 }
+    const r = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements
+    if (r.some((e) => e.type === 'salve')) angles = w.obus.map((o) => Math.atan2(o.vy, o.vx)).sort((a, b) => a - b)
+    ev.push(...r)
+  }
+  const egaux = angles.length === 8 && angles.every((a, k) => k === 0 || Math.abs(a - angles[k - 1] - Math.PI / 4) < 1e-6)
+  verifier('une salve : huit éclats à angles égaux tout autour, une seule à la fois (sa cadence)', ev.filter((e) => e.type === 'salve').length === 1 && egaux)
+  verifier('l’éclat qui touche gèle l’insecte (à la moitié de sa vitesse) et lui coûte ses points', 1000 - w.ennemis[0].pv === 4 && (w.ennemis[0].geleA ?? 0) > w.t && w.ennemis[0].ralenti === 0.5 && ev.some((e) => e.type === 'gele'))
+  const w2 = nouveauMonde(cfg, 3)
+  w2.ennemis.push(insecte(1, 0, -200))
+  const ev2: Evenement[] = []
+  for (let i = 0; i < 60; i++) {
+    w2.ennemis[0].corps = { ...w2.ennemis[0].corps, x: 0, y: -200, vx: 0, vy: 0 }
+    ev2.push(...avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  verifier('personne à portée : pas de salve', !ev2.some((e) => e.type === 'salve') && w2.obus.length === 0)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

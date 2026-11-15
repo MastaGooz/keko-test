@@ -401,6 +401,14 @@ export type Arme = {
    * (il le reste un instant après en être sorti). L'état est `Monde.givres`.
    */
   givre?: { ecart: number; rayon: number; duree: number; dps: number; ralenti: number }
+  /**
+   * UNE SALVE TOUT AUTOUR (les éclats de glace du Frimas, Keko, 15/11 : « périodiquement, des éclats de glace dans toutes
+   * les directions autour de lui, portée moyenne ; huit éclats répartis uniformément ; évidemment, ils ralentissent ») :
+   * à sa cadence, s'il y a un insecte à portée, il tire `nombre` obus à la fois, à angles égaux autour de lui (le
+   * premier vers son nez). Avec `gel`, un obus qui touche GÈLE l'insecte `duree` secondes, à `ralenti` de sa vitesse.
+   */
+  salve?: { nombre: number }
+  gel?: { duree: number; ralenti: number }
 }
 
 export type Vaisseau = {
@@ -437,7 +445,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -600,6 +608,8 @@ export type Evenement =
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
   | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number; /** Il est mort EN BRÛLANT (le lance-flammes) : il se consume au lieu d'éclater. */ brule?: boolean; /** Il est mort GELÉ (le givre) : il vole en éclats de glace. */ gele?: boolean }
+  /** Une salve part tout autour du vaisseau (voir `Arme.salve`). */
+  | { type: 'salve'; x: number; y: number; arme: string }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -1381,12 +1391,35 @@ function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     let pire: Givre | undefined
     for (const g of m.givres) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + c.ennemi.rayon * 0.5 && (pire === undefined || g.ralenti < pire.ralenti)) pire = g
     if (pire === undefined) continue
-    if ((e.geleA ?? -1) <= m.t) ev.push({ type: 'gele', id: e.id, x: e.corps.x, y: e.corps.y })
-    e.geleA = m.t + 0.25
-    e.ralenti = pire.ralenti
+    geler(m, e, 0.25, pire.ralenti, ev)
     e.pv -= pire.dps * dt
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
+}
+
+/** GELER un insecte (le givre, un éclat de glace) : `duree` secondes, à `ralenti` de sa vitesse — le gel le plus fort l'emporte. */
+function geler(m: Monde, e: Ennemi, duree: number, ralenti: number, ev: Evenement[]): void {
+  const deja = (e.geleA ?? -1) > m.t
+  if (!deja) ev.push({ type: 'gele', id: e.id, x: e.corps.x, y: e.corps.y })
+  e.ralenti = deja ? Math.min(e.ralenti ?? 1, ralenti) : ralenti
+  e.geleA = Math.max(e.geleA ?? -1, m.t + duree)
+}
+
+/** LES SALVES (voir `Arme.salve`) : à la cadence, un insecte à portée, `nombre` obus à angles égaux autour du vaisseau. */
+function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const sa = a.salve
+    if (sa === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    m.armesA[i] = m.t + a.cadence
+    for (let k = 0; k < sa.nombre; k++) {
+      const an = v.cap + (k * 2 * Math.PI) / sa.nombre
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
+      m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }) })
+    }
+    ev.push({ type: 'salve', x: v.x, y: v.y, arme: a.id })
+  })
 }
 
 /** L'instant où le triangle d'une balise s'éteint : `duree` après la pose de sa dernière balise (voir `Arme.balise`). */
@@ -1938,9 +1971,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, ev)
   menerLeGivre(c, m, dt, ev)
+  tirerLesSalves(c, m, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
@@ -2014,6 +2048,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       for (const e of m.ennemis) {
         if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.ennemi.rayon + 1.5) continue
         fini = true
+        // (un éclat de glace gèle ce qu'il touche — avant le coup : mort, il vole en éclats)
+        if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         e.pv -= o.degats
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
