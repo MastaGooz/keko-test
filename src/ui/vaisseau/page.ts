@@ -797,7 +797,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE VAISSEAU DU JEU DU VORTEX A UN CANON DANS CHAQUE AILE, QUI TIRENT À TOUR DE ROLE (Keko, 14/11) : deux canons,
     // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
     if (VORTEX) {
-      const canon = pieceDe('arme-canon')?.arme
+      const canon = pieceDe(ARME_DU_VORTEX)?.arme
       // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
       // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
       if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
@@ -894,6 +894,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
   type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[] }
+  /**
+   * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
+   * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
+   */
+  const ARME_DU_VORTEX = 'arme-canon'
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
   /** Le rival en cuirassé (à l'essai, 14/11 ; `&rival=serie` : le petit rival d'avant) : son allure, tout armé. */
   const RIVAL_CUIRASSE = parametres.get('rival') !== 'serie'
@@ -912,7 +917,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? ['canon', 'canon'] : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? [0, 1].map(() => pieceDe(ARME_DU_VORTEX)?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -3123,7 +3128,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile ; son panneau liste les armes du catalogue — les autres, verrouillées pour l'instant.
    */
-  const ARME_DU_VORTEX = 'arme-canon'
   let armesOuvertes = false
   let armeChoisie = ARME_DU_VORTEX
   function dessinerLesArmesEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
