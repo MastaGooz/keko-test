@@ -3801,3 +3801,4 @@ propulseur et la foreuse) — un souffle grave en boucle qui flotte, un
 crépitement dessus, le volume qui monte quand il crache — au lieu d'un son
 court rejoué, qui s'entendait par à-coups.
 
+Puis UNE AUTRE SILHOUETTE (Keko, 15/11 : « la rendre un peu plus distinguable du chasseur ») : plus de fléchette à ailes en flèche — un corps rond et trapu au nez camus, une échine d'acier, et SES RÉSERVOIRS EN NACELLES : deux gros fûts de laiton de part et d'autre, sur de courts pylônes, le bout rouge.

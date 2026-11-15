@@ -441,7 +441,7 @@ const GABARIT_DU_CUIRASSE: Gabarit = {
 }
 // LA SALAMANDRE (Keko, 15/11) : un peu plus trapue que le chasseur, deux tuyères côte à côte, UNE place d'arme — le
 // lance-flammes, dans l'axe, sa buse dépassant du nez
-const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.4, y: -2.6 }, { x: -0.4, y: 2.6 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -7.6, y: 8.4 }, verriere: 2.6, nez: 8, flanc: 6, anneau: 12, echelle: 1 }
+const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.5, y: -2.4 }, { x: -0.5, y: 2.4 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -7.2, y: 9.2 }, verriere: 2.4, nez: 6.5, flanc: 7, anneau: 13, echelle: 1 }
 export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + gabaritDe(coque).tuyeres[0].x
@@ -461,14 +461,13 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
   if (cran === 5) {
-    // LA SALAMANDRE : un fuseau trapu, le nez court et rond ; deux RÉSERVOIRS de laiton cerclés d'acier (rouges, ils se perdaient dans une coque rouge) sur le dos, de part
-    // et d'autre de l'échine ; la verrière en avant
-    const f: Forme[] = [{ pts: [[8, 0], [6.6, -2.6], [3.5, -4.6], [-1, -5.6], [-5.5, -5.6], [-8.2, -4], [-8.8, -1.6], [-8.8, 1.6], [-8.2, 4], [-5.5, 5.6], [-1, 5.6], [3.5, 4.6], [6.6, 2.6]], mat: 'coque', relief: 'cyl' }]
-    for (const sg of [-1, 1]) {
-      f.push({ pts: ovale(-3.4, sg * 3.3, 3.8, 1.6, 18), mat: 'or', relief: 'dome', dome: { x: -3.4, y: sg * 3.3, rx: 3.8, ry: 1.6 } })
-      for (const x of [-1.6, -5.2]) f.push({ pts: [[x + 0.45, sg * 1.7], [x - 0.45, sg * 1.7], [x - 0.45, sg * 4.9], [x + 0.45, sg * 4.9]], mat: 'metal', relief: 'plat' })
-    }
-    f.push({ pts: ovale(2.6, 0, 2.3, 1.5, 18), mat: 'verre', relief: 'dome', dome: { x: 2.6, y: 0, rx: 2.3, ry: 1.5 } })
+    // LA SALAMANDRE, UNE AUTRE SILHOUETTE (Keko, 15/11 : « changer légèrement la forme, la rendre plus distinguable du
+    // chasseur ») : pas une fléchette — un corps rond et trapu, le nez court et camus, une échine d'acier ; ses
+    // réservoirs sont ses nacelles, de part et d'autre (voir `formesDesAiles`) ; la verrière en avant
+    const f: Forme[] = [{ pts: [[6.5, 0], [5.8, -2.6], [3.5, -4.2], [-1, -4.7], [-6, -4.5], [-8.4, -3], [-8.9, 0], [-8.4, 3], [-6, 4.5], [-1, 4.7], [3.5, 4.2], [5.8, 2.6]], mat: 'coque', relief: 'cyl' }]
+    f.push({ pts: [[0.5, -1], [-7, -1.3], [-7, 1.3], [0.5, 1]], mat: 'acier', relief: 'plat' })
+    for (const x of [-2.2, -4.6]) f.push({ pts: [[x + 0.4, -1.5], [x - 0.4, -1.5], [x - 0.4, 1.5], [x + 0.4, 1.5]], mat: 'metal', relief: 'plat' })
+    f.push({ pts: ovale(2.4, 0, 2.3, 1.6, 18), mat: 'verre', relief: 'dome', dome: { x: 2.4, y: 0, rx: 2.3, ry: 1.6 } })
     return f
   }
   if (cran === 4) {
@@ -512,11 +511,13 @@ export function formesDeLaCoque(cran: number): Forme[] {
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
   if (coque === 5) {
-    // (la salamandre : des ailes courtes et larges, en arrière, le bout rouge)
+    // (la salamandre : PAS D'AILES — deux GROS RÉSERVOIRS DE LAITON en nacelles, portés par de courts pylônes, le bout
+    // rouge, une bague d'acier à l'arrière)
     for (const sg of [-1, 1]) {
-      f.push({ pts: [[0, sg * 4.6], [-4.6, sg * 8.4], [-7.8, sg * 8.6], [-8.2, sg * 7], [-6.6, sg * 4.8]], mat: 'aile', relief: 'plat', penche: sg })
-      f.push({ pts: [[0, sg * 4.6], [-4.6, sg * 8.4], [-5.4, sg * 8.25], [-0.9, sg * 4.7]], mat: 'acier', relief: 'plat', penche: sg })
-      f.push({ pts: [[-6.8, sg * 7.6], [-8.1, sg * 7.7], [-8.1, sg * 8.6], [-7.2, sg * 8.5]], mat: 'rouge', relief: 'plat', penche: sg })
+      f.push({ pts: [[0.6, sg * 4.2], [-4.6, sg * 4.2], [-5.6, sg * 6.4], [-0.4, sg * 6.4]], mat: 'aile', relief: 'plat', penche: sg })
+      f.push({ pts: ovale(-2, sg * 7.6, 5.4, 2.1, 22), mat: 'or', relief: 'dome', dome: { x: -2, y: sg * 7.6, rx: 5.4, ry: 2.1 } })
+      f.push({ pts: [[-5.4, sg * 5.7], [-6.3, sg * 5.8], [-6.3, sg * 9.4], [-5.4, sg * 9.5]], mat: 'metal', relief: 'plat' })
+      f.push({ pts: ovale(3.1, sg * 7.6, 1.2, 1.4, 12), mat: 'rouge', relief: 'dome', dome: { x: 3.1, y: sg * 7.6, rx: 1.2, ry: 1.4 } })
     }
     return f
   }
@@ -631,7 +632,7 @@ export function formesDeLArme(id: string, s: number): Forme[] {
   if (id === 'flammes') {
     // LE LANCE-FLAMMES : une buse dans l'axe, qui dépasse du nez — le fût, la bague, la veilleuse au bout
     return [
-      { pts: barre(4.5, 0, 10.6, 0, 1.3), mat: 'metal', relief: 'cyl' },
+      { pts: barre(4, 0, 10.6, 0, 1.3), mat: 'metal', relief: 'cyl' },
       { pts: barre(9.2, 0, 11.2, 0, 1.8), mat: 'acier', relief: 'cyl' },
       { pts: ovale(11.6, 0, 0.6, 0.6, 10), mat: 'feu', relief: 'dome', dome: { x: 11.6, y: 0, rx: 0.6, ry: 0.6 } },
     ]
