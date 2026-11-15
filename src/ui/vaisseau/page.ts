@@ -2468,7 +2468,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
       const cranP = monteeA(hangar, 'propulseur').cran
       const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
-      if (R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
+      if (g.omni === undefined && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
       if (u >= 1) {
         decollageA = null
@@ -2514,9 +2514,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // la tuyère au ralenti, puis le vaisseau
     const nozzle: [number, number] = [cx + jit, sy + (0.2 - queueDe(coqueMontee)) * ECH]
-    p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
+    if (g.omni === undefined) p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
+    // (UNE SOUCOUPE : au repos, toutes ses tuyères soufflent un peu — elle tient en l'air ; au décollage, celles du dessous
+    // soufflent fort — Keko, 15/11 : « au garage, quand le vaisseau décolle, on ne voit pas de propulsion »)
+    if (g.omni !== undefined) dessinerLesJetsOmni(p, coqueMontee, cx + jit, sy, -Math.PI / 2, ECH, decollageA === null ? 0 : flam, 0, decollageA === null ? 0.25 : 0, ECH * 0.6)
     // la verrière qui luit, les feux de position qui battent
     p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
@@ -6049,6 +6052,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let devieDeLaFlamme = 0
   let capVu = 0
   let virageVu = 0
+  /**
+   * LES JETS D'UNE SOUCOUPE (Keko, 15/11 : « des propulseurs plus petits, comme les propulseurs avant du chasseur : de
+   * petits jets, pas des propulseurs de feu ») : de courts jets froids, blancs au cœur et bleus au bout, aux tuyères
+   * qui font face à l'opposé de la poussée (`dx`, `dy`, dans le repère du vaisseau) — d'autant plus forts qu'elles lui
+   * font face ; `repos` : un souffle de toutes, au vol stationnaire. (sx, sy) le centre à l'écran, `s` les pixels par
+   * unité (la place des tuyères), `sl` celle de la longueur des jets — plus courts, en grand, que le vaisseau ne grandit.
+   */
+  function dessinerLesJetsOmni(p: Peintre, coque: number, sx: number, sy: number, cap: number, s: number, dx: number, dy: number, repos = 0, sl = s): void {
+    const ca = Math.cos(cap)
+    const sa = Math.sin(cap)
+    for (const tu of tuyeresOmni(coque)) {
+      const f = Math.max(repos, -(tu.ux * dx + tu.uy * dy))
+      if (f < 0.12) continue
+      const L = (2 + 4 * f) * (0.8 + 0.2 * Math.sin(t * 55 + tu.x * 3 + tu.y)) * sl
+      const x0 = sx + (tu.x * ca - tu.y * sa) * s
+      const y0 = sy + (tu.x * sa + tu.y * ca) * s
+      const ux = tu.ux * ca - tu.uy * sa
+      const uy = tu.ux * sa + tu.uy * ca
+      // (en grand, un jet de deux pixels d'épaisseur)
+      const ep = sl >= 1.5 ? [0, 1] : [0]
+      for (const e of ep) {
+        const ox = -uy * e
+        const oy = ux * e
+        p.line(x0 + ox, y0 + oy, x0 + ox + ux * L, y0 + oy + uy * L, VERRIERE[1], 0.9)
+        p.line(x0 + ox, y0 + oy, x0 + ox + ux * L * 0.5, y0 + oy + uy * L * 0.5, N.WHITE)
+      }
+      p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, (3 + 2 * f) * Math.max(1, sl), VERRIERE[1], 0.5 * f)
+    }
+  }
   function dessinerLeVaisseau(p: Peintre): void {
     const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
     // (CHAQUE FOREUSE VISE SA ROCHE : son angle, depuis son pivot, par place d'outil)
@@ -6098,25 +6130,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 2 * force, VERRIERE[1], 0.5 * force)
       }
       const gj = gabaritDe(al.coque)
-      // UNE SOUCOUPE : ses huit tuyères crachent du FEU, celles qui sont à l'opposé de la direction — d'autant plus
-      // qu'elles lui font face ; pas de jets de manœuvre (elle ne tourne pas)
-      if (gj.omni !== undefined) {
-        const dx = pousseeVue.avant - pousseeVue.retro
-        const dy = pousseeVue.cote
-        for (const tu of tuyeresOmni(al.coque)) {
-          const f = Math.max(0, -(tu.ux * dx + tu.uy * dy))
-          if (f < 0.12) continue
-          const L = (2.5 + 6 * f) * (0.8 + 0.2 * Math.sin(t * 55 + tu.x * 3 + tu.y))
-          const x0 = sx + tu.x * ca - tu.y * sa
-          const y0 = sy + tu.x * sa + tu.y * ca
-          const ux = tu.ux * ca - tu.uy * sa
-          const uy = tu.ux * sa + tu.uy * ca
-          p.line(x0, y0, x0 + ux * L, y0 + uy * L, FEU[4], 0.9)
-          p.line(x0, y0, x0 + ux * L * 0.55, y0 + uy * L * 0.55, FEU[6])
-          p.px(Math.round(x0), Math.round(y0), N.WHITE)
-          p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 3 * f, FEU[5], 0.55 * f)
-        }
-      } else {
+      // UNE SOUCOUPE : de petits jets froids à ses tuyères, celles qui font face à l'opposé de la direction ; pas de jets
+      // de manœuvre au nez ni aux flancs (elle ne tourne pas)
+      if (gj.omni !== undefined) dessinerLesJetsOmni(p, al.coque, sx, sy, v.cap, 1, pousseeVue.avant - pousseeVue.retro, pousseeVue.cote)
+      else {
       for (const cote of [-1, 1]) jet(gj.nez, cote * 2.2, 1, cote * 0.25, pousseeVue.retro)
       // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
       jet(-1, -gj.flanc, -0.15, -1, Math.max(0, pousseeVue.cote))
@@ -7910,12 +7927,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const al = allureMontee(0)
     const chaud = al.propulseur >= 3 ? ION : FEU
     const ty = sy + (0.2 - queueDe(monteeA(hangar, 'coque').cran)) * E
-    for (let k = 0; k < 18; k++) {
-      const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
-      p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
+    if (gA.omni === undefined) {
+      for (let k = 0; k < 18; k++) {
+        const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
+        p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
+      }
+      p.glow(cx, ty, 12 + 16 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
-    p.glow(cx, ty, 12 + 16 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
+    // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)
+    if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)
     p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
     if (Math.floor(t * 1.5) % 2 === 0)
       for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {
@@ -8517,23 +8538,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // les braises du moteur, en coordonnées du monde, derrière la tuyère — EN VOL SEULEMENT (Keko, 15/11 : abattu, le
         // manche tenu en faisait encore naître, figées là où le vaisseau était mort)
-        // (une soucoupe : ses braises naissent au bout des tuyères qui crachent, et partent vers l'extérieur)
-        if (m.phase === 'vol' && gabaritDe(monteeA(hangar, 'coque').cran).omni !== undefined) {
-          const dx = pousseeVue.avant - pousseeVue.retro
-          const dy = pousseeVue.cote
-          const ca = Math.cos(v.cap)
-          const sa = Math.sin(v.cap)
-          for (const tu of tuyeresOmni(monteeA(hangar, 'coque').cran)) {
-            const f = Math.max(0, -(tu.ux * dx + tu.uy * dy))
-            if (f < 0.3 || R.next() > f * 0.6) continue
-            const bx = v.x + (tu.x + tu.ux * 1.5) * ca - (tu.y + tu.uy * 1.5) * sa
-            const by = v.y + (tu.x + tu.ux * 1.5) * sa + (tu.y + tu.uy * 1.5) * ca
-            const ux = tu.ux * ca - tu.uy * sa
-            const uy = tu.ux * sa + tu.uy * ca
-            const vitesse = 25 + 30 * f
-            braises.ajouter('braise', bx, by, v.vx * 0.3 + ux * vitesse + R.range(-6, 6), v.vy * 0.3 + uy * vitesse + R.range(-6, 6), R.range(0.2, 0.4), 0, 1, 2)
-          }
-        } else if (pousseeVue.avant > 0.05 && m.phase === 'vol') {
+        // (une soucoupe ne sème pas de braises : ses jets sont froids)
+        if (gabaritDe(monteeA(hangar, 'coque').cran).omni === undefined && pousseeVue.avant > 0.05 && m.phase === 'vol') {
           const n = pousseeVue.avant > 0.6 ? 2 : 1
           for (let i = 0; i < n; i++) {
             // (ELLES NAISSENT AU BOUT DE LA FLAMME, pas à la queue du vaisseau — Keko, 13/11 : « on dirait que les

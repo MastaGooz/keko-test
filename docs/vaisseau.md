@@ -3883,3 +3883,11 @@ un anneau tout autour — et HUIT PETITES TUYÈRES sur l'anneau (`Gabarit.omni`,
 la direction crachent du feu (d'autant plus qu'elles lui font face) et sèment
 leurs braises vers l'extérieur.
 
+Puis (Keko, 15/11) : DE PETITS JETS, PAS DU FEU — « des propulseurs plus petits,
+comme les propulseurs avant du chasseur » : les huit tuyères sont de petites
+buses de manœuvre, leurs jets sont froids (blancs au cœur, bleus au bout),
+sans braises (`dessinerLesJetsOmni`). Et la soucoupe a sa propulsion À
+L'ACCUEIL ET AU GARAGE (« quand le vaisseau décolle, on ne voit pas de
+propulsion ») : au garage, au repos, toutes ses tuyères soufflent un peu ; au
+décollage, et à l'accueil, celles du dessous soufflent fort.
+

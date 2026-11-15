@@ -464,18 +464,18 @@ export function tuyeresOmni(coque: number): { x: number; y: number; ux: number; 
   if (o === undefined) return []
   return Array.from({ length: o.n }, (_, k) => {
     const a = o.depart + (k * 2 * Math.PI) / o.n
-    return { x: Math.cos(a) * (o.rayon + 1.4), y: Math.sin(a) * (o.rayon + 1.4), ux: Math.cos(a), uy: Math.sin(a) }
+    return { x: Math.cos(a) * (o.rayon + 0.9), y: Math.sin(a) * (o.rayon + 0.9), ux: Math.cos(a), uy: Math.sin(a) }
   })
 }
-/** Une petite tuyère de soucoupe, tournée vers l'extérieur, d'acier au bout. */
+/** Une petite tuyère de soucoupe — une buse de manœuvre, comme celles du nez du chasseur —, tournée vers l'extérieur. */
 function formesDeLaTuyereOmni(o: { n: number; rayon: number; depart: number }, k: number): Forme[] {
   const a = o.depart + (k * 2 * Math.PI) / o.n
   const P = (r: number, w: number): [number, number] => [Math.cos(a) * r - Math.sin(a) * w, Math.sin(a) * r + Math.cos(a) * w]
-  const r0 = o.rayon - 0.8
-  const r1 = o.rayon + 1.4
+  const r0 = o.rayon - 0.5
+  const r1 = o.rayon + 0.9
   return [
-    { pts: [P(r0, -1.3), P(r1, -0.95), P(r1, 0.95), P(r0, 1.3)], mat: 'metal', relief: 'plat' },
-    { pts: [P(r1 - 0.6, -1.05), P(r1, -0.95), P(r1, 0.95), P(r1 - 0.6, 1.05)], mat: 'acier', relief: 'plat' },
+    { pts: [P(r0, -0.85), P(r1, -0.6), P(r1, 0.6), P(r0, 0.85)], mat: 'metal', relief: 'plat' },
+    { pts: [P(r1 - 0.45, -0.68), P(r1, -0.6), P(r1, 0.6), P(r1 - 0.45, 0.68)], mat: 'acier', relief: 'plat' },
   ]
 }
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
