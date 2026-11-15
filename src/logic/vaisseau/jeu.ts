@@ -439,7 +439,7 @@ export type Evenement =
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
-  | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number }
+  | { type: 'ennemiDetruit'; id: number; x: number; y: number; vx: number; vy: number; /** Il est mort EN BRÛLANT (le lance-flammes) : il se consume au lieu d'éclater. */ brule?: boolean }
   /** Une bombe part ; une bombe éclate. */
   | { type: 'bombe'; x: number; y: number }
   | { type: 'explosion'; x: number; y: number; rayon: number }
@@ -720,7 +720,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
   if (c.invasion.active) m.invasion.abattus += 1
-  ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy })
+  ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy, brule: (e.bruleA ?? -1) > m.t })
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)

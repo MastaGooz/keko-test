@@ -373,6 +373,18 @@ const RECETTES = {
       souffle(m, h, 0, 0.15, 0, { f: 3000, d: 0.02 })
     },
   },
+  /**
+   * UN INSECTE SE CONSUME (le lance-flammes, Keko, 15/11 : « avec un son qui matche bien ») : l'embrasement — un souffle
+   * qui s'ouvre d'un coup, un « whoump » —, puis des crépitements serrés et un grésillement aigu qui s'éteint
+   */
+  consume: {
+    duree: 0.95, niveau: 0.3, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, 0, { f: 240, glisse: { vers: 1300, en: 0.16, droit: true }, q: 1.1, bande: true, a: 0.03, d: 0.28, large: true })
+      souffle(m, h, 0.04, 0.45, 0, { f: 3400, q: 0.9, bande: true, a: 0.06, d: 0.5 })
+      eclats(m, h, 10, 0.05, 0.65, 0.55)
+    },
+  },
   /** UN ENNEMI VERROUILLÉ : deux bips électroniques serrés qui montent, la visée qui se ferme */
   verrou: {
     duree: 0.35, niveau: 0.16, salle: [0.25, 0.1],

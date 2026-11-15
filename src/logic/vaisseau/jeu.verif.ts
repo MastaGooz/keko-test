@@ -881,6 +881,24 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     avancerLeMonde({ ...cfg, ennemi: { ...cfg.ennemi, pv: 12 } }, w2, 1 / 60, { x: 0, y: 0 })
   }
   verifier('un groupe serré dans le cône fond d’un coup : trois insectes de 12 points abattus en moins d’une seconde et demie', w2.ennemis.length === 0)
+  // (mort par le feu, il le dit : la page le fait se consumer au lieu d'éclater ; abattu par un obus, non)
+  const w3 = nouveauMonde({ ...cfg, ennemi: { ...cfg.ennemi, pv: 12 } }, 3)
+  w3.ennemis.push({ ...insecte(1, 0, -30), pv: 12 })
+  let brule: boolean | undefined
+  for (let i = 0; i < 120 && brule === undefined; i++) {
+    for (const e of w3.ennemis) e.corps = { ...e.corps, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde({ ...cfg, ennemi: { ...cfg.ennemi, pv: 12 } }, w3, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiDetruit') brule = e.brule
+  }
+  const canon = { id: 'canon', cadence: 0.2, degats: 20, portee: 120, vitesse: 400, vie: 1, dispersion: 0, guide: false }
+  const cfg4 = { ...cfg, armes: [canon], ennemi: { ...cfg.ennemi, pv: 12 } }
+  const w4 = nouveauMonde(cfg4, 3)
+  w4.ennemis.push({ ...insecte(1, 0, -30), pv: 12 })
+  let brule4: boolean | undefined
+  for (let i = 0; i < 120 && brule4 === undefined; i++) {
+    for (const e of w4.ennemis) e.corps = { ...e.corps, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfg4, w4, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiDetruit') brule4 = e.brule
+  }
+  verifier('mort par le feu, l’insecte le dit (il se consumera) ; abattu par un obus, non', brule === true && brule4 === false)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

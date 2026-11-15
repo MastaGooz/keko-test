@@ -3802,3 +3802,17 @@ crépitement dessus, le volume qui monte quand il crache — au lieu d'un son
 court rejoué, qui s'entendait par à-coups.
 
 Puis UNE AUTRE SILHOUETTE (Keko, 15/11 : « la rendre un peu plus distinguable du chasseur ») : plus de fléchette à ailes en flèche — un corps rond et trapu au nez camus, une échine d'acier, et SES RÉSERVOIRS EN NACELLES : deux gros fûts de laiton de part et d'autre, sur de courts pylônes, le bout rouge.
+
+L'INSECTE SE CONSUME (Keko, 15/11 : « quand un ennemi meurt par le feu,
+plutôt que de le faire exploser, s'inspirer de Burn away, dans les
+transitions de pixelfx, comme s'il se consumait d'un coup ; avec un son qui
+matche ») : la règle dit qu'il est mort en brûlant (`ennemiDetruit.brule`,
+vérifié). Son image est figée à sa mort, puis rongée en 0,6 s par un front de
+braise, des bords vers le cœur (une distance au centre troublée de bruit,
+comme le champ de l'effet) : il roussit devant le front, il est chauffé à blanc
+sur la ligne, il refroidit derrière le long de la rampe de feu de l'effet
+jusqu'au charbon, puis n'est plus. Le front lâche des langues de feu, des
+braises et de la fumée (les particules du dépôt), et au bout une bouffée
+(`consumer`, `dessinerLesConsumes`). Pas de sang vert. Le son `consume` :
+un « whoump » d'embrasement, des crépitements, un grésillement qui s'éteint.
+`&consume` : le banc — un insecte se consume à côté du vaisseau toutes les 1,6 s, hors de toute flamme.

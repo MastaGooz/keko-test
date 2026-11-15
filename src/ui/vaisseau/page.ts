@@ -6204,9 +6204,132 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (u > 0.5) p.line(sx - Math.cos(axe) * l * 0.4, sy - Math.sin(axe) * l * 0.4, sx + Math.cos(axe) * l, sy + Math.sin(axe) * l, u > 0.8 ? N.WHITE : N.hex('#f1dcff'), Math.min(1, (u - 0.5) * 3) * (u < 0.85 ? 1 : 1 - (u - 0.85) / 0.15))
     }
   }
+  /**
+   * L'INSECTE SE CONSUME (Keko, 15/11 : « quand un ennemi meurt par le feu, plutôt que de le faire exploser, s'inspirer
+   * de l'animation Burn away — dans les transitions de pixelfx — comme s'il se consumait d'un coup ») : la même
+   * mécanique, à sa taille. Son image est FIGÉE à sa mort, puis rongée en un peu plus d'une demi-seconde par UN FRONT DE
+   * BRAISE, des bords vers le cœur (une distance au centre troublée de bruit, comme le champ de l'effet) : devant le
+   * front, il roussit ; sur la ligne, il est chauffé à blanc ; derrière, il refroidit le long de la rampe du feu de
+   * l'effet jusqu'au charbon, puis n'est plus. Le front, en passant, lâche des langues de feu, des braises et de la
+   * fumée (les particules du dépôt) ; au bout, une bouffée de braises et de fumée.
+   */
+  const RAMPE_DU_FEU = N.fit(['#4a1712', '#8a1f17', '#c9281f', '#f2561d', '#ff8a2a', '#ffc23d', '#ffe26b', '#fff3a6', '#ffffff'], 9)
+  const ROUSSI = N.hex('#3a2216')
+  const CHARBON = N.hex('#2a1a16')
+  const FUMEE_DU_FEU = N.hex('#6a5a60')
+  const DUREE_DE_LA_CONSUMATION = 0.6
+  type Consume = { x: number; y: number; vx: number; vy: number; t0: number; S: number; color: Uint32Array; champ: Float32Array; kMin: number; kMax: number; passe: Uint8Array; fini: boolean }
+  let consumes: Consume[] = []
+  const feuDesConsumes = new N.Particles({ rng: new N.Rng(17), sparks: [RAMPE_DU_FEU[7], RAMPE_DU_FEU[6], RAMPE_DU_FEU[4], RAMPE_DU_FEU[2]] })
+  let feuDesConsumesA = -1
+  const alea = (i: number, j: number, g: number): number => {
+    const v = Math.sin(i * 12.9898 + j * 78.233 + g * 37.719) * 43758.5453
+    return v - Math.floor(v)
+  }
+  function consumer(id: number, x: number, y: number, vx: number, vy: number): void {
+    const S = 28
+    const c0 = S / 2
+    const f = N.createFrame(S, S)
+    const vu = dernierVu.get(id)
+    dessinerUnInsecte(N.painterFor(f), c0, c0, vu?.cap ?? 0, id * 1.7, false, vu?.aggro ?? false)
+    let rMax = 1
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) if (f.color[j * S + i] >>> 24 !== 0) rMax = Math.max(rMax, Math.hypot(i - c0, j - c0))
+    const champ = new Float32Array(S * S)
+    let kMin = Infinity
+    let kMax = -Infinity
+    for (let j = 0; j < S; j++)
+      for (let i = 0; i < S; i++) {
+        const k = j * S + i
+        if (f.color[k] >>> 24 === 0) continue
+        // (le bord brûle d'abord : un pour le bord, zéro pour le cœur — troublé à deux échelles)
+        const v = Math.hypot(i - c0, j - c0) / rMax + 0.4 * alea(i >> 1, j >> 1, id) + 0.12 * alea(i, j, id + 5)
+        champ[k] = -v
+        kMin = Math.min(kMin, -v)
+        kMax = Math.max(kMax, -v)
+      }
+    if (kMin === Infinity) return
+    consumes.push({ x, y, vx, vy, t0: t, S, color: f.color, champ, kMin, kMax, passe: new Uint8Array(S * S), fini: false })
+  }
+  // (`&consume` : LE BANC — un insecte se consume à côté du vaisseau toutes les 1,6 s, hors de toute flamme, pour le juger seul)
+  let bancConsumeA = -10
+  let bancConsumeN = 0
+  function dessinerLesConsumes(p: Peintre): void {
+    if (parametres.has('consume') && enJeu && m.phase === 'vol' && t - bancConsumeA > 1.6) {
+      bancConsumeA = t
+      bancConsumeN += 1
+      consumer(900000 + bancConsumeN, v.x + 28, v.y - 22, 0, 0)
+      jouer('consume', { dx: 28, dy: -22 })
+    }
+    const dtf = Math.min(0.05, Math.max(0, t - feuDesConsumesA))
+    feuDesConsumesA = t
+    feuDesConsumes.update(dtf)
+    consumes = consumes.filter((b) => !b.fini)
+    const F = RAMPE_DU_FEU
+    for (const b of consumes) {
+      const age = t - b.t0
+      const u = Math.min(1, age / DUREE_DE_LA_CONSUMATION)
+      // (le front : du premier pixel à brûler jusqu'au-delà du dernier, le temps que le dernier refroidisse et disparaisse)
+      const k = b.kMin - 0.02 + (b.kMax + 0.52 - b.kMin) * Math.pow(u, 1.15)
+      // (il glisse encore un peu, en freinant)
+      const glisse = 0.22 * (1 - Math.exp(-age * 5))
+      const ox = b.x + b.vx * glisse
+      const oy = b.y + b.vy * glisse
+      const sx0 = Math.round(ox - camera.x + W / 2 - b.S / 2)
+      const sy0 = Math.round(oy - camera.y + centreY() - b.S / 2)
+      for (let j = 0; j < b.S; j++)
+        for (let i = 0; i < b.S; i++) {
+          const idx = j * b.S + i
+          const c = b.color[idx]
+          if (c >>> 24 === 0) continue
+          const s = k - b.champ[idx]
+          const X = sx0 + i
+          const Y = sy0 + j
+          if (s < 0) {
+            // devant le front : il roussit, et la braise l'éclaire
+            p.px(X, Y, c)
+            if (s > -0.2) {
+              p.rect(X, Y, 1, 1, ROUSSI, 0.6 * (1 + s / 0.2))
+              p.light(X, Y, F[4], 0.25 * (1 + s / 0.2))
+            }
+            continue
+          }
+          if (s >= 0.5) continue
+          // le front passe sur lui : il lâche une langue de feu, une braise, un peu de fumée
+          if (b.passe[idx] === 0) {
+            b.passe[idx] = 1
+            const wx = ox - b.S / 2 + i + 0.5
+            const wy = oy - b.S / 2 + j + 0.5
+            const r = R.next()
+            if (r < 0.3) feuDesConsumes.spawn(N.P.FIRE, wx, wy - 1, R.range(-8, 8), -R.range(25, 50), R.range(0.18, 0.4), 0, R.range(0.8, 1.6))
+            else if (r < 0.4) feuDesConsumes.spawn(N.P.EMBER, wx, wy, R.range(-30, 30), -R.range(40, 100), R.range(0.4, 0.9), 0, R.next() < 0.25 ? 2 : 1)
+            else if (r < 0.45) feuDesConsumes.spawn(N.P.SMOKE, wx, wy - 2, R.range(-5, 5), -R.range(14, 28), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.2, 3.6))
+          }
+          // la braise : chauffée à blanc sur la ligne, elle refroidit le long de la rampe jusqu'au charbon
+          const col = s < 0.06 ? (alea(i, j, b.t0) > 0.5 ? F[8] : F[7]) : s < 0.12 ? F[6] : s < 0.18 ? F[5] : s < 0.24 ? F[4] : s < 0.3 ? F[3] : s < 0.36 ? F[2] : s < 0.43 ? F[1] : CHARBON
+          p.px(X, Y, col)
+          if (s < 0.3) p.light(X, Y, F[5], 0.5 * (1 - s / 0.3))
+        }
+      if (u < 1) p.glow(ox - camera.x + W / 2, oy - camera.y + centreY(), 11, F[5], 0.4 * (1 - u))
+      else {
+        // au bout : une bouffée de braises et de fumée
+        b.fini = true
+        for (let n = 0; n < 8; n++) {
+          const a = R.range(0, Math.PI * 2)
+          const vit = R.range(30, 80)
+          feuDesConsumes.spawn(N.P.EMBER, ox, oy, Math.cos(a) * vit, Math.sin(a) * vit * 0.7 - 30, R.range(0.4, 0.8), 0, R.next() < 0.3 ? 2 : 1)
+        }
+        for (let n = 0; n < 3; n++) feuDesConsumes.spawn(N.P.SMOKE, ox + R.range(-3, 3), oy + R.range(-2, 2), R.range(-6, 6), -R.range(10, 22), R.range(0.8, 1.3), FUMEE_DU_FEU, R.range(3, 4.5))
+      }
+    }
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    feuDesConsumes.draw(p, 'back')
+    feuDesConsumes.draw(p, 'front')
+    p.place(0, 0)
+  }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {
       dessinerLesAspires(p)
+      dessinerLesConsumes(p)
       for (const e of m.ennemis) {
         const b = e.corps
         const sx = b.x - camera.x + W / 2
@@ -8222,6 +8345,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'ennemiDetruit': {
+              // MORT PAR LE FEU : il se consume, sans sang ni éclat (voir `consumer`)
+              if (VORTEX && ev.brule === true) {
+                jouer('consume', { dx: ev.x - v.x, dy: ev.y - v.y })
+                compter('rivaux', 1)
+                consumer(ev.id, ev.x, ev.y, ev.vx, ev.vy)
+                flammesEnnemies.delete(ev.id)
+                if (typeof navigator.vibrate === 'function') navigator.vibrate(12)
+                break
+              }
               if (VORTEX) {
                 // UN INSECTE S'ÉCRASE (Keko, 14/11 : « pas une animation d'explosion : une destruction d'insecte, avec du sang
                 // vert et un bruit de splash ») : une giclée de gouttes vertes, des éclaboussures qui retombent, une
