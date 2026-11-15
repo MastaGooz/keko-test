@@ -4000,3 +4000,18 @@ souffle qui balaie d'une oreille à l'autre, des crépitements. Le chalumeau
 (pièce, buse, flamme bleue) est retiré ; `Arme.flamme.seul` reste dans la règle.
 
 Puis LE RAYON À LA MANIÈRE DE « LASER GRID » (Keko : « tu peux utiliser laser grid pour t'inspirer ») : sa rampe rouge ; un cœur blanc où des impulsions défilent vers la pointe, un corps rouge de part et d'autre, une lueur inégale qui ondule le long de lui ; derrière sa pointe, la brûlure qu'il laisse en tournant, qui refroidit du blanc au rouge sombre ; à la pointe, un point chauffé à blanc qui crache des étincelles.
+
+PUIS LE RAYON THERMIQUE DEVIENT UN RAYON CANALISÉ (Keko, 15/11 : « un rayon comme
+celui qui sert à forer les astéroïdes, permanent, qu'on canalise sur l'ennemi ;
+garde le rayon en cercle, on s'en servira plus tard ; il doit partir d'une
+foreuse sur le haut de la coque ») : `Arme.canalise`, `Monde.canal`,
+`canaliserLeRayon` (vérifié) — il reste sur une cible à 80 (la verrouillée
+d'abord, sinon il garde la sienne, sinon la plus proche) et CHAUFFE : de 5 à
+16 points par seconde en 2 s sur la même cible ; elle brûle. Il part d'UNE
+TOURELLE DE FOREUSE SUR LE TOIT (`Allure.foreuse`, qui vise sa cible), plus
+rien au nez ; son trait est le laser de la foreuse (`dessinerUnLaser`) au rouge
+de « Laser grid », sa pointe grossit en chauffant, des étincelles et des
+flammes y naissent ; son son, le bourdon de la foreuse. LE TOUR (`Arme.balayage`,
+`menerLeRayon`, son dessin, son son `rayon`) RESTE ÉCRIT, sans arme pour
+l'instant.
+

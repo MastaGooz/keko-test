@@ -1091,5 +1091,32 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
   verifier('personne à portée : le rayon ne part pas', tours2 === 0)
 }
+// LE RAYON CANALISÉ (Keko, 15/11) : il reste sur une cible et chauffe ; le verrouillé d'abord ; hors de portée, rien
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rayon = { id: 'rayon', cadence: 0.1, degats: 0, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, canalise: { dpsMin: 5, dpsMax: 16, montee: 2, brulure: 1.5, dpsBrulure: 3 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rayon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const places: [number, number][] = [[0, -40], [50, 30], [0, -200]]
+  const w = nouveauMonde(cfg, 3)
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  const pas = (n: number): void => {
+    for (let i = 0; i < n; i++) {
+      w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+  }
+  pas(60)
+  const s1 = 1000 - w.ennemis[0].pv
+  pas(60)
+  const s2 = 1000 - w.ennemis[0].pv - s1
+  verifier('le rayon reste sur le plus proche et CHAUFFE : la deuxième seconde coûte plus que la première ; les autres, rien', s1 > 5 && s2 > s1 + 4 && w.ennemis[1].pv === 1000 && w.ennemis[2].pv === 1000 && w.canal?.cible === 1)
+  verrouiller(w, 2)
+  pas(30)
+  verifier('verrouillé à portée, il passe sur lui, et sa chauffe repart de zéro', w.canal?.cible === 2 && (w.canal?.chauffe ?? 1) < 0.3 && w.ennemis[1].pv < 1000)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.ennemis.push(insecte(1, 0, -200))
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+  verifier('personne à portée : pas de rayon', w2.canal === null && w2.ennemis[0].pv === 1000)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

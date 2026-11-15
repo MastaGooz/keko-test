@@ -342,6 +342,14 @@ export type Arme = {
    * (`brulure` s à `dpsBrulure`). L'état du tour en cours est `Monde.balayage`.
    */
   balayage?: { tous: number; duree: number; longueur: number; degats: number; brulure: number; dpsBrulure: number; depart: number }
+  /**
+   * UN RAYON CANALISÉ (le rayon thermique de la Salamandre, Keko, 15/11 : « un rayon comme celui qui sert à forer les
+   * astéroïdes, permanent, qu'on canalise sur l'ennemi ») : il part d'une tourelle sur le toit et reste sur UNE cible à
+   * portée — la verrouillée d'abord, sinon il garde la sienne, sinon la plus proche — ; il CHAUFFE : ses dégâts par
+   * seconde montent de `dpsMin` à `dpsMax` en `montee` secondes sur la même cible ; ce qu'il touche brûle. L'état est
+   * `Monde.canal`.
+   */
+  canalise?: { dpsMin: number; dpsMax: number; montee: number; brulure: number; dpsBrulure: number }
 }
 
 export type Vaisseau = {
@@ -473,6 +481,8 @@ export type Monde = {
   flaques: Flaque[]
   /** LE TOUR DU RAYON en cours (voir `Arme.balayage`) : l'arme, son début, l'angle atteint, les ennemis déjà touchés ; ou null. */
   balayage: { arme: number; debut: number; angle: number; touches: number[] } | null
+  /** LE RAYON CANALISÉ (voir `Arme.canalise`) : sa cible, depuis quand il est dessus, où elle est, sa chauffe (0 à 1) ; ou null. */
+  canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
 }
 
 /** Une flaque de feu au sol (voir `Arme.napalm`). */
@@ -527,7 +537,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1142,6 +1152,45 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   }
 }
 
+/** LE RAYON CANALISÉ (voir `Arme.canalise`) : il choisit sa cible, chauffe sur elle, la brûle. */
+function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const i = c.armes.findIndex((a) => a.canalise !== undefined)
+  const a = c.armes[i]
+  const ca = a?.canalise
+  if (a === undefined || ca === undefined) {
+    m.canal = null
+    return
+  }
+  const v = m.vaisseau
+  const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+  let cible: Ennemi | undefined
+  const ve = ennemiVerrouille(m)
+  if (ve !== null && aPortee(ve)) cible = ve
+  else if (m.canal !== null) cible = m.ennemis.find((e) => e.id === m.canal!.cible && aPortee(e))
+  if (cible === undefined) {
+    let dc = Infinity
+    for (const e of m.ennemis) {
+      const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+      if (aPortee(e) && d < dc) (dc = d), (cible = e)
+    }
+  }
+  if (cible === undefined) {
+    m.canal = null
+    return
+  }
+  const depuis = m.canal !== null && m.canal.cible === cible.id ? m.canal.depuis : m.t
+  const chauffe = Math.min(1, (m.t - depuis) / ca.montee)
+  m.canal = { arme: i, cible: cible.id, depuis, x: cible.corps.x, y: cible.corps.y, chauffe }
+  cible.pv -= (ca.dpsMin + (ca.dpsMax - ca.dpsMin) * chauffe) * dt
+  cible.bruleA = m.t + ca.brulure
+  cible.dpsBrulure = ca.dpsBrulure
+  cible.dureeBrulure = ca.brulure
+  if (cible.pv <= 0) {
+    abattreLEnnemi(c, m, cible, ev)
+    m.canal = null
+  }
+}
+
 /** L'ANGLE DU RAYON (voir `Arme.balayage`), à l'instant du monde, pendant son tour ; null hors d'un tour. */
 export function angleDuBalayage(c: ConfigVaisseau, m: Monde): { angle: number; part: number; longueur: number } | null {
   const b = m.balayage
@@ -1464,7 +1513,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null)
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null)
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -1541,9 +1590,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTourelles(c, m, dt, ev)
   brulerLesFlaques(c, m, dt, ev)
   menerLeRayon(c, m, ev)
+  canaliserLeRayon(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

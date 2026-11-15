@@ -810,7 +810,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
-      if (canon?.napalm !== undefined || canon?.balayage !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       else if (canon?.pose !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -947,7 +947,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: foreuseMontee(hangar)?.cran ?? 0, radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -6091,7 +6091,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   function dessinerLeVaisseau(p: Peintre): void {
-    const vise = m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
+    // (la tourelle du rayon thermique vise sa cible, comme la foreuse sa roche)
+    const vise = m.canal !== null ? Math.atan2(m.canal.y - v.y, m.canal.x - v.x) - v.cap : m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
     // (CHAQUE FOREUSE VISE SA ROCHE : son angle, depuis son pivot, par place d'outil)
     const vises: number[] = []
     CONF.foreuses.forEach((fo, j) => {
@@ -6723,6 +6724,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         })
     }
     for (const e of m.ennemis) if (e.forage !== null) dessinerUnLaser(p, e.corps, e.forage, VIOLET, ALLURE_SERIE.foreuse)
+    // LE RAYON THERMIQUE : LE LASER DE LA FOREUSE (Keko, 15/11 : « un rayon comme celui qui sert à forer »), depuis sa
+    // tourelle sur le toit jusqu'à sa cible, au rouge de « Laser grid » ; sa pointe grossit quand il chauffe
+    if (m.phase === 'vol' && m.canal !== null) dessinerUnLaser(p, v, { sorte: 'roche', cible: 0, x: m.canal.x, y: m.canal.y, part: m.canal.chauffe }, RAMPE_DU_LASER, 3, placeDOutil(monteeA(hangar, 'coque').cran, 0))
     p.place(0, 0)
   }
 
@@ -8393,6 +8397,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), fl, sm: R.next() < 0.55, sl: R.range(0.25, 0.45), s: R.range(1.2, 2.4), f: R.next() })
           }
         }
+        // le rayon thermique : des étincelles et de petites flammes là où il frappe, plus quand il chauffe
+        if (m.canal !== null && m.phase === 'vol') {
+          const ch = m.canal.chauffe
+          if (R.next() < 0.4 + 0.5 * ch) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 90)
+            etincelles.ajouter('etincelle', m.canal.x, m.canal.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), R.next() < 0.4 ? N.WHITE : RAMPE_DU_LASER[R.next() < 0.5 ? 6 : 4], 1, 1.5)
+          }
+          if (R.next() < 0.2 + 0.4 * ch) flammesDesBrules.push({ x: m.canal.x + R.range(-2, 2), y: m.canal.y + R.range(-2, 2), vx: R.range(-6, 6), vy: R.range(-14, -4), t0: t, vie: R.range(0.15, 0.3) })
+        }
         // le rayon sème des flammes à sa pointe et le long de lui
         {
           const r = angleDuBalayage(CONF, m)
@@ -8790,7 +8804,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && m.forage !== null, m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache)
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0
