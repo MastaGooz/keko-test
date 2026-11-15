@@ -840,5 +840,47 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   verifier('le verrou tombe avec l’ennemi', w.verrou === null)
 }
+// LE LANCE-FLAMMES (Keko, 15/11) : un cône continu devant le nez, à courte portée ; ce qu'il touche brûle encore après
+{
+  const flammes = { id: 'flammes', cadence: 0.1, degats: 10, portee: 45, vitesse: 0, vie: 0, dispersion: 0, guide: false, flamme: { cone: 0.42, brulure: 2, dpsBrulure: 3 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [flammes], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  // (le nez vers le haut : −y ; une seconde de flamme, l'insecte tenu en place)
+  const perdu = (x: number, y: number, secondes = 1): { pv: number; crache: boolean } => {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(insecte(1, x, y))
+    let crache = false
+    for (let i = 0; i < 60 * secondes; i++) {
+      w.ennemis[0].corps = { ...w.ennemis[0].corps, x, y, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      crache ||= w.crache
+    }
+    return { pv: 1000 - w.ennemis[0].pv, crache }
+  }
+  const devant = perdu(0, -30)
+  verifier('devant, à portée : une seconde de flamme coûte ses dégâts par seconde, et il crache', Math.abs(devant.pv - 10) < 0.6 && devant.crache)
+  verifier('de côté, ou trop loin devant : rien, et il ne crache pas', perdu(30, 0).pv === 0 && !perdu(30, 0).crache && perdu(0, -80).pv === 0)
+  // (sorti de la flamme, il brûle encore deux secondes, puis plus)
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 0, -30))
+  for (let i = 0; i < 30; i++) {
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: -30, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  const apresFlamme = w.ennemis[0].pv
+  for (let i = 0; i < 60 * 3; i++) {
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: 200, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  verifier('sorti de la flamme, il brûle encore deux secondes (trois points par seconde), puis plus', Math.abs(apresFlamme - w.ennemis[0].pv - 6) < 0.3)
+  // (le cône prend tout ce qui s'y trouve, pas un seul)
+  const w2 = nouveauMonde({ ...cfg, ennemi: { ...cfg.ennemi, pv: 12 } }, 3)
+  w2.ennemis.push({ ...insecte(1, -5, -25), pv: 12 }, { ...insecte(2, 5, -30), pv: 12 }, { ...insecte(3, 0, -38), pv: 12 })
+  for (let i = 0; i < 90; i++) {
+    for (const e of w2.ennemis) e.corps = { ...e.corps, vx: 0, vy: 0 }
+    avancerLeMonde({ ...cfg, ennemi: { ...cfg.ennemi, pv: 12 } }, w2, 1 / 60, { x: 0, y: 0 })
+  }
+  verifier('un groupe serré dans le cône fond d’un coup : trois insectes de 12 points abattus en moins d’une seconde et demie', w2.ennemis.length === 0)
+}
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

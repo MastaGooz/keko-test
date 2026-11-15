@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4
+  cran: 1 | 2 | 3 | 4 | 5
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -123,6 +123,11 @@ export const PIECES: Piece[] = [
   // le blindage et le bouclier au plus haut de ce que la fiche sait montrer. Il n'est à vendre nulle part encore :
   // `&cuirasse` le donne, tout armé.
   { id: 'coque-4', sorte: 'coque', cran: 4, nom: 'Coque de cuirassé', dit: '8 de blindage et 6 de bouclier, 120 unités en soute, quatre outils, six armes légères et deux lourdes. Ses tourelles tirent dans toutes les directions.', prix: 0, poids: 97, pv: 8, bouclier: 6, armes: 8, lourdes: 2, outils: 4, capacite: 120, rayon: 18, tourelles: true },
+  // LA SALAMANDRE (Keko, 15/11 : « un vaisseau en mode lance-flammes qui arrose à courte portée avec des dégâts
+  // importants ») : une coque trapue, deux réservoirs, deux points de blindage de plus que le chasseur, pas d'outil ;
+  // un moteur un peu plus lent que celui de série ; le lance-flammes au nez. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'coque-5', sorte: 'coque', cran: 5, nom: 'Coque de salamandre', dit: '7 de blindage, deux réservoirs, un lance-flammes au nez.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-s1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de salamandre', dit: 'Un peu plus lent que celui du chasseur : la salamandre encaisse plus qu’elle ne fuit.', prix: 0, poids: 8, poussee: 0.78, vitesseMax: 1, rotation: 0.95 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, cout: { or: 15, cristal: 8 }, poids: 8, debit: 1.8, portee: 1.25},
@@ -131,6 +136,7 @@ export const PIECES: Piece[] = [
   { id: 'radar', sorte: 'outil', cran: 2, famille: 'radar', nom: 'Radar', dit: 'Désigne le rival au bord de l’écran jusqu’à 600 unités. Pour le chasser, sans foreuse s’il le faut : abattu, il rend son butin.', note: 'Une flèche rouge au bord de l’écran désigne le rival.', prix: 32, cout: { fer: 15, or: 8 }, poids: 2, radar: 600},
   { id: 'arme-canon', sorte: 'arme', cran: 1, nom: 'Canon', dit: 'Un obus toutes les 1,1 s, 6 points, porte à 120. Tire seul sur le rival.', note: 'Tire seul sur le rival à portée.', prix: 24, cout: { fer: 20 }, poids: 4, arme: { id: 'canon', cadence: 1.1, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0.05, guide: false} },
   { id: 'arme-rafale', sorte: 'arme', cran: 2, nom: 'Mitrailleuse', dit: 'Quatre balles par seconde, 1,6 point chacune, porte à 90, disperse.', note: 'Disperse ses balles.', prix: 44, cout: { fer: 20, or: 8 }, poids: 5, arme: { id: 'rafale', cadence: 0.25, degats: 1.6, portee: 90, vitesse: 200, vie: 0.6, dispersion: 0.14, guide: false} },
+  { id: 'arme-flammes', sorte: 'arme', cran: 1, nom: 'Lance-flammes', dit: 'Un cône de feu à courte portée : 10 points par seconde à tout ce qui s’y trouve, qui brûle encore 2 s après.', note: 'Crache dès qu’un ennemi est dans le cône.', prix: 30, poids: 6, arme: { id: 'flammes', cadence: 0.1, degats: 10, portee: 45, vitesse: 0, vie: 0, dispersion: 0, guide: false, flamme: { cone: 0.42, brulure: 2, dpsBrulure: 3 } } },
   { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Une arme LOURDE : un missile guidé toutes les 2,8 s, 14 points, porte à 190.', note: 'Arme lourde. Guidé : le missile tourne vers le rival.', prix: 68, cout: { or: 18, cristal: 10 }, lourde: true, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
 ]
 

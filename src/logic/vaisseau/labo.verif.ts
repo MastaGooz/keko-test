@@ -15,7 +15,7 @@ function verifier(quoi: string, vrai: boolean): void {
 console.log('labo')
 verifier('quatre branches, trois rangs chacune, aucun rang vide ; des identifiants uniques', BRANCHES.every((b) => RANGS.every((r) => noeudsDe(b, r).length > 0)) && new Set(NOEUDS.map((n) => n.id)).size === NOEUDS.length)
 verifier('chaque nœud est d’une seule sorte, et porte ce qu’elle demande (un vaisseau du catalogue, un passif, une mécanique)', NOEUDS.every((n) => (n.sorte === 'vaisseau' ? n.vaisseau !== undefined && MODELES.some((mo) => mo.id === n.vaisseau) && n.passif === undefined && n.mecanique === undefined : n.sorte === 'passif' ? n.passif !== undefined && n.vaisseau === undefined && n.icone !== undefined : n.mecanique !== undefined && n.vaisseau === undefined && n.icone !== undefined)))
-verifier('tout vaisseau qui n’est pas celui du départ est porté par un nœud, et un seul', MODELES.slice(1).every((mo) => NOEUDS.filter((n) => n.vaisseau === mo.id).length === 1) && NOEUDS.every((n) => n.vaisseau !== MODELES[0].id))
+verifier('tout vaisseau qui n’est pas celui du départ est porté par un nœud, et un seul', MODELES.slice(1).filter((mo) => mo.horsRecherche !== true).every((mo) => NOEUDS.filter((n) => n.vaisseau === mo.id).length === 1) && NOEUDS.every((n) => n.vaisseau !== MODELES[0].id))
 const neuf = laboNeuf()
 const riche = { fer: 500, or: 500, cristal: 500 }
 verifier('un labo neuf : rien de débloqué, le rang 1 ouvert partout, les autres fermés', neuf.debloques.length === 0 && BRANCHES.every((b) => rangOuvert(neuf, b, 1) && !rangOuvert(neuf, b, 2) && !rangOuvert(neuf, b, 3)))

@@ -3764,3 +3764,30 @@ SUR PC (Keko, 15/11) : abattu dans le jeu du vortex, une touche de déplacement 
 SUR PC (Keko, 15/11) : les coins du verrou plus épais (deux pixels, des branches de six) et les flèches du bord (le portail, les vagues) une fois et demie plus grosses — le fer est tracé pixel par pixel, ses pixels restent entiers. Grossies, elles restent EN DEÇÀ des colonnes d'interface (elles mordaient la barre de vie).
 
 LE MÉDAILLON DU NIVEAU (Keko, 15/11 : « intégrer un peu mieux le chiffre dans la barre d'XP ; là, on dirait deux choses séparées ») : le chiffre est dans une plaque cernée d'encre comme la barre, liserée de cristal, SOUDÉE à son bout — debout, en tête, la barre sort de son pied ; couché, à gauche, elle sort de son flanc —, dans la teinte de la barre (`motEnRelief(…, 'cristal')`) au lieu de l'or du blindage (`dessinerLeMedaillon`).
+
+### La Salamandre, le vaisseau au lance-flammes (15/11)
+
+Keko : « on met de côté le cuirassé ; je voudrais un deuxième concept de
+vaisseau » — puis, sur la piste de la proximité : « un vaisseau en mode
+lance-flammes qui arrose à courte portée avec des dégâts importants ».
+
+- LE LANCE-FLAMMES (`Arme.flamme`, `cracherLaFlamme` dans `jeu.ts`, vérifié) :
+  pas d'obus, UN CÔNE CONTINU devant la buse (demi-angle 0,42 rad, portée 45 —
+  le canon porte à 120) ; tout ce qui s'y trouve perd 10 points par seconde,
+  et BRÛLE ENCORE 2 s à 3 points par seconde à sa sortie (pas en plus de la
+  flamme). Il crache dès qu'un ennemi est dans le cône (`Monde.crache`). Un
+  groupe serré fond d'un coup. Pas de propagation (une piste de talent).
+- LE VAISSEAU (`salamandre` dans `flotte.ts`, `coque-5`, `propulseur-s1`,
+  `arme-flammes`) : trapu, deux réservoirs de laiton sur le dos, des ailes
+  courtes, deux tuyères, la buse au nez ; 7 de blindage (le chasseur 5), un peu
+  plus lent. Le nez se tourne vers sa cible de 110 au moins, pour être prêt.
+- DONNÉE D'OFFICE dans le jeu du vortex (`horsRecherche` : aucun nœud ne la
+  débloque, le Nova Drifter ne la voit pas) ; elle prend la place du cuirassé
+  dans le panneau des vaisseaux (le cuirassé est masqué, pas supprimé). Ses
+  armes sont à elle (`ARMES_PAR_VAISSEAU`) ; l'arme équipée est gardée par
+  vaisseau.
+- LE SPECTACLE : des flammes en particules dans le cône (blanc-jaune, orange,
+  rouge, fumée), une lueur à la buse ; l'insecte qui brûle rougeoie et lâche
+  des braises ; un souffle grave et crépitant (`flamme`), rejoué tant qu'il
+  crache. *Tous les chiffres sont de moi, à rejuger en jouant.*
+- `&vaisseau=salamandre` : la piloter d'emblée (avec `&direct`, décoller avec elle).

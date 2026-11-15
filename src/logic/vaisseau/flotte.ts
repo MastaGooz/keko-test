@@ -40,6 +40,8 @@ export type ModeleDeVaisseau = {
   serie: Hangar
   /** Sa suite de missions, dans l'ordre. */
   chaine: MissionDeVaisseau[]
+  /** HORS DE LA RECHERCHE : aucun nœud ne le débloque — le jeu du vortex le donne d'office, pour l'essai (la Salamandre). */
+  horsRecherche?: boolean
 }
 
 export const MODELES: ModeleDeVaisseau[] = [
@@ -65,6 +67,17 @@ export const MODELES: ModeleDeVaisseau[] = [
       { titre: 'As', dit: 'Abattez 5 rivaux.', compteur: 'rivaux', cible: 5, ouvre: 'coque-3' },
       { titre: 'Grande campagne', dit: 'Extrayez 150 unités.', compteur: 'pepites', cible: 150, ouvre: 'aimant-2' },
     ],
+  },
+  {
+    // LA SALAMANDRE (Keko, 15/11) : un lance-flammes au nez — il faut aller au contact, là où les insectes mordent
+    id: 'salamandre',
+    nom: 'Salamandre',
+    classe: 'chasseur',
+    dit: 'Trapue, un lance-flammes au nez : elle arrose de près et ce qu’elle touche brûle encore. Il faut aller au contact.',
+    pieces: ['coque-5', 'propulseur-s1', 'arme-flammes'],
+    serie: { possedees: ['coque-5', 'propulseur-s1', 'arme-flammes'], montees: { coque: 'coque-5', propulseur: 'propulseur-s1' }, outils: [], armes: ['arme-flammes'] },
+    chaine: [],
+    horsRecherche: true,
   },
   {
     id: 'cuirasse',

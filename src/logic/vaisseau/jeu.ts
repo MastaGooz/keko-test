@@ -292,6 +292,13 @@ export type Arme = {
    * elle, ils partent du bord du vaisseau, vers la cible.
    */
   bouche?: Vecteur
+  /**
+   * UN LANCE-FLAMMES (la Salamandre, Keko, 15/11 : « un vaisseau en mode lance-flammes qui arrose à courte portée avec
+   * des dégâts importants ») : pas d'obus — UN CÔNE CONTINU devant la bouche, de demi-angle `cone`, jusqu'à `portee` ;
+   * tout ce qui s'y trouve perd `degats` PAR SECONDE, et BRÛLE ENCORE `brulure` secondes à `dpsBrulure` par seconde.
+   * Il crache dès qu'un ennemi est dans le cône.
+   */
+  flamme?: { cone: number; brulure: number; dpsBrulure: number }
 }
 
 export type Vaisseau = {
@@ -347,6 +354,10 @@ export type Ennemi = {
   tirA: number
   /** Le prochain tir de CHACUNE de ses armes, quand il en porte (`ennemi.armes`). */
   tirsA?: number[]
+  /** IL BRÛLE (le lance-flammes) jusqu'à cet instant, à tant de points par seconde. */
+  bruleA?: number
+  dpsBrulure?: number
+  dureeBrulure?: number
   butin: number
   cargaison: Cargaison
 }
@@ -409,6 +420,8 @@ export type Monde = {
    * avec l'ennemi.
    */
   verrou: number | null
+  /** Le lance-flammes crache, à ce pas (le dessin et le son le lisent). */
+  crache: boolean
 }
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
@@ -445,7 +458,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1032,6 +1045,32 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
   }
 }
 
+/**
+ * LE LANCE-FLAMMES crache : tout ennemi dans le cône, devant la bouche, jusqu'à la portée (plus son rayon), perd les
+ * dégâts de l'arme par seconde et se met à brûler. Le cône suit le nez — c'est le nez qui se tourne vers la cible.
+ */
+function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: number; brulure: number; dpsBrulure: number }, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  const bo = arme.bouche
+  const bx = bo === undefined ? v.x : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
+  const by = bo === undefined ? v.y : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
+  const dans = m.ennemis.filter((e) => {
+    const d = Math.hypot(e.corps.x - bx, e.corps.y - by)
+    if (d > arme.portee + c.ennemi.rayon) return false
+    // (collé à la bouche, il est dedans quel que soit l'angle)
+    return d <= c.ennemi.rayon + 1 || Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - by, e.corps.x - bx))) <= fl.cone
+  })
+  if (dans.length === 0) return
+  m.crache = true
+  for (const e of dans) {
+    e.pv -= arme.degats * dt
+    e.bruleA = m.t + fl.brulure
+    e.dpsBrulure = fl.dpsBrulure
+    e.dureeBrulure = fl.brulure
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+}
+
 /** Verrouille l'ennemi `id` — ou le déverrouille, s'il l'était déjà. Un id qui n'est pas un ennemi ne change rien. */
 export function verrouiller(m: Monde, id: number): void {
   if (m.verrou === id) m.verrou = null
@@ -1170,6 +1209,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
   for (const e of [...m.ennemis]) {
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
+    // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
+    if ((e.bruleA ?? -1) > m.t && (e.bruleA ?? 0) - m.t < (e.dureeBrulure ?? 0) - dt * 1.5) e.pv -= (e.dpsBrulure ?? 0) * dt
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
   // (les insectes passés par le portail ont quitté le monde)
@@ -1198,7 +1239,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
 
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
+  m.crache = false
   c.armes.forEach((arme, i) => {
+    if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

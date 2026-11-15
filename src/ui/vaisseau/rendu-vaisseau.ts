@@ -439,7 +439,10 @@ const GABARIT_DU_CUIRASSE: Gabarit = {
   anneau: 40,
   echelle: 0.5,
 }
-export const gabaritDe = (coque: number): Gabarit => (coque >= 4 ? GABARIT_DU_CUIRASSE : GABARIT_DE_SERIE)
+// LA SALAMANDRE (Keko, 15/11) : un peu plus trapue que le chasseur, deux tuyères côte à côte, UNE place d'arme — le
+// lance-flammes, dans l'axe, sa buse dépassant du nez
+const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.4, y: -2.6 }, { x: -0.4, y: 2.6 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -7.6, y: 8.4 }, verriere: 2.6, nez: 8, flanc: 6, anneau: 12, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + gabaritDe(coque).tuyeres[0].x
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -457,7 +460,18 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
-  if (cran >= 4) {
+  if (cran === 5) {
+    // LA SALAMANDRE : un fuseau trapu, le nez court et rond ; deux RÉSERVOIRS de laiton cerclés d'acier (rouges, ils se perdaient dans une coque rouge) sur le dos, de part
+    // et d'autre de l'échine ; la verrière en avant
+    const f: Forme[] = [{ pts: [[8, 0], [6.6, -2.6], [3.5, -4.6], [-1, -5.6], [-5.5, -5.6], [-8.2, -4], [-8.8, -1.6], [-8.8, 1.6], [-8.2, 4], [-5.5, 5.6], [-1, 5.6], [3.5, 4.6], [6.6, 2.6]], mat: 'coque', relief: 'cyl' }]
+    for (const sg of [-1, 1]) {
+      f.push({ pts: ovale(-3.4, sg * 3.3, 3.8, 1.6, 18), mat: 'or', relief: 'dome', dome: { x: -3.4, y: sg * 3.3, rx: 3.8, ry: 1.6 } })
+      for (const x of [-1.6, -5.2]) f.push({ pts: [[x + 0.45, sg * 1.7], [x - 0.45, sg * 1.7], [x - 0.45, sg * 4.9], [x + 0.45, sg * 4.9]], mat: 'metal', relief: 'plat' })
+    }
+    f.push({ pts: ovale(2.6, 0, 2.3, 1.5, 18), mat: 'verre', relief: 'dome', dome: { x: 2.6, y: 0, rx: 2.3, ry: 1.5 } })
+    return f
+  }
+  if (cran === 4) {
     // LE CUIRASSÉ : une longue coque d'acier riveté — la proue en coin, les flancs droits, la poupe carrée —, deux
     // plaques de blindage le long des flancs, une échine de superstructure à membrures, la tour de la passerelle
     // vitrée vers l'avant, deux émetteurs de bouclier à la poupe ; et SES EMPLACEMENTS, vides ou non : huit socles de
@@ -497,7 +511,16 @@ export function formesDeLaCoque(cran: number): Forme[] {
 /** LES AILES, deux plaques penchées, le bout rouge — le cuirassé, lui, a deux longs bords d'armement. */
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
-  if (coque >= 4) {
+  if (coque === 5) {
+    // (la salamandre : des ailes courtes et larges, en arrière, le bout rouge)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[0, sg * 4.6], [-4.6, sg * 8.4], [-7.8, sg * 8.6], [-8.2, sg * 7], [-6.6, sg * 4.8]], mat: 'aile', relief: 'plat', penche: sg })
+      f.push({ pts: [[0, sg * 4.6], [-4.6, sg * 8.4], [-5.4, sg * 8.25], [-0.9, sg * 4.7]], mat: 'acier', relief: 'plat', penche: sg })
+      f.push({ pts: [[-6.8, sg * 7.6], [-8.1, sg * 7.7], [-8.1, sg * 8.6], [-7.2, sg * 8.5]], mat: 'rouge', relief: 'plat', penche: sg })
+    }
+    return f
+  }
+  if (coque === 4) {
     // (les deux ponts latéraux du cuirassé, et sur chacun ses quatre socles de tourelle)
     for (const sg of [-1, 1]) {
       f.push({ pts: [[27, sg * 8.6], [22, sg * 15.2], [-26, sg * 17], [-31, sg * 17], [-31, sg * 10]], mat: 'aile', relief: 'plat', penche: sg })
@@ -590,6 +613,7 @@ export function formesDuRadar(t: number): Forme[] {
  * sa nacelle, à −0,6). Les obus du vol en partent.
  */
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
+  if (id === 'flammes') return { x: 11.8, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
 /** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
@@ -604,6 +628,14 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 }
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
+  if (id === 'flammes') {
+    // LE LANCE-FLAMMES : une buse dans l'axe, qui dépasse du nez — le fût, la bague, la veilleuse au bout
+    return [
+      { pts: barre(4.5, 0, 10.6, 0, 1.3), mat: 'metal', relief: 'cyl' },
+      { pts: barre(9.2, 0, 11.2, 0, 1.8), mat: 'acier', relief: 'cyl' },
+      { pts: ovale(11.6, 0, 0.6, 0.6, 10), mat: 'feu', relief: 'dome', dome: { x: 11.6, y: 0, rx: 0.6, ry: 0.6 } },
+    ]
+  }
   if (id === 'canon') {
     return [
       { pts: barre(-5.2, s * 6.2, 1.6, s * 6.2, 1.1), mat: 'metal', relief: 'cyl' },
