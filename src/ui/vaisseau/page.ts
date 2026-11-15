@@ -13,14 +13,14 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche } from '../../logic/vaisseau/jeu.ts'
-import { acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, modeleDeVaisseau, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
@@ -2080,7 +2080,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     fenetre(p, xc, COLONNE, () => dessinerLesCouleurs(p))
     // (couché, le voile couvre TOUT l'écran, pas la seule colonne où le panneau est dessiné)
     if (vaisseauxOuverts && vue === 'hangar' && etape === 'vaisseau') p.rect(0, 0, W, H, NUIT, 0.72 * sortie((t - vaisseauxA) / 0.18))
-    fenetre(p, xc, COLONNE, () => dessinerLesVaisseaux(p, false))
+    if (VORTEX) {
+      // (COUCHÉ, LE PANNEAU DES VAISSEAUX EST EN DEUX, comme celui des pièces : la liste à gauche, par-dessus la scène, la fiche dans la colonne)
+      fenetre(p, RAIL, xc - RAIL, () => dessinerLesVaisseaux(p, false, 'liste'))
+      fenetre(p, xc, COLONNE, () => dessinerLesVaisseaux(p, false, 'fiche'))
+    } else fenetre(p, xc, COLONNE, () => dessinerLesVaisseaux(p, false))
     // (LA VENTE, en deux fenêtres elle aussi : sa courbe à gauche, par-dessus la grille, le reste dans la colonne — en
     // une seule pièce, elle fait jusqu'à 216 de haut, plus que l'écran couché)
     fenetre(p, RAIL, xc - RAIL, () => dessinerLaVente(p, 'courbe'))
@@ -3088,10 +3092,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(9, y + 4 + e.dy, 12, 3, clair)
       p.rect(9, y + 13 + e.dy, 12, 3, sombre)
       xn = 27
-      zone(4, y, xn + largeurDe(mo.nom, GRAS) + 4, h, () => ((couleursOuvertes = true), (couleursA = t)), 'ouvre')
+      // (LA PASTILLE SEULE, pas le nom — Keko, 15/11)
+      zone(6, y + 1, 18, h - 2, () => ((couleursOuvertes = true), (couleursA = t)), 'ouvre')
     }
     motEnRelief(p, mo.nom, xn + largeurDe(mo.nom, GRAS) / 2, y + 6, true)
-    if (liste.length > 1) {
+    if (liste.length > 1 && !VORTEX) {
       const bw = largeurDe('Changer', GRAS) + 16
       // (EN ACIER CLAIR, le mot sombre — Keko, 14/11 : jaune, il « renvoie trop au bouton décollage en dessous » ; « un
       // petit peu plus visible que le bouton équipement, mais pas jaune »)
@@ -3106,9 +3111,110 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let vaisseauxOuverts = false
   let vaisseauxA = -10
-  function dessinerLesVaisseaux(p: Peintre, voile = true): void {
+  /** Le vaisseau choisi dans la liste du panneau (jeu du vortex), et où son surlignage en est. */
+  let vaisseauChoisi = ''
+  let surligneVaisseau = -1
+  /**
+   * LE PANNEAU DES VAISSEAUX DU JEU DU VORTEX, comme celui des pièces (Keko, 15/11) : la liste de TOUS les modèles — ceux
+   * qu'on a, et ceux que la recherche n'a pas encore débloqués, grisés —, et la fiche du choisi : son châssis, sa
+   * classe, ce qu'il est, ses jauges de vol (vitesse, accélération, maniabilité, sur les étalons du jeu), son blindage
+   * et son bouclier ; puis « Piloter », « Piloté », ou ce qu'il faut pour l'avoir.
+   */
+  function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
+    const u0 = sortie((t - vaisseauxA) / 0.18)
+    p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
+    eteindre(0, HAUT_BARRE, W, H)
+    if (partie !== 'fiche') zones = []
+    zoneGlissante = null
+    zoneDesCases = null
+    const fermer = (): void => {
+      vaisseauxOuverts = false
+      etapeA = t
+    }
+    let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
+    const tous = MODELES
+    const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
+    const iSel = tous.indexOf(choisi)
+    const a = aLeVaisseau(flotte, choisi.id)
+    if (partie !== 'fiche') {
+    enTete(p, y, 'Vaisseaux', fermer)
+    y += HT + 3
+    const hl = tous.length * RANG_LISTE + 4
+    plaque(p, 4, y, W - 8, hl, 'creux')
+    const yl = y + 2
+    const cibleY = yl + iSel * RANG_LISTE
+    surligneVaisseau = surligneVaisseau < 0 ? cibleY : ressort(surligneVaisseau, cibleY, 24)
+    const sy = Math.round(surligneVaisseau)
+    p.rect(7, sy, W - 14, RANG_LISTE, N.hex('#2a2440'))
+    p.rect(7, sy + 1, 2, RANG_LISTE - 2, PEPITE[2])
+    tous.forEach((mo, i) => {
+      const ly = yl + i * RANG_LISTE
+      const a = aLeVaisseau(flotte, mo.id)
+      const ici = i === iSel
+      ecrire(p, mo.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
+      if (mo.id === flotte.actif) p.text('PILOTE', W - 10, ly + 4, PEPITE[2], { align: 'right' })
+      else if (!a) p.text('VERROUILLE', W - 10, ly + 4, COQUE[3], { align: 'right' })
+      zone(4, ly, W - 8, RANG_LISTE, () => (vaisseauChoisi = mo.id), ici ? null : 'clic')
+    })
+    y += hl + 4
+    // le bouton
+    if (choisi.id === flotte.actif) {
+      motEnRelief(p, 'Piloté', W / 2, y + 4, true)
+    } else if (a) {
+      const bw = largeurDe('Piloter', GRAS) + 22
+      bouton(p, Math.round(W / 2 - bw / 2), y, bw, 15, 'Piloter', true, () => {
+        sauver()
+        flotte = choisirLeVaisseau(flotte, choisi.id)
+        hangar = hangarActif(flotte)
+        livree = livreeDuVaisseau()
+        sauver()
+        etapeA = t
+        vaisseauxOuverts = false
+        feterLEquipement()
+      }, 'equipe')
+    } else ecrire(p, 'À débloquer à la recherche', W / 2, y + 4, COQUE[4], { align: 'center' })
+    y += 19
+    }
+    if (partie === 'liste') {
+      if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+      zone(0, 0, W, H, () => {}, null)
+      return
+    }
+    // la fiche
+    const cf = configDuHangar(BASE, choisi.serie)
+    const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
+    const jauges: Jauge[] = [
+      { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
+      { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
+      { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
+      { nom: 'Blindage', valeur: cf.coque, max: 8, cellules: true },
+      // (le bouclier de base du jeu du vortex compte : c'est celui qu'il aura en vol)
+      { nom: 'Bouclier', valeur: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX), max: 8, cellules: true },
+    ]
+    const dit = replier(choisi.dit, W - 22)
+    const hh = Math.max(52, 30 + jauges.length * 10 + 4)
+    const hd = hh + dit.length * 9 + 6
+    const gx = 56
+    plaque(p, 4, y, W - 8, hd, 'encre')
+    plaque(p, 8, y + 4, 44, hh - 8, 'creux')
+    const co = pieceDe(choisi.serie.montees.coque)
+    if (co !== undefined) dessinerLePictogramme(p, co, 30, y + hh / 2, 44, hh - 8)
+    if (!a) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
+    motEnRelief(p, choisi.nom, gx + (W - 12 - gx) / 2, y + 5, a)
+    ecrire(p, NOMS_CLASSE[choisi.classe], gx + (W - 12 - gx) / 2, y + 16, COQUE[4], { align: 'center' })
+    jauges.forEach((j, i) => {
+      const k = sortie((t - vaisseauxA - 0.05 - i * 0.045) / 0.32)
+      dessinerUneJaugeDePiece(p, y + 28 + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, null, false, gx, k)
+    })
+    p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
+    dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * 9, COQUE[4], { align: 'center' }))
+    if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
+    zone(0, 0, W, H, () => {}, null)
+  }
+  function dessinerLesVaisseaux(p: Peintre, voile = true, partie: 'tout' | 'liste' | 'fiche' = 'tout'): void {
     if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) vaisseauxOuverts = false
     if (!vaisseauxOuverts) return
+    if (VORTEX) return dessinerLesVaisseauxEnListe(p, voile, partie)
     const u0 = sortie((t - vaisseauxA) / 0.18)
     const liste = vaisseauxDe(flotte)
     const hc = 40
@@ -3188,7 +3294,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLApercu(p: Peintre, y0: number): void {
     let y = dessinerLesPertes(p, dessinerLeChoixDuVaisseau(p, y0))
     // (LE HANGAR DU JEU DU VORTEX : on y choisit son vaisseau, et sa couleur par la pastille à gauche du nom ; rien sur les pièces)
-    if (VORTEX) return
+    if (VORTEX) {
+      // SOUS LE NOM : « COULEUR » ET « CHANGER » (Keko, 15/11 : « on reprend le système d'avant, un bouton couleur et un
+      // bouton changer, en dessous du nom ; couleur ouvre le panneau des couleurs, changer un panneau comme pour les
+      // pièces, sauf que ce sont des vaisseaux »)
+      const wc = 5 + 9 + 5 + largeurDe('Couleur', GRAS) + 7
+      const wch = largeurDe('Changer', GRAS) + 24
+      const bx = Math.round((W - wc - 4 - wch) / 2)
+      boutonBase(p, bx, y, wc, 17, true, () => ((couleursOuvertes = true), (couleursA = t)), (dx, dy) => {
+        const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+        p.rect(bx + 5 + dx, y + 4 + dy, 9, 9, MATIERES.encre.contour)
+        p.rect(bx + 6 + dx, y + 5 + dy, 7, 7, moyen)
+        p.rect(bx + 6 + dx, y + 5 + dy, 7, 2, clair)
+        p.rect(bx + 6 + dx, y + 10 + dy, 7, 2, sombre)
+        ecrire(p, 'Couleur', bx + 19 + dx, y + 5 + dy, COQUE[6], { police: GRAS })
+      }, 'ouvre', { matiere: 'acier' })
+      bouton(p, bx + wc + 4, y, wch, 17, 'Changer', true, () => {
+        vaisseauxOuverts = true
+        vaisseauxA = t
+        vaisseauChoisi = flotte.actif
+        surligneVaisseau = -1
+      }, 'ouvre', 'acier')
+      return
+    }
     const lignes: { nom: string; valeur?: string; places?: { pleine: boolean; lourde: boolean }[] }[] = [
       { nom: 'Châssis', valeur: monteeA(hangar, 'coque').nom },
       { nom: 'Propulsion', valeur: monteeA(hangar, 'propulseur').nom },
