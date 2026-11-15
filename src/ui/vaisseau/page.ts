@@ -3285,7 +3285,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         vaisseauxOuverts = false
         feterLEquipement()
       }, 'equipe')
-    } else ecrire(p, 'À débloquer à la recherche', W / 2, y + 4, COQUE[4], { align: 'center' })
+    } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
     y += 19
     }
     if (partie === 'liste') {

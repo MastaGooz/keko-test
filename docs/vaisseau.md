@@ -3715,3 +3715,5 @@ Sous la fiche du vaisseau, au hangar du jeu du vortex : SON ARME DE BASE (Keko, 
 Puis l'arme tient en UNE LIGNE (Keko, 15/11) : « Arme », son nom, et « Changer », qui ouvre LE PANNEAU DES ARMES comme celui des vaisseaux (`dessinerLesArmesEnListe` : les armes du catalogue, le canon « EQUIPE », les autres « VERROUILLE » pour l'instant ; la fiche — jauges, ce qu'elle fait).
 
 Puis (Keko, 15/11) : le nom de l'arme seul, sans « Arme » devant ; et son « Changer » est UN BOUTON SECONDAIRE, moins visible que celui du vaisseau — l'acier sombre et la lettre courante grise, au lieu de l'acier clair et du gras.
+
+Et un vaisseau qu'on n'a pas dit « Pas encore disponible », comme les armes (Keko, 15/11), plus « À débloquer à la recherche ».
