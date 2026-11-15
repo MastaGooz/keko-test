@@ -127,7 +127,7 @@ export const PIECES: Piece[] = [
   // importants ») : une coque trapue, deux réservoirs, deux points de blindage de plus que le chasseur, pas d'outil ;
   // un moteur un peu plus lent que celui de série ; le lance-flammes au nez. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-5', sorte: 'coque', cran: 5, nom: 'Coque de salamandre', dit: '7 de blindage, deux réservoirs, un lance-flammes au nez.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
-  { id: 'propulseur-s1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de salamandre', dit: 'Un peu plus lent que celui du chasseur : la salamandre encaisse plus qu’elle ne fuit.', prix: 0, poids: 8, poussee: 0.78, vitesseMax: 1, rotation: 0.95 },
+  { id: 'propulseur-s1', sorte: 'propulseur', cran: 1, nom: 'Propulseur de salamandre', dit: 'Plus lent que celui du chasseur : la salamandre encaisse plus qu’elle ne fuit.', prix: 0, poids: 8, poussee: 0.62, vitesseMax: 0.8, rotation: 0.95 }, // (0,78 et 1 d'abord — Keko, 15/11 : « il va trop vite »)
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
   { id: 'foreuse-3', sorte: 'outil', cran: 3, famille: 'foreuse', nom: 'Foreuse longue', dit: 'Creuse 80 % plus vite, porte 25 % plus loin.', prix: 56, cout: { or: 15, cristal: 8 }, poids: 8, debit: 1.8, portee: 1.25},

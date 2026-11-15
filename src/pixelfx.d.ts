@@ -6,3 +6,5 @@ declare module 'pixelfx'
 declare module 'pixelfx/fx/index'
 /** Les aides des effets `ui/` du dépôt (plaques, mots en relief) : le hangar du vaisseau s'en sert. */
 declare module 'pixelfx/fx/ui/_lib'
+/** Les aides des effets de feu du dépôt (les bouffées de flamme et de fumée de la Fireball) : le lance-flammes s'en sert. */
+declare module 'pixelfx/fx/fire/_lib'

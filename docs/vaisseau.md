@@ -3816,3 +3816,14 @@ braises et de la fumée (les particules du dépôt), et au bout une bouffée
 (`consumer`, `dessinerLesConsumes`). Pas de sang vert. Le son `consume` :
 un « whoump » d'embrasement, des crépitements, un grésillement qui s'éteint.
 `&consume` : le banc — un insecte se consume à côté du vaisseau toutes les 1,6 s, hors de toute flamme.
+
+Puis (Keko, 15/11) : LES FLAMMES DE LA FIREBALL — « pas la boule, la traînée
+qu'elle laisse, ces flammes plus réalistes » : le jet est fait de ses
+bouffées (`firePuff`, `smokePuff` des aides de feu du dépôt,
+`pixelfx/fx/fire/_lib`) — chacune naît blanche et petite, gonfle en
+refroidissant vers l'orange et le rouge, sa pointe traînant en arrière, et un
+peu plus de la moitié s'éteignent en fumée ; les petites flammes des insectes
+qui brûlent sont les mêmes bouffées. La flamme va toujours jusqu'où elle
+touche. Et LA SALAMANDRE RALENTIT (« il va trop vite ») : sa pointe passe de
+1 à 0,8, sa poussée de 0,78 à 0,62 (le chasseur : 1,15 et 0,84).
+

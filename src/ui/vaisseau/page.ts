@@ -15,6 +15,7 @@ import * as noyau from 'pixelfx'
 import { asteroidesVisibles, avancerLeMonde, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
+import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
@@ -5528,7 +5529,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * (Son souffle est une voix continue : `regler`.) Et LES FLAMMES SUR LES INSECTES QUI BRÛLENT (Keko, 15/11 : « des
    * petites particules de flamme qui spawnent sur lui ») : petites, elles montent en rapetissant.
    */
-  let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
+  // (LES BOUFFÉES DE LA FIREBALL du dépôt — Keko, 15/11 : « ces flammes de sa traînée sont plus réalistes » : chacune
+  // naît blanche et petite, gonfle en refroidissant vers l'orange et le rouge (`firePuff`), et un peu plus de la moitié
+  // s'éteignent en FUMÉE (`smokePuff`) ; `fl` sa vie de flamme, `sm` si elle fume, `sl` combien, `s` sa taille, `f` sa
+  // place dans le jet (plus loin, un peu plus froide))
+  let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; fl: number; sm: boolean; sl: number; s: number; f: number }[] = []
   let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
   /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas. */
   let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number } | null = null
@@ -6430,33 +6435,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(o.x, o.y, 5, VERRIERE[2], 0.6)
       }
     }
-    // les flammes du lance-flammes : elles grossissent, passent du blanc-jaune à l'orange, au rouge, à la fumée
-    flammesDuNez = flammesDuNez.filter((f) => t - f.t0 < f.vie)
+    // les flammes du lance-flammes, en bouffées de la Fireball : la fumée d'abord, puis le feu, le plus vieux dessous
+    const H_FEU = hotFirst(RAMPE_DU_FEU)
+    flammesDuNez = flammesDuNez.filter((f) => t - f.t0 < f.fl + (f.sm ? f.sl : 0))
+    const auFeu: [number, number, number, (typeof flammesDuNez)[number]][] = []
     for (const f of flammesDuNez) {
       const age = t - f.t0
-      const u = age / f.vie
-      const x = f.x + f.vx * age * (1 - 0.3 * u)
-      const y = f.y + f.vy * age * (1 - 0.3 * u)
-      const r = 1.3 + 2.7 * u
-      if (u > 0.78) {
-        p.circle(x, y, r, N.hex('#3a3038'), 0.5 * (1 - (u - 0.78) / 0.22))
+      const ta = Math.min(age, f.fl)
+      const k = 1 - 0.3 * (ta / f.fl)
+      const x = f.x + f.vx * ta * k
+      const y = f.y + f.vy * ta * k
+      if (age < f.fl) {
+        auFeu.push([age, x, y, f])
         continue
       }
-      const c = u < 0.16 ? N.hex('#fff6c8') : u < 0.4 ? N.hex('#ffd04a') : u < 0.62 ? N.hex('#ff7a1a') : N.hex('#c8361a')
-      p.circle(x, y, r, c)
-      p.glow(x, y, r * 2.4, N.hex('#ff8a2a'), 0.22 * (1 - u))
+      // éteinte : sa fumée dérive encore un peu, lentement, et se dissipe
+      const sa = age - f.fl
+      smokePuff(p, x + f.vx * 0.12 * sa, y + f.vy * 0.12 * sa - 8 * sa, 1 - sa / f.sl, f.s * 0.9, FUMEE_DU_FEU)
     }
-    // les petites flammes des insectes qui brûlent : elles montent en rapetissant
+    auFeu.sort((a, b) => b[0] - a[0])
+    for (const [age, x, y, f] of auFeu) {
+      const u = age / f.fl
+      const l = Math.hypot(f.vx, f.vy) || 1
+      // (sa pointe traîne en arrière de sa course)
+      firePuff(p, x, y, 1 - u, f.s * (1 + 1.3 * u), f.f, H_FEU, 0.07, -f.vx / l, -f.vy / l)
+    }
+    // les petites flammes des insectes qui brûlent : des bouffées qui montent en rapetissant
     flammesDesBrules = flammesDesBrules.filter((f) => t - f.t0 < f.vie)
     for (const f of flammesDesBrules) {
       const age = t - f.t0
       const u = age / f.vie
-      const x = f.x + f.vx * age
-      const y = f.y + f.vy * age
-      const r = 0.5 + 1.5 * (1 - u)
-      const c = u < 0.25 ? N.hex('#ffe08a') : u < 0.55 ? N.hex('#ff9a2a') : N.hex('#d8401a')
-      p.circle(x, y, r, c, u < 0.7 ? 1 : 1 - (u - 0.7) / 0.3)
-      p.glow(x, y, 4, N.hex('#ff7a1a'), 0.25 * (1 - u))
+      firePuff(p, f.x + f.vx * age, f.y + f.vy * age, 1 - u, 1.4, 0.3, H_FEU, 0.1, 0, -1)
     }
     if (m.crache && m.phase === 'vol') {
       const bo = CONF.armes[0]?.bouche ?? { x: 0, y: 0 }
@@ -8159,9 +8168,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // (LA FLAMME VA JUSQU'OÙ ELLE TOUCHE — Keko, 15/11 : « un ennemi tout au bout, je le touche alors que la flamme
             // n'arrive pas jusqu'à lui » : le feu s'éteint, en fumée, aux 78 % de sa vie, après 0,6 × vitesse × vie de
             // course (le frein compris) — la vitesse en sort, pour que ce point tombe sur la portée, rayon de la cible compris)
-            const vie = R.range(0.22, 0.32)
-            const vit = ((a0.portee + CONF.ennemi.rayon) / (0.6 * vie)) * R.range(0.9, 1.05)
-            flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), vie })
+            // (la flamme freine d'un tiers en volant : elle a couru 0,7 × vitesse × vie de flamme quand elle s'éteint)
+            const fl = R.range(0.2, 0.3)
+            const vit = ((a0.portee + CONF.ennemi.rayon) / (0.7 * fl)) * R.range(0.9, 1.05)
+            flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit + v.vx, vy: Math.sin(an) * vit + v.vy, t0: t - R.range(0, PAS), fl, sm: R.next() < 0.55, sl: R.range(0.25, 0.45), s: R.range(1.2, 2.4), f: R.next() })
           }
         }
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
