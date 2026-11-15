@@ -925,8 +925,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     armesChoisies[flotte.actif] = id
     sauverArme(flotte.actif, id)
   }
-  /** Les armes propres à un AUTRE vaisseau que le piloté : le panneau des armes ne les montre pas. */
-  const armesDesAutres = (): string[] => Object.entries(ARMES_PAR_VAISSEAU).flatMap(([id, l]) => (id === flotte.actif ? [] : l)).filter((a) => !armesDuVortex().includes(a))
   // (`&arme=ID` : décoller avec cette arme du vaisseau piloté, sans la garder — pour l'essayer d'un lien)
   if (parametres.has('arme') && armesDuVortex().includes(parametres.get('arme') ?? '')) armesChoisies[flotte.actif] = parametres.get('arme') ?? ''
   const ALLURE_SERIE: Allure = { propulseur: 1, coque: 1, foreuse: 1, radar: false, aimant: false, armes: [], bouclier: 0 }
@@ -3260,9 +3258,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zoneGlissante = null
     zoneDesCases = null
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
-    // (les armes de ce vaisseau ; pas celles d'un autre vaisseau — ni les gros missiles du Nova Drifter : les
-    // mini-missiles s'appellent « Missiles » ici, Keko, 15/11)
-    const toutes = piecesDe('arme').filter((pc) => !armesDesAutres().includes(pc.id) && pc.id !== 'arme-missiles')
+    // (LES ARMES DE CE VAISSEAU, ET ELLES SEULES — Keko, 15/11 : « le chasseur montre le canon, la mitraillette et les
+    // missiles, et c'est tout ; la salamandre, le lance-flammes »)
+    const toutes = armesDuVortex().map((id) => pieceDe(id)).filter((pc): pc is NonNullable<typeof pc> => pc !== undefined)
     const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
     const aSoi = armesDuVortex().includes(choisie.id)
     if (partie !== 'fiche') {

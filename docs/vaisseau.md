@@ -3957,3 +3957,5 @@ Puis (Keko, 15/11) : l'onde revient À LA TAILLE DE LA ZONE (« trop réduite »
 Puis LEURS SONS (Keko, 15/11) : le départ évoque UN MOTEUR QUI S'ALLUME ET SE LANCE — un claquement d'allumage, puis une poussée grave et rugueuse qui enfle, gronde et s'éloigne en glissant vers le bas, un grondement dessous ; l'explosion est PLUS GRAVE — un coup sourd de 80 à 32 Hz, une sous-basse, un souffle bas.
 
 Puis LE MISSILE PLUS GROS EN VOL (Keko : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair et ombré, l'ogive rouge, deux ailerons, une flamme longue et sa lueur.
+
+LE PANNEAU DES ARMES NE MONTRE QUE CELLES DU VAISSEAU (Keko, 15/11 : « le chasseur montre le canon, la mitraillette et les missiles, et c'est tout ; la salamandre, le lance-flammes ») : la liste est `ARMES_PAR_VAISSEAU` du vaisseau piloté.
