@@ -8463,8 +8463,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           flashs.push({ x: choc.x, y: choc.y, t0: t, r: -1 })
         }
-        // les braises du moteur, en coordonnées du monde, derrière la tuyère
-        if (pousseeVue.avant > 0.05) {
+        // les braises du moteur, en coordonnées du monde, derrière la tuyère — EN VOL SEULEMENT (Keko, 15/11 : abattu, le
+        // manche tenu en faisait encore naître, figées là où le vaisseau était mort)
+        if (pousseeVue.avant > 0.05 && m.phase === 'vol') {
           const n = pousseeVue.avant > 0.6 ? 2 : 1
           for (let i = 0; i < n; i++) {
             // (ELLES NAISSENT AU BOUT DE LA FLAMME, pas à la queue du vaisseau — Keko, 13/11 : « on dirait que les

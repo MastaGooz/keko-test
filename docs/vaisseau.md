@@ -3827,3 +3827,11 @@ qui brûlent sont les mêmes bouffées. La flamme va toujours jusqu'où elle
 touche. Et LA SALAMANDRE RALENTIT (« il va trop vite ») : sa pointe passe de
 1 à 0,8, sa poussée de 0,78 à 0,62 (le chasseur : 1,15 et 0,84).
 
+Puis (Keko, 15/11) : ABATTU, LE LANCE-FLAMMES SE TAIT (`Monde.crache` remis à
+faux à chaque pas, avant tout : la règle s'arrêtait plus tôt pour un vaisseau
+abattu, et le jet comme son souffle restaient là pendant le compte du retour —
+vérifié) ; LES BRAISES DU MOTEUR NE NAISSENT QU'EN VOL (le manche tenu en faisait
+naître, figées, là où le vaisseau était mort) ; le cône s'élargit un peu (demi-
+angle 0,5 au lieu de 0,42) et la portée raccourcit (40 au lieu de 45) ; le
+souffle baisse (0,38 au lieu de 0,5).
+

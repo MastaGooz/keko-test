@@ -402,7 +402,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (charge === null && compte > 0) charge = voixDeCharge(ctx)
     if (flamme === null && crache) flamme = voixDeFlamme(ctx)
     const t = ctx.currentTime
-    if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.5 : 0, t, crache ? 0.03 : 0.07)
+    if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.38 : 0, t, crache ? 0.03 : 0.07) // (0,5 d'abord — Keko, 15/11 : « un tout petit peu moins fort »)
     if (propulsion !== null) {
       propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
       propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)

@@ -899,6 +899,14 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     for (const e of avancerLeMonde(cfg4, w4, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiDetruit') brule4 = e.brule
   }
   verifier('mort par le feu, l’insecte le dit (il se consumera) ; abattu par un obus, non', brule === true && brule4 === false)
+  // (abattu en crachant : le lance-flammes se tait au pas suivant, le temps du retour)
+  const w5 = nouveauMonde(cfg, 3)
+  w5.ennemis.push(insecte(1, 0, -30))
+  avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
+  const crachait = w5.crache
+  w5.phase = 'perdu'
+  avancerLeMonde(cfg, w5, 1 / 60, { x: 0, y: 0 })
+  verifier('abattu, le lance-flammes ne crache plus', crachait && !w5.crache)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

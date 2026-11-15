@@ -1168,6 +1168,9 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
  */
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
+  // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
+  // du lance-flammes reste en place pendant le compte du retour »)
+  m.crache = false
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
