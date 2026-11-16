@@ -638,6 +638,23 @@ const RECETTES = {
       for (let k = 0; k < 5; k++) souffle(m, h, 0.1 + 0.05 * k + 0.02 * h.next(), 0.35, (h.next() - 0.5) * 0.8, { f: 2600 + 800 * h.next(), q: 2, bande: true, a: 0.001, d: 0.03 })
     },
   },
+  /** UNE MINE D'ACIDE PART DU DOS : un « blop » gras, une note ronde qui monte, un petit souffle */
+  mine: {
+    duree: 0.4, niveau: 0.17, salle: [0.25, 0.1], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 200, glisse: { vers: 360, en: 0.08, droit: true }, a: 0.003, d: 0.1, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      souffle(m, h, 0, 0.35, 0, { f: 700, glisse: { vers: 1300, en: 0.1, droit: true }, q: 1.4, bande: true, a: 0.005, d: 0.1 })
+    },
+  },
+  /** LA MINE ÉCLATE EN GAZ : un « pchouf » mouillé — un coup sourd, un souffle large qui s'étale et siffle en retombant */
+  gaz: {
+    duree: 0.9, niveau: 0.28, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.7, 0, { f: 90, glisse: { vers: 45, en: 0.12 }, a: 0.002, d: 0.2, partiels: CORPS, sature: 1.4 })
+      souffle(m, h, 0, 1, 0, { f: 1400, glisse: { vers: 500, en: 0.3 }, q: 0.8, bande: true, a: 0.002, d: 0.45, large: true })
+      souffle(m, h, 0.05, 0.4, 0, { f: 4200, glisse: { vers: 2800, en: 0.5 }, q: 1.5, bande: true, a: 0.02, d: 0.5 })
+    },
+  },
   /** L'ACIDE RONGE UN INSECTE : un grésillement qui siffle et s'éteint */
   ronge: {
     duree: 0.45, niveau: 0.12, salle: [0.2, 0.08], variantes: 3,

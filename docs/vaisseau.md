@@ -4542,3 +4542,19 @@ claires, et une lueur verte dessus.
 PUIS UN CRAN ENTRE LES DEUX (Keko, 16/11 : « un peu trop claire, là ») : le bord
 reste vif, le dedans redescend d'un ton (ses taches aussi), l'opacité à 0,42 dedans
 et 0,7 au bord, la lueur à 0,16.
+
+SA DEUXIÈME ARME, LES MINES D'ACIDE (`Arme.mine` ; Keko, 16/11 : « des mines : elle
+lance en cloche depuis son dos des bulles, des pustules d'acide, qui explosent à
+courte distance des ennemis : une explosion de gaz qui fait des dégâts et infecte —
+la corrosion ») : toutes les 1,8 s, un insecte à moins de 80 (le verrouillé
+d'abord), elle LANCE EN CLOCHE une pustule depuis son dos vers là où il sera ; elle
+vole 0,6 s, se pose et ATTEND, 10 s au plus — six à la fois (la plus vieille saute).
+Posée, dès qu'un insecte passe à moins de 9, elle ÉCLATE EN GAZ : tout insecte à
+moins de 20 perd 6 points et est RONGÉ (4 s : 2 par seconde et +35 % sur tout le
+reste, comme le crachat). Tombée sur l'insecte, elle éclate aussitôt ; s'il s'est
+écarté, elle l'attend. Le vaisseau vole librement avec elle. Le dessin : en vol,
+une pustule qui monte et retombe (son ombre au sol) ; posée, un bubon sur un
+bourrelet de lie, qui BAT comme les pustules de la bête (plus vite ses deux
+dernières secondes), luit et fume ; l'éclatement, un nuage de bouffées vertes et
+violettes qui s'ouvrent jusqu'au rayon et s'effacent en roulant. Ses sons, `mine`
+et `gaz`. *Chiffres de moi, à rejuger.*

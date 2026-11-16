@@ -516,6 +516,15 @@ export type Arme = {
    * L'état est `Monde.flaquesAcides`.
    */
   crachat?: { cone: number; duree: number; acide: { duree: number; dps: number; bonus: number } }
+  /**
+   * DES MINES D'ACIDE (la deuxième arme de la Vouivre, Keko, 16/11 : « des mines : elle lance en cloche depuis son dos des
+   * bulles, des pustules d'acide, qui explosent à courte distance des ennemis : une explosion de gaz qui fait des dégâts
+   * et infecte — la corrosion ») : à sa cadence, un insecte à `portee`, elle LANCE EN CLOCHE une pustule depuis son dos
+   * vers là où il sera ; la pustule vole `vol` secondes, se pose et ATTEND, `duree` secondes au plus — `max` à la fois
+   * (la plus vieille saute). Posée, dès qu'un insecte passe à moins de `declenche`, elle ÉCLATE EN GAZ : tout insecte à
+   * moins de `rayon` perd `degats` et est RONGÉ (`acide`, comme le crachat). L'état est `Monde.mines`.
+   */
+  mine?: { max: number; duree: number; vol: number; declenche: number; rayon: number; acide: { duree: number; dps: number; bonus: number } }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -674,6 +683,8 @@ export type Monde = {
   rejetons: Rejeton[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
   flaquesAcides: { id: number; arme: number; x: number; y: number; cap: number; nee: number }[]
+  /** LES MINES D'ACIDE (voir `Arme.mine`) : d'où elles partent, où elles tombent, quand elles ont été lancées. */
+  mines: { id: number; arme: number; x0: number; y0: number; x: number; y: number; lancee: number }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -771,6 +782,10 @@ export type Evenement =
   /** La Vouivre crache (voir `Arme.crachat`) : la bouche, le cap, le cône ; un insecte se met à être rongé. */
   | { type: 'crachat'; x: number; y: number; cap: number; cone: number; portee: number; arme: string }
   | { type: 'ronge'; id: number; x: number; y: number }
+  /** Une mine d'acide est lancée, éclate en gaz, s'éteint sans avoir servi (voir `Arme.mine`). */
+  | { type: 'mineLancee'; x: number; y: number; arme: string }
+  | { type: 'gaz'; x: number; y: number; rayon: number }
+  | { type: 'mineFinie'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -791,7 +806,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1957,6 +1972,59 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   }
 }
 
+/** LES MINES D'ACIDE (voir `Arme.mine`) : le lancer en cloche, l'attente, l'éclatement en gaz, la fin. */
+function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const mi = a.mine
+    if (mi === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (aPortee(e) && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    // (là où il sera quand elle tombe)
+    const x = cible.corps.x + cible.corps.vx * mi.vol
+    const y = cible.corps.y + cible.corps.vy * mi.vol
+    m.mines.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x, y, lancee: m.t })
+    const miennes = m.mines.filter((x2) => x2.arme === i)
+    if (miennes.length > mi.max) m.mines.splice(m.mines.indexOf(miennes[0]), 1)
+    ev.push({ type: 'mineLancee', x: v.x, y: v.y, arme: a.id })
+  })
+  m.mines = m.mines.filter((mn) => {
+    const a = c.armes[mn.arme]
+    const mi = a?.mine
+    if (a === undefined || mi === undefined) return false
+    const age = m.t - mn.lancee
+    // (en vol, elle ne touche rien ; posée, elle attend)
+    if (age < mi.vol) return true
+    if (age >= mi.vol + mi.duree) {
+      ev.push({ type: 'mineFinie', x: mn.x, y: mn.y })
+      return false
+    }
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) <= mi.declenche + c.ennemi.rayon)) return true
+    // (ELLE ÉCLATE EN GAZ : tout ce qui est dans le nuage perd ses dégâts et est rongé)
+    ev.push({ type: 'gaz', x: mn.x, y: mn.y, rayon: mi.rayon })
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) > mi.rayon + c.ennemi.rayon) continue
+      ronger(m, e, mi.acide, ev)
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    return false
+  })
+}
+
 /**
  * L'ACIDE MAJORE TOUT (voir `Arme.crachat`) : ce que chaque insecte rongé a perdu depuis `avant` — de toutes les sources
  * de ce pas, quelles qu'elles soient — lui est retiré une part `bonus` de plus. (Mesuré sur ses points plutôt que dans
@@ -2601,7 +2669,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2694,10 +2762,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesNuees(c, m, dt, ev)
   menerLesRejetons(c, m, dt, ev)
   cracherLAcide(c, m, dt, ev)
+  menerLesMines(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
