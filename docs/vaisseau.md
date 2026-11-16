@@ -4598,3 +4598,7 @@ ombre et un maillon clair tous les deux pixels (fine et sombre, on la perdait) ;
 masse, une boule d'acier cernée, éclairée d'un côté, hérissée de huit pics qui
 tournent avec elle ; un flou de vitesse derrière elle. Son son, `fleau` (un choc
 sourd et métallique, le cliquetis de la chaîne). *Chiffres de moi, à rejuger.*
+
+PUIS UNE CHAÎNE PLUS LONGUE (Keko, 16/11 : « il faut que la chaîne soit plus
+longue ») : 34 au lieu de 22 ; la masse garde son tour (4,5 rad/s) — elle va donc
+plus vite sur son cercle, et balaie une couronne plus loin du vaisseau.
