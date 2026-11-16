@@ -7030,16 +7030,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     p.place(0, 0)
-  }  /**
-   * LES REJETONS DU KRAKEN (voir `Arme.rejeton`) : une petite bête — un bulbe de chair sous un chapeau de chitine, deux
-   * yeux de bile devant, tourné vers où il nage — et QUATRE TENTACULES QUI FLOTTENT derrière lui : chacune une petite
-   * corde de six maillons qui suit le bulbe (chaque maillon tiré par le précédent, à sa longueur), poussée d'une houle
-   * douce — au repos elles pendent et ondulent, en nage elles s'étirent. QUAND IL FOUETTE, une tentacule part en courbe
-   * jusqu'à l'insecte, l'aiguille au bout, et revient.
+  }
+  /**
+   * LES REJETONS DU KRAKEN (voir `Arme.rejeton`) : une petite bête — UNE CLOCHE de chair, plus longue que large, ombrée
+   * comme une sphère (cernée de sombre, claire du côté de la lumière), un chapeau de chitine devant, deux yeux de bile —
+   * et CINQ TENTACULES (Keko, 16/11 : « je trouve les rejetons rectangulaires ; il faudrait qu'on voie plus les tentacules
+   * à l'arrière, et qu'à l'arrêt elles flottent autour ») : chacune une corde de huit maillons, épaisse et cernée, qui
+   * suit la cloche (chaque maillon tiré par le précédent), poussée d'une houle ; À L'ARRÊT leurs racines s'écartent tout
+   * autour de la cloche et elles flottent en étoile, qui tourne doucement ; EN NAGE elles se resserrent derrière et
+   * traînent. QUAND IL FOUETTE, une tentacule part en courbe jusqu'à l'insecte et revient.
    */
-  const MAILLONS = 6
-  const LONGUEUR_DU_MAILLON = 1.7
-  const cordesDesRejetons = new Map<number, { cordes: [number, number][][]; cap: number; vu: number }>()
+  const MAILLONS = 8
+  const LONGUEUR_DU_MAILLON = 1.8
+  const TENTACULES_DU_REJETON = 5
+  const cordesDesRejetons = new Map<number, { cordes: [number, number][][]; cap: number; vu: number; nage: number }>()
   const coupsDeRejeton: { id: number; tx: number; ty: number; t0: number; virage: number }[] = []
   const DUREE_DU_COUP = 0.2
   function dessinerLesRejetons(p: Peintre): void {
@@ -7051,28 +7055,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const vit = Math.hypot(r.vx, r.vy)
       let etat = cordesDesRejetons.get(r.id)
       if (etat === undefined) {
-        etat = { cordes: [0, 1, 2, 3].map(() => Array.from({ length: MAILLONS }, (): [number, number] => [r.x, r.y])), cap: Math.atan2(r.vy, r.vx), vu: t }
+        etat = { cordes: Array.from({ length: TENTACULES_DU_REJETON }, () => Array.from({ length: MAILLONS }, (): [number, number] => [r.x, r.y])), cap: Math.atan2(r.vy, r.vx), vu: t, nage: 0 }
         cordesDesRejetons.set(r.id, etat)
       }
-      // (son cap suit sa nage ; à l'arrêt, il garde le sien)
+      const pas = Math.min(0.1, t - etat.vu)
+      // (son cap suit sa nage ; à l'arrêt, il garde le sien ; « nage » glisse de 0, à l'arrêt, à 1, lancé)
       if (vit > 5) {
         const voulu = Math.atan2(r.vy, r.vx)
         let e = voulu - etat.cap
         while (e > Math.PI) e -= Math.PI * 2
         while (e < -Math.PI) e += Math.PI * 2
-        etat.cap += e * Math.min(1, (t - etat.vu) * 8)
+        etat.cap += e * Math.min(1, pas * 8)
       }
+      etat.nage += (Math.min(1, vit / 35) - etat.nage) * Math.min(1, pas * 4)
       etat.vu = t
       const hx = Math.cos(etat.cap)
       const hy = Math.sin(etat.cap)
-      // (les cordes : la première maille au cul du bulbe, chacune tirée par la précédente, poussée d'une houle)
+      const nage = etat.nage
+      // (les cordes : chacune part de sa racine sur le bord de la cloche — tout autour à l'arrêt, serrées derrière en
+      // nage —, chaque maillon tiré vers le dehors de sa racine et par le précédent, poussé d'une houle)
       etat.cordes.forEach((c, k) => {
-        const ecart = (k - 1.5) * 0.9
-        c[0] = [r.x - hx * 2.2 - hy * ecart, r.y - hy * 2.2 + hx * ecart]
+        const autour = etat!.cap + Math.PI / 5 + (k * 2 * Math.PI) / TENTACULES_DU_REJETON + t * 0.7
+        const derriere = etat!.cap + Math.PI + (k - (TENTACULES_DU_REJETON - 1) / 2) * 0.32
+        let ecart = derriere - autour
+        while (ecart > Math.PI) ecart -= Math.PI * 2
+        while (ecart < -Math.PI) ecart += Math.PI * 2
+        const an = autour + ecart * nage
+        const ux = Math.cos(an)
+        const uy = Math.sin(an)
+        c[0] = [r.x + ux * 2.6, r.y + uy * 2.6]
         for (let i = 1; i < MAILLONS; i++) {
-          const houle = Math.sin(t * 6 + k * 1.7 + i * 0.9) * 0.35
-          let qx = c[i][0] - hx * 0.25 - hy * houle
-          let qy = c[i][1] - hy * 0.25 + hx * houle
+          const houle = Math.sin(t * 5 + k * 1.7 + i * 0.8) * (0.45 - 0.2 * nage)
+          let qx = c[i][0] + ux * 0.3 - uy * houle
+          let qy = c[i][1] + uy * 0.3 + ux * houle
           const dx = qx - c[i - 1][0]
           const dy = qy - c[i - 1][1]
           const d = Math.hypot(dx, dy) || 1
@@ -7080,11 +7095,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           qy = c[i - 1][1] + (dy / d) * LONGUEUR_DU_MAILLON
           c[i] = [qx, qy]
         }
+        // (cernée de sombre, épaisse à la racine, claire dessus)
         for (let i = 1; i < MAILLONS; i++) {
           const u = i / MAILLONS
-          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], u < 0.5 ? CHAIR[3] : CHAIR[2], 1 - u * 0.5)
+          p.line(c[i - 1][0] + 1, c[i - 1][1] + 1, c[i][0] + 1, c[i][1] + 1, CHAIR[0], 0.8)
+          if (u < 0.55) p.line(c[i - 1][0], c[i - 1][1] + 1, c[i][0], c[i][1] + 1, CHAIR[2])
+          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], u < 0.4 ? CHAIR[4] : CHAIR[3])
         }
-        p.px(Math.round(c[MAILLONS - 1][0]), Math.round(c[MAILLONS - 1][1]), CHAIR[4])
+        p.px(Math.round(c[MAILLONS - 1][0]), Math.round(c[MAILLONS - 1][1]), BILE[2])
       })
       // (le coup de tentacule, s'il fouette : une courbe jusqu'à l'insecte, qui part et revient)
       for (const cp of coupsDeRejeton) {
@@ -7109,16 +7127,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         p.px(Math.round(ax), Math.round(ay), OS[3])
       }
-      // (le bulbe : cerné, de la chair, le chapeau de chitine devant, deux yeux de bile, une lueur)
-      p.glow(r.x, r.y, 6, BILE[1], 0.2)
-      p.circle(r.x, r.y, 3.2, CHAIR[0])
-      p.circle(r.x, r.y, 2.5, CHAIR[2])
-      p.circle(r.x + hx * 0.9, r.y + hy * 0.9, 2.2, CHITINE_DU_REJETON)
-      p.px(Math.round(r.x + hx * 0.6 - hy * 0.9), Math.round(r.y + hy * 0.6 + hx * 0.9), CHAIR[4])
-      for (const sg of [-1, 1]) p.px(Math.round(r.x + hx * 2.2 - hy * sg * 1.1), Math.round(r.y + hy * 2.2 + hx * sg * 1.1), BILE[2])
+      // (la cloche : plus longue que large — trois disques le long du cap —, ombrée comme une sphère ; le chapeau de
+      // chitine devant, deux yeux de bile, une lueur)
+      p.glow(r.x, r.y, 7, BILE[1], 0.2)
+      const lx = -0.6
+      const ly = -0.8
+      for (const [o, rr] of [[-1.1, 2.6], [0.4, 3.2], [1.7, 2.5]] as [number, number][]) {
+        const cx = r.x + hx * o
+        const cy = r.y + hy * o
+        p.disc(cx, cy, rr + 0.8, CHAIR[0], 1)
+      }
+      for (const [o, rr] of [[-1.1, 2.6], [0.4, 3.2], [1.7, 2.5]] as [number, number][]) {
+        const cx = r.x + hx * o
+        const cy = r.y + hy * o
+        p.disc(cx, cy, rr, (d, ang) => {
+          const cl = Math.cos(ang) * lx + Math.sin(ang) * ly
+          return d > 0.75 ? (cl > 0.2 ? CHAIR[3] : CHAIR[1]) : cl * d > 0.3 ? CHAIR[4] : CHAIR[2]
+        }, 1)
+      }
+      p.disc(r.x + hx * 1.8, r.y + hy * 1.8, 1.9, (d, ang) => (Math.cos(ang) * lx + Math.sin(ang) * ly > 0.3 && d > 0.4 ? CHITINE_CLAIRE : CHITINE_DU_REJETON), 1)
+      for (const sg of [-1, 1]) p.px(Math.round(r.x + hx * 2.6 - hy * sg * 1.3), Math.round(r.y + hy * 2.6 + hx * sg * 1.3), BILE[2])
     }
     p.place(0, 0)
   }
+  const CHITINE_CLAIRE = N.hex('#7c4a4c')
   const CHITINE_DU_REJETON = N.hex('#56303a')
   const CHITINE_SOMBRE = N.hex('#1a0c12')
   /** L'instant du dernier bourdonnement de morsure (un à la fois). */

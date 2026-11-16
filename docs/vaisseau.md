@@ -4445,3 +4445,14 @@ maintenant à 32, et ils tiennent leurs distances : arrêtés aux deux tiers de 
 allonge (21), ils la projettent de là. Mesuré sur un insecte qui tourne sans
 s'arrêter à 40 : sept coups en 4 s (le plus qu'il puisse, à un toutes les
 0,5 s), le rejeton jamais à moins de 23 de lui.
+
+PUIS DES REJETONS RONDS, AUX TENTACULES QUI FLOTTENT (Keko, 16/11 : « je trouve les
+rejetons rectangulaires ; il faudrait qu'on voie plus les tentacules à l'arrière,
+et qu'à l'arrêt les tentacules flottent autour ») : LA CLOCHE, plus longue que
+large (trois disques le long du cap), ombrée comme une sphère — à cette taille,
+des cercles empilés se lisaient carrés —, cernée de sombre, le chapeau de chitine
+éclairé d'un côté ; CINQ TENTACULES de huit maillons (une douzaine d'unités, le
+double d'avant), cernées et claires dessus. À L'ARRÊT leurs racines s'écartent
+tout autour de la cloche et elles flottent en étoile, qui tourne doucement ; EN
+NAGE elles glissent vers l'arrière, se resserrent et traînent (la bascule suit la
+vitesse, lissée).
