@@ -4538,3 +4538,7 @@ PUIS UNE FLAQUE PLUS VISIBLE (Keko, 16/11 : « c'est un peu sombre, on ne la voi
 assez ») : un vert acide vif au lieu du vert sombre (deux crans plus clair), plus
 couvrante (0,5 dedans, 0,8 au bord, au lieu de 0,34 et 0,55), des gouttes plus
 claires, et une lueur verte dessus.
+
+PUIS UN CRAN ENTRE LES DEUX (Keko, 16/11 : « un peu trop claire, là ») : le bord
+reste vif, le dedans redescend d'un ton (ses taches aussi), l'opacité à 0,42 dedans
+et 0,7 au bord, la lueur à 0,16.
