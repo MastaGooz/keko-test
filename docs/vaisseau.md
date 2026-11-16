@@ -4889,3 +4889,10 @@ truc original »).
   naissent à sa poupe tous les 7 pixels parcourus (au chronomètre, à sa vitesse, on n'en voyait qu'un à la fois) et
   s'ouvrent jusqu'à 24 en 0,8 s en s'effaçant, un trait clair doublé d'un trait sombre (`ondes`, `dessinerUneOnde`) ; à
   l'accueil, quatre ondes qui s'ouvrent sous lui en boucle.
+
+LE NÉANT GROSSI, SES ONDES DISCRÈTES (Keko, 16/11 : « grossis le vaisseau dans le hangar et en jeu, il est trop petit ; et
+les ondes sont beaucoup trop visibles, je pensais à quelque chose de beaucoup plus discret »). TOUT EST GROSSI DE 45 % :
+le cœur à 6,4, les anneaux à 11,9 et 13,9 (1,5 d'épaisseur), les perles, l'éperon (sa pointe à 11,2), et le gabarit
+suit — la place d'arme (le puits part toujours de la pointe), la poupe (les ondes naissent derrière), les feux, l'anneau
+du bouclier à 17. Seul le dessin change : la règle du vol garde le rayon du vaisseau. LES ONDES : un seul trait sombre
+(plus de trait clair doublé), à 0,35 d'opacité, qui s'ouvre de 3 à 11 en 0,55 s, une tous les 12 pixels parcourus.

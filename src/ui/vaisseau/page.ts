@@ -7644,14 +7644,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let ondeA = -10
   let ondeEn = { x: 0, y: 0 }
   // (… PLUS GRANDES ET PLUS VIVES : à 15 de rayon et en pâle, on n'en voyait qu'un petit arc derrière lui)
-  const DUREE_DE_L_ONDE = 0.8
+  // (… PUIS BEAUCOUP PLUS DISCRÈTES — Keko, 16/11 : « les ondes sont beaucoup trop visibles, je pensais à quelque chose de
+  // beaucoup plus discret » : un seul trait sombre, à peine translucide, qui s'ouvre jusqu'à 11, plus espacées)
+  const DUREE_DE_L_ONDE = 0.55
   function dessinerUneOnde(p: Peintre, x: number, y: number, cap: number, u: number, k: number, e = 1): void {
-    const r = (3 + 21 * (1 - (1 - u) * (1 - u))) * e
-    const ouvre = 0.95 + 0.25 * u
+    const r = (3 + 8 * (1 - (1 - u) * (1 - u))) * e
+    const ouvre = 0.8 + 0.2 * u
     const a0 = cap + Math.PI - ouvre
     const a1 = cap + Math.PI + ouvre
-    p.arc(x, y, r + e, Math.max(1, Math.round(e)), a0, a1, VIDE[1], 0.7 * (1 - u) * k)
-    p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.3 ? VIDE[7] : u < 0.6 ? VIDE[6] : VIDE[5], Math.min(1, 1.3 * (1 - u * u)) * k)
+    p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.4 ? VIDE[4] : VIDE[3], 0.35 * (1 - u) * k)
   }
   function dessinerLesOndes(p: Peintre): void {
     for (let i = ondes.length - 1; i >= 0; i--) if (t - ondes[i].t0 > DUREE_DE_L_ONDE) ondes.splice(i, 1)
@@ -10853,8 +10854,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // (… ET COURTES — Keko, 16/11 : « trop long, on va penser que c'est une attaque, ça laisse une traînée » : une demi-
             // seconde au plus, lentes : elles crèvent juste derrière la bête ; puis « encore un poil » : un tiers de seconde au plus)
             if (coque === 13) {
-              // (le néant : une onde tous les 7 pixels parcourus — un sillage régulier à toute vitesse —, ou tous les quarts de seconde)
-              if (t - ondeA > 0.25 || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > 7) {
+              // (le néant : une onde tous les 12 pixels parcourus — un sillage régulier à toute vitesse —, ou toutes les 0,35 s)
+              if (t - ondeA > 0.35 || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > 12) {
                 ondeA = t
                 ondeEn = { x: bx, y: by }
                 ondes.push({ x: bx, y: by, cap: v.cap, t0: t, k: 0.6 + 0.4 * pousseeVue.avant })

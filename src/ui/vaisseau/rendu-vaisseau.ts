@@ -587,9 +587,11 @@ const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0
 // pour un nouveau vaisseau qui suit cette architecture ; un vaisseau du void, qui utilisera l'espace-temps et les
 // dimensions ») : un CŒUR qui bat, deux ANNEAUX inclinés qui l'orbitent, un petit éperon à la proue (d'où partent ses
 // coups) ; pas de tuyère : il lâche des éclats de néant (voir `organique` dans la page)
-const GABARIT_DU_NEANT: Gabarit = { tuyeres: [{ x: 3.4, y: 0 }], armes: [{ x: -2.2, y: 0, s: 1 }], feux: { x: 3.4, y: 3.2 }, verriere: 0, nez: 8, flanc: 6, anneau: 13.5, echelle: 1 }
+// (… GROSSI DE 45 % — Keko, 16/11 : « grossis le vaisseau dans le hangar et en jeu, il est trop petit » : tout ce qui suit est
+// à la nouvelle taille — le cœur, les anneaux, l'éperon, sa place d'arme, sa poupe, l'anneau du bouclier)
+const GABARIT_DU_NEANT: Gabarit = { tuyeres: [{ x: 2, y: 0 }], armes: [{ x: 0.6, y: 0, s: 1 }], feux: { x: 4.9, y: 4.6 }, verriere: 0, nez: 11, flanc: 8.5, anneau: 17, echelle: 1 }
 /** Le rayon du cœur du Néant, et ceux de ses deux anneaux (en unités du vaisseau). */
-export const COEUR_DU_NEANT = { r: 4.4, anneaux: [8.2, 9.6] }
+export const COEUR_DU_NEANT = { r: 6.4, anneaux: [11.9, 13.9] }
 /**
  * LE BATTEMENT du cœur (celui de l'« Energy core ») : deux battements par tour de 2,4 s, chacun un coup fort et son écho,
  * de 0 à 1.
@@ -814,14 +816,14 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
         // (la traînée de la perle : le dixième de tour derrière elle, blanc)
         const u = ((((a0 - tete) / (Math.PI * 2)) % 1) + 1) % 1
         const ton = z < 0 ? 1 : u > 0.9 ? 4 : z > 0.5 * an.r ? 3 : 2 // (derrière, presque éteints ; devant, sombres aussi — la traînée de la perle seule s'allume)
-        ;(z < 0 ? derriere : devant).push({ pts: barre(xa, ya, xb, yb, 1.15), mat: 'rayonnement', relief: 'lueur', ton })
+        ;(z < 0 ? derriere : devant).push({ pts: barre(xa, ya, xb, yb, 1.5), mat: 'rayonnement', relief: 'lueur', ton })
       }
       const [px, py, pz] = point(tete)
-      ;(pz < 0 ? derriere : devant).push({ pts: ovale(px, py, 0.95, 0.95, 8), mat: 'marque', relief: 'dome', dome: { x: px, y: py, rx: 0.95, ry: 0.95 } })
+      ;(pz < 0 ? derriere : devant).push({ pts: ovale(px, py, 1.3, 1.3, 10), mat: 'marque', relief: 'dome', dome: { x: px, y: py, rx: 1.3, ry: 1.3 } })
     })
     const eperon: Forme[] = [
-      { pts: [[3.4, -1.5], [7.8, 0], [3.4, 1.5]], mat: 'obsidienne', relief: 'plat' },
-      { pts: [[5.6, -0.5], [7.4, 0], [5.6, 0.5]], mat: 'rayonnement', relief: 'lueur', ton: pouls > 0.4 ? 5 : 4 },
+      { pts: [[5, -2.1], [11.2, 0], [5, 2.1]], mat: 'obsidienne', relief: 'plat' },
+      { pts: [[8.1, -0.7], [10.6, 0], [8.1, 0.7]], mat: 'rayonnement', relief: 'lueur', ton: pouls > 0.4 ? 5 : 4 },
     ]
     return [...derriere, ...eperon, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
   }
