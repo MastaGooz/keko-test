@@ -1488,7 +1488,8 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // reste plantée, se rétracte, se repose, recommence
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const tentacule = { id: 'tentacule', cadence: 0.15, degats: 5, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [[5, -3.5], [5, 3.5], [7, 0]] as [number, number][], aller: 0.28, tenue: 0.12, retour: 0.3, virage: 0.35 } }
+  // (UNE SEULE, À LA PROUE, BEAUCOUP PLUS RAPIDE — Keko, 16/11)
+  const tentacule = { id: 'tentacule', cadence: 0.05, degats: 6, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [[7.2, 0]] as [number, number][], aller: 0.12, tenue: 0.06, retour: 0.12, virage: 0.35 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [tentacule], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const fouetter = (places: [number, number][], verrou: number | null, duree: number) => {
     const w = nouveauMonde(cfg, 3)
@@ -1509,12 +1510,12 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
   const un = fouetter([[30, 0], [0, 200]], null, 2)
   const piqures = un.ev.filter((e) => e.type === 'piqure').length
-  verifier(`trois tentacules s’étendent vers l’insecte proche et le piquent au bout de leur élan (pas avant ${0.28} s) ; ${piqures} piqûres en 2 s, 5 chacune ; le lointain, rien`, un.premiere >= 0.28 - 1e-9 && piqures >= 6 && un.pv[0] === piqures * 5 && un.pv[1] === 0)
+  verifier(`la tentacule s’étend vers l’insecte proche et le pique au bout de son élan (pas avant ${0.12} s) ; ${piqures} piqûres en 2 s — deux et demie par seconde —, 6 chacune ; le lointain, rien`, un.premiere >= 0.12 - 1e-9 && piqures >= 5 && un.pv[0] === piqures * 6 && un.pv[1] === 0)
   verifier('elles ne vont pas droit : chaque élan a son virage, d’un côté ou de l’autre', !un.virages.has(0) && un.virages.size >= 1)
-  const trois = fouetter([[30, -10], [30, 10], [-10, 35]], null, 0.5)
-  verifier('trois insectes à portée : les trois tentacules se les partagent (une chacun)', trois.pv.every((p) => p === 5))
-  const verrou = fouetter([[30, -10], [30, 10], [-10, 35]], 3, 0.5)
-  verifier('un insecte verrouillé : toutes les tentacules vont sur lui', verrou.pv[2] === 15 && verrou.pv[0] === 0 && verrou.pv[1] === 0)
+  const proche = fouetter([[40, 0], [25, 10], [-10, 45]], null, 0.2)
+  verifier('trois insectes à portée : elle pique le plus proche de sa racine', proche.pv[1] === 6 && proche.pv[0] === 0 && proche.pv[2] === 0)
+  const verrou = fouetter([[40, 0], [25, 10], [-10, 45]], 3, 0.2)
+  verifier('un insecte verrouillé : elle va sur lui', verrou.pv[2] === 6 && verrou.pv[0] === 0 && verrou.pv[1] === 0)
 }
 
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se

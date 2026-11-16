@@ -129,7 +129,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'kraken',
     nom: 'Kraken',
     classe: 'chasseur',
-    dit: 'Une bête vivante, d’une autre race : ses tentacules à aiguille fouettent et piquent tout ce qui s’approche.',
+    dit: 'Une bête vivante, d’une autre race : sa tentacule à aiguille fouette et pique, très vite, tout ce qui s’approche.',
     pieces: ['coque-10', 'propulseur-k3', 'arme-tentacules'],
     serie: { possedees: ['coque-10', 'propulseur-k3', 'arme-tentacules'], montees: { coque: 'coque-10', propulseur: 'propulseur-k3' }, outils: [], armes: ['arme-tentacules'] },
     chaine: [],

@@ -4379,3 +4379,13 @@ cernée de sombre, la chair éclairée d'un côté, des ventouses pâles, épais
 racine, fine au bout ; une AIGUILLE d'os sur la tangente du bout, qui s'enfonce
 plantée ; une giclée de bile à la piqûre. Ses sons, `fouet` et `piqure`.
 *Chiffres de moi, à rejuger.*
+
+PUIS UNE SEULE TENTACULE, BEAUCOUP PLUS RAPIDE (Keko, 16/11 : « plutôt que trois
+tentacules qui attaquent à cette vitesse, une attaque avec un seul tentacule,
+mais beaucoup plus rapide ») : une racine, à la proue (plus grosse) ; elle
+s'étend en 0,12 s, reste plantée 0,06 s, se rétracte en 0,12 s, repart 0,05 s
+après — une piqûre toutes les 0,4 s environ (mesuré à 60 images par seconde : 2,5
+par seconde, les passages d'un état à l'autre coûtent quelques images), contre
+une toutes les 0,85 s par tentacule avant. 6 points au lieu de 5 : 15 par
+seconde, comme les trois d'avant. Elle pique le plus proche de sa racine, le
+verrouillé d'abord.

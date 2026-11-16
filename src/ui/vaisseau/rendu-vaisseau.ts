@@ -515,7 +515,9 @@ const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0
 // derrière ; ses trois tentacules à aiguille partent de trois racines, à l'avant (`ANCRES_DU_KRAKEN`) ; un jet de bile
 // à la queue
 /** Les racines des tentacules du Kraken, en unités du vaisseau : la règle les reçoit d'ici (`Arme.tentacule.ancres`). */
-export const ANCRES_DU_KRAKEN: [number, number][] = [[4.6, -3.7], [4.6, 3.7], [7.2, 0]]
+// (UNE SEULE, À LA PROUE — Keko, 16/11 : « plutôt que trois tentacules qui attaquent à cette vitesse, un seul, beaucoup
+// plus rapide »)
+export const ANCRES_DU_KRAKEN: [number, number][] = [[7.2, 0]]
 const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -4.4, y: 7.6 }, verriere: 5.8, nez: 8.2, flanc: 6.4, anneau: 12.5, echelle: 1 }
 export const gabaritDe = (coque: number): Gabarit => (coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
@@ -663,8 +665,8 @@ export function formesDeLaCoque(cran: number): Forme[] {
     for (const x of [2.6, -0.9, -4.3]) f.push({ pts: [[x + 0.4, -4.1], [x - 0.5, -2], [x - 0.8, 0], [x - 0.5, 2], [x + 0.4, 4.1], [x - 0.2, 4.2], [x - 1.2, 2], [x - 1.5, 0], [x - 1.2, -2], [x - 0.2, -4.2]], mat: 'chair', relief: 'plat' })
     // (une crête d'épines d'os sur l'échine)
     for (const x of [0.9, -2.6, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.6, -0.55], [x - 0.3, 0], [x - 0.6, 0.55]], mat: 'os', relief: 'plat' })
-    // (les racines des tentacules)
-    for (const [x, y] of ANCRES_DU_KRAKEN) f.push({ pts: ovale(x, y, 1.25, 1.25, 12), mat: 'chair', relief: 'dome', dome: { x, y, rx: 1.25, ry: 1.25 } })
+    // (la racine de la tentacule)
+    for (const [x, y] of ANCRES_DU_KRAKEN) f.push({ pts: ovale(x, y, 1.5, 1.5, 12), mat: 'chair', relief: 'dome', dome: { x, y, rx: 1.5, ry: 1.5 } })
     // (les yeux : une grappe de bile)
     for (const [x, y, r] of [[5.8, -1.3, 0.75], [6.3, 0.9, 0.6], [5.2, 0.1, 0.5], [4.6, -2.1, 0.45]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
     return f

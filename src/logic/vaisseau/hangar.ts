@@ -150,7 +150,7 @@ export const PIECES: Piece[] = [
   { id: 'propulseur-p3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Pulsar', dit: 'Un souffle de plasma : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.1 },
   // LE KRAKEN (Keko, 16/11 : « un vaisseau organique — les vaisseaux zergs, le Léviathan ») : un manteau de chitine sur
   // de la chair, des tentacules à aiguille. Lent à virer, solide. *Chiffres de moi, à rejuger en jouant.*
-  { id: 'coque-10', sorte: 'coque', cran: 10, nom: 'Manteau du Kraken', dit: '7 de blindage, une bête vivante : un manteau de chitine sur de la chair, trois tentacules à aiguille.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
+  { id: 'coque-10', sorte: 'coque', cran: 10, nom: 'Manteau du Kraken', dit: '7 de blindage, une bête vivante : un manteau de chitine sur de la chair, une tentacule à aiguille.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-k3', sorte: 'propulseur', cran: 3, nom: 'Jet du Kraken', dit: 'Un jet de bile : il file, mais vire lourdement.', prix: 0, poids: 7, poussee: 0.78, vitesseMax: 0.95, rotation: 0.95 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
@@ -195,7 +195,10 @@ export const PIECES: Piece[] = [
   // LES TENTACULES DU KRAKEN (Keko, 16/11 : « des tentacules avec des aiguilles au bout qui s'étendent vers les ennemis
   // et qui les piquent ; pas en ligne droite, un petit virage, un truc bien organique ») : trois, une par racine (le rendu
   // pose les ancres). *Chiffres de moi, à rejuger.*
-  { id: 'arme-tentacules', sorte: 'arme', cran: 1, nom: 'Tentacules', dit: 'Trois tentacules à aiguille : chacune prend un insecte à moins de 55, s’étend vers lui en se courbant et le pique — 5 points —, puis se rétracte et recommence. Elles se partagent les insectes ; le verrouillé, elles vont toutes sur lui.', note: 'Il faut aller au contact.', prix: 30, poids: 6, arme: { id: 'tentacule', cadence: 0.15, degats: 5, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [], aller: 0.28, tenue: 0.12, retour: 0.3, virage: 0.35 } } },
+  // (… PUIS UNE SEULE, BEAUCOUP PLUS RAPIDE — Keko, 16/11 : « plutôt que trois tentacules qui attaquent à cette vitesse, une
+  // attaque avec un seul tentacule, mais beaucoup plus rapide » : une piqûre toutes les 0,4 s au lieu de 0,85 ; 6 points au lieu
+  // de 5 : 15 points par seconde, comme les trois d'avant)
+  { id: 'arme-tentacules', sorte: 'arme', cran: 1, nom: 'Tentacule', dit: 'Une tentacule à aiguille, à la proue : elle prend un insecte à moins de 55, fouette vers lui en se courbant et le pique — 6 points —, se rétracte aussitôt et recommence, deux fois et demie par seconde. Le verrouillé d’abord.', note: 'Il faut aller au contact.', prix: 30, poids: 6, arme: { id: 'tentacule', cadence: 0.05, degats: 6, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [], aller: 0.12, tenue: 0.06, retour: 0.12, virage: 0.35 } } },
   // LES MINI-MISSILES DU CHASSEUR, AFFICHÉS « MISSILES » (Keko, 15/11) : guidés, plus lents et moins forts que le canon sur une cible seule,
   // mais ils EXPLOSENT : tout insecte autour de l'impact y perd aussi. *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-minimissiles', sorte: 'arme', cran: 2, nom: 'Missiles', dit: 'Un missile guidé toutes les 1,6 s, 5 points, porte à 120 : il explose à l’impact et touche aussi, de 5 points, tout ce qui est à 18 autour.', note: 'Moins bon que le canon sur une cible seule, meilleur sur un groupe.', prix: 40, poids: 6, arme: { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18, degats: 5 } } },
