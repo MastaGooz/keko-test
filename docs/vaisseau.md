@@ -4718,3 +4718,9 @@ plus, l'impact met 0,35 s à atteindre son milieu). Désormais le trait GLISSE A
 vit (`Monde.balayage.suivi`) : l'impact passe toujours sur elle ; les flaques restent où elles sont
 tombées, la traînée prend donc la courbe de sa marche. Vérifié : une cible qui marche à 40 vers le
 vaisseau prend son coup. Le dessin ne garde que les 16 derniers points de la brûlure derrière l'impact.
+
+LE RAYON DE LA SALAMANDRE NE SONNE PLUS DEUX FOIS (Keko, 16/11 : « quand on enchaîne deux lasers
+d'affilée, ça fait deux fois le bruit de lancement »). La cause est celle de la scie (15/11) : quand la
+recharge finit avec un insecte à portée, le son de l'arme est ANNONCÉ en avance de la latence
+(`armeAnnonceeA`), puis l'événement `balayage` le rejouait. L'événement porte désormais son arme, et
+ne joue plus le son déjà annoncé.

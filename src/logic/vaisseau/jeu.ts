@@ -782,7 +782,7 @@ export type Evenement =
   /** Une chaîne d'éclairs : du vaisseau, puis de cible en cible — `ids`, les ennemis touchés, dans l'ordre (voir `Arme.chaine`). */
   | { type: 'chaine'; points: Vecteur[]; ids: number[] }
   /** Le rayon commence son tour (voir `Arme.balayage`). */
-  | { type: 'balayage'; duree: number }
+  | { type: 'balayage'; duree: number; arme: string }
   /** Une scie part ; le vaisseau la rattrape (voir `Arme.scie`). */
   | { type: 'scieLancee'; x: number; y: number; arme: string }
   | { type: 'scieRattrapee'; x: number; y: number }
@@ -2566,7 +2566,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       }
       m.balayage.suivi = { id: proche.id, x: proche.corps.x, y: proche.corps.y }
     }
-    ev.push({ type: 'balayage', duree: bl.duree })
+    ev.push({ type: 'balayage', duree: bl.duree, arme: a.id })
   })
   const b = m.balayage
   const bl = b === null ? undefined : c.armes[b.arme]?.balayage

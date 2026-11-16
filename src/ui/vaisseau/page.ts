@@ -9757,8 +9757,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               secousse = Math.max(secousse, 0.2)
               break
             case 'balayage':
-              // (le rayon part : son son, qui dure le tour)
-              jouer('rayon')
+              // (le rayon part : son son, qui dure le tour — SAUF S'IL A DÉJÀ SONNÉ, annoncé en avance de la latence, comme
+              // un obus ; Keko, 16/11 : « quand on enchaîne deux lasers d'affilée, ça fait deux fois le bruit de lancement »)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer('rayon')
               secousse = Math.max(secousse, 0.15)
               break
             case 'flaque': {
