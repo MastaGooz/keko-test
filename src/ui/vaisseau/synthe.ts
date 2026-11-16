@@ -659,6 +659,15 @@ const RECETTES = {
       for (let k = 0; k < 3; k++) note(m, 0.015 * k, 0.6 - k * 0.15, (h.next() - 0.5) * 0.5, { f: 1800 + 700 * h.next(), a: 0.001, d: 0.04, partiels: [[1, 1, 1], [2.71, 0.4, 0.5]] })
     },
   },
+  /** UNE LARVE EST CRACHÉE : un petit couinement mouillé — une note qui monte et se tord, un souffle bref */
+  parasite: {
+    duree: 0.35, niveau: 0.15, salle: [0.25, 0.1], variantes: 3,
+    faire: (m, h) => {
+      const f = 520 + 160 * h.next()
+      note(m, 0, 0.8, 0, { f, glisse: { vers: f * 1.6, en: 0.09, droit: true }, a: 0.004, d: 0.1, battement: 18, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      souffle(m, h, 0, 0.35, 0, { f: 900, glisse: { vers: 500, en: 0.08 }, q: 1.4, bande: true, a: 0.003, d: 0.07 })
+    },
+  },
   /** UNE MINE D'ACIDE PART DU DOS : un « blop » gras, une note ronde qui monte, un petit souffle */
   mine: {
     duree: 0.4, niveau: 0.17, salle: [0.25, 0.1], variantes: 3,

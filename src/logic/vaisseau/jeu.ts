@@ -540,6 +540,15 @@ export type Arme = {
   // taille dessinée reste `rayon`) ; un insecte à moins de `chaine.epaisseur` de la chaîne prend `chaine.degats`, une
   // fois toutes les `rebond` secondes au plus — jamais au même pas qu'un coup de masse)
   fleau?: { longueur: number; vitesse: number; rayon: number; prise: number; rebond: number; chaine: { degats: number; epaisseur: number } }
+  /**
+   * DES PARASITES (la troisième arme de la Vouivre, Keko, 16/11 : « ok pour le parasite, mais il ne saute que sur une
+   * seule autre cible à sa mort ») : à sa cadence, un insecte à `portee` qui n'en porte pas (le verrouillé d'abord, sinon
+   * le plus proche), elle crache une LARVE vers lui — `max` à la fois. La larve vole à `vitesse`, à tête chercheuse ; au
+   * contact elle S'ACCROCHE et ronge son hôte : `dps` par seconde, et l'ACIDE (`acide`, tenu tant qu'elle y est). À LA MORT
+   * DE SON HÔTE, elle SAUTE sur UN seul autre insecte — le plus proche à moins de `saut` qui n'en porte pas — ; s'il n'y en
+   * a pas, ou qu'elle ne l'atteint pas en `vie` secondes, elle meurt. L'état est `Monde.parasites`.
+   */
+  parasite?: { max: number; dps: number; saut: number; vie: number; acide: { duree: number; dps: number; bonus: number } }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -702,6 +711,8 @@ export type Monde = {
   mines: { id: number; arme: number; x0: number; y0: number; x: number; y: number; lancee: number }[]
   /** LES FLÉAUX (voir `Arme.fleau`) : un par arme — la masse, sa vitesse, quand elle a frappé chaque insecte. */
   fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number>; frappesChaine: Record<number, number> }[]
+  /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
+  parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -806,6 +817,11 @@ export type Evenement =
   /** Le fléau frappe un insecte (voir `Arme.fleau`). */
   | { type: 'fleauFrappe'; x: number; y: number }
   | { type: 'chaineFrappe'; x: number; y: number }
+  /** Un parasite est craché, s'accroche, saute à la mort de son hôte, meurt (voir `Arme.parasite`). */
+  | { type: 'parasiteLance'; x: number; y: number; arme: string }
+  | { type: 'parasiteAccroche'; id: number; x: number; y: number }
+  | { type: 'parasiteSaute'; x: number; y: number }
+  | { type: 'parasiteMort'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -826,7 +842,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1995,6 +2011,91 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   }
 }
 
+/** LES PARASITES (voir `Arme.parasite`) : le crachat d'une larve, son vol, l'accroche, le festin, le saut à la mort de l'hôte. */
+function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  const porteurs = (): Set<number> => new Set(m.parasites.flatMap((p) => [p.hote, p.cible]).filter((x): x is number => x !== null))
+  c.armes.forEach((a, i) => {
+    const pa = a.parasite
+    if (pa === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    if (m.parasites.filter((p) => p.arme === i).length >= pa.max) return
+    const pris = porteurs()
+    const libre = (e: Ennemi): boolean => !pris.has(e.id) && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && libre(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (libre(e) && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+    m.parasites.push({ id: m.prochainId++, arme: i, hote: null, cible: cible.id, x: v.x, y: v.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, depuis: m.t })
+    ev.push({ type: 'parasiteLance', x: v.x, y: v.y, arme: a.id })
+  })
+  m.parasites = m.parasites.filter((p) => {
+    const a = c.armes[p.arme]
+    const pa = a?.parasite
+    if (a === undefined || pa === undefined) return false
+    if (p.hote !== null) {
+      const hote = m.ennemis.find((e) => e.id === p.hote)
+      if (hote !== undefined) {
+        // (accroché : il suit son hôte et le ronge)
+        p.x = hote.corps.x
+        p.y = hote.corps.y
+        ronger(m, hote, pa.acide, ev)
+        hote.pv -= pa.dps * dt
+        if (hote.pv <= 0) abattreLEnnemi(c, m, hote, ev)
+        return true
+      }
+      // (SON HÔTE EST MORT : il saute sur UN autre — le plus proche à moins de `saut` qui n'en porte pas — ou il meurt)
+      const pris = porteurs()
+      let dc = pa.saut + c.ennemi.rayon
+      let suivant: Ennemi | undefined
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - p.x, e.corps.y - p.y)
+        if (!pris.has(e.id) && d <= dc) (dc = d), (suivant = e)
+      }
+      if (suivant === undefined) {
+        ev.push({ type: 'parasiteMort', x: p.x, y: p.y })
+        return false
+      }
+      p.hote = null
+      p.cible = suivant.id
+      p.depuis = m.t
+      const an = Math.atan2(suivant.corps.y - p.y, suivant.corps.x - p.x)
+      p.vx = Math.cos(an) * a.vitesse
+      p.vy = Math.sin(an) * a.vitesse
+      ev.push({ type: 'parasiteSaute', x: p.x, y: p.y })
+      return true
+    }
+    // (en vol : il file sur sa cible ; elle disparue, ou trop long, il meurt)
+    const cible = m.ennemis.find((e) => e.id === p.cible)
+    if (cible === undefined || m.t - p.depuis > pa.vie) {
+      ev.push({ type: 'parasiteMort', x: p.x, y: p.y })
+      return false
+    }
+    const dx = cible.corps.x - p.x
+    const dy = cible.corps.y - p.y
+    const d = Math.hypot(dx, dy) || 1
+    const k = Math.min(1, 8 * dt)
+    p.vx += ((dx / d) * a.vitesse - p.vx) * k
+    p.vy += ((dy / d) * a.vitesse - p.vy) * k
+    p.x += p.vx * dt
+    p.y += p.vy * dt
+    if (Math.hypot(cible.corps.x - p.x, cible.corps.y - p.y) <= c.ennemi.rayon + 2) {
+      p.hote = cible.id
+      p.cible = null
+      ev.push({ type: 'parasiteAccroche', id: cible.id, x: cible.corps.x, y: cible.corps.y })
+    }
+    return true
+  })
+}
+
 /** LES FLÉAUX (voir `Arme.fleau`) : la masse tourne au bout de sa chaîne, avec son inertie, et frappe ce qu'elle croise. */
 function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -2750,7 +2851,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2845,10 +2946,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   cracherLAcide(c, m, dt, ev)
   menerLesMines(c, m, ev)
   menerLesFleaux(c, m, dt, ev)
+  menerLesParasites(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

@@ -4637,3 +4637,18 @@ lâchait dès que le joueur était à plus de 430 du centre). Il prend le joueur
 chasse à 170 de lui, comme avant, et ne le LÂCHE QUE S'IL S'ÉLOIGNE À PLUS DE 260 DE
 LUI (`invasion.lache`, désormais la distance joueur–insecte) — ou s'il est abattu.
 Mesuré : à 1 500 du portail, un insecte à 150 derrière le joueur le chasse toujours.
+
+SA TROISIÈME ARME, LES PARASITES (`Arme.parasite` ; Keko, 16/11 : « ok pour le
+parasite, mais il ne saute que sur une seule autre cible à sa mort ») : toutes les
+2,5 s, un insecte à moins de 90 qui n'en porte pas (le verrouillé d'abord, sinon le
+plus proche), elle crache une LARVE vers lui — trois à la fois. La larve vole à 90, à
+tête chercheuse ; au contact elle S'ACCROCHE et ronge son hôte : 6 points par
+seconde, et l'acide (tenu tant qu'elle y est : 2 par seconde, +35 % sur le reste). À
+LA MORT DE SON HÔTE, elle SAUTE sur UN seul autre insecte — le plus proche à moins de
+70 qui n'en porte pas — ; s'il n'y en a pas, ou qu'elle ne l'atteint pas en 2,5 s,
+elle meurt. Une épidémie lente : faible sur un insecte seul, elle dure dans une nuée
+serrée. Le dessin : en vol, une larve de quatre anneaux qui ondule ; accrochée, elle
+s'enroule et tourne sur son hôte, qui porte un bubon vert qui bat. VERTE, couleur de
+venin : rose, on la perdait sur les insectes, roses eux aussi. Ses sons :
+`parasite` (un couinement mouillé), `piqure` à l'accroche, `ponte` au saut.
+*Chiffres de moi, à rejuger.*

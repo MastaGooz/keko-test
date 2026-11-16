@@ -1731,6 +1731,35 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
   verifier(`le vaisseau file à 60 : la masse continue de tourner autour de lui (${(tours2 / (2 * Math.PI)).toFixed(1)} tours en 2 s)`, tours2 / (2 * Math.PI) > 1)
 }
+// LES PARASITES DE LA VOUIVRE (Keko, 16/11) : une larve s'accroche à un insecte et le ronge ; à sa mort, elle saute sur
+// UN seul autre — le plus proche, à portée de saut — ; sans voisin, elle meurt
+{
+  const insecte = (id: number, x: number, y: number, pv: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const parasite = { id: 'parasite', cadence: 99, degats: 0, portee: 90, vitesse: 90, vie: 0, dispersion: 0, guide: false, parasite: { max: 3, dps: 6, saut: 70, vie: 2.5, acide: { duree: 1.5, dps: 2, bonus: 0.35 } } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [parasite], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const elever = (places: [number, number, number][], duree: number) => {
+    const w = nouveauMonde(cfg, 3)
+    places.forEach(([x, y, pv], k) => w.ennemis.push(insecte(k + 1, x, y, pv)))
+    const ev: Evenement[] = []
+    for (let i = 0; i < 60 * duree; i++) {
+      for (const e of w.ennemis) {
+        const [x, y] = places[e.id - 1]
+        e.corps = { ...e.corps, x, y, vx: 0, vy: 0 }
+      }
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    return { w, ev, pv: [1, 2, 3].map((id) => w.ennemis.find((e) => e.id === id)?.pv) }
+  }
+  // (A, faible, à 40 ; B à 40 de A, C à 60 de A : la larve tue A, saute sur B — le plus proche —, jamais sur C)
+  const saut = elever([[40, 0, 20], [80, 0, 1000], [40, 60, 1000]], 6)
+  const surB = saut.w.parasites.some((p) => p.hote === 2 || p.cible === 2)
+  verifier(`la larve s’accroche à l’insecte, le ronge et le tue ; elle saute alors sur UN seul autre, le plus proche (B : ${(1000 - (saut.pv[1] ?? 1000)).toFixed(0)} perdus) ; C n’a rien`, saut.pv[0] === undefined && saut.ev.filter((e) => e.type === 'parasiteSaute').length === 1 && surB && (saut.pv[1] ?? 1000) < 1000 && saut.pv[2] === 1000)
+  // (seul : à sa mort, elle n'a nulle part où sauter — elle meurt)
+  const seul = elever([[40, 0, 20], [300, 0, 1000]], 5)
+  verifier('seul à portée de saut : à la mort de son hôte, la larve meurt', seul.pv[0] === undefined && seul.ev.some((e) => e.type === 'parasiteMort') && seul.w.parasites.length === 0 && seul.pv[1] === 1000)
+}
+
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {
