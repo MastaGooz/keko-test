@@ -2497,7 +2497,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
       const cranP = monteeA(hangar, 'propulseur').cran
       const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
-      if (g.omni === undefined && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
+      if (g.omni === undefined && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: organique(coqueMontee) ? couleursDesBulles(coqueMontee)[Math.floor(R.next() * 2)] : (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
       if (u >= 1) {
         decollageA = null
@@ -2543,7 +2543,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // la tuyère au ralenti, puis le vaisseau
     const nozzle: [number, number] = [cx + jit, sy + (0.2 - queueDe(coqueMontee)) * ECH]
-    if (g.omni === undefined) p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
+    if (g.omni === undefined && !organique(coqueMontee)) p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
     // (UNE SOUCOUPE : au décollage, celles du dessous soufflent fort — Keko, 15/11 : « au garage, quand le vaisseau décolle,
@@ -6069,7 +6069,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ici = (x: number, y: number): [number, number] => [sx + x * ca - y * sa, sy + x * sa + y * ca]
     const cp = allure.propulseur
     const g = gabaritDe(allure.coque)
-    if (flam > 0.02 && g.omni === undefined) {
+    if (flam > 0.02 && g.omni === undefined && !organique(allure.coque)) {
       const [fx, fy] = ici(queueDe(allure.coque) - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
       p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
@@ -7211,6 +7211,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (j % 4 === 0) p.line(x, y, x - Math.cos(an) * 3, y - Math.sin(an) * 3, VENIN[2], 0.6 * (1 - u))
       }
       if (u < 0.4) p.glow(c.x, c.y, 8, VENIN[3], 0.6 * (1 - u / 0.4))
+    }
+    p.place(0, 0)
+  }
+  /**
+   * LES BÊTES POUSSENT EN LÂCHANT DES BULLES (Keko, 16/11 : « pour le Léviathan et la Vouivre, autre chose qu'un propulseur
+   * comme ça ? la couleur verte est bien, mais l'aspect feu, c'est pas très cohérent ») : le Kraken et la Vouivre n'ont
+   * plus de flamme ; en poussée, leur queue lâche des BULLES — de bile, de venin —, des anneaux clairs et des gouttes
+   * pleines, qui s'en vont lentement, ralentissent, enflent un peu et crèvent.
+   */
+  const organique = (coque: number): boolean => coque === 10 || coque === 11
+  const couleursDesBulles = (coque: number): [number, number] => (coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
+  const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number }[] = []
+  function dessinerLesBulles(p: Peintre): void {
+    for (let i = bulles.length - 1; i >= 0; i--) if (t - bulles[i].t0 > bulles[i].vie) bulles.splice(i, 1)
+    if (bulles.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const b of bulles) {
+      const age = t - b.t0
+      const u = age / b.vie
+      // (elles ralentissent vite : une bulle n'a pas d'élan)
+      const frein = (1 - Math.exp(-age * 3)) / 3
+      const x = b.x + b.vx * frein + Math.sin(age * 6 + b.r * 9) * 0.8
+      const y = b.y + b.vy * frein
+      const r = b.r * (1 + 0.4 * u)
+      if (u > 0.9) {
+        // (elle crève : quatre éclaboussures)
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx * (r + 1), y + dy * (r + 1), b.c, 0.8)
+      } else if (r >= 1.1) {
+        p.ring(x, y, r, 1, b.c, 0.85 * (1 - u * 0.5))
+        p.dot(x - r * 0.4, y - r * 0.4, N.WHITE, 0.8)
+      } else p.dot(x, y, b.c, 1 - u * 0.5)
     }
     p.place(0, 0)
   }
@@ -9927,7 +9958,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const bx = v.x - Math.cos(v.cap) * recul - Math.sin(v.cap) * deCote
             const by = v.y - Math.sin(v.cap) * recul + Math.cos(v.cap) * deCote
             const vitesse = 30 + 40 * pousseeVue.avant
-            braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
+            // (UNE BÊTE NE CRACHE PAS DE BRAISES : elle lâche des bulles — voir `bulles`)
+            // (pas une file : une sur deux, éparpillées de côté, de toutes tailles — serrées, elles faisaient encore un jet)
+            if (organique(coque)) {
+              if (R.next() < 0.45) {
+                const cote = R.range(-1, 1)
+                bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.35 - Math.sin(v.cap) * cote * 22 + R.range(-6, 6), vy: -Math.sin(v.cap) * vitesse * 0.35 + Math.cos(v.cap) * cote * 22 + R.range(-6, 6), t0: t, vie: R.range(0.7, 1.4), r: R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
+              }
+            }
+            else braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
           }
         }
       }
@@ -10130,6 +10169,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
     dessinerLesEnnemis(p)
+    dessinerLesBulles(p)
     dessinerLesTentacules(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)

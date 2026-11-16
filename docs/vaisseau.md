@@ -4502,3 +4502,14 @@ dents d'os, le venin au fond (le crachat en part). TROIS SACS À VENIN pendent d
 travers, de tailles différentes, chacun sur un bourrelet de lie, qui gonflent et
 portent une pustule ; deux glandes au bout, à la marque du joueur. TROIS VRILLES
 DÉCHIRÉES traînent derrière et ondulent lentement.
+
+PUIS DES BÊTES SANS FLAMME (Keko, 16/11 : « pour le Léviathan et la Vouivre, on peut
+trouver autre chose qu'un propulseur comme ça ? la couleur verte est bien, mais
+l'aspect feu, c'est pas très cohérent ») : le Kraken et la Vouivre n'ont plus de
+flamme, ni de lueur de tuyère, ni de braises. En poussée, leur queue lâche UN
+SILLAGE DE BULLES (`bulles`, dans la page) — de bile pour le Kraken, de venin pour
+la Vouivre : des anneaux avec un reflet blanc, des gouttes pleines, de toutes
+tailles, éparpillées de côté (serrées en file, elles faisaient encore un jet), qui
+ralentissent vite, ondulent, enflent un peu et crèvent en éclaboussures. Au
+décollage du hangar, les éclats sont de leur couleur. Et leurs tentacules et leurs
+vrilles battent PLUS FORT quand ils poussent (l'ampleur suit la poussée).

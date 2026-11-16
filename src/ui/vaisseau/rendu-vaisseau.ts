@@ -1122,13 +1122,15 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
   // (le pulsar non plus : il souffle du plasma, violet ; ni le kraken : un jet de bile)
   const organique = a.coque === 8 || a.coque === 9 || a.coque === 10 || a.coque === 11
-  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
+  // (LE KRAKEN ET LA VOUIVRE N'ONT PLUS DE FLAMME — Keko, 16/11 : « l'aspect feu, c'est pas très cohérent » pour des bêtes :
+  // ils poussent en lâchant des bulles, que la page sème ; leurs tentacules et leurs vrilles battent plus fort)
+  if (a.coque !== 10 && a.coque !== 11) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
   if (a.coque === 11) for (const [y0, n] of [[-1.8, 4], [0.6, 5], [2.4, 3]] as [number, number][]) {
     let x = -8.4
     let y = y0
     for (let k = 0; k < n; k++) {
-      const an = Math.PI + y0 * 0.12 + Math.sin(t * 2.1 + y0 * 2.3 - k * 0.8) * 0.22 * (1 + k * 0.5) + devie * 0.04 * k
+      const an = Math.PI + y0 * 0.12 + Math.sin(t * 2.1 + y0 * 2.3 - k * 0.8) * 0.22 * (1 + k * 0.5) * (1 + 0.9 * flamme) + devie * 0.04 * k
       const nx = x + Math.cos(an) * 1.4
       const ny = y + Math.sin(an) * 1.4
       f.unshift({ pts: barre(x, y, nx, ny, 1.1 * (1 - k / (n + 1))), mat: k % 2 === 0 ? 'lie' : 'ecaille', relief: 'plat' })
@@ -1141,7 +1143,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
     let x = -6.6
     let y = y0
     for (let k = 0; k < 5; k++) {
-      const an = Math.PI + y0 * 0.09 + Math.sin(t * 3.2 + y0 * 1.7 - k * 0.9) * 0.18 * (1 + k * 0.5) + devie * 0.04 * k
+      const an = Math.PI + y0 * 0.09 + Math.sin(t * 3.2 + y0 * 1.7 - k * 0.9) * 0.18 * (1 + k * 0.5) * (1 + 0.9 * flamme) + devie * 0.04 * k
       const nx = x + Math.cos(an) * 1.5
       const ny = y + Math.sin(an) * 1.5
       f.unshift({ pts: barre(x, y, nx, ny, 1.25 * (1 - k / 6)), mat: k % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })
