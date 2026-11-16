@@ -936,7 +936,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -6820,20 +6820,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const L = Math.hypot(r.x1 - r.x0, r.y1 - r.y0) || 1
       const nx = -(r.y1 - r.y0) / L
       const ny = (r.x1 - r.x0) / L
-      // (le trait : une gaine violette large qui s'amincit, une bande bleue, une âme blanche ; il pâlit de la bouche au bout)
+      // (le trait : une gaine bleue large qui s'amincit, une bande cyan, une âme blanche ; il pâlit de la bouche au bout —
+      // AUX COULEURS DU PRISME, depuis qu'il est à lui : Keko, 16/11, « ça colle mieux avec les cristaux »)
       const demi = Math.max(0, Math.round(3 * v1))
       for (let o = -demi - 1; o <= demi + 1; o++) {
         const bord = Math.abs(o) / (demi + 1)
-        const c = bord < 0.3 ? N.WHITE : bord < 0.7 ? PLASMA[4] : PLASMA_V[2]
+        const c = bord < 0.3 ? N.WHITE : bord < 0.7 ? FAISCEAU[3] : FAISCEAU[1]
         p.line(r.x0 + nx * o, r.y0 + ny * o, r.x1 + nx * o, r.y1 + ny * o, c, (bord < 0.3 ? 1 : 0.75) * v1)
       }
       // (des nœuds de lumière le long du trait, et le flash à la bouche)
-      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, 6 * v1 + 2, q % 2 === 0 ? PLASMA[4] : PLASMA_V[2], 0.4 * v1)
+      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, 6 * v1 + 2, q % 2 === 0 ? FAISCEAU[3] : FAISCEAU[1], 0.4 * v1)
       if (u < 0.3) p.glow(r.x0, r.y0, 10, N.WHITE, 0.8 * (1 - u / 0.3))
-      // (une spirale de plasma autour du trait, qui s'efface)
+      // (une spirale d'énergie autour du trait, qui s'efface)
       for (let d = 0; d < L; d += 2) {
         const off = Math.sin(d * 0.35 - t * 40) * (3 + 3 * u)
-        p.dot(r.x0 + ((r.x1 - r.x0) * d) / L + nx * off, r.y0 + ((r.y1 - r.y0) * d) / L + ny * off, PLASMA_V[3], 0.7 * v1)
+        p.dot(r.x0 + ((r.x1 - r.x0) * d) / L + nx * off, r.y0 + ((r.y1 - r.y0) * d) / L + ny * off, FAISCEAU[2], 0.7 * v1)
       }
     }
   }
@@ -10173,7 +10174,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               for (let i = 0; i < 18; i++) {
                 const q = R.next()
                 const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, PLASMA[5], PLASMA_V[3]][Math.floor(R.next() * 3)], 1, 1.5)
+                etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, FAISCEAU[4], FAISCEAU[2]][Math.floor(R.next() * 3)], 1, 1.5)
               }
               secousse = Math.max(secousse, 0.25)
               break

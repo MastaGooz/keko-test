@@ -1117,11 +1117,12 @@ export function formesDuRadar(t: number): Forme[] {
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
   // (l'orbe de plasma se forme entre les deux cornes du Pulsar ; l'essaim en part aussi)
-  if (id === 'plasma' || id === 'essaim' || id === 'rail') return { x: 9.6, y: 0 }
+  if (id === 'plasma' || id === 'essaim') return { x: 9.6, y: 0 }
   // (la Vouivre crache de sa gueule, entre ses mandibules)
   if (id === 'crachat') return { x: 9.6, y: 0.4 }
   // (le Prisme tire de son cristal)
-  if (id === 'faisceau') return { x: CRISTAL_DU_PRISME.x + 3.4, y: 0 }
+  // (son railgun aussi — passé du Pulsar au Prisme, Keko, 16/11)
+  if (id === 'faisceau' || id === 'rail') return { x: CRISTAL_DU_PRISME.x + 3.4, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }

@@ -4757,3 +4757,10 @@ infliger des dégâts sur la durée : on ne veut pas ça ; il subit des dégâts
 rien une fois sorti (mesuré : 20 en 1 s dessus, 0 dans les 2 s d'après). L'insecte ne luit en bleu que dessus. Les
 décharges (l'éclair et le son à l'entrée, puis toutes les 0,5 s) restent, sans dégâts. *20 : de moi — un insecte
 qui traverse franchement un faisceau y passe environ un tiers de seconde, soit 6 à 7 points, comme une balise.*
+
+LE RAILGUN PASSE DU PULSAR AU PRISME (Keko, 16/11 : « on prend l'attaque du vaisseau qui tire un rayon très
+longue portée et on la met sur le Prisme ; ça colle mieux avec les cristaux ; il faut trouver une attaque sur
+l'autre vaisseau pour remplacer »). `arme-rail` est la troisième arme du Prisme, sa règle inchangée (2,6 s,
+220, 16 points à tout ce qui est sur la ligne) ; il part de la POINTE DU CRISTAL de la proue et se dessine aux
+couleurs du faisceau (gaine bleue, bande cyan, âme blanche, étincelles bleues). Le Pulsar n'a plus que deux
+armes, l'orbe et l'essaim, en attendant la troisième.

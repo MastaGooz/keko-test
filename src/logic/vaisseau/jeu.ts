@@ -476,7 +476,7 @@ export type Arme = {
    */
   sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number }
   /**
-   * UN RAILGUN DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « un tir de plasma instantané type railgun, sur une
+   * UN RAILGUN (passé du Pulsar au Prisme le 16/11, en bleu ; d'abord la troisième arme du Pulsar, Keko, 16/11 : « un tir de plasma instantané type railgun, sur une
    * très grande distance, longue portée, qui traverse tout ») : à sa cadence, un insecte à `portee`, UN TRAIT INSTANTANÉ
    * part de la bouche, long de `portee` : tout insecte à moins de `largeur` (plus son rayon) de la ligne perd `degats`. Sa
    * direction : vers le verrouillé, s'il est à portée ; sinon, des lignes qui passent par chaque insecte à portée, celle
