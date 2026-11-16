@@ -7171,16 +7171,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const k = Math.min(1, (cr.duree - age) / 0.6)
       if (k <= 0) continue
       const L = a.portee * (0.55 + 0.45 * etale)
-      p.disc(f.x, f.y, L, (d, ang) => {
-        const bout = 0.5 + 0.5 * Math.sin(ang * 9 + d * 14 - m.t * 3 + f.id)
-        return d > 0.9 ? VENIN[3] : bout > 0.75 ? VENIN[2] : VENIN[1]
-      }, (d, ang) => {
+      // (UNE ÉCLABOUSSURE, PLUS UN SECTEUR — Keko, 16/11 : « la flaque conique ne semble pas très organique, cône droit… » :
+      // des flancs qui ondulent, un bord en lobes inégaux, une pointe qui s'arrondit, des taches qui bougent dedans, des
+      // gouttes projetées au-delà ; la règle, elle, garde son cône)
+      const ou = (d: number, ang: number): number => {
+        // (combien on est dedans : > 0 dedans, le bord à 0)
         const e = Math.abs(Math.atan2(Math.sin(ang - f.cap), Math.cos(ang - f.cap)))
-        if (e > cr.cone || d < 0.12) return 0
-        const bord = Math.min(1, (cr.cone - e) / 0.08) * Math.min(1, (1 - d) / 0.08)
-        return (d > 0.9 || (cr.cone - e) < 0.06 ? 0.55 : 0.34) * bord * k
+        const flanc = cr.cone * (1 + 0.22 * Math.sin(d * 11 + f.id) + 0.12 * Math.sin(d * 23 + f.id * 2.3)) * Math.min(1, 0.35 + d * 2.2)
+        const lobe = 0.86 + 0.1 * Math.sin(ang * 13 + f.id) + 0.06 * Math.sin(ang * 31 + f.id * 3.1)
+        return Math.min((flanc - e) / 0.08, (lobe - d) / 0.06, (d - 0.08) / 0.06)
+      }
+      p.disc(f.x, f.y, L, (d, ang) => {
+        const tache = Math.sin(ang * 7 + d * 9 + m.t * 1.5 + f.id) * Math.sin(ang * 5 - d * 13 + f.id * 1.7)
+        return ou(d, ang) < 0.6 ? VENIN[3] : tache > 0.35 ? VENIN[2] : tache < -0.45 ? VENIN[0] : VENIN[1]
+      }, (d, ang) => {
+        const o = ou(d, ang)
+        if (o <= 0) return 0
+        return (o < 0.6 ? 0.55 : 0.34) * Math.min(1, o) * k
       })
-      // (des bulles qui crèvent)
+      // (les gouttes projetées au-delà du bord, de travers)
+      for (let j = 0; j < 7; j++) {
+        const an = f.cap + (alea(f.id, j, 21) * 2 - 1) * cr.cone * 1.25
+        const d = L * (0.9 + 0.22 * alea(f.id, j, 22))
+        const r = 0.6 + 1.3 * alea(f.id, j, 23)
+        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, VENIN[2], (dd) => (dd > 0.6 ? 0.55 : 0.4) * k)
+      }      // (des bulles qui crèvent)
       for (let j = 0; j < 7; j++) {
         const vie = 0.6 + 0.5 * alea(f.id, j, 1)
         const u = ((m.t + alea(f.id, j, 2) * vie) % vie) / vie

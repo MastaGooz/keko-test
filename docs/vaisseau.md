@@ -4527,3 +4527,9 @@ de 42 à 16 de long.
 
 PUIS ENCORE UN POIL PLUS COURTES (Keko, 16/11) : en vol, 0,18 à 0,35 s, et un quart
 plus lentes encore.
+
+PUIS UNE FLAQUE QUI ÉCLABOUSSE (Keko, 16/11 : « la flaque conique ne semble pas très
+organique, cône droit… ») : au dessin seulement — la règle garde son cône. Des
+flancs qui ondulent, un bord en lobes inégaux, une pointe qui s'arrondit près de la
+gueule, des taches qui bougent dedans (à la place des bandes), et sept gouttes
+projetées au-delà du bord, de travers.
