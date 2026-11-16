@@ -406,10 +406,10 @@ export type Arme = {
    */
   // (… ET DES CRISTAUX RELIÉS PAR DES FAISCEAUX, la deuxième arme du Prisme — Keko, 16/11 : « on réutilise notre système
   // de balises : on place des cristaux reliés par des faisceaux d'énergie ; dès qu'un ennemi le traverse, le faisceau s'active
-  // et lui inflige des dégâts sur la durée » : `irradie` — chaque décharge, au lieu d'un coup, IRRADIE ce qui est sur la
-  // ligne : `dps` points par seconde pendant `duree` secondes, rafraîchis à chaque décharge, pas cumulés ; `devant` — posé à
+  // et lui inflige des dégâts » : `irradie` — au lieu d'un coup à chaque décharge, la ligne IRRADIE ce qui est dessus,
+  // `dps` points par seconde TANT QU'IL Y EST, et rien après (Keko, 16/11 : pas de dégâts sur la durée) ; `devant` — posé à
   // cette distance devant le vaisseau, là où est le cristal de sa proue : « comme s'il était déposé depuis le cristal de devant »)
-  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number; irradie?: { duree: number; dps: number }; devant?: number }
+  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number; irradie?: { dps: number }; devant?: number }
   /**
    * UNE TRAÎNÉE DE GIVRE (le Frimas, Keko, 15/11 : « une attaque qui laisse une traînée de givre derrière le vaisseau,
    * qui ralentit et inflige des dégâts aux ennemis tant qu'ils restent dedans ») : en vol, il sème DERRIÈRE LUI (à
@@ -632,8 +632,8 @@ export type Ennemi = {
   ralenti?: number
   /** IL EST RONGÉ PAR L'ACIDE (voir `Arme.crachat`) jusqu'à cet instant : il perd tant par seconde, et tout ce qu'il perd d'autre est majoré de cette part. */
   acide?: { jusque: number; dps: number; bonus: number }
-  /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) jusqu'à cet instant, à tant de points par seconde. */
-  irradie?: { jusque: number; dps: number }
+  /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) : il est sur un faisceau de cristaux, jusqu'à cet instant (à peine au-delà : pour le dessin). */
+  irradie?: { jusque: number }
   butin: number
   cargaison: Cargaison
 }
@@ -2412,7 +2412,7 @@ export function finDuTrio(m: Monde, b: Balise, duree: number): number {
 }
 
 /** LES BALISES (voir `Arme.balise`) : la pose sur le passage, l'extinction, les lignes qui s'éclairent quand on les franchit. */
-function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+function menerLesBalises(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   // les triangles finis s'éteignent, d'un bloc
   const finis = new Set(m.balises.filter((b) => {
@@ -2467,12 +2467,19 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (decharges === 0 && dessus.length > 0 && m.t >= li.dechargeA) decharges = 1
     li.sur = dessus.map((e) => e.id)
     if (decharges > 0) li.dechargeA = m.t + ba.periode
+    // (UN FAISCEAU DE CRISTAUX BRÛLE TANT QU'ON EST DESSUS, ET RIEN APRÈS — Keko, 16/11 : « on ne veut pas de dégâts sur la
+    // durée : il subit des dégâts tant qu'il touche le trait, sinon rien » : `dps` par seconde, à chaque instant passé dessus)
+    if (ba.irradie !== undefined)
+      for (const e of dessus) {
+        if (!m.ennemis.includes(e)) continue
+        e.pv -= ba.irradie.dps * dt
+        e.irradie = { jusque: m.t + 0.12 }
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
     for (let k = 0; k < decharges; k++) {
       ev.push({ type: 'ligne', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y, arme: a.id })
       for (const e of dessus) {
         if (!m.ennemis.includes(e)) continue
-        // (un cristal irradie : des dégâts sur la durée, rafraîchis)
-        if (ba.irradie !== undefined) e.irradie = { jusque: m.t + ba.irradie.duree, dps: Math.max(ba.irradie.dps, e.irradie !== undefined && e.irradie.jusque > m.t ? e.irradie.dps : 0) }
         const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
         e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3016,8 +3023,6 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
     if ((e.bruleA ?? -1) > m.t && (e.bruleA ?? 0) - m.t < (e.dureeBrulure ?? 0) - dt * 1.5) e.pv -= (e.dpsBrulure ?? 0) * dt
-    // (il est irradié : les cristaux du Prisme)
-    if (e.irradie !== undefined && e.irradie.jusque > m.t) e.pv -= e.irradie.dps * dt
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
   // (les insectes passés par le portail ont quitté le monde)
@@ -3054,7 +3059,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   canaliserLeRayon(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
-  menerLesBalises(c, m, ev)
+  menerLesBalises(c, m, dt, ev)
   menerLeGivre(c, m, dt, ev)
   tirerLesSalves(c, m, ev)
   tirerLesEssaims(c, m, ev)

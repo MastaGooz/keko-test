@@ -4750,3 +4750,10 @@ discret, un peu moins fort.
 LE SON DE POSE DES CRISTAUX, ENCORE PLUS GRAVE ET DOUX (Keko, 16/11 : « c'est un son qui revient beaucoup durant
 la partie, on veut quelque chose de discret et de doux ») : un « tom » rond à 440 Hz (880 avant), presque un sinus
 pur, attaque de 20 ms, une octave qui l'effleure ; niveau 0,065 (0,1 avant, 0,13 au premier jet).
+
+LES FAISCEAUX DE CRISTAUX NE BRÛLENT QUE TANT QU'ON EST DESSUS (Keko, 16/11 : « le rayon des balises cristal semble
+infliger des dégâts sur la durée : on ne veut pas ça ; il subit des dégâts tant qu'il touche le trait, sinon rien »).
+`Arme.balise.irradie` n'a plus que `dps` : 20 points par seconde, à chaque instant passé sur un faisceau, plus
+rien une fois sorti (mesuré : 20 en 1 s dessus, 0 dans les 2 s d'après). L'insecte ne luit en bleu que dessus. Les
+décharges (l'éclair et le son à l'entrée, puis toutes les 0,5 s) restent, sans dégâts. *20 : de moi — un insecte
+qui traverse franchement un faisceau y passe environ un tiers de seconde, soit 6 à 7 points, comme une balise.*

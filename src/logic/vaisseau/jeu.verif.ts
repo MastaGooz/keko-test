@@ -1887,10 +1887,10 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 
 // LES CRISTAUX DU PRISME (Keko, 16/11) : les balises, qui IRRADIENT au lieu de frapper — l'insecte qui traverse le
-// faisceau ne perd rien sur le coup, puis 5 par seconde pendant 3 s, même sorti du faisceau
+// faisceau perd 20 par seconde tant qu'il y est, et rien une fois sorti (Keko, 16/11 : pas de dégâts sur la durée)
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const cristal = { id: 'cristal', cadence: 0.7, degats: 0, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1e9, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5, irradie: { duree: 3, dps: 5 } } }
+  const cristal = { id: 'cristal', cadence: 0.7, degats: 0, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1e9, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5, irradie: { dps: 20 } } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [cristal], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const w = nouveauMonde(cfg, 3)
   w.armesA[0] = 1e9
@@ -1902,18 +1902,16 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
     w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
     ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
   }
-  tenir(0, 100)
-  const surLeCoup = 1000 - w.ennemis[0].pv
+  for (let i = 0; i < 60; i++) tenir(0, 100)
+  const dessus = 1000 - w.ennemis[0].pv
   for (let i = 0; i < 60 * 2; i++) tenir(0, 140)
-  const deuxSecondes = 1000 - w.ennemis[0].pv
-  for (let i = 0; i < 60 * 2; i++) tenir(0, 140)
-  const quatre = 1000 - w.ennemis[0].pv
-  verifier(`un insecte traverse le faisceau de deux cristaux : il s'allume, rien sur le coup (${surLeCoup.toFixed(2)}), puis 5 par seconde, sorti du faisceau (${deuxSecondes.toFixed(1)} en 2 s), jusqu'à 3 s (${quatre.toFixed(1)} en 4 s)`, ev.some((e) => e.type === 'ligne' && e.arme === 'cristal') && surLeCoup < 0.2 && Math.abs(deuxSecondes - 10) < 0.5 && Math.abs(quatre - 15) < 0.5)
+  const apres = 1000 - w.ennemis[0].pv
+  verifier(`un insecte sur le faisceau de deux cristaux : il s'allume, 20 par seconde tant qu'il y est (${dessus.toFixed(1)} en 1 s) ; sorti, plus rien (${(apres - dessus).toFixed(2)} en 2 s)`, ev.some((e) => e.type === 'ligne' && e.arme === 'cristal') && Math.abs(dessus - 20) < 0.5 && apres - dessus < 1e-9)
 }
 
 // (le cristal est déposé DEVANT, depuis le cristal de la proue : à `devant` du vaisseau, dans l'axe de son nez)
 {
-  const cristal = { id: 'cristal', cadence: 0.7, degats: 0, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5, irradie: { duree: 3, dps: 5 }, devant: 10 } }
+  const cristal = { id: 'cristal', cadence: 0.7, degats: 0, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5, irradie: { dps: 20 }, devant: 10 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [cristal], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 } }
   const w = nouveauMonde(cfg, 3)
   w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: Math.PI / 2 }
