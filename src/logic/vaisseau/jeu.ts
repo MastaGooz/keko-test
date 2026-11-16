@@ -521,10 +521,11 @@ export type Arme = {
    * bulles, des pustules d'acide, qui explosent à courte distance des ennemis : une explosion de gaz qui fait des dégâts
    * et infecte — la corrosion ») : à sa cadence, elle LANCE EN CLOCHE une pustule depuis son dos (… PUIS AU SOL, SANS
    * CIBLE, EN PERMANENCE : autour d'elle, entre `portee` × 0,45 et `portee`, voir `menerLesMines`) ; la pustule vole `vol` secondes, se pose et ATTEND, `duree` secondes au plus — `max` à la fois
-   * (la plus vieille saute). Posée, dès qu'un insecte passe à moins de `declenche`, elle ÉCLATE EN GAZ : tout insecte à
-   * moins de `rayon` perd `degats` et est RONGÉ (`acide`, comme le crachat). L'état est `Monde.mines`.
+   * (la plus vieille saute). Posée, dès qu'un insecte entre dans sa zone — à moins de `rayon` —, elle ÉCLATE EN GAZ : tout
+   * insecte à moins de `rayon` perd `degats` et est RONGÉ (`acide`, comme le crachat). L'état est `Monde.mines`.
    */
-  mine?: { max: number; duree: number; vol: number; declenche: number; rayon: number; acide: { duree: number; dps: number; bonus: number } }
+  // (… ET ELLE ÉCLATE DÈS QU'UN INSECTE ENTRE DANS SA ZONE D'EFFET — Keko, 16/11 : le déclenchement, c'est le `rayon`)
+  mine?: { max: number; duree: number; vol: number; rayon: number; acide: { duree: number; dps: number; bonus: number } }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -2003,7 +2004,7 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       ev.push({ type: 'mineFinie', x: mn.x, y: mn.y })
       return false
     }
-    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) <= mi.declenche + c.ennemi.rayon)) return true
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) <= mi.rayon + c.ennemi.rayon)) return true
     // (ELLE ÉCLATE EN GAZ : tout ce qui est dans le nuage perd ses dégâts et est rongé)
     ev.push({ type: 'gaz', x: mn.x, y: mn.y, rayon: mi.rayon })
     for (const e of [...m.ennemis]) {

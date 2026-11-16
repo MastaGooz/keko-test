@@ -4565,3 +4565,9 @@ ennemi approche ») : à sa cadence (1,8 s), insectes ou pas, une pustule tombe 
 AUTOUR D'ELLE, dans une direction tirée au hasard, entre 18 et 40 (`portee` 40 ×
 0,45 à 1). Elles attendent 10 s, six à la fois ; elles éclatent quand un insecte
 passe à moins de 9. On sème un champ de mines en volant.
+
+PUIS ELLES ÉCLATENT DÈS QU'UN INSECTE ENTRE DANS LEUR ZONE (Keko, 16/11 : « les mines
+devraient exploser dès qu'un ennemi est dans la zone d'effet ») : le déclenchement
+était à 9 pour un gaz de 20 — un insecte pouvait frôler la zone sans la faire
+éclater. C'est maintenant le même rayon, 20 (`declenche` retiré : une seule
+valeur, plus deux qui se désaccordent).
