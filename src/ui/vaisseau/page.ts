@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampeDeLaMarque, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -193,7 +193,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return livreesPossibles().some((x) => x.id === l) ? l : VORTEX_ ? 'rouge' : 'serie'
   }
   let livree = livreeDuVaisseau()
-  const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => rampesDeLaLivree(livree)
+  // (… PUIS SEULEMENT SA MARQUE — Keko, 16/11 : « la couleur choisie ne se voit que peu, certaines petites zones ; le reste
+  // du vaisseau a sa propre couleur et sa propre identité » : dans le vortex, la couleur du joueur ne repeint plus que la
+  // matière `marque` ; le Nova Drifter garde sa livrée de châssis entier)
+  const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => {
+    if (!VORTEX_) return rampesDeLaLivree(livree)
+    const m = rampeDeLaMarque(livree)
+    return m === undefined ? undefined : { marque: m }
+  }
+  /** LES FEUX DE POSITION : rouge à bâbord, vert à tribord — dans le vortex, tous deux à la marque du joueur (un feu rouge ou vert s'y lisait comme la couleur d'un autre joueur). */
+  const couleurDuFeu = (s: number): number => (VORTEX_ ? (rampeDeLaMarque(livree)?.[4] ?? N.hex('#ff4a4a')) : N.hex(s < 0 ? '#ff4a4a' : '#4aff7a'))
   /** LES RÉGLAGES du joueur (l'onglet « Paramètres ») : de quel côté de l'écran il vole. */
   let reglages = chargerReglages()
   /**
@@ -2538,7 +2547,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // la verrière qui luit, les feux de position qui battent
     p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
-    for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {
+    for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
       const fx = Math.round(cx + jit + s * (g.feux.y + 0.2) * ECH)
       const fy = Math.round(sy + (0.2 - g.feux.x) * ECH)
       if (bat) {
@@ -6059,7 +6068,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
       for (const s of [-1, 1]) {
         const [ax, ay] = ici(g.feux.x, s * g.feux.y)
-        const c = rival ? VERRIERE_ENNEMIE[2] : N.hex(s < 0 ? '#ff4a4a' : '#4aff7a')
+        const c = rival ? VERRIERE_ENNEMIE[2] : couleurDuFeu(s)
         p.rect(Math.round(ax - 0.5), Math.round(ay - 0.5), 1, 1, N.WHITE)
         p.glow(ax, ay, 3, c, 0.8)
       }
@@ -6901,7 +6910,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LES DRONES DE LA SENTINELLE : là où la règle les a menés — à leur place sur l'orbite, ou autour de leur cible —, une
     // petite traînée derrière eux (le long de leur vitesse) ; un corps à la couleur du joueur, un œil cyan, une lueur
     if (m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
-      const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+      // (les drones à la sarcelle de la Sentinelle, leur œil à la marque du joueur — Keko, 16/11)
+      const [sombre, moyen, clair] = tonsDeLaMatiere('sarcelle')
+      const oeil = (rampeDeLaMarque(livree) ?? [])[4] ?? N.WHITE
       for (const d of m.drones) {
         for (let k = 4; k >= 1; k--) p.circle(d.x - d.vx * k * 0.014, d.y - d.vy * k * 0.014, 1.8 * (1 - k / 5), moyen, 0.45 * (1 - k / 5))
         // (un peu plus gros qu'un point : sur le portail, on les perdait)
@@ -6909,9 +6920,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.circle(d.x, d.y, 2.6, moyen)
         p.rect(Math.round(d.x) - 2, Math.round(d.y) - 1, 2, 1, clair)
         p.rect(Math.round(d.x) - 1, Math.round(d.y) + 1, 3, 1, sombre)
-        p.rect(Math.round(d.x), Math.round(d.y), 1, 1, N.WHITE)
-        p.rect(Math.round(d.x) - 1, Math.round(d.y), 1, 1, VERRIERE[2])
-        p.rect(Math.round(d.x) + 1, Math.round(d.y), 1, 1, VERRIERE[2])
+        p.rect(Math.round(d.x) - 1, Math.round(d.y), 3, 1, oeil)
         p.glow(d.x, d.y, 6, VERRIERE[2], d.cible === null ? 0.35 : 0.55)
       }
     }
@@ -8393,7 +8402,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)
     p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
     if (Math.floor(t * 1.5) % 2 === 0)
-      for (const [s, c] of [[-1, N.hex('#ff4a4a')], [1, N.hex('#4aff7a')]] as const) {
+      for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
         p.rect(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 1, 1, N.WHITE)
         p.glow(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 7, c, 0.7)
       }

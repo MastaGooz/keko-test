@@ -4212,3 +4212,20 @@ PUIS LA TORNADE LENTE (Keko, 15/11 : « il faudrait que la tornade se déplace
 beaucoup plus lentement ») : 18 au lieu de 50 — moins de la moitié d'un insecte
 (40) ; elle ne rattrape plus un insecte qui file, elle avance sur la nuée.
 
+
+LA COULEUR DU JOUEUR N'EST PLUS QU'UNE MARQUE (Keko, 16/11 : « la couleur
+sélectionnée ne doit se voir que peu, certaines zones, des petits emplacements
+de préférence ; tout le reste du vaisseau a sa propre couleur et sa propre
+identité ») : dans le vortex, la couleur du joueur ne repeint plus que la
+matière `marque` (`rampeDeLaMarque`, la teinte plus vive), plus la coque et
+les ailes. Elle tient : le bout des ailes du chasseur, le nez des réservoirs de
+la Salamandre, les trois feux de la Sentinelle et l'œil de ses drones, les trois
+voyants des modules de l'Ingénieur, la veilleuse de ses tourelles et de leurs
+capsules et le fanal de ses balises, le bout des cornes du Frimas — et les deux
+feux de position de tous (un feu rouge ou vert s'y lisait comme la couleur d'un
+autre joueur). Chaque vaisseau a SA couleur : le chasseur l'acier bleuté de la
+série, la Salamandre la suie et le cuivre (verrière d'ambre), la Sentinelle la
+perle et la sarcelle (ses drones aussi), l'Ingénieur le kaki et le graphite (ses
+bandes jaunes passent à l'acier : elles se lisaient comme une marque), le Frimas
+la nacre et l'indigo. Le Nova Drifter garde sa livrée de châssis entier.
+*Teintes de moi, à rejuger.*

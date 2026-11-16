@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -54,6 +54,25 @@ const RAMPES: Record<Matiere, number[]> = {
   violet: ['#1a0a2a', '#5a1a90', '#9a3ae0', '#c070ff', '#e8c0ff', '#ffffff'].map(hex),
   // les CRISTAUX du Frimas : une glace bleue, presque blanche dans la lumière
   glace: ['#151a3d', '#212f6b', '#2c58aa', '#3a8bd8', '#7ed4f8', '#e6fbff'].map(hex),
+  // LA MARQUE DU JOUEUR (Keko, 16/11 : « la couleur choisie sert juste à marquer certains emplacements, des petits ») :
+  // le bout des ailes, des voyants ; sa rampe vient de la couleur du joueur, celle-ci n'est que celle par défaut (le rouge
+  // des bouts d'ailes de toujours)
+  marque: ['#26080f', '#561220', '#93202e', '#d0443a', '#ff8456', '#ffcf9a'].map(hex),
+  // CHAQUE VAISSEAU A SA COULEUR À LUI (Keko, 16/11 : « le reste du vaisseau a sa propre couleur et sa propre identité ») :
+  // la Salamandre, de la suie et du cuivre ; la Sentinelle, de la perle et de la sarcelle ; l'Ingénieur, du kaki et du
+  // graphite ; le Frimas, de la nacre et de l'indigo — le chasseur garde l'acier bleuté de la série
+  suie: ['#100a10', '#211619', '#352527', '#4f3a36', '#79594c', '#b8917a'].map(hex),
+  cuivre: ['#1e0a08', '#43180f', '#73311b', '#a8542c', '#d9864c', '#ffc890'].map(hex),
+  perle: ['#14152a', '#282b45', '#464b68', '#737a96', '#aab2c8', '#eef2fa'].map(hex),
+  sarcelle: ['#061a20', '#0b3438', '#135a5a', '#1f8882', '#46beb2', '#a6f0e0'].map(hex),
+  kaki: ['#121306', '#262810', '#3f421e', '#5e6232', '#888d52', '#c6c98e'].map(hex),
+  graphite: ['#0d0d12', '#1b1b22', '#2d2d36', '#45454f', '#686874', '#a2a2ae'].map(hex),
+  nacre: ['#1a1430', '#2f2852', '#4e477a', '#7c75a8', '#b4aed6', '#efecfc'].map(hex),
+  indigo: ['#0c0822', '#1a1244', '#2b1f6a', '#403092', '#6852bc', '#ac96ea'].map(hex),
+}
+/** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
+export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
+  return [RAMPES[m][2], RAMPES[m][3], RAMPES[m][4]]
 }
 const CONTOUR = hex('#07050e')
 const BLANC = hex('#ffffff')
@@ -108,6 +127,17 @@ export function rampesDeLaLivree(id: string): Partial<Record<Matiere, number[]>>
     rampesGardees.set(id, l === undefined || l.id === 'serie' ? undefined : { coque: rampeDeLaTeinte(l.teinte, l.saturation, l.clarte, 0), blinde: rampeDeLaTeinte(l.teinte, l.saturation * 0.6, l.clarte * 0.92, 0.02), aile: rampeDeLaTeinte(l.teinte + 16, l.saturation * 0.9, l.clarte, 0.03) })
   }
   return rampesGardees.get(id)
+}
+const marquesGardees = new Map<string, number[]>()
+/**
+ * LA MARQUE d'une couleur de joueur, pour `Options.rampes.marque` (le jeu du vortex) : la même teinte, plus vive et un
+ * peu plus claire — elle ne couvre que de petites zones, il faut qu'elle s'y lise.
+ */
+export function rampeDeLaMarque(id: string): number[] | undefined {
+  const l = LIVREES.find((x) => x.id === id)
+  if (l === undefined || l.id === 'serie') return undefined
+  if (!marquesGardees.has(id)) marquesGardees.set(id, rampeDeLaTeinte(l.teinte, Math.min(1, l.saturation * 1.2), l.clarte * 1.08, 0))
+  return marquesGardees.get(id)
 }
 /** Trois tons d'une livrée (sombre, moyen, clair), pour sa pastille. */
 export function tonsDeLaLivree(id: string): [number, number, number] {
@@ -490,7 +520,7 @@ function formesDeLaTuyereOmni(o: { n: number; rayon: number; depart: number }, k
  * UNE TOURELLE DE L'INGÉNIEUR, PEINTE COMME LES VAISSEAUX (Keko, 15/11 : « les tours, c'est juste des carrés avec un
  * trait ; un truc un peu plus texturé, plus proche des textures des vaisseaux — pas forcément un carré ») : LE SOCLE,
  * fixe — une plaque octogonale sur quatre pieds en croix, chacun son patin, quatre boulons jaunes —, et LA TÊTE, qui
- * pivote — une couronne d'acier, un dôme à la couleur du joueur, un fût et son frein de bouche, une veilleuse verte.
+ * pivote — une couronne d'acier, un carter kaki, un fût et son frein de bouche, une veilleuse à la marque du joueur.
  */
 export function formesDuSocleDeTourelle(): Forme[] {
   const f: Forme[] = []
@@ -499,7 +529,7 @@ export function formesDuSocleDeTourelle(): Forme[] {
     f.push({ pts: ovale(dx * 4.1, dy * 4.1, 1.2, 1.2, 10), mat: 'acier', relief: 'dome', dome: { x: dx * 4.1, y: dy * 4.1, rx: 1.2, ry: 1.2 } })
   }
   const octo = (r: number): [number, number][] => Array.from({ length: 8 }, (_, k) => [Math.cos(Math.PI / 8 + (k * Math.PI) / 4) * r, Math.sin(Math.PI / 8 + (k * Math.PI) / 4) * r])
-  f.push({ pts: octo(4.4), mat: 'aile', relief: 'plat' })
+  f.push({ pts: octo(4.4), mat: 'graphite', relief: 'plat' })
   f.push({ pts: octo(3.6), mat: 'acier', relief: 'plat' })
   for (let k = 0; k < 4; k++) {
     const a = (k * Math.PI) / 2
@@ -522,7 +552,7 @@ export function formesDeLaCapsule(): Forme[] {
     f.push({ pts: ovale(Math.cos(a) * 3.4, Math.sin(a) * 3.4, 0.55, 0.55, 8), mat: 'or', relief: 'dome', dome: { x: Math.cos(a) * 3.4, y: Math.sin(a) * 3.4, rx: 0.55, ry: 0.55 } })
   }
   f.push({ pts: ovale(0, 0, 1.6, 1.6, 12), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 1.6, ry: 1.6 } })
-  f.push({ pts: ovale(0, 0, 0.6, 0.6, 8), mat: 'emeraude', relief: 'dome', dome: { x: 0, y: 0, rx: 0.6, ry: 0.6 } })
+  f.push({ pts: ovale(0, 0, 0.6, 0.6, 8), mat: 'marque', relief: 'dome', dome: { x: 0, y: 0, rx: 0.6, ry: 0.6 } })
   return f
 }
 /**
@@ -542,7 +572,7 @@ export function formesDeLaScie(): Forme[] {
   ]
   for (let k = 0; k < 3; k++) {
     const a = (k * 2 * Math.PI) / 3
-    f.push({ pts: ovale(Math.cos(a) * 2, Math.sin(a) * 2, 0.6, 0.6, 8), mat: 'aile', relief: 'plat' })
+    f.push({ pts: ovale(Math.cos(a) * 2, Math.sin(a) * 2, 0.6, 0.6, 8), mat: 'graphite', relief: 'plat' })
   }
   f.push({ pts: ovale(0, 0, 1.2, 1.2, 10), mat: 'or', relief: 'dome', dome: { x: 0, y: 0, rx: 1.2, ry: 1.2 } })
   f.push({ pts: ovale(0, 0, 0.45, 0.45, 6), mat: 'acier', relief: 'plat' })
@@ -560,9 +590,10 @@ export function formesDeLaBalise(): Forme[] {
     const a = Math.PI / 6 + (k * 2 * Math.PI) / 3
     f.push({ pts: barre(0, 0, Math.cos(a) * 3.6, Math.sin(a) * 3.6, 1), mat: 'metal', relief: 'plat' })
   }
-  f.push({ pts: hexa(2.7), mat: 'aile', relief: 'plat' })
+  f.push({ pts: hexa(2.7), mat: 'graphite', relief: 'plat' })
   f.push({ pts: hexa(2), mat: 'acier', relief: 'plat' })
-  f.push({ pts: ovale(0, 0, 1, 1, 10), mat: 'or', relief: 'dome', dome: { x: 0, y: 0, rx: 1, ry: 1 } })
+  // (le fanal : la marque du joueur — à plusieurs, on sait à qui est le piège)
+  f.push({ pts: ovale(0, 0, 1, 1, 10), mat: 'marque', relief: 'dome', dome: { x: 0, y: 0, rx: 1, ry: 1 } })
   return f
 }
 /** Le bec d'une balise : un court canon à rivets, vers l'avant (le cap le tourne vers la balise d'en face). */
@@ -578,9 +609,10 @@ export function formesDeLaTeteDeTourelle(): Forme[] {
     { pts: ovale(0, 0, 2.6, 2.6, 16), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 2.6, ry: 2.6 } },
     { pts: barre(1.5, 0, 6.4, 0, 1), mat: 'acier', relief: 'cyl' },
     { pts: barre(5.5, 0, 6.8, 0, 1.45), mat: 'metal', relief: 'cyl' },
-    { pts: [[2.6, -1.7], [1, -2.3], [-2.2, -2.3], [-2.8, -1.2], [-2.8, 1.2], [-2.2, 2.3], [1, 2.3], [2.6, 1.7]], mat: 'coque', relief: 'cyl' },
+    // (le carter au kaki de l'Ingénieur, la veilleuse à la marque du joueur)
+    { pts: [[2.6, -1.7], [1, -2.3], [-2.2, -2.3], [-2.8, -1.2], [-2.8, 1.2], [-2.2, 2.3], [1, 2.3], [2.6, 1.7]], mat: 'kaki', relief: 'cyl' },
     { pts: [[0.6, -2.3], [-0.2, -2.3], [-0.2, 2.3], [0.6, 2.3]], mat: 'acier', relief: 'plat' },
-    { pts: ovale(-1.7, 0, 0.55, 0.55, 8), mat: 'emeraude', relief: 'dome', dome: { x: -1.7, y: 0, rx: 0.55, ry: 0.55 } },
+    { pts: ovale(-1.7, 0, 0.7, 0.7, 8), mat: 'marque', relief: 'dome', dome: { x: -1.7, y: 0, rx: 0.7, ry: 0.7 } },
   ]
 }
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
@@ -594,8 +626,10 @@ export function formesDeLaCoque(cran: number): Forme[] {
   if (cran === 8) {
     // LE FRIMAS, UNE CARAPACE D'AILLEURS : un corps en goutte, la pointe en avant ; trois chevrons de carapace sur le dos,
     // comme les anneaux d'un insecte ; un CŒUR de glace au milieu ; un ŒIL fendu à la proue, de glace aussi
-    const f: Forme[] = [{ pts: [[7.6, 0], [5.6, -1.5], [2.6, -2.7], [-1, -3.3], [-4, -3.1], [-6.2, -2], [-7.1, 0], [-6.2, 2], [-4, 3.1], [-1, 3.3], [2.6, 2.7], [5.6, 1.5]], mat: 'coque', relief: 'cyl' }]
-    for (const x of [-2.4, -4.2, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.3, -2.1 + (x + 6) * 0.15], [x - 1.1, -2 + (x + 6) * 0.15], [x - 0.1, 0], [x - 1.1, 2 - (x + 6) * 0.15], [x - 0.3, 2.1 - (x + 6) * 0.15]], mat: 'blinde', relief: 'plat' })
+    // (sa couleur à lui : une carapace de nacre, des chevrons et des croissants d'indigo, la glace ; le bout des cornes est
+    // la marque du joueur)
+    const f: Forme[] = [{ pts: [[7.6, 0], [5.6, -1.5], [2.6, -2.7], [-1, -3.3], [-4, -3.1], [-6.2, -2], [-7.1, 0], [-6.2, 2], [-4, 3.1], [-1, 3.3], [2.6, 2.7], [5.6, 1.5]], mat: 'nacre', relief: 'cyl' }]
+    for (const x of [-2.4, -4.2, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.3, -2.1 + (x + 6) * 0.15], [x - 1.1, -2 + (x + 6) * 0.15], [x - 0.1, 0], [x - 1.1, 2 - (x + 6) * 0.15], [x - 0.3, 2.1 - (x + 6) * 0.15]], mat: 'indigo', relief: 'plat' })
     f.push({ pts: ovale(0.2, 0, 1.6, 1.6, 14), mat: 'glace', relief: 'dome', dome: { x: 0.2, y: 0, rx: 1.6, ry: 1.6 } })
     f.push({ pts: [[5.8, 0], [4.6, -0.8], [3, -0.6], [2.6, 0], [3, 0.6], [4.6, 0.8]], mat: 'glace', relief: 'dome', dome: { x: 4.2, y: 0, rx: 1.7, ry: 0.8 } })
     return f
@@ -603,12 +637,13 @@ export function formesDeLaCoque(cran: number): Forme[] {
   if (cran === 7) {
     // L'INGÉNIEUR, UN CAISSON (Keko, 15/11 : « mécanique, carré ») : une coque rectangulaire aux coins coupés ; une cabine
     // carrée vitrée à la proue ; la SOUTE À TOURELLES sur le dos, trois modules carrés rangés ; des plaques boulonnées
-    const f: Forme[] = [{ pts: [[7.4, -3.4], [6.4, -4.4], [-6.4, -4.4], [-7.4, -3.4], [-7.4, 3.4], [-6.4, 4.4], [6.4, 4.4], [7.4, 3.4]], mat: 'coque', relief: 'cyl' }]
+    // (sa couleur à lui : un caisson kaki, des caissons latéraux de graphite ; les voyants des modules sont la marque)
+    const f: Forme[] = [{ pts: [[7.4, -3.4], [6.4, -4.4], [-6.4, -4.4], [-7.4, -3.4], [-7.4, 3.4], [-6.4, 4.4], [6.4, 4.4], [7.4, 3.4]], mat: 'kaki', relief: 'cyl' }]
     f.push({ pts: [[6.6, -2], [4, -2], [4, 2], [6.6, 2]], mat: 'acier', relief: 'plat' })
     f.push({ pts: [[6.2, -1.5], [4.4, -1.5], [4.4, 1.5], [6.2, 1.5]], mat: 'verre', relief: 'plat' })
     f.push({ pts: [[2.6, -3], [-6, -3], [-6, 3], [2.6, 3]], mat: 'metal', relief: 'plat' })
     for (const x of [1.6, -1.2, -4]) f.push({ pts: [[x, -2.2], [x - 2.2, -2.2], [x - 2.2, 2.2], [x, 2.2]], mat: 'acier', relief: 'plat' })
-    for (const x of [0.5, -2.3, -5.1]) f.push({ pts: [[x + 0.5, -0.5], [x - 0.5, -0.5], [x - 0.5, 0.5], [x + 0.5, 0.5]], mat: 'or', relief: 'plat' })
+    for (const x of [0.5, -2.3, -5.1]) f.push({ pts: [[x + 0.6, -0.6], [x - 0.6, -0.6], [x - 0.6, 0.6], [x + 0.6, 0.6]], mat: 'marque', relief: 'plat' })
     for (const [x, y] of [[6.6, -3.6], [6.6, 3.6], [-6.6, -3.6], [-6.6, 3.6]]) f.push({ pts: [[x + 0.4, y - 0.4], [x - 0.4, y - 0.4], [x - 0.4, y + 0.4], [x + 0.4, y + 0.4]], mat: 'metal', relief: 'plat' })
     return f
   }
@@ -616,7 +651,8 @@ export function formesDeLaCoque(cran: number): Forme[] {
     // LA SENTINELLE, UNE SOUCOUPE (Keko, 15/11) : un disque, SANS AVANT NI ARRIÈRE — un dôme vitré au centre, huit
     // rivets en couronne, trois BERCEAUX de drone (vides : les drones sont dehors) répartis sur le dessus, des feux
     // verts entre eux ; les huit tuyères sont tout autour (voir `formesDeLaTuyereOmni`)
-    const f: Forme[] = [{ pts: ovale(0, 0, 6.8, 6.8, 28), mat: 'coque', relief: 'cyl' }]
+    // (sa couleur à elle : un disque de perle dans un anneau de sarcelle ; ses trois feux sont la marque du joueur)
+    const f: Forme[] = [{ pts: ovale(0, 0, 6.8, 6.8, 28), mat: 'perle', relief: 'cyl' }]
     for (let k = 0; k < 8; k++) {
       const a = (k * Math.PI) / 4
       f.push({ pts: ovale(Math.cos(a) * 5.6, Math.sin(a) * 5.6, 0.45, 0.45, 8), mat: 'metal', relief: 'dome', dome: { x: Math.cos(a) * 5.6, y: Math.sin(a) * 5.6, rx: 0.45, ry: 0.45 } })
@@ -627,7 +663,7 @@ export function formesDeLaCoque(cran: number): Forme[] {
       const y = Math.sin(a) * 3.9
       f.push({ pts: ovale(x, y, 1.4, 1.4, 12), mat: 'metal', relief: 'dome', dome: { x, y, rx: 1.4, ry: 1.4 } })
       const b = a + Math.PI / 3
-      f.push({ pts: ovale(Math.cos(b) * 3.9, Math.sin(b) * 3.9, 0.6, 0.6, 8), mat: 'emeraude', relief: 'dome', dome: { x: Math.cos(b) * 3.9, y: Math.sin(b) * 3.9, rx: 0.6, ry: 0.6 } })
+      f.push({ pts: ovale(Math.cos(b) * 3.9, Math.sin(b) * 3.9, 0.75, 0.75, 8), mat: 'marque', relief: 'dome', dome: { x: Math.cos(b) * 3.9, y: Math.sin(b) * 3.9, rx: 0.75, ry: 0.75 } })
     }
     f.push({ pts: ovale(0, 0, 2.3, 2.3, 18), mat: 'verre', relief: 'dome', dome: { x: 0, y: 0, rx: 2.3, ry: 2.3 } })
     return f
@@ -636,10 +672,11 @@ export function formesDeLaCoque(cran: number): Forme[] {
     // LA SALAMANDRE, UNE AUTRE SILHOUETTE (Keko, 15/11 : « changer légèrement la forme, la rendre plus distinguable du
     // chasseur ») : pas une fléchette — un corps rond et trapu, le nez court et camus, une échine d'acier ; ses
     // réservoirs sont ses nacelles, de part et d'autre (voir `formesDesAiles`) ; la verrière en avant
-    const f: Forme[] = [{ pts: [[6.5, 0], [5.8, -2.6], [3.5, -4.2], [-1, -4.7], [-6, -4.5], [-8.4, -3], [-8.9, 0], [-8.4, 3], [-6, 4.5], [-1, 4.7], [3.5, 4.2], [5.8, 2.6]], mat: 'coque', relief: 'cyl' }]
+    // (sa couleur à elle : de la suie, l'échine d'acier, des pylônes de cuivre, la verrière d'ambre)
+    const f: Forme[] = [{ pts: [[6.5, 0], [5.8, -2.6], [3.5, -4.2], [-1, -4.7], [-6, -4.5], [-8.4, -3], [-8.9, 0], [-8.4, 3], [-6, 4.5], [-1, 4.7], [3.5, 4.2], [5.8, 2.6]], mat: 'suie', relief: 'cyl' }]
     f.push({ pts: [[0.5, -1], [-7, -1.3], [-7, 1.3], [0.5, 1]], mat: 'acier', relief: 'plat' })
     for (const x of [-2.2, -4.6]) f.push({ pts: [[x + 0.4, -1.5], [x - 0.4, -1.5], [x - 0.4, 1.5], [x + 0.4, 1.5]], mat: 'metal', relief: 'plat' })
-    f.push({ pts: ovale(2.4, 0, 2.3, 1.6, 18), mat: 'verre', relief: 'dome', dome: { x: 2.4, y: 0, rx: 2.3, ry: 1.6 } })
+    f.push({ pts: ovale(2.4, 0, 2.3, 1.6, 18), mat: 'ambre', relief: 'dome', dome: { x: 2.4, y: 0, rx: 2.3, ry: 1.6 } })
     return f
   }
   if (cran === 4) {
@@ -697,10 +734,10 @@ function formesDuCroissant(sg: number): Forme[] {
     ext.push([cx + Math.cos(a) * R, sg * Math.sin(a) * R])
     int.unshift([cx + Math.cos(a) * (R - w), sg * Math.sin(a) * (R - w)])
   }
-  const f: Forme[] = [{ pts: [...ext, ...int], mat: 'aile', relief: 'plat', penche: sg }]
+  const f: Forme[] = [{ pts: [...ext, ...int], mat: 'indigo', relief: 'plat', penche: sg }]
   // (DEUX NERVURES FINES ET COURBES le tiennent au corps — une barre droite faisait trop « humain »)
-  f.push({ pts: [[1.4, sg * 2.6], [0.9, sg * 4.4], [-0.2, sg * 6.9], [-1.3, sg * 6.9], [-0.3, sg * 4.4], [0.2, sg * 2.8]], mat: 'blinde', relief: 'plat', penche: sg })
-  f.push({ pts: [[-3.6, sg * 3], [-4.6, sg * 4.2], [-5.8, sg * 5.6], [-6.7, sg * 5.3], [-5.4, sg * 3.9], [-4.6, sg * 2.8]], mat: 'blinde', relief: 'plat', penche: sg })
+  f.push({ pts: [[1.4, sg * 2.6], [0.9, sg * 4.4], [-0.2, sg * 6.9], [-1.3, sg * 6.9], [-0.3, sg * 4.4], [0.2, sg * 2.8]], mat: 'nacre', relief: 'plat', penche: sg })
+  f.push({ pts: [[-3.6, sg * 3], [-4.6, sg * 4.2], [-5.8, sg * 5.6], [-6.7, sg * 5.3], [-5.4, sg * 3.9], [-4.6, sg * 2.8]], mat: 'nacre', relief: 'plat', penche: sg })
   for (const d of [62, 95, 128]) {
     const a = (d * Math.PI) / 180
     const ux = Math.cos(a)
@@ -712,7 +749,7 @@ function formesDuCroissant(sg: number): Forme[] {
   }
   // (le bout de la corne, devant : une goutte de glace)
   const at = (d0 * Math.PI) / 180
-  f.push({ pts: ovale(cx + Math.cos(at) * (R - 0.4), sg * Math.sin(at) * (R - 0.4), 0.7, 0.7, 8), mat: 'glace', relief: 'dome', dome: { x: cx + Math.cos(at) * (R - 0.4), y: sg * Math.sin(at) * (R - 0.4), rx: 0.7, ry: 0.7 } })
+  f.push({ pts: ovale(cx + Math.cos(at) * (R - 0.4), sg * Math.sin(at) * (R - 0.4), 0.85, 0.85, 8), mat: 'marque', relief: 'dome', dome: { x: cx + Math.cos(at) * (R - 0.4), y: sg * Math.sin(at) * (R - 0.4), rx: 0.85, ry: 0.85 } })
   return f
 }
 export function formesDesAiles(coque = 1): Forme[] {
@@ -723,13 +760,13 @@ export function formesDesAiles(coque = 1): Forme[] {
     return f
   }
   if (coque === 7) {
-    // (l'ingénieur : PAS D'AILES — deux CAISSONS latéraux, plaques d'acier rayées de jaune et de noir, comme un engin de
-    // chantier)
+    // (l'ingénieur : PAS D'AILES — deux CAISSONS latéraux, plaques de graphite rayées d'acier, comme un engin de chantier)
     for (const sg of [-1, 1]) {
-      f.push({ pts: [[4.4, sg * 4], [-6, sg * 4], [-6, sg * 7.4], [4.4, sg * 7.4]], mat: 'aile', relief: 'plat', penche: sg })
+      f.push({ pts: [[4.4, sg * 4], [-6, sg * 4], [-6, sg * 7.4], [4.4, sg * 7.4]], mat: 'graphite', relief: 'plat', penche: sg })
       for (let k = 0; k < 4; k++) {
         const x = 3.6 - k * 2.6
-        f.push({ pts: [[x, sg * 6.4], [x - 1.3, sg * 6.4], [x - 1.3, sg * 7.4], [x, sg * 7.4]], mat: 'or', relief: 'plat' })
+        // (des bandes d'acier sur le graphite, plus le jaune : il se lisait comme la marque d'un joueur — Keko, 16/11)
+        f.push({ pts: [[x, sg * 6.4], [x - 1.3, sg * 6.4], [x - 1.3, sg * 7.4], [x, sg * 7.4]], mat: 'acier', relief: 'plat' })
       }
       f.push({ pts: [[4.4, sg * 4], [3.4, sg * 4], [3.4, sg * 6.4], [4.4, sg * 6.4]], mat: 'acier', relief: 'plat' })
     }
@@ -737,7 +774,7 @@ export function formesDesAiles(coque = 1): Forme[] {
   }
   if (coque === 6) {
     // (la soucoupe : PAS D'AILES — un ANNEAU tout autour d'elle, où sont fixées ses huit tuyères)
-    f.push({ pts: ovale(0, 0, 9.6, 9.6, 32), mat: 'aile', relief: 'plat' })
+    f.push({ pts: ovale(0, 0, 9.6, 9.6, 32), mat: 'sarcelle', relief: 'plat' })
     f.push({ pts: ovale(0, 0, 8.3, 8.3, 32), mat: 'acier', relief: 'plat' })
     return f
   }
@@ -745,10 +782,10 @@ export function formesDesAiles(coque = 1): Forme[] {
     // (la salamandre : PAS D'AILES — deux GROS RÉSERVOIRS DE LAITON en nacelles, portés par de courts pylônes, le bout
     // rouge, une bague d'acier à l'arrière)
     for (const sg of [-1, 1]) {
-      f.push({ pts: [[0.6, sg * 4.2], [-4.6, sg * 4.2], [-5.6, sg * 6.4], [-0.4, sg * 6.4]], mat: 'aile', relief: 'plat', penche: sg })
+      f.push({ pts: [[0.6, sg * 4.2], [-4.6, sg * 4.2], [-5.6, sg * 6.4], [-0.4, sg * 6.4]], mat: 'cuivre', relief: 'plat', penche: sg })
       f.push({ pts: ovale(-2, sg * 7.6, 5.4, 2.1, 22), mat: 'or', relief: 'dome', dome: { x: -2, y: sg * 7.6, rx: 5.4, ry: 2.1 } })
       f.push({ pts: [[-5.4, sg * 5.7], [-6.3, sg * 5.8], [-6.3, sg * 9.4], [-5.4, sg * 9.5]], mat: 'metal', relief: 'plat' })
-      f.push({ pts: ovale(3.1, sg * 7.6, 1.2, 1.4, 12), mat: 'rouge', relief: 'dome', dome: { x: 3.1, y: sg * 7.6, rx: 1.2, ry: 1.4 } })
+      f.push({ pts: ovale(3.1, sg * 7.6, 1.2, 1.4, 12), mat: 'marque', relief: 'dome', dome: { x: 3.1, y: sg * 7.6, rx: 1.2, ry: 1.4 } })
     }
     return f
   }
@@ -766,7 +803,7 @@ export function formesDesAiles(coque = 1): Forme[] {
     f.push({ pts: [[1.2, s * 2.4], [-4.8, s * 8.2], [-8, s * 8.7], [-8, s * 7], [-6.2, s * 2.6]], mat: 'aile', relief: 'plat', penche: s })
     // le bord d'attaque, une bande d'acier qui accroche la lumière
     f.push({ pts: [[1.2, s * 2.4], [-4.8, s * 8.2], [-5.6, s * 8.05], [0.2, s * 2.5]], mat: 'acier', relief: 'plat', penche: s })
-    f.push({ pts: [[-6.6, s * 7.3], [-8, s * 7.5], [-8, s * 8.7], [-7.1, s * 8.5]], mat: 'rouge', relief: 'plat', penche: s })
+    f.push({ pts: [[-6.6, s * 7.3], [-8, s * 7.5], [-8, s * 8.7], [-7.1, s * 8.5]], mat: 'marque', relief: 'plat', penche: s })
   }
   return f
 }
