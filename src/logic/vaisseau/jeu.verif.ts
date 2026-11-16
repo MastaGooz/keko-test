@@ -1445,7 +1445,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const essaim = { id: 'essaim', cadence: 2.4, degats: 4, portee: 100, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, essaim: { nombre: 6, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3 } }
+  const essaim = { id: 'essaim', cadence: 2.4, degats: 4, portee: 80, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, essaim: { nombre: 6, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [essaim], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const places: [number, number][] = [[50, 0], [-40, 30], [0, -70], [0, -300]]
   const voler = (verrou: number | null) => {
@@ -1475,6 +1475,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`leur vol est chaotique : en moyenne ${libre.tordu.toFixed(2)} fois plus long que la ligne droite (plus de 1,5)`, libre.tordu > 1.5)
   const verrouille = voler(2)
   verifier('un insecte verrouillé : les six missiles vont tous sur lui', verrouille.cibles.length === 6 && verrouille.cibles.every((id) => id === 2) && verrouille.pv[1] >= 16)
+  // (sa cible morte, un missile ne reprend qu'un insecte proche de LUI — à moins de 45 —, sinon il s'éteint)
+  const w = nouveauMonde(cfg, 3)
+  const pres: [number, number][] = [[50, 0], [62, 30], [50, -95]]
+  pres.forEach(([x, y], k) => w.ennemis.push({ ...insecte(k + 1, x, y), pv: k === 0 ? 4 : 1000 }))
+  w.verrou = 1
+  for (let i = 0; i < 140; i++) {
+    for (const e of w.ennemis) {
+      const [x, y] = pres[e.id - 1]
+      e.corps = { ...e.corps, x, y, vx: 0, vy: 0 }
+    }
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  const voisin = w.ennemis.find((e) => e.id === 2)
+  const lointain = w.ennemis.find((e) => e.id === 3)
+  verifier('la cible verrouillée meurt au premier coup : les autres missiles reprennent la voisine (à 32 d’elle), jamais la lointaine (à 95)', w.ennemis.every((e) => e.id !== 1) && voisin !== undefined && voisin.pv < 1000 && lointain !== undefined && lointain.pv === 1000 && w.obus.length === 0)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

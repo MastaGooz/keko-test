@@ -4290,3 +4290,15 @@ LE PANNEAU DES COULEURS, COUCHÉ (Keko, 16/11 : « en mode paysage, je ne peux
 plus cliquer sur Fermer, le bouton a disparu ») : douze couleurs sur trois
 rangées, il faisait 187 de haut sur un écran de 180. Couché, il n'a plus son
 aperçu du vaisseau : celui de la scène, à gauche, prend la couleur sur-le-champ.
+
+PUIS LA REPRISE D'UNE CIBLE, BORNÉE (Keko, 16/11 : « quand leur première cible
+meurt, les missiles foncent en ligne droite vers un autre ennemi, parfois assez
+loin ; ils perdent leur comportement chaotique, ça fait un effet de rebond entre
+les ennemis, avec une portée très grande ; il faudrait réduire un peu la portée »)
+: un missile dont la cible est morte ne reprend que l'insecte le plus proche DE
+LUI à moins de 45 (`reprise`) — sinon il s'éteint sur place, dans son « pop » ;
+et, repris, il REPART EN ZIGZAG : son chaos recommence (sur un calme moitié moins
+long, 0,65 s, ses bonds tirés sur une autre clé) avec de quoi voler jusque-là. Ce
+qui le faisait filer droit : l'écart du chaos se comptait depuis le départ, déjà
+éteint à la reprise, et rien ne bornait la distance. La portée de l'arme passe de
+100 à 80. *Chiffres de moi, à rejuger.*
