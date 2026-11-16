@@ -438,7 +438,17 @@ export type Arme = {
    * plus proche au plus loin (le verrouillé d'abord), un missile chacun à tour de rôle ; une cible morte, le missile
    * prend l'insecte le plus proche de lui. Chacun fait `degats` à ce qu'il touche.
    */
-  essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number }
+  // PUIS DES MISSILES MAGIQUES, CHAOTIQUES (Keko, 16/11 : « ils ont trop une trajectoire de missiles ordinaires ; les
+  // missiles magiques font des zigzags dans tous les sens et finissent par arriver sur leur cible ; chaque missile prend
+  // une cible aléatoire parmi celles à portée — sauf si une cible est verrouillée : tous vont sur elle ») : chacun part
+  // dans une direction tirée au hasard (à ±`eventail` de sa cible) ; il vole PAR BONDS de `pas` secondes (un peu plus ou
+  // un peu moins pour chacun), et à chaque bond il change brusquement de cap — vers sa cible, plus un écart tiré au
+  // hasard, d'un bord à l'autre, jusqu'à ±`chaos` ; l'écart S'ÉTEINT en `calme` secondes : il finit droit sur elle. Il
+  // braque fort (`braquage`, par seconde) : les changements de cap sont des cassures, pas des courbes. Sa vitesse monte
+  // de `vitesse` de `acces` × âge², jusqu'à `pointe`. LA CIBLE : tirée au hasard parmi les insectes à portée, missile par
+  // missile — le verrouillé, s'il est à portée, pour tous ; une cible morte, le missile prend l'insecte le plus proche de
+  // lui.
+  essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number }
 }
 
 export type Vaisseau = {
@@ -475,7 +485,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -1542,35 +1552,36 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   })
 }
 
-/** LES ESSAIMS (voir `Arme.essaim`) : à la cadence, un insecte à portée, `nombre` missiles en éventail, les cibles partagées. */
+/** LES ESSAIMS (voir `Arme.essaim`) : à la cadence, un insecte à portée, `nombre` missiles, chacun sa cible tirée au hasard (le verrouillé pour tous). */
 function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
     const es = a.essaim
     if (es === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-    const cibles = m.ennemis.filter((e) => dist(e) <= a.portee + c.ennemi.rayon).sort((p, q) => dist(p) - dist(q))
-    if (cibles.length === 0) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
     const ve = ennemiVerrouille(m)
-    if (ve !== null && cibles.includes(ve)) cibles.splice(cibles.indexOf(ve), 1), cibles.unshift(ve)
+    const cibles = ve !== null && aPortee(ve) ? [ve] : m.ennemis.filter(aPortee)
+    if (cibles.length === 0) return
     m.armesA[i] = m.t + a.cadence
     const bo = a.bouche
     const x0 = bo === undefined ? v.x : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
     const y0 = bo === undefined ? v.y : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
-    const cap0 = Math.atan2(cibles[0].corps.y - y0, cibles[0].corps.x - x0)
     for (let k = 0; k < es.nombre; k++) {
-      // (l'éventail : les missiles alternent d'un bord à l'autre, du milieu vers les bords)
-      const rang = Math.ceil(k / 2) * (k % 2 === 0 ? 1 : -1)
-      const an = cap0 + (es.nombre <= 1 ? 0 : (rang / Math.ceil((es.nombre - 1) / 2)) * es.eventail)
-      const cible = cibles[k % cibles.length]
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage } })
+      const id = m.prochainId++
+      const cible = cibles[Math.min(cibles.length - 1, Math.floor(tire(m.graine, id, 22) * cibles.length))]
+      // (il part dans une direction tirée au hasard, à ±`eventail` de sa cible)
+      const an = Math.atan2(cible.corps.y - y0, cible.corps.x - x0) + (tire(m.graine, id, 23) - 0.5) * 2 * es.eventail
+      const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
+      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme } })
     }
     ev.push({ type: 'essaim', x: x0, y: y0, arme: a.id })
   })
 }
 
-/** UN MISSILE D'ESSAIM SE RECOURBE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, de plus en plus vite et serré. */
+/**
+ * UN MISSILE D'ESSAIM ZIGZAGUE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, par
+ * bonds : à chaque bond un cap neuf, l'écart tiré au hasard d'un bord à l'autre et qui s'éteint avec l'âge.
+ */
 function traquer(m: Monde, o: Obus, dt: number): void {
   const tq = o.traque
   if (tq === undefined) return
@@ -1587,11 +1598,17 @@ function traquer(m: Monde, o: Obus, dt: number): void {
   const age = m.t - tq.nee
   const dx = cible.corps.x - o.x
   const dy = cible.corps.y - o.y
-  const d = Math.hypot(dx, dy) || 1
   const sp = Math.min(tq.pointe, tq.v0 + tq.acces * age * age)
-  const k = Math.min(1, (1.4 + tq.braquage * age) * dt)
-  o.vx += ((dx / d) * sp - o.vx) * k
-  o.vy += ((dy / d) * sp - o.vy) * k
+  // (le bond en cours, et son écart : d'un côté puis de l'autre, d'une ampleur tirée au hasard, qui s'éteint en `calme`)
+  const bond = Math.floor(age / tq.pas)
+  const ampleur = tq.chaos * Math.max(0, 1 - age / tq.calme)
+  // (un bond sur quatre ne change pas de côté : un crochet, une boucle, pas un zigzag régulier)
+  const cote = (bond % 2 === 0 ? 1 : -1) * (o.id % 2 === 0 ? 1 : -1) * (tire(m.graine, o.id, 26, bond) < 0.25 ? -1 : 1)
+  const ecart = cote * ampleur * (0.35 + 0.65 * tire(m.graine, o.id, 25, bond))
+  const voulu = Math.atan2(dy, dx) + ecart
+  const k = Math.min(1, tq.braquage * dt)
+  o.vx += (Math.cos(voulu) * sp - o.vx) * k
+  o.vy += (Math.sin(voulu) * sp - o.vy) * k
 }
 
 /** L'instant où le triangle d'une balise s'éteint : `duree` après la pose de sa dernière balise (voir `Arme.balise`). */

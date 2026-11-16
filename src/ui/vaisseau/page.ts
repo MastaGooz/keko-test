@@ -3811,7 +3811,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cote = 26
     const pas = cote + 4
     const rangs = Math.ceil(LISTE.length / COLONNES)
-    const hp = 78 + rangs * pas + 15 + 4
+    // (COUCHÉ, PAS D'APERÇU — Keko, 16/11 : « en mode paysage, je ne peux plus cliquer sur Fermer, le bouton a disparu » :
+    // douze couleurs sur trois rangées, le panneau faisait 187 de haut sur un écran de 180 ; le vaisseau reste visible
+    // dans la scène, à gauche, et prend la couleur sur-le-champ)
+    const apercu = H >= 260
+    const yGrille = apercu ? 78 : 34
+    const hp = yGrille + rangs * pas + 15 + 4
     const x = 6
     const w = W - 12
     const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
@@ -3822,14 +3827,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, x, y, w, hp, 'encre')
     motEnRelief(p, VORTEX ? 'Couleur' : 'Style', W / 2, y + 7, true)
     // le châssis monté, dans la couleur choisie
-    plaque(p, W / 2 - 24, y + 20, 48, 40, 'creux')
-    const monte = monteeA(hangar, 'coque')
-    if (monte !== undefined) dessinerLePictogramme(p, monte, W / 2, y + 40, 48, 40)
-    ecrire(p, LIVREES.find((l) => l.id === livree)?.nom ?? '', W / 2, y + 64, N.hex('#fff3cf'), { align: 'center', police: GRAS })
+    if (apercu) {
+      plaque(p, W / 2 - 24, y + 20, 48, 40, 'creux')
+      const monte = monteeA(hangar, 'coque')
+      if (monte !== undefined) dessinerLePictogramme(p, monte, W / 2, y + 40, 48, 40)
+    }
+    ecrire(p, LIVREES.find((l) => l.id === livree)?.nom ?? '', W / 2, y + yGrille - 14, N.hex('#fff3cf'), { align: 'center', police: GRAS })
     const x0 = Math.round((W - COLONNES * pas + 4) / 2)
     LISTE.forEach((l, i) => {
       const cx = x0 + (i % COLONNES) * pas
-      const cy = y + 78 + Math.floor(i / COLONNES) * pas
+      const cy = y + yGrille + Math.floor(i / COLONNES) * pas
       const choisie = l.id === livree
       const [sombre, moyen, clair] = tonsDeLaLivree(l.id)
       const e = etatDuBouton(cx, cy, cote, cote)
@@ -3856,7 +3863,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }, 'equipe')
     })
     const bf = largeurDe('Fermer', GRAS) + 22
-    bouton(p, Math.round(W / 2 - bf / 2), y + 78 + rangs * pas, bf, 15, 'Fermer', true, () => (couleursOuvertes = false), 'retour', 'acier')
+    bouton(p, Math.round(W / 2 - bf / 2), y + yGrille + rangs * pas, bf, 15, 'Fermer', true, () => (couleursOuvertes = false), 'retour', 'acier')
     zone(x, y, w, hp, () => {}, null)
     zone(0, 0, W, H, () => (couleursOuvertes = false), 'retour')
   }
@@ -6665,7 +6672,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const o of missiles) {
       const pts = rubans.get(o.id) ?? []
       pts.unshift([o.x, o.y])
-      if (pts.length > 9) pts.pop()
+      // (un ruban plus long : on y lit les zigzags)
+      if (pts.length > 14) pts.pop()
       rubans.set(o.id, pts)
     }
     for (let i = popsDEssaim.length - 1; i >= 0; i--) if (t - popsDEssaim[i].t0 > DUREE_DU_POP) popsDEssaim.splice(i, 1)

@@ -4270,3 +4270,23 @@ missiles » en violet et bleu : une tête en couches et deux rayons qui tournent
 un ruban qui s'effile, deux brins qui s'y enroulent ; à l'impact, un « pop » —
 disque blanc, croix, anneau. Son son, `essaim` : six sifflements qui montent,
 jetés d'une oreille à l'autre. *Chiffres de moi, à rejuger.*
+
+PUIS DES MISSILES MAGIQUES, CHAOTIQUES (Keko, 16/11 : « ils ont trop une
+trajectoire de missiles ordinaires ; les missiles magiques font des zigzags dans
+tous les sens et finissent par arriver sur leur cible ; chaque missile prendrait
+une cible aléatoire parmi celles à portée, sauf si une cible est verrouillée :
+tous vont sur lui ») : chacun part dans une direction tirée au hasard (±2,4 rad
+de sa cible), puis vole PAR BONDS d'un quart de seconde (plus ou moins, pour
+chacun) ; à chaque bond, un cap neuf — vers sa cible, plus un écart tiré au
+hasard jusqu'à ±2,4 rad, d'un côté puis de l'autre (un bond sur quatre reste du
+même côté : un crochet, une boucle) ; l'écart s'éteint en 1,3 s, et il finit
+droit sur elle. Il braque sec : des cassures, pas des courbes. Mesuré hors
+navigateur sur cinq graines : un vol 1,85 fois plus long que la ligne droite en
+moyenne, le plus long en 1,3 s, aucun missile perdu. La cible : tirée au hasard
+parmi les insectes à portée, missile par missile ; le verrouillé, pour tous.
+Le ruban s'allonge (quatorze images) : on y lit les zigzags.
+
+LE PANNEAU DES COULEURS, COUCHÉ (Keko, 16/11 : « en mode paysage, je ne peux
+plus cliquer sur Fermer, le bouton a disparu ») : douze couleurs sur trois
+rangées, il faisait 187 de haut sur un écran de 180. Couché, il n'a plus son
+aperçu du vaisseau : celui de la scène, à gauche, prend la couleur sur-le-champ.

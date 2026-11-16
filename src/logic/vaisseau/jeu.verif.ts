@@ -1445,21 +1445,36 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const essaim = { id: 'essaim', cadence: 2.4, degats: 4, portee: 100, vitesse: 85, vie: 1.8, dispersion: 0, guide: false, essaim: { nombre: 6, eventail: 1.5, acces: 380, pointe: 260, braquage: 12 } }
+  const essaim = { id: 'essaim', cadence: 2.4, degats: 4, portee: 100, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, essaim: { nombre: 6, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [essaim], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
-  const w = nouveauMonde(cfg, 3)
   const places: [number, number][] = [[50, 0], [-40, 30], [0, -70], [0, -300]]
-  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
-  const ev: Evenement[] = []
-  let partis = 0
-  for (let i = 0; i < 120; i++) {
-    places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
-    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
-    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
-    if (i === 0) partis = w.obus.length
+  const voler = (verrou: number | null) => {
+    const w = nouveauMonde(cfg, 3)
+    places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+    w.verrou = verrou
+    const ev: Evenement[] = []
+    let cibles: number[] = []
+    // (le chemin de chaque missile, et d'où il est parti : un vol en zigzag est bien plus long que la ligne droite)
+    const chemins = new Map<number, { l: number; x0: number; y0: number; x: number; y: number }>()
+    for (let i = 0; i < 140; i++) {
+      places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      if (i === 0) cibles = w.obus.map((o) => o.traque?.cible ?? -1)
+      for (const o of w.obus) {
+        const c = chemins.get(o.id)
+        if (c === undefined) chemins.set(o.id, { l: 0, x0: o.x, y0: o.y, x: o.x, y: o.y })
+        else (c.l += Math.hypot(o.x - c.x, o.y - c.y)), (c.x = o.x), (c.y = o.y)
+      }
+    }
+    const tordu = [...chemins.values()].reduce((s, c) => s + c.l / Math.max(1, Math.hypot(c.x - c.x0, c.y - c.y0)), 0) / Math.max(1, chemins.size)
+    return { w, ev, cibles, tordu, pv: w.ennemis.map((e) => 1000 - e.pv) }
   }
-  const pv = w.ennemis.map((e) => 1000 - e.pv)
-  verifier('six missiles partent ensemble, une seule fois ; ils se partagent les trois insectes à portée (deux chacun : 8), même celui de derrière ; le lointain, rien ; aucun ne reste', ev.filter((e) => e.type === 'essaim').length === 1 && partis === 6 && pv[0] === 8 && pv[1] === 8 && pv[2] === 8 && pv[3] === 0 && w.obus.length === 0)
+  const libre = voler(null)
+  verifier('six missiles partent ensemble, une seule fois, chacun sur une cible tirée au hasard parmi les trois à portée (au moins deux différentes) ; tous finissent par toucher (24 en tout), le lointain rien', libre.ev.filter((e) => e.type === 'essaim').length === 1 && libre.cibles.length === 6 && libre.cibles.every((id) => id >= 1 && id <= 3) && new Set(libre.cibles).size >= 2 && libre.pv[0] + libre.pv[1] + libre.pv[2] === 24 && libre.pv[3] === 0 && libre.w.obus.length === 0)
+  verifier(`leur vol est chaotique : en moyenne ${libre.tordu.toFixed(2)} fois plus long que la ligne droite (plus de 1,5)`, libre.tordu > 1.5)
+  const verrouille = voler(2)
+  verifier('un insecte verrouillé : les six missiles vont tous sur lui', verrouille.cibles.length === 6 && verrouille.cibles.every((id) => id === 2) && verrouille.pv[1] >= 16)
 }
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
