@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -968,7 +968,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau' ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -6122,7 +6122,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   function dessinerLeVaisseau(p: Peintre): void {
     // (la tourelle du rayon thermique vise sa cible, comme la foreuse sa roche)
-    const vise = m.canal !== null ? Math.atan2(m.canal.y - v.y, m.canal.x - v.x) - v.cap : m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
+    const impact = impactDuRayon(CONF, m)
+    const vise = impact !== null ? Math.atan2(impact.y - v.y, impact.x - v.x) - v.cap : m.canal !== null ? Math.atan2(m.canal.y - v.y, m.canal.x - v.x) - v.cap : m.forage !== null ? Math.atan2(m.forage.y - v.y, m.forage.x - v.x) - v.cap : 0
     // (CHAQUE FOREUSE VISE SA ROCHE : son angle, depuis son pivot, par place d'outil)
     const vises: number[] = []
     CONF.foreuses.forEach((fo, j) => {
@@ -7763,6 +7764,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // étincelles. Il s'allonge en naissant ; juste avant de partir, l'émetteur se charge.
     {
       const C = RAMPE_DU_LASER
+      // … PUIS UN TRAIT AU SOL (Keko, 16/11 : « un truc qui part du toit du vaisseau, qui va vers le bas, qui touche
+      // l'endroit où le rayon touche le sol ») : le laser de la tourelle descend jusqu'au POINT D'IMPACT ; derrière lui, le
+      // trait déjà tracé refroidit du blanc au rouge sombre ; au point, le sol chauffé à blanc, un anneau qui bat, une lueur
+      const im = impactDuRayon(CONF, m)
+      if (im !== null && m.phase === 'vol') {
+        const l = im.ligne
+        const L = Math.hypot(l.x1 - l.x0, l.y1 - l.y0) || 1
+        const ux = (l.x1 - l.x0) / L
+        const uy = (l.y1 - l.y0) / L
+        const fait = L * im.part
+        for (let d = 0; d <= fait; d += 0.7) {
+          const k = (fait - d) / 16
+          p.dot(l.x0 + ux * d, l.y0 + uy * d, k < 0.1 ? N.WHITE : k < 0.35 ? C[6] : k < 0.75 ? C[4] : C[3], Math.max(0.3, 1 - k * 0.5))
+        }
+        dessinerUnLaser(p, v, { sorte: 'roche', cible: 0, x: im.x, y: im.y, part: 1 }, C, 3, placeDOutil(monteeA(hangar, 'coque').cran, 0))
+        p.glow(im.x, im.y, 13, C[4], 0.6)
+        p.ring(im.x, im.y, 3.5 + 1.5 * Math.sin(t * 30), 1, C[6], 0.8)
+        p.circle(im.x, im.y, 2, N.WHITE)
+        p.glow(im.x, im.y, 5, N.WHITE, 0.5)
+      }
       const r = angleDuBalayage(CONF, m)
       if (r !== null && m.phase === 'vol') {
         const L = r.longueur * Math.min(1, r.part / 0.08)
@@ -9607,6 +9628,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // le rayon sème des flammes à sa pointe et le long de lui
         {
+          // (le trait au sol : le sol éclate en étincelles au point d'impact, des flammes y naissent)
+          const im = impactDuRayon(CONF, m)
+          if (im !== null && m.phase === 'vol') {
+            for (let n = 0; n < 3; n++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(40, 110)
+              etincelles.ajouter('etincelle', im.x, im.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), R.next() < 0.4 ? N.WHITE : RAMPE_DU_LASER[R.next() < 0.5 ? 6 : 4], 1, 1.5)
+            }
+            if (R.next() < 0.7) flammesDesBrules.push({ x: im.x + R.range(-2, 2), y: im.y + R.range(-2, 2), vx: R.range(-6, 6), vy: R.range(-14, -4), t0: t, vie: R.range(0.2, 0.35) })
+          }
           const r = angleDuBalayage(CONF, m)
           if (r !== null && m.phase === 'vol') {
             const ex = v.x + Math.cos(r.angle) * r.longueur

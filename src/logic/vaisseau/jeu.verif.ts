@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -1778,6 +1778,30 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const pv = w.ennemis.map((e) => 1000 - e.pv)
   const attendues = (Math.floor(2.4 / 0.3) + 1) * 2
   verifier(`le rayon balaie un arc centré sur le plus proche : les deux insectes de devant prennent leur coup et brûlent ; celui de derrière, hors de l’arc, rien ; ${w.flaques.length} flaques de feu semées le long (${attendues} attendues)`, ev.filter((e) => e.type === 'balayage').length === 1 && pv[0] >= 9 && pv[1] >= 9 && pv[2] === 0 && w.flaques.length === attendues)
+}
+
+// … PUIS UN TRAIT AU SOL (Keko, 16/11 : « il vise un ennemi en traçant un trait qui le touche, de devant vers le fond ») :
+// seul le point d'impact frappe — l'insecte visé et celui qui est sur le trait au-delà, pas celui d'à côté — ; le trait
+// part en deçà de la cible et finit au-delà ; les flaques sont semées dessus
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rayon = { id: 'rayon', cadence: 0.1, degats: 0, portee: 70, vitesse: 0, vie: 0, dispersion: 0, guide: false, balayage: { tous: 9, duree: 0.7, longueur: 70, degats: 12, brulure: 2, dpsBrulure: 3, depart: 0, trace: { avant: 24, apres: 24, rayon: 6 }, trainee: { pas: 5, rayon: 6, duree: 2.5, dps: 5, brulure: 1.5, dpsBrulure: 3 } } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rayon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  const places: [number, number][] = [[0, 30], [0, 50], [15, 30]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  const ev: Evenement[] = []
+  let premier: { x: number; y: number } | null = null
+  for (let i = 0; i < 50; i++) {
+    places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    premier ??= impactDuRayon(cfg, w)
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  const attendues = Math.floor(48 / 5) + 1
+  const surLeTrait = w.flaques.every((f) => Math.abs(f.x) < 1e-6 && f.y >= 5.9 && f.y <= 54.1)
+  verifier(`le rayon trace un trait au sol de 6 à 54 (départ ${premier === null ? '—' : premier.y.toFixed(1)}) : la cible et l'insecte au-delà prennent leur coup (${pv[0]}, ${pv[1]}), celui d'à côté rien (${pv[2]}) ; ${w.flaques.length} flaques sur le trait (${attendues} attendues)`, ev.filter((e) => e.type === 'balayage').length === 1 && premier !== null && Math.abs(premier.y - 6) < 1.5 && pv[0] >= 12 && pv[1] >= 12 && pv[2] === 0 && w.flaques.length === attendues && surLeTrait)
 }
 
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se

@@ -4688,3 +4688,17 @@ dessus, on peint les pans tournés vers le haut, chacun éclairé selon son angl
 d'énergie — leurs arêtes défilent d'un bord à l'autre. DEUX ARCHES de facettes à arête de quartz
 partent de la proue, s'écartent et se referment devant la pointe. Le faisceau part désormais de
 la POINTE du cristal (3,4 devant son centre), plus de son milieu.
+
+LE RAYON DE LA SALAMANDRE TRACE UN TRAIT AU SOL (Keko, 16/11 : « je ne voyais pas un truc qui balaie
+en arc à l'horizontale ; je voyais un truc qui part du toit du vaisseau, qui va vers le bas, qui ne
+touche pas les ennemis touchés par le rayon mais l'endroit où le rayon touche le sol ; et le rayon
+pourrait viser un ennemi en traçant un trait qui le touche, de devant vers le fond »). L'arc est
+retiré de `arme-rayon` (la règle reste écrite) ; `Arme.balayage.trace` : toutes les 2,6 s, un
+insecte à moins de 70, le laser de la TOURELLE DU TOIT (revenue) descend sur le sol et son POINT
+D'IMPACT parcourt en 0,7 s un trait droit, sur la droite du vaisseau à l'insecte le plus proche, de 24
+en deçà de lui à 24 au-delà (jamais sous le vaisseau) ; SEUL CE POINT FRAPPE : 12 points, une fois par
+trait, et la brûlure, à ce qui est à moins de 6 de lui ; une flaque de feu tous les 5 sur le trait
+(10 par trait, mesuré), 2,5 s, 5 points par seconde. Le dessin : le laser de la foreuse jusqu'au
+point, le trait déjà tracé qui refroidit du blanc au rouge sombre, au point un anneau qui bat, des
+étincelles et des flammes. Le trait est posé au départ, en coordonnées du monde : le vaisseau qui
+bouge ne le tord pas. *Chiffres de moi, à rejuger.*

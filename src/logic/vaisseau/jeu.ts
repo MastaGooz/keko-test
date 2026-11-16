@@ -345,7 +345,12 @@ export type Arme = {
   // et laisse une traînée de feu » : `arc` — l'angle balayé, un tour sans lui ; `vise` — l'arc centré sur l'insecte le
   // plus proche, le sens alternant d'un balayage à l'autre ; `trainee` — tous les `pas` radians, des flaques de feu (celles
   // du napalm) aux parts `distances` de sa longueur)
-  balayage?: { tous: number; duree: number; longueur: number; degats: number; brulure: number; dpsBrulure: number; depart: number; arc?: number; vise?: boolean; trainee?: { pas: number; distances: number[]; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number } }
+  // (… PUIS UN TRAIT AU SOL — Keko, 16/11 : « un truc qui part du toit du vaisseau, qui va vers le bas, qui ne touche pas
+  // les ennemis touchés par le rayon mais l'endroit où le rayon touche le sol ; il vise un ennemi en traçant un trait qui le
+  // touche, de devant vers le fond » : `trace` — le rayon descend sur le sol ; son POINT D'IMPACT parcourt en `duree` un
+  // trait droit, de `avant` en deçà de l'insecte le plus proche (vu du vaisseau) à `apres` au-delà ; seul ce point frappe,
+  // dans `rayon` ; la traînée y sème une flaque tous les `pas` de trait, sur le trait même)
+  balayage?: { tous: number; duree: number; longueur: number; degats: number; brulure: number; dpsBrulure: number; depart: number; arc?: number; vise?: boolean; trace?: { avant: number; apres: number; rayon: number }; trainee?: { pas: number; distances?: number[]; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number } }
   /**
    * UN RAYON CANALISÉ (le rayon thermique de la Salamandre, Keko, 15/11 : « un rayon comme celui qui sert à forer les
    * astéroïdes, permanent, qu'on canalise sur l'ennemi ») : il part d'une tourelle sur le toit et reste sur UNE cible à
@@ -690,7 +695,8 @@ export type Monde = {
   /** LES FLAQUES DE NAPALM (voir `Arme.napalm`). */
   flaques: Flaque[]
   /** LE TOUR DU RAYON en cours (voir `Arme.balayage`) : l'arme, son début, l'angle atteint, les ennemis déjà touchés ; ou null. */
-  balayage: { arme: number; debut: number; angle: number; touches: number[]; depart: number; sens: number; posees: number } | null
+  // (`ligne` : le trait au sol d'un rayon qui trace, en coordonnées du monde — voir `Arme.balayage.trace`)
+  balayage: { arme: number; debut: number; angle: number; touches: number[]; depart: number; sens: number; posees: number; ligne?: { x0: number; y0: number; x1: number; y1: number } } | null
   /** LE RAYON CANALISÉ (voir `Arme.canalise`) : sa cible, depuis quand il est dessus, où elle est, sa chauffe (0 à 1) ; ou null. */
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
@@ -2507,7 +2513,17 @@ export function angleDuBalayage(c: ConfigVaisseau, m: Monde): { angle: number; p
   const a = b === null ? undefined : c.armes[b.arme]?.balayage
   if (b === null || a === undefined) return null
   const part = Math.min(1, (m.t - b.debut) / a.duree)
+  if (b.ligne !== undefined) return null
   return { angle: b.depart + b.sens * part * (a.arc ?? 2 * Math.PI), part, longueur: a.longueur, depart: b.depart, sens: b.sens }
+}
+/** LE POINT D'IMPACT D'UN RAYON QUI TRACE (voir `Arme.balayage.trace`) : où il touche le sol, sa part du trait, le trait ; null hors d'un trait. */
+export function impactDuRayon(c: ConfigVaisseau, m: Monde): { x: number; y: number; part: number; ligne: { x0: number; y0: number; x1: number; y1: number } } | null {
+  const b = m.balayage
+  const a = b === null ? undefined : c.armes[b.arme]?.balayage
+  if (b === null || a === undefined || b.ligne === undefined) return null
+  const part = Math.min(1, (m.t - b.debut) / a.duree)
+  const l = b.ligne
+  return { x: l.x0 + (l.x1 - l.x0) * part, y: l.y0 + (l.y1 - l.y0) * part, part, ligne: l }
 }
 
 /** LE RAYON (voir `Arme.balayage`) : il part à l'heure, si un ennemi est à portée ; il balaie son arc ; ce qu'il balaie brûle ; il sème sa traînée de feu. */
@@ -2528,11 +2544,53 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       depart = Math.atan2(proche.corps.y - v.y, proche.corps.x - v.x) - (sens * arc) / 2
     }
     m.balayage = { arme: i, debut: m.t, angle: depart, touches: [], depart, sens, posees: 0 }
+    // (le trait au sol : sur la droite du vaisseau à l'insecte le plus proche, d'en deçà de lui à au-delà — jamais sous le vaisseau)
+    if (bl.trace !== undefined) {
+      let proche = aPortee[0]
+      for (const e of aPortee) if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y)) proche = e
+      const d = Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y)
+      const ux = d > 0 ? (proche.corps.x - v.x) / d : Math.cos(v.cap)
+      const uy = d > 0 ? (proche.corps.y - v.y) / d : Math.sin(v.cap)
+      const de = Math.max(c.ennemi.rayon, d - bl.trace.avant)
+      const a = d + bl.trace.apres
+      m.balayage.ligne = { x0: v.x + ux * de, y0: v.y + uy * de, x1: v.x + ux * a, y1: v.y + uy * a }
+    }
     ev.push({ type: 'balayage', duree: bl.duree })
   })
   const b = m.balayage
   const bl = b === null ? undefined : c.armes[b.arme]?.balayage
   if (b === null || bl === undefined) return
+  if (b.ligne !== undefined && bl.trace !== undefined) {
+    // LE POINT D'IMPACT frappe ce qui est sous lui — une fois par trait —, sème sa traînée sur le trait parcouru
+    const l = b.ligne
+    const part = Math.min(1, (m.t - b.debut) / bl.duree)
+    const ix = l.x0 + (l.x1 - l.x0) * part
+    const iy = l.y0 + (l.y1 - l.y0) * part
+    for (const e of [...m.ennemis]) {
+      if (b.touches.includes(e.id) || Math.hypot(e.corps.x - ix, e.corps.y - iy) > bl.trace.rayon + c.ennemi.rayon) continue
+      b.touches.push(e.id)
+      e.pv -= bl.degats
+      e.bruleA = m.t + bl.brulure
+      e.dpsBrulure = bl.dpsBrulure
+      e.dureeBrulure = bl.brulure
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    const tr = bl.trainee
+    if (tr !== undefined) {
+      const long = Math.hypot(l.x1 - l.x0, l.y1 - l.y0)
+      const faites = Math.floor((part * long) / tr.pas + 1e-9)
+      for (; b.posees <= faites; b.posees++) {
+        const u = Math.min(1, (b.posees * tr.pas) / Math.max(1, long))
+        m.flaques.push({ id: m.prochainId++, x: l.x0 + (l.x1 - l.x0) * u, y: l.y0 + (l.y1 - l.y0) * u, nee: m.t, rayon: tr.rayon, duree: tr.duree, dps: tr.dps, brulure: tr.brulure, dpsBrulure: tr.dpsBrulure })
+      }
+    }
+    if (part >= 1) {
+      m.armesA[b.arme] = m.t + bl.tous
+      m.balayage = null
+    }
+    return
+  }
   const arc = bl.arc ?? 2 * Math.PI
   const part = Math.min(1, (m.t - b.debut) / bl.duree)
   const avant = b.angle
@@ -2565,7 +2623,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const faites = Math.floor((part * arc) / tr.pas + 1e-9)
     for (; b.posees <= faites; b.posees++) {
       const an = b.depart + b.sens * b.posees * tr.pas
-      for (const u of tr.distances) {
+      for (const u of tr.distances ?? [1]) {
         const x = v.x + Math.cos(an) * bl.longueur * u
         const y = v.y + Math.sin(an) * bl.longueur * u
         m.flaques.push({ id: m.prochainId++, x, y, nee: m.t, rayon: tr.rayon, duree: tr.duree, dps: tr.dps, brulure: tr.brulure, dpsBrulure: tr.dpsBrulure })
