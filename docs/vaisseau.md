@@ -4341,3 +4341,15 @@ le jeu. Le trait : une âme blanche, une gaine bleue puis violette qui s'amincit
 des nœuds de lumière, une spirale de plasma, des étincelles tout du long. Ses
 sons : `rail` (une charge qui siffle, le claquement, une traîne qui vibre),
 `arcane` (le « tsip » des petits traits), `dissipe`. *Chiffres de moi.*
+
+PUIS LA SPHÈRE, VIDE ET TRANSPARENTE (Keko, 16/11 : « c'est un peu moche,
+l'espèce d'étoile à l'intérieur ; ça lui donne une texture pleine ; on veut plutôt
+une orbe à moitié transparente et vide, parcourue par des ondes et de
+l'énergie ») : plus de cœur blanc ni de lueur au centre. Un voile à peine teinté
+(7 à 19 % d'opacité), une PAROI qui bout (violette, une bande bleue juste dedans),
+TROIS ONDES — des anneaux tremblés qui naissent au cœur et s'ouvrent jusqu'à la
+paroi en s'effaçant —, DEUX ARCS BRISÉS qui la traversent d'un point de la paroi à
+un autre, changés à chaque image ; un seul arc d'anneau, discret, tourne autour
+(l'anneau plein, le second arc et les arcs qui crépitaient au dehors brouillaient
+le bord). Un tir la fait flasher : la paroi blanchit, les ondes s'avivent. Son
+rayon passe de 8 à 10 : à 8, on n'y lisait ni les ondes ni les arcs.

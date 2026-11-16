@@ -6737,11 +6737,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /**
    * LA SPHÈRE DE PLASMA (Keko, 16/11 : « la sphère qu'on dessine lors de l'explosion ») : la boule de l'éclat, pleine et à
-   * demeure — un cœur blanc, des bandes bleues puis violettes qui bouillonnent au bord —, deux anneaux qui tournent en sens
-   * contraire, des arcs qui crépitent, sa lueur ; elle s'ouvre en naissant, se resserre en s'éteignant, et FLASHE quand
+   * demeure — PUIS UNE ORBE À MOITIÉ TRANSPARENTE ET VIDE (Keko, 16/11) : un voile à peine teinté, une paroi qui bout, des
+   * ondes qui courent du cœur au bord, des arcs brisés qui la traversent, un arc d'anneau qui tourne, sa lueur ; elle s'ouvre en naissant, se resserre en s'éteignant, et FLASHE quand
    * elle tire (`sphereTirA`).
    */
-  const RAYON_DE_LA_SPHERE = 8
+  // (10 : à 8, on n'y lisait ni les ondes ni les arcs)
+  const RAYON_DE_LA_SPHERE = 10
   const sphereTirA = new Map<number, number>()
   /** L'instant du dernier « tsip » des petits traits (pas plus d'un tous les dixièmes). */
   let arcaneSonneA = -10
@@ -6757,35 +6758,53 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (k <= 0) continue
       const R = RAYON_DE_LA_SPHERE * (0.4 + 0.6 * k) * (1 + 0.06 * Math.sin(t * 9 + s.id))
       const flash = Math.max(0, 1 - (t - (sphereTirA.get(s.id) ?? -10)) / 0.15)
-      p.glow(s.x, s.y, R * 2.4, PLASMA_V[2], 0.45 * k)
-      p.glow(s.x, s.y, R * 1.2, PLASMA[4], (0.35 + 0.4 * flash) * k)
+      // (UNE ORBE À MOITIÉ TRANSPARENTE ET VIDE — Keko, 16/11 : « l'espèce d'étoile à l'intérieur, c'est un peu moche, et ça
+      // lui donne une texture pleine ; plutôt une orbe à moitié transparente, vide, parcourue par des ondes et de
+      // l'énergie » : plus de cœur blanc ni de lueur au centre ; un voile à peine teinté, une paroi qui bout, des ondes qui
+      // courent du cœur au bord, des arcs qui la traversent)
+      p.glow(s.x, s.y, R * 2.2, PLASMA_V[2], (0.3 + 0.2 * flash) * k)
       p.disc(s.x, s.y, R, (d, ang) => {
-        const dd = d + 0.1 * Math.sin(ang * 5 + t * 30 + s.id)
-        return dd > 0.82 ? PLASMA_V[3] : dd > 0.6 ? PLASMA_V[2] : dd > 0.35 ? PLASMA[4] : flash > 0.3 || dd < 0.18 ? N.WHITE : PLASMA[5]
-      }, (d) => 0.95 * Math.min(1, (1 - d) / 0.12))
-      p.ring(s.x, s.y, R + 2 + Math.sin(t * 4 + s.id), 1, PLASMA_V[3], 0.55 * k)
-      // (deux arcs d'anneau, qui tournent en sens contraire)
-      for (const [sens, rr, c] of [[1, R + 3.5, PLASMA[5]], [-1, R + 1.5, PLASMA_V[4]]] as const) {
-        const a0 = t * 3 * sens + s.id
-        for (let a = a0; a < a0 + 1.4; a += 0.12) p.dot(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr, c, 0.8 * k)
-        for (let a = a0 + Math.PI; a < a0 + Math.PI + 1.4; a += 0.12) p.dot(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr, c, 0.8 * k)
+        const dd = d + 0.06 * Math.sin(ang * 5 + t * 20 + s.id)
+        return dd > 0.86 ? (flash > 0.3 ? PLASMA[5] : PLASMA_V[3]) : dd > 0.72 ? PLASMA[4] : PLASMA_V[2]
+      }, (d, ang) => {
+        const dd = d + 0.06 * Math.sin(ang * 5 + t * 20 + s.id)
+        const bord = Math.min(1, (1 - d) / 0.1)
+        return (dd > 0.86 ? 0.9 : dd > 0.72 ? 0.4 + 0.2 * flash : 0.07 + 0.12 * d * d) * k * bord
+      })
+      // (les ondes : trois anneaux tremblés qui naissent au cœur et s'ouvrent jusqu'à la paroi, en s'effaçant ; un tir en relance une, vive)
+      for (let j = 0; j < 3; j++) {
+        const u = (t * 1.3 + j / 3 + s.id * 0.37) % 1
+        const r = R * (0.12 + 0.72 * u)
+        const a = (0.55 * (1 - u) + 0.3 * flash) * k
+        for (let an = 0; an < Math.PI * 2; an += 0.5 / Math.max(1, r)) {
+          const rr = r + Math.sin(an * 4 + t * 9 + j) * 0.7
+          p.dot(s.x + Math.cos(an) * rr, s.y + Math.sin(an) * rr, u < 0.45 ? PLASMA[5] : PLASMA[4], a)
+        }
       }
-      // (des arcs qui crépitent, changés à chaque image)
-      const tic = Math.floor(t * 20)
+      // (l'énergie : deux arcs brisés qui la traversent d'un point de la paroi à un autre, changés à chaque image)
+      const ticA = Math.floor(t * 18)
       for (let j = 0; j < 2; j++) {
-        if (alea(s.id + tic, j, 9) < 0.4) continue
-        const a = alea(s.id + tic, j, 1) * Math.PI * 2
-        let px = s.x + Math.cos(a) * R * 0.9
-        let py = s.y + Math.sin(a) * R * 0.9
-        for (let q = 1; q <= 3; q++) {
-          const jit = (alea(s.id + tic, j, 3 + q) - 0.5) * 3
-          const nx = s.x + Math.cos(a) * (R + q * 2) - Math.sin(a) * jit
-          const ny = s.y + Math.sin(a) * (R + q * 2) + Math.cos(a) * jit
-          p.line(px, py, nx, ny, q < 2 ? N.WHITE : PLASMA[5], 0.9 * k)
+        if (alea(s.id + ticA, j, 11) < 0.3) continue
+        const a0 = alea(s.id + ticA, j, 12) * Math.PI * 2
+        const a1 = a0 + Math.PI * (0.55 + 0.6 * alea(s.id + ticA, j, 13))
+        let px = s.x + Math.cos(a0) * R * 0.82
+        let py = s.y + Math.sin(a0) * R * 0.82
+        const qx = s.x + Math.cos(a1) * R * 0.82
+        const qy = s.y + Math.sin(a1) * R * 0.82
+        for (let q = 1; q <= 4; q++) {
+          const f = q / 4
+          const jit = q === 4 ? 0 : (alea(s.id + ticA, j, 14 + q) - 0.5) * R * 0.5
+          const nx = px + (qx - px) * (1 / (5 - q)) + jit * Math.cos(a0 + Math.PI / 2)
+          const ny = py + (qy - py) * (1 / (5 - q)) + jit * Math.sin(a0 + Math.PI / 2)
+          p.line(px, py, nx, ny, f < 0.5 ? PLASMA[5] : PLASMA_V[4], 0.75 * k)
           px = nx
           py = ny
         }
       }
+      // (UN SEUL ARC D'ANNEAU qui tourne autour, discret : l'anneau plein et le second arc, avec les arcs qui crépitaient
+      // au dehors, brouillaient le bord — l'énergie est dedans)
+      const a0 = t * 3 + s.id
+      for (const dep of [a0, a0 + Math.PI]) for (let a = dep; a < dep + 1.2; a += 0.1) p.dot(s.x + Math.cos(a) * (R + 2), s.y + Math.sin(a) * (R + 2), PLASMA_V[4], 0.5 * k)
     }
   }
   function dessinerLeRailgun(p: Peintre): void {
