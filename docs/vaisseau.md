@@ -4679,3 +4679,12 @@ rad, il sème des FLAQUES DE FEU (celles du napalm) à 45 et 80 % de sa longueur
 5 points par seconde (`trainee`). Mesuré : 18 flaques par balayage. La tourelle de
 toit n'a plus lieu d'être : le rayon part du vaisseau, son émetteur au nez.
 *Chiffres de moi, à rejuger.*
+
+LE CRISTAL DU PRISME POINTE VERS L'AVANT, TENU PAR DEUX ARCHES (Keko, 16/11 : « je voyais le
+cristal orienté pointe vers l'avant, avec deux structures arquées à l'avant qui viennent contenir
+le cristal »). Le losange qui pivotait à plat est remplacé par un PRISME À SIX PANS couché dans
+l'axe du vaisseau, pointu aux deux bouts, qui TOURNE SUR SON AXE comme celui du disloqueur : vu de
+dessus, on peint les pans tournés vers le haut, chacun éclairé selon son angle, un sur deux
+d'énergie — leurs arêtes défilent d'un bord à l'autre. DEUX ARCHES de facettes à arête de quartz
+partent de la proue, s'écartent et se referment devant la pointe. Le faisceau part désormais de
+la POINTE du cristal (3,4 devant son centre), plus de son milieu.

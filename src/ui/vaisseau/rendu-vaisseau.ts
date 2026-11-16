@@ -534,8 +534,8 @@ const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, 
 const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.6, y: 6.4 }, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
 // LE PRISME (Keko, 16/11) : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie ; À SA PROUE, UN CRISTAL
 // QUI FLOTTE ET TOURNE (le rayon en part — voir `boucheDeLArme`)
-const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -1.2, y: 7.1 }, verriere: -1.5, nez: 11.5, flanc: 7, anneau: 13, echelle: 1 }
-/** Le centre du cristal qui tourne à la proue du Prisme, en unités du vaisseau : le rayon en part. */
+const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -1.2, y: 7.1 }, verriere: -1.5, nez: 13.6, flanc: 7, anneau: 13, echelle: 1 }
+/** Le centre du cristal qui tourne à la proue du Prisme, en unités du vaisseau : le rayon part de sa pointe, 3,4 devant. */
 export const CRISTAL_DU_PRISME = { x: 9.6, y: 0 }
 export const gabaritDe = (coque: number): Gabarit => (coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
@@ -709,12 +709,29 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
     ]
     for (const [x, sg] of [[1.5, 1], [-2.5, -1]] as [number, number][]) f.push({ pts: [[x + 1.4, sg * 0.4], [x, sg * 2.4], [x - 1.4, sg * 0.4]], mat: 'quartz', relief: 'plat', penche: sg })
     f.push({ pts: ovale(-1.5, 0, 1.4, 1.4, 12), mat: 'energie', relief: 'dome', dome: { x: -1.5, y: 0, rx: 1.4, ry: 1.4 } })
-    // (le cristal de la proue : il tourne)
+    // (DEUX ARCHES qui partent de la proue et se referment devant elle : elles tiennent le cristal — Keko, 16/11 : « deux
+    // structures arquées à l'avant qui viennent contenir le cristal » ; une bande qui s'amincit, une arête de quartz dessus)
+    const arche: [number, number, number][] = [[3.8, 2.2, 1.3], [6, 3.4, 1.1], [8.4, 3.8, 0.9], [10.6, 3.3, 0.7], [12.4, 2.3, 0.45], [13.4, 1.6, 0.2]]
+    for (const sg of [-1, 1]) {
+      const bord = (k: number): [number, number] => [arche[k][0], sg * (arche[k][1] + arche[k][2])]
+      const dedans = (k: number): [number, number] => [arche[k][0], sg * (arche[k][1] - arche[k][2])]
+      f.push({ pts: [...arche.map((_, k) => bord(k)), ...arche.map((_, k) => dedans(arche.length - 1 - k))], mat: 'facette', relief: 'plat', penche: sg })
+      f.push({ pts: [...arche.map(([x, y]): [number, number] => [x, sg * (y + 0.25)]), ...arche.map(([x, y]): [number, number] => [x, sg * (y - 0.15)]).reverse()], mat: 'quartz', relief: 'plat' })
+    }
+    // (le cristal de la proue, POINTE VERS L'AVANT, entre les arches : un prisme à six pans qui TOURNE SUR SON AXE, comme
+    // celui du disloqueur — vu de dessus, ses arêtes défilent d'un bord à l'autre ; on peint les pans tournés vers le haut,
+    // chacun éclairé selon son angle, un sur deux d'énergie)
     const a = t * 2.6
-    const { x: cx, y: cy } = CRISTAL_DU_PRISME
-    const losange = (r1: number, r2: number, a0: number): [number, number][] => [0, 1, 2, 3].map((k): [number, number] => [cx + Math.cos(a0 + (k * Math.PI) / 2) * (k % 2 === 0 ? r1 : r2), cy + Math.sin(a0 + (k * Math.PI) / 2) * (k % 2 === 0 ? r1 : r2)])
-    f.push({ pts: losange(2.6, 1.5, a), mat: 'quartz', relief: 'plat', penche: Math.sin(a) })
-    f.push({ pts: losange(1.3, 0.7, a + Math.PI / 4), mat: 'energie', relief: 'plat' })
+    const { x: cx } = CRISTAL_DU_PRISME
+    const R = 1.6
+    const [avant, arriere, epaule, hanche] = [cx + 3.4, cx - 2.2, cx + 0.9, cx - 1]
+    for (let k = 0; k < 6; k++) {
+      const t1 = a + (k * Math.PI) / 3
+      const t2 = t1 + Math.PI / 3
+      if (Math.cos((t1 + t2) / 2) <= 0) continue
+      const [y1, y2] = [R * Math.sin(t1), R * Math.sin(t2)]
+      f.push({ pts: [[avant, 0], [epaule, y1], [hanche, y1], [arriere, 0], [hanche, y2], [epaule, y2]], mat: k % 2 === 0 ? 'quartz' : 'energie', relief: 'plat', penche: Math.sin((t1 + t2) / 2) })
+    }
     return f
   }
   if (cran === 11) {
@@ -1088,7 +1105,7 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   // (la Vouivre crache de sa gueule, entre ses mandibules)
   if (id === 'crachat') return { x: 9.6, y: 0.4 }
   // (le Prisme tire de son cristal)
-  if (id === 'faisceau') return CRISTAL_DU_PRISME
+  if (id === 'faisceau') return { x: CRISTAL_DU_PRISME.x + 3.4, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
