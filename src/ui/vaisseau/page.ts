@@ -2560,7 +2560,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // on ne voit pas de propulsion » ; À L'ARRÊT, RIEN — « n'allume pas les propulseurs à l'arrêt dans le hangar »)
     if (g.omni !== undefined && decollageA !== null) dessinerLesJetsOmni(p, coqueMontee, cx + jit, sy, -Math.PI / 2, ECH, flam, 0, 0, ECH * 0.6)
     // la verrière qui luit, les feux de position qui battent
-    p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
+    // (le Néant n'a pas de verrière : sa lueur bleue grisait l'horizon de son trou noir)
+    if (coqueMontee !== 13) p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
     for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
       const fx = Math.round(cx + jit + s * (g.feux.y + 0.2) * ECH)
@@ -6112,7 +6113,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
     const [vx, vy] = ici(g.verriere, 0)
-    p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
+    if (allure.coque !== 13) p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
     if (!blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
       for (const s of [-1, 1]) {
@@ -6853,11 +6854,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   /**
-   * LE PUITS DU PULSAR (voir Arme.puits) : EN VOL, une petite boule sombre au liseré violet, une traîne ; OUVERT, une
-   * SINGULARITÉ — un cœur noir cerclé de violet qui grossit, trois bras de plasma en spirale qui tournent vers lui, des
-   * grains aspirés du bord vers le centre, le cercle de son rayon qui bat — ; à l'éclat (l'événement), la gerbe du plasma.
+   * LE PUITS (voir Arme.puits) — UN MINI TROU NOIR (Keko, 16/11 : « pour le puits au milieu, un genre de mini trou noir,
+   * c'est plus cool » ; c'était une singularité de plasma violet, au Pulsar d'abord). EN VOL : une petite bille noire cerclée
+   * de magenta, sa traîne sombre. OUVERT : l'espace s'assombrit autour de lui ; un DISQUE D'ACCRÉTION — trois bras en
+   * spirale qui s'enroulent vers lui en tournant, de plus en plus chauds vers le centre — ; des grains aspirés du bord
+   * qui y tombent en tournant ; L'ANNEAU DE PHOTONS, mince et vif, plus clair d'un côté ; L'HORIZON, un disque noir qui
+   * grossit jusqu'à l'éclat ; le cercle de son rayon qui bat de plus en plus vite. L'éclat : il s'effondre (`effondrements`).
    */
+  const VIDE = ['#06010a', '#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6'].map((c) => N.hex(c))
+  const NOIR_DU_TROU = N.hex('#020004')
+  const effondrements: { x: number; y: number; t0: number; r: number }[] = []
   function dessinerLesPuits(p: Peintre): void {
+    for (let i = effondrements.length - 1; i >= 0; i--) if (t - effondrements[i].t0 > 0.5) effondrements.splice(i, 1)
     for (const pu of m.puits) {
       const conf = CONF.armes[pu.arme]?.puits
       if (conf === undefined) continue
@@ -6865,40 +6873,60 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const dx = pu.x - pu.x0
         const dy = pu.y - pu.y0
         const l = Math.hypot(dx, dy) || 1
-        for (let k = 1; k <= 4; k++) p.circle(pu.cx - (dx / l) * k * 2.5, pu.cy - (dy / l) * k * 2.5, 2.5 - k * 0.4, PLASMA_V[2], 0.35 - k * 0.07)
-        p.glow(pu.cx, pu.cy, 7, PLASMA_V[2], 0.5)
-        p.circle(pu.cx, pu.cy, 3, PLASMA_V[1])
-        p.ring(pu.cx, pu.cy, 3, 1, PLASMA_V[3], 0.9)
-        p.circle(pu.cx, pu.cy, 1.5, PLASMA[0])
+        for (let k = 1; k <= 4; k++) p.circle(pu.cx - (dx / l) * k * 2.5, pu.cy - (dy / l) * k * 2.5, 2.5 - k * 0.4, VIDE[2], 0.45 - k * 0.08)
+        p.glow(pu.cx, pu.cy, 6, VIDE[4], 0.35)
+        p.circle(pu.cx, pu.cy, 3, VIDE[5])
+        p.circle(pu.cx, pu.cy, 2.2, NOIR_DU_TROU)
         continue
       }
       const age = m.t - pu.arrive
       const u = Math.min(1, age / conf.duree)
       const naissance = Math.min(1, age / 0.25)
       const R0 = conf.rayon
+      const c = (2.5 + 3 * u) * naissance + 0.5
+      // (l'espace s'assombrit autour de lui)
+      p.disc(pu.x, pu.y, R0 * 0.7 * naissance, VIDE[0], (d) => 0.55 * (1 - d) * (1 - d))
       // (le cercle de son rayon, qui bat de plus en plus vite)
-      p.ring(pu.x, pu.y, R0 * naissance, 1, PLASMA_V[2], 0.25 + 0.2 * Math.sin(age * (8 + 14 * u)))
-      p.glow(pu.x, pu.y, R0 * 0.6, PLASMA_V[1], 0.35 * naissance)
-      // (trois bras en spirale qui tournent vers le centre)
+      p.ring(pu.x, pu.y, R0 * naissance, 1, VIDE[3], 0.2 + 0.18 * Math.sin(age * (8 + 14 * u)))
+      // (LE DISQUE D'ACCRÉTION : trois bras en spirale qui s'enroulent vers l'horizon, de plus en plus chauds vers lui)
+      const disque = Math.min(R0 * 0.55, c * 4.5) * naissance
       for (let b = 0; b < 3; b++)
-        for (let q = 0; q < 26; q++) {
-          const f = q / 26
-          const r = R0 * (1 - f) * naissance
-          const a = age * 5 + (b * 2 * Math.PI) / 3 + f * 4.2
-          p.dot(pu.x + Math.cos(a) * r, pu.y + Math.sin(a) * r, f > 0.7 ? PLASMA[5] : f > 0.35 ? PLASMA_V[3] : PLASMA_V[2], (0.3 + 0.6 * f) * naissance)
+        for (let q = 0; q < 30; q++) {
+          const f = q / 30
+          const r = c + 1 + (disque - c - 1) * (1 - f)
+          const a = age * 6 + (b * 2 * Math.PI) / 3 + f * 4.6
+          p.dot(pu.x + Math.cos(a) * r, pu.y + Math.sin(a) * r, f > 0.8 ? VIDE[7] : f > 0.55 ? VIDE[6] : f > 0.3 ? VIDE[5] : VIDE[4], (0.25 + 0.7 * f) * naissance)
         }
-      // (des grains aspirés du bord vers le centre, en tournant)
+      // (des grains aspirés du bord, qui tombent vers lui en tournant de plus en plus vite)
       for (let g = 0; g < 14; g++) {
         const ph = (age * 0.9 + g / 14) % 1
-        const a = g * 2.4 + ph * 3
-        const r = R0 * (1 - ph * ph)
-        p.dot(pu.x + Math.cos(a) * r, pu.y + Math.sin(a) * r, ph > 0.7 ? N.WHITE : PLASMA_V[3], 0.9 * naissance)
+        const a = g * 2.4 + ph * ph * 7
+        const r = c + (R0 - c) * (1 - ph) * (1 - ph)
+        p.dot(pu.x + Math.cos(a) * r, pu.y + Math.sin(a) * r, ph > 0.75 ? N.WHITE : VIDE[5], 0.85 * naissance)
       }
-      // (le cœur noir, cerclé de violet, qui grossit jusqu'à l'éclat)
-      const c = 2.5 + 3 * u
-      p.circle(pu.x, pu.y, c + 1.5, PLASMA_V[3], 0.8)
-      p.circle(pu.x, pu.y, c, PLASMA[0])
-      p.glow(pu.x, pu.y, c + 6, PLASMA_V[2], 0.4 + 0.3 * u)
+      // (L'ANNEAU DE PHOTONS : mince, vif, plus clair du côté où le disque vient vers nous ; puis L'HORIZON, noir)
+      for (let a = 0; a < Math.PI * 2; a += 0.5 / Math.max(1, c + 1)) {
+        const face = 0.5 + 0.5 * Math.cos(a - age * 6)
+        p.dot(pu.x + Math.cos(a) * (c + 1), pu.y + Math.sin(a) * (c + 1), face > 0.6 ? N.WHITE : face > 0.3 ? VIDE[6] : VIDE[4], 1)
+      }
+      // (pas de lueur posée sur lui : la lumière s'ajoute par-dessus tout, et l'horizon virait au magenta — il reste noir)
+      p.circle(pu.x, pu.y, c, NOIR_DU_TROU)
+    }
+    // (L'EFFONDREMENT : l'horizon se referme d'un coup sur un point blanc, puis une onde magenta s'ouvre, un trait sombre devant elle)
+    for (const e of effondrements) {
+      const age = t - e.t0
+      if (age < 0.1) {
+        const k = 1 - age / 0.1
+        p.circle(e.x, e.y, 6 * k + 1, NOIR_DU_TROU)
+        p.circle(e.x, e.y, 1, N.WHITE)
+        p.glow(e.x, e.y, 10, VIDE[6], 0.9)
+        continue
+      }
+      const u = (age - 0.1) / 0.4
+      const r = e.r * 1.2 * (1 - (1 - u) * (1 - u))
+      p.ring(e.x, e.y, r + 1.5, 1, VIDE[1], 0.6 * (1 - u))
+      p.ring(e.x, e.y, r, u < 0.4 ? 2 : 1, u < 0.25 ? VIDE[7] : u < 0.6 ? VIDE[6] : VIDE[4], 0.9 * (1 - u))
+      if (u < 0.3) p.glow(e.x, e.y, 12, VIDE[5], 0.7 * (1 - u / 0.3))
     }
   }
   function dessinerLeRailgun(p: Peintre): void {
@@ -7199,7 +7227,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && traitsDuRail.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane')) return
+    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -7605,7 +7633,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   // (LE NÉANT n'a pas de tuyère non plus : il lâche des éclats de néant, magenta — Keko, 16/11)
   const organique = (coque: number): boolean => coque === 10 || coque === 11 || coque === 13
-  const couleursDesBulles = (coque: number): [number, number] => (coque === 13 ? [N.hex('#b0228f'), N.hex('#ff86e6')] : coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
+  const couleursDesBulles = (coque: number): [number, number] => (coque === 13 ? [VIDE[3], VIDE[5]] : coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
+  /**
+   * LE NÉANT POUSSE PAR ONDES (Keko, 16/11 : « la propulsion aussi, essaie de trouver un autre effet, peut-être des ondes ou un
+   * truc original ») : il ne lâche rien — il PLISSE L'ESPACE derrière lui. En poussée, des fronts d'onde en arc, ouverts
+   * vers l'arrière, naissent à sa poupe et s'ouvrent en s'effaçant, comme le sillage d'une onde gravitationnelle : un
+   * trait clair doublé d'un trait sombre juste devant (l'espace creusé), une rafale plus serrée à pleine poussée.
+   */
+  const ondes: { x: number; y: number; cap: number; t0: number; k: number }[] = []
+  let ondeA = -10
+  let ondeEn = { x: 0, y: 0 }
+  // (… PLUS GRANDES ET PLUS VIVES : à 15 de rayon et en pâle, on n'en voyait qu'un petit arc derrière lui)
+  const DUREE_DE_L_ONDE = 0.8
+  function dessinerUneOnde(p: Peintre, x: number, y: number, cap: number, u: number, k: number, e = 1): void {
+    const r = (3 + 21 * (1 - (1 - u) * (1 - u))) * e
+    const ouvre = 0.95 + 0.25 * u
+    const a0 = cap + Math.PI - ouvre
+    const a1 = cap + Math.PI + ouvre
+    p.arc(x, y, r + e, Math.max(1, Math.round(e)), a0, a1, VIDE[1], 0.7 * (1 - u) * k)
+    p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.3 ? VIDE[7] : u < 0.6 ? VIDE[6] : VIDE[5], Math.min(1, 1.3 * (1 - u * u)) * k)
+  }
+  function dessinerLesOndes(p: Peintre): void {
+    for (let i = ondes.length - 1; i >= 0; i--) if (t - ondes[i].t0 > DUREE_DE_L_ONDE) ondes.splice(i, 1)
+    if (ondes.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const o of ondes) dessinerUneOnde(p, o.x, o.y, o.cap, (t - o.t0) / DUREE_DE_L_ONDE, o.k)
+    p.place(0, 0)
+  }
   const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number }[] = []
   function dessinerLesBulles(p: Peintre): void {
     for (let i = bulles.length - 1; i >= 0; i--) if (t - bulles[i].t0 > bulles[i].vie) bulles.splice(i, 1)
@@ -9698,7 +9752,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (UNE BÊTE, à l'accueil aussi, lâche des bulles et pas de feu — Keko, 16/11 : « n'oublie pas l'effet de propulsion dans
     // l'écran d'accueil ») : une colonne de bulles qui s'écartent, enflent et crèvent en s'éloignant
     const coqueA = monteeA(hangar, 'coque').cran
-    if (organique(coqueA)) {
+    if (coqueA === 13) {
+      // (le néant, à l'accueil aussi : ses ondes qui s'ouvrent derrière lui)
+      for (let k = 0; k < 4; k++) {
+        const u = boucle(t * (1.6 + us * 1.6) + k / 4, 1)
+        dessinerUneOnde(p, cx, ty + 2 + u * 8 * (E / 2), -Math.PI / 2, u, 0.6 + 0.4 * us, E / 2)
+      }
+    } else if (organique(coqueA)) {
       const [cb, cl] = couleursDesBulles(coqueA)
       for (let k = 0; k < 16; k++) {
         const u = boucle(t * (1.6 + us * 2) + k / 16, 1)
@@ -9723,7 +9783,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)
     if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)
-    p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
+    if (monteeA(hangar, 'coque').cran !== 13) p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
     if (Math.floor(t * 1.5) % 2 === 0)
       for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
         p.rect(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 1, 1, N.WHITE)
@@ -10559,7 +10619,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               else jouer('puits')
               for (let i = 0; i < 6; i++) {
                 const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), R.next() < 0.5 ? PLASMA_V[3] : PLASMA_V[2], 1, 1.5)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), R.next() < 0.5 ? VIDE[5] : VIDE[3], 1, 1.5)
               }
               break
             case 'meteore':
@@ -10585,13 +10645,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               jouer('aspire', { dx: ev.x - v.x, dy: ev.y - v.y })
               break
             case 'puitsEclate':
-              // (il éclate : la gerbe de l'orbe de plasma, une secousse)
+              // (il éclate : le trou noir s'effondre — l'horizon se referme, une onde magenta s'ouvre —, une secousse)
               jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
-              eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: Math.round(ev.x * 13 + ev.y * 7) })
+              effondrements.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
               for (let i = 0; i < 16; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(40, 120)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA[5], PLASMA_V[3], PLASMA_V[2]][Math.floor(R.next() * 4)], 1, 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, VIDE[6], VIDE[5], VIDE[4]][Math.floor(R.next() * 4)], 1, 2)
               }
               secousse = Math.max(secousse, 0.3)
               break
@@ -10792,7 +10852,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // (pas une file : une sur deux, éparpillées de côté, de toutes tailles — serrées, elles faisaient encore un jet)
             // (… ET COURTES — Keko, 16/11 : « trop long, on va penser que c'est une attaque, ça laisse une traînée » : une demi-
             // seconde au plus, lentes : elles crèvent juste derrière la bête ; puis « encore un poil » : un tiers de seconde au plus)
-            if (organique(coque)) {
+            if (coque === 13) {
+              // (le néant : une onde tous les 7 pixels parcourus — un sillage régulier à toute vitesse —, ou tous les quarts de seconde)
+              if (t - ondeA > 0.25 || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > 7) {
+                ondeA = t
+                ondeEn = { x: bx, y: by }
+                ondes.push({ x: bx, y: by, cap: v.cap, t0: t, k: 0.6 + 0.4 * pousseeVue.avant })
+              }
+            } else if (organique(coque)) {
               if (R.next() < 0.45) {
                 const cote = R.range(-1, 1)
                 bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.13 - Math.sin(v.cap) * cote * 11 + R.range(-4, 4), vy: -Math.sin(v.cap) * vitesse * 0.13 + Math.cos(v.cap) * cote * 11 + R.range(-4, 4), t0: t, vie: R.range(0.18, 0.35), r: R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
@@ -11004,6 +11071,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesBalises(p)
     dessinerLesEnnemis(p)
     dessinerLesBulles(p)
+    dessinerLesOndes(p)
     dessinerLesTentacules(p)
     dessinerLesFleaux(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)

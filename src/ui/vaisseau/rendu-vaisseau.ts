@@ -98,39 +98,36 @@ const RAMPES: Record<Matiere, number[]> = {
   // LE NÉANT (Keko, 16/11 : « un vaisseau du void, qui utilisera l'espace-temps et les dimensions ») : les teintes de
   // l'« Energy core » de pixelfx — un magenta qui sort du noir —, sombres pour sa matière, claires pour ses anneaux
   neant: ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6'].map(hex),
-  rayonnement: ['#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6'].map(hex),
+  // (… ASSOMBRIS — Keko, 16/11 : « assombrir le vaisseau du vide »)
+  rayonnement: ['#14040f', '#2e0a28', '#521046', '#80186e', '#b0228f', '#e070c8'].map(hex),
 }
 /** LE CŒUR DU NÉANT, ses huit tons : ceux du cœur de l'« Energy core » de pixelfx. */
 const COEUR = ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6', '#ffffff'].map(hex)
 /**
- * LA COULEUR D'UN PIXEL DU CŒUR (le `core` de l'« Energy core », à l'échelle d'un vaisseau) : un rebord dur, des bandes
- * fines et claires qui tournent autour d'un cœur blanc chauffé à blanc, trois filaments qui en jaillissent et changent
- * quinze fois par seconde, un reflet vitreux en haut à gauche ; un battement inonde le tout de lumière.
+ * LA COULEUR D'UN PIXEL DU CŒUR — UNE SINGULARITÉ (Keko, 16/11 : « assombrir le vaisseau du vide, et remplacer son cœur
+ * électrique par un truc qui rappelle plus une singularité » ; le plasma de l'« Energy core » d'abord) : un TROU NOIR vu
+ * de dessus — l'horizon, noir ; l'ANNEAU DE PHOTONS, mince, plus clair du côté où le disque vient vers nous (il tourne) et
+ * qui s'allume au battement ; un liseré sombre ; LE DISQUE D'ACCRÉTION, deux bras en spirale qui s'enroulent vers
+ * l'horizon en tournant, chauds au bord intérieur, sombres au dehors.
  */
+const HORIZON = hex('#030006')
 function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: number }, lx: number, ly: number): number {
   const dx = lx - c.x
   const dy = ly - c.y
   const d = Math.hypot(dx, dy) / c.r
-  if (d > 0.9) return dy < -c.r * 0.3 && dx < c.r * 0.3 ? COEUR[6] : COEUR[3]
-  if (Math.hypot(dx / c.r + 0.42, dy / c.r + 0.5) < 0.13) return COEUR[7]
-  const ph = c.t / 2.4
   const a = Math.atan2(dy, dx)
-  // (les filaments : trois traits brisés du cœur vers le bord, redessinés quinze fois par seconde)
-  const f = Math.floor(c.t * 15)
-  for (let i = 0; i < 3; i++) {
-    const af = (i / 3) * Math.PI * 2 + f * 0.7 + 0.35 * Math.sin(f * 1.7 + i * 2.3) + 0.4 * Math.sin(d * 9 + f + i)
-    let e = Math.abs(a - af) % (Math.PI * 2)
-    if (e > Math.PI) e = Math.PI * 2 - e
-    if (d > 0.18 && d < 0.84 && e * d * c.r < 0.42) return d < 0.4 ? COEUR[7] : COEUR[5]
+  if (d < 0.4) return HORIZON
+  if (d < 0.52) {
+    const face = 0.5 + 0.5 * Math.cos(a - c.t * 1.6)
+    return face > 0.62 || c.pouls > 0.6 ? COEUR[7] : face > 0.3 ? COEUR[6] : COEUR[4]
   }
-  if (d < 0.12 + 0.14 * c.pouls) return COEUR[7]
-  if (d < 0.2 + 0.14 * c.pouls) return COEUR[6]
-  // (les bandes : là où un bruit qui tourne passe par son milieu)
-  const n = 0.5 + 0.22 * Math.sin(a * 3 + ph * Math.PI * 4 + d * 4.5) + 0.18 * Math.sin(a * 5 - ph * Math.PI * 6 + d * 7 + 1.3) + 0.1 * Math.sin(a * 2 + d * 11 - ph * Math.PI * 8)
-  // (plus sombre que l'« Energy core » d'origine : à la taille d'un vaisseau, sa chaleur blanchissait tout le cœur)
-  const chaud = 0.75 * (1 - d) ** 2 + c.pouls * 0.4
-  if (Math.abs(n - 0.5) < 0.04 + 0.04 * c.pouls) return chaud > 0.5 ? COEUR[7] : chaud > 0.2 ? COEUR[6] : COEUR[5]
-  return chaud > 0.7 ? COEUR[6] : chaud > 0.42 ? COEUR[5] : chaud > 0.2 ? COEUR[3] : n > 0.5 ? COEUR[2] : COEUR[1]
+  if (d < 0.58) return COEUR[0]
+  if (d > 0.93) return COEUR[1]
+  // (les bras : une spirale qui tourne et s'enroule vers l'horizon)
+  const bras = Math.sin(2 * a + 9 * (1 - d) - c.t * 4.5)
+  const chaud = 1 - (d - 0.58) / 0.35
+  if (bras > 0.55) return chaud > 0.62 ? COEUR[5] : chaud > 0.3 ? COEUR[4] : COEUR[3]
+  return chaud > 0.62 ? COEUR[3] : chaud > 0.3 ? COEUR[2] : COEUR[1]
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
@@ -816,7 +813,7 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
         const z = (za + zb) / 2
         // (la traînée de la perle : le dixième de tour derrière elle, blanc)
         const u = ((((a0 - tete) / (Math.PI * 2)) % 1) + 1) % 1
-        const ton = z < 0 ? 1 : u > 0.9 ? 5 : z > 0.5 * an.r ? 4 : 3
+        const ton = z < 0 ? 1 : u > 0.9 ? 4 : z > 0.5 * an.r ? 3 : 2 // (derrière, presque éteints ; devant, sombres aussi — la traînée de la perle seule s'allume)
         ;(z < 0 ? derriere : devant).push({ pts: barre(xa, ya, xb, yb, 1.15), mat: 'rayonnement', relief: 'lueur', ton })
       }
       const [px, py, pz] = point(tete)

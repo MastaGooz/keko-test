@@ -4869,3 +4869,23 @@ prend autant de rangées que la hauteur en laisse (en paysage, la colonne ; en p
 dix y tiennent encore) et DÉFILE au doigt et à la molette (`defilVaisseaux`, la `zoneGlissante` des pièces avec
 `defil: 'vaisseaux'`), un ascenseur d'or à droite ; à l'ouverture, elle montre le vaisseau piloté. Piège : en paysage, la
 fiche se dessine APRÈS la liste et remettait `zoneGlissante` à zéro — le glisser devenait une tape.
+
+LE NÉANT, PLUS SOMBRE, UNE SINGULARITÉ AU CŒUR, UN PUITS EN TROU NOIR, DES ONDES POUR PROPULSION (Keko, 16/11 : « assombrir
+le vaisseau du vide et remplacer son cœur électrique par un truc qui rappelle plus une singularité ; pareil pour les
+puits au milieu, un genre de mini trou noir, c'est plus cool ; et la propulsion, un autre effet, peut-être des ondes ou un
+truc original »).
+- LE CŒUR (`pixelDuCoeur`) est un TROU NOIR vu de dessus : l'horizon noir (0,4 du rayon), l'anneau de photons mince et vif
+  — plus clair du côté où le disque vient vers nous, qui tourne, et tout blanc au battement —, un liseré sombre, le disque
+  d'accrétion : deux bras en spirale qui s'enroulent vers l'horizon, chauds en dedans, sombres au dehors.
+- LES ANNEAUX sont assombris (`rayonnement`, d'un cran plus bas, et devant ils ne passent plus au clair) : seule la
+  traînée de la perle s'allume. Le Néant n'a plus la lueur bleue de verrière des autres : posée sur son cœur, elle
+  grisait l'horizon.
+- LE PUITS OUVERT est un mini trou noir : l'espace qui s'assombrit autour, trois bras de disque d'accrétion qui
+  s'enroulent vers lui, les grains aspirés qui y tombent de plus en plus vite, l'anneau de photons, l'horizon noir qui
+  grossit — SANS LUEUR SUR LUI : la lumière s'ajoute par-dessus tout, et le noir virait au magenta ; en vol, une bille
+  noire cerclée de magenta. Son éclat est un EFFONDREMENT : l'horizon se referme d'un coup sur un point blanc, puis une
+  onde magenta s'ouvre, un trait sombre devant elle. Tout aux couleurs du Néant (`VIDE`).
+- LA PROPULSION : il ne lâche rien, IL PLISSE L'ESPACE — en poussée, des fronts d'onde en arc, ouverts vers l'arrière,
+  naissent à sa poupe tous les 7 pixels parcourus (au chronomètre, à sa vitesse, on n'en voyait qu'un à la fois) et
+  s'ouvrent jusqu'à 24 en 0,8 s en s'effaçant, un trait clair doublé d'un trait sombre (`ondes`, `dessinerUneOnde`) ; à
+  l'accueil, quatre ondes qui s'ouvrent sous lui en boucle.
