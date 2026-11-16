@@ -791,6 +791,14 @@ const RECETTES = {
       for (let k = 0; k < 7; k++) note(m, 0.01 + 0.07 * h.next() * k * 0.6, 0.35 * (1 - k / 9), (h.next() - 0.5) * 0.9, { f: 2200 + 3200 * h.next(), a: 0.001, d: 0.1 + 0.15 * h.next(), partiels: [[1, 1, 1], [2.76, 0.35, 0.5]] })
     },
   },
+  /** UN ÉCLAT DE GLACE SE BRISE SUR UN INSECTE (le Frimas, 16/11) : un petit « tchiing » de verre — un claquement bref, trois tintements qui s'égrènent ; discret, il revient souvent */
+  eclatement: {
+    duree: 0.4, niveau: 0.12, salle: [0.3, 0.12], variantes: 4,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.7, 0, { f: 5200, glisse: { vers: 3000, en: 0.04 }, q: 1.4, bande: true, a: 0.001, d: 0.04 })
+      for (let k = 0; k < 3; k++) note(m, 0.005 + 0.035 * k * (0.7 + 0.6 * h.next()), 0.45 * (1 - k / 4), (h.next() - 0.5) * 0.7, { f: 2600 + 2400 * h.next(), a: 0.001, d: 0.06 + 0.08 * h.next(), partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
   /** UNE BALISE EST PLANTÉE : un « tchok » métallique bref, puis un bip court qui l'arme */
   balisePosee: {
     duree: 0.3, niveau: 0.14, salle: [0.22, 0.09], variantes: 2,

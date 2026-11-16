@@ -4805,3 +4805,18 @@ d'effet — on frappe juste la cible ») : 18 points À L'INSECTE SEUL (mort ava
 `Arme.meteore` n'a plus de `rayon`. Le dessin prend sa taille à `POINT_DE_CHUTE` (7) : le cercle de runes se
 resserre de 12,6 à 7 (il partait de 31), l'onde de l'impact ne dépasse plus 13, le cratère tient sous l'insecte.
 Mesuré : la cible prend 18, son voisin à 8, rien.
+
+LES ÉCLATS DU FRIMAS DEVIENNENT GROS ET SE BRISENT EN CÔNE (Keko, 16/11 : d'abord « changer les éclats par ceux de
+l'effet Ice Shatter, une onde de fragments tout autour », puis aussitôt « non, j'ai mieux : on fait les 8 fragments,
+mais beaucoup plus gros ; et quand ils touchent, ils se séparent en petits fragments — ceux de l'effet Ice Shatter —
+pour créer un petit cône derrière »). `Arme.salve.eclatement` : l'éclat ne traverse plus (`perce` retiré de
+`arme-eclats`), il S'ARRÊTE au premier insecte (4 points, gelé) et s'y brise en 6 petits fragments lancés derrière
+lui dans un cône de 0,9 rad (±26°) autour de sa course, à 150, 0,22 s (une trentaine de pixels) ; ils traversent ce
+qu'ils croisent, 2 points et le même gel, jamais l'insecte brisé — ET UNE SEULE LISTE POUR LES SIX : un insecte en
+plein dans le cône n'en prend qu'un coup (sinon celui juste derrière en prenait quatre, plus que l'éclat lui-même).
+Mesuré : la cible 4, celui de derrière 2 (gelé), celui de côté hors du cône 0. Le dessin : l'éclat est un cristal en
+losange de 11 × 5 (une face claire, une à l'ombre, un liseré sombre, la pointe blanche, une traîne de givre) ; le
+fragment, celui de l'Ice Shatter (`B.SHARD` de pixelfx : un trait de 1,4 à 2,4 pixels qui tourne en filant, la
+pointe blanche, la rampe de glace — `GLACE` est sa palette) ; la brisure, un éclair blanc, une étoile à quatre
+branches, des paillettes en cône. Son `eclatement` : un « tchiing » de verre bref (pas plus d'un tous les 80 ms).
+*Chiffres de moi, à rejuger.*

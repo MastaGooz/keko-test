@@ -6762,6 +6762,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LES TRAITS DU RAILGUN qui viennent de partir (voir l'événement `rail`) : un trait épais qui s'amincit et pâlit. */
   const DUREE_DU_RAIL = 0.32
   const traitsDuRail: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
+  /** LES ÉCLATS DE GLACE QUI SE BRISENT (voir l'événement `eclatement`) : un éclair blanc et une étoile, 0,2 s. */
+  const eclatsBrises: { x: number; y: number; t0: number }[] = []
+  let eclatementSonneA = -10
   function dessinerLesSpheres(p: Peintre): void {
     for (const s of m.spheres) {
       const sp = CONF.armes[s.arme]?.sphere
@@ -7007,6 +7010,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const u = age / 0.45
         p.ring(c.x, c.y, c.r * (0.6 + 1.2 * Math.sqrt(u)), u < 0.4 ? 2 : 1, u < 0.3 ? PLASMA[5] : PLASMA_V[3], 0.9 * (1 - u))
       }
+    }
+  }
+  /** L'ÉCLAT QUI SE BRISE (l'Ice Shatter en vue de dessus) : un éclair blanc, une étoile à quatre branches, une lueur froide. */
+  function dessinerLesEclatsBrises(p: Peintre): void {
+    for (let i = eclatsBrises.length - 1; i >= 0; i--) if (t - eclatsBrises[i].t0 > 0.22) eclatsBrises.splice(i, 1)
+    if (eclatsBrises.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const b of eclatsBrises) {
+      const k = 1 - (t - b.t0) / 0.22
+      const x = Math.round(b.x)
+      const y = Math.round(b.y)
+      p.glow(x, y, 12, GLACE[4], 0.6 * k)
+      if (k > 0.6) p.circle(x, y, 3 * k, N.WHITE, k)
+      const n = Math.round(6 * k)
+      for (let d = 1; d <= n; d++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.px(x + dx * d, y + dy * d, d > n * 0.6 ? GLACE[5] : N.WHITE)
     }
   }
   function dessinerLePlasma(p: Peintre): void {
@@ -7923,12 +7941,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(qx - ux, qy - uy, qx - ux * 2.5, qy - uy * 2.5, N.hex('#fff2a8'))
         p.glow(qx - ux * 2.5, qy - uy * 2.5, 6, FEU[4], 0.6)
       } else if (o.arme === 'eclats') {
-        // (UN ÉCLAT DE GLACE : une aiguille de cristal de cinq pixels, bleue à la queue, blanche à la pointe, une lueur froide)
-        p.line(o.x - ux * 5, o.y - uy * 5, o.x - ux * 2, o.y - uy * 2, GLACE[3])
-        p.line(o.x - ux * 2, o.y - uy * 2, o.x, o.y, GLACE[6])
-        p.line(o.x - ux * 3 - uy, o.y - uy * 3 + ux, o.x - ux, o.y - uy, GLACE[5])
-        p.px(o.x, o.y, N.WHITE)
-        p.glow(o.x, o.y, 4, GLACE[5], 0.5)
+        // (UN GROS ÉCLAT DE GLACE — Keko, 16/11 : « beaucoup plus gros » : un cristal en losange de onze pixels sur cinq,
+        // une face claire et une face à l'ombre le long de son arête, un liseré sombre, la pointe blanche, une lueur
+        // froide et une traîne de givre)
+        const nx = -uy
+        const ny = ux
+        const pt = (a: number, b: number): number[] => [o.x + ux * a + nx * b, o.y + uy * a + ny * b]
+        for (let j = 1; j <= 3; j++) p.dot(o.x - ux * (9 + j * 2), o.y - uy * (9 + j * 2), GLACE[5], 0.5 - j * 0.13)
+        p.glow(o.x - ux * 3, o.y - uy * 3, 9, GLACE[4], 0.45)
+        p.poly([pt(1, 0), pt(-3, 3), pt(-10, 0), pt(-3, -3)], GLACE[1])
+        p.poly([pt(0, 0), pt(-3, 2), pt(-9, 0)], GLACE[4])
+        p.poly([pt(0, 0), pt(-9, 0), pt(-3, -2)], GLACE[6])
+        p.line(o.x - ux * 8, o.y - uy * 8, o.x, o.y, GLACE[5])
+        p.line(o.x - ux * 2, o.y - uy * 2, o.x, o.y, N.WHITE)
+        p.px(o.x + ux, o.y + uy, N.WHITE)
+      } else if (o.arme === 'fragment') {
+        // (UN PETIT FRAGMENT, celui de l'Ice Shatter de pixelfx : un trait de deux ou trois pixels qui tourne sur
+        // lui-même en filant, bleu, la pointe blanche)
+        const a = t * 22 + o.id
+        const ca = Math.cos(a)
+        const sa = Math.sin(a)
+        const s = 1.4 + (o.id % 3) * 0.5
+        for (let d = -s / 2; d <= s / 2; d += 0.5) p.dot(o.x + ca * d, o.y + sa * d, d > s / 2 - 0.6 ? N.WHITE : GLACE[4 + (o.id % 3)], 1)
+        p.glow(o.x, o.y, 3, GLACE[5], 0.3)
       } else if (o.arme === 'plasma' || o.arme === 'essaim' || o.arme === 'arcane') {
         // (l'orbe de plasma et les missiles de l'essaim : dessinés avec leurs éclats, voir `dessinerLePlasma`)
       } else if (o.arme === 'tourelle') {
@@ -10185,6 +10220,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               break
             }
+            case 'eclatement': {
+              // (UN ÉCLAT SE BRISE : celui de l'Ice Shatter — un éclair blanc, une étoile, de la poudre de glace et des
+              // paillettes qui partent en cône derrière l'insecte, le tintement du verre)
+              if (t - eclatementSonneA > 0.08) {
+                eclatementSonneA = t
+                jouer('eclatement', { dx: ev.x - v.x, dy: ev.y - v.y })
+              }
+              eclatsBrises.push({ x: ev.x, y: ev.y, t0: t })
+              for (let i = 0; i < 7; i++) {
+                const a = ev.cap + R.range(-0.6, 0.6)
+                const vit = R.range(30, 90)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [N.WHITE, GLACE[6], GLACE[5], GLACE[4]][Math.floor(R.next() * 4)], 1, 2.5)
+              }
+              break
+            }
             case 'tentacule':
               // (une tentacule fouette : un claquement mouillé — un seul à la fois, elles partent souvent ensemble)
               if (t - fouetSonneA > 0.12) {
@@ -10791,6 +10841,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTornades(p)
     dessinerLePlasma(p)
     dessinerLesMeteores(p)
+    dessinerLesEclatsBrises(p)
     dessinerLesNuees(p)
     dessinerLesRejetons(p)
     dessinerLesCrachats(p)

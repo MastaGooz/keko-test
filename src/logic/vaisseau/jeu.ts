@@ -426,8 +426,13 @@ export type Arme = {
    * PUIS (Keko, 15/11 : « c'est super faible, j'ai de la chance si un seul éclat touche ») : LA COURONNE S'ORIENTE — le
    * premier éclat part vers la cible (la verrouillée à portée d'abord, sinon la plus proche) — ET, `perce`, LES ÉCLATS
    * TRAVERSENT : chacun touche tout ce qu'il croise, une fois chacun, jusqu'au bout de sa course.
+   * PUIS (Keko, 16/11 : « les 8 fragments, mais beaucoup plus gros ; et quand ils touchent, ils se séparent en petits
+   * fragments — ceux de l'effet Ice Shatter — pour créer un petit cône derrière ») : avec `eclatement`, un éclat
+   * S'ARRÊTE au premier insecte touché et s'y brise en `nombre` petits fragments, lancés DERRIÈRE LUI dans un cône de
+   * `cone` radians autour de sa course, à `vitesse`, `vie` secondes ; chacun traverse ce qu'il croise (jamais l'insecte
+   * brisé) : `degats` points, et le même `gel`.
    */
-  salve?: { nombre: number; perce?: boolean }
+  salve?: { nombre: number; perce?: boolean; eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number } }
   /**
    * UNE TORNADE DE GIVRE (la troisième arme du Frimas, Keko, 15/11 : « une tornade de givre qui part du vaisseau et qui
    * suit automatiquement les ennemis, et disparaît au bout d'un certain temps ; elle crée une petite zone dans laquelle
@@ -622,7 +627,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -834,6 +839,8 @@ export type Evenement =
   | { type: 'tornadeFinie'; x: number; y: number }
   /** Une salve part tout autour du vaisseau (voir `Arme.salve`). */
   | { type: 'salve'; x: number; y: number; arme: string }
+  /** Un éclat se brise sur un insecte, ses fragments partent en cône derrière lui, le long de `cap` (voir `Arme.salve`). */
+  | { type: 'eclatement'; x: number; y: number; cap: number }
   /** Un essaim de missiles part (voir `Arme.essaim`), de la bouche. */
   | { type: 'essaim'; x: number; y: number; arme: string }
   /** Une sphère de plasma part (voir `Arme.sphere`), s'éteint, tire ses petits traits (combien). */
@@ -1762,7 +1769,7 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     for (let k = 0; k < sa.nombre; k++) {
       const an = cap0 + (k * 2 * Math.PI) / sa.nombre
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-      m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }), ...(sa.perce === true ? { perce: [] } : {}) })
+      m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }), ...(sa.perce === true ? { perce: [] } : {}), ...(sa.eclatement === undefined ? {} : { eclatement: sa.eclatement }) })
     }
     ev.push({ type: 'salve', x: v.x, y: v.y, arme: a.id })
   })
@@ -3310,6 +3317,18 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
         if (o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, e, ev, o.arme)
+        // (UN ÉCLAT QUI SE BRISE : ses petits fragments filent en cône derrière l'insecte, sans le retoucher)
+        if (o.eclatement !== undefined) {
+          const ec = o.eclatement
+          const cap = Math.atan2(o.vy, o.vx)
+          // (une seule liste pour tous les fragments d'un éclat : un insecte n'en prend qu'un coup, même s'il est dans tout le cône)
+          const dejaTouches = [e.id]
+          for (let k = 0; k < ec.nombre; k++) {
+            const an = cap + (ec.nombre === 1 ? 0 : (k / (ec.nombre - 1) - 0.5) * ec.cone)
+            m.obus.push({ id: m.prochainId++, x: o.x, y: o.y, vx: Math.cos(an) * ec.vitesse, vy: Math.sin(an) * ec.vitesse, vie: ec.vie, degats: ec.degats, guide: false, arme: 'fragment', perce: dejaTouches, ...(o.gel === undefined ? {} : { gel: o.gel }) })
+          }
+          ev.push({ type: 'eclatement', x: o.x, y: o.y, cap })
+        }
         eclate = true
         break
       }

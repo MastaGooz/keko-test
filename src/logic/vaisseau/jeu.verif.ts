@@ -1390,6 +1390,19 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
   }
   verifier('la couronne s’oriente sur le plus proche, et l’éclat traverse : les deux insectes en ligne sont touchés et gelés, une fois chacun', w3.ennemis.every((e) => 1000 - e.pv === 4 && (e.geleA ?? 0) > w3.t))
+  // (LES GROS ÉCLATS SE BRISENT — Keko, 16/11 : l'éclat s'arrête sur le premier insecte et ses fragments filent en cône
+  // derrière lui : celui de derrière en prend UN coup (2), celui de côté, hors du cône, rien ; la cible n'est pas retouchée)
+  const cfg4 = { ...cfg, armes: [{ ...eclats, salve: { nombre: 8, eclatement: { nombre: 6, cone: 0.9, vitesse: 150, vie: 0.22, degats: 2 } } }] }
+  const w4 = nouveauMonde(cfg4, 3)
+  const pl4: [number, number][] = [[30, 0], [50, 0], [45, 18]]
+  pl4.forEach(([x, y], k) => w4.ennemis.push(insecte(k + 1, x, y)))
+  const ev4: Evenement[] = []
+  for (let i = 0; i < 50; i++) {
+    w4.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: pl4[k][0], y: pl4[k][1], vx: 0, vy: 0 }))
+    ev4.push(...avancerLeMonde(cfg4, w4, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  const pv4 = w4.ennemis.map((e) => 1000 - e.pv)
+  verifier(`le gros éclat se brise sur la cible et ses fragments partent en cône derrière : ${pv4.join(' / ')} (4 à la cible, 2 à celui de derrière, gelé, 0 à celui de côté)`, ev4.filter((e) => e.type === 'eclatement').length === 1 && pv4[0] === 4 && pv4[1] === 2 && pv4[2] === 0 && (w4.ennemis[1].geleA ?? 0) > w4.t)
 }
 
 // LA TORNADE DE GIVRE DU FRIMAS (Keko, 15/11) : elle part du vaisseau, suit les insectes, gèle et ronge ce qui est dedans,
