@@ -4918,3 +4918,19 @@ LA MARQUE DU NÉANT À UN ENDROIT FIXE (Keko, 16/11 : « enlever les deux petite
 Néant et qui indiquent la couleur ; plutôt la couleur à un endroit fixe qui ne bouge pas, là ça fait bizarre »). Les
 deux perles et leur traînée blanche sont retirées ; LA MARQUE DU JOUEUR est une bande en travers de l'éperon, devant le
 cœur, juste derrière sa pointe allumée.
+
+LE SON DE LA POUSSÉE SELON LE VAISSEAU (Keko, 16/11 : « au Léviathan et à la Vouivre, un son un peu plus biologique et
+gazeux lors de leur décollage au hangar et de leur déplacement en jeu ; et le Néant, qu'il change aussi son son en vol
+et au décollage, un son plus science-fiction, vibrant, très grave, un peu dimensionnel »). Trois genres
+(`GenreDePropulsion`, `genreDePropulsion()` dans la page) : le SOUFFLE de toujours, la BÊTE (Kraken, Vouivre), le NÉANT.
+- AU DÉCOLLAGE (le bouton « Décoller », `sonDuDecollage`) : `decolleBete` — une bouffée de gaz mouillé qui s'ouvre, une
+  vingtaine de « bloups » (un sinus bref qui grimpe) qui éclatent en montant, un gargouillis grave qui bat ;
+  `decolleNeant` — un grondement de 44 Hz qui monte d'une quarte, deux voix qui battent six fois par seconde (il vibre),
+  leurs harmoniques pour les petits haut-parleurs, un balayage résonant qui traverse le spectre et revient, un
+  scintillement aigu qui descend. Mesuré hors navigateur : crête 0,70 et 0,75, RMS 0,085 et 0,098, comme `decolle`
+  (0,75, 0,092). La postcombustion garde `decolle`.
+- EN VOL (la voix continue, `regler(…, genre)`) : la BÊTE, du bruit dans un passe-bande qui ondule (3,7 et 1,3 Hz) et
+  HACHÉ à 9 Hz — des bloubs de gaz —, un peu de bruit grave dessous (volume 0,16 de la poussée au lieu de 0,1 : haché,
+  il paraît moins) ; le NÉANT, deux dents de scie à 41 et 41,7 Hz qui battent et une à l'octave, dans un passe-bas
+  résonant qui respire à 0,23 Hz (le son tourne), un trémolo de 6 Hz (0,22 : grave, l'oreille l'entend moins). Une voix
+  par genre, née au besoin ; les autres se taisent. `&sons=arcade` garde le souffle.

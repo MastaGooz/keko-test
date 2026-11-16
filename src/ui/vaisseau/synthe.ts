@@ -990,6 +990,40 @@ const RECETTES = {
     },
   },
   /**
+   * LE DÉCOLLAGE D'UNE BÊTE — le Kraken, la Vouivre (Keko, 16/11 : « un son un peu plus biologique et gazeux lors de leur
+   * décollage au hangar ») : une bouffée de gaz mouillé qui s'ouvre, une vingtaine de bulles qui éclatent en montant
+   * (des « bloups » : un sinus bref qui grimpe), un gargouillis grave qui bat
+   */
+  decolleBete: {
+    duree: 2.4, niveau: 0.7, salle: [0.55, 0.18], variantes: 2,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.8, 0, { f: 260, glisse: { vers: 1300, en: 1, droit: true }, q: 1.3, bande: true, a: 0.45, d: 0.8, large: true })
+      souffle(m, h, 0.1, 0.5, 0, { f: 180, glisse: { vers: 500, en: 1 }, a: 0.3, d: 0.9 })
+      note(m, 0, 0.55, 0, { f: 62, glisse: { vers: 110, en: 1, droit: true }, a: 0.25, d: 1, partiels: CORPS, battement: 160, sature: 1.6 })
+      for (let k = 0; k < 22; k++) {
+        const t0 = 0.05 + k * 0.055 + 0.04 * h.next()
+        const f = 180 + 420 * h.next() + k * 12
+        note(m, t0, 0.32 * (1 - k / 30), (h.next() - 0.5) * 0.8, { f, glisse: { vers: f * 2.1, en: 0.045, droit: true }, a: 0.004, d: 0.05 + 0.04 * h.next() })
+      }
+    },
+  },
+  /**
+   * LE DÉCOLLAGE DU NÉANT (Keko, 16/11 : « un son plus science-fiction, vibrant, très grave, un peu dimensionnel ») : un
+   * grondement de 44 Hz qui monte d'une quarte, deux voix qui battent à six coups par seconde (il vibre), ses harmoniques
+   * pour qu'un petit haut-parleur l'entende ; un balayage résonant qui traverse le spectre et revient (l'espace qui se
+   * plie) ; un scintillement aigu qui descend à l'envers, à peine
+   */
+  decolleNeant: {
+    duree: 2.8, niveau: 0.75, salle: [0.8, 0.3],
+    faire: (m, h) => {
+      note(m, 0, 0.8, -0.3, { f: 44, glisse: { vers: 59, en: 1.4, droit: true }, a: 0.5, d: 1.9, partiels: [[1, 1, 1], [2, 0.7, 0.9], [3, 0.45, 0.8], [4, 0.3, 0.6], [6, 0.12, 0.5]], battement: 220, sature: 1.5 })
+      note(m, 0.04, 0.6, 0.3, { f: 44.6, glisse: { vers: 59.6, en: 1.4, droit: true }, a: 0.55, d: 1.9, partiels: [[1, 1, 1], [2, 0.6, 0.9], [3, 0.4, 0.8], [5, 0.15, 0.5]], battement: 180, sature: 1.3 })
+      souffle(m, h, 0, 0.55, 0, { f: 140, glisse: { vers: 1100, en: 1.1, droit: true }, q: 4.5, bande: true, a: 0.6, d: 1, large: true })
+      souffle(m, h, 0.9, 0.35, 0, { f: 1100, glisse: { vers: 160, en: 0.4 }, q: 4, bande: true, a: 0.2, d: 0.9, large: true })
+      note(m, 0.2, 0.08, 0, { f: 1900, glisse: { vers: 700, en: 1.2, droit: true }, a: 0.8, d: 0.8, battement: 35 })
+    },
+  },
+  /**
    * le vaisseau se matérialise (Keko : « le son pour le spawn du vaisseau ») : pendant la spirale, un souffle et une
    * note qui montent d'une octave en s'enflant ; à l'éclosion, une quinte de clochettes (la, ré) sur un appui rond, une
    * étincelle de verre au-dessus — la même famille que l'extraction, en plus court : on arrive comme on repart

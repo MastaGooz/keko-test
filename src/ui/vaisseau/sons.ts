@@ -227,6 +227,14 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }, dans = 0): void
  * glisse (`setTargetAtTime`) pour ne jamais claquer. Et LA CHARGE de l'extraction (voir `voixDeCharge`), et LE LANCE-FLAMMES (voir `voixDeFlamme`).
  */
 type Voix = { gain: GainNode; filtre?: BiquadFilterNode }
+/**
+ * LA VOIX DU PROPULSEUR, SELON LE VAISSEAU (Keko, 16/11 : « au Léviathan et à la Vouivre, un son plus biologique et gazeux
+ * en déplacement ; le Néant, un son plus science-fiction, vibrant, très grave, un peu dimensionnel ») : le SOUFFLE de
+ * toujours ; la BÊTE, un gargouillis de gaz ; le NÉANT, un bourdon grave qui bat. Une voix par genre, née au besoin ;
+ * celles des autres genres se taisent.
+ */
+export type GenreDePropulsion = 'souffle' | 'bete' | 'neant'
+const propulsions = new Map<GenreDePropulsion, Voix>()
 let propulsion: Voix | null = null
 let forage: Voix | null = null
 let charge: (Voix & { notes: OscillatorNode[]; lfo: OscillatorNode }) | null = null
@@ -280,6 +288,95 @@ function voixDeFlamme(ctx: AudioContext): Voix {
   souffle.start()
   crepite.start()
   lfo.start()
+  return { gain, filtre }
+}
+
+/**
+ * LA BÊTE : du bruit dans un passe-bande qui ondule (3,7 Hz, puis 1,3 Hz par-dessus : la hauteur des bulles change sans
+ * cesse) et un volume HACHÉ par un battement de 9 Hz — des « bloubs » de gaz, pas un souffle lisse ; dessous, un peu de
+ * bruit grave, le gaz qui fuit.
+ */
+function voixDeBete(ctx: AudioContext): Voix {
+  const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
+  const d = b.getChannelData(0)
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+  const bruit = ctx.createBufferSource()
+  bruit.buffer = b
+  bruit.loop = true
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'bandpass'
+  filtre.frequency.value = 420
+  filtre.Q.value = 3.2
+  const ondule = ctx.createOscillator()
+  ondule.frequency.value = 3.7
+  const ampOndule = ctx.createGain()
+  ampOndule.gain.value = 160
+  ondule.connect(ampOndule).connect(filtre.frequency)
+  const ondule2 = ctx.createOscillator()
+  ondule2.frequency.value = 1.3
+  const ampOndule2 = ctx.createGain()
+  ampOndule2.gain.value = 110
+  ondule2.connect(ampOndule2).connect(filtre.frequency)
+  const hache = ctx.createGain()
+  hache.gain.value = 0.55
+  const battement = ctx.createOscillator()
+  battement.frequency.value = 9
+  const ampBattement = ctx.createGain()
+  ampBattement.gain.value = 0.45
+  battement.connect(ampBattement).connect(hache.gain)
+  const grave = ctx.createBiquadFilter()
+  grave.type = 'lowpass'
+  grave.frequency.value = 220
+  const gainGrave = ctx.createGain()
+  gainGrave.gain.value = 0.5
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  bruit.connect(filtre).connect(hache).connect(gain)
+  bruit.connect(grave).connect(gainGrave).connect(gain)
+  gain.connect(ctx.destination)
+  bruit.start()
+  ondule.start()
+  ondule2.start()
+  battement.start()
+  return { gain, filtre }
+}
+
+/**
+ * LE NÉANT : deux dents de scie à 41 et 41,7 Hz (elles battent), une troisième à l'octave, dans un passe-bas qui respire
+ * lentement (0,23 Hz : le son « tourne », dimensionnel) ; un trémolo de 6 Hz le fait vibrer. Très grave : ses harmoniques
+ * le portent jusqu'à un petit haut-parleur.
+ */
+function voixDuNeant(ctx: AudioContext): Voix {
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 260
+  filtre.Q.value = 5
+  const respire = ctx.createOscillator()
+  respire.frequency.value = 0.23
+  const ampRespire = ctx.createGain()
+  ampRespire.gain.value = 90
+  respire.connect(ampRespire).connect(filtre.frequency)
+  const vibre = ctx.createGain()
+  vibre.gain.value = 0.65
+  const tremolo = ctx.createOscillator()
+  tremolo.frequency.value = 6
+  const ampTremolo = ctx.createGain()
+  ampTremolo.gain.value = 0.35
+  tremolo.connect(ampTremolo).connect(vibre.gain)
+  for (const [f, niv] of [[41, 0.5], [41.7, 0.5], [82.3, 0.28]] as [number, number][]) {
+    const o = ctx.createOscillator()
+    o.type = 'sawtooth'
+    o.frequency.value = f
+    const g = ctx.createGain()
+    g.gain.value = niv
+    o.connect(g).connect(filtre)
+    o.start()
+  }
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  filtre.connect(vibre).connect(gain).connect(ctx.destination)
+  respire.start()
+  tremolo.start()
   return { gain, filtre }
 }
 
@@ -393,19 +490,33 @@ function voixDeCharge(ctx: AudioContext): NonNullable<typeof charge> {
  * Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), si la foreuse creuse, où en est le compte
  * de l'extraction (`compte`, de 0 à 1) et s'il monte (à quai) ou redescend (hors du parvis).
  */
-export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false): void {
+export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle'): void {
   try {
     const ctx = ZZFX.audioContext
     if (ctx.state !== 'running') return
-    if (propulsion === null && poussee > 0.02) propulsion = voixDePropulsion(ctx)
+    // (le genre du vaisseau : sa voix, née au besoin ; les autres se taisent — `&sons=arcade` garde le souffle)
+    const g = ARCADE ? 'souffle' : genre
+    if (!propulsions.has(g) && poussee > 0.02) propulsions.set(g, g === 'bete' ? voixDeBete(ctx) : g === 'neant' ? voixDuNeant(ctx) : voixDePropulsion(ctx))
+    for (const [autre, vx] of propulsions) if (autre !== g) vx.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.05)
+    propulsion = propulsions.get(g) ?? null
     if (forage === null && creuse) forage = voixDeForage(ctx)
     if (charge === null && compte > 0) charge = voixDeCharge(ctx)
     if (flamme === null && crache) flamme = voixDeFlamme(ctx)
     const t = ctx.currentTime
     if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.38 : 0, t, crache ? 0.03 : 0.07) // (0,5 d'abord — Keko, 15/11 : « un tout petit peu moins fort »)
     if (propulsion !== null) {
-      propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
-      propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
+      if (g === 'bete') {
+        // (le gargouillis : un peu plus fort que le souffle — il est haché, il paraît moins —, ses bulles montent avec la poussée)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.16 * poussee, t, 0.05)
+        propulsion.filtre!.frequency.setTargetAtTime(320 + 380 * poussee, t, 0.1)
+      } else if (g === 'neant') {
+        // (le bourdon : plus fort, il est grave — l'oreille l'entend moins ; il s'ouvre un peu avec la poussée)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.22 * poussee, t, 0.08)
+        propulsion.filtre!.frequency.setTargetAtTime(200 + 260 * poussee, t, 0.12)
+      } else {
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
+        propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
+      }
     }
     if (forage !== null) forage.gain.gain.setTargetAtTime(creuse ? ZZFX.volume * (ARCADE ? 0.2 : 0.27) : 0, t, 0.04) // (baissée d'un tiers, environ 3 dB — Keko, 13/11 : « diminuer un peu le volume de la foreuse ») // (0,18 avant : Keko la veut plus forte ; 0,38 : le bourdon rond, au même niveau mesuré que l'ancien à 0,28)
     if (charge !== null) {

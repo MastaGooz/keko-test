@@ -26,7 +26,7 @@ import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves,
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
-import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type Son } from './sons.ts'
+import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
@@ -3796,7 +3796,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.text('>', bx + 7 + i * 4 + dx, by + 12 + dy, c)
         p.text('<', bx + bw - 10 - i * 4 + dx, by + 12 + dy, c)
       }
-    }, 'decolle', { reflet: cycle < 0.3 ? bx - 14 + ((bw + 40) * cycle) / 0.3 : refletDeSurvol(bx, bw, survol !== null && survol.x >= bx && survol.x < bx + bw && survol.y >= by && survol.y < by + bh) })
+    }, sonDuDecollage(), { reflet: cycle < 0.3 ? bx - 14 + ((bw + 40) * cycle) / 0.3 : refletDeSurvol(bx, bw, survol !== null && survol.x >= bx && survol.x < bx + bw && survol.y >= by && survol.y < by + bh) })
   }
 
   /** Le surlignage de la liste glisse jusqu'à la rangée choisie ; l'instant d'un nouveau choix (les jauges se remplissent à nouveau). */
@@ -7678,6 +7678,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.4 ? VIDE[4] : VIDE[3], 0.35 * (1 - u) * k)
   }
   /**
+   * LE SON DE LA POUSSÉE, selon le vaisseau (Keko, 16/11) : les bêtes (le Kraken, la Vouivre) gargouillent, le Néant
+   * bourdonne, les autres soufflent — en vol (`regler`) comme au décollage du hangar (`sonDuDecollage`).
+   */
+  const genreDePropulsion = (): GenreDePropulsion => {
+    const c = monteeA(hangar, 'coque').cran
+    return c === 10 || c === 11 ? 'bete' : c === 13 ? 'neant' : 'souffle'
+  }
+  const sonDuDecollage = (): Son => ({ bete: 'decolleBete', neant: 'decolleNeant', souffle: 'decolle' } as const)[genreDePropulsion()]
+  /**
    * LA POUSSÉE D'UN VAISSEAU SANS TUYÈRE, À L'ARRÊT DU MONDE (l'accueil, le décollage du hangar) : le vaisseau est fixe
    * à l'écran, sa poussée défile sous lui en boucle — les ONDES du Néant, les BULLES du Kraken et de la Vouivre —, la même
    * que celle qu'il sème en vol (Keko, 16/11 : « la propulsion d'un vaisseau doit être la même dans l'écran d'accueil, au
@@ -10910,7 +10919,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache)
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion())
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0
