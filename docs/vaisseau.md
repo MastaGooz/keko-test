@@ -4312,3 +4312,32 @@ tombaient sur le même insecte. Les insectes à portée sont maintenant MÉLANG�
 cet ordre : chacun en reçoit un avant qu'un autre en ait deux (six missiles, trois
 insectes : deux chacun ; huit insectes : six d'entre eux, tirés au hasard). Un
 seul insecte à portée les prend tous.
+
+PUIS UNE SPHÈRE QUI TIRE EN PASSANT, ET UN RAILGUN (Keko, 16/11). L'ORBE N'APPORTAIT
+RIEN DE NEUF (un tir lent comme le napalm, une explosion comme les missiles, la
+traversée des éclats de glace) ; Keko : « on tire en ligne droite la sphère
+directement — celle qu'on dessine lors de l'explosion, pas le petit projectile
+d'avant — et elle tire des petits projectiles arcaniques sur tous les ennemis
+proches sur sa trajectoire ». LA SPHÈRE DE PLASMA (`Arme.sphere`, la pièce
+`arme-plasma` garde son identifiant) : toutes les 2,6 s, un insecte à moins
+de 110 (le verrouillé d'abord, sinon le plus proche), elle part de la bouche
+TOUT DROIT vers lui, à 40, pendant 3,2 s ; toutes les 0,45 s elle tire un petit
+trait arcanique sur CHAQUE insecte à moins de 42 d'elle — les missiles de
+l'essaim en petit (six dixièmes), un peu zigzagants, à tête chercheuse : 3
+points. Elle-même ne touche rien ; elle s'éteint en se resserrant dans une
+petite gerbe, sans dégâts. Elle a le dessin de la boule de l'éclat, pleine, avec
+deux anneaux qui tournent en sens contraire et des arcs qui crépitent ; elle
+flashe quand elle tire. L'orbe d'avant (`Arme.plasma`) reste écrite, plus
+aucune arme ne la porte.
+
+LE RAILGUN DE PLASMA, LA TROISIÈME ARME (`Arme.rail` ; Keko : « un tir de
+plasma instantané type railgun, sur une très grande distance, longue portée, qui
+traverse tout ») : toutes les 2,6 s, un insecte à moins de 220, un trait
+instantané part de la bouche, long de 220 — plus que la vue n'est large — :
+16 points à tout insecte à moins de 3 (plus son rayon) de la ligne. Il vise le
+verrouillé ; sinon, des lignes qui passent par chaque insecte à portée, celle qui
+en traverse LE PLUS (à égalité, vers le plus proche) — aligner les insectes, c'est
+le jeu. Le trait : une âme blanche, une gaine bleue puis violette qui s'amincit,
+des nœuds de lumière, une spirale de plasma, des étincelles tout du long. Ses
+sons : `rail` (une charge qui siffle, le claquement, une traîne qui vibre),
+`arcane` (le « tsip » des petits traits), `dissipe`. *Chiffres de moi.*

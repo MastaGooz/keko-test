@@ -599,6 +599,37 @@ const RECETTES = {
     },
   },
   /**
+   * LE RAILGUN TIRE (16/11) : une charge qui siffle en montant très vite, puis LE CLAQUEMENT — un souffle large et brillant,
+   * un coup grave qui tombe —, et une traîne métallique qui vibre et s'éloigne
+   */
+  rail: {
+    duree: 1.2, niveau: 0.34, salle: [0.45, 0.18], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 0.35, 0, { f: 600, glisse: { vers: 3200, en: 0.07, droit: true }, a: 0.01, d: 0.08, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      souffle(m, h, 0.07, 1, 0, { f: 5200, glisse: { vers: 1600, en: 0.12 }, q: 0.9, bande: true, a: 0.001, d: 0.16, large: true })
+      note(m, 0.07, 0.9, 0, { f: 110, glisse: { vers: 38, en: 0.25 }, a: 0.002, d: 0.35, partiels: CORPS, sature: 1.8 })
+      note(m, 0.08, 0.3, -0.4, { f: 1900, glisse: { vers: 900, en: 0.8 }, a: 0.003, d: 0.85, battement: 19, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+      note(m, 0.09, 0.25, 0.4, { f: 1420, glisse: { vers: 680, en: 0.8 }, a: 0.003, d: 0.85, battement: 15, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
+  /** UN PETIT TRAIT ARCANIQUE PART DE LA SPHÈRE : un « tsip » clair et bref qui monte, à peine battu */
+  arcane: {
+    duree: 0.25, niveau: 0.1, salle: [0.25, 0.1], variantes: 4,
+    faire: (m, h) => {
+      const f = 1500 + 500 * h.next()
+      note(m, 0, 1, (h.next() - 0.5) * 0.6, { f, glisse: { vers: f * 1.7, en: 0.06, droit: true }, a: 0.002, d: 0.08, battement: 26, partiels: [[1, 1, 1], [2, 0.25, 0.6]] })
+      souffle(m, h, 0, 0.3, 0, { f: 4200, q: 1.8, bande: true, a: 0.001, d: 0.025 })
+    },
+  },
+  /** LA SPHÈRE S'ÉTEINT : un souffle d'énergie qui se resserre et retombe, doux */
+  dissipe: {
+    duree: 0.6, niveau: 0.14, salle: [0.35, 0.14], variantes: 2,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.7, 0, { f: 2600, glisse: { vers: 700, en: 0.3 }, q: 1.3, bande: true, a: 0.01, d: 0.3 })
+      note(m, 0, 0.4, 0, { f: 520, glisse: { vers: 260, en: 0.3 }, a: 0.01, d: 0.3, battement: 12 })
+    },
+  },
+  /**
    * L'ORBE ÉCLATE : une gerbe d'énergie, pas une explosion de feu — un éclair clair et grésillant, un coup grave qui
    * tombe, une traîne qui scintille et ondule d'une oreille à l'autre
    */

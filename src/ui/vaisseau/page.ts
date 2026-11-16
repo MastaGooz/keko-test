@@ -825,7 +825,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
       // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
-      if (canon?.napalm !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
@@ -932,7 +932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -964,7 +964,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -6660,26 +6660,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * qui s'ouvre. Le ruban se garde ici, par missile, d'une image à l'autre.
    */
   const rubans = new Map<number, [number, number][]>()
-  const popsDEssaim: { x: number; y: number; t0: number }[] = []
+  const taillesVues = new Map<number, number>()
+  const popsDEssaim: { x: number; y: number; t0: number; k: number }[] = []
+  /** (les petits traits arcaniques de la sphère : les mêmes, aux six dixièmes) */
+  const tailleDuTrait = (arme: string): number => (arme === 'arcane' ? 0.6 : 1)
   const DUREE_DU_POP = 0.3
   function dessinerLEssaim(p: Peintre): void {
-    const missiles = m.obus.filter((o) => o.arme === 'essaim')
+    const missiles = m.obus.filter((o) => o.arme === 'essaim' || o.arme === 'arcane')
+    const tailles = new Map(missiles.map((o) => [o.id, tailleDuTrait(o.arme)]))
     const vivants = new Set(missiles.map((o) => o.id))
     for (const [id, pts] of rubans) if (!vivants.has(id)) {
-      if (pts.length > 0) popsDEssaim.push({ x: pts[0][0], y: pts[0][1], t0: t })
+      if (pts.length > 0) popsDEssaim.push({ x: pts[0][0], y: pts[0][1], t0: t, k: taillesVues.get(id) ?? 1 })
+      taillesVues.delete(id)
       rubans.delete(id)
     }
     for (const o of missiles) {
       const pts = rubans.get(o.id) ?? []
       pts.unshift([o.x, o.y])
       // (un ruban plus long : on y lit les zigzags)
-      if (pts.length > 14) pts.pop()
+      if (pts.length > (o.arme === 'arcane' ? 8 : 14)) pts.pop()
       rubans.set(o.id, pts)
+      taillesVues.set(o.id, tailles.get(o.id) ?? 1)
     }
     for (let i = popsDEssaim.length - 1; i >= 0; i--) if (t - popsDEssaim[i].t0 > DUREE_DU_POP) popsDEssaim.splice(i, 1)
     for (const o of missiles) {
       const pts = rubans.get(o.id) ?? []
       const n = pts.length
+      const K = tailles.get(o.id) ?? 1
       // (le ruban : il s'effile vers la queue, clair près de la tête, violet au bout)
       for (let i = n - 1; i >= 1; i--) {
         const u = i / Math.max(1, n - 1)
@@ -6687,36 +6694,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const [x1, y1] = pts[i - 1]
         const c = u < 0.2 ? PLASMA[4] : u < 0.5 ? PLASMA[3] : PLASMA_V[2]
         p.line(x0, y0, x1, y1, c, 1 - u * 0.7)
-        p.disc(x0, y0, 1.7 * Math.pow(1 - u, 0.8) + 0.3, u < 0.4 ? PLASMA[3] : PLASMA_V[2], (d) => (1 - u) * 0.75 * (1 - d))
+        p.disc(x0, y0, (1.7 * Math.pow(1 - u, 0.8) + 0.3) * K, u < 0.4 ? PLASMA[3] : PLASMA_V[2], (d) => (1 - u) * 0.75 * (1 - d))
         // (les deux brins qui s'enroulent, vifs quand ils passent devant)
         const L = Math.hypot(x1 - x0, y1 - y0) || 1
         const nx = -(y1 - y0) / L
         const ny = (x1 - x0) / L
         for (const s of [0, Math.PI]) {
           const ph = u * 10 - t * 26 + o.id + s
-          if (Math.cos(ph) > -0.2) p.dot(x0 + nx * Math.sin(ph) * 2.4, y0 + ny * Math.sin(ph) * 2.4, Math.cos(ph) > 0.4 ? PLASMA_V[4] : PLASMA_V[3], 1 - u)
+          if (Math.cos(ph) > -0.2) p.dot(x0 + nx * Math.sin(ph) * 2.4 * K, y0 + ny * Math.sin(ph) * 2.4 * K, Math.cos(ph) > 0.4 ? PLASMA_V[4] : PLASMA_V[3], 1 - u)
         }
       }
       // (la tête : des couches, deux rayons qui tournent, sa lueur)
       for (let k = 0; k < 2; k++) {
         const a = t * 24 + k * Math.PI + o.id
-        const l = 3.6 + Math.sin(t * 50 + k)
-        p.line(o.x + Math.cos(a) * 2, o.y + Math.sin(a) * 2, o.x + Math.cos(a) * l, o.y + Math.sin(a) * l, PLASMA[5])
+        const l = (3.6 + Math.sin(t * 50 + k)) * K
+        p.line(o.x + Math.cos(a) * 2 * K, o.y + Math.sin(a) * 2 * K, o.x + Math.cos(a) * l, o.y + Math.sin(a) * l, PLASMA[5])
       }
-      p.glow(o.x, o.y, 9, PLASMA_V[2], 0.5)
-      p.circle(o.x, o.y, 2.5, PLASMA_V[2])
-      p.circle(o.x, o.y, 1.8, PLASMA[3])
-      p.circle(o.x, o.y, 1.1, PLASMA[5])
+      p.glow(o.x, o.y, 9 * K, PLASMA_V[2], 0.5)
+      p.circle(o.x, o.y, 2.5 * K, PLASMA_V[2])
+      p.circle(o.x, o.y, 1.8 * K, PLASMA[3])
+      p.circle(o.x, o.y, 1.1 * K, PLASMA[5])
       p.px(Math.round(o.x), Math.round(o.y), N.WHITE)
       p.glow(o.x, o.y, 3, PLASMA[4], 0.3)
     }
     for (const q of popsDEssaim) {
       const u = (t - q.t0) / DUREE_DU_POP
       if (u < 0.4) {
-        const r = 4 * (1 - u / 0.4) + 1
+        const r = (4 * (1 - u / 0.4) + 1) * q.k
         p.circle(q.x, q.y, r + 1, PLASMA[4])
         p.circle(q.x, q.y, r, N.WHITE)
-        const l = 8 * (1 - u / 0.4) + 2
+        const l = Math.round((8 * (1 - u / 0.4) + 2) * q.k)
         for (let d = -l; d <= l; d++) {
           const a = Math.abs(d) / l
           const c = a < 0.3 ? N.WHITE : a < 0.65 ? PLASMA[5] : PLASMA_V[3]
@@ -6724,16 +6731,96 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.dot(q.x, q.y + d * 0.7, c, 1.15 - a)
         }
       }
-      p.ring(q.x, q.y, 2 + 9 * (1 - (1 - u) * (1 - u) * (1 - u)), 1, u < 0.3 ? N.WHITE : PLASMA_V[3], Math.min(1, 1.2 - u))
-      p.glow(q.x, q.y, 10, PLASMA_V[2], 0.4 * (1 - u))
+      p.ring(q.x, q.y, (2 + 9 * (1 - (1 - u) * (1 - u) * (1 - u))) * q.k, 1, u < 0.3 ? N.WHITE : PLASMA_V[3], Math.min(1, 1.2 - u))
+      p.glow(q.x, q.y, 10 * q.k, PLASMA_V[2], 0.4 * (1 - u))
+    }
+  }
+  /**
+   * LA SPHÈRE DE PLASMA (Keko, 16/11 : « la sphère qu'on dessine lors de l'explosion ») : la boule de l'éclat, pleine et à
+   * demeure — un cœur blanc, des bandes bleues puis violettes qui bouillonnent au bord —, deux anneaux qui tournent en sens
+   * contraire, des arcs qui crépitent, sa lueur ; elle s'ouvre en naissant, se resserre en s'éteignant, et FLASHE quand
+   * elle tire (`sphereTirA`).
+   */
+  const RAYON_DE_LA_SPHERE = 8
+  const sphereTirA = new Map<number, number>()
+  /** L'instant du dernier « tsip » des petits traits (pas plus d'un tous les dixièmes). */
+  let arcaneSonneA = -10
+  /** LES TRAITS DU RAILGUN qui viennent de partir (voir l'événement `rail`) : un trait épais qui s'amincit et pâlit. */
+  const DUREE_DU_RAIL = 0.32
+  const traitsDuRail: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
+  function dessinerLesSpheres(p: Peintre): void {
+    for (const s of m.spheres) {
+      const sp = CONF.armes[s.arme]?.sphere
+      if (sp === undefined) continue
+      const age = m.t - s.nee
+      const k = Math.min(1, age / 0.18) * Math.min(1, (sp.duree - age) / 0.25)
+      if (k <= 0) continue
+      const R = RAYON_DE_LA_SPHERE * (0.4 + 0.6 * k) * (1 + 0.06 * Math.sin(t * 9 + s.id))
+      const flash = Math.max(0, 1 - (t - (sphereTirA.get(s.id) ?? -10)) / 0.15)
+      p.glow(s.x, s.y, R * 2.4, PLASMA_V[2], 0.45 * k)
+      p.glow(s.x, s.y, R * 1.2, PLASMA[4], (0.35 + 0.4 * flash) * k)
+      p.disc(s.x, s.y, R, (d, ang) => {
+        const dd = d + 0.1 * Math.sin(ang * 5 + t * 30 + s.id)
+        return dd > 0.82 ? PLASMA_V[3] : dd > 0.6 ? PLASMA_V[2] : dd > 0.35 ? PLASMA[4] : flash > 0.3 || dd < 0.18 ? N.WHITE : PLASMA[5]
+      }, (d) => 0.95 * Math.min(1, (1 - d) / 0.12))
+      p.ring(s.x, s.y, R + 2 + Math.sin(t * 4 + s.id), 1, PLASMA_V[3], 0.55 * k)
+      // (deux arcs d'anneau, qui tournent en sens contraire)
+      for (const [sens, rr, c] of [[1, R + 3.5, PLASMA[5]], [-1, R + 1.5, PLASMA_V[4]]] as const) {
+        const a0 = t * 3 * sens + s.id
+        for (let a = a0; a < a0 + 1.4; a += 0.12) p.dot(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr, c, 0.8 * k)
+        for (let a = a0 + Math.PI; a < a0 + Math.PI + 1.4; a += 0.12) p.dot(s.x + Math.cos(a) * rr, s.y + Math.sin(a) * rr, c, 0.8 * k)
+      }
+      // (des arcs qui crépitent, changés à chaque image)
+      const tic = Math.floor(t * 20)
+      for (let j = 0; j < 2; j++) {
+        if (alea(s.id + tic, j, 9) < 0.4) continue
+        const a = alea(s.id + tic, j, 1) * Math.PI * 2
+        let px = s.x + Math.cos(a) * R * 0.9
+        let py = s.y + Math.sin(a) * R * 0.9
+        for (let q = 1; q <= 3; q++) {
+          const jit = (alea(s.id + tic, j, 3 + q) - 0.5) * 3
+          const nx = s.x + Math.cos(a) * (R + q * 2) - Math.sin(a) * jit
+          const ny = s.y + Math.sin(a) * (R + q * 2) + Math.cos(a) * jit
+          p.line(px, py, nx, ny, q < 2 ? N.WHITE : PLASMA[5], 0.9 * k)
+          px = nx
+          py = ny
+        }
+      }
+    }
+  }
+  function dessinerLeRailgun(p: Peintre): void {
+    for (let i = traitsDuRail.length - 1; i >= 0; i--) if (t - traitsDuRail[i].t0 > DUREE_DU_RAIL) traitsDuRail.splice(i, 1)
+    for (const r of traitsDuRail) {
+      const u = (t - r.t0) / DUREE_DU_RAIL
+      const v1 = 1 - u
+      const L = Math.hypot(r.x1 - r.x0, r.y1 - r.y0) || 1
+      const nx = -(r.y1 - r.y0) / L
+      const ny = (r.x1 - r.x0) / L
+      // (le trait : une gaine violette large qui s'amincit, une bande bleue, une âme blanche ; il pâlit de la bouche au bout)
+      const demi = Math.max(0, Math.round(3 * v1))
+      for (let o = -demi - 1; o <= demi + 1; o++) {
+        const bord = Math.abs(o) / (demi + 1)
+        const c = bord < 0.3 ? N.WHITE : bord < 0.7 ? PLASMA[4] : PLASMA_V[2]
+        p.line(r.x0 + nx * o, r.y0 + ny * o, r.x1 + nx * o, r.y1 + ny * o, c, (bord < 0.3 ? 1 : 0.75) * v1)
+      }
+      // (des nœuds de lumière le long du trait, et le flash à la bouche)
+      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, 6 * v1 + 2, q % 2 === 0 ? PLASMA[4] : PLASMA_V[2], 0.4 * v1)
+      if (u < 0.3) p.glow(r.x0, r.y0, 10, N.WHITE, 0.8 * (1 - u / 0.3))
+      // (une spirale de plasma autour du trait, qui s'efface)
+      for (let d = 0; d < L; d += 2) {
+        const off = Math.sin(d * 0.35 - t * 40) * (3 + 3 * u)
+        p.dot(r.x0 + ((r.x1 - r.x0) * d) / L + nx * off, r.y0 + ((r.y1 - r.y0) * d) / L + ny * off, PLASMA_V[3], 0.7 * v1)
+      }
     }
   }
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && !m.obus.some((o) => o.arme === 'essaim')) return
+    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && traitsDuRail.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    dessinerLesSpheres(p)
     dessinerLEssaim(p)
+    dessinerLeRailgun(p)
     for (const o of orbes) {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
@@ -7049,7 +7136,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(o.x - ux * 3 - uy, o.y - uy * 3 + ux, o.x - ux, o.y - uy, GLACE[5])
         p.px(o.x, o.y, N.WHITE)
         p.glow(o.x, o.y, 4, GLACE[5], 0.5)
-      } else if (o.arme === 'plasma' || o.arme === 'essaim') {
+      } else if (o.arme === 'plasma' || o.arme === 'essaim' || o.arme === 'arcane') {
         // (l'orbe de plasma et les missiles de l'essaim : dessinés avec leurs éclats, voir `dessinerLePlasma`)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
@@ -9216,6 +9303,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 const a = (i / 12) * Math.PI * 2
                 etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 6, ev.y + Math.sin(a) * 6, Math.cos(a) * R.range(30, 60), Math.sin(a) * R.range(30, 60), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.5)
               }
+              break
+            }
+            case 'sphere':
+              // (une sphère part : la décharge — sauf si elle a sonné en avance —, des grains de plasma à la bouche)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer(ev.arme as Son)
+              for (let i = 0; i < 8; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
+              }
+              break
+            case 'sphereTir': {
+              // (elle tire ses petits traits : elle flashe, un petit « tsip » — pas plus d'un tous les dixièmes)
+              const s = m.spheres.find((x) => Math.hypot(x.x - ev.x, x.y - ev.y) < 0.5)
+              if (s !== undefined) sphereTirA.set(s.id, t)
+              if (t - arcaneSonneA > 0.1) {
+                arcaneSonneA = t
+                jouer('arcane', { dx: ev.x - v.x, dy: ev.y - v.y })
+              }
+              break
+            }
+            case 'sphereFinie':
+              // (elle s'éteint : elle se resserre et lâche une petite gerbe, sans dégâts)
+              eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: RAYON_DE_LA_SPHERE * 1.4, id: Math.round(ev.x * 13 + ev.y * 7) })
+              jouer('dissipe', { dx: ev.x - v.x, dy: ev.y - v.y })
+              break
+            case 'rail': {
+              // (LE RAILGUN : le trait, son claquement — sauf s'il a sonné en avance —, des étincelles tout le long, une secousse)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer(ev.arme as Son)
+              traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
+              for (let i = 0; i < 18; i++) {
+                const q = R.next()
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, PLASMA[5], PLASMA_V[3]][Math.floor(R.next() * 3)], 1, 1.5)
+              }
+              secousse = Math.max(secousse, 0.25)
               break
             }
             case 'essaim':

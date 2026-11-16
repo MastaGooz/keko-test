@@ -1441,6 +1441,49 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('une orbe part, traverse la cible (5) et éclate au bout de sa course (12) : la voisine prend l’éclat, la lointaine rien', ev.filter((e) => e.type === 'explosionDeZone' && e.arme === 'plasma').length === 1 && pv[0] === 17 && pv[1] === 12 && pv[2] === 0 && w.obus.length === 0)
 }
 
+// LA SPHÈRE DE PLASMA DU PULSAR (Keko, 16/11) : elle part tout droit, tire de petits traits sur les insectes proches
+// de sa trajectoire, ne touche rien elle-même, et s'éteint
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const sphere = { id: 'plasma', cadence: 9, degats: 3, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 40, duree: 3.2, rayon: 42, periode: 0.45, vitesseTir: 120 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [sphere], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  // (la cible, la plus proche, sur l'axe ; une voisine de la trajectoire, plus loin, à 25 de côté ; une loin d'elle, à 75)
+  const places: [number, number][] = [[60, 0], [100, 25], [60, -75]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  const ev: Evenement[] = []
+  let chemin: [number, number][] = []
+  for (let i = 0; i < 60 * 3.5; i++) {
+    places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    if (w.spheres.length > 0) chemin.push([w.spheres[0].x, w.spheres[0].y])
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  const droit = chemin.length > 10 && chemin.every(([, y]) => Math.abs(y - chemin[0][1]) < 1e-6)
+  verifier('une sphère part tout droit vers l’insecte, tire sur la cible et sur la voisine de sa trajectoire (par 3), jamais sur la lointaine, puis s’éteint', ev.filter((e) => e.type === 'sphere').length === 1 && droit && pv[0] > 0 && pv[0] % 3 === 0 && pv[1] > 0 && pv[1] % 3 === 0 && pv[2] === 0 && ev.some((e) => e.type === 'sphereFinie') && w.spheres.length === 0)
+}
+
+// LE RAILGUN DU PULSAR (Keko, 16/11) : un trait instantané, très long, qui traverse tout — sur la ligne qui en traverse le plus
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rail = { id: 'rail', cadence: 2.6, degats: 16, portee: 220, vitesse: 0, vie: 0, dispersion: 0, guide: false, rail: { largeur: 3 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rail], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const tirer = (verrou: number | null) => {
+    const w = nouveauMonde(cfg, 3)
+    // (un seul insecte tout près, à gauche ; trois alignés vers le haut, le plus loin à 200 ; un hors de portée, à 260)
+    for (const [k, [x, y]] of ([[-30, 0], [0, -60], [0, -130], [0, -200], [0, -260]] as [number, number][]).entries()) w.ennemis.push(insecte(k + 1, x, y))
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    w.verrou = verrou
+    const ev = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements
+    return { ev, pv: w.ennemis.map((e) => 1000 - e.pv) }
+  }
+  const libre = tirer(null)
+  verifier('le railgun tire à l’instant sur la ligne qui en traverse le plus : les trois alignés, jusqu’à 200, perdent 16 ; le proche à côté et celui au-delà de la portée, rien', libre.ev.filter((e) => e.type === 'rail').length === 1 && libre.pv[0] === 0 && libre.pv[1] === 16 && libre.pv[2] === 16 && libre.pv[3] === 16 && libre.pv[4] === 0)
+  const verrouille = tirer(1)
+  verifier('un insecte verrouillé : le trait va sur lui', verrouille.pv[0] === 16 && verrouille.pv[1] === 0)
+}
+
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {

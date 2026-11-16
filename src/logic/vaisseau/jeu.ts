@@ -448,6 +448,24 @@ export type Arme = {
   // de `vitesse` de `acces` × âge², jusqu'à `pointe`. LA CIBLE : tirée au hasard parmi les insectes à portée, missile par
   // missile — le verrouillé, s'il est à portée, pour tous ; une cible morte, le missile prend l'insecte le plus proche de
   // lui.
+  /**
+   * UNE SPHÈRE DE PLASMA QUI TIRE EN PASSANT (la première arme du Pulsar refaite, Keko, 16/11 : « on tire en ligne droite
+   * la sphère directement — celle qu'on dessine lors de l'explosion, pas le petit projectile d'avant — et elle tire des
+   * petits projectiles arcaniques sur tous les ennemis proches sur sa trajectoire ») : à sa cadence, un insecte à portée
+   * (le verrouillé d'abord, sinon le plus proche), une sphère part de la bouche vers lui, TOUT DROIT, à `vitesse` ; elle
+   * vit `duree` secondes. Toutes les `periode` secondes, elle tire UN PETIT PROJECTILE sur CHAQUE insecte à moins de
+   * `rayon` d'elle : un trait arcanique, à tête chercheuse, un peu zigzagant (les missiles de l'essaim, en petit), qui
+   * part à `vitesseTir` et fait `degats` (ceux de l'arme). Elle-même ne touche rien. L'état est `Monde.spheres`.
+   */
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number }
+  /**
+   * UN RAILGUN DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « un tir de plasma instantané type railgun, sur une
+   * très grande distance, longue portée, qui traverse tout ») : à sa cadence, un insecte à `portee`, UN TRAIT INSTANTANÉ
+   * part de la bouche, long de `portee` : tout insecte à moins de `largeur` (plus son rayon) de la ligne perd `degats`. Sa
+   * direction : vers le verrouillé, s'il est à portée ; sinon, des lignes qui passent par chaque insecte à portée, celle
+   * qui en traverse LE PLUS (à égalité, vers le plus proche).
+   */
+  rail?: { largeur: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -594,7 +612,12 @@ export type Monde = {
   givres: Givre[]
   /** LES TORNADES DE GIVRE (voir `Arme.tornade`). */
   tornades: Tornade[]
+  /** LES SPHÈRES DE PLASMA (voir `Arme.sphere`). */
+  spheres: Sphere[]
 }
+
+/** Une sphère de plasma (voir `Arme.sphere`) : son arme, où, sa vitesse, quand elle est née, quand elle tire. */
+export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number }
 
 /** Une tornade de givre (voir `Arme.tornade`) : son arme, où, sa vitesse, quand elle est née. */
 export type Tornade = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number }
@@ -661,6 +684,12 @@ export type Evenement =
   | { type: 'salve'; x: number; y: number; arme: string }
   /** Un essaim de missiles part (voir `Arme.essaim`), de la bouche. */
   | { type: 'essaim'; x: number; y: number; arme: string }
+  /** Une sphère de plasma part (voir `Arme.sphere`), s'éteint, tire ses petits traits (combien). */
+  | { type: 'sphere'; x: number; y: number; arme: string }
+  | { type: 'sphereFinie'; x: number; y: number }
+  | { type: 'sphereTir'; x: number; y: number; tirs: number }
+  /** Un railgun tire (voir `Arme.rail`) : le trait, de la bouche au bout de la portée. */
+  | { type: 'rail'; x0: number; y0: number; x1: number; y1: number; arme: string }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -681,7 +710,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1591,6 +1620,110 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   })
 }
 
+/** La bouche d'une arme, dans le monde (sans bouche : le centre du vaisseau). */
+function boucheDansLeMonde(v: Vaisseau, a: Arme): Vecteur {
+  const bo = a.bouche
+  return bo === undefined ? { x: v.x, y: v.y } : { x: v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y, y: v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y }
+}
+
+/** LES SPHÈRES DE PLASMA (voir `Arme.sphere`) : le lancer, le vol tout droit, les petits tirs sur les insectes proches, l'extinction. */
+function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const sp = a.sphere
+    if (sp === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (aPortee(e) && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    const b = boucheDansLeMonde(v, a)
+    const cap = Math.atan2(cible.corps.y - b.y, cible.corps.x - b.x)
+    m.spheres.push({ id: m.prochainId++, arme: i, x: b.x, y: b.y, vx: Math.cos(cap) * sp.vitesse, vy: Math.sin(cap) * sp.vitesse, nee: m.t, tirA: m.t + sp.periode * 0.5 })
+    ev.push({ type: 'sphere', x: b.x, y: b.y, arme: a.id })
+  })
+  for (let k = m.spheres.length - 1; k >= 0; k--) {
+    const s = m.spheres[k]
+    const a = c.armes[s.arme]
+    const sp = a?.sphere
+    if (a === undefined || sp === undefined || m.t - s.nee >= sp.duree) {
+      m.spheres.splice(k, 1)
+      ev.push({ type: 'sphereFinie', x: s.x, y: s.y })
+      continue
+    }
+    s.x += s.vx * dt
+    s.y += s.vy * dt
+    if (m.t < s.tirA) continue
+    s.tirA = m.t + sp.periode
+    // (un petit trait sur CHAQUE insecte à portée d'elle : il part vers lui, un peu de travers, et le rattrape en zigzaguant)
+    let tirs = 0
+    for (const e of m.ennemis) {
+      if (Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sp.rayon + c.ennemi.rayon) continue
+      const id = m.prochainId++
+      const an = Math.atan2(e.corps.y - s.y, e.corps.x - s.x) + (tire(m.graine, id, 23) - 0.5) * 1.6
+      const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
+      m.obus.push({ id, x: s.x, y: s.y, vx: Math.cos(an) * sp.vitesseTir, vy: Math.sin(an) * sp.vitesseTir, vie: 1, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: 'arcane', critique, traque: { cible: e.id, nee: m.t, v0: sp.vitesseTir, acces: 200, pointe: 260, braquage: 14, chaos: 0.9, pas: 0.09, calme: 0.3, reprise: 20 } })
+      tirs++
+    }
+    if (tirs > 0) ev.push({ type: 'sphereTir', x: s.x, y: s.y, tirs })
+  }
+}
+
+/** LES RAILGUNS (voir `Arme.rail`) : à la cadence, un insecte à portée, le trait instantané — sur la ligne qui en traverse le plus. */
+function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const ra = a.rail
+    if (ra === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const b = boucheDansLeMonde(v, a)
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + c.ennemi.rayon
+    const enVue = m.ennemis.filter(aPortee)
+    if (enVue.length === 0) return
+    // (ceux que traverse la ligne de la bouche, dans la direction `an`, sur toute la portée)
+    const traverses = (an: number): Ennemi[] => {
+      const ux = Math.cos(an)
+      const uy = Math.sin(an)
+      return m.ennemis.filter((e) => {
+        const ex = e.corps.x - b.x
+        const ey = e.corps.y - b.y
+        const le = ex * ux + ey * uy
+        return le >= -c.ennemi.rayon && le <= a.portee + c.ennemi.rayon && Math.abs(ex * uy - ey * ux) <= ra.largeur + c.ennemi.rayon
+      })
+    }
+    const ve = ennemiVerrouille(m)
+    let an: number
+    if (ve !== null && aPortee(ve)) an = Math.atan2(ve.corps.y - b.y, ve.corps.x - b.x)
+    else {
+      let meilleur = -1
+      let dc = Infinity
+      an = 0
+      for (const e of enVue) {
+        const a0 = Math.atan2(e.corps.y - b.y, e.corps.x - b.x)
+        const n = traverses(a0).length
+        const d = Math.hypot(e.corps.x - b.x, e.corps.y - b.y)
+        if (n > meilleur || (n === meilleur && d < dc)) (meilleur = n), (dc = d), (an = a0)
+      }
+    }
+    m.armesA[i] = m.t + a.cadence
+    const touches = traverses(an)
+    ev.push({ type: 'rail', x0: b.x, y0: b.y, x1: b.x + Math.cos(an) * a.portee, y1: b.y + Math.sin(an) * a.portee, arme: a.id })
+    for (const e of touches) {
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  })
+}
+
 /**
  * UN MISSILE D'ESSAIM ZIGZAGUE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, par
  * bonds : à chaque bond un cap neuf, l'écart tiré au hasard d'un bord à l'autre et qui s'éteint avec l'âge.
@@ -2106,7 +2239,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2190,10 +2323,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLeGivre(c, m, dt, ev)
   tirerLesSalves(c, m, ev)
   tirerLesEssaims(c, m, ev)
+  menerLesSpheres(c, m, dt, ev)
+  tirerLesRails(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
