@@ -504,6 +504,18 @@ export type Arme = {
    * secondes. L'état est `Monde.rejetons`.
    */
   rejeton?: { max: number; duree: number; vitesse: number; acces: number; vue: number; allonge: number; periode: number }
+  /**
+   * UN CRACHAT D'ACIDE (la première arme de la Vouivre, Keko, 16/11 : « un vaisseau alien organique spécialisé dans la
+   * corrosion et le toxique ; un crachat : un cône d'acide craché devant, qui laisse une trace — une flaque conique ; le
+   * crachat et la flaque infligent le statut ACIDE, qui inflige des dégâts faibles mais augmente les dégâts subis de
+   * toutes les sources ») : à sa cadence, un insecte à `portee` (le verrouillé d'abord, sinon le plus proche), il crache
+   * de la bouche vers lui un CÔNE de demi-angle `cone`, long de `portee` : tout insecte dedans perd `degats` et est
+   * RONGÉ. Le cône laisse au sol UNE FLAQUE de même forme, qui vit `duree` secondes : tout insecte dedans est rongé.
+   * L'ACIDE (`Ennemi.acide`) dure `acide.duree` secondes après le dernier contact : l'insecte perd `acide.dps` par seconde,
+   * et TOUT CE QU'IL PERD D'AUTRE, DE TOUTES LES SOURCES, est majoré de `acide.bonus` (une part : 0,35 = 35 % de plus).
+   * L'état est `Monde.flaquesAcides`.
+   */
+  crachat?: { cone: number; duree: number; acide: { duree: number; dps: number; bonus: number } }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -568,6 +580,8 @@ export type Ennemi = {
   /** IL EST GELÉ (le givre) jusqu'à cet instant, et avance à cette part de sa vitesse. */
   geleA?: number
   ralenti?: number
+  /** IL EST RONGÉ PAR L'ACIDE (voir `Arme.crachat`) jusqu'à cet instant : il perd tant par seconde, et tout ce qu'il perd d'autre est majoré de cette part. */
+  acide?: { jusque: number; dps: number; bonus: number }
   butin: number
   cargaison: Cargaison
 }
@@ -658,6 +672,8 @@ export type Monde = {
   nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[] }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
+  /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
+  flaquesAcides: { id: number; arme: number; x: number; y: number; cap: number; nee: number }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -752,6 +768,9 @@ export type Evenement =
   | { type: 'rejeton'; x: number; y: number }
   | { type: 'coupDeRejeton'; id: number; x: number; y: number }
   | { type: 'rejetonFini'; x: number; y: number }
+  /** La Vouivre crache (voir `Arme.crachat`) : la bouche, le cap, le cône ; un insecte se met à être rongé. */
+  | { type: 'crachat'; x: number; y: number; cap: number; cone: number; portee: number; arme: string }
+  | { type: 'ronge'; id: number; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -772,7 +791,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1874,6 +1893,85 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
   }
 }
 
+/** Un insecte RONGÉ par l'acide (voir `Arme.crachat`) : jusqu'à `duree` d'ici — le plus long et le plus fort l'emportent. */
+function ronger(m: Monde, e: Ennemi, ac: { duree: number; dps: number; bonus: number }, ev: Evenement[]): void {
+  if (e.acide === undefined || e.acide.jusque <= m.t) ev.push({ type: 'ronge', id: e.id, x: e.corps.x, y: e.corps.y })
+  e.acide = { jusque: Math.max(e.acide?.jusque ?? 0, m.t + ac.duree), dps: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.dps : 0, ac.dps), bonus: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.bonus : 0, ac.bonus) }
+}
+
+/** Un point dans un cône (sa pointe, son cap, son demi-angle, sa longueur), un insecte compté avec son rayon. */
+function dansLeCone(x: number, y: number, px: number, py: number, cap: number, cone: number, longueur: number, rayon: number): boolean {
+  const dx = x - px
+  const dy = y - py
+  const d = Math.hypot(dx, dy)
+  if (d > longueur + rayon) return false
+  if (d <= rayon) return true
+  return Math.abs(ecartDAngle(cap, Math.atan2(dy, dx))) <= cone + Math.asin(Math.min(1, rayon / d))
+}
+
+/** LES CRACHATS D'ACIDE (voir `Arme.crachat`) : le cône craché, la flaque qu'il laisse, et l'acide qui ronge. */
+function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const cr = a.crachat
+    if (cr === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const b = boucheDansLeMonde(v, a)
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + c.ennemi.rayon
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - b.x, e.corps.y - b.y)
+        if (aPortee(e) && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    const cap = Math.atan2(cible.corps.y - b.y, cible.corps.x - b.x)
+    m.flaquesAcides.push({ id: m.prochainId++, arme: i, x: b.x, y: b.y, cap, nee: m.t })
+    ev.push({ type: 'crachat', x: b.x, y: b.y, cap, cone: cr.cone, portee: a.portee, arme: a.id })
+    for (const e of [...m.ennemis]) {
+      if (!dansLeCone(e.corps.x, e.corps.y, b.x, b.y, cap, cr.cone, a.portee, c.ennemi.rayon)) continue
+      ronger(m, e, cr.acide, ev)
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  })
+  // (les flaques : elles s'effacent au bout de leur durée ; tout insecte dedans est rongé)
+  m.flaquesAcides = m.flaquesAcides.filter((f) => {
+    const a = c.armes[f.arme]
+    const cr = a?.crachat
+    if (a === undefined || cr === undefined || m.t - f.nee >= cr.duree) return false
+    for (const e of m.ennemis) if (dansLeCone(e.corps.x, e.corps.y, f.x, f.y, f.cap, cr.cone, a.portee, c.ennemi.rayon)) ronger(m, e, cr.acide, ev)
+    return true
+  })
+  // (l'acide ronge : ses dégâts à lui)
+  for (const e of [...m.ennemis]) {
+    if (e.acide === undefined || e.acide.jusque <= m.t) continue
+    e.pv -= e.acide.dps * dt
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+}
+
+/**
+ * L'ACIDE MAJORE TOUT (voir `Arme.crachat`) : ce que chaque insecte rongé a perdu depuis `avant` — de toutes les sources
+ * de ce pas, quelles qu'elles soient — lui est retiré une part `bonus` de plus. (Mesuré sur ses points plutôt que dans
+ * chaque arme : une arme ajoutée demain sera majorée sans qu'on y pense.)
+ */
+function majorerParLAcide(c: ConfigVaisseau, m: Monde, avant: Map<Ennemi, number>, ev: Evenement[]): void {
+  for (const [e, pv0] of avant) {
+    if (e.acide === undefined || !m.ennemis.includes(e)) continue
+    const perdu = pv0 - e.pv
+    if (perdu <= 0) continue
+    e.pv -= perdu * e.acide.bonus
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+}
+
 /** LES REJETONS (voir `Arme.rejeton`) : la ponte, la nage par à-coups, la chasse, les coups de tentacule, la fin. */
 function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -2503,7 +2601,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2541,6 +2639,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
 
   // l'ennemi : il naît à l'heure dite, un à la fois ; ses chocs comptent aussi, et peuvent l'abattre
   // (jamais tant que le joueur est dans la zone calme de la base)
+  // (L'ACIDE : ce que les insectes rongés perdent pendant ce pas — de toutes les sources — sera majoré, voir `majorerParLAcide`)
+  const avantLAcide = new Map<Ennemi, number>()
+  for (const e of m.ennemis) if (e.acide !== undefined && e.acide.jusque > m.t) avantLAcide.set(e, e.pv)
   if (c.invasion.active) menerLInvasion(c, m, ev)
   else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
   for (const e of [...m.ennemis]) {
@@ -2592,10 +2693,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTentacules(c, m, ev)
   menerLesNuees(c, m, dt, ev)
   menerLesRejetons(c, m, dt, ev)
+  cracherLAcide(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
@@ -2728,6 +2830,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   }
+  majorerParLAcide(c, m, avantLAcide, ev)
 
   // L'EXTRACTION, à la station la plus proche : à quai (après être sorti une fois d'un parvis), le compte monte ; hors
   // du parvis il redescend ; au bout, la partie est extraite et tout le minerai porté passe en banque

@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -152,6 +152,10 @@ export const PIECES: Piece[] = [
   // de la chair, des tentacules à aiguille. Lent à virer, solide. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-10', sorte: 'coque', cran: 10, nom: 'Manteau du Kraken', dit: '7 de blindage, une bête vivante : un manteau de chitine sur de la chair, une tentacule à aiguille.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-k3', sorte: 'propulseur', cran: 3, nom: 'Jet du Kraken', dit: 'Un jet de bile : il file, mais vire lourdement.', prix: 0, poids: 7, poussee: 0.78, vitesseMax: 0.95, rotation: 0.95 },
+  // LA VOUIVRE (Keko, 16/11 : « un autre vaisseau alien organique, spécialisé dans la corrosion et le toxique ») : un corps
+  // de serpent en écailles, des sacs à venin, une gueule qui crache. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'coque-11', sorte: 'coque', cran: 11, nom: 'Écailles de la Vouivre', dit: '6 de blindage, une bête vivante : des écailles sombres, deux sacs à venin, une gueule qui crache l’acide.', prix: 0, poids: 22, pv: 6, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-v3', sorte: 'propulseur', cran: 3, nom: 'Souffle de la Vouivre', dit: 'Un jet de venin : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.1 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
@@ -207,6 +211,10 @@ export const PIECES: Piece[] = [
   // qui flottent derrière lui et s'en sert pour attaquer ») : pondus quand des insectes sont là, trois au plus, ils
   // chassent seuls. *Chiffres de moi, à rejuger.*
   { id: 'arme-rejetons', sorte: 'arme', cran: 3, nom: 'Rejetons', dit: 'Toutes les 3,5 s, un insecte à moins de 110, il pond un rejeton — trois à la fois, qui vivent 14 s. Chacun nage par à-coups vers l’insecte le plus proche de lui et, à 32, lui projette ses tentacules : 4 points toutes les 0,5 s. Sans proie, il revient derrière le vaisseau.', note: 'Ils chassent seuls.', prix: 30, poids: 6, arme: { id: 'rejeton', cadence: 3.5, degats: 4, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, rejeton: { max: 3, duree: 14, vitesse: 70, acces: 5, vue: 90, allonge: 32, periode: 0.5 } } },
+  // LE CRACHAT DE LA VOUIVRE (Keko, 16/11 : « un cône d'acide craché devant, qui laisse une flaque conique ; le crachat et
+  // la flaque infligent le statut acide : des dégâts faibles, mais il augmente les dégâts subis de toutes les sources ») :
+  // *chiffres de moi, à rejuger.*
+  { id: 'arme-crachat', sorte: 'arme', cran: 1, nom: 'Crachat d’acide', dit: 'Toutes les 1,4 s, un insecte à moins de 45, il crache devant lui un cône d’acide : 3 points à tout ce qui est dedans. Le cône laisse une flaque qui dure 3 s. Crachat et flaque rongent : l’insecte perd 2 points par seconde, et TOUS les dégâts qu’il subit d’ailleurs sont majorés de 35 %, 3 s encore après.', note: 'Rongez-les, puis frappez.', prix: 30, poids: 5, arme: { id: 'crachat', cadence: 1.4, degats: 3, portee: 45, vitesse: 0, vie: 0, dispersion: 0, guide: false, crachat: { cone: 0.45, duree: 3, acide: { duree: 3, dps: 2, bonus: 0.35 } } } },
   // LES MINI-MISSILES DU CHASSEUR, AFFICHÉS « MISSILES » (Keko, 15/11) : guidés, plus lents et moins forts que le canon sur une cible seule,
   // mais ils EXPLOSENT : tout insecte autour de l'impact y perd aussi. *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-minimissiles', sorte: 'arme', cran: 2, nom: 'Missiles', dit: 'Un missile guidé toutes les 1,6 s, 5 points, porte à 120 : il explose à l’impact et touche aussi, de 5 points, tout ce qui est à 18 autour.', note: 'Moins bon que le canon sur une cible seule, meilleur sur un groupe.', prix: 40, poids: 6, arme: { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18, degats: 5 } } },

@@ -1600,6 +1600,51 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
 }
 
+// LE CRACHAT D'ACIDE DE LA VOUIVRE (Keko, 16/11) : un cône craché, une flaque de même forme, l'acide qui ronge et qui
+// majore tout ce que l'insecte perd d'autre
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const crachat = { id: 'crachat', cadence: 1.4, degats: 3, portee: 45, vitesse: 0, vie: 0, dispersion: 0, guide: false, crachat: { cone: 0.45, duree: 3, acide: { duree: 3, dps: 2, bonus: 0.35 } } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [crachat], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  // (deux dans le cône, devant ; un sur le côté, hors du cône ; un au-delà de la portée, dans l'axe)
+  for (const [k, [x, y]] of ([[30, 0], [30, 9], [0, 34], [70, 0]] as [number, number][]).entries()) w.ennemis.push(insecte(k + 1, x, y))
+  const fixer = (places: [number, number][]) => places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+  w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+  const ev = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements
+  const p1 = w.ennemis.map((e) => 1000 - e.pv)
+  verifier('le crachat : les deux insectes dans le cône perdent 3 et sont rongés ; celui de côté et celui au-delà, rien', ev.filter((e) => e.type === 'crachat').length === 1 && p1[0] >= 3 && p1[0] < 3.2 && p1[1] >= 3 && p1[1] < 3.2 && p1[2] === 0 && p1[3] === 0 && (w.ennemis[0].acide?.jusque ?? 0) > w.t && w.ennemis[2].acide === undefined)
+  // (le troisième entre dans la flaque une demi-seconde après : il est rongé à son tour)
+  for (let i = 0; i < 30; i++) {
+    fixer([[30, 0], [30, 9], [0, 34], [70, 0]])
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  for (let i = 0; i < 10; i++) {
+    fixer([[30, 0], [30, 9], [20, -3], [70, 0]])
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  verifier('la flaque : l’insecte qui y entre après le crachat est rongé à son tour', (w.ennemis[2].acide?.jusque ?? 0) > w.t)
+  // (L'ACIDE MAJORE TOUTES LES SOURCES : un canon, sur un insecte rongé et sur un autre)
+  const canon = { id: 'canon', cadence: 5, degats: 6, portee: 120, vitesse: 170, vie: 1, dispersion: 0, guide: false }
+  const cfgC = { ...cfg, armes: [canon] }
+  const tirer = (ronge: boolean) => {
+    const wc = nouveauMonde(cfgC, 3)
+    wc.ennemis.push(insecte(1, 40, 0))
+    if (ronge) wc.ennemis[0].acide = { jusque: 100, dps: 0, bonus: 0.35 }
+    for (let i = 0; i < 40; i++) {
+      wc.ennemis[0].corps = { ...wc.ennemis[0].corps, x: 40, y: 0, vx: 0, vy: 0 }
+      wc.vaisseau = { ...wc.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfgC, wc, 1 / 60, { x: 0, y: 0 })
+    }
+    return 1000 - wc.ennemis[0].pv
+  }
+  const sain = tirer(false)
+  const ronge = tirer(true)
+  verifier(`l’acide majore les autres sources : un obus de canon fait ${sain} à un insecte sain, ${ronge.toFixed(2)} à un insecte rongé (35 % de plus)`, sain === 6 && Math.abs(ronge - 6 * 1.35) < 1e-6)
+}
+
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {

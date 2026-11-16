@@ -136,6 +136,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LA VOUIVRE (Keko, 16/11) : le vaisseau organique de la corrosion et du toxique — un serpent qui crache l'acide
+    id: 'vouivre',
+    nom: 'Vouivre',
+    classe: 'chasseur',
+    dit: 'Une bête venimeuse, d’une autre race : son acide ronge les insectes et les rend fragiles à tout le reste.',
+    pieces: ['coque-11', 'propulseur-v3', 'arme-crachat'],
+    serie: { possedees: ['coque-11', 'propulseur-v3', 'arme-crachat'], montees: { coque: 'coque-11', propulseur: 'propulseur-v3' }, outils: [], armes: ['arme-crachat'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',

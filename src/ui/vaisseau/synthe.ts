@@ -629,6 +629,23 @@ const RECETTES = {
       souffle(m, h, 0, 0.3, 0, { f: 3000, q: 1.5, bande: true, a: 0.01, d: 0.12 })
     },
   },
+  /** LA VOUIVRE CRACHE : un raclement de gorge bref, puis le jet — un souffle mouillé qui s'élargit, des éclaboussures */
+  crachat: {
+    duree: 0.55, niveau: 0.22, salle: [0.25, 0.1], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.5, 0, { f: 140, glisse: { vers: 90, en: 0.06 }, a: 0.003, d: 0.07, battement: 30, partiels: CORPS })
+      souffle(m, h, 0.04, 1, 0, { f: 1800, glisse: { vers: 900, en: 0.2 }, q: 0.9, bande: true, a: 0.005, d: 0.22, large: true })
+      for (let k = 0; k < 5; k++) souffle(m, h, 0.1 + 0.05 * k + 0.02 * h.next(), 0.35, (h.next() - 0.5) * 0.8, { f: 2600 + 800 * h.next(), q: 2, bande: true, a: 0.001, d: 0.03 })
+    },
+  },
+  /** L'ACIDE RONGE UN INSECTE : un grésillement qui siffle et s'éteint */
+  ronge: {
+    duree: 0.45, niveau: 0.12, salle: [0.2, 0.08], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.8, (h.next() - 0.5) * 0.5, { f: 5200, glisse: { vers: 3600, en: 0.35 }, q: 1.2, bande: true, a: 0.005, d: 0.35 })
+      souffle(m, h, 0, 0.3, 0, { f: 1500, q: 2, bande: true, a: 0.002, d: 0.1 })
+    },
+  },
   /** UN REJETON EST PONDU : un « blop » gluant — une note ronde qui plonge, un gargouillis qui remonte */
   ponte: {
     duree: 0.45, niveau: 0.16, salle: [0.25, 0.1], variantes: 3,

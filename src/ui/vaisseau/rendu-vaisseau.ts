@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -80,6 +80,11 @@ const RAMPES: Record<Matiere, number[]> = {
   chair: ['#2a0a18', '#5a1430', '#8e2a48', '#c04a62', '#e8808a', '#ffc4c0'].map(hex),
   bile: ['#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'].map(hex),
   os: ['#2a2218', '#4a3e2c', '#76664a', '#a8987a', '#d6ccb0', '#fffaf0'].map(hex),
+  // LA VOUIVRE (Keko, 16/11 : « organique, la corrosion et le toxique ») : des écailles vert sombre, un venin vert acide qui
+  // luit (ses sacs, sa gueule, son jet), une lie violette pour ses membranes — le vert et le violet du poison
+  ecaille: ['#0a120e', '#14241a', '#22382a', '#34523c', '#4f7454', '#86a87c'].map(hex),
+  venin: ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'].map(hex),
+  lie: ['#140a18', '#26122e', '#3c1c48', '#563068', '#7a4c8e', '#a678b8'].map(hex),
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
@@ -519,7 +524,10 @@ const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0
 // plus rapide »)
 export const ANCRES_DU_KRAKEN: [number, number][] = [[7.2, 0]]
 const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -4.4, y: 7.6 }, verriere: 5.8, nez: 8.2, flanc: 6.4, anneau: 12.5, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
+// LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
+// qui crache ; un jet de venin à la queue
+const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: -0.2, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.2, y: 6.6 }, verriere: 8.4, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -656,6 +664,16 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran === 11) {
+    // LA VOUIVRE, UN SERPENT D'ÉCAILLES : un corps long et fuselé ; des anneaux d'écailles en chevrons, cernés de lie ; trois
+    // pustules de venin sur l'échine ; À LA GUEULE, deux MANDIBULES d'os en crochet, le venin qui luit entre elles
+    const f: Forme[] = [{ pts: [[8.8, 0], [7.8, -2.4], [5.2, -3.5], [1.2, -3.9], [-3, -3.6], [-6.4, -2.7], [-8.8, -1.3], [-9.8, 0], [-8.8, 1.3], [-6.4, 2.7], [-3, 3.6], [1.2, 3.9], [5.2, 3.5], [7.8, 2.4]], mat: 'ecaille', relief: 'cyl' }]
+    for (const x of [4.6, 1.6, -1.4, -4.4, -7]) f.push({ pts: [[x + 0.6, 0], [x - 0.6, -3.2 + Math.abs(x + 1) * 0.08], [x - 1.2, -3.1 + Math.abs(x + 1) * 0.08], [x - 0.2, 0], [x - 1.2, 3.1 - Math.abs(x + 1) * 0.08], [x - 0.6, 3.2 - Math.abs(x + 1) * 0.08]], mat: 'lie', relief: 'plat' })
+    for (const [x, r] of [[2.8, 0.95], [-0.2, 0.85], [-3.2, 0.75], [-6, 0.6]] as [number, number][]) f.push({ pts: ovale(x, 0, r, r, 10), mat: 'venin', relief: 'dome', dome: { x, y: 0, rx: r, ry: r } })
+    for (const sg of [-1, 1]) f.push({ pts: [[10.2, sg * 0.5], [9.4, sg * 1.6], [7.6, sg * 2.2], [7.2, sg * 1.5], [8.6, sg * 1.2], [9.4, sg * 0.4]], mat: 'os', relief: 'plat', penche: sg })
+    f.push({ pts: ovale(8.6, 0, 1.1, 0.75, 10), mat: 'venin', relief: 'dome', dome: { x: 8.6, y: 0, rx: 1.1, ry: 0.75 } })
+    return f
+  }
   if (cran === 10) {
     // LE KRAKEN, UN MANTEAU DE CHITINE : un corps renflé, bosselé, la tête en avant ; trois plaques de carapace sur le
     // dos, séparées par des sillons de chair ; une grappe d'YEUX de bile à l'avant ; et LES TROIS RACINES des tentacules
@@ -815,6 +833,17 @@ function formesDuCroissant(sg: number): Forme[] {
 }
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque === 11) {
+    // (la vouivre : deux MEMBRANES de lie, nervurées d'écailles, chacune portant un gros SAC À VENIN qui luit ; un petit
+    // ergot au bout, à la marque du joueur)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[3.2, sg * 3.3], [0.6, sg * 6.4], [-3.4, sg * 7.6], [-6.8, sg * 7], [-7.6, sg * 5], [-5.4, sg * 3.3]], mat: 'lie', relief: 'plat', penche: sg })
+      for (const [x0, y0, x1, y1] of [[1.4, 3.6, -0.6, 6.6], [-2, 3.6, -3.6, 7.3], [-5, 3.4, -6.6, 6.6]] as [number, number, number, number][]) f.push({ pts: barre(x0, sg * y0, x1, sg * y1, 0.5), mat: 'ecaille', relief: 'plat' })
+      f.push({ pts: ovale(-2.4, sg * 5.3, 2.4, 1.5, 16), mat: 'venin', relief: 'dome', dome: { x: -2.4, y: sg * 5.3, rx: 2.4, ry: 1.5 } })
+      f.push({ pts: ovale(-6.8, sg * 6.4, 0.8, 0.8, 8), mat: 'marque', relief: 'dome', dome: { x: -6.8, y: sg * 6.4, rx: 0.8, ry: 0.8 } })
+    }
+    return f
+  }
   if (coque === 10) {
     // (le kraken : deux NAGEOIRES DE CHAIR, ourlées d'épines d'os ; une glande sur chacune, à la marque du joueur)
     for (const sg of [-1, 1]) {
@@ -967,6 +996,8 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
   // (l'orbe de plasma se forme entre les deux cornes du Pulsar ; l'essaim en part aussi)
   if (id === 'plasma' || id === 'essaim' || id === 'rail') return { x: 9.6, y: 0 }
+  // (la Vouivre crache de sa gueule, entre ses mandibules)
+  if (id === 'crachat') return { x: 9.8, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
@@ -983,7 +1014,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [
@@ -1041,8 +1072,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
   // (le pulsar non plus : il souffle du plasma, violet ; ni le kraken : un jet de bile)
-  const organique = a.coque === 8 || a.coque === 9 || a.coque === 10
-  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x)), tu.x, tu.y))
+  const organique = a.coque === 8 || a.coque === 9 || a.coque === 10 || a.coque === 11
+  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LE KRAKEN TRAÎNE QUATRE TENTACULES derrière lui, qui ondulent — sous la flamme et le manteau)
   if (a.coque === 10) for (const y0 of [-2.7, -0.9, 0.9, 2.7]) {
     let x = -6.6

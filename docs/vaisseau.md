@@ -4456,3 +4456,30 @@ double d'avant), cernées et claires dessus. À L'ARRÊT leurs racines s'écarte
 tout autour de la cloche et elles flottent en étoile, qui tourne doucement ; EN
 NAGE elles glissent vers l'arrière, se resserrent et traînent (la bascule suit la
 vitesse, lissée).
+
+UN HUITIÈME VAISSEAU, LA VOUIVRE (Keko, 16/11 : « un autre vaisseau alien
+organique, spécialisé dans la corrosion et le toxique ») — le serpent venimeux des
+légendes. Un corps de serpent en écailles vert sombre, des anneaux en chevrons
+cernés de lie violette, quatre pustules de venin sur l'échine ; à la gueule, deux
+mandibules d'os en crochet, le venin qui luit entre elles ; deux membranes de lie
+nervurées d'écailles, chacune portant un gros SAC À VENIN qui luit (un ergot au
+bout : la marque du joueur) ; un jet de venin à la queue (coque 11,
+`propulseur-v3` ; matières `ecaille`, `venin`, `lie`).
+
+SA PREMIÈRE ARME, LE CRACHAT D'ACIDE (`Arme.crachat` ; Keko : « un cône d'acide
+craché devant, qui laisse une trace — une flaque conique ; le crachat et la flaque
+infligent le statut acide, qui inflige des dégâts faibles mais augmente les dégâts
+subis de toutes les sources ») : toutes les 1,4 s, un insecte à moins de 45 (le
+verrouillé d'abord, sinon le plus proche), elle crache de la gueule vers lui un
+CÔNE (demi-angle 0,45 rad, long de 45) : 3 points à tout ce qui est dedans, qui
+est RONGÉ. Le cône laisse au sol UNE FLAQUE de même forme, 3 s : tout insecte qui y
+est ou y entre est rongé. L'ACIDE (`Ennemi.acide`) dure 3 s après le dernier
+contact : 2 points par seconde, et TOUT CE QUE L'INSECTE PERD D'AUTRE, de toutes
+les sources, est MAJORÉ DE 35 % (mesuré : un obus de canon fait 6 à un insecte
+sain, 8,10 à un insecte rongé). La majoration se mesure sur ses points
+(`majorerParLAcide` : ce qu'il a perdu pendant le pas, plus 35 %) plutôt que
+dans chaque arme — une arme ajoutée demain sera majorée sans qu'on y pense. Le
+dessin : la flaque, un secteur vert translucide qui bout, plus clair au bord, des
+bulles qui crèvent ; le crachat, une gerbe de gouttes dans le cône ; un insecte
+rongé, une tache verte qui fume. Ses sons, `crachat` et `ronge`. *Chiffres de
+moi, à rejuger.*

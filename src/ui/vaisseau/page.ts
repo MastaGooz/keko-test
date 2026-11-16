@@ -163,7 +163,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   // (LA SALAMANDRE EST DONNÉE D'OFFICE dans le jeu du vortex, pour l'essai — Keko, 15/11)
-  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar et le Kraken, 16/11)
+  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken et la Vouivre, 16/11)
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
@@ -825,7 +825,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
       // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
-      if (canon?.napalm !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
@@ -936,7 +936,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -968,7 +968,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -7150,6 +7150,72 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /**
+   * L'ACIDE DE LA VOUIVRE (voir `Arme.crachat`). LA FLAQUE : un secteur — le cône craché, posé au sol —, un vert sombre
+   * translucide qui bout (des taches plus claires qui bougent), plus clair au bord, des bulles qui crèvent ; elle s'étale
+   * en naissant, pâlit en s'effaçant. LE CRACHAT : une gerbe de gouttes qui filent de la gueule dans le cône, plus vite au
+   * milieu, et s'éteignent en arrivant. Sur un insecte RONGÉ (dessiné avec les insectes) : une tache verte qui fume.
+   */
+  const VENIN = ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'].map((c) => N.hex(c))
+  const DUREE_DU_CRACHAT = 0.28
+  const crachats: { x: number; y: number; cap: number; cone: number; portee: number; t0: number; id: number }[] = []
+  function dessinerLesFlaquesAcides(p: Peintre): void {
+    if (m.flaquesAcides.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const f of m.flaquesAcides) {
+      const a = CONF.armes[f.arme]
+      const cr = a?.crachat
+      if (a === undefined || cr === undefined) continue
+      const age = m.t - f.nee
+      const etale = Math.min(1, age / 0.25)
+      const k = Math.min(1, (cr.duree - age) / 0.6)
+      if (k <= 0) continue
+      const L = a.portee * (0.55 + 0.45 * etale)
+      p.disc(f.x, f.y, L, (d, ang) => {
+        const bout = 0.5 + 0.5 * Math.sin(ang * 9 + d * 14 - m.t * 3 + f.id)
+        return d > 0.9 ? VENIN[3] : bout > 0.75 ? VENIN[2] : VENIN[1]
+      }, (d, ang) => {
+        const e = Math.abs(Math.atan2(Math.sin(ang - f.cap), Math.cos(ang - f.cap)))
+        if (e > cr.cone || d < 0.12) return 0
+        const bord = Math.min(1, (cr.cone - e) / 0.08) * Math.min(1, (1 - d) / 0.08)
+        return (d > 0.9 || (cr.cone - e) < 0.06 ? 0.55 : 0.34) * bord * k
+      })
+      // (des bulles qui crèvent)
+      for (let j = 0; j < 7; j++) {
+        const vie = 0.6 + 0.5 * alea(f.id, j, 1)
+        const u = ((m.t + alea(f.id, j, 2) * vie) % vie) / vie
+        const an = f.cap + (alea(f.id, j, 3) * 2 - 1) * cr.cone * 0.85
+        const d = L * (0.2 + 0.75 * alea(f.id, j, 4 + Math.floor((m.t + alea(f.id, j, 2) * vie) / vie)))
+        const bx = f.x + Math.cos(an) * d
+        const by = f.y + Math.sin(an) * d
+        if (u < 0.8) p.ring(bx, by, 0.5 + 1.2 * u, 1, VENIN[4], 0.7 * k)
+        else p.dot(bx, by, VENIN[5], k)
+      }
+    }
+    p.place(0, 0)
+  }
+  function dessinerLesCrachats(p: Peintre): void {
+    for (let i = crachats.length - 1; i >= 0; i--) if (t - crachats[i].t0 > DUREE_DU_CRACHAT) crachats.splice(i, 1)
+    if (crachats.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const c of crachats) {
+      const u = (t - c.t0) / DUREE_DU_CRACHAT
+      for (let j = 0; j < 26; j++) {
+        const an = c.cap + (alea(c.id, j, 1) * 2 - 1) * c.cone
+        const vit = (0.65 + 0.35 * alea(c.id, j, 2)) * (1 - Math.abs(an - c.cap) / (c.cone * 2.5))
+        const d = c.portee * Math.min(1, u * 1.4) * vit
+        const x = c.x + Math.cos(an) * d
+        const y = c.y + Math.sin(an) * d
+        const r = (1.6 - u) * (0.6 + 0.6 * alea(c.id, j, 3))
+        p.circle(x, y, Math.max(0.5, r), j % 3 === 0 ? VENIN[4] : VENIN[3], 1 - u * 0.7)
+        if (j % 4 === 0) p.line(x, y, x - Math.cos(an) * 3, y - Math.sin(an) * 3, VENIN[2], 0.6 * (1 - u))
+      }
+      if (u < 0.4) p.glow(c.x, c.y, 8, VENIN[3], 0.6 * (1 - u / 0.4))
+    }
+    p.place(0, 0)
+  }
+  /** L'instant du dernier grésillement d'acide (un à la fois). */
+  let rongeSonneA = -10
   const CHITINE_CLAIRE = N.hex('#7c4a4c')
   const CHITINE_DU_REJETON = N.hex('#56303a')
   const CHITINE_SOMBRE = N.hex('#1a0c12')
@@ -7293,6 +7359,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.circle(sx, sy, 5, GLACE[4], 0.32)
           p.ring(sx, sy, 5, 1, GLACE[6], 0.45)
           for (let j = 0; j < 3; j++) if (Math.sin(t * 7 + e.id + j * 2.1) > 0.3) p.rect(Math.round(sx + Math.cos(e.id + j * 2.1) * 3.5), Math.round(sy + Math.sin(e.id + j * 2.1) * 3.5), 1, 1, N.WHITE, 0.9)
+        }
+        // IL EST RONGÉ (l'acide de la Vouivre) : une tache verte sur lui, qui fume — trois volutes qui montent et pâlissent
+        if (e.acide !== undefined && e.acide.jusque > m.t) {
+          p.glow(sx, sy, 7, VENIN[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
+          p.circle(sx, sy, 3.5, VENIN[2], 0.35)
+          for (let k = 0; k < 3; k++) {
+            const ph = (t * 1.3 + k / 3 + e.id * 0.29) % 1
+            p.dot(sx + Math.sin(e.id * 2.3 + k * 2.1 + ph * 3) * 3, sy - 2 - ph * 7, ph < 0.5 ? VENIN[4] : VENIN[2], 1 - ph)
+          }
+          if (Math.sin(t * 11 + e.id * 1.7) > 0.6) p.dot(sx + Math.cos(e.id) * 2, sy + 2, VENIN[5], 0.9)
         }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
         if ((e.bruleA ?? -1) > m.t) {
@@ -9585,6 +9661,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
               }
               break
+            case 'crachat':
+              // (la Vouivre crache : son crachat gluant — sauf s'il a sonné en avance —, la gerbe de gouttes dans le cône)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer(ev.arme as Son)
+              crachats.push({ x: ev.x, y: ev.y, cap: ev.cap, cone: ev.cone, portee: ev.portee, t0: t, id: Math.round(t * 1000) })
+              break
+            case 'ronge':
+              // (un insecte se met à être rongé : un grésillement — un seul à la fois)
+              if (t - rongeSonneA > 0.15) {
+                rongeSonneA = t
+                jouer('ronge', { dx: ev.x - v.x, dy: ev.y - v.y })
+              }
+              break
             case 'rejeton':
               // (un rejeton est pondu : un « blop » gluant, une giclée de bile)
               jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -10037,6 +10126,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLeGivre(p)
     dessinerLesFlaques(p)
+    dessinerLesFlaquesAcides(p)
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
     dessinerLesEnnemis(p)
@@ -10048,6 +10138,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLePlasma(p)
     dessinerLesNuees(p)
     dessinerLesRejetons(p)
+    dessinerLesCrachats(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)
