@@ -4896,3 +4896,12 @@ le cœur à 6,4, les anneaux à 11,9 et 13,9 (1,5 d'épaisseur), les perles, l'�
 suit — la place d'arme (le puits part toujours de la pointe), la poupe (les ondes naissent derrière), les feux, l'anneau
 du bouclier à 17. Seul le dessin change : la règle du vol garde le rayon du vaisseau. LES ONDES : un seul trait sombre
 (plus de trait clair doublé), à 0,35 d'opacité, qui s'ouvre de 3 à 11 en 0,55 s, une tous les 12 pixels parcourus.
+
+LA PROPULSION D'UN VAISSEAU EST LA MÊME PARTOUT (Keko, 16/11 : « attention ! la propulsion d'un vaisseau doit être la même
+dans l'écran d'accueil, au décollage du hangar et en jeu — pas exactement, l'échelle n'est pas la même, mais le joueur
+doit l'identifier comme cohérente »). Au décollage du hangar, les vaisseaux sans tuyère (le Kraken, la Vouivre, le
+Néant) lâchaient des POINTS qui tombaient, à leurs couleurs — ni bulles ni ondes. La poussée de l'accueil est devenue
+UNE fonction, `dessinerLaPousseeSansTuyere` (le vaisseau fixe à l'écran, sa poussée qui défile sous lui en boucle :
+les ondes du Néant, les bulles des bêtes), que l'accueil ET le décollage appellent ; en vol, les mêmes ondes
+(`dessinerUneOnde`) et les mêmes bulles sont semées dans le monde. RÈGLE POUR TOUT VAISSEAU NOUVEAU : sa poussée se
+dessine aux trois endroits — accueil, décollage, vol — par le même dessin.

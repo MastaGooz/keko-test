@@ -2507,7 +2507,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
       const cranP = monteeA(hangar, 'propulseur').cran
       const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
-      if (g.omni === undefined && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: organique(coqueMontee) ? couleursDesBulles(coqueMontee)[Math.floor(R.next() * 2)] : (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
+      // (un vaisseau sans tuyère n'en a pas : sa poussée est celle de l'accueil et du vol — voir plus bas)
+      if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
       if (u >= 1) {
         decollageA = null
@@ -2553,6 +2554,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // la tuyère au ralenti, puis le vaisseau
     const nozzle: [number, number] = [cx + jit, sy + (0.2 - queueDe(coqueMontee)) * ECH]
+    // (UN VAISSEAU SANS TUYÈRE, au décollage : les ondes ou les bulles de l'accueil et du vol, sous lui)
+    if (organique(coqueMontee) && decollageA !== null) dessinerLaPousseeSansTuyere(p, coqueMontee, nozzle[0], nozzle[1], ECH, flam)
     if (g.omni === undefined && !organique(coqueMontee)) p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
@@ -7654,6 +7657,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const a1 = cap + Math.PI + ouvre
     p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.4 ? VIDE[4] : VIDE[3], 0.35 * (1 - u) * k)
   }
+  /**
+   * LA POUSSÉE D'UN VAISSEAU SANS TUYÈRE, À L'ARRÊT DU MONDE (l'accueil, le décollage du hangar) : le vaisseau est fixe
+   * à l'écran, sa poussée défile sous lui en boucle — les ONDES du Néant, les BULLES du Kraken et de la Vouivre —, la même
+   * que celle qu'il sème en vol (Keko, 16/11 : « la propulsion d'un vaisseau doit être la même dans l'écran d'accueil, au
+   * décollage du hangar et en jeu — pas exactement, l'échelle n'est pas la même, mais le joueur doit l'identifier comme
+   * cohérente » : au décollage, elles lâchaient des points qui tombaient). `ty` : sa poupe ; `E` : son échelle ; `us` : 0 au
+   * ralenti, 1 à pleine poussée.
+   */
+  function dessinerLaPousseeSansTuyere(p: Peintre, coque: number, cx: number, ty: number, E: number, us: number): void {
+    const boucle = (a: number, b: number): number => ((a % b) + b) % b
+    if (coque === 13) {
+      for (let k = 0; k < 4; k++) {
+        const u = boucle(t * (1.6 + us * 1.6) + k / 4, 1)
+        dessinerUneOnde(p, cx, ty + 2 + u * 8 * (E / 2), -Math.PI / 2, u, 0.6 + 0.4 * us, E / 2)
+      }
+      return
+    }
+    const [cb, cl] = couleursDesBulles(coque)
+    for (let k = 0; k < 16; k++) {
+      const u = boucle(t * (1.6 + us * 2) + k / 16, 1)
+      const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 6)
+      // (courte : elle crève juste derrière — longue, on la prenait pour une attaque)
+      const y = ty + 3 + u * (16 + us * 40)
+      const r = (0.6 + 0.9 * ((k * 0.618) % 1)) * (1 + 0.6 * u) * (E / 2)
+      const c = k % 3 === 0 ? cl : cb
+      if (u > 0.9) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx * (r + 1.5), y + dy * (r + 1.5), c, 0.8)
+      else if (r >= 1.6) {
+        p.ring(x, y, r, 1, c, 0.9 * (1 - u * 0.5))
+        p.dot(x - r * 0.4, y - r * 0.4, N.WHITE, 0.85)
+      } else p.circle(x, y, Math.max(0.6, r * 0.7), c, 1 - u * 0.5)
+    }
+  }
   function dessinerLesOndes(p: Peintre): void {
     for (let i = ondes.length - 1; i >= 0; i--) if (t - ondes[i].t0 > DUREE_DE_L_ONDE) ondes.splice(i, 1)
     if (ondes.length === 0) return
@@ -9753,28 +9788,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (UNE BÊTE, à l'accueil aussi, lâche des bulles et pas de feu — Keko, 16/11 : « n'oublie pas l'effet de propulsion dans
     // l'écran d'accueil ») : une colonne de bulles qui s'écartent, enflent et crèvent en s'éloignant
     const coqueA = monteeA(hangar, 'coque').cran
-    if (coqueA === 13) {
-      // (le néant, à l'accueil aussi : ses ondes qui s'ouvrent derrière lui)
-      for (let k = 0; k < 4; k++) {
-        const u = boucle(t * (1.6 + us * 1.6) + k / 4, 1)
-        dessinerUneOnde(p, cx, ty + 2 + u * 8 * (E / 2), -Math.PI / 2, u, 0.6 + 0.4 * us, E / 2)
-      }
-    } else if (organique(coqueA)) {
-      const [cb, cl] = couleursDesBulles(coqueA)
-      for (let k = 0; k < 16; k++) {
-        const u = boucle(t * (1.6 + us * 2) + k / 16, 1)
-        const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 6)
-        // (courte : elle crève juste derrière — longue, on la prenait pour une attaque)
-        const y = ty + 3 + u * (16 + us * 40)
-        const r = (0.6 + 0.9 * ((k * 0.618) % 1)) * (1 + 0.6 * u) * (E / 2)
-        const c = k % 3 === 0 ? cl : cb
-        if (u > 0.9) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx * (r + 1.5), y + dy * (r + 1.5), c, 0.8)
-        else if (r >= 1.6) {
-          p.ring(x, y, r, 1, c, 0.9 * (1 - u * 0.5))
-          p.dot(x - r * 0.4, y - r * 0.4, N.WHITE, 0.85)
-        } else p.circle(x, y, Math.max(0.6, r * 0.7), c, 1 - u * 0.5)
-      }
-    } else if (gA.omni === undefined) {
+    if (organique(coqueA)) dessinerLaPousseeSansTuyere(p, coqueA, cx, ty, E, us)
+    else if (gA.omni === undefined) {
       for (let k = 0; k < 18; k++) {
         const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
         p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
