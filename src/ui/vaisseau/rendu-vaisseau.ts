@@ -663,13 +663,30 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 }
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
-export function formesDeLaCoque(cran: number): Forme[] {
+/**
+ * UNE PUSTULE QUI BAT (la Vouivre, Keko, 16/11 : « un aspect plus bubonique : des pustules qui battent ») : un bourrelet
+ * enflammé de lie, le bubon de venin dessus, qui ENFLE ET DÉSENFLE en double battement, comme un pouls (`t` : l'instant ;
+ * à zéro, le pictogramme, immobile).
+ */
+function pustule(x: number, y: number, r: number, t: number, phase: number): Forme[] {
+  const ph = (t * 1.6 + phase) % 1
+  // (deux coups rapprochés, puis un repos : boum-boum… boum-boum)
+  const pouls = t === 0 ? 0 : Math.exp(-(((ph - 0.08) / 0.05) ** 2)) + 0.7 * Math.exp(-(((ph - 0.25) / 0.05) ** 2))
+  const rr = r * (1 + 0.28 * pouls)
+  return [
+    { pts: ovale(x, y, r * 1.3 + 0.2, r * 1.3 + 0.2, 12), mat: 'lie', relief: 'dome', dome: { x, y, rx: r * 1.3 + 0.2, ry: r * 1.3 + 0.2 } },
+    { pts: ovale(x, y, rr, rr, 12), mat: 'venin', relief: 'dome', dome: { x, y, rx: rr, ry: rr } },
+  ]
+}
+export function formesDeLaCoque(cran: number, t = 0): Forme[] {
   if (cran === 11) {
     // LA VOUIVRE, UN SERPENT D'ÉCAILLES : un corps long et fuselé ; des anneaux d'écailles en chevrons, cernés de lie ; trois
     // pustules de venin sur l'échine ; À LA GUEULE, deux MANDIBULES d'os en crochet, le venin qui luit entre elles
     const f: Forme[] = [{ pts: [[8.8, 0], [7.8, -2.4], [5.2, -3.5], [1.2, -3.9], [-3, -3.6], [-6.4, -2.7], [-8.8, -1.3], [-9.8, 0], [-8.8, 1.3], [-6.4, 2.7], [-3, 3.6], [1.2, 3.9], [5.2, 3.5], [7.8, 2.4]], mat: 'ecaille', relief: 'cyl' }]
     for (const x of [4.6, 1.6, -1.4, -4.4, -7]) f.push({ pts: [[x + 0.6, 0], [x - 0.6, -3.2 + Math.abs(x + 1) * 0.08], [x - 1.2, -3.1 + Math.abs(x + 1) * 0.08], [x - 0.2, 0], [x - 1.2, 3.1 - Math.abs(x + 1) * 0.08], [x - 0.6, 3.2 - Math.abs(x + 1) * 0.08]], mat: 'lie', relief: 'plat' })
-    for (const [x, r] of [[2.8, 0.95], [-0.2, 0.85], [-3.2, 0.75], [-6, 0.6]] as [number, number][]) f.push({ pts: ovale(x, 0, r, r, 10), mat: 'venin', relief: 'dome', dome: { x, y: 0, rx: r, ry: r } })
+    // (UN CORPS BUBONIQUE — Keko, 16/11 : des pustules de toutes tailles, semées sur l'échine et les flancs, qui battent
+    // chacune à son rythme)
+    for (const [x, y, r, ph] of [[2.8, 0, 0.95, 0], [-0.2, 0.3, 0.85, 0.37], [-3.2, -0.2, 0.75, 0.71], [-6, 0.1, 0.6, 0.15], [4.6, -2.2, 0.55, 0.52], [1.4, 2.6, 0.6, 0.88], [-1.8, -2.7, 0.65, 0.23], [-4.8, 2.3, 0.5, 0.63], [5.8, 1.6, 0.45, 0.41], [-7.6, -1.2, 0.45, 0.79]] as [number, number, number, number][]) f.push(...pustule(x, y, r, t, ph))
     for (const sg of [-1, 1]) f.push({ pts: [[10.2, sg * 0.5], [9.4, sg * 1.6], [7.6, sg * 2.2], [7.2, sg * 1.5], [8.6, sg * 1.2], [9.4, sg * 0.4]], mat: 'os', relief: 'plat', penche: sg })
     f.push({ pts: ovale(8.6, 0, 1.1, 0.75, 10), mat: 'venin', relief: 'dome', dome: { x: 8.6, y: 0, rx: 1.1, ry: 0.75 } })
     return f
@@ -831,7 +848,7 @@ function formesDuCroissant(sg: number): Forme[] {
   f.push({ pts: ovale(cx + Math.cos(at) * (R - 0.4), sg * Math.sin(at) * (R - 0.4), 0.85, 0.85, 8), mat: 'marque', relief: 'dome', dome: { x: cx + Math.cos(at) * (R - 0.4), y: sg * Math.sin(at) * (R - 0.4), rx: 0.85, ry: 0.85 } })
   return f
 }
-export function formesDesAiles(coque = 1): Forme[] {
+export function formesDesAiles(coque = 1, t = 0): Forme[] {
   const f: Forme[] = []
   if (coque === 11) {
     // (la vouivre : deux MEMBRANES de lie, nervurées d'écailles, chacune portant un gros SAC À VENIN qui luit ; un petit
@@ -839,7 +856,10 @@ export function formesDesAiles(coque = 1): Forme[] {
     for (const sg of [-1, 1]) {
       f.push({ pts: [[3.2, sg * 3.3], [0.6, sg * 6.4], [-3.4, sg * 7.6], [-6.8, sg * 7], [-7.6, sg * 5], [-5.4, sg * 3.3]], mat: 'lie', relief: 'plat', penche: sg })
       for (const [x0, y0, x1, y1] of [[1.4, 3.6, -0.6, 6.6], [-2, 3.6, -3.6, 7.3], [-5, 3.4, -6.6, 6.6]] as [number, number, number, number][]) f.push({ pts: barre(x0, sg * y0, x1, sg * y1, 0.5), mat: 'ecaille', relief: 'plat' })
-      f.push({ pts: ovale(-2.4, sg * 5.3, 2.4, 1.5, 16), mat: 'venin', relief: 'dome', dome: { x: -2.4, y: sg * 5.3, rx: 2.4, ry: 1.5 } })
+      // (le sac à venin bat aussi, lentement, et porte deux pustules)
+      const gonfle = t === 0 ? 1 : 1 + 0.1 * Math.sin(t * 3 + sg)
+      f.push({ pts: ovale(-2.4, sg * 5.3, 2.4 * gonfle, 1.5 * gonfle, 16), mat: 'venin', relief: 'dome', dome: { x: -2.4, y: sg * 5.3, rx: 2.4 * gonfle, ry: 1.5 * gonfle } })
+      f.push(...pustule(-1.2, sg * 4.6, 0.55, t, sg > 0 ? 0.3 : 0.8), ...pustule(-3.8, sg * 6.1, 0.45, t, sg > 0 ? 0.6 : 0.1))
       f.push({ pts: ovale(-6.8, sg * 6.4, 0.8, 0.8, 8), mat: 'marque', relief: 'dome', dome: { x: -6.8, y: sg * 6.4, rx: 0.8, ry: 0.8 } })
     }
     return f
@@ -1060,7 +1080,7 @@ export function formesDeLArme(id: string, s: number): Forme[] {
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
 export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
   const g = gabaritDe(a.coque)
-  const f: Forme[] = [...formesDesAiles(a.coque)]
+  const f: Forme[] = [...formesDesAiles(a.coque, t)]
   const armes: Forme[] = []
   a.armes.forEach((id, i) => {
     if (id === '') return
@@ -1092,7 +1112,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
-  const tout = [...feux, ...reste, ...formesDeLaCoque(a.coque)]
+  const tout = [...feux, ...reste, ...formesDeLaCoque(a.coque, t)]
   if (g.surLePont) tout.push(...armes)
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant

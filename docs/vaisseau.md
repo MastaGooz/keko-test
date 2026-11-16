@@ -4483,3 +4483,11 @@ dessin : la flaque, un secteur vert translucide qui bout, plus clair au bord, de
 bulles qui crèvent ; le crachat, une gerbe de gouttes dans le cône ; un insecte
 rongé, une tache verte qui fume. Ses sons, `crachat` et `ronge`. *Chiffres de
 moi, à rejuger.*
+
+PUIS UN CORPS BUBONIQUE (Keko, 16/11 : « fais-lui un aspect plus bubonique : des
+pustules qui battent ») : dix PUSTULES de toutes tailles semées sur l'échine et les
+flancs, deux sur chaque sac à venin — chacune un bourrelet enflammé de lie, le
+bubon de venin dessus (`pustule`) — qui ENFLENT ET DÉSENFLENT en double
+battement, comme un pouls (boum-boum… boum-boum, 1,6 fois par seconde, +28 % au
+coup), chacune à son rythme ; les sacs à venin gonflent lentement. Le temps entre
+dans les formes de la coque et des ailes (`t` ; à zéro, le pictogramme, immobile).
