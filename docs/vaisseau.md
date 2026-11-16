@@ -4609,4 +4609,7 @@ que la boule ») : la masse touche à 7,5 (`prise` ; sa taille dessinée reste 4
 un insecte à moins de 2,5 de la chaîne (plus son rayon) prend 3 points, une fois par
 demi-seconde au plus, jamais au même pas qu'un coup de masse (`chaine`). Mesuré :
 un insecte immobile près du vaisseau prend un coup de chaîne à chaque tour. Son son,
-`chaine` (un cliquetis de maillons).
+`maillons` (un cliquetis ; `chaine` est celui de la chaîne d'éclairs).
+Le premier envoi avait deux sons du même nom : la compilation avait échoué et le
+commit est parti quand même (la commande ne lisait que le code des vérifications) — le
+déploiement a échoué, le site est resté sur la version d'avant.

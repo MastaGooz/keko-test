@@ -647,8 +647,8 @@ const RECETTES = {
       for (let k = 0; k < 3; k++) souffle(m, h, 0.04 + 0.03 * k, 0.2, 0, { f: 3500, q: 2, bande: true, a: 0.001, d: 0.02 })
     },
   },
-  /** LA CHAÎNE DU FLÉAU FOUETTE : un cliquetis de maillons, sec et clair */
-  chaine: {
+  /** LA CHAÎNE DU FLÉAU FOUETTE : un cliquetis de maillons, sec et clair (« chaine » est la chaîne d'éclairs) */
+  maillons: {
     duree: 0.25, niveau: 0.12, salle: [0.2, 0.08], variantes: 3,
     faire: (m, h) => {
       for (let k = 0; k < 3; k++) note(m, 0.015 * k, 0.6 - k * 0.15, (h.next() - 0.5) * 0.5, { f: 1800 + 700 * h.next(), a: 0.001, d: 0.04, partiels: [[1, 1, 1], [2.71, 0.4, 0.5]] })
