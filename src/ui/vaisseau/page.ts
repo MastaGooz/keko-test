@@ -6910,6 +6910,40 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La taille du point de chute (le cercle serré, le cratère) : elle ne frappe que l'insecte, il tient sur lui (Keko, 16/11 : « réduire la taille du cercle »). */
   const POINT_DE_CHUTE = 7
   const DUREE_DU_CRATERE = 1.4
+  /**
+   * LA MÉTÉORE EN ÉTOILE FILANTE (Keko, 16/11 : « utiliser l'effet "star fall" de pixelfx pour voir, enfin t'en
+   * inspirer — garde la méthode actuelle en réserve ») : la tête est une ÉTOILE À QUATRE BRANCHES qui scintille, un
+   * cœur blanc, deux lueurs ; la traîne, un long trait effilé qui reprend le chemin de la chute (blanc en tête, puis
+   * mauve, puis violet), doublé près de la tête, des paillettes qui s'en détachent ; l'impact, un rond blanc, un
+   * éclat à huit rayons, un anneau qui court au sol, une marque qui brille et refroidit — la palette arcane de
+   * pixelfx. Le cercle de runes et l'ombre restent. `&meteore=eclat` rend la première météore (l'éclat d'arcane qui
+   * rapetisse, le cratère).
+   */
+  const METEORE_EN_ECLAT = parametres.get('meteore') === 'eclat'
+  const ARCANE = ['#140a26', '#2b1252', '#481c88', '#6b2cc0', '#9a48ec', '#c684ff', '#ecc8ff', '#ffffff'].map((c) => N.hex(c))
+  /** L'étoile à quatre branches de pixelfx (`sparkle`) : des bras de `bras` pixels, leurs bouts plus pâles, un cœur blanc, sa lueur. */
+  const scintillement = (p: Peintre, x: number, y: number, bras: number, c: number, bout: number, k = 0.6): void => {
+    const n = Math.round(bras)
+    if (n < 1) return
+    const X = Math.floor(x)
+    const Y = Math.floor(y)
+    for (let d = 1; d <= n; d++) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.px(X + ax * d, Y + ay * d, d > n * 0.6 ? bout : c)
+    if (n >= 3) for (const [ax, ay] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) p.px(X + ax, Y + ay, c)
+    p.px(X, Y, N.WHITE)
+    p.glow(x, y, 4 + n * 2, c, k)
+  }
+  /** L'éclat à huit rayons de pixelfx (`flare`) : longs sur les axes, plus courts entre, qui pâlissent vers leur bout. */
+  const eclatAHuitRayons = (p: Peintre, x: number, y: number, L: number, k: number): void => {
+    if (L < 1) return
+    for (let i = 0; i < 8; i++) {
+      const an = (i * Math.PI) / 4
+      const len = i % 4 === 0 ? L : i % 2 === 0 ? L * 0.6 : L * 0.3
+      for (let d = 0; d <= len; d += 0.5) {
+        const u = d / len
+        p.dot(x + Math.cos(an) * d, y + Math.sin(an) * d, u < 0.35 ? N.WHITE : u < 0.7 ? ARCANE[6] : ARCANE[5], u < 0.6 ? 1 : k * 1.5 * (1 - u) + 0.2)
+      }
+    }
+  }
   const impactsDeMeteore: { x: number; y: number; t0: number; r: number; id: number }[] = []
   /** Où est la météore à la part `u` de sa chute (0 : au ciel, 1 : au sol), et sa hauteur (1 à 0) : elle tombe, elle accélère. */
   const meteoreEnLAir = (x: number, y: number, u: number): { x: number; y: number; h: number } => {
@@ -6920,8 +6954,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let i = impactsDeMeteore.length - 1; i >= 0; i--) if (t - impactsDeMeteore[i].t0 > DUREE_DU_CRATERE) impactsDeMeteore.splice(i, 1)
     if (m.meteores.length === 0 && impactsDeMeteore.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    // (EN ÉTOILE : une marque qui brille où elle est tombée, et refroidit en 0,7 s)
+    if (!METEORE_EN_ECLAT)
+      for (const c of impactsDeMeteore) {
+        const k = 1 - (t - c.t0) / 0.7
+        if (k <= 0) continue
+        p.dot(c.x, c.y, k > 0.6 ? N.WHITE : ARCANE[6], Math.min(1, k * 1.5))
+        for (const ax of [-1, 1]) p.dot(c.x + ax, c.y, ARCANE[5], Math.min(1, k * 1.2))
+        p.glow(c.x, c.y, 10, ARCANE[5], 0.35 * k)
+      }
     // (LE CRATÈRE : une tache sombre, son bord qui rougeoie violet puis refroidit, quelques braises)
-    for (const c of impactsDeMeteore) {
+    for (const c of METEORE_EN_ECLAT ? impactsDeMeteore : []) {
       const u = (t - c.t0) / DUREE_DU_CRATERE
       const k = 1 - u
       p.disc(c.x, c.y, c.r * 0.9, PLASMA_V[0], (d) => 0.6 * k * Math.min(1, (1 - d) / 0.3))
@@ -6974,6 +7017,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (conf === undefined) continue
       const u = Math.max(0, Math.min(1, (m.t - mt.lancee) / conf.chute))
       const q = meteoreEnLAir(mt.x, mt.y, u)
+      if (!METEORE_EN_ECLAT) {
+        // (LA TRAÎNE de l'étoile filante : vingt segments le long du chemin des 0,17 dernière seconde, blanc en tête,
+        // puis mauve, puis violet ; un second trait à côté près de la tête lui donne du corps)
+        const n = 20
+        for (let k = n; k >= 1; k--) {
+          const ta = m.t - (k * 0.17) / n
+          if (ta < mt.lancee) continue
+          const a = meteoreEnLAir(mt.x, mt.y, Math.min(1, (ta - mt.lancee) / conf.chute))
+          const b = meteoreEnLAir(mt.x, mt.y, Math.min(1, (ta + 0.17 / n - mt.lancee) / conf.chute))
+          const f = k / n
+          if (f < 0.55) p.line(a.x + 1, a.y, b.x + 1, b.y, f < 0.2 ? ARCANE[6] : ARCANE[5], Math.min(1, 1.1 - f * 1.4))
+          p.line(a.x, a.y, b.x, b.y, f < 0.15 ? N.WHITE : f < 0.4 ? ARCANE[6] : f < 0.7 ? ARCANE[5] : ARCANE[4], Math.min(1, 1.3 - f))
+          if (k % 3 === 0) p.glow(a.x, a.y, 7 * (1 - f) + 2, ARCANE[5], 0.3 * (1 - f))
+        }
+        // (des paillettes qui s'en détachent et scintillent un instant)
+        const tic = Math.floor(m.t * 15)
+        for (let g = 0; g < 6; g++) {
+          const f = alea(mt.id + tic, g, 31) * 0.8
+          const b = meteoreEnLAir(mt.x, mt.y, Math.max(0, u - f * 0.3))
+          const ox = (alea(mt.id + tic, g, 32) - 0.5) * 5
+          const oy = (alea(mt.id + tic, g, 33) - 0.5) * 5
+          if (alea(mt.id + tic, g, 34) < 0.3) scintillement(p, b.x + ox, b.y + oy, 1.4, ARCANE[6], ARCANE[5], 0.2)
+          else p.dot(b.x + ox, b.y + oy, g % 2 === 0 ? N.WHITE : ARCANE[6], 0.9 * (1 - f))
+        }
+        // (LA TÊTE : une étoile à quatre branches qui scintille, un cœur blanc, deux lueurs — un peu plus grande en haut)
+        const bras = (4.5 + Math.sin(m.t * 40 + mt.id)) * (1 + 0.4 * q.h)
+        scintillement(p, q.x, q.y, bras, ARCANE[6], ARCANE[5], 0.6)
+        p.circle(q.x, q.y, 1.4, N.WHITE)
+        p.glow(q.x, q.y, 16, ARCANE[5], 0.6)
+        p.glow(q.x, q.y, 5, N.WHITE, 0.35)
+        continue
+      }
       // (grosse en haut, près de nous ; elle rapetisse en tombant)
       const s = 1 + 1.3 * q.h
       // (LA TRAÎNE : vers le ciel d'où elle vient, plus longue à mesure qu'elle accélère, de plus en plus fine et pâle)
@@ -6994,8 +7069,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(q.x, q.y, 9 * s, PLASMA_V[2], 0.6)
       p.disc(q.x, q.y, 2.8 * s, (d, ang) => (d < 0.3 ? N.WHITE : d < 0.5 ? PLASMA_V[4] : d + 0.12 * Math.sin(ang * 4 + m.t * 30) < 0.82 ? PLASMA_V[3] : PLASMA_V[2]), (d) => Math.min(1, (1 - d) / 0.2))
     }
+    // (L'IMPACT EN ÉTOILE : un rond blanc, l'éclat à huit rayons, un anneau qui court au sol en pâlissant)
+    if (!METEORE_EN_ECLAT)
+      for (const c of impactsDeMeteore) {
+        const age = t - c.t0
+        if (age < 0.45) {
+          const k = age / 0.45
+          const e = 1 - Math.pow(1 - k, 3)
+          p.ring(c.x, c.y, 3 + 13 * e, Math.max(1, Math.round(2.5 * (1 - k))), k < 0.2 ? N.WHITE : k < 0.5 ? ARCANE[6] : ARCANE[5], Math.min(1, 1.15 - k))
+        }
+        if (age < 0.22) {
+          const k = age / 0.22
+          if (k < 0.35) p.circle(c.x, c.y, 5 * (1 - k / 0.35) + 1, N.WHITE)
+          eclatAHuitRayons(p, c.x, c.y, 12 * Math.pow(1 - k, 1.5) + 2, 1 - k)
+          p.glow(c.x, c.y, 20, ARCANE[5], 0.9 * (1 - k))
+        }
+      }
     // (L'IMPACT : un éclair blanc, le trait de sa chute qui s'efface, une onde qui court au sol)
-    for (const c of impactsDeMeteore) {
+    for (const c of METEORE_EN_ECLAT ? impactsDeMeteore : []) {
       const age = t - c.t0
       if (age < 0.12) {
         const k = 1 - age / 0.12

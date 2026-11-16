@@ -4820,3 +4820,14 @@ fragment, celui de l'Ice Shatter (`B.SHARD` de pixelfx : un trait de 1,4 à 2,4 
 pointe blanche, la rampe de glace — `GLACE` est sa palette) ; la brisure, un éclair blanc, une étoile à quatre
 branches, des paillettes en cône. Son `eclatement` : un « tchiing » de verre bref (pas plus d'un tous les 80 ms).
 *Chiffres de moi, à rejuger.*
+
+LA MÉTÉORE EN ÉTOILE FILANTE (Keko, 16/11 : « utiliser l'effet "star fall" de pixelfx pour la météore, enfin t'en
+inspirer — garde la méthode actuelle en réserve au cas où »). Par défaut, le dessin reprend `arcane/star-fall` et sa
+palette (`PAL.arcane`, recopiée en `ARCANE`) : la tête est une ÉTOILE À QUATRE BRANCHES qui scintille (`sparkle`,
+recopié en `scintillement`), un cœur blanc, deux lueurs — un peu plus grande en haut (×1,4) ; la traîne, vingt
+segments qui reprennent le chemin des 0,17 dernière seconde de la chute (blanc en tête, puis mauve, puis violet,
+doublée près de la tête, une lueur tous les trois), des paillettes qui s'en détachent ; l'impact, un rond blanc,
+l'éclat à huit rayons (`flare`, recopié en `eclatAHuitRayons`), un anneau qui court au sol jusqu'à 16, une marque
+qui brille et refroidit en 0,7 s (plus de cratère). Le cercle de runes et l'ombre au sol, le chemin en diagonale qui
+accélère restent : ce sont eux qui disent « d'en haut ». LA PREMIÈRE MÉTÉORE (l'éclat d'arcane qui rapetisse, le
+trait de la chute, le cratère) RESTE derrière `&meteore=eclat`.
