@@ -4613,3 +4613,7 @@ un insecte immobile près du vaisseau prend un coup de chaîne à chaque tour. S
 Le premier envoi avait deux sons du même nom : la compilation avait échoué et le
 commit est parti quand même (la commande ne lisait que le code des vérifications) — le
 déploiement a échoué, le site est resté sur la version d'avant.
+
+PUIS UNE BOULE UN PEU PLUS GROSSE (Keko, 16/11 : « grossis un tout petit peu la
+boule, je la trouve encore un peu petite ») : son dessin passe de 4,5 à 5,5 (ses
+pics suivent) ; sa prise reste 7,5.
