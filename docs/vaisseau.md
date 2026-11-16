@@ -4436,3 +4436,12 @@ six maillons tirés l'un par l'autre, poussée d'une houle (elles pendent et
 ondulent au repos, s'étirent en nage) ; quand il fouette, une tentacule part en
 courbe jusqu'à l'insecte et revient. Ses sons : `ponte` (un « blop » gluant),
 `fouet`. *Chiffres de moi, à rejuger.*
+
+PUIS DES REJETONS QUI FOUETTENT DE LOIN (Keko, 16/11 : « il faut que les rejetons
+attaquent un peu à distance en projetant leurs tentacules : là ils poursuivent
+toujours sans attaquer ») : ils devaient arriver à 13 d'un insecte qui file à 40,
+en nageant par à-coups — ils le rattrapaient rarement. Leur tentacule porte
+maintenant à 32, et ils tiennent leurs distances : arrêtés aux deux tiers de leur
+allonge (21), ils la projettent de là. Mesuré sur un insecte qui tourne sans
+s'arrêter à 40 : sept coups en 4 s (le plus qu'il puisse, à un toutes les
+0,5 s), le rejeton jamais à moins de 23 de lui.

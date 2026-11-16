@@ -1560,7 +1560,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // trois au plus ; ils meurent au bout de leur durée
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 100000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const rejeton = { id: 'rejeton', cadence: 3.5, degats: 4, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, rejeton: { max: 3, duree: 14, vitesse: 70, acces: 5, vue: 90, allonge: 13, periode: 0.5 } }
+  const rejeton = { id: 'rejeton', cadence: 3.5, degats: 4, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, rejeton: { max: 3, duree: 14, vitesse: 70, acces: 5, vue: 90, allonge: 32, periode: 0.5 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rejeton], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 100000 } }
   const elever = (places: [number, number][], duree: number) => {
     const w = nouveauMonde(cfg, 3)
@@ -1581,6 +1581,23 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`un insecte à 60 : un rejeton naît, nage jusqu’à lui et le fouette (${un.pv[0]} en 2 s, par 4)`, un.ev.filter((e) => e.type === 'rejeton').length === 1 && un.pv[0] >= 8 && un.pv[0] % 4 === 0 && un.ev.some((e) => e.type === 'coupDeRejeton'))
   const long = elever([[60, 0]], 16)
   verifier(`trois au plus (${long.plus}) ; le premier meurt au bout de 14 s`, long.plus === 3 && long.ev.some((e) => e.type === 'rejetonFini'))
+  // (UN INSECTE QUI NE S'ARRÊTE PAS — Keko, 16/11 : « ils poursuivent toujours sans attaquer » : il tourne en rond à la
+  // vitesse d'un insecte, 40 ; le rejeton doit le fouetter de loin, sans avoir à le rattraper)
+  {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(insecte(1, 60, 0))
+    const ev: Evenement[] = []
+    let plusPres = Infinity
+    for (let i = 0; i < 60 * 4; i++) {
+      const a = (i / 60) * (40 / 60)
+      w.ennemis[0].corps = { ...w.ennemis[0].corps, x: Math.cos(a) * 60, y: Math.sin(a) * 60, vx: -Math.sin(a) * 40, vy: Math.cos(a) * 40 }
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      for (const r of w.rejetons) plusPres = Math.min(plusPres, Math.hypot(r.x - w.ennemis[0].corps.x, r.y - w.ennemis[0].corps.y))
+    }
+    const coups = ev.filter((e) => e.type === 'coupDeRejeton').length
+    verifier(`un insecte qui tourne sans s’arrêter, à 40 : le rejeton le fouette de loin (${coups} coups en 4 s ; il ne l’approche pas à moins de ${plusPres.toFixed(0)})`, coups >= 4 && plusPres > 10)
+  }
 }
 
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se

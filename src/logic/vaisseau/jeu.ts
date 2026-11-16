@@ -1912,7 +1912,9 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     let bx: number
     let by: number
     let arret: number
-    if (proie !== undefined) (bx = proie.corps.x), (by = proie.corps.y), (arret = rj.allonge * 0.7)
+    // (… ET IL TIENT SES DISTANCES — Keko, 16/11 : « ils poursuivent toujours sans attaquer ; il faut qu'ils attaquent un peu à
+    // distance en projetant leurs tentacules » : il s'arrête aux deux tiers de son allonge, d'où sa tentacule porte)
+    if (proie !== undefined) (bx = proie.corps.x), (by = proie.corps.y), (arret = rj.allonge * 0.65)
     else {
       const cote = r.id % 2 === 0 ? 1 : -1
       bx = v.x - Math.cos(v.cap) * 16 - Math.sin(v.cap) * 9 * cote
