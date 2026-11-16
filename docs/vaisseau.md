@@ -4777,3 +4777,8 @@ ouverte, un cœur noir cerclé de violet qui grossit, trois bras de plasma en sp
 le cercle du rayon qui bat de plus en plus vite ; l'éclat est celui de l'orbe. Trois sons : `puits` (un
 « vloum » sourd), `aspire` (2 s, un souffle qui monte, un bourdon qui gonfle), puis `eclatPlasma`.
 *Chiffres de moi, à rejuger.*
+
+LE PUITS EST GARDÉ DE CÔTÉ (Keko, 16/11 : « c'est intéressant le puits, mais je préfère qu'on le garde pour un futur
+vaisseau que j'ai en tête ; il faudrait quelque chose qui renvoie plus aux arcanes — on en fait indirectement un
+vaisseau arcanique : il a les missiles magiques, l'orbe d'arcane »). `arme-puits` et `Arme.puits` restent écrits
+et vérifiés ; aucun vaisseau ne le porte. Le Pulsar revient à deux armes en attendant la troisième, arcanique.

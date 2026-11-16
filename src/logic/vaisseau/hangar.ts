@@ -199,6 +199,8 @@ export const PIECES: Piece[] = [
   // traverse tout ») : un trait instantané, très long, sur la ligne qui traverse le plus d'insectes. *Chiffres de moi.*
   // LE PUITS DU PULSAR (Keko, 16/11 : « on va tenter le puits » — à la place du railgun, passé au Prisme) : une petite
   // singularité de plasma lancée au cœur de la nuée, qui aspire puis éclate. *Chiffres de moi, à rejuger en jouant.*
+  // (… GARDÉ DE CÔTÉ — Keko, 16/11 : « je préfère qu'on le garde pour un futur vaisseau que j'ai en tête » ; le Pulsar est
+  // un vaisseau des ARCANES, il lui faut une arme qui y renvoie. Aucun vaisseau ne le porte.)
   { id: 'arme-puits', sorte: 'arme', cran: 3, nom: 'Puits', dit: 'Toutes les 5 s, un insecte à moins de 130, une singularité de plasma part au cœur de la nuée : ouverte, elle aspire 2 s tout insecte à moins de 45 vers son centre, puis éclate : 22 points à tout ce qui est à moins de 28.', note: 'Elle rassemble la nuée : l’orbe et l’essaim font le reste.', prix: 30, poids: 7, arme: { id: 'puits', cadence: 5, degats: 22, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, puits: { vitesse: 150, rayon: 45, force: 70, duree: 2, eclat: 28 } } },
   // (… PASSÉ AU PRISME — Keko, 16/11 : « ça colle mieux avec les cristaux » ; en bleu, depuis le cristal de sa proue ; le
   // Pulsar attend une troisième arme)
