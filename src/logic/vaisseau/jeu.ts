@@ -466,6 +466,18 @@ export type Arme = {
    * qui en traverse LE PLUS (à égalité, vers le plus proche).
    */
   rail?: { largeur: number }
+  /**
+   * DES TENTACULES À AIGUILLE (la première arme du Kraken, Keko, 16/11 : « un vaisseau organique — les vaisseaux zergs, le
+   * Léviathan ; des tentacules avec des aiguilles au bout qui s'étendent vers les ennemis et qui les piquent ; pas en
+   * ligne droite : la tentacule fait un petit virage, un truc bien organique ») : `ancres.length` tentacules, chacune
+   * fixée au vaisseau à son ancre (en unités du vaisseau, le nez vers +x ; posées par le rendu, qui dessine leurs
+   * racines). Une tentacule au repos prend un insecte à `portee` de son ancre — le verrouillé d'abord ; sinon le plus
+   * proche qu'aucune autre ne vise, ou le plus proche tout court — et S'ÉTEND vers lui en `aller` secondes, en suivant
+   * une courbe (son `virage`, d'un côté ou de l'autre, tiré au hasard : le dessin la courbe d'autant) ; tendue, elle
+   * PIQUE (`degats`), reste plantée `tenue` secondes, puis SE RÉTRACTE en `retour` ; elle repart `cadence` secondes
+   * après. Sa cible morte ou trop loin avant la piqûre, elle se rétracte. L'état est `Monde.tentacules`.
+   */
+  tentacule?: { ancres: [number, number][]; aller: number; tenue: number; retour: number; virage: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -614,7 +626,15 @@ export type Monde = {
   tornades: Tornade[]
   /** LES SPHÈRES DE PLASMA (voir `Arme.sphere`). */
   spheres: Sphere[]
+  /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
+  tentacules: Tentacule[]
 }
+
+/**
+ * Une tentacule (voir `Arme.tentacule`) : son arme, son ancre, ce qu'elle fait (au repos, elle s'étend, plantée, elle se
+ * rétracte) et depuis quand ; sa cible et le dernier point où elle était ; son allongement (0 à 1) ; son virage (signé).
+ */
+export type Tentacule = { arme: number; ancre: number; fait: 'repos' | 'aller' | 'plantee' | 'retour'; depuis: number; cible: number | null; tx: number; ty: number; u: number; virage: number }
 
 /** Une sphère de plasma (voir `Arme.sphere`) : son arme, où, sa vitesse, quand elle est née, quand elle tire. */
 export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number }
@@ -690,6 +710,9 @@ export type Evenement =
   | { type: 'sphereTir'; x: number; y: number; tirs: number }
   /** Un railgun tire (voir `Arme.rail`) : le trait, de la bouche au bout de la portée. */
   | { type: 'rail'; x0: number; y0: number; x1: number; y1: number; arme: string }
+  /** Une tentacule s'étend vers un insecte, le pique (voir `Arme.tentacule`). */
+  | { type: 'tentacule'; x: number; y: number }
+  | { type: 'piqure'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -710,7 +733,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1724,6 +1747,94 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   })
 }
 
+/** Une ancre de tentacule (en unités du vaisseau, le nez vers +x), dans le monde. */
+export function ancreDansLeMonde(v: Vaisseau, a: [number, number]): Vecteur {
+  return { x: v.x + Math.cos(v.cap) * a[0] - Math.sin(v.cap) * a[1], y: v.y + Math.sin(v.cap) * a[0] + Math.cos(v.cap) * a[1] }
+}
+
+/** LES TENTACULES (voir `Arme.tentacule`) : chacune prend sa cible, s'étend, pique, reste plantée, se rétracte, se repose. */
+function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const te = a.tentacule
+    if (te === undefined) return
+    // (une par ancre, nées au repos)
+    for (let k = 0; k < te.ancres.length; k++) if (!m.tentacules.some((x) => x.arme === i && x.ancre === k)) m.tentacules.push({ arme: i, ancre: k, fait: 'repos', depuis: -1e9, cible: null, tx: 0, ty: 0, u: 0, virage: 0 })
+  })
+  for (const tn of m.tentacules) {
+    const a = c.armes[tn.arme]
+    const te = a?.tentacule
+    if (a === undefined || te === undefined) continue
+    const an = ancreDansLeMonde(v, te.ancres[tn.ancre] ?? [0, 0])
+    const age = m.t - tn.depuis
+    const cible = tn.cible === null ? undefined : m.ennemis.find((e) => e.id === tn.cible)
+    if (cible !== undefined) (tn.tx = cible.corps.x), (tn.ty = cible.corps.y)
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - an.x, e.corps.y - an.y) <= a.portee + c.ennemi.rayon
+    if (tn.fait === 'repos') {
+      tn.u = 0
+      if (m.phase !== 'vol' || age < a.cadence) continue
+      let choix: Ennemi | undefined
+      const ve = ennemiVerrouille(m)
+      if (ve !== null && aPortee(ve)) choix = ve
+      else {
+        // (le plus proche que les autres ne visent pas ; sinon le plus proche tout court)
+        const visees = new Set(m.tentacules.filter((x) => x !== tn && x.fait !== 'repos').map((x) => x.cible))
+        let dc = Infinity
+        let dLibre = Infinity
+        let libre: Ennemi | undefined
+        let proche: Ennemi | undefined
+        for (const e of m.ennemis) {
+          if (!aPortee(e)) continue
+          const d = Math.hypot(e.corps.x - an.x, e.corps.y - an.y)
+          if (d < dc) (dc = d), (proche = e)
+          if (!visees.has(e.id) && d < dLibre) (dLibre = d), (libre = e)
+        }
+        choix = libre ?? proche
+      }
+      if (choix === undefined) continue
+      tn.fait = 'aller'
+      tn.depuis = m.t
+      tn.cible = choix.id
+      tn.tx = choix.corps.x
+      tn.ty = choix.corps.y
+      // (son virage : d'un côté ou de l'autre, plus ou moins fort, tiré au hasard)
+      const h = tire(m.graine, m.prochainId++, 31)
+      tn.virage = (h < 0.5 ? -1 : 1) * te.virage * (0.6 + 0.8 * Math.abs(h - 0.5))
+      ev.push({ type: 'tentacule', x: an.x, y: an.y })
+    } else if (tn.fait === 'aller') {
+      // (sa cible morte, ou partie trop loin : elle se rétracte d'où elle en est)
+      if (cible === undefined || Math.hypot(tn.tx - an.x, tn.ty - an.y) > (a.portee + c.ennemi.rayon) * 1.3) {
+        tn.fait = 'retour'
+        tn.depuis = m.t - (1 - tn.u) * te.retour
+        continue
+      }
+      tn.u = Math.min(1, age / te.aller)
+      if (tn.u >= 1) {
+        tn.fait = 'plantee'
+        tn.depuis = m.t
+        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+        cible.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        ev.push({ type: 'piqure', x: cible.corps.x, y: cible.corps.y })
+        ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique })
+        if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
+      }
+    } else if (tn.fait === 'plantee') {
+      tn.u = 1
+      if (age >= te.tenue || cible === undefined) {
+        tn.fait = 'retour'
+        tn.depuis = m.t
+      }
+    } else {
+      tn.u = Math.max(0, 1 - age / te.retour)
+      if (tn.u <= 0) {
+        tn.fait = 'repos'
+        tn.depuis = m.t
+        tn.cible = null
+      }
+    }
+  }
+}
+
 /**
  * UN MISSILE D'ESSAIM ZIGZAGUE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, par
  * bonds : à chaque bond un cap neuf, l'écart tiré au hasard d'un bord à l'autre et qui s'éteint avec l'âge.
@@ -2239,7 +2350,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2325,10 +2436,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   tirerLesEssaims(c, m, ev)
   menerLesSpheres(c, m, dt, ev)
   tirerLesRails(c, m, ev)
+  menerLesTentacules(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

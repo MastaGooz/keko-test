@@ -125,6 +125,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LE KRAKEN (Keko, 16/11) : le vaisseau organique — une bête de chitine et de chair, des tentacules à aiguille
+    id: 'kraken',
+    nom: 'Kraken',
+    classe: 'chasseur',
+    dit: 'Une bête vivante, d’une autre race : ses tentacules à aiguille fouettent et piquent tout ce qui s’approche.',
+    pieces: ['coque-10', 'propulseur-k3', 'arme-tentacules'],
+    serie: { possedees: ['coque-10', 'propulseur-k3', 'arme-tentacules'], montees: { coque: 'coque-10', propulseur: 'propulseur-k3' }, outils: [], armes: ['arme-tentacules'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',

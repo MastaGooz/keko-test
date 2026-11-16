@@ -4353,3 +4353,29 @@ un autre, changés à chaque image ; un seul arc d'anneau, discret, tourne autou
 (l'anneau plein, le second arc et les arcs qui crépitaient au dehors brouillaient
 le bord). Un tir la fait flasher : la paroi blanchit, les ondes s'avivent. Son
 rayon passe de 8 à 10 : à 8, on n'y lisait ni les ondes ni les arcs.
+
+UN SEPTIÈME VAISSEAU, LE KRAKEN (Keko, 16/11 : « un vaisseau organique — on
+s'inspire des vaisseaux zergs, du Léviathan ; sa première attaque, des tentacules
+avec des aiguilles au bout qui s'étendent vers les ennemis et qui les piquent ;
+pas en ligne droite : la tentacule fait un petit virage, un truc bien
+organique ») — le nom vient du mythe, pas de StarCraft. Une bête : un MANTEAU DE
+CHITINE bosselé, trois plaques séparées par des sillons de chair, une crête
+d'épines d'os, une grappe d'YEUX de bile à l'avant, deux NAGEOIRES DE CHAIR
+ourlées d'épines (une glande sur chacune : la marque du joueur), QUATRE
+TENTACULES QUI TRAÎNENT derrière et ondulent, un jet de bile à la queue (coque
+10, `propulseur-k3` ; matières `chitine`, `chair`, `bile`, `os`). Les
+trois RACINES des tentacules sont à l'avant (`ANCRES_DU_KRAKEN` : le rendu les
+dessine et les donne à la règle).
+
+SA PREMIÈRE ARME, LES TENTACULES (`Arme.tentacule`) : trois, une par racine.
+Au repos, chacune prend un insecte à moins de 55 de sa racine — le verrouillé
+pour toutes ; sinon le plus proche qu'aucune autre ne vise —, S'ÉTEND vers lui en
+0,28 s le long d'une COURBE (une quadratique dont le point de contrôle s'écarte
+de la corde de 21 à 49 % de sa longueur, d'un côté ou de l'autre, tiré au
+hasard), qui ONDULE en plus ; tendue, elle PIQUE (5 points), reste plantée 0,12 s
+— la chair palpite —, se rétracte en 0,3 s et repart 0,15 s après. Sa cible
+morte ou partie avant la piqûre, elle se rétracte d'où elle en est. Le dessin :
+cernée de sombre, la chair éclairée d'un côté, des ventouses pâles, épaisse à la
+racine, fine au bout ; une AIGUILLE d'os sur la tangente du bout, qui s'enfonce
+plantée ; une giclée de bile à la piqûre. Ses sons, `fouet` et `piqure`.
+*Chiffres de moi, à rejuger.*

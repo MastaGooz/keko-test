@@ -612,6 +612,24 @@ const RECETTES = {
       note(m, 0.09, 0.25, 0.4, { f: 1420, glisse: { vers: 680, en: 0.8 }, a: 0.003, d: 0.85, battement: 15, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
     },
   },
+  /** UNE TENTACULE FOUETTE (le Kraken, 16/11) : un sifflement d'air bref qui monte, et un claquement mouillé, sourd */
+  fouet: {
+    duree: 0.4, niveau: 0.16, salle: [0.25, 0.1], variantes: 4,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.7, (h.next() - 0.5) * 0.5, { f: 900, glisse: { vers: 2400, en: 0.12, droit: true }, q: 1.3, bande: true, a: 0.02, d: 0.1 })
+      souffle(m, h, 0.12, 0.6, 0, { f: 700, glisse: { vers: 300, en: 0.05 }, q: 1.6, bande: true, a: 0.001, d: 0.05 })
+      note(m, 0.12, 0.35, 0, { f: 170, glisse: { vers: 90, en: 0.05 }, a: 0.002, d: 0.06 })
+    },
+  },
+  /** L'AIGUILLE SE PLANTE : un « tchk » charnu — un coup sec et grave, un petit bruit humide qui gargouille */
+  piqure: {
+    duree: 0.35, niveau: 0.17, salle: [0.2, 0.08], variantes: 4,
+    faire: (m, h) => {
+      note(m, 0, 0.8, 0, { f: 260, glisse: { vers: 120, en: 0.04 }, a: 0.001, d: 0.05, partiels: CORPS, sature: 1.3 })
+      souffle(m, h, 0, 0.6, 0, { f: 2400, q: 2, bande: true, a: 0.001, d: 0.02 })
+      note(m, 0.03, 0.25, 0, { f: 380 + 120 * h.next(), glisse: { vers: 520, en: 0.04, droit: true }, a: 0.003, d: 0.05, battement: 30 })
+    },
+  },
   /** UN PETIT TRAIT ARCANIQUE PART DE LA SPHÈRE : un « tsip » clair et bref qui monte, à peine battu */
   arcane: {
     duree: 0.25, niveau: 0.1, salle: [0.25, 0.1], variantes: 4,

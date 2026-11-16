@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -148,6 +148,10 @@ export const PIECES: Piece[] = [
   // décharge au nez. Assez vif, assez fragile. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-9', sorte: 'coque', cran: 9, nom: 'Carapace du Pulsar', dit: '5 de blindage, une carapace venue d’ailleurs autour d’un cœur de plasma.', prix: 0, poids: 21, pv: 5, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-p3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Pulsar', dit: 'Un souffle de plasma : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.1 },
+  // LE KRAKEN (Keko, 16/11 : « un vaisseau organique — les vaisseaux zergs, le Léviathan ») : un manteau de chitine sur
+  // de la chair, des tentacules à aiguille. Lent à virer, solide. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'coque-10', sorte: 'coque', cran: 10, nom: 'Manteau du Kraken', dit: '7 de blindage, une bête vivante : un manteau de chitine sur de la chair, trois tentacules à aiguille.', prix: 0, poids: 26, pv: 7, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-k3', sorte: 'propulseur', cran: 3, nom: 'Jet du Kraken', dit: 'Un jet de bile : il file, mais vire lourdement.', prix: 0, poids: 7, poussee: 0.78, vitesseMax: 0.95, rotation: 0.95 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
@@ -188,6 +192,10 @@ export const PIECES: Piece[] = [
   // L'ESSAIM DU PULSAR (Keko, 16/11 : « des missiles magiques en mode plasma, plein de petits missiles à tête chercheuse
   // tirés en même temps ») : six, en éventail, qui se partagent les insectes alentour. *Chiffres de moi, à rejuger.*
   { id: 'arme-essaim', sorte: 'arme', cran: 2, nom: 'Essaim de plasma', dit: 'Toutes les 2,4 s, des insectes à moins de 80, six petits missiles de plasma partent ensemble dans tous les sens ; ils se distribuent au hasard entre les insectes à portée, un chacun avant d’en doubler un — le verrouillé, s’il y en a un, les prend tous —, zigzague en tous sens et finit par fondre sur lui : 4 points chacun. Sa cible morte, il en reprend une tout près, ou s’éteint.', note: 'Verrouillez un insecte : ils iront tous sur lui.', prix: 30, poids: 6, arme: { id: 'essaim', cadence: 2.4, degats: 4, portee: 80, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, essaim: { nombre: 6, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } } },
+  // LES TENTACULES DU KRAKEN (Keko, 16/11 : « des tentacules avec des aiguilles au bout qui s'étendent vers les ennemis
+  // et qui les piquent ; pas en ligne droite, un petit virage, un truc bien organique ») : trois, une par racine (le rendu
+  // pose les ancres). *Chiffres de moi, à rejuger.*
+  { id: 'arme-tentacules', sorte: 'arme', cran: 1, nom: 'Tentacules', dit: 'Trois tentacules à aiguille : chacune prend un insecte à moins de 55, s’étend vers lui en se courbant et le pique — 5 points —, puis se rétracte et recommence. Elles se partagent les insectes ; le verrouillé, elles vont toutes sur lui.', note: 'Il faut aller au contact.', prix: 30, poids: 6, arme: { id: 'tentacule', cadence: 0.15, degats: 5, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [], aller: 0.28, tenue: 0.12, retour: 0.3, virage: 0.35 } } },
   // LES MINI-MISSILES DU CHASSEUR, AFFICHÉS « MISSILES » (Keko, 15/11) : guidés, plus lents et moins forts que le canon sur une cible seule,
   // mais ils EXPLOSENT : tout insecte autour de l'impact y perd aussi. *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-minimissiles', sorte: 'arme', cran: 2, nom: 'Missiles', dit: 'Un missile guidé toutes les 1,6 s, 5 points, porte à 120 : il explose à l’impact et touche aussi, de 5 points, tout ce qui est à 18 autour.', note: 'Moins bon que le canon sur une cible seule, meilleur sur un groupe.', prix: 40, poids: 6, arme: { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18, degats: 5 } } },

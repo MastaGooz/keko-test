@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -74,6 +74,12 @@ const RAMPES: Record<Matiere, number[]> = {
   obsidienne: ['#0b0816', '#171128', '#261c40', '#3a2c5c', '#58457f', '#8a74b0'].map(hex),
   mauve: ['#170a26', '#2e1448', '#4c2272', '#6e369c', '#9a5cc8', '#d6a8f0'].map(hex),
   plasma: ['#2a0c5a', '#4a1a8c', '#8a3ce0', '#4a7cf0', '#7cc0ff', '#f0f8ff'].map(hex),
+  // LE KRAKEN (Keko, 16/11 : « organique, les vaisseaux zergs ») : une chitine brun violacé, une chair rose sang, une bile
+  // jaune-vert qui luit (ses yeux, son jet), de l'os pour ses aiguilles et ses épines
+  chitine: ['#120a14', '#24131f', '#3a1f2c', '#56303a', '#7c4a4c', '#b07a6c'].map(hex),
+  chair: ['#2a0a18', '#5a1430', '#8e2a48', '#c04a62', '#e8808a', '#ffc4c0'].map(hex),
+  bile: ['#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'].map(hex),
+  os: ['#2a2218', '#4a3e2c', '#76664a', '#a8987a', '#d6ccb0', '#fffaf0'].map(hex),
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
@@ -505,7 +511,13 @@ const GABARIT_DU_FRIMAS: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0
 // LE PULSAR (Keko, 16/11 : « alien, exotique, le plasma et l'énergie ») : une raie — deux grandes ailes en nageoires — autour
 // d'un CŒUR DE PLASMA, deux cornes de décharge au nez entre lesquelles l'orbe se forme ; une tuyère, à la queue
 const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -5.3, y: 9.6 }, verriere: -1.4, nez: 9.4, flanc: 6, anneau: 12.5, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
+// LE KRAKEN (Keko, 16/11) : un manteau de chitine sur de la chair, deux nageoires de chair, des tentacules qui traînent
+// derrière ; ses trois tentacules à aiguille partent de trois racines, à l'avant (`ANCRES_DU_KRAKEN`) ; un jet de bile
+// à la queue
+/** Les racines des tentacules du Kraken, en unités du vaisseau : la règle les reçoit d'ici (`Arme.tentacule.ancres`). */
+export const ANCRES_DU_KRAKEN: [number, number][] = [[4.6, -3.7], [4.6, 3.7], [7.2, 0]]
+const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -4.4, y: 7.6 }, verriere: 5.8, nez: 8.2, flanc: 6.4, anneau: 12.5, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -642,6 +654,21 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran === 10) {
+    // LE KRAKEN, UN MANTEAU DE CHITINE : un corps renflé, bosselé, la tête en avant ; trois plaques de carapace sur le
+    // dos, séparées par des sillons de chair ; une grappe d'YEUX de bile à l'avant ; et LES TROIS RACINES des tentacules
+    // (des bourrelets de chair, à leurs ancres)
+    const f: Forme[] = [{ pts: [[8.2, 0], [7.4, -2.2], [5.2, -3.9], [2, -4.9], [-1.6, -4.7], [-4.6, -4.1], [-7, -2.8], [-8.2, -1], [-8.2, 1], [-7, 2.8], [-4.6, 4.1], [-1.6, 4.7], [2, 4.9], [5.2, 3.9], [7.4, 2.2]], mat: 'chitine', relief: 'cyl' }]
+    // (les sillons de chair, en arc, entre les plaques)
+    for (const x of [2.6, -0.9, -4.3]) f.push({ pts: [[x + 0.4, -4.1], [x - 0.5, -2], [x - 0.8, 0], [x - 0.5, 2], [x + 0.4, 4.1], [x - 0.2, 4.2], [x - 1.2, 2], [x - 1.5, 0], [x - 1.2, -2], [x - 0.2, -4.2]], mat: 'chair', relief: 'plat' })
+    // (une crête d'épines d'os sur l'échine)
+    for (const x of [0.9, -2.6, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.6, -0.55], [x - 0.3, 0], [x - 0.6, 0.55]], mat: 'os', relief: 'plat' })
+    // (les racines des tentacules)
+    for (const [x, y] of ANCRES_DU_KRAKEN) f.push({ pts: ovale(x, y, 1.25, 1.25, 12), mat: 'chair', relief: 'dome', dome: { x, y, rx: 1.25, ry: 1.25 } })
+    // (les yeux : une grappe de bile)
+    for (const [x, y, r] of [[5.8, -1.3, 0.75], [6.3, 0.9, 0.6], [5.2, 0.1, 0.5], [4.6, -2.1, 0.45]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+    return f
+  }
   if (cran === 9) {
     // LE PULSAR, UNE CARAPACE D'OBSIDIENNE : un corps fuselé, le CŒUR DE PLASMA au milieu dans sa bague, deux évents qui
     // luisent sur l'échine ; au nez, DEUX CORNES DE DÉCHARGE mauves, une étincelle de plasma au bout de chacune
@@ -786,6 +813,15 @@ function formesDuCroissant(sg: number): Forme[] {
 }
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque === 10) {
+    // (le kraken : deux NAGEOIRES DE CHAIR, ourlées d'épines d'os ; une glande sur chacune, à la marque du joueur)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[3.4, sg * 3.6], [1.2, sg * 6], [-1.8, sg * 7.8], [-4.6, sg * 8.2], [-6.4, sg * 6.8], [-6.2, sg * 4.8], [-4.2, sg * 4.6]], mat: 'chair', relief: 'plat', penche: sg })
+      for (const [x, y] of [[1, 6], [-2, 7.7], [-5, 8]] as [number, number][]) f.push({ pts: [[x + 0.7, sg * (y - 0.3)], [x - 0.2, sg * (y + 1.6)], [x - 0.6, sg * (y - 0.1)]], mat: 'os', relief: 'plat' })
+      f.push({ pts: ovale(-2.6, sg * 6.1, 0.85, 0.85, 10), mat: 'marque', relief: 'dome', dome: { x: -2.6, y: sg * 6.1, rx: 0.85, ry: 0.85 } })
+    }
+    return f
+  }
   if (coque === 9) {
     // (le pulsar : deux grandes NAGEOIRES de raie, mauves, le bord d'attaque sombre, parcourues de deux veines de plasma ;
     // le bout est la marque du joueur)
@@ -945,7 +981,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [
@@ -1002,8 +1038,22 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   if (!g.surLePont) f.push(...armes)
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
-  // (le pulsar non plus : il souffle du plasma, violet)
-  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => (a.coque !== 8 && a.coque !== 9) || x.relief === 'emis').map((x): Forme => (a.coque === 9 && x.relief === 'emis' ? { ...x, mat: 'plasma' } : x)), tu.x, tu.y))
+  // (le pulsar non plus : il souffle du plasma, violet ; ni le kraken : un jet de bile)
+  const organique = a.coque === 8 || a.coque === 9 || a.coque === 10
+  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x)), tu.x, tu.y))
+  // (LE KRAKEN TRAÎNE QUATRE TENTACULES derrière lui, qui ondulent — sous la flamme et le manteau)
+  if (a.coque === 10) for (const y0 of [-2.7, -0.9, 0.9, 2.7]) {
+    let x = -6.6
+    let y = y0
+    for (let k = 0; k < 5; k++) {
+      const an = Math.PI + y0 * 0.09 + Math.sin(t * 3.2 + y0 * 1.7 - k * 0.9) * 0.18 * (1 + k * 0.5) + devie * 0.04 * k
+      const nx = x + Math.cos(an) * 1.5
+      const ny = y + Math.sin(an) * 1.5
+      f.unshift({ pts: barre(x, y, nx, ny, 1.25 * (1 - k / 6)), mat: k % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })
+      x = nx
+      y = ny
+    }
+  }
   // (une soucoupe : ses petites tuyères tout autour, sous l'anneau ; leurs jets sont dessinés par la page)
   if (g.omni !== undefined) for (let k = 0; k < g.omni.n; k++) f.unshift(...formesDeLaTuyereOmni(g.omni, k))
   // (la flamme doit passer SOUS la coque : on la met en tête)
