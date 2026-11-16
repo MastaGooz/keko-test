@@ -4913,3 +4913,8 @@ des flancs (au glissement) et du virage (à deux manches) étaient pour tous de 
 LE KRAKEN ET LA VOUIVRE y crachent désormais de PETITES BULLES de bile ou de venin (`couleursDesBulles`), par saccades,
 qui s'écartent, enflent et crèvent — leurs bulles de poussée en petit ; LE NÉANT n'en a plus aucun (il glisse dans le
 vide). Les autres gardent la flamme froide ; la soucoupe, ses jets à elle.
+
+LA MARQUE DU NÉANT À UN ENDROIT FIXE (Keko, 16/11 : « enlever les deux petites boules qui circulent sur les anneaux du
+Néant et qui indiquent la couleur ; plutôt la couleur à un endroit fixe qui ne bouge pas, là ça fait bizarre »). Les
+deux perles et leur traînée blanche sont retirées ; LA MARQUE DU JOUEUR est une bande en travers de l'éperon, devant le
+cœur, juste derrière sa pointe allumée.

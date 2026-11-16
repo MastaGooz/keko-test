@@ -787,8 +787,9 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
     // LE NÉANT : LE CŒUR et SES DEUX ANNEAUX (ceux de l'« Energy core ») — chaque anneau est un cercle incliné (l'un de
     // 1,15 rad, l'autre de −0,9) qui tourne autour de l'axe de la vue, l'un en 2,4 s, l'autre deux fois plus vite et dans
     // l'autre sens : vu de dessus, une ellipse qui pivote. Sa moitié de derrière passe SOUS le cœur, plus sombre, celle de
-    // devant PAR-DESSUS, claire ; une perle — à la marque du joueur — court le long de chacun, une traînée blanche derrière
-    // elle. Devant, un petit éperon d'obsidienne, la pointe allumée : on sait où il regarde, et ses coups en partent.
+    // devant PAR-DESSUS, un peu plus claire. Devant, un petit éperon d'obsidienne, la pointe allumée : on sait où il regarde,
+    // et ses coups en partent ; LA MARQUE DU JOUEUR, une bande en travers de l'éperon — À UN ENDROIT FIXE (Keko, 16/11 : les
+    // deux perles qui couraient sur les anneaux, à sa couleur, « ça fait bizarre » ; retirées, et leur traînée blanche avec)
     const pouls = t === 0 ? 0 : battementDuNeant(t)
     const r = COEUR_DU_NEANT.r * (1 + 0.1 * pouls)
     const derriere: Forme[] = []
@@ -797,8 +798,7 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
       { r: COEUR_DU_NEANT.anneaux[0], incline: 1.15, tourne: (Math.PI * 2 * t) / 2.4 },
       { r: COEUR_DU_NEANT.anneaux[1], incline: -0.9, tourne: (-Math.PI * 4 * t) / 2.4 + 1 },
     ]
-    const perle = (Math.PI * 2 * 3 * t) / 2.4
-    ANNEAUX.forEach((an, j) => {
+    ANNEAUX.forEach((an) => {
       const point = (a: number): [number, number, number] => {
         const x = an.r * Math.cos(a)
         const y = an.r * Math.sin(a) * Math.cos(an.incline)
@@ -806,24 +806,20 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
         return [x * Math.cos(an.tourne) - y * Math.sin(an.tourne), x * Math.sin(an.tourne) + y * Math.cos(an.tourne), z]
       }
       const n = 30
-      const tete = perle + j * 2.1
       for (let k = 0; k < n; k++) {
         const a0 = (k / n) * Math.PI * 2
         const a1 = ((k + 1.15) / n) * Math.PI * 2
         const [xa, ya, za] = point(a0)
         const [xb, yb, zb] = point(a1)
         const z = (za + zb) / 2
-        // (la traînée de la perle : le dixième de tour derrière elle, blanc)
-        const u = ((((a0 - tete) / (Math.PI * 2)) % 1) + 1) % 1
-        const ton = z < 0 ? 1 : u > 0.9 ? 4 : z > 0.5 * an.r ? 3 : 2 // (derrière, presque éteints ; devant, sombres aussi — la traînée de la perle seule s'allume)
+        const ton = z < 0 ? 1 : z > 0.5 * an.r ? 3 : 2 // (derrière, presque éteints ; devant, sombres aussi)
         ;(z < 0 ? derriere : devant).push({ pts: barre(xa, ya, xb, yb, 1.5), mat: 'rayonnement', relief: 'lueur', ton })
       }
-      const [px, py, pz] = point(tete)
-      ;(pz < 0 ? derriere : devant).push({ pts: ovale(px, py, 1.3, 1.3, 10), mat: 'marque', relief: 'dome', dome: { x: px, y: py, rx: 1.3, ry: 1.3 } })
     })
     const eperon: Forme[] = [
       { pts: [[5, -2.1], [11.2, 0], [5, 2.1]], mat: 'obsidienne', relief: 'plat' },
-      { pts: [[8.1, -0.7], [10.6, 0], [8.1, 0.7]], mat: 'rayonnement', relief: 'lueur', ton: pouls > 0.4 ? 5 : 4 },
+      { pts: [[6.8, -1.56], [8.3, -1.01], [8.3, 1.01], [6.8, 1.56]], mat: 'marque', relief: 'plat' },
+      { pts: [[8.8, -0.6], [10.8, 0], [8.8, 0.6]], mat: 'rayonnement', relief: 'lueur', ton: pouls > 0.4 ? 5 : 4 },
     ]
     return [...derriere, ...eperon, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
   }
