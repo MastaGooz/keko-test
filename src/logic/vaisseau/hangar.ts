@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -156,6 +156,11 @@ export const PIECES: Piece[] = [
   // de serpent en écailles, des sacs à venin, une gueule qui crache. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-11', sorte: 'coque', cran: 11, nom: 'Écailles de la Vouivre', dit: '6 de blindage, une bête vivante : des écailles sombres, deux sacs à venin, une gueule qui crache l’acide.', prix: 0, poids: 22, pv: 6, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-v3', sorte: 'propulseur', cran: 3, nom: 'Souffle de la Vouivre', dit: 'Un jet de venin : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.1 },
+  // LE PRISME (Keko, 16/11 : « un vaisseau cristallin, avec un cristal en son bout qui tourne, comme un disloqueur dans
+  // StarCraft ») : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie, le cristal qui flotte et tourne à
+  // sa proue. *Chiffres de moi, à rejuger.*
+  { id: 'coque-12', sorte: 'coque', cran: 12, nom: 'Cristal du Prisme', dit: '5 de blindage, un corps de cristal à facettes ; à sa proue, un cristal qui flotte et tourne.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-q3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Prisme', dit: 'Un souffle d’énergie : il file et vire bien.', prix: 0, poids: 6, poussee: 0.82, vitesseMax: 1, rotation: 1.1 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
@@ -233,7 +238,12 @@ export const PIECES: Piece[] = [
   // (LE RAYON THERMIQUE, PUIS CANALISÉ — Keko, 15/11 : « un rayon comme celui qui sert à forer, permanent, qu'on canalise
   // sur l'ennemi ; mais garde le rayon en cercle, on s'en servira plus tard » : la règle du tour, `Arme.balayage`, reste
   // écrite, plus aucune arme ne la porte ; il part d'une TOURELLE DE FOREUSE sur le toit)
-  { id: 'arme-rayon', sorte: 'arme', cran: 2, nom: 'Rayon thermique', dit: 'Un rayon continu, depuis une tourelle sur le toit, sur une cible à 80 : il chauffe, de 5 à 16 points par seconde en 2 s sur la même cible, qui brûle.', note: 'Plus on le tient sur la même cible, plus il fait mal.', prix: 30, poids: 6, arme: { id: 'rayon', cadence: 0.1, degats: 0, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, canalise: { dpsMin: 5, dpsMax: 16, montee: 2, brulure: 1.5, dpsBrulure: 3 } } },
+  // (… PUIS UN RAYON QUI BALAIE ET LAISSE UNE TRAÎNÉE DE FEU — Keko, 16/11 : le rayon canalisé passe au vaisseau de cristal,
+  // en bleu ; celui de la Salamandre balaie un arc devant elle, centré sur l'insecte le plus proche, et sème des flaques de feu)
+  { id: 'arme-rayon', sorte: 'arme', cran: 2, nom: 'Rayon balayant', dit: 'Toutes les 2,6 s, un insecte à moins de 70, un rayon balaie en 0,8 s un arc devant elle, centré sur lui : 9 points à tout ce qu’il balaie, qui brûle. Il laisse une traînée de flaques de feu, 2,5 s : 5 points par seconde à ce qui y marche.', note: 'Balayez la nuée, elle marche ensuite dans le feu.', prix: 30, poids: 6, arme: { id: 'rayon', cadence: 0.1, degats: 0, portee: 70, vitesse: 0, vie: 0, dispersion: 0, guide: false, balayage: { tous: 2.6, duree: 0.8, longueur: 70, degats: 9, brulure: 2, dpsBrulure: 3, depart: 0, arc: 2.4, vise: true, trainee: { pas: 0.3, distances: [0.45, 0.8], rayon: 8, duree: 2.5, dps: 5, brulure: 1.5, dpsBrulure: 3 } } } },
+  // LE FAISCEAU DU PRISME (Keko, 16/11 : « son attaque de base serait un rayon, comme le rayon de la Salamandre ; le rayon
+  // est bleu, énergie pure ») : le rayon canalisé d'avant, qui chauffe sur sa cible, parti du cristal qui tourne à sa proue.
+  { id: 'arme-faisceau', sorte: 'arme', cran: 1, nom: 'Faisceau', dit: 'Un rayon d’énergie pure, continu, depuis le cristal de sa proue, sur une cible à 85 : il monte de 5 à 18 points par seconde en 2 s sur la même cible.', note: 'Plus on le tient sur la même cible, plus il fait mal.', prix: 30, poids: 5, arme: { id: 'faisceau', cadence: 0.1, degats: 0, portee: 85, vitesse: 0, vie: 0, dispersion: 0, guide: false, canalise: { dpsMin: 5, dpsMax: 18, montee: 2, brulure: 0, dpsBrulure: 0 } } },
   { id: 'arme-napalm', sorte: 'arme', cran: 3, nom: 'Napalm', dit: 'Une boule de gel toutes les 1,5 s, lancée en cloche à 75 : elle laisse une flaque de feu 4 s ; tout insecte dedans perd 6 points par seconde et brûle encore en sortant.', note: 'Pour tenir une zone.', prix: 30, poids: 7, arme: { id: 'napalm', cadence: 1.5, degats: 0, portee: 75, vitesse: 120, vie: 1.2, dispersion: 0, guide: false, napalm: { rayon: 14, duree: 4, dps: 6, brulure: 1.5, dpsBrulure: 3 } } },
   // LA SENTINELLE, LE VAISSEAU DE L'ÉLECTRICITÉ (Keko, 15/11) : la CHAÎNE D'ÉCLAIRS, qui rebondit d'ennemi en ennemi ;
   // L'AURA, qui brûle sans cesse tout autour du vaisseau rond. *Chiffres de moi, à rejuger.*

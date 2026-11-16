@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -85,6 +85,11 @@ const RAMPES: Record<Matiere, number[]> = {
   ecaille: ['#0a120e', '#14241a', '#22382a', '#34523c', '#4f7454', '#86a87c'].map(hex),
   venin: ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'].map(hex),
   lie: ['#140a18', '#26122e', '#3c1c48', '#563068', '#7a4c8e', '#a678b8'].map(hex),
+  // LE PRISME (Keko, 16/11 : « un vaisseau cristallin ») : un quartz clair, bleu lavande, qui accroche la lumière ; des
+  // facettes plus sombres pour le corps ; une énergie bleue pure pour son cœur et son cristal
+  quartz: ['#14123a', '#2a2c70', '#4a5aa8', '#7aa0d8', '#b8d8f4', '#ffffff'].map(hex),
+  facette: ['#0c1024', '#18203f', '#2a3866', '#40568e', '#6680b8', '#9cb4e0'].map(hex),
+  energie: ['#0a2a6a', '#1a5ad0', '#40a0ff', '#80d8ff', '#c8f4ff', '#ffffff'].map(hex),
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
@@ -527,7 +532,12 @@ const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, 
 // LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
 // qui crache ; un jet de venin à la queue
 const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.6, y: 6.4 }, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
+// LE PRISME (Keko, 16/11) : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie ; À SA PROUE, UN CRISTAL
+// QUI FLOTTE ET TOURNE (le rayon en part — voir `boucheDeLArme`)
+const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -1.2, y: 7.1 }, verriere: -1.5, nez: 11.5, flanc: 7, anneau: 13, echelle: 1 }
+/** Le centre du cristal qui tourne à la proue du Prisme, en unités du vaisseau : le rayon en part. */
+export const CRISTAL_DU_PRISME = { x: 9.6, y: 0 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -688,6 +698,25 @@ function pustule(x: number, y: number, r: number, t: number, phase: number): For
   ]
 }
 export function formesDeLaCoque(cran: number, t = 0): Forme[] {
+  if (cran === 12) {
+    // LE PRISME, UN CORPS DE CRISTAL : un long hexagone à deux facettes (penchées de part et d'autre de l'arête : la lumière
+    // les sépare), une arête de quartz, un CŒUR d'énergie ; à la proue, détaché du corps, LE CRISTAL QUI TOURNE — un losange
+    // allongé de quartz, un éclat d'énergie dedans, qui pivotent sur eux-mêmes (« comme un disloqueur »)
+    const f: Forme[] = [
+      { pts: [[6, 0], [3, -2.7], [-4, -2.7], [-7.6, 0]], mat: 'facette', relief: 'plat', penche: -1 },
+      { pts: [[6, 0], [3, 2.7], [-4, 2.7], [-7.6, 0]], mat: 'facette', relief: 'plat', penche: 1 },
+      { pts: barre(5.4, 0, -6.8, 0, 0.6), mat: 'quartz', relief: 'plat' },
+    ]
+    for (const [x, sg] of [[1.5, 1], [-2.5, -1]] as [number, number][]) f.push({ pts: [[x + 1.4, sg * 0.4], [x, sg * 2.4], [x - 1.4, sg * 0.4]], mat: 'quartz', relief: 'plat', penche: sg })
+    f.push({ pts: ovale(-1.5, 0, 1.4, 1.4, 12), mat: 'energie', relief: 'dome', dome: { x: -1.5, y: 0, rx: 1.4, ry: 1.4 } })
+    // (le cristal de la proue : il tourne)
+    const a = t * 2.6
+    const { x: cx, y: cy } = CRISTAL_DU_PRISME
+    const losange = (r1: number, r2: number, a0: number): [number, number][] => [0, 1, 2, 3].map((k): [number, number] => [cx + Math.cos(a0 + (k * Math.PI) / 2) * (k % 2 === 0 ? r1 : r2), cy + Math.sin(a0 + (k * Math.PI) / 2) * (k % 2 === 0 ? r1 : r2)])
+    f.push({ pts: losange(2.6, 1.5, a), mat: 'quartz', relief: 'plat', penche: Math.sin(a) })
+    f.push({ pts: losange(1.3, 0.7, a + Math.PI / 4), mat: 'energie', relief: 'plat' })
+    return f
+  }
   if (cran === 11) {
     // LA VOUIVRE, UNE BÊTE BUBONIQUE (… PUIS PLUS ORGANIQUE — Keko, 16/11 : « il a trop une forme de vaisseau, on veut un
     // truc plus organique ») : plus de flèche ni d'anneaux — UNE MASSE bosselée, de travers, qui respire (une bosse de plus
@@ -881,6 +910,17 @@ function formesDuCroissant(sg: number): Forme[] {
 }
 export function formesDesAiles(coque = 1, t = 0): Forme[] {
   const f: Forme[] = []
+  if (coque === 12) {
+    // (le prisme : des ÉCLATS DE CRISTAL en ailes — un grand de quartz, un petit de facettes derrière ; la pointe du grand,
+    // à la marque du joueur)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[2.2, sg * 2.3], [-0.6, sg * 7.6], [-2.8, sg * 7], [-3.6, sg * 2.5]], mat: 'quartz', relief: 'plat', penche: sg })
+      f.push({ pts: [[0.6, sg * 2.6], [-1.6, sg * 6.6], [-2.6, sg * 2.6]], mat: 'facette', relief: 'plat', penche: -sg })
+      f.push({ pts: [[-3.6, sg * 2.4], [-6.4, sg * 5.8], [-7.6, sg * 5], [-6.8, sg * 2]], mat: 'facette', relief: 'plat', penche: sg })
+      f.push({ pts: [[-0.6, sg * 7.6], [-1.6, sg * 6.6], [-2.2, sg * 7.2]], mat: 'marque', relief: 'plat' })
+    }
+    return f
+  }
   if (coque === 11) {
     // (la vouivre : plus de membranes — TROIS SACS À VENIN qui pendent de travers, de tailles différentes, chacun sur un
     // bourrelet de lie, qui gonflent lentement et portent des pustules ; une glande au bout de deux d'entre eux, à la
@@ -1047,6 +1087,8 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'plasma' || id === 'essaim' || id === 'rail') return { x: 9.6, y: 0 }
   // (la Vouivre crache de sa gueule, entre ses mandibules)
   if (id === 'crachat') return { x: 9.6, y: 0.4 }
+  // (le Prisme tire de son cristal)
+  if (id === 'faisceau') return CRISTAL_DU_PRISME
   if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
@@ -1063,7 +1105,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [

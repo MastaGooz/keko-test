@@ -4652,3 +4652,30 @@ s'enroule et tourne sur son hôte, qui porte un bubon vert qui bat. VERTE, coule
 venin : rose, on la perdait sur les insectes, roses eux aussi. Ses sons :
 `parasite` (un couinement mouillé), `piqure` à l'accroche, `ponte` au saut.
 *Chiffres de moi, à rejuger.*
+
+UN NEUVIÈME VAISSEAU, LE PRISME, ET LE RAYON BALAYANT DE LA SALAMANDRE (Keko, 16/11 :
+« un vaisseau cristallin, avec un cristal en son bout qui tourne, comme un disloqueur
+dans StarCraft ; son attaque de base serait un rayon, comme celui de la Salamandre —
+bleu, énergie pure ; et le rayon de la Salamandre deviendrait un rayon qui balaie et
+laisse une traînée de feu »).
+
+LE PRISME (coque 12, `propulseur-q3` ; matières `quartz`, `facette`, `energie`) :
+un long corps de cristal à deux facettes penchées de part et d'autre d'une arête de
+quartz, deux éclats clairs dessus, un CŒUR d'énergie ; des ÉCLATS DE CRISTAL en
+ailes (la pointe du grand : la marque du joueur) ; À SA PROUE, DÉTACHÉ DU CORPS, LE
+CRISTAL QUI TOURNE — un losange allongé de quartz et un éclat d'énergie dedans, qui
+pivotent sur eux-mêmes (`CRISTAL_DU_PRISME` : le rayon en part). SON ARME, LE
+FAISCEAU (`arme-faisceau`) : le rayon canalisé d'avant (`Arme.canalise`) — sur une
+cible à 85, il monte de 5 à 18 points par seconde en 2 s —, en BLEU, sans brûlure :
+une gaine bleue qui s'élargit en chauffant, un corps cyan, une âme blanche où des
+impulsions filent, une lueur ondulante ; le cristal s'illumine ; à l'impact, un
+éclat blanc et un anneau qui bat, des étincelles bleues.
+
+LE RAYON DE LA SALAMANDRE BALAIE ET LAISSE UNE TRAÎNÉE DE FEU (`arme-rayon` passe au
+`Arme.balayage`, enrichi) : toutes les 2,6 s, un insecte à moins de 70, un rayon
+balaie en 0,8 s un ARC de 2,4 rad CENTRÉ SUR L'INSECTE LE PLUS PROCHE (`vise`),
+d'un côté ou de l'autre ; tout ce qu'il balaie prend 9 points et brûle ; tous les 0,3
+rad, il sème des FLAQUES DE FEU (celles du napalm) à 45 et 80 % de sa longueur : 2,5 s,
+5 points par seconde (`trainee`). Mesuré : 18 flaques par balayage. La tourelle de
+toit n'a plus lieu d'être : le rayon part du vaisseau, son émetteur au nez.
+*Chiffres de moi, à rejuger.*

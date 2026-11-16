@@ -147,6 +147,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LE PRISME (Keko, 16/11) : le vaisseau de cristal — un cristal qui tourne à sa proue, un rayon d'énergie pure
+    id: 'prisme',
+    nom: 'Prisme',
+    classe: 'chasseur',
+    dit: 'Un vaisseau de cristal : le cristal de sa proue tourne et lance un rayon d’énergie pure, qui chauffe sur sa cible.',
+    pieces: ['coque-12', 'propulseur-q3', 'arme-faisceau'],
+    serie: { possedees: ['coque-12', 'propulseur-q3', 'arme-faisceau'], montees: { coque: 'coque-12', propulseur: 'propulseur-q3' }, outils: [], armes: ['arme-faisceau'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',

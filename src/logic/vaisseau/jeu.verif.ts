@@ -1760,6 +1760,26 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('seul à portée de saut : à la mort de son hôte, la larve meurt', seul.pv[0] === undefined && seul.ev.some((e) => e.type === 'parasiteMort') && seul.w.parasites.length === 0 && seul.pv[1] === 1000)
 }
 
+// LE RAYON BALAYANT DE LA SALAMANDRE (Keko, 16/11 : « un rayon qui balaie et laisse une traînée de feu ») : un arc centré
+// sur l'insecte le plus proche ; ce qu'il balaie prend un coup et brûle ; derrière lui, des flaques de feu
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rayon = { id: 'rayon', cadence: 0.1, degats: 0, portee: 70, vitesse: 0, vie: 0, dispersion: 0, guide: false, balayage: { tous: 9, duree: 0.8, longueur: 70, degats: 9, brulure: 2, dpsBrulure: 3, depart: 0, arc: 2.4, vise: true, trainee: { pas: 0.3, distances: [0.45, 0.8], rayon: 8, duree: 2.5, dps: 5, brulure: 1.5, dpsBrulure: 3 } } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rayon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  const places: [number, number][] = [[30, 0], [40, 25], [-40, 0]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  const ev: Evenement[] = []
+  for (let i = 0; i < 60; i++) {
+    places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  const attendues = (Math.floor(2.4 / 0.3) + 1) * 2
+  verifier(`le rayon balaie un arc centré sur le plus proche : les deux insectes de devant prennent leur coup et brûlent ; celui de derrière, hors de l’arc, rien ; ${w.flaques.length} flaques de feu semées le long (${attendues} attendues)`, ev.filter((e) => e.type === 'balayage').length === 1 && pv[0] >= 9 && pv[1] >= 9 && pv[2] === 0 && w.flaques.length === attendues)
+}
+
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {
