@@ -1801,6 +1801,25 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const pv = w.ennemis.map((e) => 1000 - e.pv)
   const attendues = Math.floor(48 / 5) + 1
   const surLeTrait = w.flaques.every((f) => Math.abs(f.x) < 1e-6 && f.y >= 5.9 && f.y <= 54.1)
+  // (… EN TRAVERS, de gauche à droite vu du vaisseau : le même trait, tourné d'un quart de tour autour de la cible)
+  {
+    const rt = { ...rayon, balayage: { ...rayon.balayage, trace: { ...rayon.balayage.trace, travers: true } } }
+    const cf = { ...cfg, armes: [rt] }
+    const w2 = nouveauMonde(cf, 3)
+    const pl: [number, number][] = [[0, 30], [-18, 30], [0, 50]]
+    pl.forEach(([x, y], k) => w2.ennemis.push(insecte(k + 1, x, y)))
+    const ev2: Evenement[] = []
+    let debut: { x: number; y: number } | null = null
+    for (let i = 0; i < 50; i++) {
+      pl.forEach(([x, y], k) => (w2.ennemis[k].corps = { ...w2.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+      w2.vaisseau = { ...w2.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      ev2.push(...avancerLeMonde(cf, w2, 1 / 60, { x: 0, y: 0 }).evenements)
+      debut ??= impactDuRayon(cf, w2)
+    }
+    const pv2 = w2.ennemis.map((e) => 1000 - e.pv)
+    const travers = w2.flaques.every((f) => Math.abs(f.y - 30) < 0.5 && f.x >= -24.5 && f.x <= 24.5)
+    verifier(`en travers, le trait passe sur la cible de sa gauche (x ${debut === null ? '—' : debut.x.toFixed(1)}) à sa droite : la cible et l'insecte sur le trait prennent leur coup (${pv2[0]}, ${pv2[1]}), celui de derrière rien (${pv2[2]}) ; ${w2.flaques.length} flaques en travers`, debut !== null && Math.abs(debut.x - 24) < 1.5 && Math.abs(debut.y - 30) < 0.5 && pv2[0] >= 12 && pv2[1] >= 12 && pv2[2] === 0 && w2.flaques.length === attendues && travers)
+  }
   verifier(`le rayon trace un trait au sol de 6 à 54 (départ ${premier === null ? '—' : premier.y.toFixed(1)}) : la cible et l'insecte au-delà prennent leur coup (${pv[0]}, ${pv[1]}), celui d'à côté rien (${pv[2]}) ; ${w.flaques.length} flaques sur le trait (${attendues} attendues)`, ev.filter((e) => e.type === 'balayage').length === 1 && premier !== null && Math.abs(premier.y - 6) < 1.5 && pv[0] >= 12 && pv[1] >= 12 && pv[2] === 0 && w.flaques.length === attendues && surLeTrait)
 }
 

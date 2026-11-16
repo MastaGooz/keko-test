@@ -4702,3 +4702,11 @@ trait, et la brûlure, à ce qui est à moins de 6 de lui ; une flaque de feu to
 point, le trait déjà tracé qui refroidit du blanc au rouge sombre, au point un anneau qui bat, des
 étincelles et des flammes. Le trait est posé au départ, en coordonnées du monde : le vaisseau qui
 bouge ne le tord pas. *Chiffres de moi, à rejuger.*
+
+… PUIS EN TRAVERS, ET UN FEU QUI DURE (Keko, 16/11 : « on peut essayer perpendiculairement — le rayon fait
+la même chose mais de gauche à droite — et le feu doit rester plus longtemps et enflammer les ennemis
+qui le traversent »). `Arme.balayage.trace.travers` : le trait passe sur l'insecte EN TRAVERS de la
+droite qui le joint au vaisseau, de 24 à sa gauche à 24 à sa droite (vu du vaisseau), toujours en 0,7 s,
+seul le point d'impact frappe. Les flaques durent 6 s au lieu de 2,5, et ce qui les traverse s'enflamme
+3 s à 4 points par seconde (1,5 s à 3 avant). L'ancien trait, de devant vers le fond, reste écrit (sans
+`travers`). *Chiffres de moi, à rejuger.*

@@ -350,7 +350,10 @@ export type Arme = {
   // touche, de devant vers le fond » : `trace` — le rayon descend sur le sol ; son POINT D'IMPACT parcourt en `duree` un
   // trait droit, de `avant` en deçà de l'insecte le plus proche (vu du vaisseau) à `apres` au-delà ; seul ce point frappe,
   // dans `rayon` ; la traînée y sème une flaque tous les `pas` de trait, sur le trait même)
-  balayage?: { tous: number; duree: number; longueur: number; degats: number; brulure: number; dpsBrulure: number; depart: number; arc?: number; vise?: boolean; trace?: { avant: number; apres: number; rayon: number }; trainee?: { pas: number; distances?: number[]; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number } }
+  // (… PUIS EN TRAVERS — Keko, 16/11 : « on peut essayer perpendiculairement, le rayon fait la même chose mais de gauche à
+  // droite » : `travers` — le trait passe sur l'insecte EN TRAVERS de la droite qui le joint au vaisseau, de `avant` à sa
+  // gauche à `apres` à sa droite, vu du vaisseau)
+  balayage?: { tous: number; duree: number; longueur: number; degats: number; brulure: number; dpsBrulure: number; depart: number; arc?: number; vise?: boolean; trace?: { avant: number; apres: number; rayon: number; travers?: boolean }; trainee?: { pas: number; distances?: number[]; rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number } }
   /**
    * UN RAYON CANALISÉ (le rayon thermique de la Salamandre, Keko, 15/11 : « un rayon comme celui qui sert à forer les
    * astéroïdes, permanent, qu'on canalise sur l'ennemi ») : il part d'une tourelle sur le toit et reste sur UNE cible à
@@ -2551,9 +2554,16 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const d = Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y)
       const ux = d > 0 ? (proche.corps.x - v.x) / d : Math.cos(v.cap)
       const uy = d > 0 ? (proche.corps.y - v.y) / d : Math.sin(v.cap)
-      const de = Math.max(c.ennemi.rayon, d - bl.trace.avant)
-      const a = d + bl.trace.apres
-      m.balayage.ligne = { x0: v.x + ux * de, y0: v.y + uy * de, x1: v.x + ux * a, y1: v.y + uy * a }
+      if (bl.trace.travers === true) {
+        // (sa droite, vu du vaisseau qui regarde l'insecte : y vers le bas)
+        const [dx, dy] = [-uy, ux]
+        const { x, y } = proche.corps
+        m.balayage.ligne = { x0: x - dx * bl.trace.avant, y0: y - dy * bl.trace.avant, x1: x + dx * bl.trace.apres, y1: y + dy * bl.trace.apres }
+      } else {
+        const de = Math.max(c.ennemi.rayon, d - bl.trace.avant)
+        const a = d + bl.trace.apres
+        m.balayage.ligne = { x0: v.x + ux * de, y0: v.y + uy * de, x1: v.x + ux * a, y1: v.y + uy * a }
+      }
     }
     ev.push({ type: 'balayage', duree: bl.duree })
   })
