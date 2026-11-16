@@ -584,6 +584,21 @@ const RECETTES = {
     },
   },
   /**
+   * UN ESSAIM DE MISSILES DE PLASMA PART (16/11) : une volée de six sifflements d'énergie qui montent, lancés l'un après
+   * l'autre en quelques centièmes d'une oreille à l'autre, sur un petit bourdon qui vibre
+   */
+  essaim: {
+    duree: 0.8, niveau: 0.22, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.5, 0, { f: 180, glisse: { vers: 120, en: 0.1 }, a: 0.002, d: 0.18, battement: 16, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.3, 0.6]] })
+      for (let k = 0; k < 6; k++) {
+        const f = 700 + 260 * h.next()
+        note(m, k * 0.028 + 0.008 * h.next(), 0.42, (k % 2 === 0 ? -1 : 1) * (0.25 + 0.12 * k), { f, glisse: { vers: f * 2.1, en: 0.14, droit: true }, a: 0.003, d: 0.16, battement: 22, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      }
+      souffle(m, h, 0, 0.35, 0, { f: 2600, glisse: { vers: 4200, en: 0.15, droit: true }, q: 1.6, bande: true, a: 0.005, d: 0.14 })
+    },
+  },
+  /**
    * L'ORBE ÉCLATE : une gerbe d'énergie, pas une explosion de feu — un éclair clair et grésillant, un coup grave qui
    * tombe, une traîne qui scintille et ondule d'une oreille à l'autre
    */

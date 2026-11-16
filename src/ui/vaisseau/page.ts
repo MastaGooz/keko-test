@@ -825,7 +825,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
       // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
-      if (canon?.napalm !== undefined || canon?.plasma !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
@@ -932,7 +932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -964,7 +964,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -6646,11 +6646,86 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const PLASMA_V = ['#1c0a30', '#4a1a8c', '#8a3ce0', '#c48cff', '#f0d8ff'].map((c) => N.hex(c))
   const DUREE_DE_L_ECLAT = 0.55
   const eclatsDePlasma: { x: number; y: number; t0: number; r: number; id: number }[] = []
+  /**
+   * L'ESSAIM DU PULSAR, L'« ARCANE MISSILES » DE PIXELFX EN PLASMA (Keko, 16/11) : chaque missile, une TÊTE en couches —
+   * violette, bleue, blanche au cœur — et deux rayons qui tournent ; derrière lui, UN RUBAN qui s'effile, deux brins qui
+   * s'y enroulent ; quand il disparaît (il touche, ou sa course finit), UN « POP » : un disque blanc, une croix, un anneau
+   * qui s'ouvre. Le ruban se garde ici, par missile, d'une image à l'autre.
+   */
+  const rubans = new Map<number, [number, number][]>()
+  const popsDEssaim: { x: number; y: number; t0: number }[] = []
+  const DUREE_DU_POP = 0.3
+  function dessinerLEssaim(p: Peintre): void {
+    const missiles = m.obus.filter((o) => o.arme === 'essaim')
+    const vivants = new Set(missiles.map((o) => o.id))
+    for (const [id, pts] of rubans) if (!vivants.has(id)) {
+      if (pts.length > 0) popsDEssaim.push({ x: pts[0][0], y: pts[0][1], t0: t })
+      rubans.delete(id)
+    }
+    for (const o of missiles) {
+      const pts = rubans.get(o.id) ?? []
+      pts.unshift([o.x, o.y])
+      if (pts.length > 9) pts.pop()
+      rubans.set(o.id, pts)
+    }
+    for (let i = popsDEssaim.length - 1; i >= 0; i--) if (t - popsDEssaim[i].t0 > DUREE_DU_POP) popsDEssaim.splice(i, 1)
+    for (const o of missiles) {
+      const pts = rubans.get(o.id) ?? []
+      const n = pts.length
+      // (le ruban : il s'effile vers la queue, clair près de la tête, violet au bout)
+      for (let i = n - 1; i >= 1; i--) {
+        const u = i / Math.max(1, n - 1)
+        const [x0, y0] = pts[i]
+        const [x1, y1] = pts[i - 1]
+        const c = u < 0.2 ? PLASMA[4] : u < 0.5 ? PLASMA[3] : PLASMA_V[2]
+        p.line(x0, y0, x1, y1, c, 1 - u * 0.7)
+        p.disc(x0, y0, 1.7 * Math.pow(1 - u, 0.8) + 0.3, u < 0.4 ? PLASMA[3] : PLASMA_V[2], (d) => (1 - u) * 0.75 * (1 - d))
+        // (les deux brins qui s'enroulent, vifs quand ils passent devant)
+        const L = Math.hypot(x1 - x0, y1 - y0) || 1
+        const nx = -(y1 - y0) / L
+        const ny = (x1 - x0) / L
+        for (const s of [0, Math.PI]) {
+          const ph = u * 10 - t * 26 + o.id + s
+          if (Math.cos(ph) > -0.2) p.dot(x0 + nx * Math.sin(ph) * 2.4, y0 + ny * Math.sin(ph) * 2.4, Math.cos(ph) > 0.4 ? PLASMA_V[4] : PLASMA_V[3], 1 - u)
+        }
+      }
+      // (la tête : des couches, deux rayons qui tournent, sa lueur)
+      for (let k = 0; k < 2; k++) {
+        const a = t * 24 + k * Math.PI + o.id
+        const l = 3.6 + Math.sin(t * 50 + k)
+        p.line(o.x + Math.cos(a) * 2, o.y + Math.sin(a) * 2, o.x + Math.cos(a) * l, o.y + Math.sin(a) * l, PLASMA[5])
+      }
+      p.glow(o.x, o.y, 9, PLASMA_V[2], 0.5)
+      p.circle(o.x, o.y, 2.5, PLASMA_V[2])
+      p.circle(o.x, o.y, 1.8, PLASMA[3])
+      p.circle(o.x, o.y, 1.1, PLASMA[5])
+      p.px(Math.round(o.x), Math.round(o.y), N.WHITE)
+      p.glow(o.x, o.y, 3, PLASMA[4], 0.3)
+    }
+    for (const q of popsDEssaim) {
+      const u = (t - q.t0) / DUREE_DU_POP
+      if (u < 0.4) {
+        const r = 4 * (1 - u / 0.4) + 1
+        p.circle(q.x, q.y, r + 1, PLASMA[4])
+        p.circle(q.x, q.y, r, N.WHITE)
+        const l = 8 * (1 - u / 0.4) + 2
+        for (let d = -l; d <= l; d++) {
+          const a = Math.abs(d) / l
+          const c = a < 0.3 ? N.WHITE : a < 0.65 ? PLASMA[5] : PLASMA_V[3]
+          p.dot(q.x + d, q.y, c, 1.15 - a)
+          p.dot(q.x, q.y + d * 0.7, c, 1.15 - a)
+        }
+      }
+      p.ring(q.x, q.y, 2 + 9 * (1 - (1 - u) * (1 - u) * (1 - u)), 1, u < 0.3 ? N.WHITE : PLASMA_V[3], Math.min(1, 1.2 - u))
+      p.glow(q.x, q.y, 10, PLASMA_V[2], 0.4 * (1 - u))
+    }
+  }
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && eclatsDePlasma.length === 0) return
+    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && !m.obus.some((o) => o.arme === 'essaim')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    dessinerLEssaim(p)
     for (const o of orbes) {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
@@ -6966,8 +7041,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(o.x - ux * 3 - uy, o.y - uy * 3 + ux, o.x - ux, o.y - uy, GLACE[5])
         p.px(o.x, o.y, N.WHITE)
         p.glow(o.x, o.y, 4, GLACE[5], 0.5)
-      } else if (o.arme === 'plasma') {
-        // (l'orbe de plasma : dessinée avec ses éclats, voir `dessinerLePlasma`)
+      } else if (o.arme === 'plasma' || o.arme === 'essaim') {
+        // (l'orbe de plasma et les missiles de l'essaim : dessinés avec leurs éclats, voir `dessinerLePlasma`)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])
@@ -9135,6 +9210,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               break
             }
+            case 'essaim':
+              // (un essaim part : sa volée de sifflements — sauf s'il a sonné en avance —, des grains de plasma à la bouche)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer(ev.arme as Son)
+              for (let i = 0; i < 8; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
+              }
+              break
             case 'tornade':
               // (une tornade part : le souffle du vent qui se lève — sauf s'il a sonné en avance)
               if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)

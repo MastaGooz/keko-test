@@ -1441,4 +1441,25 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('une orbe part, traverse la cible (5) et éclate au bout de sa course (12) : la voisine prend l’éclat, la lointaine rien', ev.filter((e) => e.type === 'explosionDeZone' && e.arme === 'plasma').length === 1 && pv[0] === 17 && pv[1] === 12 && pv[2] === 0 && w.obus.length === 0)
 }
 
+// L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
+// partagent les insectes à portée et les rattrapent, même derrière le vaisseau
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const essaim = { id: 'essaim', cadence: 2.4, degats: 4, portee: 100, vitesse: 85, vie: 1.8, dispersion: 0, guide: false, essaim: { nombre: 6, eventail: 1.5, acces: 380, pointe: 260, braquage: 12 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [essaim], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  const places: [number, number][] = [[50, 0], [-40, 30], [0, -70], [0, -300]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  const ev: Evenement[] = []
+  let partis = 0
+  for (let i = 0; i < 120; i++) {
+    places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    if (i === 0) partis = w.obus.length
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier('six missiles partent ensemble, une seule fois ; ils se partagent les trois insectes à portée (deux chacun : 8), même celui de derrière ; le lointain, rien ; aucun ne reste', ev.filter((e) => e.type === 'essaim').length === 1 && partis === 6 && pv[0] === 8 && pv[1] === 8 && pv[2] === 8 && pv[3] === 0 && w.obus.length === 0)
+}
+
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

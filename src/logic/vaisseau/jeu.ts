@@ -428,6 +428,17 @@ export type Arme = {
    * à moins de `rayon` perd `plasma.degats`.
    */
   plasma?: { rayon: number; degats: number }
+  /**
+   * UN ESSAIM DE MISSILES À TÊTE CHERCHEUSE (la deuxième arme du Pulsar, Keko, 16/11 : « dans le style des missiles
+   * magiques — l'Arcane missiles de pixelfx —, en mode plasma : plein de petits missiles à tête chercheuse tirés en même
+   * temps, comme une salve, qui foncent sur les ennemis aux alentours ») : à sa cadence, un insecte à portée, `nombre`
+   * missiles partent ensemble de la bouche, EN ÉVENTAIL (de −`eventail` à +`eventail` autour de la première cible), puis
+   * se recourbent et foncent de plus en plus vite : leur vitesse monte de `vitesse` de `acces` × âge², jusqu'à
+   * `pointe` ; leur braquage se resserre avec l'âge (`braquage`). LES CIBLES SE PARTAGENT : les insectes à portée, du
+   * plus proche au plus loin (le verrouillé d'abord), un missile chacun à tour de rôle ; une cible morte, le missile
+   * prend l'insecte le plus proche de lui. Chacun fait `degats` à ce qu'il touche.
+   */
+  essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number }
 }
 
 export type Vaisseau = {
@@ -464,7 +475,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -637,6 +648,8 @@ export type Evenement =
   | { type: 'tornadeFinie'; x: number; y: number }
   /** Une salve part tout autour du vaisseau (voir `Arme.salve`). */
   | { type: 'salve'; x: number; y: number; arme: string }
+  /** Un essaim de missiles part (voir `Arme.essaim`), de la bouche. */
+  | { type: 'essaim'; x: number; y: number; arme: string }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -1529,6 +1542,58 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   })
 }
 
+/** LES ESSAIMS (voir `Arme.essaim`) : à la cadence, un insecte à portée, `nombre` missiles en éventail, les cibles partagées. */
+function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const es = a.essaim
+    if (es === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    const cibles = m.ennemis.filter((e) => dist(e) <= a.portee + c.ennemi.rayon).sort((p, q) => dist(p) - dist(q))
+    if (cibles.length === 0) return
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && cibles.includes(ve)) cibles.splice(cibles.indexOf(ve), 1), cibles.unshift(ve)
+    m.armesA[i] = m.t + a.cadence
+    const bo = a.bouche
+    const x0 = bo === undefined ? v.x : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
+    const y0 = bo === undefined ? v.y : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
+    const cap0 = Math.atan2(cibles[0].corps.y - y0, cibles[0].corps.x - x0)
+    for (let k = 0; k < es.nombre; k++) {
+      // (l'éventail : les missiles alternent d'un bord à l'autre, du milieu vers les bords)
+      const rang = Math.ceil(k / 2) * (k % 2 === 0 ? 1 : -1)
+      const an = cap0 + (es.nombre <= 1 ? 0 : (rang / Math.ceil((es.nombre - 1) / 2)) * es.eventail)
+      const cible = cibles[k % cibles.length]
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
+      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage } })
+    }
+    ev.push({ type: 'essaim', x: x0, y: y0, arme: a.id })
+  })
+}
+
+/** UN MISSILE D'ESSAIM SE RECOURBE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, de plus en plus vite et serré. */
+function traquer(m: Monde, o: Obus, dt: number): void {
+  const tq = o.traque
+  if (tq === undefined) return
+  let cible = m.ennemis.find((e) => e.id === tq.cible)
+  if (cible === undefined) {
+    let dc = Infinity
+    for (const e of m.ennemis) {
+      const d = Math.hypot(e.corps.x - o.x, e.corps.y - o.y)
+      if (d < dc) (dc = d), (cible = e)
+    }
+    if (cible === undefined) return
+    tq.cible = cible.id
+  }
+  const age = m.t - tq.nee
+  const dx = cible.corps.x - o.x
+  const dy = cible.corps.y - o.y
+  const d = Math.hypot(dx, dy) || 1
+  const sp = Math.min(tq.pointe, tq.v0 + tq.acces * age * age)
+  const k = Math.min(1, (1.4 + tq.braquage * age) * dt)
+  o.vx += ((dx / d) * sp - o.vx) * k
+  o.vy += ((dy / d) * sp - o.vy) * k
+}
+
 /** L'instant où le triangle d'une balise s'éteint : `duree` après la pose de sa dernière balise (voir `Arme.balise`). */
 export function finDuTrio(m: Monde, b: Balise, duree: number): number {
   let derniere = b.nee
@@ -2079,10 +2144,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesBalises(c, m, ev)
   menerLeGivre(c, m, dt, ev)
   tirerLesSalves(c, m, ev)
+  tirerLesEssaims(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
@@ -2135,6 +2201,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   for (let i = m.obus.length - 1; i >= 0; i--) {
     const o = m.obus[i]
     o.vie -= dt
+    traquer(m, o, dt)
     if (o.guide && m.ennemis.length > 0) {
       let cible = ennemiVerrouille(m) ?? m.ennemis[0]
       if (m.verrou === null || cible.id !== m.verrou) for (const e of m.ennemis) if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) < Math.hypot(cible.corps.x - o.x, cible.corps.y - o.y)) cible = e

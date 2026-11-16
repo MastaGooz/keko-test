@@ -4254,3 +4254,19 @@ d'éclair, des étincelles ; ses sons, `plasma` et `eclatPlasma`. *Chiffres de
 moi, à rejuger.* Au passage : un mini-missile au bout de sa course n'explosait
 jamais (le test disait `!fini` alors que `fini` est vrai en fin de course) ;
 il explose maintenant, comme la règle l'écrivait.
+
+PUIS L'ESSAIM DE PLASMA, LA DEUXIÈME ARME DU PULSAR (Keko, 16/11 : « dans le
+style des missiles magiques — Arcane, Magic Missile, dans pixelfx — en mode
+plasma : plein de petits missiles à tête chercheuse tirés en même temps, comme
+une salve, qui foncent sur les ennemis aux alentours ») : `Arme.essaim`.
+Toutes les 2,4 s, des insectes à moins de 100, SIX missiles partent ensemble
+d'entre les cornes, EN ÉVENTAIL (±1,5 rad autour de la première cible, du milieu
+vers les bords), puis se recourbent comme ceux du dépôt : leur vitesse monte de
+85 de 380 × âge² (jusqu'à 260), leur braquage se resserre avec l'âge. LES CIBLES
+SE PARTAGENT : les insectes à portée, du plus proche au plus loin (le verrouillé
+d'abord), un missile chacun à tour de rôle ; une cible morte, le missile prend
+l'insecte le plus proche de lui. 4 points chacun. Le dessin reprend l'« Arcane
+missiles » en violet et bleu : une tête en couches et deux rayons qui tournent,
+un ruban qui s'effile, deux brins qui s'y enroulent ; à l'impact, un « pop » —
+disque blanc, croix, anneau. Son son, `essaim` : six sifflements qui montent,
+jetés d'une oreille à l'autre. *Chiffres de moi, à rejuger.*
