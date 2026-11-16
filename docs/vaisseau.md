@@ -4491,3 +4491,14 @@ bubon de venin dessus (`pustule`) — qui ENFLENT ET DÉSENFLENT en double
 battement, comme un pouls (boum-boum… boum-boum, 1,6 fois par seconde, +28 % au
 coup), chacune à son rythme ; les sacs à venin gonflent lentement. Le temps entre
 dans les formes de la coque et des ailes (`t` ; à zéro, le pictogramme, immobile).
+
+PUIS UNE BÊTE, PLUS UN VAISSEAU (Keko, 16/11 : « il a trop une forme de vaisseau,
+on veut un truc plus organique ») : plus de flèche, ni d'anneaux en chevrons, ni de
+membranes symétriques. UNE MASSE de chair bosselée, DE TRAVERS (un ovale aux bosses
+tirées d'une graine, `masse`), qui RESPIRE ; une bosse de plus derrière, une tête
+renflée devant ; des VEINES de lie qui serpentent ; douze pustules semées de
+travers, qui battent ; à l'avant, UNE GUEULE RONDE de lamproie, cerclée de sept
+dents d'os, le venin au fond (le crachat en part). TROIS SACS À VENIN pendent de
+travers, de tailles différentes, chacun sur un bourrelet de lie, qui gonflent et
+portent une pustule ; deux glandes au bout, à la marque du joueur. TROIS VRILLES
+DÉCHIRÉES traînent derrière et ondulent lentement.
