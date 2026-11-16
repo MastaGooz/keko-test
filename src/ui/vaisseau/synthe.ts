@@ -378,6 +378,35 @@ const RECETTES = {
       for (const [i, f] of [LA4, FA4, RE4].entries()) note(m, 0.22 * i, 0.5, 0, { f, a: 0.01, d: 0.6, partiels: MAILLET })
     },
   },
+  /**
+   * LA BÊTE CRÈVE (Keko, 16/11 : la mort à l'image du vaisseau) : un coup sourd et mouillé, une giclée (un souffle qui
+   * se ferme), une poignée de bulles qui éclatent, puis les trois notes qui descendent de `perdu`
+   */
+  perduBete: {
+    duree: 2.6, niveau: 1, salle: [0.75, 0.3],
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 130, glisse: { vers: 48, en: 0.25 }, a: 0.006, d: 0.7, partiels: CORPS, battement: 120, sature: 2 })
+      souffle(m, h, 0, 0.8, 0, { f: 1100, glisse: { vers: 260, en: 0.35 }, q: 1.4, bande: true, a: 0.01, d: 0.8, large: true })
+      for (let k = 0; k < 12; k++) {
+        const f = 160 + 380 * h.next()
+        note(m, 0.04 + k * 0.045 + 0.03 * h.next(), 0.3 * (1 - k / 16), (h.next() - 0.5) * 0.9, { f, glisse: { vers: f * 2.2, en: 0.05, droit: true }, a: 0.004, d: 0.07 })
+      }
+      for (const [i, f] of [LA4, FA4, RE4].entries()) note(m, 0.3 + 0.22 * i, 0.5, 0, { f, a: 0.01, d: 0.6, partiels: MAILLET })
+    },
+  },
+  /**
+   * LE NÉANT S'EFFONDRE : tout est aspiré (un souffle qui monte et se serre), un silence d'un souffle, puis un grondement
+   * très grave qui vibre et un balayage résonant qui retombe ; les trois notes de `perdu` par-dessus
+   */
+  perduNeant: {
+    duree: 2.9, niveau: 1, salle: [0.85, 0.35],
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.7, 0, { f: 180, glisse: { vers: 2600, en: 0.45, droit: true }, q: 2.5, bande: true, a: 0.42, d: 0.06, large: true })
+      note(m, 0.5, 1, 0, { f: 52, glisse: { vers: 33, en: 0.9 }, a: 0.006, d: 1.5, partiels: [[1, 1, 1], [2, 0.7, 0.9], [3, 0.45, 0.7], [5, 0.2, 0.5]], battement: 200, sature: 2 })
+      souffle(m, h, 0.5, 0.6, 0, { f: 1300, glisse: { vers: 140, en: 0.7 }, q: 4.5, bande: true, a: 0.01, d: 1.1, large: true })
+      for (const [i, f] of [LA4, FA4, RE4].entries()) note(m, 0.75 + 0.22 * i, 0.45, 0, { f, a: 0.01, d: 0.6, partiels: MAILLET })
+    },
+  },
   // À LA BASE — un retour à chaque geste (Keko : « très juicy, un bon gamefeel »)
   /** un bouton : un « toc » de bois, court */
   clic: {

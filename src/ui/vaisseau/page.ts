@@ -31,6 +31,8 @@ import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } 
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
+import * as ECLATEMENT_ORGANIQUE from '../pixelfx/fx/keko/eclatement-organique.js'
+import * as EFFONDREMENT_NEANT from '../pixelfx/fx/keko/effondrement-neant.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
 import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
@@ -7687,6 +7689,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const sonDuDecollage = (): Son => ({ bete: 'decolleBete', neant: 'decolleNeant', souffle: 'decolle' } as const)[genreDePropulsion()]
   /**
+   * LA MORT D'UN VAISSEAU À SON IMAGE (Keko, 16/11 : « quand un vaisseau meurt, il explose — on a gardé ça parce qu'au
+   * début on n'avait que le chasseur ; il faudrait des explosions qui matchent le vaisseau et son système d'énergie :
+   * un réacteur bleu, des flammes bleues ; un vaisseau organique, du sang vert ; le Néant, quelque chose d'approprié ») :
+   * - LES BÊTES (Kraken, Vouivre) CRÈVENT — `eclatement-organique` : du sang de bile ou de venin, des lambeaux de chair ;
+   * - LE NÉANT S'EFFONDRE sur lui-même — `effondrement-neant` : un trou noir qui avale ses anneaux, puis une onde ;
+   * - LES AUTRES EXPLOSENT, à la couleur de ce qui les pousse — le plasma violet du Pulsar ; la glace du Frimas et le
+   *   cristal du Prisme, en éclats ; le bleu d'un réacteur ionique (un propulseur de cran 3, les jets froids de la
+   *   soucoupe) ; le feu orange des autres —, et leurs débris à la couleur de leur coque.
+   */
+  const FEUX_DE_MORT: Record<string, { palette: string[]; feu: string[]; debris: string; eclats?: string[] }> = {
+    ion: { palette: ['#08143a', '#1440a0', '#1a6ad8', '#3a9cf0', '#60c8ff', '#a0ecff', '#e0f8ff', '#ffffff'], feu: ['#ffffff', '#e0f8ff', '#a0ecff', '#60c8ff', '#3a9cf0', '#1a6ad8', '#1440a0', '#0e2468', '#08143a'], debris: '#46587a' },
+    plasma: { palette: ['#140a26', '#2a0c5a', '#4a1a8c', '#8a3ce0', '#9a5cf0', '#c48cff', '#f0d8ff', '#ffffff'], feu: ['#ffffff', '#f0d8ff', '#c48cff', '#9a5cf0', '#8a3ce0', '#6a2cc0', '#4a1a8c', '#2a0c5a', '#140a26'], debris: '#3a2c5c' },
+    glace: { palette: ['#0c1024', '#151a3d', '#212f6b', '#2c58aa', '#3a8bd8', '#7ed4f8', '#e6fbff', '#ffffff'], feu: ['#ffffff', '#e6fbff', '#a6ecff', '#7ed4f8', '#3a8bd8', '#2c58aa', '#212f6b', '#151a3d', '#0c1024'], debris: '#4e477a', eclats: ['#e6fbff', '#a6ecff', '#62c8f4', '#3a8bd8'] },
+    cristal: { palette: ['#040a1a', '#0a2a6a', '#1a5ad0', '#40a0ff', '#80d8ff', '#c8f4ff', '#e8fbff', '#ffffff'], feu: ['#ffffff', '#c8f4ff', '#80d8ff', '#40a0ff', '#1a5ad0', '#124aa8', '#0a2a6a', '#081a44', '#040a1a'], debris: '#2a3866', eclats: ['#ffffff', '#b8d8f4', '#7aa0d8', '#80d8ff'] },
+  }
+  function effetDeLaMort(x: number, y: number): Instance {
+    const coque = monteeA(hangar, 'coque').cran
+    if (coque === 10 || coque === 11)
+      return N.createFx(ECLATEMENT_ORGANIQUE as Module, { x, y, size: 0.55, seed: 5, chair: coque === 10 ? '#56303a' : '#34523c', sang: coque === 10 ? ['#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'] : ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'] })
+    if (coque === 13) return N.createFx(EFFONDREMENT_NEANT as Module, { x, y, size: 0.75, seed: 5 })
+    const genre = coque === 9 ? 'plasma' : coque === 8 ? 'glace' : coque === 12 ? 'cristal' : coque === 6 || monteeA(hangar, 'propulseur').cran >= 3 ? 'ion' : null
+    if (genre === null) return N.createFx(EXPLOSION as Module, { x, y, debris: '#46587a', size: 0.45, seed: 5 })
+    const f = FEUX_DE_MORT[genre]
+    return N.createFx(EXPLOSION as Module, { x, y, palette: f.palette, feu: f.feu, debris: coque === 6 ? '#464b68' : f.debris, eclats: f.eclats ?? null, size: 0.45, seed: 5 })
+  }
+  const sonDeLaMort = (): Son => ({ bete: 'perduBete', neant: 'perduNeant', souffle: 'perdu' } as const)[genreDePropulsion()]
+  /**
    * LA POUSSÉE D'UN VAISSEAU SANS TUYÈRE, À L'ARRÊT DU MONDE (l'accueil, le décollage du hangar) : le vaisseau est fixe
    * à l'écran, sa poussée défile sous lui en boucle — les ONDES du Néant, les BULLES du Kraken et de la Vouivre —, la même
    * que celle qu'il sème en vol (Keko, 16/11 : « la propulsion d'un vaisseau doit être la même dans l'écran d'accueil, au
@@ -10833,7 +10862,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             case 'perdu': {
               // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
-              jouer('perdu')
+              jouer(sonDeLaMort())
               perduA = t
               // LES PIÈCES CONSTRUITES QUI ÉTAIENT MONTÉES SONT PERDUES AVEC LE VAISSEAU (Keko, 14/11 : « comme un vrai jeu
               // d'extraction ») : le hangar le dira au retour
@@ -10845,7 +10874,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               compter('parcouru', v.parcouru)
               sauver()
-              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), debris: '#46587a', size: 0.45, seed: 5 }), x: v.x, y: v.y })
+              effets.push({ fx: effetDeLaMort(v.x - camera.x + W / 2, v.y - camera.y + centreY()), x: v.x, y: v.y })
               for (let i = 0; i < 18; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 120)

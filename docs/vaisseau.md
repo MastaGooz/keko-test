@@ -4934,3 +4934,25 @@ et au décollage, un son plus science-fiction, vibrant, très grave, un peu dime
   il paraît moins) ; le NÉANT, deux dents de scie à 41 et 41,7 Hz qui battent et une à l'octave, dans un passe-bas
   résonant qui respire à 0,23 Hz (le son tourne), un trémolo de 6 Hz (0,22 : grave, l'oreille l'entend moins). Une voix
   par genre, née au besoin ; les autres se taisent. `&sons=arcade` garde le souffle.
+
+LE VOL DES BÊTES EN BULLES CONTINUES, LE NÉANT PLUS BAS, LA MORT À L'IMAGE DU VAISSEAU (Keko, 16/11 : « réduis le volume de
+la propulsion du Néant en vol ; le Léviathan et la Vouivre font un bruit par à-coups au lieu de quelque chose de continu —
+j'aime bien le petit bruit de bulle du décollage : en vol, ce petit bruit, plus discret et permanent ; et quand un vaisseau
+meurt, il explose — on l'a gardé parce qu'au début on n'avait que le chasseur ; il faudrait des explosions qui matchent le
+vaisseau et son système d'énergie : un réacteur bleu, des flammes bleues ; un organique, du sang vert ; le Néant, quelque
+chose d'approprié — vérifie la cohérence des effets de mort »).
+- LE SON DU VOL : le bourdon du Néant passe de 0,22 à 0,1 de la poussée. Les bêtes ne sont plus hachées : un FOND DE GAZ
+  continu et discret (0,07), et par-dessus de PETITES BULLES — les « bloups » du décollage, un sinus qui grimpe d'une octave
+  en 45 ms — posées sur l'horloge audio au hasard, de 5 à 13 par seconde selon la poussée, à peine (0,05) (`bulle`).
+- LA MORT (`effetDeLaMort`, `sonDeLaMort`) : les BÊTES CRÈVENT — un nouvel effet, `keko/eclatement-organique` : un anneau
+  de sang, des caillots qui tournent et rapetissent, une gerbe de gouttes qui filent et freinent, un nuage qui s'étale,
+  des lambeaux de chair, des taches qui sèchent ; le sang de bile du Kraken, de venin de la Vouivre ; LE NÉANT S'EFFONDRE —
+  `keko/effondrement-neant` : ses anneaux brisés en arcs tombent en spirale dans un trou noir qui grossit, tout se referme
+  sur un point blanc, puis une onde magenta (un trait sombre devant, deux rides derrière), des fêlures de l'espace et des
+  éclats ; LES AUTRES EXPLOSENT À LA COULEUR DE CE QUI LES POUSSE — `explosion-espace` prend désormais `feu` (la rampe de la
+  boule de feu, du blanc au sombre ; les grains de `_espace.js` aussi : leurs braises et leur lumière lisaient la rampe du
+  dépôt en dur, il restait des points et une lueur orange) et `eclats` (des éclats qui tournent) : le PLASMA violet du
+  Pulsar, la GLACE du Frimas et le CRISTAL du Prisme (en éclats), le BLEU d'un réacteur ionique (un propulseur de cran 3,
+  et les jets froids de la Sentinelle), le FEU orange des autres. Le son de la mort suit : `perduBete` (un coup mouillé,
+  une giclée, des bulles), `perduNeant` (tout est aspiré, puis un grondement très grave et un balayage), les trois notes
+  qui descendent de `perdu` gardées par-dessus. Les deux nouveaux effets sont au banc `?pixelfx`, catégorie « keko ».

@@ -21,7 +21,7 @@ export const meta = {
   loop: false,
   fps: 30,
   bg: "dark",
-  options: { palette: ["#4a1712", "#c9281f", "#f2561d", "#ff8a2a", "#ffc23d", "#ffe26b", "#fff3a6", "#ffffff"], debris: "#4a3f69", size: 0.35, seed: 7 },
+  options: { palette: ["#4a1712", "#c9281f", "#f2561d", "#ff8a2a", "#ffc23d", "#ffe26b", "#fff3a6", "#ffffff"], debris: "#4a3f69", size: 0.35, seed: 7, feu: null, eclats: null },
 };
 
 const OUTLINE = hex("#1a1422"), WARM = rgb(255, 176, 96);
@@ -46,14 +46,17 @@ function morceau(p, b, st) {
 export function create(o) {
   const F = fit(o.palette, 8), S = o.size, RAD = 18 * S, POWER = 0.9 * Math.pow(S, 0.8), st = teinte(o.debris);
   const R = new Rng(o.seed), nulle = () => Infinity;
-  const grains = new Grains(R);
+  // (LA BOULE DE FEU À LA COULEUR DU VAISSEAU — Keko, 16/11 : « un vaisseau qui se propulse avec un réacteur bleu, son
+  // explosion renverrait plutôt des flammes bleues » : `feu`, neuf tons du blanc au sombre, sinon le feu du dépôt ; et
+  // `eclats`, des couleurs d'éclats de cristal ou de glace qui partent en tournant, pour un vaisseau de verre)
+  const grains = o.feu ? new Grains(R, o.feu.map(hex)) : new Grains(R);
   const morceaux = new Bits({ ground: nulle }), lights = new Lights(), flashes = [], rings = [];
   let t = 0;
 
   // la boule de feu : le flash, deux anneaux, les ronds de feu qui refroidissent en fumée, dans toutes les directions
   flashes.push({ r: RAD * 1.05, life: 0.06, max: 0.06 });
   rings.push({ r0: RAD * 0.45, r1: RAD * 2.7, life: 0.34, max: 0.34, thick: 3 * Math.sqrt(S), c: F[5] }, { r0: RAD * 0.3, r1: RAD * 1.6, life: 0.22, max: 0.22, thick: 1.8 * Math.sqrt(S), c: F[3] });
-  lights.add(0, 0, RAD * 3.4, WARM, 0.6 * POWER, 0.7);
+  lights.add(0, 0, RAD * 3.4, o.feu ? hex(o.feu[3]) : WARM, 0.6 * POWER, 0.7);
   lights.add(0, 0, RAD * 1.6, WHITE, 0.6, 0.08);
   for (let i = 0; i < 5; i++) grains.ajouter("feu", R.range(-2.5, 2.5) * S, R.range(-2.5, 2.5) * S, R.range(-20, 20), R.range(-20, 20), R.range(0.25, 0.4), 0, R.range(RAD * 0.4, RAD * 0.55), 2);
   for (let i = 0; i < Math.round(26 * POWER); i++) {
@@ -79,6 +82,13 @@ export function create(o) {
     morceaux.add({ kind: B.CHUNK, x: R.range(-0.4, 0.4) * RAD, y: R.range(-0.4, 0.4) * RAD, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0, drag: 1.1, bounce: 0, life: R.range(1.2, 2), a: R.range(0, TAU), va: R.range(-16, 16), s: R.int(1, 2) });
   }
 
+  if (o.eclats) {
+    const E = o.eclats.map(hex);
+    for (let i = 0; i < 18; i++) {
+      const a = R.range(0, TAU), sp = R.range(60, 170) * POWER;
+      morceaux.add({ kind: B.SHARD, x: 0, y: 0, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0, drag: 1.6, bounce: 0, life: R.range(0.5, 1.1), a: R.range(0, TAU), va: R.range(-20, 20), s: R.range(1.4, 3), c: E[i % E.length] });
+    }
+  }
   return {
     update(dt) {
       t += dt;
@@ -91,7 +101,13 @@ export function create(o) {
       grains.draw(p, "back");
     },
     draw(p) {
-      for (const b of morceaux.list) morceau(p, b, st);
+      for (const b of morceaux.list) {
+        if (b.kind === B.SHARD) {
+          // (un éclat : un trait qui tourne, la pointe blanche — ceux de l'Ice Shatter)
+          const ca = Math.cos(b.a), sa = Math.sin(b.a), al = Math.min(1, b.life / 0.4);
+          for (let d = -b.s / 2; d <= b.s / 2; d += 0.5) p.dot(b.x + ca * d, b.y + sa * d, d > b.s / 2 - 0.6 ? WHITE : b.c, al);
+        } else morceau(p, b, st);
+      }
       grains.draw(p, "front");
       for (const f of flashes) {
         const k2 = f.life / f.max, r = f.r * (0.8 + 0.2 * k2);

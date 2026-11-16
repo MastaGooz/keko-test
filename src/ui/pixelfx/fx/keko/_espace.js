@@ -7,8 +7,10 @@
 import { FIRE_RAMP, SMOKE_RAMP, WHITE } from "pixelfx";
 
 export class Grains {
-  constructor(rng) {
+  /** `feu` : la rampe du feu, du blanc au sombre (neuf tons) — celle du dépôt par défaut ; une autre pour un feu bleu, violet… */
+  constructor(rng, feu = FIRE_RAMP) {
     this.R = rng;
+    this.feu = feu;
     this.liste = [];
   }
   /** sorte : 'etincelle' | 'braise' | 'feu' | 'fumee' ; c : la couleur d'une étincelle ; taille : le rayon d'un rond ; frein par seconde ; delai avant de naître. */
@@ -49,9 +51,9 @@ export class Grains {
         }
         const r = g.taille * (0.8 + 0.6 * u);
         if (u < 0.55) {
-          const c = FIRE_RAMP[Math.min(8, Math.floor((u / 0.55) * 8))];
+          const c = this.feu[Math.min(8, Math.floor((u / 0.55) * 8))];
           p.disc(g.x, g.y, r, c, 0.95);
-          p.glow(g.x, g.y, r * 2.2, FIRE_RAMP[3], 0.4 * (1 - u / 0.55));
+          p.glow(g.x, g.y, r * 2.2, this.feu[3], 0.4 * (1 - u / 0.55));
         } else p.disc(g.x, g.y, r * 1.25, SMOKE_RAMP[Math.min(4, Math.floor(((u - 0.55) / 0.45) * 5))], 0.5 * (1 - u));
         continue;
       }
@@ -66,10 +68,10 @@ export class Grains {
         // la braise : du jaune au rouge sombre, qui clignote en mourant
         // (… ou PAR SA RAMPE À ELLE, du chaud au froid, si `c` en est une : la braise bleue d'un propulseur ionique)
         const rampe = Array.isArray(g.c) ? g.c : null;
-        const c = rampe ? rampe[Math.min(rampe.length - 1, Math.floor(u * rampe.length))] : FIRE_RAMP[Math.min(8, 2 + Math.floor(u * 6))];
+        const c = rampe ? rampe[Math.min(rampe.length - 1, Math.floor(u * rampe.length))] : this.feu[Math.min(8, 2 + Math.floor(u * 6))];
         if (u > 0.7 && Math.floor(g.vie * 30) % 2 === 0) continue;
         p.dot(g.x, g.y, c, 1 - u * 0.5);
-        p.light(g.x, g.y, rampe ? rampe[Math.floor(rampe.length / 2)] : FIRE_RAMP[4], 0.35 * (1 - u));
+        p.light(g.x, g.y, rampe ? rampe[Math.floor(rampe.length / 2)] : this.feu[4], 0.35 * (1 - u));
       }
     }
   }

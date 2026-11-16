@@ -292,9 +292,11 @@ function voixDeFlamme(ctx: AudioContext): Voix {
 }
 
 /**
- * LA BÊTE : du bruit dans un passe-bande qui ondule (3,7 Hz, puis 1,3 Hz par-dessus : la hauteur des bulles change sans
- * cesse) et un volume HACHÉ par un battement de 9 Hz — des « bloubs » de gaz, pas un souffle lisse ; dessous, un peu de
- * bruit grave, le gaz qui fuit.
+ * LA BÊTE : un FOND DE GAZ continu — du bruit dans un passe-bande qui ondule doucement (3,7 et 1,3 Hz), sans à-coups, et un
+ * peu de bruit grave —, et par-dessus, semées par `regler`, DE PETITES BULLES (voir `bulle`) : celles de son décollage, en
+ * plus discret, en continu. (Le volume était d'abord HACHÉ à 9 Hz — Keko, 16/11 : « un bruit par à-coups, au lieu de
+ * quelque chose de continu ; j'aime bien le petit bruit de bulle du décollage : en vol, ce petit bruit, plus discret et
+ * permanent ».)
  */
 function voixDeBete(ctx: AudioContext): Voix {
   const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
@@ -318,12 +320,7 @@ function voixDeBete(ctx: AudioContext): Voix {
   ampOndule2.gain.value = 110
   ondule2.connect(ampOndule2).connect(filtre.frequency)
   const hache = ctx.createGain()
-  hache.gain.value = 0.55
-  const battement = ctx.createOscillator()
-  battement.frequency.value = 9
-  const ampBattement = ctx.createGain()
-  ampBattement.gain.value = 0.45
-  battement.connect(ampBattement).connect(hache.gain)
+  hache.gain.value = 0.5
   const grave = ctx.createBiquadFilter()
   grave.type = 'lowpass'
   grave.frequency.value = 220
@@ -337,8 +334,23 @@ function voixDeBete(ctx: AudioContext): Voix {
   bruit.start()
   ondule.start()
   ondule2.start()
-  battement.start()
   return { gain, filtre }
+}
+
+/** UNE PETITE BULLE de la bête : un sinus bref qui grimpe d'une octave (un « bloup »), posé sur l'horloge audio, vite éteint. */
+let prochaineBulle = 0
+function bulle(ctx: AudioContext, quand: number, volume: number): void {
+  const o = ctx.createOscillator()
+  const f = 190 + 420 * Math.random()
+  o.frequency.setValueAtTime(f, quand)
+  o.frequency.exponentialRampToValueAtTime(f * 2.1, quand + 0.045)
+  const g = ctx.createGain()
+  g.gain.setValueAtTime(0.0001, quand)
+  g.gain.exponentialRampToValueAtTime(volume, quand + 0.004)
+  g.gain.exponentialRampToValueAtTime(0.0001, quand + 0.06 + 0.04 * Math.random())
+  o.connect(g).connect(new StereoPannerNode(ctx, { pan: (Math.random() - 0.5) * 0.8 })).connect(ctx.destination)
+  o.start(quand)
+  o.stop(quand + 0.12)
 }
 
 /**
@@ -506,12 +518,19 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.38 : 0, t, crache ? 0.03 : 0.07) // (0,5 d'abord — Keko, 15/11 : « un tout petit peu moins fort »)
     if (propulsion !== null) {
       if (g === 'bete') {
-        // (le gargouillis : un peu plus fort que le souffle — il est haché, il paraît moins —, ses bulles montent avec la poussée)
-        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.16 * poussee, t, 0.05)
+        // (le fond de gaz, discret ; et les bulles, de 5 à 13 par seconde selon la poussée, au hasard, à peine)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.07 * poussee, t, 0.05)
         propulsion.filtre!.frequency.setTargetAtTime(320 + 380 * poussee, t, 0.1)
+        if (poussee > 0.05) {
+          if (prochaineBulle < t) prochaineBulle = t + 0.02
+          while (prochaineBulle < t + 0.1) {
+            bulle(ctx, prochaineBulle, ZZFX.volume * 0.05 * (0.5 + 0.5 * poussee))
+            prochaineBulle += (0.4 + 1.2 * Math.random()) / (5 + 8 * poussee)
+          }
+        }
       } else if (g === 'neant') {
-        // (le bourdon : plus fort, il est grave — l'oreille l'entend moins ; il s'ouvre un peu avec la poussée)
-        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.22 * poussee, t, 0.08)
+        // (le bourdon, grave : 0,22 d'abord — Keko, 16/11 : « réduis le volume du son que fait la propulsion du Néant en vol »)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.08)
         propulsion.filtre!.frequency.setTargetAtTime(200 + 260 * poussee, t, 0.12)
       } else {
         propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
