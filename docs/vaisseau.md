@@ -4905,3 +4905,11 @@ UNE fonction, `dessinerLaPousseeSansTuyere` (le vaisseau fixe à l'écran, sa po
 les ondes du Néant, les bulles des bêtes), que l'accueil ET le décollage appellent ; en vol, les mêmes ondes
 (`dessinerUneOnde`) et les mêmes bulles sont semées dans le monde. RÈGLE POUR TOUT VAISSEAU NOUVEAU : sa poussée se
 dessine aux trois endroits — accueil, décollage, vol — par le même dessin.
+
+LES JETS DE MANŒUVRE SUIVENT LA POUSSÉE DU VAISSEAU (Keko, 16/11 : « sur certains vaisseaux, tu utilises en jeu les petits
+propulseurs frontaux et latéraux alors qu'ils devraient avoir une version cohérente : le Kraken, la Vouivre — de petites
+expulsions vertes dans le style de leur propulsion ; et le Néant ne devrait pas en avoir »). Les jets du nez (au recul),
+des flancs (au glissement) et du virage (à deux manches) étaient pour tous de courtes flammes froides bleues et blanches.
+LE KRAKEN ET LA VOUIVRE y crachent désormais de PETITES BULLES de bile ou de venin (`couleursDesBulles`), par saccades,
+qui s'écartent, enflent et crèvent — leurs bulles de poussée en petit ; LE NÉANT n'en a plus aucun (il glisse dans le
+vide). Les autres gardent la flamme froide ; la soucoupe, ses jets à elle.

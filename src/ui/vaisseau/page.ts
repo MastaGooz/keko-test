@@ -6200,13 +6200,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ca = Math.cos(v.cap)
       const sa = Math.sin(v.cap)
       /** Un jet : d'où il sort (repère du vaisseau), vers où il souffle, et sa force (0 à 1). */
+      // (LES BÊTES NE SOUFFLENT PAS DE FLAMME FROIDE — Keko, 16/11 : « sur le Kraken et la Vouivre, des petites expulsions
+      // vertes dans le style de leur propulsion » : de petites bulles de bile ou de venin, crachées par saccades, qui
+      // s'écartent, enflent et crèvent ; et LE NÉANT N'EN A PAS DU TOUT — « il ne devrait pas en avoir »)
+      const bete = al.coque === 10 || al.coque === 11
       const jet = (x: number, y: number, dx: number, dy: number, force: number): void => {
-        if (force < 0.12) return
+        if (force < 0.12 || al.coque === 13) return
         const L = (2 + 4 * force) * (0.8 + 0.2 * Math.sin(t * 55 + x * 3 + y))
         const x0 = sx + x * ca - y * sa
         const y0 = sy + x * sa + y * ca
         const ux = dx * ca - dy * sa
         const uy = dx * sa + dy * ca
+        if (bete) {
+          const [cb, cl] = couleursDesBulles(al.coque)
+          for (let k = 0; k < 3; k++) {
+            const u = (((t * (3 + 2 * force) + k / 3 + x * 0.37 + y * 0.21) % 1) + 1) % 1
+            const d = 1 + u * (3 + 5 * force)
+            const cote = Math.sin(k * 2.7 + x + y) * u * 1.5
+            const bx = x0 + ux * d - uy * cote
+            const by = y0 + uy * d + ux * cote
+            const r = (0.5 + 0.5 * ((k * 0.618) % 1)) * (1 + 0.8 * u) * (0.7 + 0.5 * force)
+            const c = k === 0 ? cl : cb
+            if (u > 0.85) for (const [ex, ey] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(bx + ex * (r + 0.8), by + ey * (r + 0.8), c, 0.7 * force)
+            else if (r >= 1.1) p.ring(bx, by, r, 1, c, 0.9 * force)
+            else p.dot(bx, by, c, force)
+          }
+          return
+        }
         p.line(x0, y0, x0 + ux * L, y0 + uy * L, VERRIERE[1], 0.9)
         p.line(x0, y0, x0 + ux * L * 0.5, y0 + uy * L * 0.5, N.WHITE)
         p.glow(x0 + ux * L * 0.5, y0 + uy * L * 0.5, 3 + 2 * force, VERRIERE[1], 0.5 * force)
