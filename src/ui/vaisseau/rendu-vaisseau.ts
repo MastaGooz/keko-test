@@ -654,6 +654,22 @@ export function formesDuBecDeBalise(): Forme[] {
     { pts: barre(3.6, 0, 4.4, 0, 1.3), mat: 'metal', relief: 'cyl' },
   ]
 }
+/**
+ * UN CRISTAL POSÉ DU PRISME (voir `Arme.balise.irradie`), debout, vu de trois quarts (à peindre sans cap) : une grande
+ * aiguille à deux facettes — l'ombre à gauche, la lumière à droite —, une âme d'énergie, deux petits éclats à son pied.
+ */
+export function formesDuCristalPose(): Forme[] {
+  const aiguille = (x: number, y: number, l: number, h: number, bas: number): Forme[] => [
+    { pts: [[x, y - h], [x, y + bas], [x - l * 0.6, y + bas * 0.6], [x - l, y - h * 0.45]], mat: 'facette', relief: 'plat', penche: -1 },
+    { pts: [[x, y - h], [x + l, y - h * 0.45], [x + l * 0.6, y + bas * 0.6], [x, y + bas]], mat: 'quartz', relief: 'plat', penche: 1 },
+  ]
+  return [
+    ...aiguille(-2.3, 1.2, 1, 2.4, 1),
+    ...aiguille(2.1, 1.5, 0.9, 2, 0.9),
+    ...aiguille(0, 0, 1.7, 5, 2.4),
+    { pts: [[0, -3.6], [0.5, -1], [0, 1.6], [-0.5, -1]], mat: 'energie', relief: 'plat' },
+  ]
+}
 export function formesDeLaTeteDeTourelle(): Forme[] {
   // (un carter anguleux, pas un dôme — rond et gros, il cachait le socle —, le canon épais et long)
   return [

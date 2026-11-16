@@ -4724,3 +4724,18 @@ d'affilée, ça fait deux fois le bruit de lancement »). La cause est celle de 
 recharge finit avec un insecte à portée, le son de l'arme est ANNONCÉ en avance de la latence
 (`armeAnnonceeA`), puis l'événement `balayage` le rejouait. L'événement porte désormais son arme, et
 ne joue plus le son déjà annoncé.
+
+LA DEUXIÈME ARME DU PRISME : LES CRISTAUX (Keko, 16/11 : « on va réutiliser notre système de balises : on
+place des cristaux reliés par des faisceaux d'énergie ; dès qu'un ennemi le traverse, le faisceau s'active
+et lui inflige des dégâts sur la durée — le même système, avec des cristaux et des rayons bleus »).
+`arme-cristaux` (id `cristal`) porte la règle des balises de l'Ingénieur telle quelle — une pose sur le
+passage toutes les 1,5 s au plus, à 40 de la précédente, six à la fois, 35 s, par trios en triangles, la
+ligne qui s'active quand on la franchit et redécharge toutes les 0,5 s tant qu'on y reste —, avec
+`Arme.balise.irradie` : chaque décharge, au lieu d'un coup, IRRADIE ce qui est dessus (`Ennemi.irradie`),
+5 points par seconde pendant 3 s, rafraîchis, pas cumulés ; mesuré : rien sur le coup, 10 en 2 s, 15 en 3 s
+et plus. Le dessin : un cristal debout (`formesDuCristalPose` : une grande aiguille de quartz à deux
+facettes et deux petits éclats), qui naît dans une onde bleue, son âme qui palpite ; entre deux cristaux,
+un faisceau faible permanent où filent des impulsions ; activé, la gaine bleue, le corps cyan, l'âme
+blanche du faisceau du Prisme ; l'insecte irradié luit en bleu, des étincelles d'énergie en montent. Deux
+sons : `cristalPose` (un tintement de verre), `cristalLigne` (un « vvvom » d'énergie). Les événements des
+balises portent désormais leur arme. *Chiffres de moi, à rejuger.*

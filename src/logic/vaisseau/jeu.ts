@@ -404,7 +404,11 @@ export type Arme = {
    * continuerait de toucher ») : tant qu'un insecte est dessus, elle se décharge encore toutes les `periode` secondes
    * depuis sa dernière décharge.
    */
-  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number }
+  // (… ET DES CRISTAUX RELIÉS PAR DES FAISCEAUX, la deuxième arme du Prisme — Keko, 16/11 : « on réutilise notre système
+  // de balises : on place des cristaux reliés par des faisceaux d'énergie ; dès qu'un ennemi le traverse, le faisceau s'active
+  // et lui inflige des dégâts sur la durée » : `irradie` — chaque décharge, au lieu d'un coup, IRRADIE ce qui est sur la
+  // ligne : `dps` points par seconde pendant `duree` secondes, rafraîchis à chaque décharge, pas cumulés)
+  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number; irradie?: { duree: number; dps: number } }
   /**
    * UNE TRAÎNÉE DE GIVRE (le Frimas, Keko, 15/11 : « une attaque qui laisse une traînée de givre derrière le vaisseau,
    * qui ralentit et inflige des dégâts aux ennemis tant qu'ils restent dedans ») : en vol, il sème DERRIÈRE LUI (à
@@ -627,6 +631,8 @@ export type Ennemi = {
   ralenti?: number
   /** IL EST RONGÉ PAR L'ACIDE (voir `Arme.crachat`) jusqu'à cet instant : il perd tant par seconde, et tout ce qu'il perd d'autre est majoré de cette part. */
   acide?: { jusque: number; dps: number; bonus: number }
+  /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) jusqu'à cet instant, à tant de points par seconde. */
+  irradie?: { jusque: number; dps: number }
   butin: number
   cargaison: Cargaison
 }
@@ -787,9 +793,9 @@ export type Evenement =
   | { type: 'scieLancee'; x: number; y: number; arme: string }
   | { type: 'scieRattrapee'; x: number; y: number }
   /** Une balise est posée ; une balise s'éteint ; une ligne entre deux balises, franchie, s'éclaire (voir `Arme.balise`). */
-  | { type: 'balisePosee'; x: number; y: number }
-  | { type: 'baliseFinie'; x: number; y: number }
-  | { type: 'ligne'; x0: number; y0: number; x1: number; y1: number }
+  | { type: 'balisePosee'; x: number; y: number; arme: string }
+  | { type: 'baliseFinie'; x: number; y: number; arme: string }
+  | { type: 'ligne'; x0: number; y0: number; x1: number; y1: number; arme: string }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
@@ -2414,7 +2420,7 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   }).map((b) => b.trio))
   m.balises = m.balises.filter((b) => {
     if (!finis.has(b.trio)) return true
-    ev.push({ type: 'baliseFinie', x: b.x, y: b.y })
+    ev.push({ type: 'baliseFinie', x: b.x, y: b.y, arme: c.armes[b.arme]?.id ?? '' })
     return false
   })
   c.armes.forEach((a, i) => {
@@ -2432,11 +2438,11 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, sur: [], dechargeA: 0 })
     const id = m.prochainId++
     m.balises.push({ id, x: v.x, y: v.y, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
-    ev.push({ type: 'balisePosee', x: v.x, y: v.y })
+    ev.push({ type: 'balisePosee', x: v.x, y: v.y, arme: a.id })
     // (trop de balises : le plus vieux triangle saute, entier)
     if (miennes.length + 1 > ba.max) {
       const vieux = miennes[0].trio
-      for (const b of m.balises) if (b.trio === vieux) ev.push({ type: 'baliseFinie', x: b.x, y: b.y })
+      for (const b of m.balises) if (b.trio === vieux) ev.push({ type: 'baliseFinie', x: b.x, y: b.y, arme: a.id })
       m.balises = m.balises.filter((b) => b.trio !== vieux)
     }
   })
@@ -2459,9 +2465,11 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     li.sur = dessus.map((e) => e.id)
     if (decharges > 0) li.dechargeA = m.t + ba.periode
     for (let k = 0; k < decharges; k++) {
-      ev.push({ type: 'ligne', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y })
+      ev.push({ type: 'ligne', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y, arme: a.id })
       for (const e of dessus) {
         if (!m.ennemis.includes(e)) continue
+        // (un cristal irradie : des dégâts sur la durée, rafraîchis)
+        if (ba.irradie !== undefined) e.irradie = { jusque: m.t + ba.irradie.duree, dps: Math.max(ba.irradie.dps, e.irradie !== undefined && e.irradie.jusque > m.t ? e.irradie.dps : 0) }
         const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
         e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3005,6 +3013,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
     if ((e.bruleA ?? -1) > m.t && (e.bruleA ?? 0) - m.t < (e.dureeBrulure ?? 0) - dt * 1.5) e.pv -= (e.dpsBrulure ?? 0) * dt
+    // (il est irradié : les cristaux du Prisme)
+    if (e.irradie !== undefined && e.irradie.jusque > m.t) e.pv -= e.irradie.dps * dt
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
   // (les insectes passés par le portail ont quitté le monde)

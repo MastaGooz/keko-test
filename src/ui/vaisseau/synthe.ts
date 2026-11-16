@@ -760,6 +760,25 @@ const RECETTES = {
       note(m, 0.07, 0.35, 0, { f: 1760, a: 0.002, d: 0.04 })
     },
   },
+  /** UN CRISTAL DU PRISME EST POSÉ : un tintement de verre — deux notes claires aux partiels inharmoniques, qui sonnent */
+  cristalPose: {
+    duree: 0.6, niveau: 0.13, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      const f = 1900 * (0.95 + 0.1 * h.next())
+      note(m, 0, 0.8, 0, { f, a: 0.001, d: 0.3, partiels: [[1, 1, 1], [2.76, 0.45, 0.6], [5.4, 0.2, 0.35]] })
+      note(m, 0.05, 0.5, 0, { f: f * 1.5, a: 0.001, d: 0.22, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
+  /** LE FAISCEAU ENTRE DEUX CRISTAUX S'ACTIVE : un « vvvom » d'énergie — un ton battu qui monte vite, un scintillement aigu */
+  cristalLigne: {
+    duree: 0.45, niveau: 0.15, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      const f = 520 * (0.94 + 0.12 * h.next())
+      note(m, 0, 0.8, 0, { f, glisse: { vers: f * 2.2, en: 0.06, droit: true }, a: 0.002, d: 0.2, battement: 30, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.25, 0.6]] })
+      note(m, 0.02, 0.35, 0, { f: 2600, a: 0.002, d: 0.16, battement: 12 })
+      souffle(m, h, 0, 0.3, 0, { f: 4200, q: 1.4, bande: true, a: 0.002, d: 0.06 })
+    },
+  },
   /** LE VAISSEAU RATTRAPE SA SCIE : un clac métallique court, un tintement */
   rattrape: {
     duree: 0.35, niveau: 0.16, salle: [0.25, 0.1], variantes: 2,

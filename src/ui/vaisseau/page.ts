@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampeDeLaMarque, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampeDeLaMarque, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN } from './rendu-vaisseau.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -936,7 +936,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -7458,7 +7458,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   /** Les lignes de balises qui viennent de s'éclairer (voir `dessinerLesBalises`). */
-  const lignesEclairees: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
+  const lignesEclairees: { x0: number; y0: number; x1: number; y1: number; t0: number; bleu?: boolean }[] = []
   /** (SOUS LES VAISSEAUX ET LES INSECTES : dessinées avec les tirs, elles cachaient le vaisseau posé dessus.) */
   function dessinerLesTourelles(p: Peintre): void {
     // LES TOURELLES DE L'INGÉNIEUR, PEINTES COMME LES VAISSEAUX (`formesDuSocleDeTourelle`, `formesDeLaTeteDeTourelle` —
@@ -7529,7 +7529,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // blanc au cœur, dans une large lueur d'or, qui s'éteint en un quart de seconde
     for (let i = lignesEclairees.length - 1; i >= 0; i--) {
       const l = lignesEclairees[i]
-      const u = (t - l.t0) / 0.25
+      const u = (t - l.t0) / (l.bleu === true ? 0.35 : 0.25)
       if (u >= 1) {
         lignesEclairees.splice(i, 1)
         continue
@@ -7538,12 +7538,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y0 = l.y0 - camera.y + centreY()
       const x1 = l.x1 - camera.x + W / 2
       const y1 = l.y1 - camera.y + centreY()
+      // (LE FAISCEAU D'UN CRISTAL S'ACTIVE : une gaine bleue large, un corps cyan, une âme blanche — le rayon du Prisme)
+      if (l.bleu === true) {
+        p.glowLine(x0, y0, x1, y1, 8, FAISCEAU[2], 0.6 * (1 - u))
+        const nx = -(y1 - y0) / (Math.hypot(x1 - x0, y1 - y0) || 1)
+        const ny = (x1 - x0) / (Math.hypot(x1 - x0, y1 - y0) || 1)
+        if (u < 0.6) for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, x1 + nx * o, y1 + ny * o, FAISCEAU[3], 0.8 * (1 - u / 0.6))
+        p.line(x0, y0, x1, y1, u < 0.5 ? N.WHITE : FAISCEAU[4], 1 - u)
+        continue
+      }
       p.glowLine(x0, y0, x1, y1, 6, PEPITE[2], 0.55 * (1 - u))
       p.line(x0, y0, x1, y1, u < 0.4 ? N.WHITE : PEPITE[3], 1 - u)
     }
     if (m.balises.length === 0) return
     const PLOT = formesDeLaBalise()
     const BEC = formesDuBecDeBalise()
+    const CRISTAL = formesDuCristalPose()
+    const cristal = (b: { arme: number }): boolean => CONF.armes[b.arme]?.id === 'cristal'
     const ecran = (x: number, y: number): [number, number] => [Math.round(x - camera.x + W / 2), Math.round(y - camera.y + centreY())]
     for (const b of m.balises) for (const li of b.liens) {
       const o = m.balises.find((x) => x.id === li.vers)
@@ -7551,6 +7562,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const [x0, y0] = ecran(b.x, b.y)
       const [x1, y1] = ecran(o.x, o.y)
       const l = Math.hypot(x1 - x0, y1 - y0)
+      // (DEUX CRISTAUX : un faisceau d'énergie qui les relie en permanence, faible, où des impulsions filent — on voit le
+      // piège ; il s'allume quand on le traverse)
+      if (cristal(b)) {
+        p.glowLine(x0, y0 - 2, x1, y1 - 2, 3, FAISCEAU[2], 0.2 + 0.06 * Math.sin(m.t * 4 + b.id))
+        p.line(x0, y0 - 2, x1, y1 - 2, FAISCEAU[2], 0.5)
+        const pas = (m.t * 1.5 + b.id * 0.37) % 1
+        for (let k = 0; k < 3; k++) {
+          const u = (k / 3 + pas) % 1
+          p.rect(Math.round(x0 + (x1 - x0) * u), Math.round(y0 - 2 + (y1 - y0) * u), 1, 1, FAISCEAU[4], 0.9)
+        }
+        continue
+      }
       const n = Math.floor(l / 3)
       const pas = (m.t * 6) % 1
       for (let k = 1; k < n; k++) {
@@ -7568,6 +7591,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (un peu plus grande que le dessin, pour qu'on la lise, plus petite qu'une tourelle)
       const k = 1.3 * (0.4 + 0.6 * sortie(Math.min(1, age / 0.2)))
       const [sx, sy] = ecran(b.x, b.y)
+      // (UN CRISTAL : il pousse du sol en naissant, une onde bleue ; son âme palpite)
+      if (cristal(b)) {
+        if (age < 0.35) p.ring(sx, sy, 4 + age * 30, 1, FAISCEAU[3], 1 - age / 0.35)
+        p.circle(sx, sy + 2, 3, N.hex('#0a0608'), 0.4)
+        peindreFormes(p, CRISTAL, sx, sy, k * 1.2, { cap: 0, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL })
+        p.glow(sx, sy - 2, 5, FAISCEAU[3], 0.3 + 0.2 * Math.sin(m.t * 5 + b.id))
+        continue
+      }
       if (age < 0.35) p.ring(sx, sy, 4 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.35)
       peindreFormes(p, PLOT, sx, sy, k, { cap: -Math.PI / 2, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
       // (un bec vers chaque balise reliée, dans un sens ou dans l'autre)
@@ -7601,6 +7632,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             p.dot(sx + Math.sin(e.id * 2.3 + k * 2.1 + ph * 3) * 3, sy - 2 - ph * 7, ph < 0.5 ? VENIN[4] : VENIN[2], 1 - ph)
           }
           if (Math.sin(t * 11 + e.id * 1.7) > 0.6) p.dot(sx + Math.cos(e.id) * 2, sy + 2, VENIN[5], 0.9)
+        }
+        // IL EST IRRADIÉ (les cristaux du Prisme) : une lueur bleue qui bat, des étincelles d'énergie qui montent
+        if (e.irradie !== undefined && e.irradie.jusque > m.t) {
+          p.glow(sx, sy, 7, FAISCEAU[3], 0.35 + 0.15 * Math.sin(t * 17 + e.id))
+          for (let k = 0; k < 3; k++) {
+            const ph = (t * 1.8 + k / 3 + e.id * 0.41) % 1
+            p.rect(Math.round(sx + Math.sin(e.id * 2.7 + k * 2.1) * 3), Math.round(sy - 2 - ph * 8), 1, 1, ph < 0.4 ? N.WHITE : FAISCEAU[4], 1 - ph)
+          }
         }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
         if ((e.bruleA ?? -1) > m.t) {
@@ -9822,22 +9861,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             case 'balisePosee':
               // (une balise plantée : son clic, un peu de poussière)
-              jouer('balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })
+              // (un cristal : un tintement de verre, des éclats bleus)
+              jouer(ev.arme === 'cristal' ? 'cristalPose' : 'balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })
               for (let i = 0; i < 5; i++) {
                 const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), N.hex('#8a8a96'), 1, 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), ev.arme === 'cristal' ? FAISCEAU[R.next() < 0.5 ? 3 : 4] : N.hex('#8a8a96'), 1, 2)
               }
               break
             case 'baliseFinie':
               for (let i = 0; i < 4; i++) {
                 const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : ev.arme === 'cristal' ? FAISCEAU[3] : PEPITE[2], 1, 2)
               }
               break
             case 'ligne':
               // (une ligne franchie s'éclaire : son « zing », l'éclair dessiné avec les balises)
-              jouer('balise', { dx: (ev.x0 + ev.x1) / 2 - v.x, dy: (ev.y0 + ev.y1) / 2 - v.y })
-              lignesEclairees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
+              jouer(ev.arme === 'cristal' ? 'cristalLigne' : 'balise', { dx: (ev.x0 + ev.x1) / 2 - v.x, dy: (ev.y0 + ev.y1) / 2 - v.y })
+              lignesEclairees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, bleu: ev.arme === 'cristal' })
               break
             case 'scieRattrapee':
               // (le vaisseau rattrape sa scie : un clac, deux étincelles)
