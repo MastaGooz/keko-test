@@ -1818,6 +1818,15 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     }
     const pv2 = w2.ennemis.map((e) => 1000 - e.pv)
     const travers = w2.flaques.every((f) => Math.abs(f.y - 30) < 0.5 && f.x >= -24.5 && f.x <= 24.5)
+    // (une cible qui marche vers le vaisseau, en travers du trait : le trait la suit, elle prend son coup)
+    const w3 = nouveauMonde(cf, 3)
+    w3.ennemis.push(insecte(1, 0, 50))
+    for (let i = 0; i < 50; i++) {
+      w3.ennemis[0].corps = { ...w3.ennemis[0].corps, x: 0, y: 50 - (40 * i) / 60, vx: 0, vy: -40 }
+      w3.vaisseau = { ...w3.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cf, w3, 1 / 60, { x: 0, y: 0 })
+    }
+    verifier(`en travers, une cible qui marche à 40 vers le vaisseau prend quand même son coup : le trait la suit (${1000 - w3.ennemis[0].pv})`, 1000 - w3.ennemis[0].pv >= 12)
     verifier(`en travers, le trait passe sur la cible de sa gauche (x ${debut === null ? '—' : debut.x.toFixed(1)}) à sa droite : la cible et l'insecte sur le trait prennent leur coup (${pv2[0]}, ${pv2[1]}), celui de derrière rien (${pv2[2]}) ; ${w2.flaques.length} flaques en travers`, debut !== null && Math.abs(debut.x - 24) < 1.5 && Math.abs(debut.y - 30) < 0.5 && pv2[0] >= 12 && pv2[1] >= 12 && pv2[2] === 0 && w2.flaques.length === attendues && travers)
   }
   verifier(`le rayon trace un trait au sol de 6 à 54 (départ ${premier === null ? '—' : premier.y.toFixed(1)}) : la cible et l'insecte au-delà prennent leur coup (${pv[0]}, ${pv[1]}), celui d'à côté rien (${pv[2]}) ; ${w.flaques.length} flaques sur le trait (${attendues} attendues)`, ev.filter((e) => e.type === 'balayage').length === 1 && premier !== null && Math.abs(premier.y - 6) < 1.5 && pv[0] >= 12 && pv[1] >= 12 && pv[2] === 0 && w.flaques.length === attendues && surLeTrait)

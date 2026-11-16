@@ -7774,7 +7774,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const ux = (l.x1 - l.x0) / L
         const uy = (l.y1 - l.y0) / L
         const fait = L * im.part
-        for (let d = 0; d <= fait; d += 0.7) {
+        // (la queue seulement : le trait suit sa cible, il glisse — les flaques, elles, restent où elles sont tombées)
+        for (let d = Math.max(0, fait - 16); d <= fait; d += 0.7) {
           const k = (fait - d) / 16
           p.dot(l.x0 + ux * d, l.y0 + uy * d, k < 0.1 ? N.WHITE : k < 0.35 ? C[6] : k < 0.75 ? C[4] : C[3], Math.max(0.3, 1 - k * 0.5))
         }

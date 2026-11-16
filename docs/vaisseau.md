@@ -4710,3 +4710,11 @@ droite qui le joint au vaisseau, de 24 à sa gauche à 24 à sa droite (vu du va
 seul le point d'impact frappe. Les flaques durent 6 s au lieu de 2,5, et ce qui les traverse s'enflamme
 3 s à 4 points par seconde (1,5 s à 3 avant). L'ancien trait, de devant vers le fond, reste écrit (sans
 `travers`). *Chiffres de moi, à rejuger.*
+
+LE TRAIT SUIT SA CIBLE (Keko, 16/11 : « le vaisseau manque souvent la cible… alors que dans l'autre sens
+non »). La cause : le trait était posé où l'insecte se trouvait au départ ; dans l'axe, l'insecte qui
+marche vers le vaisseau reste dessus, en travers il en sort en un quart de seconde (il marche à 40 et
+plus, l'impact met 0,35 s à atteindre son milieu). Désormais le trait GLISSE AVEC SA CIBLE tant qu'elle
+vit (`Monde.balayage.suivi`) : l'impact passe toujours sur elle ; les flaques restent où elles sont
+tombées, la traînée prend donc la courbe de sa marche. Vérifié : une cible qui marche à 40 vers le
+vaisseau prend son coup. Le dessin ne garde que les 16 derniers points de la brûlure derrière l'impact.

@@ -699,7 +699,7 @@ export type Monde = {
   flaques: Flaque[]
   /** LE TOUR DU RAYON en cours (voir `Arme.balayage`) : l'arme, son début, l'angle atteint, les ennemis déjà touchés ; ou null. */
   // (`ligne` : le trait au sol d'un rayon qui trace, en coordonnées du monde — voir `Arme.balayage.trace`)
-  balayage: { arme: number; debut: number; angle: number; touches: number[]; depart: number; sens: number; posees: number; ligne?: { x0: number; y0: number; x1: number; y1: number } } | null
+  balayage: { arme: number; debut: number; angle: number; touches: number[]; depart: number; sens: number; posees: number; ligne?: { x0: number; y0: number; x1: number; y1: number }; suivi?: { id: number; x: number; y: number } } | null
   /** LE RAYON CANALISÉ (voir `Arme.canalise`) : sa cible, depuis quand il est dessus, où elle est, sa chauffe (0 à 1) ; ou null. */
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
@@ -2564,6 +2564,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
         const a = d + bl.trace.apres
         m.balayage.ligne = { x0: v.x + ux * de, y0: v.y + uy * de, x1: v.x + ux * a, y1: v.y + uy * a }
       }
+      m.balayage.suivi = { id: proche.id, x: proche.corps.x, y: proche.corps.y }
     }
     ev.push({ type: 'balayage', duree: bl.duree })
   })
@@ -2571,8 +2572,17 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const bl = b === null ? undefined : c.armes[b.arme]?.balayage
   if (b === null || bl === undefined) return
   if (b.ligne !== undefined && bl.trace !== undefined) {
-    // LE POINT D'IMPACT frappe ce qui est sous lui — une fois par trait —, sème sa traînée sur le trait parcouru
+    // LE TRAIT SUIT SA CIBLE (Keko, 16/11 : « le vaisseau manque souvent la cible… alors que dans l'autre sens non » — en
+    // travers, l'insecte qui marche sort du trait posé où il était) : tant qu'elle vit, le trait glisse avec elle
     const l = b.ligne
+    const s = b.suivi
+    const suivie = s === undefined ? undefined : m.ennemis.find((e) => e.id === s.id)
+    if (s !== undefined && suivie !== undefined) {
+      const [dx, dy] = [suivie.corps.x - s.x, suivie.corps.y - s.y]
+      ;(l.x0 += dx), (l.y0 += dy), (l.x1 += dx), (l.y1 += dy)
+      ;(s.x = suivie.corps.x), (s.y = suivie.corps.y)
+    }
+    // LE POINT D'IMPACT frappe ce qui est sous lui — une fois par trait —, sème sa traînée sur le trait parcouru
     const part = Math.min(1, (m.t - b.debut) / bl.duree)
     const ix = l.x0 + (l.x1 - l.x0) * part
     const iy = l.y0 + (l.y1 - l.y0) * part
