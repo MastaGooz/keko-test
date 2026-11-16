@@ -290,14 +290,16 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   const pris = ins.fait === 'aggro'
   for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
   verifier('approché, l’insecte prend le joueur en chasse, le rejoint et le mord', pris && Math.hypot(ins.corps.x - z.vaisseau.x, ins.corps.y - z.vaisseau.y) < 20 && z.coque < 1000)
-  // il ne lâche que si LE JOUEUR part vraiment loin du portail
-  z.vaisseau = { ...z.vaisseau, x: ins.corps.x * 0.8, y: ins.corps.y * 0.8 } // (plus près du portail que lui)
+  // (IL POURSUIT TRÈS LOIN — Keko, 16/11 : plus de laisse autour du portail ; il ne lâche que quand le joueur s'éloigne trop
+  // de LUI) : le joueur file à 1 500 du portail, l'insecte à 150 derrière lui — il chasse toujours ; puis le joueur saute à
+  // `lache` + 40 de l'insecte — il lâche
+  ins.corps = { ...ins.corps, x: 1350, y: 0, vx: 0, vy: 0 }
+  z.vaisseau = { ...z.vaisseau, x: 1500, y: 0, vx: 0, vy: 0 }
   avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
   const tient = ins.fait === 'aggro'
-  const k = (cfg.invasion.lache + 30) / Math.hypot(ins.corps.x, ins.corps.y)
-  z.vaisseau = { ...z.vaisseau, x: ins.corps.x * k, y: ins.corps.y * k, vx: 0, vy: 0 }
+  z.vaisseau = { ...z.vaisseau, x: ins.corps.x + cfg.invasion.lache + 40, y: 0, vx: 0, vy: 0 }
   avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
-  verifier('une grande zone d’aggro ; il tient tant que le joueur reste près du portail, et ne lâche que s’il part vraiment loin', cfg.invasion.aggro >= 150 && tient && ins.fait === 'marche')
+  verifier('une grande zone d’aggro ; loin du portail (à 1 500), il poursuit toujours le joueur qui reste à portée de lui ; il ne lâche que quand le joueur s’éloigne trop de lui', cfg.invasion.aggro >= 150 && tient && ins.fait === 'marche')
   // le contour du portail téléporte, même un insecte en chasse
   const c2 = nouveauMonde(cfg, 7)
   loin(c2)

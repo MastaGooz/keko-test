@@ -186,7 +186,7 @@ export const VAISSEAU = {
    * secondes. Au contact, il MORD (`morsure` points, toutes les
    * `cadenceMorsure` secondes). *Tous les chiffres sont de moi, à rejuger.*
    */
-  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 170, lache: 430, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
+  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 170, lache: 260, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
     /**
      * (Keko, 14/11, la suite.) LA MORT N'EST PAS LA FIN : abattu, le joueur revient AU PORTAIL après `penalite` secondes
      * (le monde continue sans lui). LES PÉPITES que les insectes lâchent NE VONT PAS EN SOUTE : chacune vaut un point
@@ -1188,12 +1188,15 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     return []
   }
   if (e.fait === 'aggro') {
-    // (il ne lâche que si le joueur est vraiment loin du portail — ou abattu)
-    if (m.phase !== 'vol' || Math.hypot(v.x, v.y) > I.lache) {
+    // (IL LÂCHE QUAND LE JOUEUR S'ÉLOIGNE TROP DE LUI — Keko, 16/11 : « qu'ils poursuivent le joueur beaucoup plus loin dans
+    // l'espace ; que l'ennemi arrête de suivre le joueur quand le joueur s'éloigne trop de lui, mais tant qu'il est à une
+    // certaine distance, il peut le poursuivre très loin » : plus de laisse autour du portail — il lâche à `lache` du
+    // joueur, ou le joueur abattu)
+    if (m.phase !== 'vol' || dj > I.lache) {
       e.fait = 'marche'
       e.calmeA = m.t + I.calme
     }
-  } else if (m.phase === 'vol' && dj <= I.aggro && Math.hypot(v.x, v.y) <= I.lache && m.t >= (e.calmeA ?? 0)) e.fait = 'aggro'
+  } else if (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0)) e.fait = 'aggro'
   else e.fait = 'marche'
   let direction: Vecteur
   if (e.fait === 'aggro') {

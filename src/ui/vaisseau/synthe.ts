@@ -630,12 +630,17 @@ const RECETTES = {
     },
   },
   /** LA VOUIVRE CRACHE : un raclement de gorge bref, puis le jet — un souffle mouillé qui s'élargit, des éclaboussures */
+  // (… PUIS UN SON ROND DE LIQUIDE — Keko, 16/11 : « un son un peu claquant, presque comme un coup de taser ; plutôt un
+  // bruit plus rond de liquide » : plus de bourdon battu ni de claquements aigus — trois BULLES qui crèvent, des notes
+  // pures qui glissent vers le haut, sur un clapotis sourd et doux)
   crachat: {
-    duree: 0.55, niveau: 0.22, salle: [0.25, 0.1], variantes: 3,
+    duree: 0.6, niveau: 0.22, salle: [0.3, 0.12], variantes: 3,
     faire: (m, h) => {
-      note(m, 0, 0.5, 0, { f: 140, glisse: { vers: 90, en: 0.06 }, a: 0.003, d: 0.07, battement: 30, partiels: CORPS })
-      souffle(m, h, 0.04, 1, 0, { f: 1800, glisse: { vers: 900, en: 0.2 }, q: 0.9, bande: true, a: 0.005, d: 0.22, large: true })
-      for (let k = 0; k < 5; k++) souffle(m, h, 0.1 + 0.05 * k + 0.02 * h.next(), 0.35, (h.next() - 0.5) * 0.8, { f: 2600 + 800 * h.next(), q: 2, bande: true, a: 0.001, d: 0.03 })
+      souffle(m, h, 0, 0.7, 0, { f: 700, glisse: { vers: 320, en: 0.18 }, q: 0.9, bande: true, a: 0.02, d: 0.22, large: true })
+      for (let k = 0; k < 3; k++) {
+        const f = 240 + 160 * h.next() + 90 * k
+        note(m, 0.02 + 0.06 * k + 0.02 * h.next(), 0.55 - 0.1 * k, (h.next() - 0.5) * 0.5, { f, glisse: { vers: f * 2, en: 0.05, droit: true }, a: 0.004, d: 0.07 })
+      }
     },
   },
   /** LE FLÉAU FRAPPE : un choc sourd et lourd, un tintement de métal par-dessus, le cliquetis de la chaîne */

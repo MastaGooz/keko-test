@@ -4617,3 +4617,23 @@ déploiement a échoué, le site est resté sur la version d'avant.
 PUIS UNE BOULE UN PEU PLUS GROSSE (Keko, 16/11 : « grossis un tout petit peu la
 boule, je la trouve encore un peu petite ») : son dessin passe de 4,5 à 5,5 (ses
 pics suivent) ; sa prise reste 7,5.
+
+PUIS UNE FLAQUE AUX BORDS FONDUS, ET UN CRACHAT QUI SONNE LIQUIDE (Keko, 16/11 : « rendre
+les bords progressivement transparents, une tache moins nette ; le bruit du crachat
+fait un peu bizarre, claquant, presque comme un coup de taser — plutôt un bruit plus
+rond de liquide ») : la flaque n'a plus de liseré vif ; son opacité monte doucement
+du bord vers le dedans sur une large bande (un « smoothstep » sur trois fois la
+bande d'avant, jusqu'à 0,45), les gouttes projetées s'effacent vers leur bord. Le
+son `crachat` perd son bourdon battu (le « taser ») et ses claquements aigus : trois
+BULLES qui crèvent — des notes pures qui glissent vers le haut — sur un clapotis
+sourd et doux.
+
+LES INSECTES POURSUIVENT LE JOUEUR BIEN PLUS LOIN (Keko, 16/11 : « augmente la
+tolérance des ennemis à s'éloigner du vortex ; qu'ils poursuivent le joueur beaucoup
+plus loin dans l'espace ; que l'ennemi arrête de suivre le joueur quand le joueur
+s'éloigne trop de lui — mais tant que le joueur est à une certaine distance, il peut
+le poursuivre très loin ») : il n'y a plus de laisse autour du portail (un insecte
+lâchait dès que le joueur était à plus de 430 du centre). Il prend le joueur en
+chasse à 170 de lui, comme avant, et ne le LÂCHE QUE S'IL S'ÉLOIGNE À PLUS DE 260 DE
+LUI (`invasion.lache`, désormais la distance joueur–insecte) — ou s'il est abattu.
+Mesuré : à 1 500 du portail, un insecte à 150 derrière le joueur le chasse toujours.

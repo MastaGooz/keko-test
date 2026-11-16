@@ -7185,11 +7185,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const tache = Math.sin(ang * 7 + d * 9 + m.t * 1.5 + f.id) * Math.sin(ang * 5 - d * 13 + f.id * 1.7)
         // (PLUS CLAIRE — Keko, 16/11 : « un peu sombre, on ne la voit pas assez » : un vert acide vif, un bord lumineux)
         // (… puis « un peu trop claire » : un cran entre les deux — le bord vif, le dedans un ton plus bas)
-        return ou(d, ang) < 0.6 ? VENIN[4] : tache > 0.35 ? VENIN[3] : tache < -0.45 ? VENIN[1] : VENIN[2]
+        return ou(d, ang) < 1.5 ? VENIN[3] : tache > 0.35 ? VENIN[3] : tache < -0.45 ? VENIN[1] : VENIN[2]
       }, (d, ang) => {
         const o = ou(d, ang)
         if (o <= 0) return 0
-        return (o < 0.6 ? 0.7 : 0.42) * Math.min(1, o) * k
+        // (UN BORD QUI SE FOND — Keko, 16/11 : « des bords progressivement transparents, une tache moins nette » : plus de
+        // liseré vif ; l'opacité monte doucement du bord vers le dedans, sur une large bande)
+        const fondu = Math.min(1, o / 3)
+        return 0.45 * fondu * fondu * (3 - 2 * fondu) * k
       })
       // (une lueur verte dessus : elle se voit de loin, sur le fond sombre)
       p.glow(f.x + Math.cos(f.cap) * L * 0.55, f.y + Math.sin(f.cap) * L * 0.55, L * 0.6, VENIN[3], 0.16 * k)
@@ -7198,7 +7201,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const an = f.cap + (alea(f.id, j, 21) * 2 - 1) * cr.cone * 1.25
         const d = L * (0.9 + 0.22 * alea(f.id, j, 22))
         const r = 0.6 + 1.3 * alea(f.id, j, 23)
-        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, VENIN[3], (dd) => (dd > 0.6 ? 0.7 : 0.5) * k)
+        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, VENIN[3], (dd) => 0.5 * (1 - dd * dd) * k)
       }      // (des bulles qui crèvent)
       for (let j = 0; j < 7; j++) {
         const vie = 0.6 + 0.5 * alea(f.id, j, 1)
