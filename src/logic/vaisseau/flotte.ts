@@ -114,6 +114,17 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LE PULSAR (Keko, 16/11) : le vaisseau du plasma et de l'énergie, d'une autre race — une raie autour d'un cœur violet
+    id: 'pulsar',
+    nom: 'Pulsar',
+    classe: 'chasseur',
+    dit: 'Venu d’ailleurs, le vaisseau du plasma : ses orbes lentes traversent la nuée et y éclatent en gerbes violettes.',
+    pieces: ['coque-9', 'propulseur-p3', 'arme-plasma'],
+    serie: { possedees: ['coque-9', 'propulseur-p3', 'arme-plasma'], montees: { coque: 'coque-9', propulseur: 'propulseur-p3' }, outils: [], armes: ['arme-plasma'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',

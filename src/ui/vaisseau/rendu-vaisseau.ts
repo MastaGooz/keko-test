@@ -19,7 +19,7 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma'
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
 export type Forme = {
   pts: [number, number][]
@@ -69,6 +69,11 @@ const RAMPES: Record<Matiere, number[]> = {
   graphite: ['#0d0d12', '#1b1b22', '#2d2d36', '#45454f', '#686874', '#a2a2ae'].map(hex),
   nacre: ['#1a1430', '#2f2852', '#4e477a', '#7c75a8', '#b4aed6', '#efecfc'].map(hex),
   indigo: ['#0c0822', '#1a1244', '#2b1f6a', '#403092', '#6852bc', '#ac96ea'].map(hex),
+  // LE PULSAR (Keko, 16/11 : « des tons un peu violets ») : une carapace d'obsidienne, des ailes mauves, et LE PLASMA —
+  // du violet au bleu, puis au blanc (les teintes du « Plasma explosion » de pixelfx)
+  obsidienne: ['#0b0816', '#171128', '#261c40', '#3a2c5c', '#58457f', '#8a74b0'].map(hex),
+  mauve: ['#170a26', '#2e1448', '#4c2272', '#6e369c', '#9a5cc8', '#d6a8f0'].map(hex),
+  plasma: ['#2a0c5a', '#4a1a8c', '#8a3ce0', '#4a7cf0', '#7cc0ff', '#f0f8ff'].map(hex),
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
@@ -104,9 +109,20 @@ export const LIVREES: Livree[] = [
   { id: 'bleu', nom: 'Bleu', teinte: 214, saturation: 0.78, clarte: 1 },
   { id: 'vert', nom: 'Vert', teinte: 122, saturation: 0.6, clarte: 1 },
   { id: 'jaune', nom: 'Jaune', teinte: 50, saturation: 0.85, clarte: 1.08 },
+  // (… PUIS UN PANEL PLUS LARGE — Keko, 16/11 : « ce serait sympa pour les joueurs de choisir parmi un panel de couleurs
+  // un peu plus large » : douze, le tour du cercle des teintes, et le blanc ; des identifiants à elles, les livrées du Nova
+  // Drifter gardent les leurs)
+  { id: 'orange', nom: 'Orange', teinte: 26, saturation: 0.9, clarte: 1.04 },
+  { id: 'lime', nom: 'Lime', teinte: 84, saturation: 0.75, clarte: 1.08 },
+  { id: 'turquoise', nom: 'Turquoise', teinte: 166, saturation: 0.7, clarte: 1.02 },
+  { id: 'cyan', nom: 'Cyan', teinte: 190, saturation: 0.85, clarte: 1.06 },
+  { id: 'violet', nom: 'Violet', teinte: 274, saturation: 0.72, clarte: 1.04 },
+  { id: 'magenta', nom: 'Magenta', teinte: 310, saturation: 0.78, clarte: 1.02 },
+  { id: 'dragee', nom: 'Dragée', teinte: 334, saturation: 0.7, clarte: 1.3 },
+  { id: 'blanc', nom: 'Blanc', teinte: 220, saturation: 0.06, clarte: 1.22 },
 ]
 /** Les couleurs qu'un joueur du jeu du vortex peut prendre, dans l'ordre ; les autres livrées sont celles du Nova Drifter. */
-export const COULEURS_DE_JOUEUR = ['rouge', 'bleu', 'vert', 'jaune']
+export const COULEURS_DE_JOUEUR = ['rouge', 'orange', 'jaune', 'lime', 'vert', 'turquoise', 'cyan', 'bleu', 'violet', 'magenta', 'dragee', 'blanc']
 function tsl(h: number, s: number, l: number): number {
   const a = s * Math.min(l, 1 - l)
   const f = (n: number): number => {
@@ -486,7 +502,10 @@ const GABARIT_DE_L_INGENIEUR: Gabarit = { tuyeres: [{ x: 0.2, y: -2.8 }, { x: 0.
 // LE FRIMAS (Keko, 15/11 : « alien, une autre race, un peu exotique ») : un corps en goutte entre deux croissants de
 // cristal qui se referment devant lui comme des pinces ; une seule tuyère, à la pointe de la queue, qui souffle froid
 const GABARIT_DU_FRIMAS: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: 7.1, y: 3.9 }, verriere: 4.2, nez: 7.6, flanc: 6.5, anneau: 12.5, echelle: 1 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : GABARIT_DE_SERIE)
+// LE PULSAR (Keko, 16/11 : « alien, exotique, le plasma et l'énergie ») : une raie — deux grandes ailes en nageoires — autour
+// d'un CŒUR DE PLASMA, deux cornes de décharge au nez entre lesquelles l'orbe se forme ; une tuyère, à la queue
+const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -5.3, y: 9.6 }, verriere: -1.4, nez: 9.4, flanc: 6, anneau: 12.5, echelle: 1 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -623,6 +642,19 @@ function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
 
 /** LES FORMES DE LA COQUE d'un cran : le fuseau et la verrière ; le blindé ses plaques, le bouclier ses émetteurs. */
 export function formesDeLaCoque(cran: number): Forme[] {
+  if (cran === 9) {
+    // LE PULSAR, UNE CARAPACE D'OBSIDIENNE : un corps fuselé, le CŒUR DE PLASMA au milieu dans sa bague, deux évents qui
+    // luisent sur l'échine ; au nez, DEUX CORNES DE DÉCHARGE mauves, une étincelle de plasma au bout de chacune
+    const f: Forme[] = [{ pts: [[6.2, 0], [4.6, -1.6], [1.6, -2.6], [-2, -2.8], [-5.2, -2.2], [-7.4, -1], [-7.8, 0], [-7.4, 1], [-5.2, 2.2], [-2, 2.8], [1.6, 2.6], [4.6, 1.6]], mat: 'obsidienne', relief: 'cyl' }]
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[3, sg * 0.9], [6.4, sg * 0.9], [9.4, sg * 0.55], [9.7, sg * 1.1], [6.6, sg * 2], [2.8, sg * 2.4]], mat: 'mauve', relief: 'plat', penche: sg })
+      f.push({ pts: ovale(9.25, sg * 0.85, 0.5, 0.5, 8), mat: 'plasma', relief: 'dome', dome: { x: 9.25, y: sg * 0.85, rx: 0.5, ry: 0.5 } })
+    }
+    for (const [x, r] of [[-4.3, 0.55], [-5.8, 0.42]]) f.push({ pts: ovale(x, 0, r, r, 8), mat: 'plasma', relief: 'dome', dome: { x, y: 0, rx: r, ry: r } })
+    f.push({ pts: ovale(-1.4, 0, 2.6, 2.6, 18), mat: 'metal', relief: 'dome', dome: { x: -1.4, y: 0, rx: 2.6, ry: 2.6 } })
+    f.push({ pts: ovale(-1.4, 0, 1.9, 1.9, 16), mat: 'plasma', relief: 'dome', dome: { x: -1.4, y: 0, rx: 1.9, ry: 1.9 } })
+    return f
+  }
   if (cran === 8) {
     // LE FRIMAS, UNE CARAPACE D'AILLEURS : un corps en goutte, la pointe en avant ; trois chevrons de carapace sur le dos,
     // comme les anneaux d'un insecte ; un CŒUR de glace au milieu ; un ŒIL fendu à la proue, de glace aussi
@@ -754,6 +786,18 @@ function formesDuCroissant(sg: number): Forme[] {
 }
 export function formesDesAiles(coque = 1): Forme[] {
   const f: Forme[] = []
+  if (coque === 9) {
+    // (le pulsar : deux grandes NAGEOIRES de raie, mauves, le bord d'attaque sombre, parcourues de deux veines de plasma ;
+    // le bout est la marque du joueur)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[3.2, sg * 2.2], [1.4, sg * 4.6], [-1.4, sg * 7.4], [-4.6, sg * 9.6], [-6, sg * 9.4], [-5.2, sg * 7.4], [-5.6, sg * 5], [-6.8, sg * 2.6]], mat: 'mauve', relief: 'plat', penche: sg })
+      f.push({ pts: [[3.2, sg * 2.2], [1.4, sg * 4.6], [-1.4, sg * 7.4], [-4.6, sg * 9.6], [-4.9, sg * 9], [-1.9, sg * 6.9], [0.7, sg * 4.4], [2.4, sg * 2.3]], mat: 'obsidienne', relief: 'plat', penche: sg })
+      f.push({ pts: barre(0.2, sg * 3.4, -3.8, sg * 7.8, 0.55), mat: 'plasma', relief: 'plat' })
+      f.push({ pts: barre(-2.6, sg * 3, -4.7, sg * 6.4, 0.45), mat: 'plasma', relief: 'plat' })
+      f.push({ pts: ovale(-5.3, sg * 9.2, 0.8, 0.8, 8), mat: 'marque', relief: 'dome', dome: { x: -5.3, y: sg * 9.2, rx: 0.8, ry: 0.8 } })
+    }
+    return f
+  }
   if (coque === 8) {
     // (le frimas : PAS D'AILES — deux CROISSANTS de carapace qui se referment devant lui)
     for (const sg of [-1, 1]) f.push(...formesDuCroissant(sg))
@@ -883,6 +927,8 @@ export function formesDuRadar(t: number): Forme[] {
  */
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
+  // (l'orbe de plasma se forme entre les deux cornes du Pulsar)
+  if (id === 'plasma') return { x: 9.6, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
@@ -899,7 +945,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [
@@ -956,7 +1002,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   if (!g.surLePont) f.push(...armes)
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
-  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => a.coque !== 8 || x.relief === 'emis'), tu.x, tu.y))
+  // (le pulsar non plus : il souffle du plasma, violet)
+  for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => (a.coque !== 8 && a.coque !== 9) || x.relief === 'emis').map((x): Forme => (a.coque === 9 && x.relief === 'emis' ? { ...x, mat: 'plasma' } : x)), tu.x, tu.y))
   // (une soucoupe : ses petites tuyères tout autour, sous l'anneau ; leurs jets sont dessinés par la page)
   if (g.omni !== undefined) for (let k = 0; k < g.omni.n; k++) f.unshift(...formesDeLaTuyereOmni(g.omni, k))
   // (la flamme doit passer SOUS la coque : on la met en tête)

@@ -1423,4 +1423,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('personne à portée : pas de tornade', w3.tornades.length === 0)
 }
 
+// L'ORBE DE PLASMA DU PULSAR (Keko, 16/11) : elle file vers là où sera la cible, traverse ce qu'elle croise, et y éclate
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const plasma = { id: 'plasma', cadence: 1.4, degats: 5, portee: 110, vitesse: 70, vie: 2.2, dispersion: 0, guide: false, plasma: { rayon: 22, degats: 12 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, arcDeTir: 0, armes: [plasma], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  // (la cible à 60, une voisine à 15 d'elle, plus loin du vaisseau, et une troisième à 60 de là, hors de l'éclat)
+  w.ennemis.push(insecte(1, 60, 0), insecte(2, 68, 13), insecte(3, 60, 70))
+  const ev: Evenement[] = []
+  for (let i = 0; i < 72; i++) {
+    for (const [k, [x, y]] of [[60, 0], [68, 13], [60, 70]].entries()) w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier('une orbe part, traverse la cible (5) et éclate au bout de sa course (12) : la voisine prend l’éclat, la lointaine rien', ev.filter((e) => e.type === 'explosionDeZone' && e.arme === 'plasma').length === 1 && pv[0] === 17 && pv[1] === 12 && pv[2] === 0 && w.obus.length === 0)
+}
+
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

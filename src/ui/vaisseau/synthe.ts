@@ -571,6 +571,32 @@ const RECETTES = {
       for (let k = 0; k < 4; k++) note(m, 0.3 + k * 0.15 + 0.05 * h.next(), 0.18, (h.next() - 0.5) * 0.9, { f: 2600 + 1500 * h.next(), a: 0.001, d: 0.12, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
     },
   },
+  /**
+   * UNE ORBE DE PLASMA PART (le Pulsar, 16/11) : une décharge d'énergie qui se condense — un bourdon riche qui plonge puis
+   * remonte en vibrant, un souffle électrique bref, un ton clair qui ondule
+   */
+  plasma: {
+    duree: 0.7, niveau: 0.22, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 260, glisse: { vers: 140, en: 0.07 }, a: 0.002, d: 0.3, battement: 14, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.35, 0.6], [5, 0.2, 0.4]], sature: 1.3 })
+      souffle(m, h, 0, 0.5, 0, { f: 3000, glisse: { vers: 1400, en: 0.08 }, q: 1.5, bande: true, a: 0.001, d: 0.07 })
+      note(m, 0.03, 0.3, 0, { f: 900 * (0.95 + 0.1 * h.next()), glisse: { vers: 1400, en: 0.35, droit: true }, a: 0.01, d: 0.4, battement: 11 })
+    },
+  },
+  /**
+   * L'ORBE ÉCLATE : une gerbe d'énergie, pas une explosion de feu — un éclair clair et grésillant, un coup grave qui
+   * tombe, une traîne qui scintille et ondule d'une oreille à l'autre
+   */
+  eclatPlasma: {
+    duree: 1.1, niveau: 0.32, salle: [0.45, 0.18], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, 0, { f: 4200, glisse: { vers: 1800, en: 0.06 }, q: 1.3, bande: true, a: 0.001, d: 0.08 })
+      note(m, 0, 0.9, 0, { f: 120, glisse: { vers: 40, en: 0.2 }, a: 0.002, d: 0.3, partiels: CORPS, sature: 1.6 })
+      note(m, 0.01, 0.35, -0.5, { f: 1500, glisse: { vers: 700, en: 0.6 }, a: 0.005, d: 0.7, battement: 17, partiels: [[1, 1, 1], [1.5, 0.4, 0.7]] })
+      note(m, 0.02, 0.3, 0.5, { f: 1180, glisse: { vers: 560, en: 0.6 }, a: 0.005, d: 0.7, battement: 13, partiels: [[1, 1, 1], [1.5, 0.4, 0.7]] })
+      for (let k = 0; k < 5; k++) souffle(m, h, 0.03 + 0.05 * k + 0.02 * h.next(), 0.4 - k * 0.06, (h.next() - 0.5) * 0.9, { f: 3800 - 300 * k, q: 1.8, bande: true, a: 0.001, d: 0.04 })
+    },
+  },
   /** UN INSECTE GELÉ VOLE EN ÉCLATS : du verre qui se brise — un claquement, une pluie de tintements, un coup sourd */
   brise: {
     duree: 0.8, niveau: 0.24, salle: [0.35, 0.14], variantes: 3,

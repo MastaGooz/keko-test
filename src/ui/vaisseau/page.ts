@@ -163,7 +163,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   // (LA SALAMANDRE EST DONNÉE D'OFFICE dans le jeu du vortex, pour l'essai — Keko, 15/11)
-  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11)
+  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, 16/11)
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
@@ -187,7 +187,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // couleur pour bien s'identifier » ; rouge, bleu, vert ou jaune, rouge au départ)
   const VORTEX_ = parametres.has('vortex')
   const porteurDeLaLivree = (): string => (VORTEX_ ? 'joueur' : flotte.actif)
-  const livreesPossibles = (): typeof LIVREES => (VORTEX_ ? LIVREES.filter((l) => COULEURS_DE_JOUEUR.includes(l.id)) : LIVREES.filter((l) => !COULEURS_DE_JOUEUR.includes(l.id) || l.id === 'rouge'))
+  const livreesPossibles = (): typeof LIVREES => (VORTEX_ ? COULEURS_DE_JOUEUR.flatMap((id) => LIVREES.filter((l) => l.id === id)) : LIVREES.filter((l) => !COULEURS_DE_JOUEUR.includes(l.id) || l.id === 'rouge'))
   const livreeDuVaisseau = (): string => {
     const l = chargerLivree(porteurDeLaLivree())
     return livreesPossibles().some((x) => x.id === l) ? l : VORTEX_ ? 'rouge' : 'serie'
@@ -824,7 +824,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
-      if (canon?.napalm !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
+      if (canon?.napalm !== undefined || canon?.plasma !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
@@ -931,7 +932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -963,7 +964,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -6634,6 +6635,85 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /**
+   * LE PLASMA DU PULSAR (Keko, 16/11 : « des explosions de plasma violet-bleu »), les teintes du « Plasma explosion » de
+   * pixelfx — dont l'effet, de deux cents pixels, ne tient pas dans la vue du vol : ses ingrédients, redessinés à la taille
+   * de l'éclat. L'ORBE en vol : une boule qui bout — un cœur blanc, des bandes bleues et violettes qui tournent —, une
+   * traîne violette, une lueur, un arc qui crépite de temps en temps. L'ÉCLAT : un flash blanc ; la boule qui enfle puis
+   * se creuse en coquille ; deux ondes, bleue et violette ; des arcs d'éclair qui partent d'elle ; des étincelles.
+   */
+  const PLASMA = ['#0a0828', '#1a1c6e', '#2c3cc0', '#4a7cf0', '#7cc0ff', '#c8ecff', '#ffffff'].map((c) => N.hex(c))
+  const PLASMA_V = ['#1c0a30', '#4a1a8c', '#8a3ce0', '#c48cff', '#f0d8ff'].map((c) => N.hex(c))
+  const DUREE_DE_L_ECLAT = 0.55
+  const eclatsDePlasma: { x: number; y: number; t0: number; r: number; id: number }[] = []
+  function dessinerLePlasma(p: Peintre): void {
+    for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
+    const orbes = m.obus.filter((o) => o.arme === 'plasma')
+    if (orbes.length === 0 && eclatsDePlasma.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const o of orbes) {
+      const l = Math.hypot(o.vx, o.vy) || 1
+      const ux = o.vx / l
+      const uy = o.vy / l
+      // (elle se forme en sortant des cornes : petite d'abord)
+      const k = Math.min(1, ((o.vie0 ?? o.vie) - o.vie) / 0.12 + 0.35)
+      for (let j = 5; j >= 1; j--) p.disc(o.x - ux * j * 2.2, o.y - uy * j * 2.2, 2.6 * (1 - j / 6) * k, PLASMA_V[2], 0.5 * (1 - j / 6))
+      p.glow(o.x, o.y, 13 * k, PLASMA_V[2], 0.55)
+      const R = (4.6 + 0.5 * Math.sin(t * 18 + o.id)) * k
+      p.disc(o.x, o.y, R, (d, ang) => {
+        const b = 0.5 + 0.5 * Math.sin(ang * 3 + t * 25 + o.id)
+        return d > 0.75 ? PLASMA_V[2] : d > 0.45 ? (b > 0.5 ? PLASMA[4] : PLASMA_V[3]) : d > 0.2 ? PLASMA[5] : N.WHITE
+      }, (d) => Math.min(1, (1 - d) / 0.2))
+      p.glow(o.x, o.y, 6 * k, PLASMA[4], 0.45)
+      // (un arc qui crépite, un instant sur trois)
+      const tic = Math.floor(t * 14 + o.id)
+      if (tic % 3 === 0) {
+        const a = alea(o.id, tic, 1) * Math.PI * 2
+        p.line(o.x + Math.cos(a) * R, o.y + Math.sin(a) * R, o.x + Math.cos(a + 0.5) * (R + 3), o.y + Math.sin(a + 0.5) * (R + 3), PLASMA[5], 0.85)
+      }
+    }
+    for (const e of eclatsDePlasma) {
+      const u = (t - e.t0) / DUREE_DE_L_ECLAT
+      const v1 = 1 - u
+      // (les lueurs : bleue large, violette au cœur)
+      p.glow(e.x, e.y, e.r * (1.4 - 0.4 * u), PLASMA_V[2], 0.5 * v1)
+      p.glow(e.x, e.y, e.r * 0.7, PLASMA[4], 0.4 * v1)
+      // (la boule : elle enfle jusqu'aux trois quarts du rayon, puis se creuse en coquille qui s'amincit — vide au milieu :
+      // un voile clair à faible opacité y tournait au gris)
+      const rb = e.r * (0.25 + 0.55 * Math.min(1, u / 0.3))
+      const creux = Math.max(0, (u - 0.2) / 0.8)
+      p.disc(e.x, e.y, rb, (d, ang) => {
+        const dd = d + 0.1 * Math.sin(ang * 5 + t * 30 + e.id)
+        return dd > 0.82 ? PLASMA_V[3] : dd > 0.6 ? PLASMA_V[2] : dd > 0.35 ? PLASMA[4] : u < 0.25 ? N.WHITE : PLASMA[5]
+      }, (d) => (d < creux ? 0 : 0.92 * Math.min(1, (d - creux) / 0.12)) * v1 * Math.min(1, (1 - d) / 0.12))
+      // (le flash blanc des premiers centièmes)
+      if (u < 0.15) p.disc(e.x, e.y, e.r * (0.35 + u * 2), N.WHITE, (d) => (1 - u / 0.15) * (1 - d * d))
+      // (les deux ondes)
+      p.ring(e.x, e.y, e.r * (0.3 + 0.75 * Math.sqrt(u)), 1, u < 0.3 ? PLASMA[5] : PLASMA_V[3], v1)
+      p.ring(e.x, e.y, e.r * (0.2 + 0.55 * Math.sqrt(u)), 1, PLASMA[3], 0.6 * v1)
+      // (les arcs d'éclair, qui changent de forme à chaque image, la première moitié)
+      if (u < 0.5) {
+        const tic = Math.floor(t * 24)
+        for (let j = 0; j < 4; j++) {
+          const a = alea(e.id + tic, j, 1) * Math.PI * 2
+          let px = e.x + Math.cos(a) * rb * 0.8
+          let py = e.y + Math.sin(a) * rb * 0.8
+          const fin = e.r * (0.85 + 0.35 * alea(e.id + tic, j, 2))
+          for (let s = 1; s <= 4; s++) {
+            const rr = rb * 0.8 + ((fin - rb * 0.8) * s) / 4
+            const jit = (alea(e.id + tic, j, 3 + s) - 0.5) * 4
+            const nx = e.x + Math.cos(a) * rr - Math.sin(a) * jit
+            const ny = e.y + Math.sin(a) * rr + Math.cos(a) * jit
+            p.line(px, py, nx, ny, s < 3 ? N.WHITE : PLASMA[5], 1 - u * 1.6)
+            px = nx
+            py = ny
+          }
+          p.glow(px, py, 3, PLASMA[4], 0.5 * (1 - u * 2))
+        }
+      }
+    }
+    p.place(0, 0)
+  }
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   /** Les lignes de balises qui viennent de s'éclairer (voir `dessinerLesBalises`). */
@@ -6886,6 +6966,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(o.x - ux * 3 - uy, o.y - uy * 3 + ux, o.x - ux, o.y - uy, GLACE[5])
         p.px(o.x, o.y, N.WHITE)
         p.glow(o.x, o.y, 4, GLACE[5], 0.5)
+      } else if (o.arme === 'plasma') {
+        // (l'orbe de plasma : dessinée avec ses éclats, voir `dessinerLePlasma`)
       } else if (o.arme === 'tourelle') {
         // (une balle de tourelle : un traceur d'or, court)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, PEPITE[2])
@@ -8859,6 +8941,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               break
             }
             case 'explosionDeZone': {
+              // (L'ORBE DE PLASMA ÉCLATE : sa gerbe à elle, violette et bleue, son « zap », des étincelles — pas de feu)
+              if (ev.arme === 'plasma') {
+                jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
+                eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: Math.round(ev.x * 13 + ev.y * 7) })
+                for (let i = 0; i < 14; i++) {
+                  const a = R.range(0, Math.PI * 2)
+                  const vit = R.range(40, 110)
+                  etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA[5], PLASMA[4], PLASMA_V[3]][Math.floor(R.next() * 4)], 1, 2)
+                }
+                secousse = Math.max(secousse, 0.22)
+                break
+              }
               // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
               // feu (les flammes, braises et fumées du dépôt), son « boum »
               jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -9413,6 +9507,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTirs(p)
     dessinerLesScies(p)
     dessinerLesTornades(p)
+    dessinerLePlasma(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)

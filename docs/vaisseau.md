@@ -4229,3 +4229,28 @@ perle et la sarcelle (ses drones aussi), l'Ingénieur le kaki et le graphite (se
 bandes jaunes passent à l'acier : elles se lisaient comme une marque), le Frimas
 la nacre et l'indigo. Le Nova Drifter garde sa livrée de châssis entier.
 *Teintes de moi, à rejuger.*
+
+PUIS DOUZE COULEURS (Keko, 16/11 : « plusieurs autres couleurs en choix, un
+panel un peu plus large ») : rouge, orange, jaune, lime, vert, turquoise, cyan,
+bleu, violet, magenta, dragée et blanc — le tour du cercle des teintes, en trois
+rangées de cinq pastilles. Les nouvelles ont des identifiants à elles : les
+livrées du Nova Drifter ne bougent pas. *Teintes de moi, à rejuger.*
+
+UN SIXIÈME VAISSEAU, LE PULSAR (Keko, 16/11 : « un nouveau concept de vaisseau,
+alien exotique, dont le style de jeu se base sur le plasma et l'énergie ; des
+tons violets, des explosions de plasma violet-bleu ; un premier jet ») : une
+raie — deux grandes nageoires mauves au bord d'attaque d'obsidienne, parcourues
+de veines de plasma — autour d'un CŒUR DE PLASMA dans sa bague ; deux cornes de
+décharge au nez ; une seule tuyère qui souffle du plasma violet (coque 9,
+`propulseur-p3`). Sa marque : le bout des nageoires. Sa première arme,
+L'ORBE DE PLASMA (`Arme.plasma`) : toutes les 1,4 s, un insecte à moins de
+110, une orbe part d'entre les cornes, LENTE (70), vers là où sera l'insecte, et
+vole juste le temps d'y arriver ; elle TRAVERSE tout ce qu'elle croise (5 points
+chacun) et ÉCLATE au bout de sa course : 12 points à tout ce qui est à 22.
+L'éclat reprend les ingrédients et les teintes du « Plasma explosion » de
+pixelfx, redessinés à sa taille (l'effet du dépôt fait deux cents pixels) : un
+flash blanc, la boule qui enfle puis se creuse en coquille, deux ondes, des arcs
+d'éclair, des étincelles ; ses sons, `plasma` et `eclatPlasma`. *Chiffres de
+moi, à rejuger.* Au passage : un mini-missile au bout de sa course n'explosait
+jamais (le test disait `!fini` alors que `fini` est vrai en fin de course) ;
+il explose maintenant, comme la règle l'écrivait.

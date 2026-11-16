@@ -421,6 +421,13 @@ export type Arme = {
    */
   tornade?: { vitesse: number; virage: number; duree: number; rayon: number; dps: number; ralenti: number }
   gel?: { duree: number; ralenti: number }
+  /**
+   * UNE ORBE DE PLASMA (le Pulsar, Keko, 16/11 : « un style de jeu basé sur le plasma et l'énergie ; des explosions de
+   * plasma violet-bleu ») : un obus lent, tiré droit vers LÀ OÙ SERA la cible, qui vole juste le temps d'y arriver ; en
+   * chemin il TRAVERSE tout ce qu'il croise (`degats`, une fois chacun), et au bout de sa course il ÉCLATE : tout insecte
+   * à moins de `rayon` perd `plasma.degats`.
+   */
+  plasma?: { rayon: number; degats: number }
 }
 
 export type Vaisseau = {
@@ -620,7 +627,7 @@ export type Evenement =
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
-  | { type: 'explosionDeZone'; x: number; y: number; rayon: number }
+  | { type: 'explosionDeZone'; x: number; y: number; rayon: number; /** L'arme qui éclate (l'orbe de plasma a sa gerbe à elle). */ arme?: string }
   | { type: 'tourelleFinie'; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
@@ -1704,8 +1711,8 @@ function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
 }
 
 /** UNE EXPLOSION DE ZONE (voir `Arme.zone`) : tout ennemi à moins du rayon — sauf celui qu'on vient de toucher — en perd. */
-function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[]): void {
-  ev.push({ type: 'explosionDeZone', x, y, rayon: zone.rayon })
+function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[], arme?: string): void {
+  ev.push({ type: 'explosionDeZone', x, y, rayon: zone.rayon, ...(arme === undefined ? {} : { arme }) })
   for (const e of [...m.ennemis]) {
     if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + c.ennemi.rayon) continue
     e.pv -= zone.degats
@@ -2108,7 +2115,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
       if (c.arcDeTir > 0) vise = v.cap + Math.max(-c.arcDeTir, Math.min(c.arcDeTir, ecartDAngle(v.cap, vise)))
       // (sans bouche, le tir part du bord du vaisseau : d'autant moins à voler)
-      if (arme.napalm !== undefined) vieDuTir = Math.min(arme.vie, Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / arme.vitesse)
+      // (une orbe de plasma aussi : elle éclate là où sera la cible)
+      if (arme.napalm !== undefined || arme.plasma !== undefined) vieDuTir = Math.min(arme.vie, Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / arme.vitesse)
     }
     m.armesA[i] = m.t + arme.cadence
     if (c.alternance) c.armes.forEach((_, j) => {
@@ -2120,7 +2128,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.zone === undefined ? {} : { zone: arme.zone }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }) })
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.zone === undefined ? {} : { zone: arme.zone }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
     ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
@@ -2140,6 +2148,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     o.x += o.vx * dt
     o.y += o.vy * dt
     let fini = o.vie <= 0
+    let eclate = false
     // (une boule de napalm ne touche rien en vol : elle passe au-dessus ; à terre, elle devient une flaque)
     if (fini && o.napalm !== undefined) {
       m.flaques.push({ id: m.prochainId++, x: o.x, y: o.y, nee: m.t, ...o.napalm })
@@ -2165,7 +2174,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         e.pv -= o.degats
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
-        if (o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, e, ev)
+        if (o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, e, ev, o.arme)
+        eclate = true
         break
       }
     }
@@ -2178,8 +2188,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         abimerLaRoche(c, m, { x: o.x, y: o.y, force: 0, asteroide: a.id }, o.degats, ev)
       }
     }
-    // (un mini-missile au bout de sa course explose aussi, là où il est)
-    if (!fini && o.vie <= 0 && o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, null, ev)
+    // (un mini-missile au bout de sa course explose aussi, là où il est — et l'orbe de plasma, c'est là qu'elle éclate)
+    // (le test disait `!fini`, et `fini` est vrai dès que la course est finie : il n'explosait jamais — 16/11)
+    if (o.vie <= 0 && o.zone !== undefined && !eclate) exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
     if (fini) m.obus.splice(i, 1)
   }
 

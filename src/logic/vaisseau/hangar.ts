@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -143,6 +143,11 @@ export const PIECES: Piece[] = [
   // un souffle froid (cran 3 : la flamme ionique). Vif, fragile. *Chiffres de moi, à rejuger en jouant.*
   { id: 'coque-8', sorte: 'coque', cran: 8, nom: 'Carapace du Frimas', dit: '6 de blindage, une carapace venue d’ailleurs, cerclée de deux croissants de cristal.', prix: 0, poids: 22, pv: 6, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-c3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Frimas', dit: 'Un souffle froid : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.15 },
+  // LE PULSAR (Keko, 16/11 : « alien, exotique, un style de jeu basé sur le plasma et l'énergie, des tons violets, des
+  // explosions de plasma violet-bleu ») : une raie de carapace sombre autour d'un cœur de plasma, deux cornes de
+  // décharge au nez. Assez vif, assez fragile. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'coque-9', sorte: 'coque', cran: 9, nom: 'Carapace du Pulsar', dit: '5 de blindage, une carapace venue d’ailleurs autour d’un cœur de plasma.', prix: 0, poids: 21, pv: 5, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-p3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Pulsar', dit: 'Un souffle de plasma : il file et vire bien.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1.1 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
   { id: 'foreuse-2', sorte: 'outil', cran: 2, famille: 'foreuse', nom: 'Foreuse lourde', dit: 'Creuse 40 % plus vite.', prix: 20, cout: { fer: 15 }, poids: 6, debit: 1.4, portee: 1},
@@ -171,6 +176,9 @@ export const PIECES: Piece[] = [
   // LA TORNADE DE GIVRE DU FRIMAS (Keko, 15/11) : elle part du vaisseau, suit les insectes, gèle et ronge ce qui est
   // dedans, et s'éteint. *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-tornade', sorte: 'arme', cran: 3, nom: 'Tornade de givre', dit: 'Toutes les 6 s, un insecte à moins de 120, une tornade de givre part du vaisseau et suit les insectes, lentement, pendant 4,5 s : tout ce qui est dans son tourbillon (14) avance à 40 % de sa vitesse et perd 8 points par seconde.', note: 'Elle chasse seule.', prix: 30, poids: 6, arme: { id: 'tornade', cadence: 6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, tornade: { vitesse: 18, virage: 3, duree: 4.5, rayon: 14, dps: 8, ralenti: 0.4 } } },
+  // L'ORBE DE PLASMA DU PULSAR (Keko, 16/11) : lente, elle traverse tout jusqu'à là où sera la cible, et y éclate en une
+  // explosion de plasma. *Chiffres de moi, à rejuger en jouant.*
+  { id: 'arme-plasma', sorte: 'arme', cran: 1, nom: 'Orbe de plasma', dit: 'Toutes les 1,4 s, un insecte à moins de 110, une orbe de plasma part vers lui, lentement : elle traverse tout ce qu’elle croise (5 points chacun) et éclate là où il sera — 12 points à tout ce qui est à 22 autour.', note: 'Lente, mais elle éclate dans le tas.', prix: 30, poids: 6, arme: { id: 'plasma', cadence: 1.4, degats: 5, portee: 110, vitesse: 70, vie: 2.2, dispersion: 0, guide: false, plasma: { rayon: 22, degats: 12 } } },
   // LES MINI-MISSILES DU CHASSEUR, AFFICHÉS « MISSILES » (Keko, 15/11) : guidés, plus lents et moins forts que le canon sur une cible seule,
   // mais ils EXPLOSENT : tout insecte autour de l'impact y perd aussi. *Chiffres de moi, à rejuger en jouant.*
   { id: 'arme-minimissiles', sorte: 'arme', cran: 2, nom: 'Missiles', dit: 'Un missile guidé toutes les 1,6 s, 5 points, porte à 120 : il explose à l’impact et touche aussi, de 5 points, tout ce qui est à 18 autour.', note: 'Moins bon que le canon sur une cible seule, meilleur sur un groupe.', prix: 40, poids: 6, arme: { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18, degats: 5 } } },
