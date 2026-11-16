@@ -494,6 +494,16 @@ export type Arme = {
   // même quand son insecte meurt ou s'éloigne. Un insecte au bout d'un bras tendu, ou dans le nuage, perd `dps` par
   // seconde (une morsure se signale toutes les `periode` secondes).
   nuee?: { rayon: number; dps: number; bras: number; deploiement: number; periode: number }
+  /**
+   * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
+   * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
+   * un insecte à `portee` du vaisseau, il POND un rejeton derrière lui — `max` à la fois, chacun vit `duree` secondes.
+   * Un rejeton NAGE PAR À-COUPS (sa vitesse bat, comme une méduse), jusqu'à `vitesse`, en tournant de `acces` par
+   * seconde vers ce qu'il veut : l'insecte le plus proche DE LUI à `vue` (le verrouillé d'abord) ; sans proie, la place
+   * derrière le vaisseau. À `allonge` de sa proie, il la FOUETTE d'une tentacule : `degats`, toutes les `periode`
+   * secondes. L'état est `Monde.rejetons`.
+   */
+  rejeton?: { max: number; duree: number; vitesse: number; acces: number; vue: number; allonge: number; periode: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -646,7 +656,12 @@ export type Monde = {
   tentacules: Tentacule[]
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
   nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[] }[]
+  /** LES REJETONS (voir `Arme.rejeton`). */
+  rejetons: Rejeton[]
 }
+
+/** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
+export type Rejeton = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; cible: number | null; frappeA: number }
 
 /**
  * Une tentacule (voir `Arme.tentacule`) : son arme, son ancre, ce qu'elle fait (au repos, elle s'étend, plantée, elle se
@@ -733,6 +748,10 @@ export type Evenement =
   | { type: 'piqure'; x: number; y: number }
   /** Le nuage d'insectes mord un insecte (voir `Arme.nuee`) : signalé toutes les `periode` secondes. */
   | { type: 'morsure'; id: number; x: number; y: number }
+  /** Un rejeton naît, fouette sa proie (où elle est), s'éteint (voir `Arme.rejeton`). */
+  | { type: 'rejeton'; x: number; y: number }
+  | { type: 'coupDeRejeton'; id: number; x: number; y: number }
+  | { type: 'rejetonFini'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -753,7 +772,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1855,6 +1874,74 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
   }
 }
 
+/** LES REJETONS (voir `Arme.rejeton`) : la ponte, la nage par à-coups, la chasse, les coups de tentacule, la fin. */
+function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const rj = a.rejeton
+    if (rj === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    if (m.rejetons.filter((r) => r.arme === i).length >= rj.max) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    m.armesA[i] = m.t + a.cadence
+    // (pondu derrière le vaisseau, lancé vers l'arrière)
+    const x = v.x - Math.cos(v.cap) * 8
+    const y = v.y - Math.sin(v.cap) * 8
+    m.rejetons.push({ id: m.prochainId++, arme: i, x, y, vx: -Math.cos(v.cap) * 30 + v.vx, vy: -Math.sin(v.cap) * 30 + v.vy, nee: m.t, cible: null, frappeA: m.t })
+    ev.push({ type: 'rejeton', x, y })
+  })
+  for (let k = m.rejetons.length - 1; k >= 0; k--) {
+    const r = m.rejetons[k]
+    const a = c.armes[r.arme]
+    const rj = a?.rejeton
+    if (a === undefined || rj === undefined || m.t - r.nee >= rj.duree || m.phase !== 'vol') {
+      m.rejetons.splice(k, 1)
+      ev.push({ type: 'rejetonFini', x: r.x, y: r.y })
+      continue
+    }
+    // (sa proie : le verrouillé à sa vue, sinon le plus proche de lui)
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - r.x, e.corps.y - r.y)
+    let proie: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && dist(ve) <= rj.vue) proie = ve
+    else {
+      let dc = rj.vue
+      for (const e of m.ennemis) if (dist(e) < dc) (dc = dist(e)), (proie = e)
+    }
+    r.cible = proie?.id ?? null
+    // (où il veut aller : sur sa proie, jusqu'à portée de tentacule ; sans proie, sa place derrière le vaisseau)
+    let bx: number
+    let by: number
+    let arret: number
+    if (proie !== undefined) (bx = proie.corps.x), (by = proie.corps.y), (arret = rj.allonge * 0.7)
+    else {
+      const cote = r.id % 2 === 0 ? 1 : -1
+      bx = v.x - Math.cos(v.cap) * 16 - Math.sin(v.cap) * 9 * cote
+      by = v.y - Math.sin(v.cap) * 16 + Math.cos(v.cap) * 9 * cote
+      arret = 2
+    }
+    const dx = bx - r.x
+    const dy = by - r.y
+    const d = Math.hypot(dx, dy) || 1
+    // (il nage par à-coups : sa vitesse voulue bat, deux fois et demie par seconde)
+    const bat = 0.55 + 0.45 * Math.max(0, Math.sin((m.t - r.nee) * 2.5 * Math.PI * 2 + r.id))
+    const vit = d <= arret ? 0 : Math.min(rj.vitesse * bat, (d - arret) * 4)
+    const k2 = Math.min(1, rj.acces * dt)
+    r.vx += ((dx / d) * vit - r.vx) * k2
+    r.vy += ((dy / d) * vit - r.vy) * k2
+    r.x += r.vx * dt
+    r.y += r.vy * dt
+    // (à portée de tentacule : il fouette)
+    if (proie !== undefined && dist(proie) <= rj.allonge + c.ennemi.rayon && m.t >= r.frappeA) {
+      r.frappeA = m.t + rj.periode
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      proie.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'coupDeRejeton', id: r.id, x: proie.corps.x, y: proie.corps.y })
+      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
+      if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+    }
+  }
+}
+
 /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : centrés sur le vaisseau, leurs bras qui s'étendent vers les insectes proches, les morsures. */
 function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -2414,7 +2501,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2502,10 +2589,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   tirerLesRails(c, m, ev)
   menerLesTentacules(c, m, ev)
   menerLesNuees(c, m, dt, ev)
+  menerLesRejetons(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

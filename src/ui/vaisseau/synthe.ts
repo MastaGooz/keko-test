@@ -629,6 +629,15 @@ const RECETTES = {
       souffle(m, h, 0, 0.3, 0, { f: 3000, q: 1.5, bande: true, a: 0.01, d: 0.12 })
     },
   },
+  /** UN REJETON EST PONDU : un « blop » gluant — une note ronde qui plonge, un gargouillis qui remonte */
+  ponte: {
+    duree: 0.45, niveau: 0.16, salle: [0.25, 0.1], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 320, glisse: { vers: 140, en: 0.08 }, a: 0.003, d: 0.12, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      note(m, 0.06, 0.4, 0, { f: 240 + 60 * h.next(), glisse: { vers: 480, en: 0.1, droit: true }, a: 0.005, d: 0.12, battement: 22 })
+      souffle(m, h, 0, 0.3, 0, { f: 900, glisse: { vers: 400, en: 0.1 }, q: 1.5, bande: true, a: 0.002, d: 0.08 })
+    },
+  },
   /** L'AIGUILLE SE PLANTE : un « tchk » charnu — un coup sec et grave, un petit bruit humide qui gargouille */
   piqure: {
     duree: 0.35, niveau: 0.17, salle: [0.2, 0.08], variantes: 4,

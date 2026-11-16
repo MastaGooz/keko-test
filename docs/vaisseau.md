@@ -4419,3 +4419,20 @@ quatre-vingt-dix moucherons ; au repos, tous serrés autour du vaisseau ; des br
 trois sur cinq le quittent — chacun à sa place le long du bras, renflé au milieu,
 un peu courbe, qui ondule, un voile vert le long —, et au bout d'un bras tendu ils
 grouillent sur l'insecte.
+
+SA TROISIÈME ARME, LES REJETONS (`Arme.rejeton` ; Keko, 16/11 : « on spawn un
+mini vaisseau qui est autonome et attaque les ennemis, un genre de truc avec des
+tentacules qui flottent derrière lui et s'en sert pour attaquer ») : toutes les
+3,5 s, un insecte à moins de 110 du vaisseau, il POND un rejeton derrière lui —
+trois à la fois, chacun vit 14 s (pondus seulement quand des insectes sont là :
+ils ne meurent pas d'ennui). Un rejeton NAGE PAR À-COUPS, comme une méduse (sa
+vitesse voulue bat deux fois et demie par seconde, jusqu'à 70), vers l'insecte le
+plus proche DE LUI à moins de 90 (le verrouillé d'abord) ; sans proie, il revient
+à sa place derrière le vaisseau (à gauche ou à droite, selon lui). À 13 de sa
+proie, il la FOUETTE : 4 points toutes les 0,5 s. Le vaisseau vole librement. Le
+dessin : un bulbe de chair sous un chapeau de chitine, deux yeux de bile, tourné
+vers où il nage, et QUATRE TENTACULES QUI FLOTTENT — chacune une petite corde de
+six maillons tirés l'un par l'autre, poussée d'une houle (elles pendent et
+ondulent au repos, s'étirent en nage) ; quand il fouette, une tentacule part en
+courbe jusqu'à l'insecte et revient. Ses sons : `ponte` (un « blop » gluant),
+`fouet`. *Chiffres de moi, à rejuger.*

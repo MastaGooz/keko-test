@@ -1556,6 +1556,33 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   })()
   verifier('un insecte verrouillé, même le plus loin : il a son bras', verrou.nuees[0].bras.some((b) => b.cible === 4))
 }
+// LES REJETONS DU KRAKEN (Keko, 16/11) : pondus quand un insecte est à portée, ils nagent jusqu'à lui et le fouettent ;
+// trois au plus ; ils meurent au bout de leur durée
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 100000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rejeton = { id: 'rejeton', cadence: 3.5, degats: 4, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, rejeton: { max: 3, duree: 14, vitesse: 70, acces: 5, vue: 90, allonge: 13, periode: 0.5 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rejeton], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 100000 } }
+  const elever = (places: [number, number][], duree: number) => {
+    const w = nouveauMonde(cfg, 3)
+    places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+    const ev: Evenement[] = []
+    let plus = 0
+    for (let i = 0; i < 60 * duree; i++) {
+      places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      plus = Math.max(plus, w.rejetons.length)
+    }
+    return { w, ev, plus, pv: w.ennemis.map((e) => 100000 - e.pv) }
+  }
+  const rien = elever([[0, 300]], 2)
+  verifier('personne à portée : aucun rejeton', rien.ev.every((e) => e.type !== 'rejeton') && rien.w.rejetons.length === 0)
+  const un = elever([[60, 0]], 2)
+  verifier(`un insecte à 60 : un rejeton naît, nage jusqu’à lui et le fouette (${un.pv[0]} en 2 s, par 4)`, un.ev.filter((e) => e.type === 'rejeton').length === 1 && un.pv[0] >= 8 && un.pv[0] % 4 === 0 && un.ev.some((e) => e.type === 'coupDeRejeton'))
+  const long = elever([[60, 0]], 16)
+  verifier(`trois au plus (${long.plus}) ; le premier meurt au bout de 14 s`, long.plus === 3 && long.ev.some((e) => e.type === 'rejetonFini'))
+}
+
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {

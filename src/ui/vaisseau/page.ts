@@ -831,7 +831,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
       else if (canon?.tentacule !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
       // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
-      else if (canon?.nuee !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+      else if (canon?.nuee !== undefined || canon?.rejeton !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -936,7 +936,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -968,7 +968,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -5772,7 +5772,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -7030,7 +7030,97 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     p.place(0, 0)
-  }  const CHITINE_SOMBRE = N.hex('#1a0c12')
+  }  /**
+   * LES REJETONS DU KRAKEN (voir `Arme.rejeton`) : une petite bête — un bulbe de chair sous un chapeau de chitine, deux
+   * yeux de bile devant, tourné vers où il nage — et QUATRE TENTACULES QUI FLOTTENT derrière lui : chacune une petite
+   * corde de six maillons qui suit le bulbe (chaque maillon tiré par le précédent, à sa longueur), poussée d'une houle
+   * douce — au repos elles pendent et ondulent, en nage elles s'étirent. QUAND IL FOUETTE, une tentacule part en courbe
+   * jusqu'à l'insecte, l'aiguille au bout, et revient.
+   */
+  const MAILLONS = 6
+  const LONGUEUR_DU_MAILLON = 1.7
+  const cordesDesRejetons = new Map<number, { cordes: [number, number][][]; cap: number; vu: number }>()
+  const coupsDeRejeton: { id: number; tx: number; ty: number; t0: number; virage: number }[] = []
+  const DUREE_DU_COUP = 0.2
+  function dessinerLesRejetons(p: Peintre): void {
+    for (const [id] of cordesDesRejetons) if (!m.rejetons.some((r) => r.id === id)) cordesDesRejetons.delete(id)
+    for (let i = coupsDeRejeton.length - 1; i >= 0; i--) if (t - coupsDeRejeton[i].t0 > DUREE_DU_COUP) coupsDeRejeton.splice(i, 1)
+    if (m.rejetons.length === 0 || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const r of m.rejetons) {
+      const vit = Math.hypot(r.vx, r.vy)
+      let etat = cordesDesRejetons.get(r.id)
+      if (etat === undefined) {
+        etat = { cordes: [0, 1, 2, 3].map(() => Array.from({ length: MAILLONS }, (): [number, number] => [r.x, r.y])), cap: Math.atan2(r.vy, r.vx), vu: t }
+        cordesDesRejetons.set(r.id, etat)
+      }
+      // (son cap suit sa nage ; à l'arrêt, il garde le sien)
+      if (vit > 5) {
+        const voulu = Math.atan2(r.vy, r.vx)
+        let e = voulu - etat.cap
+        while (e > Math.PI) e -= Math.PI * 2
+        while (e < -Math.PI) e += Math.PI * 2
+        etat.cap += e * Math.min(1, (t - etat.vu) * 8)
+      }
+      etat.vu = t
+      const hx = Math.cos(etat.cap)
+      const hy = Math.sin(etat.cap)
+      // (les cordes : la première maille au cul du bulbe, chacune tirée par la précédente, poussée d'une houle)
+      etat.cordes.forEach((c, k) => {
+        const ecart = (k - 1.5) * 0.9
+        c[0] = [r.x - hx * 2.2 - hy * ecart, r.y - hy * 2.2 + hx * ecart]
+        for (let i = 1; i < MAILLONS; i++) {
+          const houle = Math.sin(t * 6 + k * 1.7 + i * 0.9) * 0.35
+          let qx = c[i][0] - hx * 0.25 - hy * houle
+          let qy = c[i][1] - hy * 0.25 + hx * houle
+          const dx = qx - c[i - 1][0]
+          const dy = qy - c[i - 1][1]
+          const d = Math.hypot(dx, dy) || 1
+          qx = c[i - 1][0] + (dx / d) * LONGUEUR_DU_MAILLON
+          qy = c[i - 1][1] + (dy / d) * LONGUEUR_DU_MAILLON
+          c[i] = [qx, qy]
+        }
+        for (let i = 1; i < MAILLONS; i++) {
+          const u = i / MAILLONS
+          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], u < 0.5 ? CHAIR[3] : CHAIR[2], 1 - u * 0.5)
+        }
+        p.px(Math.round(c[MAILLONS - 1][0]), Math.round(c[MAILLONS - 1][1]), CHAIR[4])
+      })
+      // (le coup de tentacule, s'il fouette : une courbe jusqu'à l'insecte, qui part et revient)
+      for (const cp of coupsDeRejeton) {
+        if (cp.id !== r.id) continue
+        const u = (t - cp.t0) / DUREE_DU_COUP
+        const tendu = u < 0.5 ? u / 0.5 : (1 - u) / 0.5
+        const L = Math.hypot(cp.tx - r.x, cp.ty - r.y) || 1
+        const cx = (r.x + cp.tx) / 2 - ((cp.ty - r.y) / L) * cp.virage * L
+        const cy = (r.y + cp.ty) / 2 + ((cp.tx - r.x) / L) * cp.virage * L
+        let ax = r.x
+        let ay = r.y
+        const n = 8
+        for (let i = 1; i <= n; i++) {
+          const s = (i / n) * tendu
+          const q = 1 - s
+          const bx = q * q * r.x + 2 * q * s * cx + s * s * cp.tx
+          const by = q * q * r.y + 2 * q * s * cy + s * s * cp.ty
+          p.line(ax, ay, bx, by, CHAIR[0])
+          p.line(ax, ay - 1, bx, by - 1, i < n / 2 ? CHAIR[3] : CHAIR[4])
+          ax = bx
+          ay = by
+        }
+        p.px(Math.round(ax), Math.round(ay), OS[3])
+      }
+      // (le bulbe : cerné, de la chair, le chapeau de chitine devant, deux yeux de bile, une lueur)
+      p.glow(r.x, r.y, 6, BILE[1], 0.2)
+      p.circle(r.x, r.y, 3.2, CHAIR[0])
+      p.circle(r.x, r.y, 2.5, CHAIR[2])
+      p.circle(r.x + hx * 0.9, r.y + hy * 0.9, 2.2, CHITINE_DU_REJETON)
+      p.px(Math.round(r.x + hx * 0.6 - hy * 0.9), Math.round(r.y + hy * 0.6 + hx * 0.9), CHAIR[4])
+      for (const sg of [-1, 1]) p.px(Math.round(r.x + hx * 2.2 - hy * sg * 1.1), Math.round(r.y + hy * 2.2 + hx * sg * 1.1), BILE[2])
+    }
+    p.place(0, 0)
+  }
+  const CHITINE_DU_REJETON = N.hex('#56303a')
+  const CHITINE_SOMBRE = N.hex('#1a0c12')
   /** L'instant du dernier bourdonnement de morsure (un à la fois). */
   let morsureSonneA = -10
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
@@ -9463,6 +9553,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
               }
               break
+            case 'rejeton':
+              // (un rejeton est pondu : un « blop » gluant, une giclée de bile)
+              jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+              for (let i = 0; i < 8; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), R.next() < 0.5 ? BILE[1] : CHAIR[3], 1, 1.5)
+              }
+              break
+            case 'coupDeRejeton': {
+              // (il fouette : la tentacule part en courbe, le claquement mouillé)
+              const h = (ev.id * 37 + Math.round(t * 10)) % 2 === 0 ? 1 : -1
+              coupsDeRejeton.push({ id: ev.id, tx: ev.x, ty: ev.y, t0: t, virage: h * 0.3 })
+              if (t - fouetSonneA > 0.1) {
+                fouetSonneA = t
+                jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
+              }
+              break
+            }
+            case 'rejetonFini':
+              // (il s'éteint : il se flétrit en une bouffée de chair et de bile)
+              for (let i = 0; i < 6; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 25), Math.sin(a) * R.range(8, 25), R.range(0.2, 0.4), R.next() < 0.5 ? CHAIR[2] : BILE[0], 1, 1.5)
+              }
+              break
             case 'morsure':
               // (le nuage mord : l'insecte blanchit, un bourdonnement qui grince — un seul à la fois)
               toucheEnnemiA.set(ev.id, t)
@@ -9900,6 +10015,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTornades(p)
     dessinerLePlasma(p)
     dessinerLesNuees(p)
+    dessinerLesRejetons(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)
