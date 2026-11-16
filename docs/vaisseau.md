@@ -4764,3 +4764,16 @@ l'autre vaisseau pour remplacer »). `arme-rail` est la troisième arme du Prism
 220, 16 points à tout ce qui est sur la ligne) ; il part de la POINTE DU CRISTAL de la proue et se dessine aux
 couleurs du faisceau (gaine bleue, bande cyan, âme blanche, étincelles bleues). Le Pulsar n'a plus que deux
 armes, l'orbe et l'essaim, en attendant la troisième.
+
+LA TROISIÈME ARME DU PULSAR : LE PUITS (Keko, 16/11 : « on va tenter le puits » — à la place du railgun, passé
+au Prisme). `Arme.puits`, `arme-puits` : toutes les 5 s, un insecte à moins de 130, une petite singularité de
+plasma part de la bouche (entre les cornes) vers L'INSECTE QUI A LE PLUS DE VOISINS à moins de 45 (le verrouillé
+d'abord), à 150, et s'ouvre au point visé ; ouverte 2 s, elle TIRE VERS SON CENTRE tout insecte à moins de 45, à
+70 par seconde (les insectes marchent à ~42 : ils ne s'en échappent pas), sans le dépasser ; puis elle ÉCLATE :
+22 points à tout ce qui est à moins de 28 du centre. C'est la seule arme qui DÉPLACE les insectes : elle regroupe
+la nuée pour l'orbe et l'essaim. Mesuré : un insecte à 40 du centre, hors de l'éclat au départ, est aspiré et
+pris dedans ; celui hors du rayon, rien. Le dessin : en vol, une boule sombre au liseré violet et sa traîne ;
+ouverte, un cœur noir cerclé de violet qui grossit, trois bras de plasma en spirale, des grains aspirés du bord,
+le cercle du rayon qui bat de plus en plus vite ; l'éclat est celui de l'orbe. Trois sons : `puits` (un
+« vloum » sourd), `aspire` (2 s, un souffle qui monte, un bourdon qui gonfle), puis `eclatPlasma`.
+*Chiffres de moi, à rejuger.*

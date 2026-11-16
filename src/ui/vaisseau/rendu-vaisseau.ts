@@ -1117,7 +1117,7 @@ export function formesDuRadar(t: number): Forme[] {
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
   // (l'orbe de plasma se forme entre les deux cornes du Pulsar ; l'essaim en part aussi)
-  if (id === 'plasma' || id === 'essaim') return { x: 9.6, y: 0 }
+  if (id === 'plasma' || id === 'essaim' || id === 'puits') return { x: 9.6, y: 0 }
   // (la Vouivre crache de sa gueule, entre ses mandibules)
   if (id === 'crachat') return { x: 9.6, y: 0.4 }
   // (le Prisme tire de son cristal)
@@ -1139,7 +1139,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau' || id === 'puits') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [

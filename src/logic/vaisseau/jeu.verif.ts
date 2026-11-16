@@ -1920,3 +1920,25 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   const v = w.vaisseau
   verifier(`le cristal est déposé devant le vaisseau, à 10 dans l'axe de son nez (${b === undefined ? '—' : Math.hypot(b.x - v.x, b.y - v.y).toFixed(1)})`, b !== undefined && Math.abs(b.x - (v.x + Math.cos(v.cap) * 10)) < 1 && Math.abs(b.y - (v.y + Math.sin(v.cap) * 10)) < 1)
 }
+
+// LE PUITS DU PULSAR (Keko, 16/11) : lancé au cœur de la nuée, il s'ouvre, aspire vers son centre ce qui est dans son
+// rayon, puis éclate sur ce qui est près du centre — l'insecte du bord, aspiré, est pris dans l'éclat ; le lointain, rien
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const puits = { id: 'puits', cadence: 99, degats: 22, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, puits: { vitesse: 150, rayon: 45, force: 70, duree: 2, eclat: 28 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [puits], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  const places: [number, number][] = [[80, 0], [80, 12], [92, -8], [0, -70], [80, 40], [80, 100]]
+  places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+  const ev: Evenement[] = []
+  let ouvertEn: { x: number; y: number } | null = null
+  for (let i = 0; i < 60 * 3.5; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      ev.push(e)
+      if (e.type === 'puitsOuvert') ouvertEn = { x: e.x, y: e.y }
+    }
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier(`le puits s'ouvre au cœur de la nuée (${ouvertEn === null ? '—' : `${ouvertEn.x.toFixed(0)}, ${ouvertEn.y.toFixed(0)}`}), aspire l'insecte du bord dans son éclat et éclate une fois : ${pv.join(' / ')} (22 aux quatre de la nuée, 0 au lointain et à celui hors du rayon)`, ev.filter((e) => e.type === 'puitsEclate').length === 1 && ouvertEn !== null && ouvertEn.x > 70 && pv[0] === 22 && pv[1] === 22 && pv[2] === 22 && pv[3] === 0 && pv[4] === 22 && pv[5] === 0)
+}

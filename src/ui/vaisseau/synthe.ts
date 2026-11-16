@@ -732,6 +732,25 @@ const RECETTES = {
    * L'ORBE ÉCLATE : une gerbe d'énergie, pas une explosion de feu — un éclair clair et grésillant, un coup grave qui
    * tombe, une traîne qui scintille et ondule d'une oreille à l'autre
    */
+  /** UN PUITS DE PLASMA PART (le Pulsar, 16/11) : un « vloum » sourd et lourd, un ton qui tombe, un souffle bref */
+  puits: {
+    duree: 0.6, niveau: 0.22, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 180 * (0.95 + 0.1 * h.next()), glisse: { vers: 70, en: 0.25 }, a: 0.004, d: 0.35, battement: 7, partiels: [[1, 1, 1], [2, 0.4, 0.7], [3, 0.2, 0.5]], sature: 1.2 })
+      souffle(m, h, 0, 0.4, 0, { f: 900, glisse: { vers: 300, en: 0.15 }, q: 1.2, bande: true, a: 0.003, d: 0.12 })
+    },
+  },
+  /**
+   * LE PUITS S'OUVRE ET ASPIRE (2 s) : un souffle qui monte en se resserrant vers l'aigu, un bourdon grave qui gonfle et
+   * bat de plus en plus vite — on entend la nuée tirée vers le centre, jusqu'à l'éclat
+   */
+  aspire: {
+    duree: 2.2, niveau: 0.2, salle: [0.4, 0.16], variantes: 2,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.7, 0, { f: 400, glisse: { vers: 2600, en: 1.9, droit: true }, q: 1.6, bande: true, a: 1.6, d: 0.3, large: true })
+      note(m, 0, 0.6, 0, { f: 55, glisse: { vers: 110, en: 1.9, droit: true }, a: 1.5, d: 0.3, battement: 6, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.3, 0.6]], sature: 1.3 })
+    },
+  },
   eclatPlasma: {
     duree: 1.1, niveau: 0.32, salle: [0.45, 0.18], variantes: 3,
     faire: (m, h) => {

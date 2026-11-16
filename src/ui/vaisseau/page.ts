@@ -825,7 +825,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
       // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
-      if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.puits !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
@@ -936,7 +936,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-puits'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -968,7 +968,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -6812,6 +6812,55 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const dep of [a0, a0 + Math.PI]) for (let a = dep; a < dep + 1.2; a += 0.1) p.dot(s.x + Math.cos(a) * (R + 2), s.y + Math.sin(a) * (R + 2), PLASMA_V[4], 0.5 * k)
     }
   }
+  /**
+   * LE PUITS DU PULSAR (voir Arme.puits) : EN VOL, une petite boule sombre au liseré violet, une traîne ; OUVERT, une
+   * SINGULARITÉ — un cœur noir cerclé de violet qui grossit, trois bras de plasma en spirale qui tournent vers lui, des
+   * grains aspirés du bord vers le centre, le cercle de son rayon qui bat — ; à l'éclat (l'événement), la gerbe du plasma.
+   */
+  function dessinerLesPuits(p: Peintre): void {
+    for (const pu of m.puits) {
+      const conf = CONF.armes[pu.arme]?.puits
+      if (conf === undefined) continue
+      if (!pu.ouvert) {
+        const dx = pu.x - pu.x0
+        const dy = pu.y - pu.y0
+        const l = Math.hypot(dx, dy) || 1
+        for (let k = 1; k <= 4; k++) p.circle(pu.cx - (dx / l) * k * 2.5, pu.cy - (dy / l) * k * 2.5, 2.5 - k * 0.4, PLASMA_V[2], 0.35 - k * 0.07)
+        p.glow(pu.cx, pu.cy, 7, PLASMA_V[2], 0.5)
+        p.circle(pu.cx, pu.cy, 3, PLASMA_V[1])
+        p.ring(pu.cx, pu.cy, 3, 1, PLASMA_V[3], 0.9)
+        p.circle(pu.cx, pu.cy, 1.5, PLASMA[0])
+        continue
+      }
+      const age = m.t - pu.arrive
+      const u = Math.min(1, age / conf.duree)
+      const naissance = Math.min(1, age / 0.25)
+      const R0 = conf.rayon
+      // (le cercle de son rayon, qui bat de plus en plus vite)
+      p.ring(pu.x, pu.y, R0 * naissance, 1, PLASMA_V[2], 0.25 + 0.2 * Math.sin(age * (8 + 14 * u)))
+      p.glow(pu.x, pu.y, R0 * 0.6, PLASMA_V[1], 0.35 * naissance)
+      // (trois bras en spirale qui tournent vers le centre)
+      for (let b = 0; b < 3; b++)
+        for (let q = 0; q < 26; q++) {
+          const f = q / 26
+          const r = R0 * (1 - f) * naissance
+          const a = age * 5 + (b * 2 * Math.PI) / 3 + f * 4.2
+          p.dot(pu.x + Math.cos(a) * r, pu.y + Math.sin(a) * r, f > 0.7 ? PLASMA[5] : f > 0.35 ? PLASMA_V[3] : PLASMA_V[2], (0.3 + 0.6 * f) * naissance)
+        }
+      // (des grains aspirés du bord vers le centre, en tournant)
+      for (let g = 0; g < 14; g++) {
+        const ph = (age * 0.9 + g / 14) % 1
+        const a = g * 2.4 + ph * 3
+        const r = R0 * (1 - ph * ph)
+        p.dot(pu.x + Math.cos(a) * r, pu.y + Math.sin(a) * r, ph > 0.7 ? N.WHITE : PLASMA_V[3], 0.9 * naissance)
+      }
+      // (le cœur noir, cerclé de violet, qui grossit jusqu'à l'éclat)
+      const c = 2.5 + 3 * u
+      p.circle(pu.x, pu.y, c + 1.5, PLASMA_V[3], 0.8)
+      p.circle(pu.x, pu.y, c, PLASMA[0])
+      p.glow(pu.x, pu.y, c + 6, PLASMA_V[2], 0.4 + 0.3 * u)
+    }
+  }
   function dessinerLeRailgun(p: Peintre): void {
     for (let i = traitsDuRail.length - 1; i >= 0; i--) if (t - traitsDuRail[i].t0 > DUREE_DU_RAIL) traitsDuRail.splice(i, 1)
     for (const r of traitsDuRail) {
@@ -6841,9 +6890,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && traitsDuRail.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane')) return
+    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && traitsDuRail.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
+    dessinerLesPuits(p)
     dessinerLEssaim(p)
     dessinerLeRailgun(p)
     for (const o of orbes) {
@@ -10161,6 +10211,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               break
             }
+            case 'puits':
+              // (un puits part : son lancer sourd — sauf s'il a sonné en avance —, des grains violets à la bouche)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer('puits')
+              for (let i = 0; i < 6; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), R.next() < 0.5 ? PLASMA_V[3] : PLASMA_V[2], 1, 1.5)
+              }
+              break
+            case 'puitsOuvert':
+              // (il s'ouvre : l'aspiration, qui monte pendant qu'il tire)
+              jouer('aspire', { dx: ev.x - v.x, dy: ev.y - v.y })
+              break
+            case 'puitsEclate':
+              // (il éclate : la gerbe de l'orbe de plasma, une secousse)
+              jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
+              eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: Math.round(ev.x * 13 + ev.y * 7) })
+              for (let i = 0; i < 16; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(40, 120)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA[5], PLASMA_V[3], PLASMA_V[2]][Math.floor(R.next() * 4)], 1, 2)
+              }
+              secousse = Math.max(secousse, 0.3)
+              break
             case 'sphereFinie':
               // (elle s'éteint : elle se resserre et lâche une petite gerbe, sans dégâts)
               eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: RAYON_DE_LA_SPHERE * 1.4, id: Math.round(ev.x * 13 + ev.y * 7) })

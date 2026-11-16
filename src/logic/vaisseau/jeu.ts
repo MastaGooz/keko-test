@@ -476,6 +476,15 @@ export type Arme = {
    */
   sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number }
   /**
+   * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
+   * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
+   * de la bouche vers L'INSECTE QUI A LE PLUS DE VOISINS à moins de `rayon` (le verrouillé d'abord), à `vitesse`, et
+   * s'ouvre au point visé (pris au départ) ; ouvert `duree` secondes, il TIRE VERS SON CENTRE tout insecte à moins de
+   * `rayon`, à `force` par seconde ; puis il ÉCLATE : `degats` (ceux de l'arme) à tout ce qui est à moins de `eclat`.
+   * L'état est `Monde.puits`.
+   */
+  puits?: { vitesse: number; rayon: number; force: number; duree: number; eclat: number }
+  /**
    * UN RAILGUN (passé du Pulsar au Prisme le 16/11, en bleu ; d'abord la troisième arme du Pulsar, Keko, 16/11 : « un tir de plasma instantané type railgun, sur une
    * très grande distance, longue portée, qui traverse tout ») : à sa cadence, un insecte à `portee`, UN TRAIT INSTANTANÉ
    * part de la bouche, long de `portee` : tout insecte à moins de `largeur` (plus son rayon) de la ligne perd `degats`. Sa
@@ -719,6 +728,8 @@ export type Monde = {
   tornades: Tornade[]
   /** LES SPHÈRES DE PLASMA (voir `Arme.sphere`). */
   spheres: Sphere[]
+  /** LES PUITS DE PLASMA (voir `Arme.puits`). */
+  puits: Puits[]
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
@@ -746,6 +757,8 @@ export type Tentacule = { arme: number; ancre: number; fait: 'repos' | 'aller' |
 
 /** Une sphère de plasma (voir `Arme.sphere`) : son arme, où, sa vitesse, quand elle est née, quand elle tire. */
 export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number }
+/** Un puits de plasma (voir `Arme.puits`) : son arme, d'où il part, où il s'ouvre, où il est ; quand il arrive ; ouvert ou en vol. */
+export type Puits = { id: number; arme: number; x0: number; y0: number; cx: number; cy: number; x: number; y: number; lance: number; arrive: number; ouvert: boolean }
 
 /** Une tornade de givre (voir `Arme.tornade`) : son arme, où, sa vitesse, quand elle est née. */
 export type Tornade = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number }
@@ -814,6 +827,10 @@ export type Evenement =
   | { type: 'essaim'; x: number; y: number; arme: string }
   /** Une sphère de plasma part (voir `Arme.sphere`), s'éteint, tire ses petits traits (combien). */
   | { type: 'sphere'; x: number; y: number; arme: string }
+  /** Un puits de plasma part, s'ouvre, éclate (voir `Arme.puits`). */
+  | { type: 'puits'; x: number; y: number; arme: string }
+  | { type: 'puitsOuvert'; x: number; y: number; rayon: number }
+  | { type: 'puitsEclate'; x: number; y: number; rayon: number }
   | { type: 'sphereFinie'; x: number; y: number }
   | { type: 'sphereTir'; x: number; y: number; tirs: number }
   /** Un railgun tire (voir `Arme.rail`) : le trait, de la bouche au bout de la portée. */
@@ -862,7 +879,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1829,6 +1846,71 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       tirs++
     }
     if (tirs > 0) ev.push({ type: 'sphereTir', x: s.x, y: s.y, tirs })
+  }
+}
+
+/** LES PUITS DE PLASMA (voir `Arme.puits`) : le lancer au cœur de la nuée, le vol, l'aspiration, l'éclat. */
+function menerLesPuits(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const pu = a.puits
+    if (pu === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    // (au cœur de la nuée : l'insecte qui a le plus de voisins dans le rayon du puits ; le verrouillé d'abord)
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let meilleur = -1
+      for (const e of m.ennemis) {
+        if (!aPortee(e)) continue
+        const n = m.ennemis.filter((o) => Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y) <= pu.rayon).length
+        if (n > meilleur) (meilleur = n), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    const b = boucheDansLeMonde(v, a)
+    const { x, y } = cible.corps
+    m.puits.push({ id: m.prochainId++, arme: i, x0: b.x, y0: b.y, cx: b.x, cy: b.y, x, y, lance: m.t, arrive: m.t + Math.hypot(x - b.x, y - b.y) / pu.vitesse, ouvert: false })
+    ev.push({ type: 'puits', x: b.x, y: b.y, arme: a.id })
+  })
+  for (let k = m.puits.length - 1; k >= 0; k--) {
+    const p = m.puits[k]
+    const a = c.armes[p.arme]
+    const pu = a?.puits
+    if (a === undefined || pu === undefined) {
+      m.puits.splice(k, 1)
+      continue
+    }
+    if (!p.ouvert) {
+      const u = Math.min(1, (m.t - p.lance) / Math.max(1e-6, p.arrive - p.lance))
+      p.cx = p.x0 + (p.x - p.x0) * u
+      p.cy = p.y0 + (p.y - p.y0) * u
+      if (u < 1) continue
+      p.ouvert = true
+      ev.push({ type: 'puitsOuvert', x: p.x, y: p.y, rayon: pu.rayon })
+    }
+    // (OUVERT : il tire vers son centre ce qui est dans son rayon — sans le dépasser)
+    for (const e of m.ennemis) {
+      const dx = p.x - e.corps.x
+      const dy = p.y - e.corps.y
+      const d = Math.hypot(dx, dy)
+      if (d > pu.rayon + c.ennemi.rayon || d < 1e-6) continue
+      const pas = Math.min(d, pu.force * dt)
+      e.corps = { ...e.corps, x: e.corps.x + (dx / d) * pas, y: e.corps.y + (dy / d) * pas }
+    }
+    if (m.t < p.arrive + pu.duree) continue
+    // (L'ÉCLAT : tout ce qui est près du centre)
+    m.puits.splice(k, 1)
+    ev.push({ type: 'puitsEclate', x: p.x, y: p.y, rayon: pu.eclat })
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - p.x, e.corps.y - p.y) > pu.eclat + c.ennemi.rayon) continue
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
   }
 }
 
@@ -2976,7 +3058,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3064,6 +3146,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   tirerLesSalves(c, m, ev)
   tirerLesEssaims(c, m, ev)
   menerLesSpheres(c, m, dt, ev)
+  menerLesPuits(c, m, dt, ev)
   tirerLesRails(c, m, ev)
   menerLesTentacules(c, m, ev)
   menerLesNuees(c, m, dt, ev)
