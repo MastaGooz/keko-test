@@ -426,6 +426,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let chocAnnonceA = -10
   const armeAnnonceeA = new Map<string, number>()
+  /** Les météores dont l'impact a déjà sonné, en avance (voir `annoncerLesSons`). */
+  const meteoresAnnoncees = new Set<number>()
   /** L'instant où chaque rival a pris un obus (il blanchit), et celui du dernier coup pris par le bouclier (son anneau flashe). */
   const toucheEnnemiA = new Map<number, number>()
   let bouclierA = -10
@@ -825,7 +827,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
       // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
       // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
-      if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.puits !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+      if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.puits !== undefined || canon?.meteore !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
       // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
@@ -936,7 +938,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -968,7 +970,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -1544,6 +1546,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       armeAnnonceeA.set(arme.id, t)
       jouer(arme.id as Son)
     })
+    // LES MÉTÉORES : leur impact est écrit dès leur départ (voir Arme.meteore)
+    for (const mt of m.meteores) {
+      if (meteoresAnnoncees.has(mt.id) || mt.tombe - m.t > avance) continue
+      meteoresAnnoncees.add(mt.id)
+      jouer('impactMeteore', { dx: mt.x - v.x, dy: mt.y - v.y })
+    }
   }
   /** Le minerai choisi à l'entrepôt. */
   let mineraiChoisi: Minerai = 'fer'
@@ -6887,6 +6895,118 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
   }
+  /**
+   * LA MÉTÉORE D'ARCANE DU PULSAR (voir Arme.meteore) — en vue de dessus, CE QUI DIT « D'EN HAUT » (Keko, 16/11 : « tu
+   * arriverais à faire un effet où on comprend visuellement que ça vient d'en haut malgré la vue top down ? ») : AU SOL,
+   * sous l'insecte, un cercle de runes qui SE RESSERRE et une ombre qui GRANDIT et fonce ; DANS LE CIEL, la météore
+   * arrive d'en haut à droite DE PLUS EN PLUS VITE (une chute, pas un vol), GROSSE quand elle est haute — près de nous —,
+   * et elle RAPETISSE en tombant, sa traîne derrière elle, jusqu'à se poser pile sur son ombre ; à l'impact, un éclair,
+   * le trait de sa chute qui s'efface, une onde au sol, des éclats projetés, un cratère qui refroidit.
+   */
+  const CIEL_DE_LA_METEORE = { x: 0.4, y: -0.92, hauteur: 120 }
+  const DUREE_DU_CRATERE = 1.4
+  const impactsDeMeteore: { x: number; y: number; t0: number; r: number; id: number }[] = []
+  /** Où est la météore à la part `u` de sa chute (0 : au ciel, 1 : au sol), et sa hauteur (1 à 0) : elle tombe, elle accélère. */
+  const meteoreEnLAir = (x: number, y: number, u: number): { x: number; y: number; h: number } => {
+    const h = 1 - u * u
+    return { x: x + CIEL_DE_LA_METEORE.x * CIEL_DE_LA_METEORE.hauteur * h, y: y + CIEL_DE_LA_METEORE.y * CIEL_DE_LA_METEORE.hauteur * h, h }
+  }
+  function dessinerLesMeteoresAuSol(p: Peintre): void {
+    for (let i = impactsDeMeteore.length - 1; i >= 0; i--) if (t - impactsDeMeteore[i].t0 > DUREE_DU_CRATERE) impactsDeMeteore.splice(i, 1)
+    if (m.meteores.length === 0 && impactsDeMeteore.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    // (LE CRATÈRE : une tache sombre, son bord qui rougeoie violet puis refroidit, quelques braises)
+    for (const c of impactsDeMeteore) {
+      const u = (t - c.t0) / DUREE_DU_CRATERE
+      const k = 1 - u
+      p.disc(c.x, c.y, c.r * 0.9, PLASMA_V[0], (d) => 0.6 * k * Math.min(1, (1 - d) / 0.3))
+      p.ring(c.x, c.y, c.r * 0.9, 1, u < 0.25 ? PLASMA_V[4] : u < 0.55 ? PLASMA_V[3] : PLASMA_V[2], 0.8 * k)
+      for (let j = 0; j < 7; j++) {
+        const a = alea(c.id, j, 41) * Math.PI * 2
+        const r = c.r * (0.25 + 0.6 * alea(c.id, j, 42))
+        if (alea(c.id + Math.floor(t * 6), j, 43) < 0.75) p.dot(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r, PLASMA_V[3], k)
+      }
+    }
+    for (const mt of m.meteores) {
+      const conf = CONF.armes[mt.arme]?.meteore
+      if (conf === undefined) continue
+      const u = Math.max(0, Math.min(1, (m.t - mt.lancee) / conf.chute))
+      const R = conf.rayon
+      // (L'OMBRE : petite et pâle quand la météore est haute, large et sombre quand elle touche)
+      p.disc(mt.x, mt.y, R * (0.3 + 0.7 * u), PLASMA_V[0], (d) => (0.2 + 0.5 * u) * (1 - d * d))
+      // (LE CERCLE DE RUNES : il se resserre sur l'insecte en tournant, et s'allume)
+      const rr = R * (1 + 1.6 * (1 - u) * (1 - u))
+      const a0 = m.t * 2.4 + mt.id
+      p.ring(mt.x, mt.y, rr, 1, u > 0.75 ? PLASMA_V[4] : PLASMA_V[3], 0.35 + 0.55 * u)
+      for (let j = 0; j < 6; j++) {
+        const a = a0 + (j * Math.PI) / 3
+        const gx = Math.round(mt.x + Math.cos(a) * (rr + 2.5))
+        const gy = Math.round(mt.y + Math.sin(a) * (rr + 2.5))
+        // (une rune : un petit losange, son cœur blanc une fois sur deux)
+        const c = j % 2 === 0 ? PLASMA_V[4] : PLASMA_V[3]
+        p.dot(gx, gy - 1, c, 0.9)
+        p.dot(gx - 1, gy, c, 0.9)
+        p.dot(gx + 1, gy, c, 0.9)
+        p.dot(gx, gy + 1, c, 0.9)
+        p.dot(gx, gy, j % 2 === 0 ? N.WHITE : PLASMA_V[2], 0.9)
+      }
+      // (quatre crans qui pointent vers le centre : c'est là qu'elle tombe)
+      for (let j = 0; j < 4; j++) {
+        const a = -a0 * 0.5 + (j * Math.PI) / 2
+        p.line(mt.x + Math.cos(a) * rr * 0.55, mt.y + Math.sin(a) * rr * 0.55, mt.x + Math.cos(a) * rr * 0.8, mt.y + Math.sin(a) * rr * 0.8, PLASMA_V[3], 0.3 + 0.5 * u)
+      }
+      if (u > 0.6) p.glow(mt.x, mt.y, R * 1.2, PLASMA_V[3], ((u - 0.6) / 0.4) * 0.6)
+    }
+  }
+  function dessinerLesMeteores(p: Peintre): void {
+    if (m.meteores.length === 0 && impactsDeMeteore.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const L0 = Math.hypot(CIEL_DE_LA_METEORE.x, CIEL_DE_LA_METEORE.y)
+    const dx = CIEL_DE_LA_METEORE.x / L0
+    const dy = CIEL_DE_LA_METEORE.y / L0
+    for (const mt of m.meteores) {
+      const conf = CONF.armes[mt.arme]?.meteore
+      if (conf === undefined) continue
+      const u = Math.max(0, Math.min(1, (m.t - mt.lancee) / conf.chute))
+      const q = meteoreEnLAir(mt.x, mt.y, u)
+      // (grosse en haut, près de nous ; elle rapetisse en tombant)
+      const s = 1 + 1.3 * q.h
+      // (LA TRAÎNE : vers le ciel d'où elle vient, plus longue à mesure qu'elle accélère, de plus en plus fine et pâle)
+      const L = 8 + 34 * u
+      for (let d = L; d >= 0; d -= 1) {
+        const f = d / L
+        const w = 2.4 * s * (1 - f) + 0.4
+        p.circle(q.x + dx * d, q.y + dy * d, w, f < 0.25 ? PLASMA_V[4] : f < 0.6 ? PLASMA_V[3] : PLASMA_V[2], 0.85 * (1 - f))
+      }
+      // (des étincelles qui s'en détachent, de côté)
+      const tic = Math.floor(m.t * 20)
+      for (let g = 0; g < 7; g++) {
+        const f = alea(mt.id + tic, g, 31)
+        const cote = (alea(mt.id + tic, g, 32) - 0.5) * 6 * s * f
+        p.dot(q.x + dx * L * f - dy * cote, q.y + dy * L * f + dx * cote, g % 2 === 0 ? N.WHITE : PLASMA_V[4], 0.9 * (1 - f))
+      }
+      // (LA TÊTE : un éclat d'arcane, son halo, un cœur blanc, un liseré qui bat)
+      p.glow(q.x, q.y, 9 * s, PLASMA_V[2], 0.6)
+      p.disc(q.x, q.y, 2.8 * s, (d, ang) => (d < 0.3 ? N.WHITE : d < 0.5 ? PLASMA_V[4] : d + 0.12 * Math.sin(ang * 4 + m.t * 30) < 0.82 ? PLASMA_V[3] : PLASMA_V[2]), (d) => Math.min(1, (1 - d) / 0.2))
+    }
+    // (L'IMPACT : un éclair blanc, le trait de sa chute qui s'efface, une onde qui court au sol)
+    for (const c of impactsDeMeteore) {
+      const age = t - c.t0
+      if (age < 0.12) {
+        const k = 1 - age / 0.12
+        p.glow(c.x, c.y, c.r * 2.6, N.WHITE, k)
+        p.circle(c.x, c.y, c.r * 0.9 * k + 1, N.WHITE, k)
+      }
+      if (age < 0.2) {
+        const k = 1 - age / 0.2
+        for (let o = -1; o <= 1; o++) p.line(c.x + o, c.y, c.x + o + dx * 70 * k, c.y + dy * 70 * k, o === 0 ? N.WHITE : PLASMA_V[3], 0.8 * k)
+      }
+      if (age < 0.45) {
+        const u = age / 0.45
+        p.ring(c.x, c.y, c.r * (0.6 + 2.2 * Math.sqrt(u)), u < 0.4 ? 2 : 1, u < 0.3 ? PLASMA[5] : PLASMA_V[3], 0.9 * (1 - u))
+      }
+    }
+  }
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
@@ -10220,6 +10340,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), R.next() < 0.5 ? PLASMA_V[3] : PLASMA_V[2], 1, 1.5)
               }
               break
+            case 'meteore':
+              // (une météore part du ciel : son sifflement qui tombe — sauf s'il a sonné en avance)
+              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+              else jouer('meteore')
+              break
+            case 'meteoreImpact':
+              // (elle frappe : son coup — sauf s'il a sonné en avance —, le cratère, des éclats projetés, une secousse)
+              if (meteoresAnnoncees.has(ev.id)) meteoresAnnoncees.delete(ev.id)
+              else jouer('impactMeteore', { dx: ev.x - v.x, dy: ev.y - v.y })
+              impactsDeMeteore.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: ev.id })
+              for (let i = 0; i < 14; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(40, 110)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA_V[4], PLASMA_V[3], PLASMA_V[2]][Math.floor(R.next() * 4)], 1, 2)
+              }
+              secousse = Math.max(secousse, 0.35)
+              break
             case 'puitsOuvert':
               // (il s'ouvre : l'aspiration, qui monte pendant qu'il tire)
               jouer('aspire', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -10637,6 +10774,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLeGivre(p)
     dessinerLesFlaques(p)
+    dessinerLesMeteoresAuSol(p)
     dessinerLesFlaquesAcides(p)
     dessinerLesMines(p)
     dessinerLesTourelles(p)
@@ -10650,6 +10788,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesScies(p)
     dessinerLesTornades(p)
     dessinerLePlasma(p)
+    dessinerLesMeteores(p)
     dessinerLesNuees(p)
     dessinerLesRejetons(p)
     dessinerLesCrachats(p)

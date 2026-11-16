@@ -4782,3 +4782,21 @@ LE PUITS EST GARDÉ DE CÔTÉ (Keko, 16/11 : « c'est intéressant le puits, mai
 vaisseau que j'ai en tête ; il faudrait quelque chose qui renvoie plus aux arcanes — on en fait indirectement un
 vaisseau arcanique : il a les missiles magiques, l'orbe d'arcane »). `arme-puits` et `Arme.puits` restent écrits
 et vérifiés ; aucun vaisseau ne le porte. Le Pulsar revient à deux armes en attendant la troisième, arcanique.
+
+LA MÉTÉORE D'ARCANE, LA TROISIÈME ARME DU PULSAR (Keko, 16/11 : « une petite météore d'arcane vient du ciel et tombe
+sur un ennemi ; ce serait la seule attaque qui frappe directement l'ennemi sans projectile — tu arriverais à faire un
+effet où on comprend visuellement que ça vient d'en haut malgré la vue top down ? »). `arme-meteore`,
+`Arme.meteore` : toutes les 1,8 s, un insecte à moins de 120 (le verrouillé, sinon le plus proche), une météore
+tombe sur lui en 0,6 s ; SON POINT DE CHUTE SUIT L'INSECTE (mort avant, elle tombe où il était) — elle ne le manque
+pas ; à l'impact, 18 points à tout ce qui est à moins de 12. Rien ne vole dans le plan du jeu : `Monde.meteores` ne
+garde que le point visé et l'heure. Mesuré : un insecte qui file à 50 par seconde est touché là où il est à
+l'impact (30,8 / 30,8), son voisin à 8 aussi, le lointain rien.
+CE QUI DIT « D'EN HAUT » EN VUE DE DESSUS — trois indices à la fois, dessin seul : AU SOL, un cercle de runes qui SE
+RESSERRE sur l'insecte en tournant et s'allume, une ombre qui grandit et fonce ; DANS LE CIEL, la météore arrive
+d'en haut à droite (`CIEL_DE_LA_METEORE`, 120 plus haut), DE PLUS EN PLUS VITE (sa hauteur suit 1 − u², une chute,
+pas un vol), GROSSE quand elle est haute (×2,3, près de nous) et qui RAPETISSE en tombant jusqu'à se poser pile sur
+son ombre ; sa traîne s'allonge en accélérant. À l'impact : un éclair blanc, le trait de sa chute qui s'efface
+vers le ciel, une onde au sol, des éclats, un cratère qui refroidit (1,4 s). Deux sons : `meteore` (le sifflement
+qui descend pendant la chute, annoncé en avance comme les autres armes) et `impactMeteore` (un coup grave, des
+éclats qui tintent) — L'IMPACT EST ANNONCÉ EN AVANCE AUSSI, son heure étant écrite dès le départ
+(`meteoresAnnoncees`). *Chiffres de moi, à rejuger.*

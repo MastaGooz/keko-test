@@ -1942,3 +1942,27 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   const pv = w.ennemis.map((e) => 1000 - e.pv)
   verifier(`le puits s'ouvre au cœur de la nuée (${ouvertEn === null ? '—' : `${ouvertEn.x.toFixed(0)}, ${ouvertEn.y.toFixed(0)}`}), aspire l'insecte du bord dans son éclat et éclate une fois : ${pv.join(' / ')} (22 aux quatre de la nuée, 0 au lointain et à celui hors du rayon)`, ev.filter((e) => e.type === 'puitsEclate').length === 1 && ouvertEn !== null && ouvertEn.x > 70 && pv[0] === 22 && pv[1] === 22 && pv[2] === 22 && pv[3] === 0 && pv[4] === 22 && pv[5] === 0)
 }
+
+// LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
+// (il file de côté, elle ne le manque pas) ; à l'impact, ce qui est près de lui est pris aussi, le lointain, rien
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const meteore = { id: 'meteore', cadence: 99, degats: 18, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, meteore: { chute: 0.6, rayon: 12 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [meteore], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 60, 0), insecte(2, 68, 0), insecte(3, 60, -60))
+  const ev: Evenement[] = []
+  let impact: { x: number; y: number } | null = null
+  let ouEtait = 0
+  for (let i = 0; i < 60; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+    // (les deux premiers filent vers le bas, à 50 par seconde)
+    for (const e of w.ennemis) if (e.id !== 3) e.corps = { ...e.corps, y: e.corps.y + 50 / 60 }
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      ev.push(e)
+      if (e.type === 'meteoreImpact') (impact = { x: e.x, y: e.y }), (ouEtait = w.ennemis.find((o) => o.id === 1)?.corps.y ?? 0)
+    }
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier(`la météore tombe une fois, sur l'insecte qui file (impact à ${impact === null ? '—' : `${impact.x.toFixed(0)}, ${impact.y.toFixed(1)}`}, lui à y ${ouEtait.toFixed(1)}) : ${pv.join(' / ')} (18 à lui et à son voisin, 0 au lointain)`, ev.filter((e) => e.type === 'meteoreImpact').length === 1 && impact !== null && impact.y > 25 && Math.abs(impact.y - ouEtait) < 1.5 && pv[0] === 18 && pv[1] === 18 && pv[2] === 0)
+}

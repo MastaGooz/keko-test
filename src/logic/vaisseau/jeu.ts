@@ -485,6 +485,15 @@ export type Arme = {
    */
   puits?: { vitesse: number; rayon: number; force: number; duree: number; eclat: number }
   /**
+   * UNE MÉTÉORE D'ARCANE (la troisième arme du Pulsar, Keko, 16/11 : « une petite météore d'arcane vient du ciel et tombe
+   * sur un ennemi ; ce serait la seule attaque qui frappe directement l'ennemi sans projectile ») : à la cadence, un
+   * insecte à portée (le verrouillé d'abord, sinon le plus proche), une météore tombe du ciel sur lui en `chute` secondes
+   * — son point de chute SUIT l'insecte (elle ne le manque pas ; mort avant, elle tombe où il était) ; à l'impact,
+   * `degats` (ceux de l'arme) à tout insecte à moins de `rayon`. Rien ne vole dans le plan du jeu : l'état
+   * (`Monde.meteores`) ne dit que le point visé et l'heure de l'impact.
+   */
+  meteore?: { chute: number; rayon: number }
+  /**
    * UN RAILGUN (passé du Pulsar au Prisme le 16/11, en bleu ; d'abord la troisième arme du Pulsar, Keko, 16/11 : « un tir de plasma instantané type railgun, sur une
    * très grande distance, longue portée, qui traverse tout ») : à sa cadence, un insecte à `portee`, UN TRAIT INSTANTANÉ
    * part de la bouche, long de `portee` : tout insecte à moins de `largeur` (plus son rayon) de la ligne perd `degats`. Sa
@@ -730,6 +739,8 @@ export type Monde = {
   spheres: Sphere[]
   /** LES PUITS DE PLASMA (voir `Arme.puits`). */
   puits: Puits[]
+  /** LES MÉTÉORES D'ARCANE qui tombent (voir `Arme.meteore`) : leur insecte, le point visé, quand elles sont parties, quand elles frappent. */
+  meteores: { id: number; arme: number; cible: number; x: number; y: number; lancee: number; tombe: number }[]
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
@@ -831,6 +842,9 @@ export type Evenement =
   | { type: 'puits'; x: number; y: number; arme: string }
   | { type: 'puitsOuvert'; x: number; y: number; rayon: number }
   | { type: 'puitsEclate'; x: number; y: number; rayon: number }
+  /** Une météore d'arcane part du ciel ; elle frappe le sol (voir `Arme.meteore`). */
+  | { type: 'meteore'; id: number; x: number; y: number; arme: string }
+  | { type: 'meteoreImpact'; id: number; x: number; y: number; rayon: number }
   | { type: 'sphereFinie'; x: number; y: number }
   | { type: 'sphereTir'; x: number; y: number; tirs: number }
   /** Un railgun tire (voir `Arme.rail`) : le trait, de la bouche au bout de la portée. */
@@ -879,7 +893,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1846,6 +1860,48 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       tirs++
     }
     if (tirs > 0) ev.push({ type: 'sphereTir', x: s.x, y: s.y, tirs })
+  }
+}
+
+/** LES MÉTÉORES D'ARCANE (voir `Arme.meteore`) : le choix de l'insecte, la chute qui le suit, l'impact. */
+function menerLesMeteores(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const me = a.meteore
+    if (me === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const d = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    let cible = ennemiVerrouille(m)
+    if (cible === null || d(cible) > a.portee + c.ennemi.rayon) {
+      cible = null
+      for (const e of m.ennemis) if (d(e) <= a.portee + c.ennemi.rayon && (cible === null || d(e) < d(cible))) cible = e
+    }
+    if (cible === null) return
+    m.armesA[i] = m.t + a.cadence
+    const id = m.prochainId++
+    m.meteores.push({ id, arme: i, cible: cible.id, x: cible.corps.x, y: cible.corps.y, lancee: m.t, tombe: m.t + me.chute })
+    ev.push({ type: 'meteore', id, x: cible.corps.x, y: cible.corps.y, arme: a.id })
+  })
+  for (let k = m.meteores.length - 1; k >= 0; k--) {
+    const mt = m.meteores[k]
+    const a = c.armes[mt.arme]
+    const me = a?.meteore
+    if (a === undefined || me === undefined) {
+      m.meteores.splice(k, 1)
+      continue
+    }
+    // (le point de chute suit son insecte tant qu'il vit)
+    const e0 = m.ennemis.find((e) => e.id === mt.cible)
+    if (e0 !== undefined) (mt.x = e0.corps.x), (mt.y = e0.corps.y)
+    if (m.t < mt.tombe) continue
+    m.meteores.splice(k, 1)
+    ev.push({ type: 'meteoreImpact', id: mt.id, x: mt.x, y: mt.y, rayon: me.rayon })
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - mt.x, e.corps.y - mt.y) > me.rayon + c.ennemi.rayon) continue
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
   }
 }
 
@@ -3058,7 +3114,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3147,6 +3203,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   tirerLesEssaims(c, m, ev)
   menerLesSpheres(c, m, dt, ev)
   menerLesPuits(c, m, dt, ev)
+  menerLesMeteores(c, m, ev)
   tirerLesRails(c, m, ev)
   menerLesTentacules(c, m, ev)
   menerLesNuees(c, m, dt, ev)
@@ -3158,7 +3215,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

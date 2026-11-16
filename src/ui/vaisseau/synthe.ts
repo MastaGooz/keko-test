@@ -741,6 +741,27 @@ const RECETTES = {
     },
   },
   /**
+   * UNE MÉTÉORE D'ARCANE TOMBE (le Pulsar, 16/11) : un sifflement qui descend pendant toute la chute (0,6 s), battu, avec
+   * un souffle qui grossit — on l'entend venir d'en haut ; l'impact a son son à lui (`impactMeteore`)
+   */
+  meteore: {
+    duree: 0.75, niveau: 0.13, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      const f = 2200 + 300 * h.next()
+      note(m, 0, 0.8, 0, { f, glisse: { vers: f * 0.35, en: 0.6 }, a: 0.12, d: 0.1, battement: 9, partiels: [[1, 1, 1], [1.5, 0.3, 0.7]] })
+      souffle(m, h, 0, 0.6, 0, { f: 3000, glisse: { vers: 900, en: 0.6 }, q: 1.4, bande: true, a: 0.45, d: 0.12 })
+    },
+  },
+  /** LA MÉTÉORE FRAPPE LE SOL : un coup grave et lourd, un claquement, puis une pluie d'éclats d'arcane qui tintent */
+  impactMeteore: {
+    duree: 1, niveau: 0.28, salle: [0.45, 0.18], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, 0, { f: 3600, glisse: { vers: 1200, en: 0.08 }, q: 1.2, bande: true, a: 0.001, d: 0.1 })
+      note(m, 0, 1, 0, { f: 110, glisse: { vers: 38, en: 0.25 }, a: 0.002, d: 0.35, partiels: CORPS, sature: 1.7 })
+      for (let k = 0; k < 6; k++) note(m, 0.03 + 0.06 * k * (0.6 + 0.4 * h.next()), 0.3 * (1 - k / 8), (h.next() - 0.5) * 0.9, { f: 1600 + 1800 * h.next(), a: 0.002, d: 0.12 + 0.15 * h.next(), battement: 14, partiels: [[1, 1, 1], [1.5, 0.3, 0.6]] })
+    },
+  },
+  /**
    * LE PUITS S'OUVRE ET ASPIRE (2 s) : un souffle qui monte en se resserrant vers l'aigu, un bourdon grave qui gonfle et
    * bat de plus en plus vite — on entend la nuée tirée vers le centre, jusqu'à l'éclat
    */
