@@ -1518,6 +1518,32 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('un insecte verrouillé : elle va sur lui', verrou.pv[2] === 6 && verrou.pv[0] === 0 && verrou.pv[1] === 0)
 }
 
+// LE NUAGE D'INSECTES DU KRAKEN (Keko, 16/11) : il suit le vaisseau sur un ressort, se penche vers l'insecte proche
+// sans quitter sa laisse, et mord ce qui est dedans
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const nuee = { id: 'nuee', cadence: 1, degats: 0, portee: 70, vitesse: 0, vie: 0, dispersion: 0, guide: false, nuee: { rayon: 16, dps: 7, raideur: 9, frein: 4.5, laisse: 26, periode: 0.4 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [nuee], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const planer = (places: [number, number][], vitesse: number, duree: number) => {
+    const w = nouveauMonde(cfg, 3)
+    places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+    const ev: Evenement[] = []
+    for (let i = 0; i < 60 * duree; i++) {
+      places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+      w.vaisseau = { ...w.vaisseau, x: (vitesse * i) / 60, y: 0, vx: vitesse, vy: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    return { w, ev, pv: w.ennemis.map((e) => 1000 - e.pv) }
+  }
+  const pres = planer([[30, 0], [0, 80]], 0, 2)
+  verifier(`le nuage se penche vers l’insecte à 30 et le mord (${pres.pv[0].toFixed(1)} en 2 s, 7 par seconde dedans) ; le lointain, rien ; des morsures signalées`, pres.pv[0] > 7 && pres.pv[0] <= 14 + 1e-6 && pres.pv[1] === 0 && pres.ev.some((e) => e.type === 'morsure'))
+  const loin = planer([[60, 0]], 0, 2)
+  verifier('un insecte à 60 — à portée, mais au-delà de la laisse et du nuage — n’est pas mordu', loin.pv[0] === 0)
+  const file = planer([[0, 500]], 40, 1)
+  const n = file.w.nuees[0]
+  verifier(`le vaisseau file : le nuage traîne derrière lui (${(n.x - file.w.vaisseau.x).toFixed(1)} en x)`, n.x - file.w.vaisseau.x < -3)
+}
+
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {

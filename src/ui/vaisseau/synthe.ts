@@ -621,6 +621,14 @@ const RECETTES = {
       note(m, 0.12, 0.35, 0, { f: 170, glisse: { vers: 90, en: 0.05 }, a: 0.002, d: 0.06 })
     },
   },
+  /** L'ESSAIM MORD : un bourdonnement d'insectes qui grince — des bourdons serrés, battus vite, un grésillement */
+  morsure: {
+    duree: 0.4, niveau: 0.12, salle: [0.2, 0.08], variantes: 4,
+    faire: (m, h) => {
+      for (let k = 0; k < 3; k++) note(m, 0.02 * k, 0.4, (h.next() - 0.5) * 0.8, { f: 200 + 90 * h.next(), a: 0.02, d: 0.22, battement: 34 + 10 * k, partiels: [[1, 1, 1], [2, 0.6, 1], [3, 0.4, 1], [5, 0.2, 1]] })
+      souffle(m, h, 0, 0.3, 0, { f: 3000, q: 1.5, bande: true, a: 0.01, d: 0.12 })
+    },
+  },
   /** L'AIGUILLE SE PLANTE : un « tchk » charnu — un coup sec et grave, un petit bruit humide qui gargouille */
   piqure: {
     duree: 0.35, niveau: 0.17, salle: [0.2, 0.08], variantes: 4,

@@ -4389,3 +4389,20 @@ par seconde, les passages d'un état à l'autre coûtent quelques images), contr
 une toutes les 0,85 s par tentacule avant. 6 points au lieu de 5 : 15 par
 seconde, comme les trois d'avant. Elle pique le plus proche de sa racine, le
 verrouillé d'abord.
+
+SA DEUXIÈME ARME, L'ESSAIM (`Arme.nuee` ; Keko, 16/11 : « un essaim d'insectes,
+tout petits mais en nuage, qui flotte autour du vaisseau ») : un nuage de 16 qui
+SUIT le vaisseau sur un ressort (raideur 9, frein 4,5) — il traîne derrière lui
+quand il file (une vingtaine d'unités à 40 de vitesse, mesuré), le rattrape quand
+il s'arrête — et SE PENCHE vers l'insecte le plus proche à moins de 70 (le
+verrouillé d'abord), sans s'éloigner du vaisseau de plus de 26. Tout insecte
+dans le nuage perd 7 points par seconde ; une morsure se signale toutes les 0,4 s
+(l'insecte blanchit, un bourdonnement qui grince, `morsure`). À la différence
+de l'aura de la Sentinelle, collée au vaisseau, on le PROMÈNE : on le traîne sur
+la nuée. Le vaisseau ne se tourne plus vers les insectes avec lui : il vole où
+l'on veut. Le dessin : un voile vert à peine visible et SOIXANTE-DIX MOUCHERONS,
+chacun un corps sombre et une aile claire qui bat d'un côté puis de l'autre (sur
+le portail violet, des points clairs seuls se perdaient), chacun sur son orbite,
+à son rayon, à sa vitesse, qui tremblent et traînent un peu plus que le nuage ;
+un sur trois quitte l'orbite pour grouiller sur un insecte mordu. *Chiffres de
+moi, à rejuger.*

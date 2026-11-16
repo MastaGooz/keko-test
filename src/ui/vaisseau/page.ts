@@ -830,6 +830,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
       // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
       else if (canon?.tentacule !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
+      // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
+      else if (canon?.nuee !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
       else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
       else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -934,7 +936,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-balises'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-rail'], kraken: ['arme-tentacules', 'arme-nuee'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -966,7 +968,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && pieceDe(armeDuVortex())?.arme?.canalise !== undefined ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -5770,7 +5772,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.salve !== undefined || a.tornade !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -6963,6 +6965,57 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /**
+   * L'ESSAIM DU KRAKEN (voir `Arme.nuee`) : un voile à peine visible, et UNE NUÉE DE MOUCHERONS — cinquante points qui
+   * tournent chacun sur son orbite autour du centre du nuage, à leur rayon, à leur vitesse, qui battent de l'aile (un
+   * reflet clair une image sur quelques-unes) et tremblent ; ils traînent un peu plus que le nuage quand il file ; un sur
+   * trois quitte l'orbite pour grouiller sur un insecte mordu.
+   */
+  // (soixante-dix, chacun un corps sombre et une aile claire : sur le portail violet, des points clairs seuls se perdaient)
+  const MOUCHERONS = 70
+  function dessinerLesNuees(p: Peintre): void {
+    if (m.nuees.length === 0 || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const n of m.nuees) {
+      const nu = CONF.armes[n.arme]?.nuee
+      if (nu === undefined) continue
+      const R = nu.rayon
+      const mordus = m.ennemis.filter((e) => Math.hypot(e.corps.x - n.x, e.corps.y - n.y) <= R + CONF.ennemi.rayon)
+      p.disc(n.x, n.y, R, BILE[0], (d) => 0.16 * (1 - d * d))
+      const tic = Math.floor(t * 24)
+      for (let j = 0; j < MOUCHERONS; j++) {
+        let x: number
+        let y: number
+        const proie = j % 3 === 0 && mordus.length > 0 ? mordus[j % mordus.length] : undefined
+        if (proie !== undefined) {
+          // (il grouille sur sa proie : une petite orbite serrée, rapide)
+          const a = alea(j, 1, 41) * Math.PI * 2 + t * (6 + 4 * alea(j, 1, 42))
+          const r = 2 + 3 * alea(j, 1, 43)
+          x = proie.corps.x + Math.cos(a) * r
+          y = proie.corps.y + Math.sin(a) * r
+        } else {
+          const a = alea(j, 1, 44) * Math.PI * 2 + t * (1.5 + 2.5 * alea(j, 1, 45)) * (j % 2 === 0 ? 1 : -1)
+          const r = R * (0.25 + 0.75 * Math.sqrt(alea(j, 1, 46))) * (0.85 + 0.15 * Math.sin(t * (3 + alea(j, 1, 47) * 4) + j))
+          const traine = 0.03 + 0.05 * alea(j, 1, 48)
+          x = n.x + Math.cos(a) * r - n.vx * traine
+          y = n.y + Math.sin(a) * r * 0.85 - n.vy * traine
+        }
+        // (ils tremblent, et battent de l'aile)
+        x += (alea(j, tic, 49) - 0.5) * 1.2
+        y += (alea(j, tic, 50) - 0.5) * 1.2
+        const ix = Math.round(x)
+        const iy = Math.round(y)
+        // (le corps, sombre ; l'aile, claire, d'un côté puis de l'autre — elle bat)
+        p.px(ix, iy, CHITINE_SOMBRE)
+        const bat = alea(j, tic, 51) < 0.5 ? 1 : -1
+        p.px(ix + bat, iy - 1, alea(j, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
+      }
+    }
+    p.place(0, 0)
+  }
+  const CHITINE_SOMBRE = N.hex('#1a0c12')
+  /** L'instant du dernier bourdonnement de morsure (un à la fois). */
+  let morsureSonneA = -10
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
@@ -9393,6 +9446,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
               }
               break
+            case 'morsure':
+              // (le nuage mord : l'insecte blanchit, un bourdonnement qui grince — un seul à la fois)
+              toucheEnnemiA.set(ev.id, t)
+              if (t - morsureSonneA > 0.25) {
+                morsureSonneA = t
+                jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
+              }
+              break
             case 'piqure':
               // (l'aiguille se plante : son « tchk » charnu, une giclée de bile)
               jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -9821,6 +9882,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesScies(p)
     dessinerLesTornades(p)
     dessinerLePlasma(p)
+    dessinerLesNuees(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)

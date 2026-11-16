@@ -478,6 +478,16 @@ export type Arme = {
    * après. Sa cible morte ou trop loin avant la piqûre, elle se rétracte. L'état est `Monde.tentacules`.
    */
   tentacule?: { ancres: [number, number][]; aller: number; tenue: number; retour: number; virage: number }
+  /**
+   * UN ESSAIM D'INSECTES EN NUAGE (la deuxième arme du Kraken, Keko, 16/11 : « un essaim d'insectes, tout petits mais en
+   * nuage, qui flotte autour du vaisseau ») : un nuage de `rayon` qui SUIT le vaisseau sur un ressort (`raideur`,
+   * `frein`) — il traîne derrière lui quand il file, le rattrape quand il s'arrête — et qui SE PENCHE vers l'insecte le
+   * plus proche à `portee` du vaisseau (le verrouillé d'abord), sans s'éloigner du vaisseau de plus de `laisse`. Tout
+   * insecte dans le nuage perd `dps` par seconde (une morsure se signale toutes les `periode` secondes). À la différence
+   * de l'aura de la Sentinelle, il n'est pas collé au vaisseau : on le promène, on le traîne sur la nuée. L'état est
+   * `Monde.nuees`.
+   */
+  nuee?: { rayon: number; dps: number; raideur: number; frein: number; laisse: number; periode: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -628,6 +638,8 @@ export type Monde = {
   spheres: Sphere[]
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
+  /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où, sa vitesse, la dernière morsure signalée. */
+  nuees: { arme: number; x: number; y: number; vx: number; vy: number; mordA: number }[]
 }
 
 /**
@@ -713,6 +725,8 @@ export type Evenement =
   /** Une tentacule s'étend vers un insecte, le pique (voir `Arme.tentacule`). */
   | { type: 'tentacule'; x: number; y: number }
   | { type: 'piqure'; x: number; y: number }
+  /** Le nuage d'insectes mord un insecte (voir `Arme.nuee`) : signalé toutes les `periode` secondes. */
+  | { type: 'morsure'; id: number; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -733,7 +747,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1835,6 +1849,60 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
   }
 }
 
+/** LES NUAGES D'INSECTES (voir `Arme.nuee`) : le ressort qui suit le vaisseau, penché vers la nuée, et les morsures. */
+function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const nu = a.nuee
+    if (nu === undefined) return
+    let n = m.nuees.find((x) => x.arme === i)
+    if (n === undefined) {
+      n = { arme: i, x: v.x, y: v.y, vx: 0, vy: 0, mordA: m.t }
+      m.nuees.push(n)
+    }
+    // (où il veut être : le vaisseau, penché vers l'insecte le plus proche — sans dépasser la laisse)
+    let cx = v.x
+    let cy = v.y
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let dc = Infinity
+      for (const e of m.ennemis) {
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (aPortee(e) && d < dc) (dc = d), (cible = e)
+      }
+    }
+    if (cible !== undefined && m.phase === 'vol') {
+      const dx = cible.corps.x - v.x
+      const dy = cible.corps.y - v.y
+      const d = Math.hypot(dx, dy) || 1
+      const l = Math.min(nu.laisse, d)
+      cx = v.x + (dx / d) * l
+      cy = v.y + (dy / d) * l
+    }
+    n.vx += ((cx - n.x) * nu.raideur - n.vx * nu.frein) * dt
+    n.vy += ((cy - n.y) * nu.raideur - n.vy * nu.frein) * dt
+    n.x += n.vx * dt
+    n.y += n.vy * dt
+    // (la laisse tient : au-delà, le nuage est ramené au bord)
+    const ex = n.x - v.x
+    const ey = n.y - v.y
+    const e0 = Math.hypot(ex, ey)
+    if (e0 > nu.laisse * 1.6) (n.x = v.x + (ex / e0) * nu.laisse * 1.6), (n.y = v.y + (ey / e0) * nu.laisse * 1.6)
+    if (m.phase !== 'vol') return
+    const signale = m.t - n.mordA >= nu.periode
+    if (signale) n.mordA = m.t
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - n.x, e.corps.y - n.y) > nu.rayon + c.ennemi.rayon) continue
+      e.pv -= nu.dps * dt
+      if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  })
+}
+
 /**
  * UN MISSILE D'ESSAIM ZIGZAGUE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, par
  * bonds : à chaque bond un cap neuf, l'écart tiré au hasard d'un bord à l'autre et qui s'éteint avec l'âge.
@@ -2350,7 +2418,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2437,10 +2505,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesSpheres(c, m, dt, ev)
   tirerLesRails(c, m, ev)
   menerLesTentacules(c, m, ev)
+  menerLesNuees(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
