@@ -487,7 +487,13 @@ export type Arme = {
    * de l'aura de la Sentinelle, il n'est pas collé au vaisseau : on le promène, on le traîne sur la nuée. L'état est
    * `Monde.nuees`.
    */
-  nuee?: { rayon: number; dps: number; raideur: number; frein: number; laisse: number; periode: number }
+  // PUIS UN NUAGE QUI RESTE AUTOUR DU VAISSEAU ET S'ÉTIRE (Keko, 16/11 : « que l'essaim reste bien autour du vaisseau
+  // quand pas d'ennemis à portée ; et quand des ennemis sont à portée, l'essaim se déforme et s'étend vers les ennemis ») :
+  // le nuage, de `rayon`, est CENTRÉ SUR LE VAISSEAU (plus de ressort ni de traîne) ; vers les `bras` insectes à `portee`
+  // les plus proches (le verrouillé d'abord), il ÉTEND UN BRAS, qui s'allonge en `deploiement` secondes et se rétracte de
+  // même quand son insecte meurt ou s'éloigne. Un insecte au bout d'un bras tendu, ou dans le nuage, perd `dps` par
+  // seconde (une morsure se signale toutes les `periode` secondes).
+  nuee?: { rayon: number; dps: number; bras: number; deploiement: number; periode: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -638,8 +644,8 @@ export type Monde = {
   spheres: Sphere[]
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
-  /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où, sa vitesse, la dernière morsure signalée. */
-  nuees: { arme: number; x: number; y: number; vx: number; vy: number; mordA: number }[]
+  /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
+  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[] }[]
 }
 
 /**
@@ -1849,7 +1855,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
   }
 }
 
-/** LES NUAGES D'INSECTES (voir `Arme.nuee`) : le ressort qui suit le vaisseau, penché vers la nuée, et les morsures. */
+/** LES NUAGES D'INSECTES (voir `Arme.nuee`) : centrés sur le vaisseau, leurs bras qui s'étendent vers les insectes proches, les morsures. */
 function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
@@ -1857,52 +1863,42 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (nu === undefined) return
     let n = m.nuees.find((x) => x.arme === i)
     if (n === undefined) {
-      n = { arme: i, x: v.x, y: v.y, vx: 0, vy: 0, mordA: m.t }
+      n = { arme: i, x: v.x, y: v.y, mordA: m.t, bras: [] }
       m.nuees.push(n)
     }
-    // (où il veut être : le vaisseau, penché vers l'insecte le plus proche — sans dépasser la laisse)
-    let cx = v.x
-    let cy = v.y
-    let cible: Ennemi | undefined
+    n.x = v.x
+    n.y = v.y
+    // (vers qui il s'étend : les `bras` insectes à portée les plus proches, le verrouillé d'abord)
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    const proches = m.phase === 'vol' ? m.ennemis.filter((e) => dist(e) <= a.portee + c.ennemi.rayon).sort((p, q) => dist(p) - dist(q)) : []
     const ve = ennemiVerrouille(m)
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
-    if (ve !== null && aPortee(ve)) cible = ve
-    else {
-      let dc = Infinity
-      for (const e of m.ennemis) {
-        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-        if (aPortee(e) && d < dc) (dc = d), (cible = e)
-      }
+    if (ve !== null && proches.includes(ve)) proches.splice(proches.indexOf(ve), 1), proches.unshift(ve)
+    const vises = new Set(proches.slice(0, nu.bras).map((e) => e.id))
+    const pas = dt / nu.deploiement
+    // (les bras tendus vers un insecte encore visé s'allongent ; les autres se rétractent, vers le dernier point où il était)
+    for (const b of n.bras) {
+      const e = vises.has(b.cible) ? m.ennemis.find((x) => x.id === b.cible) : undefined
+      if (e !== undefined) (b.u = Math.min(1, b.u + pas)), (b.tx = e.corps.x), (b.ty = e.corps.y)
+      else b.u -= pas
     }
-    if (cible !== undefined && m.phase === 'vol') {
-      const dx = cible.corps.x - v.x
-      const dy = cible.corps.y - v.y
-      const d = Math.hypot(dx, dy) || 1
-      const l = Math.min(nu.laisse, d)
-      cx = v.x + (dx / d) * l
-      cy = v.y + (dy / d) * l
+    n.bras = n.bras.filter((b) => b.u > 0)
+    for (const id of vises) if (!n.bras.some((b) => b.cible === id && vises.has(b.cible))) {
+      const e = m.ennemis.find((x) => x.id === id)!
+      n.bras.push({ cible: id, u: pas, tx: e.corps.x, ty: e.corps.y })
     }
-    n.vx += ((cx - n.x) * nu.raideur - n.vx * nu.frein) * dt
-    n.vy += ((cy - n.y) * nu.raideur - n.vy * nu.frein) * dt
-    n.x += n.vx * dt
-    n.y += n.vy * dt
-    // (la laisse tient : au-delà, le nuage est ramené au bord)
-    const ex = n.x - v.x
-    const ey = n.y - v.y
-    const e0 = Math.hypot(ex, ey)
-    if (e0 > nu.laisse * 1.6) (n.x = v.x + (ex / e0) * nu.laisse * 1.6), (n.y = v.y + (ey / e0) * nu.laisse * 1.6)
     if (m.phase !== 'vol') return
     const signale = m.t - n.mordA >= nu.periode
     if (signale) n.mordA = m.t
+    // (mordus : au bout d'un bras tendu, ou dans le nuage)
+    const auBout = new Set(n.bras.filter((b) => b.u >= 0.85 && vises.has(b.cible)).map((b) => b.cible))
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - n.x, e.corps.y - n.y) > nu.rayon + c.ennemi.rayon) continue
+      if (!auBout.has(e.id) && dist(e) > nu.rayon + c.ennemi.rayon) continue
       e.pv -= nu.dps * dt
       if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   })
 }
-
 /**
  * UN MISSILE D'ESSAIM ZIGZAGUE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, par
  * bonds : à chaque bond un cap neuf, l'écart tiré au hasard d'un bord à l'autre et qui s'éteint avec l'âge.

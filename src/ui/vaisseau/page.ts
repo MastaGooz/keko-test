@@ -6966,13 +6966,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
   /**
-   * L'ESSAIM DU KRAKEN (voir `Arme.nuee`) : un voile à peine visible, et UNE NUÉE DE MOUCHERONS — cinquante points qui
-   * tournent chacun sur son orbite autour du centre du nuage, à leur rayon, à leur vitesse, qui battent de l'aile (un
-   * reflet clair une image sur quelques-unes) et tremblent ; ils traînent un peu plus que le nuage quand il file ; un sur
-   * trois quitte l'orbite pour grouiller sur un insecte mordu.
+   * L'ESSAIM DU KRAKEN (voir `Arme.nuee`) : un voile à peine visible, et UNE NUÉE DE MOUCHERONS — chacun un corps sombre et
+   * une aile claire qui bat, qui tremblent. AU REPOS, tous tournent autour du vaisseau, serrés, chacun sur son orbite.
+   * DES BRAS (Keko, 16/11 : « l'essaim se déforme et s'étend vers les ennemis ») : trois sur cinq quittent le nuage pour
+   * ses bras — chacun à sa place le long du bras (une fraction de sa longueur, tendue d'autant qu'il est allongé), un bras
+   * renflé au milieu, un peu courbe, qui ondule ; au bout d'un bras tendu, ils grouillent sur l'insecte.
    */
-  // (soixante-dix, chacun un corps sombre et une aile claire : sur le portail violet, des points clairs seuls se perdaient)
-  const MOUCHERONS = 70
+  // (quatre-vingt-dix, chacun un corps sombre et une aile claire : sur le portail violet, des points clairs seuls se perdaient)
+  const MOUCHERONS = 90
   function dessinerLesNuees(p: Peintre): void {
     if (m.nuees.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
@@ -6980,25 +6981,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nu = CONF.armes[n.arme]?.nuee
       if (nu === undefined) continue
       const R = nu.rayon
-      const mordus = m.ennemis.filter((e) => Math.hypot(e.corps.x - n.x, e.corps.y - n.y) <= R + CONF.ennemi.rayon)
+      const bras = n.bras
       p.disc(n.x, n.y, R, BILE[0], (d) => 0.16 * (1 - d * d))
+      // (le voile le long des bras)
+      for (const b of bras) for (let q = 1; q <= 4; q++) {
+        const s = (q / 4) * b.u
+        p.disc(n.x + (b.tx - n.x) * s, n.y + (b.ty - n.y) * s, 3.5, BILE[0], (d) => 0.14 * (1 - d * d))
+      }
       const tic = Math.floor(t * 24)
       for (let j = 0; j < MOUCHERONS; j++) {
         let x: number
         let y: number
-        const proie = j % 3 === 0 && mordus.length > 0 ? mordus[j % mordus.length] : undefined
-        if (proie !== undefined) {
-          // (il grouille sur sa proie : une petite orbite serrée, rapide)
-          const a = alea(j, 1, 41) * Math.PI * 2 + t * (6 + 4 * alea(j, 1, 42))
-          const r = 2 + 3 * alea(j, 1, 43)
-          x = proie.corps.x + Math.cos(a) * r
-          y = proie.corps.y + Math.sin(a) * r
+        const b = bras.length > 0 && j % 5 < 3 ? bras[j % bras.length] : undefined
+        if (b !== undefined) {
+          const L = Math.hypot(b.tx - n.x, b.ty - n.y) || 1
+          const px = -(b.ty - n.y) / L
+          const py = (b.tx - n.x) / L
+          const s = alea(j, 1, 60)
+          if (b.u >= 0.85 && s > 0.75) {
+            // (au bout du bras tendu : il grouille sur l'insecte)
+            const a = alea(j, 1, 41) * Math.PI * 2 + t * (6 + 4 * alea(j, 1, 42))
+            const r = 2 + 3.5 * alea(j, 1, 43)
+            x = b.tx + Math.cos(a) * r
+            y = b.ty + Math.sin(a) * r
+          } else {
+            // (le long du bras : renflé au milieu, un peu courbe, il ondule)
+            const le = s * b.u
+            const large = (1.5 + 3.5 * Math.sin(Math.PI * Math.min(1, le + 0.1))) * (alea(j, 1, 61) * 2 - 1)
+            const courbe = Math.sin(Math.PI * le) * (b.cible % 2 === 0 ? 1 : -1) * L * 0.12 + Math.sin(t * 5 + le * 7 + b.cible) * 1.5
+            x = n.x + (b.tx - n.x) * le + px * (large + courbe)
+            y = n.y + (b.ty - n.y) * le + py * (large + courbe)
+          }
         } else {
           const a = alea(j, 1, 44) * Math.PI * 2 + t * (1.5 + 2.5 * alea(j, 1, 45)) * (j % 2 === 0 ? 1 : -1)
-          const r = R * (0.25 + 0.75 * Math.sqrt(alea(j, 1, 46))) * (0.85 + 0.15 * Math.sin(t * (3 + alea(j, 1, 47) * 4) + j))
-          const traine = 0.03 + 0.05 * alea(j, 1, 48)
-          x = n.x + Math.cos(a) * r - n.vx * traine
-          y = n.y + Math.sin(a) * r * 0.85 - n.vy * traine
+          const r = R * (0.35 + 0.65 * Math.sqrt(alea(j, 1, 46))) * (0.85 + 0.15 * Math.sin(t * (3 + alea(j, 1, 47) * 4) + j))
+          x = n.x + Math.cos(a) * r
+          y = n.y + Math.sin(a) * r * 0.85
         }
         // (ils tremblent, et battent de l'aile)
         x += (alea(j, tic, 49) - 0.5) * 1.2
@@ -7012,8 +7030,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     p.place(0, 0)
-  }
-  const CHITINE_SOMBRE = N.hex('#1a0c12')
+  }  const CHITINE_SOMBRE = N.hex('#1a0c12')
   /** L'instant du dernier bourdonnement de morsure (un à la fois). */
   let morsureSonneA = -10
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */

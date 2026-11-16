@@ -4406,3 +4406,16 @@ le portail violet, des points clairs seuls se perdaient), chacun sur son orbite,
 à son rayon, à sa vitesse, qui tremblent et traînent un peu plus que le nuage ;
 un sur trois quitte l'orbite pour grouiller sur un insecte mordu. *Chiffres de
 moi, à rejuger.*
+
+PUIS L'ESSAIM RESTE AUTOUR DU VAISSEAU ET S'ÉTIRE EN BRAS (Keko, 16/11 : « que
+l'essaim reste bien autour du vaisseau quand pas d'ennemis à portée ; et quand des
+ennemis sont à portée, l'essaim se déforme et s'étend vers les ennemis ») : plus de
+ressort ni de traîne — le nuage (14) est CENTRÉ SUR LE VAISSEAU. Vers les trois
+insectes à moins de 55 les plus proches (le verrouillé d'abord), il ÉTEND UN BRAS,
+qui s'allonge en 0,3 s et se rétracte de même quand son insecte meurt ou
+s'éloigne ; un insecte au bout d'un bras tendu (aux 85 %), ou dans le nuage, perd
+7 points par seconde. Le vaisseau vole toujours librement. Le dessin :
+quatre-vingt-dix moucherons ; au repos, tous serrés autour du vaisseau ; des bras,
+trois sur cinq le quittent — chacun à sa place le long du bras, renflé au milieu,
+un peu courbe, qui ondule, un voile vert le long —, et au bout d'un bras tendu ils
+grouillent sur l'insecte.
