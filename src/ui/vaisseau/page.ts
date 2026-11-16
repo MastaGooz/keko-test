@@ -1401,15 +1401,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE DÉFILEMENT de la liste (Keko : « énormément de pièces, un moyen de se déplacer dans une longue liste ») : en rangées, par catégorie ; on la fait glisser au doigt, quatre rangées visibles. */
   const defil: Record<Sorte, number> = { propulseur: 0, coque: 0, outil: 0, arme: 0 }
   /** Un glisser en cours sur la liste : d'où il part, le défilement d'alors, s'il a bougé (sinon c'est une tape). */
-  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases' | 'missions' | 'soute'; curseur?: Curseur } | null = null
+  let glisse: { x: number; y: number; defil0: number; bouge: boolean; sorte: 'liste' | 'vaisseaux' | 'onglets' | 'arbre' | 'curseur' | 'ordres' | 'inventaire' | 'cases' | 'missions' | 'soute'; curseur?: Curseur } | null = null
   /** UN CURSEUR qu'on fait glisser de côté (le panneau de vente) : sa zone, et ce qu'il règle, de 0 à 1 ; refaits à chaque image comme les zones. */
   type Curseur = { x: number; y: number; w: number; h: number; regler: (u: number) => void }
   let curseurs: Curseur[] = []
   /** LE DÉFILEMENT DE LA GRILLE D'ONGLETS, en pixels (Keko : « les deux du bas tombent sous la zone, ajoute un défilement »), et sa zone, refaite à chaque image (null : tout tient). */
   let defilOnglets = 0
   let zoneDesOnglets: { x: number; y: number; w: number; h: number } | null = null
-  /** La zone qui se fait glisser, refaite à chaque image comme les autres. */
-  let zoneGlissante: { x: number; y: number; w: number; h: number } | null = null
+  /** La zone qui se fait glisser, refaite à chaque image comme les autres ; `defil` : ce qu'elle fait défiler, si ce n'est pas la liste des pièces. */
+  let zoneGlissante: { x: number; y: number; w: number; h: number; defil?: 'vaisseaux' } | null = null
+  /** LE DÉFILEMENT DE LA LISTE DES VAISSEAUX, en rangées (Keko, 16/11 : en paysage, avec dix vaisseaux, elle ne tenait plus). */
+  let defilVaisseaux = 0
   let onglet: Sorte = 'propulseur'
   /**
    * LA PLACE OUVERTE, pour les outils et les armes au hangar (Keko : « deux slots, arme 1 et arme 2, outil 1 et
@@ -3265,7 +3267,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (EN ACIER CLAIR, le mot sombre — Keko, 14/11 : jaune, il « renvoie trop au bouton décollage en dessous » ; « un
       // petit peu plus visible que le bouton équipement, mais pas jaune »)
       const bxc = W - 7 - bw
-      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t), (vaisseauChoisi = flotte.actif), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
+      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t), (vaisseauChoisi = flotte.actif), (surligneVaisseau = -1), (defilVaisseaux = Math.max(0, modelesDuVortex().findIndex((mo) => mo.id === flotte.actif) - 2))), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
     }
     return y + h + 3
   }
@@ -3406,45 +3408,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     return hd
   }
+  // (LE CUIRASSÉ EST MIS DE CÔTÉ — Keko, 15/11 : la Salamandre a sa place)
+  const modelesDuVortex = (): ReturnType<typeof modeleDeVaisseau>[] => MODELES.filter((mo) => mo.id !== 'cuirasse')
+  /** La hauteur de la fiche d'un vaisseau au panneau (nom et dessin, cinq jauges, ce qu'il est) — voir `dessinerLaFicheDuVaisseau`. */
+  const hauteurDeLaFicheDuVaisseau = (mo: ReturnType<typeof modeleDeVaisseau>): number => 70 + replier(mo.dit, W - 22).length * 9 + 6
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
     eteindre(0, HAUT_BARRE, W, H)
-    if (partie !== 'fiche') zones = []
-    zoneGlissante = null
+    // (en paysage, la fiche se dessine APRÈS la liste, dans l'autre colonne : elle ne doit pas lui retirer son défilement)
+    if (partie !== 'fiche') (zones = []), (zoneGlissante = null)
     zoneDesCases = null
     const fermer = (): void => {
       vaisseauxOuverts = false
       etapeA = t
     }
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
-    // (LE CUIRASSÉ EST MIS DE CÔTÉ — Keko, 15/11 : la Salamandre a sa place)
-    const tous = MODELES.filter((mo) => mo.id !== 'cuirasse')
+    const tous = modelesDuVortex()
     const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
     const iSel = tous.indexOf(choisi)
     const a = aLeVaisseau(flotte, choisi.id)
     if (partie !== 'fiche') {
     enTete(p, y, 'Vaisseaux', fermer)
     y += HT + 3
-    const hl = tous.length * RANG_LISTE + 4
-    plaque(p, 4, y, W - 8, hl, 'creux')
-    const yl = y + 2
-    const cibleY = yl + iSel * RANG_LISTE
-    surligneVaisseau = surligneVaisseau < 0 ? cibleY : ressort(surligneVaisseau, cibleY, 24)
-    const sy = Math.round(surligneVaisseau)
-    p.rect(7, sy, W - 14, RANG_LISTE, N.hex('#2a2440'))
-    p.rect(7, sy + 1, 2, RANG_LISTE - 2, PEPITE[2])
-    tous.forEach((mo, i) => {
-      const ly = yl + i * RANG_LISTE
-      const a = aLeVaisseau(flotte, mo.id)
-      const ici = i === iSel
-      ecrire(p, mo.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
-      if (mo.id === flotte.actif) p.text('PILOTE', W - 10, ly + 4, PEPITE[2], { align: 'right' })
-      else if (!a) p.text('VERROUILLE', W - 10, ly + 4, COQUE[3], { align: 'right' })
-      zone(4, ly, W - 8, RANG_LISTE, () => (vaisseauChoisi = mo.id), ici ? null : 'clic')
-    })
-    y += hl + 4
-    // le bouton
+    // LE BOUTON EN TÊTE, AU-DESSUS DE LA LISTE (Keko, 16/11 : « je ne peux plus cliquer sur Piloter en paysage, il y a trop
+    // de vaisseaux dans la liste ; mettre le bouton en haut de la liste et un défilement sur la liste »)
     if (choisi.id === flotte.actif) {
       motEnRelief(p, 'Piloté', W / 2, y + 4, true)
     } else if (a) {
@@ -3461,6 +3449,44 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }, 'equipe')
     } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
     y += 19
+    // LA LISTE DÉFILE quand elle ne tient pas (au doigt, à la molette) : autant de rangées que la hauteur en laisse — sous
+    // elle, la fiche du vaisseau choisi en portrait ; en paysage, la colonne entière
+    const reserve = partie === 'liste' ? 4 : hauteurDeLaFicheDuVaisseau(choisi) + 4
+    const RANGEES = Math.max(3, Math.min(tous.length, Math.floor((H - 4 - y - 4 - reserve) / RANG_LISTE)))
+    const hl = RANGEES * RANG_LISTE + 4
+    plaque(p, 4, y, W - 8, hl, 'creux')
+    const yl = y + 2
+    const maxDefil = Math.max(0, tous.length - RANGEES)
+    defilVaisseaux = Math.max(0, Math.min(maxDefil, defilVaisseaux))
+    const depart = Math.round(defilVaisseaux)
+    zoneGlissante = maxDefil > 0 ? { x: 4, y: yl, w: W - 8, h: RANGEES * RANG_LISTE, defil: 'vaisseaux' } : null
+    const larg = W - (maxDefil > 0 ? 20 : 14)
+    const cibleY = yl + (iSel - depart) * RANG_LISTE
+    surligneVaisseau = surligneVaisseau < 0 || Math.abs(surligneVaisseau - cibleY) > 60 ? cibleY : ressort(surligneVaisseau, cibleY, 24)
+    if (iSel >= depart && iSel < depart + RANGEES) {
+      const sy = Math.round(surligneVaisseau)
+      p.rect(7, sy, larg, RANG_LISTE, N.hex('#2a2440'))
+      p.rect(7, sy + 1, 2, RANG_LISTE - 2, PEPITE[2])
+    }
+    for (let i = depart; i < Math.min(tous.length, depart + RANGEES); i++) {
+      const mo = tous[i]
+      const ly = yl + (i - depart) * RANG_LISTE
+      const a = aLeVaisseau(flotte, mo.id)
+      const ici = i === iSel
+      ecrire(p, mo.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
+      const xd = 7 + larg - 3
+      if (mo.id === flotte.actif) p.text('PILOTE', xd, ly + 4, PEPITE[2], { align: 'right' })
+      else if (!a) p.text('VERROUILLE', xd, ly + 4, COQUE[3], { align: 'right' })
+      zone(4, ly, W - 8, RANG_LISTE, () => (vaisseauChoisi = mo.id), ici ? null : 'clic')
+    }
+    // (l'ascenseur : un rail à droite, son curseur à la taille de ce qu'on voit)
+    if (maxDefil > 0) {
+      const hr = RANGEES * RANG_LISTE - 2
+      p.rect(W - 11, yl + 1, 3, hr, N.hex('#141020'))
+      const hc = Math.max(6, Math.round((hr * RANGEES) / tous.length))
+      p.rect(W - 11, yl + 1 + Math.round(((hr - hc) * defilVaisseaux) / maxDefil), 3, hc, PEPITE[2])
+    }
+    y += hl + 4
     }
     if (partie === 'liste') {
       if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
@@ -5410,7 +5436,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const q = enTampon(ev.clientX, ev.clientY)
       const g = zoneGlissante
       if (g !== null && q.x >= g.x && q.x < g.x + g.w && q.y >= g.y && q.y < g.y + g.h) {
-        glisse = { x: q.x, y: q.y, defil0: defil[onglet], bouge: false, sorte: 'liste' }
+        glisse = g.defil === 'vaisseaux' ? { x: q.x, y: q.y, defil0: defilVaisseaux, bouge: false, sorte: 'vaisseaux' } : { x: q.x, y: q.y, defil0: defil[onglet], bouge: false, sorte: 'liste' }
         racine.setPointerCapture(ev.pointerId) // (la souris qui sort du canvas garde le glisser)
         return
       }
@@ -5569,6 +5595,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'arbre') defilDeLArbre[branche] = glisse.defil0 - (q.y - glisse.y) // (l'arbre suit le doigt, au pixel)
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
+      else if (glisse.sorte === 'vaisseaux') defilVaisseaux = glisse.defil0 - (q.y - glisse.y) / 13
       return
     }
     if (regard !== null && ev.pointerId === regard.id) {
@@ -5640,6 +5667,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (z !== undefined) appuyer(z)
       }
       if (glisse.sorte === 'liste') defil[onglet] = Math.round(defil[onglet])
+      else if (glisse.sorte === 'vaisseaux') defilVaisseaux = Math.round(defilVaisseaux)
       else if (glisse.sorte === 'onglets') defilOnglets = Math.round(defilOnglets)
       else if (glisse.sorte === 'ordres') defilOrdres = Math.round(defilOrdres)
       else if (glisse.sorte === 'inventaire') defilInventaire = Math.round(defilInventaire)
@@ -5682,7 +5710,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       defilOnglets = Math.round(defilOnglets) + Math.sign(pas)
     } else if (dans(zoneGlissante)) {
       ev.preventDefault()
-      defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
+      if (zoneGlissante?.defil === 'vaisseaux') defilVaisseaux = Math.round(defilVaisseaux) + Math.sign(pas)
+      else defil[onglet] = Math.round(defil[onglet]) + Math.sign(pas)
     } else if (dans(zoneDesCases)) {
       ev.preventDefault()
       defilCases = Math.round(defilCases) + Math.sign(pas)

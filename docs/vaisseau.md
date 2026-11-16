@@ -4861,3 +4861,11 @@ LE DESSIN (`formesDeLaCoque(13, t)`), l'« Energy core » vu de dessus :
 - Pas d'ailes, pas de tuyère : comme les bêtes, il lâche en poussée des éclats de néant, magenta (`organique`).
 SES ARMES NE SONT PAS TRANCHÉES : il emporte LE PUITS — la singularité gardée de côté « pour un futur vaisseau » —, en
 attendant ; rien d'autre n'est codé.
+
+LE PANNEAU DES VAISSEAUX : « PILOTER » EN TÊTE, LA LISTE DÉFILE (Keko, 16/11 : « je ne peux plus cliquer sur Piloter en
+paysage, il y a trop de vaisseaux dans la liste ; mettre le bouton en haut de la liste et un défilement sur la
+liste »). Le bouton (« Piloter », « Piloté », « Pas encore disponible ») passe entre l'en-tête et la liste ; la liste
+prend autant de rangées que la hauteur en laisse (en paysage, la colonne ; en portrait, ce que la fiche laisse — les
+dix y tiennent encore) et DÉFILE au doigt et à la molette (`defilVaisseaux`, la `zoneGlissante` des pièces avec
+`defil: 'vaisseaux'`), un ascenseur d'or à droite ; à l'ouverture, elle montre le vaisseau piloté. Piège : en paysage, la
+fiche se dessine APRÈS la liste et remettait `zoneGlissante` à zéro — le glisser devenait une tape.
