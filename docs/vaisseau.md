@@ -4602,3 +4602,11 @@ sourd et métallique, le cliquetis de la chaîne). *Chiffres de moi, à rejuger.
 PUIS UNE CHAÎNE PLUS LONGUE (Keko, 16/11 : « il faut que la chaîne soit plus
 longue ») : 34 au lieu de 22 ; la masse garde son tour (4,5 rad/s) — elle va donc
 plus vite sur son cercle, et balaie une couronne plus loin du vaisseau.
+
+PUIS UNE PRISE PLUS LARGE ET UNE CHAÎNE QUI FRAPPE (Keko, 16/11 : « que la boule ait
+une hitbox un peu plus grosse, et que la chaîne fasse aussi des dégâts, moins forts
+que la boule ») : la masse touche à 7,5 (`prise` ; sa taille dessinée reste 4,5) ;
+un insecte à moins de 2,5 de la chaîne (plus son rayon) prend 3 points, une fois par
+demi-seconde au plus, jamais au même pas qu'un coup de masse (`chaine`). Mesuré :
+un insecte immobile près du vaisseau prend un coup de chaîne à chaque tour. Son son,
+`chaine` (un cliquetis de maillons).

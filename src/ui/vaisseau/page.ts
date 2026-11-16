@@ -9877,6 +9877,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
               secousse = Math.max(secousse, 0.15)
               break
+            case 'chaineFrappe':
+              // (la chaîne fouette un insecte : un cliquetis sec, deux étincelles — moins que la masse)
+              jouer('chaine', { dx: ev.x - v.x, dy: ev.y - v.y })
+              for (let i = 0; i < 3; i++) {
+                const a = R.range(0, Math.PI * 2)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.1, 0.2), N.WHITE, 1, 1)
+              }
+              break
             case 'mineLancee':
               // (une pustule part de son dos : un « blop » — sauf s'il a sonné en avance)
               if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)

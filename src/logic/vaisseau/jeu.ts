@@ -535,7 +535,11 @@ export type Arme = {
    * derrière, puis reprend son tour. Tout insecte à moins de `rayon` d'elle prend `degats`, une fois toutes les `rebond`
    * secondes au plus. L'état est `Monde.fleaux`.
    */
-  fleau?: { longueur: number; vitesse: number; rayon: number; rebond: number }
+  // (… PUIS UNE PRISE PLUS LARGE QUE LA BOULE, ET UNE CHAÎNE QUI FRAPPE AUSSI — Keko, 16/11 : « que la boule ait une hitbox un
+  // peu plus grosse, et que la chaîne fasse aussi des dégâts, moins forts que la boule ») : la masse touche à `prise` (sa
+  // taille dessinée reste `rayon`) ; un insecte à moins de `chaine.epaisseur` de la chaîne prend `chaine.degats`, une
+  // fois toutes les `rebond` secondes au plus — jamais au même pas qu'un coup de masse)
+  fleau?: { longueur: number; vitesse: number; rayon: number; prise: number; rebond: number; chaine: { degats: number; epaisseur: number } }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -697,7 +701,7 @@ export type Monde = {
   /** LES MINES D'ACIDE (voir `Arme.mine`) : d'où elles partent, où elles tombent, quand elles ont été lancées. */
   mines: { id: number; arme: number; x0: number; y0: number; x: number; y: number; lancee: number }[]
   /** LES FLÉAUX (voir `Arme.fleau`) : un par arme — la masse, sa vitesse, quand elle a frappé chaque insecte. */
-  fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number> }[]
+  fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number>; frappesChaine: Record<number, number> }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -801,6 +805,7 @@ export type Evenement =
   | { type: 'mineFinie'; x: number; y: number }
   /** Le fléau frappe un insecte (voir `Arme.fleau`). */
   | { type: 'fleauFrappe'; x: number; y: number }
+  | { type: 'chaineFrappe'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -1995,7 +2000,7 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     if (fl === undefined) return
     let f = m.fleaux.find((x) => x.arme === i)
     if (f === undefined) {
-      f = { arme: i, x: v.x + fl.longueur, y: v.y, vx: v.vx, vy: v.vy + fl.vitesse * fl.longueur, frappes: {} }
+      f = { arme: i, x: v.x + fl.longueur, y: v.y, vx: v.vx, vy: v.vy + fl.vitesse * fl.longueur, frappes: {}, frappesChaine: {} }
       m.fleaux.push(f)
     }
     // (poussée le long du cercle, vers sa vitesse de tour — relative au vaisseau)
@@ -2025,13 +2030,28 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     f.vy -= uy * vr
     if (m.phase !== 'vol') return
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - f.x, e.corps.y - f.y) > fl.rayon + c.ennemi.rayon) continue
-      if (m.t - (f.frappes[e.id] ?? -1e9) < fl.rebond) continue
-      f.frappes[e.id] = m.t
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
-      ev.push({ type: 'fleauFrappe', x: e.corps.x, y: e.corps.y })
-      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      // (LA MASSE, à sa prise)
+      if (Math.hypot(e.corps.x - f.x, e.corps.y - f.y) <= fl.prise + c.ennemi.rayon) {
+        if (m.t - (f.frappes[e.id] ?? -1e9) < fl.rebond) continue
+        f.frappes[e.id] = m.t
+        f.frappesChaine[e.id] = m.t
+        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        ev.push({ type: 'fleauFrappe', x: e.corps.x, y: e.corps.y })
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        continue
+      }
+      // (LA CHAÎNE : à moins de son épaisseur du segment, du vaisseau à la masse)
+      const ex = e.corps.x - v.x
+      const ey = e.corps.y - v.y
+      const le = ex * ux + ey * uy
+      if (le < 0 || le > fl.longueur || Math.abs(ex * uy - ey * ux) > fl.chaine.epaisseur + c.ennemi.rayon) continue
+      if (m.t - (f.frappesChaine[e.id] ?? -1e9) < fl.rebond) continue
+      f.frappesChaine[e.id] = m.t
+      e.pv -= fl.chaine.degats
+      ev.push({ type: 'chaineFrappe', x: e.corps.x, y: e.corps.y })
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   })

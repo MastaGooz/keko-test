@@ -1678,7 +1678,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // qu'elle croise, et traîne derrière lui quand il file
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const fleau = { id: 'fleau', cadence: 1, degats: 8, portee: 30, vitesse: 0, vie: 0, dispersion: 0, guide: false, fleau: { longueur: 22, vitesse: 4.5, rayon: 4.5, rebond: 0.5 } }
+  const fleau = { id: 'fleau', cadence: 1, degats: 8, portee: 30, vitesse: 0, vie: 0, dispersion: 0, guide: false, fleau: { longueur: 22, vitesse: 4.5, rayon: 4.5, prise: 7.5, rebond: 0.5, chaine: { degats: 3, epaisseur: 2.5 } } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [fleau], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const w = nouveauMonde(cfg, 3)
   // (un insecte sur le cercle du fléau, un autre à 50, hors de sa portée)
@@ -1699,6 +1699,21 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   }
   const pv = w.ennemis.map((e) => 1000 - e.pv)
   verifier(`la masse tourne autour du vaisseau, tenue à 22 par la chaîne (${(tours / (2 * Math.PI)).toFixed(1)} tours en 3 s) ; elle frappe l’insecte sur sa route (${pv[0]}, par 8) ; celui à 50, rien`, tours / (2 * Math.PI) > 1.5 && ecartMax < 1e-6 && pv[0] >= 16 && pv[0] % 8 === 0 && pv[1] === 0)
+  // (LA PRISE PLUS LARGE, LA CHAÎNE QUI FRAPPE : un insecte juste au-delà du cercle — à 6 de la masse quand elle passe, hors
+  // de sa taille dessinée, dans sa prise — prend ses coups de masse ; un autre près du vaisseau, à 8 — hors de la prise de la masse — ne prend que ceux de la chaîne, 3)
+  {
+    const rE = cfg.ennemi.rayon
+    const w3 = nouveauMonde(cfg, 3)
+    w3.ennemis.push(insecte(1, 0, -(22 + 6 + rE)), insecte(2, 8, 0))
+    for (let i = 0; i < 60 * 3; i++) {
+      w3.ennemis[0].corps = { ...w3.ennemis[0].corps, x: 0, y: -(22 + 6 + rE), vx: 0, vy: 0 }
+      w3.ennemis[1].corps = { ...w3.ennemis[1].corps, x: 8, y: 0, vx: 0, vy: 0 }
+      w3.vaisseau = { ...w3.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
+    }
+    const p3 = w3.ennemis.map((e) => 1000 - e.pv)
+    verifier(`la masse frappe à sa prise, plus large qu’elle (${p3[0]}, par 8) ; la chaîne frappe aussi, moins fort (${p3[1]}, par 3)`, p3[0] >= 16 && p3[0] % 8 === 0 && p3[1] >= 6 && p3[1] % 3 === 0 && p3[1] <= 18)
+  }
   // (le vaisseau file à 60 : la masse continue de faire le tour autour de lui, tenue à 22 — à vitesse constante, une
   // masse au bout d'une chaîne tourne comme à l'arrêt ; elle ne traîne que quand il accélère ou vire)
   const w2 = nouveauMonde(cfg, 3)
