@@ -519,8 +519,8 @@ export type Arme = {
   /**
    * DES MINES D'ACIDE (la deuxième arme de la Vouivre, Keko, 16/11 : « des mines : elle lance en cloche depuis son dos des
    * bulles, des pustules d'acide, qui explosent à courte distance des ennemis : une explosion de gaz qui fait des dégâts
-   * et infecte — la corrosion ») : à sa cadence, un insecte à `portee`, elle LANCE EN CLOCHE une pustule depuis son dos
-   * vers là où il sera ; la pustule vole `vol` secondes, se pose et ATTEND, `duree` secondes au plus — `max` à la fois
+   * et infecte — la corrosion ») : à sa cadence, elle LANCE EN CLOCHE une pustule depuis son dos (… PUIS AU SOL, SANS
+   * CIBLE, EN PERMANENCE : autour d'elle, entre `portee` × 0,45 et `portee`, voir `menerLesMines`) ; la pustule vole `vol` secondes, se pose et ATTEND, `duree` secondes au plus — `max` à la fois
    * (la plus vieille saute). Posée, dès qu'un insecte passe à moins de `declenche`, elle ÉCLATE EN GAZ : tout insecte à
    * moins de `rayon` perd `degats` et est RONGÉ (`acide`, comme le crachat). L'état est `Monde.mines`.
    */
@@ -1978,23 +1978,16 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   c.armes.forEach((a, i) => {
     const mi = a.mine
     if (mi === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    let cible: Ennemi | undefined
-    const ve = ennemiVerrouille(m)
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
-    if (ve !== null && aPortee(ve)) cible = ve
-    else {
-      let dc = Infinity
-      for (const e of m.ennemis) {
-        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-        if (aPortee(e) && d < dc) (dc = d), (cible = e)
-      }
-    }
-    if (cible === undefined) return
+    // (… PUIS SANS CIBLE, EN PERMANENCE — Keko, 16/11 : « les mines ne ciblent pas les ennemis : le vaisseau les lance au
+    // sol en permanence ; elles explosent quand un ennemi approche » : à sa cadence, insectes ou pas, une pustule tombe
+    // autour de lui, dans une direction tirée au hasard, entre `portee` × 0,45 et `portee`)
     m.armesA[i] = m.t + a.cadence
-    // (là où il sera quand elle tombe)
-    const x = cible.corps.x + cible.corps.vx * mi.vol
-    const y = cible.corps.y + cible.corps.vy * mi.vol
-    m.mines.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x, y, lancee: m.t })
+    const id = m.prochainId++
+    const an = tire(m.graine, id, 41) * Math.PI * 2
+    const d = a.portee * (0.45 + 0.55 * tire(m.graine, id, 42))
+    const x = v.x + Math.cos(an) * d
+    const y = v.y + Math.sin(an) * d
+    m.mines.push({ id, arme: i, x0: v.x, y0: v.y, x, y, lancee: m.t })
     const miennes = m.mines.filter((x2) => x2.arme === i)
     if (miennes.length > mi.max) m.mines.splice(m.mines.indexOf(miennes[0]), 1)
     ev.push({ type: 'mineLancee', x: v.x, y: v.y, arme: a.id })

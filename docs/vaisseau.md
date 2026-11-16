@@ -4558,3 +4558,10 @@ bourrelet de lie, qui BAT comme les pustules de la bête (plus vite ses deux
 dernières secondes), luit et fume ; l'éclatement, un nuage de bouffées vertes et
 violettes qui s'ouvrent jusqu'au rayon et s'effacent en roulant. Ses sons, `mine`
 et `gaz`. *Chiffres de moi, à rejuger.*
+
+PUIS SEMÉES EN PERMANENCE, SANS CIBLE (Keko, 16/11 : « les mines ne ciblent pas les
+ennemis : le vaisseau les lance au sol en permanence ; elles explosent quand un
+ennemi approche ») : à sa cadence (1,8 s), insectes ou pas, une pustule tombe AU SOL
+AUTOUR D'ELLE, dans une direction tirée au hasard, entre 18 et 40 (`portee` 40 ×
+0,45 à 1). Elles attendent 10 s, six à la fois ; elles éclatent quand un insecte
+passe à moins de 9. On sème un champ de mines en volant.

@@ -1649,29 +1649,30 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // un insecte passe près d'elles — dégâts et acide dans le nuage
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const mine = { id: 'mine', cadence: 9, degats: 6, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, mine: { max: 6, duree: 10, vol: 0.6, declenche: 9, rayon: 20, acide: { duree: 4, dps: 2, bonus: 0.35 } } }
+  const mine = { id: 'mine', cadence: 1.8, degats: 6, portee: 40, vitesse: 0, vie: 0, dispersion: 0, guide: false, mine: { max: 6, duree: 10, vol: 0.6, declenche: 9, rayon: 20, acide: { duree: 4, dps: 2, bonus: 0.35 } } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [mine], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
-  const jouer = (trajet: (i: number) => [number, number][], duree: number) => {
-    const w = nouveauMonde(cfg, 3)
-    trajet(0).forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
-    const ev: Evenement[] = []
-    let poseeSansEclater = false
-    for (let i = 0; i < 60 * duree; i++) {
-      trajet(i).forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
-      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
-      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
-      if (w.mines.some((mn) => w.t - mn.lancee > 0.7) && !ev.some((e) => e.type === 'gaz')) poseeSansEclater = true
-    }
-    return { w, ev, poseeSansEclater, pv: w.ennemis.map((e) => 1000 - e.pv) }
+  // (PERSONNE : elle en sème quand même, autour d'elle, et elles attendent)
+  const w = nouveauMonde(cfg, 3)
+  const ev: Evenement[] = []
+  for (let i = 0; i < 60 * 4; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
   }
-  // (un insecte immobile à 50, un voisin à 15 de lui, un troisième à 40 : la mine tombe sur le premier et éclate)
-  const sur = jouer(() => [[50, 0], [50, 15], [50, 40]], 1)
-  verifier('une mine lancée vers l’insecte tombe sur lui et éclate en gaz : lui et son voisin perdent 6 et sont rongés ; le troisième, plus loin, rien', sur.ev.filter((e) => e.type === 'mineLancee').length === 1 && sur.ev.some((e) => e.type === 'gaz') && sur.pv[0] >= 6 && sur.pv[1] >= 6 && sur.pv[2] === 0 && (sur.w.ennemis[0].acide?.jusque ?? 0) > sur.w.t && sur.w.ennemis[2].acide === undefined)
-  // (l'insecte s'écarte avant qu'elle tombe, et revient une seconde après : elle l'attendait)
-  const piege = jouer((i) => [i < 20 || i > 120 ? [50, 0] : [50, 100]], 2.5)
-  verifier('l’insecte s’est écarté avant qu’elle tombe : elle se pose et attend — il revient, elle éclate', piege.poseeSansEclater && piege.ev.some((e) => e.type === 'gaz') && piege.pv[0] >= 6)
+  const posees = w.mines.filter((mn) => w.t - mn.lancee >= 0.6)
+  verifier(`sans un insecte, elle sème des mines en permanence (${ev.filter((e) => e.type === 'mineLancee').length} en 4 s), au sol autour d’elle, entre 18 et 40 ; posées, elles attendent`, ev.filter((e) => e.type === 'mineLancee').length >= 2 && posees.length >= 2 && posees.every((mn) => Math.hypot(mn.x, mn.y) >= 18 - 1e-6 && Math.hypot(mn.x, mn.y) <= 40 + 1e-6) && ev.every((e) => e.type !== 'gaz'))
+  // (un insecte arrive sur une mine posée : elle éclate ; son voisin à 15 est pris dans le gaz, un autre à 40 non)
+  const cible = posees[0]
+  const loin = (cible.x > 0 ? -1 : 1) * 40
+  w.ennemis.push(insecte(1, cible.x, cible.y), insecte(2, cible.x, cible.y + 15), insecte(3, cible.x + loin, cible.y))
+  const ev2: Evenement[] = []
+  for (let i = 0; i < 3; i++) {
+    for (const e of w.ennemis) e.corps = { ...e.corps, vx: 0, vy: 0 }
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    ev2.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  const pv = [1, 2, 3].map((id) => 1000 - (w.ennemis.find((e) => e.id === id)?.pv ?? 1000))
+  verifier('un insecte arrive sur une mine posée : elle éclate en gaz — lui et son voisin perdent 6 et sont rongés ; le lointain, rien', ev2.some((e) => e.type === 'gaz') && pv[0] >= 6 && pv[1] >= 6 && pv[2] === 0 && (w.ennemis.find((e) => e.id === 1)?.acide?.jusque ?? 0) > w.t && !w.mines.includes(cible))
 }
-
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {
