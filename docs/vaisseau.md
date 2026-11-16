@@ -4746,3 +4746,7 @@ comme s'il était déposé depuis le cristal qui est devant »). `Arme.balise.de
 devant le vaisseau, dans l'axe de son nez — là où tourne le cristal de sa proue (l'écart de 40 se mesure
 depuis ce point). Le son `cristalPose` passe de 1 900 à 880 Hz, l'attaque de 1 à 8 ms, un seul partiel
 discret, un peu moins fort.
+
+LE SON DE POSE DES CRISTAUX, ENCORE PLUS GRAVE ET DOUX (Keko, 16/11 : « c'est un son qui revient beaucoup durant
+la partie, on veut quelque chose de discret et de doux ») : un « tom » rond à 440 Hz (880 avant), presque un sinus
+pur, attaque de 20 ms, une octave qui l'effleure ; niveau 0,065 (0,1 avant, 0,13 au premier jet).

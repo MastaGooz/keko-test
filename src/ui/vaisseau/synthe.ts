@@ -764,13 +764,16 @@ const RECETTES = {
    * UN CRISTAL DU PRISME EST POSÉ : un tintement de verre DOUX (Keko, 16/11 : le premier, à 1 900 Hz, attaque sèche, était
    * « un petit peu trop agressif et aigu ») — une note ronde plus grave, une attaque adoucie, un seul partiel discret, une
    * quinte qui répond à peine
+   * (… PUIS ENCORE PLUS GRAVE ET DOUX — Keko, 16/11 : « c'est un son qui revient beaucoup durant la partie, on veut quelque
+   * chose de discret et de doux » : un « tom » rond à 440 Hz, sinus presque pur, attaque de 20 ms, une octave qui
+   * l'effleure, deux fois moins fort qu'au premier jet)
    */
   cristalPose: {
-    duree: 0.6, niveau: 0.1, salle: [0.4, 0.16], variantes: 3,
+    duree: 0.5, niveau: 0.065, salle: [0.4, 0.16], variantes: 3,
     faire: (m, h) => {
-      const f = 880 * (0.96 + 0.08 * h.next())
-      note(m, 0, 0.8, 0, { f, a: 0.008, d: 0.32, partiels: [[1, 1, 1], [2.76, 0.12, 0.4]] })
-      note(m, 0.06, 0.3, 0, { f: f * 1.5, a: 0.01, d: 0.22 })
+      const f = 440 * (0.97 + 0.06 * h.next())
+      note(m, 0, 0.9, 0, { f, a: 0.02, d: 0.28, partiels: [[1, 1, 1], [2, 0.08, 0.5]] })
+      note(m, 0.04, 0.2, 0, { f: f * 2, a: 0.025, d: 0.18 })
     },
   },
   /** LE FAISCEAU ENTRE DEUX CRISTAUX S'ACTIVE : un « vvvom » d'énergie — un ton battu qui monte vite, un scintillement aigu */
