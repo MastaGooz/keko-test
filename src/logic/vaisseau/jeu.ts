@@ -526,6 +526,16 @@ export type Arme = {
    */
   // (… ET ELLE ÉCLATE DÈS QU'UN INSECTE ENTRE DANS SA ZONE D'EFFET — Keko, 16/11 : le déclenchement, c'est le `rayon`)
   mine?: { max: number; duree: number; vol: number; rayon: number; acide: { duree: number; dps: number; bonus: number } }
+  /**
+   * UN FLÉAU D'ARMES (la troisième arme de l'Ingénieur, à la place des balises — gardées pour un futur vaisseau ; Keko,
+   * 16/11 : « une chaîne reliée au vaisseau qui tourne autour de lui, et au bout de la chaîne une grosse massue avec des
+   * pics, en mode fléau d'armes ; le fléau fait le tour du vaisseau et blesse les ennemis sur sa route ») : une MASSE au
+   * bout d'une chaîne de `longueur`, qui TOURNE autour du vaisseau à `vitesse` (rad/s). Elle a son INERTIE : poussée
+   * tangentiellement vers sa vitesse de rotation, la chaîne la tient à sa longueur — quand le vaisseau file, elle traîne
+   * derrière, puis reprend son tour. Tout insecte à moins de `rayon` d'elle prend `degats`, une fois toutes les `rebond`
+   * secondes au plus. L'état est `Monde.fleaux`.
+   */
+  fleau?: { longueur: number; vitesse: number; rayon: number; rebond: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -686,6 +696,8 @@ export type Monde = {
   flaquesAcides: { id: number; arme: number; x: number; y: number; cap: number; nee: number }[]
   /** LES MINES D'ACIDE (voir `Arme.mine`) : d'où elles partent, où elles tombent, quand elles ont été lancées. */
   mines: { id: number; arme: number; x0: number; y0: number; x: number; y: number; lancee: number }[]
+  /** LES FLÉAUX (voir `Arme.fleau`) : un par arme — la masse, sa vitesse, quand elle a frappé chaque insecte. */
+  fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number> }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -787,6 +799,8 @@ export type Evenement =
   | { type: 'mineLancee'; x: number; y: number; arme: string }
   | { type: 'gaz'; x: number; y: number; rayon: number }
   | { type: 'mineFinie'; x: number; y: number }
+  /** Le fléau frappe un insecte (voir `Arme.fleau`). */
+  | { type: 'fleauFrappe'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
   /** Une bombe part ; une bombe éclate. */
@@ -807,7 +821,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1973,6 +1987,56 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   }
 }
 
+/** LES FLÉAUX (voir `Arme.fleau`) : la masse tourne au bout de sa chaîne, avec son inertie, et frappe ce qu'elle croise. */
+function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const fl = a.fleau
+    if (fl === undefined) return
+    let f = m.fleaux.find((x) => x.arme === i)
+    if (f === undefined) {
+      f = { arme: i, x: v.x + fl.longueur, y: v.y, vx: v.vx, vy: v.vy + fl.vitesse * fl.longueur, frappes: {} }
+      m.fleaux.push(f)
+    }
+    // (poussée le long du cercle, vers sa vitesse de tour — relative au vaisseau)
+    let dx = f.x - v.x
+    let dy = f.y - v.y
+    let d = Math.hypot(dx, dy) || 1
+    let ux = dx / d
+    let uy = dy / d
+    const tx = -uy
+    const ty = ux
+    const vt = (f.vx - v.vx) * tx + (f.vy - v.vy) * ty
+    const k = Math.min(1, 5 * dt)
+    f.vx += tx * (fl.vitesse * fl.longueur - vt) * k
+    f.vy += ty * (fl.vitesse * fl.longueur - vt) * k
+    f.x += f.vx * dt
+    f.y += f.vy * dt
+    // (la chaîne la tient à sa longueur : ramenée sur le cercle, sa vitesse le long de la chaîne retirée)
+    dx = f.x - v.x
+    dy = f.y - v.y
+    d = Math.hypot(dx, dy) || 1
+    ux = dx / d
+    uy = dy / d
+    f.x = v.x + ux * fl.longueur
+    f.y = v.y + uy * fl.longueur
+    const vr = (f.vx - v.vx) * ux + (f.vy - v.vy) * uy
+    f.vx -= ux * vr
+    f.vy -= uy * vr
+    if (m.phase !== 'vol') return
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - f.x, e.corps.y - f.y) > fl.rayon + c.ennemi.rayon) continue
+      if (m.t - (f.frappes[e.id] ?? -1e9) < fl.rebond) continue
+      f.frappes[e.id] = m.t
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'fleauFrappe', x: e.corps.x, y: e.corps.y })
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  })
+}
+
 /** LES MINES D'ACIDE (voir `Arme.mine`) : le lancer en cloche, l'attente, l'éclatement en gaz, la fin. */
 function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -2663,7 +2727,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -2757,10 +2821,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesRejetons(c, m, dt, ev)
   cracherLAcide(c, m, dt, ev)
   menerLesMines(c, m, ev)
+  menerLesFleaux(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

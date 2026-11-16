@@ -638,6 +638,15 @@ const RECETTES = {
       for (let k = 0; k < 5; k++) souffle(m, h, 0.1 + 0.05 * k + 0.02 * h.next(), 0.35, (h.next() - 0.5) * 0.8, { f: 2600 + 800 * h.next(), q: 2, bande: true, a: 0.001, d: 0.03 })
     },
   },
+  /** LE FLÉAU FRAPPE : un choc sourd et lourd, un tintement de métal par-dessus, le cliquetis de la chaîne */
+  fleau: {
+    duree: 0.5, niveau: 0.24, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 120, glisse: { vers: 60, en: 0.06 }, a: 0.001, d: 0.12, partiels: CORPS, sature: 1.6 })
+      note(m, 0.002, 0.35, (h.next() - 0.5) * 0.5, { f: 900 + 300 * h.next(), a: 0.001, d: 0.15, partiels: [[1, 1, 1], [2.71, 0.4, 0.5], [5.2, 0.2, 0.3]] })
+      for (let k = 0; k < 3; k++) souffle(m, h, 0.04 + 0.03 * k, 0.2, 0, { f: 3500, q: 2, bande: true, a: 0.001, d: 0.02 })
+    },
+  },
   /** UNE MINE D'ACIDE PART DU DOS : un « blop » gras, une note ronde qui monte, un petit souffle */
   mine: {
     duree: 0.4, niveau: 0.17, salle: [0.25, 0.1], variantes: 3,

@@ -1674,6 +1674,46 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const pv = [1, 2, 3].map((id) => 1000 - (w.ennemis.find((e) => e.id === id)?.pv ?? 1000))
   verifier('un insecte entre dans la zone d’une mine posée (à 17) : elle éclate aussitôt en gaz — lui et le voisin perdent 6 et sont rongés ; le lointain, rien', ev2.some((e) => e.type === 'gaz') && pv[0] >= 6 && pv[1] >= 6 && pv[2] === 0 && (w.ennemis.find((e) => e.id === 1)?.acide?.jusque ?? 0) > w.t && !w.mines.includes(cible))
 }
+// LE FLÉAU DE L'INGÉNIEUR (Keko, 16/11) : une masse au bout d'une chaîne, qui tourne autour du vaisseau, frappe ce
+// qu'elle croise, et traîne derrière lui quand il file
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const fleau = { id: 'fleau', cadence: 1, degats: 8, portee: 30, vitesse: 0, vie: 0, dispersion: 0, guide: false, fleau: { longueur: 22, vitesse: 4.5, rayon: 4.5, rebond: 0.5 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [fleau], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
+  const w = nouveauMonde(cfg, 3)
+  // (un insecte sur le cercle du fléau, un autre à 50, hors de sa portée)
+  w.ennemis.push(insecte(1, 0, -22), insecte(2, 50, 0))
+  let tours = 0
+  let angle0 = 0
+  let ecartMax = 0
+  for (let i = 0; i < 60 * 3; i++) {
+    w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: -22, vx: 0, vy: 0 }
+    w.ennemis[1].corps = { ...w.ennemis[1].corps, x: 50, y: 0, vx: 0, vy: 0 }
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    const f = w.fleaux[0]
+    const a = Math.atan2(f.y, f.x)
+    if (i > 0) tours += Math.atan2(Math.sin(a - angle0), Math.cos(a - angle0))
+    angle0 = a
+    ecartMax = Math.max(ecartMax, Math.abs(Math.hypot(f.x, f.y) - 22))
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier(`la masse tourne autour du vaisseau, tenue à 22 par la chaîne (${(tours / (2 * Math.PI)).toFixed(1)} tours en 3 s) ; elle frappe l’insecte sur sa route (${pv[0]}, par 8) ; celui à 50, rien`, tours / (2 * Math.PI) > 1.5 && ecartMax < 1e-6 && pv[0] >= 16 && pv[0] % 8 === 0 && pv[1] === 0)
+  // (le vaisseau file à 60 : la masse continue de faire le tour autour de lui, tenue à 22 — à vitesse constante, une
+  // masse au bout d'une chaîne tourne comme à l'arrêt ; elle ne traîne que quand il accélère ou vire)
+  const w2 = nouveauMonde(cfg, 3)
+  let tours2 = 0
+  let a0 = 0
+  for (let i = 0; i < 60 * 2; i++) {
+    w2.vaisseau = { ...w2.vaisseau, x: (60 * i) / 60, y: 0, vx: 60, vy: 0 }
+    avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+    const f = w2.fleaux[0]
+    const a = Math.atan2(f.y - w2.vaisseau.y, f.x - w2.vaisseau.x)
+    if (i > 0) tours2 += Math.atan2(Math.sin(a - a0), Math.cos(a - a0))
+    a0 = a
+  }
+  verifier(`le vaisseau file à 60 : la masse continue de tourner autour de lui (${(tours2 / (2 * Math.PI)).toFixed(1)} tours en 2 s)`, tours2 / (2 * Math.PI) > 1)
+}
 // L'ESSAIM DE MISSILES DU PULSAR (Keko, 16/11) : six missiles à tête chercheuse partent ensemble en éventail, se
 // partagent les insectes à portée et les rattrapent, même derrière le vaisseau
 {

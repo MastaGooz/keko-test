@@ -4579,3 +4579,22 @@ milieu, les autres autour, à des angles et des tailles tirés de son id —, ce
 lie sombre puis claire, une bulle de venin, un reflet ; chacune bat à sa phase (plus
 vite les deux dernières secondes). L'amas fait environ deux fois la mine d'avant. En
 vol, un petit amas de trois.
+
+LE FLÉAU REMPLACE LES BALISES SUR L'INGÉNIEUR (Keko, 16/11 : « change l'attaque avec
+les balises connectées de l'ingénieur ; on la garde pour un futur vaisseau, garde-la
+de côté, mais enlève-la à l'ingénieur ; à la place, une chaîne reliée au vaisseau qui
+tourne autour de lui, et au bout une grosse massue avec des pics, en mode fléau
+d'armes ; le fléau fait le tour du vaisseau et blesse les ennemis sur sa route ») :
+LES BALISES (`Arme.balise`, `arme-balises`) restent écrites, pièce comprise, au
+catalogue — plus aucun vaisseau ne les porte. LE FLÉAU (`Arme.fleau`,
+`arme-fleau`) : une MASSE au bout d'une chaîne de 22, qui TOURNE autour du
+vaisseau à 4,5 rad/s (un tour en 1,4 s) ; elle a son INERTIE — poussée le long du
+cercle vers sa vitesse de tour, la chaîne la tient à sa longueur (ramenée sur le
+cercle, sa vitesse le long de la chaîne retirée) : à vitesse constante elle tourne
+comme à l'arrêt, elle traîne quand le vaisseau accélère ou vire. Tout insecte à
+moins de 4,5 d'elle prend 8 points, une fois par demi-seconde au plus. Le vaisseau
+vole librement. Le dessin, sous le vaisseau : la chaîne, une ligne d'acier sur son
+ombre et un maillon clair tous les deux pixels (fine et sombre, on la perdait) ; la
+masse, une boule d'acier cernée, éclairée d'un côté, hérissée de huit pics qui
+tournent avec elle ; un flou de vitesse derrière elle. Son son, `fleau` (un choc
+sourd et métallique, le cliquetis de la chaîne). *Chiffres de moi, à rejuger.*
