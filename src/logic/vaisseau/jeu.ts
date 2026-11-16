@@ -850,7 +850,7 @@ export type Evenement =
   | { type: 'puitsOuvert'; x: number; y: number; rayon: number }
   | { type: 'puitsEclate'; x: number; y: number; rayon: number }
   /** Une météore d'arcane part du ciel ; elle frappe le sol (voir `Arme.meteore`). */
-  | { type: 'meteore'; id: number; x: number; y: number; arme: string }
+  | { type: 'meteore'; id: number; x: number; y: number; arme: string; /** La bouche du vaisseau au lancer : c'est de là qu'elle est appelée. */ x0: number; y0: number }
   | { type: 'meteoreImpact'; id: number; x: number; y: number }
   | { type: 'sphereFinie'; x: number; y: number }
   | { type: 'sphereTir'; x: number; y: number; tirs: number }
@@ -1814,7 +1814,7 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
 }
 
 /** La bouche d'une arme, dans le monde (sans bouche : le centre du vaisseau). */
-function boucheDansLeMonde(v: Vaisseau, a: Arme): Vecteur {
+export function boucheDansLeMonde(v: Vaisseau, a: Arme): Vecteur {
   const bo = a.bouche
   return bo === undefined ? { x: v.x, y: v.y } : { x: v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y, y: v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y }
 }
@@ -1886,7 +1886,8 @@ function menerLesMeteores(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     m.armesA[i] = m.t + a.cadence
     const id = m.prochainId++
     m.meteores.push({ id, arme: i, cible: cible.id, x: cible.corps.x, y: cible.corps.y, lancee: m.t, tombe: m.t + me.chute })
-    ev.push({ type: 'meteore', id, x: cible.corps.x, y: cible.corps.y, arme: a.id })
+    const b = boucheDansLeMonde(v, a)
+    ev.push({ type: 'meteore', id, x: cible.corps.x, y: cible.corps.y, arme: a.id, x0: b.x, y0: b.y })
   })
   for (let k = m.meteores.length - 1; k >= 0; k--) {
     const mt = m.meteores[k]

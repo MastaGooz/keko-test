@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, boucheDansLeMonde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -6945,6 +6945,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   const impactsDeMeteore: { x: number; y: number; t0: number; r: number; id: number }[] = []
+  /**
+   * LE LANCER (Keko, 16/11 : « un effet visuel sur le vaisseau quand il lance la météore, pour qu'on comprenne que ça
+   * vient de lui ») : un éclair et une étoile à la proue, un cercle de runes qui s'ouvre autour du vaisseau, et UNE
+   * ÉTOILE QUI MONTE de la proue vers le ciel, dans la diagonale même par où la météore redescend sur sa cible.
+   */
+  const lancersDeMeteore: { x0: number; y0: number; t0: number; id: number }[] = []
+  const DUREE_DU_LANCER = 0.4
   /** Où est la météore à la part `u` de sa chute (0 : au ciel, 1 : au sol), et sa hauteur (1 à 0) : elle tombe, elle accélère. */
   const meteoreEnLAir = (x: number, y: number, u: number): { x: number; y: number; h: number } => {
     const h = 1 - u * u
@@ -7007,11 +7014,53 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   function dessinerLesMeteores(p: Peintre): void {
-    if (m.meteores.length === 0 && impactsDeMeteore.length === 0) return
+    for (let i = lancersDeMeteore.length - 1; i >= 0; i--) if (t - lancersDeMeteore[i].t0 > DUREE_DU_LANCER) lancersDeMeteore.splice(i, 1)
+    if (m.meteores.length === 0 && impactsDeMeteore.length === 0 && lancersDeMeteore.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     const L0 = Math.hypot(CIEL_DE_LA_METEORE.x, CIEL_DE_LA_METEORE.y)
     const dx = CIEL_DE_LA_METEORE.x / L0
     const dy = CIEL_DE_LA_METEORE.y / L0
+    // (LE LANCER : il suit le vaisseau — la proue d'aujourd'hui, pas celle du départ —, sauf l'étoile qui monte, partie de là où elle était)
+    const armeM = CONF.armes.find((a) => a.meteore !== undefined)
+    for (const l of lancersDeMeteore) {
+      const age = t - l.t0
+      const k = age / DUREE_DU_LANCER
+      const b = armeM === undefined ? { x: l.x0, y: l.y0 } : boucheDansLeMonde(v, armeM)
+      // (le cercle de runes qui s'ouvre autour du vaisseau, en tournant, et pâlit)
+      const e = 1 - Math.pow(1 - k, 3)
+      const rr = 11 + 9 * e
+      p.ring(v.x, v.y, rr, 1, k < 0.3 ? ARCANE[6] : ARCANE[5], 0.8 * (1 - k))
+      for (let j = 0; j < 6; j++) {
+        const a = age * 4 + (j * Math.PI) / 3 + l.id
+        const gx = Math.round(v.x + Math.cos(a) * rr)
+        const gy = Math.round(v.y + Math.sin(a) * rr)
+        for (const [ax, ay] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) p.dot(gx + ax, gy + ay, ARCANE[5], 1 - k)
+        p.dot(gx, gy, N.WHITE, 1 - k)
+      }
+      // (l'éclair et l'étoile à la proue, qui s'éteignent vite)
+      if (age < 0.18) {
+        const f = 1 - age / 0.18
+        p.glow(b.x, b.y, 14, ARCANE[5], 0.9 * f)
+        if (f > 0.5) p.circle(b.x, b.y, 3 * f + 0.5, N.WHITE)
+        scintillement(p, b.x, b.y, 2 + 6 * f, ARCANE[6], ARCANE[5], 0.5)
+      }
+      // (L'ÉTOILE QUI MONTE : elle file de la proue vers le ciel, vite, sa traîne derrière elle, et s'y perd)
+      if (age < 0.3) {
+        const vit = 420
+        const d = vit * age
+        const hx = l.x0 + dx * d
+        const hy = l.y0 + dy * d
+        const L = Math.min(d, 30)
+        for (let s = 0; s <= L; s += 1) {
+          const f = s / Math.max(1, L)
+          p.dot(hx - dx * s, hy - dy * s, f < 0.15 ? N.WHITE : f < 0.45 ? ARCANE[6] : f < 0.75 ? ARCANE[5] : ARCANE[4], Math.min(1, 1.2 - f))
+          if (f < 0.4) p.dot(hx - dx * s + 1, hy - dy * s, ARCANE[5], 0.8 - f)
+        }
+        const f = 1 - age / 0.3
+        scintillement(p, hx, hy, 2 + 3 * f, ARCANE[6], ARCANE[5], 0.5 * f)
+        p.circle(hx, hy, 1, N.WHITE)
+      }
+    }
     for (const mt of m.meteores) {
       const conf = CONF.armes[mt.arme]?.meteore
       if (conf === undefined) continue
@@ -10487,6 +10536,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // (une météore part du ciel : son sifflement qui tombe — sauf s'il a sonné en avance)
               if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
               else jouer('meteore')
+              lancersDeMeteore.push({ x0: ev.x0, y0: ev.y0, t0: t, id: ev.id })
               break
             case 'meteoreImpact':
               // (elle frappe : son coup — sauf s'il a sonné en avance —, le cratère, des éclats projetés, une secousse)

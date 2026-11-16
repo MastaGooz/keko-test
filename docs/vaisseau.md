@@ -4831,3 +4831,11 @@ l'éclat à huit rayons (`flare`, recopié en `eclatAHuitRayons`), un anneau qui
 qui brille et refroidit en 0,7 s (plus de cratère). Le cercle de runes et l'ombre au sol, le chemin en diagonale qui
 accélère restent : ce sont eux qui disent « d'en haut ». LA PREMIÈRE MÉTÉORE (l'éclat d'arcane qui rapetisse, le
 trait de la chute, le cratère) RESTE derrière `&meteore=eclat`.
+
+LE LANCER DE LA MÉTÉORE SE VOIT SUR LE VAISSEAU (Keko, 16/11 : « un effet visuel sur le vaisseau quand il lance la
+météore, pour qu'on comprenne que ça vient de lui »). L'événement `meteore` porte la bouche au lancer (`x0`, `y0` ;
+`boucheDansLeMonde` est exporté) ; la page joue 0,4 s (`lancersDeMeteore`) : un éclair et une étoile à quatre
+branches à la proue (0,18 s), un cercle de runes qui s'ouvre autour du vaisseau de 11 à 20 en tournant et pâlit — ces
+deux-là suivent le vaisseau —, et UNE ÉTOILE QUI MONTE de la proue vers le ciel à 420 par seconde, sa traîne derrière
+elle, DANS LA DIAGONALE MÊME (`CIEL_DE_LA_METEORE`) par où la météore redescend ensuite sur sa cible : on la voit
+partir, on la voit revenir. Les deux dessins de la météore (étoile filante, et `&meteore=eclat`) ont ce lancer.
