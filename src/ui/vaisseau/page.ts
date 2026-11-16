@@ -6904,6 +6904,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * le trait de sa chute qui s'efface, une onde au sol, des éclats projetés, un cratère qui refroidit.
    */
   const CIEL_DE_LA_METEORE = { x: 0.4, y: -0.92, hauteur: 120 }
+  /** La taille du point de chute (le cercle serré, le cratère) : elle ne frappe que l'insecte, il tient sur lui (Keko, 16/11 : « réduire la taille du cercle »). */
+  const POINT_DE_CHUTE = 7
   const DUREE_DU_CRATERE = 1.4
   const impactsDeMeteore: { x: number; y: number; t0: number; r: number; id: number }[] = []
   /** Où est la météore à la part `u` de sa chute (0 : au ciel, 1 : au sol), et sa hauteur (1 à 0) : elle tombe, elle accélère. */
@@ -6931,11 +6933,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const conf = CONF.armes[mt.arme]?.meteore
       if (conf === undefined) continue
       const u = Math.max(0, Math.min(1, (m.t - mt.lancee) / conf.chute))
-      const R = conf.rayon
+      const R = POINT_DE_CHUTE
       // (L'OMBRE : petite et pâle quand la météore est haute, large et sombre quand elle touche)
       p.disc(mt.x, mt.y, R * (0.3 + 0.7 * u), PLASMA_V[0], (d) => (0.2 + 0.5 * u) * (1 - d * d))
-      // (LE CERCLE DE RUNES : il se resserre sur l'insecte en tournant, et s'allume)
-      const rr = R * (1 + 1.6 * (1 - u) * (1 - u))
+      // (LE CERCLE DE RUNES : il se resserre sur l'insecte en tournant, et s'allume — de presque deux fois l'insecte à sa taille)
+      const rr = R * (1 + 0.8 * (1 - u) * (1 - u))
       const a0 = m.t * 2.4 + mt.id
       p.ring(mt.x, mt.y, rr, 1, u > 0.75 ? PLASMA_V[4] : PLASMA_V[3], 0.35 + 0.55 * u)
       for (let j = 0; j < 6; j++) {
@@ -7003,7 +7005,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       if (age < 0.45) {
         const u = age / 0.45
-        p.ring(c.x, c.y, c.r * (0.6 + 2.2 * Math.sqrt(u)), u < 0.4 ? 2 : 1, u < 0.3 ? PLASMA[5] : PLASMA_V[3], 0.9 * (1 - u))
+        p.ring(c.x, c.y, c.r * (0.6 + 1.2 * Math.sqrt(u)), u < 0.4 ? 2 : 1, u < 0.3 ? PLASMA[5] : PLASMA_V[3], 0.9 * (1 - u))
       }
     }
   }
@@ -10349,7 +10351,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // (elle frappe : son coup — sauf s'il a sonné en avance —, le cratère, des éclats projetés, une secousse)
               if (meteoresAnnoncees.has(ev.id)) meteoresAnnoncees.delete(ev.id)
               else jouer('impactMeteore', { dx: ev.x - v.x, dy: ev.y - v.y })
-              impactsDeMeteore.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: ev.id })
+              impactsDeMeteore.push({ x: ev.x, y: ev.y, t0: t, r: POINT_DE_CHUTE, id: ev.id })
               for (let i = 0; i < 14; i++) {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(40, 110)

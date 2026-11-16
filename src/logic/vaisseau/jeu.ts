@@ -488,11 +488,11 @@ export type Arme = {
    * UNE MÉTÉORE D'ARCANE (la troisième arme du Pulsar, Keko, 16/11 : « une petite météore d'arcane vient du ciel et tombe
    * sur un ennemi ; ce serait la seule attaque qui frappe directement l'ennemi sans projectile ») : à la cadence, un
    * insecte à portée (le verrouillé d'abord, sinon le plus proche), une météore tombe du ciel sur lui en `chute` secondes
-   * — son point de chute SUIT l'insecte (elle ne le manque pas ; mort avant, elle tombe où il était) ; à l'impact,
-   * `degats` (ceux de l'arme) à tout insecte à moins de `rayon`. Rien ne vole dans le plan du jeu : l'état
-   * (`Monde.meteores`) ne dit que le point visé et l'heure de l'impact.
+   * — son point de chute SUIT l'insecte (elle ne le manque pas ; mort avant, elle tombe où il était, sur rien) ; à
+   * l'impact, `degats` (ceux de l'arme) À LUI SEUL (Keko, 16/11 : « annuler la zone d'effet, on frappe juste la cible »).
+   * Rien ne vole dans le plan du jeu : l'état (`Monde.meteores`) ne dit que le point visé et l'heure de l'impact.
    */
-  meteore?: { chute: number; rayon: number }
+  meteore?: { chute: number }
   /**
    * UN RAILGUN (passé du Pulsar au Prisme le 16/11, en bleu ; d'abord la troisième arme du Pulsar, Keko, 16/11 : « un tir de plasma instantané type railgun, sur une
    * très grande distance, longue portée, qui traverse tout ») : à sa cadence, un insecte à `portee`, UN TRAIT INSTANTANÉ
@@ -844,7 +844,7 @@ export type Evenement =
   | { type: 'puitsEclate'; x: number; y: number; rayon: number }
   /** Une météore d'arcane part du ciel ; elle frappe le sol (voir `Arme.meteore`). */
   | { type: 'meteore'; id: number; x: number; y: number; arme: string }
-  | { type: 'meteoreImpact'; id: number; x: number; y: number; rayon: number }
+  | { type: 'meteoreImpact'; id: number; x: number; y: number }
   | { type: 'sphereFinie'; x: number; y: number }
   | { type: 'sphereTir'; x: number; y: number; tirs: number }
   /** Un railgun tire (voir `Arme.rail`) : le trait, de la bouche au bout de la portée. */
@@ -1894,9 +1894,10 @@ function menerLesMeteores(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (e0 !== undefined) (mt.x = e0.corps.x), (mt.y = e0.corps.y)
     if (m.t < mt.tombe) continue
     m.meteores.splice(k, 1)
-    ev.push({ type: 'meteoreImpact', id: mt.id, x: mt.x, y: mt.y, rayon: me.rayon })
-    for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - mt.x, e.corps.y - mt.y) > me.rayon + c.ennemi.rayon) continue
+    ev.push({ type: 'meteoreImpact', id: mt.id, x: mt.x, y: mt.y })
+    // (elle ne frappe QUE son insecte — plus de zone d'effet)
+    if (e0 !== undefined) {
+      const e = e0
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })

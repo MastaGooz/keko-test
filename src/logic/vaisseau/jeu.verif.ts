@@ -1944,10 +1944,10 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 }
 
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
-// (il file de côté, elle ne le manque pas) ; à l'impact, ce qui est près de lui est pris aussi, le lointain, rien
+// (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const meteore = { id: 'meteore', cadence: 99, degats: 18, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, meteore: { chute: 0.6, rayon: 12 } }
+  const meteore = { id: 'meteore', cadence: 99, degats: 18, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, meteore: { chute: 0.6 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [meteore], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const w = nouveauMonde(cfg, 3)
   w.ennemis.push(insecte(1, 60, 0), insecte(2, 68, 0), insecte(3, 60, -60))
@@ -1964,5 +1964,5 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
     }
   }
   const pv = w.ennemis.map((e) => 1000 - e.pv)
-  verifier(`la météore tombe une fois, sur l'insecte qui file (impact à ${impact === null ? '—' : `${impact.x.toFixed(0)}, ${impact.y.toFixed(1)}`}, lui à y ${ouEtait.toFixed(1)}) : ${pv.join(' / ')} (18 à lui et à son voisin, 0 au lointain)`, ev.filter((e) => e.type === 'meteoreImpact').length === 1 && impact !== null && impact.y > 25 && Math.abs(impact.y - ouEtait) < 1.5 && pv[0] === 18 && pv[1] === 18 && pv[2] === 0)
+  verifier(`la météore tombe une fois, sur l'insecte qui file (impact à ${impact === null ? '—' : `${impact.x.toFixed(0)}, ${impact.y.toFixed(1)}`}, lui à y ${ouEtait.toFixed(1)}) : ${pv.join(' / ')} (18 à lui seul, 0 à son voisin et au lointain)`, ev.filter((e) => e.type === 'meteoreImpact').length === 1 && impact !== null && impact.y > 25 && Math.abs(impact.y - ouEtait) < 1.5 && pv[0] === 18 && pv[1] === 0 && pv[2] === 0)
 }

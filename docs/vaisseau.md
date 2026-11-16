@@ -4800,3 +4800,8 @@ vers le ciel, une onde au sol, des éclats, un cratère qui refroidit (1,4 s). D
 qui descend pendant la chute, annoncé en avance comme les autres armes) et `impactMeteore` (un coup grave, des
 éclats qui tintent) — L'IMPACT EST ANNONCÉ EN AVANCE AUSSI, son heure étant écrite dès le départ
 (`meteoresAnnoncees`). *Chiffres de moi, à rejuger.*
+PUIS SANS ZONE, ET UN CERCLE SERRÉ (Keko, 16/11 : « réduire la taille du cercle avant la frappe et annuler la zone
+d'effet — on frappe juste la cible ») : 18 points À L'INSECTE SEUL (mort avant l'impact, elle tombe sur rien) ;
+`Arme.meteore` n'a plus de `rayon`. Le dessin prend sa taille à `POINT_DE_CHUTE` (7) : le cercle de runes se
+resserre de 12,6 à 7 (il partait de 31), l'onde de l'impact ne dépasse plus 13, le cratère tient sous l'insecte.
+Mesuré : la cible prend 18, son voisin à 8, rien.
