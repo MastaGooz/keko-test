@@ -7183,18 +7183,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       p.disc(f.x, f.y, L, (d, ang) => {
         const tache = Math.sin(ang * 7 + d * 9 + m.t * 1.5 + f.id) * Math.sin(ang * 5 - d * 13 + f.id * 1.7)
-        return ou(d, ang) < 0.6 ? VENIN[3] : tache > 0.35 ? VENIN[2] : tache < -0.45 ? VENIN[0] : VENIN[1]
+        // (PLUS CLAIRE — Keko, 16/11 : « un peu sombre, on ne la voit pas assez » : un vert acide vif, un bord lumineux)
+        return ou(d, ang) < 0.6 ? VENIN[4] : tache > 0.35 ? VENIN[4] : tache < -0.45 ? VENIN[2] : VENIN[3]
       }, (d, ang) => {
         const o = ou(d, ang)
         if (o <= 0) return 0
-        return (o < 0.6 ? 0.55 : 0.34) * Math.min(1, o) * k
+        return (o < 0.6 ? 0.8 : 0.5) * Math.min(1, o) * k
       })
+      // (une lueur verte dessus : elle se voit de loin, sur le fond sombre)
+      p.glow(f.x + Math.cos(f.cap) * L * 0.55, f.y + Math.sin(f.cap) * L * 0.55, L * 0.6, VENIN[3], 0.28 * k)
       // (les gouttes projetées au-delà du bord, de travers)
       for (let j = 0; j < 7; j++) {
         const an = f.cap + (alea(f.id, j, 21) * 2 - 1) * cr.cone * 1.25
         const d = L * (0.9 + 0.22 * alea(f.id, j, 22))
         const r = 0.6 + 1.3 * alea(f.id, j, 23)
-        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, VENIN[2], (dd) => (dd > 0.6 ? 0.55 : 0.4) * k)
+        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, VENIN[3], (dd) => (dd > 0.6 ? 0.8 : 0.6) * k)
       }      // (des bulles qui crèvent)
       for (let j = 0; j < 7; j++) {
         const vie = 0.6 + 0.5 * alea(f.id, j, 1)
