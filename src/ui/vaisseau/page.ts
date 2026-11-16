@@ -9022,7 +9022,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const al = allureMontee(0)
     const chaud = al.propulseur >= 3 ? ION : FEU
     const ty = sy + (0.2 - queueDe(monteeA(hangar, 'coque').cran)) * E
-    if (gA.omni === undefined) {
+    // (UNE BÊTE, à l'accueil aussi, lâche des bulles et pas de feu — Keko, 16/11 : « n'oublie pas l'effet de propulsion dans
+    // l'écran d'accueil ») : une colonne de bulles qui s'écartent, enflent et crèvent en s'éloignant
+    const coqueA = monteeA(hangar, 'coque').cran
+    if (organique(coqueA)) {
+      const [cb, cl] = couleursDesBulles(coqueA)
+      for (let k = 0; k < 16; k++) {
+        const u = boucle(t * (0.9 + us * 2) + k / 16, 1)
+        const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 9)
+        const y = ty + 3 + u * (42 + us * 70)
+        const r = (0.6 + 0.9 * ((k * 0.618) % 1)) * (1 + 0.6 * u) * (E / 2)
+        const c = k % 3 === 0 ? cl : cb
+        if (u > 0.9) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx * (r + 1.5), y + dy * (r + 1.5), c, 0.8)
+        else if (r >= 1.6) {
+          p.ring(x, y, r, 1, c, 0.9 * (1 - u * 0.5))
+          p.dot(x - r * 0.4, y - r * 0.4, N.WHITE, 0.85)
+        } else p.circle(x, y, Math.max(0.6, r * 0.7), c, 1 - u * 0.5)
+      }
+    } else if (gA.omni === undefined) {
       for (let k = 0; k < 18; k++) {
         const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
         p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)

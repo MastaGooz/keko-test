@@ -4513,3 +4513,8 @@ tailles, éparpillées de côté (serrées en file, elles faisaient encore un je
 ralentissent vite, ondulent, enflent un peu et crèvent en éclaboussures. Au
 décollage du hangar, les éclats sont de leur couleur. Et leurs tentacules et leurs
 vrilles battent PLUS FORT quand ils poussent (l'ampleur suit la poussée).
+
+À L'ACCUEIL AUSSI (Keko, 16/11 : « n'oublie pas de mettre l'effet de propulsion dans
+l'écran d'accueil ») : le Kraken et la Vouivre n'y ont plus la traînée de feu ni sa
+lueur, mais une colonne de bulles à leur couleur, qui s'écartent, enflent et
+crèvent en s'éloignant — plus vite quand le vaisseau s'arrache.
