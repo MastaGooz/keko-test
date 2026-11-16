@@ -4739,3 +4739,10 @@ un faisceau faible permanent où filent des impulsions ; activé, la gaine bleue
 blanche du faisceau du Prisme ; l'insecte irradié luit en bleu, des étincelles d'énergie en montent. Deux
 sons : `cristalPose` (un tintement de verre), `cristalLigne` (un « vvvom » d'énergie). Les événements des
 balises portent désormais leur arme. *Chiffres de moi, à rejuger.*
+
+LES CRISTAUX SONT DÉPOSÉS DEPUIS LA PROUE, ET LEUR POSE SONNE PLUS DOUX (Keko, 16/11 : « le son de pose des
+cristaux un petit peu trop agressif et aigu ; il faudrait que le cristal soit posé à l'avant de l'appareil,
+comme s'il était déposé depuis le cristal qui est devant »). `Arme.balise.devant` : le cristal tombe à 10
+devant le vaisseau, dans l'axe de son nez — là où tourne le cristal de sa proue (l'écart de 40 se mesure
+depuis ce point). Le son `cristalPose` passe de 1 900 à 880 Hz, l'attaque de 1 à 8 ms, un seul partiel
+discret, un peu moins fort.

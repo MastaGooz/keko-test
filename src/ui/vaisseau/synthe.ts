@@ -760,13 +760,17 @@ const RECETTES = {
       note(m, 0.07, 0.35, 0, { f: 1760, a: 0.002, d: 0.04 })
     },
   },
-  /** UN CRISTAL DU PRISME EST POSÉ : un tintement de verre — deux notes claires aux partiels inharmoniques, qui sonnent */
+  /**
+   * UN CRISTAL DU PRISME EST POSÉ : un tintement de verre DOUX (Keko, 16/11 : le premier, à 1 900 Hz, attaque sèche, était
+   * « un petit peu trop agressif et aigu ») — une note ronde plus grave, une attaque adoucie, un seul partiel discret, une
+   * quinte qui répond à peine
+   */
   cristalPose: {
-    duree: 0.6, niveau: 0.13, salle: [0.35, 0.14], variantes: 3,
+    duree: 0.6, niveau: 0.1, salle: [0.4, 0.16], variantes: 3,
     faire: (m, h) => {
-      const f = 1900 * (0.95 + 0.1 * h.next())
-      note(m, 0, 0.8, 0, { f, a: 0.001, d: 0.3, partiels: [[1, 1, 1], [2.76, 0.45, 0.6], [5.4, 0.2, 0.35]] })
-      note(m, 0.05, 0.5, 0, { f: f * 1.5, a: 0.001, d: 0.22, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+      const f = 880 * (0.96 + 0.08 * h.next())
+      note(m, 0, 0.8, 0, { f, a: 0.008, d: 0.32, partiels: [[1, 1, 1], [2.76, 0.12, 0.4]] })
+      note(m, 0.06, 0.3, 0, { f: f * 1.5, a: 0.01, d: 0.22 })
     },
   },
   /** LE FAISCEAU ENTRE DEUX CRISTAUX S'ACTIVE : un « vvvom » d'énergie — un ton battu qui monte vite, un scintillement aigu */

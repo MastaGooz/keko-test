@@ -407,8 +407,9 @@ export type Arme = {
   // (… ET DES CRISTAUX RELIÉS PAR DES FAISCEAUX, la deuxième arme du Prisme — Keko, 16/11 : « on réutilise notre système
   // de balises : on place des cristaux reliés par des faisceaux d'énergie ; dès qu'un ennemi le traverse, le faisceau s'active
   // et lui inflige des dégâts sur la durée » : `irradie` — chaque décharge, au lieu d'un coup, IRRADIE ce qui est sur la
-  // ligne : `dps` points par seconde pendant `duree` secondes, rafraîchis à chaque décharge, pas cumulés)
-  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number; irradie?: { duree: number; dps: number } }
+  // ligne : `dps` points par seconde pendant `duree` secondes, rafraîchis à chaque décharge, pas cumulés ; `devant` — posé à
+  // cette distance devant le vaisseau, là où est le cristal de sa proue : « comme s'il était déposé depuis le cristal de devant »)
+  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number; irradie?: { duree: number; dps: number }; devant?: number }
   /**
    * UNE TRAÎNÉE DE GIVRE (le Frimas, Keko, 15/11 : « une attaque qui laisse une traînée de givre derrière le vaisseau,
    * qui ralentit et inflige des dégâts aux ennemis tant qu'ils restent dedans ») : en vol, il sème DERRIÈRE LUI (à
@@ -2428,7 +2429,9 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (ba === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const miennes = m.balises.filter((b) => b.arme === i)
     const derniere = miennes[miennes.length - 1]
-    if (derniere !== undefined && Math.hypot(derniere.x - v.x, derniere.y - v.y) < ba.ecart) return
+    const px = v.x + Math.cos(v.cap) * (ba.devant ?? 0)
+    const py = v.y + Math.sin(v.cap) * (ba.devant ?? 0)
+    if (derniere !== undefined && Math.hypot(derniere.x - px, derniere.y - py) < ba.ecart) return
     m.armesA[i] = m.t + ba.tous
     const rang = derniere === undefined ? 0 : (derniere.rang + 1) % 3
     const liens: Balise['liens'] = []
@@ -2437,8 +2440,8 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const premiere = miennes[miennes.length - 2]
     if (rang === 2 && derniere?.rang === 1 && premiere?.rang === 0) liens.push({ vers: premiere.id, sur: [], dechargeA: 0 })
     const id = m.prochainId++
-    m.balises.push({ id, x: v.x, y: v.y, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
-    ev.push({ type: 'balisePosee', x: v.x, y: v.y, arme: a.id })
+    m.balises.push({ id, x: px, y: py, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
+    ev.push({ type: 'balisePosee', x: px, y: py, arme: a.id })
     // (trop de balises : le plus vieux triangle saute, entier)
     if (miennes.length + 1 > ba.max) {
       const vieux = miennes[0].trio
