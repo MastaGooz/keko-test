@@ -4518,3 +4518,9 @@ vrilles battent PLUS FORT quand ils poussent (l'ampleur suit la poussée).
 l'écran d'accueil ») : le Kraken et la Vouivre n'y ont plus la traînée de feu ni sa
 lueur, mais une colonne de bulles à leur couleur, qui s'écartent, enflent et
 crèvent en s'éloignant — plus vite quand le vaisseau s'arrache.
+
+PUIS DES BULLES COURTES (Keko, 16/11 : « l'effet de propulsion est trop long, on va
+penser que c'est une attaque, ça laisse une traînée ») : en vol, elles vivent un
+quart à une demi-seconde (au lieu de 0,7 à 1,4) et s'en vont deux fois plus
+lentement — elles crèvent juste derrière la bête ; à l'accueil, la colonne passe
+de 42 à 16 de long.

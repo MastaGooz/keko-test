@@ -9028,9 +9028,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (organique(coqueA)) {
       const [cb, cl] = couleursDesBulles(coqueA)
       for (let k = 0; k < 16; k++) {
-        const u = boucle(t * (0.9 + us * 2) + k / 16, 1)
-        const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 9)
-        const y = ty + 3 + u * (42 + us * 70)
+        const u = boucle(t * (1.6 + us * 2) + k / 16, 1)
+        const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 6)
+        // (courte : elle crève juste derrière — longue, on la prenait pour une attaque)
+        const y = ty + 3 + u * (16 + us * 40)
         const r = (0.6 + 0.9 * ((k * 0.618) % 1)) * (1 + 0.6 * u) * (E / 2)
         const c = k % 3 === 0 ? cl : cb
         if (u > 0.9) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx * (r + 1.5), y + dy * (r + 1.5), c, 0.8)
@@ -9977,10 +9978,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const vitesse = 30 + 40 * pousseeVue.avant
             // (UNE BÊTE NE CRACHE PAS DE BRAISES : elle lâche des bulles — voir `bulles`)
             // (pas une file : une sur deux, éparpillées de côté, de toutes tailles — serrées, elles faisaient encore un jet)
+            // (… ET COURTES — Keko, 16/11 : « trop long, on va penser que c'est une attaque, ça laisse une traînée » : une demi-
+            // seconde au plus, lentes : elles crèvent juste derrière la bête)
             if (organique(coque)) {
               if (R.next() < 0.45) {
                 const cote = R.range(-1, 1)
-                bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.35 - Math.sin(v.cap) * cote * 22 + R.range(-6, 6), vy: -Math.sin(v.cap) * vitesse * 0.35 + Math.cos(v.cap) * cote * 22 + R.range(-6, 6), t0: t, vie: R.range(0.7, 1.4), r: R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
+                bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.18 - Math.sin(v.cap) * cote * 14 + R.range(-5, 5), vy: -Math.sin(v.cap) * vitesse * 0.18 + Math.cos(v.cap) * cote * 14 + R.range(-5, 5), t0: t, vie: R.range(0.25, 0.5), r: R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
               }
             }
             else braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
