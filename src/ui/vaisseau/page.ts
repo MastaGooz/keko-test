@@ -7274,6 +7274,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const DUREE_DU_GAZ = 0.8
   const gaz: { x: number; y: number; rayon: number; t0: number; id: number }[] = []
   const pouls = (u: number): number => Math.exp(-(((u - 0.08) / 0.06) ** 2)) + 0.7 * Math.exp(-(((u - 0.27) / 0.06) ** 2))
+  /**
+   * UN AMAS DE CLOQUES (une mine d'acide) : `n` cloques — la plus grosse au milieu, les autres autour, à des angles et des
+   * tailles tirés de l'id —, cernées de lie sombre puis claire, une bulle de venin, un reflet ; chacune bat (``pouls``) à
+   * sa phase, `vite` battements par seconde ; `k` : l'échelle.
+   */
+  function dessinerUnAmas(p: Peintre, x: number, y: number, id: number, age: number, vite: number, n: number, k: number): void {
+    const cloques: [number, number, number, number][] = [[0, 0, 2.4, 0]]
+    for (let j = 1; j < n; j++) {
+      const a = alea(id, j, 61) * Math.PI * 2 + j * 2.1
+      const d = 2.3 + 1.2 * alea(id, j, 62)
+      cloques.push([Math.cos(a) * d, Math.sin(a) * d * 0.85, 1.2 + 0.9 * alea(id, j, 63), alea(id, j, 64)])
+    }
+    // (d'abord tous les cernes, puis toutes les bulles : les cloques se touchent sans se couper)
+    for (const [dx, dy, r] of cloques) p.circle(x + dx * k, y + dy * k, (r + 0.9) * k, LIE[0])
+    for (const [dx, dy, r, ph] of cloques) {
+      const rr = r * (1 + 0.28 * pouls((age * vite + ph) % 1)) * k
+      const cx = x + dx * k
+      const cy = y + dy * k
+      p.circle(cx, cy, rr + 0.4, LIE[2])
+      p.circle(cx, cy, rr, VENIN[2])
+      p.circle(cx - rr * 0.25, cy - rr * 0.25, rr * 0.55, VENIN[4])
+      p.px(Math.round(cx - rr * 0.45), Math.round(cy - rr * 0.5), VENIN[5])
+    }
+  }
   function dessinerLesMines(p: Peintre): void {
     if (m.mines.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
@@ -7287,15 +7311,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.circle(mn.x0 + (mn.x - mn.x0) * u, mn.y0 + (mn.y - mn.y0) * u, 1.6, N.hex('#06040a'), 0.4)
         continue
       }
+      // (UN AMAS DE CLOQUES — Keko, 16/11 : « plutôt l'apparence d'un amas de bulles, un peu plus grosses, comme plusieurs
+      // petites cloques, plusieurs petites pustules regroupées ») : six cloques de tailles différentes, serrées, chacune
+      // cernée de lie, son reflet, et qui bat à son rythme — plus vite les deux dernières secondes)
       const reste = mi.vol + mi.duree - age
-      const ph = (age * (reste < 2 ? 3.2 : 1.6) + mn.id * 0.37) % 1
-      const r = 2.4 * (1 + 0.3 * pouls(ph))
-      p.glow(mn.x, mn.y, 7, VENIN[3], 0.25 + 0.2 * pouls(ph))
-      p.circle(mn.x, mn.y, r + 1.2, LIE[0])
-      p.circle(mn.x, mn.y, r + 0.6, LIE[2])
-      p.circle(mn.x, mn.y, r, VENIN[2])
-      p.circle(mn.x - 0.5, mn.y - 0.5, r * 0.55, VENIN[4])
-      p.px(Math.round(mn.x - r * 0.45), Math.round(mn.y - r * 0.5), VENIN[5])
+      const vite = reste < 2 ? 3.2 : 1.6
+      p.glow(mn.x, mn.y, 10, VENIN[3], 0.25 + 0.1 * Math.sin(t * 4 + mn.id))
+      dessinerUnAmas(p, mn.x, mn.y, mn.id, age, vite, 6, 1)
       // (un filet de gaz qui s'en échappe)
       const fu = (t * 0.9 + mn.id * 0.53) % 1
       p.dot(mn.x + Math.sin(mn.id + fu * 4) * 1.5, mn.y - 2 - fu * 6, VENIN[3], 0.6 * (1 - fu))
@@ -7317,11 +7339,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const h = Math.sin(Math.PI * u) * 16
       const x = mn.x0 + (mn.x - mn.x0) * u
       const y = mn.y0 + (mn.y - mn.y0) * u - h
-      const r = 2.2 + 0.3 * Math.sin(t * 25 + mn.id)
-      p.glow(x, y, 5, VENIN[3], 0.35)
-      p.circle(x, y, r + 0.7, LIE[1])
-      p.circle(x, y, r, VENIN[3])
-      p.px(Math.round(x - 1), Math.round(y - 1), VENIN[5])
+      p.glow(x, y, 6, VENIN[3], 0.35)
+      dessinerUnAmas(p, x, y, mn.id, m.t - mn.lancee, 4, 3, 0.8)
     }
     for (const g of gaz) {
       const u = (t - g.t0) / DUREE_DU_GAZ

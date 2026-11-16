@@ -4571,3 +4571,11 @@ devraient exploser dès qu'un ennemi est dans la zone d'effet ») : le déclench
 était à 9 pour un gaz de 20 — un insecte pouvait frôler la zone sans la faire
 éclater. C'est maintenant le même rayon, 20 (`declenche` retiré : une seule
 valeur, plus deux qui se désaccordent).
+
+PUIS DES AMAS DE CLOQUES (Keko, 16/11 : « l'apparence d'un amas de bulles, un peu plus
+grosses, comme plusieurs petites cloques, plusieurs petites pustules regroupées ») :
+une mine posée est SIX CLOQUES serrées (`dessinerUnAmas`) — la plus grosse au
+milieu, les autres autour, à des angles et des tailles tirés de son id —, cernées de
+lie sombre puis claire, une bulle de venin, un reflet ; chacune bat à sa phase (plus
+vite les deux dernières secondes). L'amas fait environ deux fois la mine d'avant. En
+vol, un petit amas de trois.
