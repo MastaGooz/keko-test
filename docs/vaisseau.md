@@ -4839,3 +4839,25 @@ branches à la proue (0,18 s), un cercle de runes qui s'ouvre autour du vaisseau
 deux-là suivent le vaisseau —, et UNE ÉTOILE QUI MONTE de la proue vers le ciel à 420 par seconde, sa traîne derrière
 elle, DANS LA DIAGONALE MÊME (`CIEL_DE_LA_METEORE`) par où la météore redescend ensuite sur sa cible : on la voit
 partir, on la voit revenir. Les deux dessins de la météore (étoile filante, et `&meteore=eclat`) ont ce lancer.
+
+UN DIXIÈME VAISSEAU, LE NÉANT (Keko, 16/11 : « utilise l'effet energy core de pixelfx, précisément la sphère avec les
+deux anneaux qui tournent autour, pour créer un nouveau vaisseau qui suit cette architecture ; un vaisseau du void,
+qui utilisera l'espace-temps et les dimensions »). `coque-13` (« Cœur du Néant », 5 de blindage), `propulseur-n3`,
+le modèle `neant` de la flotte. Le nom est de moi, à changer d'un mot.
+LE DESSIN (`formesDeLaCoque(13, t)`), l'« Energy core » vu de dessus :
+- LE CŒUR, rayon 4,4, un nouveau relief `coeur` peint pixel par pixel (`pixelDuCoeur`, le `core` de l'effet à la
+  taille d'un vaisseau, ses huit tons magenta `COEUR`) : un rebord dur, un reflet vitreux, des bandes fines qui
+  tournent (une somme de sinus à la place de son `tileFbm`), trois filaments brisés qui jaillissent du cœur blanc et
+  changent quinze fois par seconde ; LE BATTEMENT de l'effet (`battementDuNeant` : deux coups et leurs échos par tour
+  de 2,4 s) le gonfle de 10 % et l'inonde de lumière. Plus sombre que l'original : à cette taille, sa chaleur
+  blanchissait tout le cœur.
+- LES DEUX ANNEAUX, rayons 8,2 et 9,6 (à 7,4 et 8,6, ils collaient au cœur en vol, à un pixel par unité) : chacun un
+  cercle incliné (1,15 et −0,9 rad, ceux de l'effet) qui tourne autour de l'axe de la vue, l'un en 2,4 s, l'autre deux
+  fois plus vite en sens inverse — vu de dessus, une ellipse qui pivote ; trente segments, un nouveau relief `lueur`
+  (un seul ton, ni ombre ni contour) : la moitié de derrière passe SOUS le cœur, sombre, celle de devant PAR-DESSUS,
+  claire ; une PERLE À LA MARQUE DU JOUEUR court sur chacun, une traînée blanche derrière elle.
+- UN PETIT ÉPERON d'obsidienne à la proue, la pointe allumée (elle bat avec le cœur) : on voit où il regarde, et ses
+  coups en partent (sa place d'arme est reculée de 2,2 : le puits part de la pointe, à 7,4).
+- Pas d'ailes, pas de tuyère : comme les bêtes, il lâche en poussée des éclats de néant, magenta (`organique`).
+SES ARMES NE SONT PAS TRANCHÉES : il emporte LE PUITS — la singularité gardée de côté « pour un futur vaisseau » —, en
+attendant ; rien d'autre n'est codé.

@@ -147,6 +147,18 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LE NÉANT (Keko, 16/11) : le vaisseau du vide — un cœur qui bat entre deux anneaux qui l'orbitent ; l'espace-temps et
+    // les dimensions. SA PREMIÈRE ARME, LE PUITS, gardé de côté « pour un futur vaisseau » : en attendant que Keko tranche.
+    id: 'neant',
+    nom: 'Néant',
+    classe: 'chasseur',
+    dit: 'Un vaisseau du vide : un cœur de néant qui bat entre deux anneaux qui l’orbitent ; il joue de l’espace-temps et des dimensions.',
+    pieces: ['coque-13', 'propulseur-n3', 'arme-puits'],
+    serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     // LE PRISME (Keko, 16/11) : le vaisseau de cristal — un cristal qui tourne à sa proue, un rayon d'énergie pure
     id: 'prisme',
     nom: 'Prisme',

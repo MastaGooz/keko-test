@@ -19,8 +19,9 @@ import * as noyau from 'pixelfx'
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie'
-export type Relief = 'cyl' | 'plat' | 'dome' | 'emis'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement'
+/** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
+export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
   pts: [number, number][]
   mat: Matiere
@@ -31,6 +32,10 @@ export type Forme = {
   penche?: number
   /** Pour une flamme : la base (x de la tuyère) et la pointe, pour son dégradé. */
   feu?: { base: number; pointe: number }
+  /** Pour le cœur du Néant : son centre, son rayon (battement compris), l'instant et son battement (0 à 1). */
+  coeur?: { x: number; y: number; r: number; t: number; pouls: number }
+  /** Pour une lueur : le ton de la rampe (0 sombre à 5 clair). */
+  ton?: number
 }
 
 /** Les rampes, du plus sombre au plus clair, en teinte glissante. */
@@ -90,6 +95,42 @@ const RAMPES: Record<Matiere, number[]> = {
   quartz: ['#14123a', '#2a2c70', '#4a5aa8', '#7aa0d8', '#b8d8f4', '#ffffff'].map(hex),
   facette: ['#0c1024', '#18203f', '#2a3866', '#40568e', '#6680b8', '#9cb4e0'].map(hex),
   energie: ['#0a2a6a', '#1a5ad0', '#40a0ff', '#80d8ff', '#c8f4ff', '#ffffff'].map(hex),
+  // LE NÉANT (Keko, 16/11 : « un vaisseau du void, qui utilisera l'espace-temps et les dimensions ») : les teintes de
+  // l'« Energy core » de pixelfx — un magenta qui sort du noir —, sombres pour sa matière, claires pour ses anneaux
+  neant: ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6'].map(hex),
+  rayonnement: ['#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6'].map(hex),
+}
+/** LE CŒUR DU NÉANT, ses huit tons : ceux du cœur de l'« Energy core » de pixelfx. */
+const COEUR = ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6', '#ffffff'].map(hex)
+/**
+ * LA COULEUR D'UN PIXEL DU CŒUR (le `core` de l'« Energy core », à l'échelle d'un vaisseau) : un rebord dur, des bandes
+ * fines et claires qui tournent autour d'un cœur blanc chauffé à blanc, trois filaments qui en jaillissent et changent
+ * quinze fois par seconde, un reflet vitreux en haut à gauche ; un battement inonde le tout de lumière.
+ */
+function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: number }, lx: number, ly: number): number {
+  const dx = lx - c.x
+  const dy = ly - c.y
+  const d = Math.hypot(dx, dy) / c.r
+  if (d > 0.9) return dy < -c.r * 0.3 && dx < c.r * 0.3 ? COEUR[6] : COEUR[3]
+  if (Math.hypot(dx / c.r + 0.42, dy / c.r + 0.5) < 0.13) return COEUR[7]
+  const ph = c.t / 2.4
+  const a = Math.atan2(dy, dx)
+  // (les filaments : trois traits brisés du cœur vers le bord, redessinés quinze fois par seconde)
+  const f = Math.floor(c.t * 15)
+  for (let i = 0; i < 3; i++) {
+    const af = (i / 3) * Math.PI * 2 + f * 0.7 + 0.35 * Math.sin(f * 1.7 + i * 2.3) + 0.4 * Math.sin(d * 9 + f + i)
+    let e = Math.abs(a - af) % (Math.PI * 2)
+    if (e > Math.PI) e = Math.PI * 2 - e
+    if (d > 0.18 && d < 0.84 && e * d * c.r < 0.42) return d < 0.4 ? COEUR[7] : COEUR[5]
+  }
+  if (d < 0.12 + 0.14 * c.pouls) return COEUR[7]
+  if (d < 0.2 + 0.14 * c.pouls) return COEUR[6]
+  // (les bandes : là où un bruit qui tourne passe par son milieu)
+  const n = 0.5 + 0.22 * Math.sin(a * 3 + ph * Math.PI * 4 + d * 4.5) + 0.18 * Math.sin(a * 5 - ph * Math.PI * 6 + d * 7 + 1.3) + 0.1 * Math.sin(a * 2 + d * 11 - ph * Math.PI * 8)
+  // (plus sombre que l'« Energy core » d'origine : à la taille d'un vaisseau, sa chaleur blanchissait tout le cœur)
+  const chaud = 0.75 * (1 - d) ** 2 + c.pouls * 0.4
+  if (Math.abs(n - 0.5) < 0.04 + 0.04 * c.pouls) return chaud > 0.5 ? COEUR[7] : chaud > 0.2 ? COEUR[6] : COEUR[5]
+  return chaud > 0.7 ? COEUR[6] : chaud > 0.42 ? COEUR[5] : chaud > 0.2 ? COEUR[3] : n > 0.5 ? COEUR[2] : COEUR[1]
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
@@ -363,7 +404,8 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     const d = (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / nl
     // (la lumière ne pousse pas jusqu'au blanc : le blanc est réservé au spéculaire)
     let b = 0.14 + 0.66 * Math.max(0, d)
-    if (f.relief === 'emis' && f.feu) {
+    if (f.relief === 'coeur' || f.relief === 'lueur') b = 0.8
+    else if (f.relief === 'emis' && f.feu) {
       // la flamme : plus chaude près de la tuyère, et au cœur
       const u = Math.max(0, Math.min(1, (lx - f.feu.pointe) / (f.feu.base - f.feu.pointe)))
       const hw = demiLargeur(f.pts, lx) || 1
@@ -401,6 +443,15 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       p.rect(x0 + px, y0 + py, 1, 1, BLANC)
       continue
     }
+    // (le cœur du Néant et les lueurs ne prennent pas la lumière : ils la font)
+    if (f.relief === 'coeur' && f.coeur) {
+      p.rect(x0 + px, y0 + py, 1, 1, pixelDuCoeur(f.coeur, loc[i * 2], loc[i * 2 + 1]))
+      continue
+    }
+    if (f.relief === 'lueur') {
+      p.rect(x0 + px, y0 + py, 1, 1, R[Math.max(0, Math.min(R.length - 1, f.ton ?? 5))])
+      continue
+    }
     // la trame ne sert qu'à la frontière entre deux tons (une bande étroite), et jamais sur une plaque à plat
     const v = lum[i] * (R.length - 1)
     const fr = v - Math.floor(v)
@@ -430,7 +481,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       const qy = py + VOISINS[v4 * 2 + 1]
       if (qx < 0 || qy < 0 || qx >= W || qy >= H) continue
       const kq = ids[qy * W + qx]
-      if (kq < 0 || formes[kq].relief === 'emis') continue
+      if (kq < 0 || formes[kq].relief === 'emis' || formes[kq].relief === 'lueur') continue
       if (lum[qy * W + qx] > bMax) {
         bMax = lum[qy * W + qx]
         meilleur = kq
@@ -535,9 +586,28 @@ const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ 
 // LE PRISME (Keko, 16/11) : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie ; À SA PROUE, UN CRISTAL
 // QUI FLOTTE ET TOURNE (le rayon en part — voir `boucheDeLArme`)
 const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -1.2, y: 7.1 }, verriere: -1.5, nez: 13.6, flanc: 7, anneau: 13, echelle: 1 }
+// LE NÉANT (Keko, 16/11 : « l'effet energy core de pixelfx, précisément la sphère avec les deux anneaux qui tournent autour,
+// pour un nouveau vaisseau qui suit cette architecture ; un vaisseau du void, qui utilisera l'espace-temps et les
+// dimensions ») : un CŒUR qui bat, deux ANNEAUX inclinés qui l'orbitent, un petit éperon à la proue (d'où partent ses
+// coups) ; pas de tuyère : il lâche des éclats de néant (voir `organique` dans la page)
+const GABARIT_DU_NEANT: Gabarit = { tuyeres: [{ x: 3.4, y: 0 }], armes: [{ x: -2.2, y: 0, s: 1 }], feux: { x: 3.4, y: 3.2 }, verriere: 0, nez: 8, flanc: 6, anneau: 13.5, echelle: 1 }
+/** Le rayon du cœur du Néant, et ceux de ses deux anneaux (en unités du vaisseau). */
+export const COEUR_DU_NEANT = { r: 4.4, anneaux: [8.2, 9.6] }
+/**
+ * LE BATTEMENT du cœur (celui de l'« Energy core ») : deux battements par tour de 2,4 s, chacun un coup fort et son écho,
+ * de 0 à 1.
+ */
+export function battementDuNeant(t: number): number {
+  let m = 0
+  for (const [b, k] of [[0.05, 1], [0.25, 0.5], [1.25, 1], [1.45, 0.5]]) {
+    const a = (((t - b) % 2.4) + 2.4) % 2.4
+    m = Math.max(m, k * (a < 0.03 ? a / 0.03 : Math.exp(-(a - 0.03) / 0.12)))
+  }
+  return m
+}
 /** Le centre du cristal qui tourne à la proue du Prisme, en unités du vaisseau : le rayon part de sa pointe, 3,4 devant. */
 export const CRISTAL_DU_PRISME = { x: 9.6, y: 0 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
+export const gabaritDe = (coque: number): Gabarit => (coque === 13 ? GABARIT_DU_NEANT : coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -714,6 +784,50 @@ function pustule(x: number, y: number, r: number, t: number, phase: number): For
   ]
 }
 export function formesDeLaCoque(cran: number, t = 0): Forme[] {
+  if (cran === 13) {
+    // LE NÉANT : LE CŒUR et SES DEUX ANNEAUX (ceux de l'« Energy core ») — chaque anneau est un cercle incliné (l'un de
+    // 1,15 rad, l'autre de −0,9) qui tourne autour de l'axe de la vue, l'un en 2,4 s, l'autre deux fois plus vite et dans
+    // l'autre sens : vu de dessus, une ellipse qui pivote. Sa moitié de derrière passe SOUS le cœur, plus sombre, celle de
+    // devant PAR-DESSUS, claire ; une perle — à la marque du joueur — court le long de chacun, une traînée blanche derrière
+    // elle. Devant, un petit éperon d'obsidienne, la pointe allumée : on sait où il regarde, et ses coups en partent.
+    const pouls = t === 0 ? 0 : battementDuNeant(t)
+    const r = COEUR_DU_NEANT.r * (1 + 0.1 * pouls)
+    const derriere: Forme[] = []
+    const devant: Forme[] = []
+    const ANNEAUX = [
+      { r: COEUR_DU_NEANT.anneaux[0], incline: 1.15, tourne: (Math.PI * 2 * t) / 2.4 },
+      { r: COEUR_DU_NEANT.anneaux[1], incline: -0.9, tourne: (-Math.PI * 4 * t) / 2.4 + 1 },
+    ]
+    const perle = (Math.PI * 2 * 3 * t) / 2.4
+    ANNEAUX.forEach((an, j) => {
+      const point = (a: number): [number, number, number] => {
+        const x = an.r * Math.cos(a)
+        const y = an.r * Math.sin(a) * Math.cos(an.incline)
+        const z = an.r * Math.sin(a) * Math.sin(an.incline)
+        return [x * Math.cos(an.tourne) - y * Math.sin(an.tourne), x * Math.sin(an.tourne) + y * Math.cos(an.tourne), z]
+      }
+      const n = 30
+      const tete = perle + j * 2.1
+      for (let k = 0; k < n; k++) {
+        const a0 = (k / n) * Math.PI * 2
+        const a1 = ((k + 1.15) / n) * Math.PI * 2
+        const [xa, ya, za] = point(a0)
+        const [xb, yb, zb] = point(a1)
+        const z = (za + zb) / 2
+        // (la traînée de la perle : le dixième de tour derrière elle, blanc)
+        const u = ((((a0 - tete) / (Math.PI * 2)) % 1) + 1) % 1
+        const ton = z < 0 ? 1 : u > 0.9 ? 5 : z > 0.5 * an.r ? 4 : 3
+        ;(z < 0 ? derriere : devant).push({ pts: barre(xa, ya, xb, yb, 1.15), mat: 'rayonnement', relief: 'lueur', ton })
+      }
+      const [px, py, pz] = point(tete)
+      ;(pz < 0 ? derriere : devant).push({ pts: ovale(px, py, 0.95, 0.95, 8), mat: 'marque', relief: 'dome', dome: { x: px, y: py, rx: 0.95, ry: 0.95 } })
+    })
+    const eperon: Forme[] = [
+      { pts: [[3.4, -1.5], [7.8, 0], [3.4, 1.5]], mat: 'obsidienne', relief: 'plat' },
+      { pts: [[5.6, -0.5], [7.4, 0], [5.6, 0.5]], mat: 'rayonnement', relief: 'lueur', ton: pouls > 0.4 ? 5 : 4 },
+    ]
+    return [...derriere, ...eperon, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
+  }
   if (cran === 12) {
     // LE PRISME, UN CORPS DE CRISTAL : un long hexagone à deux facettes (penchées de part et d'autre de l'arête : la lumière
     // les sépare), une arête de quartz, un CŒUR d'énergie ; à la proue, détaché du corps, LE CRISTAL QUI TOURNE — un losange
@@ -943,6 +1057,8 @@ function formesDuCroissant(sg: number): Forme[] {
 }
 export function formesDesAiles(coque = 1, t = 0): Forme[] {
   const f: Forme[] = []
+  // (le néant n'a pas d'ailes : ses anneaux sont sa coque)
+  if (coque === 13) return f
   if (coque === 12) {
     // (le prisme : des ÉCLATS DE CRISTAL en ailes — un grand de quartz, un petit de facettes derrière ; la pointe du grand,
     // à la marque du joueur)
@@ -1118,6 +1234,7 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
   // (l'orbe de plasma se forme entre les deux cornes du Pulsar ; l'essaim en part aussi)
   if (id === 'plasma' || id === 'essaim' || id === 'puits' || id === 'meteore') return { x: 9.6, y: 0 }
+  // (sur le Néant, la place d'arme est reculée de 2,2 : le puits part de la pointe de son éperon — voir son gabarit)
   // (la Vouivre crache de sa gueule, entre ses mandibules)
   if (id === 'crachat') return { x: 9.6, y: 0.4 }
   // (le Prisme tire de son cristal)
@@ -1197,10 +1314,10 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
   // (le pulsar non plus : il souffle du plasma, violet ; ni le kraken : un jet de bile)
-  const organique = a.coque === 8 || a.coque === 9 || a.coque === 10 || a.coque === 11
+  const organique = a.coque === 8 || a.coque === 9 || a.coque === 10 || a.coque === 11 || a.coque === 13
   // (LE KRAKEN ET LA VOUIVRE N'ONT PLUS DE FLAMME — Keko, 16/11 : « l'aspect feu, c'est pas très cohérent » pour des bêtes :
   // ils poussent en lâchant des bulles, que la page sème ; leurs tentacules et leurs vrilles battent plus fort)
-  if (a.coque !== 10 && a.coque !== 11) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
+  if (a.coque !== 10 && a.coque !== 11 && a.coque !== 13) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
   if (a.coque === 11) for (const [y0, n] of [[-1.8, 4], [0.6, 5], [2.4, 3]] as [number, number][]) {
     let x = -8.4

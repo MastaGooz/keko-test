@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -160,6 +160,11 @@ export const PIECES: Piece[] = [
   // StarCraft ») : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie, le cristal qui flotte et tourne à
   // sa proue. *Chiffres de moi, à rejuger.*
   { id: 'coque-12', sorte: 'coque', cran: 12, nom: 'Cristal du Prisme', dit: '5 de blindage, un corps de cristal à facettes ; à sa proue, un cristal qui flotte et tourne.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 0, capacite: 20 },
+  // LE NÉANT (Keko, 16/11 : « l'effet energy core de pixelfx — la sphère avec les deux anneaux qui tournent autour — pour
+  // un nouveau vaisseau qui suit cette architecture ; un vaisseau du void, qui utilisera l'espace-temps et les
+  // dimensions ») : un cœur qui bat, deux anneaux qui l'orbitent. *Chiffres de moi, à rejuger.*
+  { id: 'coque-13', sorte: 'coque', cran: 13, nom: 'Cœur du Néant', dit: '5 de blindage, un cœur de néant qui bat, tenu par deux anneaux qui l’orbitent.', prix: 0, poids: 18, pv: 5, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-n3', sorte: 'propulseur', cran: 3, nom: 'Glissement du Néant', dit: 'Il glisse dans le vide : il file et vire bien.', prix: 0, poids: 5, poussee: 0.82, vitesseMax: 1, rotation: 1.15 },
   { id: 'propulseur-q3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Prisme', dit: 'Un souffle d’énergie : il file et vire bien.', prix: 0, poids: 6, poussee: 0.82, vitesseMax: 1, rotation: 1.1 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},
@@ -200,7 +205,8 @@ export const PIECES: Piece[] = [
   // LE PUITS DU PULSAR (Keko, 16/11 : « on va tenter le puits » — à la place du railgun, passé au Prisme) : une petite
   // singularité de plasma lancée au cœur de la nuée, qui aspire puis éclate. *Chiffres de moi, à rejuger en jouant.*
   // (… GARDÉ DE CÔTÉ — Keko, 16/11 : « je préfère qu'on le garde pour un futur vaisseau que j'ai en tête » ; le Pulsar est
-  // un vaisseau des ARCANES, il lui faut une arme qui y renvoie. Aucun vaisseau ne le porte.)
+  // un vaisseau des ARCANES, il lui faut une arme qui y renvoie.)
+  // (… PUIS LA PREMIÈRE ARME DU NÉANT, le vaisseau du vide — 16/11 : en attendant que Keko tranche les siennes)
   { id: 'arme-puits', sorte: 'arme', cran: 3, nom: 'Puits', dit: 'Toutes les 5 s, un insecte à moins de 130, une singularité de plasma part au cœur de la nuée : ouverte, elle aspire 2 s tout insecte à moins de 45 vers son centre, puis éclate : 22 points à tout ce qui est à moins de 28.', note: 'Elle rassemble la nuée : l’orbe et l’essaim font le reste.', prix: 30, poids: 7, arme: { id: 'puits', cadence: 5, degats: 22, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, puits: { vitesse: 150, rayon: 45, force: 70, duree: 2, eclat: 28 } } },
   // LA MÉTÉORE D'ARCANE DU PULSAR (Keko, 16/11 : « une petite météore d'arcane vient du ciel et tombe sur un ennemi ; ce
   // serait la seule attaque qui frappe directement l'ennemi sans projectile ») : rien ne part du vaisseau, elle tombe du

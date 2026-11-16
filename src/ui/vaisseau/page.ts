@@ -163,7 +163,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   // (LA SALAMANDRE EST DONNÉE D'OFFICE dans le jeu du vortex, pour l'essai — Keko, 15/11)
-  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre', 'prisme']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken, la Vouivre et le Prisme, 16/11)
+  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre', 'prisme', 'neant']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken, la Vouivre et le Prisme, 16/11)
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
@@ -938,7 +938,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -7574,8 +7574,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plus de flamme ; en poussée, leur queue lâche des BULLES — de bile, de venin —, des anneaux clairs et des gouttes
    * pleines, qui s'en vont lentement, ralentissent, enflent un peu et crèvent.
    */
-  const organique = (coque: number): boolean => coque === 10 || coque === 11
-  const couleursDesBulles = (coque: number): [number, number] => (coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
+  // (LE NÉANT n'a pas de tuyère non plus : il lâche des éclats de néant, magenta — Keko, 16/11)
+  const organique = (coque: number): boolean => coque === 10 || coque === 11 || coque === 13
+  const couleursDesBulles = (coque: number): [number, number] => (coque === 13 ? [N.hex('#b0228f'), N.hex('#ff86e6')] : coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
   const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number }[] = []
   function dessinerLesBulles(p: Peintre): void {
     for (let i = bulles.length - 1; i >= 0; i--) if (t - bulles[i].t0 > bulles[i].vie) bulles.splice(i, 1)
