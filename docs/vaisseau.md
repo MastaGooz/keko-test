@@ -4524,3 +4524,6 @@ penser que c'est une attaque, ça laisse une traînée ») : en vol, elles viven
 quart à une demi-seconde (au lieu de 0,7 à 1,4) et s'en vont deux fois plus
 lentement — elles crèvent juste derrière la bête ; à l'accueil, la colonne passe
 de 42 à 16 de long.
+
+PUIS ENCORE UN POIL PLUS COURTES (Keko, 16/11) : en vol, 0,18 à 0,35 s, et un quart
+plus lentes encore.
