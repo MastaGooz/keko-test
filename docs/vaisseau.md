@@ -4302,3 +4302,13 @@ long, 0,65 s, ses bonds tirés sur une autre clé) avec de quoi voler jusque-là
 qui le faisait filer droit : l'écart du chaos se comptait depuis le départ, déjà
 éteint à la reprise, et rien ne bornait la distance. La portée de l'arme passe de
 100 à 80. *Chiffres de moi, à rejuger.*
+
+PUIS LES MISSILES SE DISTRIBUENT (Keko, 16/11 : « que les missiles prennent
+vraiment des cibles aléatoires — chaque missile, pas tous sur une même cible : on
+prend toutes les cibles à portée et on leur attribue les missiles un par un, au
+hasard ; sauf si un ennemi est verrouillé ») : tirés chacun de son côté, plusieurs
+tombaient sur le même insecte. Les insectes à portée sont maintenant MÉLANGÉS
+(un mélange de Fisher-Yates sur la graine), et les missiles leur sont donnés dans
+cet ordre : chacun en reçoit un avant qu'un autre en ait deux (six missiles, trois
+insectes : deux chacun ; huit insectes : six d'entre eux, tirés au hasard). Un
+seul insecte à portée les prend tous.

@@ -1471,7 +1471,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     return { w, ev, cibles, tordu, pv: w.ennemis.map((e) => 1000 - e.pv) }
   }
   const libre = voler(null)
-  verifier('six missiles partent ensemble, une seule fois, chacun sur une cible tirée au hasard parmi les trois à portée (au moins deux différentes) ; tous finissent par toucher (24 en tout), le lointain rien', libre.ev.filter((e) => e.type === 'essaim').length === 1 && libre.cibles.length === 6 && libre.cibles.every((id) => id >= 1 && id <= 3) && new Set(libre.cibles).size >= 2 && libre.pv[0] + libre.pv[1] + libre.pv[2] === 24 && libre.pv[3] === 0 && libre.w.obus.length === 0)
+  verifier('six missiles partent ensemble, une seule fois, distribués au hasard entre les trois insectes à portée — deux chacun — ; tous finissent par toucher (24 en tout), le lointain rien', libre.ev.filter((e) => e.type === 'essaim').length === 1 && libre.cibles.length === 6 && [1, 2, 3].every((id) => libre.cibles.filter((c) => c === id).length === 2) && libre.pv[0] + libre.pv[1] + libre.pv[2] === 24 && libre.pv[3] === 0 && libre.w.obus.length === 0)
   verifier(`leur vol est chaotique : en moyenne ${libre.tordu.toFixed(2)} fois plus long que la ligne droite (plus de 1,5)`, libre.tordu > 1.5)
   const verrouille = voler(2)
   verifier('un insecte verrouillé : les six missiles vont tous sur lui', verrouille.cibles.length === 6 && verrouille.cibles.every((id) => id === 2) && verrouille.pv[1] >= 16)

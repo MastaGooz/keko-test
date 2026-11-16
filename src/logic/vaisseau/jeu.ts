@@ -1567,9 +1567,21 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const bo = a.bouche
     const x0 = bo === undefined ? v.x : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
     const y0 = bo === undefined ? v.y : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
+    // (LES MISSILES SE DISTRIBUENT — Keko, 16/11 : « pas tous les missiles sur une même cible : on prend toutes les cibles
+    // à portée et on leur attribue les missiles un par un, au hasard » : tirés chacun de son côté, plusieurs tombaient sur
+    // le même insecte ; les insectes à portée sont MÉLANGÉS, et chacun reçoit un missile avant qu'un autre en ait deux)
+    const ordre: Ennemi[] = []
+    for (let tour = 0; ordre.length < es.nombre; tour++) {
+      const paquet = [...cibles]
+      for (let j = paquet.length - 1; j > 0; j--) {
+        const r = Math.min(j, Math.floor(tire(m.graine, m.prochainId, 22, tour * 64 + j) * (j + 1)))
+        ;[paquet[j], paquet[r]] = [paquet[r], paquet[j]]
+      }
+      ordre.push(...paquet)
+    }
     for (let k = 0; k < es.nombre; k++) {
       const id = m.prochainId++
-      const cible = cibles[Math.min(cibles.length - 1, Math.floor(tire(m.graine, id, 22) * cibles.length))]
+      const cible = ordre[k]
       // (il part dans une direction tirée au hasard, à ±`eventail` de sa cible)
       const an = Math.atan2(cible.corps.y - y0, cible.corps.x - x0) + (tire(m.graine, id, 23) - 0.5) * 2 * es.eventail
       const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
