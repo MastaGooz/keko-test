@@ -1424,6 +1424,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * contre le haut de la barre (le plein) ; un trait d'encre entre deux ; cassée, un creux ; à l'instant où elle casse,
    * elle blanchit et tremble. `debout` : le long d'une barre debout ; (x, y) le coin de la bande, `L` sa longueur.
    */
+  /** LA VIE DE L'ESSAIM, EN VERT (Keko, 17/11) : sa barre n'est pas du blindage, c'est de la chair qui se régénère. */
+  const VERT_DE_LA_VIE = [N.hex('#b4f57a'), N.hex('#5ccf3c'), N.hex('#2e8a24')]
+  const vieVerte = (): boolean => VORTEX && modeleDeVaisseau(flotte.actif).race === 'essaim'
   const ACIER_DES_PLAQUES = [N.hex('#d4dce8'), N.hex('#8e99ac'), N.hex('#56607a')]
   const plaquesCasseesA: number[] = []
   function dessinerLesPlaques(p: Peintre, debout: boolean, x: number, y: number, L: number): void {
@@ -3552,7 +3555,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
         { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
-        { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
+        // (L'ESSAIM N'A PAS DE BLINDAGE, IL A DE LA VIE — Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un aspect plus point de vie »)
+        de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: 8, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
         vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
       ]
     }
@@ -4977,9 +4981,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bw = W - 12 - bx
     // (les plaques des humains, en acier gris, comme leur barre en vol)
     const acier = j.nom === 'Plaques'
-    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : rouge ? ROUGE[3] : PEPITE[2]
-    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : rouge ? ROUGE[5] : N.hex('#ffe68a')
-    const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : acier ? ACIER_DES_PLAQUES[2] : rouge ? ROUGE[2] : N.hex('#a8650f')
+    const vert = j.nom === 'Vie' || j.nom === 'Régénération'
+    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : vert ? VERT_DE_LA_VIE[1] : rouge ? ROUGE[3] : PEPITE[2]
+    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : vert ? VERT_DE_LA_VIE[0] : rouge ? ROUGE[5] : N.hex('#ffe68a')
+    const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : acier ? ACIER_DES_PLAQUES[2] : vert ? VERT_DE_LA_VIE[2] : rouge ? ROUGE[2] : N.hex('#a8650f')
     if (j.nombre) {
       const dit = j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`
       motEnRelief(p, dit, bx + largeurDe(dit, TEXTE) / 2, y - 1, 'ivoire', TEXTE)
@@ -9668,7 +9673,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (dans le jeu du vortex, sans l'écu en tête, la barre monte à sa place — Keko, 14/11)
       // (… PUIS JUSQU'EN HAUT : son sommet est celui de la barre d'expérience — Keko, 14/11)
       const by = oy + (DEUX_BARRES ? BAISSE : 17)
-      const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
+      const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : vieVerte() ? VERT_DE_LA_VIE : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
       if (m.coque < coqueConnue - 1e-6) {
         const depuis = fantomeA(coqueConnue)
@@ -9767,7 +9772,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const by = oy + (DEUX_BARRES ? 1 : 5) // (dans le jeu du vortex, la barre remonte sous la rangée du haut)
     // (PLUS FINE DANS LE JEU DU VORTEX — Keko, 15/11 : six, la largeur qu'elle a debout, au lieu de huit)
     const bh = DEUX_BARRES ? 6 : 8
-    const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : [PEPITE[3], PEPITE[2], PEPITE[1]]
+    const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : vieVerte() ? VERT_DE_LA_VIE : [PEPITE[3], PEPITE[2], PEPITE[1]]
     // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
     if (m.coque < coqueConnue - 1e-6) {
       const depuis = fantomeA(coqueConnue)

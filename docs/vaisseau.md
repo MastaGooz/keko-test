@@ -5187,3 +5187,6 @@ bouclier, lui, commence à se réparer très rapidement après un certain temps 
   (les cristaux du Prisme, et depuis le 16/11) affichaient « ECHEC » sans faire échouer la vérification. Elle est en
   dernier ; tout passe. (Trois fichiers de l'archive — `combat`, `descente`, `hub` — ont la même forme ; l'archive ne
   bouge pas.)
+- L'ESSAIM A DE LA VIE, PAS DU BLINDAGE (Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un
+  aspect plus point de vie, alors que les autres en jaune ont du blindage ») : sa barre est verte en vol (`VERT_DE_LA_VIE`,
+  `vieVerte`), et sa fiche dit « Vie » et « Régénération », en vert.
