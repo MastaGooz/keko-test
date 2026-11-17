@@ -485,6 +485,40 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let reglette: { x: number; haut: number; bas: number; vueA: number } | null = null
   const A_COTE_DU_POUCE = 34
+  /**
+   * LA RÉGLETTE FIXE, À L'ESSAI (Keko, 17/11 : « à la place d'utiliser le deuxième stick pour faire le slider de zoom, on
+   * met le slider de zoom sous la barre de vie, verticalement, quand on est en mode paysage, et en bas à droite de l'écran,
+   * quand on est en mode portrait, de manière horizontale ») : on la tire (la vue suit le curseur), une tape sur « + » ou
+   * « − » fait un pas d'un quart. Couchée : « + » en haut ; debout : « + » à droite. `&zoom=pince` rend le geste du
+   * deuxième doigt (et de la souris tenue) avec sa réglette sous le pouce. `regletteFixe` : sa place à cette image, dans
+   * le tampon de l'interface — `a0` le bout « + » de la course, `a1` le bout « − », `axe` la colonne (ou la rangée).
+   */
+  const ZOOM_PAR_PINCE = parametres.get('zoom') === 'pince'
+  let regletteFixe: { verticale: boolean; axe: number; a0: number; a1: number } | null = null
+  let regletteTenue: number | null = null
+  const PLAQUE_DE_REGLETTE = 14
+  const ECART_DE_REGLETTE = 4
+  /** Ce que vise un point du tampon sur la réglette fixe : 'plus', 'moins', 'course', ou null hors d'elle. */
+  function surLaRegletteFixe(q: Vecteur): 'plus' | 'moins' | 'course' | null {
+    const r = regletteFixe
+    if (r === null) return null
+    const travers = r.verticale ? q.x - r.axe + 0.5 : q.y - r.axe + 0.5
+    const long = r.verticale ? q.y : q.x
+    if (Math.abs(travers) > PLAQUE_DE_REGLETTE / 2 + 3) return null
+    const bout = ECART_DE_REGLETTE + PLAQUE_DE_REGLETTE + 2
+    const lo = Math.min(r.a0, r.a1)
+    const hi = Math.max(r.a0, r.a1)
+    if (long < lo - bout || long > hi + bout) return null
+    if (long < lo - ECART_DE_REGLETTE) return r.a0 < r.a1 ? 'plus' : 'moins'
+    if (long > hi + ECART_DE_REGLETTE) return r.a0 < r.a1 ? 'moins' : 'plus'
+    return 'course'
+  }
+  /** La vue que donne ce point de la course. */
+  function champSurLaReglette(q: Vecteur): number {
+    const r = regletteFixe!
+    const long = r.verticale ? q.y : q.x
+    return Math.max(1, Math.min(CHAMP_MAX, 1 + ((long - r.a0) / (r.a1 - r.a0)) * (CHAMP_MAX - 1)))
+  }
   function poserLaPince(ev: PointerEvent): void {
     pince = { id: ev.pointerId, y0: ev.clientY, champ0: champDuVortex, doigt: { x: ev.clientX, y: ev.clientY } }
     const course = Math.max(1, racine.clientHeight * COURSE_DU_ZOOM)
@@ -5543,6 +5577,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         racine.setPointerCapture(ev.pointerId)
         return
       }
+      // (LA RÉGLETTE FIXE DU ZOOM : sa course se tire, ses plaques font un pas)
+      const surR = VORTEX && !ZOOM_PAR_PINCE ? surLaRegletteFixe(q) : null
+      if (surR !== null) {
+        ev.preventDefault()
+        if (surR === 'course') {
+          regletteTenue = ev.pointerId
+          racine.setPointerCapture(ev.pointerId)
+          champDuVortex = champSurLaReglette(q)
+        } else {
+          champDuVortex = Math.max(1, Math.min(CHAMP_MAX, champDuVortex + (surR === 'plus' ? -0.25 : 0.25)))
+          jouer('clic')
+        }
+        return
+      }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
       if (z !== undefined) {
         appuyer(z)
@@ -5556,15 +5604,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const vise = ennemiSous(ev.clientX, ev.clientY)
       if (ev.pointerType === 'mouse') {
         if (vise !== null) basculerLeVerrou(vise)
-        // (la souris tenue zoome : voir `pince`)
-        racine.setPointerCapture(ev.pointerId)
-        poserLaPince(ev)
+        // (la souris tenue zoome, avec `&zoom=pince` : voir `pince`)
+        if (ZOOM_PAR_PINCE) {
+          racine.setPointerCapture(ev.pointerId)
+          poserLaPince(ev)
+        }
         return
       }
       tapeVerrou = vise === null ? null : { id: ev.pointerId, x: ev.clientX, y: ev.clientY, a: performance.now(), cible: vise }
       // (LE DEUXIÈME DOIGT ZOOME : le manche est déjà tenu, par un doigt bien posé — `doigtsPoses` compte encore ceux
       // d'avant celui-ci : l'appui arrive avant `touchstart`)
-      if (manche !== null && pince === null && ev.pointerType === 'touch' && doigtsPoses >= 1) {
+      if (ZOOM_PAR_PINCE && manche !== null && pince === null && ev.pointerType === 'touch' && doigtsPoses >= 1) {
         ev.preventDefault()
         racine.setPointerCapture(ev.pointerId)
         poserLaPince(ev)
@@ -5638,6 +5688,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       else if (glisse.sorte === 'vaisseaux') defilVaisseaux = glisse.defil0 - (q.y - glisse.y) / 13
+      return
+    }
+    if (regletteTenue !== null && ev.pointerId === regletteTenue) {
+      if (regletteFixe !== null) champDuVortex = champSurLaReglette(enTampon(ev.clientX, ev.clientY))
       return
     }
     if (pince !== null && ev.pointerId === pince.id) {
@@ -5727,6 +5781,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
     if (pince !== null && ev.pointerId === pince.id) pince = null
+    if (regletteTenue === ev.pointerId) regletteTenue = null
     if (regard !== null && ev.pointerId === regard.id) {
       // (le doigt qui visait se lève : la capacité part — sauf si l'appui a été annulé par le système)
       if (regard.tir && ev.type === 'pointerup') {
@@ -5802,6 +5857,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       manche = null
       regard = null
       pince = null
+      regletteTenue = null
     } else if (doigtsPoses === 1 && manche !== null && pince !== null) {
       // (le doigt qui zoomait et celui du manche : le plus loin du doigt qui reste tombe)
       const d = ev.touches[0]
@@ -9451,6 +9507,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(largeurDeBande() / 2) - 7, by + BH + 6, true)
+      // (LA RÉGLETTE FIXE DU ZOOM, couchée : sous la barre de vie, sur son axe — sans la secousse du coup)
+      else if (VORTEX && !ZOOM_PAR_PINCE) {
+        const axe = bx + lw / 2 - Math.round(Math.sin(t * 90) * sursaut)
+        const a0 = yHud + BAISSE + BH + 6 + PLAQUE_DE_REGLETTE + ECART_DE_REGLETTE
+        const a1 = a0 + Math.min(56, H - 6 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE - a0)
+        regletteFixe = a1 - a0 >= 16 ? { verticale: true, axe, a0, a1 } : null
+        if (regletteFixe !== null) peindreLaReglette(p, true, axe, a0, a1)
+      }
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
         p.rect(bx - 1, Math.round(gy) - 1, lw + 2, 2, N.WHITE)
@@ -9534,6 +9598,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (LE ZOOM, sous la barre, calé à sa droite : « − » puis « + »)
     if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
+    // (LA RÉGLETTE FIXE DU ZOOM, debout : couchée en bas à droite de l'écran, au milieu du bandeau du bas, « + » à droite)
+    else if (VORTEX && !ZOOM_PAR_PINCE) {
+      const axe = bandeBas() >= 22 ? H - Math.round(bandeBas() / 2) : H - 12
+      const a0 = W - 6 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE
+      const a1 = a0 - 56
+      regletteFixe = { verticale: false, axe, a0, a1 }
+      peindreLaReglette(p, false, axe, a0, a1)
+    }
     if (dc > TIENT && dc < VIDE) {
       // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
       const gx = bx + BW * fant
@@ -10054,41 +10126,59 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     p.place(0, 0)
-    const encre = MATIERES.encre.contour
     const haut = enTampon(reglette.x, reglette.haut)
     const bas = enTampon(reglette.x, reglette.bas)
-    const x = Math.round(haut.x)
-    const y0 = Math.round(haut.y)
-    const y1 = Math.round(bas.y)
-    const u = (champDuVortex - 1) / (CHAMP_MAX - 1)
-    const yc = Math.round(y0 + (y1 - y0) * u)
-    // (TOUT EST SUR UN SEUL AXE, entre les colonnes x − 1 et x — Keko, 17/11 : « attention à ce que les boutons plus et
+    peindreLaReglette(p, true, Math.round(haut.x), Math.round(haut.y), Math.round(bas.y))
+  }
+  /**
+   * UNE RÉGLETTE DU ZOOM, debout ou couchée : `axe` est sa colonne (sa rangée), entre `axe − 1` et `axe` ; `a0` le bout
+   * « + » de la course (la vue de près), `a1` le bout « − » ; les plaques sont au-delà des bouts.
+   */
+  function peindreLaReglette(p: Peintre, verticale: boolean, axe: number, a0: number, a1: number): void {
+    // (un rectangle dans le repère de la réglette : `a` le long, `b` en travers de l'axe)
+    const R = (a: number, b: number, la: number, lb: number, c: number): void => {
+      if (la <= 0 || lb <= 0) return
+      if (verticale) p.rect(axe + b, a, lb, la, c)
+      else p.rect(a, axe + b, la, lb, c)
+    }
+    const encre = MATIERES.encre.contour
+    const lo = Math.min(a0, a1)
+    const hi = Math.max(a0, a1)
+    const ac = Math.round(a0 + (a1 - a0) * ((champDuVortex - 1) / (CHAMP_MAX - 1)))
+    // (TOUT EST SUR UN SEUL AXE, entre les colonnes axe − 1 et axe — Keko, 17/11 : « attention à ce que les boutons plus et
     // moins soient bien centrés par rapport à la barre » : la barre, les plaques, leurs signes et le curseur ont tous une
     // largeur paire ; et les plaques s'écartent des bouts de la course, le curseur à fond ne les mord plus)
-    // la ligne : cernée d'encre, claire au-dessus du curseur (la part zoomée), sombre dessous
-    p.rect(x - 3, y0 - 4, 6, y1 - y0 + 9, encre)
-    p.rect(x - 2, y0 - 4, 4, yc - y0 + 4, COQUE[4])
-    p.rect(x - 2, yc, 4, y1 - yc + 5, COQUE[1])
+    // la ligne : cernée d'encre, claire du côté « + » du curseur (la part zoomée), sombre de l'autre
+    R(lo - 4, -3, hi - lo + 9, 6, encre)
+    if (a0 < a1) {
+      R(a0 - 4, -2, ac - a0 + 4, 4, COQUE[4])
+      R(ac, -2, a1 - ac + 5, 4, COQUE[1])
+    } else {
+      R(ac, -2, a0 - ac + 5, 4, COQUE[4])
+      R(a1 - 4, -2, ac - a1 + 4, 4, COQUE[1])
+    }
     // les deux bouts (Keko, 17/11 : « agrandis les boutons plus et moins et donne-leur un style un peu plus joli ») : la
     // plaque d'acier clair des boutons, le signe gravé — l'encre, et sous elle un trait de lumière
-    // (14 de côté, des traits de deux : le signe tombe au milieu de la plaque)
-    const B = 14
+    // (14 de côté, des traits de deux : le signe tombe au milieu de la plaque ; le « − » reste couché sur une réglette couchée)
+    const B = PLAQUE_DE_REGLETTE
     const signe = N.hex('#10182a')
     const grave = MATIERES.clair.lumiere2
-    for (const [yb, plus] of [[y0 - 4 - B, true], [y1 + 4, false]] as const) {
-      plaque(p, x - 7, yb, B, B, 'clair')
-      const cy = yb + 6
-      p.rect(x - 3, cy + 2, 8, 1, grave)
-      p.rect(x - 4, cy, 8, 2, signe)
+    for (const [along, plus] of [[lo - ECART_DE_REGLETTE - B, a0 < a1], [hi + ECART_DE_REGLETTE, a0 > a1]] as const) {
+      const px = verticale ? axe - 7 : along
+      const py = verticale ? along : axe - 7
+      plaque(p, px, py, B, B, 'clair')
+      p.rect(px + 4, py + 8, 8, 1, grave)
+      p.rect(px + 3, py + 6, 8, 2, signe)
       if (plus) {
-        p.rect(x - 1, cy - 3, 2, 8, signe)
-        p.rect(x + 1, cy - 2, 1, 2, grave)
-        p.rect(x + 1, cy + 3, 1, 2, grave)
-        p.rect(x, cy + 5, 2, 1, grave)
+        p.rect(px + 6, py + 3, 2, 8, signe)
+        p.rect(px + 8, py + 4, 1, 2, grave)
+        p.rect(px + 8, py + 9, 1, 2, grave)
+        p.rect(px + 7, py + 11, 2, 1, grave)
       }
     }
-    // le curseur : un plot d'or
-    plaque(p, x - 7, yc - 3, 14, 7, 'or')
+    // le curseur : un plot d'or, en travers de la course
+    if (verticale) plaque(p, axe - 7, ac - 3, 14, 7, 'or')
+    else plaque(p, ac - 3, axe - 7, 7, 14, 'or')
   }
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {

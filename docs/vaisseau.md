@@ -5001,3 +5001,17 @@ dézoome jusqu'à 2. Et on commence de base à 1,5. »
   barre ») : MESURÉ, la barre (5 de large) était centrée sur une colonne, les plaques (14) entre deux — un demi-pixel de
   décalage. Tout est maintenant de largeur paire (barre 6, plaques 14, curseur 14) ; les plaques s'écartent de 4 des
   bouts de la course, le curseur à fond ne les mord plus.
+
+### Le vortex, la réglette fixe du zoom, à l'essai (17/11)
+
+Keko : « on peut faire un test où, à la place d'utiliser le deuxième stick pour faire le slider de zoom, on met le
+slider de zoom sous la barre de vie, verticalement, quand on est en mode paysage, et on le met en bas à droite de l'écran,
+quand on est en mode portrait, de manière horizontale. »
+
+- PAR DÉFAUT, LA RÉGLETTE EST FIXE (`regletteFixe`, `surLaRegletteFixe`, `champSurLaReglette`, `regletteTenue`) : couchée,
+  sous la barre de vie et sur son axe, « + » en haut ; debout, au milieu du bandeau du bas, à droite, « + » à droite. On
+  tire sa course (la vue suit le curseur, au doigt comme à la souris), une tape sur une plaque fait un pas d'un quart.
+- Un seul peintre pour les deux réglettes, debout ou couchée (`peindreLaReglette`) : le « − » reste couché sur la réglette
+  couchée.
+- `&zoom=pince` rend le geste d'avant : le deuxième doigt (et la souris tenue) et sa réglette sous le pouce. Sans lui, un
+  deuxième doigt ne fait plus rien, et la souris tenue non plus.
