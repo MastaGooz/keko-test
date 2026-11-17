@@ -291,10 +291,9 @@ const PEAUX: Record<string, Peau[]> = {
       principale: 'facette',
       rampes: { facette: T(350, 0.6, 0.72), quartz: T(345, 0.55, 1.15), energie: R('#3a0a10', '#a01a20', '#ff4a3a', '#ff9a70', '#ffd8c0', '#ffffff'), decor: R('#3a0a10', '#a01a20', '#ff4a3a', '#ff9a70', '#ffd8c0', '#ffffff') },
       accent: R('#3a0a10', '#a01a20', '#ff4a3a', '#ff9a70', '#ffd8c0', '#ffffff'),
-      habit: () => ({
-        ailes: COTES.map((sg) => plat([[-0.6, sg * 7.6], [-1.6, sg * 6.6], [-2.2, sg * 7.2]], 'decor')),
-        coque: COTES.map((s) => plat([[-4.2, s * 2.6], [-5.4, s * 3.8], [-6, s * 2.2]], 'quartz', s)),
-      }),
+      // (plus de pointes d'ailes ni d'éclats de flanc — Keko, 17/11 : le Prisme n'a plus ni ailes ni corps ; ce sont ses
+      // éclats en orbite et leurs fils qui prennent la couleur)
+      habit: NU,
     },
     {
       // un cristal d'émeraude : des facettes vert profond, un quartz vert pâle, une énergie verte
@@ -303,10 +302,69 @@ const PEAUX: Record<string, Peau[]> = {
       principale: 'facette',
       rampes: { facette: T(150, 0.55, 0.68), quartz: T(140, 0.4, 1.15), energie: R('#06301a', '#0a6a3a', '#20c070', '#60f0a8', '#c0ffe0', '#ffffff'), decor: R('#06301a', '#0a6a3a', '#20c070', '#60f0a8', '#c0ffe0', '#ffffff') },
       accent: R('#06301a', '#0a6a3a', '#20c070', '#60f0a8', '#c0ffe0', '#ffffff'),
+      habit: NU,
+    },
+  ],
+  // LA MANTE : une chitine vert feuille, des élytres, des ailes de membrane, des yeux de bile
+  mante: [
+    origine('mante', BILE),
+    {
+      // la mante orchidée : rose et blanche, des lobes en pétales sur l'abdomen, des yeux roses
+      id: 'orchidee',
+      nom: 'Orchidée',
+      principale: 'mante',
+      rampes: { mante: T(330, 0.45, 1.2), elytre: T(318, 0.35, 1), membrane: T(300, 0.2, 1.2), bile: T(340, 0.8, 1.05), decor: T(335, 0.6, 1.15) },
+      accent: T(335, 0.6, 1.15),
       habit: () => ({
-        ailes: COTES.map((sg) => plat([[-0.6, sg * 7.6], [-1.6, sg * 6.6], [-2.2, sg * 7.2]], 'decor')),
-        coque: COTES.map((s) => plat([[1.8, s * 2.6], [0.6, s * 3.7], [0, s * 2.5]], 'quartz', s)),
+        ailes: [],
+        coque: COTES.flatMap((s) => [plat([[-3, s * 2.3], [-4.4, s * 3.6], [-6, s * 3.2], [-5.4, s * 2.1]], 'decor', s), plat([[-6.2, s * 1.9], [-7.6, s * 3], [-8.4, s * 1.4]], 'decor', s)]),
       }),
+    },
+    {
+      // la mante feuille morte : brune, des nervures sombres sur les élytres, des yeux d'ambre
+      id: 'feuille',
+      nom: 'Feuille morte',
+      principale: 'mante',
+      rampes: { mante: T(30, 0.45, 0.82), elytre: T(24, 0.4, 0.62), membrane: T(34, 0.3, 0.92), bile: AMBRE, decor2: T(20, 0.4, 0.4) },
+      accent: AMBRE,
+      habit: () => ({
+        ailes: [],
+        coque: COTES.flatMap((s) => [plat(barre(0.6, s * 0.6, -5.2, s * 1, 0.3), 'decor2'), plat(barre(-1.2, s * 0.9, -2.6, s * 2.2, 0.25), 'decor2'), plat(barre(-3.4, s * 1.1, -4.8, s * 1.9, 0.25), 'decor2')]),
+      }),
+    },
+  ],
+  // LE TESSERACT : une lumière vert d'eau, un œil jaune
+  tesseract: [
+    origine('spectre', R('#03140f', '#063028', '#0c5a48', '#18a080', '#50e8c0', '#c8fff0')),
+    {
+      // écarlate : des arêtes rouge sang, et deux autres yeux, plus petits, qui se sont ouverts à côté du premier
+      id: 'ecarlate',
+      nom: 'Écarlate',
+      principale: 'spectre',
+      rampes: { spectre: R('#140304', '#300608', '#5a0c10', '#a01820', '#e85050', '#ffd0c8'), iris: T(8, 0.85, 0.9), os: T(10, 0.2, 1.15) },
+      accent: R('#140304', '#300608', '#5a0c10', '#a01820', '#e85050', '#ffd0c8'),
+      habit: () => ({
+        ailes: [],
+        coque: COTES.flatMap((s) => [{ pts: ovale(-1.4, s * 2.7, 1, 0.65, 12), mat: 'os', relief: 'dome', dome: { x: -1.4, y: s * 2.7, rx: 1, ry: 0.65 } } as Forme, goutte(-1.1, s * 2.7, 0.45, 'iris')]),
+      }),
+    },
+    {
+      // le vide : des arêtes violet pâle, l'œil inversé — noir, l'iris blanc —, un anneau de lumière autour de lui
+      id: 'vide',
+      nom: 'Vide',
+      principale: 'spectre',
+      rampes: { spectre: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff'), os: T(260, 0.2, 0.32), iris: R('#2a3040', '#5a6478', '#9aa8bc', '#d8e2ee', '#f4f8ff', '#ffffff'), decor: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff') },
+      accent: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff'),
+      habit: () => {
+        const coque: Forme[] = []
+        for (let k = 0; k < 16; k++) {
+          if (k % 2 === 1) continue
+          const a0 = (k / 16) * Math.PI * 2
+          const a1 = ((k + 1) / 16) * Math.PI * 2
+          coque.push({ pts: barre(Math.cos(a0) * 3.8, Math.sin(a0) * 3.2, Math.cos(a1) * 3.8, Math.sin(a1) * 3.2, 0.5), mat: 'decor', relief: 'lueur', ton: 4 })
+        }
+        return { ailes: [], coque }
+      },
     },
   ],
   // LE NÉANT : un cœur magenta, des anneaux de rayonnement

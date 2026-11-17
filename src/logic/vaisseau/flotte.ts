@@ -26,6 +26,21 @@ import type { Compteur } from './quetes.ts'
 export type Classe = 'chasseur' | 'lourd'
 export const NOMS_CLASSE: Record<Classe, string> = { chasseur: 'Classe légère', lourd: 'Classe lourde' }
 
+/**
+ * LES RACES (Keko, 17/11 : « je voudrais diviser les vaisseaux en catégories, et cette catégorie, ce sera la race qui les
+ * utilise » ; trois vaisseaux par race) : LES HUMAINS, classiques et conventionnels ; L'ESSAIM, des entités biologiques
+ * (« un peu zerg ») ; LES ÉTHÉRÉS, une race plus avancée technologiquement (le froid, les arcanes, l'électricité) ; LES
+ * INNOMMÉS, une race « eldritch », très bizarre, dont les vaisseaux ne ressemblent presque pas à des vaisseaux. Les noms
+ * des trois races d'aliens sont de moi, à rejuger.
+ */
+export type Race = 'humains' | 'essaim' | 'etheres' | 'innommes'
+export const RACES: { id: Race; nom: string }[] = [
+  { id: 'humains', nom: 'Humains' },
+  { id: 'essaim', nom: 'L’Essaim' },
+  { id: 'etheres', nom: 'Les Éthérés' },
+  { id: 'innommes', nom: 'Les Innommés' },
+]
+
 /** Une mission d'un vaisseau : ce qu'elle compte, jusqu'où, et LA PIÈCE qu'elle ouvre à l'achat sur ce vaisseau. */
 export type MissionDeVaisseau = { titre: string; dit: string; compteur: Compteur; cible: number; ouvre: string }
 
@@ -33,6 +48,8 @@ export type ModeleDeVaisseau = {
   id: string
   nom: string
   classe: Classe
+  /** La race qui le pilote (voir `RACES`). */
+  race: Race
   dit: string
   /** TOUTES les pièces qu'il peut porter (celles de série comprises). */
   pieces: string[]
@@ -49,6 +66,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'chasseur',
     nom: 'Chasseur',
     classe: 'chasseur',
+    race: 'humains',
     dit: 'Léger et vif : son nez suit le regard. Deux armes légères au plus.',
     pieces: ['coque-1', 'coque-2', 'coque-3', 'propulseur-1', 'propulseur-2', 'propulseur-3', 'foreuse-1', 'foreuse-2', 'foreuse-3', 'aimant-1', 'aimant-2', 'radar', 'arme-canon', 'arme-rafale'],
     // (LE CANON EST SON ARME DE BASE — Keko, 14/11 : « je ne veux pas me retrouver sans argent, à repartir avec le
@@ -73,6 +91,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'salamandre',
     nom: 'Salamandre',
     classe: 'chasseur',
+    race: 'humains',
     dit: 'Trapue, un lance-flammes au nez : elle arrose de près et ce qu’elle touche brûle encore. Il faut aller au contact.',
     pieces: ['coque-5', 'propulseur-s1', 'arme-flammes', 'arme-rayon', 'arme-napalm'],
     // (ses trois armes possédées d'emblée : pour l'essai, pas de missions encore)
@@ -85,6 +104,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'sentinelle',
     nom: 'Sentinelle',
     classe: 'chasseur',
+    race: 'etheres',
     dit: 'Une soucoupe, sans avant ni arrière, le vaisseau de l’électricité : ses drones frappent d’arcs, sa chaîne d’éclairs rebondit, son aura brûle tout autour.',
     pieces: ['coque-6', 'propulseur-g1', 'arme-drones', 'arme-chaine', 'arme-aura'],
     serie: { possedees: ['coque-6', 'propulseur-g1', 'arme-drones', 'arme-chaine', 'arme-aura'], montees: { coque: 'coque-6', propulseur: 'propulseur-g1' }, outils: [], armes: ['arme-drones'] },
@@ -96,6 +116,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'ingenieur',
     nom: 'Ingénieur',
     classe: 'chasseur',
+    race: 'humains',
     dit: 'Carré et mécanique, sans arme à lui : il pose sur son passage de petites tourelles qui tirent seules.',
     pieces: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'],
     serie: { possedees: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'], montees: { coque: 'coque-7', propulseur: 'propulseur-i1' }, outils: [], armes: ['arme-tourelles'] },
@@ -107,6 +128,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'frimas',
     nom: 'Frimas',
     classe: 'chasseur',
+    race: 'etheres',
     dit: 'Venu d’ailleurs, le vaisseau du givre : il sème derrière lui une traînée de glace où les insectes s’engluent et gèlent.',
     pieces: ['coque-8', 'propulseur-c3', 'arme-givre', 'arme-eclats', 'arme-tornade'],
     serie: { possedees: ['coque-8', 'propulseur-c3', 'arme-givre', 'arme-eclats', 'arme-tornade'], montees: { coque: 'coque-8', propulseur: 'propulseur-c3' }, outils: [], armes: ['arme-givre'] },
@@ -118,6 +140,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'pulsar',
     nom: 'Pulsar',
     classe: 'chasseur',
+    race: 'etheres',
     dit: 'Venu d’ailleurs, le vaisseau du plasma : ses orbes lentes traversent la nuée et y éclatent en gerbes violettes.',
     pieces: ['coque-9', 'propulseur-p3', 'arme-plasma', 'arme-essaim', 'arme-meteore'],
     serie: { possedees: ['coque-9', 'propulseur-p3', 'arme-plasma', 'arme-essaim', 'arme-meteore'], montees: { coque: 'coque-9', propulseur: 'propulseur-p3' }, outils: [], armes: ['arme-plasma'] },
@@ -129,6 +152,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'kraken',
     nom: 'Kraken',
     classe: 'chasseur',
+    race: 'essaim',
     dit: 'Une bête vivante, d’une autre race : sa tentacule à aiguille fouette et pique, très vite, tout ce qui s’approche.',
     pieces: ['coque-10', 'propulseur-k3', 'arme-tentacules', 'arme-nuee', 'arme-rejetons'],
     serie: { possedees: ['coque-10', 'propulseur-k3', 'arme-tentacules', 'arme-nuee', 'arme-rejetons'], montees: { coque: 'coque-10', propulseur: 'propulseur-k3' }, outils: [], armes: ['arme-tentacules'] },
@@ -140,6 +164,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'vouivre',
     nom: 'Vouivre',
     classe: 'chasseur',
+    race: 'essaim',
     dit: 'Une bête venimeuse, d’une autre race : son acide ronge les insectes et les rend fragiles à tout le reste.',
     pieces: ['coque-11', 'propulseur-v3', 'arme-crachat', 'arme-mines', 'arme-parasites'],
     serie: { possedees: ['coque-11', 'propulseur-v3', 'arme-crachat', 'arme-mines', 'arme-parasites'], montees: { coque: 'coque-11', propulseur: 'propulseur-v3' }, outils: [], armes: ['arme-crachat'] },
@@ -152,6 +177,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'neant',
     nom: 'Néant',
     classe: 'chasseur',
+    race: 'innommes',
     dit: 'Un vaisseau du vide : un cœur de néant qui bat entre deux anneaux qui l’orbitent ; il joue de l’espace-temps et des dimensions.',
     pieces: ['coque-13', 'propulseur-n3', 'arme-puits'],
     serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
@@ -163,6 +189,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     id: 'prisme',
     nom: 'Prisme',
     classe: 'chasseur',
+    race: 'innommes',
     dit: 'Un vaisseau de cristal : le cristal de sa proue tourne et lance un rayon d’énergie pure, qui chauffe sur sa cible.',
     pieces: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'],
     serie: { possedees: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'], montees: { coque: 'coque-12', propulseur: 'propulseur-q3' }, outils: [], armes: ['arme-faisceau'] },
@@ -170,9 +197,38 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LA MANTE (Keko, 17/11 : l'Essaim « il faudra aussi leur trouver un vaisseau ») : la troisième bête, un insecte — une
+    // mante religieuse, ses deux faux repliées devant elle, ses ailes qui bourdonnent quand elle pousse. SON ARME : l'Essaim
+    // du Kraken, en attendant les siennes (de moi, à rejuger)
+    id: 'mante',
+    nom: 'Mante',
+    classe: 'chasseur',
+    race: 'essaim',
+    dit: 'Un insecte immense : ses faux repliées devant elle, ses ailes qui bourdonnent ; une nuée de petits insectes la suit et fond sur ce qui approche.',
+    pieces: ['coque-14', 'propulseur-m3', 'arme-nuee'],
+    serie: { possedees: ['coque-14', 'propulseur-m3', 'arme-nuee'], montees: { coque: 'coque-14', propulseur: 'propulseur-m3' }, outils: [], armes: ['arme-nuee'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
+    // LE TESSERACT (Keko, 17/11 : les Innommés, « il leur manque également un autre vaisseau ») : un hypercube — un cube
+    // dans un cube, qui tourne dans une quatrième dimension et se retourne sur lui-même — et, au milieu, un œil. SON ARME :
+    // les balises gardées de côté, des glyphes posés que relient des rayons (de moi, à rejuger)
+    id: 'tesseract',
+    nom: 'Tesseract',
+    classe: 'chasseur',
+    race: 'innommes',
+    dit: 'Une forme qui n’a rien à faire ici : un cube dans un cube, qui se retourne sur lui-même autour d’un œil. Il pose des glyphes que relient des rayons.',
+    pieces: ['coque-15', 'propulseur-t3', 'arme-balises'],
+    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-balises'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-balises'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     id: 'cuirasse',
     nom: 'Cuirassé',
     classe: 'lourd',
+    race: 'humains',
     dit: 'Un mastodonte lent, à tourelles : il tire dans toutes les directions sans tourner. Six armes légères, deux lourdes, quatre outils.',
     pieces: ['coque-4', 'propulseur-l1', 'propulseur-l2', 'propulseur-l3', 'foreuse-1', 'foreuse-2', 'foreuse-3', 'aimant-1', 'aimant-2', 'radar', 'arme-canon', 'arme-rafale', 'arme-missiles'],
     serie: { possedees: ['coque-4', 'propulseur-l1', 'foreuse-1', 'arme-canon'], montees: { coque: 'coque-4', propulseur: 'propulseur-l1' }, outils: ['foreuse-1'], armes: ['arme-canon', 'arme-canon'] },

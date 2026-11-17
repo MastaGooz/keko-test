@@ -5072,3 +5072,43 @@ de faire exactement le même, mais de s'en inspirer. » C'était un anneau d'un 
 - MESURÉ d'abord trop opaque (le verre et les joints grillageaient le vaisseau) : le milieu est maintenant presque nu.
 - Au hangar, la bulle remplace l'anneau là où il était (une coque à bouclier) ; les coques du vortex n'en ont pas, comme
   avant. Le banc `&coup=N` passe aussi par la bulle (son coup vient d'un côté qui tourne).
+
+### Le vortex, quatre races de trois vaisseaux (17/11)
+
+Keko : « je voudrais diviser les vaisseaux en catégories, et cette catégorie, ça va être la race qui les utilise […] je
+veux trois vaisseaux par catégorie » — les humains, « assez classiques, conventionnels » ; les entités biologiques, « un
+peu zerg » ; une race alien « plus avancée technologiquement » (le froid, les arcanes, l'électricité) ; une race « un peu
+eldritch, très bizarre » (le Néant, le Prisme) ; « le Prisme, il va falloir le retravailler pour lui donner un aspect
+beaucoup moins conventionnel : on garde le cristal, on garde les deux espèces d'arcs qui viennent l'emprisonner, mais on
+veut vraiment le rapprocher du Néant ».
+
+- LU AINSI : Keko a écrit « la Sentinelle, l'Ingénieur et la Salamandre » pour les humains, puis la Sentinelle encore
+  avec les Éthérés (« le vaisseau électrique ») ; trois par race et aucun nouveau vaisseau demandé chez les humains : le
+  troisième humain est LE CHASSEUR.
+- `RACES` et `ModeleDeVaisseau.race` (`flotte.ts`), une règle à `flotte.verif.ts` : trois par race, le cuirassé mis de
+  côté. LES NOMS, DE MOI, À REJUGER : Humains, L'Essaim, Les Éthérés, Les Innommés.
+- LA LISTE DES VAISSEAUX du hangar est rangée par race : le nom de la race en or, un filet, puis ses vaisseaux
+  (`rangeesDesVaisseaux`) ; elle s'ouvre défilée jusqu'au vaisseau piloté.
+- LA MANTE (`coque-14`, `propulseur-m3`) : un insecte — quatre pattes, l'abdomen annelé, les élytres, un long cou, DEUX
+  FAUX repliées devant (épines d'os, elles frémissent), la tête en triangle, deux yeux de bile, des antennes, des
+  mandibules ; SES AILES de membrane sortent de sous les élytres quand elle pousse et battent très vite (`formesDuVaisseau`).
+  Comme les bêtes : des bulles derrière elle, des bulles en jets de manœuvre, le son qui gargouille, la mort en
+  éclatement organique (chair verte). Arme : L'ESSAIM du Kraken, en attendant les siennes.
+- LE TESSERACT (`coque-15`, `propulseur-t3`) : les seize sommets d'un hypercube tournés dans deux plans de la quatrième
+  dimension et un plan ordinaire, ramenés en trois par perspective (le cube du dedans passe dehors et revient), vus de
+  dessus — trente-deux arêtes de lumière vert d'eau, plus sombres derrière ; au milieu UN ŒIL pâle, l'iris jaune, la
+  pupille fendue, qui regarde devant et cligne. Il laisse DES CADRES (un carré de lumière qui s'ouvre en tournant), pas de
+  jets, le son du Néant, la mort en effondrement (vert d'eau). Arme : LES BALISES gardées de côté, des glyphes posés que
+  relient des rayons.
+- LE PRISME REFAIT : plus de corps ni d'ailes ni de tuyère — LE CRISTAL AU MILIEU (plus grand, le rayon part de sa pointe,
+  `CRISTAL_DU_PRISME` à 1,2), SES DEUX ARCHES plus longues qui partent de derrière lui et se referment devant comme une
+  cage, qui respirent, et SIX ÉCLATS EN ORBITE, chacun sur son orbite penchée, reliés au cristal par un fil de lumière
+  (ceux de derrière passent sous la cage). Il sème des ÉCLATS (de petits losanges qui tournent et s'éteignent), plus de
+  jets, le son du Néant. Ses apparences Rubis et Émeraude ne gardent que leurs couleurs (leurs détails étaient sur les
+  ailes).
+- Les sillages des Innommés (`plieLEspace`) prennent les couleurs de l'apparence (`tonsDuSillage`) — les ondes du Néant
+  Supernova sont orange.
+- TROIS APPARENCES chacun : la Mante — Origine, Orchidée (rose et blanche, des lobes en pétales), Feuille morte (brune,
+  des nervures) ; le Tesseract — Origine, Écarlate (rouge, deux autres yeux ouverts à côté du premier), Vide (violet pâle,
+  l'œil inversé, un anneau de lumière).
+- LA POLICE N'AVAIT PAS LE « Œ » : « un œil » s'écrivait « un il », et le Néant avait « un cur » ; ajouté.

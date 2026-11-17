@@ -1,7 +1,7 @@
 /**
  * Vérifications de la flotte (les vaisseaux, leurs pièces, leurs missions), sans navigateur.
  */
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, lireFlotte, missionDe, MODELES, modeleDeVaisseau, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from './flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, lireFlotte, missionDe, MODELES, modeleDeVaisseau, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, vaisseauxDe } from './flotte.ts'
 import { acheter, capacite, configDuHangar, monterA, peutAcheter, pieceDe, placeLourde, poidsTotal } from './hangar.ts'
 import { VAISSEAU as C } from './jeu.ts'
 
@@ -13,6 +13,8 @@ function verifier(quoi: string, vrai: boolean): void {
 
 console.log('flotte')
 verifier('chaque modèle : des pièces du catalogue, sa série parmi elles, une suite de missions qui ouvre ses pièces, chacune une fois', MODELES.every((mo) => mo.pieces.every((id) => pieceDe(id) !== undefined) && mo.serie.possedees.every((id) => mo.pieces.includes(id)) && mo.chaine.every((mi) => mo.pieces.includes(mi.ouvre) && !mo.serie.possedees.includes(mi.ouvre) && mi.cible > 0) && new Set(mo.chaine.map((mi) => mi.ouvre)).size === mo.chaine.length))
+// (TROIS VAISSEAUX PAR RACE — Keko, 17/11 ; le cuirassé, mis de côté, n'en est pas)
+verifier('trois vaisseaux par race, le cuirassé mis de côté', RACES.every((r) => MODELES.filter((mo) => mo.race === r.id && mo.id !== 'cuirasse').length === 3))
 verifier('toute pièce d’un modèle hors de sa série est ouverte par une de ses missions', MODELES.every((mo) => mo.pieces.filter((id) => !mo.serie.possedees.includes(id)).every((id) => mo.chaine.some((mi) => mi.ouvre === id))))
 verifier('toute pièce qui n’est pas de série coûte des crédits ET du minerai', MODELES.every((mo) => mo.chaine.every((mi) => (pieceDe(mi.ouvre)?.prix ?? 0) > 0 && Object.values(coutEnMinerai(mi.ouvre)).some((x) => x > 0))))
 const neuve = flotteNeuve()

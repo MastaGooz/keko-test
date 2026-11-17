@@ -25,7 +25,7 @@ import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peau
 import { dessinerLeBouclier } from './bouclier.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
@@ -167,7 +167,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   // (LA SALAMANDRE EST DONNÉE D'OFFICE dans le jeu du vortex, pour l'essai — Keko, 15/11)
-  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre', 'prisme', 'neant']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken, la Vouivre et le Prisme, 16/11)
+  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre', 'prisme', 'neant', 'mante', 'tesseract']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken, la Vouivre et le Prisme, 16/11)
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
@@ -209,7 +209,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     livree = id
   }
   /** Le modèle à qui est une coque (son pictogramme prend l'apparence de ce modèle-là). */
-  const MODELE_DE_LA_COQUE: Record<number, string> = { 1: 'chasseur', 2: 'chasseur', 3: 'chasseur', 5: 'salamandre', 6: 'sentinelle', 7: 'ingenieur', 8: 'frimas', 9: 'pulsar', 10: 'kraken', 11: 'vouivre', 12: 'prisme', 13: 'neant' }
+  const MODELE_DE_LA_COQUE: Record<number, string> = { 1: 'chasseur', 2: 'chasseur', 3: 'chasseur', 5: 'salamandre', 6: 'sentinelle', 7: 'ingenieur', 8: 'frimas', 9: 'pulsar', 10: 'kraken', 11: 'vouivre', 12: 'prisme', 13: 'neant', 14: 'mante', 15: 'tesseract' }
   const livreeDuVaisseau = (): string => {
     if (VORTEX_) return peauCourante().id
     const l = chargerLivree(porteurDeLaLivree())
@@ -1016,7 +1016,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits'], mante: ['arme-nuee'], tesseract: ['arme-balises'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -2642,7 +2642,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (g.omni !== undefined && decollageA !== null) dessinerLesJetsOmni(p, coqueMontee, cx + jit, sy, -Math.PI / 2, ECH, flam, 0, 0, ECH * 0.6)
     // la verrière qui luit, les feux de position qui battent
     // (le Néant n'a pas de verrière : sa lueur bleue grisait l'horizon de son trou noir)
-    if (coqueMontee !== 13) p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
+    if (!sansVerriere(coqueMontee)) p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
     const feux = g.feux
     if (feux !== null) for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
@@ -3352,7 +3352,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (EN ACIER CLAIR, le mot sombre — Keko, 14/11 : jaune, il « renvoie trop au bouton décollage en dessous » ; « un
       // petit peu plus visible que le bouton équipement, mais pas jaune »)
       const bxc = W - 7 - bw
-      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t), (vaisseauChoisi = flotte.actif), (surligneVaisseau = -1), (defilVaisseaux = Math.max(0, modelesDuVortex().findIndex((mo) => mo.id === flotte.actif) - 2))), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
+      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t), (vaisseauChoisi = flotte.actif), (surligneVaisseau = -1), (defilVaisseaux = Math.max(0, rangeesDesVaisseaux().findIndex((r) => 'mo' in r && r.mo.id === flotte.actif) - 2))), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
     }
     return y + h + 3
   }
@@ -3494,7 +3494,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return hd
   }
   // (LE CUIRASSÉ EST MIS DE CÔTÉ — Keko, 15/11 : la Salamandre a sa place)
-  const modelesDuVortex = (): ReturnType<typeof modeleDeVaisseau>[] => MODELES.filter((mo) => mo.id !== 'cuirasse')
+  // (RANGÉS PAR RACE — Keko, 17/11 : « je voudrais diviser les vaisseaux en catégories : la race qui les utilise »)
+  const modelesDuVortex = (): ReturnType<typeof modeleDeVaisseau>[] => RACES.flatMap((r) => MODELES.filter((mo) => mo.id !== 'cuirasse' && mo.race === r.id))
+  /** Les rangées de la liste des vaisseaux : le nom de chaque race, puis ses vaisseaux. */
+  const rangeesDesVaisseaux = (): ({ race: string } | { mo: ReturnType<typeof modeleDeVaisseau> })[] =>
+    RACES.flatMap((r) => [{ race: r.nom }, ...MODELES.filter((mo) => mo.id !== 'cuirasse' && mo.race === r.id).map((mo) => ({ mo }))])
   /** La hauteur de la fiche d'un vaisseau au panneau (nom et dessin, cinq jauges, ce qu'il est) — voir `dessinerLaFicheDuVaisseau`. */
   const hauteurDeLaFicheDuVaisseau = (mo: ReturnType<typeof modeleDeVaisseau>): number => 70 + replier(mo.dit, W - 22).length * 9 + 6
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
@@ -3511,7 +3515,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
     const tous = modelesDuVortex()
     const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
-    const iSel = tous.indexOf(choisi)
+    const rangees = rangeesDesVaisseaux()
+    const iSel = rangees.findIndex((r) => 'mo' in r && r.mo.id === choisi.id)
     const a = aLeVaisseau(flotte, choisi.id)
     if (partie !== 'fiche') {
     enTete(p, y, 'Vaisseaux', fermer)
@@ -3537,11 +3542,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LA LISTE DÉFILE quand elle ne tient pas (au doigt, à la molette) : autant de rangées que la hauteur en laisse — sous
     // elle, la fiche du vaisseau choisi en portrait ; en paysage, la colonne entière
     const reserve = partie === 'liste' ? 4 : hauteurDeLaFicheDuVaisseau(choisi) + 4
-    const RANGEES = Math.max(3, Math.min(tous.length, Math.floor((H - 4 - y - 4 - reserve) / RANG_LISTE)))
+    const RANGEES = Math.max(3, Math.min(rangees.length, Math.floor((H - 4 - y - 4 - reserve) / RANG_LISTE)))
     const hl = RANGEES * RANG_LISTE + 4
     plaque(p, 4, y, W - 8, hl, 'creux')
     const yl = y + 2
-    const maxDefil = Math.max(0, tous.length - RANGEES)
+    const maxDefil = Math.max(0, rangees.length - RANGEES)
     defilVaisseaux = Math.max(0, Math.min(maxDefil, defilVaisseaux))
     const depart = Math.round(defilVaisseaux)
     zoneGlissante = maxDefil > 0 ? { x: 4, y: yl, w: W - 8, h: RANGEES * RANG_LISTE, defil: 'vaisseaux' } : null
@@ -3553,9 +3558,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(7, sy, larg, RANG_LISTE, N.hex('#2a2440'))
       p.rect(7, sy + 1, 2, RANG_LISTE - 2, PEPITE[2])
     }
-    for (let i = depart; i < Math.min(tous.length, depart + RANGEES); i++) {
-      const mo = tous[i]
+    for (let i = depart; i < Math.min(rangees.length, depart + RANGEES); i++) {
+      const rg = rangees[i]
       const ly = yl + (i - depart) * RANG_LISTE
+      if ('race' in rg) {
+        // (LE NOM DE LA RACE, en tête de ses vaisseaux : en or, un filet dessous)
+        ecrire(p, rg.race, 10, ly + 3, PEPITE[2], { police: GRAS })
+        p.rect(10 + largeurDe(rg.race, GRAS) + 4, ly + RANG_LISTE / 2, Math.max(0, larg - largeurDe(rg.race, GRAS) - 10), 1, MATIERES.encre.lumiere2)
+        continue
+      }
+      const mo = rg.mo
       const a = aLeVaisseau(flotte, mo.id)
       const ici = i === iSel
       ecrire(p, mo.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
@@ -3568,7 +3580,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (maxDefil > 0) {
       const hr = RANGEES * RANG_LISTE - 2
       p.rect(W - 11, yl + 1, 3, hr, N.hex('#141020'))
-      const hc = Math.max(6, Math.round((hr * RANGEES) / tous.length))
+      const hc = Math.max(6, Math.round((hr * RANGEES) / rangees.length))
       p.rect(W - 11, yl + 1 + Math.round(((hr - hc) * defilVaisseaux) / maxDefil), 3, hc, PEPITE[2])
     }
     y += hl + 4
@@ -6289,7 +6301,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
     const [vx, vy] = ici(g.verriere, 0)
-    if (allure.coque !== 13) p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
+    if (!sansVerriere(allure.coque)) p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
     const feux = g.feux
     if (feux !== null && !blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
@@ -6381,9 +6393,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LES BÊTES NE SOUFFLENT PAS DE FLAMME FROIDE — Keko, 16/11 : « sur le Kraken et la Vouivre, des petites expulsions
       // vertes dans le style de leur propulsion » : de petites bulles de bile ou de venin, crachées par saccades, qui
       // s'écartent, enflent et crèvent ; et LE NÉANT N'EN A PAS DU TOUT — « il ne devrait pas en avoir »)
-      const bete = al.coque === 10 || al.coque === 11
+      const bete = al.coque === 10 || al.coque === 11 || al.coque === 14
       const jet = (x: number, y: number, dx: number, dy: number, force: number): void => {
-        if (force < 0.12 || al.coque === 13) return
+        if (force < 0.12 || plieLEspace(al.coque)) return
         const L = (2 + 4 * force) * (0.8 + 0.2 * Math.sin(t * 55 + x * 3 + y))
         const x0 = sx + x * ca - y * sa
         const y0 = sy + x * sa + y * ca
@@ -7826,7 +7838,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * pleines, qui s'en vont lentement, ralentissent, enflent un peu et crèvent.
    */
   // (LE NÉANT n'a pas de tuyère non plus : il lâche des éclats de néant, magenta — Keko, 16/11)
-  const organique = (coque: number): boolean => coque === 10 || coque === 11 || coque === 13
+  // (… ET LA MANTE, LE PRISME ET LE TESSERACT — Keko, 17/11 : une bête de l'Essaim, deux formes des Innommés)
+  const organique = (coque: number): boolean => coque >= 10
+  /** Les Innommés ne lâchent rien : ils plissent l'espace (le Néant ses ondes, le Prisme des éclats, le Tesseract des cadres). */
+  const plieLEspace = (coque: number): boolean => coque === 12 || coque === 13 || coque === 15
+  /** Pas de verrière à faire luire : un cœur, un cristal, une bête, un œil. */
+  const sansVerriere = (coque: number): boolean => coque >= 12
+  /** Les tons du sillage d'un Innommé (sombre, moyen, clair), à l'apparence du joueur. */
+  const tonsDuSillage = (coque: number): number[] => {
+    const m = coque === 12 ? 'energie' : coque === 15 ? 'spectre' : 'rayonnement'
+    const r = rampesDuJoueur()?.[m]
+    return r !== undefined ? [r[2], r[3], r[4]] : tonsDeLaMatiere(m)
+  }
   const couleursDesBulles = (coque: number): [number, number] => (coque === 13 ? [VIDE[3], VIDE[5]] : coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
   /**
    * LE NÉANT POUSSE PAR ONDES (Keko, 16/11 : « la propulsion aussi, essaie de trouver un autre effet, peut-être des ondes ou un
@@ -7834,19 +7857,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * vers l'arrière, naissent à sa poupe et s'ouvrent en s'effaçant, comme le sillage d'une onde gravitationnelle : un
    * trait clair doublé d'un trait sombre juste devant (l'espace creusé), une rafale plus serrée à pleine poussée.
    */
-  const ondes: { x: number; y: number; cap: number; t0: number; k: number }[] = []
+  const ondes: { x: number; y: number; cap: number; t0: number; k: number; coque: number }[] = []
   let ondeA = -10
   let ondeEn = { x: 0, y: 0 }
   // (… PLUS GRANDES ET PLUS VIVES : à 15 de rayon et en pâle, on n'en voyait qu'un petit arc derrière lui)
   // (… PUIS BEAUCOUP PLUS DISCRÈTES — Keko, 16/11 : « les ondes sont beaucoup trop visibles, je pensais à quelque chose de
   // beaucoup plus discret » : un seul trait sombre, à peine translucide, qui s'ouvre jusqu'à 11, plus espacées)
   const DUREE_DE_L_ONDE = 0.55
-  function dessinerUneOnde(p: Peintre, x: number, y: number, cap: number, u: number, k: number, e = 1): void {
+  function dessinerUneOnde(p: Peintre, x: number, y: number, cap: number, u: number, k: number, e = 1, coque = 13): void {
+    const [, moyen, clair] = tonsDuSillage(coque)
+    if (coque === 12) {
+      // LE PRISME SÈME DES ÉCLATS (Keko, 17/11) : un petit losange de cristal se détache, tourne sur lui-même et s'éteint
+      const r = (1.1 + 1.3 * u) * e
+      const a = cap + u * 6 + x * 0.3
+      const [ux, uy] = [Math.cos(a), Math.sin(a)]
+      p.poly([[x + ux * r * 1.4, y + uy * r * 1.4], [x - uy * r * 0.6, y + ux * r * 0.6], [x - ux * r * 1.4, y - uy * r * 1.4], [x + uy * r * 0.6, y - ux * r * 0.6]], u < 0.3 ? clair : moyen, 0.85 * (1 - u) * k)
+      if (u < 0.2) p.dot(x, y, N.WHITE, 0.8 * k)
+      return
+    }
+    if (coque === 15) {
+      // LE TESSERACT LAISSE DES CADRES (Keko, 17/11) : un carré de lumière qui s'ouvre en tournant et s'éteint — l'empreinte
+      // d'une face de son hypercube
+      const h = (1.5 + 6 * (1 - (1 - u) * (1 - u))) * e
+      const a = cap + Math.PI / 4 + u * 1.4
+      const coin = (j: number): [number, number] => [x + Math.cos(a + (j * Math.PI) / 2) * h, y + Math.sin(a + (j * Math.PI) / 2) * h]
+      for (let j = 0; j < 4; j++) {
+        const [x0, y0] = coin(j)
+        const [x1, y1] = coin(j + 1)
+        p.line(x0, y0, x1, y1, u < 0.4 ? clair : moyen, 0.45 * (1 - u) * k)
+      }
+      return
+    }
     const r = (3 + 8 * (1 - (1 - u) * (1 - u))) * e
     const ouvre = 0.8 + 0.2 * u
     const a0 = cap + Math.PI - ouvre
     const a1 = cap + Math.PI + ouvre
-    p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.4 ? VIDE[4] : VIDE[3], 0.35 * (1 - u) * k)
+    p.arc(x, y, r, Math.max(1, Math.round(e)), a0, a1, u < 0.4 ? clair : moyen, 0.35 * (1 - u) * k)
   }
   /**
    * LE SON DE LA POUSSÉE, selon le vaisseau (Keko, 16/11) : les bêtes (le Kraken, la Vouivre) gargouillent, le Néant
@@ -7854,7 +7900,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const genreDePropulsion = (): GenreDePropulsion => {
     const c = monteeA(hangar, 'coque').cran
-    return c === 10 || c === 11 ? 'bete' : c === 13 ? 'neant' : 'souffle'
+    return c === 10 || c === 11 || c === 14 ? 'bete' : plieLEspace(c) ? 'neant' : 'souffle'
   }
   const sonDuDecollage = (): Son => ({ bete: 'decolleBete', neant: 'decolleNeant', souffle: 'decolle' } as const)[genreDePropulsion()]
   /**
@@ -7875,9 +7921,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   function effetDeLaMort(x: number, y: number): Instance {
     const coque = monteeA(hangar, 'coque').cran
-    if (coque === 10 || coque === 11)
-      return N.createFx(ECLATEMENT_ORGANIQUE as Module, { x, y, size: 0.55, seed: 5, chair: coque === 10 ? '#56303a' : '#34523c', sang: coque === 10 ? ['#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'] : ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'] })
+    if (coque === 10 || coque === 11 || coque === 14)
+      return N.createFx(ECLATEMENT_ORGANIQUE as Module, { x, y, size: 0.55, seed: 5, chair: coque === 10 ? '#56303a' : coque === 14 ? '#2e5a18' : '#34523c', sang: coque === 11 ? ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'] : ['#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'] })
     if (coque === 13) return N.createFx(EFFONDREMENT_NEANT as Module, { x, y, size: 0.75, seed: 5 })
+    // (le Tesseract s'effondre aussi, dans sa lumière vert d'eau)
+    if (coque === 15) return N.createFx(EFFONDREMENT_NEANT as Module, { x, y, size: 0.7, seed: 7, palette: ['#020a08', '#04201a', '#083a30', '#0c5a48', '#18a080', '#50e8c0', '#a0ffe0', '#e8fff8'] })
     const genre = coque === 9 ? 'plasma' : coque === 8 ? 'glace' : coque === 12 ? 'cristal' : coque === 6 || monteeA(hangar, 'propulseur').cran >= 3 ? 'ion' : null
     if (genre === null) return N.createFx(EXPLOSION as Module, { x, y, debris: '#46587a', size: 0.45, seed: 5 })
     const f = FEUX_DE_MORT[genre]
@@ -7894,10 +7942,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLaPousseeSansTuyere(p: Peintre, coque: number, cx: number, ty: number, E: number, us: number): void {
     const boucle = (a: number, b: number): number => ((a % b) + b) % b
-    if (coque === 13) {
-      for (let k = 0; k < 4; k++) {
-        const u = boucle(t * (1.6 + us * 1.6) + k / 4, 1)
-        dessinerUneOnde(p, cx, ty + 2 + u * 8 * (E / 2), -Math.PI / 2, u, 0.6 + 0.4 * us, E / 2)
+    if (plieLEspace(coque)) {
+      const n = coque === 12 ? 6 : 4
+      for (let k = 0; k < n; k++) {
+        const u = boucle(t * (1.6 + us * 1.6) + k / n, 1)
+        const dx = coque === 12 ? Math.sin(k * 2.3) * 3 * (E / 2) : 0
+        dessinerUneOnde(p, cx + dx, ty + 2 + u * (coque === 12 ? 14 : 8) * (E / 2), -Math.PI / 2, u, 0.6 + 0.4 * us, E / 2, coque)
       }
       return
     }
@@ -7920,7 +7970,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let i = ondes.length - 1; i >= 0; i--) if (t - ondes[i].t0 > DUREE_DE_L_ONDE) ondes.splice(i, 1)
     if (ondes.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    for (const o of ondes) dessinerUneOnde(p, o.x, o.y, o.cap, (t - o.t0) / DUREE_DE_L_ONDE, o.k)
+    for (const o of ondes) dessinerUneOnde(p, o.x, o.y, o.cap, (t - o.t0) / DUREE_DE_L_ONDE, o.k, 1, o.coque)
     p.place(0, 0)
   }
   const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number }[] = []
@@ -10046,7 +10096,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)
     if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)
-    if (monteeA(hangar, 'coque').cran !== 13) p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
+    if (!sansVerriere(monteeA(hangar, 'coque').cran)) p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
     const feuxA = gA.feux
     if (feuxA !== null && Math.floor(t * 1.5) % 2 === 0)
       for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
@@ -11183,12 +11233,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // (pas une file : une sur deux, éparpillées de côté, de toutes tailles — serrées, elles faisaient encore un jet)
             // (… ET COURTES — Keko, 16/11 : « trop long, on va penser que c'est une attaque, ça laisse une traînée » : une demi-
             // seconde au plus, lentes : elles crèvent juste derrière la bête ; puis « encore un poil » : un tiers de seconde au plus)
-            if (coque === 13) {
-              // (le néant : une onde tous les 12 pixels parcourus — un sillage régulier à toute vitesse —, ou toutes les 0,35 s)
-              if (t - ondeA > 0.35 || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > 12) {
+            if (plieLEspace(coque)) {
+              // (le néant : une onde tous les 12 pixels parcourus — un sillage régulier à toute vitesse —, ou toutes les 0,35 s ;
+              // le prisme, un éclat tous les 6, un peu de côté ; le tesseract, un cadre tous les 14)
+              const pas = coque === 12 ? 6 : coque === 15 ? 14 : 12
+              if (t - ondeA > (coque === 12 ? 0.2 : 0.35) || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > pas) {
                 ondeA = t
                 ondeEn = { x: bx, y: by }
-                ondes.push({ x: bx, y: by, cap: v.cap, t0: t, k: 0.6 + 0.4 * pousseeVue.avant })
+                const cote = coque === 12 ? R.range(-2.5, 2.5) : 0
+                ondes.push({ x: bx - Math.sin(v.cap) * cote, y: by + Math.cos(v.cap) * cote, cap: v.cap, t0: t, k: 0.6 + 0.4 * pousseeVue.avant, coque })
               }
             } else if (organique(coque)) {
               if (R.next() < 0.45) {

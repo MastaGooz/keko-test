@@ -20,7 +20,7 @@ type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?:
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 const mix = (noyau as unknown as { mix(a: number, b: number, t: number): number }).mix
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'iris'
 /** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
@@ -105,6 +105,14 @@ const RAMPES: Record<Matiere, number[]> = {
   // couleurs ») : des bandes, des liserés, des taches — chaque apparence leur donne ses rampes (voir `peaux.ts`)
   decor: ['#26080f', '#561220', '#93202e', '#d0443a', '#ff8456', '#ffcf9a'].map(hex),
   decor2: ['#0d0d12', '#1b1b22', '#2d2d36', '#45454f', '#686874', '#a2a2ae'].map(hex),
+  // LA MANTE (Keko, 17/11 : la troisième bête de l'Essaim) : une chitine vert feuille, des élytres plus sombres, des ailes
+  // de membrane pâle et irisée
+  mante: ['#0c1a08', '#1a3410', '#2e5a18', '#4a8a24', '#7cbc3c', '#c8f080'].map(hex),
+  elytre: ['#0e100a', '#1e2414', '#323c1e', '#4c5a2a', '#6e8038', '#a0b060'].map(hex),
+  membrane: ['#1a2030', '#2e3a50', '#4a6078', '#7a98ac', '#b8d4d8', '#f0fff4'].map(hex),
+  // LE TESSERACT (Keko, 17/11 : le troisième des Innommés) : une lumière vert d'eau, maladive, pour ses arêtes ; un œil jaune
+  spectre: ['#03140f', '#063028', '#0c5a48', '#18a080', '#50e8c0', '#c8fff0'].map(hex),
+  iris: ['#1a1404', '#4a3a06', '#8a6a10', '#d0a020', '#f8e070', '#ffffff'].map(hex),
 }
 /** LE CŒUR DU NÉANT, ses huit tons : ceux du cœur de l'« Energy core » de pixelfx. */
 const COEUR = ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6', '#ffffff'].map(hex)
@@ -611,7 +619,15 @@ const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, 
 const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.6, y: 6.4 }, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
 // LE PRISME (Keko, 16/11) : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie ; À SA PROUE, UN CRISTAL
 // QUI FLOTTE ET TOURNE (le rayon en part — voir `boucheDeLArme`)
-const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -1.2, y: 7.1 }, verriere: -1.5, nez: 13.6, flanc: 7, anneau: 13, echelle: 1 }
+// (… PUIS PLUS DU TOUT UN VAISSEAU — Keko, 17/11 : il rejoint le Néant chez les Innommés, « quelque chose qui ne ressemble
+// presque même pas à un vaisseau » : le cristal au milieu, ses deux arches qui l'emprisonnent, des éclats qui l'orbitent ;
+// plus de corps, plus d'ailes, plus de tuyère ni de feux)
+const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 6.6, flanc: 6, anneau: 14, echelle: 1 }
+// LA MANTE (Keko, 17/11) : un insecte — l'abdomen derrière, les ailes sous les élytres, deux faux repliées devant, la tête
+// triangulaire et ses deux yeux ; pas de tuyère : elle pousse en bourdonnant et lâche des bulles, comme les bêtes
+const GABARIT_DE_LA_MANTE: Gabarit = { tuyeres: [{ x: -0.8, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 10.2, flanc: 4.6, anneau: 13, echelle: 1 }
+// LE TESSERACT (Keko, 17/11) : un hypercube qui se retourne sur lui-même, un œil au milieu ; pas de tuyère : il plie l'espace
+const GABARIT_DU_TESSERACT: Gabarit = { tuyeres: [{ x: 1.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 7, flanc: 7, anneau: 14, echelle: 1 }
 // LE NÉANT (Keko, 16/11 : « l'effet energy core de pixelfx, précisément la sphère avec les deux anneaux qui tournent autour,
 // pour un nouveau vaisseau qui suit cette architecture ; un vaisseau du void, qui utilisera l'espace-temps et les
 // dimensions ») : un CŒUR qui bat, deux ANNEAUX inclinés qui l'orbitent, un petit éperon à la proue (d'où partent ses
@@ -634,9 +650,9 @@ export function battementDuNeant(t: number): number {
   }
   return m
 }
-/** Le centre du cristal qui tourne à la proue du Prisme, en unités du vaisseau : le rayon part de sa pointe, 3,4 devant. */
-export const CRISTAL_DU_PRISME = { x: 9.6, y: 0 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 13 ? GABARIT_DU_NEANT : coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
+/** Le centre du cristal qui tourne au milieu du Prisme, en unités du vaisseau : le rayon part de sa pointe, 4,4 devant. */
+export const CRISTAL_DU_PRISME = { x: 1.2, y: 0 }
+export const gabaritDe = (coque: number): Gabarit => (coque === 15 ? GABARIT_DU_TESSERACT : coque === 14 ? GABARIT_DE_LA_MANTE : coque === 13 ? GABARIT_DU_NEANT : coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
 export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
@@ -853,41 +869,148 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
     ]
     return [...derriere, ...eperon, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
   }
-  if (cran === 12) {
-    // LE PRISME, UN CORPS DE CRISTAL : un long hexagone à deux facettes (penchées de part et d'autre de l'arête : la lumière
-    // les sépare), une arête de quartz, un CŒUR d'énergie ; à la proue, détaché du corps, LE CRISTAL QUI TOURNE — un losange
-    // allongé de quartz, un éclat d'énergie dedans, qui pivotent sur eux-mêmes (« comme un disloqueur »)
-    const f: Forme[] = [
-      { pts: [[6, 0], [3, -2.7], [-4, -2.7], [-7.6, 0]], mat: 'facette', relief: 'plat', penche: -1 },
-      { pts: [[6, 0], [3, 2.7], [-4, 2.7], [-7.6, 0]], mat: 'facette', relief: 'plat', penche: 1 },
-      { pts: barre(5.4, 0, -6.8, 0, 0.6), mat: 'quartz', relief: 'plat' },
-    ]
-    for (const [x, sg] of [[1.5, 1], [-2.5, -1]] as [number, number][]) f.push({ pts: [[x + 1.4, sg * 0.4], [x, sg * 2.4], [x - 1.4, sg * 0.4]], mat: 'quartz', relief: 'plat', penche: sg })
-    f.push({ pts: ovale(-1.5, 0, 1.4, 1.4, 12), mat: 'energie', relief: 'dome', dome: { x: -1.5, y: 0, rx: 1.4, ry: 1.4 } })
-    // (DEUX ARCHES qui partent de la proue et se referment devant elle : elles tiennent le cristal — Keko, 16/11 : « deux
-    // structures arquées à l'avant qui viennent contenir le cristal » ; une bande qui s'amincit, une arête de quartz dessus)
-    const arche: [number, number, number][] = [[3.8, 2.2, 1.3], [6, 3.4, 1.1], [8.4, 3.8, 0.9], [10.6, 3.3, 0.7], [12.4, 2.3, 0.45], [13.4, 1.6, 0.2]]
-    for (const sg of [-1, 1]) {
-      const bord = (k: number): [number, number] => [arche[k][0], sg * (arche[k][1] + arche[k][2])]
-      const dedans = (k: number): [number, number] => [arche[k][0], sg * (arche[k][1] - arche[k][2])]
-      f.push({ pts: [...arche.map((_, k) => bord(k)), ...arche.map((_, k) => dedans(arche.length - 1 - k))], mat: 'facette', relief: 'plat', penche: sg })
-      f.push({ pts: [...arche.map(([x, y]): [number, number] => [x, sg * (y + 0.25)]), ...arche.map(([x, y]): [number, number] => [x, sg * (y - 0.15)]).reverse()], mat: 'quartz', relief: 'plat' })
+  if (cran === 15) {
+    // LE TESSERACT : LES SEIZE SOMMETS D'UN HYPERCUBE, tournés dans deux plans qui touchent la quatrième dimension (x-w et
+    // y-w) et dans un plan ordinaire, ramenés en trois dimensions par perspective (le cube du dedans est celui qui est
+    // « plus loin » en w), puis vus de dessus. Ses trente-deux arêtes sont des traits de lumière, plus sombres derrière ;
+    // ses sommets, des points vifs. Le cube du dedans passe dehors et revient : il se retourne sur lui-même. AU MILIEU, UN
+    // ŒIL, pâle, l'iris jaune et la pupille fendue, qui regarde devant lui (là où il va) et cligne de temps en temps.
+    const aw = t * 0.55
+    const bw = t * 0.37 + 0.7
+    const cz = t * 0.21 + 0.4
+    const S = 3.5
+    const sommets = Array.from({ length: 16 }, (_, k) => {
+      let x = k & 1 ? 1 : -1
+      let y = k & 2 ? 1 : -1
+      let z = k & 4 ? 1 : -1
+      let w = k & 8 ? 1 : -1
+      ;[x, w] = [x * Math.cos(aw) - w * Math.sin(aw), x * Math.sin(aw) + w * Math.cos(aw)]
+      ;[y, w] = [y * Math.cos(bw) - w * Math.sin(bw), y * Math.sin(bw) + w * Math.cos(bw)]
+      ;[x, z] = [x * Math.cos(cz) - z * Math.sin(cz), x * Math.sin(cz) + z * Math.cos(cz)]
+      const k4 = 3 / (3 - w)
+      return { x: x * k4 * S, y: y * k4 * S, z: z * k4, w }
+    })
+    const derriere: Forme[] = []
+    const devant: Forme[] = []
+    for (let i = 0; i < 16; i++)
+      for (let j = i + 1; j < 16; j++) {
+        const d = i ^ j
+        if ((d & (d - 1)) !== 0) continue
+        const [a, b] = [sommets[i], sommets[j]]
+        const z = (a.z + b.z) / 2
+        const ton = z < 0 ? 1 : d === 8 ? 3 : (a.w + b.w) / 2 > 0 ? 4 : 3
+        ;(z < 0 ? derriere : devant).push({ pts: barre(a.x, a.y, b.x, b.y, 0.75), mat: 'spectre', relief: 'lueur', ton })
+      }
+    for (const v of sommets) (v.z < 0 ? derriere : devant).push({ pts: ovale(v.x, v.y, 0.55, 0.55, 8), mat: 'spectre', relief: 'lueur', ton: v.z < 0 ? 2 : 5 })
+    // (l'œil : il cligne une fois toutes les 3,7 s ; l'iris regarde devant, et erre un peu)
+    const cligne = t > 0 && ((t % 3.7) + 3.7) % 3.7 < 0.14
+    const ry = cligne ? 0.25 : 1.45
+    const ix = 0.55 + 0.25 * Math.sin(t * 0.9)
+    const iy = 0.3 * Math.sin(t * 0.63)
+    const oeil: Forme[] = [{ pts: ovale(0, 0, 2.8, ry * 1.2, 18), mat: 'os', relief: 'dome', dome: { x: 0, y: 0, rx: 2.8, ry: ry * 1.2 } }]
+    if (!cligne) {
+      oeil.push({ pts: ovale(ix, iy, 1.25, 1.25, 14), mat: 'iris', relief: 'dome', dome: { x: ix, y: iy, rx: 1.25, ry: 1.25 } })
+      oeil.push({ pts: ovale(ix + 0.1, iy, 0.28, 0.95, 8), mat: 'obsidienne', relief: 'plat' })
     }
-    // (le cristal de la proue, POINTE VERS L'AVANT, entre les arches : un prisme à six pans qui TOURNE SUR SON AXE, comme
-    // celui du disloqueur — vu de dessus, ses arêtes défilent d'un bord à l'autre ; on peint les pans tournés vers le haut,
-    // chacun éclairé selon son angle, un sur deux d'énergie)
-    const a = t * 2.6
+    return [...derriere, ...oeil, ...devant]
+  }
+  if (cran === 14) {
+    // LA MANTE : sous le corps, ses quatre pattes ; l'abdomen annelé derrière, couvert à moitié par les élytres ; le thorax ;
+    // le long cou ; LES DEUX FAUX repliées devant (la cuisse vers l'avant, armée d'épines, le tibia rabattu contre elle) ;
+    // la tête en triangle, deux grands yeux, deux antennes, de petites mandibules. Les faux frémissent.
+    const f: Forme[] = []
+    for (const s of [-1, 1]) {
+      f.push({ pts: barre(0.6, s * 1.1, -1.4, s * 4.6, 0.45), mat: 'elytre', relief: 'plat' })
+      f.push({ pts: barre(-1.4, s * 4.6, -2.8, s * 5.6, 0.35), mat: 'elytre', relief: 'plat' })
+      f.push({ pts: barre(-0.6, s * 1.2, -3.6, s * 4.1, 0.45), mat: 'elytre', relief: 'plat' })
+      f.push({ pts: barre(-3.6, s * 4.1, -5.8, s * 5.2, 0.35), mat: 'elytre', relief: 'plat' })
+      f.push({ pts: barre(9.6, s * 0.5, 12.4, s * 2.6, 0.28), mat: 'elytre', relief: 'plat' })
+    }
+    f.push({ pts: ovale(-4.8, 0, 4.4, 2.5, 22), mat: 'mante', relief: 'dome', dome: { x: -4.8, y: 0, rx: 4.4, ry: 2.5 } })
+    for (const x of [-6.2, -7.6, -8.6]) {
+      const h = 2.5 * Math.sqrt(Math.max(0, 1 - ((x + 4.8) / 4.4) ** 2)) * 0.92
+      f.push({ pts: barre(x, -h, x - 0.3, h, 0.32), mat: 'elytre', relief: 'plat' })
+    }
+    for (const s of [-1, 1]) f.push({ pts: [[1.4, s * 0.2], [0.4, s * 1.9], [-2.6, s * 2.5], [-5.6, s * 1.4], [-5.9, s * 0.15]], mat: 'elytre', relief: 'plat', penche: s })
+    f.push({ pts: ovale(0.6, 0, 1.9, 1.4, 16), mat: 'mante', relief: 'dome', dome: { x: 0.6, y: 0, rx: 1.9, ry: 1.4 } })
+    f.push({ pts: [[7, -0.65], [2.2, -0.95], [2.2, 0.95], [7, 0.65]], mat: 'mante', relief: 'cyl' })
+    const frisson = t === 0 ? 0 : 0.14 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 7.3)
+    for (const s of [-1, 1]) {
+      const kx = 8.6
+      const ky = s * (2.9 + frisson)
+      f.push({ pts: barre(5, s * 0.7, kx, ky, 0.95), mat: 'mante', relief: 'plat', penche: s })
+      for (const u of [0.35, 0.6, 0.85]) {
+        const px = 5 + (kx - 5) * u
+        const py = s * 0.7 + (ky - s * 0.7) * u
+        f.push({ pts: [[px - 0.28, py], [px + 0.28, py], [px + 0.15, py - s * 0.75]], mat: 'os', relief: 'plat' })
+      }
+      f.push({ pts: barre(kx, ky, 6.1, s * 2, 0.6), mat: 'mante', relief: 'plat', penche: s })
+      f.push({ pts: [[6.1, s * 2], [5.3, s * 1.6], [5.8, s * 2.3]], mat: 'os', relief: 'plat' })
+    }
+    f.push({ pts: [[10.2, 0], [8.7, -1.75], [7.3, -1.05], [7.3, 1.05], [8.7, 1.75]], mat: 'mante', relief: 'plat' })
+    for (const s of [-1, 1]) {
+      f.push({ pts: [[10.1, s * 0.22], [10.8, s * 0.5], [9.95, s * 0.62]], mat: 'os', relief: 'plat' })
+      f.push({ pts: ovale(8.45, s * 1.32, 0.78, 0.62, 10), mat: 'bile', relief: 'dome', dome: { x: 8.45, y: s * 1.32, rx: 0.78, ry: 0.62 } })
+    }
+    return f
+  }
+  if (cran === 12) {
+    // LE PRISME, PLUS UN VAISSEAU (Keko, 17/11 : « on garde le cristal, on garde les deux espèces d'arcs qui viennent
+    // emprisonner le cristal, mais on veut vraiment le rapprocher du néant — quelque chose qui ne ressemble presque même pas
+    // à un vaisseau ») : LE CRISTAL AU MILIEU, un prisme à six pans qui tourne sur son axe (pointe vers l'avant : le rayon en
+    // part) ; SES DEUX ARCHES, plus longues, qui partent de derrière lui et se referment devant comme une cage — elles
+    // respirent ; et UNE NUÉE D'ÉCLATS qui l'orbitent, chacun sur son orbite penchée, à sa vitesse, en tournant sur lui-même,
+    // reliés au cristal par un fil de lumière ; ceux de derrière passent sous la cage, plus sombres.
+    const derriere: Forme[] = []
+    const devant: Forme[] = []
+    const fils: Forme[] = []
     const { x: cx } = CRISTAL_DU_PRISME
-    const R = 1.6
-    const [avant, arriere, epaule, hanche] = [cx + 3.4, cx - 2.2, cx + 0.9, cx - 1]
+    const ECLATS: [number, number, number, number, number, number][] = [
+      // rayon, inclinaison, orientation de l'orbite, vitesse, phase, taille
+      [9.6, 1.1, 0.3, 0.55, 0, 1.8],
+      [11.2, -0.8, 1.4, -0.42, 2.1, 1.5],
+      [8.6, 0.5, 2.6, 0.7, 4, 1.3],
+      [12.2, 1.35, -0.9, 0.33, 1.2, 1.7],
+      [10.3, -1.25, 0.9, -0.6, 3.3, 1.2],
+      [8.1, 0.95, -2, 0.85, 5.2, 1.1],
+    ]
+    for (const [r, inc, ori, vit, ph, taille] of ECLATS) {
+      const a = ph + t * vit
+      const ox = r * Math.cos(a)
+      const oy = r * Math.sin(a) * Math.cos(inc)
+      const z = r * Math.sin(a) * Math.sin(inc)
+      const x = cx + ox * Math.cos(ori) - oy * Math.sin(ori)
+      const y = ox * Math.sin(ori) + oy * Math.cos(ori)
+      const b = t * (1.3 + vit) + ph
+      const [ux, uy] = [Math.cos(b), Math.sin(b)]
+      const L = taille * 1.25
+      const l = taille * 0.5
+      const eclat: Forme = { pts: [[x + ux * L, y + uy * L], [x - uy * l, y + ux * l], [x - ux * L * 0.8, y - uy * L * 0.8], [x + uy * l, y - ux * l]], mat: z < 0 ? 'facette' : 'quartz', relief: 'plat', penche: Math.sin(b * 0.7) }
+      ;(z < 0 ? derriere : devant).push(eclat)
+      fils.push({ pts: barre(cx, 0, x, y, 0.6), mat: 'energie', relief: 'lueur', ton: z < 0 ? 1 : 2 })
+    }
+    const cage: Forme[] = []
+    const souffle = t === 0 ? 1 : 1 + 0.05 * Math.sin(t * 1.3)
+    const arche: [number, number, number][] = [[-5.8, 1, 0.45], [-4.6, 2.6, 1.05], [-2.4, 3.8, 1.2], [0, 4.4, 1.05], [2.4, 4.2, 0.85], [4.4, 3.2, 0.6], [5.8, 2, 0.32], [6.4, 1.4, 0.15]]
+    for (const sg of [-1, 1]) {
+      const bord = (k: number): [number, number] => [cx + arche[k][0], sg * (arche[k][1] * souffle + arche[k][2])]
+      const dedans = (k: number): [number, number] => [cx + arche[k][0], sg * (arche[k][1] * souffle - arche[k][2])]
+      cage.push({ pts: [...arche.map((_, k) => bord(k)), ...arche.map((_, k) => dedans(arche.length - 1 - k))], mat: 'facette', relief: 'plat', penche: sg })
+      cage.push({ pts: [...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle + 0.25)]), ...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle - 0.15)]).reverse()], mat: 'quartz', relief: 'plat' })
+    }
+    // (le cristal : ses pans tournés vers le haut, chacun éclairé selon son angle, un sur deux d'énergie)
+    const cristal: Forme[] = []
+    const a = t * 2.6
+    const R = 2.2
+    const [avant, arriere, epaule, hanche] = [cx + 4.4, cx - 3, cx + 1.2, cx - 1.4]
     for (let k = 0; k < 6; k++) {
       const t1 = a + (k * Math.PI) / 3
       const t2 = t1 + Math.PI / 3
       if (Math.cos((t1 + t2) / 2) <= 0) continue
       const [y1, y2] = [R * Math.sin(t1), R * Math.sin(t2)]
-      f.push({ pts: [[avant, 0], [epaule, y1], [hanche, y1], [arriere, 0], [hanche, y2], [epaule, y2]], mat: k % 2 === 0 ? 'quartz' : 'energie', relief: 'plat', penche: Math.sin((t1 + t2) / 2) })
+      cristal.push({ pts: [[avant, 0], [epaule, y1], [hanche, y1], [arriere, 0], [hanche, y2], [epaule, y2]], mat: k % 2 === 0 ? 'quartz' : 'energie', relief: 'plat', penche: Math.sin((t1 + t2) / 2) })
     }
-    return f
+    return [...fils, ...derriere, ...cage, ...cristal, ...devant]
   }
   if (cran === 11) {
     // LA VOUIVRE, UNE BÊTE BUBONIQUE (… PUIS PLUS ORGANIQUE — Keko, 16/11 : « il a trop une forme de vaisseau, on veut un
@@ -1084,17 +1207,9 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
   const f: Forme[] = []
   // (le néant n'a pas d'ailes : ses anneaux sont sa coque)
   if (coque === 13) return f
-  if (coque === 12) {
-    // (le prisme : des ÉCLATS DE CRISTAL en ailes — un grand de quartz, un petit de facettes derrière ; la pointe du grand,
-    // à la marque du joueur)
-    for (const sg of [-1, 1]) {
-      f.push({ pts: [[2.2, sg * 2.3], [-0.6, sg * 7.6], [-2.8, sg * 7], [-3.6, sg * 2.5]], mat: 'quartz', relief: 'plat', penche: sg })
-      f.push({ pts: [[0.6, sg * 2.6], [-1.6, sg * 6.6], [-2.6, sg * 2.6]], mat: 'facette', relief: 'plat', penche: -sg })
-      f.push({ pts: [[-3.6, sg * 2.4], [-6.4, sg * 5.8], [-7.6, sg * 5], [-6.8, sg * 2]], mat: 'facette', relief: 'plat', penche: sg })
-      f.push({ pts: [[-0.6, sg * 7.6], [-1.6, sg * 6.6], [-2.2, sg * 7.2]], mat: 'marque', relief: 'plat' })
-    }
-    return f
-  }
+  // (le prisme n'a plus d'ailes — Keko, 17/11 : ses éclats l'orbitent ; ni la mante — ses ailes battent, voir
+  // `formesDuVaisseau` — ni le tesseract)
+  if (coque === 12 || coque === 14 || coque === 15) return f
   if (coque === 11) {
     // (la vouivre : plus de membranes — TROIS SACS À VENIN qui pendent de travers, de tailles différentes, chacun sur un
     // bourrelet de lie, qui gonflent lentement et portent des pustules ; une glande au bout de deux d'entre eux, à la
@@ -1265,7 +1380,7 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'crachat') return { x: 9.6, y: 0.4 }
   // (le Prisme tire de son cristal)
   // (son railgun aussi — passé du Pulsar au Prisme, Keko, 16/11)
-  if (id === 'faisceau' || id === 'rail') return { x: CRISTAL_DU_PRISME.x + 3.4, y: 0 }
+  if (id === 'faisceau' || id === 'rail') return { x: CRISTAL_DU_PRISME.x + 4.4, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
@@ -1342,10 +1457,11 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (autant de tuyères que le gabarit en porte : le même propulseur, en plusieurs exemplaires)
   // (le frimas n'a pas de tuyère de métal : son souffle froid sort de la pointe de sa queue)
   // (le pulsar non plus : il souffle du plasma, violet ; ni le kraken : un jet de bile)
-  const organique = a.coque === 8 || a.coque === 9 || a.coque === 10 || a.coque === 11 || a.coque === 13
+  const organique = a.coque === 8 || a.coque === 9 || a.coque >= 10
   // (LE KRAKEN ET LA VOUIVRE N'ONT PLUS DE FLAMME — Keko, 16/11 : « l'aspect feu, c'est pas très cohérent » pour des bêtes :
   // ils poussent en lâchant des bulles, que la page sème ; leurs tentacules et leurs vrilles battent plus fort)
-  if (a.coque !== 10 && a.coque !== 11 && a.coque !== 13) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
+  // (NI LE PRISME, NI LA MANTE, NI LE TESSERACT — Keko, 17/11 : un cristal qui flotte, une bête, une forme d'ailleurs)
+  if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
   if (a.coque === 11) for (const [y0, n] of [[-1.8, 4], [0.6, 5], [2.4, 3]] as [number, number][]) {
     let x = -8.4
@@ -1358,6 +1474,17 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
       x = nx
       y = ny
     }
+  }
+  // (LA MANTE BOURDONNE : ses deux ailes de membrane sortent de sous les élytres quand elle pousse, et battent très vite ;
+  // repliées au repos, elles ne dépassent presque pas)
+  if (a.coque === 14) for (const s of [-1, 1]) {
+    const ouvre = 0.28 + 0.75 * Math.min(1, flamme)
+    const bat = t === 0 ? 0 : Math.sin(t * 70 + s) * 0.22 * Math.min(1, flamme * 1.5)
+    const an = Math.PI - s * (ouvre + bat)
+    const [bx, by] = [0.4, s * 1]
+    const L = 7.4
+    const pt = (d: number, k: number): [number, number] => [bx + Math.cos(an - s * d) * L * k, by + Math.sin(an - s * d) * L * k]
+    f.unshift({ pts: [[bx, by], pt(0.16, 0.7), pt(0.04, 1), pt(-0.1, 0.92), pt(-0.18, 0.55)], mat: 'membrane', relief: 'plat', penche: s })
   }
   // (LE KRAKEN TRAÎNE QUATRE TENTACULES derrière lui, qui ondulent — sous la flamme et le manteau)
   if (a.coque === 10) for (const y0 of [-2.7, -0.9, 0.9, 2.7]) {

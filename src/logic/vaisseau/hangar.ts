@@ -30,7 +30,7 @@ export type Piece = {
   id: string
   sorte: Sorte
   /** 1 de série, 2, 3 — l'ordre du catalogue ; le dessin du vaisseau en change. */
-  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13
+  cran: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
   nom: string
   /** Ce qu'elle change, dit au joueur. */
   dit: string
@@ -165,6 +165,11 @@ export const PIECES: Piece[] = [
   // dimensions ») : un cœur qui bat, deux anneaux qui l'orbitent. *Chiffres de moi, à rejuger.*
   { id: 'coque-13', sorte: 'coque', cran: 13, nom: 'Cœur du Néant', dit: '5 de blindage, un cœur de néant qui bat, tenu par deux anneaux qui l’orbitent.', prix: 0, poids: 18, pv: 5, armes: 1, outils: 0, capacite: 20 },
   { id: 'propulseur-n3', sorte: 'propulseur', cran: 3, nom: 'Glissement du Néant', dit: 'Il glisse dans le vide : il file et vire bien.', prix: 0, poids: 5, poussee: 0.82, vitesseMax: 1, rotation: 1.15 },
+  // (LA MANTE et LE TESSERACT — Keko, 17/11 : la troisième bête de l'Essaim, le troisième des Innommés)
+  { id: 'coque-14', sorte: 'coque', cran: 14, nom: 'Corps de la Mante', dit: '5 de blindage, un insecte de chitine : ses faux repliées devant elle, ses ailes sous ses élytres.', prix: 0, poids: 18, pv: 5, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-m3', sorte: 'propulseur', cran: 3, nom: 'Ailes de la Mante', dit: 'Ses ailes bourdonnent : elle file et vire sec.', prix: 0, poids: 5, poussee: 0.85, vitesseMax: 1, rotation: 1.2 },
+  { id: 'coque-15', sorte: 'coque', cran: 15, nom: 'Hypercube du Tesseract', dit: '5 de blindage, un cube dans un cube qui se retourne sur lui-même, autour d’un œil.', prix: 0, poids: 20, pv: 5, armes: 1, outils: 0, capacite: 20 },
+  { id: 'propulseur-t3', sorte: 'propulseur', cran: 3, nom: 'Pli du Tesseract', dit: 'Il plie l’espace devant lui : il file, et vire lentement.', prix: 0, poids: 6, poussee: 0.8, vitesseMax: 1, rotation: 1 },
   { id: 'propulseur-q3', sorte: 'propulseur', cran: 3, nom: 'Souffle du Prisme', dit: 'Un souffle d’énergie : il file et vire bien.', prix: 0, poids: 6, poussee: 0.82, vitesseMax: 1, rotation: 1.1 },
   { id: 'propulseur-i1', sorte: 'propulseur', cran: 1, nom: 'Propulseur d’ingénieur', dit: 'Lent et régulier : l’ingénieur pose, il ne poursuit pas.', prix: 0, poids: 9, poussee: 0.66, vitesseMax: 0.85, rotation: 0.9 },
   { id: 'foreuse-1', sorte: 'outil', cran: 1, famille: 'foreuse', nom: 'Foreuse de série', dit: 'Creuse les roches. Débit et portée de série.', note: 'Creuse les roches, jamais le rival.', prix: 0, poids: 4, debit: 1, portee: 1},

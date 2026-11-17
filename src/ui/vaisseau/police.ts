@@ -79,6 +79,8 @@ const MINUSCULES: Record<string, string> = {
   x: '.....|.....|#...#|.#.#.|..#..|.#.#.|#...#|.....|.....',
   y: '....|....|#..#|#..#|#..#|#..#|.###|...#|###.',
   z: '....|....|####|...#|..#.|.#..|####|....|....',
+  // (L'E DANS L'O — Keko, 17/11 : « un œil » s'écrivait « un il », et « un cœur », « un cur » : la lettre manquait)
+  œ: '.......|.......|.##.##.|#..#..#|#..####|#..#...|.##.###|.......|.......',
 }
 /** Les accents, sur deux rangées, à poser au-dessus d'une lettre de leur largeur (centrés). */
 const ACCENTS: Record<string, string[]> = {
