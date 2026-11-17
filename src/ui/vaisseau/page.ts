@@ -3884,6 +3884,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(cx, cy - 4, 1, 8, G[0])
     p.rect(cx - 2, cy - 3, 1, 1, G[4])
   }
+  /** Les teintes d'une race, du sombre au clair : le jonc de son médaillon et son nom. */
+  const TEINTES_DES_RACES: Record<Race, number[]> = {
+    humains: ['#5a3a08', '#a8650f', '#f2c23a'].map((c) => N.hex(c)),
+    essaim: ['#14380c', '#3a8a1c', '#7cd04a'].map((c) => N.hex(c)),
+    etheres: ['#0a3450', '#1e80a8', '#5ad0f0'].map((c) => N.hex(c)),
+    innommes: ['#2a1050', '#6a30b0', '#b878ff'].map((c) => N.hex(c)),
+  }
+  /** Le rayon du médaillon d'une race, son jonc compris. */
+  const RAYON_DU_MEDAILLON = 19
+  /** Le nom d'une race en lignes : sur une, ou l'article au-dessus quand il ne tient pas sous le médaillon. */
+  const lignesDuNomDeRace = (race: Race): string[] => {
+    const nom = RACES.find((r) => r.id === race)?.nom ?? ''
+    const i = nom.indexOf(' ')
+    return largeurDe(nom) <= 2 * RAYON_DU_MEDAILLON + 8 || i < 0 ? [nom] : [nom.slice(0, i), nom.slice(i + 1)]
+  }
+  /** La hauteur de l'identité d'une race : son médaillon, puis son nom. */
+  const hauteurDeLIdentite = (race: Race): number => 2 * RAYON_DU_MEDAILLON + 1 + 3 + lignesDuNomDeRace(race).length * 8
+  /**
+   * L'IDENTITÉ D'UNE RACE, dans la fiche d'un vaisseau (Keko, 17/11 : « le nom de la race en dessous du symbole », et plus
+   * de cadre en portrait) : son emblème dans un MÉDAILLON ROND — un jonc à ses teintes, éclairé en haut à gauche, le fond
+   * de ses portraits et un halo —, puis son nom à sa couleur, centré sous lui. `cx` : le centre, `y` : le haut. Grisée
+   * quand le vaisseau n'est pas à soi.
+   */
+  function dessinerLIdentiteDeRace(p: Peintre, race: Race, cx: number, y: number, aSoi: boolean): void {
+    const [sombre, moyen, clair] = TEINTES_DES_RACES[race]
+    const [, bas, halo] = FONDS_DES_RACES[race]
+    const encre = MATIERES.encre.contour
+    const R = RAYON_DU_MEDAILLON
+    const cy = y + R
+    p.circle(cx, cy + 1, R, encre)
+    p.circle(cx, cy, R, encre)
+    p.circle(cx, cy, R - 1, moyen)
+    p.circle(cx, cy, R - 2.5, encre)
+    p.circle(cx, cy, R - 3.5, bas)
+    p.glow(cx, cy, R - 4, halo, 0.6)
+    p.arc(cx, cy, R - 1, 1, Math.PI * 0.9, Math.PI * 1.65, clair)
+    p.arc(cx, cy, R - 1, 1, -Math.PI * 0.1, Math.PI * 0.65, sombre)
+    dessinerLEmblemeDeRace(p, race, cx, cy)
+    if (!aSoi) p.disc(cx, cy, R, N.hex('#12161f'), 0.55)
+    lignesDuNomDeRace(race).forEach((li, i) => ecrire(p, li, cx, y + 2 * R + 4 + i * 8, aSoi ? clair : COQUE[3], { align: 'center' }))
+  }
   /** Le fond d'un portrait, aux teintes de la race : le haut, le bas, le halo derrière le vaisseau. */
   const FONDS_DES_RACES: Record<Race, number[]> = {
     humains: ['#0e1626', '#16223a', '#2a4470'].map((c) => N.hex(c)),
@@ -3960,25 +4001,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const dit = avecDit ? replier(mo.dit, W - 22).slice(0, 3) : []
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
-    const yj = avecNom ? 18 : 6
-    const hh = avecNom ? Math.max(52, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
+    // LA FICHE EN DEUX ÉTAGES (Keko, 17/11 : « l'emplacement du symbole fait encore un côté portrait rectangulaire, c'est
+    // pas hyper bien organisé ; le nom de la race en dessous du symbole ») : le NOM DU VAISSEAU en titre sur toute la
+    // largeur, un filet ; dessous, à gauche, l'IDENTITÉ — le médaillon de la race et son nom —, un filet vertical, à
+    // droite les JAUGES ; puis ce qu'il est
+    const yj = avecNom ? 21 : 6
+    const hh = avecNom ? Math.max(yj + hauteurDeLIdentite(mo.race) + 3, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
     const hd = hh + (dit.length > 0 ? dit.length * 9 + 6 : 0)
     // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
-    const gx = avecNom ? 56 : 10
+    const gx = avecNom ? 62 : 10
     plaque(p, 4, y, W - 8, hd, 'encre')
     if (avecNom) {
+      motEnRelief(p, mo.nom, W / 2, y + 5, aSoi)
+      p.rect(10, y + 16, W - 20, 1, MATIERES.encre.ombre)
+      p.rect(gx - 5, y + yj - 1, 1, hh - yj - 3, MATIERES.encre.ombre)
       // (L'EMBLÈME DE SA RACE, À LA PLACE DE SON IMAGE — Keko, 17/11 : « on vire l'image du vaisseau, car elle est déjà
       // au-dessus » — son portrait, dans la grille —, « on aura plus de place pour des symboles plus travaillés »)
-      plaque(p, 8, y + 4, 44, hh - 8, 'creux')
-      dessinerLEmblemeDeRace(p, mo.race, 30, Math.round(y + hh / 2))
-      if (!aSoi) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
+      dessinerLIdentiteDeRace(p, mo.race, Math.round((8 + gx - 5) / 2), y + yj + Math.floor((hh - yj - 3 - hauteurDeLIdentite(mo.race)) / 2), aSoi)
     }
-    if (avecNom) {
-      motEnRelief(p, mo.nom, gx + (W - 12 - gx) / 2, y + 5, aSoi)
-    }
+    // (la colonne des libellés à la mesure des SIENS — « Accélération », pas les noms des pièces —, les barres gardent leur longueur)
+    const colonne = avecNom ? Math.max(...jauges.map((j) => largeurDe(j.nom)), largeurDe('Accélération')) + 4 : undefined
     jauges.forEach((j, i) => {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
-      dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, repereDe(pilote, j), false, gx, k)
+      dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, repereDe(pilote, j), false, gx, k, colonne)
     })
     if (dit.length > 0) {
       p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
@@ -3995,7 +4040,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La hauteur de la fiche d'un vaisseau au panneau (nom et dessin, cinq jauges, ce qu'il est) — voir `dessinerLaFicheDuVaisseau`. */
   // (LA GRILLE A UNE HAUTEUR FIXE — Keko, 17/11 : « la hauteur du grid varie en fonction du texte en dessous ; je voudrais
   // que le grid ait une hauteur fixe, la description limitée à trois lignes » : la fiche réserve toujours trois lignes)
-  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 70 + 3 * 9 + 6
+  // (la plus haute des fiches : cinq jauges, ou l'identité d'une race au nom sur deux lignes — voir `dessinerLaFicheDuVaisseau`)
+  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 21 + Math.max(5 * 10 + 2, ...RACES.map((r) => hauteurDeLIdentite(r.id) + 3)) + 3 * 9 + 6
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
@@ -5367,9 +5413,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * bouclier), qui s'allument une à une ; sinon une barre dans sa rainure, au dégradé lumineux, qu'un éclat parcourt
    * quand elle a fini de se remplir — et un repère blanc à la valeur de la pièce en place, pour comparer.
    */
-  function dessinerUneJaugeDePiece(p: Peintre, y: number, j: Jauge, repere: number | null, rouge: boolean, x0 = 10, plein = 1): void {
+  function dessinerUneJaugeDePiece(p: Peintre, y: number, j: Jauge, repere: number | null, rouge: boolean, x0 = 10, plein = 1, colonne = colonneDesJauges()): void {
     ecrire(p, j.nom, x0, y - 1, COQUE[4])
-    const bx = x0 + colonneDesJauges()
+    const bx = x0 + colonne
     const bw = W - 12 - bx
     // (les plaques des humains, en acier gris, comme leur barre en vol)
     const acier = j.nom === 'Plaques'

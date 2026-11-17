@@ -5294,3 +5294,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE VAISSEAU NE SUBIT AUCUN DÉGÂT DANS L'APERÇU (Keko, 17/11) : il y est INTOUCHABLE le temps de chaque pas
   (`intouchableJusque` à l'infini, levé après le pas pour qu'il ne clignote pas) ; tous les coups passent par
   `encaisser`, qui les ignore — plus de morsure, d'étincelles rouges ni de clignotement ; les insectes restent au contact.
+- LA FICHE D'UN VAISSEAU EN DEUX ÉTAGES (Keko, 17/11 : « le nom de la race en dessous du symbole ; l'emplacement du
+  symbole fait encore un côté portrait rectangulaire, c'est pas hyper bien organisé ») : le nom du vaisseau en titre sur
+  toute la largeur, un filet ; dessous, à gauche, l'IDENTITÉ — l'emblème dans un MÉDAILLON ROND (un jonc aux teintes de
+  la race, `TEINTES_DES_RACES`, éclairé en haut à gauche, le fond de ses portraits et un halo), son nom à sa couleur
+  dessous, l'article au-dessus quand il ne tient pas (« Les / Innommés ») —, un filet vertical, les jauges à droite (leur
+  colonne de libellés à la mesure des leurs, pas des noms de pièces). `dessinerLIdentiteDeRace` ; la hauteur fixe de la
+  fiche compte la plus haute identité.
