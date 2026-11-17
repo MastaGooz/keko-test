@@ -2108,6 +2108,47 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`un insecte dans la zone d'un œuf le fait éclore, et le mini-ver le poursuit et l'empoisonne (${pris.toFixed(1)} pris en 2 s)`, ev.filter((e) => e.type === 'eclosion').length >= 1 && ev.some((e) => e.type === 'venin') && pris > 3 && pris < 10)
 }
 
+// LES ÉPINES D'OS DU VER (Keko, 17/11) : un insecte à portée, une salve part de ses flancs — dix épines, cinq de chaque
+// côté, échelonnées le long du chemin qu'il a pris, chacune PERPENDICULAIRE au corps là où elle part ; dans un virage, elles
+// suivent la courbe
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const epines = { id: 'epine', cadence: 1.6, degats: 5, portee: 70, vitesse: 170, vie: 0.35, dispersion: 0, guide: false, epines: { anneaux: 5, ecart: 5, debut: 2.5 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [epines], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  // (en ligne droite vers la droite, puis un insecte à portée)
+  const w = nouveauMonde(cfg, 3)
+  w.armesA[0] = 1e9
+  let x = 0
+  for (let i = 0; i < 90; i++) {
+    x += 0.5
+    w.vaisseau = { ...w.vaisseau, x, y: 0, vx: 30, vy: 0, cap: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  w.armesA[0] = 0
+  w.ennemis.push(insecte(1, x, 60))
+  const ev: Evenement[] = []
+  w.vaisseau = { ...w.vaisseau, x: x + 0.5, y: 0, vx: 30, vy: 0, cap: 0 }
+  ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  const ep = w.obus.filter((o) => o.arme === 'epine')
+  const perp = ep.every((o) => Math.abs(o.vx) < 1 && Math.abs(Math.abs(o.vy) - 170) < 1)
+  const haut = ep.filter((o) => o.vy < 0).length
+  const xs = [...new Set(ep.map((o) => Math.round(o.x)))].sort((p, q) => q - p)
+  verifier(`une salve : ${ep.length} épines (${haut} d'un côté), perpendiculaires au corps, échelonnées derrière lui (${xs.join(', ')})`, ep.length === 10 && haut === 5 && perp && xs.length === 5 && ev.some((e) => e.type === 'epines'))
+  // (dans un virage : le corps est courbe, les épines aussi — leurs directions diffèrent)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.armesA[0] = 1e9
+  for (let i = 0; i < 120; i++) {
+    const a = (i / 120) * Math.PI
+    w2.vaisseau = { ...w2.vaisseau, x: Math.cos(a) * 20, y: Math.sin(a) * 20, vx: 0, vy: 0, cap: a + Math.PI / 2 }
+    avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+  }
+  w2.armesA[0] = 0
+  w2.ennemis.push(insecte(1, 0, 0))
+  avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+  const caps = new Set(w2.obus.filter((o) => o.arme === 'epine').map((o) => Math.round(Math.atan2(o.vy, o.vx) * 4)))
+  verifier(`dans un virage, les épines suivent la courbe du corps (${caps.size} directions)`, caps.size >= 6)
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {
