@@ -636,7 +636,9 @@ export type Arme = {
    * est ACCROCHÉ — `cibles` liens à la fois — et le lien tient, à toute distance, jusqu'à sa mort ; alors la place se
    * libère pour le prochain qui passe à portée. L'état est `Monde.liens` ; voir `liesAuDrain`)
    */
-  drain?: { rayon: number; dps: number; purge: number; cibles: number }
+  // (… PUIS SANS LIMITE — Keko, 17/11 : « enlever la limite à deux ennemis ; autant d'ennemis que possible, du moment qu'ils
+  // ont été dans la zone, ils sont pris dans le drain » : `cibles` absent, tout ce qui passe à portée est accroché)
+  drain?: { rayon: number; dps: number; purge: number; cibles?: number }
   /**
    * LES VRILLES D'OMBRE (le Néant, Keko, 17/11 : « l'effet Shadow Tendrils de pixelfx : on crée une tentacule dans un
    * endroit aléatoire autour du vaisseau, et ce tentacule attaque les ennemis proches ») : à sa cadence, un insecte à
@@ -2594,14 +2596,14 @@ function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     // (un lien dont l'âme est morte se défait : la place se libère)
     m.liens = m.liens.filter((l) => l.arme !== i || m.ennemis.some((e) => e.id === l.cible))
     const siens = m.liens.filter((l) => l.arme === i).length
-    if (siens < dr.cibles) {
+    if (siens < (dr.cibles ?? Infinity)) {
       // (LA PORTÉE N'ACCROCHE QUE : le verrouillé d'abord, puis les plus proches, qu'aucun lien ne tient déjà)
       const tenus = new Set(m.liens.map((l) => l.cible))
       const d = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
       const dans = m.ennemis.filter((e) => !tenus.has(e.id) && d(e) <= dr.rayon + c.ennemi.rayon).sort((p, q) => d(p) - d(q))
       const ve = ennemiVerrouille(m)
       if (ve !== null && dans.includes(ve)) dans.splice(dans.indexOf(ve), 1), dans.unshift(ve)
-      for (const e of dans.slice(0, dr.cibles - siens)) {
+      for (const e of dans.slice(0, (dr.cibles ?? Infinity) - siens)) {
         m.liens.push({ arme: i, cible: e.id, depuis: m.t })
         ev.push({ type: 'accroche', id: e.id, x: e.corps.x, y: e.corps.y })
       }

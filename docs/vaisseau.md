@@ -5361,3 +5361,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   `liesAuDrain`, l'événement `accroche` : un anneau qui se referme sur l'âme, le frisson). La courbe ne se cambre plus
   au-delà de 50 : loin, le lien se tend. Son aperçu tourne en circuit, pour qu'on voie le lien tenir. Proposées et
   écartées : la marque différée, la faim (plus fort blessé), les âmes en réserve.
+- LE DRAIN D'ÂME SANS LIMITE (Keko, 17/11 : « enlever la limite à deux ennemis ; autant d'ennemis que possible, du moment
+  qu'ils ont été dans la zone, ils sont pris dans le drain ») : `drain.cibles` absent, tout ce qui passe à moins de 42
+  est accroché. ET SON SON D'ACCROCHE EST À LUI (« un petit peu trop agressif ») : plus le frisson clair de la purge, un
+  souffle sourd qui monte lentement sur une note grave (`accroche`, niveau 0,1, un à la fois toutes les 0,12 s).

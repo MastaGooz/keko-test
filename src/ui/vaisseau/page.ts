@@ -3607,7 +3607,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’insectes.',
     'arme-puits': 'Une singularité qui aspire les insectes vers son cœur, puis éclate.',
-    'arme-drain': 'Il accroche deux âmes et les draine, à toute distance ; leur vie purge sa corruption.',
+    'arme-drain': 'Il accroche les âmes qui l’approchent et les draine, à toute distance ; leur vie purge sa corruption.',
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
   }
@@ -8094,6 +8094,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let corruptionVue = 0
   let drainSonneA = -10
+  let accrocheSonneA = -10
   function dessinerLeDrain(p: Peintre): void {
     const dr = CONF.armes.find((a) => a.drain !== undefined)?.drain
     const avant = corruptionVue
@@ -11698,8 +11699,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'accroche':
-          // (le drain accroche une âme : un anneau qui se referme sur l'insecte, le frisson)
-          jouer('purge')
+          // (le drain accroche une âme : un anneau qui se referme sur l'insecte, un souffle sourd — un seul à la fois)
+          if (t - accrocheSonneA > 0.12) {
+            accrocheSonneA = t
+            jouer('accroche', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
           for (let i = 0; i < 8; i++) {
             const a = (i / 8) * Math.PI * 2
             etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 9, ev.y + Math.sin(a) * 9, -Math.cos(a) * 45, -Math.sin(a) * 45, 0.18, i % 2 === 0 ? OMBRE[7] : OMBRE[5], 1, 1.5)

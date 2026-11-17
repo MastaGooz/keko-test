@@ -773,6 +773,17 @@ const RECETTES = {
       souffle(m, h, 0, 0.3, 0, { f: 4200, q: 1.8, bande: true, a: 0.001, d: 0.025 })
     },
   },
+  /**
+   * LE DRAIN D'ÂME ACCROCHE UNE ÂME (le Néant, Keko, 17/11 : le frisson de la purge était « un petit peu trop agressif ») :
+   * un souffle sourd qui monte lentement, une note grave et ronde qui ondule — rien de vif, il en sonne beaucoup
+   */
+  accroche: {
+    duree: 0.7, niveau: 0.1, salle: [0.45, 0.2], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.6, 0, { f: 500, glisse: { vers: 1100, en: 0.35 }, q: 1.1, bande: true, a: 0.12, d: 0.3 })
+      note(m, 0.02, 0.5, 0, { f: 196 * (0.97 + 0.06 * h.next()), glisse: { vers: 262, en: 0.4 }, a: 0.1, d: 0.35, battement: 5 })
+    },
+  },
   /** LA SPHÈRE S'ÉTEINT : un souffle d'énergie qui se resserre et retombe, doux */
   dissipe: {
     duree: 0.6, niveau: 0.14, salle: [0.35, 0.14], variantes: 2,

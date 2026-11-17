@@ -1960,16 +1960,16 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`le puits s'ouvre au cœur de la nuée (${ouvertEn === null ? '—' : `${ouvertEn.x.toFixed(0)}, ${ouvertEn.y.toFixed(0)}`}), aspire l'insecte du bord dans son éclat et éclate une fois : ${pv.join(' / ')} (22 aux quatre de la nuée, 0 au lointain et à celui hors du rayon)`, ev.filter((e) => e.type === 'puitsEclate').length === 1 && ouvertEn !== null && ouvertEn.x > 70 && pv[0] === 22 && pv[1] === 22 && pv[2] === 22 && pv[3] === 0 && pv[4] === 22 && pv[5] === 0)
 }
 
-// LE DRAIN D'ÂME DU NÉANT (Keko, 17/11) : il ACCROCHE deux âmes à portée, les plus proches — le troisième et le lointain,
-// rien — ; puis LE LIEN TIENT À TOUTE DISTANCE (le vaisseau part à 300, elles se vident encore) ; une âme morte libère sa
-// place, et la suivante qui passe à portée est accrochée. La vie prise purge la corruption, en continu (deux âmes une
-// seconde : 8 points pris, 1,6 de corruption purgée — un insecte abattu n'en purge que 0,5)
+// LE DRAIN D'ÂME DU NÉANT (Keko, 17/11) : il ACCROCHE TOUT CE QUI PASSE À PORTÉE, sans limite — le lointain, rien — ; puis
+// LE LIEN TIENT À TOUTE DISTANCE (le vaisseau part à 300, elles se vident encore) ; un insecte qui entre ensuite dans la
+// zone est accroché à son tour. La vie prise purge la corruption, en continu (trois âmes une seconde : 12 points pris, 2,4
+// de corruption purgée — un insecte abattu n'en purge que 0,5)
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const drain = { id: 'drain', cadence: 0.1, degats: 0, portee: 42, vitesse: 0, vie: 0, dispersion: 0, guide: false, drain: { rayon: 42, dps: 4, purge: 0.2, cibles: 2 } }
+  const drain = { id: 'drain', cadence: 0.1, degats: 0, portee: 42, vitesse: 0, vie: 0, dispersion: 0, guide: false, drain: { rayon: 42, dps: 4, purge: 0.2 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [drain], coque: 10, corruption: { ronge: 0.5, purge: 0.5 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const w = nouveauMonde(cfg, 3)
-  w.ennemis.push(insecte(1, 30, 0), insecte(2, 0, -35), insecte(3, 120, 0), insecte(4, -38, 0))
+  w.ennemis.push(insecte(1, 30, 0), insecte(2, 0, -35), insecte(3, -38, 0), insecte(4, 120, 0))
   w.corruption = 5
   const pas = (x: number, n: number): void => {
     for (let i = 0; i < n; i++) {
@@ -1980,16 +1980,14 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   pas(0, 60)
   const pv1 = w.ennemis.map((e) => 1000 - e.pv)
   const purgee = 5 - w.corruption - 0.5
-  verifier(`le drain d'âme accroche les deux plus proches à portée (${pv1.map((x) => x.toFixed(1)).join(' / ')} : 4, 4, 0 au lointain, 0 au troisième) et la vie prise purge la corruption (${purgee.toFixed(2)} sur 1,6)`, Math.abs(pv1[0] - 4) < 0.1 && Math.abs(pv1[1] - 4) < 0.1 && pv1[2] === 0 && pv1[3] === 0 && Math.abs(purgee - 1.6) < 0.05)
-  // (le vaisseau part loin, à 300 : le lien tient)
+  verifier(`le drain d'âme accroche tout ce qui est à portée (${pv1.map((x) => x.toFixed(1)).join(' / ')} : 4, 4, 4, 0 au lointain) et la vie prise purge la corruption (${purgee.toFixed(2)} sur 2,4)`, Math.abs(pv1[0] - 4) < 0.1 && Math.abs(pv1[1] - 4) < 0.1 && Math.abs(pv1[2] - 4) < 0.1 && pv1[3] === 0 && Math.abs(purgee - 2.4) < 0.05)
+  // (le vaisseau part loin, à 300 : les liens tiennent)
   pas(300, 60)
   const pv2 = w.ennemis.map((e) => 1000 - e.pv)
-  verifier(`à 300 du vaisseau, les âmes accrochées se vident encore (${pv2.map((x) => x.toFixed(1)).join(' / ')} : 8, 8, 0, 0)`, Math.abs(pv2[0] - 8) < 0.1 && Math.abs(pv2[1] - 8) < 0.1 && pv2[2] === 0 && pv2[3] === 0)
-  // (une âme meurt : sa place se libère, et la suivante qui passe à portée est accrochée)
-  w.ennemis[0].pv = 0.01
-  pas(-30, 60)
-  const quatre = w.ennemis.find((e) => e.id === 4)
-  verifier(`une âme morte libère sa place : le quatrième, à portée, est accroché (${quatre === undefined ? '—' : (1000 - quatre.pv).toFixed(1)} pris), deux liens au plus (${w.liens.length})`, quatre !== undefined && quatre.pv < 1000 && w.liens.length === 2)
+  verifier(`à 300 du vaisseau, les âmes accrochées se vident encore (${pv2.map((x) => x.toFixed(1)).join(' / ')} : 8, 8, 8, 0)`, Math.abs(pv2[0] - 8) < 0.1 && Math.abs(pv2[1] - 8) < 0.1 && Math.abs(pv2[2] - 8) < 0.1 && pv2[3] === 0)
+  // (il passe près du lointain : accroché à son tour)
+  pas(110, 30)
+  verifier(`le lointain, une fois passé à portée, est accroché à son tour (${(1000 - w.ennemis[3].pv).toFixed(1)} pris, ${w.liens.length} liens)`, w.ennemis[3].pv < 1000 && w.liens.length === 4)
 }
 
 // LES VRILLES D'OMBRE DU NÉANT (Keko, 17/11) : elles sortent en des points tirés autour du vaisseau, entre 18 et 40, trois
