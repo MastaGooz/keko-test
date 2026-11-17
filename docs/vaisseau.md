@@ -5450,3 +5450,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   POURSUIT cet insecte en serpentant (90, 7 rad/s), puis le plus proche à 90 une fois mort, 6 s ; il empoisonne ce qu'il
   touche (le venin). La copie des mouvements est partie ; « la copie avec du flair » et « les chasseurs » proposés, puis
   tranchés par Keko pour le piège.
+- L'« Œ » DANS TOUTES LES POLICES (Keko, 17/11 : « "œ" ne s'écrit pas dans le jeu — "œuf", et d'autres endroits ») : la
+  minuscule existait dans la lettre courante, pas la capitale (« Œufs ») ni les lettres tracées des titres et en-têtes.
+  Chaque police qui ne l'a pas la reçoit, en LIGATURE : son O dont le flanc droit est le fût de son E (l'épaisseur du
+  fût mesurée sur l'E) ; une police de capitales seules écrit aussi la minuscule ainsi. Accolées sans ligature, elles se
+  lisaient « OE ».

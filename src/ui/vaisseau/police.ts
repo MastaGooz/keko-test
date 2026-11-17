@@ -365,6 +365,24 @@ table['keko-titre'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: { ...doubler(GRAS
 table['keko-chiffres'] = { h: HAUT, space: 3, gap: 1, glyphs: { ...GLYPHES, ...Object.fromEntries(Object.entries(tracerLeTitre(5, 7, 1, 1, HAUT, 2)).filter(([ch]) => /^[0-9A-Z]$/.test(ch))) } }
 table['keko-titre-double'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: doubler(GRAS) }
 table['keko-titre-rond'] = { h: HAUT * 2, space: 6, gap: 2, glyphs: scale2x(GRAS) }
+// L'E DANS L'O, PARTOUT (Keko, 17/11 : « "œ" ne s'écrit pas dans le jeu — "œuf", et d'autres endroits ») : la minuscule
+// existait dans la lettre courante, mais ni la CAPITALE (« Œufs ») ni les lettres tracées des titres et des en-têtes ne
+// l'avaient — elle disparaissait. Chaque police qui ne l'a pas la reçoit : son O et son E ACCOLÉS, à son écart ; une police
+// de capitales seules (son « o » est son « O ») écrit aussi la minuscule ainsi. (… EN LIGATURE : le flanc droit de l'O EST le
+// fût de l'E — accolées, elles se lisaient « OE »)
+const lier = (a: Glyphe, b: Glyphe, epais: number): Glyphe => ({ w: a.w - epais + b.w, rows: a.rows.map((r, i) => {
+  const rb = b.rows[i] ?? vide(b.w)
+  return [...r.slice(0, a.w - epais), ...rb.map((x, j) => x || (j < epais && r[a.w - epais + j]))]
+}) })
+for (const nom of ['keko', 'keko-gras', 'keko-entete', 'keko-titre', 'keko-chiffres', 'keko-titre-double', 'keko-titre-rond']) {
+  const po = table[nom]
+  const g = po.glyphs
+  // (l'épaisseur du fût : celle de la colonne de gauche de l'E)
+  // (le fût : la plus courte suite de pixels au début des rangées qui en commencent une — les bras sont plus longs)
+  const futDe = (e: Glyphe): number => Math.max(1, Math.min(...e.rows.filter((r) => r[0]).map((r) => (r.indexOf(false) < 0 ? r.length : r.indexOf(false)))))
+  if (g.Œ === undefined && g.O !== undefined && g.E !== undefined) g.Œ = lier(g.O, g.E, futDe(g.E))
+  if (g.o !== undefined && g.o === g.O && g.Œ !== undefined) g.œ = g.Œ
+}
 
 /** La hauteur de la boîte, et le décalage de la ligne des capitales sous son haut (les 2 rangées d'accent). */
 export const HAUT_POLICE = HAUT
