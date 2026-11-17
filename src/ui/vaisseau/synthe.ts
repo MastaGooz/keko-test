@@ -373,6 +373,17 @@ const RECETTES = {
       eclats(m, h, 5, 0.03, 0.2, 0.5)
     },
   },
+  /**
+   * la corruption purgée (les Innommés, Keko, 17/11) : un frisson qui remonte — une note claire qui glisse vers l'octave,
+   * battue, et un souffle qui s'élève
+   */
+  purge: {
+    duree: 0.6, niveau: 0.28, salle: [0.45, 0.2],
+    faire: (m, h) => {
+      note(m, 0, 0.7, 0, { f: 520, glisse: { vers: 1040, en: 0.18 }, a: 0.01, d: 0.22, partiels: [[1, 1, 1], [2, 0.3, 0.6]], battement: 9 })
+      souffle(m, h, 0, 0.3, 0.1, { f: 3000, glisse: { vers: 5000, en: 0.15 }, q: 2, bande: true, a: 0.01, d: 0.12 })
+    },
+  },
   /** l'extraction : l'accord de ré qui monte, en clochettes, sur une nappe */
   extrait: {
     duree: 2.2, niveau: 0.55, salle: [0.75, 0.3],

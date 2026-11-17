@@ -932,7 +932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
     // l'Essaim, pas de bouclier, une coque qui se régénère
-    if (VORTEX) CONF = { ...CONF, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: CONF.coque, bouclier: CONF.bouclier, regeneration: CONF.regeneration, plaques: CONF.plaques }, modeleDeVaisseau(flotte.actif).plaques) }
+    if (VORTEX) CONF = { ...CONF, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: CONF.coque, bouclier: CONF.bouclier, regeneration: CONF.regeneration, plaques: CONF.plaques, corruption: CONF.corruption }, modeleDeVaisseau(flotte.actif).plaques) }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
@@ -1424,6 +1424,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * contre le haut de la barre (le plein) ; un trait d'encre entre deux ; cassée, un creux ; à l'instant où elle casse,
    * elle blanchit et tremble. `debout` : le long d'une barre debout ; (x, y) le coin de la bande, `L` sa longueur.
    */
+  /**
+   * LA CORRUPTION SUR LA BARRE (les Innommés, Keko, 17/11 : « quelque chose qui visuellement se voit sur la barre de vie
+   * pour comprendre rapidement son fonctionnement ») : la part corrompue de la coque, entre l'or sain et le vide, en
+   * VIOLET QUI ONDULE (des bandes claires qui descendent vers le vide) ; à une purge, elle s'éclaire. `pos` : le pixel le
+   * long de la barre ; `bord` : 0 le liseré clair, 1 le corps, 2 l'ombre.
+   */
+  const CORRUPTION = [N.hex('#f0c8ff'), N.hex('#b05ef0'), N.hex('#7a2cc8'), N.hex('#4a1488')]
+  let purgeA = -10
+  const tonDeLaCorruption = (pos: number, bord: number): number => {
+    if (t - purgeA < 0.12) return CORRUPTION[0]
+    const onde = ((pos + Math.floor(t * 9)) % 5 + 5) % 5 === 0
+    return bord === 0 ? CORRUPTION[0] : onde ? CORRUPTION[1] : bord === 1 ? CORRUPTION[2] : CORRUPTION[3]
+  }
   /** LA VIE DE L'ESSAIM, EN VERT (Keko, 17/11) : sa barre n'est pas du blindage, c'est de la chair qui se régénère. */
   const VERT_DE_LA_VIE = [N.hex('#b4f57a'), N.hex('#5ccf3c'), N.hex('#2e8a24')]
   const vieVerte = (): boolean => VORTEX && modeleDeVaisseau(flotte.actif).race === 'essaim'
@@ -3550,14 +3563,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cf = configDuHangar(BASE, de.serie)
       const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
       // (la vie de SA RACE — Keko, 17/11 : l'Essaim n'a pas de bouclier, sa dernière jauge dit sa régénération)
-      const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques }, de.plaques)
+      const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption }, de.plaques)
       return [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
         { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
         // (L'ESSAIM N'A PAS DE BLINDAGE, IL A DE LA VIE — Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un aspect plus point de vie »)
         de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: 8, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
-        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
       ]
     }
     const jauges = jaugesDuModele(mo)
@@ -4982,9 +4995,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (les plaques des humains, en acier gris, comme leur barre en vol)
     const acier = j.nom === 'Plaques'
     const vert = j.nom === 'Vie' || j.nom === 'Régénération'
-    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : vert ? VERT_DE_LA_VIE[1] : rouge ? ROUGE[3] : PEPITE[2]
-    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : vert ? VERT_DE_LA_VIE[0] : rouge ? ROUGE[5] : N.hex('#ffe68a')
-    const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : acier ? ACIER_DES_PLAQUES[2] : vert ? VERT_DE_LA_VIE[2] : rouge ? ROUGE[2] : N.hex('#a8650f')
+    const violet = j.nom === 'Purge'
+    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : vert ? VERT_DE_LA_VIE[1] : violet ? CORRUPTION[2] : rouge ? ROUGE[3] : PEPITE[2]
+    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : vert ? VERT_DE_LA_VIE[0] : violet ? CORRUPTION[1] : rouge ? ROUGE[5] : N.hex('#ffe68a')
+    const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : acier ? ACIER_DES_PLAQUES[2] : vert ? VERT_DE_LA_VIE[2] : violet ? CORRUPTION[3] : rouge ? ROUGE[2] : N.hex('#a8650f')
     if (j.nombre) {
       const dit = j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`
       motEnRelief(p, dit, bx + largeurDe(dit, TEXTE) / 2, y - 1, 'ivoire', TEXTE)
@@ -9675,7 +9689,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const by = oy + (DEUX_BARRES ? BAISSE : 17)
       const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : vieVerte() ? VERT_DE_LA_VIE : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
-      if (m.coque < coqueConnue - 1e-6) {
+      if (m.coque < coqueConnue - 0.04) { // (la corruption qui ronge d'un rien à chaque image n'est pas un coup)
         const depuis = fantomeA(coqueConnue)
         coqueFantome = depuis
         coqueCoupA = t
@@ -9695,6 +9709,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLEcusson(ex + 1, oy + 4 + bond, blanc, true)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
+      const corrompu = Math.max(0, Math.min(val, m.corruption / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
       const dc = t - coqueCoupA
       p.rect(bx - 1, by - 1, lw + 2, BH + 2, cerneDuBlindage())
@@ -9705,7 +9720,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const u = 1 - (y + 0.5) / BH
         for (let x = 0; x < lw; x++) {
           let c: number
-          if (u < val) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
+          if (u < val - corrompu) c = x < 1 ? or[0] : x < lw - 2 ? or[1] : or[2]
+          else if (u < val) c = tonDeLaCorruption(y, x < 1 ? 0 : x < lw - 2 ? 1 : 2)
           else if (u < fant) c = dc < 0.07 ? N.WHITE : x < 1 ? N.hex('#ff6a5a') : x < lw - 2 ? N.hex('#e02a2a') : N.hex('#9a1a1a') // (LA ZONE PERDUE EN ROUGE, plus en jaune très clair — Keko, 14/11)
           else c = (DEUX_BARRES ? null : teinteDuBouclier((u - fant) * TOT, x < 1 ? 0 : x < lw - 2 ? 1 : 2)) ?? (x < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
           p.px(bx + x, by + y, traits.has(by + y) ? assombrie(c) : c)
@@ -9774,7 +9790,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bh = DEUX_BARRES ? 6 : 8
     const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : vieVerte() ? VERT_DE_LA_VIE : [PEPITE[3], PEPITE[2], PEPITE[1]]
     // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
-    if (m.coque < coqueConnue - 1e-6) {
+    if (m.coque < coqueConnue - 0.04) { // (la corruption qui ronge d'un rien à chaque image n'est pas un coup)
       const depuis = fantomeA(coqueConnue)
       coqueFantome = depuis
       coqueCoupA = t
@@ -9795,6 +9811,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
     const val = Math.max(0, Math.min(1, m.coque / TOT))
+    const corrompu = Math.max(0, Math.min(val, m.corruption / TOT))
     const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
     const dc = t - coqueCoupA
     p.rect(bx - 1, by - 1, BW + 2, bh + 2, cerneDuBlindage())
@@ -9805,7 +9822,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = (x + 0.5) / BW
       for (let v = 0; v < bh; v++) {
         let c: number
-        if (u < val) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
+        if (u < val - corrompu) c = v < 1 ? or[0] : v < bh - 2 ? or[1] : or[2]
+        else if (u < val) c = tonDeLaCorruption(x, v < 1 ? 0 : v < bh - 2 ? 1 : 2)
         else if (u < fant) c = dc < 0.07 ? N.WHITE : v < 1 ? N.hex('#ff6a5a') : v < bh - 2 ? N.hex('#e02a2a') : N.hex('#9a1a1a') // (la zone perdue en rouge)
         else c = (DEUX_BARRES ? null : teinteDuBouclier((u - fant) * TOT, v < 1 ? 0 : v < bh - 2 ? 1 : 2)) ?? (v < 1 ? CREUX_DES_BARRES[0] : CREUX_DES_BARRES[1])
         p.px(bx + x, by + v, traits.has(x) ? assombrie(c) : c)
@@ -10518,16 +10536,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         bouclierA = t
         // (le coup d'essai vient d'un côté qui tourne : la bulle montre son onde, et sa fêlure au dernier point)
         coupsAuBouclier.push({ x: v.x + Math.cos(t * 2.3) * 20, y: v.y + Math.sin(t * 2.3) * 20, t0: t, brise: m.bouclier <= 0 })
-      } else if (m.plaques.length > 0) {
-        // (un vaisseau à plaques : le coup d'essai passe par elles, comme un vrai — au bout, tout revient)
+      } else if (m.plaques.length > 0 || CONF.corruption.ronge > 0) {
+        // (un vaisseau à plaques ou corruptible : le coup d'essai passe par la règle, comme un vrai — au bout, tout revient)
         if (m.coque <= 1.3) {
           m.coque = CONF.coque
           m.plaques = m.plaques.map(() => true)
+          m.corruption = 0
         } else {
           const evs: Evenement[] = []
           encaisser(CONF, m, v.x, v.y, 0.8, evs)
           for (const e of evs) if (e.type === 'plaque') (plaquesCasseesA[e.k] = t), jouer('plaque')
-          if (evs.some((e) => e.type === 'touche')) toucheA = t
+          if (evs.some((e) => e.type === 'touche' || e.type === 'corrompu')) toucheA = t
         }
       } else {
         m.coque = m.coque > 1.3 ? m.coque - 0.8 : CONF.coque
@@ -10880,6 +10899,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 100)
                 etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.4), R.next() < 0.5 ? N.WHITE : VERRIERE[2], 1, 2.5)
+              }
+              break
+            }
+            case 'corrompu': {
+              // LE COUP CORROMPT (les Innommés) : comme un coup dans la coque — le son, la secousse —, mais les étincelles
+              // sont violettes et la barre ne baisse pas : sa part touchée devient violette
+              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('touche')
+              toucheA = t
+              secousse = Math.max(secousse, 0.6)
+              if (typeof navigator.vibrate === 'function') navigator.vibrate(35)
+              for (let i = 0; i < 10; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(30, 100)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), i % 3 === 0 ? N.WHITE : CORRUPTION[1 + (i % 2)], 1, 2.5)
+              }
+              break
+            }
+            case 'purge': {
+              // UN INSECTE ABATTU PURGE LA CORRUPTION : un frisson qui remonte, un filet violet de l'insecte au vaisseau, la
+              // barre qui s'éclaire
+              jouer('purge')
+              purgeA = t
+              for (let i = 0; i < 6; i++) {
+                const u = i / 6
+                etincelles.ajouter('etincelle', ev.x + (v.x - ev.x) * u, ev.y + (v.y - ev.y) * u, (v.x - ev.x) * 1.5, (v.y - ev.y) * 1.5, 0.12 + 0.05 * i, i % 2 === 0 ? CORRUPTION[0] : CORRUPTION[1], 1, 2)
               }
               break
             }

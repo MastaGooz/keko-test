@@ -15,14 +15,15 @@ console.log('flotte')
 verifier('chaque modèle : des pièces du catalogue, sa série parmi elles, une suite de missions qui ouvre ses pièces, chacune une fois', MODELES.every((mo) => mo.pieces.every((id) => pieceDe(id) !== undefined) && mo.serie.possedees.every((id) => mo.pieces.includes(id)) && mo.chaine.every((mi) => mo.pieces.includes(mi.ouvre) && !mo.serie.possedees.includes(mi.ouvre) && mi.cible > 0) && new Set(mo.chaine.map((mi) => mi.ouvre)).size === mo.chaine.length))
 // (LA VIE SELON LA RACE — Keko, 17/11)
 {
-  const base = { coque: 5, bouclier: { points: 3, delai: 4, regain: 0.5 }, regeneration: 0, plaques: 0 }
+  const base = { coque: 5, bouclier: { points: 3, delai: 4, regain: 0.5 }, regeneration: 0, plaques: 0, corruption: { ronge: 0, purge: 0 } }
   const e = vieSelonLaRace('etheres', base)
   const s = vieSelonLaRace('essaim', base)
   verifier('les Éthérés : un bouclier beaucoup plus gros que leur blindage, très fragile, et qui se répare plus vite et plus tôt', e.bouclier.points > 2 * e.coque && e.coque < base.coque && e.bouclier.regain > base.bouclier.regain && e.bouclier.delai < base.bouclier.delai)
   verifier('l’Essaim : aucun bouclier, une coque qui se régénère en permanence, plus lentement que le bouclier', s.bouclier.points === 0 && s.regeneration > 0 && s.regeneration < base.bouclier.regain && talentsHorsDeLaRace('essaim').includes('bouclier'))
   const h = vieSelonLaRace('humains', base, 4)
-  verifier('les humains : pas de bouclier, des plaques — autant que le vaisseau en porte', h.bouclier.points === 0 && h.plaques === 4 && h.coque === base.coque && talentsHorsDeLaRace('humains').includes('bouclier'))
-  verifier('les Innommés gardent la vie de toujours', JSON.stringify(vieSelonLaRace('innommes', base)) === JSON.stringify(base))
+  verifier('les humains : pas de bouclier, des plaques — autant que le vaisseau en porte —, le blindage le plus épais', h.bouclier.points === 0 && h.plaques === 4 && h.coque === base.coque + 2 && talentsHorsDeLaRace('humains').includes('bouclier'))
+  const i = vieSelonLaRace('innommes', base)
+  verifier('les Innommés : pas de bouclier, la corruption — elle ronge et se purge', i.bouclier.points === 0 && i.corruption.ronge > 0 && i.corruption.purge > 0 && i.coque === base.coque && talentsHorsDeLaRace('innommes').includes('bouclier') && talentsHorsDeLaRace('etheres').length === 0)
 }
 // (TROIS VAISSEAUX PAR RACE — Keko, 17/11 ; le cuirassé, mis de côté, n'en est pas)
 verifier('trois vaisseaux par race, le cuirassé mis de côté', RACES.every((r) => MODELES.filter((mo) => mo.race === r.id && mo.id !== 'cuirasse').length === 3))

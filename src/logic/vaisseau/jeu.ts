@@ -81,16 +81,20 @@ export const VAISSEAU = {
    */
   regeneration: 0,
   /**
-   * LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11 : « une plaque protège la portion de la barre de vie sur laquelle
-   * elle se trouve, en encaissant totalement un dégât subi à la place de la barre — que ce soit 1 ou 4 points ; une fois
-   * la plaque détruite, la portion de barre à côté d'elle est touchée ; quand on en arrive à la deuxième plaque, c'est
-   * elle qui encaisse le coup ») : la barre de la coque est coupée en autant de portions égales, une plaque à côté de
-   * chacune ; le premier coup qui tombe dans une portion dont la plaque tient est pris tout entier par elle, et elle
-   * casse ; un coup qui ferait descendre la coque dans une portion encore protégée s'arrête au bord de cette portion, et
-   * sa plaque casse. Elles ne se réparent pas (elles reviennent pleines quand le vaisseau revient au portail). Zéro :
-   * aucune plaque.
+   * LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11 — d'abord une plaque par portion de la barre ; puis « tout
+   * simplement : tu as 3 plaques, tu peux subir 3 coups avant que ta vraie barre de vie soit entamée ; l'histoire de
+   * correspondre à des portions de vie va rendre les joueurs confus ») : tant qu'il reste une plaque, LE COUP EST PRIS
+   * TOUT ENTIER par la première encore debout (que ce soit 1 ou 4 points), et elle casse ; ensuite seulement la coque est
+   * touchée. Elles ne se réparent pas (elles reviennent pleines quand le vaisseau revient au portail). Zéro : aucune.
    */
   plaques: 0,
+  /**
+   * LA CORRUPTION (les Innommés, Keko, 17/11 : les blessures différées, « quelque chose qui se voit sur la barre de vie
+   * pour comprendre rapidement son fonctionnement ») : un coup ne vide pas la coque — LA PART TOUCHÉE DEVIENT CORROMPUE (la
+   * vie en sursis), puis LA CORRUPTION RONGE la coque de `ronge` points par seconde ; chaque insecte abattu en PURGE `purge`
+   * points (ils reviennent sains). La coque toute corrompue, le coup suivant passe tout droit. `ronge` à zéro : aucune.
+   */
+  corruption: { ronge: 0, purge: 0 },
   /**
    * L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11 : « quand le vaisseau touche un ennemi, il devrait subir des dégâts,
    * clignoter une petite seconde, et pendant cet intervalle ne pas pouvoir prendre d'autres dégâts ; sinon on peut se
@@ -698,6 +702,8 @@ export type Monde = {
   plaques: boolean[]
   /** Jusqu'à quel instant (`t` du monde) le joueur ne prend plus de coup — voir `invulnerabilite`. */
   intouchableJusque: number
+  /** La part de la coque qui est corrompue (en points, jamais plus que la coque) — voir la configuration. */
+  corruption: number
   toucheA: number
   forage: Forage | null
   /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
@@ -835,8 +841,12 @@ export type Evenement =
   | { type: 'touche'; x: number; y: number }
   /** Le bouclier a pris le coup à la place de la coque. */
   | { type: 'bouclier'; x: number; y: number }
-  /** Une plaque de blindage a pris le coup, et cassé (`k` : sa portion, depuis le haut de la barre). */
+  /** Une plaque de blindage a pris le coup, et cassé (`k` : laquelle, depuis la première). */
   | { type: 'plaque'; x: number; y: number; k: number }
+  /** Le coup a corrompu la coque (les Innommés) : elle ne baisse pas encore. */
+  | { type: 'corrompu'; x: number; y: number }
+  /** Un insecte abattu a purgé de la corruption (`x`, `y` : où il est mort). */
+  | { type: 'purge'; x: number; y: number }
   /** Une arme du joueur tire. */
   | { type: 'obus'; x: number; y: number; arme: string }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -930,7 +940,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1188,10 +1198,17 @@ export function larguer(m: Monde, minerai: Minerai, combien: number): number {
 }
 
 /** L'ennemi est abattu : il quitte le monde, le suivant est annoncé, il rend son butin et des pépites. */
+/** LA PURGE (les Innommés) : un insecte abattu en (x, y) rend saine une part de la corruption — voir la configuration. */
+export function purger(c: ConfigVaisseau, m: Monde, x: number, y: number, ev: Evenement[]): void {
+  if (c.corruption.purge <= 0 || m.corruption <= 0 || m.phase !== 'vol') return
+  m.corruption = Math.max(0, m.corruption - c.corruption.purge)
+  ev.push({ type: 'purge', x, y })
+}
 function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
   if (c.invasion.active) m.invasion.abattus += 1
+  purger(c, m, e.corps.x, e.corps.y, ev)
   ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy, brule: (e.bruleA ?? -1) > m.t, gele: (e.bruleA ?? -1) <= m.t && (e.geleA ?? -1) > m.t })
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
@@ -1518,31 +1535,23 @@ export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, deg
     ev.push({ type: 'bouclier', x, y })
     if (reste <= 1e-9) return
   }
-  // LES PLAQUES (voir la configuration) : celle de la portion où est la coque prend le coup entier ; sinon, le coup
-  // s'arrête au bord de la première portion encore protégée qu'il atteindrait, et sa plaque casse
-  const n = m.plaques.length
-  if (n > 0) {
-    const part = c.coque / n
-    const portion = (h: number): number => Math.min(n - 1, Math.max(0, Math.floor((c.coque - h) / part + 1e-9)))
-    const k = portion(m.coque)
-    if (m.plaques[k]) {
-      m.plaques[k] = false
-      ev.push({ type: 'plaque', x, y, k })
-      return
-    }
-    // (la dernière portion où le coup descend VRAIMENT : un coup qui s'arrête pile au bord d'une portion protégée n'y entre
-    // pas, sa plaque reste debout — Keko, 17/11 : « que se passe-t-il si les dégâts finissent à son niveau ? »)
-    const jusque = Math.min(n - 1, Math.max(0, Math.floor((c.coque - Math.max(0, m.coque - reste)) / part - 1e-9)))
-    for (let j = k + 1; j <= jusque; j++)
-      if (m.plaques[j]) {
-        m.plaques[j] = false
-        m.coque = c.coque - j * part
-        ev.push({ type: 'plaque', x, y, k: j })
-        ev.push({ type: 'touche', x, y })
-        return
-      }
+  // LES PLAQUES (voir la configuration) : la première encore debout prend le coup tout entier
+  const k = m.plaques.indexOf(true)
+  if (k >= 0) {
+    m.plaques[k] = false
+    ev.push({ type: 'plaque', x, y, k })
+    return
+  }
+  // LA CORRUPTION (voir la configuration) : le coup corrompt la part saine de la coque ; ce qui dépasse passe tout droit
+  if (c.corruption.ronge > 0) {
+    const pris = Math.min(Math.max(0, m.coque - m.corruption), reste)
+    m.corruption += pris
+    reste -= pris
+    ev.push({ type: 'corrompu', x, y })
+    if (reste <= 1e-9) return
   }
   m.coque -= reste
+  m.corruption = Math.min(m.corruption, Math.max(0, m.coque))
   ev.push({ type: 'touche', x, y })
   if (m.coque <= 0) {
     m.coque = 0
@@ -3126,6 +3135,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   m.bouclier = c.bouclier.points
   m.plaques = Array.from({ length: c.plaques }, () => true)
   m.intouchableJusque = m.t + c.invulnerabilite // (il revient en clignotant : rien ne le touche le temps d'un souffle)
+  m.corruption = 0
   m.toucheA = -100
   m.phase = 'vol'
   ev.push({ type: 'retour' })
@@ -3195,6 +3205,20 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
   // la coque se régénère, sans attendre (l'Essaim)
   if (c.regeneration > 0 && m.coque > 0 && m.coque < c.coque) m.coque = Math.min(c.coque, m.coque + c.regeneration * dt)
+  // la corruption ronge la coque (les Innommés) ; toute rongée, la partie est perdue
+  if (c.corruption.ronge > 0 && m.corruption > 0) {
+    const d = Math.min(m.corruption, c.corruption.ronge * dt)
+    m.corruption -= d
+    m.coque -= d
+    if (m.coque <= 1e-9) {
+      m.coque = 0
+      m.corruption = 0
+      m.phase = 'perdu'
+      if (c.invasion.active) m.invasion.retourA = m.t + c.invasion.penalite
+      ev.push({ type: 'perdu' })
+      return { chocs: [], evenements: ev }
+    }
+  }
   // LA POSTCOMBUSTION : la poussée et la pointe multipliées le temps qu'elle dure, la pointe qui retombe ensuite ; sans
   // manche, elle pousse droit devant
   const boost = partDeLaPostcombustion(c, m)

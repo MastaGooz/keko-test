@@ -49,18 +49,21 @@ export const RACES: { id: Race; nom: string }[] = [
  * leur spécificité. `coque`, `bouclier` : ce que donnent les pièces (le bouclier de base du jeu compris). *Les chiffres
  * sont de moi, à rejuger en jouant.*
  */
-export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number; plaques: number }
-// LES HUMAINS : PAS DE BOUCLIER, DES PLAQUES DE BLINDAGE (Keko, 17/11 : chacune protège sa portion de la barre de vie et
-// encaisse tout un coup à sa place ; « on peut même varier le nombre de plaques selon les vaisseaux » — `plaques`, celles du
-// modèle). Elles ne se réparent pas.
+export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number; plaques: number; corruption: { ronge: number; purge: number } }
+// LES HUMAINS : PAS DE BOUCLIER, DES PLAQUES DE BLINDAGE (Keko, 17/11 : chacune encaisse tout un coup avant que la barre
+// soit entamée ; « on peut même varier le nombre de plaques selon les vaisseaux » — `plaques`, celles du modèle) ; et LE
+// BLINDAGE LE PLUS ÉPAIS (plus 2) : rien ne se répare, ils doivent tenir sur une seule vie.
+// LES INNOMMÉS : PAS DE BOUCLIER, LA CORRUPTION (les blessures différées) : un coup corrompt, la corruption ronge un demi-
+// point par seconde, chaque insecte abattu en purge un demi-point.
 export function vieSelonLaRace(race: Race, v: Vie, plaques = 3): Vie {
-  if (race === 'humains') return { ...v, bouclier: { ...v.bouclier, points: 0 }, plaques }
+  if (race === 'humains') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, plaques }
+  if (race === 'innommes') return { ...v, bouclier: { ...v.bouclier, points: 0 }, corruption: { ronge: 0.5, purge: 0.5 } }
   if (race === 'etheres') return { ...v, coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
   if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.12) }
   return v
 }
-/** Les talents qu'une race ne se voit jamais proposer (l'Essaim et les humains n'ont pas de bouclier à étendre ni à recharger). */
-export const talentsHorsDeLaRace = (race: Race): string[] => (race === 'essaim' || race === 'humains' ? ['bouclier', 'recharge'] : [])
+/** Les talents qu'une race ne se voit jamais proposer (seuls les Éthérés ont un bouclier à étendre et à recharger). */
+export const talentsHorsDeLaRace = (race: Race): string[] => (race === 'etheres' ? [] : ['bouclier', 'recharge'])
 
 /** Une mission d'un vaisseau : ce qu'elle compte, jusqu'où, et LA PIÈCE qu'elle ouvre à l'achat sur ce vaisseau. */
 export type MissionDeVaisseau = { titre: string; dit: string; compteur: Compteur; cible: number; ouvre: string }

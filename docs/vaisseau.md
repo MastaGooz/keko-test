@@ -5190,3 +5190,24 @@ bouclier, lui, commence à se réparer très rapidement après un certain temps 
 - L'ESSAIM A DE LA VIE, PAS DU BLINDAGE (Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un
   aspect plus point de vie, alors que les autres en jaune ont du blindage ») : sa barre est verte en vol (`VERT_DE_LA_VIE`,
   `vieVerte`), et sa fiche dit « Vie » et « Régénération », en vert.
+
+### Le vortex, les plaques simplifiées et la corruption des Innommés (17/11)
+
+Keko : « simplifier le système des plaques : tu as 3 plaques, tu peux subir 3 coups avant que ta vraie barre de vie soit
+entamée ; l'histoire de correspondre à des portions de vie va rendre les joueurs confus » ; puis, pour les Innommés,
+« quelque chose qui visuellement se voit sur la barre de vie pour comprendre rapidement son fonctionnement » — « ok pour
+tes propositions pour les humains et pour la corruption avec les dégâts différés ». (Il a écrit « la corruption des
+éthérés » : c'était celle des Innommés, proposée pour eux ; les Éthérés gardent leur bouclier.)
+
+- LES PLAQUES : plus de portions — tant qu'il en reste une, la première debout prend le coup tout entier, puis casse ;
+  ensuite seulement la barre. À l'écran, les segments gris se vident l'un après l'autre depuis le haut. LES HUMAINS ONT LE
+  BLINDAGE LE PLUS ÉPAIS (plus 2 : le chasseur 7) — rien ne se répare, ils tiennent sur une seule vie.
+- LA CORRUPTION (`ConfigVaisseau.corruption`, `Monde.corruption`, `encaisser`, `purger`, vérifiés) : un coup ne vide pas
+  la coque, il en CORROMPT la part saine ; la corruption RONGE la coque d'un demi-point par seconde ; chaque insecte abattu
+  en PURGE un demi-point (il redevient sain) ; la coque toute corrompue, ce qui dépasse passe tout droit ; toute rongée, la
+  partie est perdue. Les Innommés n'ont plus de bouclier (ni ses talents) ; blindage 5. *Chiffres de moi, à rejuger.*
+- À L'ÉCRAN : sur la barre, entre l'or sain et le vide, LA PART CORROMPUE EN VIOLET QUI ONDULE (des bandes claires qui
+  descendent), qui recule vers le vide en rongeant ; un coup corrompu sonne et secoue comme un coup, ses étincelles sont
+  violettes ; une purge — un frisson qui remonte (`purge` dans `synthe.ts`), un filet violet de l'insecte au vaisseau, la
+  part violette qui s'éclaire. La fiche dit « Purge », en violet. (Une coque qui baisse d'un rien à chaque image n'est plus
+  prise pour un coup : plus de fantôme ni d'étincelles.)

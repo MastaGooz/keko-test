@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, encaisser, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -1996,7 +1996,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('sans régénération, elle ne bouge pas', sans.coque === 2)
 }
 
-// LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11) : une coque de 6 en trois portions de 2, une plaque à chacune
+// LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11) : trois plaques, les trois premiers coups, quels qu'ils soient
 {
   const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, plaques: 3 }
   const mp = nouveauMonde(c)
@@ -2008,16 +2008,14 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     return ev
   }
   const e1 = coup(4)
-  verifier('la plaque du haut prend tout le premier coup, même gros : la coque est intacte', mp.coque === 6 && !mp.plaques[0] && mp.plaques[1] && e1.some((e) => e.type === 'plaque'))
+  verifier('la première plaque prend tout le premier coup, même gros : la coque est intacte', mp.coque === 6 && !mp.plaques[0] && mp.plaques[1] && e1.some((e) => e.type === 'plaque'))
   coup(1)
-  verifier('sa plaque cassée, la portion du haut est touchée', mp.coque === 5)
-  coup(3)
-  verifier('un coup qui descendrait dans une portion protégée s’arrête à son bord, et sa plaque casse', mp.coque === 4 && !mp.plaques[1] && mp.plaques[2])
+  coup(5)
+  verifier('les deux suivantes prennent les deux coups suivants, petits ou gros', mp.coque === 6 && mp.plaques.every((x) => !x))
   coup(1)
-  coup(2)
-  verifier('le coup qui descendrait dans la dernière portion s’arrête à son bord, et sa plaque casse', mp.coque === 2 && !mp.plaques[2])
-  const morte = coup(5)
-  verifier('les plaques toutes cassées, le coup passe : la coque est percée', mp.coque === 0 && morte.some((e) => e.type === 'perdu'))
+  verifier('les plaques cassées, la coque est touchée', mp.coque === 5)
+  const morte = coup(9)
+  verifier('et percée', mp.coque === 0 && morte.some((e) => e.type === 'perdu'))
 }
 
 // L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11) : un insecte qui touche donnait deux coups dans la même image
@@ -2033,23 +2031,28 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('pendant l’invulnérabilité, rien ne passe', mi.coque === 6)
   mi.t += c.invulnerabilite
   encaisser(c, mi, 0, 0, 1, ev)
-  verifier('passée, le coup suivant compte', mi.coque === 5)
+  verifier('passée, le coup suivant compte (la plaque suivante le prend)', mi.coque === 6 && !mi.plaques[1] && mi.plaques[2])
 }
 
-// UN COUP QUI S'ARRÊTE PILE AU BORD D'UNE PORTION PROTÉGÉE (Keko, 17/11) : la plaque de cette portion reste debout
+// LA CORRUPTION (les Innommés, Keko, 17/11) : le coup corrompt, la corruption ronge, l'insecte abattu la purge
 {
-  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, plaques: 3 }
-  const mb = nouveauMonde(c)
-  const coup = (d: number): void => {
-    mb.t += c.invulnerabilite + 0.01
-    encaisser(c, mb, 0, 0, d, [])
-  }
-  coup(1)
-  coup(1)
-  coup(1)
-  verifier('le coup qui finit pile au bord de la portion suivante ne casse pas sa plaque', mb.coque === 4 && !mb.plaques[0] && mb.plaques[1])
-  coup(3)
-  verifier('elle prend alors tout entier le coup suivant', mb.coque === 4 && !mb.plaques[1] && mb.plaques[2])
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 5, corruption: { ronge: 0.5, purge: 0.5 } }
+  const mc = nouveauMonde(c)
+  const ev: Evenement[] = []
+  encaisser(c, mc, 0, 0, 2, ev)
+  verifier('un coup ne vide pas la coque : il la corrompt', mc.coque === 5 && mc.corruption === 2 && ev.some((e) => e.type === 'corrompu'))
+  for (let i = 0; i < 60; i++) avancerLeMonde(c, mc, 1 / 60, { x: 0, y: 0 })
+  verifier('la corruption ronge la coque d’un demi-point par seconde', Math.abs(mc.coque - 4.5) < 0.02 && Math.abs(mc.corruption - 1.5) < 0.02)
+  const avant = mc.corruption
+  const pe: Evenement[] = []
+  purger(c, mc, 0, 0, pe)
+  verifier('un insecte abattu purge un demi-point, rendu sain', Math.abs(mc.corruption - (avant - 0.5)) < 1e-9 && Math.abs(mc.coque - 4.5) < 0.02 && pe.some((e) => e.type === 'purge'))
+  const md = nouveauMonde(c)
+  md.t += 5
+  encaisser(c, md, 0, 0, 7, [])
+  verifier('la coque toute corrompue, ce qui dépasse passe tout droit', md.corruption === md.coque && md.coque === 3)
+  for (let i = 0; i < 60 * 8 && md.phase === 'vol'; i++) avancerLeMonde(c, md, 1 / 60, { x: 0, y: 0 })
+  verifier('toute rongée, la partie est perdue', md.phase === 'perdu' && md.coque === 0)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
