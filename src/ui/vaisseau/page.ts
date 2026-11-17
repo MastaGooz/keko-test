@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, boucheDansLeMonde, drainesPar, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, boucheDansLeMonde, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -3607,7 +3607,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’insectes.',
     'arme-puits': 'Une singularité qui aspire les insectes vers son cœur, puis éclate.',
-    'arme-drain': 'Il draine la vie de tout ce qui l’entoure, et purge sa corruption.',
+    'arme-drain': 'Il accroche deux âmes et les draine, à toute distance ; leur vie purge sa corruption.',
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
   }
@@ -3643,7 +3643,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * cristal tous les 40 de trajet, les mines autour de lui — en glissant de 22 de haut en bas, il empilait tout sur place.
    * Avec elles, il FAIT UN CIRCUIT : un ovale à travers le cadre, le nez dans sa course.
    */
-  const ARMES_EN_CIRCUIT = new Set(['arme-givre', 'arme-mines', 'arme-balises', 'arme-cristaux'])
+  // (… ET LE DRAIN D'ÂME : il accroche, puis s'en va — on voit le lien tenir à distance)
+  const ARMES_EN_CIRCUIT = new Set(['arme-givre', 'arme-mines', 'arme-balises', 'arme-cristaux', 'arme-drain'])
   function avancerLApercu(a: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number }, w: number, h: number): number {
     const circuit = ARMES_EN_CIRCUIT.has(a.arme)
     // (l'ovale : centré sur le cadre, aux trois dixièmes de sa largeur et de sa hauteur, parcouru à 45 par seconde environ)
@@ -8101,7 +8102,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const C = OMBRE
     const sx = v.x
     const sy = v.y
-    const pris = drainesPar(CONF, m, dr)
+    const pris = liesAuDrain(m)
     p.place(W / 2 - camera.x, centreY() - camera.y)
     // (le rayon, à peine : un cercle de grains qui tourne lentement)
     for (let k = 0; k < 24; k++) {
@@ -8115,7 +8116,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nx = -(sy - ey) / L
       const ny = (sx - ex) / L
       // (sa courbe : une cubique de l'insecte au vaisseau, cambrée d'un côté propre à lui)
-      const cambre = (((e.id * 7919) % 100) / 100 - 0.5) * 0.9 * L
+      const cambre = (((e.id * 7919) % 100) / 100 - 0.5) * 0.9 * Math.min(L, 50)
       const c1x = ex + (sx - ex) * 0.35 + nx * cambre
       const c1y = ey + (sy - ey) * 0.35 + ny * cambre
       const c2x = sx + (ex - sx) * 0.25 + nx * cambre * 0.3
@@ -11694,6 +11695,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 10; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.4), i % 3 === 0 ? OMBRE[6] : OMBRE[4], 1, 1.5)
+          }
+          break
+        case 'accroche':
+          // (le drain accroche une âme : un anneau qui se referme sur l'insecte, le frisson)
+          jouer('purge')
+          for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2
+            etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 9, ev.y + Math.sin(a) * 9, -Math.cos(a) * 45, -Math.sin(a) * 45, 0.18, i % 2 === 0 ? OMBRE[7] : OMBRE[5], 1, 1.5)
           }
           break
         case 'saisie':

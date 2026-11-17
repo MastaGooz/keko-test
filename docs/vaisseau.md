@@ -5354,3 +5354,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   allonge il S'ARRACHE : 12 points d'un coup, et elle le lâche. Sa proie morte ou partie, elle en saisit une autre. Le
   dessin : la tentacule file en courbe jusqu'à l'insecte en 0,15 s et s'enroule d'un tour et demi autour de lui, une
   boucle FINE, écartée de lui (épaisse, elle le cachait), une lueur qui court de la flaque à l'étreinte.
+- LE DRAIN D'ÂME ACCROCHE (Keko, 17/11 : « trop proche de la nuée du Kraken » en jeu ; « le drain accroche les cibles et
+  continue d'être actif quand on s'éloigne ; la portée ne sert qu'à accrocher » — ce qui le sépare de la nuée et de
+  l'aura de la Sentinelle) : un insecte qui passe à moins de 42 est ACCROCHÉ — deux liens à la fois, le verrouillé
+  d'abord — et le lien TIENT À TOUTE DISTANCE jusqu'à sa mort ; sa place se libère alors pour le suivant (`Monde.liens`,
+  `liesAuDrain`, l'événement `accroche` : un anneau qui se referme sur l'âme, le frisson). La courbe ne se cambre plus
+  au-delà de 50 : loin, le lien se tend. Son aperçu tourne en circuit, pour qu'on voie le lien tenir. Proposées et
+  écartées : la marque différée, la faim (plus fort blessé), les âmes en réserve.

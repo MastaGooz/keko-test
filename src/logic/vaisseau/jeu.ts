@@ -630,7 +630,11 @@ export type Arme = {
    * une autre arme n'en purge que `corruption.purge`, une fois.
    * (… DEUX INSECTES À LA FOIS AU PLUS — Keko, 17/11 : « on va limiter le drain d'âme à deux ennemis simultanément ; avec
    * les améliorations durant une run, on pourra augmenter ce nombre » : `cibles` — le verrouillé d'abord, puis les plus
-   * proches ; voir `drainesPar`)
+   * proches)
+   * (… ET IL ACCROCHE — Keko, 17/11 : « le drain accroche les cibles et continue d'être actif quand on s'éloigne ; la
+   * portée ne sert qu'à accrocher la cible, et peu importe la distance, le drain continue » : un insecte à moins de `rayon`
+   * est ACCROCHÉ — `cibles` liens à la fois — et le lien tient, à toute distance, jusqu'à sa mort ; alors la place se
+   * libère pour le prochain qui passe à portée. L'état est `Monde.liens` ; voir `liesAuDrain`)
    */
   drain?: { rayon: number; dps: number; purge: number; cibles: number }
   /**
@@ -829,6 +833,8 @@ export type Monde = {
   fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number>; frappesChaine: Record<number, number> }[]
   /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number }[]
+  /** LES LIENS DU DRAIN D'ÂME (voir `Arme.drain`) : son arme, l'âme accrochée, depuis quand. */
+  liens: { arme: number; cible: number; depuis: number }[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
   vrilles: { id: number; arme: number; x: number; y: number; nee: number; libreA: number; cible: number | null; saisieA: number; signaleA: number }[]
 }
@@ -944,6 +950,8 @@ export type Evenement =
   | { type: 'rejetonFini'; x: number; y: number }
   /** Une vrille d'ombre sort de sa flaque, saisit sa proie, la serre (signalé toutes les `periode` secondes), se fait arracher par un grand, rentre (voir `Arme.vrille`). */
   | { type: 'vrille'; id: number; x: number; y: number }
+  /** Le drain d'âme accroche une âme (voir `Arme.drain`). */
+  | { type: 'accroche'; id: number; x: number; y: number }
   | { type: 'saisie'; id: number; cible: number; x: number; y: number }
   | { type: 'serre'; id: number; x: number; y: number }
   | { type: 'arrache'; id: number; x: number; y: number }
@@ -983,7 +991,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2573,30 +2581,42 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
-/** LES INSECTES QUE LE DRAIN D'ÂME TIENT (voir `Arme.drain`) : à portée, `cibles` au plus — le verrouillé d'abord, puis les plus proches. Le dessin lit les mêmes. */
-export function drainesPar(c: ConfigVaisseau, m: Monde, dr: { rayon: number; cibles: number }): Ennemi[] {
-  const v = m.vaisseau
-  const d = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-  const dans = m.ennemis.filter((e) => d(e) <= dr.rayon + c.ennemi.rayon).sort((p, q) => d(p) - d(q))
-  const ve = ennemiVerrouille(m)
-  if (ve !== null && dans.includes(ve)) dans.splice(dans.indexOf(ve), 1), dans.unshift(ve)
-  return dans.slice(0, dr.cibles)
-}
+/** LES INSECTES QUE LE DRAIN D'ÂME TIENT (voir `Arme.drain`) : ceux de ses liens, toujours en vie. Le dessin lit les mêmes. */
+export const liesAuDrain = (m: Monde): Ennemi[] => m.liens.flatMap((l) => m.ennemis.filter((e) => e.id === l.cible))
 
-/** LE DRAIN D'ÂME (voir `Arme.drain`) : ce qu'il tient perd sa vie, et ce qui est pris purge la corruption. */
+/** LE DRAIN D'ÂME (voir `Arme.drain`) : il accroche les âmes à portée, les draine à toute distance, et ce qui est pris purge la corruption. */
 function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   if (m.phase !== 'vol') return
-  for (const a of c.armes) {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
     const dr = a.drain
-    if (dr === undefined) continue
-    for (const e of drainesPar(c, m, dr)) {
+    if (dr === undefined) return
+    // (un lien dont l'âme est morte se défait : la place se libère)
+    m.liens = m.liens.filter((l) => l.arme !== i || m.ennemis.some((e) => e.id === l.cible))
+    const siens = m.liens.filter((l) => l.arme === i).length
+    if (siens < dr.cibles) {
+      // (LA PORTÉE N'ACCROCHE QUE : le verrouillé d'abord, puis les plus proches, qu'aucun lien ne tient déjà)
+      const tenus = new Set(m.liens.map((l) => l.cible))
+      const d = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+      const dans = m.ennemis.filter((e) => !tenus.has(e.id) && d(e) <= dr.rayon + c.ennemi.rayon).sort((p, q) => d(p) - d(q))
+      const ve = ennemiVerrouille(m)
+      if (ve !== null && dans.includes(ve)) dans.splice(dans.indexOf(ve), 1), dans.unshift(ve)
+      for (const e of dans.slice(0, dr.cibles - siens)) {
+        m.liens.push({ arme: i, cible: e.id, depuis: m.t })
+        ev.push({ type: 'accroche', id: e.id, x: e.corps.x, y: e.corps.y })
+      }
+    }
+    // (ET LE LIEN TIENT, À TOUTE DISTANCE : l'âme perd sa vie, qui revient au vaisseau)
+    for (const l of m.liens.filter((x) => x.arme === i)) {
+      const e = m.ennemis.find((x) => x.id === l.cible)
+      if (e === undefined) continue
       const pris = Math.min(Math.max(0, e.pv), dr.dps * dt)
       e.pv -= dr.dps * dt
       // (la vie prise revient au vaisseau : la part corrompue de sa coque redevient saine — les Innommés)
       if (c.corruption.ronge > 0 && m.corruption > 0) m.corruption = Math.max(0, m.corruption - pris * dr.purge)
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
-  }
+  })
 }
 
 /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : la sortie en un point tiré autour du vaisseau, la saisie, l'étreinte, l'arrachement, la fin. */
@@ -3344,7 +3364,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
