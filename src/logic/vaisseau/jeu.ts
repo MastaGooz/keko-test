@@ -480,6 +480,9 @@ export type Arme = {
    * `anneaux` anneaux, tous les `ecart` le long DU CHEMIN QU'IL A PRIS (son corps le suit : voir `Monde.sillage`), une épine
    * de chaque côté, perpendiculaire au corps à cet endroit ; chacune file à `vitesse` (celle de l'arme) et frappe le premier
    * insecte qu'elle touche (`degats`).
+   * (… EN LIGNE DROITE, SANS VISER — Keko, 17/11 : « tu peux tirer les épines en ligne droite sans viser l'ennemi ? » : la
+   * salve part à sa cadence, qu'il y ait un insecte ou non, et toutes les épines filent PERPENDICULAIRES À L'ORIENTATION DU
+   * VAISSEAU — parallèles, deux rangées droites ; elles sortent toujours des anneaux, le long du corps)
    */
   epines?: { anneaux: number; ecart: number; debut: number }
   ponte?: { tous: number; detection: number; attente: number; eclosion: number; max: number; duree: number; vitesse: number; virage: number; vue: number; rayon: number; venin: { duree: number; dps: number } }
@@ -2730,12 +2733,11 @@ function lancerLesEpines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   c.armes.forEach((a, i) => {
     const ep = a.epines
     if (ep === undefined || m.t < (m.armesA[i] ?? 0)) return
-    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
     m.armesA[i] = m.t + a.cadence
     for (let k = 0; k < ep.anneaux; k++) {
       const s = surLeSillage(m, ep.debut + k * ep.ecart)
       for (const cote of [-1, 1]) {
-        const an = s.cap + (cote * Math.PI) / 2
+        const an = v.cap + (cote * Math.PI) / 2
         const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
         m.obus.push({ id: m.prochainId++, x: s.x + Math.cos(an) * 3, y: s.y + Math.sin(an) * 3, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique })
       }

@@ -5469,3 +5469,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   `surLeSillage`, la même géométrie que le dessin du ver) : dans un virage, la salve suit la courbe. Chacune file à 170,
   0,35 s, et frappe le premier insecte touché (5 points). Le dessin : une aiguille d'os de cinq pixels, la pointe blanche.
   *Chiffres de moi, à rejuger.*
+- LES ÉPINES EN LIGNE DROITE, SANS VISER (Keko, 17/11 : « tu peux tirer les épines en ligne droite sans viser l'ennemi ? ») :
+  la salve part à sa cadence même sans insecte, et toutes les épines filent PERPENDICULAIRES À L'ORIENTATION DU VAISSEAU —
+  deux rangées droites et parallèles ; elles sortent toujours des anneaux. (Elles s'ouvraient en éventail selon la courbe
+  du corps, ce qui pouvait se lire comme une visée.)
