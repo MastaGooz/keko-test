@@ -1525,15 +1525,18 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
   // (EN VOL, COMME UN SERPENT — Keko, 17/11 : « dans les virages, que le ver se torde ; là, il tourne en rotation ; un peu
   // comme dans Snake » : chaque anneau est posé SUR LE CHEMIN QUE LA TÊTE A PRIS, que la page lui donne ; la vague s'y
   // ajoute, en travers du chemin, moins ample — c'est le chemin qui fait la courbe)
+  // (… SANS CONVULSIONS — Keko, 17/11 : « on dirait que le ver a des convulsions, il vibre bizarrement » : la tête est au
+  // centre du vaisseau, sur le chemin même — plus devant lui, selon un cap qui tourne ; la vague du chemin est douce et
+  // régulière, elle ne suit plus la poussée, qui varie sans cesse)
   if (chemin !== undefined && chemin.length >= N) {
     for (let k = 1; k <= N; k++) {
       const [cx, cy] = chemin[k - 1]
-      const [ax, ay] = k >= 2 ? chemin[k - 2] : [pts[0].x, 0]
+      const [ax, ay] = k >= 2 ? chemin[k - 2] : [0, 0]
       const l = Math.hypot(ax - cx, ay - cy) || 1
-      const onde = A * 0.45 * Math.sin(phase - k * 0.7) * ((0.8 * k) / N)
+      const onde = 0.5 * Math.sin(t * 4 - k * 0.7) * (k / N)
       pts[k] = { x: cx - ((ay - cy) / l) * onde, y: cy + ((ax - cx) / l) * onde, r: pts[k].r }
     }
-    pts[0] = { ...pts[0], y: A * 0.2 * Math.sin(phase) }
+    pts[0] = { ...pts[0], x: 0, y: 0 }
   }
   const f: Forme[] = []
   const q = pts[N]

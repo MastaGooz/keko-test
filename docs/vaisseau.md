@@ -5425,3 +5425,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   3 s encore après). Le dessin : l'œuf, une cloque luisante qui bat de plus en plus vite, tremble et se fend ; le
   mini-ver, cinq anneaux vert poison sur SON chemin (comme le grand), qui ondulent et pâlissent avant de se dissoudre. Il
   a fallu le grossir de moitié : à neuf pixels, on ne lisait pas ses anneaux. *Chiffres de moi, à rejuger.*
+- LE VER, REPRIS (Keko, 17/11) :
+  - SANS CONVULSIONS (« il vibre bizarrement ») : sa tête est au centre du vaisseau, sur le chemin même, et LE CHEMIN PART
+    DE LÀ OÙ IL EST — les anneaux sautaient d'un demi-pixel à chaque point ajouté ; la vague du chemin est douce et
+    régulière (0,5), elle ne suit plus la poussée.
+  - SES BULLES NAISSENT AU BOUT DE SA QUEUE (« la propulsion ne colle pas à sa queue, surtout quand il tourne ») : la
+    page garde la queue que le chemin a posée (`queueDuVer`).
+  - LA TRAÎNÉE DE POISON EST UNE SEULE FLAQUE (« une superposition de taches bizarres ; comme le crachat de la Vouivre qui
+    laisse une trace dans le sol ») : ses plaques se peignent en deux passes pleines — tous les bords vifs, puis tous les
+    dedans, qui couvrent les bords intérieurs —, un goudron à veines et reflets tirés de la position dans le monde,
+    continus d'une plaque à l'autre ; elle s'efface en rétrécissant.
+  - L'ŒUF, D'APRÈS L'« EGG HATCH » DE PIXELFX, EN ŒUF D'INSECTE (« pas très joli ») : une coque cuireuse ovale, vert pâle,
+    éclairée d'en haut à gauche, la larve roulée dedans ; trois oscillations, chaque fois plus fortes, qui ouvrent des
+    fissures où luit le poison (un éclair blanc à leur ouverture) ; il frissonne, puis ÉCLATE : un éclair, sept rayons,
+    trois ou quatre coquilles qui volent en tournant, leur bord brisé lumineux, de la bave (`dessinerUnOeuf`,
+    `dessinerLesEclosions`).

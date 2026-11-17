@@ -3762,6 +3762,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesTentacules(p)
       dessinerLesVrilles(p)
       dessinerLesOeufs(p)
+      dessinerLesEclosions(p)
       dessinerLesFleaux(p)
       dessinerLeVaisseau(p)
       dessinerLesTirs(p)
@@ -6899,10 +6900,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE CHEMIN DU VER (Keko, 17/11 : « qu'il se déplace un peu comme dans Snake ») : là où le vaisseau est passé, un point
    * tous les demi-pixels de trajet, les plus récents devant — trente-cinq unités de chemin, de quoi poser ses neuf
    * anneaux ; un saut (le retour au portail, l'aperçu qui recommence) l'efface. L'aperçu des armes a le sien. Rend les
-   * anneaux, en unités du vaisseau : chacun à `ECART_DES_ANNEAUX` du précédent LE LONG DU CHEMIN, la tête à 6,6 devant
-   * le centre ; là où le chemin manque (il vient de naître, il n'a pas bougé), il se prolonge tout droit derrière lui.
+   * anneaux, en unités du vaisseau : chacun à `ECART_DES_ANNEAUX` du précédent LE LONG DU CHEMIN, la tête au centre ; là
+   * où le chemin manque (il vient de naître, il n'a pas bougé), il se prolonge tout droit derrière lui.
+   * (… LE CHEMIN PART DE LÀ OÙ IL EST, pas de son dernier point gardé — Keko, 17/11 : « il vibre bizarrement » : les
+   * anneaux sautaient d'un demi-pixel à chaque point ajouté ; et sa QUEUE est gardée, d'où partent ses bulles)
    */
   const tracesDuVer = { vol: [] as [number, number][], apercu: [] as [number, number][] }
+  let queueDuVer: { x: number; y: number; cap: number } | null = null
   const ECART_DES_ANNEAUX = 2.5
   function cheminDuVer(): [number, number][] {
     const tr = enApercu ? tracesDuVer.apercu : tracesDuVer.vol
@@ -6919,19 +6923,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     const ca = Math.cos(v.cap)
     const sa = Math.sin(v.cap)
-    // (le point du chemin à `d` derrière la tête : d'abord tout droit de la tête au centre, puis la trace, puis tout droit)
+    // (le point du chemin à `d` derrière la tête : depuis là où il est, puis la trace, puis tout droit)
+    const ch: [number, number][] = [[v.x, v.y], ...tr]
     const auDos = (d: number): [number, number] => {
-      if (d <= 6.6) return [v.x + ca * (6.6 - d), v.y + sa * (6.6 - d)]
-      let reste = d - 6.6
-      for (let i = 1; i < tr.length; i++) {
-        const l = Math.hypot(tr[i][0] - tr[i - 1][0], tr[i][1] - tr[i - 1][1])
-        if (reste <= l) return [tr[i - 1][0] + ((tr[i][0] - tr[i - 1][0]) * reste) / l, tr[i - 1][1] + ((tr[i][1] - tr[i - 1][1]) * reste) / l]
+      let reste = d
+      for (let i = 1; i < ch.length; i++) {
+        const l = Math.hypot(ch[i][0] - ch[i - 1][0], ch[i][1] - ch[i - 1][1])
+        if (l < 1e-6) continue
+        if (reste <= l) return [ch[i - 1][0] + ((ch[i][0] - ch[i - 1][0]) * reste) / l, ch[i - 1][1] + ((ch[i][1] - ch[i - 1][1]) * reste) / l]
         reste -= l
       }
-      const [qx, qy] = tr[tr.length - 1]
-      const [px, py] = tr.length >= 2 ? tr[tr.length - 2] : [v.x + ca, v.y + sa]
+      const [qx, qy] = ch[ch.length - 1]
+      const [px, py] = ch.length >= 2 && Math.hypot(ch[ch.length - 1][0] - ch[ch.length - 2][0], ch[ch.length - 1][1] - ch[ch.length - 2][1]) > 1e-6 ? ch[ch.length - 2] : [qx + ca, qy + sa]
       const l = Math.hypot(qx - px, qy - py) || 1
       return [qx + ((qx - px) / l) * reste, qy + ((qy - py) / l) * reste]
+    }
+    {
+      const [qx, qy] = auDos(9 * ECART_DES_ANNEAUX + 2)
+      const [ax, ay] = auDos(9 * ECART_DES_ANNEAUX)
+      queueDuVer = { x: qx, y: qy, cap: Math.atan2(ay - qy, ax - qx) }
     }
     const anneaux: [number, number][] = []
     for (let k = 1; k <= 9; k++) {
@@ -7415,17 +7425,41 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLeGivre(p: Peintre): void {
     if (m.givres.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    // LA TRAÎNÉE DE POISON DU VER (Keko, 17/11) : des bouffées de miasme vert-jaune au cœur, violettes au bord, qui se
-    // chevauchent en un ruban ; quelques bulles qui en montent
+    // LA TRAÎNÉE DE POISON DU VER, UNE SEULE FLAQUE (Keko, 17/11 : « on dirait une superposition de taches bizarres ; une
+    // texture plus uniforme, comme si c'était une seule et même flaque, comme le crachat de la Vouivre qui laisse une trace
+    // dans le sol ») : ses plaques se peignent EN DEUX PASSES, PLEINES — d'abord leur bord vif, toutes ; puis leur dedans,
+    // toutes, qui recouvre les bords intérieurs : il ne reste qu'un liseré autour du ruban ; le dedans est un goudron dont
+    // les veines vert-jaune et le reflet huileux sont tirés DE LA POSITION DANS LE MONDE — continus d'une plaque à l'autre.
+    // Elle s'efface en rétrécissant.
+    const rayonDuPoison = (g: (typeof m.givres)[number]): number => {
+      const age = m.t - g.nee
+      return g.rayon * Math.min(1, age / 0.2) * Math.min(1, Math.max(0, (g.duree - age) / 0.9))
+    }
     for (const g of m.givres) {
       if (g.poison !== true) continue
-      const age = m.t - g.nee
-      const k = Math.min(1, age / 0.2) * Math.min(1, (g.duree - age) / 0.9)
-      if (k <= 0) continue
-      const r = g.rayon * (0.6 + 0.4 * Math.min(1, age / 0.3))
-      p.disc(g.x, g.y, r, (d) => (d < 0.5 ? MIASME[6] : d < 0.78 ? MIASME[5] : MIASME[3]), (d) => 0.32 * (1 - d * d) * k)
+      const r = rayonDuPoison(g)
+      if (r >= 1) p.circle(g.x, g.y, r, GOUDRON[5])
+    }
+    for (const g of m.givres) {
+      if (g.poison !== true) continue
+      const r = rayonDuPoison(g) - 1
+      if (r < 0.6) continue
+      p.circle(g.x, g.y, r, (d, ang) => {
+        const x = g.x + Math.cos(ang) * d * r
+        const y = g.y + Math.sin(ang) * d * r
+        const veine = Math.abs(Math.sin(x * 0.33 + Math.sin(y * 0.21 + m.t * 0.8) * 2.2) + Math.sin(y * 0.29 - x * 0.13 - m.t * 0.6))
+        if (veine < 0.07) return GOUDRON[6]
+        if (veine < 0.18) return GOUDRON[5]
+        const huile = Math.sin(x * 0.11 + m.t * 0.5) * Math.sin(y * 0.13 - m.t * 0.4)
+        if (huile > 0.7) return Math.sin(x * 0.05 - y * 0.04 + m.t * 0.3) > 0 ? HUILE[2] : HUILE[1]
+        return veine < 0.45 ? GOUDRON[4] : GOUDRON[3]
+      })
+    }
+    for (const g of m.givres) {
+      if (g.poison !== true) continue
+      const r = rayonDuPoison(g)
       const q = (m.t * 0.8 + alea(g.id, 1, 1)) % 1
-      p.dot(g.x + (alea(g.id, 1, 2) - 0.5) * r, g.y + (alea(g.id, 1, 3) - 0.5) * r - q * 5, q < 0.5 ? MIASME[7] : MIASME[6], 0.8 * (1 - q) * k)
+      if (r > 3 && alea(g.id, 1, 4) < 0.4) p.dot(g.x + (alea(g.id, 1, 2) - 0.5) * r, g.y + (alea(g.id, 1, 3) - 0.5) * r - q * 5, q < 0.5 ? MIASME[7] : MIASME[6], 0.8 * (1 - q))
     }
     // LE VERGLAS DE LA NOVA (Keko, 17/11) : une grande plaque de glace lisse, plus claire au bord, fêlée de lignes blanches
     // qui partent du milieu, son bord givré, des reflets qui passent
@@ -8507,6 +8541,132 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * vers la queue, une petite bouche sombre devant ; il ondule ; ses dernières 0,6 s, il pâlit.
    */
   const cheminsDesMiniVers = new Map<number, [number, number][]>()
+  /**
+   * L'ŒUF, D'APRÈS L'« EGG HATCH » DE PIXELFX, EN ŒUF D'INSECTE VU DE DESSUS (Keko, 17/11 : « pas très joli ; inspire-toi
+   * de l'éclosion d'un œuf de pixelfx, en version insecte ») : une coque CUIREUSE, ovale, vert pâle, éclairée d'en haut à
+   * gauche, cernée de sombre ; dedans, LA LARVE roulée, une ombre qui remue ; il OSCILLE TROIS FOIS, chaque fois plus
+   * fort, et chaque oscillation OUVRE DES FISSURES où luit le poison — un éclair blanc à leur ouverture, la coque qui
+   * s'éclaire autour ; il frissonne juste avant d'éclater (l'éclatement, ses coquilles et sa gerbe : `coquilles`).
+   */
+  const COQUE_D_OEUF = ['#10160a', '#2c3814', '#56682a', '#8ea050', '#c4d488', '#eef6c8'].map((c) => N.hex(c))
+  const OSCILLATIONS: [number, number][] = [[0.25, 0.18], [0.5, 0.28], [0.72, 0.4]]
+  function dessinerUnOeuf(p: Peintre, o: (typeof m.oeufs)[number], u: number, age: number): void {
+    const C = COQUE_D_OEUF
+    const G = GOUDRON
+    // (le stade : combien de fissures sont ouvertes)
+    const stade = OSCILLATIONS.filter(([u0]) => u >= u0).length
+    // (il oscille autour de sa base, chaque fois plus fort ; il frissonne à la fin)
+    let a = 0
+    for (const [u0, amp] of OSCILLATIONS) {
+      const q = (u - u0) * 1.5
+      if (q > 0 && q < 0.5) a += amp * Math.sin(q * 30) * Math.exp(-q * 7)
+    }
+    if (u > 0.9) a += 0.08 * Math.sin(age * 90)
+    const rot = o.cap + a
+    const pose = Math.min(1, age / 0.15)
+    const rx = 4.4 * pose
+    const ry = 3.4 * pose
+    const ca = Math.cos(rot)
+    const sa = Math.sin(rot)
+    const lueur = stade / 3 + 0.2 * Math.max(0, Math.sin(age * 9)) * (stade / 3)
+    p.circle(o.x + 1, o.y + 1.5, ry, N.hex('#06040a'), 0.4)
+    if (lueur > 0.05) p.glow(o.x, o.y, 6 + 3 * stade, G[6], 0.15 + 0.25 * lueur)
+    // (les fissures : trois stades, en zigzag, tirées de l'œuf)
+    const fissures: [number, number, number][] = []
+    for (let f = 0; f < 3; f++) {
+      let fx = (alea(o.id, f, 1) - 0.5) * 2
+      let fy = (alea(o.id, f, 2) - 0.5) * 1.6
+      let fa = alea(o.id, f, 3) * Math.PI * 2
+      for (let k = 0; k < 4; k++) {
+        fissures.push([Math.round(fx), Math.round(fy), f])
+        fa += (alea(o.id, f * 7 + k, 4) - 0.5) * 1.6
+        fx += Math.cos(fa) * 1.1
+        fy += Math.sin(fa) * 1.1
+      }
+    }
+    const ouverte = (ux: number, uy: number): number => {
+      for (const [x, y, f] of fissures) if (f < stade && x === ux && y === uy) return f
+      return -1
+    }
+    const R2 = Math.ceil(Math.max(rx, ry)) + 1
+    for (let dy = -R2; dy <= R2; dy++)
+      for (let dx = -R2; dx <= R2; dx++) {
+        // (dans le repère de l'œuf)
+        const ux = dx * ca + dy * sa
+        const uy = -dx * sa + dy * ca
+        const e = (ux / Math.max(0.5, rx)) ** 2 + (uy / Math.max(0.5, ry)) ** 2
+        if (e > 1.25) continue
+        const px = Math.round(o.x + dx)
+        const py = Math.round(o.y + dy)
+        if (e > 1) {
+          p.px(px, py, C[0])
+          continue
+        }
+        // (la fissure ouverte : la lueur du poison, un éclair blanc quand elle s'ouvre)
+        const f = ouverte(Math.round(ux), Math.round(uy))
+        if (f >= 0) {
+          const frais = u - OSCILLATIONS[f][0] < 0.08
+          p.px(px, py, frais ? N.WHITE : G[(Math.floor(age * 12) + dx) % 3 === 0 ? 7 : 6])
+          continue
+        }
+        // (la coque, éclairée d'en haut à gauche ; la larve roulée dedans, une ombre qui remue)
+        const nx = ux / Math.max(0.5, rx)
+        const ny = uy / Math.max(0.5, ry)
+        const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny))
+        const lum = -0.6 * (nx * ca - ny * sa) - 0.6 * (nx * sa + ny * ca) + 0.55 * nz
+        const remue = Math.sin(age * 5 + o.id)
+        const larve = Math.hypot(ux - 0.4 * remue, uy) < 1.6 && Math.hypot(ux - 0.4 * remue + 0.9, uy + 0.4) > 0.8
+        let c = lum > 0.75 ? C[5] : lum > 0.4 ? C[4] : lum > 0.05 ? C[3] : C[2]
+        if (larve && lum < 0.75) c = stade >= 2 ? G[5] : C[2]
+        p.px(px, py, c)
+      }
+    // (la coque s'éclaire autour des fissures ouvertes)
+    if (stade >= 1) p.glow(o.x, o.y, 4, G[6], 0.12 * stade)
+  }
+  /**
+   * L'ÉCLOSION : LA COQUE ÉCLATE (d'après l'« Egg hatch » de pixelfx) — trois ou quatre coquilles qui volent en tournant et
+   * ralentissent, leur bord brisé encore lumineux, une gerbe de rayons vert-jaune qui jaillit, un éclair, de la bave.
+   */
+  const coquilles: { x: number; y: number; vx: number; vy: number; a: number; va: number; t0: number; r: number }[] = []
+  const eclosions: { x: number; y: number; t0: number; id: number }[] = []
+  function dessinerLesEclosions(p: Peintre): void {
+    for (let i = coquilles.length - 1; i >= 0; i--) if (t - coquilles[i].t0 > 0.7) coquilles.splice(i, 1)
+    for (let i = eclosions.length - 1; i >= 0; i--) if (t - eclosions[i].t0 > 0.5) eclosions.splice(i, 1)
+    if (coquilles.length === 0 && eclosions.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const G = GOUDRON
+    for (const e of eclosions) {
+      const q = (t - e.t0) / 0.5
+      if (q < 0.15) p.circle(e.x, e.y, 3 + 4 * q, N.WHITE, 1 - q / 0.15)
+      for (let k = 0; k < 7; k++) {
+        const an = alea(e.id, k, 1) * Math.PI * 2
+        const L = 10 * (1 - Math.pow(1 - Math.min(1, q / 0.2), 3)) * (k % 2 === 0 ? 1 : 0.65) * (1 - q * 0.6)
+        p.line(e.x, e.y, e.x + Math.cos(an) * L, e.y + Math.sin(an) * L, G[6], 0.8 * (1 - q))
+        p.line(e.x, e.y, e.x + Math.cos(an) * L * 0.4, e.y + Math.sin(an) * L * 0.4, N.WHITE, 1 - q)
+      }
+      p.glow(e.x, e.y, 10, G[6], 0.5 * (1 - q))
+    }
+    const pas = Math.min(0.05, dtBase)
+    for (const c of coquilles) {
+      const age = t - c.t0
+      c.x += c.vx * pas
+      c.y += c.vy * pas
+      c.vx *= 1 - 3 * pas
+      c.vy *= 1 - 3 * pas
+      c.a += c.va * pas
+      const f = 1 - age / 0.7
+      // (une coquille : un arc de coque, sa face éclairée, son bord brisé lumineux au début)
+      for (let k = -2; k <= 2; k++) {
+        const an = c.a + k * 0.35
+        const x = c.x + Math.cos(an) * c.r
+        const y = c.y + Math.sin(an) * c.r
+        p.px(Math.round(x), Math.round(y), k === 0 ? COQUE_D_OEUF[5] : COQUE_D_OEUF[4])
+        if (age < 0.25 && (k === -2 || k === 2)) p.px(Math.round(x), Math.round(y), G[7])
+      }
+      if (f < 0.3 && Math.floor(age * 20) % 2 === 0) continue
+    }
+    p.place(0, 0)
+  }
   function dessinerLesOeufs(p: Peintre): void {
     for (const [id] of cheminsDesMiniVers) if (!m.oeufs.some((o) => o.id === id)) cheminsDesMiniVers.delete(id)
     if (m.oeufs.length === 0 || m.phase !== 'vol') return
@@ -8517,19 +8677,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (po === undefined) continue
       const age = m.t - o.pondu
       if (!o.eclos) {
-        // (l'œuf : il bat de plus en plus vite, tremble, se fend)
-        const u = Math.min(1, age / po.eclosion)
-        const bat = 0.5 + 0.5 * Math.sin(age * (6 + 22 * u * u))
-        const tremble = u > 0.8 ? Math.sin(age * 70) * 0.6 : 0
-        const x = o.x + tremble
-        const pose = Math.min(1, age / 0.15)
-        p.glow(x, o.y, 5 + 2 * bat, G[6], (0.2 + 0.25 * bat) * pose)
-        p.disc(x, o.y, 3.3 * pose, (d) => (d > 0.8 ? G[1] : d > 0.5 ? G[4] : bat > 0.5 ? G[6] : G[5]), 1)
-        p.px(Math.round(x - 1), Math.round(o.y - 1), N.WHITE)
-        if (u > 0.8) {
-          p.line(x - 1.5, o.y - 0.5, x, o.y + 0.5, G[7])
-          p.line(x, o.y + 0.5, x + 1.2, o.y - 0.8, G[7])
-        }
+        dessinerUnOeuf(p, o, Math.min(1, age / po.eclosion), age)
         continue
       }
       // (le mini-ver : son chemin à lui, un point tous les demi-pixels)
@@ -12096,13 +12244,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (le Ver pond : un petit « blop »)
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
-        case 'eclosion':
-          // (l'œuf éclot : la coque vole en éclats, une giclée de poison)
+        case 'eclosion': {
+          // (l'œuf éclot : la coque éclate en coquilles qui volent, une gerbe de rayons, de la bave)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          eclosions.push({ x: ev.x, y: ev.y, t0: t, id: ev.id })
+          const n = 3 + Math.floor(R.next() * 2)
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2 + R.range(-0.4, 0.4)
+            const vit = R.range(30, 55)
+            coquilles.push({ x: ev.x + Math.cos(a) * 2, y: ev.y + Math.sin(a) * 2, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, a, va: R.range(-9, 9), t0: t, r: R.range(1.6, 2.4) })
+          }
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), i % 2 === 0 ? GOUDRON[6] : GOUDRON[2], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), i % 2 === 0 ? GOUDRON[6] : COQUE_D_OEUF[4], 1, 1.5)
           }
           break
+        }
         case 'miniVerFini':
           // (un mini-ver se dissout : une bouffée de poison)
           for (let i = 0; i < 6; i++) {
@@ -12636,8 +12793,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const tuyeres = gabaritDe(coque).tuyeres
             const deCote = tuyeres[Math.floor(R.next() * tuyeres.length)].y
             const recul = -queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)
-            const bx = v.x - Math.cos(v.cap) * recul - Math.sin(v.cap) * deCote
-            const by = v.y - Math.sin(v.cap) * recul + Math.cos(v.cap) * deCote
+            // (LE VER : au bout de SA QUEUE, là où le chemin l'a mise — Keko, 17/11 : « la propulsion ne colle pas à l'endroit
+            // exact de sa queue, surtout quand il tourne »)
+            const auVer = coque === 14 && queueDuVer !== null
+            const bx = auVer ? queueDuVer!.x : v.x - Math.cos(v.cap) * recul - Math.sin(v.cap) * deCote
+            const by = auVer ? queueDuVer!.y : v.y - Math.sin(v.cap) * recul + Math.cos(v.cap) * deCote
             const vitesse = 30 + 40 * pousseeVue.avant
             // (UNE BÊTE NE CRACHE PAS DE BRAISES : elle lâche des bulles — voir `bulles`)
             // (pas une file : une sur deux, éparpillées de côté, de toutes tailles — serrées, elles faisaient encore un jet)
@@ -12835,6 +12995,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTentacules(p)
     dessinerLesVrilles(p)
     dessinerLesOeufs(p)
+    dessinerLesEclosions(p)
     dessinerLesFleaux(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
