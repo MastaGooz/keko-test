@@ -1530,7 +1530,9 @@ export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, deg
       ev.push({ type: 'plaque', x, y, k })
       return
     }
-    const jusque = portion(Math.max(0, m.coque - reste))
+    // (la dernière portion où le coup descend VRAIMENT : un coup qui s'arrête pile au bord d'une portion protégée n'y entre
+    // pas, sa plaque reste debout — Keko, 17/11 : « que se passe-t-il si les dégâts finissent à son niveau ? »)
+    const jusque = Math.min(n - 1, Math.max(0, Math.floor((c.coque - Math.max(0, m.coque - reste)) / part - 1e-9)))
     for (let j = k + 1; j <= jusque; j++)
       if (m.plaques[j]) {
         m.plaques[j] = false

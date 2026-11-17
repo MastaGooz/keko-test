@@ -5179,3 +5179,11 @@ bouclier, lui, commence à se réparer très rapidement après un certain temps 
   RACES) et `Monde.intouchableJusque`, dans `encaisser` (vérifié) : après un coup reçu — bouclier, plaque ou coque —, les
   autres ne comptent pas ; le vaisseau revenu au portail l'est aussi. Il CLIGNOTE pendant ce temps (une tranche de 70 ms
   sur deux, il n'est pas dessiné).
+- UN COUP QUI FINIT PILE AU BORD D'UNE PORTION PROTÉGÉE (Keko, 17/11 : « que se passe-t-il si les dégâts commencent
+  au-dessus de la prochaine plaque mais finissent à son niveau ? ») : la plaque de cette portion cassait sans avoir rien
+  absorbé ; elle reste maintenant debout, et prend le coup suivant tout entier. L'excédent d'un coup qui passe VRAIMENT
+  sous le bord est, lui, toujours absorbé par la plaque, qui casse (vérifié).
+- `jeu.verif.ts` : la ligne qui fait échouer `npm run verif` était au milieu du fichier ; les blocs ajoutés après elle
+  (les cristaux du Prisme, et depuis le 16/11) affichaient « ECHEC » sans faire échouer la vérification. Elle est en
+  dernier ; tout passe. (Trois fichiers de l'archive — `combat`, `descente`, `hub` — ont la même forme ; l'archive ne
+  bouge pas.)

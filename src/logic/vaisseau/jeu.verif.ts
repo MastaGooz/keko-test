@@ -1898,7 +1898,6 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('la cible verrouillée meurt au premier coup : les autres missiles reprennent la voisine (à 32 d’elle), jamais la lointaine (à 95)', w.ennemis.every((e) => e.id !== 1) && voisin !== undefined && voisin.pv < 1000 && lointain !== undefined && lointain.pv === 1000 && w.obus.length === 0)
 }
 
-if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 
 // LES CRISTAUX DU PRISME (Keko, 16/11) : les balises, qui IRRADIENT au lieu de frapper — l'insecte qui traverse le
 // faisceau perd 20 par seconde tant qu'il y est, et rien une fois sorti (Keko, 16/11 : pas de dégâts sur la durée)
@@ -2015,7 +2014,7 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   coup(3)
   verifier('un coup qui descendrait dans une portion protégée s’arrête à son bord, et sa plaque casse', mp.coque === 4 && !mp.plaques[1] && mp.plaques[2])
   coup(1)
-  coup(1)
+  coup(2)
   verifier('le coup qui descendrait dans la dernière portion s’arrête à son bord, et sa plaque casse', mp.coque === 2 && !mp.plaques[2])
   const morte = coup(5)
   verifier('les plaques toutes cassées, le coup passe : la coque est percée', mp.coque === 0 && morte.some((e) => e.type === 'perdu'))
@@ -2036,3 +2035,22 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   encaisser(c, mi, 0, 0, 1, ev)
   verifier('passée, le coup suivant compte', mi.coque === 5)
 }
+
+// UN COUP QUI S'ARRÊTE PILE AU BORD D'UNE PORTION PROTÉGÉE (Keko, 17/11) : la plaque de cette portion reste debout
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, plaques: 3 }
+  const mb = nouveauMonde(c)
+  const coup = (d: number): void => {
+    mb.t += c.invulnerabilite + 0.01
+    encaisser(c, mb, 0, 0, d, [])
+  }
+  coup(1)
+  coup(1)
+  coup(1)
+  verifier('le coup qui finit pile au bord de la portion suivante ne casse pas sa plaque', mb.coque === 4 && !mb.plaques[0] && mb.plaques[1])
+  coup(3)
+  verifier('elle prend alors tout entier le coup suivant', mb.coque === 4 && !mb.plaques[1] && mb.plaques[2])
+}
+
+// (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
+if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
