@@ -467,6 +467,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VITESSE_DU_LARGE = 125
   const CHAMP_AUTO = Math.max(1, Math.min(CHAMP_MAX, Number(parametres.get('champ')) || 1.7))
   const champDuMoment = (): number => (enJeu && !ecranVisible() ? champ : 1)
+  /**
+   * LES TROIS VUES DU VORTEX, À L'ESSAI (Keko, 17/11 : « c'est très petit en vol… je me demande si c'est pas trop dézoomé »,
+   * puis « un bouton en jeu qui switch entre les trois vues pour que je teste bien la différence ») : un bouton sous la
+   * barre de vie les fait tourner — le champ de toujours, 1,6, 1,3. `&champ=N` part de N.
+   */
+  const VUES_DU_VORTEX = [CHAMP_MAX, 1.6, 1.3]
+  let champDuVortex = parametres.has('champ') ? CHAMP_AUTO : CHAMP_MAX
+  function dessinerLeChoixDeVue(p: Peintre, x: number, y: number): void {
+    const B = 22
+    const HB = 11
+    const e = etatDuBouton(x, y, B, HB)
+    plaque(p, x, y + e.dy, B, HB, 'clair', { enfonce: e.enfonce, flash: e.flash })
+    ecrire(p, String(champDuVortex).replace('.', ','), x + B / 2, y + 3 + e.dy, N.hex('#10182a'), { align: 'center' })
+    // (la zone déborde du dessin : c'est un petit bouton sous un pouce)
+    zone(x - 2, y - 2, B + 4, HB + 4, () => {
+      const i = VUES_DU_VORTEX.indexOf(champDuVortex)
+      champDuVortex = VUES_DU_VORTEX[(i + 1) % VUES_DU_VORTEX.length]
+    }, 'clic')
+  }
   /** « + » zoome (le champ se resserre), « − » dézoome ; côte à côte, ou l'un sur l'autre (`empiles`, dans le bandeau couché). */
   function dessinerLeZoom(p: Peintre, x: number, y: number, empiles: boolean): void {
     const B = 13
@@ -9399,6 +9418,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(largeurDeBande() / 2) - 7, by + BH + 6, true)
+      // (LES TROIS VUES DU VORTEX, À L'ESSAI : le bouton qui les fait tourner, sous la barre)
+      else if (VORTEX) dessinerLeChoixDeVue(p, px0, by + BH + 6)
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
         p.rect(bx - 1, Math.round(gy) - 1, lw + 2, 2, N.WHITE)
@@ -10074,8 +10095,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // seconde) ; à chaque pas, le tampon est refait et les manches gardent leur place à l'écran
     if (VORTEX) {
       // (LE JEU DU VORTEX EST DÉZOOMÉ AU MAXIMUM, EN PERMANENCE — Keko, 14/11 : « il n'y a pas vraiment d'intérêt à zoomer là » ;
-      // `&champ=N` l'essaie à une autre valeur)
-      champCible = parametres.has('champ') ? CHAMP_AUTO : CHAMP_MAX
+      // `&champ=N` l'essaie à une autre valeur ; le bouton des trois vues la change en jeu)
+      champCible = champDuVortex
       champVoulu = champCible
     } else if (ZOOM_A_LA_MAIN) {
       if (champVoulu !== champCible) {

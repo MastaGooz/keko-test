@@ -4956,3 +4956,17 @@ chose d'approprié — vérifie la cohérence des effets de mort »).
   et les jets froids de la Sentinelle), le FEU orange des autres. Le son de la mort suit : `perduBete` (un coup mouillé,
   une giclée, des bulles), `perduNeant` (tout est aspiré, puis un grondement très grave et un balayage), les trois notes
   qui descendent de `perdu` gardées par-dessus. Les deux nouveaux effets sont au banc `?pixelfx`, catégorie « keko ».
+
+### Le vortex, trois vues à l'essai (17/11)
+
+Keko : « c'est très petit en vol, le vaisseau est très petit, les ennemis sont très petits parce qu'on dézoome beaucoup…
+je sais pas quoi faire », puis « un bouton en jeu qui switch entre les trois vues pour que je teste bien la différence ».
+Le vortex était bloqué au champ le plus large (2, depuis le 14/11) ; sur un téléphone couché, un vaisseau y fait une
+quinzaine de pixels d'écran.
+
+- UN BOUTON SOUS LA BARRE DE VIE (`dessinerLeChoixDeVue`, `VUES_DU_VORTEX`, `champDuVortex`) fait tourner trois champs :
+  2 (celui de toujours), 1,6, 1,3 ; il affiche celui en cours. Le changement est immédiat (pas de glissé : on compare).
+  `&champ=N` part de N.
+- C'EST UN BANC, pas une décision : le bouton part quand Keko aura choisi. Pistes proposées à côté : un champ fixe autour de
+  1,5 ; des flèches au bord de l'écran pour les insectes hors de la vue (on dézoome surtout pour ne pas être surpris) ; un
+  zoom qui s'élargit quand une vague entoure ; des sprites plus gros à champ égal (les zones de collision avec).
