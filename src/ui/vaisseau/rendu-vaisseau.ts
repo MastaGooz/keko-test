@@ -329,6 +329,11 @@ export type Options = {
   matieres?: Partial<Record<Matiere, Matiere>>
   /** Des RAMPES à la place de celles d'une matière (la livrée du joueur : sa coque, ses ailes). Elles passent avant `matieres`. */
   rampes?: Partial<Record<Matiere, number[]>>
+  /**
+   * L'ÉCRAN APLATI EN HAUTEUR (le portrait d'un vaisseau, Keko, 17/11 : « une vue du vaisseau de près dans un autre
+   * angle ») : 1, vu d'en haut ; moins, vu de trois quarts — la hauteur de l'image est écrasée d'autant, après la rotation.
+   */
+  aplatir?: number
 }
 
 /**
@@ -352,7 +357,8 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   }
   const rampeDe = (f: Forme): number[] => o.rampes?.[f.mat] ?? RAMPES[o.matieres?.[f.mat] ?? f.mat]
   // local → écran : on tourne de cap, puis on agrandit
-  const versEcran = (x: number, y: number): [number, number] => [cx + (x * ca - y * sa) * s, cy + (x * sa + y * ca) * s]
+  const aplati = o.aplatir ?? 1
+  const versEcran = (x: number, y: number): [number, number] => [cx + (x * ca - y * sa) * s, cy + (x * sa + y * ca) * s * aplati]
   // écran → local
   let x0 = Infinity
   let y0 = Infinity
@@ -399,7 +405,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   }
   for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
     const dx = (x0 + px + 0.5 - cx) / s
-    const dy = (y0 + py + 0.5 - cy) / s
+    const dy = (y0 + py + 0.5 - cy) / (s * aplati)
     const lx = dx * ca + dy * sa
     const ly = -dx * sa + dy * ca
     const i = py * W + px

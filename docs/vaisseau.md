@@ -5216,3 +5216,20 @@ tes propositions pour les humains et pour la corruption avec les dégâts diffé
   par seconde sur une coque de 7, à peu près l'ancien régime), elle suit la coque qui grandit ; la fiche de l'Essaim
   s'arrête à « Vie ». Les repères du vaisseau piloté se comparent jauge par jauge PAR LEUR NOM (deux races n'ont plus les
   mêmes lignes : à l'index, une fiche plus courte que celle du piloté aurait lu une jauge absente).
+
+### Le vortex, la grille des vaisseaux en portraits (17/11)
+
+Keko : « changer la sélection de vaisseaux pour un grid de 12 cases où, plutôt que le nom, on met le portrait du vaisseau
+— une vue du vaisseau de près dans un autre angle, un peu comme le portrait d'un personnage, mais version vaisseau ; les
+races indiquées par un petit symbole à côté du nom ; beaucoup plus ergonomique et juicy ».
+
+- LA GRILLE, À LA PLACE DE LA LISTE : douze cases, LES RACES ALIGNÉES — debout, une rangée par race (trois colonnes) ;
+  couché, une colonne par race (trois rangées) ; la fiche du choisi dessous (debout) ou à droite (couché), « Piloter »
+  au-dessus. La choisie est cerclée d'or qui bat, elle saute et flashe quand on la prend ; la pilotée porte « PILOTE ».
+- LE PORTRAIT (`peindreLePortrait`) : le vaisseau DE PRÈS ET DE TROIS QUARTS — le nez tourné vers le haut à droite,
+  l'image écrasée en hauteur (`Options.aplatir` du peintre, 0,66), assez grand pour que le cadre le rogne un peu —, dans son
+  apparence, sur un fond aux teintes de sa race et un halo ; il vit (flamme, tentacules, anneaux, ailes) et flotte.
+- LES SYMBOLES DES RACES (`SYMBOLES_DES_RACES`, sept pixels cernés d'encre) : un chevron d'or (Humains), une alvéole verte
+  (l'Essaim), une étoile de rune cyan (les Éthérés), un œil violet (les Innommés). Dans la grille, EN INSIGNE DANS LE COIN DU
+  PORTRAIT — à côté du nom, il ne tenait que pour les noms courts et changeait de place d'une case à l'autre — ; dans la
+  fiche, à gauche du nom.

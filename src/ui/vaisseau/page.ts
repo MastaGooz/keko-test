@@ -22,10 +22,11 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
+import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLeBouclier } from './bouclier.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, talentsHorsDeLaRace, vaisseauxDe, vieSelonLaRace } from '../../logic/vaisseau/flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, talentsHorsDeLaRace, vaisseauxDe, vieSelonLaRace, type Race } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
@@ -3547,6 +3548,58 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const couleursOuverts = (): boolean => couleursOuvertes
   let surligneVaisseau = -1
+  /** L'instant où une case de la grille des vaisseaux a été choisie (elle saute et flashe). */
+  let choixVaisseauA = -10
+  /**
+   * LE SYMBOLE D'UNE RACE (Keko, 17/11 : « les races seraient indiquées par un petit symbole à côté du nom du vaisseau ») :
+   * sept pixels sur sept, cernés d'encre — LES HUMAINS, un insigne en chevron, en or ; L'ESSAIM, une alvéole de ruche, en
+   * vert ; LES ÉTHÉRÉS, une étoile de rune, en cyan ; LES INNOMMÉS, un œil, en violet.
+   */
+  const SYMBOLES_DES_RACES: Record<Race, { motif: string[]; c: number }> = {
+    humains: { motif: ['.......', '#.....#', '##...##', '.##.##.', '..###..', '...#...', '.......'], c: PEPITE[2] },
+    essaim: { motif: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'], c: N.hex('#7cd04a') },
+    etheres: { motif: ['...#...', '..#.#..', '.#.#.#.', '#.###.#', '.#.#.#.', '..#.#..', '...#...'], c: N.hex('#5ad0f0') },
+    innommes: { motif: ['.......', '..###..', '.#...#.', '#..#..#', '.#...#.', '..###..', '.......'], c: N.hex('#b878ff') },
+  }
+  function dessinerLeSymboleDeRace(p: Peintre, race: Race, x: number, y: number): void {
+    const { motif, c } = SYMBOLES_DES_RACES[race]
+    const encre = MATIERES.encre.contour
+    for (let j = 0; j < 7; j++)
+      for (let i = 0; i < 7; i++)
+        if (motif[j][i] === '#') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (motif[j + dy]?.[i + dx] !== '#') p.rect(x + i + dx, y + j + dy, 1, 1, encre)
+    for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) if (motif[j][i] === '#') p.rect(x + i, y + j, 1, 1, c)
+  }
+  /** Le fond d'un portrait, aux teintes de la race : le haut, le bas, le halo derrière le vaisseau. */
+  const FONDS_DES_RACES: Record<Race, number[]> = {
+    humains: ['#0e1626', '#16223a', '#2a4470'].map((c) => N.hex(c)),
+    essaim: ['#0a1206', '#14220c', '#2e5a18'].map((c) => N.hex(c)),
+    etheres: ['#06121c', '#0c2232', '#1e6080'].map((c) => N.hex(c)),
+    innommes: ['#0e0616', '#1c0c30', '#4a2272'].map((c) => N.hex(c)),
+  }
+  /**
+   * LE PORTRAIT D'UN VAISSEAU (Keko, 17/11) : vu DE PRÈS ET DE TROIS QUARTS — le nez tourné vers le haut à droite, l'image
+   * écrasée en hauteur (`aplatir`), assez grand pour être un peu rogné par son cadre —, dans son apparence, sur le fond de
+   * sa race, un halo derrière lui ; il vit (sa flamme, ses tentacules, ses anneaux) et flotte doucement. `n` : son rang,
+   * pour qu'ils ne flottent pas tous ensemble.
+   */
+  function peindreLePortrait(p: Peintre, mo: ReturnType<typeof modeleDeVaisseau>, x: number, y: number, w: number, h: number, n: number): void {
+    const [haut, bas, halo] = FONDS_DES_RACES[mo.race]
+    for (let j = 0; j < h; j++) p.rect(x, y + j, w, 1, j < h * 0.45 ? haut : bas)
+    for (let k = 0; k < 4; k++) p.rect(x + Math.floor(((n * 7 + k * 13) % 17) / 17 * w), y + Math.floor(((n * 5 + k * 11) % 13) / 13 * h * 0.5), 1, 1, COQUE[4])
+    p.glow(x + w / 2, y + h * 0.56, Math.min(w, h) * 0.45, halo, 0.5)
+    const coque = pieceDe(mo.serie.montees.coque)?.cran ?? 1
+    const pe = peauDuModele(mo.id)
+    const al: Allure = { propulseur: pieceDe(mo.serie.montees.propulseur)?.cran ?? 1, coque, foreuse: 0, radar: false, aimant: false, armes: [], bouclier: 0, habit: pe.habit(coque) }
+    const formes = formesDuVaisseau(al, 0.5 + 0.15 * Math.sin(t * 7 + n), t)
+    const [x0, y0, x1, y1] = boiteDe(formes)
+    const echelle = (Math.min(w, h) * 1.35) / Math.max(1, x1 - x0, y1 - y0)
+    const flotte_ = Math.round(Math.sin(t * 1.6 + n * 0.9))
+    // (le cadre rogne : rien ne déborde de la case)
+    const rogne = { rect: (rx: number, ry: number, rw: number, rh: number, c: number, a?: number): void => {
+      if (rx >= x && ry >= y && rx < x + w && ry < y + h) p.rect(rx, ry, rw, rh, c, a)
+    }, glow: (): void => {} }
+    peindreFormes(rogne, formes, x + w / 2, y + h * 0.56 + flotte_, echelle, { cap: -Math.PI / 2 + 0.62, aplatir: 0.66, rampes: rampesDeLaPeau(pe) })
+  }
   /**
    * LE PANNEAU DES VAISSEAUX DU JEU DU VORTEX, comme celui des pièces (Keko, 15/11) : la liste de TOUS les modèles — ceux
    * qu'on a, et ceux que la recherche n'a pas encore débloqués, grisés —, et la fiche du choisi : son châssis, sa
@@ -3601,6 +3654,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (avecNom) {
       motEnRelief(p, mo.nom, gx + (W - 12 - gx) / 2, y + 5, aSoi)
+      // (le symbole de sa race, à gauche de son nom)
+      dessinerLeSymboleDeRace(p, mo.race, Math.round(gx + (W - 12 - gx) / 2 - largeurDe(mo.nom, GRAS) / 2 - 11), y + 5)
     }
     jauges.forEach((j, i) => {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
@@ -3634,8 +3689,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
     const tous = modelesDuVortex()
     const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
-    const rangees = rangeesDesVaisseaux()
-    const iSel = rangees.findIndex((r) => 'mo' in r && r.mo.id === choisi.id)
     const a = aLeVaisseau(flotte, choisi.id)
     if (partie !== 'fiche') {
     enTete(p, y, 'Vaisseaux', fermer)
@@ -3658,50 +3711,51 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }, 'equipe')
     } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
     y += 19
-    // LA LISTE DÉFILE quand elle ne tient pas (au doigt, à la molette) : autant de rangées que la hauteur en laisse — sous
-    // elle, la fiche du vaisseau choisi en portrait ; en paysage, la colonne entière
+    // LA GRILLE DES VAISSEAUX (Keko, 17/11 : « un grid de 12 cases où, plutôt que le nom, on met le portrait du vaisseau —
+    // une vue du vaisseau de près dans un autre angle, un peu comme le portrait d'un personnage ; les races indiquées par un
+    // petit symbole à côté du nom ; beaucoup plus ergonomique et juicy ») : douze cases, LES RACES ALIGNÉES — debout, une
+    // rangée par race (trois colonnes) ; couché, une colonne par race (trois rangées) ; dans chaque case, LE PORTRAIT
+    // (`peindreLePortrait`), et dessous le symbole de la race et le nom. La choisie est cerclée d'or et saute un peu ; la
+    // pilotée porte « PILOTE » ; une tape en choisit une autre.
     const reserve = partie === 'liste' ? 4 : hauteurDeLaFicheDuVaisseau(choisi) + 4
-    const RANGEES = Math.max(3, Math.min(rangees.length, Math.floor((H - 4 - y - 4 - reserve) / RANG_LISTE)))
-    const hl = RANGEES * RANG_LISTE + 4
-    plaque(p, 4, y, W - 8, hl, 'creux')
-    const yl = y + 2
-    const maxDefil = Math.max(0, rangees.length - RANGEES)
-    defilVaisseaux = Math.max(0, Math.min(maxDefil, defilVaisseaux))
-    const depart = Math.round(defilVaisseaux)
-    zoneGlissante = maxDefil > 0 ? { x: 4, y: yl, w: W - 8, h: RANGEES * RANG_LISTE, defil: 'vaisseaux' } : null
-    const larg = W - (maxDefil > 0 ? 20 : 14)
-    const cibleY = yl + (iSel - depart) * RANG_LISTE
-    surligneVaisseau = surligneVaisseau < 0 || Math.abs(surligneVaisseau - cibleY) > 60 ? cibleY : ressort(surligneVaisseau, cibleY, 24)
-    if (iSel >= depart && iSel < depart + RANGEES) {
-      const sy = Math.round(surligneVaisseau)
-      p.rect(7, sy, larg, RANG_LISTE, N.hex('#2a2440'))
-      p.rect(7, sy + 1, 2, RANG_LISTE - 2, PEPITE[2])
-    }
-    for (let i = depart; i < Math.min(rangees.length, depart + RANGEES); i++) {
-      const rg = rangees[i]
-      const ly = yl + (i - depart) * RANG_LISTE
-      if ('race' in rg) {
-        // (LE NOM DE LA RACE, en tête de ses vaisseaux : en or, un filet dessous)
-        ecrire(p, rg.race, 10, ly + 3, PEPITE[2], { police: GRAS })
-        p.rect(10 + largeurDe(rg.race, GRAS) + 4, ly + RANG_LISTE / 2, Math.max(0, larg - largeurDe(rg.race, GRAS) - 10), 1, MATIERES.encre.lumiere2)
-        continue
-      }
-      const mo = rg.mo
-      const a = aLeVaisseau(flotte, mo.id)
-      const ici = i === iSel
-      ecrire(p, mo.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
-      const xd = 7 + larg - 3
-      if (mo.id === flotte.actif) p.text('PILOTE', xd, ly + 4, PEPITE[2], { align: 'right' })
-      else if (!a) p.text('VERROUILLE', xd, ly + 4, COQUE[3], { align: 'right' })
-      zone(4, ly, W - 8, RANG_LISTE, () => (vaisseauChoisi = mo.id), ici ? null : 'clic')
-    }
-    // (l'ascenseur : un rail à droite, son curseur à la taille de ce qu'on voit)
-    if (maxDefil > 0) {
-      const hr = RANGEES * RANG_LISTE - 2
-      p.rect(W - 11, yl + 1, 3, hr, N.hex('#141020'))
-      const hc = Math.max(6, Math.round((hr * RANGEES) / rangees.length))
-      p.rect(W - 11, yl + 1 + Math.round(((hr - hc) * defilVaisseaux) / maxDefil), 3, hc, PEPITE[2])
-    }
+    const parColonne = partie === 'liste'
+    const ESP = 3
+    const COLS = parColonne ? RACES.length : 3
+    const RANGS = parColonne ? 3 : RACES.length
+    const cw = Math.floor((W - 8 - (COLS - 1) * ESP) / COLS)
+    const ch = Math.max(30, Math.min(60, Math.floor((H - 4 - y - 4 - reserve - (RANGS - 1) * ESP) / RANGS)))
+    const xg = Math.round((W - (COLS * cw + (COLS - 1) * ESP)) / 2)
+    zoneGlissante = null
+    RACES.forEach((race, r) => {
+      MODELES.filter((mo) => mo.id !== 'cuirasse' && mo.race === race.id).forEach((mo, k) => {
+        const col = parColonne ? r : k
+        const rang = parColonne ? k : r
+        const cx = xg + col * (cw + ESP)
+        const cy = y + rang * (ch + ESP)
+        const ici = mo.id === choisi.id
+        const aSoi = aLeVaisseau(flotte, mo.id)
+        const e = etatDuBouton(cx, cy, cw, ch)
+        const age = t - choixVaisseauA
+        const saute = ici && age < 0.3 ? -Math.round(2 * Math.sin((age / 0.3) * Math.PI)) : 0
+        const dy = e.dy + saute
+        p.rect(cx - 1, cy - 1 + dy, cw + 2, ch + 2, ici ? (age < 0.1 ? N.WHITE : PEPITE[2 + (Math.floor(t * 4) % 2)]) : MATIERES.encre.contour)
+        p.rect(cx, cy + dy, cw, ch, MATIERES.creux.corps)
+        const hp = ch - 11
+        peindreLePortrait(p, mo, cx + 1, cy + 1 + dy, cw - 2, hp, r * 3 + k)
+        if (!aSoi) p.rect(cx + 1, cy + 1 + dy, cw - 2, hp, N.hex('#0a0c14'), 0.6)
+        if (mo.id === flotte.actif) p.text('PILOTE', cx + cw - 3, cy + 3 + dy, PEPITE[2], { align: 'right', outline: MATIERES.encre.contour })
+        // (LE SYMBOLE DE LA RACE, EN INSIGNE DANS LE COIN DU PORTRAIT, pour toutes les cases : à côté du nom, il ne tenait que
+        // pour les noms courts — « Salamandre », « Sentinelle » le repoussaient — et l'insigne changeait de place d'une case à
+        // l'autre ; dans la fiche, il est à côté du nom)
+        dessinerLeSymboleDeRace(p, mo.race, cx + 3, cy + 3 + dy)
+        ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' })
+        zone(cx - 1, cy - 1, cw + 2, ch + 2, () => {
+          vaisseauChoisi = mo.id
+          choixVaisseauA = t
+        }, ici ? null : 'clic')
+      })
+    })
+    const hl = RANGS * (ch + ESP) - ESP
     y += hl + 4
     }
     if (partie === 'liste') {
