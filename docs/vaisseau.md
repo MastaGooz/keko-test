@@ -5440,3 +5440,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     fissures où luit le poison (un éclair blanc à leur ouverture) ; il frissonne, puis ÉCLATE : un éclair, sept rayons,
     trois ou quatre coquilles qui volent en tournant, leur bord brisé lumineux, de la bave (`dessinerUnOeuf`,
     `dessinerLesEclosions`).
+- L'ÉCHANGE ENTRE LA VOUIVRE ET LE VER (Keko, 17/11 : « plus cohérent que la Vouivre garde le poison en exclusivité, et le
+  parasite va très bien au Ver ») : LA VOUIVRE a le crachat, les mines et LA TRAÎNÉE DE POISON ; LE VER a LES PARASITES
+  (attaque 1) et LES ŒUFS (attaque 2).
+- LES ŒUFS DEVIENNENT DES PIÈGES (Keko, 17/11 : les mini-vers qui copient le ver, « c'est extrêmement difficile de toucher
+  les ennemis ; sur le papier c'était bien, en jeu c'est un enfer » ; « qu'ils sortent dès qu'un ennemi entre à proximité de
+  l'œuf, et le poursuivent ») : il pond toujours en bougeant ; L'ŒUF ATTEND (15 s au plus, puis il se dessèche), un frisson
+  de temps en temps ; un insecte à moins de 30 le FEND — il oscille, se fissure et éclate en 0,35 s — et le mini-ver
+  POURSUIT cet insecte en serpentant (90, 7 rad/s), puis le plus proche à 90 une fois mort, 6 s ; il empoisonne ce qu'il
+  touche (le venin). La copie des mouvements est partie ; « la copie avec du flair » et « les chasseurs » proposés, puis
+  tranchés par Keko pour le piège.

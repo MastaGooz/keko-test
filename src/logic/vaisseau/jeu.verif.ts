@@ -2075,57 +2075,37 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`la traînée de poison empoisonne (${pris.toFixed(1)} en 1 s) sans geler (${ev.some((e) => e.type === 'gele') ? 'gelé' : 'pas de gel'})`, Math.abs(pris - 7) < 0.3 && !ev.some((e) => e.type === 'gele') && (w.ennemis[0].geleA ?? -1) < w.t && w.givres.every((g) => g.poison === true))
 }
 
-// LES ŒUFS DU VER (Keko, 17/11) : immobile, il ne pond pas ; en mouvement, il pond derrière lui — quatre à la fois au plus —,
-// l'œuf éclot 1,5 s plus tard ; LE MINI-VER FAIT LES MÊMES MOUVEMENTS QUE LUI (il s'est déplacé d'autant, dans le même
-// sens) ; ce qu'il traverse est empoisonné (5 par seconde, 3 s encore après) ; il ne laisse AUCUNE traînée
+// LES ŒUFS DU VER, DES PIÈGES (Keko, 17/11) : immobile, il ne pond pas ; en mouvement il pond — quatre à la fois au plus ;
+// SANS INSECTE, L'ŒUF ATTEND ; un insecte dans sa zone le fend, il éclot, et LE MINI-VER LE POURSUIT, le rattrape et
+// l'empoisonne (5 par seconde, 3 s encore après) ; aucune traînée
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const oeufs = { id: 'oeufs', cadence: 1.4, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, ponte: { tous: 1.4, eclosion: 1.5, max: 4, duree: 6, rayon: 4, venin: { duree: 3, dps: 5 } } }
+  const oeufs = { id: 'oeufs', cadence: 1.4, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, ponte: { tous: 1.4, detection: 30, attente: 15, eclosion: 0.35, max: 4, duree: 6, vitesse: 90, virage: 7, vue: 90, rayon: 4, venin: { duree: 3, dps: 5 } } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [oeufs], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
-  // (immobile une seconde : rien)
   const w = nouveauMonde(cfg, 3)
   for (let i = 0; i < 60; i++) {
     w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   }
   const immobile = w.oeufs.length
-  // (il file vers la droite à 30 : un œuf, puis il éclot, puis le mini-ver file comme lui)
+  // (il file vers la droite : des œufs, qui attendent — aucun insecte)
   let x = 0
-  const ev: Evenement[] = []
-  let ouEclot: { x: number; y: number } | null = null
-  let apres = { x: 0, y: 0 }
-  let xEclosion = 0
-  for (let i = 0; i < 60 * 3; i++) {
-    x += 30 / 60
-    w.vaisseau = { ...w.vaisseau, x, y: 0, vx: 30, vy: 0, cap: 0 }
-    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
-      ev.push(e)
-      if (e.type === 'eclosion' && ouEclot === null) (ouEclot = { x: e.x, y: e.y }), (xEclosion = x)
-    }
-  }
-  const premier = w.oeufs[0]
-  if (premier !== undefined) apres = { x: premier.x, y: premier.y }
-  const parcouru = ouEclot === null ? 0 : apres.x - ouEclot.x
-  verifier(`immobile, il ne pond pas (${immobile} œuf) ; en mouvement il pond, l'œuf éclot, et le mini-ver a fait le même chemin que lui (${parcouru.toFixed(1)} contre ${(x - xEclosion).toFixed(1)}), sans traînée (${w.givres.length} plaque)`, immobile === 0 && ouEclot !== null && Math.abs(parcouru - (x - xEclosion)) < 1.5 && Math.abs(apres.y - (ouEclot?.y ?? 99)) < 0.01 && w.givres.length === 0)
-  // (au plus quatre à la fois)
   for (let i = 0; i < 60 * 8; i++) {
     x += 30 / 60
     w.vaisseau = { ...w.vaisseau, x, y: 0, vx: 30, vy: 0, cap: 0 }
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-    if (w.oeufs.length > 4) break
   }
-  verifier(`quatre œufs et mini-vers à la fois au plus (${w.oeufs.length})`, w.oeufs.length <= 4 && w.oeufs.length > 0)
-  // (un mini-ver qui traverse un insecte l'empoisonne : 5 par seconde, et encore après)
-  const w2 = nouveauMonde(cfg, 3)
-  w2.oeufs.push({ id: 99, arme: 0, x: 0, y: 0, cap: 0, pondu: -1.5, eclos: true })
-  w2.ennemis.push(insecte(1, 6, 0))
-  w2.armesA[0] = 1e9
+  verifier(`immobile, il ne pond pas (${immobile}) ; en mouvement il pond, quatre au plus (${w.oeufs.length}), et sans insecte les œufs attendent (${w.oeufs.filter((o) => o.eclos !== null).length} éclos), sans traînée`, immobile === 0 && w.oeufs.length === 4 && w.oeufs.every((o) => o.eclos === null) && w.givres.length === 0)
+  // (un insecte passe à 25 du premier œuf : il se fend, éclot, le mini-ver le rattrape et l'empoisonne)
+  const o0 = w.oeufs[0]
+  w.ennemis.push(insecte(1, o0.x + 25, o0.y + 5))
+  const ev: Evenement[] = []
   for (let i = 0; i < 60 * 2; i++) {
-    w2.vaisseau = { ...w2.vaisseau, x: 500, y: 0, vx: 0, vy: 0, cap: 0 }
-    avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+    w.vaisseau = { ...w.vaisseau, x: 2000, y: 0, vx: 0, vy: 0, cap: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
   }
-  const pris = 1000 - w2.ennemis[0].pv
-  verifier(`le mini-ver empoisonne ce qu'il traverse (${pris.toFixed(1)} en 2 s, 5 par seconde)`, Math.abs(pris - 10) < 0.5)
+  const pris = 1000 - w.ennemis[0].pv
+  verifier(`un insecte dans la zone d'un œuf le fait éclore, et le mini-ver le poursuit et l'empoisonne (${pris.toFixed(1)} pris en 2 s)`, ev.filter((e) => e.type === 'eclosion').length >= 1 && ev.some((e) => e.type === 'venin') && pris > 3 && pris < 10)
 }
 
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute

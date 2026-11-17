@@ -1048,7 +1048,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-poison', 'arme-oeufs'], tesseract: ['arme-balises'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs'], tesseract: ['arme-balises'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -3594,7 +3594,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
     'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',
-    'arme-oeufs': 'Il pond des œufs ; les mini-vers qui en sortent nagent comme lui et empoisonnent.',
+    'arme-oeufs': 'Il pond des œufs-pièges : un insecte s’approche, un mini-ver en sort et le poursuit.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
@@ -8562,6 +8562,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (q > 0 && q < 0.5) a += amp * Math.sin(q * 30) * Math.exp(-q * 7)
     }
     if (u > 0.9) a += 0.08 * Math.sin(age * 90)
+    // (en attendant, un frisson toutes les 2,5 s : quelque chose remue dedans)
+    if (u === 0 && (age + o.id * 0.37) % 2.5 < 0.3) a += 0.12 * Math.sin(age * 40)
     const rot = o.cap + a
     const pose = Math.min(1, age / 0.15)
     const rx = 4.4 * pose
@@ -8571,6 +8573,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const lueur = stade / 3 + 0.2 * Math.max(0, Math.sin(age * 9)) * (stade / 3)
     p.circle(o.x + 1, o.y + 1.5, ry, N.hex('#06040a'), 0.4)
     if (lueur > 0.05) p.glow(o.x, o.y, 6 + 3 * stade, G[6], 0.15 + 0.25 * lueur)
+    else p.glow(o.x, o.y, 6, G[5], 0.1 + 0.06 * Math.sin(age * 2 + o.id))
     // (les fissures : trois stades, en zigzag, tirées de l'œuf)
     const fissures: [number, number, number][] = []
     for (let f = 0; f < 3; f++) {
@@ -8676,8 +8679,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const po = CONF.armes[o.arme]?.ponte
       if (po === undefined) continue
       const age = m.t - o.pondu
-      if (!o.eclos) {
-        dessinerUnOeuf(p, o, Math.min(1, age / po.eclosion), age)
+      if (o.eclos === null) {
+        // (il attend, immobile, un frisson de temps en temps ; fendu, il oscille, se fissure et éclate en `eclosion` secondes)
+        dessinerUnOeuf(p, o, o.fendu === null ? 0 : Math.min(1, (m.t - o.fendu) / po.eclosion), age)
         continue
       }
       // (le mini-ver : son chemin à lui, un point tous les demi-pixels)
@@ -8687,7 +8691,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         cheminsDesMiniVers.set(o.id, ch)
       } else if (Math.hypot(ch[0][0] - o.x, ch[0][1] - o.y) >= 0.5) ch.unshift([o.x, o.y])
       if (ch.length > 32) ch.length = 32
-      const vie = age - po.eclosion
+      const vie = m.t - o.eclos
       const pali = Math.max(0, Math.min(1, (po.duree - vie) / 0.6))
       const nait = Math.min(1, vie / 0.25)
       const auDos = (d: number): [number, number] => {

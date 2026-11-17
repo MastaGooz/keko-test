@@ -467,7 +467,14 @@ export type Arme = {
    * depuis là où il est né. Tout insecte à moins de `rayon` de lui est EMPOISONNÉ : `venin.dps` par seconde, `venin.duree`
    * secondes encore après (`Ennemi.venin`). L'état est `Monde.oeufs`.
    */
-  ponte?: { tous: number; eclosion: number; max: number; duree: number; rayon: number; venin: { duree: number; dps: number } }
+  // (… PUIS DES ŒUFS-PIÈGES — Keko, 17/11 : « c'est extrêmement difficile de toucher les ennemis avec les vers qui copient
+  // le ver principal ; en jeu, c'est un enfer » ; « que les vers sortent dès qu'un ennemi entre à proximité de l'œuf, dans sa
+  // zone ; l'œuf éclot et le ver le poursuit ») : il pond toujours en bougeant, toutes les `tous` secondes, `max` à la fois ;
+  // L'ŒUF ATTEND, `attente` secondes au plus, qu'un insecte entre à moins de `detection` ; alors il SE FEND et éclot
+  // `eclosion` secondes plus tard ; le mini-ver POURSUIT cet insecte — puis, mort, le plus proche à `vue` —, à `vitesse`,
+  // en virant de `virage` par seconde (il serpente) ; il vit `duree` secondes ; tout insecte à moins de `rayon` de lui prend
+  // le venin)
+  ponte?: { tous: number; detection: number; attente: number; eclosion: number; max: number; duree: number; vitesse: number; virage: number; vue: number; rayon: number; venin: { duree: number; dps: number } }
   /**
    * UNE SALVE TOUT AUTOUR (les éclats de glace du Frimas, Keko, 15/11 : « périodiquement, des éclats de glace dans toutes
    * les directions autour de lui, portée moyenne ; huit éclats répartis uniformément ; évidemment, ils ralentissent ») :
@@ -862,7 +869,8 @@ export type Monde = {
   // (`bond` : il saute d'un hôte mort au suivant — d'où, en combien de temps ; voir `menerLesParasites`)
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
   /** LES ŒUFS DU VER ET SES MINI-VERS (voir `Arme.ponte`) : où, son cap, quand il a été pondu, s'il a éclos. */
-  oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number; eclos: boolean }[]
+  // (`fendu` : l'instant où un insecte l'a déclenché ; `eclos` : l'instant de l'éclosion ; `cible` : la proie du mini-ver)
+  oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number; fendu: number | null; eclos: number | null; cible: number | null }[]
   /** LES LIENS DU DRAIN D'ÂME (voir `Arme.drain`) : son arme, l'âme accrochée, depuis quand. */
   liens: { arme: number; cible: number; depuis: number }[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
@@ -2681,31 +2689,59 @@ function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     // (derrière lui, au bout de son corps)
     const x = v.x - (v.vx / vit) * 16
     const y = v.y - (v.vy / vit) * 16
-    m.oeufs.push({ id: m.prochainId++, arme: i, x, y, cap: v.cap, pondu: m.t, eclos: false })
+    m.oeufs.push({ id: m.prochainId++, arme: i, x, y, cap: v.cap, pondu: m.t, fendu: null, eclos: null, cible: null })
     ev.push({ type: 'oeuf', x, y })
   })
   m.oeufs = m.oeufs.filter((o) => {
     const po = c.armes[o.arme]?.ponte
     if (po === undefined || m.phase !== 'vol') return false
-    const age = m.t - o.pondu
-    if (!o.eclos) {
-      if (age >= po.eclosion) {
-        o.eclos = true
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - o.x, e.corps.y - o.y)
+    if (o.eclos === null) {
+      if (o.fendu === null) {
+        // (L'ŒUF ATTEND : un insecte dans sa zone le fend ; trop vieux, il se dessèche)
+        let proie: Ennemi | undefined
+        let dc = po.detection + c.ennemi.rayon
+        for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (proie = e)
+        if (proie !== undefined) {
+          o.fendu = m.t
+          o.cible = proie.id
+        } else if (m.t - o.pondu >= po.attente) {
+          ev.push({ type: 'miniVerFini', id: o.id, x: o.x, y: o.y })
+          return false
+        }
+        return true
+      }
+      if (m.t - o.fendu >= po.eclosion) {
+        o.eclos = m.t
+        const cible = m.ennemis.find((e) => e.id === o.cible)
+        if (cible !== undefined) o.cap = Math.atan2(cible.corps.y - o.y, cible.corps.x - o.x)
         ev.push({ type: 'eclosion', id: o.id, x: o.x, y: o.y })
       }
       return true
     }
-    if (age >= po.eclosion + po.duree) {
+    if (m.t - o.eclos >= po.duree) {
       ev.push({ type: 'miniVerFini', id: o.id, x: o.x, y: o.y })
       return false
     }
-    // (IL COPIE LES MOUVEMENTS DU VER : sa vitesse, son cap — depuis là où il est)
-    o.x += v.vx * dt
-    o.y += v.vy * dt
-    o.cap = v.cap
-    // (il mord ce qu'il traverse : le venin, rafraîchi tant qu'il est dessus)
+    // (LE MINI-VER POURSUIT : sa proie ; morte, la plus proche à sa vue ; sans proie, il ondule sur place)
+    let proie = o.cible === null ? undefined : m.ennemis.find((e) => e.id === o.cible)
+    if (proie === undefined) {
+      let dc = po.vue
+      for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (proie = e)
+      o.cible = proie?.id ?? null
+    }
+    if (proie !== undefined) {
+      let e = Math.atan2(proie.corps.y - o.y, proie.corps.x - o.x) - o.cap
+      while (e > Math.PI) e -= Math.PI * 2
+      while (e < -Math.PI) e += Math.PI * 2
+      o.cap += Math.max(-po.virage * dt, Math.min(po.virage * dt, e))
+      const pas = Math.min(po.vitesse * dt, Math.max(0, dist(proie) - 2))
+      o.x += Math.cos(o.cap) * pas
+      o.y += Math.sin(o.cap) * pas
+    }
+    // (il mord ce qu'il touche : le venin, rafraîchi tant qu'il est dessus)
     for (const e of m.ennemis) {
-      if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > po.rayon + c.ennemi.rayon) continue
+      if (dist(e) > po.rayon + c.ennemi.rayon) continue
       if (e.venin === undefined || e.venin.jusque < m.t) ev.push({ type: 'venin', id: e.id, x: e.corps.x, y: e.corps.y })
       e.venin = { jusque: m.t + po.venin.duree, dps: Math.max(po.venin.dps, e.venin !== undefined && e.venin.jusque >= m.t ? e.venin.dps : 0) }
     }
