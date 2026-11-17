@@ -41,6 +41,23 @@ export const RACES: { id: Race; nom: string }[] = [
   { id: 'innommes', nom: 'Les Innommés' },
 ]
 
+/**
+ * LA VIE SELON LA RACE (Keko, 17/11 : « ce n'est pas très logique que toutes les races de vaisseaux aient la même
+ * architecture en termes de vie et de bouclier ») : LES ÉTHÉRÉS ont un bouclier beaucoup plus gros et un blindage très
+ * fragile — le bouclier, lui, commence à se réparer très vite après un temps sans coup ; L'ESSAIM n'a AUCUN BOUCLIER, mais
+ * sa coque se régénère lentement, en permanence ; les humains et les Innommés gardent la vie de toujours, en attendant
+ * leur spécificité. `coque`, `bouclier` : ce que donnent les pièces (le bouclier de base du jeu compris). *Les chiffres
+ * sont de moi, à rejuger en jouant.*
+ */
+export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number }
+export function vieSelonLaRace(race: Race, v: Vie): Vie {
+  if (race === 'etheres') return { coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
+  if (race === 'essaim') return { coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.12) }
+  return v
+}
+/** Les talents qu'une race ne se voit jamais proposer (l'Essaim n'a pas de bouclier à étendre ni à recharger). */
+export const talentsHorsDeLaRace = (race: Race): string[] => (race === 'essaim' ? ['bouclier', 'recharge'] : [])
+
 /** Une mission d'un vaisseau : ce qu'elle compte, jusqu'où, et LA PIÈCE qu'elle ouvre à l'achat sur ce vaisseau. */
 export type MissionDeVaisseau = { titre: string; dit: string; compteur: Compteur; cible: number; ouvre: string }
 

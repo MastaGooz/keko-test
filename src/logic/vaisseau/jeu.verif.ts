@@ -1979,3 +1979,19 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   const pv = w.ennemis.map((e) => 1000 - e.pv)
   verifier(`la météore tombe une fois, sur l'insecte qui file (impact à ${impact === null ? '—' : `${impact.x.toFixed(0)}, ${impact.y.toFixed(1)}`}, lui à y ${ouEtait.toFixed(1)}) : ${pv.join(' / ')} (18 à lui seul, 0 à son voisin et au lointain)`, ev.filter((e) => e.type === 'meteoreImpact').length === 1 && impact !== null && impact.y > 25 && Math.abs(impact.y - ouEtait) < 1.5 && pv[0] === 18 && pv[1] === 0 && pv[2] === 0)
 }
+
+// LA COQUE QUI SE RÉGÉNÈRE (l'Essaim, Keko, 17/11) : en permanence, sans attendre, jusqu'au plein et pas au-delà
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, regeneration: 0.5 }
+  const mr = nouveauMonde()
+  mr.coque = 2
+  mr.toucheA = mr.t
+  for (let i = 0; i < 60; i++) avancerLeMonde(c, mr, 1 / 60, { x: 0, y: 0 })
+  const apresUneSeconde = mr.coque
+  for (let i = 0; i < 60 * 20; i++) avancerLeMonde(c, mr, 1 / 60, { x: 0, y: 0 })
+  verifier('la coque se régénère tout de suite, de son régime, et s’arrête au plein', Math.abs(apresUneSeconde - 2.5) < 0.02 && mr.coque === c.coque)
+  const sans = nouveauMonde()
+  sans.coque = 2
+  for (let i = 0; i < 120; i++) avancerLeMonde({ ...c, regeneration: 0 }, sans, 1 / 60, { x: 0, y: 0 })
+  verifier('sans régénération, elle ne bouge pas', sans.coque === 2)
+}

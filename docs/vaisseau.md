@@ -5133,3 +5133,25 @@ petit peu la jauge de zoom pour glisser le bouton à sa droite. »
   (`enveloppeDe`, l'enveloppe convexe), des arêtes pâles, un éclat en étoile qui s'allume quand une face renvoie la
   lumière, et sept poussières de givre qui tournent autour de son axe, vives devant, éteintes derrière. MESURÉ d'abord
   trop blanc d'un bout à l'autre : la lumière d'une face compte davantage (puissance 2,2 au lieu de 1,4).
+
+### Le vortex, la vie selon la race ; les chiffres de l'interface (17/11)
+
+Keko : « les chiffres de l'interface, le niveau et le pourcentage du portail sont difficilement lisibles : parfois il y a
+des pixels très sombres en bas des chiffres qui donnent l'impression qu'ils sont coupés » ; puis « ce n'est pas très
+logique que toutes les races aient la même architecture en termes de vie et de bouclier : les Éthérés, un bouclier
+beaucoup plus gros que leur blindage très fragile — on garde le visuel du bouclier pour cette race ; l'Essaim, aucun
+bouclier, une barre de vie qui se régénère lentement, beaucoup plus lentement que le bouclier, mais en permanence ; le
+bouclier, lui, commence à se réparer très rapidement après un certain temps sans subir de dégâts ».
+
+- LES CHIFFRES : MESURÉ, le dégradé de `drawWord` passe sur toute la boîte de la lettre ; les deux dernières rangées d'un
+  chiffre prenaient son ton le plus sombre, et la rangée de dessous (`under`) un ton plus sombre encore — sur le « 1 » du
+  niveau, un vert presque noir contre le cerne. Pour le pour cent (violet) et le niveau (cristal), le ton du bas et le
+  dessous sont maintenant à peine plus sombres que le milieu.
+- `vieSelonLaRace` (`flotte.ts`, pur, vérifié) : LES ÉTHÉRÉS — le blindage moins 3 (2 au lieu de 5), le bouclier plus 5
+  (8 au lieu de 3), qui se répare après 3 s sans coup au lieu de 4, à 2,5 points par seconde au lieu de 0,5 ; L'ESSAIM —
+  aucun bouclier, le blindage plus 2 (7), qui se RÉGÉNÈRE en permanence à 0,12 point par seconde (un point toutes les
+  huit secondes ; `ConfigVaisseau.regeneration`, dans `jeu.ts`, vérifié) ; les humains et les Innommés gardent 5 et 3.
+  *Chiffres de moi, à rejuger.*
+- La fiche du vaisseau dit la vie de sa race ; pour l'Essaim, la dernière jauge devient « Régénération ».
+- L'Essaim ne se voit plus proposer « Bouclier étendu » ni « Bouclier vif » (`talentsHorsDeLaRace`, `proposer(…, exclus)`).
+- À TRANCHER : la spécificité des humains et celle des Innommés (proposées à Keko).

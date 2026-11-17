@@ -75,6 +75,11 @@ export const VAISSEAU = {
    * rechargent de `regain` point par seconde passé `delai` secondes sans coup. Zéro point : pas de bouclier.
    */
   bouclier: { points: 0, delai: 4, regain: 0.5 },
+  /**
+   * LA COQUE SE RÉGÉNÈRE (l'Essaim, Keko, 17/11 : « une barre de vie qui se régénère lentement sur la durée, beaucoup
+   * plus lentement que le bouclier, mais en permanence ») : tant de points par seconde, coup reçu ou non. Zéro : jamais.
+   */
+  regeneration: 0,
   /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
   foreuse: { debit: 1, portee: 1, aimant: 1 },
   /**
@@ -3134,6 +3139,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   m.t += dt
   // le bouclier se recharge, passé le délai sans coup
   if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
+  // la coque se régénère, sans attendre (l'Essaim)
+  if (c.regeneration > 0 && m.coque > 0 && m.coque < c.coque) m.coque = Math.min(c.coque, m.coque + c.regeneration * dt)
   // LA POSTCOMBUSTION : la poussée et la pointe multipliées le temps qu'elle dure, la pointe qui retombe ensuite ; sans
   // manche, elle pousse droit devant
   const boost = partDeLaPostcombustion(c, m)

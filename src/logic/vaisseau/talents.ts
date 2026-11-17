@@ -32,8 +32,9 @@ export const TALENTS: Talent[] = [
 export const talentDe = (id: string): Talent | undefined => TALENTS.find((x) => x.id === id)
 
 /** Les TROIS talents proposés : tirés de la graine de la partie, du niveau et du rang du choix (un joueur qui en a deux à faire voit deux tirages), tous différents. */
-export function proposer(graine: number, niveau: number, rang = 0): Talent[] {
-  const reste = [...TALENTS]
+export function proposer(graine: number, niveau: number, rang = 0, exclus: string[] = []): Talent[] {
+  // (`exclus` : ceux qu'on ne propose pas — l'Essaim, sans bouclier, n'a que faire de « Bouclier étendu »)
+  const reste = TALENTS.filter((x) => !exclus.includes(x.id))
   const choisis: Talent[] = []
   for (let k = 0; k < 3 && reste.length > 0; k++) {
     const i = hache(hache(graine, niveau), hache(rang, k)) % reste.length

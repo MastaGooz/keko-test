@@ -25,7 +25,7 @@ import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peau
 import { dessinerLeBouclier } from './bouclier.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, talentsHorsDeLaRace, vaisseauxDe, vieSelonLaRace } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
@@ -930,6 +930,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
       CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 150, tient: 75, lache: 300, fuit: 99999, armes } }
     }
+    // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
+    // l'Essaim, pas de bouclier, une coque qui se régénère
+    if (VORTEX) CONF = { ...CONF, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: CONF.coque, bouclier: CONF.bouclier, regeneration: CONF.regeneration }) }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
@@ -1259,7 +1262,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u0 = sortie((t - talentA) / 0.2)
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
     zones = []
-    const cartes = proposer(graineDuVol, m.invasion.niveau, ch.rang)
+    const cartes = proposer(graineDuVol, m.invasion.niveau, ch.rang, talentsHorsDeLaRace(modeleDeVaisseau(flotte.actif).race))
     const cote = W >= 300
     const cw = cote ? Math.min(100, Math.floor((W - 16 - 8) / 3)) : W - 24
     const hc = cote ? 78 : 44
@@ -1873,10 +1876,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (« ivoire » : la lettre des plaques d'en-tête — un ivoire éclairé d'en haut, ombré de bronze dessous)
     // (« violet » : la vie du portail, dans la lettre et le relief des titres d'or, aux teintes du vortex)
     // (« cristal » : le niveau, aux teintes de la barre d'expérience)
+    // (LE BAS DES CHIFFRES N'EST PLUS SOMBRE — Keko, 17/11 : « des pixels très sombres en bas des chiffres donnent
+    // l'impression qu'ils sont coupés » : MESURÉ, le dégradé passe sur toute la boîte de la lettre, ses deux dernières
+    // rangées prenaient le ton le plus sombre et la rangée du dessous un ton plus sombre encore — sur le « 1 » du niveau, un
+    // vert presque noir contre le cerne. Le ton du bas et le dessous sont maintenant à peine plus sombres que le milieu.)
     const st = or === 'cristal'
-      ? { fill: [TEINTES_MINERAI.cristal[1], TEINTES_MINERAI.cristal[2], TEINTES_MINERAI.cristal[3]], edge: TEINTES_MINERAI.cristal[3], under: TEINTES_MINERAI.cristal[0], outline: N.hex('#04120e'), shadow: 0 }
+      ? { fill: [N.hex('#22c8a0'), TEINTES_MINERAI.cristal[2], TEINTES_MINERAI.cristal[3]], edge: TEINTES_MINERAI.cristal[3], under: N.hex('#14a884'), outline: N.hex('#04120e'), shadow: 0 }
       : or === 'violet'
-      ? { fill: [N.hex('#7330d0'), N.hex('#a35cff'), N.hex('#cf9bff')], edge: N.hex('#f1dcff'), under: N.hex('#481b8c'), outline: N.hex('#12081f'), shadow: 0 }
+      ? { fill: [N.hex('#8c4cf0'), N.hex('#a35cff'), N.hex('#cf9bff')], edge: N.hex('#f1dcff'), under: N.hex('#7438d8'), outline: N.hex('#12081f'), shadow: 0 }
       : or === 'ivoire'
       ? { fill: [N.hex('#c9b98c'), N.hex('#efe2b8'), N.hex('#fff7d6')], edge: N.WHITE, under: N.hex('#8f7d54'), outline: N.hex('#0b0d16'), shadow: 0 }
       : or
@@ -3496,12 +3503,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const jaugesDuModele = (de: ReturnType<typeof modeleDeVaisseau>): Jauge[] => {
       const cf = configDuHangar(BASE, de.serie)
       const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
+      // (la vie de SA RACE — Keko, 17/11 : l'Essaim n'a pas de bouclier, sa dernière jauge dit sa régénération)
+      const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration })
       return [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
         { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
-        { nom: 'Blindage', valeur: cf.coque, max: 8, cellules: true },
-        { nom: 'Bouclier', valeur: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX), max: 8, cellules: true },
+        { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
       ]
     }
     const jauges = jaugesDuModele(mo)
