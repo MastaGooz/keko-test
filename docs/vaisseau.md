@@ -5416,3 +5416,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     empoisonne (7 par seconde, `Ennemi.poisonA` pour le dessin) ; des bouffées de miasme vert-jaune au cœur, violettes au
     bord, et des bulles ; l'insecte empoisonné luit et bulle. Elle devient l'arme de série du Ver ; la Nuée reste la seconde.
   - La traînée de givre reste écrite (`arme-givre`), plus aucun vaisseau ne la porte. *Chiffres de moi, à rejuger.*
+- LES ŒUFS DU VER, SA DEUXIÈME ARME, À LA PLACE DE LA NUÉE (Keko, 17/11 : « il pose des œufs sur son passage ; un mini-ver
+  de poison en sort, qui copie les mouvements du ver » — la copie choisie plutôt que la file derrière lui, qui aurait
+  doublé la traînée ; « les petits vers mordent et infligent poison, mais ne laissent pas de traînée — ça, c'est une
+  amélioration ») : `Arme.ponte`, `menerLesOeufs`, `Monde.oeufs`. Tant qu'il bouge, un œuf derrière lui toutes les 1,4 s
+  — quatre œufs et mini-vers à la fois — ; il éclot 1,5 s plus tard ; le mini-ver vit 6 s et SE DÉPLACE À LA VITESSE ET
+  DANS LA DIRECTION DU VER, depuis là où il est né ; ce qu'il traverse prend LE VENIN (`Ennemi.venin` : 5 par seconde,
+  3 s encore après). Le dessin : l'œuf, une cloque luisante qui bat de plus en plus vite, tremble et se fend ; le
+  mini-ver, cinq anneaux vert poison sur SON chemin (comme le grand), qui ondulent et pâlissent avant de se dissoudre. Il
+  a fallu le grossir de moitié : à neuf pixels, on ne lisait pas ses anneaux. *Chiffres de moi, à rejuger.*

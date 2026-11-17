@@ -458,6 +458,17 @@ export type Arme = {
    */
   nova?: { rayon: number; gel: { duree: number; ralenti: number }; plaque: { rayon: number; duree: number; dps: number; ralenti: number } }
   /**
+   * DES ŒUFS (la deuxième arme du Ver — Keko, 17/11 : « il pose des œufs sur son passage, qui éclosent une ou deux secondes
+   * plus tard, et un mini-ver de poison en sort, qui COPIE LES MOUVEMENTS du ver : si le ver va tout droit, le mini-ver va
+   * tout droit ; s'il tourne à gauche, il tourne à gauche » ; « les petits vers mordent tous les ennemis sur leur
+   * trajectoire et infligent poison, mais ne laissent pas de traînée — ça, c'est une amélioration ») : tant qu'il bouge, il
+   * POND un œuf derrière lui toutes les `tous` secondes — `max` œufs et mini-vers à la fois ; l'œuf ÉCLOT `eclosion`
+   * secondes plus tard ; le mini-ver vit `duree` secondes et SE DÉPLACE COMME LE VER, à sa vitesse et dans sa direction,
+   * depuis là où il est né. Tout insecte à moins de `rayon` de lui est EMPOISONNÉ : `venin.dps` par seconde, `venin.duree`
+   * secondes encore après (`Ennemi.venin`). L'état est `Monde.oeufs`.
+   */
+  ponte?: { tous: number; eclosion: number; max: number; duree: number; rayon: number; venin: { duree: number; dps: number } }
+  /**
    * UNE SALVE TOUT AUTOUR (les éclats de glace du Frimas, Keko, 15/11 : « périodiquement, des éclats de glace dans toutes
    * les directions autour de lui, portée moyenne ; huit éclats répartis uniformément ; évidemment, ils ralentissent ») :
    * à sa cadence, s'il y a un insecte à portée, il tire `nombre` obus à la fois, à angles égaux autour de lui (le
@@ -734,6 +745,8 @@ export type Ennemi = {
   irradie?: { jusque: number }
   /** IL EST EMPOISONNÉ (la traînée de poison du Ver) jusqu'à cet instant (pour le dessin). */
   poisonA?: number
+  /** LE VENIN DES MINI-VERS (voir `Arme.ponte`) : il perd tant par seconde, jusqu'à cet instant. */
+  venin?: { jusque: number; dps: number }
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
@@ -848,6 +861,8 @@ export type Monde = {
   /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
   // (`bond` : il saute d'un hôte mort au suivant — d'où, en combien de temps ; voir `menerLesParasites`)
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
+  /** LES ŒUFS DU VER ET SES MINI-VERS (voir `Arme.ponte`) : où, son cap, quand il a été pondu, s'il a éclos. */
+  oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number; eclos: boolean }[]
   /** LES LIENS DU DRAIN D'ÂME (voir `Arme.drain`) : son arme, l'âme accrochée, depuis quand. */
   liens: { arme: number; cible: number; depuis: number }[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
@@ -965,6 +980,11 @@ export type Evenement =
   | { type: 'rejetonFini'; x: number; y: number }
   /** Une vrille d'ombre sort de sa flaque, saisit sa proie, la serre (signalé toutes les `periode` secondes), se fait arracher par un grand, rentre (voir `Arme.vrille`). */
   | { type: 'vrille'; id: number; x: number; y: number }
+  /** Le Ver pond un œuf, il éclot, un mini-ver se dissout, un mini-ver mord (voir `Arme.ponte`). */
+  | { type: 'oeuf'; x: number; y: number }
+  | { type: 'eclosion'; id: number; x: number; y: number }
+  | { type: 'miniVerFini'; id: number; x: number; y: number }
+  | { type: 'venin'; id: number; x: number; y: number }
   /** Le drain d'âme accroche une âme (voir `Arme.drain`). */
   | { type: 'accroche'; id: number; x: number; y: number }
   | { type: 'saisie'; id: number; cible: number; x: number; y: number }
@@ -1008,7 +1028,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2649,6 +2669,57 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
+/** LES ŒUFS DU VER (voir `Arme.ponte`) : la ponte derrière lui, l'éclosion, les mini-vers qui copient ses mouvements, leur venin. */
+function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  const vit = Math.hypot(v.vx, v.vy)
+  c.armes.forEach((a, i) => {
+    const po = a.ponte
+    if (po === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0) || vit < 10) return
+    if (m.oeufs.filter((o) => o.arme === i).length >= po.max) return
+    m.armesA[i] = m.t + po.tous
+    // (derrière lui, au bout de son corps)
+    const x = v.x - (v.vx / vit) * 16
+    const y = v.y - (v.vy / vit) * 16
+    m.oeufs.push({ id: m.prochainId++, arme: i, x, y, cap: v.cap, pondu: m.t, eclos: false })
+    ev.push({ type: 'oeuf', x, y })
+  })
+  m.oeufs = m.oeufs.filter((o) => {
+    const po = c.armes[o.arme]?.ponte
+    if (po === undefined || m.phase !== 'vol') return false
+    const age = m.t - o.pondu
+    if (!o.eclos) {
+      if (age >= po.eclosion) {
+        o.eclos = true
+        ev.push({ type: 'eclosion', id: o.id, x: o.x, y: o.y })
+      }
+      return true
+    }
+    if (age >= po.eclosion + po.duree) {
+      ev.push({ type: 'miniVerFini', id: o.id, x: o.x, y: o.y })
+      return false
+    }
+    // (IL COPIE LES MOUVEMENTS DU VER : sa vitesse, son cap — depuis là où il est)
+    o.x += v.vx * dt
+    o.y += v.vy * dt
+    o.cap = v.cap
+    // (il mord ce qu'il traverse : le venin, rafraîchi tant qu'il est dessus)
+    for (const e of m.ennemis) {
+      if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > po.rayon + c.ennemi.rayon) continue
+      if (e.venin === undefined || e.venin.jusque < m.t) ev.push({ type: 'venin', id: e.id, x: e.corps.x, y: e.corps.y })
+      e.venin = { jusque: m.t + po.venin.duree, dps: Math.max(po.venin.dps, e.venin !== undefined && e.venin.jusque >= m.t ? e.venin.dps : 0) }
+    }
+    return true
+  })
+  // (LE VENIN RONGE : tant qu'il dure)
+  for (const e of [...m.ennemis]) {
+    if (e.venin === undefined || e.venin.jusque < m.t) continue
+    e.poisonA = Math.max(e.poisonA ?? -1, m.t + 0.1)
+    e.pv -= e.venin.dps * dt
+    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  }
+}
+
 /** LES INSECTES QUE LE DRAIN D'ÂME TIENT (voir `Arme.drain`) : ceux de ses liens, toujours en vie. Le dessin lit les mêmes. */
 export const liesAuDrain = (m: Monde): Ennemi[] => m.liens.flatMap((l) => m.ennemis.filter((e) => e.id === l.cible))
 
@@ -3432,7 +3503,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3549,10 +3620,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesParasites(c, m, dt, ev)
   menerLeDrain(c, m, dt, ev)
   menerLesVrilles(c, m, dt, ev)
+  menerLesOeufs(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

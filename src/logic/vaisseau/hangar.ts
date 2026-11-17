@@ -199,6 +199,9 @@ export const PIECES: Piece[] = [
   // LA TRAÎNÉE DE POISON DU VER (Keko, 17/11 : « le Ver récupère un sort qui fait une traînée de poison ») : la traînée de
   // givre d'avant, qui empoisonne au lieu de geler. *Chiffres de moi, à rejuger.*
   { id: 'arme-poison', sorte: 'arme', cran: 1, nom: 'Traînée de poison', dit: 'Il sème derrière lui une traînée de poison qui dure 4 s : tout insecte dedans perd 7 points par seconde.', note: 'Faites-vous suivre : ils marchent dans votre sillage.', prix: 30, poids: 5, arme: { id: 'poison', cadence: 0.1, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, givre: { ecart: 5, rayon: 8, duree: 4, dps: 7, ralenti: 1, poison: true } } },
+  // LES ŒUFS DU VER (Keko, 17/11 : « il pose des œufs sur son passage ; un mini-ver de poison en sort, qui copie les
+  // mouvements du ver ; ils mordent et empoisonnent, sans laisser de traînée »). *Chiffres de moi, à rejuger.*
+  { id: 'arme-oeufs', sorte: 'arme', cran: 2, nom: 'Œufs', dit: 'Tant qu’il bouge, il pond un œuf derrière lui toutes les 1,4 s — quatre œufs et mini-vers à la fois. L’œuf éclot 1,5 s plus tard : un mini-ver en sort, qui vit 6 s et FAIT LES MÊMES MOUVEMENTS QUE LUI, là où il est. Tout insecte qu’il traverse est empoisonné : 5 points par seconde, pendant 3 s.', note: 'Pondez, puis ramenez la couvée dans la nuée.', prix: 30, poids: 5, arme: { id: 'oeufs', cadence: 1.4, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, ponte: { tous: 1.4, eclosion: 1.5, max: 4, duree: 6, rayon: 4, venin: { duree: 3, dps: 5 } } } },
   // LES ÉCLATS DE GLACE DU FRIMAS (Keko, 15/11) : huit éclats tout autour de lui, à portée moyenne, qui gèlent ce qu'ils
   // touchent. *Chiffres de moi, à rejuger en jouant.*
   // (… PLUS DE FRAGMENTATION — Keko, 17/11 : « ce sera plutôt une amélioration qu'on rajoutera durant une partie ; on reste
