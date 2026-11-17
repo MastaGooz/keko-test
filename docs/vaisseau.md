@@ -5473,3 +5473,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   la salve part à sa cadence même sans insecte, et toutes les épines filent PERPENDICULAIRES À L'ORIENTATION DU VAISSEAU —
   deux rangées droites et parallèles ; elles sortent toujours des anneaux. (Elles s'ouvraient en éventail selon la courbe
   du corps, ce qui pouvait se lire comme une visée.)
+- LES ŒUFS : LA LARVE PREND LE CONTRÔLE (Keko, 17/11 : « le parasite qui sort de l'œuf prend le contrôle de l'hôte, qui
+  devient un serviteur du ver temporairement ; il attaque les autres ennemis sans qu'ils le prennent pour cible » ; « ne
+  pas le tuer à la fin — il serait près des ennemis, pas de nous — ; des dégâts à la fin de l'effet, pas pendant » ; « pas
+  de contrôle mental sur les gros insectes ») : `Arme.ponte.servant`, `Monde.serviteurs`, `menerLesServiteurs`. La larve
+  sortie de l'œuf court sur sa proie ; au contact, UN PETIT DEVIENT SERVITEUR 6 s — trois à la fois — : IL QUITTE LA NUÉE
+  (`m.ennemis` : plus personne ne le vise, ni les insectes, ni nos armes, ni le portail), chasse l'insecte le plus proche
+  et le mord (4 points toutes les 0,6 s) ; à la fin, il revient dans la nuée et perd 6 points d'un coup. UN GRAND (ou un
+  petit quand il y a déjà trois serviteurs) n'est pas contrôlé — proposé par moi, Keko l'a laissé ouvert : « les
+  parasites de l'œuf n'auraient aucun intérêt » sinon — : la larve le ronge (le venin) et le freine (moitié de sa vitesse,
+  3 s). Le dessin : le serviteur sous une lueur de poison, la larve sur son dos, ses yeux verts, un arc autour de lui —
+  le temps qui reste.

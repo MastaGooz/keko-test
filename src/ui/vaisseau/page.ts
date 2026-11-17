@@ -3595,7 +3595,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',
     'arme-epines': 'Une salve d’épines d’os jaillit de ses deux flancs, sur toute sa longueur.',
-    'arme-oeufs': 'Il pond des œufs-pièges : un insecte s’approche, un mini-ver en sort et le poursuit.',
+    'arme-oeufs': 'Il pond des œufs ; leur larve prend le contrôle d’un insecte, qui mord les siens.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
@@ -9692,6 +9692,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX) {
       dessinerLesAspires(p)
       dessinerLesConsumes(p)
+      // LES SERVITEURS DU VER (voir `Arme.ponte` ; Keko, 17/11) : l'insecte, sous une lueur de poison ; la larve accrochée sur
+      // son dos, qui ondule ; ses yeux qui luisent vert ; un arc autour de lui, le temps de contrôle qui reste
+      for (const sv of m.serviteurs) {
+        const b = sv.e.corps
+        const sx = b.x - camera.x + W / 2
+        const sy = b.y - camera.y + centreY()
+        const po = CONF.armes[sv.arme]?.ponte
+        const reste = po === undefined ? 0 : Math.max(0, (sv.jusque - m.t) / po.servant.duree)
+        p.glow(sx, sy, 9, GOUDRON[6], 0.35 + 0.1 * Math.sin(t * 6 + sv.e.id))
+        dessinerUnInsecte(p, sx, sy, b.cap, sv.e.id * 1.7, false, true)
+        p.circle(sx, sy, 4.5, GOUDRON[5], 0.35)
+        const dx = -Math.cos(b.cap)
+        const dy = -Math.sin(b.cap)
+        for (let k = 0; k < 3; k++) {
+          const onde = Math.sin(t * 9 - k) * 0.7
+          p.circle(sx + dx * (1 + k * 1.4) - dy * onde, sy + dy * (1 + k * 1.4) + dx * onde, 1.2 - k * 0.2, k === 0 ? GOUDRON[7] : GOUDRON[6])
+        }
+        for (const cote of [-1, 1]) p.px(Math.round(sx + Math.cos(b.cap) * 3 - Math.sin(b.cap) * cote * 1.5), Math.round(sy + Math.sin(b.cap) * 3 + Math.cos(b.cap) * cote * 1.5), GOUDRON[7])
+        p.arc(sx, sy, 8, 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reste, GOUDRON[6], 0.7)
+      }
       for (const e of m.ennemis) {
         const b = e.corps
         const sx = b.x - camera.x + W / 2
@@ -12252,6 +12272,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 10; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.4), i % 3 === 0 ? OMBRE[6] : OMBRE[4], 1, 1.5)
+          }
+          break
+        case 'controle':
+          // (la larve prend le contrôle : la piqûre, une gerbe de poison, une onde verte)
+          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: 12 })
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), i % 2 === 0 ? GOUDRON[7] : GOUDRON[5], 1, 1.5)
+          }
+          break
+        case 'morsureServiteur':
+          // (un serviteur mord un des siens : le grésillement, un seul à la fois)
+          if (t - morsureSonneA > 0.15) {
+            morsureSonneA = t
+            jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'liberation':
+          // (le contrôle prend fin : la larve le quitte, une bouffée de poison)
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.4), R.next() < 0.5 ? MIASME[5] : GOUDRON[6], 1, 1.5)
           }
           break
         case 'epines':

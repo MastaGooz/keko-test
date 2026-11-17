@@ -485,7 +485,15 @@ export type Arme = {
    * VAISSEAU — parallèles, deux rangées droites ; elles sortent toujours des anneaux, le long du corps)
    */
   epines?: { anneaux: number; ecart: number; debut: number }
-  ponte?: { tous: number; detection: number; attente: number; eclosion: number; max: number; duree: number; vitesse: number; virage: number; vue: number; rayon: number; venin: { duree: number; dps: number } }
+  // (… PUIS LA LARVE PREND LE CONTRÔLE — Keko, 17/11 : « le parasite qui sort de l'œuf prend le contrôle de l'hôte, qui
+  // devient un serviteur du ver, temporairement ; il attaque les autres ennemis, sans qu'ils le prennent pour cible » ; « des
+  // dégâts à la fin de l'effet, pas pendant » ; « pas de contrôle mental sur les gros insectes ») : la larve sortie de l'œuf
+  // court sur sa proie ; au contact, UN PETIT DEVIENT UN SERVITEUR (`servant`) pendant `duree` secondes — `max` à la fois :
+  // il QUITTE LA NUÉE (plus personne ne le vise, ni les insectes, ni nos armes), chasse l'insecte le plus proche et le mord
+  // (`morsure`, toutes les `cadence` secondes) ; à la fin, il revient dans la nuée et perd `fin` points d'un coup. UN GRAND
+  // (ou un petit quand il y a déjà `max` serviteurs) n'est pas contrôlé : la larve s'accroche et le ronge — le venin — et
+  // le freine (`frein` : sa vitesse, `venin.duree` secondes). L'état est `Monde.serviteurs`.
+  ponte?: { tous: number; detection: number; attente: number; eclosion: number; max: number; duree: number; vitesse: number; virage: number; vue: number; rayon: number; venin: { duree: number; dps: number }; servant: { duree: number; morsure: number; cadence: number; fin: number; max: number }; frein: number }
   /**
    * UNE SALVE TOUT AUTOUR (les éclats de glace du Frimas, Keko, 15/11 : « périodiquement, des éclats de glace dans toutes
    * les directions autour de lui, portée moyenne ; huit éclats répartis uniformément ; évidemment, ils ralentissent ») :
@@ -879,6 +887,8 @@ export type Monde = {
   /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
   // (`bond` : il saute d'un hôte mort au suivant — d'où, en combien de temps ; voir `menerLesParasites`)
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
+  /** LES SERVITEURS DU VER (voir `Arme.ponte`) : l'insecte contrôlé — sorti de la nuée —, son arme, jusqu'à quand, sa prochaine morsure. */
+  serviteurs: { e: Ennemi; arme: number; jusque: number; mordA: number }[]
   /** LE CHEMIN QUE LE VAISSEAU A PRIS, le plus récent devant — un point tous les demi-pixels, 40 de long : le corps du Ver le suit (voir `Arme.epines`). */
   sillage: [number, number][]
   /** LES ŒUFS DU VER ET SES MINI-VERS (voir `Arme.ponte`) : où, son cap, quand il a été pondu, s'il a éclos. */
@@ -1008,6 +1018,10 @@ export type Evenement =
   | { type: 'venin'; id: number; x: number; y: number }
   /** Le Ver lance ses épines d'os (voir `Arme.epines`). */
   | { type: 'epines'; x: number; y: number }
+  /** La larve prend le contrôle d'un insecte, un serviteur mord, le contrôle prend fin (voir `Arme.ponte`). */
+  | { type: 'controle'; id: number; x: number; y: number }
+  | { type: 'morsureServiteur'; id: number; x: number; y: number }
+  | { type: 'liberation'; id: number; x: number; y: number }
   /** Le drain d'âme accroche une âme (voir `Arme.drain`). */
   | { type: 'accroche'; id: number; x: number; y: number }
   | { type: 'saisie'; id: number; cible: number; x: number; y: number }
@@ -1051,7 +1065,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], sillage: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], sillage: [], serviteurs: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2807,13 +2821,21 @@ function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
       o.x += Math.cos(o.cap) * pas
       o.y += Math.sin(o.cap) * pas
     }
-    // (il mord ce qu'il touche : le venin, rafraîchi tant qu'il est dessus)
-    for (const e of m.ennemis) {
-      if (dist(e) > po.rayon + c.ennemi.rayon) continue
-      if (e.venin === undefined || e.venin.jusque < m.t) ev.push({ type: 'venin', id: e.id, x: e.corps.x, y: e.corps.y })
-      e.venin = { jusque: m.t + po.venin.duree, dps: Math.max(po.venin.dps, e.venin !== undefined && e.venin.jusque >= m.t ? e.venin.dps : 0) }
+    // (LA LARVE ATTEINT SA PROIE : un petit devient un serviteur ; un grand — ou trop de serviteurs déjà — est rongé et freiné)
+    if (proie === undefined || dist(proie) > po.rayon + c.ennemi.rayon) return true
+    const siens = m.serviteurs.filter((sv) => sv.arme === o.arme).length
+    if (proie.grand !== true && siens < po.servant.max) {
+      m.ennemis.splice(m.ennemis.indexOf(proie), 1)
+      proie.venin = undefined
+      if (m.verrou === proie.id) m.verrou = null
+      m.serviteurs.push({ e: proie, arme: o.arme, jusque: m.t + po.servant.duree, mordA: m.t + 0.3 })
+      ev.push({ type: 'controle', id: proie.id, x: proie.corps.x, y: proie.corps.y })
+    } else {
+      if (proie.venin === undefined || proie.venin.jusque < m.t) ev.push({ type: 'venin', id: proie.id, x: proie.corps.x, y: proie.corps.y })
+      proie.venin = { jusque: m.t + po.venin.duree, dps: po.venin.dps }
+      geler(m, proie, po.venin.duree, po.frein, ev)
     }
-    return true
+    return false
   })
   // (LE VENIN RONGE : tant qu'il dure)
   for (const e of [...m.ennemis]) {
@@ -2822,6 +2844,47 @@ function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     e.pv -= e.venin.dps * dt
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
+}
+
+/** LES SERVITEURS DU VER (voir `Arme.ponte`) : ils chassent et mordent la nuée ; leur temps fini, ils y reviennent, blessés. */
+function menerLesServiteurs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  m.serviteurs = m.serviteurs.filter((sv) => {
+    const po = c.armes[sv.arme]?.ponte
+    if (po === undefined || m.phase !== 'vol') return false
+    const e = sv.e
+    if (m.t >= sv.jusque) {
+      // (LE CONTRÔLE PREND FIN : il revient dans la nuée, et la larve qui le quitte lui coûte `fin` points)
+      e.fait = 'marche'
+      e.calmeA = m.t + 1
+      m.ennemis.push(e)
+      e.pv -= po.servant.fin
+      ev.push({ type: 'liberation', id: e.id, x: e.corps.x, y: e.corps.y })
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      return false
+    }
+    // (IL CHASSE l'insecte le plus proche de lui, et le mord au contact)
+    let proie: Ennemi | undefined
+    let dc = Infinity
+    for (const x of m.ennemis) {
+      const d = Math.hypot(x.corps.x - e.corps.x, x.corps.y - e.corps.y)
+      if (d < dc) (dc = d), (proie = x)
+    }
+    if (proie === undefined) {
+      e.corps = voler(c, c.ennemi, e.corps, dt, { x: 0, y: 0 }, m.detruits).vaisseau
+      return true
+    }
+    const d = dc || 1
+    e.corps = voler(c, c.ennemi, e.corps, dt, { x: (proie.corps.x - e.corps.x) / d, y: (proie.corps.y - e.corps.y) / d }, m.detruits).vaisseau
+    if (dc <= c.ennemi.rayon * 2 + 2 && m.t >= sv.mordA) {
+      sv.mordA = m.t + po.servant.cadence
+      proie.pv -= po.servant.morsure
+      ev.push({ type: 'morsureServiteur', id: proie.id, x: proie.corps.x, y: proie.corps.y })
+      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique: false })
+      if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+    }
+    return true
+  })
 }
 
 /** LES INSECTES QUE LE DRAIN D'ÂME TIENT (voir `Arme.drain`) : ceux de ses liens, toujours en vie. Le dessin lit les mêmes. */
@@ -3607,7 +3670,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.sillage = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.sillage = []), (m.serviteurs = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3725,6 +3788,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLeDrain(c, m, dt, ev)
   menerLesVrilles(c, m, dt, ev)
   menerLesOeufs(c, m, dt, ev)
+  menerLesServiteurs(c, m, dt, ev)
   lancerLesEpines(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
