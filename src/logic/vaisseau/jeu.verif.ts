@@ -1982,7 +1982,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 
 // LA COQUE QUI SE RÉGÉNÈRE (l'Essaim, Keko, 17/11) : en permanence, sans attendre, jusqu'au plein et pas au-delà
 {
-  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, regeneration: 0.5 }
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, regeneration: 0.1 } // (10 % d'une coque de 5 : un demi-point par seconde)
   const mr = nouveauMonde()
   mr.coque = 2
   mr.toucheA = mr.t

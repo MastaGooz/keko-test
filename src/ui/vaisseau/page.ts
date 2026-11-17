@@ -3562,18 +3562,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const jaugesDuModele = (de: ReturnType<typeof modeleDeVaisseau>): Jauge[] => {
       const cf = configDuHangar(BASE, de.serie)
       const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
-      // (la vie de SA RACE — Keko, 17/11 : l'Essaim n'a pas de bouclier, sa dernière jauge dit sa régénération)
+      // (la vie de SA RACE — Keko, 17/11 ; L'ESSAIM N'A PAS DE LIGNE DE RÉGÉNÉRATION — « on régénère les PV en % » : elle
+      // vaut la même part pour tous les siens, une jauge ne dirait rien)
       const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption }, de.plaques)
-      return [
+      const jauges: Jauge[] = [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
         { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
         // (L'ESSAIM N'A PAS DE BLINDAGE, IL A DE LA VIE — Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un aspect plus point de vie »)
         de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: 8, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
-        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: '', valeur: 0, max: 8 },
       ]
+      return jauges.filter((j) => j.nom !== '')
     }
     const jauges = jaugesDuModele(mo)
+    // (le repère du vaisseau piloté, JAUGE PAR JAUGE, PAR SON NOM : deux races n'ont pas les mêmes lignes)
+    const repereDe = (l: Jauge[] | null, j: Jauge): number | null => {
+      const q = l?.find((x) => x.nom === j.nom)
+      return q === undefined ? null : q.valeur / q.max
+    }
     // (UN REPÈRE BLANC À LA VALEUR DU VAISSEAU PILOTÉ, quand on en regarde un autre — Keko, 15/11 : « pour comparer celui
     // qui est équipé à celui qu'on est en train de regarder » ; comme les jauges des pièces)
     const pilote = mo.id === flotte.actif ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
@@ -3597,7 +3604,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     jauges.forEach((j, i) => {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
-      dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, pilote === null ? null : pilote[i].valeur / pilote[i].max, false, gx, k)
+      dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, repereDe(pilote, j), false, gx, k)
     })
     if (dit.length > 0) {
       p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)

@@ -77,7 +77,8 @@ export const VAISSEAU = {
   bouclier: { points: 0, delai: 4, regain: 0.5 },
   /**
    * LA COQUE SE RÉGÉNÈRE (l'Essaim, Keko, 17/11 : « une barre de vie qui se régénère lentement sur la durée, beaucoup
-   * plus lentement que le bouclier, mais en permanence ») : tant de points par seconde, coup reçu ou non. Zéro : jamais.
+   * plus lentement que le bouclier, mais en permanence ») : TANT DE LA COQUE PLEINE PAR SECONDE, coup reçu ou non — une
+   * part, pas des points (Keko, 17/11 : « on régénère les PV en % » : elle suit la coque qui grandit). Zéro : jamais.
    */
   regeneration: 0,
   /**
@@ -3204,7 +3205,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // le bouclier se recharge, passé le délai sans coup
   if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
   // la coque se régénère, sans attendre (l'Essaim)
-  if (c.regeneration > 0 && m.coque > 0 && m.coque < c.coque) m.coque = Math.min(c.coque, m.coque + c.regeneration * dt)
+  if (c.regeneration > 0 && m.coque > 0 && m.coque < c.coque) m.coque = Math.min(c.coque, m.coque + c.regeneration * c.coque * dt)
   // la corruption ronge la coque (les Innommés) ; toute rongée, la partie est perdue
   if (c.corruption.ronge > 0 && m.corruption > 0) {
     const d = Math.min(m.corruption, c.corruption.ronge * dt)

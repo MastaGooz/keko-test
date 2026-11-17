@@ -59,7 +59,7 @@ export function vieSelonLaRace(race: Race, v: Vie, plaques = 3): Vie {
   if (race === 'humains') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, plaques }
   if (race === 'innommes') return { ...v, bouclier: { ...v.bouclier, points: 0 }, corruption: { ronge: 0.5, purge: 0.5 } }
   if (race === 'etheres') return { ...v, coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
-  if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.12) }
+  if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.02) }
   return v
 }
 /** Les talents qu'une race ne se voit jamais proposer (seuls les Éthérés ont un bouclier à étendre et à recharger). */

@@ -5211,3 +5211,8 @@ tes propositions pour les humains et pour la corruption avec les dégâts diffé
   violettes ; une purge — un frisson qui remonte (`purge` dans `synthe.ts`), un filet violet de l'insecte au vaisseau, la
   part violette qui s'éclaire. La fiche dit « Purge », en violet. (Une coque qui baisse d'un rien à chaque image n'est plus
   prise pour un coup : plus de fantôme ni d'étincelles.)
+- LA RÉGÉNÉRATION EN POUR CENT, SANS LIGNE À LA FICHE (Keko, 17/11 : « ne mets pas de ligne régénération pour l'Essaim,
+  on régénère les PV en % ») : `regeneration` est une PART DE LA COQUE PLEINE par seconde (2 % pour l'Essaim : 0,14 point
+  par seconde sur une coque de 7, à peu près l'ancien régime), elle suit la coque qui grandit ; la fiche de l'Essaim
+  s'arrête à « Vie ». Les repères du vaisseau piloté se comparent jauge par jauge PAR LEUR NOM (deux races n'ont plus les
+  mêmes lignes : à l'index, une fiche plus courte que celle du piloté aurait lu une jauge absente).
