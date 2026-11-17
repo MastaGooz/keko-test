@@ -5308,3 +5308,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   d'étiquette dans la case ; l'éclair du choix passe à l'or pâle (le blanc dit le piloté). LE NOM DE LA RACE SUR UNE
   LIGNE, sans son article (« Éthérés », « Innommés ») : entier, il élargissait la colonne de l'identité et écrasait les
   barres des jauges.
+- LE PILOTÉ : SON NOM EN JAUNE ET UNE PETITE ÉTOILE JAUNE DANS LE COIN (Keko, 17/11, à la place du carré blanc). LE
+  CADRE D'OR DU CHOISI N'ENTOURE QUE SON PORTRAIT : autour de la case, il passait sur les noms longs (« Salamandre »,
+  « Tesseract ») — Keko ne veut pas de noms de tailles différentes. Plus d'étoile dans le coin de l'apparence choisie
+  (« le rectangle de sélection suffit »).

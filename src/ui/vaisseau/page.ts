@@ -4108,16 +4108,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const age = t - choixVaisseauA
         const saute = ici && age < 0.3 ? -Math.round(2 * Math.sin((age / 0.3) * Math.PI)) : 0
         const dy = e.dy + saute
-        // (LE PILOTÉ EST CERCLÉ DE BLANC, LE CHOISI D'OR PAR-DESSUS — Keko, 17/11 : « plutôt que d'écrire PILOTÉ en jaune, un
-        // carré blanc autour de lui ; le carré jaune par-dessus pour la sélection » ; l'éclair du choix passe à l'or pâle)
-        const cadre = ici ? (age < 0.1 ? N.hex('#fff2a8') : PEPITE[2 + (Math.floor(t * 4) % 2)]) : mo.id === flotte.actif ? N.WHITE : MATIERES.encre.contour
-        p.rect(cx - 1, cy - 1 + dy, cw + 2, ch + 2, cadre)
+        p.rect(cx - 1, cy - 1 + dy, cw + 2, ch + 2, MATIERES.encre.contour)
         p.rect(cx, cy + dy, cw, ch, MATIERES.creux.corps)
         const hp = ch - 11
         peindreLePortrait(p, mo, cx + 1, cy + 1 + dy, cw - 2, hp, r * 3 + k)
         if (!aSoi) p.rect(cx + 1, cy + 1 + dy, cw - 2, hp, N.hex('#0a0c14'), 0.6)
+        // (LE CADRE D'OR DU CHOISI N'ENTOURE QUE SON PORTRAIT — Keko, 17/11 : il passait sur les noms longs, « Salamandre »,
+        // « Tesseract », et les noms gardent tous la même taille ; l'éclair du choix en or pâle)
+        if (ici) {
+          const or = age < 0.1 ? N.hex('#fff2a8') : PEPITE[2 + (Math.floor(t * 4) % 2)]
+          p.rect(cx, cy + dy, cw, 1, or)
+          p.rect(cx, cy + hp + 1 + dy, cw, 1, or)
+          p.rect(cx, cy + dy, 1, hp + 2, or)
+          p.rect(cx + cw - 1, cy + dy, 1, hp + 2, or)
+        }
+        // (LE PILOTÉ : SON NOM EN JAUNE ET UNE PETITE ÉTOILE JAUNE DANS LE COIN — Keko, 17/11, à la place du carré blanc)
+        const pilote = mo.id === flotte.actif
+        if (pilote) N.sparkle(p, cx + cw - 6, cy + 6 + dy, 3, PEPITE[2], PEPITE[2], 0.8)
         // (plus d'insigne de race dans la case — Keko, 17/11 : la fiche, dessous, porte l'emblème de la race)
-        ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' })
+        ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, pilote ? PEPITE[2] : ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' })
         zone(cx - 1, cy - 1, cw + 2, ch + 2, () => {
           vaisseauChoisi = mo.id
           choixVaisseauA = t
@@ -4585,8 +4594,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       plaque(p, cx, cy + e.dy, cw, ch, 'creux')
       peindreDansUneCase(p, formesDuChassis(cran, pe.habit(cran)), cx + cw / 2, cy + ch / 2 + e.dy, cw - 6, ch - 6, { rampes: rampesDeLaPeau(pe) })
       ecrire(p, pe.nom, cx + cw / 2, cy + ch + 3 + e.dy, choisie ? N.hex('#fff3cf') : COQUE[4], { align: 'center', police: choisie ? GRAS : TEXTE })
-      if (choisie) N.sparkle(p, cx + cw - 5, cy + 5, 2 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), N.WHITE, PEPITE[3], 0.8)
-      else zone(cx - 2, cy - 2, cw + 4, ch + 16, () => choisirLaPeau(pe.id), 'equipe')
+      // (plus d'étoile dans le coin de la choisie — Keko, 17/11 : « le rectangle de sélection est toujours le vaisseau choisi »)
+      if (!choisie) zone(cx - 2, cy - 2, cw + 4, ch + 16, () => choisirLaPeau(pe.id), 'equipe')
     })
     const bf = largeurDe('Fermer', GRAS) + 22
     bouton(p, Math.round(W / 2 - bf / 2), y + 22 + ch + 14 + 2, bf, 15, 'Fermer', true, () => (couleursOuvertes = false), 'retour', 'acier')
