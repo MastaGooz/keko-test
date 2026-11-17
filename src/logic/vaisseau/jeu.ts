@@ -446,7 +446,17 @@ export type Arme = {
    * `rayon`, dure `duree` secondes. Un insecte dans une plaque perd `dps` par seconde et avance à `ralenti` de sa vitesse
    * (il le reste un instant après en être sorti). L'état est `Monde.givres`.
    */
-  givre?: { ecart: number; rayon: number; duree: number; dps: number; ralenti: number }
+  // (… ET UNE TRAÎNÉE DE POISON, celle du Ver — Keko, 17/11 : « le Ver récupère un sort qui fait une traînée de poison » :
+  // `poison` — la même traînée, qui ne gèle ni ne ralentit ; un insecte dedans est empoisonné, `Ennemi.poisonA`)
+  givre?: { ecart: number; rayon: number; duree: number; dps: number; ralenti: number; poison?: boolean }
+  /**
+   * UNE NOVA DE GIVRE (le Frimas, à la place de sa traînée — Keko, 17/11 : « une nova de givre qui laisse une plaque de
+   * verglas, plus grosse, mais pas en permanence une traînée ») : à sa cadence, un insecte à moins de `rayon`, une onde
+   * de froid part du vaisseau : tout insecte à moins de `rayon` prend `degats` (ceux de l'arme) et GÈLE (`gel`) ; elle
+   * laisse sous lui UNE PLAQUE DE VERGLAS (`plaque` : une plaque de givre, `Monde.givres`, bien plus grande que celles de
+   * la traînée) qui ralentit et ronge ce qui y marche.
+   */
+  nova?: { rayon: number; gel: { duree: number; ralenti: number }; plaque: { rayon: number; duree: number; dps: number; ralenti: number } }
   /**
    * UNE SALVE TOUT AUTOUR (les éclats de glace du Frimas, Keko, 15/11 : « périodiquement, des éclats de glace dans toutes
    * les directions autour de lui, portée moyenne ; huit éclats répartis uniformément ; évidemment, ils ralentissent ») :
@@ -722,6 +732,8 @@ export type Ennemi = {
   acide?: { jusque: number; dps: number; bonus: number }
   /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) : il est sur un faisceau de cristaux, jusqu'à cet instant (à peine au-delà : pour le dessin). */
   irradie?: { jusque: number }
+  /** IL EST EMPOISONNÉ (la traînée de poison du Ver) jusqu'à cet instant (pour le dessin). */
+  poisonA?: number
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
@@ -860,7 +872,7 @@ export type Puits = { id: number; arme: number; x0: number; y0: number; cx: numb
 export type Tornade = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number }
 
 /** Une plaque de givre semée par le vaisseau (voir `Arme.givre`). */
-export type Givre = { id: number; arme: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; ralenti: number }
+export type Givre = { id: number; arme: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; ralenti: number; /** De poison (le Ver), pas de givre ; de verglas (la nova). */ poison?: boolean; verglas?: boolean }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
 export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et pour chaque ligne les insectes qui sont dessus et l'instant de sa prochaine décharge s'ils y restent. */ liens: { vers: number; sur: number[]; dechargeA: number }[] }
@@ -976,6 +988,8 @@ export type Evenement =
   | { type: 'parasiteMort'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
+  /** Une nova de givre part du vaisseau (voir `Arme.nova`). */
+  | { type: 'nova'; x: number; y: number; rayon: number }
   /** Une bombe part ; une bombe éclate. */
   | { type: 'bombe'; x: number; y: number }
   | { type: 'explosion'; x: number; y: number; rayon: number }
@@ -1781,18 +1795,52 @@ function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     let derniere: Givre | undefined
     for (const g of m.givres) if (g.arme === i) derniere = g
     if (derniere !== undefined && Math.hypot(derniere.x - x, derniere.y - y) < gi.ecart) return
-    m.givres.push({ id: m.prochainId++, arme: i, x, y, nee: m.t, rayon: gi.rayon, duree: gi.duree, dps: gi.dps, ralenti: gi.ralenti })
+    m.givres.push({ id: m.prochainId++, arme: i, x, y, nee: m.t, rayon: gi.rayon, duree: gi.duree, dps: gi.dps, ralenti: gi.ralenti, ...(gi.poison === true ? { poison: true } : {}) })
   })
   if (m.givres.length === 0) return
   for (const e of [...m.ennemis]) {
-    // (la plaque qui ralentit le plus, s'il y en a plusieurs ; ses dégâts une fois, pas une fois par plaque)
+    // (la plaque qui ralentit le plus, s'il y en a plusieurs ; ses dégâts une fois, pas une fois par plaque — le poison à
+    // part : un insecte dans du givre et du poison prend les deux)
     let pire: Givre | undefined
-    for (const g of m.givres) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + c.ennemi.rayon * 0.5 && (pire === undefined || g.ralenti < pire.ralenti)) pire = g
-    if (pire === undefined) continue
-    geler(m, e, 0.25, pire.ralenti, ev)
-    e.pv -= pire.dps * dt
+    let venin: Givre | undefined
+    for (const g of m.givres) {
+      if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) > g.rayon + c.ennemi.rayon * 0.5) continue
+      if (g.poison === true) {
+        if (venin === undefined || g.dps > venin.dps) venin = g
+      } else if (pire === undefined || g.ralenti < pire.ralenti) pire = g
+    }
+    if (venin !== undefined) {
+      e.poisonA = m.t + 0.4
+      e.pv -= venin.dps * dt
+    }
+    if (pire !== undefined) {
+      geler(m, e, 0.25, pire.ralenti, ev)
+      e.pv -= pire.dps * dt
+    }
+    if (pire === undefined && venin === undefined) continue
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
+}
+
+/** LES NOVAS DE GIVRE (voir `Arme.nova`) : l'onde qui frappe et gèle tout autour, la plaque de verglas qu'elle laisse. */
+function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const nv = a.nova
+    if (nv === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const dans = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= nv.rayon + c.ennemi.rayon)
+    if (dans.length === 0) return
+    m.armesA[i] = m.t + a.cadence
+    ev.push({ type: 'nova', x: v.x, y: v.y, rayon: nv.rayon })
+    m.givres.push({ id: m.prochainId++, arme: i, x: v.x, y: v.y, nee: m.t, rayon: nv.plaque.rayon, duree: nv.plaque.duree, dps: nv.plaque.dps, ralenti: nv.plaque.ralenti, verglas: true })
+    for (const e of dans) {
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      geler(m, e, nv.gel.duree, nv.gel.ralenti, ev)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  })
 }
 
 /** GELER un insecte (le givre, un éclat de glace) : `duree` secondes, à `ralenti` de sa vitesse — le gel le plus fort l'emporte. */
@@ -3485,6 +3533,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, dt, ev)
   menerLeGivre(c, m, dt, ev)
+  lancerLesNovas(c, m, ev)
   tirerLesSalves(c, m, ev)
   tirerLesEssaims(c, m, ev)
   menerLesSpheres(c, m, dt, ev)
@@ -3503,7 +3552,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

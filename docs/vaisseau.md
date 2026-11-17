@@ -5404,3 +5404,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   fixé par la distance, de 0,4 à 0,7 s, et s'y accroche à l'arrivée. Le dessin : une cloche au-dessus du sol (6 + un
   quart de la distance), son ombre qui file dessous, la larve roulée en boule qui tourne sur elle-même et grossit au
   sommet, une traînée de gouttes de venin. Vérifié par une sonde de console : la hauteur monte jusqu'à 20 et redescend.
+- LE FRIMAS LANCE UNE NOVA, LE VER SÈME DU POISON (Keko, 17/11 : « changer le Frimas pour qu'à la place d'une traînée de
+  givre, il fasse une nova de givre qui laisse une plaque de verglas plus grosse, mais pas en permanence une traînée ; et
+  le Ver récupère un sort qui fait une traînée de poison ») :
+  - LA NOVA (`Arme.nova`, `lancerLesNovas`) : toutes les 3 s, un insecte à moins de 38, l'onde part — 8 points et gelé 2 s
+    à tout ce qui est à moins de 38 — et laisse sous le vaisseau UNE plaque de verglas de 22, 4 s (ralenti à 45 %, 4 par
+    seconde ; `Givre.verglas`). Le dessin est la Frost nova de pixelfx vue de dessus : le flocon qui éclate au cœur, le
+    front blanc puis bleu, seize cristaux qui jaillissent à son passage, pointés vers le dehors, et fondent ; le verglas,
+    une plaque lisse plus claire au bord, fêlée de lignes blanches, son bord givré, des reflets. Un son à elle (`nova`).
+  - LA TRAÎNÉE DE POISON (`arme-poison`) : la traînée de givre d'avant, `givre.poison` — elle n'en gèle ni ne ralentit, elle
+    empoisonne (7 par seconde, `Ennemi.poisonA` pour le dessin) ; des bouffées de miasme vert-jaune au cœur, violettes au
+    bord, et des bulles ; l'insecte empoisonné luit et bulle. Elle devient l'arme de série du Ver ; la Nuée reste la seconde.
+  - La traînée de givre reste écrite (`arme-givre`), plus aucun vaisseau ne la porte. *Chiffres de moi, à rejuger.*

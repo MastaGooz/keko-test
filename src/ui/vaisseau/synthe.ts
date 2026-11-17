@@ -612,6 +612,19 @@ const RECETTES = {
     },
   },
   /**
+   * UNE NOVA DE GIVRE PART (le Frimas, 17/11) : le froid qui s'abat d'un coup tout autour — un claquement sourd, une onde
+   * de souffle froid qui s'ouvre d'une oreille à l'autre, une pluie de tintements de cristal qui jaillissent
+   */
+  nova: {
+    duree: 0.9, niveau: 0.24, salle: [0.4, 0.16], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.6, 0, { f: 260, glisse: { vers: 120, en: 0.18 }, a: 0.002, d: 0.22, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      souffle(m, h, 0, 0.8, -0.5, { f: 1800, glisse: { vers: 4200, en: 0.3 }, q: 1.2, bande: true, a: 0.01, d: 0.45, large: true })
+      souffle(m, h, 0.02, 0.6, 0.5, { f: 2400, glisse: { vers: 5000, en: 0.3 }, q: 1.6, bande: true, a: 0.01, d: 0.4 })
+      for (let k = 0; k < 10; k++) note(m, 0.04 + k * 0.025 + 0.01 * h.next(), 0.28, Math.cos((k * Math.PI) / 5) * 0.85, { f: 2200 + 1800 * h.next(), a: 0.001, d: 0.1 + 0.08 * h.next(), partiels: [[1, 1, 1], [2.76, 0.35, 0.5], [5.4, 0.15, 0.3]] })
+    },
+  },
+  /**
    * UNE TORNADE DE GIVRE SE LÈVE : le vent qui monte — un souffle filtré qui enfle et tourne d'une oreille à l'autre,
    * son sifflement qui monte, quelques tintements de glace emportés
    */

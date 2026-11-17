@@ -2040,6 +2040,41 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`un grand saisi avance encore (${grand.x1.toFixed(1)} puis ${grand.x3.toFixed(1)}) ; sorti de l'allonge, il s'arrache une fois, 12 d'un coup (${grand.evs.filter((e) => e.type === 'arrache').length} arrachement)`, Math.abs(grand.x3 - grand.x1) > 20 && grand.evs.filter((e) => e.type === 'arrache').length === 1)
 }
 
+// LA NOVA DE GIVRE DU FRIMAS (Keko, 17/11) : un insecte à portée, l'onde part — 8 points et gelé à tout ce qui est à moins
+// de 38, rien au lointain — et laisse UNE plaque de verglas, grande (22), sous le vaisseau ; pas de traînée derrière lui
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const nova = { id: 'nova', cadence: 3, degats: 8, portee: 38, vitesse: 0, vie: 0, dispersion: 0, guide: false, nova: { rayon: 38, gel: { duree: 2, ralenti: 0.3 }, plaque: { rayon: 22, duree: 4, dps: 4, ralenti: 0.45 } } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [nova], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 30, 0), insecte(2, 0, -60), insecte(3, 200, 0))
+  const ev: Evenement[] = []
+  for (let i = 0; i < 30; i++) {
+    w.vaisseau = { ...w.vaisseau, x: (i * 2), y: 0, vx: 120, vy: 0, cap: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  verifier(`la nova frappe et gèle ce qui est autour (${pv[0].toFixed(1)} au proche, gelé : ${(w.ennemis[0].geleA ?? 0) > w.t}), rien au lointain, une seule plaque de verglas de 22 (${w.givres.map((g) => g.rayon).join(', ')})`, ev.filter((e) => e.type === 'nova').length === 1 && pv[0] >= 8 && (w.ennemis[0].geleA ?? 0) > w.t && pv[1] === 0 && pv[2] === 0 && w.givres.length === 1 && w.givres[0].rayon === 22 && w.givres[0].verglas === true)
+}
+
+// LA TRAÎNÉE DE POISON DU VER (Keko, 17/11) : semée derrière lui comme le givre, elle empoisonne — 7 par seconde — SANS
+// geler ni ralentir
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const poison = { id: 'poison', cadence: 0.1, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, givre: { ecart: 5, rayon: 8, duree: 4, dps: 7, ralenti: 1, poison: true } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [poison], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, -10, 0))
+  const ev: Evenement[] = []
+  for (let i = 0; i < 60; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  }
+  // (immobile, il sème sa plaque sous lui : l'insecte à 10 y est, son rayon compris)
+  const pris = 1000 - w.ennemis[0].pv
+  verifier(`la traînée de poison empoisonne (${pris.toFixed(1)} en 1 s) sans geler (${ev.some((e) => e.type === 'gele') ? 'gelé' : 'pas de gel'})`, Math.abs(pris - 7) < 0.3 && !ev.some((e) => e.type === 'gele') && (w.ennemis[0].geleA ?? -1) < w.t && w.givres.every((g) => g.poison === true))
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {
