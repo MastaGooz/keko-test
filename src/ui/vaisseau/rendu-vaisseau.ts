@@ -18,8 +18,9 @@ import * as noyau from 'pixelfx'
 
 type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?: number): void; glow(x: number, y: number, r: number, c: number, k?: number): void }
 const hex = (noyau as unknown as { hex(h: string): number }).hex
+const mix = (noyau as unknown as { mix(a: number, b: number, t: number): number }).mix
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2'
 /** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
@@ -100,6 +101,10 @@ const RAMPES: Record<Matiere, number[]> = {
   neant: ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6'].map(hex),
   // (… ASSOMBRIS — Keko, 16/11 : « assombrir le vaisseau du vide »)
   rayonnement: ['#14040f', '#2e0a28', '#521046', '#80186e', '#b0228f', '#e070c8'].map(hex),
+  // LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « trois skins par vaisseau, qui changent les petits détails et les
+  // couleurs ») : des bandes, des liserés, des taches — chaque apparence leur donne ses rampes (voir `peaux.ts`)
+  decor: ['#26080f', '#561220', '#93202e', '#d0443a', '#ff8456', '#ffcf9a'].map(hex),
+  decor2: ['#0d0d12', '#1b1b22', '#2d2d36', '#45454f', '#686874', '#a2a2ae'].map(hex),
 }
 /** LE CŒUR DU NÉANT, ses huit tons : ceux du cœur de l'« Energy core » de pixelfx. */
 const COEUR = ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6', '#ffffff'].map(hex)
@@ -111,7 +116,19 @@ const COEUR = ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6',
  * l'horizon en tournant, chauds au bord intérieur, sombres au dehors.
  */
 const HORIZON = hex('#030006')
-function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: number }, lx: number, ly: number): number {
+/**
+ * LES HUIT TONS DU CŒUR, tirés de la rampe de sa matière (Keko, 17/11 : les apparences le recolorent) : ses six tons, puis
+ * deux lumières vers le blanc ; la rampe d'origine redonne ceux de l'« Energy core ».
+ */
+const coeursGardes = new WeakMap<number[], number[]>()
+function paletteDuCoeur(r: number[]): number[] {
+  if (r === RAMPES.neant) return COEUR
+  if (!coeursGardes.has(r)) {
+    coeursGardes.set(r, [...r, mix(r[5], BLANC, 0.6), BLANC])
+  }
+  return coeursGardes.get(r)!
+}
+function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: number }, lx: number, ly: number, COEUR: number[]): number {
   const dx = lx - c.x
   const dy = ly - c.y
   const d = Math.hypot(dx, dy) / c.r
@@ -186,6 +203,10 @@ function tsl(h: number, s: number, l: number): number {
   return hex('#' + [f(0), f(8), f(4)].map((v) => v.toString(16).padStart(2, '0')).join(''))
 }
 const CLARTES = [0.13, 0.23, 0.35, 0.5, 0.69, 0.9]
+/** Une rampe de six tons tirée d'une teinte (degrés), d'une saturation, d'une clarté (1 : celle de la série) et d'un assombrissement. */
+export function rampeDeTeinte(h: number, s: number, clarte = 1, sombre = 0): number[] {
+  return rampeDeLaTeinte(h, s, clarte, sombre)
+}
 function rampeDeLaTeinte(h: number, s: number, clarte: number, sombre: number): number[] {
   return CLARTES.map((l, i) => tsl(h + 14 - (i / 5) * 22, Math.min(1, s * (i === 5 ? 1.5 : 1)), Math.max(0.04, Math.min(0.95, (l - sombre) * clarte))))
 }
@@ -442,7 +463,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     }
     // (le cœur du Néant et les lueurs ne prennent pas la lumière : ils la font)
     if (f.relief === 'coeur' && f.coeur) {
-      p.rect(x0 + px, y0 + py, 1, 1, pixelDuCoeur(f.coeur, loc[i * 2], loc[i * 2 + 1]))
+      p.rect(x0 + px, y0 + py, 1, 1, pixelDuCoeur(f.coeur, loc[i * 2], loc[i * 2 + 1], paletteDuCoeur(R)))
       continue
     }
     if (f.relief === 'lueur') {
@@ -505,7 +526,14 @@ export type Allure = {
   foreusePlace?: number
   /** L'angle de visée de la foreuse de chaque place d'outil (absent : vers l'avant) — chacune suit SA roche. */
   vises?: number[]
+  /** L'HABIT d'une apparence (voir `peaux.ts`) : ses détails sur les ailes et sur la coque ; présent, la marque du joueur part. */
+  habit?: Habit
 }
+/**
+ * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
+ * par un vrai changement de carrosserie ») : des formes posées sur les ailes (sous les armes) et sur la coque (par-dessus).
+ */
+export type Habit = { ailes: Forme[]; coque: Forme[] }
 
 /**
  * LE GABARIT D'UNE COQUE (Keko, 13/11 : « fabrique-moi un vaisseau de 200 T de type cuirassé, avec le nombre de
@@ -1158,8 +1186,9 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
  * tout ce qui ne fait pas partie des autres pièces — les emplacements d'armes sont sur les ailes, donc bien une partie
  * du châssis »). Sur le vaisseau, les deux restent séparées : les armes et la tuyère passent entre l'aile et la coque.
  */
-export function formesDuChassis(cran: number): Forme[] {
-  return [...formesDesAiles(cran), ...formesDeLaCoque(cran)]
+export function formesDuChassis(cran: number, habit?: Habit): Forme[] {
+  if (habit === undefined) return [...formesDesAiles(cran), ...formesDeLaCoque(cran)]
+  return [...formesDesAiles(cran), ...habit.ailes, ...formesDeLaCoque(cran), ...habit.coque].filter((x) => x.mat !== 'marque')
 }
 /** LA TUYÈRE d'un cran de propulseur, et sa flamme (longue de 0 à 1). */
 /**
@@ -1299,7 +1328,9 @@ export function formesDeLArme(id: string, s: number): Forme[] {
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
 export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
   const g = gabaritDe(a.coque)
-  const f: Forme[] = [...formesDesAiles(a.coque, t)]
+  // (avec un habit, la marque du joueur part : l'apparence a ses détails à elle)
+  const sansMarque = (l: Forme[]): Forme[] => (a.habit === undefined ? l : l.filter((x) => x.mat !== 'marque'))
+  const f: Forme[] = [...sansMarque(formesDesAiles(a.coque, t)), ...(a.habit?.ailes ?? [])]
   const armes: Forme[] = []
   a.armes.forEach((id, i) => {
     if (id === '') return
@@ -1346,7 +1377,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
-  const tout = [...feux, ...reste, ...formesDeLaCoque(a.coque, t)]
+  const tout = [...feux, ...reste, ...sansMarque(formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
   if (g.surLePont) tout.push(...armes)
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant

@@ -5019,3 +5019,36 @@ quand on est en mode portrait, de manière horizontale. »
   au-dessus ») : MESURÉ, elle était sur l'axe de la seule barre d'or, deux pixels à droite du milieu de l'ensemble (le
   bouclier bleu et l'or, cernes compris, de bx − 5 à bx + 6). Remesuré après : barre et plaques ont le même milieu, au
   doigt comme à la souris. Sans bouclier, elle reprend l'axe de l'or.
+
+### Le vortex, trois apparences par vaisseau (17/11)
+
+Keko : « on va enlever le petit marquage coloré des vaisseaux quand on choisit une couleur. Ce n'est pas très visible
+pour les joueurs en jeu et ça n'ajoute pas grand-chose. On va le remplacer par un vrai changement de carrosserie, de skin
+du vaisseau. Donc pour chaque vaisseau, on va proposer 3 couleurs différentes qui vont vraiment changer le vaisseau
+profondément. Pas au niveau de sa structure générale, mais au niveau des petits détails et des couleurs. »
+
+- `src/ui/vaisseau/peaux.ts` : pour chaque modèle, TROIS APPARENCES — la première est SON ORIGINE (ses couleurs de
+  toujours, sans la marque), les deux autres sont neuves. Une apparence = ses RAMPES (les matières repeintes, passées au
+  peintre par `Options.rampes` : ce qui en est fait suit — la flamme de plasma du Pulsar, le cœur du Néant, dont les huit
+  tons se tirent maintenant de la rampe `neant`, `paletteDuCoeur`), son HABIT (des détails sur les ailes et sur la coque,
+  dans deux matières neuves, `decor` et `decor2`, qu'elle colore) et son ACCENT (les feux de position, les voyants de ce
+  que le vaisseau pose — la matière `marque` des tourelles, balises, capsules).
+- Avec un habit (`Allure.habit`, `formesDuChassis(cran, habit)`), la marque du joueur part des ailes et de la coque.
+- Les vingt apparences neuves : Chasseur — Corsaire (noir, ailes cramoisies, bandes et chevron rouges), Aube (ivoire,
+  ailes orange, bande orange) ; Salamandre — Cendre (cendre, réservoirs rouges aux flammes peintes), Dragon (vert sombre,
+  réservoirs de bronze cerclés, écailles d'or, œil rouge) ; Sentinelle — Ambre (bronze, anneau orange, trois rayons),
+  Royale (blanc, anneau et liseré d'or, dôme violet) ; Ingénieur — Chantier (jaune, bandes de danger), Arctique (blanc de
+  secours, bande rouge) ; Frimas — Aurore (vert d'eau, croissants magenta, traînées roses), Blizzard (blanc, ardoise,
+  givre semé) ; Pulsar — Nova (bleu nuit, nageoires d'or, plasma de soleil), Nébuleuse (sarcelle, nageoires cyan
+  étoilées, plasma magenta) ; Kraken — Abysses (bleu nuit, chair sarcelle, taches qui luisent), Corail (corail, yeux
+  violets, épines blanches) ; Vouivre — Charogne (rouille, venin orange, cicatrices), Spectre (gris-violet pâle, venin
+  bleu) ; Prisme — Rubis, Émeraude (et leurs éclats) ; Néant — Supernova (un disque d'accrétion orange, deux bandes d'or),
+  Abîme (bleu froid, une arête cyan).
+- L'apparence se garde VAISSEAU PAR VAISSEAU (`peau-<modèle>` dans le stockage des livrées) ; le pictogramme d'une coque
+  prend celle de son modèle (`MODELE_DE_LA_COQUE`). On la choisit par la pastille à gauche du nom, au hangar : le panneau
+  « Apparence », trois cartes où le châssis est peint dans chacune.
+- La couleur du joueur (douze teintes, 15-16/11) n'est plus proposée dans le vortex ; les livrées du Nova Drifter ne
+  changent pas.
+- Vérifié : la planche des trente, rendue hors du navigateur par le peintre du jeu ; en capture, l'accueil, le hangar, le
+  vol, et le panneau ouvert au doigt en portrait et en paysage. (À la souris, en capture, les clics du hangar ne passent
+  pas — sur la version d'avant aussi : c'est la capture.)

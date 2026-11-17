@@ -20,7 +20,8 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampeDeLaMarque, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -188,23 +189,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (DANS LE JEU DU VORTEX, LA COULEUR EST CELLE DU JOUEUR, pas du vaisseau — Keko, 15/11 : « chaque joueur aura une
   // couleur pour bien s'identifier » ; rouge, bleu, vert ou jaune, rouge au départ)
   const VORTEX_ = parametres.has('vortex')
-  const porteurDeLaLivree = (): string => (VORTEX_ ? 'joueur' : flotte.actif)
-  const livreesPossibles = (): typeof LIVREES => (VORTEX_ ? COULEURS_DE_JOUEUR.flatMap((id) => LIVREES.filter((l) => l.id === id)) : LIVREES.filter((l) => !COULEURS_DE_JOUEUR.includes(l.id) || l.id === 'rouge'))
+  // (… PUIS SEULEMENT SA MARQUE — Keko, 16/11 ; … PUIS PLUS DE COULEUR DU JOUEUR DU TOUT : TROIS APPARENCES PAR VAISSEAU —
+  // Keko, 17/11 : « on va enlever le petit marquage coloré… on va le remplacer par un vrai changement de carrosserie » :
+  // dans le vortex, la « livrée » est l'apparence du vaisseau piloté, gardée vaisseau par vaisseau ; voir `peaux.ts`. Le
+  // Nova Drifter garde sa livrée de châssis entier.)
+  const porteurDeLaLivree = (): string => (VORTEX_ ? 'peau-' + flotte.actif : flotte.actif)
+  const livreesPossibles = (): typeof LIVREES => LIVREES.filter((l) => !COULEURS_DE_JOUEUR.includes(l.id) || l.id === 'rouge')
+  /** L'apparence choisie de chaque modèle du vortex (lue une fois, puis gardée ici). */
+  const peauxChoisies = new Map<string, string>()
+  const peauDuModele = (modele: string): Peau => {
+    if (!peauxChoisies.has(modele)) peauxChoisies.set(modele, chargerLivree('peau-' + modele))
+    return peauDe(modele, peauxChoisies.get(modele) ?? '')
+  }
+  const peauCourante = (): Peau => peauDuModele(flotte.actif)
+  function choisirLaPeau(id: string): void {
+    peauxChoisies.set(flotte.actif, id)
+    sauverLivree(porteurDeLaLivree(), id)
+    livree = id
+  }
+  /** Le modèle à qui est une coque (son pictogramme prend l'apparence de ce modèle-là). */
+  const MODELE_DE_LA_COQUE: Record<number, string> = { 1: 'chasseur', 2: 'chasseur', 3: 'chasseur', 5: 'salamandre', 6: 'sentinelle', 7: 'ingenieur', 8: 'frimas', 9: 'pulsar', 10: 'kraken', 11: 'vouivre', 12: 'prisme', 13: 'neant' }
   const livreeDuVaisseau = (): string => {
+    if (VORTEX_) return peauCourante().id
     const l = chargerLivree(porteurDeLaLivree())
-    return livreesPossibles().some((x) => x.id === l) ? l : VORTEX_ ? 'rouge' : 'serie'
+    return livreesPossibles().some((x) => x.id === l) ? l : 'serie'
   }
   let livree = livreeDuVaisseau()
-  // (… PUIS SEULEMENT SA MARQUE — Keko, 16/11 : « la couleur choisie ne se voit que peu, certaines petites zones ; le reste
-  // du vaisseau a sa propre couleur et sa propre identité » : dans le vortex, la couleur du joueur ne repeint plus que la
-  // matière `marque` ; le Nova Drifter garde sa livrée de châssis entier)
-  const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => {
-    if (!VORTEX_) return rampesDeLaLivree(livree)
-    const m = rampeDeLaMarque(livree)
-    return m === undefined ? undefined : { marque: m }
-  }
-  /** LES FEUX DE POSITION : rouge à bâbord, vert à tribord — dans le vortex, tous deux à la marque du joueur (un feu rouge ou vert s'y lisait comme la couleur d'un autre joueur). */
-  const couleurDuFeu = (s: number): number => (VORTEX_ ? (rampeDeLaMarque(livree)?.[4] ?? N.hex('#ff4a4a')) : N.hex(s < 0 ? '#ff4a4a' : '#4aff7a'))
+  const rampesDuJoueur = (): ReturnType<typeof rampesDeLaLivree> => (VORTEX_ ? rampesDeLaPeau(peauCourante()) : rampesDeLaLivree(livree))
+  /** L'habit de l'apparence du vaisseau piloté (ses détails), dans le vortex. */
+  const habitDuJoueur = (coque: number): Habit | undefined => (VORTEX_ ? peauCourante().habit(coque) : undefined)
+  /** LES FEUX DE POSITION : rouge à bâbord, vert à tribord — dans le vortex, tous deux à l'accent de l'apparence (un feu rouge ou vert s'y lisait comme la couleur d'un autre joueur). */
+  const couleurDuFeu = (s: number): number => (VORTEX_ ? peauCourante().accent[4] : N.hex(s < 0 ? '#ff4a4a' : '#4aff7a'))
   /** LES RÉGLAGES du joueur (l'onglet « Paramètres ») : de quel côté de l'écran il vole. */
   let reglages = chargerReglages()
   /**
@@ -990,7 +1005,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[] }
+  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit }
   /**
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
@@ -1030,7 +1045,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran) })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -3254,7 +3269,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les formes d'une pièce seule, pour son pictogramme (le même rendu que le vaisseau). */
   function formesDeLaPiece(pc: Piece): ReturnType<typeof formesDuVaisseau> {
     if (pc.sorte === 'propulseur') return formesDuPropulseur(pc.cran, 0.55 + 0.15 * Math.sin(t * 7), t)
-    if (pc.sorte === 'coque') return formesDuChassis(pc.cran) // (le cuirassé, cran 4, a son propre dessin)
+    // (le cuirassé, cran 4, a son propre dessin ; dans le vortex, une coque porte l'apparence de son modèle)
+    if (pc.sorte === 'coque') return VORTEX_ && MODELE_DE_LA_COQUE[pc.cran] !== undefined ? formesDuChassis(pc.cran, peauDuModele(MODELE_DE_LA_COQUE[pc.cran]).habit(pc.cran)) : formesDuChassis(pc.cran)
     if (pc.sorte === 'outil') return pc.famille === 'aimant' ? formesDeLAimant(pc.cran) : pc.famille === 'radar' ? formesDuRadar(t) : formesDeLaForeuse(pc.cran)
     return formesDeLArme(pc.arme?.id ?? 'canon', 1)
   }
@@ -3269,7 +3285,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** LE PICTOGRAMME D'UNE PIÈCE, mis à l'échelle de sa case (Keko : « chaque visuel rescalé pour loger dans la zone »). */
   function dessinerLePictogramme(p: Peintre, pc: Piece, x: number, y: number, bw: number, bh: number): void {
-    peindreDansUneCase(p, formesDeLaPiece(pc), x, y, bw, bh, { cadre: cadreDeLaPiece(pc), rampes: rampesDuJoueur() })
+    const modele = VORTEX_ && pc.sorte === 'coque' ? MODELE_DE_LA_COQUE[pc.cran] : undefined
+    peindreDansUneCase(p, formesDeLaPiece(pc), x, y, bw, bh, { cadre: cadreDeLaPiece(pc), rampes: modele !== undefined ? rampesDeLaPeau(peauDuModele(modele)) : rampesDuJoueur() })
   }
   /** Ouvre la liste d'un emplacement (depuis le vaisseau ou sa case). */
   function ouvrirLEmplacement(o: Sorte, k = -1): void {
@@ -3317,7 +3334,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let xn = 11
     if (VORTEX) {
       const e = etatDuBouton(8, y + 3, 14, 14)
-      const [sombre, moyen, clair] = tonsDeLaLivree(livree)
+      const [sombre, moyen, clair] = tonsDeLaPeau(peauCourante())
       p.rect(8, y + 3 + e.dy, 14, 14, e.survole ? PEPITE[3] : MATIERES.encre.contour)
       p.rect(9, y + 4 + e.dy, 12, 12, moyen)
       p.rect(9, y + 4 + e.dy, 12, 3, clair)
@@ -3908,6 +3925,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesCouleurs(p: Peintre): void {
     if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) couleursOuvertes = false
     if (!couleursOuvertes) return
+    if (VORTEX) {
+      dessinerLesPeaux(p)
+      return
+    }
     const u0 = sortie((t - couleursA) / 0.18)
     const LISTE = livreesPossibles()
     const COLONNES = Math.min(5, LISTE.length)
@@ -3967,6 +3988,46 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
     const bf = largeurDe('Fermer', GRAS) + 22
     bouton(p, Math.round(W / 2 - bf / 2), y + yGrille + rangs * pas, bf, 15, 'Fermer', true, () => (couleursOuvertes = false), 'retour', 'acier')
+    zone(x, y, w, hp, () => {}, null)
+    zone(0, 0, W, H, () => (couleursOuvertes = false), 'retour')
+  }
+
+  /**
+   * LES TROIS APPARENCES DU VAISSEAU (Keko, 17/11 : « pour chaque vaisseau, trois couleurs différentes qui vont vraiment
+   * changer le vaisseau profondément ») : trois cartes côte à côte, le châssis peint dans chacune — on voit ce qu'on
+   * choisit —, son nom dessous ; la choisie cerclée d'or ; une tape la prend, au hangar comme en vol. « Fermer », ou une
+   * tape hors du panneau.
+   */
+  function dessinerLesPeaux(p: Peintre): void {
+    const u0 = sortie((t - couleursA) / 0.18)
+    const LISTE = peauxDe(flotte.actif)
+    const cran = monteeA(hangar, 'coque').cran
+    const cw = Math.min(56, Math.floor((W - 24 - (LISTE.length - 1) * 4) / LISTE.length))
+    const ch = Math.min(52, Math.max(34, H - 112))
+    const hp = 22 + ch + 14 + 21
+    const w = LISTE.length * cw + (LISTE.length - 1) * 4 + 12
+    const x = Math.round((W - w) / 2)
+    const y = Math.max(HAUT_BARRE + 3, Math.round((H - hp) / 2)) + Math.round((1 - u0) * 10)
+    p.rect(0, 0, W, H, NUIT, 0.72 * u0)
+    frame.light.fill(0)
+    zones = []
+    zoneGlissante = null
+    plaque(p, x, y, w, hp, 'encre')
+    motEnRelief(p, 'Apparence', W / 2, y + 7, true)
+    LISTE.forEach((pe, i) => {
+      const cx = x + 6 + i * (cw + 4)
+      const cy = y + 22
+      const choisie = pe.id === peauCourante().id
+      const e = etatDuBouton(cx, cy, cw, ch + 12)
+      p.rect(cx - 1, cy - 1 + e.dy, cw + 2, ch + 2, choisie ? PEPITE[3] : MATIERES.encre.contour)
+      plaque(p, cx, cy + e.dy, cw, ch, 'creux')
+      peindreDansUneCase(p, formesDuChassis(cran, pe.habit(cran)), cx + cw / 2, cy + ch / 2 + e.dy, cw - 6, ch - 6, { rampes: rampesDeLaPeau(pe) })
+      ecrire(p, pe.nom, cx + cw / 2, cy + ch + 3 + e.dy, choisie ? N.hex('#fff3cf') : COQUE[4], { align: 'center', police: choisie ? GRAS : TEXTE })
+      if (choisie) N.sparkle(p, cx + cw - 5, cy + 5, 2 + Math.round(1.5 + 1.5 * Math.sin(t * 5)), N.WHITE, PEPITE[3], 0.8)
+      else zone(cx - 2, cy - 2, cw + 4, ch + 16, () => choisirLaPeau(pe.id), 'equipe')
+    })
+    const bf = largeurDe('Fermer', GRAS) + 22
+    bouton(p, Math.round(W / 2 - bf / 2), y + 22 + ch + 14 + 2, bf, 15, 'Fermer', true, () => (couleursOuvertes = false), 'retour', 'acier')
     zone(x, y, w, hp, () => {}, null)
     zone(0, 0, W, H, () => (couleursOuvertes = false), 'retour')
   }
@@ -8418,7 +8479,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
       // (les drones à la sarcelle de la Sentinelle, leur œil à la marque du joueur — Keko, 16/11)
       const [sombre, moyen, clair] = tonsDeLaMatiere('sarcelle')
-      const oeil = (rampeDeLaMarque(livree) ?? [])[4] ?? N.WHITE
+      const oeil = VORTEX_ ? peauCourante().accent[4] : N.WHITE
       for (const d of m.drones) {
         for (let k = 4; k >= 1; k--) p.circle(d.x - d.vx * k * 0.014, d.y - d.vy * k * 0.014, 1.8 * (1 - k / 5), moyen, 0.45 * (1 - k / 5))
         // (un peu plus gros qu'un point : sur le portail, on les perdait)
