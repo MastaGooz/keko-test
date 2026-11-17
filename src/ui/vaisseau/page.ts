@@ -29,7 +29,7 @@ import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves,
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, talentsHorsDeLaRace, vaisseauxDe, vieSelonLaRace, type Race } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
-import { ECLOSION_DE_L_ARRIVEE, jouer, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
+import { ECLOSION_DE_L_ARRIVEE, jouer as jouerLeSon, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
 import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
@@ -68,7 +68,7 @@ type Peintre = {
   disc(x: number, y: number, r: number, c: number | ((d: number, ang: number) => number), a: number | ((d: number, ang: number) => number)): void
 }
 type Particules = { spawn(k: number, x: number, y: number, vx: number, vy: number, vie: number, c?: number, taille?: number, delai?: number, drapeau?: number): void; update(dt: number): void; draw(p: Peintre, couche?: string): void }
-type Morceaux = { add(b: Record<string, unknown>): void; update(dt: number): void; draw(p: Peintre): void }
+type Morceaux = { list: unknown[]; add(b: Record<string, unknown>): void; update(dt: number): void; draw(p: Peintre): void }
 type Noyau = {
   createFrame(w: number, h: number): { w: number; h: number; color: Uint32Array; light: Uint32Array }
   clearFrame<T>(f: T): T
@@ -137,6 +137,14 @@ const REFLET_DU_RIVAL = N.hex('#6a2440')
 const COULEURS_NEBULEUSE = ['#3a1a6a', '#14305a', '#5a1a40', '#103a3a'].map((h) => N.hex(h))
 
 export function monterVaisseau(racine: HTMLElement, build: string): void {
+  /** Vrai le temps que l'aperçu des armes rejoue les événements du vol : ni son, ni vibration, ni compte de mission. */
+  let enApercu = false
+  const jouer = (son: Son, ou?: { dx: number; dy: number }, dans = 0): void => {
+    if (!enApercu) jouerLeSon(son, ou, dans)
+  }
+  const vibrer = (motif: number | number[]): void => {
+    if (!enApercu) navigator.vibrate(motif)
+  }
   document.documentElement.classList.add('vaisseau-page')
   racine.classList.add('vaisseau')
   const parametres = new URLSearchParams(location.search)
@@ -245,6 +253,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fait avancer les quêtes concernées ; celle qui se termine s'annonce, en vol comme à la base.
    */
   function compter(c: Compteur, valeur: number): void {
+    if (enApercu) return // (l'aperçu des armes ne compte pour aucune mission)
     const avant = new Set(quetes.actives.filter(estTerminee).map((q) => q.modele))
     const etapesAvant = new Map(quetes.actives.map((q) => [q.modele, etapesFaites(q)]))
     quetes = noter(quetes, c, valeur)
@@ -939,6 +948,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * restent, c'est tout ce qui reste.
    */
   function demarrer(): void {
+    // (ce que l'aperçu des armes a semé au hangar ne suit pas dans le vol)
+    effets = []
+    flashs.length = 0
+    pops.length = 0
+    taches = []
+    consumes = []
+    impactsDeMeteore.length = 0
+    etincelles.vider()
+    braises.vider()
+    morceaux.list.length = 0
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
     souris = null // (la souris ne vise qu'une fois bougée pendant ce vol)
@@ -3598,7 +3617,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let apercu: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number } | null = null
   const APERCU_LOIN = 200
-  function apercuDe(arme: string): { conf: ConfigVaisseau; monde: Monde } {
+  function apercuDe(arme: string): { conf: ConfigVaisseau; monde: Monde; t: number; nes: number } {
     if (apercu === null || apercu.arme !== arme || apercu.monde.phase !== 'vol' || apercu.monde.t > 14) {
       const base = configDuVol(arme, 1)
       // (des insectes deux fois plus lents qu'en vol : l'arme a le temps de se montrer avant qu'ils n'arrivent)
@@ -3609,8 +3628,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       monde.vaisseau = { ...monde.vaisseau, x: -APERCU_LOIN, y: 0, cap: 0, vx: 0, vy: 0 }
       apercu = { arme, conf, monde, t, nes: 0 }
     }
-    const a = apercu
-    let reste = Math.min(0.1, Math.max(0, t - a.t))
+    return apercu
+  }
+  /** Fait avancer l'aperçu jusqu'à maintenant (les globales du vol lui sont prêtées) ; rend le temps avancé. */
+  function avancerLApercu(a: { conf: ConfigVaisseau; monde: Monde; t: number; nes: number }): number {
+    const fait = Math.min(0.1, Math.max(0, t - a.t))
+    let reste = fait
     a.t = t
     while (reste > 1e-6) {
       const pas = Math.min(1 / 60, reste)
@@ -3627,14 +3650,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const proche = a.monde.ennemis.reduce<Ennemi | null>((b, e) => (b === null || Math.hypot(e.corps.x - va.x, e.corps.y - va.y) < Math.hypot(b.corps.x - va.x, b.corps.y - va.y) ? e : b), null)
       const regard = proche === null ? { x: 1, y: 0 } : { x: proche.corps.x - va.x, y: proche.corps.y - va.y }
       const r = avancerLeMonde(a.conf, a.monde, pas, { x: 0, y: 0 }, regard)
-      // (CE QUE LE VOL SÈME À SES ÉVÉNEMENTS ET QUI EST L'ARME ELLE-MÊME — les arcs des drones et de la chaîne, les éclats qui se
-      // brisent, l'insecte qui blanchit — : les mêmes gestes que le vol, sans le son ni le reste)
-      for (const ev of r.evenements) {
-        if (ev.type === 'arc') arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, de: { sorte: 'drone', k: ev.drone }, vers: { sorte: 'ennemi', id: ev.id }, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
-        else if (ev.type === 'chaine') for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, de: k === 0 ? { sorte: 'vaisseau' } : { sorte: 'ennemi', id: ev.ids[k - 1] }, vers: { sorte: 'ennemi', id: ev.ids[k] }, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
-        else if (ev.type === 'eclatement') eclatsBrises.push({ x: ev.x, y: ev.y, t0: t })
-        else if (ev.type === 'ennemiTouche') toucheEnnemiA.set(ev.id, t)
-      }
+      // (CE QUE LE VOL FAIT DE SES ÉVÉNEMENTS, TEL QUEL — les morts des insectes, les impacts, les éclairs, les arcs : Keko,
+      // 17/11, « un ennemi tué disparaît sans animation de mort, et l'animation de hit n'apparaît pas » ; muet)
+      v = a.monde.vaisseau
+      celebrer(r)
       // (le lance-flammes : ses flammes, comme en vol)
       if (a.monde.crache && a.conf.armes.length > 0) {
         const a0 = a.conf.armes[0]
@@ -3661,8 +3680,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       a.monde.bouclier = a.conf.bouclier.points
       a.monde.plaques = a.monde.plaques.map(() => true)
       a.monde.corruption = 0
+      v = a.monde.vaisseau
     }
-    return a
+    return fait
   }
   function dessinerLApercuDeLArme(p: Peintre, x: number, y: number, w: number, h: number, arme: string): void {
     const a = apercuDe(arme)
@@ -3675,15 +3695,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ay = Math.round(y + ORIGINE.y)
     const avantC = frame.color.slice()
     const avantL = frame.light.slice()
-    const garde = { m, CONF, v, cx: camera.x, cy: camera.y, arme: armesChoisies[flotte.actif] }
+    // (LES GLOBALES DU VOL SONT PRÊTÉES À L'APERÇU, le temps de l'avancer et de le peindre ; ce que ses événements
+    // touchent du vol — la secousse, le blanchiment du vaisseau, l'éclat de l'expérience — est remis ensuite)
+    const garde = { m, CONF, v, cx: camera.x, cy: camera.y, arme: armesChoisies[flotte.actif], secousse, toucheA, xpA, purgeA }
     m = a.monde
     CONF = a.conf
     v = m.vaisseau
     armesChoisies[flotte.actif] = arme
+    enApercu = true
     // (le centre du cadre montre le point (14, 0) du petit monde : le vaisseau à gauche, les insectes à droite)
     camera.x = W / 2 - APERCU_LOIN + 14 - (x + w / 2)
     camera.y = centreY() - (y + h / 2)
     try {
+      const dtA = avancerLApercu(a)
+      // (les gerbes et les effets avancent avec lui : au hangar, le vol ne les fait pas avancer)
+      braises.update(dtA)
+      etincelles.update(dtA)
+      morceaux.update(dtA)
+      for (let i = flashs.length - 1; i >= 0; i--) if (t - flashs[i].t0 > 0.4) flashs.splice(i, 1)
+      for (const e of effets) {
+        e.fx.update(dtA)
+        e.fx.options.x = e.x - camera.x + W / 2
+        e.fx.options.y = e.y - camera.y + centreY()
+      }
+      effets = effets.filter((e) => !e.fx.done())
+      dessinerLesTaches(p)
       dessinerLeGivre(p)
       dessinerLesFlaques(p)
       dessinerLesMeteoresAuSol(p)
@@ -3708,12 +3744,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesParasites(p)
       dessinerLElectricite(p)
       dessinerLesLasers(p)
+      dessinerLesGerbes(p)
+      for (const e of effets) e.fx.draw(frame)
     } finally {
       m = garde.m
       CONF = garde.CONF
       v = garde.v
       camera.x = garde.cx
       camera.y = garde.cy
+      secousse = garde.secousse
+      toucheA = garde.toucheA
+      xpA = garde.xpA
+      purgeA = garde.purgeA
+      enApercu = false
       if (garde.arme === undefined) delete armesChoisies[flotte.actif]
       else armesChoisies[flotte.actif] = garde.arme
       p.place(0, 0)
@@ -10814,6 +10857,738 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- la boucle
   let avant = performance.now()
   let accumule = 0
+  /** Les gerbes du monde — braises, morceaux, pépites, étincelles, « pops », flashs —, sous la caméra. */
+  function dessinerLesGerbes(p: Peintre): void {
+    // les braises, les morceaux, les pépites, les étincelles sont dans le monde : le peintre se place sur la caméra
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    braises.draw(p)
+    morceaux.draw(p)
+    dessinerLesPepites(p)
+    etincelles.draw(p)
+    // les « pops » d'une pépite montée à bord : un disque blanc qui se referme, puis un anneau qui s'ouvre
+    for (let i = pops.length - 1; i >= 0; i--) {
+      const f = pops[i]
+      const u = (t - f.t0) / 0.32
+      if (u >= 1) {
+        pops.splice(i, 1)
+        continue
+      }
+      if (u < 0.3) p.circle(f.x, f.y, 4.5 * (1 - u / 0.3) + 1, u < 0.15 ? N.WHITE : f.c[4] ?? N.WHITE)
+      p.ring(f.x, f.y, 3 + 9 * sortie(u), Math.max(1, 2 * (1 - u)), u < 0.3 ? N.WHITE : f.c[3], 1.2 - u)
+      p.glow(f.x, f.y, 12, f.c[2], 0.7 * (1 - u))
+    }
+    for (const f of flashs) {
+      const u = (t - f.t0) / 0.4
+      if (f.r === 0) {
+        // une pépite montée à bord : un éclat
+        N.sparkle(p, f.x, f.y, 1 + 3 * Math.sin(u * Math.PI), (f.c ?? PEPITE)[3], (f.c ?? PEPITE)[2], 0.5 * (1 - u))
+        continue
+      }
+      if (f.r === -1) {
+        // un choc : un point blanc et une lueur, trois images
+        if (u < 0.4) {
+          p.circle(f.x, f.y, 1.5 * (1 - u / 0.4) + 0.5, N.WHITE)
+          p.glow(f.x, f.y, 10, LASER[4], 0.6 * (1 - u / 0.4))
+        }
+        continue
+      }
+      p.glow(f.x, f.y, f.r * 2 + 10, LASER[4], 0.8 * (1 - u))
+      p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
+    }
+    p.place(0, 0)
+  }
+  /**
+   * CE QUE LE VOL FAIT DE SES ÉVÉNEMENTS : les sons, les éclats, les flashs, les morts des insectes, les impacts… Sorti de
+   * `image` pour que l'APERÇU DES ARMES le rejoue tel quel (Keko, 17/11 : « quand un ennemi est tué, il disparaît sans
+   * animation de mort, et l'animation de hit n'apparaît pas non plus ») — là, `enApercu` coupe les sons, les vibrations
+   * et les compteurs des missions.
+   */
+  function celebrer(r: ReturnType<typeof avancerLeMonde>): void {
+    for (const ev of r.evenements) {
+      switch (ev.type) {
+        case 'eclat': {
+          // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
+          jouer('eclat', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+          const roche = rocheDe(ev.minerai)
+          const n = 6 + Math.round(ev.rayon)
+          for (let i = 0; i < n; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const d = R.range(0, ev.rayon * 0.7)
+            const vit = R.range(25, 90)
+            morceaux.add({ kind: N.B.SHARD, x: ev.x + Math.cos(a) * d, y: ev.y + Math.sin(a) * d, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, g: 0, drag: 1.1, bounce: 0, life: R.range(0.8, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-9, 9), s: R.range(1.5, 2.5 + ev.rayon * 0.15), c: roche[2 + Math.floor(R.next() * 4)] })
+          }
+          secousse = Math.max(secousse, Math.min(1, 0.3 + ev.rayon / 20))
+          if (typeof navigator.vibrate === 'function') vibrer(30)
+          break
+        }
+        case 'ramasse':
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
+          if (ev.par === 'joueur') {
+            compter('ramassees', 1)
+            // (dans le jeu du vortex, la pépite est de l'expérience : pas d'envol vers la soute, la barre s'allume)
+            if (VORTEX) xpA = t
+            else envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai, trace: [] })
+            jouer('ramasse')
+            // (le « pop » du coin collect : un disque blanc qui se referme, un anneau, des étoiles lancées en rond)
+            pops.push({ x: ev.x, y: ev.y, t0: t, c: TEINTES_MINERAI[ev.minerai] })
+            for (let i = 0; i < 5; i++) {
+              const a = (i / 5) * Math.PI * 2 + R.range(-0.3, 0.3)
+              const vit = R.range(40, 80)
+              etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 2, ev.y + Math.sin(a) * 2, Math.cos(a) * vit + v.vx * 0.5, Math.sin(a) * vit + v.vy * 0.5, R.range(0.2, 0.4), TEINTES_MINERAI[ev.minerai][i % 2 === 0 ? 3 : 4], 1, 3)
+            }
+          }
+          break
+        case 'touche': {
+          // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
+          if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('touche') // (un choc annoncé en avance a déjà sonné)
+          toucheA = t
+          secousse = Math.max(secousse, 0.7)
+          if (typeof navigator.vibrate === 'function') vibrer(40)
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 110)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), R.next() < 0.5 ? N.WHITE : ROUGE[4], 1, 2.5)
+          }
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
+          break
+        }
+        case 'arc':
+          // (un drone frappe d'un arc électrique)
+          arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, de: { sorte: 'drone', k: ev.drone }, vers: { sorte: 'ennemi', id: ev.id }, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
+          if (t - zapA > 0.06) {
+            zapA = t
+            jouer('zap', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
+          }
+          break
+        case 'chaine':
+          // (la chaîne d'éclairs : maillon après maillon, de quelques centièmes)
+          for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, de: k === 0 ? { sorte: 'vaisseau' } : { sorte: 'ennemi', id: ev.ids[k - 1] }, vers: { sorte: 'ennemi', id: ev.ids[k] }, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
+          jouer('chaine')
+          secousse = Math.max(secousse, 0.2)
+          break
+        case 'balayage':
+          // (le rayon part : son son, qui dure le tour — SAUF S'IL A DÉJÀ SONNÉ, annoncé en avance de la latence, comme
+          // un obus ; Keko, 16/11 : « quand on enchaîne deux lasers d'affilée, ça fait deux fois le bruit de lancement »)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('rayon')
+          secousse = Math.max(secousse, 0.15)
+          break
+        case 'flaque': {
+          // UNE BOULE S'ÉCRASE EN FLAQUE : son « splotch » et l'embrasement, une gerbe de flammes et de gouttes
+          jouer('flaque', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(15, 45)
+            feuDesConsumes.spawn(N.P.FIRE, ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit - 10, R.range(0.2, 0.4), 0, R.range(1.2, 2.2))
+          }
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.3, 0.6), 0, 1)
+          }
+          break
+        }
+        case 'explosionDeZone': {
+          // (L'ORBE DE PLASMA ÉCLATE : sa gerbe à elle, violette et bleue, son « zap », des étincelles — pas de feu)
+          if (ev.arme === 'plasma') {
+            jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
+            eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: Math.round(ev.x * 13 + ev.y * 7) })
+            for (let i = 0; i < 14; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(40, 110)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA[5], PLASMA[4], PLASMA_V[3]][Math.floor(R.next() * 4)], 1, 2)
+            }
+            secousse = Math.max(secousse, 0.22)
+            break
+          }
+          // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
+          // feu (les flammes, braises et fumées du dépôt), son « boum »
+          jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+          // (L'ONDE À LA TAILLE DE LA ZONE — Keko, 15/11 : le grand cercle était l'éclair des chocs ; réduite aux deux
+          // tiers, « trop réduite » : elle s'ouvre jusqu'au bord de la zone de dégâts ; et PLUS DE FEU À L'IMPACT : des flammes plus nombreuses et plus grosses,
+          // qui ROULENT — décalées de quelques centièmes — et fument en s'éteignant)
+          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+          for (let i = 0; i < 16; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const d = R.range(0, ev.rayon * 0.35)
+            const vit = R.range(8, 32)
+            feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.25, 0.5), 0, R.range(1.6, 3), R.range(0, 0.09), R.next() < 0.5 ? 1 : 0)
+          }
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90), Math.sin(a) * R.range(40, 90), R.range(0.3, 0.6), 0, 1)
+          }
+          for (let i = 0; i < 2; i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3), ev.y + R.range(-3, 3), R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5))
+          secousse = Math.max(secousse, 0.2)
+          break
+        }
+        case 'tourelleLancee':
+          jouer('lance')
+          break
+        case 'scieLancee':
+          // (UN LANCER ANNONCÉ EN AVANCE A DÉJÀ SONNÉ, comme un obus — Keko, 15/11 : relancée aussitôt rattrapée,
+          // l'annonce de la latence jouait le son, puis le lancer le rejouait : « le son du tir se fait deux fois »)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('scie')
+          break
+        case 'balisePosee':
+          // (une balise plantée : son clic, un peu de poussière)
+          // (un cristal : un tintement de verre, des éclats bleus)
+          jouer(ev.arme === 'cristal' ? 'cristalPose' : 'balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 5; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), ev.arme === 'cristal' ? FAISCEAU[R.next() < 0.5 ? 3 : 4] : N.hex('#8a8a96'), 1, 2)
+          }
+          break
+        case 'baliseFinie':
+          for (let i = 0; i < 4; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : ev.arme === 'cristal' ? FAISCEAU[3] : PEPITE[2], 1, 2)
+          }
+          break
+        case 'ligne':
+          // (une ligne franchie s'éclaire : son « zing », l'éclair dessiné avec les balises)
+          jouer(ev.arme === 'cristal' ? 'cristalLigne' : 'balise', { dx: (ev.x0 + ev.x1) / 2 - v.x, dy: (ev.y0 + ev.y1) / 2 - v.y })
+          lignesEclairees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, bleu: ev.arme === 'cristal' })
+          break
+        case 'scieRattrapee':
+          // (le vaisseau rattrape sa scie : un clac, deux étincelles)
+          jouer('rattrape')
+          for (let i = 0; i < 4; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 1.5)
+          }
+          break
+        case 'tourellePosee':
+          // (une tourelle posée : son clac, un peu de poussière)
+          jouer('pose', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.2, 0.4), R.next() < 0.5 ? N.hex('#8a8a96') : PEPITE[2], 1, 2)
+          }
+          break
+        case 'tourelleFinie':
+          // (une tourelle s'éteint : quelques étincelles)
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.35), R.next() < 0.5 ? N.WHITE : N.hex('#8a8a96'), 1, 2)
+          }
+          break
+        case 'obus':
+          // une arme tire : deux étincelles à la bouche, et son son
+          // (un coup annoncé en avance a déjà sonné)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-20, 20), R.range(-20, 20), 0.12, N.WHITE, 1, 1.5)
+          break
+        case 'ennemiTouche': {
+          // un obus touche le rival : il blanchit, des étincelles cyan
+          // (un insecte, dans le jeu du vortex : un son organique — Keko, 15/11)
+          jouer(VORTEX ? 'insecteTouche' : 'ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
+          toucheEnnemiA.set(ev.id, t)
+          // (un coup critique : un éclair de plus, une petite secousse)
+          if (ev.critique) {
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: 6 })
+            secousse = Math.max(secousse, 0.35)
+          }
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 90)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), R.next() < 0.5 ? N.WHITE : VERRIERE[2], 1, 2)
+          }
+          break
+        }
+        case 'bouclier': {
+          // le bouclier prend le coup : son anneau flashe, des étincelles cyan, une petite secousse
+          // (LE BLINDAGE A LA PRIORITÉ — Keko, 13/11 : un coup qui vide le bouclier ET entame la coque sonne comme un
+          // coup dans le blindage, « le joueur doit avoir l'info prioritaire » : le son du bouclier se tait alors)
+          if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4) && !r.evenements.some((e) => e.type === 'touche')) jouer('bouclier')
+          bouclierA = t
+          coupsAuBouclier.push({ x: ev.x, y: ev.y, t0: t, brise: m.bouclier <= 0 })
+          secousse = Math.max(secousse, 0.3)
+          if (typeof navigator.vibrate === 'function') vibrer(20)
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 100)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.4), R.next() < 0.5 ? N.WHITE : VERRIERE[2], 1, 2.5)
+          }
+          break
+        }
+        case 'corrompu': {
+          // LE COUP CORROMPT (les Innommés) : comme un coup dans la coque — le son, la secousse —, mais les étincelles
+          // sont violettes et la barre ne baisse pas : sa part touchée devient violette
+          if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('touche')
+          toucheA = t
+          secousse = Math.max(secousse, 0.6)
+          if (typeof navigator.vibrate === 'function') vibrer(35)
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 100)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), i % 3 === 0 ? N.WHITE : CORRUPTION[1 + (i % 2)], 1, 2.5)
+          }
+          break
+        }
+        case 'purge': {
+          // UN INSECTE ABATTU PURGE LA CORRUPTION : un frisson qui remonte, un filet violet de l'insecte au vaisseau, la
+          // barre qui s'éclaire
+          jouer('purge')
+          purgeA = t
+          for (let i = 0; i < 6; i++) {
+            const u = i / 6
+            etincelles.ajouter('etincelle', ev.x + (v.x - ev.x) * u, ev.y + (v.y - ev.y) * u, (v.x - ev.x) * 1.5, (v.y - ev.y) * 1.5, 0.12 + 0.05 * i, i % 2 === 0 ? CORRUPTION[0] : CORRUPTION[1], 1, 2)
+          }
+          break
+        }
+        case 'plaque': {
+          // UNE PLAQUE DE BLINDAGE PREND LE COUP ET CASSE (les humains, Keko, 17/11) : un clang de métal, des éclats
+          // d'acier qui giclent, une secousse ; sa plaque, dans la barre, blanchit puis se creuse
+          jouer('plaque')
+          plaquesCasseesA[ev.k] = t
+          secousse = Math.max(secousse, 0.35)
+          if (typeof navigator.vibrate === 'function') vibrer(25)
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 110)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), i % 3 === 0 ? N.WHITE : ACIER_DES_PLAQUES[i % 2], 1, 2.5)
+          }
+          break
+        }
+        case 'explosion': {
+          // la bombe éclate : l'explosion du dépôt, une secousse, un éclair, des morceaux
+          jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
+          effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: 0.6, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+          secousse = Math.max(secousse, 1)
+          if (typeof navigator.vibrate === 'function') vibrer(50)
+          break
+        }
+        case 'retour': {
+          // LE JOUEUR REVIENT AU PORTAIL : la matérialisation du départ, et son son
+          arriveA = t
+          jouer('arrive', undefined, Math.max(0, ARRIVE_A - ECLOSION_DE_L_ARRIVEE))
+          effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: -camera.x + W / 2, y: -camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: 0, y: 0 })
+          break
+        }
+        case 'niveau': {
+          // UN NIVEAU : le jeu se met en pause, on choisit un talent (un de plus s'il y en avait déjà un à choisir)
+          niveauA = t
+          jouer('achat')
+          const enCours = choixDeTalent as Choix | null
+          if (enCours === null) {
+            choixDeTalent = ouvrirLeChoix(reserveDeTalents)
+            reserveDeTalents = 0
+            talentFinA = t + DUREE_DU_CHOIX
+            talentA = t
+          } else choixDeTalent = { aFaire: enCours.aFaire + 1, rang: enCours.rang }
+          break
+        }
+        case 'fin': {
+          // LE PORTAIL EST TOMBÉ : la partie s'arrête sur son écran de fin
+          finA = t
+          jouer('perdu')
+          secousse = 1
+          break
+        }
+        case 'traverse': {
+          // UN INSECTE TRAVERSE LE PORTAIL : il y est ASPIRÉ, et le portail le dit
+          // (SANS POSITION, AU MÊME VOLUME OÙ QU'ON SOIT — Keko, 14/11 : « pour que les joueurs aient bien l'information »)
+          jouer('breche')
+          {
+            // (son image est aspirée : la règle l'a déjà retiré du monde, on garde où il était et vers où il regardait)
+            const parti = dernierVu.get(ev.id)
+            aspires.push({ x: ev.x, y: ev.y, cap: parti?.cap ?? Math.atan2(-ev.y, -ev.x), id: ev.id, t0: t, aggro: parti?.aggro ?? false })
+            dernierVu.delete(ev.id)
+          }
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, -Math.cos(a) * R.range(10, 40), -Math.sin(a) * R.range(10, 40), R.range(0.2, 0.5), R.next() < 0.5 ? N.hex('#cf9bff') : N.WHITE, 1, 2)
+          }
+          passeA = t
+          break
+        }
+        case 'vague': {
+          // (d'où elle vient : des flèches rouges au bord, quelques secondes)
+          vagueA = t
+          cadransDeLaVague = ev.cadrans
+          jouer('equipe')
+          break
+        }
+        case 'salve': {
+          // (une salve d'éclats part : son crissement — sauf s'il a sonné en avance —, une couronne de givre autour
+          // du vaisseau)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * Math.PI * 2
+            etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 6, ev.y + Math.sin(a) * 6, Math.cos(a) * R.range(30, 60), Math.sin(a) * R.range(30, 60), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.5)
+          }
+          break
+        }
+        case 'eclatement': {
+          // (UN ÉCLAT SE BRISE : celui de l'Ice Shatter — un éclair blanc, une étoile, de la poudre de glace et des
+          // paillettes qui partent en cône derrière l'insecte, le tintement du verre)
+          if (t - eclatementSonneA > 0.08) {
+            eclatementSonneA = t
+            jouer('eclatement', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          eclatsBrises.push({ x: ev.x, y: ev.y, t0: t })
+          for (let i = 0; i < 7; i++) {
+            const a = ev.cap + R.range(-0.6, 0.6)
+            const vit = R.range(30, 90)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [N.WHITE, GLACE[6], GLACE[5], GLACE[4]][Math.floor(R.next() * 4)], 1, 2.5)
+          }
+          break
+        }
+        case 'tentacule':
+          // (une tentacule fouette : un claquement mouillé — un seul à la fois, elles partent souvent ensemble)
+          if (t - fouetSonneA > 0.12) {
+            fouetSonneA = t
+            jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'crachat':
+          // (la Vouivre crache : son crachat gluant — sauf s'il a sonné en avance —, la gerbe de gouttes dans le cône)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          crachats.push({ x: ev.x, y: ev.y, cap: ev.cap, cone: ev.cone, portee: ev.portee, t0: t, id: Math.round(t * 1000) })
+          break
+        case 'fleauFrappe':
+          // (la masse frappe : un choc sourd et métallique, des étincelles, une petite secousse)
+          jouer('fleau', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 7; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.3), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 1.5)
+          }
+          secousse = Math.max(secousse, 0.15)
+          break
+        case 'chaineFrappe':
+          // (la chaîne fouette un insecte : un cliquetis sec, deux étincelles — moins que la masse)
+          jouer('maillons', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.1, 0.2), N.WHITE, 1, 1)
+          }
+          break
+        case 'parasiteLance':
+          // (une larve est crachée : son petit couinement mouillé — sauf s'il a sonné en avance)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          break
+        case 'parasiteAccroche':
+          // (elle s'accroche : la piqûre charnue, une giclée)
+          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          toucheEnnemiA.set(ev.id, t)
+          for (let i = 0; i < 5; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? VENIN[4] : LARVE[2], 1, 1.5)
+          }
+          break
+        case 'parasiteSaute':
+          // (son hôte mort, elle jaillit de lui : un « blop », une gerbe de chair et de venin)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 9; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.2, 0.4), [VENIN[3], LARVE[2], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
+          }
+          break
+        case 'parasiteMort':
+          // (elle meurt, sans hôte : elle se tortille et se dessèche — trois miettes)
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15), R.range(0.2, 0.35), LARVE[1], 1, 1)
+          }
+          break
+        case 'mineLancee':
+          // (une pustule part de son dos : un « blop » — sauf s'il a sonné en avance)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          break
+        case 'gaz':
+          // (ELLE ÉCLATE : le nuage de gaz, son « pchouf » mouillé, des gouttes, une petite secousse)
+          gaz.push({ x: ev.x, y: ev.y, rayon: ev.rayon, t0: t, id: Math.round(ev.x * 13 + ev.y * 7 + t * 100) })
+          jouer('gaz', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 12; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 70), Math.sin(a) * R.range(25, 70), R.range(0.2, 0.4), [VENIN[4], VENIN[3], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
+          }
+          secousse = Math.max(secousse, 0.18)
+          break
+        case 'mineFinie':
+          // (elle s'éteint sans avoir servi : elle se dégonfle, un filet de gaz)
+          for (let i = 0; i < 4; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15) - 10, R.range(0.3, 0.5), VENIN[2], 1, 1)
+          }
+          break
+        case 'ronge':
+          // (un insecte se met à être rongé : un grésillement — un seul à la fois)
+          if (t - rongeSonneA > 0.15) {
+            rongeSonneA = t
+            jouer('ronge', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'rejeton':
+          // (un rejeton est pondu : un « blop » gluant, une giclée de bile)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), R.next() < 0.5 ? BILE[1] : CHAIR[3], 1, 1.5)
+          }
+          break
+        case 'coupDeRejeton': {
+          // (il fouette : la tentacule part en courbe, le claquement mouillé)
+          const h = (ev.id * 37 + Math.round(t * 10)) % 2 === 0 ? 1 : -1
+          coupsDeRejeton.push({ id: ev.id, tx: ev.x, ty: ev.y, t0: t, virage: h * 0.3 })
+          if (t - fouetSonneA > 0.1) {
+            fouetSonneA = t
+            jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        }
+        case 'rejetonFini':
+          // (il s'éteint : il se flétrit en une bouffée de chair et de bile)
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 25), Math.sin(a) * R.range(8, 25), R.range(0.2, 0.4), R.next() < 0.5 ? CHAIR[2] : BILE[0], 1, 1.5)
+          }
+          break
+        case 'morsure':
+          // (le nuage mord : l'insecte blanchit, un bourdonnement qui grince — un seul à la fois)
+          toucheEnnemiA.set(ev.id, t)
+          if (t - morsureSonneA > 0.25) {
+            morsureSonneA = t
+            jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'piqure':
+          // (l'aiguille se plante : son « tchk » charnu, une giclée de bile)
+          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 55), Math.sin(a) * R.range(20, 55), R.range(0.15, 0.3), R.next() < 0.5 ? BILE[1] : BILE[2], 1, 1.5)
+          }
+          break
+        case 'sphere':
+          // (une sphère part : la décharge — sauf si elle a sonné en avance —, des grains de plasma à la bouche)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
+          }
+          break
+        case 'sphereTir': {
+          // (elle tire ses petits traits : elle flashe, un petit « tsip » — pas plus d'un tous les dixièmes)
+          const s = m.spheres.find((x) => Math.hypot(x.x - ev.x, x.y - ev.y) < 0.5)
+          if (s !== undefined) sphereTirA.set(s.id, t)
+          if (t - arcaneSonneA > 0.1) {
+            arcaneSonneA = t
+            jouer('arcane', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        }
+        case 'puits':
+          // (un puits part : son lancer sourd — sauf s'il a sonné en avance —, des grains violets à la bouche)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('puits')
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), R.next() < 0.5 ? VIDE[5] : VIDE[3], 1, 1.5)
+          }
+          break
+        case 'meteore':
+          // (une météore part du ciel : son sifflement qui tombe — sauf s'il a sonné en avance)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('meteore')
+          lancersDeMeteore.push({ x0: ev.x0, y0: ev.y0, t0: t, id: ev.id })
+          break
+        case 'meteoreImpact':
+          // (elle frappe : son coup — sauf s'il a sonné en avance —, le cratère, des éclats projetés, une secousse)
+          if (meteoresAnnoncees.has(ev.id)) meteoresAnnoncees.delete(ev.id)
+          else jouer('impactMeteore', { dx: ev.x - v.x, dy: ev.y - v.y })
+          impactsDeMeteore.push({ x: ev.x, y: ev.y, t0: t, r: POINT_DE_CHUTE, id: ev.id })
+          for (let i = 0; i < 14; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(40, 110)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA_V[4], PLASMA_V[3], PLASMA_V[2]][Math.floor(R.next() * 4)], 1, 2)
+          }
+          secousse = Math.max(secousse, 0.35)
+          break
+        case 'puitsOuvert':
+          // (il s'ouvre : l'aspiration, qui monte pendant qu'il tire)
+          jouer('aspire', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        case 'puitsEclate':
+          // (il éclate : le trou noir s'effondre — l'horizon se referme, une onde magenta s'ouvre —, une secousse)
+          jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
+          effondrements.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+          for (let i = 0; i < 16; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(40, 120)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, VIDE[6], VIDE[5], VIDE[4]][Math.floor(R.next() * 4)], 1, 2)
+          }
+          secousse = Math.max(secousse, 0.3)
+          break
+        case 'sphereFinie':
+          // (elle s'éteint : elle se resserre et lâche une petite gerbe, sans dégâts)
+          eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: RAYON_DE_LA_SPHERE * 1.4, id: Math.round(ev.x * 13 + ev.y * 7) })
+          jouer('dissipe', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        case 'rail': {
+          // (LE RAILGUN : le trait, son claquement — sauf s'il a sonné en avance —, des étincelles tout le long, une secousse)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
+          for (let i = 0; i < 18; i++) {
+            const q = R.next()
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, FAISCEAU[4], FAISCEAU[2]][Math.floor(R.next() * 3)], 1, 1.5)
+          }
+          secousse = Math.max(secousse, 0.25)
+          break
+        }
+        case 'essaim':
+          // (un essaim part : sa volée de sifflements — sauf s'il a sonné en avance —, des grains de plasma à la bouche)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
+          }
+          break
+        case 'tornade':
+          // (une tornade part : le souffle du vent qui se lève — sauf s'il a sonné en avance)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer(ev.arme as Son)
+          break
+        case 'tornadeFinie':
+          // (elle s'éteint : un dernier tourbillon de flocons qui s'éparpille)
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.2, 0.45), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.5)
+          }
+          break
+        case 'gele':
+          // (un insecte entre dans le givre : un craquement de glace — pas plus d'un tous les dixièmes)
+          if (t - geleSonneA > 0.1) {
+            geleSonneA = t
+            jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'ennemiDetruit': {
+          // MORT GELÉ : il vole en ÉCLATS DE GLACE — des morceaux de glace qui tournent, des étincelles froides, un
+          // flocon qui éclate, le bruit du verre qui se brise
+          if (VORTEX && ev.gele === true) {
+            jouer('brise', { dx: ev.x - v.x, dy: ev.y - v.y })
+            compter('rivaux', 1)
+            for (let i = 0; i < 12; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(25, 95)
+              morceaux.add({ kind: N.B.SHARD, x: ev.x, y: ev.y, vx: Math.cos(a) * vit + ev.vx * 0.3, vy: Math.sin(a) * vit + ev.vy * 0.3, g: 0, drag: 1.4, bounce: 0, life: R.range(0.5, 1.1), a: R.range(0, Math.PI * 2), va: R.range(-12, 12), s: R.range(1.2, 2.6), c: GLACE[3 + Math.floor(R.next() * 4)] })
+            }
+            for (let i = 0; i < 10; i++) {
+              const a = R.range(0, Math.PI * 2)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 90), Math.sin(a) * R.range(30, 90), R.range(0.15, 0.35), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 2)
+            }
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: 5 })
+            flammesEnnemies.delete(ev.id)
+            if (typeof navigator.vibrate === 'function') vibrer(15)
+            break
+          }
+          // MORT PAR LE FEU : il se consume, sans sang ni éclat (voir `consumer`)
+          if (VORTEX && ev.brule === true) {
+            jouer('consume', { dx: ev.x - v.x, dy: ev.y - v.y })
+            compter('rivaux', 1)
+            consumer(ev.id, ev.x, ev.y, ev.vx, ev.vy)
+            flammesEnnemies.delete(ev.id)
+            if (typeof navigator.vibrate === 'function') vibrer(12)
+            break
+          }
+          if (VORTEX) {
+            // UN INSECTE S'ÉCRASE (Keko, 14/11 : « pas une animation d'explosion : une destruction d'insecte, avec du sang
+            // vert et un bruit de splash ») : une giclée de gouttes vertes, des éclaboussures qui retombent, une
+            // tache qui reste quelques secondes
+            jouer('splash', { dx: ev.x - v.x, dy: ev.y - v.y })
+            compter('rivaux', 1)
+            for (let i = 0; i < 22; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(25, 120)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit + ev.vx * 0.3, Math.sin(a) * vit + ev.vy * 0.3, R.range(0.2, 0.55), SANG_VERT[Math.floor(R.next() * 3)], 1, 4)
+            }
+            for (let i = 0; i < 10; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(8, 40)
+              braises.ajouter('braise', ev.x + R.range(-2, 2), ev.y + R.range(-2, 2), Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.5, 1), BRAISES_VERTES, 1, 3)
+            }
+            taches.push({ x: ev.x, y: ev.y, t0: t, graine: ev.id })
+            flammesEnnemies.delete(ev.id)
+            if (typeof navigator.vibrate === 'function') vibrer(15)
+            break
+          }
+          // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
+          jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
+          compter('rivaux', 1)
+          effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), palette: EXPLOSION_RIVAL, debris: '#7a2a36', size: 0.35, seed: ev.id }), x: ev.x, y: ev.y })
+          for (let i = 0; i < 14; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 110)
+            morceaux.add({ kind: N.B.SHARD, x: ev.x, y: ev.y, vx: Math.cos(a) * vit + ev.vx * 0.4, vy: Math.sin(a) * vit + ev.vy * 0.4, g: 0, drag: 1.2, bounce: 0, life: R.range(0.8, 1.5), a: R.range(0, Math.PI * 2), va: R.range(-10, 10), s: R.range(1.5, 3), c: ROUGE[1 + Math.floor(R.next() * 4)] })
+          }
+          secousse = Math.max(secousse, 0.6)
+          flammesEnnemies.delete(ev.id)
+          if (typeof navigator.vibrate === 'function') vibrer(40)
+          break
+        }
+        case 'extrait': {
+          jouer('extrait')
+          // resté à quai jusqu'au bout : le vaisseau se TÉLÉPORTE (Keko) — dessiné blanchi jusqu'à l'éclair, puis
+          // l'effet prend le relais et il n'est plus dessiné ; l'écran de fin vient quand l'effet est passé
+          perduA = t
+          effets.push({ fx: N.createFx(TELEPORTATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), rayon: CONF.rayon, seed: 3 }), x: v.x, y: v.y })
+          secousse = 0.5
+          if (typeof navigator.vibrate === 'function') vibrer([40, 60, 40])
+          // le porté passe en banque : les compteurs du haut se vident (le total ne s'affiche pas : l'écran le dit)
+          for (const k of MINERAIS) affiche[k] = 0
+          // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
+          tresor = { ...m.tresor }
+          // (les quêtes : ce qui vient d'être extrait, l'extraction, le chemin parcouru)
+          for (const k of MINERAIS) compter(k, ev.cargaison[k])
+          compter('pepites', ev.pepites)
+          compter('extractions', 1)
+          compter('parcouru', v.parcouru)
+          sauver()
+          // (le bilan ne s'affiche plus au hangar : Keko l'a fait retirer ; les compteurs et le trésor disent tout)
+          break
+        }
+        case 'perdu': {
+          // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
+          jouer(sonDeLaMort())
+          perduA = t
+          // LES PIÈCES CONSTRUITES QUI ÉTAIENT MONTÉES SONT PERDUES AVEC LE VAISSEAU (Keko, 14/11 : « comme un vrai jeu
+          // d'extraction ») : le hangar le dira au retour
+          // (pas dans le jeu du vortex : on y revient au portail dix secondes plus tard, avec tout son équipement)
+          if (!VORTEX) {
+            const pr = perdreLesMontees(hangar, modeleDeVaisseau(flotte.actif).serie)
+            hangar = pr.hangar
+            if (pr.perdues.length > 0) pertes = { noms: pr.perdues.map((id) => pieceDe(id)?.nom ?? id), t0: null }
+          }
+          compter('parcouru', v.parcouru)
+          sauver()
+          effets.push({ fx: effetDeLaMort(v.x - camera.x + W / 2, v.y - camera.y + centreY()), x: v.x, y: v.y })
+          for (let i = 0; i < 18; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 120)
+            morceaux.add({ kind: N.B.SHARD, x: v.x, y: v.y, vx: Math.cos(a) * vit + v.vx * 0.4, vy: Math.sin(a) * vit + v.vy * 0.4, g: 0, drag: 1.2, bounce: 0, life: R.range(0.9, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-10, 10), s: R.range(1.5, 3), c: COQUE[1 + Math.floor(R.next() * 4)] })
+          }
+          secousse = 1
+          if (typeof navigator.vibrate === 'function') vibrer([60, 40, 90])
+          break
+        }
+        default:
+          break
+      }
+    }
+  }
   function image(ms: number): void {
     const dt = Math.min(0.25, (ms - avant) / 1000)
     avant = ms
@@ -11007,690 +11782,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           etincelles.ajouter('etincelle', f.x + (nx / d) * 0.5, f.y + (ny / d) * 0.5, Math.cos(a) * vit + depuis.vx * 0.2, Math.sin(a) * vit + depuis.vy * 0.2, R.range(0.2, 0.45), R.next() < 0.5 ? LASER[4] : LASER[3], 1, 2.5)
           if (R.next() < 0.25) etincelles.ajouter('braise', f.x, f.y, Math.cos(a) * vit * 0.5, Math.sin(a) * vit * 0.5, R.range(0.4, 0.8), 0, 1, 1.5)
         }
-        for (const ev of r.evenements) {
-          switch (ev.type) {
-            case 'eclat': {
-              // une roche éclate : un flash, ses morceaux qui partent en tournant et s'éteignent
-              jouer('eclat', { dx: ev.x - v.x, dy: ev.y - v.y })
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-              const roche = rocheDe(ev.minerai)
-              const n = 6 + Math.round(ev.rayon)
-              for (let i = 0; i < n; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const d = R.range(0, ev.rayon * 0.7)
-                const vit = R.range(25, 90)
-                morceaux.add({ kind: N.B.SHARD, x: ev.x + Math.cos(a) * d, y: ev.y + Math.sin(a) * d, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, g: 0, drag: 1.1, bounce: 0, life: R.range(0.8, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-9, 9), s: R.range(1.5, 2.5 + ev.rayon * 0.15), c: roche[2 + Math.floor(R.next() * 4)] })
-              }
-              secousse = Math.max(secousse, Math.min(1, 0.3 + ev.rayon / 20))
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(30)
-              break
-            }
-            case 'ramasse':
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
-              if (ev.par === 'joueur') {
-                compter('ramassees', 1)
-                // (dans le jeu du vortex, la pépite est de l'expérience : pas d'envol vers la soute, la barre s'allume)
-                if (VORTEX) xpA = t
-                else envols.push({ x: v.x, y: v.y, t0: t, minerai: ev.minerai, trace: [] })
-                jouer('ramasse')
-                // (le « pop » du coin collect : un disque blanc qui se referme, un anneau, des étoiles lancées en rond)
-                pops.push({ x: ev.x, y: ev.y, t0: t, c: TEINTES_MINERAI[ev.minerai] })
-                for (let i = 0; i < 5; i++) {
-                  const a = (i / 5) * Math.PI * 2 + R.range(-0.3, 0.3)
-                  const vit = R.range(40, 80)
-                  etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 2, ev.y + Math.sin(a) * 2, Math.cos(a) * vit + v.vx * 0.5, Math.sin(a) * vit + v.vy * 0.5, R.range(0.2, 0.4), TEINTES_MINERAI[ev.minerai][i % 2 === 0 ? 3 : 4], 1, 3)
-                }
-              }
-              break
-            case 'touche': {
-              // un trait perce la coque : le vaisseau blanchit, une étincelle rouge, une secousse, une vibration
-              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('touche') // (un choc annoncé en avance a déjà sonné)
-              toucheA = t
-              secousse = Math.max(secousse, 0.7)
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
-              for (let i = 0; i < 10; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 110)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), R.next() < 0.5 ? N.WHITE : ROUGE[4], 1, 2.5)
-              }
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
-              break
-            }
-            case 'arc':
-              // (un drone frappe d'un arc électrique)
-              arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, de: { sorte: 'drone', k: ev.drone }, vers: { sorte: 'ennemi', id: ev.id }, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
-              if (t - zapA > 0.06) {
-                zapA = t
-                jouer('zap', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
-              }
-              break
-            case 'chaine':
-              // (la chaîne d'éclairs : maillon après maillon, de quelques centièmes)
-              for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, de: k === 0 ? { sorte: 'vaisseau' } : { sorte: 'ennemi', id: ev.ids[k - 1] }, vers: { sorte: 'ennemi', id: ev.ids[k] }, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
-              jouer('chaine')
-              secousse = Math.max(secousse, 0.2)
-              break
-            case 'balayage':
-              // (le rayon part : son son, qui dure le tour — SAUF S'IL A DÉJÀ SONNÉ, annoncé en avance de la latence, comme
-              // un obus ; Keko, 16/11 : « quand on enchaîne deux lasers d'affilée, ça fait deux fois le bruit de lancement »)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer('rayon')
-              secousse = Math.max(secousse, 0.15)
-              break
-            case 'flaque': {
-              // UNE BOULE S'ÉCRASE EN FLAQUE : son « splotch » et l'embrasement, une gerbe de flammes et de gouttes
-              jouer('flaque', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 10; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(15, 45)
-                feuDesConsumes.spawn(N.P.FIRE, ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit - 10, R.range(0.2, 0.4), 0, R.range(1.2, 2.2))
-              }
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.3, 0.6), 0, 1)
-              }
-              break
-            }
-            case 'explosionDeZone': {
-              // (L'ORBE DE PLASMA ÉCLATE : sa gerbe à elle, violette et bleue, son « zap », des étincelles — pas de feu)
-              if (ev.arme === 'plasma') {
-                jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
-                eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, id: Math.round(ev.x * 13 + ev.y * 7) })
-                for (let i = 0; i < 14; i++) {
-                  const a = R.range(0, Math.PI * 2)
-                  const vit = R.range(40, 110)
-                  etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA[5], PLASMA[4], PLASMA_V[3]][Math.floor(R.next() * 4)], 1, 2)
-                }
-                secousse = Math.max(secousse, 0.22)
-                break
-              }
-              // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
-              // feu (les flammes, braises et fumées du dépôt), son « boum »
-              jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
-              // (L'ONDE À LA TAILLE DE LA ZONE — Keko, 15/11 : le grand cercle était l'éclair des chocs ; réduite aux deux
-              // tiers, « trop réduite » : elle s'ouvre jusqu'au bord de la zone de dégâts ; et PLUS DE FEU À L'IMPACT : des flammes plus nombreuses et plus grosses,
-              // qui ROULENT — décalées de quelques centièmes — et fument en s'éteignant)
-              ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-              for (let i = 0; i < 16; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const d = R.range(0, ev.rayon * 0.35)
-                const vit = R.range(8, 32)
-                feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.25, 0.5), 0, R.range(1.6, 3), R.range(0, 0.09), R.next() < 0.5 ? 1 : 0)
-              }
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90), Math.sin(a) * R.range(40, 90), R.range(0.3, 0.6), 0, 1)
-              }
-              for (let i = 0; i < 2; i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3), ev.y + R.range(-3, 3), R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5))
-              secousse = Math.max(secousse, 0.2)
-              break
-            }
-            case 'tourelleLancee':
-              jouer('lance')
-              break
-            case 'scieLancee':
-              // (UN LANCER ANNONCÉ EN AVANCE A DÉJÀ SONNÉ, comme un obus — Keko, 15/11 : relancée aussitôt rattrapée,
-              // l'annonce de la latence jouait le son, puis le lancer le rejouait : « le son du tir se fait deux fois »)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer('scie')
-              break
-            case 'balisePosee':
-              // (une balise plantée : son clic, un peu de poussière)
-              // (un cristal : un tintement de verre, des éclats bleus)
-              jouer(ev.arme === 'cristal' ? 'cristalPose' : 'balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 5; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), ev.arme === 'cristal' ? FAISCEAU[R.next() < 0.5 ? 3 : 4] : N.hex('#8a8a96'), 1, 2)
-              }
-              break
-            case 'baliseFinie':
-              for (let i = 0; i < 4; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : ev.arme === 'cristal' ? FAISCEAU[3] : PEPITE[2], 1, 2)
-              }
-              break
-            case 'ligne':
-              // (une ligne franchie s'éclaire : son « zing », l'éclair dessiné avec les balises)
-              jouer(ev.arme === 'cristal' ? 'cristalLigne' : 'balise', { dx: (ev.x0 + ev.x1) / 2 - v.x, dy: (ev.y0 + ev.y1) / 2 - v.y })
-              lignesEclairees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, bleu: ev.arme === 'cristal' })
-              break
-            case 'scieRattrapee':
-              // (le vaisseau rattrape sa scie : un clac, deux étincelles)
-              jouer('rattrape')
-              for (let i = 0; i < 4; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 1.5)
-              }
-              break
-            case 'tourellePosee':
-              // (une tourelle posée : son clac, un peu de poussière)
-              jouer('pose', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 8; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.2, 0.4), R.next() < 0.5 ? N.hex('#8a8a96') : PEPITE[2], 1, 2)
-              }
-              break
-            case 'tourelleFinie':
-              // (une tourelle s'éteint : quelques étincelles)
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.35), R.next() < 0.5 ? N.WHITE : N.hex('#8a8a96'), 1, 2)
-              }
-              break
-            case 'obus':
-              // une arme tire : deux étincelles à la bouche, et son son
-              // (un coup annoncé en avance a déjà sonné)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-20, 20), R.range(-20, 20), 0.12, N.WHITE, 1, 1.5)
-              break
-            case 'ennemiTouche': {
-              // un obus touche le rival : il blanchit, des étincelles cyan
-              // (un insecte, dans le jeu du vortex : un son organique — Keko, 15/11)
-              jouer(VORTEX ? 'insecteTouche' : 'ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
-              toucheEnnemiA.set(ev.id, t)
-              // (un coup critique : un éclair de plus, une petite secousse)
-              if (ev.critique) {
-                flashs.push({ x: ev.x, y: ev.y, t0: t, r: 6 })
-                secousse = Math.max(secousse, 0.35)
-              }
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 90)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), R.next() < 0.5 ? N.WHITE : VERRIERE[2], 1, 2)
-              }
-              break
-            }
-            case 'bouclier': {
-              // le bouclier prend le coup : son anneau flashe, des étincelles cyan, une petite secousse
-              // (LE BLINDAGE A LA PRIORITÉ — Keko, 13/11 : un coup qui vide le bouclier ET entame la coque sonne comme un
-              // coup dans le blindage, « le joueur doit avoir l'info prioritaire » : le son du bouclier se tait alors)
-              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4) && !r.evenements.some((e) => e.type === 'touche')) jouer('bouclier')
-              bouclierA = t
-              coupsAuBouclier.push({ x: ev.x, y: ev.y, t0: t, brise: m.bouclier <= 0 })
-              secousse = Math.max(secousse, 0.3)
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(20)
-              for (let i = 0; i < 8; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 100)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.4), R.next() < 0.5 ? N.WHITE : VERRIERE[2], 1, 2.5)
-              }
-              break
-            }
-            case 'corrompu': {
-              // LE COUP CORROMPT (les Innommés) : comme un coup dans la coque — le son, la secousse —, mais les étincelles
-              // sont violettes et la barre ne baisse pas : sa part touchée devient violette
-              if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4)) jouer('touche')
-              toucheA = t
-              secousse = Math.max(secousse, 0.6)
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(35)
-              for (let i = 0; i < 10; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 100)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.5), i % 3 === 0 ? N.WHITE : CORRUPTION[1 + (i % 2)], 1, 2.5)
-              }
-              break
-            }
-            case 'purge': {
-              // UN INSECTE ABATTU PURGE LA CORRUPTION : un frisson qui remonte, un filet violet de l'insecte au vaisseau, la
-              // barre qui s'éclaire
-              jouer('purge')
-              purgeA = t
-              for (let i = 0; i < 6; i++) {
-                const u = i / 6
-                etincelles.ajouter('etincelle', ev.x + (v.x - ev.x) * u, ev.y + (v.y - ev.y) * u, (v.x - ev.x) * 1.5, (v.y - ev.y) * 1.5, 0.12 + 0.05 * i, i % 2 === 0 ? CORRUPTION[0] : CORRUPTION[1], 1, 2)
-              }
-              break
-            }
-            case 'plaque': {
-              // UNE PLAQUE DE BLINDAGE PREND LE COUP ET CASSE (les humains, Keko, 17/11) : un clang de métal, des éclats
-              // d'acier qui giclent, une secousse ; sa plaque, dans la barre, blanchit puis se creuse
-              jouer('plaque')
-              plaquesCasseesA[ev.k] = t
-              secousse = Math.max(secousse, 0.35)
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(25)
-              for (let i = 0; i < 10; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 110)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), i % 3 === 0 ? N.WHITE : ACIER_DES_PLAQUES[i % 2], 1, 2.5)
-              }
-              break
-            }
-            case 'explosion': {
-              // la bombe éclate : l'explosion du dépôt, une secousse, un éclair, des morceaux
-              jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
-              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: 0.6, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
-              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-              secousse = Math.max(secousse, 1)
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(50)
-              break
-            }
-            case 'retour': {
-              // LE JOUEUR REVIENT AU PORTAIL : la matérialisation du départ, et son son
-              arriveA = t
-              jouer('arrive', undefined, Math.max(0, ARRIVE_A - ECLOSION_DE_L_ARRIVEE))
-              effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: -camera.x + W / 2, y: -camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: 0, y: 0 })
-              break
-            }
-            case 'niveau': {
-              // UN NIVEAU : le jeu se met en pause, on choisit un talent (un de plus s'il y en avait déjà un à choisir)
-              niveauA = t
-              jouer('achat')
-              const enCours = choixDeTalent as Choix | null
-              if (enCours === null) {
-                choixDeTalent = ouvrirLeChoix(reserveDeTalents)
-                reserveDeTalents = 0
-                talentFinA = t + DUREE_DU_CHOIX
-                talentA = t
-              } else choixDeTalent = { aFaire: enCours.aFaire + 1, rang: enCours.rang }
-              break
-            }
-            case 'fin': {
-              // LE PORTAIL EST TOMBÉ : la partie s'arrête sur son écran de fin
-              finA = t
-              jouer('perdu')
-              secousse = 1
-              break
-            }
-            case 'traverse': {
-              // UN INSECTE TRAVERSE LE PORTAIL : il y est ASPIRÉ, et le portail le dit
-              // (SANS POSITION, AU MÊME VOLUME OÙ QU'ON SOIT — Keko, 14/11 : « pour que les joueurs aient bien l'information »)
-              jouer('breche')
-              {
-                // (son image est aspirée : la règle l'a déjà retiré du monde, on garde où il était et vers où il regardait)
-                const parti = dernierVu.get(ev.id)
-                aspires.push({ x: ev.x, y: ev.y, cap: parti?.cap ?? Math.atan2(-ev.y, -ev.x), id: ev.id, t0: t, aggro: parti?.aggro ?? false })
-                dernierVu.delete(ev.id)
-              }
-              for (let i = 0; i < 10; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, -Math.cos(a) * R.range(10, 40), -Math.sin(a) * R.range(10, 40), R.range(0.2, 0.5), R.next() < 0.5 ? N.hex('#cf9bff') : N.WHITE, 1, 2)
-              }
-              passeA = t
-              break
-            }
-            case 'vague': {
-              // (d'où elle vient : des flèches rouges au bord, quelques secondes)
-              vagueA = t
-              cadransDeLaVague = ev.cadrans
-              jouer('equipe')
-              break
-            }
-            case 'salve': {
-              // (une salve d'éclats part : son crissement — sauf s'il a sonné en avance —, une couronne de givre autour
-              // du vaisseau)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              for (let i = 0; i < 12; i++) {
-                const a = (i / 12) * Math.PI * 2
-                etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 6, ev.y + Math.sin(a) * 6, Math.cos(a) * R.range(30, 60), Math.sin(a) * R.range(30, 60), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.5)
-              }
-              break
-            }
-            case 'eclatement': {
-              // (UN ÉCLAT SE BRISE : celui de l'Ice Shatter — un éclair blanc, une étoile, de la poudre de glace et des
-              // paillettes qui partent en cône derrière l'insecte, le tintement du verre)
-              if (t - eclatementSonneA > 0.08) {
-                eclatementSonneA = t
-                jouer('eclatement', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              eclatsBrises.push({ x: ev.x, y: ev.y, t0: t })
-              for (let i = 0; i < 7; i++) {
-                const a = ev.cap + R.range(-0.6, 0.6)
-                const vit = R.range(30, 90)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [N.WHITE, GLACE[6], GLACE[5], GLACE[4]][Math.floor(R.next() * 4)], 1, 2.5)
-              }
-              break
-            }
-            case 'tentacule':
-              // (une tentacule fouette : un claquement mouillé — un seul à la fois, elles partent souvent ensemble)
-              if (t - fouetSonneA > 0.12) {
-                fouetSonneA = t
-                jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              break
-            case 'crachat':
-              // (la Vouivre crache : son crachat gluant — sauf s'il a sonné en avance —, la gerbe de gouttes dans le cône)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              crachats.push({ x: ev.x, y: ev.y, cap: ev.cap, cone: ev.cone, portee: ev.portee, t0: t, id: Math.round(t * 1000) })
-              break
-            case 'fleauFrappe':
-              // (la masse frappe : un choc sourd et métallique, des étincelles, une petite secousse)
-              jouer('fleau', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 7; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.3), R.next() < 0.5 ? N.WHITE : PEPITE[2], 1, 1.5)
-              }
-              secousse = Math.max(secousse, 0.15)
-              break
-            case 'chaineFrappe':
-              // (la chaîne fouette un insecte : un cliquetis sec, deux étincelles — moins que la masse)
-              jouer('maillons', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 3; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.1, 0.2), N.WHITE, 1, 1)
-              }
-              break
-            case 'parasiteLance':
-              // (une larve est crachée : son petit couinement mouillé — sauf s'il a sonné en avance)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              break
-            case 'parasiteAccroche':
-              // (elle s'accroche : la piqûre charnue, une giclée)
-              jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
-              toucheEnnemiA.set(ev.id, t)
-              for (let i = 0; i < 5; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? VENIN[4] : LARVE[2], 1, 1.5)
-              }
-              break
-            case 'parasiteSaute':
-              // (son hôte mort, elle jaillit de lui : un « blop », une gerbe de chair et de venin)
-              jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 9; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.2, 0.4), [VENIN[3], LARVE[2], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
-              }
-              break
-            case 'parasiteMort':
-              // (elle meurt, sans hôte : elle se tortille et se dessèche — trois miettes)
-              for (let i = 0; i < 3; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15), R.range(0.2, 0.35), LARVE[1], 1, 1)
-              }
-              break
-            case 'mineLancee':
-              // (une pustule part de son dos : un « blop » — sauf s'il a sonné en avance)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              break
-            case 'gaz':
-              // (ELLE ÉCLATE : le nuage de gaz, son « pchouf » mouillé, des gouttes, une petite secousse)
-              gaz.push({ x: ev.x, y: ev.y, rayon: ev.rayon, t0: t, id: Math.round(ev.x * 13 + ev.y * 7 + t * 100) })
-              jouer('gaz', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 12; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 70), Math.sin(a) * R.range(25, 70), R.range(0.2, 0.4), [VENIN[4], VENIN[3], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
-              }
-              secousse = Math.max(secousse, 0.18)
-              break
-            case 'mineFinie':
-              // (elle s'éteint sans avoir servi : elle se dégonfle, un filet de gaz)
-              for (let i = 0; i < 4; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15) - 10, R.range(0.3, 0.5), VENIN[2], 1, 1)
-              }
-              break
-            case 'ronge':
-              // (un insecte se met à être rongé : un grésillement — un seul à la fois)
-              if (t - rongeSonneA > 0.15) {
-                rongeSonneA = t
-                jouer('ronge', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              break
-            case 'rejeton':
-              // (un rejeton est pondu : un « blop » gluant, une giclée de bile)
-              jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 8; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), R.next() < 0.5 ? BILE[1] : CHAIR[3], 1, 1.5)
-              }
-              break
-            case 'coupDeRejeton': {
-              // (il fouette : la tentacule part en courbe, le claquement mouillé)
-              const h = (ev.id * 37 + Math.round(t * 10)) % 2 === 0 ? 1 : -1
-              coupsDeRejeton.push({ id: ev.id, tx: ev.x, ty: ev.y, t0: t, virage: h * 0.3 })
-              if (t - fouetSonneA > 0.1) {
-                fouetSonneA = t
-                jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              break
-            }
-            case 'rejetonFini':
-              // (il s'éteint : il se flétrit en une bouffée de chair et de bile)
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 25), Math.sin(a) * R.range(8, 25), R.range(0.2, 0.4), R.next() < 0.5 ? CHAIR[2] : BILE[0], 1, 1.5)
-              }
-              break
-            case 'morsure':
-              // (le nuage mord : l'insecte blanchit, un bourdonnement qui grince — un seul à la fois)
-              toucheEnnemiA.set(ev.id, t)
-              if (t - morsureSonneA > 0.25) {
-                morsureSonneA = t
-                jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              break
-            case 'piqure':
-              // (l'aiguille se plante : son « tchk » charnu, une giclée de bile)
-              jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 55), Math.sin(a) * R.range(20, 55), R.range(0.15, 0.3), R.next() < 0.5 ? BILE[1] : BILE[2], 1, 1.5)
-              }
-              break
-            case 'sphere':
-              // (une sphère part : la décharge — sauf si elle a sonné en avance —, des grains de plasma à la bouche)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              for (let i = 0; i < 8; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
-              }
-              break
-            case 'sphereTir': {
-              // (elle tire ses petits traits : elle flashe, un petit « tsip » — pas plus d'un tous les dixièmes)
-              const s = m.spheres.find((x) => Math.hypot(x.x - ev.x, x.y - ev.y) < 0.5)
-              if (s !== undefined) sphereTirA.set(s.id, t)
-              if (t - arcaneSonneA > 0.1) {
-                arcaneSonneA = t
-                jouer('arcane', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              break
-            }
-            case 'puits':
-              // (un puits part : son lancer sourd — sauf s'il a sonné en avance —, des grains violets à la bouche)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer('puits')
-              for (let i = 0; i < 6; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), R.next() < 0.5 ? VIDE[5] : VIDE[3], 1, 1.5)
-              }
-              break
-            case 'meteore':
-              // (une météore part du ciel : son sifflement qui tombe — sauf s'il a sonné en avance)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer('meteore')
-              lancersDeMeteore.push({ x0: ev.x0, y0: ev.y0, t0: t, id: ev.id })
-              break
-            case 'meteoreImpact':
-              // (elle frappe : son coup — sauf s'il a sonné en avance —, le cratère, des éclats projetés, une secousse)
-              if (meteoresAnnoncees.has(ev.id)) meteoresAnnoncees.delete(ev.id)
-              else jouer('impactMeteore', { dx: ev.x - v.x, dy: ev.y - v.y })
-              impactsDeMeteore.push({ x: ev.x, y: ev.y, t0: t, r: POINT_DE_CHUTE, id: ev.id })
-              for (let i = 0; i < 14; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(40, 110)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA_V[4], PLASMA_V[3], PLASMA_V[2]][Math.floor(R.next() * 4)], 1, 2)
-              }
-              secousse = Math.max(secousse, 0.35)
-              break
-            case 'puitsOuvert':
-              // (il s'ouvre : l'aspiration, qui monte pendant qu'il tire)
-              jouer('aspire', { dx: ev.x - v.x, dy: ev.y - v.y })
-              break
-            case 'puitsEclate':
-              // (il éclate : le trou noir s'effondre — l'horizon se referme, une onde magenta s'ouvre —, une secousse)
-              jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
-              effondrements.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-              for (let i = 0; i < 16; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(40, 120)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, VIDE[6], VIDE[5], VIDE[4]][Math.floor(R.next() * 4)], 1, 2)
-              }
-              secousse = Math.max(secousse, 0.3)
-              break
-            case 'sphereFinie':
-              // (elle s'éteint : elle se resserre et lâche une petite gerbe, sans dégâts)
-              eclatsDePlasma.push({ x: ev.x, y: ev.y, t0: t, r: RAYON_DE_LA_SPHERE * 1.4, id: Math.round(ev.x * 13 + ev.y * 7) })
-              jouer('dissipe', { dx: ev.x - v.x, dy: ev.y - v.y })
-              break
-            case 'rail': {
-              // (LE RAILGUN : le trait, son claquement — sauf s'il a sonné en avance —, des étincelles tout le long, une secousse)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
-              for (let i = 0; i < 18; i++) {
-                const q = R.next()
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, FAISCEAU[4], FAISCEAU[2]][Math.floor(R.next() * 3)], 1, 1.5)
-              }
-              secousse = Math.max(secousse, 0.25)
-              break
-            }
-            case 'essaim':
-              // (un essaim part : sa volée de sifflements — sauf s'il a sonné en avance —, des grains de plasma à la bouche)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              for (let i = 0; i < 8; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
-              }
-              break
-            case 'tornade':
-              // (une tornade part : le souffle du vent qui se lève — sauf s'il a sonné en avance)
-              if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-              else jouer(ev.arme as Son)
-              break
-            case 'tornadeFinie':
-              // (elle s'éteint : un dernier tourbillon de flocons qui s'éparpille)
-              for (let i = 0; i < 10; i++) {
-                const a = R.range(0, Math.PI * 2)
-                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.2, 0.45), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.5)
-              }
-              break
-            case 'gele':
-              // (un insecte entre dans le givre : un craquement de glace — pas plus d'un tous les dixièmes)
-              if (t - geleSonneA > 0.1) {
-                geleSonneA = t
-                jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
-              }
-              break
-            case 'ennemiDetruit': {
-              // MORT GELÉ : il vole en ÉCLATS DE GLACE — des morceaux de glace qui tournent, des étincelles froides, un
-              // flocon qui éclate, le bruit du verre qui se brise
-              if (VORTEX && ev.gele === true) {
-                jouer('brise', { dx: ev.x - v.x, dy: ev.y - v.y })
-                compter('rivaux', 1)
-                for (let i = 0; i < 12; i++) {
-                  const a = R.range(0, Math.PI * 2)
-                  const vit = R.range(25, 95)
-                  morceaux.add({ kind: N.B.SHARD, x: ev.x, y: ev.y, vx: Math.cos(a) * vit + ev.vx * 0.3, vy: Math.sin(a) * vit + ev.vy * 0.3, g: 0, drag: 1.4, bounce: 0, life: R.range(0.5, 1.1), a: R.range(0, Math.PI * 2), va: R.range(-12, 12), s: R.range(1.2, 2.6), c: GLACE[3 + Math.floor(R.next() * 4)] })
-                }
-                for (let i = 0; i < 10; i++) {
-                  const a = R.range(0, Math.PI * 2)
-                  etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 90), Math.sin(a) * R.range(30, 90), R.range(0.15, 0.35), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 2)
-                }
-                flashs.push({ x: ev.x, y: ev.y, t0: t, r: 5 })
-                flammesEnnemies.delete(ev.id)
-                if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
-                break
-              }
-              // MORT PAR LE FEU : il se consume, sans sang ni éclat (voir `consumer`)
-              if (VORTEX && ev.brule === true) {
-                jouer('consume', { dx: ev.x - v.x, dy: ev.y - v.y })
-                compter('rivaux', 1)
-                consumer(ev.id, ev.x, ev.y, ev.vx, ev.vy)
-                flammesEnnemies.delete(ev.id)
-                if (typeof navigator.vibrate === 'function') navigator.vibrate(12)
-                break
-              }
-              if (VORTEX) {
-                // UN INSECTE S'ÉCRASE (Keko, 14/11 : « pas une animation d'explosion : une destruction d'insecte, avec du sang
-                // vert et un bruit de splash ») : une giclée de gouttes vertes, des éclaboussures qui retombent, une
-                // tache qui reste quelques secondes
-                jouer('splash', { dx: ev.x - v.x, dy: ev.y - v.y })
-                compter('rivaux', 1)
-                for (let i = 0; i < 22; i++) {
-                  const a = R.range(0, Math.PI * 2)
-                  const vit = R.range(25, 120)
-                  etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit + ev.vx * 0.3, Math.sin(a) * vit + ev.vy * 0.3, R.range(0.2, 0.55), SANG_VERT[Math.floor(R.next() * 3)], 1, 4)
-                }
-                for (let i = 0; i < 10; i++) {
-                  const a = R.range(0, Math.PI * 2)
-                  const vit = R.range(8, 40)
-                  braises.ajouter('braise', ev.x + R.range(-2, 2), ev.y + R.range(-2, 2), Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.5, 1), BRAISES_VERTES, 1, 3)
-                }
-                taches.push({ x: ev.x, y: ev.y, t0: t, graine: ev.id })
-                flammesEnnemies.delete(ev.id)
-                if (typeof navigator.vibrate === 'function') navigator.vibrate(15)
-                break
-              }
-              // l'ennemi éclate comme une roche, en rouge, et rend ses pépites (la règle les a faites naître)
-              jouer('ennemiDetruit', { dx: ev.x - v.x, dy: ev.y - v.y })
-              compter('rivaux', 1)
-              effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), palette: EXPLOSION_RIVAL, debris: '#7a2a36', size: 0.35, seed: ev.id }), x: ev.x, y: ev.y })
-              for (let i = 0; i < 14; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 110)
-                morceaux.add({ kind: N.B.SHARD, x: ev.x, y: ev.y, vx: Math.cos(a) * vit + ev.vx * 0.4, vy: Math.sin(a) * vit + ev.vy * 0.4, g: 0, drag: 1.2, bounce: 0, life: R.range(0.8, 1.5), a: R.range(0, Math.PI * 2), va: R.range(-10, 10), s: R.range(1.5, 3), c: ROUGE[1 + Math.floor(R.next() * 4)] })
-              }
-              secousse = Math.max(secousse, 0.6)
-              flammesEnnemies.delete(ev.id)
-              if (typeof navigator.vibrate === 'function') navigator.vibrate(40)
-              break
-            }
-            case 'extrait': {
-              jouer('extrait')
-              // resté à quai jusqu'au bout : le vaisseau se TÉLÉPORTE (Keko) — dessiné blanchi jusqu'à l'éclair, puis
-              // l'effet prend le relais et il n'est plus dessiné ; l'écran de fin vient quand l'effet est passé
-              perduA = t
-              effets.push({ fx: N.createFx(TELEPORTATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), rayon: CONF.rayon, seed: 3 }), x: v.x, y: v.y })
-              secousse = 0.5
-              if (typeof navigator.vibrate === 'function') navigator.vibrate([40, 60, 40])
-              // le porté passe en banque : les compteurs du haut se vident (le total ne s'affiche pas : l'écran le dit)
-              for (const k of MINERAIS) affiche[k] = 0
-              // le trésor s'en souvient, sur l'appareil : c'est lui qui achète les pièces au hangar
-              tresor = { ...m.tresor }
-              // (les quêtes : ce qui vient d'être extrait, l'extraction, le chemin parcouru)
-              for (const k of MINERAIS) compter(k, ev.cargaison[k])
-              compter('pepites', ev.pepites)
-              compter('extractions', 1)
-              compter('parcouru', v.parcouru)
-              sauver()
-              // (le bilan ne s'affiche plus au hangar : Keko l'a fait retirer ; les compteurs et le trésor disent tout)
-              break
-            }
-            case 'perdu': {
-              // le joueur explose et disparaît ; l'écran de fin attend que la boule de feu soit passée
-              jouer(sonDeLaMort())
-              perduA = t
-              // LES PIÈCES CONSTRUITES QUI ÉTAIENT MONTÉES SONT PERDUES AVEC LE VAISSEAU (Keko, 14/11 : « comme un vrai jeu
-              // d'extraction ») : le hangar le dira au retour
-              // (pas dans le jeu du vortex : on y revient au portail dix secondes plus tard, avec tout son équipement)
-              if (!VORTEX) {
-                const pr = perdreLesMontees(hangar, modeleDeVaisseau(flotte.actif).serie)
-                hangar = pr.hangar
-                if (pr.perdues.length > 0) pertes = { noms: pr.perdues.map((id) => pieceDe(id)?.nom ?? id), t0: null }
-              }
-              compter('parcouru', v.parcouru)
-              sauver()
-              effets.push({ fx: effetDeLaMort(v.x - camera.x + W / 2, v.y - camera.y + centreY()), x: v.x, y: v.y })
-              for (let i = 0; i < 18; i++) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(30, 120)
-                morceaux.add({ kind: N.B.SHARD, x: v.x, y: v.y, vx: Math.cos(a) * vit + v.vx * 0.4, vy: Math.sin(a) * vit + v.vy * 0.4, g: 0, drag: 1.2, bounce: 0, life: R.range(0.9, 1.6), a: R.range(0, Math.PI * 2), va: R.range(-10, 10), s: R.range(1.5, 3), c: COQUE[1 + Math.floor(R.next() * 4)] })
-              }
-              secousse = 1
-              if (typeof navigator.vibrate === 'function') navigator.vibrate([60, 40, 90])
-              break
-            }
-            default:
-              break
-          }
-        }
+        celebrer(r)
         for (const choc of r.chocs) {
           secousse = Math.min(1, 0.3 + choc.force / 120)
           if (typeof navigator.vibrate === 'function') navigator.vibrate(Math.round(10 + choc.force / 4))
@@ -11895,42 +11987,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const creuse = m.creuse.get(a.id) ?? 0
       if (creuse > 0) dessinerUneJauge(p, a.x - camera.x + W / 2, a.y - camera.y + centreY() + a.rayon + 4, Math.max(8, Math.round(a.rayon * 1.6)), 1 - creuse / solidite(CONF, a), COQUE[4], COQUE[6], creusee && Math.floor(t * 20) % 2 === 0)
     }
-    // les braises, les morceaux, les pépites, les étincelles sont dans le monde : le peintre se place sur la caméra
-    p.place(W / 2 - camera.x, centreY() - camera.y)
-    braises.draw(p)
-    morceaux.draw(p)
-    dessinerLesPepites(p)
-    etincelles.draw(p)
-    // les « pops » d'une pépite montée à bord : un disque blanc qui se referme, puis un anneau qui s'ouvre
-    for (let i = pops.length - 1; i >= 0; i--) {
-      const f = pops[i]
-      const u = (t - f.t0) / 0.32
-      if (u >= 1) {
-        pops.splice(i, 1)
-        continue
-      }
-      if (u < 0.3) p.circle(f.x, f.y, 4.5 * (1 - u / 0.3) + 1, u < 0.15 ? N.WHITE : f.c[4] ?? N.WHITE)
-      p.ring(f.x, f.y, 3 + 9 * sortie(u), Math.max(1, 2 * (1 - u)), u < 0.3 ? N.WHITE : f.c[3], 1.2 - u)
-      p.glow(f.x, f.y, 12, f.c[2], 0.7 * (1 - u))
-    }
-    for (const f of flashs) {
-      const u = (t - f.t0) / 0.4
-      if (f.r === 0) {
-        // une pépite montée à bord : un éclat
-        N.sparkle(p, f.x, f.y, 1 + 3 * Math.sin(u * Math.PI), (f.c ?? PEPITE)[3], (f.c ?? PEPITE)[2], 0.5 * (1 - u))
-        continue
-      }
-      if (f.r === -1) {
-        // un choc : un point blanc et une lueur, trois images
-        if (u < 0.4) {
-          p.circle(f.x, f.y, 1.5 * (1 - u / 0.4) + 0.5, N.WHITE)
-          p.glow(f.x, f.y, 10, LASER[4], 0.6 * (1 - u / 0.4))
-        }
-        continue
-      }
-      p.glow(f.x, f.y, f.r * 2 + 10, LASER[4], 0.8 * (1 - u))
-      p.ring(f.x, f.y, f.r * 0.5 + f.r * 2.2 * u, 1, u < 0.3 ? N.WHITE : LASER[3], 1 - u)
-    }
+    dessinerLesGerbes(p)
     p.place(0, 0)
     if (VORTEX) {
       // LE VORTEX, au centre du monde, sous le vaisseau : il tourne sans fin

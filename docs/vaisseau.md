@@ -5272,3 +5272,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   trois alvéoles, des antennes et des mandibules (l'Essaim), une étoile de rune et sa gemme dans un anneau où tourne une
   lueur (les Éthérés), un œil fendu dans six vrilles qui ondulent (les Innommés ; d'abord trop sombre sur le fond de la
   fiche, éclairci). Le petit symbole de sept pixels est retiré, de la grille et de la fiche.
+- L'APERÇU A LES MORTS ET LES IMPACTS DU VOL (Keko, 17/11 : « quand un ennemi est tué, il disparaît sans animation de
+  mort, et l'animation de hit n'apparaît pas non plus — ex. le météore ») : ce que le vol fait de ses événements est
+  SORTI DE `image` dans `celebrer(r)`, et l'aperçu l'appelle à chaque pas, les globales du vol prêtées — les morts
+  (éclatement, gel, consumation, taches), les impacts, les flashs, la chute du météore, les arcs ; les gerbes du monde
+  (`dessinerLesGerbes`) et les effets y avancent et s'y peignent. `enApercu` y coupe les sons, les vibrations (`vibrer`)
+  et les comptes des missions ; la secousse et les éclats de l'interface sont remis après. Au décollage, tout ce que
+  l'aperçu a semé est vidé (`Grains.vider`).

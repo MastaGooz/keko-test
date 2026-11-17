@@ -17,6 +17,10 @@ export class Grains {
   ajouter(sorte, x, y, vx, vy, vie, c = WHITE, taille = 1, frein = 1.5, delai = 0) {
     this.liste.push({ sorte, x, y, vx, vy, vie, max: vie, c, taille, frein, delai });
   }
+  /** Plus aucun grain. */
+  vider() {
+    this.liste.length = 0;
+  }
   get count() {
     return this.liste.length;
   }
