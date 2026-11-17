@@ -5052,3 +5052,23 @@ profondément. Pas au niveau de sa structure générale, mais au niveau des peti
 - Vérifié : la planche des trente, rendue hors du navigateur par le peintre du jeu ; en capture, l'accueil, le hangar, le
   vol, et le panneau ouvert au doigt en portrait et en paysage. (À la souris, en capture, les clics du hangar ne passent
   pas — sur la version d'avant aussi : c'est la capture.)
+
+### Le bouclier, une bulle de plaques (17/11)
+
+Keko : « pour les boucliers des vaisseaux, est-ce qu'on ne peut pas utiliser l'effet de pixelFX Force field ? Je dis pas
+de faire exactement le même, mais de s'en inspirer. » C'était un anneau d'un pixel.
+
+- `src/ui/vaisseau/bouclier.ts`, `dessinerLeBouclier` : du « Force field », on garde le verre et sa lecture, retournés
+  pour la vue de dessus — UNE SPHÈRE DE PLAQUES HEXAGONALES autour du vaisseau (pas un dôme au sol), les plaques qui
+  rapetissent vers le bord, de quatre ou cinq pixels quelle que soit la taille ; le verre presque invisible de face et
+  plus épais vers le bord ; les joints à peine là au milieu, plus marqués vers le bord ; un bord vif, blanc là où la
+  lumière le prend (d'en haut à gauche), un simple voile côté ombre ; une plaque sur cinq qui scintille ; un balayage de
+  lumière en diagonale toutes les quatre secondes ; la bulle qui tourne doucement. Ses huit tons sont ceux de l'effet.
+- AU COUP (`coupsAuBouclier`, l'événement `bouclier` et sa position) : les plaques frappées blanchissent, une onde court
+  sur la sphère depuis l'impact (du côté d'où vient le coup), les plaques derrière elle bourdonnent ; LE COUP QUI LA VIDE
+  LA FÊLE (cinq traits brisés de lumière depuis l'impact) ; une étoile et une lueur à l'impact. L'anneau qui flashait est
+  retiré.
+- Elle S'AMINCIT QUAND ELLE S'USE (`part`) ; vide, elle disparaît (après sa fêlure).
+- MESURÉ d'abord trop opaque (le verre et les joints grillageaient le vaisseau) : le milieu est maintenant presque nu.
+- Au hangar, la bulle remplace l'anneau là où il était (une coque à bouclier) ; les coques du vortex n'en ont pas, comme
+  avant. Le banc `&coup=N` passe aussi par la bulle (son coup vient d'un côté qui tourne).

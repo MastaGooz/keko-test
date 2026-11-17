@@ -22,6 +22,7 @@ import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
+import { dessinerLeBouclier } from './bouclier.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
 import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, reclamerLaMission, vaisseauxDe } from '../../logic/vaisseau/flotte.ts'
@@ -448,6 +449,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant où chaque rival a pris un obus (il blanchit), et celui du dernier coup pris par le bouclier (son anneau flashe). */
   const toucheEnnemiA = new Map<number, number>()
   let bouclierA = -10
+  /** Les coups récents que le bouclier a pris : où (dans le monde), quand, et s'il en a été vidé (la bulle se fêle). */
+  const coupsAuBouclier: { x: number; y: number; t0: number; brise: boolean }[] = []
   const flammesEnnemies = new Map<number, number>()
   let enJeu = false
   let zoom = 2
@@ -2650,7 +2653,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(fx, fy, 6, c, 0.7)
       }
     }
-    if (al.bouclier > 0) p.ring(cx + jit, sy, g.anneau * ECH, 1, VERRIERE[2], 0.3 + 0.25 * Math.sin(t * 3))
+    if (al.bouclier > 0) dessinerLeBouclier(p, cx + jit, sy, g.anneau * ECH, t, 1, [])
     p.place(0, 0)
     // LE POIDS, en étiquette dans le coin — écrit COMME LA LIGNE « Poids » D'UNE FICHE (Keko : « la différence de
     // police et de taille entre le mot et le chiffre casse la cohérence ») : le mot dans la lettre courante, le nombre
@@ -6296,7 +6299,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(Math.round(ax - 0.5), Math.round(ay - 0.5), 1, 1, N.WHITE)
         p.glow(ax, ay, 3, c, 0.8)
       }
-    if (allure.bouclier > 0) p.ring(sx, sy, g.anneau, 1, VERRIERE[2], 0.25 + 0.35 * allure.bouclier * (0.75 + 0.25 * Math.sin(t * 6)))
+    // LE BOUCLIER, UNE BULLE DE PLAQUES (Keko, 17/11 : « s'inspirer de l'effet Force field » ; c'était un anneau) : voir
+    // `bouclier.ts` ; celui du joueur prend ses coups (l'onde, les plaques qui blanchissent) et se fêle quand il se vide
+    while (coupsAuBouclier.length > 0 && t - coupsAuBouclier[0].t0 > 1.2) coupsAuBouclier.shift()
+    const coups = rival ? [] : coupsAuBouclier.map((c) => ({ angle: Math.atan2(c.y - corps.y, c.x - corps.x), age: t - c.t0, brise: c.brise }))
+    if (allure.bouclier > 0 || coups.some((c) => c.brise && c.age < 0.8)) dessinerLeBouclier(p, sx, sy, g.anneau, t, allure.bouclier, coups)
   }
 
   /** La déviation de la flamme du joueur (voir `dessinerLeVaisseau`), et son cap à l'image d'avant. */
@@ -6421,14 +6428,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       }
     }
-    // le bouclier qui prend un coup : son anneau flashe blanc et s'ouvre
-    if (t - bouclierA < 0.25) {
-      const k = 1 - (t - bouclierA) / 0.25
-      p.place(W / 2 - camera.x, centreY() - camera.y)
-      p.ring(v.x, v.y, CONF.rayon + 6 + (1 - k) * 5, 1, k > 0.5 ? N.WHITE : VERRIERE[2], k)
-      p.glow(v.x, v.y, 14, VERRIERE[1], 0.6 * k)
-      p.place(0, 0)
-    }
+    // (le bouclier qui prend un coup : c'est la bulle qui le montre, voir `dessinerLeBouclier` ; l'anneau qui flashait est parti)
   }
 
   /**
@@ -10354,6 +10354,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         m.bouclier = Math.max(0, m.bouclier - 1)
         m.toucheA = m.t
         bouclierA = t
+        // (le coup d'essai vient d'un côté qui tourne : la bulle montre son onde, et sa fêlure au dernier point)
+        coupsAuBouclier.push({ x: v.x + Math.cos(t * 2.3) * 20, y: v.y + Math.sin(t * 2.3) * 20, t0: t, brise: m.bouclier <= 0 })
       } else {
         m.coque = m.coque > 1.3 ? m.coque - 0.8 : CONF.coque
         m.toucheA = m.t
@@ -10698,6 +10700,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               // coup dans le blindage, « le joueur doit avoir l'info prioritaire » : le son du bouclier se tait alors)
               if (!(r.chocs.length > 0 && t - chocAnnonceA < 0.4) && !r.evenements.some((e) => e.type === 'touche')) jouer('bouclier')
               bouclierA = t
+              coupsAuBouclier.push({ x: ev.x, y: ev.y, t0: t, brise: m.bouclier <= 0 })
               secousse = Math.max(secousse, 0.3)
               if (typeof navigator.vibrate === 'function') navigator.vibrate(20)
               for (let i = 0; i < 8; i++) {
