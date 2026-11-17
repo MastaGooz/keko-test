@@ -3543,11 +3543,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // toutes les informations statistiques ; plus de jauge : juste le nom de l'arme et une petite description, avec une
     // animation — on voit le vaisseau et un ennemi, avec le projectile en animation, pour voir ce que ça donne en jeu ») :
     // l'aperçu (`dessinerLApercuDeLArme`), le nom, la description sans chiffres (`DESCRIPTIONS_DES_ARMES`)
-    const hA = Math.max(64, Math.min(110, H - y - 4 - 48))
-    plaque(p, 4, y, W - 8, hA + 48, 'encre')
+    // (UN PETIT ESPACE SOUS LA DESCRIPTION, comme celle des vaisseaux — Keko, 17/11 : « elle touche le bord inférieur de son
+    // cadre » : la plaque se taille à ses lignes, trois pixels sous la dernière)
+    const lignes = replier(DESCRIPTIONS_DES_ARMES[choisie.id] ?? choisie.dit, W - 22).slice(0, 3)
+    const bas = 21 + lignes.length * 9 + 3
+    const hA = Math.max(64, Math.min(110, H - y - 4 - bas))
+    plaque(p, 4, y, W - 8, hA + bas, 'encre')
     dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
     motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
-    replier(DESCRIPTIONS_DES_ARMES[choisie.id] ?? choisie.dit, W - 22).slice(0, 3).forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + i * 9, COQUE[4], { align: 'center' }))
+    lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + i * 9, COQUE[4], { align: 'center' }))
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }
@@ -3729,24 +3733,92 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let surligneVaisseau = -1
   /** L'instant où une case de la grille des vaisseaux a été choisie (elle saute et flashe). */
   let choixVaisseauA = -10
+  // (LE PETIT SYMBOLE DES RACES, sept pixels, est parti — Keko, 17/11 : l'emblème de la fiche le remplace)
   /**
-   * LE SYMBOLE D'UNE RACE (Keko, 17/11 : « les races seraient indiquées par un petit symbole à côté du nom du vaisseau ») :
-   * sept pixels sur sept, cernés d'encre — LES HUMAINS, un insigne en chevron, en or ; L'ESSAIM, une alvéole de ruche, en
-   * vert ; LES ÉTHÉRÉS, une étoile de rune, en cyan ; LES INNOMMÉS, un œil, en violet.
+   * L'EMBLÈME D'UNE RACE (Keko, 17/11 : « des symboles plus travaillés », dans la fiche du vaisseau, à la place de son
+   * image), une trentaine de pixels, cerné d'encre, centré sur (cx, cy) : LES HUMAINS, un écu d'or aux deux chevrons,
+   * entre deux ailes ; L'ESSAIM, trois alvéoles de ruche, des antennes et deux mandibules, en vert ; LES ÉTHÉRÉS, une étoile
+   * de rune à huit branches, une gemme au cœur, un anneau où tourne une lueur, en cyan ; LES INNOMMÉS, un œil fendu au
+   * milieu de six vrilles qui ondulent, en violet. Ils vivent un peu (la lueur qui tourne, les vrilles, l'iris qui bat).
    */
-  const SYMBOLES_DES_RACES: Record<Race, { motif: string[]; c: number }> = {
-    humains: { motif: ['.......', '#.....#', '##...##', '.##.##.', '..###..', '...#...', '.......'], c: PEPITE[2] },
-    essaim: { motif: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'], c: N.hex('#7cd04a') },
-    etheres: { motif: ['...#...', '..#.#..', '.#.#.#.', '#.###.#', '.#.#.#.', '..#.#..', '...#...'], c: N.hex('#5ad0f0') },
-    innommes: { motif: ['.......', '..###..', '.#...#.', '#..#..#', '.#...#.', '..###..', '.......'], c: N.hex('#b878ff') },
-  }
-  function dessinerLeSymboleDeRace(p: Peintre, race: Race, x: number, y: number): void {
-    const { motif, c } = SYMBOLES_DES_RACES[race]
+  function dessinerLEmblemeDeRace(p: Peintre, race: Race, cx: number, cy: number): void {
     const encre = MATIERES.encre.contour
-    for (let j = 0; j < 7; j++)
-      for (let i = 0; i < 7; i++)
-        if (motif[j][i] === '#') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (motif[j + dy]?.[i + dx] !== '#') p.rect(x + i + dx, y + j + dy, 1, 1, encre)
-    for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) if (motif[j][i] === '#') p.rect(x + i, y + j, 1, 1, c)
+    // (un polygone cerné d'un pixel d'encre)
+    const cerne = (pts: number[][], c: number): void => {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.poly(pts.map(([x, y]) => [x + dx, y + dy]), encre)
+      p.poly(pts, c)
+    }
+    const trait = (x0: number, y0: number, x1: number, y1: number, c: number): void => {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.line(x0 + dx, y0 + dy, x1 + dx, y1 + dy, encre)
+      p.line(x0, y0, x1, y1, c)
+    }
+    if (race === 'humains') {
+      const G = ['#5a3a08', '#a8650f', '#d99a1c', '#f2c23a', '#fff2a8'].map((c) => N.hex(c))
+      for (const s of [-1, 1])
+        for (let k = 2; k >= 0; k--) cerne([[cx + s * 6, cy - 7 + k * 4], [cx + s * (16 - k * 2), cy - 10 + k * 5], [cx + s * (14 - k * 2), cy - 6 + k * 5], [cx + s * 6, cy - 3 + k * 4]], G[k === 1 ? 2 : 1])
+      cerne([[cx - 8, cy - 11], [cx + 8, cy - 11], [cx + 8, cy + 1], [cx, cy + 11], [cx - 8, cy + 1]], G[2])
+      p.poly([[cx - 7, cy - 10], [cx, cy - 10], [cx, cy + 9], [cx - 7, cy + 1]], G[3])
+      for (const [dy, c] of [[-5, G[4]], [0, G[1]]] as [number, number][]) {
+        p.line(cx - 5, cy + dy - 1, cx, cy + dy + 3, c)
+        p.line(cx, cy + dy + 3, cx + 5, cy + dy - 1, c)
+        p.line(cx - 5, cy + dy, cx, cy + dy + 4, c)
+        p.line(cx, cy + dy + 4, cx + 5, cy + dy, c)
+      }
+      p.rect(cx - 1, cy - 15, 3, 1, G[4])
+      p.rect(cx, cy - 16, 1, 3, G[4])
+      return
+    }
+    if (race === 'essaim') {
+      const G = ['#0e2a08', '#1f5a12', '#3a8a1c', '#7cd04a', '#c8f080'].map((c) => N.hex(c))
+      trait(cx - 2, cy - 9, cx - 7, cy - 15, G[3])
+      trait(cx + 2, cy - 9, cx + 7, cy - 15, G[3])
+      const alveole = (x: number, y: number, r: number): number[][] => Array.from({ length: 6 }, (_, k) => [x + Math.cos(Math.PI / 6 + (k * Math.PI) / 3) * r, y + Math.sin(Math.PI / 6 + (k * Math.PI) / 3) * r])
+      for (const [x, y] of [[cx - 6, cy + 3], [cx + 6, cy + 3], [cx, cy - 4]]) {
+        cerne(alveole(x, y, 6.6), G[1])
+        p.poly(alveole(x, y, 4.6), G[2])
+        p.poly(alveole(x - 0.8, y - 0.8, 2.4), G[3])
+      }
+      for (const s of [-1, 1]) cerne([[cx + s * 3, cy + 9], [cx + s * 9, cy + 13], [cx + s * 6, cy + 16], [cx + s * 2, cy + 12]], G[3])
+      return
+    }
+    if (race === 'etheres') {
+      const G = ['#06243a', '#0e4a6a', '#1e80a8', '#5ad0f0', '#c8f6ff'].map((c) => N.hex(c))
+      p.ring(cx, cy, 14, 1, G[1])
+      const etoile = (n: number, re: number, ri: number, tourne: number): number[][] => Array.from({ length: n * 2 }, (_, k) => {
+        const r = k % 2 === 0 ? re : ri
+        const a = tourne + (k * Math.PI) / n
+        return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
+      })
+      cerne(etoile(8, 11, 4.5, -Math.PI / 2), G[2])
+      p.poly(etoile(4, 11, 3, -Math.PI / 2), G[3])
+      p.poly([[cx, cy - 4], [cx + 3, cy], [cx, cy + 4], [cx - 3, cy]], G[4])
+      const a = t * 1.4
+      p.rect(Math.round(cx + Math.cos(a) * 14), Math.round(cy + Math.sin(a) * 14), 2, 2, G[4])
+      p.glow(cx + Math.cos(a) * 14, cy + Math.sin(a) * 14, 5, G[3], 0.4)
+      return
+    }
+    const G = ['#1a0a2a', '#3c1a6a', '#6a30b0', '#b878ff', '#e8d0ff'].map((c) => N.hex(c))
+    for (let k = 0; k < 6; k++) {
+      const a0 = (k * Math.PI) / 3 + Math.PI / 6
+      let [x, y] = [cx + Math.cos(a0) * 8, cy + Math.sin(a0) * 6]
+      for (let i = 1; i <= 4; i++) {
+        const a = a0 + Math.sin(t * 2 + k + i * 0.9) * 0.35
+        const [nx, ny] = [cx + Math.cos(a) * (8 + i * 2.2), cy + Math.sin(a) * (6 + i * 2.2)]
+        trait(x, y, nx, ny, i < 3 ? G[3] : G[2])
+        ;[x, y] = [nx, ny]
+      }
+    }
+    const amande = Array.from({ length: 16 }, (_, k) => {
+      const u = k < 8 ? -1 + (k / 7) * 2 : 1 - ((k - 8) / 7) * 2
+      return [cx + u * 12, cy + (k < 8 ? -1 : 1) * (1 - u * u) * 7]
+    })
+    // (plus clair : sur le fond sombre de la fiche, l'œil et ses vrilles se perdaient)
+    cerne(amande, G[1])
+    const bat = 0.5 + 0.5 * Math.sin(t * 2.4)
+    p.circle(cx, cy, 4.6, G[3])
+    p.circle(cx, cy, 3.2, bat > 0.5 ? G[4] : G[3])
+    p.rect(cx, cy - 4, 1, 8, G[0])
+    p.rect(cx - 2, cy - 3, 1, 1, G[4])
   }
   /** Le fond d'un portrait, aux teintes de la race : le haut, le bas, le halo derrière le vaisseau. */
   const FONDS_DES_RACES: Record<Race, number[]> = {
@@ -3831,15 +3903,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const gx = avecNom ? 56 : 10
     plaque(p, 4, y, W - 8, hd, 'encre')
     if (avecNom) {
+      // (L'EMBLÈME DE SA RACE, À LA PLACE DE SON IMAGE — Keko, 17/11 : « on vire l'image du vaisseau, car elle est déjà
+      // au-dessus » — son portrait, dans la grille —, « on aura plus de place pour des symboles plus travaillés »)
       plaque(p, 8, y + 4, 44, hh - 8, 'creux')
-      const co = pieceDe(mo.serie.montees.coque)
-      if (co !== undefined) dessinerLePictogramme(p, co, 30, y + hh / 2, 44, hh - 8)
+      dessinerLEmblemeDeRace(p, mo.race, 30, Math.round(y + hh / 2))
       if (!aSoi) p.rect(9, y + 5, 42, hh - 10, N.hex('#12161f'), 0.55)
     }
     if (avecNom) {
       motEnRelief(p, mo.nom, gx + (W - 12 - gx) / 2, y + 5, aSoi)
-      // (le symbole de sa race, à gauche de son nom)
-      dessinerLeSymboleDeRace(p, mo.race, Math.round(gx + (W - 12 - gx) / 2 - largeurDe(mo.nom, GRAS) / 2 - 11), y + 5)
     }
     jauges.forEach((j, i) => {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
@@ -3930,10 +4001,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         peindreLePortrait(p, mo, cx + 1, cy + 1 + dy, cw - 2, hp, r * 3 + k)
         if (!aSoi) p.rect(cx + 1, cy + 1 + dy, cw - 2, hp, N.hex('#0a0c14'), 0.6)
         if (mo.id === flotte.actif) p.text('PILOTE', cx + cw - 3, cy + 3 + dy, PEPITE[2], { align: 'right', outline: MATIERES.encre.contour })
-        // (LE SYMBOLE DE LA RACE, EN INSIGNE DANS LE COIN DU PORTRAIT, pour toutes les cases : à côté du nom, il ne tenait que
-        // pour les noms courts — « Salamandre », « Sentinelle » le repoussaient — et l'insigne changeait de place d'une case à
-        // l'autre ; dans la fiche, il est à côté du nom)
-        dessinerLeSymboleDeRace(p, mo.race, cx + 3, cy + 3 + dy)
+        // (plus d'insigne de race dans la case — Keko, 17/11 : la fiche, dessous, porte l'emblème de la race)
         ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' })
         zone(cx - 1, cy - 1, cw + 2, ch + 2, () => {
           vaisseauChoisi = mo.id

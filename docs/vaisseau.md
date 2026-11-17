@@ -5264,3 +5264,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (l'aperçu est à 200 de lui) ; poussé par eux, le vaisseau sortait du cadre (il est tenu à sa place) ; en glissant, son nez
   suivait sa course et les armes qui ne tirent que devant ne tiraient plus (il regarde l'insecte). Les trente aperçus ont
   été capturés un par un.
+- LA DESCRIPTION DES ARMES A SON ESPACE (Keko, 17/11 : « elle touche le bord inférieur de son cadre ; il faudrait un petit
+  espace, comme dans la description des vaisseaux ») : la plaque se taille à ses lignes, trois pixels sous la dernière.
+- L'EMBLÈME DE LA RACE À LA PLACE DE L'IMAGE DU VAISSEAU, dans sa fiche (Keko, 17/11 : « on vire l'image du vaisseau,
+  car elle est déjà au-dessus, et les symboles des races dans le grid ; on aura plus de place pour des symboles plus
+  travaillés ») : `dessinerLEmblemeDeRace`, une trentaine de pixels — un écu d'or aux chevrons entre deux ailes (Humains),
+  trois alvéoles, des antennes et des mandibules (l'Essaim), une étoile de rune et sa gemme dans un anneau où tourne une
+  lueur (les Éthérés), un œil fendu dans six vrilles qui ondulent (les Innommés ; d'abord trop sombre sur le fond de la
+  fiche, éclairci). Le petit symbole de sept pixels est retiré, de la grille et de la fiche.
