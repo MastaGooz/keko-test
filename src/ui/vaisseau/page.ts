@@ -7429,7 +7429,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // texture plus uniforme, comme si c'était une seule et même flaque, comme le crachat de la Vouivre qui laisse une trace
     // dans le sol ») : ses plaques se peignent EN DEUX PASSES, PLEINES — d'abord leur bord vif, toutes ; puis leur dedans,
     // toutes, qui recouvre les bords intérieurs : il ne reste qu'un liseré autour du ruban ; le dedans est un goudron dont
-    // les veines vert-jaune et le reflet huileux sont tirés DE LA POSITION DANS LE MONDE — continus d'une plaque à l'autre.
+    // les veines vert-jaune sont tirées DE LA POSITION DANS LE MONDE — continus d'une plaque à l'autre.
     // Elle s'efface en rétrécissant.
     const rayonDuPoison = (g: (typeof m.givres)[number]): number => {
       const age = m.t - g.nee
@@ -7450,8 +7450,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const veine = Math.abs(Math.sin(x * 0.33 + Math.sin(y * 0.21 + m.t * 0.8) * 2.2) + Math.sin(y * 0.29 - x * 0.13 - m.t * 0.6))
         if (veine < 0.07) return GOUDRON[6]
         if (veine < 0.18) return GOUDRON[5]
-        const huile = Math.sin(x * 0.11 + m.t * 0.5) * Math.sin(y * 0.13 - m.t * 0.4)
-        if (huile > 0.7) return Math.sin(x * 0.05 - y * 0.04 + m.t * 0.3) > 0 ? HUILE[2] : HUILE[1]
+        // (plus de reflet huileux violet — Keko, 17/11 : « c'est un peu bizarre, les taches violettes » : sur un ruban
+        // si étroit, ce n'étaient plus des reflets, mais des taches)
         return veine < 0.45 ? GOUDRON[4] : GOUDRON[3]
       })
     }

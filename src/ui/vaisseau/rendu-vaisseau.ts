@@ -1509,9 +1509,10 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
   const N = 9
   const L = 2.5
   const pousse = Math.min(1, Math.max(0, flamme))
-  // (ample : en vol, il ne fait qu'une trentaine de pixels de long)
-  const A = 0.6 + 2.6 * pousse
-  const phase = t * (3 + 6 * pousse)
+  // (… CALME — Keko, 17/11 : « dans l'écran de sélection des vaisseaux, le ver se tortille beaucoup trop vite » : la vague
+  // va à vitesse fixe, lente, et son ampleur ne suit plus qu'un peu la poussée, qui bat vite dans les portraits)
+  const A = 0.7 + 0.9 * pousse
+  const phase = t * 2.4
   // (le corps : la tête au premier point, la queue au dernier)
   const pts: { x: number; y: number; r: number }[] = []
   let x = 6.6

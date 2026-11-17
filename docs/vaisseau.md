@@ -5455,3 +5455,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Chaque police qui ne l'a pas la reçoit, en LIGATURE : son O dont le flanc droit est le fût de son E (l'épaisseur du
   fût mesurée sur l'E) ; une police de capitales seules écrit aussi la minuscule ainsi. Accolées sans ligature, elles se
   lisaient « OE ».
+- LA TRAÎNÉE DE POISON SANS REFLET VIOLET (Keko, 17/11 : « un peu bizarre, les taches violettes ») : sur un ruban si
+  étroit, le reflet huileux de la Toxic puddle faisait des taches ; il ne reste que le goudron et ses veines.
+- LE VER SE TORTILLE MOINS (Keko, 17/11 : « dans l'écran de sélection, il se tortille beaucoup trop vite ») : sans chemin
+  (hangar, grille, apparences), sa vague va à vitesse fixe et lente (2,4 rad/s), d'une ampleur qui ne suit plus qu'un peu
+  la poussée — celle des portraits bat vite.
