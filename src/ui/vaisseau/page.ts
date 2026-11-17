@@ -3609,16 +3609,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
    * que ça donne en jeu ») : UN PETIT MONDE À PART, armé de la même configuration que le vrai vol (`configDuVol`) — le
-   * vaisseau piloté au milieu, deux insectes qui foncent sur lui depuis la droite, remplacés dès qu'ils tombent ; il ne
-   * meurt pas (sa coque est refaite à chaque pas). On le fait avancer par la règle (`avancerLeMonde`), et on le PEINT AVEC
+   * vaisseau piloté au milieu, deux insectes qui foncent sur lui depuis la droite et le mordent comme en vol, remplacés
+   * quand l'arme les abat — JAMAIS AUTREMENT (Keko, 17/11 : « il persiste des bugs de disparition de l'ennemi ») ; ils ne
+   * lâchent pas de pépites ; il ne meurt pas (sa coque est refaite à chaque pas). On le fait avancer par la règle (`avancerLeMonde`), et on le PEINT AVEC
    * LES FONCTIONS DU VOL, le temps de les prêter à ce monde (`m`, `CONF`, `v`, la caméra), rognées à son cadre : ce qu'on
-   * voit est ce que fait l'arme en jeu. (Ce que le vol sème à ses événements — étincelles, éclairs d'impact, sons — n'y est
-   * pas.) Il repart de zéro quand on change d'arme, et toutes les quatorze secondes.
+   * voit est ce que fait l'arme en jeu. Il repart de zéro quand on change d'arme (plus toutes les quatorze secondes : tout
+   * s'y effaçait d'un coup).
    */
   let apercu: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number } | null = null
   const APERCU_LOIN = 200
   function apercuDe(arme: string): { conf: ConfigVaisseau; monde: Monde; t: number; nes: number } {
-    if (apercu === null || apercu.arme !== arme || apercu.monde.phase !== 'vol' || apercu.monde.t > 14) {
+    if (apercu === null || apercu.arme !== arme || apercu.monde.phase !== 'vol') {
       const base = configDuVol(arme, 1)
       // (des insectes deux fois plus lents qu'en vol : l'arme a le temps de se montrer avant qu'ils n'arrivent)
       const conf: ConfigVaisseau = { ...base, invasion: { ...base.invasion, premiere: 1e9 }, ennemi: { ...base.ennemi, vitesseMax: base.ennemi.vitesseMax * 0.5, poussee: base.ennemi.poussee * 0.5 } }
@@ -3671,10 +3672,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // (IL GLISSE DOUCEMENT DE HAUT EN BAS, toujours à la même place — mesuré : poussé par les insectes qui le heurtent, il
       // sortait du cadre ; et ce qu'il pose « sur son passage » — balises, cristaux, givre — ne se posait pas à l'arrêt ;
-      // il tourne et vise tout seul ; un insecte qui l'atteint s'en va, un autre arrive)
+      // il tourne et vise tout seul ; un insecte qui l'atteint le mord, comme en vol — il n'est plus retiré : il disparaissait
+      // sans mourir, au fléau surtout, qui laisse les insectes venir au contact)
       const tm = a.monde.t
       a.monde.vaisseau = { ...a.monde.vaisseau, x: -APERCU_LOIN, y: 22 * Math.sin(0.9 * tm), vx: 0, vy: 22 * 0.9 * Math.cos(0.9 * tm) }
-      a.monde.ennemis = a.monde.ennemis.filter((e) => Math.hypot(e.corps.x - a.monde.vaisseau.x, e.corps.y - a.monde.vaisseau.y) > 12)
+      // (PAS DE PÉPITES dans l'aperçu — Keko, 17/11 : les insectes abattus n'y lâchent rien)
+      a.monde.pepites = []
       // (il ne meurt pas : sa coque, son bouclier, ses plaques sont refaits)
       a.monde.coque = a.conf.coque
       a.monde.bouclier = a.conf.bouclier.points

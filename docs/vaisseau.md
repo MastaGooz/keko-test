@@ -5279,3 +5279,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (`dessinerLesGerbes`) et les effets y avancent et s'y peignent. `enApercu` y coupe les sons, les vibrations (`vibrer`)
   et les comptes des missions ; la secousse et les éclats de l'interface sont remis après. Au décollage, tout ce que
   l'aperçu a semé est vidé (`Grains.vider`).
+- PLUS DE DISPARITIONS DANS L'APERÇU, PLUS DE PÉPITES (Keko, 17/11 : « il persiste des bugs de disparition de l'ennemi —
+  ex. le fléau de l'ingénieur ; ne pas faire lâcher de minerai par les ennemis tués ») : MESURÉ image par image, ce
+  n'était pas la règle mais l'aperçu lui-même — il retirait tout insecte arrivé au contact du vaisseau (le fléau les
+  laisse venir), et repartait de zéro toutes les quatorze secondes. L'insecte au contact MORD maintenant comme en vol
+  (le vaisseau clignote, sa coque est refaite) et ne quitte l'aperçu qu'abattu ; l'aperçu ne repart de zéro qu'au
+  changement d'arme ; ses pépites sont retirées à chaque pas.
