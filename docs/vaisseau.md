@@ -4970,3 +4970,5 @@ quinzaine de pixels d'écran.
 - C'EST UN BANC, pas une décision : le bouton part quand Keko aura choisi. Pistes proposées à côté : un champ fixe autour de
   1,5 ; des flèches au bord de l'écran pour les insectes hors de la vue (on dézoome surtout pour ne pas être surpris) ; un
   zoom qui s'élargit quand une vague entoure ; des sprites plus gros à champ égal (les zones de collision avec).
+- RETIRÉ LE MÊME JOUR (Keko : « ok, enlève le bouton ») : le vol du vortex revient au champ 2 ; `&champ=N` reste pour
+  essayer une autre vue.
