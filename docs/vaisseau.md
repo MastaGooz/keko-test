@@ -5233,3 +5233,8 @@ races indiquées par un petit symbole à côté du nom ; beaucoup plus ergonomiq
   (l'Essaim), une étoile de rune cyan (les Éthérés), un œil violet (les Innommés). Dans la grille, EN INSIGNE DANS LE COIN DU
   PORTRAIT — à côté du nom, il ne tenait que pour les noms courts et changeait de place d'une case à l'autre — ; dans la
   fiche, à gauche du nom.
+- LE PORTRAIT NE TREMBLE PLUS (Keko, 17/11 : « le Frimas, le Pulsar et tous les vaisseaux humains ont un genre de
+  tremblement bizarre ») : le cadrage se prenait sur les formes de l'image, flamme comprise — elle frémit à chaque image —,
+  et l'échelle du portrait changeait avec elle (seuls les vaisseaux à tuyère tremblaient). Il se prend maintenant sur une
+  pose fixe, gardée par modèle (`cadresDesPortraits`). MESURÉ sur six images rapprochées : le bord gauche de la coque du
+  chasseur sautait de 7 à 13 pixels ; il ne bouge plus (reste le flottement voulu, d'un pixel).

@@ -3582,6 +3582,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sa race, un halo derrière lui ; il vit (sa flamme, ses tentacules, ses anneaux) et flotte doucement. `n` : son rang,
    * pour qu'ils ne flottent pas tous ensemble.
    */
+  const cadresDesPortraits = new Map<string, [number, number, number, number]>()
   function peindreLePortrait(p: Peintre, mo: ReturnType<typeof modeleDeVaisseau>, x: number, y: number, w: number, h: number, n: number): void {
     const [haut, bas, halo] = FONDS_DES_RACES[mo.race]
     for (let j = 0; j < h; j++) p.rect(x, y + j, w, 1, j < h * 0.45 ? haut : bas)
@@ -3591,7 +3592,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pe = peauDuModele(mo.id)
     const al: Allure = { propulseur: pieceDe(mo.serie.montees.propulseur)?.cran ?? 1, coque, foreuse: 0, radar: false, aimant: false, armes: [], bouclier: 0, habit: pe.habit(coque) }
     const formes = formesDuVaisseau(al, 0.5 + 0.15 * Math.sin(t * 7 + n), t)
-    const [x0, y0, x1, y1] = boiteDe(formes)
+    // (LE CADRE EST CELUI D'UNE POSE FIXE, gardé par modèle — Keko, 17/11 : « le Frimas, le Pulsar et tous les vaisseaux
+    // humains ont un genre de tremblement bizarre » : la boîte prise sur les formes de l'image changeait avec la flamme, qui
+    // frémit à chaque image, et l'échelle du portrait avec elle — la même leçon que `Options.cadre`)
+    if (!cadresDesPortraits.has(mo.id)) cadresDesPortraits.set(mo.id, boiteDe(formesDuVaisseau(al, 0.65, 0)))
+    const [x0, y0, x1, y1] = cadresDesPortraits.get(mo.id)!
     const echelle = (Math.min(w, h) * 1.35) / Math.max(1, x1 - x0, y1 - y0)
     const flotte_ = Math.round(Math.sin(t * 1.6 + n * 0.9))
     // (le cadre rogne : rien ne déborde de la case)
