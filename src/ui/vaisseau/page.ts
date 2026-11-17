@@ -3893,12 +3893,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Le rayon du médaillon d'une race, son jonc compris. */
   const RAYON_DU_MEDAILLON = 19
-  /** Le nom d'une race en lignes : sur une, ou l'article au-dessus quand il ne tient pas sous le médaillon. */
-  const lignesDuNomDeRace = (race: Race): string[] => {
-    const nom = RACES.find((r) => r.id === race)?.nom ?? ''
-    const i = nom.indexOf(' ')
-    return largeurDe(nom) <= 2 * RAYON_DU_MEDAILLON + 8 || i < 0 ? [nom] : [nom.slice(0, i), nom.slice(i + 1)]
-  }
+  /**
+   * Le nom d'une race, TOUJOURS SUR UNE LIGNE (Keko, 17/11 : « ne marque pas le nom de la race en deux lignes »), SANS SON
+   * ARTICLE : « Les Innommés » entier élargissait la colonne de l'identité et écrasait les barres des jauges.
+   */
+  const lignesDuNomDeRace = (race: Race): string[] => [(RACES.find((r) => r.id === race)?.nom ?? '').replace(/^(Les |L’|L')/, '')]
   /** La hauteur de l'identité d'une race : son médaillon, puis son nom. */
   const hauteurDeLIdentite = (race: Race): number => 2 * RAYON_DU_MEDAILLON + 1 + 3 + lignesDuNomDeRace(race).length * 8
   /**
@@ -4009,7 +4008,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const hh = avecNom ? Math.max(yj + hauteurDeLIdentite(mo.race) + 3, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
     const hd = hh + (dit.length > 0 ? dit.length * 9 + 6 : 0)
     // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
-    const gx = avecNom ? 62 : 10
+    // (la colonne de l'identité tient le plus long nom de race sur une ligne)
+    const gx = avecNom ? Math.max(62, 8 + 2 + Math.max(...RACES.map((r) => largeurDe(lignesDuNomDeRace(r.id)[0]))) + 2 + 5) : 10
     plaque(p, 4, y, W - 8, hd, 'encre')
     if (avecNom) {
       motEnRelief(p, mo.nom, W / 2, y + 5, aSoi)
@@ -4108,12 +4108,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const age = t - choixVaisseauA
         const saute = ici && age < 0.3 ? -Math.round(2 * Math.sin((age / 0.3) * Math.PI)) : 0
         const dy = e.dy + saute
-        p.rect(cx - 1, cy - 1 + dy, cw + 2, ch + 2, ici ? (age < 0.1 ? N.WHITE : PEPITE[2 + (Math.floor(t * 4) % 2)]) : MATIERES.encre.contour)
+        // (LE PILOTÉ EST CERCLÉ DE BLANC, LE CHOISI D'OR PAR-DESSUS — Keko, 17/11 : « plutôt que d'écrire PILOTÉ en jaune, un
+        // carré blanc autour de lui ; le carré jaune par-dessus pour la sélection » ; l'éclair du choix passe à l'or pâle)
+        const cadre = ici ? (age < 0.1 ? N.hex('#fff2a8') : PEPITE[2 + (Math.floor(t * 4) % 2)]) : mo.id === flotte.actif ? N.WHITE : MATIERES.encre.contour
+        p.rect(cx - 1, cy - 1 + dy, cw + 2, ch + 2, cadre)
         p.rect(cx, cy + dy, cw, ch, MATIERES.creux.corps)
         const hp = ch - 11
         peindreLePortrait(p, mo, cx + 1, cy + 1 + dy, cw - 2, hp, r * 3 + k)
         if (!aSoi) p.rect(cx + 1, cy + 1 + dy, cw - 2, hp, N.hex('#0a0c14'), 0.6)
-        if (mo.id === flotte.actif) p.text('PILOTE', cx + cw - 3, cy + 3 + dy, PEPITE[2], { align: 'right', outline: MATIERES.encre.contour })
         // (plus d'insigne de race dans la case — Keko, 17/11 : la fiche, dessous, porte l'emblème de la race)
         ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' })
         zone(cx - 1, cy - 1, cw + 2, ch + 2, () => {

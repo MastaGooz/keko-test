@@ -5304,3 +5304,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE BOUTON « PILOTER » CHANGE DE PLACE (Keko, 17/11) : DEBOUT, entre la grille et la fiche (la grille remonte sous
   l'en-tête) ; COUCHÉ, sous la description, dans la colonne de droite où il restait du vide — la grille de gauche gagne
   sa hauteur, ses cases grandissent. `boutonPiloter`, `HAUT_DU_PILOTER`.
+- LE PILOTÉ CERCLÉ DE BLANC, LE CHOISI D'OR PAR-DESSUS (Keko, 17/11 : « plutôt que d'écrire PILOTÉ en jaune ») : plus
+  d'étiquette dans la case ; l'éclair du choix passe à l'or pâle (le blanc dit le piloté). LE NOM DE LA RACE SUR UNE
+  LIGNE, sans son article (« Éthérés », « Innommés ») : entier, il élargissait la colonne de l'identité et écrasait les
+  barres des jauges.
