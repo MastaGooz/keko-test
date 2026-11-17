@@ -834,7 +834,8 @@ export type Monde = {
   /** LES FLÉAUX (voir `Arme.fleau`) : un par arme — la masse, sa vitesse, quand elle a frappé chaque insecte. */
   fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number>; frappesChaine: Record<number, number> }[]
   /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
-  parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number }[]
+  // (`bond` : il saute d'un hôte mort au suivant — d'où, en combien de temps ; voir `menerLesParasites`)
+  parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
   /** LES LIENS DU DRAIN D'ÂME (voir `Arme.drain`) : son arme, l'âme accrochée, depuis quand. */
   liens: { arme: number; cible: number; depuis: number }[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
@@ -2361,6 +2362,9 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
       const an = Math.atan2(suivant.corps.y - p.y, suivant.corps.x - p.x)
       p.vx = Math.cos(an) * a.vitesse
       p.vy = Math.sin(an) * a.vitesse
+      // (UN BOND, PAS UN VOL — Keko, 17/11 : « on ne le voit pas sauter d'ennemi en ennemi, on dirait qu'il se téléporte » :
+      // il rejoint le suivant en un temps fixé par la distance, de 0,4 à 0,7 s, le long d'une cloche que le dessin trace)
+      p.bond = { x0: p.x, y0: p.y, duree: Math.max(0.4, Math.min(0.7, dc / 110)) }
       ev.push({ type: 'parasiteSaute', x: p.x, y: p.y })
       return true
     }
@@ -2369,6 +2373,20 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
     if (cible === undefined || m.t - p.depuis > pa.vie) {
       ev.push({ type: 'parasiteMort', x: p.x, y: p.y })
       return false
+    }
+    // (EN PLEIN BOND : il va de son point de départ à l'insecte, là où celui-ci est, et s'y accroche à l'arrivée)
+    if (p.bond !== undefined) {
+      const u = Math.min(1, (m.t - p.depuis) / p.bond.duree)
+      const e = u * u * (3 - 2 * u)
+      p.x = p.bond.x0 + (cible.corps.x - p.bond.x0) * e
+      p.y = p.bond.y0 + (cible.corps.y - p.bond.y0) * e
+      if (u >= 1) {
+        p.bond = undefined
+        p.hote = cible.id
+        p.cible = null
+        ev.push({ type: 'parasiteAccroche', id: cible.id, x: cible.corps.x, y: cible.corps.y })
+      }
+      return true
     }
     const dx = cible.corps.x - p.x
     const dy = cible.corps.y - p.y

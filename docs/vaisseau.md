@@ -5399,3 +5399,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - LE CRACHAT ET L'INSECTE RONGÉ (Acid splash) : un éclair blanc et une étoile à la gueule, des gouttes à tête vive qui
     grésillent là où elles retombent (une petite étoile blanche) ; sur l'insecte rongé, une vapeur pâle qui monte en
     ondulant et de petites étoiles qui pètent.
+- LE PARASITE BONDIT (Keko, 17/11 : « on ne le voit pas sauter d'ennemi en ennemi, on dirait qu'il se téléporte quand
+  un ennemi meurt ») : à la mort de son hôte, il ne vole plus — il BONDIT (`parasite.bond`) jusqu'au suivant en un temps
+  fixé par la distance, de 0,4 à 0,7 s, et s'y accroche à l'arrivée. Le dessin : une cloche au-dessus du sol (6 + un
+  quart de la distance), son ombre qui file dessous, la larve roulée en boule qui tourne sur elle-même et grossit au
+  sommet, une traînée de gouttes de venin. Vérifié par une sonde de console : la hauteur monte jusqu'à 20 et redescend.

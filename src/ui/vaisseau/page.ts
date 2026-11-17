@@ -9157,6 +9157,39 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         continue
       }
+      // (EN PLEIN BOND — Keko, 17/11 : « une petite animation où on le voit sauter » : il monte en cloche au-dessus du sol et
+      // retombe sur sa proie ; son ombre file au sol, sous lui ; roulé en boule, il tourne sur lui-même, grossit au sommet ;
+      // une traînée de gouttes de venin le suit)
+      if (pa.bond !== undefined) {
+        const b = pa.bond
+        const cible = m.ennemis.find((e) => e.id === pa.cible)
+        const tx = cible?.corps.x ?? pa.x
+        const ty = cible?.corps.y ?? pa.y
+        const u = Math.min(1, (m.t - pa.depuis) / b.duree)
+        const dist = Math.hypot(tx - b.x0, ty - b.y0)
+        const haut = 6 + dist * 0.25
+        const ou = (q: number): [number, number, number] => {
+          const e = q * q * (3 - 2 * q)
+          return [b.x0 + (tx - b.x0) * e, b.y0 + (ty - b.y0) * e, Math.sin(Math.PI * q) * haut]
+        }
+        const [gx, gy, h] = ou(u)
+        p.circle(gx, gy, 1.6 + 0.6 * (1 - h / haut), N.hex('#06040a'), 0.45)
+        for (let j = 1; j <= 5; j++) {
+          const q = u - j * 0.05
+          if (q <= 0) break
+          const [ax, ay, ah] = ou(q)
+          p.dot(ax, ay - ah, j % 2 === 0 ? LARVE[2] : VENIN[4], 0.8 * (1 - j / 6))
+        }
+        const gros = 1 + 0.45 * Math.sin(Math.PI * u)
+        const rot = u * Math.PI * 3 + pa.id
+        p.glow(gx, gy - h, 5, VENIN[3], 0.35)
+        for (let k = 3; k >= 0; k--) {
+          const a = rot - k * 0.9
+          p.circle(gx + Math.cos(a) * 1.4 * gros, gy - h + Math.sin(a) * 1.4 * gros, (1.3 - k * 0.15) * gros, k === 0 ? LARVE[0] : k % 2 === 0 ? LARVE[1] : LARVE[2])
+        }
+        p.px(Math.round(gx + Math.cos(rot) * 1.4 * gros), Math.round(gy - h + Math.sin(rot) * 1.4 * gros), LARVE[3])
+        continue
+      }
       // (en vol : quatre anneaux le long de sa course, qui ondulent)
       const l = Math.hypot(pa.vx, pa.vy) || 1
       const ux = pa.vx / l

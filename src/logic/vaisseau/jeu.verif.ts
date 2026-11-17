@@ -1775,6 +1775,9 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`la larve s’accroche à l’insecte, le ronge et le tue ; elle saute alors sur UN seul autre, le plus proche (B : ${(1000 - (saut.pv[1] ?? 1000)).toFixed(0)} perdus) ; C n’a rien`, saut.pv[0] === undefined && saut.ev.filter((e) => e.type === 'parasiteSaute').length === 1 && surB && (saut.pv[1] ?? 1000) < 1000 && saut.pv[2] === 1000)
   // (seul : à sa mort, elle n'a nulle part où sauter — elle meurt)
   const seul = elever([[40, 0, 20], [300, 0, 1000]], 5)
+  // (LE SAUT EST UN BOND — Keko, 17/11 : de 0,4 à 0,7 s, puis elle s'accroche)
+  const bonds = saut.w.parasites.filter((p) => p.bond !== undefined).length
+  verifier(`le saut est un bond, qui finit accroché (${bonds} encore en l'air à la fin)`, bonds === 0 && saut.w.parasites.some((p) => p.hote === 2))
   verifier('seul à portée de saut : à la mort de son hôte, la larve meurt', seul.pv[0] === undefined && seul.ev.some((e) => e.type === 'parasiteMort') && seul.w.parasites.length === 0 && seul.pv[1] === 1000)
 }
 
