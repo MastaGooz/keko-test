@@ -618,6 +618,23 @@ export type Arme = {
    * a pas, ou qu'elle ne l'atteint pas en `vie` secondes, elle meurt. L'état est `Monde.parasites`.
    */
   parasite?: { max: number; dps: number; saut: number; vie: number; acide: { duree: number; dps: number; bonus: number } }
+  /**
+   * LE DRAIN D'ÂME (le Néant, Keko, 17/11 : « l'effet Soul Drain de pixelfx : ça touchera tous les ennemis à portée et ça
+   * drainera la vie vers le vaisseau ; cette attaque aura la particularité de recharger plus vite la corruption que les
+   * autres attaques ») : tout insecte à moins de `rayon` du vaisseau perd `dps` par seconde, sans cesse (comme l'aura) ;
+   * et LA VIE DRAINÉE PURGE LA CORRUPTION : chaque point pris en purge `purge` — en continu, quand un insecte abattu par
+   * une autre arme n'en purge que `corruption.purge`, une fois.
+   */
+  drain?: { rayon: number; dps: number; purge: number }
+  /**
+   * LES VRILLES D'OMBRE (le Néant, Keko, 17/11 : « l'effet Shadow Tendrils de pixelfx : on crée une tentacule dans un
+   * endroit aléatoire autour du vaisseau, et ce tentacule attaque les ennemis proches ») : à sa cadence, un insecte à
+   * `portee` du vaisseau, UNE VRILLE sort d'une flaque d'ombre en un point tiré au hasard autour de lui, entre `pres` et
+   * `loin` — `max` à la fois (la plus vieille rentre) ; elle vit `duree` secondes, IMMOBILE (le vaisseau peut la quitter).
+   * Sortie (`sortie` secondes), elle FOUETTE toutes les `periode` secondes l'insecte le plus proche d'elle à moins de
+   * `allonge` (le verrouillé d'abord) : `degats` (ceux de l'arme). L'état est `Monde.vrilles`.
+   */
+  vrille?: { max: number; duree: number; pres: number; loin: number; allonge: number; periode: number; sortie: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -795,6 +812,8 @@ export type Monde = {
   fleaux: { arme: number; x: number; y: number; vx: number; vy: number; frappes: Record<number, number>; frappesChaine: Record<number, number> }[]
   /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number }[]
+  /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
+  vrilles: { id: number; arme: number; x: number; y: number; nee: number; frappeA: number; cible: number | null }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -906,6 +925,10 @@ export type Evenement =
   | { type: 'rejeton'; x: number; y: number }
   | { type: 'coupDeRejeton'; id: number; x: number; y: number }
   | { type: 'rejetonFini'; x: number; y: number }
+  /** Une vrille d'ombre sort de sa flaque, fouette sa proie (où elle est), rentre (voir `Arme.vrille`). */
+  | { type: 'vrille'; id: number; x: number; y: number }
+  | { type: 'coupDeVrille'; id: number; x: number; y: number }
+  | { type: 'vrilleFinie'; id: number; x: number; y: number }
   /** La Vouivre crache (voir `Arme.crachat`) : la bouche, le cap, le cône ; un insecte se met à être rongé. */
   | { type: 'crachat'; x: number; y: number; cap: number; cone: number; portee: number; arme: string }
   | { type: 'ronge'; id: number; x: number; y: number }
@@ -941,7 +964,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2526,6 +2549,79 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
+/** LE DRAIN D'ÂME (voir `Arme.drain`) : tout ce qui est à portée perd sa vie, et ce qui est pris purge la corruption. */
+function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  if (m.phase !== 'vol') return
+  const v = m.vaisseau
+  for (const a of c.armes) {
+    const dr = a.drain
+    if (dr === undefined) continue
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > dr.rayon + c.ennemi.rayon) continue
+      const pris = Math.min(Math.max(0, e.pv), dr.dps * dt)
+      e.pv -= dr.dps * dt
+      // (la vie prise revient au vaisseau : la part corrompue de sa coque redevient saine — les Innommés)
+      if (c.corruption.ronge > 0 && m.corruption > 0) m.corruption = Math.max(0, m.corruption - pris * dr.purge)
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  }
+}
+
+/** LES VRILLES D'OMBRE (voir `Arme.vrille`) : la sortie en un point tiré autour du vaisseau, les coups de fouet, la fin. */
+function menerLesVrilles(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const vr = a.vrille
+    if (vr === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    m.armesA[i] = m.t + a.cadence
+    // (la plus vieille rentre si elles sont déjà toutes sorties)
+    const siennes = m.vrilles.filter((r) => r.arme === i)
+    if (siennes.length >= vr.max) {
+      const vieille = siennes.reduce((x, y) => (y.nee < x.nee ? y : x))
+      m.vrilles.splice(m.vrilles.indexOf(vieille), 1)
+      ev.push({ type: 'vrilleFinie', id: vieille.id, x: vieille.x, y: vieille.y })
+    }
+    // (un point tiré au hasard autour du vaisseau, entre `pres` et `loin`)
+    const id = m.prochainId++
+    const an = tire(m.graine, id, 41) * Math.PI * 2
+    const d = vr.pres + (vr.loin - vr.pres) * Math.sqrt(tire(m.graine, id, 42))
+    const x = v.x + Math.cos(an) * d
+    const y = v.y + Math.sin(an) * d
+    m.vrilles.push({ id, arme: i, x, y, nee: m.t, frappeA: m.t + vr.sortie, cible: null })
+    ev.push({ type: 'vrille', id, x, y })
+  })
+  for (let k = m.vrilles.length - 1; k >= 0; k--) {
+    const r = m.vrilles[k]
+    const a = c.armes[r.arme]
+    const vr = a?.vrille
+    if (a === undefined || vr === undefined || m.t - r.nee >= vr.duree || m.phase !== 'vol') {
+      m.vrilles.splice(k, 1)
+      ev.push({ type: 'vrilleFinie', id: r.id, x: r.x, y: r.y })
+      continue
+    }
+    if (m.t < r.frappeA) continue
+    // (sa proie : le verrouillé à son allonge, sinon le plus proche d'elle)
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - r.x, e.corps.y - r.y)
+    const allonge = vr.allonge + c.ennemi.rayon
+    let proie: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && dist(ve) <= allonge) proie = ve
+    else {
+      let dc = allonge
+      for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (proie = e)
+    }
+    r.cible = proie?.id ?? null
+    if (proie === undefined) continue
+    r.frappeA = m.t + vr.periode
+    const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+    proie.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+    ev.push({ type: 'coupDeVrille', id: r.id, x: proie.corps.x, y: proie.corps.y })
+    ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
+    if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+  }
+}
+
 /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : centrés sur le vaisseau, leurs bras qui s'étendent vers les insectes proches, les morsures. */
 function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -3193,7 +3289,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3307,10 +3403,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesMines(c, m, ev)
   menerLesFleaux(c, m, dt, ev)
   menerLesParasites(c, m, dt, ev)
+  menerLeDrain(c, m, dt, ev)
+  menerLesVrilles(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

@@ -201,14 +201,15 @@ export const MODELES: ModeleDeVaisseau[] = [
   },
   {
     // LE NÉANT (Keko, 16/11) : le vaisseau du vide — un cœur qui bat entre deux anneaux qui l'orbitent ; l'espace-temps et
-    // les dimensions. SA PREMIÈRE ARME, LE PUITS, gardé de côté « pour un futur vaisseau » : en attendant que Keko tranche.
+    // les dimensions. SA PREMIÈRE ARME, LE PUITS, gardé de côté « pour un futur vaisseau » ; puis LE DRAIN D'ÂME et LES
+    // VRILLES D'OMBRE (Keko, 17/11 : les effets Soul Drain et Shadow Tendrils de pixelfx).
     id: 'neant',
     nom: 'Néant',
     classe: 'chasseur',
     race: 'innommes',
     dit: 'Un cœur de néant qui bat entre deux anneaux : il joue de l’espace-temps et des dimensions.',
-    pieces: ['coque-13', 'propulseur-n3', 'arme-puits'],
-    serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
+    pieces: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'],
+    serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
     chaine: [],
     horsRecherche: true,
   },

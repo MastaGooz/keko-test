@@ -917,7 +917,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
         else if (canon?.tentacule !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
         // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
-        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.orbite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -1048,7 +1048,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits'], mante: ['arme-nuee'], tesseract: ['arme-balises'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-givre', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-parasites'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-nuee'], tesseract: ['arme-balises'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -1080,7 +1080,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { x: canonDeLaForeuse(cran).pivot + pl.x, y: pl.y }
   }
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran) })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') && ((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.pose !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.scie !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran) })
   /** L'écran est là quand rien ne vole : avant le premier décollage, et après une fin, le temps que l'effet passe. */
   /**
    * L'ACCUEIL (Keko, 11/11 : « un écran d'accueil avec une demande de tap pour lancer le hangar, afin de débloquer les
@@ -3607,6 +3607,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’insectes.',
     'arme-puits': 'Une singularité qui aspire les insectes vers son cœur, puis éclate.',
+    'arme-drain': 'Il draine la vie de tout ce qui l’entoure, et purge sa corruption.',
+    'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
   }
   /**
@@ -3753,6 +3755,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesBalises(p)
       dessinerLesEnnemis(p)
       dessinerLesTentacules(p)
+      dessinerLesVrilles(p)
       dessinerLesFleaux(p)
       dessinerLeVaisseau(p)
       dessinerLesTirs(p)
@@ -3762,6 +3765,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesMeteores(p)
       dessinerLesEclatsBrises(p)
       dessinerLesNuees(p)
+      dessinerLeDrain(p)
       dessinerLesRejetons(p)
       dessinerLesCrachats(p)
       dessinerLesGaz(p)
@@ -6565,7 +6569,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined || a.drain !== undefined || a.vrille !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -8069,6 +8073,222 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.glow(px, py, 3, PLASMA[4], 0.5 * (1 - u * 2))
         }
       }
+    }
+    p.place(0, 0)
+  }
+  /** LE VIOLET DE L'OMBRE, du noir au blanc (la palette « void » des effets d'ombre de pixelfx). */
+  const OMBRE = ['#06040b', '#150c26', '#2a1150', '#461a84', '#6f2cc0', '#9d5cec', '#cfa6ff', '#f6eaff'].map((c) => N.hex(c))
+  const entre01 = (x: number): number => Math.max(0, Math.min(1, x))
+  const lisse = (a: number, b: number, x: number): number => {
+    const u = entre01((x - a) / (b - a))
+    return u * u * (3 - 2 * u)
+  }
+  /**
+   * LE DRAIN D'ÂME (voir `Arme.drain`) — L'EFFET SOUL DRAIN DE PIXELFX, SANS SES ÂMES (Keko, 17/11 : « on utilise le même
+   * effet, sans le petit fantôme qui flotte, juste les effets de drain violet ») : de chaque insecte à portée, UN ENTONNOIR
+   * de lignes — une courbe propre à l'insecte, pâle, qui s'éclaire en approchant du vaisseau, des tirets qui y coulent vers
+   * lui, des traînées plus rapides à tête blanche — ; sur l'insecte, une brume pâle qu'on arrache ; sur le vaisseau, la
+   * lueur qui grossit à mesure qu'il boit, des grains qui tournent autour, un anneau à chaque arrivée. Le rayon se devine,
+   * un cercle à peine marqué. Tant qu'il purge la corruption, la barre s'éclaire et un frisson sonne de temps en temps.
+   */
+  let corruptionVue = 0
+  let drainSonneA = -10
+  function dessinerLeDrain(p: Peintre): void {
+    const dr = CONF.armes.find((a) => a.drain !== undefined)?.drain
+    const avant = corruptionVue
+    corruptionVue = m.corruption
+    if (dr === undefined || m.phase !== 'vol' || t - arriveA < ARRIVE_A) return
+    const C = OMBRE
+    const sx = v.x
+    const sy = v.y
+    const pris = m.ennemis.filter((e) => Math.hypot(e.corps.x - sx, e.corps.y - sy) <= dr.rayon + CONF.ennemi.rayon)
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    // (le rayon, à peine : un cercle de grains qui tourne lentement)
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * Math.PI * 2 + t * 0.25
+      p.px(Math.round(sx + Math.cos(a) * dr.rayon), Math.round(sy + Math.sin(a) * dr.rayon), k % 3 === 0 ? C[4] : C[3])
+    }
+    for (const e of pris) {
+      const ex = e.corps.x
+      const ey = e.corps.y
+      const L = Math.hypot(sx - ex, sy - ey) || 1
+      const nx = -(sy - ey) / L
+      const ny = (sx - ex) / L
+      // (sa courbe : une cubique de l'insecte au vaisseau, cambrée d'un côté propre à lui)
+      const cambre = (((e.id * 7919) % 100) / 100 - 0.5) * 0.9 * L
+      const c1x = ex + (sx - ex) * 0.35 + nx * cambre
+      const c1y = ey + (sy - ey) * 0.35 + ny * cambre
+      const c2x = sx + (ex - sx) * 0.25 + nx * cambre * 0.3
+      const c2y = sy + (ey - sy) * 0.25 + ny * cambre * 0.3
+      const le = (u: number): [number, number] => {
+        const q = 1 - u
+        return [q * q * q * ex + 3 * q * q * u * c1x + 3 * q * u * u * c2x + u * u * u * sx, q * q * q * ey + 3 * q * q * u * c1y + 3 * q * u * u * c2y + u * u * u * sy]
+      }
+      // (la ligne pâle, plus vive vers le vaisseau ; des tirets qui coulent vers lui)
+      let [px, py] = le(0)
+      const pas = Math.max(0.04, 1.5 / L)
+      for (let u = pas; u <= 1.0001; u += pas) {
+        const [x, y] = le(u)
+        p.line(px, py, x, y, u > 0.6 ? C[5] : C[4], 0.45 + 0.5 * u)
+        const tiret = (((u * 5 - t * 2.2 + e.id * 0.3) % 1) + 1) % 1
+        if (tiret < 0.18) p.px(Math.round(x), Math.round(y), u > 0.5 ? C[7] : C[6])
+        ;[px, py] = [x, y]
+      }
+      // (deux traînées qui filent, de plus en plus vite, la tête blanche)
+      for (let k = 0; k < 2; k++) {
+        const ph = (((t * 1.4 + k * 0.5 + e.id * 0.37) % 1) + 1) % 1
+        const q = Math.pow(ph, 2.2)
+        const q2 = Math.pow(Math.max(0, ph - 0.07), 2.2)
+        const [hx, hy] = le(q)
+        const [qx, qy] = le(q2)
+        p.line(qx, qy, hx, hy, C[6])
+        p.px(Math.round(hx), Math.round(hy), N.WHITE)
+        p.glow(hx, hy, 3, C[6], 0.35)
+      }
+      // (sur l'insecte, la brume pâle qu'on arrache)
+      for (let k = 0; k < 3; k++) {
+        const ph = (((t * 1.1 + k / 3 + e.id * 0.21) % 1) + 1) % 1
+        const a = e.id * 1.7 + k * 2.1
+        if (ph < 0.7) p.px(Math.round(ex + Math.cos(a) * (2 + ph * 4)), Math.round(ey + Math.sin(a) * (2 + ph * 4) - ph * 3), ph < 0.35 ? C[7] : C[5])
+      }
+      p.glow(ex, ey, 7, C[5], 0.4)
+    }
+    // (sur le vaisseau : la lueur qui grossit avec ce qu'il boit, les grains qui tournent, l'anneau des arrivées)
+    if (pris.length > 0) {
+      const f = Math.min(1, pris.length / 3)
+      p.glow(sx, sy, 14 + 8 * f, C[5], 0.3 + 0.25 * f)
+      for (let k = 0; k < 6; k++) {
+        const a = t * 4 + (k * Math.PI * 2) / 6
+        const z = Math.sin(a)
+        p.px(Math.round(sx + Math.cos(a) * 11), Math.round(sy + Math.sin(a) * 4 - 1), z > 0 ? C[7] : C[4])
+        if (z > 0) p.glow(sx + Math.cos(a) * 11, sy + Math.sin(a) * 4 - 1, 3, C[6], 0.3)
+      }
+      const arrivee = (t * 1.4) % 0.5
+      if (arrivee < 0.25) {
+        const k = arrivee / 0.25
+        p.ring(sx, sy, 5 + 9 * (1 - (1 - k) * (1 - k)), Math.max(1, 2 * (1 - k)), k < 0.4 ? C[7] : k < 0.7 ? C[5] : C[3], 0.8 * (1 - k))
+      }
+      // (la vie prise purge la corruption : la barre s'éclaire, un frisson de temps en temps)
+      if (m.corruption < avant - 1e-6) {
+        purgeA = t
+        if (t - drainSonneA > 1.4) {
+          drainSonneA = t
+          jouer('purge')
+        }
+      }
+    }
+    p.place(0, 0)
+  }
+  /**
+   * LES VRILLES D'OMBRE (voir `Arme.vrille`) — L'EFFET SHADOW TENDRILS DE PIXELFX, VU DE DESSUS (Keko, 17/11) : UNE FLAQUE
+   * D'OMBRE s'ouvre (un noir cerclé de violet, des rides, une brume qui monte), une TENTACULE en jaillit — un corps sombre
+   * plus clair du côté de la lumière, un liseré vif, une pulsation qui la parcourt, un crochet au bout, la pointe blanche —,
+   * ondule, se penche vers sa dernière proie ; QUAND ELLE FOUETTE, elle se tend jusqu'à l'insecte et revient ; à la fin,
+   * elle rentre et la flaque se referme.
+   */
+  const coupsDeVrille: { id: number; tx: number; ty: number; t0: number }[] = []
+  const DUREE_DU_FOUET = 0.3
+  const penchantsDesVrilles = new Map<number, number>()
+  function dessinerLesVrilles(p: Peintre): void {
+    for (let i = coupsDeVrille.length - 1; i >= 0; i--) if (t - coupsDeVrille[i].t0 > DUREE_DU_FOUET) coupsDeVrille.splice(i, 1)
+    for (const [id] of penchantsDesVrilles) if (!m.vrilles.some((r) => r.id === id)) penchantsDesVrilles.delete(id)
+    if (m.vrilles.length === 0 || m.phase !== 'vol') return
+    const C = OMBRE
+    const LX = -0.6
+    const LY = -0.8
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const r of m.vrilles) {
+      const vr = CONF.armes[r.arme]?.vrille
+      if (vr === undefined) continue
+      const age = m.t - r.nee
+      const reste = vr.duree - age
+      const ph = (r.id * 2.399) % (Math.PI * 2)
+      // LA FLAQUE : elle s'ouvre en 0,3 s, se referme dans les 0,45 dernières
+      const ouvre = 1 - Math.pow(1 - entre01(age / 0.3), 3)
+      const ferme = Math.pow(entre01((0.45 - reste) / 0.45), 3)
+      const rf = 7 * ouvre * (1 - ferme)
+      if (rf > 0.5) {
+        p.glow(r.x, r.y, rf * 2.2 + 4, C[4], 0.4)
+        p.circle(r.x, r.y, rf + 1, C[5])
+        p.circle(r.x, r.y, rf, C[2])
+        p.circle(r.x + 0.5, r.y + 0.5, rf * 0.75, C[1])
+        p.circle(r.x + 0.5, r.y + 0.5, rf * 0.45, C[0])
+        // (des rides qui s'ouvrent dans le noir)
+        const ride = (((t * 1.3 + r.id * 0.29) % 1) + 1) % 1
+        p.ring(r.x, r.y, 1 + (rf - 1) * ride, 1, C[4], 0.8 * (1 - ride))
+        // (la brume et les grains qui en montent)
+        for (let k = 0; k < 4; k++) {
+          const q = (((t * 0.9 + k / 4 + r.id * 0.13) % 1) + 1) % 1
+          const a = ph + k * 1.9
+          p.dot(r.x + Math.cos(a) * rf * 0.6, r.y + Math.sin(a) * rf * 0.4 - q * 8, k % 2 === 0 ? C[6] : C[5], 0.8 * (1 - q))
+        }
+      }
+      // LA TENTACULE : elle jaillit (dépasse, puis se pose), ondule ; elle rentre dans les 0,5 dernières secondes
+      const jaillit = entre01((age - 0.08) / 0.25)
+      const surpasse = 1 + 2.2 * Math.pow(jaillit - 1, 3) + 1.2 * Math.pow(jaillit - 1, 2)
+      const rentre = 1 - Math.pow(entre01((0.5 - reste) / 0.5), 2)
+      let longueur = 21 * Math.max(0, surpasse) * rentre
+      let penche = penchantsDesVrilles.get(r.id) ?? ph
+      let ondule = 0.16
+      let crochet = 0.25
+      let pulsation = -1
+      // (QUAND ELLE FOUETTE : elle se tend jusqu'à l'insecte en 0,1 s, y reste, revient)
+      const coup = coupsDeVrille.find((c) => c.id === r.id)
+      if (coup !== undefined) {
+        const u = (t - coup.t0) / DUREE_DU_FOUET
+        const tendu = u < 0.33 ? 1 - Math.pow(1 - u / 0.33, 2) : u < 0.5 ? 1 : 1 - lisse(0.5, 1, u)
+        const d = Math.hypot(coup.tx - r.x, coup.ty - r.y)
+        penche = Math.atan2(coup.ty - r.y, coup.tx - r.x)
+        penchantsDesVrilles.set(r.id, penche)
+        longueur += (Math.max(longueur, d) - longueur) * tendu
+        ondule *= 1 - 0.7 * tendu
+        crochet *= 1 - 0.6 * tendu
+        pulsation = (t - coup.t0) * 150
+      } else penche += 0.25 * Math.sin(t * 1.6 + ph)
+      if (longueur < 1) continue
+      // (son échine : un point tous les demi-pixels, son angle, sa demi-largeur)
+      const W0 = 2.3
+      let th = penche
+      let x = r.x
+      let y = r.y
+      const pts: { x: number; y: number; th: number; w: number; u: number; s: number }[] = []
+      const n = Math.ceil(longueur / 0.5)
+      for (let i = 0; i <= n; i++) {
+        const s0 = i * 0.5
+        const u = s0 / longueur
+        pts.push({ x, y, th, w: W0 * Math.pow(1 - u, 0.75) + 0.45, u, s: s0 })
+        th += 0.5 * (ondule * Math.sin((s0 / 13) * Math.PI * 2 - 6 * t + ph) * 2.2 + (r.id % 2 === 0 ? 1 : -1) * crochet * lisse(0.58, 1, u))
+        x += Math.cos(th) * 0.5
+        y += Math.sin(th) * 0.5
+      }
+      // (le corps : plus clair du côté de la lumière)
+      for (const q of pts) {
+        const nx = -Math.sin(q.th)
+        const ny = Math.cos(q.th)
+        const ks = nx * LX + ny * LY >= 0 ? 1 : -1
+        for (let w = -q.w; w <= q.w; w += 0.5) {
+          const u = (w / q.w) * ks
+          p.px(Math.round(q.x + nx * w), Math.round(q.y + ny * w), u > 0.55 ? C[5] : u > -0.45 ? C[4] : C[3])
+        }
+      }
+      // (les liserés : vif du côté de la lumière, violet de l'autre ; la pulsation qui la parcourt quand elle fouette)
+      const lente = ((age * 40) % (longueur * 1.8)) - 4
+      for (const q of pts) {
+        const nx = -Math.sin(q.th)
+        const ny = Math.cos(q.th)
+        const f = nx * LX + ny * LY
+        const lit = (f >= 0 ? 1 : -1) * q.w
+        p.px(Math.round(q.x - nx * lit), Math.round(q.y - ny * lit), C[2])
+        p.px(Math.round(q.x + nx * lit), Math.round(q.y + ny * lit), Math.abs(f) > 0.8 && q.u > 0.15 ? C[7] : C[6])
+        const dp = Math.min(pulsation < 0 ? 99 : Math.abs(q.s - pulsation), Math.abs(q.s - lente) * 1.6)
+        if (dp < 2.5) p.px(Math.round(q.x), Math.round(q.y), dp < 1 ? N.WHITE : C[7])
+      }
+      // (la pointe : blanche, une lueur)
+      const bout = pts[pts.length - 1]
+      p.px(Math.round(bout.x), Math.round(bout.y), N.WHITE)
+      p.glow(bout.x, bout.y, 4, C[6], coup !== undefined ? 0.5 : 0.25)
+      // (le col d'encre là où elle sort de la flaque)
+      if (rf > 1) p.ring(r.x, r.y, W0 + 1.2, 1, C[5], 0.8)
     }
     p.place(0, 0)
   }
@@ -11438,6 +11658,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'vrille':
+          // (une vrille d'ombre sort : un « blop » sombre, une giclée d'encre violette hors de la flaque)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.4), i % 3 === 0 ? OMBRE[6] : OMBRE[4], 1, 1.5)
+          }
+          break
+        case 'coupDeVrille':
+          // (elle fouette : la tentacule se tend jusqu'à l'insecte, le claquement)
+          coupsDeVrille.push({ id: ev.id, tx: ev.x, ty: ev.y, t0: t })
+          if (t - fouetSonneA > 0.1) {
+            fouetSonneA = t
+            jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 5; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 55), Math.sin(a) * R.range(20, 55), R.range(0.1, 0.25), i % 2 === 0 ? OMBRE[7] : OMBRE[5], 1, 1.5)
+          }
+          break
+        case 'vrilleFinie':
+          // (elle rentre : la flaque se referme sur une bouffée d'ombre)
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 22), Math.sin(a) * R.range(8, 22), R.range(0.2, 0.4), R.next() < 0.5 ? OMBRE[3] : OMBRE[5], 1, 1.5)
+          }
+          break
         case 'rejetonFini':
           // (il s'éteint : il se flétrit en une bouffée de chair et de bile)
           for (let i = 0; i < 6; i++) {
@@ -12103,6 +12350,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesBulles(p)
     dessinerLesOndes(p)
     dessinerLesTentacules(p)
+    dessinerLesVrilles(p)
     dessinerLesFleaux(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
@@ -12112,6 +12360,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesMeteores(p)
     dessinerLesEclatsBrises(p)
     dessinerLesNuees(p)
+    dessinerLeDrain(p)
     dessinerLesRejetons(p)
     dessinerLesCrachats(p)
     dessinerLesGaz(p)

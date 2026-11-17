@@ -1956,6 +1956,57 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`le puits s'ouvre au cœur de la nuée (${ouvertEn === null ? '—' : `${ouvertEn.x.toFixed(0)}, ${ouvertEn.y.toFixed(0)}`}), aspire l'insecte du bord dans son éclat et éclate une fois : ${pv.join(' / ')} (22 aux quatre de la nuée, 0 au lointain et à celui hors du rayon)`, ev.filter((e) => e.type === 'puitsEclate').length === 1 && ouvertEn !== null && ouvertEn.x > 70 && pv[0] === 22 && pv[1] === 22 && pv[2] === 22 && pv[3] === 0 && pv[4] === 22 && pv[5] === 0)
 }
 
+// LE DRAIN D'ÂME DU NÉANT (Keko, 17/11) : tout ce qui est à portée perd sa vie, le lointain rien ; et LA VIE PRISE PURGE
+// LA CORRUPTION, en continu (deux insectes une seconde : 8 points pris, 1,6 de corruption purgée — un insecte abattu n'en
+// purge que 0,5) ; sans corruption (une autre race), rien ne change
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const drain = { id: 'drain', cadence: 0.1, degats: 0, portee: 42, vitesse: 0, vie: 0, dispersion: 0, guide: false, drain: { rayon: 42, dps: 4, purge: 0.2 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [drain], coque: 10, corruption: { ronge: 0.5, purge: 0.5 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 30, 0), insecte(2, 0, -35), insecte(3, 120, 0))
+  w.corruption = 5
+  for (let i = 0; i < 60; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  const pv = w.ennemis.map((e) => 1000 - e.pv)
+  // (la corruption ronge aussi pendant ce temps : 0,5 par seconde)
+  const purgee = 5 - w.corruption - 0.5
+  verifier(`le drain d'âme prend sa vie à tout ce qui est à portée (${pv.map((x) => x.toFixed(1)).join(' / ')} : 4, 4, 0) et la vie prise purge la corruption (${purgee.toFixed(2)} sur 1,6)`, Math.abs(pv[0] - 4) < 0.1 && Math.abs(pv[1] - 4) < 0.1 && pv[2] === 0 && Math.abs(purgee - 1.6) < 0.05)
+}
+
+// LES VRILLES D'OMBRE DU NÉANT (Keko, 17/11) : elles sortent en des points tirés autour du vaisseau, entre 18 et 40, trois
+// à la fois au plus ; elles fouettent l'insecte le plus proche d'elles à leur allonge — pas avant d'être sorties —, et
+// rentrent à la fin de leur vie
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const vrilles = { id: 'vrille', cadence: 1.2, degats: 5, portee: 70, vitesse: 0, vie: 0, dispersion: 0, guide: false, vrille: { max: 3, duree: 6, pres: 18, loin: 40, allonge: 30, periode: 0.8, sortie: 0.35 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [vrilles], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  // (un cercle d'insectes à 30 du vaisseau : toute vrille en a un à portée)
+  for (let k = 0; k < 8; k++) w.ennemis.push(insecte(k + 1, Math.cos((k * Math.PI) / 4) * 30, Math.sin((k * Math.PI) / 4) * 30))
+  const ev: Evenement[] = []
+  let auPlus = 0
+  let distancesOk = true
+  let premierCoup = Infinity
+  for (let i = 0; i < 60 * 8; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      ev.push(e)
+      if (e.type === 'vrille') {
+        const d = Math.hypot(e.x, e.y)
+        if (d < 18 - 1e-6 || d > 40 + 1e-6) distancesOk = false
+      }
+      if (e.type === 'coupDeVrille' && premierCoup === Infinity) premierCoup = w.t
+    }
+    auPlus = Math.max(auPlus, w.vrilles.length)
+  }
+  const sorties = ev.filter((e) => e.type === 'vrille')
+  const angles = new Set(sorties.map((e) => (e.type === 'vrille' ? Math.round(Math.atan2(e.y, e.x) * 2) : 0)))
+  verifier(`les vrilles sortent autour du vaisseau, entre 18 et 40, en des points variés (${angles.size} directions sur ${sorties.length} sorties), trois à la fois au plus (${auPlus}), et ne frappent qu'une fois sorties (premier coup à ${premierCoup.toFixed(2)} s)`, distancesOk && sorties.length >= 5 && angles.size >= 3 && auPlus === 3 && premierCoup >= 0.35 - 1e-6 && ev.some((e) => e.type === 'vrilleFinie') && w.ennemis.some((e) => e.pv < 1000))
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {

@@ -5316,3 +5316,21 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   verticalement. DANS LA GRILLE DES VAISSEAUX, LES NOMS S'ÉCRIVENT APRÈS TOUTES LES CASES : couché, « Salamandre »
   déborde d'un pixel et la case voisine le coupait ; par-dessus, il mord sur l'espace entre les cases (renommer la
   Salamandre, proposé par Keko, n'a pas été nécessaire).
+- LES DEUX ARMES DU NÉANT (Keko, 17/11 : « on va utiliser les effets Soul Drain et Shadow Tendrils de pixelfx pour
+  fabriquer les deux nouvelles armes du Void »), après le puits :
+  - LE DRAIN D'ÂME (`Arme.drain`, `menerLeDrain`) : tout insecte à moins de 42 perd 4 points par seconde, sans cesse ; la
+    vie prise PURGE LA CORRUPTION, 0,2 par point — un insecte drainé purge 0,8 par seconde, quand un insecte abattu n'en
+    purge que 0,5 une fois (« recharger plus vite la corruption que les autres attaques »). Le dessin
+    (`dessinerLeDrain`) reprend l'entonnoir du Soul Drain SANS SES ÂMES (« sans le petit fantôme ») : une courbe par
+    insecte, des tirets qui coulent vers le vaisseau, des traînées à tête blanche, la brume arrachée sur l'insecte, la
+    lueur et les grains qui tournent sur le vaisseau, l'anneau des arrivées ; le rayon en pointillés ; tant qu'il
+    purge, la barre s'éclaire et un frisson sonne (une fois par 1,4 s au plus).
+  - LES VRILLES D'OMBRE (`Arme.vrille`, `menerLesVrilles`, `Monde.vrilles`) : toutes les 1,2 s, un insecte à moins de
+    70, une vrille sort d'une flaque d'ombre en un point TIRÉ AU HASARD autour du vaisseau, entre 18 et 40 (graine du
+    monde) — trois à la fois, la plus vieille rentre, 6 s chacune, immobiles ; sortie (0,35 s), chacune fouette toutes
+    les 0,8 s l'insecte le plus proche d'elle à moins de 30 : 5 points. Le dessin (`dessinerLesVrilles`) est le Shadow
+    Tendrils vu de dessus : la flaque qui s'ouvre et se referme, ses rides et sa brume, la tentacule (échine en
+    demi-pixels, corps éclairé d'un côté, liserés, crochet au bout, pointe blanche, pulsation) qui jaillit, ondule, se
+    tend jusqu'à l'insecte quand elle fouette. Sur l'espace noir, la palette « void » est REMONTÉE de deux tons : le
+    corps sombre du dépôt (fait pour un sol clair) ne se voyait pas.
+  *Chiffres de moi, à rejuger.*
