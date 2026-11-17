@@ -547,6 +547,8 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
 
 /** Ce que porte le vaisseau : les crans et les pièces montées. */
 export type Allure = {
+  /** LE VER : où sont ses anneaux, en unités du vaisseau — le chemin que sa tête a pris (voir `formesDuVer`). */
+  chemin?: [number, number][]
   propulseur: number
   coque: number
   foreuse: number
@@ -1503,7 +1505,7 @@ export function formesDeLArme(id: string, s: number): Forme[] {
  * l'extérieur du virage. Les anneaux gardent leur écart le long du corps : courbé, il raccourcit. Son apparence pose son
  * motif sur chaque anneau (`motif` : des taches, des lueurs qui battent, une bande sur le dos).
  */
-export function formesDuVer(t: number, flamme: number, devie: number, motif?: MotifDuVer): Forme[] {
+export function formesDuVer(t: number, flamme: number, devie: number, motif?: MotifDuVer, chemin?: [number, number][]): Forme[] {
   const N = 9
   const L = 2.5
   const pousse = Math.min(1, Math.max(0, flamme))
@@ -1519,6 +1521,19 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
     if (k > 0) x -= Math.sqrt(Math.max(0.3, L * L - (yk - y) ** 2))
     y = yk
     pts.push({ x, y, r: 3.2 - (1.7 * k) / N })
+  }
+  // (EN VOL, COMME UN SERPENT — Keko, 17/11 : « dans les virages, que le ver se torde ; là, il tourne en rotation ; un peu
+  // comme dans Snake » : chaque anneau est posé SUR LE CHEMIN QUE LA TÊTE A PRIS, que la page lui donne ; la vague s'y
+  // ajoute, en travers du chemin, moins ample — c'est le chemin qui fait la courbe)
+  if (chemin !== undefined && chemin.length >= N) {
+    for (let k = 1; k <= N; k++) {
+      const [cx, cy] = chemin[k - 1]
+      const [ax, ay] = k >= 2 ? chemin[k - 2] : [pts[0].x, 0]
+      const l = Math.hypot(ax - cx, ay - cy) || 1
+      const onde = A * 0.45 * Math.sin(phase - k * 0.7) * ((0.8 * k) / N)
+      pts[k] = { x: cx - ((ay - cy) / l) * onde, y: cy + ((ax - cx) / l) * onde, r: pts[k].r }
+    }
+    pts[0] = { ...pts[0], y: A * 0.2 * Math.sin(phase) }
   }
   const f: Forme[] = []
   const q = pts[N]
@@ -1635,7 +1650,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
-  const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
+  const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
   if (g.surLePont) tout.push(...armes)
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant

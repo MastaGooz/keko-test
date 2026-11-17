@@ -5380,3 +5380,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qu'une trentaine de pixels : la vague a dû être doublée pour se lire. Ses apparences posent un MOTIF sur chaque anneau
   (`Habit.motif`, qui ondule avec lui) : Origine (sable, anneaux bruns), Abysses (indigo, des lueurs cyan qui battent sur
   ses flancs), Braise (rouge sang, anneaux noirs, des taches d'ambre).
+- LE VER AVANCE COMME UN SERPENT (Keko, 17/11 : « dans les virages, que le ver se torde ; là, il tourne en rotation ; un
+  peu comme dans Snake ») : la page garde LE CHEMIN DE SA TÊTE (`cheminDuVer` : un point tous les demi-pixels de trajet,
+  35 unités, effacé par un saut ; l'aperçu des armes a le sien) et pose chaque anneau DESSUS, à 2,5 du précédent le long
+  du chemin (`Allure.chemin`, lu par `formesDuVer`) ; la vague s'y ajoute en travers, à moitié moins ample — c'est le
+  chemin qui fait la courbe. Immobile, il ne bouge pas ; s'il tourne sur place, seule la tête tourne. Au hangar et dans
+  la grille, sans chemin, il garde la vague sur place. La règle n'a pas changé : le vaisseau reste un cercle, le corps
+  n'est que dessiné.

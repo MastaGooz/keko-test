@@ -1040,7 +1040,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit }
+  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit }
   /**
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
@@ -6890,6 +6890,53 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (allure.bouclier > 0 || coups.some((c) => c.brise && c.age < 0.8)) dessinerLeBouclier(p, sx, sy, g.anneau, t, allure.bouclier, coups)
   }
 
+  /**
+   * LE CHEMIN DU VER (Keko, 17/11 : « qu'il se déplace un peu comme dans Snake ») : là où le vaisseau est passé, un point
+   * tous les demi-pixels de trajet, les plus récents devant — trente-cinq unités de chemin, de quoi poser ses neuf
+   * anneaux ; un saut (le retour au portail, l'aperçu qui recommence) l'efface. L'aperçu des armes a le sien. Rend les
+   * anneaux, en unités du vaisseau : chacun à `ECART_DES_ANNEAUX` du précédent LE LONG DU CHEMIN, la tête à 6,6 devant
+   * le centre ; là où le chemin manque (il vient de naître, il n'a pas bougé), il se prolonge tout droit derrière lui.
+   */
+  const tracesDuVer = { vol: [] as [number, number][], apercu: [] as [number, number][] }
+  const ECART_DES_ANNEAUX = 2.5
+  function cheminDuVer(): [number, number][] {
+    const tr = enApercu ? tracesDuVer.apercu : tracesDuVer.vol
+    if (tr.length === 0 || Math.hypot(tr[0][0] - v.x, tr[0][1] - v.y) > 30) tr.splice(0, tr.length, [v.x, v.y])
+    else if (Math.hypot(tr[0][0] - v.x, tr[0][1] - v.y) >= 0.5) tr.unshift([v.x, v.y])
+    // (on ne garde que ce qu'il faut de chemin)
+    let long = 0
+    for (let i = 1; i < tr.length; i++) {
+      long += Math.hypot(tr[i][0] - tr[i - 1][0], tr[i][1] - tr[i - 1][1])
+      if (long > 35) {
+        tr.length = i + 1
+        break
+      }
+    }
+    const ca = Math.cos(v.cap)
+    const sa = Math.sin(v.cap)
+    // (le point du chemin à `d` derrière la tête : d'abord tout droit de la tête au centre, puis la trace, puis tout droit)
+    const auDos = (d: number): [number, number] => {
+      if (d <= 6.6) return [v.x + ca * (6.6 - d), v.y + sa * (6.6 - d)]
+      let reste = d - 6.6
+      for (let i = 1; i < tr.length; i++) {
+        const l = Math.hypot(tr[i][0] - tr[i - 1][0], tr[i][1] - tr[i - 1][1])
+        if (reste <= l) return [tr[i - 1][0] + ((tr[i][0] - tr[i - 1][0]) * reste) / l, tr[i - 1][1] + ((tr[i][1] - tr[i - 1][1]) * reste) / l]
+        reste -= l
+      }
+      const [qx, qy] = tr[tr.length - 1]
+      const [px, py] = tr.length >= 2 ? tr[tr.length - 2] : [v.x + ca, v.y + sa]
+      const l = Math.hypot(qx - px, qy - py) || 1
+      return [qx + ((qx - px) / l) * reste, qy + ((qy - py) / l) * reste]
+    }
+    const anneaux: [number, number][] = []
+    for (let k = 1; k <= 9; k++) {
+      const [wx, wy] = auDos(k * ECART_DES_ANNEAUX)
+      const dx = wx - v.x
+      const dy = wy - v.y
+      anneaux.push([dx * ca + dy * sa, -dx * sa + dy * ca])
+    }
+    return anneaux
+  }
   /** La déviation de la flamme du joueur (voir `dessinerLeVaisseau`), et son cap à l'image d'avant. */
   let devieDeLaFlamme = 0
   let capVu = 0
@@ -6937,7 +6984,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       vises[fo.outil] = Math.atan2(f.y - oy, f.x - ox) - v.cap
     })
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
-    const al = { ...allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0), vises }
+    const al0 = allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0)
+    const al = { ...al0, vises, ...(al0.coque === 14 ? { chemin: cheminDuVer() } : {}) }
     // LA FLAMME TRAÎNE (Keko, 13/11 : « que la flamme du réacteur se déplace un petit peu comme les particules sur les
     // côtés, au lieu d'être rigide ») : sa pointe se déporte à l'opposé du glissement de côté du vaisseau, et reste en
     // arrière quand il vire ; un ressort l'y amène et l'en ramène, un frémissement la fait vivre
