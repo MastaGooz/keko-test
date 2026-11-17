@@ -305,32 +305,27 @@ const PEAUX: Record<string, Peau[]> = {
       habit: NU,
     },
   ],
-  // LA MANTE : une chitine vert feuille, des élytres, des ailes de membrane, des yeux de bile
+  // LE VER (à la place de la Mante — Keko, 17/11) : une chair de sable, des anneaux bruns, une bouche qui luit de bile ;
+  // ses apparences posent leur motif sur chacun de ses anneaux, qui ondule avec lui (`Habit.motif`)
   mante: [
-    origine('mante', BILE),
+    origine('ver', BILE),
     {
-      // la mante orchidée : rose et blanche, des lobes en pétales sur l'abdomen, des yeux roses
-      id: 'orchidee',
-      nom: 'Orchidée',
-      principale: 'mante',
-      rampes: { mante: T(330, 0.45, 1.2), elytre: T(318, 0.35, 1), membrane: T(300, 0.2, 1.2), bile: T(340, 0.8, 1.05), decor: T(335, 0.6, 1.15) },
-      accent: T(335, 0.6, 1.15),
-      habit: () => ({
-        ailes: [],
-        coque: COTES.flatMap((s) => [plat([[-3, s * 2.3], [-4.4, s * 3.6], [-6, s * 3.2], [-5.4, s * 2.1]], 'decor', s), plat([[-6.2, s * 1.9], [-7.6, s * 3], [-8.4, s * 1.4]], 'decor', s)]),
-      }),
+      // le ver des abysses : une chair indigo presque noire, des anneaux d'encre, des lueurs cyan qui battent sur ses flancs
+      id: 'abysses',
+      nom: 'Abysses',
+      principale: 'ver',
+      rampes: { ver: T(250, 0.4, 0.55), anneau: T(250, 0.3, 0.32), chair: T(200, 0.4, 0.7), bile: ENERGIE, decor: ENERGIE },
+      accent: ENERGIE,
+      habit: () => ({ ailes: [], coque: [], motif: 'lueurs' }),
     },
     {
-      // la mante feuille morte : brune, des nervures sombres sur les élytres, des yeux d'ambre
-      id: 'feuille',
-      nom: 'Feuille morte',
-      principale: 'mante',
-      rampes: { mante: T(30, 0.45, 0.82), elytre: T(24, 0.4, 0.62), membrane: T(34, 0.3, 0.92), bile: AMBRE, decor2: T(20, 0.4, 0.4) },
+      // le ver de braise : une chair rouge sang, des anneaux noirs, des taches d'ambre, une bouche de feu
+      id: 'braise',
+      nom: 'Braise',
+      principale: 'ver',
+      rampes: { ver: T(6, 0.62, 0.85), anneau: T(0, 0.2, 0.28), chair: T(14, 0.6, 0.9), bile: AMBRE, decor: AMBRE },
       accent: AMBRE,
-      habit: () => ({
-        ailes: [],
-        coque: COTES.flatMap((s) => [plat(barre(0.6, s * 0.6, -5.2, s * 1, 0.3), 'decor2'), plat(barre(-1.2, s * 0.9, -2.6, s * 2.2, 0.25), 'decor2'), plat(barre(-3.4, s * 1.1, -4.8, s * 1.9, 0.25), 'decor2')]),
-      }),
+      habit: () => ({ ailes: [], coque: [], motif: 'taches' }),
     },
   ],
   // LE TESSERACT : une lumière vert d'eau, un œil jaune

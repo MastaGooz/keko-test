@@ -229,11 +229,14 @@ export const MODELES: ModeleDeVaisseau[] = [
     // LA MANTE (Keko, 17/11 : l'Essaim « il faudra aussi leur trouver un vaisseau ») : la troisième bête, un insecte — une
     // mante religieuse, ses deux faux repliées devant elle, ses ailes qui bourdonnent quand elle pousse. SON ARME : la Nuée
     // du Kraken, en attendant les siennes (de moi, à rejuger)
+    // (… PUIS LE VER — Keko, 17/11 : « je voudrais changer la Mante pour un autre concept : un vaisseau sous la forme d'un
+    // ver de l'espace, qui se déplace par ondulation » ; son arme reste la Nuée. L'identifiant reste `mante` : les
+    // sauvegardes et les armes choisies y sont rangées)
     id: 'mante',
-    nom: 'Mante',
+    nom: 'Ver',
     classe: 'chasseur',
     race: 'essaim',
-    dit: 'Un insecte immense aux faux repliées, aux ailes qui bourdonnent ; une nuée la suit.',
+    dit: 'Un ver immense, tout en anneaux, qui nage dans le vide en ondulant ; une nuée le suit.',
     pieces: ['coque-14', 'propulseur-m3', 'arme-nuee'],
     serie: { possedees: ['coque-14', 'propulseur-m3', 'arme-nuee'], montees: { coque: 'coque-14', propulseur: 'propulseur-m3' }, outils: [], armes: ['arme-nuee'] },
     chaine: [],

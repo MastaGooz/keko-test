@@ -5369,3 +5369,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sur la périphérie ») : un voile d'anneau à peine marqué ; quatre traînées qui tournent sur le bord, la tête blanche
   dans une lueur, la queue qui s'éteint en s'enroulant de 5 vers l'intérieur ; trois traînées pâles à contre-sens, un
   peu dehors ; dix grains aspirés du dehors, qui spiralent jusqu'au bord.
+- LA MANTE DEVIENT LE VER (Keko, 17/11 : « changer la Mante pour un autre concept : un vaisseau sous la forme d'un ver ;
+  ses déplacements un peu par ondulation ; je te laisse me proposer quelque chose » — compris « ver », pas « verre » : un
+  ver de l'espace, l'Essaim est la race des bêtes). L'identifiant reste `mante` (sauvegardes, arme choisie), la Nuée
+  reste son arme. `formesDuVer` : une tête ronde ouverte sur une bouche bordée de sept dents, une lueur de bile au fond,
+  deux palpes qui tâtent ; neuf anneaux qui rapetissent jusqu'à une queue en pointe, chacun cerclé de chitine, des soies
+  un anneau sur deux. L'ONDULATION, AU DESSIN : une vague part de la tête et descend vers la queue — ample et rapide
+  quand il pousse (`flamme`), lente et faible au repos ; la tête se balance à peine, la queue balaie ; dans un virage
+  (`devie`), la queue se déporte à l'extérieur ; les anneaux gardent leur écart, courbé il raccourcit. En vol, il ne fait
+  qu'une trentaine de pixels : la vague a dû être doublée pour se lire. Ses apparences posent un MOTIF sur chaque anneau
+  (`Habit.motif`, qui ondule avec lui) : Origine (sable, anneaux bruns), Abysses (indigo, des lueurs cyan qui battent sur
+  ses flancs), Braise (rouge sang, anneaux noirs, des taches d'ambre).

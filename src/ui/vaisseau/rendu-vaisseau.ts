@@ -20,7 +20,7 @@ type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?:
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 const mix = (noyau as unknown as { mix(a: number, b: number, t: number): number }).mix
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'iris'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'iris' | 'ver' | 'anneau'
 /** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
@@ -110,6 +110,10 @@ const RAMPES: Record<Matiere, number[]> = {
   mante: ['#0c1a08', '#1a3410', '#2e5a18', '#4a8a24', '#7cbc3c', '#c8f080'].map(hex),
   elytre: ['#0e100a', '#1e2414', '#323c1e', '#4c5a2a', '#6e8038', '#a0b060'].map(hex),
   membrane: ['#1a2030', '#2e3a50', '#4a6078', '#7a98ac', '#b8d4d8', '#f0fff4'].map(hex),
+  // LE VER (Keko, 17/11 : à la place de la Mante, « un vaisseau sous la forme d'un ver ») : une chair de sable, des anneaux
+  // de chitine brune
+  ver: ['#1e1208', '#3e2812', '#6a4620', '#9c6e34', '#c89a56', '#f0d49a'].map(hex),
+  anneau: ['#120a06', '#24160c', '#3c2614', '#5a3a1e', '#7c5430', '#a87c50'].map(hex),
   // LE TESSERACT (Keko, 17/11 : le troisième des Innommés) : une lumière vert d'eau, maladive, pour ses arêtes ; un œil jaune
   spectre: ['#03140f', '#063028', '#0c5a48', '#18a080', '#50e8c0', '#c8fff0'].map(hex),
   iris: ['#1a1404', '#4a3a06', '#8a6a10', '#d0a020', '#f8e070', '#ffffff'].map(hex),
@@ -563,7 +567,9 @@ export type Allure = {
  * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
  * par un vrai changement de carrosserie ») : des formes posées sur les ailes (sous les armes) et sur la coque (par-dessus).
  */
-export type Habit = { ailes: Forme[]; coque: Forme[] }
+/** LES MOTIFS DU VER, que ses apparences posent sur chacun de ses anneaux : ils ondulent avec lui (voir `formesDuVer`). */
+export type MotifDuVer = 'taches' | 'lueurs' | 'bandes'
+export type Habit = { ailes: Forme[]; coque: Forme[]; /** (le ver : son motif, posé anneau par anneau) */ motif?: MotifDuVer }
 
 /**
  * LE GABARIT D'UNE COQUE (Keko, 13/11 : « fabrique-moi un vaisseau de 200 T de type cuirassé, avec le nombre de
@@ -645,9 +651,10 @@ const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ 
 // presque même pas à un vaisseau » : le cristal au milieu, ses deux arches qui l'emprisonnent, des éclats qui l'orbitent ;
 // plus de corps, plus d'ailes, plus de tuyère ni de feux)
 const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 6.6, flanc: 6, anneau: 14, echelle: 1 }
+// (LE VER, à la place de la Mante — Keko, 17/11 : sa tête devant, ses anneaux jusqu'à la queue, loin derrière)
 // LA MANTE (Keko, 17/11) : un insecte — l'abdomen derrière, les ailes sous les élytres, deux faux repliées devant, la tête
 // triangulaire et ses deux yeux ; pas de tuyère : elle pousse en bourdonnant et lâche des bulles, comme les bêtes
-const GABARIT_DE_LA_MANTE: Gabarit = { tuyeres: [{ x: -0.8, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 10.2, flanc: 4.6, anneau: 13, echelle: 1 }
+const GABARIT_DE_LA_MANTE: Gabarit = { tuyeres: [{ x: -0.8, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 10.6, flanc: 3.9, anneau: 13, echelle: 1 }
 // LE TESSERACT (Keko, 17/11) : un hypercube qui se retourne sur lui-même, un œil au milieu ; pas de tuyère : il plie l'espace
 const GABARIT_DU_TESSERACT: Gabarit = { tuyeres: [{ x: 1.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 0, nez: 7, flanc: 7, anneau: 14, echelle: 1 }
 // LE NÉANT (Keko, 16/11 : « l'effet energy core de pixelfx, précisément la sphère avec les deux anneaux qui tournent autour,
@@ -850,7 +857,7 @@ function pustule(x: number, y: number, r: number, t: number, phase: number): For
     { pts: ovale(x, y, rr, rr, 12), mat: 'venin', relief: 'dome', dome: { x, y, rx: rr, ry: rr } },
   ]
 }
-export function formesDeLaCoque(cran: number, t = 0): Forme[] {
+export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[] {
   if (cran === 13) {
     // LE NÉANT : LE CŒUR et SES DEUX ANNEAUX (ceux de l'« Energy core ») — chaque anneau est un cercle incliné (l'un de
     // 1,15 rad, l'autre de −0,9) qui tourne autour de l'axe de la vue, l'un en 2,4 s, l'autre deux fois plus vite et dans
@@ -936,46 +943,8 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
     }
     return [...derriere, ...oeil, ...devant]
   }
-  if (cran === 14) {
-    // LA MANTE : sous le corps, ses quatre pattes ; l'abdomen annelé derrière, couvert à moitié par les élytres ; le thorax ;
-    // le long cou ; LES DEUX FAUX repliées devant (la cuisse vers l'avant, armée d'épines, le tibia rabattu contre elle) ;
-    // la tête en triangle, deux grands yeux, deux antennes, de petites mandibules. Les faux frémissent.
-    const f: Forme[] = []
-    for (const s of [-1, 1]) {
-      f.push({ pts: barre(0.6, s * 1.1, -1.4, s * 4.6, 0.45), mat: 'elytre', relief: 'plat' })
-      f.push({ pts: barre(-1.4, s * 4.6, -2.8, s * 5.6, 0.35), mat: 'elytre', relief: 'plat' })
-      f.push({ pts: barre(-0.6, s * 1.2, -3.6, s * 4.1, 0.45), mat: 'elytre', relief: 'plat' })
-      f.push({ pts: barre(-3.6, s * 4.1, -5.8, s * 5.2, 0.35), mat: 'elytre', relief: 'plat' })
-      f.push({ pts: barre(9.6, s * 0.5, 12.4, s * 2.6, 0.28), mat: 'elytre', relief: 'plat' })
-    }
-    f.push({ pts: ovale(-4.8, 0, 4.4, 2.5, 22), mat: 'mante', relief: 'dome', dome: { x: -4.8, y: 0, rx: 4.4, ry: 2.5 } })
-    for (const x of [-6.2, -7.6, -8.6]) {
-      const h = 2.5 * Math.sqrt(Math.max(0, 1 - ((x + 4.8) / 4.4) ** 2)) * 0.92
-      f.push({ pts: barre(x, -h, x - 0.3, h, 0.32), mat: 'elytre', relief: 'plat' })
-    }
-    for (const s of [-1, 1]) f.push({ pts: [[1.4, s * 0.2], [0.4, s * 1.9], [-2.6, s * 2.5], [-5.6, s * 1.4], [-5.9, s * 0.15]], mat: 'elytre', relief: 'plat', penche: s })
-    f.push({ pts: ovale(0.6, 0, 1.9, 1.4, 16), mat: 'mante', relief: 'dome', dome: { x: 0.6, y: 0, rx: 1.9, ry: 1.4 } })
-    f.push({ pts: [[7, -0.65], [2.2, -0.95], [2.2, 0.95], [7, 0.65]], mat: 'mante', relief: 'cyl' })
-    const frisson = t === 0 ? 0 : 0.14 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 7.3)
-    for (const s of [-1, 1]) {
-      const kx = 8.6
-      const ky = s * (2.9 + frisson)
-      f.push({ pts: barre(5, s * 0.7, kx, ky, 0.95), mat: 'mante', relief: 'plat', penche: s })
-      for (const u of [0.35, 0.6, 0.85]) {
-        const px = 5 + (kx - 5) * u
-        const py = s * 0.7 + (ky - s * 0.7) * u
-        f.push({ pts: [[px - 0.28, py], [px + 0.28, py], [px + 0.15, py - s * 0.75]], mat: 'os', relief: 'plat' })
-      }
-      f.push({ pts: barre(kx, ky, 6.1, s * 2, 0.6), mat: 'mante', relief: 'plat', penche: s })
-      f.push({ pts: [[6.1, s * 2], [5.3, s * 1.6], [5.8, s * 2.3]], mat: 'os', relief: 'plat' })
-    }
-    f.push({ pts: [[10.2, 0], [8.7, -1.75], [7.3, -1.05], [7.3, 1.05], [8.7, 1.75]], mat: 'mante', relief: 'plat' })
-    for (const s of [-1, 1]) {
-      f.push({ pts: [[10.1, s * 0.22], [10.8, s * 0.5], [9.95, s * 0.62]], mat: 'os', relief: 'plat' })
-      f.push({ pts: ovale(8.45, s * 1.32, 0.78, 0.62, 10), mat: 'bile', relief: 'dome', dome: { x: 8.45, y: s * 1.32, rx: 0.78, ry: 0.62 } })
-    }
-    return f
-  }
+  // (LE VER — à la place de la Mante, Keko, 17/11 : au repos, sans motif ; en vol, `formesDuVaisseau` le fait onduler)
+  if (cran === 14) return formesDuVer(t, 0, 0, motif)
   if (cran === 12) {
     // LE PRISME, PLUS UN VAISSEAU (Keko, 17/11 : « on garde le cristal, on garde les deux espèces d'arcs qui viennent
     // emprisonner le cristal, mais on veut vraiment le rapprocher du néant — quelque chose qui ne ressemble presque même pas
@@ -1387,7 +1356,7 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
  */
 export function formesDuChassis(cran: number, habit?: Habit): Forme[] {
   if (habit === undefined) return [...formesDesAiles(cran), ...formesDeLaCoque(cran)]
-  return [...formesDesAiles(cran), ...habit.ailes, ...formesDeLaCoque(cran), ...habit.coque].filter((x) => x.mat !== 'marque')
+  return [...formesDesAiles(cran), ...habit.ailes, ...formesDeLaCoque(cran, 0, habit.motif), ...habit.coque].filter((x) => x.mat !== 'marque')
 }
 /** LA TUYÈRE d'un cran de propulseur, et sa flamme (longue de 0 à 1). */
 /**
@@ -1524,6 +1493,94 @@ export function formesDeLArme(id: string, s: number): Forme[] {
   ]
 }
 
+/**
+ * LE VER (Keko, 17/11 : « je voudrais changer la Mante pour un autre concept : un vaisseau sous la forme d'un ver de
+ * l'espace ; il faudrait que ses déplacements se fassent un peu par ondulation ») : UNE TÊTE ronde, ouverte devant sur
+ * une BOUCHE ronde bordée de dents — une lueur au fond —, deux palpes qui tâtent devant elle ; derrière, NEUF ANNEAUX de
+ * plus en plus petits jusqu'à la queue, chacun cerclé de chitine, deux soies sur ses flancs.
+ * IL ONDULE : une vague part de la tête et descend vers la queue, ample et rapide quand il pousse (`flamme`), lente et
+ * faible au repos ; la tête ne fait que se balancer, la queue balaie ; QUAND IL VIRE (`devie`), la queue se déporte à
+ * l'extérieur du virage. Les anneaux gardent leur écart le long du corps : courbé, il raccourcit. Son apparence pose son
+ * motif sur chaque anneau (`motif` : des taches, des lueurs qui battent, une bande sur le dos).
+ */
+export function formesDuVer(t: number, flamme: number, devie: number, motif?: MotifDuVer): Forme[] {
+  const N = 9
+  const L = 2.5
+  const pousse = Math.min(1, Math.max(0, flamme))
+  // (ample : en vol, il ne fait qu'une trentaine de pixels de long)
+  const A = 0.6 + 2.6 * pousse
+  const phase = t * (3 + 6 * pousse)
+  // (le corps : la tête au premier point, la queue au dernier)
+  const pts: { x: number; y: number; r: number }[] = []
+  let x = 6.6
+  let y = 0
+  for (let k = 0; k <= N; k++) {
+    const yk = A * Math.sin(phase - k * 0.7) * (0.2 + (0.8 * k) / N) - devie * 0.1 * k * (k / N)
+    if (k > 0) x -= Math.sqrt(Math.max(0.3, L * L - (yk - y) ** 2))
+    y = yk
+    pts.push({ x, y, r: 3.2 - (1.7 * k) / N })
+  }
+  const f: Forme[] = []
+  const q = pts[N]
+  const ap = pts[N - 1]
+  const dq = Math.hypot(q.x - ap.x, q.y - ap.y) || 1
+  // (le bout de la queue, une pointe)
+  f.push({ pts: [[q.x + ((q.x - ap.x) / dq) * 2.4, q.y + ((q.y - ap.y) / dq) * 2.4], [q.x - ((q.y - ap.y) / dq) * q.r * 0.7, q.y + ((q.x - ap.x) / dq) * q.r * 0.7], [q.x + ((q.y - ap.y) / dq) * q.r * 0.7, q.y - ((q.x - ap.x) / dq) * q.r * 0.7]], mat: 'anneau', relief: 'plat' })
+  for (let k = N; k >= 1; k--) {
+    const p = pts[k]
+    const d = pts[k - 1]
+    const l = Math.hypot(d.x - p.x, d.y - p.y) || 1
+    const ux = (d.x - p.x) / l
+    const uy = (d.y - p.y) / l
+    // (deux soies sur ses flancs, un anneau sur deux, couchées vers l'arrière, qui frémissent)
+    if (k % 2 === 0) for (const s of [-1, 1]) {
+      const bx = p.x - uy * s * p.r * 0.85
+      const by = p.y + ux * s * p.r * 0.85
+      const lg = 0.75 + 0.25 * Math.sin(t * 12 + k * 1.3 + s)
+      f.push({ pts: barre(bx, by, bx - ux * lg * 0.9 - uy * s * lg, by - uy * lg * 0.9 + ux * s * lg, 0.22), mat: 'anneau', relief: 'plat' })
+    }
+    f.push({ pts: ovale(p.x, p.y, p.r * 0.95, p.r, 14), mat: 'ver', relief: 'dome', dome: { x: p.x, y: p.y, rx: p.r * 0.95, ry: p.r } })
+    // (son anneau de chitine, en travers, vers l'avant)
+    const ax = p.x + ux * p.r * 0.5
+    const ay = p.y + uy * p.r * 0.5
+    f.push({ pts: barre(ax - uy * p.r * 0.85, ay + ux * p.r * 0.85, ax + uy * p.r * 0.85, ay - ux * p.r * 0.85, 0.5), mat: 'anneau', relief: 'plat' })
+    if (motif === 'taches' && k % 2 === 1) f.push({ pts: ovale(p.x - ux * 0.3, p.y - uy * 0.3, p.r * 0.38, p.r * 0.38, 10), mat: 'decor', relief: 'dome', dome: { x: p.x - ux * 0.3, y: p.y - uy * 0.3, rx: p.r * 0.38, ry: p.r * 0.38 } })
+    if (motif === 'lueurs') for (const s of [-1, 1]) f.push({ pts: ovale(p.x - uy * s * p.r * 0.45, p.y + ux * s * p.r * 0.45, 0.42, 0.42, 8), mat: 'decor', relief: 'lueur', ton: Math.round(3 + 2 * (0.5 + 0.5 * Math.sin(t * 4 - k * 0.7))) })
+    if (motif === 'bandes') f.push({ pts: barre(p.x - ux * p.r * 0.4, p.y - uy * p.r * 0.4, d.x, d.y, 0.55), mat: 'decor', relief: 'plat' })
+  }
+  // LA TÊTE : deux palpes qui tâtent devant, la tête ronde, son col de chitine, la bouche et ses dents, la lueur au fond
+  const h = pts[0]
+  const n1 = pts[1]
+  const lh = Math.hypot(h.x - n1.x, h.y - n1.y) || 1
+  const ux = (h.x - n1.x) / lh
+  const uy = (h.y - n1.y) / lh
+  for (const s of [-1, 1]) {
+    const bx = h.x + ux * 1.6 - uy * s * 1.7
+    const by = h.y + uy * 1.6 + ux * s * 1.7
+    const an = Math.atan2(uy, ux) + s * (0.55 + 0.25 * Math.sin(t * 5 + s * 1.3))
+    f.push({ pts: barre(bx, by, bx + Math.cos(an) * 2.6, by + Math.sin(an) * 2.6, 0.32), mat: 'chair', relief: 'plat' })
+  }
+  f.push({ pts: ovale(h.x, h.y, h.r, h.r, 18), mat: 'ver', relief: 'dome', dome: { x: h.x, y: h.y, rx: h.r, ry: h.r } })
+  const cx = h.x - ux * h.r * 0.55
+  const cy = h.y - uy * h.r * 0.55
+  f.push({ pts: barre(cx - uy * h.r * 0.9, cy + ux * h.r * 0.9, cx + uy * h.r * 0.9, cy - ux * h.r * 0.9, 0.6), mat: 'anneau', relief: 'plat' })
+  // (la bouche respire : elle s'ouvre et se referme lentement)
+  const mx = h.x + ux * 1.3
+  const my = h.y + uy * 1.3
+  const ouvre = 1.15 + 0.2 * Math.sin(t * 2.2)
+  f.push({ pts: ovale(mx, my, ouvre * 0.85, ouvre, 14), mat: 'obsidienne', relief: 'plat' })
+  f.push({ pts: ovale(mx, my, 0.45, 0.55, 8), mat: 'bile', relief: 'lueur', ton: Math.round(3 + 1.5 * (0.5 + 0.5 * Math.sin(t * 3))) })
+  for (let k = 0; k < 7; k++) {
+    const a = (k / 7) * Math.PI * 2 + t * 0.4
+    const ca = Math.cos(a)
+    const sa = Math.sin(a)
+    const rx = mx + ca * ouvre * 0.85
+    const ry = my + sa * ouvre
+    f.push({ pts: [[rx + sa * 0.25, ry - ca * 0.25], [rx - sa * 0.25, ry + ca * 0.25], [mx + ca * ouvre * 0.35, my + sa * ouvre * 0.4]], mat: 'os', relief: 'plat' })
+  }
+  return f
+}
+
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
 export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
   const g = gabaritDe(a.coque)
@@ -1559,17 +1616,6 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
       y = ny
     }
   }
-  // (LA MANTE BOURDONNE : ses deux ailes de membrane sortent de sous les élytres quand elle pousse, et battent très vite ;
-  // repliées au repos, elles ne dépassent presque pas)
-  if (a.coque === 14) for (const s of [-1, 1]) {
-    const ouvre = 0.28 + 0.75 * Math.min(1, flamme)
-    const bat = t === 0 ? 0 : Math.sin(t * 70 + s) * 0.22 * Math.min(1, flamme * 1.5)
-    const an = Math.PI - s * (ouvre + bat)
-    const [bx, by] = [0.4, s * 1]
-    const L = 7.4
-    const pt = (d: number, k: number): [number, number] => [bx + Math.cos(an - s * d) * L * k, by + Math.sin(an - s * d) * L * k]
-    f.unshift({ pts: [[bx, by], pt(0.16, 0.7), pt(0.04, 1), pt(-0.1, 0.92), pt(-0.18, 0.55)], mat: 'membrane', relief: 'plat', penche: s })
-  }
   // (LE KRAKEN TRAÎNE QUATRE TENTACULES derrière lui, qui ondulent — sous la flamme et le manteau)
   if (a.coque === 10) for (const y0 of [-2.7, -0.9, 0.9, 2.7]) {
     let x = -6.6
@@ -1588,7 +1634,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (la flamme doit passer SOUS la coque : on la met en tête)
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
-  const tout = [...feux, ...reste, ...sansMarque(formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
+  // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
+  const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
   if (g.surLePont) tout.push(...armes)
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant
