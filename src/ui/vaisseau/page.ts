@@ -3564,13 +3564,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'aperçu (`dessinerLApercuDeLArme`), le nom, la description sans chiffres (`DESCRIPTIONS_DES_ARMES`)
     // (UN PETIT ESPACE SOUS LA DESCRIPTION, comme celle des vaisseaux — Keko, 17/11 : « elle touche le bord inférieur de son
     // cadre » : la plaque se taille à ses lignes, trois pixels sous la dernière)
+    // (LA PLAQUE GARDE TOUJOURS LA PLACE DE TROIS LIGNES — Keko, 17/11 : « dessine toujours le rectangle de la même taille ;
+    // s'il y a deux lignes, centre-les verticalement »)
     const lignes = replier(DESCRIPTIONS_DES_ARMES[choisie.id] ?? choisie.dit, W - 22).slice(0, 3)
-    const bas = 21 + lignes.length * 9 + 3
+    const bas = 21 + 3 * 9 + 3
     const hA = Math.max(64, Math.min(110, H - y - 4 - bas))
     plaque(p, 4, y, W - 8, hA + bas, 'encre')
     dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
     motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
-    lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + i * 9, COQUE[4], { align: 'center' }))
+    const centre = Math.round(((3 - lignes.length) * 9) / 2)
+    lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + centre + i * 9, COQUE[4], { align: 'center' }))
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }
@@ -4096,6 +4099,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ch = Math.max(30, Math.min(60, Math.floor((H - 4 - y - 4 - reserve - (RANGS - 1) * ESP) / RANGS)))
     const xg = Math.round((W - (COLS * cw + (COLS - 1) * ESP)) / 2)
     zoneGlissante = null
+    // (LES NOMS S'ÉCRIVENT APRÈS TOUTES LES CASES — Keko, 17/11 : couché, « Salamandre » déborde d'un pixel et la case
+    // d'à côté le coupait ; écrit par-dessus, il mord sur l'espace entre les cases, sans toucher la voisine)
+    const noms: (() => void)[] = []
     RACES.forEach((race, r) => {
       MODELES.filter((mo) => mo.id !== 'cuirasse' && mo.race === race.id).forEach((mo, k) => {
         const col = parColonne ? r : k
@@ -4126,13 +4132,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const pilote = mo.id === flotte.actif
         if (pilote) N.sparkle(p, cx + cw - 6, cy + 6 + dy, 3, PEPITE[2], PEPITE[2], 0.8)
         // (plus d'insigne de race dans la case — Keko, 17/11 : la fiche, dessous, porte l'emblème de la race)
-        ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, pilote ? PEPITE[2] : ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' })
+        noms.push(() => ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, pilote ? PEPITE[2] : ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' }))
         zone(cx - 1, cy - 1, cw + 2, ch + 2, () => {
           vaisseauChoisi = mo.id
           choixVaisseauA = t
         }, ici ? null : 'clic')
       })
     })
+    noms.forEach((ecrireLeNom) => ecrireLeNom())
     const hl = RANGS * (ch + ESP) - ESP
     y += hl + 4
     }

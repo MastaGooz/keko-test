@@ -5312,3 +5312,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   CADRE D'OR DU CHOISI N'ENTOURE QUE SON PORTRAIT : autour de la case, il passait sur les noms longs (« Salamandre »,
   « Tesseract ») — Keko ne veut pas de noms de tailles différentes. Plus d'étoile dans le coin de l'apparence choisie
   (« le rectangle de sélection suffit »).
+- LA PLAQUE DES ARMES GARDE TOUJOURS LA PLACE DE TROIS LIGNES (Keko, 17/11) ; une description plus courte s'y centre
+  verticalement. DANS LA GRILLE DES VAISSEAUX, LES NOMS S'ÉCRIVENT APRÈS TOUTES LES CASES : couché, « Salamandre »
+  déborde d'un pixel et la case voisine le coupait ; par-dessus, il mord sur l'espace entre les cases (renommer la
+  Salamandre, proposé par Keko, n'a pas été nécessaire).
