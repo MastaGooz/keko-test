@@ -1538,7 +1538,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // bras, qui mordent une fois tendus
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const nuee = { id: 'nuee', cadence: 1, degats: 0, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, nuee: { rayon: 14, dps: 7, bras: 3, deploiement: 0.3, periode: 0.4 } }
+  const nuee = { id: 'nuee', cadence: 1, degats: 0, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, nuee: { rayon: 14, budget: 14, bras: 3, deploiement: 0.3, periode: 0.4 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [nuee], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const planer = (places: [number, number][], vitesse: number, duree: number) => {
     const w = nouveauMonde(cfg, 3)
@@ -1556,7 +1556,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const seul = planer([[0, 500]], 40, 1)
   verifier('personne à portée : le nuage reste sur le vaisseau, même quand il file, sans bras', seul.w.nuees[0].x === seul.w.vaisseau.x && seul.w.nuees[0].y === seul.w.vaisseau.y && seul.w.nuees[0].bras.length === 0)
   const un = planer([[40, 0], [0, 90]], 0, 2)
-  verifier(`un insecte à 40 (hors du nuage, à portée) : un bras s’étend vers lui (à mi-course au bout de 0,15 s) et le mord une fois tendu (${un.pv[0].toFixed(1)} en 2 s) ; le lointain, rien`, un.bras05 > 0.4 && un.bras05 < 0.7 && un.pv[0] > 7 * 1.6 && un.pv[0] < 7 * 1.8 && un.pv[1] === 0 && un.ev.some((e) => e.type === 'morsure'))
+  verifier(`un insecte à 40 (hors du nuage, à portée) : un bras s’étend vers lui (à mi-course au bout de 0,15 s) et le mord une fois tendu (${un.pv[0].toFixed(1)} en 2 s) ; le lointain, rien`, un.bras05 > 0.4 && un.bras05 < 0.7 && un.pv[0] > 14 * 1.6 && un.pv[0] < 14 * 1.8 && un.pv[1] === 0 && un.ev.some((e) => e.type === 'morsure'))
   const cinq = planer([[30, 0], [-30, 0], [0, 35], [0, -40], [45, 30]], 0, 1)
   verifier('cinq insectes à portée : trois bras, vers les trois plus proches — les deux autres ne sont pas mordus', cinq.w.nuees[0].bras.length === 3 && cinq.pv[0] > 0 && cinq.pv[1] > 0 && cinq.pv[2] > 0 && cinq.pv[3] === 0 && cinq.pv[4] === 0)
   const verrou = (() => {
@@ -1571,6 +1571,10 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     return w
   })()
   verifier('un insecte verrouillé, même le plus loin : il a son bras', verrou.nuees[0].bras.some((b) => b.cible === 4))
+  // (LE BUDGET DE LA NUÉE — Keko, 17/11 : les insectes mordus en même temps se partagent ses 14 points par seconde)
+  const deux = planer([[8, 0], [-8, 0]], 0, 1)
+  const trois = planer([[8, 0], [-8, 0], [0, 8]], 0, 1)
+  verifier(`la nuée partage son budget : seul, un insecte dans le nuage perd 14 par seconde ; à deux, 7 chacun (${deux.pv.map((x) => x.toFixed(1)).join(' / ')}) ; à trois, 4,7 (${trois.pv.map((x) => x.toFixed(1)).join(' / ')})`, deux.pv.every((x) => Math.abs(x - 7) < 0.2) && trois.pv.every((x) => Math.abs(x - 14 / 3) < 0.2))
 }
 // LES REJETONS DU KRAKEN (Keko, 16/11) : pondus quand un insecte est à portée, ils nagent jusqu'à lui et le fouettent ;
 // trois au plus ; ils meurent au bout de leur durée

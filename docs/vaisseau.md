@@ -5334,3 +5334,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     tend jusqu'à l'insecte quand elle fouette. Sur l'espace noir, la palette « void » est REMONTÉE de deux tons : le
     corps sombre du dépôt (fait pour un sol clair) ne se voyait pas.
   *Chiffres de moi, à rejuger.*
+- LE KRAKEN, RÉGLÉ (Keko, 17/11) : SA TENTACULE UN TOUT PETIT PEU MOINS RAPIDE — une piqûre toutes les 0,42 s au lieu
+  de 0,35 (aller et retour en 0,14, plantée 0,07, repos 0,07), 14 points par seconde. L'ESSAIM DEVIENT « LA NUÉE »
+  (« l'essaim, c'est déjà le nom de la race »), et SES DÉGÂTS SONT UN BUDGET (« si un seul ennemi est attaqué, il prend
+  la totalité ; si deux, c'est divisé par deux ») : 14 points par seconde partagés à parts égales entre les insectes
+  mordus en même temps (`Arme.nuee.budget`) — 7 à chacun de deux, comme avant, 14 à un seul, 4,7 à trois.
+- LES TOURELLES DE L'INGÉNIEUR N'ONT PLUS DE JAUGE DE DURÉE sous le socle (Keko, 17/11 : « inutile ») ; elles
+  clignotent toujours leurs trois dernières secondes.
+- LES ÉCLATS DE GLACE DU FRIMAS NE SE FRAGMENTENT PLUS (Keko, 17/11 : « ce sera plutôt une amélioration qu'on rajoutera
+  durant une partie ; on reste sur les projectiles ») : huit éclats, le premier droit sur la cible, chacun frappe le
+  premier insecte touché (4 points, le gel). La règle `salve.eclatement` reste écrite et vérifiée, pour l'amélioration.

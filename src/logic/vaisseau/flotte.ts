@@ -227,7 +227,7 @@ export const MODELES: ModeleDeVaisseau[] = [
   },
   {
     // LA MANTE (Keko, 17/11 : l'Essaim « il faudra aussi leur trouver un vaisseau ») : la troisième bête, un insecte — une
-    // mante religieuse, ses deux faux repliées devant elle, ses ailes qui bourdonnent quand elle pousse. SON ARME : l'Essaim
+    // mante religieuse, ses deux faux repliées devant elle, ses ailes qui bourdonnent quand elle pousse. SON ARME : la Nuée
     // du Kraken, en attendant les siennes (de moi, à rejuger)
     id: 'mante',
     nom: 'Mante',

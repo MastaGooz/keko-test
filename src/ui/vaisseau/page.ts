@@ -3592,13 +3592,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-scie': 'Une scie circulaire lancée vers l’ennemi, qui coupe tout à l’aller et au retour.',
     'arme-fleau': 'Une masse à pics qui tourne sans cesse autour de lui, au bout de sa chaîne.',
     'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
-    'arme-eclats': 'De gros éclats de glace tout autour : chacun se brise sur un insecte en une gerbe de fragments.',
+    'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
     'arme-essaim': 'Une gerbe de petits missiles de plasma, qui zigzaguent puis fondent sur les insectes.',
     'arme-meteore': 'Une météore d’arcane tombe du ciel sur un insecte, sans jamais le manquer.',
     'arme-tentacules': 'Une tentacule à aiguille, qui fouette et pique très vite.',
-    'arme-nuee': 'Un nuage de minuscules insectes l’entoure et lance ses bras vers les ennemis.',
+    'arme-nuee': 'Une nuée de minuscules insectes l’entoure et lance ses bras vers les ennemis.',
     'arme-rejetons': 'Il pond des rejetons, qui nagent vers les insectes et les agrippent de leurs tentacules.',
     'arme-crachat': 'Un crachat d’acide devant lui, qui ronge les insectes et les rend fragiles.',
     'arme-mines': 'Des pustules d’acide semées autour de lui, qui éclatent en gaz au passage d’un insecte.',
@@ -8351,7 +8351,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
   /**
-   * L'ESSAIM DU KRAKEN (voir `Arme.nuee`) : un voile à peine visible, et UNE NUÉE DE MOUCHERONS — chacun un corps sombre et
+   * LA NUÉE DU KRAKEN (voir `Arme.nuee` ; « l'essaim » d'abord, renommée le 17/11) : un voile à peine visible, et UNE NUÉE DE MOUCHERONS — chacun un corps sombre et
    * une aile claire qui bat, qui tremblent. AU REPOS, tous tournent autour du vaisseau, serrés, chacun sur son orbite.
    * DES BRAS (Keko, 16/11 : « l'essaim se déforme et s'étend vers les ennemis ») : trois sur cinq quittent le nuage pour
    * ses bras — chacun à sa place le long du bras (une fraction de sa longueur, tendue d'autant qu'il est allongé), un bras
@@ -8982,7 +8982,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LES TOURELLES DE L'INGÉNIEUR, PEINTES COMME LES VAISSEAUX (`formesDuSocleDeTourelle`, `formesDeLaTeteDeTourelle` —
     // Keko, 15/11 : les carrés à un trait n'étaient « pas très jolis ») : le socle fixe, la tête qui pivote vers sa cible,
     // à la lumière du vol et à la couleur du joueur. Elles se DÉPLIENT en naissant (elles grandissent, une onde de
-    // poussière), CLIGNOTENT leurs trois dernières secondes ; une jauge de vie sous elles.
+    // poussière), CLIGNOTENT leurs trois dernières secondes.
     const SOCLE = formesDuSocleDeTourelle()
     const TETE = formesDeLaTeteDeTourelle()
     const CAPSULE = formesDeLaCapsule()
@@ -9013,11 +9013,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (age < 0.4) p.ring(sx, sy, 5 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.4)
       peindreFormes(p, SOCLE, sx, sy, k, { cap: -Math.PI / 2, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
       peindreFormes(p, TETE, sx, sy, k, { cap: tu.cap, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
-      // sa vie, une jauge fine sous le socle
-      const lw = 11
-      const lv = Math.round(lw * Math.max(0, reste / po.duree))
-      p.rect(sx - 5, sy + 8, lw, 1, MATIERES.encre.contour)
-      if (lv > 0) p.rect(sx - 5, sy + 8, lv, 1, reste < 3 ? ROUGE[4] : PEPITE[2])
+      // (plus de jauge de durée sous le socle — Keko, 17/11 : « inutile d'avoir une barre pour la durée de la tourelle » ;
+      // le clignotement des trois dernières secondes reste)
     }
   }
   /**

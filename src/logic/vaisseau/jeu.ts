@@ -562,7 +562,11 @@ export type Arme = {
   // les plus proches (le verrouillé d'abord), il ÉTEND UN BRAS, qui s'allonge en `deploiement` secondes et se rétracte de
   // même quand son insecte meurt ou s'éloigne. Un insecte au bout d'un bras tendu, ou dans le nuage, perd `dps` par
   // seconde (une morsure se signale toutes les `periode` secondes).
-  nuee?: { rayon: number; dps: number; bras: number; deploiement: number; periode: number }
+  // (… RENOMMÉ « LA NUÉE », ET SES DÉGÂTS SONT UN BUDGET — Keko, 17/11 : « l'essaim, c'est déjà le nom de la race » ; « la
+  // nuée a un budget de X dégâts par seconde : si un seul ennemi est attaqué, il prend la totalité ; si deux, c'est divisé
+  // par deux » : les insectes mordus en même temps — au bout d'un bras tendu, ou dans le nuage — se partagent `budget`
+  // points par seconde, à parts égales)
+  nuee?: { rayon: number; budget: number; bras: number; deploiement: number; periode: number }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
@@ -2656,11 +2660,11 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (m.phase !== 'vol') return
     const signale = m.t - n.mordA >= nu.periode
     if (signale) n.mordA = m.t
-    // (mordus : au bout d'un bras tendu, ou dans le nuage)
+    // (mordus : au bout d'un bras tendu, ou dans le nuage — ils se partagent le budget de la nuée)
     const auBout = new Set(n.bras.filter((b) => b.u >= 0.85 && vises.has(b.cible)).map((b) => b.cible))
-    for (const e of [...m.ennemis]) {
-      if (!auBout.has(e.id) && dist(e) > nu.rayon + c.ennemi.rayon) continue
-      e.pv -= nu.dps * dt
+    const mordus = m.ennemis.filter((e) => auBout.has(e.id) || dist(e) <= nu.rayon + c.ennemi.rayon)
+    for (const e of mordus) {
+      e.pv -= (nu.budget / mordus.length) * dt
       if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
