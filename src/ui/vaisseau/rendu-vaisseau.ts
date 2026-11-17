@@ -519,7 +519,8 @@ export type Allure = {
 export type Gabarit = {
   tuyeres: { x: number; y: number }[]
   armes: { x: number; y: number; s: number }[]
-  feux: { x: number; y: number }
+  /** Les feux de position (rouge à bâbord, vert à tribord) ; null : il n'en a pas. */
+  feux: { x: number; y: number } | null
   verriere: number
   nez: number
   flanc: number
@@ -589,7 +590,8 @@ const GABARIT_DU_PRISME: Gabarit = { tuyeres: [{ x: 1.9, y: 0 }], armes: [{ x: 0
 // coups) ; pas de tuyère : il lâche des éclats de néant (voir `organique` dans la page)
 // (… GROSSI DE 45 % — Keko, 16/11 : « grossis le vaisseau dans le hangar et en jeu, il est trop petit » : tout ce qui suit est
 // à la nouvelle taille — le cœur, les anneaux, l'éperon, sa place d'arme, sa poupe, l'anneau du bouclier)
-const GABARIT_DU_NEANT: Gabarit = { tuyeres: [{ x: 2, y: 0 }], armes: [{ x: 0.6, y: 0, s: 1 }], feux: { x: 4.9, y: 4.6 }, verriere: 0, nez: 11, flanc: 8.5, anneau: 17, echelle: 1 }
+// (… ET SANS FEUX DE POSITION — Keko, 17/11 : « il n'a pas de raison d'avoir des lumières comme ça, lui »)
+const GABARIT_DU_NEANT: Gabarit = { tuyeres: [{ x: 2, y: 0 }], armes: [{ x: 0.6, y: 0, s: 1 }], feux: null, verriere: 0, nez: 11, flanc: 8.5, anneau: 17, echelle: 1 }
 /** Le rayon du cœur du Néant, et ceux de ses deux anneaux (en unités du vaisseau). */
 export const COEUR_DU_NEANT = { r: 6.4, anneaux: [11.9, 13.9] }
 /**

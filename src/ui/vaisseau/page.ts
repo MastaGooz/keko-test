@@ -476,6 +476,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let champDuVortex = parametres.has('champ') ? CHAMP_AUTO : 1.5
   let pince: { id: number; y0: number; champ0: number; doigt: Vecteur } | null = null
   const COURSE_DU_ZOOM = 0.4
+  /**
+   * LA RÉGLETTE DU ZOOM (Keko, 17/11 : « un petit slider sur une ligne sous le pouce quand on zoome et qu'on dézoome, que le
+   * joueur voit le minimum et le maximum ») : une ligne verticale, « + » en haut (1, la vue de près), « − » en bas (2, la
+   * plus large), le curseur où en est le champ. Elle est posée au premier contact et ne bouge plus ; au doigt, un peu à
+   * gauche du pouce (dessous, il la cacherait). Elle s'efface au relâchement. En pixels CSS : `x`, `haut`, `bas`.
+   */
+  let reglette: { x: number; haut: number; bas: number; vueA: number } | null = null
+  const A_COTE_DU_POUCE = 34
+  function poserLaPince(ev: PointerEvent): void {
+    pince = { id: ev.pointerId, y0: ev.clientY, champ0: champDuVortex, doigt: { x: ev.clientX, y: ev.clientY } }
+    const course = Math.max(1, racine.clientHeight * COURSE_DU_ZOOM)
+    const x = ev.clientX - (ev.pointerType === 'mouse' ? 0 : A_COTE_DU_POUCE)
+    reglette = { x, haut: ev.clientY - (champDuVortex - 1) * course, bas: ev.clientY + (CHAMP_MAX - champDuVortex) * course, vueA: t }
+  }
   /** « + » zoome (le champ se resserre), « − » dézoome ; côte à côte, ou l'un sur l'autre (`empiles`, dans le bandeau couché). */
   function dessinerLeZoom(p: Peintre, x: number, y: number, empiles: boolean): void {
     const B = 13
@@ -2577,9 +2591,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le Néant n'a pas de verrière : sa lueur bleue grisait l'horizon de son trou noir)
     if (coqueMontee !== 13) p.glow(cx + jit, sy - g.verriere * ECH, 7, VERRIERE[2], 0.25)
     const bat = Math.floor(t * 1.5) % 2 === 0
-    for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
-      const fx = Math.round(cx + jit + s * (g.feux.y + 0.2) * ECH)
-      const fy = Math.round(sy + (0.2 - g.feux.x) * ECH)
+    const feux = g.feux
+    if (feux !== null) for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
+      const fx = Math.round(cx + jit + s * (feux.y + 0.2) * ECH)
+      const fy = Math.round(sy + (0.2 - feux.x) * ECH)
       if (bat) {
         p.rect(fx, fy, 1, 1, N.WHITE)
         p.glow(fx, fy, 6, c, 0.7)
@@ -5542,7 +5557,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (vise !== null) basculerLeVerrou(vise)
         // (la souris tenue zoome : voir `pince`)
         racine.setPointerCapture(ev.pointerId)
-        pince = { id: ev.pointerId, y0: ev.clientY, champ0: champDuVortex, doigt: { x: ev.clientX, y: ev.clientY } }
+        poserLaPince(ev)
         return
       }
       tapeVerrou = vise === null ? null : { id: ev.pointerId, x: ev.clientX, y: ev.clientY, a: performance.now(), cible: vise }
@@ -5551,7 +5566,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (manche !== null && pince === null && ev.pointerType === 'touch' && doigtsPoses >= 1) {
         ev.preventDefault()
         racine.setPointerCapture(ev.pointerId)
-        pince = { id: ev.pointerId, y0: ev.clientY, champ0: champDuVortex, doigt: { x: ev.clientX, y: ev.clientY } }
+        poserLaPince(ev)
         return
       }
     }
@@ -6155,9 +6170,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const [vx, vy] = ici(g.verriere, 0)
     if (allure.coque !== 13) p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
-    if (!blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
+    const feux = g.feux
+    if (feux !== null && !blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
       for (const s of [-1, 1]) {
-        const [ax, ay] = ici(g.feux.x, s * g.feux.y)
+        const [ax, ay] = ici(feux.x, s * feux.y)
         const c = rival ? VERRIERE_ENNEMIE[2] : couleurDuFeu(s)
         p.rect(Math.round(ax - 0.5), Math.round(ay - 0.5), 1, 1, N.WHITE)
         p.glow(ax, ay, 3, c, 0.8)
@@ -9893,10 +9909,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)
     if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)
     if (monteeA(hangar, 'coque').cran !== 13) p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
-    if (Math.floor(t * 1.5) % 2 === 0)
+    const feuxA = gA.feux
+    if (feuxA !== null && Math.floor(t * 1.5) % 2 === 0)
       for (const [s, c] of [[-1, couleurDuFeu(-1)], [1, couleurDuFeu(1)]] as const) {
-        p.rect(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 1, 1, N.WHITE)
-        p.glow(Math.round(cx + s * (gA.feux.y + 0.2) * E), Math.round(sy + (0.2 - gA.feux.x) * E), 7, c, 0.7)
+        p.rect(Math.round(cx + s * (feuxA.y + 0.2) * E), Math.round(sy + (0.2 - feuxA.x) * E), 1, 1, N.WHITE)
+        p.glow(Math.round(cx + s * (feuxA.y + 0.2) * E), Math.round(sy + (0.2 - feuxA.x) * E), 7, c, 0.7)
       }
 
     // LE TITRE ARRIVE COMME LE « COMBO COUNTER » DU DÉPÔT (Keko : « un truc plus travaillé, dans le genre de
@@ -10027,6 +10044,40 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
+  /** La réglette du zoom (voir `reglette`) : la ligne, ses deux bouts « + » et « − », le curseur ; un fondu au relâchement. */
+  function dessinerLaReglette(p: Peintre): void {
+    if (reglette === null) return
+    if (pince !== null) reglette.vueA = t
+    const a = 1 - (t - reglette.vueA) / 0.3
+    if (a <= 0 || !enJeu || ecranVisible()) {
+      reglette = null
+      return
+    }
+    p.place(0, 0)
+    const encre = MATIERES.encre.contour
+    const haut = enTampon(reglette.x, reglette.haut)
+    const bas = enTampon(reglette.x, reglette.bas)
+    const x = Math.round(haut.x)
+    const y0 = Math.round(haut.y)
+    const y1 = Math.round(bas.y)
+    const u = (champDuVortex - 1) / (CHAMP_MAX - 1)
+    const yc = Math.round(y0 + (y1 - y0) * u)
+    // la ligne : cernée d'encre, claire au-dessus du curseur (la part zoomée), sombre dessous
+    p.rect(x - 2, y0, 5, y1 - y0 + 1, encre, a)
+    p.rect(x - 1, y0, 3, yc - y0, COQUE[4], a)
+    p.rect(x - 1, yc, 3, y1 - yc + 1, COQUE[1], a)
+    // les deux bouts : « + » en haut, « − » en bas, sur une petite plaque
+    for (const [yb, plus] of [[y0 - 9, true], [y1 + 3, false]] as const) {
+      p.rect(x - 4, yb, 9, 7, encre, a)
+      p.rect(x - 3, yb + 1, 7, 5, COQUE[3], a)
+      p.rect(x - 2, yb + 3, 5, 1, encre, a)
+      if (plus) p.rect(x, yb + 1, 1, 5, encre, a)
+    }
+    // le curseur : un plot d'or, éclairé en haut
+    p.rect(x - 4, yc - 2, 9, 5, encre, a)
+    p.rect(x - 3, yc - 1, 7, 3, PEPITE[2], a)
+    p.rect(x - 3, yc - 1, 7, 1, PEPITE[3], a)
+  }
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {
     if (parametres.has('doigts')) {
@@ -10066,6 +10117,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.circle(px - 2, py - 2, Math.max(1, rp - 4), RG[3])
       p.rect(px - Math.round(rp * 0.5), py - Math.round(rp * 0.55), 2, 1, N.WHITE)
     }
+    dessinerLaReglette(p)
     if (manche === null) return
     p.place(0, 0)
     const r = C.manche.rayon / zoom

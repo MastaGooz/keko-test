@@ -4986,3 +4986,9 @@ dézoome jusqu'à 2. Et on commence de base à 1,5. »
 - Le filet des doigts perdus le connaît : plus aucun doigt, la pince tombe ; un seul doigt pour manche + pince, le plus
   loin de lui tombe.
 - Le champ choisi reste pour la session (un nouveau vol le garde) ; il n'est pas sauvegardé.
+- LA RÉGLETTE DU ZOOM (Keko, 17/11 : « un petit slider sur une ligne sous le pouce quand on zoome et qu'on dézoome, que
+  le joueur voit le minimum et le maximum ») : `reglette`, `dessinerLaReglette` — une ligne verticale posée au premier
+  contact, « + » en haut (1), « − » en bas (2), un plot d'or où en est le champ, la part au-dessus plus claire ; au doigt,
+  34 px à gauche du pouce (dessous, il la cacherait) ; elle s'efface en 0,3 s au relâchement.
+- LE NÉANT N'A PLUS DE FEUX DE POSITION (Keko, 17/11 : « il n'a pas de raison d'avoir des lumières comme ça, lui ») :
+  `Gabarit.feux` peut être null, et le Néant l'est — à l'accueil, au hangar et en vol.
