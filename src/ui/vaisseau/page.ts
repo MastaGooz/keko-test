@@ -3609,7 +3609,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
    * que ça donne en jeu ») : UN PETIT MONDE À PART, armé de la même configuration que le vrai vol (`configDuVol`) — le
-   * vaisseau piloté au milieu, deux insectes qui foncent sur lui depuis la droite et le mordent comme en vol, remplacés
+   * vaisseau piloté au milieu, deux insectes qui foncent sur lui depuis la droite et le mordent sans l'entamer, remplacés
    * quand l'arme les abat — JAMAIS AUTREMENT (Keko, 17/11 : « il persiste des bugs de disparition de l'ennemi ») ; ils ne
    * lâchent pas de pépites ; il ne meurt pas (sa coque est refaite à chaque pas). On le fait avancer par la règle (`avancerLeMonde`), et on le PEINT AVEC
    * LES FONCTIONS DU VOL, le temps de les prêter à ce monde (`m`, `CONF`, `v`, la caméra), rognées à son cadre : ce qu'on
@@ -3663,7 +3663,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const va = a.monde.vaisseau
       const proche = a.monde.ennemis.reduce<Ennemi | null>((b, e) => (b === null || Math.hypot(e.corps.x - va.x, e.corps.y - va.y) < Math.hypot(b.corps.x - va.x, b.corps.y - va.y) ? e : b), null)
       const regard = circuit ? { x: va.vx, y: va.vy } : proche === null ? { x: 1, y: 0 } : { x: proche.corps.x - va.x, y: proche.corps.y - va.y }
+      // (IL NE SUBIT AUCUN DÉGÂT — Keko, 17/11 : « empêche le vaisseau de subir des dégâts durant la prévisualisation » :
+      // intouchable le temps du pas, la règle ignore les morsures et les chocs ; levé après, il ne clignote pas)
+      a.monde.intouchableJusque = Infinity
       const r = avancerLeMonde(a.conf, a.monde, pas, { x: 0, y: 0 }, regard)
+      a.monde.intouchableJusque = -1
       // (CE QUE LE VOL FAIT DE SES ÉVÉNEMENTS, TEL QUEL — les morts des insectes, les impacts, les éclairs, les arcs : Keko,
       // 17/11, « un ennemi tué disparaît sans animation de mort, et l'animation de hit n'apparaît pas » ; muet)
       v = a.monde.vaisseau

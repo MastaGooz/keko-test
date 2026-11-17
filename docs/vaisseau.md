@@ -5291,3 +5291,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Avec elles (`ARMES_EN_CIRCUIT` : givre, mines, balises, et les cristaux, qui se posent pareil), il parcourt un ovale à
   travers le cadre (trois dixièmes de sa largeur et de sa hauteur, 45 par seconde), le nez dans sa course ; les autres
   armes gardent le glissement et visent l'insecte.
+- LE VAISSEAU NE SUBIT AUCUN DÉGÂT DANS L'APERÇU (Keko, 17/11) : il y est INTOUCHABLE le temps de chaque pas
+  (`intouchableJusque` à l'infini, levé après le pas pour qu'il ne clignote pas) ; tous les coups passent par
+  `encaisser`, qui les ignore — plus de morsure, d'étincelles rouges ni de clignotement ; les insectes restent au contact.
