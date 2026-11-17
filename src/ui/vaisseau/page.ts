@@ -475,7 +475,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let champDuVortex = parametres.has('champ') ? CHAMP_AUTO : 1.5
   let pince: { id: number; y0: number; champ0: number; doigt: Vecteur } | null = null
-  const COURSE_DU_ZOOM = 0.4
+  // (0,4 d'abord — Keko, 17/11 : « réduis la taille du slider de moitié, on n'a pas besoin d'une précision aussi importante »)
+  const COURSE_DU_ZOOM = 0.2
   /**
    * LA RÉGLETTE DU ZOOM (Keko, 17/11 : « un petit slider sur une ligne sous le pouce quand on zoome et qu'on dézoome, que le
    * joueur voit le minimum et le maximum ») : une ligne verticale, « + » en haut (1, la vue de près), « − » en bas (2, la
@@ -10044,12 +10045,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
 
-  /** La réglette du zoom (voir `reglette`) : la ligne, ses deux bouts « + » et « − », le curseur ; un fondu au relâchement. */
+  /** La réglette du zoom (voir `reglette`) : la ligne, ses deux bouts « + » et « − », le curseur ; elle part peu après le relâchement. */
   function dessinerLaReglette(p: Peintre): void {
     if (reglette === null) return
     if (pince !== null) reglette.vueA = t
-    const a = 1 - (t - reglette.vueA) / 0.3
-    if (a <= 0 || !enJeu || ecranVisible()) {
+    if (t - reglette.vueA > 0.15 || !enJeu || ecranVisible()) {
       reglette = null
       return
     }
@@ -10063,20 +10063,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u = (champDuVortex - 1) / (CHAMP_MAX - 1)
     const yc = Math.round(y0 + (y1 - y0) * u)
     // la ligne : cernée d'encre, claire au-dessus du curseur (la part zoomée), sombre dessous
-    p.rect(x - 2, y0, 5, y1 - y0 + 1, encre, a)
-    p.rect(x - 1, y0, 3, yc - y0, COQUE[4], a)
-    p.rect(x - 1, yc, 3, y1 - yc + 1, COQUE[1], a)
-    // les deux bouts : « + » en haut, « − » en bas, sur une petite plaque
-    for (const [yb, plus] of [[y0 - 9, true], [y1 + 3, false]] as const) {
-      p.rect(x - 4, yb, 9, 7, encre, a)
-      p.rect(x - 3, yb + 1, 7, 5, COQUE[3], a)
-      p.rect(x - 2, yb + 3, 5, 1, encre, a)
-      if (plus) p.rect(x, yb + 1, 1, 5, encre, a)
+    p.rect(x - 2, y0, 5, y1 - y0 + 1, encre)
+    p.rect(x - 1, y0, 3, yc - y0, COQUE[4])
+    p.rect(x - 1, yc, 3, y1 - yc + 1, COQUE[1])
+    // les deux bouts (Keko, 17/11 : « agrandis les boutons plus et moins et donne-leur un style un peu plus joli ») : la
+    // plaque d'acier clair des boutons, le signe gravé — l'encre, et sous elle un trait de lumière
+    // (14 de côté, des traits de deux : le signe tombe au milieu de la plaque)
+    const B = 14
+    const signe = N.hex('#10182a')
+    const grave = MATIERES.clair.lumiere2
+    for (const [yb, plus] of [[y0 - B + 1, true], [y1, false]] as const) {
+      plaque(p, x - 7, yb, B, B, 'clair')
+      const cy = yb + 6
+      p.rect(x - 3, cy + 2, 8, 1, grave)
+      p.rect(x - 4, cy, 8, 2, signe)
+      if (plus) {
+        p.rect(x - 1, cy - 3, 2, 8, signe)
+        p.rect(x + 1, cy - 2, 1, 2, grave)
+        p.rect(x + 1, cy + 3, 1, 2, grave)
+        p.rect(x, cy + 5, 2, 1, grave)
+      }
     }
-    // le curseur : un plot d'or, éclairé en haut
-    p.rect(x - 4, yc - 2, 9, 5, encre, a)
-    p.rect(x - 3, yc - 1, 7, 3, PEPITE[2], a)
-    p.rect(x - 3, yc - 1, 7, 1, PEPITE[3], a)
+    // le curseur : un plot d'or
+    plaque(p, x - 6, yc - 3, 13, 7, 'or')
   }
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {

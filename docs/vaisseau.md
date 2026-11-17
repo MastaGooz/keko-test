@@ -4992,3 +4992,8 @@ dézoome jusqu'à 2. Et on commence de base à 1,5. »
   34 px à gauche du pouce (dessous, il la cacherait) ; elle s'efface en 0,3 s au relâchement.
 - LE NÉANT N'A PLUS DE FEUX DE POSITION (Keko, 17/11 : « il n'a pas de raison d'avoir des lumières comme ça, lui ») :
   `Gabarit.feux` peut être null, et le Néant l'est — à l'accueil, au hangar et en vol.
+- … PUIS DEUX FOIS PLUS COURTE, AUX BOUTS PLUS GRANDS (Keko, 17/11 : « réduis la taille du slider de moitié, on n'a pas
+  besoin d'une précision aussi importante. Et agrandis les boutons plus et moins et donne-leur un style un peu plus
+  joli ») : `COURSE_DU_ZOOM` 0,2 (toute la course sur un cinquième de la hauteur) ; les bouts sont des plaques d'acier
+  clair de 14, le signe gravé (l'encre, un trait de lumière dessous) ; le curseur une plaque d'or ; elle part 0,15 s
+  après le relâchement (les plaques n'ont pas de fondu).
