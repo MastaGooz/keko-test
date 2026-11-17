@@ -4057,34 +4057,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const tous = modelesDuVortex()
     const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
     const a = aLeVaisseau(flotte, choisi.id)
+    // LE BOUTON « PILOTER » (ou « Piloté », ou « Pas encore disponible ») — Keko, 17/11 : DEBOUT, ENTRE LA GRILLE ET LA FICHE
+    // (« on remonte le grid un peu pour placer le bouton dessous ») ; COUCHÉ, SOUS LA FICHE, dans la colonne de droite (« on
+    // a un espace vide ; ainsi le grid peut être un peu plus gros à gauche »). Il prend `HAUT_DU_PILOTER` de haut.
+    const boutonPiloter = (yb: number): void => {
+      if (choisi.id === flotte.actif) {
+        motEnRelief(p, 'Piloté', W / 2, yb + 4, true)
+      } else if (a) {
+        const bw = largeurDe('Piloter', GRAS) + 22
+        bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Piloter', true, () => {
+          sauver()
+          flotte = choisirLeVaisseau(flotte, choisi.id)
+          hangar = hangarActif(flotte)
+          livree = livreeDuVaisseau()
+          sauver()
+          etapeA = t
+          vaisseauxOuverts = false
+          feterLEquipement()
+        }, 'equipe')
+      } else ecrire(p, 'Pas encore disponible', W / 2, yb + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
+    }
+    const HAUT_DU_PILOTER = 19
     if (partie !== 'fiche') {
     enTete(p, y, 'Vaisseaux', fermer)
     y += HT + 3
-    // LE BOUTON EN TÊTE, AU-DESSUS DE LA LISTE (Keko, 16/11 : « je ne peux plus cliquer sur Piloter en paysage, il y a trop
-    // de vaisseaux dans la liste ; mettre le bouton en haut de la liste et un défilement sur la liste »)
-    if (choisi.id === flotte.actif) {
-      motEnRelief(p, 'Piloté', W / 2, y + 4, true)
-    } else if (a) {
-      const bw = largeurDe('Piloter', GRAS) + 22
-      bouton(p, Math.round(W / 2 - bw / 2), y, bw, 15, 'Piloter', true, () => {
-        sauver()
-        flotte = choisirLeVaisseau(flotte, choisi.id)
-        hangar = hangarActif(flotte)
-        livree = livreeDuVaisseau()
-        sauver()
-        etapeA = t
-        vaisseauxOuverts = false
-        feterLEquipement()
-      }, 'equipe')
-    } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
-    y += 19
     // LA GRILLE DES VAISSEAUX (Keko, 17/11 : « un grid de 12 cases où, plutôt que le nom, on met le portrait du vaisseau —
     // une vue du vaisseau de près dans un autre angle, un peu comme le portrait d'un personnage ; les races indiquées par un
     // petit symbole à côté du nom ; beaucoup plus ergonomique et juicy ») : douze cases, LES RACES ALIGNÉES — debout, une
     // rangée par race (trois colonnes) ; couché, une colonne par race (trois rangées) ; dans chaque case, LE PORTRAIT
     // (`peindreLePortrait`), et dessous le symbole de la race et le nom. La choisie est cerclée d'or et saute un peu ; la
     // pilotée porte « PILOTE » ; une tape en choisit une autre.
-    const reserve = partie === 'liste' ? 4 : hauteurDeLaFicheDuVaisseau(choisi) + 4
+    const reserve = partie === 'liste' ? 4 : HAUT_DU_PILOTER + hauteurDeLaFicheDuVaisseau(choisi) + 4
     const parColonne = partie === 'liste'
     const ESP = 3
     const COLS = parColonne ? RACES.length : 3
@@ -4127,7 +4130,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       zone(0, 0, W, H, () => {}, null)
       return
     }
-    dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true)
+    if (partie === 'tout') {
+      boutonPiloter(y)
+      y += HAUT_DU_PILOTER
+    }
+    const hd = dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true)
+    if (partie === 'fiche') boutonPiloter(y + hd + 5)
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }

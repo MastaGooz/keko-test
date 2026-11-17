@@ -5301,3 +5301,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   dessous, l'article au-dessus quand il ne tient pas (« Les / Innommés ») —, un filet vertical, les jauges à droite (leur
   colonne de libellés à la mesure des leurs, pas des noms de pièces). `dessinerLIdentiteDeRace` ; la hauteur fixe de la
   fiche compte la plus haute identité.
+- LE BOUTON « PILOTER » CHANGE DE PLACE (Keko, 17/11) : DEBOUT, entre la grille et la fiche (la grille remonte sous
+  l'en-tête) ; COUCHÉ, sous la description, dans la colonne de droite où il restait du vide — la grille de gauche gagne
+  sa hauteur, ses cases grandissent. `boutonPiloter`, `HAUT_DU_PILOTER`.
