@@ -9509,7 +9509,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(largeurDeBande() / 2) - 7, by + BH + 6, true)
       // (LA RÉGLETTE FIXE DU ZOOM, couchée : sous la barre de vie, sur son axe — sans la secousse du coup)
       else if (VORTEX && !ZOOM_PAR_PINCE) {
-        const axe = bx + lw / 2 - Math.round(Math.sin(t * 90) * sursaut)
+        // (L'AXE EST CELUI DE TOUTE LA BARRE, BOUCLIER COMPRIS — Keko, 17/11 : « pas totalement alignée verticalement avec la
+        // barre de vie au-dessus » : MESURÉ, la réglette était sur l'axe de la seule barre d'or, deux pixels à droite du
+        // milieu de l'ensemble — le bouclier bleu, de bx − 5 à bx − 1 cerne compris, et l'or de bx − 1 à bx + 6 ; douze
+        // pixels, l'axe entre bx et bx + 1)
+        const axe = bx + (CONF.bouclier.points > 0 ? 1 : lw / 2) - Math.round(Math.sin(t * 90) * sursaut)
         const a0 = yHud + BAISSE + BH + 6 + PLAQUE_DE_REGLETTE + ECART_DE_REGLETTE
         const a1 = a0 + Math.min(56, H - 6 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE - a0)
         regletteFixe = a1 - a0 >= 16 ? { verticale: true, axe, a0, a1 } : null

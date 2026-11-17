@@ -5015,3 +5015,7 @@ quand on est en mode portrait, de manière horizontale. »
   couchée.
 - `&zoom=pince` rend le geste d'avant : le deuxième doigt (et la souris tenue) et sa réglette sous le pouce. Sans lui, un
   deuxième doigt ne fait plus rien, et la souris tenue non plus.
+- … SUR L'AXE DE TOUTE LA BARRE DE VIE (Keko, 17/11 : « pas totalement alignée verticalement avec la barre de vie
+  au-dessus ») : MESURÉ, elle était sur l'axe de la seule barre d'or, deux pixels à droite du milieu de l'ensemble (le
+  bouclier bleu et l'or, cernes compris, de bx − 5 à bx + 6). Remesuré après : barre et plaques ont le même milieu, au
+  doigt comme à la souris. Sans bouclier, elle reprend l'axe de l'or.
