@@ -282,6 +282,22 @@ function demiLargeur(pts: [number, number][], x: number): number {
 export function ovale(cx: number, cy: number, rx: number, ry: number, n = 16): [number, number][] {
   return Array.from({ length: n }, (_, i): [number, number] => [cx + Math.cos((i / n) * Math.PI * 2) * rx, cy + Math.sin((i / n) * Math.PI * 2) * ry])
 }
+/** L'enveloppe convexe d'un nuage de points (la chaîne monotone) : la silhouette d'un cristal. */
+function enveloppeDe(pts: [number, number][]): [number, number][] {
+  const P = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1])
+  const croix = (o: [number, number], a: [number, number], b: [number, number]): number => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+  const bas: [number, number][] = []
+  const haut: [number, number][] = []
+  for (const q of P) {
+    while (bas.length >= 2 && croix(bas[bas.length - 2], bas[bas.length - 1], q) <= 0) bas.pop()
+    bas.push(q)
+  }
+  for (const q of P.reverse()) {
+    while (haut.length >= 2 && croix(haut[haut.length - 2], haut[haut.length - 1], q) <= 0) haut.pop()
+    haut.push(q)
+  }
+  return bas.slice(0, -1).concat(haut.slice(0, -1))
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1
@@ -998,19 +1014,81 @@ export function formesDeLaCoque(cran: number, t = 0): Forme[] {
       cage.push({ pts: [...arche.map((_, k) => bord(k)), ...arche.map((_, k) => dedans(arche.length - 1 - k))], mat: 'facette', relief: 'plat', penche: sg })
       cage.push({ pts: [...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle + 0.25)]), ...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle - 0.15)]).reverse()], mat: 'quartz', relief: 'plat' })
     }
-    // (le cristal : ses pans tournés vers le haut, chacun éclairé selon son angle, un sur deux d'énergie)
+    // LE CRISTAL, À LA MANIÈRE DU « ICE CRYSTAL » DE PIXELFX (Keko, 17/11 : « pour le cristal du prisme, tu peux t'inspirer
+    // de ice crystal ») : un vrai cristal en trois dimensions — un prisme à six pans, une longue pointe devant (le rayon en
+    // part), une plus courte derrière — couché sur son axe et qui tourne autour ; chaque face vue est peinte d'UN ton, selon
+    // la lumière qu'elle prend (sombre de profil, pâle face à la lumière), un pan sur deux d'énergie ; UN CERNE sombre
+    // autour de la silhouette ; DES ARÊTES pâles où deux faces se rencontrent ; UN ÉCLAT en étoile sur la face qui renvoie la
+    // lumière ; et DES POUSSIÈRES DE GIVRE qui tournent autour de lui, devant et derrière.
     const cristal: Forme[] = []
-    const a = t * 2.6
-    const R = 2.2
-    const [avant, arriere, epaule, hanche] = [cx + 4.4, cx - 3, cx + 1.2, cx - 1.4]
+    const th = t * 1.7
+    const R = 2
+    const anneau = (x: number): [number, number, number][] => Array.from({ length: 6 }, (_, k) => [x, Math.cos(th + (k * Math.PI) / 3) * R, Math.sin(th + (k * Math.PI) / 3) * R])
+    const avant = anneau(cx + R * 0.45)
+    const arriere = anneau(cx - R * 0.45)
+    const A: [number, number, number] = [cx + R * 2.2, 0, 0]
+    const Z: [number, number, number] = [cx - R * 1.7, 0, 0]
+    const faces: { f: [number, number, number][]; mat: Matiere }[] = []
     for (let k = 0; k < 6; k++) {
-      const t1 = a + (k * Math.PI) / 3
-      const t2 = t1 + Math.PI / 3
-      if (Math.cos((t1 + t2) / 2) <= 0) continue
-      const [y1, y2] = [R * Math.sin(t1), R * Math.sin(t2)]
-      cristal.push({ pts: [[avant, 0], [epaule, y1], [hanche, y1], [arriere, 0], [hanche, y2], [epaule, y2]], mat: k % 2 === 0 ? 'quartz' : 'energie', relief: 'plat', penche: Math.sin((t1 + t2) / 2) })
+      const j = (k + 1) % 6
+      const mat: Matiere = k % 2 === 0 ? 'quartz' : 'energie'
+      faces.push({ f: [A, avant[k], avant[j]], mat }, { f: [avant[k], arriere[k], arriere[j], avant[j]], mat }, { f: [arriere[k], Z, arriere[j]], mat })
     }
-    return [...fils, ...derriere, ...cage, ...cristal, ...devant]
+    const vues: { pts: [number, number][]; lit: number; spec: number; mat: Matiere; cx: number; cy: number }[] = []
+    const DEMI_VUE = (() => {
+      const v = [LUM[0], LUM[1], LUM[2] + 1]
+      const n = Math.hypot(v[0], v[1], v[2])
+      return v.map((c) => c / n)
+    })()
+    for (const { f, mat } of faces) {
+      const [p0, p1, p2] = f
+      const u = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]]
+      const v = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]]
+      let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+      const ln = Math.hypot(n[0], n[1], n[2]) || 1
+      n = n.map((c) => c / ln)
+      const mx = f.reduce((s0, q) => s0 + q[0], 0) / f.length
+      const my = f.reduce((s0, q) => s0 + q[1], 0) / f.length
+      const mz = f.reduce((s0, q) => s0 + q[2], 0) / f.length
+      if (n[0] * (mx - cx) + n[1] * my + n[2] * mz < 0) n = n.map((c) => -c)
+      if (n[2] <= 0.02) continue
+      const lit = Math.max(0, n[0] * LUM[0] + n[1] * LUM[1] + n[2] * LUM[2])
+      const spec = Math.max(0, n[0] * DEMI_VUE[0] + n[1] * DEMI_VUE[1] + n[2] * DEMI_VUE[2])
+      vues.push({ pts: f.map((q): [number, number] => [q[0], q[1]]), lit, spec, mat, cx: mx, cy: my })
+    }
+    // (le cerne : la silhouette, un peu plus grande, d'un ton sombre)
+    const tous = vues.flatMap((vu) => vu.pts)
+    const enveloppe = enveloppeDe(tous)
+    const centre = enveloppe.reduce((c0, q) => [c0[0] + q[0] / enveloppe.length, c0[1] + q[1] / enveloppe.length], [0, 0])
+    cristal.push({ pts: enveloppe.map(([x, y]): [number, number] => {
+      const d = Math.hypot(x - centre[0], y - centre[1]) || 1
+      return [x + ((x - centre[0]) / d) * 0.45, y + ((y - centre[1]) / d) * 0.45]
+    }), mat: 'facette', relief: 'lueur', ton: 0 })
+    for (const vu of vues) cristal.push({ pts: vu.pts, mat: vu.mat, relief: 'lueur', ton: vu.spec > 0.985 ? 5 : Math.max(1, Math.min(5, Math.round(0.6 + Math.pow(vu.lit, 2.2) * 4.6))) })
+    for (const vu of vues)
+      for (let i = 0; i < vu.pts.length; i++) {
+        const [x0, y0] = vu.pts[i]
+        const [x1, y1] = vu.pts[(i + 1) % vu.pts.length]
+        cristal.push({ pts: barre(x0, y0, x1, y1, 0.32), mat: 'quartz', relief: 'lueur', ton: vu.lit > 0.75 ? 5 : vu.lit > 0.4 ? 4 : 3 })
+      }
+    // (l'éclat : une petite étoile sur la face qui renvoie la lumière)
+    for (const vu of vues)
+      if (vu.spec > 0.975) {
+        const l = 0.5 + (vu.spec - 0.975) * 30
+        cristal.push({ pts: barre(vu.cx - l, vu.cy, vu.cx + l, vu.cy, 0.35), mat: 'energie', relief: 'lueur', ton: 5 }, { pts: barre(vu.cx, vu.cy - l, vu.cx, vu.cy + l, 0.35), mat: 'energie', relief: 'lueur', ton: 5 })
+      }
+    // (les poussières de givre : elles tournent autour de son axe, vives devant, éteintes derrière)
+    const givreDerriere: Forme[] = []
+    const givreDevant: Forme[] = []
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2 + t * (1.4 + (i % 3) * 0.3)
+      const rr = 3 + (i % 3) * 0.5
+      const x = cx - 2 + ((i * 0.618) % 1) * 5 + Math.sin(t * 0.7 + i) * 0.4
+      const y = Math.cos(a) * rr
+      const z = Math.sin(a) * rr
+      ;(z < 0 ? givreDerriere : givreDevant).push({ pts: ovale(x, y, z < 0 ? 0.3 : 0.38, z < 0 ? 0.3 : 0.38, 6), mat: 'energie', relief: 'lueur', ton: z < 0 ? 2 : i % 3 === 0 ? 5 : 4 })
+    }
+    return [...fils, ...derriere, ...givreDerriere, ...cage, ...cristal, ...givreDevant, ...devant]
   }
   if (cran === 11) {
     // LA VOUIVRE, UNE BÊTE BUBONIQUE (… PUIS PLUS ORGANIQUE — Keko, 16/11 : « il a trop une forme de vaisseau, on veut un

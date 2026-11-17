@@ -5126,3 +5126,10 @@ petit peu la jauge de zoom pour glisser le bouton à sa droite. »
   talent et sur l'écran de fin.
 - LA PAUSE (`pauseOuverte`, `dessinerLaPause`) : le monde s'arrête comme pour la soute (ses sons continus se taisent),
   un voile, « Pause », « Reprendre » et « Retour à la base » — qui fait ce que fait « Hangar » à la fin d'une partie.
+- LE CRISTAL DU PRISME, À LA MANIÈRE DU « ICE CRYSTAL » DE PIXELFX (Keko, 17/11 : « pour le cristal du prisme, tu peux
+  t'inspirer de ice crystal ») : un vrai cristal en trois dimensions — un prisme à six pans, une longue pointe devant
+  (le rayon en part toujours, à 4,4), une courte derrière — couché sur son axe et qui tourne autour ; chaque face vue est
+  peinte d'UN ton selon la lumière qu'elle prend (un pan sur deux d'énergie), un cerne sombre autour de la silhouette
+  (`enveloppeDe`, l'enveloppe convexe), des arêtes pâles, un éclat en étoile qui s'allume quand une face renvoie la
+  lumière, et sept poussières de givre qui tournent autour de son axe, vives devant, éteintes derrière. MESURÉ d'abord
+  trop blanc d'un bout à l'autre : la lumière d'une face compte davantage (puissance 2,2 au lieu de 1,4).
