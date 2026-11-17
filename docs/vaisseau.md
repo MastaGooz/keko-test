@@ -5112,3 +5112,17 @@ veut vraiment le rapprocher du Néant ».
   des nervures) ; le Tesseract — Origine, Écarlate (rouge, deux autres yeux ouverts à côté du premier), Vide (violet pâle,
   l'œil inversé, un anneau de lumière).
 - LA POLICE N'AVAIT PAS LE « Œ » : « un œil » s'écrivait « un il », et le Néant avait « un cur » ; ajouté.
+
+### Le vortex, le bouton du menu et la pause (17/11)
+
+Keko : « réduire un petit peu la jauge de zoom, sans changer le zoom minimum et maximum, pour mettre en mode paysage en
+dessous, tout en bas à droite de l'écran, un petit bouton menu qui permet de mettre le jeu en pause et de retourner à la
+base pour finir la partie prématurément. Et en mode portrait, ce bouton également tout en bas à droite, en réduisant un
+petit peu la jauge de zoom pour glisser le bouton à sa droite. »
+
+- LA RÉGLETTE RACCOURCIT, ses bouts ne changent pas (1 et 2) : couchée, 40 de course au lieu de 56 ; debout, 44.
+- LE BOUTON DU MENU (`dessinerLeBoutonMenu`) : une plaque d'acier clair de 14, trois traits gravés ; couché, tout en bas
+  à droite, sur l'axe de la barre de vie et de la réglette ; debout, à droite de la réglette. Caché pendant le choix d'un
+  talent et sur l'écran de fin.
+- LA PAUSE (`pauseOuverte`, `dessinerLaPause`) : le monde s'arrête comme pour la soute (ses sons continus se taisent),
+  un voile, « Pause », « Reprendre » et « Retour à la base » — qui fait ce que fait « Hangar » à la fin d'une partie.

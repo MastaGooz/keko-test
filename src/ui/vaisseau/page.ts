@@ -1371,6 +1371,49 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLExperience(p, xe, y, droite - xe)
     dessinerLeRetour(p)
   }
+  /**
+   * LA PAUSE (Keko, 17/11 : « un petit bouton menu qui permet de mettre le jeu en pause et de retourner à la base pour
+   * finir la partie prématurément ») : le bouton, une plaque d'acier clair aux trois traits, tout en bas à droite (sous la
+   * réglette du zoom couché, à sa droite debout) ; ouverte, LE MONDE EST EN PAUSE (comme la soute) sous un voile, et deux
+   * boutons — « Reprendre », « Retour à la base » (comme « Hangar » à la fin d'une partie).
+   */
+  let pauseOuverte = false
+  let pauseA = -10
+  function dessinerLeBoutonMenu(p: Peintre, x: number, y: number): void {
+    if (m.invasion.finie || choixDeTalent !== null) return
+    const B = PLAQUE_DE_REGLETTE
+    boutonBase(p, x, y, B, B, true, () => {
+      pauseOuverte = true
+      pauseA = t
+      manche = null
+      touches.clear()
+    }, (dx, dy) => {
+      for (const k of [0, 1, 2]) {
+        p.rect(x + 4 + dx, y + 5 + k * 3 + dy, 7, 1, MATIERES.clair.lumiere2)
+        p.rect(x + 3 + dx, y + 3 + k * 3 + dy, 8, 2, N.hex('#10182a'))
+      }
+    }, 'ouvre', { matiere: 'clair' })
+  }
+  function dessinerLaPause(p: Peintre): void {
+    if (pauseOuverte && (!enJeu || m.invasion.finie)) pauseOuverte = false
+    if (!pauseOuverte) return
+    const u0 = sortie((t - pauseA) / 0.25)
+    p.rect(0, 0, W, H, NUIT, 0.75 * u0)
+    zones = []
+    const cy = Math.round(H / 2)
+    motEnRelief(p, 'Pause', W / 2, cy - 34 + Math.round((1 - u0) * 8), true, TITRE)
+    const bw = largeurDe('Retour à la base', GRAS) + 30
+    const bx = Math.round(W / 2 - bw / 2)
+    bouton(p, bx, cy - 8, bw, 17, 'Reprendre', true, () => (pauseOuverte = false), 'retour')
+    bouton(p, bx, cy + 14, bw, 17, 'Retour à la base', true, () => {
+      pauseOuverte = false
+      choixDeTalent = null
+      reserveDeTalents = 0
+      taches = []
+      enJeu = false
+    }, 'retour', 'acier')
+    zone(0, 0, W, H, () => {}, null)
+  }
   /** LA FIN DE LA PARTIE : le portail est tombé — un voile, la vague atteinte, « Rejouer ». */
   let finA = -10
   function dessinerLaFin(p: Peintre): void {
@@ -9625,10 +9668,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // milieu de l'ensemble — le bouclier bleu, de bx − 5 à bx − 1 cerne compris, et l'or de bx − 1 à bx + 6 ; douze
         // pixels, l'axe entre bx et bx + 1)
         const axe = bx + (CONF.bouclier.points > 0 ? 1 : lw / 2) - Math.round(Math.sin(t * 90) * sursaut)
+        // (… UN PEU PLUS COURTE, LE BOUTON DU MENU TOUT EN BAS SOUS ELLE — Keko, 17/11 : « réduire un petit peu la jauge de zoom
+        // pour mettre en dessous, tout en bas à droite, un petit bouton menu » ; 56 de course avant)
+        const yMenu = H - 6 - PLAQUE_DE_REGLETTE
         const a0 = yHud + BAISSE + BH + 6 + PLAQUE_DE_REGLETTE + ECART_DE_REGLETTE
-        const a1 = a0 + Math.min(56, H - 6 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE - a0)
+        const a1 = a0 + Math.min(40, yMenu - 4 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE - a0)
         regletteFixe = a1 - a0 >= 16 ? { verticale: true, axe, a0, a1 } : null
         if (regletteFixe !== null) peindreLaReglette(p, true, axe, a0, a1)
+        dessinerLeBoutonMenu(p, axe - 7, yMenu)
       }
       if (dc > TIENT && dc < VIDE) {
         const gy = yDe(fant)
@@ -9716,10 +9763,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LA RÉGLETTE FIXE DU ZOOM, debout : couchée en bas à droite de l'écran, au milieu du bandeau du bas, « + » à droite)
     else if (VORTEX && !ZOOM_PAR_PINCE) {
       const axe = bandeBas() >= 22 ? H - Math.round(bandeBas() / 2) : H - 12
-      const a0 = W - 6 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE
-      const a1 = a0 - 56
+      // (… UN PEU PLUS COURTE, LE BOUTON DU MENU À SA DROITE, tout en bas à droite — Keko, 17/11)
+      const xMenu = W - 6 - PLAQUE_DE_REGLETTE
+      const a0 = xMenu - 6 - PLAQUE_DE_REGLETTE - ECART_DE_REGLETTE
+      const a1 = a0 - 44
       regletteFixe = { verticale: false, axe, a0, a1 }
       peindreLaReglette(p, false, axe, a0, a1)
+      dessinerLeBoutonMenu(p, xMenu, axe - 7)
     }
     if (dc > TIENT && dc < VIDE) {
       // l'arête qui se vide : blanche, lumineuse, elle crache des étincelles
@@ -10419,8 +10469,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       reserveDeTalents += reserveApresLeDelai(choixDeTalent)
       choixDeTalent = null
     }
-    if (enJeu && (souteOuverte || choixDeTalent !== null)) regler(0, false, 0, false)
-    if (enJeu && !souteOuverte && choixDeTalent === null) {
+    if (enJeu && (souteOuverte || choixDeTalent !== null || pauseOuverte)) regler(0, false, 0, false)
+    if (enJeu && !souteOuverte && choixDeTalent === null && !pauseOuverte) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
       {
@@ -11511,6 +11561,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesToasts(dt)
     if (VORTEX) dessinerLeChoixDeTalent(p)
     if (VORTEX) dessinerLaFin(p)
+    if (VORTEX) dessinerLaPause(p)
     // (séparée du monde, l'interface est transparente là où elle ne peint rien : le monde est dessous)
     if (separe) N.composite(frame, img.data, null)
     else N.composite(frame, img.data, cuireLeCiel())
