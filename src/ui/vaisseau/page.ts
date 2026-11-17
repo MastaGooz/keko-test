@@ -10062,17 +10062,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y1 = Math.round(bas.y)
     const u = (champDuVortex - 1) / (CHAMP_MAX - 1)
     const yc = Math.round(y0 + (y1 - y0) * u)
+    // (TOUT EST SUR UN SEUL AXE, entre les colonnes x − 1 et x — Keko, 17/11 : « attention à ce que les boutons plus et
+    // moins soient bien centrés par rapport à la barre » : la barre, les plaques, leurs signes et le curseur ont tous une
+    // largeur paire ; et les plaques s'écartent des bouts de la course, le curseur à fond ne les mord plus)
     // la ligne : cernée d'encre, claire au-dessus du curseur (la part zoomée), sombre dessous
-    p.rect(x - 2, y0, 5, y1 - y0 + 1, encre)
-    p.rect(x - 1, y0, 3, yc - y0, COQUE[4])
-    p.rect(x - 1, yc, 3, y1 - yc + 1, COQUE[1])
+    p.rect(x - 3, y0 - 4, 6, y1 - y0 + 9, encre)
+    p.rect(x - 2, y0 - 4, 4, yc - y0 + 4, COQUE[4])
+    p.rect(x - 2, yc, 4, y1 - yc + 5, COQUE[1])
     // les deux bouts (Keko, 17/11 : « agrandis les boutons plus et moins et donne-leur un style un peu plus joli ») : la
     // plaque d'acier clair des boutons, le signe gravé — l'encre, et sous elle un trait de lumière
     // (14 de côté, des traits de deux : le signe tombe au milieu de la plaque)
     const B = 14
     const signe = N.hex('#10182a')
     const grave = MATIERES.clair.lumiere2
-    for (const [yb, plus] of [[y0 - B + 1, true], [y1, false]] as const) {
+    for (const [yb, plus] of [[y0 - 4 - B, true], [y1 + 4, false]] as const) {
       plaque(p, x - 7, yb, B, B, 'clair')
       const cy = yb + 6
       p.rect(x - 3, cy + 2, 8, 1, grave)
@@ -10085,7 +10088,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     // le curseur : un plot d'or
-    plaque(p, x - 6, yc - 3, 13, 7, 'or')
+    plaque(p, x - 7, yc - 3, 14, 7, 'or')
   }
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   function dessinerLeManche(p: Peintre): void {

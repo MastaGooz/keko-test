@@ -4997,3 +4997,7 @@ dézoome jusqu'à 2. Et on commence de base à 1,5. »
   joli ») : `COURSE_DU_ZOOM` 0,2 (toute la course sur un cinquième de la hauteur) ; les bouts sont des plaques d'acier
   clair de 14, le signe gravé (l'encre, un trait de lumière dessous) ; le curseur une plaque d'or ; elle part 0,15 s
   après le relâchement (les plaques n'ont pas de fondu).
+- … ET SUR UN SEUL AXE (Keko, 17/11 : « attention à ce que les boutons plus et moins soient bien centrés par rapport à la
+  barre ») : MESURÉ, la barre (5 de large) était centrée sur une colonne, les plaques (14) entre deux — un demi-pixel de
+  décalage. Tout est maintenant de largeur paire (barre 6, plaques 14, curseur 14) ; les plaques s'écartent de 4 des
+  bouts de la course, le curseur à fond ne les mord plus.
