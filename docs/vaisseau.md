@@ -5365,3 +5365,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qu'ils ont été dans la zone, ils sont pris dans le drain ») : `drain.cibles` absent, tout ce qui passe à moins de 42
   est accroché. ET SON SON D'ACCROCHE EST À LUI (« un petit peu trop agressif ») : plus le frisson clair de la purge, un
   souffle sourd qui monte lentement sur une note grave (`accroche`, niveau 0,1, un à la fois toutes les 0,12 s).
+- LA ZONE D'ACCROCHE DU DRAIN EST UN TOURBILLON (Keko, 17/11 : « plutôt qu'un cercle de pointillés, un petit tourbillon
+  sur la périphérie ») : un voile d'anneau à peine marqué ; quatre traînées qui tournent sur le bord, la tête blanche
+  dans une lueur, la queue qui s'éteint en s'enroulant de 5 vers l'intérieur ; trois traînées pâles à contre-sens, un
+  peu dehors ; dix grains aspirés du dehors, qui spiralent jusqu'au bord.

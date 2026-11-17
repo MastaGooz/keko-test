@@ -8105,10 +8105,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const sy = v.y
     const pris = liesAuDrain(m)
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    // (le rayon, à peine : un cercle de grains qui tourne lentement)
-    for (let k = 0; k < 24; k++) {
-      const a = (k / 24) * Math.PI * 2 + t * 0.25
-      p.px(Math.round(sx + Math.cos(a) * dr.rayon), Math.round(sy + Math.sin(a) * dr.rayon), k % 3 === 0 ? C[4] : C[3])
+    // LA ZONE D'ACCROCHE, UN TOURBILLON SUR SON BORD (Keko, 17/11 : « plutôt qu'un cercle de pointillés, un petit tourbillon
+    // sur la périphérie ») : un voile à peine marqué ; quatre traînées qui tournent sur le bord, la tête vive, la queue qui
+    // s'éteint en s'enroulant vers l'intérieur ; trois plus pâles qui tournent dans l'autre sens, un peu dehors ; et des
+    // grains aspirés du dehors, qui spiralent jusqu'au bord et s'y perdent
+    const R = dr.rayon
+    p.ring(sx, sy, R, 1, C[2], 0.35)
+    const traine = (n: number, vit: number, r0: number, long: number, rentre: number, tons: number[]): void => {
+      for (let k = 0; k < n; k++) {
+        const tete = t * vit + (k / n) * Math.PI * 2
+        const pas = 1.2 / r0
+        for (let a = 0; a <= long; a += pas) {
+          const u = a / long
+          const an = tete - Math.sign(vit) * a
+          const rr = r0 - rentre * u
+          p.px(Math.round(sx + Math.cos(an) * rr), Math.round(sy + Math.sin(an) * rr), tons[Math.min(tons.length - 1, Math.floor(u * tons.length))])
+        }
+      }
+    }
+    traine(3, -0.7, R + 3, 0.7, 2, [C[3], C[2]])
+    traine(4, 1.3, R, 1.1, 5, [N.WHITE, C[7], C[6], C[5], C[4], C[3]])
+    for (let k = 0; k < 4; k++) {
+      const tete = t * 1.3 + (k / 4) * Math.PI * 2
+      p.glow(sx + Math.cos(tete) * R, sy + Math.sin(tete) * R, 5, C[5], 0.4)
+    }
+    for (let k = 0; k < 10; k++) {
+      const q = (((t * 0.45 + k / 10) % 1) + 1) % 1
+      const an = (k * 2.399) + t * 1.3 + q * 1.6
+      const rr = R + 10 * (1 - q)
+      p.px(Math.round(sx + Math.cos(an) * rr), Math.round(sy + Math.sin(an) * rr), q > 0.75 ? C[7] : q > 0.4 ? C[5] : C[3])
     }
     for (const e of pris) {
       const ex = e.corps.x
