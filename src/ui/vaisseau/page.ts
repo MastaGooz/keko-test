@@ -467,6 +467,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VITESSE_DU_LARGE = 125
   const CHAMP_AUTO = Math.max(1, Math.min(CHAMP_MAX, Number(parametres.get('champ')) || 1.7))
   const champDuMoment = (): number => (enJeu && !ecranVisible() ? champ : 1)
+  /**
+   * LE ZOOM DU VORTEX, AU GESTE (Keko, 17/11 : « quand on met le deuxième doigt sur l'écran, ou quand on clique avec la
+   * souris, et qu'on monte vers le haut ou vers le bas, on va zoomer, dézoomer… jusqu'à 1… jusqu'à 2. Et on commence de
+   * base à 1,5 ») : `pince` est ce doigt (ou la souris tenue) — monter rapproche la vue, descendre l'éloigne, toute la
+   * course sur `COURSE_DU_ZOOM` de la hauteur de l'écran. `&champ=N` part de N.
+   */
+  let champDuVortex = parametres.has('champ') ? CHAMP_AUTO : 1.5
+  let pince: { id: number; y0: number; champ0: number; doigt: Vecteur } | null = null
+  const COURSE_DU_ZOOM = 0.4
   /** « + » zoome (le champ se resserre), « − » dézoome ; côte à côte, ou l'un sur l'autre (`empiles`, dans le bandeau couché). */
   function dessinerLeZoom(p: Peintre, x: number, y: number, empiles: boolean): void {
     const B = 13
@@ -5531,9 +5540,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const vise = ennemiSous(ev.clientX, ev.clientY)
       if (ev.pointerType === 'mouse') {
         if (vise !== null) basculerLeVerrou(vise)
+        // (la souris tenue zoome : voir `pince`)
+        racine.setPointerCapture(ev.pointerId)
+        pince = { id: ev.pointerId, y0: ev.clientY, champ0: champDuVortex, doigt: { x: ev.clientX, y: ev.clientY } }
         return
       }
       tapeVerrou = vise === null ? null : { id: ev.pointerId, x: ev.clientX, y: ev.clientY, a: performance.now(), cible: vise }
+      // (LE DEUXIÈME DOIGT ZOOME : le manche est déjà tenu, par un doigt bien posé — `doigtsPoses` compte encore ceux
+      // d'avant celui-ci : l'appui arrive avant `touchstart`)
+      if (manche !== null && pince === null && ev.pointerType === 'touch' && doigtsPoses >= 1) {
+        ev.preventDefault()
+        racine.setPointerCapture(ev.pointerId)
+        pince = { id: ev.pointerId, y0: ev.clientY, champ0: champDuVortex, doigt: { x: ev.clientX, y: ev.clientY } }
+        return
+      }
     }
     {
       // (deux appuis rapprochés, dans le temps et sur l'écran : la postcombustion ; le second appui pose quand même le manche)
@@ -5602,6 +5622,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (glisse.sorte === 'onglets') defilOnglets = glisse.defil0 - (q.y - glisse.y) / 37 // (la feuille « PLUS » défile d'une rangée par 37 pixels)
       else if (glisse.sorte === 'liste') defil[onglet] = glisse.defil0 - (q.y - glisse.y) / 13
       else if (glisse.sorte === 'vaisseaux') defilVaisseaux = glisse.defil0 - (q.y - glisse.y) / 13
+      return
+    }
+    if (pince !== null && ev.pointerId === pince.id) {
+      // monter rapproche (vers 1), descendre éloigne (vers 2)
+      const course = Math.max(1, racine.clientHeight * COURSE_DU_ZOOM)
+      champDuVortex = Math.max(1, Math.min(CHAMP_MAX, pince.champ0 + (ev.clientY - pince.y0) / course))
+      pince.doigt = { x: ev.clientX, y: ev.clientY }
       return
     }
     if (regard !== null && ev.pointerId === regard.id) {
@@ -5683,6 +5710,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
+    if (pince !== null && ev.pointerId === pince.id) pince = null
     if (regard !== null && ev.pointerId === regard.id) {
       // (le doigt qui visait se lève : la capacité part — sauf si l'appui a été annulé par le système)
       if (regard.tir && ev.type === 'pointerup') {
@@ -5757,6 +5785,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (doigtsPoses === 0) {
       manche = null
       regard = null
+      pince = null
+    } else if (doigtsPoses === 1 && manche !== null && pince !== null) {
+      // (le doigt qui zoomait et celui du manche : le plus loin du doigt qui reste tombe)
+      const d = ev.touches[0]
+      const loin = (q: Vecteur): number => Math.hypot(q.x - d.clientX, q.y - d.clientY)
+      if (loin(manche.doigt) > loin(pince.doigt)) manche = null
+      else pince = null
     } else if (doigtsPoses === 1 && manche !== null && regard !== null) {
       const d = ev.touches[0]
       const loin = (q: Vecteur): number => Math.hypot(q.x - d.clientX, q.y - d.clientY)
@@ -10073,9 +10108,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE CHAMP DE VISION glisse vers ce que les boutons « + » et « − » ont demandé (un quart par tape, en un sixième de
     // seconde) ; à chaque pas, le tampon est refait et les manches gardent leur place à l'écran
     if (VORTEX) {
-      // (LE JEU DU VORTEX EST DÉZOOMÉ AU MAXIMUM, EN PERMANENCE — Keko, 14/11 : « il n'y a pas vraiment d'intérêt à zoomer là » ;
-      // `&champ=N` l'essaie à une autre valeur)
-      champCible = parametres.has('champ') ? CHAMP_AUTO : CHAMP_MAX
+      // (le jeu du vortex était dézoomé au maximum, en permanence — Keko, 14/11 ; LE ZOOM Y EST MAINTENANT AU GESTE, voir
+      // `champDuVortex` : il suit le doigt, sans glisser)
+      champCible = champDuVortex
       champVoulu = champCible
     } else if (ZOOM_A_LA_MAIN) {
       if (champVoulu !== champCible) {

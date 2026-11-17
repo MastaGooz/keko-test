@@ -4972,3 +4972,17 @@ quinzaine de pixels d'écran.
   zoom qui s'élargit quand une vague entoure ; des sprites plus gros à champ égal (les zones de collision avec).
 - RETIRÉ LE MÊME JOUR (Keko : « ok, enlève le bouton ») : le vol du vortex revient au champ 2 ; `&champ=N` reste pour
   essayer une autre vue.
+
+### Le vortex, le zoom au geste (17/11)
+
+Keko : « quand on met le deuxième doigt sur l'écran, ou quand on clique avec la souris, et qu'on monte vers le haut ou
+vers le bas, on va zoomer, dézoomer. Quand on monte vers le haut, on zoome jusqu'à 1, et quand on va vers le bas, on
+dézoome jusqu'à 2. Et on commence de base à 1,5. »
+
+- `champDuVortex` (1,5 au départ ; `&champ=N` part de N) et `pince` (le doigt ou la souris qui zoome). Le premier doigt
+  reste le manche ; un doigt posé quand le manche est tenu devient la pince ; la souris tenue en vol la fait aussi (son
+  clic verrouille toujours l'ennemi sous elle). Le champ SUIT LE DOIGT (pas de glissé), toute la course 1 → 2 sur 40 % de
+  la hauteur de l'écran (`COURSE_DU_ZOOM`), relatif au point de départ : on reprend où on s'était arrêté.
+- Le filet des doigts perdus le connaît : plus aucun doigt, la pince tombe ; un seul doigt pour manche + pince, le plus
+  loin de lui tombe.
+- Le champ choisi reste pour la session (un nouveau vol le garde) ; il n'est pas sauvegardé.
