@@ -5171,3 +5171,11 @@ bouclier, lui, commence à se réparer très rapidement après un certain temps 
   `&coup=N` passe par elles.
 - À VENIR (Keko) : des symboles sur la carte qui rendent une plaque ; des soins de blindage lâchés par les ennemis, pour
   toutes les races.
+- L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11 : « quand je touche un ennemi, je perds ma plaque de blindage et de la vie
+  en plus derrière ; la plaque devrait absorber la totalité du coup […] quand le vaisseau touche un ennemi, il devrait
+  subir des dégâts, clignoter une petite seconde, et pendant cet intervalle ne pas pouvoir prendre d'autres dégâts ») :
+  MESURÉ dans la règle, un insecte qui touche donnait DEUX coups dans la même image — sa morsure et le choc de la
+  collision — : la plaque prenait le premier, la barre le second. `ConfigVaisseau.invulnerabilite` (1 s, TOUTES LES
+  RACES) et `Monde.intouchableJusque`, dans `encaisser` (vérifié) : après un coup reçu — bouclier, plaque ou coque —, les
+  autres ne comptent pas ; le vaisseau revenu au portail l'est aussi. Il CLIGNOTE pendant ce temps (une tranche de 70 ms
+  sur deux, il n'est pas dessiné).

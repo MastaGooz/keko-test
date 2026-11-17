@@ -194,6 +194,7 @@ zb.detruits = new Set(asteroidesAutour(bouclier, 0, 0, 300).map((r) => r.id))
 let absorbes = 0
 let touchesCoque = 0
 for (let n = 0; n < 3; n++) {
+  zb.intouchableJusque = -1 // (on éprouve le bouclier, pas l'invulnérabilité qui suit un coup)
   zb.tirs.push({ id: 900 + n, x: -12, y: 0, vx: 120, vy: 0, vie: 1 })
   for (let i = 0; i < 30 && zb.tirs.length > 0; i++) {
     const r = avancerLeMonde(bouclier, zb, 1 / 60, { x: 0, y: 0 })
@@ -2000,7 +2001,9 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 {
   const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, plaques: 3 }
   const mp = nouveauMonde(c)
+  // (chaque coup un peu après le précédent : passé l'invulnérabilité qui suit un coup)
   const coup = (d: number): Evenement[] => {
+    mp.t += c.invulnerabilite + 0.01
     const ev: Evenement[] = []
     encaisser(c, mp, 0, 0, d, ev)
     return ev
@@ -2016,4 +2019,20 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   verifier('le coup qui descendrait dans la dernière portion s’arrête à son bord, et sa plaque casse', mp.coque === 2 && !mp.plaques[2])
   const morte = coup(5)
   verifier('les plaques toutes cassées, le coup passe : la coque est percée', mp.coque === 0 && morte.some((e) => e.type === 'perdu'))
+}
+
+// L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11) : un insecte qui touche donnait deux coups dans la même image
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, plaques: 3 }
+  const mi = nouveauMonde(c)
+  const ev: Evenement[] = []
+  encaisser(c, mi, 0, 0, 1, ev)
+  encaisser(c, mi, 0, 0, 1, ev)
+  verifier('deux coups dans le même instant : la plaque prend le premier, le second ne compte pas — la barre est intacte', mi.coque === 6 && !mi.plaques[0] && mi.plaques[1] && ev.filter((e) => e.type === 'plaque').length === 1 && !ev.some((e) => e.type === 'touche'))
+  mi.t += c.invulnerabilite * 0.5
+  encaisser(c, mi, 0, 0, 1, ev)
+  verifier('pendant l’invulnérabilité, rien ne passe', mi.coque === 6)
+  mi.t += c.invulnerabilite
+  encaisser(c, mi, 0, 0, 1, ev)
+  verifier('passée, le coup suivant compte', mi.coque === 5)
 }

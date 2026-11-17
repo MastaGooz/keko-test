@@ -91,6 +91,14 @@ export const VAISSEAU = {
    * aucune plaque.
    */
   plaques: 0,
+  /**
+   * L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11 : « quand le vaisseau touche un ennemi, il devrait subir des dégâts,
+   * clignoter une petite seconde, et pendant cet intervalle ne pas pouvoir prendre d'autres dégâts ; sinon on peut se
+   * faire éclater en un rien de temps avec de multiples touches très rapides ») : tant de secondes, après un coup reçu —
+   * dans le bouclier, une plaque ou la coque —, pendant lesquelles les autres ne comptent pas. Un insecte qui touche
+   * donnait DEUX coups dans la même image, sa morsure et le choc : la plaque prenait le premier, la barre le second.
+   */
+  invulnerabilite: 1,
   /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
   foreuse: { debit: 1, portee: 1, aimant: 1 },
   /**
@@ -688,6 +696,8 @@ export type Monde = {
   bouclier: number
   /** Les plaques de blindage, de la portion du haut de la barre à celle du bas : vrai, elle tient (voir la configuration). */
   plaques: boolean[]
+  /** Jusqu'à quel instant (`t` du monde) le joueur ne prend plus de coup — voir `invulnerabilite`. */
+  intouchableJusque: number
   toucheA: number
   forage: Forage | null
   /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
@@ -920,7 +930,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1496,6 +1506,9 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
  * la partie est perdue. (Avant : un point entier de bouclier par coup, quel que soit le coup, et rien sous un point.)
  */
 export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
+  // (encore intouchable depuis le dernier coup : celui-ci ne compte pas)
+  if (m.t < m.intouchableJusque) return
+  m.intouchableJusque = m.t + c.invulnerabilite
   m.toucheA = m.t
   let reste = degats
   if (c.bouclier.points > 0 && m.bouclier > 0) {
@@ -3110,6 +3123,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   m.coque = c.coque
   m.bouclier = c.bouclier.points
   m.plaques = Array.from({ length: c.plaques }, () => true)
+  m.intouchableJusque = m.t + c.invulnerabilite // (il revient en clignotant : rien ne le touche le temps d'un souffle)
   m.toucheA = -100
   m.phase = 'vol'
   ev.push({ type: 'retour' })

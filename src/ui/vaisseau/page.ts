@@ -6478,7 +6478,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (le virage, de −1 à 1 : il allume les jets du nez — voir plus bas)
       virageVu = ressort(virageVu, Math.max(-1, Math.min(1, omega / 4)), 14)
     }
-    dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false, devieDeLaFlamme)
+    // (INTOUCHABLE APRÈS UN COUP, IL CLIGNOTE — Keko, 17/11 : « subir des dégâts, clignoter une petite seconde » : une
+    // tranche de 70 ms sur deux, il n'est pas dessiné ; voir `invulnerabilite` dans `jeu.ts`)
+    const clignote = m.phase === 'vol' && m.t < m.intouchableJusque && Math.floor((m.intouchableJusque - m.t) / 0.07) % 2 === 1
+    if (!clignote) dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false, devieDeLaFlamme)
     // LES JETS DE MANŒUVRE : de courtes flammes froides, blanches au cœur et bleues au bout — DEUX AU NEZ, qui soufflent
     // vers l'avant quand on recule ; UNE PAR FLANC, qui souffle à l'opposé du côté où l'on glisse. Elles frémissent.
     {
