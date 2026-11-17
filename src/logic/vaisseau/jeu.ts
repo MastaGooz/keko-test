@@ -628,17 +628,26 @@ export type Arme = {
    * autres attaques ») : tout insecte à moins de `rayon` du vaisseau perd `dps` par seconde, sans cesse (comme l'aura) ;
    * et LA VIE DRAINÉE PURGE LA CORRUPTION : chaque point pris en purge `purge` — en continu, quand un insecte abattu par
    * une autre arme n'en purge que `corruption.purge`, une fois.
+   * (… DEUX INSECTES À LA FOIS AU PLUS — Keko, 17/11 : « on va limiter le drain d'âme à deux ennemis simultanément ; avec
+   * les améliorations durant une run, on pourra augmenter ce nombre » : `cibles` — le verrouillé d'abord, puis les plus
+   * proches ; voir `drainesPar`)
    */
-  drain?: { rayon: number; dps: number; purge: number }
+  drain?: { rayon: number; dps: number; purge: number; cibles: number }
   /**
    * LES VRILLES D'OMBRE (le Néant, Keko, 17/11 : « l'effet Shadow Tendrils de pixelfx : on crée une tentacule dans un
    * endroit aléatoire autour du vaisseau, et ce tentacule attaque les ennemis proches ») : à sa cadence, un insecte à
    * `portee` du vaisseau, UNE VRILLE sort d'une flaque d'ombre en un point tiré au hasard autour de lui, entre `pres` et
    * `loin` — `max` à la fois (la plus vieille rentre) ; elle vit `duree` secondes, IMMOBILE (le vaisseau peut la quitter).
-   * Sortie (`sortie` secondes), elle FOUETTE toutes les `periode` secondes l'insecte le plus proche d'elle à moins de
-   * `allonge` (le verrouillé d'abord) : `degats` (ceux de l'arme). L'état est `Monde.vrilles`.
+   * PUIS ELLE SAISIT AU LIEU DE FOUETTER (Keko, 17/11 : « ça ressemble trop aux tourelles de l'ingénieur ; la tentacule
+   * saisit un ennemi et s'enroule autour de lui ; les petits ennemis sont immobilisés sur place et subissent des dégâts
+   * par seconde ; un ennemi trop grand, un mini-boss ou un boss, elle le saisit mais ne l'immobilise plus ; et s'il
+   * s'éloigne hors de sa portée, il subit des dégâts au moment où il la quitte ») : sortie (`sortie` secondes), libre,
+   * elle SAISIT l'insecte le plus proche d'elle à moins de `allonge` qu'aucune autre ne tient (le verrouillé d'abord) ;
+   * elle le serre : `dps` par seconde (signalé toutes les `periode` secondes) ; UN PETIT est IMMOBILISÉ (`Ennemi.tenuA`),
+   * UN GRAND (`Ennemi.grand`) avance encore — s'il sort de `allonge`, il S'ARRACHE : `arrache` points d'un coup, et elle le
+   * lâche. Sa proie morte ou partie, elle en saisit une autre. L'état est `Monde.vrilles`.
    */
-  vrille?: { max: number; duree: number; pres: number; loin: number; allonge: number; periode: number; sortie: number }
+  vrille?: { max: number; duree: number; pres: number; loin: number; allonge: number; sortie: number; dps: number; periode: number; arrache: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -707,6 +716,10 @@ export type Ennemi = {
   acide?: { jusque: number; dps: number; bonus: number }
   /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) : il est sur un faisceau de cristaux, jusqu'à cet instant (à peine au-delà : pour le dessin). */
   irradie?: { jusque: number }
+  /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
+  tenuA?: number
+  /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
+  grand?: boolean
   butin: number
   cargaison: Cargaison
 }
@@ -817,7 +830,7 @@ export type Monde = {
   /** LES PARASITES (voir `Arme.parasite`) : en vol vers leur cible, ou accrochés à leur hôte ; où, leur vitesse, depuis quand. */
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number }[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
-  vrilles: { id: number; arme: number; x: number; y: number; nee: number; frappeA: number; cible: number | null }[]
+  vrilles: { id: number; arme: number; x: number; y: number; nee: number; libreA: number; cible: number | null; saisieA: number; signaleA: number }[]
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -929,9 +942,11 @@ export type Evenement =
   | { type: 'rejeton'; x: number; y: number }
   | { type: 'coupDeRejeton'; id: number; x: number; y: number }
   | { type: 'rejetonFini'; x: number; y: number }
-  /** Une vrille d'ombre sort de sa flaque, fouette sa proie (où elle est), rentre (voir `Arme.vrille`). */
+  /** Une vrille d'ombre sort de sa flaque, saisit sa proie, la serre (signalé toutes les `periode` secondes), se fait arracher par un grand, rentre (voir `Arme.vrille`). */
   | { type: 'vrille'; id: number; x: number; y: number }
-  | { type: 'coupDeVrille'; id: number; x: number; y: number }
+  | { type: 'saisie'; id: number; cible: number; x: number; y: number }
+  | { type: 'serre'; id: number; x: number; y: number }
+  | { type: 'arrache'; id: number; x: number; y: number }
   | { type: 'vrilleFinie'; id: number; x: number; y: number }
   /** La Vouivre crache (voir `Arme.crachat`) : la bouche, le cap, le cône ; un insecte se met à être rongé. */
   | { type: 'crachat'; x: number; y: number; cap: number; cone: number; portee: number; arme: string }
@@ -1366,6 +1381,11 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
 
 /** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. Rend ses chocs. */
 function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
+  // (TENU PAR UNE VRILLE, un petit ne bouge plus, ne mord ni ne tire — voir `Arme.vrille`)
+  if ((e.tenuA ?? -1) > m.t && e.grand !== true) {
+    e.corps = { ...e.corps, vx: 0, vy: 0 }
+    return []
+  }
   if (c.invasion.active) return conduireLInsecte(c, m, e, dt, ev)
   const v = m.vaisseau
   const b = e.corps
@@ -2553,15 +2573,23 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
-/** LE DRAIN D'ÂME (voir `Arme.drain`) : tout ce qui est à portée perd sa vie, et ce qui est pris purge la corruption. */
+/** LES INSECTES QUE LE DRAIN D'ÂME TIENT (voir `Arme.drain`) : à portée, `cibles` au plus — le verrouillé d'abord, puis les plus proches. Le dessin lit les mêmes. */
+export function drainesPar(c: ConfigVaisseau, m: Monde, dr: { rayon: number; cibles: number }): Ennemi[] {
+  const v = m.vaisseau
+  const d = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+  const dans = m.ennemis.filter((e) => d(e) <= dr.rayon + c.ennemi.rayon).sort((p, q) => d(p) - d(q))
+  const ve = ennemiVerrouille(m)
+  if (ve !== null && dans.includes(ve)) dans.splice(dans.indexOf(ve), 1), dans.unshift(ve)
+  return dans.slice(0, dr.cibles)
+}
+
+/** LE DRAIN D'ÂME (voir `Arme.drain`) : ce qu'il tient perd sa vie, et ce qui est pris purge la corruption. */
 function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   if (m.phase !== 'vol') return
-  const v = m.vaisseau
   for (const a of c.armes) {
     const dr = a.drain
     if (dr === undefined) continue
-    for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > dr.rayon + c.ennemi.rayon) continue
+    for (const e of drainesPar(c, m, dr)) {
       const pris = Math.min(Math.max(0, e.pv), dr.dps * dt)
       e.pv -= dr.dps * dt
       // (la vie prise revient au vaisseau : la part corrompue de sa coque redevient saine — les Innommés)
@@ -2571,8 +2599,8 @@ function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
   }
 }
 
-/** LES VRILLES D'OMBRE (voir `Arme.vrille`) : la sortie en un point tiré autour du vaisseau, les coups de fouet, la fin. */
-function menerLesVrilles(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+/** LES VRILLES D'OMBRE (voir `Arme.vrille`) : la sortie en un point tiré autour du vaisseau, la saisie, l'étreinte, l'arrachement, la fin. */
+function menerLesVrilles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
     const vr = a.vrille
@@ -2592,7 +2620,7 @@ function menerLesVrilles(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const d = vr.pres + (vr.loin - vr.pres) * Math.sqrt(tire(m.graine, id, 42))
     const x = v.x + Math.cos(an) * d
     const y = v.y + Math.sin(an) * d
-    m.vrilles.push({ id, arme: i, x, y, nee: m.t, frappeA: m.t + vr.sortie, cible: null })
+    m.vrilles.push({ id, arme: i, x, y, nee: m.t, libreA: m.t + vr.sortie, cible: null, saisieA: -1, signaleA: -1 })
     ev.push({ type: 'vrille', id, x, y })
   })
   for (let k = m.vrilles.length - 1; k >= 0; k--) {
@@ -2604,25 +2632,48 @@ function menerLesVrilles(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       ev.push({ type: 'vrilleFinie', id: r.id, x: r.x, y: r.y })
       continue
     }
-    if (m.t < r.frappeA) continue
-    // (sa proie : le verrouillé à son allonge, sinon le plus proche d'elle)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - r.x, e.corps.y - r.y)
     const allonge = vr.allonge + c.ennemi.rayon
-    let proie: Ennemi | undefined
-    const ve = ennemiVerrouille(m)
-    if (ve !== null && dist(ve) <= allonge) proie = ve
-    else {
-      let dc = allonge
-      for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (proie = e)
+    let proie = r.cible === null ? undefined : m.ennemis.find((e) => e.id === r.cible)
+    // (UN GRAND S'ARRACHE : sorti de son allonge, il prend un coup et elle le lâche)
+    if (proie !== undefined && dist(proie) > allonge) {
+      proie.pv -= vr.arrache
+      ev.push({ type: 'arrache', id: r.id, x: proie.corps.x, y: proie.corps.y })
+      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique: false })
+      if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+      proie = undefined
+      r.cible = null
+      r.libreA = m.t + 0.3
     }
-    r.cible = proie?.id ?? null
-    if (proie === undefined) continue
-    r.frappeA = m.t + vr.periode
-    const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-    proie.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
-    ev.push({ type: 'coupDeVrille', id: r.id, x: proie.corps.x, y: proie.corps.y })
-    ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
-    if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+    if (proie === undefined && r.cible !== null) (r.cible = null), (r.libreA = m.t + 0.2)
+    if (proie === undefined) {
+      if (m.t < r.libreA) continue
+      // (LIBRE, elle saisit : le verrouillé à son allonge, sinon le plus proche d'elle qu'aucune autre ne tient)
+      const tenus = new Set(m.vrilles.map((x) => x.cible))
+      const ve = ennemiVerrouille(m)
+      if (ve !== null && dist(ve) <= allonge && !tenus.has(ve.id)) proie = ve
+      else {
+        let dc = allonge
+        for (const e of m.ennemis) if (!tenus.has(e.id) && dist(e) <= dc) (dc = dist(e)), (proie = e)
+      }
+      if (proie === undefined) continue
+      r.cible = proie.id
+      r.saisieA = m.t
+      r.signaleA = m.t
+      ev.push({ type: 'saisie', id: r.id, cible: proie.id, x: proie.corps.x, y: proie.corps.y })
+    }
+    // (ELLE SERRE : un petit ne bouge plus ; tous perdent leur vie)
+    if (proie.grand !== true) proie.tenuA = m.t + 0.1
+    proie.pv -= vr.dps * dt
+    if (m.t - r.signaleA >= vr.periode) {
+      r.signaleA = m.t
+      ev.push({ type: 'serre', id: proie.id, x: proie.corps.x, y: proie.corps.y })
+    }
+    if (proie.pv <= 0) {
+      abattreLEnnemi(c, m, proie, ev)
+      r.cible = null
+      r.libreA = m.t + 0.2
+    }
   }
 }
 
@@ -3408,7 +3459,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesFleaux(c, m, dt, ev)
   menerLesParasites(c, m, dt, ev)
   menerLeDrain(c, m, dt, ev)
-  menerLesVrilles(c, m, ev)
+  menerLesVrilles(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)

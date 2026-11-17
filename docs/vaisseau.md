@@ -5344,3 +5344,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LES ÉCLATS DE GLACE DU FRIMAS NE SE FRAGMENTENT PLUS (Keko, 17/11 : « ce sera plutôt une amélioration qu'on rajoutera
   durant une partie ; on reste sur les projectiles ») : huit éclats, le premier droit sur la cible, chacun frappe le
   premier insecte touché (4 points, le gel). La règle `salve.eclatement` reste écrite et vérifiée, pour l'amélioration.
+- LE DRAIN D'ÂME : DEUX INSECTES À LA FOIS AU PLUS (Keko, 17/11 : « avec les améliorations durant une run, on pourra
+  augmenter ce nombre ») — `drain.cibles`, le verrouillé d'abord, puis les plus proches ; `drainesPar` est lu par la
+  règle et par le dessin.
+- LES VRILLES SAISISSENT (Keko, 17/11 : elles « ressemblaient trop aux tourelles de l'ingénieur ») : libre, une vrille
+  saisit l'insecte le plus proche d'elle à 30 qu'aucune autre ne tient, s'enroule autour de lui et le serre — 8 points
+  par seconde ; UN PETIT EST IMMOBILISÉ (`Ennemi.tenuA` : il ne bouge, ne mord ni ne tire) ; UN GRAND (`Ennemi.grand`, un
+  mini-boss ou un boss — il n'y en a pas encore : la règle est écrite et vérifiée) avance encore, et s'il sort de son
+  allonge il S'ARRACHE : 12 points d'un coup, et elle le lâche. Sa proie morte ou partie, elle en saisit une autre. Le
+  dessin : la tentacule file en courbe jusqu'à l'insecte en 0,15 s et s'enroule d'un tour et demi autour de lui, une
+  boucle FINE, écartée de lui (épaisse, elle le cachait), une lueur qui court de la flaque à l'étreinte.
