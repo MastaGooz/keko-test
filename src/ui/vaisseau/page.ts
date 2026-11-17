@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, boucheDansLeMonde, encaisser, type Evenement, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, boucheDansLeMonde, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -876,6 +876,64 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const decalageDeLaCamera = { x: 0, y: 0 }
   const touches = new Set<string>()
   /**
+   * LA CONFIGURATION D'UN VOL, POUR UNE ARME (sortie de `demarrer` — Keko, 17/11 : l'aperçu des armes, au hangar, arme un
+   * petit monde à part avec la même configuration que le vrai vol) : les pièces montées, le labo, l'arme du vortex et sa
+   * place sur le vaisseau, l'espace du vortex, la vie de la race. `graine` : celle de l'espace.
+   */
+  function configDuVol(arme: string, graine: number): ConfigVaisseau {
+      let conf = configDuLabo(configDuHangar(BASE, hangar), labo) // (les passifs et les mécaniques du labo par-dessus les pièces montées)
+      // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
+      // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
+      // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
+      // (LES OBUS PARTENT DE LA BOUCHE DE LEUR ARME, là où elle est dessinée sous son aile — c'est le rendu qui la connaît)
+      conf = { ...conf, armes: conf.armes.map((a) => ({ ...a, bouche: boucheMontee(monteeA(hangar, 'coque').cran, a.id, a.place ?? 0) })) }
+      // (… ET CHAQUE FOREUSE CREUSE DE LÀ OÙ ELLE EST MONTÉE : le pivot de son canon, à sa place d'outil)
+      conf = { ...conf, foreuses: conf.foreuses.map((f) => ({ ...f, place: ouEstLaForeuse(f.outil, f.cran) })) }
+      conf = { ...conf, champ: { ...conf.champ, graine: graine } }
+      // (LE JEU DU VORTEX : l'espace vide — ni roche, ni rival, ni quai)
+      // LE VAISSEAU DU JEU DU VORTEX A UN CANON DANS CHAQUE AILE, QUI TIRENT À TOUR DE ROLE (Keko, 14/11) : deux canons,
+      // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
+      if (VORTEX) {
+        const canon = pieceDe(arme)?.arme
+        // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
+        // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
+        // (LE LANCE-FLAMMES DE LA SALAMANDRE : un seul, au nez — Keko, 15/11)
+        // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
+        // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
+        // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
+        // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
+        if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.puits !== undefined || canon?.meteore !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+        // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
+        // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
+        // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
+        else if (canon?.tentacule !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
+        // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
+        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.orbite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
+        else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
+        else if (canon !== undefined) conf = { ...conf, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
+      }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) } }
+      // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
+      // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
+      // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
+      // (SES VRAIES ARMES — Keko, 14/11 : « deux canons, le reste en mitraillette, tous ses slots d'armes légères
+      // remplis, et deux missiles dans ses slots lourds » : celles du catalogue, chacune à sa bouche sur la coque)
+      if (RIVAL_CUIRASSE && !VORTEX) {
+        const armes = ARMES_DU_RIVAL.flatMap((id, place) => {
+          const a = pieceDe(id)?.arme
+          return a === undefined ? [] : [{ ...a, place, bouche: boucheMontee(4, a.id, place) }]
+        })
+        conf = { ...conf, ennemi: { ...conf.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 150, tient: 75, lache: 300, fuit: 99999, armes } }
+      }
+      // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
+      // l'Essaim, pas de bouclier, une coque qui se régénère
+      if (VORTEX) conf = { ...conf, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption }, modeleDeVaisseau(flotte.actif).plaques) }
+      if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
+    return conf
+  }
+  /**
    * Le décollage, depuis le hangar (le bouton) ou au clavier : l'expédition part à neuf avec le vaisseau tel que monté
    * (la configuration se refait des pièces) ; après une coque percée ou une extraction, pareil — le trésor et les pièces
    * restent, c'est tout ce qui reste.
@@ -884,57 +942,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (enJeu && m.phase === 'vol') return
     if (enJeu && t - perduA < 1.2) return
     souris = null // (la souris ne vise qu'une fois bougée pendant ce vol)
-    CONF = configDuLabo(configDuHangar(BASE, hangar), labo) // (les passifs et les mécaniques du labo par-dessus les pièces montées)
-    // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
-    // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
-    // le ciel ; `&graine=N` la fixe (0 : l'espace de toujours)
-    // (LES OBUS PARTENT DE LA BOUCHE DE LEUR ARME, là où elle est dessinée sous son aile — c'est le rendu qui la connaît)
-    CONF = { ...CONF, armes: CONF.armes.map((a) => ({ ...a, bouche: boucheMontee(monteeA(hangar, 'coque').cran, a.id, a.place ?? 0) })) }
-    // (… ET CHAQUE FOREUSE CREUSE DE LÀ OÙ ELLE EST MONTÉE : le pivot de son canon, à sa place d'outil)
-    CONF = { ...CONF, foreuses: CONF.foreuses.map((f) => ({ ...f, place: ouEstLaForeuse(f.outil, f.cran) })) }
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
-    CONF = { ...CONF, champ: { ...CONF.champ, graine: graineDuVol } }
-    // (LE JEU DU VORTEX : l'espace vide — ni roche, ni rival, ni quai)
-    // LE VAISSEAU DU JEU DU VORTEX A UN CANON DANS CHAQUE AILE, QUI TIRENT À TOUR DE ROLE (Keko, 14/11) : deux canons,
-    // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
-    if (VORTEX) {
-      const canon = pieceDe(armeDuVortex())?.arme
-      // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
-      // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
-      // (LE LANCE-FLAMMES DE LA SALAMANDRE : un seul, au nez — Keko, 15/11)
-      // (LES DRONES DE LA SENTINELLE : trois, répartis sur l'orbite — Keko, 15/11)
-      // (LES TOURELLES DE L'INGÉNIEUR : une arme, qui les pose — Keko, 15/11)
-      // (LE NAPALM DE LA SALAMANDRE : un mortier, au nez)
-      // (L'ORBE DU PULSAR : une, qui se forme entre ses deux cornes — 16/11)
-      if (canon?.napalm !== undefined || canon?.crachat !== undefined || canon?.plasma !== undefined || canon?.essaim !== undefined || canon?.sphere !== undefined || canon?.puits !== undefined || canon?.meteore !== undefined || canon?.rail !== undefined || canon?.balayage !== undefined || canon?.canalise !== undefined || canon?.chaine !== undefined || canon?.aura !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
-      // (LA SCIE DE L'INGÉNIEUR : une, lancée du vaisseau)
-      // (LE GIVRE DU FRIMAS : une traînée, semée derrière lui)
-      // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
-      else if (canon?.tentacule !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
-      // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
-      else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
-      else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
-      else if (canon?.orbite !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
-      else if (canon?.flamme !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
-      else if (canon !== undefined) CONF = { ...CONF, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
-    }
-    if (VORTEX) CONF = { ...CONF, champ: { ...CONF.champ, densite: 0 }, station: { ...CONF.station, portee: -1 }, invasion: { ...CONF.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || CONF.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...CONF.ennemi, ...INSECTE }, bouclier: { ...CONF.bouclier, points: Math.max(CONF.bouclier.points, BOUCLIER_DU_VORTEX) } }
-    // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
-    // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
-    // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
-    // (SES VRAIES ARMES — Keko, 14/11 : « deux canons, le reste en mitraillette, tous ses slots d'armes légères
-    // remplis, et deux missiles dans ses slots lourds » : celles du catalogue, chacune à sa bouche sur la coque)
-    if (RIVAL_CUIRASSE && !VORTEX) {
-      const armes = ARMES_DU_RIVAL.flatMap((id, place) => {
-        const a = pieceDe(id)?.arme
-        return a === undefined ? [] : [{ ...a, place, bouche: boucheMontee(4, a.id, place) }]
-      })
-      CONF = { ...CONF, ennemi: { ...CONF.ennemi, pv: 160, poussee: 45, vitesseMax: 42, rotation: 0.7, rayon: 18, voit: 150, tient: 75, lache: 300, fuit: 99999, armes } }
-    }
-    // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
-    // l'Essaim, pas de bouclier, une coque qui se régénère
-    if (VORTEX) CONF = { ...CONF, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: CONF.coque, bouclier: CONF.bouclier, regeneration: CONF.regeneration, plaques: CONF.plaques, corruption: CONF.corruption }, modeleDeVaisseau(flotte.actif).plaques) }
-    if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
+    CONF = configDuVol(armeDuVortex(), graineDuVol)
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
     // pèsent plus rien, et le propulseur ne donne ni poussée, ni pointe, ni rotation. Le reste (outils, armes) ne change pas.
@@ -3530,21 +3539,191 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         return
       }
     }
-    // la fiche : son nom, ses jauges (sans le poids), ce qu'elle fait
-    const jauges = jaugesDe(choisie).filter((j) => j.nom !== 'Poids')
-    const dit = replier(choisie.dit, W - 22)
-    const hh = 18 + jauges.length * 10 + 2
-    const hd = hh + dit.length * 9 + 6
-    plaque(p, 4, y, W - 8, hd, 'encre')
-    motEnRelief(p, choisie.nom, W / 2, y + 5, aSoi)
-    jauges.forEach((j, i) => {
-      const k = sortie((t - vaisseauxA - 0.05 - i * 0.045) / 0.32)
-      dessinerUneJaugeDePiece(p, y + 18 + i * 10, { ...j, valeur: j.valeur * k }, null, false, 10, k)
-    })
-    p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
-    dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * 9, COQUE[4], { align: 'center' }))
+    // L'APERÇU ET CE QU'ELLE FAIT (Keko, 17/11 : « dans l'écran de sélection des armes, on enlève la cadence, les dégâts et
+    // toutes les informations statistiques ; plus de jauge : juste le nom de l'arme et une petite description, avec une
+    // animation — on voit le vaisseau et un ennemi, avec le projectile en animation, pour voir ce que ça donne en jeu ») :
+    // l'aperçu (`dessinerLApercuDeLArme`), le nom, la description sans chiffres (`DESCRIPTIONS_DES_ARMES`)
+    const hA = Math.max(64, Math.min(110, H - y - 4 - 48))
+    plaque(p, 4, y, W - 8, hA + 48, 'encre')
+    dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
+    motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
+    replier(DESCRIPTIONS_DES_ARMES[choisie.id] ?? choisie.dit, W - 22).slice(0, 3).forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + i * 9, COQUE[4], { align: 'center' }))
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
+  }
+  /** LES ARMES, DITES SANS CHIFFRES (Keko, 17/11 : « juste le nom de l'arme et une petite description ») : ce qu'elle fait, à voir. */
+  const DESCRIPTIONS_DES_ARMES: Record<string, string> = {
+    'arme-canon': 'Des obus lourds, tirés d’une aile puis de l’autre, droit devant.',
+    'arme-rafale': 'Une pluie de balles rapides, qui s’éparpillent un peu.',
+    'arme-minimissiles': 'Des missiles guidés, qui rattrapent leur cible et explosent à l’impact.',
+    'arme-flammes': 'Un cône de feu au nez : il arrose de près, et ce qu’il touche brûle encore.',
+    'arme-rayon': 'Un rayon tombe du toit et trace au sol un trait de feu, qui laisse des flammes.',
+    'arme-napalm': 'Une boule de gel lancée en cloche, qui laisse une flaque de feu.',
+    'arme-drones': 'Trois drones en orbite fondent sur les ennemis proches et les frappent d’arcs électriques.',
+    'arme-chaine': 'Un éclair qui rebondit d’ennemi en ennemi.',
+    'arme-aura': 'Un champ électrique autour du vaisseau, qui grille ce qui s’approche.',
+    'arme-tourelles': 'Il pose sur son passage de petites tourelles qui tirent seules.',
+    'arme-scie': 'Une scie circulaire lancée vers l’ennemi, qui coupe tout à l’aller et au retour.',
+    'arme-fleau': 'Une masse à pics qui tourne sans cesse autour de lui, au bout de sa chaîne.',
+    'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
+    'arme-eclats': 'De gros éclats de glace tout autour : chacun se brise sur un insecte en une gerbe de fragments.',
+    'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
+    'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
+    'arme-essaim': 'Une gerbe de petits missiles de plasma, qui zigzaguent puis fondent sur les insectes.',
+    'arme-meteore': 'Une météore d’arcane tombe du ciel sur un insecte, sans jamais le manquer.',
+    'arme-tentacules': 'Une tentacule à aiguille, qui fouette et pique très vite.',
+    'arme-nuee': 'Un nuage de minuscules insectes l’entoure et lance ses bras vers les ennemis.',
+    'arme-rejetons': 'Il pond des rejetons, qui nagent vers les insectes et les agrippent de leurs tentacules.',
+    'arme-crachat': 'Un crachat d’acide devant lui, qui ronge les insectes et les rend fragiles.',
+    'arme-mines': 'Des pustules d’acide semées autour de lui, qui éclatent en gaz au passage d’un insecte.',
+    'arme-parasites': 'Une larve crachée sur un insecte : elle le ronge, puis saute sur un autre à sa mort.',
+    'arme-faisceau': 'Un rayon continu depuis son cristal, qui chauffe de plus en plus sur la même cible.',
+    'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
+    'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’insectes.',
+    'arme-puits': 'Une singularité qui aspire les insectes vers son cœur, puis éclate.',
+    'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
+  }
+  /**
+   * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
+   * que ça donne en jeu ») : UN PETIT MONDE À PART, armé de la même configuration que le vrai vol (`configDuVol`) — le
+   * vaisseau piloté au milieu, deux insectes qui foncent sur lui depuis la droite, remplacés dès qu'ils tombent ; il ne
+   * meurt pas (sa coque est refaite à chaque pas). On le fait avancer par la règle (`avancerLeMonde`), et on le PEINT AVEC
+   * LES FONCTIONS DU VOL, le temps de les prêter à ce monde (`m`, `CONF`, `v`, la caméra), rognées à son cadre : ce qu'on
+   * voit est ce que fait l'arme en jeu. (Ce que le vol sème à ses événements — étincelles, éclairs d'impact, sons — n'y est
+   * pas.) Il repart de zéro quand on change d'arme, et toutes les quatorze secondes.
+   */
+  let apercu: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number } | null = null
+  const APERCU_LOIN = 200
+  function apercuDe(arme: string): { conf: ConfigVaisseau; monde: Monde } {
+    if (apercu === null || apercu.arme !== arme || apercu.monde.phase !== 'vol' || apercu.monde.t > 14) {
+      const base = configDuVol(arme, 1)
+      // (des insectes deux fois plus lents qu'en vol : l'arme a le temps de se montrer avant qu'ils n'arrivent)
+      const conf: ConfigVaisseau = { ...base, invasion: { ...base.invasion, premiere: 1e9 }, ennemi: { ...base.ennemi, vitesseMax: base.ennemi.vitesseMax * 0.5, poussee: base.ennemi.poussee * 0.5 } }
+      const monde = nouveauMonde(conf, 1)
+      // (LOIN DU PORTAIL — mesuré : posés dessus, les insectes qui arrivaient au vaisseau « passaient » le portail et
+      // disparaissaient avant d'être touchés ; à 200 de lui, ils foncent sur le vaisseau)
+      monde.vaisseau = { ...monde.vaisseau, x: -APERCU_LOIN, y: 0, cap: 0, vx: 0, vy: 0 }
+      apercu = { arme, conf, monde, t, nes: 0 }
+    }
+    const a = apercu
+    let reste = Math.min(0.1, Math.max(0, t - a.t))
+    a.t = t
+    while (reste > 1e-6) {
+      const pas = Math.min(1 / 60, reste)
+      reste -= pas
+      while (a.monde.ennemis.length < 2) {
+        const k = a.nes++
+        const an = (((k * 0.618) % 1) - 0.5) * 1.3
+        const e: Ennemi = { id: a.monde.prochainId++, corps: { ...a.monde.vaisseau, x: -APERCU_LOIN + 34 + Math.cos(an) * 38, y: Math.sin(an) * 30, vx: 0, vy: 0, cap: Math.PI, poussee: 0 }, pv: a.conf.ennemi.pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide() }
+        a.monde.ennemis.push(e)
+      }
+      // (IL REGARDE L'INSECTE LE PLUS PROCHE, comme le manche du regard en vol : en glissant, son nez suivait sa course, et les
+      // armes qui ne tirent que devant ne tiraient plus)
+      const va = a.monde.vaisseau
+      const proche = a.monde.ennemis.reduce<Ennemi | null>((b, e) => (b === null || Math.hypot(e.corps.x - va.x, e.corps.y - va.y) < Math.hypot(b.corps.x - va.x, b.corps.y - va.y) ? e : b), null)
+      const regard = proche === null ? { x: 1, y: 0 } : { x: proche.corps.x - va.x, y: proche.corps.y - va.y }
+      const r = avancerLeMonde(a.conf, a.monde, pas, { x: 0, y: 0 }, regard)
+      // (CE QUE LE VOL SÈME À SES ÉVÉNEMENTS ET QUI EST L'ARME ELLE-MÊME — les arcs des drones et de la chaîne, les éclats qui se
+      // brisent, l'insecte qui blanchit — : les mêmes gestes que le vol, sans le son ni le reste)
+      for (const ev of r.evenements) {
+        if (ev.type === 'arc') arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, de: { sorte: 'drone', k: ev.drone }, vers: { sorte: 'ennemi', id: ev.id }, t0: t, vie: 0.16, g: R.range(0, 1e4), fort: false })
+        else if (ev.type === 'chaine') for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, de: k === 0 ? { sorte: 'vaisseau' } : { sorte: 'ennemi', id: ev.ids[k - 1] }, vers: { sorte: 'ennemi', id: ev.ids[k] }, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
+        else if (ev.type === 'eclatement') eclatsBrises.push({ x: ev.x, y: ev.y, t0: t })
+        else if (ev.type === 'ennemiTouche') toucheEnnemiA.set(ev.id, t)
+      }
+      // (le lance-flammes : ses flammes, comme en vol)
+      if (a.monde.crache && a.conf.armes.length > 0) {
+        const a0 = a.conf.armes[0]
+        const va = a.monde.vaisseau
+        const bo = a0.bouche ?? { x: 0, y: 0 }
+        const bx = va.x + Math.cos(va.cap) * bo.x - Math.sin(va.cap) * bo.y
+        const by = va.y + Math.sin(va.cap) * bo.x + Math.cos(va.cap) * bo.y
+        const cone = a0.flamme?.cone ?? 0.4
+        for (let i = 0; i < 6; i++) {
+          const an = va.cap + R.range(-cone * 0.8, cone * 0.8)
+          const fl = R.range(0.2, 0.3)
+          const vit = ((a0.portee + a.conf.ennemi.rayon) / (0.7 * fl)) * R.range(0.9, 1.05)
+          flammesDuNez.push({ x: bx, y: by, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, t0: t - R.range(0, pas), fl, sm: R.next() < 0.55, sl: R.range(0.25, 0.45), s: R.range(1.2, 2.4), f: R.next() })
+        }
+      }
+      // (IL GLISSE DOUCEMENT DE HAUT EN BAS, toujours à la même place — mesuré : poussé par les insectes qui le heurtent, il
+      // sortait du cadre ; et ce qu'il pose « sur son passage » — balises, cristaux, givre — ne se posait pas à l'arrêt ;
+      // il tourne et vise tout seul ; un insecte qui l'atteint s'en va, un autre arrive)
+      const tm = a.monde.t
+      a.monde.vaisseau = { ...a.monde.vaisseau, x: -APERCU_LOIN, y: 22 * Math.sin(0.9 * tm), vx: 0, vy: 22 * 0.9 * Math.cos(0.9 * tm) }
+      a.monde.ennemis = a.monde.ennemis.filter((e) => Math.hypot(e.corps.x - a.monde.vaisseau.x, e.corps.y - a.monde.vaisseau.y) > 12)
+      // (il ne meurt pas : sa coque, son bouclier, ses plaques sont refaits)
+      a.monde.coque = a.conf.coque
+      a.monde.bouclier = a.conf.bouclier.points
+      a.monde.plaques = a.monde.plaques.map(() => true)
+      a.monde.corruption = 0
+    }
+    return a
+  }
+  function dessinerLApercuDeLArme(p: Peintre, x: number, y: number, w: number, h: number, arme: string): void {
+    const a = apercuDe(arme)
+    p.place(0, 0)
+    p.rect(x - 1, y - 1, w + 2, h + 2, MATIERES.encre.contour)
+    p.rect(x, y, w, h, N.hex('#05060c'))
+    for (let k = 0; k < 14; k++) p.rect(x + ((k * 37) % w), y + ((k * 23) % h), 1, 1, k % 4 === 0 ? COQUE[5] : COQUE[3])
+    const fw = frame.w
+    const ax = Math.round(x + ORIGINE.x)
+    const ay = Math.round(y + ORIGINE.y)
+    const avantC = frame.color.slice()
+    const avantL = frame.light.slice()
+    const garde = { m, CONF, v, cx: camera.x, cy: camera.y, arme: armesChoisies[flotte.actif] }
+    m = a.monde
+    CONF = a.conf
+    v = m.vaisseau
+    armesChoisies[flotte.actif] = arme
+    // (le centre du cadre montre le point (14, 0) du petit monde : le vaisseau à gauche, les insectes à droite)
+    camera.x = W / 2 - APERCU_LOIN + 14 - (x + w / 2)
+    camera.y = centreY() - (y + h / 2)
+    try {
+      dessinerLeGivre(p)
+      dessinerLesFlaques(p)
+      dessinerLesMeteoresAuSol(p)
+      dessinerLesFlaquesAcides(p)
+      dessinerLesMines(p)
+      dessinerLesTourelles(p)
+      dessinerLesBalises(p)
+      dessinerLesEnnemis(p)
+      dessinerLesTentacules(p)
+      dessinerLesFleaux(p)
+      dessinerLeVaisseau(p)
+      dessinerLesTirs(p)
+      dessinerLesScies(p)
+      dessinerLesTornades(p)
+      dessinerLePlasma(p)
+      dessinerLesMeteores(p)
+      dessinerLesEclatsBrises(p)
+      dessinerLesNuees(p)
+      dessinerLesRejetons(p)
+      dessinerLesCrachats(p)
+      dessinerLesGaz(p)
+      dessinerLesParasites(p)
+      dessinerLElectricite(p)
+      dessinerLesLasers(p)
+    } finally {
+      m = garde.m
+      CONF = garde.CONF
+      v = garde.v
+      camera.x = garde.cx
+      camera.y = garde.cy
+      if (garde.arme === undefined) delete armesChoisies[flotte.actif]
+      else armesChoisies[flotte.actif] = garde.arme
+      p.place(0, 0)
+    }
+    // (rogné à son cadre : hors de lui, l'écran d'avant)
+    for (let yy = 0; yy < frame.h; yy++) {
+      const dansY = yy >= ay && yy < ay + h
+      for (let xx = 0; xx < fw; xx++) {
+        if (dansY && xx >= ax && xx < ax + w) continue
+        const i = yy * fw + xx
+        frame.color[i] = avantC[i]
+        frame.light[i] = avantL[i]
+      }
+    }
   }
   const couleursOuverts = (): boolean => couleursOuvertes
   let surligneVaisseau = -1
@@ -3642,7 +3821,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (UN REPÈRE BLANC À LA VALEUR DU VAISSEAU PILOTÉ, quand on en regarde un autre — Keko, 15/11 : « pour comparer celui
     // qui est équipé à celui qu'on est en train de regarder » ; comme les jauges des pièces)
     const pilote = mo.id === flotte.actif ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
-    const dit = avecDit ? replier(mo.dit, W - 22) : []
+    const dit = avecDit ? replier(mo.dit, W - 22).slice(0, 3) : []
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
     const yj = avecNom ? 18 : 6
@@ -3679,7 +3858,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const rangeesDesVaisseaux = (): ({ race: string } | { mo: ReturnType<typeof modeleDeVaisseau> })[] =>
     RACES.flatMap((r) => [{ race: r.nom }, ...MODELES.filter((mo) => mo.id !== 'cuirasse' && mo.race === r.id).map((mo) => ({ mo }))])
   /** La hauteur de la fiche d'un vaisseau au panneau (nom et dessin, cinq jauges, ce qu'il est) — voir `dessinerLaFicheDuVaisseau`. */
-  const hauteurDeLaFicheDuVaisseau = (mo: ReturnType<typeof modeleDeVaisseau>): number => 70 + replier(mo.dit, W - 22).length * 9 + 6
+  // (LA GRILLE A UNE HAUTEUR FIXE — Keko, 17/11 : « la hauteur du grid varie en fonction du texte en dessous ; je voudrais
+  // que le grid ait une hauteur fixe, la description limitée à trois lignes » : la fiche réserve toujours trois lignes)
+  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 70 + 3 * 9 + 6
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)

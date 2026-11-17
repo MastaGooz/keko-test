@@ -5238,3 +5238,29 @@ races indiquées par un petit symbole à côté du nom ; beaucoup plus ergonomiq
   et l'échelle du portrait changeait avec elle (seuls les vaisseaux à tuyère tremblaient). Il se prend maintenant sur une
   pose fixe, gardée par modèle (`cadresDesPortraits`). MESURÉ sur six images rapprochées : le bord gauche de la coque du
   chasseur sautait de 7 à 13 pixels ; il ne bouge plus (reste le flottement voulu, d'un pixel).
+
+### Le vortex, la grille à hauteur fixe ; l'écran des armes refait (17/11)
+
+Keko : « la hauteur du grid des vaisseaux varie en fonction du texte en dessous […] je voudrais que le grid ait une
+hauteur fixe ; la description limitée à trois lignes. Dans l'écran de sélection des armes, on enlève la cadence, les
+dégâts et toutes les informations statistiques ; plus de jauge : juste le nom de l'arme et une petite description, avec
+une animation — on voit le vaisseau et un ennemi, avec le projectile en animation, pour voir ce que ça donne en jeu ».
+
+- LA GRILLE : la fiche réserve toujours trois lignes (`hauteurDeLaFicheDuVaisseau`), la description est coupée à trois ;
+  et les descriptions des vaisseaux sont RÉÉCRITES pour tenir en trois lignes — MESURÉ avec la police du jeu, à 158 pixels
+  (la colonne la plus étroite) : onze sur treize en prenaient quatre ou cinq (« d'une autre race » n'avait plus de sens
+  avec les races, et le Prisme n'a plus de proue).
+- L'ÉCRAN DES ARMES : la liste des noms, « Équiper », puis L'APERÇU et la description sans chiffres
+  (`DESCRIPTIONS_DES_ARMES`, une phrase par arme). Plus de jauges.
+- L'APERÇU (`apercuDe`, `dessinerLApercuDeLArme`) : un petit monde à part, armé de LA MÊME CONFIGURATION QUE LE VRAI VOL
+  (`configDuVol(arme, graine)`, sorti de `demarrer` pour l'occasion), que la règle fait avancer ; on le peint AVEC LES
+  FONCTIONS DU VOL en leur prêtant ce monde (`m`, `CONF`, `v`, la caméra, l'arme), rognées à son cadre (l'écran hors du
+  cadre est remis tel qu'il était). Le vaisseau piloté à gauche, qui glisse doucement de haut en bas (ce qu'il pose « sur
+  son passage » se pose) et regarde l'insecte le plus proche ; deux insectes, deux fois plus lents qu'en vol, qui foncent
+  sur lui depuis la droite et sont remplacés quand ils tombent ou l'atteignent ; il ne meurt pas. Ce que le vol sème à ses
+  événements et qui est l'arme elle-même y est aussi : les arcs des drones et de la chaîne, les éclats qui se brisent,
+  l'insecte qui blanchit, les flammes du lance-flammes ; pas les sons.
+- MESURÉ en route : posés sur le portail, les insectes « passaient » le portail en arrivant au vaisseau et disparaissaient
+  (l'aperçu est à 200 de lui) ; poussé par eux, le vaisseau sortait du cadre (il est tenu à sa place) ; en glissant, son nez
+  suivait sa course et les armes qui ne tirent que devant ne tiraient plus (il regarde l'insecte). Les trente aperçus ont
+  été capturés un par un.
