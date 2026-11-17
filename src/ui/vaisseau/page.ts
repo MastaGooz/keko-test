@@ -7433,7 +7433,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // Elle s'efface en rétrécissant.
     const rayonDuPoison = (g: (typeof m.givres)[number]): number => {
       const age = m.t - g.nee
-      return g.rayon * Math.min(1, age / 0.2) * Math.min(1, Math.max(0, (g.duree - age) / 0.9))
+      // (… À SA LARGEUR DÈS SA POSE — Keko, 17/11 : « elle commence par un petit point et s'élargit » : la plus jeune, en tête,
+      // grandissait encore ; elle ne fait plus que rétrécir en s'effaçant)
+      return g.rayon * Math.min(1, Math.max(0, (g.duree - age) / 0.9))
     }
     for (const g of m.givres) {
       if (g.poison !== true) continue

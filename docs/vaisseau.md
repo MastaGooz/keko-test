@@ -5460,3 +5460,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE VER SE TORTILLE MOINS (Keko, 17/11 : « dans l'écran de sélection, il se tortille beaucoup trop vite ») : sans chemin
   (hangar, grille, apparences), sa vague va à vitesse fixe et lente (2,4 rad/s), d'une ampleur qui ne suit plus qu'un peu
   la poussée — celle des portraits bat vite.
+- LA TRAÎNÉE DE POISON NAÎT À SA LARGEUR (Keko, 17/11 : « elle commence par un petit point et s'élargit ») : ses plaques
+  ne grandissent plus à la pose (la plus jeune, en tête, grandissait encore) ; elles ne font que rétrécir en s'effaçant.
