@@ -5285,3 +5285,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   laisse venir), et repartait de zéro toutes les quatorze secondes. L'insecte au contact MORD maintenant comme en vol
   (le vaisseau clignote, sa coque est refaite) et ne quitte l'aperçu qu'abattu ; l'aperçu ne repart de zéro qu'au
   changement d'arme ; ses pépites sont retirées à chaque pas.
+- LES ARMES QUI POSENT SUR LE PASSAGE FONT UN CIRCUIT (Keko, 17/11 : « la traînée de givre, les mines et les balises
+  reliées ne sont pas bien animées, car le vaisseau se déplace de haut en bas ») : en glissant de 22 sur place, le
+  vaisseau empilait la traînée, les mines et les balises (une tous les 40 de trajet : il n'en posait presque pas).
+  Avec elles (`ARMES_EN_CIRCUIT` : givre, mines, balises, et les cristaux, qui se posent pareil), il parcourt un ovale à
+  travers le cadre (trois dixièmes de sa largeur et de sa hauteur, 45 par seconde), le nez dans sa course ; les autres
+  armes gardent le glissement et visent l'insecte.

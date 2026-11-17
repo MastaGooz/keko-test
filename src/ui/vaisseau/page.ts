@@ -3618,7 +3618,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let apercu: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number } | null = null
   const APERCU_LOIN = 200
-  function apercuDe(arme: string): { conf: ConfigVaisseau; monde: Monde; t: number; nes: number } {
+  function apercuDe(arme: string): { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number } {
     if (apercu === null || apercu.arme !== arme || apercu.monde.phase !== 'vol') {
       const base = configDuVol(arme, 1)
       // (des insectes deux fois plus lents qu'en vol : l'arme a le temps de se montrer avant qu'ils n'arrivent)
@@ -3632,7 +3632,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return apercu
   }
   /** Fait avancer l'aperçu jusqu'à maintenant (les globales du vol lui sont prêtées) ; rend le temps avancé. */
-  function avancerLApercu(a: { conf: ConfigVaisseau; monde: Monde; t: number; nes: number }): number {
+  /**
+   * LES ARMES QUI POSENT SUR LE PASSAGE DU VAISSEAU (Keko, 17/11 : « la traînée de givre, les mines et les balises reliées
+   * ne sont pas bien animées, car le vaisseau se déplace de haut en bas ») : la traînée naît derrière lui, une balise ou un
+   * cristal tous les 40 de trajet, les mines autour de lui — en glissant de 22 de haut en bas, il empilait tout sur place.
+   * Avec elles, il FAIT UN CIRCUIT : un ovale à travers le cadre, le nez dans sa course.
+   */
+  const ARMES_EN_CIRCUIT = new Set(['arme-givre', 'arme-mines', 'arme-balises', 'arme-cristaux'])
+  function avancerLApercu(a: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number }, w: number, h: number): number {
+    const circuit = ARMES_EN_CIRCUIT.has(a.arme)
+    // (l'ovale : centré sur le cadre, aux trois dixièmes de sa largeur et de sa hauteur, parcouru à 45 par seconde environ)
+    const rx = w * 0.3
+    const ry = h * 0.3
+    const omega = 45 / Math.max(1, (rx + ry) / 2)
+    const xc = -APERCU_LOIN + 14
     const fait = Math.min(0.1, Math.max(0, t - a.t))
     let reste = fait
     a.t = t
@@ -3649,7 +3662,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // armes qui ne tirent que devant ne tiraient plus)
       const va = a.monde.vaisseau
       const proche = a.monde.ennemis.reduce<Ennemi | null>((b, e) => (b === null || Math.hypot(e.corps.x - va.x, e.corps.y - va.y) < Math.hypot(b.corps.x - va.x, b.corps.y - va.y) ? e : b), null)
-      const regard = proche === null ? { x: 1, y: 0 } : { x: proche.corps.x - va.x, y: proche.corps.y - va.y }
+      const regard = circuit ? { x: va.vx, y: va.vy } : proche === null ? { x: 1, y: 0 } : { x: proche.corps.x - va.x, y: proche.corps.y - va.y }
       const r = avancerLeMonde(a.conf, a.monde, pas, { x: 0, y: 0 }, regard)
       // (CE QUE LE VOL FAIT DE SES ÉVÉNEMENTS, TEL QUEL — les morts des insectes, les impacts, les éclairs, les arcs : Keko,
       // 17/11, « un ennemi tué disparaît sans animation de mort, et l'animation de hit n'apparaît pas » ; muet)
@@ -3675,7 +3688,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // il tourne et vise tout seul ; un insecte qui l'atteint le mord, comme en vol — il n'est plus retiré : il disparaissait
       // sans mourir, au fléau surtout, qui laisse les insectes venir au contact)
       const tm = a.monde.t
-      a.monde.vaisseau = { ...a.monde.vaisseau, x: -APERCU_LOIN, y: 22 * Math.sin(0.9 * tm), vx: 0, vy: 22 * 0.9 * Math.cos(0.9 * tm) }
+      if (circuit) a.monde.vaisseau = { ...a.monde.vaisseau, x: xc + rx * Math.cos(omega * tm), y: ry * Math.sin(omega * tm), vx: -rx * omega * Math.sin(omega * tm), vy: ry * omega * Math.cos(omega * tm) }
+      else a.monde.vaisseau = { ...a.monde.vaisseau, x: -APERCU_LOIN, y: 22 * Math.sin(0.9 * tm), vx: 0, vy: 22 * 0.9 * Math.cos(0.9 * tm) }
       // (PAS DE PÉPITES dans l'aperçu — Keko, 17/11 : les insectes abattus n'y lâchent rien)
       a.monde.pepites = []
       // (il ne meurt pas : sa coque, son bouclier, ses plaques sont refaits)
@@ -3710,7 +3724,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     camera.x = W / 2 - APERCU_LOIN + 14 - (x + w / 2)
     camera.y = centreY() - (y + h / 2)
     try {
-      const dtA = avancerLApercu(a)
+      const dtA = avancerLApercu(a, w, h)
       // (les gerbes et les effets avancent avec lui : au hangar, le vol ne les fait pas avancer)
       braises.update(dtA)
       etincelles.update(dtA)
