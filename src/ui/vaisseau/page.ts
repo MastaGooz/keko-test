@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, boucheDansLeMonde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, boucheDansLeMonde, encaisser, type Evenement, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -932,7 +932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
     // l'Essaim, pas de bouclier, une coque qui se régénère
-    if (VORTEX) CONF = { ...CONF, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: CONF.coque, bouclier: CONF.bouclier, regeneration: CONF.regeneration }) }
+    if (VORTEX) CONF = { ...CONF, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: CONF.coque, bouclier: CONF.bouclier, regeneration: CONF.regeneration, plaques: CONF.plaques }, modeleDeVaisseau(flotte.actif).plaques) }
     if (bouclierDEssai > 0) CONF = { ...CONF, bouclier: { ...CONF.bouclier, points: bouclierDEssai } }
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
@@ -1416,6 +1416,49 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       enJeu = false
     }, 'retour', 'acier')
     zone(0, 0, W, H, () => {}, null)
+  }
+  /**
+   * LES PLAQUES DE BLINDAGE DES HUMAINS (Keko, 17/11 : « à la place du bouclier bleu, des plaques de blindage représentées
+   * en gris, comme le bouclier, mais divisées par segments séparés, à côté de la barre de blindage ») : à la place de la
+   * barre fine du bouclier, une plaque d'acier par portion de la barre, À CÔTÉ DE LA PORTION QU'ELLE PROTÈGE — la première
+   * contre le haut de la barre (le plein) ; un trait d'encre entre deux ; cassée, un creux ; à l'instant où elle casse,
+   * elle blanchit et tremble. `debout` : le long d'une barre debout ; (x, y) le coin de la bande, `L` sa longueur.
+   */
+  const ACIER_DES_PLAQUES = [N.hex('#d4dce8'), N.hex('#8e99ac'), N.hex('#56607a')]
+  const plaquesCasseesA: number[] = []
+  function dessinerLesPlaques(p: Peintre, debout: boolean, x: number, y: number, L: number): void {
+    const n = m.plaques.length
+    const fin = 3
+    const encre = MATIERES.encre.contour
+    if (debout) p.rect(x - 1, y - 1, fin + 2, L + 2, encre)
+    else p.rect(x - 1, y - 1, L + 2, fin + 2, encre)
+    for (let k = 0; k < n; k++) {
+      const a0 = Math.round((k * L) / n)
+      const a1 = Math.round(((k + 1) * L) / n) - (k < n - 1 ? 1 : 0)
+      const long = a1 - a0
+      if (long <= 0) continue
+      const age = t - (plaquesCasseesA[k] ?? -10)
+      const tremble = age < 0.25 ? Math.round(Math.sin(age * 80) * 1.5 * (1 - age / 0.25)) : 0
+      // (debout, la plaque du haut est en haut ; couchée, le plein est à droite)
+      const px = debout ? x + tremble : x + L - a1
+      const py = debout ? y + a0 : y + tremble
+      const w = debout ? fin : long
+      const h = debout ? long : fin
+      if (age < 0.1) {
+        p.rect(px, py, w, h, N.WHITE)
+        continue
+      }
+      if (!m.plaques[k]) {
+        p.rect(px, py, w, h, N.hex('#2f3b58')) // (le creux des barres)
+        continue
+      }
+      p.rect(px, py, w, h, ACIER_DES_PLAQUES[1])
+      // (le biseau : clair en haut et à gauche, sombre en bas et à droite)
+      p.rect(px, py, w, 1, ACIER_DES_PLAQUES[0])
+      p.rect(px, py, 1, h, ACIER_DES_PLAQUES[0])
+      p.rect(px, py + h - 1, w, 1, ACIER_DES_PLAQUES[2])
+      p.rect(px + w - 1, py, 1, h, ACIER_DES_PLAQUES[2])
+    }
   }
   /** LA FIN DE LA PARTIE : le portail est tombé — un voile, la vague atteinte, « Rejouer ». */
   let finA = -10
@@ -3504,13 +3547,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cf = configDuHangar(BASE, de.serie)
       const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
       // (la vie de SA RACE — Keko, 17/11 : l'Essaim n'a pas de bouclier, sa dernière jauge dit sa régénération)
-      const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration })
+      const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques }, de.plaques)
       return [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
         { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
         { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
-        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : { nom: 'Régénération', valeur: Math.round(vie.regeneration * 25), max: 8, cellules: true },
       ]
     }
     const jauges = jaugesDuModele(mo)
@@ -4932,9 +4975,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ecrire(p, j.nom, x0, y - 1, COQUE[4])
     const bx = x0 + colonneDesJauges()
     const bw = W - 12 - bx
-    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : rouge ? ROUGE[3] : PEPITE[2]
-    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : rouge ? ROUGE[5] : N.hex('#ffe68a')
-    const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : rouge ? ROUGE[2] : N.hex('#a8650f')
+    // (les plaques des humains, en acier gris, comme leur barre en vol)
+    const acier = j.nom === 'Plaques'
+    const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : rouge ? ROUGE[3] : PEPITE[2]
+    const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : rouge ? ROUGE[5] : N.hex('#ffe68a')
+    const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : acier ? ACIER_DES_PLAQUES[2] : rouge ? ROUGE[2] : N.hex('#a8650f')
     if (j.nombre) {
       const dit = j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`
       motEnRelief(p, dit, bx + largeurDe(dit, TEXTE) / 2, y - 1, 'ivoire', TEXTE)
@@ -9667,7 +9712,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const plein = Math.round(BH * partDuBouclier())
         for (let y = 0; y < BH; y++) p.rect(xf, by + y, fin, 1, teinteDeLaBarreFine(BH - y <= plein, 1))
         if (plein > 0) p.rect(xf, by + BH - plein, 1, plein, teinteDeLaBarreFine(true, 0))
-      }
+      } else if (DEUX_BARRES && m.plaques.length > 0) dessinerLesPlaques(p, true, bx - 4, by, BH)
       // (LE ZOOM, sous la barre : « + » puis « − », l'un sur l'autre dans le bandeau)
       if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, W - Math.round(largeurDeBande() / 2) - 7, by + BH + 6, true)
       // (LA RÉGLETTE FIXE DU ZOOM, couchée : sous la barre de vie, sur son axe — sans la secousse du coup)
@@ -9676,7 +9721,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // barre de vie au-dessus » : MESURÉ, la réglette était sur l'axe de la seule barre d'or, deux pixels à droite du
         // milieu de l'ensemble — le bouclier bleu, de bx − 5 à bx − 1 cerne compris, et l'or de bx − 1 à bx + 6 ; douze
         // pixels, l'axe entre bx et bx + 1)
-        const axe = bx + (CONF.bouclier.points > 0 ? 1 : lw / 2) - Math.round(Math.sin(t * 90) * sursaut)
+        const axe = bx + (CONF.bouclier.points > 0 || CONF.plaques > 0 ? 1 : lw / 2) - Math.round(Math.sin(t * 90) * sursaut)
         // (… UN PEU PLUS COURTE, LE BOUTON DU MENU TOUT EN BAS SOUS ELLE — Keko, 17/11 : « réduire un petit peu la jauge de zoom
         // pour mettre en dessous, tout en bas à droite, un petit bouton menu » ; 56 de course avant)
         const yMenu = H - 6 - PLAQUE_DE_REGLETTE
@@ -9766,7 +9811,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const plein = Math.round(BW * partDuBouclier())
       for (let x = 0; x < BW; x++) p.rect(bx + x, by + bh + 1, 1, fin, teinteDeLaBarreFine(x < plein, 1))
       if (plein > 0) p.rect(bx, by + bh + 1, plein, 1, teinteDeLaBarreFine(true, 0))
-    }
+    } else if (DEUX_BARRES && m.plaques.length > 0) dessinerLesPlaques(p, false, bx, by + bh + 1, BW)
     // (LE ZOOM, sous la barre, calé à sa droite : « − » puis « + »)
     if (ZOOM_A_LA_MAIN) dessinerLeZoom(p, bx + BW - 30, by + bh + 5, false)
     // (LA RÉGLETTE FIXE DU ZOOM, debout : couchée en bas à droite de l'écran, au milieu du bandeau du bas, « + » à droite)
@@ -10465,6 +10510,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         bouclierA = t
         // (le coup d'essai vient d'un côté qui tourne : la bulle montre son onde, et sa fêlure au dernier point)
         coupsAuBouclier.push({ x: v.x + Math.cos(t * 2.3) * 20, y: v.y + Math.sin(t * 2.3) * 20, t0: t, brise: m.bouclier <= 0 })
+      } else if (m.plaques.length > 0) {
+        // (un vaisseau à plaques : le coup d'essai passe par elles, comme un vrai — au bout, tout revient)
+        if (m.coque <= 1.3) {
+          m.coque = CONF.coque
+          m.plaques = m.plaques.map(() => true)
+        } else {
+          const evs: Evenement[] = []
+          encaisser(CONF, m, v.x, v.y, 0.8, evs)
+          for (const e of evs) if (e.type === 'plaque') (plaquesCasseesA[e.k] = t), jouer('plaque')
+          if (evs.some((e) => e.type === 'touche')) toucheA = t
+        }
       } else {
         m.coque = m.coque > 1.3 ? m.coque - 0.8 : CONF.coque
         m.toucheA = m.t
@@ -10816,6 +10872,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 const a = R.range(0, Math.PI * 2)
                 const vit = R.range(30, 100)
                 etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.4), R.next() < 0.5 ? N.WHITE : VERRIERE[2], 1, 2.5)
+              }
+              break
+            }
+            case 'plaque': {
+              // UNE PLAQUE DE BLINDAGE PREND LE COUP ET CASSE (les humains, Keko, 17/11) : un clang de métal, des éclats
+              // d'acier qui giclent, une secousse ; sa plaque, dans la barre, blanchit puis se creuse
+              jouer('plaque')
+              plaquesCasseesA[ev.k] = t
+              secousse = Math.max(secousse, 0.35)
+              if (typeof navigator.vibrate === 'function') navigator.vibrate(25)
+              for (let i = 0; i < 10; i++) {
+                const a = R.range(0, Math.PI * 2)
+                const vit = R.range(30, 110)
+                etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), i % 3 === 0 ? N.WHITE : ACIER_DES_PLAQUES[i % 2], 1, 2.5)
               }
               break
             }

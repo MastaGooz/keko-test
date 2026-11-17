@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, encaisser, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -1994,4 +1994,26 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   sans.coque = 2
   for (let i = 0; i < 120; i++) avancerLeMonde({ ...c, regeneration: 0 }, sans, 1 / 60, { x: 0, y: 0 })
   verifier('sans régénération, elle ne bouge pas', sans.coque === 2)
+}
+
+// LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11) : une coque de 6 en trois portions de 2, une plaque à chacune
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, plaques: 3 }
+  const mp = nouveauMonde(c)
+  const coup = (d: number): Evenement[] => {
+    const ev: Evenement[] = []
+    encaisser(c, mp, 0, 0, d, ev)
+    return ev
+  }
+  const e1 = coup(4)
+  verifier('la plaque du haut prend tout le premier coup, même gros : la coque est intacte', mp.coque === 6 && !mp.plaques[0] && mp.plaques[1] && e1.some((e) => e.type === 'plaque'))
+  coup(1)
+  verifier('sa plaque cassée, la portion du haut est touchée', mp.coque === 5)
+  coup(3)
+  verifier('un coup qui descendrait dans une portion protégée s’arrête à son bord, et sa plaque casse', mp.coque === 4 && !mp.plaques[1] && mp.plaques[2])
+  coup(1)
+  coup(1)
+  verifier('le coup qui descendrait dans la dernière portion s’arrête à son bord, et sa plaque casse', mp.coque === 2 && !mp.plaques[2])
+  const morte = coup(5)
+  verifier('les plaques toutes cassées, le coup passe : la coque est percée', mp.coque === 0 && morte.some((e) => e.type === 'perdu'))
 }

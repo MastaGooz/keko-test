@@ -80,6 +80,17 @@ export const VAISSEAU = {
    * plus lentement que le bouclier, mais en permanence ») : tant de points par seconde, coup reçu ou non. Zéro : jamais.
    */
   regeneration: 0,
+  /**
+   * LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11 : « une plaque protège la portion de la barre de vie sur laquelle
+   * elle se trouve, en encaissant totalement un dégât subi à la place de la barre — que ce soit 1 ou 4 points ; une fois
+   * la plaque détruite, la portion de barre à côté d'elle est touchée ; quand on en arrive à la deuxième plaque, c'est
+   * elle qui encaisse le coup ») : la barre de la coque est coupée en autant de portions égales, une plaque à côté de
+   * chacune ; le premier coup qui tombe dans une portion dont la plaque tient est pris tout entier par elle, et elle
+   * casse ; un coup qui ferait descendre la coque dans une portion encore protégée s'arrête au bord de cette portion, et
+   * sa plaque casse. Elles ne se réparent pas (elles reviennent pleines quand le vaisseau revient au portail). Zéro :
+   * aucune plaque.
+   */
+  plaques: 0,
   /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
   foreuse: { debit: 1, portee: 1, aimant: 1 },
   /**
@@ -675,6 +686,8 @@ export type Monde = {
   coque: number
   /** Le bouclier qui reste (voir la configuration), et l'instant du dernier coup reçu (il se recharge passé un délai). */
   bouclier: number
+  /** Les plaques de blindage, de la portion du haut de la barre à celle du bas : vrai, elle tient (voir la configuration). */
+  plaques: boolean[]
   toucheA: number
   forage: Forage | null
   /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
@@ -812,6 +825,8 @@ export type Evenement =
   | { type: 'touche'; x: number; y: number }
   /** Le bouclier a pris le coup à la place de la coque. */
   | { type: 'bouclier'; x: number; y: number }
+  /** Une plaque de blindage a pris le coup, et cassé (`k` : sa portion, depuis le haut de la barre). */
+  | { type: 'plaque'; x: number; y: number; k: number }
   /** Une arme du joueur tire. */
   | { type: 'obus'; x: number; y: number; arme: string }
   | { type: 'ennemiApparait'; id: number; x: number; y: number }
@@ -905,7 +920,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1480,7 +1495,7 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
  * dégâts vident d'abord ce qu'il en reste, même une fraction en pleine recharge, et LE RESTE passe à la coque ; percée,
  * la partie est perdue. (Avant : un point entier de bouclier par coup, quel que soit le coup, et rien sous un point.)
  */
-function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
+export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
   m.toucheA = m.t
   let reste = degats
   if (c.bouclier.points > 0 && m.bouclier > 0) {
@@ -1489,6 +1504,28 @@ function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: nu
     reste -= pris
     ev.push({ type: 'bouclier', x, y })
     if (reste <= 1e-9) return
+  }
+  // LES PLAQUES (voir la configuration) : celle de la portion où est la coque prend le coup entier ; sinon, le coup
+  // s'arrête au bord de la première portion encore protégée qu'il atteindrait, et sa plaque casse
+  const n = m.plaques.length
+  if (n > 0) {
+    const part = c.coque / n
+    const portion = (h: number): number => Math.min(n - 1, Math.max(0, Math.floor((c.coque - h) / part + 1e-9)))
+    const k = portion(m.coque)
+    if (m.plaques[k]) {
+      m.plaques[k] = false
+      ev.push({ type: 'plaque', x, y, k })
+      return
+    }
+    const jusque = portion(Math.max(0, m.coque - reste))
+    for (let j = k + 1; j <= jusque; j++)
+      if (m.plaques[j]) {
+        m.plaques[j] = false
+        m.coque = c.coque - j * part
+        ev.push({ type: 'plaque', x, y, k: j })
+        ev.push({ type: 'touche', x, y })
+        return
+      }
   }
   m.coque -= reste
   ev.push({ type: 'touche', x, y })
@@ -3072,6 +3109,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   m.vaisseau = nouveauVaisseau()
   m.coque = c.coque
   m.bouclier = c.bouclier.points
+  m.plaques = Array.from({ length: c.plaques }, () => true)
   m.toucheA = -100
   m.phase = 'vol'
   ev.push({ type: 'retour' })

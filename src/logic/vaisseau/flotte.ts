@@ -49,14 +49,18 @@ export const RACES: { id: Race; nom: string }[] = [
  * leur spécificité. `coque`, `bouclier` : ce que donnent les pièces (le bouclier de base du jeu compris). *Les chiffres
  * sont de moi, à rejuger en jouant.*
  */
-export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number }
-export function vieSelonLaRace(race: Race, v: Vie): Vie {
-  if (race === 'etheres') return { coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
-  if (race === 'essaim') return { coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.12) }
+export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number; plaques: number }
+// LES HUMAINS : PAS DE BOUCLIER, DES PLAQUES DE BLINDAGE (Keko, 17/11 : chacune protège sa portion de la barre de vie et
+// encaisse tout un coup à sa place ; « on peut même varier le nombre de plaques selon les vaisseaux » — `plaques`, celles du
+// modèle). Elles ne se réparent pas.
+export function vieSelonLaRace(race: Race, v: Vie, plaques = 3): Vie {
+  if (race === 'humains') return { ...v, bouclier: { ...v.bouclier, points: 0 }, plaques }
+  if (race === 'etheres') return { ...v, coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
+  if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.12) }
   return v
 }
-/** Les talents qu'une race ne se voit jamais proposer (l'Essaim n'a pas de bouclier à étendre ni à recharger). */
-export const talentsHorsDeLaRace = (race: Race): string[] => (race === 'essaim' ? ['bouclier', 'recharge'] : [])
+/** Les talents qu'une race ne se voit jamais proposer (l'Essaim et les humains n'ont pas de bouclier à étendre ni à recharger). */
+export const talentsHorsDeLaRace = (race: Race): string[] => (race === 'essaim' || race === 'humains' ? ['bouclier', 'recharge'] : [])
 
 /** Une mission d'un vaisseau : ce qu'elle compte, jusqu'où, et LA PIÈCE qu'elle ouvre à l'achat sur ce vaisseau. */
 export type MissionDeVaisseau = { titre: string; dit: string; compteur: Compteur; cible: number; ouvre: string }
@@ -67,6 +71,8 @@ export type ModeleDeVaisseau = {
   classe: Classe
   /** La race qui le pilote (voir `RACES`). */
   race: Race
+  /** Ses plaques de blindage, s'il est humain (voir `vieSelonLaRace`) : trois sans autre dit. */
+  plaques?: number
   dit: string
   /** TOUTES les pièces qu'il peut porter (celles de série comprises). */
   pieces: string[]
@@ -109,6 +115,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Salamandre',
     classe: 'chasseur',
     race: 'humains',
+    plaques: 4,
     dit: 'Trapue, un lance-flammes au nez : elle arrose de près et ce qu’elle touche brûle encore. Il faut aller au contact.',
     pieces: ['coque-5', 'propulseur-s1', 'arme-flammes', 'arme-rayon', 'arme-napalm'],
     // (ses trois armes possédées d'emblée : pour l'essai, pas de missions encore)
@@ -134,6 +141,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Ingénieur',
     classe: 'chasseur',
     race: 'humains',
+    plaques: 4,
     dit: 'Carré et mécanique, sans arme à lui : il pose sur son passage de petites tourelles qui tirent seules.',
     pieces: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'],
     serie: { possedees: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'], montees: { coque: 'coque-7', propulseur: 'propulseur-i1' }, outils: [], armes: ['arme-tourelles'] },

@@ -360,6 +360,19 @@ const RECETTES = {
       souffle(m, h, 0.05, 0.35, -0.2, { f: 5200, glisse: { vers: 2400, en: 0.05 }, q: 3, bande: true, a: 0.002, d: 0.08 })
     },
   },
+  /**
+   * une plaque de blindage prend le coup et casse (les humains, Keko, 17/11) : UN CLANG DE MÉTAL — un coup sec et sourd,
+   * une tôle qui sonne (des partiels qui ne s'accordent pas, ceux d'une plaque), un grésillement, des éclats qui tombent
+   */
+  plaque: {
+    duree: 0.9, niveau: 0.62, salle: [0.4, 0.16],
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 180, glisse: { vers: 115, en: 0.03 }, a: 0.002, d: 0.12, partiels: CORPS, sature: 2 })
+      note(m, 0, 0.7, 0.15, { f: 640, a: 0.002, d: 0.34, partiels: [[1, 1, 1], [2.76, 0.6, 0.7], [5.4, 0.35, 0.5], [8.93, 0.2, 0.35]] })
+      souffle(m, h, 0, 0.6, 0, { f: 4200, glisse: { vers: 1500, en: 0.05 }, d: 0.07 })
+      eclats(m, h, 5, 0.03, 0.2, 0.5)
+    },
+  },
   /** l'extraction : l'accord de ré qui monte, en clochettes, sur une nappe */
   extrait: {
     duree: 2.2, niveau: 0.55, salle: [0.75, 0.3],

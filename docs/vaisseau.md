@@ -5155,3 +5155,19 @@ bouclier, lui, commence à se réparer très rapidement après un certain temps 
 - La fiche du vaisseau dit la vie de sa race ; pour l'Essaim, la dernière jauge devient « Régénération ».
 - L'Essaim ne se voit plus proposer « Bouclier étendu » ni « Bouclier vif » (`talentsHorsDeLaRace`, `proposer(…, exclus)`).
 - À TRANCHER : la spécificité des humains et celle des Innommés (proposées à Keko).
+- LES HUMAINS : DES PLAQUES DE BLINDAGE (Keko, 17/11 — d'abord des plaques qui réduisaient les dégâts, cassées à des
+  seuils ; puis, « ça risque d'être compliqué, et ça va créer une spirale » : « une plaque protège la portion de la barre
+  de vie sur laquelle elle se trouve, en encaissant totalement un dégât subi à la place de la barre, que ce soit 1 ou 4
+  points ; une fois la plaque détruite, la portion de barre à côté d'elle est touchée ; quand on en arrive à la deuxième
+  plaque, c'est elle qui encaisse »). `ConfigVaisseau.plaques`, `Monde.plaques`, dans `encaisser` (vérifié) : la barre
+  de la coque est coupée en autant de portions égales que de plaques ; le premier coup qui tombe dans une portion dont la
+  plaque tient est pris tout entier par elle ; un coup qui ferait descendre la coque dans une portion encore protégée
+  s'arrête à son bord, et sa plaque casse. Elles ne se réparent pas ; elles reviennent pleines avec le vaisseau, au portail.
+  PAS DE BOUCLIER pour les humains (ni « Bouclier étendu » ni « Bouclier vif » aux talents). Le chasseur en porte 3, la
+  Salamandre et l'Ingénieur 4 (`ModeleDeVaisseau.plaques` ; *de moi, à rejuger*).
+- À L'ÉCRAN : à la place de la barre fine du bouclier, une plaque d'acier gris par portion, à côté de celle qu'elle
+  protège, séparées d'un trait (`dessinerLesPlaques`) ; cassée, un creux ; elle blanchit et tremble en cassant ; un clang de
+  métal (`plaque` dans `synthe.ts`), des éclats d'acier, une secousse. La fiche dit « Plaques », en gris. Le banc
+  `&coup=N` passe par elles.
+- À VENIR (Keko) : des symboles sur la carte qui rendent une plaque ; des soins de blindage lâchés par les ennemis, pour
+  toutes les races.
