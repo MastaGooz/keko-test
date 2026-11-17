@@ -5387,3 +5387,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   chemin qui fait la courbe. Immobile, il ne bouge pas ; s'il tourne sur place, seule la tête tourne. Au hangar et dans
   la grille, sans chemin, il garde la vague sur place. La règle n'a pas changé : le vaisseau reste un cercle, le corps
   n'est que dessiné.
+- L'ACIDE DE LA VOUIVRE REPRIS D'APRÈS PIXELFX (Keko, 17/11 : « Poison Cloud, Toxic Puddle et Acid Splash, ce serait bien
+  de t'en inspirer pour rework les trucs d'acide ») — des effets vus de côté sur un sol, repris VUS DE DESSUS ; les règles,
+  la forme de la flaque et son bord fondu ne changent pas :
+  - LA FLAQUE (Toxic puddle) : un goudron traversé de VEINES vert-jaune qui ondulent et battent, un REFLET HUILEUX violet
+    et sarcelle qui glisse dessus, un bord qui luit ; des BULLES LUISANTES qui bombent (une lueur dedans, un reflet blanc)
+    et crèvent en un anneau et quelques éclaboussures ; des RUBANS DE VAPEUR qui montent en ondulant. Le goudron est
+    remonté de deux tons : celui du dépôt, fait pour un sol clair, disparaissait sur l'espace.
+  - LE GAZ DES MINES (Poison cloud) : un miasme éclairé du dedans, vert-jaune au cœur, qui vire au violet vers ses bords ;
+    trois volutes qui s'enroulent en s'ouvrant ; des grains qui scintillent en dérivant.
+  - LE CRACHAT ET L'INSECTE RONGÉ (Acid splash) : un éclair blanc et une étoile à la gueule, des gouttes à tête vive qui
+    grésillent là où elles retombent (une petite étoile blanche) ; sur l'insecte rongé, une vapeur pâle qui monte en
+    ondulant et de petites étoiles qui pètent.

@@ -8650,6 +8650,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * milieu, et s'éteignent en arrivant. Sur un insecte RONGÉ (dessiné avec les insectes) : une tache verte qui fume.
    */
   const VENIN = ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'].map((c) => N.hex(c))
+  // (LES TEINTES DES EFFETS D'ACIDE DE PIXELFX — Keko, 17/11 : « Poison Cloud, Toxic Puddle et Acid Splash, ce serait bien
+  // de t'en inspirer pour rework les trucs d'acide ») : le goudron de la flaque toxique et ses reflets huileux, le miasme
+  // du nuage de poison (vert-jaune au cœur, violet au bord), l'acide qui éclabousse et sa vapeur pâle
+  const GOUDRON = ['#06070a', '#0c100c', '#141a10', '#1e2814', '#2e3c18', '#5a7a1c', '#a6d42a', '#ecff86'].map((c) => N.hex(c))
+  const HUILE = ['#2a1648', '#5a2e8e', '#1e7a86', '#6adccc'].map((c) => N.hex(c))
+  const MIASME = ['#0e0816', '#24123a', '#3e2056', '#5a3a62', '#6a6a3a', '#96aa30', '#cce040', '#f4ffa0'].map((c) => N.hex(c))
+  const ECLABOUSSURE = ['#0e140a', '#1c3010', '#2c5214', '#457e18', '#6aae1c', '#a0dc2a', '#dcff6a', '#f8ffd0'].map((c) => N.hex(c))
+  const VAPEUR = N.hex('#c8d2c0')
   const DUREE_DU_CRACHAT = 0.28
   const crachats: { x: number; y: number; cap: number; cone: number; portee: number; t0: number; id: number }[] = []
   function dessinerLesFlaquesAcides(p: Peintre): void {
@@ -8674,37 +8682,88 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const lobe = 0.86 + 0.1 * Math.sin(ang * 13 + f.id) + 0.06 * Math.sin(ang * 31 + f.id * 3.1)
         return Math.min((flanc - e) / 0.08, (lobe - d) / 0.06, (d - 0.08) / 0.06)
       }
+      // (LA FLAQUE TOXIQUE DE PIXELFX, VUE DE DESSUS — Keko, 17/11) : un goudron sombre éclairé du dedans par des VEINES
+      // vert-jaune qui ondulent et battent, un REFLET HUILEUX violet et sarcelle qui glisse dessus, un bord qui luit ; la
+      // forme et le bord fondu restent ceux qu'on avait réglés
+      const G = GOUDRON
+      const dedans = (d: number, ang: number): { veine: number; huile: number; teinte: number } => {
+        const px = Math.cos(ang) * d * L
+        const py = Math.sin(ang) * d * L
+        const pouls = 0.6 + 0.4 * Math.sin(m.t * 3 + px * 0.05 + f.id)
+        const veine = Math.abs(Math.sin(px * 0.33 + Math.sin(py * 0.21 + m.t * 0.8 + f.id) * 2.2) + Math.sin(py * 0.29 - px * 0.13 - m.t * 0.6)) / pouls
+        const huile = Math.sin(px * 0.11 + m.t * 0.5 + f.id) * Math.sin(py * 0.13 - m.t * 0.4)
+        return { veine, huile, teinte: Math.sin(px * 0.05 - py * 0.04 + m.t * 0.3) }
+      }
       p.disc(f.x, f.y, L, (d, ang) => {
-        const tache = Math.sin(ang * 7 + d * 9 + m.t * 1.5 + f.id) * Math.sin(ang * 5 - d * 13 + f.id * 1.7)
-        // (PLUS CLAIRE — Keko, 16/11 : « un peu sombre, on ne la voit pas assez » : un vert acide vif, un bord lumineux)
-        // (… puis « un peu trop claire » : un cran entre les deux — le bord vif, le dedans un ton plus bas)
-        return ou(d, ang) < 1.5 ? VENIN[3] : tache > 0.35 ? VENIN[3] : tache < -0.45 ? VENIN[1] : VENIN[2]
+        if (ou(d, ang) < 1.5) return G[6]
+        const { veine, huile, teinte } = dedans(d, ang)
+        if (veine < 0.07) return G[7]
+        if (veine < 0.16) return G[6]
+        if (huile > 0.62) return teinte > 0 ? HUILE[3] : HUILE[1]
+        if (huile > 0.45) return teinte > 0 ? HUILE[2] : HUILE[0]
+        // (un goudron plus clair que celui du dépôt, fait pour un sol clair : sur le noir de l'espace, on ne le voyait pas)
+        return veine < 0.32 ? G[6] : veine < 0.7 ? G[5] : G[4]
       }, (d, ang) => {
         const o = ou(d, ang)
         if (o <= 0) return 0
-        // (UN BORD QUI SE FOND — Keko, 16/11 : « des bords progressivement transparents, une tache moins nette » : plus de
-        // liseré vif ; l'opacité monte doucement du bord vers le dedans, sur une large bande)
+        // (UN BORD QUI SE FOND — Keko, 16/11 : « des bords progressivement transparents, une tache moins nette »)
         const fondu = Math.min(1, o / 3)
-        return 0.45 * fondu * fondu * (3 - 2 * fondu) * k
+        const base = fondu * fondu * (3 - 2 * fondu) * k
+        const { veine } = dedans(d, ang)
+        return (veine < 0.16 ? 0.9 : 0.5) * base
       })
-      // (une lueur verte dessus : elle se voit de loin, sur le fond sombre)
-      p.glow(f.x + Math.cos(f.cap) * L * 0.55, f.y + Math.sin(f.cap) * L * 0.55, L * 0.6, VENIN[3], 0.16 * k)
+      // (la lueur qui en monte : elle se voit de loin, sur le fond sombre)
+      p.glow(f.x + Math.cos(f.cap) * L * 0.55, f.y + Math.sin(f.cap) * L * 0.55, L * 0.6, G[5], 0.2 * k)
       // (les gouttes projetées au-delà du bord, de travers)
       for (let j = 0; j < 7; j++) {
         const an = f.cap + (alea(f.id, j, 21) * 2 - 1) * cr.cone * 1.25
         const d = L * (0.9 + 0.22 * alea(f.id, j, 22))
         const r = 0.6 + 1.3 * alea(f.id, j, 23)
-        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, VENIN[3], (dd) => 0.5 * (1 - dd * dd) * k)
-      }      // (des bulles qui crèvent)
-      for (let j = 0; j < 7; j++) {
-        const vie = 0.6 + 0.5 * alea(f.id, j, 1)
-        const u = ((m.t + alea(f.id, j, 2) * vie) % vie) / vie
-        const an = f.cap + (alea(f.id, j, 3) * 2 - 1) * cr.cone * 0.85
-        const d = L * (0.2 + 0.75 * alea(f.id, j, 4 + Math.floor((m.t + alea(f.id, j, 2) * vie) / vie)))
+        p.disc(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d, r, G[5], (dd) => 0.55 * (1 - dd * dd) * k)
+      }
+      // (DES BULLES LUISANTES : elles bombent, sombres, une lueur dedans et un reflet blanc ; elles crèvent en un anneau qui
+      // court et quelques éclaboussures)
+      for (let j = 0; j < 6; j++) {
+        const vie = 1.6 + 0.8 * alea(f.id, j, 1)
+        const cycle = (m.t + alea(f.id, j, 2) * vie) / vie
+        const u = cycle % 1
+        const an = f.cap + (alea(f.id, j, 3) * 2 - 1) * cr.cone * 0.8
+        const d = L * (0.25 + 0.65 * alea(f.id, j, 4 + Math.floor(cycle)))
         const bx = f.x + Math.cos(an) * d
         const by = f.y + Math.sin(an) * d
-        if (u < 0.8) p.ring(bx, by, 0.5 + 1.2 * u, 1, VENIN[4], 0.7 * k)
-        else p.dot(bx, by, VENIN[5], k)
+        const rmax = 1 + 1.6 * alea(f.id, j, 5)
+        if (u < 0.7) {
+          const r = rmax * (1 - Math.pow(1 - u / 0.7, 3))
+          if (r < 0.5) continue
+          p.circle(bx, by, r + 0.6, G[1], k)
+          p.circle(bx, by, r, G[4], k)
+          p.circle(bx + r * 0.15, by + r * 0.15, r * 0.55, G[6], k)
+          if (r > 1.1) p.px(Math.round(bx - r * 0.4), Math.round(by - r * 0.5), N.WHITE)
+        } else {
+          const q = (u - 0.7) / 0.3
+          p.ring(bx, by, 1 + 4 * q, 1, q < 0.4 ? N.WHITE : G[7], (1 - q) * k)
+          for (let e = 0; e < 3; e++) {
+            const ae = alea(f.id, j * 7 + e, Math.floor(cycle)) * Math.PI * 2
+            p.dot(bx + Math.cos(ae) * (1 + 5 * q), by + Math.sin(ae) * (1 + 5 * q) - 3 * q * (1 - q), e % 2 === 0 ? HUILE[3] : G[6], (1 - q) * k)
+          }
+        }
+      }
+      // (LA VAPEUR : des rubans qui montent de la flaque en ondulant, vert-jaune près d'elle, pâles en s'élevant)
+      for (let j = 0; j < 3; j++) {
+        const vie = 2.2
+        const age = (m.t * 0.8 + alea(f.id, j, 31) * vie) % vie
+        const uv = age / vie
+        const an = f.cap + (alea(f.id, j, 32) * 2 - 1) * cr.cone * 0.6
+        const d0 = L * (0.3 + 0.5 * alea(f.id, j, 33))
+        const x0 = f.x + Math.cos(an) * d0
+        const y0 = f.y + Math.sin(an) * d0
+        const tete = age * 9
+        const queue = Math.max(0, tete - 14)
+        const fondu = Math.min(1, uv / 0.12) * (1 - Math.max(0, (uv - 0.5) / 0.5))
+        for (let h = queue; h <= tete; h += 0.5) {
+          const sv = (h - queue) / Math.max(1, tete - queue)
+          p.blend(x0 + 2.5 * Math.sin(h * 0.25 + j + age * 1.6) * (0.3 + sv), y0 - h, h < 5 ? G[6] : VAPEUR, fondu * Math.sin(Math.PI * sv) * 0.4 * k)
+        }
       }
     }
     p.place(0, 0)
@@ -8715,6 +8774,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const c of crachats) {
       const u = (t - c.t0) / DUREE_DU_CRACHAT
+      // (L'ÉCLABOUSSURE DE PIXELFX — Keko, 17/11 : un éclair blanc à la gueule, des gouttes à tête vive, et là où elles
+      // retombent, un grésillement — une étoile blanche qui s'ouvre)
+      const E = ECLABOUSSURE
+      if (u < 0.25) {
+        const q = u / 0.25
+        p.circle(c.x, c.y, 2 + 3 * q, q < 0.5 ? N.WHITE : E[7], 1 - q)
+        N.sparkle(p, c.x, c.y, 2 + 4 * (1 - q), E[7], E[6], 0.6 * (1 - q))
+      }
       for (let j = 0; j < 26; j++) {
         const an = c.cap + (alea(c.id, j, 1) * 2 - 1) * c.cone
         const vit = (0.65 + 0.35 * alea(c.id, j, 2)) * (1 - Math.abs(an - c.cap) / (c.cone * 2.5))
@@ -8722,10 +8789,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const x = c.x + Math.cos(an) * d
         const y = c.y + Math.sin(an) * d
         const r = (1.6 - u) * (0.6 + 0.6 * alea(c.id, j, 3))
-        p.circle(x, y, Math.max(0.5, r), j % 3 === 0 ? VENIN[4] : VENIN[3], 1 - u * 0.7)
-        if (j % 4 === 0) p.line(x, y, x - Math.cos(an) * 3, y - Math.sin(an) * 3, VENIN[2], 0.6 * (1 - u))
+        p.circle(x, y, Math.max(0.5, r), j % 3 === 0 ? E[6] : E[5], 1 - u * 0.7)
+        p.px(Math.round(x - Math.cos(an) * r * 0.4), Math.round(y - Math.sin(an) * r * 0.4), u < 0.5 ? E[7] : E[6])
+        if (j % 4 === 0) p.line(x, y, x - Math.cos(an) * 3, y - Math.sin(an) * 3, E[4], 0.6 * (1 - u))
+        if (j % 3 === 0 && u > 0.68) {
+          const q = (u - 0.68) / 0.32
+          p.px(Math.round(x), Math.round(y), N.WHITE)
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) p.dot(x + dx * (1 + q * 2), y + dy * (1 + q * 2), E[7], 1 - q)
+        }
       }
-      if (u < 0.4) p.glow(c.x, c.y, 8, VENIN[3], 0.6 * (1 - u / 0.4))
+      if (u < 0.4) p.glow(c.x, c.y, 8, E[5], 0.6 * (1 - u / 0.4))
     }
     p.place(0, 0)
   }
@@ -8975,16 +9048,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const g of gaz) {
       const u = (t - g.t0) / DUREE_DU_GAZ
       const v1 = 1 - u
-      if (u < 0.15) p.glow(g.x, g.y, g.rayon * 0.8, VENIN[4], 0.6 * (1 - u / 0.15))
+      // (LE NUAGE DE POISON DE PIXELFX — Keko, 17/11 : un miasme éclairé du dedans, vert-jaune au cœur, qui vire au violet
+      // vers ses bords ; ses bords s'enroulent en volutes ; des grains qui scintillent dérivent avec lui)
+      const M = MIASME
+      if (u < 0.15) p.glow(g.x, g.y, g.rayon * 0.8, M[6], 0.6 * (1 - u / 0.15))
+      p.glow(g.x, g.y, g.rayon * 0.7, M[5], 0.25 * v1)
       // (des bouffées qui s'ouvrent jusqu'au rayon et roulent)
       for (let j = 0; j < 9; j++) {
         const a = alea(g.id, j, 1) * Math.PI * 2 + u * (alea(g.id, j, 2) - 0.5) * 2
         const d = g.rayon * (0.15 + 0.7 * alea(g.id, j, 3)) * Math.sqrt(Math.min(1, u * 2.5))
         const r = g.rayon * (0.22 + 0.18 * alea(g.id, j, 4)) * (0.6 + 0.6 * u)
-        const c = j % 3 === 0 ? LIE[3] : j % 3 === 1 ? VENIN[3] : VENIN[2]
-        p.disc(g.x + Math.cos(a) * d, g.y + Math.sin(a) * d, r, c, (dd) => (1 - dd * dd) * 0.55 * v1)
+        const loin = d / g.rayon
+        p.disc(g.x + Math.cos(a) * d, g.y + Math.sin(a) * d, r, (dd) => {
+          const v = dd * 0.8 + loin * 0.3
+          return v < 0.3 ? M[7] : v < 0.55 ? M[6] : v < 0.8 ? M[5] : v < 0.95 ? M[3] : M[2]
+        }, (dd) => (1 - dd * dd) * 0.6 * v1)
       }
-      p.ring(g.x, g.y, g.rayon * (0.3 + 0.7 * Math.sqrt(u)), 1, VENIN[4], 0.6 * v1)
+      // (les volutes : trois bords de gaz qui s'enroulent sur eux-mêmes en s'ouvrant)
+      for (let j = 0; j < 3; j++) {
+        const a0 = alea(g.id, j, 11) * Math.PI * 2
+        const rr = g.rayon * (0.55 + 0.4 * Math.sqrt(u))
+        const cx = g.x + Math.cos(a0) * rr
+        const cy = g.y + Math.sin(a0) * rr
+        const spin = u * Math.PI * 4 * (j % 2 === 0 ? 1 : -1)
+        const r0 = 2 + g.rayon * 0.12
+        for (let b = 0; b < 4.6; b += 0.2) {
+          const rb = r0 * (1 - b * 0.12)
+          p.blend(cx + Math.cos(spin + b) * rb, cy + Math.sin(spin + b) * rb, b < 2 ? M[6] : M[5], 0.6 * v1 * (1 - b / 5.5))
+        }
+      }
+      // (des grains qui scintillent en dérivant vers le dehors)
+      for (let j = 0; j < 8; j++) {
+        const a = alea(g.id, j, 41) * Math.PI * 2
+        const d = g.rayon * (0.2 + 0.9 * u) * (0.5 + 0.5 * alea(g.id, j, 42))
+        const sc = 0.6 + 0.4 * Math.sin(t * 9 + j * 1.7)
+        p.dot(g.x + Math.cos(a) * d, g.y + Math.sin(a) * d, sc > 0.8 ? M[7] : M[6], v1 * sc)
+      }
+      p.ring(g.x, g.y, g.rayon * (0.3 + 0.7 * Math.sqrt(u)), 1, M[6], 0.6 * v1)
     }
     p.place(0, 0)
   }
@@ -9250,11 +9350,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (e.acide !== undefined && e.acide.jusque > m.t) {
           p.glow(sx, sy, 7, VENIN[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
           p.circle(sx, sy, 3.5, VENIN[2], 0.35)
-          for (let k = 0; k < 3; k++) {
-            const ph = (t * 1.3 + k / 3 + e.id * 0.29) % 1
-            p.dot(sx + Math.sin(e.id * 2.3 + k * 2.1 + ph * 3) * 3, sy - 2 - ph * 7, ph < 0.5 ? VENIN[4] : VENIN[2], 1 - ph)
+          // (… ET IL GRÉSILLE, comme l'éclaboussure de pixelfx — Keko, 17/11 : une vapeur pâle qui monte en ondulant, et de
+          // petites étoiles blanches qui pètent sur lui)
+          for (let k = 0; k < 2; k++) {
+            const ph = (t * 0.9 + k / 2 + e.id * 0.29) % 1
+            for (let h = 0; h < 6; h += 0.5) p.blend(sx + Math.sin(e.id * 2.3 + k * 2.1 + h * 0.5 + t * 2) * (1 + h * 0.3), sy - 2 - ph * 6 - h, h < 2 ? ECLABOUSSURE[6] : VAPEUR, 0.35 * (1 - ph) * Math.sin((Math.PI * h) / 6))
           }
-          if (Math.sin(t * 11 + e.id * 1.7) > 0.6) p.dot(sx + Math.cos(e.id) * 2, sy + 2, VENIN[5], 0.9)
+          const pet = (t * 5 + e.id * 0.37) % 1
+          if (pet < 0.35) {
+            const n = Math.floor(t * 5 + e.id * 0.37)
+            const ox = sx + (alea(e.id, n, 1) - 0.5) * 6
+            const oy = sy + (alea(e.id, n, 2) - 0.5) * 6
+            const q = pet / 0.35
+            p.px(Math.round(ox), Math.round(oy), N.WHITE)
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) p.dot(ox + dx * (1 + q * 2), oy + dy * (1 + q * 2), ECLABOUSSURE[7], 1 - q)
+          }
         }
         // IL EST IRRADIÉ (les cristaux du Prisme) : une lueur bleue qui bat, des étincelles d'énergie qui montent
         if (e.irradie !== undefined && e.irradie.jusque > m.t) {
