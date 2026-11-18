@@ -728,6 +728,9 @@ export type Arme = {
    * deuxième ; il tire dès qu'un ennemi est à portée du troisième rebond » : le lancer et chaque rebond font `bond` de
    * long et durent `vol` ; il tire sur un insecte à moins de `bond` × `rebonds`, vers là où il sera au contact qui
    * tombe le plus près de lui)
+   * (… ET IL TOMBE SUR UN INSECTE PLUS PRÈS — Keko, 18/11 : « si l'ennemi est au-delà de la distance du premier lancer, on
+   * lance à la distance max ; s'il est plus près, on lui lance dessus » : le lancer raccourcit jusqu'à lui, les rebonds
+   * gardent leur longueur ; un insecte collé au vaisseau passait sous la cloche)
    */
   hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; croissance: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
@@ -2802,14 +2805,16 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     }
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
-    // (SON CAP : vers là où l'insecte sera au contact qui tombe le plus près de lui ; LE LANCER A TOUJOURS LA MÊME
-    // LONGUEUR, celle d'un bond)
+    // (SON CAP : vers là où l'insecte sera au contact qui tombe le plus près de lui ; LE LANCER A LA LONGUEUR D'UN BOND —
+    // SAUF SUR UN INSECTE PLUS PRÈS : il lui tombe dessus)
     const k = Math.max(1, Math.min(hc.rebonds, Math.ceil(dist(cible) / hc.bond)))
     const x = cible.corps.x + cible.corps.vx * hc.vol * k
     const y = cible.corps.y + cible.corps.vy * hc.vol * k
-    const cap = Math.hypot(x - v.x, y - v.y) > 1e-6 ? Math.atan2(y - v.y, x - v.x) : v.cap
-    const x1 = v.x + Math.cos(cap) * hc.bond
-    const y1 = v.y + Math.sin(cap) * hc.bond
+    const d = Math.hypot(x - v.x, y - v.y)
+    const cap = d > 1e-6 ? Math.atan2(y - v.y, x - v.x) : v.cap
+    const lancer = k === 1 ? Math.min(hc.bond, d) : hc.bond
+    const x1 = v.x + Math.cos(cap) * lancer
+    const y1 = v.y + Math.sin(cap) * lancer
     m.hypercubes.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x1, y1, depart: m.t, duree: hc.vol, cap, contacts: 0 })
     ev.push({ type: 'hypercube', x: v.x, y: v.y, arme: a.id })
   })

@@ -5597,4 +5597,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   plus proche à 150 (`allongeDeLHypercube` = `bond` × `rebonds`), le cap vers là où il sera au contact qui tombe le
   plus près de lui. La zone grossit toujours (12, 15,6, 20,3). *Conséquence mesurée dans l'aperçu : un insecte collé au
   vaisseau, à moins de 50 moins la zone (une trentaine), n'est jamais touché — le cube passe au-dessus de lui ; les
-  insectes de l'aperçu, qui foncent sur le vaisseau, n'y meurent plus.* À trancher par Keko.
+  insectes de l'aperçu, qui foncent sur le vaisseau, n'y meurent plus.*
+- L'HYPERCUBE TOMBE SUR UN INSECTE PLUS PRÈS (Keko, 18/11 : « si l'ennemi est au-delà de la distance du premier lancer
+  en cloche, on lance à la distance max de la cloche ; mais s'il est plus près, on lui lance dessus ») : le lancer
+  raccourcit jusqu'à lui (là où il sera à la chute), les deux rebonds gardent leurs 50 — un insecte à 20 : contacts à
+  20, 70, 120. Au-delà de 50, rien ne change (50, 100, 150). Mesuré dans l'aperçu : les insectes qui foncent sur le
+  vaisseau y meurent de nouveau.
