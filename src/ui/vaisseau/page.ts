@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLeBouclier } from './bouclier.ts'
@@ -3595,7 +3595,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',
     'arme-epines': 'Une grande épine d’os, qui transperce tous les insectes sur sa course.',
-    'arme-oeufs': 'Il pond des œufs ; leur larve prend le contrôle d’un insecte, qui mord les siens.',
+    'arme-oeufs': 'Il pond des œufs, qui éclosent d’eux-mêmes : trois petits vers en sortent et mordent les insectes.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
@@ -3767,6 +3767,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesVrilles(p)
       dessinerLesOeufs(p)
       dessinerLesEclosions(p)
+      dessinerLesMiniVers(p)
       dessinerLesEpines(p)
       dessinerLesFleaux(p)
       dessinerLeVaisseau(p)
@@ -8542,12 +8543,61 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
   /**
-   * LES ŒUFS DU VER ET SES MINI-VERS (voir `Arme.ponte` ; Keko, 17/11). L'ŒUF : une cloque luisante posée au sol — une
-   * coque sombre, une lueur de poison dedans qui bat de plus en plus vite, un reflet blanc ; il tremble ses dernières
-   * 0,3 s et se fend. LE MINI-VER : cinq anneaux vert poison, posés sur SON chemin à lui (comme le grand), qui rapetissent
-   * vers la queue, une petite bouche sombre devant ; il ondule ; ses dernières 0,6 s, il pâlit.
+   * LES MINI-VERS (voir `Arme.ponte` ; Keko, 18/11 : « des copies du gros ver en miniature ») : LE VER LUI-MÊME
+   * (`formesDuVer`), à l'apparence du joueur, peint à `ECHELLE_DU_MINI_VER` de sa taille ; ses anneaux posés sur LE CHEMIN
+   * DE SA TÊTE à lui, comme le grand ; il naît en grandissant (0,25 s), et ses dernières 0,4 s il rapetisse.
    */
+  const ECHELLE_DU_MINI_VER = 0.5
   const cheminsDesMiniVers = new Map<number, [number, number][]>()
+  /** Les tons de la chair du Ver (sombre, moyen, clair), à l'apparence du joueur. */
+  const tonsDeLaChairDuVer = (): number[] => {
+    const rv = rampesDuJoueur()?.ver
+    return rv !== undefined ? [rv[2], rv[3], rv[4]] : tonsDeLaMatiere('ver')
+  }
+  function dessinerLesMiniVers(p: Peintre): void {
+    for (const [id] of cheminsDesMiniVers) if (!m.miniVers.some((w) => w.id === id)) cheminsDesMiniVers.delete(id)
+    if (m.miniVers.length === 0 || m.phase !== 'vol') return
+    p.place(0, 0)
+    const motif = habitDuJoueur(14)?.motif
+    const rampes = rampesDuJoueur()
+    for (const w of m.miniVers) {
+      const po = CONF.armes[w.arme]?.ponte
+      if (po === undefined) continue
+      // (son chemin à lui, un point tous les quarts de pixel)
+      let ch = cheminsDesMiniVers.get(w.id)
+      if (ch === undefined) {
+        ch = [[w.x, w.y]]
+        cheminsDesMiniVers.set(w.id, ch)
+      } else if (Math.hypot(ch[0][0] - w.x, ch[0][1] - w.y) >= 0.25) ch.unshift([w.x, w.y])
+      if (ch.length > 80) ch.length = 80
+      const vie = m.t - w.ne
+      const s = ECHELLE_DU_MINI_VER * Math.min(1, vie / 0.25) * Math.max(0, Math.min(1, (po.duree - vie) / 0.4))
+      if (s < 0.08) continue
+      const ca = Math.cos(w.cap)
+      const sa = Math.sin(w.cap)
+      const c0 = ch
+      const auDos = (d: number): [number, number] => {
+        let reste = d
+        for (let i = 1; i < c0.length; i++) {
+          const l = Math.hypot(c0[i][0] - c0[i - 1][0], c0[i][1] - c0[i - 1][1])
+          if (l < 1e-6) continue
+          if (reste <= l) return [c0[i - 1][0] + ((c0[i][0] - c0[i - 1][0]) * reste) / l, c0[i - 1][1] + ((c0[i][1] - c0[i - 1][1]) * reste) / l]
+          reste -= l
+        }
+        const [qx, qy] = c0[c0.length - 1]
+        return [qx - ca * reste, qy - sa * reste]
+      }
+      // (ses neuf anneaux, en unités du ver : l'écart du grand, à son échelle)
+      const anneaux: [number, number][] = []
+      for (let k = 1; k <= 9; k++) {
+        const [wx, wy] = auDos(k * ECART_DES_ANNEAUX * s)
+        const dx = wx - w.x
+        const dy = wy - w.y
+        anneaux.push([(dx * ca + dy * sa) / s, (-dx * sa + dy * ca) / s])
+      }
+      peindreFormes(p, formesDuVer(t + w.id * 0.37, 0, 0, motif, anneaux), w.x - camera.x + W / 2, w.y - camera.y + centreY(), s, { cap: w.cap, lumiere: LUMIERE_DU_VOL, rampes, reflet: REFLET_DU_VOL })
+    }
+  }
   /**
    * L'ŒUF, D'APRÈS L'« EGG HATCH » DE PIXELFX, EN ŒUF D'INSECTE VU DE DESSUS (Keko, 17/11 : « pas très joli ; inspire-toi
    * de l'éclosion d'un œuf de pixelfx, en version insecte ») : une coque CUIREUSE, ovale, vert pâle, éclairée d'en haut à
@@ -8678,54 +8728,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
   function dessinerLesOeufs(p: Peintre): void {
-    for (const [id] of cheminsDesMiniVers) if (!m.oeufs.some((o) => o.id === id)) cheminsDesMiniVers.delete(id)
     if (m.oeufs.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    const G = GOUDRON
     for (const o of m.oeufs) {
       const po = CONF.armes[o.arme]?.ponte
       if (po === undefined) continue
+      // (il attend, un frisson de temps en temps ; sa dernière seconde, il oscille, se fissure et éclate)
       const age = m.t - o.pondu
-      if (o.eclos === null) {
-        // (il attend, immobile, un frisson de temps en temps ; fendu, il oscille, se fissure et éclate en `eclosion` secondes)
-        dessinerUnOeuf(p, o, o.fendu === null ? 0 : Math.min(1, (m.t - o.fendu) / po.eclosion), age)
-        continue
-      }
-      // (le mini-ver : son chemin à lui, un point tous les demi-pixels)
-      let ch = cheminsDesMiniVers.get(o.id)
-      if (ch === undefined) {
-        ch = [[o.x, o.y]]
-        cheminsDesMiniVers.set(o.id, ch)
-      } else if (Math.hypot(ch[0][0] - o.x, ch[0][1] - o.y) >= 0.5) ch.unshift([o.x, o.y])
-      if (ch.length > 32) ch.length = 32
-      const vie = m.t - o.eclos
-      const pali = Math.max(0, Math.min(1, (po.duree - vie) / 0.6))
-      const nait = Math.min(1, vie / 0.25)
-      const auDos = (d: number): [number, number] => {
-        let reste = d
-        for (let i = 1; i < ch!.length; i++) {
-          const l = Math.hypot(ch![i][0] - ch![i - 1][0], ch![i][1] - ch![i - 1][1])
-          if (reste <= l) return [ch![i - 1][0] + ((ch![i][0] - ch![i - 1][0]) * reste) / l, ch![i - 1][1] + ((ch![i][1] - ch![i - 1][1]) * reste) / l]
-          reste -= l
-        }
-        const [qx, qy] = ch![ch!.length - 1]
-        return [qx - Math.cos(o.cap) * reste, qy - Math.sin(o.cap) * reste]
-      }
-      const anneaux: [number, number, number][] = []
-      for (let k = 0; k < 5; k++) {
-        const [ax, ay] = auDos(k * 2.4 * nait)
-        const onde = Math.sin(m.t * 9 - k * 0.9 + o.id) * 0.8 * (k / 4)
-        anneaux.push([ax - Math.sin(o.cap) * onde, ay + Math.cos(o.cap) * onde, (2.7 - k * 0.35) * nait])
-      }
-      p.glow(o.x, o.y, 6, MIASME[5], 0.25 * pali)
-      for (let k = 4; k >= 0; k--) {
-        const [ax, ay, r] = anneaux[k]
-        if (r < 0.4) continue
-        p.circle(ax, ay, r + 0.5, G[1], pali)
-        p.circle(ax, ay, r, k % 2 === 0 ? G[6] : G[5], pali)
-        if (r > 1) p.px(Math.round(ax - r * 0.4), Math.round(ay - r * 0.4), G[7])
-      }
-      p.circle(o.x + Math.cos(o.cap) * 1.6, o.y + Math.sin(o.cap) * 1.6, 0.9, G[0], pali)
+      dessinerUnOeuf(p, o, Math.max(0, Math.min(1, age - (po.eclosion - 1))), age)
     }
     p.place(0, 0)
   }
@@ -9777,26 +9787,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX) {
       dessinerLesAspires(p)
       dessinerLesConsumes(p)
-      // LES SERVITEURS DU VER (voir `Arme.ponte` ; Keko, 17/11) : l'insecte, sous une lueur de poison ; la larve accrochée sur
-      // son dos, qui ondule ; ses yeux qui luisent vert ; un arc autour de lui, le temps de contrôle qui reste
-      for (const sv of m.serviteurs) {
-        const b = sv.e.corps
-        const sx = b.x - camera.x + W / 2
-        const sy = b.y - camera.y + centreY()
-        const po = CONF.armes[sv.arme]?.ponte
-        const reste = po === undefined ? 0 : Math.max(0, (sv.jusque - m.t) / po.servant.duree)
-        p.glow(sx, sy, 9, GOUDRON[6], 0.35 + 0.1 * Math.sin(t * 6 + sv.e.id))
-        dessinerUnInsecte(p, sx, sy, b.cap, sv.e.id * 1.7, false, true)
-        p.circle(sx, sy, 4.5, GOUDRON[5], 0.35)
-        const dx = -Math.cos(b.cap)
-        const dy = -Math.sin(b.cap)
-        for (let k = 0; k < 3; k++) {
-          const onde = Math.sin(t * 9 - k) * 0.7
-          p.circle(sx + dx * (1 + k * 1.4) - dy * onde, sy + dy * (1 + k * 1.4) + dx * onde, 1.2 - k * 0.2, k === 0 ? GOUDRON[7] : GOUDRON[6])
-        }
-        for (const cote of [-1, 1]) p.px(Math.round(sx + Math.cos(b.cap) * 3 - Math.sin(b.cap) * cote * 1.5), Math.round(sy + Math.sin(b.cap) * 3 + Math.cos(b.cap) * cote * 1.5), GOUDRON[7])
-        p.arc(sx, sy, 8, 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reste, GOUDRON[6], 0.7)
-      }
       for (const e of m.ennemis) {
         const b = e.corps
         const sx = b.x - camera.x + W / 2
@@ -12352,29 +12342,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.4), i % 3 === 0 ? OMBRE[6] : OMBRE[4], 1, 1.5)
           }
           break
-        case 'controle':
-          // (la larve prend le contrôle : la piqûre, une gerbe de poison, une onde verte)
-          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
-          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: 12 })
-          for (let i = 0; i < 10; i++) {
-            const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), i % 2 === 0 ? GOUDRON[7] : GOUDRON[5], 1, 1.5)
-          }
-          break
-        case 'morsureServiteur':
-          // (un serviteur mord un des siens : le grésillement, un seul à la fois)
-          if (t - morsureSonneA > 0.15) {
-            morsureSonneA = t
-            jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
-          }
-          break
-        case 'liberation':
-          // (le contrôle prend fin : la larve le quitte, une bouffée de poison)
-          for (let i = 0; i < 8; i++) {
-            const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.4), R.next() < 0.5 ? MIASME[5] : GOUDRON[6], 1, 1.5)
-          }
-          break
         case 'epines':
           // (l'épine part de sa tête : elle fend l'air)
           jouer('epine', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -12413,18 +12380,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
-        case 'miniVerFini':
-          // (un mini-ver se dissout : une bouffée de poison)
+        case 'miniVerFini': {
+          // (un mini-ver se dissout : quelques miettes de sa chair)
+          const chair = tonsDeLaChairDuVer()
           for (let i = 0; i < 6; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 22), Math.sin(a) * R.range(8, 22), R.range(0.2, 0.4), R.next() < 0.5 ? MIASME[5] : MIASME[3], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 22), Math.sin(a) * R.range(8, 22), R.range(0.2, 0.4), chair[i % 3], 1, 1.5)
           }
           break
-        case 'venin':
-          // (un mini-ver mord : le grésillement, un seul à la fois)
-          if (t - rongeSonneA > 0.15) {
-            rongeSonneA = t
-            jouer('ronge', { dx: ev.x - v.x, dy: ev.y - v.y })
+        }
+        case 'morsureMiniVer':
+          // (un mini-ver mord : le claquement de mâchoires, un seul à la fois ; une giclée d'ichor)
+          if (t - morsureSonneA > 0.12) {
+            morsureSonneA = t
+            jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.12, 0.25), i === 0 ? OS[2] : CHAIR[4], 1, 1)
           }
           break
         case 'accroche':
@@ -13149,6 +13122,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesVrilles(p)
     dessinerLesOeufs(p)
     dessinerLesEclosions(p)
+    dessinerLesMiniVers(p)
     dessinerLesEpines(p)
     dessinerLesFleaux(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)

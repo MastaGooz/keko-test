@@ -5529,3 +5529,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LES CROCS DES CERVEAUX ONT LA CHAIR DU VER (Keko, 18/11 : « la partie inférieure des parasites, celle qui est claire, de
   la même couleur que le ver, pour donner une cohérence ») : ils étaient d'os ; ils prennent les tons de la chair du Ver
   (MATIERES.ver), ceux de l'apparence du joueur s'il en a une (Abysses, Braise).
+- LES ŒUFS ÉCLOSENT D'EUX-MÊMES, TROIS MINI-VERS EN SORTENT (Keko, 18/11 : « quand un œuf est posé, il s'ouvre
+  automatiquement après un délai, il n'attend pas qu'un ennemi passe à côté ; à son ouverture, il libère trois mini-vers,
+  des copies du gros ver en miniature, qui poursuivent les ennemis et les mordent ») : Arme.ponte réécrite, Monde.oeufs
+  (l'œuf seul) et Monde.miniVers, menerLesOeufs. Tant qu'il bouge, il pond toutes les 3 s, deux œufs à la fois ;
+  2 s après la ponte, l'œuf éclot (sa dernière seconde, il oscille et se fissure) et libère trois mini-vers en étoile.
+  Chacun vit 5 s : il poursuit un insecte à moins de 90 — d'abord un que ses frères ne chassent pas —, à 70, en virant de
+  6 rad/s ; au contact, il mord : 2 points toutes les 0,6 s. Sans proie, il nage en ondulant, lentement (son virage est
+  bridé à 1,5 rad/s : à pleine vitesse de virage, il tournait en rond). LE CONTRÔLE MENTAL EST RETIRÉ (les serviteurs,
+  menerLesServiteurs, le venin des larves : git log) — Keko le garde en tête pour un bonus en partie. Le dessin
+  (dessinerLesMiniVers) : LE VER LUI-MÊME (ormesDuVer), à l'apparence du joueur, peint à la moitié de sa taille, ses
+  anneaux sur le chemin de sa tête à lui ; il naît en grandissant (0,25 s) et rapetisse ses dernières 0,4 s ; sa morsure
+  fait le claquement de mâchoires et une giclée d'ichor ; il se dissout en miettes de sa chair. *Chiffres de moi, à
+  rejuger.*

@@ -2075,12 +2075,12 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`la traînée de poison empoisonne (${pris.toFixed(1)} en 1 s) sans geler (${ev.some((e) => e.type === 'gele') ? 'gelé' : 'pas de gel'})`, Math.abs(pris - 7) < 0.3 && !ev.some((e) => e.type === 'gele') && (w.ennemis[0].geleA ?? -1) < w.t && w.givres.every((g) => g.poison === true))
 }
 
-// LES ŒUFS DU VER, DES PIÈGES (Keko, 17/11) : immobile, il ne pond pas ; en mouvement il pond — quatre à la fois au plus ;
-// SANS INSECTE, L'ŒUF ATTEND ; un insecte dans sa zone le fend, il éclot, et LE MINI-VER LE POURSUIT, le rattrape et
-// l'empoisonne (5 par seconde, 3 s encore après) ; aucune traînée
+// LES ŒUFS DU VER (Keko, 18/11 : « il s'ouvre automatiquement après un délai ; il libère trois mini-vers qui poursuivent
+// les ennemis et les mordent ») : immobile, il ne pond pas ; en mouvement il pond, deux à la fois au plus ; SANS INSECTE,
+// L'ŒUF ÉCLOT QUAND MÊME à son heure, trois mini-vers en sortent ; ils poursuivent l'insecte, le rattrapent et le mordent
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const oeufs = { id: 'oeufs', cadence: 1.4, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, ponte: { tous: 1.4, detection: 30, attente: 15, eclosion: 0.35, max: 4, duree: 6, vitesse: 90, virage: 7, vue: 90, rayon: 4, venin: { duree: 3, dps: 5 }, servant: { duree: 6, morsure: 4, cadence: 0.6, fin: 6, max: 3 }, frein: 0.5 } }
+  const oeufs = { id: 'oeufs', cadence: 3, degats: 0, portee: 0, vitesse: 0, vie: 0, dispersion: 0, guide: false, ponte: { tous: 3, max: 2, eclosion: 2, nombre: 3, duree: 5, vitesse: 70, virage: 6, vue: 90, morsure: 2, cadence: 0.6 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [oeufs], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const w = nouveauMonde(cfg, 3)
   for (let i = 0; i < 60; i++) {
@@ -2088,48 +2088,36 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   }
   const immobile = w.oeufs.length
-  // (il file vers la droite : des œufs, qui attendent — aucun insecte)
-  let x = 0
-  for (let i = 0; i < 60 * 8; i++) {
-    x += 30 / 60
-    w.vaisseau = { ...w.vaisseau, x, y: 0, vx: 30, vy: 0, cap: 0 }
-    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-  }
-  verifier(`immobile, il ne pond pas (${immobile}) ; en mouvement il pond, quatre au plus (${w.oeufs.length}), et sans insecte les œufs attendent (${w.oeufs.filter((o) => o.eclos !== null).length} éclos), sans traînée`, immobile === 0 && w.oeufs.length === 4 && w.oeufs.every((o) => o.eclos === null) && w.givres.length === 0)
-  // (UN ŒUF, UN INSECTE QUI PASSE À 6 : la larve EN PREND LE CONTRÔLE — il quitte la nuée, mord un autre insecte, et revient
-  // dans la nuée blessé de 6 au bout de 6 s)
-  const w2 = nouveauMonde(cfg, 3)
-  w2.oeufs.push({ id: 77, arme: 0, x: 0, y: 0, cap: 0, pondu: 0, fendu: null, eclos: null, cible: null })
-  w2.armesA[0] = 1e9
-  w2.ennemis.push(insecte(1, 6, 0))
+  // (il file vers la droite, aucun insecte : 1,5 s — un œuf pondu, pas encore éclos)
   const ev: Evenement[] = []
+  let x = 0
+  const filer = (n: number): void => {
+    for (let i = 0; i < n; i++) {
+      x += 30 / 60
+      w.vaisseau = { ...w.vaisseau, x, y: 0, vx: 30, vy: 0, cap: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+  }
+  filer(90)
+  const avant = { oeufs: w.oeufs.length, vers: w.miniVers.length }
+  filer(45)
+  verifier(`immobile, il ne pond pas (${immobile}) ; il pond, et sans insecte l'œuf éclot à son heure : ${avant.oeufs} œuf et ${avant.vers} mini-ver à 1,5 s, puis ${w.miniVers.length} mini-vers`, immobile === 0 && avant.oeufs === 1 && avant.vers === 0 && w.miniVers.length === 3 && ev.some((e) => e.type === 'eclosion'))
+  // (un insecte à 40 de l'œuf qui éclot : les trois mini-vers le rattrapent et le mordent ; au bout de leur vie, ils se dissolvent)
+  const w2 = nouveauMonde(cfg, 3)
+  w2.armesA[0] = 1e9
+  w2.oeufs.push({ id: 77, arme: 0, x: 0, y: 0, cap: 0, pondu: -2 })
+  w2.ennemis.push(insecte(1, 40, 0))
+  const ev2: Evenement[] = []
   const pas = (n: number): void => {
     for (let i = 0; i < n; i++) {
       w2.vaisseau = { ...w2.vaisseau, x: 2000, y: 0, vx: 0, vy: 0, cap: 0 }
-      ev.push(...avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements)
+      ev2.push(...avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements)
     }
   }
-  pas(40)
-  const horsDeLaNuee = w2.serviteurs.some((sv) => sv.e.id === 1) && !w2.ennemis.some((e) => e.id === 1)
-  // (les insectes de ce banc ne bougent pas : on pose l'autre contre le serviteur)
-  const sv1 = w2.serviteurs[0]
-  if (sv1 !== undefined) w2.ennemis.push(insecte(2, sv1.e.corps.x + 6, sv1.e.corps.y))
-  pas(60)
-  const mordu = 1000 - (w2.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
-  pas(60 * 6)
-  const revenu = w2.ennemis.find((e) => e.id === 1)
-  verifier(`la larve prend le contrôle de l'insecte, qui quitte la nuée (${horsDeLaNuee}) et mord l'autre (${mordu} pris en 1 s) ; au bout de 6 s il revient dans la nuée, blessé de 6 (${revenu === undefined ? '—' : (1000 - revenu.pv).toFixed(0)})`, horsDeLaNuee && mordu >= 4 && revenu !== undefined && Math.abs(1000 - revenu.pv - 6) < 0.01 && ev.some((e) => e.type === 'controle') && ev.some((e) => e.type === 'liberation'))
-  // (UN GRAND n'est pas contrôlé : il est rongé et freiné)
-  const w3 = nouveauMonde(cfg, 3)
-  w3.oeufs.push({ id: 77, arme: 0, x: 0, y: 0, cap: 0, pondu: 0, fendu: -1, eclos: -1, cible: null })
-  w3.ennemis.push({ ...insecte(9, 6, 0), grand: true })
-  w3.armesA[0] = 1e9
-  for (let i = 0; i < 30; i++) {
-    w3.vaisseau = { ...w3.vaisseau, x: 2000, y: 0, vx: 0, vy: 0, cap: 0 }
-    avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
-  }
-  const g = w3.ennemis[0]
-  verifier(`un grand n'est pas contrôlé : rongé (${(1000 - g.pv).toFixed(1)}) et freiné (${(g.geleA ?? 0) > w3.t})`, w3.serviteurs.length === 0 && g.pv < 1000 && (g.geleA ?? 0) > w3.t)
+  pas(60 * 3)
+  const mordu = 1000 - (w2.ennemis.find((e) => e.id === 1)?.pv ?? 1000)
+  pas(60 * 2 + 5)
+  verifier(`les trois mini-vers le poursuivent et le mordent (${mordu} pris en 3 s), puis se dissolvent (${w2.miniVers.length} restent)`, mordu >= 12 && ev2.some((e) => e.type === 'morsureMiniVer') && w2.miniVers.length === 0 && ev2.filter((e) => e.type === 'miniVerFini').length === 3)
 }
 
 // L'ÉPINE D'OS DU VER (Keko, 18/11 : « un projectile assez important qui traverse tout » ; « qu'il traverse les ennemis
