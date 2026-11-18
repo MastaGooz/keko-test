@@ -2786,7 +2786,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // vaisseaux beaucoup plus gros », puis, la hauteur d'un téléphone la rétrécissant : « dessiner le rond à une taille
     // fixe (grand) même s'il dépasse de la zone, il ne sera pas entier, c'est pas grave ») : elle tient dans la largeur ;
     // ce qui dépasse en haut et en bas est coupé par la scène (`dessinerLaScene` recouvre le dessous, les barres le dessus)
-    const R0 = 74
+    // (… PUIS PLUS PETITE — Keko, 18/11 : « réduire un petit peu la plateforme circulaire, car aucun vaisseau ne prend
+    // autant de place ; ce serait peut-être plus esthétique » : 74 → 56, mesuré sur les plus larges — le Kraken et ses
+    // tentacules, le Néant et ses anneaux, le Prisme, le Ver, le Tesseract)
+    const R0 = 56
     p.circle(cx, cy, R0 + 4, N.hex('#07090f'))
     p.circle(cx, cy, R0 + 3, N.hex('#262c3c'))
     p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, N.hex('#3e4760'))

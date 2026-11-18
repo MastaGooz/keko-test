@@ -5829,3 +5829,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   la jauge à cellules d'une fiche est UNE BARRE D'UN SEUL TENANT, un trait d'encre entre deux segments — six pixels de
   plein par segment au lieu de trois (`dessinerUneJaugeDePiece`) ; les plaques, à huit, gardent leurs cellules. Leur
   jauge s'appelle « SURBLINDAGE » (11 lettres, dans la colonne des noms ; le code garde « plaques »).
+- L'AIRE DU HANGAR PLUS PETITE (Keko, 18/11 : « réduire un petit peu la plateforme circulaire sur laquelle sont posés les
+  vaisseaux, car aucun vaisseau ne prend autant de place ; la réduire serait peut-être plus esthétique ») : son rayon
+  passe de 74 à 56. Mesuré à la capture sur huit vaisseaux — le Chasseur, le Kraken, le Néant et ses anneaux (le plus
+  large), le Prisme, le Ver, le Tesseract, la Sentinelle, la Salamandre : tous y tiennent, avec de la marge.
