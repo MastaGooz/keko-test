@@ -754,8 +754,12 @@ export type Arme = {
    * puis S'ABAT en `chute` secondes. Jusqu'à l'impact il reste au-dessus de son insecte et le suit, comme la météore (mort
    * avant, il tombe où il était) ; à l'impact, TOUT INSECTE À MOINS DE `rayon` perd `degats` × LE CHIFFRE. L'état est
    * `Monde.des`.
+   * (… ET SA ZONE SUIT LE CHIFFRE — Keko, 18/11 : « on peut corréler le chiffre du dé avec la grandeur de la zone ; la
+   * zone actuelle correspondrait à un chiffre de 4 ; plus petite, c'est un chiffre plus petit, plus grosse, un chiffre
+   * plus gros » : `rayon` est la zone d'un 4, chaque point de plus ou de moins l'élargit ou la resserre de `pas` —
+   * `zoneDuDe`)
    */
-  de?: { roule: number; chute: number; rayon: number }
+  de?: { roule: number; chute: number; /** La zone d'un 4. */ rayon: number; /** Ce que chaque point du dé ajoute à la zone (ou lui retire, sous 4). */ pas: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -2850,6 +2854,9 @@ function ouSeraLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, T: number): Vect
   return { x, y }
 }
 
+/** LA ZONE D'UN DÉ DU DESTIN selon son chiffre (voir `Arme.de`) : `rayon` sur un 4, `pas` de plus par point au-dessus, de moins en dessous. */
+export const zoneDuDe = (de: NonNullable<Arme['de']>, face: number): number => de.rayon + de.pas * (face - 4)
+
 /** LES DÉS DU DESTIN (voir `Arme.de`) : le choix de l'insecte, le chiffre tiré, le dé qui le suit, l'impact sur la zone. */
 function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -2883,10 +2890,11 @@ function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (e0 !== undefined) (dd.x = e0.corps.x), (dd.y = e0.corps.y)
     if (m.t < dd.tombe) continue
     m.des.splice(k, 1)
-    ev.push({ type: 'deImpact', id: dd.id, x: dd.x, y: dd.y, face: dd.face, rayon: de.rayon })
-    // (IL S'ABAT : toute la zone, d'autant plus fort que le chiffre est haut)
+    const zone = zoneDuDe(de, dd.face)
+    ev.push({ type: 'deImpact', id: dd.id, x: dd.x, y: dd.y, face: dd.face, rayon: zone })
+    // (IL S'ABAT : toute la zone, d'autant plus large et plus fort que le chiffre est haut)
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - dd.x, e.corps.y - dd.y) > de.rayon + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - dd.x, e.corps.y - dd.y) > zone + c.ennemi.rayon) continue
       const critique = c.passifs.critique > 0 && tire(m.graine, dd.id * 31 + e.id * 7, 12) < c.passifs.critique
       e.pv -= a.degats * dd.face * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })

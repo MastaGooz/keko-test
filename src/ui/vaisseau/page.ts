@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, boucheDansLeMonde, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, zoneDuDe, boucheDansLeMonde, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -8982,15 +8982,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const pret = Math.min(1, s / 0.2)
       // (L'OMBRE : petite et pâle quand il est haut, large et sombre quand il touche)
       p.disc(dd.x, dd.y, 3 + 4 * u, N.hex('#06040a'), (d) => (0.2 + 0.4 * u) * pret * (1 - d * d))
-      // (LA ZONE : un anneau qui s'ouvre quand il paraît, et s'allume à mesure qu'il descend ; quatre crans qui tournent)
-      const rr = de.rayon * (0.6 + 0.4 * (1 - Math.pow(1 - pret, 3)))
+      // (LA ZONE : un anneau qui s'ouvre quand il paraît, et s'allume à mesure qu'il descend ; quatre crans qui tournent —
+      // ET SA TAILLE SUIT LA FACE MONTRÉE : elle saute avec les faces qui défilent, puis s'arrête sur celle du chiffre tiré)
+      const zone = zoneDuDe(de, faceMontree(dd.id, dd.face, s, de.roule))
+      const rr = zone * (0.6 + 0.4 * (1 - Math.pow(1 - pret, 3)))
       p.ring(dd.x, dd.y, rr, 1, u > 0.5 ? sp[4] : sp[3], (0.25 + 0.6 * u) * pret)
       const a0 = s * 1.2 + dd.id
       for (let j = 0; j < 4; j++) {
         const a = a0 + (j * Math.PI) / 2
         p.line(dd.x + Math.cos(a) * rr * 0.72, dd.y + Math.sin(a) * rr * 0.72, dd.x + Math.cos(a) * rr * 0.92, dd.y + Math.sin(a) * rr * 0.92, u > 0.5 ? lu[4] : sp[4], (0.3 + 0.6 * u) * pret)
       }
-      if (u > 0.5) p.glow(dd.x, dd.y, de.rayon * 0.8, sp[4], (u - 0.5) * 0.5)
+      if (u > 0.5) p.glow(dd.x, dd.y, zone * 0.8, sp[4], (u - 0.5) * 0.5)
     }
     // (LA MARQUE : une onde jusqu'au bord de la zone, le chiffre frappé au sol en grand, qui s'efface)
     for (const mq of marquesDuDe) {

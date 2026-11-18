@@ -5645,3 +5645,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   à même les arêtes, d'un pixel, les points ne se lisaient pas ; sur la plaque, oui. Les sons : `de` (des « tic » de
   verre qui ralentissent, un tintement au chiffre), `impactDe`. Les balises restent la troisième arme, en attendant.
   *Cadence, portée, zone, 4 par point : de moi, à rejuger en jouant.*
+- LA ZONE DU DÉ SUIT SON CHIFFRE (Keko, 18/11 : « on peut corréler le chiffre du dé avec la grandeur de la zone ; la zone
+  actuelle correspondrait à un chiffre de 4 ; plus petite, c'est un chiffre plus petit, plus grosse, un chiffre plus
+  gros ») : `Arme.de.rayon` est la zone d'un 4 (22), `Arme.de.pas` ce que chaque point ajoute ou retire (4) —
+  `zoneDuDe` : 10, 14, 18, 22, 26, 30 du 1 au 6. Le pas est de moi (un pas proportionnel au chiffre aurait donné 5,5 sur
+  un 1, à peine plus que l'insecte). Un 6 frappe donc 24 sur 30 de rayon, un 1 frappe 4 sur 10 : le chiffre compte deux
+  fois. AU SOL, l'anneau de la zone suit LA FACE MONTRÉE : il saute avec les faces qui défilent pendant que le dé roule,
+  puis s'arrête sur la zone du chiffre tiré. Vérifié (600 lancers) : les six zones, et un insecte à 25 du point de chute
+  pris à partir d'un 4 seulement.

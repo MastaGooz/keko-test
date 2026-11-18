@@ -2205,10 +2205,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 
 // LE DÉ DU DESTIN DU TESSERACT (Keko, 18/11 : « un dé de 1 à 6 qui tourne, puis s'abat sur un ennemi, dans une zone
 // d'effet ; des dégâts plus ou moins importants en fonction du chiffre ») : il paraît au-dessus de l'insecte le plus
-// proche, le suit, roule 0,9 s, tombe en 0,3 s ; tout insecte à moins de 22 perd 4 × le chiffre, rien au-delà
+// proche, le suit, roule 0,9 s, tombe en 0,3 s ; tout insecte dans sa zone perd 4 × le chiffre, rien au-delà ; (… ET LA
+// ZONE SUIT LE CHIFFRE — Keko, 18/11 : 22 sur un 4, 4 de plus ou de moins par point, de 10 à 30)
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const de = { id: 'de', cadence: 99, degats: 4, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, de: { roule: 0.9, chute: 0.3, rayon: 22 } }
+  const de = { id: 'de', cadence: 99, degats: 4, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, de: { roule: 0.9, chute: 0.3, rayon: 22, pas: 4 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [de], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const lancer = (graine: number, insectes: ReturnType<typeof insecte>[], file = 0) => {
     const w = nouveauMonde(cfg, graine)
@@ -2231,15 +2232,21 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (l'insecte visé à 60, qui file vers le bas à 30 par seconde avec son voisin à 15 de lui ; un troisième à 40 de lui, hors de la zone)
   const a = lancer(3, [insecte(1, 60, 0), insecte(2, 75, 0), insecte(3, 60, -40)], 30)
   const f = a.impact?.face ?? 0
-  verifier(`le dé paraît une fois, sur l'insecte le plus proche, et s'abat 1,2 s après, là où il est (impact à y ${a.impact?.y.toFixed(1)}, lui à ${a.ouEtait.toFixed(1)}) : un ${f}, ${a.pv.join(' / ')} (${4 * f} à lui et à son voisin, rien au troisième)`, a.ev.filter((e) => e.type === 'de').length === 1 && a.paru?.x === 60 && a.impact !== undefined && a.impact.face === a.paru?.face && a.impact.y > 30 && Math.abs(a.impact.y - a.ouEtait) < 1 && f >= 1 && f <= 6 && a.pv[0] === 4 * f && a.pv[1] === 4 * f && a.pv[2] === 0)
-  // (le chiffre : de 1 à 6, chacun à peu près une fois sur six, sur 600 lancers)
+  verifier(`le dé paraît une fois, sur l'insecte le plus proche, et s'abat 1,2 s après, là où il est (impact à y ${a.impact?.y.toFixed(1)}, lui à ${a.ouEtait.toFixed(1)}) : un ${f}, ${a.pv.join(' / ')} (${4 * f} à lui et à son voisin, rien au troisième)`, a.ev.filter((e) => e.type === 'de').length === 1 && a.paru?.x === 60 && a.impact !== undefined && a.impact.face === a.paru?.face && a.impact.y > 30 && Math.abs(a.impact.y - a.ouEtait) < 1 && f >= 1 && f <= 6 && a.impact.rayon === 22 + 4 * (f - 4) && a.pv[0] === 4 * f && a.pv[1] === 4 * f && a.pv[2] === 0)
+  // (le chiffre : de 1 à 6, chacun à peu près une fois sur six, sur 600 lancers ; un second insecte à 25 du point de
+  // chute — 20 de zone plus son rayon de 5 : il n'est pris que par une zone de 20 au moins, un 4, un 5 ou un 6)
   const faces = [0, 0, 0, 0, 0, 0]
+  const zones = new Set<string>()
+  let ecarts = 0
   for (let g = 1; g <= 600; g++) {
-    const b = lancer(g, [insecte(1, 60, 0)])
-    if (b.impact !== undefined) faces[b.impact.face - 1]++
-    if (b.impact !== undefined && b.pv[0] !== 4 * b.impact.face) faces[0] = -1e9
+    const b = lancer(g, [insecte(1, 60, 0), insecte(2, 60, 25)])
+    if (b.impact === undefined) continue
+    faces[b.impact.face - 1]++
+    zones.add(`${b.impact.face}:${b.impact.rayon}`)
+    if (b.pv[0] !== 4 * b.impact.face || b.pv[1] !== (b.impact.face >= 4 ? 4 * b.impact.face : 0)) ecarts++
   }
-  verifier(`sur 600 lancers, chaque chiffre sort à peu près une fois sur six, et frappe 4 fois son chiffre (${faces.join(' / ')})`, faces.every((n) => n >= 70 && n <= 130) && faces.reduce((x, y) => x + y, 0) === 600)
+  const zonesLues = [...zones].sort().map((z) => z.split(':')[1]).join(', ')
+  verifier(`sur 600 lancers, chaque chiffre sort à peu près une fois sur six (${faces.join(' / ')}), frappe 4 fois son chiffre, sur une zone qui grandit avec lui (${zonesLues}) : l'insecte à 25 n'est pris qu'à partir d'un 4 (${ecarts} écart)`, faces.every((n) => n >= 70 && n <= 130) && faces.reduce((x, y) => x + y, 0) === 600 && zonesLues === '10, 14, 18, 22, 26, 30' && ecarts === 0)
   const c2 = lancer(3, [insecte(1, 130, 0)])
   verifier(`à 130, au-delà de sa portée (120) : rien ne paraît`, c2.ev.every((e) => e.type !== 'de'))
 }
