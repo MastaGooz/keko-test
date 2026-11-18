@@ -5899,3 +5899,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - UN PIXEL ENTRE DEUX LIGNES DE DESCRIPTION (Keko, 18/11 : « dans les descriptions des vaisseaux et des armes, les lignes
   se touchent : une virgule sur la ligne du haut et un L sur celle d'en bas, au même endroit, se touchent ») : elles
   avancent de dix pixels au lieu de neuf (`INTERLIGNE`), la fiche du vaisseau et la plaque de l'arme grandissent d'autant.
+- LA VITESSE ET LA MANIABILITÉ PLUS DISCRIMINANTES ; LE NAPALM TIRE SANS CIBLE (Keko, 18/11 : « la maniabilité devient
+  vite très maniable : l'ingénieur à la moitié de la jauge est déjà vraiment maniable, et même la salamandre ; rendre les
+  vaisseaux moins maniables de manière générale ; quelque chose qui a la maniabilité de la salamandre doit être vraiment
+  compliqué à manier » ; « l'ingénieur devrait être plus lent, sans l'être trop, et le chasseur un peu plus rapide » ; « le
+  napalm devrait tirer même en l'absence d'ennemis, un peu au hasard autour de lui : il laisse une flaque ») :
+  LA POUSSÉE SUIT L'AGILITÉ À LA PUISSANCE 1,6, LE VIRAGE À SON CARRÉ (`manieDe` : l'agilité sur 9, celle du Chasseur ;
+  `POUSSEE_MAX` 140, `VIRAGE_MAX` 2,9) — la jauge reste celle de l'agilité. Un angle droit : le Chasseur 0,55 s (0,45
+  avant), le Ver 0,58, le Néant 0,68, l'Ingénieur 0,89, le Pulsar et la Vouivre 0,9, le Tesseract 0,96, la Sentinelle
+  1,13, le Kraken 1,68, LA SALAMANDRE 1,76 (0,79 avant) ; la poussée : le Chasseur 139, le Ver 132, l'Ingénieur 94 (107
+  avant), la Sentinelle 78, le Kraken 57, la Salamandre 54 (76 avant). LA POINTE : l'Ingénieur 80 → 68, le Chasseur 106 →
+  110 (le plafond de la flotte, sans le passer). LE NAPALM, sans insecte en vue, vise un point tiré au hasard (seedé) entre
+  45 et 95 % de sa portée ; le lance-flammes et le rayon thermique gardent leur cible.

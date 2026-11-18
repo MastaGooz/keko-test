@@ -910,7 +910,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
       if (VORTEX) {
         // (LE VIRAGE, l'agilité en vol : voir `agiliteDe`)
-        conf = { ...conf, virage: VIRAGE_DU_VORTEX * agiliteDe(conf) }
+        conf = { ...conf, virage: VIRAGE_MAX * manieDe(conf) ** 2 }
         const canon = pieceDe(arme)?.arme
         // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
         // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
@@ -1123,7 +1123,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // salamandre, entre le chasseur et l'ingénieur ; l'ingénieur est vraiment la version blindée des vaisseaux humains » :
   // 9 → 7, entre les 4 du Chasseur et les 9 de l'Ingénieur)
   // (… ET SA ROTATION × 1,45 — Keko, 18/11 : la maniabilité devient l'agilité, sa rotation divisée par son poids
-  // (`VIRAGE_DU_VORTEX`) ; à × 1,3, le Ver, plus léger, passait devant lui)
+  // (`agiliteDe`) ; à × 1,3, le Ver, plus léger, passait devant lui)
   // (… LES TROIS HUMAINS, CHACUN SON PROFIL — Keko, 18/11 : « l'ingénieur la plus basse vitesse, plus maniable que la
   // salamandre mais moins rapide ; le chasseur une bonne vitesse, une bonne maniabilité, mais il perd au blindage et au
   // surblindage ; la salamandre une vitesse médiocre, une maniabilité assez faible, plus faible que sa vitesse, moyenne en
@@ -1134,16 +1134,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (… PUIS « DOUBLE LA VITESSE DE LA SALAMANDRE ET LA MANIABILITÉ DE L'INGÉNIEUR » — Keko, 18/11 — LUES SUR LEURS JAUGES :
   // doubler les valeurs aurait mis la Salamandre à 176, bien au-delà de la flotte, et l'Ingénieur devant le Chasseur ; la
   // Salamandre 31 → 62 % de jauge (88 → 103,5), l'Ingénieur 23 → 46 % (5,5 → 7 d'agilité))
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 106 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 103.5 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 80 / 94, rotation: 1.746, blindage: 6 / 9 } }
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 110 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 103.5 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
    * rotation rapportée à son poids (le poids de série, 30, sur le sien) — c'est elle que la jauge « Maniabilité » montre ;
-   * le virage en vol en est `VIRAGE_DU_VORTEX` fois (voir `ConfigVaisseau.virage`) : le Chasseur plie un angle droit en
-   * 0,45 s environ, l'Ingénieur, le plus lourd, en une seconde.
+   * le virage en vol et la poussée en découlent, plus fortement qu'elle (`manieDe`, `VIRAGE_MAX`, `POUSSEE_MAX`).
    */
   const agiliteDe = (cf: ConfigVaisseau): number => (cf.rotation * POIDS_SERIE) / Math.max(1, cf.masse)
-  const VIRAGE_DU_VORTEX = 0.4
   /** Le blindage d'un vaisseau au vortex, une fois la vie de sa race posée : réglé par `REGLAGES_DU_VORTEX`. */
   const blindageAuVortex = <V extends { coque: number }>(v: V, id: string): V => {
     const f = VORTEX ? REGLAGES_DU_VORTEX[id]?.blindage : undefined
@@ -1156,10 +1154,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // maniabilité comme deux statistiques différentes ? » ; « on fusionne » : elles disaient la même chose, divisées toutes
     // deux par le poids ; au vortex la poussée découle de l'agilité, `POUSSEE_PAR_AGILITE` fois — réglé sur la moyenne de
     // la flotte, qui ne bouge pas)
-    return VORTEX ? { ...regle, poussee: POUSSEE_PAR_AGILITE * agiliteDe(regle) } : regle
+    // (… ET PLUS FORTEMENT QUE L'AGILITÉ — Keko, 18/11 : « pas assez discriminant ; la maniabilité devient vite très
+    // maniable ; que quelque chose qui a la maniabilité de la salamandre soit vraiment compliqué à manier » : la poussée
+    // suit l'agilité à la puissance 1,6, le virage à son carré — `manieDe`)
+    return VORTEX ? { ...regle, poussee: POUSSEE_MAX * Math.pow(manieDe(regle), 1.6) } : regle
   }
-  /** La poussée d'un vaisseau au vortex par point d'agilité (la moyenne de la flotte, 103,75, sur son agilité moyenne, 6,8). */
-  const POUSSEE_PAR_AGILITE = 15.26
+  /** La poussée au vortex du plus maniable (l'agilité de référence), le virage aussi : les autres en ont d'autant moins. */
+  const POUSSEE_MAX = 140
+  const VIRAGE_MAX = 2.9
+  /** L'agilité d'un vaisseau rapportée à celle de référence (9, à peu près le Chasseur) : de 0,55 (la Salamandre) à 1. */
+  const manieDe = (cf: ConfigVaisseau): number => agiliteDe(cf) / 9
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */

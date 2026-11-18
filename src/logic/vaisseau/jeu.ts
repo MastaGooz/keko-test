@@ -4166,8 +4166,16 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
         if (enVue(e) && d < dc) (dc = d), (cible = e)
       }
+      // (LE NAPALM TIRE MÊME SANS CIBLE — Keko, 18/11 : « le napalm devrait tirer même en l'absence d'ennemis, un peu au
+      // hasard autour de lui : il laisse une flaque, ça peut avoir un intérêt de tirer sans cible ; pas le lance-flammes ni
+      // le rayon thermique » : personne en vue, il vise un point tiré au hasard, entre 45 et 95 % de sa portée)
+      if (cible === null && arme.napalm !== undefined) {
+        const an = tire(m.graine, m.prochainId, 13) * Math.PI * 2
+        const loin = arme.portee * (0.45 + 0.5 * tire(m.graine, m.prochainId, 14))
+        cible = { id: -1, corps: { ...v, x: bx + Math.cos(an) * loin, y: by + Math.sin(an) * loin, vx: 0, vy: 0 } } as Ennemi
+      }
       if (cible === null) return
-      cibleDuTir = cible
+      if (cible.id >= 0) cibleDuTir = cible
       const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
       // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
