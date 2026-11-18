@@ -5881,3 +5881,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Chasseur 115 → 137 (le plus maniable, il accélère maintenant le plus — son facteur de poussée est retiré), le Ver
   132 → 133, le Néant 123, le Prisme 119 → 114, le Tesseract 116 → 103, le Frimas 109 → 112, le Pulsar et la Vouivre
   109 → 107, la Sentinelle 90 → 95, le Kraken 90 → 78, la Salamandre 70 → 76, l'Ingénieur 63 → 61.
+- LES TROIS HUMAINS, CHACUN SON PROFIL (Keko, 18/11 : « l'ingénieur la plus basse vitesse ; plus maniable que la
+  salamandre, mais moins rapide ; le chasseur une bonne vitesse, une bonne maniabilité, mais il perd au blindage et au
+  surblindage ; la salamandre une vitesse médiocre, une maniabilité assez faible — plus faible que sa vitesse,
+  proportionnellement —, plutôt moyenne en blindage et surblindage, plus de blindage que de surblindage ; à l'inverse,
+  l'ingénieur un blindage moyen, mais beaucoup de surblindage ») — `REGLAGES_DU_VORTEX` :
+  | | pointe | agilité (accélération) | blindage / 12 | surblindage / 8 |
+  |---|---|---|---|---|
+  | Chasseur | 100 → 106 (≈ 67 %) | 8,96 (75 %, la meilleure ; 137) | 4 | 3 |
+  | Salamandre | 88 (≈ 31 %) | 5 (15 %, la plus faible ; 76) | 7 | 4 |
+  | Ingénieur | 94 → 80 (15 %, la plus basse) | 4 → 5,5 (≈ 25 % ; 61 → 84) | 9 → 6 | 6 |
+  L'Ingénieur reste le plus protégé au total (12, la Salamandre 11, le Chasseur 7). Vu à la capture.
