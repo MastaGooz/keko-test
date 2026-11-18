@@ -1877,10 +1877,12 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
       }
     }
     if (cible === undefined) return
-    const cap0 = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
-    // (elle part du bord du vaisseau, à la vitesse qui la fait s'arrêter pile à `portee` : 2 × portée ÷ aller)
-    const x0 = v.x + Math.cos(cap0) * (c.rayon + 2)
-    const y0 = v.y + Math.sin(cap0) * (c.rayon + 2)
+    // (elle part du bord du vaisseau — ou de son lance-scie, à la proue, s'il en a un : `bouche` —, à la vitesse qui la
+    // fait s'arrêter pile à `portee` : 2 × portée ÷ aller)
+    const b = a.bouche === undefined ? null : boucheDansLeMonde(v, a)
+    const cap0 = Math.atan2(cible.corps.y - (b?.y ?? v.y), cible.corps.x - (b?.x ?? v.x))
+    const x0 = b?.x ?? v.x + Math.cos(cap0) * (c.rayon + 2)
+    const y0 = b?.y ?? v.y + Math.sin(cap0) * (c.rayon + 2)
     const v0 = (2 * (a.portee - c.rayon - 2)) / sc.aller
     m.scies.push({ id: m.prochainId++, arme: i, x: x0, y: y0, vx: Math.cos(cap0) * v0, vy: Math.sin(cap0) * v0, cap0, lancee: m.t, revient: false, touches: [] })
     ev.push({ type: 'scieLancee', x: x0, y: y0, arme: a.id })
@@ -3757,8 +3759,10 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
       }
       const ou = proche === undefined ? libres[0] : libres.reduce((b, pl) => (Math.hypot(pl.x - proche!.corps.x, pl.y - proche!.corps.y) < Math.hypot(b.x - proche!.corps.x, b.y - proche!.corps.y) ? pl : b))
       m.armesA[i] = m.t + po.tous
-      m.tourelles.push({ id: m.prochainId++, x: ou.x, y: ou.y, nee: m.t + po.vol, cap: v.cap, tirA: m.t + po.vol + 0.4, arme: i, x0: v.x, y0: v.y, lancee: m.t, deployee: false })
-      ev.push({ type: 'tourelleLancee', x: v.x, y: v.y })
+      // (la capsule part du lance-tourelles, sur le dos, s'il y en a un : `bouche`)
+      const b = boucheDansLeMonde(v, a)
+      m.tourelles.push({ id: m.prochainId++, x: ou.x, y: ou.y, nee: m.t + po.vol, cap: v.cap, tirA: m.t + po.vol + 0.4, arme: i, x0: b.x, y0: b.y, lancee: m.t, deployee: false })
+      ev.push({ type: 'tourelleLancee', x: b.x, y: b.y })
       const miennes = m.tourelles.filter((tu) => tu.arme === i)
       if (miennes.length > po.max) {
         const vieille = miennes[0]

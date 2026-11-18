@@ -1184,8 +1184,9 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     f.push({ pts: [[6.6, -2], [4, -2], [4, 2], [6.6, 2]], mat: 'acier', relief: 'plat' })
     f.push({ pts: [[6.2, -1.5], [4.4, -1.5], [4.4, 1.5], [6.2, 1.5]], mat: 'verre', relief: 'plat' })
     f.push({ pts: [[2.6, -3], [-6, -3], [-6, 3], [2.6, 3]], mat: 'metal', relief: 'plat' })
-    for (const x of [1.6, -1.2, -4]) f.push({ pts: [[x, -2.2], [x - 2.2, -2.2], [x - 2.2, 2.2], [x, 2.2]], mat: 'acier', relief: 'plat' })
-    for (const x of [0.5, -2.3, -5.1]) f.push({ pts: [[x + 0.6, -0.6], [x - 0.6, -0.6], [x - 0.6, 0.6], [x + 0.6, 0.6]], mat: 'marque', relief: 'plat' })
+    // (… LA SOUTE À TOURELLES QUITTE LA COQUE — Keko, 18/11 : « on doit toujours changer visuellement l'arme à chaque fois
+    // qu'on change d'arme sur un vaisseau » : elle restait sur le dos avec la scie et le fléau ; c'est l'arme des tourelles
+    // qui porte maintenant son lance-tourelles, voir `formesDeLArme`)
     for (const [x, y] of [[6.6, -3.6], [6.6, 3.6], [-6.6, -3.6], [-6.6, 3.6]]) f.push({ pts: [[x + 0.4, y - 0.4], [x - 0.4, y - 0.4], [x - 0.4, y + 0.4], [x + 0.4, y + 0.4]], mat: 'metal', relief: 'plat' })
     return f
   }
@@ -1463,7 +1464,12 @@ export function formesDuRadar(t: number): Forme[] {
  * sa nacelle, à −0,6). Les obus du vol en partent.
  */
 export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
-  if (id === 'flammes' || id === 'napalm') return { x: 11.8, y: 0 }
+  if (id === 'flammes') return { x: 11.8, y: 0 }
+  // (les capsules de tourelle sortent du lance-tourelles, sur le dos ; la scie, de son carter, à la proue)
+  if (id === 'tourelle') return { x: 2, y: 0 }
+  if (id === 'scie') return { x: 11, y: 0 }
+  // (le napalm sort de son mortier, sur le dos — voir `formesDeLArme`)
+  if (id === 'napalm') return { x: 1.6, y: 0 }
   // (l'orbe de plasma se forme entre les deux cornes du Pulsar ; l'essaim en part aussi)
   if (id === 'plasma' || id === 'essaim' || id === 'puits' || id === 'meteore') return { x: 9.6, y: 0 }
   // (sur le Néant, la place d'arme est reculée de 2,2 : le puits part de la pointe de son éperon — voir son gabarit)
@@ -1482,14 +1488,18 @@ export const placeDArme = (coque: number, k: number): { x: number; y: number; s:
   return places[Math.max(0, Math.min(places.length - 1, k))]
 }
 export function boucheMontee(coque: number, id: string, k: number): { x: number; y: number } {
+  // (une arme du dos est sur la coque elle-même, pas à une place d'aile)
+  if (SUR_LE_DOS.has(id)) return boucheDeLArme(id, 1)
   const pl = placeDArme(coque, k)
   const b = boucheDeLArme(id, pl.s)
   return { x: b.x + pl.x, y: b.y + pl.y }
 }
+/** Les armes montées SUR la coque, par-dessus elle, en ses coordonnées : le mortier du napalm, le lance-tourelles, le lance-scie de la proue. */
+const SUR_LE_DOS = new Set(['napalm', 'tourelle', 'scie'])
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'nova' || id === 'poison' || id === 'oeufs' || id === 'epine' || id === 'drain' || id === 'vrille' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau' || id === 'puits' || id === 'meteore' || id === 'hypercube' || id === 'de' || id === 'coupe') return []
+  if (id === 'drone' || id === 'nova' || id === 'poison' || id === 'oeufs' || id === 'epine' || id === 'drain' || id === 'vrille' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau' || id === 'puits' || id === 'meteore' || id === 'hypercube' || id === 'de' || id === 'coupe') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [
@@ -1498,11 +1508,48 @@ export function formesDeLArme(id: string, s: number): Forme[] {
       { pts: ovale(10.2, 0, 1.2, 1.2, 12), mat: 'ion', relief: 'dome', dome: { x: 10.2, y: 0, rx: 1.2, ry: 1.2 } },
     ]
   }
+  // (LES ARMES DE L'INGÉNIEUR À LEUR PLACE — Keko, 18/11 : « pour les tourelles, un lance-tourelles sur le dos, d'où sont
+  // lancées les tourelles » ; « avec la scie, il nous faut visuellement une arme à l'avant de l'appareil qui tire la scie,
+  // quelque chose avec une scie qui tombe dedans ») : LE LANCE-TOURELLES, deux rails le long du dos, un berceau d'acier où
+  // attend une tourelle repliée (son voyant à la marque), une bouche de lancement devant ; LE LANCE-SCIE, un carter large
+  // qui dépasse de la proue, sa fente sombre, une scie engagée dedans
+  if (id === 'tourelle') {
+    return [
+      { pts: barre(-5.6, -1.9, 2.2, -1.9, 0.7), mat: 'metal', relief: 'cyl' },
+      { pts: barre(-5.6, 1.9, 2.2, 1.9, 0.7), mat: 'metal', relief: 'cyl' },
+      { pts: [[-0.8, -2.6], [-4.8, -2.6], [-4.8, 2.6], [-0.8, 2.6]], mat: 'acier', relief: 'plat' },
+      { pts: [[-1.3, -1.7], [-4.3, -1.7], [-4.3, 1.7], [-1.3, 1.7]], mat: 'kaki', relief: 'cyl' },
+      { pts: [[-2.3, -0.6], [-3.3, -0.6], [-3.3, 0.6], [-2.3, 0.6]], mat: 'marque', relief: 'plat' },
+      { pts: [[2.6, -2.4], [0.8, -2.4], [0.8, 2.4], [2.6, 2.4]], mat: 'acier', relief: 'plat' },
+      { pts: [[2.3, -1.5], [1.2, -1.5], [1.2, 1.5], [2.3, 1.5]], mat: 'graphite', relief: 'plat' },
+    ]
+  }
+  if (id === 'scie') {
+    // (… LA LAME DÉPASSE DU CARTER — mesuré à la capture : rentrée dedans, petite, elle ne se lisait pas ; sa moitié avant
+    // sort maintenant de la fente, ses dents à l'air)
+    const lame = formesDeLaScie().map((x): Forme => ({ pts: x.pts.map(([px, py]) => [9.6 + px * 0.68, py * 0.68]), mat: x.mat, relief: 'plat' }))
+    return [
+      ...lame,
+      { pts: [[9.4, -4], [6.4, -4], [6.4, 4], [9.4, 4]], mat: 'graphite', relief: 'cyl' },
+      { pts: [[9.6, -3.4], [8.4, -3.4], [8.4, 3.4], [9.6, 3.4]], mat: 'suie', relief: 'plat' },
+      { pts: [[7.2, -4.2], [6.2, -4.2], [6.2, 4.2], [7.2, 4.2]], mat: 'acier', relief: 'plat' },
+      { pts: [[9.6, -4.2], [8.8, -4.2], [8.8, -3.2], [9.6, -3.2]], mat: 'acier', relief: 'plat' },
+      { pts: [[9.6, 3.2], [8.8, 3.2], [8.8, 4.2], [9.6, 4.2]], mat: 'acier', relief: 'plat' },
+    ]
+  }
+  // (LE NAPALM : UN MORTIER SUR LE DOS — Keko, 18/11 : « plutôt que le visuel du lance-flammes avec la petite pointe au
+  // nez, un cylindre sur le dos de l'appareil d'où jaillissent les boules de gel ; on doit toujours changer visuellement
+  // l'arme à chaque fois qu'on change d'arme sur un vaisseau » : une embase d'acier, un fût court et large tourné vers
+  // l'avant, sa bouche sombre où rougeoie le gel — par-dessus la coque, voir `SUR_LE_DOS`)
+  // (… UN CYLINDRE, PAS UNE BOULE — mesuré à la capture : une embase ronde lisait comme la tourelle du rayon thermique ; un
+  // fût couché le long du dos, deux bagues, la bouche large et orange devant)
   if (id === 'napalm') {
     return [
-      { pts: barre(4, 0, 10.4, 0, 1.9), mat: 'metal', relief: 'cyl' },
-      { pts: barre(9.4, 0, 11.2, 0, 2.3), mat: 'acier', relief: 'cyl' },
-      { pts: ovale(11.3, 0, 0.8, 1.4, 10), mat: 'feu', relief: 'dome', dome: { x: 11.3, y: 0, rx: 0.8, ry: 1.4 } },
+      { pts: barre(-4.4, 0, 1.4, 0, 3.4), mat: 'metal', relief: 'cyl' },
+      { pts: barre(-3.6, 0, -2.8, 0, 3.9), mat: 'acier', relief: 'cyl' },
+      { pts: barre(-0.6, 0, 0.2, 0, 3.9), mat: 'acier', relief: 'cyl' },
+      { pts: ovale(1.5, 0, 0.8, 1.6, 12), mat: 'suie', relief: 'plat' },
+      { pts: ovale(1.55, 0, 0.5, 1.1, 10), mat: 'feu', relief: 'dome', dome: { x: 1.55, y: 0, rx: 0.5, ry: 1.1 } },
     ]
   }
   if (id === 'flammes') {
@@ -1675,8 +1722,11 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const sansMarque = (l: Forme[]): Forme[] => (a.habit === undefined ? l : l.filter((x) => x.mat !== 'marque'))
   const f: Forme[] = [...sansMarque(formesDesAiles(a.coque, t)), ...(a.habit?.ailes ?? [])]
   const armes: Forme[] = []
+  // (les armes montées SUR LE DOS passent par-dessus la coque, à leur place sur elle, pas sous une aile)
+  const surLeDos: Forme[] = []
   a.armes.forEach((id, i) => {
     if (id === '') return
+    if (SUR_LE_DOS.has(id)) return surLeDos.push(...formesDeLArme(id, 1))
     const pl = placeDArme(a.coque, i)
     armes.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y))
   })
@@ -1724,6 +1774,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
   const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
   if (g.surLePont) tout.push(...armes)
+  tout.push(...surLeDos)
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant
     a.outils.forEach((o, k) => {

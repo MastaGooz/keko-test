@@ -5841,3 +5841,21 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   un souffle de feu qui embrase les ennemis à courte portée » ; « pour le rayon, ne dis pas qu'il tombe du toit, c'est pas
   clair, et on s'en fout : un rayon thermique qui enflamme le sol et les ennemis qui s'y trouvent ») : « Un souffle de feu
   qui embrase les ennemis à courte portée. » ; « Un rayon thermique qui enflamme le sol et les ennemis qui s'y trouvent. »
+- CHAQUE ARME SE VOIT SUR SON VAISSEAU : LE NAPALM, LES TOURELLES, LA SCIE ; LE RAYON THERMIQUE (Keko, 18/11 : « change le
+  visuel de l'arme du napalm : plutôt que le visuel du lance-flammes avec la petite pointe au nez, un cylindre sur le dos
+  de l'appareil d'où jaillissent les boules de gel ; ON DOIT TOUJOURS CHANGER VISUELLEMENT L'ARME À CHAQUE FOIS QU'ON
+  CHANGE D'ARME SUR UN VAISSEAU » ; « renomme le rayon balayant par rayon thermique » ; « pour l'ingénieur, quand il est
+  équipé de la scie, qu'il fasse face aux ennemis, et une arme à l'avant qui tire la scie, quelque chose avec une scie qui
+  tombe dedans ; pour les tourelles, un lance-tourelles sur le dos, d'où sont lancées les tourelles ») :
+  - LES ARMES « SUR LE DOS » (`SUR_LE_DOS` dans `rendu-vaisseau.ts`) se dessinent PAR-DESSUS la coque, en ses
+    coordonnées (les autres sont sous les ailes) ; leur bouche ne dépend pas de la place (`boucheMontee`).
+  - LE NAPALM : un cylindre couché le long du dos, deux bagues, la bouche large et orange devant ; les boules en partent.
+    *Mesuré à la capture* : une première embase ronde lisait comme la tourelle du rayon thermique.
+  - LES TOURELLES : LE LANCE-TOURELLES sur le dos — deux rails, un berceau d'acier où attend une tourelle repliée (son
+    voyant à la marque), une bouche de lancement devant, d'où partent les capsules (`menerLesTourelles` part de la
+    `bouche`). La « soute à tourelles » (trois modules) quitte la coque : elle restait avec la scie et le fléau.
+  - LA SCIE : LE LANCE-SCIE à la proue — un carter large, sa fente, une lame engagée dedans dont la moitié avant dépasse,
+    dents à l'air (*mesuré* : rentrée et petite, elle ne se lisait pas) ; la scie part de sa bouche (`menerLesScies`), et
+    AVEC ELLE L'INGÉNIEUR TOURNE LE NEZ VERS LES INSECTES (la scie quitte la liste de `regardVoulu`). Le vortex dessinait
+    sans arme un vaisseau à tourelles ou à scie : elles quittent la liste d'`allureMontee`.
+  - « Rayon balayant » s'appelle « RAYON THERMIQUE ».
