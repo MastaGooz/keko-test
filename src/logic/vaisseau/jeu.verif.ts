@@ -2333,39 +2333,6 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`le virage : lancé à droite, le manche vers le haut, en 0,3 s il a tourné de ${sans.angle.toFixed(0)}° sans virage, ${lourd.angle.toFixed(0)}° lourd, ${agile.angle.toFixed(0)}° agile — vitesse gardée (${agile.vitesse.toFixed(0)})`, agile.angle > lourd.angle + 10 && lourd.angle > sans.angle + 5 && agile.vitesse >= sans.vitesse - 1)
 }
 
-// L'AUTO-ATTAQUE PERMANENTE (Keko, 18/11 : « toutes les armes tirent en permanence ; s'il n'y a pas d'ennemis, il tire
-// droit devant lui ») : sans un insecte, chaque arme qui attendait une cible tire quand même — et aucun coup ne se signale ;
-// sans le drapeau (`?vaisseau`), elles se taisent
-{
-  const TIRS = new Set(['obus', 'chaine', 'balayage', 'scieLancee', 'nova', 'salve', 'tornade', 'essaim', 'meteore', 'tentacule', 'crachat', 'rail', 'puits', 'parasiteLance', 'epines', 'hypercube', 'de', 'coupe', 'sphere', 'arc'])
-  const ARMES = ['arme-laser', 'arme-mitrailleuse', 'arme-minimissiles', 'arme-flammes', 'arme-rayon', 'arme-napalm', 'arme-drones', 'arme-chaine', 'arme-scie', 'arme-nova', 'arme-eclats', 'arme-tornade', 'arme-plasma', 'arme-essaim', 'arme-meteore', 'arme-tentacules', 'arme-crachat', 'arme-rail', 'arme-faisceau', 'arme-puits', 'arme-parasites', 'arme-epines', 'arme-hypercube', 'arme-de', 'arme-coupe']
-  const essai = (id: string, permanent: boolean) => {
-    const piece = pieceDe(id)!.arme!
-    // (les tentacules reçoivent leurs ancres du rendu : ici, celle du Kraken)
-    const arme = { ...piece, place: 0, ...(piece.tentacule === undefined ? {} : { tentacule: { ...piece.tentacule, ancres: [[7.2, 0]] as [number, number][] } }) }
-    const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [arme], tirPermanent: permanent, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 } }
-    const w = nouveauMonde(cfg, 3)
-    let tirs = 0
-    let touches = 0
-    let flamme = false
-    let canal = false
-    for (let i = 0; i < 240; i++) {
-      w.vaisseau = { ...w.vaisseau, x: 300, y: 0, vx: 0, vy: 0, cap: 0 }
-      for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
-        if (TIRS.has(e.type)) tirs++
-        if (e.type === 'ennemiTouche') touches++
-      }
-      flamme ||= w.crache
-      canal ||= w.canal !== null
-    }
-    return { tire: tirs > 0 || flamme || canal, touches }
-  }
-  const muettes = ARMES.filter((id) => !essai(id, true).tire)
-  const touchees = ARMES.filter((id) => essai(id, true).touches > 0)
-  const bavardes = ARMES.filter((id) => essai(id, false).tire && id !== 'arme-napalm')
-  verifier(`l'auto-attaque permanente : sans un insecte, les ${ARMES.length} armes tirent (muettes : ${muettes.join(', ') || 'aucune'}), sans un coup signalé (${touchees.join(', ') || 'aucun'}) ; sans le drapeau, elles se taisent (${bavardes.join(', ') || 'toutes'} — le napalm tire toujours)`, muettes.length === 0 && touchees.length === 0 && bavardes.length === 0)
-}
-
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {

@@ -72,13 +72,6 @@ export const VAISSEAU = {
    * (`configDuVol`).
    */
   virage: 0,
-  /**
-   * L'AUTO-ATTAQUE PERMANENTE (Keko, 18/11, pour le vortex : « on devrait faire tirer automatiquement toutes les armes,
-   * car on aura des effets qui se déclenchent à chaque tir ; s'il n'y a pas d'ennemis, il tire droit devant lui — une
-   * auto-attaque permanente, comme dans tous les survivors ») : personne à portée, chaque arme vise la cible devant
-   * (`cibleDevant`). Éteinte par défaut (`?vaisseau`, le rival) ; le vortex l'allume (`configDuVol`).
-   */
-  tirPermanent: false as boolean,
   /** La part de vitesse rendue par un rebond sur un astéroïde. */
   rebond: 0.45,
   /** En dessous de cette vitesse normale, toucher une roche n'est pas un choc (on s'y appuie, on glisse le long). */
@@ -1825,10 +1818,7 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
     // (collé à la bouche, il est dedans quel que soit l'angle)
     return d <= c.ennemi.rayon + 1 || Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - by, e.corps.x - bx))) <= fl.cone
   })
-  if (dans.length === 0) {
-    if (c.tirPermanent) m.crache = true
-    return
-  }
+  if (dans.length === 0) return
   m.crache = true
   // (LE CHALUMEAU ne brûle que la plus proche dans son faisceau)
   if (fl.seul === true) dans.splice(0, dans.length, dans.reduce((a, e) => (Math.hypot(e.corps.x - bx, e.corps.y - by) < Math.hypot(a.corps.x - bx, a.corps.y - by) ? e : a)))
@@ -1865,11 +1855,10 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
         if (aPortee(e) && d < dc) (dc = d), (premiere = e)
       }
     }
-    if (premiere === undefined) premiere = devant(c, m, v, a.portee)
     if (premiere === undefined) return
     m.armesA[i] = m.t + a.cadence
     const touches: Ennemi[] = [premiere]
-    while (premiere.id >= 0 && touches.length <= ch.rebonds) {
+    while (touches.length <= ch.rebonds) {
       const der = touches[touches.length - 1]
       let suiv: Ennemi | undefined
       let dc = ch.saut + c.ennemi.rayon
@@ -1883,7 +1872,6 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     }
     ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))], ids: touches.map((e) => e.id) })
     touches.forEach((e, k) => {
-      if (e.id < 0) return
       e.pv -= a.degats * Math.pow(ch.attenuation, k)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -1908,7 +1896,6 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
         if (aPortee(e) && d < dc) (dc = d), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     // (elle part du bord du vaisseau — ou de son lance-scie, à la proue, s'il en a un : `bouche` —, à la vitesse qui la
     // fait s'arrêter pile à `portee` : 2 × portée ÷ aller)
@@ -2013,7 +2000,7 @@ function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const nv = a.nova
     if (nv === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const dans = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= nv.rayon + c.ennemi.rayon)
-    if (dans.length === 0 && !c.tirPermanent) return
+    if (dans.length === 0) return
     m.armesA[i] = m.t + a.cadence
     ev.push({ type: 'nova', x: v.x, y: v.y, rayon: nv.rayon })
     m.givres.push({ id: m.prochainId++, arme: i, x: v.x, y: v.y, nee: m.t, rayon: nv.plaque.rayon, duree: nv.plaque.duree, dps: nv.plaque.dps, ralenti: nv.plaque.ralenti, verglas: true })
@@ -2047,7 +2034,6 @@ function menerLesTornades(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
       const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
       if (d <= dc) (dc = d), (cible = e)
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
@@ -2121,7 +2107,6 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
         if (aPortee(e) && d < dc) (dc = d), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const cap0 = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
@@ -2142,9 +2127,7 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (es === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
     const ve = ennemiVerrouille(m)
-    const enVue = ve !== null && aPortee(ve) ? [ve] : m.ennemis.filter(aPortee)
-    const fantome = devant(c, m, v, a.portee)
-    const cibles = enVue.length > 0 || fantome === undefined ? enVue : [fantome]
+    const cibles = ve !== null && aPortee(ve) ? [ve] : m.ennemis.filter(aPortee)
     if (cibles.length === 0) return
     m.armesA[i] = m.t + a.cadence
     const bo = a.bouche
@@ -2197,7 +2180,6 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
         if (aPortee(e) && d < dc) (dc = d), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const b = boucheDansLeMonde(v, a)
@@ -2244,7 +2226,6 @@ function menerLesMeteores(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       cible = null
       for (const e of m.ennemis) if (d(e) <= a.portee + c.ennemi.rayon && (cible === null || d(e) < d(cible))) cible = e
     }
-    if (cible === null) cible = devant(c, m, v, a.portee) ?? null
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
     const id = m.prochainId++
@@ -2296,7 +2277,6 @@ function menerLesPuits(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
         if (n > meilleur) (meilleur = n), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const b = boucheDansLeMonde(v, a)
@@ -2351,9 +2331,7 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (ra === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const b = boucheDansLeMonde(v, a)
     const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + c.ennemi.rayon
-    const enVue0 = m.ennemis.filter(aPortee)
-    const fantome = devant(c, m, b, a.portee)
-    const enVue = enVue0.length > 0 || fantome === undefined ? enVue0 : [fantome]
+    const enVue = m.ennemis.filter(aPortee)
     if (enVue.length === 0) return
     // (ceux que traverse la ligne de la bouche, dans la direction `an`, sur toute la portée)
     const traverses = (an: number): Ennemi[] => {
@@ -2436,7 +2414,6 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
         }
         choix = libre ?? proche
       }
-      if (choix === undefined) choix = devant(c, m, an, a.portee)
       if (choix === undefined) continue
       tn.fait = 'aller'
       tn.depuis = m.t
@@ -2449,7 +2426,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       ev.push({ type: 'tentacule', x: an.x, y: an.y })
     } else if (tn.fait === 'aller') {
       // (sa cible morte, ou partie trop loin : elle se rétracte d'où elle en est)
-      if (tn.cible !== -1 && (cible === undefined || Math.hypot(tn.tx - an.x, tn.ty - an.y) > (a.portee + c.ennemi.rayon) * 1.3)) {
+      if (cible === undefined || Math.hypot(tn.tx - an.x, tn.ty - an.y) > (a.portee + c.ennemi.rayon) * 1.3) {
         tn.fait = 'retour'
         tn.depuis = m.t - (1 - tn.u) * te.retour
         continue
@@ -2458,8 +2435,6 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       if (tn.u >= 1) {
         tn.fait = 'plantee'
         tn.depuis = m.t
-        // (une piqûre dans le vide ne frappe personne)
-        if (cible === undefined) continue
         const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
         cible.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
         ev.push({ type: 'piqure', x: cible.corps.x, y: cible.corps.y })
@@ -2468,7 +2443,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       }
     } else if (tn.fait === 'plantee') {
       tn.u = 1
-      if (age >= te.tenue || (cible === undefined && tn.cible !== -1)) {
+      if (age >= te.tenue || cible === undefined) {
         tn.fait = 'retour'
         tn.depuis = m.t
       }
@@ -2517,7 +2492,6 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
         if (aPortee(e) && d < dc) (dc = d), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, b, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const cap = Math.atan2(cible.corps.y - b.y, cible.corps.x - b.x)
@@ -2568,11 +2542,10 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
         if (libre(e) && d < dc) (dc = d), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
-    m.parasites.push({ id: m.prochainId++, arme: i, hote: null, cible: cible.id >= 0 ? cible.id : null, x: v.x, y: v.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, depuis: m.t })
+    m.parasites.push({ id: m.prochainId++, arme: i, hote: null, cible: cible.id, x: v.x, y: v.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, depuis: m.t })
     ev.push({ type: 'parasiteLance', x: v.x, y: v.y, arme: a.id })
   })
   m.parasites = m.parasites.filter((p) => {
@@ -2612,23 +2585,6 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
       // il rejoint le suivant en un temps fixé par la distance, de 0,4 à 0,7 s, le long d'une cloche que le dessin trace)
       p.bond = { x0: p.x, y0: p.y, duree: Math.max(0.4, Math.min(0.7, dc / 110)) }
       ev.push({ type: 'parasiteSaute', x: p.x, y: p.y })
-      return true
-    }
-    // (EN VOL LIBRE — lancé sans cible, droit devant : il file tout droit, s'accroche au premier insecte libre qu'il
-    // croise, et meurt au bout de sa vie)
-    if (p.cible === null) {
-      if (m.t - p.depuis > pa.vie) {
-        ev.push({ type: 'parasiteMort', x: p.x, y: p.y })
-        return false
-      }
-      p.x += p.vx * dt
-      p.y += p.vy * dt
-      const pris = porteurs()
-      const croise = m.ennemis.find((e) => !pris.has(e.id) && Math.hypot(e.corps.x - p.x, e.corps.y - p.y) <= c.ennemi.rayon + 2)
-      if (croise !== undefined) {
-        p.hote = croise.id
-        ev.push({ type: 'parasiteAccroche', id: croise.id, x: croise.corps.x, y: croise.corps.y })
-      }
       return true
     }
     // (en vol : il file sur sa cible ; elle disparue, ou trop long, il meurt)
@@ -2801,7 +2757,7 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     const rj = a.rejeton
     if (rj === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     if (m.rejetons.filter((r) => r.arme === i).length >= rj.max) return
-    if (!c.tirPermanent && !m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
     m.armesA[i] = m.t + a.cadence
     // (pondu derrière le vaisseau, lancé vers l'arrière)
     const x = v.x - Math.cos(v.cap) * 8
@@ -2877,7 +2833,6 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       let dc = a.portee
       for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (cible = e)
     }
-    if (cible === null) cible = devant(c, m, v, a.portee) ?? null
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
     // (là où il sera quand elle arrivera)
@@ -3025,7 +2980,6 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
         if (n > meilleur) (meilleur = n), (cible = e)
       }
     }
-    if (cible === undefined) cible = devant(c, m, v, a.portee)
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const id = m.prochainId++
@@ -3068,20 +3022,6 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
 /** LA ZONE D'UN DÉ DU DESTIN selon son chiffre (voir `Arme.de`) : `rayon` sur un 4, `pas` de plus par point au-dessus, de moins en dessous. */
 export const zoneDuDe = (de: NonNullable<Arme['de']>, face: number): number => de.rayon + de.pas * (face - 4)
 
-/**
- * LA CIBLE DEVANT (voir `ConfigVaisseau.tirPermanent`) : un point DROIT DEVANT LE NEZ, à `part` de la portée depuis
- * `depuis` — un insecte fantôme, hors de `m.ennemis` (son id est −1, ses points de vie infinis) : rien ne le touche,
- * rien ne le suit, aucun coup ne se signale sur lui.
- */
-export function cibleDevant(m: Monde, depuis: Vecteur, portee: number, part = 0.7): Ennemi {
-  const v = m.vaisseau
-  const x = depuis.x + Math.cos(v.cap) * portee * part
-  const y = depuis.y + Math.sin(v.cap) * portee * part
-  return { id: -1, corps: { ...v, x, y, vx: 0, vy: 0 }, pv: Infinity, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } }
-}
-/** La cible devant si le tir est permanent (voir `ConfigVaisseau.tirPermanent`), rien sinon. */
-const devant = (c: ConfigVaisseau, m: Monde, depuis: Vecteur, portee: number): Ennemi | undefined => (c.tirPermanent ? cibleDevant(m, depuis, portee) : undefined)
-
 /** LES DÉS DU DESTIN (voir `Arme.de`) : le choix de l'insecte, le chiffre tiré, le dé qui le suit, l'impact sur la zone. */
 function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -3094,7 +3034,6 @@ function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       cible = null
       for (const e of m.ennemis) if (d(e) <= a.portee + c.ennemi.rayon && (cible === null || d(e) < d(cible))) cible = e
     }
-    if (cible === null) cible = devant(c, m, v, a.portee) ?? null
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
     const id = m.prochainId++
@@ -3144,7 +3083,6 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       let dc = allonge
       for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (cible = e)
     }
-    if (cible === null) cible = devant(c, m, v, allonge) ?? null
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
     // (LE CONTACT QUI TOMBE SUR LUI : le premier qui peut l'atteindre LÀ OÙ IL SERA À CE CONTACT-LÀ — le k-ième tombe
@@ -3333,7 +3271,7 @@ function menerLesVrilles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
   c.armes.forEach((a, i) => {
     const vr = a.vrille
     if (vr === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    if (!c.tirPermanent && !m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
     m.armesA[i] = m.t + a.cadence
     // (la plus vieille rentre si elles sont déjà toutes sorties)
     const siennes = m.vrilles.filter((r) => r.arme === i)
@@ -3604,7 +3542,6 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
       if (aPortee(e) && d < dc) (dc = d), (cible = e)
     }
   }
-  if (cible === undefined) cible = devant(c, m, v, a.portee)
   if (cible === undefined) {
     m.canal = null
     return
@@ -3647,9 +3584,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   c.armes.forEach((a, i) => {
     const bl = a.balayage
     if (bl === undefined || m.balayage !== null || m.t < (m.armesA[i] ?? 0)) return
-    const enVue = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + c.ennemi.rayon)
-    const fantome = devant(c, m, v, bl.longueur)
-    const aPortee = enVue.length > 0 || fantome === undefined ? enVue : [fantome]
+    const aPortee = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + c.ennemi.rayon)
     if (aPortee.length === 0) return
     const arc = bl.arc ?? 2 * Math.PI
     let depart = bl.depart
@@ -3952,18 +3887,15 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     d.vy += (wy - d.vy) * kb
     d.x += d.vx * dt
     d.y += d.vy * dt
-    // il tire, sa cible à portée — ou, le tir permanent, droit devant le vaisseau
-    if (m.t < (m.armesA[i] ?? 0)) return
-    if (cible === undefined) cible = devant(c, m, d, a.portee)
-    if (cible === undefined) return
+    // il tire, sa cible à portée
+    if (cible === undefined || m.t < (m.armesA[i] ?? 0)) return
     const dist = Math.hypot(cible.corps.x - d.x, cible.corps.y - d.y)
     if (dist > a.portee) return
     m.armesA[i] = m.t + a.cadence
     // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
     if (a.eclair === true) {
-      ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
-      if (cible.id < 0) return
       cible.pv -= a.degats
+      ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
       ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique: false })
       if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
       return
@@ -4242,7 +4174,6 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         const loin = arme.portee * (0.45 + 0.5 * tire(m.graine, m.prochainId, 14))
         cible = { id: -1, corps: { ...v, x: bx + Math.cos(an) * loin, y: by + Math.sin(an) * loin, vx: 0, vy: 0 } } as Ennemi
       }
-      if (cible === null) cible = devant(c, m, { x: bx, y: by }, arme.portee) ?? null
       if (cible === null) return
       if (cible.id >= 0) cibleDuTir = cible
       const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
