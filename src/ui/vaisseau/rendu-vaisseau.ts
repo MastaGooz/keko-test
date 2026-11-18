@@ -1488,7 +1488,7 @@ export function boucheMontee(coque: number, id: string, k: number): { x: number;
 /** UNE ARME sous l'aile `s` (−1 la gauche, +1 la droite). */
 export function formesDeLArme(id: string, s: number): Forme[] {
   // (les drones ne sont pas sur la coque : ils tournent autour, dessinés par la page ; les tourelles sont posées dans le monde)
-  if (id === 'drone' || id === 'tourelle' || id === 'nova' || id === 'poison' || id === 'oeufs' || id === 'epine' || id === 'drain' || id === 'vrille' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau' || id === 'puits' || id === 'meteore' || id === 'hypercube') return []
+  if (id === 'drone' || id === 'tourelle' || id === 'nova' || id === 'poison' || id === 'oeufs' || id === 'epine' || id === 'drain' || id === 'vrille' || id === 'scie' || id === 'balise' || id === 'givre' || id === 'eclats' || id === 'tornade' || id === 'plasma' || id === 'essaim' || id === 'rail' || id === 'tentacule' || id === 'nuee' || id === 'rejeton' || id === 'crachat' || id === 'mine' || id === 'fleau' || id === 'parasite' || id === 'faisceau' || id === 'puits' || id === 'meteore' || id === 'hypercube' || id === 'de') return []
   // (le rayon thermique : une tige d'émetteur, un cristal au bout ; le napalm : un tube large, un mortier)
   if (id === 'rayon') {
     return [

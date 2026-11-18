@@ -248,13 +248,15 @@ export const MODELES: ModeleDeVaisseau[] = [
     // les balises gardées de côté, des glyphes posés que relient des rayons (de moi, à rejuger)
     // (… SA PREMIÈRE ARME, L'HYPERCUBE — Keko, 18/11 : « un cube en quatre dimensions, comme sa propre structure, lancé en
     // cloche, qui rebondit trois fois » ; les balises restent derrière lui, en attendant ses deux autres armes)
+    // (… SA DEUXIÈME, LE DÉ DU DESTIN — Keko, 18/11 : un dé en 4D qui roule au-dessus d'un insecte et s'abat sur sa zone,
+    // plus ou moins fort selon son chiffre ; les balises en attendant la troisième)
     id: 'tesseract',
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
-    dit: 'Un cube dans un cube, qui se retourne sur lui-même autour d’un cœur de lumière. Il lance des hypercubes qui rebondissent.',
-    pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-balises'],
-    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-balises'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
+    dit: 'Un cube dans un cube, qui se retourne sur lui-même autour d’un cœur de lumière. Il lance des hypercubes qui rebondissent, et des dés qui s’abattent du ciel.',
+    pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-balises'],
+    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-balises'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
     chaine: [],
     horsRecherche: true,
   },

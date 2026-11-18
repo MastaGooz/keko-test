@@ -458,6 +458,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const meteoresAnnoncees = new Set<number>()
   /** Les contacts au sol des hypercubes déjà sonnés en avance (« id:contact »). */
   const rebondsAnnonces = new Set<string>()
+  /** Les dés du destin dont l'impact a déjà sonné en avance. */
+  const desAnnonces = new Set<number>()
   /** L'instant où chaque rival a pris un obus (il blanchit), et celui du dernier coup pris par le bouclier (son anneau flashe). */
   const toucheEnnemiA = new Map<number, number>()
   let bouclierA = -10
@@ -919,7 +921,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
         else if (canon?.tentacule !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
         // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
-        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined || canon?.hypercube !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined || canon?.hypercube !== undefined || canon?.de !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.nova !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.orbite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -1050,7 +1052,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-balises'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-balises'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -1774,6 +1776,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (rebondsAnnonces.has(cle) || h.depart + h.duree - m.t > avance) continue
       rebondsAnnonces.add(cle)
       jouer('rebondHypercube', { dx: h.x1 - v.x, dy: h.y1 - v.y })
+    }
+    // LES DÉS : leur impact est écrit dès qu'ils paraissent (voir Arme.de)
+    for (const dd of m.des) {
+      if (desAnnonces.has(dd.id) || dd.tombe - m.t > avance) continue
+      desAnnonces.add(dd.id)
+      jouer('impactDe', { dx: dd.x - v.x, dy: dd.y - v.y })
     }
   }
   /** Le minerai choisi à l'entrepôt. */
@@ -3624,6 +3632,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
     'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois à pas égaux en grossissant : chaque rebond frappe autour de lui, plus large.',
+    'arme-de': 'Un dé à quatre dimensions qui roule au-dessus d’un insecte, puis s’abat sur sa zone : plus son chiffre est haut, plus il frappe fort.',
   }
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
@@ -3771,6 +3780,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesFlaquesAcides(p)
       dessinerLesMines(p)
       dessinerLesOmbresDesHypercubes(p)
+      dessinerLesDesAuSol(p)
       dessinerLesTourelles(p)
       dessinerLesBalises(p)
       dessinerLesEnnemis(p)
@@ -3794,6 +3804,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesCrachats(p)
       dessinerLesGaz(p)
       dessinerLesHypercubes(p)
+      dessinerLesDes(p)
       dessinerLesParasites(p)
       dessinerLElectricite(p)
       dessinerLesLasers(p)
@@ -8889,6 +8900,148 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /**
+   * LE DÉ DU DESTIN DU TESSERACT (voir `Arme.de` ; Keko, 18/11 : « un cube en 4D, un peu comme le vaisseau, au-dessus du
+   * champ de bataille ; un dé de 1 à 6 qui tourne avec une petite animation, et ensuite il s'abat sous la forme d'un dé en
+   * 4D ») : UN HYPERCUBE comme celui du vaisseau, plus gros que celui qu'il lance, qui paraît EN L'AIR AU-DESSUS DE SON
+   * INSECTE (son ombre au sol, sur lui) ; il TOURNE VITE PUIS RALENTIT, et en son cœur LES POINTS D'UNE FACE DE DÉ
+   * défilent de moins en moins vite, jusqu'au chiffre tiré — un éclair, une onde : c'est lui ; puis il S'ABAT, de plus en
+   * plus vite. AU SOL, LA ZONE qu'il va frapper : un anneau et quatre crans qui s'allument à mesure qu'il descend. À
+   * L'IMPACT, une onde jusqu'au bord de la zone et LE CHIFFRE FRAPPÉ AU SOL, ses points en grand, qui s'effacent ; la
+   * secousse et la gerbe grandissent avec le chiffre.
+   */
+  const HAUTEUR_DU_DE = 46
+  const TAILLE_DU_DE = 5.5
+  const DUREE_DE_LA_MARQUE = 0.6
+  const marquesDuDe: { x: number; y: number; face: number; rayon: number; t0: number }[] = []
+  /** Les points de chaque face de dé, sur une grille de −1 à 1. */
+  const POINTS_DU_DE: [number, number][][] = [
+    [[0, 0]],
+    [[-1, -1], [1, 1]],
+    [[-1, -1], [0, 0], [1, 1]],
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+    [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]],
+    [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]],
+  ]
+  /** Quand le dé montre son chiffre (la part du roulement) : avant, les faces défilent. */
+  const ARRET_DU_DE = 0.78
+  /** La face que montre le dé `s` secondes après avoir paru : elles défilent à 16 par seconde, de moins en moins vite (4 à la fin), puis le chiffre tiré. */
+  const faceMontree = (id: number, face: number, s: number, roule: number): number => {
+    const T = roule * ARRET_DU_DE
+    if (s >= T) return face
+    const n = Math.floor(16 * s - (6 * s * s) / T)
+    return 1 + Math.min(5, Math.floor(alea(id, n, 71) * 6))
+  }
+  /** Son tour sur lui-même `s` secondes après avoir paru : vite, puis de plus en plus lent jusqu'à l'arrêt, puis à peine. */
+  const tourDuDe = (s: number, roule: number): number => {
+    const T = roule * ARRET_DU_DE
+    const r = Math.min(s, T)
+    return (12 * T) / 3 * (1 - Math.pow(1 - r / T, 3)) + 0.5 * s
+  }
+  function dessinerUnDe(p: Peintre, x: number, y: number, tc: number, taille: number, face: number, eclat: number): void {
+    const { sp, lu } = tonsDuCube()
+    const so = sommetsDUnHypercube(tc)
+    p.glow(x, y, taille * 3, sp[4], 0.3 + 0.4 * eclat)
+    const arete = (devant: boolean): void => {
+      for (const [i, j, d] of ARETES_DE_L_HYPERCUBE) {
+        const [a, b] = [so[i], so[j]]
+        if (a.z + b.z >= 0 !== devant) continue
+        const c = !devant ? sp[2] : d === 8 ? sp[4] : (a.w + b.w) / 2 > 0 ? sp[5] : sp[4]
+        p.line(x + a.x * taille, y + a.y * taille, x + b.x * taille, y + b.y * taille, c)
+      }
+    }
+    arete(false)
+    arete(true)
+    for (const s0 of so) if (s0.z >= 0) p.dot(x + s0.x * taille, y + s0.y * taille, sp[5])
+    // (LA FACE, en son cœur, par-dessus les arêtes : une plaque sombre cernée de lumière, ses points blancs de deux pixels
+    // — mesuré : posés à même les arêtes, d'un pixel, ils ne se lisaient pas)
+    const X = Math.round(x)
+    const Y = Math.round(y)
+    const ecart = 3
+    const demi = ecart + 2
+    p.rect(X - demi - 1, Y - demi - 1, 2 * demi + 2, 2 * demi + 2, eclat > 0.3 ? lu[5] : sp[4])
+    p.rect(X - demi, Y - demi, 2 * demi, 2 * demi, N.hex('#06040a'))
+    for (const [px, py] of POINTS_DU_DE[face - 1]) {
+      const gx = X + px * ecart
+      const gy = Y + py * ecart
+      if (eclat > 0) p.glow(gx, gy, 3 + 2 * eclat, lu[5], 0.6 * eclat)
+      p.rect(gx - 1, gy - 1, 2, 2, N.WHITE)
+    }
+  }
+  /** Au sol : l'ombre de chaque dé en l'air, la zone qu'il frappera, et la marque de ceux qui sont tombés. */
+  function dessinerLesDesAuSol(p: Peintre): void {
+    for (let i = marquesDuDe.length - 1; i >= 0; i--) if (t - marquesDuDe[i].t0 > DUREE_DE_LA_MARQUE) marquesDuDe.splice(i, 1)
+    if ((m.des.length === 0 && marquesDuDe.length === 0) || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const { sp, lu } = tonsDuCube()
+    for (const dd of m.des) {
+      const de = CONF.armes[dd.arme]?.de
+      if (de === undefined) continue
+      const s = m.t - dd.lance
+      const u = Math.max(0, Math.min(1, (s - de.roule) / de.chute))
+      const pret = Math.min(1, s / 0.2)
+      // (L'OMBRE : petite et pâle quand il est haut, large et sombre quand il touche)
+      p.disc(dd.x, dd.y, 3 + 4 * u, N.hex('#06040a'), (d) => (0.2 + 0.4 * u) * pret * (1 - d * d))
+      // (LA ZONE : un anneau qui s'ouvre quand il paraît, et s'allume à mesure qu'il descend ; quatre crans qui tournent)
+      const rr = de.rayon * (0.6 + 0.4 * (1 - Math.pow(1 - pret, 3)))
+      p.ring(dd.x, dd.y, rr, 1, u > 0.5 ? sp[4] : sp[3], (0.25 + 0.6 * u) * pret)
+      const a0 = s * 1.2 + dd.id
+      for (let j = 0; j < 4; j++) {
+        const a = a0 + (j * Math.PI) / 2
+        p.line(dd.x + Math.cos(a) * rr * 0.72, dd.y + Math.sin(a) * rr * 0.72, dd.x + Math.cos(a) * rr * 0.92, dd.y + Math.sin(a) * rr * 0.92, u > 0.5 ? lu[4] : sp[4], (0.3 + 0.6 * u) * pret)
+      }
+      if (u > 0.5) p.glow(dd.x, dd.y, de.rayon * 0.8, sp[4], (u - 0.5) * 0.5)
+    }
+    // (LA MARQUE : une onde jusqu'au bord de la zone, le chiffre frappé au sol en grand, qui s'efface)
+    for (const mq of marquesDuDe) {
+      const u = (t - mq.t0) / DUREE_DE_LA_MARQUE
+      const ouvre = 1 - Math.pow(1 - Math.min(1, u * 2.5), 2)
+      if (u < 0.25) p.glow(mq.x, mq.y, mq.rayon * 1.3, sp[4], 0.7 * (1 - u / 0.25))
+      p.ring(mq.x, mq.y, mq.rayon * ouvre, 1, u < 0.3 ? lu[5] : sp[4], 0.9 * (1 - u))
+      const ecart = mq.rayon * 0.42
+      for (const [px, py] of POINTS_DU_DE[mq.face - 1]) {
+        const gx = mq.x + px * ecart
+        const gy = mq.y + py * ecart
+        p.circle(gx, gy, 1.6, u < 0.3 ? N.WHITE : lu[5], 1 - u)
+        p.glow(gx, gy, 5, lu[5], 0.5 * (1 - u))
+      }
+    }
+    p.place(0, 0)
+  }
+  /** En l'air, au-dessus de tout : les dés, qui roulent puis s'abattent. */
+  function dessinerLesDes(p: Peintre): void {
+    if (m.des.length === 0 || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const { sp, lu } = tonsDuCube()
+    for (const dd of m.des) {
+      const de = CONF.armes[dd.arme]?.de
+      if (de === undefined) continue
+      const s = m.t - dd.lance
+      const u = Math.max(0, Math.min(1, (s - de.roule) / de.chute))
+      // (il paraît d'un coup, un peu trop gros, puis se pose ; il flotte un peu ; il s'abat de plus en plus vite)
+      const parait = Math.min(1, s / 0.15)
+      const gonfle = parait < 1 ? parait * 1.25 : 1 + 0.25 * Math.max(0, 1 - (s - 0.15) / 0.12)
+      const flotte = u > 0 ? 0 : Math.sin(s * 7 + dd.id) * 1.5 * (1 - s / de.roule)
+      const haut = HAUTEUR_DU_DE * (1 - u * u) + flotte
+      // (LE CHIFFRE TOMBE : un éclair, une onde autour du dé)
+      const arret = s - de.roule * ARRET_DU_DE
+      const eclat = arret >= 0 ? Math.max(0, 1 - arret / 0.25) : 0
+      const x = dd.x
+      const y = dd.y - haut
+      // (sa traîne quand il s'abat : deux échos de lui, plus haut, plus pâles)
+      if (u > 0.15)
+        for (const k of [1, 2]) {
+          const ue = Math.max(0, u - k * 0.12)
+          const he = HAUTEUR_DU_DE * (1 - ue * ue)
+          p.glow(x, dd.y - he, TAILLE_DU_DE * 2, sp[4], 0.35 / k)
+          p.line(x, dd.y - he, x, y, k === 1 ? sp[4] : sp[3], 0.5 / k)
+        }
+      if (eclat > 0) p.ring(x, y, TAILLE_DU_DE * (2 + 4 * (1 - eclat)), 1, lu[5], 0.8 * eclat)
+      dessinerUnDe(p, x, y, dd.id * 3 + tourDuDe(s, de.roule), TAILLE_DU_DE * gonfle, faceMontree(dd.id, dd.face, s, de.roule), eclat)
+      if (parait < 1) p.glow(x, y, 12, lu[5], 0.8 * (1 - parait))
+    }
+    p.place(0, 0)
+  }
   /** En l'air, au-dessus de tout : les hypercubes. */
   function dessinerLesHypercubes(p: Peintre): void {
     if (m.hypercubes.length === 0 || m.phase !== 'vol') return
@@ -12495,6 +12648,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'de':
+          // (un dé du destin paraît et roule : ses « tic » qui ralentissent, son tintement — sauf s'il a sonné en avance)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('de', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        case 'deImpact': {
+          // (IL S'ABAT : son coup — sauf s'il a sonné en avance —, le chiffre frappé au sol, une gerbe et une secousse à sa mesure)
+          if (desAnnonces.has(ev.id)) desAnnonces.delete(ev.id)
+          else jouer('impactDe', { dx: ev.x - v.x, dy: ev.y - v.y })
+          marquesDuDe.push({ x: ev.x, y: ev.y, face: ev.face, rayon: ev.rayon, t0: t })
+          const { sp, lu } = tonsDuCube()
+          for (let i = 0; i < 4 + 3 * ev.face; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 60 + 12 * ev.face)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.4), [N.WHITE, lu[5], sp[5], sp[4]][i % 4], 1, 1.5)
+          }
+          secousse = Math.max(secousse, 0.08 + 0.05 * ev.face)
+          break
+        }
         case 'oeuf':
           // (le Ver pond : un petit « blop »)
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -13249,6 +13421,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesFlaquesAcides(p)
     dessinerLesMines(p)
     dessinerLesOmbresDesHypercubes(p)
+    dessinerLesDesAuSol(p)
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
     dessinerLesEnnemis(p)
@@ -13274,6 +13447,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesCrachats(p)
     dessinerLesGaz(p)
     dessinerLesHypercubes(p)
+    dessinerLesDes(p)
     dessinerLesParasites(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)

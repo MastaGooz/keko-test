@@ -803,6 +803,32 @@ const RECETTES = {
       souffle(m, h, 0, 0.35, 0, { f: 3000, q: 1.3, bande: true, a: 0.001, d: 0.04 })
     },
   },
+  /**
+   * LE DÉ DU DESTIN PARAÎT ET ROULE (le Tesseract, 18/11) : une note de verre qui s'ouvre, puis des « tic » cristallins de
+   * plus en plus espacés — le dé qui roule et ralentit —, et à 0,9 s (son `roule`) un tintement de cloche : le chiffre est tombé
+   */
+  de: {
+    duree: 1.5, niveau: 0.12, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.5, 0, { f: 520, glisse: { vers: 1040, en: 0.15, droit: true }, a: 0.02, d: 0.15, battement: 16 })
+      let t0 = 0.08
+      for (let k = 0; k < 9 && t0 < 0.82; k++) {
+        note(m, t0, 0.45, (h.next() - 0.5) * 0.5, { f: 1500 + 700 * h.next(), a: 0.001, d: 0.03, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+        souffle(m, h, t0, 0.15, 0, { f: 4000, q: 2, bande: true, a: 0.001, d: 0.015 })
+        t0 += 0.05 + 0.017 * k * k
+      }
+      note(m, 0.9, 0.7, 0, { f: 990, a: 0.002, d: 0.5, battement: 6, partiels: [[1, 1, 1], [2.76, 0.35, 0.6], [5.4, 0.15, 0.35]] })
+    },
+  },
+  /** LE DÉ S'ABAT : un coup grave et lourd, un éclat de verre qui se brise, des éclats qui tintent */
+  impactDe: {
+    duree: 0.9, niveau: 0.26, salle: [0.4, 0.16], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 120, glisse: { vers: 42, en: 0.2 }, a: 0.002, d: 0.3, partiels: CORPS, sature: 1.6 })
+      souffle(m, h, 0, 0.8, 0, { f: 3200, glisse: { vers: 1000, en: 0.1 }, q: 1.2, bande: true, a: 0.001, d: 0.12 })
+      for (let k = 0; k < 5; k++) note(m, 0.02 + 0.05 * k * (0.6 + 0.4 * h.next()), 0.28 * (1 - k / 7), (h.next() - 0.5) * 0.9, { f: 1300 + 1500 * h.next(), a: 0.002, d: 0.1 + 0.12 * h.next(), partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
   /** UN PETIT TRAIT ARCANIQUE PART DE LA SPHÈRE : un « tsip » clair et bref qui monte, à peine battu */
   arcane: {
     duree: 0.25, niveau: 0.1, salle: [0.25, 0.1], variantes: 4,

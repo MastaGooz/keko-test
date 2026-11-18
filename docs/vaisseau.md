@@ -5628,3 +5628,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   92 % seulement quand le vaisseau file. *La mesure « à chaque fois » de l'entrée précédente était faussée* : le banc
   posait le vaisseau SUR le portail (les insectes qui l'atteignaient y passaient et sortaient du jeu, comptés ni
   touchés ni manqués) et lançait sur des insectes encore immobiles.
+- LE DÉ DU DESTIN, LA DEUXIÈME ARME DU TESSERACT (Keko, 18/11 : « un cube en 4D, un peu comme le vaisseau, au-dessus du
+  champ de bataille, et on lui attribue un chiffre aléatoire, comme un D6 ; on lance un dé de 1 à 6 qui tourne avec une
+  petite animation, et ensuite il s'abat sous la forme d'un dé en 4D sur un ennemi ; un peu le sort de la comète, sauf
+  qu'il s'abat dans une zone d'effet : tous les ennemis dans la zone subissent des dégâts plus ou moins importants en
+  fonction du chiffre tiré ») : `Arme.de`, `menerLesDes`, `Monde.des`, la pièce `arme-de` (« Dé du destin », le nom est
+  de moi). Toutes les 2,5 s, un insecte à 120 (le verrouillé d'abord, sinon le plus proche), un dé paraît au-dessus de
+  lui ; LE CHIFFRE EST TIRÉ AU LANCER (seedé, `tire(graine, id, 61)`) et le dessin le fait rouler jusqu'à lui ; il roule
+  0,9 s, s'abat en 0,3 s, et comme la météore il RESTE AU-DESSUS DE SON INSECTE ET LE SUIT jusqu'à l'impact ; à
+  l'impact, tout insecte à moins de 22 perd 4 × le chiffre (4 sur un 1, 24 sur un 6, 14 en moyenne). Vérifié : 600
+  lancers, chaque chiffre entre 87 et 116 fois. LE DESSIN : un hypercube comme celui du vaisseau, 46 pixels au-dessus de
+  l'insecte, qui tourne vite puis ralentit ; en son cœur LA FACE — une plaque sombre cernée de lumière, des points
+  blancs de deux pixels — défile de 16 à 4 faces par seconde puis s'arrête sur le chiffre (éclair, onde) ; au sol,
+  l'ombre et l'anneau de la zone, qui s'allument à mesure qu'il descend ; à l'impact, une onde jusqu'au bord de la zone
+  et LE CHIFFRE FRAPPÉ AU SOL en grand, une gerbe et une secousse qui grandissent avec lui. *Mesuré à la capture* : posés
+  à même les arêtes, d'un pixel, les points ne se lisaient pas ; sur la plaque, oui. Les sons : `de` (des « tic » de
+  verre qui ralentissent, un tintement au chiffre), `impactDe`. Les balises restent la troisième arme, en attendant.
+  *Cadence, portée, zone, 4 par point : de moi, à rejuger en jouant.*

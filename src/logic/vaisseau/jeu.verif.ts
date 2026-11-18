@@ -2203,6 +2203,47 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`à 160, au-delà de son troisième rebond (150) : rien ne part`, c2.ev.every((e) => e.type !== 'hypercube'))
 }
 
+// LE DÉ DU DESTIN DU TESSERACT (Keko, 18/11 : « un dé de 1 à 6 qui tourne, puis s'abat sur un ennemi, dans une zone
+// d'effet ; des dégâts plus ou moins importants en fonction du chiffre ») : il paraît au-dessus de l'insecte le plus
+// proche, le suit, roule 0,9 s, tombe en 0,3 s ; tout insecte à moins de 22 perd 4 × le chiffre, rien au-delà
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const de = { id: 'de', cadence: 99, degats: 4, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, de: { roule: 0.9, chute: 0.3, rayon: 22 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [de], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const lancer = (graine: number, insectes: ReturnType<typeof insecte>[], file = 0) => {
+    const w = nouveauMonde(cfg, graine)
+    w.ennemis.push(...insectes)
+    const ev: Evenement[] = []
+    let ouEtait = 0
+    for (let i = 0; i < 80; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      for (const e of w.ennemis) if (e.id !== 3) e.corps = { ...e.corps, y: e.corps.y + file / 60 }
+      for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        ev.push(e)
+        if (e.type === 'deImpact') ouEtait = w.ennemis.find((o) => o.id === 1)?.corps.y ?? 0
+      }
+    }
+    const pv = insectes.map((e) => 1000 - (w.ennemis.find((o) => o.id === e.id)?.pv ?? 1000))
+    const impact = ev.find((e) => e.type === 'deImpact') as Extract<Evenement, { type: 'deImpact' }> | undefined
+    const paru = ev.find((e) => e.type === 'de') as Extract<Evenement, { type: 'de' }> | undefined
+    return { ev, pv, impact, paru, ouEtait }
+  }
+  // (l'insecte visé à 60, qui file vers le bas à 30 par seconde avec son voisin à 15 de lui ; un troisième à 40 de lui, hors de la zone)
+  const a = lancer(3, [insecte(1, 60, 0), insecte(2, 75, 0), insecte(3, 60, -40)], 30)
+  const f = a.impact?.face ?? 0
+  verifier(`le dé paraît une fois, sur l'insecte le plus proche, et s'abat 1,2 s après, là où il est (impact à y ${a.impact?.y.toFixed(1)}, lui à ${a.ouEtait.toFixed(1)}) : un ${f}, ${a.pv.join(' / ')} (${4 * f} à lui et à son voisin, rien au troisième)`, a.ev.filter((e) => e.type === 'de').length === 1 && a.paru?.x === 60 && a.impact !== undefined && a.impact.face === a.paru?.face && a.impact.y > 30 && Math.abs(a.impact.y - a.ouEtait) < 1 && f >= 1 && f <= 6 && a.pv[0] === 4 * f && a.pv[1] === 4 * f && a.pv[2] === 0)
+  // (le chiffre : de 1 à 6, chacun à peu près une fois sur six, sur 600 lancers)
+  const faces = [0, 0, 0, 0, 0, 0]
+  for (let g = 1; g <= 600; g++) {
+    const b = lancer(g, [insecte(1, 60, 0)])
+    if (b.impact !== undefined) faces[b.impact.face - 1]++
+    if (b.impact !== undefined && b.pv[0] !== 4 * b.impact.face) faces[0] = -1e9
+  }
+  verifier(`sur 600 lancers, chaque chiffre sort à peu près une fois sur six, et frappe 4 fois son chiffre (${faces.join(' / ')})`, faces.every((n) => n >= 70 && n <= 130) && faces.reduce((x, y) => x + y, 0) === 600)
+  const c2 = lancer(3, [insecte(1, 130, 0)])
+  verifier(`à 130, au-delà de sa portée (120) : rien ne paraît`, c2.ev.every((e) => e.type !== 'de'))
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {
