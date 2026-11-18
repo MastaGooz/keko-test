@@ -2169,7 +2169,28 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const p2 = lancer([insecte(1, 20, 0), insecte(2, 70, 0), insecte(3, 120, 0)])
   verifier(`un insecte à 20, plus près qu'un lancer : le cube lui tombe dessus, puis rebondit de 50 (${p2.contacts.join(', ')}) — ${p2.pv.join(' / ')}`, p2.contacts.join() === '20,70,120' && p2.pv.join() === '8,8,8')
   const b = lancer([insecte(1, 145, 0)])
-  verifier(`un insecte seul à 145, à portée du troisième rebond : il lance (${b.contacts.join(', ')}) et le dernier contact le frappe (${b.pv[0]})`, b.contacts.join() === '50,100,150' && b.pv[0] === 8)
+  verifier(`un insecte seul à 145, à portée du troisième contact : le lancer raccourcit pour que le troisième tombe sur lui (${b.contacts.join(', ')}) — ${b.pv[0]}`, b.contacts.join() === '45,95,145' && b.pv[0] === 8)
+  // (… ET PLUS DE TROU ENTRE DEUX CONTACTS — Keko, 18/11 : « parfois je manque la cible » : à 70, il tombait entre la zone
+  // du premier contact, à 50, et celle du deuxième, à 100)
+  const t2 = lancer([insecte(1, 70, 0)])
+  verifier(`un insecte seul à 70, entre deux contacts : le deuxième tombe sur lui (${t2.contacts.join(', ')}) — ${t2.pv[0]}`, t2.contacts.join() === '20,70,120' && t2.pv[0] === 8)
+  // (un insecte qui file de côté, à 40 par seconde, pendant les 1,5 s du vol : le cube le suit, le troisième contact le frappe)
+  {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push({ ...insecte(1, 130, 0) })
+    const ev: Evenement[] = []
+    let ou = { x: 0, y: 0 }
+    for (let i = 0; i < 92; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      for (const e of w.ennemis) e.corps = { ...e.corps, y: e.corps.y + 40 / 60, vx: 0, vy: 40 }
+      for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        ev.push(e)
+        if (e.type === 'rebondHypercube' && e.contact === 3) ou = { x: e.x, y: e.y }
+      }
+    }
+    const pv = 1000 - (w.ennemis[0]?.pv ?? 1000)
+    verifier(`un insecte qui file de côté (40/s) : le troisième contact le suit et le frappe (contact à ${ou.x.toFixed(0)}, ${ou.y.toFixed(0)} ; lui à ${w.ennemis[0].corps.x.toFixed(0)}, ${w.ennemis[0].corps.y.toFixed(0)}) — ${pv}`, pv === 8)
+  }
   const c2 = lancer([insecte(1, 160, 0)])
   verifier(`à 160, au-delà de son troisième rebond (150) : rien ne part`, c2.ev.every((e) => e.type !== 'hypercube'))
 }

@@ -731,6 +731,14 @@ export type Arme = {
    * (… ET IL TOMBE SUR UN INSECTE PLUS PRÈS — Keko, 18/11 : « si l'ennemi est au-delà de la distance du premier lancer, on
    * lance à la distance max ; s'il est plus près, on lui lance dessus » : le lancer raccourcit jusqu'à lui, les rebonds
    * gardent leur longueur ; un insecte collé au vaisseau passait sous la cloche)
+   * (… ET IL NE MANQUE PLUS SA CIBLE — Keko, 18/11 : « parfois je manque la cible alors qu'elle est à portée du premier
+   * rebond ; qu'un ennemi à portée du premier rebond soit touché systématiquement ; hors de portée du premier, on ajuste
+   * le tir pour que le deuxième le touche ; hors de portée du deuxième, pour que le troisième le touche » : un insecte
+   * entre deux contacts — à 70, entre 50 et 100 — tombait dans le trou entre leurs zones. Le contact visé est le premier
+   * qui peut l'atteindre (`vise`), et le LANCER RACCOURCIT pour que ce contact tombe sur lui (les rebonds gardent leur
+   * longueur) ; puis LE CUBE LE SUIT : à chaque rebond avant le contact visé, il se réoriente vers là où l'insecte sera
+   * à ce contact, et pendant le bond qui doit le toucher, son point de chute suit l'insecte, d'un quart de bond au plus
+   * au-delà de sa longueur)
    */
   hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; croissance: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
@@ -920,7 +928,7 @@ export type Monde = {
   /** LES ÉPINES D'OS DU VER EN VOL (voir `Arme.epines`) : où, leur vitesse, ce qu'il leur reste à voler, qui elles ont touché. */
   brochettes: { id: number; arme: number; x: number; y: number; vx: number; vy: number; vie: number; touches: number[] }[]
   /** LES HYPERCUBES DU TESSERACT (voir `Arme.hypercube`) : le bond en cours (d'où, où, quand il est parti, combien de temps), son cap, ses contacts au sol. */
-  hypercubes: { id: number; arme: number; x0: number; y0: number; x1: number; y1: number; depart: number; duree: number; cap: number; contacts: number }[]
+  hypercubes: { id: number; arme: number; x0: number; y0: number; x1: number; y1: number; depart: number; duree: number; cap: number; contacts: number; /** L'insecte visé, et le contact qui doit tomber sur lui (1 à `rebonds`). */ cible: number | null; vise: number }[]
   /** LES ŒUFS DU VER (voir `Arme.ponte`) : où, leur cap, quand ils ont été pondus. */
   oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number }[]
   /** LES MINI-VERS (voir `Arme.ponte`) : où, leur cap, quand ils sont nés, leur proie, leur prochaine morsure. */
@@ -2805,23 +2813,38 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     }
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
-    // (SON CAP : vers là où l'insecte sera au contact qui tombe le plus près de lui ; LE LANCER A LA LONGUEUR D'UN BOND —
-    // SAUF SUR UN INSECTE PLUS PRÈS : il lui tombe dessus)
-    const k = Math.max(1, Math.min(hc.rebonds, Math.ceil(dist(cible) / hc.bond)))
-    const x = cible.corps.x + cible.corps.vx * hc.vol * k
-    const y = cible.corps.y + cible.corps.vy * hc.vol * k
+    // (LE CONTACT QUI TOMBE SUR LUI : le premier qui peut l'atteindre, là où il sera à ce contact — deux passes, son
+    // avance peut le faire changer de contact ; LE LANCER RACCOURCIT pour que ce contact tombe pile sur lui)
+    let k = Math.max(1, Math.min(hc.rebonds, Math.ceil(dist(cible) / hc.bond)))
+    let x = cible.corps.x
+    let y = cible.corps.y
+    for (let passe = 0; passe < 2; passe++) {
+      x = cible.corps.x + cible.corps.vx * hc.vol * k
+      y = cible.corps.y + cible.corps.vy * hc.vol * k
+      k = Math.max(1, Math.min(hc.rebonds, Math.ceil(Math.hypot(x - v.x, y - v.y) / hc.bond)))
+    }
     const d = Math.hypot(x - v.x, y - v.y)
     const cap = d > 1e-6 ? Math.atan2(y - v.y, x - v.x) : v.cap
-    const lancer = k === 1 ? Math.min(hc.bond, d) : hc.bond
+    const lancer = Math.max(0, Math.min(hc.bond, d - (k - 1) * hc.bond))
     const x1 = v.x + Math.cos(cap) * lancer
     const y1 = v.y + Math.sin(cap) * lancer
-    m.hypercubes.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x1, y1, depart: m.t, duree: hc.vol, cap, contacts: 0 })
+    m.hypercubes.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x1, y1, depart: m.t, duree: hc.vol, cap, contacts: 0, cible: cible.id, vise: k })
     ev.push({ type: 'hypercube', x: v.x, y: v.y, arme: a.id })
   })
   m.hypercubes = m.hypercubes.filter((h) => {
     const a = c.armes[h.arme]
     const hc = a?.hypercube
     if (a === undefined || hc === undefined) return false
+    // (PENDANT LE BOND QUI DOIT LE TOUCHER, son point de chute suit l'insecte visé : là où il sera à la chute)
+    const visee = h.cible === null ? undefined : m.ennemis.find((e) => e.id === h.cible)
+    if (visee !== undefined && h.contacts + 1 === h.vise) {
+      const reste = Math.max(0, h.depart + h.duree - m.t)
+      const px = visee.corps.x + visee.corps.vx * reste
+      const py = visee.corps.y + visee.corps.vy * reste
+      const l = Math.hypot(px - h.x0, py - h.y0)
+      const lm = Math.min(l, hc.bond * 1.25)
+      if (l > 1e-6) (h.cap = Math.atan2(py - h.y0, px - h.x0)), (h.x1 = h.x0 + Math.cos(h.cap) * lm), (h.y1 = h.y0 + Math.sin(h.cap) * lm)
+    }
     if (m.t < h.depart + h.duree) return true
     // (IL TOUCHE LE SOL : une petite zone de dégâts, plus large à chaque contact)
     h.contacts++
@@ -2838,11 +2861,18 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       ev.push({ type: 'hypercubeFini', x: h.x1, y: h.y1 })
       return false
     }
-    // (IL REBONDIT, plus loin dans le sens de son lancer, d'un bond de la même longueur et de la même durée)
+    // (IL REBONDIT, plus loin dans le sens de son lancer, d'un bond de la même longueur et de la même durée — AVANT LE
+    // CONTACT VISÉ, réorienté vers là où l'insecte sera à ce contact)
     h.depart += h.duree
     h.duree = hc.vol
     h.x0 = h.x1
     h.y0 = h.y1
+    if (visee !== undefined && h.contacts < h.vise) {
+      const reste = (h.vise - h.contacts) * hc.vol
+      const px = visee.corps.x + visee.corps.vx * reste
+      const py = visee.corps.y + visee.corps.vy * reste
+      if (Math.hypot(px - h.x0, py - h.y0) > 1e-6) h.cap = Math.atan2(py - h.y0, px - h.x0)
+    }
     h.x1 = h.x0 + Math.cos(h.cap) * hc.bond
     h.y1 = h.y0 + Math.sin(h.cap) * hc.bond
     return true

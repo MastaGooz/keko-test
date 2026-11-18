@@ -5603,3 +5603,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   raccourcit jusqu'à lui (là où il sera à la chute), les deux rebonds gardent leurs 50 — un insecte à 20 : contacts à
   20, 70, 120. Au-delà de 50, rien ne change (50, 100, 150). Mesuré dans l'aperçu : les insectes qui foncent sur le
   vaisseau y meurent de nouveau.
+- L'HYPERCUBE NE MANQUE PLUS SA CIBLE (Keko, 18/11 : « parfois je manque la cible alors qu'elle est à portée de mon
+  premier rebond ; qu'un ennemi à portée du premier rebond soit touché systématiquement ; hors de portée du premier, on
+  ajuste le tir pour que le deuxième le touche ; hors de portée du deuxième, pour que le troisième le touche ») : LA
+  CAUSE, un trou entre les zones — avec des pas fixes de 50, la zone du premier contact porte jusqu'à 66 (12 + le rayon
+  d'un insecte), celle du deuxième commence à 80 : un insecte à 70 n'était sous aucune. Maintenant le contact visé est
+  le premier qui peut atteindre l'insecte (`vise`, calculé là où il sera à ce contact, en deux passes), et LE LANCER
+  RACCOURCIT pour que ce contact tombe pile sur lui (à 70 : contacts à 20, 70, 120 ; à 145 : 45, 95, 145) — les rebonds
+  gardent leurs 50. PUIS LE CUBE LE SUIT : à chaque rebond avant le contact visé, il se réoriente vers là où l'insecte
+  sera à ce contact ; pendant le bond qui doit le toucher, son point de chute suit l'insecte (un quart de bond au plus
+  au-delà de sa longueur). Mesuré hors navigateur (`balayage-cube.ts`, 600 lancers, des insectes à leur vraie conduite
+  entre 15 et 150, le vaisseau sur place ou qui file à 60) : le contact visé touche sa cible à chaque fois.
