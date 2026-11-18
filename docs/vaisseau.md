@@ -5484,3 +5484,21 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   parasites de l'œuf n'auraient aucun intérêt » sinon — : la larve le ronge (le venin) et le freine (moitié de sa vitesse,
   3 s). Le dessin : le serviteur sous une lueur de poison, la larve sur son dos, ses yeux verts, un arc autour de lui —
   le temps qui reste.
+- L'ÉPINE D'OS QUI EMBROCHE (Keko, 18/11 : « c'est affreux de toucher avec les pics, c'est pas fun » ; il a écarté les
+  épines plus généreuses — trop proches des éclats du Frimas —, le corps épineux — du contact —, la riposte quand on est
+  frappé, le tir vers l'arrière — « le vaisseau se tourne quand il tire, le devant et le derrière ne sont pas
+  pertinents » — ; puis, sur ma proposition de la brochette : « un projectile assez important qui traverse tout et qui
+  embroche les ennemis ; faisons un essai ») : LES SALVES DES FLANCS SONT PARTIES, et le chemin du vaisseau dans la règle
+  avec elles (Monde.sillage, surLeSillage : git log). Arme.epines (largeur, ecart, impact),
+  Monde.brochettes, menerLesEpines. Toutes les 2,2 s, un insecte à moins de 90 (le verrouillé d'abord, sinon le plus
+  proche), UNE GRANDE ÉPINE part de la tête du Ver vers lui (là où il sera), à 150, 0,7 s ; le nez se tourne vers sa
+  cible. Elle TRAVERSE TOUT : chaque insecte à moins de 3 (plus son rayon) prend 7 points, une fois ; UN PETIT QUI
+  SURVIT RESTE EMBROCHÉ, enfilé sur la tige derrière la pointe tous les 4 (il ne bouge plus, ne mord plus — 	enuA,
+  comme la vrille), EMPORTÉ avec elle, loin du portail ; un grand est traversé, pas emporté. Au bout de sa course, elle
+  se plante : 9 points à chaque embroché, et ils sont relâchés. Le dessin : une lance d'os cernée, éclairée d'un côté,
+  la pointe blanche, deux barbes de harpon, le talon noueux d'un os, une traîne de poussière d'os, PLUS LONGUE de ce
+  qu'elle emporte, tracée par-dessus les insectes enfilés ; plantée, elle vibre et s'efface (0,6 s), des éclats d'os
+  giclent, une onde si elle était chargée. Deux sons composés : epine (le départ, un souffle lourd) et plante
+  (l'impact chargé, un coup sourd et des craquements d'os) ; chaque embroché fait le « tchk » de la piqûre. *Chiffres de
+  moi, à rejuger.* (Le contrôle mental des œufs n'est plus une attaque de base pour Keko — « plutôt un bonus durant la
+  partie, une chance d'appliquer un contrôle mental sur les attaques » — : ce que font les œufs reste à trouver.)

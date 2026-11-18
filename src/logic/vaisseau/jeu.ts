@@ -474,17 +474,18 @@ export type Arme = {
   // `eclosion` secondes plus tard ; le mini-ver POURSUIT cet insecte — puis, mort, le plus proche à `vue` —, à `vitesse`,
   // en virant de `virage` par seconde (il serpente) ; il vit `duree` secondes ; tout insecte à moins de `rayon` de lui prend
   // le venin)
+  // (D'ABORD DES SALVES DE SES FLANCS — Keko, 17/11 : « il lance des épines d'os sur ses côtés, en longueur, des deux côtés,
+  // à intervalles réguliers » —, puis tirées droites sans viser ; « c'est affreux de toucher avec les pics, c'est pas fun »)
   /**
-   * DES ÉPINES D'OS (la troisième arme du Ver — Keko, 17/11 : « il lance des épines d'os sur ses côtés, en longueur, des
-   * deux côtés, à intervalles réguliers ») : à sa cadence, un insecte à `portee`, UNE SALVE part de SES FLANCS — de
-   * `anneaux` anneaux, tous les `ecart` le long DU CHEMIN QU'IL A PRIS (son corps le suit : voir `Monde.sillage`), une épine
-   * de chaque côté, perpendiculaire au corps à cet endroit ; chacune file à `vitesse` (celle de l'arme) et frappe le premier
-   * insecte qu'elle touche (`degats`).
-   * (… EN LIGNE DROITE, SANS VISER — Keko, 17/11 : « tu peux tirer les épines en ligne droite sans viser l'ennemi ? » : la
-   * salve part à sa cadence, qu'il y ait un insecte ou non, et toutes les épines filent PERPENDICULAIRES À L'ORIENTATION DU
-   * VAISSEAU — parallèles, deux rangées droites ; elles sortent toujours des anneaux, le long du corps)
+   * L'ÉPINE D'OS QUI EMBROCHE (la troisième arme du Ver — Keko, 18/11 : « un projectile assez important qui traverse tout
+   * et qui embroche les ennemis ») : à sa cadence, un insecte à `portee` (le verrouillé d'abord, sinon le plus proche),
+   * UNE GRANDE ÉPINE part de sa tête vers lui, à `vitesse`, `vie` secondes. ELLE TRAVERSE TOUT : chaque insecte à moins de
+   * `largeur` (plus son rayon) prend `degats`, une fois ; UN PETIT QUI SURVIT RESTE EMBROCHÉ — enfilé sur la tige derrière
+   * la pointe, tous les `ecart`, il ne bouge plus, ne mord plus, il est EMPORTÉ avec elle ; un grand est traversé, pas
+   * emporté. AU BOUT DE SA COURSE, elle se plante : chaque embroché prend `impact`, et il est relâché. L'état est
+   * `Monde.brochettes`.
    */
-  epines?: { anneaux: number; ecart: number; debut: number }
+  epines?: { largeur: number; ecart: number; impact: number }
   // (… PUIS LA LARVE PREND LE CONTRÔLE — Keko, 17/11 : « le parasite qui sort de l'œuf prend le contrôle de l'hôte, qui
   // devient un serviteur du ver, temporairement ; il attaque les autres ennemis, sans qu'ils le prennent pour cible » ; « des
   // dégâts à la fin de l'effet, pas pendant » ; « pas de contrôle mental sur les gros insectes ») : la larve sortie de l'œuf
@@ -889,8 +890,8 @@ export type Monde = {
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
   /** LES SERVITEURS DU VER (voir `Arme.ponte`) : l'insecte contrôlé — sorti de la nuée —, son arme, jusqu'à quand, sa prochaine morsure. */
   serviteurs: { e: Ennemi; arme: number; jusque: number; mordA: number }[]
-  /** LE CHEMIN QUE LE VAISSEAU A PRIS, le plus récent devant — un point tous les demi-pixels, 40 de long : le corps du Ver le suit (voir `Arme.epines`). */
-  sillage: [number, number][]
+  /** LES ÉPINES D'OS DU VER EN VOL (voir `Arme.epines`) : où, leur vitesse, ce qu'il leur reste à voler, qui elles ont touché, qui elles emportent (dans l'ordre où elles l'ont embroché). */
+  brochettes: { id: number; arme: number; x: number; y: number; vx: number; vy: number; vie: number; touches: number[]; embroches: number[] }[]
   /** LES ŒUFS DU VER ET SES MINI-VERS (voir `Arme.ponte`) : où, son cap, quand il a été pondu, s'il a éclos. */
   // (`fendu` : l'instant où un insecte l'a déclenché ; `eclos` : l'instant de l'éclosion ; `cible` : la proie du mini-ver)
   oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number; fendu: number | null; eclos: number | null; cible: number | null }[]
@@ -1016,8 +1017,10 @@ export type Evenement =
   | { type: 'eclosion'; id: number; x: number; y: number }
   | { type: 'miniVerFini'; id: number; x: number; y: number }
   | { type: 'venin'; id: number; x: number; y: number }
-  /** Le Ver lance ses épines d'os (voir `Arme.epines`). */
+  /** Le Ver lance son épine d'os ; elle embroche un insecte ; elle se plante au bout de sa course (voir `Arme.epines`). */
   | { type: 'epines'; x: number; y: number }
+  | { type: 'embroche'; id: number; x: number; y: number }
+  | { type: 'epinePlantee'; x: number; y: number; cap: number; embroches: number }
   /** La larve prend le contrôle d'un insecte, un serviteur mord, le contrôle prend fin (voir `Arme.ponte`). */
   | { type: 'controle'; id: number; x: number; y: number }
   | { type: 'morsureServiteur'; id: number; x: number; y: number }
@@ -1065,7 +1068,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], sillage: [], serviteurs: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], serviteurs: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2706,60 +2709,73 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
-/** LES ŒUFS DU VER (voir `Arme.ponte`) : la ponte derrière lui, l'éclosion, les mini-vers qui copient ses mouvements, leur venin. */
-/** LE CHEMIN DU VAISSEAU (voir `Monde.sillage`) : un point tous les demi-pixels ; un saut l'efface. */
-function suivreLeSillage(m: Monde): void {
-  const v = m.vaisseau
-  const s = m.sillage
-  if (s.length === 0 || Math.hypot(s[0][0] - v.x, s[0][1] - v.y) > 30) m.sillage = [[v.x, v.y]]
-  else if (Math.hypot(s[0][0] - v.x, s[0][1] - v.y) >= 0.5) s.unshift([v.x, v.y])
-  let long = 0
-  for (let i = 1; i < m.sillage.length; i++) {
-    long += Math.hypot(m.sillage[i][0] - m.sillage[i - 1][0], m.sillage[i][1] - m.sillage[i - 1][1])
-    if (long > 40) {
-      m.sillage.length = i + 1
-      break
-    }
-  }
-}
-
-/** Le point du chemin à `d` derrière le vaisseau (depuis là où il est), et la direction du chemin là (vers l'avant). */
-export function surLeSillage(m: Monde, d: number): { x: number; y: number; cap: number } {
-  const v = m.vaisseau
-  const ch: [number, number][] = [[v.x, v.y], ...m.sillage]
-  let reste = d
-  for (let i = 1; i < ch.length; i++) {
-    const l = Math.hypot(ch[i][0] - ch[i - 1][0], ch[i][1] - ch[i - 1][1])
-    if (l < 1e-6) continue
-    if (reste <= l) return { x: ch[i - 1][0] + ((ch[i][0] - ch[i - 1][0]) * reste) / l, y: ch[i - 1][1] + ((ch[i][1] - ch[i - 1][1]) * reste) / l, cap: Math.atan2(ch[i - 1][1] - ch[i][1], ch[i - 1][0] - ch[i][0]) }
-    reste -= l
-  }
-  // (au-delà du chemin, tout droit derrière lui)
-  const [qx, qy] = ch[ch.length - 1]
-  return { x: qx - Math.cos(v.cap) * reste, y: qy - Math.sin(v.cap) * reste, cap: v.cap }
-}
-
-/** LES ÉPINES D'OS DU VER (voir `Arme.epines`) : une salve de ses flancs, de chaque côté, perpendiculaire à son corps. */
-function lancerLesEpines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
-  if (m.phase !== 'vol') return
-  suivreLeSillage(m)
+/** L'ÉPINE D'OS DU VER (voir `Arme.epines`) : le tir sur l'insecte, la course qui traverse tout, les embrochés emportés, l'impact au bout. */
+function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
-    const ep = a.epines
-    if (ep === undefined || m.t < (m.armesA[i] ?? 0)) return
+    if (a.epines === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    // (le verrouillé à portée d'abord, sinon le plus proche)
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    const ve = ennemiVerrouille(m)
+    let cible: Ennemi | null = ve !== null && dist(ve) <= a.portee ? ve : null
+    if (cible === null) {
+      let dc = a.portee
+      for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (cible = e)
+    }
+    if (cible === null) return
     m.armesA[i] = m.t + a.cadence
-    for (let k = 0; k < ep.anneaux; k++) {
-      const s = surLeSillage(m, ep.debut + k * ep.ecart)
-      for (const cote of [-1, 1]) {
-        const an = v.cap + (cote * Math.PI) / 2
-        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-        m.obus.push({ id: m.prochainId++, x: s.x + Math.cos(an) * 3, y: s.y + Math.sin(an) * 3, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique })
+    // (là où il sera quand elle arrivera)
+    const temps = dist(cible) / a.vitesse
+    const an = Math.atan2(cible.corps.y + cible.corps.vy * temps - v.y, cible.corps.x + cible.corps.vx * temps - v.x)
+    const x = v.x + Math.cos(an) * (c.rayon + 2)
+    const y = v.y + Math.sin(an) * (c.rayon + 2)
+    m.brochettes.push({ id: m.prochainId++, arme: i, x, y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, touches: [], embroches: [] })
+    ev.push({ type: 'epines', x, y })
+  })
+  m.brochettes = m.brochettes.filter((b) => {
+    const a = c.armes[b.arme]
+    const ep = a?.epines
+    if (a === undefined || ep === undefined) return false
+    b.vie -= dt
+    b.x += b.vx * dt
+    b.y += b.vy * dt
+    const vit = Math.hypot(b.vx, b.vy) || 1
+    const ux = b.vx / vit
+    const uy = b.vy / vit
+    // (ELLE TRAVERSE TOUT : chacun à sa largeur prend le coup, une fois ; un petit qui survit reste embroché)
+    for (const e of [...m.ennemis]) {
+      if (b.touches.includes(e.id) || Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > c.ennemi.rayon + ep.largeur) continue
+      b.touches.push(e.id)
+      const critique = c.passifs.critique > 0 && tire(m.graine, b.id * 31 + e.id, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      else if (e.grand !== true) {
+        b.embroches.push(e.id)
+        ev.push({ type: 'embroche', id: e.id, x: e.corps.x, y: e.corps.y })
       }
     }
-    ev.push({ type: 'epines', x: v.x, y: v.y })
+    // (LES EMBROCHÉS, enfilés sur la tige derrière la pointe, emportés : ils ne bougent plus d'eux-mêmes, ne mordent plus)
+    const enfiles = b.embroches.map((id) => m.ennemis.find((e) => e.id === id)).filter((e): e is Ennemi => e !== undefined)
+    b.embroches = enfiles.map((e) => e.id)
+    enfiles.forEach((e, k) => {
+      e.tenuA = m.t + 0.1
+      e.corps = { ...e.corps, x: b.x - ux * (2 + k * ep.ecart), y: b.y - uy * (2 + k * ep.ecart), vx: 0, vy: 0 }
+    })
+    if (b.vie > 0) return true
+    // (AU BOUT DE SA COURSE, ELLE SE PLANTE : chaque embroché prend l'impact, et il est relâché)
+    for (const e of enfiles) {
+      e.tenuA = m.t
+      e.pv -= ep.impact
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    ev.push({ type: 'epinePlantee', x: b.x, y: b.y, cap: Math.atan2(uy, ux), embroches: enfiles.length })
+    return false
   })
 }
 
+/** LES ŒUFS DU VER (voir `Arme.ponte`) : la ponte derrière lui, l'éclosion, les mini-vers qui copient ses mouvements, leur venin. */
 function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   const vit = Math.hypot(v.vx, v.vy)
@@ -3670,7 +3686,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.sillage = []), (m.serviteurs = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.serviteurs = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3789,7 +3805,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesVrilles(c, m, dt, ev)
   menerLesOeufs(c, m, dt, ev)
   menerLesServiteurs(c, m, dt, ev)
-  lancerLesEpines(c, m, ev)
+  menerLesEpines(c, m, dt, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)

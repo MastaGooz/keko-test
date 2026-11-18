@@ -3594,7 +3594,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
     'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',
-    'arme-epines': 'Une salve d’épines d’os jaillit de ses deux flancs, sur toute sa longueur.',
+    'arme-epines': 'Une grande épine d’os traverse tout et emporte les insectes qu’elle embroche.',
     'arme-oeufs': 'Il pond des œufs ; leur larve prend le contrôle d’un insecte, qui mord les siens.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
@@ -3648,7 +3648,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * Avec elles, il FAIT UN CIRCUIT : un ovale à travers le cadre, le nez dans sa course.
    */
   // (… ET LE DRAIN D'ÂME : il accroche, puis s'en va — on voit le lien tenir à distance)
-  const ARMES_EN_CIRCUIT = new Set(['arme-givre', 'arme-poison', 'arme-oeufs', 'arme-epines', 'arme-mines', 'arme-balises', 'arme-cristaux', 'arme-drain'])
+  const ARMES_EN_CIRCUIT = new Set(['arme-givre', 'arme-poison', 'arme-oeufs', 'arme-mines', 'arme-balises', 'arme-cristaux', 'arme-drain'])
   function avancerLApercu(a: { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number }, w: number, h: number): number {
     const circuit = ARMES_EN_CIRCUIT.has(a.arme)
     // (l'ovale : centré sur le cadre, aux trois dixièmes de sa largeur et de sa hauteur, parcouru à 45 par seconde environ)
@@ -3764,6 +3764,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesVrilles(p)
       dessinerLesOeufs(p)
       dessinerLesEclosions(p)
+      dessinerLesEpines(p)
       dessinerLesFleaux(p)
       dessinerLeVaisseau(p)
       dessinerLesTirs(p)
@@ -6577,7 +6578,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && tirA360) return undefined
     // (LA SENTINELLE NE SE TOURNE PAS VERS SA CIBLE : ses drones tirent dans toutes les directions, son nez suit le manche)
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.nova !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined || a.drain !== undefined || a.vrille !== undefined || a.ponte !== undefined || a.epines !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.scie !== undefined || a.balise !== undefined || a.givre !== undefined || a.nova !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined || a.drain !== undefined || a.vrille !== undefined || a.ponte !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -8734,6 +8735,56 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const CHAIR = ['#2a0a18', '#5a1430', '#8e2a48', '#c04a62', '#e8808a', '#ffc4c0'].map((c) => N.hex(c))
   const OS = ['#4a3e2c', '#a8987a', '#d6ccb0', '#fffaf0'].map((c) => N.hex(c))
   const BILE = ['#3a5a0c', '#a8d42a', '#e0f870'].map((c) => N.hex(c))
+  /**
+   * L'ÉPINE D'OS DU VER (voir `Arme.epines`) : une grande lance d'os, ALLONGÉE DE CE QU'ELLE EMPORTE (la tige passe à
+   * travers les embrochés, dessinée par-dessus) ; cernée de sombre, éclairée d'un côté, effilée jusqu'à sa pointe blanche,
+   * deux barbes de harpon derrière la pointe, le talon noueux d'un os ; une traîne de poussière d'os. Plantée au bout de sa
+   * course, elle reste fichée un instant, vibre, et s'efface.
+   */
+  const epinesPlantees: { x: number; y: number; cap: number; long: number; t0: number }[] = []
+  const longueurDeLEpine = (n: number, ecart: number): number => Math.max(14, 2 + Math.max(0, n - 1) * ecart + 9)
+  function dessinerUneEpine(p: Peintre, x: number, y: number, ux: number, uy: number, long: number, a: number): void {
+    const nx = -uy
+    const ny = ux
+    const pt = (u: number, w: number): number[] => [x + ux * u + nx * w, y + uy * u + ny * w]
+    p.poly([pt(2, 0), pt(-long * 0.4, 2.2), pt(-long, 2.4), pt(-long, -2.4), pt(-long * 0.4, -2.2)], OS[0], a)
+    p.poly([pt(1, 0), pt(-long * 0.4, 1.3), pt(-long + 0.5, 1.5), pt(-long + 0.5, -1.5), pt(-long * 0.4, -1.3)], OS[1], a)
+    p.line(pt(0, -0.4)[0], pt(0, -0.4)[1], pt(-long + 1, -0.9)[0], pt(-long + 1, -0.9)[1], OS[2], a)
+    // (les barbes du harpon)
+    for (const c of [-1, 1]) p.line(pt(-2.5, c * 0.8)[0], pt(-2.5, c * 0.8)[1], pt(-5.5, c * 2.8)[0], pt(-5.5, c * 2.8)[1], OS[2], a)
+    // (le talon : les deux nœuds d'un bout d'os)
+    for (const c of [-1, 1]) {
+      p.circle(pt(-long, c * 1.4)[0], pt(-long, c * 1.4)[1], 1.9, OS[0], a)
+      p.circle(pt(-long, c * 1.4)[0], pt(-long, c * 1.4)[1], 1.2, c < 0 ? OS[2] : OS[1], a)
+    }
+    // (la pointe)
+    p.line(pt(-2, 0)[0], pt(-2, 0)[1], pt(1, 0)[0], pt(1, 0)[1], OS[3], a)
+  }
+  function dessinerLesEpines(p: Peintre): void {
+    for (let i = epinesPlantees.length - 1; i >= 0; i--) if (t - epinesPlantees[i].t0 > 0.6) epinesPlantees.splice(i, 1)
+    if ((m.brochettes.length === 0 && epinesPlantees.length === 0) || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const b of m.brochettes) {
+      const ep = CONF.armes[b.arme]?.epines
+      if (ep === undefined) continue
+      const vit = Math.hypot(b.vx, b.vy) || 1
+      const ux = b.vx / vit
+      const uy = b.vy / vit
+      const long = longueurDeLEpine(b.embroches.length, ep.ecart)
+      for (let j = 1; j <= 4; j++) p.dot(b.x - ux * (long + j * 2.5), b.y - uy * (long + j * 2.5), OS[j < 3 ? 2 : 1], 0.55 - j * 0.12)
+      p.glow(b.x - ux * 3, b.y - uy * 3, 7, OS[2], 0.25)
+      dessinerUneEpine(p, b.x, b.y, ux, uy, long, 1)
+    }
+    // (plantée : elle vibre, de moins en moins, et s'efface)
+    for (const e of epinesPlantees) {
+      const age = t - e.t0
+      const vibre = Math.sin(age * 70) * 1.2 * Math.max(0, 1 - age / 0.3)
+      const ux = Math.cos(e.cap)
+      const uy = Math.sin(e.cap)
+      dessinerUneEpine(p, e.x - uy * vibre * 0.3, e.y + ux * vibre * 0.3, ux, uy, e.long, Math.max(0, Math.min(1, (0.6 - age) / 0.25)))
+    }
+    p.place(0, 0)
+  }
   function dessinerLesTentacules(p: Peintre): void {
     if (m.tentacules.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
@@ -9868,13 +9919,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(qx - ux, qy - uy, qx - ux * (1 + fl), qy - uy * (1 + fl), FEU[4])
         p.line(qx - ux, qy - uy, qx - ux * 2.5, qy - uy * 2.5, N.hex('#fff2a8'))
         p.glow(qx - ux * 2.5, qy - uy * 2.5, 6, FEU[4], 0.6)
-      } else if (o.arme === 'epine') {
-        // (UNE ÉPINE D'OS — Keko, 17/11 : une aiguille d'os de cinq pixels, épaisse à la base, la pointe blanche, une
-        // ombre d'un pixel dessous)
-        p.line(o.x - ux * 4 + 0.5, o.y - uy * 4 + 0.5, o.x + 0.5, o.y + 0.5, OS[0])
-        p.line(o.x - ux * 4, o.y - uy * 4, o.x, o.y, OS[1])
-        p.line(o.x - ux * 2, o.y - uy * 2, o.x, o.y, OS[2])
-        p.px(Math.round(o.x), Math.round(o.y), OS[3])
       } else if (o.arme === 'eclats') {
         // (UN GROS ÉCLAT DE GLACE — Keko, 16/11 : « beaucoup plus gros » : un cristal en losange de onze pixels sur cinq,
         // une face claire et une face à l'ombre le long de son arête, un liseré sombre, la pointe blanche, une lueur
@@ -12298,9 +12342,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'epines':
-          // (la salve d'épines part de ses flancs : un claquement sec d'os)
-          jouer('piqure')
+          // (l'épine part de sa tête : elle fend l'air)
+          jouer('epine', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
+        case 'embroche':
+          // (un insecte est enfilé : le « tchk » charnu, un seul à la fois, une giclée d'ichor)
+          if (t - morsureSonneA > 0.08) {
+            morsureSonneA = t
+            jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 5; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), i % 2 === 0 ? MIASME[5] : OS[2], 1, 1)
+          }
+          break
+        case 'epinePlantee': {
+          // (au bout de sa course, elle se plante : un coup sourd, des éclats d'os, une onde si elle emportait des insectes)
+          const ep = CONF.armes.find((a) => a.epines !== undefined)?.epines
+          epinesPlantees.push({ x: ev.x, y: ev.y, cap: ev.cap, long: longueurDeLEpine(ev.embroches, ep?.ecart ?? 4), t0: t })
+          jouer(ev.embroches > 0 ? 'plante' : 'piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          if (ev.embroches > 0) ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: 8 + ev.embroches * 2 })
+          for (let i = 0; i < 6 + ev.embroches * 2; i++) {
+            const a = ev.cap + Math.PI + R.range(-1.3, 1.3)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.2, 0.4), R.next() < 0.6 ? OS[2] : OS[1], 1, 1.5)
+          }
+          break
+        }
         case 'oeuf':
           // (le Ver pond : un petit « blop »)
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -13057,6 +13124,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesVrilles(p)
     dessinerLesOeufs(p)
     dessinerLesEclosions(p)
+    dessinerLesEpines(p)
     dessinerLesFleaux(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
     dessinerLesTirs(p)
