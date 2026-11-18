@@ -5743,3 +5743,22 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qui fondent sur l'ennemi. » Le Chasseur : « Le maître du ciel : agile, rapide, il impose sa supériorité dans chaque
   combat. » (trois lignes à la capture, la limite de la fiche). *LA RÈGLE DES DESCRIPTIONS DU VORTEX : ce que fait
   l'arme, ce qu'est le vaisseau — pas leurs mécaniques.*
+- LE CHASSEUR SANS FOREUSE, SA MITRAILLEUSE QUI NE MANQUE PAS, LES JAUGES À L'ÉCHELLE DE LA FLOTTE (Keko, 18/11 : « enlève
+  la foreuse sur le dessus du chasseur, il ne l'utilise plus » ; « la mitraillette : des projectiles jaunes, un tout petit
+  peu plus gros, bien droits, pas tout tordus, bizarres, qui ne manquent jamais leur cible — le chasseur est un chasseur
+  d'élite, il faut qu'il tire bien — avec une cadence importante » ; « modifie les jauges des statistiques des vaisseaux,
+  l'échelle n'est pas très bonne, personne n'atteint les maximums ; il faudrait que le chasseur ait la plus haute
+  maniabilité, sa jauge à fond ; une vitesse assez élevée et une accélération assez élevée aussi ») :
+  (1) AU VORTEX, PLUS DE FOREUSE SUR LE TOIT (`allureMontee` : 0, sauf pour les armes qui la prennent pour émetteur, le
+  rayon et la trace) — au vortex aucun vaisseau ne creuse.
+  (2) LA PIÈCE `arme-mitrailleuse` (« Mitrailleuse », id `mitraille`) prend la place de la mitrailleuse dans la liste du
+  Chasseur ; l'autre reste celle de `?vaisseau`. Plus de dispersion (0,14 rad : les balles partaient de travers),
+  `infaillible` comme le canon laser, à 300 (le laser : 420), une balle toutes les 0,18 s, 1,2 point — le débit de
+  l'ancienne. Vérifié : 43 balles sur 43 sur l'insecte qui file de côté. LE DESSIN : un trait jaune de cinq pixels sur
+  deux le long de sa course, le bout blanc, une lueur jaune (l'ancienne balle : un tiret de deux pixels, qui crénelait).
+  Son son, `mitraille` : un « tac » court et rond, sans souffle aigu.
+  (3) LES JAUGES DE VOL DU VORTEX se mesurent à SA FLOTTE (`etalonsDesJauges`) : le meilleur de ses vaisseaux de série
+  remplit chaque jauge — ailleurs, les étalons absolus du banc restent (`ETALONS`). Et LE VORTEX RÈGLE LE CHASSEUR
+  par-dessus ses pièces (`NEZ_DU_VORTEX`, le vortex seul : `?vaisseau` partage ce modèle) : sa rotation × 1,3, de 7 à
+  9,1 rad/s, au-dessus de la Mante (8,4) — la plus haute de la flotte ; sa pointe (126) l'est déjà, sa poussée (111) est
+  à 84 % de celle de la Mante (132). Mesuré à la capture : vitesse et maniabilité à fond, accélération aux cinq sixièmes.

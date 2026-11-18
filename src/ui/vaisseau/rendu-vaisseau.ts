@@ -1474,7 +1474,7 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'faisceau' || id === 'rail') return { x: CRISTAL_DU_PRISME.x + 4.4, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
   if (id === 'laser') return { x: 3.4, y: s * 6.2 }
-  return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
+  return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' || id === 'mitraille' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
 /** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
 export const placeDArme = (coque: number, k: number): { x: number; y: number; s: number } => {
@@ -1527,7 +1527,8 @@ export function formesDeLArme(id: string, s: number): Forme[] {
       { pts: ovale(3.2, s * 6.2, 0.6, 0.7, 10), mat: 'emeraude', relief: 'dome', dome: { x: 3.2, y: s * 6.2, rx: 0.6, ry: 0.7 } },
     ]
   }
-  if (id === 'rafale') {
+  // (la mitrailleuse du Chasseur, au vortex : la même que l'autre)
+  if (id === 'rafale' || id === 'mitraille') {
     return [
       { pts: barre(-5, s * 5.4, 0.6, s * 5.4, 0.8), mat: 'metal', relief: 'cyl' },
       { pts: barre(-5, s * 7, 0.6, s * 7, 0.8), mat: 'metal', relief: 'cyl' },

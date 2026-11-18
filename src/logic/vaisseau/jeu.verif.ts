@@ -2311,6 +2311,9 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const { infaillible: _, ...nonAccroche } = laser
   const b = essai(nonAccroche)
   verifier(`le canon laser ne manque pas un insecte qui file de côté et change de sens : ${a.touches} touches sur ${a.tirs} traits arrivés (non accroché : ${b.touches} sur ${b.tirs})`, a.tirs > 20 && a.touches === a.tirs && b.touches < b.tirs)
+  // (… ET LA MITRAILLEUSE DU CHASSEUR, plus lente que lui, accrochée pareil — Keko, 18/11)
+  const c = essai({ ...laser, id: 'mitraille', cadence: 0.18, degats: 1.2, portee: 100, vitesse: 300, vie: 0.7 })
+  verifier(`la mitrailleuse du Chasseur non plus : ${c.touches} touches sur ${c.tirs} balles arrivées`, c.tirs > 20 && c.touches === c.tirs)
 }
 
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute

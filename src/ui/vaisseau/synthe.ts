@@ -287,6 +287,14 @@ const RECETTES = {
       souffle(m, h, 0, 0.5, 0, { f: 3200, glisse: { vers: 1000, en: 0.015 }, d: 0.03 })
     },
   },
+  /** LA MITRAILLEUSE DU CHASSEUR (18/11) : un « tac » court et rond, sans souffle aigu — elle tire vite, il ne doit pas fatiguer */
+  mitraille: {
+    duree: 0.25, niveau: 0.2, salle: [0.25, 0.08], variantes: 4,
+    faire: (m, h, v) => {
+      note(m, 0, 1, 0, { f: 360 + 25 * v, glisse: { vers: 170 + 10 * v, en: 0.025 }, a: 0.001, d: 0.06, partiels: [[1, 1, 1], [2, 0.3, 0.6], [3, 0.1, 0.4]] })
+      souffle(m, h, 0, 0.35, 0, { f: 1800, glisse: { vers: 700, en: 0.015 }, q: 0.8, a: 0.001, d: 0.025 })
+    },
+  },
   /** un missile part : un souffle large qui s'ouvre */
   missiles: {
     duree: 1, niveau: 0.42, salle: [0.5, 0.18],
