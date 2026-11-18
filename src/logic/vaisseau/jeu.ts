@@ -769,8 +769,12 @@ export type Arme = {
    * referme en triangle retourné, puis en point ; elle tourne sur elle-même (`tour` radians par seconde) et son plus
    * grand sommet est à `rayon`. Toutes les `periode` secondes, TOUT INSECTE DANS LA COUPE (à son rayon près) perd
    * `degats`. Elle ne bouge pas. L'état est `Monde.coupes`.
+   * (… ET SON POINT FINAL FRAPPE FORT — Keko, 18/11 : « quand la zone se referme en un seul point, la cible sous ce point
+   * prend des dégâts très importants ; ça rend la zone un peu différente, et sur les boss, qui prennent beaucoup de place,
+   * ça lui permet d'être efficace » : quand la tranche se referme, tout insecte dont le corps couvre son centre perd
+   * `fin` d'un coup)
    */
-  coupe?: { duree: number; rayon: number; periode: number; tour: number }
+  coupe?: { duree: number; rayon: number; periode: number; tour: number; /** Le coup du point final, à ce qui est dessous. */ fin: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -1102,7 +1106,7 @@ export type Evenement =
   | { type: 'deImpact'; id: number; x: number; y: number; face: number; rayon: number }
   /** Une coupe paraît (un cube commence à traverser le plan) ; elle se referme (voir `Arme.coupe`). */
   | { type: 'coupe'; id: number; x: number; y: number; arme: string }
-  | { type: 'coupeFinie'; id: number; x: number; y: number }
+  | { type: 'coupeFinie'; id: number; x: number; y: number; /** Combien d'insectes son point final a frappés. */ touches: number }
   /** Le drain d'âme accroche une âme (voir `Arme.drain`). */
   | { type: 'accroche'; id: number; x: number; y: number }
   | { type: 'saisie'; id: number; cible: number; x: number; y: number }
@@ -2971,7 +2975,17 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       co.prochain += cp.periode
     }
     if (m.t < co.nee + cp.duree) return true
-    ev.push({ type: 'coupeFinie', id: co.id, x: co.x, y: co.y })
+    // (LE POINT FINAL : la tranche se referme sur son centre, et ce qui est dessous prend le gros coup)
+    let touches = 0
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - co.x, e.corps.y - co.y) > c.ennemi.rayon) continue
+      const critique = c.passifs.critique > 0 && tire(m.graine, co.id * 31 + e.id * 7, 64) < c.passifs.critique
+      e.pv -= cp.fin * (critique ? c.passifs.critiqueFacteur : 1)
+      touches++
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    ev.push({ type: 'coupeFinie', id: co.id, x: co.x, y: co.y, touches })
     return false
   })
 }

@@ -5668,3 +5668,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qui monte pendant que la tranche s'ouvre et redescend quand elle se referme. *Vu à la capture* : un insecte qui charge
   le vaisseau traverse la tranche en moins d'une seconde — immobile, elle frappe surtout ce qui stationne ou ce qui
   arrive derrière lui. *Tous les chiffres sont de moi.*
+- LE POINT FINAL DE LA COUPE FRAPPE FORT, ET SE VOIT (Keko, 18/11 : « quand la zone se referme en un seul point, la cible
+  sous ce point prend des dégâts très importants ; on déploie la zone, elle inflige des dégâts tout au long de sa durée,
+  et au moment où elle se referme, le point final inflige plus de dégâts ; sur les boss, qui prennent beaucoup de place,
+  ça lui permet d'être efficace » ; puis « il faut un indicateur visuel qui explique les dégâts du point à la fin : un
+  petit faisceau de lumière qui monte vers le haut ») — il avait écarté le changement de camp et l'arrêt dans le temps
+  (« sur un boss, ce serait complètement abusé ») : `Arme.coupe.fin` (30, de moi) — à la fermeture, tout insecte dont le
+  corps couvre le centre de la tranche (`c.ennemi.rayon`) le perd d'un coup ; l'événement `coupeFinie` dit combien il en
+  a frappé. Un insecte resté au cœur prend donc 21 + 30. LE DESSIN : dans le dernier quart, quatre crans se resserrent
+  sur le centre, qui s'allume (c'est là que ça va frapper) ; à la fermeture, UN FAISCEAU DE LUMIÈRE JAILLIT DU POINT VERS
+  LE HAUT (70 pixels en 0,1 s, blanc au cœur, plein puis qui s'amincit et s'efface en 0,55 s), un éclat à son pied, une
+  onde ; plus large, avec une gerbe et une secousse, s'il a frappé. *Mesuré à la capture* : translucide dès le départ, la
+  trame hachait le faisceau en pointillé ; il est plein tant qu'il est jeune. Le son `pointCoupe` (un coup sourd et un
+  « tching » de cristal qui monte), annoncé en avance comme le dé. *Vu à la capture* : sur les petits insectes qui
+  chargent, le point final tombe le plus souvent à vide — il est pour ce qui reste, les gros et les boss.

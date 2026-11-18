@@ -460,6 +460,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const rebondsAnnonces = new Set<string>()
   /** Les dés du destin dont l'impact a déjà sonné en avance. */
   const desAnnonces = new Set<number>()
+  /** Les coupes dont le point final a déjà sonné en avance. */
+  const coupesAnnoncees = new Set<number>()
   /** L'instant où chaque rival a pris un obus (il blanchit), et celui du dernier coup pris par le bouclier (son anneau flashe). */
   const toucheEnnemiA = new Map<number, number>()
   let bouclierA = -10
@@ -1782,6 +1784,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (desAnnonces.has(dd.id) || dd.tombe - m.t > avance) continue
       desAnnonces.add(dd.id)
       jouer('impactDe', { dx: dd.x - v.x, dy: dd.y - v.y })
+    }
+    // LES COUPES : l'heure de leur point final est écrite dès qu'elles paraissent (voir Arme.coupe)
+    for (const co of m.coupes) {
+      const fin = co.nee + (CONF.armes[co.arme]?.coupe?.duree ?? 0)
+      if (coupesAnnoncees.has(co.id) || fin - m.t > avance) continue
+      coupesAnnoncees.add(co.id)
+      jouer('pointCoupe', { dx: co.x - v.x, dy: co.y - v.y })
     }
   }
   /** Le minerai choisi à l'entrepôt. */
@@ -3807,6 +3816,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesGaz(p)
       dessinerLesHypercubes(p)
       dessinerLesDes(p)
+      dessinerLesFaisceauxDeCoupe(p)
       dessinerLesParasites(p)
       dessinerLElectricite(p)
       dessinerLesLasers(p)
@@ -9052,8 +9062,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * TRANCHE, pleine d'une lumière pâle, ses bords vifs, ses sommets blancs — un point qui s'ouvre en triangle, devient
    * hexagone, se referme en triangle retourné, puis en point. À chaque coup, elle s'allume ; elle paraît d'un éclair et
    * s'éteint en une poignée d'étincelles.
+   * (… ET SON POINT FINAL SE VOIT — Keko, 18/11 : « il faut un indicateur visuel qui explique les dégâts du point à la
+   * fin : on peut refermer sur un point et faire un petit faisceau de lumière qui monte vers le haut » : dans son dernier
+   * quart, quatre crans se resserrent sur le centre et il s'allume — c'est là que ça va frapper ; à la fermeture, UN
+   * FAISCEAU DE LUMIÈRE JAILLIT DU POINT VERS LE HAUT, blanc au cœur, un éclat à son pied, une onde ; plus fort s'il a
+   * frappé quelque chose)
    */
   const eclairsDeCoupe: { x: number; y: number; t0: number }[] = []
+  const faisceauxDeCoupe: { x: number; y: number; t0: number; touches: number }[] = []
+  const DUREE_DU_FAISCEAU = 0.55
+  const HAUTEUR_DU_FAISCEAU = 70
   function dessinerLesCoupes(p: Peintre): void {
     for (let i = eclairsDeCoupe.length - 1; i >= 0; i--) if (t - eclairsDeCoupe[i].t0 > 0.25) eclairsDeCoupe.splice(i, 1)
     if ((m.coupes.length === 0 && eclairsDeCoupe.length === 0) || m.phase !== 'vol') return
@@ -9092,12 +9110,56 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         for (const q of f) p.dot(q.x, q.y, N.WHITE)
       } else p.dot(co.x, co.y, lu[5], vu)
+      // (LE POINT QUI VA FRAPPER : dans son dernier quart, quatre crans se resserrent sur le centre, qui s'allume)
+      if (u > 0.75) {
+        const w = (u - 0.75) / 0.25
+        const d0 = 3 + 9 * (1 - w)
+        for (let j = 0; j < 4; j++) {
+          const a = an * 2 + (j * Math.PI) / 2
+          p.line(co.x + Math.cos(a) * d0, co.y + Math.sin(a) * d0, co.x + Math.cos(a) * (d0 + 3), co.y + Math.sin(a) * (d0 + 3), lu[5], 0.5 + 0.5 * w)
+        }
+        p.glow(co.x, co.y, 4 + 6 * w, lu[5], 0.3 + 0.5 * w)
+        p.dot(co.x, co.y, N.WHITE)
+      }
     }
     // (L'ÉCLAIR où elle paraît : une étoile de lumière qui s'éteint vite)
     for (const e of eclairsDeCoupe) {
       const k = 1 - (t - e.t0) / 0.25
       p.glow(e.x, e.y, 14, lu[5], 0.8 * k)
       for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let d = 1; d <= Math.round(5 * k); d++) p.dot(e.x + ax * d, e.y + ay * d, d > 3 * k ? sp[5] : N.WHITE, k)
+    }
+    p.place(0, 0)
+  }
+  /** En l'air, au-dessus de tout : le faisceau de lumière qui jaillit du point final d'une coupe. */
+  function dessinerLesFaisceauxDeCoupe(p: Peintre): void {
+    for (let i = faisceauxDeCoupe.length - 1; i >= 0; i--) if (t - faisceauxDeCoupe[i].t0 > DUREE_DU_FAISCEAU) faisceauxDeCoupe.splice(i, 1)
+    if (faisceauxDeCoupe.length === 0 || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const { sp, lu } = tonsDuCube()
+    for (const fx of faisceauxDeCoupe) {
+      const age = t - fx.t0
+      const u = age / DUREE_DU_FAISCEAU
+      const fort = fx.touches > 0 ? 1 : 0.6
+      // (il jaillit vite jusqu'en haut, puis s'amincit et s'efface)
+      const monte = Math.min(1, age / 0.1)
+      const haut = HAUTEUR_DU_FAISCEAU * fort * monte
+      const k = 1 - u
+      // (PLEIN tant qu'il est jeune, sauf sa pointe — mesuré : translucide dès le départ, la trame le hachait en pointillé ;
+      // plus large s'il a frappé)
+      const demi = fx.touches > 0 ? (u < 0.35 ? 2 : u < 0.7 ? 1 : 0) : u < 0.35 ? 1 : 0
+      for (let dy = 0; dy <= haut; dy++) {
+        const f = dy / Math.max(1, haut)
+        const a = u < 0.45 && f < 0.75 ? 1 : k * (1 - f * 0.7)
+        for (let dx = -demi; dx <= demi; dx++) p.dot(fx.x + dx, fx.y - dy, dx === 0 ? N.WHITE : lu[5], a)
+        if (dy % 4 === 0) p.glow(fx.x, fx.y - dy, 4 + 3 * fort, sp[4], 0.25 * a)
+      }
+      // (son pied : un éclat à quatre branches, une onde au sol)
+      if (u < 0.5) {
+        const b = (1 - u / 0.5) * fort
+        p.glow(fx.x, fx.y, 16 * fort, lu[5], 0.8 * b)
+        for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let d = 1; d <= Math.round(7 * b); d++) p.dot(fx.x + ax * d, fx.y + ay * d, d > 4 * b ? sp[5] : N.WHITE, b)
+      }
+      p.ring(fx.x, fx.y, 3 + 12 * Math.min(1, u * 2), 1, lu[4], 0.8 * k * fort)
     }
     p.place(0, 0)
   }
@@ -12714,12 +12776,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           eclairsDeCoupe.push({ x: ev.x, y: ev.y, t0: t })
           break
         case 'coupeFinie': {
-          // (elle s'est refermée en un point : quelques étincelles de lumière)
+          // (elle s'est refermée en un point : son coup de cristal — sauf s'il a sonné en avance —, LE FAISCEAU qui jaillit
+          // vers le haut, une gerbe, une secousse s'il a frappé)
+          if (coupesAnnoncees.has(ev.id)) coupesAnnoncees.delete(ev.id)
+          else jouer('pointCoupe', { dx: ev.x - v.x, dy: ev.y - v.y })
+          faisceauxDeCoupe.push({ x: ev.x, y: ev.y, t0: t, touches: ev.touches })
           const { sp, lu } = tonsDuCube()
-          for (let i = 0; i < 6; i++) {
-            const a = (i / 6) * Math.PI * 2 + R.range(-0.3, 0.3)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.2, 0.4), i % 2 === 0 ? lu[5] : sp[5], 1, 1)
+          for (let i = 0; i < (ev.touches > 0 ? 12 : 6); i++) {
+            const a = (i / 12) * Math.PI * 2 + R.range(-0.3, 0.3)
+            const vit = R.range(20, ev.touches > 0 ? 60 : 35)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit - 15, R.range(0.2, 0.45), [N.WHITE, lu[5], sp[5]][i % 3], 1, 1.5)
           }
+          if (ev.touches > 0) secousse = Math.max(secousse, 0.22)
           break
         }
         case 'de':
@@ -13523,6 +13591,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesGaz(p)
     dessinerLesHypercubes(p)
     dessinerLesDes(p)
+    dessinerLesFaisceauxDeCoupe(p)
     dessinerLesParasites(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)

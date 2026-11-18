@@ -2259,7 +2259,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const plus = Math.max(...[1, 2].flatMap((h) => coupeDUnCube(h).map((p) => Math.hypot(p.x, p.y))))
   verifier(`la tranche d'un cube par le plan perpendiculaire à sa diagonale : ${tranches} sommets à 0,3, 1, 1,5, 2 et 2,7 ; rien à 0 et à 3 ; au plus loin √(2/3) (${plus.toFixed(3)})`, tranches === '3,3,6,3,3' && coupeDUnCube(0).length === 0 && coupeDUnCube(3).length === 0 && Math.abs(plus - Math.sqrt(2 / 3)) < 1e-9)
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const coupe = { id: 'coupe', cadence: 99, degats: 3, portee: 100, vitesse: 0, vie: 0, dispersion: 0, guide: false, coupe: { duree: 2, rayon: 30, periode: 0.25, tour: 0.8 } }
+  const coupe = { id: 'coupe', cadence: 99, degats: 3, portee: 100, vitesse: 0, vie: 0, dispersion: 0, guide: false, coupe: { duree: 2, rayon: 30, periode: 0.25, tour: 0.8, fin: 30 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [coupe], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const lancer = (insectes: ReturnType<typeof insecte>[]) => {
     const w = nouveauMonde(cfg, 3)
@@ -2271,9 +2271,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     }
     return { w, ev, pv: insectes.map((e) => 1000 - (w.ennemis.find((o) => o.id === e.id)?.pv ?? 1000)) }
   }
-  // (au cœur de la nuée : l'insecte qui a trois voisins ; un quatrième à 45, au-delà de sa tranche)
-  const a = lancer([insecte(1, 60, 0), insecte(2, 62, 3), insecte(3, 58, -3), insecte(4, 105, 0)])
-  verifier(`une coupe paraît une fois, sur la nuée, frappe sept fois ce qui est en son cœur (${a.pv.join(' / ')} : 21 aux trois du cœur, rien à 45), puis se referme`, a.ev.filter((e) => e.type === 'coupe').length === 1 && a.pv.join() === '21,21,21,0' && a.ev.some((e) => e.type === 'coupeFinie') && a.w.coupes.length === 0)
+  // (au cœur de la nuée : l'insecte qui a deux voisins tout près, sous le point final ; un quatrième à 15, dans la
+  // tranche mais pas sous le point ; un cinquième à 55, au-delà de la tranche)
+  const a = lancer([insecte(1, 60, 0), insecte(2, 62, 3), insecte(3, 58, -3), insecte(4, 75, 0), insecte(5, 115, 0)])
+  const fin = a.ev.find((e) => e.type === 'coupeFinie') as Extract<Evenement, { type: 'coupeFinie' }> | undefined
+  verifier(`une coupe paraît une fois, sur la nuée, frappe sept fois ce qu'elle couvre, puis son point final frappe ce qui est dessous (${a.pv.join(' / ')} : 21 + 30 aux trois sous le point, moins à celui à 15, rien à 55)`, a.ev.filter((e) => e.type === 'coupe').length === 1 && a.pv[0] === 51 && a.pv[1] === 51 && a.pv[2] === 51 && a.pv[3] > 0 && a.pv[3] < 30 && a.pv[4] === 0 && fin?.touches === 3 && a.w.coupes.length === 0)
   const b = lancer([insecte(1, 110, 0)])
   verifier(`à 110, au-delà de sa portée (100) : rien ne paraît`, b.ev.every((e) => e.type !== 'coupe'))
 }

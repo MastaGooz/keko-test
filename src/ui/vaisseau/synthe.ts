@@ -833,6 +833,15 @@ const RECETTES = {
       souffle(m, h, 0, 0.3, 0, { f: 2600, glisse: { vers: 4200, en: 1, droit: true }, q: 1.6, bande: true, a: 0.8, d: 1.2, large: true })
     },
   },
+  /** LE POINT FINAL DE LA COUPE FRAPPE ET SON FAISCEAU JAILLIT : un coup sourd, un « tching » de cristal clair qui monte, un souffle qui s'élève */
+  pointCoupe: {
+    duree: 0.9, niveau: 0.2, salle: [0.4, 0.16], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.8, 0, { f: 140, glisse: { vers: 60, en: 0.12 }, a: 0.001, d: 0.18, partiels: CORPS, sature: 1.4 })
+      note(m, 0, 0.7, 0, { f: 1320 * (0.97 + 0.06 * h.next()), glisse: { vers: 2100, en: 0.15, droit: true }, a: 0.001, d: 0.45, battement: 8, partiels: [[1, 1, 1], [2.76, 0.3, 0.5], [5.4, 0.12, 0.3]] })
+      souffle(m, h, 0, 0.4, 0, { f: 2400, glisse: { vers: 6000, en: 0.2, droit: true }, q: 1.5, bande: true, a: 0.005, d: 0.25 })
+    },
+  },
   /** LE DÉ S'ABAT : un coup grave et lourd, un éclat de verre qui se brise, des éclats qui tintent */
   impactDe: {
     duree: 0.9, niveau: 0.26, salle: [0.4, 0.16], variantes: 3,
