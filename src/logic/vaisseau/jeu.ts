@@ -759,6 +759,13 @@ export type Arme = {
    * plus gros » : `rayon` est la zone d'un 4, chaque point de plus ou de moins l'élargit ou la resserre de `pas` —
    * `zoneDuDe`)
    */
+  /**
+   * UN TIR QUI NE MANQUE PAS (le canon laser du Chasseur, Keko, 18/11 : « un tir de laser à la Star Wars, vert, très
+   * rapide, qui touche systématiquement une cible : il ne faut pas qu'on loupe la cible ») : l'obus part ACCROCHÉ à
+   * l'insecte qu'il vise (`Obus.verrou`) et, à chaque pas, file droit vers là où il est ; plus près qu'un pas, il le touche.
+   * Sa cible morte avant, il continue tout droit.
+   */
+  infaillible?: boolean
   de?: { roule: number; chute: number; /** La zone d'un 4. */ rayon: number; /** Ce que chaque point du dé ajoute à la zone (ou lui retire, sous 4). */ pas: number }
   /**
    * LA COUPE (la troisième arme du Tesseract, Keko, 18/11 : « je voudrais bien voir ce que ça donne visuellement, la
@@ -813,7 +820,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -4120,6 +4127,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     let vise: number
     // (une boule de napalm vole juste le temps d'atteindre la cible — là où elle sera)
     let vieDuTir = arme.vie
+    // (la cible visée : un tir infaillible s'y accroche)
+    let cibleDuTir: Ennemi | null = null
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
     else {
       let cible: Ennemi | null = null
@@ -4134,6 +4143,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (enVue(e) && d < dc) (dc = d), (cible = e)
       }
       if (cible === null) return
+      cibleDuTir = cible
       const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
       // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
@@ -4152,7 +4162,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.zone === undefined ? {} : { zone: arme.zone }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...(arme.zone === undefined ? {} : { zone: arme.zone }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
     ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
@@ -4170,8 +4180,27 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       o.vx = Math.cos(cap) * vit
       o.vy = Math.sin(cap) * vit
     }
-    o.x += o.vx * dt
-    o.y += o.vy * dt
+    // (UN TIR INFAILLIBLE file droit vers l'insecte auquel il est accroché, là où il est ; plus près qu'un pas, il est sur
+    // lui — la touche se fait plus bas, comme pour les autres)
+    let bouge = true
+    if (o.verrou !== undefined) {
+      const e = m.ennemis.find((x) => x.id === o.verrou)
+      if (e === undefined) delete o.verrou
+      else {
+        const dx = e.corps.x - o.x
+        const dy = e.corps.y - o.y
+        const d = Math.hypot(dx, dy)
+        const vit = Math.hypot(o.vx, o.vy)
+        if (d <= vit * dt) (o.x = e.corps.x), (o.y = e.corps.y), (bouge = false)
+        else (o.vx = (dx / d) * vit), (o.vy = (dy / d) * vit)
+        // (il ne meurt pas en route vers elle)
+        o.vie = Math.max(o.vie, dt)
+      }
+    }
+    if (bouge) {
+      o.x += o.vx * dt
+      o.y += o.vy * dt
+    }
     let fini = o.vie <= 0
     let eclate = false
     // (une boule de napalm ne touche rien en vol : elle passe au-dessus ; à terre, elle devient une flaque)

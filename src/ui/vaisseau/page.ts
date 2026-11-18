@@ -1054,7 +1054,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-coupe'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-laser', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-coupe'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -3606,6 +3606,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LES ARMES, DITES SANS CHIFFRES (Keko, 17/11 : « juste le nom de l'arme et une petite description ») : ce qu'elle fait, à voir. */
   const DESCRIPTIONS_DES_ARMES: Record<string, string> = {
     'arme-canon': 'Des obus lourds, tirés d’une aile puis de l’autre, droit devant.',
+    'arme-laser': 'Des traits laser verts, tirés d’une aile puis de l’autre, si rapides qu’ils ne manquent jamais leur cible.',
     'arme-rafale': 'Une pluie de balles rapides, qui s’éparpillent un peu.',
     'arme-minimissiles': 'Des missiles guidés, qui rattrapent leur cible et explosent à l’impact.',
     'arme-flammes': 'Un cône de feu au nez : il arrose de près, et ce qu’il touche brûle encore.',
@@ -10369,6 +10370,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   /** Les traits de l'ennemi : un fuseau violet-blanc le long de sa vitesse, une lueur. */
+  /** Le vert du canon laser, du sombre au blanc. */
+  const LASER_VERT = ['#0a3a12', '#1a8a2a', '#36d856', '#8dffa0', '#e8ffe8'].map((c) => N.hex(c))
   function dessinerLesTirs(p: Peintre): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const tr of m.tirs) {
@@ -10400,7 +10403,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
       const uy = o.vy / l
-      if (o.arme === 'missiles') {
+      if (o.arme === 'laser') {
+        // (UN TRAIT LASER À LA STAR WARS — Keko, 18/11 : « un trait laser un peu plus gros, vert, très rapide » : un trait de
+        // quatorze pixels, son cœur presque blanc sur trois, un liseré vert de chaque côté, la pointe blanche, une lueur verte
+        // tout du long — mesuré à la capture : sur trois pixels seulement, il se lisait comme un fil)
+        const nx = -uy
+        const ny = ux
+        const L = 14
+        p.glow(o.x - ux * 6, o.y - uy * 6, 10, LASER_VERT[2], 0.6)
+        for (const k of [-2, 2]) p.line(o.x - ux * (L - 3) + nx * k, o.y - uy * (L - 3) + ny * k, o.x - ux * 2 + nx * k, o.y - uy * 2 + ny * k, LASER_VERT[1])
+        for (const k of [-1, 1]) p.line(o.x - ux * (L - 1) + nx * k, o.y - uy * (L - 1) + ny * k, o.x - ux + nx * k, o.y - uy + ny * k, LASER_VERT[3])
+        p.line(o.x - ux * L, o.y - uy * L, o.x, o.y, LASER_VERT[4])
+        p.px(o.x, o.y, N.WHITE)
+        p.px(o.x - ux, o.y - uy, N.WHITE)
+      } else if (o.arme === 'missiles') {
         p.line(o.x - ux * 4, o.y - uy * 4, o.x, o.y, COQUE[5])
         p.px(o.x, o.y, N.hex('#ff5a5a'))
         p.line(o.x - ux * 7, o.y - uy * 7, o.x - ux * 4, o.y - uy * 4, FEU[5])

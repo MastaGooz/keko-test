@@ -5710,3 +5710,25 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   que le reste du grid ») : `FONDS_DES_RACES.humains` passe de #0e1626 / #16223a / #2a4470 à #140c04 / #24160a / #5c3a12,
   à la clarté des fonds de l'essaim et des innommés. LE MÉDAILLON DE LA FICHE GARDE SON BLEU (`FOND_DU_MEDAILLON_HUMAIN`,
   les anciennes teintes) : Keko ne parlait que de la grille, et l'écu d'or se détache du bleu.
+- LE SON DE MORT D'UN INSECTE, UNE EXPLOSION BIOLOGIQUE (Keko, 18/11 : « un truc qui fasse moins bruit de caisse claire,
+  là on dirait vraiment un claquement ; qu'on entende vraiment un son biologique, d'explosion biologique ; de bonne
+  qualité ») : la recette `splash` refaite. La caisse claire, c'était le corps à quatre partiels saturé (CORPS) sous un
+  souffle large autour de 1 100 Hz et un second vers 2 600 Hz. Maintenant : un « boumf » sourd (une fondamentale grave
+  qui s'enfonce de 105 à 42 Hz, presque sans partiels), un souffle étouffé en passe-bas qui se referme (la chair qui
+  cède), un gargouillis (sept petites résonances serrées, Q 7, entre 300 et 800 Hz, en rafale), des bulles qui éclatent
+  (des notes qui montent vite) et trois gouttes qui retombent ; quatre variantes. MESURÉ (`synthetiser` hors navigateur,
+  sa FFT) : le centre du spectre passe de 896 à 225 Hz, l'énergie au-dessus de 2 kHz de 11,8 % à 0,5 % — et la bande
+  300–2 000 Hz, celle qu'un haut-parleur de téléphone rend, reste au même niveau (55,8 → 52,5 à 55,6 dB selon la
+  variante) : on l'entend toujours au téléphone. Les morts gelées et brûlées gardent leurs sons.
+- LE CANON LASER DU CHASSEUR (Keko, 18/11 : « changer le canon pour canon laser, qu'il tire un trait laser un peu plus
+  gros, la sensation d'un tir de laser à la Star Wars, un tir vert très rapide qui touche systématiquement une cible ; il
+  ne faut pas qu'on loupe la cible ») : la pièce `arme-laser` (« Canon laser », id `laser`) prend la place du canon dans
+  la liste du Chasseur (`ARMES_PAR_VAISSEAU`) ; le canon reste celui de `?vaisseau` et du rival. Même cadence et mêmes
+  dégâts que le canon, tiré d'une aile puis de l'autre, mais le trait file à 420 (le canon : 170) et il est
+  `Arme.infaillible` : l'obus part ACCROCHÉ à l'insecte visé (`Obus.verrou`) et, à chaque pas, file droit vers là où il
+  est — plus près qu'un pas, il est sur lui ; sa cible morte avant, il continue tout droit. Vérifié : un insecte qui file
+  de côté à 90 et fait demi-tour toutes les 0,4 s, 46 traits sur 46 touchent (non accroché : 5 sur 39). LE DESSIN : un
+  trait de quatorze pixels, le cœur presque blanc, un liseré vert de chaque côté, la pointe blanche, une lueur verte ;
+  sur l'aile, un fût fin à émetteur émeraude. *Mesuré à la capture* : à 520 et sur trois pixels, il ne restait qu'une
+  image et se lisait comme un fil. LE SON `laser` : un « piou » qui tombe très vite de l'aigu au grave, métallique et
+  battu, sur un claquement d'énergie bref.

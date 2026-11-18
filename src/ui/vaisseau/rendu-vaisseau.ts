@@ -1473,6 +1473,7 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   // (son railgun aussi — passé du Pulsar au Prisme, Keko, 16/11)
   if (id === 'faisceau' || id === 'rail') return { x: CRISTAL_DU_PRISME.x + 4.4, y: 0 }
   if (id === 'rayon') return { x: 10.2, y: 0 }
+  if (id === 'laser') return { x: 3.4, y: s * 6.2 }
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
 /** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
@@ -1516,6 +1517,14 @@ export function formesDeLArme(id: string, s: number): Forme[] {
     return [
       { pts: barre(-5.2, s * 6.2, 1.6, s * 6.2, 1.1), mat: 'metal', relief: 'cyl' },
       { pts: barre(0.6, s * 6.2, 2, s * 6.2, 1.5), mat: 'acier', relief: 'cyl' },
+    ]
+  }
+  // (LE CANON LASER : un fût fin et long, une bague, un émetteur vert au bout)
+  if (id === 'laser') {
+    return [
+      { pts: barre(-5.2, s * 6.2, 2.8, s * 6.2, 0.9), mat: 'metal', relief: 'cyl' },
+      { pts: barre(-1, s * 6.2, 0.6, s * 6.2, 1.5), mat: 'acier', relief: 'cyl' },
+      { pts: ovale(3.2, s * 6.2, 0.6, 0.7, 10), mat: 'emeraude', relief: 'dome', dome: { x: 3.2, y: s * 6.2, rx: 0.6, ry: 0.7 } },
     ]
   }
   if (id === 'rafale') {

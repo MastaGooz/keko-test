@@ -2280,6 +2280,39 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`à 110, au-delà de sa portée (100) : rien ne paraît`, b.ev.every((e) => e.type !== 'coupe'))
 }
 
+// LE CANON LASER DU CHASSEUR (Keko, 18/11 : « un tir qui touche systématiquement une cible : il ne faut pas qu'on loupe la
+// cible ») : des insectes qui filent de côté et changent de sens — chaque trait tiré touche ; le même tir, non accroché, en
+// manque
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const laser = { id: 'laser', cadence: 0.25, degats: 6, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true }
+  const essai = (arme: typeof laser | Omit<typeof laser, 'infaillible'>) => {
+    const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [arme], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1e6, vitesseMax: 0, poussee: 0 } }
+    let tirs = 0
+    let touches = 0
+    for (const loin of [40, 80, 115]) {
+      const w = nouveauMonde(cfg, 5)
+      w.ennemis.push(insecte(1, loin, 0))
+      for (let i = 0; i < 240; i++) {
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+        // (il file de côté à 90 par seconde, et fait demi-tour toutes les 0,4 s)
+        const vy = (Math.floor(i / 24) % 2 === 0 ? 1 : -1) * 90
+        w.ennemis[0].corps = { ...w.ennemis[0].corps, vy, y: w.ennemis[0].corps.y + vy / 60 }
+        for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+          if (e.type === 'obus') tirs++
+          if (e.type === 'ennemiTouche') touches++
+        }
+      }
+      tirs -= w.obus.length
+    }
+    return { tirs, touches }
+  }
+  const a = essai(laser)
+  const { infaillible: _, ...nonAccroche } = laser
+  const b = essai(nonAccroche)
+  verifier(`le canon laser ne manque pas un insecte qui file de côté et change de sens : ${a.touches} touches sur ${a.tirs} traits arrivés (non accroché : ${b.touches} sur ${b.tirs})`, a.tirs > 20 && a.touches === a.tirs && b.touches < b.tirs)
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {

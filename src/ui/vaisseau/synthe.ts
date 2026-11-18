@@ -254,6 +254,19 @@ const RECETTES = {
       note(m, 0.045, 1, 0.15, { f: haut, d: 0.26, partiels: MAILLET })
     },
   },
+  /**
+   * LE CANON LASER (le Chasseur, Keko, 18/11 : « la sensation d'un tir de laser à la Star Wars ») : un « piou » — une note
+   * qui tombe très vite de l'aigu au grave, métallique (des partiels serrés), battue, sur un claquement d'énergie bref
+   */
+  laser: {
+    duree: 0.45, niveau: 0.2, salle: [0.3, 0.12], variantes: 4,
+    faire: (m, h) => {
+      const f = 1900 * (0.94 + 0.12 * h.next())
+      note(m, 0, 1, 0, { f, glisse: { vers: f * 0.16, en: 0.16 }, a: 0.001, d: 0.17, battement: 28, partiels: [[1, 1, 1], [1.51, 0.35, 0.8], [2.02, 0.2, 0.6]], sature: 1.3 })
+      note(m, 0, 0.35, 0, { f: f * 0.5, glisse: { vers: f * 0.1, en: 0.12 }, a: 0.001, d: 0.12 })
+      souffle(m, h, 0, 0.25, 0, { f: 5000, glisse: { vers: 2000, en: 0.02 }, q: 1.5, bande: true, a: 0.001, d: 0.015 })
+    },
+  },
   /** le canon : un « poum » feutré */
   canon: {
     duree: 0.7, niveau: 0.3, salle: [0.4, 0.16],
@@ -312,15 +325,35 @@ const RECETTES = {
   /**
    * un insecte s'écrase (le jeu du vortex — Keko, 14/11 : « pas une explosion : une destruction d'insecte, avec du sang
    * vert et un bruit de splash ») : un choc mou et court, un souffle mouillé qui retombe, deux gouttes qui claquent
+   * (… UNE EXPLOSION BIOLOGIQUE — Keko, 18/11 : « moins bruit de caisse claire, là on dirait vraiment un claquement ;
+   * qu'on entende vraiment un son biologique, d'explosion biologique, de bonne qualité » : la caisse claire, c'était le
+   * corps à quatre partiels saturé sous un souffle large autour de 1 100 Hz et un second vers 2 600 Hz. Plus rien d'aigu :
+   * UN « BOUMF » SOURD (une fondamentale grave, presque sans partiels, qui s'enfonce), UN SOUFFLE ÉTOUFFÉ (passe-bas, qui
+   * se referme — la chair qui cède), UN GARGOUILLIS (de petites résonances serrées, entre 300 et 800 Hz, en rafale), DES
+   * BULLES QUI ÉCLATENT (des notes qui montent vite, le bruit d'un liquide) et quelques gouttes qui retombent)
    */
   splash: {
-    duree: 0.7, niveau: 0.75, salle: [0.35, 0.12],
+    duree: 0.8, niveau: 0.7, salle: [0.3, 0.1], variantes: 4,
     faire: (m, h) => {
-      note(m, 0, 0.7, 0, { f: 150, glisse: { vers: 70, en: 0.05 }, a: 0.003, d: 0.16, partiels: CORPS, sature: 1.6 })
-      souffle(m, h, 0, 0.9, 0, { f: 1100, glisse: { vers: 260, en: 0.09 }, q: 1.4, bande: true, a: 0.004, d: 0.22, large: true })
-      souffle(m, h, 0.03, 0.5, 0.2, { f: 2600, glisse: { vers: 900, en: 0.06 }, q: 2, bande: true, a: 0.003, d: 0.1 })
-      note(m, 0.09, 0.25, -0.3, { f: 520, glisse: { vers: 880, en: 0.04, droit: true }, a: 0.004, d: 0.07 })
-      note(m, 0.15, 0.2, 0.3, { f: 640, glisse: { vers: 1040, en: 0.04, droit: true }, a: 0.004, d: 0.06 })
+      // (le boumf : la panse qui crève)
+      note(m, 0, 0.9, 0, { f: 105 * (0.92 + 0.16 * h.next()), glisse: { vers: 42, en: 0.14 }, a: 0.006, d: 0.22, partiels: [[1, 1, 1], [2, 0.18, 0.6]], sature: 1.25 })
+      // (la chair qui cède : un souffle grave, étouffé, qui se referme)
+      souffle(m, h, 0, 0.8, 0, { f: 900, glisse: { vers: 180, en: 0.16 }, q: 0.9, a: 0.004, d: 0.2, large: true })
+      // (le gargouillis : de petites résonances serrées, en rafale)
+      for (let k = 0; k < 7; k++) {
+        const t0 = 0.01 + k * 0.022 * (0.7 + 0.6 * h.next())
+        souffle(m, h, t0, 0.45 * (1 - k / 9), (h.next() - 0.5) * 0.6, { f: 320 + 480 * h.next(), glisse: { vers: 200 + 200 * h.next(), en: 0.03 }, q: 7, bande: true, a: 0.002, d: 0.035 })
+      }
+      // (les bulles qui éclatent : des notes qui montent vite, rondes)
+      for (let k = 0; k < 4; k++) {
+        const f = 260 + 340 * h.next()
+        note(m, 0.04 + 0.05 * k + 0.03 * h.next(), 0.22 * (1 - k / 6), (h.next() - 0.5) * 0.8, { f, glisse: { vers: f * 2.2, en: 0.03, droit: true }, a: 0.002, d: 0.045 })
+      }
+      // (quelques gouttes qui retombent, plus tard, plus douces)
+      for (let k = 0; k < 3; k++) {
+        const f = 380 + 300 * h.next()
+        note(m, 0.22 + 0.09 * k + 0.05 * h.next(), 0.1, (h.next() - 0.5) * 1, { f, glisse: { vers: f * 1.8, en: 0.025, droit: true }, a: 0.002, d: 0.035 })
+      }
     },
   },
   /**
