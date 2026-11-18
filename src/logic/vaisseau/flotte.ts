@@ -147,7 +147,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     classe: 'chasseur',
     race: 'humains',
     plaques: 4,
-    dit: 'Lent et méthodique, il ne combat pas seul : il bâtit sa défense là où il passe.',
+    dit: 'Lent et méthodique, un génie de la mécanique qui ne laisse rien au hasard.',
     pieces: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'],
     serie: { possedees: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'], montees: { coque: 'coque-7', propulseur: 'propulseur-i1' }, outils: [], armes: ['arme-tourelles'] },
     chaine: [],

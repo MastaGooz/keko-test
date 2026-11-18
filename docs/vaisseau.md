@@ -5810,3 +5810,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   comme un serpent. » ; le Tesseract, « Un cube dans un cube, qui se retourne autour d'un cœur de lumière et plie la
   géométrie. » Toutes tiennent en trois lignes à la capture. *La règle : la description d'un vaisseau est sa vision
   d'ensemble — jamais ses armes.* (Le cuirassé, hors du vortex, garde la sienne.)
+- L'INGÉNIEUR (Keko, 18/11 : « ne dis pas qu'il ne combat pas seul : s'il a son fléau, il combat seul ») : « Lent et
+  méthodique, un génie de la mécanique qui ne laisse rien au hasard. » *Une description vaut pour TOUTES les armes du
+  vaisseau : rien qui ne soit vrai qu'avec l'une d'elles.*
