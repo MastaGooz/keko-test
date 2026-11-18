@@ -723,8 +723,13 @@ export type Arme = {
    * de `portee`, son premier contact tombe en deçà, pour que LE PREMIER CONTACT QUI PEUT L'ATTEINDRE tombe sur lui.
    * … ET IL GROSSIT À CHAQUE REBOND — « on ajoute une dimension de taille : plus il rebondit, plus il grossit » : sa zone
    * est `croissance` fois plus large à chaque contact — `rayon` au premier, puis `rayon` × `croissance`, etc.)
+   * (… PUIS TOUS SES BONDS ÉGAUX — Keko, 18/11 : « ne varie pas la portée du premier lancer ; chaque lancer et chaque
+   * rebond font la même taille : la même distance X entre le vaisseau et le premier rebond, puis entre le premier et le
+   * deuxième ; il tire dès qu'un ennemi est à portée du troisième rebond » : le lancer et chaque rebond font `bond` de
+   * long et durent `vol` ; il tire sur un insecte à moins de `bond` × `rebonds`, vers là où il sera au contact qui
+   * tombe le plus près de lui)
    */
-  hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; amorti: number; croissance: number }
+  hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; croissance: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -2777,11 +2782,8 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
   })
 }
 
-/** LES BONDS D'UN HYPERCUBE APRÈS SA CHUTE (voir `Arme.hypercube`) : la longueur et la durée de chacun, du premier au dernier. */
-const bondsDeLHypercube = (hc: NonNullable<Arme['hypercube']>): { longueur: number; duree: number }[] =>
-  Array.from({ length: Math.max(0, hc.rebonds - 1) }, (_, k) => ({ longueur: hc.bond * Math.pow(hc.amorti, k), duree: hc.vol * Math.pow(hc.amorti, k + 1) }))
-/** JUSQU'OÙ PORTE UN HYPERCUBE : sa portée de lancer, plus tous ses bonds. */
-export const allongeDeLHypercube = (a: Arme): number => a.portee + (a.hypercube === undefined ? 0 : bondsDeLHypercube(a.hypercube).reduce((s, b) => s + b.longueur, 0))
+/** JUSQU'OÙ PORTE UN HYPERCUBE : jusqu'à son dernier contact, tous ses bonds de la même longueur. */
+export const allongeDeLHypercube = (a: Arme): number => (a.hypercube === undefined ? a.portee : a.hypercube.bond * a.hypercube.rebonds)
 
 /** L'HYPERCUBE DU TESSERACT (voir `Arme.hypercube`) : le lancer en cloche, les contacts au sol qui frappent, les rebonds. */
 function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
@@ -2789,7 +2791,7 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
   c.armes.forEach((a, i) => {
     const hc = a.hypercube
     if (hc === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    // (le verrouillé à son allonge d'abord, sinon le plus proche — JUSQU'À SON DERNIER REBOND)
+    // (le verrouillé à son allonge d'abord, sinon le plus proche — JUSQU'À SON DERNIER CONTACT)
     const allonge = allongeDeLHypercube(a)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
     const ve = ennemiVerrouille(m)
@@ -2800,24 +2802,14 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     }
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
-    // (QUEL CONTACT TOMBE SUR LUI : le premier qui peut l'atteindre — sa chute s'il est à portée, sinon un rebond, le
-    // premier contact tombant d'autant en deçà ; là où il sera à ce contact-là)
-    const bonds = bondsDeLHypercube(hc)
-    let quand = hc.vol
-    let avant = 0
-    let premier = 0
-    let cap = v.cap
-    for (let k = 0; k < hc.rebonds; k++) {
-      if (k > 0) (quand += bonds[k - 1].duree), (avant += bonds[k - 1].longueur)
-      const x = cible.corps.x + cible.corps.vx * quand
-      const y = cible.corps.y + cible.corps.vy * quand
-      const d = Math.hypot(x - v.x, y - v.y)
-      if (d > 1e-6) cap = Math.atan2(y - v.y, x - v.x)
-      premier = Math.max(0, Math.min(a.portee, d - avant))
-      if (d - avant <= a.portee) break
-    }
-    const x1 = v.x + Math.cos(cap) * premier
-    const y1 = v.y + Math.sin(cap) * premier
+    // (SON CAP : vers là où l'insecte sera au contact qui tombe le plus près de lui ; LE LANCER A TOUJOURS LA MÊME
+    // LONGUEUR, celle d'un bond)
+    const k = Math.max(1, Math.min(hc.rebonds, Math.ceil(dist(cible) / hc.bond)))
+    const x = cible.corps.x + cible.corps.vx * hc.vol * k
+    const y = cible.corps.y + cible.corps.vy * hc.vol * k
+    const cap = Math.hypot(x - v.x, y - v.y) > 1e-6 ? Math.atan2(y - v.y, x - v.x) : v.cap
+    const x1 = v.x + Math.cos(cap) * hc.bond
+    const y1 = v.y + Math.sin(cap) * hc.bond
     m.hypercubes.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x1, y1, depart: m.t, duree: hc.vol, cap, contacts: 0 })
     ev.push({ type: 'hypercube', x: v.x, y: v.y, arme: a.id })
   })
@@ -2841,14 +2833,13 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       ev.push({ type: 'hypercubeFini', x: h.x1, y: h.y1 })
       return false
     }
-    // (IL REBONDIT, plus loin dans le sens de son lancer, plus court et plus bref à chaque fois)
-    const bond = bondsDeLHypercube(hc)[h.contacts - 1]
+    // (IL REBONDIT, plus loin dans le sens de son lancer, d'un bond de la même longueur et de la même durée)
     h.depart += h.duree
-    h.duree = bond.duree
+    h.duree = hc.vol
     h.x0 = h.x1
     h.y0 = h.y1
-    h.x1 = h.x0 + Math.cos(h.cap) * bond.longueur
-    h.y1 = h.y0 + Math.sin(h.cap) * bond.longueur
+    h.x1 = h.x0 + Math.cos(h.cap) * hc.bond
+    h.y1 = h.y0 + Math.sin(h.cap) * hc.bond
     return true
   })
 }

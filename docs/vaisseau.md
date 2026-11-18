@@ -5590,3 +5590,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   GROSSIT » : sa zone et sa taille ×1,3 à chaque contact (`croissance` : 12, puis 15,6, puis 20,3) ; il gonfle d'un coup
   en rebondissant, un peu trop, puis se pose à sa taille. (4) « ESPACE UN PETIT PEU PLUS LES REBONDS » : 40 puis 32 (au
   lieu de 30 puis 21 ; `bond` 40, `amorti` 0,8).
+- L'HYPERCUBE, À PAS ÉGAUX (Keko, 18/11 : « ne varie pas la portée du premier lancer ; chaque lancer et chaque rebond
+  font la même taille : la même distance X entre le vaisseau et le premier rebond, puis entre le premier et le deuxième ;
+  il tire dès qu'un ennemi est à portée du troisième rebond ») : le lancer et les deux rebonds font 50 chacun et durent
+  0,5 s chacun (`bond`, `vol` ; `amorti` retiré) — contacts à 50, 100, 150 du vaisseau ; il tire sur l'insecte le
+  plus proche à 150 (`allongeDeLHypercube` = `bond` × `rebonds`), le cap vers là où il sera au contact qui tombe le
+  plus près de lui. La zone grossit toujours (12, 15,6, 20,3). *Conséquence mesurée dans l'aperçu : un insecte collé au
+  vaisseau, à moins de 50 moins la zone (une trentaine), n'est jamais touché — le cube passe au-dessus de lui ; les
+  insectes de l'aperçu, qui foncent sur le vaisseau, n'y meurent plus.* À trancher par Keko.

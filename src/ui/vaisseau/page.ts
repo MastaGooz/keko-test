@@ -3623,7 +3623,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-drain': 'Il accroche les âmes qui l’approchent et les draine, à toute distance ; leur vie purge sa corruption.',
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
-    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois en grossissant : chaque rebond frappe autour de lui, plus large.',
+    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois à pas égaux en grossissant : chaque rebond frappe autour de lui, plus large.',
   }
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
