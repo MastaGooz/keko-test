@@ -5953,3 +5953,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   et sa flamme élargies d'autant en travers — de bord à bord de la poupe, ±4,3) ; ses braises de vol naissent sur toute sa
   largeur. Le Chasseur garde sa tuyère au milieu, la Salamandre ses deux réacteurs latéraux. Vu à la capture : au
   décollage, une nappe de flamme sous toute la poupe.
+- LE PONT TÔLÉ DE L'INGÉNIEUR, DANS SON APPARENCE « ORIGINE » (Keko, 18/11 : « pour le premier skin de l'ingénieur, dommage
+  qu'il n'y ait pas de texture sur la grosse plaque grise qu'il a sur le dos ») : la soute à tourelles, partie avec
+  l'arme, la couvrait ; les deux autres apparences y ont leurs voyants (et « Chantier » ses bandes de danger). Son habit
+  (`peaux.ts`) : deux joints en long et deux en travers qui la découpent en panneaux, un rivet à chaque croisement et aux
+  coins, une grille d'aération à la poupe. Vu à la capture, avec le fléau (la plaque à nu) et les tourelles (le
+  lance-tourelles par-dessus).

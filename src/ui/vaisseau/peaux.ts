@@ -143,7 +143,21 @@ const PEAUX: Record<string, Peau[]> = {
   ],
   // L'INGÉNIEUR : un caisson kaki, des caissons de graphite
   ingenieur: [
-    origine('kaki', T(46, 0.85, 1.08)),
+    // (… SON PONT TÔLÉ — Keko, 18/11 : « dommage qu'il n'y ait pas de texture sur la grosse plaque grise qu'il a sur le dos »
+    // : la soute à tourelles, partie avec l'arme, la couvrait ; deux joints en long et deux en travers la découpent en
+    // panneaux, un rivet à chaque croisement et aux coins, une grille d'aération à la poupe)
+    {
+      ...origine('kaki', T(46, 0.85, 1.08)),
+      habit: () => ({
+        ailes: [],
+        coque: [
+          ...[-1.05, 1.05].map((y) => plat([[2.4, y - 0.14], [-5.8, y - 0.14], [-5.8, y + 0.14], [2.4, y + 0.14]], 'graphite')),
+          ...[-0.3, -3.1].map((x) => plat([[x + 0.14, -2.8], [x - 0.14, -2.8], [x - 0.14, 2.8], [x + 0.14, 2.8]], 'graphite')),
+          ...[2.1, -0.3, -3.1, -5.5].flatMap((x) => [-2.5, -1.05, 1.05, 2.5].map((y) => plat([[x + 0.22, y - 0.22], [x - 0.22, y - 0.22], [x - 0.22, y + 0.22], [x + 0.22, y + 0.22]], 'acier'))),
+          ...[-4.0, -4.5, -5.0].map((x) => plat([[x + 0.16, -0.7], [x - 0.16, -0.7], [x - 0.16, 0.7], [x + 0.16, 0.7]], 'graphite')),
+        ],
+      }),
+    },
     {
       // un caisson jaune d'engin de chantier, des bandes de danger noires à la poupe, des voyants orange
       id: 'chantier',
