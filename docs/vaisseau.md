@@ -5795,3 +5795,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (ses pièces, plus les deux des humains) → 4 au vortex (`REGLAGES_DU_VORTEX.chasseur.blindage`, `blindageAuVortex`,
   posé après la vie de la race, en vol comme sur la jauge) — l'entier le plus proche de la moitié, un blindage comptant
   des coups entiers.
+- LES DESCRIPTIONS DES VAISSEAUX, UNE VISION D'ENSEMBLE (Keko, 18/11 : « assure-toi qu'on a une vision d'ensemble sur le
+  vaisseau sans rentrer dans trop de détails, et ne spécifie pas les armes dans la description du vaisseau — dans le
+  Kraken, tu parles de son tentacule, mais son tentacule n'est pas tout le temps là ») : les onze autres réécrites comme
+  celle du Chasseur — ce qu'est le vaisseau, son élément ou sa nature, son style ; ni arme, ni mécanique. La Salamandre,
+  « Trapue et robuste, née du feu : elle consume tout ce qui ose l'approcher. » ; la Sentinelle, « Une soucoupe sans
+  avant ni arrière, chargée d'électricité : elle veille et foudroie. » ; l'Ingénieur, « Lent et méthodique, il ne combat
+  pas seul : il bâtit sa défense là où il passe. » ; le Frimas, « Le vaisseau du grand froid : ce qui l'approche
+  ralentit, se fige et se brise. » ; le Pulsar, « Il dompte le plasma et les arcanes, des énergies instables et
+  dévastatrices. » ; le Kraken, « Une bête vivante, massive et vorace, surgie des profondeurs de l'espace. » ; la
+  Vouivre, « Une bête venimeuse et sournoise, qui ronge ses proies à petit feu. » ; le Néant, « Un cœur de néant qui bat
+  entre deux anneaux : il plie l'espace et dévore la lumière. » ; le Prisme, « Un cristal de lumière pris dans sa cage
+  d'arches, d'une pureté aveuglante. » ; le Ver, « Un ver immense, tout en anneaux, qui nage dans le vide en ondulant
+  comme un serpent. » ; le Tesseract, « Un cube dans un cube, qui se retourne autour d'un cœur de lumière et plie la
+  géométrie. » Toutes tiennent en trois lignes à la capture. *La règle : la description d'un vaisseau est sa vision
+  d'ensemble — jamais ses armes.* (Le cuirassé, hors du vortex, garde la sienne.)
