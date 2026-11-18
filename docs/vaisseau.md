@@ -5732,3 +5732,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sur l'aile, un fût fin à émetteur émeraude. *Mesuré à la capture* : à 520 et sur trois pixels, il ne restait qu'une
   image et se lisait comme un fil. LE SON `laser` : un « piou » qui tombe très vite de l'aigu au grave, métallique et
   battu, sur un claquement d'énergie bref.
+- LE LASER PLUS GRAVE ET PLUS ROND ; LES DESCRIPTIONS SUR LEUR PRINCIPE (Keko, 18/11 : « le son est trop criard ; c'est
+  un laser assez lourd, un son un petit peu plus grave, un petit peu plus rond » ; « dans la description de l'arme, ne
+  dis pas qu'il touche à chaque fois, ne rentre pas dans les éléments de gameplay, ni qu'il tire d'une aile puis de
+  l'autre : une généralité, un overview de l'arme, qu'est-ce que ça fait ? Pour le vaisseau, pareil : pas qu'il tourne
+  la tête vers l'ennemi ; l'accent sur la supériorité aérienne, l'agilité, la rapidité ») : le son `laser` part de
+  720 Hz au lieu de 1 900, partiels harmoniques et faibles (plus de quinte métallique), à peine battu, sans saturation,
+  un corps grave dessous, le claquement en passe-bas à 1 600 Hz — MESURÉ : le centre du spectre passe de 1 866 à
+  520 Hz, l'énergie au-dessus de 2 kHz de 14,2 % à 0,2 %. Le canon laser : « Des traits laser verts, lourds et rapides,
+  qui fondent sur l'ennemi. » Le Chasseur : « Le maître du ciel : agile, rapide, il impose sa supériorité dans chaque
+  combat. » (trois lignes à la capture, la limite de la fiche). *LA RÈGLE DES DESCRIPTIONS DU VORTEX : ce que fait
+  l'arme, ce qu'est le vaisseau — pas leurs mécaniques.*

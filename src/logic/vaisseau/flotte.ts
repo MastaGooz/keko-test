@@ -93,7 +93,9 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Chasseur',
     classe: 'chasseur',
     race: 'humains',
-    dit: 'Léger et vif : son nez suit le regard. Deux armes légères au plus.',
+    // (… SA DESCRIPTION SUR SON PRINCIPE — Keko, 18/11 : « ne dis pas qu'il tourne la tête vers l'ennemi, on s'en fout ;
+    // mets plutôt l'accent sur la supériorité aérienne, l'agilité, la rapidité »)
+    dit: 'Le maître du ciel : agile, rapide, il impose sa supériorité dans chaque combat.',
     pieces: ['coque-1', 'coque-2', 'coque-3', 'propulseur-1', 'propulseur-2', 'propulseur-3', 'foreuse-1', 'foreuse-2', 'foreuse-3', 'aimant-1', 'aimant-2', 'radar', 'arme-canon', 'arme-rafale'],
     // (LE CANON EST SON ARME DE BASE — Keko, 14/11 : « je ne veux pas me retrouver sans argent, à repartir avec le
     // vaisseau de base sans armes : comme la foreuse de série, un canon de base que le chasseur puisse embarquer en

@@ -3606,7 +3606,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LES ARMES, DITES SANS CHIFFRES (Keko, 17/11 : « juste le nom de l'arme et une petite description ») : ce qu'elle fait, à voir. */
   const DESCRIPTIONS_DES_ARMES: Record<string, string> = {
     'arme-canon': 'Des obus lourds, tirés d’une aile puis de l’autre, droit devant.',
-    'arme-laser': 'Des traits laser verts, tirés d’une aile puis de l’autre, si rapides qu’ils ne manquent jamais leur cible.',
+    // (… SUR SON PRINCIPE — Keko, 18/11 : « ne dis pas qu'il touche à chaque fois, ni qu'il tire d'une aile puis de
+    // l'autre ; une généralité, un overview de l'arme : qu'est-ce que ça fait ? »)
+    'arme-laser': 'Des traits laser verts, lourds et rapides, qui fondent sur l’ennemi.',
     'arme-rafale': 'Une pluie de balles rapides, qui s’éparpillent un peu.',
     'arme-minimissiles': 'Des missiles guidés, qui rattrapent leur cible et explosent à l’impact.',
     'arme-flammes': 'Un cône de feu au nez : il arrose de près, et ce qu’il touche brûle encore.',

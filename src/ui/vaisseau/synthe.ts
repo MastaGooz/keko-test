@@ -257,14 +257,18 @@ const RECETTES = {
   /**
    * LE CANON LASER (le Chasseur, Keko, 18/11 : « la sensation d'un tir de laser à la Star Wars ») : un « piou » — une note
    * qui tombe très vite de l'aigu au grave, métallique (des partiels serrés), battue, sur un claquement d'énergie bref
+   * (… PLUS GRAVE ET PLUS ROND — Keko, 18/11 : « trop criard ; c'est un laser assez lourd, un son un petit peu plus grave,
+   * un petit peu plus rond » : il part de 720 Hz au lieu de 1 900, ses partiels sont harmoniques et faibles (plus de
+   * quinte métallique), à peine battu, sans saturation ; dessous, un corps grave qui s'enfonce donne le poids ; le
+   * claquement passe de 5 000 à 1 600 Hz, en passe-bas)
    */
   laser: {
-    duree: 0.45, niveau: 0.2, salle: [0.3, 0.12], variantes: 4,
+    duree: 0.5, niveau: 0.24, salle: [0.32, 0.12], variantes: 4,
     faire: (m, h) => {
-      const f = 1900 * (0.94 + 0.12 * h.next())
-      note(m, 0, 1, 0, { f, glisse: { vers: f * 0.16, en: 0.16 }, a: 0.001, d: 0.17, battement: 28, partiels: [[1, 1, 1], [1.51, 0.35, 0.8], [2.02, 0.2, 0.6]], sature: 1.3 })
-      note(m, 0, 0.35, 0, { f: f * 0.5, glisse: { vers: f * 0.1, en: 0.12 }, a: 0.001, d: 0.12 })
-      souffle(m, h, 0, 0.25, 0, { f: 5000, glisse: { vers: 2000, en: 0.02 }, q: 1.5, bande: true, a: 0.001, d: 0.015 })
+      const f = 720 * (0.95 + 0.1 * h.next())
+      note(m, 0, 1, 0, { f, glisse: { vers: f * 0.22, en: 0.18 }, a: 0.003, d: 0.2, battement: 9, partiels: [[1, 1, 1], [2, 0.22, 0.6], [3, 0.06, 0.4]] })
+      note(m, 0, 0.7, 0, { f: 150, glisse: { vers: 60, en: 0.12 }, a: 0.003, d: 0.16, partiels: [[1, 1, 1], [2, 0.15, 0.6]] })
+      souffle(m, h, 0, 0.3, 0, { f: 1600, glisse: { vers: 500, en: 0.05 }, q: 0.8, a: 0.002, d: 0.05 })
     },
   },
   /** le canon : un « poum » feutré */
