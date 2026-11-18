@@ -5782,3 +5782,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   uniquement les informations nécessaires pour comprendre : quel est le type d'arme, comment ça marche ») : « Une rafale
   continue de balles, tirée à très haute cadence sur l'ennemi. » *La règle : le type d'arme et comment elle marche, rien
   d'autre.*
+- LES JAUGES DE VOL GARDENT DE LA MARGE (Keko, 18/11 : « on ne va pas mettre le maximum sur les jauges, parce qu'avec des
+  améliorations, plus tard, on va permettre d'améliorer les statistiques des vaisseaux ; ne va jamais plus haut que 75 % »)
+  : `MARGE_DES_JAUGES` (0,75) ramène toute la jauge étirée aux trois quarts — le meilleur de la flotte à 75 %, le plus
+  faible à 15 %, les écarts gardant leur proportion. Le Chasseur : maniabilité 75 %, accélération 60 %, vitesse 49 %.

@@ -4138,7 +4138,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true): number {
     const jaugesDuModele = (de: ReturnType<typeof modeleDeVaisseau>): Jauge[] => {
       const cf = regleAuVortex(configDuHangar(BASE, de.serie), de.id)
-      const sur = (v: number, e: { min: number; max: number }): number => Math.max(0.05, Math.min(1, VORTEX ? 0.2 + (0.8 * (v - e.min)) / Math.max(1e-9, e.max - e.min) : v / e.max))
+      // (… ET LE MEILLEUR NE VA QU'À 75 % — Keko, 18/11 : « avec des améliorations, plus tard, on pourra améliorer les
+      // statistiques des vaisseaux ; garde un peu de marge, ne va jamais plus haut que 75 % » : toute la jauge étirée est
+      // ramenée aux trois quarts, le plus faible à 15 % — les écarts entre vaisseaux gardent leur proportion)
+      const sur = (v: number, e: { min: number; max: number }): number => Math.max(0.05, Math.min(1, VORTEX ? MARGE_DES_JAUGES * (0.2 + (0.8 * (v - e.min)) / Math.max(1e-9, e.max - e.min)) : v / e.max))
       const ETALONS = etalonsDesJauges()
       // (la vie de SA RACE — Keko, 17/11 ; L'ESSAIM N'A PAS DE LIGNE DE RÉGÉNÉRATION — « on régénère les PV en % » : elle
       // vaut la même part pour tous les siens, une jauge ne dirait rien)
@@ -4206,6 +4209,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LA FLOTTE EST À 20 %, LE MEILLEUR À 100 % ; depuis zéro, tous les vaisseaux tenaient entre 70 et 100 %, et 65 % de
    * vitesse aurait fait du Chasseur le plus lent de tous — `surLaJaugeDuVortex`)
    */
+  /** Le haut des jauges de vol du vortex, pour le meilleur de la flotte : la place des améliorations à venir. */
+  const MARGE_DES_JAUGES = 0.75
   let etalonsDuVortex: typeof ETALONS_DU_BANC | null = null
   const etalonsDesJauges = (): typeof ETALONS_DU_BANC => {
     if (!VORTEX) return ETALONS_DU_BANC
