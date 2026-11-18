@@ -1104,12 +1104,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VORTEX = parametres.has('vortex')
   /**
    * LE VORTEX RÈGLE CERTAINS VAISSEAUX PAR-DESSUS LEURS PIÈCES (Keko, 18/11 : « il faudrait que le chasseur ait la plus
-   * haute maniabilité, sa jauge à fond ; une vitesse assez élevée et une accélération assez élevée aussi ») : un facteur
-   * sur la rotation, au vortex seul — `?vaisseau` garde le même modèle tel quel. Le Chasseur : 7 → 9,1 rad/s, au-dessus de
-   * la Mante (8,4) ; sa pointe (126) est déjà la plus haute de la flotte, sa poussée (111) dans le haut.
+   * haute maniabilité, sa jauge à fond ») : des facteurs sur la pointe, la poussée et la rotation, au vortex seul —
+   * `?vaisseau` garde le même modèle tel quel.
+   * (… PUIS LE MEILLEUR EN MANIABILITÉ SEULEMENT — Keko, 18/11 : « pas le meilleur en vitesse ni en accélération : à fond
+   * en maniabilité, à 80 % en accélération et à plus de 60 % en vitesse », sur la jauge étirée (`etalonsDesJauges`) : sa
+   * rotation 7 → 9,1 rad/s, au-dessus du Ver (8,4) ; sa pointe 126 → 100 (65 % : la flotte va de 88 à 110) ; sa poussée
+   * 111 → 115 (80 % : de 63 à 132))
    */
-  const NEZ_DU_VORTEX: Record<string, number> = { chasseur: 1.3 }
-  const regleAuVortex = (cf: ConfigVaisseau, id: string): ConfigVaisseau => (VORTEX && NEZ_DU_VORTEX[id] !== undefined ? { ...cf, rotation: cf.rotation * NEZ_DU_VORTEX[id] } : cf)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax: number; poussee: number; rotation: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.3 } }
+  const regleAuVortex = (cf: ConfigVaisseau, id: string): ConfigVaisseau => {
+    const r = VORTEX ? REGLAGES_DU_VORTEX[id] : undefined
+    return r === undefined ? cf : { ...cf, vitesseMax: cf.vitesseMax * r.vitesseMax, poussee: cf.poussee * r.poussee, rotation: cf.rotation * r.rotation }
+  }
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
@@ -3617,9 +3623,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (… SUR SON PRINCIPE — Keko, 18/11 : « ne dis pas qu'il touche à chaque fois, ni qu'il tire d'une aile puis de
     // l'autre ; une généralité, un overview de l'arme : qu'est-ce que ça fait ? »)
     'arme-laser': 'Des traits laser verts, lourds et rapides, qui fondent sur l’ennemi.',
-    'arme-mitrailleuse': 'Une pluie serrée de balles jaunes, droites et précises.',
+    // (… ET CE QU'ON EN COMPREND — Keko, 18/11 : « quand le joueur lit la description d'une arme, il doit avoir une
+    // compréhension globale de comment ça fonctionne », sans ses chiffres ni ses mécaniques ; et les missiles pareil)
+    'arme-mitrailleuse': 'Une rafale de petites balles jaunes : chacune frappe peu, mais elles pleuvent sans répit.',
     'arme-rafale': 'Une pluie de balles rapides, qui s’éparpillent un peu.',
-    'arme-minimissiles': 'Des missiles guidés, qui rattrapent leur cible et explosent à l’impact.',
+    'arme-minimissiles': 'Des missiles qui poursuivent leur cible et explosent à l’impact, touchant aussi les ennemis autour.',
     'arme-flammes': 'Un cône de feu au nez : il arrose de près, et ce qu’il touche brûle encore.',
     'arme-rayon': 'Un rayon tombe du toit et trace au sol un trait de feu, qui laisse des flammes.',
     'arme-napalm': 'Une boule de gel lancée en cloche, qui laisse une flaque de feu.',
@@ -4128,7 +4136,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true): number {
     const jaugesDuModele = (de: ReturnType<typeof modeleDeVaisseau>): Jauge[] => {
       const cf = regleAuVortex(configDuHangar(BASE, de.serie), de.id)
-      const sur = (v: number, e: { max: number }): number => Math.max(0.05, Math.min(1, v / e.max))
+      const sur = (v: number, e: { min: number; max: number }): number => Math.max(0.05, Math.min(1, VORTEX ? 0.2 + (0.8 * (v - e.min)) / Math.max(1e-9, e.max - e.min) : v / e.max))
       const ETALONS = etalonsDesJauges()
       // (la vie de SA RACE — Keko, 17/11 ; L'ESSAIM N'A PAS DE LIGNE DE RÉGÉNÉRATION — « on régénère les PV en % » : elle
       // vaut la même part pour tous les siens, une jauge ne dirait rien)
@@ -4192,13 +4200,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LES ÉTALONS DES JAUGES DE VOL (Keko, 18/11 : « l'échelle n'est pas très bonne, personne n'atteint les maximums ») : au
    * vortex, LE MEILLEUR DE SA FLOTTE remplit la jauge — la pointe, la poussée, la rotation de chacun de ses vaisseaux de
    * série, réglages du vortex compris ; ailleurs, les étalons absolus du banc (`ETALONS`).
+   * (… ET LA JAUGE EST ÉTIRÉE SUR LA FLOTTE — Keko, 18/11, choisi entre deux lectures de son « 60 % » : LE PLUS FAIBLE DE
+   * LA FLOTTE EST À 20 %, LE MEILLEUR À 100 % ; depuis zéro, tous les vaisseaux tenaient entre 70 et 100 %, et 65 % de
+   * vitesse aurait fait du Chasseur le plus lent de tous — `surLaJaugeDuVortex`)
    */
   let etalonsDuVortex: typeof ETALONS_DU_BANC | null = null
   const etalonsDesJauges = (): typeof ETALONS_DU_BANC => {
     if (!VORTEX) return ETALONS_DU_BANC
     if (etalonsDuVortex === null) {
       const cfs = modelesDuVortex().map((mo) => regleAuVortex(configDuHangar(BASE, mo.serie), mo.id))
-      const max = (f: (c: ConfigVaisseau) => number): { min: number; max: number } => ({ min: 0, max: Math.max(...cfs.map(f)) })
+      const max = (f: (c: ConfigVaisseau) => number): { min: number; max: number } => ({ min: Math.min(...cfs.map(f)), max: Math.max(...cfs.map(f)) })
       etalonsDuVortex = { vitesse: max((c) => c.vitesseMax), acceleration: max((c) => c.poussee), maniabilite: max((c) => c.rotation) } as unknown as typeof ETALONS_DU_BANC
     }
     return etalonsDuVortex

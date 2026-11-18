@@ -5760,5 +5760,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (3) LES JAUGES DE VOL DU VORTEX se mesurent à SA FLOTTE (`etalonsDesJauges`) : le meilleur de ses vaisseaux de série
   remplit chaque jauge — ailleurs, les étalons absolus du banc restent (`ETALONS`). Et LE VORTEX RÈGLE LE CHASSEUR
   par-dessus ses pièces (`NEZ_DU_VORTEX`, le vortex seul : `?vaisseau` partage ce modèle) : sa rotation × 1,3, de 7 à
-  9,1 rad/s, au-dessus de la Mante (8,4) — la plus haute de la flotte ; sa pointe (126) l'est déjà, sa poussée (111) est
-  à 84 % de celle de la Mante (132). Mesuré à la capture : vitesse et maniabilité à fond, accélération aux cinq sixièmes.
+  9,1 rad/s, au-dessus du Ver (8,4) — la plus haute de la flotte ; sa pointe (126) l'est déjà, sa poussée (111) est
+  à 84 % de celle du Ver (132). Mesuré à la capture : vitesse et maniabilité à fond, accélération aux cinq sixièmes.
+- LE CHASSEUR, LE MEILLEUR EN MANIABILITÉ SEULEMENT ; LA JAUGE ÉTIRÉE ; LES DESCRIPTIONS DES MISSILES ET DE LA
+  MITRAILLEUSE (Keko, 18/11 : « la Mante n'existe plus, c'est devenu le Ver » — je l'avais encore nommée ainsi ; « le
+  chasseur devrait être le meilleur en maniabilité, mais pas le meilleur en vitesse ni en accélération : à fond en
+  maniabilité, à 80 % en accélération et à plus de 60 % en vitesse » ; « quand le joueur lit la description d'une arme,
+  il doit avoir une compréhension globale de comment ça fonctionne ») : LA JAUGE DU VORTEX EST ÉTIRÉE SUR LA FLOTTE — son
+  plus faible à 20 %, son meilleur à 100 % (choisi par Keko : depuis zéro, toute la flotte tenait entre 70 et 100 %, et
+  65 % de vitesse faisait du Chasseur, à 72, le plus lent de tous). Le Chasseur (`REGLAGES_DU_VORTEX`, le vortex seul) :
+  pointe 126 → 100 (65 % : la flotte va de 88 à 110), poussée 111 → 115 (80 % : de 63 à 132), rotation 7 → 9,1 (100 %).
+  La mitrailleuse : « Une rafale de petites balles jaunes : chacune frappe peu, mais elles pleuvent sans répit. »
+  (la première, plus longue, débordait de ses trois lignes à la capture) Les missiles : « Des missiles qui poursuivent leur cible et explosent à l'impact, touchant aussi les
+  ennemis autour. »
