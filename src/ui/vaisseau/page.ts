@@ -9070,7 +9070,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const eclairsDeCoupe: { x: number; y: number; t0: number }[] = []
   const faisceauxDeCoupe: { x: number; y: number; t0: number; touches: number }[] = []
-  const DUREE_DU_FAISCEAU = 0.6
+  const DUREE_DU_FAISCEAU = 0.4
   const HAUTEUR_DU_FAISCEAU = 90
   function dessinerLesCoupes(p: Peintre): void {
     for (let i = eclairsDeCoupe.length - 1; i >= 0; i--) if (t - eclairsDeCoupe[i].t0 > 0.25) eclairsDeCoupe.splice(i, 1)
@@ -9135,6 +9135,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // bien qu'on comprenne qu'il y a des dégâts fort concentrés » : tout aux tons de la tranche, plus de blanc qu'un éclair
   // d'un instant ; il jaillit en 0,06 s, plus haut et plus large ; à son pied, un éclair qui couvre la zone, un carré —
   // une face du cube — qui s'ouvre en tournant, un éclat à huit rayons, deux ondes ; la secousse plus forte)
+  // (… PUIS PLUS RAPIDE — Keko, 18/11 : « accélère un peu l'animation finale du point » : 0,4 s au lieu de 0,6, l'éclair en
+  // 0,06 s, le faisceau qui jaillit en 0,04 s — tout le reste suit, réglé sur la part de sa durée)
   function dessinerLesFaisceauxDeCoupe(p: Peintre): void {
     for (let i = faisceauxDeCoupe.length - 1; i >= 0; i--) if (t - faisceauxDeCoupe[i].t0 > DUREE_DU_FAISCEAU) faisceauxDeCoupe.splice(i, 1)
     if (faisceauxDeCoupe.length === 0 || m.phase !== 'vol') return
@@ -9146,14 +9148,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const fort = fx.touches > 0 ? 1 : 0.65
       const k = 1 - u
       // (L'ÉCLAIR : un instant, la zone entière s'allume, le point blanc)
-      if (age < 0.08) {
-        const e = 1 - age / 0.08
+      if (age < 0.06) {
+        const e = 1 - age / 0.06
         p.glow(fx.x, fx.y, 34 * fort, sp[5], e)
         p.circle(fx.x, fx.y, 2 + 3 * e * fort, N.WHITE)
       }
-      // (LE FAISCEAU : il jaillit en 0,06 s, PLEIN tant qu'il est jeune — translucide, la trame le hachait —, son cœur au
+      // (LE FAISCEAU : il jaillit en 0,04 s, PLEIN tant qu'il est jeune — translucide, la trame le hachait —, son cœur au
       // ton le plus clair de la tranche, ses bords un cran plus sombres ; il s'amincit, puis s'efface par le haut)
-      const haut = HAUTEUR_DU_FAISCEAU * fort * Math.min(1, age / 0.06)
+      const haut = HAUTEUR_DU_FAISCEAU * fort * Math.min(1, age / 0.04)
       const demi = fx.touches > 0 ? (u < 0.25 ? 3 : u < 0.5 ? 2 : u < 0.75 ? 1 : 0) : u < 0.3 ? 2 : u < 0.6 ? 1 : 0
       for (let dy = 0; dy <= haut; dy++) {
         const f = dy / Math.max(1, haut)

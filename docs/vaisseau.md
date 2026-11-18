@@ -5689,3 +5689,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   pixels au départ s'il a frappé) ; À SON PIED, LA FRAPPE CONCENTRÉE : un éclair qui couvre la zone, un carré — une face du
   cube — qui s'ouvre en tournant, un éclat à huit rayons, deux ondes ; dix-huit étincelles et une secousse de 0,32 s'il a
   frappé (0,12 sinon).
+- LE POINT FINAL PLUS RAPIDE (Keko, 18/11 : « accélère un peu l'animation finale du point ») : `DUREE_DU_FAISCEAU` 0,6 →
+  0,4 s, l'éclair 0,08 → 0,06 s, le faisceau qui jaillit en 0,04 s au lieu de 0,06 ; le carré, l'éclat, les ondes et
+  l'amincissement suivent (réglés sur la part de sa durée). La règle ne change pas.
