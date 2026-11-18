@@ -3637,8 +3637,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (choisie.id === armeDuVortex()) motEnRelief(p, 'Équipé', W / 2, y + 4, true)
       else if (aSoi) {
         const bw = largeurDe('Équiper', GRAS) + 22
+        // (ÉQUIPER RAMÈNE AU HANGAR, comme « Piloter » — Keko, 18/11 : « quand on sélectionne une arme, fais un retour vers le
+        // hangar, comme quand on sélectionne un véhicule »)
         bouton(p, Math.round(W / 2 - bw / 2), y, bw, 15, 'Équiper', true, () => {
           choisirLArme(choisie.id)
+          armesOuvertes = false
+          etapeA = t
           feterLEquipement()
         }, 'equipe')
       } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' })

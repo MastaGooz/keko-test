@@ -561,15 +561,15 @@ const RECETTES = {
   // (150 → 260) et le second souffle redescendait de 2 400 à 900 Hz. Tout monte maintenant : le bourdon de 90 à 420 Hz,
   // battu de moins en moins vite — il se resserre —, deux souffles qui grimpent l'un après l'autre, et à la fin une
   // pointe claire, la concentration)
+  // (… SANS SA FIN DANS LES AIGUS — Keko, 18/11 : « la première partie rend bien, le monter vers les aigus à la fin rend
+  // moche » : la seconde voix, le second souffle et la pointe claire sont partis ; le premier souffle plafonne à 1 000 Hz
+  // au lieu de 1 600, les crépitements s'arrêtent à 0,6 s — reste la montée grave du bourdon)
   rayon: {
     duree: 1.3, niveau: 0.3, salle: [0.35, 0.14], variantes: 2,
     faire: (m, h) => {
       note(m, 0, 1, 0, { f: 90, glisse: { vers: 420, en: 0.95, droit: true }, a: 0.06, d: 0.95, battement: 14, partiels: [[1, 1, 1], [2, 0.55, 1], [3, 0.35, 1], [4, 0.2, 1]], sature: 1.3 })
-      note(m, 0.4, 0.45, 0, { f: 210, glisse: { vers: 840, en: 0.55, droit: true }, a: 0.15, d: 0.5, battement: 5 })
-      souffle(m, h, 0, 0.5, -0.5, { f: 400, glisse: { vers: 1600, en: 0.6, droit: true }, q: 1.2, bande: true, a: 0.1, d: 0.55 })
-      souffle(m, h, 0.45, 0.5, 0.5, { f: 1200, glisse: { vers: 3200, en: 0.5, droit: true }, q: 1.3, bande: true, a: 0.1, d: 0.5 })
-      note(m, 0.9, 0.3, 0, { f: 1700, a: 0.01, d: 0.3, battement: 8, partiels: [[1, 1, 1], [2.76, 0.2, 0.5]] })
-      eclats(m, h, 6, 0.1, 0.9, 0.22)
+      souffle(m, h, 0, 0.5, -0.5, { f: 400, glisse: { vers: 1000, en: 0.6, droit: true }, q: 1.2, bande: true, a: 0.1, d: 0.55 })
+      eclats(m, h, 5, 0.1, 0.6, 0.2)
     },
   },
   /** UNE BOULE DE NAPALM PART : un « thoump » de mortier, sourd, et un glouglou de gel */

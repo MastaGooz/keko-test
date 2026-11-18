@@ -5929,3 +5929,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   maintenant entre 140 et 55 Hz, saturé (ses harmoniques s'entendent), le grave d'avant dessous, un grondement en
   passe-bas qui traîne, un claquement d'attaque de quelques millisecondes, des crépitements moins forts. MESURÉ : la bande
   100–300 Hz +10 dB (21,4 → 31,2), l'énergie au-dessus de 600 Hz 43 → 6 %.
+- LE RAYON THERMIQUE SANS SA FIN AIGUË ; ÉQUIPER RAMÈNE AU HANGAR (Keko, 18/11 : « enlève la toute dernière phase sonore du
+  rayon thermique, le moment où ça monte vraiment dans les aigus ; la première partie rend bien » ; « quand on sélectionne
+  une arme, fais un retour vers le hangar, comme quand on sélectionne un véhicule ») : `rayon` perd sa seconde voix, son
+  second souffle et sa pointe claire ; le premier souffle plafonne à 1 000 Hz (1 600 avant), les crépitements s'arrêtent
+  à 0,6 s. MESURÉ (le centre du spectre toutes les 0,15 s) : 138 → 170 → 343 → 826 → 275 → 390 → 590 (il finissait à
+  1 698). « Équiper » ferme le panneau des armes, comme « Piloter » celui des vaisseaux. Vu à la capture.
