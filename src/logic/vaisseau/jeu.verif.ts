@@ -2316,6 +2316,23 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`la mitrailleuse du Chasseur non plus : ${c.touches} touches sur ${c.tirs} balles arrivées`, c.tirs > 20 && c.touches === c.tirs)
 }
 
+// LE VIRAGE (Keko, 18/11 : la maniabilité devient l'agilité — « un vaisseau lourd sera peu maniable, un léger tournera
+// sec ») : lancé vers la droite, le manche vers le haut, un vaisseau agile a viré bien plus loin qu'un lourd en 0,3 s, sans
+// perdre son élan ; sans virage, rien ne change
+{
+  const lance = (virage: number) => {
+    const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, virage }
+    const w = nouveauMonde(cfg, 3)
+    w.vaisseau = { ...w.vaisseau, x: 300, y: 0, vx: 100, vy: 0, cap: 0 }
+    for (let i = 0; i < 18; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: -1 })
+    return { angle: (Math.atan2(-w.vaisseau.vy, w.vaisseau.vx) * 180) / Math.PI, vitesse: Math.hypot(w.vaisseau.vx, w.vaisseau.vy) }
+  }
+  const sans = lance(0)
+  const lourd = lance(1.6)
+  const agile = lance(3.6)
+  verifier(`le virage : lancé à droite, le manche vers le haut, en 0,3 s il a tourné de ${sans.angle.toFixed(0)}° sans virage, ${lourd.angle.toFixed(0)}° lourd, ${agile.angle.toFixed(0)}° agile — vitesse gardée (${agile.vitesse.toFixed(0)})`, agile.angle > lourd.angle + 10 && lourd.angle > sans.angle + 5 && agile.vitesse >= sans.vitesse - 1)
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {

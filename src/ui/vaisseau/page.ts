@@ -909,6 +909,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // LE VAISSEAU DU JEU DU VORTEX A UN CANON DANS CHAQUE AILE, QUI TIRENT À TOUR DE ROLE (Keko, 14/11) : deux canons,
       // chacun à la moitié de la cadence — le vaisseau tire aussi souvent qu'avec un seul, une aile puis l'autre
       if (VORTEX) {
+        // (LE VIRAGE, l'agilité en vol : voir `agiliteDe`)
+        conf = { ...conf, virage: VIRAGE_DU_VORTEX * agiliteDe(conf) }
         const canon = pieceDe(arme)?.arme
         // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
         // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
@@ -1120,7 +1122,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (… ET LA SALAMANDRE ENTRE LE CHASSEUR ET L'INGÉNIEUR — Keko, 18/11 : « réduire un petit peu le blindage de la
   // salamandre, entre le chasseur et l'ingénieur ; l'ingénieur est vraiment la version blindée des vaisseaux humains » :
   // 9 → 7, entre les 4 du Chasseur et les 9 de l'Ingénieur)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.3, blindage: 0.5 }, salamandre: { blindage: 7 / 9 } }
+  // (… ET SA ROTATION × 1,45 — Keko, 18/11 : la maniabilité devient l'agilité, sa rotation divisée par son poids
+  // (`VIRAGE_DU_VORTEX`) ; à × 1,3, le Ver, plus léger, passait devant lui)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.45, blindage: 0.5 }, salamandre: { blindage: 7 / 9 } }
+  /**
+   * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
+   * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
+   * rotation rapportée à son poids (le poids de série, 30, sur le sien) — c'est elle que la jauge « Maniabilité » montre ;
+   * le virage en vol en est `VIRAGE_DU_VORTEX` fois (voir `ConfigVaisseau.virage`) : le Chasseur plie un angle droit en
+   * 0,45 s environ, l'Ingénieur, le plus lourd, en une seconde.
+   */
+  const agiliteDe = (cf: ConfigVaisseau): number => (cf.rotation * POIDS_SERIE) / Math.max(1, cf.masse)
+  const VIRAGE_DU_VORTEX = 0.4
   /** Le blindage d'un vaisseau au vortex, une fois la vie de sa race posée : réglé par `REGLAGES_DU_VORTEX`. */
   const blindageAuVortex = <V extends { coque: number }>(v: V, id: string): V => {
     const f = VORTEX ? REGLAGES_DU_VORTEX[id]?.blindage : undefined
@@ -4171,7 +4184,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const jauges: Jauge[] = [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
-        { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
+        { nom: 'Maniabilité', valeur: sur(VORTEX ? agiliteDe(cf) : cf.rotation, ETALONS.maniabilite), max: 1 },
         // (L'ESSAIM N'A PAS DE BLINDAGE, IL A DE LA VIE — Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un aspect plus point de vie »)
         // (… ET SES BARRES À CASES GARDENT DE LA MARGE — Keko, 18/11 : « la barre de blindage ne doit jamais être pleine, plus
         // tard on permettra son amélioration ; l'ingénieur à 75 % » : au vortex, douze cases pour le blindage, la vie et le
@@ -4244,7 +4257,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (etalonsDuVortex === null) {
       const cfs = modelesDuVortex().map((mo) => regleAuVortex(configDuHangar(BASE, mo.serie), mo.id))
       const max = (f: (c: ConfigVaisseau) => number): { min: number; max: number } => ({ min: Math.min(...cfs.map(f)), max: Math.max(...cfs.map(f)) })
-      etalonsDuVortex = { vitesse: max((c) => c.vitesseMax), acceleration: max((c) => c.poussee), maniabilite: max((c) => c.rotation) } as unknown as typeof ETALONS_DU_BANC
+      etalonsDuVortex = { vitesse: max((c) => c.vitesseMax), acceleration: max((c) => c.poussee), maniabilite: max(agiliteDe) } as unknown as typeof ETALONS_DU_BANC
     }
     return etalonsDuVortex
   }

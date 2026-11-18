@@ -5859,3 +5859,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     AVEC ELLE L'INGÉNIEUR TOURNE LE NEZ VERS LES INSECTES (la scie quitte la liste de `regardVoulu`). Le vortex dessinait
     sans arme un vaisseau à tourelles ou à scie : elles quittent la liste d'`allureMontee`.
   - « Rayon balayant » s'appelle « RAYON THERMIQUE ».
+- LA MANIABILITÉ DEVIENT L'AGILITÉ EN VOL (Keko, 18/11 : « ça change quoi exactement, la maniabilité ? les vaisseaux se
+  tournent tout seuls, est-ce un reliquat ? » — mesuré : au vortex elle ne réglait que le nez, qui pivote seul vers
+  l'insecte ; la poussée suit le manche quel que soit le nez ; un demi-tour en 0,35 s pour le Chasseur, 0,5 s pour
+  l'Ingénieur ; elle ne comptait que pour les armes qui tirent devant et le cône du lance-flammes. Trois voies proposées :
+  la retirer, la rendre sensible, LUI DONNER UN SENS — choisi, avec « un vaisseau lourd sera peu maniable, un léger
+  tournera sec ») : `ConfigVaisseau.virage` (0 par défaut : `?vaisseau` et les insectes ne changent pas) — QUAND ON POUSSE,
+  LA VITESSE PLIE VERS LE MANCHE à `virage` rad/s, sans rien perdre de son élan (`voler`, le joueur seul par son moteur).
+  Au vortex, L'AGILITÉ (`agiliteDe`) est la rotation du propulseur RAPPORTÉE AU POIDS (30, le poids de série, sur le sien)
+  — c'est elle que montre la jauge « Maniabilité » — et le virage en est 0,4 fois (`VIRAGE_DU_VORTEX`) : le Chasseur plie
+  un angle droit en 0,45 s environ, l'Ingénieur (47 t) en une seconde. Le nez garde sa rotation. Le Chasseur passe de
+  × 1,3 à × 1,45 de rotation (`REGLAGES_DU_VORTEX`) : rapportée au poids, celle du Ver (29 t) passait devant la sienne.
+  Vérifié : lancé à droite, le manche vers le haut, en 0,3 s, 28° sans virage, 53° lourd, 83° agile, l'élan gardé. *À
+  juger en jouant : 0,4 est de moi.*

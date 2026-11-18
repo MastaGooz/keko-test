@@ -64,6 +64,14 @@ export const VAISSEAU = {
   rayon: 4,
   /** LA MASSE du vaisseau, en tonnes : le poids total de ses pièces (le hangar la pose ; 30 de série). Elle se mesure à celle des roches, dans un choc. */
   masse: 30,
+  /**
+   * LE VIRAGE, l'agilité en déplacement (Keko, 18/11, pour le vortex : la maniabilité ne réglait plus que le nez, qui se
+   * tourne seul — « un vaisseau lourd sera peu maniable, un vaisseau léger tournera sec ») : quand on pousse, la vitesse
+   * PLIE vers le manche à `virage` radians par seconde, sans rien perdre de son élan — un vaisseau agile vire sec, un
+   * lourd glisse et dérive avant de répondre. 0 : rien ne plie (`?vaisseau`, les insectes) ; le vortex le calcule
+   * (`configDuVol`).
+   */
+  virage: 0,
   /** La part de vitesse rendue par un rebond sur un astéroïde. */
   rebond: 0.45,
   /** En dessous de cette vitesse normale, toucher une roche n'est pas un choc (on s'y appuie, on glisse le long). */
@@ -1253,7 +1261,7 @@ export const solidite = (c: ConfigVaisseau, a: Asteroide): number => c.forage.du
 /** L'écart d'angle le plus court de `de` vers `vers`, dans [−π, π]. */
 const ecartDAngle = (de: number, vers: number): number => Math.atan2(Math.sin(vers - de), Math.cos(vers - de))
 
-type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: number; /** Sa masse, s'il peut traverser les roches légères (le joueur ; le rival n'en a pas). */ masse?: number }
+type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: number; /** Sa masse, s'il peut traverser les roches légères (le joueur ; le rival n'en a pas). */ masse?: number; /** Son virage (voir `ConfigVaisseau.virage`) : le joueur seul. */ virage?: number }
 
 /**
  * Fait voler un corps de `dt` secondes sous une direction (longueur 0 à 1) : la poussée, le frein du vide, le plafond,
@@ -1285,6 +1293,18 @@ export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number
   } else {
     vx *= frein
     vy *= frein
+  }
+  // (LE VIRAGE : la vitesse plie vers le manche, sans perdre son élan, d'autant plus vite qu'on pousse fort)
+  const vir = moteur.virage ?? 0
+  if (vir > 0 && n > 0.05) {
+    const sp = Math.hypot(vx, vy)
+    if (sp > 1) {
+      const a = Math.atan2(vy, vx)
+      const e = ecartDAngle(a, Math.atan2(direction.y, direction.x))
+      const r = a + Math.sign(e) * Math.min(Math.abs(e), vir * force * dt)
+      vx = Math.cos(r) * sp
+      vy = Math.sin(r) * sp
+    }
   }
   const vitesse = Math.hypot(vx, vy)
   if (vitesse > moteur.vitesseMax) {
@@ -4023,7 +4043,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // manche, elle pousse droit devant
   const boost = partDeLaPostcombustion(c, m)
   const pousse = boost > 0 && m.t - m.boostA < c.postcombustion.duree
-  const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon, masse: c.masse } : c
+  const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon, masse: c.masse, virage: c.virage } : c
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
   // (un vaisseau à tourelles ne tourne pas vers son regard : il ne sert plus bas qu'à viser)
   const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
