@@ -5692,3 +5692,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE POINT FINAL PLUS RAPIDE (Keko, 18/11 : « accélère un peu l'animation finale du point ») : `DUREE_DU_FAISCEAU` 0,6 →
   0,4 s, l'éclair 0,08 → 0,06 s, le faisceau qui jaillit en 0,04 s au lieu de 0,06 ; le carré, l'éclat, les ondes et
   l'amincissement suivent (réglés sur la part de sa durée). La règle ne change pas.
+- LES EMBLÈMES DES RACES REPRIS (Keko, 18/11 : « la petite étoile ou le petit plus minuscule au-dessus du blason des
+  humains est moche et pas très centré ; en plus, il n'est pas animé, alors que celui des éthérés et des innommés l'est.
+  Anime aussi celui de l'essaim, et change celui des éthérés, il fait trop flocon de neige ») — `dessinerLEmblemeDeRace` :
+  TOUT EST POSÉ SUR LE PIXEL (le centre est arrondi d'abord : entre deux pixels, le petit plus — des rectangles — se
+  décalait de l'écu — des polygones). LES HUMAINS : l'écu et ses ailes descendus de deux pixels, et au-dessus, sur son
+  axe, UNE ÉTOILE À CINQ BRANCHES dessinée au pixel (cinq sur cinq), cernée d'encre, éclairée à gauche ; une lueur qui
+  respire, toutes les 1,8 s un éclat qui la parcourt de haut en bas et deux petits rayons de côté ; toutes les 2,6 s, un
+  REFLET qui traverse l'écu en biais, dans ses bords. *Mesuré à la capture* : une étoile à quatre branches lisait encore
+  « plus », et dépassait sur le jonc du médaillon. L'ESSAIM : les antennes ondulent (deux segments, chacune son rythme),
+  une lueur passe d'une alvéole à l'autre, les mandibules s'ouvrent et se referment. LES ÉTHÉRÉS : plus d'étoile à huit
+  branches — UNE GEMME TAILLÉE (un losange à quatre facettes) entre DEUX ORBITES INCLINÉES qui se croisent, une lumière
+  sur chacune (la moitié qui passe derrière la gemme dessinée avant elle, plus sombre) ; l'anneau et sa lueur qui tourne
+  restent.

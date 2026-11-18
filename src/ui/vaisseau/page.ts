@@ -3859,8 +3859,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * entre deux ailes ; L'ESSAIM, trois alvéoles de ruche, des antennes et deux mandibules, en vert ; LES ÉTHÉRÉS, une étoile
    * de rune à huit branches, une gemme au cœur, un anneau où tourne une lueur, en cyan ; LES INNOMMÉS, un œil fendu au
    * milieu de six vrilles qui ondulent, en violet. Ils vivent un peu (la lueur qui tourne, les vrilles, l'iris qui bat).
+   * (… REPRIS — Keko, 18/11 : « la petite étoile au-dessus du blason des humains est moche, pas très centrée, et pas
+   * animée alors que celui des éthérés et des innommés l'est ; anime aussi celui de l'essaim, et change celui des éthérés,
+   * il fait trop flocon de neige » : TOUT EST POSÉ SUR LE PIXEL (un centre entre deux pixels décalait le petit plus, un
+   * rectangle, de l'écu, un polygone) ; LES HUMAINS : une étoile à quatre branches qui scintille au-dessus de l'écu, et un
+   * reflet qui le traverse de temps en temps ; L'ESSAIM : les antennes qui ondulent, une lueur qui passe d'une alvéole à
+   * l'autre, les mandibules qui s'ouvrent ; LES ÉTHÉRÉS : une gemme taillée entre deux orbites inclinées qui se croisent,
+   * deux lumières qui y courent — plus d'étoile à huit branches)
    */
-  function dessinerLEmblemeDeRace(p: Peintre, race: Race, cx: number, cy: number): void {
+  function dessinerLEmblemeDeRace(p: Peintre, race: Race, cx0: number, cy0: number): void {
+    const cx = Math.round(cx0)
+    const cy = Math.round(cy0)
     const encre = MATIERES.encre.contour
     // (un polygone cerné d'un pixel d'encre)
     const cerne = (pts: number[][], c: number): void => {
@@ -3872,6 +3881,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.line(x0, y0, x1, y1, c)
     }
     if (race === 'humains') {
+      // (l'écu et ses ailes descendus de deux pixels : au-dessus, la place de l'étoile, dans le médaillon)
+      const cy = Math.round(cy0) + 2
       const G = ['#5a3a08', '#a8650f', '#d99a1c', '#f2c23a', '#fff2a8'].map((c) => N.hex(c))
       for (const s of [-1, 1])
         for (let k = 2; k >= 0; k--) cerne([[cx + s * 6, cy - 7 + k * 4], [cx + s * (16 - k * 2), cy - 10 + k * 5], [cx + s * (14 - k * 2), cy - 6 + k * 5], [cx + s * 6, cy - 3 + k * 4]], G[k === 1 ? 2 : 1])
@@ -3883,34 +3894,102 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(cx - 5, cy + dy, cx, cy + dy + 4, c)
         p.line(cx, cy + dy + 4, cx + 5, cy + dy, c)
       }
-      p.rect(cx - 1, cy - 15, 3, 1, G[4])
-      p.rect(cx, cy - 16, 1, 3, G[4])
+      // (LE REFLET : toutes les 2,6 s, une bande de lumière traverse l'écu en biais, dans ses bords)
+      const ecu = [[cx - 8, cy - 11], [cx + 8, cy - 11], [cx + 8, cy + 1], [cx, cy + 11], [cx - 8, cy + 1]]
+      const dansLEcu = (x: number, y: number): boolean => ecu.every(([ax, ay], i) => {
+        const [bx, by] = ecu[(i + 1) % ecu.length]
+        return (bx - ax) * (y + 0.5 - ay) - (by - ay) * (x + 0.5 - ax) >= 0
+      })
+      const passe = (t % 2.6) / 0.55
+      if (passe < 1) {
+        const d = -22 + 44 * passe
+        for (let y = cy - 11; y <= cy + 11; y++)
+          for (const k of [0, 1, 2]) {
+            const x = cx + Math.round(d + (y - cy) * 0.6) + k
+            if (dansLEcu(x, y)) p.dot(x, y, G[4], k === 1 ? 0.85 : 0.45)
+          }
+      }
+      // (L'ÉTOILE, au-dessus de l'écu, sur son axe : cinq branches dessinées au pixel, cernées d'encre ; une lueur qui
+      // respire, et toutes les 1,8 s un éclat qui la traverse — ses pixels s'allument de haut en bas — et deux petits
+      // rayons de côté qui scintillent)
+      const ETOILE = ['..X..', '.XXX.', 'XXXXX', '.XXX.', '.X.X.']
+      const sy = cy - 17
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ETOILE.forEach((li, j) => [...li].forEach((c, i) => c === 'X' && p.px(cx - 2 + i + dx, sy + j + dy, encre)))
+      const eclat = (t % 1.8) / 0.35
+      ETOILE.forEach((li, j) => [...li].forEach((c, i) => {
+        if (c !== 'X') return
+        const allume = eclat < 1 && Math.abs(j - eclat * 6 + 0.5) < 1
+        p.px(cx - 2 + i, sy + j, allume ? N.WHITE : i < 2 || (i === 2 && j < 2) ? G[4] : G[3])
+      }))
+      p.glow(cx + 0.5, sy + 2.5, 6, G[3], 0.3 + 0.15 * Math.sin(t * 2.6))
+      if (eclat < 1.6) {
+        const k = 1 - Math.abs(eclat - 0.8) / 0.8
+        if (k > 0.3) for (const ax of [-1, 1]) p.px(cx + ax * 4, sy + 2, G[4])
+      }
       return
     }
     if (race === 'essaim') {
       const G = ['#0e2a08', '#1f5a12', '#3a8a1c', '#7cd04a', '#c8f080'].map((c) => N.hex(c))
-      trait(cx - 2, cy - 9, cx - 7, cy - 15, G[3])
-      trait(cx + 2, cy - 9, cx + 7, cy - 15, G[3])
+      // (les antennes ondulent, chacune à son rythme, en deux segments)
+      for (const s0 of [-1, 1]) {
+        const o = Math.sin(t * 2.6 + (s0 > 0 ? 1.3 : 0))
+        const mx = cx + s0 * 4.5
+        const my = cy - 12
+        trait(cx + s0 * 2, cy - 9, mx, my, G[3])
+        trait(mx, my, cx + s0 * (7 + o), cy - 15 - Math.abs(o) * 0.8, G[3])
+      }
       const alveole = (x: number, y: number, r: number): number[][] => Array.from({ length: 6 }, (_, k) => [x + Math.cos(Math.PI / 6 + (k * Math.PI) / 3) * r, y + Math.sin(Math.PI / 6 + (k * Math.PI) / 3) * r])
-      for (const [x, y] of [[cx - 6, cy + 3], [cx + 6, cy + 3], [cx, cy - 4]]) {
+      // (une lueur passe d'une alvéole à l'autre : en haut, à droite, à gauche)
+      const tour = (t * 0.9) % 3
+      ;[[cx, cy - 4], [cx + 6, cy + 3], [cx - 6, cy + 3]].forEach(([x, y], i) => {
+        const ici = Math.max(0, 1 - Math.abs(tour - i - 0.5) * 1.6)
         cerne(alveole(x, y, 6.6), G[1])
         p.poly(alveole(x, y, 4.6), G[2])
-        p.poly(alveole(x - 0.8, y - 0.8, 2.4), G[3])
-      }
-      for (const s of [-1, 1]) cerne([[cx + s * 3, cy + 9], [cx + s * 9, cy + 13], [cx + s * 6, cy + 16], [cx + s * 2, cy + 12]], G[3])
+        p.poly(alveole(x - 0.8, y - 0.8, 2.4), ici > 0.5 ? G[4] : G[3])
+        if (ici > 0) p.glow(x, y, 6, G[3], 0.5 * ici)
+      })
+      // (les mandibules s'ouvrent et se referment)
+      const ouvre = Math.round(1 + Math.sin(t * 3.4))
+      for (const s0 of [-1, 1]) cerne([[cx + s0 * 3, cy + 9], [cx + s0 * (9 + ouvre), cy + 13], [cx + s0 * (6 + ouvre), cy + 16], [cx + s0 * 2, cy + 12]], G[3])
       return
     }
     if (race === 'etheres') {
       const G = ['#06243a', '#0e4a6a', '#1e80a8', '#5ad0f0', '#c8f6ff'].map((c) => N.hex(c))
       p.ring(cx, cy, 14, 1, G[1])
-      const etoile = (n: number, re: number, ri: number, tourne: number): number[][] => Array.from({ length: n * 2 }, (_, k) => {
-        const r = k % 2 === 0 ? re : ri
-        const a = tourne + (k * Math.PI) / n
-        return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
-      })
-      cerne(etoile(8, 11, 4.5, -Math.PI / 2), G[2])
-      p.poly(etoile(4, 11, 3, -Math.PI / 2), G[3])
-      p.poly([[cx, cy - 4], [cx + 3, cy], [cx, cy + 4], [cx - 3, cy]], G[4])
+      // (DEUX ORBITES INCLINÉES qui se croisent autour de la gemme, chacune sa lumière qui y court ; la moitié de l'orbite
+      // qui passe derrière la gemme est dessinée avant elle, plus sombre)
+      const orbite = (u: number, incl: number): [number, number, boolean] => {
+        const ox = Math.cos(u) * 11.5
+        const oy = Math.sin(u) * 4.2
+        return [cx + ox * Math.cos(incl) - oy * Math.sin(incl), cy + ox * Math.sin(incl) + oy * Math.cos(incl), Math.sin(u) > 0]
+      }
+      const ORBITES = [0.6, -0.6]
+      const tracer = (devant: boolean): void => {
+        for (const incl of ORBITES)
+          for (let k = 0; k < 48; k++) {
+            const [x0, y0, d0] = orbite((k / 48) * Math.PI * 2, incl)
+            const [x1, y1] = orbite(((k + 1) / 48) * Math.PI * 2, incl)
+            if (d0 === devant) p.line(x0, y0, x1, y1, devant ? G[3] : G[1])
+          }
+      }
+      const lumieres = ORBITES.map((incl, i) => orbite(t * 1.8 + i * Math.PI, incl))
+      tracer(false)
+      for (const [x, y, d] of lumieres) if (!d) p.px(Math.round(x), Math.round(y), G[2])
+      // (LA GEMME : un losange taillé, quatre facettes, cerné d'encre ; elle luit doucement)
+      const gemme = [[cx, cy - 8], [cx + 5, cy], [cx, cy + 8], [cx - 5, cy]]
+      cerne(gemme, G[2])
+      p.poly([[cx, cy - 8], [cx, cy], [cx - 5, cy]], G[4])
+      p.poly([[cx, cy - 8], [cx + 5, cy], [cx, cy]], G[3])
+      p.poly([[cx, cy], [cx + 5, cy], [cx, cy + 8]], G[1])
+      p.glow(cx, cy, 7, G[3], 0.3 + 0.15 * Math.sin(t * 2.2))
+      p.px(cx - 1, cy - 4, N.WHITE)
+      tracer(true)
+      for (const [x, y, d] of lumieres)
+        if (d) {
+          p.glow(x, y, 4, G[3], 0.6)
+          p.rect(Math.round(x) - 1, Math.round(y), 2, 1, G[4])
+          p.rect(Math.round(x), Math.round(y) - 1, 1, 2, G[4])
+        }
       const a = t * 1.4
       p.rect(Math.round(cx + Math.cos(a) * 14), Math.round(cy + Math.sin(a) * 14), 2, 2, G[4])
       p.glow(cx + Math.cos(a) * 14, cy + Math.sin(a) * 14, 5, G[3], 0.4)
