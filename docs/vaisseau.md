@@ -5705,3 +5705,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   branches — UNE GEMME TAILLÉE (un losange à quatre facettes) entre DEUX ORBITES INCLINÉES qui se croisent, une lumière
   sur chacune (la moitié qui passe derrière la gemme dessinée avant elle, plus sombre) ; l'anneau et sa lueur qui tourne
   restent.
+- LE FOND DES HUMAINS EN AMBRE (Keko, 18/11 : « changer le bleu pour un truc un peu orange-jaune qui matche la couleur
+  du blason, car tous les autres ont un fond de case qui matche un peu leur blason ; pas trop clair, dans les mêmes tons
+  que le reste du grid ») : `FONDS_DES_RACES.humains` passe de #0e1626 / #16223a / #2a4470 à #140c04 / #24160a / #5c3a12,
+  à la clarté des fonds de l'essaim et des innommés. LE MÉDAILLON DE LA FICHE GARDE SON BLEU (`FOND_DU_MEDAILLON_HUMAIN`,
+  les anciennes teintes) : Keko ne parlait que de la grille, et l'écu d'or se détache du bleu.

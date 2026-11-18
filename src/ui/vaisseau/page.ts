@@ -4025,6 +4025,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     etheres: ['#0a3450', '#1e80a8', '#5ad0f0'].map((c) => N.hex(c)),
     innommes: ['#2a1050', '#6a30b0', '#b878ff'].map((c) => N.hex(c)),
   }
+  /** Le fond du médaillon des humains : le bleu de leurs anciens portraits, d'où l'écu d'or se détache. */
+  const FOND_DU_MEDAILLON_HUMAIN = ['#0e1626', '#16223a', '#2a4470'].map((c) => N.hex(c))
   /** Le rayon du médaillon d'une race, son jonc compris. */
   const RAYON_DU_MEDAILLON = 19
   /**
@@ -4042,7 +4044,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLIdentiteDeRace(p: Peintre, race: Race, cx: number, y: number, aSoi: boolean): void {
     const [sombre, moyen, clair] = TEINTES_DES_RACES[race]
-    const [, bas, halo] = FONDS_DES_RACES[race]
+    const [, bas, halo] = race === 'humains' ? FOND_DU_MEDAILLON_HUMAIN : FONDS_DES_RACES[race]
     const encre = MATIERES.encre.contour
     const R = RAYON_DU_MEDAILLON
     const cy = y + R
@@ -4058,9 +4060,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!aSoi) p.disc(cx, cy, R, N.hex('#12161f'), 0.55)
     lignesDuNomDeRace(race).forEach((li, i) => ecrire(p, li, cx, y + 2 * R + 4 + i * 8, aSoi ? clair : COQUE[3], { align: 'center' }))
   }
-  /** Le fond d'un portrait, aux teintes de la race : le haut, le bas, le halo derrière le vaisseau. */
+  /**
+   * Le fond d'un portrait, aux teintes de la race : le haut, le bas, le halo derrière le vaisseau.
+   * (… LES HUMAINS EN AMBRE — Keko, 18/11 : « changer le bleu pour un truc un peu orange-jaune qui matche la couleur du
+   * blason, car tous les autres ont un fond de case qui matche un peu leur blason ; pas trop clair, dans les mêmes tons
+   * que le reste du grid » : à la clarté des fonds de l'essaim et des innommés ; LE MÉDAILLON DE LA FICHE GARDE SON BLEU,
+   * `FOND_DU_MEDAILLON_HUMAIN` — l'écu d'or s'en détache)
+   */
   const FONDS_DES_RACES: Record<Race, number[]> = {
-    humains: ['#0e1626', '#16223a', '#2a4470'].map((c) => N.hex(c)),
+    humains: ['#140c04', '#24160a', '#5c3a12'].map((c) => N.hex(c)),
     essaim: ['#0a1206', '#14220c', '#2e5a18'].map((c) => N.hex(c)),
     etheres: ['#06121c', '#0c2232', '#1e6080'].map((c) => N.hex(c)),
     innommes: ['#0e0616', '#1c0c30', '#4a2272'].map((c) => N.hex(c)),
