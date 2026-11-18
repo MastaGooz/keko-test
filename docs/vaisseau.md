@@ -5682,3 +5682,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   trame hachait le faisceau en pointillé ; il est plein tant qu'il est jeune. Le son `pointCoupe` (un coup sourd et un
   « tching » de cristal qui monte), annoncé en avance comme le dé. *Vu à la capture* : sur les petits insectes qui
   chargent, le point final tombe le plus souvent à vide — il est pour ce qui reste, les gros et les boss.
+- LE POINT FINAL, AUX TONS DE LA ZONE ET PLUS PERCUTANT (Keko, 18/11 : « que l'animation de fin sur le point qui fait des
+  dégâts soit colorée en vert pour rappeler la zone, et un peu plus percutante, pour bien qu'on comprenne qu'il y a des
+  dégâts fort concentrés ») : le faisceau et l'annonce passent aux tons de la tranche (la rampe `spectre` de l'apparence,
+  `tonsDuCube`) — plus de blanc qu'un éclair d'un instant ; le faisceau jaillit en 0,06 s, monte à 90, plus large (sept
+  pixels au départ s'il a frappé) ; À SON PIED, LA FRAPPE CONCENTRÉE : un éclair qui couvre la zone, un carré — une face du
+  cube — qui s'ouvre en tournant, un éclat à huit rayons, deux ondes ; dix-huit étincelles et une secousse de 0,32 s'il a
+  frappé (0,12 sinon).
