@@ -5823,3 +5823,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Chasseur et les 9 de l'Ingénieur. LES PLAQUES (huit cases) : le Chasseur 3, la Salamandre 4, L'INGÉNIEUR 4 → 6 (son
   modèle, `plaques` — elles ne servent qu'au vortex), aux trois quarts. *Vu à la capture* : à douze cases, chacune n'est
   plus qu'un trait, plus fin que les cases des plaques ; ça se compte encore.
+- LES BARRES À DOUZE SEGMENTS, LE « SURBLINDAGE » (Keko, 18/11 : « élargis un peu les cases du blindage et de la vie, je
+  les trouve très fines ; tu peux faire une barre avec juste des petits traits pour distinguer les segments » ; « pour la
+  technologie humaine, le mot plaque est un peu flou ; un terme plus évocateur d'un blindage renforcé ») : au-delà de huit,
+  la jauge à cellules d'une fiche est UNE BARRE D'UN SEUL TENANT, un trait d'encre entre deux segments — six pixels de
+  plein par segment au lieu de trois (`dessinerUneJaugeDePiece`) ; les plaques, à huit, gardent leurs cellules. Leur
+  jauge s'appelle « SURBLINDAGE » (11 lettres, dans la colonne des noms ; le code garde « plaques »).

@@ -4165,7 +4165,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // tard on permettra son amélioration ; l'ingénieur à 75 % » : au vortex, douze cases pour le blindage, la vie et le
         // bouclier — les 9 de l'Ingénieur aux trois quarts ; les plaques gardent leurs huit, les 6 de l'Ingénieur aussi)
         de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true },
-        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: CASES_DE_LA_VIE, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: '', valeur: 0, max: 8 },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: CASES_DE_LA_VIE, cellules: true } : vie.plaques > 0 ? { nom: 'Surblindage', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: '', valeur: 0, max: 8 },
       ]
       return jauges.filter((j) => j.nom !== '')
     }
@@ -5643,8 +5643,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ecrire(p, j.nom, x0, y - 1, COQUE[4])
     const bx = x0 + colonne
     const bw = W - 12 - bx
-    // (les plaques des humains, en acier gris, comme leur barre en vol)
-    const acier = j.nom === 'Plaques'
+    // (les plaques des humains, en acier gris, comme leur barre en vol — NOMMÉES « SURBLINDAGE », Keko, 18/11 : « pour la
+    // technologie humaine, le mot plaque est un peu flou ; un terme plus évocateur d'un blindage renforcé »)
+    const acier = j.nom === 'Surblindage'
     const vert = j.nom === 'Vie' || j.nom === 'Régénération'
     const violet = j.nom === 'Purge'
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : vert ? VERT_DE_LA_VIE[1] : violet ? CORRUPTION[2] : rouge ? ROUGE[3] : PEPITE[2]
@@ -5653,6 +5654,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (j.nombre) {
       const dit = j.unite === undefined ? String(j.valeur) : `${j.valeur} ${j.unite}`
       motEnRelief(p, dit, bx + largeurDe(dit, TEXTE) / 2, y - 1, 'ivoire', TEXTE)
+      return
+    }
+    // (AU-DELÀ DE HUIT, UNE BARRE À SEGMENTS — Keko, 18/11 : « élargis les cases du blindage et de la vie, je les trouve très
+    // fines ; tu peux faire une barre avec juste des petits traits pour distinguer les segments » : à douze cellules
+    // séparées, chacune n'avait plus que trois pixels ; d'un seul tenant, un trait d'encre entre deux segments, elles en
+    // ont six)
+    if (j.cellules && Math.round(j.max) > 8) {
+      const n = Math.round(j.max)
+      const sw = (bw - 2) / n
+      const xs = (i: number): number => bx + 1 + Math.round(i * sw)
+      p.rect(bx, y, bw, 6, MATIERES.creux.contour)
+      p.rect(bx + 1, y + 1, bw - 2, 4, MATIERES.creux.corps)
+      for (let i = 0; i < n; i++) {
+        const x0 = xs(i)
+        const x1 = xs(i + 1) - (i < n - 1 ? 1 : 0)
+        if (i < Math.round(j.valeur)) {
+          p.rect(x0, y + 1, x1 - x0, 4, teinte)
+          p.rect(x0, y + 1, x1 - x0, 1, clair)
+          p.rect(x0, y + 4, x1 - x0, 1, sombre)
+        }
+        if (i < n - 1) p.rect(xs(i + 1) - 1, y + 1, 1, 4, MATIERES.creux.contour)
+      }
+      if (repere !== null) p.rect(xs(Math.round(repere * n)) - 1, y - 1, 1, 8, N.WHITE)
       return
     }
     if (j.cellules) {
