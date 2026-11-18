@@ -919,7 +919,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
         else if (canon?.tentacule !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
         // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
-        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined || canon?.hypercube !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.nova !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.orbite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -3623,7 +3623,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-drain': 'Il accroche les âmes qui l’approchent et les draine, à toute distance ; leur vie purge sa corruption.',
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
-    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois : chaque rebond frappe autour de lui.',
+    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois en grossissant : chaque rebond frappe autour de lui, plus large.',
   }
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
@@ -8833,6 +8833,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * derrière, et un point de lumière au milieu, entre elles. EN CLOCHE : il monte au-dessus de son ombre et retombe, chaque
    * bond plus bas (la hauteur suit le carré de la durée du bond, comme une vraie chute). À CHAQUE CONTACT, SON EMPREINTE
    * AU SOL : un éclair, un carré de lumière qui s'ouvre en tournant jusqu'au bord de la zone frappée, un anneau.
+   * (… IL GROSSIT À CHAQUE REBOND — Keko, 18/11 : comme sa zone, `croissance` fois plus gros à chaque contact ; il gonfle
+   * d'un coup en rebondissant, un peu trop, puis se pose à sa taille)
    */
   const empreintesDuCube: { x: number; y: number; rayon: number; cap: number; t0: number }[] = []
   const DUREE_DE_L_EMPREINTE = 0.35
@@ -8893,7 +8895,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const h of m.hypercubes) {
       const u = Math.max(0, Math.min(1, (m.t - h.depart) / h.duree))
-      dessinerUnHypercube(p, h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u - hauteurDuCube(u, h.duree), m.t * 3 + h.id, TAILLE_DE_L_HYPERCUBE)
+      const gonfle = h.contacts > 0 ? 1 + 0.35 * Math.max(0, 1 - (m.t - h.depart) / 0.15) : 1
+      const taille = TAILLE_DE_L_HYPERCUBE * Math.pow(CONF.armes[h.arme]?.hypercube?.croissance ?? 1, h.contacts) * gonfle
+      dessinerUnHypercube(p, h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u - hauteurDuCube(u, h.duree), m.t * 3 + h.id, taille)
     }
     p.place(0, 0)
   }

@@ -2141,24 +2141,36 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 }
 
 // L'HYPERCUBE DU TESSERACT (Keko, 18/11 : « lancé en cloche, il rebondit trois fois ; à chaque rebond, une petite zone
-// de dégâts ») : il tombe sur l'insecte le plus proche — lui et son voisin perdent 8, le lointain rien —, puis rebondit
-// plus loin dans le même sens, deux fois, de plus en plus court, et frappe à chaque contact ; au troisième, il s'éteint
+// de dégâts » ; « plus il rebondit, plus il grossit ») : il tombe sur l'insecte le plus proche — lui et son voisin perdent
+// 8, le lointain rien —, puis rebondit plus loin dans le même sens (40, puis 32), et frappe à chaque contact, de plus en
+// plus large (12, 15,6, 20,3) ; au troisième, il s'éteint
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const hypercube = { id: 'hypercube', cadence: 1.6, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, hypercube: { rebonds: 3, rayon: 12, vol: 0.6, bond: 30, amorti: 0.7 } }
+  const hypercube = { id: 'hypercube', cadence: 1.6, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, hypercube: { rebonds: 3, rayon: 12, vol: 0.6, bond: 40, amorti: 0.8, croissance: 1.3 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [hypercube], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
-  const w = nouveauMonde(cfg, 3)
-  // (la cible à 60, son voisin à 66, un lointain hors de la zone, puis un insecte sur chacun des deux rebonds : à 90 et à 111)
-  w.ennemis.push(insecte(1, 60, 0), insecte(2, 66, 0), insecte(3, 60, -40), insecte(4, 90, 0), insecte(5, 111, 0))
-  const ev: Evenement[] = []
-  for (let i = 0; i < 87; i++) {
-    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
-    ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  const lancer = (insectes: ReturnType<typeof insecte>[]) => {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(...insectes)
+    const ev: Evenement[] = []
+    for (let i = 0; i < 92; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    const pv = insectes.map((e) => 1000 - (w.ennemis.find((o) => o.id === e.id)?.pv ?? 1000))
+    const contacts = ev.flatMap((e) => (e.type === 'rebondHypercube' ? [`${e.x.toFixed(0)}`] : []))
+    const rayons = ev.flatMap((e) => (e.type === 'rebondHypercube' ? [e.rayon.toFixed(1)] : []))
+    return { w, ev, pv, contacts, rayons }
   }
-  const pv = [1, 2, 3, 4, 5].map((id) => 1000 - (w.ennemis.find((e) => e.id === id)?.pv ?? 1000))
-  const contacts = ev.flatMap((e) => (e.type === 'rebondHypercube' ? [`${e.x.toFixed(0)}`] : []))
-  verifier(`l'hypercube part une fois, touche le sol trois fois (à ${contacts.join(', ')}) et s'éteint`, ev.filter((e) => e.type === 'hypercube').length === 1 && contacts.join() === '60,90,111' && ev.some((e) => e.type === 'hypercubeFini') && w.hypercubes.length === 0)
-  verifier(`chaque contact frappe sa zone : ${pv.join(' / ')} (8 à la cible et à son voisin, rien au lointain, 8 à chaque insecte des rebonds)`, pv.join() === '8,8,0,8,8')
+  // (la cible à 60, son voisin à 66, un lointain hors de la zone, puis un insecte sur chacun des deux rebonds : à 100 et à 132)
+  const a = lancer([insecte(1, 60, 0), insecte(2, 66, 0), insecte(3, 60, -40), insecte(4, 100, 0), insecte(5, 132, 0)])
+  verifier(`l'hypercube part une fois, touche le sol trois fois (à ${a.contacts.join(', ')}), de plus en plus large (${a.rayons.join(', ')}), et s'éteint`, a.ev.filter((e) => e.type === 'hypercube').length === 1 && a.contacts.join() === '60,100,132' && a.rayons.join() === '12.0,15.6,20.3' && a.ev.some((e) => e.type === 'hypercubeFini') && a.w.hypercubes.length === 0)
+  verifier(`chaque contact frappe sa zone : ${a.pv.join(' / ')} (8 à la cible et à son voisin, rien au lointain, 8 à chaque insecte des rebonds)`, a.pv.join() === '8,8,0,8,8')
+  // (… IL PORTE JUSQU'À SON DERNIER REBOND — Keko, 18/11 : un insecte seul à 150, bien au-delà de la portée du lancer (90) :
+  // il le lance quand même, et c'est le dernier contact qui tombe sur lui)
+  const b = lancer([insecte(1, 150, 0)])
+  verifier(`un insecte seul à 150 (au-delà des 90 du lancer) : il lance quand même, les rebonds tombent avant lui (${b.contacts.join(', ')}) et le dernier le frappe (${b.pv[0]})`, b.contacts.join() === '78,118,150' && b.pv[0] === 8)
+  const c2 = lancer([insecte(1, 170, 0)])
+  verifier(`à 170, au-delà de son dernier rebond (162) : rien ne part`, c2.ev.every((e) => e.type !== 'hypercube'))
 }
 
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute

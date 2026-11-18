@@ -5579,3 +5579,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   éclats. Ses sons : un « vwoum » d'énergie qui monte au lancer, un « tonk » de verre épais à chaque contact (annoncé en
   avance de la latence, comme l'impact d'une météore). Les balises restent derrière lui, en attendant ses deux autres
   armes. Les chiffres sont de moi.
+- L'HYPERCUBE, REPRIS (Keko, 18/11) : (1) UN MISSILE ÉTAIT DESSINÉ SUR LE TESSERACT — l'hypercube n'était pas dans la
+  liste des armes que la coque ne porte pas (`formesDeLArme`), ni dans celles qui n'ont qu'une place (`configDuVol`) :
+  il était monté comme un canon, sur les deux ailes. Il est dans les deux, et dans celle des armes que le tir ordinaire
+  ne tire pas (`avancerLeMonde`). (2) « QU'IL LANCE SON CUBE EN CALCULANT LA PORTÉE NON PAS DU PREMIER REBOND MAIS DU
+  DERNIER : si un ennemi est loin, il le lance quand même, quitte à ce qu'il rebondisse avant l'ennemi » : il vise un
+  insecte jusqu'à sa portée PLUS tous ses bonds (`allongeDeLHypercube` : 90 + 40 + 32 = 162) ; c'est LE PREMIER CONTACT
+  QUI PEUT L'ATTEINDRE qui tombe sur lui — sa chute s'il est à 90, sinon un rebond, la chute tombant d'autant en deçà
+  (un insecte seul à 150 : contacts à 78, 118, 150). (3) « UNE DIMENSION DE TAILLE : PLUS IL REBONDIT, PLUS IL
+  GROSSIT » : sa zone et sa taille ×1,3 à chaque contact (`croissance` : 12, puis 15,6, puis 20,3) ; il gonfle d'un coup
+  en rebondissant, un peu trop, puis se pose à sa taille. (4) « ESPACE UN PETIT PEU PLUS LES REBONDS » : 40 puis 32 (au
+  lieu de 30 puis 21 ; `bond` 40, `amorti` 0,8).

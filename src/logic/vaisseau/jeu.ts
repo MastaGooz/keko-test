@@ -717,8 +717,14 @@ export type Arme = {
    * contact, tout insecte à moins de `rayon` perd `degats` ; puis il REBONDIT plus loin, dans le sens de son lancer, de
    * `bond` — chaque bond `amorti` fois plus court, et plus bref, que le précédent. Au dernier contact, il s'éteint. L'état
    * est `Monde.hypercubes`.
+   * (… IL PORTE JUSQU'À SON DERNIER REBOND — Keko, 18/11 : « qu'il lance son cube en calculant la portée non pas du
+   * premier rebond mais du dernier : si un ennemi est loin, il le lance quand même, quitte à ce qu'il rebondisse avant
+   * l'ennemi » : il vise un insecte jusqu'à `portee` PLUS la longueur de tous ses bonds (`allongeDeLHypercube`) ; au-delà
+   * de `portee`, son premier contact tombe en deçà, pour que LE PREMIER CONTACT QUI PEUT L'ATTEINDRE tombe sur lui.
+   * … ET IL GROSSIT À CHAQUE REBOND — « on ajoute une dimension de taille : plus il rebondit, plus il grossit » : sa zone
+   * est `croissance` fois plus large à chaque contact — `rayon` au premier, puis `rayon` × `croissance`, etc.)
    */
-  hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; amorti: number }
+  hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; amorti: number; croissance: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -2771,28 +2777,47 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
   })
 }
 
+/** LES BONDS D'UN HYPERCUBE APRÈS SA CHUTE (voir `Arme.hypercube`) : la longueur et la durée de chacun, du premier au dernier. */
+const bondsDeLHypercube = (hc: NonNullable<Arme['hypercube']>): { longueur: number; duree: number }[] =>
+  Array.from({ length: Math.max(0, hc.rebonds - 1) }, (_, k) => ({ longueur: hc.bond * Math.pow(hc.amorti, k), duree: hc.vol * Math.pow(hc.amorti, k + 1) }))
+/** JUSQU'OÙ PORTE UN HYPERCUBE : sa portée de lancer, plus tous ses bonds. */
+export const allongeDeLHypercube = (a: Arme): number => a.portee + (a.hypercube === undefined ? 0 : bondsDeLHypercube(a.hypercube).reduce((s, b) => s + b.longueur, 0))
+
 /** L'HYPERCUBE DU TESSERACT (voir `Arme.hypercube`) : le lancer en cloche, les contacts au sol qui frappent, les rebonds. */
 function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
     const hc = a.hypercube
     if (hc === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    // (le verrouillé à portée d'abord, sinon le plus proche)
+    // (le verrouillé à son allonge d'abord, sinon le plus proche — JUSQU'À SON DERNIER REBOND)
+    const allonge = allongeDeLHypercube(a)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
     const ve = ennemiVerrouille(m)
-    let cible: Ennemi | null = ve !== null && dist(ve) <= a.portee ? ve : null
+    let cible: Ennemi | null = ve !== null && dist(ve) <= allonge ? ve : null
     if (cible === null) {
-      let dc = a.portee
+      let dc = allonge
       for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (cible = e)
     }
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
-    // (là où il sera à sa chute ; pas plus loin que la portée)
-    let x1 = cible.corps.x + cible.corps.vx * hc.vol
-    let y1 = cible.corps.y + cible.corps.vy * hc.vol
-    const d = Math.hypot(x1 - v.x, y1 - v.y)
-    const cap = d > 1e-6 ? Math.atan2(y1 - v.y, x1 - v.x) : v.cap
-    if (d > a.portee) (x1 = v.x + Math.cos(cap) * a.portee), (y1 = v.y + Math.sin(cap) * a.portee)
+    // (QUEL CONTACT TOMBE SUR LUI : le premier qui peut l'atteindre — sa chute s'il est à portée, sinon un rebond, le
+    // premier contact tombant d'autant en deçà ; là où il sera à ce contact-là)
+    const bonds = bondsDeLHypercube(hc)
+    let quand = hc.vol
+    let avant = 0
+    let premier = 0
+    let cap = v.cap
+    for (let k = 0; k < hc.rebonds; k++) {
+      if (k > 0) (quand += bonds[k - 1].duree), (avant += bonds[k - 1].longueur)
+      const x = cible.corps.x + cible.corps.vx * quand
+      const y = cible.corps.y + cible.corps.vy * quand
+      const d = Math.hypot(x - v.x, y - v.y)
+      if (d > 1e-6) cap = Math.atan2(y - v.y, x - v.x)
+      premier = Math.max(0, Math.min(a.portee, d - avant))
+      if (d - avant <= a.portee) break
+    }
+    const x1 = v.x + Math.cos(cap) * premier
+    const y1 = v.y + Math.sin(cap) * premier
     m.hypercubes.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x1, y1, depart: m.t, duree: hc.vol, cap, contacts: 0 })
     ev.push({ type: 'hypercube', x: v.x, y: v.y, arme: a.id })
   })
@@ -2801,11 +2826,12 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     const hc = a?.hypercube
     if (a === undefined || hc === undefined) return false
     if (m.t < h.depart + h.duree) return true
-    // (IL TOUCHE LE SOL : une petite zone de dégâts)
+    // (IL TOUCHE LE SOL : une petite zone de dégâts, plus large à chaque contact)
     h.contacts++
-    ev.push({ type: 'rebondHypercube', id: h.id, x: h.x1, y: h.y1, rayon: hc.rayon, contact: h.contacts })
+    const rayon = hc.rayon * Math.pow(hc.croissance, h.contacts - 1)
+    ev.push({ type: 'rebondHypercube', id: h.id, x: h.x1, y: h.y1, rayon, contact: h.contacts })
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - h.x1, e.corps.y - h.y1) > hc.rayon + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - h.x1, e.corps.y - h.y1) > rayon + c.ennemi.rayon) continue
       const critique = c.passifs.critique > 0 && tire(m.graine, h.id * 31 + e.id * 7 + h.contacts, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -2816,13 +2842,13 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       return false
     }
     // (IL REBONDIT, plus loin dans le sens de son lancer, plus court et plus bref à chaque fois)
-    const k = Math.pow(hc.amorti, h.contacts - 1)
+    const bond = bondsDeLHypercube(hc)[h.contacts - 1]
     h.depart += h.duree
-    h.duree = hc.vol * hc.amorti * k
+    h.duree = bond.duree
     h.x0 = h.x1
     h.y0 = h.y1
-    h.x1 = h.x0 + Math.cos(h.cap) * hc.bond * k
-    h.y1 = h.y0 + Math.sin(h.cap) * hc.bond * k
+    h.x1 = h.x0 + Math.cos(h.cap) * bond.longueur
+    h.y1 = h.y0 + Math.sin(h.cap) * bond.longueur
     return true
   })
 }
@@ -3806,7 +3832,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
