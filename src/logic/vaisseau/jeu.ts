@@ -943,6 +943,8 @@ export type Monde = {
   /** LE TOUR DU RAYON en cours (voir `Arme.balayage`) : l'arme, son début, l'angle atteint, les ennemis déjà touchés ; ou null. */
   // (`ligne` : le trait au sol d'un rayon qui trace, en coordonnées du monde — voir `Arme.balayage.trace`)
   balayage: { arme: number; debut: number; angle: number; touches: number[]; depart: number; sens: number; posees: number; ligne?: { x0: number; y0: number; x1: number; y1: number }; suivi?: { id: number; x: number; y: number } } | null
+  /** Le dernier insecte que le rayon a vu à sa portée : où, et quand (voir `menerLeRayon`) ; null avant. */
+  rayonVu: { x: number; y: number; t: number } | null
   /** LE RAYON CANALISÉ (voir `Arme.canalise`) : sa cible, depuis quand il est dessus, où elle est, sa chauffe (0 à 1) ; ou null. */
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
@@ -1165,7 +1167,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -3581,10 +3583,23 @@ export function impactDuRayon(c: ConfigVaisseau, m: Monde): { x: number; y: numb
 /** LE RAYON (voir `Arme.balayage`) : il part à l'heure, si un ennemi est à portée ; il balaie son arc ; ce qu'il balaie brûle ; il sème sa traînée de feu. */
 function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau
+  // (le dernier insecte vu à sa portée — le plus proche —, pour qu'un rayon annoncé parte même s'il vient de mourir)
+  for (const a of c.armes) {
+    if (a.balayage === undefined) continue
+    let proche: Ennemi | undefined
+    for (const e of m.ennemis) if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.balayage.longueur + c.ennemi.rayon && (proche === undefined || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y))) proche = e
+    if (proche !== undefined) m.rayonVu = { x: proche.corps.x, y: proche.corps.y, t: m.t }
+  }
   c.armes.forEach((a, i) => {
     const bl = a.balayage
     if (bl === undefined || m.balayage !== null || m.t < (m.armesA[i] ?? 0)) return
-    const aPortee = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + c.ennemi.rayon)
+    const enVue = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + c.ennemi.rayon)
+    // (UN RAYON ANNONCÉ VA AU BOUT — Keko, 18/11 : « le bruit du rayon se lance, mais pas le rayon ; dès qu'on commence un
+    // rayon, il faut aller jusqu'au bout » — mesuré : la page joue son son d'avance, jusqu'à 0,25 s, dès qu'un insecte est à
+    // portée ; mort ou sorti entre-temps, le rayon ne partait plus, 6 % des fois. S'il a vu un insecte à portée dans la
+    // demi-seconde, il part vers là où il l'a vu)
+    const vu = m.rayonVu
+    const aPortee = enVue.length > 0 ? enVue : vu !== null && m.t - vu.t <= 0.5 ? [{ id: -1, corps: { ...v, x: vu.x, y: vu.y, vx: 0, vy: 0 }, pv: Infinity, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } } as Ennemi] : []
     if (aPortee.length === 0) return
     const arc = bl.arc ?? 2 * Math.PI
     let depart = bl.depart

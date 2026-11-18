@@ -5935,3 +5935,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   second souffle et sa pointe claire ; le premier souffle plafonne à 1 000 Hz (1 600 avant), les crépitements s'arrêtent
   à 0,6 s. MESURÉ (le centre du spectre toutes les 0,15 s) : 138 → 170 → 343 → 826 → 275 → 390 → 590 (il finissait à
   1 698). « Équiper » ferme le panneau des armes, comme « Piloter » celui des vaisseaux. Vu à la capture.
+- UN RAYON ANNONCÉ VA AU BOUT ; LA SALAMANDRE UN PEU MOINS VITE (Keko, 18/11 : « réduis un petit peu la vitesse de la
+  salamandre » ; « parfois le bruit du rayon se lance, mais pas le rayon, comme s'il commençait l'attaque et s'arrêtait en
+  cours ; dès qu'on commence un rayon, il faut aller jusqu'au bout — peut-être quand l'ennemi visé meurt avant ») : le
+  rayon, une fois parti, allait déjà au bout (sa cible morte, son trait reste posé). La cause, MESURÉE (une simulation des
+  annonces de la page sur 80 parties) : la page joue le son d'une arme d'avance, de la latence — 0,25 s au plus —, dès
+  qu'un insecte est à portée ; s'il mourait ou sortait entre l'annonce et la fin de la recharge, le rayon ne partait pas :
+  7 sons sur 118 sans rayon. Le rayon retient le dernier insecte vu à sa portée (`Monde.rayonVu`) : s'il en a vu un dans
+  la demi-seconde, il part vers là où il l'a vu — 0 sur 117. Vérifié : un insecte à portée qui meurt 0,05 s avant la fin
+  de la recharge, le rayon part quand même. La Salamandre : 103,5 → 97 de pointe.

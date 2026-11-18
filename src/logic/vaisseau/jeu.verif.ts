@@ -2333,6 +2333,23 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`le virage : lancé à droite, le manche vers le haut, en 0,3 s il a tourné de ${sans.angle.toFixed(0)}° sans virage, ${lourd.angle.toFixed(0)}° lourd, ${agile.angle.toFixed(0)}° agile — vitesse gardée (${agile.vitesse.toFixed(0)})`, agile.angle > lourd.angle + 10 && lourd.angle > sans.angle + 5 && agile.vitesse >= sans.vitesse - 1)
 }
 
+// UN RAYON ANNONCÉ VA AU BOUT (Keko, 18/11 : « le bruit du rayon se lance, mais pas le rayon ») : un insecte à portée qui
+// meurt juste avant la fin de la recharge — le son est déjà parti —, le rayon part quand même, vers là où il était
+{
+  const arme = { ...pieceDe('arme-rayon')!.arme!, place: 0 }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [arme], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push({ id: 1, corps: { ...nouveauVaisseau(), x: 340, y: 0 }, pv: 1000, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  w.armesA = [0.3]
+  let part = false
+  for (let i = 0; i < 60; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 300, y: 0, vx: 0, vy: 0 }
+    if (i === 15) w.ennemis = []
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'balayage') part = true
+  }
+  verifier(`un insecte à portée meurt 0,05 s avant la fin de la recharge du rayon : il part quand même (${part})`, part)
+}
+
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute
 // (il file de côté, elle ne le manque pas) ; à l'impact, ELLE NE FRAPPE QUE LUI : son voisin tout près, rien
 {
