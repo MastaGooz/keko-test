@@ -250,13 +250,15 @@ export const MODELES: ModeleDeVaisseau[] = [
     // cloche, qui rebondit trois fois » ; les balises restent derrière lui, en attendant ses deux autres armes)
     // (… SA DEUXIÈME, LE DÉ DU DESTIN — Keko, 18/11 : un dé en 4D qui roule au-dessus d'un insecte et s'abat sur sa zone,
     // plus ou moins fort selon son chiffre ; les balises en attendant la troisième)
+    // (… SA TROISIÈME, LA COUPE — Keko, 18/11 : « je voudrais bien voir ce que ça donne » : un cube qui traverse le plan
+    // en biais, dont on ne voit que la tranche ; elle prend la place des balises)
     id: 'tesseract',
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
-    dit: 'Un cube dans un cube, qui se retourne sur lui-même autour d’un cœur de lumière. Il lance des hypercubes qui rebondissent, et des dés qui s’abattent du ciel.',
-    pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-balises'],
-    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-balises'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
+    dit: 'Un cube dans un cube, qui se retourne sur lui-même autour d’un cœur de lumière. Il lance des hypercubes qui rebondissent, des dés qui s’abattent du ciel, et des cubes qui traversent le plan.',
+    pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'],
+    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
     chaine: [],
     horsRecherche: true,
   },

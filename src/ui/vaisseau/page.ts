@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, zoneDuDe, boucheDansLeMonde, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, boucheDansLeMonde, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -921,7 +921,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (LES TENTACULES DU KRAKEN : leurs ancres, là où le rendu dessine leurs racines — 16/11)
         else if (canon?.tentacule !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, tentacule: { ...canon.tentacule, ancres: ANCRES_DU_KRAKEN } }] }
         // (L'ESSAIM DU KRAKEN : un nuage, autour de lui)
-        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined || canon?.hypercube !== undefined || canon?.de !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined || canon?.hypercube !== undefined || canon?.de !== undefined || canon?.coupe !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.pose !== undefined || canon?.scie !== undefined || canon?.balise !== undefined || canon?.givre !== undefined || canon?.nova !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.orbite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
@@ -1052,7 +1052,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-balises'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-coupe'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -3632,6 +3632,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
     'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois à pas égaux en grossissant : chaque rebond frappe autour de lui, plus large.',
+    'arme-coupe': 'Un cube traverse le plan en biais : on n’en voit que la tranche, un triangle qui devient hexagone, qui frappe tout ce qu’il couvre.',
     'arme-de': 'Un dé à quatre dimensions qui roule au-dessus d’un insecte, puis s’abat sur sa zone : plus son chiffre est haut, plus il frappe fort.',
   }
   /**
@@ -3781,6 +3782,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesMines(p)
       dessinerLesOmbresDesHypercubes(p)
       dessinerLesDesAuSol(p)
+      dessinerLesCoupes(p)
       dessinerLesTourelles(p)
       dessinerLesBalises(p)
       dessinerLesEnnemis(p)
@@ -9044,6 +9046,61 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /**
+   * LA COUPE DU TESSERACT (voir `Arme.coupe`) — AU SOL, dans le plan du jeu : L'OMBRE DU CUBE ENTIER vu le long de sa
+   * grande diagonale (un hexagone et trois arêtes vers son centre, à peine tracés : ce qui traverse), et dedans LA
+   * TRANCHE, pleine d'une lumière pâle, ses bords vifs, ses sommets blancs — un point qui s'ouvre en triangle, devient
+   * hexagone, se referme en triangle retourné, puis en point. À chaque coup, elle s'allume ; elle paraît d'un éclair et
+   * s'éteint en une poignée d'étincelles.
+   */
+  const eclairsDeCoupe: { x: number; y: number; t0: number }[] = []
+  function dessinerLesCoupes(p: Peintre): void {
+    for (let i = eclairsDeCoupe.length - 1; i >= 0; i--) if (t - eclairsDeCoupe[i].t0 > 0.25) eclairsDeCoupe.splice(i, 1)
+    if ((m.coupes.length === 0 && eclairsDeCoupe.length === 0) || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const { sp, lu } = tonsDuCube()
+    for (const co of m.coupes) {
+      const cp = CONF.armes[co.arme]?.coupe
+      if (cp === undefined) continue
+      const age = m.t - co.nee
+      const u = age / cp.duree
+      const vu = Math.max(0, Math.min(1, u / 0.12, (1 - u) / 0.12))
+      // (l'ombre du cube : ses six sommets hors de la diagonale, ceux des deux triangles, et trois arêtes vers le centre)
+      const k = cp.rayon / Math.sqrt(2 / 3)
+      const an = co.angle + cp.tour * age
+      const dansLeMonde = (q: { x: number; y: number }): { x: number; y: number } => ({ x: co.x + (q.x * Math.cos(an) - q.y * Math.sin(an)) * k, y: co.y + (q.x * Math.sin(an) + q.y * Math.cos(an)) * k })
+      const t1 = coupeDUnCube(1).map(dansLeMonde)
+      const t2 = coupeDUnCube(2).map(dansLeMonde)
+      const ombre = [...t1, ...t2].sort((a, b) => Math.atan2(a.y - co.y, a.x - co.x) - Math.atan2(b.y - co.y, b.x - co.x))
+      for (let j = 0; j < ombre.length; j++) {
+        const a = ombre[j]
+        const b = ombre[(j + 1) % ombre.length]
+        p.line(a.x, a.y, b.x, b.y, sp[2], 0.45 * vu)
+      }
+      for (const q of t1) p.line(co.x, co.y, q.x, q.y, sp[2], 0.3 * vu)
+      // (LA TRANCHE : pleine, ses bords, ses sommets — elle s'allume à chaque coup)
+      const f = formeDeLaCoupe(co, cp, m.t)
+      if (f.length >= 3) {
+        const coup = Math.max(0, 1 - (age % cp.periode) / 0.1)
+        p.poly(f.map((q) => [q.x, q.y]), sp[3], 0.25 + 0.25 * coup)
+        p.glow(co.x, co.y, cp.rayon * 0.7, sp[4], 0.2 + 0.25 * coup)
+        for (let j = 0; j < f.length; j++) {
+          const a = f[j]
+          const b = f[(j + 1) % f.length]
+          p.glowLine(a.x, a.y, b.x, b.y, 3, sp[4], 0.35 + 0.3 * coup)
+          p.line(a.x, a.y, b.x, b.y, coup > 0.5 ? lu[5] : lu[4])
+        }
+        for (const q of f) p.dot(q.x, q.y, N.WHITE)
+      } else p.dot(co.x, co.y, lu[5], vu)
+    }
+    // (L'ÉCLAIR où elle paraît : une étoile de lumière qui s'éteint vite)
+    for (const e of eclairsDeCoupe) {
+      const k = 1 - (t - e.t0) / 0.25
+      p.glow(e.x, e.y, 14, lu[5], 0.8 * k)
+      for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let d = 1; d <= Math.round(5 * k); d++) p.dot(e.x + ax * d, e.y + ay * d, d > 3 * k ? sp[5] : N.WHITE, k)
+    }
+    p.place(0, 0)
+  }
   /** En l'air, au-dessus de tout : les hypercubes. */
   function dessinerLesHypercubes(p: Peintre): void {
     if (m.hypercubes.length === 0 || m.phase !== 'vol') return
@@ -12650,6 +12707,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'coupe':
+          // (un cube commence à traverser le plan : son chant de verre qui monte puis redescend — sauf s'il a sonné en avance —, un éclair)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('coupe', { dx: ev.x - v.x, dy: ev.y - v.y })
+          eclairsDeCoupe.push({ x: ev.x, y: ev.y, t0: t })
+          break
+        case 'coupeFinie': {
+          // (elle s'est refermée en un point : quelques étincelles de lumière)
+          const { sp, lu } = tonsDuCube()
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 + R.range(-0.3, 0.3)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.2, 0.4), i % 2 === 0 ? lu[5] : sp[5], 1, 1)
+          }
+          break
+        }
         case 'de':
           // (un dé du destin paraît et roule : ses « tic » qui ralentissent, son tintement — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
@@ -13424,6 +13496,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesMines(p)
     dessinerLesOmbresDesHypercubes(p)
     dessinerLesDesAuSol(p)
+    dessinerLesCoupes(p)
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
     dessinerLesEnnemis(p)

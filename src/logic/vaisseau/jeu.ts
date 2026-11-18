@@ -760,6 +760,17 @@ export type Arme = {
    * `zoneDuDe`)
    */
   de?: { roule: number; chute: number; /** La zone d'un 4. */ rayon: number; /** Ce que chaque point du dé ajoute à la zone (ou lui retire, sous 4). */ pas: number }
+  /**
+   * LA COUPE (la troisième arme du Tesseract, Keko, 18/11 : « je voudrais bien voir ce que ça donne visuellement, la
+   * coupe » — de mes idées : un objet de plus de dimensions qui traverse notre plan n'y paraît que par tranches) : à la
+   * cadence, un insecte à `portee` (le verrouillé d'abord, sinon celui qui a le plus de voisins à moins de `rayon`), UN
+   * CUBE TRAVERSE LE PLAN DU JEU EN BIAIS, là où il est, en `duree` secondes — le plan perpendiculaire à sa grande
+   * diagonale : on n'en voit que LA COUPE (`coupeDUnCube`), un point qui s'ouvre en triangle, devient hexagone, se
+   * referme en triangle retourné, puis en point ; elle tourne sur elle-même (`tour` radians par seconde) et son plus
+   * grand sommet est à `rayon`. Toutes les `periode` secondes, TOUT INSECTE DANS LA COUPE (à son rayon près) perd
+   * `degats`. Elle ne bouge pas. L'état est `Monde.coupes`.
+   */
+  coupe?: { duree: number; rayon: number; periode: number; tour: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -948,6 +959,8 @@ export type Monde = {
   brochettes: { id: number; arme: number; x: number; y: number; vx: number; vy: number; vie: number; touches: number[] }[]
   /** LES HYPERCUBES DU TESSERACT (voir `Arme.hypercube`) : le bond en cours (d'où, où, quand il est parti, combien de temps), son cap, ses contacts au sol. */
   hypercubes: { id: number; arme: number; x0: number; y0: number; x1: number; y1: number; depart: number; duree: number; cap: number; contacts: number; /** L'insecte visé, et le contact qui doit tomber sur lui (1 à `rebonds`). */ cible: number | null; vise: number }[]
+  /** LES COUPES DU TESSERACT (voir `Arme.coupe`) : où, quand elles ont paru, leur angle de départ, l'heure de leur prochain coup. */
+  coupes: { id: number; arme: number; x: number; y: number; nee: number; angle: number; prochain: number }[]
   /** LES DÉS DU TESSERACT (voir `Arme.de`) : leur insecte, le point visé (qui le suit), quand ils ont paru, quand ils frappent, le chiffre tiré. */
   des: { id: number; arme: number; cible: number; x: number; y: number; lance: number; tombe: number; face: number }[]
   /** LES ŒUFS DU VER (voir `Arme.ponte`) : où, leur cap, quand ils ont été pondus. */
@@ -1087,6 +1100,9 @@ export type Evenement =
   /** Un dé du destin paraît au-dessus d'un insecte, son chiffre déjà tiré ; il s'abat (voir `Arme.de`). */
   | { type: 'de'; id: number; x: number; y: number; arme: string; face: number }
   | { type: 'deImpact'; id: number; x: number; y: number; face: number; rayon: number }
+  /** Une coupe paraît (un cube commence à traverser le plan) ; elle se referme (voir `Arme.coupe`). */
+  | { type: 'coupe'; id: number; x: number; y: number; arme: string }
+  | { type: 'coupeFinie'; id: number; x: number; y: number }
   /** Le drain d'âme accroche une âme (voir `Arme.drain`). */
   | { type: 'accroche'; id: number; x: number; y: number }
   | { type: 'saisie'; id: number; cible: number; x: number; y: number }
@@ -1130,7 +1146,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2854,6 +2870,112 @@ function ouSeraLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, T: number): Vect
   return { x, y }
 }
 
+/**
+ * LA COUPE D'UN CUBE d'arête 1 par le plan x + y + z = `h` (de 0 à 3), perpendiculaire à sa grande diagonale : ses
+ * sommets dans ce plan, autour de la diagonale, rangés en tournant — rien à 0 et à 3, un triangle jusqu'à 1, un hexagone
+ * entre 1 et 2 (régulier à 1,5), le triangle retourné jusqu'à 3. Le plus loin qu'un sommet aille : √(2/3), à 1 et à 2.
+ */
+export function coupeDUnCube(h: number): Vecteur[] {
+  const pts: Vecteur[] = []
+  // (la base du plan : deux directions perpendiculaires à la diagonale, et perpendiculaires entre elles)
+  const e1 = [1 / Math.SQRT2, -1 / Math.SQRT2, 0]
+  const e2 = [1 / Math.sqrt(6), 1 / Math.sqrt(6), -2 / Math.sqrt(6)]
+  for (let i = 0; i < 8; i++)
+    for (const axe of [1, 2, 4]) {
+      if (i & axe) continue
+      const a = [i & 1 ? 1 : 0, i & 2 ? 1 : 0, i & 4 ? 1 : 0]
+      const sa = a[0] + a[1] + a[2]
+      // (l'arête de a vers b monte de 1 en x + y + z : elle coupe le plan si h est entre ses deux bouts)
+      if (h < sa - 1e-9 || h > sa + 1 + 1e-9) continue
+      const p = a.slice()
+      p[axe === 1 ? 0 : axe === 2 ? 1 : 2] += h - sa
+      const q = [p[0] - 0.5, p[1] - 0.5, p[2] - 0.5]
+      const v = { x: q[0] * e1[0] + q[1] * e1[1] + q[2] * e1[2], y: q[0] * e2[0] + q[1] * e2[1] + q[2] * e2[2] }
+      if (!pts.some((o) => Math.hypot(o.x - v.x, o.y - v.y) < 1e-6)) pts.push(v)
+    }
+  if (pts.length < 3) return []
+  const cx = pts.reduce((s0, p) => s0 + p.x, 0) / pts.length
+  const cy = pts.reduce((s0, p) => s0 + p.y, 0) / pts.length
+  return pts.sort((p, q) => Math.atan2(p.y - cy, p.x - cx) - Math.atan2(q.y - cy, q.x - cx))
+}
+
+/** LA COUPE dans le monde à l'instant `t` (voir `Arme.coupe`) : ses sommets, tournés et à l'échelle — vide avant et après sa traversée. */
+export function formeDeLaCoupe(co: Monde['coupes'][number], cp: NonNullable<Arme['coupe']>, t: number): Vecteur[] {
+  const u = (t - co.nee) / cp.duree
+  if (u <= 0 || u >= 1) return []
+  const k = cp.rayon / Math.sqrt(2 / 3)
+  const an = co.angle + cp.tour * (t - co.nee)
+  const c0 = Math.cos(an)
+  const s0 = Math.sin(an)
+  return coupeDUnCube(3 * u).map((p) => ({ x: co.x + (p.x * c0 - p.y * s0) * k, y: co.y + (p.x * s0 + p.y * c0) * k }))
+}
+
+/** Un point est-il dans une forme convexe (rangée en tournant), à `marge` près ? */
+function dansLaForme(f: Vecteur[], x: number, y: number, marge: number): boolean {
+  if (f.length < 3) return false
+  // (le sens des sommets : celui de la première arête vue du centre)
+  const cx = f.reduce((s0, p) => s0 + p.x, 0) / f.length
+  const cy = f.reduce((s0, p) => s0 + p.y, 0) / f.length
+  for (let i = 0; i < f.length; i++) {
+    const a = f[i]
+    const b = f[(i + 1) % f.length]
+    const L = Math.hypot(b.x - a.x, b.y - a.y)
+    if (L < 1e-9) continue
+    const cote = (px: number, py: number): number => ((b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x)) / L
+    const sens = Math.sign(cote(cx, cy)) || 1
+    if (cote(x, y) * sens < -marge) return false
+  }
+  return true
+}
+
+/** LES COUPES DU TESSERACT (voir `Arme.coupe`) : le choix du lieu, la traversée, les coups à ce qui est dedans. */
+function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const cp = a.coupe
+    if (cp === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    // (au cœur de la nuée : l'insecte qui a le plus de voisins dans sa coupe ; le verrouillé d'abord)
+    let cible: Ennemi | undefined
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    else {
+      let meilleur = -1
+      for (const e of m.ennemis) {
+        if (!aPortee(e)) continue
+        const n = m.ennemis.filter((o) => Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y) <= cp.rayon).length
+        if (n > meilleur) (meilleur = n), (cible = e)
+      }
+    }
+    if (cible === undefined) return
+    m.armesA[i] = m.t + a.cadence
+    const id = m.prochainId++
+    const { x, y } = cible.corps
+    m.coupes.push({ id, arme: i, x, y, nee: m.t, angle: tire(m.graine, id, 63) * Math.PI * 2, prochain: m.t + cp.periode })
+    ev.push({ type: 'coupe', id, x, y, arme: a.id })
+  })
+  m.coupes = m.coupes.filter((co) => {
+    const a = c.armes[co.arme]
+    const cp = a?.coupe
+    if (a === undefined || cp === undefined) return false
+    // (À CHAQUE PÉRIODE, la coupe frappe tout ce qui est dedans — de sa forme à cet instant)
+    while (m.t >= co.prochain && co.prochain < co.nee + cp.duree) {
+      const f = formeDeLaCoupe(co, cp, co.prochain)
+      for (const e of [...m.ennemis]) {
+        if (!dansLaForme(f, e.corps.x, e.corps.y, c.ennemi.rayon)) continue
+        const critique = c.passifs.critique > 0 && tire(m.graine, co.id * 31 + e.id * 7 + Math.round(co.prochain * 100), 12) < c.passifs.critique
+        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
+      co.prochain += cp.periode
+    }
+    if (m.t < co.nee + cp.duree) return true
+    ev.push({ type: 'coupeFinie', id: co.id, x: co.x, y: co.y })
+    return false
+  })
+}
+
 /** LA ZONE D'UN DÉ DU DESTIN selon son chiffre (voir `Arme.de`) : `rayon` sur un 4, `pas` de plus par point au-dessus, de moins en dessous. */
 export const zoneDuDe = (de: NonNullable<Arme['de']>, face: number): number => de.rayon + de.pas * (face - 4)
 
@@ -3845,7 +3967,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3966,10 +4088,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesEpines(c, m, dt, ev)
   menerLesHypercubes(c, m, ev)
   menerLesDes(c, m, ev)
+  menerLesCoupes(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

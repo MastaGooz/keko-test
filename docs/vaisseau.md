@@ -5653,3 +5653,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   fois. AU SOL, l'anneau de la zone suit LA FACE MONTRÉE : il saute avec les faces qui défilent pendant que le dé roule,
   puis s'arrête sur la zone du chiffre tiré. Vérifié (600 lancers) : les six zones, et un insecte à 25 du point de chute
   pris à partir d'un 4 seulement.
+- LA COUPE, LA TROISIÈME ARME DU TESSERACT, À L'ESSAI (Keko, 18/11 : « je voudrais bien voir ce que ça donne
+  visuellement, la coupe » — l'une des quatre idées que je lui ai proposées pour la dernière attaque du set : le
+  retournement, la coupe, le rembobinage, les ombres) : `Arme.coupe`, `menerLesCoupes`, `Monde.coupes`, la pièce
+  `arme-coupe` (« Coupe »), À LA PLACE DES BALISES. Un objet de plus de dimensions qui traverse notre plan n'y paraît
+  que par tranches : toutes les 3 s, sur l'insecte à 100 qui a le plus de voisins (le verrouillé d'abord), UN CUBE
+  TRAVERSE LE PLAN EN BIAIS en 2 s, perpendiculairement à sa grande diagonale — `coupeDUnCube(h)`, la vraie tranche,
+  calculée aux arêtes : un point, un triangle (jusqu'au palier 1), un hexagone (régulier au milieu), le triangle
+  retourné, un point. Elle tourne (0,8 rad/s), ne bouge pas, son plus grand sommet est à 30 ; tous les quarts de
+  seconde, tout insecte dans la tranche (à son rayon près, `dansLaForme`) perd 3 points — 21 au plus pour un insecte
+  resté au cœur. LE DESSIN, au sol : l'ombre du cube entier vu le long de sa diagonale (l'hexagone et trois arêtes vers
+  le centre, en pointillé), la tranche pleine en trame, ses bords en traits de lumière qui s'allument à chaque coup, ses
+  sommets blancs ; un éclair où elle paraît, des étincelles quand elle se referme. Le son `coupe` : un chant de verre
+  qui monte pendant que la tranche s'ouvre et redescend quand elle se referme. *Vu à la capture* : un insecte qui charge
+  le vaisseau traverse la tranche en moins d'une seconde — immobile, elle frappe surtout ce qui stationne ou ce qui
+  arrive derrière lui. *Tous les chiffres sont de moi.*

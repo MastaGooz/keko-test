@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -2249,6 +2249,33 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`sur 600 lancers, chaque chiffre sort à peu près une fois sur six (${faces.join(' / ')}), frappe 4 fois son chiffre, sur une zone qui grandit avec lui (${zonesLues}) : l'insecte à 25 n'est pris qu'à partir d'un 4 (${ecarts} écart)`, faces.every((n) => n >= 70 && n <= 130) && faces.reduce((x, y) => x + y, 0) === 600 && zonesLues === '10, 14, 18, 22, 26, 30' && ecarts === 0)
   const c2 = lancer(3, [insecte(1, 130, 0)])
   verifier(`à 130, au-delà de sa portée (120) : rien ne paraît`, c2.ev.every((e) => e.type !== 'de'))
+}
+
+// LA COUPE DU TESSERACT (Keko, 18/11 : « je voudrais bien voir ce que ça donne ») : la tranche d'un cube qui traverse le
+// plan en biais — un point, un triangle, un hexagone, le triangle retourné, un point ; elle frappe ce qu'elle couvre
+// toutes les 0,25 s pendant ses 2 s
+{
+  const tranches = [0.3, 1, 1.5, 2, 2.7].map((h) => coupeDUnCube(h).length).join()
+  const plus = Math.max(...[1, 2].flatMap((h) => coupeDUnCube(h).map((p) => Math.hypot(p.x, p.y))))
+  verifier(`la tranche d'un cube par le plan perpendiculaire à sa diagonale : ${tranches} sommets à 0,3, 1, 1,5, 2 et 2,7 ; rien à 0 et à 3 ; au plus loin √(2/3) (${plus.toFixed(3)})`, tranches === '3,3,6,3,3' && coupeDUnCube(0).length === 0 && coupeDUnCube(3).length === 0 && Math.abs(plus - Math.sqrt(2 / 3)) < 1e-9)
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const coupe = { id: 'coupe', cadence: 99, degats: 3, portee: 100, vitesse: 0, vie: 0, dispersion: 0, guide: false, coupe: { duree: 2, rayon: 30, periode: 0.25, tour: 0.8 } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [coupe], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const lancer = (insectes: ReturnType<typeof insecte>[]) => {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(...insectes)
+    const ev: Evenement[] = []
+    for (let i = 0; i < 140; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    return { w, ev, pv: insectes.map((e) => 1000 - (w.ennemis.find((o) => o.id === e.id)?.pv ?? 1000)) }
+  }
+  // (au cœur de la nuée : l'insecte qui a trois voisins ; un quatrième à 45, au-delà de sa tranche)
+  const a = lancer([insecte(1, 60, 0), insecte(2, 62, 3), insecte(3, 58, -3), insecte(4, 105, 0)])
+  verifier(`une coupe paraît une fois, sur la nuée, frappe sept fois ce qui est en son cœur (${a.pv.join(' / ')} : 21 aux trois du cœur, rien à 45), puis se referme`, a.ev.filter((e) => e.type === 'coupe').length === 1 && a.pv.join() === '21,21,21,0' && a.ev.some((e) => e.type === 'coupeFinie') && a.w.coupes.length === 0)
+  const b = lancer([insecte(1, 110, 0)])
+  verifier(`à 110, au-delà de sa portée (100) : rien ne paraît`, b.ev.every((e) => e.type !== 'coupe'))
 }
 
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute

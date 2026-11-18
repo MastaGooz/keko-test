@@ -820,6 +820,19 @@ const RECETTES = {
       note(m, 0.9, 0.7, 0, { f: 990, a: 0.002, d: 0.5, battement: 6, partiels: [[1, 1, 1], [2.76, 0.35, 0.6], [5.4, 0.15, 0.35]] })
     },
   },
+  /**
+   * LA COUPE (le Tesseract, 18/11) : le cube traverse le plan en 2 s — un chant de verre qui monte pendant que la tranche
+   * s'ouvre, puis redescend pendant qu'elle se referme, battu, dans un souffle large qui scintille
+   */
+  coupe: {
+    duree: 2.4, niveau: 0.11, salle: [0.45, 0.18], variantes: 2,
+    faire: (m, h) => {
+      const f = 392 * (0.97 + 0.06 * h.next())
+      note(m, 0, 0.7, 0, { f, glisse: { vers: f * 1.5, en: 1, droit: true }, a: 0.3, d: 0.75, battement: 10, partiels: [[1, 1, 1], [2, 0.3, 0.7], [3, 0.15, 0.5]] })
+      note(m, 1, 0.7, 0, { f: f * 1.5, glisse: { vers: f, en: 1 }, a: 0.05, d: 1, battement: 10, partiels: [[1, 1, 1], [2, 0.3, 0.7], [3, 0.15, 0.5]] })
+      souffle(m, h, 0, 0.3, 0, { f: 2600, glisse: { vers: 4200, en: 1, droit: true }, q: 1.6, bande: true, a: 0.8, d: 1.2, large: true })
+    },
+  },
   /** LE DÉ S'ABAT : un coup grave et lourd, un éclat de verre qui se brise, des éclats qui tintent */
   impactDe: {
     duree: 0.9, niveau: 0.26, salle: [0.4, 0.16], variantes: 3,
