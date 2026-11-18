@@ -1124,7 +1124,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // 9 → 7, entre les 4 du Chasseur et les 9 de l'Ingénieur)
   // (… ET SA ROTATION × 1,45 — Keko, 18/11 : la maniabilité devient l'agilité, sa rotation divisée par son poids
   // (`VIRAGE_DU_VORTEX`) ; à × 1,3, le Ver, plus léger, passait devant lui)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.45, blindage: 0.5 }, salamandre: { blindage: 7 / 9 } }
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { blindage: 7 / 9 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
@@ -1141,8 +1141,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const regleAuVortex = (cf: ConfigVaisseau, id: string): ConfigVaisseau => {
     const r = VORTEX ? REGLAGES_DU_VORTEX[id] : undefined
-    return r === undefined ? cf : { ...cf, vitesseMax: cf.vitesseMax * (r.vitesseMax ?? 1), poussee: cf.poussee * (r.poussee ?? 1), rotation: cf.rotation * (r.rotation ?? 1) }
+    const regle = r === undefined ? cf : { ...cf, vitesseMax: cf.vitesseMax * (r.vitesseMax ?? 1), poussee: cf.poussee * (r.poussee ?? 1), rotation: cf.rotation * (r.rotation ?? 1) }
+    // (L'ACCÉLÉRATION FONDUE DANS LA MANIABILITÉ — Keko, 18/11 : « est-ce que ça fait sens d'avoir l'accélération et la
+    // maniabilité comme deux statistiques différentes ? » ; « on fusionne » : elles disaient la même chose, divisées toutes
+    // deux par le poids ; au vortex la poussée découle de l'agilité, `POUSSEE_PAR_AGILITE` fois — réglé sur la moyenne de
+    // la flotte, qui ne bouge pas)
+    return VORTEX ? { ...regle, poussee: POUSSEE_PAR_AGILITE * agiliteDe(regle) } : regle
   }
+  /** La poussée d'un vaisseau au vortex par point d'agilité (la moyenne de la flotte, 103,75, sur son agilité moyenne, 6,8). */
+  const POUSSEE_PAR_AGILITE = 15.26
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
@@ -4183,7 +4190,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const vie = blindageAuVortex(vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption }, de.plaques), de.id)
       const jauges: Jauge[] = [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
-        { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
+        // (au vortex, plus d'accélération : elle est dans la maniabilité — Keko, 18/11)
+        ...(VORTEX ? [] : [{ nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 }]),
         { nom: 'Maniabilité', valeur: sur(VORTEX ? agiliteDe(cf) : cf.rotation, ETALONS.maniabilite), max: 1 },
         // (L'ESSAIM N'A PAS DE BLINDAGE, IL A DE LA VIE — Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un aspect plus point de vie »)
         // (… ET SES BARRES À CASES GARDENT DE LA MARGE — Keko, 18/11 : « la barre de blindage ne doit jamais être pleine, plus

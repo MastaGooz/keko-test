@@ -5872,3 +5872,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   × 1,3 à × 1,45 de rotation (`REGLAGES_DU_VORTEX`) : rapportée au poids, celle du Ver (29 t) passait devant la sienne.
   Vérifié : lancé à droite, le manche vers le haut, en 0,3 s, 28° sans virage, 53° lourd, 83° agile, l'élan gardé. *À
   juger en jouant : 0,4 est de moi.*
+- L'ACCÉLÉRATION FONDUE DANS LA MANIABILITÉ (Keko, 18/11 : « est-ce que ça fait sens d'avoir l'accélération et la
+  maniabilité comme deux statistiques différentes ? » ; « on fusionne ») — mesuré : divisées toutes deux par le poids,
+  elles montaient et descendaient ensemble dans toute la flotte (le Ver, le Néant, le Chasseur en haut des deux ;
+  l'Ingénieur et la Salamandre en bas) ; à un seul manche, le joueur ne sent qu'une réactivité. AU VORTEX, LA POUSSÉE
+  DÉCOULE DE L'AGILITÉ (`regleAuVortex` : `POUSSEE_PAR_AGILITE`, 15,26, réglé pour que la moyenne de la flotte reste à
+  103,75), et la fiche n'a plus de jauge « Accélération » — Vitesse, Maniabilité, puis la vie. Ce que ça change : le
+  Chasseur 115 → 137 (le plus maniable, il accélère maintenant le plus — son facteur de poussée est retiré), le Ver
+  132 → 133, le Néant 123, le Prisme 119 → 114, le Tesseract 116 → 103, le Frimas 109 → 112, le Pulsar et la Vouivre
+  109 → 107, la Sentinelle 90 → 95, le Kraken 90 → 78, la Salamandre 70 → 76, l'Ingénieur 63 → 61.
