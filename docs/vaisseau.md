@@ -5773,3 +5773,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   La mitrailleuse : « Une rafale de petites balles jaunes : chacune frappe peu, mais elles pleuvent sans répit. »
   (la première, plus longue, débordait de ses trois lignes à la capture) Les missiles : « Des missiles qui poursuivent leur cible et explosent à l'impact, touchant aussi les
   ennemis autour. »
+- LES DESCRIPTIONS DES ARMES SANS LEURS COULEURS (Keko, 18/11 : « inutile de préciser la couleur des lasers et la
+  couleur des balles de mitraillette dans la description des armes ») : le canon laser, « Des traits laser lourds et
+  rapides, qui fondent sur l'ennemi. » ; la mitrailleuse, « Une rafale de petites balles : chacune frappe peu, mais elles
+  pleuvent sans répit. » *La règle : une description dit ce que fait l'arme, pas ses chiffres, ses mécaniques ni ses
+  couleurs.*
