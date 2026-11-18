@@ -3626,7 +3626,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (… ET CE QU'ON EN COMPREND — Keko, 18/11 : « quand le joueur lit la description d'une arme, il doit avoir une
     // compréhension globale de comment ça fonctionne », sans ses chiffres ni ses mécaniques ; et les missiles pareil)
     // (… NI SES COULEURS — Keko, 18/11 : « inutile de préciser la couleur des lasers et des balles de mitraillette »)
-    'arme-mitrailleuse': 'Une rafale de petites balles : chacune frappe peu, mais elles pleuvent sans répit.',
+    // (… RIEN QUE L'ESSENTIEL — Keko, 18/11 : « ne précise pas que les balles frappent peu ; le type d'arme, comment ça marche »)
+    'arme-mitrailleuse': 'Une rafale continue de balles, tirée à très haute cadence sur l’ennemi.',
     'arme-rafale': 'Une pluie de balles rapides, qui s’éparpillent un peu.',
     'arme-minimissiles': 'Des missiles qui poursuivent leur cible et explosent à l’impact, touchant aussi les ennemis autour.',
     'arme-flammes': 'Un cône de feu au nez : il arrose de près, et ce qu’il touche brûle encore.',

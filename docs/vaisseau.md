@@ -5778,3 +5778,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   rapides, qui fondent sur l'ennemi. » ; la mitrailleuse, « Une rafale de petites balles : chacune frappe peu, mais elles
   pleuvent sans répit. » *La règle : une description dit ce que fait l'arme, pas ses chiffres, ses mécaniques ni ses
   couleurs.*
+- LA MITRAILLEUSE, RIEN QUE L'ESSENTIEL (Keko, 18/11 : « ne précise pas que les balles frappent peu, ça n'a pas d'intérêt ;
+  uniquement les informations nécessaires pour comprendre : quel est le type d'arme, comment ça marche ») : « Une rafale
+  continue de balles, tirée à très haute cadence sur l'ennemi. » *La règle : le type d'arme et comment elle marche, rien
+  d'autre.*
