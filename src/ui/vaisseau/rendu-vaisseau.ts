@@ -20,7 +20,7 @@ type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?:
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 const mix = (noyau as unknown as { mix(a: number, b: number, t: number): number }).mix
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'iris' | 'ver' | 'anneau'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'lumiere' | 'ver' | 'anneau'
 /** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
@@ -116,9 +116,10 @@ const RAMPES: Record<Matiere, number[]> = {
   // ils se perdaient)
   ver: ['#140c06', '#2a1a0c', '#46301a', '#644626', '#866034', '#a87e48'].map(hex),
   anneau: ['#120a06', '#24160c', '#3c2614', '#5a3a1e', '#7c5430', '#a87c50'].map(hex),
-  // LE TESSERACT (Keko, 17/11 : le troisième des Innommés) : une lumière vert d'eau, maladive, pour ses arêtes ; un œil jaune
+  // LE TESSERACT (Keko, 17/11 : le troisième des Innommés) : une lumière vert d'eau pour ses arêtes ; (18/11 : « le
+  // vaisseau de lumière ») SON CŒUR DE LUMIÈRE, d'eau pâle jusqu'au blanc — il a remplacé l'œil jaune
   spectre: ['#03140f', '#063028', '#0c5a48', '#18a080', '#50e8c0', '#c8fff0'].map(hex),
-  iris: ['#1a1404', '#4a3a06', '#8a6a10', '#d0a020', '#f8e070', '#ffffff'].map(hex),
+  lumiere: ['#0c2a24', '#1e5a4c', '#4aa890', '#a0f0dc', '#e8fff8', '#ffffff'].map(hex),
 }
 /** LE CŒUR DU NÉANT, ses huit tons : ceux du cœur de l'« Energy core » de pixelfx. */
 const COEUR = ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6', '#ffffff'].map(hex)
@@ -906,8 +907,12 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // LE TESSERACT : LES SEIZE SOMMETS D'UN HYPERCUBE, tournés dans deux plans qui touchent la quatrième dimension (x-w et
     // y-w) et dans un plan ordinaire, ramenés en trois dimensions par perspective (le cube du dedans est celui qui est
     // « plus loin » en w), puis vus de dessus. Ses trente-deux arêtes sont des traits de lumière, plus sombres derrière ;
-    // ses sommets, des points vifs. Le cube du dedans passe dehors et revient : il se retourne sur lui-même. AU MILIEU, UN
-    // ŒIL, pâle, l'iris jaune et la pupille fendue, qui regarde devant lui (là où il va) et cligne de temps en temps.
+    // ses sommets, des points vifs. Le cube du dedans passe dehors et revient : il se retourne sur lui-même.
+    // (LE VAISSEAU DE LUMIÈRE — Keko, 18/11 : « l'œil au milieu n'est pas très clair ; le remplacer par une boule
+    // lumineuse ; le Néant fait ténèbres, le Prisme prismatique, je voudrais que le Tesseract soit le vaisseau de lumière ;
+    // rendre ses formes plus lumineuses, et au milieu, un petit cœur de lumière » : AU MILIEU, UN CŒUR DE LUMIÈRE — un halo
+    // de la couleur des arêtes, trois disques de plus en plus clairs jusqu'au blanc, qui battent doucement, et quatre
+    // rayons en croix qui tournent lentement ; ses arêtes et ses sommets sont d'un ton plus vifs, un peu plus épais)
     const aw = t * 0.55
     const bw = t * 0.37 + 0.7
     const cz = t * 0.21 + 0.4
@@ -931,21 +936,25 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
         if ((d & (d - 1)) !== 0) continue
         const [a, b] = [sommets[i], sommets[j]]
         const z = (a.z + b.z) / 2
-        const ton = z < 0 ? 1 : d === 8 ? 3 : (a.w + b.w) / 2 > 0 ? 4 : 3
-        ;(z < 0 ? derriere : devant).push({ pts: barre(a.x, a.y, b.x, b.y, 0.75), mat: 'spectre', relief: 'lueur', ton })
+        const ton = z < 0 ? 2 : d === 8 ? 4 : (a.w + b.w) / 2 > 0 ? 5 : 4
+        ;(z < 0 ? derriere : devant).push({ pts: barre(a.x, a.y, b.x, b.y, 0.85), mat: 'spectre', relief: 'lueur', ton })
       }
-    for (const v of sommets) (v.z < 0 ? derriere : devant).push({ pts: ovale(v.x, v.y, 0.55, 0.55, 8), mat: 'spectre', relief: 'lueur', ton: v.z < 0 ? 2 : 5 })
-    // (l'œil : il cligne une fois toutes les 3,7 s ; l'iris regarde devant, et erre un peu)
-    const cligne = t > 0 && ((t % 3.7) + 3.7) % 3.7 < 0.14
-    const ry = cligne ? 0.25 : 1.45
-    const ix = 0.55 + 0.25 * Math.sin(t * 0.9)
-    const iy = 0.3 * Math.sin(t * 0.63)
-    const oeil: Forme[] = [{ pts: ovale(0, 0, 2.8, ry * 1.2, 18), mat: 'os', relief: 'dome', dome: { x: 0, y: 0, rx: 2.8, ry: ry * 1.2 } }]
-    if (!cligne) {
-      oeil.push({ pts: ovale(ix, iy, 1.25, 1.25, 14), mat: 'iris', relief: 'dome', dome: { x: ix, y: iy, rx: 1.25, ry: 1.25 } })
-      oeil.push({ pts: ovale(ix + 0.1, iy, 0.28, 0.95, 8), mat: 'obsidienne', relief: 'plat' })
+    for (const v of sommets) (v.z < 0 ? derriere : devant).push({ pts: ovale(v.x, v.y, 0.6, 0.6, 8), mat: 'spectre', relief: 'lueur', ton: v.z < 0 ? 3 : 5 })
+    // (le cœur : il bat doucement, ses rayons tournent)
+    const bat = 0.5 + 0.5 * Math.sin(t * 3)
+    const coeur: Forme[] = []
+    for (let k = 0; k < 4; k++) {
+      const a = t * 0.8 + (k * Math.PI) / 2
+      const L = 3.1 + 0.4 * bat
+      coeur.push({ pts: barre(Math.cos(a) * 0.6, Math.sin(a) * 0.6, Math.cos(a) * L, Math.sin(a) * L, 0.32), mat: 'lumiere', relief: 'lueur', ton: 4 })
     }
-    return [...derriere, ...oeil, ...devant]
+    const r = 2.3 + 0.25 * bat
+    coeur.push({ pts: ovale(0, 0, r, r, 18), mat: 'spectre', relief: 'lueur', ton: 3 })
+    coeur.push({ pts: ovale(0, 0, r * 0.74, r * 0.74, 16), mat: 'lumiere', relief: 'lueur', ton: 3 })
+    coeur.push({ pts: ovale(0, 0, r * 0.5, r * 0.5, 14), mat: 'lumiere', relief: 'lueur', ton: 4 })
+    coeur.push({ pts: ovale(-0.15, -0.15, r * 0.27, r * 0.27, 10), mat: 'lumiere', relief: 'lueur', ton: 5 })
+    // (par-dessus tout : derrière les arêtes de devant, on ne le lisait plus)
+    return [...derriere, ...devant, ...coeur]
   }
   // (LE VER — à la place de la Mante, Keko, 17/11 : au repos, sans motif ; en vol, `formesDuVaisseau` le fait onduler)
   if (cran === 14) return formesDuVer(t, 0, 0, motif)

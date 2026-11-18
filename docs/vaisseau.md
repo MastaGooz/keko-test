@@ -5542,3 +5542,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   anneaux sur le chemin de sa tête à lui ; il naît en grandissant (0,25 s) et rapetisse ses dernières 0,4 s ; sa morsure
   fait le claquement de mâchoires et une giclée d'ichor ; il se dissout en miettes de sa chair. *Chiffres de moi, à
   rejuger.*
+- LE TESSERACT, LE VAISSEAU DE LUMIÈRE (Keko, 18/11 : « j'adore son skin visuel ; par contre, l'œil au milieu n'est pas
+  très clair ; le remplacer par une boule lumineuse ; on a le Néant qui fait ténèbres, le Prisme prismatique, je voudrais
+  que le Tesseract soit le vaisseau de lumière ; rendre ses formes un peu plus lumineuses, et au milieu, un petit cœur
+  de lumière ») : l'œil est parti. AU MILIEU, UN CŒUR DE LUMIÈRE (ormesDeLaCoque, cran 15) : un halo de la couleur
+  des arêtes, trois disques de plus en plus clairs jusqu'au blanc, qui battent doucement, quatre rayons en croix qui
+  tournent lentement — PAR-DESSUS les arêtes (derrière celles de devant, on ne le lisait plus). Ses arêtes et ses
+  sommets sont d'un ton plus vifs et un peu plus épais. En vol, il RAYONNE (dessinerUnVaisseau) : une lueur qui bat
+  avec lui, de la couleur de son cœur, et un halo plus large, de celle de ses arêtes. La matière iris devient
+  lumiere (d'eau pâle jusqu'au blanc) ; Écarlate a un cœur de braise et ses deux petits yeux deviennent deux petites
+  lumières ; Vide, un cœur blanc bleuté.

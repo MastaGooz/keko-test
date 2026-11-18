@@ -328,27 +328,30 @@ const PEAUX: Record<string, Peau[]> = {
       habit: () => ({ ailes: [], coque: [], motif: 'taches' }),
     },
   ],
-  // LE TESSERACT : une lumière vert d'eau, un œil jaune
+  // LE TESSERACT : une lumière vert d'eau, un cœur de lumière (il a remplacé l'œil — Keko, 18/11 : « le vaisseau de lumière »)
   tesseract: [
     origine('spectre', R('#03140f', '#063028', '#0c5a48', '#18a080', '#50e8c0', '#c8fff0')),
     {
-      // écarlate : des arêtes rouge sang, et deux autres yeux, plus petits, qui se sont ouverts à côté du premier
+      // écarlate : des arêtes rouge sang, un cœur de braise, et deux petites lumières à côté de lui (c'étaient deux yeux)
       id: 'ecarlate',
       nom: 'Écarlate',
       principale: 'spectre',
-      rampes: { spectre: R('#140304', '#300608', '#5a0c10', '#a01820', '#e85050', '#ffd0c8'), iris: T(8, 0.85, 0.9), os: T(10, 0.2, 1.15) },
+      rampes: { spectre: R('#140304', '#300608', '#5a0c10', '#a01820', '#e85050', '#ffd0c8'), lumiere: R('#300608', '#7a1810', '#d04a2a', '#ff9a6a', '#ffe0c8', '#ffffff') },
       accent: R('#140304', '#300608', '#5a0c10', '#a01820', '#e85050', '#ffd0c8'),
       habit: () => ({
         ailes: [],
-        coque: COTES.flatMap((s) => [{ pts: ovale(-1.4, s * 2.7, 1, 0.65, 12), mat: 'os', relief: 'dome', dome: { x: -1.4, y: s * 2.7, rx: 1, ry: 0.65 } } as Forme, goutte(-1.1, s * 2.7, 0.45, 'iris')]),
+        coque: COTES.flatMap((s): Forme[] => [
+          { pts: ovale(-1.4, s * 2.9, 0.75, 0.75, 10), mat: 'lumiere', relief: 'lueur', ton: 3 },
+          { pts: ovale(-1.4, s * 2.9, 0.4, 0.4, 8), mat: 'lumiere', relief: 'lueur', ton: 5 },
+        ]),
       }),
     },
     {
-      // le vide : des arêtes violet pâle, l'œil inversé — noir, l'iris blanc —, un anneau de lumière autour de lui
+      // le vide : des arêtes violet pâle, un cœur de lumière blanche, bleutée, un anneau de lumière autour de lui
       id: 'vide',
       nom: 'Vide',
       principale: 'spectre',
-      rampes: { spectre: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff'), os: T(260, 0.2, 0.32), iris: R('#2a3040', '#5a6478', '#9aa8bc', '#d8e2ee', '#f4f8ff', '#ffffff'), decor: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff') },
+      rampes: { spectre: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff'), lumiere: R('#2a3040', '#5a6478', '#9aa8bc', '#d8e2ee', '#f4f8ff', '#ffffff'), decor: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff') },
       accent: R('#0c0618', '#1c0e36', '#36205e', '#6448a0', '#a890e0', '#f0e8ff'),
       habit: () => {
         const coque: Forme[] = []

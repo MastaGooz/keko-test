@@ -6884,6 +6884,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
     peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
+    // (LE CŒUR DE LUMIÈRE DU TESSERACT RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur qui bat avec lui, de
+    // la couleur de son cœur, et un halo plus large, de celle de ses arêtes)
+    if (allure.coque === 15 && !rival) {
+      const ru = rampesDuJoueur()
+      const lu = ru?.lumiere ?? [0, 0, 0, ...tonsDeLaMatiere('lumiere')]
+      const sp = ru?.spectre ?? [0, 0, 0, ...tonsDeLaMatiere('spectre')]
+      const bat = 0.5 + 0.5 * Math.sin(t * 3)
+      p.glow(sx, sy, 16 + 3 * bat, sp[4], 0.3 + 0.1 * bat)
+      p.glow(sx, sy, 7 + 2 * bat, lu[4], 0.55 + 0.2 * bat)
+    }
     const [vx, vy] = ici(g.verriere, 0)
     if (!sansVerriere(allure.coque)) p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
