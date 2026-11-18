@@ -622,7 +622,8 @@ export type Habit = { ailes: Forme[]; coque: Forme[]; /** (le ver : son motif, p
  * deux bords.
  */
 export type Gabarit = {
-  tuyeres: { x: number; y: number }[]
+  /** Ses tuyères ; `large` : la tuyère élargie d'autant (l'Ingénieur, une seule sur toute sa poupe). */
+  tuyeres: { x: number; y: number; large?: number }[]
   armes: { x: number; y: number; s: number }[]
   /** Les feux de position (rouge à bâbord, vert à tribord) ; null : il n'en a pas. */
   feux: { x: number; y: number } | null
@@ -668,7 +669,11 @@ const GABARIT_DE_LA_SALAMANDRE: Gabarit = { tuyeres: [{ x: -0.5, y: -2.4 }, { x:
 const GABARIT_DE_LA_SENTINELLE: Gabarit = { tuyeres: [], omni: { n: 8, rayon: 9.4, depart: Math.PI / 8 }, armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6, y: 8.4 }, verriere: 0, nez: 7.4, flanc: 7, anneau: 13, echelle: 1 }
 // L'INGÉNIEUR (Keko, 15/11 : « des formes assez carrées, qui dénotent avec les autres ») : un caisson, deux tuyères
 // carrées côte à côte à la poupe ; son arme est posée dans le monde
-const GABARIT_DE_L_INGENIEUR: Gabarit = { tuyeres: [{ x: 0.2, y: -2.8 }, { x: 0.2, y: 2.8 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.4, y: 7.6 }, verriere: 4.6, nez: 7.4, flanc: 7.6, anneau: 13, echelle: 1 }
+// (… UNE SEULE TUYÈRE, TRÈS LARGE — Keko, 18/11 : « qu'à la place de deux propulseurs, il n'en ait qu'un seul, très
+// large, comme si on fusionnait les deux pour former un seul faisceau de propulsion sur toute la largeur de la partie
+// basse ; l'idée, c'est d'avoir des propulseurs différents entre le chasseur, la salamandre et l'ingénieur » : une
+// tuyère au milieu, 2,4 fois plus large — de bord à bord de la poupe —, et sa flamme en nappe)
+const GABARIT_DE_L_INGENIEUR: Gabarit = { tuyeres: [{ x: 0.2, y: 0, large: 2.4 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.4, y: 7.6 }, verriere: 4.6, nez: 7.4, flanc: 7.6, anneau: 13, echelle: 1 }
 // LE FRIMAS (Keko, 15/11 : « alien, une autre race, un peu exotique ») : un corps en goutte entre deux croissants de
 // cristal qui se referment devant lui comme des pinces ; une seule tuyère, à la pointe de la queue, qui souffle froid
 const GABARIT_DU_FRIMAS: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: 7.1, y: 3.9 }, verriere: 4.2, nez: 7.6, flanc: 6.5, anneau: 12.5, echelle: 1 }
@@ -1739,7 +1744,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (LE KRAKEN ET LA VOUIVRE N'ONT PLUS DE FLAMME — Keko, 16/11 : « l'aspect feu, c'est pas très cohérent » pour des bêtes :
   // ils poussent en lâchant des bulles, que la page sème ; leurs tentacules et leurs vrilles battent plus fort)
   // (NI LE PRISME, NI LA MANTE, NI LE TESSERACT — Keko, 17/11 : un cristal qui flotte, une bête, une forme d'ailleurs)
-  if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
+  if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).map((x): Forme => (tu.large === undefined ? x : { ...x, pts: x.pts.map(([px, py]) => [px, py * tu.large!]) })).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
   if (a.coque === 11) for (const [y0, n] of [[-1.8, 4], [0.6, 5], [2.4, 3]] as [number, number][]) {
     let x = -8.4

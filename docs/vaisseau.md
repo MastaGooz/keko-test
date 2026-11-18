@@ -5946,3 +5946,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   de la recharge, le rayon part quand même. La Salamandre : 103,5 → 97 de pointe.
 - LE CHASSEUR UN PEU MOINS VITE (Keko, 18/11 : « réduis un petit peu la vitesse du chasseur ») : 110 → 104 de pointe —
   toujours devant la Salamandre (97) et l'Ingénieur (68), sous les 105 à 110 des autres races.
+- L'INGÉNIEUR, UNE SEULE TUYÈRE TRÈS LARGE (Keko, 18/11 : « qu'à la place de deux propulseurs, il n'en ait qu'un seul,
+  très large, comme si on fusionnait les deux pour ne former qu'un seul faisceau de propulsion sur toute la largeur de la
+  partie basse ; l'idée, c'est d'avoir visuellement des propulseurs différents entre le chasseur, la salamandre et
+  l'ingénieur ») : son gabarit n'a plus qu'une tuyère, au milieu, `large` de 2,4 (`Gabarit.tuyeres[].large` : la tuyère
+  et sa flamme élargies d'autant en travers — de bord à bord de la poupe, ±4,3) ; ses braises de vol naissent sur toute sa
+  largeur. Le Chasseur garde sa tuyère au milieu, la Salamandre ses deux réacteurs latéraux. Vu à la capture : au
+  décollage, une nappe de flamme sous toute la poupe.

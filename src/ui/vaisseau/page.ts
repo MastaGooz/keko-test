@@ -13646,7 +13646,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             // (… PUIS DE NOUVEAU À LA TUYÈRE, au début de la flamme — c'est la flamme qui n'est plus rigide)
             const coque = monteeA(hangar, 'coque').cran
             const tuyeres = gabaritDe(coque).tuyeres
-            const deCote = tuyeres[Math.floor(R.next() * tuyeres.length)].y
+            const tuy = tuyeres[Math.floor(R.next() * tuyeres.length)]
+            // (une tuyère large — l'Ingénieur — sème ses braises sur toute sa largeur)
+            const deCote = tuy.y + (tuy.large === undefined ? 0 : R.range(-1, 1) * 1.6 * tuy.large)
             const recul = -queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)
             // (LE VER : au bout de SA QUEUE, là où le chemin l'a mise — Keko, 17/11 : « la propulsion ne colle pas à l'endroit
             // exact de sa queue, surtout quand il tourne »)
