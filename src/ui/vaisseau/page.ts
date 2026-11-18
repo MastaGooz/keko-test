@@ -9506,15 +9506,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LES PARASITES DU VER (voir `Arme.parasite` ; Keko, 18/11 : « pas des parasites de poison ; de petits cerveaux avec
    * des dents qui s'accrochent, un peu comme les métroïdes ») : UN CERVEAU — deux lobes mauves, le sillon au milieu, des
-   * circonvolutions — sous une MEMBRANE translucide cernée de cyan, quatre CROCS d'os devant lui. EN VOL, les crocs vers
+   * circonvolutions — sous une MEMBRANE translucide cernée de cyan, quatre CROCS de la chair du Ver devant lui. EN VOL, les crocs vers
    * sa proie, il palpite et deux filaments traînent derrière. EN PLEIN BOND, il culbute en cloche, son ombre au sol.
    * ACCROCHÉ, il est posé sur le dos de son hôte, les crocs plantés dedans, et il enfle à chaque gorgée — l'hôte luit mauve.
    * (Mauves et cyan : roses, on les perdait sur les insectes, roses eux aussi.)
    */
   const CERVEAU = ['#1c0a2e', '#5a3a8e', '#a084dc', '#d4c4fa', '#ffffff'].map((c) => N.hex(c))
   const MEMBRANE = ['#0a3a40', '#2aa8a8', '#7af0e0'].map((c) => N.hex(c))
-  /** Un cerveau à crocs en (x, y), les crocs vers (ux, uy) ; `gros` sa taille ; `mord` : 0 crocs ouverts, 1 refermés. */
-  function dessinerUnCerveau(p: Peintre, x: number, y: number, ux: number, uy: number, gros: number, mord: number): void {
+  /**
+   * Un cerveau à crocs en (x, y), les crocs vers (ux, uy) ; `gros` sa taille ; `mord` : 0 crocs ouverts, 1 refermés ;
+   * `chair` les tons de ses crocs (sombre, moyen, clair).
+   * (LES CROCS ONT LA CHAIR DU VER — Keko, 18/11 : « la partie inférieure des parasites, celle qui est claire, de la même
+   * couleur que le ver, pour donner une cohérence » : ils étaient d'os ; ils suivent l'apparence du joueur)
+   */
+  function dessinerUnCerveau(p: Peintre, x: number, y: number, ux: number, uy: number, gros: number, mord: number, chair: number[]): void {
     const nx = -uy
     const ny = ux
     // (la membrane : un dôme translucide, plus grand que le cerveau, cerné de cyan)
@@ -9528,9 +9533,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const pince = k * (0.35 - 0.45 * mord) * gros
       const tx = bx + ux * lg + nx * pince
       const ty = by + uy * lg + ny * pince
-      p.line(bx, by, tx, ty, OS[1])
-      p.line(bx + ux * 0.4, by + uy * 0.4, tx, ty, OS[2])
-      p.px(Math.round(tx), Math.round(ty), OS[3])
+      p.line(bx, by, tx, ty, chair[0])
+      p.line(bx + ux * 0.4, by + uy * 0.4, tx, ty, chair[1])
+      p.px(Math.round(tx), Math.round(ty), chair[2])
     }
     // (le cerveau : cerné de sombre ; DEUX LOBES CLAIRS de part et d'autre du sillon sombre, un pli sur chacun, un reflet —
     // mesuré : tout en plis, à cette taille, il ne se lisait que comme une boule sombre)
@@ -9548,6 +9553,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesParasites(p: Peintre): void {
     if (m.parasites.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    const rv = rampesDuJoueur()?.ver
+    const chair = rv !== undefined ? [rv[2], rv[3], rv[4]] : tonsDeLaMatiere('ver')
     for (const pa of m.parasites) {
       if (pa.hote !== null) {
         const hote = m.ennemis.find((e) => e.id === pa.hote)
@@ -9558,7 +9565,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const ph = (t * 2.6 + pa.id * 0.31) % 1
         const gorgee = pouls(ph)
         p.glow(hx, hy, 6, CERVEAU[3], 0.2 + 0.25 * gorgee)
-        dessinerUnCerveau(p, hx, hy - 3.2, 0, 1, 1 + 0.15 * gorgee, 0.6 + 0.4 * gorgee)
+        dessinerUnCerveau(p, hx, hy - 3.2, 0, 1, 1 + 0.15 * gorgee, 0.6 + 0.4 * gorgee, chair)
         continue
       }
       // (EN PLEIN BOND — Keko, 17/11 : « une petite animation où on le voit sauter » : il monte en cloche au-dessus du sol et
@@ -9585,7 +9592,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         const gros = 1 + 0.35 * Math.sin(Math.PI * u)
         const rot = u * Math.PI * 2 + Math.atan2(ty - b.y0, tx - b.x0) - Math.PI
-        dessinerUnCerveau(p, gx, gy - h, Math.cos(rot), Math.sin(rot), gros, 0)
+        dessinerUnCerveau(p, gx, gy - h, Math.cos(rot), Math.sin(rot), gros, 0, chair)
         continue
       }
       // (EN VOL : les crocs vers sa proie, il palpite ; deux filaments traînent derrière lui et ondulent)
@@ -9604,7 +9611,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           y = y1
         }
       }
-      dessinerUnCerveau(p, pa.x, pa.y, ux, uy, 1 + 0.08 * Math.sin(t * 14 + pa.id), 0.5 + 0.5 * Math.sin(t * 9 + pa.id))
+      dessinerUnCerveau(p, pa.x, pa.y, ux, uy, 1 + 0.08 * Math.sin(t * 14 + pa.id), 0.5 + 0.5 * Math.sin(t * 9 + pa.id), chair)
     }
     p.place(0, 0)
   }

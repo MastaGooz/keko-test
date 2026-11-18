@@ -5526,3 +5526,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   crocs vers la proie, deux filaments qui traînent ; en bond, il culbute ; accroché, posé sur le dos de son hôte, les
   crocs plantés, il enfle à chaque gorgée et l'hôte luit mauve. Mauve et cyan : roses, on les perdait sur les insectes.
   Mesuré : tout en plis, à cette taille, le cerveau ne se lisait que comme une boule sombre ; ce sont deux lobes clairs.
+- LES CROCS DES CERVEAUX ONT LA CHAIR DU VER (Keko, 18/11 : « la partie inférieure des parasites, celle qui est claire, de
+  la même couleur que le ver, pour donner une cohérence ») : ils étaient d'os ; ils prennent les tons de la chair du Ver
+  (MATIERES.ver), ceux de l'apparence du joueur s'il en a une (Abysses, Braise).
