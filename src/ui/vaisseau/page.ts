@@ -3649,9 +3649,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-drones': 'Trois drones en orbite fondent sur les ennemis proches et les frappent d’arcs électriques.',
     'arme-chaine': 'Un éclair qui rebondit d’ennemi en ennemi.',
     'arme-aura': 'Un champ électrique autour du vaisseau, qui grille ce qui s’approche.',
-    'arme-tourelles': 'Il pose sur son passage de petites tourelles qui tirent seules.',
+    // (… AUTOUR DE LUI — Keko, 18/11 : « ne dis pas qu'il pose des tourelles sur son passage, c'est faux ; qu'il déploie des
+    // tourelles autour de lui, qui tirent toutes seules ; et pas "des petites tourelles" » ; le fléau, « au bout d'une chaîne »)
+    'arme-tourelles': 'Il déploie des tourelles autour de lui, qui tirent toutes seules.',
     'arme-scie': 'Une scie circulaire lancée vers l’ennemi, qui coupe tout à l’aller et au retour.',
-    'arme-fleau': 'Une masse à pics qui tourne sans cesse autour de lui, au bout de sa chaîne.',
+    'arme-fleau': 'Une masse à pics qui tourne sans cesse autour de lui, au bout d’une chaîne.',
     'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
     'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',

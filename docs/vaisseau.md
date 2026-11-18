@@ -5833,3 +5833,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   vaisseaux, car aucun vaisseau ne prend autant de place ; la réduire serait peut-être plus esthétique ») : son rayon
   passe de 74 à 56. Mesuré à la capture sur huit vaisseaux — le Chasseur, le Kraken, le Néant et ses anneaux (le plus
   large), le Prisme, le Ver, le Tesseract, la Sentinelle, la Salamandre : tous y tiennent, avec de la marge.
+- LES ARMES DE L'INGÉNIEUR, JUSTES (Keko, 18/11 : « ne dis pas qu'il pose des tourelles sur son passage, c'est faux ; dis
+  qu'il déploie des tourelles autour de lui, qui tirent toutes seules ; pas "des petites tourelles" ; et pour le fléau, au
+  bout d'une chaîne, pas de sa chaîne ») : « Il déploie des tourelles autour de lui, qui tirent toutes seules. » ; « Une
+  masse à pics qui tourne sans cesse autour de lui, au bout d'une chaîne. »
