@@ -5512,7 +5512,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   monde de l'aperçu posait le vaisseau au centre ; au premier pas, il y laissait sa première flaque, puis sautait sur
   son ovale. Les armes en circuit commencent maintenant SUR l'ovale.
 - LE VER HÉRISSÉ D'OS (Keko, 18/11 : « des pics sur le ver, pour qu'il évoque ses attaques d'os ; revoir sa structure, lui
-  ajouter de la texture, le rendre plus menaçant ») : ormesDuVer. Sur chaque flanc de chaque anneau, UNE ÉPINE D'OS
+  ajouter de la texture, le rendre plus menaçant ») : formesDuVer. Sur chaque flanc de chaque anneau, UNE ÉPINE D'OS
   couchée vers l'arrière, plus longue vers la tête (elles remplacent les soies) ; sur le dos de chaque anneau, une
   PLAQUE D'OS en pointe vers l'arrière (sa colonne, vue d'en haut) ; deux MANDIBULES d'os en crochets devant la bouche,
   qui s'écartent avec elle, et deux CORNES couchées derrière la tête (elles remplacent les palpes de chair) ; un DARD
@@ -5538,14 +5538,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   6 rad/s ; au contact, il mord : 2 points toutes les 0,6 s. Sans proie, il nage en ondulant, lentement (son virage est
   bridé à 1,5 rad/s : à pleine vitesse de virage, il tournait en rond). LE CONTRÔLE MENTAL EST RETIRÉ (les serviteurs,
   menerLesServiteurs, le venin des larves : git log) — Keko le garde en tête pour un bonus en partie. Le dessin
-  (dessinerLesMiniVers) : LE VER LUI-MÊME (ormesDuVer), à l'apparence du joueur, peint à la moitié de sa taille, ses
+  (dessinerLesMiniVers) : LE VER LUI-MÊME (formesDuVer), à l'apparence du joueur, peint à la moitié de sa taille, ses
   anneaux sur le chemin de sa tête à lui ; il naît en grandissant (0,25 s) et rapetisse ses dernières 0,4 s ; sa morsure
   fait le claquement de mâchoires et une giclée d'ichor ; il se dissout en miettes de sa chair. *Chiffres de moi, à
   rejuger.*
 - LE TESSERACT, LE VAISSEAU DE LUMIÈRE (Keko, 18/11 : « j'adore son skin visuel ; par contre, l'œil au milieu n'est pas
   très clair ; le remplacer par une boule lumineuse ; on a le Néant qui fait ténèbres, le Prisme prismatique, je voudrais
   que le Tesseract soit le vaisseau de lumière ; rendre ses formes un peu plus lumineuses, et au milieu, un petit cœur
-  de lumière ») : l'œil est parti. AU MILIEU, UN CŒUR DE LUMIÈRE (ormesDeLaCoque, cran 15) : un halo de la couleur
+  de lumière ») : l'œil est parti. AU MILIEU, UN CŒUR DE LUMIÈRE (formesDeLaCoque, cran 15) : un halo de la couleur
   des arêtes, trois disques de plus en plus clairs jusqu'au blanc, qui battent doucement, quatre rayons en croix qui
   tournent lentement — PAR-DESSUS les arêtes (derrière celles de devant, on ne le lisait plus). Ses arêtes et ses
   sommets sont d'un ton plus vifs et un peu plus épais. En vol, il RAYONNE (dessinerUnVaisseau) : une lueur qui bat
@@ -5554,7 +5554,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   lumières ; Vide, un cœur blanc bleuté.
 - LA LUMIÈRE VA AU PRISME (Keko, 18/11 : « j'ai fait une erreur : finalement, on associe la lumière au prisme ; il
   envoie des rayons, il est basé sur le rayonnement, les traits, les lasers ; ne touche pas à la forme et la
-  structure, retravaille un petit peu la texture et les couleurs ») : ses matières (quartz, acette, energie)
+  structure, retravaille un petit peu la texture et les couleurs ») : ses matières (quartz, facette, energie)
   quittent le bleu lavande de glace pour LA LUMIÈRE DU SOLEIL — un quartz ivoire qui monte au blanc, une cage d'or pâle,
   une énergie d'or blanc (sa marque aussi ; ses cristaux posés suivent, ils sont de la même matière ; Rubis et Émeraude
   gardent leurs couleurs). Sa texture : l'arête de quartz de ses arches LUIT (elle prenait la lumière, elle la fait), les
@@ -5564,3 +5564,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE TESSERACT GARDE SON CŒUR DE LUMIÈRE, ENTRE SES ARÊTES (Keko, 18/11 : « il me plaît comme ça ; le noyau semble
   toujours au-dessus, on ne voit jamais les lignes passer devant ») : posé par-dessus tout, le cœur est remis derrière
   les arêtes de devant. Son concept et ses armes restent à trouver.
+- L'HYPERCUBE, LA PREMIÈRE ARME DU TESSERACT (Keko, 18/11 : « je voudrais qu'il lance un cube en quatre dimensions, un
+  peu comme sa propre structure, en cloche, qui rebondit trois fois ; à chaque fois qu'il rebondit, il inflige une
+  petite zone de dégâts ») : `Arme.hypercube`, `menerLesHypercubes`, `Monde.hypercubes`. Toutes les 1,6 s, sur
+  l'insecte à 90 (le verrouillé d'abord, sinon le plus proche), il lance en cloche un hypercube là où l'insecte sera à sa
+  chute (0,6 s). Il TOUCHE LE SOL TROIS FOIS : à chaque contact, tout insecte à 12 perd 8 points ; entre deux, il
+  rebondit plus loin dans le sens de son lancer (30, puis 21), chaque bond plus court et plus bref (×0,7) ; au troisième
+  contact, il s'éteint. *J'ai compté trois contacts, trois zones* — « rebondit trois fois » pouvait en dire quatre (la
+  chute, puis trois rebonds) : `rebonds` le change. Au dessin, C'EST SON HYPERCUBE À LUI, EN PETIT : les mêmes seize
+  sommets (`sommetsDUnHypercube`, sorti du dessin du vaisseau pour être partagé ; `ARETES_DE_L_HYPERCUBE`), tournés
+  trois fois plus vite, ses arêtes aux couleurs des siennes (l'apparence du joueur), un point de lumière entre elles ;
+  il monte au-dessus de son ombre, chaque bond plus bas (la hauteur suit le carré de la durée du bond) ; à chaque contact,
+  son EMPREINTE : un éclair, deux carrés de lumière qui s'ouvrent en tournant jusqu'au bord de la zone, un anneau, des
+  éclats. Ses sons : un « vwoum » d'énergie qui monte au lancer, un « tonk » de verre épais à chaque contact (annoncé en
+  avance de la latence, comme l'impact d'une météore). Les balises restent derrière lui, en attendant ses deux autres
+  armes. Les chiffres sont de moi.

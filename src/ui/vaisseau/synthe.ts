@@ -785,6 +785,24 @@ const RECETTES = {
       note(m, 0, 0.5, 0, { f: 900 + 200 * h.next(), glisse: { vers: 500, en: 0.03 }, a: 0.001, d: 0.03, partiels: [[1, 1, 1], [2.3, 0.5, 0.6]] })
     },
   },
+  /** L'HYPERCUBE PART (le Tesseract, 18/11) : un « vwoum » d'énergie qui monte, battu — le cube qui se retourne —, un souffle qui s'élève */
+  hypercube: {
+    duree: 0.45, niveau: 0.13, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      const f = 330 * (0.95 + 0.1 * h.next())
+      note(m, 0, 0.8, 0, { f, glisse: { vers: f * 2, en: 0.18, droit: true }, a: 0.01, d: 0.2, battement: 18, partiels: [[1, 1, 1], [1.5, 0.35, 0.7]] })
+      souffle(m, h, 0, 0.35, 0, { f: 1800, glisse: { vers: 3200, en: 0.2, droit: true }, q: 1.4, bande: true, a: 0.02, d: 0.15 })
+    },
+  },
+  /** L'HYPERCUBE TOUCHE LE SOL (le Tesseract, 18/11) : un « tonk » creux et cristallin — un coup bref, une note ronde de verre épais qui sonne un instant */
+  rebondHypercube: {
+    duree: 0.5, niveau: 0.15, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.7, 0, { f: 150, glisse: { vers: 80, en: 0.05 }, a: 0.001, d: 0.08, partiels: CORPS, sature: 1.2 })
+      note(m, 0, 0.6, 0, { f: 620 * (0.95 + 0.1 * h.next()), a: 0.002, d: 0.25, partiels: [[1, 1, 1], [2.76, 0.3, 0.5], [5.4, 0.12, 0.3]] })
+      souffle(m, h, 0, 0.35, 0, { f: 3000, q: 1.3, bande: true, a: 0.001, d: 0.04 })
+    },
+  },
   /** UN PETIT TRAIT ARCANIQUE PART DE LA SPHÈRE : un « tsip » clair et bref qui monte, à peine battu */
   arcane: {
     duree: 0.25, niveau: 0.1, salle: [0.25, 0.1], variantes: 4,

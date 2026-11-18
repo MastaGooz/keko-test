@@ -246,13 +246,15 @@ export const MODELES: ModeleDeVaisseau[] = [
     // LE TESSERACT (Keko, 17/11 : les Innommés, « il leur manque également un autre vaisseau ») : un hypercube — un cube
     // dans un cube, qui tourne dans une quatrième dimension et se retourne sur lui-même — et, au milieu, un œil. SON ARME :
     // les balises gardées de côté, des glyphes posés que relient des rayons (de moi, à rejuger)
+    // (… SA PREMIÈRE ARME, L'HYPERCUBE — Keko, 18/11 : « un cube en quatre dimensions, comme sa propre structure, lancé en
+    // cloche, qui rebondit trois fois » ; les balises restent derrière lui, en attendant ses deux autres armes)
     id: 'tesseract',
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
-    dit: 'Un cube dans un cube, qui se retourne sur lui-même autour d’un œil. Il pose des glyphes.',
-    pieces: ['coque-15', 'propulseur-t3', 'arme-balises'],
-    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-balises'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-balises'] },
+    dit: 'Un cube dans un cube, qui se retourne sur lui-même autour d’un cœur de lumière. Il lance des hypercubes qui rebondissent.',
+    pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-balises'],
+    serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-balises'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
     chaine: [],
     horsRecherche: true,
   },

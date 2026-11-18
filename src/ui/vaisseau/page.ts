@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLeBouclier } from './bouclier.ts'
@@ -456,6 +456,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const armeAnnonceeA = new Map<string, number>()
   /** Les météores dont l'impact a déjà sonné, en avance (voir `annoncerLesSons`). */
   const meteoresAnnoncees = new Set<number>()
+  /** Les contacts au sol des hypercubes déjà sonnés en avance (« id:contact »). */
+  const rebondsAnnonces = new Set<string>()
   /** L'instant où chaque rival a pris un obus (il blanchit), et celui du dernier coup pris par le bouclier (son anneau flashe). */
   const toucheEnnemiA = new Map<number, number>()
   let bouclierA = -10
@@ -1048,7 +1050,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA MITRAILLEUSE EST OUVERTE AUSSI, pour l'essayer — Keko, 15/11 : « débloque-moi la mitrailleuse pour tester » ;
   // l'arme équipée est gardée sur l'appareil)
   // (CHAQUE VAISSEAU A SES ARMES — la Salamandre, son lance-flammes ; l'arme équipée est gardée par vaisseau)
-  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-balises'] }
+  const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-canon', 'arme-rafale', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-balises'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
   const armeDuVortex = (): string => {
@@ -1765,6 +1767,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (meteoresAnnoncees.has(mt.id) || mt.tombe - m.t > avance) continue
       meteoresAnnoncees.add(mt.id)
       jouer('impactMeteore', { dx: mt.x - v.x, dy: mt.y - v.y })
+    }
+    // LES HYPERCUBES : l'heure de leur prochain contact au sol est écrite dès le bond (voir Arme.hypercube)
+    for (const h of m.hypercubes) {
+      const cle = `${h.id}:${h.contacts + 1}`
+      if (rebondsAnnonces.has(cle) || h.depart + h.duree - m.t > avance) continue
+      rebondsAnnonces.add(cle)
+      jouer('rebondHypercube', { dx: h.x1 - v.x, dy: h.y1 - v.y })
     }
   }
   /** Le minerai choisi à l'entrepôt. */
@@ -3614,6 +3623,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-drain': 'Il accroche les âmes qui l’approchent et les draine, à toute distance ; leur vie purge sa corruption.',
     'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
+    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois : chaque rebond frappe autour de lui.',
   }
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
@@ -3760,6 +3770,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesMeteoresAuSol(p)
       dessinerLesFlaquesAcides(p)
       dessinerLesMines(p)
+      dessinerLesOmbresDesHypercubes(p)
       dessinerLesTourelles(p)
       dessinerLesBalises(p)
       dessinerLesEnnemis(p)
@@ -3782,6 +3793,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesRejetons(p)
       dessinerLesCrachats(p)
       dessinerLesGaz(p)
+      dessinerLesHypercubes(p)
       dessinerLesParasites(p)
       dessinerLElectricite(p)
       dessinerLesLasers(p)
@@ -8814,6 +8826,77 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     p.place(0, 0)
   }
+  /**
+   * L'HYPERCUBE DU TESSERACT (voir `Arme.hypercube` ; Keko, 18/11 : « un cube en quatre dimensions, un peu comme sa propre
+   * structure ») : SON HYPERCUBE À LUI, EN PETIT — les mêmes seize sommets (`sommetsDUnHypercube`), tournés trois fois plus
+   * vite, ses trente-deux arêtes en traits de lumière aux couleurs des siennes (l'apparence du joueur), plus sombres
+   * derrière, et un point de lumière au milieu, entre elles. EN CLOCHE : il monte au-dessus de son ombre et retombe, chaque
+   * bond plus bas (la hauteur suit le carré de la durée du bond, comme une vraie chute). À CHAQUE CONTACT, SON EMPREINTE
+   * AU SOL : un éclair, un carré de lumière qui s'ouvre en tournant jusqu'au bord de la zone frappée, un anneau.
+   */
+  const empreintesDuCube: { x: number; y: number; rayon: number; cap: number; t0: number }[] = []
+  const DUREE_DE_L_EMPREINTE = 0.35
+  const TAILLE_DE_L_HYPERCUBE = 2.2
+  /** La hauteur d'un hypercube en l'air (en pixels) : la cloche de son bond, d'autant plus haute que le bond est long. */
+  const hauteurDuCube = (u: number, duree: number): number => 55 * duree * duree * 4 * u * (1 - u)
+  const tonsDuCube = (): { sp: number[]; lu: number[] } => {
+    const ru = rampesDuJoueur()
+    return { sp: ru?.spectre ?? rampeDeLaMatiere('spectre'), lu: ru?.lumiere ?? rampeDeLaMatiere('lumiere') }
+  }
+  function dessinerUnHypercube(p: Peintre, x: number, y: number, tc: number, taille: number): void {
+    const { sp, lu } = tonsDuCube()
+    const so = sommetsDUnHypercube(tc)
+    p.glow(x, y, taille * 3, sp[4], 0.3)
+    const arete = (devant: boolean): void => {
+      for (const [i, j, d] of ARETES_DE_L_HYPERCUBE) {
+        const [a, b] = [so[i], so[j]]
+        if (a.z + b.z >= 0 !== devant) continue
+        const c = !devant ? sp[2] : d === 8 ? sp[4] : (a.w + b.w) / 2 > 0 ? sp[5] : sp[4]
+        p.line(x + a.x * taille, y + a.y * taille, x + b.x * taille, y + b.y * taille, c)
+      }
+    }
+    arete(false)
+    p.glow(x, y, taille * 1.1, lu[5], 0.6)
+    p.dot(x, y, lu[5])
+    arete(true)
+    for (const s0 of so) if (s0.z >= 0) p.dot(x + s0.x * taille, y + s0.y * taille, sp[5])
+  }
+  /** Au sol : l'ombre de chaque hypercube en l'air, et l'empreinte de ses contacts. */
+  function dessinerLesOmbresDesHypercubes(p: Peintre): void {
+    for (let i = empreintesDuCube.length - 1; i >= 0; i--) if (t - empreintesDuCube[i].t0 > DUREE_DE_L_EMPREINTE) empreintesDuCube.splice(i, 1)
+    if ((m.hypercubes.length === 0 && empreintesDuCube.length === 0) || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    const { sp, lu } = tonsDuCube()
+    for (const h of m.hypercubes) {
+      const u = Math.max(0, Math.min(1, (m.t - h.depart) / h.duree))
+      const haut = hauteurDuCube(u, h.duree)
+      p.circle(h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u, 2.6 - Math.min(1, haut / 20), N.hex('#06040a'), 0.4)
+    }
+    for (const e of empreintesDuCube) {
+      const u = (t - e.t0) / DUREE_DE_L_EMPREINTE
+      const ouvre = 1 - (1 - u) * (1 - u)
+      if (u < 0.3) p.glow(e.x, e.y, e.rayon * 1.2, sp[4], 0.55 * (1 - u / 0.3))
+      // (le carré de lumière : il s'ouvre en tournant, un second, plus petit, dedans)
+      for (const [k, c] of [[1, lu[4]], [0.55, sp[4]]] as [number, number][]) {
+        const demi = e.rayon * (0.3 + 0.7 * ouvre) * k
+        const ang = e.cap + Math.PI / 4 + ouvre * 0.9 * (k < 1 ? -1 : 1)
+        const coins = [0, 1, 2, 3].map((q) => [e.x + Math.cos(ang + (q * Math.PI) / 2) * demi * Math.SQRT2, e.y + Math.sin(ang + (q * Math.PI) / 2) * demi * Math.SQRT2])
+        for (let q = 0; q < 4; q++) p.line(coins[q][0], coins[q][1], coins[(q + 1) % 4][0], coins[(q + 1) % 4][1], c, 1 - u)
+      }
+      p.ring(e.x, e.y, e.rayon * ouvre, 1, sp[3], 0.5 * (1 - u))
+    }
+    p.place(0, 0)
+  }
+  /** En l'air, au-dessus de tout : les hypercubes. */
+  function dessinerLesHypercubes(p: Peintre): void {
+    if (m.hypercubes.length === 0 || m.phase !== 'vol') return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const h of m.hypercubes) {
+      const u = Math.max(0, Math.min(1, (m.t - h.depart) / h.duree))
+      dessinerUnHypercube(p, h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u - hauteurDuCube(u, h.duree), m.t * 3 + h.id, TAILLE_DE_L_HYPERCUBE)
+    }
+    p.place(0, 0)
+  }
   function dessinerLesTentacules(p: Peintre): void {
     if (m.tentacules.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
@@ -12379,6 +12462,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'epineFinie':
           epinesFinies.push({ x: ev.x, y: ev.y, cap: ev.cap, t0: t })
           break
+        case 'hypercube':
+          // (le Tesseract lance son hypercube : son « vwoum » — sauf s'il a sonné en avance)
+          if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
+          else jouer('hypercube', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        case 'rebondHypercube': {
+          // (IL TOUCHE LE SOL : son « tonk » de verre — sauf s'il a sonné en avance —, son empreinte, des éclats de lumière)
+          const cle = `${ev.id}:${ev.contact}`
+          if (rebondsAnnonces.has(cle)) rebondsAnnonces.delete(cle)
+          else jouer('rebondHypercube', { dx: ev.x - v.x, dy: ev.y - v.y })
+          empreintesDuCube.push({ x: ev.x, y: ev.y, rayon: ev.rayon, cap: ev.id + ev.contact * 0.7, t0: t })
+          const { sp, lu } = tonsDuCube()
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(20, 50)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.3), [sp[4], sp[5], lu[4]][i % 3], 1, 1.5)
+          }
+          secousse = Math.max(secousse, 0.08)
+          break
+        }
+        case 'hypercubeFini': {
+          // (au dernier contact, il s'éteint : ses sommets s'envolent en points de lumière)
+          const { sp, lu } = tonsDuCube()
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 + R.range(-0.3, 0.3)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 30), Math.sin(a) * R.range(15, 30) - 12, R.range(0.3, 0.5), i % 2 === 0 ? lu[5] : sp[5], 1, 1)
+          }
+          break
+        }
         case 'oeuf':
           // (le Ver pond : un petit « blop »)
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -13132,6 +13244,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesMeteoresAuSol(p)
     dessinerLesFlaquesAcides(p)
     dessinerLesMines(p)
+    dessinerLesOmbresDesHypercubes(p)
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
     dessinerLesEnnemis(p)
@@ -13156,6 +13269,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesRejetons(p)
     dessinerLesCrachats(p)
     dessinerLesGaz(p)
+    dessinerLesHypercubes(p)
     dessinerLesParasites(p)
     dessinerLElectricite(p)
     dessinerLesBombes(p)

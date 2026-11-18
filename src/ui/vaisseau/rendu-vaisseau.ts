@@ -166,6 +166,38 @@ function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: nu
   return chaud > 0.62 ? COEUR[3] : chaud > 0.3 ? COEUR[2] : COEUR[1]
 }
 /** Trois tons d'une matière (sombre, moyen, clair), pour ce que la page peint à la main (les drones). */
+/**
+ * LES SEIZE SOMMETS D'UN HYPERCUBE à l'instant `t` (le Tesseract, et l'hypercube qu'il lance — Keko, 18/11 : « un cube
+ * en quatre dimensions, un peu comme sa propre structure ») : tournés dans deux plans qui touchent la quatrième dimension
+ * (x-w et y-w) et dans un plan ordinaire, ramenés en trois dimensions par perspective, à l'échelle 1 (le grand cube fait
+ * à peu près ±1,5). `z` dit s'il est devant ou derrière, `w` s'il est du cube du dehors.
+ */
+export function sommetsDUnHypercube(t: number): { x: number; y: number; z: number; w: number }[] {
+  const aw = t * 0.55
+  const bw = t * 0.37 + 0.7
+  const cz = t * 0.21 + 0.4
+  return Array.from({ length: 16 }, (_, k) => {
+    let x = k & 1 ? 1 : -1
+    let y = k & 2 ? 1 : -1
+    let z = k & 4 ? 1 : -1
+    let w = k & 8 ? 1 : -1
+    ;[x, w] = [x * Math.cos(aw) - w * Math.sin(aw), x * Math.sin(aw) + w * Math.cos(aw)]
+    ;[y, w] = [y * Math.cos(bw) - w * Math.sin(bw), y * Math.sin(bw) + w * Math.cos(bw)]
+    ;[x, z] = [x * Math.cos(cz) - z * Math.sin(cz), x * Math.sin(cz) + z * Math.cos(cz)]
+    const k4 = 3 / (3 - w)
+    return { x: x * k4, y: y * k4, z: z * k4, w }
+  })
+}
+/** SES TRENTE-DEUX ARÊTES : les paires de sommets qui ne diffèrent que d'une coordonnée, et laquelle (8 : celles qui joignent les deux cubes). */
+export const ARETES_DE_L_HYPERCUBE: [number, number, number][] = []
+for (let i = 0; i < 16; i++)
+  for (let j = i + 1; j < 16; j++) {
+    const d = i ^ j
+    if ((d & (d - 1)) === 0) ARETES_DE_L_HYPERCUBE.push([i, j, d])
+  }
+/** La rampe entière d'une matière (six tons, du plus sombre au plus clair). */
+export const rampeDeLaMatiere = (m: Matiere): number[] => RAMPES[m]
+
 export function tonsDeLaMatiere(m: Matiere): [number, number, number] {
   return [RAMPES[m][2], RAMPES[m][3], RAMPES[m][4]]
 }
@@ -919,32 +951,16 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // rayons en croix qui tournent lentement ; ses arêtes et ses sommets sont d'un ton plus vifs, un peu plus épais)
     // (… PUIS LA LUMIÈRE VA AU PRISME — Keko, 18/11 : « finalement, on associe la lumière au prisme ; le tesseract me plaît
     // comme ça » : il garde son cœur, son concept reste à trouver)
-    const aw = t * 0.55
-    const bw = t * 0.37 + 0.7
-    const cz = t * 0.21 + 0.4
     const S = 3.5
-    const sommets = Array.from({ length: 16 }, (_, k) => {
-      let x = k & 1 ? 1 : -1
-      let y = k & 2 ? 1 : -1
-      let z = k & 4 ? 1 : -1
-      let w = k & 8 ? 1 : -1
-      ;[x, w] = [x * Math.cos(aw) - w * Math.sin(aw), x * Math.sin(aw) + w * Math.cos(aw)]
-      ;[y, w] = [y * Math.cos(bw) - w * Math.sin(bw), y * Math.sin(bw) + w * Math.cos(bw)]
-      ;[x, z] = [x * Math.cos(cz) - z * Math.sin(cz), x * Math.sin(cz) + z * Math.cos(cz)]
-      const k4 = 3 / (3 - w)
-      return { x: x * k4 * S, y: y * k4 * S, z: z * k4, w }
-    })
+    const sommets = sommetsDUnHypercube(t).map((v) => ({ ...v, x: v.x * S, y: v.y * S }))
     const derriere: Forme[] = []
     const devant: Forme[] = []
-    for (let i = 0; i < 16; i++)
-      for (let j = i + 1; j < 16; j++) {
-        const d = i ^ j
-        if ((d & (d - 1)) !== 0) continue
+    for (const [i, j, d] of ARETES_DE_L_HYPERCUBE) {
         const [a, b] = [sommets[i], sommets[j]]
         const z = (a.z + b.z) / 2
         const ton = z < 0 ? 2 : d === 8 ? 4 : (a.w + b.w) / 2 > 0 ? 5 : 4
         ;(z < 0 ? derriere : devant).push({ pts: barre(a.x, a.y, b.x, b.y, 0.85), mat: 'spectre', relief: 'lueur', ton })
-      }
+    }
     for (const v of sommets) (v.z < 0 ? derriere : devant).push({ pts: ovale(v.x, v.y, 0.6, 0.6, 8), mat: 'spectre', relief: 'lueur', ton: v.z < 0 ? 3 : 5 })
     // (le cœur : il bat doucement, ses rayons tournent)
     const bat = 0.5 + 0.5 * Math.sin(t * 3)

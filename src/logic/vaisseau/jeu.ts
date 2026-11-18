@@ -709,6 +709,16 @@ export type Arme = {
    * lâche. Sa proie morte ou partie, elle en saisit une autre. L'état est `Monde.vrilles`.
    */
   vrille?: { max: number; duree: number; pres: number; loin: number; allonge: number; sortie: number; dps: number; periode: number; arrache: number }
+  /**
+   * L'HYPERCUBE (la première arme du Tesseract, Keko, 18/11 : « il lance un cube en quatre dimensions, un peu comme sa
+   * propre structure, en cloche, qui rebondit trois fois ; à chaque fois qu'il rebondit, il inflige une petite zone de
+   * dégâts ») : à sa cadence, sur un insecte à `portee` (le verrouillé d'abord, sinon le plus proche), il LANCE EN CLOCHE
+   * un hypercube là où l'insecte sera à sa chute (`vol` secondes plus tard). Il touche le sol `rebonds` fois : à chaque
+   * contact, tout insecte à moins de `rayon` perd `degats` ; puis il REBONDIT plus loin, dans le sens de son lancer, de
+   * `bond` — chaque bond `amorti` fois plus court, et plus bref, que le précédent. Au dernier contact, il s'éteint. L'état
+   * est `Monde.hypercubes`.
+   */
+  hypercube?: { rebonds: number; rayon: number; vol: number; bond: number; amorti: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
   essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
@@ -895,6 +905,8 @@ export type Monde = {
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
   /** LES ÉPINES D'OS DU VER EN VOL (voir `Arme.epines`) : où, leur vitesse, ce qu'il leur reste à voler, qui elles ont touché. */
   brochettes: { id: number; arme: number; x: number; y: number; vx: number; vy: number; vie: number; touches: number[] }[]
+  /** LES HYPERCUBES DU TESSERACT (voir `Arme.hypercube`) : le bond en cours (d'où, où, quand il est parti, combien de temps), son cap, ses contacts au sol. */
+  hypercubes: { id: number; arme: number; x0: number; y0: number; x1: number; y1: number; depart: number; duree: number; cap: number; contacts: number }[]
   /** LES ŒUFS DU VER (voir `Arme.ponte`) : où, leur cap, quand ils ont été pondus. */
   oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number }[]
   /** LES MINI-VERS (voir `Arme.ponte`) : où, leur cap, quand ils sont nés, leur proie, leur prochaine morsure. */
@@ -1025,6 +1037,10 @@ export type Evenement =
   | { type: 'epines'; x: number; y: number }
   | { type: 'transperce'; id: number; x: number; y: number }
   | { type: 'epineFinie'; x: number; y: number; cap: number }
+  /** Le Tesseract lance son hypercube ; il touche le sol (son rang de contact, de 1 à `rebonds`) ; il s'éteint (voir `Arme.hypercube`). */
+  | { type: 'hypercube'; x: number; y: number; arme: string }
+  | { type: 'rebondHypercube'; id: number; x: number; y: number; rayon: number; contact: number }
+  | { type: 'hypercubeFini'; x: number; y: number }
   /** Le drain d'âme accroche une âme (voir `Arme.drain`). */
   | { type: 'accroche'; id: number; x: number; y: number }
   | { type: 'saisie'; id: number; cible: number; x: number; y: number }
@@ -1068,7 +1084,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [] }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [] }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2755,6 +2771,62 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
   })
 }
 
+/** L'HYPERCUBE DU TESSERACT (voir `Arme.hypercube`) : le lancer en cloche, les contacts au sol qui frappent, les rebonds. */
+function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const hc = a.hypercube
+    if (hc === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    // (le verrouillé à portée d'abord, sinon le plus proche)
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    const ve = ennemiVerrouille(m)
+    let cible: Ennemi | null = ve !== null && dist(ve) <= a.portee ? ve : null
+    if (cible === null) {
+      let dc = a.portee
+      for (const e of m.ennemis) if (dist(e) <= dc) (dc = dist(e)), (cible = e)
+    }
+    if (cible === null) return
+    m.armesA[i] = m.t + a.cadence
+    // (là où il sera à sa chute ; pas plus loin que la portée)
+    let x1 = cible.corps.x + cible.corps.vx * hc.vol
+    let y1 = cible.corps.y + cible.corps.vy * hc.vol
+    const d = Math.hypot(x1 - v.x, y1 - v.y)
+    const cap = d > 1e-6 ? Math.atan2(y1 - v.y, x1 - v.x) : v.cap
+    if (d > a.portee) (x1 = v.x + Math.cos(cap) * a.portee), (y1 = v.y + Math.sin(cap) * a.portee)
+    m.hypercubes.push({ id: m.prochainId++, arme: i, x0: v.x, y0: v.y, x1, y1, depart: m.t, duree: hc.vol, cap, contacts: 0 })
+    ev.push({ type: 'hypercube', x: v.x, y: v.y, arme: a.id })
+  })
+  m.hypercubes = m.hypercubes.filter((h) => {
+    const a = c.armes[h.arme]
+    const hc = a?.hypercube
+    if (a === undefined || hc === undefined) return false
+    if (m.t < h.depart + h.duree) return true
+    // (IL TOUCHE LE SOL : une petite zone de dégâts)
+    h.contacts++
+    ev.push({ type: 'rebondHypercube', id: h.id, x: h.x1, y: h.y1, rayon: hc.rayon, contact: h.contacts })
+    for (const e of [...m.ennemis]) {
+      if (Math.hypot(e.corps.x - h.x1, e.corps.y - h.y1) > hc.rayon + c.ennemi.rayon) continue
+      const critique = c.passifs.critique > 0 && tire(m.graine, h.id * 31 + e.id * 7 + h.contacts, 12) < c.passifs.critique
+      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    if (h.contacts >= hc.rebonds) {
+      ev.push({ type: 'hypercubeFini', x: h.x1, y: h.y1 })
+      return false
+    }
+    // (IL REBONDIT, plus loin dans le sens de son lancer, plus court et plus bref à chaque fois)
+    const k = Math.pow(hc.amorti, h.contacts - 1)
+    h.depart += h.duree
+    h.duree = hc.vol * hc.amorti * k
+    h.x0 = h.x1
+    h.y0 = h.y1
+    h.x1 = h.x0 + Math.cos(h.cap) * hc.bond * k
+    h.y1 = h.y0 + Math.sin(h.cap) * hc.bond * k
+    return true
+  })
+}
+
 /** LES ŒUFS DU VER (voir `Arme.ponte`) : la ponte derrière lui, l'éclosion à son heure, les mini-vers qui chassent et mordent. */
 function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -3611,7 +3683,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -3730,6 +3802,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesVrilles(c, m, dt, ev)
   menerLesOeufs(c, m, dt, ev)
   menerLesEpines(c, m, dt, ev)
+  menerLesHypercubes(c, m, ev)
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)

@@ -189,6 +189,9 @@ export const PIECES: Piece[] = [
   // LES BALISES DE L'INGÉNIEUR (Keko, 15/11) : posées sur son passage, reliées deux à deux ; un insecte entre deux
   // balises reliées, la ligne s'éclaire et tout ce qui est dessus prend un coup — un piège (les rivets d'abord, remplacés
   // le 15/11). *Chiffres de moi, à rejuger en jouant.*
+  // L'HYPERCUBE DU TESSERACT (Keko, 18/11 : « il lance un cube en quatre dimensions, comme sa propre structure, en
+  // cloche, qui rebondit trois fois ; à chaque rebond, une petite zone de dégâts » ; les chiffres sont de moi)
+  { id: 'arme-hypercube', sorte: 'arme', cran: 3, nom: 'Hypercube', dit: 'Toutes les 1,6 s, il lance en cloche un hypercube sur l’insecte le plus proche, à 90. Il touche le sol trois fois, en rebondissant plus loin : à chaque contact, tout insecte à 12 perd 8 points.', note: 'Une nuée serrée : chaque rebond la frappe encore.', prix: 30, poids: 5, arme: { id: 'hypercube', cadence: 1.6, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, hypercube: { rebonds: 3, rayon: 12, vol: 0.6, bond: 30, amorti: 0.7 } } },
   { id: 'arme-balises', sorte: 'arme', cran: 3, nom: 'Balises', dit: 'Il pose une balise sur son passage, toutes les 1,5 s au plus, six à la fois, qui vivent 35 s ; elles vont par trois, chaque trio un triangle, séparé des autres. Chaque fois qu’un insecte franchit la ligne entre deux balises reliées, elle s’éclaire : tout insecte dessus perd 8 points ; tant qu’il en reste dessus, elle redécharge toutes les 0,5 s.', note: 'Un piège : tracez-le sur le chemin des insectes.', prix: 30, poids: 6, arme: { id: 'balise', cadence: 0.7, degats: 8, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, balise: { tous: 1.5, ecart: 40, max: 6, duree: 35, garde: 3, periode: 0.5 } } },
   // LE GIVRE DU FRIMAS (Keko, 15/11) : une traînée de givre derrière le vaisseau, qui ralentit et ronge les insectes
   // qui y restent. *Chiffres de moi, à rejuger en jouant.*
