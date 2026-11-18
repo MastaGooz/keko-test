@@ -1113,7 +1113,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   // (… ET SON BLINDAGE DE MOITIÉ — Keko, 18/11 : « diminuer largement le blindage du chasseur, peut-être la moitié » : 7
   // (ses pièces, plus les deux des humains) → 4, l'entier le plus proche de 3,5 — un blindage compte des coups entiers)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax: number; poussee: number; rotation: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.3, blindage: 0.5 } }
+  // (… ET LA SALAMANDRE ENTRE LE CHASSEUR ET L'INGÉNIEUR — Keko, 18/11 : « réduire un petit peu le blindage de la
+  // salamandre, entre le chasseur et l'ingénieur ; l'ingénieur est vraiment la version blindée des vaisseaux humains » :
+  // 9 → 7, entre les 4 du Chasseur et les 9 de l'Ingénieur)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.3, blindage: 0.5 }, salamandre: { blindage: 7 / 9 } }
   /** Le blindage d'un vaisseau au vortex, une fois la vie de sa race posée : réglé par `REGLAGES_DU_VORTEX`. */
   const blindageAuVortex = <V extends { coque: number }>(v: V, id: string): V => {
     const f = VORTEX ? REGLAGES_DU_VORTEX[id]?.blindage : undefined
@@ -1121,7 +1124,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const regleAuVortex = (cf: ConfigVaisseau, id: string): ConfigVaisseau => {
     const r = VORTEX ? REGLAGES_DU_VORTEX[id] : undefined
-    return r === undefined ? cf : { ...cf, vitesseMax: cf.vitesseMax * r.vitesseMax, poussee: cf.poussee * r.poussee, rotation: cf.rotation * r.rotation }
+    return r === undefined ? cf : { ...cf, vitesseMax: cf.vitesseMax * (r.vitesseMax ?? 1), poussee: cf.poussee * (r.poussee ?? 1), rotation: cf.rotation * (r.rotation ?? 1) }
   }
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
@@ -4158,8 +4161,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
         { nom: 'Maniabilité', valeur: sur(cf.rotation, ETALONS.maniabilite), max: 1 },
         // (L'ESSAIM N'A PAS DE BLINDAGE, IL A DE LA VIE — Keko, 17/11 : « on devrait passer cette barre de vie en vert pour refléter un aspect plus point de vie »)
-        de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: 8, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: 8, cellules: true },
-        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: 8, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: '', valeur: 0, max: 8 },
+        // (… ET SES BARRES À CASES GARDENT DE LA MARGE — Keko, 18/11 : « la barre de blindage ne doit jamais être pleine, plus
+        // tard on permettra son amélioration ; l'ingénieur à 75 % » : au vortex, douze cases pour le blindage, la vie et le
+        // bouclier — les 9 de l'Ingénieur aux trois quarts ; les plaques gardent leurs huit, les 6 de l'Ingénieur aussi)
+        de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: CASES_DE_LA_VIE, cellules: true } : vie.plaques > 0 ? { nom: 'Plaques', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: '', valeur: 0, max: 8 },
       ]
       return jauges.filter((j) => j.nom !== '')
     }
@@ -4216,6 +4222,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LA FLOTTE EST À 20 %, LE MEILLEUR À 100 % ; depuis zéro, tous les vaisseaux tenaient entre 70 et 100 %, et 65 % de
    * vitesse aurait fait du Chasseur le plus lent de tous — `surLaJaugeDuVortex`)
    */
+  /** Les cases des barres de blindage, de vie et de bouclier d'une fiche : douze au vortex, de quoi les améliorer. */
+  const CASES_DE_LA_VIE = VORTEX ? 12 : 8
   /** Le haut des jauges de vol du vortex, pour le meilleur de la flotte : la place des améliorations à venir. */
   const MARGE_DES_JAUGES = 0.75
   let etalonsDuVortex: typeof ETALONS_DU_BANC | null = null

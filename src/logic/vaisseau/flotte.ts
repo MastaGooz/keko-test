@@ -146,7 +146,9 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Ingénieur',
     classe: 'chasseur',
     race: 'humains',
-    plaques: 4,
+    // (… LA VERSION BLINDÉE DES HUMAINS — Keko, 18/11 : six plaques, au-dessus des quatre de la Salamandre et des trois
+    // du Chasseur ; les trois quarts de leur barre)
+    plaques: 6,
     dit: 'Lent et méthodique, un génie de la mécanique qui ne laisse rien au hasard.',
     pieces: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'],
     serie: { possedees: ['coque-7', 'propulseur-i1', 'arme-tourelles', 'arme-scie', 'arme-fleau'], montees: { coque: 'coque-7', propulseur: 'propulseur-i1' }, outils: [], armes: ['arme-tourelles'] },

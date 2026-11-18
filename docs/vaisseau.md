@@ -5813,3 +5813,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - L'INGÉNIEUR (Keko, 18/11 : « ne dis pas qu'il ne combat pas seul : s'il a son fléau, il combat seul ») : « Lent et
   méthodique, un génie de la mécanique qui ne laisse rien au hasard. » *Une description vaut pour TOUTES les armes du
   vaisseau : rien qui ne soit vrai qu'avec l'une d'elles.*
+- LE BLINDAGE DES HUMAINS EN TROIS PALIERS, LES BARRES À CASES AVEC DE LA MARGE (Keko, 18/11 : « réduire un petit peu le
+  blindage de la salamandre, entre le chasseur et l'ingénieur ; la barre de blindage ne doit jamais être pleine, plus tard
+  on permettra son amélioration : l'ingénieur à 75 % ; la salamandre, un nombre de plaques un peu au-dessus du chasseur,
+  mais toujours en dessous de l'ingénieur — l'ingénieur est vraiment la version blindée des vaisseaux humains ») : AU
+  VORTEX, les barres de BLINDAGE, de VIE et de BOUCLIER d'une fiche ont DOUZE CASES (`CASES_DE_LA_VIE` ; huit ailleurs) —
+  l'Ingénieur, 9 (7 de ses pièces, 2 des humains), aux trois quarts ; aucune barre de la flotte n'est pleine (le plus
+  gros bouclier, 8, aux deux tiers). LA SALAMANDRE : 9 → 7 (`REGLAGES_DU_VORTEX.salamandre.blindage`), entre les 4 du
+  Chasseur et les 9 de l'Ingénieur. LES PLAQUES (huit cases) : le Chasseur 3, la Salamandre 4, L'INGÉNIEUR 4 → 6 (son
+  modèle, `plaques` — elles ne servent qu'au vortex), aux trois quarts. *Vu à la capture* : à douze cases, chacune n'est
+  plus qu'un trait, plus fin que les cases des plaques ; ça se compte encore.
