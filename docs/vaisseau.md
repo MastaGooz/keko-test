@@ -5552,3 +5552,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   avec lui, de la couleur de son cœur, et un halo plus large, de celle de ses arêtes. La matière iris devient
   lumiere (d'eau pâle jusqu'au blanc) ; Écarlate a un cœur de braise et ses deux petits yeux deviennent deux petites
   lumières ; Vide, un cœur blanc bleuté.
+- LA LUMIÈRE VA AU PRISME (Keko, 18/11 : « j'ai fait une erreur : finalement, on associe la lumière au prisme ; il
+  envoie des rayons, il est basé sur le rayonnement, les traits, les lasers ; ne touche pas à la forme et la
+  structure, retravaille un petit peu la texture et les couleurs ») : ses matières (quartz, acette, energie)
+  quittent le bleu lavande de glace pour LA LUMIÈRE DU SOLEIL — un quartz ivoire qui monte au blanc, une cage d'or pâle,
+  une énergie d'or blanc (sa marque aussi ; ses cristaux posés suivent, ils sont de la même matière ; Rubis et Émeraude
+  gardent leurs couleurs). Sa texture : l'arête de quartz de ses arches LUIT (elle prenait la lumière, elle la fait), les
+  fils qui relient ses éclats sont plus vifs, ses poussières de givre sont des poussières de lumière ; en vol, son
+  cristal RAYONNE (une lueur d'or blanc qui respire, un halo plus large). Forme et mouvements inchangés. Les armes du
+  Prisme (rayon, cristaux reliés, railgun) gardent leurs couleurs de toujours.
+- LE TESSERACT GARDE SON CŒUR DE LUMIÈRE, ENTRE SES ARÊTES (Keko, 18/11 : « il me plaît comme ça ; le noyau semble
+  toujours au-dessus, on ne voit jamais les lignes passer devant ») : posé par-dessus tout, le cœur est remis derrière
+  les arêtes de devant. Son concept et ses armes restent à trouver.

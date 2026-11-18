@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLeBouclier } from './bouclier.ts'
@@ -6884,6 +6884,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
     peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
+    // (LE CRISTAL DU PRISME RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur d'or blanc qui respire, sur son
+    // cristal ; un halo plus large autour de lui)
+    if (allure.coque === 12 && !rival) {
+      const en = rampesDuJoueur()?.energie ?? [0, 0, 0, ...tonsDeLaMatiere('energie')]
+      const [kx, ky] = ici(CRISTAL_DU_PRISME.x, 0)
+      const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
+      p.glow(kx, ky, 18 + 3 * bat, en[3], 0.25 + 0.08 * bat)
+      p.glow(kx, ky, 8 + 2 * bat, en[4], 0.5 + 0.15 * bat)
+    }
     // (LE CŒUR DE LUMIÈRE DU TESSERACT RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur qui bat avec lui, de
     // la couleur de son cœur, et un halo plus large, de celle de ses arêtes)
     if (allure.coque === 15 && !rival) {

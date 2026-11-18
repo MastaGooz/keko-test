@@ -91,11 +91,15 @@ const RAMPES: Record<Matiere, number[]> = {
   ecaille: ['#0a120e', '#14241a', '#22382a', '#34523c', '#4f7454', '#86a87c'].map(hex),
   venin: ['#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0'].map(hex),
   lie: ['#140a18', '#26122e', '#3c1c48', '#563068', '#7a4c8e', '#a678b8'].map(hex),
-  // LE PRISME (Keko, 16/11 : « un vaisseau cristallin ») : un quartz clair, bleu lavande, qui accroche la lumière ; des
-  // facettes plus sombres pour le corps ; une énergie bleue pure pour son cœur et son cristal
-  quartz: ['#14123a', '#2a2c70', '#4a5aa8', '#7aa0d8', '#b8d8f4', '#ffffff'].map(hex),
-  facette: ['#0c1024', '#18203f', '#2a3866', '#40568e', '#6680b8', '#9cb4e0'].map(hex),
-  energie: ['#0a2a6a', '#1a5ad0', '#40a0ff', '#80d8ff', '#c8f4ff', '#ffffff'].map(hex),
+  // LE PRISME (Keko, 16/11 : « un vaisseau cristallin ») : un quartz clair qui accroche la lumière ; des facettes plus
+  // sombres pour sa cage ; une énergie pure pour son cristal.
+  // (LE VAISSEAU DE LUMIÈRE — Keko, 18/11 : « on associe la lumière au prisme : il envoie des rayons, il est basé sur le
+  // rayonnement, les traits, les lasers ; ne touche pas à la forme ni à la structure, retravaille la texture et les
+  // couleurs » : le bleu lavande de glace est devenu la LUMIÈRE DU SOLEIL — un quartz ivoire qui monte au blanc, une cage
+  // d'or pâle, une énergie d'or blanc)
+  quartz: ['#3a2a10', '#7a5a20', '#c09a40', '#f0d880', '#fff6d0', '#ffffff'].map(hex),
+  facette: ['#2a200e', '#4e3c1a', '#7e6430', '#b49a58', '#e0cc88', '#fff2c0'].map(hex),
+  energie: ['#5a3a08', '#b08020', '#ffd050', '#ffeaa0', '#fffae0', '#ffffff'].map(hex),
   // LE NÉANT (Keko, 16/11 : « un vaisseau du void, qui utilisera l'espace-temps et les dimensions ») : les teintes de
   // l'« Energy core » de pixelfx — un magenta qui sort du noir —, sombres pour sa matière, claires pour ses anneaux
   neant: ['#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6'].map(hex),
@@ -913,6 +917,8 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // rendre ses formes plus lumineuses, et au milieu, un petit cœur de lumière » : AU MILIEU, UN CŒUR DE LUMIÈRE — un halo
     // de la couleur des arêtes, trois disques de plus en plus clairs jusqu'au blanc, qui battent doucement, et quatre
     // rayons en croix qui tournent lentement ; ses arêtes et ses sommets sont d'un ton plus vifs, un peu plus épais)
+    // (… PUIS LA LUMIÈRE VA AU PRISME — Keko, 18/11 : « finalement, on associe la lumière au prisme ; le tesseract me plaît
+    // comme ça » : il garde son cœur, son concept reste à trouver)
     const aw = t * 0.55
     const bw = t * 0.37 + 0.7
     const cz = t * 0.21 + 0.4
@@ -953,8 +959,9 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     coeur.push({ pts: ovale(0, 0, r * 0.74, r * 0.74, 16), mat: 'lumiere', relief: 'lueur', ton: 3 })
     coeur.push({ pts: ovale(0, 0, r * 0.5, r * 0.5, 14), mat: 'lumiere', relief: 'lueur', ton: 4 })
     coeur.push({ pts: ovale(-0.15, -0.15, r * 0.27, r * 0.27, 10), mat: 'lumiere', relief: 'lueur', ton: 5 })
-    // (par-dessus tout : derrière les arêtes de devant, on ne le lisait plus)
-    return [...derriere, ...devant, ...coeur]
+    // (ENTRE LES ARÊTES — Keko, 18/11 : « le noyau semble toujours au-dessus, on ne voit jamais les lignes passer devant » :
+    // posé par-dessus tout, il a été remis derrière celles de devant)
+    return [...derriere, ...coeur, ...devant]
   }
   // (LE VER — à la place de la Mante, Keko, 17/11 : au repos, sans motif ; en vol, `formesDuVaisseau` le fait onduler)
   if (cran === 14) return formesDuVer(t, 0, 0, motif)
@@ -991,7 +998,8 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
       const l = taille * 0.5
       const eclat: Forme = { pts: [[x + ux * L, y + uy * L], [x - uy * l, y + ux * l], [x - ux * L * 0.8, y - uy * L * 0.8], [x + uy * l, y - ux * l]], mat: z < 0 ? 'facette' : 'quartz', relief: 'plat', penche: Math.sin(b * 0.7) }
       ;(z < 0 ? derriere : devant).push(eclat)
-      fils.push({ pts: barre(cx, 0, x, y, 0.6), mat: 'energie', relief: 'lueur', ton: z < 0 ? 1 : 2 })
+      // (des fils de LUMIÈRE, plus vifs — Keko, 18/11 : « le vaisseau de lumière »)
+      fils.push({ pts: barre(cx, 0, x, y, 0.6), mat: 'energie', relief: 'lueur', ton: z < 0 ? 2 : 4 })
     }
     const cage: Forme[] = []
     const souffle = t === 0 ? 1 : 1 + 0.05 * Math.sin(t * 1.3)
@@ -1000,7 +1008,8 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
       const bord = (k: number): [number, number] => [cx + arche[k][0], sg * (arche[k][1] * souffle + arche[k][2])]
       const dedans = (k: number): [number, number] => [cx + arche[k][0], sg * (arche[k][1] * souffle - arche[k][2])]
       cage.push({ pts: [...arche.map((_, k) => bord(k)), ...arche.map((_, k) => dedans(arche.length - 1 - k))], mat: 'facette', relief: 'plat', penche: sg })
-      cage.push({ pts: [...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle + 0.25)]), ...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle - 0.15)]).reverse()], mat: 'quartz', relief: 'plat' })
+      // (son arête de quartz LUIT : un trait de lumière le long de l'arche — elle prenait la lumière, elle la fait)
+      cage.push({ pts: [...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle + 0.25)]), ...arche.map(([x, y]): [number, number] => [cx + x, sg * (y * souffle - 0.15)]).reverse()], mat: 'quartz', relief: 'lueur', ton: 4 })
     }
     // LE CRISTAL, À LA MANIÈRE DU « ICE CRYSTAL » DE PIXELFX (Keko, 17/11 : « pour le cristal du prisme, tu peux t'inspirer
     // de ice crystal ») : un vrai cristal en trois dimensions — un prisme à six pans, une longue pointe devant (le rayon en
@@ -1074,7 +1083,7 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
       const x = cx - 2 + ((i * 0.618) % 1) * 5 + Math.sin(t * 0.7 + i) * 0.4
       const y = Math.cos(a) * rr
       const z = Math.sin(a) * rr
-      ;(z < 0 ? givreDerriere : givreDevant).push({ pts: ovale(x, y, z < 0 ? 0.3 : 0.38, z < 0 ? 0.3 : 0.38, 6), mat: 'energie', relief: 'lueur', ton: z < 0 ? 2 : i % 3 === 0 ? 5 : 4 })
+      ;(z < 0 ? givreDerriere : givreDevant).push({ pts: ovale(x, y, z < 0 ? 0.3 : 0.38, z < 0 ? 0.3 : 0.38, 6), mat: 'energie', relief: 'lueur', ton: z < 0 ? 3 : 5 })
     }
     return [...fils, ...derriere, ...givreDerriere, ...cage, ...cristal, ...givreDevant, ...devant]
   }

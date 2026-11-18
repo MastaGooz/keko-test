@@ -283,7 +283,8 @@ const PEAUX: Record<string, Peau[]> = {
   ],
   // LE PRISME : le quartz, les facettes, l'énergie
   prisme: [
-    origine('quartz', ENERGIE),
+    // (sa marque : l'or blanc de sa lumière — Keko, 18/11)
+    origine('quartz', R('#5a3a08', '#b08020', '#ffd050', '#ffeaa0', '#fffae0', '#ffffff')),
     {
       // un cristal de rubis : des facettes rouge sombre, un quartz rose, une énergie rouge ; des éclats sur les flancs
       id: 'rubis',
