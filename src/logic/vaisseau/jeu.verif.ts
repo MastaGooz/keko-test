@@ -2174,22 +2174,30 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // du premier contact, à 50, et celle du deuxième, à 100)
   const t2 = lancer([insecte(1, 70, 0)])
   verifier(`un insecte seul à 70, entre deux contacts : le deuxième tombe sur lui (${t2.contacts.join(', ')}) — ${t2.pv[0]}`, t2.contacts.join() === '20,70,120' && t2.pv[0] === 8)
-  // (un insecte qui file de côté, à 40 par seconde, pendant les 1,5 s du vol : le cube le suit, le troisième contact le frappe)
-  {
-    const w = nouveauMonde(cfg, 3)
-    w.ennemis.push({ ...insecte(1, 130, 0) })
+  // (DES INSECTES QUI CHARGENT, à leur vraie conduite — les insectes du vortex, le vaisseau loin du portail, une seconde
+  // d'élan avant le lancer. EN LIGNE DROITE, Keko, 18/11 : le lancer vise là où chacun sera au contact qui peut
+  // l'atteindre — un insecte qui chasse le vaisseau fonce vers lui, `ouSeraLInsecte` ; un par contact, et à chaque fois
+  // le contact visé le frappe)
+  for (const loin of [75, 125, 175]) {
+    const cfg2 = { ...cfg, invasion: { ...VAISSEAU.invasion, active: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+    const w = nouveauMonde(cfg2, 3)
+    w.ennemis.push({ ...insecte(1, 300 + loin * Math.cos(1), loin * Math.sin(1)), calmeA: undefined })
+    w.armesA = [1]
     const ev: Evenement[] = []
-    let ou = { x: 0, y: 0 }
-    for (let i = 0; i < 92; i++) {
-      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
-      for (const e of w.ennemis) e.corps = { ...e.corps, y: e.corps.y + 40 / 60, vx: 0, vy: 40 }
-      for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+    let vise = 0
+    let frappe = false
+    const caps: number[] = []
+    for (let i = 0; i < 160; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 300, y: 0, vx: 0, vy: 0, cap: 0 }
+      const avant = w.ennemis[0]?.pv ?? 0
+      for (const e of avancerLeMonde(cfg2, w, 1 / 60, { x: 0, y: 0 }).evenements) {
         ev.push(e)
-        if (e.type === 'rebondHypercube' && e.contact === 3) ou = { x: e.x, y: e.y }
+        if (e.type === 'hypercube' && vise === 0) vise = w.hypercubes[0].vise
+        if (e.type === 'rebondHypercube' && caps.length < 3) caps.push(Math.atan2(e.y, e.x - 300))
+        if (e.type === 'rebondHypercube' && e.contact === vise && (w.ennemis[0]?.pv ?? 0) < avant) frappe = true
       }
     }
-    const pv = 1000 - (w.ennemis[0]?.pv ?? 1000)
-    verifier(`un insecte qui file de côté (40/s) : le troisième contact le suit et le frappe (contact à ${ou.x.toFixed(0)}, ${ou.y.toFixed(0)} ; lui à ${w.ennemis[0].corps.x.toFixed(0)}, ${w.ennemis[0].corps.y.toFixed(0)}) — ${pv}`, pv === 8)
+    verifier(`un insecte qui charge depuis ${loin} : le contact ${vise} le frappe (${frappe}), en ligne droite (caps ${caps.map((a) => a.toFixed(3)).join(', ')})`, vise > 0 && frappe && caps.length === 3 && Math.abs(caps[0] - caps[2]) < 1e-6 && Math.abs(caps[1] - caps[2]) < 1e-6)
   }
   const c2 = lancer([insecte(1, 160, 0)])
   verifier(`à 160, au-delà de son troisième rebond (150) : rien ne part`, c2.ev.every((e) => e.type !== 'hypercube'))

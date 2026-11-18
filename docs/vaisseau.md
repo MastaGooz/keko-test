@@ -5614,3 +5614,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sera à ce contact ; pendant le bond qui doit le toucher, son point de chute suit l'insecte (un quart de bond au plus
   au-delà de sa longueur). Mesuré hors navigateur (`balayage-cube.ts`, 600 lancers, des insectes à leur vraie conduite
   entre 15 et 150, le vaisseau sur place ou qui file à 60) : le contact visé touche sa cible à chaque fois.
+- SA TRAJECTOIRE RESTE DROITE (Keko, 18/11 : « j'aurais voulu que la trajectoire reste droite, que le cube ne change
+  pas de trajectoire ; je préfère qu'on garde ça pour des améliorations en run ») : le suivi (réorienté à chaque rebond,
+  le point de chute qui suit l'insecte) n'est plus que derrière `Arme.hypercube.suit`, éteint — gardé pour une
+  amélioration en run. Ses trois contacts sont alignés avec le vaisseau. C'EST LA VISÉE AU LANCER QUI FAIT TOUT :
+  (1) `ouSeraLInsecte` — un insecte qui chasse le vaisseau (`aggro`) est prédit FONÇANT VERS LUI (vers là où il sera, à sa
+  pointe et sa poussée, arrêté à son contact), les autres en ligne droite ; (2) le contact visé est le premier dont le
+  lancer demandé tient entre 0 et un bond, LÀ OÙ L'INSECTE SERA À CE CONTACT-LÀ — ma première boucle mélangeait le
+  contact choisi et la position prédite pour un autre ; (3) si aucun ne tient (un insecte qui charge vite : trop loin pour
+  l'un, déjà en deçà du suivant), celui qui s'en écarte le moins — le lancer tombait sinon à zéro, sous le vaisseau.
+  MESURÉ (`balayage-cube.ts` du bloc-notes : les insectes du vortex, vitesse 40, une seconde d'élan avant le lancer, le
+  vaisseau à 300 du portail, sur place ou qui file à 60) : 529 contacts visés, 528 touchent ; prédits en ligne droite,
+  92 % seulement quand le vaisseau file. *La mesure « à chaque fois » de l'entrée précédente était faussée* : le banc
+  posait le vaisseau SUR le portail (les insectes qui l'atteignaient y passaient et sortaient du jeu, comptés ni
+  touchés ni manqués) et lançait sur des insectes encore immobiles.
