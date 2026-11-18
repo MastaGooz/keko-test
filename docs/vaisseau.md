@@ -5911,3 +5911,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   avant), la Sentinelle 78, le Kraken 57, la Salamandre 54 (76 avant). LA POINTE : l'Ingénieur 80 → 68, le Chasseur 106 →
   110 (le plafond de la flotte, sans le passer). LE NAPALM, sans insecte en vue, vise un point tiré au hasard (seedé) entre
   45 et 95 % de sa portée ; le lance-flammes et le rayon thermique gardent leur cible.
+- L'AUTO-ATTAQUE PERMANENTE (Keko, 18/11 : « on devrait faire tirer automatiquement toutes les armes, car parfois on aura
+  des effets qui se déclenchent à chaque tir ; même quand il n'y a pas d'ennemis, il faut qu'il continue de tirer en
+  permanence, et s'il n'y a pas d'ennemis, il tire droit devant lui — une auto-attaque permanente, comme dans tous les
+  survivors, type Vampire Survivors ») : `ConfigVaisseau.tirPermanent`, éteint par défaut (la règle est partagée : en
+  `?vaisseau`, le canon du joueur et du rival se seraient mis à tirer sans fin), ALLUMÉ PAR LE VORTEX (`configDuVol`).
+  Personne à portée, chaque arme vise LA CIBLE DEVANT (`cibleDevant`) : un point droit devant le nez, à 70 % de sa portée
+  — un insecte fantôme hors du monde (id −1, des points de vie infinis), que rien ne touche, que rien ne suit, sur qui
+  aucun coup ne se signale. Ce qu'en fait chaque arme : les tirs (laser, mitrailleuse, missiles, plasma, épines, éclats,
+  crachat, scie, sphère, essaim, tornade) partent droit devant ; les sorts qui tombent (météore, dé, coupe, puits,
+  hypercube) tombent devant ; le rail et le rayon thermique tracent devant ; le faisceau du Prisme chauffe dans le vide ; le
+  lance-flammes crache ; la nova bat ; la chaîne d'éclairs lance un arc devant, sans rebond ; la tentacule pique le vide
+  et revient ; les drones lancent leur arc devant le vaisseau ; LES PARASITES filent droit (un VOL LIBRE : ils s'accrochent
+  au premier insecte libre qu'ils croisent, sinon s'éteignent au bout de leur vie) ; les vrilles et les rejetons naissent
+  même sans insecte. Tiraient déjà sans cible : les mines, le fléau, les tourelles, les balises, les œufs, le poison, la
+  nuée, l'aura, le napalm. SEUL LE DRAIN D'ÂME n'a rien à drainer sans âme : il attend. Le lance-flammes et le rayon
+  thermique, que Keko voulait d'abord garder à leur cible, suivent la règle de toutes les armes. Vérifié : sans un
+  insecte, les 25 armes qui attendaient tirent, sans un coup signalé ; sans le drapeau, elles se taisent.

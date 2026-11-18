@@ -911,6 +911,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) {
         // (LE VIRAGE, l'agilité en vol : voir `agiliteDe`)
         conf = { ...conf, virage: VIRAGE_MAX * manieDe(conf) ** 2 }
+        // (L'AUTO-ATTAQUE PERMANENTE — Keko, 18/11 : toutes les armes tirent, même sans insecte, droit devant)
+        conf = { ...conf, tirPermanent: true }
         const canon = pieceDe(arme)?.arme
         // (… ET ILS NE TIRENT QUE DEVANT : cinquante degrés de part et d'autre du nez — `&arc=N` l'essaie, en degrés)
         // (PLUS DE RALENTI EN MARCHE ARRIÈRE : le nez regarde l'ennemi, on recule devant lui à pleine poussée — Keko, 15/11)
