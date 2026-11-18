@@ -3606,7 +3606,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-rejetons': 'Il pond des rejetons, qui nagent vers les insectes et les agrippent de leurs tentacules.',
     'arme-crachat': 'Un crachat d’acide devant lui, qui ronge les insectes et les rend fragiles.',
     'arme-mines': 'Des pustules d’acide semées autour de lui, qui éclatent en gaz au passage d’un insecte.',
-    'arme-parasites': 'Une larve crachée sur un insecte : elle le ronge, puis saute sur un autre à sa mort.',
+    'arme-parasites': 'Un petit cerveau à crocs s’accroche à un insecte et le dévore, puis bondit sur un autre à sa mort.',
     'arme-faisceau': 'Un rayon continu depuis son cristal, qui chauffe de plus en plus sur la même cible.',
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’insectes.',
@@ -9504,12 +9504,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
   /**
-   * LES PARASITES DE LA VOUIVRE (voir `Arme.parasite`). EN VOL : une larve de quatre anneaux de chair, la tête sombre
-   * devant, qui ONDULE en filant. ACCROCHÉE : elle s'enroule autour de son hôte et tourne lentement dessus, et l'hôte
-   * porte un BUBON vert qui bat — il est mangé de l'intérieur.
+   * LES PARASITES DU VER (voir `Arme.parasite` ; Keko, 18/11 : « pas des parasites de poison ; de petits cerveaux avec
+   * des dents qui s'accrochent, un peu comme les métroïdes ») : UN CERVEAU — deux lobes mauves, le sillon au milieu, des
+   * circonvolutions — sous une MEMBRANE translucide cernée de cyan, quatre CROCS d'os devant lui. EN VOL, les crocs vers
+   * sa proie, il palpite et deux filaments traînent derrière. EN PLEIN BOND, il culbute en cloche, son ombre au sol.
+   * ACCROCHÉ, il est posé sur le dos de son hôte, les crocs plantés dedans, et il enfle à chaque gorgée — l'hôte luit mauve.
+   * (Mauves et cyan : roses, on les perdait sur les insectes, roses eux aussi.)
    */
-  // (verte, couleur de venin : rose, on la perdait sur les insectes, roses eux aussi)
-  const LARVE = ['#1a3006', '#4e8e10', '#a6e03a', '#f0ffb0'].map((c) => N.hex(c))
+  const CERVEAU = ['#1c0a2e', '#5a3a8e', '#a084dc', '#d4c4fa', '#ffffff'].map((c) => N.hex(c))
+  const MEMBRANE = ['#0a3a40', '#2aa8a8', '#7af0e0'].map((c) => N.hex(c))
+  /** Un cerveau à crocs en (x, y), les crocs vers (ux, uy) ; `gros` sa taille ; `mord` : 0 crocs ouverts, 1 refermés. */
+  function dessinerUnCerveau(p: Peintre, x: number, y: number, ux: number, uy: number, gros: number, mord: number): void {
+    const nx = -uy
+    const ny = ux
+    // (la membrane : un dôme translucide, plus grand que le cerveau, cerné de cyan)
+    p.disc(x, y, 3.6 * gros, MEMBRANE[1], (d) => 0.12 + 0.3 * d * d)
+    p.ring(x, y, 3.6 * gros, 0.6, MEMBRANE[2], 0.55)
+    // (les crocs : quatre, devant, qui se referment quand il mord)
+    for (const k of [-1.5, -0.5, 0.5, 1.5]) {
+      const bx = x + ux * 1.9 * gros + nx * k * 0.85 * gros
+      const by = y + uy * 1.9 * gros + ny * k * 0.85 * gros
+      const lg = (Math.abs(k) > 1 ? 2.2 : 1.6) * gros
+      const pince = k * (0.35 - 0.45 * mord) * gros
+      const tx = bx + ux * lg + nx * pince
+      const ty = by + uy * lg + ny * pince
+      p.line(bx, by, tx, ty, OS[1])
+      p.line(bx + ux * 0.4, by + uy * 0.4, tx, ty, OS[2])
+      p.px(Math.round(tx), Math.round(ty), OS[3])
+    }
+    // (le cerveau : cerné de sombre ; DEUX LOBES CLAIRS de part et d'autre du sillon sombre, un pli sur chacun, un reflet —
+    // mesuré : tout en plis, à cette taille, il ne se lisait que comme une boule sombre)
+    p.circle(x, y, 2.6 * gros + 0.7, CERVEAU[0])
+    p.circle(x, y, 2.6 * gros, CERVEAU[2])
+    for (const s of [-1, 1]) p.circle(x + nx * s * 1.05 * gros - ux * 0.2 * gros, y + ny * s * 1.05 * gros - uy * 0.2 * gros, 1.35 * gros, CERVEAU[3])
+    p.line(x - ux * 2.4 * gros, y - uy * 2.4 * gros, x + ux * 2.1 * gros, y + uy * 2.1 * gros, CERVEAU[1])
+    for (const s of [-1, 1]) {
+      p.px(Math.round(x + nx * s * 1.2 * gros + ux * 0.6 * gros), Math.round(y + ny * s * 1.2 * gros + uy * 0.6 * gros), CERVEAU[2])
+      p.px(Math.round(x + nx * s * 1.4 * gros - ux * 0.9 * gros), Math.round(y + ny * s * 1.4 * gros - uy * 0.9 * gros), CERVEAU[4])
+    }
+    // (le reflet sur la membrane)
+    p.px(Math.round(x - ux * 2.4 * gros - nx * 1.8 * gros), Math.round(y - uy * 2.4 * gros - ny * 1.8 * gros), MEMBRANE[2])
+  }
   function dessinerLesParasites(p: Peintre): void {
     if (m.parasites.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
@@ -9519,23 +9554,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (hote === undefined) continue
         const hx = hote.corps.x
         const hy = hote.corps.y
-        // (le bubon qui bat sur l'hôte)
-        const ph = (t * 2.2 + pa.id * 0.31) % 1
-        const rb = 1.8 * (1 + 0.35 * pouls(ph))
-        p.circle(hx + 1, hy - 1, rb + 0.6, LIE[1])
-        p.circle(hx + 1, hy - 1, rb, VENIN[3])
-        p.px(Math.round(hx + 0.5), Math.round(hy - 1.6), VENIN[5])
-        // (la larve enroulée, qui tourne sur lui)
-        for (let k = 3; k >= 0; k--) {
-          const a = t * 2.4 + pa.id - k * 0.55
-          const r = 4.2
-          p.circle(hx + Math.cos(a) * r, hy + Math.sin(a) * r, 1.3 - k * 0.15, k === 0 ? LARVE[0] : k % 2 === 0 ? LARVE[1] : LARVE[2])
-        }
+        // (ACCROCHÉ : sur le dos de l'hôte, les crocs plantés dedans ; il enfle à chaque gorgée, l'hôte luit mauve)
+        const ph = (t * 2.6 + pa.id * 0.31) % 1
+        const gorgee = pouls(ph)
+        p.glow(hx, hy, 6, CERVEAU[3], 0.2 + 0.25 * gorgee)
+        dessinerUnCerveau(p, hx, hy - 3.2, 0, 1, 1 + 0.15 * gorgee, 0.6 + 0.4 * gorgee)
         continue
       }
       // (EN PLEIN BOND — Keko, 17/11 : « une petite animation où on le voit sauter » : il monte en cloche au-dessus du sol et
-      // retombe sur sa proie ; son ombre file au sol, sous lui ; roulé en boule, il tourne sur lui-même, grossit au sommet ;
-      // une traînée de gouttes de venin le suit)
+      // retombe sur sa proie ; son ombre file au sol, sous lui ; il culbute, grossit au sommet ; une traînée mauve le suit)
       if (pa.bond !== undefined) {
         const b = pa.bond
         const cible = m.ennemis.find((e) => e.id === pa.cible)
@@ -9549,35 +9576,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           return [b.x0 + (tx - b.x0) * e, b.y0 + (ty - b.y0) * e, Math.sin(Math.PI * q) * haut]
         }
         const [gx, gy, h] = ou(u)
-        p.circle(gx, gy, 1.6 + 0.6 * (1 - h / haut), N.hex('#06040a'), 0.45)
+        p.circle(gx, gy, 2 + 0.8 * (1 - h / haut), N.hex('#06040a'), 0.45)
         for (let j = 1; j <= 5; j++) {
           const q = u - j * 0.05
           if (q <= 0) break
           const [ax, ay, ah] = ou(q)
-          p.dot(ax, ay - ah, j % 2 === 0 ? LARVE[2] : VENIN[4], 0.8 * (1 - j / 6))
+          p.dot(ax, ay - ah, j % 2 === 0 ? CERVEAU[3] : MEMBRANE[2], 0.8 * (1 - j / 6))
         }
-        const gros = 1 + 0.45 * Math.sin(Math.PI * u)
-        const rot = u * Math.PI * 3 + pa.id
-        p.glow(gx, gy - h, 5, VENIN[3], 0.35)
-        for (let k = 3; k >= 0; k--) {
-          const a = rot - k * 0.9
-          p.circle(gx + Math.cos(a) * 1.4 * gros, gy - h + Math.sin(a) * 1.4 * gros, (1.3 - k * 0.15) * gros, k === 0 ? LARVE[0] : k % 2 === 0 ? LARVE[1] : LARVE[2])
-        }
-        p.px(Math.round(gx + Math.cos(rot) * 1.4 * gros), Math.round(gy - h + Math.sin(rot) * 1.4 * gros), LARVE[3])
+        const gros = 1 + 0.35 * Math.sin(Math.PI * u)
+        const rot = u * Math.PI * 2 + Math.atan2(ty - b.y0, tx - b.x0) - Math.PI
+        dessinerUnCerveau(p, gx, gy - h, Math.cos(rot), Math.sin(rot), gros, 0)
         continue
       }
-      // (en vol : quatre anneaux le long de sa course, qui ondulent)
+      // (EN VOL : les crocs vers sa proie, il palpite ; deux filaments traînent derrière lui et ondulent)
       const l = Math.hypot(pa.vx, pa.vy) || 1
       const ux = pa.vx / l
       const uy = pa.vy / l
-      for (let k = 3; k >= 0; k--) {
-        const onde = Math.sin(t * 22 - k * 1.3 + pa.id) * 0.9 * (k / 3)
-        const x = pa.x - ux * k * 1.5 - uy * onde
-        const y = pa.y - uy * k * 1.5 + ux * onde
-        p.circle(x, y, 1.4 - k * 0.15, k === 0 ? LARVE[0] : k % 2 === 0 ? LARVE[1] : LARVE[2])
+      for (const s of [-1, 1]) {
+        let x = pa.x - ux * 2.4 - uy * s * 1.2
+        let y = pa.y - uy * 2.4 + ux * s * 1.2
+        for (let k = 1; k <= 3; k++) {
+          const onde = Math.sin(t * 18 - k * 1.2 + s) * 0.6
+          const x1 = x - ux * 1.5 - uy * onde
+          const y1 = y - uy * 1.5 + ux * onde
+          p.line(x, y, x1, y1, k === 1 ? MEMBRANE[2] : MEMBRANE[1], 0.8 - k * 0.2)
+          x = x1
+          y = y1
+        }
       }
-      p.px(Math.round(pa.x + ux * 0.8), Math.round(pa.y + uy * 0.8), LARVE[3])
-      p.glow(pa.x, pa.y, 4, VENIN[3], 0.25)
+      dessinerUnCerveau(p, pa.x, pa.y, ux, uy, 1 + 0.08 * Math.sin(t * 14 + pa.id), 0.5 + 0.5 * Math.sin(t * 9 + pa.id))
     }
     p.place(0, 0)
   }
@@ -12235,32 +12262,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'parasiteLance':
-          // (une larve est crachée : son petit couinement mouillé — sauf s'il a sonné en avance)
+          // (un cerveau est lancé : son petit couinement mouillé — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
           else jouer(ev.arme as Son)
           break
         case 'parasiteAccroche':
-          // (elle s'accroche : la piqûre charnue, une giclée)
+          // (il s'accroche : ses crocs se plantent, une giclée)
           jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
           toucheEnnemiA.set(ev.id, t)
           for (let i = 0; i < 5; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? VENIN[4] : LARVE[2], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? CERVEAU[3] : MEMBRANE[2], 1, 1.5)
           }
           break
         case 'parasiteSaute':
-          // (son hôte mort, elle jaillit de lui : un « blop », une gerbe de chair et de venin)
+          // (son hôte mort, il bondit hors de lui : un « blop », une gerbe de chair et de membrane)
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 9; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.2, 0.4), [VENIN[3], LARVE[2], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.2, 0.4), [CERVEAU[3], MEMBRANE[2], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           break
         case 'parasiteMort':
-          // (elle meurt, sans hôte : elle se tortille et se dessèche — trois miettes)
+          // (il meurt, sans hôte : il se dessèche — trois miettes)
           for (let i = 0; i < 3; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15), R.range(0.2, 0.35), LARVE[1], 1, 1)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15), R.range(0.2, 0.35), CERVEAU[1], 1, 1)
           }
           break
         case 'mineLancee':

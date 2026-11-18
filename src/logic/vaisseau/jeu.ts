@@ -668,8 +668,11 @@ export type Arme = {
    * contact elle S'ACCROCHE et ronge son hôte : `dps` par seconde, et l'ACIDE (`acide`, tenu tant qu'elle y est). À LA MORT
    * DE SON HÔTE, elle SAUTE sur UN seul autre insecte — le plus proche à moins de `saut` qui n'en porte pas — ; s'il n'y en
    * a pas, ou qu'elle ne l'atteint pas en `vie` secondes, elle meurt. L'état est `Monde.parasites`.
+   * (… SANS POISON — Keko, 18/11 : « je ne voudrais pas que ce soit des parasites de poison ; plutôt de petits cerveaux
+   * avec des dents qui s'accrochent, un peu comme les métroïdes » : l'acide est facultatif, celui du Ver n'en a plus — il
+   * ne fait que dévorer, `dps`)
    */
-  parasite?: { max: number; dps: number; saut: number; vie: number; acide: { duree: number; dps: number; bonus: number } }
+  parasite?: { max: number; dps: number; saut: number; vie: number; acide?: { duree: number; dps: number; bonus: number } }
   /**
    * LE DRAIN D'ÂME (le Néant, Keko, 17/11 : « l'effet Soul Drain de pixelfx : ça touchera tous les ennemis à portée et ça
    * drainera la vie vers le vaisseau ; cette attaque aura la particularité de recharger plus vite la corruption que les
@@ -2447,7 +2450,7 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
         // (accroché : il suit son hôte et le ronge)
         p.x = hote.corps.x
         p.y = hote.corps.y
-        ronger(m, hote, pa.acide, ev)
+        if (pa.acide !== undefined) ronger(m, hote, pa.acide, ev)
         hote.pv -= pa.dps * dt
         if (hote.pv <= 0) abattreLEnnemi(c, m, hote, ev)
         return true

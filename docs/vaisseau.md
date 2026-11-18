@@ -5511,3 +5511,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - L'APERÇU DE LA TRAÎNÉE DE POISON (Keko, 18/11 : « un petit rond de poison qui apparaît seul au milieu ») : le petit
   monde de l'aperçu posait le vaisseau au centre ; au premier pas, il y laissait sa première flaque, puis sautait sur
   son ovale. Les armes en circuit commencent maintenant SUR l'ovale.
+- LE VER HÉRISSÉ D'OS (Keko, 18/11 : « des pics sur le ver, pour qu'il évoque ses attaques d'os ; revoir sa structure, lui
+  ajouter de la texture, le rendre plus menaçant ») : ormesDuVer. Sur chaque flanc de chaque anneau, UNE ÉPINE D'OS
+  couchée vers l'arrière, plus longue vers la tête (elles remplacent les soies) ; sur le dos de chaque anneau, une
+  PLAQUE D'OS en pointe vers l'arrière (sa colonne, vue d'en haut) ; deux MANDIBULES d'os en crochets devant la bouche,
+  qui s'écartent avec elle, et deux CORNES couchées derrière la tête (elles remplacent les palpes de chair) ; un DARD
+  d'os au bout de la queue. Sa chair d'origine est plus sombre (MATIERES.ver) : sur l'ancien beige, l'os clair se
+  perdait. Les apparences Abysses et Braise gardent leurs couleurs.
+- LES PARASITES DU VER SONT DE PETITS CERVEAUX À CROCS (Keko, 18/11 : « pas des parasites de poison ; de petits cerveaux
+  avec des dents qui s'accrochent, un peu comme les métroïdes ») : leur acide est parti (Arme.parasite.acide devient
+  facultatif, le Ver n'en a plus) — ils ne font que dévorer, 6 points par seconde : ILS FONT MOINS DE DÉGÂTS qu'avant
+  (l'acide ajoutait 2 par seconde et 35 % aux coups reçus). Le dessin (dessinerUnCerveau) : deux lobes mauves de part
+  et d'autre d'un sillon sombre, sous une membrane translucide cernée de cyan, quatre crocs d'os devant ; en vol, les
+  crocs vers la proie, deux filaments qui traînent ; en bond, il culbute ; accroché, posé sur le dos de son hôte, les
+  crocs plantés, il enfle à chaque gorgée et l'hôte luit mauve. Mauve et cyan : roses, on les perdait sur les insectes.
+  Mesuré : tout en plis, à cette taille, le cerveau ne se lisait que comme une boule sombre ; ce sont deux lobes clairs.

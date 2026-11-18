@@ -112,7 +112,9 @@ const RAMPES: Record<Matiere, number[]> = {
   membrane: ['#1a2030', '#2e3a50', '#4a6078', '#7a98ac', '#b8d4d8', '#f0fff4'].map(hex),
   // LE VER (Keko, 17/11 : à la place de la Mante, « un vaisseau sous la forme d'un ver ») : une chair de sable, des anneaux
   // de chitine brune
-  ver: ['#1e1208', '#3e2812', '#6a4620', '#9c6e34', '#c89a56', '#f0d49a'].map(hex),
+  // (plus sombre — Keko, 18/11 : « plus menaçant » ; et ses pics d'os, clairs, s'y détachent : sur la chair beige d'avant,
+  // ils se perdaient)
+  ver: ['#140c06', '#2a1a0c', '#46301a', '#644626', '#866034', '#a87e48'].map(hex),
   anneau: ['#120a06', '#24160c', '#3c2614', '#5a3a1e', '#7c5430', '#a87c50'].map(hex),
   // LE TESSERACT (Keko, 17/11 : le troisième des Innommés) : une lumière vert d'eau, maladive, pour ses arêtes ; un œil jaune
   spectre: ['#03140f', '#063028', '#0c5a48', '#18a080', '#50e8c0', '#c8fff0'].map(hex),
@@ -1543,20 +1545,25 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
   const q = pts[N]
   const ap = pts[N - 1]
   const dq = Math.hypot(q.x - ap.x, q.y - ap.y) || 1
-  // (le bout de la queue, une pointe)
-  f.push({ pts: [[q.x + ((q.x - ap.x) / dq) * 2.4, q.y + ((q.y - ap.y) / dq) * 2.4], [q.x - ((q.y - ap.y) / dq) * q.r * 0.7, q.y + ((q.x - ap.x) / dq) * q.r * 0.7], [q.x + ((q.y - ap.y) / dq) * q.r * 0.7, q.y - ((q.x - ap.x) / dq) * q.r * 0.7]], mat: 'anneau', relief: 'plat' })
+  // (le bout de la queue : un DARD D'OS, long, sur un talon de chitine)
+  const qx = (q.x - ap.x) / dq
+  const qy = (q.y - ap.y) / dq
+  f.push({ pts: [[q.x + qx * 1.2, q.y + qy * 1.2], [q.x - qy * q.r * 0.8, q.y + qx * q.r * 0.8], [q.x + qy * q.r * 0.8, q.y - qx * q.r * 0.8]], mat: 'anneau', relief: 'plat' })
+  f.push({ pts: [[q.x + qx * 4.2, q.y + qy * 4.2], [q.x + qx * 0.4 - qy * q.r * 0.55, q.y + qy * 0.4 + qx * q.r * 0.55], [q.x + qx * 0.4 + qy * q.r * 0.55, q.y + qy * 0.4 - qx * q.r * 0.55]], mat: 'os', relief: 'plat' })
   for (let k = N; k >= 1; k--) {
     const p = pts[k]
     const d = pts[k - 1]
     const l = Math.hypot(d.x - p.x, d.y - p.y) || 1
     const ux = (d.x - p.x) / l
     const uy = (d.y - p.y) / l
-    // (deux soies sur ses flancs, un anneau sur deux, couchées vers l'arrière, qui frémissent)
-    if (k % 2 === 0) for (const s of [-1, 1]) {
-      const bx = p.x - uy * s * p.r * 0.85
-      const by = p.y + ux * s * p.r * 0.85
-      const lg = 0.75 + 0.25 * Math.sin(t * 12 + k * 1.3 + s)
-      f.push({ pts: barre(bx, by, bx - ux * lg * 0.9 - uy * s * lg, by - uy * lg * 0.9 + ux * s * lg, 0.22), mat: 'anneau', relief: 'plat' })
+    // (LES PICS D'OS — Keko, 18/11 : « des pics sur le ver, pour qu'il évoque ses attaques d'os ; lui ajouter de la
+    // texture, le rendre plus menaçant » : sur chaque flanc de chaque anneau, une épine d'os couchée vers l'arrière, plus
+    // longue vers la tête, qui frémit à peine ; elles sortent de sous l'anneau — elles remplacent ses soies)
+    for (const s of [-1, 1]) {
+      const lg = (1.4 + 1.6 * (1 - k / N)) * (1 + 0.06 * Math.sin(t * 6 + k * 1.3 + s))
+      const bx = p.x - uy * s * p.r * 0.8
+      const by = p.y + ux * s * p.r * 0.8
+      f.push({ pts: [[bx + ux * 0.55, by + uy * 0.55], [bx - ux * lg * 0.85 - uy * s * lg, by - uy * lg * 0.85 + ux * s * lg], [bx - ux * 0.55, by - uy * 0.55]], mat: 'os', relief: 'plat' })
     }
     f.push({ pts: ovale(p.x, p.y, p.r * 0.95, p.r, 14), mat: 'ver', relief: 'dome', dome: { x: p.x, y: p.y, rx: p.r * 0.95, ry: p.r } })
     // (son anneau de chitine, en travers, vers l'avant)
@@ -1566,18 +1573,35 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
     if (motif === 'taches' && k % 2 === 1) f.push({ pts: ovale(p.x - ux * 0.3, p.y - uy * 0.3, p.r * 0.38, p.r * 0.38, 10), mat: 'decor', relief: 'dome', dome: { x: p.x - ux * 0.3, y: p.y - uy * 0.3, rx: p.r * 0.38, ry: p.r * 0.38 } })
     if (motif === 'lueurs') for (const s of [-1, 1]) f.push({ pts: ovale(p.x - uy * s * p.r * 0.45, p.y + ux * s * p.r * 0.45, 0.42, 0.42, 8), mat: 'decor', relief: 'lueur', ton: Math.round(3 + 2 * (0.5 + 0.5 * Math.sin(t * 4 - k * 0.7))) })
     if (motif === 'bandes') f.push({ pts: barre(p.x - ux * p.r * 0.4, p.y - uy * p.r * 0.4, d.x, d.y, 0.55), mat: 'decor', relief: 'plat' })
+    // (sur le dos, UNE PLAQUE D'OS en pointe vers l'arrière, derrière son anneau de chitine : sa colonne, vue d'en haut)
+    const dx0 = p.x + ux * p.r * 0.2
+    const dy0 = p.y + uy * p.r * 0.2
+    f.push({ pts: [[dx0 - uy * p.r * 0.32, dy0 + ux * p.r * 0.32], [p.x - ux * p.r * 0.85, p.y - uy * p.r * 0.85], [dx0 + uy * p.r * 0.32, dy0 - ux * p.r * 0.32]], mat: 'os', relief: 'plat' })
   }
-  // LA TÊTE : deux palpes qui tâtent devant, la tête ronde, son col de chitine, la bouche et ses dents, la lueur au fond
+  // LA TÊTE : deux MANDIBULES d'os en crochets devant, deux CORNES d'os couchées derrière, la tête ronde, son col de
+  // chitine, la bouche et ses dents, la lueur au fond (les mandibules et les cornes ont remplacé les palpes de chair : plus
+  // menaçant — Keko, 18/11)
   const h = pts[0]
   const n1 = pts[1]
   const lh = Math.hypot(h.x - n1.x, h.y - n1.y) || 1
   const ux = (h.x - n1.x) / lh
   const uy = (h.y - n1.y) / lh
+  const nx = -uy
+  const ny = ux
+  // (les mandibules s'écartent et se referment avec la bouche)
+  const ecarte = 0.35 + 0.3 * Math.sin(t * 2.2)
   for (const s of [-1, 1]) {
-    const bx = h.x + ux * 1.6 - uy * s * 1.7
-    const by = h.y + uy * 1.6 + ux * s * 1.7
-    const an = Math.atan2(uy, ux) + s * (0.55 + 0.25 * Math.sin(t * 5 + s * 1.3))
-    f.push({ pts: barre(bx, by, bx + Math.cos(an) * 2.6, by + Math.sin(an) * 2.6, 0.32), mat: 'chair', relief: 'plat' })
+    const bx = h.x + ux * 0.9 + nx * s * h.r * 0.75
+    const by = h.y + uy * 0.9 + ny * s * h.r * 0.75
+    const mx = bx + ux * 1.7 + nx * s * ecarte
+    const my = by + uy * 1.7 + ny * s * ecarte
+    const tx = bx + ux * 3.1 - nx * s * 0.7
+    const ty = by + uy * 3.1 - ny * s * 0.7
+    f.push({ pts: [[bx + nx * s * 0.5, by + ny * s * 0.5], [mx + nx * s * 0.45, my + ny * s * 0.45], [tx, ty], [mx - nx * s * 0.15, my - ny * s * 0.15], [bx - nx * s * 0.4, by - ny * s * 0.4]], mat: 'os', relief: 'plat' })
+    // (une corne, derrière le col, couchée vers l'arrière et vers l'extérieur)
+    const cx0 = h.x - ux * h.r * 0.45 + nx * s * h.r * 0.75
+    const cy0 = h.y - uy * h.r * 0.45 + ny * s * h.r * 0.75
+    f.push({ pts: [[cx0 + ux * 0.7, cy0 + uy * 0.7], [cx0 - ux * 2.9 + nx * s * 2.1, cy0 - uy * 2.9 + ny * s * 2.1], [cx0 - ux * 0.6, cy0 - uy * 0.6]], mat: 'os', relief: 'plat' })
   }
   f.push({ pts: ovale(h.x, h.y, h.r, h.r, 18), mat: 'ver', relief: 'dome', dome: { x: h.x, y: h.y, rx: h.r, ry: h.r } })
   const cx = h.x - ux * h.r * 0.55
