@@ -5892,3 +5892,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   | Salamandre | 88 (≈ 31 %) | 5 (15 %, la plus faible ; 76) | 7 | 4 |
   | Ingénieur | 94 → 80 (15 %, la plus basse) | 4 → 5,5 (≈ 25 % ; 61 → 84) | 9 → 6 | 6 |
   L'Ingénieur reste le plus protégé au total (12, la Salamandre 11, le Chasseur 7). Vu à la capture.
+- « DOUBLE LA VITESSE DE LA SALAMANDRE ET LA MANIABILITÉ DE L'INGÉNIEUR » (Keko, 18/11) — LU SUR LEURS JAUGES : doubler
+  les valeurs aurait mis la Salamandre à 176 (la flotte plafonne à 110) et l'Ingénieur devant le Chasseur, qu'il veut le
+  plus maniable. La Salamandre : 31 → 62 % de jauge, sa pointe 88 → 103,5 (juste sous les 106 du Chasseur) ; l'Ingénieur :
+  23 → 46 %, son agilité 5,5 → 7 (sa rotation × 1,746), son accélération 84 → 107. Vu à la capture.
+- UN PIXEL ENTRE DEUX LIGNES DE DESCRIPTION (Keko, 18/11 : « dans les descriptions des vaisseaux et des armes, les lignes
+  se touchent : une virgule sur la ligne du haut et un L sur celle d'en bas, au même endroit, se touchent ») : elles
+  avancent de dix pixels au lieu de neuf (`INTERLIGNE`), la fiche du vaisseau et la plaque de l'arme grandissent d'autant.

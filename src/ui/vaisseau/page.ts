@@ -1131,7 +1131,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // surblindage » : le Chasseur 100 → 106 de pointe ; l'Ingénieur 94 → 80 de pointe (la plus basse), 4 → 5,5 d'agilité
   // (au-dessus des 5 de la Salamandre), 9 → 6 de blindage, ses 6 plaques gardées ; la Salamandre telle quelle — 88, 5,
   // 7 de blindage et 4 plaques)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 106 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { blindage: 7 / 9 }, ingenieur: { vitesseMax: 80 / 94, rotation: 1.37, blindage: 6 / 9 } }
+  // (… PUIS « DOUBLE LA VITESSE DE LA SALAMANDRE ET LA MANIABILITÉ DE L'INGÉNIEUR » — Keko, 18/11 — LUES SUR LEURS JAUGES :
+  // doubler les valeurs aurait mis la Salamandre à 176, bien au-delà de la flotte, et l'Ingénieur devant le Chasseur ; la
+  // Salamandre 31 → 62 % de jauge (88 → 103,5), l'Ingénieur 23 → 46 % (5,5 → 7 d'agilité))
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 106 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 103.5 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 80 / 94, rotation: 1.746, blindage: 6 / 9 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
@@ -3651,13 +3654,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LA PLAQUE GARDE TOUJOURS LA PLACE DE TROIS LIGNES — Keko, 17/11 : « dessine toujours le rectangle de la même taille ;
     // s'il y a deux lignes, centre-les verticalement »)
     const lignes = replier(DESCRIPTIONS_DES_ARMES[choisie.id] ?? choisie.dit, W - 22).slice(0, 3)
-    const bas = 21 + 3 * 9 + 3
+    // (… UN PIXEL ENTRE DEUX LIGNES — Keko, 18/11 : « les lignes se touchent entre elles : une virgule sur la ligne du haut
+    // et un L sur celle d'en bas, au même endroit, se touchent » : elles avancent de dix pixels au lieu de neuf, ici et
+    // dans la fiche des vaisseaux)
+    const bas = 21 + 3 * INTERLIGNE + 3
     const hA = Math.max(64, Math.min(110, H - y - 4 - bas))
     plaque(p, 4, y, W - 8, hA + bas, 'encre')
     dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
     motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
-    const centre = Math.round(((3 - lignes.length) * 9) / 2)
-    lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + centre + i * 9, COQUE[4], { align: 'center' }))
+    const centre = Math.round(((3 - lignes.length) * INTERLIGNE) / 2)
+    lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + centre + i * INTERLIGNE, COQUE[4], { align: 'center' }))
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }
@@ -4227,7 +4233,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // droite les JAUGES ; puis ce qu'il est
     const yj = avecNom ? 21 : 6
     const hh = avecNom ? Math.max(yj + hauteurDeLIdentite(mo.race) + 3, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
-    const hd = hh + (dit.length > 0 ? dit.length * 9 + 6 : 0)
+    const hd = hh + (dit.length > 0 ? dit.length * INTERLIGNE + 6 : 0)
     // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
     // (la colonne de l'identité tient le plus long nom de race sur une ligne)
     const gx = avecNom ? Math.max(62, 8 + 2 + Math.max(...RACES.map((r) => largeurDe(lignesDuNomDeRace(r.id)[0]))) + 2 + 5) : 10
@@ -4248,7 +4254,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
     if (dit.length > 0) {
       p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
-      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * 9, COQUE[4], { align: 'center' }))
+      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * INTERLIGNE, COQUE[4], { align: 'center' }))
     }
     return hd
   }
@@ -4264,6 +4270,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /** Les cases des barres de blindage, de vie et de bouclier d'une fiche : douze au vortex, de quoi les améliorer. */
   const CASES_DE_LA_VIE = VORTEX ? 12 : 8
+  /** Le pas d'une ligne de description (d'un vaisseau, d'une arme) : la hauteur de la police et un pixel d'air. */
+  const INTERLIGNE = 10
   /** Le haut des jauges de vol du vortex, pour le meilleur de la flotte : la place des améliorations à venir. */
   const MARGE_DES_JAUGES = 0.75
   let etalonsDuVortex: typeof ETALONS_DU_BANC | null = null
@@ -4284,7 +4292,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA GRILLE A UNE HAUTEUR FIXE — Keko, 17/11 : « la hauteur du grid varie en fonction du texte en dessous ; je voudrais
   // que le grid ait une hauteur fixe, la description limitée à trois lignes » : la fiche réserve toujours trois lignes)
   // (la plus haute des fiches : cinq jauges, ou l'identité d'une race au nom sur deux lignes — voir `dessinerLaFicheDuVaisseau`)
-  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 21 + Math.max(5 * 10 + 2, ...RACES.map((r) => hauteurDeLIdentite(r.id) + 3)) + 3 * 9 + 6
+  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 21 + Math.max(5 * 10 + 2, ...RACES.map((r) => hauteurDeLIdentite(r.id) + 3)) + 3 * INTERLIGNE + 6
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
