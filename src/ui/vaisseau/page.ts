@@ -3643,8 +3643,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-mitrailleuse': 'Une rafale continue de balles, tirée à très haute cadence sur l’ennemi.',
     'arme-rafale': 'Une pluie de balles rapides, qui s’éparpillent un peu.',
     'arme-minimissiles': 'Des missiles qui poursuivent leur cible et explosent à l’impact, touchant aussi les ennemis autour.',
-    'arme-flammes': 'Un cône de feu au nez : il arrose de près, et ce qu’il touche brûle encore.',
-    'arme-rayon': 'Un rayon tombe du toit et trace au sol un trait de feu, qui laisse des flammes.',
+    // (… LA SALAMANDRE — Keko, 18/11 : « ne parle pas du nez et ne dis pas qu'on brûle encore : un souffle de feu qui
+    // embrase les ennemis à courte portée » ; « le rayon : ne dis pas qu'il tombe du toit, c'est pas clair ; un rayon thermique
+    // qui enflamme le sol et les ennemis qui s'y trouvent »)
+    'arme-flammes': 'Un souffle de feu qui embrase les ennemis à courte portée.',
+    'arme-rayon': 'Un rayon thermique qui enflamme le sol et les ennemis qui s’y trouvent.',
     'arme-napalm': 'Une boule de gel lancée en cloche, qui laisse une flaque de feu.',
     'arme-drones': 'Trois drones en orbite fondent sur les ennemis proches et les frappent d’arcs électriques.',
     'arme-chaine': 'Un éclair qui rebondit d’ennemi en ennemi.',

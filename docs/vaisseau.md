@@ -5837,3 +5837,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qu'il déploie des tourelles autour de lui, qui tirent toutes seules ; pas "des petites tourelles" ; et pour le fléau, au
   bout d'une chaîne, pas de sa chaîne ») : « Il déploie des tourelles autour de lui, qui tirent toutes seules. » ; « Une
   masse à pics qui tourne sans cesse autour de lui, au bout d'une chaîne. »
+- LES ARMES DE LA SALAMANDRE (Keko, 18/11 : « pour le lance-flammes, ne parle pas du nez et ne dis pas qu'on brûle encore :
+  un souffle de feu qui embrase les ennemis à courte portée » ; « pour le rayon, ne dis pas qu'il tombe du toit, c'est pas
+  clair, et on s'en fout : un rayon thermique qui enflamme le sol et les ennemis qui s'y trouvent ») : « Un souffle de feu
+  qui embrase les ennemis à courte portée. » ; « Un rayon thermique qui enflamme le sol et les ennemis qui s'y trouvent. »
