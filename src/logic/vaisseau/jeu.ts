@@ -477,15 +477,15 @@ export type Arme = {
   // (D'ABORD DES SALVES DE SES FLANCS — Keko, 17/11 : « il lance des épines d'os sur ses côtés, en longueur, des deux côtés,
   // à intervalles réguliers » —, puis tirées droites sans viser ; « c'est affreux de toucher avec les pics, c'est pas fun »)
   /**
-   * L'ÉPINE D'OS QUI EMBROCHE (la troisième arme du Ver — Keko, 18/11 : « un projectile assez important qui traverse tout
+   * L'ÉPINE D'OS QUI TRANSPERCE (la troisième arme du Ver — Keko, 18/11 : « un projectile assez important qui traverse tout
    * et qui embroche les ennemis ») : à sa cadence, un insecte à `portee` (le verrouillé d'abord, sinon le plus proche),
    * UNE GRANDE ÉPINE part de sa tête vers lui, à `vitesse`, `vie` secondes. ELLE TRAVERSE TOUT : chaque insecte à moins de
-   * `largeur` (plus son rayon) prend `degats`, une fois ; UN PETIT QUI SURVIT RESTE EMBROCHÉ — enfilé sur la tige derrière
-   * la pointe, tous les `ecart`, il ne bouge plus, ne mord plus, il est EMPORTÉ avec elle ; un grand est traversé, pas
-   * emporté. AU BOUT DE SA COURSE, elle se plante : chaque embroché prend `impact`, et il est relâché. L'état est
-   * `Monde.brochettes`.
+   * `largeur` (plus son rayon) prend `degats`, une fois, ET RESTE OÙ IL EST. L'état est `Monde.brochettes`.
+   * (… SANS EMPORTER PERSONNE — Keko, 18/11 : « je ne sais pas si c'est une bonne idée de faire reculer les monstres :
+   * parfois, quand je les poursuis, je les pousse dans le vortex ; que le projectile d'os traverse les ennemis sans les
+   * repousser » : elle les enfilait sur sa tige et les emportait jusqu'au bout de sa course, où ils prenaient l'impact)
    */
-  epines?: { largeur: number; ecart: number; impact: number }
+  epines?: { largeur: number }
   // (… PUIS LA LARVE PREND LE CONTRÔLE — Keko, 17/11 : « le parasite qui sort de l'œuf prend le contrôle de l'hôte, qui
   // devient un serviteur du ver, temporairement ; il attaque les autres ennemis, sans qu'ils le prennent pour cible » ; « des
   // dégâts à la fin de l'effet, pas pendant » ; « pas de contrôle mental sur les gros insectes ») : la larve sortie de l'œuf
@@ -890,8 +890,8 @@ export type Monde = {
   parasites: { id: number; arme: number; hote: number | null; cible: number | null; x: number; y: number; vx: number; vy: number; depuis: number; bond?: { x0: number; y0: number; duree: number } }[]
   /** LES SERVITEURS DU VER (voir `Arme.ponte`) : l'insecte contrôlé — sorti de la nuée —, son arme, jusqu'à quand, sa prochaine morsure. */
   serviteurs: { e: Ennemi; arme: number; jusque: number; mordA: number }[]
-  /** LES ÉPINES D'OS DU VER EN VOL (voir `Arme.epines`) : où, leur vitesse, ce qu'il leur reste à voler, qui elles ont touché, qui elles emportent (dans l'ordre où elles l'ont embroché). */
-  brochettes: { id: number; arme: number; x: number; y: number; vx: number; vy: number; vie: number; touches: number[]; embroches: number[] }[]
+  /** LES ÉPINES D'OS DU VER EN VOL (voir `Arme.epines`) : où, leur vitesse, ce qu'il leur reste à voler, qui elles ont touché. */
+  brochettes: { id: number; arme: number; x: number; y: number; vx: number; vy: number; vie: number; touches: number[] }[]
   /** LES ŒUFS DU VER ET SES MINI-VERS (voir `Arme.ponte`) : où, son cap, quand il a été pondu, s'il a éclos. */
   // (`fendu` : l'instant où un insecte l'a déclenché ; `eclos` : l'instant de l'éclosion ; `cible` : la proie du mini-ver)
   oeufs: { id: number; arme: number; x: number; y: number; cap: number; pondu: number; fendu: number | null; eclos: number | null; cible: number | null }[]
@@ -1017,10 +1017,10 @@ export type Evenement =
   | { type: 'eclosion'; id: number; x: number; y: number }
   | { type: 'miniVerFini'; id: number; x: number; y: number }
   | { type: 'venin'; id: number; x: number; y: number }
-  /** Le Ver lance son épine d'os ; elle embroche un insecte ; elle se plante au bout de sa course (voir `Arme.epines`). */
+  /** Le Ver lance son épine d'os ; elle transperce un insecte ; elle finit sa course (voir `Arme.epines`). */
   | { type: 'epines'; x: number; y: number }
-  | { type: 'embroche'; id: number; x: number; y: number }
-  | { type: 'epinePlantee'; x: number; y: number; cap: number; embroches: number }
+  | { type: 'transperce'; id: number; x: number; y: number }
+  | { type: 'epineFinie'; x: number; y: number; cap: number }
   /** La larve prend le contrôle d'un insecte, un serviteur mord, le contrôle prend fin (voir `Arme.ponte`). */
   | { type: 'controle'; id: number; x: number; y: number }
   | { type: 'morsureServiteur'; id: number; x: number; y: number }
@@ -2709,7 +2709,7 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
-/** L'ÉPINE D'OS DU VER (voir `Arme.epines`) : le tir sur l'insecte, la course qui traverse tout, les embrochés emportés, l'impact au bout. */
+/** L'ÉPINE D'OS DU VER (voir `Arme.epines`) : le tir sur l'insecte, la course qui traverse tout sans rien emporter. */
 function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
@@ -2729,7 +2729,7 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const an = Math.atan2(cible.corps.y + cible.corps.vy * temps - v.y, cible.corps.x + cible.corps.vx * temps - v.x)
     const x = v.x + Math.cos(an) * (c.rayon + 2)
     const y = v.y + Math.sin(an) * (c.rayon + 2)
-    m.brochettes.push({ id: m.prochainId++, arme: i, x, y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, touches: [], embroches: [] })
+    m.brochettes.push({ id: m.prochainId++, arme: i, x, y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, touches: [] })
     ev.push({ type: 'epines', x, y })
   })
   m.brochettes = m.brochettes.filter((b) => {
@@ -2739,38 +2739,18 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     b.vie -= dt
     b.x += b.vx * dt
     b.y += b.vy * dt
-    const vit = Math.hypot(b.vx, b.vy) || 1
-    const ux = b.vx / vit
-    const uy = b.vy / vit
-    // (ELLE TRAVERSE TOUT : chacun à sa largeur prend le coup, une fois ; un petit qui survit reste embroché)
+    // (ELLE TRAVERSE TOUT : chacun à sa largeur prend le coup, une fois, et reste où il est)
     for (const e of [...m.ennemis]) {
       if (b.touches.includes(e.id) || Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > c.ennemi.rayon + ep.largeur) continue
       b.touches.push(e.id)
       const critique = c.passifs.critique > 0 && tire(m.graine, b.id * 31 + e.id, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      ev.push({ type: 'transperce', id: e.id, x: e.corps.x, y: e.corps.y })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
-      else if (e.grand !== true) {
-        b.embroches.push(e.id)
-        ev.push({ type: 'embroche', id: e.id, x: e.corps.x, y: e.corps.y })
-      }
     }
-    // (LES EMBROCHÉS, enfilés sur la tige derrière la pointe, emportés : ils ne bougent plus d'eux-mêmes, ne mordent plus)
-    const enfiles = b.embroches.map((id) => m.ennemis.find((e) => e.id === id)).filter((e): e is Ennemi => e !== undefined)
-    b.embroches = enfiles.map((e) => e.id)
-    enfiles.forEach((e, k) => {
-      e.tenuA = m.t + 0.1
-      e.corps = { ...e.corps, x: b.x - ux * (2 + k * ep.ecart), y: b.y - uy * (2 + k * ep.ecart), vx: 0, vy: 0 }
-    })
     if (b.vie > 0) return true
-    // (AU BOUT DE SA COURSE, ELLE SE PLANTE : chaque embroché prend l'impact, et il est relâché)
-    for (const e of enfiles) {
-      e.tenuA = m.t
-      e.pv -= ep.impact
-      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
-      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
-    }
-    ev.push({ type: 'epinePlantee', x: b.x, y: b.y, cap: Math.atan2(uy, ux), embroches: enfiles.length })
+    ev.push({ type: 'epineFinie', x: b.x, y: b.y, cap: Math.atan2(b.vy, b.vx) })
     return false
   })
 }

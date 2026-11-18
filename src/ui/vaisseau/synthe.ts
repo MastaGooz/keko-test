@@ -785,15 +785,6 @@ const RECETTES = {
       note(m, 0, 0.5, 0, { f: 900 + 200 * h.next(), glisse: { vers: 500, en: 0.03 }, a: 0.001, d: 0.03, partiels: [[1, 1, 1], [2.3, 0.5, 0.6]] })
     },
   },
-  /** L'ÉPINE SE PLANTE, CHARGÉE D'INSECTES (le Ver, 18/11) : un coup sourd et grave, des craquements d'os */
-  plante: {
-    duree: 0.5, niveau: 0.24, salle: [0.3, 0.12], variantes: 3,
-    faire: (m, h) => {
-      note(m, 0, 0.9, 0, { f: 150, glisse: { vers: 70, en: 0.08 }, a: 0.002, d: 0.1, partiels: CORPS, sature: 1.4 })
-      souffle(m, h, 0, 0.5, 0, { f: 900, q: 1.5, bande: true, a: 0.001, d: 0.05 })
-      for (let k = 0; k < 3; k++) note(m, 0.02 + 0.03 * k + 0.02 * h.next(), 0.3, (h.next() - 0.5) * 0.6, { f: 1200 + 900 * h.next(), a: 0.001, d: 0.025 })
-    },
-  },
   /** UN PETIT TRAIT ARCANIQUE PART DE LA SPHÈRE : un « tsip » clair et bref qui monte, à peine battu */
   arcane: {
     duree: 0.25, niveau: 0.1, salle: [0.25, 0.1], variantes: 4,

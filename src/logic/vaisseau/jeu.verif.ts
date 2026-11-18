@@ -2132,12 +2132,12 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`un grand n'est pas contrôlé : rongé (${(1000 - g.pv).toFixed(1)}) et freiné (${(g.geleA ?? 0) > w3.t})`, w3.serviteurs.length === 0 && g.pv < 1000 && (g.geleA ?? 0) > w3.t)
 }
 
-// L'ÉPINE D'OS DU VER (Keko, 18/11 : « un projectile assez important qui traverse tout et qui embroche les ennemis ») :
-// elle part sur l'insecte, TRAVERSE toute la file — chacun prend le coup —, emporte les petits qui survivent, enfilés sur
-// sa tige ; un faible meurt au passage, un grand est traversé mais reste ; au bout de sa course, l'impact, et elle les relâche
+// L'ÉPINE D'OS DU VER (Keko, 18/11 : « un projectile assez important qui traverse tout » ; « qu'il traverse les ennemis
+// sans les repousser ») : elle part sur l'insecte, TRAVERSE toute la file — chacun prend le coup, une fois —, un faible
+// meurt au passage, et personne ne bouge ; au bout de sa course, elle disparaît
 {
   const insecte = (id: number, x: number, y: number, pv = 1000) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const epine = { id: 'epine', cadence: 2.2, degats: 7, portee: 90, vitesse: 150, vie: 0.7, dispersion: 0, guide: false, epines: { largeur: 3, ecart: 4, impact: 9 } }
+  const epine = { id: 'epine', cadence: 2.2, degats: 16, portee: 90, vitesse: 150, vie: 0.7, dispersion: 0, guide: false, epines: { largeur: 3 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [epine], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const w = nouveauMonde(cfg, 3)
   w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
@@ -2145,14 +2145,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const ev: Evenement[] = []
   for (let i = 0; i < 30; i++) ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
   const de = (id: number) => w.ennemis.find((e) => e.id === id)
-  const b = w.brochettes[0]
   verifier(`l'épine part sur le plus proche : ${w.brochettes.length} en vol`, w.brochettes.length === 1 && ev.some((e) => e.type === 'epines'))
-  verifier(`elle traverse la file : embrochés ${b?.embroches.join(', ')}, le faible mort (${de(3) === undefined}), le grand traversé (${1000 - (de(4)?.pv ?? 0)}) mais pas emporté, le voisin hors ligne intact`, b !== undefined && b.embroches.join(',') === '1,2' && de(3) === undefined && de(4)?.pv === 993 && de(5)?.pv === 1000)
-  const x1 = de(1)!.corps.x
-  const x2 = de(2)!.corps.x
-  verifier(`les embrochés sont emportés, enfilés derrière la pointe (${x1.toFixed(1)}, ${x2.toFixed(1)} ; pointe ${b.x.toFixed(1)})`, x1 > 60 && x2 < x1 && Math.abs(x1 - x2 - 4) < 0.01 && x1 < b.x && Math.abs(de(4)!.corps.x - 60) < 0.01)
+  verifier(`elle traverse la file : ${[1, 2, 4].map((id) => 1000 - (de(id)?.pv ?? 0)).join(', ')} points, le faible mort (${de(3) === undefined}), le voisin hors ligne intact`, [1, 2, 4].every((id) => de(id)?.pv === 984) && de(3) === undefined && de(5)?.pv === 1000 && ev.filter((e) => e.type === 'transperce').length === 4)
+  verifier(`personne n'est repoussé (${[1, 2, 4].map((id) => de(id)!.corps.x).join(', ')})`, de(1)!.corps.x === 30 && de(2)!.corps.x === 40 && de(4)!.corps.x === 60)
   for (let i = 0; i < 20; i++) ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
-  verifier(`au bout de sa course, l'impact (${1000 - de(1)!.pv}) et ils sont relâchés`, w.brochettes.length === 0 && de(1)!.pv === 1000 - 7 - 9 && de(2)!.pv === 1000 - 7 - 9 && (de(1)!.tenuA ?? 0) <= w.t && ev.some((e) => e.type === 'epinePlantee' && e.embroches === 2))
+  verifier(`au bout de sa course, elle disparaît`, w.brochettes.length === 0 && ev.some((e) => e.type === 'epineFinie'))
 }
 
 // LA MÉTÉORE D'ARCANE DU PULSAR : elle tombe sur l'insecte le plus proche, son point de chute LE SUIT pendant la chute

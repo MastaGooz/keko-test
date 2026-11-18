@@ -5502,3 +5502,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (l'impact chargé, un coup sourd et des craquements d'os) ; chaque embroché fait le « tchk » de la piqûre. *Chiffres de
   moi, à rejuger.* (Le contrôle mental des œufs n'est plus une attaque de base pour Keko — « plutôt un bonus durant la
   partie, une chance d'appliquer un contrôle mental sur les attaques » — : ce que font les œufs reste à trouver.)
+- L'ÉPINE TRAVERSE SANS REPOUSSER (Keko, 18/11 : « je ne sais pas si c'est une bonne idée de faire reculer les monstres :
+  parfois, quand je les poursuis, je les pousse dans le vortex ; que le projectile d'os traverse les ennemis sans les
+  repousser ») : plus d'embrochés ni d'impact au bout. Arme.epines ne garde que largeur ; chaque insecte transpercé
+  prend 16 points (les 7 du passage et les 9 de l'impact d'un embroché) et reste où il est ; au bout de sa course,
+  l'épine file encore un instant en s'effaçant. Le son de l'impact chargé (plante) est parti ; chaque transpercé fait
+  le « tchk » de la piqûre et une giclée d'ichor. La lance garde sa longueur fixe (14).
+- L'APERÇU DE LA TRAÎNÉE DE POISON (Keko, 18/11 : « un petit rond de poison qui apparaît seul au milieu ») : le petit
+  monde de l'aperçu posait le vaisseau au centre ; au premier pas, il y laissait sa première flaque, puis sautait sur
+  son ovale. Les armes en circuit commencent maintenant SUR l'ovale.

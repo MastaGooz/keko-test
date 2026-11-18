@@ -3594,7 +3594,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
     'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',
-    'arme-epines': 'Une grande épine d’os traverse tout et emporte les insectes qu’elle embroche.',
+    'arme-epines': 'Une grande épine d’os, qui transperce tous les insectes sur sa course.',
     'arme-oeufs': 'Il pond des œufs ; leur larve prend le contrôle d’un insecte, qui mord les siens.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
@@ -3659,6 +3659,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const fait = Math.min(0.1, Math.max(0, t - a.t))
     let reste = fait
     a.t = t
+    // (LE CIRCUIT COMMENCE SUR L'OVALE — Keko, 18/11 : « un petit rond de poison apparaît seul au milieu » : le monde
+    // posait le vaisseau au centre, il y laissait sa première flaque au premier pas, puis sautait sur l'ovale)
+    if (circuit && a.monde.t === 0) a.monde.vaisseau = { ...a.monde.vaisseau, x: xc + rx, y: 0, vx: 0, vy: ry * omega }
     while (reste > 1e-6) {
       const pas = Math.min(1 / 60, reste)
       reste -= pas
@@ -8736,13 +8739,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const OS = ['#4a3e2c', '#a8987a', '#d6ccb0', '#fffaf0'].map((c) => N.hex(c))
   const BILE = ['#3a5a0c', '#a8d42a', '#e0f870'].map((c) => N.hex(c))
   /**
-   * L'ÉPINE D'OS DU VER (voir `Arme.epines`) : une grande lance d'os, ALLONGÉE DE CE QU'ELLE EMPORTE (la tige passe à
-   * travers les embrochés, dessinée par-dessus) ; cernée de sombre, éclairée d'un côté, effilée jusqu'à sa pointe blanche,
-   * deux barbes de harpon derrière la pointe, le talon noueux d'un os ; une traîne de poussière d'os. Plantée au bout de sa
-   * course, elle reste fichée un instant, vibre, et s'efface.
+   * L'ÉPINE D'OS DU VER (voir `Arme.epines`) : une grande lance d'os de quatorze pixels, dessinée par-dessus les insectes
+   * qu'elle transperce ; cernée de sombre, éclairée d'un côté, effilée jusqu'à sa pointe blanche, deux barbes de harpon
+   * derrière la pointe, le talon noueux d'un os ; une traîne de poussière d'os. Au bout de sa course, elle file encore un
+   * instant en s'effaçant.
    */
-  const epinesPlantees: { x: number; y: number; cap: number; long: number; t0: number }[] = []
-  const longueurDeLEpine = (n: number, ecart: number): number => Math.max(14, 2 + Math.max(0, n - 1) * ecart + 9)
+  const epinesFinies: { x: number; y: number; cap: number; t0: number }[] = []
+  const LONGUEUR_DE_L_EPINE = 14
   function dessinerUneEpine(p: Peintre, x: number, y: number, ux: number, uy: number, long: number, a: number): void {
     const nx = -uy
     const ny = ux
@@ -8761,27 +8764,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.line(pt(-2, 0)[0], pt(-2, 0)[1], pt(1, 0)[0], pt(1, 0)[1], OS[3], a)
   }
   function dessinerLesEpines(p: Peintre): void {
-    for (let i = epinesPlantees.length - 1; i >= 0; i--) if (t - epinesPlantees[i].t0 > 0.6) epinesPlantees.splice(i, 1)
-    if ((m.brochettes.length === 0 && epinesPlantees.length === 0) || m.phase !== 'vol') return
+    for (let i = epinesFinies.length - 1; i >= 0; i--) if (t - epinesFinies[i].t0 > 0.2) epinesFinies.splice(i, 1)
+    if ((m.brochettes.length === 0 && epinesFinies.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const b of m.brochettes) {
-      const ep = CONF.armes[b.arme]?.epines
-      if (ep === undefined) continue
       const vit = Math.hypot(b.vx, b.vy) || 1
       const ux = b.vx / vit
       const uy = b.vy / vit
-      const long = longueurDeLEpine(b.embroches.length, ep.ecart)
+      const long = LONGUEUR_DE_L_EPINE
       for (let j = 1; j <= 4; j++) p.dot(b.x - ux * (long + j * 2.5), b.y - uy * (long + j * 2.5), OS[j < 3 ? 2 : 1], 0.55 - j * 0.12)
       p.glow(b.x - ux * 3, b.y - uy * 3, 7, OS[2], 0.25)
       dessinerUneEpine(p, b.x, b.y, ux, uy, long, 1)
     }
-    // (plantée : elle vibre, de moins en moins, et s'efface)
-    for (const e of epinesPlantees) {
+    // (au bout de sa course : elle file encore un peu, et s'efface)
+    for (const e of epinesFinies) {
       const age = t - e.t0
-      const vibre = Math.sin(age * 70) * 1.2 * Math.max(0, 1 - age / 0.3)
       const ux = Math.cos(e.cap)
       const uy = Math.sin(e.cap)
-      dessinerUneEpine(p, e.x - uy * vibre * 0.3, e.y + ux * vibre * 0.3, ux, uy, e.long, Math.max(0, Math.min(1, (0.6 - age) / 0.25)))
+      dessinerUneEpine(p, e.x + ux * age * 60, e.y + uy * age * 60, ux, uy, LONGUEUR_DE_L_EPINE, Math.max(0, 1 - age / 0.2))
     }
     p.place(0, 0)
   }
@@ -12345,8 +12345,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (l'épine part de sa tête : elle fend l'air)
           jouer('epine', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
-        case 'embroche':
-          // (un insecte est enfilé : le « tchk » charnu, un seul à la fois, une giclée d'ichor)
+        case 'transperce':
+          // (un insecte est transpercé : le « tchk » charnu, un seul à la fois, une giclée d'ichor)
           if (t - morsureSonneA > 0.08) {
             morsureSonneA = t
             jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -12356,18 +12356,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), i % 2 === 0 ? MIASME[5] : OS[2], 1, 1)
           }
           break
-        case 'epinePlantee': {
-          // (au bout de sa course, elle se plante : un coup sourd, des éclats d'os, une onde si elle emportait des insectes)
-          const ep = CONF.armes.find((a) => a.epines !== undefined)?.epines
-          epinesPlantees.push({ x: ev.x, y: ev.y, cap: ev.cap, long: longueurDeLEpine(ev.embroches, ep?.ecart ?? 4), t0: t })
-          jouer(ev.embroches > 0 ? 'plante' : 'piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
-          if (ev.embroches > 0) ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: 8 + ev.embroches * 2 })
-          for (let i = 0; i < 6 + ev.embroches * 2; i++) {
-            const a = ev.cap + Math.PI + R.range(-1.3, 1.3)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.2, 0.4), R.next() < 0.6 ? OS[2] : OS[1], 1, 1.5)
-          }
+        case 'epineFinie':
+          epinesFinies.push({ x: ev.x, y: ev.y, cap: ev.cap, t0: t })
           break
-        }
         case 'oeuf':
           // (le Ver pond : un petit « blop »)
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
