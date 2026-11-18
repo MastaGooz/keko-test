@@ -537,26 +537,39 @@ const RECETTES = {
    * UN MISSILE EXPLOSE : un « boum » GRAVE (Keko, 15/11 : « un petit peu plus grave ») — un coup sourd qui tombe de 80 à
    * 32 Hz, un souffle bas qui retombe, quelques crépitements
    */
+  // (… PLUS PROFOND ET MOINS MOU — Keko, 18/11 : « un peu mou et trop aigu ; un son d'explosion un petit peu plus profond » :
+  // son coup sourd tombait de 80 à 32 Hz, sous ce qu'un haut-parleur de téléphone rend — on n'entendait que le souffle à
+  // 900 Hz et les crépitements. Le corps est maintenant entre 140 et 55 Hz, saturé pour que ses harmoniques s'entendent ;
+  // dessous, le grave d'avant ; un grondement en passe-bas qui traîne ; un claquement d'attaque de quelques millisecondes,
+  // le punch ; des crépitements moins forts)
   explosionMini: {
-    duree: 0.9, niveau: 0.34, salle: [0.4, 0.16], variantes: 3,
+    duree: 1, niveau: 0.36, salle: [0.42, 0.16], variantes: 3,
     faire: (m, h) => {
-      note(m, 0, 1, 0, { f: 80, glisse: { vers: 32, en: 0.16 }, a: 0.002, d: 0.26, partiels: CORPS, sature: 1.7 })
-      note(m, 0, 0.5, 0, { f: 48, glisse: { vers: 28, en: 0.2 }, a: 0.003, d: 0.3 })
-      souffle(m, h, 0, 0.75, 0, { f: 900, glisse: { vers: 150, en: 0.22 }, q: 1, bande: true, a: 0.002, d: 0.32, large: true })
-      eclats(m, h, 4, 0.05, 0.35, 0.22)
+      note(m, 0, 1, 0, { f: 140, glisse: { vers: 55, en: 0.12 }, a: 0.001, d: 0.34, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.25, 0.6]], sature: 2 })
+      note(m, 0, 0.6, 0, { f: 60, glisse: { vers: 34, en: 0.25 }, a: 0.002, d: 0.42 })
+      souffle(m, h, 0, 0.8, 0, { f: 520, glisse: { vers: 110, en: 0.4 }, q: 0.9, a: 0.002, d: 0.48, large: true })
+      souffle(m, h, 0, 0.35, 0, { f: 2400, q: 0.7, bande: true, a: 0.0005, d: 0.012 })
+      eclats(m, h, 3, 0.06, 0.4, 0.12)
     },
   },
   /**
    * LE RAYON THERMIQUE FAIT SON TOUR : une montée d'énergie — un bourdon riche qui glisse vers l'aigu pendant le tour —,
    * un souffle qui balaie d'une oreille à l'autre, des crépitements ; il dure le temps du tour
    */
+  // (… QUI MONTE DU GRAVE VERS L'AIGU — Keko, 18/11 : « il va plutôt de l'aigu vers le grave, c'est un peu bizarre ; un
+  // rayon, on l'imagine partir du grave et aller vers l'aigu, comme s'il se concentrait » : le bourdon montait à peine
+  // (150 → 260) et le second souffle redescendait de 2 400 à 900 Hz. Tout monte maintenant : le bourdon de 90 à 420 Hz,
+  // battu de moins en moins vite — il se resserre —, deux souffles qui grimpent l'un après l'autre, et à la fin une
+  // pointe claire, la concentration)
   rayon: {
     duree: 1.3, niveau: 0.3, salle: [0.35, 0.14], variantes: 2,
     faire: (m, h) => {
-      note(m, 0, 1, 0, { f: 150, glisse: { vers: 260, en: 0.9, droit: true }, a: 0.04, d: 0.95, battement: 9, partiels: [[1, 1, 1], [2, 0.6, 1], [3, 0.4, 1], [4, 0.25, 1], [5, 0.15, 1]], sature: 1.3 })
-      souffle(m, h, 0, 0.6, -0.6, { f: 1200, glisse: { vers: 2400, en: 0.45, droit: true }, q: 1.1, bande: true, a: 0.05, d: 0.45 })
-      souffle(m, h, 0.45, 0.6, 0.6, { f: 2400, glisse: { vers: 900, en: 0.45 }, q: 1.1, bande: true, a: 0.02, d: 0.5 })
-      eclats(m, h, 8, 0.05, 0.9, 0.3)
+      note(m, 0, 1, 0, { f: 90, glisse: { vers: 420, en: 0.95, droit: true }, a: 0.06, d: 0.95, battement: 14, partiels: [[1, 1, 1], [2, 0.55, 1], [3, 0.35, 1], [4, 0.2, 1]], sature: 1.3 })
+      note(m, 0.4, 0.45, 0, { f: 210, glisse: { vers: 840, en: 0.55, droit: true }, a: 0.15, d: 0.5, battement: 5 })
+      souffle(m, h, 0, 0.5, -0.5, { f: 400, glisse: { vers: 1600, en: 0.6, droit: true }, q: 1.2, bande: true, a: 0.1, d: 0.55 })
+      souffle(m, h, 0.45, 0.5, 0.5, { f: 1200, glisse: { vers: 3200, en: 0.5, droit: true }, q: 1.3, bande: true, a: 0.1, d: 0.5 })
+      note(m, 0.9, 0.3, 0, { f: 1700, a: 0.01, d: 0.3, battement: 8, partiels: [[1, 1, 1], [2.76, 0.2, 0.5]] })
+      eclats(m, h, 6, 0.1, 0.9, 0.22)
     },
   },
   /** UNE BOULE DE NAPALM PART : un « thoump » de mortier, sourd, et un glouglou de gel */

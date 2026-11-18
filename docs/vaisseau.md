@@ -5918,3 +5918,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   insecte : le napalm tire au hasard autour du vaisseau et laisse ses flaques, les tourelles se déploient, le fléau tourne ;
   le laser, le lance-flammes, le dé se taisent. *La règle : une arme ne tire sans cible que si ce tir a un intérêt à lui —
   une flaque, une tourelle, une masse qui tourne.*
+- LE RAYON THERMIQUE QUI MONTE, L'EXPLOSION DES MISSILES PLUS PROFONDE (Keko, 18/11 : « le son du rayon thermique va plutôt
+  de l'aigu vers le grave, c'est un peu bizarre ; un rayon, on l'imagine partir du grave vers l'aigu, comme s'il se
+  concentrait » ; « le son d'explosion des missiles du chasseur un peu mou et trop aigu ; un peu plus profond ») :
+  `rayon` — le bourdon de 90 à 420 Hz (150 → 260 avant), battu de moins en moins vite, une seconde voix qui monte, deux
+  souffles qui grimpent l'un après l'autre (le second redescendait de 2 400 à 900 Hz), une pointe claire à la fin.
+  MESURÉ (le centre du spectre, sous 3 kHz, toutes les 0,15 s) : avant 309 → 281 → 458 → 2 053 → 1 690 → 923 → 1 066,
+  après 138 → 175 → 296 → 385 → 663 → 1 286 → 1 698. `explosionMini` — son coup sourd tombait de 80 à 32 Hz, sous ce
+  qu'un haut-parleur de téléphone rend : on n'entendait que le souffle à 900 Hz et les crépitements ; le corps est
+  maintenant entre 140 et 55 Hz, saturé (ses harmoniques s'entendent), le grave d'avant dessous, un grondement en
+  passe-bas qui traîne, un claquement d'attaque de quelques millisecondes, des crépitements moins forts. MESURÉ : la bande
+  100–300 Hz +10 dB (21,4 → 31,2), l'énergie au-dessus de 600 Hz 43 → 6 %.
