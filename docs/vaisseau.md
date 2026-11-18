@@ -5944,3 +5944,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   7 sons sur 118 sans rayon. Le rayon retient le dernier insecte vu à sa portée (`Monde.rayonVu`) : s'il en a vu un dans
   la demi-seconde, il part vers là où il l'a vu — 0 sur 117. Vérifié : un insecte à portée qui meurt 0,05 s avant la fin
   de la recharge, le rayon part quand même. La Salamandre : 103,5 → 97 de pointe.
+- LE CHASSEUR UN PEU MOINS VITE (Keko, 18/11 : « réduis un petit peu la vitesse du chasseur ») : 110 → 104 de pointe —
+  toujours devant la Salamandre (97) et l'Ingénieur (68), sous les 105 à 110 des autres races.

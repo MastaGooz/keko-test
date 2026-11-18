@@ -1135,7 +1135,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // doubler les valeurs aurait mis la Salamandre à 176, bien au-delà de la flotte, et l'Ingénieur devant le Chasseur ; la
   // Salamandre 31 → 62 % de jauge (88 → 103,5), l'Ingénieur 23 → 46 % (5,5 → 7 d'agilité))
   // (… PUIS LA SALAMANDRE UN PEU MOINS VITE — Keko, 18/11 : « réduis un petit peu la vitesse de la salamandre » : 103,5 → 97)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 110 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 } }
+  // (… ET LE CHASSEUR AUSSI — Keko, 18/11 : « réduis un petit peu la vitesse du chasseur » : 110 → 104)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
