@@ -5786,3 +5786,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   améliorations, plus tard, on va permettre d'améliorer les statistiques des vaisseaux ; ne va jamais plus haut que 75 % »)
   : `MARGE_DES_JAUGES` (0,75) ramène toute la jauge étirée aux trois quarts — le meilleur de la flotte à 75 %, le plus
   faible à 15 %, les écarts gardant leur proportion. Le Chasseur : maniabilité 75 %, accélération 60 %, vitesse 49 %.
+- LE LASER PLUS GRAVE ET PULSANT ; LE BLINDAGE DU CHASSEUR DE MOITIÉ (Keko, 18/11 : « le son du laser toujours un peu
+  trop aigu et un peu trop mou ; un son un peu plus grave et plus pulsant » ; « diminuer largement le blindage du
+  chasseur, peut-être la moitié ») : le son `laser` part de 420 Hz au lieu de 720 et tombe en 0,08 s au lieu de 0,18 —
+  la lenteur de la chute le rendait mou —, une jumelle désaccordée de 60 cents le fait battre (une dizaine de pulsations
+  par seconde), un coup sourd un peu saturé dessous, l'attaque sèche. MESURÉ : le centre du spectre passe de 520 à
+  278 Hz, et la bande 300–2 000 Hz (le haut-parleur d'un téléphone) reste au même niveau (49 à 51 dB). LE BLINDAGE : 7
+  (ses pièces, plus les deux des humains) → 4 au vortex (`REGLAGES_DU_VORTEX.chasseur.blindage`, `blindageAuVortex`,
+  posé après la vie de la race, en vol comme sur la jauge) — l'entier le plus proche de la moitié, un blindage comptant
+  des coups entiers.

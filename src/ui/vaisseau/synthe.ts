@@ -262,13 +262,17 @@ const RECETTES = {
    * quinte métallique), à peine battu, sans saturation ; dessous, un corps grave qui s'enfonce donne le poids ; le
    * claquement passe de 5 000 à 1 600 Hz, en passe-bas)
    */
+  // (… PLUS GRAVE ET PLUS PULSANT — Keko, 18/11 : « toujours un peu trop aigu et un peu trop mou ; un son un peu plus grave
+  // et plus pulsant » : il part de 420 Hz au lieu de 720 et tombe en 0,08 s au lieu de 0,18 — c'est la lenteur de la chute
+  // qui le rendait mou ; une jumelle désaccordée de 60 cents le fait battre, une dizaine de pulsations par seconde ; un coup
+  // sourd un peu saturé dessous, l'attaque sèche)
   laser: {
-    duree: 0.5, niveau: 0.24, salle: [0.32, 0.12], variantes: 4,
+    duree: 0.4, niveau: 0.26, salle: [0.3, 0.1], variantes: 4,
     faire: (m, h) => {
-      const f = 720 * (0.95 + 0.1 * h.next())
-      note(m, 0, 1, 0, { f, glisse: { vers: f * 0.22, en: 0.18 }, a: 0.003, d: 0.2, battement: 9, partiels: [[1, 1, 1], [2, 0.22, 0.6], [3, 0.06, 0.4]] })
-      note(m, 0, 0.7, 0, { f: 150, glisse: { vers: 60, en: 0.12 }, a: 0.003, d: 0.16, partiels: [[1, 1, 1], [2, 0.15, 0.6]] })
-      souffle(m, h, 0, 0.3, 0, { f: 1600, glisse: { vers: 500, en: 0.05 }, q: 0.8, a: 0.002, d: 0.05 })
+      const f = 420 * (0.95 + 0.1 * h.next())
+      note(m, 0, 1, 0, { f, glisse: { vers: f * 0.24, en: 0.08 }, a: 0.001, d: 0.16, battement: 60, partiels: [[1, 1, 1], [2, 0.3, 0.6], [3, 0.08, 0.4]], sature: 1.4 })
+      note(m, 0, 0.85, 0, { f: 115, glisse: { vers: 48, en: 0.07 }, a: 0.001, d: 0.12, partiels: [[1, 1, 1], [2, 0.2, 0.6]], sature: 1.5 })
+      souffle(m, h, 0, 0.3, 0, { f: 1300, glisse: { vers: 400, en: 0.03 }, q: 0.8, a: 0.001, d: 0.03 })
     },
   },
   /** le canon : un « poum » feutré */

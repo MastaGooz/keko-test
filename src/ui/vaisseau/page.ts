@@ -944,7 +944,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
       // l'Essaim, pas de bouclier, une coque qui se régénère
-      if (VORTEX) conf = { ...conf, ...vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption }, modeleDeVaisseau(flotte.actif).plaques) }
+      if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption }, modeleDeVaisseau(flotte.actif).plaques), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
     return conf
   }
@@ -1111,7 +1111,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * rotation 7 → 9,1 rad/s, au-dessus du Ver (8,4) ; sa pointe 126 → 100 (65 % : la flotte va de 88 à 110) ; sa poussée
    * 111 → 115 (80 % : de 63 à 132))
    */
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax: number; poussee: number; rotation: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.3 } }
+  // (… ET SON BLINDAGE DE MOITIÉ — Keko, 18/11 : « diminuer largement le blindage du chasseur, peut-être la moitié » : 7
+  // (ses pièces, plus les deux des humains) → 4, l'entier le plus proche de 3,5 — un blindage compte des coups entiers)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax: number; poussee: number; rotation: number; blindage?: number }> = { chasseur: { vitesseMax: 100 / 126, poussee: 115 / 111, rotation: 1.3, blindage: 0.5 } }
+  /** Le blindage d'un vaisseau au vortex, une fois la vie de sa race posée : réglé par `REGLAGES_DU_VORTEX`. */
+  const blindageAuVortex = <V extends { coque: number }>(v: V, id: string): V => {
+    const f = VORTEX ? REGLAGES_DU_VORTEX[id]?.blindage : undefined
+    return f === undefined ? v : { ...v, coque: Math.max(1, Math.round(v.coque * f)) }
+  }
   const regleAuVortex = (cf: ConfigVaisseau, id: string): ConfigVaisseau => {
     const r = VORTEX ? REGLAGES_DU_VORTEX[id] : undefined
     return r === undefined ? cf : { ...cf, vitesseMax: cf.vitesseMax * r.vitesseMax, poussee: cf.poussee * r.poussee, rotation: cf.rotation * r.rotation }
@@ -4145,7 +4152,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ETALONS = etalonsDesJauges()
       // (la vie de SA RACE — Keko, 17/11 ; L'ESSAIM N'A PAS DE LIGNE DE RÉGÉNÉRATION — « on régénère les PV en % » : elle
       // vaut la même part pour tous les siens, une jauge ne dirait rien)
-      const vie = vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption }, de.plaques)
+      const vie = blindageAuVortex(vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption }, de.plaques), de.id)
       const jauges: Jauge[] = [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         { nom: 'Accélération', valeur: sur(cf.poussee, ETALONS.acceleration), max: 1 },
