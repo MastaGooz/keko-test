@@ -6486,3 +6486,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   s'appelle « Désintégration » (son identifiant reste). Vu dans l'aperçu, origine et Rubis.
 - LE FAISCEAU DU PRISME REDIT (Keko, 19/11 : « ne dis pas un rayon qui chauffe de plus en plus, ses dégâts sont continus ;
   dis plutôt un rayon de lumière qui se concentre sur un ennemi ») : « Un rayon de lumière qui se concentre sur un ennemi. »
+- LES ARMES DU NÉANT RENOMMÉES (Keko, 19/11 : « singularité, pour celle qui fait un trou noir ; intrication à la place de
+  drain d'âme ; vrille de l'ombre, on le laisse tel qu'il est ») : le Puits s'appelle « Singularité », le Drain d'âme
+  « Intrication » ; les identifiants (`puits`, `drain`) et les descriptions restent.
