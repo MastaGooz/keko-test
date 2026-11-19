@@ -689,7 +689,9 @@ const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0
 export const ANCRES_DU_KRAKEN: [number, number][] = [[7.2, 0]]
 // (… EN DEUX CORPS, ÉPINEUX — Keko, 19/11 : la queue au bout de l'abdomen, le nez au bout des mandibules ; plus de feux de
 // position — ils étaient sur ses nageoires —, une bête n'en a pas)
-const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: -0.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 5.8, nez: 11.6, flanc: 6.4, anneau: 13, echelle: 1 }
+/** De combien l'abdomen du Kraken s'est rapproché de sa tête (Keko, 19/11). */
+const AVANCE_DE_L_ABDOMEN_DU_KRAKEN = 1.2
+const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: -0.9 + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 5.8, nez: 11.6, flanc: 6.4, anneau: 13, echelle: 1 }
 // LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
 // qui crache ; un jet de venin à la queue
 const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.6, y: 6.4 }, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
@@ -1164,27 +1166,35 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // (une mandibule en faux : quatre maillons qui s'amincissent, de chitine, la pointe d'os)
     const faux = (pts: [number, number][], w: number): Forme[] => pts.slice(1).map(([x, y], k) => ({ pts: barre(pts[k][0], pts[k][1], x, y, w * (1 - k / (pts.length + 0.5))), mat: k === pts.length - 2 ? 'os' : 'chitine', relief: 'plat' }))
     const f: Forme[] = []
+    // (… L'ABDOMEN RAPPROCHÉ DE LA TÊTE — Keko, 19/11 : « rapprocher un peu l'abdomen de la tête pour diminuer l'espace fin
+    // au milieu » : ses cornes, sa carapace, ses sacs, ses côtes et son échine avancent de `AVANCE`, la taille raccourcit ;
+    // les racines des tentacules et la queue suivent — voir `formesDuVaisseau`, `GABARIT_DU_KRAKEN`)
+    const AVANCE = AVANCE_DE_L_ABDOMEN_DU_KRAKEN
+    const cornes: Forme[] = []
+    const abdomen: Forme[] = []
     // (les cornes de l'abdomen, sous lui : trois par flanc, et deux à la pointe)
     for (const sg of [-1, 1]) {
-      f.push(corne(-2.8, sg * 4.2, -5.4, sg * 8.8, 0.9, 1.2), corne(-5.4, sg * 4.8, -8.8, sg * 7.6, 0.85, 1), corne(-7.8, sg * 3, -11.4, sg * 4.4, 0.75, 0.6), corne(-9, sg * 0.9, -12.4, sg * 1.4, 0.6, 0.2))
+      cornes.push(corne(-2.8, sg * 4.2, -5.4, sg * 8.8, 0.9, 1.2), corne(-5.4, sg * 4.8, -8.8, sg * 7.6, 0.85, 1), corne(-7.8, sg * 3, -11.4, sg * 4.4, 0.75, 0.6), corne(-9, sg * 0.9, -12.4, sg * 1.4, 0.6, 0.2))
       // (les mandibules : trois paires de faux recourbées vers l'avant, sous la tête)
       f.push(...faux([[6.4, sg * 2.2], [8.6, sg * 3.9], [10.6, sg * 3.7], [11.6, sg * 2.4]], 1))
       f.push(...faux([[5, sg * 2.9], [6.6, sg * 5.1], [8.6, sg * 5.6], [9.8, sg * 4.6]], 0.85))
       f.push(...faux([[3.4, sg * 3.2], [4.2, sg * 5.4], [5.8, sg * 6.4], [7.2, sg * 6.2]], 0.7))
     }
     // L'ABDOMEN : sa carapace, ses deux sacs de chair, l'échine cuirassée qui le partage, les pustules de bile des sacs
-    f.push({ pts: [[-1.2, -2.2], [-2.6, -4.3], [-4.4, -5.3], [-6.6, -5], [-8.4, -3.4], [-9.4, -1.2], [-9.4, 1.2], [-8.4, 3.4], [-6.6, 5], [-4.4, 5.3], [-2.6, 4.3], [-1.2, 2.2]], mat: 'chitine', relief: 'cyl' })
+    abdomen.push({ pts: [[-1.2, -2.2], [-2.6, -4.3], [-4.4, -5.3], [-6.6, -5], [-8.4, -3.4], [-9.4, -1.2], [-9.4, 1.2], [-8.4, 3.4], [-6.6, 5], [-4.4, 5.3], [-2.6, 4.3], [-1.2, 2.2]], mat: 'chitine', relief: 'cyl' })
     // (… DES SACS ALLONGÉS, BARRÉS DE CÔTES — mesuré à la capture : deux dômes ronds côte à côte, ça ne se lisait pas
     // comme une bête ; comme sur l'image de Keko, des côtes de chitine les recoupent en lobes)
     for (const sg of [-1, 1]) {
-      f.push({ pts: ovale(-5.2, sg * 3.1, 3.4, 1.55, 18), mat: 'chair', relief: 'dome', dome: { x: -5.2, y: sg * 3.1, rx: 3.4, ry: 1.55 } })
-      for (const [x, y, r] of [[-4.1, sg * 3.4, 0.35], [-5.9, sg * 2.8, 0.3], [-7.2, sg * 3.1, 0.28]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 8), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+      abdomen.push({ pts: ovale(-5.2, sg * 3.1, 3.4, 1.55, 18), mat: 'chair', relief: 'dome', dome: { x: -5.2, y: sg * 3.1, rx: 3.4, ry: 1.55 } })
+      for (const [x, y, r] of [[-4.1, sg * 3.4, 0.35], [-5.9, sg * 2.8, 0.3], [-7.2, sg * 3.1, 0.28]] as [number, number, number][]) abdomen.push({ pts: ovale(x, y, r, r, 8), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
     }
-    for (const x of [-3.2, -5, -6.8]) f.push({ pts: [[x + 0.4, -5], [x + 0.9, -2.4], [x + 1, 0], [x + 0.9, 2.4], [x + 0.4, 5], [x - 0.35, 4.9], [x + 0.15, 2.4], [x + 0.25, 0], [x + 0.15, -2.4], [x - 0.35, -4.9]], mat: 'chitine', relief: 'plat' })
-    for (const x of [-1.8, -3.3, -4.8, -6.3, -7.8]) f.push({ pts: [[x + 0.7, 0], [x - 0.3, -1.35], [x - 1.1, -1.15], [x - 0.5, 0], [x - 1.1, 1.15], [x - 0.3, 1.35]], mat: 'graphite', relief: 'plat' })
+    for (const x of [-3.2, -5, -6.8]) abdomen.push({ pts: [[x + 0.4, -5], [x + 0.9, -2.4], [x + 1, 0], [x + 0.9, 2.4], [x + 0.4, 5], [x - 0.35, 4.9], [x + 0.15, 2.4], [x + 0.25, 0], [x + 0.15, -2.4], [x - 0.35, -4.9]], mat: 'chitine', relief: 'plat' })
+    for (const x of [-1.8, -3.3, -4.8, -6.3, -7.8]) abdomen.push({ pts: [[x + 0.7, 0], [x - 0.3, -1.35], [x - 1.1, -1.15], [x - 0.5, 0], [x - 1.1, 1.15], [x - 0.3, 1.35]], mat: 'graphite', relief: 'plat' })
+    f.unshift(...decaler(cornes, AVANCE, 0))
+    f.push(...decaler(abdomen, AVANCE, 0))
     // LA TAILLE : un étranglement de chitine, une petite épine de chaque côté
-    f.push({ pts: [[1.2, -1.9], [-1.6, -2.2], [-1.6, 2.2], [1.2, 1.9]], mat: 'chitine', relief: 'cyl' })
-    for (const sg of [-1, 1]) f.push(corne(-0.2, sg * 2, -1.4, sg * 4.4, 0.5, 0.5))
+    f.push({ pts: [[1.2, -1.9], [-0.4, -2.2], [-0.4, 2.2], [1.2, 1.9]], mat: 'chitine', relief: 'cyl' })
+    for (const sg of [-1, 1]) f.push(corne(0.6, sg * 2, -0.6, sg * 4.4, 0.5, 0.5))
     // LE THORAX : sa carapace, un bouclier cuirassé, deux paires d'yeux de bile
     f.push({ pts: [[7.6, -1.5], [6.4, -2.9], [3.8, -3.5], [1, -2.7], [0.6, 0], [1, 2.7], [3.8, 3.5], [6.4, 2.9], [7.6, 1.5]], mat: 'chitine', relief: 'cyl' })
     // (… DEUX SILLONS DE CHAIR et deux épines sur l'échine — un bouclier gris, d'une pièce, y faisait un œuf)
@@ -1810,8 +1820,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // QUAND IL POUSSE (`flamme`), ils se rabattent derrière et traînent ; une houle les parcourt de la racine au bout)
   if (a.coque === 10) {
     const nage = Math.min(1, Math.max(0, flamme))
-    // (… DE L'ABDOMEN, ENTRE SES CORNES — Keko, 19/11)
-    const RACINES: [number, number][] = [[-3.6, -4.8], [-3.6, 4.8], [-6.6, -4.5], [-6.6, 4.5], [-8.8, -2.2], [-8.8, 2.2]]
+    // (… DE L'ABDOMEN, ENTRE SES CORNES — Keko, 19/11 ; il s'est rapproché de la tête, elles avec lui)
+    const RACINES = ([[-3.6, -4.8], [-3.6, 4.8], [-6.6, -4.5], [-6.6, 4.5], [-8.8, -2.2], [-8.8, 2.2]] as [number, number][]).map(([x, y]): [number, number] => [x + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y])
     RACINES.forEach(([x0, y0], k) => {
       const repos = Math.atan2(y0, x0 + 1.2)
       let ecart = Math.PI + y0 * 0.04 - repos

@@ -5993,3 +5993,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Dans la grille, son portrait le montre en nage, les tentacules rabattues (à demi déployées, elles le réduisaient à
   rien dans sa case). *Mesuré à la capture* : deux sacs ronds côte à côte se lisaient mal, et un bouclier gris d'une
   pièce faisait un œuf sur le thorax — les côtes et les sillons les ont remplacés.
+- L'ABDOMEN DU KRAKEN RAPPROCHÉ DE SA TÊTE (Keko, 19/11 : « rapprocher un peu l'abdomen de la tête pour diminuer un peu
+  l'espace fin au milieu ») : ses cornes, sa carapace, ses sacs, ses côtes et son échine avancent de 1,2
+  (`AVANCE_DE_L_ABDOMEN_DU_KRAKEN`), la taille raccourcit d'autant (de 2,8 à 1,6 de long), les racines des tentacules et
+  la queue (sa tuyère, d'où partent ses bulles) suivent. Vu à la capture.
