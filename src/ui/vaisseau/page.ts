@@ -3791,8 +3791,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-givre': 'Laisse derrière lui une traînée de givre, qui ralentit et gèle les ennemis.',
     'arme-nova': 'Une onde de froid tout autour, qui gèle et laisse le sol en verglas.',
     'arme-poison': 'Laisse derrière lui une traînée d’acide corrosive, qui ronge les ennemis qui passent dessus.',
-    'arme-epines': 'Une grande épine d’os, qui transperce tous les ennemis sur sa course.',
-    'arme-oeufs': 'Des œufs, qui éclosent d’eux-mêmes : trois petits vers en sortent et mordent les ennemis.',
+    // (… LE VER — Keko, 19/11 : l'épine « transperce tout sur son passage » ; les œufs « éclosent après un certain temps,
+    // libérant des vers » ; les parasites sans leurs cerveaux à crocs, qui « prennent une nouvelle cible »)
+    'arme-epines': 'Une grande épine d’os, qui transperce tout sur son passage.',
+    'arme-oeufs': 'Dépose des œufs qui éclosent après un certain temps, libérant des vers qui attaquent les ennemis.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les ennemis, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
@@ -3803,7 +3805,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
     'arme-crachat': 'Crache une flaque d’acide corrosive sur les ennemis proches.',
     'arme-mines': 'Sème des mines autour, qui explosent en un nuage de gaz corrosif quand un ennemi approche.',
-    'arme-parasites': 'Un petit cerveau à crocs s’accroche à un ennemi et le dévore, puis bondit sur un autre.',
+    'arme-parasites': 'Lance des parasites sur les ennemis proches, qui prennent une nouvelle cible une fois la première dévorée.',
     'arme-faisceau': 'Un rayon continu, qui chauffe de plus en plus sur la même cible.',
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’ennemis.',
@@ -10048,13 +10050,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const r = rampesDuJoueur()?.[m]
     return r !== undefined ? [r[2], r[3], r[4]] : tonsDeLaMatiere(m)
   }
-  // (… AUX TEINTES DE L'APPARENCE — Keko, 19/11 : le venin de la Vouivre, la bile du Kraken)
-  const couleursDesBulles = (coque: number): [number, number] => {
-    const ru = rampesDuJoueur()
-    if (coque === 13) return [VIDE[3], VIDE[5]]
-    if (coque === 11) return ru?.venin !== undefined ? [ru.venin[3], ru.venin[5]] : [VENIN[3], VENIN[5]]
-    return ru?.bile !== undefined ? [ru.bile[3], ru.bile[4]] : [BILE[1], BILE[2]]
-  }
+  // (LA PROPULSION GARDE SA COULEUR, quelle que soit l'apparence — Keko, 19/11 : « ne change pas la couleur de la propulsion
+  // de la Vouivre, laisse-la verte, peu importe le skin »)
+  const couleursDesBulles = (coque: number): [number, number] => (coque === 13 ? [VIDE[3], VIDE[5]] : coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
   /**
    * LE NÉANT POUSSE PAR ONDES (Keko, 16/11 : « la propulsion aussi, essaie de trouver un autre effet, peut-être des ondes ou un
    * truc original ») : il ne lâche rien — il PLISSE L'ESPACE derrière lui. En poussée, des fronts d'onde en arc, ouverts
@@ -10167,7 +10165,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const u = boucle(t * (1.4 + us * 2) + k / 7 + (dehors > 0 ? 0.5 : 0), 1)
           const x = cx + tu.y * E + dehors * u * (4 + 3 * us) * (E / 2)
           const y = sy - tu.x * E + u * (8 + 22 * us) * (E / 2)
-          dessinerUneBouffee(p, x, y, (1 + 0.5 * ((k * 0.618) % 1)) * (E / 2), u, k + (dehors > 0 ? 10 : 0))
+          dessinerUneBouffee(p, x, y, (0.7 + 0.35 * ((k * 0.618) % 1)) * (E / 2), u, k + (dehors > 0 ? 10 : 0))
         }
       }
       return
@@ -10200,19 +10198,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * (… EN PIXELS, PAS EN FLOU — Keko, 19/11 : « un effet gazeux un peu flou, on perd le côté pixel ; une texture plus
    * pixelisée, plus fidèle au style graphique » : un nuage à aplats — trois boules serrées, cernées d'un ton sombre, d'un
    * ton moyen, un reflet clair sur la première —, sans transparence ; il gonfle, puis CRÈVE en quelques pixels qui
-   * s'écartent, comme les bulles du Kraken. Aux teintes du venin de son apparence)
+   * s'écartent, comme les bulles du Kraken)
    */
   function dessinerUneBouffee(p: Peintre, x: number, y: number, r: number, u: number, graine: number): void {
-    const ve = teintesDesMines().venin
+    // (… VERTE, QUELLE QUE SOIT L'APPARENCE — Keko, 19/11)
+    const ve = VENIN
     if (u > 0.72) {
       const q = (u - 0.72) / 0.28
-      for (let j = 0; j < 5; j++) {
-        const a = graine * 3.7 + j * 1.26
-        p.px(Math.round(x + Math.cos(a) * r * (1.6 + 1.4 * q)), Math.round(y + Math.sin(a) * r * (1.6 + 1.4 * q)), j % 2 === 0 ? ve[3] : ve[2])
+      for (let j = 0; j < 4; j++) {
+        const a = graine * 3.7 + j * 1.57
+        p.px(Math.round(x + Math.cos(a) * r * (1.3 + 1 * q)), Math.round(y + Math.sin(a) * r * (1.3 + 1 * q)), j % 2 === 0 ? ve[3] : ve[2])
       }
       return
     }
-    const g = 1 + 0.9 * Math.sqrt(u / 0.72)
+    // (… PLUS DISCRET — Keko, 19/11 : « l'effet de propulsion un peu trop gros » : il gonfle moins)
+    const g = 1 + 0.55 * Math.sqrt(u / 0.72)
     const boules = [0, 1, 2].map((j): [number, number, number] => {
       const a = graine * 7.1 + j * 2.1
       const d = j === 0 ? 0 : r * 0.55 * g
@@ -13967,11 +13967,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               }
             } else if (tuy.pustule === true) {
               // (LE GAZ DES PUSTULES : une bouffée vers l'arrière et le dehors, qui gonfle et s'efface derrière la bête)
-              if (R.next() < 0.6) {
+              if (R.next() < 0.45) {
                 const dehors = Math.sign(tuy.y)
                 const vit = vitesse * 0.35
                 const [cb] = couleursDesBulles(coque)
-                bulles.push({ x: bx, y: by, vx: -Math.cos(v.cap) * vit - Math.sin(v.cap) * dehors * 14 + R.range(-4, 4), vy: -Math.sin(v.cap) * vit + Math.cos(v.cap) * dehors * 14 + R.range(-4, 4), t0: t, vie: R.range(0.3, 0.5), r: R.range(1.2, 2.2), c: cb, gaz: true })
+                bulles.push({ x: bx, y: by, vx: -Math.cos(v.cap) * vit - Math.sin(v.cap) * dehors * 14 + R.range(-4, 4), vy: -Math.sin(v.cap) * vit + Math.cos(v.cap) * dehors * 14 + R.range(-4, 4), t0: t, vie: R.range(0.25, 0.4), r: R.range(0.8, 1.4), c: cb, gaz: true })
               }
             } else if (organique(coque)) {
               if (R.next() < 0.45) {

@@ -6127,3 +6127,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - … PUIS L'EXPLOSION DES MINES RESTE VERTE (Keko, 19/11 : « je veux que la couleur des mines suive l'apparence, mais
   l'animation d'explosion de la mine doit rester verte, de la couleur de l'acide ») : la mine posée, en vol, sa lueur
   suivent l'apparence ; le nuage de l'explosion (`MIASME`), ses éclats et l'acide laissé sur les ennemis restent verts.
+- LES ARMES DU VER REDITES (Keko, 19/11) : « Une grande épine d'os, qui transperce tout sur son passage. » ; « Dépose des
+  œufs qui éclosent après un certain temps, libérant des vers qui attaquent les ennemis. » ; « Lance des parasites sur les
+  ennemis proches, qui prennent une nouvelle cible une fois la première dévorée. » (plus de cerveaux à crocs).
+- LE GAZ DE LA VOUIVRE PLUS DISCRET, ET VERT (Keko, 19/11 : « l'effet de propulsion un peu trop gros » ; « ne change pas la
+  couleur de la propulsion, laisse-la verte, peu importe le skin ») : des bouffées plus petites (0,8 à 1,4 au lieu de
+  1,2 à 2,2), qui gonflent moins, vivent moins, sortent un peu moins souvent, et crèvent en quatre pixels ; au venin
+  d'origine, quelle que soit l'apparence. Les bulles du Kraken, que j'avais teintées à son apparence sans qu'il le
+  demande, reprennent aussi leur bile d'origine.
