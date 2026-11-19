@@ -6084,3 +6084,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   l'autre côté faisaient un escarpin. Une seule griffe en faucille (`contourDuCrochet`, lue par le corps et par la
   tentacule projetée) : elle part dans le prolongement de la tentacule, large à sa base, se recourbe d'un côté en
   s'effilant, la pointe revenant un peu en arrière. Vu à la capture.
+- L'INGÉNIEUR ARCTIQUE, LES DEUX TRAITS ROUGES (Keko, 19/11 : « il a l'aile gauche qui porte un trait rouge, mais pas
+  l'aile droite ») : le trait était posé au ras du bord extérieur des caissons (6,9 à 7,4) ; à droite, le liseré clair de
+  la silhouette le recouvrait. En retrait du bord (6,2 à 6,9), il se voit des deux côtés.
+- LES REJETONS AUX COULEURS DU KRAKEN (Keko, 19/11 : « quand je change son skin, les rejetons devraient adopter sa
+  couleur ; on les voit changer sur le Kraken, mais quand on les lance, ils restent les mêmes ») : en vol, ils lisent la
+  chair, la chitine et la bile de son apparence (`rampesDuJoueur`), comme le rejeton de son dos.
+- `&peau=ID` : l'apparence du vaisseau piloté, d'emblée (pour juger une apparence d'un lien).

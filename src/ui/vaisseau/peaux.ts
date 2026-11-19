@@ -181,7 +181,9 @@ const PEAUX: Record<string, Peau[]> = {
       rampes: { kaki: T(210, 0.08, 1.2), graphite: T(210, 0.35, 0.85), acier: T(210, 0.12, 0.75), verre: T(24, 0.9, 1.05), decor: T(358, 0.75, 1) },
       accent: T(358, 0.75, 1),
       habit: () => ({
-        ailes: COTES.map((sg) => plat([[4.4, sg * 6.9], [-6, sg * 6.9], [-6, sg * 7.4], [4.4, sg * 7.4]], 'decor', sg)),
+        // (… EN RETRAIT DU BORD — Keko, 19/11 : « il a l'aile gauche qui porte un trait rouge, mais pas l'aile droite » :
+        // posé au ras du bord, à droite, le liseré clair de la silhouette le recouvrait)
+        ailes: COTES.map((sg) => plat([[4.4, sg * 6.2], [-6, sg * 6.2], [-6, sg * 6.9], [4.4, sg * 6.9]], 'decor', sg)),
         coque: [plat([[3.7, -4.4], [2.9, -4.4], [2.9, 4.4], [3.7, 4.4]], 'decor'), ...[0.5, -2.3, -5.1].map((x) => plat([[x + 0.6, -0.6], [x - 0.6, -0.6], [x - 0.6, 0.6], [x + 0.6, 0.6]], 'decor'))],
       }),
     },

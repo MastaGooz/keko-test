@@ -218,6 +218,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'apparence choisie de chaque modèle du vortex (lue une fois, puis gardée ici). */
   const peauxChoisies = new Map<string, string>()
   const peauDuModele = (modele: string): Peau => {
+    // (`&peau=ID` : l'apparence du vaisseau piloté, d'emblée — ce qui se teste doit pouvoir s'ouvrir d'un lien)
+    if (!peauxChoisies.has(modele) && parametres.has('peau') && modele === flotte.actif) peauxChoisies.set(modele, parametres.get('peau') ?? '')
     if (!peauxChoisies.has(modele)) peauxChoisies.set(modele, chargerLivree('peau-' + modele))
     return peauDe(modele, peauxChoisies.get(modele) ?? '')
   }
@@ -9741,6 +9743,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const [id] of cordesDesRejetons) if (!m.rejetons.some((r) => r.id === id)) cordesDesRejetons.delete(id)
     for (let i = coupsDeRejeton.length - 1; i >= 0; i--) if (t - coupsDeRejeton[i].t0 > DUREE_DU_COUP) coupsDeRejeton.splice(i, 1)
     if (m.rejetons.length === 0 || m.phase !== 'vol') return
+    // (AUX COULEURS DE SON APPARENCE — Keko, 19/11 : « quand je change le skin du Kraken, les rejetons devraient adopter sa
+    // couleur ; on les voit changer sur le Kraken, mais quand on les lance, ils restent les mêmes » : sa chair, sa chitine
+    // et sa bile, comme le rejeton de son dos)
+    const ru = rampesDuJoueur()
+    const ch = ru?.chair ?? CHAIR
+    const bi = ru?.bile !== undefined ? [ru.bile[1], ru.bile[3], ru.bile[4]] : BILE
+    const ctRejeton = ru?.chitine?.[3] ?? CHITINE_DU_REJETON
+    const ctClaire = ru?.chitine?.[4] ?? CHITINE_CLAIRE
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const r of m.rejetons) {
       const vit = Math.hypot(r.vx, r.vy)
@@ -9789,11 +9799,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (cernée de sombre, épaisse à la racine, claire dessus)
         for (let i = 1; i < MAILLONS; i++) {
           const u = i / MAILLONS
-          p.line(c[i - 1][0] + 1, c[i - 1][1] + 1, c[i][0] + 1, c[i][1] + 1, CHAIR[0], 0.8)
-          if (u < 0.55) p.line(c[i - 1][0], c[i - 1][1] + 1, c[i][0], c[i][1] + 1, CHAIR[2])
-          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], u < 0.4 ? CHAIR[4] : CHAIR[3])
+          p.line(c[i - 1][0] + 1, c[i - 1][1] + 1, c[i][0] + 1, c[i][1] + 1, ch[0], 0.8)
+          if (u < 0.55) p.line(c[i - 1][0], c[i - 1][1] + 1, c[i][0], c[i][1] + 1, ch[2])
+          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], u < 0.4 ? ch[4] : ch[3])
         }
-        p.px(Math.round(c[MAILLONS - 1][0]), Math.round(c[MAILLONS - 1][1]), BILE[2])
+        p.px(Math.round(c[MAILLONS - 1][0]), Math.round(c[MAILLONS - 1][1]), bi[2])
       })
       // (le coup de tentacule, s'il fouette : une courbe jusqu'à l'insecte, qui part et revient)
       for (const cp of coupsDeRejeton) {
@@ -9811,8 +9821,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const q = 1 - s
           const bx = q * q * r.x + 2 * q * s * cx + s * s * cp.tx
           const by = q * q * r.y + 2 * q * s * cy + s * s * cp.ty
-          p.line(ax, ay, bx, by, CHAIR[0])
-          p.line(ax, ay - 1, bx, by - 1, i < n / 2 ? CHAIR[3] : CHAIR[4])
+          p.line(ax, ay, bx, by, ch[0])
+          p.line(ax, ay - 1, bx, by - 1, i < n / 2 ? ch[3] : ch[4])
           ax = bx
           ay = by
         }
@@ -9821,25 +9831,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (la cloche : plus longue que large — trois disques le long du cap —, ombrée comme une sphère ; le chapeau de
       // chitine devant, deux yeux de bile, une lueur)
       const T_ = TAILLE_DU_REJETON
-      p.glow(r.x, r.y, 7 * T_, BILE[1], 0.2)
+      p.glow(r.x, r.y, 7 * T_, bi[1], 0.2)
       const lx = -0.6
       const ly = -0.8
       const cloche = ([[-1.1, 2.6], [0.4, 3.2], [1.7, 2.5]] as [number, number][]).map(([o, rr]): [number, number] => [o * T_, rr * T_])
       for (const [o, rr] of cloche) {
         const cx = r.x + hx * o
         const cy = r.y + hy * o
-        p.disc(cx, cy, rr + 0.8, CHAIR[0], 1)
+        p.disc(cx, cy, rr + 0.8, ch[0], 1)
       }
       for (const [o, rr] of cloche) {
         const cx = r.x + hx * o
         const cy = r.y + hy * o
         p.disc(cx, cy, rr, (d, ang) => {
           const cl = Math.cos(ang) * lx + Math.sin(ang) * ly
-          return d > 0.75 ? (cl > 0.2 ? CHAIR[3] : CHAIR[1]) : cl * d > 0.3 ? CHAIR[4] : CHAIR[2]
+          return d > 0.75 ? (cl > 0.2 ? ch[3] : ch[1]) : cl * d > 0.3 ? ch[4] : ch[2]
         }, 1)
       }
-      p.disc(r.x + hx * 1.8 * T_, r.y + hy * 1.8 * T_, 1.9 * T_, (d, ang) => (Math.cos(ang) * lx + Math.sin(ang) * ly > 0.3 && d > 0.4 ? CHITINE_CLAIRE : CHITINE_DU_REJETON), 1)
-      for (const sg of [-1, 1]) p.px(Math.round(r.x + (hx * 2.6 - hy * sg * 1.3) * T_), Math.round(r.y + (hy * 2.6 + hx * sg * 1.3) * T_), BILE[2])
+      p.disc(r.x + hx * 1.8 * T_, r.y + hy * 1.8 * T_, 1.9 * T_, (d, ang) => (Math.cos(ang) * lx + Math.sin(ang) * ly > 0.3 && d > 0.4 ? ctClaire : ctRejeton), 1)
+      for (const sg of [-1, 1]) p.px(Math.round(r.x + (hx * 2.6 - hy * sg * 1.3) * T_), Math.round(r.y + (hy * 2.6 + hx * sg * 1.3) * T_), bi[2])
     }
     p.place(0, 0)
   }
