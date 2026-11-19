@@ -2815,6 +2815,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * STATIONNAIRE (il respire d'un pixel, son ombre sous lui s'élargit et se resserre), ses feux de position qui battent,
    * la lueur de sa tuyère au ralenti ; son décollage ; son poids en étiquette ; les zones de ses pièces.
    */
+  /** D'où part un éclat de propulsion, de côté, en unités du vaisseau : une tuyère au hasard, sur toute sa largeur. */
+  const ecartDeTuyere = (tuyeres: { y: number; large?: number }[]): number => {
+    if (tuyeres.length === 0) return 0
+    const tu = tuyeres[Math.floor(R.next() * tuyeres.length)]
+    return tu.y + (tu.large === undefined ? 0 : R.range(-1, 1) * 1.6 * tu.large)
+  }
   function dessinerLeHangarEnScene(p: Peintre, cx: number, cy: number, y0: number, y1: number): void {
     // (le gabarit de la coque montée : un cuirassé est montré plus petit, ses repères sont ailleurs)
     const coqueMontee = monteeA(hangar, 'coque').cran
@@ -2833,7 +2839,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cranP = monteeA(hangar, 'propulseur').cran
       const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
       // (un vaisseau sans tuyère n'en a pas : sa poussée est celle de l'accueil et du vol — voir plus bas)
-      if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
+      // (… DE CHACUNE DE SES TUYÈRES — Keko, 19/11 : « quand la Salamandre décolle du hangar, la traînée de particules est
+      // toujours au milieu du vaisseau, au lieu d'une traînée à chacun des deux réacteurs » : une tuyère tirée au hasard,
+      // sur toute sa largeur pour l'Ingénieur, comme les braises du vol)
+      if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + ecartDeTuyere(g.tuyeres) * ECH + (R.next() - 0.5) * 3, y: sy + bout, vx: (R.next() - 0.5) * (g.tuyeres.length > 1 ? 8 : 30), vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
       // (PLUS DE FUMÉE AU DÉCOLLAGE — Keko, 19/11 : « l'espèce de poussière ou de fumée au décollage, elle est par-dessus le
       // vaisseau, c'est vraiment pas joli » : ses bouffées grises étaient semées sur la couche de l'interface)
       if (u >= 1) {
@@ -2885,7 +2894,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nozzle: [number, number] = [cx + jit, sy + (0.2 - queueDe(coqueMontee)) * ECH]
     // (UN VAISSEAU SANS TUYÈRE, au décollage : les ondes ou les bulles de l'accueil et du vol, sous lui)
     if (organique(coqueMontee) && decollageA !== null) dessinerLaPousseeSansTuyere(p, coqueMontee, nozzle[0], nozzle[1], ECH, flam)
-    if (g.omni === undefined && !organique(coqueMontee)) p.glow(nozzle[0], nozzle[1], 8 + 14 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
+    if (g.omni === undefined && !organique(coqueMontee))
+      for (const tu of g.tuyeres) p.glow(nozzle[0] + tu.y * ECH, nozzle[1], (8 + 14 * flam) / Math.sqrt(g.tuyeres.length), al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
     // (UNE SOUCOUPE : au décollage, celles du dessous soufflent fort — Keko, 15/11 : « au garage, quand le vaisseau décolle,
@@ -12275,11 +12285,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const coqueA = monteeA(hangar, 'coque').cran
     if (organique(coqueA)) dessinerLaPousseeSansTuyere(p, coqueA, cx, ty, E, us)
     else if (gA.omni === undefined) {
-      for (let k = 0; k < 18; k++) {
-        const u = boucle(t * (1.5 + us * 2) + k / 18, 1)
-        p.dot(cx + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
+      // (… UNE TRAÎNÉE PAR TUYÈRE — Keko, 19/11 : celle de la Salamandre partait du milieu, entre ses deux réacteurs ; la
+      // tuyère large de l'Ingénieur souffle sur toute sa largeur)
+      const tus = gA.tuyeres
+      for (let k = 0; k < 18 * tus.length; k++) {
+        const tu = tus[k % tus.length]
+        const u = boucle(t * (1.5 + us * 2) + k / (18 * tus.length), 1)
+        const large = tu.large === undefined ? 0 : Math.sin(k * 3.1) * 1.6 * tu.large * E
+        p.dot(cx + tu.y * E + large + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
       }
-      p.glow(cx, ty, 12 + 16 * flam, al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
+      for (const tu of tus) p.glow(cx + tu.y * E, ty, (12 + 16 * flam) / Math.sqrt(tus.length), al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)

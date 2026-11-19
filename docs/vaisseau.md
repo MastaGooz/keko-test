@@ -6034,3 +6034,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   long des bords, deux cheminées ; sur les caissons, une trappe à poignée, trois ouïes, des boulons, un voyant à la
   marque. *Mesuré à la capture* : fins (0,13 à 0,36) et de teintes voisines, les premiers détails disparaissaient —
   épaissis, et en contraste (des sangles sombres sur le laiton, une arête sombre sur le fuselage clair).
+- UNE TRAÎNÉE PAR TUYÈRE AU DÉCOLLAGE (Keko, 19/11 : « quand la Salamandre décolle du hangar, la traînée de particules est
+  toujours au milieu du vaisseau, au lieu d'une traînée à chacun des deux réacteurs ») : au hangar, les éclats du
+  décollage naissent à une tuyère tirée au hasard (`ecartDeTuyere`, sur toute sa largeur pour l'Ingénieur, comme les
+  braises du vol), la lueur se pose sur chacune ; à plusieurs tuyères, ils dérivent moins de côté (± 4 au lieu de ± 15,
+  sinon les deux colonnes se rejoignaient au milieu en tombant). L'ACCUEIL avait le même défaut : sa traînée et sa
+  lueur sont posées à chaque tuyère. Vu à la capture : deux colonnes, une sous chaque réacteur.
