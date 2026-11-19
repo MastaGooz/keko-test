@@ -4229,7 +4229,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * Le nom d'une race, TOUJOURS SUR UNE LIGNE (Keko, 17/11 : « ne marque pas le nom de la race en deux lignes »), SANS SON
    * ARTICLE : « Les Innommés » entier élargissait la colonne de l'identité et écrasait les barres des jauges.
    */
-  const lignesDuNomDeRace = (race: Race): string[] => [(RACES.find((r) => r.id === race)?.nom ?? '').replace(/^(Les |L’|L')/, '')]
+  const lignesDuNomDeRace = (race: Race): string[] => [(RACES.find((r) => r.id === race)?.nom ?? '').replace(/^(Les |La |Le |L’|L')/, '')]
   /** La hauteur de l'identité d'une race : son médaillon, puis son nom. */
   const hauteurDeLIdentite = (race: Race): number => 2 * RAYON_DU_MEDAILLON + 1 + 3 + lignesDuNomDeRace(race).length * 8
   /**

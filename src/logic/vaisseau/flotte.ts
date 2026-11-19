@@ -40,8 +40,11 @@ export type Race = 'humains' | 'essaim' | 'etheres' | 'innommes'
 export const RACES: { id: Race; nom: string }[] = [
   { id: 'humains', nom: 'L’Empire' },
   { id: 'essaim', nom: 'Les Xénoïdes' },
-  { id: 'etheres', nom: 'Les Éthérés' },
-  { id: 'innommes', nom: 'Les Innommés' },
+  // (… PUIS LES VECTRANS ET LES XL'QOTH — Keko, 19/11 : « pour les Éthérés, un nom qui sonne vraiment technologie avancée ;
+  // pour les Innommés, un nom eldritch qui sonne presque imprononçable » ; puis, la Convergence essayée : « je veux
+  // vraiment un nom de race, un peu comme les Xénoïdes » — choisis par Keko parmi mes propositions)
+  { id: 'etheres', nom: 'Les Vectrans' },
+  { id: 'innommes', nom: 'Les Xl’qoth' },
 ]
 
 /**

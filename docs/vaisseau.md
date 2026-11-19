@@ -6179,3 +6179,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   à la place de l'acide du crachat (qui majorait tous les dégâts) : 3 par seconde pendant 4 s (l'acide faisait 2, plus son
   bonus ; *chiffres de moi*). Vérifié (`jeu.verif.ts`) : touchés, empoisonnés, plus rongés ; 3,00 points perdus en 1 s.
   Leur description dit « un nuage de gaz toxique » (il était corrosif).
+- LES VECTRANS ET LES XL'QOTH (Keko, 19/11 : « renommer les Éthérés et les Innommés : pour les Éthérés, un nom qui sonne
+  vraiment technologie avancée ; pour les Innommés, un nom eldritch qui sonne presque imprononçable ») : choisis par Keko
+  parmi mes propositions — la Convergence, essayée pour les Éthérés, écartée : « je veux vraiment un nom de race, un peu
+  comme les Xénoïdes ». Le nom sous le médaillon perd aussi « La » et « Le » (`lignesDuNomDeRace`).
