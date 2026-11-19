@@ -734,7 +734,7 @@ export type Arme = {
    */
   // (… PUIS SANS LIMITE — Keko, 17/11 : « enlever la limite à deux ennemis ; autant d'ennemis que possible, du moment qu'ils
   // ont été dans la zone, ils sont pris dans le drain » : `cibles` absent, tout ce qui passe à portée est accroché)
-  drain?: { rayon: number; dps: number; purge: number; cibles?: number }
+  drain?: { rayon: number; dps: number; cibles?: number }
   /**
    * LES VRILLES D'OMBRE (le Néant, Keko, 17/11 : « l'effet Shadow Tendrils de pixelfx : on crée une tentacule dans un
    * endroit aléatoire autour du vaisseau, et ce tentacule attaque les ennemis proches ») : à sa cadence, un insecte à
@@ -3438,10 +3438,9 @@ function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     for (const l of m.liens.filter((x) => x.arme === i)) {
       const e = m.ennemis.find((x) => x.id === l.cible)
       if (e === undefined) continue
-      const pris = Math.min(Math.max(0, e.pv), dr.dps * dt)
       e.pv -= dr.dps * dt
-      // (la vie prise revient au vaisseau : la part corrompue de sa coque redevient saine — les Innommés)
-      if (c.corruption.ronge > 0 && m.corruption > 0) m.corruption = Math.max(0, m.corruption - pris * dr.purge)
+      // (… PLUS DE PURGE — Keko, 19/11 : « on va supprimer le bonus de purge de l'intrication » : la vie prise ne revient
+      // plus au vaisseau ; un insecte qu'elle abat purge comme les autres)
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   })

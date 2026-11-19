@@ -6518,3 +6518,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     (un, trois, cinq, qui changent) ; la Superposition, UN TRIANGLE ET UN HEXAGONE posés l'un sur l'autre, qui tournent en
     sens contraires, un point de lumière au milieu.
   Au hangar, à l'accueil, en vol ; vus à la capture.
+- L'INTRICATION NE PURGE PLUS (Keko, 19/11 : « pas super satisfait du système de purge des innommés, pas hyper facile à
+  comprendre, pas hyper clair comparé aux autres races ; dans un survivor, on inflige tellement de dégâts que ça risque de
+  remonter assez vite ; pas hyper viable » ; puis « on va déjà supprimer le bonus de purge de l'intrication, ensuite on
+  va réfléchir au nouveau système ») : la vie qu'elle prend ne purge plus la corruption (`Arme.drain.purge` retiré, son
+  frisson et sa barre qui s'éclairait aussi) ; un insecte qu'elle abat purge comme les autres. LE SYSTÈME DE LA
+  CORRUPTION RESTE À REPENSER — pistes proposées : un déphasage (une chance d'esquiver un coup), un retour du néant (une
+  seconde vie à recharge), une purge plafonnée, une vengeance du vide (une onde quand une jauge de coups se remplit).

@@ -2009,7 +2009,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // de corruption purgée — un insecte abattu n'en purge que 0,5)
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const drain = { id: 'drain', cadence: 0.1, degats: 0, portee: 42, vitesse: 0, vie: 0, dispersion: 0, guide: false, drain: { rayon: 42, dps: 4, purge: 0.2 } }
+  const drain = { id: 'drain', cadence: 0.1, degats: 0, portee: 42, vitesse: 0, vie: 0, dispersion: 0, guide: false, drain: { rayon: 42, dps: 4 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [drain], coque: 10, corruption: { ronge: 0.5, purge: 0.5 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const w = nouveauMonde(cfg, 3)
   w.ennemis.push(insecte(1, 30, 0), insecte(2, 0, -35), insecte(3, -38, 0), insecte(4, 120, 0))
@@ -2023,7 +2023,8 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   pas(0, 60)
   const pv1 = w.ennemis.map((e) => 1000 - e.pv)
   const purgee = 5 - w.corruption - 0.5
-  verifier(`le drain d'âme accroche tout ce qui est à portée (${pv1.map((x) => x.toFixed(1)).join(' / ')} : 4, 4, 4, 0 au lointain) et la vie prise purge la corruption (${purgee.toFixed(2)} sur 2,4)`, Math.abs(pv1[0] - 4) < 0.1 && Math.abs(pv1[1] - 4) < 0.1 && Math.abs(pv1[2] - 4) < 0.1 && pv1[3] === 0 && Math.abs(purgee - 2.4) < 0.05)
+  // (… LA VIE PRISE NE PURGE PLUS — Keko, 19/11 : seule la corruption qui ronge, 0,5 en une seconde, s'en va)
+  verifier(`l'intrication accroche tout ce qui est à portée (${pv1.map((x) => x.toFixed(1)).join(' / ')} : 4, 4, 4, 0 au lointain) et ne purge plus la corruption (${purgee.toFixed(2)} purgé)`, Math.abs(pv1[0] - 4) < 0.1 && Math.abs(pv1[1] - 4) < 0.1 && Math.abs(pv1[2] - 4) < 0.1 && pv1[3] === 0 && Math.abs(purgee) < 0.05)
   // (le vaisseau part loin, à 300 : les liens tiennent)
   pas(300, 60)
   const pv2 = w.ennemis.map((e) => 1000 - e.pv)

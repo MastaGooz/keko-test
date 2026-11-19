@@ -8774,15 +8774,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * de lignes — une courbe propre à l'insecte, pâle, qui s'éclaire en approchant du vaisseau, des tirets qui y coulent vers
    * lui, des traînées plus rapides à tête blanche — ; sur l'insecte, une brume pâle qu'on arrache ; sur le vaisseau, la
    * lueur qui grossit à mesure qu'il boit, des grains qui tournent autour, un anneau à chaque arrivée. Le rayon se devine,
-   * un cercle à peine marqué. Tant qu'il purge la corruption, la barre s'éclaire et un frisson sonne de temps en temps.
+   * un cercle à peine marqué. (Il ne purge plus la corruption — Keko, 19/11.)
    */
-  let corruptionVue = 0
-  let drainSonneA = -10
   let accrocheSonneA = -10
   function dessinerLeDrain(p: Peintre): void {
     const dr = CONF.armes.find((a) => a.drain !== undefined)?.drain
-    const avant = corruptionVue
-    corruptionVue = m.corruption
     if (dr === undefined || m.phase !== 'vol' || t - arriveA < ARRIVE_A) return
     const C = OMBRE
     const sx = v.x
@@ -8878,14 +8874,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (arrivee < 0.25) {
         const k = arrivee / 0.25
         p.ring(sx, sy, 5 + 9 * (1 - (1 - k) * (1 - k)), Math.max(1, 2 * (1 - k)), k < 0.4 ? C[7] : k < 0.7 ? C[5] : C[3], 0.8 * (1 - k))
-      }
-      // (la vie prise purge la corruption : la barre s'éclaire, un frisson de temps en temps)
-      if (m.corruption < avant - 1e-6) {
-        purgeA = t
-        if (t - drainSonneA > 1.4) {
-          drainSonneA = t
-          jouer('purge')
-        }
       }
     }
     p.place(0, 0)
