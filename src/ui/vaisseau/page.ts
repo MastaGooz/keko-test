@@ -1072,7 +1072,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean } }
+  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }; /** Le Ver et ses armes (voir `Allure.ver` du rendu). */ ver?: { oeufs?: boolean; parasite?: number; epine?: number } }
   /**
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
@@ -1114,7 +1114,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
   // (LE LANCE-TOURELLES ET LE LANCE-SCIE DE L'INGÉNIEUR SE DESSINENT — Keko, 18/11 : leurs armes ne sont plus dans la liste
   // de celles qu'on ne voit pas sur le vaisseau)
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure(), ver: verDeLAllure() })
   /**
    * CE QUE LES ARMES DU KRAKEN CHANGENT À SON CORPS (voir `Allure.kraken`) : les crochets de la Tentacule, le rejeton
    * accroché au dos — parti quand un rejeton naît (`rejetonPartiA`), il repousse : rien pendant 0,4 s, puis il grandit en
@@ -1125,6 +1125,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * CE QUE LES ARMES DE LA VOUIVRE CHANGENT À SON CORPS (voir `Allure.vouivre`) : la tête du Crachat, la poche de la
    * Traînée, la mine du dos — partie quand une mine est lancée (`minePartieA`), elle repousse comme le rejeton du Kraken.
    */
+  /**
+   * CE QUE LES ARMES DU VER CHANGENT À SON CORPS (voir `Allure.ver`) : les œufs qu'il porte ; le parasite de sa nuque et
+   * l'épine de sa gueule — partis au tir (`parasitePartiA`, `epinePartieA`), ils repoussent.
+   */
+  let parasitePartiA = -1e9
+  let epinePartieA = -1e9
+  function verDeLAllure(): Allure['ver'] {
+    if (!parametres.has('vortex')) return undefined
+    const a = pieceDe(armeDuVortex())?.arme
+    const repousse = (depuis: number, attente: number, duree: number): number => Math.max(0, Math.min(1, (t - depuis - attente) / duree))
+    if (a?.ponte !== undefined) return { oeufs: true }
+    if (a?.parasite !== undefined) return { parasite: repousse(parasitePartiA, 0.3, 1) }
+    if (a?.epines !== undefined) return { epine: repousse(epinePartieA, 0.2, 0.9) }
+    return undefined
+  }
   let minePartieA = -1e9
   function vouivreDeLAllure(): Allure['vouivre'] {
     if (!parametres.has('vortex')) return undefined
@@ -13210,6 +13225,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'parasiteLance':
+          parasitePartiA = t
           // (un cerveau est lancé : son petit couinement mouillé — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
           else jouer(ev.arme as Son)
@@ -13296,6 +13312,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'epines':
+          epinePartieA = t
           // (l'épine part de sa tête : elle fend l'air)
           jouer('epine', { dx: ev.x - v.x, dy: ev.y - v.y })
           break

@@ -6135,3 +6135,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   1,2 à 2,2), qui gonflent moins, vivent moins, sortent un peu moins souvent, et crèvent en quatre pixels ; au venin
   d'origine, quelle que soit l'apparence. Les bulles du Kraken, que j'avais teintées à son apparence sans qu'il le
   demande, reprennent aussi leur bile d'origine.
+- LES ARMES DU VER SE VOIENT SUR LUI (Keko, 19/11 ; `Allure.ver`, `formesDuVer`) : LES ŒUFS, des œufs nacrés de toutes
+  tailles collés sur ses flancs, un ou deux par anneau, la lueur du petit au fond (`OEUFS_DU_VER` ; « pour comprendre qu'il
+  transporte des œufs sur lui » — *mesuré à la capture* : à la taille d'un pic, ce n'étaient que des points) ; LES
+  PARASITES, un parasite accroché à SA NUQUE, derrière le col (« c'est de là que les parasites sauteront »), qui saute
+  au lancer et repousse (rien 0,3 s, puis 1 s) ; L'ÉPINE D'OS, la lance DANS SA GUEULE, pointée devant, qui part au tir
+  et repousse (0,2 s, puis 0,9 s). Avec l'épine — et les parasites —, il tourne déjà la tête vers l'ennemi le plus proche
+  (`regardVoulu` : ni l'une ni l'autre ne sont parmi les armes qui laissent le nez au manche) ; vu en partie. L'aperçu des
+  armes, lui, ne tourne pas le vaisseau.

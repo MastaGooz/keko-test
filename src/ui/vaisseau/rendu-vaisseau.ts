@@ -617,6 +617,13 @@ export type Allure = {
    * une poche d'acide à l'arrière, entre ses deux pustules propulsives.
    */
   vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }
+  /**
+   * LE VER ET SES ARMES (Keko, 19/11) : `oeufs`, les Œufs montés — des œufs de toutes tailles tout le long de son corps ;
+   * `parasite`, les Parasites montés — la taille (0 à 1) du parasite accroché à sa nuque, d'où ils sautent ; `epine`,
+   * l'Épine d'os montée — la longueur (0 à 1) de la lance d'os dans sa gueule. Les deux derniers partent au tir et
+   * repoussent.
+   */
+  ver?: { oeufs?: boolean; parasite?: number; epine?: number }
 }
 /**
  * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
@@ -1867,7 +1874,7 @@ export function formesDeLArme(id: string, s: number): Forme[] {
  * l'extérieur du virage. Les anneaux gardent leur écart le long du corps : courbé, il raccourcit. Son apparence pose son
  * motif sur chaque anneau (`motif` : des taches, des lueurs qui battent, une bande sur le dos).
  */
-export function formesDuVer(t: number, flamme: number, devie: number, motif?: MotifDuVer, chemin?: [number, number][]): Forme[] {
+export function formesDuVer(t: number, flamme: number, devie: number, motif?: MotifDuVer, chemin?: [number, number][], armes?: Allure['ver']): Forme[] {
   const N = 9
   const L = 2.5
   const pousse = Math.min(1, Math.max(0, flamme))
@@ -1937,6 +1944,20 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
     const dx0 = p.x + ux * p.r * 0.2
     const dy0 = p.y + uy * p.r * 0.2
     f.push({ pts: [[dx0 - uy * p.r * 0.32, dy0 + ux * p.r * 0.32], [p.x - ux * p.r * 0.85, p.y - uy * p.r * 0.85], [dx0 + uy * p.r * 0.32, dy0 - ux * p.r * 0.32]], mat: 'os', relief: 'plat' })
+    // (LES ŒUFS QU'IL PORTE — Keko, 19/11 : « des œufs de différentes tailles tout le long de son corps, pour comprendre qu'il
+    // transporte des œufs sur lui » : collés sur ses flancs, un ou deux par anneau, de tailles tirées de l'anneau ; une
+    // coque nacrée, un reflet, l'ombre du petit au fond)
+    if (armes?.oeufs === true && k <= N - 1) {
+      for (const [s, taille, recul] of OEUFS_DU_VER[k] ?? []) {
+        // (… GROS — mesuré à la capture : à la taille d'un pic, ce n'étaient que des points)
+        const r = taille * 1.55 * (0.75 + 0.35 * (p.r / 3.2))
+        const ox = p.x - uy * s * p.r * 0.72 - ux * recul
+        const oy = p.y + ux * s * p.r * 0.72 - uy * recul
+        f.push({ pts: ovale(ox, oy, r * 1.15, r, 10), mat: 'anneau', relief: 'plat' })
+        f.push({ pts: ovale(ox, oy, r * 0.95, r * 0.82, 10), mat: 'nacre', relief: 'dome', dome: { x: ox, y: oy, rx: r * 0.95, ry: r * 0.82 } })
+        if (r > 0.6) f.push({ pts: ovale(ox + 0.1, oy + 0.1, r * 0.35, r * 0.3, 8), mat: 'bile', relief: 'lueur', ton: 2 })
+      }
+    }
   }
   // LA TÊTE : deux MANDIBULES d'os en crochets devant, deux CORNES d'os couchées derrière, la tête ronde, son col de
   // chitine, la bouche et ses dents, la lueur au fond (les mandibules et les cornes ont remplacé les palpes de chair : plus
@@ -1981,7 +2002,39 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
     const ry = my + sa * ouvre
     f.push({ pts: [[rx + sa * 0.25, ry - ca * 0.25], [rx - sa * 0.25, ry + ca * 0.25], [mx + ca * ouvre * 0.35, my + sa * ouvre * 0.4]], mat: 'os', relief: 'plat' })
   }
+  // (L'ÉPINE D'OS DANS SA GUEULE — Keko, 19/11 : « lui mettre la lance dans la bouche » : une lance d'os, large à sa base
+  // dans la bouche, pointue devant, qui part au tir et repousse — `epine`, sa longueur)
+  if (armes?.epine !== undefined && armes.epine > 0.05) {
+    const lg = 6.2 * armes.epine
+    const b0 = 0.75
+    f.push({ pts: [[mx - ux * 0.6 + nx * b0, my - uy * 0.6 + ny * b0], [mx + ux * lg * 0.55 + nx * 0.5, my + uy * lg * 0.55 + ny * 0.5], [mx + ux * lg, my + uy * lg], [mx + ux * lg * 0.55 - nx * 0.5, my + uy * lg * 0.55 - ny * 0.5], [mx - ux * 0.6 - nx * b0, my - uy * 0.6 - ny * b0]], mat: 'os', relief: 'cyl' })
+    for (const q of [0.25, 0.5]) f.push({ pts: barre(mx + ux * lg * q + nx * 0.55, my + uy * lg * q + ny * 0.55, mx + ux * lg * q - nx * 0.55, my + uy * lg * q - ny * 0.55, 0.22), mat: 'anneau', relief: 'plat' })
+  }
+  // (LE PARASITE SUR SA NUQUE — Keko, 19/11 : « un parasite au niveau de sa nuque, c'est de là que les parasites sauteront
+  // vers les ennemis » : un petit cerveau rose aux replis sombres, deux crocs d'os, accroché derrière le col ; il saute au
+  // tir et un autre repousse — `parasite`, sa taille)
+  if (armes?.parasite !== undefined && armes.parasite > 0.05) {
+    const k = armes.parasite * 1.3
+    const px = h.x - ux * (h.r + 1.2)
+    const py = h.y - uy * (h.r + 1.2)
+    f.push({ pts: ovale(px, py, 1.55 * k, 1.55 * k, 12), mat: 'anneau', relief: 'plat' })
+    f.push({ pts: ovale(px, py, 1.3 * k, 1.2 * k, 12), mat: 'chair', relief: 'dome', dome: { x: px, y: py, rx: 1.3 * k, ry: 1.2 * k } })
+    f.push({ pts: barre(px - ux * 1.1 * k, py - uy * 1.1 * k, px + ux * 1.1 * k, py + uy * 1.1 * k, 0.2 * k), mat: 'lie', relief: 'plat' })
+    for (const s of [-1, 1]) f.push({ pts: barre(px + nx * s * 0.5 * k - ux * 0.7 * k, py + ny * s * 0.5 * k - uy * 0.7 * k, px + nx * s * 0.6 * k + ux * 0.5 * k, py + ny * s * 0.6 * k + uy * 0.5 * k, 0.16 * k), mat: 'lie', relief: 'plat' })
+    for (const s of [-1, 1]) f.push({ pts: [[px + ux * 1 * k + nx * s * 0.35 * k, py + uy * 1 * k + ny * s * 0.35 * k], [px + ux * 2 * k + nx * s * 0.6 * k, py + uy * 2 * k + ny * s * 0.6 * k], [px + ux * 1.1 * k + nx * s * 0.75 * k, py + uy * 1.1 * k + ny * s * 0.75 * k]], mat: 'os', relief: 'plat' })
+  }
   return f
+}
+/** Les œufs que porte le Ver, anneau par anneau (de 1, derrière la tête, à 8) : (côté, taille, recul) — Keko, 19/11. */
+const OEUFS_DU_VER: Record<number, [number, number, number][]> = {
+  1: [[1, 0.7, 0.3]],
+  2: [[-1, 1.05, 0], [1, 0.5, 0.6]],
+  3: [[1, 0.9, 0.2]],
+  4: [[-1, 0.6, 0.4], [1, 1.1, -0.2]],
+  5: [[-1, 0.95, 0]],
+  6: [[1, 0.65, 0.3], [-1, 0.45, -0.3]],
+  7: [[-1, 0.75, 0.2]],
+  8: [[1, 0.5, 0]],
 }
 
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
@@ -2051,7 +2104,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
-  const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
+  const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)
   if (a.coque === 10 && a.kraken?.rejeton !== undefined) tout.push(...formesDuRejetonDuDos(a.kraken.rejeton, t))
