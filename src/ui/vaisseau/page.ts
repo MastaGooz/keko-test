@@ -3827,7 +3827,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-nuee': 'Une nuée de minuscules insectes, qui se jette sur les ennemis proches pour les dévorer.',
     'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
     'arme-crachat': 'Crache une flaque d’acide corrosive sur les ennemis proches.',
-    'arme-mines': 'Sème des mines autour, qui explosent en un nuage de gaz corrosif quand un ennemi approche.',
+    'arme-mines': 'Sème des mines autour, qui explosent en un nuage de gaz toxique quand un ennemi approche.',
     'arme-parasites': 'Lance des parasites qui sautent d’ennemi en ennemi.',
     'arme-faisceau': 'Un rayon continu, qui chauffe de plus en plus sur la même cible.',
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',

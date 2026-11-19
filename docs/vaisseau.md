@@ -6173,3 +6173,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   d'agilité (la plus basse de la flotte, sous la Salamandre), 9 → 11 de vie (la plus haute) ; LA VOUIVRE 110 → 78, 7 → 8,2,
   8 de vie ; LE DÉVOREUR 110 → 95, 8,7 → 7,4, 7 → 6 de vie. La régénération reste une part de la vie (2 % par seconde) :
   le Kraken, le plus de vie, régénère le plus de points. Vu sur les fiches.
+- LES MINES DE LA VOUIVRE EMPOISONNENT (Keko, 19/11 : « les mines doivent appliquer l'état empoisonné ») : un vrai ÉTAT
+  EMPOISONNÉ (`Ennemi.poison`, `empoisonner`) — il perd tant par seconde jusqu'à un instant, le plus long et le plus fort
+  l'emportent, et il le montre comme dans la traînée (`poisonA` : la lueur et les bulles de poison). L'explosion l'applique
+  à la place de l'acide du crachat (qui majorait tous les dégâts) : 3 par seconde pendant 4 s (l'acide faisait 2, plus son
+  bonus ; *chiffres de moi*). Vérifié (`jeu.verif.ts`) : touchés, empoisonnés, plus rongés ; 3,00 points perdus en 1 s.
+  Leur description dit « un nuage de gaz toxique » (il était corrosif).

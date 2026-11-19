@@ -1696,7 +1696,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // un insecte passe près d'elles — dégâts et acide dans le nuage
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const mine = { id: 'mine', cadence: 1.8, degats: 6, portee: 40, vitesse: 0, vie: 0, dispersion: 0, guide: false, mine: { max: 6, duree: 10, vol: 0.6, rayon: 20, acide: { duree: 4, dps: 2, bonus: 0.35 } } }
+  const mine = { id: 'mine', cadence: 1.8, degats: 6, portee: 40, vitesse: 0, vie: 0, dispersion: 0, guide: false, mine: { max: 6, duree: 10, vol: 0.6, rayon: 20, poison: { duree: 4, dps: 3 } } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [mine], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   // (PERSONNE : elle en sème quand même, autour d'elle, et elles attendent)
   const w = nouveauMonde(cfg, 3)
@@ -1719,7 +1719,17 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     ev2.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
   }
   const pv = [1, 2, 3].map((id) => 1000 - (w.ennemis.find((e) => e.id === id)?.pv ?? 1000))
-  verifier('un insecte entre dans la zone d’une mine posée (à 17) : elle éclate aussitôt en gaz — lui et le voisin perdent 6 et sont rongés ; le lointain, rien', ev2.some((e) => e.type === 'gaz') && pv[0] >= 6 && pv[1] >= 6 && pv[2] === 0 && (w.ennemis.find((e) => e.id === 1)?.acide?.jusque ?? 0) > w.t && !w.mines.includes(cible))
+  // (… ET EMPOISONNÉS — Keko, 19/11 : plus rongés)
+  const e1 = w.ennemis.find((e) => e.id === 1)
+  verifier('un insecte entre dans la zone d’une mine posée (à 17) : elle éclate aussitôt en gaz — lui et le voisin perdent 6 et sont empoisonnés ; le lointain, rien', ev2.some((e) => e.type === 'gaz') && pv[0] >= 6 && pv[1] >= 6 && pv[2] === 0 && (e1?.poison?.jusque ?? 0) > w.t && (e1?.poisonA ?? 0) > w.t && e1?.acide === undefined && !w.mines.includes(cible))
+  // (le poison ronge ensuite : 3 par seconde, 4 s)
+  const pvApres = 1000 - (e1?.pv ?? 1000)
+  for (let i = 0; i < 60; i++) {
+    for (const e of w.ennemis) e.corps = { ...e.corps, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  const perdu = 1000 - (w.ennemis.find((e) => e.id === 1)?.pv ?? 1000) - pvApres
+  verifier(`empoisonné, il perd ensuite 3 points par seconde (${perdu.toFixed(2)} en 1 s)`, Math.abs(perdu - 3) < 0.2)
 }
 // LE FLÉAU DE L'INGÉNIEUR (Keko, 16/11) : une masse au bout d'une chaîne, qui tourne autour du vaisseau, frappe ce
 // qu'elle croise, et traîne derrière lui quand il file

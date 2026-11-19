@@ -672,7 +672,9 @@ export type Arme = {
    * insecte à moins de `rayon` perd `degats` et est RONGÉ (`acide`, comme le crachat). L'état est `Monde.mines`.
    */
   // (… ET ELLE ÉCLATE DÈS QU'UN INSECTE ENTRE DANS SA ZONE D'EFFET — Keko, 16/11 : le déclenchement, c'est le `rayon`)
-  mine?: { max: number; duree: number; vol: number; rayon: number; acide: { duree: number; dps: number; bonus: number } }
+  // (… PUIS ELLES EMPOISONNENT — Keko, 19/11 : « les mines de la Vouivre doivent appliquer l'état empoisonné » : plus
+  // l'acide du crachat, `poison` — voir `Ennemi.poison`)
+  mine?: { max: number; duree: number; vol: number; rayon: number; poison: { duree: number; dps: number } }
   /**
    * UN FLÉAU D'ARMES (la troisième arme de l'Ingénieur, à la place des balises — gardées pour un futur vaisseau ; Keko,
    * 16/11 : « une chaîne reliée au vaisseau qui tourne autour de lui, et au bout de la chaîne une grosse massue avec des
@@ -874,6 +876,11 @@ export type Ennemi = {
   irradie?: { jusque: number }
   /** IL EST EMPOISONNÉ (la traînée de poison du Ver) jusqu'à cet instant (pour le dessin). */
   poisonA?: number
+  /**
+   * L'ÉTAT EMPOISONNÉ (les mines de la Vouivre, Keko, 19/11) : jusqu'à cet instant, il perd `dps` par seconde — le plus
+   * long et le plus fort l'emportent ; il le montre comme dans la traînée (`poisonA`).
+   */
+  poison?: { jusque: number; dps: number }
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
@@ -2515,6 +2522,13 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
   }
 }
 
+/** Un insecte EMPOISONNÉ (voir `Ennemi.poison`) : jusqu'à `duree` d'ici — le plus long et le plus fort l'emportent. */
+function empoisonner(m: Monde, e: Ennemi, po: { duree: number; dps: number }): void {
+  const encore = e.poison !== undefined && e.poison.jusque > m.t
+  e.poison = { jusque: Math.max(encore ? e.poison!.jusque : 0, m.t + po.duree), dps: Math.max(encore ? e.poison!.dps : 0, po.dps) }
+  e.poisonA = Math.max(e.poisonA ?? 0, e.poison.jusque)
+}
+
 /** Un insecte RONGÉ par l'acide (voir `Arme.crachat`) : jusqu'à `duree` d'ici — le plus long et le plus fort l'emportent. */
 function ronger(m: Monde, e: Ennemi, ac: { duree: number; dps: number; bonus: number }, ev: Evenement[]): void {
   if (e.acide === undefined || e.acide.jusque <= m.t) ev.push({ type: 'ronge', id: e.id, x: e.corps.x, y: e.corps.y })
@@ -2571,10 +2585,13 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     for (const e of m.ennemis) if (dansLeCone(e.corps.x, e.corps.y, f.x, f.y, f.cap, cr.cone, a.portee, c.ennemi.rayon)) ronger(m, e, cr.acide, ev)
     return true
   })
-  // (l'acide ronge : ses dégâts à lui)
+  // (l'acide ronge : ses dégâts à lui ; le poison, les siens)
   for (const e of [...m.ennemis]) {
-    if (e.acide === undefined || e.acide.jusque <= m.t) continue
-    e.pv -= e.acide.dps * dt
+    const ronge = e.acide !== undefined && e.acide.jusque > m.t
+    const empoisonne = e.poison !== undefined && e.poison.jusque > m.t
+    if (!ronge && !empoisonne) continue
+    if (ronge) e.pv -= e.acide!.dps * dt
+    if (empoisonne) e.pv -= e.poison!.dps * dt
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 }
@@ -2778,11 +2795,11 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       return false
     }
     if (!m.ennemis.some((e) => Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) <= mi.rayon + c.ennemi.rayon)) return true
-    // (ELLE ÉCLATE EN GAZ : tout ce qui est dans le nuage perd ses dégâts et est rongé)
+    // (ELLE ÉCLATE EN GAZ : tout ce qui est dans le nuage perd ses dégâts et est EMPOISONNÉ — Keko, 19/11)
     ev.push({ type: 'gaz', x: mn.x, y: mn.y, rayon: mi.rayon })
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) > mi.rayon + c.ennemi.rayon) continue
-      ronger(m, e, mi.acide, ev)
+      empoisonner(m, e, mi.poison)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
