@@ -3764,9 +3764,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
     'arme-essaim': 'Une gerbe de petits missiles de plasma, qui zigzaguent puis fondent sur les insectes.',
     'arme-meteore': 'Une météore d’arcane tombe du ciel sur un insecte, sans jamais le manquer.',
-    'arme-tentacules': 'Une tentacule à aiguille, qui fouette et pique très vite.',
-    'arme-nuee': 'Une nuée de minuscules insectes l’entoure et lance ses bras vers les ennemis.',
-    'arme-rejetons': 'Il pond des rejetons, qui nagent vers les insectes et les agrippent de leurs tentacules.',
+    'arme-tentacules': 'Un énorme tentacule à aiguille, qui transperce un ennemi.',
+    'arme-nuee': 'Une nuée de minuscules insectes, qui se jette sur les ennemis proches pour les dévorer.',
+    'arme-rejetons': 'Il pond des rejetons, qui nagent vers les ennemis et les transpercent de leurs aiguilles.',
     'arme-crachat': 'Un crachat d’acide devant lui, qui ronge les insectes et les rend fragiles.',
     'arme-mines': 'Des pustules d’acide semées autour de lui, qui éclatent en gaz au passage d’un insecte.',
     'arme-parasites': 'Un petit cerveau à crocs s’accroche à un insecte et le dévore, puis bondit sur un autre à sa mort.',
@@ -4217,6 +4217,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * pour qu'ils ne flottent pas tous ensemble.
    */
   const cadresDesPortraits = new Map<string, [number, number, number, number]>()
+  /** La longueur, en unités du vaisseau, qu'une case de portrait montre en entier (voir `peindreLePortrait`). */
+  const LONGUEUR_DU_PORTRAIT = 20
   function peindreLePortrait(p: Peintre, mo: ReturnType<typeof modeleDeVaisseau>, x: number, y: number, w: number, h: number, n: number): void {
     const [haut, bas, halo] = FONDS_DES_RACES[mo.race]
     for (let j = 0; j < h; j++) p.rect(x, y + j, w, 1, j < h * 0.45 ? haut : bas)
@@ -4232,15 +4234,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LE CADRE EST CELUI D'UNE POSE FIXE, gardé par modèle — Keko, 17/11 : « le Frimas, le Pulsar et tous les vaisseaux
     // humains ont un genre de tremblement bizarre » : la boîte prise sur les formes de l'image changeait avec la flamme, qui
     // frémit à chaque image, et l'échelle du portrait avec elle — la même leçon que `Options.cadre`)
-    if (!cadresDesPortraits.has(mo.id)) cadresDesPortraits.set(mo.id, boiteDe(formesDuVaisseau(al, nageDuPortrait ?? 0.65, 0)))
+    // (… PRIS SANS LA FLAMME : c'est le vaisseau qu'on cadre)
+    if (!cadresDesPortraits.has(mo.id)) cadresDesPortraits.set(mo.id, boiteDe(formesDuVaisseau(al, nageDuPortrait ?? 0, 0)))
     const [x0, y0, x1, y1] = cadresDesPortraits.get(mo.id)!
-    const echelle = (Math.min(w, h) * 1.35) / Math.max(1, x1 - x0, y1 - y0)
+    // TOUS À LA MÊME ÉCHELLE (Keko, 19/11 : « tous les vaisseaux ne sont pas à la même échelle ; le Kraken, un vaisseau très
+    // gros, semble plus petit que le chasseur ; si un vaisseau ne loge pas dans la case, n'affiche que l'avant qui loge, fais
+    // dépasser l'arrière en bas à gauche ») : chacun était agrandi à la mesure de sa case. L'échelle est commune, réglée
+    // sur `LONGUEUR_DU_PORTRAIT` unités ; un vaisseau qui la tient est centré dans sa case, un plus long y montre ses
+    // `LONGUEUR_DU_PORTRAIT` unités de devant, et l'arrière sort par le bas à gauche (le nez est tourné vers le haut à droite)
+    const echelle = (Math.min(w, h) * 1.35) / LONGUEUR_DU_PORTRAIT
+    const mx = x1 - x0 <= LONGUEUR_DU_PORTRAIT ? (x0 + x1) / 2 : x1 - LONGUEUR_DU_PORTRAIT / 2
+    const my = (y0 + y1) / 2
+    const capP = -Math.PI / 2 + 0.62
+    const ox = x + w / 2 - (mx * Math.cos(capP) - my * Math.sin(capP)) * echelle
+    const oy = y + h * 0.54 - (mx * Math.sin(capP) + my * Math.cos(capP)) * echelle * 0.66
     const flotte_ = Math.round(Math.sin(t * 1.6 + n * 0.9))
     // (le cadre rogne : rien ne déborde de la case)
     const rogne = { rect: (rx: number, ry: number, rw: number, rh: number, c: number, a?: number): void => {
       if (rx >= x && ry >= y && rx < x + w && ry < y + h) p.rect(rx, ry, rw, rh, c, a)
     }, glow: (): void => {} }
-    peindreFormes(rogne, formes, x + w / 2, y + h * 0.56 + flotte_, echelle, { cap: -Math.PI / 2 + 0.62, aplatir: 0.66, rampes: rampesDeLaPeau(pe) })
+    peindreFormes(rogne, formes, ox, oy + flotte_, echelle, { cap: capP, aplatir: 0.66, rampes: rampesDeLaPeau(pe) })
   }
   /**
    * LE PANNEAU DES VAISSEAUX DU JEU DU VORTEX, comme celui des pièces (Keko, 15/11) : la liste de TOUS les modèles — ceux

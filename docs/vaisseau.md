@@ -6040,3 +6040,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   braises du vol), la lueur se pose sur chacune ; à plusieurs tuyères, ils dérivent moins de côté (± 4 au lieu de ± 15,
   sinon les deux colonnes se rejoignaient au milieu en tombant). L'ACCUEIL avait le même défaut : sa traînée et sa
   lueur sont posées à chaque tuyère. Vu à la capture : deux colonnes, une sous chaque réacteur.
+- LES ARMES DU KRAKEN REDITES (Keko, 19/11) : les rejetons ne s'agrippent pas — « Il pond des rejetons, qui nagent vers les
+  ennemis et les transpercent de leurs aiguilles » ; la tentacule ne « frappe pas très vite » — « Un énorme tentacule à
+  aiguille, qui transperce un ennemi » (au masculin, comme le dit Keko) ; la nuée n'a pas de bras — « Une nuée de
+  minuscules insectes, qui se jette sur les ennemis proches pour les dévorer ».
+- LES PORTRAITS DE LA GRILLE À LA MÊME ÉCHELLE (Keko, 19/11 : « tous les vaisseaux ne sont pas à la même échelle ; le Kraken,
+  un vaisseau très gros, semble plus petit que le chasseur ; si un vaisseau ne loge pas dans la case, n'affiche que
+  l'avant qui loge, fais dépasser l'arrière en bas à gauche ») : chacun était agrandi à la mesure de sa case (sa boîte,
+  flamme comprise). L'échelle est COMMUNE, réglée sur 20 unités (`LONGUEUR_DU_PORTRAIT`) ; la boîte se prend sans la
+  flamme ; un vaisseau qui tient dans 20 est centré, un plus long montre ses 20 unités de devant, l'arrière sort par le
+  bas à gauche. *Mesuré* (nez à queue, flamme comprise) : du Tesseract (18,5) au Ver (30,3) et au Kraken (29,7, ses
+  tentacules rabattues) ; le corps du Kraken seul fait 17,7 de long, à peine plus que le Chasseur — c'est sa taille en
+  vol aussi.
